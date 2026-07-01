@@ -2,8 +2,9 @@
 // SPDX-License-Identifier: MIT
 import { test, expect } from '@playwright/test';
 
-// Curated key pages mirrored from .pa11yci for page parity (the 404 entry is
-// omitted because reflow/resize assertions target real content pages).
+// Curated key pages mirrored from the site-crawl spec for page parity (the
+// 404 entry is omitted because reflow/resize assertions target real content
+// pages).
 const PAGES = [
   { name: 'home', path: '/hve-core/' },
   { name: 'docs', path: '/hve-core/docs/' },

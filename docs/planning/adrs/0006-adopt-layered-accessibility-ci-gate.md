@@ -1,9 +1,9 @@
 ---
 id: "0006"
-title: "Adopt a layered four-tool accessibility CI gate as a blocking merge guardrail"
+title: "Adopt a layered accessibility CI gate as a blocking merge guardrail"
 description: "Adopt a layered accessibility CI architecture for the Docusaurus site that runs static linting, component-level axe assertions, behavioral end-to-end checks, and a full-site crawl as a single blocking job, gating merges at a zero-violation full-site threshold against WCAG 2.2 AA."
 author: "HVE Core Maintainers"
-ms.date: "2026-06-14"
+ms.date: "2026-06-30"
 ms.topic: "reference"
 status: "accepted"
 proposed_date: "2026-06-14"
@@ -26,7 +26,7 @@ tags:
 affected_components:
   - ".github/workflows/docusaurus-tests.yml"
   - "docs/docusaurus/eslint.config.mjs"
-  - "docs/docusaurus/.pa11yci"
+  - "docs/docusaurus/e2e/site-crawl.spec.ts"
   - "docs/docusaurus/playwright.config.ts"
   - "docs/docusaurus/jest.config.js"
   - "docs/docusaurus/package.json"
@@ -36,19 +36,19 @@ superseded-by: null
 related: []
 asr_triggers:
   - kind: "compliance"
-    evidence: "docs/docusaurus/.pa11yci pins standard WCAG2AA with threshold 0 across the canonical URL set, and .github/workflows/docusaurus-tests.yml runs that scan as a blocking step with no soft-fail."
+    evidence: "docs/docusaurus/e2e/site-crawl.spec.ts now runs the current axe-based site-crawl gate with WCAG 2.x A/AA plus `wcag22aa` and `best-practice` tags at threshold 0, and .github/workflows/docusaurus-tests.yml runs that scan as a blocking step with no soft-fail."
     note: "The conformance target is WCAG 2.2 AA and the full-site scan must report zero violations to pass; there is no soft-fail escape hatch."
   - kind: "maintainability"
     evidence: "The SearchBar swizzle couples the site to @easyops-cn/docusaurus-search-local, so the behavioral and full-site layers must keep passing across upstream plugin churn (NFR-001)."
     note: "Layered coverage absorbs upstream DOM/ARIA drift without a bespoke pipeline; the gate lives inside docs/docusaurus and the shared workflow."
   - kind: "maintainability"
-    evidence: "The canonical scan set in docs/docusaurus/.pa11yci and the e2e specs under docs/docusaurus/e2e/ are extended as new page types ship (RSK-2, G-004)."
+    evidence: "The canonical scan set in docs/docusaurus/e2e/_helpers/pages.ts and the e2e specs under docs/docusaurus/e2e/ are extended as new page types ship (RSK-2, G-004)."
     note: "New page types are onboarded by extending the canonical URL list and adding targeted specs rather than re-architecting the gate."
 success_criteria:
   - metric: "full-site-axe-violations"
-    target: "pa11y-ci reports zero WCAG 2.2 AA violations across the canonical URL set"
+    target: "the Playwright site-crawl spec reports zero WCAG 2.2 AA violations across the canonical URL set"
     measurement_window: "per-PR"
-    source: "docs/docusaurus/.pa11yci"
+    source: "docs/docusaurus/e2e/site-crawl.spec.ts"
   - metric: "a11y-gate-blocking"
     target: "the accessibility job blocks merge on any layer failure with no soft-fail default"
     measurement_window: "every PR run"
@@ -68,6 +68,14 @@ decisionMetadata:
     "Evolvability for new page types": "ASR-evolvability-scan-set"
 ---
 
+> **Update (2026-06-30):** This ADR was revised in place to reflect the migration of the
+> full-site crawl from pa11y-ci to the `@axe-core/playwright` site-crawl spec
+> (`docs/docusaurus/e2e/site-crawl.spec.ts`). pa11y-ci, `.pa11yci`, and puppeteer were removed;
+> the full-site and behavioral layers now both run on Playwright, so the gate spans three tools
+> (`eslint-plugin-jsx-a11y`, `jest-axe`, Playwright with `@axe-core/playwright`) across four
+> layers. The decision to run a layered, blocking accessibility gate at a zero-violation
+> full-site threshold is unchanged.
+
 ## Context
 
 The Docusaurus documentation site under `docs/docusaurus/` needs an
@@ -85,9 +93,10 @@ that contributors do not learn to ignore it, (c) covers the distinct defect
 classes above, and (d) can serve as a reusable lighthouse pattern for other
 sites. The gate must run inside the existing
 `.github/workflows/docusaurus-tests.yml` job rather than a bespoke pipeline,
-must validate against WCAG 2.2 AA, and the full-site scan configured in
-`docs/docusaurus/.pa11yci` must gate at a zero-violation threshold with no
-soft-fail. The static layer is configured in `docs/docusaurus/eslint.config.mjs`,
+must validate against WCAG 2.2 AA, and the full-site scan implemented by the
+Playwright `@axe-core/playwright` site-crawl spec
+(`docs/docusaurus/e2e/site-crawl.spec.ts`) must gate at a zero-violation
+threshold with no soft-fail. The static layer is configured in `docs/docusaurus/eslint.config.mjs`,
 the component layer in `docs/docusaurus/jest.config.js`, the behavioral layer in
 `docs/docusaurus/playwright.config.ts` with specs under `docs/docusaurus/e2e/`,
 and the npm scripts that wire these together live in
@@ -109,8 +118,8 @@ and the npm scripts that wire these together live in
 
 ## Considered Options
 
-* Option A: Layered multi-tool gate. Run static linting (`eslint-plugin-jsx-a11y`), component-level axe assertions (`jest-axe`), behavioral end-to-end checks (Playwright with `@axe-core/playwright`), and a full-site crawl (`pa11y-ci`) as one blocking CI job at a zero-violation full-site threshold.
-* Option B: Single full-site scanner. Run only `pa11y-ci` against the served site as the sole accessibility gate.
+* Option A: Layered multi-tool gate. Run static linting (`eslint-plugin-jsx-a11y`), component-level axe assertions (`jest-axe`), behavioral end-to-end checks (Playwright with `@axe-core/playwright`), and a full-site axe crawl (Playwright `@axe-core/playwright` site-crawl spec) as one blocking CI job at a zero-violation full-site threshold.
+* Option B: Single full-site scanner. Run only a Playwright axe crawl against the served site as the sole accessibility gate.
 * Option C: Runtime-only. Run only Playwright with axe injection against a running browser, with no static linting and no full-site crawl.
 
 ## Decision Outcome
@@ -139,9 +148,9 @@ defense in depth, and they fall on CI rather than on authors.
 ### Consequences
 
 * Good, because each accessibility defect class is caught at the cheapest layer that can detect it, from static lint through full-site crawl.
-* Good, because the full-site `pa11y-ci` scan gates at a zero-violation threshold with no soft-fail, so whole-page WCAG 2.2 AA regressions cannot merge.
+* Good, because the full-site Playwright axe crawl gates at a zero-violation threshold with no soft-fail, so whole-page WCAG 2.2 AA regressions cannot merge.
 * Good, because the four layers are wired through standard npm scripts and the shared workflow, making the gate a reusable lighthouse pattern other sites can adopt.
-* Bad, because four tools mean four configuration surfaces to keep aligned, increasing the maintenance footprint under upstream churn.
+* Bad, because the layered gate spans several configuration surfaces to keep aligned, increasing the maintenance footprint under upstream churn.
 * Bad, because the behavioral layer drives a real browser and is the most likely source of flakiness, which can erode contributor trust if not contained.
 * Bad, because cross-browser behavioral coverage is deferred: the workflow installs Chromium only, so Firefox and WebKit keyboard/focus paths are not yet exercised in CI.
 * Neutral, because the conformance target is fixed at WCAG 2.2 AA for all layers; tightening or relaxing it is a follow-up decision, not a per-run toggle.
@@ -151,9 +160,9 @@ defense in depth, and they fall on CI rather than on authors.
 
 Compliance with this decision is confirmed by three mechanisms:
 
-1. CI enforcement: `.github/workflows/docusaurus-tests.yml` runs the static, component, full-site, and behavioral layers in one job, and the full-site scan fails the job on any violation because `docs/docusaurus/.pa11yci` pins `threshold: 0`.
-2. Local reproduction: the `lint:a11y`, `test:coverage`, `a11y:ci`, and `test:e2e` scripts in `docs/docusaurus/package.json` reproduce each layer outside CI.
-3. Configuration review: the conformance standard and URL set live in `docs/docusaurus/.pa11yci`, and the static, component, and behavioral configs live in `docs/docusaurus/eslint.config.mjs`, `docs/docusaurus/jest.config.js`, and `docs/docusaurus/playwright.config.ts`, so the gate's contract is reviewable in version control.
+1. CI enforcement: `.github/workflows/docusaurus-tests.yml` runs the static, component, full-site, and behavioral layers in one job, and the full-site scan fails the job on any violation because `docs/docusaurus/e2e/site-crawl.spec.ts` gates with `violations: []` at threshold 0.
+2. Local reproduction: the `lint:a11y`, `test:coverage`, and `test:e2e` scripts in `docs/docusaurus/package.json` reproduce each layer outside CI, with `test:e2e` running both the behavioral specs and the full-site axe crawl.
+3. Configuration review: the conformance standard and URL set live in `docs/docusaurus/e2e/site-crawl.spec.ts` and `docs/docusaurus/e2e/_helpers/pages.ts`, and the static, component, and behavioral configs live in `docs/docusaurus/eslint.config.mjs`, `docs/docusaurus/jest.config.js`, and `docs/docusaurus/playwright.config.ts`, so the gate's contract is reviewable in version control.
 
 ## Pros and Cons of the Options
 
@@ -166,14 +175,14 @@ the merge gate rather than of reviewer diligence.
 * Good, because static lint gives authors the fastest possible signal on missing roles and labels before anything renders.
 * Good, because `jest-axe` catches component-level ARIA and contrast regressions at render time, close to the code that caused them.
 * Good, because Playwright with `@axe-core/playwright` exercises real keyboard and focus behavior that static and render-time checks cannot see.
-* Good, because the `pa11y-ci` full-site crawl is the authoritative whole-page gate at a zero-violation threshold.
+* Good, because the Playwright axe crawl is the authoritative whole-page gate at a zero-violation threshold.
 * Neutral, because the layers share one workflow and standard npm scripts, so the added structure is centralized rather than scattered.
-* Bad, because four configuration surfaces must stay aligned as the toolchain and upstream plugins evolve.
+* Bad, because the layered gate's configuration surfaces must stay aligned as the toolchain and upstream plugins evolve.
 * Bad, because the behavioral browser layer is the most flakiness-prone and needs containment to preserve contributor trust.
 
 ### Option B: Single full-site scanner
 
-A `pa11y-ci`-only gate is the simplest to operate and the least flaky, but it
+A Playwright axe-only gate is the simplest to operate and the least flaky, but it
 trades away coverage of exactly the defect classes that do not surface in a
 whole-page crawl.
 
@@ -217,7 +226,7 @@ The diagram below traces a pull request through the layers to the merge gate.
 |       v                                                      |
 |  build + serve:ci                                            |
 |       |                                                      |
-|       +--> Layer 3: pa11y-ci       (full-site, threshold 0)  |
+|       +--> Layer 3: Playwright axe crawl (full-site, threshold 0) |
 |       |                                                      |
 |       +--> Layer 4: Playwright + @axe-core/playwright        |
 |                                    (behavioral e2e)          |
@@ -229,7 +238,7 @@ The diagram below traces a pull request through the layers to the merge gate.
 
 ## Risks and Mitigations
 
-* Risk: four tools mean four configuration surfaces to keep aligned, increasing the maintenance footprint under upstream churn. Mitigation: centralize the layers in one workflow and the `docs/docusaurus/package.json` scripts, and pin tool versions through the existing dependency-pinning checks.
+* Risk: the layered gate spans several configuration surfaces to keep aligned, increasing the maintenance footprint under upstream churn. Mitigation: centralize the layers in one workflow and the `docs/docusaurus/package.json` scripts, and pin tool versions through the existing dependency-pinning checks.
 * Risk: the behavioral browser layer is the most likely source of flakiness, which can erode contributor trust if it produces false failures. Mitigation: scope the behavioral specs under `docs/docusaurus/e2e/` to deterministic flows, use explicit waits and focus helpers, and keep the highest-risk keyboard/focus paths narrow.
 * Risk: cross-browser behavioral coverage is deferred because the workflow installs Chromium only, so Firefox and WebKit regressions can slip through. Mitigation: track cross-browser expansion as a follow-up that extends `playwright.config.ts` to the highest-risk keyboard/focus paths on Firefox and WebKit once the Chromium gate is stable.
 
@@ -238,7 +247,7 @@ The diagram below traces a pull request through the layers to the merge gate.
 If this decision is reversed, the rollback path is:
 
 1. Remove the accessibility layers from `.github/workflows/docusaurus-tests.yml`, leaving the build and existing test steps intact.
-2. Remove the `lint:a11y`, `a11y:ci`, and `test:e2e` wiring from `docs/docusaurus/package.json` and the corresponding configs in `docs/docusaurus/eslint.config.mjs`, `docs/docusaurus/.pa11yci`, and `docs/docusaurus/playwright.config.ts`.
+2. Remove the `lint:a11y` and `test:e2e` wiring from `docs/docusaurus/package.json` and the corresponding configs in `docs/docusaurus/eslint.config.mjs`, `docs/docusaurus/e2e/site-crawl.spec.ts`, and `docs/docusaurus/playwright.config.ts`.
 3. Retain or remove the `docs/docusaurus/e2e/` specs depending on whether behavioral coverage is kept for non-accessibility reasons.
 4. Document the reversal in a superseding ADR that links back to this one and sets `superseded-by` here.
 
@@ -248,7 +257,7 @@ No data migration is required; removing the gate leaves the site content untouch
 
 * .github/workflows/docusaurus-tests.yml
 * docs/docusaurus/eslint.config.mjs
-* docs/docusaurus/.pa11yci
+* docs/docusaurus/e2e/site-crawl.spec.ts
 * docs/docusaurus/playwright.config.ts
 * docs/docusaurus/jest.config.js
 * docs/docusaurus/package.json
@@ -258,7 +267,7 @@ No data migration is required; removing the gate leaves the site content untouch
 
 * CI job and gate wiring: `.github/workflows/docusaurus-tests.yml`
 * Static layer config: `docs/docusaurus/eslint.config.mjs`
-* Full-site scan config (standard and threshold): `docs/docusaurus/.pa11yci`
+* Full-site scan config (standard and threshold): `docs/docusaurus/e2e/site-crawl.spec.ts`
 * Behavioral layer config: `docs/docusaurus/playwright.config.ts`
 * Component layer config: `docs/docusaurus/jest.config.js`
 * Layer npm scripts: `docs/docusaurus/package.json`

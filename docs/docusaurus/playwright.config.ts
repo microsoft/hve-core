@@ -8,8 +8,12 @@ export default defineConfig({
   testDir: './e2e',
   fullyParallel: true,
   forbidOnly: !!process.env.CI,
-  retries: process.env.CI ? 2 : 0,
-  workers: process.env.CI ? 1 : undefined,
+  // The suite drives a single `docusaurus serve` instance, which resets
+  // connections (net::ERR_ABORTED) under concurrent workers. Serialize on a
+  // single worker everywhere for deterministic runs, and keep retries to
+  // absorb transient navigation resets (more in CI).
+  retries: process.env.CI ? 2 : 1,
+  workers: 1,
   reporter: process.env.CI
     ? [['github'], ['list'], ['html', { open: 'never' }]]
     : [['list'], ['html', { open: 'never' }]],
@@ -26,11 +30,9 @@ export default defineConfig({
   webServer: {
     command: 'npm run build && npm run serve:ci',
     url: baseURL,
-    // Each step owns its own server lifecycle. In CI the pa11y-ci step runs
-    // via start-server-and-test, which starts and then stops `serve:ci`, so
-    // nothing is left listening here and Playwright builds and serves its
-    // own instance. Locally, `reuseExistingServer: true` reuses an already
-    // running dev/serve process instead of failing on a port conflict.
+    // Playwright owns its server lifecycle: it builds and serves its own
+    // instance for the run. Locally, `reuseExistingServer: true` reuses an
+    // already running dev/serve process instead of failing on a port conflict.
     reuseExistingServer: true,
     timeout: 180000,
     stdout: 'pipe',
