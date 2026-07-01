@@ -117,17 +117,17 @@ Use this only for a legitimate trusted checkout. Review expectations:
 
 ## Triage flow
 
-When the workflow fails, review the finding in the Security tab and resolve it in the workflow file:
+When the required homegrown check fails, resolve the blocking `dangerous-workflow/template-injection` finding:
 
-1. Open the failing check and read the SARIF finding for the affected workflow and line. Findings use the stable rule IDs `dangerous-workflow/untrusted-checkout` and `dangerous-workflow/template-injection`, both emitted at `level: error`.
-2. Confirm whether the workflow is running in a privileged context such as `pull_request_target` or `workflow_run`.
-3. If the checkout is unsafe, move to a trusted ref or remove the privileged trigger.
-4. If a `run:` or script block interpolates an untrusted event value, replace the interpolation with a trusted value or restructure the workflow so the untrusted payload is never executed as code.
-5. Use the file path, job/step, and line information in the finding to navigate directly to the offending workflow block, then re-run `npm run lint:dangerous-workflow` and re-check the PR validation status.
+1. Open the failing check and read the SARIF finding for the affected workflow and line. The homegrown gate emits the stable rule ID `dangerous-workflow/template-injection` at `level: error`.
+2. Locate the `run:` or `github-script` block that interpolates an untrusted event value.
+3. Replace the interpolation with a trusted value, route the untrusted value through an intermediate `env:` variable, or restructure the workflow so the untrusted payload is never executed as code.
+4. Re-run `npm run lint:dangerous-workflow` and re-check the PR validation status.
+
+Advisory Poutine findings such as `untrusted_checkout_exec` appear separately in the Security tab under the `poutine` category and do not block merge. Triage them by hardening the workflow or acknowledging the finding in `.poutine.yml`.
 
 ## Related documentation
 
-* [Security Documentation](README)
 * [Branch Protection](branch-protection)
 * [Dependency Pinning](dependency-pinning)
 

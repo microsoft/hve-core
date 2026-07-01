@@ -18,16 +18,16 @@ This directory contains security documentation for HVE Core, demonstrating defen
 
 ## Documents
 
-| Document                                                                   | Description                                                                                             |
-|----------------------------------------------------------------------------|---------------------------------------------------------------------------------------------------------|
-| [Security Model](security-model.md)                                        | Comprehensive security model and security assurance case                                                |
-| [Branch Protection](branch-protection.md)                                  | Main branch protection requirements and repository controls                                             |
-| [Dependency Pinning](dependency-pinning.md)                                | Pinning strategies and CI enforcement for all dependency types                                          |
-| [SBOM Verification](sbom-verification.md)                                  | SBOM attestation verification and consumption guide                                                     |
-| [VEX Verification](vex-verification.md)                                    | Download, verify, and interpret the published OpenVEX document                                          |
-| [Fuzzing](fuzzing.md)                                                      | OSSF Scorecard fuzz harness convention and compliance                                                   |
+| Document                                                                   | Description                                                                                                               |
+|----------------------------------------------------------------------------|---------------------------------------------------------------------------------------------------------------------------|
+| [Security Model](security-model.md)                                        | Comprehensive security model and security assurance case                                                                  |
+| [Branch Protection](branch-protection.md)                                  | Main branch protection requirements and repository controls                                                               |
+| [Dependency Pinning](dependency-pinning.md)                                | Pinning strategies and CI enforcement for all dependency types                                                            |
+| [SBOM Verification](sbom-verification.md)                                  | SBOM attestation verification and consumption guide                                                                       |
+| [VEX Verification](vex-verification.md)                                    | Download, verify, and interpret the published OpenVEX document                                                            |
+| [Fuzzing](fuzzing.md)                                                      | OSSF Scorecard fuzz harness convention and compliance                                                                     |
 | [Dangerous Workflow Detection](dangerous-workflow-detection.md)            | Hybrid CI control: a homegrown template-injection gate plus the Poutine supply-chain scanner for GitHub Actions workflows |
-| [SECURITY.md](https://github.com/microsoft/hve-core/blob/main/SECURITY.md) | Vulnerability disclosure and reporting process                                                          |
+| [SECURITY.md](https://github.com/microsoft/hve-core/blob/main/SECURITY.md) | Vulnerability disclosure and reporting process                                                                            |
 
 ## Skill Security Models
 
