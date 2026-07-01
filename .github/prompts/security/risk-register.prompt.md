@@ -1,6 +1,7 @@
 ---
 description: "Create a qualitative risk register using a Probability × Impact (P×I) matrix"
 name: risk-register
+agent: agent
 argument-hint: "[project-name] [optional: focus-area]"
 ---
 
