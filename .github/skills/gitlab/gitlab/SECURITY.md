@@ -160,7 +160,7 @@ All REST calls target the configured `GITLAB_URL` over `urllib.request` through 
 
 ### TLS posture
 
-Every GitLab call uses the stdlib opener with no custom `SSLContext`, CA-bundle flag, or pinning. Operators inherit Python's default HTTPS behavior: validation uses the system trust store; internal CAs require `SSL_CERT_FILE`/`SSL_CERT_DIR`; there is no pinning or mTLS (G-TLS-1). HTTPS is required for non-loopback hosts; plaintext `http://` is refused even when `GITLAB_ALLOW_INSECURE=1` is set. The bypass is limited to loopback hosts only, and `cmd_job_log` continues to emit redacted, untrusted CI trace content with truncation.
+Every GitLab call uses the stdlib opener with no custom `SSLContext`, CA-bundle flag, or pinning. Operators inherit Python's default HTTPS behavior: validation uses the system trust store; internal CAs require `SSL_CERT_FILE`/`SSL_CERT_DIR`; there is no pinning or mTLS (G-TLS-1). HTTPS is required for non-loopback hosts; plaintext `http://` is refused for non-loopback hosts even when `GITLAB_ALLOW_INSECURE=1` is set, and is permitted only for loopback hosts when `GITLAB_ALLOW_INSECURE=1` is explicitly set — an opt-in gate mirroring the jira skill. `cmd_job_log` continues to emit redacted, untrusted CI trace content with truncation.
 
 ### Risk Rating
 

@@ -261,12 +261,15 @@ def require_environment() -> None:
         die(str(error), EXIT_USAGE)
 
     parsed_url = urllib.parse.urlsplit(gitlab_url)
-    if parsed_url.scheme == "http" and not _is_loopback(parsed_url.hostname):
-        die(
-            "GITLAB_URL must use https:// for non-local hosts; "
-            "plaintext http is not allowed",
-            EXIT_USAGE,
-        )
+    if parsed_url.scheme == "http":
+        allow_insecure = os.environ.get("GITLAB_ALLOW_INSECURE", "").strip() == "1"
+        if not _is_loopback(parsed_url.hostname) or not allow_insecure:
+            die(
+                "GITLAB_URL must use https:// for non-loopback hosts; "
+                "plaintext http is allowed only for loopback hosts when "
+                "GITLAB_ALLOW_INSECURE=1",
+                EXIT_USAGE,
+            )
     if not gitlab_token:
         die("GITLAB_TOKEN is not set", EXIT_USAGE)
 
