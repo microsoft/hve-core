@@ -28,6 +28,12 @@ Captured from the deep subagent review before explanation. One row per planned s
 2. {{segment-2 title}}
 3. {{segment-3 title}}
 
+## Working notes
+
+Scratch space for the current session: open questions, partial findings from the deep review, and anything needed to resume after an interruption. Keep working notes here so the walkthrough artifact stays the single durable record.
+
+- {{note}}
+
 ## Walkthrough log
 
 Append one entry per segment as it is explained.
