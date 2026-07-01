@@ -274,6 +274,7 @@ Python skills include a `pyproject.toml` validated by `validate:skills` via `Tes
 * `fuzz` dependency group with `atheris>=3.0` - Required alongside `fuzz_harness.py`. Kept separate from `dev` (no macOS wheels).
 * `python_files = ["test_*.py", "fuzz_harness.py"]` in `[tool.pytest.ini_options]` - Required alongside `fuzz_harness.py`. Enables pytest discovery.
 * `ruff` in dev dependencies - Recommended. Ensures the linter is available in the skill's virtual environment.
+* `uv.lock` - Required at the skill root when Python dependencies exist. Skills must commit both `pyproject.toml` and `uv.lock` so Dependabot can resolve and patch vulnerable dependencies via the `.github/skills/**` uv glob.
 
 ### PowerShell Module Installation in Workflows
 
