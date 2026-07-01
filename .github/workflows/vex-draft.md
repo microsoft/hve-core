@@ -1,5 +1,6 @@
 ---
 description: "Drafts OpenVEX status updates as a pull request after the VEX Detection workflow finds untriaged vulnerabilities"
+tracker-id: vex-draft
 on:
   workflow_run:
     workflows: ["VEX Detection"]
@@ -8,6 +9,86 @@ on:
   workflow_dispatch:
   skip-bots: ["dependabot[bot]", "github-actions[bot]"]
   reaction: eyes
+  skip-if-match: 'is:open "gh-aw-tracker-id: vex-draft" in:body'
+  permissions:
+    contents: read
+    issues: read
+  steps:
+    - id: vex_gate
+      name: Gate B - skip when all findings already have terminal VEX statuses
+      env:
+        GH_TOKEN: ${{ github.token }}
+        REPO_SLUG: ${{ github.repository }}
+        ISSUE_TITLE: 'VEX detection: untriaged vulnerabilities found'
+      run: |
+        set -euo pipefail
+
+        issue_number="$(gh issue list --repo "$REPO_SLUG" --state open --label automated --limit 100 --json number,title --jq ".[] | select(.title == \"$ISSUE_TITLE\") | .number" | head -n 1)"
+        if [ -z "$issue_number" ]; then
+          echo "No open automated VEX detection issue found; skipping."
+          exit 1
+        fi
+
+        issue_body="$(gh issue view --repo "$REPO_SLUG" "$issue_number" --json body --jq '.body')"
+        finding_ids=()
+        while IFS= read -r line; do
+          if [[ "$line" =~ ^\|[[:space:]]*([^|]+)[[:space:]]*\| ]]; then
+            finding_id="${BASH_REMATCH[1]}"
+            finding_id="${finding_id// /}"
+            if [[ "$finding_id" != "Finding" && "$finding_id" != "ID" && "$finding_id" != "FindingID" ]]; then
+              finding_ids+=("$finding_id")
+            fi
+          fi
+        done <<< "$issue_body"
+
+        if [ ${#finding_ids[@]} -eq 0 ]; then
+          echo "No findings found in detection issue; skipping."
+          exit 1
+        fi
+
+        python3 - "$PWD/security/vex/hve-core.openvex.json" "${finding_ids[@]}" <<'PY'
+        import json
+        import sys
+        from pathlib import Path
+
+        path = Path(sys.argv[1])
+        finding_ids = sys.argv[2:]
+        if not path.exists():
+            print("OpenVEX document not found; proceeding.")
+            sys.exit(0)
+
+        with path.open(encoding="utf-8") as handle:
+            document = json.load(handle)
+
+        terminal_statuses = {"not_affected", "fixed"}
+
+        def check_terminal(node, target):
+            if isinstance(node, dict):
+                status = node.get("status")
+                if isinstance(status, str) and status in terminal_statuses:
+                    for value in node.values():
+                        if isinstance(value, str) and target.lower() in value.lower():
+                            return True
+                        if isinstance(value, list) and any(isinstance(item, str) and target.lower() in item.lower() for item in value):
+                            return True
+                    return False
+                for value in node.values():
+                    if isinstance(value, (dict, list)) and check_terminal(value, target):
+                        return True
+            elif isinstance(node, list):
+                for item in node:
+                    if check_terminal(item, target):
+                        return True
+            return False
+
+        for finding_id in finding_ids:
+            if not check_terminal(document, finding_id):
+                print(f"Finding {finding_id} is not terminal; proceeding.")
+                sys.exit(0)
+
+        print("All findings already have terminal VEX status; skipping.")
+        sys.exit(1)
+        PY
 
 engine: copilot
 timeout-minutes: 20
@@ -15,7 +96,8 @@ timeout-minutes: 20
 # Deterministic gate: skip the agent entirely when the upstream VEX Detection
 # run did not succeed. workflow_dispatch carries no workflow_run payload, so it
 # always passes this guard.
-if: github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success'
+if: >-
+  (github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success') && needs.pre_activation.outputs.vex_gate_result == 'success'
 
 imports:
   - ../agents/security/vex-generator.agent.md
@@ -53,6 +135,8 @@ network:
     - services.nvd.nist.gov
 
 safe-outputs:
+  concurrency-group: "vex-draft-${{ github.repository }}"
+  report-failure-as-issue: ["!max_ai_credits_exceeded", "!ai_credits_rate_limit_error"]
   create-pull-request:
     max: 1
     labels: [security, automated, needs-triage]
