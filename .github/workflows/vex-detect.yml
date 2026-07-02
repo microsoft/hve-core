@@ -196,11 +196,17 @@ jobs:
           REPO_SLUG: ${{ github.repository }}
           ISSUE_TITLE: 'VEX detection: untriaged vulnerabilities found'
         run: |
+          # Use the REST issues-list endpoint (label + state filters), not the
+          # eventually-consistent Search API. Passing --search routes this
+          # through Search, which lags issue creation and tokenizes the
+          # colon-bearing title phrase unreliably, causing duplicate issues to
+          # be filed instead of updating the existing one. Match the title
+          # exactly in jq over the consistent listing.
           existing=$(gh issue list \
             --repo "${REPO_SLUG}" \
             --state open \
             --label automated \
-            --search "in:title \"${ISSUE_TITLE}\"" \
+            --limit 100 \
             --json number,title \
             --jq "map(select(.title == \"${ISSUE_TITLE}\")) | .[0].number // empty")
           if [[ -z "${existing}" ]]; then
@@ -222,11 +228,13 @@ jobs:
           REPO_SLUG: ${{ github.repository }}
           ISSUE_TITLE: 'VEX detection: untriaged vulnerabilities found'
         run: |
+          # Consistent REST listing + exact jq title match (see file/update
+          # step above for why --search is avoided).
           existing=$(gh issue list \
             --repo "${REPO_SLUG}" \
             --state open \
             --label automated \
-            --search "in:title \"${ISSUE_TITLE}\"" \
+            --limit 100 \
             --json number,title \
             --jq "map(select(.title == \"${ISSUE_TITLE}\")) | .[0].number // empty")
           if [[ -n "${existing}" ]]; then

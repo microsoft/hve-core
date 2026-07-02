@@ -2,7 +2,7 @@
 title: Creating Custom Agents
 description: Build specialized agents with tool restrictions, subagent delegation, and mode-based workflows for your team
 author: Microsoft
-ms.date: 2026-06-15
+ms.date: 2026-06-30
 ms.topic: how-to
 keywords:
   - agents
@@ -275,6 +275,8 @@ Tool values support four naming patterns:
 | Category          | `read`, `search`, `edit`, `web`, `agent`      |
 | Category-specific | `edit/createFile`, `execute/runInTerminal`    |
 | Wildcard          | `github/*`, `ado/*`                           |
+
+The set of available tools evolves with GitHub Copilot and VS Code. For the authoritative, current list, see the official [VS Code custom agents documentation](https://code.visualstudio.com/docs/copilot/customization/custom-agents). To invoke a granted tool from the agent body, use the `#tool:` reference syntax (for example, `#tool:codebase`); see [Contributing: Custom Agents](../contributing/custom-agents.md) for details.
 
 ### agents
 

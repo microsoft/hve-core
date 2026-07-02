@@ -2,7 +2,7 @@
 name: accessibility
 description: "Consolidated accessibility skill entrypoint for WCAG 2.2, ARIA Authoring Practices, cognitive accessibility, Section 508, EN 301 549, and the Accessibility Planner workflow."
 license: MIT
-compatibility: "Requires Python 3.11+ and uv; the scanner additionally needs Node.js and network access to run 'npx --yes @axe-core/cli'."
+compatibility: "Requires Python 3.11+ and uv; the scanner additionally needs Node.js and network access to run 'npx --yes @axe-core/cli@4.12.1'."
 user-invocable: false
 metadata:
   authors: "microsoft/hve-core"

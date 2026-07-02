@@ -74,7 +74,10 @@ class ScriptError(Exception):
 
 def _is_loopback_host(hostname: str | None) -> bool:
     """Return True for loopback hosts that may allow local development."""
-    return hostname in {"localhost", "127.0.0.1", "::1"}
+    if not hostname:
+        return False
+    hostname = hostname.lower()
+    return hostname in {"localhost", "127.0.0.1", "::1"} or hostname.startswith("127.")
 
 
 def _canonicalize_base_url(base_url: str) -> str:
@@ -118,9 +121,11 @@ def _canonicalize_base_url(base_url: str) -> str:
 
     if parsed.scheme == "http":
         allow_insecure = os.environ.get("JIRA_ALLOW_INSECURE", "").strip() == "1"
-        if not allow_insecure and not _is_loopback_host(parsed.hostname):
+        is_loopback = _is_loopback_host(parsed.hostname)
+        if not is_loopback or not allow_insecure:
             raise ScriptError(
-                "JIRA_BASE_URL must use https:// for non-loopback hosts",
+                "JIRA_BASE_URL must use https:// for non-loopback hosts; "
+                "plaintext http is not allowed",
                 EXIT_USAGE,
             )
 
@@ -706,6 +711,13 @@ def create_parser() -> argparse.ArgumentParser:
         )
     )
     parser.add_argument(
+        "--yes",
+        "--confirm",
+        dest="confirm",
+        action="store_true",
+        help="Confirm write operations (create, update, transition, comment).",
+    )
+    parser.add_argument(
         "--fields",
         help=(
             "Comma-delimited field list for read commands, for example "
@@ -801,8 +813,20 @@ def main() -> int:
         parser = create_parser()
         args = parser.parse_args()
         args.fields = _split_fields(args.fields)
+        command = getattr(args, "command", "") or ""
         global _AUDIT_OP
-        _AUDIT_OP = getattr(args, "command", "") or ""
+        _AUDIT_OP = command
+
+        if command in {"create", "update", "transition", "comment"}:
+            confirmed = bool(args.confirm) or (
+                os.environ.get("JIRA_CONFIRM_WRITES", "").strip() == "1"
+            )
+            if not confirmed:
+                raise ScriptError(
+                    "Write operations require explicit confirmation; rerun with "
+                    "--confirm, --yes, or set JIRA_CONFIRM_WRITES=1",
+                    EXIT_USAGE,
+                )
 
         client = JiraClient.from_environment()
         result = args.handler(client, args)
