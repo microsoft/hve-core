@@ -9,7 +9,9 @@ BeforeAll {
 }
 
 Describe 'Test-VsceAvailable' {
-    It 'Returns hashtable with IsAvailable property' {
+    BeforeEach {
+        # Default probe: vsce present, npx absent. Cases that need a different
+        # availability scenario override this mock in-place.
         Mock Get-Command {
             param($Name, $ErrorAction)
             $null = $ErrorAction  # Suppress PSScriptAnalyzer warning
@@ -18,22 +20,15 @@ Describe 'Test-VsceAvailable' {
             }
             return $null
         }
+    }
 
+    It 'Returns hashtable with IsAvailable property' {
         $result = Test-VsceAvailable
         $result | Should -BeOfType [hashtable]
         $result.Keys | Should -Contain 'IsAvailable'
     }
 
     It 'Returns CommandType when available' {
-        Mock Get-Command {
-            param($Name, $ErrorAction)
-            $null = $ErrorAction  # Suppress PSScriptAnalyzer warning
-            if ($Name -eq 'vsce') {
-                return [PSCustomObject]@{ Source = 'C:\bin\vsce.cmd' }
-            }
-            return $null
-        }
-
         $result = Test-VsceAvailable
         if ($result.IsAvailable) {
             $result.CommandType | Should -BeIn @('npx', 'vsce')
@@ -42,14 +37,6 @@ Describe 'Test-VsceAvailable' {
     }
 
     It 'Returns vsce when vsce command is found' {
-        Mock Get-Command {
-            param($Name, $ErrorAction)
-            $null = $ErrorAction  # Suppress PSScriptAnalyzer warning
-            if ($Name -eq 'vsce') {
-                return [PSCustomObject]@{ Source = 'C:\bin\vsce.cmd' }
-            }
-            return $null
-        }
         $result = Test-VsceAvailable
         $result.IsAvailable | Should -BeTrue
         $result.CommandType | Should -Be 'vsce'
