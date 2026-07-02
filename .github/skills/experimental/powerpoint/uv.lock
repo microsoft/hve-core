@@ -531,10 +531,10 @@ fuzz = [
 requires-dist = [
     { name = "cairosvg" },
     { name = "github-copilot-sdk" },
-    { name = "lxml" },
+    { name = "lxml", specifier = ">=5.0" },
     { name = "pillow" },
     { name = "pymupdf", specifier = ">=1.27.1,<2.0" },
-    { name = "python-pptx" },
+    { name = "python-pptx", specifier = ">=1.0.2" },
     { name = "pyyaml" },
     { name = "ruamel-yaml" },
 ]

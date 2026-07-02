@@ -26,6 +26,7 @@ EXPECTED_FIXTURE = {
         },
         2: {
             "layout": "Title and Content",
+            "speaker_notes": "This is a speaker note for slide 2.",
             "texts": ["Slide with Image", "Below is an embedded image."],
             "element_types": ["textbox", "textbox", "image"],
             "image_path": "images/image-01.png",
@@ -85,6 +86,7 @@ def test_main_extracts_real_fixture(minimal_test_fixture_path, tmp_path):
     ]
     assert slide_2["slide"] == 2
     assert slide_2["layout"] == expected_slide_2["layout"]
+    assert slide_2["speaker_notes"] == expected_slide_2["speaker_notes"]
     assert [element["text"] for element in slide_2["elements"][:2]] == expected_slide_2[
         "texts"
     ]
@@ -133,4 +135,4 @@ def test_generated_fixture_passes_validate_deck(
     results = validate_deck(minimal_test_fixture_path)
     severity = max_severity(results)
 
-    assert severity in ("info", "none"), f"validate_deck reported {severity}: {results}"
+    assert severity == "none", f"validate_deck reported {severity}: {results}"

@@ -3,8 +3,10 @@ name = "powerpoint-skill-tests"
 version = "0.0.0"
 requires-python = ">=3.11"
 dependencies = [
-    "python-pptx",
-    "lxml",
+    # Fixture generator assumes python-pptx's bundled default.pptx layout/theme
+    # names; pin a lower bound so out-of-lock contributors don't drift.
+    "python-pptx>=1.0.2",
+    "lxml>=5.0",
     "pyyaml",
     "ruamel.yaml",  # required by generate_themes.py for round-trip YAML fidelity
     "cairosvg",

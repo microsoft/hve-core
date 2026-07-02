@@ -72,6 +72,27 @@ def _minimal_png_bytes() -> bytes:
     )
 
 
+def _apply_srgb_color(
+    clr_scheme: etree._Element,
+    ns: dict[str, str],
+    color_name: str,
+    hex_val: str,
+) -> None:
+    """Set a theme color's srgbClr value, raising if the node is absent."""
+    node = clr_scheme.find(f"a:{color_name}", ns)
+    if node is None:
+        raise ValueError(
+            f"Could not find theme color node a:{color_name} in clrScheme."
+        )
+    for child in list(node):
+        node.remove(child)
+    srgb = etree.SubElement(
+        node,
+        "{http://schemas.openxmlformats.org/drawingml/2006/main}srgbClr",
+    )
+    srgb.set("val", hex_val)
+
+
 def _set_theme_colors(prs: Presentation) -> None:
     """Set specific theme colors via the theme part's public
     blob setter."""
@@ -92,19 +113,8 @@ def _set_theme_colors(prs: Presentation) -> None:
     if clr_scheme is None:
         raise ValueError("Could not find clrScheme in theme XML.")
 
-    def set_color(color_name: str, hex_val: str) -> None:
-        node = clr_scheme.find(f"a:{color_name}", ns)
-        if node is not None:
-            for child in list(node):
-                node.remove(child)
-            srgb = etree.SubElement(
-                node,
-                "{http://schemas.openxmlformats.org/drawingml/2006/main}srgbClr",
-            )
-            srgb.set("val", hex_val)
-
-    set_color("dk1", "000000")
-    set_color("accent1", "4F81BD")
+    _apply_srgb_color(clr_scheme, ns, "dk1", "000000")
+    _apply_srgb_color(clr_scheme, ns, "accent1", "4F81BD")
 
     theme_part.blob = etree.tostring(
         theme_element,
@@ -140,7 +150,7 @@ def generate_minimal_fixture(output_path: Path) -> None:
     slide2 = prs.slides.add_slide(slide_layout_2)
     slide2.placeholders[0].text = "Slide with Image"
     slide2.placeholders[1].text = "Below is an embedded image."
-    _ = slide2.notes_slide  # ensure notes part exists
+    slide2.notes_slide.notes_text_frame.text = "This is a speaker note for slide 2."
     image_stream = io.BytesIO(_minimal_png_bytes())
     slide2.shapes.add_picture(image_stream, Inches(1), Inches(2), width=Inches(2))
 
