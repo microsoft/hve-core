@@ -235,7 +235,7 @@ stimuli:
             $spec.stimuli[0].name | Should -Be 'agent-b-case'
         }
 
-        It 'Skips writing when -Force is set but content is identical' {
+        It 'Skips writing when the existing file is identical and -Force is not set' {
             Write-Partial -Root $script:TestRoot -Slug 'idem' -Content @"
 stimuli:
   - name: idem-case
@@ -244,6 +244,19 @@ stimuli:
             (Invoke-AgentBehaviorSpecCore -RepoRoot $script:TestRoot).Outcome | Should -Be 'Wrote'
             $first = Read-OutputYaml -Root $script:TestRoot
             (Invoke-AgentBehaviorSpecCore -RepoRoot $script:TestRoot).Outcome | Should -Be 'Skipped'
+            $second = Read-OutputYaml -Root $script:TestRoot
+            $second | Should -Be $first
+        }
+
+        It 'Rewrites (Wrote) when -Force is set even though content is identical' {
+            Write-Partial -Root $script:TestRoot -Slug 'idem' -Content @"
+stimuli:
+  - name: idem-case
+    prompt: Prompt.
+"@
+            (Invoke-AgentBehaviorSpecCore -RepoRoot $script:TestRoot).Outcome | Should -Be 'Wrote'
+            $first = Read-OutputYaml -Root $script:TestRoot
+            (Invoke-AgentBehaviorSpecCore -RepoRoot $script:TestRoot -Force).Outcome | Should -Be 'Wrote'
             $second = Read-OutputYaml -Root $script:TestRoot
             $second | Should -Be $first
         }
