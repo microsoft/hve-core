@@ -82,6 +82,7 @@ jobs:
         $report = Get-Content -Path $outputPath -Raw | ConvertFrom-Json
         $report.Violations | Should -HaveCount 1
         $report.Violations[0].Metadata.RuleId | Should -Be 'dangerous-workflow/template-injection'
+        $report.Violations[0].Line | Should -Be 8
     }
 
     It 'flags multiline run-block template injection expressions' {
@@ -104,6 +105,7 @@ jobs:
         $report = Get-Content -Path $outputPath -Raw | ConvertFrom-Json
         $report.Violations | Should -HaveCount 1
         $report.Violations[0].Metadata.RuleId | Should -Be 'dangerous-workflow/template-injection'
+        $report.Violations[0].Line | Should -Be 10
     }
 
     It 'flags template injection inside github-script blocks' {
@@ -119,6 +121,8 @@ jobs:
         with:
           script: |
             console.log("${{ github.event.issue.title }}")
+      - name: later
+        run: echo hi
 '@
 
         $outputPath = Join-Path $TestDrive 'github-script-injection.json'
@@ -127,6 +131,54 @@ jobs:
         $report = Get-Content -Path $outputPath -Raw | ConvertFrom-Json
         $report.Violations | Should -HaveCount 1
         $report.Violations[0].Metadata.RuleId | Should -Be 'dangerous-workflow/template-injection'
+        # The injection is on line 11 (the script interpolation), not the innocent 'run: echo hi' at line 13.
+        $report.Violations[0].Line | Should -Be 11
+    }
+
+    It 'reports the correct line for an injection in a later job regardless of job order' {
+        $fixturePath = New-DangerousWorkflowFixture -Name 'multi-job-order' -WorkflowContent @'
+name: test
+on:
+  pull_request_target:
+jobs:
+  alpha:
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "safe"
+  beta:
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "${{ github.event.pull_request.title }}"
+'@
+
+        $outputPath = Join-Path $TestDrive 'multi-job-order.json'
+        Invoke-DangerousWorkflowFixture -FixturePath $fixturePath -Format json -OutputPath $outputPath | Out-Null
+
+        $report = Get-Content -Path $outputPath -Raw | ConvertFrom-Json
+        $report.Violations | Should -HaveCount 1
+        $report.Violations[0].Metadata.RuleId | Should -Be 'dangerous-workflow/template-injection'
+        $report.Violations[0].Line | Should -Be 12
+    }
+
+    It 'does not flag a with.script input on a non-github-script action' {
+        $fixturePath = New-DangerousWorkflowFixture -Name 'non-github-script-with-script' -WorkflowContent @'
+name: test
+on:
+  pull_request_target:
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: some/other-action@v1
+        with:
+          script: echo "${{ github.event.pull_request.title }}"
+'@
+
+        $outputPath = Join-Path $TestDrive 'non-github-script-with-script.json'
+        Invoke-DangerousWorkflowFixture -FixturePath $fixturePath -Format json -OutputPath $outputPath | Out-Null
+
+        $report = Get-Content -Path $outputPath -Raw | ConvertFrom-Json
+        $report.Violations | Should -HaveCount 0
     }
 
     It 'does not flag trusted expressions in run blocks' {

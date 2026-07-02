@@ -335,7 +335,7 @@ function Invoke-DangerousWorkflowCheck {
             continue
         }
 
-        $runSearchIndex = 0
+        $injectionSearchIndex = 0
         foreach ($jobEntry in $jobsNode.GetEnumerator()) {
             $jobName = [string]$jobEntry.Key
             $jobObject = $jobEntry.Value
@@ -378,11 +378,11 @@ function Invoke-DangerousWorkflowCheck {
 
                 $runValue = $null
                 $scriptValue = $null
-                $scriptBlockValue = $null
                 if ($step -is [System.Collections.IDictionary]) {
                     $runValue = $step['run']
                     $usesValue = $step['uses']
                     $withValue = $step['with']
+                    $scriptBlockValue = $null
                     if ($withValue -and $withValue -is [System.Collections.IDictionary]) {
                         $scriptBlockValue = $withValue['script']
                     }
@@ -393,34 +393,38 @@ function Invoke-DangerousWorkflowCheck {
                         $scriptValue = $scriptBlockValue
                     }
                 }
-                else {
-                    $runValue = $step.run
-                    $usesValue = $step.uses
-                    if ($step.with -and $step.with.PSObject.Properties.Name -contains 'script') {
-                        $scriptValue = $step.with.script
-                    }
-                }
 
-                $codeValues = @()
+                # Each step carries exactly one code source (run or github-script). Track the
+                # source kind so line resolution can anchor on the correct block, and only treat
+                # with.script as executable code for actions/github-script.
+                $codeCandidates = @()
                 if ($null -ne $runValue) {
-                    $codeValues += [string]$runValue
+                    $codeCandidates += @{ Kind = 'run'; Text = [string]$runValue }
                 }
                 if ($null -ne $scriptValue) {
-                    $codeValues += [string]$scriptValue
+                    $codeCandidates += @{ Kind = 'script'; Text = [string]$scriptValue }
                 }
 
-                foreach ($codeValue in $codeValues) {
-                    foreach ($expression in Get-ExpressionMatches -Text $codeValue) {
+                foreach ($candidate in $codeCandidates) {
+                    foreach ($expression in Get-ExpressionMatches -Text $candidate.Text) {
                         if (Test-IsUntrustedInjectionExpression -Expression $expression) {
-                            $lineNumber = Find-NextMatchingLine -Lines $rawLines -Pattern '^\s*run:\s*' -StartIndex $runSearchIndex
+                            # Anchor on the actual interpolation so the reported line is the exact
+                            # line containing the untrusted expression, independent of job/step
+                            # iteration order (the parser returns an unordered hashtable).
+                            $exprPattern = '\$\{\{\s*' + [regex]::Escape($expression) + '\s*\}\}'
+                            $lineNumber = Find-NextMatchingLine -Lines $rawLines -Pattern $exprPattern -StartIndex $injectionSearchIndex
                             if ($lineNumber -eq 0) {
-                                $lineNumber = Find-NextMatchingLine -Lines $rawLines -Pattern '^\s*script:\s*' -StartIndex $runSearchIndex
+                                $lineNumber = Find-NextMatchingLine -Lines $rawLines -Pattern $exprPattern -StartIndex 0
+                            }
+                            if ($lineNumber -eq 0) {
+                                $headerPattern = if ($candidate.Kind -eq 'script') { '^\s*script:\s*' } else { '^\s*run:\s*' }
+                                $lineNumber = Find-NextMatchingLine -Lines $rawLines -Pattern $headerPattern -StartIndex 0
                             }
                             if ($lineNumber -eq 0) {
                                 $lineNumber = 1
                             }
                             else {
-                                $runSearchIndex = $lineNumber
+                                $injectionSearchIndex = $lineNumber
                             }
 
                             $violation = New-DangerousWorkflowViolation -File $relativePath -Line $lineNumber -RuleId 'dangerous-workflow/template-injection' -Description "Untrusted expression '$expression' is interpolated into a code execution context in job '$jobName' step '$stepName'." -Remediation 'Avoid directly interpolating untrusted GitHub event or workflow-output values into shell or script blocks.' -JobName $jobName -StepName $stepName
