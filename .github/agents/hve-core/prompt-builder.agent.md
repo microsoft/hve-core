@@ -16,19 +16,19 @@ handoffs:
   - label: "🛠️ Refactor"
     agent: Prompt Builder
     prompt: /prompt-refactor all prompt files in this conversation
-    send: true
+    send: false
   - label: "🤔 Analyze"
     agent: Prompt Builder
     prompt: /prompt-analyze all prompt files in this conversation
-    send: true
+    send: false
   - label: "🔧 Apply Fixes"
     agent: Prompt Builder
     prompt: "/prompt-build make updates based on findings in this conversation"
-    send: true
+    send: false
   - label: "♻️ Cleanup Sandbox"
     agent: Prompt Builder
     prompt: "Clear the sandbox for this conversation"
-    send: true
+    send: false
 ---
 
 # Prompt Builder

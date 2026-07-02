@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="c">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>RPI Cockpit — theme compare (Fluent · VS Code · Mica)</title>
+<style>
+  /* ---- theme A: Fluent 2 light (Microsoft 365 / Azure) ---- */
+  [data-theme="a"]{
+    --brand:#0F6CBD;--brand-hover:#115EA3;--brand-2:#E8F1FB;
+    --body-bg:radial-gradient(1200px 600px at 15% -10%,#F3F6FB 0%,rgba(243,246,251,0) 60%),radial-gradient(900px 500px at 100% 0%,#F4F1FB 0%,rgba(244,241,251,0) 55%),#EDEBE9;
+    --layer:#FFFFFF;--layer-alt:#FAF9F8;--stroke:#E1DFDD;--stroke-2:#D2D0CE;
+    --text:#242424;--text-2:#616161;--text-3:#8A8886;
+    --ok:#0E700E;--ok-bg:#E7F2E7;--accent2:#5C2E91;
+    --av-pi-bg:#F3EFFB;--av-pi-fg:#5C2E91;--av-rs-bg:#EAF1FB;--av-rs-fg:#0F4A8A;
+    --radius:8px;--radius-sm:4px;
+    --shadow-4:0 2px 4px rgba(0,0,0,.10),0 0 2px rgba(0,0,0,.10);--shadow-8:0 4px 8px rgba(0,0,0,.12),0 0 2px rgba(0,0,0,.10);
+    --bar:rgba(255,255,255,.72);--bar-blur:blur(20px) saturate(140%);
+    --rail:rgba(255,255,255,.45);--rail-blur:none;--card-blur:none;
+  }
+  /* ---- theme B: VS Code dark (editor-native) ---- */
+  [data-theme="b"]{
+    --brand:#0E639C;--brand-hover:#1177BB;--brand-2:#094771;
+    --body-bg:#1E1E1E;
+    --layer:#252526;--layer-alt:#2D2D2D;--stroke:#3C3C3C;--stroke-2:#4A4A4A;
+    --text:#CCCCCC;--text-2:#9D9D9D;--text-3:#6E6E6E;
+    --ok:#73C991;--ok-bg:#16301F;--accent2:#C9A9F0;
+    --av-pi-bg:#3A2D4D;--av-pi-fg:#C9A9F0;--av-rs-bg:#16324D;--av-rs-fg:#6FB3E8;
+    --radius:4px;--radius-sm:3px;
+    --shadow-4:0 2px 8px rgba(0,0,0,.36);--shadow-8:0 8px 16px rgba(0,0,0,.45);
+    --bar:#323233;--bar-blur:none;
+    --rail:#252526;--rail-blur:none;--card-blur:none;
+  }
+  /* ---- theme C: Windows 11 Mica / acrylic (native app) ---- */
+  [data-theme="c"]{
+    --brand:#005FB8;--brand-hover:#0257A8;--brand-2:#EAF2FB;
+    --body-bg:radial-gradient(1000px 700px at 10% -5%,#DCE8FB 0%,rgba(220,232,251,0) 55%),radial-gradient(900px 600px at 95% 0%,#ECE1FA 0%,rgba(236,225,250,0) 55%),radial-gradient(760px 520px at 60% 112%,#E3F5EF 0%,rgba(227,245,239,0) 60%),#EFEFEF;
+    --layer:rgba(255,255,255,.80);--layer-alt:rgba(255,255,255,.55);--stroke:rgba(0,0,0,.07);--stroke-2:rgba(0,0,0,.12);
+    --text:#1A1A1A;--text-2:#5A5A5A;--text-3:#8A8A8A;
+    --ok:#0F7B0F;--ok-bg:#E6F2E6;--accent2:#6A2EA0;
+    --av-pi-bg:#EFE7FB;--av-pi-fg:#6A2EA0;--av-rs-bg:#E5EFFB;--av-rs-fg:#0F4A8A;
+    --radius:10px;--radius-sm:6px;
+    --shadow-4:0 2px 6px rgba(0,0,0,.10);--shadow-8:0 10px 28px rgba(0,0,0,.16);
+    --bar:rgba(255,255,255,.55);--bar-blur:blur(40px) saturate(170%);
+    --rail:rgba(255,255,255,.38);--rail-blur:blur(30px) saturate(150%);--card-blur:blur(30px) saturate(140%);
+  }
+  *{box-sizing:border-box;margin:0;padding:0;transition:background-color .22s ease,border-color .22s ease,color .14s ease}
+  html,body{height:100%}
+  body{font-family:'Segoe UI Variable Text','Segoe UI',system-ui,-apple-system,'Helvetica Neue',Arial,sans-serif;
+    color:var(--text);background:var(--body-bg);font-size:13px;line-height:1.45;-webkit-font-smoothing:antialiased}
+  .app{display:flex;flex-direction:column;height:100vh;overflow:hidden}
+
+  .topbar{display:flex;align-items:center;gap:14px;height:48px;padding:0 16px;background:var(--bar);
+    -webkit-backdrop-filter:var(--bar-blur);backdrop-filter:var(--bar-blur);border-bottom:1px solid var(--stroke);z-index:5}
+  .mark{display:flex;align-items:center;gap:9px;font-weight:600;letter-spacing:.2px;color:var(--text)}
+  .mark .glyph{width:22px;height:22px;border-radius:6px;background:var(--brand);display:flex;align-items:center;justify-content:center;box-shadow:var(--shadow-4)}
+  .crumb{color:var(--text-2);font-size:12.5px}.crumb b{color:var(--text);font-weight:600}
+  .spacer{flex:1}
+  .pill{display:inline-flex;align-items:center;gap:6px;height:24px;padding:0 10px;border-radius:12px;font-size:11.5px;font-weight:600;background:var(--ok-bg);color:var(--ok)}
+  .dot{width:7px;height:7px;border-radius:50%;background:currentColor;animation:pulse 1.6s ease-in-out infinite;transition:none}
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:.35}}
+  .host{font-size:11.5px;color:var(--text-2);background:var(--layer);border:1px solid var(--stroke);height:24px;display:inline-flex;align-items:center;padding:0 9px;border-radius:6px}
+  .switch{display:flex;border:1px solid var(--stroke-2);border-radius:6px;overflow:hidden}
+  .switch button{height:26px;padding:0 11px;font-size:11.5px;font-weight:600;font-family:inherit;background:transparent;color:var(--text-2);border:none;border-right:1px solid var(--stroke-2);cursor:pointer}
+  .switch button:last-child{border-right:none}
+  .switch button.on{background:var(--brand);color:#fff}
+  .iconbtn{width:30px;height:30px;border-radius:6px;border:1px solid transparent;background:transparent;display:flex;align-items:center;justify-content:center;color:var(--text-2);cursor:pointer}
+  .iconbtn:hover{background:var(--layer);border-color:var(--stroke)}
+
+  .main{display:flex;flex:1;min-height:0}
+  .rail-left{width:248px;flex:none;padding:14px 12px;border-right:1px solid var(--stroke);background:var(--rail);-webkit-backdrop-filter:var(--rail-blur);backdrop-filter:var(--rail-blur);overflow:auto}
+  .rail-title{font-size:11px;text-transform:uppercase;letter-spacing:.7px;color:var(--text-3);font-weight:600;margin:4px 8px 10px}
+  .chipline{display:flex;gap:6px;margin:0 6px 14px;flex-wrap:wrap}
+  .chip{font-size:11px;font-weight:600;padding:3px 9px;border-radius:11px;background:var(--brand-2);color:var(--brand)}
+  [data-theme="b"] .chip{color:#9CDCFE}
+  .chip.muted{background:var(--layer);color:var(--text-2);border:1px solid var(--stroke)}
+  .step{display:flex;gap:11px;padding:9px 8px;border-radius:7px;position:relative}
+  .step+.step{margin-top:2px}
+  .step .ring{flex:none;width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;border:1.5px solid var(--stroke-2);color:var(--text-3);background:var(--layer)}
+  .step.done .ring{background:var(--ok-bg);border-color:var(--ok);color:var(--ok)}
+  .step.active{background:var(--brand-2)}
+  .step.active .ring{background:var(--brand);border-color:var(--brand);color:#fff;box-shadow:var(--shadow-4)}
+  .step.active .lbl{color:var(--text)}
+  [data-theme="b"] .step.active .lbl,[data-theme="b"] .step.active .sub{color:#fff}
+  .step .lbl{font-weight:600;font-size:13px}.step .sub{font-size:11.5px;color:var(--text-2)}
+  .step.pending .lbl{color:var(--text-3);font-weight:500}
+  .connector{position:absolute;left:19.5px;top:38px;width:2px;height:14px;background:var(--stroke-2)}
+  .step.done .connector{background:var(--ok)}
+  .substep{margin:8px 0 2px 35px;font-size:11.5px;color:var(--text-2);display:flex;align-items:center;gap:7px}
+  .mini{width:6px;height:6px;border-radius:50%;background:var(--brand)}
+
+  .center{flex:1;min-width:0;overflow:auto;padding:18px 22px}
+  .h-row{display:flex;align-items:baseline;gap:12px;margin-bottom:3px}
+  .h-row h1{font-size:19px;font-weight:600;letter-spacing:.1px}
+  .h-row .state{font-size:12px;color:var(--brand);font-weight:600}
+  [data-theme="b"] .h-row .state{color:#4FC1FF}
+  .lead{color:var(--text-2);font-size:12.5px;margin-bottom:18px}
+  code{font-family:'Cascadia Code','Segoe UI Mono',ui-monospace,monospace;font-size:11.5px;background:var(--layer-alt);padding:1px 5px;border-radius:4px;border:1px solid var(--stroke)}
+  .sec{font-size:11px;text-transform:uppercase;letter-spacing:.7px;color:var(--text-3);font-weight:600;margin:0 0 9px}
+  .card{background:var(--layer);border:1px solid var(--stroke);border-radius:var(--radius);box-shadow:var(--shadow-4);-webkit-backdrop-filter:var(--card-blur);backdrop-filter:var(--card-blur)}
+  .sub-card{display:flex;align-items:center;gap:12px;padding:12px 14px}
+  .sub-card+.sub-card{border-top:1px solid var(--stroke)}
+  .av{width:32px;height:32px;border-radius:7px;flex:none;display:flex;align-items:center;justify-content:center;background:var(--av-pi-bg);color:var(--av-pi-fg);font-weight:600;font-size:12px}
+  .av.rs{background:var(--av-rs-bg);color:var(--av-rs-fg)}
+  .sub-card .nm{font-weight:600}.sub-card .meta{font-size:11.5px;color:var(--text-2)}
+  .bar{height:5px;border-radius:3px;background:var(--stroke);overflow:hidden;margin-top:6px;width:170px}
+  .bar>i{display:block;height:100%;background:var(--brand);border-radius:3px}
+  .tagidle{font-size:11px;color:var(--text-3);background:var(--layer-alt);border:1px solid var(--stroke);padding:2px 8px;border-radius:10px}
+  .gate{display:flex;gap:10px;margin:16px 0 22px;flex-wrap:wrap}
+  .check{display:inline-flex;align-items:center;gap:7px;font-size:12px;font-weight:600;padding:6px 11px;border-radius:6px;border:1px solid var(--stroke);background:var(--layer)}
+  .check.ok{color:var(--ok);background:var(--ok-bg)}
+  .check.run{color:var(--brand);background:var(--brand-2)}
+  [data-theme="b"] .check.run{color:#9CDCFE}
+  .check.wait{color:var(--text-3)}
+
+  .decide{border:1.5px solid var(--brand);border-radius:var(--radius);box-shadow:var(--shadow-8);overflow:hidden;margin-top:6px;background:var(--layer);-webkit-backdrop-filter:var(--card-blur);backdrop-filter:var(--card-blur)}
+  .decide-head{background:var(--brand);color:#fff;padding:11px 16px;display:flex;align-items:center;gap:10px}
+  .decide-head .t{font-weight:600;font-size:13.5px}.decide-head .s{font-size:11.5px;opacity:.85;margin-left:auto}
+  .decide-body{padding:14px 16px}
+  .opts{display:grid;grid-template-columns:repeat(3,1fr);gap:11px;margin-bottom:13px}
+  .opt{border:1px solid var(--stroke);border-radius:var(--radius-sm);padding:12px;background:var(--layer-alt);position:relative}
+  .opt.rec{border:1.5px solid var(--brand)}
+  .opt .badge{position:absolute;top:-9px;left:11px;font-size:10px;font-weight:700;letter-spacing:.4px;background:var(--brand);color:#fff;padding:2px 8px;border-radius:9px}
+  .opt h4{font-size:13px;font-weight:600;margin-bottom:5px}.opt p{font-size:11.5px;color:var(--text-2);line-height:1.5}
+  .opt .to{margin-top:8px;font-size:11px;color:var(--text-3)}
+  .btns{display:flex;gap:9px;align-items:center}
+  .btn{height:32px;padding:0 16px;border-radius:var(--radius-sm);font-size:12.5px;font-weight:600;font-family:inherit;cursor:pointer;border:1px solid var(--stroke-2);background:var(--layer);color:var(--text)}
+  .btn.primary{background:var(--brand);border-color:var(--brand);color:#fff}
+  .btn.primary:hover{background:var(--brand-hover)}
+  .btn.ghost{color:var(--text-2)}
+  .await{margin-left:auto;font-size:11.5px;color:var(--text-3);display:flex;align-items:center;gap:7px}
+
+  .rail-right{width:300px;flex:none;border-left:1px solid var(--stroke);background:var(--rail);-webkit-backdrop-filter:var(--rail-blur);backdrop-filter:var(--rail-blur);display:flex;flex-direction:column;min-height:0}
+  .rr-sec{padding:14px 14px 6px}
+  .steer{margin:0 14px 12px;background:var(--layer);border:1px solid var(--stroke);border-radius:var(--radius-sm);padding:11px 12px}
+  .steer label{font-size:11px;color:var(--text-3);font-weight:600;text-transform:uppercase;letter-spacing:.6px}
+  .select{margin-top:7px;height:32px;width:100%;border:1px solid var(--stroke-2);border-radius:var(--radius-sm);background:var(--layer);padding:0 10px;font-size:12.5px;color:var(--text);display:flex;align-items:center;justify-content:space-between}
+  .stream{flex:1;overflow:auto;padding:4px 14px 16px;font-size:11.5px}
+  .evt{display:flex;gap:9px;padding:7px 0;border-bottom:1px dashed var(--stroke)}
+  .evt .ts{color:var(--text-3);font-variant-numeric:tabular-nums;flex:none;width:38px}
+  .evt .k{font-weight:600;color:var(--brand)}
+  [data-theme="b"] .evt .k{color:#4FC1FF}
+  .evt .k.s2{color:var(--accent2)}.evt .k.ok{color:var(--ok)}.evt .txt{color:var(--text-2)}
+  svg{display:block}
+</style>
+</head>
+<body>
+<div class="app">
+
+  <div class="topbar">
+    <div class="mark"><span class="glyph"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round"><path d="M4 12a8 8 0 1 0 2.3-5.6"/><path d="M4 4v3.5H7.5"/></svg></span>RPI Cockpit</div>
+    <div class="crumb">Refactor auth module · <b>RPI session</b></div>
+    <div class="spacer"></div>
+    <div class="switch" role="group" aria-label="Theme">
+      <button data-t="a">Fluent</button>
+      <button data-t="b">VS Code</button>
+      <button data-t="c" class="on">Mica</button>
+    </div>
+    <span class="pill"><span class="dot"></span>live</span>
+    <span class="host">via MCP · Claude Code</span>
+    <button class="iconbtn" title="Pause" aria-label="Pause"><svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="5" width="4" height="14" rx="1"/><rect x="14" y="5" width="4" height="14" rx="1"/></svg></button>
+  </div>
+
+  <div class="main">
+    <aside class="rail-left">
+      <div class="rail-title">RPI loop</div>
+      <div class="chipline"><span class="chip">Difficulty: challenging</span><span class="chip muted">cycle 1</span></div>
+      <div class="step done"><div class="ring"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 13l4 4L19 7"/></svg></div><div><div class="lbl">1 · Research</div><div class="sub">Task Researcher</div></div><span class="connector"></span></div>
+      <div class="step done"><div class="ring"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 13l4 4L19 7"/></svg></div><div><div class="lbl">2 · Plan</div><div class="sub">Task Planner</div></div><span class="connector"></span></div>
+      <div class="step active"><div class="ring">3</div><div><div class="lbl">3 · Implement</div><div class="sub">Task Implementor · running</div></div></div>
+      <div class="substep"><span class="mini"></span>Phase 2 of 3 — token middleware</div>
+      <div class="step pending"><div class="ring">4</div><div><div class="lbl">4 · Review</div><div class="sub">Reviewer + Challenger</div></div></div>
+      <div class="step pending"><div class="ring">5</div><div><div class="lbl">5 · Discover</div><div class="sub">next-work suggestions</div></div></div>
+    </aside>
+
+    <section class="center">
+      <div class="h-row"><h1>Phase 3 · Implement</h1><span class="state">● running</span></div>
+      <div class="lead">Executing the plan from <code>.copilot-tracking/plans/</code>. Subagents and validation run here; the loop won't advance to Review until checks pass.</div>
+
+      <div class="sec">Live subagents</div>
+      <div class="card" style="margin-bottom:22px">
+        <div class="sub-card"><div class="av">PI</div><div style="flex:1"><div class="nm">Phase Implementor</div><div class="meta">applying step 2.2 · editing <code>auth/middleware.ts</code></div><div class="bar"><i style="width:64%"></i></div></div><span class="pill"><span class="dot"></span>active</span></div>
+        <div class="sub-card"><div class="av rs">RS</div><div style="flex:1"><div class="nm">Researcher Subagent</div><div class="meta">idle · last ran for plan gap "session store"</div></div><span class="tagidle">idle</span></div>
+      </div>
+
+      <div class="sec">Validation gate</div>
+      <div class="gate">
+        <span class="check ok"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 13l4 4L19 7"/></svg>lint</span>
+        <span class="check ok"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 13l4 4L19 7"/></svg>types</span>
+        <span class="check run"><span class="dot"></span>tests</span>
+        <span class="check wait">○ build</span>
+      </div>
+
+      <div class="sec">Action needed</div>
+      <div class="decide">
+        <div class="decide-head"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><path d="M12 9v4M12 17h.01"/><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z"/></svg><span class="t">The agent is asking you to choose an approach</span><span class="s">present_options · awaiting your pick</span></div>
+        <div class="decide-body">
+          <div class="opts">
+            <div class="opt"><h4>A · Minimal patch</h4><p>Guard the existing handler in place. Smallest diff, ships today.</p><div class="to">Trade-off: leaves the duplication.</div></div>
+            <div class="opt rec"><span class="badge">RECOMMENDED</span><h4>B · Token middleware</h4><p>Extract a reusable middleware layer. Clean seam, moderate change.</p><div class="to">Trade-off: touches 6 files.</div></div>
+            <div class="opt"><h4>C · Full rewrite</h4><p>Replace the auth module with a policy engine. Most durable.</p><div class="to">Trade-off: new dependency, higher risk.</div></div>
+          </div>
+          <div class="btns"><button class="btn primary">Choose B</button><button class="btn">Choose A</button><button class="btn ghost">Choose C</button><span class="await"><span class="dot" style="color:var(--brand)"></span>agent is paused on your decision</span></div>
+        </div>
+      </div>
+    </section>
+
+    <aside class="rail-right">
+      <div class="rr-sec"><div class="sec" style="margin:0 0 9px">Steer</div></div>
+      <div class="steer"><label>Implementor for next phase</label><div class="select">Phase Implementor (default)<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--text-3)" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg></div></div>
+      <div class="rr-sec" style="padding-top:2px"><div class="sec" style="margin:0 0 4px">Activity · AG-UI stream</div></div>
+      <div class="stream">
+        <div class="evt"><span class="ts">14:01</span><span><span class="k">phase.enter</span> <span class="txt">Research → Plan</span></span></div>
+        <div class="evt"><span class="ts">14:02</span><span><span class="k">phase.enter</span> <span class="txt">Plan → Implement</span></span></div>
+        <div class="evt"><span class="ts">14:02</span><span><span class="k s2">subagent.start</span> <span class="txt">Phase Implementor</span></span></div>
+        <div class="evt"><span class="ts">14:03</span><span><span class="k ok">artifact.update</span> <span class="txt">changes.md +18</span></span></div>
+        <div class="evt"><span class="ts">14:04</span><span><span class="k ok">validate</span> <span class="txt">lint ✓ · types ✓</span></span></div>
+        <div class="evt"><span class="ts">14:05</span><span><span class="k">present_options</span> <span class="txt">3 choices · awaiting user</span></span></div>
+      </div>
+    </aside>
+  </div>
+</div>
+<script>
+  const root=document.documentElement;
+  document.querySelectorAll('.switch button').forEach(b=>{
+    b.addEventListener('click',()=>{root.dataset.theme=b.dataset.t;
+      document.querySelectorAll('.switch button').forEach(x=>x.classList.toggle('on',x===b));});
+  });
+</script>
+</body>
+</html>

@@ -1,0 +1,12 @@
+{
+  "servers": {
+    "rpi-cockpit": {
+      "type": "stdio",
+      "command": "node",
+      "args": [
+        "${workspaceFolder}/rpi-cockpit/dist/index.js"
+      ],
+      "cwd": "${workspaceFolder}"
+    }
+  }
+}
