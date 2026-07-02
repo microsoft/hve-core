@@ -40,10 +40,6 @@ function calculateContrastRatio(foreground: string, background: string): number 
   return (lighter + 0.05) / (darker + 0.05);
 }
 
-function isLargeText(fontSize: number, fontWeight: number): boolean {
-  return fontSize >= 24 || (fontSize >= 18.66 && fontWeight >= 700);
-}
-
 function describeContrastCase(label: string, selector: string, pseudoElt?: string): string {
   if (pseudoElt) {
     return `${label} (${selector}, ${pseudoElt})`;
@@ -131,9 +127,6 @@ test.describe('Contrast measurement gates', () => {
 
     const heading = await measureContrast(page, 'header h1');
     const subtitle = await measureContrast(page, 'header p');
-
-    const headingThreshold = isLargeText(heading.fontSize, heading.fontWeight) ? 3 : 4.5;
-    const subtitleThreshold = isLargeText(subtitle.fontSize, subtitle.fontWeight) ? 3 : 4.5;
 
     expect(
       heading.backgroundImage,
