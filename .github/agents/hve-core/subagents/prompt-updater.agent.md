@@ -3,6 +3,7 @@ name: Prompt Updater
 description: 'Creates and modifies prompts, instructions, agents, and skills following prompt engineering conventions'
 user-invocable: false
 model:
+  - Claude Sonnet 5 (copilot)
   - MAI-Code-1-Flash (copilot)
   - Claude Sonnet 4.6 (copilot)
   - Claude Haiku 4.5 (copilot)
