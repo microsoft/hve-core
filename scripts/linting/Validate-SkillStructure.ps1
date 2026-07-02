@@ -218,6 +218,66 @@ function Test-PythonSkillConfig {
     return @{ Errors = $errors; Warnings = $warnings }
 }
 
+function Test-SecurityModelStructure {
+    <#
+    .SYNOPSIS
+    Validates that a skill's SECURITY.md follows the canonical heading structure.
+
+    .DESCRIPTION
+    Enforces the per-skill STRIDE model layout defined in
+    .github/instructions/skill-security-model.instructions.md: trust buckets are
+    top-level '## Bucket Bn' sections (there is no '## Trust Buckets' umbrella),
+    and each bucket's STRIDE categories and Risk Rating are '###' headings. Files
+    that use the umbrella, H3 buckets, or H4 STRIDE/Risk Rating headings are
+    flagged so the fleet cannot drift back to the deeper-nested variant.
+
+    .PARAMETER Path
+    Absolute path to the SECURITY.md file.
+
+    .PARAMETER RelativePath
+    Repository-relative path to the skill directory, used in messages.
+
+    .OUTPUTS
+    [string[]] Conformance errors (empty when the file conforms).
+
+    .EXAMPLE
+    $errs = Test-SecurityModelStructure -Path '/repo/.github/skills/jira/jira/SECURITY.md' -RelativePath 'jira/jira'
+    #>
+    [CmdletBinding()]
+    [OutputType([string[]])]
+    param(
+        [Parameter(Mandatory = $true)]
+        [ValidateNotNullOrEmpty()]
+        [string]$Path,
+
+        [Parameter(Mandatory = $true)]
+        [ValidateNotNullOrEmpty()]
+        [string]$RelativePath
+    )
+
+    $errors = [System.Collections.Generic.List[string]]::new()
+    $lines = @(Get-Content -Path $Path -ErrorAction SilentlyContinue)
+    if ($lines.Count -eq 0) {
+        return [string[]]@()
+    }
+
+    $strideCategories = 'Spoofing|Tampering|Repudiation|Information Disclosure|Denial of Service|Elevation of Privilege|Risk Rating'
+
+    if (@($lines | Where-Object { $_ -match '^## Trust Buckets\s*$' }).Count -gt 0) {
+        $errors.Add("SECURITY.md uses the deprecated '## Trust Buckets' umbrella heading in '$RelativePath'; trust buckets must be top-level '## Bucket Bn' sections (see .github/instructions/skill-security-model.instructions.md)")
+    }
+
+    if (@($lines | Where-Object { $_ -match '^### Bucket B' }).Count -gt 0) {
+        $errors.Add("SECURITY.md places trust buckets at H3 '### Bucket Bn' in '$RelativePath'; buckets must be H2 '## Bucket Bn'")
+    }
+
+    if (@($lines | Where-Object { $_ -match "^#### ($strideCategories)\s*`$" }).Count -gt 0) {
+        $errors.Add("SECURITY.md places STRIDE or Risk Rating headings at H4 in '$RelativePath'; they must be H3 '### <Category>'")
+    }
+
+    return [string[]]$errors.ToArray()
+}
+
 function Test-SkillDirectory {
     <#
     .SYNOPSIS
@@ -338,6 +398,13 @@ function Test-SkillDirectory {
         $pyResult = Test-PythonSkillConfig -PyprojectPath $pyprojectPath -HasTestsDir $hasTestsDir -RelativePath $relativePath
         foreach ($err in $pyResult.Errors) { $errors.Add($err) }
         foreach ($warn in $pyResult.Warnings) { $warnings.Add($warn) }
+    }
+
+    # Validate per-skill SECURITY.md heading structure when a model is present
+    $securityMdPath = Join-Path -Path $Directory.FullName -ChildPath 'SECURITY.md'
+    if (Test-Path $securityMdPath -PathType Leaf) {
+        $secErrors = Test-SecurityModelStructure -Path $securityMdPath -RelativePath $relativePath
+        foreach ($err in $secErrors) { $errors.Add($err) }
     }
 
     # Check for unrecognized subdirectories (-Force includes dot-prefixed dirs hidden on Linux)

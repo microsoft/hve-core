@@ -2,7 +2,7 @@
 title: GH Code Scanning Skill Security Model
 description: STRIDE threat model for the gh-code-scanning skill organized by assets, adversaries, and trust buckets (CLI to gh/GitHub API subprocess, untrusted alert-data rendering, CLI caller process and credentials) with in-code mitigations and acknowledged enterprise readiness gaps
 author: microsoft/hve-core
-ms.date: 2026-06-30
+ms.date: 2026-07-02
 ms.topic: reference
 estimated_reading_time: 8
 keywords:
@@ -119,101 +119,99 @@ flowchart TD
 | ADV-b | Malicious content in alert fields (crafted rule text, path, URL) | Alert fields are emitted as data (`Format-Table`, `ConvertTo-Json`, `jq`); never evaluated or executed                                               |
 | ADV-c | Network attacker on the CLI ↔ GitHub channel                     | TLS and certificate validation delegated to `gh`; no plaintext fallback                                                                              |
 
-## Trust Buckets
+## Bucket B1: CLI → gh/GitHub API subprocess
 
-### Bucket B1: CLI → gh/GitHub API subprocess
-
-#### Spoofing
+### Spoofing
 
 * Authentication and endpoint identity are delegated to `gh`, which validates the GitHub API's TLS certificate. The script constructs the endpoint from a fixed template with validated path segments.
 
-#### Tampering
+### Tampering
 
 * All caller inputs are validated before use: `Owner` and `Repo` against `^[a-zA-Z0-9._-]+$`, `Branch` against `^[a-zA-Z0-9._/-]+$`, `OutputFormat` against a `[ValidateSet]`, and severity against a fixed enum. Because `&`, `?`, and whitespace are excluded, a caller cannot inject additional query parameters or alter the REST path.
 * The `Branch` value is confined to the `ref=refs/heads/...` query-string segment; its allow-list still permits `.` and `/` (including `..`), recorded as G-TAM-1.
 
-#### Repudiation
+### Repudiation
 
 * Not applicable. This is a read-only reporting tool with no state change to attribute.
 
-#### Information Disclosure
+### Information Disclosure
 
 * No secret is handled in-script; the token lives only inside `gh`. `GH_PAGER` is cleared to keep output non-interactive.
 
-#### Denial of Service
+### Denial of Service
 
 * The query caps page size (`per_page=100`) and uses `gh --paginate`; runtime is bounded by the number of open alerts. No unbounded local loops.
 
-#### Elevation of Privilege
+### Elevation of Privilege
 
 * The subprocess runs with the caller's privileges; access is limited to whatever the `gh` token already grants. The script requests no additional scope.
 
-#### Risk Rating
+### Risk Rating
 
 | Threat                                   | Likelihood | Impact | Residual Risk | Status                                      |
 |------------------------------------------|------------|--------|---------------|---------------------------------------------|
 | Argument/query injection into `gh api`   | Low        | Med    | Low           | Mitigated (allow-list validation)           |
 | `Branch` allow-list permits `.`/`..`/`/` | Low        | Low    | Low           | Accepted (confined to query value; G-TAM-1) |
 
-### Bucket B2: Untrusted alert-data rendering
+## Bucket B2: Untrusted alert-data rendering
 
-#### Spoofing
+### Spoofing
 
 * Not applicable. Alert content carries no identity claim; it is treated as data.
 
-#### Tampering
+### Tampering
 
 * The script does not modify alert data; it groups and sorts it for display.
 
-#### Repudiation
+### Repudiation
 
 * Not applicable.
 
-#### Information Disclosure
+### Information Disclosure
 
 * Alert descriptions, affected paths, and URLs originate from the operator's own repository scanning and are printed to the operator's terminal or a JSON consumer. They are rendered as data; downstream consumers are responsible for their own safe handling.
 
-#### Denial of Service
+### Denial of Service
 
 * Grouping is proportional to the number of alerts returned; there is no amplification.
 
-#### Elevation of Privilege
+### Elevation of Privilege
 
 * Rendered fields are never interpreted as code or commands, so hostile alert content cannot drive execution.
 
-#### Risk Rating
+### Risk Rating
 
 | Threat                                  | Likelihood | Impact | Residual Risk | Status                           |
 |-----------------------------------------|------------|--------|---------------|----------------------------------|
 | Hostile alert field rendered downstream | Low        | Low    | Low           | Mitigated (emitted as data only) |
 
-### Bucket B3: CLI caller process and credentials
+## Bucket B3: CLI caller process and credentials
 
-#### Spoofing
+### Spoofing
 
 * Not applicable. No local identity surface.
 
-#### Tampering
+### Tampering
 
 * The script writes no files; output is stdout only, so there is no on-disk artifact to tamper with.
 
-#### Repudiation
+### Repudiation
 
 * Not applicable. Local read-only tool.
 
-#### Information Disclosure
+### Information Disclosure
 
 * The token is never read, logged, or echoed by the script; it stays inside `gh`. Only grouped alert data reaches stdout.
 
-#### Denial of Service
+### Denial of Service
 
 * No local resource is consumed beyond the bounded `gh` call and in-memory grouping.
 
-#### Elevation of Privilege
+### Elevation of Privilege
 
 * Runs entirely with the caller's privileges; no elevation and no setuid behavior.
 
-#### Risk Rating
+### Risk Rating
 
 | Threat                            | Likelihood | Impact | Residual Risk | Status                                         |
 |-----------------------------------|------------|--------|---------------|------------------------------------------------|

@@ -2,7 +2,7 @@
 title: Customer Card Render Skill Security Model
 description: STRIDE threat model for the customer-card-render skill organized by assets, adversaries, and trust buckets (untrusted DT markdown parsing, YAML content emission, CLI caller with out-of-process PowerPoint handoff) with in-code mitigations and acknowledged enterprise readiness gaps
 author: microsoft/hve-core
-ms.date: 2026-06-30
+ms.date: 2026-07-02
 ms.topic: reference
 estimated_reading_time: 8
 keywords:
@@ -120,100 +120,98 @@ flowchart TD
 | ADV-b | Caller supplying an adversarial output path                     | Output path is operator-controlled; the script only writes `slide-NNN/content.yaml` beneath it                                             |
 | ADV-c | Attacker targeting the downstream deck build                    | Build is delegated out-of-process to the powerpoint skill and governed by its model (G-SUP-1)                                              |
 
-## Trust Buckets
+## Bucket B1: Untrusted DT markdown parsing
 
-### Bucket B1: Untrusted DT markdown parsing
-
-#### Spoofing
+### Spoofing
 
 * Not applicable. Markdown content carries no identity claim; it is treated as data.
 
-#### Tampering
+### Tampering
 
 * The skill never modifies the source artifacts. Frontmatter is parsed by line-wise `str.partition(":")` rather than a YAML loader, so no arbitrary object construction occurs; sections are extracted with bounded regular expressions.
 
-#### Repudiation
+### Repudiation
 
 * Not applicable. No attribution is claimed over input content.
 
-#### Information Disclosure
+### Information Disclosure
 
 * Parsing surfaces only the fields the templates consume; nothing beyond the artifact's own content is read or forwarded.
 
-#### Denial of Service
+### Denial of Service
 
 * Section extraction uses anchored, non-catastrophic regular expressions over a single artifact; input size is bounded by the artifact.
 
-#### Elevation of Privilege
+### Elevation of Privilege
 
 * No input path leads to code execution: there is no `eval`, no dynamic import, and no subprocess.
 
-#### Risk Rating
+### Risk Rating
 
 | Threat                                              | Likelihood | Impact | Residual Risk | Status                                       |
 |-----------------------------------------------------|------------|--------|---------------|----------------------------------------------|
 | Malicious frontmatter/section triggers unsafe parse | Low        | Low    | Low           | Mitigated (string partition; no YAML loader) |
 
-### Bucket B2: YAML content emission
+## Bucket B2: YAML content emission
 
-#### Spoofing
+### Spoofing
 
 * Not applicable.
 
-#### Tampering
+### Tampering
 
 * **YAML injection is mitigated**: every dynamic value is passed through `yaml_escape` (escaping `\`, `"`, and newlines) before insertion, and every template placeholder is wrapped in double quotes (`text: "{{...}}"`; the sole unquoted field, `slide: {{SLIDE_NUMBER}}`, is an integer). Injected content therefore stays inside its scalar and cannot introduce new keys or structure.
 
-#### Repudiation
+### Repudiation
 
 * Not applicable.
 
-#### Information Disclosure
+### Information Disclosure
 
 * Confidential prose from the source artifact flows verbatim (escaped) into the emitted `content.yaml` and any downstream deck. There is no data-classification gate (G-INF-1).
 
-#### Denial of Service
+### Denial of Service
 
 * Output size is proportional to the input artifact; there is no amplification.
 
-#### Elevation of Privilege
+### Elevation of Privilege
 
 * Emission writes text files only; it performs no execution.
 
-#### Risk Rating
+### Risk Rating
 
 | Threat                                                 | Likelihood | Impact | Residual Risk | Status                                          |
 |--------------------------------------------------------|------------|--------|---------------|-------------------------------------------------|
 | YAML breakout via artifact prose                       | Low        | Med    | Low           | Mitigated (`yaml_escape` + quoted placeholders) |
 | Confidential prose emitted without classification gate | Med        | Low    | Low           | By design (G-INF-1)                             |
 
-### Bucket B3: CLI caller process and PowerPoint handoff
+## Bucket B3: CLI caller process and PowerPoint handoff
 
-#### Spoofing
+### Spoofing
 
 * Not applicable. No identity surface.
 
-#### Tampering
+### Tampering
 
 * The script writes only `slide-NNN/content.yaml` files beneath the operator-supplied output directory.
 
-#### Repudiation
+### Repudiation
 
 * Not applicable. Local tool.
 
-#### Information Disclosure
+### Information Disclosure
 
 * No credentials or secrets are handled; the skill makes no network connection.
 
-#### Denial of Service
+### Denial of Service
 
 * File writes are bounded by the number of rendered cards; there is no unbounded resource use.
 
-#### Elevation of Privilege
+### Elevation of Privilege
 
 * The skill runs entirely with the caller's privileges. The deck build is a **separate process** the operator invokes explicitly through the powerpoint skill; this skill neither spawns it nor passes credentials to it. That runtime's risk is covered by the powerpoint skill's own model (G-SUP-1).
 
-#### Risk Rating
+### Risk Rating
 
 | Threat                                      | Likelihood | Impact | Residual Risk | Status                                 |
 |---------------------------------------------|------------|--------|---------------|----------------------------------------|
