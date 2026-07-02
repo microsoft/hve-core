@@ -1,9 +1,9 @@
 ---
-title: VEX Generator
-description: AI-assisted agent that triages dependency vulnerabilities and drafts an OpenVEX document for human review
+title: VEX Capability
+description: HVE Core's VEX capability - triage dependency vulnerabilities and draft OpenVEX documents via the SSSC Reviewer, SSSC Planner, and the vex skill
 sidebar_position: 10
 author: Microsoft
-ms.date: 2026-06-18
+ms.date: 2026-07-01
 ms.topic: concept
 keywords:
   - VEX
@@ -19,10 +19,19 @@ tags:
 estimated_reading_time: 7
 ---
 
-The VEX Generator is an AI-assisted agent that turns scanner noise into accountable answers. It scans dependencies for known vulnerabilities, enriches each one from public advisory sources, analyzes whether the vulnerable code is reachable in HVE Core, and drafts an [OpenVEX](https://openvex.dev/) document plus a human-readable triage report. The agent drafts; a human reviews and merges. The merge-commit author is the accountable author of record, never the agent.
+HVE Core delivers VEX (Vulnerability Exploitability eXchange) as a capability split across the
+**SSSC Reviewer** (assesses evidence and drafts OpenVEX statements), the **SSSC Planner** (plans
+standing up VEX in a target project as a backlog for the Task-* implementors), the
+[`vex` skill](https://github.com/microsoft/hve-core/blob/main/.github/skills/security/vex/SKILL.md)
+(OpenVEX v0.2.0 specification reference plus implement and review playbooks), and the
+`vex-detect` / `vex-draft` workflows (automated detection and drafting). Together they turn scanner
+noise into accountable answers: scanning dependencies for known vulnerabilities, enriching each from
+public advisory sources, analyzing whether the vulnerable code is reachable in HVE Core, and drafting
+an [OpenVEX](https://openvex.dev/) document plus a human-readable triage report. The tooling drafts;
+a human reviews and merges. The merge-commit author is the accountable author of record, never the AI.
 
 > [!CAUTION]
-> This agent is an assistive tool. It drafts VEX status determinations for human review and does not replace professional security assessment, penetration testing, or qualified human judgment. Every status it drafts, especially `not_affected`, must be independently validated by a CODEOWNERS-required reviewer before the OpenVEX document is merged or published.
+> This capability is an assistive tool. It drafts VEX status determinations for human review and does not replace professional security assessment, penetration testing, or qualified human judgment. Every status it drafts, especially `not_affected`, must be independently validated by a CODEOWNERS-required reviewer before the OpenVEX document is merged or published.
 
 ## Prerequisites
 
@@ -34,7 +43,7 @@ The VEX Generator is an AI-assisted agent that turns scanner noise into accounta
 
 ## How It Works
 
-The agent runs a four-phase pipeline and delegates per-CVE exploitability analysis to the `CVE Analyzer` subagent:
+The `vex-draft` workflow (via the SSSC Reviewer VEX assessment capability) runs a four-phase pipeline and can delegate per-CVE exploitability analysis to the `CVE Analyzer` subagent:
 
 ```mermaid
 flowchart LR

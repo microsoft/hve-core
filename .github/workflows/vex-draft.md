@@ -9,7 +9,7 @@ on:
   workflow_dispatch:
   skip-bots: ["dependabot[bot]", "github-actions[bot]"]
   reaction: eyes
-  skip-if-match: 'is:open "gh-aw-tracker-id: vex-draft" in:body'
+  skip-if-match: 'is:pr is:open "gh-aw-tracker-id: vex-draft" in:body'
   permissions:
     contents: read
     issues: read
@@ -100,7 +100,7 @@ if: >-
   (github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success') && needs.pre_activation.outputs.vex_gate_result == 'success'
 
 imports:
-  - ../agents/security/vex-generator.agent.md
+  - ../agents/security/sssc-reviewer.agent.md
 
 checkout:
   sparse-checkout: |
@@ -108,8 +108,7 @@ checkout:
     .github/agents/security/
     .github/instructions/security/
     .github/instructions/shared/
-    .github/skills/security/openvex-spec/
-    .github/PULL_REQUEST_TEMPLATE/vex-triage.md
+    .github/skills/security/vex/
     security/vex/
     scripts/
     extension/
@@ -137,6 +136,9 @@ network:
 safe-outputs:
   concurrency-group: "vex-draft-${{ github.repository }}"
   report-failure-as-issue: ["!max_ai_credits_exceeded", "!ai_credits_rate_limit_error"]
+  # Roll failure reports into a single parent "Failed runs" issue instead of
+  # filing a fresh issue per failing run.
+  group-reports: true
   create-pull-request:
     max: 1
     labels: [security, automated, needs-triage]
@@ -170,11 +172,11 @@ commit author is the accountable author of record, never the agent.
 ## Instruction Priority
 
 Follow the Workflow section below as the sole drafting procedure. The imported
-`VEX Generator` agent and its referenced skill and instructions provide domain
-knowledge only: OpenVEX schema, status logic, evidence thresholds, confidence
-routing, and licensing posture. Ignore any phase-, mode-, or tracking-file-based
-orchestration from the imported files; this workflow runs Mode 2 (triage from an
-existing finding set) non-interactively.
+`SSSC Reviewer` agent and its referenced `vex` skill and VEX instructions provide
+domain knowledge only: OpenVEX schema, status logic, evidence thresholds,
+confidence routing, and licensing posture. Ignore any review-mode or state-file
+orchestration from the imported files; this workflow drafts VEX statuses from an
+existing finding set non-interactively.
 
 ## Workflow
 
@@ -204,11 +206,9 @@ existing finding set) non-interactively.
    is unavailable; record the gap.
 
 5. **Analyze reachability.** For each finding, determine whether the vulnerable
-   symbol is reachable in this codebase. Delegate per-CVE exploitability
-   analysis to the `CVE Analyzer` subagent. If subagent delegation is
-   unavailable in this environment, perform the same analysis inline. Either
-   way, trace the import path, confirm dead code, or identify a mitigation, and
-   cite file paths and line ranges as evidence.
+   symbol is reachable in this codebase. Perform the per-CVE exploitability
+   analysis inline: trace the import path, confirm dead code, or identify a
+   mitigation, and cite file paths and line ranges as evidence.
 
 6. **Route by confidence.** Classify each finding into a confidence band and
    draft the status the band permits:
@@ -228,10 +228,12 @@ existing finding set) non-interactively.
    document version, set timestamps, never rewrite unrelated statements).
 
 8. **Open one pull request.** Emit a single `create-pull-request` safe output.
-   Populate the PR body from `.github/PULL_REQUEST_TEMPLATE/vex-triage.md`: a
+   Populate the PR body from the scaffold at
+   `.github/skills/security/vex/assets/pr-body-scaffold.yml`: render the
    summary, the evidence checklist, and one CVE assessment block per finding
-   recording the drafted status, confidence band, code-citation evidence, and
-   impact statement. Title the PR `VEX: draft status for untriaged findings`.
+   (from `cve_assessment_template`) recording the drafted status, confidence
+   band, code-citation evidence, and impact statement. Title the PR `VEX: draft
+   status for untriaged findings`.
 
 ## Constraints
 

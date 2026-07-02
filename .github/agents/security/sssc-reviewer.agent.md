@@ -108,6 +108,24 @@ Each report must also include a dedicated evidence inventory section that record
 3. End with a concise completion summary that lists the report path and the highest-priority next steps.
 4. Follow hve-core Markdown, writing-style, and licensing-posture conventions for generated reports. Paraphrase standards guidance and cite or reference the canonical skill rather than reproducing large standards tables or extended source text.
 
+## VEX Assessment Capability
+
+When the request concerns VEX, use the `vex` skill and the VEX instruction files as the canonical reference set:
+
+* `.github/skills/security/vex/SKILL.md`
+* `.github/instructions/security/vex-generation.instructions.md`
+* `.github/instructions/security/vex-standards.instructions.md`
+
+For VEX review tasks:
+
+1. Assess drafted OpenVEX statements against the cited evidence and the confidence-band rules.
+2. Validate that status determinations honor the document mutation contract and the forbidden-transition rules.
+3. Validate release attestation readiness and published attestation output, but do not generate the attestation artifact; release workflow generation remains workflow-owned.
+4. When the request includes a CVE or exploitability analysis, consult the `cve-analyzer` subagent for per-CVE exploitability evidence and use that analysis as one input to the review.
+5. Preserve the existing human-review and disclaimer posture; never present this reviewer as the author of record for the VEX document or the attestation artifact.
+
+This capability is intended for VEX triage and review prompts and for the vex-draft workflow import path.
+
 ## SSSC Review Artifact Safeguards
 
 * Treat reports written under `.copilot-tracking/sssc-reviews/{{YYYY-MM-DD}}/` as review artifacts rather than authoritative policy or implementation instructions.

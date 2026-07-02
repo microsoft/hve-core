@@ -1,6 +1,6 @@
 ---
 name: vex-scan
-agent: VEX Generator
+agent: SSSC Reviewer
 description: "Run a full VEX pipeline that scans dependencies, enriches CVEs, analyzes exploitability, and drafts an OpenVEX document for review - Brought to you by microsoft/hve-core"
 argument-hint: "[scope=path/to/dir] [product=pkg:npm/@org/name]"
 ---
@@ -17,6 +17,6 @@ argument-hint: "[scope=path/to/dir] [product=pkg:npm/@org/name]"
 
 ## Requirements
 
-1. Run the VEX Generator in Mode 1 (full pipeline): scan, enrich, analyze, and generate.
+1. Use the SSSC Reviewer's VEX assessment capability to run the full VEX pipeline (scan, enrich, analyze, and draft an OpenVEX document), following the `vex` skill playbook and the VEX generation and standards instructions.
 2. When `${input:scope}` is provided, limit the dependency scan to files within the specified directories or paths.
 3. When `${input:product}` is provided, use it as the PURL product identifier for the generated VEX statements.

@@ -168,7 +168,7 @@ jobs:
               '',
               f'OSV-Scanner found **{count}** vulnerability(ies) that are untriaged or carry a '
               'non-terminal status in `security/vex/hve-core.openvex.json`. Triage each with '
-              '`/vex-triage` or `/vex-scan` (see the VEX Generator agent), then open a PR using '
+              '`/vex-triage` or `/vex-scan` (see the SSSC Reviewer VEX assessment), then open a PR using '
               'the VEX triage template.',
               '',
               '| Vulnerability | Aliases | Package | Source | Severity | Current VEX status |',
