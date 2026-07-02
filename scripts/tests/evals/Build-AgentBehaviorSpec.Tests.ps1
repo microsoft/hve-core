@@ -152,7 +152,7 @@ stimuli:
     tags:
       agent: other-slug
 "@
-            { Invoke-AgentBehaviorSpecCore -RepoRoot $script:TestRoot } | Should -Throw '*declares tags.agent*'
+            { Invoke-AgentBehaviorSpecCore -RepoRoot $script:TestRoot } | Should -Throw -ExpectedMessage "*declares tags.agent*expected-slug*"
         }
 
         It 'Accepts a partial that explicitly tags the matching agent slug' {
@@ -219,7 +219,7 @@ stimuli:
   - name: agent-a-case
     prompt: Prompt.
 "@
-            { Invoke-AgentBehaviorSpecCore -RepoRoot $script:TestRoot } | Should -Throw '*already exists and differs*'
+            { Invoke-AgentBehaviorSpecCore -RepoRoot $script:TestRoot } | Should -Throw -ExpectedMessage '*already exists and differs*'
         }
 
         It 'Overwrites the existing file with -Force' {
@@ -281,7 +281,7 @@ stimuli:
     Context 'Partial validation errors' {
         It 'Names the offending file when a partial is invalid YAML' {
             Write-Partial -Root $script:TestRoot -Slug 'broken' -Content "stimuli:`n  - name: x`n   bad-indent:"
-            { Invoke-AgentBehaviorSpecCore -RepoRoot $script:TestRoot } | Should -Throw '*Failed to parse partial*broken*'
+            { Invoke-AgentBehaviorSpecCore -RepoRoot $script:TestRoot } | Should -Throw -ExpectedMessage '*Failed to parse partial*broken*'
         }
 
         It 'Fails when a stimulus is missing the name field' {
@@ -289,7 +289,7 @@ stimuli:
 stimuli:
   - prompt: A prompt with no name.
 "@
-            { Invoke-AgentBehaviorSpecCore -RepoRoot $script:TestRoot } | Should -Throw "*missing a non-empty 'name' field*"
+            { Invoke-AgentBehaviorSpecCore -RepoRoot $script:TestRoot } | Should -Throw -ExpectedMessage "*missing a non-empty 'name' field*"
         }
 
         It 'Fails when a stimulus is missing the prompt field' {
@@ -297,7 +297,7 @@ stimuli:
 stimuli:
   - name: prompt-less
 "@
-            { Invoke-AgentBehaviorSpecCore -RepoRoot $script:TestRoot } | Should -Throw "*is missing a non-empty 'prompt' field*"
+            { Invoke-AgentBehaviorSpecCore -RepoRoot $script:TestRoot } | Should -Throw -ExpectedMessage "*is missing a non-empty 'prompt' field*"
         }
 
         It 'Silently skips a partial whose stimuli list is empty' {
