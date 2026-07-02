@@ -4,6 +4,10 @@
 
 from __future__ import annotations
 
+import io
+import json
+
+import pytest
 import vex_gate
 
 DETECTION_BODY = """\
@@ -104,3 +108,159 @@ def test_evaluate_skips_when_all_terminal() -> None:
 def test_evaluate_proceeds_when_some_non_terminal() -> None:
     doc = _doc(("GHSA-69w3-r845-3855", "not_affected"))
     assert vex_gate.evaluate(DETECTION_BODY, doc) is True
+
+
+# --- parse_finding_ids: prefix families and rejection ---
+
+_ACCEPTED_IDS = [
+    "CVE-2024-12345",
+    "GHSA-aaaa-bbbb-cccc",
+    "PYSEC-2025-217",
+    "OSV-2024-1",
+    "RUSTSEC-2024-0001",
+    "GO-2024-1234",
+    "GMS-2024-0001",
+    "GLSA-202401-01",
+    "DSA-5000-1",
+    "USN-6000-1",
+    "ALSA-2024:0001",
+    "ELSA-2024-0001",
+    "RHSA-2024:1234",
+]
+
+
+@pytest.mark.parametrize("vid", _ACCEPTED_IDS)
+def test_parse_accepts_known_prefix(vid: str) -> None:
+    assert vex_gate.parse_finding_ids(f"| {vid} | a | b |") == [vid]
+
+
+@pytest.mark.parametrize(
+    "cell",
+    [
+        "Vulnerability",  # header word
+        "cve-2024-1",  # lowercase prefix
+        "CVE2024-1",  # missing hyphen after prefix
+        "CVE-",  # empty identifier body
+        "---------------",  # separator row
+        "NOTAPREFIX-2024-1",  # unknown prefix
+        "CVE-2024-1 (dup)",  # trailing junk rejected by the $ anchor
+        "",  # empty cell
+    ],
+)
+def test_parse_rejects_non_ids(cell: str) -> None:
+    assert vex_gate.parse_finding_ids(f"| {cell} | x | y |") == []
+
+
+def test_parse_tolerates_surrounding_whitespace() -> None:
+    assert vex_gate.parse_finding_ids("|   CVE-2024-1   | x |") == ["CVE-2024-1"]
+
+
+def test_parse_ignores_pipe_only_and_non_id_first_cell() -> None:
+    assert vex_gate.parse_finding_ids("|") == []
+    assert vex_gate.parse_finding_ids("| just text |") == []
+
+
+# --- all_terminal: OpenVEX vulnerability shapes and robustness ---
+
+
+def test_all_terminal_vulnerability_as_string() -> None:
+    doc = {"statements": [{"vulnerability": "CVE-2024-1", "status": "fixed"}]}
+    assert vex_gate.all_terminal(doc, ["CVE-2024-1"]) is True
+
+
+def test_all_terminal_vulnerability_via_at_id() -> None:
+    doc = {
+        "statements": [
+            {"vulnerability": {"@id": "CVE-2024-1"}, "status": "not_affected"}
+        ]
+    }
+    assert vex_gate.all_terminal(doc, ["CVE-2024-1"]) is True
+
+
+@pytest.mark.parametrize("status", ["affected", "under_investigation", "", "unknown"])
+def test_all_terminal_false_for_non_terminal_status(status: str) -> None:
+    doc = {"statements": [{"vulnerability": {"name": "CVE-2024-1"}, "status": status}]}
+    assert vex_gate.all_terminal(doc, ["CVE-2024-1"]) is False
+
+
+def test_all_terminal_skips_malformed_statements() -> None:
+    doc = {
+        "statements": [
+            None,
+            "nope",
+            {},
+            {"status": "fixed"},
+            {"vulnerability": {"name": "CVE-2024-1"}, "status": "fixed"},
+        ]
+    }
+    assert vex_gate.all_terminal(doc, ["CVE-2024-1"]) is True
+
+
+def test_all_terminal_missing_statements_key() -> None:
+    assert vex_gate.all_terminal({}, ["CVE-2024-1"]) is False
+
+
+def test_all_terminal_statements_not_a_list() -> None:
+    assert vex_gate.all_terminal({"statements": "oops"}, ["CVE-2024-1"]) is False
+
+
+# --- main(): CLI exit-code contract (0 proceed, 1 skip, 2 usage) ---
+
+
+def _run_main(monkeypatch: pytest.MonkeyPatch, body: str, argv: list[str]) -> int:
+    monkeypatch.setattr("sys.stdin", io.StringIO(body))
+    return vex_gate.main(argv)
+
+
+def test_main_usage_when_no_args(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr("sys.stdin", io.StringIO(""))
+    assert vex_gate.main([]) == 2
+
+
+def test_main_proceeds_when_doc_missing(
+    monkeypatch: pytest.MonkeyPatch, tmp_path
+) -> None:
+    assert _run_main(monkeypatch, DETECTION_BODY, [str(tmp_path / "absent.json")]) == 0
+
+
+def test_main_skips_when_all_terminal(
+    monkeypatch: pytest.MonkeyPatch, tmp_path
+) -> None:
+    doc = tmp_path / "vex.json"
+    doc.write_text(
+        json.dumps(
+            _doc(
+                ("GHSA-69w3-r845-3855", "not_affected"),
+                ("PYSEC-2025-217", "fixed"),
+            )
+        ),
+        encoding="utf-8",
+    )
+    assert _run_main(monkeypatch, DETECTION_BODY, [str(doc)]) == 1
+
+
+def test_main_proceeds_when_some_non_terminal(
+    monkeypatch: pytest.MonkeyPatch, tmp_path
+) -> None:
+    doc = tmp_path / "vex.json"
+    doc.write_text(
+        json.dumps(_doc(("GHSA-69w3-r845-3855", "not_affected"))),
+        encoding="utf-8",
+    )
+    assert _run_main(monkeypatch, DETECTION_BODY, [str(doc)]) == 0
+
+
+def test_main_skips_when_no_findings(
+    monkeypatch: pytest.MonkeyPatch, tmp_path
+) -> None:
+    doc = tmp_path / "vex.json"
+    doc.write_text(json.dumps(_doc(("GHSA-1", "fixed"))), encoding="utf-8")
+    assert _run_main(monkeypatch, "no findings here", [str(doc)]) == 1
+
+
+def test_main_proceeds_on_malformed_json(
+    monkeypatch: pytest.MonkeyPatch, tmp_path
+) -> None:
+    doc = tmp_path / "vex.json"
+    doc.write_text("{ not valid json", encoding="utf-8")
+    assert _run_main(monkeypatch, DETECTION_BODY, [str(doc)]) == 0

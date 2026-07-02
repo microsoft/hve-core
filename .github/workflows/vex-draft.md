@@ -33,31 +33,14 @@ on:
         fi
 
         issue_body="$(gh issue view --repo "$REPO_SLUG" "$issue_number" --json body --jq '.body')"
-        # Collect only first-column cells that match a known vulnerability-ID
-        # pattern. Allowlisting the ID shape (not denylisting header words) skips
-        # the table header and separator rows regardless of their labels. This
-        # mirrors parse_finding_ids in .github/skills/security/vex/scripts/vex_gate.py,
-        # which is unit-tested and is the reference/extension point for this logic.
-        finding_ids=()
-        while IFS= read -r line; do
-          if [[ "$line" =~ ^\|[[:space:]]*([^|]+)[[:space:]]*\| ]]; then
-            finding_id="${BASH_REMATCH[1]}"
-            finding_id="${finding_id// /}"
-            if [[ "$finding_id" =~ ^(CVE|GHSA|PYSEC|OSV|RUSTSEC|GO|GMS|GLSA|DSA|USN|ALSA|ELSA|RHSA)-[0-9A-Za-z._-]+$ ]]; then
-              finding_ids+=("$finding_id")
-            fi
-          fi
-        done <<< "$issue_body"
 
-        if [ ${#finding_ids[@]} -eq 0 ]; then
-          echo "No findings found in detection issue; skipping."
-          exit 1
-        fi
-
-        # The pre-activation job runs without a repository checkout, so fetch
-        # the OpenVEX document from the default branch through the contents API
-        # (the job carries contents: read). A missing file or empty response is
-        # treated as "document not found" so the gate proceeds.
+        # The pre-activation job runs without a repository checkout, so fetch both
+        # the OpenVEX document and the unit-tested gate module from the default branch
+        # through the contents API (the job carries contents: read). Running the tested
+        # module — rather than reimplementing its parse/terminal logic inline — keeps the
+        # deployed gate and its test suite in lockstep. A missing OpenVEX document is
+        # treated as "everything untriaged" (proceed); a missing gate module fails safe
+        # toward drafting.
         vex_doc="$(mktemp)"
         if ! gh api -H "Accept: application/vnd.github.raw" \
              "repos/${REPO_SLUG}/contents/security/vex/hve-core.openvex.json" \
@@ -65,49 +48,18 @@ on:
           rm -f "$vex_doc"
         fi
 
-        python3 - "$vex_doc" "${finding_ids[@]}" <<'PY'
-        import json
-        import sys
-        from pathlib import Path
+        gate_script="$(mktemp)"
+        if ! gh api -H "Accept: application/vnd.github.raw" \
+             "repos/${REPO_SLUG}/contents/.github/skills/security/vex/scripts/vex_gate.py" \
+             > "$gate_script" 2>/dev/null || [ ! -s "$gate_script" ]; then
+          echo "VEX gate module unavailable; proceeding."
+          exit 0
+        fi
 
-        path = Path(sys.argv[1])
-        finding_ids = sys.argv[2:]
-        if not path.exists():
-            print("OpenVEX document not found; proceeding.")
-            sys.exit(0)
-
-        with path.open(encoding="utf-8") as handle:
-            document = json.load(handle)
-
-        terminal_statuses = {"not_affected", "fixed"}
-
-        def check_terminal(node, target):
-            if isinstance(node, dict):
-                status = node.get("status")
-                if isinstance(status, str) and status in terminal_statuses:
-                    for value in node.values():
-                        if isinstance(value, str) and target.lower() in value.lower():
-                            return True
-                        if isinstance(value, list) and any(isinstance(item, str) and target.lower() in item.lower() for item in value):
-                            return True
-                    return False
-                for value in node.values():
-                    if isinstance(value, (dict, list)) and check_terminal(value, target):
-                        return True
-            elif isinstance(node, list):
-                for item in node:
-                    if check_terminal(item, target):
-                        return True
-            return False
-
-        for finding_id in finding_ids:
-            if not check_terminal(document, finding_id):
-                print(f"Finding {finding_id} is not terminal; proceeding.")
-                sys.exit(0)
-
-        print("All findings already have terminal VEX status; skipping.")
-        sys.exit(1)
-        PY
+        # vex_gate.py reads the detection-issue body on stdin and the OpenVEX path as
+        # its first argument. Exit 0 = proceed (untriaged or non-terminal findings),
+        # 1 = skip (no findings, or every finding already has a terminal VEX status).
+        printf '%s' "$issue_body" | python3 "$gate_script" "$vex_doc"
 
 engine: copilot
 timeout-minutes: 20

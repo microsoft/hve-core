@@ -20,9 +20,10 @@ from pathlib import Path
 TERMINAL_STATUSES = frozenset({"not_affected", "fixed"})
 
 # Vulnerability identifier prefixes emitted by OSV-Scanner and public advisories.
+# The identifier body allows ':' so distro advisories such as RHSA-2024:1234 parse.
 _VULN_ID_RE = re.compile(
     r"^(?:CVE|GHSA|PYSEC|OSV|RUSTSEC|GO|GMS|GLSA|DSA|USN|ALSA|ELSA|RHSA)-"
-    r"[0-9A-Za-z._-]+$"
+    r"[0-9A-Za-z._:-]+$"
 )
 
 
