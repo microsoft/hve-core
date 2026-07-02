@@ -603,7 +603,6 @@
     const tools = [...allTools].sort();
     if (tools.length === 0) { container.innerHTML = '<p class="empty-state">No tool data</p>'; return; }
 
-    const cols = tools.length + 1;
     let html = `<div class="heatmap" style="grid-template-columns: 200px repeat(${tools.length}, 1fr);">`;
     // Header row
     html += '<div class="heatmap-cell heatmap-header">Session</div>';

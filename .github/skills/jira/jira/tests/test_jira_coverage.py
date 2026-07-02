@@ -91,6 +91,18 @@ def test_validate_base_url_rejects_insecure_remote_host(
         jira._validate_base_url("http://jira.example.com")
 
 
+def test_validate_base_url_rejects_insecure_non_loopback_when_allow_env_set(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setenv("JIRA_ALLOW_INSECURE", "1")
+
+    with pytest.raises(jira.ScriptError) as exc_info:
+        jira._validate_base_url("http://jira.example.com")
+
+    assert exc_info.value.exit_code == jira.EXIT_USAGE
+    assert "non-loopback" in str(exc_info.value).lower()
+
+
 def test_validate_base_url_rejects_unknown_scheme() -> None:
     with pytest.raises(jira.ScriptError):
         jira._validate_base_url("ftp://jira.example.com")

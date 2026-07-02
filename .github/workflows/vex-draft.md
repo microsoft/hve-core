@@ -9,9 +9,12 @@ on:
   workflow_dispatch:
   skip-bots: ["dependabot[bot]", "github-actions[bot]"]
   reaction: eyes
+  # Zero-AIC Gate A: skip while a VEX draft PR is already open. Scoped to is:pr so
+  # guardrail failure issues (which also carry this tracker-id marker) can never
+  # wedge the gate closed.
   skip-if-match: 'is:pr is:open "gh-aw-tracker-id: vex-draft" in:body'
   permissions:
-    contents: read
+    contents: read # needed by Gate B pre-activation step to fetch the OpenVEX doc via the contents API
     issues: read
   steps:
     - id: vex_gate
@@ -30,12 +33,17 @@ on:
         fi
 
         issue_body="$(gh issue view --repo "$REPO_SLUG" "$issue_number" --json body --jq '.body')"
+        # Collect only first-column cells that match a known vulnerability-ID
+        # pattern. Allowlisting the ID shape (not denylisting header words) skips
+        # the table header and separator rows regardless of their labels. This
+        # mirrors parse_finding_ids in .github/skills/security/vex/scripts/vex_gate.py,
+        # which is unit-tested and is the reference/extension point for this logic.
         finding_ids=()
         while IFS= read -r line; do
           if [[ "$line" =~ ^\|[[:space:]]*([^|]+)[[:space:]]*\| ]]; then
             finding_id="${BASH_REMATCH[1]}"
             finding_id="${finding_id// /}"
-            if [[ "$finding_id" != "Finding" && "$finding_id" != "ID" && "$finding_id" != "FindingID" ]]; then
+            if [[ "$finding_id" =~ ^(CVE|GHSA|PYSEC|OSV|RUSTSEC|GO|GMS|GLSA|DSA|USN|ALSA|ELSA|RHSA)-[0-9A-Za-z._-]+$ ]]; then
               finding_ids+=("$finding_id")
             fi
           fi
@@ -46,7 +54,18 @@ on:
           exit 1
         fi
 
-        python3 - "$PWD/security/vex/hve-core.openvex.json" "${finding_ids[@]}" <<'PY'
+        # The pre-activation job runs without a repository checkout, so fetch
+        # the OpenVEX document from the default branch through the contents API
+        # (the job carries contents: read). A missing file or empty response is
+        # treated as "document not found" so the gate proceeds.
+        vex_doc="$(mktemp)"
+        if ! gh api -H "Accept: application/vnd.github.raw" \
+             "repos/${REPO_SLUG}/contents/security/vex/hve-core.openvex.json" \
+             > "$vex_doc" 2>/dev/null || [ ! -s "$vex_doc" ]; then
+          rm -f "$vex_doc"
+        fi
+
+        python3 - "$vex_doc" "${finding_ids[@]}" <<'PY'
         import json
         import sys
         from pathlib import Path
@@ -135,7 +154,7 @@ network:
 
 safe-outputs:
   concurrency-group: "vex-draft-${{ github.repository }}"
-  report-failure-as-issue: ["!max_ai_credits_exceeded", "!ai_credits_rate_limit_error"]
+  report-failure-as-issue: ["!max_ai_credits_exceeded", "!daily_ai_credits_exceeded", "!ai_credits_rate_limit_error"]
   # Roll failure reports into a single parent "Failed runs" issue instead of
   # filing a fresh issue per failing run.
   group-reports: true

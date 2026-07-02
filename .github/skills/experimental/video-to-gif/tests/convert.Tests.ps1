@@ -96,12 +96,20 @@ Describe 'Test-HDRContent' -Tag 'Unit' {
 
 Describe 'Invoke-SinglePassConversion' -Tag 'Unit' {
     It 'Returns true when the single-pass command exits successfully' {
-        Mock ffmpeg { $global:LASTEXITCODE = 0 }
+        Mock Invoke-FFmpegProcess { return $true }
 
         $result = Invoke-SinglePassConversion -SourcePath 'video.mp4' -DestinationPath 'output.gif' -LoopCount 0 -BaseFilter 'fps=10' -TimeArgs @(-1)
 
         $result | Should -BeTrue
-        Should -Invoke ffmpeg -Times 1 -Exactly
+        Should -Invoke Invoke-FFmpegProcess -Times 1 -Exactly
+    }
+
+    It 'Forwards the configured timeout to the ffmpeg process wrapper' {
+        Mock Invoke-FFmpegProcess { return $true }
+
+        Invoke-SinglePassConversion -SourcePath 'video.mp4' -DestinationPath 'output.gif' -LoopCount 0 -BaseFilter 'fps=10' -TimeArgs @(-1) -TimeoutSeconds 42 | Out-Null
+
+        Should -Invoke Invoke-FFmpegProcess -Times 1 -Exactly -ParameterFilter { $TimeoutSeconds -eq 42 }
     }
 }
 
@@ -114,23 +122,29 @@ Describe 'Invoke-TwoPassConversion' -Tag 'Unit' {
         Remove-Item Env:TEMP -ErrorAction SilentlyContinue
     }
 
-    It 'Removes the temporary palette file after a successful conversion' {
-        $paletteFile = Join-Path $TestDrive "palette_$PID.png"
+    It 'Removes the temporary palette directory after a successful conversion' {
+        $script:capturedPalette = $null
         $destinationPath = Join-Path $TestDrive 'output.gif'
 
-        Mock ffmpeg {
-            $global:LASTEXITCODE = 0
-            Set-Content -Path $paletteFile -Value 'palette' -NoNewline
+        Mock Invoke-FFmpegProcess {
+            $paletteArg = $Arguments | Where-Object { $_ -is [string] -and $_ -like '*palette.png' }
+            if ($paletteArg) {
+                $script:capturedPalette = $paletteArg
+                Set-Content -Path $paletteArg -Value 'palette' -NoNewline
+            }
+            return $true
         }
 
         $result = Invoke-TwoPassConversion -SourcePath 'video.mp4' -DestinationPath $destinationPath -DitherAlgorithm 'bayer' -LoopCount 0 -BaseFilter 'fps=10' -TimeArgs @(-1)
 
         $result | Should -BeTrue
-        Test-Path -Path $paletteFile | Should -BeFalse
+        $script:capturedPalette | Should -Not -BeNullOrEmpty
+        Test-Path -Path $script:capturedPalette | Should -BeFalse
+        Test-Path -Path (Split-Path -Parent $script:capturedPalette) | Should -BeFalse
     }
 
     It 'Returns false when palette generation fails' {
-        Mock ffmpeg { $global:LASTEXITCODE = 1 }
+        Mock Invoke-FFmpegProcess { return $false }
 
         $result = Invoke-TwoPassConversion -SourcePath 'video.mp4' -DestinationPath 'output.gif' -DitherAlgorithm 'bayer' -LoopCount 0 -BaseFilter 'fps=10' -TimeArgs @(-1)
 
