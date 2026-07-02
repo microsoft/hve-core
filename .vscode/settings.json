@@ -65,7 +65,8 @@
     ".github/agents/rai-planning": true,
     ".github/agents/rai-planning/subagents": true,
     ".github/agents/security": true,
-    ".github/agents/security/subagents": true
+    ".github/agents/security/subagents": true,
+    ".github/agents/rpi/subagents": true
   },
   "chat.promptFilesLocations": {
     ".github/prompts/ado": true,
