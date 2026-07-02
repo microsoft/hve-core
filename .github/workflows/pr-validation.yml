@@ -310,6 +310,18 @@ jobs:
       upload-sarif: true
       upload-artifact: false
 
+  dangerous-workflow-check:
+    name: Dangerous Workflow Check
+    uses: ./.github/workflows/dangerous-workflow-scan.yml
+    permissions:
+      contents: read
+      security-events: write  # Required for SARIF upload to Security tab
+    with:
+      soft-fail: false
+      upload-sarif: true
+      upload-artifact: false
+      poutine-soft-fail: true  # Poutine runs advisory; homegrown template-injection check is the hard gate
+
   action-version-consistency-scan:
     name: Action Version Consistency Scan
     uses: ./.github/workflows/action-version-consistency-scan.yml
@@ -416,6 +428,7 @@ jobs:
       - dependency-pinning-check
       - devcontainer-lockfile-check
       - workflow-permissions-check
+      - dangerous-workflow-check
       - action-version-consistency-scan
       - gitleaks-scan
       - npm-audit
