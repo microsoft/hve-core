@@ -544,6 +544,16 @@ function Split-AssetDocByMarkers {
         }
     }
 
+    $innerBeginIdx = $Content.IndexOf($begin, $beginIdx + $begin.Length)
+    if ($innerBeginIdx -ge 0 -and $innerBeginIdx -lt $endIdx) {
+        return @{
+            HasMarkers = $false
+            Before     = $Content
+            Body       = ''
+            After      = ''
+        }
+    }
+
     $bodyStart = $beginIdx + $begin.Length
     $before = $Content.Substring(0, $beginIdx)
     $body = $Content.Substring($bodyStart, $endIdx - $bodyStart)

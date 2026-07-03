@@ -283,6 +283,21 @@ Describe 'Split-AssetDocByMarkers' -Tag 'Unit' {
         $split = Split-AssetDocByMarkers -Content $content -Region 'metadata'
         $split.HasMarkers | Should -BeFalse
     }
+
+    It 'Reports no markers when a begin marker is duplicated before the end' {
+        $content = @(
+            'before'
+            '<!-- BEGIN AUTO-GENERATED: metadata -->'
+            'first'
+            '<!-- BEGIN AUTO-GENERATED: metadata -->'
+            'second'
+            '<!-- END AUTO-GENERATED: metadata -->'
+            'after'
+        ) -join "`n"
+        $split = Split-AssetDocByMarkers -Content $content -Region 'metadata'
+        $split.HasMarkers | Should -BeFalse
+        $split.Before | Should -Be $content
+    }
 }
 
 Describe 'Merge-AssetDocRegion' -Tag 'Unit' {
