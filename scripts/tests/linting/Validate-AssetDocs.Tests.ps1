@@ -58,6 +58,27 @@ Describe 'Test-AssetDocCoverage' -Tag 'Unit' {
         Test-AssetDocCoverage -Models $script:models -RepoRoot $script:repo | Should -BeNullOrEmpty
     }
 
+    It 'Does not accept a miscased page as satisfying coverage' {
+        # On case-insensitive filesystems a miscased page (docs/reference/Agents/...)
+        # would satisfy Test-Path; coverage must compare case-sensitively so the
+        # correctly-cased page is still reported missing. Simulate by giving the
+        # model an uppercased DocRel while the real page stays lowercase.
+        $miscased = $script:models | ForEach-Object {
+            if ($_.Kind -eq 'agent') {
+                $clone = $_.PSObject.Copy()
+                $clone.DocRel = $_.DocRel -replace '^docs/reference/agents/', 'docs/reference/Agents/'
+                $clone
+            }
+            else {
+                $_
+            }
+        }
+        $findings = @(Test-AssetDocCoverage -Models $miscased -RepoRoot $script:repo)
+        $findings.Count | Should -Be 1
+        $findings[0].Category | Should -Be 'Coverage'
+        $findings[0].Path | Should -Be 'docs/reference/Agents/hve-core/demo-agent.md'
+    }
+
     It 'Reports a warning for a missing page by default' {
         Remove-Item -LiteralPath (Join-Path $script:repo $script:agentModel.DocRel) -Force
         $findings = @(Test-AssetDocCoverage -Models $script:models -RepoRoot $script:repo)
@@ -87,6 +108,28 @@ Describe 'Test-AssetDocOrphan' -Tag 'Unit' {
         Test-Path -LiteralPath (Join-Path $script:repo 'docs/reference/README.md') | Should -BeTrue
         (Test-AssetDocOrphan -Models $script:models -RepoRoot $script:repo) |
             Where-Object { $_.Path -like '*README.md' } | Should -BeNullOrEmpty
+    }
+
+    It 'Flags a page whose path case differs from the expected model path' {
+        # A miscased page (docs/reference/Agents/...) must still be treated as an
+        # orphan on case-sensitive filesystems. Simulate the case difference by
+        # giving the model an uppercased DocRel while the real page stays
+        # lowercase, so the comparison is exercised regardless of the host
+        # filesystem's own case sensitivity.
+        $miscased = $script:models | ForEach-Object {
+            if ($_.Kind -eq 'agent') {
+                $clone = $_.PSObject.Copy()
+                $clone.DocRel = $_.DocRel -replace '^docs/reference/agents/', 'docs/reference/Agents/'
+                $clone
+            }
+            else {
+                $_
+            }
+        }
+        $findings = @(Test-AssetDocOrphan -Models $miscased -RepoRoot $script:repo)
+        $findings.Count | Should -Be 1
+        $findings[0].Category | Should -Be 'Orphan'
+        $findings[0].Path | Should -Be 'docs/reference/agents/hve-core/demo-agent.md'
     }
 
     It 'Reports an error for a page with no matching asset' {

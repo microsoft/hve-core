@@ -126,6 +126,42 @@ function New-AssetDocFinding {
 
 #region Checks
 
+function Get-AssetDocPagePath {
+    <#
+    .SYNOPSIS
+        Enumerates repo-relative paths of per-asset documentation pages.
+    .DESCRIPTION
+        Returns every docs/reference markdown page except generated README
+        index pages, normalized to forward-slash separators so the paths
+        compare directly against model DocRel values. Callers must compare
+        these paths case-sensitively (Ordinal) so a miscased page is neither
+        accepted as coverage nor hidden from orphan detection.
+    .PARAMETER RepoRoot
+        Repository root directory.
+    .OUTPUTS
+        [string[]] Repo-relative page paths.
+    #>
+    [CmdletBinding()]
+    [OutputType([string[]])]
+    param(
+        [Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string]$RepoRoot
+    )
+
+    $docsRoot = Join-Path $RepoRoot 'docs/reference'
+    if (-not (Test-Path -LiteralPath $docsRoot)) {
+        return @()
+    }
+
+    $pages = Get-ChildItem -LiteralPath $docsRoot -Recurse -File -Filter '*.md' -ErrorAction SilentlyContinue
+    $paths = foreach ($page in $pages) {
+        if ($page.Name -eq 'README.md') {
+            continue
+        }
+        ([System.IO.Path]::GetRelativePath($RepoRoot, $page.FullName)) -replace '\\', '/'
+    }
+    return @($paths)
+}
+
 function Test-AssetDocCoverage {
     <#
     .SYNOPSIS
@@ -149,8 +185,18 @@ function Test-AssetDocCoverage {
 
     $level = if ($FailOnMissing) { 'Error' } else { 'Warning' }
     $findings = @()
+
+    # Match pages by exact case (Ordinal) so a miscased page such as
+    # docs/reference/Agents/foo.md is not silently accepted as covering the
+    # expected lowercase docs/reference/agents/foo.md on case-insensitive
+    # filesystems.
+    $actual = [System.Collections.Generic.HashSet[string]]::new([System.StringComparer]::Ordinal)
+    foreach ($page in (Get-AssetDocPagePath -RepoRoot $RepoRoot)) {
+        [void]$actual.Add($page)
+    }
+
     foreach ($model in $Models) {
-        if (-not (Test-Path -LiteralPath (Join-Path $RepoRoot $model.DocRel))) {
+        if (-not $actual.Contains($model.DocRel)) {
             $findings += New-AssetDocFinding -Level $level -Category 'Coverage' -Path $model.DocRel -Message "Missing documentation page for asset '$($model.SourceRel)'."
         }
     }
@@ -179,22 +225,17 @@ function Test-AssetDocOrphan {
     )
 
     $findings = @()
-    $docsRoot = Join-Path $RepoRoot 'docs/reference'
-    if (-not (Test-Path -LiteralPath $docsRoot)) {
-        return $findings
-    }
 
-    $expected = [System.Collections.Generic.HashSet[string]]::new([System.StringComparer]::OrdinalIgnoreCase)
+    # Ordinal (case-sensitive) comparison so a miscased page path such as
+    # docs/reference/Agents/foo.md is still flagged as an orphan on
+    # case-sensitive filesystems, where it does not match the expected
+    # lowercase docs/reference/agents/foo.md.
+    $expected = [System.Collections.Generic.HashSet[string]]::new([System.StringComparer]::Ordinal)
     foreach ($model in $Models) {
         [void]$expected.Add($model.DocRel)
     }
 
-    $pages = Get-ChildItem -LiteralPath $docsRoot -Recurse -File -Filter '*.md' -ErrorAction SilentlyContinue
-    foreach ($page in $pages) {
-        if ($page.Name -eq 'README.md') {
-            continue
-        }
-        $rel = ([System.IO.Path]::GetRelativePath($RepoRoot, $page.FullName)) -replace '\\', '/'
+    foreach ($rel in (Get-AssetDocPagePath -RepoRoot $RepoRoot)) {
         if (-not $expected.Contains($rel)) {
             $findings += New-AssetDocFinding -Level 'Error' -Category 'Orphan' -Path $rel -Message 'Orphaned documentation page has no matching asset.'
         }
