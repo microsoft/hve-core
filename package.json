@@ -58,6 +58,8 @@
     "clean:logs": "pwsh -NoProfile -Command \"Get-ChildItem -Path logs -File -Recurse -Exclude .gitkeep | Remove-Item -Force\"",
     "docs:build": "npm --prefix docs/docusaurus run build",
     "docs:test": "npm --prefix docs/docusaurus test",
+    "docs:generate": "pwsh -NoProfile -File scripts/docs/Generate-AssetDocs.ps1",
+    "docs:generate:check": "pwsh -NoProfile -File scripts/docs/Generate-AssetDocs.ps1 -WhatIf",
     "docs:test:coverage": "npm --prefix docs/docusaurus run test:coverage",
     "docs:test:e2e": "npm --prefix docs/docusaurus run test:e2e",
     "docs:test:e2e:setup": "npm --prefix docs/docusaurus exec -- playwright install --with-deps chrome",
