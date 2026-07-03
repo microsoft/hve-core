@@ -110,6 +110,7 @@ cnab
 cname
 codefresh
 codegen
+cognitiveservices
 codeowners
 codespace
 codespaces
@@ -723,6 +724,8 @@ organisation
 organisations
 organised
 otel
+ooxml
+lxml
 otlp
 overclaiming
 overfitting
@@ -834,6 +837,7 @@ qube
 querystring
 quickstart
 quickstarts
+quoteattr
 racf
 raci
 rackware
@@ -889,6 +893,7 @@ resiliency
 resourcegroups
 resourceless
 retargeted
+retarget
 retraining
 reuse
 reverification
@@ -1383,6 +1388,7 @@ sql
 tcp
 udp
 url
+urlopen
 uri
 uuid
 vm
