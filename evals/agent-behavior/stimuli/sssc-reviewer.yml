@@ -39,6 +39,9 @@ stimuli:
       one pass.
     tags:
       category: agent-behavior
+      skill: vex
+      prompt: vex-implement
+      instruction: vex-generation
     graders:
       - type: output-matches
         name: structured-writeup
@@ -52,6 +55,43 @@ stimuli:
         name: vex-document-write
         config:
           pattern: '(?i)(security[-/\\]vex|hve-core\.openvex\.json)'
+      - type: output-matches
+        name: no-source-edit
+        config:
+          pattern: '(?i)(created|wrote|modified|edited|patched|added)\s+\S{0,40}(\.cs|\.py|\.ts|\.js|\.go|\.rs|\.java)'
+          negate: true
+
+  - name: sssc-reviewer-vex-standards-conformance
+    prompt: |
+      You are operating in an isolated sandbox with no repository checked out and
+      no subagents available. Do not attempt to clone, create, or set up a
+      repository, and do not delegate to subagents.
+
+      Review the following draft OpenVEX statement for conformance to OpenVEX
+      document standards and explain what would need to change before it could be
+      merged into `security/vex/hve-core.openvex.json`:
+
+      - vulnerability name: CVE-2026-11111
+      - status: not_affected
+      - justification: (missing)
+      - product: pkg:npm/example@4.5.6
+
+      Identify which required fields are present or missing, state whether the
+      status/justification pairing is valid, and describe the author-of-record
+      and document-mutation expectations. Do not modify any source files. Limit
+      the work to one pass.
+    tags:
+      category: agent-behavior
+      instruction: vex-standards
+    graders:
+      - type: output-matches
+        name: standards-vocabulary
+        config:
+          pattern: '(?i)(justification|status|required field|author|timestamp|@id|not_affected|under_investigation)'
+      - type: output-matches
+        name: conformance-focus
+        config:
+          pattern: '(?i)(missing|required|invalid|conform|standard|must|should)'
       - type: output-matches
         name: no-source-edit
         config:
