@@ -124,8 +124,8 @@ function New-AssetDocFinding {
     param(
         [Parameter(Mandatory = $true)][ValidateSet('Error', 'Warning')][string]$Level,
         [Parameter(Mandatory = $true)][ValidateSet('Coverage', 'Orphan', 'Sync', 'Structure', 'Authored')][string]$Category,
-        [Parameter(Mandatory = $true)][string]$Path,
-        [Parameter(Mandatory = $true)][string]$Message
+        [Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string]$Path,
+        [Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string]$Message
     )
 
     return [PSCustomObject]@{
@@ -157,7 +157,7 @@ function Test-AssetDocCoverage {
     [OutputType([PSCustomObject[]])]
     param(
         [Parameter(Mandatory = $true)][AllowEmptyCollection()][object[]]$Models,
-        [Parameter(Mandatory = $true)][string]$RepoRoot,
+        [Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string]$RepoRoot,
         [Parameter(Mandatory = $false)][switch]$FailOnMissing
     )
 
@@ -189,7 +189,7 @@ function Test-AssetDocOrphan {
     [OutputType([PSCustomObject[]])]
     param(
         [Parameter(Mandatory = $true)][AllowEmptyCollection()][object[]]$Models,
-        [Parameter(Mandatory = $true)][string]$RepoRoot
+        [Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string]$RepoRoot
     )
 
     $findings = @()
@@ -352,8 +352,8 @@ function Write-AssetDocsValidationResults {
     param(
         [Parameter(Mandatory = $true)][AllowEmptyCollection()][object[]]$Findings,
         [Parameter(Mandatory = $true)][int]$AssetCount,
-        [Parameter(Mandatory = $true)][string]$RepoRoot,
-        [Parameter(Mandatory = $true)][string]$OutputPath,
+        [Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string]$RepoRoot,
+        [Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string]$OutputPath,
         [Parameter(Mandatory = $true)][hashtable]$Options
     )
 
@@ -430,7 +430,7 @@ function Invoke-AssetDocsValidation {
     [CmdletBinding()]
     [OutputType([int])]
     param(
-        [Parameter(Mandatory = $true)][string]$RepoRoot,
+        [Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string]$RepoRoot,
         [Parameter(Mandatory = $false)][switch]$FailOnMissing,
         [Parameter(Mandatory = $false)][switch]$CheckSync,
         [Parameter(Mandatory = $false)][switch]$RequireAuthoredContent,

@@ -6,6 +6,10 @@ BeforeAll {
     Import-Module $PSScriptRoot/../../docs/Modules/DocsHelpers.psm1 -Force
 }
 
+AfterAll {
+    Remove-Module DocsHelpers, CollectionHelpers -Force -ErrorAction SilentlyContinue
+}
+
 Describe 'Get-AssetFrontmatter' -Tag 'Unit' {
     BeforeAll {
         $script:root = Join-Path $TestDrive 'frontmatter'

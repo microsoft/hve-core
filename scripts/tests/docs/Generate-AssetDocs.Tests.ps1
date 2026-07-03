@@ -6,8 +6,10 @@ BeforeAll {
     . (Join-Path $PSScriptRoot '../../docs/Generate-AssetDocs.ps1')
     $script:TemplatePath = (Resolve-Path (Join-Path $PSScriptRoot '../../docs/templates/asset-doc.template.md')).Path
 
+    $script:fixtureRepoCounter = 0
     function script:New-AssetFixtureRepo {
-        $repo = Join-Path $TestDrive ([guid]::NewGuid().ToString('N').Substring(0, 8))
+        $script:fixtureRepoCounter++
+        $repo = Join-Path $TestDrive "asset-fixture-$($script:fixtureRepoCounter)"
         $gh = Join-Path $repo '.github'
 
         $fixtures = @{
@@ -33,6 +35,10 @@ BeforeAll {
         $content = Get-Content -LiteralPath $Path -Raw
         return [int]([regex]::Match($content, '(?m)^sidebar_position:\s*(\d+)').Groups[1].Value)
     }
+}
+
+AfterAll {
+    Remove-Module DocsHelpers, CollectionHelpers -Force -ErrorAction SilentlyContinue
 }
 
 Describe 'Invoke-AssetDocsGeneration - scaffolding' -Tag 'Unit' {

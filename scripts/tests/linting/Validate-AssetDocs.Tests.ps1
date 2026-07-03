@@ -6,8 +6,10 @@ BeforeAll {
     . (Join-Path $PSScriptRoot '../../linting/Validate-AssetDocs.ps1')
     $script:TemplatePath = (Resolve-Path (Join-Path $PSScriptRoot '../../docs/templates/asset-doc.template.md')).Path
 
+    $script:validatorFixtureCounter = 0
     function script:New-ValidatorFixture {
-        $repo = Join-Path $TestDrive ([guid]::NewGuid().ToString('N').Substring(0, 8))
+        $script:validatorFixtureCounter++
+        $repo = Join-Path $TestDrive "validator-fixture-$($script:validatorFixtureCounter)"
         $gh = Join-Path $repo '.github'
 
         $fixtures = @{
@@ -33,6 +35,10 @@ BeforeAll {
         param([string]$Repo, [string]$Kind)
         return (Get-FixtureModels -Repo $Repo | Where-Object { $_.Kind -eq $Kind } | Select-Object -First 1)
     }
+}
+
+AfterAll {
+    Remove-Module DocsHelpers, CollectionHelpers, CIHelpers -Force -ErrorAction SilentlyContinue
 }
 
 Describe 'Test-AssetDocCoverage' -Tag 'Unit' {

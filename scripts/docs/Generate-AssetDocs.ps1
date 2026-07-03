@@ -142,10 +142,10 @@ function New-DocFrontmatter {
     [CmdletBinding()]
     [OutputType([string])]
     param(
-        [Parameter(Mandatory = $true)][string]$Title,
-        [Parameter(Mandatory = $true)][string]$Description,
+        [Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string]$Title,
+        [Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string]$Description,
         [Parameter(Mandatory = $true)][int]$SidebarPosition,
-        [Parameter(Mandatory = $true)][string]$MsDate
+        [Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string]$MsDate
     )
 
     return (@(
@@ -210,8 +210,8 @@ function New-AssetMetadataBlock {
     [CmdletBinding()]
     [OutputType([string])]
     param(
-        [Parameter(Mandatory = $true)][string]$Kind,
-        [Parameter(Mandatory = $true)][string]$SourcePath,
+        [Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string]$Kind,
+        [Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string]$SourcePath,
         [Parameter(Mandatory = $true)][hashtable]$Invocation,
         [Parameter(Mandatory = $true)][bool]$Interactive
     )
@@ -277,7 +277,7 @@ function Get-TemplateHumanTail {
     [CmdletBinding()]
     [OutputType([string])]
     param(
-        [Parameter(Mandatory = $true)][string]$TemplatePath,
+        [Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string]$TemplatePath,
         [Parameter(Mandatory = $true)][bool]$Interactive
     )
 
@@ -311,7 +311,7 @@ function New-AssetPageModel {
     [OutputType([PSCustomObject])]
     param(
         [Parameter(Mandatory = $true)][hashtable]$Asset,
-        [Parameter(Mandatory = $true)][string]$RepoRoot
+        [Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string]$RepoRoot
     )
 
     $kind = [string]$Asset.kind
@@ -405,8 +405,8 @@ function New-AssetDocContent {
     [OutputType([string])]
     param(
         [Parameter(Mandatory = $true)][PSCustomObject]$Model,
-        [Parameter(Mandatory = $true)][string]$RepoRoot,
-        [Parameter(Mandatory = $true)][string]$TemplatePath,
+        [Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string]$RepoRoot,
+        [Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string]$TemplatePath,
         [Parameter(Mandatory = $true)][int]$SidebarPosition
     )
 
@@ -469,9 +469,9 @@ function New-KindIndexContent {
     [CmdletBinding()]
     [OutputType([string])]
     param(
-        [Parameter(Mandatory = $true)][string]$KindDir,
+        [Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string]$KindDir,
         [Parameter(Mandatory = $true)][object[]]$Pages,
-        [Parameter(Mandatory = $true)][string]$RepoRoot
+        [Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string]$RepoRoot
     )
 
     $title = (Get-Culture).TextInfo.ToTitleCase($KindDir)
@@ -509,7 +509,7 @@ function New-RootIndexContent {
     [OutputType([string])]
     param(
         [Parameter(Mandatory = $true)][object[]]$Pages,
-        [Parameter(Mandatory = $true)][string]$RepoRoot
+        [Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string]$RepoRoot
     )
 
     $rows = [System.Collections.Generic.List[string]]::new()
@@ -544,11 +544,11 @@ function New-IndexContent {
     [CmdletBinding()]
     [OutputType([string])]
     param(
-        [Parameter(Mandatory = $true)][string]$Title,
-        [Parameter(Mandatory = $true)][string]$Description,
+        [Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string]$Title,
+        [Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string]$Description,
         [Parameter(Mandatory = $true)][int]$SidebarPosition,
         [Parameter(Mandatory = $true)][string]$RegionBody,
-        [Parameter(Mandatory = $true)][string]$ExistingPath
+        [Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string]$ExistingPath
     )
 
     $msDate = Get-Date -Format 'yyyy-MM-dd'
@@ -587,7 +587,7 @@ function Write-DocIfChanged {
     [CmdletBinding(SupportsShouldProcess)]
     [OutputType([string])]
     param(
-        [Parameter(Mandatory = $true)][string]$Path,
+        [Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string]$Path,
         [Parameter(Mandatory = $true)][string]$Content
     )
 
@@ -634,8 +634,8 @@ function Invoke-AssetDocsGeneration {
     [CmdletBinding(SupportsShouldProcess)]
     [OutputType([PSCustomObject])]
     param(
-        [Parameter(Mandatory = $true)][string]$RepoRoot,
-        [Parameter(Mandatory = $true)][string]$TemplatePath
+        [Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string]$RepoRoot,
+        [Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string]$TemplatePath
     )
 
     if (-not (Test-Path -LiteralPath $TemplatePath)) {
@@ -714,27 +714,34 @@ function Invoke-AssetDocsGeneration {
 #endregion Orchestration
 
 if ($MyInvocation.InvocationName -ne '.') {
-    $summary = Invoke-AssetDocsGeneration -RepoRoot $RepoRoot -TemplatePath $TemplatePath
+    try {
+        $summary = Invoke-AssetDocsGeneration -RepoRoot $RepoRoot -TemplatePath $TemplatePath
 
-    # The run summary is a report, not a documentation change, so it is always
-    # persisted even under -WhatIf (with -WhatIf:$false) so CI can read drift.
-    $resultsPath = if ([System.IO.Path]::IsPathRooted($OutputPath)) { $OutputPath } else { Join-Path $RepoRoot $OutputPath }
-    $resultsDir = Split-Path -Path $resultsPath -Parent
-    if ($resultsDir -and -not (Test-Path -LiteralPath $resultsDir)) {
-        New-Item -ItemType Directory -Path $resultsDir -Force -WhatIf:$false | Out-Null
-    }
-    $summary | ConvertTo-Json -Depth 5 | Set-Content -LiteralPath $resultsPath -Encoding utf8NoBOM -WhatIf:$false
+        # The run summary is a report, not a documentation change, so it is always
+        # persisted even under -WhatIf (with -WhatIf:$false) so CI can read drift.
+        $resultsPath = if ([System.IO.Path]::IsPathRooted($OutputPath)) { $OutputPath } else { Join-Path $RepoRoot $OutputPath }
+        $resultsDir = Split-Path -Path $resultsPath -Parent
+        if ($resultsDir -and -not (Test-Path -LiteralPath $resultsDir)) {
+            New-Item -ItemType Directory -Path $resultsDir -Force -WhatIf:$false | Out-Null
+        }
+        $summary | ConvertTo-Json -Depth 5 | Set-Content -LiteralPath $resultsPath -Encoding utf8NoBOM -WhatIf:$false
 
-    $verb = if ($summary.WhatIf) { 'Would create' } else { 'Created' }
-    $verb2 = if ($summary.WhatIf) { 'would update' } else { 'updated' }
-    Write-Host "`n--- Asset Docs Generation ---" -ForegroundColor Cyan
-    Write-Host "  $verb`: $($summary.Created.Count)"
-    Write-Host "  $((Get-Culture).TextInfo.ToTitleCase($verb2))`: $($summary.Updated.Count)"
-    Write-Host "  Unchanged: $($summary.Unchanged.Count)"
-    if ($summary.NeedsAttention.Count -gt 0) {
-        Write-Host "  Needs attention (missing markers, skipped): $($summary.NeedsAttention.Count)" -ForegroundColor Yellow
+        $verb = if ($summary.WhatIf) { 'Would create' } else { 'Created' }
+        $verb2 = if ($summary.WhatIf) { 'would update' } else { 'updated' }
+        Write-Host "`n--- Asset Docs Generation ---" -ForegroundColor Cyan
+        Write-Host "  $verb`: $($summary.Created.Count)"
+        Write-Host "  $((Get-Culture).TextInfo.ToTitleCase($verb2))`: $($summary.Updated.Count)"
+        Write-Host "  Unchanged: $($summary.Unchanged.Count)"
+        if ($summary.NeedsAttention.Count -gt 0) {
+            Write-Host "  Needs attention (missing markers, skipped): $($summary.NeedsAttention.Count)" -ForegroundColor Yellow
+        }
+        if ($summary.WhatIf -and $summary.DriftCount -gt 0) {
+            Write-Host "  Drift detected in $($summary.DriftCount) page(s)." -ForegroundColor Yellow
+        }
+        exit 0
     }
-    if ($summary.WhatIf -and $summary.DriftCount -gt 0) {
-        Write-Host "  Drift detected in $($summary.DriftCount) page(s)." -ForegroundColor Yellow
+    catch {
+        Write-Error -ErrorAction Continue "Generate-AssetDocs failed: $($_.Exception.Message)"
+        exit 1
     }
 }
