@@ -184,7 +184,11 @@ function Format-AssetInvocation {
             return "Applied automatically to $tick$token$tick"
         }
         'skill-load' { return 'Loaded on demand by referencing agents' }
-        default { return (ConvertTo-TableCell -Value $token) }
+        default {
+            $mechanism = ConvertTo-TableCell -Value ([string]$Invocation.Mechanism)
+            Write-Warning "Format-AssetInvocation: unrecognized mechanism '$mechanism'; rendering drift marker."
+            return "(unknown invocation: $mechanism)"
+        }
     }
 }
 
