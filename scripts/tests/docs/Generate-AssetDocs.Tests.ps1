@@ -233,62 +233,6 @@ Describe 'Invoke-AssetDocsGeneration - WhatIf' -Tag 'Unit' {
     }
 }
 
-Describe 'Format-YamlScalar' -Tag 'Unit' {
-    It 'Leaves a safe scalar unquoted' {
-        Format-YamlScalar -Value 'Alpha Agent' | Should -Be 'Alpha Agent'
-    }
-
-    It 'Quotes values containing a colon' {
-        Format-YamlScalar -Value 'Triage: draft VEX' | Should -Be '"Triage: draft VEX"'
-    }
-
-    It 'Escapes embedded double quotes' {
-        Format-YamlScalar -Value 'say "hi"' | Should -Be '"say \"hi\""'
-    }
-
-    It 'Quotes an empty string' {
-        Format-YamlScalar -Value '' | Should -Be '""'
-    }
-}
-
-Describe 'ConvertTo-TableCell' -Tag 'Unit' {
-    It 'Collapses line breaks to spaces' {
-        ConvertTo-TableCell -Value ('line one' + "`n" + 'line two') | Should -Be 'line one line two'
-    }
-
-    It 'Escapes pipe characters' {
-        ConvertTo-TableCell -Value 'a | b' | Should -Be 'a \| b'
-    }
-}
-
-Describe 'Format-AssetInvocation' -Tag 'Unit' {
-    It 'Describes an agent picker invocation' {
-        $text = Format-AssetInvocation -Invocation @{ Mechanism = 'agent-picker'; Token = 'RPI Agent' }
-        $text | Should -Match 'chat agent picker'
-        $text | Should -Match 'RPI Agent'
-    }
-
-    It 'Describes a slash command invocation' {
-        Format-AssetInvocation -Invocation @{ Mechanism = 'slash-command'; Token = '/demo' } |
-            Should -Match 'Slash command'
-    }
-
-    It 'Describes an auto-applied instruction with a glob' {
-        Format-AssetInvocation -Invocation @{ Mechanism = 'auto-applied'; Token = '**/*.ps1' } |
-            Should -Match 'Applied automatically to'
-    }
-
-    It 'Describes an auto-applied instruction without a glob' {
-        Format-AssetInvocation -Invocation @{ Mechanism = 'auto-applied'; Token = '' } |
-            Should -Be 'Applied automatically'
-    }
-
-    It 'Describes a skill load' {
-        Format-AssetInvocation -Invocation @{ Mechanism = 'skill-load'; Token = 'documentation' } |
-            Should -Match 'Loaded on demand'
-    }
-}
-
 Describe 'New-DocFrontmatter' -Tag 'Unit' {
     It 'Emits all required frontmatter fields' {
         $fm = New-DocFrontmatter -Title 'Demo' -Description 'A demo.' -SidebarPosition 3 -MsDate '2026-07-02'
@@ -296,15 +240,6 @@ Describe 'New-DocFrontmatter' -Tag 'Unit' {
         $fm | Should -Match '(?m)^description: A demo\.$'
         $fm | Should -Match '(?m)^sidebar_position: 3$'
         $fm | Should -Match '(?m)^ms\.date: 2026-07-02$'
-    }
-}
-
-Describe 'New-AssetMetadataBlock' -Tag 'Unit' {
-    It 'Builds a metadata table with all rows' {
-        $block = New-AssetMetadataBlock -Kind 'agent' -SourcePath '.github/agents/hve-core/demo.agent.md' -Invocation @{ Mechanism = 'agent-picker'; Token = 'Demo' } -Interactive $true
-        $block | Should -Match '(?m)^\| Kind \| agent \|$'
-        $block | Should -Match 'agents/hve-core/demo\.agent\.md'
-        $block | Should -Match '(?m)^\| Interactive \| Yes \|$'
     }
 }
 
