@@ -47,18 +47,18 @@ $script:AssetDocStubSentinel = '<!-- asset-docs:stub -->'
 function Format-YamlScalar {
     <#
     .SYNOPSIS
-    Renders a string as a safe YAML scalar for frontmatter.
+        Renders a string as a safe YAML scalar for frontmatter.
 
     .DESCRIPTION
-    Returns the value unquoted when it is safe to do so, otherwise wraps it in
-    double quotes with backslash and double-quote escaping so colons and other
-    YAML-significant characters do not break the frontmatter block.
+        Returns the value unquoted when it is safe to do so, otherwise wraps it in
+        double quotes with backslash and double-quote escaping so colons and other
+        YAML-significant characters do not break the frontmatter block.
 
     .PARAMETER Value
-    The scalar value to render.
+        The scalar value to render.
 
     .OUTPUTS
-    [string] A YAML-safe scalar.
+        [string] A YAML-safe scalar.
     #>
     [CmdletBinding()]
     [OutputType([string])]
@@ -84,17 +84,17 @@ function Format-YamlScalar {
 function ConvertTo-TableCell {
     <#
     .SYNOPSIS
-    Normalizes text for inclusion in a Markdown table cell.
+        Normalizes text for inclusion in a Markdown table cell.
 
     .DESCRIPTION
-    Collapses line breaks to spaces and escapes pipe characters so cell content
-    cannot break table structure.
+        Collapses line breaks to spaces and escapes pipe characters so cell content
+        cannot break table structure.
 
     .PARAMETER Value
-    The raw cell text.
+        The raw cell text.
 
     .OUTPUTS
-    [string] A single-line, pipe-escaped cell value.
+        [string] A single-line, pipe-escaped cell value.
     #>
     [CmdletBinding()]
     [OutputType([string])]
@@ -114,21 +114,21 @@ function ConvertTo-TableCell {
 function Get-AssetFrontmatter {
     <#
     .SYNOPSIS
-    Parses the full YAML frontmatter block of an asset markdown file.
+        Parses the full YAML frontmatter block of an asset markdown file.
 
     .DESCRIPTION
-    Reads the YAML frontmatter delimited by --- markers at the start of a
-    markdown file and returns it as a hashtable. Complements
-    Get-ArtifactDescription (description only) by exposing every frontmatter
-    field required for invocation and interactivity classification such as
-    name, applyTo, argument-hint, and agent. Returns an empty hashtable when
-    the file is missing, has no frontmatter, or the frontmatter fails to parse.
+        Reads the YAML frontmatter delimited by --- markers at the start of a
+        markdown file and returns it as a hashtable. Complements
+        Get-ArtifactDescription (description only) by exposing every frontmatter
+        field required for invocation and interactivity classification such as
+        name, applyTo, argument-hint, and agent. Returns an empty hashtable when
+        the file is missing, has no frontmatter, or the frontmatter fails to parse.
 
     .PARAMETER FilePath
-    Absolute path to the asset markdown file.
+        Absolute path to the asset markdown file.
 
     .OUTPUTS
-    [hashtable] Parsed frontmatter fields, or an empty hashtable.
+        [hashtable] Parsed frontmatter fields, or an empty hashtable.
     #>
     [CmdletBinding()]
     [OutputType([hashtable])]
@@ -166,20 +166,20 @@ function Get-AssetFrontmatter {
 function Get-DocumentableAssets {
     <#
     .SYNOPSIS
-    Enumerates GenAI assets eligible for a generated documentation page.
+        Enumerates GenAI assets eligible for a generated documentation page.
 
     .DESCRIPTION
-    Discovers all artifacts via Get-ArtifactFiles and narrows them to the
-    documentable kinds (agent, prompt, instruction, skill). Root-level
-    repo-specific artifacts and assets under deprecated directory trees are
-    already excluded by Get-ArtifactFiles, so no additional filtering is
-    required. Results are sorted by kind then path for deterministic output.
+        Discovers all artifacts via Get-ArtifactFiles and narrows them to the
+        documentable kinds (agent, prompt, instruction, skill). Root-level
+        repo-specific artifacts and assets under deprecated directory trees are
+        already excluded by Get-ArtifactFiles, so no additional filtering is
+        required. Results are sorted by kind then path for deterministic output.
 
     .PARAMETER RepoRoot
-    Absolute path to the repository root directory.
+        Absolute path to the repository root directory.
 
     .OUTPUTS
-    [hashtable[]] Array of hashtable entries with path and kind keys.
+        [hashtable[]] Array of hashtable entries with path and kind keys.
     #>
     [CmdletBinding()]
     [OutputType([hashtable[]])]
@@ -198,26 +198,26 @@ function Get-DocumentableAssets {
 function Get-AssetDocsPath {
     <#
     .SYNOPSIS
-    Derives the documentation page path for an asset.
+        Derives the documentation page path for an asset.
 
     .DESCRIPTION
-    Maps a repo-relative .github/<kind>/... asset path to its deterministic
-    docs/reference/<kind>/... documentation page path. The intermediate
-    directory structure is preserved so nested assets such as agent subagents
-    (.github/agents/<collection>/subagents/<name>.agent.md) and nested
-    instructions retain their hierarchy under docs/reference/. File-based kinds
-    (agent, prompt, instruction) have their suffix replaced with .md; skills are
-    directory-based, so .md is appended to the skill directory name.
+        Maps a repo-relative .github/<kind>/... asset path to its deterministic
+        docs/reference/<kind>/... documentation page path. The intermediate
+        directory structure is preserved so nested assets such as agent subagents
+        (.github/agents/<collection>/subagents/<name>.agent.md) and nested
+        instructions retain their hierarchy under docs/reference/. File-based kinds
+        (agent, prompt, instruction) have their suffix replaced with .md; skills are
+        directory-based, so .md is appended to the skill directory name.
 
     .PARAMETER Path
-    Repo-relative asset path with forward slashes (as produced by
-    Get-DocumentableAssets). For skills this is the skill directory path.
+        Repo-relative asset path with forward slashes (as produced by
+        Get-DocumentableAssets). For skills this is the skill directory path.
 
     .PARAMETER Kind
-    The artifact kind (agent, prompt, instruction, skill).
+        The artifact kind (agent, prompt, instruction, skill).
 
     .OUTPUTS
-    [string] Repo-relative documentation page path with forward slashes.
+        [string] Repo-relative documentation page path with forward slashes.
     #>
     [CmdletBinding()]
     [OutputType([string])]
@@ -259,27 +259,27 @@ function Get-AssetDocsPath {
 function Get-AssetInvocation {
     <#
     .SYNOPSIS
-    Describes how an asset is invoked.
+        Describes how an asset is invoked.
 
     .DESCRIPTION
-    Returns a structured descriptor of the invocation mechanism for an asset so
-    documentation generation can render consistent "how to invoke" guidance.
-    Agents surface in the chat agent picker under their display name; prompts run
-    as slash commands; instructions apply automatically to files matching their
-    applyTo glob; skills load on demand when a referencing agent needs them.
+        Returns a structured descriptor of the invocation mechanism for an asset so
+        documentation generation can render consistent "how to invoke" guidance.
+        Agents surface in the chat agent picker under their display name; prompts run
+        as slash commands; instructions apply automatically to files matching their
+        applyTo glob; skills load on demand when a referencing agent needs them.
 
     .PARAMETER Kind
-    The artifact kind (agent, prompt, instruction, skill).
+        The artifact kind (agent, prompt, instruction, skill).
 
     .PARAMETER Name
-    The asset name (display name for agents, artifact key otherwise).
+        The asset name (display name for agents, artifact key otherwise).
 
     .PARAMETER Frontmatter
-    Optional parsed frontmatter hashtable. Used to resolve the applyTo glob for
-    instructions and to prefer an agent's declared display name.
+        Optional parsed frontmatter hashtable. Used to resolve the applyTo glob for
+        instructions and to prefer an agent's declared display name.
 
     .OUTPUTS
-    [hashtable] With Mechanism and Token keys.
+        [hashtable] With Mechanism and Token keys.
     #>
     [CmdletBinding()]
     [OutputType([hashtable])]
@@ -330,25 +330,25 @@ function Get-AssetInvocation {
 function Test-AssetInteractive {
     <#
     .SYNOPSIS
-    Determines whether an asset engages the user interactively.
+        Determines whether an asset engages the user interactively.
 
     .DESCRIPTION
-    Classifies whether an asset has an interactive usage flow so documentation
-    generation can decide whether to include a "How to use" section. Agents are
-    conversational and always interactive. Prompts are interactive when they
-    declare inputs (argument-hint) or launch an agent (agent field). Instructions
-    and skills are passive: instructions apply automatically and skills load in
-    the background, so neither is interactive.
+        Classifies whether an asset has an interactive usage flow so documentation
+        generation can decide whether to include a "How to use" section. Agents are
+        conversational and always interactive. Prompts are interactive when they
+        declare inputs (argument-hint) or launch an agent (agent field). Instructions
+        and skills are passive: instructions apply automatically and skills load in
+        the background, so neither is interactive.
 
     .PARAMETER Kind
-    The artifact kind (agent, prompt, instruction, skill).
+        The artifact kind (agent, prompt, instruction, skill).
 
     .PARAMETER Frontmatter
-    Optional parsed frontmatter hashtable used to detect prompt inputs and
-    agent binding.
+        Optional parsed frontmatter hashtable used to detect prompt inputs and
+        agent binding.
 
     .OUTPUTS
-    [bool] True when the asset has an interactive usage flow.
+        [bool] True when the asset has an interactive usage flow.
     #>
     [CmdletBinding()]
     [OutputType([bool])]
@@ -379,13 +379,13 @@ function Test-AssetInteractive {
 function Format-AssetInvocation {
     <#
     .SYNOPSIS
-    Renders an invocation descriptor as human-readable table text.
+        Renders an invocation descriptor as human-readable table text.
 
     .PARAMETER Invocation
-    Hashtable from Get-AssetInvocation with Mechanism and Token keys.
+        Hashtable from Get-AssetInvocation with Mechanism and Token keys.
 
     .OUTPUTS
-    [string] Table-safe invocation description.
+        [string] Table-safe invocation description.
     #>
     [CmdletBinding()]
     [OutputType([string])]
@@ -419,20 +419,20 @@ function Format-AssetInvocation {
 function Get-AssetDocMarker {
     <#
     .SYNOPSIS
-    Builds a named auto-generated marker string.
+        Builds a named auto-generated marker string.
 
     .DESCRIPTION
-    Returns the BEGIN or END marker comment for a named generated region using
-    the shared marker format so producers and consumers cannot drift.
+        Returns the BEGIN or END marker comment for a named generated region using
+        the shared marker format so producers and consumers cannot drift.
 
     .PARAMETER Region
-    The region name (for example, metadata or overview).
+        The region name (for example, metadata or overview).
 
     .PARAMETER Boundary
-    Which marker to build: Begin or End.
+        Which marker to build: Begin or End.
 
     .OUTPUTS
-    [string] The marker comment.
+        [string] The marker comment.
     #>
     [CmdletBinding()]
     [OutputType([string])]
@@ -459,21 +459,21 @@ function Get-AssetDocMarker {
 function New-AssetGeneratedRegion {
     <#
     .SYNOPSIS
-    Renders a named auto-generated region.
+        Renders a named auto-generated region.
 
     .DESCRIPTION
-    Wraps generated body content between the BEGIN and END markers for a named
-    region. The body is trimmed of surrounding blank lines and placed on its own
-    lines so the rendered block is stable across regenerations.
+        Wraps generated body content between the BEGIN and END markers for a named
+        region. The body is trimmed of surrounding blank lines and placed on its own
+        lines so the rendered block is stable across regenerations.
 
     .PARAMETER Region
-    The region name (for example, metadata or overview).
+        The region name (for example, metadata or overview).
 
     .PARAMETER Body
-    The generated content to place between the markers.
+        The generated content to place between the markers.
 
     .OUTPUTS
-    [string] The rendered region including both markers.
+        [string] The rendered region including both markers.
     #>
     [CmdletBinding()]
     [OutputType([string])]
@@ -497,25 +497,25 @@ function New-AssetGeneratedRegion {
 function Split-AssetDocByMarkers {
     <#
     .SYNOPSIS
-    Splits documentation content at a named region's markers.
+        Splits documentation content at a named region's markers.
 
     .DESCRIPTION
-    Locates the BEGIN and END markers for a named region within the supplied
-    content and returns the text before the region, the region body, and the
-    text after the region. The Before and After segments hold the
-    human-authored sections that must survive regeneration. Returns
-    HasMarkers = $false with the full content as Before when the markers are
-    missing or mis-ordered.
+        Locates the BEGIN and END markers for a named region within the supplied
+        content and returns the text before the region, the region body, and the
+        text after the region. The Before and After segments hold the
+        human-authored sections that must survive regeneration. Returns
+        HasMarkers = $false with the full content as Before when the markers are
+        missing or mis-ordered.
 
     .PARAMETER Content
-    The full text content of a documentation page.
+        The full text content of a documentation page.
 
     .PARAMETER Region
-    The region name to locate (for example, metadata or overview).
+        The region name to locate (for example, metadata or overview).
 
     .OUTPUTS
-    [hashtable] With HasMarkers ([bool]), Before ([string]), Body ([string]),
-    and After ([string]) keys.
+        [hashtable] With HasMarkers ([bool]), Before ([string]), Body ([string]),
+        and After ([string]) keys.
     #>
     [CmdletBinding()]
     [OutputType([hashtable])]
@@ -570,26 +570,26 @@ function Split-AssetDocByMarkers {
 function Merge-AssetDocRegion {
     <#
     .SYNOPSIS
-    Replaces a named region's body while preserving human-authored sections.
+        Replaces a named region's body while preserving human-authored sections.
 
     .DESCRIPTION
-    Rewrites only the content between a named region's BEGIN and END markers,
-    leaving every human-authored section outside the region byte-for-byte
-    unchanged. Throws when the region markers are absent so callers can detect
-    a corrupted or drifted page instead of silently discarding generated
-    content.
+        Rewrites only the content between a named region's BEGIN and END markers,
+        leaving every human-authored section outside the region byte-for-byte
+        unchanged. Throws when the region markers are absent so callers can detect
+        a corrupted or drifted page instead of silently discarding generated
+        content.
 
     .PARAMETER Content
-    The full text content of an existing documentation page.
+        The full text content of an existing documentation page.
 
     .PARAMETER Region
-    The region name to update (for example, metadata or overview).
+        The region name to update (for example, metadata or overview).
 
     .PARAMETER Body
-    The new generated content to place between the markers.
+        The new generated content to place between the markers.
 
     .OUTPUTS
-    [string] The merged page content.
+        [string] The merged page content.
     #>
     [CmdletBinding()]
     [OutputType([string])]
@@ -619,18 +619,18 @@ function Merge-AssetDocRegion {
 function Test-AssetDocStub {
     <#
     .SYNOPSIS
-    Detects unwritten human-authored stub sections.
+        Detects unwritten human-authored stub sections.
 
     .DESCRIPTION
-    Returns true when the stub sentinel appears anywhere in the supplied
-    content, signalling that at least one human-authored section is still a
-    placeholder awaiting authoring.
+        Returns true when the stub sentinel appears anywhere in the supplied
+        content, signalling that at least one human-authored section is still a
+        placeholder awaiting authoring.
 
     .PARAMETER Content
-    The full text content of a documentation page.
+        The full text content of a documentation page.
 
     .OUTPUTS
-    [bool] True when a stub sentinel is present.
+        [bool] True when a stub sentinel is present.
     #>
     [CmdletBinding()]
     [OutputType([bool])]
@@ -650,21 +650,21 @@ function Test-AssetDocStub {
 function New-AssetPageModel {
     <#
     .SYNOPSIS
-    Builds the resolved page model for a documentable asset.
+        Builds the resolved page model for a documentable asset.
 
     .DESCRIPTION
-    Reads the asset frontmatter and description once and derives the title,
-    invocation, interactivity, source path, and destination docs path used by
-    both the page builder and the index builder.
+        Reads the asset frontmatter and description once and derives the title,
+        invocation, interactivity, source path, and destination docs path used by
+        both the page builder and the index builder.
 
     .PARAMETER Asset
-    Hashtable with path and kind keys from Get-DocumentableAssets.
+        Hashtable with path and kind keys from Get-DocumentableAssets.
 
     .PARAMETER RepoRoot
-    Repository root directory.
+        Repository root directory.
 
     .OUTPUTS
-    [PSCustomObject] The resolved page model.
+        [PSCustomObject] The resolved page model.
     #>
     [CmdletBinding()]
     [OutputType([PSCustomObject])]
@@ -716,22 +716,22 @@ function New-AssetPageModel {
 function New-AssetMetadataBlock {
     <#
     .SYNOPSIS
-    Builds the metadata region body for an asset page.
+        Builds the metadata region body for an asset page.
 
     .PARAMETER Kind
-    Asset kind.
+        Asset kind.
 
     .PARAMETER SourcePath
-    Repo-relative source path of the asset.
+        Repo-relative source path of the asset.
 
     .PARAMETER Invocation
-    Invocation descriptor from Get-AssetInvocation.
+        Invocation descriptor from Get-AssetInvocation.
 
     .PARAMETER Interactive
-    Whether the asset has an interactive usage flow.
+        Whether the asset has an interactive usage flow.
 
     .OUTPUTS
-    [string] The metadata table body (without markers).
+        [string] The metadata table body (without markers).
     #>
     [CmdletBinding()]
     [OutputType([string])]
@@ -758,18 +758,18 @@ function New-AssetMetadataBlock {
 function New-AssetOverviewBody {
     <#
     .SYNOPSIS
-    Renders the overview ("What it does") region body for an asset.
+        Renders the overview ("What it does") region body for an asset.
 
     .DESCRIPTION
-    Returns the asset description collapsed to a single line, or a stable
-    fallback sentence when the asset declares no description. Shared by the
-    generator and the validator so the sync check renders identically.
+        Returns the asset description collapsed to a single line, or a stable
+        fallback sentence when the asset declares no description. Shared by the
+        generator and the validator so the sync check renders identically.
 
     .PARAMETER Model
-    Page model from New-AssetPageModel.
+        Page model from New-AssetPageModel.
 
     .OUTPUTS
-    [string] The overview region body.
+        [string] The overview region body.
     #>
     [CmdletBinding()]
     [OutputType([string])]
