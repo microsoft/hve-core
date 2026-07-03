@@ -143,7 +143,7 @@ function Get-AssetFrontmatter {
     }
 
     $content = Get-Content -LiteralPath $FilePath -Raw
-    if ($content -match '(?s)^---\s*\r?\n(.*?)\r?\n---') {
+    if ($content -match '(?s)^---[ \t]*\r?\n(.*?)\r?\n---') {
         $yamlBlock = $Matches[1] -replace '\r\n', "`n" -replace '\r', "`n"
         try {
             $frontmatter = ConvertFrom-Yaml -Yaml $yamlBlock
