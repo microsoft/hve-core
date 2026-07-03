@@ -8,6 +8,8 @@ BeforeAll {
 
     $script:fixtureRepoCounter = 0
     function script:New-AssetFixtureRepo {
+        param([string]$Newline = "`n")
+
         $script:fixtureRepoCounter++
         $repo = Join-Path $TestDrive "asset-fixture-$($script:fixtureRepoCounter)"
         $gh = Join-Path $repo '.github'
@@ -24,7 +26,7 @@ BeforeAll {
         foreach ($rel in $fixtures.Keys) {
             $full = Join-Path $gh $rel
             New-Item -ItemType Directory -Path (Split-Path $full -Parent) -Force | Out-Null
-            Set-Content -LiteralPath $full -Value ($fixtures[$rel] -join "`n") -Encoding utf8NoBOM
+            Set-Content -LiteralPath $full -Value ($fixtures[$rel] -join $Newline) -Encoding utf8NoBOM -NoNewline
         }
 
         return $repo
@@ -126,6 +128,38 @@ Describe 'Invoke-AssetDocsGeneration - idempotency' -Tag 'Unit' {
 
     It 'Reports every page as unchanged' {
         $script:second.Unchanged.Count | Should -Be 11
+    }
+}
+
+Describe 'Invoke-AssetDocsGeneration - CRLF source assets' -Tag 'Unit' {
+    BeforeAll {
+        $script:lfRepo = New-AssetFixtureRepo
+        $script:crlfRepo = New-AssetFixtureRepo -Newline "`r`n"
+
+        $script:lfResult = Invoke-AssetDocsGeneration -RepoRoot $script:lfRepo -TemplatePath $script:TemplatePath
+        $script:crlfResult = Invoke-AssetDocsGeneration -RepoRoot $script:crlfRepo -TemplatePath $script:TemplatePath
+    }
+
+    It 'Creates the same set of pages regardless of source line endings' {
+        ($script:crlfResult.Created | Sort-Object) | Should -Be ($script:lfResult.Created | Sort-Object)
+        $script:crlfResult.Updated.Count | Should -Be 0
+        $script:crlfResult.Unchanged.Count | Should -Be 0
+    }
+
+    It 'Generates byte-identical page content from CRLF and LF sources' {
+        foreach ($rel in $script:lfResult.Created) {
+            $lfContent = Get-Content -LiteralPath (Join-Path $script:lfRepo $rel) -Raw
+            $crlfContent = Get-Content -LiteralPath (Join-Path $script:crlfRepo $rel) -Raw
+            $crlfContent | Should -Be $lfContent -Because "generated page '$rel' must not depend on source line endings"
+        }
+    }
+
+    It 'Reports every page as unchanged on a second run over CRLF sources' {
+        $second = Invoke-AssetDocsGeneration -RepoRoot $script:crlfRepo -TemplatePath $script:TemplatePath
+        $second.Created.Count | Should -Be 0
+        $second.Updated.Count | Should -Be 0
+        $second.DriftCount | Should -Be 0
+        $second.Unchanged.Count | Should -Be $script:crlfResult.Created.Count
     }
 }
 
@@ -279,6 +313,45 @@ Describe 'Remove-HowToUseSection' -Tag 'Unit' {
         $result = Remove-HowToUseSection -Tail $tail
         $result | Should -Not -Match '## How to use it'
         $result | Should -Match '## When to use it'
+    }
+
+    It 'Removes the How to use section identically when the tail uses CRLF' {
+        $lfTail = @(
+            ''
+            '## When to use it'
+            ''
+            'Use it here.'
+            ''
+            '## How to use it'
+            ''
+            'Steps here.'
+            ''
+            '## Example usage'
+            ''
+            'An example.'
+        ) -join "`n"
+        $crlfTail = $lfTail -replace "`n", "`r`n"
+        $lfResult = Remove-HowToUseSection -Tail $lfTail
+        $crlfResult = Remove-HowToUseSection -Tail $crlfTail
+        ($crlfResult -replace "`r`n", "`n") | Should -Be $lfResult
+    }
+
+    It 'Removes a trailing How to use section identically when the tail uses CRLF' {
+        # Exercises the \z end-of-string branch of the lookahead under CRLF.
+        $lfTail = @(
+            ''
+            '## When to use it'
+            ''
+            'Use it here.'
+            ''
+            '## How to use it'
+            ''
+            'Steps here.'
+        ) -join "`n"
+        $crlfTail = $lfTail -replace "`n", "`r`n"
+        $lfResult = Remove-HowToUseSection -Tail $lfTail
+        $crlfResult = Remove-HowToUseSection -Tail $crlfTail
+        ($crlfResult -replace "`r`n", "`n") | Should -Be $lfResult
     }
 }
 

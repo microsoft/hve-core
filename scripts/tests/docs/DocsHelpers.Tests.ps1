@@ -63,6 +63,25 @@ Describe 'Get-AssetFrontmatter' -Tag 'Unit' {
         $fm = Get-AssetFrontmatter -FilePath $script:malformedPath
         $fm | Should -BeOfType [hashtable]
     }
+
+    It 'Parses frontmatter identically when the file uses CRLF line endings' {
+        $lf = @(
+            '---'
+            'name: RPI Agent'
+            'description: An orchestrator'
+            'applyTo: "**/*.ps1"'
+            '---'
+            ''
+            '# Body'
+        ) -join "`n"
+        $crlfPath = Join-Path $script:root 'crlf.md'
+        Set-Content -LiteralPath $crlfPath -Value ($lf -replace "`n", "`r`n") -Encoding utf8NoBOM -NoNewline
+
+        $fm = Get-AssetFrontmatter -FilePath $crlfPath
+        $fm['name'] | Should -Be 'RPI Agent'
+        $fm['description'] | Should -Be 'An orchestrator'
+        $fm['applyTo'] | Should -Be '**/*.ps1'
+    }
 }
 
 Describe 'Get-DocumentableAssets' -Tag 'Unit' {
@@ -298,6 +317,28 @@ Describe 'Split-AssetDocByMarkers' -Tag 'Unit' {
         $split.HasMarkers | Should -BeFalse
         $split.Before | Should -Be $content
     }
+
+    It 'Extracts identical segments when content uses CRLF line endings' {
+        $lf = @(
+            'before'
+            '<!-- BEGIN AUTO-GENERATED: metadata -->'
+            'BODY'
+            '<!-- END AUTO-GENERATED: metadata -->'
+            'after'
+        ) -join "`n"
+        $crlf = $lf -replace "`n", "`r`n"
+
+        $lfSplit = Split-AssetDocByMarkers -Content $lf -Region 'metadata'
+        $crlfSplit = Split-AssetDocByMarkers -Content $crlf -Region 'metadata'
+
+        $crlfSplit.HasMarkers | Should -Be $lfSplit.HasMarkers
+        $crlfSplit.Body | Should -Be $lfSplit.Body
+        # Before/After retain their native line endings; the IndexOf offsets must
+        # still land on the marker boundaries so the segments match after
+        # normalizing CRLF back to LF.
+        ($crlfSplit.Before -replace "`r`n", "`n") | Should -Be $lfSplit.Before
+        ($crlfSplit.After -replace "`r`n", "`n") | Should -Be $lfSplit.After
+    }
 }
 
 Describe 'Merge-AssetDocRegion' -Tag 'Unit' {
@@ -338,6 +379,13 @@ Describe 'Merge-AssetDocRegion' -Tag 'Unit' {
     It 'Throws when the region markers are absent' {
         { Merge-AssetDocRegion -Content 'no markers here' -Region 'metadata' -Body 'x' } | Should -Throw
     }
+
+    It 'Merges identically apart from line endings when the page uses CRLF' {
+        $crlf = $script:doc -replace "`n", "`r`n"
+        $lfMerged = Merge-AssetDocRegion -Content $script:doc -Region 'metadata' -Body 'new metadata'
+        $crlfMerged = Merge-AssetDocRegion -Content $crlf -Region 'metadata' -Body 'new metadata'
+        ($crlfMerged -replace "`r`n", "`n") | Should -Be $lfMerged
+    }
 }
 
 Describe 'Test-AssetDocStub' -Tag 'Unit' {
@@ -375,6 +423,12 @@ Describe 'ConvertTo-TableCell' -Tag 'Unit' {
 
     It 'Escapes pipe characters' {
         ConvertTo-TableCell -Value 'a | b' | Should -Be 'a \| b'
+    }
+
+    It 'Collapses CRLF line breaks identically to LF' {
+        $lf = 'line one' + "`n" + 'line two'
+        $crlf = $lf -replace "`n", "`r`n"
+        ConvertTo-TableCell -Value $crlf | Should -Be (ConvertTo-TableCell -Value $lf)
     }
 }
 
