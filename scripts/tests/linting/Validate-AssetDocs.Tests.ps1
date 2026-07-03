@@ -3,6 +3,12 @@
 # SPDX-License-Identifier: MIT
 
 BeforeAll {
+    # Dot-source the generator first so its -Force module re-imports (DocsHelpers
+    # -> CollectionHelpers -> CIHelpers) settle before the validator runs its own
+    # imports. The validator's explicit imports then land last, keeping every
+    # command it uses (including Write-CIAnnotation) in this script's scope. The
+    # generator also provides Invoke-AssetDocsGeneration for scaffolding fixtures.
+    . (Join-Path $PSScriptRoot '../../docs/Generate-AssetDocs.ps1')
     . (Join-Path $PSScriptRoot '../../linting/Validate-AssetDocs.ps1')
     $script:TemplatePath = (Resolve-Path (Join-Path $PSScriptRoot '../../docs/templates/asset-doc.template.md')).Path
 

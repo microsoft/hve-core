@@ -55,7 +55,7 @@
 
 .NOTES
     Runs via: npm run lint:asset-docs
-    Dependencies: DocsHelpers module and Generate-AssetDocs.ps1 render helpers.
+    Dependencies: DocsHelpers, CollectionHelpers, and CIHelpers modules.
 #>
 
 [CmdletBinding()]
@@ -78,29 +78,15 @@ param(
 
 $ErrorActionPreference = 'Stop'
 
-# The generator declares its own RepoRoot/OutputPath param defaults. Dot-sourcing
-# it below runs that param block in this script's scope, which would overwrite
-# these parameters, so preserve them and restore them after the dot-source.
-$assetDocsRepoRoot = $RepoRoot
-$assetDocsOutputPath = $OutputPath
-
-# Reuse the generator's deterministic render helpers so the sync check compares
-# against exactly what the generator would produce. Dot-sourcing does not run
-# the generator's main block (invocation guard).
-. (Join-Path -Path $PSScriptRoot -ChildPath '../docs/Generate-AssetDocs.ps1')
-
-# Re-import the modules this script calls directly, highest-level first and
-# lowest-level last. The generator and its modules cross-import these with
-# -Force, and each -Force re-import re-scopes shared modules into the importing
-# module's scope; importing in dependency order here guarantees every command
-# this script uses (DocsHelpers, CollectionHelpers, CIHelpers) ends up in this
-# script's scope.
+# Import the modules this script calls directly, highest-level first and
+# lowest-level last, so each -Force re-import re-scopes shared dependencies in
+# dependency order and every command used here (DocsHelpers, CollectionHelpers,
+# CIHelpers) resolves in this script's scope. DocsHelpers exposes the shared
+# render helpers (New-AssetPageModel, New-AssetMetadataBlock, New-AssetOverviewBody)
+# so the sync check renders exactly what the generator produces.
 Import-Module (Join-Path -Path $PSScriptRoot -ChildPath '../docs/Modules/DocsHelpers.psm1') -Force
 Import-Module (Join-Path -Path $PSScriptRoot -ChildPath '../collections/Modules/CollectionHelpers.psm1') -Force
 Import-Module (Join-Path -Path $PSScriptRoot -ChildPath '../lib/Modules/CIHelpers.psm1') -Force
-
-$RepoRoot = $assetDocsRepoRoot
-$OutputPath = $assetDocsOutputPath
 
 #region Findings
 
