@@ -391,11 +391,85 @@ Describe 'Format-AssetInvocation' -Tag 'Unit' {
     }
 }
 
+Describe 'New-AssetPageModel' -Tag 'Unit' {
+    BeforeAll {
+        $script:modelRepo = Join-Path $TestDrive 'page-model'
+        $modelGh = Join-Path $script:modelRepo '.github'
+
+        function script:New-ModelFixture {
+            param([string]$RelativePath, [string[]]$Lines)
+            $full = Join-Path $modelGh $RelativePath
+            New-Item -ItemType Directory -Path (Split-Path $full -Parent) -Force | Out-Null
+            Set-Content -LiteralPath $full -Value ($Lines -join "`n") -Encoding utf8NoBOM
+        }
+
+        New-ModelFixture -RelativePath 'agents/hve-core/demo.agent.md' -Lines @(
+            '---', 'name: Demo Agent', 'description: A demo agent for tests.', '---', '', '# Body')
+        New-ModelFixture -RelativePath 'prompts/hve-core/demo-prompt.prompt.md' -Lines @(
+            '---', 'description: A demo prompt for tests.', '---', '', '# Body')
+        New-ModelFixture -RelativePath 'skills/hve-core/demo-skill/SKILL.md' -Lines @(
+            '---', 'name: demo-skill', 'description: A demo skill for tests.', '---', '', '# Body')
+    }
+
+    It 'Resolves the full page model for an agent' {
+        $model = New-AssetPageModel -Asset @{ path = '.github/agents/hve-core/demo.agent.md'; kind = 'agent' } -RepoRoot $script:modelRepo
+        $model.Kind | Should -Be 'agent'
+        $model.Key | Should -Be 'demo'
+        $model.Title | Should -Be 'Demo Agent'
+        $model.Description | Should -Be 'A demo agent for tests.'
+        $model.SourceRel | Should -Be '.github/agents/hve-core/demo.agent.md'
+        $model.DocRel | Should -Be 'docs/reference/agents/hve-core/demo.md'
+        $model.Folder | Should -Be 'docs/reference/agents/hve-core'
+        $model.KindDir | Should -Be 'agents'
+        $model.Invocation.Mechanism | Should -Be 'agent-picker'
+        $model.Invocation.Token | Should -Be 'Demo Agent'
+        $model.Interactive | Should -BeTrue
+    }
+
+    It 'Falls back to a titlecased key when frontmatter has no name or title' {
+        $model = New-AssetPageModel -Asset @{ path = '.github/prompts/hve-core/demo-prompt.prompt.md'; kind = 'prompt' } -RepoRoot $script:modelRepo
+        $model.Key | Should -Be 'demo-prompt'
+        $model.Title | Should -Be 'Demo Prompt'
+        $model.Interactive | Should -BeFalse
+    }
+
+    It 'Reads SKILL.md and derives the skill page model' {
+        $model = New-AssetPageModel -Asset @{ path = '.github/skills/hve-core/demo-skill'; kind = 'skill' } -RepoRoot $script:modelRepo
+        $model.Key | Should -Be 'demo-skill'
+        $model.Title | Should -Be 'demo-skill'
+        $model.Description | Should -Be 'A demo skill for tests.'
+        $model.DocRel | Should -Be 'docs/reference/skills/hve-core/demo-skill.md'
+        $model.KindDir | Should -Be 'skills'
+    }
+}
+
 Describe 'New-AssetMetadataBlock' -Tag 'Unit' {
     It 'Builds a metadata table with all rows' {
         $block = New-AssetMetadataBlock -Kind 'agent' -SourcePath '.github/agents/hve-core/demo.agent.md' -Invocation @{ Mechanism = 'agent-picker'; Token = 'Demo' } -Interactive $true
         $block | Should -Match '(?m)^\| Kind \| agent \|$'
         $block | Should -Match 'agents/hve-core/demo\.agent\.md'
         $block | Should -Match '(?m)^\| Interactive \| Yes \|$'
+    }
+}
+
+Describe 'New-AssetOverviewBody' -Tag 'Unit' {
+    It 'Collapses a multi-line description to a single trimmed line' {
+        $model = [PSCustomObject]@{ Description = "First line`nSecond line" }
+        New-AssetOverviewBody -Model $model | Should -Be 'First line Second line'
+    }
+
+    It 'Trims surrounding whitespace' {
+        $model = [PSCustomObject]@{ Description = '  padded description  ' }
+        New-AssetOverviewBody -Model $model | Should -Be 'padded description'
+    }
+
+    It 'Returns a fallback sentence when the description is empty' {
+        $model = [PSCustomObject]@{ Description = '' }
+        New-AssetOverviewBody -Model $model | Should -Be 'This asset does not declare a description.'
+    }
+
+    It 'Returns a fallback sentence when the description is whitespace only' {
+        $model = [PSCustomObject]@{ Description = "   `n  " }
+        New-AssetOverviewBody -Model $model | Should -Be 'This asset does not declare a description.'
     }
 }
