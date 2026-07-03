@@ -7,13 +7,13 @@ applyTo: '.github/agents/security/sssc-reviewer.agent.md, .github/agents/securit
 
 Rules governing AI-assisted VEX document generation. Agents producing or editing OpenVEX documents
 must follow these instructions. For OpenVEX schema details, see the
-`vex` skill at `.github/skills/security/vex/SKILL.md`.
+`vex` skill (read its `SKILL.md`).
 
 ## Evidence requirements, confidence routing, and forbidden transitions
 
 The canonical definitions for justification codes, evidence requirements per status,
-confidence-routing bands, and forbidden transitions live in the `vex` skill reference:
-`.github/skills/security/vex/references/vex-status-logic.md`.
+confidence-routing bands, and forbidden transitions live in the `vex` skill reference
+`references/vex-status-logic.md`.
 
 Agents must follow the decision tree, evidence thresholds, and band routing defined in that
 reference. The behavioral rules below supplement that reference with agent-specific constraints.

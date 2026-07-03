@@ -67,7 +67,7 @@ When the request concerns standing up VEX in a target project, use the `vex` ski
 3. Hand off the plan to Task-* agents, which perform the actual implementation using the `vex` skill and the referenced VEX instructions.
 4. Keep the plan explicit that planning and backlog authoring are the Planner's responsibility, while execution is the responsibility of the Task-* agents.
 
-Use `.github/skills/security/vex/SKILL.md`, `.github/instructions/security/vex-generation.instructions.md`, and `.github/instructions/security/vex-standards.instructions.md` as the normative references for this capability.
+Use the `vex` skill and the `vex-generation.instructions.md` and `vex-standards.instructions.md` instruction files as the normative references for this capability.
 
 ## Six-Phase Architecture
 

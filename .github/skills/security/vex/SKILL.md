@@ -21,7 +21,7 @@ source for schema, status logic, and public-source guidance.
 ## VEX management playbooks
 
 Detection, drafting, and attestation are workflow-owned automation. This skill supplies the
-reusable procedures, mutation rules, and review criteria. The [cve-analyzer subagent](../../../agents/security/subagents/cve-analyzer.agent.md) performs the per-CVE exploitability analysis that feeds those workflows.
+reusable procedures, mutation rules, and review criteria. The `CVE Analyzer` subagent performs the per-CVE exploitability analysis that feeds those workflows.
 
 ### Implement VEX in a target project
 
@@ -29,9 +29,8 @@ Use this playbook when standing up VEX in a target project. Scaffold the VEX doc
 security/vex, wire the vex-detect and vex-draft workflows, reference the PR-body scaffold in
 [assets/pr-body-scaffold.yml](assets/pr-body-scaffold.yml), connect the release attestation step
 for provenance and OpenVEX-over-SBOM attestation, and set CODEOWNERS on the VEX document.
-Use [references/vex-status-logic.md](references/vex-status-logic.md) and
-[../../../instructions/security/vex-standards.instructions.md](../../../instructions/security/vex-standards.instructions.md)
-for the detailed rules.
+Use [references/vex-status-logic.md](references/vex-status-logic.md) and the
+`vex-standards.instructions.md` instructions for the detailed rules.
 
 ### Review and validate VEX
 

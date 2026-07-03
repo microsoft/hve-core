@@ -6,6 +6,7 @@ agents:
   - Skill Assessor
   - Finding Deep Verifier
   - Report Generator
+  - CVE Analyzer
 tools:
   - agent
   - execute/runInTerminal
@@ -112,9 +113,9 @@ Each report must also include a dedicated evidence inventory section that record
 
 When the request concerns VEX, use the `vex` skill and the VEX instruction files as the canonical reference set:
 
-* `.github/skills/security/vex/SKILL.md`
-* `.github/instructions/security/vex-generation.instructions.md`
-* `.github/instructions/security/vex-standards.instructions.md`
+* the `vex` skill (read its `SKILL.md` on load)
+* `vex-generation.instructions.md`
+* `vex-standards.instructions.md`
 
 For VEX review tasks:
 
