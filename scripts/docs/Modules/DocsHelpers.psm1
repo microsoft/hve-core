@@ -10,8 +10,8 @@
 # Author: HVE Core Team
 
 #Requires -Version 7.4
-#Requires -Modules @{ ModuleName='PowerShell-Yaml'; RequiredVersion='0.4.7' }
 
+Import-Module PowerShell-Yaml -ErrorAction Stop
 Import-Module (Join-Path $PSScriptRoot '../../collections/Modules/CollectionHelpers.psm1') -Force
 
 # ---------------------------------------------------------------------------
