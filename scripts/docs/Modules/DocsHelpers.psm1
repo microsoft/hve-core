@@ -254,6 +254,9 @@ function Get-AssetInvocation {
         'skill' {
             return @{ Mechanism = 'skill-load'; Token = $Name }
         }
+        default {
+            throw "Get-AssetInvocation: unrecognized kind '$Kind'."
+        }
     }
 }
 
