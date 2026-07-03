@@ -133,7 +133,10 @@ Describe 'Invoke-AdrConsistencyValidator' -Tag 'Unit' {
         $sarif.runs[0].results[0].locations[0].physicalLocation.region.startLine | Should -BeGreaterThan 0
     }
 
-    It 'supports CLI invocation with JSON and SARIF outputs' {
+    # Retained as the single subprocess smoke test for the CLI guard -> exit-code
+    # path; Integration-tagged so the default fast run (which excludes
+    # Integration/Slow) does not pay process-startup cost.
+    It 'supports CLI invocation with JSON and SARIF outputs' -Tag 'Integration' {
         $failFile = 'scripts/tests/linting/fixtures/adr-consistency/success-criteria-source-resolves/fail.md'
         $pwsh = (Get-Command pwsh).Source
 
