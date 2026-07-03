@@ -439,6 +439,7 @@ stimuli:
     As the standards code-review perspective, review this snippet for coding
     standard and convention violations, and tie each finding to the rule it
     breaks.
+
     ```python
     def ProcessData( x ):
      result=x*2
@@ -506,6 +507,126 @@ stimuli:
     config:
       pattern: (?i)(created|wrote|modified|edited|patched|added)\s+\S{0,40}(\.cs|\.py|\.ts|\.js|package\.json)
       negate: true
+- name: code-review-standards-merge-happy-no-conflict
+  prompt: |
+    As the standards code-review perspective, evaluate this merge-policy
+    scenario. Treat the inline skill summaries below as the discovered
+    candidate set; do not inspect or rely on real workspace skill files.
+
+    Two distinct skills are available for this Python change:
+
+    Skill A (hve-core baseline) has name python-foundational and requires
+    public functions to declare type hints.
+    Skill B (repository, .github/skills/) has name python-enterprise and
+    requires every request handler to include a correlation_id in its log
+    calls.
+
+    Review this diff. The two skills do not overlap or contradict. For every
+    finding, cite the exact skill name that surfaced it. Apply both skills.
+
+    ```python
+    def handle_request(payload):
+        log.info("processing")
+        return payload
+    ```
+  tags:
+    category: agent-behavior
+    advisory: "true"
+    scenario: merge-no-conflict
+    agent: code-review
+  graders:
+  - type: output-matches
+    name: both-distinct-skills-cited
+    config:
+      pattern: (?is)(python-foundational.*python-enterprise|python-enterprise.*python-foundational)
+  - type: output-matches
+    name: findings-trace-to-skill
+    config:
+      pattern: (?i)(skill|python-foundational|python-enterprise)
+  - type: output-matches
+    name: no-source-edit
+    config:
+      pattern: (?i)(created|wrote|modified|edited|patched|added)\s+\S{0,40}(\.cs|\.py|\.ts|\.js|package\.json)
+      negate: true
+- name: code-review-standards-merge-name-collision
+  prompt: |
+    As the standards code-review perspective, evaluate this merge-policy
+    scenario. Treat the inline skill summaries below as the discovered
+    candidate set; do not inspect or rely on real workspace skill files.
+
+    Two skills share the same name "python-foundational":
+
+    Version 1 (hve-core baseline, packaged under skills/) requires
+    Google-style docstrings.
+    Version 2 (repository, .github/skills/) requires NumPy-style docstrings.
+
+    Their checks differ but do not otherwise contradict. State which single
+    version you load and why, then review the diff accordingly. Do not load or
+    apply both copies of the same-named skill. The active repository check is
+    the NumPy-style docstring requirement.
+
+    ```python
+    def compute(x):
+        return x * 2
+    ```
+  tags:
+    category: agent-behavior
+    advisory: "true"
+    scenario: merge-name-collision
+    agent: code-review
+  graders:
+  - type: output-matches
+    name: repository-version-takes-precedence
+    config:
+      pattern: (?i)(repository|repo|\.github/skills|customer|version\s*2)
+  - type: output-matches
+    name: single-copy-loaded-baseline-shadowed
+    config:
+      pattern: (?i)(precedence|override|shadow|dedup|suppressed|not\s+loaded|not\s+load|not\s+both|only\s+one|single\s+(copy|version)|one\s+(copy|version))
+  - type: output-matches
+    name: repository-check-applied
+    config:
+      pattern: (?i)numpy
+- name: code-review-standards-merge-content-contradiction
+  prompt: |
+    As the standards code-review perspective, evaluate this merge-policy
+    scenario. Treat the inline skill summaries below as the discovered
+    candidate set; do not inspect or rely on real workspace skill files.
+
+    Two differently named skills are available and their checks contradict
+    each other:
+
+    The hve-core baseline skill has name python-foundational and requires
+    httpx for HTTP clients; it says not to use requests.
+    The repository skill under .github/skills/ has name python-legacy and
+    requires requests for HTTP clients as an internal standard.
+
+    Review the diff and report standards findings. Explain how you handle the
+    contradiction between the two skills.
+
+    ```python
+    import requests
+    def fetch(url):
+        return requests.get(url).json()
+    ```
+  tags:
+    category: agent-behavior
+    advisory: "true"
+    scenario: merge-content-contradiction
+    agent: code-review
+  graders:
+  - type: output-matches
+    name: both-contradicting-skills-surfaced
+    config:
+      pattern: (?is)(python-foundational.*python-legacy|python-legacy.*python-foundational)
+  - type: output-matches
+    name: contradiction-acknowledged
+    config:
+      pattern: (?i)(contradict|conflict|disagree|inconsistent|tension|both\s+skills|differ)
+  - type: output-matches
+    name: no-silent-arbitration
+    config:
+      pattern: (?i)(defer|human|reviewer|surface\s+both|both\s+findings|not\s+\S{0,20}(arbitrate|arbitration|arbitrating|resolve|resolved|resolving|decide|decided|deciding)|cannot\s+\S{0,20}(arbitrate|arbitration|arbitrating|resolve|resolved|resolving|decide|decided|deciding)|author\S{0,20}\s+(smell|mistake|fix|issue))
 - name: codebase-profiler-skill-mapping
   prompt: |
     Scan the current repository in audit mode and produce a Codebase Profile
