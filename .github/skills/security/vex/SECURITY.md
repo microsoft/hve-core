@@ -27,13 +27,13 @@ The vex skill's highest-risk behavior is **parsing an externally authorable GitH
 
 ### Security Posture Overview
 
-| Dimension          | Value                                                                                                                     |
-|--------------------|---------------------------------------------------------------------------------------------------------------------------|
+| Dimension          | Value                                                                                                                       |
+|--------------------|-----------------------------------------------------------------------------------------------------------------------------|
 | Runtime surface    | Local Python CLI; anchored-regex parse of untrusted issue body (stdin); `json.loads` of a local OpenVEX doc; exit code only |
-| Trust buckets      | B1 detection-issue body parsing, B2 OpenVEX document parsing, B3 gate decision + adjacent workflow fetch                   |
-| Credentials        | None handled or persisted (upstream `GH_TOKEN` is workflow-owned)                                                         |
-| Network egress     | None (upstream `gh api` / `gh issue view` fetch is workflow-owned)                                                        |
-| Open residual gaps | 2 (Tamper-Low gate-suppression; DoS-Low forced-proceed AI-credit consumption)                                            |
+| Trust buckets      | B1 detection-issue body parsing, B2 OpenVEX document parsing, B3 gate decision + adjacent workflow fetch                    |
+| Credentials        | None handled or persisted (upstream `GH_TOKEN` is workflow-owned)                                                           |
+| Network egress     | None (upstream `gh api` / `gh issue view` fetch is workflow-owned)                                                          |
+| Open residual gaps | 2 (Tamper-Low gate-suppression; DoS-Low forced-proceed AI-credit consumption)                                               |
 
 ## Contents
 
@@ -97,27 +97,27 @@ flowchart TD
 
 ### Boundary Descriptions
 
-| Boundary                | Assets Protected                    | Controls Enforced                                                                                                           |
-|-------------------------|-------------------------------------|-----------------------------------------------------------------------------------------------------------------------------|
-| vex-draft workflow      | Fetch integrity, `GH_TOKEN`         | Read-only `contents` / `issues` scopes; deterministic detection issue (bot-owned, `automated`-labelled); credit budgets     |
-| CI pre-activation job   | Gate-decision integrity, host process | Anchored allowlist regex (no ReDoS); `json.loads` only (no gadget); caught decode errors fail toward proceed; exit code only |
+| Boundary              | Assets Protected                      | Controls Enforced                                                                                                            |
+|-----------------------|---------------------------------------|------------------------------------------------------------------------------------------------------------------------------|
+| vex-draft workflow    | Fetch integrity, `GH_TOKEN`           | Read-only `contents` / `issues` scopes; deterministic detection issue (bot-owned, `automated`-labelled); credit budgets      |
+| CI pre-activation job | Gate-decision integrity, host process | Anchored allowlist regex (no ReDoS); `json.loads` only (no gadget); caught decode errors fail toward proceed; exit code only |
 
 ## Assets
 
-| Id | Asset                        | Lifetime               | Notes                                                                              |
-|----|------------------------------|------------------------|------------------------------------------------------------------------------------|
-| A1 | Detection-issue body         | Read-only via stdin    | Untrusted; a GitHub issue body that external parties may be able to edit           |
-| A2 | OpenVEX document             | Read-only via argv path | `security/vex/hve-core.openvex.json`; repo-controlled; parsed with `json.loads`    |
-| A3 | Gate decision (exit code)    | Ephemeral              | Governs whether the AI drafting workflow spends credits                            |
-| A4 | vex-draft workflow fetch     | External               | Owns the `gh api` / `gh issue view` call and `GH_TOKEN`; governed by its own model |
+| Id | Asset                     | Lifetime                | Notes                                                                              |
+|----|---------------------------|-------------------------|------------------------------------------------------------------------------------|
+| A1 | Detection-issue body      | Read-only via stdin     | Untrusted; a GitHub issue body that external parties may be able to edit           |
+| A2 | OpenVEX document          | Read-only via argv path | `security/vex/hve-core.openvex.json`; repo-controlled; parsed with `json.loads`    |
+| A3 | Gate decision (exit code) | Ephemeral               | Governs whether the AI drafting workflow spends credits                            |
+| A4 | vex-draft workflow fetch  | External                | Owns the `gh api` / `gh issue view` call and `GH_TOKEN`; governed by its own model |
 
 ## Adversaries
 
-| Id    | Adversary                                                            | In-scope mitigations                                                                                                                      |
-|-------|---------------------------------------------------------------------|------------------------------------------------------------------------------------------------------------------------------------------|
-| ADV-a | Party with issue-edit access crafting the detection-issue body      | Anchored allowlist regex reads only first-cell IDs; injected non-ID rows cannot add findings; detection issue is bot-owned and `automated`-labelled |
-| ADV-b | Corrupt or malformed OpenVEX document                               | `json.loads` (no `pickle`/YAML gadget); `JSONDecodeError` / `OSError` caught and treated as absent (gate proceeds toward triage)         |
-| ADV-c | Attacker targeting the upstream fetch or `GH_TOKEN`                 | Fetch is delegated to the vex-draft workflow and bounded by its read-only permissions and credit budgets (adjacent boundary)             |
+| Id    | Adversary                                                      | In-scope mitigations                                                                                                                                |
+|-------|----------------------------------------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------|
+| ADV-a | Party with issue-edit access crafting the detection-issue body | Anchored allowlist regex reads only first-cell IDs; injected non-ID rows cannot add findings; detection issue is bot-owned and `automated`-labelled |
+| ADV-b | Corrupt or malformed OpenVEX document                          | `json.loads` (no `pickle`/YAML gadget); `JSONDecodeError` / `OSError` caught and treated as absent (gate proceeds toward triage)                    |
+| ADV-c | Attacker targeting the upstream fetch or `GH_TOKEN`            | Fetch is delegated to the vex-draft workflow and bounded by its read-only permissions and credit budgets (adjacent boundary)                        |
 
 ## Bucket B1: Untrusted detection-issue body parsing
 
@@ -147,10 +147,10 @@ flowchart TD
 
 ### Risk Rating
 
-| Threat                                          | Likelihood | Impact | Residual Risk | Status                                          |
-|-------------------------------------------------|------------|--------|---------------|-------------------------------------------------|
-| Crafted issue body forces skip (suppress draft) | Low        | Low    | Low           | Bounded (bot-owned issue; manual triage remains) (G-TAM-1) |
-| Crafted issue body forces proceed (burn credits) | Low        | Med    | Low           | Bounded (workflow credit budgets) (G-DOS-1)     |
+| Threat                                           | Likelihood | Impact | Residual Risk | Status                                                     |
+|--------------------------------------------------|------------|--------|---------------|------------------------------------------------------------|
+| Crafted issue body forces skip (suppress draft)  | Low        | Low    | Low           | Bounded (bot-owned issue; manual triage remains) (G-TAM-1) |
+| Crafted issue body forces proceed (burn credits) | Low        | Med    | Low           | Bounded (workflow credit budgets) (G-DOS-1)                |
 
 ## Bucket B2: OpenVEX document parsing
 
@@ -180,10 +180,10 @@ flowchart TD
 
 ### Risk Rating
 
-| Threat                                        | Likelihood | Impact | Residual Risk | Status                                              |
-|-----------------------------------------------|------------|--------|---------------|-----------------------------------------------------|
-| Malformed JSON crashes or subverts the gate   | Low        | Low    | Low           | Mitigated (`json.loads`; decode errors → proceed)   |
-| Corrupt document silently suppresses drafting | Low        | Low    | Low           | By design (fail-open toward triage)                 |
+| Threat                                        | Likelihood | Impact | Residual Risk | Status                                            |
+|-----------------------------------------------|------------|--------|---------------|---------------------------------------------------|
+| Malformed JSON crashes or subverts the gate   | Low        | Low    | Low           | Mitigated (`json.loads`; decode errors → proceed) |
+| Corrupt document silently suppresses drafting | Low        | Low    | Low           | By design (fail-open toward triage)               |
 
 ## Bucket B3: Gate decision and adjacent workflow fetch
 
@@ -213,10 +213,10 @@ flowchart TD
 
 ### Risk Rating
 
-| Threat                                             | Likelihood | Impact | Residual Risk | Status                                              |
-|----------------------------------------------------|------------|--------|---------------|-----------------------------------------------------|
-| Forced proceed consumes AI credits                 | Low        | Med    | Low           | Bounded (credit budgets; `skip-if-match`) (G-DOS-1) |
-| Gate decision unattributable                       | Low        | Low    | Low           | Mitigated (stdout reason + Actions logs)            |
+| Threat                             | Likelihood | Impact | Residual Risk | Status                                              |
+|------------------------------------|------------|--------|---------------|-----------------------------------------------------|
+| Forced proceed consumes AI credits | Low        | Med    | Low           | Bounded (credit budgets; `skip-if-match`) (G-DOS-1) |
+| Gate decision unattributable       | Low        | Low    | Low           | Mitigated (stdout reason + Actions logs)            |
 
 ## Enterprise Readiness Gaps
 
@@ -224,8 +224,8 @@ The following are known limitations recorded so operators can make informed depl
 
 | Id      | Gap                                                                                                                      | Severity   | Status                                                                                                                               |
 |---------|--------------------------------------------------------------------------------------------------------------------------|------------|--------------------------------------------------------------------------------------------------------------------------------------|
-| G-TAM-1 | A party with edit access to the detection issue can malform its finding rows to suppress auto-drafting (forced skip).     | Tamper-Low | Bounded: the detection issue is created by the deterministic `vex-detect` bot and `automated`-labelled; manual triage still applies.  |
-| G-DOS-1 | A well-formed injected finding row (with no terminal OpenVEX statement) forces a proceed, consuming AI drafting credits.  | DoS-Low    | Bounded: the vex-draft workflow enforces daily/max AI-credit budgets and `skip-if-match: is:pr` to pause drafting.                    |
+| G-TAM-1 | A party with edit access to the detection issue can malform its finding rows to suppress auto-drafting (forced skip).    | Tamper-Low | Bounded: the detection issue is created by the deterministic `vex-detect` bot and `automated`-labelled; manual triage still applies. |
+| G-DOS-1 | A well-formed injected finding row (with no terminal OpenVEX statement) forces a proceed, consuming AI drafting credits. | DoS-Low    | Bounded: the vex-draft workflow enforces daily/max AI-credit budgets and `skip-if-match: is:pr` to pause drafting.                   |
 
 For an active issue tracker entry covering these gaps, see the [hve-core issues list](https://github.com/microsoft/hve-core/issues).
 

@@ -250,9 +250,7 @@ def test_main_proceeds_when_some_non_terminal(
     assert _run_main(monkeypatch, DETECTION_BODY, [str(doc)]) == 0
 
 
-def test_main_skips_when_no_findings(
-    monkeypatch: pytest.MonkeyPatch, tmp_path
-) -> None:
+def test_main_skips_when_no_findings(monkeypatch: pytest.MonkeyPatch, tmp_path) -> None:
     doc = tmp_path / "vex.json"
     doc.write_text(json.dumps(_doc(("GHSA-1", "fixed"))), encoding="utf-8")
     assert _run_main(monkeypatch, "no findings here", [str(doc)]) == 1
