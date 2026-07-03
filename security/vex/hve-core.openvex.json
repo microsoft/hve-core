@@ -1,9 +1,70 @@
 {
   "@context": "https://openvex.dev/ns/v0.2.0",
-  "@id": "https://github.com/microsoft/hve-core/security/vex/2026-06-19",
+  "@id": "https://github.com/microsoft/hve-core/security/vex/2026-07-03",
   "author": "Microsoft HVE Core Maintainers",
   "timestamp": "2026-06-19T00:00:00Z",
-  "version": 2,
+  "last_updated": "2026-07-03T15:14:19Z",
+  "version": 3,
   "tooling": "Maintained via the hve-core VEX Generator agent (AI-assisted drafting) with human review and merge; published and Sigstore-attested by the release-stable.yml workflow.",
-  "statements": []
+  "statements": [
+    {
+      "vulnerability": {
+        "@id": "https://nvd.nist.gov/vuln/detail/CVE-2026-1839",
+        "name": "CVE-2026-1839",
+        "description": "Unsafe deserialization in transformers Trainer._load_rng_state() via torch.load() without weights_only, allowing RCE via a malicious checkpoint file.",
+        "aliases": ["GHSA-69w3-r845-3855"]
+      },
+      "timestamp": "2026-07-03T15:14:19Z",
+      "products": [
+        {
+          "@id": "pkg:pypi/hve-core-moderation@1.0.0",
+          "identifiers": {
+            "purl": "pkg:pypi/hve-core-moderation@1.0.0"
+          }
+        }
+      ],
+      "status": "not_affected",
+      "justification": "vulnerable_code_not_in_execute_path",
+      "status_notes": "The hve-core moderation eval (scripts/evals/moderation/moderate.py) uses transformers exclusively through detoxify 0.5.2 for toxicity inference. The only transformers entry point is Detoxify.predict(), an inference-only call path. The vulnerable Trainer._load_rng_state() method (src/transformers/trainer.py:3059) belongs to the training API and is never imported or invoked. No training code is present anywhere in the moderation pipeline or its test suite. Evidence: moderate.py line 113 imports only `from detoxify import Detoxify`; tests/test_moderate.py stubs the model and exercises inference paths only; scripts/evals/moderation/pip-audit-known-vulnerabilities.txt records this assessment. Fixed in transformers 5.0.0rc3; revisit when the dependency constraint is lifted from <5."
+    },
+    {
+      "vulnerability": {
+        "@id": "https://nvd.nist.gov/vuln/detail/CVE-2025-14929",
+        "name": "CVE-2025-14929",
+        "description": "RCE via unsafe deserialization in the transformers X-CLIP checkpoint conversion utility when processing attacker-controlled checkpoint files.",
+        "aliases": ["PYSEC-2025-217"]
+      },
+      "timestamp": "2026-07-03T15:14:19Z",
+      "products": [
+        {
+          "@id": "pkg:pypi/hve-core-moderation@1.0.0",
+          "identifiers": {
+            "purl": "pkg:pypi/hve-core-moderation@1.0.0"
+          }
+        }
+      ],
+      "status": "not_affected",
+      "justification": "vulnerable_code_not_in_execute_path",
+      "status_notes": "The hve-core moderation eval uses transformers exclusively through detoxify for BERT/ALBERT-based toxicity classification. X-CLIP is a video-language model architecture; its checkpoint conversion utility (src/transformers/models/xclip/) is a separate offline data-engineering tool with no call path from moderate.py. Detoxify loads fixed BERT-based toxicity classifiers from its own pinned HuggingFace Hub repositories; no untrusted checkpoint conversion is performed. Evidence: moderate.py line 113 imports only `from detoxify import Detoxify`; model names are constrained to ['original', 'unbiased', 'multilingual'] by argparse.choices; scripts/evals/moderation/pip-audit-known-vulnerabilities.txt records this assessment. No fixed release exists in the 4.x line; revisit when a 4.x patch ships or the stack moves to transformers 5."
+    },
+    {
+      "vulnerability": {
+        "@id": "https://nvd.nist.gov/vuln/detail/CVE-2026-4372",
+        "name": "CVE-2026-4372",
+        "description": "RCE via unsafe deserialization of a malicious config.json containing _attn_implementation_internal in transformers model loading.",
+        "aliases": ["GHSA-29pf-2h5f-8g72"]
+      },
+      "timestamp": "2026-07-03T15:14:19Z",
+      "products": [
+        {
+          "@id": "pkg:pypi/hve-core-moderation@1.0.0",
+          "identifiers": {
+            "purl": "pkg:pypi/hve-core-moderation@1.0.0"
+          }
+        }
+      ],
+      "status": "under_investigation",
+      "status_notes": "The advisory describes RCE triggered when AutoModelForCausalLM.from_pretrained() deserializes a config.json containing _attn_implementation_internal set to an attacker-controlled HuggingFace Hub repository ID. The hve-core moderation eval loads only BERT/ALBERT classification models via detoxify; model names are constrained to ['original', 'unbiased', 'multilingual'] by argparse.choices, preventing attacker-controlled model loading at the CLI surface. The CVSS attack vector is local (AV:L/AC:L/PR:N/UI:R). Investigation is pending confirmation of whether the shared PretrainedConfig deserialization path in transformers 4.57.6 processes _attn_implementation_internal for BERT-class model configurations, or whether the vulnerable code is specific to causal LM model classes. If the field is handled only in causal LM config paths, status should transition to not_affected with justification vulnerable_code_not_in_execute_path. Advisory: https://github.com/advisories/GHSA-29pf-2h5f-8g72. Fixed in transformers 5.3.0. Reviewer question: does BertForSequenceClassification.from_pretrained() in transformers 4.57.6 process the _attn_implementation_internal config field? Confirm by inspecting src/transformers/configuration_utils.py and src/transformers/models/bert/configuration_bert.py in the locked 4.57.6 release."
+    }
+  ]
 }
