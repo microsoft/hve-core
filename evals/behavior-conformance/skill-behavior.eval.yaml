@@ -2114,3 +2114,22 @@ stimuli:
         name: scope-language
         config:
           pattern: '(?i)(supply|chain|security|scorecard|slsa|sbom)'
+
+  - name: skill-vex-knowledge
+    prompt: |
+      Summarize what the `vex` skill helps with and name one OpenVEX concept it
+      references.
+    tags:
+      category: behavior-conformance
+      skill: vex
+      shape: knowledge
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: skill-attribution
+        config:
+          pattern: '(?i)(vex|openvex|vulnerabilit|exploitability|statement)'
+      - type: output-matches
+        name: scope-language
+        config:
+          pattern: '(?i)(vex|openvex|status|justification|not_affected|under_investigation)'
