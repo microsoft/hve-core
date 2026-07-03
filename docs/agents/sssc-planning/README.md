@@ -14,7 +14,7 @@ tags:
   - agents
   - security
 author: Microsoft
-ms.date: 2026-03-18
+ms.date: 2026-06-27
 ms.topic: concept
 estimated_reading_time: 8
 ---
@@ -32,7 +32,7 @@ The SSSC Planner agent walks your team through a structured six-phase supply cha
 | ⚡ Actionable output          | The final phase produces backlog items with adoption steps, priority derived from risk level, and improvement projections per check |
 
 > [!TIP]
-> New to the agent? Read [Why SSSC Planning?](why-sssc-planning.md) for the reasoning behind each phase.
+> New to the agent? Read [Why SSSC Planning?](why-sssc-planning) for the reasoning behind each phase.
 
 ## The SSSC Planning Flow
 
@@ -91,7 +91,7 @@ Work items generated in Phase 5 are assigned an autonomy tier that controls how 
 |---------|---------------------------------|-----------------------------------------------|
 | Full    | Agent executes without approval | Low-risk configuration changes                |
 | Partial | Agent drafts, human approves    | Default tier for most supply chain work items |
-| Manual  | Human plans and executes        | High-risk items requiring new capabilities    |
+| Guided  | Human plans and executes        | High-risk items requiring new capabilities    |
 
 ## Entry Modes
 
@@ -133,11 +133,11 @@ The SSSC Planner supports four entry modes, each matched to a prompt file.
 
 ## Next Steps
 
-* [Why SSSC Planning?](why-sssc-planning.md) for the reasoning behind each phase.
-* [Agent Overview](agent-overview.md) for the architecture and state management details.
-* [Entry Modes](entry-modes.md) for a deep dive into all four entry mode workflows.
-* [Phase Reference](phase-reference.md) for phase-by-phase field and artifact details.
-* [Handoff Pipeline](handoff-pipeline.md) for backlog generation and improvement projections.
+* [Why SSSC Planning?](why-sssc-planning) for the reasoning behind each phase.
+* [Agent Overview](agent-overview) for the architecture and state management details.
+* [Entry Modes](entry-modes) for a deep dive into all four entry mode workflows.
+* [Phase Reference](phase-reference) for phase-by-phase field and artifact details.
+* [Handoff Pipeline](handoff-pipeline) for backlog generation and improvement projections.
 
 <!-- markdownlint-disable MD036 -->
 *🤖 Crafted with precision by ✨Copilot following brilliant human instruction,

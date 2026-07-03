@@ -3,7 +3,7 @@ title: Security Assurance Case and Security Model
 description: Comprehensive security model and security assurance documentation demonstrating enterprise security practices
 sidebar_position: 2
 author: Microsoft
-ms.date: 2026-06-01
+ms.date: 2026-06-30
 ms.topic: reference
 keywords:
   - security
@@ -52,6 +52,7 @@ Security relies on defense-in-depth with 20+ automated controls validated throug
 * [Security Controls](#security-controls)
 * [Assurance Argument](#assurance-argument)
 * [MCP Server Trust Analysis](#mcp-server-trust-analysis)
+* [Skill Security Models](#skill-security-models)
 * [Quantitative Security Metrics](#quantitative-security-metrics)
 * [References](#references)
 
@@ -1035,16 +1036,17 @@ External standards are cited inline.
 
 ### Supply Chain Security Controls
 
-| ID   | Control                         | Implementation                                  | Validates Against |
-|------|---------------------------------|-------------------------------------------------|-------------------|
-| SC-1 | Dependency Pinning Validation   | Test-DependencyPinning.ps1                      | S-1, S-2          |
-| SC-2 | SHA Staleness Monitoring        | Test-SHAStaleness.ps1                           | S-1               |
-| SC-3 | Dependency Review               | dependency-review.yml                           | S-2, AI-5         |
-| SC-4 | npm Security Audit              | npm audit in pr-validation.yml                  | S-2               |
-| SC-5 | Dependabot Updates              | dependabot.yml                                  | S-1, S-2          |
-| SC-6 | Tool Checksum Verification      | scripts/security/tool-checksums.json            | S-1               |
-| SC-7 | SBOM Generation and Attestation | anchore/sbom-action, actions/attest in main.yml | S-1, S-2          |
-| SC-8 | SBOM Dependency Diff            | sbom-diff job in main.yml                       | S-1, S-2          |
+| ID   | Control                                  | Implementation                                                            | Validates Against |
+|------|------------------------------------------|---------------------------------------------------------------------------|-------------------|
+| SC-1 | Dependency Pinning Validation            | Test-DependencyPinning.ps1                                                | S-1, S-2          |
+| SC-2 | SHA Staleness Monitoring                 | Test-SHAStaleness.ps1                                                     | S-1               |
+| SC-3 | Dependency Review                        | dependency-review.yml                                                     | S-2, AI-5         |
+| SC-4 | npm Security Audit                       | npm audit in pr-validation.yml                                            | S-2               |
+| SC-5 | Dependabot Updates                       | dependabot.yml                                                            | S-1, S-2          |
+| SC-6 | Tool Checksum Verification               | scripts/security/tool-checksums.json                                      | S-1               |
+| SC-7 | SBOM Generation and Attestation          | anchore/sbom-action, actions/attest in main.yml                           | S-1, S-2          |
+| SC-8 | SBOM Dependency Diff                     | sbom-diff job in main.yml                                                 | S-1, S-2          |
+| SC-9 | VEX Vulnerability Triage and Attestation | vex-detect.yml, vex-draft.md, attest-and-upload-vex in release-stable.yml | S-1, S-2          |
 
 #### SC-8: SBOM Dependency Diff Implementation
 
@@ -1228,6 +1230,26 @@ Follow-up items identified during the Phase 5 review of the Mural skill OAuth su
 1. First-party servers (GitHub, Azure DevOps, Microsoft Docs): Enable with organization policy controls; GitHub MCP is enabled by default
 2. Third-party servers (Context7): Evaluate data flow, use API key rotation, review Upstash trust center
 
+## Skill Security Models
+
+Most skills are markdown knowledge packs with no runtime and are covered by the repository-level supply-chain and developer-workflow controls above.
+Skills that ship an executable runtime (network egress, credential handling, subprocess execution, or untrusted document/content parsing) carry their own per-skill STRIDE threat model in a `SECURITY.md` next to their `SKILL.md`.
+Those models follow a shared structure (assets, adversaries, trust buckets with per-bucket STRIDE mitigations, and an Enterprise Readiness Gaps register) and are the authoritative source for each skill's residual risk.
+
+| Skill                               | Runtime surface                                                                   | Primary residual gaps                                                           | Security model                                                                                                              |
+|-------------------------------------|-----------------------------------------------------------------------------------|---------------------------------------------------------------------------------|-----------------------------------------------------------------------------------------------------------------------------|
+| jira                                | REST CLI; environment credentials                                                 | No token revocation; best-effort redaction; no cert pinning                     | [SECURITY.md](https://github.com/microsoft/hve-core/blob/main/.github/skills/jira/jira/SECURITY.md)                         |
+| gitlab                              | REST CLI; environment credentials; git-remote subprocess                          | Untrusted CI-trace egress; insecure-transport opt-out; no cert pinning          | [SECURITY.md](https://github.com/microsoft/hve-core/blob/main/.github/skills/gitlab/gitlab/SECURITY.md)                     |
+| mural (experimental)                | REST CLI; embedded stdio MCP server; OAuth token store                            | OAuth audit gaps; keyring backend toggle is code-execution surface              | [SECURITY.md](https://github.com/microsoft/hve-core/blob/main/.github/skills/experimental/mural/SECURITY.md)                |
+| tts-voiceover (experimental)        | Azure Speech egress; key/Entra credentials; SSML + PPTX parsing                   | Content egress to Azure region; broad credential chain                          | [SECURITY.md](https://github.com/microsoft/hve-core/blob/main/.github/skills/experimental/tts-voiceover/SECURITY.md)        |
+| accessibility                       | Arbitrary-URL scan egress; unpinned `npx @axe-core/cli` subprocess                | Unpinned scanner package; no egress allow-list (SSRF); headless-browser surface | [SECURITY.md](https://github.com/microsoft/hve-core/blob/main/.github/skills/accessibility/accessibility/SECURITY.md)       |
+| powerpoint (experimental)           | Sandboxed `content-extra.py` execution; LibreOffice/MuPDF document parsing        | Denylist confinement is not OS-level; external-parser CVE exposure              | [SECURITY.md](https://github.com/microsoft/hve-core/blob/main/.github/skills/experimental/powerpoint/SECURITY.md)           |
+| video-to-gif (experimental)         | Local CLI (bash + PowerShell); FFmpeg/ffprobe subprocess; untrusted media parsing | Inherited FFmpeg decoder CVE exposure; bare-filename search resolution          | [SECURITY.md](https://github.com/microsoft/hve-core/blob/main/.github/skills/experimental/video-to-gif/SECURITY.md)         |
+| gh-code-scanning                    | GitHub code-scanning read via `gh` CLI subprocess; stdout only                    | Unpinned `gh`/`jq` PATH dependencies; TLS delegated to `gh`                     | [SECURITY.md](https://github.com/microsoft/hve-core/blob/main/.github/skills/github/gh-code-scanning/SECURITY.md)           |
+| customer-card-render (experimental) | Local Python CLI; regex parse of untrusted DT markdown; YAML emission             | Inherited powerpoint build toolchain; confidential DT prose egress              | [SECURITY.md](https://github.com/microsoft/hve-core/blob/main/.github/skills/experimental/customer-card-render/SECURITY.md) |
+
+Skills whose scripts perform only local validation with no external surface (for example `adr-author` and `vally-tests`) do not require a dedicated model; their risk is bounded by the repository-level controls. When a new skill adds an executable runtime with any of the surfaces above, add a `SECURITY.md` following the shared structure and register it in this table and in the [security documentation index](README.md#skill-security-models).
+
 ## Quantitative Security Metrics
 
 ### Configured Thresholds
@@ -1263,7 +1285,7 @@ Follow-up items identified during the Phase 5 review of the Mural skill OAuth su
 
 * [SECURITY.md](https://github.com/microsoft/hve-core/blob/main/SECURITY.md): Vulnerability disclosure process
 * [GOVERNANCE.md](https://github.com/microsoft/hve-core/blob/main/GOVERNANCE.md): Project governance and roles
-* [Branch Protection](../contributing/branch-protection.md): Repository protection configuration
+* [Branch Protection](branch-protection.md): Repository protection configuration
 * [MCP Configuration](../getting-started/mcp-configuration.md): MCP server setup guidance
 
 ### External Standards

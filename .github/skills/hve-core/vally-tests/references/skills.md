@@ -31,9 +31,9 @@ Grader identifiers below use the Vally CLI 0.4.0 catalog (`semantic_similarity`,
 ### Check 1: Required Frontmatter Fields
 
 * Contract source: `prompt-builder.instructions.md` L346-L400.
-* Testable behavior: SKILL.md frontmatter MUST include a `name:` field in lowercase kebab-case AND a `description:` field that is non-empty, under 120 characters, and carries the attribution suffix `- Brought to you by organization/repository-name`.
+* Testable behavior: SKILL.md frontmatter MUST include a `name:` field in lowercase kebab-case AND a `description:` field that is non-empty and under 120 characters.
 * Suggested stimulus: ask the assistant to identify a named skill by its frontmatter `name:` and `description:` values.
-* Grader recommendation: `regex` with pattern `(?m)^name:\s*['"]?[a-z0-9][a-z0-9-]*['"]?` combined with `(?m)^description:\s*['"].{1,120}.*Brought to you by`.
+* Grader recommendation: `regex` with pattern `(?m)^name:\s*['"]?[a-z0-9][a-z0-9-]*['"]?` combined with `(?m)^description:\s*['"].{1,120}`.
 * Evidence: `.github/skills/experimental/vscode-playwright/SKILL.md` L1-L7 demonstrates the required pair.
 
 ### Check 2: Name Matches Directory
@@ -43,14 +43,6 @@ Grader identifiers below use the Vally CLI 0.4.0 catalog (`semantic_similarity`,
 * Suggested stimulus: ask the assistant where on disk a named skill lives and to confirm that the directory matches the frontmatter name.
 * Grader recommendation: `semantic_similarity` with rubric "Does the skill's frontmatter name field equal the final segment of its directory path in lowercase kebab-case?".
 * Evidence: `.github/skills/experimental/vscode-playwright/SKILL.md` L1 declares `name: vscode-playwright` matching the directory.
-
-### Check 3: Attribution Footer
-
-* Contract source: `prompt-builder.instructions.md` L552-L562.
-* Testable behavior: SKILL.md MUST end its body with an attribution footer as the last non-blank line, taking the form `> Brought to you by organization/repository-name` or a recognized equivalent for the hve-core collection.
-* Suggested stimulus: ask the assistant to quote the final line of a named skill's body.
-* Grader recommendation: `regex` with pattern `(?m)^(?:>\s+Brought to you by\s+\S+/\S+|.*Crafted with precision.*hve-core.*)\s*$`.
-* Evidence: every shipped skill under `.github/skills/` carries an attribution footer at the end of `SKILL.md`.
 
 ### Check 4: H1 Title Matches Skill Purpose
 

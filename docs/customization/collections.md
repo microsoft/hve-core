@@ -2,7 +2,7 @@
 title: Managing Collections
 description: Bundle agents, prompts, instructions, and skills into distributable collection packages with maturity filtering
 author: Microsoft
-ms.date: 2026-03-10
+ms.date: 2026-06-27
 ms.topic: how-to
 keywords:
   - collections
@@ -89,14 +89,15 @@ display:
 
 ## Maturity Filtering
 
-Collections support four maturity tiers that control inclusion in generated plugin output:
+Collections support five maturity tiers that control inclusion in generated plugin output:
 
-| Tier           | Meaning                                    | Plugin Inclusion            |
-|----------------|--------------------------------------------|-----------------------------|
-| `stable`       | Production-ready, fully tested             | Included in all channels    |
-| `preview`      | Feature-complete but undergoing validation | Included in all channels    |
-| `experimental` | Early-stage, may change significantly      | Excluded from stable builds |
-| `deprecated`   | Scheduled for removal                      | Excluded from new builds    |
+| Tier           | Meaning                                    | Plugin Inclusion                               |
+|----------------|--------------------------------------------|------------------------------------------------|
+| `stable`       | Production-ready, fully tested             | Included in all channels                       |
+| `preview`      | Feature-complete but undergoing validation | Included in all channels                       |
+| `experimental` | Early-stage, may change significantly      | Excluded from stable builds                    |
+| `deprecated`   | Scheduled for removal                      | Excluded from new builds                       |
+| `removed`      | Withdrawn from distribution                | Excluded from every channel and auto-discovery |
 
 Maturity applies at two levels:
 

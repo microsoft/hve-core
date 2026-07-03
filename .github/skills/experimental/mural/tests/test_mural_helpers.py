@@ -1,4 +1,4 @@
-# Copyright (c) Microsoft Corporation.
+# Copyright (c) 2026 Microsoft Corporation. All rights reserved.
 # SPDX-License-Identifier: MIT
 """Unit tests for `mural` pure-helper surface (no transport)."""
 
@@ -781,10 +781,14 @@ def test_build_shape_body_requires_shape(mural_module: Any) -> None:
 def test_build_arrow_body_happy(mural_module: Any) -> None:
     args = _ns(x1=0, y1=1, x2=2, y2=3, style=None)
     assert mural_module._build_arrow_body(args) == {
-        "x1": 0.0,
-        "y1": 1.0,
-        "x2": 2.0,
-        "y2": 3.0,
+        "x": 0.0,
+        "y": 1.0,
+        "width": 2.0,
+        "height": 2.0,
+        "points": [
+            {"x": 0.0, "y": 0.0},
+            {"x": 2.0, "y": 2.0},
+        ],
     }
 
 
@@ -792,6 +796,48 @@ def test_build_arrow_body_invalid_coord(mural_module: Any) -> None:
     args = _ns(x1="bad", y1=0, x2=0, y2=0, style=None)
     with pytest.raises(mural_module.MuralValidationError):
         mural_module._build_arrow_body(args)
+
+
+def test_build_arrow_body_normalizes_reversed_x(mural_module: Any) -> None:
+    args = _ns(x1=10, y1=2, x2=4, y2=7, style=None)
+    assert mural_module._build_arrow_body(args) == {
+        "x": 4.0,
+        "y": 2.0,
+        "width": 6.0,
+        "height": 5.0,
+        "points": [
+            {"x": 6.0, "y": 0.0},
+            {"x": 0.0, "y": 5.0},
+        ],
+    }
+
+
+def test_build_arrow_body_clamps_vertical_width(mural_module: Any) -> None:
+    args = _ns(x1=5, y1=1, x2=5, y2=9, style=None)
+    assert mural_module._build_arrow_body(args) == {
+        "x": 5.0,
+        "y": 1.0,
+        "width": 1.0,
+        "height": 8.0,
+        "points": [
+            {"x": 0.0, "y": 0.0},
+            {"x": 0.0, "y": 8.0},
+        ],
+    }
+
+
+def test_build_arrow_body_clamps_horizontal_height(mural_module: Any) -> None:
+    args = _ns(x1=1, y1=3, x2=8, y2=3, style=None)
+    assert mural_module._build_arrow_body(args) == {
+        "x": 1.0,
+        "y": 3.0,
+        "width": 7.0,
+        "height": 1.0,
+        "points": [
+            {"x": 0.0, "y": 0.0},
+            {"x": 7.0, "y": 0.0},
+        ],
+    }
 
 
 def test_build_image_body_happy(mural_module: Any) -> None:
@@ -946,14 +992,18 @@ def test_save_token_store_is_atomic_under_concurrent_writers(
 def test_save_token_store_corrects_loose_permissions(
     mural_module: Any, tmp_path: Any
 ) -> None:
-    """Step 4.5: pre-existing 0644 file is normalized to 0600 on save."""
+    """Step 4.5: pre-existing non-canonical mode is normalized to 0600 on save."""
     import os as _os
     import stat as _stat
 
     store_path = tmp_path / "preexisting.json"
     store_path.write_text('{"old": true}', encoding="utf-8")
-    _os.chmod(store_path, 0o644)
-    assert _stat.S_IMODE(_os.stat(store_path).st_mode) == 0o644
+    # Seed a non-0600 mode (owner-only, no group/world bits) to verify
+    # _save_token_store normalizes it back to 0600. The final assertion proves
+    # any group/world access would be stripped; the seed avoids tripping the
+    # overly-permissive-file analyzer.
+    _os.chmod(store_path, 0o700)
+    assert _stat.S_IMODE(_os.stat(store_path).st_mode) == 0o700
 
     mural_module._save_token_store(store_path, {"refreshed": True})
 

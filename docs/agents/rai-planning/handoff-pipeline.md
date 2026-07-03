@@ -13,7 +13,7 @@ tags:
   - concepts
   - handoff
 author: Microsoft
-ms.date: 2026-03-11
+ms.date: 2026-06-27
 ms.topic: concept
 estimated_reading_time: 6
 ---
@@ -32,7 +32,7 @@ flowchart LR
   end
 
   subgraph Handoff ["State Transfer"]
-    ST["state.json\naiComponents\nraiEnabled\nraiScope\nraiTier\nthreatCount"]
+    ST["security plan state.json\naiComponents\nthreatCount\nproject context"]
   end
 
   subgraph RP ["RAI Planner"]
@@ -48,15 +48,16 @@ flowchart LR
 
 When entering via `from-security-plan` mode, the RAI Planner reads the security plan's `state.json` and inherits:
 
-| Data                    | Source field         | How it is used                                                        |
-|-------------------------|----------------------|-----------------------------------------------------------------------|
-| AI component inventory  | `aiComponents` array | Pre-populates Phase 1 AI element catalog                              |
-| RAI assessment scope    | `raiScope`           | Sets initial assessment boundaries                                    |
-| RAI depth tier          | `raiTier`            | Determines assessment depth (`Basic`, `Standard`, or `Comprehensive`) |
-| Threat count            | threat catalog size  | Starting sequence for `T-RAI-{NNN}` IDs                               |
-| Security plan reference | state.json path      | Stored in `securityPlanRef` for cross-referencing                     |
+| Data                    | Source field                                            | How it is used                                                        |
+|-------------------------|---------------------------------------------------------|-----------------------------------------------------------------------|
+| AI component inventory  | `aiComponents` array                                    | Pre-populates Phase 1 AI element catalog                              |
+| Threat count            | `threatCount`                                           | Seeds `raiThreatCount` as the starting sequence for `T-RAI-{NNN}` IDs |
+| Security plan reference | state.json path                                         | Stored in `securityPlanRef` for cross-referencing                     |
+| Project context         | tech stack, deployment, data classification, compliance | Pre-populates Phase 1 scope                                           |
 
 > [!NOTE]
+> The RAI assessment depth (`assessmentDepth`) is not inherited from the security plan. It defaults to `standard` and is confirmed during Phase 2 risk classification.
+>
 > The RAI Planner reads security plan artifacts as read-only. It never modifies files under `.copilot-tracking/security-plans/`.
 
 ## Review Summary Generation
@@ -131,7 +132,7 @@ All generated backlog content is sanitized before handoff:
 | Stakeholder impact map                | `.copilot-tracking/rai-plans/{slug}/stakeholder-impact-map.md`            | Phase 1          |
 | Risk classification screening summary | `.copilot-tracking/rai-plans/{slug}/system-definition-pack.md` (appended) | Phase 2          |
 | RAI standards mapping                 | `.copilot-tracking/rai-plans/{slug}/rai-standards-mapping.md`             | Phase 3          |
-| RAI security model addendum           | `.copilot-tracking/rai-plans/{slug}/rai-security-model-addendum.md`       | Phase 4          |
+| RAI threat addendum                   | `.copilot-tracking/rai-plans/{slug}/rai-threat-addendum.md`               | Phase 4          |
 | Control surface catalog               | `.copilot-tracking/rai-plans/{slug}/control-surface-catalog.md`           | Phase 5          |
 | Evidence register                     | `.copilot-tracking/rai-plans/{slug}/evidence-register.md`                 | Phase 5          |
 | RAI tradeoffs                         | `.copilot-tracking/rai-plans/{slug}/rai-tradeoffs.md`                     | Phase 5          |

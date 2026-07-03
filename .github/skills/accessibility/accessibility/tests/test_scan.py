@@ -1,4 +1,4 @@
-# Copyright (c) Microsoft Corporation.
+# Copyright (c) 2026 Microsoft Corporation. All rights reserved.
 # SPDX-License-Identifier: MIT
 
 from __future__ import annotations
@@ -93,5 +93,5 @@ def test_given_target_when_run_scan_then_invokes_scanner_with_list_arguments() -
     assert result["summary"]["violations"] == 0
     command = mock_run.call_args.args[0]
     assert command[0] == "npx"
-    assert command[1:3] == ["--yes", "@axe-core/cli"]
+    assert command[1:3] == ["--yes", "@axe-core/cli@4.12.1"]
     assert command[-1] == "https://example.com"

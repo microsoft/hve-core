@@ -1,4 +1,4 @@
-# Copyright (c) Microsoft Corporation.
+# Copyright (c) 2026 Microsoft Corporation. All rights reserved.
 # SPDX-License-Identifier: MIT
 """Helper-oriented unit tests for gitlab.py."""
 
@@ -17,6 +17,33 @@ class TestDie:
 
         assert exc_info.value.code == gitlab.EXIT_USAGE
         assert capsys.readouterr().err.strip() == "error: boom"
+
+
+class TestRedact:
+    """Tests for _redact."""
+
+    def test_masks_header_and_query_string_secrets(self) -> None:
+        payload = (
+            "PRIVATE-TOKEN: secret123\n"
+            "X-API-Key: api-key-456\n"
+            "Cookie: session=xyz\n"
+            "https://example.com/?private_token=abc&access_token=def&token=ghi"
+            "&api_key=789&password=secret&secret=hidden"
+        )
+
+        redacted = gitlab._redact(payload)
+
+        assert "PRIVATE-TOKEN=[REDACTED]" in redacted
+        assert "X-API-Key=[REDACTED]" in redacted
+        assert "Cookie=[REDACTED]" in redacted
+        assert "private_token=[REDACTED]" in redacted
+        assert "access_token=[REDACTED]" in redacted
+        assert "token=[REDACTED]" in redacted
+        assert "api_key=[REDACTED]" in redacted
+        assert "password=[REDACTED]" in redacted
+        assert "secret=[REDACTED]" in redacted
+        assert "secret123" not in redacted
+        assert "abc" not in redacted
 
 
 class TestStripGitSuffix:
@@ -38,7 +65,7 @@ class TestStripGitSuffix:
 class TestValidateNumericId:
     """Tests for validate_numeric_id."""
 
-    @pytest.mark.parametrize("value", ["0", "7", "123456"])
+    @pytest.mark.parametrize("value", ["7", "123456"])
     def test_accepts_numeric_strings(self, value: str) -> None:
         gitlab.validate_numeric_id(value)
 
@@ -58,7 +85,7 @@ class TestValidateNumericId:
 class TestValidatePositiveInt:
     """Tests for validate_positive_int."""
 
-    @pytest.mark.parametrize("value", ["0", "1", "250"])
+    @pytest.mark.parametrize("value", ["1", "50", "100"])
     def test_accepts_digit_strings(self, value: str) -> None:
         gitlab.validate_positive_int(value, "max_results")
 

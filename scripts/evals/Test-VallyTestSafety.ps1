@@ -1,5 +1,5 @@
 #!/usr/bin/env pwsh
-# Copyright (c) Microsoft Corporation.
+# Copyright (c) 2026 Microsoft Corporation. All rights reserved.
 # SPDX-License-Identifier: MIT
 
 <#
@@ -43,7 +43,7 @@
     pwsh -File scripts/evals/Test-VallyTestSafety.ps1 -Root evals -OutputPath logs/vally-test-safety.json
 #>
 
-#Requires -Version 7.0
+#Requires -Version 7.4
 
 [CmdletBinding()]
 [OutputType([void])]

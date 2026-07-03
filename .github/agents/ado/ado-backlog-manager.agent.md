@@ -212,7 +212,3 @@ Approval requests appear as concise summaries showing the proposed action, affec
 * Content sanitization runs before any ADO API call to prevent leaking internal tracking references.
 * The autonomy mode is respected at every gate point.
 * Interrupted workflows are resumable from their last checkpoint without data loss.
-
----
-
-🤖 Brought to you by microsoft/hve-core

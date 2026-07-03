@@ -12,12 +12,12 @@ tags:
   - agents
   - security
 author: Microsoft
-ms.date: 2026-03-11
+ms.date: 2026-06-27
 ms.topic: concept
 estimated_reading_time: 6
 ---
 
-The Security Planner's final two phases convert analysis artifacts into actionable outputs. Phase 5 generates backlog items, and Phase 6 orchestrates the handoff, including dispatching the RAI Planner when AI/ML components are in scope.
+The Security Planner's final two phases convert analysis artifacts into actionable outputs. Phase 5 generates backlog items, and Phase 6 orchestrates the handoff, including recommending the RAI Planner when AI/ML components are in scope.
 
 ## Backlog Generation Pipeline
 
@@ -64,14 +64,18 @@ Users can override the suggested tier for any work item during the Phase 5 revie
 
 ## RAI Planner Dispatch
 
-When Phase 1 detects AI/ML components, the Security Planner tracks four RAI-related fields throughout the analysis:
+When Phase 1 detects AI/ML components, the Security Planner tracks the RAI-related fields throughout the analysis:
 
-| Field          | Set during | Values                                       |
-|----------------|------------|----------------------------------------------|
-| `raiEnabled`   | Phase 1    | `true` / `false`                             |
-| `raiScope`     | Phase 1    | `none`, `lightweight`, `full`                |
-| `raiTier`      | Phase 1    | `none`, `basic`, `standard`, `comprehensive` |
-| `aiComponents` | Phase 1    | List of detected components                  |
+| Field                    | Set during | Values                                        |
+|--------------------------|------------|-----------------------------------------------|
+| `raiEnabled`             | Phase 1    | `true` / `false`                              |
+| `raiScope`               | Phase 1    | `none`, `embedded`, `delegated`               |
+| `raiTier`                | Phase 1    | `none`, `basic`, `standard`, `comprehensive`  |
+| `aiComponents`           | Phase 1    | List of detected components                   |
+| `raiRecommendationShown` | Phase 6    | `true` once the recommendation is presented   |
+| `raiPlannerDispatched`   | Phase 6    | `true` only after the user starts the handoff |
+
+The two Phase 6 flags carry distinct semantics: presenting the recommendation sets `raiRecommendationShown`, while `raiPlannerDispatched` flips to `true` only once the user actually starts the RAI Planner. A later resume still surfaces the handoff for an AI-enabled system the user has not yet acted on.
 
 ### The Handoff
 
@@ -80,7 +84,7 @@ In Phase 6, when `raiEnabled` is `true`, the agent:
 1. **Summarizes AI/ML findings** from the security analysis, including which buckets contain AI/ML components and what threats were identified against them.
 2. Presents the RAI Planner path: `.github/agents/rai-planning/rai-planner.agent.md`.
 3. **Recommends the `from-security-plan` entry mode**, which allows the RAI Planner to read the completed security plan state as a starting point.
-4. **Provides the state file location** so the RAI Planner can locate the project slug and existing analysis.
+4. **Sets `securityPlanRef`** to the Security Planner `state.json` path so the RAI `from-security-plan` flow can read fields such as `aiComponents` directly from state rather than from the markdown plan file.
 
 ### What the RAI Planner Receives
 

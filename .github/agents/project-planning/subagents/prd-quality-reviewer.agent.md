@@ -1,6 +1,6 @@
 ---
 name: PRD Quality Reviewer
-description: "Read-only PRD quality reviewer that emits both PRD_STANDARD_FINDINGS_V1 and PRD_QUALITY_REPORT_V1 payloads - Brought to you by microsoft/hve-core"
+description: "Read-only PRD quality reviewer that emits both PRD_STANDARD_FINDINGS_V1 and PRD_QUALITY_REPORT_V1 payloads"
 tools:
   - search/codebase
   - search/fileSearch

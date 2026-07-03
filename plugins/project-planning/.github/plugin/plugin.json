@@ -6,6 +6,7 @@
     "agents/accessibility/",
     "agents/hve-core/",
     "agents/hve-core/subagents/",
+    "agents/privacy/",
     "agents/project-planning/",
     "agents/project-planning/subagents/",
     "agents/rai-planning/",

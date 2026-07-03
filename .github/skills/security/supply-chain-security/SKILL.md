@@ -39,4 +39,4 @@ Load the reference file for the topic you need. Each file holds the verbatim sta
 
 Standard catalogs in this skill derive from their respective upstream projects. Per-reference attribution appears at the bottom of each reference file. See [references/00-index.md](references/00-index.md) for the consolidated attribution summary.
 
-> Brought to you by microsoft/hve-core
+

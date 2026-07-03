@@ -1,4 +1,4 @@
-# Copyright (c) Microsoft Corporation.
+# Copyright (c) 2026 Microsoft Corporation. All rights reserved.
 # SPDX-License-Identifier: MIT
 
 # EvalSpecSchema.psm1
@@ -6,7 +6,7 @@
 # Purpose: Schema validation helpers for vally eval spec files under evals/.
 # Author: HVE Core Team
 
-#Requires -Version 7.0
+#Requires -Version 7.4
 
 Set-StrictMode -Version Latest
 

@@ -1,5 +1,5 @@
 #Requires -Modules Pester
-# Copyright (c) Microsoft Corporation.
+# Copyright (c) 2026 Microsoft Corporation. All rights reserved.
 # SPDX-License-Identifier: MIT
 
 BeforeAll {
@@ -95,7 +95,7 @@ Describe 'New-StimulusIndex' -Tag 'Unit' {
         $tempRoot = Join-Path ([System.IO.Path]::GetTempPath()) ([Guid]::NewGuid().ToString())
         try {
             New-Item -ItemType Directory -Path $tempRoot -Force | Out-Null
-            Set-Content -LiteralPath (Join-Path $tempRoot 'broken.yaml') -Value ":\n  - not: [valid"
+            Set-Content -LiteralPath (Join-Path $tempRoot 'broken.yaml') -Value "stimuli:\n  - not: [valid"
             $index = New-StimulusIndex -EvalRoot $tempRoot
             $index.specsScanned | Should -Be 1
             $index.errors.Count | Should -BeGreaterOrEqual 1

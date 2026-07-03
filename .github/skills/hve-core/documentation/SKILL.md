@@ -60,7 +60,3 @@ Write session state to `.copilot-tracking/documentation/` using a
 
 - `templates/guide.md` — Structure template for narrative guides and how-to pages.
 - `templates/reference.md` — Structure template for reference and API-style documentation.
-
----
-
-> Brought to you by microsoft/hve-core

@@ -11,7 +11,7 @@ tags:
   - agents
   - security
 author: Microsoft
-ms.date: 2026-03-11
+ms.date: 2026-06-27
 ms.topic: concept
 estimated_reading_time: 6
 ---
@@ -48,7 +48,7 @@ Converting threats into backlog items with acceptance criteria closes the loop b
 
 ### Phase 6: Review and Handoff
 
-The review phase validates completeness and catches gaps before the analysis leaves the agent. When AI/ML components are in scope, the handoff to the RAI Planner carries the security context forward rather than starting from scratch.
+The review phase validates completeness and catches gaps before the analysis leaves the agent. When AI/ML components are in scope, the agent recommends the RAI Planner and points the `from-security-plan` handoff at the Security Planner `state.json`, so the follow-up carries the security context forward rather than starting from scratch. The handoff is marked dispatched only once the user actually starts the RAI Planner.
 
 ## Quality Comparison
 

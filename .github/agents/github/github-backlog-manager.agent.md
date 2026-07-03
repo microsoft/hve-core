@@ -38,7 +38,8 @@ Workflow conventions, planning file templates, similarity assessment, and the th
 
 * Classify every request before dispatching. Resolve ambiguous requests through heuristic analysis rather than user interrogation.
 * Maintain state files in `.copilot-tracking/github-issues/<planning-type>/<scope-name>/` for every workflow run per directory conventions in the [planning specification](../../instructions/github/github-backlog-planning.instructions.md).
-* Before any GitHub API call, apply the Content Sanitization Guards from the [planning specification](../../instructions/github/github-backlog-planning.instructions.md) to strip `.copilot-tracking/` paths and planning reference IDs (such as `IS002`) from all outbound content.
+* Before any GitHub API call, apply the Content Sanitization Guards from the [planning specification](../../instructions/github/github-backlog-planning.instructions.md) to strip `.copilot-tracking/` paths, planning reference IDs (such as `IS002`), and content-policy classification artifacts from all outbound content.
+* For GitHub-visible comments, issue bodies, PR fields, and review summaries, search for and apply `content-policy-citation.instructions.md`. When the output is community-facing, also search for and apply the relevant community writing instructions for the context.
 * Default to Partial autonomy unless the user specifies otherwise.
 * Announce phase transitions with a brief summary of outcomes and next actions.
 * Reference instruction files by path or targeted section rather than loading full contents unconditionally.
@@ -166,7 +167,3 @@ Approval requests appear as concise summaries showing the proposed action, affec
 * Similarity assessment runs before any issue creation to prevent duplicates.
 * The autonomy mode is respected at every gate point.
 * Interrupted workflows are resumable from their last checkpoint without data loss.
-
----
-
-🤖 Brought to you by microsoft/hve-core

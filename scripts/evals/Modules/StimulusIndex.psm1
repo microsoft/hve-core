@@ -1,4 +1,4 @@
-﻿# Copyright (c) Microsoft Corporation.
+﻿# Copyright (c) 2026 Microsoft Corporation. All rights reserved.
 # SPDX-License-Identifier: MIT
 
 # StimulusIndex.psm1
@@ -7,7 +7,7 @@
 #          so AI-artifact coverage checks can resolve which evals exercise a given artifact.
 # Author: HVE Core Team
 
-#Requires -Version 7.0
+#Requires -Version 7.4
 
 Set-StrictMode -Version Latest
 
@@ -66,9 +66,9 @@ function New-StimulusIndex {
     Scans an eval root for spec files and builds a (kind:slug) → spec-paths index.
 
     .DESCRIPTION
-    Walks `EvalRoot` for `*.yaml` and `*.yml` files, parses each via `ConvertFrom-Yaml`, and
-    records every stimulus backlink. Specs that fail to parse are reported under `errors`
-    rather than thrown so callers can decide how strict to be.
+    Walks `EvalRoot` for `*.yaml` and `*.yml` files, parses files that declare a top-level
+    `stimuli` key via `ConvertFrom-Yaml`, and records every stimulus backlink. Specs that fail
+    to parse are reported under `errors` rather than thrown so callers can decide how strict to be.
 
     Requires the `powershell-yaml` module to be importable.
 
@@ -101,16 +101,19 @@ function New-StimulusIndex {
 
     $specFiles = Get-ChildItem -LiteralPath $resolvedRoot -Recurse -File -Include '*.yaml', '*.yml' -ErrorAction SilentlyContinue
     foreach ($file in $specFiles) {
-        $specsScanned++
         $relPath = [System.IO.Path]::GetRelativePath($resolvedRoot, $file.FullName) -replace '\\', '/'
 
         $parsed = $null
         try {
             $raw = Get-Content -LiteralPath $file.FullName -Raw -ErrorAction Stop
             if ([string]::IsNullOrWhiteSpace($raw)) {
-                $errors.Add(@{ path = $relPath; message = 'Spec file is empty' })
                 continue
             }
+            if ($raw -notmatch '(?m)^\s*stimuli\s*:') {
+                continue
+            }
+
+            $specsScanned++
             $parsed = ConvertFrom-Yaml -Yaml $raw
         }
         catch {

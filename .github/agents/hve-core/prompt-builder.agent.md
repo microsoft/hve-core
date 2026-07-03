@@ -7,6 +7,7 @@ agents:
   - Prompt Evaluator
   - Prompt Updater
   - Researcher Subagent
+  - Vally Test Author
 handoffs:
   - label: "💡 Update/Create"
     agent: Prompt Builder
@@ -175,6 +176,24 @@ Run `Prompt Updater` as a subagent using `runSubagent` or `task`, and paralleliz
 3. Continue to Phase 3 if modifications are needed from repeating Phase 1.
 
 Repeat until the current *evaluation-log* from `Prompt Evaluator` shows no issues.
+
+### Phase 4: Optional Vally Conformance Authoring
+
+Run this phase only when the user asks for conformance test coverage, or offer it once Phase 3 has converged and the modified artifact documents stable behaviors worth pinning. Skip it silently when the user declines or when the changes are too exploratory to pin. Use the `prompt-builder` skill as the canonical orchestration source; its dispatch matrix documents the `Vally Test Author` inputs and outputs used below.
+
+#### Step 1: Dispatch Vally Test Author
+
+Run `Vally Test Author` as a subagent using `runSubagent` or `task`, providing these inputs:
+
+* `mode=from-artifact` and `files=` with the finalized artifact path(s) (`.prompt.md`, `.instructions.md`, `.agent.md`, or a skill's `SKILL.md`).
+* `kind=auto` unless the user specifies a kind.
+
+`Vally Test Author` owns its own routing, safety self-check, dedupe, and append-only writes; do not pre-resolve eval paths or restate its safety mechanics here. It returns the routed eval file path, the stimuli-appended count, any dedupe skips, and its JSON report path.
+
+#### Step 2: Surface Results
+
+1. Report the routed eval file, the count of appended stimuli, and any refusals or blockers the subagent surfaced.
+2. Do not flip `tags.advisory: false` or graduate stimuli — graduation is governed by `evals/behavior-conformance/README.md`.
 
 ## Cleanup Before Finishing
 

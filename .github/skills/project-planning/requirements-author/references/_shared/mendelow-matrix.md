@@ -1,5 +1,5 @@
 ---
-description: 'Power/Interest grid for stakeholder engagement, originally proposed by Aubrey L. Mendelow (1991) - presented as a 2x2 quadrant table with original HVE-Core engagement captions used by the BRD Builder - Brought to you by microsoft/hve-core'
+description: 'Power/Interest grid for stakeholder engagement, originally proposed by Aubrey L. Mendelow (1991) - presented as a 2x2 quadrant table with original HVE-Core engagement captions used by the BRD Builder'
 ---
 
 # Mendelow Power/Interest Grid
@@ -57,4 +57,4 @@ The 2x2 grid construct has since been widely reproduced across the business-anal
 
 This reference file is original Microsoft content licensed under [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/). The 2x2 Power/Interest construct is treated as a generic stakeholder-analysis pattern; the cited conference paper is the property of its author and the publisher of the proceedings.
 
-> Brought to you by microsoft/hve-core
+

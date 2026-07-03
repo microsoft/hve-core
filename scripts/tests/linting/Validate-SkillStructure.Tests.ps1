@@ -1,4 +1,4 @@
-﻿# Copyright (c) Microsoft Corporation.
+﻿# Copyright (c) 2026 Microsoft Corporation. All rights reserved.
 # SPDX-License-Identifier: MIT
 
 #Requires -Modules Pester
@@ -24,6 +24,7 @@ BeforeAll {
             [switch]$WithEmptyScriptsDir,
             [switch]$WithUnrecognizedDir,
             [switch]$WithPyprojectToml,
+            [switch]$WithoutUvLock,
             [switch]$WithPythonScripts,
             [string]$WithPythonPackageDir,
             [string[]]$OptionalDirs = @()
@@ -73,6 +74,9 @@ target-version = "py311"
 [tool.ruff.lint]
 select = ["E", "F", "I", "W"]
 "@
+            if (-not $WithoutUvLock) {
+                Set-Content -Path (Join-Path $skillDir 'uv.lock') -Value 'version = 1'
+            }
         }
 
         if ($WithPythonScripts) {
@@ -131,7 +135,7 @@ description: A test skill for validation
             $content = @"
 ---
 name: 'my-skill'
-description: 'A skill with single quotes - Brought to you by microsoft/hve-core'
+description: 'A skill with single quotes'
 ---
 
 # Skill
@@ -142,7 +146,7 @@ description: 'A skill with single quotes - Brought to you by microsoft/hve-core'
             $result = Get-SkillFrontmatter -Path $filePath
             $result | Should -Not -BeNullOrEmpty
             $result['name'] | Should -BeExactly 'my-skill'
-            $result['description'] | Should -BeExactly 'A skill with single quotes - Brought to you by microsoft/hve-core'
+            $result['description'] | Should -BeExactly 'A skill with single quotes'
         }
 
         It 'Strips double-quoted values correctly' {
@@ -290,7 +294,7 @@ Describe 'Test-SkillDirectory' -Tag 'Unit' {
             $frontmatter = @"
 ---
 name: test-skill
-description: 'A test skill for validation - Brought to you by microsoft/hve-core'
+description: 'A test skill for validation'
 ---
 
 # Test Skill

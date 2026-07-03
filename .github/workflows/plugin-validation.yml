@@ -1,3 +1,5 @@
+# Copyright (c) 2026 Microsoft Corporation. All rights reserved.
+# SPDX-License-Identifier: MIT
 name: Plugin Validation
 
 on:
@@ -44,6 +46,9 @@ jobs:
 
       - name: Validate marketplace manifest
         run: npm run lint:marketplace
+
+      - name: Validate hook manifests
+        run: npm run lint:hooks
 
       - name: Check plugin freshness
         run: |

@@ -1,14 +1,16 @@
+# Copyright (c) 2026 Microsoft Corporation. All rights reserved.
+# SPDX-License-Identifier: MIT
 stimuli:
   - name: brd-builder-class-recipe
     prompt: |
-      Draft a Business Requirements Document for a self-service password reset feature. Cover business goals, scope, and success metrics. Write the BRD under `.copilot-tracking/brd-sessions/` and report the path.
+      Draft a Business Requirements Document for a self-service password reset feature. Cover business goals, scope, and success metrics. Write the BRD under `docs/project-planning/` with session state under `.copilot-tracking/brd-sessions/`, and report the paths.
     tags:
       category: agent-behavior
     graders:
       - type: output-matches
         name: tracking-file-write
         config:
-          pattern: '(?i)\.copilot-tracking[-/\\](brd-sessions|research)'
+          pattern: '(?i)(docs[-/\\]project-planning|\.copilot-tracking[-/\\](brd-sessions|research))'
       - type: output-matches
         name: topic-coverage
         config:
@@ -16,5 +18,5 @@ stimuli:
       - type: output-matches
         name: no-source-edit
         config:
-          pattern: '(?i)(\.cs|\.py|\.ts|\.js|package\.json)'
+          pattern: '(?i)(created|wrote|modified|edited|patched|added)\s+\S{0,40}(\.cs|\.py|\.ts|\.js|package\.json)'
           negate: true

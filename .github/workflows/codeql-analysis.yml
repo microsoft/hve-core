@@ -1,3 +1,5 @@
+# Copyright (c) 2026 Microsoft Corporation. All rights reserved.
+# SPDX-License-Identifier: MIT
 name: CodeQL Security Analysis
 
 on:
@@ -21,9 +23,10 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        # Repository contains GitHub Actions workflows, PowerShell, shell scripts, and Python
-        # CodeQL supports 'actions' for workflow scanning and 'python' for script analysis
-        language: [ 'actions', 'python' ]
+        # Repository contains GitHub Actions workflows, Python, and JavaScript/TypeScript (VS Code extension source)
+        # CodeQL 'actions' scans workflows, 'python' scans scripts, and 'javascript-typescript' covers both JS and TS
+        # PowerShell and shell scripts are not CodeQL-supported (covered by PSScriptAnalyzer and shellcheck)
+        language: [ 'actions', 'python', 'javascript-typescript' ]
     
     steps:
       - name: Checkout repository

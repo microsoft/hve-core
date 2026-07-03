@@ -43,4 +43,4 @@ NTIA Minimum Elements content derives from a U.S. government publication. Not su
 
 OpenSSF is a registered trademark of the Linux Foundation.
 
-> Brought to you by microsoft/hve-core
+

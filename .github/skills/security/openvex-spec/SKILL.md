@@ -1,0 +1,72 @@
+---
+name: openvex-spec
+description: OpenVEX v0.2.0 specification reference for producing, validating, and interpreting Vulnerability Exploitability eXchange documents - Brought to you by microsoft/hve-core.
+license: Apache-2.0
+user-invocable: false
+metadata:
+  authors: "OpenVEX Community"
+  spec_version: "1.0"
+  framework_revision: "1.0.0"
+  last_updated: "2026-05-14"
+  content_based_on: "https://github.com/openvex/spec/blob/main/OPENVEX-SPEC.md"
+---
+
+# OpenVEX Specification: Skill Entry
+
+This `SKILL.md` is the **entrypoint** for the OpenVEX specification skill. It provides
+**OpenVEX v0.2.0** schema references for producing valid VEX documents, understanding
+vulnerability exploitability statuses, and looking up CVE data from public sources. Status
+determination logic and agent behavioral rules live in the VEX generation instructions.
+
+## VEX statuses
+
+| Status                | Meaning                                                                                                    |
+|-----------------------|------------------------------------------------------------------------------------------------------------|
+| `not_affected`        | The vulnerability is not exploitable in this product. Requires a `justification` or `impact_statement`.    |
+| `affected`            | The vulnerability is exploitable. Requires an `action_statement` describing remediation.                   |
+| `fixed`               | The vulnerability was present but has been remediated in this product version.                             |
+| `under_investigation` | The author is evaluating whether the vulnerability affects this product. Safe default for uncertain cases. |
+
+### Justification codes for `not_affected`
+
+When a statement uses `not_affected` status, it must include a machine-readable justification:
+
+| Code                                                | Meaning                                                            |
+|-----------------------------------------------------|--------------------------------------------------------------------|
+| `component_not_present`                             | The vulnerable component is not included in the product.           |
+| `vulnerable_code_not_present`                       | The component is present but the vulnerable code is not included.  |
+| `vulnerable_code_not_in_execute_path`               | The vulnerable code is present but cannot be reached at runtime.   |
+| `vulnerable_code_cannot_be_controlled_by_adversary` | The code is reachable but an attacker cannot influence the inputs. |
+| `inline_mitigations_already_exist`                  | Existing controls prevent exploitation of the vulnerability.       |
+
+### Product identifiers
+
+Products use [Package URL (PURL)](https://github.com/package-url/purl-spec) format
+(for example, `pkg:npm/@microsoft/hve-core@3.10.0`).
+
+## Normative references
+
+1. [OpenVEX JSON Schema Reference](references/openvex-schema.md): field definitions, required
+   versus optional fields, and example documents.
+2. [VEX Status Logic](references/vex-status-logic.md): status determination decision tree,
+   evidence requirements per status, and forbidden transitions.
+3. [CVE Data Sources](references/cve-data-sources.md): OSV.dev, NVD, and GitHub Advisory Database
+   API references with licensing posture.
+
+## Skill layout
+
+* `SKILL.md`: this file (skill entrypoint).
+* `references/`: normative reference documents.
+  * `openvex-schema.md`: JSON schema reference with field definitions and examples.
+  * `vex-status-logic.md`: status determination decision tree and forbidden transitions.
+  * `cve-data-sources.md`: CVE data source API references and licensing.
+
+## Third-Party Attribution
+
+| Attribute     | Value                                                                                                                                                            |
+|---------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| Specification | OpenVEX Specification v0.2.0                                                                                                                                     |
+| Copyright     | © OpenVEX Contributors                                                                                                                                           |
+| License       | [Apache License 2.0](https://www.apache.org/licenses/LICENSE-2.0)                                                                                                |
+| Source        | <https://github.com/openvex/spec/blob/main/OPENVEX-SPEC.md>                                                                                                      |
+| Modifications | Specification restructured into agent-consumable reference documents with added status determination logic, evidence requirements, and CVE data source guidance. |

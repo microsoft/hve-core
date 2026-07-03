@@ -1,5 +1,5 @@
 ---
-description: 'PRD user-story reference - the Connextra "As a / I want / so that" role-feature-benefit template described in original Microsoft prose with anti-patterns and cite-only attribution; complements INVEST and EARS for story authoring - Brought to you by microsoft/hve-core'
+description: 'PRD user-story reference - the Connextra "As a / I want / so that" role-feature-benefit template described in original Microsoft prose with anti-patterns and cite-only attribution; complements INVEST and EARS for story authoring'
 ---
 
 # Connextra User-Story Template
@@ -52,4 +52,4 @@ so that <benefit>.
 
 This reference file is original Microsoft content licensed under [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/). The story-authoring guidance is HVE-Core IP and may be reused under the same license. The Connextra template form remains attributable to its originators; the cited sources are accessed by the reader and are never redistributed here.
 
-> Brought to you by microsoft/hve-core
+

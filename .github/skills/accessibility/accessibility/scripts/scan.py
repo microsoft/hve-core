@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# Copyright (c) Microsoft Corporation.
+# Copyright (c) 2026 Microsoft Corporation. All rights reserved.
 # SPDX-License-Identifier: MIT
 # /// script
 # requires-python = ">=3.11"
@@ -112,7 +112,7 @@ def normalize_results(raw_results: dict[str, Any], target: str) -> dict[str, Any
 
 def run_scan(target: str) -> dict[str, Any]:
     """Run the external axe-core scanner and normalize the output."""
-    command = ["npx", "--yes", "@axe-core/cli", target]
+    command = ["npx", "--yes", "@axe-core/cli@4.12.1", target]
     try:
         completed = subprocess.run(
             command,
@@ -123,7 +123,7 @@ def run_scan(target: str) -> dict[str, Any]:
     except FileNotFoundError as exc:
         raise ScriptError(
             "Node-based axe scanner is unavailable. "
-            "Install Node.js and run 'npx --yes @axe-core/cli'.",
+            "Install Node.js and run 'npx --yes @axe-core/cli@4.12.1'.",
             EXIT_USAGE,
         ) from exc
     except subprocess.CalledProcessError as exc:

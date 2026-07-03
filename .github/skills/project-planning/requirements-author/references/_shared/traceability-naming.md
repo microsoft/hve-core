@@ -1,5 +1,5 @@
 ---
-description: 'Configurable identifier routing and traceability naming conventions for requirements-author consumers - Brought to you by microsoft/hve-core'
+description: 'Configurable identifier routing and traceability naming conventions for requirements-author consumers'
 ---
 
 # Traceability and Naming
@@ -109,4 +109,4 @@ External (cite-only, no embedded text):
 
 Original content in this reference is licensed under [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/), copyright (C) Microsoft Corporation. External standards are cited by name and clause only.
 
-> Brought to you by microsoft/hve-core
+

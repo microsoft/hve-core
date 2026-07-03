@@ -1,7 +1,7 @@
 ﻿#!/usr/bin/env pwsh
-# Copyright (c) Microsoft Corporation.
+# Copyright (c) 2026 Microsoft Corporation. All rights reserved.
 # SPDX-License-Identifier: MIT
-#Requires -Version 7.0
+#Requires -Version 7.4
 
 <#
 .SYNOPSIS
@@ -411,6 +411,7 @@ function New-CollectionReadme {
     $prompts = @()
     $instructions = @()
     $skills = @()
+    $hooks = @()
 
     if ($Collection.ContainsKey('items')) {
         foreach ($item in $Collection.items) {
@@ -438,6 +439,7 @@ function New-CollectionReadme {
                 'prompt' { $prompts += $entry }
                 'instruction' { $instructions += $entry }
                 'skill' { $skills += $entry }
+                'hook' { $hooks += $entry }
             }
         }
     }
@@ -449,7 +451,8 @@ function New-CollectionReadme {
         @{ Title = 'Chat Agents'; Items = $agents },
         @{ Title = 'Prompts'; Items = $prompts },
         @{ Title = 'Instructions'; Items = $instructions },
-        @{ Title = 'Skills'; Items = $skills }
+        @{ Title = 'Skills'; Items = $skills },
+        @{ Title = 'Hooks'; Items = $hooks }
     )) {
         if ($section.Items.Count -eq 0) { continue }
 

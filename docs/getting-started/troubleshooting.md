@@ -3,7 +3,7 @@ title: Troubleshooting
 description: Solutions for common installation problems and answers to frequently asked questions about HVE Core collections.
 sidebar_position: 8
 author: Microsoft
-ms.date: 2026-03-11
+ms.date: 2026-06-27
 ms.topic: troubleshooting
 keywords: [troubleshooting, FAQ, installation, collections, hve-core, hve-installer]
 estimated_reading_time: 5
@@ -41,7 +41,7 @@ Duplicate agents appear in Copilot Chat, or agents behave unexpectedly after ins
 
 #### Solutions
 
-1. The HVE Core All extension installs the full `hve-core-all` collection containing every artifact. The HVE Installer deploys individual collections selectively. Using both can produce duplicate artifacts. Choose one extension.
+1. The HVE Core All extension installs the full `hve-core-all` collection bundle from the marketplace. The HVE Installer deploys selected collection artifacts into `.github/`. Using both can produce duplicate artifacts. Choose one extension.
 2. If you want all artifacts, keep HVE Core All and uninstall HVE Installer. If you want selective collections, keep HVE Installer and uninstall HVE Core All.
 3. After uninstalling, delete any leftover `.github/agents/`, `.github/prompts/`, `.github/instructions/`, and `.github/skills/` directories that were deployed by the removed extension. Then reinstall with your preferred method.
 

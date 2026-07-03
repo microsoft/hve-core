@@ -1,26 +1,26 @@
+# Copyright (c) 2026 Microsoft Corporation. All rights reserved.
+# SPDX-License-Identifier: MIT
 stimuli:
-  - name: code-review-standards-class-recipe
+  - name: code-review-standards-lens
     prompt: |
-      Review this snippet against Python conventions:
+      As the standards code-review perspective, review this snippet for coding
+      standard and convention violations, and tie each finding to the rule it
+      breaks.
       ```python
-      def Get_User_Data(USER_ID):
-         x=db.fetch(USER_ID)
-         return x
+      def ProcessData( x ):
+       result=x*2
+       return result
       ```
-      List style violations with severity.
     tags:
       category: agent-behavior
+      advisory: "true"
     graders:
       - type: output-matches
-        name: findings-table-present
+        name: standards-finding-vocabulary
         config:
-          pattern: '(?i)(\|.*severity.*\||finding|issue|concern|recommendation|violation)'
-      - type: output-matches
-        name: severity-vocab
-        config:
-          pattern: '(?i)(critical|high|medium|low|info|severity|warning)'
+          pattern: '(?i)(standard|convention|naming|style|PEP\s?8|formatting|violation|finding|issue)'
       - type: output-matches
         name: no-source-edit
         config:
-          pattern: '(?i)(\.cs|\.py|\.ts|\.js|package\.json)'
+          pattern: '(?i)(created|wrote|modified|edited|patched|added)\s+\S{0,40}(\.cs|\.py|\.ts|\.js|package\.json)'
           negate: true

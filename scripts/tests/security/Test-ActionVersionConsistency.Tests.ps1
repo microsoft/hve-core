@@ -1,5 +1,5 @@
 #Requires -Modules Pester
-# Copyright (c) Microsoft Corporation.
+# Copyright (c) 2026 Microsoft Corporation. All rights reserved.
 # SPDX-License-Identifier: MIT
 
 using module ../../security/Modules/SecurityClasses.psm1
@@ -740,14 +740,17 @@ Describe 'Main Script Execution' -Tag 'Unit' {
         It 'Returns exit code 0 when no violations and no fail flags' {
             Copy-Item -Path (Join-Path $script:FixturesPath 'pinned-workflow.yml') -Destination $script:TestWorkspace
 
-            $null = pwsh -NoProfile -Command "& '$script:TestScript' -Path '$script:TestWorkspace' -Format Json" 2>&1
-            $LASTEXITCODE | Should -Be 0
+            $outputPath = Join-Path $script:TestWorkspace 'report.json'
+            $exitCode = Invoke-ActionVersionConsistency -Path $script:TestWorkspace -Format Json -OutputPath $outputPath
+            $exitCode | Should -BeOfType [int]
+            $exitCode | Should -Be 0
         }
 
-        It 'Returns exit code 1 when FailOnMismatch and mismatches exist' {
+        It 'Returns exit code 1 when FailOnMismatch and mismatches exist' -Tag 'Integration' {
             Copy-Item -Path (Join-Path $script:FixturesPath 'version-mismatch-a.yml') -Destination $script:TestWorkspace
             Copy-Item -Path (Join-Path $script:FixturesPath 'version-mismatch-b.yml') -Destination $script:TestWorkspace
 
+            # Retained guard smoke test for the process exit-code path.
             $tempScript = Join-Path $script:TestWorkspace 'run-test.ps1'
             $scriptContent = @"
 & '$($script:TestScript)' -Path '$($script:TestWorkspace)' -Format Json -FailOnMismatch
@@ -761,21 +764,19 @@ exit `$LASTEXITCODE
         It 'Returns exit code 1 when FailOnMissingComment and missing comments exist' {
             Copy-Item -Path (Join-Path $script:FixturesPath 'missing-version-comment.yml') -Destination $script:TestWorkspace
 
-            $tempScript = Join-Path $script:TestWorkspace 'run-test.ps1'
-            $scriptContent = @"
-& '$($script:TestScript)' -Path '$($script:TestWorkspace)' -Format Json -FailOnMissingComment
-exit `$LASTEXITCODE
-"@
-            Set-Content -Path $tempScript -Value $scriptContent
-            $proc = Start-Process -FilePath 'pwsh' -ArgumentList @('-NoProfile', '-File', $tempScript) -Wait -PassThru -NoNewWindow
-            $proc.ExitCode | Should -Be 1
+            $outputPath = Join-Path $script:TestWorkspace 'report.json'
+            $exitCode = Invoke-ActionVersionConsistency -Path $script:TestWorkspace -Format Json -FailOnMissingComment -OutputPath $outputPath
+            $exitCode | Should -BeOfType [int]
+            $exitCode | Should -Be 1
         }
 
         It 'Returns exit code 0 when violations exist but no fail flags set' {
             Copy-Item -Path (Join-Path $script:FixturesPath 'missing-version-comment.yml') -Destination $script:TestWorkspace
 
-            $null = pwsh -NoProfile -Command "& '$script:TestScript' -Path '$script:TestWorkspace' -Format Json" 2>&1
-            $LASTEXITCODE | Should -Be 0
+            $outputPath = Join-Path $script:TestWorkspace 'report.json'
+            $exitCode = Invoke-ActionVersionConsistency -Path $script:TestWorkspace -Format Json -OutputPath $outputPath
+            $exitCode | Should -BeOfType [int]
+            $exitCode | Should -Be 0
         }
     }
 }

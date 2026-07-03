@@ -3,7 +3,7 @@ title: 'Contributing Agents to HVE Core'
 description: 'Requirements and standards for contributing GitHub Copilot agent files to hve-core'
 sidebar_position: 5
 author: Microsoft
-ms.date: 2026-06-15
+ms.date: 2026-06-30
 ms.topic: how-to
 ---
 
@@ -139,7 +139,7 @@ Agent files are typically organized in a collection subdirectory by convention:
 ### Naming Convention
 
 * Use lowercase kebab-case: `security-reviewer.agent.md`
-* Be descriptive and action-oriented: `task-planner.agent.md`, `pr-review.agent.md`, `rpi-agent.agent.md`
+* Be descriptive and action-oriented: `task-planner.agent.md`, `code-review.agent.md`, `rpi-agent.agent.md`
 * Avoid generic names: `helper.agent.md` ❌ → `ado-work-item-processor.agent.md` ✅
 
 ### File Format
@@ -198,10 +198,22 @@ Valid tools:
 * `searchResults` - Search view results
 * `edit/createFile` - File creation
 * `edit/createDirectory` - Directory creation
-* `Bicep (EXPERIMENTAL)/*` - Bicep tooling
 * `terraform/*` - Terraform tooling
 * `context7/*` - Library documentation
 * `microsoft-docs/*` - Microsoft documentation
+
+> [!NOTE]
+> This curated list reflects commonly used tools but is not exhaustive and can drift as GitHub Copilot and VS Code evolve. Treat the official [VS Code custom agents documentation](https://code.visualstudio.com/docs/copilot/customization/custom-agents) as the authoritative, up-to-date source for available tools and tool names.
+
+#### Referencing tools in agent bodies
+
+The `tools:` frontmatter field controls which tools an agent can access. To reference a specific tool inside the agent body (or a prompt), use the `#tool:` syntax:
+
+```markdown
+Use #tool:codebase to locate the relevant files, then #tool:editFiles to apply changes.
+```
+
+The name after `#tool:` matches the tool name as it appears in the `tools:` array (for example, `#tool:search`, `#tool:runCommands`, `#tool:githubRepo`). This differs from the `tools:` frontmatter field, which grants access, whereas `#tool:` directs the agent to invoke a specific granted tool at a point in the workflow.
 
 **`agents`** (array of strings)
 
@@ -415,13 +427,7 @@ before they're merged into the library.
 
 #### 6. Attribution Footer
 
-Include at end of file (MANDATORY):
-
-```markdown
----
-
-Brought to you by microsoft/hve-core
-```
+Source artifacts carry no attribution footer.
 
 ### XML-Style Block Requirements
 

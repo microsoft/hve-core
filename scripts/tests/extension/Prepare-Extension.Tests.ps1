@@ -1,9 +1,12 @@
 #Requires -Modules Pester
-# Copyright (c) Microsoft Corporation.
+# Copyright (c) 2026 Microsoft Corporation. All rights reserved.
 # SPDX-License-Identifier: MIT
 
 BeforeAll {
     . $PSScriptRoot/../../extension/Prepare-Extension.ps1
+    # Re-import CIHelpers so Pester can resolve Write-CIAnnotation within It-block scope;
+    # the script's own import does not propagate through dot-sourcing in Pester v5.
+    Import-Module (Join-Path $PSScriptRoot '../../lib/Modules/CIHelpers.psm1') -Force
 }
 
 #region Package Generation Function Tests
@@ -448,7 +451,6 @@ description: "My skill description"
         $content | Should -Match '## Requirements'
         $content | Should -Match '## License'
         $content | Should -Match '## Support'
-        $content | Should -Match 'Microsoft ISE HVE Essentials'
     }
 
     It 'Handles collection without description key' {
@@ -2075,18 +2077,6 @@ description: "My artifact description"
 "@ | Set-Content -Path $path
         $result = Get-ArtifactDescription -FilePath $path
         $result | Should -Be 'My artifact description'
-    }
-
-    It 'Strips branding suffix from description' {
-        $path = Join-Path $script:tempDir 'branded.md'
-        @"
----
-description: "Some tool - Brought to you by microsoft/hve-core"
----
-# Branded
-"@ | Set-Content -Path $path
-        $result = Get-ArtifactDescription -FilePath $path
-        $result | Should -Be 'Some tool'
     }
 
     It 'Returns empty string when frontmatter YAML is invalid' {

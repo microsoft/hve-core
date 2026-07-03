@@ -1,3 +1,5 @@
+# Copyright (c) 2026 Microsoft Corporation. All rights reserved.
+# SPDX-License-Identifier: MIT
 stimuli:
   - name: ado-prd-to-wit-class-recipe
     prompt: |
@@ -16,5 +18,5 @@ stimuli:
       - type: output-matches
         name: no-source-edit
         config:
-          pattern: '(?i)(\.cs|\.py|\.ts|\.js|package\.json)'
+          pattern: '(?i)(created|wrote|modified|edited|patched|added)\s+\S{0,40}(\.cs|\.py|\.ts|\.js|package\.json)'
           negate: true

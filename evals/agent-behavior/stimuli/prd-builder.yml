@@ -1,14 +1,16 @@
+# Copyright (c) 2026 Microsoft Corporation. All rights reserved.
+# SPDX-License-Identifier: MIT
 stimuli:
   - name: prd-builder-class-recipe
     prompt: |
-      Draft a Product Requirements Document for a notification preferences page (in-app, email, SMS toggles). Include user stories and success criteria. Write the PRD under `.copilot-tracking/prd-sessions/` and report the path.
+      Draft a Product Requirements Document for a notification preferences page (in-app, email, SMS toggles). Include user stories and success criteria. Write the PRD under `docs/project-planning/` with session state under `.copilot-tracking/prd-sessions/`, and report the paths.
     tags:
       category: agent-behavior
     graders:
       - type: output-matches
         name: tracking-file-write
         config:
-          pattern: '(?i)\.copilot-tracking[-/\\](prd-sessions|research)'
+          pattern: '(?i)(docs[-/\\]project-planning|\.copilot-tracking[-/\\](prd-sessions|research))'
       - type: output-matches
         name: topic-coverage
         config:
@@ -16,5 +18,5 @@ stimuli:
       - type: output-matches
         name: no-source-edit
         config:
-          pattern: '(?i)(\.cs|\.py|\.ts|\.js|package\.json)'
+          pattern: '(?i)(created|wrote|modified|edited|patched|added)\s+\S{0,40}(\.cs|\.py|\.ts|\.js|package\.json)'
           negate: true

@@ -1,5 +1,5 @@
 ---
-description: 'Neutral quality status taxonomy and score-to-status mechanics for requirements-author consumers - Brought to you by microsoft/hve-core'
+description: 'Neutral quality status taxonomy and score-to-status mechanics for requirements-author consumers'
 ---
 
 # Quality Rubric
@@ -84,4 +84,4 @@ The zero-source-row note in [traceability-matrix.md](traceability-matrix.md) is 
 
 This rubric is original Microsoft content licensed under [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/). Third-party standards referenced by related rubrics are cited by name only and remain the property of their respective rights holders.
 
-> Brought to you by microsoft/hve-core
+

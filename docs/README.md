@@ -3,7 +3,7 @@ title: HVE Core Documentation
 description: Documentation hub for HVE Core, a prompt engineering framework that brings AI-powered agents, prompts, instructions, and skills to your GitHub Copilot workflow
 sidebar_position: 1
 author: Microsoft
-ms.date: 2026-03-11
+ms.date: 2026-06-30
 ms.topic: overview
 keywords:
   - hve core
@@ -18,7 +18,7 @@ HVE Core gives your team production-ready agents, reusable prompts, coding instr
 
 ## Choose Your Extension
 
-|              | HVE Core All                                                                                                | HVE Installer                                                                                                 |
+| Option       | HVE Core All                                                                                                | HVE Installer                                                                                                 |
 |--------------|-------------------------------------------------------------------------------------------------------------|---------------------------------------------------------------------------------------------------------------|
 | What you get | Every agent, prompt, instruction, and skill in the framework                                                | Pick only the collections you need                                                                            |
 | Best for     | Teams that want the full toolkit out of the box                                                             | Teams that prefer a curated, lightweight setup                                                                |
@@ -59,7 +59,7 @@ Explore advanced capabilities including Design Thinking coaching, security plann
 * [Design Thinking](design-thinking/README.md) guides teams through nine methods across three spaces
 * [Project Planning](agents/project-planning/) covers ADR creation, BRD/PRD building, architecture diagrams, and security plan generation
 * [Security documentation](security/README.md) covers threat modeling and security planning
-* [RPI methodology](rpi/) explains the Research, Plan, Implement agent coordination pattern
+* [RPI methodology](rpi/) explains the Research, Plan, Implement, Review agent coordination pattern
 
 ## Roles
 
@@ -88,10 +88,10 @@ Specialized agents are organized into functional groups that combine agents, pro
 
 ## RPI Methodology
 
-Research, Plan, Implement (RPI) decomposes complex engineering tasks into three specialized agents that collaborate through structured handoffs.
+Research, Plan, Implement, Review (RPI) decomposes complex engineering tasks into four specialized agents that collaborate through structured handoffs.
 
 * [Why RPI?](rpi/why-rpi.md) explains the problem statement and design rationale
-* [Task Researcher](rpi/task-researcher.md), [Task Planner](rpi/task-planner.md), and [Task Implementor](rpi/task-implementor.md) cover each agent
+* [Task Researcher](rpi/task-researcher.md), [Task Planner](rpi/task-planner.md), [Task Implementor](rpi/task-implementor.md), and [Task Reviewer](rpi/task-reviewer.md) cover each agent
 * [Using Together](rpi/using-together.md) describes agent coordination patterns
 
 **[RPI Documentation →](rpi/)**
