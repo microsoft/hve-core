@@ -170,11 +170,18 @@ function New-AssetDocContent {
         Builds the full documentation page content for an asset.
     .DESCRIPTION
         Assembles frontmatter, the refreshed metadata and overview regions, and
-        the human-authored tail. For an existing page the tail (and its ms.date)
-        are preserved; for a new page the tail comes from the template. Throws
+        the human-authored tail. For an existing page the human-authored tail is
+        preserved; for a new page the tail comes from the template. Throws
         when an existing page is missing its overview markers, so human-authored
         sections are never discarded (the orchestrator pre-checks and skips such
         pages before calling this function).
+
+        The ms.date field reflects the last time the generated content changed:
+        it is preserved from the existing page when regeneration produces
+        identical output, and advanced to today whenever the regenerated
+        frontmatter or auto-generated regions differ. New pages are stamped with
+        today's date. Human-only edits do not advance ms.date because the tail is
+        preserved verbatim, so the regenerated output matches the existing page.
     .PARAMETER Model
         Page model from New-AssetPageModel.
     .PARAMETER RepoRoot
@@ -198,6 +205,7 @@ function New-AssetDocContent {
     $docFull = Join-Path $RepoRoot $Model.DocRel
     $today = Get-Date -Format 'yyyy-MM-dd'
 
+    $existing = $null
     if (Test-Path -LiteralPath $docFull) {
         $existing = Get-Content -LiteralPath $docFull -Raw
         $existingFm = Get-AssetFrontmatter -FilePath $docFull
@@ -230,12 +238,24 @@ function New-AssetDocContent {
     }
     $overviewBody = New-AssetOverviewBody -Model $Model
 
-    $frontmatter = New-DocFrontmatter -Title $Model.Title -Description $descriptionMeta -SidebarPosition $SidebarPosition -MsDate $msDate
     $metadataRegion = New-AssetGeneratedRegion -Region 'metadata' -Body (New-AssetMetadataBlock -Kind $Model.Kind -SourcePath $Model.SourceRel -Invocation $Model.Invocation -Interactive $Model.Interactive)
     $overviewRegion = New-AssetGeneratedRegion -Region 'overview' -Body $overviewBody
+    $generatedTail = "`n`n$metadataRegion`n`n## What it does`n`n$overviewRegion" + $humanTail
 
-    $head = "$frontmatter`n`n$metadataRegion`n`n## What it does`n`n$overviewRegion"
-    return ($head + $humanTail).TrimEnd() + "`n"
+    # Assemble with the preserved ms.date first, then advance it to today only
+    # when the regenerated output differs from the existing page. This makes
+    # ms.date track the last time the generated frontmatter or regions changed
+    # rather than the first-scaffold date, while staying idempotent: rebuilding
+    # with an unchanged date reproduces the file byte-for-byte, and preserved
+    # human sections keep the output identical so human-only edits never advance
+    # the date.
+    $content = ((New-DocFrontmatter -Title $Model.Title -Description $descriptionMeta -SidebarPosition $SidebarPosition -MsDate $msDate) + $generatedTail).TrimEnd() + "`n"
+
+    if ($null -ne $existing -and -not [string]::Equals($content, $existing, [System.StringComparison]::Ordinal)) {
+        $content = ((New-DocFrontmatter -Title $Model.Title -Description $descriptionMeta -SidebarPosition $SidebarPosition -MsDate $today) + $generatedTail).TrimEnd() + "`n"
+    }
+
+    return $content
 }
 
 function New-KindIndexContent {
@@ -322,7 +342,9 @@ function New-IndexContent {
     .PARAMETER RegionBody
         The generated index body placed inside the index region.
     .PARAMETER ExistingPath
-        Path to an existing index page whose ms.date is preserved.
+        Path to an existing index page. Its ms.date is preserved when the
+        regenerated content is identical, and advanced to today when the
+        generated index region or frontmatter changes.
     .OUTPUTS
         [string] The index page content ending with a single newline.
     #>
@@ -336,17 +358,27 @@ function New-IndexContent {
         [Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string]$ExistingPath
     )
 
-    $msDate = Get-Date -Format 'yyyy-MM-dd'
+    $today = Get-Date -Format 'yyyy-MM-dd'
+    $msDate = $today
+    $existing = $null
     if (Test-Path -LiteralPath $ExistingPath) {
+        $existing = Get-Content -LiteralPath $ExistingPath -Raw
         $existingFm = Get-AssetFrontmatter -FilePath $ExistingPath
         if ($existingFm.ContainsKey('ms.date') -and $existingFm['ms.date']) {
             $msDate = [string]$existingFm['ms.date']
         }
     }
 
-    $frontmatter = New-DocFrontmatter -Title $Title -Description $Description -SidebarPosition $SidebarPosition -MsDate $msDate
     $region = New-AssetGeneratedRegion -Region 'index' -Body $RegionBody
-    return "$frontmatter`n`n$region`n"
+
+    # Advance ms.date to today only when the regenerated index differs, so the
+    # date reflects the last content change rather than the first-scaffold date.
+    $content = "$(New-DocFrontmatter -Title $Title -Description $Description -SidebarPosition $SidebarPosition -MsDate $msDate)`n`n$region`n"
+    if ($null -ne $existing -and -not [string]::Equals($content, $existing, [System.StringComparison]::Ordinal)) {
+        $content = "$(New-DocFrontmatter -Title $Title -Description $Description -SidebarPosition $SidebarPosition -MsDate $today)`n`n$region`n"
+    }
+
+    return $content
 }
 
 #endregion Content Builders

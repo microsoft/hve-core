@@ -163,6 +163,97 @@ Describe 'Invoke-AssetDocsGeneration - CRLF source assets' -Tag 'Unit' {
     }
 }
 
+Describe 'Invoke-AssetDocsGeneration - ms.date last-modified semantics' -Tag 'Unit' {
+    BeforeAll {
+        function script:Get-PageMsDate {
+            param([string]$Path)
+            $content = Get-Content -LiteralPath $Path -Raw
+            return [regex]::Match($content, '(?m)^ms\.date:\s*(\S+)').Groups[1].Value
+        }
+
+        function script:Set-PageMsDate {
+            param([string]$Path, [string]$Date)
+            $content = Get-Content -LiteralPath $Path -Raw
+            Set-Content -LiteralPath $Path -Value ($content -replace '(?m)^ms\.date:.*$', "ms.date: $Date") -Encoding utf8NoBOM -NoNewline
+        }
+
+        $script:today = Get-Date -Format 'yyyy-MM-dd'
+        $script:pageRel = 'docs/reference/agents/hve-core/alpha-agent.md'
+    }
+
+    It 'Preserves ms.date when regeneration produces identical content' {
+        $repo = New-AssetFixtureRepo
+        Invoke-AssetDocsGeneration -RepoRoot $repo -TemplatePath $script:TemplatePath | Out-Null
+
+        $page = Join-Path $repo $script:pageRel
+        Set-PageMsDate -Path $page -Date '2020-01-01'
+
+        $result = Invoke-AssetDocsGeneration -RepoRoot $repo -TemplatePath $script:TemplatePath
+        $result.Updated | Should -Not -Contain $script:pageRel
+        Get-PageMsDate -Path $page | Should -Be '2020-01-01'
+    }
+
+    It 'Advances ms.date to today when a generated region changes' {
+        $repo = New-AssetFixtureRepo
+        Invoke-AssetDocsGeneration -RepoRoot $repo -TemplatePath $script:TemplatePath | Out-Null
+
+        $page = Join-Path $repo $script:pageRel
+        Set-PageMsDate -Path $page -Date '2020-01-01'
+
+        # Change the source asset description so the overview and frontmatter differ.
+        $source = Join-Path $repo '.github/agents/hve-core/alpha-agent.agent.md'
+        Set-Content -LiteralPath $source -Value (@(
+                '---'
+                'name: Alpha Agent'
+                'description: An updated description for the first demo agent.'
+                '---'
+                ''
+                '# Body'
+            ) -join "`n") -Encoding utf8NoBOM -NoNewline
+
+        $result = Invoke-AssetDocsGeneration -RepoRoot $repo -TemplatePath $script:TemplatePath
+        $result.Updated | Should -Contain $script:pageRel
+        Get-PageMsDate -Path $page | Should -Be $script:today
+    }
+
+    It 'Does not advance ms.date when only a human section changes' {
+        $repo = New-AssetFixtureRepo
+        Invoke-AssetDocsGeneration -RepoRoot $repo -TemplatePath $script:TemplatePath | Out-Null
+
+        $page = Join-Path $repo $script:pageRel
+        Set-PageMsDate -Path $page -Date '2020-01-01'
+        $edited = (Get-Content -LiteralPath $page -Raw) -replace 'Describe the situations[^\n]*', 'HUMAN EDIT.'
+        Set-Content -LiteralPath $page -Value $edited -Encoding utf8NoBOM -NoNewline
+
+        $result = Invoke-AssetDocsGeneration -RepoRoot $repo -TemplatePath $script:TemplatePath
+        $result.Updated | Should -Not -Contain $script:pageRel
+        Get-PageMsDate -Path $page | Should -Be '2020-01-01'
+    }
+
+    It 'Advances index ms.date to today when the asset list changes' {
+        $repo = New-AssetFixtureRepo
+        Invoke-AssetDocsGeneration -RepoRoot $repo -TemplatePath $script:TemplatePath | Out-Null
+
+        $index = Join-Path $repo 'docs/reference/agents/README.md'
+        Set-PageMsDate -Path $index -Date '2020-01-01'
+
+        # Add a new agent so the agents index region changes.
+        $newAgent = Join-Path $repo '.github/agents/hve-core/mike-agent.agent.md'
+        Set-Content -LiteralPath $newAgent -Value (@(
+                '---'
+                'name: Mike Agent'
+                'description: A newly added agent.'
+                '---'
+                ''
+                '# Body'
+            ) -join "`n") -Encoding utf8NoBOM -NoNewline
+
+        $result = Invoke-AssetDocsGeneration -RepoRoot $repo -TemplatePath $script:TemplatePath
+        $result.Updated | Should -Contain 'docs/reference/agents/README.md'
+        Get-PageMsDate -Path $index | Should -Be $script:today
+    }
+}
+
 Describe 'Invoke-AssetDocsGeneration - human section preservation' -Tag 'Unit' {
     BeforeAll {
         $script:repo = New-AssetFixtureRepo
