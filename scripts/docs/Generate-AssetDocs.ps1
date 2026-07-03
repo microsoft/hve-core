@@ -346,6 +346,31 @@ function New-AssetPageModel {
     }
 }
 
+function New-AssetOverviewBody {
+    <#
+    .SYNOPSIS
+        Renders the overview ("What it does") region body for an asset.
+    .DESCRIPTION
+        Returns the asset description collapsed to a single line, or a stable
+        fallback sentence when the asset declares no description. Shared by the
+        generator and the validator so the sync check renders identically.
+    .PARAMETER Model
+        Page model from New-AssetPageModel.
+    .OUTPUTS
+        [string] The overview region body.
+    #>
+    [CmdletBinding()]
+    [OutputType([string])]
+    param(
+        [Parameter(Mandatory = $true)][PSCustomObject]$Model
+    )
+
+    if ([string]::IsNullOrWhiteSpace($Model.Description)) {
+        return 'This asset does not declare a description.'
+    }
+    return ($Model.Description -replace '\r?\n', ' ').Trim()
+}
+
 function New-AssetDocContent {
     <#
     .SYNOPSIS
@@ -405,10 +430,7 @@ function New-AssetDocContent {
     else {
         ($Model.Description -replace '\r?\n', ' ').Trim()
     }
-    $overviewBody = if ([string]::IsNullOrWhiteSpace($Model.Description)) {
-        'This asset does not declare a description.'
-    }
-    else { $descriptionMeta }
+    $overviewBody = New-AssetOverviewBody -Model $Model
 
     $frontmatter = New-DocFrontmatter -Title $Model.Title -Description $descriptionMeta -SidebarPosition $SidebarPosition -MsDate $msDate
     $metadataRegion = New-AssetGeneratedRegion -Region 'metadata' -Body (New-AssetMetadataBlock -Kind $Model.Kind -SourcePath $Model.SourceRel -Invocation $Model.Invocation -Interactive $Model.Interactive)

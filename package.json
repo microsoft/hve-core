@@ -60,6 +60,7 @@
     "docs:test": "npm --prefix docs/docusaurus test",
     "docs:generate": "pwsh -NoProfile -File scripts/docs/Generate-AssetDocs.ps1",
     "docs:generate:check": "pwsh -NoProfile -File scripts/docs/Generate-AssetDocs.ps1 -WhatIf",
+    "lint:asset-docs": "pwsh -NoProfile -File scripts/linting/Validate-AssetDocs.ps1",
     "docs:test:coverage": "npm --prefix docs/docusaurus run test:coverage",
     "docs:test:e2e": "npm --prefix docs/docusaurus run test:e2e",
     "docs:test:e2e:setup": "npm --prefix docs/docusaurus exec -- playwright install --with-deps chrome",
