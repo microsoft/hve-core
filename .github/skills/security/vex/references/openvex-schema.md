@@ -97,7 +97,7 @@ precedence. The `products` field has no document-level equivalent and must appea
   "author": "Microsoft HVE Core Maintainers",
   "timestamp": "2026-05-14T00:00:00Z",
   "version": 1,
-  "tooling": "hve-core VEX Generator agent (AI-assisted drafting), human-reviewed and Sigstore-attested at release.",
+  "tooling": "hve-core SSSC Reviewer VEX assessment (AI-assisted drafting), human-reviewed and Sigstore-attested at release.",
   "statements": [
     {
       "vulnerability": { "name": "CVE-2026-XXXXX" },

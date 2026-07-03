@@ -19,7 +19,7 @@ A conformant skill `SECURITY.md` contains, in order:
 6. `## System Description` with a `### Components` list and a `### Data Flow` ```mermaid``` `flowchart TD` whose subgraphs are trust zones and whose edges are labeled with protocols.
 7. `## Trust Boundaries` with a `### Boundary Diagram` (ASCII box diagram) and a `### Boundary Descriptions` table.
 8. `## Assets` (`A1…`) and `## Adversaries` (`ADV-a…`) tables.
-9. `## Trust Buckets` `B1…Bn`. Each bucket enumerates all six STRIDE categories as `###` headings in canonical order (Spoofing, Tampering, Repudiation, Information Disclosure, Denial of Service, Elevation of Privilege), using an explicit "Not applicable. <reason>." where a category does not apply, and ends with a `#### Risk Rating` table (Threat / Likelihood / Impact / Residual Risk / Status).
+9. One `## Bucket B1…Bn` section per trust bucket (there is no umbrella `## Trust Buckets` heading). Each bucket enumerates all six STRIDE categories as `###` headings in canonical order (Spoofing, Tampering, Repudiation, Information Disclosure, Denial of Service, Elevation of Privilege), using an explicit "Not applicable. <reason>." where a category does not apply, and ends with a `### Risk Rating` table (Threat / Likelihood / Impact / Residual Risk / Status).
 10. `## Enterprise Readiness Gaps` register.
 11. `## References`.
 

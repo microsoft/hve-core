@@ -14,8 +14,8 @@ Applies to all files under `security/vex/` and `.copilot-tracking/security/vex/`
 ## Canonical rules reference
 
 The authoritative definitions for confidence routing, status determination, forbidden transitions,
-evidence requirements, and justification codes live in the `openvex-spec` skill reference at
-[`vex-status-logic.md`](../../skills/security/openvex-spec/references/vex-status-logic.md). Treat that
+evidence requirements, and justification codes live in the `vex` skill reference
+`references/vex-status-logic.md`. Treat that
 reference as the single source of truth. Do not duplicate or paraphrase those tables here, because
 duplication causes drift.
 

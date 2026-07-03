@@ -33,26 +33,14 @@ on:
         fi
 
         issue_body="$(gh issue view --repo "$REPO_SLUG" "$issue_number" --json body --jq '.body')"
-        finding_ids=()
-        while IFS= read -r line; do
-          if [[ "$line" =~ ^\|[[:space:]]*([^|]+)[[:space:]]*\| ]]; then
-            finding_id="${BASH_REMATCH[1]}"
-            finding_id="${finding_id// /}"
-            if [[ "$finding_id" != "Finding" && "$finding_id" != "ID" && "$finding_id" != "FindingID" ]]; then
-              finding_ids+=("$finding_id")
-            fi
-          fi
-        done <<< "$issue_body"
 
-        if [ ${#finding_ids[@]} -eq 0 ]; then
-          echo "No findings found in detection issue; skipping."
-          exit 1
-        fi
-
-        # The pre-activation job runs without a repository checkout, so fetch
-        # the OpenVEX document from the default branch through the contents API
-        # (the job carries contents: read). A missing file or empty response is
-        # treated as "document not found" so the gate proceeds.
+        # The pre-activation job runs without a repository checkout, so fetch both
+        # the OpenVEX document and the unit-tested gate module from the default branch
+        # through the contents API (the job carries contents: read). Running the tested
+        # module — rather than reimplementing its parse/terminal logic inline — keeps the
+        # deployed gate and its test suite in lockstep. A missing OpenVEX document is
+        # treated as "everything untriaged" (proceed); a missing gate module fails safe
+        # toward drafting.
         vex_doc="$(mktemp)"
         if ! gh api -H "Accept: application/vnd.github.raw" \
              "repos/${REPO_SLUG}/contents/security/vex/hve-core.openvex.json" \
@@ -60,49 +48,18 @@ on:
           rm -f "$vex_doc"
         fi
 
-        python3 - "$vex_doc" "${finding_ids[@]}" <<'PY'
-        import json
-        import sys
-        from pathlib import Path
+        gate_script="$(mktemp)"
+        if ! gh api -H "Accept: application/vnd.github.raw" \
+             "repos/${REPO_SLUG}/contents/.github/skills/security/vex/scripts/vex_gate.py" \
+             > "$gate_script" 2>/dev/null || [ ! -s "$gate_script" ]; then
+          echo "VEX gate module unavailable; proceeding."
+          exit 0
+        fi
 
-        path = Path(sys.argv[1])
-        finding_ids = sys.argv[2:]
-        if not path.exists():
-            print("OpenVEX document not found; proceeding.")
-            sys.exit(0)
-
-        with path.open(encoding="utf-8") as handle:
-            document = json.load(handle)
-
-        terminal_statuses = {"not_affected", "fixed"}
-
-        def check_terminal(node, target):
-            if isinstance(node, dict):
-                status = node.get("status")
-                if isinstance(status, str) and status in terminal_statuses:
-                    for value in node.values():
-                        if isinstance(value, str) and target.lower() in value.lower():
-                            return True
-                        if isinstance(value, list) and any(isinstance(item, str) and target.lower() in item.lower() for item in value):
-                            return True
-                    return False
-                for value in node.values():
-                    if isinstance(value, (dict, list)) and check_terminal(value, target):
-                        return True
-            elif isinstance(node, list):
-                for item in node:
-                    if check_terminal(item, target):
-                        return True
-            return False
-
-        for finding_id in finding_ids:
-            if not check_terminal(document, finding_id):
-                print(f"Finding {finding_id} is not terminal; proceeding.")
-                sys.exit(0)
-
-        print("All findings already have terminal VEX status; skipping.")
-        sys.exit(1)
-        PY
+        # vex_gate.py reads the detection-issue body on stdin and the OpenVEX path as
+        # its first argument. Exit 0 = proceed (untriaged or non-terminal findings),
+        # 1 = skip (no findings, or every finding already has a terminal VEX status).
+        printf '%s' "$issue_body" | python3 "$gate_script" "$vex_doc"
 
 engine: copilot
 timeout-minutes: 20
@@ -114,7 +71,7 @@ if: >-
   (github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success') && needs.pre_activation.outputs.vex_gate_result == 'success'
 
 imports:
-  - ../agents/security/vex-generator.agent.md
+  - ../agents/security/sssc-reviewer.agent.md
 
 checkout:
   sparse-checkout: |
@@ -122,8 +79,7 @@ checkout:
     .github/agents/security/
     .github/instructions/security/
     .github/instructions/shared/
-    .github/skills/security/openvex-spec/
-    .github/PULL_REQUEST_TEMPLATE/vex-triage.md
+    .github/skills/security/vex/
     security/vex/
     scripts/
     extension/
@@ -151,6 +107,9 @@ network:
 safe-outputs:
   concurrency-group: "vex-draft-${{ github.repository }}"
   report-failure-as-issue: ["!max_ai_credits_exceeded", "!daily_ai_credits_exceeded", "!ai_credits_rate_limit_error"]
+  # Roll failure reports into a single parent "Failed runs" issue instead of
+  # filing a fresh issue per failing run.
+  group-reports: true
   create-pull-request:
     max: 1
     labels: [security, automated, needs-triage]
@@ -184,11 +143,11 @@ commit author is the accountable author of record, never the agent.
 ## Instruction Priority
 
 Follow the Workflow section below as the sole drafting procedure. The imported
-`VEX Generator` agent and its referenced skill and instructions provide domain
-knowledge only: OpenVEX schema, status logic, evidence thresholds, confidence
-routing, and licensing posture. Ignore any phase-, mode-, or tracking-file-based
-orchestration from the imported files; this workflow runs Mode 2 (triage from an
-existing finding set) non-interactively.
+`SSSC Reviewer` agent and its referenced `vex` skill and VEX instructions provide
+domain knowledge only: OpenVEX schema, status logic, evidence thresholds,
+confidence routing, and licensing posture. Ignore any review-mode or state-file
+orchestration from the imported files; this workflow drafts VEX statuses from an
+existing finding set non-interactively.
 
 ## Workflow
 
@@ -218,11 +177,9 @@ existing finding set) non-interactively.
    is unavailable; record the gap.
 
 5. **Analyze reachability.** For each finding, determine whether the vulnerable
-   symbol is reachable in this codebase. Delegate per-CVE exploitability
-   analysis to the `CVE Analyzer` subagent. If subagent delegation is
-   unavailable in this environment, perform the same analysis inline. Either
-   way, trace the import path, confirm dead code, or identify a mitigation, and
-   cite file paths and line ranges as evidence.
+   symbol is reachable in this codebase. Perform the per-CVE exploitability
+   analysis inline: trace the import path, confirm dead code, or identify a
+   mitigation, and cite file paths and line ranges as evidence.
 
 6. **Route by confidence.** Classify each finding into a confidence band and
    draft the status the band permits:
@@ -242,10 +199,12 @@ existing finding set) non-interactively.
    document version, set timestamps, never rewrite unrelated statements).
 
 8. **Open one pull request.** Emit a single `create-pull-request` safe output.
-   Populate the PR body from `.github/PULL_REQUEST_TEMPLATE/vex-triage.md`: a
+   Populate the PR body from the scaffold at
+   `.github/skills/security/vex/assets/pr-body-scaffold.yml`: render the
    summary, the evidence checklist, and one CVE assessment block per finding
-   recording the drafted status, confidence band, code-citation evidence, and
-   impact statement. Title the PR `VEX: draft status for untriaged findings`.
+   (from `cve_assessment_template`) recording the drafted status, confidence
+   band, code-citation evidence, and impact statement. Title the PR `VEX: draft
+   status for untriaged findings`.
 
 ## Constraints
 

@@ -59,9 +59,6 @@ items:
     kind: agent
     maturity: experimental
   # VEX Agents
-  - path: .github/agents/security/vex-generator.agent.md
-    kind: agent
-    maturity: experimental
   - path: .github/agents/security/subagents/cve-analyzer.agent.md
     kind: agent
     maturity: experimental
@@ -99,7 +96,7 @@ items:
   - path: .github/skills/security/supply-chain-security
     kind: skill
     maturity: experimental
-  - path: .github/skills/security/openvex-spec
+  - path: .github/skills/security/vex
     kind: skill
     maturity: experimental
   - path: .github/skills/shared/pr-reference
@@ -153,6 +150,9 @@ items:
     kind: prompt
     maturity: experimental
   - path: .github/prompts/security/vex-triage.prompt.md
+    kind: prompt
+    maturity: experimental
+  - path: .github/prompts/security/vex-implement.prompt.md
     kind: prompt
     maturity: experimental
   # RAI Planner Prompts
