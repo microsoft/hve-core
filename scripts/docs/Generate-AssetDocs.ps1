@@ -386,7 +386,10 @@ function New-AssetDocContent {
     .DESCRIPTION
         Assembles frontmatter, the refreshed metadata and overview regions, and
         the human-authored tail. For an existing page the tail (and its ms.date)
-        are preserved; for a new page the tail comes from the template.
+        are preserved; for a new page the tail comes from the template. Throws
+        when an existing page is missing its overview markers, so human-authored
+        sections are never discarded (the orchestrator pre-checks and skips such
+        pages before calling this function).
     .PARAMETER Model
         Page model from New-AssetPageModel.
     .PARAMETER RepoRoot
@@ -419,13 +422,15 @@ function New-AssetDocContent {
         else { $today }
 
         $split = Split-AssetDocByMarkers -Content $existing -Region 'overview'
-        $humanTail = if ($split.HasMarkers) {
-            $split.After
+        if (-not $split.HasMarkers) {
+            # Defense in depth: refuse to regenerate an existing page whose overview
+            # markers are missing, mirroring Merge-AssetDocRegion. Rebuilding the tail
+            # from the template here would discard the human-authored sections. The
+            # orchestrator pre-checks this condition and skips such pages, so this
+            # guard is normally unreachable.
+            throw "Overview markers missing in $($Model.DocRel); refusing to regenerate because doing so would discard human-authored sections. Restore the AUTO-GENERATED markers (or delete the page to re-scaffold) and re-run."
         }
-        else {
-            Write-Warning "Overview markers missing in $($Model.DocRel); restoring human sections from template."
-            Get-TemplateHumanTail -TemplatePath $TemplatePath -Interactive $Model.Interactive
-        }
+        $humanTail = $split.After
     }
     else {
         $msDate = $today
@@ -623,7 +628,8 @@ function Invoke-AssetDocsGeneration {
     .PARAMETER TemplatePath
         Path to the asset documentation template.
     .OUTPUTS
-        [PSCustomObject] Summary with Created, Updated, and Unchanged path lists.
+        [PSCustomObject] Summary with Created, Updated, Unchanged, and
+        NeedsAttention path lists.
     #>
     [CmdletBinding(SupportsShouldProcess)]
     [OutputType([PSCustomObject])]
@@ -639,6 +645,7 @@ function Invoke-AssetDocsGeneration {
     $created = [System.Collections.Generic.List[string]]::new()
     $updated = [System.Collections.Generic.List[string]]::new()
     $unchanged = [System.Collections.Generic.List[string]]::new()
+    $needsAttention = [System.Collections.Generic.List[string]]::new()
 
     $record = {
         param($Status, $RelPath)
@@ -663,6 +670,16 @@ function Invoke-AssetDocsGeneration {
     }
 
     foreach ($page in $pages) {
+        $docFull = Join-Path $RepoRoot $page.DocRel
+        # Option B guard: an existing page whose overview markers are missing cannot
+        # be regenerated without discarding its human-authored sections. Skip it,
+        # leave the file untouched, and report it as drift needing manual attention.
+        if ((Test-Path -LiteralPath $docFull) -and
+            -not (Split-AssetDocByMarkers -Content (Get-Content -LiteralPath $docFull -Raw) -Region 'overview').HasMarkers) {
+            Write-Warning "Overview markers missing in $($page.DocRel); skipping regeneration to preserve human-authored sections. Restore the AUTO-GENERATED markers (or delete the page to re-scaffold) and re-run."
+            $needsAttention.Add($page.DocRel)
+            continue
+        }
         $content = New-AssetDocContent -Model $page -RepoRoot $RepoRoot -TemplatePath $TemplatePath -SidebarPosition $positions[$page.DocRel]
         $status = Write-DocIfChanged -Path (Join-Path $RepoRoot $page.DocRel) -Content $content
         & $record $status $page.DocRel
@@ -685,11 +702,12 @@ function Invoke-AssetDocsGeneration {
     }
 
     return [PSCustomObject]@{
-        Created    = $created
-        Updated    = $updated
-        Unchanged  = $unchanged
-        DriftCount = $created.Count + $updated.Count
-        WhatIf     = [bool]$WhatIfPreference
+        Created        = $created
+        Updated        = $updated
+        Unchanged      = $unchanged
+        NeedsAttention = $needsAttention
+        DriftCount     = $created.Count + $updated.Count + $needsAttention.Count
+        WhatIf         = [bool]$WhatIfPreference
     }
 }
 
@@ -713,6 +731,9 @@ if ($MyInvocation.InvocationName -ne '.') {
     Write-Host "  $verb`: $($summary.Created.Count)"
     Write-Host "  $((Get-Culture).TextInfo.ToTitleCase($verb2))`: $($summary.Updated.Count)"
     Write-Host "  Unchanged: $($summary.Unchanged.Count)"
+    if ($summary.NeedsAttention.Count -gt 0) {
+        Write-Host "  Needs attention (missing markers, skipped): $($summary.NeedsAttention.Count)" -ForegroundColor Yellow
+    }
     if ($summary.WhatIf -and $summary.DriftCount -gt 0) {
         Write-Host "  Drift detected in $($summary.DriftCount) page(s)." -ForegroundColor Yellow
     }

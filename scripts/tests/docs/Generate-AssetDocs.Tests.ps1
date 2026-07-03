@@ -150,6 +150,46 @@ Describe 'Invoke-AssetDocsGeneration - human section preservation' -Tag 'Unit' {
     }
 }
 
+Describe 'Invoke-AssetDocsGeneration - missing overview markers' -Tag 'Unit' {
+    BeforeAll {
+        $script:repo = New-AssetFixtureRepo
+        Invoke-AssetDocsGeneration -RepoRoot $script:repo -TemplatePath $script:TemplatePath | Out-Null
+
+        $script:page = Join-Path $script:repo 'docs/reference/agents/hve-core/alpha-agent.md'
+        # Remove the overview markers but keep hand-authored prose in a human section.
+        $mangled = (Get-Content -LiteralPath $script:page -Raw) `
+            -replace '<!-- BEGIN AUTO-GENERATED: overview -->', '' `
+            -replace '<!-- END AUTO-GENERATED: overview -->', '' `
+            -replace 'Describe the situations[^\n]*', 'IRREPLACEABLE HUMAN CONTENT.'
+        Set-Content -LiteralPath $script:page -Value $mangled -Encoding utf8NoBOM -NoNewline
+        $script:before = Get-Content -LiteralPath $script:page -Raw
+
+        $script:result = Invoke-AssetDocsGeneration -RepoRoot $script:repo -TemplatePath $script:TemplatePath
+    }
+
+    It 'Skips the page instead of overwriting it and flags it as needing attention' {
+        $script:result.Updated | Should -Not -Contain 'docs/reference/agents/hve-core/alpha-agent.md'
+        $script:result.NeedsAttention | Should -Contain 'docs/reference/agents/hve-core/alpha-agent.md'
+    }
+
+    It 'Preserves the human-authored content byte-for-byte' {
+        (Get-Content -LiteralPath $script:page -Raw) | Should -Be $script:before
+        (Get-Content -LiteralPath $script:page -Raw) | Should -Match 'IRREPLACEABLE HUMAN CONTENT\.'
+    }
+
+    It 'Counts the skipped page as drift' {
+        $script:result.DriftCount | Should -BeGreaterThan 0
+    }
+
+    It 'New-AssetDocContent throws directly when overview markers are missing' {
+        $model = Get-DocumentableAssets -RepoRoot $script:repo |
+            Where-Object { $_.path -eq '.github/agents/hve-core/alpha-agent.agent.md' } |
+                ForEach-Object { New-AssetPageModel -Asset $_ -RepoRoot $script:repo }
+        { New-AssetDocContent -Model $model -RepoRoot $script:repo -TemplatePath $script:TemplatePath -SidebarPosition 1 } |
+            Should -Throw
+    }
+}
+
 Describe 'Invoke-AssetDocsGeneration - interactivity' -Tag 'Unit' {
     BeforeAll {
         $script:repo = New-AssetFixtureRepo
