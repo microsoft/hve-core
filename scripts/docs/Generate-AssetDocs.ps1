@@ -237,6 +237,10 @@ function Remove-HowToUseSection {
         Non-interactive assets have no interactive usage flow, so the template's
         "How to use it" section is dropped when scaffolding a new page for them.
         Existing pages are never modified by this function.
+
+        The terminating lookahead matches either the next H2 heading or the end
+        of the string (\z), so the section is removed even when "How to use it"
+        is the last H2 on the page rather than being followed by another heading.
     .PARAMETER Tail
         The human-section tail beginning at the first section heading.
     .OUTPUTS
@@ -250,7 +254,7 @@ function Remove-HowToUseSection {
         [string]$Tail
     )
 
-    return ($Tail -replace '(?ms)\r?\n## How to use it\b.*?(?=\r?\n## )', '')
+    return ($Tail -replace '(?ms)\r?\n## How to use it\b.*?(?=\r?\n## |\z)', '')
 }
 
 #endregion Pure Helpers

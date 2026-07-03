@@ -283,6 +283,22 @@ Describe 'Remove-HowToUseSection' -Tag 'Unit' {
         $result | Should -Match '## When to use it'
         $result | Should -Match '## Example usage'
     }
+
+    It 'Removes the How to use section when it is the last H2' {
+        $tail = @(
+            ''
+            '## When to use it'
+            ''
+            'Use it here.'
+            ''
+            '## How to use it'
+            ''
+            'Steps here.'
+        ) -join "`n"
+        $result = Remove-HowToUseSection -Tail $tail
+        $result | Should -Not -Match '## How to use it'
+        $result | Should -Match '## When to use it'
+    }
 }
 
 Describe 'Write-DocIfChanged' -Tag 'Unit' {
