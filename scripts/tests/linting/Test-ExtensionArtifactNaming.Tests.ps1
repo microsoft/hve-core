@@ -3,36 +3,69 @@
 # SPDX-License-Identifier: MIT
 
 BeforeAll {
+    Import-Module PowerShell-Yaml -ErrorAction Stop
     . (Join-Path $PSScriptRoot '../../linting/Test-ExtensionArtifactNaming.ps1')
+
+    function New-TestWorkflow {
+        param(
+            [string]$RepoRoot,
+            [string]$FileName,
+            [string]$JobName,
+            [string]$StepName,
+            [string]$Uses,
+            [hashtable]$With
+        )
+        $dir = Join-Path $RepoRoot '.github/workflows'
+        New-Item -ItemType Directory -Path $dir -Force | Out-Null
+        $withLines = foreach ($key in $With.Keys) { "          ${key}: `"$($With[$key])`"" }
+        $content = @(
+            "name: $JobName"
+            'on: push'
+            'jobs:'
+            "  ${JobName}:"
+            '    runs-on: ubuntu-latest'
+            '    steps:'
+            "      - name: $StepName"
+            "        uses: $Uses"
+            '        with:'
+            $withLines
+        ) -join "`n"
+        Set-Content -Path (Join-Path $dir $FileName) -Value $content
+    }
 }
 
 Describe 'Test-ExtensionArtifactNaming' -Tag 'Unit' {
-    It 'Returns success when producer and consumer names match' {
-        $tempDir = Join-Path $TestDrive 'repo'
-        New-Item -ItemType Directory -Path $tempDir -Force | Out-Null
-        $workflowPath = Join-Path $tempDir '.github/workflows/extension-package.yml'
-        New-Item -ItemType Directory -Path (Split-Path $workflowPath -Parent) -Force | Out-Null
-        Set-Content -Path $workflowPath -Value 'name: extension-vsix-${{ matrix.id }}'
-        $consumerPath = Join-Path $tempDir '.github/workflows/extension-marketplace-publish.yml'
-        New-Item -ItemType Directory -Path (Split-Path $consumerPath -Parent) -Force | Out-Null
-        Set-Content -Path $consumerPath -Value 'name: extension-vsix-${{ matrix.id }}'
+    It 'Passes when a consumed artifact name has a producing upload site' {
+        $repo = Join-Path $TestDrive 'match'
+        New-TestWorkflow -RepoRoot $repo -FileName 'producer.yml' -JobName 'build' -StepName 'Upload' -Uses 'actions/upload-artifact@v4' -With @{ name = 'extension-vsix-hve-ado'; path = 'dist/*.vsix' }
+        New-TestWorkflow -RepoRoot $repo -FileName 'consumer.yml' -JobName 'publish' -StepName 'Download' -Uses 'actions/download-artifact@v4' -With @{ name = 'extension-vsix-hve-ado'; path = './dist' }
 
-        $result = Test-ExtensionArtifactNaming -RepoRoot $tempDir
+        $result = Test-ExtensionArtifactNaming -RepoRoot $repo
         $result.Passed | Should -BeTrue
     }
 
-    It 'Returns failure when producer and consumer differ' {
-        $tempDir = Join-Path $TestDrive 'repo-mismatch'
-        New-Item -ItemType Directory -Path $tempDir -Force | Out-Null
-        $workflowPath = Join-Path $tempDir '.github/workflows/extension-package.yml'
-        New-Item -ItemType Directory -Path (Split-Path $workflowPath -Parent) -Force | Out-Null
-        Set-Content -Path $workflowPath -Value 'name: extension-vsix-${{ matrix.id }}'
-        $consumerPath = Join-Path $tempDir '.github/workflows/extension-marketplace-publish.yml'
-        New-Item -ItemType Directory -Path (Split-Path $consumerPath -Parent) -Force | Out-Null
-        Set-Content -Path $consumerPath -Value 'name: extension-vsix-${{ matrix.id }}-other'
+    It 'Fails when a consumed artifact name has no producing upload site' {
+        $repo = Join-Path $TestDrive 'orphan'
+        New-TestWorkflow -RepoRoot $repo -FileName 'consumer.yml' -JobName 'publish' -StepName 'Download' -Uses 'actions/download-artifact@v4' -With @{ name = 'extension-vsix-hve-ghost'; path = './dist' }
 
-        $result = Test-ExtensionArtifactNaming -RepoRoot $tempDir
+        $result = Test-ExtensionArtifactNaming -RepoRoot $repo
         $result.Passed | Should -BeFalse
-        ($result.Issues -join "`n") | Should -Match 'Producer and consumer artifact names differ'
+        ($result.Issues -join "`n") | Should -Match 'extension-vsix-hve-ghost'
+    }
+
+    It 'Tolerates a producer-only artifact name with no consumer' {
+        $repo = Join-Path $TestDrive 'producer-only'
+        New-TestWorkflow -RepoRoot $repo -FileName 'producer.yml' -JobName 'build' -StepName 'Upload' -Uses 'actions/upload-artifact@v4' -With @{ name = 'extension-vsix-hve-retain'; path = 'dist/*.vsix' }
+
+        $result = Test-ExtensionArtifactNaming -RepoRoot $repo
+        $result.Passed | Should -BeTrue
+    }
+
+    It 'Skips cross-run download-artifact steps with run-id or repository inputs' {
+        $repo = Join-Path $TestDrive 'cross-run'
+        New-TestWorkflow -RepoRoot $repo -FileName 'consumer.yml' -JobName 'publish' -StepName 'Download' -Uses 'actions/download-artifact@v4' -With @{ name = 'extension-vsix-hve-crossrun'; 'run-id' = '123'; repository = 'microsoft/hve-core' }
+
+        $result = Test-ExtensionArtifactNaming -RepoRoot $repo
+        $result.Passed | Should -BeTrue
     }
 }
