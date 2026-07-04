@@ -330,13 +330,13 @@ Describe 'Invoke-AssetDocsGeneration - interactivity' -Tag 'Unit' {
     It 'Keeps the How to use section for interactive assets' {
         $content = Get-Content -LiteralPath (Join-Path $script:repo 'docs/reference/prompts/hve-core/demo.md') -Raw
         $content | Should -Match '## How to use it'
-        $content | Should -Match '(?m)^\| Interactive \| Yes \|$'
+        $content | Should -Match '(?m)^\| Interactive\s+\| Yes\s+\|$'
     }
 
     It 'Strips the How to use section for non-interactive assets' {
         $content = Get-Content -LiteralPath (Join-Path $script:repo 'docs/reference/instructions/shared/demo.md') -Raw
         $content | Should -Not -Match '## How to use it'
-        $content | Should -Match '(?m)^\| Interactive \| No \|$'
+        $content | Should -Match '(?m)^\| Interactive\s+\| No\s+\|$'
     }
 }
 
