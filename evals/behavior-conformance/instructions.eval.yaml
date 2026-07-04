@@ -1435,3 +1435,39 @@ stimuli:
         name: scope-language
         config:
           pattern: '(?i)(update|jira|backlog|handoff|issue)'
+
+  - name: instruction-vex-generation-conformance
+    prompt: |
+      You are drafting an AI-assisted VEX assessment for a vulnerability finding.
+      Which instruction file governs the VEX generation rules (cite its path)?
+    tags:
+      category: behavior-conformance
+      instruction: vex-generation
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: instruction-attribution
+        config:
+          pattern: '(?i)(vex|generation|evidence|confidence|triage)'
+      - type: output-matches
+        name: scope-language
+        config:
+          pattern: '(?i)(vex|generation|status|justification|evidence)'
+
+  - name: instruction-vex-standards-conformance
+    prompt: |
+      You are reviewing an OpenVEX document for conformance. Which instruction
+      file defines the VEX document standards (cite its path)?
+    tags:
+      category: behavior-conformance
+      instruction: vex-standards
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: instruction-attribution
+        config:
+          pattern: '(?i)(vex|standard|openvex|document|author)'
+      - type: output-matches
+        name: scope-language
+        config:
+          pattern: '(?i)(vex|openvex|standard|document|statement)'

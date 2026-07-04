@@ -58,6 +58,17 @@ Each phase entry begins with a mandatory `read_file` of the indicated skill refe
 
 `.github/skills/security/supply-chain-security/references/00-index.md` is the discovery index cataloging the full reference set; consult it during Phase 1 orientation to locate the references each later phase requires.
 
+## VEX Planning Capability
+
+When the request concerns standing up VEX in a target project, use the `vex` skill as the reference source for the implement playbook and the VEX standards. The SSSC Planner does not implement VEX directly in the target project. Instead:
+
+1. Consult the `vex` skill's "Implement VEX in a target project" playbook to understand the stand-up steps, including scaffolding the OpenVEX document under `security/vex`, wiring the `vex-detect` and `vex-draft` workflows plus the PR-body scaffold asset, wiring release attestation, and setting CODEOWNERS where appropriate.
+2. Encode those steps as backlog work items and planning outputs in the normal SSSC planning flow, with enough detail for downstream Task-* implementors to execute them.
+3. Hand off the plan to Task-* agents, which perform the actual implementation using the `vex` skill and the referenced VEX instructions.
+4. Keep the plan explicit that planning and backlog authoring are the Planner's responsibility, while execution is the responsibility of the Task-* agents.
+
+Use the `vex` skill and the `vex-generation.instructions.md` and `vex-standards.instructions.md` instruction files as the normative references for this capability.
+
 ## Six-Phase Architecture
 
 Supply chain security planning follows six sequential phases. Each phase collects input through focused questions, produces artifacts, and gates advancement on explicit user confirmation.

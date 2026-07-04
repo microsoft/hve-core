@@ -752,12 +752,14 @@ Describe 'workflow-npm-commands composite action discovery' -Tag 'Unit' {
     }
 }
 
-Describe 'Dot-sourced execution protection' -Tag 'Unit' {
+Describe 'Dot-sourced execution protection' -Tag 'Integration' {
     Context 'When script is dot-sourced' {
         It 'Does not execute main block when dot-sourced' {
             # Arrange
             $testScript = Join-Path $PSScriptRoot '../../security/Test-DependencyPinning.ps1'
             $tempOutputPath = Join-Path $TestDrive 'dot-source-test.json'
+
+            # This retained smoke test exercises the guard in a child process.
 
             # Act - Invoke in new process with dot-sourcing simulation
             $scriptBlock = ". '$testScript' -OutputPath '$tempOutputPath'; [System.IO.File]::Exists('$tempOutputPath')"
@@ -791,13 +793,24 @@ Describe 'GitHub Actions error annotation' {
             New-Item -ItemType Directory -Path (Join-Path $testWorkflowDir '.github/workflows') -Force | Out-Null
             $corruptedFile = Join-Path $testWorkflowDir '.github/workflows/test.yml'
             "uses: actions/checkout@invalid!!!" | Out-File -FilePath $corruptedFile -Encoding UTF8
-            
-            # Act - Run script in new process with GITHUB_ACTIONS set
-            $scriptCommand = @"
-`$env:GITHUB_ACTIONS = 'true'
-& '$script:TestScript' -Path '$testWorkflowDir' -Format 'json' -OutputPath '$TestDrive/gha-test.json' -FailOnUnpinned 2>&1
-"@
-            $output = pwsh -Command $scriptCommand
+
+            # Act - Invoke the analysis core in-process with GITHUB_ACTIONS enabled
+            $originalGha = $env:GITHUB_ACTIONS
+            try {
+                $env:GITHUB_ACTIONS = 'true'
+                $output = Invoke-DependencyPinningAnalysis -Path $testWorkflowDir -Format 'json' -OutputPath "$TestDrive/gha-test.json" -FailOnUnpinned *>&1
+            }
+            catch {
+                $output = $_
+            }
+            finally {
+                if ($null -eq $originalGha) {
+                    Remove-Item Env:GITHUB_ACTIONS -ErrorAction SilentlyContinue
+                }
+                else {
+                    $env:GITHUB_ACTIONS = $originalGha
+                }
+            }
 
             # Assert - Should contain GitHub Actions error annotation or error output
             # The script should execute and potentially generate warnings/errors
@@ -971,7 +984,7 @@ jobs:
             $jsonPath = Join-Path $TestDrive 'scan-output.json'
             
             # Execute script with array coercion operations
-            & $script:TestScript -Path $script:TestWorkspaceDir -Format 'json' -OutputPath $jsonPath *>&1 | Out-Null
+            Invoke-DependencyPinningAnalysis -Path $script:TestWorkspaceDir -Format 'json' -OutputPath $jsonPath *>&1 | Out-Null
             
             # Verify output was created (proves array operations executed)
             Test-Path $jsonPath | Should -BeTrue
@@ -998,7 +1011,7 @@ jobs:
             $jsonPath = Join-Path $TestDrive 'empty-output.json'
             
             # Execute with all dependencies pinned (tests zero count array coercion)
-            & $script:TestScript -Path $script:TestWorkspaceDir -Format 'json' -OutputPath $jsonPath *>&1 | Out-Null
+            Invoke-DependencyPinningAnalysis -Path $script:TestWorkspaceDir -Format 'json' -OutputPath $jsonPath *>&1 | Out-Null
             
             Test-Path $jsonPath | Should -BeTrue
             $result = Get-Content $jsonPath | ConvertFrom-Json

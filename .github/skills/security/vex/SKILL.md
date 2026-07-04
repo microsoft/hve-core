@@ -1,22 +1,44 @@
 ---
-name: openvex-spec
-description: OpenVEX v0.2.0 specification reference for producing, validating, and interpreting Vulnerability Exploitability eXchange documents - Brought to you by microsoft/hve-core.
-license: Apache-2.0
+name: vex
+description: OpenVEX v0.2.0 specification reference plus VEX management playbooks - Brought to you by microsoft/hve-core.
+license: Apache-2.0 AND CC-BY-4.0
 user-invocable: false
 metadata:
-  authors: "OpenVEX Community"
+  authors: "OpenVEX Community; microsoft/hve-core"
   spec_version: "1.0"
   framework_revision: "1.0.0"
-  last_updated: "2026-05-14"
+  last_updated: "2026-07-01"
   content_based_on: "https://github.com/openvex/spec/blob/main/OPENVEX-SPEC.md"
 ---
 
-# OpenVEX Specification: Skill Entry
+# VEX skill
 
-This `SKILL.md` is the **entrypoint** for the OpenVEX specification skill. It provides
-**OpenVEX v0.2.0** schema references for producing valid VEX documents, understanding
-vulnerability exploitability statuses, and looking up CVE data from public sources. Status
-determination logic and agent behavioral rules live in the VEX generation instructions.
+This skill is the entrypoint for VEX operations in hve-core. It combines the OpenVEX v0.2.0
+specification reference with reusable management playbooks for implementing, reviewing, and
+validating VEX documents. The normative reference material below remains the authoritative
+source for schema, status logic, and public-source guidance.
+
+## VEX management playbooks
+
+Detection, drafting, and attestation are workflow-owned automation. This skill supplies the
+reusable procedures, mutation rules, and review criteria. The `CVE Analyzer` subagent performs the per-CVE exploitability analysis that feeds those workflows.
+
+### Implement VEX in a target project
+
+Use this playbook when standing up VEX in a target project. Scaffold the VEX document under
+security/vex, wire the vex-detect and vex-draft workflows, reference the PR-body scaffold in
+[assets/pr-body-scaffold.yml](assets/pr-body-scaffold.yml), connect the release attestation step
+for provenance and OpenVEX-over-SBOM attestation, and set CODEOWNERS on the VEX document.
+Use [references/vex-status-logic.md](references/vex-status-logic.md) and the
+`vex-standards.instructions.md` instructions for the detailed rules.
+
+### Review and validate VEX
+
+Use this playbook when reviewing drafted VEX statements. Assess the status determination against
+the evidence and confidence bands, honor the document mutation and forbidden-transition contract,
+and validate the release attestation output. Attestation generation is owned by the release
+workflow, not by the reviewer. The forthcoming tested gate module and tests will live in this
+skill so the workflow and interactive entry points can share the same rules.
 
 ## VEX statuses
 
@@ -61,7 +83,15 @@ Products use [Package URL (PURL)](https://github.com/package-url/purl-spec) form
   * `vex-status-logic.md`: status determination decision tree and forbidden transitions.
   * `cve-data-sources.md`: CVE data source API references and licensing.
 
-## Third-Party Attribution
+## Attribution and licensing
+
+The OpenVEX specification reference content in this skill is derived from the OpenVEX Community
+specification and remains attributed to the OpenVEX Community. The reusable VEX management
+playbooks and the surrounding guidance in this skill are hve-core-authored content. The skill
+frontmatter uses a mixed-attribution metadata set so the upstream specification reference and the
+hve-core playbooks are clearly distinguished.
+
+### Third-Party Attribution
 
 | Attribute     | Value                                                                                                                                                            |
 |---------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------|

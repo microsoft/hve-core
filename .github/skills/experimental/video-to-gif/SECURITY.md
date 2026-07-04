@@ -2,7 +2,7 @@
 title: Video-to-GIF Skill Security Model
 description: STRIDE threat model for the video-to-gif skill organized by assets, adversaries, and trust buckets (CLI to FFmpeg subprocess, untrusted media parsing, CLI caller process and filesystem) with in-code mitigations and acknowledged enterprise readiness gaps
 author: microsoft/hve-core
-ms.date: 2026-06-30
+ms.date: 2026-07-02
 ms.topic: reference
 estimated_reading_time: 9
 keywords:
@@ -123,37 +123,35 @@ flowchart TD
 | ADV-b | Caller supplying adversarial CLI parameters                          | Numeric range validation, dither/tonemap allow-lists, array argument passing prevent filtergraph/argument injection |
 | ADV-c | Local attacker racing the temp palette path                          | Private unpredictable temp directory (mkdtemp/random, 0700) with guaranteed cleanup                                 |
 
-## Trust Buckets
+## Bucket B1: CLI → FFmpeg/ffprobe subprocess
 
-### Bucket B1: CLI → FFmpeg/ffprobe subprocess
-
-#### Spoofing
+### Spoofing
 
 * `ffmpeg` and `ffprobe` are resolved by name from `PATH`; the skill trusts the operator's environment for binary identity. A compromised `PATH` is an inherited environment concern, not one the skill can resolve; operators are expected to maintain PATH hygiene.
 
-#### Tampering
+### Tampering
 
 * All FFmpeg arguments are passed as discrete array elements (bash `"${args[@]}"`, PowerShell `ProcessStartInfo.ArgumentList`), never as a shell string, so no argument can inject shell metacharacters.
 * Numeric parameters (`fps`, `width`, `loop`, `start`, `duration`) are validated to integer/decimal ranges before they are interpolated into the FFmpeg `-vf` filtergraph, closing a filtergraph-injection vector (V-INJ-1, mitigated). The PowerShell twin enforces the same ranges through typed `[ValidateRange]` parameters.
 * Dither and tonemap algorithms are restricted to fixed allow-lists (bash `case`, PowerShell `[ValidateSet]`).
 
-#### Repudiation
+### Repudiation
 
 * Not applicable. This is a local developer conversion tool with no audit or non-repudiation requirement. FFmpeg progress is written to stderr for the interactive caller.
 
-#### Information Disclosure
+### Information Disclosure
 
 * No secrets or credentials are handled and no network egress occurs. FFmpeg output is limited to progress and diagnostics on the caller's terminal.
 
-#### Denial of Service
+### Denial of Service
 
 * Every `ffprobe` and `ffmpeg` invocation is bounded by a wall-clock timeout (bash `timeout`/`gtimeout`, PowerShell `Process.WaitForExit` + `Kill`), default 600 seconds and overridable via `VIDEO_TO_GIF_TIMEOUT` / `-TimeoutSeconds` (V-DOS-1, mitigated). A pathological input can still consume CPU and disk within the bound.
 
-#### Elevation of Privilege
+### Elevation of Privilege
 
 * The subprocess runs with the caller's privileges and no shell (`UseShellExecute=$false`; array argument passing). There is no privilege transition.
 
-#### Risk Rating
+### Risk Rating
 
 | Threat                                            | Likelihood | Impact | Residual Risk | Status                          |
 |---------------------------------------------------|------------|--------|---------------|---------------------------------|
@@ -161,66 +159,66 @@ flowchart TD
 | Unbounded FFmpeg run exhausts resources           | Low        | Med    | Low           | Mitigated (V-DOS-1)             |
 | PATH-resolved FFmpeg binary substitution          | Low        | High   | Low           | Accepted (operator environment) |
 
-### Bucket B2: Untrusted media input parsing
+## Bucket B2: Untrusted media input parsing
 
-#### Spoofing
+### Spoofing
 
 * Not applicable. The input file is treated as untrusted data, never as an authenticated identity.
 
-#### Tampering
+### Tampering
 
 * The skill never modifies the input file; FFmpeg opens it read-only. The untrusted container and codec bitstreams are parsed by FFmpeg's demuxers and decoders.
 
-#### Repudiation
+### Repudiation
 
 * Not applicable. No audit requirement for a local conversion.
 
-#### Information Disclosure
+### Information Disclosure
 
 * `ffprobe` reads only `color_primaries` and `color_transfer` for HDR detection; no other metadata from the untrusted file is surfaced beyond an HDR yes/no decision.
 
-#### Denial of Service
+### Denial of Service
 
 * A malformed or oversized input could stall decoding; both the HDR probe and each conversion pass are bounded by the wall-clock timeout (V-DOS-1).
 
-#### Elevation of Privilege
+### Elevation of Privilege
 
 * Memory-safety defects in FFmpeg's decoders, triggered by hostile media, could theoretically execute code within the FFmpeg process. The skill cannot fix FFmpeg internals; the timeout bounds availability impact but not memory-safety exploitation. This is recorded as G-SUP-1, mitigated at the operator level by keeping FFmpeg patched.
 
-#### Risk Rating
+### Risk Rating
 
 | Threat                                    | Likelihood | Impact | Residual Risk | Status                        |
 |-------------------------------------------|------------|--------|---------------|-------------------------------|
 | Hostile media triggers FFmpeg decoder CVE | Low        | High   | Med           | Partially Mitigated (G-SUP-1) |
 | Malformed input stalls decoding           | Low        | Med    | Low           | Mitigated (V-DOS-1)           |
 
-### Bucket B3: CLI caller process and filesystem
+## Bucket B3: CLI caller process and filesystem
 
-#### Spoofing
+### Spoofing
 
 * Not applicable. No authentication or identity surface.
 
-#### Tampering
+### Tampering
 
 * The intermediate palette is written inside a private, unpredictable temporary directory (bash `mktemp -d ... 0700`, PowerShell random directory under the system temp path) rather than a predictable `/tmp/palette_$$.png` or `%TEMP%\palette_$PID.png`, closing a symlink/pre-creation race on a shared temp location (V-TMP-1, mitigated). Cleanup runs on process exit (a bash `EXIT` handler; PowerShell `finally`) so the directory is removed even on failure or timeout.
 
-#### Repudiation
+### Repudiation
 
 * Not applicable. Local tool with no non-repudiation requirement.
 
-#### Information Disclosure
+### Information Disclosure
 
 * The convenience file search resolves a bare filename across the current directory, the workspace root, and `~/Movies`/`~/Videos`, `~/Downloads`, and `~/Desktop`. A bare name could resolve to an unintended file in a lower-priority location (G-INF-1). The output path is derived from the input, and existing destinations are overwritten with `-y`.
 
-#### Denial of Service
+### Denial of Service
 
 * Temp and output writes are bounded by the conversion timeout; disk usage is proportional to the input size.
 
-#### Elevation of Privilege
+### Elevation of Privilege
 
 * The skill runs entirely with the caller's privileges; there is no setuid behavior and no elevation.
 
-#### Risk Rating
+### Risk Rating
 
 | Threat                                        | Likelihood | Impact | Residual Risk | Status                         |
 |-----------------------------------------------|------------|--------|---------------|--------------------------------|

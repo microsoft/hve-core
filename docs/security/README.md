@@ -44,6 +44,7 @@ Skills that ship executable runtimes (network egress, credential handling, subpr
 | **video-to-gif** (experimental)         | Local CLI (bash + PowerShell); FFmpeg/ffprobe subprocess          | [SECURITY.md](https://github.com/microsoft/hve-core/blob/main/.github/skills/experimental/video-to-gif/SECURITY.md)         |
 | **gh-code-scanning**                    | GitHub code-scanning read via `gh` CLI subprocess                 | [SECURITY.md](https://github.com/microsoft/hve-core/blob/main/.github/skills/github/gh-code-scanning/SECURITY.md)           |
 | **customer-card-render** (experimental) | Local Python CLI; DT markdown to `content.yaml` emission          | [SECURITY.md](https://github.com/microsoft/hve-core/blob/main/.github/skills/experimental/customer-card-render/SECURITY.md) |
+| **vex**                                 | Local Python gate; untrusted issue-body + OpenVEX doc parsing     | [SECURITY.md](https://github.com/microsoft/hve-core/blob/main/.github/skills/security/vex/SECURITY.md)                      |
 
 ## Security Posture
 
