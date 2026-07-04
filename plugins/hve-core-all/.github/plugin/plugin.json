@@ -25,6 +25,7 @@
     "agents/security/subagents/"
   ],
   "commands": [
+    "commands/accessibility/",
     "commands/ado/",
     "commands/data-science/",
     "commands/design-thinking/",

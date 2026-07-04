@@ -2,7 +2,9 @@
 name = "accessibility-skill"
 version = "0.0.0"
 requires-python = ">=3.11"
-dependencies = []
+dependencies = [
+    "jsonschema>=4.20",
+]
 
 [dependency-groups]
 dev = [

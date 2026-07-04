@@ -1,0 +1,277 @@
+{
+  "probes": [
+    {
+      "probeId": "probe-axe",
+      "decides": [
+        { "criterionId": "1.3.1", "framework": "wcag-22", "states": ["default", "open", "error", "empty"] },
+        { "criterionId": "2.4.1", "framework": "wcag-22", "states": ["default", "open", "error", "empty"] },
+        { "criterionId": "2.4.2", "framework": "wcag-22", "states": ["default", "open", "error", "empty"] },
+        { "criterionId": "3.1.1", "framework": "wcag-22", "states": ["default", "open", "error", "empty"] }
+      ],
+      "informs": [
+        { "criterionId": "4.1.2", "framework": "wcag-22", "states": ["default", "open", "error", "empty"] },
+        { "criterionId": "2.5.3", "framework": "wcag-22", "states": ["default", "open", "error", "empty"] },
+        { "criterionId": "2.4.7", "framework": "wcag-22", "states": ["default", "open", "error", "empty"] }
+      ]
+    },
+    {
+      "probeId": "probe-keyboard-traversal",
+      "decides": [
+        { "criterionId": "2.1.1", "framework": "wcag-22", "states": ["default", "focus", "open"] },
+        { "criterionId": "2.1.2", "framework": "wcag-22", "states": ["default", "focus", "open"] },
+        { "criterionId": "2.4.3", "framework": "wcag-22", "states": ["default", "focus", "open"] }
+      ],
+      "informs": [
+        { "criterionId": "2.4.7", "framework": "wcag-22", "states": ["default", "focus", "open"] },
+        { "criterionId": "2.4.11", "framework": "wcag-22", "states": ["default", "focus", "open"] }
+      ]
+    },
+    {
+      "probeId": "probe-focus-visible",
+      "decides": [
+        { "criterionId": "2.4.7", "framework": "wcag-22", "states": ["default", "focus", "dark", "forced-colors"] }
+      ],
+      "informs": [
+        { "criterionId": "2.4.13", "framework": "wcag-22", "states": ["default", "focus", "dark", "forced-colors"] },
+        { "criterionId": "1.4.11", "framework": "wcag-22", "states": ["default", "focus", "dark", "forced-colors"] }
+      ]
+    },
+    {
+      "probeId": "probe-focus-obscured",
+      "decides": [
+        { "criterionId": "2.4.11", "framework": "wcag-22", "states": ["default", "focus", "zoom-400", "reflow-320"] }
+      ],
+      "informs": [
+        { "criterionId": "2.4.7", "framework": "wcag-22", "states": ["default", "focus", "zoom-400", "reflow-320"] },
+        { "criterionId": "2.4.13", "framework": "wcag-22", "states": ["default", "focus", "zoom-400", "reflow-320"] }
+      ]
+    },
+    {
+      "probeId": "probe-live-region",
+      "decides": [
+        { "criterionId": "4.1.3", "framework": "wcag-22", "states": ["default", "error", "open"] }
+      ],
+      "informs": [
+        { "criterionId": "APG:notification-live-region", "framework": "aria-apg", "states": ["default", "error", "open"] }
+      ]
+    },
+    {
+      "probeId": "probe-aria-tree",
+      "decides": [
+        { "criterionId": "4.1.2", "framework": "wcag-22", "states": ["default", "focus", "open", "error", "empty"] },
+        { "criterionId": "1.3.1", "framework": "wcag-22", "states": ["default", "focus", "open", "error", "empty"] }
+      ],
+      "informs": [
+        { "criterionId": "APG:widget-semantics", "framework": "aria-apg", "states": ["default", "focus", "open", "error", "empty"] },
+        { "criterionId": "2.1.1", "framework": "wcag-22", "states": ["default", "focus", "open", "error", "empty"] },
+        { "criterionId": "2.1.2", "framework": "wcag-22", "states": ["default", "focus", "open", "error", "empty"] },
+        { "criterionId": "2.4.3", "framework": "wcag-22", "states": ["default", "focus", "open", "error", "empty"] }
+      ]
+    },
+    {
+      "probeId": "probe-widget-keyboard",
+      "decides": [
+        { "criterionId": "2.1.1", "framework": "wcag-22", "states": ["default", "focus", "open", "error"] },
+        { "criterionId": "2.1.2", "framework": "wcag-22", "states": ["default", "focus", "open", "error"] }
+      ],
+      "informs": [
+        { "criterionId": "APG:widget-keyboard", "framework": "aria-apg", "states": ["default", "focus", "open", "error"] },
+        { "criterionId": "2.4.3", "framework": "wcag-22", "states": ["default", "focus", "open", "error"] },
+        { "criterionId": "2.4.7", "framework": "wcag-22", "states": ["default", "focus", "open", "error"] }
+      ]
+    },
+    {
+      "probeId": "probe-reflow-resize",
+      "decides": [
+        { "criterionId": "1.4.10", "framework": "wcag-22", "states": ["default", "mobile", "reflow-320", "zoom-400"] },
+        { "criterionId": "1.4.4", "framework": "wcag-22", "states": ["default", "mobile", "reflow-320", "zoom-400"] }
+      ],
+      "informs": []
+    },
+    {
+      "probeId": "probe-target-size",
+      "decides": [
+        { "criterionId": "2.5.8", "framework": "wcag-22", "states": ["default", "mobile"] }
+      ],
+      "informs": []
+    },
+    {
+      "probeId": "probe-contrast",
+      "decides": [
+        { "criterionId": "1.4.3", "framework": "wcag-22", "states": ["default", "dark", "forced-colors"] }
+      ],
+      "informs": [
+        { "criterionId": "1.4.11", "framework": "wcag-22", "states": ["default", "dark", "forced-colors"] }
+      ]
+    },
+    {
+      "probeId": "probe-forced-colors",
+      "decides": [
+        { "criterionId": "1.4.11", "framework": "wcag-22", "states": ["default", "forced-colors", "focus", "dark"] },
+        { "criterionId": "2.4.7", "framework": "wcag-22", "states": ["forced-colors"] }
+      ],
+      "informs": [
+        { "criterionId": "1.4.3", "framework": "wcag-22", "states": ["default", "forced-colors", "focus", "dark"] },
+        { "criterionId": "1.4.1", "framework": "wcag-22", "states": ["default", "forced-colors", "focus", "dark"] }
+      ]
+    },
+    {
+      "probeId": "probe-reduced-motion",
+      "decides": [
+        { "criterionId": "2.2.2", "framework": "wcag-22", "states": ["default", "reduced-motion"] }
+      ],
+      "informs": [
+        { "criterionId": "2.3.3", "framework": "wcag-22", "states": ["default", "reduced-motion"] }
+      ]
+    },
+    {
+      "probeId": "probe-structure-crawl",
+      "decides": [
+        { "criterionId": "1.3.1", "framework": "wcag-22", "states": ["default", "open"] },
+        { "criterionId": "2.4.1", "framework": "wcag-22", "states": ["default", "open"] },
+        { "criterionId": "2.4.2", "framework": "wcag-22", "states": ["default", "open"] },
+        { "criterionId": "3.1.1", "framework": "wcag-22", "states": ["default", "open"] }
+      ],
+      "informs": [
+        { "criterionId": "2.4.6", "framework": "wcag-22", "states": ["default", "open"] },
+        { "criterionId": "2.4.3", "framework": "wcag-22", "states": ["default", "open"] }
+      ]
+    },
+    {
+      "probeId": "probe-name-in-label",
+      "decides": [
+        { "criterionId": "2.5.3", "framework": "wcag-22", "states": ["default", "focus"] }
+      ],
+      "informs": [
+        { "criterionId": "4.1.2", "framework": "wcag-22", "states": ["default", "focus"] },
+        { "criterionId": "3.3.2", "framework": "wcag-22", "states": ["default", "focus"] }
+      ]
+    },
+    {
+      "probeId": "probe-use-of-color",
+      "decides": [
+        { "criterionId": "1.4.1", "framework": "wcag-22", "states": ["default"] }
+      ],
+      "informs": [
+        { "criterionId": "1.4.11", "framework": "wcag-22", "states": ["default"] }
+      ]
+    },
+    {
+      "probeId": "probe-text-spacing",
+      "decides": [
+        { "criterionId": "1.4.12", "framework": "wcag-22", "states": ["default"] }
+      ],
+      "informs": []
+    },
+    {
+      "probeId": "probe-hover-focus",
+      "decides": [
+        { "criterionId": "1.4.13", "framework": "wcag-22", "states": ["default", "hover", "focus"] }
+      ],
+      "informs": []
+    },
+    {
+      "probeId": "probe-link-purpose",
+      "decides": [
+        { "criterionId": "2.4.4", "framework": "wcag-22", "states": ["default"] }
+      ],
+      "informs": [
+        { "criterionId": "2.4.9", "framework": "wcag-22", "states": ["default"] }
+      ]
+    },
+    {
+      "probeId": "probe-input-purpose",
+      "decides": [
+        { "criterionId": "1.3.5", "framework": "wcag-22", "states": ["default"] }
+      ],
+      "informs": []
+    },
+    {
+      "probeId": "probe-forms",
+      "decides": [
+        { "criterionId": "3.3.2", "framework": "wcag-22", "states": ["default", "error"] }
+      ],
+      "informs": [
+        { "criterionId": "3.3.1", "framework": "wcag-22", "states": ["default", "error"] },
+        { "criterionId": "3.3.3", "framework": "wcag-22", "states": ["default", "error"] }
+      ]
+    },
+    {
+      "probeId": "probe-context-change",
+      "decides": [
+        { "criterionId": "3.2.1", "framework": "wcag-22", "states": ["default", "focus"] },
+        { "criterionId": "3.2.2", "framework": "wcag-22", "states": ["default", "focus"] }
+      ],
+      "informs": []
+    },
+    {
+      "probeId": "probe-orientation",
+      "decides": [
+        { "criterionId": "1.3.4", "framework": "wcag-22", "states": ["default"] }
+      ],
+      "informs": []
+    },
+    {
+      "probeId": "probe-audio-control",
+      "decides": [
+        { "criterionId": "1.4.2", "framework": "wcag-22", "states": ["default"] }
+      ],
+      "informs": [
+        { "criterionId": "2.2.2", "framework": "wcag-22", "states": ["default"] }
+      ]
+    },
+    {
+      "probeId": "probe-timing",
+      "decides": [
+        { "criterionId": "2.2.1", "framework": "wcag-22", "states": ["default"] }
+      ],
+      "informs": []
+    },
+    {
+      "probeId": "probe-zoom-blocker",
+      "decides": [
+        { "criterionId": "1.4.4", "framework": "wcag-22", "states": ["default"] }
+      ],
+      "informs": [
+        { "criterionId": "1.4.10", "framework": "wcag-22", "states": ["default"] }
+      ]
+    },
+    {
+      "probeId": "probe-console-errors",
+      "decides": [
+        { "criterionId": "DEFECT:console-error", "framework": "defect-scan", "states": ["default"] }
+      ],
+      "informs": []
+    },
+    {
+      "probeId": "probe-broken-links",
+      "decides": [
+        { "criterionId": "DEFECT:broken-link", "framework": "defect-scan", "states": ["default"] }
+      ],
+      "informs": []
+    },
+    {
+      "probeId": "probe-dom-hygiene",
+      "decides": [
+        { "criterionId": "DEFECT:duplicate-id", "framework": "defect-scan", "states": ["default"] },
+        { "criterionId": "DEFECT:positive-tabindex", "framework": "defect-scan", "states": ["default"] },
+        { "criterionId": "DEFECT:missing-landmark", "framework": "defect-scan", "states": ["default"] },
+        { "criterionId": "DEFECT:duplicate-main", "framework": "defect-scan", "states": ["default"] }
+      ],
+      "informs": [
+        { "criterionId": "1.3.1", "framework": "wcag-22", "states": ["default"] }
+      ]
+    },
+    {
+      "probeId": "probe-title-lang",
+      "decides": [
+        { "criterionId": "DEFECT:empty-title", "framework": "defect-scan", "states": ["default"] },
+        { "criterionId": "DEFECT:invalid-lang", "framework": "defect-scan", "states": ["default"] }
+      ],
+      "informs": [
+        { "criterionId": "2.4.2", "framework": "wcag-22", "states": ["default"] },
+        { "criterionId": "3.1.1", "framework": "wcag-22", "states": ["default"] }
+      ]
+    }
+  ]
+}

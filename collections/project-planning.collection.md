@@ -39,19 +39,20 @@ Create architecture decision records (MADR v4 + Y-Statement) with phase-gated co
 
 ### Prompts
 
-| Name                            | Description                                                                                                                                  |
-|---------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------|
-| **incident-response**           | Run an incident response workflow for Azure operations scenarios                                                                             |
-| **rai-capture**                 | Start responsible AI assessment planning from existing knowledge using the RAI Planner agent in capture mode                                 |
-| **rai-plan-from-prd**           | Start responsible AI assessment planning from PRD/BRD artifacts using the RAI Planner agent in from-prd mode                                 |
-| **rai-plan-from-security-plan** | Start responsible AI assessment planning from a completed Security Plan using the RAI Planner agent in from-security-plan mode (recommended) |
-| **risk-register**               | Create a qualitative risk register using a Probability × Impact (P×I) matrix                                                                 |
-| **security-capture**            | Start security planning from existing notes using the Security Planner agent (capture mode)                                                  |
-| **security-plan-from-prd**      | Start security planning from PRD/BRD artifacts using the Security Planner agent (from-prd mode)                                              |
-| **sssc-capture**                | Start supply chain security planning from existing knowledge using the SSSC Planner agent in capture mode                                    |
-| **sssc-from-brd**               | Start supply chain security planning from BRD artifacts using the SSSC Planner agent in from-brd mode                                        |
-| **sssc-from-prd**               | Start supply chain security planning from PRD artifacts using the SSSC Planner agent in from-prd mode                                        |
-| **sssc-from-security-plan**     | Extend a Security Planner assessment with supply chain coverage using the SSSC Planner agent in from-security-plan mode                      |
+| Name                              | Description                                                                                                                                  |
+|-----------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------|
+| **accessibility-coverage-matrix** | Build, refresh, report, or probe an accessibility coverage matrix across criteria, surfaces, and methods.                                    |
+| **incident-response**             | Run an incident response workflow for Azure operations scenarios                                                                             |
+| **rai-capture**                   | Start responsible AI assessment planning from existing knowledge using the RAI Planner agent in capture mode                                 |
+| **rai-plan-from-prd**             | Start responsible AI assessment planning from PRD/BRD artifacts using the RAI Planner agent in from-prd mode                                 |
+| **rai-plan-from-security-plan**   | Start responsible AI assessment planning from a completed Security Plan using the RAI Planner agent in from-security-plan mode (recommended) |
+| **risk-register**                 | Create a qualitative risk register using a Probability × Impact (P×I) matrix                                                                 |
+| **security-capture**              | Start security planning from existing notes using the Security Planner agent (capture mode)                                                  |
+| **security-plan-from-prd**        | Start security planning from PRD/BRD artifacts using the Security Planner agent (from-prd mode)                                              |
+| **sssc-capture**                  | Start supply chain security planning from existing knowledge using the SSSC Planner agent in capture mode                                    |
+| **sssc-from-brd**                 | Start supply chain security planning from BRD artifacts using the SSSC Planner agent in from-brd mode                                        |
+| **sssc-from-prd**                 | Start supply chain security planning from PRD artifacts using the SSSC Planner agent in from-prd mode                                        |
+| **sssc-from-security-plan**       | Extend a Security Planner assessment with supply chain coverage using the SSSC Planner agent in from-security-plan mode                      |
 
 ### Instructions
 
