@@ -51,6 +51,11 @@ success_criteria:
     target: "A consumer can verify the VEX artifact with a single signer-workflow command that matches the published trust model"
     measurement_window: "for each release"
     source: "gh attestation verify commands in docs/security/vex-verification.md and SECURITY.md"
+decisionMetadata:
+  driverToTriggerMap:
+    "Security": "The VEX attestation signer identity is part of the release-integrity and trust-anchor contract, so naming the reusable workflow makes it explicit and verifiable for consumers and reviewers."
+    "Compliance": "VEX guidance and the OpenVEX tooling field must stay consistent for downstream consumers and reviewers, and a single signer identity removes ambiguity for audit and verification."
+    "Maintainability": "The reusable workflow name becomes the single source of truth across docs, instructions, the skill playbook, and the published OpenVEX data, which reduces drift."
 ---
 
 ## Context
@@ -61,9 +66,9 @@ The VEX document under security/vex is owned by @microsoft/edge-ai-core-dev in C
 
 ## Decision Drivers
 
-* Security: make the signer identity explicit and verifiable for consumers and reviewers.
-* Compliance: keep the VEX trust-anchor language, OpenVEX tooling metadata, and verification guidance aligned.
-* Maintainability: reduce drift across docs, instructions, the skill playbook, and the published OpenVEX data.
+* Security
+* Compliance
+* Maintainability
 
 ## Considered Options
 
@@ -71,6 +76,12 @@ The VEX document under security/vex is owned by @microsoft/edge-ai-core-dev in C
 * Option B: Re-anchor the published VEX trust model to the dedicated reusable workflow `microsoft/hve-core/.github/workflows/vex-attest.yml` and use that identity everywhere.
 
 ## Decision Outcome
+
+| Decision driver | Option A: keep release workflow as anchor | Option B: reusable vex-attest.yml as anchor |
+|-----------------|-------------------------------------------|---------------------------------------------|
+| Security        | Partial                                   | Yes                                         |
+| Compliance      | Partial                                   | Yes                                         |
+| Maintainability | No                                        | Yes                                         |
 
 Chosen option: **Option B**, because it makes the attestation identity explicit, aligns every consumer-facing and maintainer-facing artifact with the actual attestation builder, and supports `gh attestation verify --signer-workflow` without ambiguity.
 
@@ -86,6 +97,26 @@ The reusable workflow name is now the authoritative signer identity for the publ
 ### Confirmation
 
 This decision is confirmed by the repository changes that now use the same workflow identity in the VEX verification commands, the security instructions, the VEX skill, and the published OpenVEX document. The change is also reflected in the ADR itself so future reviewers can see why the trust anchor moved.
+
+## Affected Components
+
+* .github/instructions/security/vex-standards.instructions.md
+* .github/instructions/security/vex-generation.instructions.md
+* .github/skills/security/vex/SKILL.md
+* security/vex/hve-core.openvex.json
+* docs/security/vex-verification.md
+* SECURITY.md
+
+## More Information
+
+The trust-anchor change updates every artifact that names the VEX signer identity:
+
+* .github/instructions/security/vex-standards.instructions.md carries the author-of-record and trust-anchor language.
+* .github/instructions/security/vex-generation.instructions.md carries the trust-anchor row and tooling guidance.
+* .github/skills/security/vex/SKILL.md carries the attestation playbook ownership.
+* security/vex/hve-core.openvex.json carries the published `tooling` metadata field.
+* docs/security/vex-verification.md carries the consumer verification commands.
+* SECURITY.md carries the release-integrity verification guidance.
 
 ---
 

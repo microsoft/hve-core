@@ -112,7 +112,6 @@ jobs:
           PRE_RELEASE: ${{ inputs.pre-release }}
           COLLECTION_ID: ${{ matrix.id }}
         run: |
-          VSIX_FILE="$VSIX_FILE"
           if [ -z "$VSIX_FILE" ]; then
             echo "::error::No VSIX file found for collection $COLLECTION_ID"
             exit 1
