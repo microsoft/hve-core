@@ -41,6 +41,21 @@ BeforeAll {
         param([string]$Repo, [string]$Kind)
         return (Get-FixtureModels -Repo $Repo | Where-Object { $_.Kind -eq $Kind } | Select-Object -First 1)
     }
+
+    # Rewrites the value cell of a named field in a generated metadata table
+    # without depending on the column padding Format-MarkdownTable emits, so sync
+    # tamper tests never silently no-op if the table formatting changes. Throws
+    # when the field row is not found (tamper had no effect), surfacing a format
+    # drift as an explicit failure instead of a false pass.
+    function script:Set-TamperedMetadataCell {
+        param([string]$Content, [string]$Field, [string]$NewValue)
+        $pattern = '(?m)^(\|[ \t]*' + [regex]::Escape($Field) + '[ \t]*\|[ \t]*)[^|\r\n]*?([ \t]*\|)'
+        $tampered = [regex]::Replace($Content, $pattern, { param($m) $m.Groups[1].Value + $NewValue + $m.Groups[2].Value })
+        if ($tampered -eq $Content) {
+            throw "Set-TamperedMetadataCell found no '$Field' metadata row to tamper; the generated table format may have changed."
+        }
+        return $tampered
+    }
 }
 
 AfterAll {
@@ -193,7 +208,7 @@ Describe 'Test-AssetDocRegionSync' -Tag 'Unit' {
     }
 
     It 'Detects a tampered metadata region' {
-        $tampered = $script:agentContent -replace '\| Kind\s+\| agent\s+\|', '| Kind | TAMPERED |'
+        $tampered = Set-TamperedMetadataCell -Content $script:agentContent -Field 'Kind' -NewValue 'TAMPERED'
         $findings = @(Test-AssetDocRegionSync -Model $script:agentModel -Content $tampered)
         $findings.Count | Should -Be 1
         $findings[0].Category | Should -Be 'Sync'
@@ -268,7 +283,7 @@ Describe 'Invoke-AssetDocsValidation' -Tag 'Unit' {
         $repo = New-ValidatorFixture
         $model = Get-FixtureModel -Repo $repo -Kind 'agent'
         $page = Join-Path $repo $model.DocRel
-        $tampered = (Get-Content -LiteralPath $page -Raw) -replace '\| Kind\s+\| agent\s+\|', '| Kind | TAMPERED |'
+        $tampered = Set-TamperedMetadataCell -Content (Get-Content -LiteralPath $page -Raw) -Field 'Kind' -NewValue 'TAMPERED'
         Set-Content -LiteralPath $page -Value $tampered -Encoding utf8NoBOM -NoNewline
         (Invoke-AssetDocsValidation -RepoRoot $repo -CheckSync) | Should -Be 1
     }
