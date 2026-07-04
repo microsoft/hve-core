@@ -106,6 +106,32 @@ Describe 'AffectedAgents module' -Tag 'Unit' {
             $result | Should -Be @('code-review', 'code-review-standards')
         }
 
+        It 'Resolves multiple changed subagents to their respective parents via one shared name index' {
+            $subA = '.github/agents/coding-standards/subagents/code-review-standards.agent.md'
+            $parentA = '.github/agents/coding-standards/code-review.agent.md'
+            $subB = '.github/agents/security/subagents/cve-analyzer.agent.md'
+            $parentB = '.github/agents/security/sssc-reviewer.agent.md'
+            foreach ($rel in @($subA, $parentA, $subB, $parentB)) {
+                New-Item -ItemType Directory -Path (Join-Path $script:TestRoot (Split-Path -Parent $rel)) -Force | Out-Null
+            }
+            Set-Content -LiteralPath (Join-Path $script:TestRoot $subA) -Value "---`nname: Code Review Standards`nuser-invocable: false`n---`n# Agent`n" -Encoding utf8
+            Set-Content -LiteralPath (Join-Path $script:TestRoot $parentA) -Value "---`nname: Code Review`nagents:`n  - Code Review Standards`nuser-invocable: true`n---`n# Agent`n" -Encoding utf8
+            Set-Content -LiteralPath (Join-Path $script:TestRoot $subB) -Value "---`nname: CVE Analyzer`nuser-invocable: false`n---`n# Agent`n" -Encoding utf8
+            Set-Content -LiteralPath (Join-Path $script:TestRoot $parentB) -Value "---`nname: SSSC Reviewer`nagents:`n  - CVE Analyzer`nuser-invocable: true`n---`n# Agent`n" -Encoding utf8
+            New-DepMap -Map @{
+                'code-review'   = @{ subagents = @() }
+                'sssc-reviewer' = @{ subagents = @() }
+            }
+
+            $result = Get-AffectedAgentSlugs `
+                -ChangedFiles @($subA, $subB) `
+                -RepoRoot $script:TestRoot `
+                -DepMapPath $script:DepMapPath `
+                -SkipDepMapRefresh
+
+            $result | Should -Be @('code-review', 'code-review-standards', 'cve-analyzer', 'sssc-reviewer')
+        }
+
         It 'Does not include security subagents as direct parents (DD-09: frontmatter wins)' {
             New-AgentFile -RelativePath '.github/agents/security/subagents/security-reviewer-subagent.agent.md' -UserInvocable $false
             New-AgentFile -RelativePath '.github/agents/security/security-reviewer.agent.md' -UserInvocable $true
