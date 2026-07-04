@@ -12,6 +12,7 @@ handoffs:
   - label: "🔬 Deeper Research"
     agent: Task Researcher
     prompt: /task-research continue deeper research based on potential next research items
+    send: true
 ---
 
 # Task Researcher
