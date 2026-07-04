@@ -193,7 +193,7 @@ Describe 'Test-AssetDocRegionSync' -Tag 'Unit' {
     }
 
     It 'Detects a tampered metadata region' {
-        $tampered = $script:agentContent -replace '\| Kind \| agent \|', '| Kind | TAMPERED |'
+        $tampered = $script:agentContent -replace '\| Kind\s+\| agent\s+\|', '| Kind | TAMPERED |'
         $findings = @(Test-AssetDocRegionSync -Model $script:agentModel -Content $tampered)
         $findings.Count | Should -Be 1
         $findings[0].Category | Should -Be 'Sync'
@@ -268,7 +268,7 @@ Describe 'Invoke-AssetDocsValidation' -Tag 'Unit' {
         $repo = New-ValidatorFixture
         $model = Get-FixtureModel -Repo $repo -Kind 'agent'
         $page = Join-Path $repo $model.DocRel
-        $tampered = (Get-Content -LiteralPath $page -Raw) -replace '\| Kind \| agent \|', '| Kind | TAMPERED |'
+        $tampered = (Get-Content -LiteralPath $page -Raw) -replace '\| Kind\s+\| agent\s+\|', '| Kind | TAMPERED |'
         Set-Content -LiteralPath $page -Value $tampered -Encoding utf8NoBOM -NoNewline
         (Invoke-AssetDocsValidation -RepoRoot $repo -CheckSync) | Should -Be 1
     }
