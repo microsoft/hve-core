@@ -1,0 +1,85 @@
+---
+title: Agents
+description: Reference documentation for HVE Core agents.
+sidebar_position: 0
+ms.date: 2026-07-03
+---
+
+<!-- BEGIN AUTO-GENERATED: index -->
+This page lists the generated reference documentation for HVE Core agents.
+
+| Asset | Description |
+| ----- | ----------- |
+| [Accessibility Planner](accessibility/accessibility-planner.md) | Phase-based accessibility planner that guides users through structured planning for WCAG 2.2, ARIA APG, Cognitive Accessibility, Section 508, and EN 301 549, producing framework selections, control mappings, evidence-register entries, plan-risk classifications, and dual-format backlog handoff. |
+| [Accessibility Reviewer](accessibility/accessibility-reviewer.md) | Accessibility skill assessment orchestrator for codebase profiling and accessibility findings reporting |
+| [Accessibility Framework Assessor](accessibility/subagents/accessibility-framework-assessor.md) | Assesses accessibility framework scopes through the consolidated Accessibility skill and returns structured findings |
+| [ADO Backlog Manager](ado/ado-backlog-manager.md) | Azure DevOps backlog orchestrator for triage, discovery, sprint planning, PRD-to-work-item conversion, and execution |
+| [AzDO PRD to WIT](ado/ado-prd-to-wit.md) | Product Manager expert for analyzing PRDs and planning Azure DevOps work item hierarchies |
+| [Code Review](coding-standards/code-review.md) | Human-gated code review orchestrator that bootstraps change context, scopes hotspots, picks perspectives and depth, and merges skill-backed perspective findings into one report |
+| [Code Review Accessibility](coding-standards/subagents/code-review-accessibility.md) | Thin skill-backed perspective subagent that reviews a precomputed diff for accessibility conformance and writes structured findings |
+| [Code Review Explainer](coding-standards/subagents/code-review-explainer.md) | Thin skill-backed Register 1 explainer subagent that answers factual symbol or function questions and persists an explanation artifact |
+| [Code Review Functional](coding-standards/subagents/code-review-functional.md) | Thin skill-backed perspective subagent that reviews a precomputed diff for functional correctness and writes structured findings |
+| [Code Review PR](coding-standards/subagents/code-review-pr.md) | Thin skill-backed orientation detailer that turns a precomputed diff into a factual Register 1 walkthrough plus dispatch-board appendices within the orientation-first review workflow |
+| [Code Review Readiness](coding-standards/subagents/code-review-readiness.md) | Thin skill-backed perspective subagent that reviews PR deliverable readiness and changed non-code documentation against a precomputed diff and PR context, and writes structured findings |
+| [Code Review Security](coding-standards/subagents/code-review-security.md) | Thin skill-backed perspective subagent that reviews a precomputed diff for security issues and writes structured findings |
+| [Code Review Standards](coding-standards/subagents/code-review-standards.md) | Thin skill-backed perspective subagent that reviews a precomputed diff against project coding standards and writes structured findings |
+| [Code Review Walkback](coding-standards/subagents/code-review-walkback.md) | Thin wrapper subagent that dispatches deep Register 2 questions to the generic Researcher Subagent and anchors the output to a board item |
+| [Evaluation Dataset Creator](data-science/eval-dataset-creator.md) | Creates evaluation datasets and documentation for AI agent testing using interview-driven data curation |
+| [DS Gen Data Spec](data-science/gen-data-spec.md) | Generate data dictionaries, machine-readable data profiles, and summaries for downstream EDA notebooks and dashboards |
+| [DS Gen Jupyter Notebook](data-science/gen-jupyter-notebook.md) | Create exploratory data analysis (EDA) Jupyter notebooks from data sources and data dictionaries |
+| [DS Gen Streamlit Dashboard](data-science/gen-streamlit-dashboard.md) | Develop a multi-page Streamlit dashboard |
+| [DS Test Streamlit Dashboard](data-science/test-streamlit-dashboard.md) | Automated testing for Streamlit dashboards using Playwright with issue tracking and reporting |
+| [DT Coach](design-thinking/dt-coach.md) | Design Thinking coach guiding teams through the 9-method HVE framework with Think/Speak/Empower |
+| [DT Learning Tutor](design-thinking/dt-learning-tutor.md) | Design Thinking learning tutor providing structured curriculum, comprehension checks, and adaptive pacing |
+| [Experiment Designer](experimental/experiment-designer.md) | Coach for designing a Minimum Viable Experiment (MVE) with hypothesis formation, vetting, and experiment planning |
+| [PowerPoint Builder](experimental/pptx.md) | Creates, updates, and manages PowerPoint slide decks using YAML-driven content with python-pptx |
+| [PowerPoint Subagent](experimental/subagents/pptx-subagent.md) | Executes PowerPoint skill operations including content extraction, YAML creation, deck building, and visual validation |
+| [GitHub Backlog Manager](github/github-backlog-manager.md) | GitHub backlog orchestrator for triage, discovery, sprint planning, and execution |
+| [Documentation](hve-core/documentation.md) | Orchestrates documentation audit, drift, authoring, and validation work through the documentation skill |
+| [Memory](hve-core/memory.md) | Conversation memory persistence for session continuity |
+| [Prompt Builder](hve-core/prompt-builder.md) | Prompt engineering assistant for creating and validating prompts, agents, and instructions |
+| [RPI Agent](hve-core/rpi-agent.md) | Autonomous RPI orchestrator running Research → Plan → Implement → Review → Discover phases with specialized subagents |
+| [Implementation Validator](hve-core/subagents/implementation-validator.md) | Validates implementation quality against architectural requirements, design principles, and code standards with severity-graded findings |
+| [Phase Implementor](hve-core/subagents/phase-implementor.md) | Executes a single implementation phase from a plan with full codebase access and change tracking |
+| [Plan Validator](hve-core/subagents/plan-validator.md) | Validates implementation plans against research documents with severity-graded findings |
+| [Prompt Evaluator](hve-core/subagents/prompt-evaluator.md) | Evaluates prompt execution results against Prompt Quality Criteria with severity-graded findings and remediation guidance |
+| [Prompt Tester](hve-core/subagents/prompt-tester.md) | Tests prompt files by following them literally in a sandbox, without interpreting beyond face value |
+| [Prompt Updater](hve-core/subagents/prompt-updater.md) | Creates and modifies prompts, instructions, agents, and skills following prompt engineering conventions |
+| [Researcher Subagent](hve-core/subagents/researcher-subagent.md) | Research subagent using search, read, web-fetch, GitHub repo, and MCP tools |
+| [RPI Validator](hve-core/subagents/rpi-validator.md) | Validates a Changes Log against the Implementation Plan, Planning Log, and Research Documents for a specific plan phase |
+| [Vally Test Author](hve-core/subagents/vally-test-author.md) | Authors Vally conformance test stimuli in two modes: from-artifact (read a prompt, instructions, agent, or skill file and draft a stimulus block) and corpus-import (turn a CSV or XLSX corpus into stimulus blocks), with safety-lint refusal enforcement and SHA-256 dedupe before append-only writes to the routed eval file |
+| [Task Challenger](hve-core/task-challenger.md) | Adversarial questioning agent that interrogates implementations with What/Why/How questions: no suggestions, no hints, no leading |
+| [Task Implementor](hve-core/task-implementor.md) | Executes implementation plans from .copilot-tracking/plans with progressive tracking and change records |
+| [Task Planner](hve-core/task-planner.md) | Implementation planner that creates actionable, step-by-step plans |
+| [Task Researcher](hve-core/task-researcher.md) | Task research specialist for comprehensive project analysis |
+| [Task Reviewer](hve-core/task-reviewer.md) | Reviews completed implementation work for accuracy, completeness, and convention compliance |
+| [Jira Backlog Manager](jira/jira-backlog-manager.md) | Jira backlog orchestrator for discovery, triage, execution, and single-issue actions |
+| [Jira PRD to WIT](jira/jira-prd-to-wit.md) | Product Manager expert for analyzing PRDs and planning Jira issue hierarchies without mutating Jira |
+| [Privacy Planner](privacy/privacy-planner.md) | Phase-based privacy planner producing data maps, DPIA assessments, controls, and backlog handoffs for processing activities |
+| [Privacy Reviewer](privacy/privacy-reviewer.md) | Privacy-focused reviewer orchestrator for assessment planning, evidence review, and report generation |
+| [ADR Creator](project-planning/adr-creation.md) | ADR Creator: phase-gated creator producing standards-aligned Architecture Decision Records (Frame, Decide, Govern), with state recovery, Researcher Subagent delegation, and dual-format backlog handoff |
+| [Agile Coach](project-planning/agile-coach.md) | Creates and refines goal-oriented user stories with clear acceptance criteria for any tracking tool |
+| [BRD Builder](project-planning/brd-builder.md) | Business Requirements Document builder with guided Q&A and references |
+| [Meeting Analyst](project-planning/meeting-analyst.md) | Meeting transcript analyzer that extracts product requirements for PRD creation via work-iq-mcp |
+| [Network ISA-95 Planner](project-planning/network-isa95-planner.md) | ISA-95-aligned network planning for secure edge Kubernetes to Azure connectivity and remediation roadmaps |
+| [PRD Builder](project-planning/prd-builder.md) | Product Requirements Document builder with guided Q&A and references |
+| [Product Manager Advisor](project-planning/product-manager-advisor.md) | Product management advisor for requirements discovery, validation, and issue creation |
+| [BRD Quality Reviewer](project-planning/subagents/brd-quality-reviewer.md) | Read-only BRD quality reviewer that emits both BRD_STANDARD_FINDINGS_V1 and BRD_QUALITY_REPORT_V1 payloads |
+| [PRD Quality Reviewer](project-planning/subagents/prd-quality-reviewer.md) | Read-only PRD quality reviewer that emits both PRD_STANDARD_FINDINGS_V1 and PRD_QUALITY_REPORT_V1 payloads |
+| [System Architecture Reviewer](project-planning/system-architecture-reviewer.md) | System architecture reviewer for design trade-offs, ADR creation, and well-architected alignment |
+| [UX UI Designer](project-planning/ux-ui-designer.md) | UX research specialist for Jobs-to-be-Done analysis, user journey mapping, and accessibility requirements |
+| [RAI Planner](rai-planning/rai-planner.md) | Responsible AI assessment planner evaluating against NIST AI RMF 1.0, producing an RAI security model, impact assessment, control surface catalog, and backlog handoff |
+| [RAI Reviewer](rai-planning/rai-reviewer.md) | Responsible AI standards assessment orchestrator for codebase profiling and RAI findings reporting against NIST AI RMF, the AI STRIDE overlay, and the EU AI Act |
+| [RAI Skill Assessor](rai-planning/subagents/rai-skill-assessor.md) | Assesses a single Responsible AI framework from the rai-standards skill against the codebase, reading framework references and returning structured findings |
+| [Security Planner](security/security-planner.md) | Phase-based security planner producing security models, standards mappings, and backlog handoffs with AI/ML detection and RAI Planner integration |
+| [Security Reviewer](security/security-reviewer.md) | Security skill assessment orchestrator for codebase profiling and vulnerability reporting |
+| [SSSC Planner](security/sssc-planner.md) | Six-phase repository supply chain security assessment against OpenSSF Scorecard, SLSA, Sigstore, and SBOM standards, producing a prioritized backlog of reusable workflows. |
+| [SSSC Reviewer](security/sssc-reviewer.md) | Evidence-based reviewer for repository supply-chain security posture with audit, diff, and plan review modes |
+| [Codebase Profiler](security/subagents/codebase-profiler.md) | Scans the repository to build a technology profile and select applicable security skills |
+| [CVE Analyzer](security/subagents/cve-analyzer.md) | Per-CVE deep exploitability analysis tracing code reachability to determine an evidence-backed VEX status - Brought to you by microsoft/hve-core |
+| [Finding Deep Verifier](security/subagents/finding-deep-verifier.md) | Deep adversarial verification of FAIL and PARTIAL findings for a single security skill |
+| [Report Generator](security/subagents/report-generator.md) | Collates verified security or accessibility skill assessment findings and generates a comprehensive report written to the domain-appropriate reports directory |
+| [Skill Assessor](security/subagents/skill-assessor.md) | Assesses a single security skill against the codebase and returns structured findings |
+| [Supply Chain Skill Assessor](security/subagents/supply-chain-skill-assessor.md) | Assesses supply-chain posture against the supply-chain skill and returns structured findings |
+| [Supply Chain Reviewer](security/supply-chain-reviewer.md) | Supply-chain posture assessment orchestrator for codebase profiling and reporting |
+<!-- END AUTO-GENERATED: index -->
