@@ -1,0 +1,67 @@
+# Copyright (c) 2026 Microsoft Corporation. All rights reserved.
+# SPDX-License-Identifier: MIT
+
+name: VEX Attestation
+
+on:
+  workflow_call:
+    inputs:
+      version:
+        description: Release version or tag to attach the VEX attestation to
+        required: true
+        type: string
+      sbom-artifact:
+        description: Name of the shared dependency SBOM artifact to download
+        required: false
+        default: sbom-dependencies
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  attest:
+    name: Attest and Upload VEX
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      id-token: write
+      attestations: write
+      artifact-metadata: write
+    steps:
+      - name: Checkout VEX document
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+        with:
+          sparse-checkout: security/vex/hve-core.openvex.json
+          sparse-checkout-cone-mode: false
+          persist-credentials: false
+
+      - name: Attest VEX document provenance
+        uses: actions/attest-build-provenance@a2bbfa25375fe432b6a289bc6b6cd05ecd0c4c32 # v4.1.0
+        with:
+          subject-path: security/vex/hve-core.openvex.json
+
+      - name: Download dependency SBOM
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: ${{ inputs.sbom-artifact }}
+          path: ./sbom
+
+      - name: Attest VEX over dependency SBOM
+        uses: actions/attest@59d89421af93a897026c735860bf21b6eb4f7b26 # v4.1.0
+        with:
+          subject-path: sbom/dependencies.spdx.json
+          predicate-type: https://openvex.dev/ns/v0.2.0
+          predicate-path: security/vex/hve-core.openvex.json
+
+      - name: Upload VEX document to GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_VERSION: ${{ inputs.version }}
+          REPOSITORY: ${{ github.repository }}
+          VEX_PATH: security/vex/hve-core.openvex.json
+        run: |
+          set -euo pipefail
+          gh release upload "$RELEASE_VERSION" \
+            "$VEX_PATH" \
+            --clobber -R "$REPOSITORY"

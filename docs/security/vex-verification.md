@@ -53,20 +53,22 @@ gh release download <version> -R microsoft/hve-core \
 
 The release publishes two Sigstore attestations for the VEX document:
 
-1. **Provenance of the VEX document**, so you can confirm the file itself came from the official pipeline. Verify it the same way as any other release artifact:
+1. **Provenance of the VEX document**, so you can confirm the file itself came from the official pipeline. Verify it against the dedicated reusable VEX attestation workflow:
 
    ```bash
-   gh attestation verify hve-core.openvex.json -R microsoft/hve-core
+   gh attestation verify hve-core.openvex.json -R microsoft/hve-core \
+     --signer-workflow microsoft/hve-core/.github/workflows/vex-attest.yml
    ```
 
 2. **VEX bound to the dependency SBOM**, where the VEX document is the in-toto *predicate* over the SBOM *subject* (the OpenVEX "encapsulating format"). This lets VEX-aware tooling resolve the exploitability assessment for the product's component inventory:
 
    ```bash
    gh attestation verify dependencies.spdx.json -R microsoft/hve-core \
+     --signer-workflow microsoft/hve-core/.github/workflows/vex-attest.yml \
      --predicate-type https://openvex.dev/ns/v0.2.0
    ```
 
-A successful verification confirms the artifact was produced by the official HVE Core CI/CD pipeline and has not been modified since signing.
+A successful verification confirms the artifact was produced by the dedicated reusable VEX attestation workflow and has not been modified since signing.
 
 > [!TIP]
 > The default `gh attestation verify` command verifies build provenance. Pass `--predicate-type <type>` to target a specific attestation: the OpenVEX predicate above, or `https://spdx.dev/Document/v2.3` for the SBOM. Run `gh attestation verify --help` for the full set of options.
