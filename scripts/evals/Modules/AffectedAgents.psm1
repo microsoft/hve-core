@@ -245,6 +245,98 @@ function Build-ReverseIndex {
     return $index
 }
 
+function Get-FrontmatterListValues {
+    [CmdletBinding()]
+    [OutputType([string[]])]
+    param(
+        [Parameter(Mandatory)] [string]$Frontmatter,
+        [Parameter(Mandatory)] [string]$Field
+    )
+
+    $results = [System.Collections.Generic.List[string]]::new()
+    $lines = $Frontmatter -split "`r?`n"
+    $inList = $false
+    foreach ($line in $lines) {
+        if (-not $inList) {
+            if ($line -match "^$([regex]::Escape($Field))\s*:\s*\[(.*)\]\s*$") {
+                $items = $matches[1] -split ','
+                foreach ($item in $items) {
+                    $t = $item.Trim().Trim('"').Trim("'")
+                    if ($t) { $results.Add($t) }
+                }
+                return $results.ToArray()
+            }
+            if ($line -match "^$([regex]::Escape($Field))\s*:\s*$") {
+                $inList = $true
+                continue
+            }
+        } else {
+            if ($line -match '^\s*-\s*(.+?)\s*$') {
+                $results.Add($matches[1].Trim().Trim('"').Trim("'"))
+            } elseif ($line -match '^\S') {
+                break
+            }
+        }
+    }
+    return $results.ToArray()
+}
+
+function Get-FrontmatterStringValue {
+    [CmdletBinding()]
+    [OutputType([string])]
+    param(
+        [Parameter(Mandatory)] [string]$Frontmatter,
+        [Parameter(Mandatory)] [string]$Field
+    )
+
+    foreach ($line in ($Frontmatter -split "`r?`n")) {
+        if ($line -match "^$([regex]::Escape($Field))\s*:\s*(?<val>.+?)\s*$") {
+            return $matches['val'].Trim().Trim('"').Trim("'")
+        }
+    }
+    return ''
+}
+
+function Get-ParentSlugsFromFrontmatter {
+    [CmdletBinding()]
+    [OutputType([string[]])]
+    param(
+        [Parameter(Mandatory)] [string]$RepoRoot,
+        [Parameter(Mandatory)] [string]$SubagentPath
+    )
+
+    $subagentAbs = Join-Path -Path $RepoRoot -ChildPath $SubagentPath
+    if (-not (Test-Path -LiteralPath $subagentAbs -PathType Leaf)) { return @() }
+
+    $raw = [System.IO.File]::ReadAllText($subagentAbs)
+    if ($raw -notmatch '(?ms)^---\s*\r?\n(.*?)\r?\n---\s*(?:\r?\n|$)') { return @() }
+
+    $frontmatter = $matches[1]
+    $subagentName = Get-FrontmatterStringValue -Frontmatter $frontmatter -Field 'name'
+    if ([string]::IsNullOrWhiteSpace($subagentName)) { return @() }
+
+    $agentsRoot = Join-Path -Path $RepoRoot -ChildPath '.github/agents'
+    if (-not (Test-Path -LiteralPath $agentsRoot -PathType Container)) { return @() }
+
+    $parentSlugs = [System.Collections.Generic.HashSet[string]]::new([System.StringComparer]::OrdinalIgnoreCase)
+    $agentFiles = @(Get-ChildItem -Path $agentsRoot -Recurse -Filter '*.agent.md' -File -ErrorAction SilentlyContinue)
+    foreach ($file in $agentFiles) {
+        $relPath = ConvertTo-NormalizedPath -RepoRoot $RepoRoot -Path $file.FullName
+        if (-not (Test-IsParentAgentByFrontmatter -RepoRoot $RepoRoot -RelativePath $relPath)) { continue }
+
+        $body = [System.IO.File]::ReadAllText($file.FullName)
+        if ($body -notmatch '(?ms)^---\s*\r?\n(.*?)\r?\n---\s*(?:\r?\n|$)') { continue }
+        $parentFrontmatter = $matches[1]
+        $listedNames = @(Get-FrontmatterListValues -Frontmatter $parentFrontmatter -Field 'agents')
+        if ($listedNames -contains $subagentName) {
+            $slug = [System.IO.Path]::GetFileName($file.Name) -replace '\.agent\.md$', ''
+            if ($slug) { [void]$parentSlugs.Add($slug) }
+        }
+    }
+
+    return @($parentSlugs | Sort-Object)
+}
+
 function Get-AffectedAgentSlugs {
     <#
     .SYNOPSIS
@@ -338,8 +430,16 @@ function Get-AffectedAgentSlugs {
     $subagentIndex    = Build-ReverseIndex -DepMap $depMap -Field 'subagents'
 
     foreach ($rel in $subagentCandidates) {
+        $ownSlug = [System.IO.Path]::GetFileName($rel) -replace '\.agent\.md$', ''
+        if ($ownSlug) { [void]$result.Add($ownSlug) }
+
         if ($subagentIndex.ContainsKey($rel)) {
             foreach ($slug in $subagentIndex[$rel]) { [void]$result.Add($slug) }
+        }
+        else {
+            foreach ($slug in (Get-ParentSlugsFromFrontmatter -RepoRoot $resolvedRoot -SubagentPath $rel)) {
+                [void]$result.Add($slug)
+            }
         }
     }
 

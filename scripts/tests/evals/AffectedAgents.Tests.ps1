@@ -81,11 +81,34 @@ Describe 'AffectedAgents module' -Tag 'Unit' {
                 -RepoRoot $script:TestRoot `
                 -DepMapPath $script:DepMapPath `
                 -SkipDepMapRefresh
-            $result | Should -Be @('task-implementor', 'task-planner')
+            $result | Should -Be @('researcher-subagent', 'task-implementor', 'task-planner')
+        }
+
+        It 'Returns the parent slug and the subagent slug when a parent lists the subagent by display name' {
+            $subagentPath = '.github/agents/coding-standards/subagents/code-review-standards.agent.md'
+            $parentPath = '.github/agents/coding-standards/code-review.agent.md'
+            $subagentAbsPath = Join-Path $script:TestRoot $subagentPath
+            $parentAbsPath = Join-Path $script:TestRoot $parentPath
+            New-Item -ItemType Directory -Path (Split-Path -Parent $subagentAbsPath) -Force | Out-Null
+            New-Item -ItemType Directory -Path (Split-Path -Parent $parentAbsPath) -Force | Out-Null
+            Set-Content -LiteralPath $subagentAbsPath -Value "---`nname: Code Review Standards`nuser-invocable: false`n---`n# Agent`n" -Encoding utf8
+            Set-Content -LiteralPath $parentAbsPath -Value "---`nname: Code Review`nagents:`n  - Code Review Standards`nuser-invocable: true`n---`n# Agent`n" -Encoding utf8
+            New-DepMap -Map @{
+                'code-review' = @{ subagents = @($subagentPath) }
+            }
+
+            $result = Get-AffectedAgentSlugs `
+                -ChangedFiles @($subagentPath) `
+                -RepoRoot $script:TestRoot `
+                -DepMapPath $script:DepMapPath `
+                -SkipDepMapRefresh
+
+            $result | Should -Be @('code-review', 'code-review-standards')
         }
 
         It 'Does not include security subagents as direct parents (DD-09: frontmatter wins)' {
             New-AgentFile -RelativePath '.github/agents/security/subagents/security-reviewer-subagent.agent.md' -UserInvocable $false
+            New-AgentFile -RelativePath '.github/agents/security/security-reviewer.agent.md' -UserInvocable $true
             New-DepMap -Map @{
                 'security-reviewer' = @{ subagents = @('.github/agents/security/subagents/security-reviewer-subagent.agent.md') }
             }
@@ -94,8 +117,7 @@ Describe 'AffectedAgents module' -Tag 'Unit' {
                 -RepoRoot $script:TestRoot `
                 -DepMapPath $script:DepMapPath `
                 -SkipDepMapRefresh
-            $result | Should -Be @('security-reviewer')
-            $result | Should -Not -Contain 'security-reviewer-subagent'
+            $result | Should -Be @('security-reviewer', 'security-reviewer-subagent')
         }
     }
 
