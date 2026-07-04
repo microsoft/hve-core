@@ -6,12 +6,12 @@ ms.date: 2026-07-03
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->
-| Field | Value |
-| ----- | ----- |
-| Kind | instruction |
-| Source | `.github/instructions/shared/story-quality.instructions.md` |
-| Invocation | Applied automatically to `**/*.agent.md, **/.github/instructions/ado/**` |
-| Interactive | No |
+| Field       | Value                                                                    |
+|-------------|--------------------------------------------------------------------------|
+| Kind        | instruction                                                              |
+| Source      | `.github/instructions/shared/story-quality.instructions.md`              |
+| Invocation  | Applied automatically to `**/*.agent.md, **/.github/instructions/ado/**` |
+| Interactive | No                                                                       |
 <!-- END AUTO-GENERATED: metadata -->
 
 ## What it does

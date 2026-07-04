@@ -6,12 +6,12 @@ ms.date: 2026-07-03
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->
-| Field | Value |
-| ----- | ----- |
-| Kind | agent |
-| Source | `.github/agents/hve-core/subagents/prompt-updater.agent.md` |
-| Invocation | Selected from the chat agent picker as `Prompt Updater` |
-| Interactive | Yes |
+| Field       | Value                                                       |
+|-------------|-------------------------------------------------------------|
+| Kind        | agent                                                       |
+| Source      | `.github/agents/hve-core/subagents/prompt-updater.agent.md` |
+| Invocation  | Selected from the chat agent picker as `Prompt Updater`     |
+| Interactive | Yes                                                         |
 <!-- END AUTO-GENERATED: metadata -->
 
 ## What it does

@@ -6,12 +6,12 @@ ms.date: 2026-07-03
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->
-| Field | Value |
-| ----- | ----- |
-| Kind | instruction |
-| Source | `.github/instructions/rai-planning/rai-license-posture.instructions.md` |
-| Invocation | Applied automatically to `**/skills/rai**/**, **/.copilot-tracking/rai-plans/**` |
-| Interactive | No |
+| Field       | Value                                                                            |
+|-------------|----------------------------------------------------------------------------------|
+| Kind        | instruction                                                                      |
+| Source      | `.github/instructions/rai-planning/rai-license-posture.instructions.md`          |
+| Invocation  | Applied automatically to `**/skills/rai**/**, **/.copilot-tracking/rai-plans/**` |
+| Interactive | No                                                                               |
 <!-- END AUTO-GENERATED: metadata -->
 
 ## What it does

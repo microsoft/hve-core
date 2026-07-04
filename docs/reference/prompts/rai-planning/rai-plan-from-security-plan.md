@@ -6,12 +6,12 @@ ms.date: 2026-07-03
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->
-| Field | Value |
-| ----- | ----- |
-| Kind | prompt |
-| Source | `.github/prompts/rai-planning/rai-plan-from-security-plan.prompt.md` |
-| Invocation | Slash command `/rai-plan-from-security-plan` |
-| Interactive | Yes |
+| Field       | Value                                                                |
+|-------------|----------------------------------------------------------------------|
+| Kind        | prompt                                                               |
+| Source      | `.github/prompts/rai-planning/rai-plan-from-security-plan.prompt.md` |
+| Invocation  | Slash command `/rai-plan-from-security-plan`                         |
+| Interactive | Yes                                                                  |
 <!-- END AUTO-GENERATED: metadata -->
 
 ## What it does

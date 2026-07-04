@@ -6,12 +6,12 @@ ms.date: 2026-07-03
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->
-| Field | Value |
-| ----- | ----- |
-| Kind | prompt |
-| Source | `.github/prompts/ado/ado-update-wit-items.prompt.md` |
-| Invocation | Slash command `/ado-update-wit-items` |
-| Interactive | Yes |
+| Field       | Value                                                |
+|-------------|------------------------------------------------------|
+| Kind        | prompt                                               |
+| Source      | `.github/prompts/ado/ado-update-wit-items.prompt.md` |
+| Invocation  | Slash command `/ado-update-wit-items`                |
+| Interactive | Yes                                                  |
 <!-- END AUTO-GENERATED: metadata -->
 
 ## What it does

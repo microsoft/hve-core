@@ -6,12 +6,12 @@ ms.date: 2026-07-03
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->
-| Field | Value |
-| ----- | ----- |
-| Kind | prompt |
-| Source | `.github/prompts/security/security-capture.prompt.md` |
-| Invocation | Slash command `/security-capture` |
-| Interactive | Yes |
+| Field       | Value                                                 |
+|-------------|-------------------------------------------------------|
+| Kind        | prompt                                                |
+| Source      | `.github/prompts/security/security-capture.prompt.md` |
+| Invocation  | Slash command `/security-capture`                     |
+| Interactive | Yes                                                   |
 <!-- END AUTO-GENERATED: metadata -->
 
 ## What it does

@@ -6,12 +6,12 @@ ms.date: 2026-07-03
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->
-| Field | Value |
-| ----- | ----- |
-| Kind | agent |
-| Source | `.github/agents/data-science/gen-data-spec.agent.md` |
-| Invocation | Selected from the chat agent picker as `DS Gen Data Spec` |
-| Interactive | Yes |
+| Field       | Value                                                     |
+|-------------|-----------------------------------------------------------|
+| Kind        | agent                                                     |
+| Source      | `.github/agents/data-science/gen-data-spec.agent.md`      |
+| Invocation  | Selected from the chat agent picker as `DS Gen Data Spec` |
+| Interactive | Yes                                                       |
 <!-- END AUTO-GENERATED: metadata -->
 
 ## What it does

@@ -6,12 +6,12 @@ ms.date: 2026-07-03
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->
-| Field | Value |
-| ----- | ----- |
-| Kind | instruction |
-| Source | `.github/instructions/coding-standards/uv-projects.instructions.md` |
-| Invocation | Applied automatically to `**/*.py, **/*.ipynb` |
-| Interactive | No |
+| Field       | Value                                                               |
+|-------------|---------------------------------------------------------------------|
+| Kind        | instruction                                                         |
+| Source      | `.github/instructions/coding-standards/uv-projects.instructions.md` |
+| Invocation  | Applied automatically to `**/*.py, **/*.ipynb`                      |
+| Interactive | No                                                                  |
 <!-- END AUTO-GENERATED: metadata -->
 
 ## What it does

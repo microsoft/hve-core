@@ -6,12 +6,12 @@ ms.date: 2026-07-03
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->
-| Field | Value |
-| ----- | ----- |
-| Kind | instruction |
-| Source | `.github/instructions/hve-core/prompt-builder.instructions.md` |
-| Invocation | Applied automatically to `**/*.prompt.md, **/*.agent.md, **/*.instructions.md, **/SKILL.md` |
-| Interactive | No |
+| Field       | Value                                                                                       |
+|-------------|---------------------------------------------------------------------------------------------|
+| Kind        | instruction                                                                                 |
+| Source      | `.github/instructions/hve-core/prompt-builder.instructions.md`                              |
+| Invocation  | Applied automatically to `**/*.prompt.md, **/*.agent.md, **/*.instructions.md, **/SKILL.md` |
+| Interactive | No                                                                                          |
 <!-- END AUTO-GENERATED: metadata -->
 
 ## What it does

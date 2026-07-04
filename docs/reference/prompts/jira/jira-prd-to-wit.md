@@ -6,12 +6,12 @@ ms.date: 2026-07-03
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->
-| Field | Value |
-| ----- | ----- |
-| Kind | prompt |
-| Source | `.github/prompts/jira/jira-prd-to-wit.prompt.md` |
-| Invocation | Slash command `/jira-prd-to-wit` |
-| Interactive | Yes |
+| Field       | Value                                            |
+|-------------|--------------------------------------------------|
+| Kind        | prompt                                           |
+| Source      | `.github/prompts/jira/jira-prd-to-wit.prompt.md` |
+| Invocation  | Slash command `/jira-prd-to-wit`                 |
+| Interactive | Yes                                              |
 <!-- END AUTO-GENERATED: metadata -->
 
 ## What it does

@@ -6,12 +6,12 @@ ms.date: 2026-07-03
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->
-| Field | Value |
-| ----- | ----- |
-| Kind | prompt |
-| Source | `.github/prompts/ado/ado-get-my-work-items.prompt.md` |
-| Invocation | Slash command `/ado-get-my-work-items` |
-| Interactive | Yes |
+| Field       | Value                                                 |
+|-------------|-------------------------------------------------------|
+| Kind        | prompt                                                |
+| Source      | `.github/prompts/ado/ado-get-my-work-items.prompt.md` |
+| Invocation  | Slash command `/ado-get-my-work-items`                |
+| Interactive | Yes                                                   |
 <!-- END AUTO-GENERATED: metadata -->
 
 ## What it does

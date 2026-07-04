@@ -6,12 +6,12 @@ ms.date: 2026-07-03
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->
-| Field | Value |
-| ----- | ----- |
-| Kind | prompt |
-| Source | `.github/prompts/github/github-add-issue.prompt.md` |
-| Invocation | Slash command `/github-add-issue` |
-| Interactive | Yes |
+| Field       | Value                                               |
+|-------------|-----------------------------------------------------|
+| Kind        | prompt                                              |
+| Source      | `.github/prompts/github/github-add-issue.prompt.md` |
+| Invocation  | Slash command `/github-add-issue`                   |
+| Interactive | Yes                                                 |
 <!-- END AUTO-GENERATED: metadata -->
 
 ## What it does

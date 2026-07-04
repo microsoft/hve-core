@@ -6,12 +6,12 @@ ms.date: 2026-07-03
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->
-| Field | Value |
-| ----- | ----- |
-| Kind | instruction |
-| Source | `.github/instructions/rai-planning/rai-identity.instructions.md` |
-| Invocation | Applied automatically to `**/.copilot-tracking/rai-plans/**` |
-| Interactive | No |
+| Field       | Value                                                            |
+|-------------|------------------------------------------------------------------|
+| Kind        | instruction                                                      |
+| Source      | `.github/instructions/rai-planning/rai-identity.instructions.md` |
+| Invocation  | Applied automatically to `**/.copilot-tracking/rai-plans/**`     |
+| Interactive | No                                                               |
 <!-- END AUTO-GENERATED: metadata -->
 
 ## What it does

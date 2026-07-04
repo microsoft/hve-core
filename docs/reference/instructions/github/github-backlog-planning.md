@@ -6,12 +6,12 @@ ms.date: 2026-07-03
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->
-| Field | Value |
-| ----- | ----- |
-| Kind | instruction |
-| Source | `.github/instructions/github/github-backlog-planning.instructions.md` |
-| Invocation | Applied automatically to `**/.copilot-tracking/github-issues/**` |
-| Interactive | No |
+| Field       | Value                                                                 |
+|-------------|-----------------------------------------------------------------------|
+| Kind        | instruction                                                           |
+| Source      | `.github/instructions/github/github-backlog-planning.instructions.md` |
+| Invocation  | Applied automatically to `**/.copilot-tracking/github-issues/**`      |
+| Interactive | No                                                                    |
 <!-- END AUTO-GENERATED: metadata -->
 
 ## What it does

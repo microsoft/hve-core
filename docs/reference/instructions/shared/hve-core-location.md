@@ -6,12 +6,12 @@ ms.date: 2026-07-03
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->
-| Field | Value |
-| ----- | ----- |
-| Kind | instruction |
-| Source | `.github/instructions/shared/hve-core-location.instructions.md` |
-| Invocation | Applied automatically to `**` |
-| Interactive | No |
+| Field       | Value                                                           |
+|-------------|-----------------------------------------------------------------|
+| Kind        | instruction                                                     |
+| Source      | `.github/instructions/shared/hve-core-location.instructions.md` |
+| Invocation  | Applied automatically to `**`                                   |
+| Interactive | No                                                              |
 <!-- END AUTO-GENERATED: metadata -->
 
 ## What it does

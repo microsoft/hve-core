@@ -6,12 +6,12 @@ ms.date: 2026-07-03
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->
-| Field | Value |
-| ----- | ----- |
-| Kind | prompt |
-| Source | `.github/prompts/hve-core/prompt-refactor.prompt.md` |
-| Invocation | Slash command `/prompt-refactor` |
-| Interactive | Yes |
+| Field       | Value                                                |
+|-------------|------------------------------------------------------|
+| Kind        | prompt                                               |
+| Source      | `.github/prompts/hve-core/prompt-refactor.prompt.md` |
+| Invocation  | Slash command `/prompt-refactor`                     |
+| Interactive | Yes                                                  |
 <!-- END AUTO-GENERATED: metadata -->
 
 ## What it does

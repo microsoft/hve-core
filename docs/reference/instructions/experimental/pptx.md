@@ -6,12 +6,12 @@ ms.date: 2026-07-03
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->
-| Field | Value |
-| ----- | ----- |
-| Kind | instruction |
-| Source | `.github/instructions/experimental/pptx.instructions.md` |
-| Invocation | Applied automatically to `**/.copilot-tracking/ppt/**` |
-| Interactive | No |
+| Field       | Value                                                    |
+|-------------|----------------------------------------------------------|
+| Kind        | instruction                                              |
+| Source      | `.github/instructions/experimental/pptx.instructions.md` |
+| Invocation  | Applied automatically to `**/.copilot-tracking/ppt/**`   |
+| Interactive | No                                                       |
 <!-- END AUTO-GENERATED: metadata -->
 
 ## What it does

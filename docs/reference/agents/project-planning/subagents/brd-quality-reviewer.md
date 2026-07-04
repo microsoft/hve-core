@@ -6,12 +6,12 @@ ms.date: 2026-07-03
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->
-| Field | Value |
-| ----- | ----- |
-| Kind | agent |
-| Source | `.github/agents/project-planning/subagents/brd-quality-reviewer.agent.md` |
-| Invocation | Selected from the chat agent picker as `BRD Quality Reviewer` |
-| Interactive | Yes |
+| Field       | Value                                                                     |
+|-------------|---------------------------------------------------------------------------|
+| Kind        | agent                                                                     |
+| Source      | `.github/agents/project-planning/subagents/brd-quality-reviewer.agent.md` |
+| Invocation  | Selected from the chat agent picker as `BRD Quality Reviewer`             |
+| Interactive | Yes                                                                       |
 <!-- END AUTO-GENERATED: metadata -->
 
 ## What it does

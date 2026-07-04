@@ -6,12 +6,12 @@ ms.date: 2026-07-03
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->
-| Field | Value |
-| ----- | ----- |
-| Kind | instruction |
-| Source | `.github/instructions/experimental/mural/mural-seeding-patterns.instructions.md` |
-| Invocation | Applied automatically to `**/.github/agents/design-thinking/dt-coach.agent.md, **/.github/agents/rai-planning/rai-planner.agent.md, **/.github/agents/project-planning/ux-ui-designer.agent.md` |
-| Interactive | No |
+| Field       | Value                                                                                                                                                                                           |
+|-------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| Kind        | instruction                                                                                                                                                                                     |
+| Source      | `.github/instructions/experimental/mural/mural-seeding-patterns.instructions.md`                                                                                                                |
+| Invocation  | Applied automatically to `**/.github/agents/design-thinking/dt-coach.agent.md, **/.github/agents/rai-planning/rai-planner.agent.md, **/.github/agents/project-planning/ux-ui-designer.agent.md` |
+| Interactive | No                                                                                                                                                                                              |
 <!-- END AUTO-GENERATED: metadata -->
 
 ## What it does

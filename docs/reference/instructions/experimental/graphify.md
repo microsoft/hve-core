@@ -6,12 +6,12 @@ ms.date: 2026-07-03
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->
-| Field | Value |
-| ----- | ----- |
-| Kind | instruction |
-| Source | `.github/instructions/experimental/graphify.instructions.md` |
-| Invocation | Applied automatically to `**/graphify-out/**` |
-| Interactive | No |
+| Field       | Value                                                        |
+|-------------|--------------------------------------------------------------|
+| Kind        | instruction                                                  |
+| Source      | `.github/instructions/experimental/graphify.instructions.md` |
+| Invocation  | Applied automatically to `**/graphify-out/**`                |
+| Interactive | No                                                           |
 <!-- END AUTO-GENERATED: metadata -->
 
 ## What it does

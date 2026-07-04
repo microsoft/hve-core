@@ -6,12 +6,12 @@ ms.date: 2026-07-03
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->
-| Field | Value |
-| ----- | ----- |
-| Kind | prompt |
-| Source | `.github/prompts/ado/ado-create-pull-request.prompt.md` |
-| Invocation | Slash command `/ado-create-pull-request` |
-| Interactive | Yes |
+| Field       | Value                                                   |
+|-------------|---------------------------------------------------------|
+| Kind        | prompt                                                  |
+| Source      | `.github/prompts/ado/ado-create-pull-request.prompt.md` |
+| Invocation  | Slash command `/ado-create-pull-request`                |
+| Interactive | Yes                                                     |
 <!-- END AUTO-GENERATED: metadata -->
 
 ## What it does

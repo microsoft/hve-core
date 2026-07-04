@@ -6,12 +6,12 @@ ms.date: 2026-07-03
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->
-| Field | Value |
-| ----- | ----- |
-| Kind | instruction |
-| Source | `.github/instructions/jira/jira-wit-planning.instructions.md` |
-| Invocation | Applied automatically to `**/.copilot-tracking/jira-issues/prds/**` |
-| Interactive | No |
+| Field       | Value                                                               |
+|-------------|---------------------------------------------------------------------|
+| Kind        | instruction                                                         |
+| Source      | `.github/instructions/jira/jira-wit-planning.instructions.md`       |
+| Invocation  | Applied automatically to `**/.copilot-tracking/jira-issues/prds/**` |
+| Interactive | No                                                                  |
 <!-- END AUTO-GENERATED: metadata -->
 
 ## What it does

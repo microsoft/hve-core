@@ -6,12 +6,12 @@ ms.date: 2026-07-03
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->
-| Field | Value |
-| ----- | ----- |
-| Kind | prompt |
-| Source | `.github/prompts/security/incident-response.prompt.md` |
-| Invocation | Slash command `/incident-response` |
-| Interactive | Yes |
+| Field       | Value                                                  |
+|-------------|--------------------------------------------------------|
+| Kind        | prompt                                                 |
+| Source      | `.github/prompts/security/incident-response.prompt.md` |
+| Invocation  | Slash command `/incident-response`                     |
+| Interactive | Yes                                                    |
 <!-- END AUTO-GENERATED: metadata -->
 
 ## What it does

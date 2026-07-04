@@ -515,9 +515,9 @@ Describe 'New-AssetPageModel' -Tag 'Unit' {
 Describe 'New-AssetMetadataBlock' -Tag 'Unit' {
     It 'Builds a metadata table with all rows' {
         $block = New-AssetMetadataBlock -Kind 'agent' -SourcePath '.github/agents/hve-core/demo.agent.md' -Invocation @{ Mechanism = 'agent-picker'; Token = 'Demo' } -Interactive $true
-        $block | Should -Match '(?m)^\| Kind \| agent \|$'
+        $block | Should -Match '(?m)^\| Kind\s+\| agent\s+\|$'
         $block | Should -Match 'agents/hve-core/demo\.agent\.md'
-        $block | Should -Match '(?m)^\| Interactive \| Yes \|$'
+        $block | Should -Match '(?m)^\| Interactive\s+\| Yes\s+\|$'
     }
 }
 

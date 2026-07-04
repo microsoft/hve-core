@@ -6,12 +6,12 @@ ms.date: 2026-07-03
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->
-| Field | Value |
-| ----- | ----- |
-| Kind | prompt |
-| Source | `.github/prompts/hve-core/git-commit.prompt.md` |
-| Invocation | Slash command `/git-commit` |
-| Interactive | Yes |
+| Field       | Value                                           |
+|-------------|-------------------------------------------------|
+| Kind        | prompt                                          |
+| Source      | `.github/prompts/hve-core/git-commit.prompt.md` |
+| Invocation  | Slash command `/git-commit`                     |
+| Interactive | Yes                                             |
 <!-- END AUTO-GENERATED: metadata -->
 
 ## What it does

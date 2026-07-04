@@ -6,12 +6,12 @@ ms.date: 2026-07-03
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->
-| Field | Value |
-| ----- | ----- |
-| Kind | prompt |
-| Source | `.github/prompts/security/vex-implement.prompt.md` |
-| Invocation | Slash command `/vex-implement` |
-| Interactive | Yes |
+| Field       | Value                                              |
+|-------------|----------------------------------------------------|
+| Kind        | prompt                                             |
+| Source      | `.github/prompts/security/vex-implement.prompt.md` |
+| Invocation  | Slash command `/vex-implement`                     |
+| Interactive | Yes                                                |
 <!-- END AUTO-GENERATED: metadata -->
 
 ## What it does

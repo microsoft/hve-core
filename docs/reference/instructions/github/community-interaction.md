@@ -6,12 +6,12 @@ ms.date: 2026-07-03
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->
-| Field | Value |
-| ----- | ----- |
-| Kind | instruction |
-| Source | `.github/instructions/github/community-interaction.instructions.md` |
-| Invocation | Applied automatically to `**/.github/instructions/github-backlog-*.instructions.md` |
-| Interactive | No |
+| Field       | Value                                                                               |
+|-------------|-------------------------------------------------------------------------------------|
+| Kind        | instruction                                                                         |
+| Source      | `.github/instructions/github/community-interaction.instructions.md`                 |
+| Invocation  | Applied automatically to `**/.github/instructions/github-backlog-*.instructions.md` |
+| Interactive | No                                                                                  |
 <!-- END AUTO-GENERATED: metadata -->
 
 ## What it does

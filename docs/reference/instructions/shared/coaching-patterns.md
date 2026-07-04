@@ -6,12 +6,12 @@ ms.date: 2026-07-03
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->
-| Field | Value |
-| ----- | ----- |
-| Kind | instruction |
-| Source | `.github/instructions/shared/coaching-patterns.instructions.md` |
-| Invocation | Applied automatically to `**/.copilot-tracking/rai-plans/**, **/.copilot-tracking/security-plans/**, **/.copilot-tracking/sssc-plans/**, **/.copilot-tracking/privacy-plans/**` |
-| Interactive | No |
+| Field       | Value                                                                                                                                                                           |
+|-------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| Kind        | instruction                                                                                                                                                                     |
+| Source      | `.github/instructions/shared/coaching-patterns.instructions.md`                                                                                                                 |
+| Invocation  | Applied automatically to `**/.copilot-tracking/rai-plans/**, **/.copilot-tracking/security-plans/**, **/.copilot-tracking/sssc-plans/**, **/.copilot-tracking/privacy-plans/**` |
+| Interactive | No                                                                                                                                                                              |
 <!-- END AUTO-GENERATED: metadata -->
 
 ## What it does

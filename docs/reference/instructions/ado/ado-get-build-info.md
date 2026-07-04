@@ -6,12 +6,12 @@ ms.date: 2026-07-03
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->
-| Field | Value |
-| ----- | ----- |
-| Kind | instruction |
-| Source | `.github/instructions/ado/ado-get-build-info.instructions.md` |
-| Invocation | Applied automatically to `**/.copilot-tracking/pr/*-build-*.md` |
-| Interactive | No |
+| Field       | Value                                                           |
+|-------------|-----------------------------------------------------------------|
+| Kind        | instruction                                                     |
+| Source      | `.github/instructions/ado/ado-get-build-info.instructions.md`   |
+| Invocation  | Applied automatically to `**/.copilot-tracking/pr/*-build-*.md` |
+| Interactive | No                                                              |
 <!-- END AUTO-GENERATED: metadata -->
 
 ## What it does

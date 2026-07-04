@@ -6,12 +6,12 @@ ms.date: 2026-07-03
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->
-| Field | Value |
-| ----- | ----- |
-| Kind | instruction |
-| Source | `.github/instructions/accessibility/accessibility-license-posture.instructions.md` |
-| Invocation | Applied automatically to `**/.github/skills/accessibility/**, **/.copilot-tracking/accessibility/**` |
-| Interactive | No |
+| Field       | Value                                                                                                |
+|-------------|------------------------------------------------------------------------------------------------------|
+| Kind        | instruction                                                                                          |
+| Source      | `.github/instructions/accessibility/accessibility-license-posture.instructions.md`                   |
+| Invocation  | Applied automatically to `**/.github/skills/accessibility/**, **/.copilot-tracking/accessibility/**` |
+| Interactive | No                                                                                                   |
 <!-- END AUTO-GENERATED: metadata -->
 
 ## What it does

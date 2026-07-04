@@ -6,12 +6,12 @@ ms.date: 2026-07-03
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->
-| Field | Value |
-| ----- | ----- |
-| Kind | agent |
-| Source | `.github/agents/project-planning/agile-coach.agent.md` |
-| Invocation | Selected from the chat agent picker as `Agile Coach` |
-| Interactive | Yes |
+| Field       | Value                                                  |
+|-------------|--------------------------------------------------------|
+| Kind        | agent                                                  |
+| Source      | `.github/agents/project-planning/agile-coach.agent.md` |
+| Invocation  | Selected from the chat agent picker as `Agile Coach`   |
+| Interactive | Yes                                                    |
 <!-- END AUTO-GENERATED: metadata -->
 
 ## What it does

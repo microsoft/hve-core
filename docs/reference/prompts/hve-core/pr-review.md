@@ -6,12 +6,12 @@ ms.date: 2026-07-03
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->
-| Field | Value |
-| ----- | ----- |
-| Kind | prompt |
-| Source | `.github/prompts/hve-core/pr-review.prompt.md` |
-| Invocation | Slash command `/pr-review` |
-| Interactive | Yes |
+| Field       | Value                                          |
+|-------------|------------------------------------------------|
+| Kind        | prompt                                         |
+| Source      | `.github/prompts/hve-core/pr-review.prompt.md` |
+| Invocation  | Slash command `/pr-review`                     |
+| Interactive | Yes                                            |
 <!-- END AUTO-GENERATED: metadata -->
 
 ## What it does

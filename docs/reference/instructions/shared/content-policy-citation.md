@@ -6,12 +6,12 @@ ms.date: 2026-07-03
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->
-| Field | Value |
-| ----- | ----- |
-| Kind | instruction |
-| Source | `.github/instructions/shared/content-policy-citation.instructions.md` |
-| Invocation | Applied automatically to `**/*.agent.md, **/*.prompt.md, **/*.instructions.md, **/SKILL.md, **/.github/workflows/*.md, **/.github/workflows/**/*.md, **/.github/hooks/**` |
-| Interactive | No |
+| Field       | Value                                                                                                                                                                     |
+|-------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| Kind        | instruction                                                                                                                                                               |
+| Source      | `.github/instructions/shared/content-policy-citation.instructions.md`                                                                                                     |
+| Invocation  | Applied automatically to `**/*.agent.md, **/*.prompt.md, **/*.instructions.md, **/SKILL.md, **/.github/workflows/*.md, **/.github/workflows/**/*.md, **/.github/hooks/**` |
+| Interactive | No                                                                                                                                                                        |
 <!-- END AUTO-GENERATED: metadata -->
 
 ## What it does

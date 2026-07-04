@@ -6,12 +6,12 @@ ms.date: 2026-07-03
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->
-| Field | Value |
-| ----- | ----- |
-| Kind | prompt |
-| Source | `.github/prompts/github/github-triage-issues.prompt.md` |
-| Invocation | Slash command `/github-triage-issues` |
-| Interactive | Yes |
+| Field       | Value                                                   |
+|-------------|---------------------------------------------------------|
+| Kind        | prompt                                                  |
+| Source      | `.github/prompts/github/github-triage-issues.prompt.md` |
+| Invocation  | Slash command `/github-triage-issues`                   |
+| Interactive | Yes                                                     |
 <!-- END AUTO-GENERATED: metadata -->
 
 ## What it does

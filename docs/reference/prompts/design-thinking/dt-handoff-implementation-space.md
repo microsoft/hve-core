@@ -6,12 +6,12 @@ ms.date: 2026-07-03
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->
-| Field | Value |
-| ----- | ----- |
-| Kind | prompt |
-| Source | `.github/prompts/design-thinking/dt-handoff-implementation-space.prompt.md` |
-| Invocation | Slash command `/dt-handoff-implementation-space` |
-| Interactive | Yes |
+| Field       | Value                                                                       |
+|-------------|-----------------------------------------------------------------------------|
+| Kind        | prompt                                                                      |
+| Source      | `.github/prompts/design-thinking/dt-handoff-implementation-space.prompt.md` |
+| Invocation  | Slash command `/dt-handoff-implementation-space`                            |
+| Interactive | Yes                                                                         |
 <!-- END AUTO-GENERATED: metadata -->
 
 ## What it does

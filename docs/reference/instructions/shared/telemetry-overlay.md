@@ -6,12 +6,12 @@ ms.date: 2026-07-03
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->
-| Field | Value |
-| ----- | ----- |
-| Kind | instruction |
-| Source | `.github/instructions/shared/telemetry-overlay.instructions.md` |
-| Invocation | Applied automatically to `**/.copilot-tracking/sssc-plans/**, **/.copilot-tracking/sssc-reviews/**, **/.copilot-tracking/rai-plans/**, **/.copilot-tracking/security-plans/**, **/.copilot-tracking/adr-plans/**, **/docs/planning/adrs/**, **/.copilot-tracking/prd-sessions/**, **/.copilot-tracking/accessibility/**, **/.copilot-tracking/privacy-plans/**, **/.copilot-tracking/privacy-reviews/**, **/.copilot-tracking/reviews/code-reviews/**, **/.copilot-tracking/changes/**` |
-| Interactive | No |
+| Field       | Value                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   |
+|-------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| Kind        | instruction                                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
+| Source      | `.github/instructions/shared/telemetry-overlay.instructions.md`                                                                                                                                                                                                                                                                                                                                                                                                                         |
+| Invocation  | Applied automatically to `**/.copilot-tracking/sssc-plans/**, **/.copilot-tracking/sssc-reviews/**, **/.copilot-tracking/rai-plans/**, **/.copilot-tracking/security-plans/**, **/.copilot-tracking/adr-plans/**, **/docs/planning/adrs/**, **/.copilot-tracking/prd-sessions/**, **/.copilot-tracking/accessibility/**, **/.copilot-tracking/privacy-plans/**, **/.copilot-tracking/privacy-reviews/**, **/.copilot-tracking/reviews/code-reviews/**, **/.copilot-tracking/changes/**` |
+| Interactive | No                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      |
 <!-- END AUTO-GENERATED: metadata -->
 
 ## What it does

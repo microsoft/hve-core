@@ -6,12 +6,12 @@ ms.date: 2026-07-03
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->
-| Field | Value |
-| ----- | ----- |
-| Kind | instruction |
-| Source | `.github/instructions/project-planning/adr-handoff.instructions.md` |
-| Invocation | Applied automatically to `**/.copilot-tracking/adr-plans/**, **/docs/planning/adrs/**` |
-| Interactive | No |
+| Field       | Value                                                                                  |
+|-------------|----------------------------------------------------------------------------------------|
+| Kind        | instruction                                                                            |
+| Source      | `.github/instructions/project-planning/adr-handoff.instructions.md`                    |
+| Invocation  | Applied automatically to `**/.copilot-tracking/adr-plans/**, **/docs/planning/adrs/**` |
+| Interactive | No                                                                                     |
 <!-- END AUTO-GENERATED: metadata -->
 
 ## What it does

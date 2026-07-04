@@ -283,18 +283,17 @@ function New-KindIndexContent {
     $indexRel = "docs/reference/$KindDir/README.md"
     $indexDir = Split-Path -Path (Join-Path $RepoRoot $indexRel) -Parent
 
-    $rows = [System.Collections.Generic.List[string]]::new()
-    $rows.Add('| Asset | Description |')
-    $rows.Add('| ----- | ----------- |')
+    $rows = [System.Collections.Generic.List[object]]::new()
     foreach ($page in ($Pages | Sort-Object DocRel)) {
         $target = Join-Path $RepoRoot $page.DocRel
         $link = ([System.IO.Path]::GetRelativePath($indexDir, $target)) -replace '\\', '/'
         $descCell = if ([string]::IsNullOrWhiteSpace($page.Description)) { '' } else { ConvertTo-TableCell -Value $page.Description }
         $titleCell = ConvertTo-TableCell -Value $page.Title
-        $rows.Add("| [$titleCell]($link) | $descCell |")
+        $rows.Add(@("[$titleCell]($link)", $descCell))
     }
 
-    $body = "This page lists the generated reference documentation for HVE Core $KindDir.`n`n" + ($rows -join "`n")
+    $table = Format-MarkdownTable -Header @('Asset', 'Description') -Rows $rows.ToArray()
+    $body = "This page lists the generated reference documentation for HVE Core $KindDir.`n`n" + $table
     $description = "Reference documentation for HVE Core $KindDir."
     return (New-IndexContent -Title $title -Description $description -SidebarPosition 0 -RegionBody $body -ExistingPath (Join-Path $RepoRoot $indexRel))
 }
@@ -317,15 +316,14 @@ function New-RootIndexContent {
         [Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string]$RepoRoot
     )
 
-    $rows = [System.Collections.Generic.List[string]]::new()
-    $rows.Add('| Category | Assets |')
-    $rows.Add('| -------- | ------ |')
+    $rows = [System.Collections.Generic.List[object]]::new()
     foreach ($group in ($Pages | Group-Object KindDir | Sort-Object Name)) {
         $categoryTitle = (Get-Culture).TextInfo.ToTitleCase($group.Name)
-        $rows.Add("| [$categoryTitle]($($group.Name)/README.md) | $($group.Count) |")
+        $rows.Add(@("[$categoryTitle]($($group.Name)/README.md)", [string]$group.Count))
     }
 
-    $body = "This page lists the generated reference documentation, grouped by asset kind.`n`n" + ($rows -join "`n")
+    $table = Format-MarkdownTable -Header @('Category', 'Assets') -Rows $rows.ToArray()
+    $body = "This page lists the generated reference documentation, grouped by asset kind.`n`n" + $table
     return (New-IndexContent -Title 'Reference' -Description 'Generated reference documentation for HVE Core GenAI assets.' -SidebarPosition 0 -RegionBody $body -ExistingPath (Join-Path $RepoRoot 'docs/reference/README.md'))
 }
 

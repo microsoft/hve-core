@@ -6,12 +6,12 @@ ms.date: 2026-07-03
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->
-| Field | Value |
-| ----- | ----- |
-| Kind | prompt |
-| Source | `.github/prompts/design-thinking/dt-method-06-testing.prompt.md` |
-| Invocation | Slash command `/dt-method-06-testing` |
-| Interactive | Yes |
+| Field       | Value                                                            |
+|-------------|------------------------------------------------------------------|
+| Kind        | prompt                                                           |
+| Source      | `.github/prompts/design-thinking/dt-method-06-testing.prompt.md` |
+| Invocation  | Slash command `/dt-method-06-testing`                            |
+| Interactive | Yes                                                              |
 <!-- END AUTO-GENERATED: metadata -->
 
 ## What it does

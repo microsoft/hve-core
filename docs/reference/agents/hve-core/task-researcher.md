@@ -6,12 +6,12 @@ ms.date: 2026-07-03
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->
-| Field | Value |
-| ----- | ----- |
-| Kind | agent |
-| Source | `.github/agents/hve-core/task-researcher.agent.md` |
-| Invocation | Selected from the chat agent picker as `Task Researcher` |
-| Interactive | Yes |
+| Field       | Value                                                    |
+|-------------|----------------------------------------------------------|
+| Kind        | agent                                                    |
+| Source      | `.github/agents/hve-core/task-researcher.agent.md`       |
+| Invocation  | Selected from the chat agent picker as `Task Researcher` |
+| Interactive | Yes                                                      |
 <!-- END AUTO-GENERATED: metadata -->
 
 ## What it does
