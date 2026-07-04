@@ -1,13 +1,15 @@
 .section {
-  max-width: calc(100% - 48px);
+  max-width: min(100%, 1200px);
   margin: 0 24px;
   padding: 48px 0;
+  box-sizing: border-box;
 }
 
 .sectionCompact {
-  max-width: calc(100% - 48px);
+  max-width: min(100%, 1200px);
   margin: 0 24px;
   padding: 24px 0;
+  box-sizing: border-box;
 }
 
 .sectionTitle {
@@ -21,4 +23,12 @@
   margin-top: 0;
   margin-bottom: 24px;
   font-size: 16px;
+}
+
+.heroPurpose {
+  max-width: min(100%, 900px);
+  margin: 0 24px 24px;
+  color: var(--ms-learn-text-subtle);
+  font-size: 16px;
+  line-height: 1.5;
 }

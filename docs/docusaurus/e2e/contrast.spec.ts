@@ -1,6 +1,7 @@
 // Copyright (c) 2026 Microsoft Corporation. All rights reserved.
 // SPDX-License-Identifier: MIT
 import { test, expect } from '@playwright/test';
+import { SITE_PAGES, visitInvariantPage } from './_helpers/a11yInvariants';
 
 function parseColor(color: string): { r: number; g: number; b: number; a: number } | null {
   const match = color.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)(?:,\s*([\d.]+))?\)/i);
@@ -90,6 +91,38 @@ async function measureContrast(page: any, selector: string, pseudoElt?: string) 
 }
 
 test.describe('Contrast measurement gates', () => {
+  for (const pageCase of SITE_PAGES) {
+    test(`${pageCase.name} keeps links visually distinct without relying on color alone`, async ({ page }) => {
+      await visitInvariantPage(page, pageCase);
+
+      // WCAG 1.4.1 (Use of Color) targets links embedded in blocks of text.
+      // Scope the check to in-content prose links (Docusaurus renders the
+      // article body under .markdown); navigational chrome such as breadcrumbs,
+      // cards, and hero call-to-action buttons is distinguished by non-color
+      // affordances and is intentionally out of scope here. Heading anchor
+      // (hash) links are decorative and excluded.
+      const proseLinks = page.locator(
+        '.markdown a:not(.hash-link):not([class*="card"]):not([class*="button"])',
+      );
+      const count = await proseLinks.count();
+      test.skip(count === 0, 'No in-content prose links on this page.');
+
+      const link = proseLinks.first();
+      await expect(link).toBeVisible();
+
+      const style = await link.evaluate((element) => {
+        const computed = window.getComputedStyle(element);
+        return {
+          textDecorationLine: computed.textDecorationLine,
+          textDecorationStyle: computed.textDecorationStyle,
+          textDecorationColor: computed.textDecorationColor,
+        };
+      });
+
+      expect(style.textDecorationLine, `${pageCase.name} should render a visible underline for content links`).toMatch(/underline/i);
+    });
+  }
+
   test('measures the navbar search input contrast in light and dark mode', async ({ page }) => {
     await page.goto('/hve-core/', { waitUntil: 'domcontentloaded' });
 

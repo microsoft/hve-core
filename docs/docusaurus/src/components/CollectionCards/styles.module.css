@@ -2,10 +2,11 @@
   display: block;
   position: relative;
   background: var(--ifm-card-background-color);
-  border: 1px solid transparent;
+  border: 1px solid rgba(0, 0, 0, 0.25);
   border-radius: 2px;
   padding: 1.25rem;
   box-shadow: rgba(0, 0, 0, 0.13) 0px 1.6px 3.6px 0px, rgba(0, 0, 0, 0.11) 0px 0.3px 0.9px 0px;
+  overflow: visible;
 }
 
 .collectionCard:hover .collectionName {
@@ -25,7 +26,7 @@
   font-weight: 600;
   line-height: 20px;
   color: var(--ifm-color-primary);
-  text-decoration: none;
+  text-decoration: underline;
   margin: 0;
 }
 

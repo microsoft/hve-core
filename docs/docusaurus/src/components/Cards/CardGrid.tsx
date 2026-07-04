@@ -13,9 +13,15 @@ export default function CardGrid({
   columns = 3,
 }: CardGridProps): React.ReactElement {
   const columnClass = columns === 2 ? styles.cardGridTwo : columns === 4 ? styles.cardGridFour : '';
+  const items = React.Children.toArray(children);
+
   return (
-    <div className={`${styles.cardGrid} ${columnClass}`}>
-      {children}
-    </div>
+    <ul className={`${styles.cardGrid} ${columnClass}`}>
+      {items.map((child, index) => (
+        <li key={(child as React.ReactElement)?.key ?? index} className={styles.cardGridItem}>
+          {child}
+        </li>
+      ))}
+    </ul>
   );
 }

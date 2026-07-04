@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: MIT
 import { test, expect } from '@playwright/test';
 import AxeBuilder from '@axe-core/playwright';
+import { SITE_PAGES, visitInvariantPage } from './_helpers/a11yInvariants';
 
 const WCAG_TAGS = ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'];
 
@@ -10,6 +11,20 @@ const WCAG_TAGS = ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'];
 // pattern. The widget must be operable, surface results, expose a conformant
 // combobox/listbox structure, and respond to keyboard navigation.
 test.describe('Search', () => {
+  for (const pageCase of SITE_PAGES.filter(({ path }) => path.includes('/docs/') || path === '/hve-core/')) {
+    test(`${pageCase.name} keeps the search widget semantically wired`, async ({ page }) => {
+      await visitInvariantPage(page, pageCase);
+
+      const searchInput = page.locator('.navbar__search-input').first();
+      await expect(searchInput).toBeVisible();
+      await expect(searchInput).toHaveAttribute('role', 'combobox');
+      await expect(searchInput).toHaveAttribute('aria-expanded', 'false');
+      await expect(searchInput).toHaveAttribute('aria-labelledby');
+      const describedBy = await searchInput.getAttribute('aria-describedby');
+      expect(describedBy).toBeTruthy();
+    });
+  }
+
   async function openResults(page: import('@playwright/test').Page) {
     await page.goto('/hve-core/docs/getting-started/');
 

@@ -1,6 +1,7 @@
 // Copyright (c) 2026 Microsoft Corporation. All rights reserved.
 // SPDX-License-Identifier: MIT
 import { test, expect } from '@playwright/test';
+import { SITE_PAGES, visitInvariantPage } from './_helpers/a11yInvariants';
 import { testFocusTrapEscape, validateRovingTabindex } from './_helpers/focus';
 
 // Behavioral keyboard/focus conformance against real Docusaurus hooks. These
@@ -9,6 +10,28 @@ import { testFocusTrapEscape, validateRovingTabindex } from './_helpers/focus';
 // stay in the existing axe specs to avoid redundant coverage.
 
 test.describe('Focus management', () => {
+  for (const pageCase of SITE_PAGES.filter(({ path }) => path.includes('/docs/') || path === '/hve-core/')) {
+    test(`${pageCase.name} exposes a visible four-sided focus indicator on interactive controls`, async ({ page }) => {
+      await visitInvariantPage(page, pageCase);
+
+      const target = page.locator('a, button, input, select, textarea, [tabindex]:not([tabindex="-1"])').first();
+      await expect(target).toBeVisible();
+      await target.focus();
+
+      const styles = await target.evaluate((element) => {
+        const computed = window.getComputedStyle(element);
+        return {
+          outline: computed.outline,
+          outlineWidth: computed.outlineWidth,
+          boxShadow: computed.boxShadow,
+        };
+      });
+
+      expect(styles.outline, `${pageCase.name} should expose a visible focus outline`).not.toMatch(/none|0px/i);
+      expect(styles.boxShadow, `${pageCase.name} should expose a visible box-shadow focus cue`).not.toMatch(/none/i);
+    });
+  }
+
   // WCAG 2.4.3 Focus Order + 2.4.1 Bypass Blocks: the skip link must be the
   // first element to receive focus from the top of the page.
   test('skip link is first in the focus order', async ({ page }) => {

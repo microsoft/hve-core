@@ -45,18 +45,59 @@ export default function SearchBarWrapper(props) {
     }
 
     let lastResultCount = null;
+    let lastQuery = '';
+    let lastOpenState = false;
     let announceTimer = null;
+    let currentInput = null;
 
-    const announceResultCount = (count) => {
-      const message = count === 0 ? 'No results' : `${count} result${count === 1 ? '' : 's'}`;
+    const clearStatusMessage = () => {
       window.clearTimeout(announceTimer);
+      statusNode.textContent = '';
+    };
+
+    const announceResultCount = (count, query) => {
+      const message = count === 0
+        ? `No results for "${query}". Try a broader term or browse the documentation.`
+        : `${count} result${count === 1 ? '' : 's'}`;
+      clearStatusMessage();
       announceTimer = window.setTimeout(() => {
         statusNode.textContent = message;
       }, 120);
     };
 
+    const getSearchInput = () => root.querySelector('input.navbar__search-input');
+    const getListbox = () => root.querySelector('[role="listbox"]');
+    const getFooterLink = (listboxNode) => (listboxNode ? listboxNode.querySelector('[class*="hitFooter"] a') : null);
+
+    const handleInputKeyDown = (event) => {
+      const input = getSearchInput();
+      const listbox = getListbox();
+      const footerLink = getFooterLink(listbox);
+      if (!input || !listbox || !footerLink) {
+        return;
+      }
+
+      const options = Array.from(listbox.querySelectorAll('[role="option"]')).filter(
+        (option) => !option.closest('[class*="hitFooter"]'),
+      );
+      const lastOption = options[options.length - 1];
+      if ((event.key === 'ArrowDown' || event.key === 'End') && lastOption) {
+        event.preventDefault();
+        input.setAttribute('aria-activedescendant', footerLink.id);
+        footerLink.focus({ preventScroll: true });
+      }
+    };
+
     const sync = () => {
-      const input = root.querySelector('input.navbar__search-input');
+      const input = getSearchInput();
+      if (input && input !== currentInput) {
+        if (currentInput) {
+          currentInput.removeEventListener('keydown', handleInputKeyDown);
+        }
+        currentInput = input;
+        currentInput.addEventListener('keydown', handleInputKeyDown);
+      }
+
       if (input) {
         const owns = input.getAttribute('aria-owns');
         if (owns) {
@@ -68,25 +109,97 @@ export default function SearchBarWrapper(props) {
         }
       }
 
-      const listbox = root.querySelector('[role="listbox"]');
-      if (listbox) {
-        const footerLink = listbox.querySelector('[class*="hitFooter"] a');
-        if (footerLink && footerLink.getAttribute('role') !== 'option') {
-          footerLink.setAttribute('role', 'option');
+      const listbox = getListbox();
+      const footerLink = getFooterLink(listbox);
+      const query = input ? input.value.trim() : '';
+      const isOpen = Boolean(listbox) && query.length > 0;
+
+      if (input) {
+        // aria-expanded/aria-controls/aria-activedescendant are only permitted on a
+        // combobox. The upstream widget sets these attributes but does not always
+        // apply the role at rest, so enforce it here (WCAG 4.1.2 / axe aria-allowed-attr).
+        if (input.getAttribute('role') !== 'combobox') {
+          input.setAttribute('role', 'combobox');
         }
 
+        const nextExpanded = isOpen ? 'true' : 'false';
+        if (input.getAttribute('aria-expanded') !== nextExpanded) {
+          input.setAttribute('aria-expanded', nextExpanded);
+        }
+
+        if (footerLink) {
+          footerLink.setAttribute('role', 'option');
+          footerLink.setAttribute('tabindex', '-1');
+          if (!footerLink.id) {
+            footerLink.id = 'search-footer-link';
+          }
+        }
+
+        const clearButton = root.querySelector('button[type="reset"], button[class*="clear"]');
+        if (clearButton && clearButton.getAttribute('aria-label') !== 'Clear search') {
+          clearButton.setAttribute('aria-label', 'Clear search');
+        }
+
+        const descriptionId = 'search-shortcut-description';
+        let descriptionNode = root.querySelector(`#${descriptionId}`);
+        if (!descriptionNode) {
+          descriptionNode = document.createElement('div');
+          descriptionNode.id = descriptionId;
+          descriptionNode.style = srOnlyStyle;
+          descriptionNode.textContent = 'Keyboard shortcut: Control plus K';
+          root.prepend(descriptionNode);
+        }
+
+        const currentDescribedBy = input.getAttribute('aria-describedby');
+        const describedByIds = currentDescribedBy ? currentDescribedBy.split(/\s+/) : [];
+        if (!describedByIds.includes(descriptionId)) {
+          input.setAttribute('aria-describedby', [...describedByIds, descriptionId].join(' ').trim());
+        }
+
+        const headingId = 'search-input-heading';
+        let headingNode = root.querySelector(`#${headingId}`);
+        if (!headingNode) {
+          headingNode = document.createElement('h2');
+          headingNode.id = headingId;
+          headingNode.style = srOnlyStyle;
+          headingNode.textContent = 'Search';
+          root.prepend(headingNode);
+        }
+
+        if (input.getAttribute('aria-labelledby') !== headingId) {
+          input.setAttribute('aria-labelledby', headingId);
+        }
+        if (!input.hasAttribute('aria-label')) {
+          input.setAttribute('aria-label', 'Search');
+        }
+      }
+
+      let resultCount = 0;
+      if (listbox) {
         const options = Array.from(listbox.querySelectorAll('[role="option"]')).filter(
           (option) => !option.closest('[class*="hitFooter"]'),
         );
-        const resultCount = options.length;
-        if (resultCount !== lastResultCount) {
-          lastResultCount = resultCount;
-          announceResultCount(resultCount);
-        }
-      } else if (lastResultCount !== 0) {
-        lastResultCount = 0;
-        announceResultCount(0);
+        resultCount = options.length;
       }
+
+      if (!query || !isOpen) {
+        clearStatusMessage();
+        lastQuery = query;
+        lastResultCount = resultCount;
+        lastOpenState = isOpen;
+        return;
+      }
+
+      const shouldAnnounce =
+        query !== lastQuery || resultCount !== lastResultCount || isOpen !== lastOpenState;
+
+      if (shouldAnnounce) {
+        announceResultCount(resultCount, query);
+      }
+
+      lastQuery = query;
+      lastResultCount = resultCount;
+      lastOpenState = isOpen;
     };
 
     // The combobox attributes are applied lazily, the first time the input is
@@ -99,12 +212,14 @@ export default function SearchBarWrapper(props) {
       subtree: true,
       childList: true,
       attributes: true,
-      attributeFilter: ['aria-owns'],
     });
 
     return () => {
+      if (currentInput) {
+        currentInput.removeEventListener('keydown', handleInputKeyDown);
+      }
       observer.disconnect();
-      window.clearTimeout(announceTimer);
+      clearStatusMessage();
     };
   }, []);
 
