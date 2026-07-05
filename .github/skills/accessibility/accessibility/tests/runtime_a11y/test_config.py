@@ -64,8 +64,9 @@ def test_given_allowed_target_when_assert_target_allowed_then_succeeds(
     assert_target_allowed(config, allow_external=allow_external)
 
 
-def test_given_external_target_without_override_when_assert_target_allowed_then_raises(
-) -> None:
+def test_given_external_target_without_override_when_assert_target_allowed_then_raises() -> (
+    None
+):
     with pytest.raises(ScriptError, match="Refusing to probe non-loopback host"):
         assert_target_allowed({"baseUrl": "https://example.com"})
 

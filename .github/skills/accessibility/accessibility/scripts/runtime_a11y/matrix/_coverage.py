@@ -36,9 +36,7 @@ def compute_coverage(matrix: Matrix) -> dict[str, object]:
     )
     overall_denominator = len(applicable_cells)
     overall_percentage = round(
-        (overall_numerator / overall_denominator * 100)
-        if overall_denominator
-        else 0.0,
+        (overall_numerator / overall_denominator * 100) if overall_denominator else 0.0,
         1,
     )
 

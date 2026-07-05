@@ -78,7 +78,7 @@ def test_given_probe_command_when_subprocess_fails_then_returns_usage_error(
 
 
 def test_given_external_target_without_allowlist_when_run_all_then_returns_usage_error(
-    tmp_path: Path
+    tmp_path: Path,
 ) -> None:
     config_path = tmp_path / "a11y-runtime.config.json"
     config_path.write_text(

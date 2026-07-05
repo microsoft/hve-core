@@ -136,9 +136,7 @@ def _run_probe(
     try:
         return json.loads(completed.stdout)
     except json.JSONDecodeError as exc:
-        raise ScriptError(
-            f"Probe '{probe_id}' returned invalid JSON output"
-        ) from exc
+        raise ScriptError(f"Probe '{probe_id}' returned invalid JSON output") from exc
 
 
 def run(
@@ -232,9 +230,7 @@ def main(argv: list[str] | None = None) -> int:
     args = parser.parse_args(argv)
 
     try:
-        config = load_validated_config(
-            args.config, allow_external=args.allow_external
-        )
+        config = load_validated_config(args.config, allow_external=args.allow_external)
         base_url = args.base_url or config.get("baseUrl", "")
         probe_filter = getattr(args, "probe_id", None)
         document = run(config, probe_filter, base_url, args.trace)

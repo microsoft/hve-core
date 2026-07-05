@@ -1401,4 +1401,4 @@ stimuli:
       - type: output-matches
         name: standards-paraphrase
         config:
-          pattern: "(?i)(paraphras|summary|cite|link|verbatim|normative text|not reproduce)"
+          pattern: "(?i)(paraphrase|paraphrasing|summary|cite|link|verbatim|normative text|not reproduce)"
