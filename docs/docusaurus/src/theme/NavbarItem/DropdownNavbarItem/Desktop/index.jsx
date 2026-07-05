@@ -31,6 +31,9 @@ export default function DropdownNavbarItemDesktop({
   const menuId = useId();
   const [showDropdown, setShowDropdown] = useState(false);
   const [focusFirstItem, setFocusFirstItem] = useState(false);
+  // Roving tabindex: the active menu item carries tabindex=0, the rest -1, so
+  // the menu exposes exactly one tab stop (WAI-ARIA APG Menu pattern).
+  const [activeIndex, setActiveIndex] = useState(0);
 
   useEffect(() => {
     if (!showDropdown || !focusFirstItem) {
@@ -91,6 +94,7 @@ export default function DropdownNavbarItemDesktop({
   }, [showDropdown]);
 
   const openDropdown = (reason = 'pointer') => {
+    setActiveIndex(0);
     setShowDropdown(true);
     if (reason === 'keyboard' || reason === 'toggle') {
       setFocusFirstItem(true);
@@ -111,6 +115,7 @@ export default function DropdownNavbarItemDesktop({
     setShowDropdown((value) => {
       const nextValue = !value;
       if (nextValue) {
+        setActiveIndex(0);
         setFocusFirstItem(true);
       }
       return nextValue;
@@ -136,17 +141,22 @@ export default function DropdownNavbarItemDesktop({
     if (event.key === 'ArrowDown') {
       event.preventDefault();
       const nextIndex = (index + 1) % menuItems.length;
+      setActiveIndex(nextIndex);
       menuItems[nextIndex]?.focus();
     } else if (event.key === 'ArrowUp') {
       event.preventDefault();
       const previousIndex = (index - 1 + menuItems.length) % menuItems.length;
+      setActiveIndex(previousIndex);
       menuItems[previousIndex]?.focus();
     } else if (event.key === 'Home') {
       event.preventDefault();
+      setActiveIndex(0);
       menuItems[0]?.focus();
     } else if (event.key === 'End') {
       event.preventDefault();
-      menuItems[menuItems.length - 1]?.focus();
+      const lastIndex = menuItems.length - 1;
+      setActiveIndex(lastIndex);
+      menuItems[lastIndex]?.focus();
     } else if (event.key === 'Escape') {
       event.preventDefault();
       closeDropdown(true);
@@ -171,6 +181,10 @@ export default function DropdownNavbarItemDesktop({
         ref={toggleRef}
         type="button"
         className={clsx('navbar__link', className)}
+        // The classic theme makes the dropdown toggle hover-only via
+        // pointer-events: none; this control is an interactive button, so it
+        // must receive pointer events to be operable by mouse (WCAG 2.1.1).
+        style={{pointerEvents: 'auto'}}
         aria-haspopup="menu"
         aria-expanded={showDropdown}
         aria-controls={menuId}
@@ -195,7 +209,7 @@ export default function DropdownNavbarItemDesktop({
                   to={childHref}
                   href={childHref}
                   role="menuitem"
-                  tabIndex="-1"
+                  tabIndex={index === activeIndex ? 0 : -1}
                   ref={(node) => {
                     itemRefs.current[index] = node;
                   }}

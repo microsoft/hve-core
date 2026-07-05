@@ -28,12 +28,13 @@ export default function Home(): React.ReactElement {
         ]}
       />
 
-      <p className={styles.heroPurpose}>
-        HVE Core helps teams move from an idea to a shipped solution with shared guidance, reusable assets, and accessible documentation.
-      </p>
-
       <main>
-        <section className={styles.sectionCompact} aria-label="Featured resources">
+        <p className={styles.heroPurpose}>
+          HVE Core helps teams move from an idea to a shipped solution with shared guidance, reusable assets, and accessible documentation.
+        </p>
+
+        <section className={styles.sectionCompact} aria-labelledby="featured-title">
+          <h2 id="featured-title" className={styles.srOnly}>Featured resources</h2>
           <CardGrid>
             {iconCards.map((card) => (
               <IconCard key={card.href} icon={card.icon} supertitle={card.supertitle} title={card.title} href={card.href} />

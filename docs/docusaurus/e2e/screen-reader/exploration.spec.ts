@@ -79,7 +79,9 @@ test.describe('Screen-reader exploration: search combobox', () => {
 
     // The "See all results" footer must be reachable and activatable by
     // keyboard as part of the combobox, not orphaned as a mouse-only control.
-    const seeAll = page.getByRole('link', { name: /see all results/i }).first();
+    // The swizzle tags it role="option" so the listbox owns only valid children
+    // (axe aria-required-children); its accessible name includes "See all".
+    const seeAll = page.getByRole('option', { name: /see all/i }).first();
     await expect(seeAll).toBeVisible();
     const seeAllId = await seeAll.getAttribute('id');
     expect(seeAllId, 'the "See all results" control needs a stable id for aria-activedescendant').toBeTruthy();

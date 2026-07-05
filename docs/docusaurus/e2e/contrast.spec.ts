@@ -158,16 +158,19 @@ test.describe('Contrast measurement gates', () => {
   test('records the homepage hero contrast as human review where the background is a gradient', async ({ page }) => {
     await page.goto('/hve-core/', { waitUntil: 'domcontentloaded' });
 
-    const heading = await measureContrast(page, 'header h1');
-    const subtitle = await measureContrast(page, 'header p');
+    // The hero is a labelled <section aria-labelledby="hero-title">, not a
+    // <header>; target the hero heading/subtitle directly. measureContrast walks
+    // ancestors for the effective (gradient) background.
+    const heading = await measureContrast(page, '#hero-title');
+    const subtitle = await measureContrast(page, '[aria-labelledby="hero-title"] p');
 
     expect(
       heading.backgroundImage,
-      `${describeContrastCase('Homepage hero heading', 'header h1')} should be evaluated as a human-review case when the effective background is a gradient or image`,
+      `${describeContrastCase('Homepage hero heading', '#hero-title')} should be evaluated as a human-review case when the effective background is a gradient or image`,
     ).toBeTruthy();
     expect(
       subtitle.backgroundImage,
-      `${describeContrastCase('Homepage hero subtitle', 'header p')} should be evaluated as a human-review case when the effective background is a gradient or image`,
+      `${describeContrastCase('Homepage hero subtitle', '[aria-labelledby="hero-title"] p')} should be evaluated as a human-review case when the effective background is a gradient or image`,
     ).toBeTruthy();
 
     const headingRatio = heading.backgroundImage && heading.backgroundImage !== 'none'

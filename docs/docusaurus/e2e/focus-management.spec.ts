@@ -83,7 +83,12 @@ test.describe('Focus management', () => {
       return;
     }
 
-    await dropdownToggle.click();
+    // Open the dropdown via the keyboard path. A hover+click sequence on a
+    // hoverable dropdown is ambiguous (hovering opens the menu, so the click
+    // then toggles it closed); focusing the toggle and pressing ArrowDown is
+    // the operable path a keyboard user takes and is what this test asserts.
+    await dropdownToggle.focus();
+    await dropdownToggle.press('ArrowDown');
 
     const dropdownMenu = page.locator('.navbar__item.dropdown .dropdown__menu').first();
     await expect(dropdownMenu).toBeVisible();

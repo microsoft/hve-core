@@ -26,11 +26,26 @@ export async function visitInvariantPage(page: Page, spec: PageSpec): Promise<vo
 
 export async function collectPageSnapshot(page: Page): Promise<PageSnapshot> {
   return await page.evaluate(() => {
+    // A native <header>/<footer> is only exposed as the banner/contentinfo
+    // landmark when it is not scoped inside article/aside/main/nav/section
+    // (HTML-AAM). Counting raw elements would miscount the nested
+    // footer.theme-doc-footer and the doc article <header>, so filter to
+    // top-level elements and de-duplicate against explicit ARIA roles.
+    const isTopLevel = (element: Element) =>
+      element.closest('article, aside, main, nav, section') === null;
+    const bannerLandmarks = new Set<Element>([
+      ...Array.from(document.querySelectorAll('header')).filter(isTopLevel),
+      ...Array.from(document.querySelectorAll('[role="banner"]')),
+    ]);
+    const contentinfoLandmarks = new Set<Element>([
+      ...Array.from(document.querySelectorAll('footer')).filter(isTopLevel),
+      ...Array.from(document.querySelectorAll('[role="contentinfo"]')),
+    ]);
     const landmarks = {
-      banner: document.querySelectorAll('header, [role="banner"]').length,
+      banner: bannerLandmarks.size,
       navigation: document.querySelectorAll('nav, [role="navigation"]').length,
       main: document.querySelectorAll('main, [role="main"]').length,
-      footer: document.querySelectorAll('footer, [role="contentinfo"]').length,
+      footer: contentinfoLandmarks.size,
     };
 
     const headingLevels = Array.from(document.querySelectorAll('h1, h2, h3, h4, h5, h6')).map((heading) => Number(heading.tagName.charAt(1)));

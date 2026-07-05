@@ -17,7 +17,11 @@ test.describe('Document navigation', () => {
       expect(snapshot.landmarks.banner, `${pageCase.name} should expose a banner landmark`).toBeGreaterThan(0);
       expect(snapshot.landmarks.navigation, `${pageCase.name} should expose a navigation landmark`).toBeGreaterThan(0);
       expect(snapshot.landmarks.main, `${pageCase.name} should expose a main landmark`).toBeGreaterThan(0);
-      expect(snapshot.tocHeading, `${pageCase.name} should expose an article TOC heading`).toContain('article');
+      // The article table-of-contents heading only exists on doc pages; custom
+      // pages (home, 404) legitimately have no TOC.
+      if (pageCase.path.includes('/docs/')) {
+        expect(snapshot.tocHeading, `${pageCase.name} should expose an article TOC heading`).toContain('article');
+      }
       expect(snapshot.footerTitles.length, `${pageCase.name} should expose footer group titles`).toBeGreaterThan(0);
     });
   }

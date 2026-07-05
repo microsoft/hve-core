@@ -112,7 +112,10 @@ export default function SearchBarWrapper(props) {
       const listbox = getListbox();
       const footerLink = getFooterLink(listbox);
       const query = input ? input.value.trim() : '';
-      const isOpen = Boolean(listbox) && query.length > 0;
+      // The upstream widget hides (rather than removes) the popup on Escape, so
+      // presence alone is not "open"; require the listbox to be rendered/visible.
+      const listboxVisible = Boolean(listbox) && listbox.getClientRects().length > 0;
+      const isOpen = listboxVisible && query.length > 0;
 
       if (input) {
         // aria-expanded/aria-controls/aria-activedescendant are only permitted on a
@@ -128,8 +131,12 @@ export default function SearchBarWrapper(props) {
         }
 
         if (footerLink) {
-          footerLink.setAttribute('role', 'option');
-          footerLink.setAttribute('tabindex', '-1');
+          if (footerLink.getAttribute('role') !== 'option') {
+            footerLink.setAttribute('role', 'option');
+          }
+          if (footerLink.getAttribute('tabindex') !== '-1') {
+            footerLink.setAttribute('tabindex', '-1');
+          }
           if (!footerLink.id) {
             footerLink.id = 'search-footer-link';
           }
@@ -206,13 +213,31 @@ export default function SearchBarWrapper(props) {
     // focused and the search index loads, and the popup contents are rebuilt on
     // every keystroke, so observe the whole search container rather than reading
     // the initial state once.
-    sync();
-    const observer = new MutationObserver(sync);
-    observer.observe(root, {
-      subtree: true,
-      childList: true,
-      attributes: true,
-    });
+    //
+    // sync() mutates attributes/DOM inside `root`, which would otherwise be
+    // re-observed and re-trigger sync() in an unbounded microtask loop that
+    // freezes the main thread once results (and the footer link) render. Wrap
+    // every run so the observer is disconnected while our own mutations are
+    // applied and reconnected afterward; only genuine upstream mutations then
+    // schedule another run.
+    let observer;
+    const observerConfig = { subtree: true, childList: true, attributes: true };
+    const runSync = () => {
+      if (observer) {
+        observer.disconnect();
+      }
+      try {
+        sync();
+      } finally {
+        if (observer) {
+          observer.observe(root, observerConfig);
+        }
+      }
+    };
+
+    runSync();
+    observer = new MutationObserver(runSync);
+    observer.observe(root, observerConfig);
 
     return () => {
       if (currentInput) {

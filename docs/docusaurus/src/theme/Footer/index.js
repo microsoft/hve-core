@@ -64,11 +64,35 @@ export default function FooterWrapper() {
     return null;
   }
 
+  // Visually-hidden heading for the footer landmark. The footer column titles
+  // are <h3>, so without a preceding <h2> the document outline jumps (e.g.
+  // h1 -> h3 on sparse pages such as 404). This <h2> keeps the heading order
+  // coherent site-wide (WCAG 1.3.1 / axe heading-order).
+  const srOnlyStyle = {
+    position: 'absolute',
+    width: '1px',
+    height: '1px',
+    padding: 0,
+    margin: '-1px',
+    overflow: 'hidden',
+    clip: 'rect(0, 0, 0, 0)',
+    whiteSpace: 'nowrap',
+    border: 0,
+  };
+
   const {copyright, links, logo, style} = footer;
   return (
     <FooterLayout
       style={style}
-      links={links && links.length > 0 && <FooterLinks links={links} />}
+      links={
+        links &&
+        links.length > 0 && (
+          <>
+            <h2 style={srOnlyStyle}>Site footer</h2>
+            <FooterLinks links={links} />
+          </>
+        )
+      }
       logo={logo && <FooterLogo logo={logo} />}
       copyright={copyright && <FooterCopyright copyright={copyright} />}
     />
