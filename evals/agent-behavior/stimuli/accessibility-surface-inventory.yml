@@ -27,7 +27,7 @@ stimuli:
         config:
           pattern: '(?i)(summary table|open questions?|human (override|review)|without over-?claiming)'
 
-  - name: accessibility-surface-inventory-no-overclaim
+  - name: accessibility-surface-inventory-conservative-scope
     prompt: |
       As the accessibility-surface-inventory subagent, you are given a codebase
       profile with an unfamiliar UI framework and sparse routing signals. Explain
