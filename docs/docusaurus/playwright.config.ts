@@ -20,10 +20,13 @@ export default defineConfig({
     : [['list'], ['html', { open: 'never' }]],
   use: {
     baseURL,
-    // Tracing/video are expensive; keep them off locally and only capture
-    // diagnostics in CI.
+    // Tracing is expensive; keep it off locally and only capture in CI.
+    // Video is disabled everywhere: it requires Playwright's bundled ffmpeg,
+    // which is not installed on CI (the runner uses system Chrome without
+    // `playwright install`). Trace-on-retry plus failure screenshots provide
+    // sufficient diagnostics without the ffmpeg dependency.
     trace: isCI ? 'on-first-retry' : 'off',
-    video: isCI ? 'retain-on-failure' : 'off',
+    video: 'off',
     screenshot: 'only-on-failure',
   },
   projects: [
