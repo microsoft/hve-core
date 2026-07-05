@@ -17,7 +17,7 @@ function BreadcrumbsItemLink({children, href, isLast}) {
   const className = 'breadcrumbs__link';
   if (isLast) {
     return (
-      <span className={className} aria-current={isLast ? 'page' : undefined}>
+      <span className={className} aria-current="page">
         {children}
       </span>
     );

@@ -28,6 +28,10 @@ if (!fs.existsSync(path.join(buildDir, 'index.html'))) {
   process.exit(1);
 }
 
+// Read the 404 page once at startup so the not-found handler serves an
+// in-memory buffer instead of touching the file system on every request.
+const notFoundHtml = fs.readFileSync(path.join(buildDir, '404.html'));
+
 const app = express();
 app.use(compression());
 
@@ -48,7 +52,7 @@ app.get('/', (_req, res) => res.redirect(BASE));
 // Unknown routes render the Docusaurus 404 template with a 404 status,
 // mirroring production behavior for the not-found page.
 app.use((_req, res) => {
-  res.status(404).sendFile(path.join(buildDir, '404.html'));
+  res.status(404).type('html').send(notFoundHtml);
 });
 
 const server = app.listen(PORT, HOST, () => {

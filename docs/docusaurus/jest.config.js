@@ -29,6 +29,9 @@ module.exports = {
     '!src/**/__mocks__/**',
     '!src/**/__tests__/**',
     '!src/**/*.test.{ts,tsx}',
+    // Static content pages (no logic); rendering is validated by the e2e suite.
+    '!src/pages/accessibility.tsx',
+    '!src/pages/accessibility/vpat.tsx',
   ],
   coverageDirectory: 'coverage',
   coverageReporters: ['lcov', 'text-summary'],
