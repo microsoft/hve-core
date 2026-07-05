@@ -1395,9 +1395,14 @@ vm
 vpc
 
 # Technical Terms
+affordances
 apis
 backend
+contentinfo
+describedby
 frontend
+haspopup
+labelledby
 middleware
 microservice
 microservices
