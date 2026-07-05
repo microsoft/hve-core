@@ -192,6 +192,7 @@ function Invoke-CollectionValidation {
     $validatedCount = 0
     $allowedMaturities = Get-CollectionMaturityVocabulary
     $canonicalCollectionId = 'hve-core-all'
+    $aggregateCollectionSentinel = 'all-collections'
     $itemOccurrences = @{}
 
     $knownCollectionIds = @{}
@@ -291,23 +292,21 @@ function Invoke-CollectionValidation {
             $itemPath = $item.path
             $kind = $item.kind
             $absolutePath = Join-Path -Path $RepoRoot -ChildPath $itemPath
-                        $itemMaturity = $null
+            $itemMaturity = $null
             $isExplicitItemMaturity = $false
             if ($item.ContainsKey('maturity')) {
                 $itemMaturity = [string]$item.maturity
                 $isExplicitItemMaturity = -not [string]::IsNullOrWhiteSpace($itemMaturity)
             }
-            
+
             $crossCheckMaturity = $itemMaturity
             if (-not $isExplicitItemMaturity -and $manifest.ContainsKey('maturity')) {
                 $crossCheckMaturity = [string]$manifest.maturity
             }
 
-            $effectiveMaturity = Resolve-CollectionItemMaturity -Maturity $itemMaturity
-
-            # Repo-specific path exclusion
-            if (Test-HveCoreRepoRelativePath -Path $itemPath) {
-                $fileErrors += @{ ErrorType = 'RepoSpecificPath'; Message = "repo-specific path not allowed in collections: $itemPath (root-level artifacts under .github/{type}/ are excluded from distribution)" }
+            # fallback to resolve default stable when neither is Set
+            if (-not $crossCheckMaturity){
+                $crossCheckMaturity = Resolve-CollectionItemMaturity -Maturity $itemMaturity
             }
 
             # Path existence
@@ -351,6 +350,10 @@ function Invoke-CollectionValidation {
                         Add-ValidationResult -Collection $collectionLabel -ErrorType 'UnknownCollectionFolderReference' -Message "item folder '$folderName' does not match any known collection ID: $itemPath" -Severity 'Warning'
                     }
                 }
+                elseif ($pathSegments.Count -lt 4 -and $pathSegments[0] -eq '.github') {
+                    # Reject root-level artifacts inside .github/ that lack a collection-specific subfolder
+                    $fileErrors += @{ ErrorType = 'InvalidArtifactPathStructure'; Message = "item '$itemPath' must be placed in a collection-specific subfolder under .github/{type}/{collection-id}/" }
+                }
             }
 
             if (-not [string]::IsNullOrWhiteSpace($itemPath) -and -not [string]::IsNullOrWhiteSpace($kind)) {
@@ -359,6 +362,10 @@ function Invoke-CollectionValidation {
                     $itemOccurrences[$itemKey] = @()
                 }
 
+                # Intentional: Using $crossCheckMaturity ensures that items inheriting 'removed'
+                # from a collection-level maturity marker are correctly treated as tombstoned
+                # by downstream checks (Check 4 and Orphan check), preventing false positives
+                # for "missing from canonical" or orphan errors.
                 $itemOccurrences[$itemKey] += @{
                     CollectionId = $id
                     CollectionFile = $file.Name
@@ -421,7 +428,7 @@ function Invoke-CollectionValidation {
             $nameLabel = ($compositeKey -split '\|')[1]
             $pathList = ($paths | Sort-Object) -join ', '
             Write-Host "  FAIL duplicate $kindLabel artifact key '$nameLabel' found at distinct paths: $pathList" -ForegroundColor Red
-            Add-ValidationResult -Collection 'all-collections' -ErrorType 'DuplicateArtifactKey' -Message "duplicate $kindLabel artifact key '$nameLabel' found at distinct paths: $pathList"
+            Add-ValidationResult -Collection $aggregateCollectionSentinel -ErrorType 'DuplicateArtifactKey' -Message "duplicate $kindLabel artifact key '$nameLabel' found at distinct paths: $pathList"
             $errorCount++
         }
     }
@@ -430,32 +437,6 @@ function Invoke-CollectionValidation {
         $occurrences = $itemOccurrences[$itemKey]
         $canonicalMatches = @($occurrences | Where-Object { $_.CollectionId -eq $canonicalCollectionId })
         $themedMatches    = @($occurrences | Where-Object { $_.CollectionId -ne $canonicalCollectionId })
-
-        # Check 4: item in one or more themed collections but absent from hve-core-all
-        # Skip when all themed occurrences are marked maturity:'removed' (intentional tombstone
-        # excluded from hve-core-all by Update-HveCoreAllCollection).
-        $activeThemedMatches = @($themedMatches | Where-Object { $_.Maturity -ne 'removed' })
-        if ($canonicalManifestFound -and $activeThemedMatches.Count -gt 0 -and $canonicalMatches.Count -eq 0) {
-            $themedCollections = ($activeThemedMatches | ForEach-Object { $_.CollectionId } | Sort-Object -Unique) -join ', '
-            Write-Host "  FAIL item '$itemKey' exists in themed collection(s) [$themedCollections] but is absent from '$canonicalCollectionId'" -ForegroundColor Red
-            Add-ValidationResult -Collection $canonicalCollectionId -ErrorType 'ThemedItemMissingFromCanonical' -Message "item '$itemKey' exists in themed collection(s) [$themedCollections] but is absent from '$canonicalCollectionId'"
-            $errorCount++
-            continue
-        }
-
-        # Maturity conflict: only when item appears in canonical AND at least one themed
-        if ($canonicalMatches.Count -gt 0 -and $themedMatches.Count -gt 0) {
-            $canonical = $canonicalMatches[0]
-            if ($canonical.IsExplicitItemMaturity) {
-                foreach ($occurrence in $themedMatches) {
-                    if ($occurrence.Maturity -ne $canonical.Maturity) {
-                        Write-Host "  FAIL maturity conflict for '$itemKey': canonical '$canonicalCollectionId'='$($canonical.Maturity)', '$($occurrence.CollectionId)'='$($occurrence.Maturity)'" -ForegroundColor Red
-                        Add-ValidationResult -Collection $occurrence.CollectionId -ErrorType 'MaturityConflict' -Message "maturity conflict for '$itemKey': canonical '$canonicalCollectionId'='$($canonical.Maturity)', '$($occurrence.CollectionId)'='$($occurrence.Maturity)'"
-                        $errorCount++
-                    }
-                }
-            }
-        }
 
         if ($themedMatches.Count -gt 1) {
             $themedMaturities = @{}
@@ -468,7 +449,7 @@ function Invoke-CollectionValidation {
                     $themedMaturities[$mat].Add($occurrence.CollectionId)
                 }
             }
-            
+
             $uniqueMaturities = @($themedMaturities.Keys)
             if ($uniqueMaturities.Count -gt 1) {
                 $collectionsInvolved = foreach ($mat in $uniqueMaturities) {
@@ -477,9 +458,33 @@ function Invoke-CollectionValidation {
                 }
                 $conflictMsg = "Cross-collection maturity conflict for '$itemKey': $($collectionsInvolved -join ', ')"
                 Write-Host "  FAIL $conflictMsg" -ForegroundColor Red
-                Add-ValidationResult -Collection 'all-collections' -ErrorType 'CrossCollectionMaturityConflict' -Message $conflictMsg
+                Add-ValidationResult -Collection $aggregateCollectionSentinel -ErrorType 'CrossCollectionMaturityConflict' -Message $conflictMsg
                 $errorCount++
             }
+        }
+
+        if ($canonicalMatches.Count -gt 0 -and $themedMatches.Count -gt 0) {
+            $canonical = $canonicalMatches[0]
+            if ($canonical.IsExplicitItemMaturity) {
+                foreach ($occurrence in $themedMatches) {
+                    if ($occurrence.Maturity -ne $canonical.Maturity) {
+                        Write-Host "  FAIL maturity conflict for '$itemKey': canonical '$canonicalCollectionId'='$($canonical.Maturity)', '$($occurrence.CollectionId)'='$($occurrence.Maturity)'" -ForegroundColor Red
+                        Add-ValidationResult -Collection $occurrence.CollectionId -ErrorType 'MaturityConflict' -Message "maturity conflict for '$itemKey': canonical '$canonicalCollectionId'='$($canonical.Maturity)', '$($occurrence.CollectionId)'='$($occurrence.Maturity)'"
+                        $errorCount++
+                    }
+                }
+            }
+        }
+        # Check 4: item in one or more themed collections but absent from hve-core-all
+        # Skip when all themed occurrences are marked maturity:'removed' (intentional tombstone
+        # excluded from hve-core-all by Update-HveCoreAllCollection).
+        $activeThemedMatches = @($themedMatches | Where-Object { $_.Maturity -ne 'removed' })
+        if ($canonicalManifestFound -and $activeThemedMatches.Count -gt 0 -and $canonicalMatches.Count -eq 0) {
+            $themedCollections = ($activeThemedMatches | ForEach-Object { $_.CollectionId } | Sort-Object -Unique) -join ', '
+            Write-Host "  FAIL item '$itemKey' exists in themed collection(s) [$themedCollections] but is absent from '$canonicalCollectionId'" -ForegroundColor Red
+            Add-ValidationResult -Collection $canonicalCollectionId -ErrorType 'ThemedItemMissingFromCanonical' -Message "item '$itemKey' exists in themed collection(s) [$themedCollections] but is absent from '$canonicalCollectionId'"
+            $errorCount++
+            continue
         }
     }
 
