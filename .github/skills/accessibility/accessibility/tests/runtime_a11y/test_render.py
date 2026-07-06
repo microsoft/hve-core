@@ -46,9 +46,7 @@ def _sample_matrix() -> Matrix:
 def _sample_coverage() -> dict[str, Any]:
     return {
         "overall": {"coverage": 50.0, "numerator": 1, "denominator": 2},
-        "frameworks": {
-            "wcag-22": {"coverage": 50.0, "numerator": 1, "denominator": 2}
-        },
+        "frameworks": {"wcag-22": {"coverage": 50.0, "numerator": 1, "denominator": 2}},
         "residual": [
             {
                 "criterionId": "2.4.7",

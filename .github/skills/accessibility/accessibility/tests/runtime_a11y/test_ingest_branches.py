@@ -91,9 +91,7 @@ def test_planner_matches_by_platform_with_project_surfaces_fallback() -> None:
         "controlMappings": [{"controlId": "1.1.1", "status": "partial"}],
         "project": {"surfaces": ["web"]},
     }
-    surfaces = [
-        Surface(id="web-main", name="Web", platform="web", states=["default"])
-    ]
+    surfaces = [Surface(id="web-main", name="Web", platform="web", states=["default"])]
 
     updates = ingest_planner_state(state, surfaces)
 
