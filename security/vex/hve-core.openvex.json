@@ -4,6 +4,6 @@
   "author": "Microsoft HVE Core Maintainers",
   "timestamp": "2026-06-19T00:00:00Z",
   "version": 2,
-  "tooling": "Maintained via the hve-core VEX Generator agent (AI-assisted drafting) with human review and merge; published and Sigstore-attested by the release-stable.yml workflow.",
+  "tooling": "Maintained via the hve-core SSSC Reviewer VEX assessment capability (AI-assisted drafting) with human review and merge; published and Sigstore-attested by the release-stable.yml workflow.",
   "statements": []
 }

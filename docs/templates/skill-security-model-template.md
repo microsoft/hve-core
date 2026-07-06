@@ -3,7 +3,7 @@ title: Skill Security Model Template
 description: 'Canonical structure for per-skill STRIDE security models (SECURITY.md) mirroring the repo-wide security model, with data-flow and trust-boundary diagrams, risk-rating tables, and a G-prefixed gap register'
 sidebar_position: 1
 author: microsoft/hve-core
-ms.date: 2026-06-30
+ms.date: 2026-07-02
 ms.topic: reference
 estimated_reading_time: 8
 keywords:
@@ -48,7 +48,7 @@ This template mirrors `docs/security/security-model.md` so per-skill models reac
 * [Trust Boundaries](#trust-boundaries)
 * [Assets](#assets)
 * [Adversaries](#adversaries)
-* [Trust Buckets](#trust-buckets)
+* [Bucket B1: {{name}}](#bucket-b1-name)
 * [Enterprise Readiness Gaps](#enterprise-readiness-gaps)
 * [References](#references)
 
@@ -117,40 +117,39 @@ flowchart TD
 |-------|---------------|----------------------|
 | ADV-a | {{adversary}} | {{mitigations}}      |
 
-## Trust Buckets
-
-<!-- For EACH bucket Bn, enumerate ALL SIX STRIDE categories as ### headings in canonical
+<!-- For EACH trust bucket, add a `## Bucket Bn: {{name}}` section (there is no umbrella
+"Trust Buckets" heading). Enumerate ALL SIX STRIDE categories as ### headings in canonical
 order: Spoofing, Tampering, Repudiation, Information Disclosure, Denial of Service,
 Elevation of Privilege. Use "Not applicable. <reason>." where a category genuinely does not apply.
-End each bucket with a Risk Rating summary table. -->
+End each bucket with a ### Risk Rating summary table. -->
 
-### Bucket B1: {{name}}
+## Bucket B1: {{name}}
 
-#### Spoofing
-
-* {{mitigation}}
-
-#### Tampering
+### Spoofing
 
 * {{mitigation}}
 
-#### Repudiation
+### Tampering
+
+* {{mitigation}}
+
+### Repudiation
 
 * {{mitigation, or "Not applicable. <reason>."}}
 
-#### Information Disclosure
+### Information Disclosure
 
 * {{mitigation}}
 
-#### Denial of Service
+### Denial of Service
 
 * {{mitigation}}
 
-#### Elevation of Privilege
+### Elevation of Privilege
 
 * {{mitigation}}
 
-#### Risk Rating
+### Risk Rating
 
 | Threat     | Likelihood       | Impact           | Residual Risk    | Status                                         |
 |------------|------------------|------------------|------------------|------------------------------------------------|

@@ -191,7 +191,3 @@ agents:
     path: '.github/agents/project-planning/ux-ui-designer.agent.md'
     class: unknown
     cost_tier: light
-  - slug: vex-generator
-    path: '.github/agents/security/vex-generator.agent.md'
-    class: unknown
-    cost_tier: light

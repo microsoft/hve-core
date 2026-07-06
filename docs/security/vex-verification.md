@@ -3,7 +3,7 @@ title: VEX Verification
 description: Download, verify, and interpret the OpenVEX vulnerability exploitability document published with each HVE Core release
 sidebar_position: 4
 author: Microsoft
-ms.date: 2026-06-18
+ms.date: 2026-07-03
 ms.topic: how-to
 keywords:
   - VEX
@@ -131,7 +131,7 @@ grype sbom:hve-core-<version>.vsix.spdx.json --vex hve-core.openvex.json
 
 * [SBOM Verification](sbom-verification.md): Download and verify the Software Bill of Materials that pairs with the VEX document
 * [Security Model](security-model.md): Security controls including VEX attestation (SC-9)
-* [VEX Generator agent](../agents/security/vex-generator.md): How HVE Core drafts its VEX determinations
+* [VEX capability](../agents/security/vex-capability.md): How HVE Core drafts its VEX determinations
 * [OpenVEX specification](https://github.com/openvex/spec): The OpenVEX v0.2.0 format reference
 
 ---
