@@ -18,7 +18,7 @@ fuzz = [
 ]
 
 [tool.pytest.ini_options]
-addopts = "--cov --cov-report=term-missing --cov-fail-under=90"
+addopts = "--cov --cov-report=term-missing --cov-fail-under=95"
 testpaths = ["tests"]
 pythonpath = ["scripts"]
 python_files = ["test_*.py", "fuzz_harness.py"]
