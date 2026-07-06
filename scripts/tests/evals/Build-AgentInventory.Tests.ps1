@@ -27,6 +27,20 @@ BeforeAll {
         Set-Content -LiteralPath $full -Value ($lines -join "`n") -Encoding UTF8
     }
 
+    function script:New-StimulusPartial {
+        param(
+            [Parameter(Mandatory)] [string]$Root,
+            [Parameter(Mandatory)] [string]$Slug
+        )
+
+        $full = Join-Path $Root (Join-Path 'evals/agent-behavior/stimuli' "$Slug.yml")
+        $dir  = Split-Path -Parent $full
+        if (-not (Test-Path -LiteralPath $dir -PathType Container)) {
+            New-Item -ItemType Directory -Path $dir -Force | Out-Null
+        }
+        Set-Content -LiteralPath $full -Value "stimuli: []`n" -Encoding UTF8
+    }
+
     function script:New-MinimalRepo {
         param([Parameter(Mandatory)] [string]$Root)
 
@@ -37,22 +51,14 @@ BeforeAll {
         }
         New-AgentFile -Root $Root -RelativePath '.github/agents/ado/ado-backlog-manager.agent.md'
 
-        # Subagents marked with user-invocable: false MUST be excluded regardless of path.
+        # Subagents marked with user-invocable: false are included only when a matching stimuli partial exists.
         New-AgentFile -Root $Root -RelativePath '.github/agents/hve-core/subagents/researcher-subagent.agent.md' -Frontmatter @{
             'user-invocable' = 'false'
         }
         New-AgentFile -Root $Root -RelativePath '.github/agents/security/subagents/codebase-profiler.agent.md' -Frontmatter @{
             'user-invocable' = 'false'
         }
-        New-AgentFile -Root $Root -RelativePath '.github/agents/security/subagents/finding-deep-verifier.agent.md' -Frontmatter @{
-            'user-invocable' = 'false'
-        }
-        New-AgentFile -Root $Root -RelativePath '.github/agents/security/subagents/report-generator.agent.md' -Frontmatter @{
-            'user-invocable' = 'false'
-        }
-        New-AgentFile -Root $Root -RelativePath '.github/agents/security/subagents/skill-assessor.agent.md' -Frontmatter @{
-            'user-invocable' = 'false'
-        }
+        New-StimulusPartial -Root $Root -Slug 'codebase-profiler'
     }
 }
 
@@ -85,12 +91,12 @@ Describe 'Build-AgentInventory.ps1' -Tag 'Unit' {
             $script:Yaml | Should -Match '(?m)^\s+- slug: ado-backlog-manager\s*$'
         }
 
-        It 'Excludes every agent with user-invocable: false regardless of path' {
+        It 'Includes subagents that own a matching stimuli partial' {
+            $script:Yaml | Should -Match '(?m)^\s+- slug: codebase-profiler\s*$'
+        }
+
+        It 'Excludes subagents without a matching stimuli partial' {
             $script:Yaml | Should -Not -Match '(?m)^\s+- slug: researcher-subagent\s*$'
-            $script:Yaml | Should -Not -Match '(?m)^\s+- slug: codebase-profiler\s*$'
-            $script:Yaml | Should -Not -Match '(?m)^\s+- slug: finding-deep-verifier\s*$'
-            $script:Yaml | Should -Not -Match '(?m)^\s+- slug: report-generator\s*$'
-            $script:Yaml | Should -Not -Match '(?m)^\s+- slug: skill-assessor\s*$'
         }
 
         It 'Renders frontmatter eval-class and cost_tier when present' {
@@ -106,9 +112,9 @@ Describe 'Build-AgentInventory.ps1' -Tag 'Unit' {
             $slugs | Should -Be ($slugs | Sort-Object)
         }
 
-        It 'Counts exactly the parent agents (those without user-invocable: false)' {
+        It 'Counts the parent agents plus the included subagent rows' {
             $count = ([regex]::Matches($script:Yaml, '(?m)^\s+- slug:\s+')).Count
-            $count | Should -Be 2
+            $count | Should -Be 3
         }
     }
 

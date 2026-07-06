@@ -74,8 +74,8 @@ $ActionSHAMap = @{
     "actions/deploy-pages@v4"              = "actions/deploy-pages@d6db90164ac5ed86f2b6aed7e0febac5b3c0c03e" # v4.0.5
 
     # Attestation and provenance
-    "actions/attest@v4"                    = "actions/attest@59d89421af93a897026c735860bf21b6eb4f7b26" # v4.1.0
-    "actions/attest-build-provenance@v4"   = "actions/attest-build-provenance@a2bbfa25375fe432b6a289bc6b6cd05ecd0c4c32" # v4.1.0
+    "actions/attest@v4"                    = "actions/attest@a1948c3f048ba23858d222213b7c278aabede763" # v4.1.1
+    "actions/attest-build-provenance@v4"   = "actions/attest-build-provenance@0f67c3f4856b2e3261c31976d6725780e5e4c373" # v4.1.1
 
     # Security and code analysis
     "actions/dependency-review-action@v4"  = "actions/dependency-review-action@2031cfc080254a8a887f58cffee85186f0e49e48" # v4.9.0

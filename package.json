@@ -24,6 +24,7 @@
     "lint:hooks": "pwsh -File scripts/linting/Validate-HookManifests.ps1 -OutputPath logs/hook-manifest-validation-results.json",
     "lint:version-consistency": "pwsh -NoProfile -Command \"./scripts/security/Test-ActionVersionConsistency.ps1 -FailOnMismatch -Format Json -OutputPath logs/action-version-consistency-results.json\"",
     "lint:permissions": "pwsh -NoProfile -Command \"& './scripts/security/Test-WorkflowPermissions.ps1' -FailOnViolation\"",
+    "lint:extension-artifact-naming": "pwsh -NoProfile -File scripts/linting/Test-ExtensionArtifactNaming.ps1",
     "lint:dangerous-workflow": "pwsh -NoProfile -Command \"& './scripts/security/Test-DangerousWorkflow.ps1' -FailOnViolation\"",
     "lint:dependency-pinning": "pwsh -NoProfile -Command \"& './scripts/security/Test-DependencyPinning.ps1' -FailOnUnpinned\"",
     "lint:pr-gate": "pwsh -NoProfile -Command \"& './scripts/security/Test-PrValidationGate.ps1' -FailOnViolation\"",
