@@ -1,6 +1,6 @@
 ---
 name: BRD Builder
-description: "Business Requirements Document builder with guided Q&A and references - Brought to you by microsoft/hve-core"
+description: "Business Requirements Document builder with guided Q&A and references"
 agents:
   - BRD Quality Reviewer
   - Researcher Subagent

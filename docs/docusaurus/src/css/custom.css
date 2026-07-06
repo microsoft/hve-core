@@ -51,10 +51,12 @@
   --ifm-line-height-base: 1.3;
 
   /* Layer 2: Custom MS Learn properties */
-  --ms-learn-hero-bg: #005ba1;
-  --ms-learn-hero-gradient: linear-gradient(174.2deg, #005ba1 0%, #004d88 66.72%, #003e6e);
+  /* SC 1.4.3/1.4.6: gradient stops kept dark so white hero text holds >=7:1 at
+     the lightest stop (extra margin vs. the 4.5:1 minimum) */
+  --ms-learn-hero-bg: #004e8a;
+  --ms-learn-hero-gradient: linear-gradient(174.2deg, #004e8a 0%, #004478 66.72%, #003459);
   --ms-learn-hero-text: #ffffff;
-  --ms-learn-hero-pattern: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='60' height='60' fill='none'%3E%3Cpath d='M8 6l10 10m0-10L8 16M38 36l10 10m0-10L38 46' stroke='%23000' stroke-opacity='0.08' stroke-width='2' stroke-linecap='round'/%3E%3C/svg%3E");
+  --ms-learn-hero-pattern: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='60' height='60' fill='none'%3E%3Cpath d='M8 6l10 10m0-10L8 16M38 36l10 10m0-10L38 46' stroke='%23000' stroke-opacity='0.05' stroke-width='2' stroke-linecap='round'/%3E%3C/svg%3E");
   --ms-learn-card-accent: #0078d4;
   --ms-learn-card-border: #e6e6e6;
   --ms-learn-text-subtle: #505050;
@@ -113,6 +115,31 @@ button:focus-visible,
   border-color: #6b7680;
   box-shadow: inset 0 -1px 0 #6b7680;
   color: #4a5560;
+}
+
+/* SC 1.4.3 / 1.4.11: pin search input colors so typed text, placeholder, and the
+   field border keep deterministic >=4.5:1 (text) / >=3:1 (border) contrast
+   instead of inheriting low-contrast Infima defaults */
+.navbar__search-input {
+  background-color: #ffffff;
+  color: #161616;
+  border: 1px solid #6b7680;
+}
+
+.navbar__search-input::placeholder {
+  color: #595959;
+  opacity: 1;
+}
+
+[data-theme='dark'] .navbar__search-input {
+  background-color: #292929;
+  color: #f2f2f2;
+  border: 1px solid #8a8a8a;
+}
+
+[data-theme='dark'] .navbar__search-input::placeholder {
+  color: #b0b0b0;
+  opacity: 1;
 }
 
 /* Navbar: MS Learn-style sizing */
@@ -208,9 +235,21 @@ button:focus-visible,
 .menu__link {
   font-size: 14px;
   font-weight: 400;
-  line-height: 25.6px;
-  padding: 2px 0 2px 16px;
+  line-height: 1.3;
+  padding: 4px 0 4px 16px;
+  min-height: 24px;
+  display: flex;
+  align-items: center;
+  box-sizing: border-box;
   color: var(--ifm-font-color-base);
+}
+
+.table-of-contents__link {
+  display: flex;
+  align-items: center;
+  min-height: 24px;
+  padding-block: 4px;
+  box-sizing: border-box;
 }
 
 .menu__link:hover {
@@ -242,9 +281,26 @@ button:focus-visible,
 
 .menu__caret {
   order: -1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
   padding: 0;
-  margin-right: -4px;
-  transform: scale(0.5);
+  margin: -2px 0 -2px -8px;
+  box-sizing: border-box;
+  transform: none;
+}
+
+.hash-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  margin: -4px;
+  padding: 0 4px;
+  box-sizing: border-box;
 }
 
 .menu__link--sublist {
@@ -337,6 +393,22 @@ button:focus-visible,
 
 .docCard a:hover {
   text-decoration: none;
+}
+
+.cardTitle,
+.collectionName {
+  display: flex;
+  align-items: center;
+  min-height: 24px;
+  padding-block: 2px;
+  box-sizing: border-box;
+}
+
+.boxCardLinks a {
+  display: block;
+  min-height: 24px;
+  padding-block: 4px;
+  box-sizing: border-box;
 }
 
 /* Dark mode: derived from MS Learn dark theme (extracted via Chrome DevTools) */

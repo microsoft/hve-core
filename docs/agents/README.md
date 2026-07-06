@@ -3,7 +3,7 @@ title: Agent Systems Catalog
 description: Overview of all hve-core agent systems with workflow documentation and quick links
 sidebar_position: 1
 author: Microsoft
-ms.date: 2026-06-26
+ms.date: 2026-06-30
 ms.topic: overview
 keywords:
   - github copilot
@@ -34,7 +34,7 @@ hve-core organizes specialized agents into functional groups. Each group combine
 
 ## RPI Orchestration
 
-The Research, Plan, Implement methodology separates complex tasks into specialized phases. Six agents (task-researcher, task-planner, task-implementor, task-reviewer, task-challenger, and the RPI orchestrator) coordinate through planning files to deliver structured engineering workflows. See the [RPI Documentation](../rpi/) for the full guide.
+The Research, Plan, Implement, Review methodology separates complex tasks into specialized phases. Six agents (task-researcher, task-planner, task-implementor, task-reviewer, task-challenger, and the RPI orchestrator) coordinate through planning files to deliver structured engineering workflows. See the [RPI Documentation](../rpi/) for the full guide.
 
 ## Code Review
 
@@ -98,8 +98,6 @@ The Design Thinking agents provide AI-assisted coaching through a nine-method, t
 |---------------------|--------------------------------------------------------------|
 | `dt-coach`          | Coaches teams through all 9 DT methods with session tracking |
 | `dt-learning-tutor` | Teaches DT curriculum with exercises and assessments         |
-
-> Brought to you by microsoft/hve-core
 
 ---
 

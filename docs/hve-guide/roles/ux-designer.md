@@ -2,7 +2,7 @@
 title: UX Designer
 description: Design Thinking coaching, user research, and prototyping workflows for UX Designers
 author: Microsoft
-ms.date: 2026-06-26
+ms.date: 2026-06-28
 ms.topic: tutorial
 keywords:
   - ux designer
@@ -117,8 +117,6 @@ them against desirability, feasibility, and viability criteria.
 > Learn Design Thinking methods: [Design Thinking Overview](../../design-thinking/README.md)
 > Try the DT learning tutor: [DT Learning Tutor](../../design-thinking/dt-learning-tutor.md)
 > See how your stages connect: [AI-Assisted Project Lifecycle](../lifecycle/)
-
-Brought to you by microsoft/hve-core
 
 ---
 

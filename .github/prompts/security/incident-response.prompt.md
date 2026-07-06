@@ -1,6 +1,7 @@
 ---
 description: "Run an incident response workflow for Azure operations scenarios"
 name: incident-response
+agent: agent
 argument-hint: "[incident-description] [severity={1|2|3|4}] [phase={triage|diagnose|mitigate|rca}]"
 ---
 

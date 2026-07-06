@@ -71,4 +71,4 @@ Return a concise, evidence-first summary with:
 * Artifact self-check status, listing required sections checked when no executable validation ran.
 * Handoff status, either `/rpi-plan` with the dated artifact path or an explicit no-handoff reason.
 
-> Brought to you by microsoft/hve-core
+

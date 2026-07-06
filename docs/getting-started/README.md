@@ -3,7 +3,7 @@ title: Getting Started with HVE Core
 description: Quick setup guide for using HVE Core Copilot customizations in your projects
 sidebar_position: 1
 author: Microsoft
-ms.date: 2026-06-27
+ms.date: 2026-06-30
 ms.topic: tutorial
 keywords:
   - github copilot
@@ -17,10 +17,10 @@ You've installed HVE Core. What now?
 
 The honest answer: you can start using agents immediately, and some of them
 will produce good results right away. But the real power of HVE Core is a
-methodology called RPI (Research, Plan, Implement) that changes how you
+methodology called RPI (Research, Plan, Implement, Review) that changes how you
 collaborate with AI. Instead of asking AI to "write the code," you ask it to
-research first, plan second, and implement third. The constraint changes
-everything.
+research first, plan second, implement third, and review last. The constraint
+changes everything.
 
 This guide walks you through four steps, each building on the last:
 

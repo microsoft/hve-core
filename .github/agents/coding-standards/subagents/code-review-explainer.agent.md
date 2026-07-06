@@ -38,7 +38,3 @@ Do not invent severity levels, categories, or output fields the skill does not d
 2. **Explain the symbol.** Describe what the function or symbol does, how it is wired into the local flow, and what the surrounding control or data flow implies. Keep the explanation factual and anchored to the code. Use the same neutral Register 1 prose style as the walkthrough.
 3. **Persist an explanation artifact.** Write a markdown artifact under the review folder indicated by `findingsFolder`, using the board item id and the target symbol as the filename stem if possible. Include the answer, the source file reference, the relevant code excerpt, and any follow-on symbols worth inspecting. Preserve openable links and selectable symbols for the board.
 4. **Return a concise summary.** Return the artifact path and a short note on the explanation. If the symbol cannot be resolved with available evidence, say so plainly and avoid guessing.
-
----
-
-Brought to you by microsoft/hve-core

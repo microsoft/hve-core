@@ -2,7 +2,7 @@
 title: Linting Scripts
 description: PowerShell scripts for code quality validation and documentation checks
 author: HVE Core Team
-ms.date: 2026-06-27
+ms.date: 2026-06-30
 ms.topic: reference
 keywords:
   - powershell
@@ -313,6 +313,7 @@ Purpose: Ensure all skill packages comply with the agentskills.io specification 
 * Verifies `name` matches directory name
 * When `scripts/` subdirectory exists, requires both `.ps1` and `.sh` files for cross-platform support
 * Validates Python skills with `tests/` include `tests/fuzz_harness.py` for Scorecard compliance
+* Warns when a Python skill has `pyproject.toml` without a committed `uv.lock` (required for Dependabot uv ecosystem coverage)
 * Warns on unrecognized directories
 * Supports changed-files-only mode via Git
 * Creates CI annotations for violations
@@ -355,7 +356,7 @@ Purpose: Ensure all PowerShell, shell, and Python scripts include the required M
 ##### Features
 
 * Scans `.ps1`, `.psm1`, `.psd1`, `.sh`, and `.py` files recursively
-* Checks for `Copyright (c) Microsoft Corporation` header
+* Checks for `Copyright (c) 2026 Microsoft Corporation. All rights reserved.` header
 * Checks for `SPDX-License-Identifier: MIT` identifier
 * Configurable file extensions and exclude paths
 * Exports JSON results with per-file compliance details
@@ -368,6 +369,7 @@ Purpose: Ensure all PowerShell, shell, and Python scripts include the required M
 * `-OutputPath` (string) - Path for JSON results (default: `logs/copyright-header-results.json`)
 * `-FailOnMissing` (switch) - Exit with code 1 if any files lack required headers
 * `-ExcludePaths` (string[]) - Directories to exclude (default: `@('node_modules', '.git', 'vendor', 'logs')`)
+* `-Fix` (switch) - Rewrite non-canonical headers and insert missing ones in place using the comment prefix appropriate to each file. Idempotent. Default is validation-only.
 
 ##### Usage
 
@@ -380,6 +382,9 @@ Purpose: Ensure all PowerShell, shell, and Python scripts include the required M
 
 # Check specific path with verbose output
 ./scripts/linting/Test-CopyrightHeaders.ps1 -Path ./scripts -FailOnMissing -Verbose
+
+# Normalize headers in place (rewrite non-canonical, insert missing)
+./scripts/linting/Test-CopyrightHeaders.ps1 -Fix
 ```
 
 ##### GitHub Actions Integration

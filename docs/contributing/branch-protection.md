@@ -3,7 +3,7 @@ title: Branch Protection Configuration
 description: Branch protection configuration for the hve-core repository
 sidebar_position: 8
 author: Microsoft
-ms.date: 2026-01-16
+ms.date: 2026-06-29
 ms.topic: reference
 keywords:
   - branch protection
@@ -16,6 +16,8 @@ estimated_reading_time: 3
 ## Overview
 
 Guidelines and configuration for GitHub branch protection rules in hve-core.
+
+> This page covers contributor-facing configuration and required status checks. For the security policy and rationale behind these controls, see [Branch Protection](../security/branch-protection.md).
 
 Branch protection rules ensure code quality and security by requiring:
 

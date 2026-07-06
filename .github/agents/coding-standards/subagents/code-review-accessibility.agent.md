@@ -56,7 +56,3 @@ Findings must trace to one of these skills and a specific success criterion or a
 5. **Write structured findings.** Write `<findingsFolder>/accessibility-findings.json` using the Output contract schema from output-formats.md, setting each finding's `skill` to the originating accessibility skill. Do not write a markdown report. Return a one-line summary of severity counts, the skills evaluated, and the findings file path.
 
 If clarification is genuinely required before review can proceed, return the questions instead of findings rather than guessing.
-
----
-
-Brought to you by microsoft/hve-core

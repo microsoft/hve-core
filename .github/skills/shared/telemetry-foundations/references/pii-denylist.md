@@ -17,4 +17,3 @@ This denylist is the authoritative list of fields treated as Personally Identifi
 
 Redaction strategy definitions live in the parent skill under PII Handling. To propose a new entry, follow the intake process in [proposed-additions.md](proposed-additions.md).
 
-> Brought to you by microsoft/hve-core

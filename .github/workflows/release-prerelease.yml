@@ -278,9 +278,40 @@ jobs:
             "dist/${{ steps.vsix.outputs.name }}.intoto.jsonl" \
             --clobber -R "${{ github.repository }}"
 
+  verify-provenance:
+    name: Verify Provenance
+    needs: [prerelease-tag, attest-and-upload]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      attestations: read
+    env:
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - name: Download release artifacts
+        run: |
+          mkdir -p ./artifacts
+          gh release download "${{ needs.prerelease-tag.outputs.tag_name }}" \
+            -R "${{ github.repository }}" \
+            -p '*.vsix' \
+            -p '*.zip' \
+            -D ./artifacts
+
+      - name: Verify build provenance
+        run: |
+          shopt -s nullglob
+          files=(./artifacts/*)
+          if [ ${#files[@]} -eq 0 ]; then
+            echo "::error::No release artifacts downloaded for provenance verification"
+            exit 1
+          fi
+          for f in "${files[@]}"; do
+            gh attestation verify "$f" --repo "${{ github.repository }}"
+          done
+
   publish-release:
     name: Publish Pre-Release
-    needs: [prerelease-tag, attest-and-upload]
+    needs: [prerelease-tag, attest-and-upload, verify-provenance]
     runs-on: ubuntu-latest
     permissions:
       contents: write

@@ -48,7 +48,7 @@ Each parent agent belongs to exactly one class. The class selects the stimulus s
 
 | Class           | Members | Prompt Theme                                                    | Grader Regex (case-insensitive)                           |
 |-----------------|---------|-----------------------------------------------------------------|-----------------------------------------------------------|
-| research-writer | 8       | Investigate or document a topic and return a structured writeup | `(summary\|findings\|recommendation\|outline\|sections?)` |
+| research-writer | 9       | Investigate or document a topic and return a structured writeup | `(summary\|findings\|recommendation\|outline\|sections?)` |
 | code-reviewer   | 7       | Review a diff or artifact and surface concerns                  | `(issue\|risk\|severity\|finding\|recommend\|line \d+)`   |
 | code-implementor  | 6       | Implement or modify code to satisfy a spec                            | `(```\|patch\|diff\|file:\|edit\|add\|modify)`                                             |
 | workitem-manager  | 8       | Convert a raw request into a backlog draft                            | `(title\|summary\|description\|acceptance\|priority\|severity\|repro\|steps)`              |

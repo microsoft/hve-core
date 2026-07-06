@@ -24,6 +24,7 @@ BeforeAll {
             [switch]$WithEmptyScriptsDir,
             [switch]$WithUnrecognizedDir,
             [switch]$WithPyprojectToml,
+            [switch]$WithoutUvLock,
             [switch]$WithPythonScripts,
             [string]$WithPythonPackageDir,
             [string[]]$OptionalDirs = @()
@@ -73,6 +74,9 @@ target-version = "py311"
 [tool.ruff.lint]
 select = ["E", "F", "I", "W"]
 "@
+            if (-not $WithoutUvLock) {
+                Set-Content -Path (Join-Path $skillDir 'uv.lock') -Value 'version = 1'
+            }
         }
 
         if ($WithPythonScripts) {
@@ -131,7 +135,7 @@ description: A test skill for validation
             $content = @"
 ---
 name: 'my-skill'
-description: 'A skill with single quotes - Brought to you by microsoft/hve-core'
+description: 'A skill with single quotes'
 ---
 
 # Skill
@@ -142,7 +146,7 @@ description: 'A skill with single quotes - Brought to you by microsoft/hve-core'
             $result = Get-SkillFrontmatter -Path $filePath
             $result | Should -Not -BeNullOrEmpty
             $result['name'] | Should -BeExactly 'my-skill'
-            $result['description'] | Should -BeExactly 'A skill with single quotes - Brought to you by microsoft/hve-core'
+            $result['description'] | Should -BeExactly 'A skill with single quotes'
         }
 
         It 'Strips double-quoted values correctly' {
@@ -290,7 +294,7 @@ Describe 'Test-SkillDirectory' -Tag 'Unit' {
             $frontmatter = @"
 ---
 name: test-skill
-description: 'A test skill for validation - Brought to you by microsoft/hve-core'
+description: 'A test skill for validation'
 ---
 
 # Test Skill
@@ -1735,4 +1739,86 @@ description: 'Skill for default output path test'
     }
 }
 #endregion Default OutputPath Parameter Test
+
+#region SECURITY.md Structure Tests
+
+Describe 'Test-SecurityModelStructure' -Tag 'Unit' {
+    BeforeAll {
+        $script:SecModelDir = Join-Path $script:TempTestDir "secmodel_$([guid]::NewGuid().ToString('N'))"
+        New-Item -ItemType Directory -Path $script:SecModelDir -Force | Out-Null
+
+        # Variant A (canonical): no umbrella, buckets at H2, STRIDE and Risk Rating at H3.
+        $script:VariantA = "# Skill Security Model`n`n## Bucket B1: Example`n`n### Spoofing`n`n* n/a`n`n### Risk Rating`n`n| Threat | Status |`n|--------|--------|`n| x | Mitigated |`n"
+
+        # Variant B (deprecated): umbrella heading, buckets at H3, STRIDE/Risk Rating at H4.
+        $script:VariantB = "# Skill Security Model`n`n## Trust Buckets`n`n### Bucket B1: Example`n`n#### Spoofing`n`n* n/a`n`n#### Risk Rating`n`n| Threat | Status |`n|--------|--------|`n| x | Mitigated |`n"
+
+        function New-SecurityModelFile {
+            param([string]$Name, [string]$Content)
+            $path = Join-Path $script:SecModelDir "$Name.md"
+            Set-Content -Path $path -Value $Content -NoNewline
+            return $path
+        }
+    }
+
+    It 'Returns no errors for a Variant A model' {
+        $path = New-SecurityModelFile -Name 'good' -Content $script:VariantA
+        $errors = Test-SecurityModelStructure -Path $path -RelativePath 'skills/good'
+        $errors | Should -BeNullOrEmpty
+    }
+
+    It 'Flags the deprecated ## Trust Buckets umbrella heading' {
+        $content = "# M`n`n## Trust Buckets`n`n## Bucket B1: x`n`n### Spoofing`n`n* n/a`n"
+        $path = New-SecurityModelFile -Name 'umbrella' -Content $content
+        $errors = Test-SecurityModelStructure -Path $path -RelativePath 'skills/umbrella'
+        ($errors -join "`n") | Should -Match 'Trust Buckets'
+    }
+
+    It 'Flags H3 bucket headings' {
+        $content = "# M`n`n### Bucket B1: x`n`n### Spoofing`n`n* n/a`n"
+        $path = New-SecurityModelFile -Name 'h3bucket' -Content $content
+        $errors = Test-SecurityModelStructure -Path $path -RelativePath 'skills/h3bucket'
+        ($errors -join "`n") | Should -Match 'H3'
+    }
+
+    It 'Flags H4 STRIDE headings' {
+        $content = "# M`n`n## Bucket B1: x`n`n#### Spoofing`n`n* n/a`n"
+        $path = New-SecurityModelFile -Name 'h4stride' -Content $content
+        $errors = Test-SecurityModelStructure -Path $path -RelativePath 'skills/h4stride'
+        ($errors -join "`n") | Should -Match 'H4'
+    }
+
+    It 'Flags H4 Risk Rating headings' {
+        $content = "# M`n`n## Bucket B1: x`n`n### Spoofing`n`n* n/a`n`n#### Risk Rating`n"
+        $path = New-SecurityModelFile -Name 'h4rr' -Content $content
+        $errors = Test-SecurityModelStructure -Path $path -RelativePath 'skills/h4rr'
+        ($errors -join "`n") | Should -Match 'H4'
+    }
+
+    It 'Reports all three violations for a full Variant B model' {
+        $path = New-SecurityModelFile -Name 'variantb' -Content $script:VariantB
+        $errors = Test-SecurityModelStructure -Path $path -RelativePath 'skills/variantb'
+        @($errors).Count | Should -Be 3
+    }
+
+    It 'Fails Test-SkillDirectory when a skill ships a Variant B SECURITY.md' {
+        $skillDir = Join-Path $script:SecModelDir 'wired-bad'
+        New-Item -ItemType Directory -Path $skillDir -Force | Out-Null
+        Set-Content -Path (Join-Path $skillDir 'SKILL.md') -Value "---`nname: wired-bad`ndescription: test`n---`n# S"
+        Set-Content -Path (Join-Path $skillDir 'SECURITY.md') -Value $script:VariantB -NoNewline
+        $result = Test-SkillDirectory -Directory (Get-Item $skillDir) -RepoRoot $script:SecModelDir
+        $result.IsValid | Should -BeFalse
+        ($result.Errors -join "`n") | Should -Match 'Trust Buckets'
+    }
+
+    It 'Passes Test-SkillDirectory when a skill ships a Variant A SECURITY.md' {
+        $skillDir = Join-Path $script:SecModelDir 'wired-good'
+        New-Item -ItemType Directory -Path $skillDir -Force | Out-Null
+        Set-Content -Path (Join-Path $skillDir 'SKILL.md') -Value "---`nname: wired-good`ndescription: test`n---`n# S"
+        Set-Content -Path (Join-Path $skillDir 'SECURITY.md') -Value $script:VariantA -NoNewline
+        $result = Test-SkillDirectory -Directory (Get-Item $skillDir) -RepoRoot $script:SecModelDir
+        ($result.Errors -join "`n") | Should -Not -Match 'SECURITY.md'
+    }
+}
+#endregion SECURITY.md Structure Tests
 

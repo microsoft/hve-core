@@ -1288,3 +1288,57 @@ stimuli:
         name: scope-language
         config:
           pattern: "(?i)(finding|severity|verdict|approve|request changes|comment)"
+
+  - name: prompt-vex-scan-conformance
+    prompt: |
+      Invoke the `vex-scan` prompt with minimal arguments and explain how it
+      coordinates the workflow.
+    tags:
+      category: behavior-conformance
+      prompt: vex-scan
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: agent-attribution
+        config:
+          pattern: "(?i)VEX\\s+Generator|vex-scan"
+      - type: output-matches
+        name: scope-language
+        config:
+          pattern: "(?i)VEX|vulnerabilit|exploitability|OpenVEX|scan|vex-scan"
+
+  - name: prompt-vex-triage-conformance
+    prompt: |
+      Invoke the `vex-triage` prompt with minimal arguments and explain how it
+      coordinates the workflow.
+    tags:
+      category: behavior-conformance
+      prompt: vex-triage
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: agent-attribution
+        config:
+          pattern: "(?i)VEX\\s+Generator|vex-triage"
+      - type: output-matches
+        name: scope-language
+        config:
+          pattern: "(?i)VEX|triage|OpenVEX|SBOM|report|vex-triage"
+
+  - name: prompt-vex-implement-conformance
+    prompt: |
+      Invoke the `vex-implement` prompt with minimal arguments and explain how it
+      coordinates the workflow.
+    tags:
+      category: behavior-conformance
+      prompt: vex-implement
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: agent-attribution
+        config:
+          pattern: "(?i)VEX|vex-implement|OpenVEX"
+      - type: output-matches
+        name: scope-language
+        config:
+          pattern: "(?i)VEX|OpenVEX|statement|status|justification|vex-implement"

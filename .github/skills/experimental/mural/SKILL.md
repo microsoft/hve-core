@@ -1,6 +1,6 @@
 ---
 name: mural
-description: 'Mural workspace, room, mural, and widget workflows via the Mural REST API exposed through a Python CLI. Use when you need to read or write Mural content or automate widget creation. - Brought to you by microsoft/hve-core'
+description: 'Mural workspace, room, mural, and widget workflows via the Mural REST API exposed through a Python CLI. Use when you need to read or write Mural content or automate widget creation.'
 license: MIT
 compatibility: 'Requires Python 3.11+ and a Mural OAuth app'
 metadata:

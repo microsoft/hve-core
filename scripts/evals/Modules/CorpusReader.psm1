@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: MIT
 # CorpusReader.psm1
 # Purpose: Read AI corpus markdown files with YAML frontmatter stripping for moderation input.
-#Requires -Version 7.0
+#Requires -Version 7.4
 
 <#
 .SYNOPSIS

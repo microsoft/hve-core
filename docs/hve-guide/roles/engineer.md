@@ -3,7 +3,7 @@ title: Engineer Guide
 description: HVE Core support for engineers building features, fixing bugs, and shipping code with AI-assisted workflows
 sidebar_position: 3
 author: Microsoft
-ms.date: 2026-06-26
+ms.date: 2026-06-30
 ms.topic: how-to
 keywords:
   - engineer
@@ -115,13 +115,13 @@ Auto-activated instructions apply coding standards based on file type: C# (`*.cs
 
 ## Tips
 
-| Do                                                         | Don't                                                      |
-|------------------------------------------------------------|------------------------------------------------------------|
-| Research before implementing multi-file changes            | Jump straight to coding complex features                   |
-| Use `/rpi mode=auto` for planned, multi-step work          | Manually coordinate research, planning, and implementation |
-| Let coding standards auto-activate by file type            | Override or skip language-specific instructions            |
-| Review the research doc before starting the planning phase | Skip research for unfamiliar codebases or APIs             |
-| Clear context between RPI phases with `/clear`             | Carry stale context across research, plan, and implement   |
+| Do                                                         | Don't                                                            |
+|------------------------------------------------------------|------------------------------------------------------------------|
+| Research before implementing multi-file changes            | Jump straight to coding complex features                         |
+| Use `/rpi mode=auto` for planned, multi-step work          | Manually coordinate research, planning, and implementation       |
+| Let coding standards auto-activate by file type            | Override or skip language-specific instructions                  |
+| Review the research doc before starting the planning phase | Skip research for unfamiliar codebases or APIs                   |
+| Clear context between RPI phases with `/clear`             | Carry stale context across research, plan, implement, and review |
 
 ## Related Roles
 

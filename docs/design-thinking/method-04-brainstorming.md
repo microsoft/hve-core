@@ -3,7 +3,7 @@ title: "Method 4: Brainstorming"
 description: "Generate diverse solution ideas through structured divergent thinking and converge on promising directions through evidence-informed clustering."
 sidebar_position: 8
 author: Microsoft
-ms.date: 2026-06-26
+ms.date: 2026-06-28
 ms.topic: tutorial
 keywords: [design thinking, method-04, brainstorming]
 estimated_reading_time: 5
@@ -81,8 +81,6 @@ When you have 3 to 5 converged solution themes grounded in the problem statement
 * [Method 3: Input Synthesis](method-03-input-synthesis.md)
 * [Method 5: User Concepts](method-05-user-concepts.md)
 * [Design Thinking Overview](README.md)
-
-> Brought to you by microsoft/hve-core
 
 <!-- markdownlint-disable MD036 -->
 *🤖 Crafted with precision by ✨Copilot following brilliant human instruction,

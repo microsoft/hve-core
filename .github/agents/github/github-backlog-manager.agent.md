@@ -167,7 +167,3 @@ Approval requests appear as concise summaries showing the proposed action, affec
 * Similarity assessment runs before any issue creation to prevent duplicates.
 * The autonomy mode is respected at every gate point.
 * Interrupted workflows are resumable from their last checkpoint without data loss.
-
----
-
-🤖 Brought to you by microsoft/hve-core

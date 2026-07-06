@@ -488,6 +488,27 @@ stimuli:
         config:
           pattern: "(?i)prohibited\\s+use|risk\\s+(indicator|classification)|depth\\s+tier|basic|standard|comprehensive"
 
+  - name: instruction-rai-license-posture-conformance
+    prompt: |
+      You are authoring RAI standards content under a `skills/rai` scope with a
+      plan at `.copilot-tracking/rai-plans/customer-onboarding/`. Which
+      `.github/instructions/**/*.instructions.md` file defines the RAI overlay
+      onto the repository licensing posture (cite its path) and what does it
+      require for reproduction and attribution of third-party standards?
+    tags:
+      category: behavior-conformance
+      instruction: rai-license-posture
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: applyTo-evidence
+        config:
+          pattern: "(?i)skills/rai|\\.copilot-tracking/rai-plans|rai-plans/"
+      - type: output-matches
+        name: scope-language
+        config:
+          pattern: "(?i)license|attribution|reproduce|standard|posture"
+
   - name: instruction-backlog-handoff-conformance
     prompt: |
       You are completing Phase 5 of a Security Planning session and
@@ -1252,3 +1273,201 @@ stimuli:
         name: scope-language
         config:
           pattern: '(?i)(\.copilot-tracking[-/\\]reviews|artifact|persist|schema|verdict)'
+
+  - name: instruction-ado-interaction-templates-conformance
+    prompt: |
+      You are drafting a new Azure DevOps backlog comment or work-item description.
+      Which instruction file should guide the shared wording and field structure?
+    tags:
+      category: behavior-conformance
+      instruction: ado-interaction-templates
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: instruction-attribution
+        config:
+          pattern: '(?i)(ado|azure\s+devops|work\s+item|comment|description|interaction)'
+      - type: output-matches
+        name: scope-language
+        config:
+          pattern: '(?i)(template|guidance|work\s+item|ado|description)'
+
+  - name: instruction-adr-byo-template-conformance
+    prompt: |
+      You are creating a new ADR draft and need the repository's BYO template guidance.
+      Which instruction file applies and what does it help structure?
+    tags:
+      category: behavior-conformance
+      instruction: adr-byo-template
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: instruction-attribution
+        config:
+          pattern: '(?i)(adr|decision|template|byo)'
+      - type: output-matches
+        name: scope-language
+        config:
+          pattern: '(?i)(template|adr|decision|frontmatter)'
+
+  - name: instruction-adr-handoff-conformance
+    prompt: |
+      You are handing an ADR draft from planning to implementation work.
+      Which instruction file governs the handoff contract and summary shape?
+    tags:
+      category: behavior-conformance
+      instruction: adr-handoff
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: instruction-attribution
+        config:
+          pattern: '(?i)(adr|handoff|govern|summary)'
+      - type: output-matches
+        name: scope-language
+        config:
+          pattern: '(?i)(handoff|summary|planning|implementation)'
+
+  - name: instruction-adr-identity-conformance
+    prompt: |
+      You are setting up an ADR authoring session and need the canonical identity protocol.
+      Which instruction file should guide the session framing and state handling?
+    tags:
+      category: behavior-conformance
+      instruction: adr-identity
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: instruction-attribution
+        config:
+          pattern: '(?i)(adr|identity|state|session|phase)'
+      - type: output-matches
+        name: scope-language
+        config:
+          pattern: '(?i)(identity|session|state|phase|authoring)'
+
+  - name: instruction-adr-standards-conformance
+    prompt: |
+      You are authoring an ADR and need the shared standards for status, naming, and template use.
+      Which instruction file should you consult?
+    tags:
+      category: behavior-conformance
+      instruction: adr-standards
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: instruction-attribution
+        config:
+          pattern: '(?i)(adr|standard|status|naming|template)'
+      - type: output-matches
+        name: scope-language
+        config:
+          pattern: '(?i)(standard|status|naming|adr|template)'
+
+  - name: instruction-graphify-conformance
+    prompt: |
+      You are preparing a planning note that should connect to the graphify guidance package.
+      Which instruction file applies and what kind of evidence does it help organize?
+    tags:
+      category: behavior-conformance
+      instruction: graphify
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: instruction-attribution
+        config:
+          pattern: '(?i)(graphify|evidence|graph|knowledge)'
+      - type: output-matches
+        name: scope-language
+        config:
+          pattern: '(?i)(graph|evidence|knowledge|planning)'
+
+  - name: instruction-jira-backlog-discovery-conformance
+    prompt: |
+      You are discovering backlog work items from Jira data and need the canonical discovery guidance.
+      Which instruction file should guide the search and planning workflow?
+    tags:
+      category: behavior-conformance
+      instruction: jira-backlog-discovery
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: instruction-attribution
+        config:
+          pattern: '(?i)(jira|backlog|discovery|search|planning)'
+      - type: output-matches
+        name: scope-language
+        config:
+          pattern: '(?i)(jira|backlog|discovery|planning|issue)'
+
+  - name: instruction-jira-backlog-triage-conformance
+    prompt: |
+      You are triaging Jira issues and need the shared triage guidance for labels and duplicates.
+      Which instruction file applies and what does it help decide?
+    tags:
+      category: behavior-conformance
+      instruction: jira-backlog-triage
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: instruction-attribution
+        config:
+          pattern: '(?i)(jira|triage|label|duplicate|issue)'
+      - type: output-matches
+        name: scope-language
+        config:
+          pattern: '(?i)(triage|label|duplicate|jira|issue)'
+
+  - name: instruction-jira-backlog-update-conformance
+    prompt: |
+      You are updating Jira backlog items after a planning handoff and need the update guidance.
+      Which instruction file should guide the update workflow?
+    tags:
+      category: behavior-conformance
+      instruction: jira-backlog-update
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: instruction-attribution
+        config:
+          pattern: '(?i)(jira|backlog|update|handoff|issue)'
+      - type: output-matches
+        name: scope-language
+        config:
+          pattern: '(?i)(update|jira|backlog|handoff|issue)'
+
+  - name: instruction-vex-generation-conformance
+    prompt: |
+      You are drafting an AI-assisted VEX assessment for a vulnerability finding.
+      Which instruction file governs the VEX generation rules (cite its path)?
+    tags:
+      category: behavior-conformance
+      instruction: vex-generation
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: instruction-attribution
+        config:
+          pattern: '(?i)(vex|generation|evidence|confidence|triage)'
+      - type: output-matches
+        name: scope-language
+        config:
+          pattern: '(?i)(vex|generation|status|justification|evidence)'
+
+  - name: instruction-vex-standards-conformance
+    prompt: |
+      You are reviewing an OpenVEX document for conformance. Which instruction
+      file defines the VEX document standards (cite its path)?
+    tags:
+      category: behavior-conformance
+      instruction: vex-standards
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: instruction-attribution
+        config:
+          pattern: '(?i)(vex|standard|openvex|document|author)'
+      - type: output-matches
+        name: scope-language
+        config:
+          pattern: '(?i)(vex|openvex|standard|document|statement)'

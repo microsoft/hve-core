@@ -3,7 +3,7 @@ title: Architecture Diagrams Skill
 description: Use the portable architecture-diagrams skill to generate ASCII or Mermaid architecture diagrams from infrastructure source files
 sidebar_position: 4
 author: Microsoft
-ms.date: 2026-06-27
+ms.date: 2026-06-29
 ms.topic: how-to
 ---
 
@@ -38,7 +38,7 @@ Analyze the Terraform and Bicep files in this repository and create an ASCII arc
 
 ## Related Documentation
 
-* [Project Planning Agents](README)
+* [Project Planning Agents](README.md)
 * [ADR Creator](adr-creation)
 
 ---

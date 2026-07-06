@@ -127,7 +127,3 @@ Involve a human product owner or stakeholder when:
 * Budget allocation or resource commitment decisions are required.
 * Requirements from different stakeholders conflict and cannot be resolved through data.
 * Legal, compliance, or regulatory implications need expert judgment.
-
----
-
-Brought to you by microsoft/hve-core

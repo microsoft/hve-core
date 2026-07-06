@@ -308,6 +308,14 @@ with:
 
 Avoid `format()` workarounds or environment variable indirection when the simpler options above apply.
 
+## PR Validation Gate
+
+`pr-validation.yml` exposes a single `pr-validation-success` aggregator job as the required status check that gates merge. This job is green only when every other job in the workflow passes.
+
+Every job defined in `pr-validation.yml`, except `pr-validation-success` itself, MUST appear in the `needs:` list of the `pr-validation-success` job. Omitting a job lets that job fail silently without blocking merge, which defeats the gate.
+
+The `gate-completeness-check` job enforces this rule in CI, failing the workflow whenever the gate's `needs:` list drifts out of sync with the defined jobs. Contributors can validate the gate locally by running `npm run lint:pr-gate` before pushing.
+
 ## Enforcement Statement
 
 The following scripts enforce compliance:
@@ -316,5 +324,6 @@ The following scripts enforce compliance:
 * `scripts/security/Test-SHAStaleness.ps1` - Checks for stale dependencies
 * `scripts/security/Test-WorkflowPermissions.ps1` - Validates workflow permissions declarations
 * `scripts/linting/Invoke-YamlLint.ps1` - Runs actionlint validation
+* `scripts/security/Test-PrValidationGate.ps1` - Validates the PR validation gate `needs:` completeness
 
 All workflows must pass these validation checks to be merged into the repository.

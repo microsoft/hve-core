@@ -451,7 +451,6 @@ description: "My skill description"
         $content | Should -Match '## Requirements'
         $content | Should -Match '## License'
         $content | Should -Match '## Support'
-        $content | Should -Match 'Microsoft ISE HVE Essentials'
     }
 
     It 'Handles collection without description key' {
@@ -2078,18 +2077,6 @@ description: "My artifact description"
 "@ | Set-Content -Path $path
         $result = Get-ArtifactDescription -FilePath $path
         $result | Should -Be 'My artifact description'
-    }
-
-    It 'Strips branding suffix from description' {
-        $path = Join-Path $script:tempDir 'branded.md'
-        @"
----
-description: "Some tool - Brought to you by microsoft/hve-core"
----
-# Branded
-"@ | Set-Content -Path $path
-        $result = Get-ArtifactDescription -FilePath $path
-        $result | Should -Be 'Some tool'
     }
 
     It 'Returns empty string when frontmatter YAML is invalid' {

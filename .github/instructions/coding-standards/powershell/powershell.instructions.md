@@ -23,7 +23,7 @@ Placement varies by file type:
 #!/usr/bin/env pwsh
 # Copyright (c) 2026 Microsoft Corporation. All rights reserved.
 # SPDX-License-Identifier: MIT
-#Requires -Version 7.0
+#Requires -Version 7.4
 
 # Module (.psm1): first lines (no shebang)
 # Copyright (c) 2026 Microsoft Corporation. All rights reserved.
@@ -51,7 +51,7 @@ Production scripts follow a 10-section structure. Each section appears in the or
 
 ### Requires Statements
 
-`#Requires -Version 7.0` is required on all scripts and modules. Place it after the copyright header. In modules, place the `#Requires` statement after the copyright header and purpose comment.
+`#Requires -Version 7.4` is required on all scripts and modules. Place it after the copyright header. In modules, place the `#Requires` statement after the copyright header and purpose comment.
 
 ### Comment-Based Help
 
@@ -129,7 +129,7 @@ Module files (`.psm1`) follow a distinct pattern from scripts:
 
 * No shebang line
 * Purpose comment after the copyright header: `# ModuleName.psm1` and `# Purpose: ...`
-* `#Requires -Version 7.0` after the purpose comment
+* `#Requires -Version 7.4` after the purpose comment
 * Functions with full comment-based help, `[CmdletBinding()]`, and `[OutputType()]`
 * Explicit `Export-ModuleMember -Function @(...)` at the end of the file
 
@@ -251,7 +251,7 @@ Key enforced rules:
 * Block comment-based help before function body (`PSProvideCommentHelp`)
 * `[OutputType()]` attribute on functions (`PSUseOutputTypeCorrectly`)
 * Full cmdlet names, no aliases (`PSAvoidUsingCmdletAliases`)
-* Compatible syntax targeting PowerShell 5.1, 7.0, and 7.2 (`PSUseCompatibleSyntax`)
+* Compatible syntax targeting PowerShell 7.4 (`PSUseCompatibleSyntax`)
 
 Allowed exceptions:
 
@@ -266,7 +266,7 @@ Allowed exceptions:
 #!/usr/bin/env pwsh
 # Copyright (c) Microsoft Corporation.
 # SPDX-License-Identifier: MIT
-#Requires -Version 7.0
+#Requires -Version 7.4
 
 <#
 .SYNOPSIS
@@ -348,7 +348,7 @@ if ($MyInvocation.InvocationName -ne '.') {
 # HelperModule.psm1
 # Purpose: Shared utility functions for area operations.
 
-#Requires -Version 7.0
+#Requires -Version 7.4
 
 function Get-SomeData {
     <#
