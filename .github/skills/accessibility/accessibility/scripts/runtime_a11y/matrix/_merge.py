@@ -54,7 +54,7 @@ def _should_replace(
 
 def merge_updates(matrix: Matrix, updates: list[CandidateUpdate]) -> Matrix:
     """Apply deterministic updates to the matrix cells."""
-    cells = [cell for cell in matrix.cells]
+    cells = list(matrix.cells)
     for update in updates:
         for index, cell in enumerate(cells):
             if (

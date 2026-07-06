@@ -19,7 +19,7 @@ from urllib.parse import urlparse
 from runtime_a11y._errors import EXIT_USAGE, ScriptError
 
 _SCHEMA_PATH = Path(__file__).with_name("config-schema.json")
-_LOOPBACK_HOSTS = frozenset({"localhost", "127.0.0.1", "::1", "0.0.0.0"})
+_LOOPBACK_HOSTS = frozenset({"localhost", "127.0.0.1", "::1"})
 
 
 def load_schema() -> dict[str, Any]:

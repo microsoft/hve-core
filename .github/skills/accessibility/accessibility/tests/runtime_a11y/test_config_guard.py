@@ -57,3 +57,15 @@ def test_assert_target_allowed_blocks_unauthorized_host() -> None:
 
 def test_assert_target_allowed_permits_loopback() -> None:
     assert_target_allowed({"baseUrl": "http://127.0.0.1:3000"})
+
+
+def test_assert_target_allowed_blocks_bind_all_address() -> None:
+    # 0.0.0.0 is a bind-all address, not loopback, so it must not be treated as
+    # unconditionally safe by the SSRF guard.
+    with pytest.raises(ScriptError):
+        assert_target_allowed({"baseUrl": "http://0.0.0.0:3000"})
+
+
+def test_assert_target_allowed_permits_bind_all_when_allowlisted() -> None:
+    assert_target_allowed({"baseUrl": "http://0.0.0.0:3000", "allowlist": ["0.0.0.0"]})
+    assert_target_allowed({"baseUrl": "http://0.0.0.0:3000"}, allow_external=True)

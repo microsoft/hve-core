@@ -81,8 +81,10 @@ def _load_document(payload: str | bytes | Path | dict[str, Any]) -> dict[str, An
 
 def _normalize_status(value: Any) -> str:
     status = str(value or "").strip().lower()
-    if status in {"candidate", "partial"}:
-        return "partial"
-    if status in {"pass", "fail", "partial"}:
-        return status
-    return "unknown"
+    match status:
+        case "candidate" | "partial":
+            return "partial"
+        case "pass" | "fail":
+            return status
+        case _:
+            return "unknown"

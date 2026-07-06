@@ -26,8 +26,9 @@ export async function runProbe() {
     const hasDefect = snapshot.roles > 0 && treeIssues.length > 0;
     const evidencePayload = {
       snapshot,
-      accessibilityTree,
       treeIssueCount: treeIssues.length,
+      // Capped to avoid bloating evidence payloads on complex pages.
+      accessibilityTreeSample: JSON.stringify(accessibilityTree).slice(0, 2000),
     };
 
     const results = await buildProbeResults({
