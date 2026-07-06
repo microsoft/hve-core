@@ -10,6 +10,10 @@ import MDXComponents from '@theme-original/MDXComponents';
 // present in the pre-rendered HTML, before hydration, so an accessibility scan
 // on load always sees a focusable scroll region.
 function Table(props: React.ComponentProps<'table'>): React.ReactElement {
+  // A scrollable region must be keyboard focusable (WCAG 2.1.1 / axe
+  // scrollable-region-focusable). jsx-a11y/no-noninteractive-tabindex does not
+  // model that case for a <table>, so it is disabled here with intent.
+  // eslint-disable-next-line jsx-a11y/no-noninteractive-tabindex
   return <table {...props} tabIndex={0} />;
 }
 
