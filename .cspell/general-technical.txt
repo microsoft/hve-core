@@ -1402,10 +1402,13 @@ contentinfo
 describedby
 frontend
 haspopup
+hoverable
+hrefs
 labelledby
 middleware
 microservice
 microservices
+supertitle
 webhook
 webhooks
 
