@@ -40,7 +40,9 @@ export async function runProbe() {
         state,
         status: snapshot.duplicateIds.length > 0 ? 'fail' : 'pass',
         method: 'runtime-automation',
-        evidence: JSON.stringify({ duplicateIds: snapshot.duplicateIds.slice(0, 10) }),
+        // duplicateIds are page-derived strings; redact them before emitting so
+        // this probe follows the same log-hygiene contract as the sibling probes.
+        evidence: JSON.stringify({ duplicateIds: snapshot.duplicateIds.slice(0, 10).map((value) => redactUrl(value)) }),
         severity: snapshot.duplicateIds.length > 0 ? 'moderate' : 'minor',
       },
       {

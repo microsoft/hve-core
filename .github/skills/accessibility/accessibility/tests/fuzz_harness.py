@@ -56,7 +56,12 @@ def fuzz_normalize_results(data: bytes) -> None:
 def fuzz_runtime_a11y_parsers(data: bytes) -> None:
     """Exercise the pure-Python runtime_a11y parsers with fuzzed inputs."""
     provider = atheris.FuzzedDataProvider(data)
-    try:
+    # Fuzzed input is intentionally malformed, so these parsers are expected to
+    # raise on bad data; only crashes and hangs are real findings. Suppress the
+    # expected exceptions with the same contextlib.suppress idiom used elsewhere
+    # in this harness so the fuzzer keeps exploring instead of aborting on
+    # handled input errors.
+    with suppress(Exception):
         config_module.load_config(
             Path(provider.ConsumeUnicodeNoSurrogates(32) or "config.json")
         )
@@ -85,8 +90,6 @@ def fuzz_runtime_a11y_parsers(data: bytes) -> None:
             ),
             [],
         )
-    except Exception:
-        pass
 
 
 FUZZ_TARGETS = [fuzz_normalize_results, fuzz_runtime_a11y_parsers]
