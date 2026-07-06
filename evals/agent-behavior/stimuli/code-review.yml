@@ -150,3 +150,128 @@ stimuli:
         name: no-silent-arbitration
         config:
           pattern: '(?i)(defer|human|reviewer|surface\s+both|both\s+findings|not\s+\S{0,20}(arbitrate|arbitration|arbitrating|resolve|resolved|resolving|decide|decided|deciding)|cannot\s+\S{0,20}(arbitrate|arbitration|arbitrating|resolve|resolved|resolving|decide|decided|deciding)|author\S{0,20}\s+(smell|mistake|fix|issue))'
+
+  # Origin-precedence and stacking coverage for the Workspace/User/Bundled
+  # skill-discovery revision (issue #1901). These assert the "Resolve
+  # duplicates" and "Load stacked skills" rules of the coding-standards
+  # subagent through the parent Code Review matrix slug.
+  - name: code-review-standards-user-tier-precedence
+    prompt: |
+      As the standards code-review perspective, evaluate this merge-policy
+      scenario. Treat the inline skill summaries below as the discovered
+      candidate set; do not inspect or rely on real workspace skill files.
+
+      Two skills share the same name "python-foundational", and no Workspace
+      copy is present:
+
+      Candidate A comes from a User-profile skill root (~/.copilot/skills/
+      coding-standards/) and requires public functions to declare type hints.
+      Candidate B is a Bundled extension skill (packaged plugin under
+      skills/coding-standards/) and forbids type-hint annotations.
+
+      Their checks differ. Given the Workspace > User > Bundled origin
+      precedence, state which single copy you load and why, then review the
+      diff. Do not load or apply both copies of the same-named skill. The
+      User-profile check (type hints required) is the one that must apply.
+
+      ```python
+      def compute(x):
+          return x * 2
+      ```
+
+    tags:
+      category: agent-behavior
+      advisory: "true"
+      scenario: merge-user-tier-precedence
+    graders:
+      - type: output-matches
+        name: user-tier-takes-precedence
+        config:
+          pattern: '(?i)(user[-\s]?profile|user\s+(origin|tier|copy|version)|~/\.copilot|\.copilot/skills)'
+      - type: output-matches
+        name: single-copy-loaded-bundled-shadowed
+        config:
+          pattern: '(?i)(precedence|override|shadow|dedup|suppressed|not\s+loaded|not\s+load|not\s+both|only\s+one|single\s+(copy|version)|one\s+(copy|version))'
+      - type: output-matches
+        name: user-check-applied
+        config:
+          pattern: '(?i)(type\s?hint|annotation)'
+  - name: code-review-standards-unknown-origin-dedup
+    prompt: |
+      As the standards code-review perspective, evaluate this merge-policy
+      scenario. Treat the inline skill summaries below as the discovered
+      candidate set; do not inspect or rely on real workspace skill files.
+
+      Two skills are available and both are named "python-foundational", but
+      neither candidate carries a source label or path, so their origin cannot
+      be determined and neither can be ranked as Workspace, User, or Bundled.
+      Their checks differ.
+
+      Explain how you resolve this duplicate. Load only one same-named skill,
+      do not merge or combine the two bodies, and note the ambiguous duplicate
+      in your summary.
+
+      ```python
+      def compute(x):
+          return x * 2
+      ```
+
+    tags:
+      category: agent-behavior
+      advisory: "true"
+      scenario: merge-unknown-origin-dedup
+    graders:
+      - type: output-matches
+        name: single-copy-no-merge
+        config:
+          pattern: '(?i)(only\s+one|single\s+(copy|version)|one\s+(copy|version)|do\s+not\s+merge|not\s+merge|without\s+merging|not\s+combine|no\s+merg)'
+      - type: output-matches
+        name: ambiguous-duplicate-noted
+        config:
+          pattern: '(?i)(ambig|unknown\s+origin|cannot\s+determine|undetermined|indeterminate|unclear\s+(origin|source)|flag|note)'
+      - type: output-matches
+        name: no-source-edit
+        config:
+          pattern: '(?i)(created|wrote|modified|edited|patched|added)\s+\S{0,40}(\.cs|\.py|\.ts|\.js|package\.json)'
+          negate: true
+  - name: code-review-standards-stacked-coverage
+    prompt: |
+      As the standards code-review perspective, evaluate this coverage
+      scenario. Treat the inline skill summaries below as the discovered
+      candidate set; do not inspect or rely on real workspace skill files.
+
+      The change touches two file groups: a Python file (.py) and a Bash
+      script (.sh). Three distinct skills are available:
+
+      Skill python-foundational matches Python by name and covers the .py file.
+      Skill bash-standards matches Bash by name and is the only candidate that
+      covers the .sh file.
+      Skill general-style matches only by a broad description and overlaps the
+      Python coverage already provided by python-foundational.
+
+      Select the skills to load so every changed file group is covered. Keep
+      the only match for a group even when it is the sole candidate, and drop
+      description-only matches that cover no otherwise-uncovered group. State
+      which skills you load and which you drop.
+
+      ```text
+      # app.py and deploy.sh both changed
+      ```
+
+    tags:
+      category: agent-behavior
+      advisory: "true"
+      scenario: stacked-coverage
+    graders:
+      - type: output-matches
+        name: group-skills-stacked
+        config:
+          pattern: '(?is)(python-foundational.*bash-standards|bash-standards.*python-foundational)'
+      - type: output-matches
+        name: only-match-retained
+        config:
+          pattern: '(?i)(bash-standards|bash|\.sh)'
+      - type: output-matches
+        name: description-only-dropped
+        config:
+          pattern: '(?i)(general-style|drop|deprioriti|exclud|skip|redundant|already\s+covered|description[-\s]only)'
