@@ -402,8 +402,10 @@ reading the emitted YAML before relying on it.
 Authoring in this skill emits source-controlled `*.mcs.yml` for human review
 before anything reaches an environment. Provisioning and deployment are gated and attended: in-session deploys go to
 an operator-designated environment — Dev/Test after explicit confirmation, and
-Production only with the Phase 7 evaluation and Phase 8 Responsible AI gates
-green and explicit, environment-named approval; the CI/CD pipeline is the
+Production only with the Phase 7 evaluation gate (evalPassed) and the
+Phase 10 post-deploy Responsible AI behavior gate (raiApproved) green and
+explicit, environment-named approval (Phase 8 provides the
+raiDevTestCleared Dev/Test design clearance); the CI/CD pipeline is the
 alternative/degrade executor for hands-off promotion. Identity for any data-accessing tool or
 connection must come from the authenticated deployment context and never from a
 user-typed name, email address, or ID. The recipes here are placeholder-only
