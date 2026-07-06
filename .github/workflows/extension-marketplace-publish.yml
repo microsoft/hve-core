@@ -9,11 +9,21 @@ on:
         description: "JSON matrix of collections to publish"
         required: true
         type: string
+      tag:
+        description: "GitHub Release tag containing the attested VSIX assets"
+        required: false
+        type: string
+        default: ""
       pre-release:
         description: "Publish as pre-release extension"
         required: false
         type: boolean
         default: false
+      verify-attestation:
+        description: "Verify the attested VSIX provenance before publishing"
+        required: false
+        type: boolean
+        default: true
 
 permissions:
   contents: read
@@ -28,6 +38,7 @@ jobs:
       matrix: ${{ fromJson(inputs.collections-matrix) }}
     permissions:
       contents: read
+      attestations: read
       id-token: write
     steps:
       - name: Checkout code
@@ -53,11 +64,47 @@ jobs:
       - name: Install dependencies
         run: npm ci --ignore-scripts=false
 
-      - name: Download VSIX artifact
+      - name: Download attested VSIX from GitHub Release
+        if: ${{ inputs.tag != '' }}
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ inputs.tag }}
+          COLLECTION_ID: ${{ matrix.id }}
+          ASSET_DIRECTORY: ./dist
+          REPOSITORY: ${{ github.repository }}
+        run: |
+          New-Item -ItemType Directory -Path $env:ASSET_DIRECTORY -Force | Out-Null
+          gh release download "$env:RELEASE_TAG" --repo "$env:REPOSITORY" --pattern "*$env:COLLECTION_ID*.vsix" --dir $env:ASSET_DIRECTORY
+          $selected = & ./scripts/extension/Select-CollectionVsix.ps1 -AssetDirectory $env:ASSET_DIRECTORY -CollectionId $env:COLLECTION_ID
+          "VSIX_FILE=$selected" >> $env:GITHUB_ENV
+
+      - name: Download intra-run VSIX artifact
+        if: ${{ inputs.tag == '' }}
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
         with:
           name: extension-vsix-${{ matrix.id }}
           path: ./dist
+
+      - name: Resolve downloaded VSIX path
+        if: ${{ inputs.tag == '' }}
+        shell: pwsh
+        env:
+          COLLECTION_ID: ${{ matrix.id }}
+          VSIX_DIRECTORY: ./dist
+        run: |
+          $resolved = & ./scripts/extension/Resolve-VsixFile.ps1 -DirectoryPath $env:VSIX_DIRECTORY
+          "VSIX_FILE=$resolved" >> $env:GITHUB_ENV
+
+      - name: Verify attested VSIX provenance
+        if: ${{ inputs.verify-attestation && inputs.tag != '' }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPOSITORY: ${{ github.repository }}
+          SIGNER_WORKFLOW: ${{ github.repository }}/.github/workflows/extension-provenance.yml
+        run: |
+          set -euo pipefail
+          gh attestation verify "$VSIX_FILE" --repo "$REPOSITORY" --signer-workflow "$SIGNER_WORKFLOW"
 
       - name: Publish to VS Code Marketplace
         id: publish
@@ -65,7 +112,6 @@ jobs:
           PRE_RELEASE: ${{ inputs.pre-release }}
           COLLECTION_ID: ${{ matrix.id }}
         run: |
-          VSIX_FILE=$(find dist -name '*.vsix' | head -1)
           if [ -z "$VSIX_FILE" ]; then
             echo "::error::No VSIX file found for collection $COLLECTION_ID"
             exit 1
