@@ -29,15 +29,18 @@ module.exports = {
     '!src/**/__mocks__/**',
     '!src/**/__tests__/**',
     '!src/**/*.test.{ts,tsx}',
+    // Static content pages (no logic); rendering is validated by the e2e suite.
+    '!src/pages/accessibility.tsx',
+    '!src/pages/accessibility/vpat.tsx',
   ],
   coverageDirectory: 'coverage',
   coverageReporters: ['lcov', 'text-summary'],
   coverageThreshold: {
     global: {
-      statements: 55,
-      branches: 65,
-      functions: 55,
-      lines: 60,
+      statements: 80,
+      branches: 80,
+      functions: 80,
+      lines: 80,
     },
   },
 };
