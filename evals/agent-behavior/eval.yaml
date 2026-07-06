@@ -636,10 +636,10 @@ stimuli:
     Two skills share the same name "python-foundational", and no Workspace
     copy is present:
 
-    Candidate A comes from a User-profile skill root (~/.copilot/skills/
-    coding-standards/) and requires public functions to declare type hints.
-    Candidate B is a Bundled extension skill (packaged plugin under
-    skills/coding-standards/) and forbids type-hint annotations.
+    Candidate A has a User origin (a user-profile skill) and requires
+    public functions to declare type hints.
+    Candidate B has a Bundled origin (a packaged extension/plugin skill)
+    and forbids type-hint annotations.
 
     Their checks differ. Given the Workspace > User > Bundled origin
     precedence, state which single copy you load and why, then review the
@@ -659,7 +659,7 @@ stimuli:
   - type: output-matches
     name: user-tier-takes-precedence
     config:
-      pattern: (?i)(user[-\s]?profile|user\s+(origin|tier|copy|version)|~/\.copilot|\.copilot/skills)
+      pattern: (?i)(user[-\s]?profile|user\s+(origin|tier|copy|version))
   - type: output-matches
     name: single-copy-loaded-bundled-shadowed
     config:
