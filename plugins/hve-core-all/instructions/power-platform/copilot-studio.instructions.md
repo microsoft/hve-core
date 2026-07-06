@@ -1,0 +1,1 @@
+../../../../.github/instructions/power-platform/copilot-studio.instructions.md

@@ -4,12 +4,14 @@
   "version": "3.3.101",
   "agents": [
     "agents/experimental/",
-    "agents/experimental/subagents/"
+    "agents/experimental/subagents/",
+    "agents/power-platform/"
   ],
   "commands": [
     "commands/experimental/"
   ],
   "skills": [
-    "skills/experimental/"
+    "skills/experimental/",
+    "skills/power-platform/"
   ]
 }

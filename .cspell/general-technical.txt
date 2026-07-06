@@ -60,6 +60,7 @@ autodetecting
 autodetection
 autolabeling
 automanage
+automatable
 automations
 autoremediation
 autoscale
@@ -1636,3 +1637,8 @@ Brussee
 # Power Platform / Copilot Studio (pac CLI)
 msapp
 packagetype
+apikey
+connectionreferences
+copilotchatmcp
+memcp
+scaffolder

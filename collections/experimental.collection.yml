@@ -13,6 +13,9 @@ items:
     kind: agent
   - path: .github/agents/experimental/subagents/pptx-subagent.agent.md
     kind: agent
+  - path: .github/agents/power-platform/copilot-studio-agent-builder.agent.md
+    kind: agent
+    maturity: experimental
   # Skills
   - path: .github/skills/experimental/caveman
     kind: skill
@@ -29,6 +32,9 @@ items:
   - path: .github/skills/experimental/vscode-playwright
     kind: skill
   - path: .github/skills/experimental/mural
+    kind: skill
+    maturity: experimental
+  - path: .github/skills/power-platform/copilot-studio-pac
     kind: skill
     maturity: experimental
   # Prompts
@@ -69,5 +75,8 @@ items:
     maturity: experimental
   - path: .github/instructions/shared/hve-core-location.instructions.md
     kind: instruction
+  - path: .github/instructions/power-platform/copilot-studio.instructions.md
+    kind: instruction
+    maturity: experimental
 display:
   ordering: alpha

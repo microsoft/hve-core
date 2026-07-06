@@ -1,0 +1,1 @@
+../../../../.github/agents/power-platform/copilot-studio-agent-builder.agent.md
