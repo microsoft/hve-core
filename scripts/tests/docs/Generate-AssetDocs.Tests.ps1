@@ -338,6 +338,13 @@ Describe 'Invoke-AssetDocsGeneration - interactivity' -Tag 'Unit' {
         $content | Should -Not -Match '## How to use it'
         $content | Should -Match '(?m)^\| Interactive\s+\| No\s+\|$'
     }
+
+    It 'Renders a subagent as a delegated, non-interactive page' {
+        $content = Get-Content -LiteralPath (Join-Path $script:repo 'docs/reference/agents/hve-core/subagents/nested-sub.md') -Raw
+        $content | Should -Match 'Delegated subagent'
+        $content | Should -Match '(?m)^\| Interactive\s+\| No\s+\|$'
+        $content | Should -Not -Match '## How to use it'
+    }
 }
 
 Describe 'Invoke-AssetDocsGeneration - WhatIf' -Tag 'Unit' {

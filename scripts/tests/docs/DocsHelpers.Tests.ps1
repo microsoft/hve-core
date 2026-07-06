@@ -223,11 +223,26 @@ Describe 'Get-AssetInvocation' -Tag 'Unit' {
         $result.Mechanism | Should -Be 'skill-load'
         $result.Token | Should -Be 'documentation'
     }
+
+    It 'Classifies an agent under a subagents directory as a delegated subagent' {
+        $result = Get-AssetInvocation -Kind 'agent' -Name 'researcher-subagent' -Frontmatter @{ name = 'Researcher Subagent' } -Path '.github/agents/hve-core/subagents/researcher-subagent.agent.md'
+        $result.Mechanism | Should -Be 'subagent-delegated'
+        $result.Token | Should -Be 'Researcher Subagent'
+    }
+
+    It 'Keeps a top-level agent as agent-picker even when a path is provided' {
+        $result = Get-AssetInvocation -Kind 'agent' -Name 'rpi-agent' -Frontmatter @{ name = 'RPI Agent' } -Path '.github/agents/hve-core/rpi-agent.agent.md'
+        $result.Mechanism | Should -Be 'agent-picker'
+    }
 }
 
 Describe 'Test-AssetInteractive' -Tag 'Unit' {
     It 'Treats agents as interactive' {
         Test-AssetInteractive -Kind 'agent' | Should -BeTrue
+    }
+
+    It 'Treats a delegated subagent as non-interactive' {
+        Test-AssetInteractive -Kind 'agent' -Path '.github/agents/hve-core/subagents/researcher-subagent.agent.md' | Should -BeFalse
     }
 
     It 'Treats a prompt with argument-hint as interactive' {
@@ -458,6 +473,11 @@ Describe 'Format-AssetInvocation' -Tag 'Unit' {
         Format-AssetInvocation -Invocation @{ Mechanism = 'skill-load'; Token = 'documentation' } |
             Should -Match 'Loaded on demand'
     }
+
+    It 'Describes a delegated subagent' {
+        Format-AssetInvocation -Invocation @{ Mechanism = 'subagent-delegated'; Token = 'Researcher Subagent' } |
+            Should -Match 'Delegated subagent'
+    }
 }
 
 Describe 'New-AssetPageModel' -Tag 'Unit' {
@@ -478,6 +498,8 @@ Describe 'New-AssetPageModel' -Tag 'Unit' {
             '---', 'description: A demo prompt for tests.', '---', '', '# Body')
         New-ModelFixture -RelativePath 'skills/hve-core/demo-skill/SKILL.md' -Lines @(
             '---', 'name: demo-skill', 'description: A demo skill for tests.', '---', '', '# Body')
+        New-ModelFixture -RelativePath 'agents/hve-core/subagents/demo-sub.agent.md' -Lines @(
+            '---', 'name: Demo Subagent', 'description: A demo subagent for tests.', '---', '', '# Body')
     }
 
     It 'Resolves the full page model for an agent' {
@@ -493,6 +515,14 @@ Describe 'New-AssetPageModel' -Tag 'Unit' {
         $model.Invocation.Mechanism | Should -Be 'agent-picker'
         $model.Invocation.Token | Should -Be 'Demo Agent'
         $model.Interactive | Should -BeTrue
+    }
+
+    It 'Classifies a nested subagent as delegated and non-interactive' {
+        $model = New-AssetPageModel -Asset @{ path = '.github/agents/hve-core/subagents/demo-sub.agent.md'; kind = 'agent' } -RepoRoot $script:modelRepo
+        $model.Invocation.Mechanism | Should -Be 'subagent-delegated'
+        $model.Invocation.Token | Should -Be 'Demo Subagent'
+        $model.Interactive | Should -BeFalse
+        $model.DocRel | Should -Be 'docs/reference/agents/hve-core/subagents/demo-sub.md'
     }
 
     It 'Falls back to a titlecased key when frontmatter has no name or title' {

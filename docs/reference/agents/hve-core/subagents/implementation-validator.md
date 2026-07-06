@@ -2,16 +2,16 @@
 title: Implementation Validator
 description: "Validates implementation quality against architectural requirements, design principles, and code standards with severity-graded findings"
 sidebar_position: 1
-ms.date: 2026-07-03
+ms.date: 2026-07-05
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->
-| Field       | Value                                                                 |
-|-------------|-----------------------------------------------------------------------|
-| Kind        | agent                                                                 |
-| Source      | `.github/agents/hve-core/subagents/implementation-validator.agent.md` |
-| Invocation  | Selected from the chat agent picker as `Implementation Validator`     |
-| Interactive | Yes                                                                   |
+| Field       | Value                                                                    |
+|-------------|--------------------------------------------------------------------------|
+| Kind        | agent                                                                    |
+| Source      | `.github/agents/hve-core/subagents/implementation-validator.agent.md`    |
+| Invocation  | Delegated subagent, dispatched by a parent agent (not selected directly) |
+| Interactive | No                                                                       |
 <!-- END AUTO-GENERATED: metadata -->
 
 ## What it does
@@ -24,11 +24,6 @@ Validates implementation quality against architectural requirements, design prin
 
 <!-- asset-docs:stub -->
 Describe the situations where this asset is the right choice, and when to reach for a different asset instead.
-
-## How to use it
-
-<!-- asset-docs:stub -->
-Walk through invoking this asset step by step. Remove this section when the asset is not interactive.
 
 ## Example usage
 

@@ -336,6 +336,11 @@ function Get-AssetInvocation {
         Optional parsed frontmatter hashtable. Used to resolve the applyTo glob for
         instructions and to prefer an agent's declared display name.
 
+    .PARAMETER Path
+        Optional repo-relative source path. When an agent's path lies under a
+        subagents directory the invocation is classified as a delegated subagent
+        rather than a chat-picker agent.
+
     .OUTPUTS
         [hashtable] With Mechanism and Token keys.
     #>
@@ -351,7 +356,10 @@ function Get-AssetInvocation {
         [string]$Name,
 
         [Parameter(Mandatory = $false)]
-        [hashtable]$Frontmatter = @{}
+        [hashtable]$Frontmatter = @{},
+
+        [Parameter(Mandatory = $false)]
+        [string]$Path = ''
     )
 
     switch ($Kind) {
@@ -361,6 +369,9 @@ function Get-AssetInvocation {
             }
             else {
                 $Name
+            }
+            if ($Path -match '(?:^|[\\/])subagents[\\/]') {
+                return @{ Mechanism = 'subagent-delegated'; Token = $displayName }
             }
             return @{ Mechanism = 'agent-picker'; Token = $displayName }
         }
@@ -405,6 +416,10 @@ function Test-AssetInteractive {
         Optional parsed frontmatter hashtable used to detect prompt inputs and
         agent binding.
 
+    .PARAMETER Path
+        Optional repo-relative source path. Agents under a subagents directory are
+        delegated (non-interactive) and return false.
+
     .OUTPUTS
         [bool] True when the asset has an interactive usage flow.
     #>
@@ -416,11 +431,17 @@ function Test-AssetInteractive {
         [string]$Kind,
 
         [Parameter(Mandatory = $false)]
-        [hashtable]$Frontmatter = @{}
+        [hashtable]$Frontmatter = @{},
+
+        [Parameter(Mandatory = $false)]
+        [string]$Path = ''
     )
 
     switch ($Kind) {
         'agent' {
+            if ($Path -match '(?:^|[\\/])subagents[\\/]') {
+                return $false
+            }
             return $true
         }
         'prompt' {
@@ -462,6 +483,7 @@ function Format-AssetInvocation {
             return "Applied automatically to $tick$token$tick"
         }
         'skill-load' { return 'Loaded on demand by referencing agents' }
+        'subagent-delegated' { return 'Delegated subagent, dispatched by a parent agent (not selected directly)' }
         default {
             $mechanism = ConvertTo-TableCell -Value ([string]$Invocation.Mechanism)
             Write-Warning "Format-AssetInvocation: unrecognized mechanism '$mechanism'; rendering drift marker."
@@ -766,8 +788,8 @@ function New-AssetPageModel {
         DocRel      = $docRel
         Folder      = $folder
         KindDir     = $kindDir
-        Invocation  = Get-AssetInvocation -Kind $kind -Name $key -Frontmatter $frontmatter
-        Interactive = Test-AssetInteractive -Kind $kind -Frontmatter $frontmatter
+        Invocation  = Get-AssetInvocation -Kind $kind -Name $key -Frontmatter $frontmatter -Path $relPath
+        Interactive = Test-AssetInteractive -Kind $kind -Frontmatter $frontmatter -Path $relPath
     }
 }
 

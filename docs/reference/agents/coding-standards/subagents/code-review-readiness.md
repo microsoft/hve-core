@@ -2,7 +2,7 @@
 title: Code Review Readiness
 description: "Thin skill-backed perspective subagent that reviews PR deliverable readiness and changed non-code documentation against a precomputed diff and PR context, and writes structured findings"
 sidebar_position: 5
-ms.date: 2026-07-03
+ms.date: 2026-07-05
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->
@@ -10,8 +10,8 @@ ms.date: 2026-07-03
 |-------------|----------------------------------------------------------------------------|
 | Kind        | agent                                                                      |
 | Source      | `.github/agents/coding-standards/subagents/code-review-readiness.agent.md` |
-| Invocation  | Selected from the chat agent picker as `Code Review Readiness`             |
-| Interactive | Yes                                                                        |
+| Invocation  | Delegated subagent, dispatched by a parent agent (not selected directly)   |
+| Interactive | No                                                                         |
 <!-- END AUTO-GENERATED: metadata -->
 
 ## What it does
@@ -24,11 +24,6 @@ Thin skill-backed perspective subagent that reviews PR deliverable readiness and
 
 <!-- asset-docs:stub -->
 Describe the situations where this asset is the right choice, and when to reach for a different asset instead.
-
-## How to use it
-
-<!-- asset-docs:stub -->
-Walk through invoking this asset step by step. Remove this section when the asset is not interactive.
 
 ## Example usage
 
