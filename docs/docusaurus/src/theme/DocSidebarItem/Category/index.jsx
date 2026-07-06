@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: MIT
 // This file is based on the upstream Docusaurus 3.10.1 component
 // @docusaurus/theme-classic/lib/theme/DocSidebarItem/Category/index.js.
-import React, {useEffect, useMemo, useRef} from 'react';
+import React, {useEffect, useMemo} from 'react';
 import clsx from 'clsx';
 import {
   ThemeClassNames,
@@ -18,7 +18,7 @@ import {
   useDocSidebarItemsExpandedState,
   useVisibleSidebarItems,
 } from '@docusaurus/plugin-content-docs/client';
-import {useLocation} from '@docusaurus/router';
+
 import Link from '@docusaurus/Link';
 import {translate} from '@docusaurus/Translate';
 import useIsBrowser from '@docusaurus/useIsBrowser';
@@ -61,14 +61,6 @@ function useCategoryHrefWithSSRFallback(item) {
     }
     return findFirstSidebarItemLink(item);
   }, [item, isBrowser]);
-}
-
-function focusMainContent() {
-  const main = document.querySelector('main:first-of-type');
-  if (main instanceof HTMLElement) {
-    main.setAttribute('tabindex', '-1');
-    main.focus();
-  }
 }
 
 function CategoryLinkLabel({label}) {
@@ -116,8 +108,6 @@ function DocSidebarItemCategoryCollapsible({
   const hrefWithSSRFallback = useCategoryHrefWithSSRFallback(item);
   const isActive = isActiveSidebarItem(item, activePath);
   const isCurrentPage = isSamePath(href, activePath);
-  const location = useLocation();
-  const treeItemRef = useRef(null);
   const {collapsed, setCollapsed} = useCollapsible({
     initialState: () => {
       if (!collapsible) {
@@ -149,16 +139,6 @@ function DocSidebarItemCategoryCollapsible({
       setCollapsed(true);
     }
   }, [collapsible, expandedItem, index, setCollapsed, autoCollapseCategories]);
-
-  useEffect(() => {
-    if (location.pathname && treeItemRef.current) {
-      const previousPathRef = treeItemRef.current.__previousPath;
-      if (previousPathRef && previousPathRef !== location.pathname) {
-        focusMainContent();
-      }
-      treeItemRef.current.__previousPath = location.pathname;
-    }
-  }, [location.pathname]);
 
   const handleItemClick = (event) => {
     onItemClick?.(item);
@@ -198,7 +178,6 @@ function DocSidebarItemCategoryCollapsible({
 
   return (
     <li
-      ref={treeItemRef}
       className={clsx(
         ThemeClassNames.docs.docSidebarItemCategory,
         ThemeClassNames.docs.docSidebarItemCategoryLevel(level),

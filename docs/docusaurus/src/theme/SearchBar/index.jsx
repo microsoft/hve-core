@@ -152,7 +152,10 @@ export default function SearchBarWrapper(props) {
         if (!descriptionNode) {
           descriptionNode = document.createElement('div');
           descriptionNode.id = descriptionId;
-          descriptionNode.style = srOnlyStyle;
+          // HTMLElement.style is [PutForwards=cssText]; assigning an object is a
+          // silent no-op, so copy each declaration onto the live style object to
+          // keep the node visually hidden (sr-only) rather than rendered.
+          Object.assign(descriptionNode.style, srOnlyStyle);
           descriptionNode.textContent = 'Keyboard shortcut: Control plus K';
           root.prepend(descriptionNode);
         }
@@ -168,7 +171,10 @@ export default function SearchBarWrapper(props) {
         if (!headingNode) {
           headingNode = document.createElement('h2');
           headingNode.id = headingId;
-          headingNode.style = srOnlyStyle;
+          // Same [PutForwards=cssText] caveat as the description node above: the
+          // sr-only styles must be copied onto the live style object, otherwise
+          // this heading renders visibly and injects a stray h2 into the banner.
+          Object.assign(headingNode.style, srOnlyStyle);
           headingNode.textContent = 'Search';
           root.prepend(headingNode);
         }

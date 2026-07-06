@@ -16,7 +16,7 @@
     "test:coverage": "jest --coverage",
     "typecheck": "tsc --noEmit",
     "lint:a11y": "eslint .",
-    "lint:labels": "node scripts/check-label-registry.mjs",
+    "lint:label-registry": "node scripts/check-label-registry.mjs",
     "serve:ci": "node e2e/static-server.mjs",
     "serve:preview": "docusaurus build && node e2e/static-server.mjs",
     "test:e2e": "playwright test",

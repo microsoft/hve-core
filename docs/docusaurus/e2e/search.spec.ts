@@ -25,6 +25,28 @@ test.describe('Search', () => {
     });
   }
 
+  test('injected sr-only heading and description stay visually hidden', async ({ page }) => {
+    await page.goto('/hve-core/docs/getting-started/');
+
+    const searchInput = page.locator('.navbar__search-input').first();
+    await expect(searchInput).toBeVisible();
+    // Focus triggers the swizzle's sync(), which injects the labelling nodes.
+    await searchInput.click();
+
+    // The sr-only heading and description must be clipped to a 1px box. A broken
+    // hide (e.g. assigning a style object to HTMLElement.style, which is a no-op)
+    // would render full-size text and add a stray heading to the banner landmark,
+    // so assert the clipped geometry rather than only the ARIA wiring.
+    for (const selector of ['#search-input-heading', '#search-shortcut-description']) {
+      const node = page.locator(selector);
+      await expect(node).toHaveCount(1);
+      const box = await node.boundingBox();
+      expect(box, `${selector} should be attached to the DOM`).not.toBeNull();
+      expect(box!.width).toBeLessThanOrEqual(1);
+      expect(box!.height).toBeLessThanOrEqual(1);
+    }
+  });
+
   async function openResults(page: import('@playwright/test').Page) {
     await page.goto('/hve-core/docs/getting-started/');
 

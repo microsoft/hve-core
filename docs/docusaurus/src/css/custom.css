@@ -58,6 +58,12 @@
   --ms-learn-hero-text: #ffffff;
   --ms-learn-hero-pattern: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='60' height='60' fill='none'%3E%3Cpath d='M8 6l10 10m0-10L8 16M38 36l10 10m0-10L38 46' stroke='%23000' stroke-opacity='0.05' stroke-width='2' stroke-linecap='round'/%3E%3C/svg%3E");
   --ms-learn-card-accent: #0078d4;
+
+  /* WCAG 2.4.7 + 1.4.11: dual-band keyboard focus indicator tokens. The inner
+     band stays light and the outer band stays dark so the ring keeps >=3:1
+     contrast against both light and dark surfaces. */
+  --hve-focus-ring-inner: #ffffff;
+  --hve-focus-ring-outer: #003a66;
   --ms-learn-card-border: #e6e6e6;
   --ms-learn-text-subtle: #505050;
   --ms-learn-section-bg: #f2f2f2;
@@ -97,9 +103,9 @@ button:focus-visible,
 .cardTitle:focus-visible,
 .collectionName:focus-visible,
 .boxCardLinks a:focus-visible {
-  outline: 2px solid #ffffff;
+  outline: 2px solid var(--hve-focus-ring-inner);
   outline-offset: 2px;
-  box-shadow: 0 0 0 4px #003a66;
+  box-shadow: 0 0 0 4px var(--hve-focus-ring-outer);
   border-radius: 2px;
 }
 

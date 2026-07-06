@@ -52,12 +52,13 @@ npx playwright install --with-deps chrome
 Run each layer from `docs/docusaurus`:
 
 ```bash
-npm run lint:a11y    # static jsx-a11y lint
-npm run typecheck    # TypeScript project typecheck
-npm test             # Jest + jest-axe component assertions
-npm run test:e2e     # Playwright journeys + full-site axe crawl
+npm run lint:a11y            # static jsx-a11y lint
+npm run lint:label-registry # WCAG 3.2.4 consistent-label registry gate
+npm run typecheck           # TypeScript project typecheck
+npm test                    # Jest + jest-axe component assertions
+npm run test:e2e            # Playwright journeys + full-site axe crawl
 ```
 
-From the repository root, `npm run lint:docs-site` runs the lint, typecheck, component, and end-to-end layers in sequence, and `npm run docs:test:e2e:setup` installs the Chrome dependency for Playwright.
+From the repository root, `npm run lint:docs-site` runs the lint, label-registry, typecheck, component, and end-to-end layers in sequence, and `npm run docs:test:e2e:setup` installs the Chrome dependency for Playwright.
 
 🤖 *Crafted with precision by ✨Copilot following brilliant human instruction, then carefully refined by our team of discerning human reviewers.*
