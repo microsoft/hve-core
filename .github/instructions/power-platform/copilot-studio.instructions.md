@@ -52,6 +52,8 @@ Phase 7 evaluation dataset, the Phase 8 design-adequacy review, and the post-dep
 
 Add domain-specific refusals as needed, but R1–R4 are the minimum set.
 
+**Enforcement under generative orchestration.** When the agent routes via generative orchestration (a generative recognizer / generative actions), the planner does **not** honor classic topic routing-priority — a high-priority Escalate topic is **not** a reliable safety control. Enforce R1–R4 as **system-instruction rules** that hold regardless of routing mode; when tools are enabled, **bar tool-calls for refusal-class or safety intents** (escalate/refuse instead of calling a tool); and require that the agent **never returns an empty or blank turn for a safety-relevant request** — a silent turn is a failure, always emit the refusal/escalation text. These become Phase 7 test cases (paraphrase-robust escalation coverage; no-empty-turn on safety intents).
+
 ## 3. Per-Artifact Templates (emit these shapes so output is consistent across users)
 
 Use these skeletons verbatim; fill every field or mark `N/A` with a reason. Do not invent a different shape.
@@ -170,6 +172,7 @@ the main hazard. Therefore:
   references and environment variables; the CI/CD pipeline injects these from the target environment's
   secret store.
 - Treat unmanaged solutions as the source-control form (Dev) and **managed** as the deploy form (Test/Prod).
+- **Bind every required connector input before push.** Each input the connector's OpenAPI/swagger marks `required` must be bound (parameter / environment variable / connection-reference property) and its connection reference minted (Recipe #6) before `pac copilot push`; verify the wiring with the Phase 10 **post-deploy tool-invocation smoke probe** — an unbound required input surfaces at runtime as `InvokeConnectorTaskAction missing required properties`.
 
 ## 7. Design ↔ Source Reconciliation (avoid two silent sources of truth)
 
