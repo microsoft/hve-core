@@ -28,7 +28,7 @@ stimuli:
           pattern: '(?i)(created|wrote|modified|edited|patched|added)\s+\S{0,40}(\.cs|\.py|\.ts|\.js|package\.json)'
           negate: true
 
-  # Skill merge behavior for issue #1901. These stimuli assert the coding-
+  # Skill merge behavior tests. These stimuli assert the coding-
   # standards merge contract through the parent Code Review matrix slug.
   - name: code-review-standards-merge-happy-no-conflict
     prompt: |
