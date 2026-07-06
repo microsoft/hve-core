@@ -50,6 +50,7 @@ Experimental and preview artifacts not yet promoted to stable collections. Items
 |--------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | **caveman**              | Ultra-compressed response style that reduces output token count while preserving technical accuracy, with intensity levels and auto-clarity safety rules                              |
 | **customer-card-render** | Generate customer-card PowerPoint content YAML from Design Thinking canonical artifacts and build using the shared PowerPoint skill pipeline                                          |
+| **demo-video**           | Assemble ordered frames or clips with narration into a narrated MP4 via FFmpeg                                                                                                        |
 | **mural**                | Mural workspace, room, mural, and widget workflows via the Mural REST API exposed through a Python CLI. Use when you need to read or write Mural content or automate widget creation. |
 | **powerpoint**           | PowerPoint slide deck generation and management using python-pptx with YAML-driven content and styling                                                                                |
 | **tts-voiceover**        | Text-to-speech voice-over generation from YAML speaker notes using Azure Speech SDK with SSML pronunciation control                                                                   |

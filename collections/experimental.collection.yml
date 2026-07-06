@@ -19,6 +19,8 @@ items:
     maturity: experimental
   - path: .github/skills/experimental/customer-card-render
     kind: skill
+  - path: .github/skills/experimental/demo-video
+    kind: skill
   - path: .github/skills/experimental/powerpoint
     kind: skill
   - path: .github/skills/experimental/tts-voiceover

@@ -568,6 +568,8 @@ items:
   maturity: experimental
 - path: .github/skills/experimental/customer-card-render
   kind: skill
+- path: .github/skills/experimental/demo-video
+  kind: skill
 - path: .github/skills/experimental/mural
   kind: skill
   maturity: experimental
