@@ -1395,12 +1395,20 @@ vm
 vpc
 
 # Technical Terms
+affordances
 apis
 backend
+contentinfo
+describedby
 frontend
+haspopup
+hoverable
+hrefs
+labelledby
 middleware
 microservice
 microservices
+supertitle
 webhook
 webhooks
 

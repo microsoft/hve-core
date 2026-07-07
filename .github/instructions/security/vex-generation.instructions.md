@@ -34,12 +34,12 @@ reference. The behavioral rules below supplement that reference with agent-speci
 
 VEX documents require an accountable author for trust purposes.
 
-| Role             | Description                                                                              |
-|------------------|------------------------------------------------------------------------------------------|
-| Drafter          | the AI agent. No trust requirement; the agent performs analysis and drafts the document. |
-| Reviewer         | CODEOWNERS-required human approver who validates evidence and status determinations.     |
-| Author of record | the merge commit author (the human approver). This is the accountable identity.          |
-| Trust anchor     | Sigstore identity of the release workflow that attests the VEX document.                 |
+| Role             | Description                                                                                                                                     |
+|------------------|-------------------------------------------------------------------------------------------------------------------------------------------------|
+| Drafter          | the AI agent. No trust requirement; the agent performs analysis and drafts the document.                                                        |
+| Reviewer         | CODEOWNERS-required human approver who validates evidence and status determinations.                                                            |
+| Author of record | the merge commit author (the human approver). This is the accountable identity.                                                                 |
+| Trust anchor     | Sigstore identity of the reusable VEX attestation workflow, microsoft/hve-core/.github/workflows/vex-attest.yml, that attests the VEX document. |
 
 The agent must never represent itself as the author of record. The `author` field in OpenVEX
 documents must identify the maintainer team or organization, not the agent.
@@ -110,7 +110,7 @@ The generated `hve-core.openvex.json` document containing all VEX statements. Mu
 * Validate against the OpenVEX v0.2.0 schema (see `openvex-schema.md` reference).
 * Increment the document `version` field.
 * Set `timestamp` only on first issuance. Update `last_updated` to the current generation time.
-* Set the `tooling` field to record document provenance: the drafting agent plus the human-reviewed, Sigstore-attested release process.
+* Set the `tooling` field to record document provenance: the drafting agent, the human-reviewed merge, and the reusable VEX attestation workflow's Sigstore identity.
 * Preserve existing statements that were not re-analyzed.
 * Use PURL format for all product identifiers.
 

@@ -204,6 +204,233 @@ function Write-EvalSpecAnnotations {
     }
 }
 
+function Get-TagValues {
+    [CmdletBinding()]
+    [OutputType([string[]])]
+    param(
+        [Parameter(Mandatory = $true)]
+        [AllowNull()]
+        $Tags,
+
+        [Parameter(Mandatory = $true)]
+        [ValidateNotNullOrEmpty()]
+        [string]$TagName
+    )
+
+    if ($null -eq $Tags -or -not ($Tags -is [System.Collections.IDictionary])) {
+        return @()
+    }
+
+    if (-not $Tags.Contains($TagName)) {
+        return @()
+    }
+
+    $rawValue = $Tags[$TagName]
+    if ($null -eq $rawValue) {
+        return @()
+    }
+
+    if ($rawValue -is [System.Collections.IEnumerable] -and -not ($rawValue -is [string])) {
+        return @($rawValue | ForEach-Object { [string]$_ })
+    }
+
+    return @([string]$rawValue)
+}
+
+function Get-AgentInventorySlugs {
+    [CmdletBinding()]
+    [OutputType([string[]])]
+    param(
+        [Parameter(Mandatory = $true)]
+        [ValidateNotNullOrEmpty()]
+        [string]$RepoRoot,
+
+        [Parameter(Mandatory = $false)]
+        [string]$InventoryPath = 'evals/agent-behavior/AGENTS.yml'
+    )
+
+    $inventoryFull = if ([System.IO.Path]::IsPathRooted($InventoryPath)) {
+        $InventoryPath
+    }
+    else {
+        Join-Path -Path $RepoRoot -ChildPath $InventoryPath
+    }
+
+    if (-not (Test-Path -LiteralPath $inventoryFull -PathType Leaf)) {
+        return @()
+    }
+
+    $parsed = ConvertFrom-Yaml -Yaml (Get-Content -LiteralPath $inventoryFull -Raw -ErrorAction Stop)
+    if ($null -eq $parsed -or -not ($parsed -is [System.Collections.IDictionary])) {
+        return @()
+    }
+
+    if (-not $parsed.Contains('agents')) {
+        return @()
+    }
+
+    $slugs = [System.Collections.Generic.HashSet[string]]::new([System.StringComparer]::OrdinalIgnoreCase)
+    foreach ($record in @($parsed['agents'])) {
+        if ($null -eq $record -or -not ($record -is [System.Collections.IDictionary])) {
+            continue
+        }
+
+        if (-not $record.Contains('slug')) {
+            continue
+        }
+
+        $slug = [string]$record['slug']
+        if ([string]::IsNullOrWhiteSpace($slug)) {
+            continue
+        }
+
+        [void]$slugs.Add($slug.Trim())
+    }
+
+    return @($slugs)
+}
+
+function Test-OrphanedStimulusTag {
+    [CmdletBinding()]
+    [OutputType([hashtable])]
+    param(
+        [Parameter(Mandatory = $true)]
+        [ValidateNotNullOrEmpty()]
+        [string]$RepoRoot,
+
+        [Parameter(Mandatory = $false)]
+        [string]$EvalSpecPath = 'evals/agent-behavior/eval.yaml',
+
+        [Parameter(Mandatory = $false)]
+        [string]$InventoryPath = 'evals/agent-behavior/AGENTS.yml'
+    )
+
+    $selectableSlugs = [System.Collections.Generic.HashSet[string]]::new([System.StringComparer]::OrdinalIgnoreCase)
+    foreach ($slug in @(Get-AgentInventorySlugs -RepoRoot $RepoRoot -InventoryPath $InventoryPath)) {
+        [void]$selectableSlugs.Add($slug)
+    }
+
+    $inventoryFull = if ([System.IO.Path]::IsPathRooted($InventoryPath)) {
+        $InventoryPath
+    }
+    else {
+        Join-Path -Path $RepoRoot -ChildPath $InventoryPath
+    }
+
+    $inventoryError = $null
+    if (-not (Test-Path -LiteralPath $inventoryFull -PathType Leaf)) {
+        $inventoryError = "Agent inventory not found at '$InventoryPath'; cannot evaluate stimulus tag reachability."
+    }
+    elseif ($selectableSlugs.Count -eq 0) {
+        $inventoryError = "Agent inventory at '$InventoryPath' contains no usable agent slugs; cannot evaluate stimulus tag reachability."
+    }
+
+    if ($null -ne $inventoryError) {
+        return @{
+            evalSpecPath   = $EvalSpecPath
+            inventoryPath  = $InventoryPath
+            availableSlugs = @($selectableSlugs)
+            checkedCount   = 0
+            orphanedTags   = @()
+            inventoryError = $inventoryError
+        }
+    }
+
+    $evalSpecFull = if ([System.IO.Path]::IsPathRooted($EvalSpecPath)) {
+        $EvalSpecPath
+    }
+    else {
+        Join-Path -Path $RepoRoot -ChildPath $EvalSpecPath
+    }
+
+    if (-not (Test-Path -LiteralPath $evalSpecFull -PathType Leaf)) {
+        return @{
+            evalSpecPath = $EvalSpecPath
+            inventoryPath = $InventoryPath
+            availableSlugs = @($selectableSlugs.ToArray())
+            checkedCount = 0
+            orphanedTags = @()
+            inventoryError = $null
+        }
+    }
+
+    $parsed = ConvertFrom-Yaml -Yaml (Get-Content -LiteralPath $evalSpecFull -Raw -ErrorAction Stop)
+    $orphaned = [System.Collections.Generic.List[hashtable]]::new()
+    $checkedCount = 0
+
+    if ($null -ne $parsed -and $parsed -is [System.Collections.IDictionary] -and $parsed.Contains('stimuli')) {
+        foreach ($stimulus in @($parsed['stimuli'])) {
+            if ($null -eq $stimulus -or -not ($stimulus -is [System.Collections.IDictionary])) {
+                continue
+            }
+
+            $tags = $null
+            if ($stimulus.ContainsKey('tags') -and $stimulus['tags'] -is [System.Collections.IDictionary]) {
+                $tags = $stimulus['tags']
+            }
+
+            $agentTags = @(Get-TagValues -Tags $tags -TagName 'agent')
+            foreach ($agentTag in $agentTags) {
+                $checkedCount++
+                if (-not $selectableSlugs.Contains($agentTag)) {
+                    $orphaned.Add(@{
+                        tag = 'agent'
+                        value = $agentTag
+                        stimulusName = if ($stimulus.ContainsKey('name')) { [string]$stimulus['name'] } else { '<unknown>' }
+                        reason = 'tag value is not an inventoried slug'
+                    })
+                }
+            }
+
+            $scenarioTags = @(Get-TagValues -Tags $tags -TagName 'scenario')
+            foreach ($scenarioTag in $scenarioTags) {
+                $checkedCount++
+                $hasReachableAgentSelector = $false
+                foreach ($agentTag in $agentTags) {
+                    if ($selectableSlugs.Contains($agentTag)) {
+                        $hasReachableAgentSelector = $true
+                        break
+                    }
+                }
+
+                if (-not $hasReachableAgentSelector) {
+                    $orphaned.Add(@{
+                        tag = 'scenario'
+                        value = $scenarioTag
+                        stimulusName = if ($stimulus.ContainsKey('name')) { [string]$stimulus['name'] } else { '<unknown>' }
+                        reason = 'scenario tag has no reachable agent selector in the same stimulus'
+                    })
+                }
+            }
+        }
+    }
+
+    return @{
+        evalSpecPath = $EvalSpecPath
+        inventoryPath = $InventoryPath
+        availableSlugs = @($selectableSlugs)
+        checkedCount = $checkedCount
+        orphanedTags = @($orphaned)
+        inventoryError = $null
+    }
+}
+
+function Write-OrphanedStimulusTagAnnotations {
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory = $true)]
+        [System.Collections.IEnumerable]$OrphanedTags,
+
+        [Parameter(Mandatory = $true)]
+        [string]$EvalSpecPath
+    )
+
+    foreach ($entry in $OrphanedTags) {
+        $msg = "Orphaned $($entry.tag) tag '$($entry.value)' in stimulus '$($entry.stimulusName)' ($($entry.reason))."
+        Write-Host "::error file=$EvalSpecPath::$msg"
+    }
+}
+
 function Get-ParentAgentInventoryForCoverage {
     [CmdletBinding()]
     [OutputType([System.Collections.IList])]
@@ -418,6 +645,9 @@ if ($MyInvocation.InvocationName -ne '.') {
     Write-Host "Validated $($report.valid.Count) eval spec(s) successfully; $($report.invalid.Count) failed."
     Write-Host "Report: $resolvedOutput"
 
+    $orphanReport = Test-OrphanedStimulusTag -RepoRoot $resolvedRepoRoot -EvalSpecPath 'evals/agent-behavior/eval.yaml' -InventoryPath 'evals/agent-behavior/AGENTS.yml'
+    Write-Host "Stimulus tag reachability: $($orphanReport.checkedCount) tag value(s) checked; $($orphanReport.orphanedTags.Count) orphaned."
+
     $coverageReport = $null
     if (-not $SkipAgentCoverage) {
         $restrictSlugs = $null
@@ -441,10 +671,22 @@ if ($MyInvocation.InvocationName -ne '.') {
 
     if ($null -ne $coverageReport) {
         $merged = [ordered]@{
-            root     = $report.root
-            valid    = $report.valid
-            invalid  = $report.invalid
-            coverage = $coverageReport
+            root         = $report.root
+            valid        = $report.valid
+            invalid      = $report.invalid
+            orphanedTags = $orphanReport.orphanedTags
+            inventoryError = $orphanReport.inventoryError
+            coverage     = $coverageReport
+        }
+        $merged | ConvertTo-Json -Depth 10 | Set-Content -LiteralPath $resolvedOutput -Encoding UTF8
+    }
+    else {
+        $merged = [ordered]@{
+            root         = $report.root
+            valid        = $report.valid
+            invalid      = $report.invalid
+            orphanedTags = $orphanReport.orphanedTags
+            inventoryError = $orphanReport.inventoryError
         }
         $merged | ConvertTo-Json -Depth 10 | Set-Content -LiteralPath $resolvedOutput -Encoding UTF8
     }
@@ -456,6 +698,14 @@ if ($MyInvocation.InvocationName -ne '.') {
     }
     if ($null -ne $coverageReport -and $coverageReport.missing.Count -gt 0) {
         Write-AgentCoverageAnnotations -Missing $coverageReport.missing -StimuliRoot $StimuliRoot
+        $exitCode = 1
+    }
+    if ($orphanReport.inventoryError) {
+        Write-Host "::error file=$($orphanReport.inventoryPath)::$($orphanReport.inventoryError)"
+        $exitCode = 1
+    }
+    elseif ($orphanReport.orphanedTags.Count -gt 0) {
+        Write-OrphanedStimulusTagAnnotations -OrphanedTags $orphanReport.orphanedTags -EvalSpecPath $orphanReport.evalSpecPath
         $exitCode = 1
     }
 

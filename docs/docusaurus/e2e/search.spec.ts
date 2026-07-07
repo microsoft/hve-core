@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: MIT
 import { test, expect } from '@playwright/test';
 import AxeBuilder from '@axe-core/playwright';
+import { SITE_PAGES, visitInvariantPage } from './_helpers/a11yInvariants';
 
 const WCAG_TAGS = ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'];
 
@@ -10,6 +11,42 @@ const WCAG_TAGS = ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'];
 // pattern. The widget must be operable, surface results, expose a conformant
 // combobox/listbox structure, and respond to keyboard navigation.
 test.describe('Search', () => {
+  for (const pageCase of SITE_PAGES.filter(({ path }) => path.includes('/docs/') || path === '/hve-core/')) {
+    test(`${pageCase.name} keeps the search widget semantically wired`, async ({ page }) => {
+      await visitInvariantPage(page, pageCase);
+
+      const searchInput = page.locator('.navbar__search-input').first();
+      await expect(searchInput).toBeVisible();
+      await expect(searchInput).toHaveAttribute('role', 'combobox');
+      await expect(searchInput).toHaveAttribute('aria-expanded', 'false');
+      await expect(searchInput).toHaveAttribute('aria-labelledby');
+      const describedBy = await searchInput.getAttribute('aria-describedby');
+      expect(describedBy).toBeTruthy();
+    });
+  }
+
+  test('injected sr-only heading and description stay visually hidden', async ({ page }) => {
+    await page.goto('/hve-core/docs/getting-started/');
+
+    const searchInput = page.locator('.navbar__search-input').first();
+    await expect(searchInput).toBeVisible();
+    // Focus triggers the swizzle's sync(), which injects the labelling nodes.
+    await searchInput.click();
+
+    // The sr-only heading and description must be clipped to a 1px box. A broken
+    // hide (e.g. assigning a style object to HTMLElement.style, which is a no-op)
+    // would render full-size text and add a stray heading to the banner landmark,
+    // so assert the clipped geometry rather than only the ARIA wiring.
+    for (const selector of ['#search-input-heading', '#search-shortcut-description']) {
+      const node = page.locator(selector);
+      await expect(node).toHaveCount(1);
+      const box = await node.boundingBox();
+      expect(box, `${selector} should be attached to the DOM`).not.toBeNull();
+      expect(box!.width).toBeLessThanOrEqual(1);
+      expect(box!.height).toBeLessThanOrEqual(1);
+    }
+  });
+
   async function openResults(page: import('@playwright/test').Page) {
     await page.goto('/hve-core/docs/getting-started/');
 

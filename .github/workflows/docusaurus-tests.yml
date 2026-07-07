@@ -98,6 +98,10 @@ jobs:
         working-directory: docs/docusaurus
         run: npm run lint:a11y
 
+      - name: Lint label registry (COGA-1)
+        working-directory: docs/docusaurus
+        run: npm run lint:label-registry
+
       - name: Typecheck
         working-directory: docs/docusaurus
         run: npm run typecheck

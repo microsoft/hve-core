@@ -101,6 +101,25 @@ Describe 'Invoke-AgentMatrix.ps1 (dry-run)' -Tag 'Unit' {
         }
     }
 
+    Context 'Changed mode with a subagent path' {
+        BeforeEach {
+            & $script:ScriptPath `
+                -Changed @('.github/agents/coding-standards/subagents/code-review-standards.agent.md') `
+                -Tier pr `
+                -RepoRoot $script:RepoRoot `
+                -OutputDir $script:OutputDir `
+                -WhatIf *> $null
+            $script:Summary = Get-Content -LiteralPath $script:SummaryPath -Raw | ConvertFrom-Json
+        }
+
+        It 'Plans both the parent and own slugs for a changed subagent' {
+            $script:Summary.agentCount | Should -Be 2
+            $planText = $script:Summary.plannedCommands -join [Environment]::NewLine
+            $planText | Should -Match '--tag agent=code-review(?:\s|$)'
+            $planText | Should -Match '--tag agent=code-review-standards(?:\s|$)'
+        }
+    }
+
     Context 'Changed mode with no slugs' {
         BeforeEach {
             & $script:ScriptPath `

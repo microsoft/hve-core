@@ -111,6 +111,88 @@ Each violation's `impact` is one of `minor`, `moderate`, `serious`, or `critical
 
 WCAG success criteria are normative; the axe techniques that surface them are informative. Treat scanner output as evidence pointing at a criterion, not a conformance verdict.
 
+### Runtime probe harness
+
+The runtime probe harness ([scripts/runtime_a11y](scripts/runtime_a11y)) runs Playwright-based accessibility probes against a project-specific surface inventory and aggregates the results into a coverage matrix. Use the [accessibility-coverage-matrix prompt](../../../prompts/accessibility/accessibility-coverage-matrix.prompt.md) for workflow orchestration and the [accessibility-surface-inventory subagent](../../../agents/accessibility/subagents/accessibility-surface-inventory.agent.md) as the canonical producer of the runtime config.
+
+#### Invocation
+
+```bash
+uv run python -m runtime_a11y run-all --config a11y-runtime.config.json --out results.json
+uv run python -m runtime_a11y probe <probeId> --config a11y-runtime.config.json
+```
+
+* `--out` writes the aggregated JSON document to disk.
+* `--base-url` overrides the configured base URL.
+* `--trace` captures Playwright traces and screenshots.
+* `--allow-external` confirms intentional probing of a non-loopback host.
+
+#### Config summary
+
+The harness loads [scripts/runtime_a11y/config-schema.json](scripts/runtime_a11y/config-schema.json) and expects a runtime config with fields such as `baseUrl`, `serveMode`, `allowlist`, `routes`, `surfaces`, and `probeScoping`. The config defines the surfaces and interaction states the probes execute. A runtime guard blocks non-loopback targets unless the host is allowlisted or the caller supplies `--allow-external`.
+
+#### Probe inventory and adequacy map
+
+The harness currently includes these probes under [scripts/runtime_a11y/runner](scripts/runtime_a11y/runner):
+
+WCAG and ARIA APG probes:
+
+* `probe-axe`
+* `probe-keyboard-traversal`
+* `probe-focus-visible`
+* `probe-focus-obscured`
+* `probe-live-region`
+* `probe-aria-tree`
+* `probe-widget-keyboard`
+* `probe-reflow-resize`
+* `probe-target-size`
+* `probe-contrast`
+* `probe-forced-colors`
+* `probe-reduced-motion`
+* `probe-structure-crawl`
+* `probe-name-in-label`
+* `probe-use-of-color` (1.4.1)
+* `probe-text-spacing` (1.4.12)
+* `probe-hover-focus` (1.4.13)
+* `probe-link-purpose` (2.4.4)
+* `probe-input-purpose` (1.3.5)
+* `probe-forms` (3.3.2, informs 3.3.1/3.3.3)
+* `probe-context-change` (3.2.1, 3.2.2)
+* `probe-orientation` (1.3.4)
+* `probe-audio-control` (1.4.2)
+* `probe-timing` (2.2.1)
+* `probe-zoom-blocker` (1.4.4, informs 1.4.10)
+
+Non-WCAG defect-scan probes (framework `defect-scan`):
+
+* `probe-console-errors` (console/page errors)
+* `probe-broken-links` (same-origin 404s)
+* `probe-dom-hygiene` (duplicate ids, positive tabindex, missing/duplicate landmarks)
+* `probe-title-lang` (empty title, invalid `lang`)
+
+Method adequacy is encoded in [scripts/runtime_a11y/probe-criteria-map.json](scripts/runtime_a11y/probe-criteria-map.json). Each entry records which criteria a probe can decide and which criteria it can only inform. A result only counts as adequate when the winning method is allowed by that mapping.
+
+#### Coverage engine outputs
+
+The matrix engine in [scripts/runtime_a11y/matrix](scripts/runtime_a11y/matrix) expands the criterion x surface x state grid, merges updates deterministically, and preserves human-confirmed findings over lower-priority automation. It computes adequate-coverage percentages by framework and overall, then renders coverage-matrix JSON and markdown outputs named `coverage-matrix-{repo-slug}.json` and `coverage-matrix-{repo-slug}.md`.
+
+#### Exit codes
+
+* `0` indicates the harness completed successfully, even when probes reported findings.
+* Non-zero exit codes indicate a harness error such as invalid config, a failed probe, missing Node.js, missing browser support, or a blocked target.
+
+#### Runtime dependencies
+
+The harness uses `npx` at run time to install pinned dependencies `playwright@1.61.1` and `@axe-core/playwright@4.12.1`. It targets the system Google Chrome browser through `channel: 'chrome'`, so no skill-local `package.json` or `node_modules` directory is required.
+
+### CI regression gate
+
+Use the ready-to-copy workflow template at [references/ci/accessibility-coverage.workflow-template.yml](references/ci/accessibility-coverage.workflow-template.yml) as the documentation-first integration point for a target project. Copy it into a real workflow under `.github/workflows/` only after the target project commits an `a11y-runtime.config.json` and has a build/serve path that the template can invoke.
+
+The template mirrors the Docusaurus workflow recipe by provisioning system Chrome, setting up Node 24 plus Python and `uv`, building the target, serving it under a configurable base URL, and running `uv run python -m runtime_a11y run-all --config a11y-runtime.config.json --out results.json`. It treats the high-confidence probes as blocking failures: `probe-axe`, `probe-dom-hygiene`, `probe-broken-links`, `probe-console-errors`, `probe-target-size`, `probe-contrast`, and `probe-reflow-resize`. The heuristic probes such as `use-of-color`, `hover-focus`, `link-purpose`, `name-in-label`, `keyboard-traversal`, `widget-keyboard`, `aria-tree`, and `focus-*` are surfaced as informational results so they can guide follow-up work without blocking initial adoption.
+
+The parity reference at [references/ci/probe-spec-parity.md](references/ci/probe-spec-parity.md) maps each runtime probe to the closest existing Docusaurus e2e spec and highlights gaps where no equivalent spec currently exists.
+
 ## Usage notes
 
 * Treat this skill as the default accessibility entrypoint for planning and review workflows.

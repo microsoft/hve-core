@@ -34,18 +34,26 @@ jobs:
       contents: read
     outputs:
       version: ${{ steps.normalize.outputs.version }}
+      tag: ${{ steps.normalize.outputs.tag }}
     steps:
       - name: Resolve version from event
         id: resolve
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          EVENT_TAG: ${{ github.event.release.tag_name }}
+          INPUT_VERSION: ${{ inputs.version }}
         run: |
-          if [[ "${{ github.event_name }}" == "release" ]]; then
-            TAG="${{ github.event.release.tag_name }}"
+          set -euo pipefail
+          if [[ "$EVENT_NAME" == "release" ]]; then
+            TAG="$EVENT_TAG"
             VERSION="${TAG#hve-core-v}"
             VERSION="${VERSION#v}"
             echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+            echo "tag=$TAG" >> "$GITHUB_OUTPUT"
             echo "Resolved version from release tag: $VERSION"
           else
-            echo "version=${{ inputs.version }}" >> "$GITHUB_OUTPUT"
+            echo "version=$INPUT_VERSION" >> "$GITHUB_OUTPUT"
+            echo "tag=" >> "$GITHUB_OUTPUT"
           fi
 
       - name: Normalize version string
@@ -53,17 +61,32 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
           INPUT_VERSION: ${{ steps.resolve.outputs.version }}
+          INPUT_TAG: ${{ steps.resolve.outputs.tag }}
+          REPOSITORY: ${{ github.repository }}
         run: |
+          set -euo pipefail
           VERSION="$INPUT_VERSION"
+          TAG="$INPUT_TAG"
+
           # Strip leading 'v' and component prefix if present
           VERSION="${VERSION#v}"
           VERSION="${VERSION#hve-core-v}"
 
           # Auto-detect from latest release tag when no version specified
           if [ -z "$VERSION" ]; then
-            TAG=$(gh release list --exclude-drafts --exclude-pre-releases --limit 1 --json tagName -q '.[0].tagName' -R "${{ github.repository }}")
+            TAG=$(gh release list --exclude-drafts --exclude-pre-releases --limit 1 --json tagName -q '.[0].tagName' -R "$REPOSITORY")
             VERSION="${TAG#hve-core-v}"
             echo "📦 Auto-detected version from latest release: $VERSION"
+          fi
+
+          if [ -z "$TAG" ] && [ -n "$VERSION" ]; then
+            TAGS=$(gh release list --exclude-drafts --exclude-pre-releases --limit 100 --json tagName -q '.[].tagName' -R "$REPOSITORY")
+            TAG=$(printf '%s\n' "$TAGS" | grep -E "^hve-core-v?$VERSION$" | head -1)
+          fi
+
+          if [ -z "$TAG" ]; then
+            echo "::error::Unable to resolve a release tag for version $VERSION"
+            exit 1
           fi
 
           # Validate semver format
@@ -81,25 +104,51 @@ jobs:
           fi
 
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
 
-  package:
-    name: Package Extensions
+  discover:
+    name: Discover Collections
     needs: [normalize-version]
-    uses: ./.github/workflows/extension-package.yml
-    with:
-      version: ${{ needs.normalize-version.outputs.version }}
-      channel: Stable
+    runs-on: ubuntu-latest
     permissions:
       contents: read
+    outputs:
+      matrix: ${{ steps.discover.outputs.matrix }}
+      version: ${{ steps.read-version.outputs.version }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
+
+      - name: Setup PowerShell modules
+        uses: ./.github/actions/setup-ps-modules
+
+      - name: Resolve effective version
+        id: read-version
+        shell: bash
+        env:
+          INPUT_VERSION: ${{ needs.normalize-version.outputs.version }}
+        run: |
+          version="$INPUT_VERSION"
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+
+      - name: Discover collection manifests
+        id: discover
+        shell: pwsh
+        run: |
+          & ./scripts/extension/Find-CollectionManifests.ps1 -Channel 'Stable'
 
   publish:
     name: Publish Extensions
-    needs: [package]
+    needs: [normalize-version, discover]
     if: ${{ !inputs.dry-run }}
     uses: ./.github/workflows/extension-marketplace-publish.yml
     with:
-      collections-matrix: ${{ needs.package.outputs.collections-matrix }}
+      collections-matrix: ${{ needs.discover.outputs.matrix }}
+      tag: ${{ needs.normalize-version.outputs.tag }}
       pre-release: false
+      verify-attestation: true
     permissions:
       contents: read
       id-token: write
