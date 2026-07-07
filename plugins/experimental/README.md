@@ -15,12 +15,12 @@ Experimental and preview artifacts not yet promoted to stable collections. Items
 
 ### Chat Agents
 
-| Name                             | Description                                                                                                                                                                  |
-|----------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| **copilot-studio-agent-builder** | Guides design and ALM of a Microsoft Copilot Studio agent from inside the repository, producing source-controlled design specs and a pac CLI ALM scaffold across nine phases |
-| **experiment-designer**          | Coach for designing a Minimum Viable Experiment (MVE) with hypothesis formation, vetting, and experiment planning                                                            |
-| **pptx**                         | Creates, updates, and manages PowerPoint slide decks using YAML-driven content with python-pptx                                                                              |
-| **pptx-subagent**                | Executes PowerPoint skill operations including content extraction, YAML creation, deck building, and visual validation                                                       |
+| Name                             | Description                                                                                                                                                                 |
+|----------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| **copilot-studio-agent-builder** | Guides design and ALM of a Microsoft Copilot Studio agent from inside the repository, producing source-controlled design specs and a pac CLI ALM scaffold across ten phases |
+| **experiment-designer**          | Coach for designing a Minimum Viable Experiment (MVE) with hypothesis formation, vetting, and experiment planning                                                           |
+| **pptx**                         | Creates, updates, and manages PowerPoint slide decks using YAML-driven content with python-pptx                                                                             |
+| **pptx-subagent**                | Executes PowerPoint skill operations including content extraction, YAML creation, deck building, and visual validation                                                      |
 
 ### Prompts
 
@@ -48,16 +48,16 @@ Experimental and preview artifacts not yet promoted to stable collections. Items
 
 ### Skills
 
-| Name                     | Description                                                                                                                                                                                                                                                 |
-|--------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| **caveman**              | Ultra-compressed response style that reduces output token count while preserving technical accuracy, with intensity levels and auto-clarity safety rules                                                                                                    |
-| **copilot-studio-pac**   | Verified Microsoft Copilot Studio pac component recipes covering the init-pack-import and clone-edit-push deployment flows plus placeholder-only mcs.yml YAML for agent core, suggested prompts, knowledge, triggers, MCP tools, and connection references. |
-| **customer-card-render** | Generate customer-card PowerPoint content YAML from Design Thinking canonical artifacts and build using the shared PowerPoint skill pipeline                                                                                                                |
-| **mural**                | Mural workspace, room, mural, and widget workflows via the Mural REST API exposed through a Python CLI. Use when you need to read or write Mural content or automate widget creation.                                                                       |
-| **powerpoint**           | PowerPoint slide deck generation and management using python-pptx with YAML-driven content and styling                                                                                                                                                      |
-| **tts-voiceover**        | Text-to-speech voice-over generation from YAML speaker notes using Azure Speech SDK with SSML pronunciation control                                                                                                                                         |
-| **video-to-gif**         | Video-to-GIF conversion with FFmpeg two-pass optimization                                                                                                                                                                                                   |
-| **vscode-playwright**    | VS Code screenshot capture using Playwright MCP with serve-web for slide decks and documentation                                                                                                                                                            |
+| Name                     | Description                                                                                                                                                                           |
+|--------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| **caveman**              | Ultra-compressed response style that reduces output token count while preserving technical accuracy, with intensity levels and auto-clarity safety rules                              |
+| **copilot-studio-pac**   | Verified Copilot Studio pac recipes for the init-pack-import and clone-edit-push flows, with placeholder mcs.yml for core, prompts, knowledge, triggers, MCP tools, and connections.  |
+| **customer-card-render** | Generate customer-card PowerPoint content YAML from Design Thinking canonical artifacts and build using the shared PowerPoint skill pipeline                                          |
+| **mural**                | Mural workspace, room, mural, and widget workflows via the Mural REST API exposed through a Python CLI. Use when you need to read or write Mural content or automate widget creation. |
+| **powerpoint**           | PowerPoint slide deck generation and management using python-pptx with YAML-driven content and styling                                                                                |
+| **tts-voiceover**        | Text-to-speech voice-over generation from YAML speaker notes using Azure Speech SDK with SSML pronunciation control                                                                   |
+| **video-to-gif**         | Video-to-GIF conversion with FFmpeg two-pass optimization                                                                                                                             |
+| **vscode-playwright**    | VS Code screenshot capture using Playwright MCP with serve-web for slide decks and documentation                                                                                      |
 
 <!-- END AUTO-GENERATED ARTIFACTS -->
 
