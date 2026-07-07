@@ -2114,3 +2114,64 @@ stimuli:
         name: scope-language
         config:
           pattern: '(?i)(supply|chain|security|scorecard|slsa|sbom)'
+
+  - name: skill-copilot-studio-pac-knowledge
+    prompt: |
+      Summarize what the `copilot-studio-pac` skill helps with. Name the pac
+      CLI workflow it standardizes and the fail-closed topic-integrity gate it
+      runs before packaging a Copilot Studio agent.
+    tags:
+      category: behavior-conformance
+      skill: copilot-studio-pac
+      shape: knowledge
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: skill-attribution
+        config:
+          pattern: '(?i)(pac|power platform cli|copilot studio|topic|solution|alm)'
+      - type: output-matches
+        name: scope-language
+        config:
+          pattern: '(?i)(pack|import|publish|topic[- ]integrity|deploy|provision)'
+
+  - name: skill-copilot-studio-pac-tool-trigger
+    prompt: |
+      I am packaging a Copilot Studio agent and need to validate that every
+      authored topic is schema-valid and that no custom topic reuses a system
+      trigger before I run `pac copilot pack`. Which skill under
+      `.github/skills/**/SKILL.md` applies and what does it have me run?
+    tags:
+      category: behavior-conformance
+      skill: copilot-studio-pac
+      shape: tool-trigger
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: skill-domain-attribution
+        config:
+          pattern: '(?i)(copilot-studio-pac|pac|topic|validate|integrity)'
+      - type: output-matches
+        name: scope-language
+        config:
+          pattern: '(?i)(pack|topic|trigger|schema|validate|gate)'
+
+  - name: skill-copilot-studio-pac-bleed-detection
+    prompt: |
+      I am building a GitHub Actions workflow in `.github/workflows/ci.yml`
+      with no Copilot Studio or Power Platform involvement. Does the
+      `copilot-studio-pac` skill apply here? Justify briefly.
+    tags:
+      category: behavior-conformance
+      skill: copilot-studio-pac
+      shape: bleed-detection
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: correct-non-application
+        config:
+          pattern: '(?i)(does not apply|not applicable|\bno\b|unrelated|out of scope)'
+      - type: output-matches
+        name: scope-language
+        config:
+          pattern: '(?i)(copilot studio|power platform|pac|topic)'

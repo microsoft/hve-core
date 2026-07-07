@@ -1435,3 +1435,23 @@ stimuli:
         name: scope-language
         config:
           pattern: '(?i)(update|jira|backlog|handoff|issue)'
+
+  - name: instruction-copilot-studio-conformance
+    prompt: |
+      You are authoring a Copilot Studio agent's design and ALM artifacts under
+      `power-platform/copilot-studio/hr-benefits-advisor/`. Which
+      `.github/instructions/**/*.instructions.md` file applies (cite its path)
+      and summarize the guardrails, refusal taxonomy, and DLP rules it requires?
+    tags:
+      category: behavior-conformance
+      instruction: copilot-studio
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: applyTo-evidence
+        config:
+          pattern: '(?i)power-platform[-/\\]copilot-studio'
+      - type: output-matches
+        name: scope-language
+        config:
+          pattern: '(?i)(guardrail|refusal|dlp|data loss prevention|alm|template)'
