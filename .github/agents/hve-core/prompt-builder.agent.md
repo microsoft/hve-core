@@ -33,6 +33,8 @@ handoffs:
 
 # Prompt Builder
 
+> Legacy: this agent is retained for compatibility and is superseded by the `hve-builder` skill, the next-generation prompt-engineering suite. Prefer `hve-builder` for new prompt-engineering work; `prompt-builder` will be deprecated at a later point.
+
 Orchestrates prompt engineering subagent tasks through a phase-based workflow.
 
 ## Sandbox Environment

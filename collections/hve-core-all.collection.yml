@@ -81,6 +81,12 @@ items:
   kind: agent
 - path: .github/agents/hve-core/rpi-agent.agent.md
   kind: agent
+- path: .github/agents/hve-core/subagents/hve-artifact-author.agent.md
+  kind: agent
+- path: .github/agents/hve-core/subagents/hve-artifact-reviewer.agent.md
+  kind: agent
+- path: .github/agents/hve-core/subagents/hve-artifact-tester.agent.md
+  kind: agent
 - path: .github/agents/hve-core/subagents/implementation-validator.agent.md
   kind: agent
 - path: .github/agents/hve-core/subagents/phase-implementor.agent.md
@@ -599,6 +605,8 @@ items:
   kind: skill
   maturity: experimental
 - path: .github/skills/hve-core/documentation
+  kind: skill
+- path: .github/skills/hve-core/hve-builder
   kind: skill
 - path: .github/skills/hve-core/prompt-analyze
   kind: skill
