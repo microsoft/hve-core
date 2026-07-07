@@ -100,8 +100,8 @@ References capture the conformance taxonomy, grader selection rules, eval-suite 
 |------------------------------------|-------------------------------------------------------------------------|
 | `references/prompts.md`            | The 12 conformance checks emitted for `.prompt.md` artifacts.           |
 | `references/instructions.md`       | The 8 conformance checks emitted for `.instructions.md` artifacts.      |
-| `references/agents.md`             | The 10 conformance checks emitted for `.agent.md` artifacts.            |
-| `references/skills.md`             | The 10 conformance checks emitted for `SKILL.md` artifacts.             |
+| `references/agents.md`             | The 9 conformance checks emitted for `.agent.md` artifacts.             |
+| `references/skills.md`             | The 9 conformance checks emitted for `SKILL.md` artifacts.              |
 | `references/grader-catalog.md`     | Vally CLI 0.4.0 grader types, selection rules, and gotchas.             |
 | `references/refusal-taxonomy.md`   | Regex source of truth for the 7 refusal categories and worked examples. |
 | `references/eval-suite-routing.md` | Maps artifact kind to the canonical Vally eval file under `evals/`.     |

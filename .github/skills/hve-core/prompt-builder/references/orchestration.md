@@ -8,7 +8,7 @@ Use this reference to keep the phase loop, sandbox contract, subagent dispatch m
 
 ## Phase loop and return-to-Phase-1 behavior
 
-The loop builds, tests, evaluates, and updates the prompt artifacts, repeating until the evaluation log shows no remaining issues. Build and modification edits follow the Prompt Design Principles and the Prompt Quality Criteria in `prompt-builder.instructions.md`.
+The loop builds, tests, evaluates, and updates the prompt artifacts, repeating until the evaluation log shows no remaining issues. Build and modification edits follow the Outcome-First Authoring Core and the Quality Criteria in `hve-builder.instructions.md`.
 
 1. Execution and evaluation: run `Prompt Tester`, then `Prompt Evaluator` in a sandbox folder and inspect the evaluation log. Test the target prompt files individually, together, or both: test a file on its own when it is meant to run standalone, and test the files together when they are meant to operate in concert (for example, an agent with its instructions and subagents).
 2. Research: create or update the primary research file and run `Researcher Subagent` in parallel when topics are independent. Consolidate findings into the primary research document and clean and finalize it before moving to the modification phase.

@@ -8,6 +8,8 @@ user-invocable: true
 
 # Prompt Builder Skill
 
+> Legacy: this skill is retained for compatibility and is superseded by the `hve-builder` skill, the next-generation prompt-engineering suite. Prefer `hve-builder` for new work; `prompt-builder` will be deprecated at a later point.
+
 Primary entry point for prompt-engineering work. Create or update prompt, instruction, agent, and skill artifacts through the full execution, evaluation, research, and modification loop, and route refactor or analyze requests to the specialized skills.
 [references/orchestration.md](references/orchestration.md) is the canonical reference for the phase loop, sandbox contract, caller-owned evidence roots, subagent dispatch matrix, artifact paths, and cleanup contract; the specialized skills reference it, mirroring only the parts they need.
 
@@ -19,7 +21,7 @@ Create or update prompt-engineering artifacts through the full execution, evalua
 
 ## Flow
 
-1. Confirm the target prompt artifacts, reference files, requirements, and any caller-provided evidence root. When the request does not already name the artifacts, decide which artifact types it needs using the Choosing the Right Artifact Type section in `prompt-builder.instructions.md`, propose the breakdown, and confirm scope with the user. Then derive the sandbox topic, evidence root, and next run number using the deterministic contract in
+1. Confirm the target prompt artifacts, reference files, requirements, and any caller-provided evidence root. When the request does not already name the artifacts, decide which artifact types it needs using the Choosing the Artifact Type section in `hve-builder.instructions.md`, propose the breakdown, and confirm scope with the user. Then derive the sandbox topic, evidence root, and next run number using the deterministic contract in
    [references/orchestration.md](references/orchestration.md).
 2. When the target prompt files already exist, run the execution and evaluation phase (dispatch `Prompt Tester`, then `Prompt Evaluator`) to establish their current state and inspect the evaluation log; when that baseline shows no unresolved issues, skip to the final response. When the target files do not exist yet, skip to step 3.
 3. Research: create or update the primary research artifact at the resolved evidence path, defaulting to `.copilot-tracking/research/{{YYYY-MM-DD}}/{{topic}}-research.md`, and delegate to `Researcher Subagent` when the topics are independent.
@@ -49,14 +51,14 @@ When a "clean up" request is ambiguous, keep substantial create-or-change work i
 ## Success criteria
 
 * The requested prompt artifacts or related instruction files exist or were updated.
-* The artifacts meet the stated requirements and prompt-builder quality criteria.
+* The artifacts meet the stated requirements and the applicable Quality Criteria in `hve-builder.instructions.md`.
 * The evaluation loop completed with no unresolved issues, or any remaining issues are documented explicitly.
 
 ## Constraints
 
 * Keep sandbox edits inside the assigned sandbox folder and reuse prior runs for continuity.
 * Do not skip the evaluator step or finalize early.
-* Maintain the repository's prompt-builder quality standard.
+* Maintain the repository's HVE Builder quality standard.
 * When generating bounded agents, include handoffs only when the user asks for them or they are essential to the workflow's completion path.
 * When generating audit-style workflows or modes that distinguish audit from improvement, state source-edit authority explicitly without weakening this skill's default create, update, and improve behavior.
 * Clean up the sandbox files and folders created for this request before the final response unless the user asked to keep them.

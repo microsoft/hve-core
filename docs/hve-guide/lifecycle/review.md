@@ -134,7 +134,7 @@ Execute .github/prompts/hve-core/task-review.prompt.md literally in a sandbox to
 Select **prompt-evaluator** agent:
 
 ```text
-Evaluate the execution log from .copilot-tracking/sandbox/2025-01-15-task-review-001/execution-log.md against the prompt quality criteria in .github/instructions/hve-core/prompt-builder.instructions.md
+Evaluate the execution log from .copilot-tracking/sandbox/2025-01-15-task-review-001/execution-log.md against the prompt quality criteria in .github/instructions/hve-core/hve-builder.instructions.md
 ```
 
 ### Documentation Review

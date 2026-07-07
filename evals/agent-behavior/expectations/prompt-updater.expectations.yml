@@ -58,11 +58,11 @@ expectations:
     contract_ref: "agent §Response Format (status of the modifications for each prompt file)"
 
   - expectation_id: instructions-followed
-    summary: Response acknowledges following prompt-builder and writing-style instructions.
+    summary: Response acknowledges following hve-builder and writing-style instructions.
     signal: Response cites or applies the two normative instruction files.
     pass_criteria: |
       Response demonstrates that modifications follow guidance from
-      `.github/instructions/hve-core/prompt-builder.instructions.md` and
+      `.github/instructions/hve-core/hve-builder.instructions.md` and
       `.github/instructions/hve-core/writing-style.instructions.md`, either
       by direct citation or by visible adherence (e.g., voice/tone, frontmatter
       schema) in tracked changes.
@@ -70,7 +70,7 @@ expectations:
       - Neither instruction file referenced or applied.
       - Modifications visibly violate the cited standards.
     priority: high
-    contract_ref: "agent §Pre-requisite (read prompt-builder + writing-style instructions)"
+    contract_ref: "agent §Pre-requisite (read hve-builder + writing-style instructions)"
 
   - expectation_id: remaining-checklist
     summary: Response includes a checklist of remaining requirements and issues.

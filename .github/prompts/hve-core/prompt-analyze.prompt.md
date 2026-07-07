@@ -28,7 +28,7 @@ Issues Found:
 
 Quality Assessment:
 
-* Summarize which Prompt Quality Criteria passed and which failed.
+* Summarize which applicable Quality Criteria passed and which failed.
 * Note any patterns of concern across multiple criteria.
 
 When issues are found:
@@ -40,7 +40,7 @@ When issues are found:
 When no issues are found:
 
 * Present the purpose and capabilities section.
-* Display: ✅ **Quality Assessment Passed** - This prompt meets all Prompt Quality Criteria.
+* Display: ✅ **Quality Assessment Passed** - This prompt meets all applicable Quality Criteria.
 * Summarize the criteria validated.
 
 ## Required Steps

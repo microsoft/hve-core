@@ -1386,7 +1386,7 @@ stimuli:
     using the execution log in
     `.copilot-tracking/sandbox/2026-05-27-example-prompt-002/execution-log.md`.
     Produce an evaluation-log.md with severity-graded findings against the
-    Prompt Quality Criteria.
+    applicable Quality Criteria in `hve-builder.instructions.md`.
   tags:
     category: agent-behavior
     advisory: "true"
@@ -1399,11 +1399,11 @@ stimuli:
   - type: output-matches
     name: criteria-vocabulary
     config:
-      pattern: (?i)(prompt[- ]?quality[- ]?criteria|severity|finding|prompt[- ]?builder)
+      pattern: (?i)(quality[- ]?criteria|severity|finding|hve[- ]?builder)
 - name: prompt-evaluator-criteria-checklist
   prompt: |
-    As a prompt-evaluator subagent, describe how you apply the Prompt Quality
-    Criteria from `prompt-builder.instructions.md` and the style standards from
+    As a prompt-evaluator subagent, describe how you apply the Quality
+    Criteria from `hve-builder.instructions.md` and the style standards from
     `writing-style.instructions.md` to a target prompt file, and how
     pass/fail assessments are recorded with evidence.
   tags:
@@ -1414,7 +1414,7 @@ stimuli:
   - type: output-matches
     name: instructions-references
     config:
-      pattern: (?i)(prompt-builder|writing-style|\.instructions\.md)
+      pattern: (?i)(hve-builder|writing-style|\.instructions\.md)
   - type: output-matches
     name: assessment-vocabulary
     config:

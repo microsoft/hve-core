@@ -57,7 +57,7 @@ Each finding includes:
 | Field                      | Content                                                                                                                         |
 |----------------------------|---------------------------------------------------------------------------------------------------------------------------------|
 | Artifact                   | Workspace-relative markdown link to the affected artifact                                                                       |
-| Criterion or contract area | Failed Prompt Quality Criteria item, Prompt Design Principles item, analyze-only contract area, or local evidence contract area |
+| Criterion or contract area | Failed Quality Criteria item, Outcome-First Authoring Core requirement, analyze-only contract area, or local evidence contract area |
 | Severity                   | Critical, High, Medium, or Low                                                                                                  |
 | Evidence                   | Specific artifact text, execution-log finding, evaluation-log finding, or observed behavior                                     |
 | Impact                     | Why the issue matters                                                                                                           |
@@ -67,15 +67,15 @@ Use `None` when no findings exist for a severity.
 
 ### Non-Issue Improvement Opportunities
 
-Use this section for optional improvements that do not fail the Prompt Quality Criteria or local contracts. Keep them separate from severity-graded findings and label them as optional.
+Use this section for optional improvements that do not fail the applicable Quality Criteria or local contracts. Keep them separate from severity-graded findings and label them as optional.
 
 ### Quality Assessment
 
-Summarize which Prompt Quality Criteria passed, failed, or were not applicable. Note cross-artifact patterns, missing evidence, and any fallback handling from the evidence contract.
+Summarize which applicable Quality Criteria passed, failed, or were not applicable. Note cross-artifact patterns, missing evidence, and any fallback handling from the evidence contract.
 
 If no issues are found, include this exact line:
 
-✅ Quality Assessment Passed - This prompt meets all Prompt Quality Criteria.
+✅ Quality Assessment Passed - This artifact meets all applicable Quality Criteria.
 
 ### Sandbox and Retention Notes
 

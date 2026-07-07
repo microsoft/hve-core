@@ -55,7 +55,7 @@ See [Contributing Instructions](../../docs/contributing/instructions.md) for aut
 |------------------------------------------------------------------------------------|-------------------------------------------------------|---------------------------------------|
 | [hve-core/markdown.instructions.md](hve-core/markdown.instructions.md)             | `**/*.md`                                             | Markdown formatting standards         |
 | [hve-core/writing-style.instructions.md](hve-core/writing-style.instructions.md)   | `**/*.md`                                             | Voice, tone, and language conventions |
-| [hve-core/prompt-builder.instructions.md](hve-core/prompt-builder.instructions.md) | `**/*.prompt.md, **/*.agent.md, **/*.instructions.md` | Prompt engineering artifact authoring |
+| [hve-core/hve-builder.instructions.md](hve-core/hve-builder.instructions.md)       | `**/*.prompt.md, **/*.agent.md, **/*.instructions.md, **/SKILL.md` | HVE artifact authoring standards      |
 | [docusaurus-edits.instructions.md](docusaurus-edits.instructions.md)               | `docs/**`                                             | Docusaurus documentation authoring    |
 
 ### Git and Workflow
@@ -278,7 +278,7 @@ For manual creation, see [Contributing Instructions](../../docs/contributing/ins
 │   ├── git-merge.instructions.md
 │   ├── licensing-posture.instructions.md
 │   ├── markdown.instructions.md
-│   ├── prompt-builder.instructions.md
+│   ├── hve-builder.instructions.md
 │   ├── pull-request.instructions.md
 │   └── writing-style.instructions.md
 ├── jira/                             # Jira backlog workflows

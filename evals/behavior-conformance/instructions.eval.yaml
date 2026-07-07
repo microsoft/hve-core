@@ -321,7 +321,7 @@ stimuli:
         config:
           pattern: "(?i)markdownlint|heading|atx|list|frontmatter"
 
-  - name: instruction-prompt-builder-conformance
+  - name: instruction-hve-builder-conformance
     prompt: |
       You are authoring a new custom agent file at
       `.github/agents/example/my-agent.agent.md`. Which
@@ -330,7 +330,7 @@ stimuli:
       engineering artifacts?
     tags:
       category: behavior-conformance
-      instruction: prompt-builder
+      instruction: hve-builder
       advisory: "true"
     graders:
       - type: output-matches

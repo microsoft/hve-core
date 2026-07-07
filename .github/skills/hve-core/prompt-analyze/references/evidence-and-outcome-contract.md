@@ -13,7 +13,7 @@ Every severity-graded finding in the Analysis Report includes these fields:
 | Field                      | Requirement                                                                                                                                                |
 |----------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | Artifact                   | Name the evaluated artifact and link to it with a workspace-relative markdown link.                                                                        |
-| Criterion or contract area | Name the failed Prompt Quality Criteria item, Prompt Design Principles item, analyze-only contract area, or other local contract area.                     |
+| Criterion or contract area | Name the failed Quality Criteria item, Outcome-First Authoring Core requirement, analyze-only contract area, or other local contract area.             |
 | Severity                   | Use Critical, High, Medium, or Low after normalizing incoming wording.                                                                                     |
 | Evidence                   | Cite the specific observed behavior, artifact text, execution-log finding, or evaluation-log finding.                                                      |
 | Impact                     | Explain why the issue affects prompt reliability, execution quality, user safety, maintainability, or reviewability.                                       |

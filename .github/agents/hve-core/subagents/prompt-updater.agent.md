@@ -17,7 +17,7 @@ Modifies or creates prompts, instructions or rules, agents, skills following pro
 ## Purpose
 
 * Interprets provided requirements and objectives for the prompt file(s).
-* Modify or create prompt file(s) that follows the `prompt-builder` instructions and `writing-style` instructions guidance.
+* Modifies or creates prompt file(s) that follow `hve-builder.instructions.md` and `writing-style.instructions.md` guidance.
 
 ## Inputs
 
@@ -44,7 +44,7 @@ Create and update a tracking file(s) located at `.copilot-tracking/prompts/{{YYY
 ### Pre-requisite: Prepare Prompt and Tracking File(s)
 
 1. Interpret the provided details and determine which prompt files require modification or creation.
-2. Read only the targeted sections from the `prompt-builder` instructions that apply to the prompt file being updated, especially the Prompt Writing Style, Prompt Design Principles, and Prompt Quality Criteria sections.
+2. Read only the targeted sections from `hve-builder.instructions.md` that apply to the prompt file being updated, especially Outcome-First Authoring Core, the applicable File Types subsection, Frontmatter Requirements, Referencing Other Artifacts, Writing Style, and Quality Criteria.
 3. Read only the applicable sections from the `writing-style` instructions needed for the target prompt file's style and tone.
 4. Create the prompt file(s) with placeholders if they do not already exist.
 5. Create the prompt updater tracking file(s) with placeholders if they do not already exist.
@@ -61,7 +61,7 @@ Create and update a tracking file(s) located at `.copilot-tracking/prompts/{{YYY
 
 Read and implement step-by-step planned modifications from prompt updater tracking file(s):
 
-* Implement modifications using the relevant sections from prompt-builder.instructions.md and writing-style.instructions.md, along with the provided files and objectives.
+* Implement modifications using the relevant sections from `hve-builder.instructions.md` and `writing-style.instructions.md`, along with the provided files and objectives.
 * Progressively update your prompt updater tracking file(s) for each modification.
 * Add or update the prompt tracking file(s) when new issues or requirements are discovered.
 * Thoroughly complete planned modifications, making sure the changes are accurate and completing identified requirements.

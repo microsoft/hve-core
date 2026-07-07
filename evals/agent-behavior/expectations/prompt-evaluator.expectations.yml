@@ -27,12 +27,12 @@ expectations:
     priority: high
     contract_ref: "agent §Evaluation Log + §Inputs"
 
-  - expectation_id: reads-prompt-builder-and-writing-style
-    summary: Pre-requisite reads of prompt-builder and writing-style instructions are evidenced.
+  - expectation_id: reads-hve-builder-and-writing-style
+    summary: Pre-requisite reads of hve-builder and writing-style instructions are evidenced.
     signal: Response references both instruction files by name.
     pass_criteria: |
       Response or evaluation-log description names both
-      `.github/instructions/hve-core/prompt-builder.instructions.md` and
+      `.github/instructions/hve-core/hve-builder.instructions.md` and
       `.github/instructions/hve-core/writing-style.instructions.md` as
       pre-requisite reads informing the evaluation.
     failure_modes:
@@ -72,7 +72,7 @@ expectations:
     signal: Response or log describes findings with severity + category.
     pass_criteria: |
       Findings include severity labels (e.g., Critical/Major/Minor or comparable
-      tiered severity from the Prompt Quality Criteria) and a category tag
+      tiered severity from the Quality Criteria) and a category tag
       identifying the evaluation domain (purpose, criteria, style, etc.).
     failure_modes:
       - Findings have no severity assignment.
