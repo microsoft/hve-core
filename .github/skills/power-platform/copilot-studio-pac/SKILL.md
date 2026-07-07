@@ -448,12 +448,12 @@ PowerShell 7.4+ and the repo-pinned `PowerShell-Yaml` module
 
 ### Parameters
 
-| Parameter | Required | Description |
-|-----------|----------|-------------|
-| `-Path` | Yes | Scaffold root (auto-discovers `workspace/topics/*.mcs.yml`) or a directory of `*.mcs.yml` files. |
-| `-StatePath` | No | Explicit `state.json` for topicCount reconciliation. Auto-discovered under the scaffold root when omitted (prefers one inside `.copilot-tracking/`). |
-| `-JsonOut` | No | Path to write a machine-readable JSON report. |
-| `-AllowPrefix` | No | Declared variable namespaces treated as bound. Defaults to `System, Topic, Global, Env`. |
+| Parameter      | Required | Description                                                                                                                                          |
+|----------------|----------|------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `-Path`        | Yes      | Scaffold root (auto-discovers `workspace/topics/*.mcs.yml`) or a directory of `*.mcs.yml` files.                                                     |
+| `-StatePath`   | No       | Explicit `state.json` for topicCount reconciliation. Auto-discovered under the scaffold root when omitted (prefers one inside `.copilot-tracking/`). |
+| `-JsonOut`     | No       | Path to write a machine-readable JSON report.                                                                                                        |
+| `-AllowPrefix` | No       | Declared variable namespaces treated as bound. Defaults to `System, Topic, Global, Env`.                                                             |
 
 ### Troubleshooting
 
