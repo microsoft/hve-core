@@ -8,6 +8,7 @@ import { IconCard, BoxCard, CardGrid } from '../components/Cards';
 import CollectionCard from '../components/CollectionCards';
 import { iconCards, boxCards } from '../data/hubCards';
 import { resolveCollectionCards } from '../data/collectionCards';
+import { labelRegistry } from '../data/labelRegistry';
 import styles from './styles.module.css';
 
 export default function Home(): React.ReactElement {
@@ -19,7 +20,7 @@ export default function Home(): React.ReactElement {
   return (
     <Layout title="HVE Core" description="AI-Driven Software Development Across the Full Lifecycle">
       <HeroSection
-        title="HVE Core"
+        title={labelRegistry.hveCoreExpanded}
         subtitle="AI-Driven Software Development Across the Full Lifecycle"
         cta={[
           { label: 'Install the Extension', href: 'https://marketplace.visualstudio.com/items?itemName=ise-hve-essentials.hve-core', primary: true },
@@ -28,7 +29,12 @@ export default function Home(): React.ReactElement {
       />
 
       <main>
-        <section className={styles.sectionCompact}>
+        <p className={styles.heroPurpose}>
+          HVE Core helps teams move from an idea to a shipped solution with shared guidance, reusable assets, and accessible documentation.
+        </p>
+
+        <section className={styles.sectionCompact} aria-labelledby="featured-title">
+          <h2 id="featured-title" className={styles.srOnly}>Featured resources</h2>
           <CardGrid>
             {iconCards.map((card) => (
               <IconCard key={card.href} icon={card.icon} supertitle={card.supertitle} title={card.title} href={card.href} />
@@ -36,10 +42,13 @@ export default function Home(): React.ReactElement {
           </CardGrid>
         </section>
 
-        <section className={styles.section}>
-          <h2 className={styles.sectionTitle}>Deep dive</h2>
+        <section className={styles.section} aria-labelledby="deep-dive-title">
+          <h2 id="deep-dive-title" className={styles.sectionTitle}>{labelRegistry.deepDive}</h2>
           <p className={styles.sectionSubtitle}>
             Explore best practices and patterns for AI-assisted development.
+          </p>
+          <p className={styles.heroPurpose}>
+            Deep dive groups practical guidance and reference material that helps you apply the workflow in real projects.
           </p>
           <CardGrid columns={4}>
             {boxCards.map((card) => (
@@ -48,8 +57,8 @@ export default function Home(): React.ReactElement {
           </CardGrid>
         </section>
 
-        <section className={styles.section}>
-          <h2 className={styles.sectionTitle}>Collections</h2>
+        <section className={styles.section} aria-labelledby="collections-title">
+          <h2 id="collections-title" className={styles.sectionTitle}>{labelRegistry.collections}</h2>
           <p className={styles.sectionSubtitle}>
             Browse domain-specific artifact bundles.
           </p>

@@ -79,6 +79,9 @@ items:
   - path: .github/agents/project-planning/subagents/prd-quality-reviewer.agent.md
     kind: agent
   # Prompts
+  - path: .github/prompts/accessibility/accessibility-coverage-matrix.prompt.md
+    kind: prompt
+    maturity: experimental
   - path: .github/prompts/security/security-plan-from-prd.prompt.md
     kind: prompt
     maturity: experimental

@@ -49,7 +49,7 @@ VEX documents in this repository follow a draft-and-merge accountability model.
 
 The AI agent drafts VEX statements, including status determinations, justification codes, and supporting evidence. The human reviewer merges the pull request after validating the evidence and confirming the status determination.
 
-The merge commit author is the accountable author of record for the VEX statement. The Sigstore identity attached by the release workflow serves as the trust anchor for published VEX documents.
+The merge commit author is the accountable author of record for the VEX statement. The Sigstore identity attached by the reusable VEX attestation workflow, microsoft/hve-core/.github/workflows/vex-attest.yml, serves as the trust anchor for published VEX documents.
 
 ## Document mutation contract
 
