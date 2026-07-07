@@ -13,6 +13,15 @@ required guardrails and emit the per-artifact templates verbatim (filled in), re
 > depth — especially the safety guardrails and the artifact shapes that make output **consistent and
 > repeatable** across users and models.
 
+## Scope
+
+These standards apply to any Copilot Studio agent built from this repository — the `applyTo` globs
+cover both the `**/power-platform/copilot-studio/**` design deliverables and the
+`**/.copilot-tracking/copilot-studio/**` planning state. They define the required guardrails, the
+refusal taxonomy, the per-artifact templates, the DLP rubric, and the ALM rules the agent applies
+across its phases. They do **not** author the Responsible AI assessment or the DLP policy themselves —
+the agent hands those off.
+
 ## 1. Required Guardrails Block (MANDATORY — inject into every Phase 3 `system-instructions.md`)
 
 Every generated agent MUST encode these unless the maker explicitly overrides one with a written

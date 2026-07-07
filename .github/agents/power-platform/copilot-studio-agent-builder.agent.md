@@ -81,7 +81,8 @@ power-platform/copilot-studio/{agent-slug}/
 │   ├── governance-notes.md
 │   ├── test-plan.md
 │   ├── bindings.md                  # construct→workspace-file→bind-step governance manifest (Phase 9)
-│   └── CHANGES.md
+│   ├── CHANGES.md
+│   └── deploy-and-iterate.md    # Phase 10 deploy + iteration runbook
 ├── connectors/
 │   └── {connector-name}.openapi.yaml
 ├── solution/                       # pac solution unpack output (source-control-friendly)
@@ -171,7 +172,19 @@ The harness is **capability-aware**: Phase 1 records which capabilities the agen
 
 ### Phase 2: Conversation and Topic Design
 
-**Objective.** Capture the conversation design as repo artifacts. For each topic, record its name, trigger phrases, entities/slots, and the dialog flow (questions, conditions, messages, redirects). Distinguish system topics (Conversation Start, Fallback, Escalate, End of Conversation) from custom topics, and note whether routing relies on generative orchestration or classic trigger matching. **Safety-routing note.** When the routing mode is generative orchestration (a generative recognizer / generative actions), the generative planner does **not** honor classic topic routing-priority, so a high-priority Escalate topic is **not** a reliable safety control on its own — every escalation/refusal path must also be enforced in the Phase 3 system instructions (and, where the platform supports it, as a planner rule that bars tool-calls for refusal-class intents). **Topic-integrity & complexity note.** For each topic, assert the §3 integrity invariants at design time — **filename == `componentName`** for custom topics (identity derives from `componentName`, not the filename; `componentName` is unique and no custom topic reuses a system topic's `componentName`), no custom topic redefines a system trigger kind (`OnConversationStart`, `OnUnknownIntent`, `OnEscalate`, `OnError`, `OnSignIn`) — a fraud/scam intent is an `OnRecognizedIntent` custom topic, not an `OnEscalate` override; redirecting **to** a system topic via `BeginDialog` is legal, only redefining its trigger kind is not — no undeclared `{…}` tokens (each resolves to a declared topic/global/system variable, else a runtime variable-not-defined error), a `pac copilot`-schema skeleton (load-bearing `mcs.metadata` + `kind: AdaptiveDialog` + `beginDialog.id: main`; the terminal node varies by tier — `CancelAllDialogs` is the tier-1 convention, not universal), and at most one topic per system trigger kind — and record its **complexity tier** (§3): a tier ≥ 2 topic captures its **node graph**, not just a prose outline. Also capture the agent's **conversation starters** (suggested prompts) — agent-level starter prompts surfaced in the Copilot Studio UI, a first-class construct distinct from any topic.
+**Objective.** Capture the conversation design as repo artifacts.
+
+* For each topic, record its name, trigger phrases, entities/slots, and the dialog flow (questions, conditions, messages, redirects). Distinguish system topics (Conversation Start, Fallback, Escalate, End of Conversation) from custom topics, and note whether routing relies on generative orchestration or classic trigger matching.
+* **Safety-routing note.** When the routing mode is generative orchestration (a generative recognizer / generative actions), the generative planner does **not** honor classic topic routing-priority, so a high-priority Escalate topic is **not** a reliable safety control on its own — every escalation/refusal path must also be enforced in the Phase 3 system instructions (and, where the platform supports it, as a planner rule that bars tool-calls for refusal-class intents).
+* **Topic-integrity & complexity note.** For each topic, assert the §3 integrity invariants at design time and record its complexity tier:
+  * **filename == `componentName`** for custom topics (identity derives from `componentName`, not the filename).
+  * `componentName` is unique and no custom topic reuses a system topic's `componentName`.
+  * No custom topic redefines a system trigger kind (`OnConversationStart`, `OnUnknownIntent`, `OnEscalate`, `OnError`, `OnSignIn`) — a fraud/scam intent is an `OnRecognizedIntent` custom topic, not an `OnEscalate` override; redirecting **to** a system topic via `BeginDialog` is legal, only redefining its trigger kind is not.
+  * No undeclared `{…}` tokens (each resolves to a declared topic/global/system variable, else a runtime variable-not-defined error).
+  * A `pac copilot`-schema skeleton (load-bearing `mcs.metadata` + `kind: AdaptiveDialog` + `beginDialog.id: main`; the terminal node varies by tier — `CancelAllDialogs` is the tier-1 convention, not universal).
+  * At most one topic per system trigger kind.
+  * Record each topic's **complexity tier** (§3): a tier ≥ 2 topic captures its **node graph**, not just a prose outline.
+* Also capture the agent's **conversation starters** (suggested prompts) — agent-level starter prompts surfaced in the Copilot Studio UI, a first-class construct distinct from any topic.
 
 * Artifact: `design/topic-design.md` (one section per topic: name, trigger phrases, entities, dialog outline, redirects, and orchestration mode).
 * Artifact: conversation starters captured in `design/topic-design.md` and later emitted under `conversationStarters` in `agent.mcs.yml` (Phase 9) — a construct distinct from topics, not a topic trigger.
@@ -226,7 +239,26 @@ The harness is **capability-aware**: Phase 1 records which capabilities the agen
 
 ### Phase 8: Governance and Responsible AI Design-Adequacy Review
 
-**Objective.** Capture the environment strategy (separate Dev, Test, and Production environments; managed-environment posture) and propose a DLP connector classification (Business / Non-Business / Blocked) for every connector from Phase 5 using the **§4 DLP rubric**. Inventory every environment-specific value and connector dependency as an **environment variable** and **connection reference** per **§6**. Then run a **Builder design-adequacy checklist** over the design-level safety surfaces — the §1 guardrails present, the §2 refusal taxonomy (R1–R4) present, the identity-from-authenticated-context rule, every connector DLP-classified, environment values parameterized, escalation/refusal paths defined, knowledge sources scoped/allow-listed, no connector over-scoped, and the platform-native RAI controls asserted config-present — and render a verdict: **CLEARED-FOR-DEV/TEST** (the design is safe enough to stand up for behavior verification → sets `phases.governance.raiDevTestCleared`) or **HALT** (a genuine *design-level* risk that cannot be mitigated — the only red). Phase 8 does **not** run the heavy independent Responsible AI hand-off by default and **never** sets `phases.governance.raiApproved`; the single authoritative independent `@rai-planner` **behavior** assessment moves to Phase 10 (post-deploy). Phase 8 **escalates to `@rai-planner` only** when the checklist flags a genuine design risk (to adjudicate the HALT). This agent does not author the RAI assessment or the DLP policy itself.
+**Objective.** Assess the design-level governance and safety surfaces, then render a clearance verdict.
+
+* Capture the environment strategy (separate Dev, Test, and Production environments; managed-environment posture).
+* Propose a DLP connector classification (Business / Non-Business / Blocked) for every connector from Phase 5 using the **§4 DLP rubric**.
+* Inventory every environment-specific value and connector dependency as an **environment variable** and **connection reference** per **§6**.
+* Run a **Builder design-adequacy checklist** over the design-level safety surfaces:
+  * the §1 guardrails present
+  * the §2 refusal taxonomy (R1–R4) present
+  * the identity-from-authenticated-context rule
+  * every connector DLP-classified
+  * environment values parameterized
+  * escalation/refusal paths defined
+  * knowledge sources scoped/allow-listed
+  * no connector over-scoped
+  * the platform-native RAI controls asserted config-present
+* Render a verdict: **CLEARED-FOR-DEV/TEST** (the design is safe enough to stand up for behavior verification → sets `phases.governance.raiDevTestCleared`) or **HALT** (a genuine *design-level* risk that cannot be mitigated — the only red).
+* Phase 8 does **not** run the heavy independent Responsible AI hand-off by default and **never** sets `phases.governance.raiApproved`.
+* The single authoritative independent `@rai-planner` **behavior** assessment moves to Phase 10 (post-deploy).
+* Phase 8 **escalates to `@rai-planner` only** when the checklist flags a genuine design risk (to adjudicate the HALT).
+* This agent does not author the RAI assessment or the DLP policy itself.
 
 * Artifact: `design/governance-notes.md` (environment topology, per-connector DLP classification proposal, and the environment-variable / connection-reference inventory); the DLP classification is recorded in `state.json` (`phases.governance.dlpClassified = true`), and on a **CLEARED-FOR-DEV/TEST** verdict record `phases.governance.raiDevTestCleared = true`. `phases.governance.raiHandoff = true` / `handoffs.raiPlanner = true` are recorded only when Phase 8 escalates a flagged design risk to `@rai-planner` or when the post-deploy Phase 10 behavior assessment runs; `phases.governance.raiApproved` is **deferred to the Phase 10 post-deploy behavior gate** and is never set here.
 * Automated RAI controls (auto-asserted evidence). Responsible AI here is not only a human sign-off — much of it is measurable, so the RAI hand-off starts from evidence rather than assertions. **Platform-native tier (always-on / configurable, low-code):** assert and record — as *config-present* evidence in `design/governance-notes.md` — the Azure AI **Content Safety** input-and-output moderation posture at the environment's severity thresholds, the **prompt-injection / jailbreak shields**, **groundedness** and allowed-domain scoping (per the web-grounding plan), and the **DLP / Microsoft Purview** classification from the companion instructions' §4 rubric. **Pro-dev tier (opt-in, beyond the citizen-developer default):** when the operator opts in, run automated safety evaluators — Microsoft **PyRIT** red-teaming and/or **Azure AI Foundry** risk-and-safety evaluators (jailbreak resilience, harmful content, groundedness, protected material) — headless, and fold the scored, *behavior-verified* results into the Phase 7 tests and the RAI evidence register. Per the Phase 7 config-present-vs-behavior-verified note, enabling a control is config-present; only a passing evaluation behavior-verifies it. **This evidence informs the Phase 8 design-adequacy checklist and the Phase 10 behavior assessment; it never sets `phases.governance.raiApproved` (the Phase 10 post-deploy behavior gate), and the Phase 8 checklist sets only `phases.governance.raiDevTestCleared`.**
