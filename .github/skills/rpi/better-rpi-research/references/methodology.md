@@ -50,7 +50,7 @@ Subagents provide breadth. They do not relieve the lead of owning verification o
 5. Precise scope boundaries: what is in and out of scope.
 6. Stop criteria and budget: when the worker is done and how much effort to spend.
 
-Dispatch multiple subagents in parallel when the questions are independent. The dedicated worker is the RPI Research Subagent at `.github/agents/rpi/subagents/rpi-research-subagent.agent.md`.
+Dispatch multiple subagents using `runSubagent` or `task` tools, in parallel (up to 15) when the questions are independent. The dedicated worker is the `RPI Research Subagent`.
 
 ## Subagent return contract
 

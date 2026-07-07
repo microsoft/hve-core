@@ -35,6 +35,8 @@ Work in waves. Each wave runs one or more searches and then a single, distinct r
 
 Open with the Prior Knowledge Gate: treat prior artifacts, memory, and any supplied context as starting points to verify, not as ground truth. Confirm versions, paths, and claims against current evidence before you build on them.
 
+Use `RPI Research Subagent` (refer to Dispatching research subagents for details) subagents as the primary workhorses for gathering intelligence.
+
 ## Decision-critical trigger
 
 One trigger governs the heavier disciplines below. A claim is decision-critical when the recommendation hinges on it, and it triggers extra rigor only when it is also externally or behaviorally uncertain. Mark the trigger with a single line in the artifact:
@@ -47,13 +49,13 @@ When the answer is no, for routine codebase facts, stable internal conventions, 
 
 ## Dispatching research subagents
 
-Subagents provide breadth; they do not relieve you of owning verification of the load-bearing claim. Dispatch the RPI Research Subagent (`.github/agents/rpi/subagents/rpi-research-subagent.agent.md`) with a six-part brief: one core objective, allowed tool categories, the expected output schema, suggested starting points plus what counts as a high-quality source, precise scope boundaries, and stop criteria plus a budget. You may dispatch several in parallel. See the full dispatch and return contracts in [references/methodology.md](references/methodology.md), and the runtime tool map in [references/tool-categories.md](references/tool-categories.md).
+Subagents provide breadth; they do not relieve you of owning verification of the primary claim. Dispatch the `RPI Research Subagent` using `runSubagent` or `task` tools, with a six-part brief: one core objective, allowed tool categories, the expected output schema, suggested starting points plus what counts as a high-quality source, precise scope boundaries, and stop criteria plus a budget. You may dispatch several in parallel. See the full dispatch and return contracts in [references/methodology.md](references/methodology.md), and the runtime tool map in [references/tool-categories.md](references/tool-categories.md).
 
 ## Lead verification and context discipline
 
 * Do direct primary research yourself in three cases: straightforward or low-complexity questions, when no subagent is available, and for targeted verification or read-back.
 * When you read back, verify the single most decisive or most contested claim first, especially an external capability or behavior claim, not the cheapest in-repo fact.
-* Treat a subagent's chat response as an index into its file. Re-read the subagent file or the original source only when the next action needs it, but always confirm any load-bearing claim from the file rather than from the summary alone.
+* Treat a subagent's chat response as an index into its file. Re-read the subagent file or the original source only when the next action needs it, but always confirm any primary claim from the file rather than from the summary alone.
 
 ## Evidence and citation contract
 
@@ -96,4 +98,4 @@ Run the Artifact Self-Check before returning. Confirm every claim resolves to an
 * [references/methodology.md](references/methodology.md): the normative research loop, gates, dispatch and return contracts, evidence standards, and protocol.
 * [references/tool-categories.md](references/tool-categories.md): the concrete runtime tool categories mapped to research use and evidence tiers.
 * [templates/research.md](templates/research.md): the research artifact template with repeatable wave and alternative blocks.
-* RPI Research Subagent (`.github/agents/rpi/subagents/rpi-research-subagent.agent.md`): the dedicated worker this skill dispatches.
+* `RPI Research Subagent` using `runSubagent` or `task`: the dedicated worker this skill dispatches.
