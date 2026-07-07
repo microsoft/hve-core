@@ -20,27 +20,27 @@ the gated pipeline, never inline in authored source.
 
 ## Component map
 
-| Component | File | Root `kind` or key | Flow |
-| --- | --- | --- | --- |
-| Agent core | `agent.mcs.yml` | `kind: GptComponentMetadata` | Flow 1 or Flow 2 |
-| Suggested prompts | `agent.mcs.yml` | `conversationStarters:` | Flow 1 or Flow 2 |
-| Knowledge, public site | `knowledge/<name>.mcs.yml` | `kind: KnowledgeSourceConfiguration` | Flow 2 |
-| Conversational trigger | `topics/<name>.mcs.yml` | `kind: AdaptiveDialog` with `OnRecognizedIntent` | Flow 1 or Flow 2 |
-| MCP tool or action | `actions/<name>.mcs.yml` | `kind: TaskDialog` | Flow 2 |
-| Connection references | `connectionreferences.mcs.yml` | `connectionReferences:` | Flow 2 |
-| Knowledge answering topic | `topics/Search.mcs.yml` | `kind: AdaptiveDialog` with `OnUnknownIntent` | Flow 2 |
+| Component                 | File                           | Root `kind` or key                               | Flow             |
+|---------------------------|--------------------------------|--------------------------------------------------|------------------|
+| Agent core                | `agent.mcs.yml`                | `kind: GptComponentMetadata`                     | Flow 1 or Flow 2 |
+| Suggested prompts         | `agent.mcs.yml`                | `conversationStarters:`                          | Flow 1 or Flow 2 |
+| Knowledge, public site    | `knowledge/<name>.mcs.yml`     | `kind: KnowledgeSourceConfiguration`             | Flow 2           |
+| Conversational trigger    | `topics/<name>.mcs.yml`        | `kind: AdaptiveDialog` with `OnRecognizedIntent` | Flow 1 or Flow 2 |
+| MCP tool or action        | `actions/<name>.mcs.yml`       | `kind: TaskDialog`                               | Flow 2           |
+| Connection references     | `connectionreferences.mcs.yml` | `connectionReferences:`                          | Flow 2           |
+| Knowledge answering topic | `topics/Search.mcs.yml`        | `kind: AdaptiveDialog` with `OnUnknownIntent`    | Flow 2           |
 
 ## Agent core
 
 Root `kind` is `GptComponentMetadata`.
 
-| Key | Shape | Notes |
-| --- | --- | --- |
-| `instructions` | YAML literal block scalar (`\|-`) | Persona and behavior text |
-| `gptCapabilities.webBrowsing` | boolean | Enables web browsing |
-| `gptCapabilities.codeInterpreter` | boolean | Enables code interpreter |
-| `aISettings.model.modelNameHint` | string | Pins a named model, for example `GPT5Chat` |
-| `aISettings.model.kind` | string | Use `CurrentModels` to float to the environment default |
+| Key                               | Shape                             | Notes                                                   |
+|-----------------------------------|-----------------------------------|---------------------------------------------------------|
+| `instructions`                    | YAML literal block scalar (`\|-`) | Persona and behavior text                               |
+| `gptCapabilities.webBrowsing`     | boolean                           | Enables web browsing                                    |
+| `gptCapabilities.codeInterpreter` | boolean                           | Enables code interpreter                                |
+| `aISettings.model.modelNameHint`  | string                            | Pins a named model, for example `GPT5Chat`              |
+| `aISettings.model.kind`           | string                            | Use `CurrentModels` to float to the environment default |
 
 ```yaml
 kind: GptComponentMetadata
@@ -119,11 +119,11 @@ unverified.
 Root `kind` is `TaskDialog`. The `action.kind` is
 `InvokeExternalAgentTaskAction`.
 
-| Key | Value |
-| --- | --- |
-| `action.connectionReference` | `<connectionReferenceLogicalName>` |
-| `action.connectionProperties.mode` | `Invoker` |
-| `action.operationDetails.kind` | `ModelContextProtocolMetadata` |
+| Key                                   | Value                                           |
+|---------------------------------------|-------------------------------------------------|
+| `action.connectionReference`          | `<connectionReferenceLogicalName>`              |
+| `action.connectionProperties.mode`    | `Invoker`                                       |
+| `action.operationDetails.kind`        | `ModelContextProtocolMetadata`                  |
 | `action.operationDetails.operationId` | for example `mcp_MeServer` or `mcp_m365copilot` |
 
 ```yaml
@@ -155,9 +155,9 @@ connectionReferences:
 Observed connector-to-operation pairings:
 
 | `connectorId` shared prefix | Paired `operationId` |
-| --- | --- |
-| `shared_a365memcp` | `mcp_MeServer` |
-| `shared_a365copilotchatmcp` | `mcp_m365copilot` |
+|-----------------------------|----------------------|
+| `shared_a365memcp`          | `mcp_MeServer`       |
+| `shared_a365copilotchatmcp` | `mcp_m365copilot`    |
 
 ## Knowledge answering topic
 

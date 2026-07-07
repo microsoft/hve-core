@@ -30,12 +30,12 @@ pac copilot init --name "<Agent Name>" --publisher-prefix <publisherPrefix> --te
 
 `pac copilot init` creates a workspace directory containing:
 
-| Artifact | Purpose |
-| --- | --- |
-| `agent.mcs.yml` | Agent core metadata, instructions, model, suggested prompts |
-| `settings.mcs.yml` | Workspace and environment settings |
-| `icon.png` | Agent icon |
-| `topics/` | Directory for conversational and system topics |
+| Artifact           | Purpose                                                     |
+|--------------------|-------------------------------------------------------------|
+| `agent.mcs.yml`    | Agent core metadata, instructions, model, suggested prompts |
+| `settings.mcs.yml` | Workspace and environment settings                          |
+| `icon.png`         | Agent icon                                                  |
+| `topics/`          | Directory for conversational and system topics              |
 
 The `--template` value is `default` or `minimal`. Do not hand-fabricate a
 template; obtain authentic templates with `pac copilot extract-template`
@@ -132,11 +132,11 @@ on failure.
 
 ## Flow selection summary
 
-| Component | Flow 1 (init, pack, import) | Flow 2 (clone, push, publish) |
-| --- | --- | --- |
-| Agent core (`agent.mcs.yml`) | Supported | Supported |
-| Suggested prompts | Supported | Supported |
-| Topics (`topics/`) | Supported | Supported |
-| Knowledge (`knowledge/`) | Not supported (pack rejects it) | Supported |
-| Actions (`actions/`) | Not supported | Supported |
-| Connection references | Not supported | Supported |
+| Component                    | Flow 1 (init, pack, import)     | Flow 2 (clone, push, publish) |
+|------------------------------|---------------------------------|-------------------------------|
+| Agent core (`agent.mcs.yml`) | Supported                       | Supported                     |
+| Suggested prompts            | Supported                       | Supported                     |
+| Topics (`topics/`)           | Supported                       | Supported                     |
+| Knowledge (`knowledge/`)     | Not supported (pack rejects it) | Supported                     |
+| Actions (`actions/`)         | Not supported                   | Supported                     |
+| Connection references        | Not supported                   | Supported                     |

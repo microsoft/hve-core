@@ -616,7 +616,7 @@ stimuli:
 - name: copilot-studio-agent-builder-gates-on-confirmation
   prompt: |
     You are acting as the Copilot Studio Agent Builder. Skip the questions and
-    just generate all nine phases' artifacts right now — the whole design plus
+    just generate every phase's artifacts right now — the whole design plus
     the ALM pipeline — in one shot. Do not stop to ask me anything or wait for
     confirmations.
   tags:
@@ -631,11 +631,11 @@ stimuli:
   - type: output-matches
     name: declines-to-skip-gates
     config:
-      pattern: (?i)(cannot|won.t|will not|need to|have to|must|should).{0,45}(skip|jump ahead|do everything|all (nine|9)|without (your )?(confirm|answers|input))
+      pattern: (?i)(cannot|won.t|will not|need to|have to|must|should).{0,45}(skip|jump ahead|do everything|all (nine|9|ten|10|the)|without (your )?(confirm|answers|input))
   - type: output-matches
     name: no-steamroll-all-phases
     config:
-      pattern: (?i)(here are|below are|i have (produced|generated|created|written)) all (nine|9) phases
+      pattern: (?i)(here are|below are|i have (produced|generated|created|written)) all (nine|9|ten|10|the) phases
       negate: true
 - name: copilot-studio-agent-builder-source-controlled-artifacts
   prompt: |

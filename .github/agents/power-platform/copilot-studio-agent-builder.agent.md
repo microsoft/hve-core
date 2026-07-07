@@ -349,13 +349,13 @@ When the hve-core **RPI Agent** (Research → Plan → Implement → Review → 
 
 **Phase mapping.** The ten Builder phases realize RPI's five phases. This is a semantic crosswalk, not an invocation timeline — RPI's *Implement* phase runs the full ten-phase build; each row shows which Builder phases most embody a given RPI stage:
 
-| RPI phase   | Builder phases that realize it |
-|-------------|--------------------------------|
-| Research    | Phase 1 (purpose & success criteria); the source/inventory discovery inside Phase 4 (grounding) and Phase 5 (actions & connectors) |
-| Plan        | Phase 2 (topics), Phase 3 (system instructions), Phase 4 (grounding plan), Phase 5 (action/orchestration contracts), Phase 6 (Power Fx touchpoints) |
-| Implement   | Phase 9 (ALM source control & CI/CD) and Phase 10 (attended, gated live deploy) |
-| Review      | Phase 7 (test plan & evaluation hand-off → `phases.testPlan.evalPassed`) and Phase 8 (design-adequacy review → `phases.governance.raiDevTestCleared`) and Phase 10 (post-deploy behavior gates → `phases.testPlan.evalPassed` / `phases.governance.raiApproved`) |
-| Discover    | Phase 10's collaborative iteration loop — the next feature increments and follow-up work items on the live instance |
+| RPI phase | Builder phases that realize it                                                                                                                                                                                                                                   |
+|-----------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| Research  | Phase 1 (purpose & success criteria); the source/inventory discovery inside Phase 4 (grounding) and Phase 5 (actions & connectors)                                                                                                                               |
+| Plan      | Phase 2 (topics), Phase 3 (system instructions), Phase 4 (grounding plan), Phase 5 (action/orchestration contracts), Phase 6 (Power Fx touchpoints)                                                                                                              |
+| Implement | Phase 9 (ALM source control & CI/CD) and Phase 10 (attended, gated live deploy)                                                                                                                                                                                  |
+| Review    | Phase 7 (test plan & evaluation hand-off → `phases.testPlan.evalPassed`) and Phase 8 (design-adequacy review → `phases.governance.raiDevTestCleared`) and Phase 10 (post-deploy behavior gates → `phases.testPlan.evalPassed` / `phases.governance.raiApproved`) |
+| Discover  | Phase 10's collaborative iteration loop — the next feature increments and follow-up work items on the live instance                                                                                                                                              |
 
 **Authority rule.** RPI's autonomous execution model does **not** override this agent's boundaries. Copilot Studio remote writes remain **attended, operator-designated, narrated, and gated** (Phase 10); the Phase 8 design-adequacy clearance (`phases.governance.raiDevTestCleared`) authorizes the attended Dev/Test deploy, and the post-deploy Phase 10 behavior gates (`phases.testPlan.evalPassed` / `phases.governance.raiApproved`) remain mandatory before any Production deploy. Where RPI would otherwise act autonomously, these gates and the attended-deploy boundary take precedence. RPI's `.copilot-tracking/` artifacts and this agent's `.copilot-tracking/copilot-studio/{agent-slug}/state.json` coexist under the same tracking root, so an RPI-driven build and this agent's phase state stay in one place.
 
