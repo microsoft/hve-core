@@ -109,6 +109,26 @@ Describe 'New-AgentMatrixDashboard.ps1' -Tag 'Unit' {
             $script:Html | Should -Match 'class="missing">missing</td>'
         }
 
+        It 'Uses default class and cost tier labels for inventory rows without explicit values' {
+            $inventoryPath = Join-Path $script:Fix.Root 'evals/agent-behavior/AGENTS.yml'
+            Set-Content -LiteralPath $inventoryPath -Value @(
+                'agents:'
+                '  - slug: task-reviewer'
+                '    path: .github/agents/task-reviewer.agent.md'
+            ) -Encoding utf8NoBOM
+
+            & $script:ScriptPath `
+                -RepoRoot $script:Fix.Root `
+                -AgentMatrixRoot $script:Fix.MatrixRoot `
+                -SurfaceSignaturesRoot $script:Fix.SurfaceRoot `
+                -InventoryPath $inventoryPath `
+                -OutPath $script:OutPath *> $null
+            $script:Html = Get-Content -LiteralPath $script:OutPath -Raw
+
+            $script:Html | Should -Match '<td>unknown</td>'
+            $script:Html | Should -Match '<td>light</td>'
+        }
+
         It 'Reports the matrix-level overall verdict in the header' {
             $script:Html | Should -Match 'Overall: <strong>fail</strong>'
         }

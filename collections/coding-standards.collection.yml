@@ -23,10 +23,13 @@ items:
     kind: agent
     maturity: experimental
   # Subagents
-  - path: .github/agents/coding-standards/subagents/code-review-functional.agent.md
+  - path: .github/agents/accessibility/subagents/accessibility-framework-assessor.agent.md
     kind: agent
     maturity: experimental
-  - path: .github/agents/accessibility/subagents/accessibility-framework-assessor.agent.md
+  - path: .github/agents/accessibility/subagents/accessibility-surface-inventory.agent.md
+    kind: agent
+    maturity: experimental
+  - path: .github/agents/coding-standards/subagents/code-review-functional.agent.md
     kind: agent
     maturity: experimental
   - path: .github/agents/coding-standards/subagents/code-review-standards.agent.md

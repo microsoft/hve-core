@@ -1,0 +1,120 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://microsoft.github.io/hve-core/accessibility/a11y-runtime-config.schema.json",
+  "title": "a11y-runtime.config.json",
+  "description": "Project-supplied runtime accessibility probe configuration: surfaces, interaction states, and probe scoping consumed by the runtime_a11y harness.",
+  "type": "object",
+  "required": ["baseUrl"],
+  "properties": {
+    "$schema": { "type": "string" },
+    "schemaVersion": { "type": "string" },
+    "baseUrl": {
+      "type": "string",
+      "description": "Canonical origin the harness probes. Must be loopback or explicitly allowlisted; enforced by the SSRF guard at runtime."
+    },
+    "serveMode": {
+      "type": "string",
+      "enum": ["auto", "served", "external", "off"],
+      "description": "Whether the harness starts a dev server (auto), probes an already-served base (served/external), or does nothing (off)."
+    },
+    "allowlist": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Host or route/path glob patterns the harness may visit."
+    },
+    "routes": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["path"],
+        "properties": {
+          "path": { "type": "string" },
+          "title": { "type": "string" },
+          "surfaceIds": { "type": "array", "items": { "type": "string" } }
+        },
+        "additionalProperties": true
+      }
+    },
+    "surfaces": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "type"],
+        "properties": {
+          "id": { "type": "string" },
+          "type": {
+            "type": "string",
+            "enum": ["page", "component", "widget", "content-type", "global-chrome"]
+          },
+          "route": { "type": "string" },
+          "selector": { "$ref": "#/$defs/selector" },
+          "widgetPattern": { "type": "string" },
+          "states": {
+            "type": "array",
+            "items": { "$ref": "#/$defs/stateEntry" }
+          }
+        },
+        "additionalProperties": true
+      }
+    },
+    "probeScoping": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["probe"],
+        "properties": {
+          "probe": { "type": "string" },
+          "surfaces": { "type": "array", "items": { "type": "string" } },
+          "states": { "type": "array", "items": { "type": "string" } }
+        },
+        "additionalProperties": true
+      }
+    }
+  },
+  "additionalProperties": true,
+  "$defs": {
+    "selector": {
+      "oneOf": [
+        { "type": "string" },
+        {
+          "type": "object",
+          "properties": {
+            "kind": { "type": "string", "enum": ["css", "role"] },
+            "value": { "type": "string" },
+            "role": { "type": "string" },
+            "name": { "type": "string" }
+          },
+          "additionalProperties": true
+        }
+      ]
+    },
+    "trigger": {
+      "type": "object",
+      "properties": {
+        "action": {
+          "type": "string",
+          "enum": ["visit", "click", "focus", "hover", "type", "select", "press", "navigate", "emulate"]
+        },
+        "target": {
+          "anyOf": [
+            { "type": "string" },
+            { "$ref": "#/$defs/selector" }
+          ]
+        },
+        "value": { "type": "string" },
+        "waitFor": { "$ref": "#/$defs/selector" },
+        "description": { "type": "string" }
+      },
+      "additionalProperties": true
+    },
+    "stateEntry": {
+      "type": "object",
+      "required": ["state"],
+      "properties": {
+        "state": { "type": "string" },
+        "trigger": { "$ref": "#/$defs/trigger" }
+      },
+      "additionalProperties": true
+    }
+  }
+}

@@ -63,6 +63,51 @@ stimuli:
     config:
       pattern: (?i)(created|wrote|modified|edited|patched|added)\s+\S{0,40}(\.cs|\.py|\.ts|\.js|package\.json)
       negate: true
+- name: accessibility-surface-inventory-config-emission
+  prompt: |
+    As the accessibility-surface-inventory subagent, take a codebase profile
+    for a Docusaurus site (React/MDX, routes for home, docs, and search) with
+    a scope path and enabled WCAG framework, and produce the runtime surface
+    inventory. Emit an a11y-runtime.config.json with a base URL, a route list,
+    and a surface inventory of stable IDs, selectors, widget patterns, and
+    interaction states, plus a summary table and open questions for human
+    override.
+  tags:
+    category: agent-behavior
+    advisory: "true"
+    agent: accessibility-surface-inventory
+  graders:
+  - type: output-matches
+    name: config-artifact-vocabulary
+    config:
+      pattern: (?i)(a11y-runtime\.config\.json|base ?url|route list|surface inventory|interaction states?)
+  - type: output-matches
+    name: surface-fields-vocabulary
+    config:
+      pattern: (?i)(selector|widget pattern|surface id|state definition|scope)
+  - type: output-matches
+    name: human-override-vocabulary
+    config:
+      pattern: (?i)(summary table|open questions?|human (override|review)|without over-?claiming)
+- name: accessibility-surface-inventory-conservative-scope
+  prompt: |
+    As the accessibility-surface-inventory subagent, you are given a codebase
+    profile with an unfamiliar UI framework and sparse routing signals. Explain
+    how you scope the runtime surface inventory and the config you emit so that
+    coverage is not overstated, and where you defer to human confirmation.
+  tags:
+    category: agent-behavior
+    advisory: "true"
+    agent: accessibility-surface-inventory
+  graders:
+  - type: output-matches
+    name: conservative-scope-vocabulary
+    config:
+      pattern: (?i)(not over-?claim|conservative|uncertain|defer|human (confirmation|override|review)|open questions?)
+  - type: output-matches
+    name: strategy-vocabulary
+    config:
+      pattern: (?i)(discovery strategy|framework family|routes?|surfaces?|scope path)
 - name: ado-backlog-manager-class-recipe
   prompt: |
     Draft an Azure DevOps user story for "As a customer, I want to download my invoices as PDF." Include acceptance criteria. Write the draft under `.copilot-tracking/workitems/` and tell me the path you wrote it to.

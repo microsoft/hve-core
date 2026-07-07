@@ -278,6 +278,75 @@ function Test-SecurityModelStructure {
     return [string[]]$errors.ToArray()
 }
 
+function Test-NodeSkillConfig {
+    <#
+    .SYNOPSIS
+    Validates Node unit-test coverage for a skill that ships JS-family modules.
+
+    .DESCRIPTION
+    When a skill contains non-test .mjs/.cjs/.js files under scripts/, requires
+    at least one *.test.* or *.spec.* (mjs/cjs/js) unit test so shipped Node
+    logic is tested. This mirrors the Python tests/ + pytest requirement and the
+    node-tests CI job + Codecov 'node' flag, keeping Node skills at parity with
+    Python skills.
+
+    .PARAMETER SkillPath
+    Absolute path to the skill directory.
+
+    .PARAMETER RelativePath
+    Relative skill path for messages.
+
+    .OUTPUTS
+    [hashtable] With 'Errors' and 'Warnings' lists.
+    #>
+    [CmdletBinding()]
+    [OutputType([hashtable])]
+    param(
+        [Parameter(Mandatory = $true)]
+        [ValidateNotNullOrEmpty()]
+        [string]$SkillPath,
+
+        [Parameter(Mandatory = $true)]
+        [ValidateNotNullOrEmpty()]
+        [string]$RelativePath
+    )
+
+    $errors = [System.Collections.Generic.List[string]]::new()
+    $warnings = [System.Collections.Generic.List[string]]::new()
+
+    $scriptsDir = Join-Path -Path $SkillPath -ChildPath 'scripts'
+    if (-not (Test-Path $scriptsDir -PathType Container)) {
+        return @{ Errors = $errors; Warnings = $warnings }
+    }
+
+    # Non-test .mjs/.cjs/.js modules under scripts/ are shippable Node logic.
+    $sourceModules = @(Get-ChildItem -Path $scriptsDir -File -Recurse -ErrorAction SilentlyContinue |
+        Where-Object {
+            $_.Extension -in @('.mjs', '.cjs', '.js') -and
+            $_.Name -notmatch '\.(test|spec)\.(mjs|cjs|js)$' -and
+            $_.FullName -notmatch 'node_modules'
+        })
+    if ($sourceModules.Count -eq 0) {
+        return @{ Errors = $errors; Warnings = $warnings }
+    }
+
+    # Test files follow the *.test.* / *.spec.* convention across the JS family.
+    $testModules = @(Get-ChildItem -Path $SkillPath -File -Recurse -ErrorAction SilentlyContinue |
+        Where-Object { $_.Name -match '\.(test|spec)\.(mjs|cjs|js)$' -and $_.FullName -notmatch 'node_modules' })
+
+    if ($testModules.Count -eq 0) {
+        $errors.Add("$RelativePath ships Node modules (scripts/**/*.{mjs,cjs,js}) but has no *.test.* / *.spec.* unit tests (required for 'node --test' + Codecov 'node' flag parity)")
+    }
+    else {
+        $underTestsDir = @($testModules | Where-Object { ($_.FullName -replace '\\', '/') -match '/tests/' })
+        if ($underTestsDir.Count -eq 0) {
+            $warnings.Add("$RelativePath - test modules should live under a tests/ directory for 'node --test' discovery")
+        }
+    }
+
+    return @{ Errors = $errors; Warnings = $warnings }
+}
+
 function Test-SkillDirectory {
     <#
     .SYNOPSIS
@@ -370,12 +439,19 @@ function Test-SkillDirectory {
         $hasBash = @($allScriptFiles | Where-Object { $_.Extension -eq '.sh' }).Count -gt 0
         # Python files may be packaged in subdirectories (e.g., scripts/<pkg>/__init__.py); search recursively.
         $hasPython = @(Get-ChildItem -Path $scriptsDirPath -File -Recurse -Filter '*.py' -ErrorAction SilentlyContinue).Count -gt 0
+        # Node modules (.mjs/.cjs/.js, excluding *.test.*/*.spec.*) may be packaged in subdirectories; search recursively.
+        $hasNode = @(Get-ChildItem -Path $scriptsDirPath -File -Recurse -ErrorAction SilentlyContinue |
+            Where-Object { $_.Extension -in @('.mjs', '.cjs', '.js') -and $_.Name -notmatch '\.(test|spec)\.(mjs|cjs|js)$' -and $_.FullName -notmatch 'node_modules' }).Count -gt 0
 
         if ($isPythonSkill) {
             # Python skills: require at least one .py, OR the traditional .ps1+.sh pair
             if (-not $hasPython -and -not ($hasPowerShell -and $hasBash)) {
                 $errors.Add("'scripts/' subdirectory exists but contains no .py files and no .ps1/.sh pair in '$relativePath'")
             }
+        }
+        elseif ($hasNode) {
+            # Node skills: .mjs modules are the entrypoints; test presence is
+            # enforced separately by Test-NodeSkillConfig.
         }
         else {
             # Non-Python skills: require both .ps1 and .sh
@@ -406,6 +482,11 @@ function Test-SkillDirectory {
         $secErrors = Test-SecurityModelStructure -Path $securityMdPath -RelativePath $relativePath
         foreach ($err in $secErrors) { $errors.Add($err) }
     }
+
+    # Validate Node unit-test presence for skills that ship .mjs modules
+    $nodeResult = Test-NodeSkillConfig -SkillPath $Directory.FullName -RelativePath $relativePath
+    foreach ($err in $nodeResult.Errors) { $errors.Add($err) }
+    foreach ($warn in $nodeResult.Warnings) { $warnings.Add($warn) }
 
     # Check for unrecognized subdirectories (-Force includes dot-prefixed dirs hidden on Linux)
     $subdirs = Get-ChildItem -Path $Directory.FullName -Directory -Force -ErrorAction SilentlyContinue

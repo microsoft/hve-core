@@ -1,12 +1,12 @@
 // Copyright (c) 2026 Microsoft Corporation. All rights reserved.
 // SPDX-License-Identifier: MIT
 import { test, expect } from '@playwright/test';
-import { PAGES } from './_helpers/pages';
+import { SITE_PAGES, visitInvariantPage } from './_helpers/a11yInvariants';
 
 test.describe('Heading-order accessibility regression locks', () => {
-  for (const { name, path } of PAGES) {
+  for (const { name, path } of SITE_PAGES) {
     test(`${name} does not skip heading levels`, async ({ page }) => {
-      await page.goto(path, { waitUntil: 'domcontentloaded' });
+      await visitInvariantPage(page, { name, path });
 
       const levels = await page.$$eval('h1, h2, h3, h4, h5, h6', (headings) =>
         headings.map((heading) => Number(heading.tagName.charAt(1))),

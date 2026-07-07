@@ -19,13 +19,19 @@ export default function IconCard({
   href,
   description,
 }: IconCardProps): React.ReactElement {
+  const titleId = React.useId();
+
   return (
-    <article className={styles.card}>
+    <article className={styles.card} aria-labelledby={titleId}>
       <div className={styles.iconCardLayout}>
         <div className={styles.iconContainer}>{icon}</div>
         <div className={styles.iconCardContent}>
           <span className={styles.supertitle}>{supertitle}</span>
-          <Link to={href} className={styles.cardTitle}>{title}</Link>
+          <h3 id={titleId}>
+            <Link to={href} className={styles.cardTitle} aria-label={`${supertitle}: ${title}`}>
+              {title}
+            </Link>
+          </h3>
           {description && <p className={styles.cardDescription}>{description}</p>}
         </div>
       </div>
