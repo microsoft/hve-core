@@ -28,6 +28,7 @@ Reference material lives beside this file:
 - `references/deploy-flows.md` gives the full command walkthrough for both flows.
 - `references/component-recipes.md` gives a field-level recipe map for every component.
 - `references/pac-verb-reference.md` lists the relevant `pac` verbs.
+- `scripts/validate-topics.mjs` (with `.ps1` / `.sh` launchers) is the executable, fail-closed topic-integrity gate for the Builder's Phase 9 pre-pack step.
 
 ## Deployment flows
 
@@ -396,6 +397,45 @@ reading the emitted YAML before relying on it.
    schema validation, but its full server round-trip is pending a pre-minted
    connection reference and a portal-created connection. Confirm by cloning an
    agent that uses a custom-connector action and reading the emitted YAML.
+
+## Topic-integrity gate (`scripts/validate-topics.mjs`)
+
+The skill ships an executable, fail-closed validator that enforces the Copilot
+Studio Agent Builder's Phase 9 pre-pack topic-integrity gate. Run it against a
+scaffold root or a `topics/` directory before `pac copilot pack` or
+`pac solution import`, and do not proceed while it reports a FAIL.
+
+```bash
+node scripts/validate-topics.mjs <scaffold-root-or-topics-dir> [--state <state.json>] [--json <out.json>]
+```
+
+Cross-platform launchers forward to the same engine and propagate its exit code:
+
+```bash
+./scripts/validate-topics.ps1 <scaffold-root-or-topics-dir>   # Windows / pwsh
+./scripts/validate-topics.sh  <scaffold-root-or-topics-dir>   # bash
+```
+
+Exit codes: `0` every topic passes; `1` at least one topic FAILs (the gate is
+fail-closed — stop the pack or import); `2` a usage, parse, or IO error.
+
+The validator loads each `topics/<name>.mcs.yml` and checks:
+
+- schema skeleton — the load-bearing `mcs.metadata`, `kind: AdaptiveDialog`, and
+  `beginDialog.id: main`;
+- undeclared `{…}` tokens — every interpolation token resolves to a `System`,
+  `Topic`, `Global`, or `Env` namespace;
+- system-trigger collision — no custom topic reuses a system trigger kind
+  (`OnConversationStart`, `OnUnknownIntent`, `OnEscalate`, `OnError`,
+  `OnSignIn`), evaluated on each topic's own `beginDialog.kind`, and at most one
+  topic per system trigger;
+- `componentName` uniqueness and the filename-equals-`componentName` rule for
+  custom topics (system topics are exempt via the canonical name map);
+- topic-count reconciliation — `state.json topics.topicCount` equals the packed
+  custom-topic count when a `state.json` is supplied.
+
+It has no third-party dependencies (js-yaml is resolved from the hve-core
+workspace) and never writes to the environment; it only reads topic source.
 
 ## Safety and boundary
 
