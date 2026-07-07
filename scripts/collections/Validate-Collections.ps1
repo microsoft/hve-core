@@ -434,11 +434,23 @@ function Invoke-CollectionValidation {
     }
 
     foreach ($itemKey in $itemOccurrences.Keys) {
+        $itemPath = ($itemKey -split '\|')[1]
+        $pathSegments = $itemPath -split '[/\\]'
+        
+        $isSharedSubdomain = $false
+        if ($pathSegments.Count -ge 4 -and $pathSegments[0] -eq '.github') {
+            $folderName = $pathSegments[2]
+            if ($sharedSubdomainFolders.ContainsKey($folderName)) {
+                $isSharedSubdomain = $true
+            }
+        }
+
         $occurrences = $itemOccurrences[$itemKey]
         $canonicalMatches = @($occurrences | Where-Object { $_.CollectionId -eq $canonicalCollectionId })
         $themedMatches    = @($occurrences | Where-Object { $_.CollectionId -ne $canonicalCollectionId })
 
-        if ($themedMatches.Count -gt 1) {
+        # Skip cross-collection maturity conflicts for shared sub-domain artifacts
+        if (-not $isSharedSubdomain -and $themedMatches.Count -gt 1) {
             $themedMaturities = @{}
             foreach ($occurrence in $themedMatches) {
                 $mat = $occurrence.Maturity
@@ -463,7 +475,8 @@ function Invoke-CollectionValidation {
             }
         }
 
-        if ($canonicalMatches.Count -gt 0 -and $themedMatches.Count -gt 0) {
+        # Skip canonical vs themed maturity conflicts for shared sub-domain artifacts
+        if (-not $isSharedSubdomain -and $canonicalMatches.Count -gt 0 -and $themedMatches.Count -gt 0) {
             $canonical = $canonicalMatches[0]
             if ($canonical.IsExplicitItemMaturity) {
                 foreach ($occurrence in $themedMatches) {
@@ -475,6 +488,7 @@ function Invoke-CollectionValidation {
                 }
             }
         }
+
         # Check 4: item in one or more themed collections but absent from hve-core-all
         # Skip when all themed occurrences are marked maturity:'removed' (intentional tombstone
         # excluded from hve-core-all by Update-HveCoreAllCollection).
