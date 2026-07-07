@@ -1,6 +1,6 @@
 ---
 name: copilot-studio-pac
-description: Verified Microsoft Copilot Studio pac component recipes covering the init-pack-import and clone-edit-push deployment flows plus placeholder-only mcs.yml YAML for agent core, suggested prompts, knowledge, triggers, MCP tools, and connection references.
+description: Verified Copilot Studio pac recipes for the init-pack-import and clone-edit-push flows, with placeholder mcs.yml for core, prompts, knowledge, triggers, MCP tools, and connections.
 ---
 
 # copilot-studio-pac
@@ -28,7 +28,7 @@ Reference material lives beside this file:
 - `references/deploy-flows.md` gives the full command walkthrough for both flows.
 - `references/component-recipes.md` gives a field-level recipe map for every component.
 - `references/pac-verb-reference.md` lists the relevant `pac` verbs.
-- `scripts/validate-topics.mjs` (with `.ps1` / `.sh` launchers) is the executable, fail-closed topic-integrity gate for the Builder's Phase 9 pre-pack step.
+- `scripts/validate-topics.ps1` (with a `.sh` bash launcher) is the executable, fail-closed topic-integrity gate for the Builder's Phase 9 pre-pack step.
 
 ## Deployment flows
 
@@ -264,7 +264,7 @@ connectionReferences:
 
 Without this, `pac copilot push` fails identically to the MCP case:
 
-```
+```text
 DataverseBadRequestException [IsvAborted] code 10000:
 "A record with the specified key values does not exist in connectionreference entity"
 ```
@@ -398,7 +398,14 @@ reading the emitted YAML before relying on it.
    connection reference and a portal-created connection. Confirm by cloning an
    agent that uses a custom-connector action and reading the emitted YAML.
 
-## Topic-integrity gate (`scripts/validate-topics.mjs`)
+## Prerequisites
+
+- PowerShell 7.4 or later (`pwsh`).
+- The `PowerShell-Yaml` module (repo-pinned 0.4.7):
+  `Install-Module powershell-yaml -Scope CurrentUser`. hve-core CI provisions
+  this module; install it locally to run the gate or its Pester tests.
+
+## Topic-integrity gate (`scripts/validate-topics.ps1`)
 
 The skill ships an executable, fail-closed validator that enforces the Copilot
 Studio Agent Builder's Phase 9 pre-pack topic-integrity gate. Run it against a
@@ -406,23 +413,24 @@ scaffold root or a `topics/` directory before `pac copilot pack` or
 `pac solution import`, and do not proceed while it reports a FAIL.
 
 ```bash
-node scripts/validate-topics.mjs <scaffold-root-or-topics-dir> [--state <state.json>] [--json <out.json>]
+pwsh -File scripts/validate-topics.ps1 -Path <scaffold-root-or-topics-dir> [-StatePath <state.json>] [-JsonOut <out.json>]
 ```
 
-Cross-platform launchers forward to the same engine and propagate its exit code:
+The bash launcher forwards to the same engine and propagates its exit code:
 
 ```bash
-./scripts/validate-topics.ps1 <scaffold-root-or-topics-dir>   # Windows / pwsh
-./scripts/validate-topics.sh  <scaffold-root-or-topics-dir>   # bash
+./scripts/validate-topics.sh -Path <scaffold-root-or-topics-dir>   # bash wrapper -> pwsh
 ```
 
 Exit codes: `0` every topic passes; `1` at least one topic FAILs (the gate is
-fail-closed — stop the pack or import); `2` a usage, parse, or IO error.
+fail-closed — stop the pack or import) or topicCount reconciliation fails; `2` a
+usage, parse, IO, or missing-dependency error. An invalid `-Path` fails
+parameter binding (`ValidateScript`) and surfaces as exit `1` (fail-closed).
 
 The validator loads each `topics/<name>.mcs.yml` and checks:
 
-- schema skeleton — the load-bearing `mcs.metadata`, `kind: AdaptiveDialog`, and
-  `beginDialog.id: main`;
+- schema skeleton — the load-bearing `mcs.metadata`, `kind: AdaptiveDialog`,
+  `beginDialog.kind`, and `beginDialog.id: main`;
 - undeclared `{…}` tokens — every interpolation token resolves to a `System`,
   `Topic`, `Global`, or `Env` namespace;
 - system-trigger collision — no custom topic reuses a system trigger kind
@@ -434,8 +442,33 @@ The validator loads each `topics/<name>.mcs.yml` and checks:
 - topic-count reconciliation — `state.json topics.topicCount` equals the packed
   custom-topic count when a `state.json` is supplied.
 
-It has no third-party dependencies (js-yaml is resolved from the hve-core
-workspace) and never writes to the environment; it only reads topic source.
+It reads topic source only and never writes to the environment. It requires
+PowerShell 7.4+ and the repo-pinned `PowerShell-Yaml` module
+(`Install-Module powershell-yaml -Scope CurrentUser`).
+
+### Parameters
+
+| Parameter | Required | Description |
+|-----------|----------|-------------|
+| `-Path` | Yes | Scaffold root (auto-discovers `workspace/topics/*.mcs.yml`) or a directory of `*.mcs.yml` files. |
+| `-StatePath` | No | Explicit `state.json` for topicCount reconciliation. Auto-discovered under the scaffold root when omitted (prefers one inside `.copilot-tracking/`). |
+| `-JsonOut` | No | Path to write a machine-readable JSON report. |
+| `-AllowPrefix` | No | Declared variable namespaces treated as bound. Defaults to `System, Topic, Global, Env`. |
+
+### Troubleshooting
+
+- **Exit 2, "Required module 'powershell-yaml' is not installed"** — run
+  `Install-Module powershell-yaml -Scope CurrentUser`.
+- **A parameter binding error on `-Path`** — the path does not exist or is not a
+  directory; pass a scaffold root or a `topics/` directory.
+- **Exit 2, "YAML parse error"** — a `*.mcs.yml` file has invalid YAML; fix the
+  syntax and re-run.
+- **A `FAIL` line with `system-trigger-collision` / `reserved-name-collision`** —
+  a custom topic uses (or its `componentName` matches) a built-in system topic;
+  rename it or route to the system topic via a redirect instead.
+- **`SCAFFOLD FAIL topicCount-reconciliation`** — `state.json topics.topicCount`
+  does not equal the number of `OnRecognizedIntent` topic files; reconcile the
+  count.
 
 ## Safety and boundary
 
