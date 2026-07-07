@@ -110,6 +110,7 @@ cnab
 cname
 codefresh
 codegen
+cognitiveservices
 codeowners
 codespace
 codespaces
@@ -421,6 +422,7 @@ exabytes
 exadata
 executables
 execs
+exploitability
 exponential
 failback
 failover
@@ -722,6 +724,8 @@ organisation
 organisations
 organised
 otel
+ooxml
+lxml
 otlp
 overclaiming
 overfitting
@@ -833,6 +837,7 @@ qube
 querystring
 quickstart
 quickstarts
+quoteattr
 racf
 raci
 rackware
@@ -888,6 +893,7 @@ resiliency
 resourcegroups
 resourceless
 retargeted
+retarget
 retraining
 reuse
 reverification
@@ -1257,7 +1263,9 @@ gdpr
 hipaa
 oidc
 oldsha
+openvex
 OSSF
+osv
 passwordless
 siem
 sox
@@ -1380,18 +1388,27 @@ sql
 tcp
 udp
 url
+urlopen
 uri
 uuid
 vm
 vpc
 
 # Technical Terms
+affordances
 apis
 backend
+contentinfo
+describedby
 frontend
+haspopup
+hoverable
+hrefs
+labelledby
 middleware
 microservice
 microservices
+supertitle
 webhook
 webhooks
 
@@ -1422,6 +1439,7 @@ backlog
 pipeline
 blockquotes
 deinit
+deprioritize
 deprioritized
 deprioritizes
 experim

@@ -8,7 +8,7 @@
 #          from Architecture Decision Record markdown for downstream rule checks.
 # Author: HVE Core Team
 
-#Requires -Version 7.0
+#Requires -Version 7.4
 
 #region Parsing Helpers
 

@@ -1,0 +1,246 @@
+name: VEX Detection
+
+# Scans project dependencies for vulnerabilities and files a triage issue when
+# untriaged CVEs (or status drift) are found relative to the canonical VEX
+# document at security/vex/hve-core.openvex.json. No AI drafting happens here;
+# this workflow only detects and reports.
+
+on:
+  # Run after a stable release publishes (re-check the just-released dependency set).
+  workflow_run:
+    workflows:
+      - 'Stable Release Pipeline'
+    types:
+      - completed
+  # Weekly sweep on Tuesday, after the Monday Dependabot cadence has opened PRs.
+  schedule:
+    - cron: '0 8 * * 2'  # Tuesdays at 08:00 UTC
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  vex-detect:
+    name: VEX Vulnerability Detection
+    runs-on: ubuntu-latest
+    # Skip runs triggered by a failed release pipeline.
+    if: >-
+      github.event_name != 'workflow_run'
+      || github.event.workflow_run.conclusion == 'success'
+    permissions:
+      contents: read   # read the repository and the VEX document
+      issues: write    # file or update the detection issue
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+        with:
+          persist-credentials: false
+
+      - name: Install OSV-Scanner
+        env:
+          OSV_SCANNER_VERSION: '2.3.8'
+          OSV_SCANNER_AMD64_SHA256: 'bc98e15319ed0d515e3f9235287ba53cdc5535d576d24fd573978ecfe9ab92dc'
+          OSV_SCANNER_ARM64_SHA256: '8158b18edd2d03b1a30d905ca91b032bc62262167be8f206c27114f08823e27c'
+          GITHUB_RELEASES_URL: ${{ vars.HVE_GITHUB_RELEASES_URL || 'https://github.com' }}
+        run: |
+          ARCH=$(uname -m)
+          if [[ "${ARCH}" == "x86_64" ]]; then
+            OSV_ARCH="amd64"
+            OSV_SHA256="${OSV_SCANNER_AMD64_SHA256}"
+          elif [[ "${ARCH}" == "aarch64" ]]; then
+            OSV_ARCH="arm64"
+            OSV_SHA256="${OSV_SCANNER_ARM64_SHA256}"
+          else
+            echo "ERROR: Unsupported architecture for osv-scanner: ${ARCH}" >&2
+            exit 1
+          fi
+          curl -sSfL "${GITHUB_RELEASES_URL}/google/osv-scanner/releases/download/v${OSV_SCANNER_VERSION}/osv-scanner_linux_${OSV_ARCH}" -o /tmp/osv-scanner
+          if ! echo "${OSV_SHA256}  /tmp/osv-scanner" | sha256sum -c --quiet -; then
+            echo "ERROR: osv-scanner checksum verification failed" >&2
+            exit 1
+          fi
+          sudo install /tmp/osv-scanner /usr/local/bin/osv-scanner
+          rm /tmp/osv-scanner
+          osv-scanner --version
+
+      - name: Run vulnerability scan
+        id: scan
+        run: |
+          set +e
+          osv-scanner scan source --recursive --format json --output /tmp/osv-results.json .
+          rc=$?
+          set -e
+          # osv-scanner exits 0 when clean and 1 when vulnerabilities are found;
+          # both are expected. A higher exit code is a real scanner error and
+          # must fail the job rather than be masked as "no vulnerabilities".
+          if [[ "${rc}" -gt 1 ]]; then
+            echo "ERROR: osv-scanner failed (exit ${rc})" >&2
+            exit "${rc}"
+          fi
+          if [[ ! -s /tmp/osv-results.json ]]; then
+            echo '{"results":[]}' > /tmp/osv-results.json
+          fi
+
+      - name: Diff findings against VEX document
+        id: diff
+        run: |
+          python3 - <<'PY'
+          import json, os
+
+          # Statuses that represent a completed triage decision. Any other
+          # status (e.g. affected, under_investigation) is drift that must
+          # resurface, and a missing statement means the vuln is untriaged.
+          TERMINAL = {'not_affected', 'fixed'}
+
+          with open('/tmp/osv-results.json', encoding='utf-8') as fh:
+              try:
+                  scan = json.load(fh)
+              except json.JSONDecodeError:
+                  scan = {"results": []}
+
+          vex_path = 'security/vex/hve-core.openvex.json'
+          known = {}
+          try:
+              with open(vex_path, encoding='utf-8') as fh:
+                  vex = json.load(fh)
+              for stmt in vex.get('statements', []):
+                  vuln = stmt.get('vulnerability', {}) or {}
+                  if isinstance(vuln, str):
+                      vuln = {'name': vuln}
+                  status = stmt.get('status', 'unknown')
+                  ids = [vuln.get('name')] + (vuln.get('aliases') or [])
+                  for vid in ids:
+                      if vid:
+                          known[vid] = status
+          except (FileNotFoundError, json.JSONDecodeError):
+              pass
+
+          findings = {}
+          for result in scan.get('results', []):
+              source = (result.get('source') or {}).get('path', 'unknown')
+              for pkg in result.get('packages', []):
+                  info = pkg.get('package', {}) or {}
+                  name = info.get('name', 'unknown')
+                  version = info.get('version', 'unknown')
+                  groups = pkg.get('groups', []) or []
+                  max_sev = next((g.get('max_severity') for g in groups if g.get('max_severity')), '')
+                  for vuln in pkg.get('vulnerabilities', []):
+                      vid = vuln.get('id', 'unknown')
+                      aliases = vuln.get('aliases') or []
+                      all_ids = [vid] + aliases
+                      vex_status = next((known[i] for i in all_ids if i in known), None)
+                      # Suppress only vulns with a terminal VEX status; untriaged
+                      # (no statement) and non-terminal statuses are reported.
+                      if vex_status in TERMINAL:
+                          continue
+                      sev = max_sev
+                      if not sev:
+                          for s in vuln.get('severity', []) or []:
+                              if s.get('score'):
+                                  sev = s['score']
+                                  break
+                      pkg_ref = f'{name}@{version}'
+                      if vid in findings:
+                          # Same CVE can affect multiple packages; accumulate
+                          # the full blast radius instead of overwriting.
+                          if pkg_ref not in findings[vid]['packages']:
+                              findings[vid]['packages'].append(pkg_ref)
+                      else:
+                          findings[vid] = {
+                              'id': vid,
+                              'aliases': ', '.join(a for a in aliases if a) or '-',
+                              'packages': [pkg_ref],
+                              'source': source,
+                              'severity': sev or '-',
+                              'status': vex_status or 'none',
+                          }
+
+          rows = sorted(findings.values(), key=lambda f: f['id'])
+          count = len(rows)
+
+          body_lines = [
+              '## VEX detection: untriaged vulnerabilities',
+              '',
+              f'OSV-Scanner found **{count}** vulnerability(ies) that are untriaged or carry a '
+              'non-terminal status in `security/vex/hve-core.openvex.json`. Triage each with '
+              '`/vex-triage` or `/vex-scan` (see the SSSC Reviewer VEX assessment), then open a PR using '
+              'the VEX triage template.',
+              '',
+              '| Vulnerability | Aliases | Package | Source | Severity | Current VEX status |',
+              '|---------------|---------|---------|--------|----------|--------------------|',
+          ]
+          for f in rows:
+              body_lines.append(
+                  f"| {f['id']} | {f['aliases']} | {', '.join(sorted(f['packages']))} | {f['source']} | {f['severity']} | {f['status']} |"
+              )
+          body_lines += ['', '_Generated by the VEX Detection workflow (OSV-Scanner). This is detection only; no status has been drafted._']
+
+          with open('/tmp/vex-issue-body.md', 'w', encoding='utf-8') as fh:
+              fh.write('\n'.join(body_lines) + '\n')
+
+          with open(os.environ['GITHUB_OUTPUT'], 'a', encoding='utf-8') as fh:
+              fh.write(f'count={count}\n')
+
+          print(f'Untriaged findings: {count}')
+          PY
+
+      - name: File or update detection issue
+        if: ${{ steps.diff.outputs.count != '' && steps.diff.outputs.count != '0' }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO_SLUG: ${{ github.repository }}
+          ISSUE_TITLE: 'VEX detection: untriaged vulnerabilities found'
+        run: |
+          # Use the REST issues-list endpoint (label + state filters), not the
+          # eventually-consistent Search API. Passing --search routes this
+          # through Search, which lags issue creation and tokenizes the
+          # colon-bearing title phrase unreliably, causing duplicate issues to
+          # be filed instead of updating the existing one. Match the title
+          # exactly in jq over the consistent listing.
+          existing=$(gh issue list \
+            --repo "${REPO_SLUG}" \
+            --state open \
+            --label automated \
+            --limit 100 \
+            --json number,title \
+            --jq "map(select(.title == \"${ISSUE_TITLE}\")) | .[0].number // empty")
+          if [[ -z "${existing}" ]]; then
+            gh issue create \
+              --repo "${REPO_SLUG}" \
+              --title "${ISSUE_TITLE}" \
+              --label "security,automated,needs-triage" \
+              --body-file /tmp/vex-issue-body.md
+          else
+            gh issue edit "${existing}" \
+              --repo "${REPO_SLUG}" \
+              --body-file /tmp/vex-issue-body.md
+          fi
+
+      - name: Close detection issue when all vulnerabilities are triaged
+        if: ${{ steps.diff.outputs.count == '0' }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO_SLUG: ${{ github.repository }}
+          ISSUE_TITLE: 'VEX detection: untriaged vulnerabilities found'
+        run: |
+          # Consistent REST listing + exact jq title match (see file/update
+          # step above for why --search is avoided).
+          existing=$(gh issue list \
+            --repo "${REPO_SLUG}" \
+            --state open \
+            --label automated \
+            --limit 100 \
+            --json number,title \
+            --jq "map(select(.title == \"${ISSUE_TITLE}\")) | .[0].number // empty")
+          if [[ -n "${existing}" ]]; then
+            gh issue comment "${existing}" \
+              --repo "${REPO_SLUG}" \
+              --body "All previously untriaged vulnerabilities have been resolved or suppressed by the VEX document. Closing."
+            gh issue close "${existing}" \
+              --repo "${REPO_SLUG}"
+          fi

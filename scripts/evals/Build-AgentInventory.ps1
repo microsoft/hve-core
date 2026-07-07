@@ -1,24 +1,24 @@
 #!/usr/bin/env pwsh
 # Copyright (c) 2026 Microsoft Corporation. All rights reserved.
 # SPDX-License-Identifier: MIT
-#Requires -Version 7.0
+#Requires -Version 7.4
 
 <#
 .SYNOPSIS
-    Generate the authoritative inventory of parent agents at evals/agent-behavior/AGENTS.yml.
+    Generate the authoritative inventory of enrolled agents at evals/agent-behavior/AGENTS.yml.
 
 .DESCRIPTION
     Scans `.github/agents/**/*.agent.md` and emits a deterministic YAML inventory of all
-    parent agents enrolled in the per-agent eval-behavior matrix. The inventory becomes the
+    agents enrolled in the per-agent eval-behavior matrix. The inventory becomes the
     single source of truth shared by `Build-AgentBehaviorSpec.ps1`, `Invoke-VallyEvals.ps1`,
     `Test-AgentBehaviorCoverage.ps1`, and the dashboard.
 
     Discovery rule:
       1. Enumerate every `.agent.md` file under `.github/agents/`.
-      2. Drop any file whose YAML frontmatter sets `user-invocable: false`. This is the
-         canonical parent/subagent boundary marker; the `subagents/` folder convention is
-         informational only and is not consulted.
-      3. Files with no `user-invocable` key are treated as parent agents.
+      2. Keep parent agents unconditionally.
+      3. Keep subagents only when a matching stimulus partial exists at
+         `evals/agent-behavior/stimuli/<slug>.yml`.
+      4. Files with no `user-invocable` key are treated as parent agents.
 
     Frontmatter fields read per agent:
       * `eval-class:` (Phase 2.2 populates) -> class slug; defaults to `unknown` when absent.
@@ -154,6 +154,18 @@ function Test-IsParentAgent {
     return $true
 }
 
+function Test-HasStimulusPartial {
+    [CmdletBinding()]
+    [OutputType([bool])]
+    param(
+        [Parameter(Mandatory)] [string]$RepoRoot,
+        [Parameter(Mandatory)] [string]$Slug
+    )
+
+    $stimuliPath = Join-Path $RepoRoot (Join-Path 'evals/agent-behavior/stimuli' "$Slug.yml")
+    return (Test-Path -LiteralPath $stimuliPath -PathType Leaf)
+}
+
 function Get-ParentAgentInventory {
     [CmdletBinding()]
     [OutputType([System.Collections.Generic.List[hashtable]])]
@@ -170,10 +182,12 @@ function Get-ParentAgentInventory {
     foreach ($file in $files) {
         $rel = ConvertTo-RelativePath -RepoRoot $RepoRoot -Path $file.FullName
         $fm = Read-AgentFrontmatter -Path $file.FullName
-        if (-not (Test-IsParentAgent -Frontmatter $fm)) { continue }
+        $slug = Get-AgentSlug -RelativePath $rel
+        $isParent = Test-IsParentAgent -Frontmatter $fm
+        if (-not $isParent -and -not (Test-HasStimulusPartial -RepoRoot $RepoRoot -Slug $slug)) { continue }
 
         $entries.Add([ordered]@{
-                slug      = Get-AgentSlug -RelativePath $rel
+                slug      = $slug
                 path      = $rel
                 class     = if ($fm.ContainsKey('eval-class') -and $fm['eval-class']) { [string]$fm['eval-class'] } else { 'unknown' }
                 cost_tier = if ($fm.ContainsKey('cost_tier') -and $fm['cost_tier']) { [string]$fm['cost_tier'] } else { 'light' }

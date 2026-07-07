@@ -14,6 +14,7 @@ Security review, planning, incident response, risk assessment, vulnerability ana
 | Name                            | Description                                                                                                                                                                 |
 |---------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | **codebase-profiler**           | Scans the repository to build a technology profile and select applicable security skills                                                                                    |
+| **cve-analyzer**                | Per-CVE deep exploitability analysis tracing code reachability to determine an evidence-backed VEX status - Brought to you by microsoft/hve-core                            |
 | **finding-deep-verifier**       | Deep adversarial verification of FAIL and PARTIAL findings for a single security skill                                                                                      |
 | **rai-planner**                 | Responsible AI assessment planner evaluating against NIST AI RMF 1.0, producing an RAI security model, impact assessment, control surface catalog, and backlog handoff      |
 | **rai-reviewer**                | Responsible AI standards assessment orchestrator for codebase profiling and RAI findings reporting against NIST AI RMF, the AI STRIDE overlay, and the EU AI Act            |
@@ -30,23 +31,26 @@ Security review, planning, incident response, risk assessment, vulnerability ana
 
 ### Prompts
 
-| Name                            | Description                                                                                                                                  |
-|---------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------|
-| **incident-response**           | Run an incident response workflow for Azure operations scenarios                                                                             |
-| **rai-capture**                 | Start responsible AI assessment planning from existing knowledge using the RAI Planner agent in capture mode                                 |
-| **rai-plan-from-prd**           | Start responsible AI assessment planning from PRD/BRD artifacts using the RAI Planner agent in from-prd mode                                 |
-| **rai-plan-from-security-plan** | Start responsible AI assessment planning from a completed Security Plan using the RAI Planner agent in from-security-plan mode (recommended) |
-| **risk-register**               | Create a qualitative risk register using a Probability × Impact (P×I) matrix                                                                 |
-| **security-capture**            | Start security planning from existing notes using the Security Planner agent (capture mode)                                                  |
-| **security-plan-from-prd**      | Start security planning from PRD/BRD artifacts using the Security Planner agent (from-prd mode)                                              |
-| **security-review**             | Run an OWASP vulnerability assessment against the current codebase                                                                           |
-| **security-review-llm**         | Run OWASP LLM and Agentic vulnerability assessments with codebase profiling                                                                  |
-| **security-review-sbd**         | Run a Secure by Design principles assessment per UK and Australian government guidance                                                       |
-| **security-review-web**         | Run an OWASP Top 10 web vulnerability assessment without codebase profiling                                                                  |
-| **sssc-capture**                | Start supply chain security planning from existing knowledge using the SSSC Planner agent in capture mode                                    |
-| **sssc-from-brd**               | Start supply chain security planning from BRD artifacts using the SSSC Planner agent in from-brd mode                                        |
-| **sssc-from-prd**               | Start supply chain security planning from PRD artifacts using the SSSC Planner agent in from-prd mode                                        |
-| **sssc-from-security-plan**     | Extend a Security Planner assessment with supply chain coverage using the SSSC Planner agent in from-security-plan mode                      |
+| Name                            | Description                                                                                                                                                               |
+|---------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| **incident-response**           | Run an incident response workflow for Azure operations scenarios                                                                                                          |
+| **rai-capture**                 | Start responsible AI assessment planning from existing knowledge using the RAI Planner agent in capture mode                                                              |
+| **rai-plan-from-prd**           | Start responsible AI assessment planning from PRD/BRD artifacts using the RAI Planner agent in from-prd mode                                                              |
+| **rai-plan-from-security-plan** | Start responsible AI assessment planning from a completed Security Plan using the RAI Planner agent in from-security-plan mode (recommended)                              |
+| **risk-register**               | Create a qualitative risk register using a Probability × Impact (P×I) matrix                                                                                              |
+| **security-capture**            | Start security planning from existing notes using the Security Planner agent (capture mode)                                                                               |
+| **security-plan-from-prd**      | Start security planning from PRD/BRD artifacts using the Security Planner agent (from-prd mode)                                                                           |
+| **security-review**             | Run an OWASP vulnerability assessment against the current codebase                                                                                                        |
+| **security-review-llm**         | Run OWASP LLM and Agentic vulnerability assessments with codebase profiling                                                                                               |
+| **security-review-sbd**         | Run a Secure by Design principles assessment per UK and Australian government guidance                                                                                    |
+| **security-review-web**         | Run an OWASP Top 10 web vulnerability assessment without codebase profiling                                                                                               |
+| **sssc-capture**                | Start supply chain security planning from existing knowledge using the SSSC Planner agent in capture mode                                                                 |
+| **sssc-from-brd**               | Start supply chain security planning from BRD artifacts using the SSSC Planner agent in from-brd mode                                                                     |
+| **sssc-from-prd**               | Start supply chain security planning from PRD artifacts using the SSSC Planner agent in from-prd mode                                                                     |
+| **sssc-from-security-plan**     | Extend a Security Planner assessment with supply chain coverage using the SSSC Planner agent in from-security-plan mode                                                   |
+| **vex-implement**               | Plan the work to stand up VEX in a target project as a backlog for Task-* implementors - Brought to you by microsoft/hve-core                                             |
+| **vex-scan**                    | Run a full VEX pipeline that scans dependencies, enriches CVEs, analyzes exploitability, and drafts an OpenVEX document for review - Brought to you by microsoft/hve-core |
+| **vex-triage**                  | Triage CVEs from an existing scan report or SBOM and draft an OpenVEX document, skipping the scan phase - Brought to you by microsoft/hve-core                            |
 
 ### Instructions
 
@@ -57,6 +61,8 @@ Security review, planning, incident response, risk assessment, vulnerability ana
 | **security/identity**                 | Security Planner identity, six-phase orchestration, state management, and session recovery protocols                                                                                                                                                                                  |
 | **security/sssc-planner**             | SSSC Planner identity, six-phase orchestration, state schema, session recovery, and Phase 2-6 assessment protocols                                                                                                                                                                    |
 | **security/standards-mapping**        | OWASP and NIST security standards references with researcher subagent delegation for CIS, WAF, CAF, and other runtime lookups                                                                                                                                                         |
+| **security/vex-generation**           | VEX generation rules: evidence requirements, confidence routing, forbidden transitions, report templates, and licensing posture for AI-assisted vulnerability triage - Brought to you by microsoft/hve-core                                                                           |
+| **security/vex-standards**            | VEX document standards: canonical rule reference, licensing posture, author-of-record contract, and document mutation contract for OpenVEX management - Brought to you by microsoft/hve-core                                                                                          |
 | **shared/coaching-patterns**          | Shared exploration-first coaching patterns for planning agents (RAI, security, SSSC, Privacy) adapted from Design Thinking research methods                                                                                                                                           |
 | **shared/disclaimer-language**        | Centralized disclaimer language for AI-assisted planning and review agents requiring professional review acknowledgment                                                                                                                                                               |
 | **shared/hve-core-location**          | Important: hve-core is the repository containing this instruction file; Guidance: if a referenced prompt, instructions, agent, or script is missing in the current directory, fall back to this hve-core location by walking up this file's directory tree.                           |
@@ -83,5 +89,6 @@ Security review, planning, incident response, risk assessment, vulnerability ana
 | **security-reviewer-formats** | Format specifications and data contracts for the security reviewer orchestrator and its subagents.                                                                                                                                                                                               |
 | **supply-chain-security**     | Software supply chain security reference for OpenSSF Scorecard, SLSA, Sigstore, SBOM, and posture/backlog taxonomies.                                                                                                                                                                            |
 | **telemetry-foundations**     | Declarative OpenTelemetry-aligned telemetry vocabulary and instrumentation conventions for traces, metrics, logs, and PII handling                                                                                                                                                               |
+| **vex**                       | OpenVEX v0.2.0 specification reference plus VEX management playbooks - Brought to you by microsoft/hve-core.                                                                                                                                                                                     |
 
 <!-- END AUTO-GENERATED ARTIFACTS -->

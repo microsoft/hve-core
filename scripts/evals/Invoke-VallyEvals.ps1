@@ -1,7 +1,7 @@
 #!/usr/bin/env pwsh
 # Copyright (c) 2026 Microsoft Corporation. All rights reserved.
 # SPDX-License-Identifier: MIT
-#Requires -Version 7.0
+#Requires -Version 7.4
 
 <#
 .SYNOPSIS
@@ -30,6 +30,14 @@
     Path to the changed-artifact manifest. Defaults to
     `logs/changed-ai-artifacts.json`. Resolved relative to the repository root
     when not absolute.
+
+.PARAMETER ChangedSpecManifestPath
+    Optional path to a synthetic-artifact manifest produced by
+    `Get-ChangedSpecStimulus.ps1`. Its entries (one per stimulus added or
+    modified in a changed eval spec) are unioned into the execution set, deduped
+    by `kind:artifactId`, so a changed test runs even when the underlying AI
+    artifact is unchanged (issue #2297). Resolved relative to the repository
+    root when not absolute. Ignored when empty or missing.
 
 .PARAMETER EvalRoot
     Filesystem path to the eval spec root. Defaults to `evals/`. Resolved
@@ -95,6 +103,7 @@
 [CmdletBinding()]
 param(
     [string]$ManifestPath,
+    [string]$ChangedSpecManifestPath,
     [string]$EvalRoot,
     [string]$LogsDir,
     [ValidateSet('agent','prompt','instruction','skill')]
@@ -378,6 +387,38 @@ if ($null -ne $manifest -and $null -ne $manifest.artifacts) {
 $artifacts = @($artifacts | Where-Object {
     -not (Test-RepoRootArtifact -Kind ([string]$_.kind) -Path ([string]$_.path))
 })
+
+# Issue #2297: a stimulus added or modified in an otherwise-unchanged eval spec
+# does not appear in the changed-artifact manifest, so it would never execute.
+# Union in synthetic artifacts derived from changed specs (one per changed
+# stimulus backlink), deduped by `kind:artifactId` so a stimulus whose artifact
+# also changed runs only once. The existing run plan scopes each to its spec via
+# `--tag kind=slug`, keeping execution diff-scoped to the changed stimuli.
+if (-not [string]::IsNullOrWhiteSpace($ChangedSpecManifestPath)) {
+    $resolvedChangedSpec = Resolve-PathFromRoot -Path $ChangedSpecManifestPath -RepoRoot $resolvedRoot
+    if (Test-Path -LiteralPath $resolvedChangedSpec -PathType Leaf) {
+        $changedSpecManifest = Get-Content -LiteralPath $resolvedChangedSpec -Raw | ConvertFrom-Json
+        $synthetic = @()
+        if ($null -ne $changedSpecManifest -and $null -ne $changedSpecManifest.artifacts) {
+            $synthetic = @($changedSpecManifest.artifacts | Where-Object { [string]$_.status -ne 'D' })
+        }
+        if ($synthetic.Count -gt 0) {
+            $existingKeys = @{}
+            foreach ($existing in $artifacts) {
+                $existingKeys["$([string]$existing.kind):$([string]$existing.artifactId)"] = $true
+            }
+            $merged = [System.Collections.Generic.List[object]]::new()
+            foreach ($existing in $artifacts) { $merged.Add($existing) }
+            foreach ($candidate in $synthetic) {
+                $key = "$([string]$candidate.kind):$([string]$candidate.artifactId)"
+                if ($existingKeys.ContainsKey($key)) { continue }
+                $existingKeys[$key] = $true
+                $merged.Add($candidate)
+            }
+            $artifacts = @($merged.ToArray())
+        }
+    }
+}
 
 # Per-kind shard filter. When -Kind is supplied, the stimulus artifacts[] loop
 # is narrowed to the matching kind(s) only. Baseline equivalence is cross-kind

@@ -133,6 +133,7 @@ def extract_chart(shape) -> dict:
         try:
             elem["title"] = chart.chart_title.text_frame.text
         except (AttributeError, TypeError):
+            # Chart title text frame is unavailable; skip the title.
             pass
     elem["has_legend"] = chart.has_legend
 
@@ -149,6 +150,7 @@ def extract_chart(shape) -> dict:
             }
             elem["series"].append(series_data)
     except (IndexError, AttributeError):
+        # Chart has no accessible plot/series data; skip it.
         pass
 
     return elem

@@ -2,7 +2,15 @@
 title: Mural Skill Security Model
 description: STRIDE threat model for the Mural skill organized by assets, adversaries, and trust buckets (Browser to Loopback, CLI to Mural, on-disk cache, CLI caller process) with in-code mitigations and acknowledged enterprise readiness gaps
 author: microsoft/hve-core
+ms.date: 2026-06-30
 ms.topic: reference
+estimated_reading_time: 18
+keywords:
+  - security
+  - STRIDE
+  - mural
+  - oauth
+  - threat model
 ---
 <!-- markdownlint-disable-file -->
 # Mural Skill Security Model
@@ -10,6 +18,95 @@ ms.topic: reference
 This document records the STRIDE threat model for the Mural skill (the `mural` package under `scripts/mural/`). The model is organized by trust bucket: Browser to Loopback (B1), CLI to Mural endpoints (B2), On-disk cache (B3), and CLI caller process (B4). Each bucket enumerates all six STRIDE categories with the in-code mitigations that address them. Assets and adversaries are enumerated first because credential-storage docs ([`docs/agents/mural/credentials.md`](../../../../docs/agents/mural/credentials.md)) reference them by id. Acknowledged enterprise readiness gaps are listed at the end of the document.
 
 > **See also: repo-wide STRIDE model.** This skill participates in the repository-wide threat model at [`docs/security/security-model.md`](../../../../docs/security/security-model.md). The Authorization Code + PKCE login flow implemented by `_run_login` is enumerated there as threats **OA-1 through OA-17** in [§ OAuth Authentication Threats](../../../../docs/security/security-model.md#oauth-authentication-threats). Each OA row cites Mural's published OAuth documentation at <https://developers.mural.co/public/docs/oauth> (verified 2026-05-10) and pins residual-risk expectations against published RFC behavior. Gap **G-EOP-2** below (refresh-token non-rotation) is **verified correct** against that source.
+
+## Executive Summary
+
+The Mural skill is a local Python CLI with an embedded stdio MCP server. It authenticates to Mural with OAuth 2.0 Authorization Code + PKCE, caches access and refresh tokens in the OS keyring (or a `0600` file fallback), and makes authenticated HTTPS calls to the Mural REST API. Its highest-risk behaviors are at-rest credential storage on the operator workstation and the browser-mediated OAuth login flow; both are mitigated in code, with residual gaps tracked in the gap register. The skill runs no public listener (the loopback receiver is single-shot and bound to `127.0.0.1`) and treats all Mural-authored content returned through the CLI as untrusted.
+
+### Security Posture Overview
+
+| Dimension          | Value                                                                                |
+|--------------------|--------------------------------------------------------------------------------------|
+| Runtime surface    | REST CLI + embedded stdio MCP server; OAuth Auth Code + PKCE; single-shot loopback   |
+| Trust buckets      | B1 Browser→Loopback, B2 CLI→Mural, B3 On-disk cache, B4 CLI caller process           |
+| Credentials        | OAuth access/refresh tokens + `client_id`/`client_secret`; OS keyring or `0600` file |
+| Network egress     | HTTPS to `https://app.mural.co` (system trust store; no-redirect token opener)       |
+| Open residual gaps | 10 (EoP-High: no client-side token revocation / refresh-token non-rotation)          |
+
+## Contents
+
+* [System Description](#system-description)
+* [Trust Boundaries](#trust-boundaries)
+* [Assets](#assets)
+* [Adversaries](#adversaries)
+* [Bucket B1: Browser → Loopback](#bucket-b1-browser--loopback)
+* [Bucket B2: CLI → Mural endpoints](#bucket-b2-cli--mural-endpoints)
+* [Bucket B3: On-disk cache](#bucket-b3-on-disk-cache)
+* [Bucket B4: CLI Caller Process](#bucket-b4-cli-caller-process)
+* [Enterprise Readiness Gaps](#enterprise-readiness-gaps)
+* [References](#references)
+
+## System Description
+
+### Components
+
+1. `scripts/mural/` Python package — the CLI entry point, command handlers, and the embedded stdio MCP server.
+2. OAuth login flow (`_run_login`) — opens the browser to Mural's authorization URL and runs a single-shot loopback receiver at `http://127.0.0.1:8765/callback`.
+3. Token store and credential file — per-user cache (`mural-token.json`, mode `0600`) and `mural.{profile}.env`, or the OS keyring backend.
+4. REST client — `urllib.request` calls to `https://app.mural.co` through a no-redirect opener with a capped JSON parser.
+
+### Data Flow
+
+```mermaid
+flowchart TD
+    subgraph HOST["Operator Workstation (trust zone)"]
+        CLI["mural CLI / MCP server"]
+        LOOP["Single-shot loopback<br/>127.0.0.1:8765"]
+        STORE["Token store + credential file<br/>(keyring or 0600 file)"]
+    end
+    subgraph BROWSER["Default Browser (user-driven)"]
+        TAB["Mural consent page"]
+    end
+    subgraph MURAL["Mural SaaS (network boundary)"]
+        AUTH["Authorization server"]
+        API["REST + token endpoints"]
+    end
+    CLI -->|"open auth URL + PKCE challenge"| TAB
+    TAB -->|"redirect with code + state (HTTP loopback)"| LOOP
+    LOOP -->|"code"| CLI
+    CLI -->|"code + verifier (HTTPS, no-redirect)"| AUTH
+    AUTH -->|"access + refresh tokens"| CLI
+    CLI -->|"persist"| STORE
+    CLI -->|"Bearer request (HTTPS)"| API
+    API -->|"widget content (untrusted)"| CLI
+```
+
+## Trust Boundaries
+
+### Boundary Diagram
+
+```text
+┌───────────────────────────────────────────────────────────────┐
+│ TRUST BOUNDARY: Operator Workstation                          │
+│  ┌─────────────┐  ┌────────────────┐  ┌────────────────────┐  │
+│  │ mural CLI / │  │ Loopback recv  │  │ Token store +      │  │
+│  │ MCP server │  │ 127.0.0.1:8765 │  │ credential file    │  │
+│  └─────────────┘  └────────────────┘  └────────────────────┘  │
+└───────────────┬───────────────────────────────┬───────────────┘
+                │ open browser                  │ HTTPS (TLS)
+    ┌────────────▼───────────┐      ┌────────────▼───────────────┐
+    │ BOUNDARY: Browser      │      │ BOUNDARY: Mural SaaS       │
+    │  Mural consent page    │      │  Auth server + REST API    │
+    └────────────────────────┘      └────────────────────────────┘
+```
+
+### Boundary Descriptions
+
+| Boundary             | Assets Protected                         | Controls Enforced                                                                                   |
+|----------------------|------------------------------------------|-----------------------------------------------------------------------------------------------------|
+| Operator Workstation | Tokens, client secret, code verifier     | OS keyring / `0600` files, single-shot loopback bound to `127.0.0.1`, PKCE verifier held in-process |
+| Browser              | Authorization code, `state`              | Random `state` compared with `secrets.compare_digest`; user verifies consent URL                    |
+| Mural SaaS           | Request/response integrity, bearer token | TLS via system trust store; no-redirect token opener; capped JSON response parser                   |
 
 ## Assets
 
@@ -73,6 +170,14 @@ A request to an unexpected path or method could attempt to drive the handler int
 
 * The handler accepts only `GET /callback` and rejects every other method or path with HTTP 404 (see [`scripts/mural/`](scripts/mural/) `_LoopbackHandler`).
 
+### Risk Rating
+
+| Threat                                         | Likelihood | Impact | Residual Risk | Status           |
+|------------------------------------------------|------------|--------|---------------|------------------|
+| Forged authorization response (state mismatch) | Low        | Med    | Low           | Mitigated        |
+| Authorization-code capture by hostile referrer | Low        | Med    | Low           | Mitigated (PKCE) |
+| Local DoS / loopback port collision            | Low        | Low    | Low           | Mitigated        |
+
 ## Bucket B2: CLI → Mural endpoints
 
 All REST and OAuth token-endpoint calls target `https://app.mural.co/...` over TLS using the Python standard library (`urllib.request`).
@@ -116,6 +221,15 @@ The skill performs every Mural API and OAuth token-endpoint call through `urllib
 * **mTLS.** Not supported by the skill. Mural's API does not require client certificates, so this is not currently a gap.
 * **TLS version and ciphers.** Inherited from the host Python build's OpenSSL. The skill makes no calls to `set_ciphers`, `minimum_version`, or `set_alpn_protocols`. Hosts requiring TLS 1.2 floors or specific cipher suites must enforce them through the Python build or system OpenSSL configuration.
 * **FIPS posture.** Inherited from the host Python build. The skill does not attempt to detect or enforce FIPS mode; operators on FIPS-validated systems should confirm their Python and OpenSSL builds before relying on the skill in regulated environments.
+
+### Risk Rating
+
+| Threat                                         | Likelihood | Impact | Residual Risk | Status                         |
+|------------------------------------------------|------------|--------|---------------|--------------------------------|
+| TLS MITM / hostile redirect retargeting        | Low        | High   | Low           | Mitigated (no-redirect opener) |
+| Refresh-token leak via 30x to non-Mural origin | Low        | High   | Low           | Mitigated                      |
+| Upstream rate-limit / oversized-body DoS       | Med        | Low    | Low           | Mitigated (capped reader)      |
+| Compromised local CA (no cert pinning)         | Low        | High   | Low           | Accepted (G-TLS-1)             |
 
 ## Bucket B3: On-disk cache
 
@@ -172,6 +286,15 @@ Devcontainer, Codespaces, and WSL2 contexts inherit the host operator's trust; t
 
 **Known limitation: plaintext at-rest.** Both the token store and the credential file are mode-0600 plaintext on disk. Stdlib symmetric encryption with a passphrase prompt was rejected because it would prompt on every CLI invocation (defeating the UX goal) and storing the passphrase next to the ciphertext provides no real defense over POSIX permissions. The credential file shares the same threat model as the token store; users who require stronger at-rest protection wrap invocations with an out-of-band secrets manager (`dotenvx`, `sops exec-env`, `pass`) as documented in [SKILL.md](SKILL.md).
 
+### Risk Rating
+
+| Threat                                     | Likelihood | Impact | Residual Risk | Status                                |
+|--------------------------------------------|------------|--------|---------------|---------------------------------------|
+| At-rest token/secret theft (file backend)  | Med        | High   | Med           | Partially Mitigated (keyring backend) |
+| Backup/sync exfiltration of home directory | Med        | High   | Med           | Partially Mitigated (keyring backend) |
+| Cache tampering / partial write            | Low        | Med    | Low           | Mitigated (atomic write + lock)       |
+| Refresh-token non-rotation reuse           | Med        | High   | Med           | Accepted upstream (G-EOP-2)           |
+
 ## Bucket B4: CLI Caller Process
 
 The skill exposes Mural operations through local CLI commands. The caller process controls argv, environment variables, stdin, stdout, and stderr, and the CLI treats that process as operator-controlled.
@@ -211,6 +334,15 @@ The skill exposes Mural operations through local CLI commands. The caller proces
 * Guarded destructive commands honor the AI-authored tag contract and require explicit override flags before mutating human-authored widgets.
 * Dry-run capable commands return structured previews without invoking the underlying Mural API call.
 
+### Risk Rating
+
+| Threat                                      | Likelihood | Impact | Residual Risk | Status                          |
+|---------------------------------------------|------------|--------|---------------|---------------------------------|
+| Hostile argv / JSON body injection          | Low        | Med    | Low           | Mitigated (validated, no shell) |
+| Secret leakage into logs                    | Low        | High   | Low           | Mitigated (`_redact`)           |
+| Untrusted Mural content consumed downstream | Med        | Med    | Med           | By design (G-INF-4)             |
+| Duplicate-write double-attribution          | Low        | Low    | Low           | Mitigated (idempotency cache)   |
+
 ## Enterprise Readiness Gaps
 
 The following gaps are known limitations of the current implementation. They are recorded here so operators can make informed deployment decisions and so contributors have a clear backlog of hardening work. Severity ratings are the project's own assessment and are not equivalent to a CVSS score.
@@ -229,5 +361,13 @@ The following gaps are known limitations of the current implementation. They are
 | G-TLS-1 | The skill performs no certificate pinning for `app.mural.co`; TLS validation depends entirely on the system trust store. A compromised local CA, an operator-installed inspection root, or a vulnerability in the underlying OpenSSL/SChannel/Security framework therefore extends to the skill. See the **TLS posture** subsection under B2 for the full inventory.                                                                                                                                    | InfoDisc-Low    | Operator-acceptable for a public SaaS endpoint; documented for customers whose policy mandates pinning.                                                                                                                                                                                                                                                                                                                                                                                  |
 
 For an active issue tracker entry covering these gaps, see the [hve-core issues list](https://github.com/microsoft/hve-core/issues).
+
+## References
+
+* [STRIDE Threat Model](https://learn.microsoft.com/azure/security/develop/threat-modeling-tool-threats)
+* [OWASP Top 10 for LLM Applications](https://owasp.org/www-project-top-10-for-large-language-model-applications/)
+* [Mural OAuth documentation](https://developers.mural.co/public/docs/oauth) (verified 2026-05-10)
+* [RFC 6749 — OAuth 2.0](https://datatracker.ietf.org/doc/html/rfc6749), [RFC 7636 — PKCE](https://datatracker.ietf.org/doc/html/rfc7636), [RFC 6819 — OAuth Threat Model](https://datatracker.ietf.org/doc/html/rfc6819)
+* [Repository security model](../../../../docs/security/security-model.md)
 
 🤖 Crafted with precision by ✨Copilot following brilliant human instruction, then carefully refined by our team of discerning human reviewers.

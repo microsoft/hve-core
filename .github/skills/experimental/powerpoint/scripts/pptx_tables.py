@@ -165,6 +165,7 @@ def extract_table(shape, colors: dict | None = None) -> dict:
                 if cell_fill:
                     cell_data["fill"] = cell_fill
             except (AttributeError, TypeError):
+                # Cell exposes no fill; leave it unset.
                 pass
 
             # Merge info

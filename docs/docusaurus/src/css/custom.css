@@ -58,6 +58,12 @@
   --ms-learn-hero-text: #ffffff;
   --ms-learn-hero-pattern: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='60' height='60' fill='none'%3E%3Cpath d='M8 6l10 10m0-10L8 16M38 36l10 10m0-10L38 46' stroke='%23000' stroke-opacity='0.05' stroke-width='2' stroke-linecap='round'/%3E%3C/svg%3E");
   --ms-learn-card-accent: #0078d4;
+
+  /* WCAG 2.4.7 + 1.4.11: dual-band keyboard focus indicator tokens. The inner
+     band stays light and the outer band stays dark so the ring keeps >=3:1
+     contrast against both light and dark surfaces. */
+  --hve-focus-ring-inner: #ffffff;
+  --hve-focus-ring-outer: #003a66;
   --ms-learn-card-border: #e6e6e6;
   --ms-learn-text-subtle: #505050;
   --ms-learn-section-bg: #f2f2f2;
@@ -89,21 +95,34 @@ a:visited {
   text-decoration: underline;
 }
 
-/* WI-06 / SC 2.4.7 + 1.4.11: visible keyboard focus indicator (>=3:1 against
-   the page background in both themes via --ifm-color-primary) */
+/* WCAG 2.4.7 + 1.4.11: visible, four-sided keyboard focus indicator with a
+   dual-band treatment that stays visible against both light and dark backgrounds. */
 a:focus-visible,
 button:focus-visible,
-.navbar__link:focus-visible,
-.menu__link:focus-visible,
-.pagination-nav__link:focus-visible {
-  outline: 2px solid var(--ifm-color-primary);
+[tabindex]:focus-visible,
+.cardTitle:focus-visible,
+.collectionName:focus-visible,
+.boxCardLinks a:focus-visible {
+  outline: 2px solid var(--hve-focus-ring-inner);
   outline-offset: 2px;
+  box-shadow: 0 0 0 4px var(--hve-focus-ring-outer);
   border-radius: 2px;
 }
 
-/* Navbar link hover: no underline in nav */
+/* WCAG 1.4.1: persistent link underlines provide a non-color distinction. */
+.menu__link,
+.table-of-contents__link,
+.navbar__link,
+.cardTitle,
+.collectionName,
+.boxCardLinks a {
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+/* Navbar link hover: keep the persistent underline for navigation links. */
 .navbar__link:hover {
-  text-decoration: none;
+  text-decoration: underline;
 }
 
 .navbar__link:visited {
@@ -140,6 +159,14 @@ button:focus-visible,
 [data-theme='dark'] .navbar__search-input::placeholder {
   color: #b0b0b0;
   opacity: 1;
+}
+
+html {
+  scroll-padding-top: 54px;
+}
+
+:target {
+  scroll-margin-top: 54px;
 }
 
 /* Navbar: MS Learn-style sizing */
@@ -235,9 +262,21 @@ button:focus-visible,
 .menu__link {
   font-size: 14px;
   font-weight: 400;
-  line-height: 25.6px;
-  padding: 2px 0 2px 16px;
+  line-height: 1.3;
+  padding: 4px 0 4px 16px;
+  min-height: 24px;
+  display: flex;
+  align-items: center;
+  box-sizing: border-box;
   color: var(--ifm-font-color-base);
+}
+
+.table-of-contents__link {
+  display: flex;
+  align-items: center;
+  min-height: 24px;
+  padding-block: 4px;
+  box-sizing: border-box;
 }
 
 .menu__link:hover {
@@ -269,9 +308,26 @@ button:focus-visible,
 
 .menu__caret {
   order: -1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
   padding: 0;
-  margin-right: -4px;
-  transform: scale(0.5);
+  margin: -2px 0 -2px -8px;
+  box-sizing: border-box;
+  transform: none;
+}
+
+.hash-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  margin: -4px;
+  padding: 0 4px;
+  box-sizing: border-box;
 }
 
 .menu__link--sublist {
@@ -318,6 +374,11 @@ button:focus-visible,
 }
 
 .breadcrumbs__link {
+  display: inline-flex;
+  align-items: center;
+  min-height: 24px;
+  min-width: 24px;
+  padding: 2px 0;
   font-size: 14px;
   color: var(--ifm-link-color);
 }
@@ -327,14 +388,13 @@ button:focus-visible,
   padding: 24px 0;
 }
 
-/* TOC: "In this article" heading on right-side TOC */
+/* TOC: right-side article heading styling */
 .table-of-contents {
   border-left: 2px solid var(--ms-learn-card-border);
   padding-left: 1rem;
 }
 
-.table-of-contents::before {
-  content: 'In this article';
+.table-of-contents__title {
   display: block;
   font-size: 14px;
   font-weight: 600;
@@ -364,6 +424,22 @@ button:focus-visible,
 
 .docCard a:hover {
   text-decoration: none;
+}
+
+.cardTitle,
+.collectionName {
+  display: flex;
+  align-items: center;
+  min-height: 24px;
+  padding-block: 2px;
+  box-sizing: border-box;
+}
+
+.boxCardLinks a {
+  display: block;
+  min-height: 24px;
+  padding-block: 4px;
+  box-sizing: border-box;
 }
 
 /* Dark mode: derived from MS Learn dark theme (extracted via Chrome DevTools) */

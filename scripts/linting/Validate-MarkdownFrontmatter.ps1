@@ -12,7 +12,7 @@
 # - Standard Copilot attribution footer (excludes Microsoft template files)
 # - Content structure by file type (GitHub configs, DevContainer docs, etc.)
 
-#Requires -Version 7.0
+#Requires -Version 7.4
 
 using namespace System.Collections.Generic
 # Import FrontmatterValidation module with 'using' to make PowerShell class types
@@ -37,6 +37,8 @@ param(
         'collections/*.collection.md',
         'pr.md',
         '.github/PULL_REQUEST_TEMPLATE.md',
+        '.github/PULL_REQUEST_TEMPLATE/**',
+        '.copilot-tracking/**',
         'plugins/**'
     ),
 
@@ -55,7 +57,8 @@ param(
     [Parameter(Mandatory = $false)]
     [string[]]$FooterExcludePaths = @(
         'CHANGELOG.md',
-        'dependency-pinning-artifacts/**'
+        'dependency-pinning-artifacts/**',
+        '.github/ISSUE_TEMPLATE/**'
     ),
 
     [Parameter(Mandatory = $false)]

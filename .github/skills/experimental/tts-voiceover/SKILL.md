@@ -19,6 +19,7 @@ This skill reads `content.yaml` files from a PowerPoint skill content directory,
 * **Azure Speech resource** — Free tier provides 500K characters per month.
 * **Authentication** — Key-based (`SPEECH_KEY`) or Microsoft Entra ID (`SPEECH_RESOURCE_ID`).
 * **Python 3.11+** with `uv` for virtual environment management.
+* **Data handling note** — Speaker-notes content is transmitted to the configured `SPEECH_REGION` for synthesis. Operators must pin an approved region and avoid sending regulated or confidential narration.
 
 ### Key-Based Auth
 

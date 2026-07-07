@@ -2,7 +2,7 @@
 title: Linting Scripts
 description: PowerShell scripts for code quality validation and documentation checks
 author: HVE Core Team
-ms.date: 2026-06-28
+ms.date: 2026-06-30
 ms.topic: reference
 keywords:
   - powershell
@@ -313,6 +313,7 @@ Purpose: Ensure all skill packages comply with the agentskills.io specification 
 * Verifies `name` matches directory name
 * When `scripts/` subdirectory exists, requires both `.ps1` and `.sh` files for cross-platform support
 * Validates Python skills with `tests/` include `tests/fuzz_harness.py` for Scorecard compliance
+* Warns when a Python skill has `pyproject.toml` without a committed `uv.lock` (required for Dependabot uv ecosystem coverage)
 * Warns on unrecognized directories
 * Supports changed-files-only mode via Git
 * Creates CI annotations for violations

@@ -11,7 +11,7 @@ This suite covers every user-invocable hve-core agent with at least one function
 
 The complement to [baseline-equivalence](../baseline-equivalence/README.md) is intentional: baseline-equivalence asserts the customization layer does not alter underlying model behavior beyond documented divergences, while agent-behavior asserts each agent actually performs its declared job.
 
-The suite is organized around five behavioral classes (research-writer, code-reviewer, code-implementor, workitem-manager, planner-coach). Every parent agent belongs to exactly one class, and class membership selects the stimulus shape and grader template used in [stimuli/](stimuli/). The 44-agent inventory at the bottom of this document is the authoritative class assignment.
+The suite is organized around five behavioral classes (research-writer, code-reviewer, code-implementor, workitem-manager, planner-coach). Every inventoried agent belongs to exactly one class, and class membership selects the stimulus shape and grader template used in [stimuli/](stimuli/). The 73-agent inventory at the bottom of this document is the authoritative class assignment.
 
 ## Layout
 
@@ -21,7 +21,7 @@ evals/agent-behavior/
 ├── AGENTS.yml          # authoritative inventory (slug, path, class, cost_tier)
 ├── eval.yaml           # generated executable spec - do not edit by hand
 └── stimuli/
-    └── <agent-slug>.yml  # one partial per user-invocable agent (47 files)
+    └── <agent-slug>.yml  # one partial per inventoried agent (73 files)
 ```
 
 The partials in [stimuli/](stimuli/) are the source of truth for stimuli. The top-level [eval.yaml](eval.yaml) is regenerated from those partials by [scripts/evals/Build-AgentBehaviorSpec.ps1](../../scripts/evals/Build-AgentBehaviorSpec.ps1). The inventory at [AGENTS.yml](AGENTS.yml) is regenerated from the agent frontmatter on disk by [scripts/evals/Build-AgentInventory.ps1](../../scripts/evals/Build-AgentInventory.ps1) and the agent-behavior generator only reads slugs whose partials exist in [stimuli/](stimuli/).
@@ -48,7 +48,7 @@ Each parent agent belongs to exactly one class. The class selects the stimulus s
 
 | Class           | Members | Prompt Theme                                                    | Grader Regex (case-insensitive)                           |
 |-----------------|---------|-----------------------------------------------------------------|-----------------------------------------------------------|
-| research-writer | 8       | Investigate or document a topic and return a structured writeup | `(summary\|findings\|recommendation\|outline\|sections?)` |
+| research-writer | 9       | Investigate or document a topic and return a structured writeup | `(summary\|findings\|recommendation\|outline\|sections?)` |
 | code-reviewer   | 7       | Review a diff or artifact and surface concerns                  | `(issue\|risk\|severity\|finding\|recommend\|line \d+)`   |
 | code-implementor  | 6       | Implement or modify code to satisfy a spec                            | `(```\|patch\|diff\|file:\|edit\|add\|modify)`                                             |
 | workitem-manager  | 8       | Convert a raw request into a backlog draft                            | `(title\|summary\|description\|acceptance\|priority\|severity\|repro\|steps)`              |
@@ -393,7 +393,7 @@ The inventory lists every user-invocable hve-core parent agent and its class ass
 | test-streamlit-dashboard     | code-implementor | light     | [.github/agents/data-science/test-streamlit-dashboard.agent.md](../../.github/agents/data-science/test-streamlit-dashboard.agent.md)                 |
 | ux-ui-designer               | research-writer  | light     | [.github/agents/project-planning/ux-ui-designer.agent.md](../../.github/agents/project-planning/ux-ui-designer.agent.md)                             |
 
-The inventory totals 48 user-invocable parent agents. Subagent-only agents (`codebase-profiler`, `finding-deep-verifier`, `report-generator`, `skill-assessor`) declare `user-invocable: false` in their frontmatter and are excluded from this suite; they remain covered by their parent agents' stimuli and by the dependency-map dispatch path documented in [evals/baseline-equivalence/README.md](../baseline-equivalence/README.md).
+The inventory totals 73 agents: 47 parent agents plus 26 enrolled subagents whose stimulus partials exist in [stimuli/](stimuli/). Subagents without a matching stimulus partial remain excluded from the matrix run set and are documented separately in the inventory generator and related eval research.
 
 ## Related Suites
 

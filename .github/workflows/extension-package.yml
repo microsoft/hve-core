@@ -57,9 +57,12 @@ jobs:
       - name: Resolve effective version
         id: read-version
         shell: bash
+        env:
+          INPUT_VERSION: ${{ inputs.version }}
+          INPUT_DEV_PATCH: ${{ inputs.dev-patch-number }}
         run: |
-          version="${{ inputs.version }}"
-          dev_patch="${{ inputs.dev-patch-number }}"
+          version="$INPUT_VERSION"
+          dev_patch="$INPUT_DEV_PATCH"
           if [ -z "$version" ]; then
             version=$(jq -r .version extension/templates/package.template.json)
           fi
@@ -114,8 +117,10 @@ jobs:
       - name: Prepare extension resources
         id: prepare
         shell: pwsh
+        env:
+          INPUT_CHANNEL: ${{ inputs.channel }}
         run: |
-          $channel = "${{ inputs.channel }}".Trim()
+          $channel = "$env:INPUT_CHANNEL".Trim()
           if (-not $channel) { $channel = 'Stable' }
           $collection = "${{ matrix.manifest }}"
 
@@ -125,10 +130,14 @@ jobs:
       - name: Package extension
         id: package
         shell: pwsh
+        env:
+          INPUT_VERSION: ${{ inputs.version }}
+          INPUT_DEV_PATCH: ${{ inputs.dev-patch-number }}
+          INPUT_CHANNEL: ${{ inputs.channel }}
         run: |
-          $version = "${{ inputs.version }}".Trim()
-          $devPatch = "${{ inputs.dev-patch-number }}".Trim()
-          $channel = "${{ inputs.channel }}".Trim()
+          $version = "$env:INPUT_VERSION".Trim()
+          $devPatch = "$env:INPUT_DEV_PATCH".Trim()
+          $channel = "$env:INPUT_CHANNEL".Trim()
           if (-not $channel) { $channel = 'Stable' }
           $collection = "${{ matrix.manifest }}"
 

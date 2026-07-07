@@ -101,6 +101,10 @@ param(
     [double]$Duration,
 
     [Parameter(Mandatory = $false)]
+    [ValidateRange(1, 86400)]
+    [int]$TimeoutSeconds = 600,
+
+    [Parameter(Mandatory = $false)]
     [switch]$SkipPalette
 )
 
@@ -232,13 +236,45 @@ function Format-FileSize {
     }
 }
 
+function Invoke-FFmpegProcess {
+    <#
+    .SYNOPSIS
+        Runs ffmpeg with the given argument list under a wall-clock timeout.
+    .DESCRIPTION
+        Uses the .NET process API so each argument (including the filtergraph) is
+        passed verbatim and is never re-parsed by a shell, and so the process can
+        be terminated if it exceeds TimeoutSeconds, preventing a hostile or
+        pathological input from hanging the conversion indefinitely.
+    #>
+    param(
+        [Parameter(Mandatory = $true)]
+        [object[]]$Arguments,
+
+        [Parameter(Mandatory = $false)]
+        [int]$TimeoutSeconds = 600
+    )
+
+    $psi = [System.Diagnostics.ProcessStartInfo]::new()
+    $psi.FileName = 'ffmpeg'
+    foreach ($arg in $Arguments) { [void]$psi.ArgumentList.Add([string]$arg) }
+    $psi.UseShellExecute = $false
+
+    $process = [System.Diagnostics.Process]::Start($psi)
+    if (-not $process.WaitForExit($TimeoutSeconds * 1000)) {
+        try { $process.Kill($true) } catch { Write-Verbose "Failed to terminate timed-out ffmpeg process: $_" }
+        throw "FFmpeg timed out after $TimeoutSeconds seconds."
+    }
+    return $process.ExitCode -eq 0
+}
+
 function Invoke-SinglePassConversion {
     param(
         [string]$SourcePath,
         [string]$DestinationPath,
         [int]$LoopCount,
         [string]$BaseFilter,
-        [double[]]$TimeArgs
+        [double[]]$TimeArgs,
+        [int]$TimeoutSeconds = 600
     )
 
     Write-Verbose "Running single-pass conversion..."
@@ -262,8 +298,7 @@ function Invoke-SinglePassConversion {
         '-y', $DestinationPath
     )
 
-    & ffmpeg @arguments
-    return $LASTEXITCODE -eq 0
+    return (Invoke-FFmpegProcess -Arguments $arguments -TimeoutSeconds $TimeoutSeconds)
 }
 
 function Invoke-TwoPassConversion {
@@ -273,10 +308,17 @@ function Invoke-TwoPassConversion {
         [string]$DitherAlgorithm,
         [int]$LoopCount,
         [string]$BaseFilter,
-        [double[]]$TimeArgs
+        [double[]]$TimeArgs,
+        [int]$TimeoutSeconds = 600
     )
 
-    $paletteFile = Join-Path -Path $env:TEMP -ChildPath "palette_$PID.png"
+    # Create the palette inside a private, unpredictable temp directory rather than
+    # a predictable palette_$PID.png, which is exposed to a symlink or pre-creation
+    # race on a shared temp location. The finally block removes it even on failure.
+    $paletteDir = New-Item -ItemType Directory -Force -Path (
+        Join-Path -Path ([System.IO.Path]::GetTempPath()) -ChildPath ("video-to-gif-" + [System.IO.Path]::GetRandomFileName())
+    )
+    $paletteFile = Join-Path -Path $paletteDir.FullName -ChildPath 'palette.png'
 
     try {
         # Build time arguments array
@@ -300,8 +342,7 @@ function Invoke-TwoPassConversion {
             '-y', $paletteFile
         )
 
-        & ffmpeg @pass1Args
-        if ($LASTEXITCODE -ne 0) {
+        if (-not (Invoke-FFmpegProcess -Arguments $pass1Args -TimeoutSeconds $TimeoutSeconds)) {
             Write-Error "Palette generation failed."
             return $false
         }
@@ -318,13 +359,12 @@ function Invoke-TwoPassConversion {
             '-y', $DestinationPath
         )
 
-        & ffmpeg @pass2Args
-        return $LASTEXITCODE -eq 0
+        return (Invoke-FFmpegProcess -Arguments $pass2Args -TimeoutSeconds $TimeoutSeconds)
     }
     finally {
-        # Cleanup palette file
-        if (Test-Path -Path $paletteFile) {
-            Remove-Item -Path $paletteFile -Force -ErrorAction SilentlyContinue
+        # Remove the private palette directory (and its contents) even on failure.
+        if ($paletteDir -and (Test-Path -Path $paletteDir.FullName)) {
+            Remove-Item -Path $paletteDir.FullName -Recurse -Force -ErrorAction SilentlyContinue
         }
     }
 }
@@ -453,7 +493,8 @@ function Invoke-VideoConversion {
             -DestinationPath $OutputPath `
             -LoopCount $Loop `
             -BaseFilter $baseFilter `
-            -TimeArgs $timeArgs
+            -TimeArgs $timeArgs `
+            -TimeoutSeconds $TimeoutSeconds
     }
     else {
         Write-Host "Mode:       Two-pass palette optimization"
@@ -465,7 +506,8 @@ function Invoke-VideoConversion {
             -DitherAlgorithm $Dither `
             -LoopCount $Loop `
             -BaseFilter $baseFilter `
-            -TimeArgs $timeArgs
+            -TimeArgs $timeArgs `
+            -TimeoutSeconds $TimeoutSeconds
     }
 
     if ($success -and (Test-Path -Path $OutputPath)) {

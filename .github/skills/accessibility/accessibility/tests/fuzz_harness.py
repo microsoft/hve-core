@@ -27,6 +27,11 @@ if str(_SCRIPTS_DIR) not in sys.path:
     sys.path.insert(0, str(_SCRIPTS_DIR))
 
 scan = importlib.import_module("scan")
+config_module = importlib.import_module("runtime_a11y._config")
+assessor_module = importlib.import_module("runtime_a11y.matrix._ingest_assessor")
+planner_module = importlib.import_module("runtime_a11y.matrix._ingest_planner")
+report_module = importlib.import_module("runtime_a11y.matrix._ingest_reports")
+merge_module = importlib.import_module("runtime_a11y.matrix._merge")
 
 
 def fuzz_normalize_results(data: bytes) -> None:
@@ -48,7 +53,46 @@ def fuzz_normalize_results(data: bytes) -> None:
     scan.normalize_results(payload, provider.ConsumeUnicodeNoSurrogates(30))
 
 
-FUZZ_TARGETS = [fuzz_normalize_results]
+def fuzz_runtime_a11y_parsers(data: bytes) -> None:
+    """Exercise the pure-Python runtime_a11y parsers with fuzzed inputs."""
+    provider = atheris.FuzzedDataProvider(data)
+    # Fuzzed input is intentionally malformed, so these parsers are expected to
+    # raise on bad data; only crashes and hangs are real findings. Suppress the
+    # expected exceptions with the same contextlib.suppress idiom used elsewhere
+    # in this harness so the fuzzer keeps exploring instead of aborting on
+    # handled input errors.
+    with suppress(Exception):
+        config_module.load_config(
+            Path(provider.ConsumeUnicodeNoSurrogates(32) or "config.json")
+        )
+        assessor_module.ingest_assessor_findings(
+            provider.ConsumeUnicodeNoSurrogates(64),
+            [provider.ConsumeUnicodeNoSurrogates(12)],
+        )
+        planner_module.ingest_planner_state(
+            {
+                "controlMappings": [
+                    {"controlId": provider.ConsumeUnicodeNoSurrogates(8)}
+                ],
+                "evidenceRegister": [],
+            },
+            [provider.ConsumeUnicodeNoSurrogates(8)],
+        )
+        report_module.ingest_report_markdown(
+            provider.ConsumeUnicodeNoSurrogates(64),
+            [provider.ConsumeUnicodeNoSurrogates(12)],
+        )
+        merge_module.merge_updates(
+            merge_module.Matrix(
+                criteria=[],
+                surfaces=[],
+                cells=[],
+            ),
+            [],
+        )
+
+
+FUZZ_TARGETS = [fuzz_normalize_results, fuzz_runtime_a11y_parsers]
 
 
 def fuzz_dispatch(data: bytes) -> None:

@@ -2,7 +2,7 @@
 title: Environment Customization
 description: Configure DevContainers, VS Code settings, MCP servers, and coding agent environments for your team
 author: Microsoft
-ms.date: 2026-06-26
+ms.date: 2026-06-30
 ms.topic: how-to
 keywords:
   - devcontainer
@@ -15,7 +15,7 @@ estimated_reading_time: 6
 ## DevContainer Configuration
 
 HVE Core uses an Ubuntu 22.04 (Jammy) base image with Node.js 24, Python 3.11,
-and PowerShell 7 pre-installed. The configuration lives in
+and PowerShell 7.4 pre-installed. The configuration lives in
 `.devcontainer/devcontainer.json` and includes extensions for Markdown editing,
 spell checking, and GitHub integration.
 
@@ -25,7 +25,7 @@ The DevContainer ships with these tools:
 
 * Node.js 24 with npm
 * Python 3.11
-* PowerShell 7 with PSScriptAnalyzer 1.25.0, PowerShell-Yaml 0.4.7, and Pester 5.7.1
+* PowerShell 7.4 with PSScriptAnalyzer 1.25.0, PowerShell-Yaml 0.4.7, and Pester 5.7.1
 * Git and GitHub CLI
 * Azure CLI
 * shellcheck for bash validation
@@ -252,10 +252,11 @@ The coding agent environment includes:
 
 * Node.js 24 with npm dependencies from `package.json`
 * Python 3.11
-* PowerShell 7 with PSScriptAnalyzer 1.25.0, PowerShell-Yaml 0.4.7, and Pester 5.7.1
+* PowerShell 7.4 with PSScriptAnalyzer 1.25.0, PowerShell-Yaml 0.4.7, and Pester 5.7.1
 * shellcheck (pre-installed on ubuntu-latest)
 * actionlint for GitHub Actions workflow validation
 * cosign for artifact signing and verification
+* osv-scanner for dependency vulnerability scanning
 
 ### Adding Tools for the Coding Agent
 
@@ -290,12 +291,13 @@ share most tools but differ intentionally in a few areas.
 |-------------------------|--------------|--------------|
 | Node.js 24              | Yes          | Yes          |
 | Python 3.11             | Yes          | Yes          |
-| PowerShell 7            | Yes          | Yes          |
+| PowerShell 7.4          | Yes          | Yes          |
 | PSScriptAnalyzer 1.25.0 | Yes          | Yes          |
 | Pester 5.7.1            | Yes          | Yes          |
 | shellcheck              | Yes          | Yes          |
 | actionlint              | Yes          | Yes          |
 | cosign                  | Yes          | Yes          |
+| osv-scanner             | Yes          | Yes          |
 
 ### Intentional Differences
 

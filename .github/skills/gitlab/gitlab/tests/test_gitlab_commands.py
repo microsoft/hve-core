@@ -15,6 +15,7 @@ from test_constants import (
     FIELDS_PIPELINE,
     TEST_API_URL,
     TEST_PROJECT_ENCODED,
+    USAGE_JOB_LOG,
     USAGE_MR_COMMENT,
     USAGE_MR_CREATE,
     USAGE_MR_GET,
@@ -326,3 +327,31 @@ def test_mr_notes_filters_system_notes_before_printing(
 
     assert recorder.calls[0].quiet is True
     assert printed == [FILTERED_NOTES]
+
+
+class TestCmdJobLog:
+    """Tests for cmd_job_log."""
+
+    def test_redacts_and_truncates_job_log_output(
+        self,
+        configured_gitlab,
+        response_factory,
+        capsys: pytest.CaptureFixture[str],
+        mocker,
+    ) -> None:
+        payload = "token abc123\n" + ("x" * (gitlab.MAX_LOG_BYTES + 64))
+        mocker.patch("gitlab._OPENER.open", return_value=response_factory(payload))
+
+        gitlab.cmd_job_log(["99"])
+
+        output = capsys.readouterr().out
+        assert "token=[REDACTED]" in output
+        assert "abc123" not in output
+        assert "... [truncated]" in output
+
+    def test_requires_job_id(self, capsys: pytest.CaptureFixture[str]) -> None:
+        with pytest.raises(SystemExit) as exc_info:
+            gitlab.cmd_job_log([])
+
+        assert exc_info.value.code == gitlab.EXIT_USAGE
+        assert USAGE_JOB_LOG in capsys.readouterr().err

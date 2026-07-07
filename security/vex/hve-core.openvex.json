@@ -1,0 +1,9 @@
+{
+  "@context": "https://openvex.dev/ns/v0.2.0",
+  "@id": "https://github.com/microsoft/hve-core/security/vex/2026-06-19",
+  "author": "Microsoft HVE Core Maintainers",
+  "timestamp": "2026-06-19T00:00:00Z",
+  "version": 2,
+  "tooling": "Maintained via the hve-core SSSC Reviewer VEX assessment capability (AI-assisted drafting) with human review and merge; published and Sigstore-attested by the microsoft/hve-core/.github/workflows/vex-attest.yml reusable workflow.",
+  "statements": []
+}
