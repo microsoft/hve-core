@@ -626,6 +626,9 @@ items:
 - path: .github/skills/rai/rai-standards
   kind: skill
   maturity: experimental
+- path: .github/skills/release-readiness/release-readiness-gate
+  kind: skill
+  maturity: experimental
 - path: .github/skills/rpi/rpi-implement
   kind: skill
 - path: .github/skills/rpi/rpi-plan

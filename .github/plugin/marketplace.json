@@ -82,6 +82,12 @@
       "version": "3.3.101"
     },
     {
+      "name": "release-readiness",
+      "source": "release-readiness",
+      "description": "Go/No-Go release gate for production and soft-launch sign-off with an evidence-grounded readiness scorecard",
+      "version": "3.3.101"
+    },
+    {
       "name": "rpi",
       "source": "rpi",
       "description": "Skill-forward Research, Plan, Implement, and Review entry points with an umbrella RPI skill and existing subagent dispatch.",

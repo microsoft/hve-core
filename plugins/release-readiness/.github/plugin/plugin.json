@@ -1,0 +1,8 @@
+{
+  "name": "release-readiness",
+  "description": "Go/No-Go release gate for production and soft-launch sign-off with an evidence-grounded readiness scorecard",
+  "version": "3.3.101",
+  "skills": [
+    "skills/release-readiness/"
+  ]
+}
