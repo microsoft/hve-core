@@ -2,7 +2,7 @@
 title: Extension Scripts
 description: PowerShell scripts for VS Code extension preparation, packaging, and collection discovery
 author: HVE Core Team
-ms.date: 2026-03-17
+ms.date: 2026-07-08
 ms.topic: reference
 keywords:
   - powershell
@@ -127,6 +127,66 @@ maturity rules.
 
 # Discover all collections for pre-release
 ./scripts/extension/Find-CollectionManifests.ps1 -Channel PreRelease
+```
+
+### `Resolve-VsixFile.ps1`
+
+Resolves the single `.vsix` file within a directory.
+
+Purpose: Return the one VSIX path in a directory, failing when zero or multiple
+`.vsix` files are present. Used by the `extension-provenance.yml` reusable
+workflow to locate the built VSIX before signing and attestation.
+
+#### Parameters
+
+* `-DirectoryPath` - Directory to search for a `.vsix` file (defaults to `$env:VSIX_DIRECTORY`)
+
+#### Usage
+
+```powershell
+# Resolve the VSIX in a directory
+./scripts/extension/Resolve-VsixFile.ps1 -DirectoryPath ./extension
+```
+
+### `Select-CollectionVsix.ps1`
+
+Selects the collection-specific VSIX from a set of candidate assets.
+
+Purpose: Pick the `.vsix` matching a collection ID from a directory of release
+assets. Used by the `extension-marketplace-publish.yml` reusable workflow to
+choose the correct collection artifact before publishing.
+
+#### Parameters
+
+* `-AssetDirectory` - Directory containing candidate assets (defaults to `$env:ASSET_DIRECTORY`)
+* `-CollectionId` - Collection ID to match (defaults to `$env:COLLECTION_ID`)
+
+#### Usage
+
+```powershell
+# Select the VSIX for a collection
+./scripts/extension/Select-CollectionVsix.ps1 -AssetDirectory ./dist -CollectionId hve-core
+```
+
+### `Export-AttestationBundle.ps1`
+
+Exports attestation files from an attestation bundle.
+
+Purpose: Extract the Sigstore and in-toto attestation files from a bundle to
+local paths. Used in the provenance flow to materialize attestation artifacts
+for verification and release upload.
+
+#### Parameters
+
+* `-BundlePath` - Path to the attestation bundle (defaults to `$env:BUNDLE_PATH`)
+* `-SigstorePath` - Output path for the Sigstore attestation (defaults to `$env:SIGSTORE_PATH`)
+* `-IntotoPath` - Output path for the in-toto attestation (defaults to `$env:INTOTO_PATH`)
+
+#### Usage
+
+```powershell
+# Export attestation files from a bundle
+./scripts/extension/Export-AttestationBundle.ps1 -BundlePath ./bundle.json -SigstorePath ./out.sigstore.json -IntotoPath ./out.intoto.jsonl
 ```
 
 ## npm Scripts
