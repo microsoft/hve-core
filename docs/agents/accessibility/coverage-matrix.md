@@ -72,13 +72,13 @@ The workflow persists two runtime artifacts under `.copilot-tracking/accessibili
 
 ## Related Files
 
-| File type     | Location                                                                                                                                                                    |
-|---------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| Prompt        | [.github/prompts/accessibility/accessibility-coverage-matrix.prompt.md](../../../.github/prompts/accessibility/accessibility-coverage-matrix.prompt.md)                     |
-| Subagent      | [.github/agents/accessibility/subagents/accessibility-surface-inventory.agent.md](../../../.github/agents/accessibility/subagents/accessibility-surface-inventory.agent.md) |
-| Skill         | [.github/skills/accessibility/accessibility/SKILL.md](../../../.github/skills/accessibility/accessibility/SKILL.md)                                                         |
-| Reviewer page | [Accessibility Reviewer](accessibility-reviewer)                                                                                                                            |
-| Planner page  | [Accessibility Planner](accessibility-planner)                                                                                                                              |
+| File type     | Location                                                                          |
+|---------------|-----------------------------------------------------------------------------------|
+| Prompt        | `.github/prompts/accessibility/accessibility-coverage-matrix.prompt.md`           |
+| Subagent      | `.github/agents/accessibility/subagents/accessibility-surface-inventory.agent.md` |
+| Skill         | `.github/skills/accessibility/accessibility/SKILL.md`                             |
+| Reviewer page | [Accessibility Reviewer](accessibility-reviewer)                                  |
+| Planner page  | [Accessibility Planner](accessibility-planner)                                    |
 
 <!-- markdownlint-disable MD036 -->
 *🤖 Crafted with precision by ✨Copilot following brilliant human instruction,
