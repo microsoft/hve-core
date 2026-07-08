@@ -2,7 +2,7 @@
 title: Linting Scripts
 description: PowerShell scripts for code quality validation and documentation checks
 author: HVE Core Team
-ms.date: 2026-06-30
+ms.date: 2026-07-08
 ms.topic: reference
 keywords:
   - powershell
@@ -521,14 +521,21 @@ Purpose: Execute Python test suites for all Python skills that include a `tests/
 
 The linting directory also contains these scripts that are not yet covered in the earlier sections:
 
-| Script                          | Purpose                                                                       |
-|---------------------------------|-------------------------------------------------------------------------------|
-| `Invoke-JsonLint.ps1`           | Validate strict JSON syntax using System.Text.Json                            |
-| `Validate-HookManifests.ps1`    | Validate collection-scoped hook manifests under `.github/hooks/`              |
-| `Validate-PlannerArtifacts.ps1` | Validate AI artifact footer and disclaimer presence in instruction templates  |
-| `Test-ModelReferences.ps1`      | Validate model references in agent and prompt files against the model catalog |
-| `Update-ModelCatalog.ps1`       | Refresh the model catalog from GitHub docs data                               |
-| `Format-MarkdownTables.ps1`     | Normalize markdown tables to the repository formatting convention             |
+| Script                             | Purpose                                                                                              |
+|------------------------------------|------------------------------------------------------------------------------------------------------|
+| `Invoke-JsonLint.ps1`              | Validate strict JSON syntax using System.Text.Json                                                   |
+| `Validate-HookManifests.ps1`       | Validate collection-scoped hook manifests under `.github/hooks/`                                     |
+| `Validate-PlannerArtifacts.ps1`    | Validate AI artifact footer and disclaimer presence in instruction templates                         |
+| `Test-ModelReferences.ps1`         | Validate model references in agent and prompt files against the model catalog                        |
+| `Test-ExtensionArtifactNaming.ps1` | Validate extension-vsix artifact producer and consumer naming across the extension release workflows |
+| `Update-ModelCatalog.ps1`          | Refresh the model catalog from GitHub docs data                                                      |
+| `Format-MarkdownTables.ps1`        | Normalize markdown tables to the repository formatting convention                                    |
+
+## npm Scripts
+
+| npm Script                       | Description                                                                                                            |
+|----------------------------------|------------------------------------------------------------------------------------------------------------------------|
+| `lint:extension-artifact-naming` | Run `pwsh -NoProfile -File scripts/linting/Test-ExtensionArtifactNaming.ps1` to validate extension VSIX artifact names |
 
 ## Shared Module
 
