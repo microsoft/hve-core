@@ -542,7 +542,10 @@ jobs:
       version: ${{ needs.release-please.outputs.tag_name }}
       sbom-artifact: sbom-dependencies
     permissions:
-      contents: read
+      contents: write
+      id-token: write
+      attestations: write
+      artifact-metadata: write
 
   verify-provenance:
     name: Verify Provenance

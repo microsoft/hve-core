@@ -151,5 +151,6 @@ jobs:
       verify-attestation: true
     permissions:
       contents: read
+      attestations: read
       id-token: write
     secrets: inherit
