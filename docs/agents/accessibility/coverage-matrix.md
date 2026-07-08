@@ -25,12 +25,12 @@ The Accessibility Coverage Matrix workflow evaluates whether an accessibility as
 
 The workflow supports four execution modes.
 
-| Mode | Purpose | Typical use |
-|------|---------|-------------|
-| `build` | Create or expand the matrix from the current evidence set | Initial matrix creation |
-| `refresh` | Recompute the matrix after new findings or updated inputs | Re-running after code or evidence changes |
-| `report` | Render the current matrix state into the JSON and markdown artifacts | Sharing findings or preparing review |
-| `probe` | Run the runtime harness for a specific probe against the current inventory | Investigating a gap or validating a candidate |
+| Mode      | Purpose                                                                    | Typical use                                   |
+|-----------|----------------------------------------------------------------------------|-----------------------------------------------|
+| `build`   | Create or expand the matrix from the current evidence set                  | Initial matrix creation                       |
+| `refresh` | Recompute the matrix after new findings or updated inputs                  | Re-running after code or evidence changes     |
+| `report`  | Render the current matrix state into the JSON and markdown artifacts       | Sharing findings or preparing review          |
+| `probe`   | Run the runtime harness for a specific probe against the current inventory | Investigating a gap or validating a candidate |
 
 ## Grid Model and Cell Lifecycle
 
@@ -42,14 +42,14 @@ The matrix is modeled as a criterion x surface x method grid.
 
 Each cell moves through a lifecycle of not-started, blocked, partial, fail, pass, or not-applicable. The lifecycle changes when new evidence is ingested, when a human override is applied, or when the engine re-runs coverage after a probe or report refresh.
 
-| Lifecycle state | Meaning |
-|-----------------|---------|
-| `not-started` | No evidence has been recorded for the cell yet |
-| `blocked` | Evidence collection is prevented by a dependency or external constraint |
-| `partial` | Some evidence exists, but it is incomplete or inconclusive |
-| `fail` | The current evidence indicates a gap or a failing result |
-| `pass` | A winning result has been recorded for the cell |
-| `not-applicable` | The cell does not apply to the current surface and criterion |
+| Lifecycle state  | Meaning                                                                 |
+|------------------|-------------------------------------------------------------------------|
+| `not-started`    | No evidence has been recorded for the cell yet                          |
+| `blocked`        | Evidence collection is prevented by a dependency or external constraint |
+| `partial`        | Some evidence exists, but it is incomplete or inconclusive              |
+| `fail`           | The current evidence indicates a gap or a failing result                |
+| `pass`           | A winning result has been recorded for the cell                         |
+| `not-applicable` | The cell does not apply to the current surface and criterion            |
 
 ## Method Adequacy Semantics
 
@@ -72,10 +72,15 @@ The workflow persists two runtime artifacts under `.copilot-tracking/accessibili
 
 ## Related Files
 
-| File type | Location |
-|-----------|----------|
-| Prompt | [.github/prompts/accessibility/accessibility-coverage-matrix.prompt.md](../../../.github/prompts/accessibility/accessibility-coverage-matrix.prompt.md) |
-| Subagent | [.github/agents/accessibility/subagents/accessibility-surface-inventory.agent.md](../../../.github/agents/accessibility/subagents/accessibility-surface-inventory.agent.md) |
-| Skill | [.github/skills/accessibility/accessibility/SKILL.md](../../../.github/skills/accessibility/accessibility/SKILL.md) |
-| Reviewer page | [Accessibility Reviewer](accessibility-reviewer) |
-| Planner page | [Accessibility Planner](accessibility-planner) |
+| File type     | Location                                                                                                                                                                    |
+|---------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| Prompt        | [.github/prompts/accessibility/accessibility-coverage-matrix.prompt.md](../../../.github/prompts/accessibility/accessibility-coverage-matrix.prompt.md)                     |
+| Subagent      | [.github/agents/accessibility/subagents/accessibility-surface-inventory.agent.md](../../../.github/agents/accessibility/subagents/accessibility-surface-inventory.agent.md) |
+| Skill         | [.github/skills/accessibility/accessibility/SKILL.md](../../../.github/skills/accessibility/accessibility/SKILL.md)                                                         |
+| Reviewer page | [Accessibility Reviewer](accessibility-reviewer)                                                                                                                            |
+| Planner page  | [Accessibility Planner](accessibility-planner)                                                                                                                              |
+
+<!-- markdownlint-disable MD036 -->
+*🤖 Crafted with precision by ✨Copilot following brilliant human instruction,
+then carefully refined by our team of discerning human reviewers.*
+<!-- markdownlint-enable MD036 -->
