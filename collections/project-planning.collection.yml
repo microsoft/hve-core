@@ -228,5 +228,8 @@ items:
   - path: .github/skills/security/supply-chain-security
     kind: skill
     maturity: experimental
+  - path: .github/skills/release-readiness/release-readiness-gate
+    kind: skill
+    maturity: experimental
 display:
   ordering: manual
