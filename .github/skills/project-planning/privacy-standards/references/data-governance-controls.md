@@ -1,6 +1,6 @@
 ---
 title: Data governance controls for release readiness
-description: Operational data-governance controls — classification tiers, role-aware redaction, tiered retention, and tamper-evident audit — for production-readiness privacy planning
+description: Operational data-governance controls (classification tiers, role-aware redaction, tiered retention, and tamper-evident audit) for production-readiness privacy planning
 ---
 
 ## Data governance controls for release readiness
@@ -25,18 +25,18 @@ Classify each data element before selecting a control. Record the persona(s) tha
 
 Map each classified element to the obligations it triggers, then to a concrete control:
 
-- Minimization and lawful basis or consent — collect only what the purpose needs; record the basis.
-- Redaction — role-aware masking of personal data in outputs and logs.
-- Retention and deletion — tiered schedule with an enforced deletion mechanism.
-- Breach handling — detection, notification threshold, and response path.
-- Subject access and erasure — how a request is served and evidenced.
-- Audit — tamper-evident record of who did what, when, and to which data.
+- Minimization and lawful basis or consent: collect only what the purpose needs; record the basis.
+- Redaction: role-aware masking of personal data in outputs and logs.
+- Retention and deletion: tiered schedule with an enforced deletion mechanism.
+- Breach handling: detection, notification threshold, and response path.
+- Subject access and erasure: how a request is served and evidenced.
+- Audit: tamper-evident record of who did what, when, and to which data.
 
 Record each obligation's status as `Present`, `Partial`, or `Missing` with a source-control reference so the reviewer can assert readiness.
 
 ## Role-aware redaction
 
-Redaction is a role decision, not a blanket rule. State explicitly who is redacted and who is retained for each output surface. For example, a public or cross-tenant export may redact impacted-person PII while retaining operator identifiers needed for accountability. Never specify "redact everything" — that hides the accountability trail as well as the sensitive data.
+Redaction is a role decision, not a blanket rule. State explicitly who is redacted and who is retained for each output surface. For example, a public or cross-tenant export may redact impacted-person PII while retaining operator identifiers needed for accountability. Never specify "redact everything"; that hides the accountability trail as well as the sensitive data.
 
 ## Tiered retention
 
@@ -55,8 +55,22 @@ An audit trail that can be edited is not evidence. Require tamper-evidence and d
 
 - Tamper-evidence: append-only or hash-chained log so entries cannot be silently altered.
 - Entry captures: actor identity, timestamp, context, and stage or state change.
-- Evidence bundle: for a regulated export (for example FOIA or litigation hold), the set of audit entries and source records for one subject, plus a verification step that proves the chain is intact.
+- Evidence bundle: for a regulated export (for example, FOIA or litigation hold), the set of audit entries and source records for one subject, plus a verification step that proves the chain is intact.
 
 ## Suggested use
 
 Use this reference during Phase 4 (Controls) and Phase 5 (Impact) to specify concrete data-governance controls, and during a release-readiness review to mark each obligation `Present` / `Partial` / `Missing` against what the codebase actually implements.
+
+## Planning synthesis
+
+These controls are a planning synthesis derived from the referenced privacy standards and are not a substitute for legal advice.
+
+## Source attribution
+
+Obligations anchor to the standards packages indexed in `SKILL.md`:
+
+- NIST Privacy Framework: https://www.nist.gov/privacy-framework
+- NISTIR 8062: https://doi.org/10.6028/NIST.IR.8062
+- GDPR: https://gdpr-info.eu
+- CCPA/CPRA: https://oag.ca.gov/privacy/ccpa
+- OWASP Top 10 Privacy Risks: https://owasp.org/www-project-top-10-privacy-risks/
