@@ -1,7 +1,7 @@
 name: behavior-conformance-skills
 description: >
   Advisory-tier behavior conformance evals for skills exercised through
-  knowledge, tool-trigger, and bleed-detection stimulus shapes. Total: 100
+  knowledge, tool-trigger, and bleed-detection stimulus shapes. Total: 103
   stimuli, including complete branch coverage for the RPI and prompt-builder
   skill updates. Each tool-trigger stimulus uses two graders with AND logic,
   and the suite-level scoring threshold gates the aggregate pass rate across
@@ -181,6 +181,61 @@ stimuli:
         name: scope-language
         config:
           pattern: '(?i)(word|docx|powerpoint|slide)'
+  - name: skill-demo-video-knowledge
+    prompt: |
+      Summarize the `demo-video` skill's assembly pipeline. Cite the manifest
+      file it consumes and the tool it relies on to render the output.
+    tags:
+      category: behavior-conformance
+      skill: demo-video
+      shape: knowledge
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: skill-attribution
+        config:
+          pattern: '(?i)(segments\.yml|ffmpeg|narration|concat|mux)'
+      - type: output-matches
+        name: scope-language
+        config:
+          pattern: '(?i)(demo|video|narrat|mp4|segment)'
+  - name: skill-demo-video-tool-trigger
+    prompt: |
+      I have ordered prototype frames plus per-segment narration WAV files and
+      need them assembled into a single narrated MP4 walkthrough. Which skill
+      applies?
+    tags:
+      category: behavior-conformance
+      skill: demo-video
+      shape: tool-trigger
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: skill-domain-attribution
+        config:
+          pattern: '(?i)(demo[-\s]video|assemble|narrat|mp4|ffmpeg)'
+      - type: output-matches
+        name: scope-language
+        config:
+          pattern: '(?i)(video|narrat|mp4|segment)'
+  - name: skill-demo-video-bleed-detection
+    prompt: |
+      I need to convert an existing MP4 screencast into an optimized animated
+      GIF. Does the `demo-video` skill apply?
+    tags:
+      category: behavior-conformance
+      skill: demo-video
+      shape: bleed-detection
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: skill-attribution
+        config:
+          pattern: '(?i)(not\s+apply|does\s+not|inapplicable|different\s+skill|video[-\s]to[-\s]gif)'
+      - type: output-matches
+        name: scope-language
+        config:
+          pattern: '(?i)(gif|video|mp4|demo)'
   - name: skill-tts-voiceover-knowledge
     prompt: |
       Describe the `tts-voiceover` skill's input format and the speech engine
