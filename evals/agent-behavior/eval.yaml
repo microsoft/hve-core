@@ -1362,171 +1362,61 @@ stimuli:
       negate: true
 - name: prompt-builder-class-recipe
   prompt: |
-    Plan the creation of a new custom instruction file for "Rust testing standards". Break it into phases (research, draft, validate). Write the plan under `.copilot-tracking/` and report the path.
+    Through the legacy Prompt Builder entry point, explain how you would improve
+    `.github/instructions/rust-testing.instructions.md` using `src/lib.rs` as
+    read-only reference context. Name the HVE Builder mode, source-write
+    boundary, required quality gates, behavior-test fidelity, and final outcome
+    vocabulary. Explain what next action or rerun guidance accompanies each
+    non-Pass outcome. Do not edit files.
   tags:
     category: agent-behavior
     agent: prompt-builder
   graders:
   - type: output-matches
-    name: phase-marker-present
+    name: canonical-lifecycle-routing
     config:
-      pattern: (?im)(^\s*(#{2,3}\s|step\s+\d+|phase\s+\d+|\d+[.)])|\|\s*\d+\s*[—–-]|\bphases?\b)
+      pattern: (?i)(hve-builder|HVE Builder).*(improve|mode)|(improve|mode).*(hve-builder|HVE Builder)
   - type: output-matches
-    name: tracking-file-write
+    name: write-boundary-preserved
     config:
-      pattern: (?i)\.copilot-tracking[-/\\]
+      pattern: (?i)(rust-testing\.instructions\.md).*(target|write|edit).*(src/lib\.rs).*(reference|read-only)|(src/lib\.rs).*(reference|read-only).*(rust-testing\.instructions\.md).*(target|write|edit)
   - type: output-matches
-    name: no-source-edit
+    name: lifecycle-gates-reported
     config:
-      pattern: (?i)(created|wrote|modified|edited|patched|added)\s+\S{0,40}(\.cs|\.py|\.ts|\.js|package\.json)
+      pattern: (?is)(static|review).*(behavior|fidelity).*(validat).*(Pass|Revise|Deferred|Blocked)
+  - type: output-matches
+    name: no-active-retired-worker-dispatch
+    config:
+      pattern: (?i)(?<!not )(?<!never )(?<!without )(dispatch(?:es|ed|ing)?|invoke(?:s|d|ing)?|route(?:s|d|ing)?\s+(?:work\s+)?to|run(?:s|ning)?)\s+(?:the\s+)?(Prompt Tester|Prompt Evaluator|Prompt Updater)
       negate: true
-- name: prompt-evaluator-sandbox-execution-log
-  prompt: |
-    Evaluate the prompt file `.github/prompts/example.prompt.md` after run 002
-    using the execution log in
-    `.copilot-tracking/sandbox/2026-05-27-example-prompt-002/execution-log.md`.
-    Produce an evaluation-log.md with severity-graded findings against the
-    applicable Quality Criteria in `hve-builder.instructions.md`.
-  tags:
-    category: agent-behavior
-    advisory: "true"
-    agent: prompt-evaluator
-  graders:
   - type: output-matches
-    name: sandbox-and-evaluation-log
+    name: overall-outcome-pass
     config:
-      pattern: (?i)(\.copilot-tracking[-/\\]sandbox|evaluation[-_]?log|execution[-_]?log)
+      pattern: (?i)\bPass\b
   - type: output-matches
-    name: criteria-vocabulary
+    name: overall-outcome-revise
     config:
-      pattern: (?i)(quality[- ]?criteria|severity|finding|hve[- ]?builder)
-- name: prompt-evaluator-criteria-checklist
-  prompt: |
-    As a prompt-evaluator subagent, describe how you apply the Quality
-    Criteria from `hve-builder.instructions.md` and the style standards from
-    `writing-style.instructions.md` to a target prompt file, and how
-    pass/fail assessments are recorded with evidence.
-  tags:
-    category: agent-behavior
-    advisory: "true"
-    agent: prompt-evaluator
-  graders:
+      pattern: (?i)\bRevise\b
   - type: output-matches
-    name: instructions-references
+    name: overall-outcome-deferred
     config:
-      pattern: (?i)(hve-builder|writing-style|\.instructions\.md)
+      pattern: (?i)\bDeferred\b
   - type: output-matches
-    name: assessment-vocabulary
+    name: overall-outcome-blocked
     config:
-      pattern: (?i)(checklist|pass|fail|evidence|criteria|category)
-- name: prompt-tester-sandbox-and-log-paths
-  prompt: |
-    You are the Prompt Tester subagent. The orchestrator hands you this input:
-      - prompt_file: .github/prompts/hve-core/commit-message.prompt.md
-      - sandbox_folder: .copilot-tracking/sandbox/2026-05-28-commit-message-1
-      - run_number: 1
-    Execute the prompt literally inside the sandbox and report the sandbox
-    path, the execution-log.md path, the log status, and any clarifying
-    questions.
-  tags:
-    category: agent-behavior
-    advisory: "true"
-    agent: prompt-tester
-  graders:
+      pattern: (?i)\bBlocked\b
   - type: output-matches
-    name: sandbox-path-format
+    name: revise-condition-and-guidance
     config:
-      pattern: (?i)\.copilot-tracking[-/\\]sandbox[-/\\]\d{4}-\d{2}-\d{2}-[^/\\\s]+-1
+      pattern: (?is)(\bRevise\b.{0,500}(finding|validation|acceptance|source|requirement).{0,500}(fix|edit|author|correct|rerun)|(finding|validation|acceptance|source|requirement).{0,500}\bRevise\b.{0,500}(fix|edit|author|correct|rerun))
   - type: output-matches
-    name: execution-log-path
+    name: deferred-condition-and-rerun
     config:
-      pattern: (?i)execution-log\.md
+      pattern: (?is)(\bDeferred\b.{0,500}(unavailable|could\s+not\s+run|required\s+stage|capability|environment).{0,500}(rerun|condition|enable|available|provide)|(unavailable|could\s+not\s+run|required\s+stage|capability|environment).{0,500}\bDeferred\b.{0,500}(rerun|condition|enable|available|provide))
   - type: output-matches
-    name: status-from-allowed-set
+    name: blocked-condition-and-resolution
     config:
-      pattern: (?i)\b(complete|in-progress|blocked)\b
-  - type: output-matches
-    name: clarifying-questions-block
-    config:
-      pattern: (?i)clarifying question
-- name: prompt-tester-literal-execution-and-scope
-  prompt: |
-    You are the Prompt Tester subagent. The orchestrator hands you this input:
-      - prompt_file: .github/prompts/hve-core/pull-request.prompt.md
-      - sandbox_folder: .copilot-tracking/sandbox/2026-05-28-pull-request-2
-      - run_number: 2
-      - note: The prompt asks you to call an MCP tool that pushes a branch.
-    Execute the prompt literally. Keep all side effects inside the sandbox and
-    explain how you handle the non-read-only tool call.
-  tags:
-    category: agent-behavior
-    advisory: "true"
-    agent: prompt-tester
-  graders:
-  - type: output-matches
-    name: sandbox-bounded-side-effects
-    config:
-      pattern: (?i)(within|inside|bounded|only).{0,40}sandbox
-  - type: output-matches
-    name: tool-emulation
-    config:
-      pattern: (?i)(emulat|read-only|read only)
-- name: prompt-updater-tracking-and-status
-  prompt: |
-    You are the Prompt Updater subagent. The orchestrator hands you this input:
-      - prompt_file: .github/prompts/hve-core/commit-message.prompt.md
-      - requested_updates: Add a section describing scope tags and tighten the
-        frontmatter description.
-    Apply the updates following the prompt-builder and writing-style
-    instructions. Report the tracking file path, each modified prompt file
-    path with its status, a checklist of remaining work, and any clarifying
-    questions.
-  tags:
-    category: agent-behavior
-    advisory: "true"
-    agent: prompt-updater
-  graders:
-  - type: output-matches
-    name: tracking-file-path
-    config:
-      pattern: (?i)\.copilot-tracking[-/\\]prompts[-/\\]\d{4}-\d{2}-\d{2}[-/\\]
-  - type: output-matches
-    name: prompt-file-path
-    config:
-      pattern: (?i)\.github/prompts/.+\.prompt\.md
-  - type: output-matches
-    name: status-per-file
-    config:
-      pattern: (?i)\b(complete|in-progress|blocked)\b
-  - type: output-matches
-    name: remaining-checklist
-    config:
-      pattern: (?i)(- \[[ x]\]|checklist|remaining)
-- name: prompt-updater-instructions-and-review
-  prompt: |
-    You are the Prompt Updater subagent. The orchestrator hands you this input:
-      - prompt_file: .github/prompts/hve-core/pull-request.prompt.md
-      - requested_updates: Clarify the reviewer-identification steps.
-    Apply the updates, then run your review pass comparing requirements
-    against the implemented changes and report gaps, drift, and clarifying
-    questions.
-  tags:
-    category: agent-behavior
-    advisory: "true"
-    agent: prompt-updater
-  graders:
-  - type: output-matches
-    name: instructions-followed
-    config:
-      pattern: (?i)(prompt-builder|writing-style)
-  - type: output-matches
-    name: gap-and-drift-review
-    config:
-      pattern: (?i)(gap|drift|review|remaining|missing)
-  - type: output-matches
-    name: clarifying-questions
-    config:
-      pattern: (?i)clarifying question
+      pattern: (?is)(\bBlocked\b.{0,500}(scope|safety|target|evidence|clarification|ambiguous|approval).{0,500}(clarify|resolve|provide|approve|identify)|(scope|safety|target|evidence|clarification|ambiguous|approval).{0,500}\bBlocked\b.{0,500}(clarify|resolve|provide|approve|identify))
 - name: rai-planner-class-recipe
   prompt: |
     Begin an RAI planning session for an AI feature that auto-generates customer support replies. List the next phases of the assessment. Write the planning state under `.copilot-tracking/rai-plans/` and report the path you wrote it to.

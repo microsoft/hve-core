@@ -90,7 +90,7 @@ Grader identifiers below use the Vally CLI 0.4.0 catalog (`semantic_similarity`,
 * Testable behavior: when an agent declares `tools:`, the value MUST be a list of valid tool identifiers available in this VS Code context. When the `tools:` field is omitted, the agent inherits the default tool set.
 * Suggested stimulus: ask the assistant which tools a named agent restricts itself to and why those tools fit its purpose.
 * Grader recommendation: `semantic_similarity` with rubric "Are the declared tools valid identifiers from the VS Code tool surface, and is the restriction set appropriate for the agent's stated purpose?".
-* Evidence: a subagent under `.github/agents/**/subagents/` such as `.github/agents/hve-core/subagents/prompt-tester.agent.md` shows the `tools:` field shape.
+* Evidence: a subagent under `.github/agents/**/subagents/` such as `.github/agents/hve-core/subagents/hve-artifact-tester.agent.md` shows the `tools:` field shape.
 
 ### Check 8: Subagent Invocation by Human-Readable Name
 

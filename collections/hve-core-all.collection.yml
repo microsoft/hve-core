@@ -101,12 +101,6 @@ items:
   kind: agent
 - path: .github/agents/hve-core/subagents/plan-validator.agent.md
   kind: agent
-- path: .github/agents/hve-core/subagents/prompt-evaluator.agent.md
-  kind: agent
-- path: .github/agents/hve-core/subagents/prompt-tester.agent.md
-  kind: agent
-- path: .github/agents/hve-core/subagents/prompt-updater.agent.md
-  kind: agent
 - path: .github/agents/hve-core/subagents/researcher-subagent.agent.md
   kind: agent
 - path: .github/agents/hve-core/subagents/rpi-validator.agent.md
@@ -496,6 +490,8 @@ items:
 - path: .github/instructions/hve-core/licensing-posture.instructions.md
   kind: instruction
 - path: .github/instructions/hve-core/markdown.instructions.md
+  kind: instruction
+- path: .github/instructions/hve-core/prompt-builder.instructions.md
   kind: instruction
 - path: .github/instructions/hve-core/pull-request.instructions.md
   kind: instruction

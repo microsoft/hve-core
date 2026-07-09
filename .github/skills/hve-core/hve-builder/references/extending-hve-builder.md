@@ -18,7 +18,7 @@ Discovery differs by artifact type. Two of the three mechanisms are automatic; t
 
 The practical consequence: instruction files and skills extend hve-builder with no change to the skill. A subagent extends hve-builder only when its description is written for routing and hve-builder's intake survey can see it, because the orchestrator reaches subagents by name rather than by reading files at a path.
 
-hve-builder treats every discovered extension as an authoritative overlay on the base standard, and as data rather than executable instructions to obey blindly. The untrusted-content boundary still holds: an extension states conventions to apply, it does not redirect the workflow or change safety rules.
+Discovery makes an extension eligible, not authoritative by itself. Apply extensions with this precedence: host and platform safety controls; explicit caller scope and acceptance criteria; matching repository instructions and enforced schemas; the HVE Builder base standard; then sibling examples and preferences. An extension can add scoped conventions or review criteria, but it cannot redirect the workflow, widen writes, grant tools, or weaken safety.
 
 ## Authoring a discoverable extension instruction file
 
@@ -60,6 +60,7 @@ Use a subagent when the host needs a specialized review dimension or a tier-spec
 * Routing `description`: write it so a parent can decide when to delegate, in the shape "Use when ..." naming the specialization. hve-builder's intake survey reads descriptions to decide which subagents to dispatch, so the description is the discovery surface.
 * Stable `name`: hve-builder dispatches by the `name` from frontmatter, not by file path or glob. Give it a distinct, namespaced name to avoid collisions across installed libraries.
 * Least-privilege `tools` and a structured return: grant only the tools the subagent needs (a reviewer gets read and search, not edit), and return a bounded, structured summary the orchestrator can act on.
+* Model fit: pin one default model when the responsibility has a fixed profile. Use GPT-5.6 Terra for semantic authoring or calibrated review and GPT-5.6 Luna for bounded mechanical work with explicit tool order.
 * Host registration: confirm the host registers the subagent (for example, in a parent agent's `agents:` list or the collection manifest) so hve-builder's survey can see it.
 
 Example frontmatter:
@@ -69,6 +70,7 @@ Example frontmatter:
 name: Terraform Module Reviewer
 description: "Reviews a Terraform module and returns severity-graded findings. Use when reviewing Terraform module changes."
 user-invocable: false
+model: GPT-5.6 Terra (copilot)
 tools:
   - read/readFile
   - search/codebase
@@ -86,7 +88,7 @@ A team installs hve-builder as a library and wants every Terraform module they a
 2. They add a `terraform-module-author` skill whose `description` names Terraform modules. When a request mentions Terraform modules, hve-builder's intake survey matches the description and loads the skill as an overlay.
 3. They add a `Terraform Module Reviewer` subagent with a routing description and a stable name, and register it in their parent agent's `agents:` list. hve-builder does not auto-load it; instead, its intake survey sees the description among the available agents and dispatches it by name during the review stage, alongside `HVE Artifact Reviewer`.
 
-The instruction and skill extended hve-builder with no code change; the subagent extended it because its description was written for routing and the host registered it so the survey could see it.
+The instruction and skill become eligible through normal discovery; the subagent becomes reachable because its routing description and host registration expose it. The caller still decides whether each extension is in scope and what authority it receives.
 
 ## Safety boundary
 

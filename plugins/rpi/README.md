@@ -49,9 +49,9 @@ copilot plugin install rpi@hve-core
 
 ## Instructions
 
-| Instruction                   | Description                                                                                                                                 |
-|-------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------|
-| copilot-tracking.instructions | Shared .copilot-tracking conventions for intermediate artifacts, file paths, and subagent handoffs across the RPI and prompt-builder skills |
+| Instruction                   | Description                                                                                                       |
+|-------------------------------|-------------------------------------------------------------------------------------------------------------------|
+| copilot-tracking.instructions | Shared .copilot-tracking conventions for RPI, HVE Builder, prompt comparison, and compatibility workflow evidence |
 
 ## Skills
 

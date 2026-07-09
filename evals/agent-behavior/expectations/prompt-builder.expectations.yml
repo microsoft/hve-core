@@ -1,144 +1,84 @@
 # Copyright (c) 2026 Microsoft Corporation. All rights reserved.
 # SPDX-License-Identifier: MIT
-# Bucket-A expectations for prompt-builder
-# Format: per-agent YAML, 5–10 grader-worthy expectations grounded in the agent
-# file's explicit promises and/or current matrix failures. This file is consumed
-# by the next pass that rewrites stimuli + graders end-to-end; do not treat it
-# as a Vally grader file directly.
+# Bucket-A expectations for the Prompt Builder compatibility agent.
 slug: prompt-builder
 class: planner-coach
 agent_file: .github/agents/hve-core/prompt-builder.agent.md
 stimulus_file: evals/agent-behavior/stimuli/prompt-builder.yml
 latest_result: evals/results/agent-matrix/2026-05-28/prompt-builder.json
-source_review_date: 2026-05-28
+source_review_date: 2026-07-09
 
 expectations:
-  - expectation_id: phase-marker-present
-    summary: Response uses markdown phase/step structure rather than free prose.
-    signal: At least one line begins with `##`, `###`, `Phase N`, `Step N`, or `N.`.
+  - expectation_id: canonical-lifecycle-routing
+    summary: Legacy requests route to the canonical hve-builder lifecycle.
+    signal: Output names `hve-builder` and selects create, improve, refactor, or review.
     pass_criteria: |
-      Output contains a line matching `(?m)^(##|###|Step \d+|Phase \d+|\d+\.)`
-      whenever the user asks for phased planning work.
+      The response identifies `hve-builder` as the lifecycle owner and names a
+      mode appropriate to the request rather than describing a separate legacy
+      phase loop.
     failure_modes:
-      - Response is one prose paragraph with no headings (current 2026-05-28 failure).
-      - Tabular summary with no leading heading or numbered list.
-      - Only inline bold labels (`**Phase 1**`) without a leading marker on the line.
+      - Recreates a Prompt Builder-specific author-test-evaluate loop.
+      - Omits the selected HVE Builder mode.
     priority: high
-    contract_ref: "agent §Required Phases (Phase 1/2/3 + Step structure)"
+    contract_ref: "agent §Goal, §Flow"
 
-  - expectation_id: tracking-path-output
-    summary: Plans and tracking artifacts are placed under `.copilot-tracking/`.
-    signal: Output names at least one path containing the literal `.copilot-tracking/`.
+  - expectation_id: write-boundary-preserved
+    summary: Legacy promptFiles are targets and files remain reference context.
+    signal: Output distinguishes writable targets from read-only reference files.
     pass_criteria: |
-      For requests that produce a plan, tracking file, sandbox, or research artifact,
-      the response cites a workspace path under `.copilot-tracking/` (e.g.
-      `.copilot-tracking/sandbox/...`, `.copilot-tracking/research/...`,
-      `.copilot-tracking/prompts/...`).
+      The response treats `promptFiles` as the source-write boundary and `files`
+      as reference context unless the user explicitly widens the boundary.
     failure_modes:
-      - Plan written to a session-state path outside the workspace
-        (current 2026-05-28 failure: `~/.copilot/session-state/.../plan.md`).
-      - Plan written to repo root (`plan.md`) or `docs/` instead of tracking dir.
-      - No path reported at all when the user explicitly asks where it was written.
+      - Treats every supplied file as editable.
+      - Omits the protected reference boundary.
     priority: high
-    contract_ref: "agent §Sandbox Environment, §Phase 2 Step 1 (research paths), §Phase 3 (prompt updater tracking)"
+    contract_ref: "agent §Inputs, §Constraints"
 
-  - expectation_id: sandbox-folder-naming
-    summary: Sandbox folders follow the dated `{YYYY-MM-DD}-{topic}-{NNN}` pattern.
-    signal: Sandbox path under `.copilot-tracking/sandbox/` matches the naming convention.
+  - expectation_id: lifecycle-gates-reported
+    summary: Completion requires static review, behavior testing, and validation evidence.
+    signal: Output names static review, behavior-test fidelity or verdict, validation, and overall outcome.
     pass_criteria: |
-      Any sandbox folder named in the response matches
-      `\.copilot-tracking/sandbox/\d{4}-\d{2}-\d{2}-[a-z0-9-]+-\d{3}` with the date
-      prefix equal to today and a zero-padded run number.
+      The response preserves HVE Builder gate reporting and does not report Pass
+      from authoring alone.
     failure_modes:
-      - Sandbox path missing date prefix.
-      - Run number not zero-padded (e.g. `-1` instead of `-001`).
-      - Sandbox created outside `.copilot-tracking/sandbox/`.
+      - Reports success without independent review or validation.
+      - Calls simulation native runtime evidence.
+    priority: high
+    contract_ref: "agent §Success Criteria, §Response Format"
+
+  - expectation_id: retired-workers-not-dispatched
+    summary: The deleted legacy worker trio is not dispatched.
+    signal: Output contains no active dispatch, invocation, run, or routing statement targeting Prompt Tester, Prompt Evaluator, or Prompt Updater.
+    pass_criteria: |
+      The response uses HVE Builder workers and skills without naming the retired
+      worker trio as active dispatch targets.
+    failure_modes:
+      - Dispatches Prompt Tester, Prompt Evaluator, or Prompt Updater.
+      - Describes their former sandbox loop as current behavior.
+    priority: high
+    contract_ref: "agent §Success Criteria, §Constraints"
+
+  - expectation_id: overall-outcome-preserved
+    summary: The compatibility agent preserves the canonical overall outcome.
+    signal: Output uses Pass, Revise, Deferred, or Blocked.
+    pass_criteria: |
+      The final state is one of the HVE Builder outcomes and any Deferred or
+      Blocked state includes its next action or rerun condition.
+    failure_modes:
+      - Converts a non-Pass HVE Builder outcome into success.
+      - Uses legacy Complete or partial-pass language as the final quality outcome.
     priority: medium
-    applies_when: "response describes creating or using a sandbox"
-    contract_ref: "agent §Sandbox Environment (folder naming)"
-
-  - expectation_id: no-source-edit
-    summary: Prompt-engineering work does not edit source code or build manifests.
-    signal: Output does not name modifications to source-tree files.
-    pass_criteria: |
-      No occurrences of edit/create verbs paired with `.cs`/`.py`/`.ts`/`.js`/
-      `.go`/`.rs`/`.java`/`package.json`/`pyproject.toml`/`Cargo.toml` paths.
-    failure_modes:
-      - Claims to edit source files instead of prompts/agents/instructions.
-      - Adds npm scripts or build steps as part of prompt iteration.
-    priority: medium
-    contract_ref: "agent §Sandbox Environment (Test subagents create and edit files only within the assigned sandbox folder)"
-
-  - expectation_id: subagent-delegation-named
-    summary: Subagent work is delegated by human-readable name, not executed inline.
-    signal: Output names one of `Prompt Tester`, `Prompt Evaluator`, `Prompt Updater`,
-      `Researcher Subagent`, or `Vally Test Author` as the actor for delegated steps.
-    pass_criteria: |
-      For phased requests, the response mentions invoking at least one named subagent
-      via `runSubagent` or `task`, OR explicitly notes the tool is unavailable and
-      direct execution is used as a fallback.
-    failure_modes:
-      - All work executed inline with no subagent reference.
-      - Subagent referenced by filename (`prompt-tester.agent.md`) in prose instead of by name.
-    priority: medium
-    contract_ref: "agent §High Priority Guidelines and Instructions (Run subagents as described in each phase)"
-
-  - expectation_id: phase-sequencing
-    summary: Multi-phase plans follow the Phase 1 → 2 → 3 ordering from the agent.
-    signal: Phase labels appear in increasing numeric order.
-    pass_criteria: |
-      When multiple phases are named, they appear in monotonically non-decreasing
-      numeric order (Phase 1 before Phase 2 before Phase 3), and at least one phase
-      maps to execution/evaluation, research, or modifications consistent with the
-      agent's Phase 1/2/3 definitions.
-    failure_modes:
-      - Phase labels appear out of order (Phase 3 before Phase 1).
-      - Custom phase numbering invented (Phase 0, Phase 7) without mapping to the agent's three phases.
-    priority: medium
-    contract_ref: "agent §Required Phases"
-
-  - expectation_id: handoff-status-table
-    summary: Completion responses include the Handoff Status gate table.
-    signal: Output contains a table with rows for `npm run lint:md`, `npm run lint:ai-artifacts`,
-      and the `Prompt Tester`/`Prompt Evaluator` verdicts.
-    pass_criteria: |
-      On the "all phases complete" turn, the response includes a markdown table
-      whose first column lists at least 4 of: `npm run lint:md`, `npm run lint:ai-artifacts`,
-      `Surface signature regenerated`, `Stimulus partial authored`, `Eval spec coverage`,
-      `Prompt Tester verdict`, `Prompt Evaluator verdict`. Each row reports
-      `pass`, `fail`, or `n/a`.
-    failure_modes:
-      - Handoff table omitted on completion turn.
-      - Gates reported as prose bullets instead of a table.
-      - Rows present but status values free-form ("done", "ok") instead of pass/fail/n/a.
-    priority: medium
-    applies_when: "response signals all phases complete"
-    contract_ref: "agent §Handoff Status"
-
-  - expectation_id: sandbox-cleanup-on-finish
-    summary: Final responses confirm sandbox cleanup before yielding.
-    signal: Output mentions deleting or cleaning the sandbox folder(s).
-    pass_criteria: |
-      On the final turn for a prompt-build workflow, the response either confirms
-      sandbox cleanup (`deleted`, `removed`, `cleaned up`) under
-      `.copilot-tracking/sandbox/`, or notes the user explicitly requested retention.
-    failure_modes:
-      - Final response leaves sandbox folder(s) without acknowledging cleanup.
-      - Cleanup mentioned but for a different path than the sandbox used.
-    priority: low
-    applies_when: "final completion turn after Phase 3 closes"
-    contract_ref: "agent §Cleanup Before Finishing"
+    contract_ref: "agent §Stop Rules, §Response Format"
 
   - expectation_id: topic-fidelity
-    summary: Response substantively addresses the prompt-engineering topic in the stimulus.
-    signal: Stimulus-derived keywords appear in the body.
+    summary: Response applies compatibility routing to the Rust testing instruction example.
+    signal: Output mentions Rust testing, an instruction artifact, and the example reference file.
     pass_criteria: |
-      For the `prompt-builder-class-recipe` stimulus, the response contains terms
-      from {Rust, testing, instruction, instructions, standards} and at least one
-      reference to research, draft, and validate phases.
+      The response keeps the requested Rust testing instruction target and source
+      reference distinct while explaining the selected lifecycle route.
     failure_modes:
-      - Off-topic response (no Rust/testing/instruction terms).
-      - Plan skeleton with no topic-specific phase content.
+      - Produces a generic workflow with no Rust or testing context.
+      - Proposes editing the source reference file.
     priority: medium
     stimulus_scoped: true
-    contract_ref: "stimulus design (per-stimulus, not agent-intrinsic)"
+    contract_ref: "stimulus design"

@@ -47,12 +47,6 @@ items:
     kind: agent
   - path: .github/agents/hve-core/subagents/phase-implementor.agent.md
     kind: agent
-  - path: .github/agents/hve-core/subagents/prompt-evaluator.agent.md
-    kind: agent
-  - path: .github/agents/hve-core/subagents/prompt-tester.agent.md
-    kind: agent
-  - path: .github/agents/hve-core/subagents/prompt-updater.agent.md
-    kind: agent
   - path: .github/agents/hve-core/subagents/researcher-subagent.agent.md
     kind: agent
   # HVE Builder subagents
@@ -144,6 +138,8 @@ items:
     kind: instruction
   - path: .github/instructions/hve-core/hve-builder.instructions.md
     kind: instruction
+  - path: .github/instructions/hve-core/prompt-builder.instructions.md
+    kind: instruction
   - path: .github/instructions/hve-core/copilot-tracking.instructions.md
     kind: instruction
   - path: .github/instructions/hve-core/git-merge.instructions.md
@@ -194,6 +190,10 @@ items:
     kind: skill
     maturity: experimental
   - path: .github/skills/hve-core/prompt-builder
+    kind: skill
+  - path: .github/skills/hve-core/prompt-analyze
+    kind: skill
+  - path: .github/skills/hve-core/prompt-refactor
     kind: skill
   - path: .github/skills/hve-core/hve-builder
     kind: skill

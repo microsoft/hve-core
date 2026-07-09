@@ -1378,9 +1378,9 @@ stimuli:
           pattern: '(?i)(safety-boundary|prohibited|conformance|scope|probe)'
   - name: skill-prompt-builder-knowledge
     prompt: |
-      Summarize the `prompt-builder` skill's full workflow. Include its phase
-      loop, routing to specialized skills, tracking evidence, and optional
-      Vally conformance authoring.
+      Summarize the `prompt-builder` compatibility skill. Include legacy input
+      translation, HVE Builder mode selection, source-write boundaries, required
+      quality gates, and outcome preservation.
     tags:
       category: behavior-conformance
       skill: prompt-builder
@@ -1390,11 +1390,11 @@ stimuli:
       - type: output-matches
         name: skill-attribution
         config:
-          pattern: '(?i)(prompt-builder|prompt\s+builder|execution|evaluation|research|modification|vally)'
+          pattern: '(?i)(prompt-builder|prompt\s+builder).*(hve-builder|HVE Builder)|(hve-builder|HVE Builder).*(prompt-builder|prompt\s+builder)'
       - type: output-matches
         name: scope-language
         config:
-          pattern: '(?i)(route|prompt-refactor|prompt-analyze|copilot-tracking|sandbox|artifact)'
+          pattern: '(?i)(create|improve|target|write\s+boundary|reference|static\s+review|behavior|validation|outcome)'
   - name: skill-prompt-builder-tool-trigger
     prompt: |
       I need to create a new prompt artifact, research the existing prompt
@@ -1409,7 +1409,7 @@ stimuli:
       - type: output-matches
         name: skill-domain-attribution
         config:
-          pattern: '(?i)(prompt-builder|prompt\s+builder|prompt|research|validate|collection)'
+          pattern: '(?i)(hve-builder|prompt-builder|prompt\s+builder|create|improve)'
       - type: output-matches
         name: scope-language
         config:
@@ -1428,16 +1428,16 @@ stimuli:
       - type: output-matches
         name: skill-attribution
         config:
-          pattern: '(?i)(prompt-analyze|read-only|analysis|report|route|specialized)'
+          pattern: '(?i)(prompt-analyze|hve-builder|review|read-only|report|route)'
       - type: output-matches
         name: scope-language
         config:
           pattern: '(?i)(no\s+source\s+edit|without\s+modifying|analyze|analyse|quality|report)'
   - name: skill-prompt-refactor-knowledge
     prompt: |
-      Summarize the `prompt-refactor` skill. Include how it handles baseline
-      evaluation, cleanup objectives, validation selection, and preserving
-      functional intent.
+      Summarize the `prompt-refactor` compatibility skill. Include baseline
+      review, HVE Builder refactor mode, preserved behavior, required quality
+      gates, and outcome preservation.
     tags:
       category: behavior-conformance
       skill: prompt-refactor
@@ -1447,11 +1447,11 @@ stimuli:
       - type: output-matches
         name: skill-attribution
         config:
-          pattern: '(?i)(prompt-refactor|prompt\s+refactor|baseline|evaluation|cleanup|validation)'
+          pattern: '(?i)(prompt-refactor|prompt\s+refactor).*(hve-builder|refactor)|(hve-builder|refactor).*(prompt-refactor|prompt\s+refactor)'
       - type: output-matches
         name: scope-language
         config:
-          pattern: '(?i)((preserve|preserving)\s+functional\s+intent|refactor|requirements|sandbox|checklist|matrix)'
+          pattern: '(?i)(preserv(e|ing)\s+(behavior|intent)|baseline\s+review|static\s+review|behavior\s+test|validation|outcome)'
   - name: skill-prompt-refactor-tool-trigger
     prompt: |
       I have an existing `.prompt.md` file and explicit requirements for
@@ -1485,16 +1485,16 @@ stimuli:
       - type: output-matches
         name: skill-attribution
         config:
-          pattern: '(?i)(prompt-builder|not\s+apply|does\s+not|new\s+prompt|create)'
+          pattern: '(?i)(prompt-builder|hve-builder|not\s+apply|does\s+not|new\s+prompt|create)'
       - type: output-matches
         name: scope-language
         config:
           pattern: '(?i)(existing\s+artifact|refactor|create|new|requirements)'
   - name: skill-prompt-analyze-knowledge
     prompt: |
-      Summarize the `prompt-analyze` skill. Include the read-only boundary,
-      subagents it dispatches, durable Analysis Report, severity normalization,
-      and cleanup behavior.
+      Summarize the `prompt-analyze` compatibility skill. Include the read-only
+      boundary, HVE Builder review mode, static and behavior evidence, fidelity,
+      report links, and outcome preservation.
     tags:
       category: behavior-conformance
       skill: prompt-analyze
@@ -1504,11 +1504,11 @@ stimuli:
       - type: output-matches
         name: skill-attribution
         config:
-          pattern: '(?i)(prompt-analyze|prompt\s+(analyze|analyse)|read-only|analysis\s+report|prompt\s+tester|prompt\s+evaluator)'
+          pattern: '(?i)(prompt-analyze|prompt\s+(analyze|analyse)).*(hve-builder|review)|(hve-builder|review).*(prompt-analyze|prompt\s+(analyze|analyse))'
       - type: output-matches
         name: scope-language
         config:
-          pattern: '(?i)(severity|critical|high|medium|low|durable|cleanup|sandbox)'
+          pattern: '(?i)(read-only|static\s+review|behavior|fidelity|report|Pass|Revise|Deferred|Blocked)'
   - name: skill-prompt-analyze-tool-trigger
     prompt: |
       I need to evaluate an existing prompt artifact and produce an analysis
@@ -1542,7 +1542,7 @@ stimuli:
       - type: output-matches
         name: skill-attribution
         config:
-          pattern: '(?i)(prompt-builder|prompt-refactor|not\s+apply|does\s+not|modify|fix)'
+          pattern: '(?i)(prompt-builder|prompt-refactor|hve-builder|not\s+apply|does\s+not|modify|fix)'
       - type: output-matches
         name: scope-language
         config:

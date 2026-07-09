@@ -2,7 +2,7 @@
 title: Agentic Workflows
 description: End-to-end process flow for AI-driven issue triage, implementation, and review workflows in hve-core
 author: HVE Core Team
-ms.date: 2026-06-30
+ms.date: 2026-07-09
 ms.topic: concept
 sidebar_position: 4
 keywords:
@@ -168,13 +168,14 @@ Each agent hands off to the next through structured artifacts stored in `.copilo
 
 ### Prompt Engineering
 
-The [Prompt Builder](https://github.com/microsoft/hve-core/blob/main/.github/agents/hve-core/prompt-builder.agent.md) orchestrates a three-phase workflow for creating and refining AI artifacts (agents, prompts, instructions, skills):
+The [Prompt Builder](https://github.com/microsoft/hve-core/blob/main/.github/agents/hve-core/prompt-builder.agent.md) preserves legacy entry points while routing prompt-engineering work to the `hve-builder` skill. HVE Builder uses one lifecycle for agents, prompts, instructions, subagents, and skills:
 
-1. Execute and evaluate prompt files using sandbox testing
-2. Research findings and best practices
-3. Apply modifications based on evaluation results
+1. Resolve mode, targets, write boundary, architecture, and applicable conventions
+2. Author or perform read-only review according to the selected mode
+3. Run fresh-context static review and fidelity-labeled behavior testing
+4. Run non-mutating host validation and resolve one overall outcome
 
-It delegates to Prompt Tester, Prompt Evaluator, Prompt Updater, and Researcher subagents.
+Semantic discovery, authoring, research, and review use GPT-5.6 Terra. Literal simulation and mechanical validation use GPT-5.6 Luna. Legacy `/prompt-build`, `/prompt-analyze`, and `/prompt-refactor` commands remain compatibility routes to this lifecycle.
 
 ### Security Review
 

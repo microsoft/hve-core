@@ -1,33 +1,33 @@
 ---
-description: 'Skill-forward artifact-type selection, delegation analysis, and load-timing and authority routing for hve-builder.'
+description: 'Responsibility-based artifact architecture, delegation analysis, model fit, and load-timing and authority routing for hve-builder.'
 ---
 <!-- markdownlint-disable-file -->
-# Artifact Type and Load-Timing Routing
+# Artifact Architecture and Routing
 
-Use this reference during the intake step to decide which artifact type solves the request and to route each fact by when it should load and how strongly it should bind. This operationalizes the Agent architecture, Agents and subagents, and Instruction-file architecture categories in the requirements catalog.
+Use this reference during intake to decompose the request by responsibility, choose each artifact's activation surface, and route facts by load timing and authority. Artifact types are complementary rather than a universal preference ladder.
 
-## Choose the artifact type: skill-forward, subagent-forward
+## Choose by responsibility and activation
 
-Prefer a skill-forward and subagent-forward shape. Match the need to the earliest row below whose "when to choose" description fits, and author a later type only when no earlier row expresses the need. Agents and prompts are opt-in: reach for them only when the caller specifically asks.
+Choose every type whose responsibility is independently necessary. Prefer skills for reusable on-demand capability and subagents for isolated work, but do not force a path-scoped convention into a skill or a user entry point into a subagent merely because of ranking.
 
-| Preference | Choose                                    | When to choose it                                                                                                                                                                 | Activation                                          |
-|------------|-------------------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|-----------------------------------------------------|
-| 1          | Skill (`SKILL.md`)                        | The need is reusable capability or domain knowledge that can bundle its own resources, references, and scripts and load on demand.                                                | Semantic match on its description, or `/skill-name` |
-| 2          | Subagent (`.agent.md` under `subagents/`) | The need is context isolation, high-volume or parallel work, or a responsibility best run at a specific reasoning-level model.                                                    | Dispatched by a parent agent or skill               |
-| 3          | Instruction file (`.instructions.md`)     | The need is a path-scoped convention for files being created or edited, applied to whoever touches them (agents, skills, subagents, or human maintainers), via an `applyTo` glob. | Auto-applied by an `applyTo` glob                   |
-| 4          | Agent (`.agent.md`)                       | A multi-turn role or a bounded autonomous workflow is specifically requested.                                                                                                     | Selected as a chat mode or agent                    |
-| 5          | Prompt (`.prompt.md`)                     | A repeatable single-session slash command is specifically requested.                                                                                                              | Invoked as `/name`                                  |
-| Note       | Tool                                      | A concrete capability rather than guidance is needed. It is declared in an agent's tools frontmatter, not authored here.                                                          | Declared in frontmatter                             |
+| Responsibility | Choose | Activation |
+|---|---|---|
+| Reusable workflow, domain knowledge, bundled references, templates, or scripts | Skill (`SKILL.md`) | Semantic description match or `/skill-name` |
+| Isolated, high-volume, parallel, fresh-context, mechanical, or model-specific work | Subagent (`.agent.md` under `subagents/`) | Parent dispatch by stable `name` |
+| Convention that applies whenever matching paths are edited | Instruction file (`.instructions.md`) | Automatic `applyTo` match |
+| User-selected multi-turn role or bounded autonomous workflow | Agent (`.agent.md`) | Agent picker or explicit handoff |
+| Repeatable, parameterized user entry point | Prompt (`.prompt.md`) | Slash invocation |
+| Concrete action capability | Tool | Native registration in agent frontmatter |
 
-When a single request spans several types, split it: for example a skill for the workflow and shared scripts, subagents for isolated or tier-specific work, and an instruction file for the conventions both share. Propose the split and confirm scope before authoring.
+When a request spans responsibilities, split it deliberately: a skill may own the workflow, subagents may isolate execution and review, an instruction file may govern matching paths, and a prompt may provide a user entry point. Confirm only splits that widen the caller's write boundary or product surface.
 
 ## Guiding questions
 
-* Does it carry reusable capability, domain knowledge, or scripts that should load on demand? That points to a skill.
+* Does it carry reusable capability, domain knowledge, references, templates, or scripts that should load on demand? That points to a skill.
 * Does it need context isolation, high-volume or parallel work, or a specific reasoning-level model? That points to a subagent.
-* Is it a path-scoped convention that should auto-apply to a set of files whenever they are created or edited, regardless of who touches them? That points to an instruction file with an `applyTo` glob.
+* Is it a convention that applies whenever matching paths are edited? That points to an instruction file.
 * Was a multi-turn role or bounded autonomous workflow specifically requested? That points to an agent.
-* Was a repeatable single-session slash command specifically requested? That points to a prompt.
+* Is a parameterized slash entry point needed for users? That points to a prompt.
 * Does it need a capability rather than guidance? That points to a tool.
 
 ## Route each fact by load timing and authority
@@ -53,10 +53,15 @@ A single requirement often splits across both axes. For example, "do not write t
 
 Treat delegation as a first-class architecture decision, not an afterthought. During intake, before settling the shape, analyze what the skill or agent being authored could hand to a subagent.
 
-* Identify functionality a low-reasoning-effort subagent could own: isolated research, high-volume reads, mechanical checks, fresh-context review, or tier-specific execution. Author it to the `.agent.md` subagent convention and dispatch it with `runSubagent` or `task`.
+* Identify functionality a focused subagent could own: high-volume discovery, mechanical checks, fresh-context review, or profile-specific execution. Match the model to the responsibility; fresh-context review usually needs more judgment than mechanical validation.
 * Weigh delegating against inlining. Delegating buys context isolation, parallelism, and a right-sized model per responsibility; inlining is simpler for tightly coupled, low-volume, or latency-sensitive steps. Prefer making, updating, or reusing a subagent over inlining coordination, orchestration, or workflow logic.
-* Design the agentic loop explicitly: dispatch a subagent and act on its return, dispatch more subagents when the work fans out, orchestrate several in parallel when their work is independent, and chain one subagent's output into the next when the work is sequential.
+* Design the loop explicitly: define dispatch inputs, owned evidence, return schema, stage gate, and which later step consumes the result. Parallelize only independent work.
 * Favor reuse. Check whether an existing subagent already covers the responsibility before creating a new one, and prefer extending or adjusting an existing subagent over duplicating it.
+* Make the contract executable. A create-only worker writes its owned log once; progressive logs require edit capability. A parent that dispatches subagents declares the `agent` tool and its allowed agent set.
+
+## Choose the model profile
+
+Pin one default model when responsibility determines the profile. Use GPT-5.6 Luna for bounded, literal, mechanical execution with explicit tool order. Use GPT-5.6 Terra for semantic discovery, architecture, authoring, research, and calibrated review. A model array is an availability fallback, not a substitute for selecting a profile.
 
 ## Worked example: compact skill plus one low-reasoning worker
 
@@ -81,9 +86,7 @@ Worker subagent (`.agent.md` under `subagents/`), pinned to a fixed low tier bec
 name: CSV Profiler Worker
 description: "Profiles a CSV with a bundled script and returns a summary. Use when profiling CSV data."
 user-invocable: false
-model:
-  - MAI-Code-1-Flash (copilot)
-  - Claude Haiku 4.5 (copilot)
+model: GPT-5.6 Luna (copilot)
 tools:
   - search/fileSearch
   - read/readFile
@@ -91,9 +94,9 @@ tools:
 ---
 ```
 
-Because the worker targets a low-reasoning model, its body names the tool order: use `search/fileSearch` to locate the CSV, `read/readFile` to confirm the header, then run the bundled profiling script and write the summary with `edit/createFile`.
+Because the worker targets Luna, its body names the tool order: use `search/fileSearch` to locate the CSV, `read/readFile` to confirm the header, then run the bundled profiling script and write the summary with `edit/createFile`.
 
-Parent-owned test step: the skill's Flow tests HVE artifacts through the `/hve-builder-tester` sub-skill dispatch at the Low tier, the tier the worker targets, to exercise the skill and worker together in a sandbox before the run is treated as complete. Route HVE-artifact testing through `/hve-builder-tester` rather than dispatching `HVE Artifact Tester` directly; the tester skill owns the sandbox setup, black-box test-prompt design, execution, and the runtime-log review.
+Parent-owned test step: the skill tests the workflow through the `hve-builder-tester` skill at the Low profile. Select simulation or native fidelity explicitly and report the evidence limitation. Do not dispatch `HVE Artifact Tester` directly; the tester skill owns design, fidelity, evidence integrity, grading, and cleanup.
 
 ## Placement heuristics
 

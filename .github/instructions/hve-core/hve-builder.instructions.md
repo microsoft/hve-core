@@ -24,18 +24,18 @@ Write every artifact outcome-first. Personality and process serve the outcome; t
 * Treat reasoning effort as a tuning knob set at dispatch, not as "think harder" prose baked into the artifact.
 * Match output shape to the product or user need, adding heavier formatting only when it improves comprehension or interface stability.
 
-## Choosing the Artifact Type: Skill-Forward, Subagent-Forward
+## Choosing the Artifact Type by Responsibility
 
-A single request often decomposes into several artifact types. Separate them before authoring. Prefer a skill-forward and subagent-forward shape: match the need to the earliest row below whose "when to choose" description fits, and author a later type only when no earlier row expresses the need. Agents and prompts are opt-in: reach for them only when the caller specifically asks.
+A single request often decomposes into several artifact types. Separate responsibilities before authoring, then choose every type needed for activation and load timing. Prefer skills for reusable on-demand capability and subagents for isolated work, but do not force a convention or user entry point into the wrong type because of a universal ranking.
 
-| Preference | Artifact    | When to choose it                                                                                                                                                    | Form                                                    | How it activates                                    |
-|------------|-------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------|---------------------------------------------------------|-----------------------------------------------------|
-| 1          | Skill       | Reusable capability or domain knowledge that can bundle its own resources, references, and scripts and load on demand.                                               | `SKILL.md` in `.github/skills/<collection>/<skill>/`    | Semantic match on its description, or `/skill-name` |
-| 2          | Subagent    | Context isolation, high-volume or parallel work, or a responsibility best run at a specific reasoning-level model.                                                   | `.agent.md` under a `subagents/` folder                 | Dispatched by a parent agent or skill               |
-| 3          | Instruction | Path-scoped conventions for files being created or edited, applied to whoever touches them (agents, skills, subagents, or human maintainers), via an `applyTo` glob. | `.instructions.md`                                      | Auto-applied by an `applyTo` glob                   |
-| 4          | Agent       | A multi-turn role or bounded autonomous workflow is specifically requested.                                                                                          | `.agent.md`                                             | Selected as a chat mode or agent                    |
-| 5          | Prompt      | A repeatable single-session slash command is specifically requested.                                                                                                 | `.prompt.md`                                            | Invoked on demand as `/name`                        |
-| Note       | Tool        | A concrete capability rather than guidance is needed.                                                                                                                | Provided by VS Code or an MCP server, not authored here | Declared in an agent's `tools:` frontmatter         |
+| Responsibility                                                                     | Artifact    | Form                                                 | Activation                                  |
+|------------------------------------------------------------------------------------|-------------|------------------------------------------------------|---------------------------------------------|
+| Reusable workflow, domain knowledge, references, templates, or scripts             | Skill       | `SKILL.md` in `.github/skills/<collection>/<skill>/` | Semantic description match or `/skill-name` |
+| Isolated, high-volume, parallel, fresh-context, mechanical, or model-specific work | Subagent    | `.agent.md` under a `subagents/` folder              | Parent dispatch by stable `name`            |
+| Convention that applies whenever matching paths are edited                         | Instruction | `.instructions.md`                                   | Automatic `applyTo` match                   |
+| User-selected multi-turn role or bounded autonomous workflow                       | Agent       | `.agent.md`                                          | Agent picker or handoff                     |
+| Repeatable, parameterized user entry point                                         | Prompt      | `.prompt.md`                                         | Slash invocation                            |
+| Concrete action capability                                                         | Tool        | VS Code or MCP registration                          | Agent `tools:` frontmatter                  |
 
 ### Guiding Questions
 
@@ -43,7 +43,7 @@ A single request often decomposes into several artifact types. Separate them bef
 * Does it need context isolation, high-volume or parallel work, or a specific reasoning-level model? That points to a subagent.
 * Is it a path-scoped convention that should auto-apply to a set of files whenever they are created or edited, regardless of who touches them? That points to an instruction file with an `applyTo` glob.
 * Was a multi-turn role or bounded autonomous workflow specifically requested? That points to an agent.
-* Was a repeatable single-session slash command specifically requested? That points to a prompt.
+* Is a parameterized slash entry point needed for users? That points to a prompt.
 * Does it need a concrete capability rather than guidance? That points to a tool.
 
 When a request spans several types, propose a breakdown, for example a skill for the workflow and shared scripts, subagents for isolated or tier-specific work, and an instruction file for the conventions both share, then confirm scope with the user before building.
@@ -52,9 +52,9 @@ When a request spans several types, propose a breakdown, for example a skill for
 
 Treat delegation as a first-class architecture decision, not an afterthought. Before settling the shape of a skill or agent, analyze what it could hand to a subagent.
 
-* Identify functionality a low-reasoning-effort subagent could own: isolated research, high-volume reads, mechanical checks, fresh-context review, or tier-specific execution. Author it to the subagent convention and dispatch it with `runSubagent` or `task`.
+* Identify functionality a focused subagent could own: high-volume discovery, mechanical checks, fresh-context review, or profile-specific execution. Match the model to the responsibility; fresh-context review usually needs more judgment than mechanical validation.
 * Weigh delegating against inlining. Delegating buys context isolation, parallelism, and a right-sized model per responsibility; inlining is simpler for tightly coupled, low-volume, or latency-sensitive steps. Prefer making, updating, or reusing a subagent over inlining coordination, orchestration, or workflow logic.
-* Design the agentic loop explicitly: dispatch a subagent and act on its return, dispatch more when the work fans out, orchestrate independent work in parallel, and chain sequential work.
+* Design the loop explicitly: define dispatch inputs, owned evidence, return schema, stage gate, and which later step consumes the result. Parallelize only independent work.
 * Reuse before authoring. Survey the available subagents, skills, and instruction files. Prefer reusing an existing artifact as it stands; when it almost fits, prefer adjusting or extending it; create a new artifact only when no existing one can be reasonably adapted.
 
 ## Load-Timing and Authority Routing
@@ -108,10 +108,11 @@ Subagents execute specialized, isolated, or parallelizable work on behalf of a p
 * Give each subagent one narrow purpose, specialized by description, prompt, tools, and model.
 * Write the `description` so a parent can decide when to delegate to it.
 * Grant least-privilege tools: the minimum the subagent needs, and no edit or write tools for a read-only reviewer.
+* Match tools to the body contract. A create-only worker gathers evidence and writes its owned file once; progressive logging requires edit capability. An orchestrator that dispatches agents includes the `agent` tool.
 * When a subagent targets a lower-reasoning-effort model and tools are available, name the tools or tool groupings it should use and when to use each grouping, rather than leaving tool selection implicit. A passing low-reasoning subagent states, for example, to search before reading a full file, and which tool group handles which step.
 * Return a condensed summary: explore widely, but return a distilled result, and write full fidelity to a tracking artifact when the work warrants it.
-* Set `user-invocable: false` for background-only subagents. Parent agents with a fixed subagent set declare dependencies in their `agents:` frontmatter by the subagent's `name:` value; do not use wildcard `agents: "*"`.
-* Pin `model:` only when the subagent must always run at a fixed reasoning tier: set it to that tier's model list from the reasoning-tier model map. When the parent or tester selects the tier at dispatch, omit `model:` and state the target tier in the dispatch or test inputs instead.
+* Set `user-invocable: false` for background-only subagents. Parent agents with a fixed subagent set declare dependencies in `agents:` by the subagent's `name:` value. Use `agents: "*"` only for a genuine dynamic router whose selectable agent set comes from the user's approved input, and explain that exception in the body.
+* Pin one `model:` when a fixed responsibility determines the reasoning profile. Use an array only as a deliberate availability fallback, not as a substitute for model selection. When the parent intentionally chooses the model per dispatch, document the bounded override rule.
 * Subagents do not run their own subagents unless the harness supports nested calls; otherwise the parent orchestrates.
 * Include a Response Format section. Use the Compact Pointer format for read-only or analysis subagents that write findings to a `.copilot-tracking/` artifact and return an executive summary, and the Structured Template format for subagents that modify workspace files.
 
@@ -139,7 +140,8 @@ Agents support conversational workflows (multi-turn interaction) and autonomous 
 
 * Conversational agents use phase-based protocols for stages the user moves between; autonomous agents use step-based protocols for bounded execution.
 * Declare available `tools` and any fixed subagent dependencies in `agents:` frontmatter.
-* Set `disable-model-invocation: true` for agents that run subagents, cause side effects, or should run only when explicitly requested.
+* Set `disable-model-invocation: true` when the agent must not be invoked *as a subagent* by another model, including user-facing orchestrators with side effects. This field does not prevent the agent from dispatching its own allowed subagents.
+* Agents that dispatch subagents declare the `agent` tool and an `agents:` allowlist. Use the wildcard exception only for a user-approved dynamic router.
 * Keep the agent body outcome-first and delegate isolated or tier-specific work to subagents rather than inlining it.
 
 ### Prompt Files
@@ -158,9 +160,9 @@ Prompts are single-session workflows a user invokes and Copilot executes to comp
 * `name:` is required for skills (matching the directory in lowercase kebab-case) and preferred for agents (human-readable).
 * `applyTo:` is required for instruction files only.
 * `argument-hint:` is optional for user-invocable skills and prompts; keep it brief with the required arguments first.
-* `tools:` restricts an agent or subagent to the listed tools; omit it to allow all tools in context.
+* `tools:` restricts an agent or subagent to the listed tools; omission allows every available tool and therefore requires an explicit reason during review.
 * `user-invocable:` defaults to true; set it to false for background-only artifacts. Use this spelling consistently.
-* `model:` is optional; set it only when the artifact intentionally pins or prioritizes a model, otherwise let the user or dispatcher choose. For a subagent that must always run at a fixed reasoning tier, pin it to that tier's model list; when tier selection happens at dispatch, omit it and name the target tier in the dispatch inputs.
+* `model:` is optional; set one model when responsibility fixes the profile. Use an ordered array only for intentional availability fallback. When model selection happens at dispatch, omit it or document the narrow override contract.
 * Do not include a `maturity` field; collection manifests track maturity.
 
 ## Referencing Other Artifacts
@@ -218,12 +220,16 @@ Every item applies to the whole file. Mark an item not applicable when it does n
 * [ ] File structure and frontmatter follow the File Types and Frontmatter Requirements for the artifact type.
 * [ ] Each fact sits at the right load timing and authority; always-loaded surfaces stay short and non-inferable.
 * [ ] Delegation is used where it isolates or right-sizes work, and existing subagents, skills, and instructions are reused before new ones are created.
+* [ ] Connected artifacts agree on modes, stage gates, result vocabulary, and terminal outcomes.
+* [ ] Every required step is executable with the declared tools, and write behavior matches create or edit capability.
+* [ ] Each fixed-responsibility subagent has one appropriate default model; any override or proxy run is narrow and disclosed.
 * [ ] A subagent that targets a lower-reasoning-effort model names its tools or tool groupings and when to use each.
 * [ ] Absolute words are reserved for true invariants; judgment calls are decision rules.
 * [ ] Canonical files are referenced, not copied, and reference chains are shallow.
 * [ ] Tool and output schemas pass the intern test, make invalid states unrepresentable, and use native registration.
 * [ ] Hard rules are routed to enforced controls; risky actions require confirmation; external content is treated as data; secrets stay out.
 * [ ] Success criteria are checkable and the artifact asks for evidence rather than assertions.
+* [ ] Behavior claims distinguish native observation, simulation, and emulation.
 * [ ] References to other artifacts follow Referencing Other Artifacts, naming each artifact rather than hard-coding a path.
 * [ ] None of the retired stale patterns are present.
 * [ ] The user's request and requirements are implemented completely.
@@ -244,3 +250,6 @@ Remove these on sight when improving or replacing an artifact. Each is supersede
 * Kitchen-sink instruction files, copied style guides, copied templates, and exhaustive edge-case lists. Prefer scoped, referenced, evaluation-informed artifacts.
 * Singular AGENT.md where AGENTS.md is the current format; keep a compatibility link where needed.
 * Universal secondhand length ceilings. Use the host's own published numbers and scope or defer the rest.
+* Fixed iteration counts used as quality theater rather than responses to observed findings.
+* Model fallback lists used instead of a responsibility-based profile decision.
+* Calling simulation or emulation native runtime validation.
