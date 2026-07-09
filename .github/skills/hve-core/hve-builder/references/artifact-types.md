@@ -10,14 +10,14 @@ Use this reference during the intake step to decide which artifact type solves t
 
 Prefer a skill-forward and subagent-forward shape. Match the need to the earliest row below whose "when to choose" description fits, and author a later type only when no earlier row expresses the need. Agents and prompts are opt-in: reach for them only when the caller specifically asks.
 
-| Preference | Choose | When to choose it | Activation |
-|---|---|---|---|
-| 1 | Skill (`SKILL.md`) | The need is reusable capability or domain knowledge that can bundle its own resources, references, and scripts and load on demand. | Semantic match on its description, or `/skill-name` |
-| 2 | Subagent (`.agent.md` under `subagents/`) | The need is context isolation, high-volume or parallel work, or a responsibility best run at a specific reasoning-level model. | Dispatched by a parent agent or skill |
-| 3 | Instruction file (`.instructions.md`) | The need is a path-scoped convention for files being created or edited, applied to whoever touches them (agents, skills, subagents, or human maintainers), via an `applyTo` glob. | Auto-applied by an `applyTo` glob |
-| 4 | Agent (`.agent.md`) | A multi-turn role or a bounded autonomous workflow is specifically requested. | Selected as a chat mode or agent |
-| 5 | Prompt (`.prompt.md`) | A repeatable single-session slash command is specifically requested. | Invoked as `/name` |
-| Note | Tool | A concrete capability rather than guidance is needed. It is declared in an agent's tools frontmatter, not authored here. | Declared in frontmatter |
+| Preference | Choose                                    | When to choose it                                                                                                                                                                 | Activation                                          |
+|------------|-------------------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|-----------------------------------------------------|
+| 1          | Skill (`SKILL.md`)                        | The need is reusable capability or domain knowledge that can bundle its own resources, references, and scripts and load on demand.                                                | Semantic match on its description, or `/skill-name` |
+| 2          | Subagent (`.agent.md` under `subagents/`) | The need is context isolation, high-volume or parallel work, or a responsibility best run at a specific reasoning-level model.                                                    | Dispatched by a parent agent or skill               |
+| 3          | Instruction file (`.instructions.md`)     | The need is a path-scoped convention for files being created or edited, applied to whoever touches them (agents, skills, subagents, or human maintainers), via an `applyTo` glob. | Auto-applied by an `applyTo` glob                   |
+| 4          | Agent (`.agent.md`)                       | A multi-turn role or a bounded autonomous workflow is specifically requested.                                                                                                     | Selected as a chat mode or agent                    |
+| 5          | Prompt (`.prompt.md`)                     | A repeatable single-session slash command is specifically requested.                                                                                                              | Invoked as `/name`                                  |
+| Note       | Tool                                      | A concrete capability rather than guidance is needed. It is declared in an agent's tools frontmatter, not authored here.                                                          | Declared in frontmatter                             |
 
 When a single request spans several types, split it: for example a skill for the workflow and shared scripts, subagents for isolated or tier-specific work, and an instruction file for the conventions both share. Propose the split and confirm scope before authoring.
 
@@ -34,18 +34,18 @@ When a single request spans several types, split it: for example a skill for the
 
 For every rule or fact the artifact would carry, place it where it loads at the right time and binds with the right force. This keeps always-loaded surfaces short and moves enforcement off advisory prose.
 
-| Load timing | Home | Use for |
-|---|---|---|
-| Always loaded | Root agent instruction file (AGENTS.md or equivalent) | Durable, non-inferable, project-wide facts: key commands, non-default conventions, invariants |
-| Scoped by path | Path-scoped instruction file with an `applyTo` glob | Conventions that apply only to some files or languages |
-| On demand | Skill body and its references | Recurring workflows and domain knowledge needed only sometimes |
-| Deferred detail | Skill references, templates, and assets | Full schemas, long examples, and reusable skeletons |
-| Delegated | Subagent | Isolated, high-volume, or verification work returning a summary |
+| Load timing     | Home                                                  | Use for                                                                                       |
+|-----------------|-------------------------------------------------------|-----------------------------------------------------------------------------------------------|
+| Always loaded   | Root agent instruction file (AGENTS.md or equivalent) | Durable, non-inferable, project-wide facts: key commands, non-default conventions, invariants |
+| Scoped by path  | Path-scoped instruction file with an `applyTo` glob   | Conventions that apply only to some files or languages                                        |
+| On demand       | Skill body and its references                         | Recurring workflows and domain knowledge needed only sometimes                                |
+| Deferred detail | Skill references, templates, and assets               | Full schemas, long examples, and reusable skeletons                                           |
+| Delegated       | Subagent                                              | Isolated, high-volume, or verification work returning a summary                               |
 
-| Authority | Home | Use for |
-|---|---|---|
-| Advisory | Instruction and skill prose | Guidance the model should follow and can override with judgment |
-| Enforced | Hooks, permission modes, pipeline checks, strict schemas | Non-negotiable rules that must hold regardless of model judgment |
+| Authority | Home                                                     | Use for                                                          |
+|-----------|----------------------------------------------------------|------------------------------------------------------------------|
+| Advisory  | Instruction and skill prose                              | Guidance the model should follow and can override with judgment  |
+| Enforced  | Hooks, permission modes, pipeline checks, strict schemas | Non-negotiable rules that must hold regardless of model judgment |
 
 A single requirement often splits across both axes. For example, "do not write to protected paths" belongs in advisory prose for context and in an enforced hook for the guarantee.
 
@@ -93,7 +93,7 @@ tools:
 
 Because the worker targets a low-reasoning model, its body names the tool order: use `search/fileSearch` to locate the CSV, `read/readFile` to confirm the header, then run the bundled profiling script and write the summary with `edit/createFile`.
 
-Parent-owned test step: the skill's Flow dispatches `HVE Artifact Tester` at the Low tier, the tier the worker targets, to exercise the skill and worker together in a sandbox before the run is treated as complete.
+Parent-owned test step: the skill's Flow tests HVE artifacts through the `/hve-builder-tester` sub-skill dispatch at the Low tier, the tier the worker targets, to exercise the skill and worker together in a sandbox before the run is treated as complete. Route HVE-artifact testing through `/hve-builder-tester` rather than dispatching `HVE Artifact Tester` directly; the tester skill owns the sandbox setup, black-box test-prompt design, execution, and the runtime-log review.
 
 ## Placement heuristics
 

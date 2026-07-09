@@ -1,6 +1,6 @@
 ---
 name: HVE Artifact Tester
-description: 'Runs a prompt-engineering artifact in a sandbox at its target reasoning tier and logs the conversation and gaps. Dispatched by the hve-builder skill.'
+description: 'Runs a prompt-engineering artifact in a sandbox at its target reasoning tier and logs the conversation and gaps. Dispatched by the hve-builder-tester skill.'
 user-invocable: false
 tools:
   - read/readFile

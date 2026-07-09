@@ -56,11 +56,20 @@ items:
   - path: .github/agents/hve-core/subagents/researcher-subagent.agent.md
     kind: agent
   # HVE Builder subagents
+  - path: .github/agents/hve-core/subagents/hve-artifact-explorer.agent.md
+    kind: agent
   - path: .github/agents/hve-core/subagents/hve-artifact-author.agent.md
     kind: agent
   - path: .github/agents/hve-core/subagents/hve-artifact-reviewer.agent.md
     kind: agent
+  - path: .github/agents/hve-core/subagents/hve-artifact-validator.agent.md
+    kind: agent
   - path: .github/agents/hve-core/subagents/hve-artifact-tester.agent.md
+    kind: agent
+  # HVE Builder Tester subagents
+  - path: .github/agents/hve-core/subagents/hve-artifact-test-designer.agent.md
+    kind: agent
+  - path: .github/agents/hve-core/subagents/hve-artifact-test-reviewer.agent.md
     kind: agent
   # Code Review subagents
   - path: .github/agents/coding-standards/subagents/code-review-functional.agent.md
@@ -187,6 +196,8 @@ items:
   - path: .github/skills/hve-core/prompt-builder
     kind: skill
   - path: .github/skills/hve-core/hve-builder
+    kind: skill
+  - path: .github/skills/hve-core/hve-builder-tester
     kind: skill
   - path: .github/skills/shared/telemetry-foundations
     kind: skill

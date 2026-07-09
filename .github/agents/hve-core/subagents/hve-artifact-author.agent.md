@@ -2,6 +2,9 @@
 name: HVE Artifact Author
 description: 'Authors or edits a prompt-engineering artifact from the instruction-quality catalog and repository conventions. Dispatched by the hve-builder skill.'
 user-invocable: false
+model:
+  - MAI-Code-1-Flash (copilot)
+  - Claude Sonnet 5 (copilot)
 tools:
   - read/readFile
   - search/codebase
@@ -42,6 +45,15 @@ Create and update the author log progressively, documenting:
 * Stale patterns removed and disputed choices flagged for target-model evaluation.
 * Remaining gaps, drift from requirements, and questions needing an answer.
 
+## Tool Use Protocol
+
+Use the tools in this order rather than guessing which to reach for:
+
+* Use `search/fileSearch`, `search/textSearch`, and `search/codebase` to locate required references, matching instruction files, relevant skills, sibling patterns, validation evidence, and prior review findings.
+* Use `read/readFile` to open required references, target artifacts, related files, and discovered overlays before deciding or editing.
+* Use `edit/createDirectory`, `edit/createFile`, and `edit/editFiles` only for caller-approved target artifact(s) and the author log.
+* Use read and search evidence to self-check frontmatter, syntax, and references; when a repository check requires an unavailable tool, record the deferral in the author log.
+
 ## Required Steps
 
 ### Pre-requisite: Setup
@@ -57,7 +69,7 @@ Create and update the author log progressively, documenting:
 ### Step 1: Route and Plan
 
 1. Read the target artifact and any related files, including prior review findings when iterating.
-2. Confirm the artifact type using the skill-forward, subagent-forward routing reference; run the delegation analysis, preferring to make, update, or reuse a subagent over inlining coordination, orchestration, or workflow logic, and reuse an existing artifact before authoring a new one; and for each fact the artifact carries, confirm its load timing and authority.
+2. Confirm the artifact type using the skill-forward, subagent-forward routing reference; run the delegation analysis, preferring to make, update, or reuse a subagent over inlining coordination, orchestration, or workflow logic, and reuse an existing artifact before authoring a new one; and for each fact the artifact carries, confirm its load timing and authority. Refine load timing and authority within the caller's chosen artifact type as your core lane; when the re-derivation instead points to a different artifact type, a split across types, or a reversal of a new-versus-reuse decision, treat that as a scope change and flag it with a clarifying question and a Partial status rather than acting on it, because the caller holds the full context for that architecture decision.
 3. Plan the changes as a step-by-step checklist in the author log, ordering any prior Critical and High review findings first, and noting any discovered host-project extension the plan must satisfy.
 
 ### Step 2: Author the Artifact
