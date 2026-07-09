@@ -16,7 +16,7 @@ estimated_reading_time: 2
 # Fuzz Corpus Seeds
 
 Seed inputs for the ADR Author Atheris fuzz harness. Each file is raw bytes consumed
-by `_entry` which routes `data[0] % 3` to one of three targets.
+by `_entry` which routes `data[0] % len(FUZZ_TARGETS)` to one of the targets.
 
 ## Naming Convention
 
@@ -28,6 +28,7 @@ array position:
 | 0     | `_fuzz_validate_frontmatter` |
 | 1     | `_fuzz_normalize_template`   |
 | 2     | `_fuzz_update_lineage_slug`  |
+| 3     | `_fuzz_utils`                |
 
 The first byte selects the target; the remaining bytes are the input payload.
 

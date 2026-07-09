@@ -16,7 +16,7 @@ estimated_reading_time: 2
 # Fuzz Corpus Seeds
 
 Seed inputs for the Atheris fuzz harness. Each file is raw bytes consumed by
-`fuzz_dispatch` which routes `data[0] % 4` to one of four targets.
+`fuzz_dispatch` which routes `data[0] % len(FUZZ_TARGETS)` to one of the targets.
 
 ## Naming Convention
 
@@ -29,6 +29,7 @@ array position:
 | 1     | `fuzz_hex_brightness`           |
 | 2     | `fuzz_max_severity`             |
 | 3     | `fuzz_has_formatting_variation` |
+| 4     | `fuzz_safe_open_pdf`            |
 
 ## Usage
 
