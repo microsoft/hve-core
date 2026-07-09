@@ -2,7 +2,7 @@
 title: GitHub Copilot Prompts
 description: Coaching and guidance prompts for specific development tasks that provide step-by-step assistance and context-aware support
 author: Edge AI Team
-ms.date: 2026-03-11
+ms.date: 2026-07-08
 ms.topic: hub-page
 estimated_reading_time: 3
 keywords:

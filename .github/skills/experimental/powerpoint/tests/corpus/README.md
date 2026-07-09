@@ -2,7 +2,7 @@
 title: Fuzz Corpus Seeds
 description: Seed inputs for coverage-guided fuzzing with the Atheris fuzz harness
 author: Microsoft
-ms.date: 2026-03-19
+ms.date: 2026-07-08
 ms.topic: reference
 keywords:
   - fuzz

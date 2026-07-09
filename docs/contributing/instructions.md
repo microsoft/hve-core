@@ -3,7 +3,7 @@ title: 'Contributing Instructions to HVE Core'
 description: 'Requirements and standards for contributing GitHub Copilot instruction files to hve-core'
 sidebar_position: 3
 author: Microsoft
-ms.date: 2026-06-28
+ms.date: 2026-07-08
 ms.topic: how-to
 ---
 
