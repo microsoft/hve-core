@@ -2,7 +2,7 @@
 title: Extension Scripts
 description: PowerShell scripts for VS Code extension preparation, packaging, and collection discovery
 author: HVE Core Team
-ms.date: 2026-07-08
+ms.date: 2026-07-09
 ms.topic: reference
 keywords:
   - powershell
@@ -26,8 +26,10 @@ The extension packaging pipeline follows a three-stage process:
    filtering by maturity and channel
 3. `Package-Extension.ps1` produces one `.vsix` per collection using `vsce`
 
-All three scripts import `CIHelpers.psm1` and `CollectionHelpers.psm1` for CI
-platform detection and YAML manifest parsing.
+All three scripts import `CIHelpers.psm1` for CI platform detection.
+`Prepare-Extension.ps1` and `Package-Extension.ps1` additionally import
+`CollectionHelpers.psm1` for YAML manifest parsing; `Find-CollectionManifests.ps1`
+does not.
 
 ## Scripts
 
