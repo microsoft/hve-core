@@ -19,21 +19,28 @@ BeforeAll {
 #region Get-ChangedFilesFromGit Tests
 
 Describe 'Get-ChangedFilesFromGit' {
+    BeforeEach {
+        Mock git {
+            $global:LASTEXITCODE = 0
+            return @()
+        } -ModuleName 'LintingHelpers' -ParameterFilter { $args[0] -eq 'ls-files' }
+    }
+
     Context 'Merge-base succeeds' {
         BeforeEach {
             # Mock git commands at module scope with proper LASTEXITCODE handling
             $changedFiles = @('scripts/test.ps1', 'docs/readme.md', 'config/settings.json')
-            
+
             Mock git {
                 $global:LASTEXITCODE = 0
                 return 'abc123def456789'
             } -ModuleName 'LintingHelpers' -ParameterFilter { $args[0] -eq 'merge-base' }
-            
+
             Mock git {
                 $global:LASTEXITCODE = 0
                 return $changedFiles
             } -ModuleName 'LintingHelpers' -ParameterFilter { $args[0] -eq 'diff' }
-            
+
             Mock Test-Path { return $true } -ModuleName 'LintingHelpers' -ParameterFilter { $PathType -eq 'Leaf' }
         }
 
@@ -62,6 +69,54 @@ Describe 'Get-ChangedFilesFromGit' {
         }
     }
 
+    Context 'Working tree changes are not staged' {
+        BeforeEach {
+            Mock git {
+                $global:LASTEXITCODE = 0
+                return 'abc123def456789'
+            } -ModuleName 'LintingHelpers' -ParameterFilter { $args[0] -eq 'merge-base' }
+
+            Mock git {
+                $global:LASTEXITCODE = 0
+                return @('committed.ps1')
+            } -ModuleName 'LintingHelpers' -ParameterFilter {
+                $args[0] -eq 'diff' -and $args -contains 'abc123def456789'
+            }
+
+            Mock git {
+                $global:LASTEXITCODE = 0
+                return @('unstaged.ps1')
+            } -ModuleName 'LintingHelpers' -ParameterFilter {
+                $args[0] -eq 'diff' -and $args -notcontains 'abc123def456789'
+            }
+
+            Mock git {
+                $global:LASTEXITCODE = 0
+                return @('untracked.ps1')
+            } -ModuleName 'LintingHelpers' -ParameterFilter { $args[0] -eq 'ls-files' }
+
+            Mock Test-Path { return $true } -ModuleName 'LintingHelpers' -ParameterFilter { $PathType -eq 'Leaf' }
+        }
+
+        It 'Combines committed, unstaged, and untracked files' {
+            $result = Get-ChangedFilesFromGit -FileExtensions @('*.ps1')
+
+            $result | Should -Contain 'committed.ps1'
+            $result | Should -Contain 'unstaged.ps1'
+            $result | Should -Contain 'untracked.ps1'
+        }
+
+        It 'Requests untracked files without requiring them to be staged' {
+            Get-ChangedFilesFromGit -FileExtensions @('*.ps1') | Out-Null
+
+            Should -Invoke git -ModuleName 'LintingHelpers' -ParameterFilter {
+                $args[0] -eq 'ls-files' -and
+                $args -contains '--others' -and
+                $args -contains '--exclude-standard'
+            } -Times 1 -Exactly
+        }
+    }
+
     Context 'Merge-base fails, HEAD~1 fallback' {
         BeforeEach {
             # Merge-base fails
@@ -69,19 +124,19 @@ Describe 'Get-ChangedFilesFromGit' {
                 $global:LASTEXITCODE = 128
                 return $null
             } -ModuleName 'LintingHelpers' -ParameterFilter { $args[0] -eq 'merge-base' }
-            
+
             # rev-parse succeeds for HEAD~1 check
             Mock git {
                 $global:LASTEXITCODE = 0
                 return 'HEAD~1-sha'
             } -ModuleName 'LintingHelpers' -ParameterFilter { $args[0] -eq 'rev-parse' }
-            
+
             # diff returns fallback file
             Mock git {
                 $global:LASTEXITCODE = 0
                 return @('fallback-file.ps1')
             } -ModuleName 'LintingHelpers' -ParameterFilter { $args[0] -eq 'diff' }
-            
+
             Mock Test-Path { return $true } -ModuleName 'LintingHelpers' -ParameterFilter { $PathType -eq 'Leaf' }
         }
 
@@ -97,7 +152,7 @@ Describe 'Get-ChangedFilesFromGit' {
                 $global:LASTEXITCODE = 0
                 return 'abc123def456789'
             } -ModuleName 'LintingHelpers' -ParameterFilter { $args[0] -eq 'merge-base' }
-            
+
             Mock git {
                 $global:LASTEXITCODE = 0
                 return @()
@@ -116,12 +171,12 @@ Describe 'Get-ChangedFilesFromGit' {
                 $global:LASTEXITCODE = 0
                 return 'abc123def456789'
             } -ModuleName 'LintingHelpers' -ParameterFilter { $args[0] -eq 'merge-base' }
-            
+
             Mock git {
                 $global:LASTEXITCODE = 0
                 return @('exists.ps1', 'deleted.ps1')
             } -ModuleName 'LintingHelpers' -ParameterFilter { $args[0] -eq 'diff' }
-            
+
             Mock Test-Path {
                 param($Path)
                 return $Path -eq 'exists.ps1'
@@ -141,12 +196,12 @@ Describe 'Get-ChangedFilesFromGit' {
                 $global:LASTEXITCODE = 0
                 return 'abc123def456789'
             } -ModuleName 'LintingHelpers' -ParameterFilter { $args[0] -eq 'merge-base' }
-            
+
             Mock git {
                 $global:LASTEXITCODE = 0
                 return @('valid.ps1', '', '   ', 'another.ps1')
             } -ModuleName 'LintingHelpers' -ParameterFilter { $args[0] -eq 'diff' }
-            
+
             Mock Test-Path { return $true } -ModuleName 'LintingHelpers' -ParameterFilter { $PathType -eq 'Leaf' }
         }
 
@@ -166,19 +221,19 @@ Describe 'Get-ChangedFilesFromGit' {
                 $global:LASTEXITCODE = 128
                 return $null
             } -ModuleName 'LintingHelpers' -ParameterFilter { $args[0] -eq 'merge-base' }
-            
+
             # rev-parse fails for HEAD~1 check
             Mock git {
                 $global:LASTEXITCODE = 128
                 return $null
             } -ModuleName 'LintingHelpers' -ParameterFilter { $args[0] -eq 'rev-parse' }
-            
+
             # diff returns files from third fallback (git diff --name-only HEAD)
             Mock git {
                 $global:LASTEXITCODE = 0
                 return @('unstaged-file.ps1')
             } -ModuleName 'LintingHelpers' -ParameterFilter { $args[0] -eq 'diff' }
-            
+
             Mock Test-Path { return $true } -ModuleName 'LintingHelpers' -ParameterFilter { $PathType -eq 'Leaf' }
         }
 
@@ -194,7 +249,7 @@ Describe 'Get-ChangedFilesFromGit' {
                 $global:LASTEXITCODE = 0
                 return 'abc123def456789'
             } -ModuleName 'LintingHelpers' -ParameterFilter { $args[0] -eq 'merge-base' }
-            
+
             # Diff fails with non-zero exit code
             Mock git {
                 $global:LASTEXITCODE = 1
@@ -202,9 +257,8 @@ Describe 'Get-ChangedFilesFromGit' {
             } -ModuleName 'LintingHelpers' -ParameterFilter { $args[0] -eq 'diff' }
         }
 
-        It 'Returns empty array when git diff fails' {
-            $result = Get-ChangedFilesFromGit
-            $result | Should -BeNullOrEmpty
+        It 'Throws when git diff fails' {
+            { Get-ChangedFilesFromGit } | Should -Throw '*Unable to determine changed files from git*'
         }
     }
 
@@ -215,9 +269,58 @@ Describe 'Get-ChangedFilesFromGit' {
             } -ModuleName 'LintingHelpers' -ParameterFilter { $args[0] -eq 'merge-base' }
         }
 
-        It 'Catches exceptions and returns empty array' {
-            $result = Get-ChangedFilesFromGit
-            $result | Should -BeNullOrEmpty
+        It 'Surfaces exceptions to prevent incomplete validation' {
+            { Get-ChangedFilesFromGit } | Should -Throw '*Simulated git failure*'
+        }
+    }
+
+    Context 'Working tree diff command fails' {
+        BeforeEach {
+            Mock git {
+                $global:LASTEXITCODE = 0
+                return 'abc123def456789'
+            } -ModuleName 'LintingHelpers' -ParameterFilter { $args[0] -eq 'merge-base' }
+
+            Mock git {
+                $global:LASTEXITCODE = 0
+                return @('committed.ps1')
+            } -ModuleName 'LintingHelpers' -ParameterFilter {
+                $args[0] -eq 'diff' -and $args -contains 'abc123def456789'
+            }
+
+            Mock git {
+                $global:LASTEXITCODE = 1
+                return $null
+            } -ModuleName 'LintingHelpers' -ParameterFilter {
+                $args[0] -eq 'diff' -and $args -notcontains 'abc123def456789'
+            }
+        }
+
+        It 'Throws rather than returning an incomplete committed-only list' {
+            { Get-ChangedFilesFromGit } | Should -Throw '*staged and unstaged*'
+        }
+    }
+
+    Context 'Untracked file discovery fails' {
+        BeforeEach {
+            Mock git {
+                $global:LASTEXITCODE = 0
+                return 'abc123def456789'
+            } -ModuleName 'LintingHelpers' -ParameterFilter { $args[0] -eq 'merge-base' }
+
+            Mock git {
+                $global:LASTEXITCODE = 0
+                return @()
+            } -ModuleName 'LintingHelpers' -ParameterFilter { $args[0] -eq 'diff' }
+
+            Mock git {
+                $global:LASTEXITCODE = 1
+                return $null
+            } -ModuleName 'LintingHelpers' -ParameterFilter { $args[0] -eq 'ls-files' }
+        }
+
+        It 'Throws rather than omitting untracked files' {
+            { Get-ChangedFilesFromGit } | Should -Throw '*untracked files*'
         }
     }
 
@@ -233,8 +336,13 @@ Describe 'Get-ChangedFilesFromGit' {
                 return $null
             } -ModuleName 'LintingHelpers' -ParameterFilter { $args[0] -eq 'diff' }
 
-            $output = Get-ChangedFilesFromGit 3>&1
-            $warnings = @($output | Where-Object { $_ -is [System.Management.Automation.WarningRecord] })
+            $warnings = @()
+            try {
+                Get-ChangedFilesFromGit -WarningVariable warnings -WarningAction Continue | Out-Null
+            }
+            catch {
+                Write-Verbose "Expected discovery failure: $_"
+            }
             $warnings | Should -Not -BeNullOrEmpty
         }
 
@@ -243,7 +351,13 @@ Describe 'Get-ChangedFilesFromGit' {
                 throw "Simulated git failure"
             } -ModuleName 'LintingHelpers' -ParameterFilter { $args[0] -eq 'merge-base' }
 
-            $warnings = Get-ChangedFilesFromGit 3>&1 | Where-Object { $_ -is [System.Management.Automation.WarningRecord] }
+            $warnings = @()
+            try {
+                Get-ChangedFilesFromGit -WarningVariable warnings -WarningAction Continue | Out-Null
+            }
+            catch {
+                Write-Verbose "Expected discovery failure: $_"
+            }
             $warnings | Should -Not -BeNullOrEmpty
         }
 
