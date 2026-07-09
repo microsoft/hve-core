@@ -89,6 +89,44 @@ jobs:
             Write-Output "Found Python projects: $dirs"
           }
 
+  discover-node-projects:
+    name: Discover Node Skills
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    outputs:
+      directories: ${{ steps.find.outputs.directories }}
+      has-projects: ${{ steps.find.outputs.has-projects }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
+
+      - name: Find Node skills
+        id: find
+        shell: pwsh
+        run: |
+          # A Node skill is any skill (dir containing SKILL.md) that ships at
+          # least one *.test.* / *.spec.* (mjs/cjs/js). The skill root is the
+          # node --test working dir.
+          $skills = @(Get-ChildItem -Path .github/skills -Recurse -Force -Filter SKILL.md -ErrorAction SilentlyContinue |
+            Where-Object { $_.FullName -notmatch 'node_modules' } |
+            ForEach-Object { $_.DirectoryName } |
+            Where-Object { @(Get-ChildItem -Path $_ -Recurse -Force -File -ErrorAction SilentlyContinue | Where-Object { $_.Name -match '\.(test|spec)\.(mjs|cjs|js)$' -and $_.FullName -notmatch 'node_modules' }).Count -gt 0 } |
+            ForEach-Object { (Resolve-Path -Relative $_) -replace '^\.[\\/]', '' -replace '\\', '/' } |
+            Sort-Object -Unique)
+          $jsonItems = $skills | ForEach-Object { $_ | ConvertTo-Json -Compress }
+          $dirs = '[' + (($jsonItems) -join ',') + ']'
+          "directories=$dirs" >> $env:GITHUB_OUTPUT
+          if ($skills.Count -eq 0) {
+            "has-projects=false" >> $env:GITHUB_OUTPUT
+            Write-Output 'No Node skills found'
+          } else {
+            "has-projects=true" >> $env:GITHUB_OUTPUT
+            Write-Output "Found Node skills: $dirs"
+          }
+
   python-lint:
     name: "Python Lint (${{ matrix.directory }})"
     needs: discover-python-projects
@@ -149,6 +187,23 @@ jobs:
       fail-fast: false
       matrix:
         directory: ${{ fromJson(needs.discover-python-projects.outputs.directories) }}
+
+  node-tests:
+    name: "Node Tests (${{ matrix.directory }})"
+    needs: discover-node-projects
+    if: needs.discover-node-projects.outputs.has-projects == 'true'
+    uses: ./.github/workflows/node-tests.yml
+    permissions:
+      contents: read
+      id-token: write
+    with:
+      working-directory: ${{ matrix.directory }}
+      soft-fail: false
+      changed-files-only: true
+    strategy:
+      fail-fast: false
+      matrix:
+        directory: ${{ fromJson(needs.discover-node-projects.outputs.directories) }}
 
   fuzz-tests:
     name: "Fuzz Tests (${{ matrix.directory }})"
@@ -413,6 +468,8 @@ jobs:
       - yaml-lint
       - pester-tests
       - pytest
+      - discover-node-projects
+      - node-tests
       - fuzz-tests
       - pip-audit
       - docusaurus-tests

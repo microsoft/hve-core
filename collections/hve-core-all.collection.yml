@@ -15,6 +15,9 @@ items:
 - path: .github/agents/accessibility/subagents/accessibility-framework-assessor.agent.md
   kind: agent
   maturity: experimental
+- path: .github/agents/accessibility/subagents/accessibility-surface-inventory.agent.md
+  kind: agent
+  maturity: experimental
 - path: .github/agents/ado/ado-backlog-manager.agent.md
   kind: agent
 - path: .github/agents/ado/ado-prd-to-wit.agent.md
@@ -182,6 +185,9 @@ items:
   maturity: experimental
 - path: .github/agents/security/supply-chain-reviewer.agent.md
   kind: agent
+  maturity: experimental
+- path: .github/prompts/accessibility/accessibility-coverage-matrix.prompt.md
+  kind: prompt
   maturity: experimental
 - path: .github/prompts/ado/ado-add-work-item.prompt.md
   kind: prompt

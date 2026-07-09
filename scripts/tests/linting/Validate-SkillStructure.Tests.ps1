@@ -1370,6 +1370,210 @@ description: 'Fallback skill'
     }
 }
 
+Describe 'Node Skill Validation' -Tag 'Unit' {
+    BeforeAll {
+        $script:NodeTestDir = Join-Path $script:TempTestDir 'node-tests'
+        New-Item -ItemType Directory -Path $script:NodeTestDir -Force | Out-Null
+
+        # Override TempTestDir for fixture helper within this Describe
+        $script:TempTestDir = $script:NodeTestDir
+    }
+
+    AfterAll {
+        $script:TempTestDir = (Split-Path $script:NodeTestDir -Parent)
+    }
+
+    Context 'Test-NodeSkillConfig' {
+        It 'Returns no errors when the skill has no scripts directory' {
+            $dir = New-TestSkillDirectory -SkillName 'node-none' -FrontmatterContent @"
+---
+name: node-none
+description: 'no scripts'
+---
+# Test
+"@
+            $result = Test-NodeSkillConfig -SkillPath $dir.FullName -RelativePath 'node-none'
+            $result.Errors | Should -HaveCount 0
+        }
+
+        It 'Ignores a scripts directory without .mjs modules' {
+            $dir = New-TestSkillDirectory -SkillName 'node-py' -OptionalDirs @('scripts') -FrontmatterContent @"
+---
+name: node-py
+description: 'py scripts'
+---
+# Test
+"@
+            Set-Content -Path (Join-Path $dir.FullName 'scripts/main.py') -Value '# py'
+            $result = Test-NodeSkillConfig -SkillPath $dir.FullName -RelativePath 'node-py'
+            $result.Errors | Should -HaveCount 0
+        }
+
+        It 'Errors when .mjs modules ship without any *.test.mjs' {
+            $dir = New-TestSkillDirectory -SkillName 'node-untested' -OptionalDirs @('scripts') -FrontmatterContent @"
+---
+name: node-untested
+description: 'untested node'
+---
+# Test
+"@
+            Set-Content -Path (Join-Path $dir.FullName 'scripts/probe.mjs') -Value 'export const x = 1;'
+            $result = Test-NodeSkillConfig -SkillPath $dir.FullName -RelativePath 'node-untested'
+            $result.Errors | Should -HaveCount 1
+            $result.Errors[0] | Should -BeLike '*unit tests*'
+        }
+
+        It 'Errors when a .js module ships without any test' {
+            $dir = New-TestSkillDirectory -SkillName 'node-js-untested' -OptionalDirs @('scripts') -FrontmatterContent @"
+---
+name: node-js-untested
+description: 'untested js'
+---
+# Test
+"@
+            Set-Content -Path (Join-Path $dir.FullName 'scripts/util.js') -Value 'module.exports = 1;'
+            $result = Test-NodeSkillConfig -SkillPath $dir.FullName -RelativePath 'node-js-untested'
+            $result.Errors | Should -HaveCount 1
+            $result.Errors[0] | Should -BeLike '*unit tests*'
+        }
+
+        It 'Passes a .cjs module with a tests/ .test.cjs' {
+            $dir = New-TestSkillDirectory -SkillName 'node-cjs' -OptionalDirs @('scripts', 'tests') -FrontmatterContent @"
+---
+name: node-cjs
+description: 'cjs'
+---
+# Test
+"@
+            Set-Content -Path (Join-Path $dir.FullName 'scripts/lib.cjs') -Value 'module.exports = 1;'
+            Set-Content -Path (Join-Path $dir.FullName 'tests/lib.test.cjs') -Value 'const assert = require("node:assert");'
+            $result = Test-NodeSkillConfig -SkillPath $dir.FullName -RelativePath 'node-cjs'
+            $result.Errors | Should -HaveCount 0
+            $result.Warnings | Should -HaveCount 0
+        }
+
+        It 'Accepts a .spec.js test as satisfying the requirement' {
+            $dir = New-TestSkillDirectory -SkillName 'node-spec' -OptionalDirs @('scripts', 'tests') -FrontmatterContent @"
+---
+name: node-spec
+description: 'spec'
+---
+# Test
+"@
+            Set-Content -Path (Join-Path $dir.FullName 'scripts/util.js') -Value 'export const x = 1;'
+            Set-Content -Path (Join-Path $dir.FullName 'tests/util.spec.js') -Value 'import assert from "node:assert";'
+            $result = Test-NodeSkillConfig -SkillPath $dir.FullName -RelativePath 'node-spec'
+            $result.Errors | Should -HaveCount 0
+            $result.Warnings | Should -HaveCount 0
+        }
+
+        It 'Warns when a .spec.mjs test is not under tests/' {
+            $dir = New-TestSkillDirectory -SkillName 'node-spec-loose' -OptionalDirs @('scripts') -FrontmatterContent @"
+---
+name: node-spec-loose
+description: 'loose spec'
+---
+# Test
+"@
+            Set-Content -Path (Join-Path $dir.FullName 'scripts/probe.mjs') -Value 'export const x = 1;'
+            Set-Content -Path (Join-Path $dir.FullName 'scripts/probe.spec.mjs') -Value 'import assert from "node:assert";'
+            $result = Test-NodeSkillConfig -SkillPath $dir.FullName -RelativePath 'node-spec-loose'
+            $result.Errors | Should -HaveCount 0
+            $result.Warnings[0] | Should -BeLike '*tests/ directory*'
+        }
+
+        It 'Passes when .mjs modules have a tests/ unit test' {
+            $dir = New-TestSkillDirectory -SkillName 'node-tested' -OptionalDirs @('scripts', 'tests') -FrontmatterContent @"
+---
+name: node-tested
+description: 'tested node'
+---
+# Test
+"@
+            Set-Content -Path (Join-Path $dir.FullName 'scripts/probe.mjs') -Value 'export const x = 1;'
+            Set-Content -Path (Join-Path $dir.FullName 'tests/probe.test.mjs') -Value 'import assert from "node:assert";'
+            $result = Test-NodeSkillConfig -SkillPath $dir.FullName -RelativePath 'node-tested'
+            $result.Errors | Should -HaveCount 0
+            $result.Warnings | Should -HaveCount 0
+        }
+
+        It 'Warns when a *.test.mjs exists outside a tests/ directory' {
+            $dir = New-TestSkillDirectory -SkillName 'node-loose' -OptionalDirs @('scripts') -FrontmatterContent @"
+---
+name: node-loose
+description: 'loose test'
+---
+# Test
+"@
+            Set-Content -Path (Join-Path $dir.FullName 'scripts/probe.mjs') -Value 'export const x = 1;'
+            Set-Content -Path (Join-Path $dir.FullName 'scripts/probe.test.mjs') -Value 'import assert from "node:assert";'
+            $result = Test-NodeSkillConfig -SkillPath $dir.FullName -RelativePath 'node-loose'
+            $result.Errors | Should -HaveCount 0
+            $result.Warnings | Should -Not -BeNullOrEmpty
+            $result.Warnings[0] | Should -BeLike '*tests/ directory*'
+        }
+
+        It 'Ignores a scripts directory containing only test modules' {
+            $dir = New-TestSkillDirectory -SkillName 'node-testonly' -OptionalDirs @('scripts') -FrontmatterContent @"
+---
+name: node-testonly
+description: 'test only'
+---
+# Test
+"@
+            Set-Content -Path (Join-Path $dir.FullName 'scripts/only.test.mjs') -Value 'import assert from "node:assert";'
+            $result = Test-NodeSkillConfig -SkillPath $dir.FullName -RelativePath 'node-testonly'
+            $result.Errors | Should -HaveCount 0
+        }
+    }
+
+    Context 'Test-SkillDirectory integration' {
+        It 'Passes a Node skill with .mjs modules and a matching test' {
+            $dir = New-TestSkillDirectory -SkillName 'node-skill' -OptionalDirs @('scripts', 'tests') -FrontmatterContent @"
+---
+name: node-skill
+description: 'A node skill'
+---
+# Test
+"@
+            Set-Content -Path (Join-Path $dir.FullName 'scripts/probe.mjs') -Value 'export const x = 1;'
+            Set-Content -Path (Join-Path $dir.FullName 'tests/probe.test.mjs') -Value 'import assert from "node:assert";'
+            $result = Test-SkillDirectory -Directory $dir -RepoRoot $script:NodeTestDir
+            $result.IsValid | Should -BeTrue
+            $result.Errors | Should -HaveCount 0
+        }
+
+        It 'Fails a Node skill that ships .mjs modules without tests' {
+            $dir = New-TestSkillDirectory -SkillName 'node-skill-untested' -OptionalDirs @('scripts') -FrontmatterContent @"
+---
+name: node-skill-untested
+description: 'A node skill'
+---
+# Test
+"@
+            Set-Content -Path (Join-Path $dir.FullName 'scripts/probe.mjs') -Value 'export const x = 1;'
+            $result = Test-SkillDirectory -Directory $dir -RepoRoot $script:NodeTestDir
+            $result.IsValid | Should -BeFalse
+            ($result.Errors -join "`n") | Should -BeLike '*unit tests*'
+        }
+
+        It 'Passes a Node skill with a .cjs module and a .test.cjs test' {
+            $dir = New-TestSkillDirectory -SkillName 'node-cjs-skill' -OptionalDirs @('scripts', 'tests') -FrontmatterContent @"
+---
+name: node-cjs-skill
+description: 'A node skill'
+---
+# Test
+"@
+            Set-Content -Path (Join-Path $dir.FullName 'scripts/lib.cjs') -Value 'module.exports = 1;'
+            Set-Content -Path (Join-Path $dir.FullName 'tests/lib.test.cjs') -Value 'const assert = require("node:assert");'
+            $result = Test-SkillDirectory -Directory $dir -RepoRoot $script:NodeTestDir
+            $result.IsValid | Should -BeTrue
+            $result.Errors | Should -HaveCount 0
+        }
+    }
+}
+
 Describe 'Python Skill Validation' -Tag 'Unit' {
     BeforeAll {
         $script:PythonTestDir = Join-Path $script:TempTestDir 'python-tests'
