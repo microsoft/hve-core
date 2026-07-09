@@ -6,7 +6,7 @@ compatibility: 'Requires FFmpeg on PATH'
 metadata:
   authors: "microsoft/hve-core"
   spec_version: "1.0"
-  last_updated: "2026-07-06"
+  last_updated: "2026-07-09"
 ---
 
 # Demo Video Assembly Skill
@@ -62,11 +62,20 @@ The assembly step accepts the following high-level controls:
 * `--resolution` or `-Resolution` controls the output width and height in the form `WIDTHxHEIGHT`
 * `duration` per segment lets you override the inferred length when narration timing is known in advance
 
+## Narration Quality
+
+Narration quality is the single biggest driver of how polished the final video feels. Prioritize neural voices from **Azure AI Speech (part of Azure AI Foundry)** through the `tts-voiceover` skill for any video you intend to share.
+
+* **Recommended:** Use the `tts-voiceover` skill backed by Azure AI Speech neural voices (for example `en-US-Andrew:DragonHDLatestNeural` or `en-US-Jenny:DragonHDLatestNeural`). These produce natural, presentation-grade narration and are the default for shareable output.
+* **Fallback only:** Offline open-source engines such as `espeak-ng` require no credentials but sound noticeably robotic. Treat them as a no-network smoke-test fallback, not a delivery format. Regenerate narration with Azure AI Speech before publishing.
+
+See the `tts-voiceover` skill for the neural voice catalog, `--voice` and `--rate` controls, and Azure authentication (Entra ID or key).
+
 ## Reuse Bridge
 
 This skill is intentionally designed to fit into the existing media workflow:
 
-* `tts-voiceover` provides the narration WAV files that this skill muxes into the final output
+* `tts-voiceover` provides the narration WAV files that this skill muxes into the final output; prefer its Azure AI Speech neural voices for production-quality narration
 * `vscode-playwright` provides the frame-capture source for prototype walkthroughs and screen-based demos
 
 ## Prerequisites
