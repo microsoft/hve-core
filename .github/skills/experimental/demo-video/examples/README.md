@@ -11,7 +11,7 @@ keywords:
 estimated_reading_time: 2
 ---
 
-# Demo Video Example Assets
+## Demo Video Example Assets
 
 This example manifest is designed to run with small fixture files that are kept out of source control. Create the following files locally before running the wrapper:
 

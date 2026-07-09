@@ -2,7 +2,7 @@
 # Copyright (c) 2026 Microsoft Corporation. All rights reserved.
 # SPDX-License-Identifier: MIT
 
-<#!
+<#
 .SYNOPSIS
     Pester tests for the demo-video PowerShell wrapper.
 .DESCRIPTION
@@ -12,7 +12,8 @@
 BeforeAll {
     $script:RepoRoot = git rev-parse --show-toplevel 2>$null
     if (-not $script:RepoRoot) {
-        $script:RepoRoot = Split-Path (Split-Path (Split-Path $PSScriptRoot))
+        # tests -> demo-video -> experimental -> skills -> .github -> repo root
+        $script:RepoRoot = Split-Path (Split-Path (Split-Path (Split-Path (Split-Path $PSScriptRoot))))
     }
     $script:WrapperPath = Join-Path $script:RepoRoot '.github/skills/experimental/demo-video/scripts/Invoke-AssembleVideo.ps1'
 }

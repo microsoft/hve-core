@@ -42,7 +42,7 @@ segments:
 
 ## Quick Start
 
-Use the planned bash or PowerShell wrappers to invoke the assembler from the skill directory.
+Use the bash or PowerShell wrappers to invoke the assembler from the skill directory.
 
 ```bash
 scripts/assemble-video.sh --manifest examples/segments.yml --output ./output/demo.mp4

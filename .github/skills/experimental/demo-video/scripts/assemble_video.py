@@ -12,6 +12,7 @@ with the narration audio track.
 from __future__ import annotations
 
 import argparse
+import logging
 import shutil
 import subprocess
 import sys
@@ -66,8 +67,6 @@ def create_parser() -> argparse.ArgumentParser:
 
 def configure_logging(verbose: bool = False) -> None:
     """Configure logging based on verbosity level."""
-    import logging
-
     level = logging.DEBUG if verbose else logging.INFO
     logging.basicConfig(level=level, format="%(levelname)s: %(message)s")
 
@@ -97,7 +96,7 @@ def _read_manifest(path: Path) -> dict[str, Any]:
 
 
 def _validate_manifest(
-    data: dict[str, Any], manifest_path: Path
+    data: dict[str, Any],
 ) -> tuple[dict[str, Any], list[dict[str, Any]]]:
     """Validate manifest structure and return normalized values."""
     allowed_top_level_keys = {"output", "resolution", "fps", "segments"}
@@ -341,6 +340,7 @@ def _render_segment(
 
 def _run_ffmpeg(command: list[str]) -> None:
     """Run an FFmpeg command and raise a clear error on failure."""
+    logging.debug("Running FFmpeg: %s", " ".join(command))
     result = subprocess.run(command, capture_output=True, text=True, check=False)
     if result.returncode != 0:
         stderr = (
@@ -361,7 +361,7 @@ def assemble_video(
     ffmpeg_path = _require_command("ffmpeg")
 
     manifest_data = _read_manifest(manifest_path)
-    config, segments = _validate_manifest(manifest_data, manifest_path)
+    config, segments = _validate_manifest(manifest_data)
 
     manifest_dir = manifest_path.parent.resolve()
     output_config = config.get("output")
@@ -406,6 +406,9 @@ def assemble_video(
                 duration = _probe_duration(narration_path)
             else:
                 duration = segment["duration"]
+            logging.debug(
+                "Rendering segment #%d (duration=%.3fs)", index, float(duration)
+            )
 
             normalized_path = temp_dir / f"segment-{index:02d}.mp4"
             segment_data = dict(segment)
@@ -475,9 +478,6 @@ def main() -> int:
         return EXIT_ERROR
     except FileNotFoundError as exc:
         print(f"Error: {exc}", file=sys.stderr)
-        return EXIT_FAILURE
-    except subprocess.CalledProcessError as exc:
-        print(f"Error: FFmpeg exited with code {exc.returncode}", file=sys.stderr)
         return EXIT_FAILURE
     except Exception as exc:  # pragma: no cover - defensive top-level fallback
         print(f"Error: {exc}", file=sys.stderr)

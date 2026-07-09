@@ -1,11 +1,11 @@
 #!/usr/bin/env pwsh
 # Copyright (c) 2026 Microsoft Corporation. All rights reserved.
 # SPDX-License-Identifier: MIT
-#Requires -Version 7.0
 #
 # Invoke-AssembleVideo.ps1
 # Wrapper for assemble_video.py that resolves the skill's Python environment
 # and delegates FFmpeg video assembly.
+#Requires -Version 7.4
 
 <#
 .SYNOPSIS
@@ -54,7 +54,7 @@ $VenvDir = Join-Path $SkillRoot '.venv'
 
 function Test-UvAvailability {
     if (-not (Get-Command -Name 'uv' -ErrorAction SilentlyContinue)) {
-        throw "uv is required but was not found on PATH. Install with: curl -LsSf https://astral.sh/uv/install.sh | sh"
+        throw "uv is required but was not found on PATH. See https://docs.astral.sh/uv/getting-started/installation/ (for example: 'winget install astral-sh.uv' on Windows, or 'curl -LsSf https://astral.sh/uv/install.sh | sh' on Linux/macOS)."
     }
 }
 
