@@ -49,9 +49,9 @@ copilot plugin install rpi@hve-core
 
 ## Instructions
 
-| Instruction                   | Description                                                                                                       |
-|-------------------------------|-------------------------------------------------------------------------------------------------------------------|
-| copilot-tracking.instructions | Shared .copilot-tracking conventions for RPI, HVE Builder, prompt comparison, and compatibility workflow evidence |
+| Instruction                   | Description                                                                                    |
+|-------------------------------|------------------------------------------------------------------------------------------------|
+| copilot-tracking.instructions | Shared .copilot-tracking conventions for RPI, HVE Builder, and compatibility workflow evidence |
 
 ## Skills
 

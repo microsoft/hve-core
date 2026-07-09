@@ -21,10 +21,10 @@ A black-box scenario exercises the target through its documented interface, usin
 
 Every run records one fidelity:
 
-| Fidelity | What runs | Claims the evidence supports |
-|---|---|---|
+| Fidelity     | What runs                                                                                                                          | Claims the evidence supports                                                                            |
+|--------------|------------------------------------------------------------------------------------------------------------------------------------|---------------------------------------------------------------------------------------------------------|
 | `simulation` | `HVE Artifact Tester` reads the target and follows it literally in a contained sandbox, emulating unavailable or unsafe dispatches | Contract interpretation, instruction clarity, handoff consistency, and expected tool-selection behavior |
-| `native` | The registered target agent, subagent, or semantically activated skill receives the black-box scenario directly | Observed activation, tool selection, outputs, and stop behavior for that run and model profile |
+| `native`     | The registered target agent, subagent, or semantically activated skill receives the black-box scenario directly                    | Observed activation, tool selection, outputs, and stop behavior for that run and model profile          |
 
 Simulation is the safe default. Native fidelity is permitted only when all conditions hold:
 
@@ -47,13 +47,13 @@ Test only what has runtime behavior to exercise. The decision rule:
 
 The lead selects profile, fidelity, grouping, and wrapper. The Designer supplies only the black-box scenario.
 
-| Kind | Simulation dispatch | Native dispatch when eligible |
-|---|---|---|
-| skill | `HVE Artifact Tester` with a skill pointer and sandbox wrapper | Generic subagent invocation whose task semantically activates the named skill |
-| prompt | `HVE Artifact Tester` with a prompt pointer and sandbox wrapper | Host prompt invocation only when the harness exposes it; otherwise unavailable |
-| instructions | `HVE Artifact Tester` with a simulated matching-path context | Host-created matching-path context only when enforced containment exists; otherwise unavailable |
-| agent | `HVE Artifact Tester` with an agent pointer and sandbox wrapper | Dispatch the registered agent by `name` |
-| subagent | `HVE Artifact Tester` with a subagent pointer and sandbox wrapper | Dispatch the registered subagent by `name` |
+| Kind         | Simulation dispatch                                               | Native dispatch when eligible                                                                   |
+|--------------|-------------------------------------------------------------------|-------------------------------------------------------------------------------------------------|
+| skill        | `HVE Artifact Tester` with a skill pointer and sandbox wrapper    | Generic subagent invocation whose task semantically activates the named skill                   |
+| prompt       | `HVE Artifact Tester` with a prompt pointer and sandbox wrapper   | Host prompt invocation only when the harness exposes it; otherwise unavailable                  |
+| instructions | `HVE Artifact Tester` with a simulated matching-path context      | Host-created matching-path context only when enforced containment exists; otherwise unavailable |
+| agent        | `HVE Artifact Tester` with an agent pointer and sandbox wrapper   | Dispatch the registered agent by `name`                                                         |
+| subagent     | `HVE Artifact Tester` with a subagent pointer and sandbox wrapper | Dispatch the registered subagent by `name`                                                      |
 
 For simulation, the wrapper says which target to read, where side effects may occur, which profile is in use, and which scenario to follow. For native execution, the target receives the scenario and containment boundary but not the artifact path, internal headings, or expected answer.
 

@@ -17,10 +17,10 @@
 
 Captured from the deep subagent review before explanation. One row per planned segment.
 
-| Segment | Reference (path and lines or section) | What it does | Why it is this way | Evidence |
-|---------|---------------------------------------|--------------|--------------------|----------|
-| 1 | {{path/to/file.ext:L10-L24}} | {{behavior}} | {{rationale}} | {{path or note}} |
-| 2 | {{path/to/file.ext:L30}} | {{behavior}} | {{rationale}} | {{path or note}} |
+| Segment | Reference (path and lines or section) | What it does | Why it is this way | Evidence         |
+|---------|---------------------------------------|--------------|--------------------|------------------|
+| 1       | {{path/to/file.ext:L10-L24}}          | {{behavior}} | {{rationale}}      | {{path or note}} |
+| 2       | {{path/to/file.ext:L30}}              | {{behavior}} | {{rationale}}      | {{path or note}} |
 
 ## Segment plan
 

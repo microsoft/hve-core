@@ -16,14 +16,14 @@ Grader identifiers below use the Vally CLI 0.4.0 catalog (`semantic_similarity`,
 
 ## Contract Summary
 
-| Topic                              | Section in hve-builder.instructions.md |
-|------------------------------------|----------------------------------------|
+| Topic                              | Section in hve-builder.instructions.md                   |
+|------------------------------------|----------------------------------------------------------|
 | Frontmatter and applyTo glob       | Frontmatter Requirements; File Types > Instruction Files |
-| Scope and applicability statement  | File Types > Instruction Files |
-| Core conventions as bulleted rules | Writing Style |
-| Code examples in fenced blocks     | Writing Style |
-| Patterns to avoid                  | Stale Patterns to Retire |
-| Validation tooling references      | File Types > Instruction Files |
+| Scope and applicability statement  | File Types > Instruction Files                           |
+| Core conventions as bulleted rules | Writing Style                                            |
+| Code examples in fenced blocks     | Writing Style                                            |
+| Patterns to avoid                  | Stale Patterns to Retire                                 |
+| Validation tooling references      | File Types > Instruction Files                           |
 
 ## Conformance Checks
 

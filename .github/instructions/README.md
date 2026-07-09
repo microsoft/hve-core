@@ -51,12 +51,12 @@ See [Contributing Instructions](../../docs/contributing/instructions.md) for aut
 
 ### Documentation and Content
 
-| File                                                                               | Applies To                                            | Purpose                               |
-|------------------------------------------------------------------------------------|-------------------------------------------------------|---------------------------------------|
-| [hve-core/markdown.instructions.md](hve-core/markdown.instructions.md)             | `**/*.md`                                             | Markdown formatting standards         |
-| [hve-core/writing-style.instructions.md](hve-core/writing-style.instructions.md)   | `**/*.md`                                             | Voice, tone, and language conventions |
-| [hve-core/hve-builder.instructions.md](hve-core/hve-builder.instructions.md)       | `**/*.prompt.md, **/*.agent.md, **/*.instructions.md, **/SKILL.md` | HVE artifact authoring standards      |
-| [docusaurus-edits.instructions.md](docusaurus-edits.instructions.md)               | `docs/**`                                             | Docusaurus documentation authoring    |
+| File                                                                             | Applies To                                                         | Purpose                               |
+|----------------------------------------------------------------------------------|--------------------------------------------------------------------|---------------------------------------|
+| [hve-core/markdown.instructions.md](hve-core/markdown.instructions.md)           | `**/*.md`                                                          | Markdown formatting standards         |
+| [hve-core/writing-style.instructions.md](hve-core/writing-style.instructions.md) | `**/*.md`                                                          | Voice, tone, and language conventions |
+| [hve-core/hve-builder.instructions.md](hve-core/hve-builder.instructions.md)     | `**/*.prompt.md, **/*.agent.md, **/*.instructions.md, **/SKILL.md` | HVE artifact authoring standards      |
+| [docusaurus-edits.instructions.md](docusaurus-edits.instructions.md)             | `docs/**`                                                          | Docusaurus documentation authoring    |
 
 ### Git and Workflow
 

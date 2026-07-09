@@ -16,14 +16,14 @@ Grader identifiers below use the Vally CLI 0.4.0 catalog (`semantic_similarity`,
 
 ## Contract Summary
 
-| Topic                         | Section in hve-builder.instructions.md |
-|-------------------------------|----------------------------------------|
-| Frontmatter and name          | Frontmatter Requirements; File Types > Skill Files |
-| File location and portability | File Types > Skill Files |
-| Optional subdirectories       | File Types > Skill Files |
-| Content sections              | File Types > Skill Files |
+| Topic                         | Section in hve-builder.instructions.md                      |
+|-------------------------------|-------------------------------------------------------------|
+| Frontmatter and name          | Frontmatter Requirements; File Types > Skill Files          |
+| File location and portability | File Types > Skill Files                                    |
+| Optional subdirectories       | File Types > Skill Files                                    |
+| Content sections              | File Types > Skill Files                                    |
 | Progressive disclosure        | Load-Timing and Authority Routing; File Types > Skill Files |
-| Semantic invocation           | File Types > Skill Files; Choosing the Artifact Type |
+| Semantic invocation           | File Types > Skill Files; Choosing the Artifact Type        |
 
 ## Conformance Checks
 

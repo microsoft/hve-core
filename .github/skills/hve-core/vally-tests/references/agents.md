@@ -16,16 +16,16 @@ Grader identifiers below use the Vally CLI 0.4.0 catalog (`semantic_similarity`,
 
 ## Contract Summary
 
-| Topic                                 | Section in hve-builder.instructions.md |
-|---------------------------------------|----------------------------------------|
+| Topic                                 | Section in hve-builder.instructions.md             |
+|---------------------------------------|----------------------------------------------------|
 | Frontmatter and metadata              | Frontmatter Requirements; File Types > Agent Files |
-| Tool restrictions                     | File Types > Agent Files |
-| Handoff pattern                       | File Types > Agent Files |
-| Conversational vs autonomous protocol | File Types > Agent Files |
-| Subagent pattern                      | File Types > Subagents |
-| Subagent structural template          | File Types > Subagents |
-| Subagent invocation                   | Referencing Other Artifacts |
-| Phase and step heading conventions    | File Types > Agent Files |
+| Tool restrictions                     | File Types > Agent Files                           |
+| Handoff pattern                       | File Types > Agent Files                           |
+| Conversational vs autonomous protocol | File Types > Agent Files                           |
+| Subagent pattern                      | File Types > Subagents                             |
+| Subagent structural template          | File Types > Subagents                             |
+| Subagent invocation                   | Referencing Other Artifacts                        |
+| Phase and step heading conventions    | File Types > Agent Files                           |
 
 ## Conformance Checks
 

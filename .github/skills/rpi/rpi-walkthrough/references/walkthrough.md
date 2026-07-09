@@ -124,10 +124,10 @@ This shows the intended rhythm: open with the point, explain how and why in a fe
 
 The `withRetry` wrapper exists so one flaky network call does not fail the whole import. It runs the callback, and when the callback throws it waits a short, growing delay and tries again, up to three attempts, before giving up. The delay grows on purpose: instant retries against a rate-limited API tend to make an outage worse, so each attempt backs off a little further.
 
-| Reference | What to look at |
-|-----------|-----------------|
+| Reference                                    | What to look at                            |
+|----------------------------------------------|--------------------------------------------|
 | [src/net/retry.ts](src/net/retry.ts#L12-L28) | The retry loop and the backoff calculation |
-| [src/net/client.ts](src/net/client.ts#L40) | Where the import call is wrapped |
+| [src/net/client.ts](src/net/client.ts#L40)   | Where the import call is wrapped           |
 
 Then ask, through `vscode_askQuestions`, whether to go deeper on how the backoff delay is calculated or move on to how a final failure is handled.
 
@@ -135,10 +135,10 @@ Then ask, through `vscode_askQuestions`, whether to go deeper on how the backoff
 
 Present references as a compact markdown table near the bottom of the message, before the questions. Use workspace-relative markdown links with line numbers, never inline code for file names, and never combine non-contiguous lines into one link.
 
-| Reference | What to look at |
-|-----------|-----------------|
+| Reference                                    | What to look at                    |
+|----------------------------------------------|------------------------------------|
 | [path/to/file.ext](path/to/file.ext#L10-L24) | One-line description of this block |
-| [path/to/other.ext](path/to/other.ext#L5) | One-line description of this line |
+| [path/to/other.ext](path/to/other.ext#L5)    | One-line description of this line  |
 
 For a `.copilot-tracking` artifact walkthrough, link the artifact section being explained and any codebase files it references so the user can move between the decision and the code.
 
@@ -177,8 +177,8 @@ Close with a concise summary that contains:
 * The count of captured change requests.
 * A markdown table linking the walkthrough artifact and its Requested Changes section alongside the recommended next command.
 
-| Artifact | Requested Changes | Next step |
-|----------|-------------------|-----------|
+| Artifact                                                                                                                                                 | Requested Changes                                                                                                 | Next step                                                         |
+|----------------------------------------------------------------------------------------------------------------------------------------------------------|-------------------------------------------------------------------------------------------------------------------|-------------------------------------------------------------------|
 | [.copilot-tracking/walkthroughs/{{YYYY-MM-DD}}/{{task_slug}}-walkthrough.md](.copilot-tracking/walkthroughs/{{YYYY-MM-DD}}/{{task_slug}}-walkthrough.md) | [Requested Changes](.copilot-tracking/walkthroughs/{{YYYY-MM-DD}}/{{task_slug}}-walkthrough.md#requested-changes) | Run `/rpi-quick` with this artifact, or run the full RPI sequence |
 
 ## Re-entry

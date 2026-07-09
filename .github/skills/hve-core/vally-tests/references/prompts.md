@@ -16,16 +16,16 @@ Grader identifiers below use the Vally CLI 0.4.0 catalog (`semantic_similarity`,
 
 ## Contract Summary
 
-| Topic                              | Section in hve-builder.instructions.md |
-|------------------------------------|----------------------------------------|
+| Topic                              | Section in hve-builder.instructions.md              |
+|------------------------------------|-----------------------------------------------------|
 | Frontmatter and metadata           | Frontmatter Requirements; File Types > Prompt Files |
-| Agent delegation                   | File Types > Prompt Files |
+| Agent delegation                   | File Types > Prompt Files                           |
 | Input variables and argument hints | File Types > Prompt Files; Frontmatter Requirements |
-| Protocol structure                 | File Types > Agent Files |
-| Step and phase headings            | File Types > Agent Files |
-| Writing style and link format      | Writing Style |
-| Subagent invocation                | Referencing Other Artifacts |
-| Quality criteria checklist         | Quality Criteria |
+| Protocol structure                 | File Types > Agent Files                            |
+| Step and phase headings            | File Types > Agent Files                            |
+| Writing style and link format      | Writing Style                                       |
+| Subagent invocation                | Referencing Other Artifacts                         |
+| Quality criteria checklist         | Quality Criteria                                    |
 
 ## Conformance Checks
 

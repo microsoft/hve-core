@@ -12,14 +12,14 @@ Fill every `{{placeholder}}`. Update this file continuously during research, not
 
 <!-- Confirm scope before spending budget. If a required field is missing and blocks progress, ask ONE clarifying question, then proceed. Budgets are adjustable defaults, not caps. -->
 
-| Field | Value |
-|---|---|
-| Research question(s) | {{primary_question}} |
-| Codebase scope | {{repos / paths / modules in scope, or "none"}} |
-| External scope | {{domains / doc sets / "open web", or "none"}} |
-| Budget / deadline | {{max searches, max subagents, max iterations, or time box, or "defaults"}} |
-| Edits allowed during research? | no — research-only |
-| Resolved evidence root | {{.copilot-tracking/ default, or the trusted sandbox / caller-owned root used}} |
+| Field                                | Value                                                                                                              |
+|--------------------------------------|--------------------------------------------------------------------------------------------------------------------|
+| Research question(s)                 | {{primary_question}}                                                                                               |
+| Codebase scope                       | {{repos / paths / modules in scope, or "none"}}                                                                    |
+| External scope                       | {{domains / doc sets / "open web", or "none"}}                                                                     |
+| Budget / deadline                    | {{max searches, max subagents, max iterations, or time box, or "defaults"}}                                        |
+| Edits allowed during research?       | no — research-only                                                                                                 |
+| Resolved evidence root               | {{.copilot-tracking/ default, or the trusted sandbox / caller-owned root used}}                                    |
 | Known constraints / excluded sources | {{versions, licenses, sources to avoid, or research-only / no-handoff / analysis / audit / comparison boundaries}} |
 
 ## Scope and Success Criteria
@@ -44,10 +44,10 @@ Fill every `{{placeholder}}`. Update this file continuously during research, not
 <!-- Decompose the ask into answerable sub-questions ordered by dependency. Classify each to set fan-out:
 depth = one topic, multiple angles; breadth = distinct independent sub-questions; straightforward = single focused investigation, do not over-delegate. -->
 
-| # | Sub-question | Type (depth / breadth / straightforward) | Priority | Status |
-|---:|---|---|---|---|
-| Q1 | {{sub_question}} | {{type}} | {{H/M/L}} | {{open/answered/blocked}} |
-| Q2 | {{sub_question}} | {{type}} | {{H/M/L}} | {{open/answered/blocked}} |
+|  # | Sub-question     | Type (depth / breadth / straightforward) | Priority  | Status                    |
+|---:|------------------|------------------------------------------|-----------|---------------------------|
+| Q1 | {{sub_question}} | {{type}}                                 | {{H/M/L}} | {{open/answered/blocked}} |
+| Q2 | {{sub_question}} | {{type}}                                 | {{H/M/L}} | {{open/answered/blocked}} |
 
 ## Prior Knowledge Gate
 
@@ -87,17 +87,17 @@ Cite these IDs from Technical Scenarios, Open Questions, and Advisory Next Step 
 
 ### Codebase Evidence
 
-| ID | Claim / finding | Location (`path:line`) | Tool | Confidence | Notes |
-|---|---|---|---|---|---|
-| C1 | {{finding}} | {{workspace_relative_path:line}} | {{semantic / grep / read / usages}} | {{high/med/low}} | {{context}} |
+| ID | Claim / finding | Location (`path:line`)           | Tool                                | Confidence       | Notes       |
+|----|-----------------|----------------------------------|-------------------------------------|------------------|-------------|
+| C1 | {{finding}}     | {{workspace_relative_path:line}} | {{semantic / grep / read / usages}} | {{high/med/low}} | {{context}} |
 
 <!-- Group repeated code-search sweeps by search term in the Notes column when the search results materially informed the recommendation. -->
 
 ### External Evidence
 
-| ID | Claim / finding | Source (title) | URL | Retrieved | Version/date | Confidence |
-|---|---|---|---|---|---|---|
-| W1 | {{finding}} | {{title}} | {{url}} | {{YYYY-MM-DD}} | {{ver}} | {{high/med/low}} |
+| ID | Claim / finding | Source (title) | URL     | Retrieved      | Version/date | Confidence       |
+|----|-----------------|----------------|---------|----------------|--------------|------------------|
+| W1 | {{finding}}     | {{title}}      | {{url}} | {{YYYY-MM-DD}} | {{ver}}      | {{high/med/low}} |
 
 <!-- Triangulate claims that depend on external facts across >=2 credible sources; prefer primary/official sources; note conflicts below. Separate sourced fact from inference. For code-only research, leave this table empty and write "No external sources used" in the Sources section. -->
 

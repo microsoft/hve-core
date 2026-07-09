@@ -10,11 +10,11 @@ hve-builder is built to be extended by the host project it runs in. A downstream
 
 Discovery differs by artifact type. Two of the three mechanisms are automatic; the third requires hve-builder's survey-and-dispatch step.
 
-| Extension type | How hve-builder finds it | Author burden |
-|---|---|---|
-| Instruction file (`.instructions.md`) | Auto-applies when its `applyTo` glob matches the files being created or edited. | Write an `applyTo` glob that covers the target artifact paths. |
-| Skill (`SKILL.md`) | Activates on a semantic match between the request and its `description`. | Write a `description` whose trigger words match the artifact type and domain. |
-| Subagent (`.agent.md`) | Does NOT auto-load. hve-builder surveys the available agents and dispatches the matching one by `name`. | Write a routing-oriented `description` and a stable `name`, and confirm the host registers the subagent so the survey can see it. |
+| Extension type                        | How hve-builder finds it                                                                                | Author burden                                                                                                                     |
+|---------------------------------------|---------------------------------------------------------------------------------------------------------|-----------------------------------------------------------------------------------------------------------------------------------|
+| Instruction file (`.instructions.md`) | Auto-applies when its `applyTo` glob matches the files being created or edited.                         | Write an `applyTo` glob that covers the target artifact paths.                                                                    |
+| Skill (`SKILL.md`)                    | Activates on a semantic match between the request and its `description`.                                | Write a `description` whose trigger words match the artifact type and domain.                                                     |
+| Subagent (`.agent.md`)                | Does NOT auto-load. hve-builder surveys the available agents and dispatches the matching one by `name`. | Write a routing-oriented `description` and a stable `name`, and confirm the host registers the subagent so the survey can see it. |
 
 The practical consequence: instruction files and skills extend hve-builder with no change to the skill. A subagent extends hve-builder only when its description is written for routing and hve-builder's intake survey can see it, because the orchestrator reaches subagents by name rather than by reading files at a path.
 

@@ -75,7 +75,7 @@ Each phase has two entry points: the `/task-*` prompt commands (`/task-research`
 
 | Agent                 | Purpose                                                                | Key Constraint                                                |
 |-----------------------|------------------------------------------------------------------------|---------------------------------------------------------------|
-| **prompt-builder**    | Compatibility entry point for HVE Builder artifact lifecycle work      | Routes to one author-review-test-validation implementation   |
+| **prompt-builder**    | Compatibility entry point for HVE Builder artifact lifecycle work      | Routes to one author-review-test-validation implementation    |
 | **security-reviewer** | OWASP vulnerability assessment with subagent-driven verification       | Delegates all reference reading to subagents                  |
 | **code-review**       | Human-gated review orchestrator dispatching five perspective subagents | Operator confirms scope, perspectives, and depth; review-only |
 

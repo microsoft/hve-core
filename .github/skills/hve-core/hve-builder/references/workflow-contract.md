@@ -10,14 +10,14 @@ Use this reference to route an `hve-builder` request, dispatch the right workers
 
 Infer the narrowest mode that satisfies the request. Ask only when two plausible modes would grant materially different write authority.
 
-| Mode | Source write authority | Required stages | Completion intent |
-|---|---|---|---|
-| `create` | Create the approved targets and directly required support artifacts | route, author, static review, behavior test, validate | Deliver a new, usable artifact set |
-| `improve` | Edit the approved targets and directly required support artifacts | baseline review, author, static review, behavior test, validate | Improve behavior without changing the approved architecture unless the caller accepts the change |
-| `refactor` | Edit the approved targets; preserve documented behavior | baseline review, author, static review, behavior test, validate | Simplify structure while preserving the stated contract |
-| `replace` | Replace approved targets after recording their intent and migration boundary | baseline intent capture, route, author, static review, behavior test, validate | Deliver a new architecture that covers the approved old intent |
-| `review` | Read source artifacts; write review and test evidence only | static review, behavior test when runtime behavior exists | Return an independent quality verdict without source edits |
-| `validate` | Read source artifacts; write validation evidence only | validate | Run the host project's mechanical checks without source edits |
+| Mode       | Source write authority                                                       | Required stages                                                                | Completion intent                                                                                |
+|------------|------------------------------------------------------------------------------|--------------------------------------------------------------------------------|--------------------------------------------------------------------------------------------------|
+| `create`   | Create the approved targets and directly required support artifacts          | route, author, static review, behavior test, validate                          | Deliver a new, usable artifact set                                                               |
+| `improve`  | Edit the approved targets and directly required support artifacts            | baseline review, author, static review, behavior test, validate                | Improve behavior without changing the approved architecture unless the caller accepts the change |
+| `refactor` | Edit the approved targets; preserve documented behavior                      | baseline review, author, static review, behavior test, validate                | Simplify structure while preserving the stated contract                                          |
+| `replace`  | Replace approved targets after recording their intent and migration boundary | baseline intent capture, route, author, static review, behavior test, validate | Deliver a new architecture that covers the approved old intent                                   |
+| `review`   | Read source artifacts; write review and test evidence only                   | static review, behavior test when runtime behavior exists                      | Return an independent quality verdict without source edits                                       |
+| `validate` | Read source artifacts; write validation evidence only                        | validate                                                                       | Run the host project's mechanical checks without source edits                                    |
 
 A behavior test is satisfied-and-skipped only when the runtime-behavior rule in the `hve-builder-tester` skill says the target or change has no behavior to exercise. Record the reason. Validation is required for every mutating mode and for `validate`; it is optional in `review` unless the caller asks for mechanical conformance evidence.
 
@@ -38,16 +38,16 @@ Stages may run in parallel only when neither consumes the other's output. Discov
 
 Each worker has one frontmatter default. A prioritized fallback list is not a reasoning policy and is not used by this suite.
 
-| Worker | Default model | Profile | Why |
-|---|---|---|---|
-| `HVE Artifact Explorer` | GPT-5.6 Terra (copilot) | Medium | Semantic relatedness and reuse decisions span heterogeneous artifacts |
-| `HVE Artifact Author` | GPT-5.6 Terra (copilot) | Medium | Architecture-aware multi-file authoring requires trade-off judgment |
-| `HVE Artifact Reviewer` | GPT-5.6 Terra (copilot) | Medium | Independent rubric application and severity calibration require judgment |
-| `HVE Artifact Validator` | GPT-5.6 Luna (copilot) | Low | Check discovery and command execution follow a bounded mechanical protocol |
-| `HVE Artifact Test Designer` | GPT-5.6 Terra (copilot) | Medium | Black-box scenario design requires semantic coverage analysis |
-| `HVE Artifact Tester` | GPT-5.6 Luna (copilot) | Low | Literal conformance simulation is bounded and intentionally non-interpretive |
-| `HVE Artifact Test Reviewer` | GPT-5.6 Terra (copilot) | Medium | Behavior-evidence grading and coverage analysis require independent judgment |
-| `Researcher Subagent` | GPT-5.6 Terra (copilot) | Medium | Decision-critical research requires source comparison and contradiction resolution |
+| Worker                       | Default model           | Profile | Why                                                                                |
+|------------------------------|-------------------------|---------|------------------------------------------------------------------------------------|
+| `HVE Artifact Explorer`      | GPT-5.6 Terra (copilot) | Medium  | Semantic relatedness and reuse decisions span heterogeneous artifacts              |
+| `HVE Artifact Author`        | GPT-5.6 Terra (copilot) | Medium  | Architecture-aware multi-file authoring requires trade-off judgment                |
+| `HVE Artifact Reviewer`      | GPT-5.6 Terra (copilot) | Medium  | Independent rubric application and severity calibration require judgment           |
+| `HVE Artifact Validator`     | GPT-5.6 Luna (copilot)  | Low     | Check discovery and command execution follow a bounded mechanical protocol         |
+| `HVE Artifact Test Designer` | GPT-5.6 Terra (copilot) | Medium  | Black-box scenario design requires semantic coverage analysis                      |
+| `HVE Artifact Tester`        | GPT-5.6 Luna (copilot)  | Low     | Literal conformance simulation is bounded and intentionally non-interpretive       |
+| `HVE Artifact Test Reviewer` | GPT-5.6 Terra (copilot) | Medium  | Behavior-evidence grading and coverage analysis require independent judgment       |
+| `Researcher Subagent`        | GPT-5.6 Terra (copilot) | Medium  | Decision-critical research requires source comparison and contradiction resolution |
 
 The `hve-builder-tester` lead may override only `HVE Artifact Tester` from Luna to Terra when the target contract explicitly expects the Medium profile. Record the override in run state and the report. Do not override semantic workers to Luna or mechanical workers to Terra for convenience.
 
@@ -69,12 +69,12 @@ Workers report execution separately from judgment:
 
 Resolve the run once, using the first matching row from top to bottom.
 
-| Overall outcome | Condition |
-|---|---|
-| `Blocked` | Scope, safety, target identity, decision-critical clarification, or required evidence is too ambiguous to proceed responsibly |
-| `Deferred` | A required stage could not run, a required behavior verdict is Not available, or discovery or behavior execution is Partial because an unavailable capability prevents completion |
-| `Revise` | A review verdict is Revise, validation is Fail, authoring is Partial, or an actionable acceptance criterion remains unmet |
-| `Pass` | Every required stage completed or was legitimately satisfied-and-skipped, every required review verdict is Pass, validation is Pass when required, and all acceptance criteria are met |
+| Overall outcome | Condition                                                                                                                                                                              |
+|-----------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `Blocked`       | Scope, safety, target identity, decision-critical clarification, or required evidence is too ambiguous to proceed responsibly                                                          |
+| `Deferred`      | A required stage could not run, a required behavior verdict is Not available, or discovery or behavior execution is Partial because an unavailable capability prevents completion      |
+| `Revise`        | A review verdict is Revise, validation is Fail, authoring is Partial, or an actionable acceptance criterion remains unmet                                                              |
+| `Pass`          | Every required stage completed or was legitimately satisfied-and-skipped, every required review verdict is Pass, validation is Pass when required, and all acceptance criteria are met |
 
 Never convert validation failure into Pass because static prose looks correct. Never convert an unavailable stage into Pass because another stage succeeded.
 

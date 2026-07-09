@@ -10,13 +10,13 @@ The `hve-builder-tester` lead merges `HVE Artifact Test Reviewer` findings into 
 
 Every finding carries exactly one action category. These describe what the artifact's author should do in response to the behavior evidence:
 
-| Category    | Meaning                                                                          |
-|-------------|----------------------------------------------------------------------------------|
-| improvement | The artifact worked, but a change would raise its behavior quality.              |
-| adjustment  | A rule or wording behaved differently than intended and should be tuned.         |
-| deletion    | An instruction fired but added no value or caused noise, and should be removed.  |
-| correction  | The artifact produced incorrect behavior and must be fixed.                      |
-| miss        | The artifact failed to do something its contract required, a gap in coverage.    |
+| Category    | Meaning                                                                         |
+|-------------|---------------------------------------------------------------------------------|
+| improvement | The artifact worked, but a change would raise its behavior quality.             |
+| adjustment  | A rule or wording behaved differently than intended and should be tuned.        |
+| deletion    | An instruction fired but added no value or caused noise, and should be removed. |
+| correction  | The artifact produced incorrect behavior and must be fixed.                     |
+| miss        | The artifact failed to do something its contract required, a gap in coverage.   |
 
 ## Finding shape
 

@@ -10,14 +10,14 @@ Use this reference during intake to decompose the request by responsibility, cho
 
 Choose every type whose responsibility is independently necessary. Prefer skills for reusable on-demand capability and subagents for isolated work, but do not force a path-scoped convention into a skill or a user entry point into a subagent merely because of ranking.
 
-| Responsibility | Choose | Activation |
-|---|---|---|
-| Reusable workflow, domain knowledge, bundled references, templates, or scripts | Skill (`SKILL.md`) | Semantic description match or `/skill-name` |
-| Isolated, high-volume, parallel, fresh-context, mechanical, or model-specific work | Subagent (`.agent.md` under `subagents/`) | Parent dispatch by stable `name` |
-| Convention that applies whenever matching paths are edited | Instruction file (`.instructions.md`) | Automatic `applyTo` match |
-| User-selected multi-turn role or bounded autonomous workflow | Agent (`.agent.md`) | Agent picker or explicit handoff |
-| Repeatable, parameterized user entry point | Prompt (`.prompt.md`) | Slash invocation |
-| Concrete action capability | Tool | Native registration in agent frontmatter |
+| Responsibility                                                                     | Choose                                    | Activation                                  |
+|------------------------------------------------------------------------------------|-------------------------------------------|---------------------------------------------|
+| Reusable workflow, domain knowledge, bundled references, templates, or scripts     | Skill (`SKILL.md`)                        | Semantic description match or `/skill-name` |
+| Isolated, high-volume, parallel, fresh-context, mechanical, or model-specific work | Subagent (`.agent.md` under `subagents/`) | Parent dispatch by stable `name`            |
+| Convention that applies whenever matching paths are edited                         | Instruction file (`.instructions.md`)     | Automatic `applyTo` match                   |
+| User-selected multi-turn role or bounded autonomous workflow                       | Agent (`.agent.md`)                       | Agent picker or explicit handoff            |
+| Repeatable, parameterized user entry point                                         | Prompt (`.prompt.md`)                     | Slash invocation                            |
+| Concrete action capability                                                         | Tool                                      | Native registration in agent frontmatter    |
 
 When a request spans responsibilities, split it deliberately: a skill may own the workflow, subagents may isolate execution and review, an instruction file may govern matching paths, and a prompt may provide a user entry point. Confirm only splits that widen the caller's write boundary or product surface.
 

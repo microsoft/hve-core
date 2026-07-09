@@ -163,8 +163,6 @@ items:
   maturity: experimental
 - path: .github/agents/rpi/rpi-researcher.agent.md
   kind: agent
-- path: .github/agents/rpi/subagents/rpi-research-subagent.agent.md
-  kind: agent
 - path: .github/agents/security/security-planner.agent.md
   kind: agent
   maturity: experimental
@@ -644,8 +642,6 @@ items:
 - path: .github/skills/rai/rai-standards
   kind: skill
   maturity: experimental
-- path: .github/skills/rpi/better-rpi-research
-  kind: skill
 - path: .github/skills/rpi/rpi-implement
   kind: skill
 - path: .github/skills/rpi/rpi-plan

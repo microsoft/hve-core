@@ -201,15 +201,15 @@ Re-invoke the rpi-research skill when the current evidence is incomplete, when a
 
 The skill runs on Copilot in VS Code. Map research work to these tool categories; note any gap in the artifact and proceed with the closest substitute.
 
-| Category | Use for | Copilot tools |
-|---|---|---|
-| Code search (semantic) | Unknown surfaces, concepts | `semantic_search` |
-| Code search (exact) | Known strings, symbols | `grep_search` |
-| File discovery | Locate files by name or glob | `file_search`, `list_dir` |
-| File read | Read the controlling abstraction narrowly | `read_file` |
-| Symbol / usages | Map code paths and relationships | `vscode_listCodeUsages` |
-| Read-only command | Collect data, never edit | read-only `run_in_terminal` (`git log`, `git diff`, `ls`, `grep`) |
-| Web search / fetch | Current external facts, specific pages | `fetch_webpage` |
-| Repo search | Patterns from authoritative repos | `github_repo`, `github_text_search` |
-| Documentation MCP | Version-aware official docs | `microsoft_docs_search`, Context7 |
-| Subagent delegation | Parallel, independent research threads | `Researcher Subagent` via `runSubagent` or `task` |
+| Category               | Use for                                   | Copilot tools                                                     |
+|------------------------|-------------------------------------------|-------------------------------------------------------------------|
+| Code search (semantic) | Unknown surfaces, concepts                | `semantic_search`                                                 |
+| Code search (exact)    | Known strings, symbols                    | `grep_search`                                                     |
+| File discovery         | Locate files by name or glob              | `file_search`, `list_dir`                                         |
+| File read              | Read the controlling abstraction narrowly | `read_file`                                                       |
+| Symbol / usages        | Map code paths and relationships          | `vscode_listCodeUsages`                                           |
+| Read-only command      | Collect data, never edit                  | read-only `run_in_terminal` (`git log`, `git diff`, `ls`, `grep`) |
+| Web search / fetch     | Current external facts, specific pages    | `fetch_webpage`                                                   |
+| Repo search            | Patterns from authoritative repos         | `github_repo`, `github_text_search`                               |
+| Documentation MCP      | Version-aware official docs               | `microsoft_docs_search`, Context7                                 |
+| Subagent delegation    | Parallel, independent research threads    | `Researcher Subagent` via `runSubagent` or `task`                 |
