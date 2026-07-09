@@ -252,7 +252,6 @@ class TestAssembleVideo:
         with pytest.raises(assemble_video.ManifestError, match="non-empty 'segments'"):
             assemble_video._validate_manifest(
                 assemble_video._read_manifest(manifest_path),
-                manifest_path,
             )
 
     def test_given_unknown_segment_key_when_validate_manifest_then_raises(
@@ -269,7 +268,6 @@ class TestAssembleVideo:
         with pytest.raises(assemble_video.ManifestError, match="unsupported keys"):
             assemble_video._validate_manifest(
                 assemble_video._read_manifest(manifest_path),
-                manifest_path,
             )
 
     def test_given_subprocess_run_when_ffmpeg_command_then_uses_list_args_without_shell(

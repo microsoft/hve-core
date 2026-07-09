@@ -40,7 +40,7 @@ def fuzz_manifest_validator(data):
     try:
         with suppress(Exception):
             manifest_data = _read_manifest(tmp_path)
-            _validate_manifest(manifest_data, tmp_path)
+            _validate_manifest(manifest_data)
     finally:
         tmp_path.unlink(missing_ok=True)
 
@@ -71,7 +71,6 @@ class TestFuzzManifestValidator:
 
         config, segments = _validate_manifest(
             _read_manifest(manifest_path),
-            manifest_path,
         )
 
         assert config["output"] == "demo.mp4"
@@ -85,7 +84,7 @@ class TestFuzzManifestValidator:
         manifest_path.write_text("segments: []\n", encoding="utf-8")
 
         with pytest.raises(ManifestError, match="non-empty 'segments'"):
-            _validate_manifest(_read_manifest(manifest_path), manifest_path)
+            _validate_manifest(_read_manifest(manifest_path))
 
 
 if __name__ == "__main__" and FUZZING:
