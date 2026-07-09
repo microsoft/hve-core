@@ -198,7 +198,7 @@ stimuli:
       - type: output-matches
         name: scope-language
         config:
-          pattern: '(?i)(demo|video|narrat|mp4|segment)'
+          pattern: '(?i)(demo|video|narration|narrated|mp4|segment)'
   - name: skill-demo-video-tool-trigger
     prompt: |
       I have ordered prototype frames plus per-segment narration WAV files and
@@ -213,11 +213,11 @@ stimuli:
       - type: output-matches
         name: skill-domain-attribution
         config:
-          pattern: '(?i)(demo[-\s]video|assemble|narrat|mp4|ffmpeg)'
+          pattern: '(?i)(demo[-\s]video|assemble|narration|narrated|mp4|ffmpeg)'
       - type: output-matches
         name: scope-language
         config:
-          pattern: '(?i)(video|narrat|mp4|segment)'
+          pattern: '(?i)(video|narration|narrated|mp4|segment)'
   - name: skill-demo-video-bleed-detection
     prompt: |
       I need to convert an existing MP4 screencast into an optimized animated
