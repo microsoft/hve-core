@@ -37,12 +37,12 @@ You enter Review after completing implementation work in [Stage 6: Implementatio
 
 ### Supporting Agents
 
-| Tool                     | Type  | How to Invoke                             | Purpose                                     |
-|--------------------------|-------|-------------------------------------------|---------------------------------------------|
-| rpi-validator            | Agent | Select **rpi-validator** agent            | Validate RPI workflow compliance            |
-| implementation-validator | Agent | Select **implementation-validator** agent | Check implementation against specifications |
-| Prompt Builder           | Agent | Select **Prompt Builder** agent           | Test prompt engineering artifacts through the HVE Builder review lifecycle |
-| Prompt Builder           | Agent | Select **Prompt Builder** agent and use `/prompt-analyze` | Evaluate prompt quality and effectiveness   |
+| Tool                     | Type  | How to Invoke                                             | Purpose                                                                    |
+|--------------------------|-------|-----------------------------------------------------------|----------------------------------------------------------------------------|
+| rpi-validator            | Agent | Select **rpi-validator** agent                            | Validate RPI workflow compliance                                           |
+| implementation-validator | Agent | Select **implementation-validator** agent                 | Check implementation against specifications                                |
+| Prompt Builder           | Agent | Select **Prompt Builder** agent                           | Test prompt engineering artifacts through the HVE Builder review lifecycle |
+| Prompt Builder           | Agent | Select **Prompt Builder** agent and use `/prompt-analyze` | Evaluate prompt quality and effectiveness                                  |
 
 ### Prompts and Instructions
 

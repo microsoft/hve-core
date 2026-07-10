@@ -38,16 +38,16 @@ Stages may run in parallel only when neither consumes the other's output. Discov
 
 The HVE Builder workers intentionally pin responsibility-based profiles, so their frontmatter carries each profile's full ordered availability-fallback list and prose names the first model as primary. This suite-specific pinning does not make `model:` mandatory elsewhere. An omitted subagent model inherits the invoking parent's model; an omitted directly invoked agent or prompt model uses the current session selection.
 
-| Worker                       | Primary model            | Profile | Why                                                                                |
-|------------------------------|--------------------------|---------|------------------------------------------------------------------------------------|
-| `HVE Artifact Explorer`      | GPT-5.6 Terra (copilot)  | Medium  | Semantic relatedness and reuse decisions span heterogeneous artifacts              |
-| `HVE Artifact Author`        | GPT-5.6 Terra (copilot)  | Medium  | Architecture-aware multi-file authoring requires trade-off judgment                |
-| `HVE Artifact Reviewer`      | GPT-5.6 Terra (copilot)  | Medium  | Independent rubric application and severity calibration require judgment           |
-| `HVE Artifact Validator`     | GPT-5.6 Luna (copilot)   | Low     | Check discovery and command execution follow a bounded mechanical protocol         |
-| `HVE Artifact Test Designer` | GPT-5.6 Terra (copilot)  | Medium  | Black-box scenario design requires semantic coverage analysis                      |
-| `HVE Artifact Tester`        | GPT-5.6 Luna (copilot)   | Low     | Literal conformance simulation is bounded and intentionally non-interpretive       |
-| `HVE Artifact Test Reviewer` | GPT-5.6 Terra (copilot)  | Medium  | Behavior-evidence grading and coverage analysis require independent judgment       |
-| `Researcher Subagent`        | GPT-5.6 Terra (copilot)  | Medium  | Decision-critical research requires source comparison and contradiction resolution |
+| Worker                       | Primary model           | Profile | Why                                                                                |
+|------------------------------|-------------------------|---------|------------------------------------------------------------------------------------|
+| `HVE Artifact Explorer`      | GPT-5.6 Terra (copilot) | Medium  | Semantic relatedness and reuse decisions span heterogeneous artifacts              |
+| `HVE Artifact Author`        | GPT-5.6 Terra (copilot) | Medium  | Architecture-aware multi-file authoring requires trade-off judgment                |
+| `HVE Artifact Reviewer`      | GPT-5.6 Terra (copilot) | Medium  | Independent rubric application and severity calibration require judgment           |
+| `HVE Artifact Validator`     | GPT-5.6 Luna (copilot)  | Low     | Check discovery and command execution follow a bounded mechanical protocol         |
+| `HVE Artifact Test Designer` | GPT-5.6 Terra (copilot) | Medium  | Black-box scenario design requires semantic coverage analysis                      |
+| `HVE Artifact Tester`        | GPT-5.6 Luna (copilot)  | Low     | Literal conformance simulation is bounded and intentionally non-interpretive       |
+| `HVE Artifact Test Reviewer` | GPT-5.6 Terra (copilot) | Medium  | Behavior-evidence grading and coverage analysis require independent judgment       |
+| `Researcher Subagent`        | GPT-5.6 Terra (copilot) | Medium  | Decision-critical research requires source comparison and contradiction resolution |
 
 Canonical profile lists:
 
