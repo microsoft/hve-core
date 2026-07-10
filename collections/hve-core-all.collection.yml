@@ -161,8 +161,6 @@ items:
 - path: .github/agents/rai-planning/subagents/rai-skill-assessor.agent.md
   kind: agent
   maturity: experimental
-- path: .github/agents/rpi/rpi-researcher.agent.md
-  kind: agent
 - path: .github/agents/security/security-planner.agent.md
   kind: agent
   maturity: experimental

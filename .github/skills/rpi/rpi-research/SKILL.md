@@ -6,7 +6,7 @@ license: MIT
 user-invocable: true
 ---
 
-# RPI Researcher
+# rpi-research
 
 Follow the shared conventions in `copilot-tracking.instructions.md`.
 
@@ -79,6 +79,6 @@ When the caller requests research-only, no handoff, analysis, audit, or comparis
 
 ## Final Response
 
-Return a concise, evidence-first summary that opens with a `## 🔬 RPI Researcher: [Topic]` header and covers the research artifact path, the selected approach and rationale, rejected alternatives, key evidence with workspace-relative paths, open questions, risks, and residual uncertainty, constraint status (including that planning and implementation were avoided), artifact self-check status, and the advisory `/rpi-plan` next step or an explicit no-planning reason. Close with the summary table (Research Artifact / Selected Approach / Key Discoveries / Alternatives Evaluated / Open Questions / Advisory Next Step). See [references/research.md](references/research.md) for the canonical Final Response Contract.
+Return a concise, evidence-first summary that opens with a `## 🔬 rpi-research: [Topic]` header and covers the research artifact path, the selected approach and rationale, rejected alternatives, key evidence with workspace-relative paths, open questions, risks, and residual uncertainty, constraint status (including that planning and implementation were avoided), artifact self-check status, and the advisory `/rpi-plan` next step or an explicit no-planning reason. Close with the summary table (Research Artifact / Selected Approach / Key Discoveries / Alternatives Evaluated / Open Questions / Advisory Next Step). See [references/research.md](references/research.md) for the canonical Final Response Contract.
 
 

@@ -11,7 +11,7 @@ This suite covers every user-invocable hve-core agent with at least one function
 
 The complement to [baseline-equivalence](../baseline-equivalence/README.md) is intentional: baseline-equivalence asserts the customization layer does not alter underlying model behavior beyond documented divergences, while agent-behavior asserts each agent actually performs its declared job.
 
-The suite is organized around five behavioral classes (research-writer, code-reviewer, code-implementor, workitem-manager, planner-coach). Every parent agent belongs to exactly one class, and class membership selects the stimulus shape and grader template used in [stimuli/](stimuli/). The parent-agent table below is the authoritative class assignment; [AGENTS.yml](AGENTS.yml) records all 72 enrolled agents, including 24 subagents.
+The suite is organized around five behavioral classes (research-writer, code-reviewer, code-implementor, workitem-manager, planner-coach). Every parent agent belongs to exactly one class, and class membership selects the stimulus shape and grader template used in [stimuli/](stimuli/). The parent-agent table below is the authoritative class assignment; [AGENTS.yml](AGENTS.yml) records all 71 enrolled agents, including 24 subagents.
 
 ## Layout
 
@@ -21,7 +21,7 @@ evals/agent-behavior/
 ├── AGENTS.yml          # authoritative inventory (slug, path, class, cost_tier)
 ├── eval.yaml           # generated executable spec - do not edit by hand
 └── stimuli/
-    └── <agent-slug>.yml  # one partial per inventoried agent (72 files)
+    └── <agent-slug>.yml  # one partial per inventoried agent (71 files)
 ```
 
 The partials in [stimuli/](stimuli/) are the source of truth for stimuli. The top-level [eval.yaml](eval.yaml) is regenerated from those partials by [scripts/evals/Build-AgentBehaviorSpec.ps1](../../scripts/evals/Build-AgentBehaviorSpec.ps1). The inventory at [AGENTS.yml](AGENTS.yml) is regenerated from the agent frontmatter on disk by [scripts/evals/Build-AgentInventory.ps1](../../scripts/evals/Build-AgentInventory.ps1) and the agent-behavior generator only reads slugs whose partials exist in [stimuli/](stimuli/).
@@ -103,7 +103,7 @@ When authoring or updating a planner-coach stimulus, copy the canonical pattern 
 
 Agents that investigate topics, analyze data, or produce structured documents as their primary output.
 
-**Members (9):** task-researcher, rpi-researcher, adr-creation, brd-builder, meeting-analyst, network-isa95-planner, prd-builder, system-architecture-reviewer, ux-ui-designer
+**Members (8):** task-researcher, adr-creation, brd-builder, meeting-analyst, network-isa95-planner, prd-builder, system-architecture-reviewer, ux-ui-designer
 
 **Required Graders:**
 
@@ -382,7 +382,6 @@ The inventory lists every user-invocable hve-core parent agent and its class ass
 | rai-planner                  | planner-coach    | light     | [.github/agents/rai-planning/rai-planner.agent.md](../../.github/agents/rai-planning/rai-planner.agent.md)                                           |
 | rai-reviewer                 | code-reviewer    | light     | [.github/agents/rai-planning/rai-reviewer.agent.md](../../.github/agents/rai-planning/rai-reviewer.agent.md)                                         |
 | rpi-agent                    | planner-coach    | light     | [.github/agents/hve-core/rpi-agent.agent.md](../../.github/agents/hve-core/rpi-agent.agent.md)                                                       |
-| rpi-researcher               | research-writer  | light     | [.github/agents/rpi/rpi-researcher.agent.md](../../.github/agents/rpi/rpi-researcher.agent.md)                                                       |
 | security-planner             | planner-coach    | light     | [.github/agents/security/security-planner.agent.md](../../.github/agents/security/security-planner.agent.md)                                         |
 | security-reviewer            | code-reviewer    | light     | [.github/agents/security/security-reviewer.agent.md](../../.github/agents/security/security-reviewer.agent.md)                                       |
 | sssc-planner                 | planner-coach    | light     | [.github/agents/security/sssc-planner.agent.md](../../.github/agents/security/sssc-planner.agent.md)                                                 |
@@ -397,7 +396,7 @@ The inventory lists every user-invocable hve-core parent agent and its class ass
 | test-streamlit-dashboard     | code-implementor | light     | [.github/agents/data-science/test-streamlit-dashboard.agent.md](../../.github/agents/data-science/test-streamlit-dashboard.agent.md)                 |
 | ux-ui-designer               | research-writer  | light     | [.github/agents/project-planning/ux-ui-designer.agent.md](../../.github/agents/project-planning/ux-ui-designer.agent.md)                             |
 
-The inventory totals 72 agents: 48 parent agents plus 24 enrolled subagents whose stimulus partials exist in [stimuli/](stimuli/). Subagents without a matching stimulus partial remain excluded from the matrix run set and are documented separately in the inventory generator and related eval research.
+The inventory totals 71 agents: 47 parent agents plus 24 enrolled subagents whose stimulus partials exist in [stimuli/](stimuli/). Subagents without a matching stimulus partial remain excluded from the matrix run set and are documented separately in the inventory generator and related eval research.
 
 ## Related Suites
 

@@ -21,7 +21,7 @@ items:
     kind: skill
   - path: .github/skills/rpi/rpi-walkthrough
     kind: skill
-  - path: .github/agents/rpi/rpi-researcher.agent.md
+  - path: .github/agents/hve-core/task-researcher.agent.md
     kind: agent
   - path: .github/agents/hve-core/subagents/researcher-subagent.agent.md
     kind: agent

@@ -1,10 +1,10 @@
 # RPI Skills
 
-This collection packages the RPI Researcher agent and skill-forward RPI entry points for research, planning, implementation, review, and guided walkthroughs.
+This collection packages the `rpi-research` skill, Task Researcher, and skill-forward RPI entry points for research, planning, implementation, review, and guided walkthroughs.
 
 ## Local enablement
 
-For local testing in VS Code, enable the RPI skill folder, RPI agent folder, and existing subagent folder in your workspace settings:
+For local testing in VS Code, enable the RPI skill folder, Task Researcher agent folder, and existing subagent folder in your workspace settings:
 
 ```json
 {
@@ -12,7 +12,7 @@ For local testing in VS Code, enable the RPI skill folder, RPI agent folder, and
     ".github/skills/rpi": true
   },
   "chat.agentFilesLocations": {
-    ".github/agents/rpi": true,
+    ".github/agents/hve-core": true,
     ".github/agents/hve-core/subagents": true
   }
 }

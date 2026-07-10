@@ -5,11 +5,11 @@ Skill-forward Research, Plan, Implement, and Review entry points with an umbrell
 
 ## Overview
 
-This collection packages the RPI Researcher agent and skill-forward RPI entry points for research, planning, implementation, review, and guided walkthroughs.
+This collection packages the `rpi-research` skill, Task Researcher, and skill-forward RPI entry points for research, planning, implementation, review, and guided walkthroughs.
 
 ## Local enablement
 
-For local testing in VS Code, enable the RPI skill folder, RPI agent folder, and existing subagent folder in your workspace settings:
+For local testing in VS Code, enable the RPI skill folder, Task Researcher agent folder, and existing subagent folder in your workspace settings:
 
 ```json
 {
@@ -17,7 +17,7 @@ For local testing in VS Code, enable the RPI skill folder, RPI agent folder, and
     ".github/skills/rpi": true
   },
   "chat.agentFilesLocations": {
-    ".github/agents/rpi": true,
+    ".github/agents/hve-core": true,
     ".github/agents/hve-core/subagents": true
   }
 }
@@ -40,7 +40,7 @@ copilot plugin install rpi@hve-core
 
 | Agent                    | Description                                                                                                                              |
 |--------------------------|------------------------------------------------------------------------------------------------------------------------------------------|
-| rpi-researcher           | Research-only RPI specialist for evidence-backed task analysis and planning-ready research briefs                                        |
+| task-researcher          | Task research specialist for comprehensive project analysis                                                                              |
 | researcher-subagent      | Research subagent using search, read, web-fetch, GitHub repo, and MCP tools                                                              |
 | plan-validator           | Validates implementation plans against research documents with severity-graded findings                                                  |
 | phase-implementor        | Executes a single implementation phase from a plan with full codebase access and change tracking                                         |

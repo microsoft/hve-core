@@ -1,8 +1,8 @@
 ---
-description: "Research methodology, template, and protocol for the RPI Researcher skill"
+description: "Research methodology, template, and protocol for the rpi-research skill"
 ---
 
-# RPI Researcher Reference
+# rpi-research reference
 
 Use this reference when the research phase needs a planning-ready document. It covers the research methodology, the template section guidance, the delegation protocol, and the tool-category reference.
 
@@ -182,7 +182,7 @@ The template includes these planning-ready sections.
 
 Return a concise, evidence-first response with:
 
-* Open with a `## 🔬 RPI Researcher: [Topic]` header.
+* Open with a `## 🔬 rpi-research: [Topic]` header.
 * Research artifact path.
 * Selected approach and rationale.
 * Rejected alternatives or lower-ranked options.

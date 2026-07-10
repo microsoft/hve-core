@@ -1578,42 +1578,6 @@ stimuli:
     config:
       pattern: (?i)(created|wrote|modified|edited|patched|added)\s+\S{0,40}(\.cs|\.py|\.ts|\.js|package\.json)
       negate: true
-- name: rpi-researcher-produces-research-brief
-  prompt: |
-    You are operating in an isolated sandbox with no repository checked out and
-    no subagents available. Do not attempt to clone, create, or set up a
-    repository, and do not delegate to subagents. Using only the notes below,
-    produce a concise, evidence-first research brief.
-
-    Notes to synthesize:
-    - `npm run lint:md` validates Markdown formatting.
-    - `npm run lint:frontmatter` validates YAML frontmatter.
-    - `npm run eval:lint:schema` validates eval specifications.
-
-    Explain which checks apply to a new agent Markdown file, write the research
-    brief under `.copilot-tracking/research/`, and report the path. Keep this
-    research-only and do not invoke planning or implementation.
-  tags:
-    category: agent-behavior
-    agent: rpi-researcher
-  graders:
-  - type: output-matches
-    name: structured-research-brief
-    config:
-      pattern: (?i)(summary|finding|recommendation|research|brief)
-  - type: output-matches
-    name: tracking-file-write
-    config:
-      pattern: (?i)\.copilot-tracking[-/\\]research
-  - type: output-matches
-    name: topic-coverage
-    config:
-      pattern: (?i)(markdown|frontmatter|eval|schema|validate)
-  - type: output-matches
-    name: no-source-edit
-    config:
-      pattern: (?i)(created|wrote|modified|edited|patched|added)\s+\S{0,40}(\.cs|\.py|\.ts|\.js|\.go|\.rs|\.java)
-      negate: true
 - name: rpi-validator-phase-scope
   prompt: |
     Validate phase 3 of the plan at `.copilot-tracking/plans/example.md`

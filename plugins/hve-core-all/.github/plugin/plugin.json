@@ -21,7 +21,6 @@
     "agents/project-planning/subagents/",
     "agents/rai-planning/",
     "agents/rai-planning/subagents/",
-    "agents/rpi/",
     "agents/security/",
     "agents/security/subagents/"
   ],
