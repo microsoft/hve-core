@@ -208,6 +208,26 @@ Describe 'Merge-ModelData' -Tag 'Unit' {
             $result[0].tier | Should -Be 'standard'
         }
     }
+
+    Context 'provider and current profile metadata' {
+        It 'Maps MAI models to Microsoft' {
+            $release = @(@{ name = 'MAI-Code-1-Flash'; release_status = 'GA' })
+            $mult = @(@{ model = 'MAI-Code-1-Flash'; new_multiplier = 0.25 })
+            $result = @(Merge-ModelData -ReleaseStatus $release -Multipliers $mult)
+            $result[0].provider | Should -Be 'Microsoft'
+        }
+
+        It 'Derives the canonical Claude Opus 4.8 metadata' {
+            $release = @(@{ name = 'Claude Opus 4.8'; release_status = 'GA' })
+            $mult = @(@{ model = 'Claude Opus 4.8'; new_multiplier = 27 })
+            $result = @(Merge-ModelData -ReleaseStatus $release -Multipliers $mult)
+            $result[0].name | Should -Be 'Claude Opus 4.8 (copilot)'
+            $result[0].tier | Should -Be 'ultra'
+            $result[0].multiplier | Should -Be 27
+            $result[0].status | Should -Be 'ga'
+            $result[0].provider | Should -Be 'Anthropic'
+        }
+    }
 }
 
 #endregion Merge-ModelData Tests
@@ -326,6 +346,43 @@ Describe 'Compare-Catalogs' -Tag 'Unit' {
             $result.changed | Should -HaveCount 0
         }
     }
+
+    Context 'when derivable metadata changes' {
+        It 'Reports tier, status, or provider changes even when multiplier is stable' {
+            $current = @(
+                [PSCustomObject]@{
+                    name = 'MAI-Code-1-Flash (copilot)'; tier = 'standard'; multiplier = 0.25
+                    status = 'preview'; provider = 'Unknown'
+                }
+            )
+            $discovered = @(
+                [PSCustomObject]@{
+                    name = 'MAI-Code-1-Flash (copilot)'; tier = 'fast'; multiplier = 0.25
+                    status = 'ga'; provider = 'Microsoft'
+                }
+            )
+            $result = Compare-Catalogs -Current $current -Discovered $discovered
+            $result.changed | Should -HaveCount 1
+            $result.changed[0].discovered.provider | Should -Be 'Microsoft'
+        }
+
+        It 'Reports a rediscovered retiring record so retiredDate can be removed' {
+            $current = @(
+                [PSCustomObject]@{
+                    name = 'Model A (copilot)'; tier = 'standard'; multiplier = 1
+                    status = 'retiring'; provider = 'Unknown'; retiredDate = '2026-08-01'
+                }
+            )
+            $discovered = @(
+                [PSCustomObject]@{
+                    name = 'Model A (copilot)'; tier = 'standard'; multiplier = 1
+                    status = 'ga'; provider = 'Unknown'
+                }
+            )
+            $result = Compare-Catalogs -Current $current -Discovered $discovered
+            $result.changed | Should -HaveCount 1
+        }
+    }
 }
 
 #endregion Compare-Catalogs Tests
@@ -386,6 +443,13 @@ Describe 'Invoke-ModelCatalogUpdate' -Tag 'Unit' {
             $written = Get-Content $script:NewCatalogPath -Raw | ConvertFrom-Json
             $written.lastUpdated | Should -Not -BeNullOrEmpty
         }
+
+        It 'Allows every provider used by canonical profiles' {
+            $written = Get-Content $script:NewCatalogPath -Raw | ConvertFrom-Json
+            $written.providerAllowlist | Should -Contain 'Anthropic'
+            $written.providerAllowlist | Should -Contain 'OpenAI'
+            $written.providerAllowlist | Should -Contain 'Microsoft'
+        }
     }
 
     Context 'when catalog exists with no changes' {
@@ -395,7 +459,7 @@ Describe 'Invoke-ModelCatalogUpdate' -Tag 'Unit' {
                 lastUpdated = '2026-01-01'
                 source      = 'https://example.com'
                 models      = @(
-                    @{ name = 'Model A (copilot)'; tier = 'standard'; multiplier = 1; status = 'ga' }
+                    @{ name = 'Model A (copilot)'; tier = 'standard'; multiplier = 1; status = 'ga'; provider = 'Unknown' }
                 )
             }
             $existingCatalog | ConvertTo-Json -Depth 5 | Set-Content -Path $script:UnchangedPath -Encoding utf8
@@ -423,7 +487,7 @@ Describe 'Invoke-ModelCatalogUpdate' -Tag 'Unit' {
                 lastUpdated = '2026-01-01'
                 source      = 'https://example.com'
                 models      = @(
-                    @{ name = 'Model A (copilot)'; tier = 'standard'; multiplier = 1; status = 'ga' }
+                    @{ name = 'Model A (copilot)'; tier = 'standard'; multiplier = 1; status = 'ga'; provider = 'Unknown' }
                 )
             }
             $existingCatalog | ConvertTo-Json -Depth 5 | Set-Content -Path $script:AddedPath -Encoding utf8
@@ -461,8 +525,8 @@ Describe 'Invoke-ModelCatalogUpdate' -Tag 'Unit' {
                 lastUpdated = '2026-01-01'
                 source      = 'https://example.com'
                 models      = @(
-                    @{ name = 'Model A (copilot)'; tier = 'standard'; multiplier = 1; status = 'ga' }
-                    @{ name = 'Model B (copilot)'; tier = 'premium'; multiplier = 3; status = 'ga' }
+                    @{ name = 'Model A (copilot)'; tier = 'standard'; multiplier = 1; status = 'ga'; provider = 'Unknown' }
+                    @{ name = 'Model B (copilot)'; tier = 'premium'; multiplier = 3; status = 'ga'; provider = 'Unknown' }
                 )
             }
             $existingCatalog | ConvertTo-Json -Depth 5 | Set-Content -Path $script:RemovedPath -Encoding utf8
@@ -499,6 +563,14 @@ Describe 'Invoke-ModelCatalogUpdate' -Tag 'Unit' {
             }
             $retiring.tier | Should -Be 'premium'
             $retiring.multiplier | Should -Be 3
+        }
+
+        It 'Preserves provider on retiring model' {
+            $retiring = $script:RemovedResult.finalModels | Where-Object {
+                if ($_ -is [hashtable]) { $_['name'] -eq 'Model B (copilot)' }
+                else { $_.name -eq 'Model B (copilot)' }
+            }
+            $retiring.provider | Should -Be 'Unknown'
         }
 
         It 'Sets retiredDate as future date on removed model' {
@@ -548,6 +620,40 @@ Describe 'Invoke-ModelCatalogUpdate' -Tag 'Unit' {
         }
     }
 
+    Context 'when an existing record has stale metadata' {
+        BeforeAll {
+            $script:MetadataPath = Join-Path $script:CatalogDir 'metadata-catalog.json'
+            $existingCatalog = @{
+                lastUpdated = '2026-01-01'
+                source      = 'https://example.com'
+                models      = @(
+                    @{
+                        name = 'MAI-Code-1-Flash (copilot)'; tier = 'standard'; multiplier = 0.25
+                        status = 'retiring'; retiredDate = '2026-08-01'; provider = 'Unknown'
+                    }
+                )
+            }
+            $existingCatalog | ConvertTo-Json -Depth 5 | Set-Content -Path $script:MetadataPath -Encoding utf8
+
+            $release = @(@{ name = 'MAI-Code-1-Flash'; release_status = 'GA' })
+            $mult = @(@{ model = 'MAI-Code-1-Flash'; new_multiplier = 0.25 })
+            $script:MetadataResult = Invoke-ModelCatalogUpdate -ReleaseStatus $release -Multipliers $mult -CatalogPath $script:MetadataPath
+        }
+
+        It 'Refreshes all derivable fields for the existing record' {
+            $model = $script:MetadataResult.finalModels[0]
+            $model.tier | Should -Be 'fast'
+            $model.status | Should -Be 'ga'
+            $model.provider | Should -Be 'Microsoft'
+            $model.multiplier | Should -Be 0.25
+        }
+
+        It 'Removes stale retiredDate from a rediscovered record' {
+            $model = $script:MetadataResult.finalModels[0]
+            $model.Keys | Should -Not -Contain 'retiredDate'
+        }
+    }
+
     Context 'when DryRun is specified' {
         BeforeAll {
             $script:DryRunPath = Join-Path $script:CatalogDir 'dryrun-catalog.json'
@@ -594,7 +700,7 @@ Describe 'Invoke-ModelCatalogUpdate' -Tag 'Unit' {
                 lastUpdated = '2026-01-01'
                 source      = 'https://example.com'
                 models      = @(
-                    @{ name = 'Model A (copilot)'; tier = 'standard'; multiplier = 1; status = 'ga' }
+                    @{ name = 'Model A (copilot)'; tier = 'standard'; multiplier = 1; status = 'ga'; provider = 'Unknown' }
                 )
             }
             $existingCatalog | ConvertTo-Json -Depth 5 | Set-Content -Path $script:DryRunNoChangePath -Encoding utf8

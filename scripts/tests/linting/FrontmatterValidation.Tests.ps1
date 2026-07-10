@@ -21,13 +21,13 @@ BeforeAll {
     # Get module reference for class instantiation in module scope
     # This avoids parse-time caching issues with 'using module'
     $script:FVModule = Get-Module FrontmatterValidation
-    
+
     # Helper functions for new classes (instantiate in module scope)
     function script:New-FileValidationResult {
         param([string]$FilePath)
         & $script:FVModule { param($fp) [FileValidationResult]::new($fp) } $FilePath
     }
-    
+
     function script:New-ValidationSummary {
         & $script:FVModule { [ValidationSummary]::new() }
     }
@@ -48,7 +48,7 @@ BeforeAll {
     function script:New-ValidationIssueEmpty {
         & $script:FVModule { [ValidationIssue]::new() }
     }
-    
+
     function script:New-FileTypeInfo {
         param([hashtable]$Properties)
         & $script:FVModule {
@@ -804,6 +804,164 @@ Describe 'Test-GitHubResourceFileFields' -Tag 'Unit' {
             $issues = Test-GitHubResourceFileFields -Frontmatter $frontmatter -RelativePath '.github/prompts/test.prompt.md' -FileTypeInfo $script:PromptInfo
 
             $issues.Count | Should -Be 0
+        }
+    }
+}
+
+#endregion
+
+#region Agent Identity Reference Tests
+
+Describe 'Agent identity references' -Tag 'Unit' {
+    BeforeAll {
+        $script:IdentityAgentInfo = New-FileTypeInfo -Properties @{ IsAgent = $true; IsGitHub = $true }
+        $script:IdentityPromptInfo = New-FileTypeInfo -Properties @{ IsPrompt = $true; IsGitHub = $true }
+        $script:KnownAgentNames = @('Task Planner', 'Researcher Subagent')
+    }
+
+    Context 'prompt targets' {
+        It 'Accepts built-in prompt agent modes' {
+            foreach ($target in @('ask', 'edit', 'agent')) {
+                $issues = Test-AgentIdentityReferences -Frontmatter @{ agent = $target } -FileTypeInfo $script:IdentityPromptInfo -RelativePath '.github/prompts/test.prompt.md' -RegisteredAgentNames $script:KnownAgentNames
+                $issues | Should -BeNullOrEmpty
+            }
+        }
+
+        It 'Accepts a registered custom agent name' {
+            $issues = Test-AgentIdentityReferences -Frontmatter @{ agent = 'Task Planner' } -FileTypeInfo $script:IdentityPromptInfo -RelativePath '.github/prompts/test.prompt.md' -RegisteredAgentNames $script:KnownAgentNames
+
+            $issues | Should -BeNullOrEmpty
+        }
+
+        It 'Rejects an unresolved custom agent target' {
+            $issues = Test-AgentIdentityReferences -Frontmatter @{ agent = 'task-planner' } -FileTypeInfo $script:IdentityPromptInfo -RelativePath '.github/prompts/test.prompt.md' -RegisteredAgentNames $script:KnownAgentNames
+
+            $issues | Should -HaveCount 1
+            $issues[0].Field | Should -Be 'agent'
+            $issues[0].Message | Should -Match 'Unknown prompt agent'
+        }
+    }
+
+    Context 'agent targets' {
+        It 'Accepts fixed subagents and handoffs by registered name' {
+            $frontmatter = @{
+                agents   = @('Researcher Subagent')
+                handoffs = @(
+                    @{ label = 'Plan'; agent = 'Task Planner' }
+                )
+            }
+
+            $issues = Test-AgentIdentityReferences -Frontmatter $frontmatter -FileTypeInfo $script:IdentityAgentInfo -RelativePath '.github/agents/test.agent.md' -RegisteredAgentNames $script:KnownAgentNames
+
+            $issues | Should -BeNullOrEmpty
+        }
+
+        It 'Rejects unresolved fixed subagent and handoff targets' {
+            $frontmatter = @{
+                agents   = @('researcher-subagent')
+                handoffs = @(
+                    @{ label = 'Plan'; agent = 'task-planner' }
+                )
+            }
+
+            $issues = Test-AgentIdentityReferences -Frontmatter $frontmatter -FileTypeInfo $script:IdentityAgentInfo -RelativePath '.github/agents/test.agent.md' -RegisteredAgentNames $script:KnownAgentNames
+
+            $issues | Should -HaveCount 2
+            $issues.Field | Should -Contain 'agents[0]'
+            $issues.Field | Should -Contain 'handoffs[0].agent'
+        }
+    }
+
+    Context 'repository discovery' {
+        It 'Discovers names and validates prompt references through orchestration' {
+            $repoRoot = Join-Path $TestDrive 'agent-reference-repo'
+            $agentsDir = Join-Path $repoRoot '.github/agents'
+            $promptsDir = Join-Path $repoRoot '.github/prompts'
+            New-Item -ItemType Directory -Path $agentsDir -Force | Out-Null
+            New-Item -ItemType Directory -Path $promptsDir -Force | Out-Null
+
+            $agentPath = Join-Path $agentsDir 'task-planner.agent.md'
+            @"
+---
+name: Task Planner
+description: Plans implementation work
+---
+
+# Task Planner
+"@ | Set-Content -Path $agentPath -Encoding utf8
+
+            $promptPath = Join-Path $promptsDir 'plan.prompt.md'
+            @"
+---
+description: Plans work
+agent: Task Planner
+---
+
+# Plan
+"@ | Set-Content -Path $promptPath -Encoding utf8
+
+            $summary = Invoke-FrontmatterValidation -Files @($agentPath, $promptPath) -RepoRoot $repoRoot -SkipFooterValidation
+
+            $summary.TotalErrors | Should -Be 0
+        }
+
+        It 'Reports an unresolved prompt target through orchestration' {
+            $repoRoot = Join-Path $TestDrive 'unknown-agent-reference-repo'
+            $agentsDir = Join-Path $repoRoot '.github/agents'
+            $promptsDir = Join-Path $repoRoot '.github/prompts'
+            New-Item -ItemType Directory -Path $agentsDir -Force | Out-Null
+            New-Item -ItemType Directory -Path $promptsDir -Force | Out-Null
+
+            @"
+---
+name: Task Planner
+description: Plans implementation work
+---
+
+# Task Planner
+"@ | Set-Content -Path (Join-Path $agentsDir 'task-planner.agent.md') -Encoding utf8
+
+            $promptPath = Join-Path $promptsDir 'plan.prompt.md'
+            @"
+---
+description: Plans work
+agent: task-planner
+---
+
+# Plan
+"@ | Set-Content -Path $promptPath -Encoding utf8
+
+            $summary = Invoke-FrontmatterValidation -Files @($promptPath) -RepoRoot $repoRoot -SkipFooterValidation
+            $issue = $summary.Results[0].Issues | Where-Object { $_.Field -eq 'agent' }
+
+            $summary.TotalErrors | Should -Be 1
+            $issue.Message | Should -Match 'Unknown prompt agent'
+        }
+
+        It 'Reports duplicate registered agent names on every conflicting file' {
+            $repoRoot = Join-Path $TestDrive 'duplicate-agent-name-repo'
+            $agentsDir = Join-Path $repoRoot '.github/agents'
+            New-Item -ItemType Directory -Path $agentsDir -Force | Out-Null
+
+            $agentA = Join-Path $agentsDir 'first.agent.md'
+            $agentB = Join-Path $agentsDir 'second.agent.md'
+            foreach ($agentPath in @($agentA, $agentB)) {
+                @"
+---
+name: Duplicate Agent
+description: Duplicate-name fixture
+---
+
+# Duplicate Agent
+"@ | Set-Content -Path $agentPath -Encoding utf8
+            }
+
+            $summary = Invoke-FrontmatterValidation -Files @($agentA, $agentB) -RepoRoot $repoRoot -SkipFooterValidation
+            $nameIssues = @($summary.Results | ForEach-Object { $_.Issues } | Where-Object { $_.Field -eq 'name' })
+
+            $summary.TotalErrors | Should -Be 2
+            $nameIssues | Should -HaveCount 2
+            $nameIssues.Message | ForEach-Object { $_ | Should -Match 'Duplicate agent name' }
         }
     }
 }

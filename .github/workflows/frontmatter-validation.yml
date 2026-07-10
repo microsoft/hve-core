@@ -6,30 +6,30 @@ on:
   workflow_call:
     inputs:
       soft-fail:
-        description: 'Whether to continue on frontmatter validation errors'
+        description: "Whether to continue on frontmatter validation errors"
         required: false
         type: boolean
         default: false
       changed-files-only:
-        description: 'Only validate changed markdown files'
+        description: "Only validate changed markdown files"
         required: false
         type: boolean
         default: true
       skip-footer-validation:
-        description: 'Skip Copilot footer validation'
+        description: "Skip Copilot footer validation"
         required: false
         type: boolean
         default: false
       warnings-as-errors:
-        description: 'Treat warnings as errors'
+        description: "Treat warnings as errors"
         required: false
         type: boolean
         default: true
       footer-exclude-paths:
-        description: 'Comma-separated list of file patterns to exclude from footer validation (overrides script defaults)'
+        description: "Comma-separated list of file patterns to exclude from footer validation (overrides script defaults)"
         required: false
         type: string
-        default: ''
+        default: ""
 
 permissions:
   contents: read
@@ -58,8 +58,10 @@ jobs:
       - name: Run Frontmatter Validation
         shell: pwsh
         run: |
-          $params = @{}
-          
+          $params = @{
+            EnableSchemaValidation = $true
+          }
+
           if ('${{ inputs.changed-files-only }}' -eq 'true') {
             $params['ChangedFilesOnly'] = $true
           }
@@ -69,13 +71,13 @@ jobs:
           if ('${{ inputs.warnings-as-errors }}' -eq 'true') {
             $params['WarningsAsErrors'] = $true
           }
-          
+
           # Pass footer exclude paths if provided (overrides script defaults)
           $footerExcludeInput = '${{ inputs.footer-exclude-paths }}'
           if ($footerExcludeInput -and $footerExcludeInput -ne '') {
             $params['FooterExcludePaths'] = $footerExcludeInput -split ',' | ForEach-Object { $_.Trim() }
           }
-          
+
           & scripts/linting/Validate-MarkdownFrontmatter.ps1 @params
         continue-on-error: true
 

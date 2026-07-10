@@ -10,8 +10,9 @@
 
 .DESCRIPTION
     Scans all .agent.md and .prompt.md files for model frontmatter references and
-    validates them against scripts/linting/model-catalog.json. Reports unrecognized
-    models and models with retiring status.
+    validates them against scripts/linting/model-catalog.json. Authored declarations
+    must use one exact ordered High, Medium, or Low profile. Reports invalid profiles,
+    unrecognized models, and models with retiring status.
 
 .PARAMETER OutputPath
     Path for the JSON results file.
@@ -104,6 +105,48 @@ function Get-ModelReferences {
     return @($modelValue.ToString())
 }
 
+function Test-CanonicalModelProfile {
+    <#
+    .SYNOPSIS
+    Tests whether a model value is one exact canonical ordered profile.
+
+    .PARAMETER ModelValue
+    Parsed model frontmatter value.
+
+    .OUTPUTS
+    [bool] True when the value matches one canonical profile exactly.
+    #>
+    [CmdletBinding()]
+    [OutputType([bool])]
+    param(
+        [Parameter(Mandatory = $true)]
+        [AllowNull()]
+        [AllowEmptyCollection()]
+        [object]$ModelValue
+    )
+
+    if ($ModelValue -is [string] -or $ModelValue -is [System.Collections.IDictionary] -or
+        $ModelValue -isnot [System.Collections.IEnumerable]) {
+        return $false
+    }
+
+    $models = @($ModelValue | ForEach-Object { $_.ToString() })
+    $profiles = @(
+        @('GPT-5.6 Sol (copilot)', 'Claude Opus 4.8 (copilot)', 'GPT-5.5 (copilot)'),
+        @('GPT-5.6 Terra (copilot)', 'Claude Sonnet 5 (copilot)', 'MAI-Code-1-Flash (copilot)'),
+        @('GPT-5.6 Luna (copilot)', 'MAI-Code-1-Flash (copilot)', 'Claude Haiku 4.5 (copilot)')
+    )
+
+    foreach ($candidateProfile in $profiles) {
+        if ($models.Count -eq $candidateProfile.Count -and
+            ($models -join "`0") -ceq ($candidateProfile -join "`0")) {
+            return $true
+        }
+    }
+
+    return $false
+}
+
 #endregion Functions
 
 #region Main
@@ -173,14 +216,25 @@ function Invoke-ModelReferenceValidation {
             continue
         }
 
-        $models = Get-ModelReferences -Frontmatter $frontmatter
-        if ($models.Count -eq 0) {
+        if (-not $frontmatter.ContainsKey('model')) {
             continue
         }
 
+        $modelValue = $frontmatter['model']
         $filesWithModels++
         $fileStatus = 'valid'
         $fileModels = @()
+        $models = @(Get-ModelReferences -Frontmatter $frontmatter)
+
+        if (-not (Test-CanonicalModelProfile -ModelValue $modelValue)) {
+            $fileStatus = 'invalid'
+            $invalidReferences++
+            $errors += @{
+                file    = $relativePath
+                model   = ($models -join ', ')
+                message = "Invalid model declaration. Use exactly one ordered canonical profile: High [GPT-5.6 Sol, Claude Opus 4.8, GPT-5.5], Medium [GPT-5.6 Terra, Claude Sonnet 5, MAI-Code-1-Flash], or Low [GPT-5.6 Luna, MAI-Code-1-Flash, Claude Haiku 4.5], with '(copilot)' suffixes."
+            }
+        }
 
         foreach ($modelName in $models) {
             $totalReferences++
@@ -283,7 +337,7 @@ function Write-ModelReferenceOutput {
     if ($ValidationResult.retiringReferences -gt 0) {
         Write-Host "  Retiring references: $($ValidationResult.retiringReferences)" -ForegroundColor Yellow
     }
-    if ($ValidationResult.invalidReferences -gt 0) {
+    if ($ValidationResult.errors.Count -gt 0) {
         Write-Host "  Invalid references: $($ValidationResult.invalidReferences)" -ForegroundColor Red
         foreach ($err in $ValidationResult.errors) {
             Write-Host "    ERROR: $($err.file) - $($err.message)" -ForegroundColor Red
@@ -295,7 +349,7 @@ function Write-ModelReferenceOutput {
 
     Write-Host "`nResults written to: $OutputPath"
 
-    if ($ValidationResult.invalidReferences -gt 0) {
+    if ($ValidationResult.errors.Count -gt 0) {
         return 1
     }
     return 0

@@ -627,7 +627,7 @@ Describe 'Test-JsonSchemaValidation' -Tag 'Unit' {
                 required   = @('description')
                 properties = @{
                     description = @{ type = 'string'; minLength = 1 }
-                    tags        = @{ 
+                    tags        = @{
                         type  = 'array'
                         items = @{ type = 'string' }
                         enum  = @('stable', 'preview', 'deprecated')
@@ -770,10 +770,8 @@ Describe 'Test-JsonSchemaValidation' -Tag 'Unit' {
                 properties = @{
                     description = @{ type = 'string'; minLength = 1 }
                     agents      = @{
-                        oneOf = @(
-                            @{ type = 'array'; items = @{ type = 'string' } },
-                            @{ type = 'string'; enum = @('*') }
-                        )
+                        type  = 'array'
+                        items = @{ type = 'string'; pattern = '^(?!\*$).+$' }
                     }
                     handoffs    = @{
                         type  = 'array'
@@ -793,10 +791,9 @@ Describe 'Test-JsonSchemaValidation' -Tag 'Unit' {
             } | ConvertTo-Json -Depth 10 | ConvertFrom-Json
         }
 
-        It 'Accepts agents as * string' {
+        It 'Accepts omission of agents for unrestricted access' {
             $frontmatter = @{
                 description = 'test'
-                agents      = '*'
             }
             $result = Test-JsonSchemaValidation -Frontmatter $frontmatter -SchemaContent $script:NestedSchema
             $result.IsValid | Should -BeTrue
@@ -805,20 +802,39 @@ Describe 'Test-JsonSchemaValidation' -Tag 'Unit' {
         It 'Accepts agents as array of strings' {
             $frontmatter = @{
                 description = 'test'
-                agents      = @('task-researcher', 'task-planner')
+                agents      = @('Task Researcher', 'Task Planner')
             }
             $result = Test-JsonSchemaValidation -Frontmatter $frontmatter -SchemaContent $script:NestedSchema
             $result.IsValid | Should -BeTrue
         }
 
-        It 'Rejects agents as non-wildcard string' {
+        It 'Accepts agents as an intentional empty array' {
             $frontmatter = @{
                 description = 'test'
-                agents      = 'all'
+                agents      = @()
+            }
+            $result = Test-JsonSchemaValidation -Frontmatter $frontmatter -SchemaContent $script:NestedSchema
+            $result.IsValid | Should -BeTrue
+        }
+
+        It 'Rejects wildcard agents string' {
+            $frontmatter = @{
+                description = 'test'
+                agents      = '*'
             }
             $result = Test-JsonSchemaValidation -Frontmatter $frontmatter -SchemaContent $script:NestedSchema
             $result.IsValid | Should -BeFalse
-            $result.Errors | Where-Object { $_ -match 'must match one of the allowed schemas' } | Should -Not -BeNullOrEmpty
+            $result.Errors | Should -Contain "Field 'agents' must be an array"
+        }
+
+        It 'Rejects wildcard inside an explicit agents array' {
+            $frontmatter = @{
+                description = 'test'
+                agents      = @('*')
+            }
+            $result = Test-JsonSchemaValidation -Frontmatter $frontmatter -SchemaContent $script:NestedSchema
+            $result.IsValid | Should -BeFalse
+            $result.Errors | Where-Object { $_ -match 'agents\[0\].*pattern' } | Should -Not -BeNullOrEmpty
         }
 
         It 'Accepts handoff without prompt (prompt is optional)' {
@@ -986,6 +1002,194 @@ Describe 'Test-JsonSchemaValidation' -Tag 'Unit' {
 
 #endregion
 
+Describe 'Agent and prompt model schema policy' -Tag 'Unit' {
+    BeforeAll {
+        $script:AgentSchema = Get-Content -Path (Join-Path $script:SchemaDir 'agent-frontmatter.schema.json') -Raw | ConvertFrom-Json
+        $script:PromptSchema = Get-Content -Path (Join-Path $script:SchemaDir 'prompt-frontmatter.schema.json') -Raw | ConvertFrom-Json
+        $script:HighProfile = @(
+            'GPT-5.6 Sol (copilot)',
+            'Claude Opus 4.8 (copilot)',
+            'GPT-5.5 (copilot)'
+        )
+        $script:MediumProfile = @(
+            'GPT-5.6 Terra (copilot)',
+            'Claude Sonnet 5 (copilot)',
+            'MAI-Code-1-Flash (copilot)'
+        )
+        $script:LowProfile = @(
+            'GPT-5.6 Luna (copilot)',
+            'MAI-Code-1-Flash (copilot)',
+            'Claude Haiku 4.5 (copilot)'
+        )
+    }
+
+    It 'Accepts omitted model on agents' {
+        $result = Test-JsonSchemaValidation -Frontmatter @{ name = 'Test Agent'; description = 'test' } -SchemaContent $script:AgentSchema
+        $result.IsValid | Should -BeTrue
+    }
+
+    It 'Accepts omitted model on prompts' {
+        $result = Test-JsonSchemaValidation -Frontmatter @{ description = 'test' } -SchemaContent $script:PromptSchema
+        $result.IsValid | Should -BeTrue
+    }
+
+    It 'Accepts omitted agents on the repository agent schema' {
+        $result = Test-JsonSchemaValidation -Frontmatter @{ name = 'Test Agent'; description = 'test' } -SchemaContent $script:AgentSchema
+        $result.IsValid | Should -BeTrue
+    }
+
+    It 'Rejects an agent without a name' {
+        $result = Test-JsonSchemaValidation -Frontmatter @{ description = 'test' } -SchemaContent $script:AgentSchema
+        $result.IsValid | Should -BeFalse
+    }
+
+    It 'Accepts human-readable fixed agents on the repository agent schema' {
+        $result = Test-JsonSchemaValidation -Frontmatter @{ name = 'Test Agent'; description = 'test'; agents = @('Task Researcher', 'Task Planner') } -SchemaContent $script:AgentSchema
+        $result.IsValid | Should -BeTrue
+    }
+
+    It 'Accepts an empty fixed agents array on the repository agent schema' {
+        $result = Test-JsonSchemaValidation -Frontmatter @{ name = 'Test Agent'; description = 'test'; agents = @() } -SchemaContent $script:AgentSchema
+        $result.IsValid | Should -BeTrue
+    }
+
+    It 'Rejects a scalar wildcard agents value on the repository agent schema' {
+        $result = Test-JsonSchemaValidation -Frontmatter @{ name = 'Test Agent'; description = 'test'; agents = '*' } -SchemaContent $script:AgentSchema
+        $result.IsValid | Should -BeFalse
+    }
+
+    It 'Rejects a wildcard agents array on the repository agent schema' {
+        $result = Test-JsonSchemaValidation -Frontmatter @{ name = 'Test Agent'; description = 'test'; agents = @('*') } -SchemaContent $script:AgentSchema
+        $result.IsValid | Should -BeFalse
+    }
+
+    It 'Accepts every canonical model list on agents' {
+        foreach ($candidateProfile in @($script:HighProfile, $script:MediumProfile, $script:LowProfile)) {
+            $result = Test-JsonSchemaValidation -Frontmatter @{ name = 'Test Agent'; description = 'test'; model = $candidateProfile } -SchemaContent $script:AgentSchema
+            $result.IsValid | Should -BeTrue
+        }
+    }
+
+    It 'Accepts every canonical model list on prompts' {
+        foreach ($candidateProfile in @($script:HighProfile, $script:MediumProfile, $script:LowProfile)) {
+            $result = Test-JsonSchemaValidation -Frontmatter @{ description = 'test'; model = $candidateProfile } -SchemaContent $script:PromptSchema
+            $result.IsValid | Should -BeTrue
+        }
+    }
+
+    It 'Rejects a scalar model on agents' {
+        $result = Test-JsonSchemaValidation -Frontmatter @{ name = 'Test Agent'; description = 'test'; model = 'GPT-5.6 Luna (copilot)' } -SchemaContent $script:AgentSchema
+        $result.IsValid | Should -BeFalse
+    }
+
+    It 'Rejects a scalar model on prompts' {
+        $result = Test-JsonSchemaValidation -Frontmatter @{ description = 'test'; model = 'GPT-5.6 Luna (copilot)' } -SchemaContent $script:PromptSchema
+        $result.IsValid | Should -BeFalse
+    }
+
+    It 'Rejects a wrong-order model list on agents and prompts' {
+        $wrongOrder = @(
+            'MAI-Code-1-Flash (copilot)',
+            'GPT-5.6 Luna (copilot)',
+            'Claude Haiku 4.5 (copilot)'
+        )
+
+        foreach ($schema in @($script:AgentSchema, $script:PromptSchema)) {
+            $result = Test-JsonSchemaValidation -Frontmatter @{ description = 'test'; model = $wrongOrder } -SchemaContent $schema
+            $result.IsValid | Should -BeFalse
+        }
+    }
+
+    It 'Rejects mixed profile membership on agents and prompts' {
+        $mixedProfile = @(
+            'GPT-5.6 Luna (copilot)',
+            'Claude Sonnet 5 (copilot)',
+            'Claude Haiku 4.5 (copilot)'
+        )
+
+        foreach ($schema in @($script:AgentSchema, $script:PromptSchema)) {
+            $result = Test-JsonSchemaValidation -Frontmatter @{ description = 'test'; model = $mixedProfile } -SchemaContent $schema
+            $result.IsValid | Should -BeFalse
+        }
+    }
+
+    It 'Rejects wrong-length model lists on agents and prompts' {
+        foreach ($schema in @($script:AgentSchema, $script:PromptSchema)) {
+            $result = Test-JsonSchemaValidation -Frontmatter @{ description = 'test'; model = $script:LowProfile[0..1] } -SchemaContent $schema
+            $result.IsValid | Should -BeFalse
+
+            $tooLong = @($script:LowProfile) + 'GPT-5.5 (copilot)'
+            $result = Test-JsonSchemaValidation -Frontmatter @{ description = 'test'; model = $tooLong } -SchemaContent $schema
+            $result.IsValid | Should -BeFalse
+        }
+    }
+}
+
+Describe 'Schema validation gate enforcement' -Tag 'Unit' {
+    BeforeEach {
+        $script:GateAgentsDir = Join-Path $TestDrive '.github/agents'
+        New-Item -Path $script:GateAgentsDir -ItemType Directory -Force | Out-Null
+
+        Mock Get-SchemaForFile { return (Join-Path $script:SchemaDir 'agent-frontmatter.schema.json') }
+    }
+
+    It 'Fails when an agent omits its required name' {
+        $agentPath = Join-Path $script:GateAgentsDir 'missing-name.agent.md'
+        @"
+---
+description: Agent without a registered name
+---
+
+# Missing Name
+"@ | Set-Content -Path $agentPath -Encoding UTF8
+
+        $result = Test-FrontmatterValidation -Files @($agentPath) -EnableSchemaValidation -SkipFooterValidation
+        $schemaErrors = $result.Results | ForEach-Object { $_.Issues } | Where-Object { $_.Field -eq 'schema' }
+
+        $result.GetExitCode($false) | Should -Be 1
+        $schemaErrors.Message | Should -Contain 'JSON Schema: Missing required field: name'
+    }
+
+    It 'Fails when agents is a scalar wildcard' {
+        $agentPath = Join-Path $script:GateAgentsDir 'scalar-wildcard.agent.md'
+        @"
+---
+name: Scalar Wildcard Agent
+description: Agent with invalid scalar wildcard access
+agents: '*'
+---
+
+# Scalar Wildcard Agent
+"@ | Set-Content -Path $agentPath -Encoding UTF8
+
+        $result = Test-FrontmatterValidation -Files @($agentPath) -EnableSchemaValidation -SkipFooterValidation
+        $schemaErrors = $result.Results | ForEach-Object { $_.Issues } | Where-Object { $_.Field -eq 'schema' }
+
+        $result.GetExitCode($false) | Should -Be 1
+        ($schemaErrors.Message -join "`n") | Should -Match "Field 'agents' must be an array"
+    }
+
+    It 'Fails when an agents array contains a wildcard' {
+        $agentPath = Join-Path $script:GateAgentsDir 'array-wildcard.agent.md'
+        @"
+---
+name: Array Wildcard Agent
+description: Agent with invalid wildcard array access
+agents:
+  - '*'
+---
+
+# Array Wildcard Agent
+"@ | Set-Content -Path $agentPath -Encoding UTF8
+
+        $result = Test-FrontmatterValidation -Files @($agentPath) -EnableSchemaValidation -SkipFooterValidation
+        $schemaErrors = $result.Results | ForEach-Object { $_.Issues } | Where-Object { $_.Field -eq 'schema' }
+
+        $result.GetExitCode($false) | Should -Be 1
+        ($schemaErrors.Message -join "`n") | Should -Match "agents\[0\].*pattern"
+    }
+}
+
 
 #region Test-FrontmatterValidation Integration Tests
 
@@ -997,6 +1201,7 @@ Describe 'Test-FrontmatterValidation' -Tag 'Integration' {
 
     BeforeEach {
         New-Item -Path "$script:TestRepoRoot/docs" -ItemType Directory -Force | Out-Null
+        New-Item -Path "$script:TestRepoRoot/.github/agents" -ItemType Directory -Force | Out-Null
         New-Item -Path "$script:TestRepoRoot/.github/instructions" -ItemType Directory -Force | Out-Null
         New-Item -Path "$script:TestRepoRoot/scripts/linting/schemas" -ItemType Directory -Force | Out-Null
 
@@ -1235,17 +1440,82 @@ description: Valid test document for schema overlay
             Should -Invoke Test-JsonSchemaValidation -Times 1
         }
 
-        It 'Writes warnings when schema validation reports errors' {
+        It 'Adds schema validation errors to the summary and exit code' {
             Mock Initialize-JsonSchemaValidation { return $true }
             Mock Get-SchemaForFile { return (Join-Path $script:SchemaDir 'docs-frontmatter.schema.json') }
             Mock Test-JsonSchemaValidation {
                 return [PSCustomObject]@{ IsValid = $false; Errors = @('Missing required field: ms.date'); Warnings = @() }
             }
 
-            $null = Test-FrontmatterValidation -Files @("$script:TestRepoRoot/docs/schema-test.md") -EnableSchemaValidation -SkipFooterValidation -WarningVariable warnings 3>$null
+            $result = Test-FrontmatterValidation -Files @("$script:TestRepoRoot/docs/schema-test.md") -EnableSchemaValidation -SkipFooterValidation
 
-            $schemaWarnings = $warnings | Where-Object { $_ -match 'JSON Schema validation errors' -or $_ -match 'ms\.date' }
-            $schemaWarnings | Should -Not -BeNullOrEmpty
+            $schemaErrors = $result.Results | ForEach-Object { $_.Issues } | Where-Object { $_.Field -eq 'schema' }
+
+            $result.GetExitCode($false) | Should -Be 1
+            $result.TotalErrors | Should -Be 1
+            $schemaErrors.Message | Should -Contain 'JSON Schema: Missing required field: ms.date'
+        }
+
+        It 'Fails the gate when an agent omits its required name' {
+            $agentPath = "$script:TestRepoRoot/.github/agents/missing-name.agent.md"
+            @"
+---
+description: Agent without a registered name
+---
+
+# Missing Name
+"@ | Set-Content -Path $agentPath -Encoding UTF8
+
+            Mock Get-SchemaForFile { return (Join-Path $script:SchemaDir 'agent-frontmatter.schema.json') }
+
+            $result = Test-FrontmatterValidation -Files @($agentPath) -EnableSchemaValidation -SkipFooterValidation
+            $schemaErrors = $result.Results | ForEach-Object { $_.Issues } | Where-Object { $_.Field -eq 'schema' }
+
+            $result.GetExitCode($false) | Should -Be 1
+            $schemaErrors.Message | Should -Contain 'JSON Schema: Missing required field: name'
+        }
+
+        It 'Fails the gate for a scalar wildcard agents declaration' {
+            $agentPath = "$script:TestRepoRoot/.github/agents/scalar-wildcard.agent.md"
+            @"
+---
+name: Scalar Wildcard Agent
+description: Agent with invalid scalar wildcard access
+agents: '*'
+---
+
+# Scalar Wildcard Agent
+"@ | Set-Content -Path $agentPath -Encoding UTF8
+
+            Mock Get-SchemaForFile { return (Join-Path $script:SchemaDir 'agent-frontmatter.schema.json') }
+
+            $result = Test-FrontmatterValidation -Files @($agentPath) -EnableSchemaValidation -SkipFooterValidation
+            $schemaErrors = $result.Results | ForEach-Object { $_.Issues } | Where-Object { $_.Field -eq 'schema' }
+
+            $result.GetExitCode($false) | Should -Be 1
+            ($schemaErrors.Message -join "`n") | Should -Match "Field 'agents' must be an array"
+        }
+
+        It 'Fails the gate for a wildcard entry in an agents array' {
+            $agentPath = "$script:TestRepoRoot/.github/agents/array-wildcard.agent.md"
+            @"
+---
+name: Array Wildcard Agent
+description: Agent with invalid wildcard array access
+agents:
+  - '*'
+---
+
+# Array Wildcard Agent
+"@ | Set-Content -Path $agentPath -Encoding UTF8
+
+            Mock Get-SchemaForFile { return (Join-Path $script:SchemaDir 'agent-frontmatter.schema.json') }
+
+            $result = Test-FrontmatterValidation -Files @($agentPath) -EnableSchemaValidation -SkipFooterValidation
+            $schemaErrors = $result.Results | ForEach-Object { $_.Issues } | Where-Object { $_.Field -eq 'schema' }
+
+            $result.GetExitCode($false) | Should -Be 1
+            ($schemaErrors.Message -join "`n") | Should -Match "agents\[0\].*pattern"
         }
 
         It 'Skips schema check when file has no frontmatter' {
@@ -1525,18 +1795,18 @@ Describe 'CI Environment Integration' -Tag 'Unit' {
     Context 'Main execution error handling with GitHub Actions' {
         It 'Outputs GitHub error annotation when validation throws exception in CI' {
             $env:GITHUB_ACTIONS = 'true'
-            
+
             # Create a file that will cause validation to fail
             $errorFile = Join-Path $TestDrive 'error-test.md'
             # Create malformed content
             Set-Content $errorFile "Malformed content"
-            
+
             # Mock a critical function to throw
             Mock Test-SingleFileFrontmatter { throw 'Validation critical error' }
-            
+
             # Act
             $output = Test-FrontmatterValidation -Files @($errorFile) 2>&1 3>&1 6>&1 | ForEach-Object { [string]$_ }
-            
+
             # Assert - Should attempt to output GitHub annotation on error
             # The error annotation is in the catch block
             $hasErrorOutput = $output | Where-Object { $_ -match 'error' }
@@ -1644,7 +1914,7 @@ Describe 'Empty Input Handling' -Tag 'Unit' {
 
             # Act
             $result = Test-FrontmatterValidation -Paths @($excludeDir) -ExcludePaths @('**/node_modules/**')
-            
+
             # Assert
             $result.TotalFiles | Should -Be 0
         }

@@ -174,6 +174,60 @@ Describe 'Get-ModelReferences' -Tag 'Unit' {
 
 #endregion
 
+Describe 'Test-CanonicalModelProfile' -Tag 'Unit' {
+    It 'Accepts the High profile' {
+        Test-CanonicalModelProfile -ModelValue @(
+            'GPT-5.6 Sol (copilot)',
+            'Claude Opus 4.8 (copilot)',
+            'GPT-5.5 (copilot)'
+        ) | Should -BeTrue
+    }
+
+    It 'Accepts the Medium profile' {
+        Test-CanonicalModelProfile -ModelValue @(
+            'GPT-5.6 Terra (copilot)',
+            'Claude Sonnet 5 (copilot)',
+            'MAI-Code-1-Flash (copilot)'
+        ) | Should -BeTrue
+    }
+
+    It 'Accepts the Low profile' {
+        Test-CanonicalModelProfile -ModelValue @(
+            'GPT-5.6 Luna (copilot)',
+            'MAI-Code-1-Flash (copilot)',
+            'Claude Haiku 4.5 (copilot)'
+        ) | Should -BeTrue
+    }
+
+    It 'Rejects a scalar model' {
+        Test-CanonicalModelProfile -ModelValue 'GPT-5.6 Luna (copilot)' | Should -BeFalse
+    }
+
+    It 'Rejects an explicit null model' {
+        Test-CanonicalModelProfile -ModelValue $null | Should -BeFalse
+    }
+
+    It 'Rejects an empty model list' {
+        Test-CanonicalModelProfile -ModelValue @() | Should -BeFalse
+    }
+
+    It 'Rejects a profile in the wrong order' {
+        Test-CanonicalModelProfile -ModelValue @(
+            'MAI-Code-1-Flash (copilot)',
+            'GPT-5.6 Luna (copilot)',
+            'Claude Haiku 4.5 (copilot)'
+        ) | Should -BeFalse
+    }
+
+    It 'Rejects mixed profile membership' {
+        Test-CanonicalModelProfile -ModelValue @(
+            'GPT-5.6 Luna (copilot)',
+            'Claude Sonnet 5 (copilot)',
+            'Claude Haiku 4.5 (copilot)'
+        ) | Should -BeFalse
+    }
+}
+
 #region Invoke-ModelReferenceValidation Tests
 
 Describe 'Invoke-ModelReferenceValidation' -Tag 'Unit' {
@@ -204,9 +258,14 @@ Describe 'Invoke-ModelReferenceValidation' -Tag 'Unit' {
                 lastUpdated = '2026-05-06'
                 source      = 'https://example.com'
                 models      = @(
+                    @{ name = 'GPT-5.6 Sol (copilot)'; tier = 'ultra'; multiplier = 30; status = 'ga' }
+                    @{ name = 'Claude Opus 4.8 (copilot)'; tier = 'ultra'; multiplier = 27; status = 'ga' }
+                    @{ name = 'GPT-5.5 (copilot)'; tier = 'premium'; multiplier = 1; status = 'ga' }
+                    @{ name = 'GPT-5.6 Terra (copilot)'; tier = 'standard'; multiplier = 1; status = 'ga' }
+                    @{ name = 'Claude Sonnet 5 (copilot)'; tier = 'standard'; multiplier = 1; status = 'ga' }
+                    @{ name = 'MAI-Code-1-Flash (copilot)'; tier = 'fast'; multiplier = 0.25; status = 'ga' }
+                    @{ name = 'GPT-5.6 Luna (copilot)'; tier = 'fast'; multiplier = 0.33; status = 'ga' }
                     @{ name = 'Claude Haiku 4.5 (copilot)'; tier = 'fast'; multiplier = 0.33; status = 'ga' }
-                    @{ name = 'GPT-5.4 mini (copilot)'; tier = 'fast'; multiplier = 0.33; status = 'ga' }
-                    @{ name = 'Gemini 3 Flash (Preview) (copilot)'; tier = 'fast'; multiplier = 0.33; status = 'preview' }
                 )
             }
             $catalog | ConvertTo-Json -Depth 5 | Set-Content -Path $script:TestCatalogPath -Encoding utf8
@@ -216,18 +275,22 @@ Describe 'Invoke-ModelReferenceValidation' -Tag 'Unit' {
 ---
 name: Valid Agent
 model:
-  - Claude Haiku 4.5 (copilot)
-  - GPT-5.4 mini (copilot)
+    - GPT-5.6 Terra (copilot)
+    - Claude Sonnet 5 (copilot)
+    - MAI-Code-1-Flash (copilot)
 ---
 
 # Agent
 "@ | Set-Content -Path (Join-Path $script:ValidDir 'test.agent.md') -Encoding utf8
 
-            # Create prompt file with valid single model
+            # Create prompt file with a valid Low profile
             @"
 ---
 description: Valid Prompt
-model: Gemini 3 Flash (Preview) (copilot)
+model:
+    - GPT-5.6 Luna (copilot)
+    - MAI-Code-1-Flash (copilot)
+    - Claude Haiku 4.5 (copilot)
 ---
 
 # Prompt
@@ -241,11 +304,11 @@ model: Gemini 3 Flash (Preview) (copilot)
         }
 
         It 'Reports correct total references' {
-            $script:ValidResult.totalReferences | Should -Be 3
+            $script:ValidResult.totalReferences | Should -Be 6
         }
 
         It 'Reports correct valid references' {
-            $script:ValidResult.validReferences | Should -Be 3
+            $script:ValidResult.validReferences | Should -Be 6
         }
 
         It 'Reports correct files with models count' {
@@ -283,8 +346,9 @@ model: Gemini 3 Flash (Preview) (copilot)
 ---
 name: Bad Agent
 model:
-  - Claude Haiku 4.5 (copilot)
-  - Nonexistent Model (copilot)
+    - GPT-5.6 Luna (copilot)
+    - MAI-Code-1-Flash (copilot)
+    - Nonexistent Model (copilot)
 ---
 
 # Agent
@@ -294,20 +358,20 @@ model:
         }
 
         It 'Reports one invalid reference' {
-            $script:InvalidResult.invalidReferences | Should -Be 1
+            $script:InvalidResult.invalidReferences | Should -Be 2
         }
 
         It 'Reports one valid reference' {
-            $script:InvalidResult.validReferences | Should -Be 1
+            $script:InvalidResult.validReferences | Should -Be 2
         }
 
         It 'Contains error with model name' {
-            $script:InvalidResult.errors | Should -HaveCount 1
-            $script:InvalidResult.errors[0].model | Should -Be 'Nonexistent Model (copilot)'
+            $script:InvalidResult.errors | Should -HaveCount 2
+            $script:InvalidResult.errors.model | Should -Contain 'Nonexistent Model (copilot)'
         }
 
         It 'Contains descriptive error message' {
-            $script:InvalidResult.errors[0].message | Should -Match 'Unrecognized model'
+            ($script:InvalidResult.errors.message -join "`n") | Should -Match 'Unrecognized model'
         }
 
         It 'Marks file result as invalid' {
@@ -325,8 +389,9 @@ model:
                 lastUpdated = '2026-05-06'
                 source      = 'https://example.com'
                 models      = @(
-                    @{ name = 'Claude Haiku 4.5 (copilot)'; tier = 'fast'; multiplier = 0.33; status = 'ga' }
-                    @{ name = 'Old Model (copilot)'; tier = 'fast'; multiplier = 0.33; status = 'retiring'; retiredDate = '2026-06-01' }
+                    @{ name = 'GPT-5.6 Luna (copilot)'; tier = 'fast'; multiplier = 0.33; status = 'ga' }
+                    @{ name = 'MAI-Code-1-Flash (copilot)'; tier = 'fast'; multiplier = 0.25; status = 'ga' }
+                    @{ name = 'Claude Haiku 4.5 (copilot)'; tier = 'fast'; multiplier = 0.33; status = 'retiring'; retiredDate = '2026-08-01' }
                 )
             }
             $script:RetiringCatalogPath = Join-Path $script:CatalogDir 'retiring-catalog.json'
@@ -337,8 +402,9 @@ model:
 ---
 name: Retiring Agent
 model:
-  - Old Model (copilot)
-  - Claude Haiku 4.5 (copilot)
+    - GPT-5.6 Luna (copilot)
+    - MAI-Code-1-Flash (copilot)
+    - Claude Haiku 4.5 (copilot)
 ---
 
 # Agent
@@ -356,12 +422,12 @@ model:
         }
 
         It 'Counts retiring model as valid' {
-            $script:RetiringResult.validReferences | Should -Be 2
+            $script:RetiringResult.validReferences | Should -Be 3
         }
 
         It 'Contains warning with retiring model name' {
             $script:RetiringResult.warnings | Should -HaveCount 1
-            $script:RetiringResult.warnings[0].model | Should -Be 'Old Model (copilot)'
+            $script:RetiringResult.warnings[0].model | Should -Be 'Claude Haiku 4.5 (copilot)'
         }
 
         It 'Contains descriptive warning message' {
@@ -383,8 +449,8 @@ model:
 ---
 name: Mixed Agent
 model:
-  - Old Model (copilot)
-  - Fake Model (copilot)
+    - Claude Haiku 4.5 (copilot)
+    - Fake Model (copilot)
 ---
 
 # Agent
@@ -398,7 +464,7 @@ model:
         }
 
         It 'Reports one invalid and one retiring' {
-            $script:MixedResult.invalidReferences | Should -Be 1
+            $script:MixedResult.invalidReferences | Should -Be 2
             $script:MixedResult.retiringReferences | Should -Be 1
         }
     }

@@ -188,10 +188,27 @@ function Get-AgentModelHint {
         Select-Object -First 1
     if (-not $candidate) { return $null }
 
-    $match = Select-String -Path $candidate.FullName -Pattern '^\s*model\s*:\s*(.+)\s*$' -List
-    if (-not $match) { return $null }
+    $content = [System.IO.File]::ReadAllText($candidate.FullName)
+    if ($content -notmatch '(?s)^---\r?\n(?<frontmatter>.*?)\r?\n---(?:\r?\n|$)') { return $null }
 
-    return $match.Matches[0].Groups[1].Value.Trim().Trim('"').Trim("'")
+    try {
+        $parsed = ConvertFrom-Yaml -Yaml $Matches['frontmatter'] -ErrorAction Stop
+    }
+    catch {
+        return $null
+    }
+
+    $model = $parsed.model
+    if ($model -is [string]) { return $model }
+    if ($null -eq $model -or $model -is [System.Collections.IDictionary] -or
+        $model -isnot [System.Collections.IEnumerable]) {
+        return $null
+    }
+
+    $firstModel = @($model) | Select-Object -First 1
+    if ($null -eq $firstModel -or [string]::IsNullOrWhiteSpace($firstModel.ToString())) { return $null }
+
+    return $firstModel.ToString()
 }
 
 function Resolve-ModelList {

@@ -168,6 +168,72 @@ Describe 'Invoke-BaselineEquivalence.ps1 (dry-run)' -Tag 'Unit' {
     }
 }
 
+Describe 'Get-AgentModelHint' -Tag 'Unit' {
+    BeforeAll {
+        . $script:ScriptPath
+        $script:HintRepo = Join-Path $TestDrive 'hint-repo'
+        $script:HintAgentDir = Join-Path $script:HintRepo '.github/agents'
+        New-Item -ItemType Directory -Path $script:HintAgentDir -Force | Out-Null
+    }
+
+    It 'Returns the first model from a YAML list' {
+        @"
+---
+description: Test agent
+model:
+  - GPT-5.6 Terra (copilot)
+  - Claude Sonnet 5 (copilot)
+  - MAI-Code-1-Flash (copilot)
+---
+"@ | Set-Content -LiteralPath (Join-Path $script:HintAgentDir 'list.agent.md') -Encoding utf8NoBOM
+
+        Get-AgentModelHint -Agent 'list' -RepoRoot $script:HintRepo | Should -Be 'GPT-5.6 Terra (copilot)'
+    }
+
+    It 'Retains scalar compatibility for legacy or external artifacts' {
+        @"
+---
+description: Legacy agent
+model: GPT-5.6 Luna (copilot)
+---
+"@ | Set-Content -LiteralPath (Join-Path $script:HintAgentDir 'scalar.agent.md') -Encoding utf8NoBOM
+
+        Get-AgentModelHint -Agent 'scalar' -RepoRoot $script:HintRepo | Should -Be 'GPT-5.6 Luna (copilot)'
+    }
+
+    It 'Returns null when model is omitted' {
+        @"
+---
+description: No model
+---
+"@ | Set-Content -LiteralPath (Join-Path $script:HintAgentDir 'omitted.agent.md') -Encoding utf8NoBOM
+
+        Get-AgentModelHint -Agent 'omitted' -RepoRoot $script:HintRepo | Should -BeNullOrEmpty
+    }
+
+    It 'Returns null for an empty model list' {
+        @"
+---
+description: Empty model list
+model:
+---
+"@ | Set-Content -LiteralPath (Join-Path $script:HintAgentDir 'empty.agent.md') -Encoding utf8NoBOM
+
+        Get-AgentModelHint -Agent 'empty' -RepoRoot $script:HintRepo | Should -BeNullOrEmpty
+    }
+
+    It 'Returns null for malformed frontmatter' {
+        @"
+---
+description: Missing closing delimiter
+model:
+  - GPT-5.6 Luna (copilot)
+"@ | Set-Content -LiteralPath (Join-Path $script:HintAgentDir 'malformed.agent.md') -Encoding utf8NoBOM
+
+        Get-AgentModelHint -Agent 'malformed' -RepoRoot $script:HintRepo | Should -BeNullOrEmpty
+    }
+}
+
 Describe 'Measure-InvariantFailures' -Tag 'Unit' {
     BeforeAll {
         . $script:ScriptPath

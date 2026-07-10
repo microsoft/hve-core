@@ -154,7 +154,7 @@ Purpose: Ensure consistent metadata across documentation.
 * `-ChangedFilesOnly` (switch) - Validate only changed markdown files
 * `-SkipFooterValidation` (switch) - Skip footer checks
 * `-WarningsAsErrors` (switch) - Treat warnings as errors
-* `-EnableSchemaValidation` (switch) - Enable JSON Schema validation (advisory only)
+* `-EnableSchemaValidation` (switch) - Enable JSON Schema validation; violations are errors that block the command
 
 ##### Artifacts Generated
 

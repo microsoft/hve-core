@@ -5,26 +5,17 @@
   "description": "Frontmatter schema for .agent.md files per VS Code custom agent specification",
   "type": "object",
   "required": [
-    "description"
+    "description",
+    "name"
   ],
   "properties": {
     "agents": {
-      "oneOf": [
-        {
-          "type": "array",
-          "items": {
-            "type": "string"
-          }
-        },
-        {
-          "type": "string",
-          "enum": [
-            "*"
-          ]
-        }
-      ],
-      "default": "*",
-      "description": "List of subagent names allowed to be invoked by this agent. Use '*' to allow all subagents."
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^(?!\\*$).+$"
+      },
+      "description": "Fixed allowlist of subagent names this agent may invoke. Omit the field for unrestricted subagent access; use an explicit array, including an empty array, for a fixed set."
     },
     "description": {
       "type": "string",
@@ -33,7 +24,8 @@
     },
     "name": {
       "type": "string",
-      "description": "The name of the custom agent. If not specified, the file name is used"
+      "minLength": 1,
+      "description": "The human-readable dispatch and display name of the custom agent"
     },
     "argument-hint": {
       "type": "string",
@@ -49,16 +41,64 @@
     "model": {
       "oneOf": [
         {
-          "type": "string"
+          "type": "array",
+          "minItems": 3,
+          "maxItems": 3,
+          "prefixItems": [
+            {
+              "type": "string",
+              "const": "GPT-5.6 Sol (copilot)"
+            },
+            {
+              "type": "string",
+              "const": "Claude Opus 4.8 (copilot)"
+            },
+            {
+              "type": "string",
+              "const": "GPT-5.5 (copilot)"
+            }
+          ]
         },
         {
           "type": "array",
-          "items": {
-            "type": "string"
-          }
+          "minItems": 3,
+          "maxItems": 3,
+          "prefixItems": [
+            {
+              "type": "string",
+              "const": "GPT-5.6 Terra (copilot)"
+            },
+            {
+              "type": "string",
+              "const": "Claude Sonnet 5 (copilot)"
+            },
+            {
+              "type": "string",
+              "const": "MAI-Code-1-Flash (copilot)"
+            }
+          ]
+        },
+        {
+          "type": "array",
+          "minItems": 3,
+          "maxItems": 3,
+          "prefixItems": [
+            {
+              "type": "string",
+              "const": "GPT-5.6 Luna (copilot)"
+            },
+            {
+              "type": "string",
+              "const": "MAI-Code-1-Flash (copilot)"
+            },
+            {
+              "type": "string",
+              "const": "Claude Haiku 4.5 (copilot)"
+            }
+          ]
         }
       ],
-      "description": "The AI model(s) to use when running the agent. If not specified, the currently selected model in model picker is used."
+      "description": "Optional exact ordered High, Medium, or Low three-model profile. Order is availability fallback within the responsibility-selected profile. An omitted subagent model inherits the invoking parent model; an omitted directly invoked agent model uses the current session selection."
     },
     "target": {
       "type": "string",
@@ -100,7 +140,7 @@
           },
           "agent": {
             "type": "string",
-            "description": "The target agent identifier to switch to"
+            "description": "The target agent's human-readable frontmatter name"
           },
           "prompt": {
             "type": "string",

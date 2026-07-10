@@ -11,7 +11,7 @@
 .DESCRIPTION
     Fetches structured YAML data files from the github/docs repository that define
     Copilot model names, release status, and multipliers. Merges these into the
-    local model-catalog.json. Reports additions, removals, and multiplier changes.
+    local model-catalog.json. Reports additions, removals, and derivable metadata changes.
 
 .PARAMETER CatalogPath
     Path to the model catalog JSON file to update.
@@ -106,6 +106,7 @@ function Get-ModelProvider {
     $providerPatterns = @(
         @{ Pattern = '^Claude';    Provider = 'Anthropic' }
         @{ Pattern = '^GPT-|^o\d'; Provider = 'OpenAI' }
+        @{ Pattern = '^MAI-';      Provider = 'Microsoft' }
         @{ Pattern = '^Gemini';    Provider = 'Google' }
         @{ Pattern = '^Grok';      Provider = 'xAI' }
     )
@@ -212,11 +213,16 @@ function Compare-Catalogs {
     $changed = @()
     foreach ($disc in $Discovered) {
         $curr = $Current | Where-Object { $_.name -eq $disc.name }
-        if ($curr -and $curr.multiplier -ne $disc.multiplier) {
+        if ($curr -and ($curr.multiplier -ne $disc.multiplier -or
+                $curr.tier -ne $disc.tier -or
+                $curr.status -ne $disc.status -or
+                $curr.provider -ne $disc.provider -or
+                $curr.PSObject.Properties.Name -contains 'retiredDate')) {
             $changed += @{
                 name          = $disc.name
                 oldMultiplier = $curr.multiplier
                 newMultiplier = $disc.multiplier
+                discovered    = $disc
             }
         }
     }
@@ -289,8 +295,8 @@ function Invoke-ModelCatalogUpdate {
             foreach ($m in $diff.removed) { Write-Host "    - $($m.name)" -ForegroundColor Yellow }
         }
         if ($diff.changed.Count -gt 0) {
-            Write-Host "`n  Multiplier changes:" -ForegroundColor Cyan
-            foreach ($c in $diff.changed) { Write-Host "    ~ $($c.name): $($c.oldMultiplier) -> $($c.newMultiplier)" -ForegroundColor Cyan }
+            Write-Host "`n  Metadata changes:" -ForegroundColor Cyan
+            foreach ($c in $diff.changed) { Write-Host "    ~ $($c.name)" -ForegroundColor Cyan }
         }
 
         if ($diff.added.Count -eq 0 -and $diff.removed.Count -eq 0 -and $diff.changed.Count -eq 0) {
@@ -312,16 +318,19 @@ function Invoke-ModelCatalogUpdate {
                     multiplier  = $curr.multiplier
                     status      = 'retiring'
                     retiredDate = (Get-Date).AddDays(60).ToString('yyyy-MM-dd')
+                    provider    = $curr.provider
                 }
                 $finalModels += $retiring
             }
             else {
-                # Update multiplier if changed
+                # Replace all derivable metadata when an existing record changes.
                 $change = $diff.changed | Where-Object { $_.name -eq $curr.name }
                 if ($change) {
-                    $curr.multiplier = $change.newMultiplier
+                    $finalModels += $change.discovered
                 }
-                $finalModels += $curr
+                else {
+                    $finalModels += $curr
+                }
             }
         }
         # Add new models
@@ -340,7 +349,7 @@ function Invoke-ModelCatalogUpdate {
     # Write updated catalog
     # providerAllowlist controls which providers are permitted in agent/prompt model
     # references. To allow additional providers, add them to this array.
-    $allowlist = @('Anthropic', 'OpenAI')
+    $allowlist = @('Anthropic', 'Google', 'OpenAI', 'Microsoft')
     if (Test-Path -Path $CatalogPath) {
         $existingCatalog = Get-Content -Path $CatalogPath -Raw | ConvertFrom-Json
         if ($existingCatalog.providerAllowlist) {

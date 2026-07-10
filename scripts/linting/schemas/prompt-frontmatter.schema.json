@@ -24,21 +24,69 @@
     },
     "agent": {
       "type": "string",
-      "description": "The agent used for running the prompt. Options: ask, edit, agent (default), or a custom agent name"
+      "description": "The agent used for running the prompt. Use ask, edit, agent (default), or a custom agent's human-readable frontmatter name."
     },
     "model": {
       "oneOf": [
         {
-          "type": "string"
+          "type": "array",
+          "minItems": 3,
+          "maxItems": 3,
+          "prefixItems": [
+            {
+              "type": "string",
+              "const": "GPT-5.6 Sol (copilot)"
+            },
+            {
+              "type": "string",
+              "const": "Claude Opus 4.8 (copilot)"
+            },
+            {
+              "type": "string",
+              "const": "GPT-5.5 (copilot)"
+            }
+          ]
         },
         {
           "type": "array",
-          "items": {
-            "type": "string"
-          }
+          "minItems": 3,
+          "maxItems": 3,
+          "prefixItems": [
+            {
+              "type": "string",
+              "const": "GPT-5.6 Terra (copilot)"
+            },
+            {
+              "type": "string",
+              "const": "Claude Sonnet 5 (copilot)"
+            },
+            {
+              "type": "string",
+              "const": "MAI-Code-1-Flash (copilot)"
+            }
+          ]
+        },
+        {
+          "type": "array",
+          "minItems": 3,
+          "maxItems": 3,
+          "prefixItems": [
+            {
+              "type": "string",
+              "const": "GPT-5.6 Luna (copilot)"
+            },
+            {
+              "type": "string",
+              "const": "MAI-Code-1-Flash (copilot)"
+            },
+            {
+              "type": "string",
+              "const": "Claude Haiku 4.5 (copilot)"
+            }
+          ]
         }
       ],
-      "description": "The language model(s) to use when running the prompt. Accepts a single string or a prioritized array. Defaults to current selection if not specified."
+      "description": "Optional exact ordered High, Medium, or Low three-model profile. Order is availability fallback within the responsibility-selected profile. Omit to use the current session model."
     },
     "tools": {
       "type": "array",

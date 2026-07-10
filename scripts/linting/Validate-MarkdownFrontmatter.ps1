@@ -341,8 +341,10 @@ function Test-ValueAgainstSchema {
     .SYNOPSIS
         Validates a value against a (subset of) JSON schema.
     .DESCRIPTION
-        Supports: type (string/array/boolean/object), required, properties, items, enum, pattern, minLength, oneOf.
-        Designed for "soft" schema validation; does not implement full JSON Schema.
+        Supports: type (string/array/boolean/object), required, properties, items, prefixItems,
+        minItems, maxItems, const, enum, pattern, minLength, and oneOf.
+        Implements the schema subset used by repository frontmatter validation;
+        it does not implement full JSON Schema.
     #>
     [CmdletBinding()]
     [OutputType([string[]])]
@@ -414,6 +416,17 @@ function Test-ValueAgainstSchema {
         return $localErrors.ToArray()
     }
 
+    $hasConst = if ($Schema -is [System.Collections.IDictionary]) {
+        $Schema.Contains('const')
+    }
+    else {
+        $null -ne $Schema.PSObject.Properties['const']
+    }
+    if ($hasConst -and $Value -cne $Schema.const) {
+        $localErrors.Add("Field '$Path' must equal: $($Schema.const). Got: $Value")
+        return $localErrors.ToArray()
+    }
+
     # Type validation.
     if ($Schema.type) {
         switch ($Schema.type) {
@@ -448,9 +461,25 @@ function Test-ValueAgainstSchema {
                     return $localErrors.ToArray()
                 }
 
+                $arrayValue = @($Value)
+                if ($null -ne $Schema.minItems -and $arrayValue.Count -lt [int]$Schema.minItems) {
+                    $localErrors.Add("Field '$Path' must contain at least $($Schema.minItems) items")
+                }
+
+                if ($null -ne $Schema.maxItems -and $arrayValue.Count -gt [int]$Schema.maxItems) {
+                    $localErrors.Add("Field '$Path' must contain at most $($Schema.maxItems) items")
+                }
+
+                $prefixSchemas = if ($null -ne $Schema.prefixItems) { @($Schema.prefixItems) } else { @() }
+                $prefixCount = [Math]::Min($arrayValue.Count, $prefixSchemas.Count)
+                for ($i = 0; $i -lt $prefixCount; $i++) {
+                    $itemErrors = Test-ValueAgainstSchema -Value $arrayValue[$i] -Schema $prefixSchemas[$i] -Path "$Path[$i]"
+                    foreach ($e in $itemErrors) { $localErrors.Add($e) }
+                }
+
                 if ($Schema.items) {
                     $i = 0
-                    foreach ($item in $Value) {
+                    foreach ($item in $arrayValue) {
                         $itemErrors = Test-ValueAgainstSchema -Value $item -Schema $Schema.items -Path "$Path[$i]"
                         foreach ($e in $itemErrors) { $localErrors.Add($e) }
                         $i++
@@ -523,6 +552,9 @@ function Test-JsonSchemaValidation {
     - type: string, array, boolean, object type checking
     - properties: Nested object property validation
     - items: Array item validation
+    - prefixItems: Positional array item validation
+    - minItems/maxItems: Array length validation
+    - const: Exact value validation
     - oneOf: Composition keyword support (exactly one subschema must match)
     - pattern: Regex pattern matching for strings
     - enum: Allowed value constraints
@@ -573,8 +605,9 @@ function Test-JsonSchemaValidation {
     # Result.Errors contains "Field 'title' must have minimum length of 1"
 
     .NOTES
-    This implements soft validation suitable for advisory feedback without
-    blocking builds on schema violations.
+    This implements the JSON Schema subset used by repository frontmatter.
+    When Test-FrontmatterValidation enables the schema overlay, violations are
+    added to the validation summary as errors and block the validation gate.
     #>
     [CmdletBinding(DefaultParameterSetName = 'SchemaPath')]
     [OutputType([SchemaValidationResult])]
@@ -693,7 +726,7 @@ function Test-FrontmatterValidation {
     Git reference for comparison. Default: 'origin/main'.
 
     .PARAMETER EnableSchemaValidation
-    Enable JSON Schema validation (advisory only).
+    Enable JSON Schema validation. Schema violations are validation errors.
 
     .PARAMETER FooterExcludePaths
     Array of wildcard patterns for files to exclude from footer validation only.
@@ -789,7 +822,7 @@ function Test-FrontmatterValidation {
     # Use module's orchestration function for core validation
     $summary = Invoke-FrontmatterValidation -Files $resolvedFiles -RepoRoot $repoRoot -FooterExcludePaths $FooterExcludePaths -SkipFooterValidation:$SkipFooterValidation
 
-    # Optional schema validation overlay (advisory only)
+    # Optional schema validation overlay
     # Uses frontmatter already parsed by Invoke-FrontmatterValidation
     if ($EnableSchemaValidation -and (Initialize-JsonSchemaValidation)) {
         foreach ($fileResult in $summary.Results) {
@@ -797,13 +830,18 @@ function Test-FrontmatterValidation {
                 $schemaPath = Get-SchemaForFile -FilePath $fileResult.FilePath
                 if ($schemaPath) {
                     $schemaResult = Test-JsonSchemaValidation -Frontmatter $fileResult.Frontmatter -SchemaPath $schemaPath
-                    if ($schemaResult.Errors.Count -gt 0) {
-                        Write-Warning "JSON Schema validation errors in $($fileResult.FilePath)"
-                        $schemaResult.Errors | ForEach-Object { Write-Warning "  - $_" }
+                    foreach ($schemaError in $schemaResult.Errors) {
+                        $fileResult.AddError("JSON Schema: $schemaError", 'schema')
+                    }
+                    foreach ($schemaWarning in $schemaResult.Warnings) {
+                        $fileResult.AddWarning("JSON Schema: $schemaWarning", 'schema')
                     }
                 }
             }
         }
+
+        $summary.RecalculateCounts()
+        $summary.Complete()
     }
 
     # Output to console

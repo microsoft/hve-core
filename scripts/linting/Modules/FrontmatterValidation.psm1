@@ -175,6 +175,31 @@ class ValidationSummary {
         }
     }
 
+    [void] RecalculateCounts() {
+        $this.TotalFiles = 0
+        $this.FilesWithErrors = 0
+        $this.FilesWithWarnings = 0
+        $this.FilesValid = 0
+        $this.TotalErrors = 0
+        $this.TotalWarnings = 0
+
+        foreach ($result in $this.Results) {
+            $this.TotalFiles++
+
+            if ($result.HasErrors()) {
+                $this.FilesWithErrors++
+                $this.TotalErrors += $result.ErrorCount()
+            }
+            if ($result.HasWarnings()) {
+                $this.FilesWithWarnings++
+                $this.TotalWarnings += $result.WarningCount()
+            }
+            if ($result.IsValid() -and -not $result.HasWarnings()) {
+                $this.FilesValid++
+            }
+        }
+    }
+
     [void] Complete() {
         $this.CompletedAt = (Get-Date).ToUniversalTime()
         $this.Duration = $this.CompletedAt - $this.StartedAt
@@ -550,6 +575,202 @@ function Test-GitHubResourceFileFields {
     return , $issues.ToArray()
 }
 
+function Get-RegisteredAgentNameRegistry {
+    <#
+    .SYNOPSIS
+        Returns registered custom agent names and duplicate ownership details.
+    .DESCRIPTION
+        Scans .github/agents for .agent.md files, indexing non-empty frontmatter
+        name values case-insensitively. Missing or malformed files are skipped so
+        structural validation can report their own errors independently. Every
+        file participating in a duplicate name is returned for file-local errors.
+    .PARAMETER RepoRoot
+        Repository root containing the .github/agents directory.
+    .OUTPUTS
+        [hashtable] Names and DuplicateFiles collections.
+    #>
+    [CmdletBinding()]
+    [OutputType([hashtable])]
+    param(
+        [Parameter(Mandatory)]
+        [ValidateNotNullOrEmpty()]
+        [string]$RepoRoot
+    )
+
+    $agentsRoot = Join-Path $RepoRoot '.github/agents'
+    if (-not (Test-Path -LiteralPath $agentsRoot -PathType Container)) {
+        return @{ Names = @(); DuplicateFiles = @{} }
+    }
+
+    $registrations = @{}
+    foreach ($file in Get-ChildItem -LiteralPath $agentsRoot -Recurse -Filter '*.agent.md' -File) {
+        try {
+            $content = Get-Content -LiteralPath $file.FullName -Raw -ErrorAction Stop
+            if ($content -notmatch '(?s)^---\r?\n(.*?)\r?\n---') {
+                continue
+            }
+
+            $frontmatter = $Matches[1] | ConvertFrom-Yaml -ErrorAction Stop
+            if ($frontmatter -is [System.Collections.IDictionary] -and
+                $frontmatter.Contains('name') -and
+                -not [string]::IsNullOrWhiteSpace([string]$frontmatter['name'])) {
+                $name = [string]$frontmatter['name']
+                if (-not $registrations.ContainsKey($name)) {
+                    $registrations[$name] = [System.Collections.Generic.List[string]]::new()
+                }
+                $registrations[$name].Add($file.FullName)
+            }
+        }
+        catch {
+            Write-Verbose "Skipping agent name discovery for '$($file.FullName)': $_"
+        }
+    }
+
+    $duplicateFiles = @{}
+    foreach ($name in $registrations.Keys) {
+        if ($registrations[$name].Count -gt 1) {
+            foreach ($filePath in $registrations[$name]) {
+                $duplicateFiles[$filePath] = $name
+            }
+        }
+    }
+
+    return @{
+        Names          = @($registrations.Keys | Sort-Object)
+        DuplicateFiles = $duplicateFiles
+    }
+}
+
+function Get-RegisteredAgentNames {
+    <#
+    .SYNOPSIS
+        Returns registered custom agent display names from repository frontmatter.
+    .PARAMETER RepoRoot
+        Repository root containing the .github/agents directory.
+    .OUTPUTS
+        [string[]] Registered agent display names.
+    #>
+    [CmdletBinding()]
+    [OutputType([string[]])]
+    param(
+        [Parameter(Mandatory)]
+        [ValidateNotNullOrEmpty()]
+        [string]$RepoRoot
+    )
+
+    $registry = Get-RegisteredAgentNameRegistry -RepoRoot $RepoRoot
+    return @($registry.Names)
+}
+
+function Test-AgentIdentityReferences {
+    <#
+    .SYNOPSIS
+        Validates custom-agent references against registered display names.
+    .DESCRIPTION
+        Prompt agent values may use the built-in ask, edit, and agent modes or a
+        registered custom agent name. Agent fixed subagent lists and handoffs
+        must use registered custom agent names.
+    .PARAMETER Frontmatter
+        Parsed YAML frontmatter for the artifact under validation.
+    .PARAMETER FileTypeInfo
+        Classified file-type information for the artifact.
+    .PARAMETER RelativePath
+        Workspace-relative artifact path used in validation issues.
+    .PARAMETER RegisteredAgentNames
+        Repository custom-agent display names discovered from frontmatter.
+    .OUTPUTS
+        [ValidationIssue[]] Identity-reference validation issues.
+    #>
+    [CmdletBinding()]
+    [OutputType([ValidationIssue[]])]
+    param(
+        [Parameter(Mandatory)]
+        [hashtable]$Frontmatter,
+
+        [Parameter(Mandatory)]
+        $FileTypeInfo,
+
+        [Parameter(Mandatory)]
+        [string]$RelativePath,
+
+        [string[]]$RegisteredAgentNames = @()
+    )
+
+    $issues = [System.Collections.Generic.List[ValidationIssue]]::new()
+    if ($RegisteredAgentNames.Count -eq 0) {
+        return , $issues.ToArray()
+    }
+
+    $knownNames = [System.Collections.Generic.HashSet[string]]::new([System.StringComparer]::Ordinal)
+    foreach ($name in $RegisteredAgentNames) {
+        if (-not [string]::IsNullOrWhiteSpace($name)) {
+            $null = $knownNames.Add($name)
+        }
+    }
+
+    if ($FileTypeInfo.IsPrompt -and $Frontmatter.ContainsKey('agent')) {
+        $target = [string]$Frontmatter['agent']
+        $builtInAgents = @('ask', 'edit', 'agent')
+        if (-not [string]::IsNullOrWhiteSpace($target) -and
+            $target -notin $builtInAgents -and
+            -not $knownNames.Contains($target)) {
+            $issues.Add([ValidationIssue]::new(
+                'Error',
+                'agent',
+                "Unknown prompt agent '$target'. Use ask, edit, agent, or a registered agent frontmatter name.",
+                $RelativePath
+            ))
+        }
+    }
+
+    if ($FileTypeInfo.IsAgent -and $Frontmatter.ContainsKey('agents')) {
+        $subagents = $Frontmatter['agents']
+        if ($subagents -is [System.Collections.IEnumerable] -and $subagents -isnot [string]) {
+            $index = 0
+            foreach ($subagent in $subagents) {
+                $target = [string]$subagent
+                if (-not [string]::IsNullOrWhiteSpace($target) -and -not $knownNames.Contains($target)) {
+                    $issues.Add([ValidationIssue]::new(
+                        'Error',
+                        "agents[$index]",
+                        "Unknown fixed subagent '$target'. Use a registered agent frontmatter name.",
+                        $RelativePath
+                    ))
+                }
+                $index++
+            }
+        }
+    }
+
+    if ($FileTypeInfo.IsAgent -and $Frontmatter.ContainsKey('handoffs')) {
+        $handoffs = $Frontmatter['handoffs']
+        if ($handoffs -is [System.Collections.IEnumerable] -and $handoffs -isnot [string]) {
+            $index = 0
+            foreach ($handoff in $handoffs) {
+                $target = $null
+                if ($handoff -is [System.Collections.IDictionary] -and $handoff.Contains('agent')) {
+                    $target = [string]$handoff['agent']
+                }
+                elseif ($handoff -is [pscustomobject] -and $null -ne $handoff.PSObject.Properties['agent']) {
+                    $target = [string]$handoff.agent
+                }
+
+                if (-not [string]::IsNullOrWhiteSpace($target) -and -not $knownNames.Contains($target)) {
+                    $issues.Add([ValidationIssue]::new(
+                        'Error',
+                        "handoffs[$index].agent",
+                        "Unknown handoff agent '$target'. Use a registered agent frontmatter name.",
+                        $RelativePath
+                    ))
+                }
+                $index++
+            }
+        }
+    }
+
+    return , $issues.ToArray()
+}
+
 function Test-DocsFileFields {
     <#
     .SYNOPSIS
@@ -811,7 +1032,9 @@ function Test-SingleFileFrontmatter {
 
         [string[]]$FooterExcludePaths = @(),
 
-        [switch]$SkipFooterValidation
+        [switch]$SkipFooterValidation,
+
+        [string[]]$RegisteredAgentNames = @()
     )
 
     $relativePath = $FilePath
@@ -888,6 +1111,10 @@ function Test-SingleFileFrontmatter {
         }
         elseif ($fileTypeInfo.IsInstruction -or $fileTypeInfo.IsPrompt -or $fileTypeInfo.IsChatMode -or $fileTypeInfo.IsAgent) {
             $issues = Test-GitHubResourceFileFields -Frontmatter $frontmatter -FileTypeInfo $fileTypeInfo -RelativePath $relativePath
+            $agentIdentityIssues = Test-AgentIdentityReferences -Frontmatter $frontmatter -FileTypeInfo $fileTypeInfo -RelativePath $relativePath -RegisteredAgentNames $RegisteredAgentNames
+            foreach ($agentIdentityIssue in $agentIdentityIssues) {
+                $issues += $agentIdentityIssue
+            }
         }
         elseif ($fileTypeInfo.IsDevContainer) {
             $issues = Test-DevContainerFileFields -Frontmatter $frontmatter -RelativePath $relativePath
@@ -992,13 +1219,29 @@ function Invoke-FrontmatterValidation {
 
         [string[]]$FooterExcludePaths = @(),
 
-        [switch]$SkipFooterValidation
+        [switch]$SkipFooterValidation,
+
+        [string[]]$RegisteredAgentNames = @()
     )
 
     $summary = [ValidationSummary]::new()
+    $duplicateAgentFiles = @{}
+
+    if ($RegisteredAgentNames.Count -eq 0) {
+        $agentRegistry = Get-RegisteredAgentNameRegistry -RepoRoot $RepoRoot
+        $RegisteredAgentNames = @($agentRegistry.Names)
+        $duplicateAgentFiles = $agentRegistry.DuplicateFiles
+    }
 
     foreach ($file in $Files) {
-        $result = Test-SingleFileFrontmatter -FilePath $file -RepoRoot $RepoRoot -FooterExcludePaths $FooterExcludePaths -SkipFooterValidation:$SkipFooterValidation
+        $result = Test-SingleFileFrontmatter -FilePath $file -RepoRoot $RepoRoot -FooterExcludePaths $FooterExcludePaths -SkipFooterValidation:$SkipFooterValidation -RegisteredAgentNames $RegisteredAgentNames
+        if ($duplicateAgentFiles.Count -gt 0) {
+            $resolvedFile = (Resolve-Path -LiteralPath $file).Path
+            if ($duplicateAgentFiles.ContainsKey($resolvedFile)) {
+                $duplicateName = $duplicateAgentFiles[$resolvedFile]
+                $result.AddError("Duplicate agent name '$duplicateName'. Agent names must be unique.", 'name')
+            }
+        }
         $summary.AddResult($result)
     }
 
@@ -1104,6 +1347,9 @@ Export-ModuleMember -Function @(
     'Test-DevContainerFileFields'
     'Test-VSCodeReadmeFileFields'
     'Test-GitHubResourceFileFields'
+    'Get-RegisteredAgentNameRegistry'
+    'Get-RegisteredAgentNames'
+    'Test-AgentIdentityReferences'
     'Test-DocsFileFields'
     'Test-CommonFields'
     'Test-FooterPresence'
