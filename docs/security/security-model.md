@@ -1401,13 +1401,13 @@ Its headline residual is speaker-notes content egress to the Azure region; input
 | SC-4 | npm Security Audit                       | npm audit in pr-validation.yml                                            | S-2               |
 | SC-5 | Dependabot Updates                       | dependabot.yml                                                            | S-1, S-2          |
 | SC-6 | Tool Checksum Verification               | scripts/security/tool-checksums.json                                      | S-1               |
-| SC-7 | SBOM Generation and Attestation          | anchore/sbom-action, actions/attest in main.yml                           | S-1, S-2          |
-| SC-8 | SBOM Dependency Diff                     | sbom-diff job in main.yml                                                 | S-1, S-2          |
-| SC-9 | VEX Vulnerability Triage and Attestation | vex-detect.yml, vex-draft.md, attest-and-upload-vex in release-stable.yml | S-1, S-2          |
+| SC-7 | SBOM Generation and Attestation          | anchore/sbom-action, actions/attest in release-stable.yml                           | S-1, S-2          |
+| SC-8 | SBOM Dependency Diff                     | sbom-diff job in release-stable.yml                                                 | S-1, S-2          |
+| SC-9 | VEX Vulnerability Triage and Attestation | vex-detect.yml, vex-draft.md, vex-attest job in release-stable.yml | S-1, S-2          |
 
 #### SC-8: SBOM Dependency Diff Implementation
 
-The `sbom-diff` job in `main.yml` runs during each release to surface supply chain changes between consecutive versions. It compares the current dependency SBOM against the previous release, generating a structured `dependency-diff.md` report that is uploaded to the GitHub Release.
+The `sbom-diff` job in `release-stable.yml` runs during each release to surface supply chain changes between consecutive versions. It compares the current dependency SBOM against the previous release, generating a structured `dependency-diff.md` report that is uploaded to the GitHub Release.
 
 | Field            | Value                                                                      |
 |------------------|----------------------------------------------------------------------------|
