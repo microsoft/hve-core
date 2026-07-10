@@ -1,19 +1,19 @@
 ---
 description: "VEX generation rules: evidence requirements, confidence routing, forbidden transitions, report templates, and licensing posture for AI-assisted vulnerability triage - Brought to you by microsoft/hve-core"
-applyTo: '.github/agents/security/vex-*.agent.md, .github/agents/security/subagents/cve-*.agent.md'
+applyTo: '.github/agents/security/sssc-reviewer.agent.md, .github/agents/security/subagents/cve-*.agent.md'
 ---
 
 # VEX Generation Instructions
 
 Rules governing AI-assisted VEX document generation. Agents producing or editing OpenVEX documents
 must follow these instructions. For OpenVEX schema details, see the
-`openvex-spec` skill at `.github/skills/security/openvex-spec/SKILL.md`.
+`vex` skill (read its `SKILL.md`).
 
 ## Evidence requirements, confidence routing, and forbidden transitions
 
 The canonical definitions for justification codes, evidence requirements per status,
-confidence-routing bands, and forbidden transitions live in the `openvex-spec` skill reference:
-`.github/skills/security/openvex-spec/references/vex-status-logic.md`.
+confidence-routing bands, and forbidden transitions live in the `vex` skill reference
+`references/vex-status-logic.md`.
 
 Agents must follow the decision tree, evidence thresholds, and band routing defined in that
 reference. The behavioral rules below supplement that reference with agent-specific constraints.
@@ -34,12 +34,12 @@ reference. The behavioral rules below supplement that reference with agent-speci
 
 VEX documents require an accountable author for trust purposes.
 
-| Role             | Description                                                                              |
-|------------------|------------------------------------------------------------------------------------------|
-| Drafter          | the AI agent. No trust requirement; the agent performs analysis and drafts the document. |
-| Reviewer         | CODEOWNERS-required human approver who validates evidence and status determinations.     |
-| Author of record | the merge commit author (the human approver). This is the accountable identity.          |
-| Trust anchor     | Sigstore identity of the release workflow that attests the VEX document.                 |
+| Role             | Description                                                                                                                                     |
+|------------------|-------------------------------------------------------------------------------------------------------------------------------------------------|
+| Drafter          | the AI agent. No trust requirement; the agent performs analysis and drafts the document.                                                        |
+| Reviewer         | CODEOWNERS-required human approver who validates evidence and status determinations.                                                            |
+| Author of record | the merge commit author (the human approver). This is the accountable identity.                                                                 |
+| Trust anchor     | Sigstore identity of the reusable VEX attestation workflow, microsoft/hve-core/.github/workflows/vex-attest.yml, that attests the VEX document. |
 
 The agent must never represent itself as the author of record. The `author` field in OpenVEX
 documents must identify the maintainer team or organization, not the agent.
@@ -110,7 +110,7 @@ The generated `hve-core.openvex.json` document containing all VEX statements. Mu
 * Validate against the OpenVEX v0.2.0 schema (see `openvex-schema.md` reference).
 * Increment the document `version` field.
 * Set `timestamp` only on first issuance. Update `last_updated` to the current generation time.
-* Set the `tooling` field to record document provenance: the drafting agent plus the human-reviewed, Sigstore-attested release process.
+* Set the `tooling` field to record document provenance: the drafting agent, the human-reviewed merge, and the reusable VEX attestation workflow's Sigstore identity.
 * Preserve existing statements that were not re-analyzed.
 * Use PURL format for all product identifiers.
 

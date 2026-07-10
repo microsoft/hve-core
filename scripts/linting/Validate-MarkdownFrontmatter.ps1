@@ -57,7 +57,8 @@ param(
     [Parameter(Mandatory = $false)]
     [string[]]$FooterExcludePaths = @(
         'CHANGELOG.md',
-        'dependency-pinning-artifacts/**'
+        'dependency-pinning-artifacts/**',
+        '.github/ISSUE_TEMPLATE/**'
     ),
 
     [Parameter(Mandatory = $false)]

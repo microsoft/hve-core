@@ -1,6 +1,6 @@
 ---
 name: vex-triage
-agent: VEX Generator
+agent: SSSC Reviewer
 description: "Triage CVEs from an existing scan report or SBOM and draft an OpenVEX document, skipping the scan phase - Brought to you by microsoft/hve-core"
 argument-hint: "report=path/to/report.json [product=pkg:npm/@org/name]"
 ---
@@ -17,6 +17,6 @@ argument-hint: "report=path/to/report.json [product=pkg:npm/@org/name]"
 
 ## Requirements
 
-1. Run the VEX Generator in Mode 2 (triage from existing report): skip the scan phase and begin at enrichment using `${input:report}`.
+1. Use the SSSC Reviewer's VEX assessment capability to triage from the existing report (skip the scan phase; begin at enrichment using `${input:report}`), following the `vex` skill playbook and the VEX generation and standards instructions.
 2. Apply the input precedence when interpreting the report: Trivy JSON > OSV-Scanner JSON > SPDX-JSON SBOM.
 3. When `${input:product}` is provided, use it as the PURL product identifier for the generated VEX statements.

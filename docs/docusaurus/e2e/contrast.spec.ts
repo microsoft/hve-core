@@ -1,6 +1,7 @@
 // Copyright (c) 2026 Microsoft Corporation. All rights reserved.
 // SPDX-License-Identifier: MIT
 import { test, expect } from '@playwright/test';
+import { SITE_PAGES, visitInvariantPage } from './_helpers/a11yInvariants';
 
 function parseColor(color: string): { r: number; g: number; b: number; a: number } | null {
   const match = color.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)(?:,\s*([\d.]+))?\)/i);
@@ -38,10 +39,6 @@ function calculateContrastRatio(foreground: string, background: string): number 
   const lighter = Math.max(fgLuminance, bgLuminance);
   const darker = Math.min(fgLuminance, bgLuminance);
   return (lighter + 0.05) / (darker + 0.05);
-}
-
-function isLargeText(fontSize: number, fontWeight: number): boolean {
-  return fontSize >= 24 || (fontSize >= 18.66 && fontWeight >= 700);
 }
 
 function describeContrastCase(label: string, selector: string, pseudoElt?: string): string {
@@ -94,6 +91,38 @@ async function measureContrast(page: any, selector: string, pseudoElt?: string) 
 }
 
 test.describe('Contrast measurement gates', () => {
+  for (const pageCase of SITE_PAGES) {
+    test(`${pageCase.name} keeps links visually distinct without relying on color alone`, async ({ page }) => {
+      await visitInvariantPage(page, pageCase);
+
+      // WCAG 1.4.1 (Use of Color) targets links embedded in blocks of text.
+      // Scope the check to in-content prose links (Docusaurus renders the
+      // article body under .markdown); navigational chrome such as breadcrumbs,
+      // cards, and hero call-to-action buttons is distinguished by non-color
+      // affordances and is intentionally out of scope here. Heading anchor
+      // (hash) links are decorative and excluded.
+      const proseLinks = page.locator(
+        '.markdown a:not(.hash-link):not([class*="card"]):not([class*="button"])',
+      );
+      const count = await proseLinks.count();
+      test.skip(count === 0, 'No in-content prose links on this page.');
+
+      const link = proseLinks.first();
+      await expect(link).toBeVisible();
+
+      const style = await link.evaluate((element) => {
+        const computed = window.getComputedStyle(element);
+        return {
+          textDecorationLine: computed.textDecorationLine,
+          textDecorationStyle: computed.textDecorationStyle,
+          textDecorationColor: computed.textDecorationColor,
+        };
+      });
+
+      expect(style.textDecorationLine, `${pageCase.name} should render a visible underline for content links`).toMatch(/underline/i);
+    });
+  }
+
   test('measures the navbar search input contrast in light and dark mode', async ({ page }) => {
     await page.goto('/hve-core/', { waitUntil: 'domcontentloaded' });
 
@@ -129,19 +158,19 @@ test.describe('Contrast measurement gates', () => {
   test('records the homepage hero contrast as human review where the background is a gradient', async ({ page }) => {
     await page.goto('/hve-core/', { waitUntil: 'domcontentloaded' });
 
-    const heading = await measureContrast(page, 'header h1');
-    const subtitle = await measureContrast(page, 'header p');
-
-    const headingThreshold = isLargeText(heading.fontSize, heading.fontWeight) ? 3 : 4.5;
-    const subtitleThreshold = isLargeText(subtitle.fontSize, subtitle.fontWeight) ? 3 : 4.5;
+    // The hero is a labelled <section aria-labelledby="hero-title">, not a
+    // <header>; target the hero heading/subtitle directly. measureContrast walks
+    // ancestors for the effective (gradient) background.
+    const heading = await measureContrast(page, '#hero-title');
+    const subtitle = await measureContrast(page, '[aria-labelledby="hero-title"] p');
 
     expect(
       heading.backgroundImage,
-      `${describeContrastCase('Homepage hero heading', 'header h1')} should be evaluated as a human-review case when the effective background is a gradient or image`,
+      `${describeContrastCase('Homepage hero heading', '#hero-title')} should be evaluated as a human-review case when the effective background is a gradient or image`,
     ).toBeTruthy();
     expect(
       subtitle.backgroundImage,
-      `${describeContrastCase('Homepage hero subtitle', 'header p')} should be evaluated as a human-review case when the effective background is a gradient or image`,
+      `${describeContrastCase('Homepage hero subtitle', '[aria-labelledby="hero-title"] p')} should be evaluated as a human-review case when the effective background is a gradient or image`,
     ).toBeTruthy();
 
     const headingRatio = heading.backgroundImage && heading.backgroundImage !== 'none'

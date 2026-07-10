@@ -504,6 +504,42 @@ class TestGitLabTransportHardening:
 
         assert exc_info.value.code == gitlab.EXIT_USAGE
 
+    def test_rejects_non_localhost_http_even_when_allow_env_set(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        monkeypatch.setenv("GITLAB_URL", "http://example.com")
+        monkeypatch.setenv("GITLAB_TOKEN", TEST_GITLAB_TOKEN)
+        monkeypatch.setenv("GITLAB_ALLOW_INSECURE", "1")
+
+        with pytest.raises(SystemExit) as exc_info:
+            gitlab.require_environment()
+
+        assert exc_info.value.code == gitlab.EXIT_USAGE
+
+    def test_rejects_loopback_http_without_allow_env(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        monkeypatch.setenv("GITLAB_URL", "http://127.0.0.1:8080")
+        monkeypatch.setenv("GITLAB_TOKEN", TEST_GITLAB_TOKEN)
+        monkeypatch.delenv("GITLAB_ALLOW_INSECURE", raising=False)
+
+        with pytest.raises(SystemExit) as exc_info:
+            gitlab.require_environment()
+
+        assert exc_info.value.code == gitlab.EXIT_USAGE
+
+    def test_accepts_loopback_http_with_allow_env(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        monkeypatch.setenv("GITLAB_URL", "http://127.0.0.1:8080")
+        monkeypatch.setenv("GITLAB_TOKEN", TEST_GITLAB_TOKEN)
+        monkeypatch.setenv("GITLAB_ALLOW_INSECURE", "1")
+
+        gitlab.require_environment()
+
+        assert gitlab.gitlab_url == "http://127.0.0.1:8080"
+        assert gitlab.api_url == "http://127.0.0.1:8080/api/v4"
+
     def test_rejects_invalid_mr_state(self) -> None:
         with pytest.raises(SystemExit) as exc_info:
             gitlab.cmd_mr_list(["invalid-state"])

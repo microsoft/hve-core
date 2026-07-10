@@ -3,7 +3,7 @@ title: Security Assurance Case and Security Model
 description: Comprehensive security model and security assurance documentation demonstrating enterprise security practices
 sidebar_position: 2
 author: Microsoft
-ms.date: 2026-06-30
+ms.date: 2026-07-03
 ms.topic: reference
 keywords:
   - security
@@ -49,9 +49,13 @@ Security relies on defense-in-depth with 20+ automated controls validated throug
   * [AI-Specific Threats](#ai-specific-threats)
   * [Responsible AI Threats](#responsible-ai-threats)
   * [OAuth Authentication Threats](#oauth-authentication-threats)
+  * [Jira Credential Threats](#jira-credential-threats)
+  * [GitLab Credential Threats](#gitlab-credential-threats)
+  * [TTS Voice-Over Threats](#tts-voice-over-threats)
 * [Security Controls](#security-controls)
 * [Assurance Argument](#assurance-argument)
 * [MCP Server Trust Analysis](#mcp-server-trust-analysis)
+* [Skill Security Models](#skill-security-models)
 * [Quantitative Security Metrics](#quantitative-security-metrics)
 * [References](#references)
 
@@ -1031,6 +1035,360 @@ External standards are cited inline.
 | **Trust Boundary Crossed** | Skill Process ↔ Mural API; User ↔ Mural Account Console                                                                                                                                                                                                                                                                                                                                                                                                                                                            |
 | **Detection**              | Out-of-band Mural account-side audit; alert on token-issuance anomaly                                                                                                                                                                                                                                                                                                                                                                                                                                              |
 
+### Jira Credential Threats
+
+These threats address credential and error-handling risks specific to the [Jira skill](https://github.com/microsoft/hve-core/blob/main/.github/skills/jira/jira/SKILL.md) (`.github/skills/jira/jira/scripts/jira.py`), a single-file standard-library CLI that authenticates to a Jira instance with a PAT (`Authorization: Bearer`) or Jira Cloud Basic auth (`base64(email:token)`) read from the environment per invocation.
+The catalog uses the same extended 11-row format as the OAuth threats. The authoritative per-skill model is the [Jira skill `SECURITY.md`](https://github.com/microsoft/hve-core/blob/main/.github/skills/jira/jira/SECURITY.md).
+Residual redaction-architecture hardening (central `_emit()` sink, `LOGGER`, typed `JiraAPIError`, source-contract redaction tests) is tracked on issues #1555, #1556, and #1559.
+
+#### JR-1: PAT Exfiltration via Traceback or Error Message
+
+| Field                      | Value                                                                                                                                                                                                                                                                                                                                                                          |
+|----------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| **Category**               | Information Disclosure                                                                                                                                                                                                                                                                                                                                                         |
+| **Asset**                  | Jira PAT (`Authorization: Bearer`)                                                                                                                                                                                                                                                                                                                                             |
+| **Threat**                 | A raw exception or diagnostic that embeds the request URL, headers, or upstream error body could surface the bearer token in stderr, an audit record, or a captured log                                                                                                                                                                                                        |
+| **Likelihood**             | Low                                                                                                                                                                                                                                                                                                                                                                            |
+| **Impact**                 | High (token grants the operator's Jira scope until revoked)                                                                                                                                                                                                                                                                                                                    |
+| **Mitigations**            | Token sent only in the `Authorization` header over TLS and never logged; remote error text passes through `_redact_sensitive_text` (masks `Bearer`/`Basic`, `Authorization`, query-string secrets) before display; `ScriptError` messages are built from structured fields, not raw responses. Central `_emit()`/`LOGGER` sink and typed `JiraAPIError` tracked on #1555/#1556 |
+| **Residual Risk**          | Low                                                                                                                                                                                                                                                                                                                                                                            |
+| **Status**                 | Partially Mitigated (redaction in place; central sink pending #1555/#1556)                                                                                                                                                                                                                                                                                                     |
+| **Source**                 | CWE-532 (Insertion of Sensitive Information into Log File); OWASP ASVS v4 §7.1.1                                                                                                                                                                                                                                                                                               |
+| **Trust Boundary Crossed** | Skill Process ↔ Operator diagnostics / audit sink                                                                                                                                                                                                                                                                                                                              |
+| **Detection**              | Source-contract redaction tests planned (#1559); code review                                                                                                                                                                                                                                                                                                                   |
+
+#### JR-2: Basic-Auth Credential Decoded from Logs
+
+| Field                      | Value                                                                                                                                                                                        |
+|----------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| **Category**               | Information Disclosure                                                                                                                                                                       |
+| **Asset**                  | Jira Cloud Basic credential (`base64(email:token)`)                                                                                                                                          |
+| **Threat**                 | The Basic `Authorization` value is reversible base64; if it reaches a log or error string it can be trivially decoded to recover the email and API token                                     |
+| **Likelihood**             | Low                                                                                                                                                                                          |
+| **Impact**                 | High                                                                                                                                                                                         |
+| **Mitigations**            | `_redact_sensitive_text` masks the `Basic` credential in error text; the credential is built from ASCII-validated components and used only as an in-transit header over TLS; never persisted |
+| **Residual Risk**          | Low                                                                                                                                                                                          |
+| **Status**                 | Partially Mitigated (#1556)                                                                                                                                                                  |
+| **Source**                 | CWE-522 (Insufficiently Protected Credentials); RFC 7617 (Basic auth is base64, not encryption)                                                                                              |
+| **Trust Boundary Crossed** | Skill Process ↔ Operator diagnostics                                                                                                                                                         |
+| **Detection**              | Redaction contract tests (#1559)                                                                                                                                                             |
+
+#### JR-3: `JIRA_BASE_URL` Substitution / SSRF
+
+| Field                      | Value                                                                                                                                                                                                                                                             |
+|----------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| **Category**               | Spoofing / Tampering                                                                                                                                                                                                                                              |
+| **Asset**                  | Request destination integrity (where the bearer token is sent)                                                                                                                                                                                                    |
+| **Threat**                 | A crafted `JIRA_BASE_URL` (embedded userinfo, alternate host, redirect chain) could retarget authenticated requests to an attacker-controlled origin, leaking the token                                                                                           |
+| **Likelihood**             | Low                                                                                                                                                                                                                                                               |
+| **Impact**                 | High                                                                                                                                                                                                                                                              |
+| **Mitigations**            | `_canonicalize_base_url` reduces the value to an origin-only URL and rejects control characters, userinfo, query, fragment, and non-root paths; HTTPS enforced for non-loopback hosts; `_NoRedirect` opener refuses 30x so the token is never replayed cross-host |
+| **Residual Risk**          | Low                                                                                                                                                                                                                                                               |
+| **Status**                 | Mitigated                                                                                                                                                                                                                                                         |
+| **Source**                 | CWE-918 (Server-Side Request Forgery); OWASP ASVS v4 §12.6                                                                                                                                                                                                        |
+| **Trust Boundary Crossed** | Skill Process ↔ Jira Instance (network)                                                                                                                                                                                                                           |
+| **Detection**              | Transport regression tests (redirect blocking, HTTPS guard)                                                                                                                                                                                                       |
+
+#### JR-4: Upstream Error Body Echoed Verbatim
+
+| Field                      | Value                                                                                                                                                                                                                       |
+|----------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| **Category**               | Information Disclosure                                                                                                                                                                                                      |
+| **Asset**                  | Diagnostic output integrity                                                                                                                                                                                                 |
+| **Threat**                 | A hostile or misconfigured Jira response could embed secrets or sensitive content that, if echoed verbatim, leaks to stderr or downstream automation                                                                        |
+| **Likelihood**             | Low                                                                                                                                                                                                                         |
+| **Impact**                 | Medium                                                                                                                                                                                                                      |
+| **Mitigations**            | Error bodies are JSON-parsed first and only redacted for presentation (`_extract_error_message` → `_redact_sensitive_text`); responses are read through a `MAX_BODY_BYTES`-capped reader with JSON content-type fail-closed |
+| **Residual Risk**          | Low                                                                                                                                                                                                                         |
+| **Status**                 | Mitigated                                                                                                                                                                                                                   |
+| **Source**                 | CWE-209 (Generation of Error Message Containing Sensitive Information)                                                                                                                                                      |
+| **Trust Boundary Crossed** | Jira Instance ↔ Skill Process ↔ Operator diagnostics                                                                                                                                                                        |
+| **Detection**              | Error-redaction regression tests                                                                                                                                                                                            |
+
+#### JR-5: `JIRA_PAT` Environment Leak via `os.environ` Dump
+
+| Field                      | Value                                                                                                                                                                                                                                                                          |
+|----------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| **Category**               | Information Disclosure                                                                                                                                                                                                                                                         |
+| **Asset**                  | Jira PAT / API token in the process environment                                                                                                                                                                                                                                |
+| **Threat**                 | A future debug path that dumps `os.environ` (or a traceback that captured it) could expose `JIRA_PAT` / `JIRA_API_TOKEN`                                                                                                                                                       |
+| **Likelihood**             | Low                                                                                                                                                                                                                                                                            |
+| **Impact**                 | High                                                                                                                                                                                                                                                                           |
+| **Mitigations**            | No code path prints `os.environ`; credentials are read once and held on a frozen dataclass; unexpected exceptions surface a standard traceback that does not include variable values. A gated, redaction-wrapped debug traceback (`_emit_debug_traceback`) is tracked on #1555 |
+| **Residual Risk**          | Low                                                                                                                                                                                                                                                                            |
+| **Status**                 | Partially Mitigated (no env dump today; hardened debug path pending #1555)                                                                                                                                                                                                     |
+| **Source**                 | CWE-526 (Exposure of Sensitive Information Through Environment Variables); CWE-532                                                                                                                                                                                             |
+| **Trust Boundary Crossed** | Skill Process ↔ Operator diagnostics                                                                                                                                                                                                                                           |
+| **Detection**              | Code review; redaction contract tests (#1559)                                                                                                                                                                                                                                  |
+
+#### JR-6: `JiraClient` `repr()` Leaking `auth_header`
+
+| Field                      | Value                                                                                                                                                                                                                       |
+|----------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| **Category**               | Information Disclosure                                                                                                                                                                                                      |
+| **Asset**                  | `Authorization` header value (Bearer / Basic)                                                                                                                                                                               |
+| **Threat**                 | `JiraClient` is a `@dataclass(frozen=True)` whose `auth_header` field holds the raw credential; the auto-generated `repr()` would expose it if the object were ever printed, logged, or captured by a debugger or traceback |
+| **Likelihood**             | Very Low (no current code path calls `repr(client)`)                                                                                                                                                                        |
+| **Impact**                 | High                                                                                                                                                                                                                        |
+| **Mitigations**            | No code path calls `repr()` on or logs the client; token used only as an in-transit header. A `__repr__` / field-mask override is tracked on #1555/#1556                                                                    |
+| **Residual Risk**          | Low                                                                                                                                                                                                                         |
+| **Status**                 | Open (latent gap; no `repr` override); tracked on #1555/#1556                                                                                                                                                               |
+| **Source**                 | CWE-215 (Insertion of Sensitive Information Into Debugging Code); CWE-532                                                                                                                                                   |
+| **Trust Boundary Crossed** | Skill Process ↔ Operator diagnostics                                                                                                                                                                                        |
+| **Detection**              | `repr()` negative test planned (#1559)                                                                                                                                                                                      |
+
+#### JR-7: `handle_comment` Stdin Payload Echoed in Traceback
+
+| Field                      | Value                                                                                                                                                                                   |
+|----------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| **Category**               | Information Disclosure                                                                                                                                                                  |
+| **Asset**                  | Operator-supplied stdin comment payload                                                                                                                                                 |
+| **Threat**                 | `handle_comment` reads a comment body from stdin; if that payload (which may contain sensitive text) were embedded in an error message or traceback, it could leak                      |
+| **Likelihood**             | Low                                                                                                                                                                                     |
+| **Impact**                 | Low                                                                                                                                                                                     |
+| **Mitigations**            | stdin is read through `_read_stdin(MAX_BODY_BYTES)` (size-capped); parse failures raise `ScriptError` with a static message, not the raw payload; error text is redacted before display |
+| **Residual Risk**          | Low                                                                                                                                                                                     |
+| **Status**                 | Mitigated                                                                                                                                                                               |
+| **Source**                 | CWE-209; CWE-117 (Improper Output Neutralization for Logs)                                                                                                                              |
+| **Trust Boundary Crossed** | CLI caller ↔ Skill Process                                                                                                                                                              |
+| **Detection**              | Redaction contract tests (#1559)                                                                                                                                                        |
+
+### GitLab Credential Threats
+
+These threats address credential and error-handling risks specific to the [GitLab skill](https://github.com/microsoft/hve-core/blob/main/.github/skills/gitlab/gitlab/SKILL.md) (`.github/skills/gitlab/gitlab/scripts/gitlab.py`), a single-file standard-library CLI that authenticates with a PAT (`PRIVATE-TOKEN` header) read from `GITLAB_TOKEN` and resolves the project from a read-only `git remote` subprocess.
+The authoritative per-skill model is the [GitLab skill `SECURITY.md`](https://github.com/microsoft/hve-core/blob/main/.github/skills/gitlab/gitlab/SECURITY.md).
+Residual redaction-architecture hardening (central `_emit()` sink, `LOGGER`, typed `GitLabAPIError` replacing `die()`, single-`urlopen` refactor, source-contract tests) is tracked on issues #1555, #1557, and #1559.
+
+#### GL-1: `PRIVATE-TOKEN` Exfiltration via Traceback or Error Message
+
+| Field                      | Value                                                                                                                                                                                                                                                                                                        |
+|----------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| **Category**               | Information Disclosure                                                                                                                                                                                                                                                                                       |
+| **Asset**                  | GitLab PAT (`PRIVATE-TOKEN` header)                                                                                                                                                                                                                                                                          |
+| **Threat**                 | A raw exception, `die()` message, or diagnostic embedding the URL, headers, or upstream body could surface the token                                                                                                                                                                                         |
+| **Likelihood**             | Low                                                                                                                                                                                                                                                                                                          |
+| **Impact**                 | High                                                                                                                                                                                                                                                                                                         |
+| **Mitigations**            | Token sent only in `PRIVATE-TOKEN` over TLS and never logged; error and non-JSON text passes through `_redact` (masks `PRIVATE-TOKEN`, `Authorization`, cookies, query-string secrets) before display. Central `_emit()`/`LOGGER` sink and typed `GitLabAPIError` (replacing `die()`) tracked on #1555/#1557 |
+| **Residual Risk**          | Low                                                                                                                                                                                                                                                                                                          |
+| **Status**                 | Partially Mitigated (redaction in place; central sink + typed error pending #1555/#1557)                                                                                                                                                                                                                     |
+| **Source**                 | CWE-532; OWASP ASVS v4 §7.1.1                                                                                                                                                                                                                                                                                |
+| **Trust Boundary Crossed** | Skill Process ↔ Operator diagnostics                                                                                                                                                                                                                                                                         |
+| **Detection**              | Redaction contract tests (#1559)                                                                                                                                                                                                                                                                             |
+
+#### GL-2: `gitlab_token` Module-Global Accidental Dump
+
+| Field                      | Value                                                                                                                                                                                   |
+|----------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| **Category**               | Information Disclosure                                                                                                                                                                  |
+| **Asset**                  | `gitlab_token` PAT held in mutable module-global state                                                                                                                                  |
+| **Threat**                 | The token is stored in a module-level global; a `globals()` dump, `repr`, or debugger frame could expose it                                                                             |
+| **Likelihood**             | Very Low                                                                                                                                                                                |
+| **Impact**                 | High                                                                                                                                                                                    |
+| **Mitigations**            | No code path dumps globals; token used only as the `PRIVATE-TOKEN` header. Moving the credential onto an immutable config object (mirroring Jira's dataclass) is tracked on #1555/#1557 |
+| **Residual Risk**          | Low                                                                                                                                                                                     |
+| **Status**                 | Open (module-global remains); tracked on #1555/#1557                                                                                                                                    |
+| **Source**                 | CWE-526; CWE-215                                                                                                                                                                        |
+| **Trust Boundary Crossed** | Skill Process ↔ Operator diagnostics                                                                                                                                                    |
+| **Detection**              | Code review; contract tests (#1559)                                                                                                                                                     |
+
+#### GL-3: `cmd_job_log` Second `urlopen` Site Bypassing Redaction
+
+| Field                      | Value                                                                                                                                                                                                                                                                                                                     |
+|----------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| **Category**               | Information Disclosure                                                                                                                                                                                                                                                                                                    |
+| **Asset**                  | CI job-trace egress and `PRIVATE-TOKEN`                                                                                                                                                                                                                                                                                   |
+| **Threat**                 | `cmd_job_log` issues a second HTTP request outside the central `request()` helper; historically this bypassed transport hardening and printed the raw error body                                                                                                                                                          |
+| **Likelihood**             | Low                                                                                                                                                                                                                                                                                                                       |
+| **Impact**                 | Medium                                                                                                                                                                                                                                                                                                                    |
+| **Mitigations**            | The second request now routes through the shared `_NoRedirect` `_OPENER` with `REQUEST_TIMEOUT` and `MAX_BODY_BYTES`; job-trace output passes through `_redact` and is truncated via `_preview_text`. Collapsing it into a single `request()` call site (source-contract single-`urlopen` test) is tracked on #1555/#1557 |
+| **Residual Risk**          | Low                                                                                                                                                                                                                                                                                                                       |
+| **Status**                 | Partially Mitigated (egress redacted + hardened opener; single-`urlopen` refactor pending #1555/#1557)                                                                                                                                                                                                                    |
+| **Source**                 | CWE-532; CWE-200 (Exposure of Sensitive Information to an Unauthorized Actor)                                                                                                                                                                                                                                             |
+| **Trust Boundary Crossed** | GitLab Instance ↔ Skill Process ↔ Operator diagnostics                                                                                                                                                                                                                                                                    |
+| **Detection**              | Single-`urlopen` source-contract test (#1559)                                                                                                                                                                                                                                                                             |
+
+#### GL-4: `die()` Helper Printing Raw Upstream Body
+
+| Field                      | Value                                                                                                                                                                                                                              |
+|----------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| **Category**               | Information Disclosure                                                                                                                                                                                                             |
+| **Asset**                  | Diagnostic output integrity                                                                                                                                                                                                        |
+| **Threat**                 | The `die()` helper prints an error string and exits; if callers pass a raw upstream body, secrets or sensitive content could leak                                                                                                  |
+| **Likelihood**             | Low                                                                                                                                                                                                                                |
+| **Impact**                 | Medium                                                                                                                                                                                                                             |
+| **Mitigations**            | Error bodies are parsed then redacted before reaching `die()`; non-JSON bodies pass through `_redact` + `_preview_text`. Replacing `die()` with a typed `GitLabAPIError` carrying only structured fields is tracked on #1555/#1557 |
+| **Residual Risk**          | Low                                                                                                                                                                                                                                |
+| **Status**                 | Partially Mitigated (#1555/#1557)                                                                                                                                                                                                  |
+| **Source**                 | CWE-209                                                                                                                                                                                                                            |
+| **Trust Boundary Crossed** | Skill Process ↔ Operator diagnostics                                                                                                                                                                                               |
+| **Detection**              | Redaction contract tests (#1559)                                                                                                                                                                                                   |
+
+#### GL-5: `GITLAB_URL` Substitution / SSRF
+
+| Field                      | Value                                                                                                                                                                              |
+|----------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| **Category**               | Spoofing / Tampering                                                                                                                                                               |
+| **Asset**                  | Request destination integrity                                                                                                                                                      |
+| **Threat**                 | A crafted `GITLAB_URL` could retarget authenticated requests to an attacker origin and leak the token                                                                              |
+| **Likelihood**             | Low                                                                                                                                                                                |
+| **Impact**                 | High                                                                                                                                                                               |
+| **Mitigations**            | `_normalize_base_url` reduces to origin-only and rejects userinfo, query, fragment, non-root paths, and control characters; HTTPS enforced off-loopback; `_NoRedirect` refuses 30x |
+| **Residual Risk**          | Low                                                                                                                                                                                |
+| **Status**                 | Mitigated                                                                                                                                                                          |
+| **Source**                 | CWE-918; OWASP ASVS v4 §12.6                                                                                                                                                       |
+| **Trust Boundary Crossed** | Skill Process ↔ GitLab Instance                                                                                                                                                    |
+| **Detection**              | Transport regression tests                                                                                                                                                         |
+
+#### GL-6: Upstream Error Body or CI Trace Echoed Verbatim
+
+| Field                      | Value                                                                                                                                        |
+|----------------------------|----------------------------------------------------------------------------------------------------------------------------------------------|
+| **Category**               | Information Disclosure                                                                                                                       |
+| **Asset**                  | Diagnostic output integrity                                                                                                                  |
+| **Threat**                 | A hostile or misconfigured GitLab response or CI trace could embed secrets that leak if echoed verbatim                                      |
+| **Likelihood**             | Medium (CI traces routinely contain secret-shaped content)                                                                                   |
+| **Impact**                 | Medium                                                                                                                                       |
+| **Mitigations**            | Error bodies parsed-then-redacted; job traces emitted through `_redact` with truncation; JSON content-type fail-closed; `MAX_BODY_BYTES` cap |
+| **Residual Risk**          | Low                                                                                                                                          |
+| **Status**                 | Mitigated                                                                                                                                    |
+| **Source**                 | CWE-209; CWE-200                                                                                                                             |
+| **Trust Boundary Crossed** | GitLab Instance ↔ Skill Process ↔ Operator diagnostics                                                                                       |
+| **Detection**              | Redaction regression tests                                                                                                                   |
+
+#### GL-7: `GITLAB_TOKEN` Environment Leak via `os.environ` Dump
+
+| Field                      | Value                                                                                                                               |
+|----------------------------|-------------------------------------------------------------------------------------------------------------------------------------|
+| **Category**               | Information Disclosure                                                                                                              |
+| **Asset**                  | `GITLAB_TOKEN` in the process environment                                                                                           |
+| **Threat**                 | A future debug path dumping `os.environ` could expose the token                                                                     |
+| **Likelihood**             | Low                                                                                                                                 |
+| **Impact**                 | High                                                                                                                                |
+| **Mitigations**            | No code path prints `os.environ`; token read once into module state. Gated redaction-wrapped debug traceback tracked on #1555/#1557 |
+| **Residual Risk**          | Low                                                                                                                                 |
+| **Status**                 | Partially Mitigated (no env dump today; hardened debug path pending #1555/#1557)                                                    |
+| **Source**                 | CWE-526; CWE-532                                                                                                                    |
+| **Trust Boundary Crossed** | Skill Process ↔ Operator diagnostics                                                                                                |
+| **Detection**              | Code review; contract tests (#1559)                                                                                                 |
+
+### TTS Voice-Over Threats
+
+These threats address credential and content-egress risks specific to the [tts-voiceover skill](https://github.com/microsoft/hve-core/blob/main/.github/skills/experimental/tts-voiceover/SKILL.md) (`.github/skills/experimental/tts-voiceover/scripts/`), a Python CLI that escapes speaker-notes text into SSML, synthesizes audio through the Azure Cognitive Services Speech SDK over TLS, and embeds the audio into a PowerPoint deck.
+It authenticates with a `SPEECH_KEY` subscription key or an Entra token minted by `DefaultAzureCredential`. The authoritative per-skill model is the [tts-voiceover skill `SECURITY.md`](https://github.com/microsoft/hve-core/blob/main/.github/skills/experimental/tts-voiceover/SECURITY.md).
+Its headline residual is speaker-notes content egress to the Azure region; input-parser defense-in-depth is tracked on #1056 / PR #1695.
+
+#### TT-1: `SPEECH_KEY` Exfiltration via Traceback, Error, or Logs
+
+| Field                      | Value                                                                                                                                                  |
+|----------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------|
+| **Category**               | Information Disclosure                                                                                                                                 |
+| **Asset**                  | `SPEECH_KEY` Azure Speech subscription key                                                                                                             |
+| **Threat**                 | An exception or diagnostic embedding the key or SDK request context could surface it in stderr or a log                                                |
+| **Likelihood**             | Low                                                                                                                                                    |
+| **Impact**                 | High (key grants synthesis on the subscription until rotated)                                                                                          |
+| **Mitigations**            | Key read per invocation and passed only to the Speech SDK over TLS; never persisted and never logged; the SDK owns transport and does not echo the key |
+| **Residual Risk**          | Low                                                                                                                                                    |
+| **Status**                 | Mitigated                                                                                                                                              |
+| **Source**                 | CWE-532; OWASP ASVS v4 §7.1.1                                                                                                                          |
+| **Trust Boundary Crossed** | Skill Process ↔ Azure Speech; Skill Process ↔ Operator diagnostics                                                                                     |
+| **Detection**              | Code review                                                                                                                                            |
+
+#### TT-2: Entra Token Leakage via Debug Output
+
+| Field                      | Value                                                                                                                                                                   |
+|----------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| **Category**               | Information Disclosure                                                                                                                                                  |
+| **Asset**                  | Entra access token (`aad#{resource}#{token}`)                                                                                                                           |
+| **Threat**                 | The composed `aad#{resource_id}#{token}` authorization value could leak via a debug print or captured traceback                                                         |
+| **Likelihood**             | Low                                                                                                                                                                     |
+| **Impact**                 | High (bearer token for `cognitiveservices.azure.com` until expiry)                                                                                                      |
+| **Mitigations**            | Token minted per invocation by `DefaultAzureCredential`, refreshed near expiry, and passed only to the SDK; not logged or persisted; short TTL caps the exposure window |
+| **Residual Risk**          | Low                                                                                                                                                                     |
+| **Status**                 | Mitigated                                                                                                                                                               |
+| **Source**                 | CWE-532; CWE-522                                                                                                                                                        |
+| **Trust Boundary Crossed** | Skill Process ↔ Entra / Azure Speech                                                                                                                                    |
+| **Detection**              | Code review                                                                                                                                                             |
+
+#### TT-3: Speaker-Notes Content Egress Without Data-Classification Gate
+
+| Field                      | Value                                                                                                                                                                                                                                                        |
+|----------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| **Category**               | Information Disclosure                                                                                                                                                                                                                                       |
+| **Asset**                  | Speaker-notes content (`content.yaml`)                                                                                                                                                                                                                       |
+| **Threat**                 | All narration text leaves the trust boundary to the configured Azure Speech region for synthesis; confidential content could egress without a classification or consent gate                                                                                 |
+| **Likelihood**             | Medium (any run sends content off-box)                                                                                                                                                                                                                       |
+| **Impact**                 | Medium (depends on content sensitivity)                                                                                                                                                                                                                      |
+| **Mitigations**            | Egress is over TLS to the operator-configured region only; documented as the primary residual in the skill `SECURITY.md`; operators control what content is supplied and which region is used. No automated data-classification gate exists (documented gap) |
+| **Residual Risk**          | Medium                                                                                                                                                                                                                                                       |
+| **Status**                 | Partially Mitigated (documented; no automated classification gate)                                                                                                                                                                                           |
+| **Source**                 | CWE-200 (Exposure of Sensitive Information to an Unauthorized Actor)                                                                                                                                                                                         |
+| **Trust Boundary Crossed** | Operator Workstation ↔ Azure Speech (region)                                                                                                                                                                                                                 |
+| **Detection**              | Out-of-band Azure-side monitoring; operator review of inputs                                                                                                                                                                                                 |
+
+#### TT-4: SSML Injection via Unescaped Speaker Notes
+
+| Field                      | Value                                                                                                            |
+|----------------------------|------------------------------------------------------------------------------------------------------------------|
+| **Category**               | Tampering                                                                                                        |
+| **Asset**                  | SSML synthesis request integrity                                                                                 |
+| **Threat**                 | Speaker-notes text interpolated into SSML could inject markup that alters synthesis or smuggles control elements |
+| **Likelihood**             | Low                                                                                                              |
+| **Impact**                 | Low                                                                                                              |
+| **Mitigations**            | Speaker notes are XML-escaped / `quoteattr`-quoted before insertion into SSML                                    |
+| **Residual Risk**          | Low                                                                                                              |
+| **Status**                 | Mitigated                                                                                                        |
+| **Source**                 | CWE-91 (XML Injection); CWE-116 (Improper Encoding or Escaping of Output)                                        |
+| **Trust Boundary Crossed** | Inputs ↔ Skill Process ↔ Azure Speech                                                                            |
+| **Detection**              | Unit tests on SSML escaping                                                                                      |
+
+#### TT-5: Untrusted PPTX / YAML Parsing (XXE / Unsafe Deserialization)
+
+| Field                      | Value                                                                                                                                                                                                                                                                  |
+|----------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| **Category**               | Tampering / Elevation of Privilege                                                                                                                                                                                                                                     |
+| **Asset**                  | Host process integrity                                                                                                                                                                                                                                                 |
+| **Threat**                 | Malicious `content.yaml` or input PPTX could exploit unsafe YAML deserialization or XML external-entity resolution during parsing                                                                                                                                      |
+| **Likelihood**             | Low                                                                                                                                                                                                                                                                    |
+| **Impact**                 | Medium                                                                                                                                                                                                                                                                 |
+| **Mitigations**            | `yaml.safe_load` for YAML; python-pptx OOXML parsing with external-entity resolution disabled; the single raw `lxml` parse targets a hardcoded trusted timing-template constant (not attacker-influenced) and is being hardened as defense-in-depth (#1056 / PR #1695) |
+| **Residual Risk**          | Low                                                                                                                                                                                                                                                                    |
+| **Status**                 | Partially Mitigated (safe parsers in place; `lxml` defense-in-depth pending #1056/#1695)                                                                                                                                                                               |
+| **Source**                 | CWE-611 (Improper Restriction of XML External Entity Reference); CWE-502 (Deserialization of Untrusted Data)                                                                                                                                                           |
+| **Trust Boundary Crossed** | Inputs ↔ Skill Process                                                                                                                                                                                                                                                 |
+| **Detection**              | Parser hardening tracked on #1056/#1695                                                                                                                                                                                                                                |
+
+#### TT-6: `DefaultAzureCredential` Ambient-Credential Breadth
+
+| Field                      | Value                                                                                                                                                                                                                                     |
+|----------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| **Category**               | Elevation of Privilege / Spoofing                                                                                                                                                                                                         |
+| **Asset**                  | Ambient Azure identity used for synthesis                                                                                                                                                                                                 |
+| **Threat**                 | `DefaultAzureCredential` walks a broad chain (environment, managed identity, Azure CLI, and more); on a shared host it could resolve to an unintended, more-privileged identity than the operator expects                                 |
+| **Likelihood**             | Low                                                                                                                                                                                                                                       |
+| **Impact**                 | Medium                                                                                                                                                                                                                                    |
+| **Mitigations**            | Token scoped to `cognitiveservices.azure.com/.default`; credential resolution is per-invocation and non-persistent; operators can pin the identity via the environment. Chain breadth documented as a residual in the skill `SECURITY.md` |
+| **Residual Risk**          | Medium                                                                                                                                                                                                                                    |
+| **Status**                 | Partially Mitigated (documented; chain breadth inherent to `DefaultAzureCredential`)                                                                                                                                                      |
+| **Source**                 | CWE-269 (Improper Privilege Management)                                                                                                                                                                                                   |
+| **Trust Boundary Crossed** | Skill Process ↔ Entra                                                                                                                                                                                                                     |
+| **Detection**              | Operator review of the resolved identity                                                                                                                                                                                                  |
+
+#### TT-7: Azure Speech Region / Endpoint Substitution
+
+| Field                      | Value                                                                                                                                                                                   |
+|----------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| **Category**               | Spoofing / Tampering                                                                                                                                                                    |
+| **Asset**                  | Synthesis request destination (where content and credential are sent)                                                                                                                   |
+| **Threat**                 | A tampered region or endpoint configuration could direct content and the credential to an attacker-controlled endpoint                                                                  |
+| **Likelihood**             | Low                                                                                                                                                                                     |
+| **Impact**                 | High                                                                                                                                                                                    |
+| **Mitigations**            | The endpoint is derived from the operator-supplied region and reached over TLS via the SDK (system trust store); credentials and content are sent only to the configured Azure endpoint |
+| **Residual Risk**          | Low                                                                                                                                                                                     |
+| **Status**                 | Mitigated (TLS; operator-controlled region)                                                                                                                                             |
+| **Source**                 | CWE-918; CWE-297 (Improper Validation of Certificate with Host Mismatch, mitigated by SDK TLS)                                                                                          |
+| **Trust Boundary Crossed** | Skill Process ↔ Azure Speech                                                                                                                                                            |
+| **Detection**              | TLS validation via the SDK                                                                                                                                                              |
+
 ## Security Controls
 
 ### Supply Chain Security Controls
@@ -1228,6 +1586,27 @@ Follow-up items identified during the Phase 5 review of the Mural skill OAuth su
 
 1. First-party servers (GitHub, Azure DevOps, Microsoft Docs): Enable with organization policy controls; GitHub MCP is enabled by default
 2. Third-party servers (Context7): Evaluate data flow, use API key rotation, review Upstash trust center
+
+## Skill Security Models
+
+Most skills are markdown knowledge packs with no runtime and are covered by the repository-level supply-chain and developer-workflow controls above.
+Skills that ship an executable runtime (network egress, credential handling, subprocess execution, or untrusted document/content parsing) carry their own per-skill STRIDE threat model in a `SECURITY.md` next to their `SKILL.md`.
+Those models follow a shared structure (assets, adversaries, trust buckets with per-bucket STRIDE mitigations, and an Enterprise Readiness Gaps register) and are the authoritative source for each skill's residual risk.
+
+| Skill                               | Runtime surface                                                                                                                              | Primary residual gaps                                                           | Security model                                                                                                              |
+|-------------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------|---------------------------------------------------------------------------------|-----------------------------------------------------------------------------------------------------------------------------|
+| jira                                | REST CLI; environment credentials                                                                                                            | No token revocation; best-effort redaction; no cert pinning                     | [SECURITY.md](https://github.com/microsoft/hve-core/blob/main/.github/skills/jira/jira/SECURITY.md)                         |
+| gitlab                              | REST CLI; environment credentials; git-remote subprocess                                                                                     | Untrusted CI-trace egress; insecure-transport opt-out; no cert pinning          | [SECURITY.md](https://github.com/microsoft/hve-core/blob/main/.github/skills/gitlab/gitlab/SECURITY.md)                     |
+| mural (experimental)                | REST CLI; embedded stdio MCP server; OAuth token store                                                                                       | OAuth audit gaps; keyring backend toggle is code-execution surface              | [SECURITY.md](https://github.com/microsoft/hve-core/blob/main/.github/skills/experimental/mural/SECURITY.md)                |
+| tts-voiceover (experimental)        | Azure Speech egress; key/Entra credentials; SSML + PPTX parsing                                                                              | Content egress to Azure region; broad credential chain                          | [SECURITY.md](https://github.com/microsoft/hve-core/blob/main/.github/skills/experimental/tts-voiceover/SECURITY.md)        |
+| accessibility                       | Arbitrary-URL scan egress; unpinned `npx @axe-core/cli` subprocess                                                                           | Unpinned scanner package; no egress allow-list (SSRF); headless-browser surface | [SECURITY.md](https://github.com/microsoft/hve-core/blob/main/.github/skills/accessibility/accessibility/SECURITY.md)       |
+| powerpoint (experimental)           | Sandboxed `content-extra.py` execution; LibreOffice/MuPDF document parsing                                                                   | Denylist confinement is not OS-level; external-parser CVE exposure              | [SECURITY.md](https://github.com/microsoft/hve-core/blob/main/.github/skills/experimental/powerpoint/SECURITY.md)           |
+| video-to-gif (experimental)         | Local CLI (bash + PowerShell); FFmpeg/ffprobe subprocess; untrusted media parsing                                                            | Inherited FFmpeg decoder CVE exposure; bare-filename search resolution          | [SECURITY.md](https://github.com/microsoft/hve-core/blob/main/.github/skills/experimental/video-to-gif/SECURITY.md)         |
+| gh-code-scanning                    | GitHub code-scanning read via `gh` CLI subprocess; stdout only                                                                               | Unpinned `gh`/`jq` PATH dependencies; TLS delegated to `gh`                     | [SECURITY.md](https://github.com/microsoft/hve-core/blob/main/.github/skills/github/gh-code-scanning/SECURITY.md)           |
+| customer-card-render (experimental) | Local Python CLI; regex parse of untrusted DT markdown; YAML emission                                                                        | Inherited powerpoint build toolchain; confidential DT prose egress              | [SECURITY.md](https://github.com/microsoft/hve-core/blob/main/.github/skills/experimental/customer-card-render/SECURITY.md) |
+| vex                                 | Local Python gate (`vex_gate.py`); anchored-regex parse of untrusted detection-issue body; `json.loads` of local OpenVEX doc; exit code only | Gate-suppression by issue-edit access; forced-proceed AI-credit consumption     | [SECURITY.md](https://github.com/microsoft/hve-core/blob/main/.github/skills/security/vex/SECURITY.md)                      |
+
+Skills whose scripts perform only local validation with no external surface (for example `adr-author` and `vally-tests`) do not require a dedicated model; their risk is bounded by the repository-level controls. When a new skill adds an executable runtime with any of the surfaces above, add a `SECURITY.md` following the shared structure and register it in this table and in the [security documentation index](README.md#skill-security-models).
 
 ## Quantitative Security Metrics
 

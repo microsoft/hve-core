@@ -47,6 +47,24 @@ err() {
   exit 1
 }
 
+# Maximum wall-clock seconds for any single FFmpeg/ffprobe invocation. Prevents a
+# hostile or pathological input from hanging the conversion indefinitely.
+# Override with VIDEO_TO_GIF_TIMEOUT (seconds).
+FFMPEG_TIMEOUT="${VIDEO_TO_GIF_TIMEOUT:-600}"
+
+# Run an external command under a wall-clock bound when a timeout utility is
+# available (coreutils `timeout`, or macOS `gtimeout` from coreutils); otherwise
+# run it unbounded so the skill still functions where neither is installed.
+run_bounded() {
+  if command -v timeout &>/dev/null; then
+    timeout "${FFMPEG_TIMEOUT}" "$@"
+  elif command -v gtimeout &>/dev/null; then
+    gtimeout "${FFMPEG_TIMEOUT}" "$@"
+  else
+    "$@"
+  fi
+}
+
 get_file_size() {
   local file="$1"
   if [[ "$(uname)" == "Darwin" ]]; then
@@ -155,7 +173,7 @@ detect_hdr() {
   fi
 
   local color_info
-  color_info=$(ffprobe -v error -select_streams v:0 \
+  color_info=$(run_bounded ffprobe -v error -select_streams v:0 \
     -show_entries stream=color_primaries,color_transfer \
     -of csv=p=0 "${file}" 2>/dev/null || echo "")
 
@@ -304,6 +322,25 @@ Searched: current directory, workspace root, ~/Movies (or ~/Videos), ~/Downloads
       ;;
   esac
 
+  # Validate numeric arguments before they are interpolated into the FFmpeg
+  # filtergraph. Without this, a value such as --fps "10,<filter>" could inject
+  # additional FFmpeg filters (filtergraph injection). Ranges mirror convert.ps1.
+  if [[ ! "${fps}" =~ ^[0-9]+$ ]] || (( fps < 1 || fps > 30 )); then
+    err "--fps must be an integer between 1 and 30"
+  fi
+  if [[ ! "${width}" =~ ^[0-9]+$ ]] || (( width < 100 || width > 3840 )); then
+    err "--width must be an integer between 100 and 3840"
+  fi
+  if [[ ! "${loop}" =~ ^[0-9]+$ ]]; then
+    err "--loop must be a non-negative integer"
+  fi
+  if [[ -n "${start_time}" && ! "${start_time}" =~ ^[0-9]+([.][0-9]+)?$ ]]; then
+    err "--start must be a non-negative number (seconds)"
+  fi
+  if [[ -n "${duration}" && ! "${duration}" =~ ^[0-9]+([.][0-9]+)?$ ]]; then
+    err "--duration must be a non-negative number (seconds)"
+  fi
+
   # Check for FFmpeg
   if ! command -v ffmpeg &>/dev/null; then
     echo "ERROR: FFmpeg is required but not installed." >&2
@@ -351,29 +388,33 @@ Searched: current directory, workspace root, ~/Movies (or ~/Videos), ~/Downloads
     echo "Mode:       Single-pass (faster, lower quality)"
     echo ""
 
-    ffmpeg "${time_args[@]}" -i "${input_file}" \
+    run_bounded ffmpeg "${time_args[@]}" -i "${input_file}" \
       -vf "${base_filter}" \
       -loop "${loop}" -y "${output_file}"
   else
     echo "Mode:       Two-pass palette optimization"
     echo ""
 
-    local palette_file="/tmp/palette_$$.png"
+    # Create the palette inside a private, unpredictable temp directory (mode 0700)
+    # rather than a predictable /tmp/palette_$$.png, which is exposed to a symlink
+    # or pre-creation race on a world-writable /tmp. The EXIT trap removes it even
+    # on failure or timeout.
+    local palette_dir
+    palette_dir=$(mktemp -d "${TMPDIR:-/tmp}/video-to-gif.XXXXXX") || err "Failed to create temporary directory"
+    trap 'rm -rf "${palette_dir}"' EXIT
+    local palette_file="${palette_dir}/palette.png"
 
     # Pass 1: Generate palette
     echo "Pass 1: Generating optimized palette..."
-    ffmpeg "${time_args[@]}" -i "${input_file}" \
+    run_bounded ffmpeg "${time_args[@]}" -i "${input_file}" \
       -vf "${base_filter},palettegen=stats_mode=diff" \
       -y "${palette_file}"
 
     # Pass 2: Create GIF
     echo "Pass 2: Creating GIF with palette..."
-    ffmpeg "${time_args[@]}" -i "${input_file}" -i "${palette_file}" \
+    run_bounded ffmpeg "${time_args[@]}" -i "${input_file}" -i "${palette_file}" \
       -filter_complex "${base_filter}[x];[x][1:v]paletteuse=dither=${dither}:diff_mode=rectangle" \
       -loop "${loop}" -y "${output_file}"
-
-    # Cleanup palette file
-    rm -f "${palette_file}"
   fi
 
   if [[ -f "${output_file}" ]]; then

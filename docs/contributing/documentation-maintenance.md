@@ -3,7 +3,7 @@ title: Documentation Maintenance
 description: How the automated ms.date freshness system detects and flags stale documentation for review
 sidebar_position: 8
 author: Microsoft
-ms.date: 2026-03-10
+ms.date: 2026-07-08
 ms.topic: reference
 keywords:
   - documentation

@@ -3,7 +3,7 @@ title: SBOM Verification
 description: Verify, download, and inspect the Software Bill of Materials published with each HVE Core release
 sidebar_position: 3
 author: Microsoft
-ms.date: 2026-03-01
+ms.date: 2026-07-08
 ms.topic: how-to
 keywords:
   - SBOM
@@ -51,8 +51,11 @@ Verify the SBOM attestation:
 
 ```bash
 gh attestation verify hve-core-<version>.vsix -R microsoft/hve-core \
+  --signer-workflow microsoft/hve-core/.github/workflows/extension-provenance.yml \
   --predicate-type https://spdx.dev/Document/v2.3
 ```
+
+Use the signer-workflow pin to verify the dedicated reusable provenance builder. This provenance is generated in an isolated reusable workflow that provides a GitHub-native SLSA Build L3 posture.
 
 A successful verification confirms:
 

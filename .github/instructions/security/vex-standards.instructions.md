@@ -14,8 +14,8 @@ Applies to all files under `security/vex/` and `.copilot-tracking/security/vex/`
 ## Canonical rules reference
 
 The authoritative definitions for confidence routing, status determination, forbidden transitions,
-evidence requirements, and justification codes live in the `openvex-spec` skill reference at
-[`vex-status-logic.md`](../../skills/security/openvex-spec/references/vex-status-logic.md). Treat that
+evidence requirements, and justification codes live in the `vex` skill reference
+`references/vex-status-logic.md`. Treat that
 reference as the single source of truth. Do not duplicate or paraphrase those tables here, because
 duplication causes drift.
 
@@ -49,7 +49,7 @@ VEX documents in this repository follow a draft-and-merge accountability model.
 
 The AI agent drafts VEX statements, including status determinations, justification codes, and supporting evidence. The human reviewer merges the pull request after validating the evidence and confirming the status determination.
 
-The merge commit author is the accountable author of record for the VEX statement. The Sigstore identity attached by the release workflow serves as the trust anchor for published VEX documents.
+The merge commit author is the accountable author of record for the VEX statement. The Sigstore identity attached by the reusable VEX attestation workflow, microsoft/hve-core/.github/workflows/vex-attest.yml, serves as the trust anchor for published VEX documents.
 
 ## Document mutation contract
 

@@ -245,6 +245,121 @@ function Build-ReverseIndex {
     return $index
 }
 
+function Get-FrontmatterListValues {
+    [CmdletBinding()]
+    [OutputType([string[]])]
+    param(
+        [Parameter(Mandatory)] [string]$Frontmatter,
+        [Parameter(Mandatory)] [string]$Field
+    )
+
+    $results = [System.Collections.Generic.List[string]]::new()
+    $lines = $Frontmatter -split "`r?`n"
+    $inList = $false
+    foreach ($line in $lines) {
+        if (-not $inList) {
+            if ($line -match "^$([regex]::Escape($Field))\s*:\s*\[(.*)\]\s*$") {
+                $items = $matches[1] -split ','
+                foreach ($item in $items) {
+                    $t = $item.Trim().Trim('"').Trim("'")
+                    if ($t) { $results.Add($t) }
+                }
+                return $results.ToArray()
+            }
+            if ($line -match "^$([regex]::Escape($Field))\s*:\s*$") {
+                $inList = $true
+                continue
+            }
+        } else {
+            if ($line -match '^\s*-\s*(.+?)\s*$') {
+                $results.Add($matches[1].Trim().Trim('"').Trim("'"))
+            } elseif ($line -match '^\S') {
+                break
+            }
+        }
+    }
+    return $results.ToArray()
+}
+
+function Get-FrontmatterStringValue {
+    [CmdletBinding()]
+    [OutputType([string])]
+    param(
+        [Parameter(Mandatory)] [string]$Frontmatter,
+        [Parameter(Mandatory)] [string]$Field
+    )
+
+    foreach ($line in ($Frontmatter -split "`r?`n")) {
+        if ($line -match "^$([regex]::Escape($Field))\s*:\s*(?<val>.+?)\s*$") {
+            return $matches['val'].Trim().Trim('"').Trim("'")
+        }
+    }
+    return ''
+}
+
+function Get-SubagentDisplayName {
+    [CmdletBinding()]
+    [OutputType([string])]
+    param(
+        [Parameter(Mandatory)] [string]$RepoRoot,
+        [Parameter(Mandatory)] [string]$SubagentPath
+    )
+
+    $subagentAbs = Join-Path -Path $RepoRoot -ChildPath $SubagentPath
+    if (-not (Test-Path -LiteralPath $subagentAbs -PathType Leaf)) { return '' }
+
+    $raw = [System.IO.File]::ReadAllText($subagentAbs)
+    if ($raw -notmatch '(?ms)^---\s*\r?\n(.*?)\r?\n---\s*(?:\r?\n|$)') { return '' }
+
+    return Get-FrontmatterStringValue -Frontmatter $matches[1] -Field 'name'
+}
+
+function Build-ParentAgentNameIndex {
+    <#
+    .SYNOPSIS
+    Build a display-name -> parent-slug[] index in a single pass over the
+    parent agents, so name-referenced subagents can be resolved to their
+    parents without re-scanning per candidate.
+
+    .OUTPUTS
+    [hashtable] keyed (case-insensitively) by the display name a parent lists
+    under `agents:`; each value is a HashSet of parent slugs.
+    #>
+    [CmdletBinding()]
+    [OutputType([hashtable])]
+    param(
+        [Parameter(Mandatory)] [string]$RepoRoot
+    )
+
+    $index = @{}
+    $agentsRoot = Join-Path -Path $RepoRoot -ChildPath '.github/agents'
+    if (-not (Test-Path -LiteralPath $agentsRoot -PathType Container)) { return $index }
+
+    $agentFiles = @(Get-ChildItem -Path $agentsRoot -Recurse -Filter '*.agent.md' -File -ErrorAction SilentlyContinue)
+    foreach ($file in $agentFiles) {
+        $relPath = ConvertTo-NormalizedPath -RepoRoot $RepoRoot -Path $file.FullName
+        if (-not (Test-IsParentAgentByFrontmatter -RepoRoot $RepoRoot -RelativePath $relPath)) { continue }
+
+        $body = [System.IO.File]::ReadAllText($file.FullName)
+        if ($body -notmatch '(?ms)^---\s*\r?\n(.*?)\r?\n---\s*(?:\r?\n|$)') { continue }
+        $listedNames = @(Get-FrontmatterListValues -Frontmatter $matches[1] -Field 'agents')
+        if ($listedNames.Count -eq 0) { continue }
+
+        $slug = $file.Name -replace '\.agent\.md$', ''
+        if (-not $slug) { continue }
+        foreach ($name in $listedNames) {
+            if ([string]::IsNullOrWhiteSpace($name)) { continue }
+            $key = $name.Trim()
+            if (-not $index.ContainsKey($key)) {
+                $index[$key] = [System.Collections.Generic.HashSet[string]]::new([System.StringComparer]::OrdinalIgnoreCase)
+            }
+            [void]$index[$key].Add($slug)
+        }
+    }
+
+    return $index
+}
+
 function Get-AffectedAgentSlugs {
     <#
     .SYNOPSIS
@@ -337,9 +452,26 @@ function Get-AffectedAgentSlugs {
     $skillIndex       = Build-ReverseIndex -DepMap $depMap -Field 'skills'
     $subagentIndex    = Build-ReverseIndex -DepMap $depMap -Field 'subagents'
 
+    $parentNameIndex = $null
     foreach ($rel in $subagentCandidates) {
+        $ownSlug = [System.IO.Path]::GetFileName($rel) -replace '\.agent\.md$', ''
+        if ($ownSlug) { [void]$result.Add($ownSlug) }
+
         if ($subagentIndex.ContainsKey($rel)) {
             foreach ($slug in $subagentIndex[$rel]) { [void]$result.Add($slug) }
+        }
+        else {
+            # The dep-map records `agents:` frontmatter references by display
+            # name, not path, so the reverse index misses name-referenced
+            # subagents. Resolve them against a name -> parent-slug index built
+            # once per call (single pass over the parents).
+            if ($null -eq $parentNameIndex) {
+                $parentNameIndex = Build-ParentAgentNameIndex -RepoRoot $resolvedRoot
+            }
+            $displayName = Get-SubagentDisplayName -RepoRoot $resolvedRoot -SubagentPath $rel
+            if (-not [string]::IsNullOrWhiteSpace($displayName) -and $parentNameIndex.ContainsKey($displayName)) {
+                foreach ($slug in $parentNameIndex[$displayName]) { [void]$result.Add($slug) }
+            }
         }
     }
 
