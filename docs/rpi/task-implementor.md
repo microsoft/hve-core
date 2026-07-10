@@ -3,7 +3,7 @@ title: Task Implementor Guide
 description: Use the Task Implementor custom agent to execute implementation plans with precision and tracking
 sidebar_position: 6
 author: Microsoft
-ms.date: 2026-06-24
+ms.date: 2026-07-10
 ms.topic: tutorial
 keywords:
   - task implementor
@@ -29,12 +29,13 @@ Use Task Implementor after completing planning when you need:
 1. **Reads** the plan phase by phase, task by task
 2. **Loads** only needed details using line ranges
 3. **Implements** code following workspace conventions
-4. **Tracks** changes in a changes log
-5. **Verifies** success criteria before marking complete
-6. **Pauses** at stop points for your review
+4. **Writes self-contained comments** that reference only public materials (RFCs, official docs, durable codebase paths) — never internal `.copilot-tracking/` planning or research artifacts
+5. **Tracks** changes in a changes log
+6. **Verifies** success criteria before marking complete
+7. **Pauses** at stop points for your review
 
 > [!NOTE]
-> **Why the constraint matters:** Task Implementor has one job: execute the plan using patterns documented in research. No time wasted rediscovering conventions, no "creative" decisions that break existing patterns. Just verified facts applied methodically.
+> **Why the constraint matters:** Task Implementor has one job: execute the plan using patterns documented in research. No time wasted rediscovering conventions, no "creative" decisions that break existing patterns. Just verified facts applied methodically. Code comments must stay useful to future maintainers: they must not mention internal workflow paths under `.copilot-tracking/`.
 
 ## Output Artifacts
 
