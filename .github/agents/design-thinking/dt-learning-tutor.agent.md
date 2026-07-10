@@ -19,7 +19,7 @@ An adaptive instructor that provides structured Design Thinking education throug
 
 This tutor occupies a fundamentally different role from the DT coach.
 
-| Dimension  | Coach (dt-coach)                                | Tutor (dt-learning-tutor)          |
+| Dimension  | Coach (`DT Coach`)                              | Tutor (`DT Learning Tutor`)        |
 |------------|-------------------------------------------------|------------------------------------|
 | Mode       | Project-driven                                  | Syllabus-driven                    |
 | Output     | Project artifacts                               | Comprehension and assessment       |
@@ -130,7 +130,7 @@ Summarize competency and offer the handoff to the DT coach.
 * Present a competency summary across all methods the learner completed, noting strengths and areas for continued growth.
 * Recommend methods for further study if the learner did not cover the full curriculum.
 * Offer the "Start Project" handoff: "You've built a solid foundation in Design Thinking. When you're ready to apply these methods to a real project, I can connect you with the DT coach who will guide you through a hands-on Design Thinking engagement."
-* When the learner accepts, hand off to the `dt-coach` agent with context about the learner's background, completed modules, and competency levels.
+* When the learner accepts, hand off to `DT Coach` with context about the learner's background, completed modules, and competency levels.
 * When the learner declines the handoff, offer to revisit any modules or explore advanced topics.
 
 ## Examples
@@ -158,4 +158,4 @@ The tutoring session is complete when:
 * All selected modules have been delivered at the appropriate depth
 * Comprehension checks confirm understanding at each module boundary
 * The learner has a clear picture of their competency across methods
-* The learner either accepts the handoff to `dt-coach` for project work or chooses to continue learning
+* The learner either accepts the handoff to `DT Coach` for project work or chooses to continue learning

@@ -22,7 +22,7 @@ Derive `{{task_slug}}` from the primary task or target with lower-kebab-case, an
 
 1. Confirm the task scope and the current research state. Prefer a completed `/rpi-research` artifact when available.
 2. Follow the four phases in order: Context Assessment, Planning, Plan Validation, Completion.
-3. If research is missing or incomplete, create or extend `.copilot-tracking/research/{{YYYY-MM-DD}}/{{task_slug}}-research.md`. When deeper gaps remain, prefer the Researcher Subagent at `.github/agents/hve-core/subagents/researcher-subagent.agent.md` via `runSubagent` or `task`, writing subagent evidence under `.copilot-tracking/research/subagents/{{YYYY-MM-DD}}/<topic>-research.md`.
+3. If research is missing or incomplete, create or extend `.copilot-tracking/research/{{YYYY-MM-DD}}/{{task_slug}}-research.md`. When deeper gaps remain, prefer `Researcher Subagent` via `runSubagent` or `task`, writing subagent evidence under `.copilot-tracking/research/subagents/{{YYYY-MM-DD}}/<topic>-research.md`.
 4. Create or update the dated planning artifacts for this phase:
    * `.copilot-tracking/plans/{{YYYY-MM-DD}}/{{task_slug}}-plan.instructions.md`
    * `.copilot-tracking/details/{{YYYY-MM-DD}}/{{task_slug}}-details.md`
@@ -30,7 +30,7 @@ Derive `{{task_slug}}` from the primary task or target with lower-kebab-case, an
    * `.copilot-tracking/research/{{YYYY-MM-DD}}/{{task_slug}}-research.md`
    Derive `.copilot-tracking/changes/{{YYYY-MM-DD}}/{{task_slug}}-changes.md` as the downstream implementation handoff path, but do not create or update it during planning.
 5. Add `<!-- markdownlint-disable-file -->` to generated `.copilot-tracking/**` markdown artifacts. The implementation plan also includes `applyTo: '.copilot-tracking/changes/{{YYYY-MM-DD}}/{{task_slug}}-changes.md'` frontmatter.
-6. Prefer the Plan Validator at `.github/agents/hve-core/subagents/plan-validator.agent.md` via `runSubagent` or `task`, providing the research path, plan path, details path, planning log path, and a concise user-requirements summary. If neither dispatch tool is available, perform the equivalent validation inline and record the findings in the Planning Log Validator Findings section instead of dead-stopping on tooling alone.
+6. Prefer `Plan Validator` via `runSubagent` or `task`, providing the research path, plan path, details path, planning log path, and a concise user-requirements summary. If neither dispatch tool is available, perform the equivalent validation inline and record the findings in the Planning Log Validator Findings section instead of dead-stopping on tooling alone.
 7. Fix Critical and High findings in the planning artifacts, update the Planning Log Discrepancy Log and Validator Findings section, and rerun validation until only non-blocking findings remain.
 8. Re-enter dated artifacts in place, keep completed work, refresh line references, and rerun validation after material edits.
 9. Complete the run by summarizing the implementation plan artifacts created and any scope items deferred for future planning, drawing the deferred items from the planning log.

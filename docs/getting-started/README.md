@@ -3,7 +3,7 @@ title: Getting Started with HVE Core
 description: Quick setup guide for using HVE Core Copilot customizations in your projects
 sidebar_position: 1
 author: Microsoft
-ms.date: 2026-06-30
+ms.date: 2026-07-09
 ms.topic: tutorial
 keywords:
   - github copilot
@@ -34,7 +34,7 @@ This guide walks you through four steps, each building on the last:
 > [!TIP]
 > Already comfortable with AI-assisted development? Skip to
 > [First Full Workflow](first-workflow.md) or try the
-> [rpi-agent](https://github.com/microsoft/hve-core/blob/main/.github/CUSTOM-AGENTS.md#rpi-agent) for autonomous
+> [RPI Agent](https://github.com/microsoft/hve-core/blob/main/.github/CUSTOM-AGENTS.md#rpi-agent) for autonomous
 > single-session workflows. If you want explicit skill entry points, use `/rpi-quick`, `/rpi-research`, `/rpi-plan`, `/rpi-implement`, and `/rpi-review`.
 
 Need installation help? See the [Installation Guide](install.md) for all
@@ -42,7 +42,7 @@ methods, or install the
 [VS Code extension](https://marketplace.visualstudio.com/items?itemName=ise-hve-essentials.hve-core)
 for the quickest path.
 
-Not sure which bundle of agents you need?  
+Not sure which bundle of agents you need?
 Browse the available [Extension Collections](collections.md) to see curated sets of HVE capabilities.
 
 ## Troubleshooting
@@ -90,7 +90,7 @@ Copy the scripts you need to your project's `scripts/` directory and adjust path
 For projects requiring user-centered requirements discovery before implementation:
 
 * [Design Thinking Guide](../design-thinking/README.md): Start here for DT overview
-* [Using the DT Coach](../design-thinking/dt-coach.md): Learn to use the dt-coach agent
+* [Using the DT Coach](../design-thinking/dt-coach.md): Learn to use the DT Coach agent
 * [DT to RPI Integration](../design-thinking/dt-rpi-integration.md): Transition from DT to implementation
 
 ## See Also

@@ -10,11 +10,11 @@ handoffs:
 
 # Meeting Analyst
 
-A product analyst expert that retrieves meeting transcripts from Microsoft 365 via *work-iq-mcp*, identifies product requirements and decisions, and produces structured handoff documents for the PRD builder agent.
+A product analyst expert that retrieves meeting transcripts from Microsoft 365 via *work-iq-mcp*, identifies product requirements and decisions, and produces structured handoff documents for `PRD Builder`.
 
 ## Core Mission
 
-Meeting discussions contain valuable product requirements, decisions, and action items that often remain unstructured. The workflow guides users from meeting discovery through transcript analysis, organizing findings into a structured handoff that the *prd-builder* agent consumes directly.
+Meeting discussions contain valuable product requirements, decisions, and action items that often remain unstructured. The workflow guides users from meeting discovery through transcript analysis, organizing findings into a structured handoff that `PRD Builder` consumes directly.
 
 ## Data Sensitivity
 
@@ -69,7 +69,7 @@ The transcript analysis workflow progresses through these stages:
 1. *Discover*: Identify relevant meetings, transcripts, and stakeholder roles via `mcp_workiq_ask_work_iq` queries.
 2. *Extract*: Retrieve transcript content and pull out product-relevant information with speaker attribution.
 3. *Synthesize*: Organize findings into structured requirements, decisions, and action items; weight by stakeholder authority.
-4. *Handoff*: Format analysis into the handoff document and guide user to *prd-builder*.
+4. *Handoff*: Format analysis into the handoff document and guide the user to `PRD Builder`.
 
 ## Tool Usage
 
@@ -223,7 +223,7 @@ Proceed to Phase 4 when the user confirms the synthesized findings.
 
 Create the transcript analysis file at `.copilot-tracking/prd-sessions/<kebab-case-name>-transcript-analysis.md` using the handoff format. Write the Executive Summary as a 3–5 sentence overview of the initiative, key findings, and recommended next steps. Synthesize the Backlog Implications summary from the confirmed requirements, decisions, and action items; the Suggested Downstream Workflows subsection is fixed guidance and requires no synthesis. Present a summary of the analysis to the user, including the total number of requirements, decisions, action items, and open questions found.
 
-Guide the user to start a *prd-builder* session with the analysis file attached. Update the state file with the completed phase and final query count.
+Guide the user to start a `PRD Builder` session with the analysis file attached. Update the state file with the completed phase and final query count.
 
 After the user confirms the handoff is complete, remind them to delete both the `<name>-transcript-analysis.md` and `<name>-transcript.state.json` files from `.copilot-tracking/prd-sessions/`. If the user confirms, delete both files.
 
@@ -235,8 +235,8 @@ The transcript analysis file follows this structure:
 ---
 title: "Transcript Analysis: <Product/Initiative Name>"
 description: "Meeting transcript analysis handoff for PRD creation"
-source-agent: meeting-analyst
-target-agent: prd-builder
+source-agent: Meeting Analyst
+target-agent: PRD Builder
 data-classification: "<confirmed classification level>"
 planning-intent: "<create | update>"
 existing-references: []
@@ -293,8 +293,8 @@ Users and personas mentioned in transcripts.
 Summary of how the extracted requirements, decisions, and action items translate into backlog work. Identify new epics, features, or stories implied by the analysis and flag updates to existing work items when references were provided.
 
 ### Suggested Downstream Workflows
-* **Create ADO work items**: Use the *ado-prd-to-wit* agent with this analysis and the resulting PRD.
-* **Create or update GitHub issues**: Use the *github-backlog-manager* agent with this analysis.
+* **Create ADO work items**: Use `AzDO PRD to WIT` with this analysis and the resulting PRD.
+* **Create or update GitHub issues**: Use `GitHub Backlog Manager` with this analysis.
 
 ## Analysis Notes
 Additional observations, patterns, or context from transcript review.

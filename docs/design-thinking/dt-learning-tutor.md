@@ -1,9 +1,9 @@
 ---
 title: Using the DT Learning Tutor
-description: Guide to using the dt-learning-tutor agent for self-paced Design Thinking education
+description: Guide to using the DT Learning Tutor agent for self-paced Design Thinking education
 sidebar_position: 4
 author: Microsoft
-ms.date: 2026-06-28
+ms.date: 2026-07-09
 ms.topic: tutorial
 keywords:
   - dt-learning-tutor
@@ -43,7 +43,7 @@ The tutor tracks curriculum progress in the DT session state at:
 .copilot-tracking/design-thinking-sessions/{project-slug}/
 ```
 
-Progress artifacts include comprehension assessment results and exercise outputs for each completed module. The tutor loads the `dt-curriculum` skill entrypoint from `.github/skills/design-thinking/dt-curriculum/SKILL.md` at the start of the session, and it hands off to the `dt-coach` agent through the `/dt-start-project` workflow when the learner is ready to apply the curriculum to a real project.
+Progress artifacts include comprehension assessment results and exercise outputs for each completed module. The tutor loads the `dt-curriculum` skill entrypoint from `.github/skills/design-thinking/dt-curriculum/SKILL.md` at the start of the session, and it hands off to the DT Coach agent through the `/dt-start-project` workflow when the learner is ready to apply the curriculum to a real project.
 
 ## How to Use DT Learning Tutor
 
@@ -80,7 +80,7 @@ Each module delivers five components:
 
 ## Example
 
-Select the **dt-learning-tutor** agent, then start a learning session:
+Select the **DT Learning Tutor** agent, then start a learning session:
 
 ```text
 I'm new to Design Thinking and want to learn the full

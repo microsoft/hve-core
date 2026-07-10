@@ -1,5 +1,5 @@
 ---
-description: "Plan the work to stand up VEX in a target project as a backlog for Task-* implementors - Brought to you by microsoft/hve-core"
+description: "Plan the work to stand up VEX in a target project as a backlog for Task Implementor - Brought to you by microsoft/hve-core"
 name: vex-implement
 agent: SSSC Planner
 argument-hint: "[scope=path/to/dir] [product=pkg:npm/@org/name]"
@@ -21,5 +21,5 @@ argument-hint: "[scope=path/to/dir] [product=pkg:npm/@org/name]"
 2. Keep the work in planning mode only; do not implement the VEX changes directly in the target project.
 3. Use the `vex` skill as the reference source for the implement playbook and the VEX rules so the backlog can encode the required stand-up steps.
 4. Produce backlog work items that cover scaffolding the OpenVEX document under `security/vex`, wiring the `vex-detect` and `vex-draft` workflows, referencing the PR-body scaffold asset, wiring release attestation, and setting CODEOWNERS where appropriate.
-5. Make the handoff explicit: the Planner authors the plan and backlog, and the downstream Task-* agents execute the implementation using the `vex` skill.
+5. Make the handoff explicit: the Planner authors the plan and backlog, and `Task Implementor` executes the implementation using the `vex` skill.
 6. If the target project already has VEX-related assets, incorporate them as context and avoid redundant planning steps.

@@ -3,7 +3,7 @@ title: HVE Core Documentation
 description: Documentation hub for HVE Core, a prompt engineering framework that brings AI-powered agents, prompts, instructions, and skills to your GitHub Copilot workflow
 sidebar_position: 1
 author: Microsoft
-ms.date: 2026-07-08
+ms.date: 2026-07-09
 ms.topic: overview
 keywords:
   - hve core
@@ -98,7 +98,7 @@ Research, Plan, Implement, Review (RPI) decomposes complex engineering tasks int
 
 ## Design Thinking
 
-The dt-coach agent guides teams through nine Design Thinking methods across problem space, solution space, and validation.
+The DT Coach agent guides teams through nine Design Thinking methods across problem space, solution space, and validation.
 
 * [Design Thinking Guide](design-thinking/README.md) provides the overview and method catalog
 * [Why Design Thinking?](design-thinking/why-design-thinking.md) explains when to reach for DT

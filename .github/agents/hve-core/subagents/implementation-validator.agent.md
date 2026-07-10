@@ -6,9 +6,9 @@ tools:
   - read
   - search
 model:
+  - GPT-5.6 Terra (copilot)
   - Claude Sonnet 5 (copilot)
   - MAI-Code-1-Flash (copilot)
-  - Claude Sonnet 4.6 (copilot)
 ---
 
 # Implementation Validator

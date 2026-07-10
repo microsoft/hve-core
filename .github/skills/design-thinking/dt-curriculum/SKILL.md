@@ -11,7 +11,7 @@ metadata:
 
 This `SKILL.md` is the **entrypoint** for the Design Thinking learning curriculum.
 
-The dt-learning-tutor agent loads this skill to teach Design Thinking concepts, run
+`DT Learning Tutor` loads this skill to teach Design Thinking concepts, run
 comprehension checks, and assign practice exercises. The curriculum spans nine
 progressive modules — one per Design Thinking method — and a shared manufacturing
 reference scenario that threads through every module so learners build on consistent

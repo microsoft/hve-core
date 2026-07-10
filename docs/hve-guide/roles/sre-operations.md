@@ -3,7 +3,7 @@ title: SRE / Operations Guide
 description: HVE Core support for SRE and operations engineers managing infrastructure, incidents, and deployment workflows
 sidebar_position: 8
 author: Microsoft
-ms.date: 2026-06-26
+ms.date: 2026-07-09
 ms.topic: how-to
 keywords:
   - SRE
@@ -52,11 +52,11 @@ This guide is for you if you manage infrastructure, handle incidents, deploy sys
 ## Stage Walkthrough
 
 1. Stage 1: Setup. Configure your development environment and install HVE Core tooling using the [Getting Started guide](../../getting-started/install.md). Set up IaC project structure for your infrastructure repository.
-2. Stage 3: Product Definition. Define infrastructure requirements, SLOs, and operational contracts. Use the **security-planner** agent for infrastructure security planning.
-3. Stage 3: Product Definition. Run the **sssc-planner** agent to assess supply chain security of CI/CD pipelines and deployment infrastructure.
-4. Stage 6: Implementation. Write infrastructure code with auto-activated standards for Terraform (`*.tf`), Bicep (`bicep/**`), Bash (`*.sh`), and GitHub Actions (`*.yml`). Use the **task-implementor** agent for complex multi-file changes.
+2. Stage 3: Product Definition. Define infrastructure requirements, SLOs, and operational contracts. Use the **Security Planner** agent for infrastructure security planning.
+3. Stage 3: Product Definition. Run the **SSSC Planner** agent to assess supply chain security of CI/CD pipelines and deployment infrastructure.
+4. Stage 6: Implementation. Write infrastructure code with auto-activated standards for Terraform (`*.tf`), Bicep (`bicep/**`), Bash (`*.sh`), and GitHub Actions (`*.yml`). Use the **Task Implementor** agent for complex multi-file changes.
 5. Stage 8: Delivery. Deploy infrastructure changes through CI/CD pipelines. Use `/git-commit` for conventional commits and `/pull-request` for infrastructure PRs with proper review.
-6. Stage 9: Operations. Handle incidents with `/incident-response` runbooks. Investigate production issues with the **task-researcher** agent for structured root cause analysis.
+6. Stage 9: Operations. Handle incidents with `/incident-response` runbooks. Investigate production issues with the **Task Researcher** agent for structured root cause analysis.
 
 ## Starter Prompts
 
@@ -67,7 +67,7 @@ Include containment steps, GDPR notification timelines, forensic evidence
 preservation, and post-incident review process.
 ```
 
-Select **task-researcher** agent:
+Select **Task Researcher** agent:
 
 ```text
 Investigate elevated 503 errors on the /api/orders endpoint. Error rate
@@ -76,7 +76,7 @@ increased from 0.1% to 12% starting at 14:30 UTC. The service runs on
 deployments, and upstream dependency health.
 ```
 
-Select **security-planner** agent:
+Select **Security Planner** agent:
 
 ```text
 Create a security plan for the Kubernetes ingress controller cluster.
@@ -85,7 +85,7 @@ rules for namespace isolation, WAF configuration for OWASP Top 10
 protection, and audit logging for ingress configuration changes.
 ```
 
-Select **sssc-planner** agent:
+Select **SSSC Planner** agent:
 
 ```text
 Assess the supply chain security posture for our CI/CD pipeline and container infrastructure
@@ -95,7 +95,7 @@ Assess the supply chain security posture for our CI/CD pipeline and container in
 /pull-request Create a PR for infrastructure changes
 ```
 
-Select **task-implementor** agent:
+Select **Task Implementor** agent:
 
 ```text
 Implement Terraform infrastructure for the Redis cache cluster in the
@@ -108,12 +108,12 @@ encryption at rest. Output the connection string to the Vault KV store.
 
 | Agent                | Purpose                                             | Docs                                              |
 |----------------------|-----------------------------------------------------|---------------------------------------------------|
-| **task-researcher**  | Structured production issue investigation           | [Task Researcher](../../rpi/task-researcher.md)   |
-| **task-implementor** | Infrastructure code implementation                  | [Task Implementor](../../rpi/task-implementor.md) |
-| **task-reviewer**    | Infrastructure code review                          | [Task Reviewer](../../rpi/task-reviewer.md)       |
-| **security-planner** | Infrastructure security planning                    | Agent file                                        |
-| **sssc-planner**     | Supply chain security assessment for infrastructure | Agent file                                        |
-| **code-review**      | Pull request review for infrastructure changes      | Agent file                                        |
+| **Task Researcher**  | Structured production issue investigation           | [Task Researcher](../../rpi/task-researcher.md)   |
+| **Task Implementor** | Infrastructure code implementation                  | [Task Implementor](../../rpi/task-implementor.md) |
+| **Task Reviewer**    | Infrastructure code review                          | [Task Reviewer](../../rpi/task-reviewer.md)       |
+| **Security Planner** | Infrastructure security planning                    | Agent file                                        |
+| **SSSC Planner**     | Supply chain security assessment for infrastructure | Agent file                                        |
+| **Code Review**      | Pull request review for infrastructure changes      | Agent file                                        |
 | **memory**           | Session context and preference persistence          | Agent file                                        |
 
 Prompts complement the agents for operational workflows:
@@ -133,8 +133,8 @@ Auto-activated instructions apply IaC standards based on file type: Terraform (`
 |----------------------------------------------------------------------|----------------------------------------------------------|
 | Let IaC-specific instructions auto-activate by file type             | Manually enforce Terraform or Bicep standards            |
 | Create incident response runbooks before incidents occur             | Write runbooks reactively during active incidents        |
-| Use the **task-researcher** agent for structured root cause analysis | Debug production issues without systematic investigation |
-| Review infrastructure PRs with the **code-review** agent             | Merge infrastructure changes without code review         |
+| Use the **Task Researcher** agent for structured root cause analysis | Debug production issues without systematic investigation |
+| Review infrastructure PRs with the **Code Review** agent             | Merge infrastructure changes without code review         |
 | Use `/git-commit` for consistent, conventional commit history        | Write ad-hoc commit messages for infrastructure changes  |
 
 ## Related Roles

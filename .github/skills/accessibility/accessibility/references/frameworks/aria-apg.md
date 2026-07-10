@@ -1,11 +1,11 @@
 ---
 title: ARIA Authoring Practices Guide framework reference
-description: WAI-ARIA Authoring Practices Guide widget patterns used as an accessibility assessment knowledge base by the Accessibility Planner and Skill Assessor subagent
+description: WAI-ARIA Authoring Practices Guide widget patterns used as an accessibility assessment knowledge base by the Accessibility Planner and Accessibility Framework Assessor
 ---
 
 # ARIA Authoring Practices Guide framework reference
 
-This skill packages the W3C WAI-ARIA Authoring Practices Guide (APG) as an accessibility assessment knowledge base. APG documents the keyboard interaction, ARIA roles, states, and properties for the common interactive widget patterns that web authors implement. The skill groups 44 design patterns into seven families (Disclosure, Combobox, Grid, Menu, Tabs, Treegrid, and Dialog) and points the Accessibility Skill Assessor subagent at the per-family reference files in `references/` when a finding involves a specific pattern.
+This skill packages the W3C WAI-ARIA Authoring Practices Guide (APG) as an accessibility assessment knowledge base. APG documents the keyboard interaction, ARIA roles, states, and properties for the common interactive widget patterns that web authors implement. The skill groups 44 design patterns into seven families (Disclosure, Combobox, Grid, Menu, Tabs, Treegrid, and Dialog) and points `Accessibility Framework Assessor` at the per-family reference files in `references/` when a finding involves a specific pattern.
 
 APG is non-normative implementation guidance that operationalises the normative WAI-ARIA specification, so APG patterns sit alongside the [`wcag-22`](wcag-22.md) skill: APG describes how to build the widget, WCAG 2.2 describes which behaviours the finished widget must satisfy. Assessor subagents typically cite both — the APG pattern for the widget contract and the relevant WCAG 2.2 success criterion for the user-facing requirement.
 
@@ -64,7 +64,7 @@ Total: 44 patterns across 7 families (Disclosure: 6; Combobox: 6; Grid: 6; Menu:
 
 ## Assessment heuristics
 
-Per-pattern keyboard interaction lists, ARIA role and state requirements, and pattern-specific notes live inside the per-family reference files in `references/`. The Accessibility Skill Assessor subagent consumes the appropriate `family-<name>.md#pattern-<slug>` section when evaluating a finding against a specific APG pattern.
+Per-pattern keyboard interaction lists, ARIA role and state requirements, and pattern-specific notes live inside the per-family reference files in `references/`. `Accessibility Framework Assessor` consumes the appropriate `family-<name>.md#pattern-<slug>` section when evaluating a finding against a specific APG pattern.
 
 Cross-skill use is the common case: an APG finding usually cites both the pattern reference here and the relevant WCAG 2.2 success criterion in [`wcag-22`](wcag-22.md). For example, a custom combobox with broken keyboard support is cited against `family-combobox.md#pattern-combobox-list` (for the missing keyboard contract) and `../wcag-22/references/guideline-2-1.md#sc-2-1-1` (for the WCAG 2.1.1 Keyboard requirement).
 

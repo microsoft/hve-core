@@ -1,6 +1,6 @@
 ---
 description: "Start security planning from PRD/BRD artifacts using the Security Planner agent (from-prd mode)"
-agent: security-planner
+agent: Security Planner
 ---
 
 # Security Plan from PRD/BRD

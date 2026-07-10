@@ -3,7 +3,7 @@ title: Security Assurance Case and Security Model
 description: Comprehensive security model and security assurance documentation demonstrating enterprise security practices
 sidebar_position: 2
 author: Microsoft
-ms.date: 2026-07-03
+ms.date: 2026-07-09
 ms.topic: reference
 keywords:
   - security
@@ -612,7 +612,7 @@ These threats address ethical and responsible AI considerations aligned with Mic
 |-------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | **Category**      | Privacy & Security (Responsible AI)                                                                                                                                                                                                                                                          |
 | **Asset**         | Meeting transcripts, customer confidential data, PII                                                                                                                                                                                                                                         |
-| **Threat**        | The meeting-analyst agent retrieves M365 transcripts containing sensitive data and writes them to local files in `.copilot-tracking/`. Data may be exposed through accidental commits (`git add -f`), gitignore misconfiguration, shared Codespaces, CI/CD logs, or unencrypted disk access. |
+| **Threat**        | The Meeting Analyst agent retrieves M365 transcripts containing sensitive data and writes them to local files in `.copilot-tracking/`. Data may be exposed through accidental commits (`git add -f`), gitignore misconfiguration, shared Codespaces, CI/CD logs, or unencrypted disk access. |
 | **Likelihood**    | Medium (users may not recognize transcript sensitivity; gitignore is the only barrier)                                                                                                                                                                                                       |
 | **Impact**        | High (customer confidential data, PII, trade secrets)                                                                                                                                                                                                                                        |
 | **Mitigations**   | Gitignore for `.copilot-tracking/`, agent-level data sensitivity notice and pre-flight classification prompt, anonymization guidance in agent instructions, data retention cleanup at handoff, documentation in threat model and agent catalog                                               |

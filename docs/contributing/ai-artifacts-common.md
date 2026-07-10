@@ -3,7 +3,7 @@ title: 'AI Artifacts Common Standards'
 description: 'Common standards and quality gates for all AI artifact contributions to hve-core'
 sidebar_position: 2
 author: Microsoft
-ms.date: 2026-06-28
+ms.date: 2026-07-09
 ms.topic: reference
 ---
 
@@ -77,7 +77,7 @@ Focus on agents that:
 
 ## Model Version Requirements
 
-All AI artifacts (agents, instructions, prompts) **MUST** target models listed in the model catalog (`scripts/linting/model-catalog.json`). The catalog defines which models are available in GitHub Copilot and which providers are accepted via the `providerAllowlist` field.
+The `model` field is optional for agents and prompts. When an artifact declares it, every entry **MUST** come from the model catalog (`scripts/linting/model-catalog.json`). The catalog defines which models are available in GitHub Copilot and which providers are accepted via the `providerAllowlist` field.
 
 ### Accepted Models
 
@@ -95,34 +95,34 @@ Any model in the catalog whose provider appears in `providerAllowlist` and whose
 Model references in frontmatter use the VS Code display name with vendor suffix:
 
 ```yaml
-# Single model
-model: Claude Haiku 4.5 (copilot)
-
-# Prioritized fallback array (system tries each in order)
+# Low reasoning profile
 model:
+  - GPT-5.6 Luna (copilot)
+  - MAI-Code-1-Flash (copilot)
   - Claude Haiku 4.5 (copilot)
-  - GPT-5.4 mini (copilot)
 ```
 
-The `(copilot)` suffix is required. Run `npm run lint:models` to validate all model references against the catalog.
+The `(copilot)` suffix is required. Existing `model:` declarations MUST use exactly one canonical ordered profile:
+
+| Profile | Responsibilities | Ordered availability fallbacks |
+|---------|------------------|--------------------------------|
+| High | Architecture, consequential decisions, and complex synthesis | GPT-5.6 Sol, Claude Opus 4.8, GPT-5.5 |
+| Medium | Research, authoring, implementation, and review | GPT-5.6 Terra, Claude Sonnet 5, MAI-Code-1-Flash |
+| Low | Literal simulation, mechanical validation, and routine operations | GPT-5.6 Luna, MAI-Code-1-Flash, Claude Haiku 4.5 |
+
+Select the profile from the artifact's responsibility first. The order then provides availability fallback within that profile; it does not replace responsibility-based profile selection. Run `npm run lint:models` to validate profile membership and order against the catalog.
 
 ### Model Selection (Optional)
 
-The `model` frontmatter property is **optional**. When omitted, the agent or prompt inherits the user's session model (whatever is selected in the VS Code model picker).
+The `model` frontmatter property is **optional**. An omitted subagent model inherits the invoking parent's model. An omitted directly invoked agent or prompt model uses the user's current session model (whatever is selected in the VS Code model picker).
 
-Use explicit model selection for cost optimization:
-
-| Tier     | Multiplier  | Use When                                                | Example Models                 |
-|----------|-------------|---------------------------------------------------------|--------------------------------|
-| Fast     | 0.25x–0.33x | Read-only research, mechanical file ops, classification | Claude Haiku 4.5, GPT-5.4 mini |
-| Standard | 1x          | Code generation, architecture, complex synthesis        | Claude Sonnet 4.6, GPT-5.4     |
-| Premium  | 3x–15x      | Vision-capable tasks, complex architectural decisions   | Claude Opus 4.6, GPT-5.5       |
+Add `model` only when the artifact needs a responsibility-selected profile. Do not add it solely to provide a generic fallback list.
 
 ### Cost Tier Constraint
 
-The `model` property is a **preference hint**, not a hard constraint. VS Code never fails a prompt or agent invocation due to model unavailability. When a specified model is unavailable or exceeds the cost tier of the parent model, VS Code falls back through the array entries in order, then to the session model (model picker selection).
+The `model` property is a **preference hint**, not a hard constraint. VS Code never fails a prompt or agent invocation due to model unavailability. When a profile entry is unavailable or exceeds the cost tier of the parent model, VS Code tries the remaining entries in order, then the session model (model picker selection).
 
-VS Code enforces that subagent models cannot exceed the cost tier of the parent model. If the user selects Sonnet (standard) in the model picker, subagents can use Haiku (fast) but not Opus (premium). Fallback arrays provide resilience when the preferred model is unavailable or exceeds the cost tier. A single-model string is equally safe: it falls back to the session model when the specified model cannot be used.
+VS Code enforces that subagent models cannot exceed the cost tier of the parent model. The ordered profile provides resilience when its primary model is unavailable or exceeds that constraint.
 
 ### Model Catalog Validation
 
@@ -418,7 +418,7 @@ items:
 
 For detailed channel and lifecycle information, see [Release Process - Extension Channels](release-process.md#extension-channels-and-maturity).
 
-Before submitting: Verify your artifact targets the current latest model versions from Anthropic or OpenAI. Contributions targeting older or alternative models will be automatically rejected.
+Before submitting, omit `model` when parent or session inheritance is intended. When `model` is declared, run `npm run lint:models` to verify the exact canonical profile, catalog membership, provider allowlist, and retirement status.
 
 ## Plugin Generation
 
@@ -888,7 +888,7 @@ When contributing AI artifacts:
 
 * Read `.github/copilot-instructions.md` for repository-wide conventions
 * Review existing files in same category for patterns
-* Use `prompt-builder.agent.md` agent for guided assistance
+* Use `Prompt Builder` for guided assistance
 
 ### Ask Questions
 

@@ -156,7 +156,7 @@ Gather context from available sources: user-provided information, attached files
 
 #### Step 2: Create or Extend Research
 
-When no research document exists, create a lightweight one at `.copilot-tracking/research/{{YYYY-MM-DD}}/task-description-research.md` covering scope, key findings from available context, and known constraints. This lightweight document captures planning-relevant context without the depth of a full task-researcher investigation.
+When no research document exists, create a lightweight one at `.copilot-tracking/research/{{YYYY-MM-DD}}/task-description-research.md` covering scope, key findings from available context, and known constraints. This lightweight document captures planning-relevant context without the depth of a full Task Researcher investigation.
 
 When research gaps exist, run `Researcher Subagent` as described in Subagent Delegation, providing research topic(s) and subagent output file path.
 

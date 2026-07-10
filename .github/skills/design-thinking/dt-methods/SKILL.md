@@ -9,7 +9,7 @@ metadata:
 
 # Design Thinking Methods Skill
 
-Entrypoint for Design Thinking method coaching knowledge. The `dt-coach` agent loads the method reference matching the active method in coaching state, the matching deep reference when advanced technique is needed, and the industry reference when an industry context applies.
+Entrypoint for Design Thinking method coaching knowledge. `DT Coach` loads the method reference matching the active method in coaching state, the matching deep reference when advanced technique is needed, and the industry reference when an industry context applies.
 
 ## How to use this skill
 

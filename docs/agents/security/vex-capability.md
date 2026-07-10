@@ -3,7 +3,7 @@ title: VEX Capability
 description: HVE Core's VEX capability - triage dependency vulnerabilities and draft OpenVEX documents via the SSSC Reviewer, SSSC Planner, and the vex skill
 sidebar_position: 10
 author: Microsoft
-ms.date: 2026-07-01
+ms.date: 2026-07-09
 ms.topic: concept
 keywords:
   - VEX
@@ -21,7 +21,7 @@ estimated_reading_time: 7
 
 HVE Core delivers VEX (Vulnerability Exploitability eXchange) as a capability split across the
 **SSSC Reviewer** (assesses evidence and drafts OpenVEX statements), the **SSSC Planner** (plans
-standing up VEX in a target project as a backlog for the Task-* implementors), the
+standing up VEX in a target project as a backlog for `Task Implementor`), the
 [`vex` skill](https://github.com/microsoft/hve-core/blob/main/.github/skills/security/vex/SKILL.md)
 (OpenVEX v0.2.0 specification reference plus implement and review playbooks), and the
 `vex-detect` / `vex-draft` workflows (automated detection and drafting). Together they turn scanner

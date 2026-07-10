@@ -55,7 +55,7 @@ Present the following and await explicit consent:
 I'll help you install HVE-Core agents, prompts, instructions and skills.
 
 Available content:
-• 25+ specialized agents (task-researcher, task-planner, etc.)
+• 25+ specialized agents (Task Researcher, Task Planner, etc.)
 • Reusable prompt templates for common workflows
 • Technology-specific coding instructions (bash, python, markdown, etc.)
 • Domain-specific skills (pr-reference, etc.)
@@ -193,9 +193,9 @@ The HVE Core extension has been installed from the VS Code Marketplace.
 🔗 Marketplace: https://marketplace.visualstudio.com/items?itemName=ise-hve-essentials.hve-core
 
 🧪 Available Agents:
-• task-researcher, task-planner, task-implementor, task-reviewer
-• github-backlog-manager, adr-creation, doc-ops, pr-review
-• prompt-builder, memory, and more!
+• Task Researcher, Task Planner, Task Implementor, Task Reviewer
+• GitHub Backlog Manager, ADR Creator, doc-ops, pr-review
+• Prompt Builder, Memory, and more!
 
 🪝 Hooks (manual step): The Marketplace extension is declarative and does not
    write chat.hookFilesLocations. To enable bundled hooks (e.g. telemetry), add
@@ -643,9 +643,9 @@ Method [N]: [Name] installed successfully.
 📖 Documentation: https://github.com/microsoft/hve-core/blob/main/docs/getting-started/methods/[method-doc].md
 
 🧪 Available Agents:
-• task-researcher, task-planner, task-implementor, task-reviewer
-• github-backlog-manager, adr-creation, doc-ops, pr-review
-• prompt-builder, memory, and more!
+• Task Researcher, Task Planner, Task Implementor, Task Reviewer
+• GitHub Backlog Manager, ADR Creator, doc-ops, pr-review
+• Prompt Builder, Memory, and more!
 
 📋 Configuring optional settings...
 ```
@@ -901,7 +901,7 @@ After gitignore and MCP checkpoints complete, display the final completion messa
 2. Open Copilot Chat (`Ctrl+Alt+I`) and click the agent picker dropdown
 3. Select an agent to start working
 
-💡 Select `task-researcher` from the picker to explore HVE-Core capabilities
+💡 Select `Task Researcher` from the picker to explore HVE-Core capabilities
 ```
 <!-- </final-completion-report> -->
 
@@ -938,24 +938,24 @@ HVE-Core includes specialized agents for common workflows.
 Copying agents enables local customization and offline use.
 
 🔬 RPI Core (Research-Plan-Implement workflow)
-  • task-researcher - Technical research and evidence gathering
-  • task-planner - Implementation plan creation
-  • task-implementor - Plan execution with tracking
-  • task-reviewer - Implementation review and validation
-  • rpi-agent - RPI workflow coordinator
+  • Task Researcher - Technical research and evidence gathering
+  • Task Planner - Implementation plan creation
+  • Task Implementor - Plan execution with tracking
+  • Task Reviewer - Implementation review and validation
+  • RPI Agent - RPI workflow coordinator
 
 📋 Planning & Documentation
-  • adr-creation, agile-coach, brd-builder, doc-ops, prd-builder
-  • product-manager-advisor, security-planner, ux-ui-designer
+  • ADR Creator, Agile Coach, BRD Builder, doc-ops, PRD Builder
+  • Product Manager Advisor, Security Planner, UX UI Designer
 
 ⚙️ Generators
-  • gen-data-spec, gen-jupyter-notebook, gen-streamlit-dashboard
+  • DS Gen Data Spec, DS Gen Jupyter Notebook, DS Gen Streamlit Dashboard
 
 ✅ Review & Testing
-  • pr-review, prompt-builder, test-streamlit-dashboard
+  • pr-review, Prompt Builder, DS Test Streamlit Dashboard
 
 🧠 Utilities
-  • memory - Conversation memory and session continuity
+  • Memory - Conversation memory and session continuity
 
 🔗 Platform-Specific
   • ado-prd-to-wit (Azure DevOps)

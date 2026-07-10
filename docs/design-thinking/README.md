@@ -1,9 +1,9 @@
 ---
 title: Design Thinking Guide
-description: AI-assisted Design Thinking using the dt-coach agent
+description: AI-assisted Design Thinking using the DT Coach agent
 sidebar_position: 1
 author: Microsoft
-ms.date: 2026-06-28
+ms.date: 2026-07-09
 ms.topic: concept
 keywords:
   - design thinking

@@ -56,7 +56,7 @@ Security review, planning, incident response, risk assessment, vulnerability ana
 | **sssc-from-brd**               | Start supply chain security planning from BRD artifacts using the SSSC Planner agent in from-brd mode                                                                     |
 | **sssc-from-prd**               | Start supply chain security planning from PRD artifacts using the SSSC Planner agent in from-prd mode                                                                     |
 | **sssc-from-security-plan**     | Extend a Security Planner assessment with supply chain coverage using the SSSC Planner agent in from-security-plan mode                                                   |
-| **vex-implement**               | Plan the work to stand up VEX in a target project as a backlog for Task-* implementors - Brought to you by microsoft/hve-core                                             |
+| **vex-implement**               | Plan the work to stand up VEX in a target project as a backlog for Task Implementor - Brought to you by microsoft/hve-core                                                |
 | **vex-scan**                    | Run a full VEX pipeline that scans dependencies, enriches CVEs, analyzes exploitability, and drafts an OpenVEX document for review - Brought to you by microsoft/hve-core |
 | **vex-triage**                  | Triage CVEs from an existing scan report or SBOM and draft an OpenVEX document, skipping the scan phase - Brought to you by microsoft/hve-core                            |
 

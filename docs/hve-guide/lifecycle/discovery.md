@@ -3,7 +3,7 @@ title: "Stage 2: Discovery"
 description: Research requirements, gather context, and build foundational documents with AI-assisted exploration
 sidebar_position: 2
 author: Microsoft
-ms.date: 2026-06-28
+ms.date: 2026-07-09
 ms.topic: how-to
 keywords:
   - ai-assisted project lifecycle
@@ -29,31 +29,31 @@ You enter Discovery after completing [Stage 1: Setup](setup.md) with a configure
 
 | Tool                   | Type   | How to Invoke                           | Purpose                                                                                    |
 |------------------------|--------|-----------------------------------------|--------------------------------------------------------------------------------------------|
-| task-researcher        | Agent  | Select **task-researcher** agent        | Research best practices and technical topics                                               |
-| brd-builder            | Agent  | Select **brd-builder** agent            | Create business requirements documents                                                     |
-| security-planner       | Agent  | Select **security-planner** agent       | Generate security plans and security models                                                |
-| sssc-planner           | Agent  | Select **sssc-planner** agent           | Assess supply chain security posture against OpenSSF standards                             |
-| rai-planner            | Agent  | Select **rai-planner** agent            | Assess responsible AI risks and generate RAI plans                                         |
-| gen-data-spec          | Agent  | Select **gen-data-spec** agent          | Generate data specifications and schemas                                                   |
-| adr-creation           | Agent  | Select **adr-creation** agent           | Document architecture decisions                                                            |
+| Task Researcher        | Agent  | Select **Task Researcher** agent        | Research best practices and technical topics                                               |
+| BRD Builder            | Agent  | Select **BRD Builder** agent            | Create business requirements documents                                                     |
+| Security Planner       | Agent  | Select **Security Planner** agent       | Generate security plans and security models                                                |
+| SSSC Planner           | Agent  | Select **SSSC Planner** agent           | Assess supply chain security posture against OpenSSF standards                             |
+| RAI Planner            | Agent  | Select **RAI Planner** agent            | Assess responsible AI risks and generate RAI plans                                         |
+| DS Gen Data Spec       | Agent  | Select **DS Gen Data Spec** agent       | Generate data specifications and schemas                                                   |
+| ADR Creator            | Agent  | Select **ADR Creator** agent            | Document architecture decisions                                                            |
 | architecture-diagrams  | Skill  | Use the **architecture-diagrams** skill | Generate architecture diagrams                                                             |
-| ux-ui-designer         | Agent  | Select **ux-ui-designer** agent         | Design user experience and interface concepts                                              |
-| github-backlog-manager | Agent  | Select **github-backlog-manager** agent | Discover and triage existing GitHub issues                                                 |
-| memory                 | Agent  | Select **memory** agent                 | Store research findings for later reference                                                |
+| UX UI Designer         | Agent  | Select **UX UI Designer** agent         | Design user experience and interface concepts                                              |
+| GitHub Backlog Manager | Agent  | Select **GitHub Backlog Manager** agent | Discover and triage existing GitHub issues                                                 |
+| Memory                 | Agent  | Select **Memory** agent                 | Store research findings for later reference                                                |
 | risk-register          | Prompt | `/risk-register`                        | Identify and track project risks                                                           |
 | task-research          | Prompt | `/task-research`                        | Quick research queries without full agent context                                          |
-| dt-coach               | Agent  | Select **dt-coach** agent               | Guide teams through Design Thinking methods for user-centered requirements discovery       |
-| experiment-designer    | Agent  | Select **experiment-designer** agent    | Design Minimum Viable Experiments to validate unknowns before committing to implementation |
+| DT Coach               | Agent  | Select **DT Coach** agent               | Guide teams through Design Thinking methods for user-centered requirements discovery       |
+| Experiment Designer    | Agent  | Select **Experiment Designer** agent    | Design Minimum Viable Experiments to validate unknowns before committing to implementation |
 
 ## Design Thinking as Pre-Research Methodology
 
 > [!NOTE]
-> Teams can invoke **dt-coach** during Discovery to run scope conversations (Method 1) and design research (Method 2) before engaging the task-researcher agent. Design Thinking provides structured, empathy-driven research techniques that produce validated problem statements and stakeholder maps, strengthening the foundation for subsequent technical research.
+> Teams can invoke **DT Coach** during Discovery to run scope conversations (Method 1) and design research (Method 2) before engaging Task Researcher. Design Thinking provides structured, empathy-driven research techniques that produce validated problem statements and stakeholder maps, strengthening the foundation for subsequent technical research.
 
 ## Validating Unknowns with Minimum Viable Experiments
 
 > [!NOTE]
-> When Discovery surfaces unknowns across data, technology, or use cases, invoke **experiment-designer** to design a Minimum Viable Experiment (MVE) before committing to full implementation. The agent guides you through problem discovery, hypothesis formation, vetting criteria, and experiment planning. MVEs resolve uncertainty early (whether hypotheses are validated or invalidated) the results inform your go/no-go decisions and reduce downstream risk.
+> When Discovery surfaces unknowns across data, technology, or use cases, invoke **Experiment Designer** to design a Minimum Viable Experiment (MVE) before committing to full implementation. The agent guides you through problem discovery, hypothesis formation, vetting criteria, and experiment planning. MVEs resolve uncertainty early (whether hypotheses are validated or invalidated) the results inform your go/no-go decisions and reduce downstream risk.
 
 ## Role-Specific Guidance
 
@@ -66,11 +66,11 @@ TPMs lead Discovery, producing BRDs and coordinating research across disciplines
 * [Data Scientist Guide](../roles/data-scientist.md)
 * [UX Designer Guide](../roles/ux-designer.md)
 
-UX and UI designers use Discovery-stage tools alongside **dt-coach** for structured user research. The dt-coach agent provides nine Design Thinking methods, including interview planning, environmental observation, and input synthesis, that complement task-researcher workflows with empathy-driven requirements gathering. See the [Design Thinking documentation](../../design-thinking/) for method details.
+UX and UI designers use Discovery-stage tools alongside **DT Coach** for structured user research. The DT Coach agent provides nine Design Thinking methods, including interview planning, environmental observation, and input synthesis, that complement Task Researcher workflows with empathy-driven requirements gathering. See the [Design Thinking documentation](../../design-thinking/) for method details.
 
 ## Starter Prompts
 
-Select **task-researcher** agent:
+Select **Task Researcher** agent:
 
 ```text
 Research best practices for container orchestration with Kubernetes,
@@ -79,7 +79,7 @@ quota configuration, and secret management approaches like external
 secrets operator vs sealed secrets.
 ```
 
-Select **brd-builder** agent:
+Select **BRD Builder** agent:
 
 ```text
 Create a business requirements document for the customer onboarding portal.
@@ -88,7 +88,7 @@ onboarding time from 2 weeks to 3 days. Include integration requirements
 for existing SSO and billing systems and SOC 2 Type II compliance constraints.
 ```
 
-Select **security-planner** agent:
+Select **Security Planner** agent:
 
 ```text
 Generate a security plan for the /api/payments endpoint in our
@@ -98,13 +98,13 @@ tokenization, and a security model covering injection and broken
 access control. Exclude infrastructure and network-level controls.
 ```
 
-Select **sssc-planner** agent:
+Select **SSSC Planner** agent:
 
 ```text
 Assess this repository's supply chain security posture against the OpenSSF Scorecard
 ```
 
-Select **rai-planner** agent:
+Select **RAI Planner** agent:
 
 ```text
 Assess the responsible AI risks for this project based on the security plan

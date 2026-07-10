@@ -3,7 +3,7 @@ title: "Stage 6: Implementation"
 description: Build features, write code, and create content with the full suite of AI-assisted development tools
 sidebar_position: 7
 author: Microsoft
-ms.date: 2026-06-30
+ms.date: 2026-07-09
 ms.topic: how-to
 keywords:
   - ai-assisted project lifecycle
@@ -29,24 +29,24 @@ You enter Implementation after completing [Stage 5: Sprint Planning](sprint-plan
 
 ### Primary Agents
 
-| Tool                    | Type  | How to Invoke                            | Purpose                                               |
-|-------------------------|-------|------------------------------------------|-------------------------------------------------------|
-| rpi-agent               | Agent | Select **rpi-agent** agent               | Orchestrate the full research-plan-implement workflow |
-| task-researcher         | Agent | Select **task-researcher** agent         | Research requirements and gather codebase evidence    |
-| task-planner            | Agent | Select **task-planner** agent            | Create implementation plans from research findings    |
-| task-implementor        | Agent | Select **task-implementor** agent        | Build components following plans                      |
-| task-reviewer           | Agent | Select **task-reviewer** agent           | Validate implementation against plan and research     |
-| gen-jupyter-notebook    | Agent | Select **gen-jupyter-notebook** agent    | Create data analysis notebooks                        |
-| gen-streamlit-dashboard | Agent | Select **gen-streamlit-dashboard** agent | Generate Streamlit dashboards                         |
-| prompt-builder          | Agent | Select **prompt-builder** agent          | Create and refine prompt engineering artifacts        |
+| Tool                     | Type  | How to Invoke                             | Purpose                                               |
+|--------------------------|-------|-------------------------------------------|-------------------------------------------------------|
+| RPI Agent                | Agent | Select **RPI Agent** agent                | Orchestrate the full research-plan-implement workflow |
+| Task Researcher          | Agent | Select **Task Researcher** agent          | Research requirements and gather codebase evidence    |
+| Task Planner             | Agent | Select **Task Planner** agent             | Create implementation plans from research findings    |
+| Task Implementor         | Agent | Select **Task Implementor** agent         | Build components following plans                      |
+| Task Reviewer            | Agent | Select **Task Reviewer** agent            | Validate implementation against plan and research     |
+| DS Gen Jupyter Notebook  | Agent | Select **DS Gen Jupyter Notebook** agent  | Create data analysis notebooks                        |
+| DS Gen Streamlit Dashboard | Agent | Select **DS Gen Streamlit Dashboard** agent | Generate Streamlit dashboards                       |
+| Prompt Builder           | Agent | Select **Prompt Builder** agent           | Create and refine prompt engineering artifacts        |
 
 ### Supporting Agents
 
-| Tool                | Type  | How to Invoke                        | Purpose                                  |
-|---------------------|-------|--------------------------------------|------------------------------------------|
-| phase-implementor   | Agent | Select **phase-implementor** agent   | Execute individual implementation phases |
-| prompt-updater      | Agent | Select **prompt-updater** agent      | Update existing prompts and instructions |
-| researcher-subagent | Agent | Select **researcher-subagent** agent | Conduct focused research within tasks    |
+| Tool                | Type  | How to Invoke                                     | Purpose                                  |
+|---------------------|-------|---------------------------------------------------|------------------------------------------|
+| Phase Implementor   | Agent | Select **Phase Implementor** agent                | Execute individual implementation phases |
+| Prompt Builder      | Agent | Select **Prompt Builder** agent and use `/prompt-build` | Update existing prompts and instructions |
+| Researcher Subagent | Agent | Select **Researcher Subagent** agent              | Conduct focused research within tasks    |
 
 ### Prompts
 
@@ -130,7 +130,7 @@ research output.
 
 Execute the plan:
 
-Select **task-implementor** agent:
+Select **Task Implementor** agent:
 
 ```text
 Build the webhook delivery system following the plan in
@@ -138,7 +138,7 @@ Build the webhook delivery system following the plan in
 dispatcher component and implement the retry queue second.
 ```
 
-Select **gen-jupyter-notebook** agent:
+Select **DS Gen Jupyter Notebook** agent:
 
 ```text
 Create a data analysis notebook for the Q4 sales transactions dataset in

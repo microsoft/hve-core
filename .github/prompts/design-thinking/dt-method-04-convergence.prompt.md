@@ -1,6 +1,6 @@
 ---
 description: 'Theme discovery for Design Thinking Method 4c through philosophy-based clustering'
-agent: dt-coach
+agent: DT Coach
 argument-hint: "project-slug=... [ideaCount=...]"
 ---
 

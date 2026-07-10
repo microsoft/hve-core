@@ -74,7 +74,7 @@ Load `prd-author#validate` first. Confirm completeness and quality before approv
 
 Load `prd-author#finalize` first. Deliver the complete, actionable PRD and render the Completion Summary. The final quality report authorizes Finalize exit via `gate_decisions.finalize_exit`. When the user wants backlog upload or work item creation, hand off the approved PRD to the appropriate PRD-to-WIT planner so its planning files are refined before any tracker mutation workflow runs.
 
-If the PRD surfaced significant architectural decisions worth preserving — for example, tech-stack choices, build-vs-buy calls, system-boundary or integration patterns — you may want to capture them as ADRs. The `@adr-creation` agent can guide you through it; the PRD makes useful context.
+If the PRD surfaced significant architectural decisions worth preserving — for example, tech-stack choices, build-vs-buy calls, system-boundary or integration patterns — you may want to capture them as ADRs. `ADR Creator` can guide you through it; the PRD makes useful context.
 
 When the PRD benefits from an architecture or network diagram, use the `architecture-diagrams` skill: load its `SKILL.md` and follow its authoring contract, choosing ASCII or Mermaid output for the diagram. That skill is the authoritative source for its own conventions and output format.
 

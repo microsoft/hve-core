@@ -88,7 +88,6 @@ Use subagent tools when delegation clearly improves speed, coverage, or risk man
 
 * When using `runSubagent`, select the named agent directly and pass only the inputs required for that phase.
 * Use the human-readable agent name in prose, such as `Researcher Subagent` and `Phase Implementor`. Reserve filename-style identifiers for file paths, glob examples, and tool-level identifiers only.
-* Reference subagent files using glob paths (for example, `.github/agents/**/researcher-subagent.agent.md`) so resolution works regardless of directory structure.
 * Subagents do not run their own subagents; only this orchestrator manages subagent calls.
 * Run subagents in parallel when their work has no dependencies on each other.
 * Collect findings from completed subagent runs and feed them into later work.

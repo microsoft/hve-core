@@ -3,7 +3,7 @@ title: Peer Directory Clone Installation
 description: Install HVE Core as a sibling directory for local VS Code development
 sidebar_position: 4
 author: Microsoft
-ms.date: 2026-06-11
+ms.date: 2026-07-09
 ms.topic: how-to
 keywords:
   - peer directory
@@ -126,7 +126,7 @@ You should see `.agent.md` files. Then validate in VS Code:
 1. Reload VS Code window (`Ctrl+Shift+P` → "Developer: Reload Window")
 2. Open GitHub Copilot Chat (`Ctrl+Alt+I`)
 3. Click the agent picker dropdown
-4. Verify HVE Core agents appear (task-planner, task-researcher, prompt-builder)
+4. Verify HVE Core agents appear (Task Planner, Task Researcher, Prompt Builder)
 
 ## Updating HVE Core
 

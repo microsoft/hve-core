@@ -123,7 +123,7 @@ All tracking files use markdown format with frontmatter and follow patterns from
 ### Agents and Subagents
 
 By convention, custom agents are organized under `.github/agents/{collection-id}/`. Each collection typically places its agents in a dedicated subdirectory (e.g., `.github/agents/hve-core/`, `.github/agents/ado/`). Subagents are typically organized under `.github/agents/{collection-id}/subagents/`.
-Parent agents reference subagents using glob paths like `.github/agents/**/researcher-subagent.agent.md` so resolution works regardless of nesting depth.
+Parent agents reference subagents by their human-readable frontmatter `name:` values, such as `Researcher Subagent`. Fixed dependencies belong in an explicit `agents:` frontmatter array.
 
 Collection manifests in `collections/` define bundles of agents, prompts, instructions, and skills:
 

@@ -1,6 +1,6 @@
 ---
 description: 'Scrappy prototype building with fidelity enforcement for Design Thinking Method 6b'
-agent: dt-coach
+agent: DT Coach
 argument-hint: "project-slug=... [prototypeFormats=...]"
 ---
 

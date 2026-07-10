@@ -5,7 +5,7 @@ description: Making Content Usable for People with Cognitive and Learning Disabi
 
 # COGA framework reference
 
-This `SKILL.md` is the entrypoint for the **Making Content Usable for People with Cognitive and Learning Disabilities (COGA)** framework skill used by the Accessibility Planner and the Accessibility Skill Assessor subagent.
+This `SKILL.md` is the entrypoint for the **Making Content Usable for People with Cognitive and Learning Disabilities (COGA)** framework skill used by the Accessibility Planner and `Accessibility Framework Assessor`.
 
 COGA is a Working Group Note published by the W3C Cognitive Accessibility Task Force. Unlike the normative WCAG 2.2 success criteria, COGA provides informative design guidance: 53 design patterns are organised into eight user-need objectives that together cover the accessibility needs of people with cognitive, learning, neurological, and age-related impairments. Each pattern describes a user need, suggested design approaches, and evaluation considerations. COGA patterns frequently complement WCAG 2.2 criteria, since several user needs (consistent navigation, clear labels, error prevention, focus support) are partially expressed across both standards.
 
@@ -77,7 +77,7 @@ The table below lists every COGA pattern grouped by objective. The `Reference` c
 
 ## Assessment heuristics
 
-Per-pattern assessment heuristics, design pattern detail, and scope notes live inside the per-objective reference files in `references/`. The Accessibility Skill Assessor subagent consumes the appropriate `objective-<slug>.md#control-<pattern-slug>` section when evaluating a finding against a specific COGA pattern.
+Per-pattern assessment heuristics, design pattern detail, and scope notes live inside the per-objective reference files in `references/`. `Accessibility Framework Assessor` consumes the appropriate `objective-<slug>.md#control-<pattern-slug>` section when evaluating a finding against a specific COGA pattern.
 
 Cross-skill use is the common case: a COGA finding usually cites both the pattern reference here and the most closely related WCAG 2.2 success criterion in [`wcag-22`](wcag-22.md). For example, a page that auto-rotates a carousel without a pause control is cited against `objective-user-control.md#control-let-users-control-when-the-content-moves-or-changes` (for the COGA user-control pattern) and `../wcag-22/references/guideline-2-2.md#sc-2-2-2` (for the WCAG 2.2.2 Pause, Stop, Hide requirement).
 

@@ -1,9 +1,9 @@
 ---
 title: Your First Research
-description: Use the task-researcher agent to investigate your own codebase
+description: Use Task Researcher to investigate your own codebase
 sidebar_position: 5
 author: Microsoft
-ms.date: 2026-06-27
+ms.date: 2026-07-09
 ms.topic: tutorial
 keywords:
   - getting started

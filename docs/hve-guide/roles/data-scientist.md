@@ -3,7 +3,7 @@ title: Data Scientist Guide
 description: HVE Core support for data scientists building notebooks, dashboards, data specifications, and analytics workflows
 sidebar_position: 9
 author: Microsoft
-ms.date: 2026-06-26
+ms.date: 2026-07-09
 ms.topic: how-to
 keywords:
   - data science
@@ -44,15 +44,15 @@ This guide is for you if you analyze data, build Jupyter notebooks, create dashb
 
 ## Stage Walkthrough
 
-1. Stage 2: Discovery. Use the **task-researcher** agent to investigate data sources, explore available datasets, and research analytical approaches.
-2. Stage 3: Product Definition. Run the **gen-data-spec** agent to define data schemas, sources, and transformation requirements as structured specification documents.
-3. Stage 6: Notebook Development. Generate analysis notebooks with the **gen-jupyter-notebook** agent and create dashboards with the **gen-streamlit-dashboard** agent.
-4. Stage 7: Validation. Test generated dashboards with the **test-streamlit-dashboard** agent and review analysis results for accuracy and completeness.
+1. Stage 2: Discovery. Use the **Task Researcher** agent to investigate data sources, explore available datasets, and research analytical approaches.
+2. Stage 3: Product Definition. Run the **DS Gen Data Spec** agent to define data schemas, sources, and transformation requirements as structured specification documents.
+3. Stage 6: Notebook Development. Generate analysis notebooks with the **DS Gen Jupyter Notebook** agent and create dashboards with the **DS Gen Streamlit Dashboard** agent.
+4. Stage 7: Validation. Test generated dashboards with the **DS Test Streamlit Dashboard** agent and review analysis results for accuracy and completeness.
 5. Stage 8: Delivery. Package notebooks, dashboards, and documentation for sharing with stakeholders and engineering teams.
 
 ## Starter Prompts
 
-Select **gen-jupyter-notebook** agent:
+Select **DS Gen Jupyter Notebook** agent:
 
 ```text
 Create a data analysis notebook for the Q4 sales transactions dataset in
@@ -61,7 +61,7 @@ analysis by product category and region, and customer cohort segmentation
 using RFM scoring with matplotlib visualizations.
 ```
 
-Select **gen-data-spec** agent:
+Select **DS Gen Data Spec** agent:
 
 ```text
 Define a data specification for the customer event ingestion pipeline.
@@ -70,7 +70,7 @@ Include timestamp normalization, PII hashing transformations, quality
 rules for null checks, and partitioning by event_date and event_type.
 ```
 
-Select **gen-streamlit-dashboard** agent:
+Select **DS Gen Streamlit Dashboard** agent:
 
 ```text
 Build a dashboard for API latency and error rate metrics from the
@@ -79,7 +79,7 @@ error rate breakdown by endpoint (5xx vs 4xx), and a 30-day daily active
 users trend. Set refresh interval to 5 minutes.
 ```
 
-Select **test-streamlit-dashboard** agent:
+Select **DS Test Streamlit Dashboard** agent:
 
 ```text
 Validate the dashboard at dashboards/api-performance.json. Check that all
@@ -87,7 +87,7 @@ queries return data for the last 7 days, panels render without errors, and
 the refresh rate does not exceed Prometheus scrape intervals.
 ```
 
-Select **task-researcher** agent:
+Select **Task Researcher** agent:
 
 ```text
 Research data sources for predicting customer churn in the SaaS platform.
@@ -98,15 +98,15 @@ granularity, and GDPR privacy constraints for EU customer data.
 
 ## Key Agents and Workflows
 
-| Agent                        | Purpose                                    | Docs                                            |
-|------------------------------|--------------------------------------------|-------------------------------------------------|
-| **gen-jupyter-notebook**     | Jupyter notebook generation                | Agent file                                      |
-| **gen-streamlit-dashboard**  | Streamlit dashboard creation               | Agent file                                      |
-| **gen-data-spec**            | Data specification document creation       | Agent file                                      |
-| **test-streamlit-dashboard** | Dashboard functional testing               | Agent file                                      |
-| **task-researcher**          | Data source and pattern research           | [Task Researcher](../../rpi/task-researcher.md) |
-| **task-planner**             | Analytics pipeline planning                | [Task Planner](../../rpi/task-planner.md)       |
-| **memory**                   | Session context and preference persistence | Agent file                                      |
+| Agent                         | Purpose                                    | Docs                                            |
+|-------------------------------|--------------------------------------------|-------------------------------------------------|
+| **DS Gen Jupyter Notebook**   | Jupyter notebook generation                | Agent file                                      |
+| **DS Gen Streamlit Dashboard** | Streamlit dashboard creation             | Agent file                                      |
+| **DS Gen Data Spec**          | Data specification document creation       | Agent file                                      |
+| **DS Test Streamlit Dashboard** | Dashboard functional testing             | Agent file                                      |
+| **Task Researcher**           | Data source and pattern research           | [Task Researcher](../../rpi/task-researcher.md) |
+| **Task Planner**              | Analytics pipeline planning                | [Task Planner](../../rpi/task-planner.md)       |
+| **Memory**                    | Session context and preference persistence | Agent file                                      |
 
 Prompts complement the agents for cross-cutting workflows:
 
@@ -119,13 +119,13 @@ Python environment management follows the `uv` virtual environment instructions 
 
 ## Tips
 
-| Do                                                                          | Don't                                                        |
-|-----------------------------------------------------------------------------|--------------------------------------------------------------|
-| Start with the **gen-data-spec** agent to define schemas before coding      | Jump straight to notebook coding without data specifications |
-| Use the **gen-jupyter-notebook** agent for structured, documented notebooks | Create raw notebooks without documentation cells             |
-| Test dashboards with the **test-streamlit-dashboard** agent                 | Deploy dashboards without functional validation              |
-| Research data sources with the **task-researcher** agent first              | Assume data availability without investigation               |
-| Use `uv` for reproducible Python environments                               | Install packages globally or skip environment isolation      |
+| Do                                                                             | Don't                                                        |
+|--------------------------------------------------------------------------------|--------------------------------------------------------------|
+| Start with the **DS Gen Data Spec** agent to define schemas before coding      | Jump straight to notebook coding without data specifications |
+| Use the **DS Gen Jupyter Notebook** agent for structured, documented notebooks | Create raw notebooks without documentation cells             |
+| Test dashboards with the **DS Test Streamlit Dashboard** agent                 | Deploy dashboards without functional validation              |
+| Research data sources with the **Task Researcher** agent first                 | Assume data availability without investigation               |
+| Use `uv` for reproducible Python environments                                  | Install packages globally or skip environment isolation      |
 
 ## Related Roles
 

@@ -103,7 +103,7 @@ Classify the user's request into one of nine workflow categories using keyword s
 
 Disambiguation heuristics for overlapping signals:
 
-* Product-level documents (PRDs, specifications, feature documents) suggest PRD Planning, which delegates to `@AzDO PRD to WIT`.
+* Product-level documents (PRDs, specifications, feature documents) suggest PRD Planning, which delegates to `AzDO PRD to WIT`.
 * Structured requirement briefs (e.g., `backlog-brief.md` with flat REQ-NNN entries) route to Discovery Path B.
 * "Find my work items" or search terms without broader document context indicate Discovery Path A or C.
 * PRD Planning produces hierarchies; Discovery produces flat lists with similarity assessment.
@@ -122,7 +122,7 @@ Load the corresponding instruction file and execute the workflow. Each run creat
 |-----------------|----------------------------------------------------------------------------------------------------------------------|-----------------------------------------------------------|
 | Triage          | [ado-backlog-triage.instructions.md](../../instructions/ado/ado-backlog-triage.instructions.md)                      | `.copilot-tracking/workitems/triage/{{YYYY-MM-DD}}/`      |
 | Discovery       | [ado-wit-discovery.instructions.md](../../instructions/ado/ado-wit-discovery.instructions.md)                        | `.copilot-tracking/workitems/discovery/{{scope-name}}/`   |
-| PRD Planning    | Delegates to `@AzDO PRD to WIT` agent                                                                                | `.copilot-tracking/workitems/prds/{{name}}/`              |
+| PRD Planning    | Delegates to `AzDO PRD to WIT`                                                                                       | `.copilot-tracking/workitems/prds/{{name}}/`              |
 | Sprint Planning | [ado-backlog-sprint.instructions.md](../../instructions/ado/ado-backlog-sprint.instructions.md)                      | `.copilot-tracking/workitems/sprint/{{iteration-kebab}}/` |
 | Execution       | [ado-update-wit-items.instructions.md](../../instructions/ado/ado-update-wit-items.instructions.md)                  | `.copilot-tracking/workitems/execution/{{YYYY-MM-DD}}/`   |
 | Single Item     | Direct MCP tool calls with [interaction templates](../../instructions/ado/ado-interaction-templates.instructions.md) | `.copilot-tracking/workitems/execution/{{YYYY-MM-DD}}/`   |
@@ -137,7 +137,7 @@ For each dispatched workflow:
 3. Execute workflow phases, updating state files at each checkpoint.
 4. Honor the active autonomy mode for human review gates.
 
-PRD Planning dispatches to `@AzDO PRD to WIT` agent. When that agent completes, the user can invoke the "Execute" handoff to process the resulting *handoff.md*.
+PRD Planning dispatches to `AzDO PRD to WIT`. When that agent completes, the user can invoke the "Execute" handoff to process the resulting *handoff.md*.
 
 Sprint Planning coordinates Discovery followed by Triage inline, producing iteration-scoped work item analysis and field classification in a single coordinated sequence.
 
@@ -187,7 +187,7 @@ When resuming an interrupted workflow, check the tracking directory for existing
 
 ## Session Persistence
 
-The Save handoff delegates to the memory agent with the checkpoint prompt, preserving session state for later resumption. When a workflow extends beyond a single session:
+The Save handoff delegates to `Memory` with the checkpoint prompt, preserving session state for later resumption. When a workflow extends beyond a single session:
 
 1. Write a context summary block to *planning-log.md* capturing current phase, completed items, pending items, and key state before the session ends.
 2. On resumption, read *planning-log.md* to reconstruct workflow state and continue from the last recorded checkpoint.

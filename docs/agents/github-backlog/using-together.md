@@ -3,7 +3,7 @@ title: Using Workflows Together
 description: Connect discovery, triage, sprint planning, and execution into a complete backlog management pipeline
 sidebar_position: 7
 author: Microsoft
-ms.date: 2026-05-20
+ms.date: 2026-07-09
 ms.topic: tutorial
 keywords:
   - github backlog manager
@@ -50,7 +50,7 @@ The GitHub Backlog Manager includes a **Save** button that captures workflow con
 
 ### Save a Session
 
-Click **Save** in the GitHub Backlog Manager chat interface at any point during a backlog workflow. The memory agent creates a file at `.copilot-tracking/memory/YYYY-MM-DD/<description>-memory.md` containing:
+Click **Save** in the GitHub Backlog Manager chat interface at any point during a backlog workflow. `Memory` creates a file at `.copilot-tracking/memory/YYYY-MM-DD/<description>-memory.md` containing:
 
 * Workflow state and current pipeline stage
 * Completed operations and key decisions
@@ -61,7 +61,7 @@ Click **Save** in the GitHub Backlog Manager chat interface at any point during 
 
 1. Start a new chat and type `/clear` to ensure a clean context.
 2. Type `/checkpoint continue <description>` to restore the saved session.
-3. The memory agent displays restored workflow state and next steps.
+3. `Memory` displays restored workflow state and next steps.
 4. Click **🚀 Continue with Backlog** to return to the GitHub Backlog Manager and continue where you left off.
 
 > [!TIP]

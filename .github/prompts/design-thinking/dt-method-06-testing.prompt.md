@@ -1,6 +1,6 @@
 ---
 description: 'Hypothesis-driven testing and constraint validation for Design Thinking Method 6c'
-agent: dt-coach
+agent: DT Coach
 argument-hint: "project-slug=... [testEnvironment=...]"
 ---
 

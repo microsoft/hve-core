@@ -132,7 +132,7 @@ Jira workflow support is available through dedicated prompts in this directory. 
 * **[SSSC from Security Plan](./security/sssc-from-security-plan.prompt.md)** - Extend a Security Planner assessment with supply chain coverage
 * **[VEX Scan](./security/vex-scan.prompt.md)** - Full VEX pipeline: scan dependencies, enrich CVEs, analyze exploitability, and draft an OpenVEX document
 * **[VEX Triage](./security/vex-triage.prompt.md)** - Triage CVEs from an existing scan report or SBOM and draft an OpenVEX document
-* **[VEX Implement](./security/vex-implement.prompt.md)** - Plan the work to stand up VEX in a target project as a backlog for Task-* implementors
+* **[VEX Implement](./security/vex-implement.prompt.md)** - Plan the work to stand up VEX in a target project as a backlog for `Task Implementor`
 * **[Incident Response](./security/incident-response.prompt.md)** - Incident response workflow for Azure operations with triage, diagnostics, mitigation, and RCA phases
 * **[Risk Register](./security/risk-register.prompt.md)** - Generate a qualitative risk assessment with a P×I matrix and mitigation plans
 

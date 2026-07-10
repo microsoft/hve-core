@@ -655,7 +655,7 @@ See [AI Artifacts Common Standards - Getting Help](ai-artifacts-common.md#gettin
 
 * Review existing examples in `.github/instructions/{collection-id}/` (the conventional location for instruction files)
 * Test glob patterns using file search commands
-* Use `prompt-builder.agent.md` agent for assistance
+* Use `Prompt Builder` for assistance
 
 ---
 

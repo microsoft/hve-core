@@ -3,7 +3,7 @@ name: System Architecture Reviewer
 description: 'System architecture reviewer for design trade-offs, ADR creation, and well-architected alignment'
 handoffs:
   - label: "📐 Create ADR"
-    agent: ADR Creation
+    agent: ADR Creator
     prompt: "Create an ADR based on the architecture review findings"
     send: true
   - label: "📋 Create Plan"
@@ -21,7 +21,7 @@ Architecture review specialist focused on design trade-offs, well-architected al
 * Select only the frameworks and patterns relevant to the project's constraints and system type.
 * Drive toward clear architectural recommendations with documented trade-offs.
 * Preserve decision rationale through ADRs so future team members understand the context.
-* Escalate security-specific concerns to the `security-planner` agent.
+* Escalate security-specific concerns to `Security Planner`.
 * Before generating any architecture diagram, use the `architecture-diagrams` skill: load its `SKILL.md` and produce the diagram exactly as that skill directs. The skill is the authoritative source for its own conventions and output format; do not restate them here.
 * Reference `docs/templates/adr-template-solutions.md` for ADR structure, if available. If the template is not found, use a minimal ADR structure: Title, Status, Context, Decision, Consequences.
 * Follow repository conventions from `.github/copilot-instructions.md`.
@@ -84,7 +84,7 @@ Apply the Microsoft Well-Architected Framework pillars relevant to the system ty
 * All inputs to AI models are validated and sanitized.
 * Least privilege access applies to agent tool permissions and data access.
 * Model endpoints and training data are protected with appropriate access controls.
-* For comprehensive security architecture reviews, delegate to the `security-planner` agent.
+* For comprehensive security architecture reviews, delegate to `Security Planner`.
 
 #### Cost Optimization
 
@@ -146,7 +146,7 @@ ADR creation criteria: document decisions when they involve:
 
 Save ADRs under `docs/decisions/` using ISO date-prefixed filenames (`YYYY-MM-DD-short-title.md`). If `docs/decisions/` is unavailable, use `docs/architecture/decisions/` with the same naming pattern. Each ADR captures the decision context, options evaluated, chosen approach, and consequences.
 
-For detailed, interactive ADR development with Socratic coaching, use the ADR Creation handoff to delegate to the `adr-creation` agent.
+For detailed, interactive ADR development with Socratic coaching, use the `ADR Creator` handoff.
 
 ### Step 6: Identify Escalation Points
 

@@ -3,7 +3,7 @@ title: VS Code Extension Installation
 description: Install HVE Core as a VS Code extension from the marketplace
 sidebar_position: 1
 author: Microsoft
-ms.date: 2026-06-27
+ms.date: 2026-07-09
 ms.topic: how-to
 keywords:
   - extension
@@ -77,11 +77,12 @@ After installation, verify everything works:
 1. Open GitHub Copilot Chat (`Ctrl+Alt+I`)
 2. Click the agent picker dropdown
 3. Verify HVE Core agents appear:
-   * task-planner
-   * task-researcher
-   * task-implementor
-   * code-review
-   * adr-creation
+
+    * Task Planner
+    * Task Researcher
+    * Task Implementor
+    * Code Review
+    * ADR Creator
 
 ## Post-Installation (Optional)
 
@@ -95,7 +96,7 @@ HVE Core agents create ephemeral workflow artifacts in a `.copilot-tracking/` fo
 .copilot-tracking/
 ```
 
-This applies even when using the extension. The folder is created in your project directory when you use agents like `task-researcher` or `code-review`. See the [installation guide](../install.md#post-installation-update-your-gitignore) for details on what gets stored there.
+This applies even when using the extension. The folder is created in your project directory when you use agents such as Task Researcher or Code Review. See the [installation guide](../install.md#post-installation-update-your-gitignore) for details on what gets stored there.
 
 ## What's Included
 
@@ -103,7 +104,7 @@ The extension provides all HVE Core components:
 
 | Component    | Examples                                |
 |--------------|-----------------------------------------|
-| Chat Agents  | task-planner, code-review, adr-creation |
+| Chat Agents  | Task Planner, Code Review, ADR Creator |
 | Prompts      | git-commit, pull-request, ado-create-pr |
 | Instructions | markdown, python-script, commit-message |
 | Skills       | pr-reference, video-to-gif              |
@@ -151,7 +152,7 @@ The extension updates automatically through VS Code's extension system:
 #### Steps
 
 1. Install extension from marketplace
-2. Start using `task-planner` and other agents
+2. Start using Task Planner and other agents
 3. That's it!
 
 ### Scenario 2: Multi-Machine Developer

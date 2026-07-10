@@ -2,6 +2,7 @@
 agent: 'agent'
 description: 'Interactive, verification-first Git configuration assistant (non-destructive)'
 model:
+  - GPT-5.6 Luna (copilot)
   - MAI-Code-1-Flash (copilot)
   - Claude Haiku 4.5 (copilot)
 ---

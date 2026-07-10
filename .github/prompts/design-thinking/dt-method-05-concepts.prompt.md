@@ -1,6 +1,6 @@
 ---
 description: 'Concept articulation for Design Thinking Method 5b from brainstorming themes'
-agent: dt-coach
+agent: DT Coach
 argument-hint: "project-slug=... [selectedThemes=...]"
 ---
 

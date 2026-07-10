@@ -113,7 +113,7 @@ WCAG success criteria are normative; the axe techniques that surface them are in
 
 ### Runtime probe harness
 
-The runtime probe harness ([scripts/runtime_a11y](scripts/runtime_a11y)) runs Playwright-based accessibility probes against a project-specific surface inventory and aggregates the results into a coverage matrix. Use the [accessibility-coverage-matrix prompt](../../../prompts/accessibility/accessibility-coverage-matrix.prompt.md) for workflow orchestration and the [accessibility-surface-inventory subagent](../../../agents/accessibility/subagents/accessibility-surface-inventory.agent.md) as the canonical producer of the runtime config.
+The runtime probe harness ([scripts/runtime_a11y](scripts/runtime_a11y)) runs Playwright-based accessibility probes against a project-specific surface inventory and aggregates the results into a coverage matrix. Use the `Accessibility Coverage Matrix` prompt for workflow orchestration and `Accessibility Surface Inventory` as the canonical producer of the runtime config.
 
 #### Invocation
 

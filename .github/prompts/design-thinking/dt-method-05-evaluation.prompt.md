@@ -1,6 +1,6 @@
 ---
 description: 'Stakeholder alignment and three-lens evaluation for Design Thinking Method 5c'
-agent: dt-coach
+agent: DT Coach
 argument-hint: "project-slug=... [stakeholderGroups=...]"
 ---
 

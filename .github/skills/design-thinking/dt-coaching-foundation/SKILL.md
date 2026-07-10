@@ -11,7 +11,7 @@ metadata:
 
 This `SKILL.md` is the **entrypoint** for the Design Thinking coaching foundation knowledge.
 
-The dt-coach agent loads this skill at session start and during a coaching session to
+`DT Coach` loads this skill at session start and during a coaching session to
 ground coaching behavior in a stable identity, enforce quality and fidelity expectations,
 navigate method transitions, persist and recover session state, and run the opt-in
 canonical deck workflow. The foundation knowledge stays constant across all nine

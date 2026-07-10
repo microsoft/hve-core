@@ -27,7 +27,7 @@ Treat the matrix as a criterion x surface x method grid.
 
 1. Bootstrap or resume the matrix under .copilot-tracking/accessibility/coverage/ and create or update the working artifacts for the target scope.
 2. Load the criteria catalog and adequateMethods from the accessibility skill framework references before evaluating any cells.
-3. Delegate to the accessibility-surface-inventory subagent as the sole producer of a11y-runtime.config.json; do not author that config yourself. Pause for the user to review or override it before proceeding.
+3. Delegate to `Accessibility Surface Inventory` as the sole producer of a11y-runtime.config.json; do not author that config yourself. Pause for the user to review or override it before proceeding.
 4. Build the grid with the runtime_a11y matrix engine, using the loaded framework and surface definitions.
 5. Ingest existing and static evidence as data, including assessor findings, planner state.json data, prior reports, and prior matrix artifacts; preserve provenance and do not invent evidence.
 6. Run the harness using the package directory .github/skills/accessibility/accessibility/scripts/runtime_a11y/:

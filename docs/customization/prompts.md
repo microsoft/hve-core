@@ -2,7 +2,7 @@
 title: Creating Custom Prompts
 description: Author reusable prompt templates with variables, agent delegation, and tool restrictions for team workflows
 author: Microsoft
-ms.date: 2026-06-27
+ms.date: 2026-07-09
 ms.topic: how-to
 keywords:
   - prompts
@@ -61,11 +61,15 @@ Frontmatter fields:
 * `description` (required): A one-line summary displayed in the prompt picker
 * `name` (optional): A human-readable identifier for the prompt
 * `argument-hint` (optional): Hint text shown in the prompt picker for expected inputs
-* `agent` (optional): Delegates execution to a specific custom agent
-* `model` (optional): Pins the prompt to a specific model or prioritized model list
+* `agent` (optional): Uses `ask`, `edit`, `agent`, or delegates to the exact registered name of a custom agent
+* `model` (optional): Exact ordered High, Medium, or Low profile; omit it to use the current session model
 * `tools` (optional): Restricts available tools for the prompt
 
 The body contains the actual instructions Copilot follows, including any structured sections, requirements, or constraints.
+
+When `model` is present, select the profile from the prompt's responsibility and use its exact canonical three-model order. High is GPT-5.6 Sol, Claude Opus 4.8, then GPT-5.5. Medium is GPT-5.6 Terra, Claude Sonnet 5, then MAI-Code-1-Flash. Low is GPT-5.6 Luna, MAI-Code-1-Flash, then Claude Haiku 4.5.
+
+Each frontmatter name includes the `(copilot)` suffix. Omit `model` when the current session model is appropriate. See [AI Artifacts Common Standards](../contributing/ai-artifacts-common.md#model-name-format) for the canonical lists.
 
 ## Accelerating with Prompt Builder
 
@@ -139,7 +143,7 @@ defined in #file:.github/instructions/coding-standards/typescript.instructions.m
 
 ## Agent Delegation from Prompts
 
-The `agent:` frontmatter field delegates prompt execution to a custom agent. The value uses the agent's human-readable `name:` from its frontmatter.
+The `agent:` frontmatter field accepts `ask`, `edit`, `agent`, or the exact case-sensitive human-readable `name:` of a registered custom agent.
 
 ```yaml
 ---

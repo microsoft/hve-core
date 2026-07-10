@@ -13,7 +13,7 @@ tags:
   - agents
   - accessibility
 author: Microsoft
-ms.date: 2026-06-12
+ms.date: 2026-07-09
 ms.topic: concept
 estimated_reading_time: 6
 ---
@@ -72,7 +72,7 @@ flowchart LR
 | Subagent                     | Responsibility                                                |
 |------------------------------|---------------------------------------------------------------|
 | Codebase Profiler            | Determines which accessibility skills apply to the codebase   |
-| Accessibility Skill Assessor | Assesses a single skill and produces findings                 |
+| Accessibility Framework Assessor | Assesses a single framework and produces findings             |
 | Finding Deep Verifier        | Re-verifies FAIL and PARTIAL findings in audit and diff modes |
 | Report Generator             | Produces the consolidated conformance report                  |
 

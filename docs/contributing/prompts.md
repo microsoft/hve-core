@@ -3,7 +3,7 @@ title: 'Contributing Prompts to HVE Core'
 description: 'Requirements and standards for contributing GitHub Copilot prompt files to hve-core'
 sidebar_position: 4
 author: Microsoft
-ms.date: 2026-07-08
+ms.date: 2026-07-09
 ms.topic: how-to
 ---
 
@@ -76,7 +76,7 @@ Prompt files MUST:
 | Property | Value                                                                    |
 |----------|--------------------------------------------------------------------------|
 | Purpose  | Delegates execution to a named custom agent                              |
-| Format   | Human-readable agent name matching the agent's `name:` frontmatter field |
+| Format   | `ask`, `edit`, `agent`, or the exact case-sensitive `name:` of a registered custom agent |
 | Style    | Quote the value when the agent name contains spaces                      |
 | Example  | `'ADO Backlog Manager'`                                                  |
 
@@ -89,18 +89,18 @@ Prompt files MUST:
 | Style    | Keep hints concise; lead with required arguments                                                                                               |
 | Example  | `"project=... [type={Epic\|Feature\|UserStory\|Bug\|Task}] [title=...]"`                                                                       |
 
-**`model`** (string or array of strings)
+**`model`** (array of strings)
 
-| Property | Value                                                                                          |
-|----------|------------------------------------------------------------------------------------------------|
-| Purpose  | Specifies a preferred AI model for prompt invocation (cost optimization)                       |
-| Format   | Model display name with `(copilot)` suffix, or prioritized array for fallback                  |
-| Style    | Use names from `scripts/linting/model-catalog.json`; omit if the session default is acceptable |
-| Example  | `Claude Haiku 4.5 (copilot)`                                                                   |
+| Property | Value                                                              |
+|----------|--------------------------------------------------------------------|
+| Purpose  | Specifies a responsibility-selected High, Medium, or Low profile    |
+| Format   | Exact canonical ordered three-model list with `(copilot)` suffixes   |
+| Style    | Select by responsibility; omit if the session default is acceptable |
+| Example  | Low: GPT-5.6 Luna, MAI-Code-1-Flash, Claude Haiku 4.5                |
 
-Use `model` on prompts that perform mechanical operations (git commits, issue creation, file I/O) rather than complex reasoning or code generation.
+Use the Low profile on prompts that perform mechanical operations (git commits, issue creation, file I/O). Use Medium for research, authoring, implementation, or review, and High for architecture or consequential decisions. The exact profile lists are defined in [AI Artifacts Common Standards](ai-artifacts-common.md#model-name-format).
 
-The `model` property is a **preference hint**, not a hard requirement. When the specified model is unavailable or exceeds the user's session model cost tier, VS Code falls back through the array (if specified) then to the session model. A single-model string is safe: it never causes failure. Fallback arrays add resilience when cost-tier constraints may make the primary model unavailable.
+The `model` property is a **preference hint**, not a hard requirement. When a model is unavailable or exceeds the user's session model cost tier, VS Code tries the remaining entries in the selected profile, then the session model. The ordered list is availability fallback within the responsibility-selected profile.
 
 Run `npm run lint:models` to validate model references against the catalog.
 
@@ -525,6 +525,7 @@ Before submitting your prompt, verify:
 * [ ] `description` field present and descriptive (10-200 chars)
 * [ ] `mode` field present with valid value
 * [ ] `category` field appropriate for domain (if present)
+* [ ] `model` is omitted or matches one exact canonical ordered profile
 * [ ] No trailing whitespace in values
 * [ ] Single newline at EOF
 

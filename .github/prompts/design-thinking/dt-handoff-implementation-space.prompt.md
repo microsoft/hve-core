@@ -148,7 +148,7 @@ Record a lateral transition in the coaching state `transition_log`:
 
 ### Step 5: Generate RPI Entry
 
-Create a self-contained RPI handoff document at `.copilot-tracking/research/{project-slug}-research-topic.md` for task-researcher to consume directly.
+Create a self-contained RPI handoff document at `.copilot-tracking/research/{project-slug}-research-topic.md` for Task Researcher to consume directly.
 
 Include YAML frontmatter with `description` set to a summary of the handoff context (for example, `description: 'RPI research topic from DT Implementation Space for {project name}'`).
 
@@ -187,7 +187,7 @@ Items tagged `assumed`, `unknown`, or `conflicting` requiring Researcher investi
 List all `.copilot-tracking/dt/{project-slug}/` artifact paths so the Researcher can read original DT evidence directly.
 
 Inline all content directly rather than referencing `.copilot-tracking/` paths (except in the DT Artifact Paths section).
-The document stands alone as complete context for the receiving task-researcher.
+The document stands alone as complete context for the receiving Task Researcher.
 
 ### Step 6: Completion Ceremony
 

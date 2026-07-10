@@ -2,7 +2,7 @@
 title: UX Designer
 description: Design Thinking coaching, user research, and prototyping workflows for UX Designers
 author: Microsoft
-ms.date: 2026-06-28
+ms.date: 2026-07-09
 ms.topic: tutorial
 keywords:
   - ux designer
@@ -44,15 +44,15 @@ HVE Core provides addressable assets tailored to UX design workflows, with Desig
 
 ## Stage Walkthrough
 
-1. Discovery. Start with the **dt-coach** agent to run scope conversations (Method 1), identifying stakeholders and validating the problem statement. Continue into design research (Method 2) for interview-based evidence gathering, then synthesize inputs (Method 3) into themes and How Might We questions.
-2. Design. Use **dt-coach** for brainstorming (Method 4) to generate divergent solution ideas grounded in validated themes, then develop user concepts (Method 5) with visual representations and Desirability/Feasibility/Viability analysis.
-3. Prototype. Build lo-fi prototypes (Method 6) with **dt-coach** enforcing scrappy, low-cost experiments. Test prototypes with real users and document constraint discoveries.
+1. Discovery. Start with the **DT Coach** agent to run scope conversations (Method 1), identifying stakeholders and validating the problem statement. Continue into design research (Method 2) for interview-based evidence gathering, then synthesize inputs (Method 3) into themes and How Might We questions.
+2. Design. Use **DT Coach** for brainstorming (Method 4) to generate divergent solution ideas grounded in validated themes, then develop user concepts (Method 5) with visual representations and Desirability/Feasibility/Viability analysis.
+3. Prototype. Build lo-fi prototypes (Method 6) with **DT Coach** enforcing scrappy, low-cost experiments. Test prototypes with real users and document constraint discoveries.
 4. Test. Transition to hi-fi prototypes (Method 7) with functional systems and real data, then run user testing (Method 8) with evidence-based evaluation protocols and severity-ranked findings.
 5. Iterate. Deploy at scale (Method 9) with telemetry-driven optimization, connecting metrics to iteration priorities and managing organizational change.
 
 ## Starter Prompts
 
-Select **dt-coach** agent:
+Select **DT Coach** agent:
 
 ```text
 Start a new Design Thinking project for improving the developer
@@ -60,7 +60,7 @@ onboarding experience. Begin with scope conversations to identify
 stakeholders and validate the problem statement.
 ```
 
-Select **dt-coach** agent:
+Select **DT Coach** agent:
 
 ```text
 I have completed scope conversations and have a validated problem
@@ -69,7 +69,7 @@ with 5 developer personas across junior, mid-level, and senior
 experience bands.
 ```
 
-Select **dt-coach** agent:
+Select **DT Coach** agent:
 
 ```text
 Synthesize the research findings from my 8 interviews. Identify
@@ -77,7 +77,7 @@ themes, create an affinity diagram, and generate How Might We
 questions that bridge the problem space to solution space.
 ```
 
-Select **dt-coach** agent:
+Select **DT Coach** agent:
 
 ```text
 Run a brainstorming session for the onboarding friction theme.
@@ -89,10 +89,10 @@ them against desirability, feasibility, and viability criteria.
 
 | Agent                 | Purpose                                             | Docs                                                   |
 |-----------------------|-----------------------------------------------------|--------------------------------------------------------|
-| **dt-coach**          | Full nine-method Design Thinking coaching           | [DT Coach](../../design-thinking/dt-coach.md)          |
+| **DT Coach**          | Full nine-method Design Thinking coaching           | [DT Coach](../../design-thinking/dt-coach.md)          |
 | **dt-learning-tutor** | Self-paced Design Thinking curriculum and exercises | [DT Tutor](../../design-thinking/dt-learning-tutor.md) |
-| **ux-ui-designer**    | UX/UI design guidance and interface review          | Agent file                                             |
-| **task-researcher**   | Deep technical and market research                  | [Task Researcher](../../rpi/task-researcher.md)        |
+| **UX UI Designer**    | UX/UI design guidance and interface review          | Agent file                                             |
+| **Task Researcher**   | Deep technical and market research                  | [Task Researcher](../../rpi/task-researcher.md)        |
 | **memory**            | Session context and preference persistence          | Agent file                                             |
 
 ## Tips
@@ -102,7 +102,7 @@ them against desirability, feasibility, and viability criteria.
 | Complete each DT method before progressing to the next     | Skip methods without validating readiness signals              |
 | Test prototypes with real users, not just team members     | Treat internal reviews as user validation                      |
 | Use the **dt-learning-tutor** to learn methods before use  | Start coaching a real project without understanding methods    |
-| Let **dt-coach** manage space transitions                  | Manually jump between Problem, Solution, and Validation spaces |
+| Let **DT Coach** manage space transitions                  | Manually jump between Problem, Solution, and Validation spaces |
 | Document constraint discoveries from every prototype round | Discard prototype feedback that contradicts your hypothesis    |
 
 ## Related Roles

@@ -3,7 +3,7 @@ title: Business Program Manager Guide
 description: HVE Core support for business program managers driving stakeholder alignment, business outcomes, and program coordination
 sidebar_position: 6
 author: Microsoft
-ms.date: 2026-06-26
+ms.date: 2026-07-09
 ms.topic: how-to
 keywords:
   - BPM
@@ -57,17 +57,17 @@ For technical backlog management, Azure DevOps integration, or GitHub issue work
 
 ## Stage Walkthrough
 
-1. Stage 2: Discovery. Use the **task-researcher** agent to investigate business context, competitive landscape, and stakeholder needs.
-2. Stage 3: Product Definition. Run the **brd-builder** agent to create business requirements documents from stakeholder conversations and strategy inputs.
-3. Stage 3: Advisory. Consult the **product-manager-advisor** agent for prioritization guidance, go-to-market strategy, and product positioning.
+1. Stage 2: Discovery. Use the **Task Researcher** agent to investigate business context, competitive landscape, and stakeholder needs.
+2. Stage 3: Product Definition. Run the **BRD Builder** agent to create business requirements documents from stakeholder conversations and strategy inputs.
+3. Stage 3: Advisory. Consult the **Product Manager Advisor** agent for prioritization guidance, go-to-market strategy, and product positioning.
 4. Stage 4: Decomposition. Break business objectives into program milestones and coordinate cross-team dependencies.
-5. Stage 5: Planning. Use the **agile-coach** agent to create or refine user stories with clear acceptance criteria for program work items.
+5. Stage 5: Planning. Use the **Agile Coach** agent to create or refine user stories with clear acceptance criteria for program work items.
 
 ## Starter Prompts
 
 ### Business Requirements
 
-Select **brd-builder** agent:
+Select **BRD Builder** agent:
 
 ```text
 Create a business requirements document for the customer onboarding portal.
@@ -76,7 +76,7 @@ onboarding time from 2 weeks to 3 days. Include integration requirements
 for existing SSO and billing systems and SOC 2 Type II compliance constraints.
 ```
 
-To resume a previous session, select **brd-builder** agent:
+To resume a previous session, select **BRD Builder** agent:
 
 ```text
 Continue my claims automation BRD. Pick up where we left off
@@ -85,7 +85,7 @@ and focus on completing the data and reporting requirements section.
 
 ### Product Requirements Discovery
 
-Select **product-manager-advisor** agent:
+Select **Product Manager Advisor** agent:
 
 ```text
 We're building a webhook notification system for our API platform. Walk me
@@ -95,7 +95,7 @@ outcomes would indicate success. Three enterprise customers provided
 interview feedback we can reference.
 ```
 
-For feature prioritization, select **product-manager-advisor** agent:
+For feature prioritization, select **Product Manager Advisor** agent:
 
 ```text
 Advise on prioritization for the identity and access management product
@@ -106,7 +106,7 @@ us to 2 engineers for the next quarter.
 
 ### User Story Coaching
 
-Select **agile-coach** agent to create a story from a rough idea:
+Select **Agile Coach** agent to create a story from a rough idea:
 
 ```text
 I need a user story for adding webhook retry logic to our event
@@ -114,7 +114,7 @@ notification service. Deliveries currently fail silently when endpoints
 return 5xx errors, and customers are missing critical billing events.
 ```
 
-Select **agile-coach** agent to refine a vague story:
+Select **Agile Coach** agent to refine a vague story:
 
 ```text
 Help me refine this story. Title: Improve error handling. Description:
@@ -125,7 +125,7 @@ tied to specific API endpoints.
 
 ### Business Context Research
 
-Select **task-researcher** agent:
+Select **Task Researcher** agent:
 
 ```text
 Research best practices for migrating from manual invoice approval workflows
@@ -138,7 +138,7 @@ invoices per month with a 12% exception rate we need to cut in half.
 
 ### UX Research
 
-Select **ux-ui-designer** agent:
+Select **UX UI Designer** agent:
 
 ```text
 Create a Jobs-to-be-Done analysis and user journey map for the first-time
@@ -152,15 +152,15 @@ navigation support.
 
 | Agent                       | Purpose                                                   | Docs                                               |
 |-----------------------------|-----------------------------------------------------------|----------------------------------------------------|
-| **brd-builder**             | Business requirements document creation                   | Agent file                                         |
-| **product-manager-advisor** | Product strategy and prioritization guidance              | Agent file                                         |
-| **agile-coach**             | User story creation and refinement coaching               | Agent file                                         |
-| **task-researcher**         | Business context and market research                      | Agent file                                         |
-| **ux-ui-designer**          | UX/UI guidance for business-facing deliverables           | Agent file                                         |
-| **memory**                  | Session context and preference persistence                | Agent file                                         |
-| **dt-coach**                | Design Thinking coaching for user-centered program design | [Design Thinking](../../design-thinking/README.md) |
+| **BRD Builder**             | Business requirements document creation                   | Agent file                                         |
+| **Product Manager Advisor** | Product strategy and prioritization guidance              | Agent file                                         |
+| **Agile Coach**             | User story creation and refinement coaching               | Agent file                                         |
+| **Task Researcher**         | Business context and market research                      | Agent file                                         |
+| **UX UI Designer**          | UX/UI guidance for business-facing deliverables           | Agent file                                         |
+| **Memory**                  | Session context and preference persistence                | Agent file                                         |
+| **DT Coach**                | Design Thinking coaching for user-centered program design | [Design Thinking](../../design-thinking/README.md) |
 
-BPMs benefit from **dt-coach** when program design requires user-centered validation. Design Thinking scope conversations (Method 1) and user concepts (Method 5) help BPMs ground business requirements in validated user needs before formal BRD creation.
+BPMs benefit from **DT Coach** when program design requires user-centered validation. Design Thinking scope conversations (Method 1) and user concepts (Method 5) help BPMs ground business requirements in validated user needs before formal BRD creation.
 
 Prompts complement the agents for cross-cutting workflows:
 
@@ -173,8 +173,8 @@ Prompts complement the agents for cross-cutting workflows:
 
 | Do                                                                    | Don't                                                    |
 |-----------------------------------------------------------------------|----------------------------------------------------------|
-| Start with the **brd-builder** agent for structured requirements      | Create informal requirements without BRD structure       |
-| Use the **product-manager-advisor** agent for data-informed decisions | Make prioritization decisions without advisory input     |
+| Start with the **BRD Builder** agent for structured requirements      | Create informal requirements without BRD structure       |
+| Use the **Product Manager Advisor** agent for data-informed decisions | Make prioritization decisions without advisory input     |
 | Focus on business outcomes and stakeholder alignment                  | Dive into technical implementation details               |
 | Coordinate with TPMs for technical decomposition                      | Attempt Azure DevOps or GitHub issue management directly |
 | Research market context before defining requirements                  | Assume business context without investigation            |

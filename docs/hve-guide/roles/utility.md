@@ -3,7 +3,7 @@ title: Utility Reference
 description: Cross-cutting HVE Core utilities for memory, documentation, media, Git workflows, and diagnostic operations
 sidebar_position: 10
 author: Microsoft
-ms.date: 2026-06-26
+ms.date: 2026-07-09
 ms.topic: reference
 keywords:
   - utility
@@ -31,9 +31,9 @@ Use these cross-cutting utilities when your workflow spans multiple roles or lif
 
 ### Memory Persistence
 
-The **memory** agent stores preferences, context, and notes that persist across sessions. Use it to save coding preferences, project-specific conventions, or working state that should carry forward.
+The **Memory** agent stores preferences, context, and notes that persist across sessions. Use it to save coding preferences, project-specific conventions, or working state that should carry forward.
 
-Select **memory** agent:
+Select **Memory** agent:
 
 ```text
 Save my preference for commit messages: always use conventional commits
@@ -50,9 +50,9 @@ documented in code comments.
 
 ### Documentation Operations
 
-The **documentation** agent handles documentation audit, drift, authoring, and validation through its four modes. The `/checkpoint` prompt saves and restores conversation context across sessions using memory files.
+The **Documentation** agent handles documentation audit, drift, authoring, and validation through its four modes. The `/checkpoint` prompt saves and restores conversation context across sessions using memory files.
 
-Select **documentation** agent:
+Select **Documentation** agent:
 
 ```text
 Update documentation for the notification service. The v2.3 release added
@@ -62,7 +62,7 @@ getting started guide.
 ```
 
 ```text
-Select documentation agent in drift mode. Sync docs with recent changes.
+Select Documentation agent in drift mode. Sync docs with recent changes.
 ```
 
 ```text
@@ -77,7 +77,7 @@ middleware chain but haven't started implementation yet.
 
 ### Media Processing
 
-The video-to-gif skill converts video files to optimized GIF format using FFmpeg two-pass encoding. This skill activates through the **memory** agent or general chat context.
+The video-to-gif skill converts video files to optimized GIF format using FFmpeg two-pass encoding. This skill activates through the **Memory** agent or general chat context.
 
 Refer to the [video-to-gif skill](https://github.com/microsoft/hve-core/blob/main/.github/skills/experimental/video-to-gif/SKILL.md) for detailed usage, parameters, and optimization options.
 
@@ -105,8 +105,8 @@ This fallback activates automatically. No manual configuration is needed.
 
 | Agent             | Category      | Description                                           |
 |-------------------|---------------|-------------------------------------------------------|
-| **memory**        | Memory        | Session context and preference persistence            |
-| **documentation** | Documentation | Documentation audit, drift, authoring, and validation |
+| **Memory**        | Memory        | Session context and preference persistence            |
+| **Documentation** | Documentation | Documentation audit, drift, authoring, and validation |
 
 ### Prompts
 
@@ -131,7 +131,7 @@ This fallback activates automatically. No manual configuration is needed.
 
 | Do                                                                         | Don't                                                      |
 |----------------------------------------------------------------------------|------------------------------------------------------------|
-| Use the **memory** agent to save preferences early in a session            | Repeat the same context setup in every conversation        |
+| Use the **Memory** agent to save preferences early in a session            | Repeat the same context setup in every conversation        |
 | Use `/checkpoint` during long, multi-step workflows                        | Lose progress context in extended sessions                 |
 | Use `/git-commit` for all commits to maintain conventions                  | Write ad-hoc commit messages that skip conventional format |
 | Ask any agent "help me customize hve-core installation" to configure setup | Install `hve-core-all` when you only need one collection   |

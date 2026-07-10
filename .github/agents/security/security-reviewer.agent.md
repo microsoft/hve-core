@@ -100,12 +100,12 @@ Skill resolution: Read the applicable security skill (e.g., `owasp-top-10`, `owa
 
 ### Subagents
 
-| Name                  | Agent File                                         | Purpose                                                                            |
-|-----------------------|----------------------------------------------------|------------------------------------------------------------------------------------|
-| Codebase Profiler     | `.github/agents/**/codebase-profiler.agent.md`     | Scans the repository to build a technology profile and identify applicable skills. |
-| Finding Deep Verifier | `.github/agents/**/finding-deep-verifier.agent.md` | Deep adversarial verification of findings using full vulnerability references.     |
-| Report Generator      | `.github/agents/**/report-generator.agent.md`      | Collates all verified findings and generates the final vulnerability report.       |
-| Skill Assessor        | `.github/agents/**/skill-assessor.agent.md`        | Assesses a single skill against the codebase, returning structured findings.       |
+| Name                  | Purpose                                                                            |
+|-----------------------|------------------------------------------------------------------------------------|
+| Codebase Profiler     | Scans the repository to build a technology profile and identify applicable skills. |
+| Finding Deep Verifier | Deep adversarial verification of findings using full vulnerability references.     |
+| Report Generator      | Collates all verified findings and generates the final vulnerability report.       |
+| Skill Assessor        | Assesses a single skill against the codebase, returning structured findings.       |
 
 ### Available Skills
 

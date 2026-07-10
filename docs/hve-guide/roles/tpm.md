@@ -3,7 +3,7 @@ title: TPM Guide
 description: HVE Core support for technical program managers driving requirements, backlog management, and delivery coordination
 sidebar_position: 5
 author: Microsoft
-ms.date: 2026-06-28
+ms.date: 2026-07-09
 ms.topic: how-to
 keywords:
   - TPM
@@ -45,15 +45,15 @@ This guide is for you if you drive project planning, manage requirements, coordi
 
 ## Stage Walkthrough
 
-1. Stage 2: Discovery. Run the **task-researcher** agent for technical investigation and `/github-discover-issues` to find and categorize existing issues across repositories.
-2. Stage 3: Product Definition. Use the **brd-builder** agent to create business requirements, then the **prd-builder** agent to generate a product specification from the BRD.
-3. Stage 4: Decomposition. Convert PRD requirements to Azure DevOps work items with the **ado-prd-to-wit** agent, creating proper parent-child hierarchies.
-4. Stage 5: Sprint Planning. Triage discovered issues with `/github-triage-issues` and plan sprints using the **agile-coach** agent for priority-based selection.
+1. Stage 2: Discovery. Run the **Task Researcher** agent for technical investigation and `/github-discover-issues` to find and categorize existing issues across repositories.
+2. Stage 3: Product Definition. Use the **BRD Builder** agent to create business requirements, then the **PRD Builder** agent to generate a product specification from the BRD.
+3. Stage 4: Decomposition. Convert PRD requirements to Azure DevOps work items with the **AzDO PRD to WIT** agent, creating proper parent-child hierarchies.
+4. Stage 5: Sprint Planning. Triage discovered issues with `/github-triage-issues` and plan sprints using the **Agile Coach** agent for priority-based selection.
 5. Stage 8: Delivery. Update work items as features ship, close completed milestones, and track delivery metrics.
 
 ## Starter Prompts
 
-Select **brd-builder** agent:
+Select **BRD Builder** agent:
 
 ```text
 Create a business requirements document for the customer onboarding portal.
@@ -62,7 +62,7 @@ onboarding time from 2 weeks to 3 days. Include integration requirements
 for existing SSO and billing systems and SOC 2 Type II compliance constraints.
 ```
 
-Select **prd-builder** agent:
+Select **PRD Builder** agent:
 
 ```text
 Generate a PRD from the BRD at docs/project-planning/customer-onboarding-v2.md.
@@ -75,7 +75,7 @@ and a data migration plan from the legacy system.
 /github-discover-issues Find and categorize open issues
 ```
 
-Select **agile-coach** agent:
+Select **Agile Coach** agent:
 
 ```text
 Refine the user story for the notification preferences feature. The current
@@ -85,7 +85,7 @@ GDPR consent tracking. Help me write acceptance criteria that are binary
 and testable.
 ```
 
-Select **ado-prd-to-wit** agent:
+Select **AzDO PRD to WIT** agent:
 
 ```text
 Convert the PRD at docs/project-planning/notification-service-v3.md to Azure DevOps
@@ -98,19 +98,19 @@ Set iteration path to Sprint 24.
 
 | Agent                       | Purpose                                                                    | Docs                                            |
 |-----------------------------|----------------------------------------------------------------------------|-------------------------------------------------|
-| **brd-builder**             | Business requirements document creation                                    | Agent file                                      |
-| **prd-builder**             | Product requirements document generation                                   | Agent file                                      |
-| **agile-coach**             | Sprint planning and agile methodology                                      | Agent file                                      |
-| **ado-prd-to-wit**          | PRD to Azure DevOps work item conversion                                   | Agent file                                      |
-| **github-backlog-manager**  | GitHub issue discovery and backlog automation                              | [GitHub Backlog](../../agents/github-backlog/)  |
-| **product-manager-advisor** | Product strategy and prioritization guidance                               | Agent file                                      |
-| **ux-ui-designer**          | UX/UI design guidance and review                                           | Agent file                                      |
-| **task-researcher**         | Deep technical and requirement research                                    | [Task Researcher](../../rpi/task-researcher.md) |
-| **rpi-agent**               | RPI workflow orchestration                                                 | [RPI docs](../../rpi/)                          |
-| **memory**                  | Session context and preference persistence                                 | Agent file                                      |
-| **dt-coach**                | Design Thinking coaching for stakeholder alignment and scope conversations | [Design Thinking](../../design-thinking/)       |
+| **BRD Builder**             | Business requirements document creation                                    | Agent file                                      |
+| **PRD Builder**             | Product requirements document generation                                   | Agent file                                      |
+| **Agile Coach**             | Sprint planning and agile methodology                                      | Agent file                                      |
+| **AzDO PRD to WIT**         | PRD to Azure DevOps work item conversion                                   | Agent file                                      |
+| **GitHub Backlog Manager**  | GitHub issue discovery and backlog automation                              | [GitHub Backlog](../../agents/github-backlog/)  |
+| **Product Manager Advisor** | Product strategy and prioritization guidance                               | Agent file                                      |
+| **UX UI Designer**          | UX/UI design guidance and review                                           | Agent file                                      |
+| **Task Researcher**         | Deep technical and requirement research                                    | [Task Researcher](../../rpi/task-researcher.md) |
+| **RPI Agent**               | RPI workflow orchestration                                                 | [RPI docs](../../rpi/)                          |
+| **Memory**                  | Session context and preference persistence                                 | Agent file                                      |
+| **DT Coach**                | Design Thinking coaching for stakeholder alignment and scope conversations | [Design Thinking](../../design-thinking/)       |
 
-TPMs benefit from **dt-coach** when stakeholder alignment requires structured scope conversations (Method 1) or when requirements gathering needs empathy-driven research techniques. Design Thinking methods produce validated problem statements and stakeholder maps that strengthen BRD creation.
+TPMs benefit from **DT Coach** when stakeholder alignment requires structured scope conversations (Method 1) or when requirements gathering needs empathy-driven research techniques. Design Thinking methods produce validated problem statements and stakeholder maps that strengthen BRD creation.
 
 ## Tips
 
@@ -118,9 +118,9 @@ TPMs benefit from **dt-coach** when stakeholder alignment requires structured sc
 |---------------------------------------------------------------|-----------------------------------------------------------|
 | Start with a BRD before jumping to work item creation         | Create work items without documented requirements         |
 | Use `/github-discover-issues` before manual issue searches    | Manually scan repositories for open issues                |
-| Let the **agile-coach** agent suggest sprint priorities       | Assign sprint items without capacity or priority analysis |
+| Let the **Agile Coach** agent suggest sprint priorities       | Assign sprint items without capacity or priority analysis |
 | Triage issues with labels and milestones systematically       | Leave discovered issues uncategorized                     |
-| Use the **github-backlog-manager** agent for issue management | Manage issues manually without backlog automation         |
+| Use the **GitHub Backlog Manager** agent for issue management | Manage issues manually without backlog automation         |
 
 ## Related Roles
 

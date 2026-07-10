@@ -1,11 +1,11 @@
 ---
 title: WCAG 2.2 framework reference
-description: Web Content Accessibility Guidelines (WCAG) 2.2 success criteria packaged as an accessibility assessment knowledge base for the Accessibility Planner and Skill Assessor subagent
+description: Web Content Accessibility Guidelines (WCAG) 2.2 success criteria packaged as an accessibility assessment knowledge base for the Accessibility Planner and Accessibility Framework Assessor
 ---
 
 # WCAG 2.2 framework reference
 
-This `SKILL.md` is the entrypoint for the **Web Content Accessibility Guidelines (WCAG) 2.2** framework skill used by the Accessibility Planner and the Accessibility Skill Assessor subagent.
+This `SKILL.md` is the entrypoint for the **Web Content Accessibility Guidelines (WCAG) 2.2** framework skill used by the Accessibility Planner and `Accessibility Framework Assessor`.
 
 WCAG 2.2 is published by the W3C Web Accessibility Initiative as a W3C Recommendation. It organises 86 active success criteria (plus 1 obsolete criterion, SC 4.1.1 Parsing) under four foundational principles (Perceivable, Operable, Understandable, Robust) and 13 guidelines. Each success criterion is assigned one of three conformance levels: A, AA, or AAA.
 
@@ -111,7 +111,7 @@ The table below lists every WCAG 2.2 success criterion. The `Reference` column l
 
 ## Assessment heuristics
 
-Per-criterion assessment heuristics, common failure patterns, and scope notes live inside the per-guideline reference files in `references/`. The Accessibility Skill Assessor subagent consumes the appropriate `guideline-<n>-<m>.md#sc-<n>-<m>-<k>` section when evaluating a finding against a specific success criterion.
+Per-criterion assessment heuristics, common failure patterns, and scope notes live inside the per-guideline reference files in `references/`. `Accessibility Framework Assessor` consumes the appropriate `guideline-<n>-<m>.md#sc-<n>-<m>-<k>` section when evaluating a finding against a specific success criterion.
 
 ## Skill layout
 

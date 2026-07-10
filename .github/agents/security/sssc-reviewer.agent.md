@@ -122,7 +122,7 @@ For VEX review tasks:
 1. Assess drafted OpenVEX statements against the cited evidence and the confidence-band rules.
 2. Validate that status determinations honor the document mutation contract and the forbidden-transition rules.
 3. Validate release attestation readiness and published attestation output, but do not generate the attestation artifact; release workflow generation remains workflow-owned.
-4. When the request includes a CVE or exploitability analysis, consult the `cve-analyzer` subagent for per-CVE exploitability evidence and use that analysis as one input to the review.
+4. When the request includes a CVE or exploitability analysis, consult `CVE Analyzer` for per-CVE exploitability evidence and use that analysis as one input to the review.
 5. Preserve the existing human-review and disclaimer posture; never present this reviewer as the author of record for the VEX document or the attestation artifact.
 
 This capability is intended for VEX triage and review prompts and for the vex-draft workflow import path.

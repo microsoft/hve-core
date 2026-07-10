@@ -2,7 +2,10 @@
 name: Researcher Subagent
 description: 'Research subagent using search, read, web-fetch, GitHub repo, and MCP tools'
 user-invocable: false
-model: GPT-5.6 Terra (copilot)
+model:
+  - GPT-5.6 Terra (copilot)
+  - Claude Sonnet 5 (copilot)
+  - MAI-Code-1-Flash (copilot)
 tools:
   - read
   - search

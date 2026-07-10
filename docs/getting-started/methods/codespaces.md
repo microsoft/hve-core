@@ -3,7 +3,7 @@ title: GitHub Codespaces Installation
 description: Install HVE Core in GitHub Codespaces using postCreateCommand
 sidebar_position: 8
 author: Microsoft
-ms.date: 2026-06-11
+ms.date: 2026-07-09
 ms.topic: how-to
 keywords:
   - codespaces
@@ -70,9 +70,9 @@ Add the clone command and VS Code settings:
 {
   "name": "My Project with HVE Core",
   "image": "mcr.microsoft.com/devcontainers/base:ubuntu",
-  
+
   "postCreateCommand": "[ -d /workspaces/hve-core ] || git clone --depth 1 https://github.com/microsoft/hve-core.git /workspaces/hve-core",
-  
+
   "customizations": {
     "vscode": {
       "settings": {
@@ -129,7 +129,7 @@ git push
 
 1. Open GitHub Copilot Chat (`Ctrl+Alt+I`)
 2. Click the agent picker dropdown
-3. Verify HVE Core agents appear (task-planner, task-researcher, prompt-builder)
+3. Verify HVE Core agents appear (Task Planner, Task Researcher, Prompt Builder)
 
 ## Complete Configuration Examples
 
@@ -139,9 +139,9 @@ git push
 {
   "name": "HVE Core Enabled",
   "image": "mcr.microsoft.com/devcontainers/base:ubuntu",
-  
+
   "postCreateCommand": "[ -d /workspaces/hve-core ] || git clone --depth 1 https://github.com/microsoft/hve-core.git /workspaces/hve-core",
-  
+
   "customizations": {
     "vscode": {
       "settings": {
@@ -187,19 +187,19 @@ git push
 {
   "name": "HVE Core Development Environment",
   "image": "mcr.microsoft.com/devcontainers/base:ubuntu",
-  
+
   "features": {
     "ghcr.io/devcontainers/features/git:1": {},
     "ghcr.io/devcontainers/features/github-cli:1": {}
   },
-  
+
   "postCreateCommand": {
     "clone-hve-core": "if [ ! -d /workspaces/hve-core ]; then git clone --depth 1 https://github.com/microsoft/hve-core.git /workspaces/hve-core && echo '✅ HVE Core cloned'; else echo '✅ HVE Core present'; fi",
     "verify": "test -d /workspaces/hve-core/.github/agents && echo '✅ Verified' || echo '⚠️ Missing'"
   },
-  
+
   "updateContentCommand": "cd /workspaces/hve-core && git pull --ff-only 2>/dev/null || echo 'Update skipped'",
-  
+
   "customizations": {
     "vscode": {
       "settings": {
@@ -251,15 +251,15 @@ For projects needing HVE Core in both local devcontainers and Codespaces:
 {
   "name": "HVE Core (Local + Codespaces)",
   "image": "mcr.microsoft.com/devcontainers/base:ubuntu",
-  
+
   // Clone if not already present (Codespaces path)
   "postCreateCommand": "[ -d /workspaces/hve-core ] || git clone --depth 1 https://github.com/microsoft/hve-core.git /workspaces/hve-core",
-  
+
   // Local only: mount peer directory (silently fails in Codespaces)
   "mounts": [
     "source=${localWorkspaceFolder}/../hve-core,target=/workspaces/hve-core,type=bind,readonly=true,consistency=cached"
   ],
-  
+
   "customizations": {
     "vscode": {
       "settings": {

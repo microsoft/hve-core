@@ -3,10 +3,9 @@ name: backlog-templates
 description: "Shared work-item templates and conventions for ADO and GitHub backlog handoff across the RAI, Security, SSSC, Accessibility, and Privacy planners"
 license: MIT
 user-invocable: true
-compatibility:
-  hosts: ["vscode", "github-coding-agent"]
+compatibility: "Works with VS Code and GitHub Copilot Coding Agent hosts"
 metadata:
-  authors: ["microsoft/hve-core"]
+  authors: "microsoft/hve-core"
   spec_version: "1.0.0"
   last_updated: "2026-05-09"
 ---
@@ -22,7 +21,7 @@ Planners that emit Phase-final backlog work items all need the same dual-format 
 Callers:
 
 * RAI Planner (`rai-planner` skill `references/backlog-handoff.md`)
-* Security Planner (`.github/agents/security/security-planner.agent.md`; security-specific handoff details in `.github/skills/project-planning/security-planning/references/backlog-formats.md`)
+* Security Planner (security-specific handoff details in `.github/skills/project-planning/security-planning/references/backlog-formats.md`)
 * SSSC Planner (`.github/instructions/security/sssc-planner.instructions.md`)
 * Accessibility Planner (`accessibility/accessibility` skill `references/phases/backlog-handoff.md`)
 * Privacy Planner (`.github/instructions/privacy/privacy-identity.instructions.md`)

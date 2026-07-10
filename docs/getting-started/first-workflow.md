@@ -3,7 +3,7 @@ title: Your First Full Workflow
 description: Hands-on tutorial using Research, Plan, Implement phases to create a validation script
 sidebar_position: 6
 author: Microsoft
-ms.date: 2026-06-27
+ms.date: 2026-07-09
 ms.topic: tutorial
 keywords:
   - getting started
@@ -214,24 +214,24 @@ npm run check:docs-readme
 Rename-Item docs/rpi/README.md.bak README.md
 ```
 
-## Alternative: Single-Session with rpi-agent
+## Alternative: Single-Session with RPI Agent
 
 The three-agent workflow above separates research, planning, and implementation
 into distinct phases with `/clear` between each. This is the best way to learn
 RPI because you see each phase produce its own artifact.
 
-For day-to-day work, the [rpi-agent](https://github.com/microsoft/hve-core/blob/main/.github/CUSTOM-AGENTS.md#rpi-agent)
+For day-to-day work, [RPI Agent](https://github.com/microsoft/hve-core/blob/main/.github/CUSTOM-AGENTS.md#rpi-agent)
 runs all three phases in a single session. It follows the same methodology but
 handles the phase transitions automatically.
 
-To compare the experience, select **rpi-agent** from the agent picker and try
+To compare the experience, select **RPI Agent** from the agent picker and try
 this prompt:
 
 > Create a PowerShell script that validates every subfolder under docs/ contains
 > a README.md file. Place it at scripts/linting/Test-DocsReadme.ps1 and add an
 > npm script entry.
 
-The rpi-agent researches, plans, and implements without `/clear` commands
+RPI Agent researches, plans, and implements without `/clear` commands
 between phases.
 
 ## What You Learned

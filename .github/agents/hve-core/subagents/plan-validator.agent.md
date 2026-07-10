@@ -3,9 +3,9 @@ name: Plan Validator
 description: 'Validates implementation plans against research documents with severity-graded findings'
 user-invocable: false
 model:
+  - GPT-5.6 Terra (copilot)
   - Claude Sonnet 5 (copilot)
   - MAI-Code-1-Flash (copilot)
-  - Claude Sonnet 4.6 (copilot)
 ---
 
 # Plan Validator
@@ -33,9 +33,9 @@ Validates implementation plans against research documents for completeness and a
 
 ## Planning Log
 
-The plan-validator updates only the Discrepancy Log section within the Planning Log file provided as input. The parent task-planner creates the Planning Log; the plan-validator does not create it.
+The Plan Validator updates only the Discrepancy Log section within the Planning Log file provided as input. The parent Task Planner creates the Planning Log; the Plan Validator does not create it.
 
-Within the Discrepancy Log section, the plan-validator adds, updates, or removes entries to reflect current findings:
+Within the Discrepancy Log section, the Plan Validator adds, updates, or removes entries to reflect current findings:
 
 * *Unaddressed Research Items*: DR- prefixed entries identifying research items with no corresponding plan coverage.
 * *Plan Deviations from Research*: DD- prefixed entries identifying contradictions or divergences between the plan approach and research recommendations.

@@ -198,7 +198,7 @@ Organize checks into numbered sections with bullet points. Each bullet should be
 
 1. Place the `SKILL.md` file in your repository.
 2. Make a change to a file that matches the skill's target language.
-3. Invoke the **code-review** agent and select the `standards` perspective (or `full`).
+3. Invoke `Code Review` and select the `standards` perspective (or `full`).
 4. Verify that findings cite your skill's `name` in their Skill field.
 5. If the skill does not activate, verify that the `description` clearly mentions the language, framework, or file extension present in the diff. Placement under `.github/skills/coding-standards/` is recommended for organization but does not control activation.
 

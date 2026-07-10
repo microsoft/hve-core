@@ -1,6 +1,6 @@
 ---
 description: 'Concept analysis and prototype approach design for Design Thinking Method 6a'
-agent: dt-coach
+agent: DT Coach
 argument-hint: "project-slug=... [selectedConcepts=...]"
 ---
 

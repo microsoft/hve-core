@@ -3,7 +3,7 @@ title: "Stage 5: Sprint Planning"
 description: Organize work items into sprints and manage backlog priorities with AI-assisted planning
 sidebar_position: 5
 author: Microsoft
-ms.date: 2026-06-26
+ms.date: 2026-07-09
 ms.topic: how-to
 keywords:
   - ai-assisted project lifecycle
@@ -29,8 +29,8 @@ You enter Sprint Planning after completing [Stage 4: Decomposition](decompositio
 
 | Tool                    | Type        | How to Invoke                           | Purpose                                          |
 |-------------------------|-------------|-----------------------------------------|--------------------------------------------------|
-| github-backlog-manager  | Agent       | Select **github-backlog-manager** agent | Manage GitHub issue backlog end-to-end           |
-| agile-coach             | Agent       | Select **agile-coach** agent            | Get agile methodology guidance and sprint advice |
+| GitHub Backlog Manager  | Agent       | Select **GitHub Backlog Manager** agent | Manage GitHub issue backlog end-to-end           |
+| Agile Coach             | Agent       | Select **Agile Coach** agent            | Get agile methodology guidance and sprint advice |
 | github-discover-issues  | Prompt      | `/github-discover-issues`               | Find open issues for sprint planning             |
 | github-triage-issues    | Prompt      | `/github-triage-issues`                 | Triage and label unprocessed issues              |
 | github-sprint-plan      | Prompt      | `/github-sprint-plan`                   | Create a sprint plan from backlog priorities     |
@@ -94,13 +94,13 @@ Create a new issue using repository templates and conversational field collectio
 
 ### User Story Coaching
 
-Select **agile-coach** agent to create a new story from a rough idea:
+Select **Agile Coach** agent to create a new story from a rough idea:
 
 ```text
 I need a story for adding webhook notifications when deployment status changes. The platform team needs real-time alerts in their monitoring dashboard.
 ```
 
-Select **agile-coach** agent to refine a vague existing story:
+Select **Agile Coach** agent to refine a vague existing story:
 
 ```text
 Help me refine this story: Title: Improve error handling, Description: Handle errors better, AC: Errors are handled
@@ -108,7 +108,7 @@ Help me refine this story: Title: Improve error handling, Description: Handle er
 
 ### Full Backlog Orchestration
 
-Select **github-backlog-manager** agent to coordinate triage and sprint planning end-to-end:
+Select **GitHub Backlog Manager** agent to coordinate triage and sprint planning end-to-end:
 
 ```text
 Prepare the v2.4.0 milestone for sprint planning. Triage any needs-triage issues first, then build a prioritized sprint plan with a 15-issue capacity.

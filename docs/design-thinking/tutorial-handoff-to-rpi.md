@@ -3,7 +3,7 @@ title: "Tutorial: Handing Off from DT to RPI"
 description: Step-by-step tutorial for performing Design Thinking to RPI handoffs at each exit point
 sidebar_position: 15
 author: Microsoft
-ms.date: 2026-06-28
+ms.date: 2026-07-09
 ms.topic: tutorial
 keywords:
   - design thinking
@@ -87,7 +87,7 @@ Clear your chat context and switch to Task Researcher:
 Open the generated handoff file in your editor, then invoke Task Researcher:
 
 ```text
-@task-researcher Research implementation options for the voice-guided
+With **Task Researcher** selected, research implementation options for the voice-guided
 repair system based on the DT handoff artifact that is open in the
 editor at docs/design-thinking/factory-floor-maintenance/rpi-handoff-implementation-space.md
 ```
@@ -120,7 +120,7 @@ The handoff is not one-way. Task Researcher can recommend returning to DT coachi
 | Check readiness                     | `/dt-method-next` in the DT Coach session                                          |
 | Generate the implementation handoff | `/dt-handoff-implementation-space project-slug=...`                                |
 | Switch to RPI                       | `/clear`, open the handoff artifact, then invoke Task Researcher                   |
-| Return to DT from RPI               | Start a new `@dt-coach` session and describe the finding that triggered the return |
+| Return to DT from RPI               | Start a new DT Coach session and describe the finding that triggered the return |
 
 ## Related Resources
 

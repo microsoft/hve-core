@@ -3,7 +3,7 @@ title: Security Architect Guide
 description: HVE Core support for security architects building security models, security plans, and compliance verification
 sidebar_position: 7
 author: Microsoft
-ms.date: 2026-06-26
+ms.date: 2026-07-09
 ms.topic: how-to
 keywords:
   - security
@@ -49,17 +49,17 @@ This guide is for you if you perform security model analysis, build security pla
 
 ## Stage Walkthrough
 
-1. Stage 2: Discovery. Use the **task-researcher** agent to investigate the threat landscape, existing security controls, and compliance requirements for your system.
-2. Stage 3: Product Definition. Run the **security-planner** agent to generate a security plan with security models, attack vectors, and mitigation strategies.
-3. Stage 3: Product Definition. Run the **sssc-planner** agent to assess supply chain security posture against OpenSSF standards.
-4. Stage 3: Product Definition. Run the **rai-planner** agent if the project includes AI/ML components.
+1. Stage 2: Discovery. Use the **Task Researcher** agent to investigate the threat landscape, existing security controls, and compliance requirements for your system.
+2. Stage 3: Product Definition. Run the **Security Planner** agent to generate a security plan with security models, attack vectors, and mitigation strategies.
+3. Stage 3: Product Definition. Run the **SSSC Planner** agent to assess supply chain security posture against OpenSSF standards.
+4. Stage 3: Product Definition. Run the **RAI Planner** agent if the project includes AI/ML components.
 5. Stage 3: Product Definition. Use `/risk-register` to assess and document component-level risks with severity ratings, likelihood, and mitigation plans.
-6. Stage 7: Review. Validate implementation against security requirements using the **task-reviewer** agent for code-level security compliance checks.
+6. Stage 7: Review. Validate implementation against security requirements using the **Task Reviewer** agent for code-level security compliance checks.
 7. Stage 9: Operations. Maintain incident response readiness with `/incident-response` and update security models as the system evolves.
 
 ## Starter Prompts
 
-Select **security-planner** agent:
+Select **Security Planner** agent:
 
 ```text
 Generate a security plan for our customer-facing REST API gateway. Cover
@@ -81,19 +81,19 @@ Include containment steps, GDPR notification timelines, forensic evidence
 preservation, and post-incident review process.
 ```
 
-Select **sssc-planner** agent:
+Select **SSSC Planner** agent:
 
 ```text
 Assess this repository's supply chain security posture
 ```
 
-Select **rai-planner** agent:
+Select **RAI Planner** agent:
 
 ```text
 Assess responsible AI risks based on the security plan
 ```
 
-Select **task-researcher** agent:
+Select **Task Researcher** agent:
 
 ```text
 Research security patterns for GraphQL APIs, focusing on query depth
@@ -106,12 +106,12 @@ arguments.
 
 | Agent                | Purpose                                                    | Docs                                            |
 |----------------------|------------------------------------------------------------|-------------------------------------------------|
-| **security-planner** | Security plan and security model generation                | Agent file                                      |
-| **sssc-planner**     | Supply chain security assessment against OpenSSF standards | Agent file                                      |
-| **rai-planner**      | Responsible AI risk assessment and RAI plan generation     | Agent file                                      |
-| **task-researcher**  | Security-focused codebase and threat research              | [Task Researcher](../../rpi/task-researcher.md) |
-| **task-reviewer**    | Security compliance review                                 | [Task Reviewer](../../rpi/task-reviewer.md)     |
-| **memory**           | Session context and preference persistence                 | Agent file                                      |
+| **Security Planner** | Security plan and security model generation                | Agent file                                      |
+| **SSSC Planner**     | Supply chain security assessment against OpenSSF standards | Agent file                                      |
+| **RAI Planner**      | Responsible AI risk assessment and RAI plan generation     | Agent file                                      |
+| **Task Researcher**  | Security-focused codebase and threat research              | [Task Researcher](../../rpi/task-researcher.md) |
+| **Task Reviewer**    | Security compliance review                                 | [Task Reviewer](../../rpi/task-reviewer.md)     |
+| **Memory**           | Session context and preference persistence                 | Agent file                                      |
 
 Prompts complement the agents for targeted security workflows:
 
@@ -124,13 +124,13 @@ Prompts complement the agents for targeted security workflows:
 
 | Do                                                                      | Don't                                                               |
 |-------------------------------------------------------------------------|---------------------------------------------------------------------|
-| Start with the **security-planner** agent for comprehensive models      | Create ad-hoc security notes without structured security models     |
+| Start with the **Security Planner** agent for comprehensive models      | Create ad-hoc security notes without structured security models     |
 | Use `/risk-register` for each significant component                     | Track risks informally or skip risk documentation                   |
 | Research the threat landscape before defining mitigations               | Assume security models from other projects directly apply           |
 | Update security models as the system architecture evolves               | Treat security plans as static, one-time documents                  |
 | Map security requirements to specific lifecycle stages                  | Isolate security from the broader product lifecycle                 |
-| Run **sssc-planner** after **security-planner** for pipeline assessment | Skip supply chain assessment for non-deployable documentation repos |
-| Use **rai-planner** for any project with AI/ML components               | Apply RAI assessment to purely non-AI systems                       |
+| Run **SSSC Planner** after **Security Planner** for pipeline assessment | Skip supply chain assessment for non-deployable documentation repos |
+| Use **RAI Planner** for any project with AI/ML components               | Apply RAI assessment to purely non-AI systems                       |
 
 ## Related Roles
 
@@ -149,7 +149,7 @@ Prompts complement the agents for targeted security workflows:
 ---
 
 > [!IMPORTANT]
-> Security-specific tooling covers Stage 2, Stage 3, Stage 7, and Stage 9 only. Stages 4 through 6 and Stage 8 rely on general-purpose agents (the **task-researcher** and **task-reviewer** agents) rather than dedicated security tooling. Specialized security coverage for decomposition, sprint planning, implementation, and delivery is a planned improvement.
+> Security-specific tooling covers Stage 2, Stage 3, Stage 7, and Stage 9 only. Stages 4 through 6 and Stage 8 rely on general-purpose agents (the **Task Researcher** and **Task Reviewer** agents) rather than dedicated security tooling. Specialized security coverage for decomposition, sprint planning, implementation, and delivery is a planned improvement.
 
 <!-- markdownlint-disable MD036 -->
 *🤖 Crafted with precision by ✨Copilot following brilliant human instruction,

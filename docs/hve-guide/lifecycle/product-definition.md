@@ -3,7 +3,7 @@ title: "Stage 3: Product Definition"
 description: Transform business requirements into product specifications and architecture decisions
 sidebar_position: 3
 author: Microsoft
-ms.date: 2026-06-28
+ms.date: 2026-07-09
 ms.topic: how-to
 keywords:
   - ai-assisted project lifecycle
@@ -29,17 +29,17 @@ You enter Product Definition after completing [Stage 2: Discovery](discovery.md)
 
 | Tool                    | Type  | How to Invoke                            | Purpose                                         |
 |-------------------------|-------|------------------------------------------|-------------------------------------------------|
-| prd-builder             | Agent | Select **prd-builder** agent             | Create product requirements documents from BRDs |
-| product-manager-advisor | Agent | Select **product-manager-advisor** agent | Get product management guidance and feedback    |
-| adr-creation            | Agent | Select **adr-creation** agent            | Document architecture decisions formally        |
+| PRD Builder             | Agent | Select **PRD Builder** agent             | Create product requirements documents from BRDs |
+| Product Manager Advisor | Agent | Select **Product Manager Advisor** agent | Get product management guidance and feedback    |
+| ADR Creator             | Agent | Select **ADR Creator** agent             | Document architecture decisions formally        |
 | architecture-diagrams   | Skill | Use the **architecture-diagrams** skill  | Generate ASCII architecture diagrams for PRDs   |
-| security-planner        | Agent | Select **security-planner** agent        | Validate security requirements in product specs |
-| sssc-planner            | Agent | Select **sssc-planner** agent            | Validate supply chain security in product specs |
-| rai-planner             | Agent | Select **rai-planner** agent             | Validate RAI requirements in product specs      |
+| Security Planner        | Agent | Select **Security Planner** agent        | Validate security requirements in product specs |
+| SSSC Planner            | Agent | Select **SSSC Planner** agent            | Validate supply chain security in product specs |
+| RAI Planner             | Agent | Select **RAI Planner** agent             | Validate RAI requirements in product specs      |
 
 ## Design Thinking for Product Concepts
 
-Teams that used **dt-coach** during Discovery can carry Design Thinking outputs into Product Definition. Methods 4-5 (Brainstorming and User Concepts) produce validated solution concepts with Desirability/Feasibility/Viability analysis that strengthen PRD requirements. The **dt-coach** agent helps refine concepts before formal PRD creation, ensuring product definitions reflect user-validated insights. See the [Design Thinking documentation](../../design-thinking/README.md) for method details.
+Teams that used **DT Coach** during Discovery can carry Design Thinking outputs into Product Definition. Methods 4-5 (Brainstorming and User Concepts) produce validated solution concepts with Desirability/Feasibility/Viability analysis that strengthen PRD requirements. The **DT Coach** agent helps refine concepts before formal PRD creation, ensuring product definitions reflect user-validated insights. See the [Design Thinking documentation](../../design-thinking/README.md) for method details.
 
 ## Role-Specific Guidance
 
@@ -51,7 +51,7 @@ TPMs own Product Definition, translating BRDs into PRDs with clear acceptance cr
 
 ## Starter Prompts
 
-Select **prd-builder** agent:
+Select **PRD Builder** agent:
 
 ```text
 Create a PRD from the BRD at docs/project-planning/fleet-management-v1.md. Define
@@ -60,7 +60,7 @@ real-time GPS updates, geofence alerting, and non-functional requirements
 for sub-500ms map tile rendering at 10,000 concurrent sessions.
 ```
 
-Select **adr-creation** agent:
+Select **ADR Creator** agent:
 
 ```text
 Document the architecture decision for choosing PostgreSQL over CosmosDB

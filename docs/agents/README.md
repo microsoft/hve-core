@@ -3,7 +3,7 @@ title: Agent Systems Catalog
 description: Overview of all hve-core agent systems with workflow documentation and quick links
 sidebar_position: 1
 author: Microsoft
-ms.date: 2026-06-30
+ms.date: 2026-07-09
 ms.topic: overview
 keywords:
   - github copilot
@@ -34,7 +34,7 @@ hve-core organizes specialized agents into functional groups. Each group combine
 
 ## RPI Orchestration
 
-The Research, Plan, Implement, Review methodology separates complex tasks into specialized phases. Six agents (task-researcher, task-planner, task-implementor, task-reviewer, task-challenger, and the RPI orchestrator) coordinate through planning files to deliver structured engineering workflows. See the [RPI Documentation](../rpi/) for the full guide.
+The Research, Plan, Implement, Review methodology separates complex tasks into specialized phases. Six agents (`Task Researcher`, `Task Planner`, `Task Implementor`, `Task Reviewer`, `Task Challenger`, and `RPI Agent`) coordinate through planning files to deliver structured engineering workflows. See the [RPI Documentation](../rpi/) for the full guide.
 
 ## Code Review
 
@@ -42,11 +42,11 @@ A single human-gated Code Review agent provides pre-PR review on local branches.
 
 ## GitHub Backlog Management
 
-Automates issue discovery, triage, sprint planning, and execution across GitHub repositories. The backlog manager agent orchestrates five distinct workflows with three-tier autonomy control. See the [Backlog Manager Documentation](github-backlog/) for workflow guides.
+Automates issue discovery, triage, sprint planning, and execution across GitHub repositories. `GitHub Backlog Manager` orchestrates five distinct workflows with three-tier autonomy control. See the [Backlog Manager Documentation](github-backlog/) for workflow guides.
 
 ## ADO Backlog Management
 
-Automates work item discovery, triage, sprint planning, execution, PR creation, build monitoring, and task planning across Azure DevOps projects. The ADO Backlog Manager agent orchestrates nine distinct workflows with three-tier autonomy control. The PRD-to-WIT agent translates product requirements into structured work items. See the [Backlog Manager Documentation](ado-backlog/README.md) for workflow guides.
+Automates work item discovery, triage, sprint planning, execution, PR creation, build monitoring, and task planning across Azure DevOps projects. `ADO Backlog Manager` orchestrates nine distinct workflows with three-tier autonomy control. `AzDO PRD to WIT` translates product requirements into structured work items. See the [Backlog Manager Documentation](ado-backlog/README.md) for workflow guides.
 
 ## Jira Backlog Management
 
@@ -70,7 +70,7 @@ Agents focused on deployment reliability and build pipeline analysis.
 
 ## Meta/Engineering
 
-The prompt builder agent creates and validates prompt engineering artifacts. Supports interactive authoring with sandbox testing for prompts, instructions, agents, and skills. The documentation agent coordinates documentation audit, drift, authoring, and validation across the repository through its four modes.
+`Prompt Builder` creates and validates prompt engineering artifacts with sandbox testing for prompts, instructions, agents, and skills. `Documentation` coordinates documentation audit, drift, authoring, and validation across the repository through its four modes.
 
 ## Infrastructure
 
@@ -82,13 +82,13 @@ General-purpose agents for cross-cutting concerns such as session persistence an
 
 ## Security Planning
 
-Guides teams through a six-phase security assessment covering system scoping, operational bucketing, standards mapping, security model analysis, impact assessment, and backlog handoff. The security planner agent conducts interactive sessions with structured state tracking and produces dual-platform work items for ADO and GitHub. The security reviewer agent performs automated security analysis of code changes. See the [Security Planner Documentation](security/) for phase details and entry modes.
+Guides teams through a six-phase security assessment covering system scoping, operational bucketing, standards mapping, security model analysis, impact assessment, and backlog handoff. `Security Planner` conducts interactive sessions with structured state tracking and produces dual-platform work items for ADO and GitHub. `Security Reviewer` performs automated security analysis of code changes. See the [Security Planner Documentation](security/) for phase details and entry modes.
 
 The **SSSC Planner** guides teams through a structured six-phase supply chain security assessment. It inventories 27 supply chain capabilities, maps against OpenSSF Scorecard, SLSA, Sigstore, and SBOM standards, performs gap analysis with adoption categories, and generates priority-sorted backlog items. Supports four entry modes: capture, from-PRD, from-BRD, and from-security-plan. See [SSSC Planning](sssc-planning/README.md) for details.
 
 ## RAI Planning
 
-Guides teams through a six-phase responsible AI assessment planning workflow covering AI system scoping, risk classification, RAI standards mapping, security model analysis, impact assessment, and review with backlog handoff. The RAI planner agent builds on security plan outputs when available and produces dual-platform work items for identified gaps. See the [RAI Planner Documentation](rai-planning/) for phase details and entry modes.
+Guides teams through a six-phase responsible AI assessment planning workflow covering AI system scoping, risk classification, RAI standards mapping, security model analysis, impact assessment, and review with backlog handoff. `RAI Planner` builds on security plan outputs when available and produces dual-platform work items for identified gaps. See the [RAI Planner Documentation](rai-planning/) for phase details and entry modes.
 
 ## Design Thinking
 
@@ -96,8 +96,8 @@ The Design Thinking agents provide AI-assisted coaching through a nine-method, t
 
 | Agent               | Purpose                                                      |
 |---------------------|--------------------------------------------------------------|
-| `dt-coach`          | Coaches teams through all 9 DT methods with session tracking |
-| `dt-learning-tutor` | Teaches DT curriculum with exercises and assessments         |
+| DT Coach            | Coaches teams through all 9 DT methods with session tracking |
+| DT Learning Tutor   | Teaches DT curriculum with exercises and assessments         |
 
 ---
 

@@ -2,7 +2,7 @@
 title: ADO Backlog Manager
 description: Automated work item discovery, triage, sprint planning, and execution for Azure DevOps projects
 author: Microsoft
-ms.date: 2026-06-26
+ms.date: 2026-07-09
 ms.topic: concept
 keywords:
   - azure devops backlog manager
@@ -57,7 +57,7 @@ See the [Triage workflow guide](triage.md) for classification dimensions and dup
 
 ### 📄 PRD Planning
 
-PRD Planning converts product requirements documents into Azure DevOps work item hierarchies. It delegates to the `@AzDO PRD to WIT` agent, which parses requirements, builds parent-child structures (Epic > Feature > Story > Task), and produces execution-ready handoff files.
+PRD Planning converts product requirements documents into Azure DevOps work item hierarchies. It delegates to `AzDO PRD to WIT`, which parses requirements, builds parent-child structures (Epic > Feature > Story > Task), and produces execution-ready handoff files.
 
 See the [PRD Planning workflow guide](prd-planning.md) for the conversion process and hierarchy model.
 

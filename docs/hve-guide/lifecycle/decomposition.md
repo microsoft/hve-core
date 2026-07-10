@@ -3,7 +3,7 @@ title: "Stage 4: Decomposition"
 description: Break product requirements into actionable work items and task hierarchies
 sidebar_position: 6
 author: Microsoft
-ms.date: 2026-06-28
+ms.date: 2026-07-09
 ms.topic: how-to
 keywords:
   - ai-assisted project lifecycle
@@ -29,8 +29,8 @@ You enter Decomposition after completing [Stage 3: Product Definition](product-d
 
 | Tool                                        | Type        | How to Invoke                                  | Purpose                                                |
 |---------------------------------------------|-------------|------------------------------------------------|--------------------------------------------------------|
-| ado-prd-to-wit                              | Agent       | Select **ado-prd-to-wit** agent                | Convert PRDs into ADO work items automatically         |
-| github-backlog-manager                      | Agent       | Select **github-backlog-manager** agent        | GitHub issue discovery, triage, and backlog management |
+| AzDO PRD to WIT                              | Agent       | Select **AzDO PRD to WIT** agent                | Convert PRDs into ADO work items automatically         |
+| GitHub Backlog Manager                       | Agent       | Select **GitHub Backlog Manager** agent         | GitHub issue discovery, triage, and backlog management |
 | ado-get-my-work-items                       | Prompt      | `/ado-get-my-work-items`                       | Retrieve your assigned work items                      |
 | ado-process-my-work-items-for-task-planning | Prompt      | `/ado-process-my-work-items-for-task-planning` | Process and prioritize existing work items             |
 | ado-wit-planning                            | Instruction | Auto-activated on workitems                    | Enforces work item planning conventions                |
@@ -45,7 +45,7 @@ TPMs own Decomposition, creating work item hierarchies that engineers pick up du
 
 ### ADO Work Items
 
-Select **ado-prd-to-wit** agent:
+Select **AzDO PRD to WIT** agent:
 
 ```text
 Convert the PRD at docs/project-planning/customer-onboarding-v2.md to Azure DevOps
@@ -64,7 +64,7 @@ items with "onboarding-v2".
 
 ### GitHub Issues via RPI Workflow
 
-Select **github-backlog-manager** agent:
+Select **GitHub Backlog Manager** agent:
 
 ```text
 Convert the PRD at docs/project-planning/customer-onboarding-v2.md into GitHub
@@ -88,7 +88,7 @@ Decomposition produces work item hierarchies in ADO or GitHub Issues, with accep
 ## Coverage Notes
 
 > [!NOTE]
-> Teams that use GitHub Issues instead of ADO can use the RPI workflow with the **github-backlog-manager** agent for decomposition. Decomposition currently has no skills or templates.
+> Teams that use GitHub Issues instead of ADO can use the RPI workflow with the **GitHub Backlog Manager** agent for decomposition. Decomposition currently has no skills or templates.
 
 <!-- markdownlint-disable MD036 -->
 *🤖 Crafted with precision by ✨Copilot following brilliant human instruction,

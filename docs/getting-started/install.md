@@ -3,7 +3,7 @@ title: Installing HVE Core
 description: Three ways to install HVE Core with marketplace extension, selective collections, or developer clone
 sidebar_position: 2
 author: Microsoft
-ms.date: 2026-06-30
+ms.date: 2026-07-09
 ms.topic: how-to
 keywords:
   - installation
@@ -163,7 +163,7 @@ After installing, verify that HVE Core is active:
 
 1. Open Copilot Chat in VS Code.
 2. Type `@` to see available agents.
-3. Look for HVE Core agents like `task-researcher`, `task-planner`, and `task-implementor`, and try the new RPI skills such as `/rpi-research` and `/rpi-plan`.
+3. Look for HVE Core agents such as **Task Researcher**, **Task Planner**, and **Task Implementor**, and try the new RPI skills such as `/rpi-research` and `/rpi-plan`.
 
 If you don't see the agents, check the [Troubleshooting](troubleshooting.md) page for common solutions.
 

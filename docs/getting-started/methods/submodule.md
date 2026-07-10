@@ -3,7 +3,7 @@ title: Git Submodule Installation
 description: Set up HVE Core as a git submodule for version-controlled team consumption
 sidebar_position: 7
 author: Microsoft
-ms.date: 2026-06-30
+ms.date: 2026-07-09
 ms.topic: how-to
 keywords:
   - git submodule
@@ -214,7 +214,7 @@ After setup, verify HVE Core is working:
 1. Check `lib/hve-core/` contains the HVE Core repository
 2. Open Copilot Chat (`Ctrl+Alt+I`)
 3. Click the agent picker dropdown
-4. Verify HVE Core agents appear (task-planner, task-researcher, etc.)
+4. Verify HVE Core agents appear (Task Planner, Task Researcher, and others)
 
 ## Troubleshooting
 

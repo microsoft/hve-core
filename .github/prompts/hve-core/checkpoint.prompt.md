@@ -3,6 +3,7 @@ description: "Save or restore conversation context using memory files"
 agent: Memory
 argument-hint: "[mode={save|continue|incremental}] [description=...]"
 model:
+  - GPT-5.6 Luna (copilot)
   - MAI-Code-1-Flash (copilot)
   - Claude Haiku 4.5 (copilot)
 ---
@@ -28,9 +29,9 @@ Identify the operation mode from input:
 
 ### Step 2: Execute Operation
 
-Invoke the memory agent with determined mode:
+Invoke `Memory` with the determined mode:
 
-* For save mode: Proceed to save mode phase of memory agent
+* For save mode: Proceed to the save-mode phase of `Memory`
   * Use the description input as the memory file name, or generate from conversation context
   * Capture Task Overview, Current State, Important Discoveries, Next Steps, and Context to Preserve
 
@@ -45,4 +46,4 @@ Invoke the memory agent with determined mode:
 
 ---
 
-Proceed with the determined mode using the memory agent.
+Proceed with the determined mode using `Memory`.

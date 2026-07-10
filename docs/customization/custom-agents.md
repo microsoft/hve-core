@@ -2,7 +2,7 @@
 title: Creating Custom Agents
 description: Build specialized agents with tool restrictions, subagent delegation, and mode-based workflows for your team
 author: Microsoft
-ms.date: 2026-06-30
+ms.date: 2026-07-09
 ms.topic: how-to
 keywords:
   - agents
@@ -125,11 +125,10 @@ tools:
 ---
 ```
 
-The parent references subagents using glob paths so resolution works regardless of nesting depth:
+The parent references subagents by their human-readable frontmatter `name:` values:
 
 ```markdown
-Delegate security analysis to the security checker subagent
-at `.github/agents/**/security-checker.agent.md`.
+Delegate security analysis to `Contoso Security Checker`.
 ```
 
 Subagent files include `user-invocable: false` in frontmatter to prevent direct user invocation:
@@ -230,32 +229,28 @@ Agent frontmatter supports these fields:
 
 | Field                      | Type           | Required | Purpose                                                                          |
 |----------------------------|----------------|----------|----------------------------------------------------------------------------------|
-| `name`                     | string         | Yes      | Human-readable name shown in the agent picker                                    |
+| `name`                     | string         | Yes      | Non-empty, unique registered name used exactly for dispatch, fixed subagents, handoffs, and execution-facing prose |
 | `description`              | string         | Yes      | One-line purpose with attribution suffix                                         |
 | `tools`                    | array          | No       | Restrict available tools; omit for full access                                   |
-| `agents`                   | array          | No       | Human-readable names of subagent dependencies                                    |
+| `agents`                   | array          | No       | Fixed subagent allowlist; omit for unrestricted access                            |
 | `handoffs`                 | array          | No       | Structured transitions to other agents                                           |
-| `model`                    | string / array | No       | Preferred model(s); array tried in order until one is available; omit to inherit |
+| `model`                    | array          | No       | Responsibility-selected profile tried in order; omit to inherit                  |
 | `disable-model-invocation` | boolean        | No       | Set `true` for orchestrators that only delegate to subagents                     |
 | `user-invocable`           | boolean        | No       | Set `false` for subagents not meant for direct invocation                        |
 
 ### model
 
-Specifies a preferred AI model as a single string or prioritized fallback array. The system tries each entry in order until one is available. When omitted, the agent inherits the parent conversation model.
+Specifies one canonical High, Medium, or Low profile. Select the profile from the agent's responsibility; the system then tries its entries in order until one is available. When omitted, a subagent inherits the invoking parent's model; a directly invoked agent uses the current session or model-picker selection.
 
 ```yaml
-# Single model
-model: Claude Sonnet 4.6 (copilot)
-```
-
-```yaml
-# Prioritized fallback array
+# Medium profile for research, authoring, implementation, or review
 model:
-  - Claude Haiku 4.5 (copilot)
-  - GPT-5.4 mini (copilot)
+  - GPT-5.6 Terra (copilot)
+  - Claude Sonnet 5 (copilot)
+  - MAI-Code-1-Flash (copilot)
 ```
 
-Subagents that perform read-only or validation tasks should use fast-tier models for cost optimization. Accepted models are those in `scripts/linting/model-catalog.json` whose provider appears in `providerAllowlist` and whose status is `ga` or `preview`. Run `npm run lint:models` to validate references.
+Use High (GPT-5.6 Sol, Claude Opus 4.8, GPT-5.5) for architecture and consequential decisions. Use Low (GPT-5.6 Luna, MAI-Code-1-Flash, Claude Haiku 4.5) for literal simulation, mechanical validation, and routine operations. Accepted models are those in `scripts/linting/model-catalog.json` whose provider appears in `providerAllowlist` and whose status is `ga` or `preview`. Run `npm run lint:models` to validate profile membership and order.
 
 ### description
 
@@ -280,7 +275,9 @@ The set of available tools evolves with GitHub Copilot and VS Code. For the auth
 
 ### agents
 
-Declares subagent dependencies using their human-readable `name` values. Reference subagents in the body using glob paths so resolution works regardless of nesting depth:
+Declares subagent dependencies using their human-readable `name` values. Reference subagents in the body by the same human-readable names:
+
+Omit `agents:` to allow unrestricted subagent access. Use an explicit array for a fixed allowlist, including `agents: []` when the agent must not invoke subagents. Do not use a wildcard string.
 
 ```yaml
 agents:
@@ -289,8 +286,7 @@ agents:
 ```
 
 ```markdown
-Delegate research to the researcher subagent
-at `.github/agents/**/researcher-subagent.agent.md`.
+Delegate research to `Researcher Subagent`.
 ```
 
 ### handoffs

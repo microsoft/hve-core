@@ -1,6 +1,6 @@
 ---
 description: 'Assess DT project state and recommend next method with sequencing validation'
-agent: dt-coach
+agent: DT Coach
 argument-hint: "[project-slug=...]"
 ---
 
@@ -47,13 +47,13 @@ Apply progression logic:
 * **Forward progression (primary path):**
   * If current method has artifacts and exit signals met → suggest method + 1
   * At space boundaries (3→4, 6→7): verify readiness signals before suggesting transition
-  
+
 * **Backward iteration (secondary path):**
   * Before recommending a backward transition, use `read_file` on `.github/skills/design-thinking/dt-coaching-foundation/references/method-sequencing.md` and quote the matching return-path rule in the recommendation.
   * If current method reveals gaps in prior work → suggest returning to earlier method with rationale
   * Common patterns: prototype issues → Method 2/3, brainstorming failure → Method 3, concept misalignment → Method 1
   * Always name the source method, target method, and the sequencing rule that authorizes the transition.
-  
+
 * **Lateral transitions:**
   * If all 9 methods complete → suggest iteration on Method 9 or handoff to RPI workflow
   * If user requests skipping methods → explain sequencing rationale and offer to proceed with caution

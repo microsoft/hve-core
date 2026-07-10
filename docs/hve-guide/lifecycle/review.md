@@ -31,16 +31,16 @@ You enter Review after completing implementation work in [Stage 6: Implementatio
 
 | Tool                     | Type  | How to Invoke                             | Purpose                                  |
 |--------------------------|-------|-------------------------------------------|------------------------------------------|
-| task-reviewer            | Agent | Select **task-reviewer** agent            | Review implementation against the plan   |
-| code-review              | Agent | Select **code-review** agent              | Multi-perspective review of code changes |
-| test-streamlit-dashboard | Agent | Select **test-streamlit-dashboard** agent | Test Streamlit dashboard implementations |
+| Task Reviewer            | Agent | Select **Task Reviewer** agent            | Review implementation against the plan   |
+| Code Review              | Agent | Select **Code Review** agent              | Multi-perspective review of code changes |
+| DS Test Streamlit Dashboard | Agent | Select **DS Test Streamlit Dashboard** agent | Test Streamlit dashboard implementations |
 
 ### Supporting Agents
 
 | Tool                     | Type  | How to Invoke                             | Purpose                                     |
 |--------------------------|-------|-------------------------------------------|---------------------------------------------|
-| rpi-validator            | Agent | Select **rpi-validator** agent            | Validate RPI workflow compliance            |
-| implementation-validator | Agent | Select **implementation-validator** agent | Check implementation against specifications |
+| RPI Validator            | Agent | Select **RPI Validator** agent            | Validate RPI workflow compliance            |
+| Implementation Validator | Agent | Select **Implementation Validator** agent | Check implementation against specifications |
 | Prompt Builder           | Agent | Select **Prompt Builder** agent           | Test prompt engineering artifacts through the HVE Builder review lifecycle |
 | Prompt Builder           | Agent | Select **Prompt Builder** agent and use `/prompt-analyze` | Evaluate prompt quality and effectiveness   |
 
@@ -52,7 +52,7 @@ You enter Review after completing implementation work in [Stage 6: Implementatio
 | pr-review               | Prompt      | `/pr-review`                   | Run a multi-perspective review of a pull request |
 | pull-request            | Prompt      | `/pull-request`                | Create a pull request for current changes        |
 | ado-create-pull-request | Prompt      | `/ado-create-pull-request`     | Create an ADO-linked pull request                |
-| documentation           | Agent       | Select **documentation** agent | Audit, drift, author, and validate documentation |
+| Documentation           | Agent       | Select **Documentation** agent | Audit, drift, author, and validate documentation |
 | commit-message          | Instruction | Auto-activated                 | Enforces commit message conventions              |
 | community-interaction   | Instruction | Auto-activated                 | Enforces community communication standards       |
 
@@ -69,7 +69,7 @@ Engineers submit work for review and participate as peer reviewers. Tech Leads s
 
 ### Implementation Review
 
-Select **task-reviewer** agent:
+Select **Task Reviewer** agent:
 
 ```text
 Review today's changes to the authentication service against .copilot-tracking/plans/2025-01-15/auth-refactor-plan.instructions.md and check for missing input validation on the new endpoints
@@ -97,7 +97,7 @@ Review today's changes to the authentication service against .copilot-tracking/p
 /pr-review
 ```
 
-Select **code-review** agent:
+Select **Code Review** agent:
 
 ```text
 Review the open PR for the payment processing refactor, focusing on breaking changes to the /api/payments endpoint and any exposed credentials in configuration files
@@ -105,7 +105,7 @@ Review the open PR for the payment processing refactor, focusing on breaking cha
 
 ### Dashboard Testing
 
-Select **test-streamlit-dashboard** agent:
+Select **DS Test Streamlit Dashboard** agent:
 
 ```text
 Test the sensor monitoring dashboard at src/dashboards/sensor_monitor.py, verifying that temperature readings render within the 15-45°C expected range and all navigation links resolve correctly
@@ -113,13 +113,13 @@ Test the sensor monitoring dashboard at src/dashboards/sensor_monitor.py, verify
 
 ### Quality Validation
 
-Select **rpi-validator** agent:
+Select **RPI Validator** agent:
 
 ```text
 Validate phase 2 of .copilot-tracking/plans/2025-01-15/api-redesign-plan.instructions.md against .copilot-tracking/changes/2025-01-15/api-redesign-changes.md
 ```
 
-Select **implementation-validator** agent:
+Select **Implementation Validator** agent:
 
 ```text
 Run full-quality validation on the files changed in src/services/auth/ against the architecture requirements in docs/architecture/auth-design.md
@@ -140,7 +140,7 @@ Evaluate the execution log from .copilot-tracking/sandbox/2025-01-15-task-review
 ### Documentation Review
 
 ```text
-Select documentation agent in validate mode. Scope docs/hve-guide/lifecycle, validation-only, focus accuracy.
+Select Documentation agent in validate mode. Scope docs/hve-guide/lifecycle, validation-only, focus accuracy.
 ```
 
 ## Stage Outputs and Next Stage

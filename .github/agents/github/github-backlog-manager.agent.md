@@ -142,7 +142,7 @@ When resuming an interrupted workflow, check the tracking directory for existing
 
 ## Session Persistence
 
-The Save handoff delegates to the memory agent with the checkpoint prompt, preserving session state for later resumption. When a workflow extends beyond a single session:
+The Save handoff delegates to `Memory` with the checkpoint prompt, preserving session state for later resumption. When a workflow extends beyond a single session:
 
 1. Write a context summary block to *planning-log.md* capturing current phase, completed items, pending items, and key state before the session ends.
 2. On resumption, read *planning-log.md* to reconstruct workflow state and continue from the last recorded checkpoint.

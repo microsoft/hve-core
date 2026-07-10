@@ -173,7 +173,7 @@ Use this edition when you want access to everything without choosing a focused c
 | **task-research**                               | Initiate research for implementation planning from user requirements                                                                                                      |
 | **task-review**                                 | Initiate implementation review from user context or artifact discovery                                                                                                    |
 | **vally-test-write**                            | Authors Vally conformance test stimuli for an existing prompt, instructions, agent, or skill artifact                                                                     |
-| **vex-implement**                               | Plan the work to stand up VEX in a target project as a backlog for Task-* implementors - Brought to you by microsoft/hve-core                                             |
+| **vex-implement**                               | Plan the work to stand up VEX in a target project as a backlog for Task Implementor - Brought to you by microsoft/hve-core                                                |
 | **vex-scan**                                    | Run a full VEX pipeline that scans dependencies, enriches CVEs, analyzes exploitability, and drafts an OpenVEX document for review - Brought to you by microsoft/hve-core |
 | **vex-triage**                                  | Triage CVEs from an existing scan report or SBOM and draft an OpenVEX document, skipping the scan phase - Brought to you by microsoft/hve-core                            |
 

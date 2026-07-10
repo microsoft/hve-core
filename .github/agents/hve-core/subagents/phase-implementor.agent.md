@@ -3,10 +3,9 @@ name: Phase Implementor
 description: 'Executes a single implementation phase from a plan with full codebase access and change tracking'
 user-invocable: false
 model:
+  - GPT-5.6 Terra (copilot)
   - Claude Sonnet 5 (copilot)
   - MAI-Code-1-Flash (copilot)
-  - Claude Sonnet 4.6 (copilot)
-  - GPT-5.4 mini (copilot)
 ---
 
 # Phase Implementor

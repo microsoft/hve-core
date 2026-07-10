@@ -25,7 +25,7 @@ At the start of the run, locate the skill named `code-review` and read these ref
 * `SKILL.md` (skill entrypoint)
 * `references/dispatch-loop.md`
 * `references/output-formats.md`
-* the Researcher Subagent agent (`.github/agents/hve-core/subagents/researcher-subagent.agent.md`)
+* the `Researcher Subagent` contract
 
 Do not invent severity levels, categories, or output fields the skill does not define.
 

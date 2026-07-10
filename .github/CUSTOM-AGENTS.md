@@ -24,7 +24,7 @@ Specialized GitHub Copilot behaviors for common development workflows. Each cust
 
 **Example:**
 
-* Select "task-planner" from the dropdown
+* Select "Task Planner" from the dropdown
 * Type: "Create a plan to add Docker SHA validation"
 * Press Enter
 
@@ -42,69 +42,69 @@ Each phase has two entry points: the `/task-*` prompt commands (`/task-research`
 
 | Agent                | Purpose                                                                                               | Key Constraint                                            |
 |----------------------|-------------------------------------------------------------------------------------------------------|-----------------------------------------------------------|
-| **rpi-agent**        | Autonomous agent with subagent delegation for complex tasks                                           | Requires a subagent tool enabled                          |
-| **task-researcher**  | Produces research documents with evidence-based recommendations                                       | Research-only; never plans or implements                  |
-| **task-planner**     | Creates 2 planning files (plan, details)                                                              | Requires research first; never implements code            |
-| **task-implementor** | Executes implementation plans with subagent delegation                                                | Requires completed plan files                             |
-| **task-reviewer**    | Validates implementation against research and plan specifications                                     | Requires research/plan artifacts                          |
-| **task-challenger**  | Adversarial questioning agent that interrogates completed implementations with What/Why/How questions | Experimental; no suggestions, hints, or leading questions |
+| **RPI Agent**        | Autonomous agent with subagent delegation for complex tasks                                           | Requires a subagent tool enabled                          |
+| **Task Researcher**  | Produces research documents with evidence-based recommendations                                       | Research-only; never plans or implements                  |
+| **Task Planner**     | Creates 2 planning files (plan, details)                                                              | Requires research first; never implements code            |
+| **Task Implementor** | Executes implementation plans with subagent delegation                                                | Requires completed plan files                             |
+| **Task Reviewer**    | Validates implementation against research and plan specifications                                     | Requires research/plan artifacts                          |
+| **Task Challenger**  | Adversarial questioning agent that interrogates completed implementations with What/Why/How questions | Experimental; no suggestions, hints, or leading questions |
 
 ### Documentation and Planning Agents
 
 | Agent                            | Purpose                                                                                                                  | Key Constraint                                                                                                                     |
 |----------------------------------|--------------------------------------------------------------------------------------------------------------------------|------------------------------------------------------------------------------------------------------------------------------------|
-| **adr-creation**                 | Interactive ADR coaching with guided discovery                                                                           | Socratic coaching approach                                                                                                         |
-| **brd-builder**                  | Creates Business Requirements Documents with reference integration                                                       | Solution-agnostic requirements focus                                                                                               |
-| **documentation**                | Documentation audit, drift, authoring, and validation workflow                                                           | Uses the shared documentation skill and escalates formal assessments to planner agents                                             |
-| **meeting-analyst**              | Analyzes meeting transcripts to extract product requirements via work-iq-mcp                                             | Experimental; requires work-iq-mcp EULA; transcripts may contain PII and confidential data, analysis files are unencrypted on disk |
-| **prd-builder**                  | Creates Product Requirements Documents through guided Q&A                                                                | Iterative questioning; state-tracked sessions                                                                                      |
-| **product-manager-advisor**      | Requirements discovery, story quality, and prioritization guidance                                                       | Principles over format; delegates to prd/brd builders                                                                              |
-| **security-planner**             | STRIDE-based security model analysis with standards mapping and backlog handoff                                          | Six-phase conversational workflow; experimental                                                                                    |
-| **sssc-planner**                 | Supply chain security assessment with 6-phase workflow against OpenSSF Scorecard, SLSA, Sigstore, and SBOM               | Six-phase conversational workflow; experimental                                                                                    |
-| **rai-planner**                  | Responsible AI assessment with 6-phase workflow against Microsoft Responsible AI Impact Assessment Guide and NIST AI RMF | Six-phase conversational workflow; experimental                                                                                    |
-| **system-architecture-reviewer** | Reviews system designs for trade-offs and ADR alignment                                                                  | Scoped review; delegates security concerns                                                                                         |
-| **ux-ui-designer**               | JTBD analysis, user journey mapping, and accessibility requirements                                                      | Research artifacts only; visual design in Figma                                                                                    |
+| **ADR Creator**                  | Interactive ADR coaching with guided discovery                                                                           | Socratic coaching approach                                                                                                         |
+| **BRD Builder**                  | Creates Business Requirements Documents with reference integration                                                       | Solution-agnostic requirements focus                                                                                               |
+| **Documentation**                | Documentation audit, drift, authoring, and validation workflow                                                           | Uses the shared documentation skill and escalates formal assessments to planner agents                                             |
+| **Meeting Analyst**              | Analyzes meeting transcripts to extract product requirements via work-iq-mcp                                             | Experimental; requires work-iq-mcp EULA; transcripts may contain PII and confidential data, analysis files are unencrypted on disk |
+| **PRD Builder**                  | Creates Product Requirements Documents through guided Q&A                                                                | Iterative questioning; state-tracked sessions                                                                                      |
+| **Product Manager Advisor**      | Requirements discovery, story quality, and prioritization guidance                                                       | Principles over format; delegates to prd/brd builders                                                                              |
+| **Security Planner**             | STRIDE-based security model analysis with standards mapping and backlog handoff                                          | Six-phase conversational workflow; experimental                                                                                    |
+| **SSSC Planner**                 | Supply chain security assessment with 6-phase workflow against OpenSSF Scorecard, SLSA, Sigstore, and SBOM               | Six-phase conversational workflow; experimental                                                                                    |
+| **RAI Planner**                  | Responsible AI assessment with 6-phase workflow against Microsoft Responsible AI Impact Assessment Guide and NIST AI RMF | Six-phase conversational workflow; experimental                                                                                    |
+| **System Architecture Reviewer** | Reviews system designs for trade-offs and ADR alignment                                                                  | Scoped review; delegates security concerns                                                                                         |
+| **UX UI Designer**               | JTBD analysis, user journey mapping, and accessibility requirements                                                      | Research artifacts only; visual design in Figma                                                                                    |
 
 ### Utility Agents
 
 | Agent      | Purpose                                    | Key Constraint                        |
 |------------|--------------------------------------------|---------------------------------------|
-| **memory** | Persists repository facts for future tasks | Stores only durable, actionable facts |
+| **Memory** | Persists repository facts for future tasks | Stores only durable, actionable facts |
 
 ### Code and Review Agents
 
 | Agent                 | Purpose                                                                | Key Constraint                                                |
 |-----------------------|------------------------------------------------------------------------|---------------------------------------------------------------|
-| **prompt-builder**    | Compatibility entry point for HVE Builder artifact lifecycle work      | Routes to one author-review-test-validation implementation    |
-| **security-reviewer** | OWASP vulnerability assessment with subagent-driven verification       | Delegates all reference reading to subagents                  |
-| **code-review**       | Human-gated review orchestrator dispatching five perspective subagents | Operator confirms scope, perspectives, and depth; review-only |
+| **Prompt Builder**    | Compatibility entry point for HVE Builder artifact lifecycle work      | Routes to one author-review-test-validation implementation    |
+| **Security Reviewer** | OWASP vulnerability assessment with subagent-driven verification       | Delegates all reference reading to subagents                  |
+| **Code Review**       | Human-gated review orchestrator dispatching five perspective subagents | Operator confirms scope, perspectives, and depth; review-only |
 
 ### Generator Agents
 
 | Agent                       | Purpose                                            | Key Constraint                       |
 |-----------------------------|----------------------------------------------------|--------------------------------------|
-| **gen-jupyter-notebook**    | Creates structured EDA notebooks from data sources | Requires data dictionaries           |
-| **gen-streamlit-dashboard** | Develops multi-page Streamlit dashboards           | Uses Context7 for documentation      |
-| **gen-data-spec**           | Generates data dictionaries and profiles           | Produces JSON and markdown artifacts |
+| **DS Gen Jupyter Notebook**    | Creates structured EDA notebooks from data sources | Requires data dictionaries           |
+| **DS Gen Streamlit Dashboard** | Develops multi-page Streamlit dashboards           | Uses Context7 for documentation      |
+| **DS Gen Data Spec**           | Generates data dictionaries and profiles           | Produces JSON and markdown artifacts |
 
 ### Platform Integration Agents
 
 | Agent                      | Purpose                                                                          | Key Constraint                            |
 |----------------------------|----------------------------------------------------------------------------------|-------------------------------------------|
-| **github-backlog-manager** | Consolidated GitHub backlog management with community interaction                | Uses MCP GitHub tools                     |
-| **jira-backlog-manager**   | Consolidated Jira backlog management with workflow dispatch and handoff tracking | Uses Jira skill planning workflows        |
-| **ado-prd-to-wit**         | Analyzes PRDs and plans Azure DevOps work item hierarchies                       | Planning-only; does not create work items |
-| **jira-prd-to-wit**        | Analyzes PRDs and plans Jira issue hierarchies                                   | Planning-only; does not mutate Jira       |
+| **GitHub Backlog Manager** | Consolidated GitHub backlog management with community interaction                | Uses MCP GitHub tools                     |
+| **Jira Backlog Manager**   | Consolidated Jira backlog management with workflow dispatch and handoff tracking | Uses Jira skill planning workflows        |
+| **AzDO PRD to WIT**        | Analyzes PRDs and plans Azure DevOps work item hierarchies                       | Planning-only; does not create work items |
+| **Jira PRD to WIT**        | Analyzes PRDs and plans Jira issue hierarchies                                   | Planning-only; does not mutate Jira       |
 
 ### Testing Agents
 
 | Agent                        | Purpose                                     | Key Constraint                         |
 |------------------------------|---------------------------------------------|----------------------------------------|
-| **test-streamlit-dashboard** | Automated Streamlit testing with Playwright | Requires running Streamlit application |
+| **DS Test Streamlit Dashboard** | Automated Streamlit testing with Playwright | Requires running Streamlit application |
 
 ## Agent Details
 
-### rpi-agent
+### RPI Agent
 
 **Creates:** Subagent research artifacts when needed:
 
@@ -114,7 +114,7 @@ Each phase has two entry points: the `/task-*` prompt commands (`/task-research`
 
 **Critical:** Requires a subagent tool enabled. Delegates MCP tools, heavy terminal commands, and complex research to subagents. Provides autonomous execution with loop guard for detecting stuck states.
 
-### task-researcher
+### Task Researcher
 
 **Creates:** Single authoritative research document:
 
@@ -125,7 +125,7 @@ Each phase has two entry points: the `/task-*` prompt commands (`/task-research`
 
 **Critical:** Research-only specialist. Uses subagent tools. Continuously refines document. Never plans or implements.
 
-### task-planner
+### Task Planner
 
 **Creates:** Two interconnected files per task:
 
@@ -134,9 +134,9 @@ Each phase has two entry points: the `/task-*` prompt commands (`/task-research`
 
 **Workflow:** Validates research → Creates plan files → User implements separately
 
-**Critical:** Automatically calls task-researcher if research is missing. Treats all user input as planning requests. Never implements actual code.
+**Critical:** Automatically calls Task Researcher if research is missing. Treats all user input as planning requests. Never implements actual code.
 
-### task-implementor
+### Task Implementor
 
 **Creates:** Change tracking logs:
 
@@ -146,7 +146,7 @@ Each phase has two entry points: the `/task-*` prompt commands (`/task-research`
 
 **Critical:** Requires completed plan files. Uses subagent architecture for parallel phase execution. Updates tracking artifacts after each phase.
 
-### task-reviewer
+### Task Reviewer
 
 **Creates:** Review validation logs:
 
@@ -158,7 +158,7 @@ Each phase has two entry points: the `/task-*` prompt commands (`/task-research`
 
 **Documentation:** See [Task Reviewer Guide](../docs/rpi/task-reviewer.md) for detailed usage.
 
-### prompt-builder
+### Prompt Builder
 
 **Creates:** Instruction files and prompt files:
 
@@ -171,17 +171,17 @@ Each phase has two entry points: the `/task-*` prompt commands (`/task-research`
 
 **Critical:** Compatibility surface only. The `hve-builder` skill owns the lifecycle, stage gates, Terra/Luna worker models, and final outcome.
 
-### product-manager-advisor
+### Product Manager Advisor
 
 **Purpose:** Requirements discovery, story quality assurance, and prioritization guidance.
 
 **Workflow:** Discovery → Story Quality → Prioritization → Validation → Handoff
 
-**Handoffs:** Delegates to `prd-builder` for full PRDs, `brd-builder` for business requirements, `ux-ui-designer` for journey mapping, and `task-researcher` for deep research.
+**Handoffs:** Delegates to `PRD Builder` for full PRDs, `BRD Builder` for business requirements, `UX UI Designer` for journey mapping, and `Task Researcher` for deep research.
 
-**Critical:** Focuses on quality principles rather than prescribing issue formats. Guides teams to leverage platform-native templates (GitHub issue forms, Azure DevOps work item templates). Differentiates from `prd-builder` by focusing on the requirements discovery gate rather than document authoring.
+**Critical:** Focuses on quality principles rather than prescribing issue formats. Guides teams to leverage platform-native templates (GitHub issue forms, Azure DevOps work item templates). Differentiates from `PRD Builder` by focusing on the requirements discovery gate rather than document authoring.
 
-### ux-ui-designer
+### UX UI Designer
 
 **Purpose:** UX research artifacts including Jobs-to-be-Done analysis, user journey mapping, and accessibility requirements.
 
@@ -192,11 +192,11 @@ Each phase has two entry points: the `/task-*` prompt commands (`/task-research`
 * Accessibility requirements integrated into journey stages
 * Design handoff sections with flow descriptions and principles
 
-**Handoffs:** Delegates to `product-manager-advisor` for business alignment and `task-researcher` for technical feasibility.
+**Handoffs:** Delegates to `Product Manager Advisor` for business alignment and `Task Researcher` for technical feasibility.
 
 **Critical:** Research-only. Does not generate UI designs or visual mockups. Produces artifacts that designers translate into Figma flows. Treats accessibility as a foundational constraint.
 
-### prd-builder
+### PRD Builder
 
 **Creates:** Product requirements documents with session state:
 
@@ -207,7 +207,7 @@ Each phase has two entry points: the `/task-*` prompt commands (`/task-research`
 
 **Critical:** Iterative questioning with refinement checklists. Maintains session state for continuity. Integrates user-provided references automatically.
 
-### brd-builder
+### BRD Builder
 
 **Creates:** Business requirements documents with session state:
 
@@ -218,7 +218,7 @@ Each phase has two entry points: the `/task-*` prompt commands (`/task-research`
 
 **Critical:** Solution-agnostic requirements focus. Links every requirement to business objectives. Supports session resume after context summarization.
 
-### adr-creation
+### ADR Creator
 
 **Creates:** Architecture Decision Records:
 
@@ -229,7 +229,7 @@ Each phase has two entry points: the `/task-*` prompt commands (`/task-research`
 
 **Critical:** Uses Socratic coaching methods. Guides users through decision-making process. Adapts coaching style to experience level.
 
-### system-architecture-reviewer
+### System Architecture Reviewer
 
 **Creates:** Architecture review findings and ADRs:
 
@@ -237,9 +237,9 @@ Each phase has two entry points: the `/task-*` prompt commands (`/task-research`
 
 **Workflow:** Context Discovery → Review Scoping → Well-Architected Evaluation → Trade-Off Analysis → ADR Documentation → Escalation Review
 
-**Critical:** Asks questions and reviews existing artifacts (ADRs, PRDs, plans) before making assumptions. Scopes reviews to 2-3 relevant framework areas based on gathered context. Delegates security-specific reviews to `security-planner` and detailed ADR coaching to `adr-creation`. Uses `docs/templates/adr-template-solutions.md` for ADR structure.
+**Critical:** Asks questions and reviews existing artifacts (ADRs, PRDs, plans) before making assumptions. Scopes reviews to 2-3 relevant framework areas based on gathered context. Delegates security-specific reviews to `Security Planner` and detailed ADR coaching to `ADR Creator`. Uses `docs/templates/adr-template-solutions.md` for ADR structure.
 
-### documentation
+### Documentation
 
 **Creates:** Documentation workflow session tracking and documentation updates:
 
@@ -253,7 +253,7 @@ Each phase has two entry points: the `/task-*` prompt commands (`/task-research`
 
 **Critical:** Uses the Documentation workflow as the canonical entry point for documentation work. It stays focused on documentation artifacts and routes formal accessibility, RAI, and security assessments to the matching planner agents.
 
-### meeting-analyst
+### Meeting Analyst
 
 **Creates:** Transcript analysis documents and session state:
 
@@ -262,12 +262,12 @@ Each phase has two entry points: the `/task-*` prompt commands (`/task-research`
 
 **Workflow:** Discover → Extract → Synthesize → Handoff
 
-**Critical:** Experimental. Requires the `workiq` MCP server in `.vscode/mcp.json` (not included in the installer skill or curated MCP documentation; see [official documentation](https://learn.microsoft.com/microsoft-365-copilot/extensibility/workiq-overview#install-in-vs-code) for setup). Requires `mcp_workiq_accept_eula` call before querying. Uses `mcp_workiq_ask_work_iq` for Microsoft 365 meeting data. Query budget of approximately 30 per session. Hands off to **prd-builder** for PRD creation.
+**Critical:** Experimental. Requires the `workiq` MCP server in `.vscode/mcp.json` (not included in the installer skill or curated MCP documentation; see [official documentation](https://learn.microsoft.com/microsoft-365-copilot/extensibility/workiq-overview#install-in-vs-code) for setup). Requires `mcp_workiq_accept_eula` call before querying. Uses `mcp_workiq_ask_work_iq` for Microsoft 365 meeting data. Query budget of approximately 30 per session. Hands off to **PRD Builder** for PRD creation.
 
 **Data Sensitivity Warning:** Meeting transcripts retrieved by this agent may contain PII, customer confidential information, and proprietary business data. Analysis files and state files are written to `.copilot-tracking/prd-sessions/` which is gitignored by default when following HVE Core setup guidance, but the files exist **unencrypted on disk**.
 Users are responsible for verifying their repository's `.gitignore` configuration, complying with their organization's data handling policies, and deleting both the `<name>-transcript-analysis.md` and `<name>-transcript.state.json` files after the PRD handoff is complete. The agent will prompt for deletion at handoff completion, but deletion is the user's responsibility.
 
-### memory
+### Memory
 
 **Creates:** Repository memory records and session context:
 
@@ -279,7 +279,7 @@ Users are responsible for verifying their repository's `.gitignore` configuratio
 
 **Critical:** Stores only durable, reusable facts. Does not store transient discussion, personal preferences, or speculative information.
 
-### security-planner
+### Security Planner
 
 **Creates:** Security plans and backlog handoff artifacts under `.copilot-tracking/security-plans/{project-slug}/`:
 
@@ -293,7 +293,7 @@ Users are responsible for verifying their repository's `.gitignore` configuratio
 
 **Critical:** Uses STRIDE methodology per operational bucket. Maps controls to OWASP Top 10, NIST 800-53, and CIS v8 frameworks. Detects AI/ML components during scoping and recommends RAI Planner dispatch when AI elements are present. Works iteratively with 3-5 questions per turn using emoji checklists to track progress. No blueprint infrastructure requirement. Maturity: experimental.
 
-### rai-planner
+### RAI Planner
 
 **Creates:** Nine artifacts across 6 phases under `.copilot-tracking/rai-plans/{project-slug}/`:
 
@@ -311,7 +311,7 @@ Users are responsible for verifying their repository's `.gitignore` configuratio
 
 **Critical:** Evaluates AI systems against the Microsoft Responsible AI Impact Assessment Guide and NIST AI RMF 1.0. Applies AI-specific threat analysis using dual threat ID convention (`T-RAI-{NNN}` sequential IDs and `T-{BUCKET}-AI-{NNN}` cross-references) across data poisoning, model evasion, prompt injection, and bias amplification. Seven instruction files provide domain guidance. Works iteratively with up to 7 questions per turn. Maturity: experimental.
 
-### sssc-planner
+### SSSC Planner
 
 **Creates:** Assessment artifacts under `.copilot-tracking/sssc-plans/{project-slug}/`:
 
@@ -325,7 +325,7 @@ Users are responsible for verifying their repository's `.gitignore` configuratio
 
 **Critical:** Assesses against OpenSSF Scorecard (20 checks), SLSA Build levels (L0-L3), Best Practices Badge tiers, Sigstore keyless signing maturity, and SBOM compliance. Works iteratively with 3-5 questions per turn with confirmation before phase advancement. Maturity: experimental.
 
-### security-reviewer
+### Security Reviewer
 
 **Creates:** OWASP vulnerability assessment reports:
 
@@ -345,7 +345,7 @@ Users are responsible for verifying their repository's `.gitignore` configuratio
 
 **Critical:** Orchestrator-only pattern. Delegates codebase profiling, skill assessment, adversarial finding verification, and report generation to specialized subagents. Uses OWASP skills (`owasp-agentic`, `owasp-llm`, `owasp-top-10`, `owasp-mcp`, `owasp-infrastructure`, `owasp-cicd`) and the `secure-by-design` skill for vulnerability and design principle references. Supports incremental comparison with prior scan reports.
 
-### code-review
+### Code Review
 
 **Creates:** Merged review artifacts in a normalized branch folder:
 
@@ -357,7 +357,7 @@ Users are responsible for verifying their repository's `.gitignore` configuratio
 **Critical:** Human-gated orchestrator invoked from the agent picker. After computing the diff via the `pr-reference` skill, it confirms scope with the operator, then lets the operator choose any combination of five perspectives (`functional`, `standards`, `accessibility`, `security`, `pr`) or `full` to run all five, plus a depth tier (`basic`, `standard`, or `comprehensive`) applied independently of perspective.
 It dispatches thin perspective subagents under `.github/agents/coding-standards/subagents/`, shares the computed diff to avoid duplicate git operations, and merges every report into a single output. Review-only; never modifies code. Maturity: experimental.
 
-### gen-jupyter-notebook
+### DS Gen Jupyter Notebook
 
 **Creates:** Exploratory data analysis notebooks:
 
@@ -368,7 +368,7 @@ It dispatches thin perspective subagents under `.github/agents/coding-standards/
 
 **Critical:** Follows standard section layout with 13 required sections. Uses Plotly Express for interactive visualizations. References existing data dictionaries.
 
-### gen-streamlit-dashboard
+### DS Gen Streamlit Dashboard
 
 **Creates:** Multi-page Streamlit applications:
 
@@ -380,7 +380,7 @@ It dispatches thin perspective subagents under `.github/agents/coding-standards/
 
 **Critical:** Uses Context7 for current Streamlit documentation. Supports AutoGen chat integration when reference scripts exist.
 
-### gen-data-spec
+### DS Gen Data Spec
 
 **Creates:** Data documentation artifacts:
 
@@ -393,7 +393,7 @@ It dispatches thin perspective subagents under `.github/agents/coding-standards/
 
 **Critical:** Produces machine-readable profiles for downstream consumption. Follows strict JSON schemas. Minimal clarifying questions.
 
-### github-backlog-manager
+### GitHub Backlog Manager
 
 **Creates:** Backlog management artifacts under `.copilot-tracking/github-issues/`
 
@@ -401,7 +401,7 @@ It dispatches thin perspective subagents under `.github/agents/coding-standards/
 
 **Critical:** Uses MCP GitHub tools. Follows community interaction guidelines from `community-interaction.instructions.md` for all contributor-facing comments.
 
-### jira-backlog-manager
+### Jira Backlog Manager
 
 **Creates:** Backlog management artifacts under `.copilot-tracking/jira-issues/`
 
@@ -409,7 +409,7 @@ It dispatches thin perspective subagents under `.github/agents/coding-standards/
 
 **Critical:** Uses the Jira skill command surface. Supports discovery, triage, execution, and single-issue workflows while preserving planning files and autonomy gates.
 
-### ado-prd-to-wit
+### AzDO PRD to WIT
 
 **Creates:** Work item planning files:
 
@@ -422,7 +422,7 @@ It dispatches thin perspective subagents under `.github/agents/coding-standards/
 
 **Critical:** Planning-only. Uses ADO MCP tools for work item discovery. Supports Epics, Features, and User Stories.
 
-### jira-prd-to-wit
+### Jira PRD to WIT
 
 **Creates:** Work item planning files:
 
@@ -435,7 +435,7 @@ It dispatches thin perspective subagents under `.github/agents/coding-standards/
 
 **Critical:** Planning-only. Validates Jira issue types and required fields before finalizing plans. Does not call Jira mutation commands.
 
-### test-streamlit-dashboard
+### DS Test Streamlit Dashboard
 
 **Creates:** Test reports and issue documentation:
 
@@ -451,7 +451,7 @@ It dispatches thin perspective subagents under `.github/agents/coding-standards/
 
 ### Autonomous Task Completion
 
-1. Select **rpi-agent** from agent picker
+1. Select **RPI Agent** from agent picker
 2. Provide your request
 3. Agent autonomously researches, implements, and verifies
 4. Review results; agent continues if more work remains
@@ -459,23 +459,23 @@ It dispatches thin perspective subagents under `.github/agents/coding-standards/
 
 ### Planning a Feature
 
-1. Select **task-researcher** from agent picker and create research document
+1. Select **Task Researcher** from agent picker and create research document
 2. Review research and provide decisions on approach
 3. Clear context or start new chat
-4. Select **task-planner** from agent picker and attach research doc
+4. Select **Task Planner** from agent picker and attach research doc
 5. Generate 3-file plan set
-6. Use `/task-implement` to execute the plan (automatically switches to **task-implementor**)
+6. Use `/task-implement` to execute the plan (automatically switches to **Task Implementor**)
 
 ### Code Review
 
-1. Select **code-review** from agent picker
+1. Select **Code Review** from agent picker
 2. Confirm the change scope when prompted
 3. Choose perspectives (`functional`, `standards`, `accessibility`, `security`, `pr`, or `full`) and a depth tier
 4. Receive a merged `review.md` under `.copilot-tracking/reviews/code-reviews/<branch>/`
 
 ### Creating Instructions
 
-1. Select **prompt-builder** from agent picker
+1. Select **Prompt Builder** from agent picker
 2. Provide the target path, reference context, and requirements
 3. HVE Builder resolves the create or improve mode and source-write boundary
 4. HVE Builder authors, independently reviews, behavior-tests, and validates the artifact
@@ -483,7 +483,7 @@ It dispatches thin perspective subagents under `.github/agents/coding-standards/
 
 ### Creating Documentation
 
-1. Select **prd-builder** or **brd-builder** from agent picker
+1. Select **PRD Builder** or **BRD Builder** from agent picker
 2. Answer guided questions about the product or business initiative
 3. Provide references and supporting materials
 4. Review and refine iteratively
@@ -493,8 +493,8 @@ It dispatches thin perspective subagents under `.github/agents/coding-standards/
 
 * **Linting Exemption:** Files in `.copilot-tracking/**` are exempt from repository linting rules
 * **Agent Switching:** Clear context or start a new chat when switching between specialized agents
-* **Research First:** Task planner requires completed research; will automatically invoke researcher if missing
-* **No Implementation:** Task planner and researcher never implement actual project code. They create planning artifacts only
+* **Research First:** Task Planner requires completed research; it automatically invokes Task Researcher if research is missing
+* **No Implementation:** Task Planner and Task Researcher never implement actual project code. They create planning artifacts only
 * **Subagent Requirements:** Several agents require a subagent tool enabled in Copilot settings
 
 ## Tips

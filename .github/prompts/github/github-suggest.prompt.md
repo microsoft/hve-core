@@ -6,7 +6,7 @@ argument-hint: "[optional: description of restored session context]"
 
 # GitHub Suggest
 
-Review the restored session context from the memory agent and propose the next workflow step for the current backlog management task.
+Review the restored session context from `Memory` and propose the next workflow step for the current backlog management task.
 
 ## Instructions
 

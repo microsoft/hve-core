@@ -3,7 +3,7 @@ title: "Context Engineering: Why AI Context Management Matters"
 description: Understanding LLM recency bias, context windows, and why /clear is an engineering practice, not just a step
 sidebar_position: 3
 author: Microsoft
-ms.date: 2026-07-08
+ms.date: 2026-07-09
 ms.topic: concept
 keywords:
   - context engineering
@@ -112,13 +112,13 @@ The tradeoff is precision. `/compact` summaries lose detail because the model de
 | `/checkpoint` | Persists state to disk             | Between sessions, preserving context |
 | New chat      | Fresh conversation, new context    | Starting unrelated work              |
 
-## The rpi-agent Difference
+## The RPI Agent Difference
 
-rpi-agent runs all five phases in a single conversation. This design choice prioritizes convenience: one invocation handles everything. It also creates a specific vulnerability to context degradation.
+RPI Agent runs all five phases in a single conversation. This design choice prioritizes convenience: one invocation handles everything. It also creates a specific vulnerability to context degradation.
 
 With strict RPI, mandatory `/clear` commands between phases prevent token accumulation. Each phase starts fresh. The research agent never sees implementation tokens. The implementation agent never sees research exploration tokens.
 
-With rpi-agent, tokens accumulate across all phases within one session. The first request works well because the conversation is short and instructions dominate. Subsequent requests in the same session face the full recency bias effect: 50K+ tokens of prior work competing against 3K tokens of phase ordering instructions.
+With RPI Agent, tokens accumulate across all phases within one session. The first request works well because the conversation is short and instructions dominate. Subsequent requests in the same session face the full recency bias effect: 50K+ tokens of prior work competing against 3K tokens of phase ordering instructions.
 
 The phase ordering instruction is advisory. It exists as prose in the agent's system prompt, not as a programmatic constraint. When recency bias shifts the model's attention toward recent implementation patterns, the advisory instruction loses its influence.
 

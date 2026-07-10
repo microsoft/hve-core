@@ -3,8 +3,9 @@ name: RPI Validator
 description: 'Validates a Changes Log against the Implementation Plan, Planning Log, and Research Documents for a specific plan phase'
 user-invocable: false
 model:
+  - GPT-5.6 Luna (copilot)
   - MAI-Code-1-Flash (copilot)
-  - Claude Sonnet 4.6 (copilot)
+  - Claude Haiku 4.5 (copilot)
 ---
 
 # RPI Validator

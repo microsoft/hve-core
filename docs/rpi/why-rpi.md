@@ -1,9 +1,9 @@
 ---
 title: Why the RPI Workflow Works
-description: The psychology, research, and principles behind the Research-Plan-Implement-Review framework, plus guidance on when to use RPI vs rpi-agent
+description: The psychology, research, and principles behind the Research-Plan-Implement-Review framework, plus guidance on when to use RPI vs RPI Agent
 sidebar_position: 2
 author: Microsoft
-ms.date: 2026-06-24
+ms.date: 2026-07-09
 ms.topic: concept
 keywords:
   - rpi workflow
@@ -133,7 +133,7 @@ By your third feature, the workflow feels natural. The research phase becomes fa
 
 The value compounds over time. Research documents accumulate into institutional memory. New team members can read how past decisions were made. Patterns get documented once and referenced forever.
 
-## Choosing Your Workflow: RPI vs rpi-agent
+## Choosing Your Workflow: RPI vs RPI Agent
 
 HVE Core provides two workflow options. The right choice depends on the task, not personal preference.
 
@@ -153,7 +153,7 @@ Use the four-phase workflow ([Task Researcher](task-researcher.md) → [Task Pla
 3. Clear context, invoke `/rpi-implement` (Task Implementor) → implements following the plan
 4. Clear context, invoke `/rpi-review` (Task Reviewer) → validates against specifications
 
-### rpi-agent: When Simplicity Fits
+### RPI Agent: When Simplicity Fits
 
 Use the [autonomous agent](https://github.com/microsoft/hve-core/blob/main/.github/agents/hve-core/rpi-agent.agent.md) when:
 
@@ -161,14 +161,14 @@ Use the [autonomous agent](https://github.com/microsoft/hve-core/blob/main/.gith
 * ✅ Codebase-only investigation requiring minimal research
 * ✅ Active development with fast feedback loops for quick iteration
 
-**The workflow:** Single rpi-agent session that orchestrates all four phases using subagent dispatch. The agent uses `runSubagent` to delegate work to specialized task agents while maintaining overall control.
+**The workflow:** A single RPI Agent session orchestrates all four phases using subagent dispatch. The agent uses `runSubagent` to delegate work to specialized task agents while maintaining overall control.
 
 > [!NOTE]
-> rpi-agent requires the `runSubagent` tool to be available. When unavailable, use strict RPI with manual phase transitions instead.
+> RPI Agent requires the `runSubagent` tool to be available. When unavailable, use strict RPI with manual phase transitions instead.
 
 ### Matching Tool to Task
 
-| Factor                | Strict RPI                     | rpi-agent                    |
+| Factor                | Strict RPI                     | RPI Agent                    |
 |-----------------------|--------------------------------|------------------------------|
 | Research depth        | Deep, verified, cited          | Moderate, inline             |
 | Context contamination | Eliminated via `/clear`        | Possible                     |
@@ -178,7 +178,7 @@ Use the [autonomous agent](https://github.com/microsoft/hve-core/blob/main/.gith
 
 ### Escalation Path
 
-rpi-agent can hand off to Task Researcher when it encounters complexity beyond its scope. The Review phase can also trigger iteration: when findings reveal gaps, the workflow escalates back to research or planning. This hybrid approach gives you speed for simple tasks and depth when needed. You don't have to decide upfront; start with rpi-agent and escalate if the task reveals hidden complexity.
+RPI Agent can hand off to Task Researcher when it encounters complexity beyond its scope. The Review phase can also trigger iteration: when findings reveal gaps, the workflow escalates back to research or planning. This hybrid approach gives you speed for simple tasks and depth when needed. You don't have to decide upfront; start with RPI Agent and escalate if the task reveals hidden complexity.
 
 ## Next Steps
 

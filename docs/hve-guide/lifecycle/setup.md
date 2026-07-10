@@ -3,7 +3,7 @@ title: "Stage 1: Setup"
 description: Install and configure HVE Core tooling for your project with guided onboarding
 sidebar_position: 4
 author: Microsoft
-ms.date: 2026-06-26
+ms.date: 2026-07-09
 ms.topic: how-to
 keywords:
   - ai-assisted project lifecycle
@@ -30,7 +30,7 @@ You enter Setup when starting a new project or joining an existing engagement th
 | Tool              | Type        | How to Invoke                                            | Purpose                                         |
 |-------------------|-------------|----------------------------------------------------------|-------------------------------------------------|
 | installer         | Skill       | Ask any agent: "help me customize hve-core installation" | Install and configure HVE Core for your project |
-| memory            | Agent       | Select **memory** agent                                  | Store persistent preferences and conventions    |
+| Memory            | Agent       | Select **Memory** agent                                  | Store persistent preferences and conventions    |
 | checkpoint        | Prompt      | `/checkpoint`                                            | Save current environment state                  |
 | git-setup         | Prompt      | `/git-setup`                                             | Configure Git settings for the project          |
 | writing-style     | Instruction | Auto-activated on `**/*.md`                              | Enforces voice and tone conventions             |
@@ -64,7 +64,7 @@ and verify agents appear in the Copilot Chat picker.
 /git-setup
 ```
 
-Select **memory** agent:
+Select **Memory** agent:
 
 ```text
 Store my coding conventions: use 4-space indentation for Python, enforce

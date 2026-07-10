@@ -3,7 +3,7 @@ title: AI Artifacts Architecture
 description: Prompt, agent, and instruction delegation model for Copilot customizations
 sidebar_position: 2
 author: Microsoft
-ms.date: 2026-06-10
+ms.date: 2026-07-09
 ms.topic: concept
 ---
 
@@ -49,6 +49,7 @@ Agents (`.agent.md`) define task-specific behaviors with access to Copilot tools
 
 ```yaml
 ---
+name: Task Planner
 description: 'Orchestrates task planning with research integration'
 tools: ['codebase', 'search', 'editFiles', 'changes']
 handoffs:
@@ -177,11 +178,11 @@ Prompts reference agents through the `agent:` frontmatter field:
 ```yaml
 ---
 description: 'Create a pull request with work item linking'
-agent: 'pr-creator'
+agent: 'Task Planner'
 ---
 ```
 
-The referenced agent file (`pr-creator.agent.md`) is typically organized under `.github/agents/{collection-id}/` by convention. When a user invokes the prompt, Copilot activates the specified agent with the prompt's context.
+The value must match the target agent's exact case-sensitive `name:` value. The referenced agent file is typically organized under `.github/agents/{collection-id}/` by convention; its filename may use a lowercase slug. When a user invokes the prompt, Copilot activates the specified agent with the prompt's context.
 
 ### Instruction Glob Patterns
 

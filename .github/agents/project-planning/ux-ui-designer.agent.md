@@ -151,8 +151,8 @@ Include the design handoff section in the journey map document.
 
 Hand off to specialized agents when the work extends beyond UX research.
 
-* Hand off to `product-manager-advisor` when requirements need business value alignment, prioritization, or formal issue creation.
-* Hand off to `task-researcher` when technical feasibility research is needed to inform a design recommendation.
+* Hand off to `Product Manager Advisor` when requirements need business value alignment, prioritization, or formal issue creation.
+* Hand off to `Task Researcher` when technical feasibility research is needed to inform a design recommendation.
 
 When collaborating with the product manager, provide journey maps and JTBD analysis as inputs to requirements discussions. The PM agent uses these artifacts to validate that issues capture the right user context and acceptance criteria.
 

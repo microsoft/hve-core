@@ -12,7 +12,7 @@ tags:
   - agents
   - security
 author: Microsoft
-ms.date: 2026-06-27
+ms.date: 2026-07-09
 ms.topic: concept
 estimated_reading_time: 6
 ---
@@ -82,7 +82,7 @@ The two Phase 6 flags carry distinct semantics: presenting the recommendation se
 In Phase 6, when `raiEnabled` is `true`, the agent:
 
 1. **Summarizes AI/ML findings** from the security analysis, including which buckets contain AI/ML components and what threats were identified against them.
-2. Presents the RAI Planner path: `.github/agents/rai-planning/rai-planner.agent.md`.
+2. Presents a handoff to `RAI Planner`.
 3. **Recommends the `from-security-plan` entry mode**, which allows the RAI Planner to read the completed security plan state as a starting point.
 4. **Sets `securityPlanRef`** to the Security Planner `state.json` path so the RAI `from-security-plan` flow can read fields such as `aiComponents` directly from state rather than from the markdown plan file.
 

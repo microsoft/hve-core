@@ -2,7 +2,7 @@
 title: PRD Planning Workflow
 description: Convert product requirements documents into Azure DevOps work item hierarchies with structured decomposition
 author: Microsoft
-ms.date: 2026-06-26
+ms.date: 2026-07-09
 ms.topic: tutorial
 keywords:
   - azure devops backlog manager
@@ -13,7 +13,7 @@ estimated_reading_time: 4
 sidebar_position: 6
 ---
 
-The PRD Planning workflow converts product requirements documents into Azure DevOps work item hierarchies, decomposing requirements into a three-level structure (Epic > Feature > User Story) that the `@AzDO PRD to WIT` agent supports.
+The PRD Planning workflow converts product requirements documents into Azure DevOps work item hierarchies, decomposing requirements into a three-level structure (Epic > Feature > User Story) that `AzDO PRD to WIT` supports.
 
 ## When to Use
 
@@ -25,17 +25,17 @@ The PRD Planning workflow converts product requirements documents into Azure Dev
 ## What It Does
 
 1. Accepts a PRD, specification, or requirements document as input
-2. Delegates to the `@AzDO PRD to WIT` agent for parsing and decomposition
+2. Delegates to `AzDO PRD to WIT` for parsing and decomposition
 3. Maps requirements to Azure DevOps work item types (Epic, Feature, User Story)
 4. Builds parent-child relationships following the three-level hierarchy
 5. Produces a handoff file with the complete work item hierarchy ready for execution
 
 > [!NOTE]
-> PRD Planning delegates to a specialized agent (`@AzDO PRD to WIT`) that handles the document parsing and hierarchy construction. The ADO Backlog Manager orchestrates the handoff and provides the execution path.
+> PRD Planning delegates to `AzDO PRD to WIT`, which handles the document parsing and hierarchy construction. The ADO Backlog Manager orchestrates the handoff and provides the execution path.
 
 ## Hierarchy Model
 
-The `@AzDO PRD to WIT` agent maps requirements to three work item types based on scope and granularity:
+`AzDO PRD to WIT` maps requirements to three work item types based on scope and granularity:
 
 | Level   | Work Item Type | Typical Scope                          |
 |---------|----------------|----------------------------------------|
@@ -59,7 +59,7 @@ Requirements that span multiple features become Epics. Requirements with clear u
 
 ### Option 1: Handoff Button
 
-Click the "PRD" handoff button in the ADO Backlog Manager agent. This delegates to the `@AzDO PRD to WIT` agent with your document context.
+Click the "PRD" handoff button in `ADO Backlog Manager`. This delegates to `AzDO PRD to WIT` with your document context.
 
 ### Option 2: Direct Reference
 

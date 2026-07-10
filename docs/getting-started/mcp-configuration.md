@@ -3,7 +3,7 @@ title: MCP Server Configuration
 description: Optional configuration for Model Context Protocol servers used by HVE Core agents
 sidebar_position: 7
 author: Microsoft
-ms.date: 2026-06-27
+ms.date: 2026-07-09
 ms.topic: how-to
 keywords:
   - mcp
@@ -43,9 +43,9 @@ Configuring both is unnecessary unless you work across platforms. If you use oth
 |------------------------|--------------------------|---------------------------------|
 | ado-prd-to-wit         | ado, microsoft-docs      | ADO work item creation          |
 | github-backlog-manager | github                   | GitHub backlog management       |
-| task-researcher        | context7, microsoft-docs | Documentation lookup (optional) |
-| task-planner           | context7, microsoft-docs | Documentation lookup (optional) |
-| rpi-agent              | Varies by subagent       | Delegates to specialized agents |
+| Task Researcher        | context7, microsoft-docs | Documentation lookup (optional) |
+| Task Planner           | context7, microsoft-docs | Documentation lookup (optional) |
+| RPI Agent              | Varies by subagent       | Delegates to specialized agents |
 | dt-figma-export        | figma                    | DT artifact export to FigJam    |
 
 Agents without MCP dependencies work without any MCP configuration.

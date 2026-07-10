@@ -3,7 +3,7 @@ title: AI-Assisted Project Lifecycle Overview
 description: Navigate the full AI-assisted engineering lifecycle from setup through operations with HVE Core tooling
 sidebar_position: 1
 author: Microsoft
-ms.date: 2026-06-28
+ms.date: 2026-07-09
 ms.topic: concept
 keywords:
   - ai-assisted project lifecycle
@@ -22,15 +22,15 @@ HVE Core supports a 9-stage project lifecycle, from initial setup through ongoin
 
 | Stage   | Name               | Asset Count | Key Tools                                                                                       | Guide                                       |
 |---------|--------------------|-------------|-------------------------------------------------------------------------------------------------|---------------------------------------------|
-| Stage 1 | Setup              | 3           | hve-core-installer (skill), memory                                                              | [Setup](setup.md)                           |
-| Stage 2 | Discovery          | 14          | task-researcher, brd-builder, security-planner, sssc-planner, rai-planner                       | [Discovery](discovery.md)                   |
-| Stage 3 | Product Definition | 6           | prd-builder, product-manager-advisor, adr-creation, security-planner, sssc-planner, rai-planner | [Product Definition](product-definition.md) |
-| Stage 4 | Decomposition      | 5           | ado-prd-to-wit, github-backlog-manager                                                          | [Decomposition](decomposition.md)           |
-| Stage 5 | Sprint Planning    | 9           | github-backlog-manager, agile-coach                                                             | [Sprint Planning](sprint-planning.md)       |
-| Stage 6 | Implementation     | 30          | task-researcher, task-planner, task-implementor, task-reviewer, rpi-agent, prompt-builder       | [Implementation](implementation.md)         |
-| Stage 7 | Review             | 11          | task-reviewer, code-review                                                                      | [Review](review.md)                         |
+| Stage 1 | Setup              | 3           | hve-core-installer (skill), Memory                                                              | [Setup](setup.md)                           |
+| Stage 2 | Discovery          | 14          | Task Researcher, BRD Builder, Security Planner, SSSC Planner, RAI Planner                       | [Discovery](discovery.md)                   |
+| Stage 3 | Product Definition | 6           | PRD Builder, Product Manager Advisor, ADR Creator, Security Planner, SSSC Planner, RAI Planner | [Product Definition](product-definition.md) |
+| Stage 4 | Decomposition      | 5           | AzDO PRD to WIT, GitHub Backlog Manager                                                        | [Decomposition](decomposition.md)           |
+| Stage 5 | Sprint Planning    | 9           | GitHub Backlog Manager, Agile Coach                                                             | [Sprint Planning](sprint-planning.md)       |
+| Stage 6 | Implementation     | 30          | Task Researcher, Task Planner, Task Implementor, Task Reviewer, RPI Agent, Prompt Builder       | [Implementation](implementation.md)         |
+| Stage 7 | Review             | 11          | Task Reviewer, Code Review                                                                      | [Review](review.md)                         |
 | Stage 8 | Delivery           | 9           | git-merge, ado-get-build-info                                                                   | [Delivery](delivery.md)                     |
-| Stage 9 | Operations         | 11          | documentation, prompt-builder, incident-response                                                | [Operations](operations.md)                 |
+| Stage 9 | Operations         | 11          | Documentation, Prompt Builder, incident-response                                                | [Operations](operations.md)                 |
 
 ## Where Are You?
 

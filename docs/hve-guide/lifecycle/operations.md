@@ -3,7 +3,7 @@ title: "Stage 9: Operations"
 description: Monitor production systems, respond to incidents, and maintain documentation post-delivery
 sidebar_position: 10
 author: Microsoft
-ms.date: 2026-06-26
+ms.date: 2026-07-09
 ms.topic: how-to
 keywords:
   - ai-assisted project lifecycle
@@ -31,8 +31,8 @@ You enter Operations after completing the final sprint delivery in [Stage 8: Del
 
 | Tool           | Type  | How to Invoke                   | Purpose                                          |
 |----------------|-------|---------------------------------|--------------------------------------------------|
-| documentation  | Agent | Select **documentation** agent  | Audit, drift, author, and validate documentation |
-| prompt-builder | Agent | Select **prompt-builder** agent | Refine and optimize operational prompts          |
+| Documentation  | Agent | Select **Documentation** agent  | Audit, drift, author, and validate documentation |
+| Prompt Builder | Agent | Select **Prompt Builder** agent | Refine and optimize operational prompts          |
 
 ### Prompts
 
@@ -78,15 +78,15 @@ Severity 2. Phase is triage.
 
 ### Documentation Maintenance
 
-Select the **documentation** agent and choose the validate or author mode to target a specific scope and focus area:
+Select the **Documentation** agent and choose the validate or author mode to target a specific scope and focus area:
 
 ```text
-Select documentation agent in validate mode. Scope docs, focus accuracy.
+Select Documentation agent in validate mode. Scope docs, focus accuracy.
 ```
 
 For ad-hoc documentation work, select the agent and describe the task directly.
 
-Select **documentation** agent:
+Select **Documentation** agent:
 
 ```text
 Scan docs/getting-started/ for accuracy against current scripts/ and
@@ -108,7 +108,7 @@ duplicate input declarations and consolidate the research scope section
 into a single structured list.
 ```
 
-To create a new prompt from an existing implementation file, select **prompt-builder** agent:
+To create a new prompt from an existing implementation file, select **Prompt Builder** agent:
 
 ```text
 Create a prompt from src/api/handlers/search.py that generates search

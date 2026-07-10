@@ -93,29 +93,30 @@ Focus on agents that:
 
 ### Model Version Requirements
 
-All agents **MUST** target models listed in the model catalog (`scripts/linting/model-catalog.json`). The catalog defines which models are available in GitHub Copilot and which providers are accepted via the `providerAllowlist` field.
+The `model` field is optional. When an agent declares it, every entry **MUST** come from the model catalog (`scripts/linting/model-catalog.json`). The catalog defines which models are available in GitHub Copilot and which providers are accepted via the `providerAllowlist` field.
 
-Accepted: Any model in the catalog whose provider appears in `providerAllowlist` and whose status is `ga` or `preview` (e.g., `Claude Sonnet 4.6 (copilot)`, `GPT-5.4 (copilot)`, `Gemini 2.5 Pro (copilot)`)
+Accepted: Models in the catalog whose provider appears in `providerAllowlist` and whose status is `ga` or `preview`, assembled into one canonical responsibility profile (for example, the Medium profile starts with `GPT-5.6 Terra (copilot)`)
 
 Not Accepted: Models not present in the catalog, models from providers outside the `providerAllowlist`, custom/fine-tuned models, models with `retiring` or `retired` status
 
 ### Model Selection for Subagents
 
-The `model` frontmatter property is **optional**. When omitted, the agent inherits the parent conversation model. Use explicit model selection for cost optimization on subagents that perform read-only or validation tasks:
+The `model` frontmatter property is **optional**. When omitted, a subagent inherits the invoking parent's model; a directly invoked agent uses the current session or model-picker selection. Use explicit model selection when an agent's responsibility calls for a stable reasoning profile. For a mechanical validation subagent, select the Low profile:
 
 ```yaml
-# Subagent that does research (read-only) — use fast-tier model
+# Mechanical validation subagent — use the Low profile
 model:
+  - GPT-5.6 Luna (copilot)
+  - MAI-Code-1-Flash (copilot)
   - Claude Haiku 4.5 (copilot)
-  - GPT-5.4 mini (copilot)
 ```
 
 ```yaml
-# Subagent that writes code — omit model to inherit session model
+# Subagent that writes code — omit model to inherit the invoking parent model
 # (no model property)
 ```
 
-Parent agents can also pass `model` dynamically on `runSubagent` calls via instructions in the agent body. The cost tier constraint means subagent models cannot exceed the parent model's tier.
+The canonical High, Medium, and Low profiles are defined in [AI Artifacts Common Standards](ai-artifacts-common.md#model-name-format). Select a profile from the agent's responsibility; model order is availability fallback only. Parent agents can also pass `model` dynamically on `runSubagent` calls via instructions in the agent body. The cost tier constraint means subagent models cannot exceed the parent model's tier.
 
 Run `npm run lint:models` to validate model references against the catalog.
 
@@ -155,6 +156,14 @@ Agent files MUST:
 
 ### Required Fields
 
+**`name`** (string, MANDATORY)
+
+| Attribute | Details                                                                  |
+|-----------|--------------------------------------------------------------------------|
+| Purpose   | Non-empty, unique human-readable dispatch and display name for the agent |
+| Format    | Exact case-sensitive name used by prompts, fixed subagent lists, handoffs, and execution-facing prose |
+| Example   | `Task Planner`                                                           |
+
 **`description`** (string, MANDATORY)
 
 | Attribute | Details                                                                              |
@@ -165,14 +174,6 @@ Agent files MUST:
 | Example   | `'Validates contributed content for quality and compliance with hve-core standards'` |
 
 ### Optional Fields
-
-**`name`** (string)
-
-| Attribute | Details                                                  |
-|-----------|----------------------------------------------------------|
-| Purpose   | Custom display name for the agent                        |
-| Format    | Lowercase kebab-case matching filename without extension |
-| Default   | File name used if not specified                          |
 
 **`tools`** (array of strings)
 
@@ -217,19 +218,19 @@ The name after `#tool:` matches the tool name as it appears in the `tools:` arra
 
 **`agents`** (array of strings)
 
-| Attribute   | Details                                                                            |
-|-------------|------------------------------------------------------------------------------------|
-| Purpose     | Declares subagent dependencies available to this agent                             |
-| Format      | Array of agent names. Use `*` to allow all agents, or `[]` to prevent subagent use |
-| Requirement | When specified, include the `agent` tool in the `tools` property                   |
+| Attribute   | Details                                                                                             |
+|-------------|-----------------------------------------------------------------------------------------------------|
+| Purpose     | Declares a fixed allowlist of subagents available to this agent                                     |
+| Format      | Array of agent names. Omit for unrestricted access; use `[]` to intentionally prevent subagent use |
+| Requirement | When specified, include the `agent` tool in the `tools` property                                    |
 
-**`model`** (string or array of strings)
+**`model`** (array of strings)
 
-| Attribute | Details                                                                                      |
-|-----------|----------------------------------------------------------------------------------------------|
-| Purpose   | Specifies the AI model for this agent                                                        |
-| Format    | Single model name or prioritized list of models (system tries each in order until available) |
-| Default   | Currently selected model in model picker when omitted                                        |
+| Attribute | Details                                                                                         |
+|-----------|-------------------------------------------------------------------------------------------------|
+| Purpose   | Specifies the responsibility-selected High, Medium, or Low profile                              |
+| Format    | Exact canonical ordered three-model list; the system tries each entry in order until available |
+| Default   | Subagents inherit the invoking parent's model; directly invoked agents use the current session or model-picker selection |
 
 **`user-invocable`** (boolean)
 
@@ -279,7 +280,7 @@ The name after `#tool:` matches the tool name as it appears in the `tools:` arra
 Fields per handoff:
 
 * `label` (string, required): Button text displayed in UI, supports emoji
-* `agent` (string, required): Target agent filename without `.agent.md` extension
+* `agent` (string, required): Target agent's human-readable frontmatter `name:` value, not a filename or slug
 * `prompt` (string, optional): Pre-filled prompt text, can include slash commands
 * `send` (boolean, optional): When true, auto-submits prompt; when false (default), user can edit
 * `model` (string, optional): Language model override for the handoff execution
@@ -307,6 +308,7 @@ Example:
 
 ```yaml
 ---
+name: Content Validation Orchestrator
 description: 'Validates and reviews contributed agents, prompts, and instructions for quality and compliance'
 tools: ['agent', 'read', 'search']
 disable-model-invocation: true
@@ -520,9 +522,12 @@ Before submitting your agent, verify:
 ### Frontmatter
 
 * [ ] Valid YAML between `---` delimiters
+* [ ] `name` is present, non-empty, unique, and used exactly by prompt, fixed-subagent, handoff, and execution-facing references
 * [ ] `description` field present and descriptive (10-200 chars)
 * [ ] `tools` array contains only valid tool names (if present)
 * [ ] `agents` array contains valid subagent names (if present)
+* [ ] `agents` is omitted for unrestricted access; no wildcard string is used
+* [ ] `model` is omitted or matches one exact canonical ordered profile
 * [ ] `user-invocable` and `disable-model-invocation` used correctly (if present)
 * [ ] No trailing whitespace in values
 * [ ] Single newline at EOF

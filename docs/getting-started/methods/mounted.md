@@ -3,7 +3,7 @@ title: Mounted Directory Installation
 description: Advanced devcontainer setup mounting HVE Core from host filesystem
 sidebar_position: 5
 author: Microsoft
-ms.date: 2026-06-11
+ms.date: 2026-07-09
 ms.topic: how-to
 keywords:
   - mounted directory
@@ -114,7 +114,7 @@ Update `.devcontainer/devcontainer.json`:
 ```jsonc
 {
   // ... existing configuration ...
-  
+
   "mounts": [
     "source=${localWorkspaceFolder}/../hve-core,target=/workspaces/hve-core,type=bind,readonly=true,consistency=cached"
   ]
@@ -236,7 +236,7 @@ After rebuild, update `.vscode/settings.json`:
 
 1. Open GitHub Copilot Chat (`Ctrl+Alt+I`)
 2. Click the agent picker dropdown
-3. Verify HVE Core agents appear (task-planner, task-researcher, prompt-builder)
+3. Verify HVE Core agents appear (Task Planner, Task Researcher, Prompt Builder)
 
 #### Verify mount from container terminal
 
@@ -250,11 +250,11 @@ ls /workspaces/hve-core/.github/agents
 {
   "name": "My Project with Mounted HVE Core",
   "image": "mcr.microsoft.com/devcontainers/base:ubuntu",
-  
+
   "mounts": [
     "source=${localWorkspaceFolder}/../hve-core,target=/workspaces/hve-core,type=bind,readonly=true,consistency=cached"
   ],
-  
+
   "customizations": {
     "vscode": {
       "settings": {
