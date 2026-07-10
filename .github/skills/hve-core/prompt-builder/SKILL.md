@@ -50,5 +50,3 @@ Use `prompt-analyze` for a legacy read-only request and `prompt-refactor` for a 
 ## Final Response Contract
 
 Return the mode, targets, changed files, static verdict, behavior-test fidelity and verdict, validation result, overall outcome, evidence links, and next action.
-
-> Brought to you by microsoft/hve-core

@@ -1383,11 +1383,11 @@ stimuli:
   - type: output-matches
     name: lifecycle-gates-reported
     config:
-      pattern: (?is)(static|review).*(behavior|fidelity).*(validat).*(Pass|Revise|Deferred|Blocked)
+      pattern: (?is)(static|review).*(behavior|fidelity).*(validate|validates|validated|validation).*(Pass|Revise|Deferred|Blocked)
   - type: output-matches
     name: no-active-retired-worker-dispatch
     config:
-      pattern: (?i)(?<!not )(?<!never )(?<!without )(dispatch(?:es|ed|ing)?|invoke(?:s|d|ing)?|route(?:s|d|ing)?\s+(?:work\s+)?to|run(?:s|ning)?)\s+(?:the\s+)?(Prompt Tester|Prompt Evaluator|Prompt Updater)
+      pattern: (?i)(?<!not )(?<!never )(?<!without )(dispatch(?:es|ed|ing)?|invoke(?:s|d|ing)?|route(?:s|d|ing)?\s+(?:work\s+)?to|(?:run|runs|running))\s+(?:the\s+)?(Prompt Tester|Prompt Evaluator|Prompt Updater)
       negate: true
   - type: output-matches
     name: overall-outcome-pass

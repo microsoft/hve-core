@@ -1451,7 +1451,7 @@ stimuli:
       - type: output-matches
         name: scope-language
         config:
-          pattern: '(?i)(preserv(e|ing)\s+(behavior|intent)|baseline\s+review|static\s+review|behavior\s+test|validation|outcome)'
+          pattern: '(?i)((?:preserve|preserving)\s+(behavior|intent)|baseline\s+review|static\s+review|behavior\s+test|validation|outcome)'
   - name: skill-prompt-refactor-tool-trigger
     prompt: |
       I have an existing `.prompt.md` file and explicit requirements for

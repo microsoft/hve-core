@@ -51,5 +51,3 @@ Use `prompt-analyze` for read-only follow-up review and `prompt-builder` when th
 ## Final Response Contract
 
 Return targets, changed files, refactor rationale, static verdict, behavior-test fidelity and verdict, validation result, overall outcome, evidence links, and next action.
-
-> Brought to you by microsoft/hve-core

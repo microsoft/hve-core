@@ -79,5 +79,3 @@ After the walkthrough completes, review the captured Requested Changes with the 
 ## Final response
 
 Return a concise summary with the walkthrough file path, the segments covered and the detail level, the count of captured change requests, and a markdown table that links the walkthrough file and its Requested Changes section alongside the recommended next command. Use the Requested Changes section wording in the walkthrough artifact as the anchor for that part of the response.
-
-> Brought to you by microsoft/hve-core

@@ -52,5 +52,3 @@ Recommend `prompt-builder` for approved improvements or `prompt-refactor` for be
 ## Final Response Contract
 
 Return targets, static verdict, behavior-test profile and fidelity, behavior verdict, validation result (`Not requested` unless requested), overall outcome, top findings, report links, and next action.
-
-> Brought to you by microsoft/hve-core

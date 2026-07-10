@@ -118,5 +118,3 @@ Return a concise summary: mode, approved write boundary, source artifacts change
 * [references/review-rubric.md](references/review-rubric.md): the bounded review dimensions, severity scale, and verdict.
 * [references/extending-hve-builder.md](references/extending-hve-builder.md): how a host project extends hve-builder with discoverable instructions, skills, and subagents.
 * `HVE Artifact Explorer`, `HVE Artifact Author`, `HVE Artifact Reviewer`, `HVE Artifact Validator`, and `Researcher Subagent`: the discovery, author-and-review, validation, and research workers this skill dispatches. Testing is delegated to the `hve-builder-tester` skill, which owns `HVE Artifact Test Designer`, `HVE Artifact Tester`, and `HVE Artifact Test Reviewer`.
-
-> Brought to you by microsoft/hve-core

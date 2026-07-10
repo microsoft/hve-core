@@ -909,7 +909,7 @@ stimuli:
       - type: output-matches
         name: scope-language
         config:
-          pattern: "(?i)prompt|refactor|preserv(e|ing)|review|behavior|validation|hve-builder"
+          pattern: "(?i)prompt|refactor|(?:preserve|preserving)|review|behavior|validation|hve-builder"
 
   - name: prompt-pull-request-conformance
     prompt: |

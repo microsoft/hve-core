@@ -57,6 +57,13 @@
             "provider": "Anthropic"
         },
         {
+            "name": "Claude Opus 4.8 (copilot)",
+            "tier": "premium",
+            "multiplier": 15,
+            "status": "ga",
+            "provider": "Anthropic"
+        },
+        {
             "name": "GPT-4.1 (copilot)",
             "tier": "free",
             "multiplier": 0,

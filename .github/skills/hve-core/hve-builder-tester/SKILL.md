@@ -113,5 +113,3 @@ Return a concise summary: artifacts, behavior-gate disposition, profile and mode
 * [references/test-methodology.md](references/test-methodology.md): black-box scenarios, fidelity selection, artifact dispatch, and sandbox conventions.
 * [references/report-format.md](references/report-format.md): the action-category taxonomy, the report structure, and the human-review disclaimer.
 * `HVE Artifact Test Designer`, `HVE Artifact Tester`, and `HVE Artifact Test Reviewer`: the design, execution, and grading workers this skill dispatches.
-
-> Brought to you by microsoft/hve-core
