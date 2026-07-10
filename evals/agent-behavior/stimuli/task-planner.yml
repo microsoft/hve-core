@@ -24,7 +24,7 @@ stimuli:
           negate: true
   - name: task-planner-acceptance-criteria-coverage
     prompt: |
-      Plan the implementation for this GitHub issue. Write the plan under `.copilot-tracking/plans/` and report the path.
+      Plan the implementation for this GitHub issue and report where you saved the plan.
 
       Issue #412 — "Add CSV export to the reports page"
       Acceptance criteria:
@@ -50,6 +50,34 @@ stimuli:
         name: coverage-status-vocab
         config:
           pattern: '(?i)(covered|partial|missing|needs\s+clarification|out\s+of\s+scope)'
+      - type: output-matches
+        name: tracking-file-write
+        config:
+          pattern: '(?i)\.copilot-tracking[-/\\]plans'
+      - type: output-matches
+        name: no-source-edit
+        config:
+          pattern: '(?i)(created|wrote|modified|edited|patched|added)\s+\S{0,40}(\.cs|\.py|\.ts|\.js|package\.json)'
+          negate: true
+  - name: task-planner-ambiguous-acceptance-criterion
+    prompt: |
+      Plan the implementation for this Jira ticket and report where you saved the plan.
+
+      PROJ-88 — "Improve dashboard performance"
+      Acceptance criteria:
+      1. The dashboard initial load feels fast enough on the reports page.
+      2. Performance is noticeably better than before.
+    tags:
+      category: agent-behavior
+    graders:
+      - type: output-matches
+        name: acceptance-criteria-coverage-section
+        config:
+          pattern: '(?i)acceptance\s+criteria\s+coverage'
+      - type: output-matches
+        name: needs-clarification-status
+        config:
+          pattern: '(?i)needs\s+clarification'
       - type: output-matches
         name: tracking-file-write
         config:
