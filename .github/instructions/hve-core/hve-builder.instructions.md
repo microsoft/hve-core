@@ -7,7 +7,7 @@ applyTo: '**/*.prompt.md, **/*.agent.md, **/*.instructions.md, **/SKILL.md'
 
 Authoring standards for prompt-engineering artifacts govern how prompt, agent, subagent, instructions, and skill files are created and maintained. Apply these standards when creating or modifying any of these file types so that the result is outcome-first, routes each fact to the right load timing and authority, delegates deliberately, and is free of retired stale patterns.
 
-The goal is instruction quality for current frontier LLMs across reasoning tiers: an artifact authored to this standard should be followed accurately by high-, mid-, and low-reasoning models. This standard is distilled from the frontier-LLM instruction-quality research at .copilot-tracking/research/2026-07-02/frontier-llm-instruction-quality-research.md and its ranked requirements catalog. That research is research-supported, not runtime-validated, so confirm disputed choices (emphasis wording, example counts, length ceilings) with target-model evaluation.
+The goal is instruction quality for current frontier LLMs across reasoning tiers: an artifact authored to this standard should be followed accurately by high-, mid-, and low-reasoning models. This standard is distilled from frontier-LLM instruction-quality research and its ranked requirements catalog. That research is research-supported, not runtime-validated, so confirm disputed choices (emphasis wording, example counts, length ceilings) with target-model evaluation.
 
 ## Outcome-First Authoring Core
 
@@ -28,14 +28,14 @@ Write every artifact outcome-first. Personality and process serve the outcome; t
 
 A single request often decomposes into several artifact types. Separate responsibilities before authoring, then choose every type needed for activation and load timing. Prefer skills for reusable on-demand capability and subagents for isolated work, but do not force a convention or user entry point into the wrong type because of a universal ranking.
 
-| Responsibility                                                                     | Artifact    | Form                                    | Activation                                  |
-|------------------------------------------------------------------------------------|-------------|-----------------------------------------|---------------------------------------------|
-| Reusable workflow, domain knowledge, references, templates, or scripts             | Skill       | `SKILL.md` in `.github/skills/<skill>/` | Semantic description match or `/skill-name` |
-| Isolated, high-volume, parallel, fresh-context, mechanical, or model-specific work | Subagent    | `.agent.md` under a `subagents/` folder | Parent dispatch by stable `name`            |
-| Convention that applies whenever matching paths are edited                         | Instruction | `.instructions.md`                      | Automatic `applyTo` match                   |
-| User-selected multi-turn role or bounded autonomous workflow                       | Agent       | `.agent.md`                             | Agent picker or handoff                     |
-| Repeatable, parameterized user entry point                                         | Prompt      | `.prompt.md`                            | Slash invocation                            |
-| Concrete action capability                                                         | Tool        | VS Code or MCP registration             | Agent `tools:` frontmatter                  |
+| Responsibility                                                                     | Artifact    | Form                              | Activation                                  |
+|------------------------------------------------------------------------------------|-------------|-----------------------------------|---------------------------------------------|
+| Reusable workflow, domain knowledge, references, templates, or scripts             | Skill       | `.github/skills/<skill>/SKILL.md` | Semantic description match or `/skill-name` |
+| Isolated, high-volume, parallel, fresh-context, mechanical, or model-specific work | Subagent    | `.agent.md`                       | Parent dispatch by stable `name`            |
+| Convention that applies whenever matching paths are edited                         | Instruction | `.instructions.md`                | Automatic `applyTo` match                   |
+| User-selected multi-turn role or bounded autonomous workflow                       | Agent       | `.agent.md`                       | Agent picker or handoff                     |
+| Repeatable, parameterized user entry point                                         | Prompt      | `.prompt.md`                      | Slash invocation                            |
+| Concrete action capability                                                         | Tool        | VS Code or MCP registration       | Agent `tools:` frontmatter                  |
 
 ### Guiding Questions
 
@@ -95,13 +95,12 @@ Skills are self-contained, relocatable packages that bundle on-demand knowledge 
 * Store templates as referenced assets, not prose pasted into the body.
 * Skill frontmatter must not declare `tools`, `model`, `agent`, `handoffs`, or `applyTo`; those belong to agents, prompts, or instructions. For skill-forward work, keep the body compact and dispatch existing subagents for tool, model, and isolation concerns instead of duplicating a full workflow.
 * Reference resources by paths relative to the skill root, never repo-root-relative, so the package stays portable across repository, plugin, and extension distributions.
-* Source skill bodies omit repository attribution footers.
 
 Playbook-style skills that delegate execution to subagents use this section order: Title, Goal, Flow, Inputs, Success criteria, Constraints, Stop rules, Handoff, and a final response contract when the caller needs a specific summary shape.
 
 ### Subagents
 
-*Extension*: `.agent.md`, typically under a `subagents/` folder in the collection.
+*Extension*: `.agent.md`. A subagent uses the same artifact format as an agent; its dispatch role does not require a directory convention.
 
 Subagents execute specialized, isolated, or parallelizable work on behalf of a parent agent or skill.
 
@@ -114,9 +113,9 @@ Subagents execute specialized, isolated, or parallelizable work on behalf of a p
 * Set `user-invocable: false` for background-only subagents. Parent agents with a fixed subagent set declare dependencies in `agents:` by the subagent's `name:` value. Omit `agents:` for unrestricted subagent access; use an explicit array for a fixed allowlist, including `[]` when no subagent is allowed.
 * `model:` is optional for subagents. Omit it to inherit the invoking parent's model. When a stable profile is needed, select High, Medium, or Low from the responsibility and declare that profile's exact ordered three-model list. The order is an availability fallback within the selected profile, not a substitute for profile selection. When the parent intentionally chooses the profile per dispatch, document the bounded override rule.
 * Subagents do not run their own subagents unless the harness supports nested calls; otherwise the parent orchestrates.
-* Include a Response Format section. Use the Compact Pointer format for read-only or analysis subagents that write findings to a `.copilot-tracking/` artifact and return an executive summary, and the Structured Template format for subagents that modify workspace files.
+* Include a Response Format section. Use the Compact Pointer format for read-only or analysis subagents that write findings to an evidence artifact and return an executive summary, and the Structured Template format for subagents that modify workspace files.
 
-Follow the canonical subagent section pattern: an H1 matching the name, Purpose, Inputs, a named output artifact, Required Steps (with a Pre-requisite setup and numbered steps), an optional Required Protocol when there are execution constraints, a File Reference Formatting section when the subagent writes into `.copilot-tracking/`, and a Response Format.
+Follow the canonical subagent section pattern: an H1 matching the name, Purpose, Inputs, a named output artifact, Required Steps (with a Pre-requisite setup and numbered steps), an optional Required Protocol when there are execution constraints, a File Reference Formatting section when the subagent writes into a tracking or evidence artifact, and a Response Format.
 
 ### Instruction Files
 
@@ -168,7 +167,7 @@ Prompts are single-session workflows a user invokes and Copilot executes to comp
 
 * Refer to a skill, agent, subagent, or prompt by the `name:` value from its frontmatter wrapped in backticks (for example, run `HVE Artifact Tester` or route to the `hve-builder` skill), not by a hard-coded path.
 * Instruction files have no `name:`, so refer to them by their full `<name>.instructions.md` filename, naming the specific section when only part applies.
-* Reserve file paths for a skill's own bundled resources (relative to its root), for `.copilot-tracking/` output locations, and for frontmatter wiring such as `agents:`, `agent:`, and `applyTo`.
+* Reserve file paths for a skill's own bundled resources (relative to its root), for caller-defined tracking or evidence output locations, and for frontmatter wiring such as `agents:`, `agent:`, and `applyTo`.
 * Never hard-code a skill's `SKILL.md` path to load it; the skill root differs across distributions. Name the skill and let progressive disclosure load it.
 
 ## Tool Schemas and Structured Outputs
@@ -200,7 +199,7 @@ Treat tool and output schemas as first-class prompts; the interface between the 
 * Write with proper grammar and formatting in a clear, professional, guidance voice; use imperative voice for subagent action steps.
 * Use `*` for grouping lists and `1.` for sequential steps, and let a section heading provide context so lists need no title instruction.
 * Use bold only to draw a human reader's attention to a key concept, and italics only when introducing a new concept, file name, or technical term.
-* Follow the surface rule for paths: references written into `.copilot-tracking/` artifact content use plain-text workspace-relative paths with no backticks, links, or `#file:`; in-conversation responses to the user use markdown links.
+* Follow the surface rule for paths: references written into generated tracking or evidence artifacts use plain-text workspace-relative paths with no backticks, links, or `#file:`; in-conversation responses to the user use markdown links.
 * Follow the conventions in `writing-style.instructions.md` for voice, tone, and language.
 
 Avoid these patterns:

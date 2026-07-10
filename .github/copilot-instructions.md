@@ -74,6 +74,18 @@ Scripts are organized by function:
 
 By convention, skills are self-contained packages organized under `.github/skills/{collection-id}/{skill-name}/`. Each skill folder contains a `SKILL.md` file with domain-specific instructions, and may include other markdown files that are referenced by `SKILL.md` along with `scripts/`, `references/`, `assets/`, or other subdirectories.
 
+### Cross-Kind Artifact References
+
+Generic authoring guidance uses portable paths such as `.github/skills/<skill>/SKILL.md` and does not assume a collection directory. HVE-Core packaging may add a `{collection-id}` layer as an optional host packaging convention.
+
+When a prompt, agent, or instruction uses `#file:`:
+
+* Resolve the path relative to the containing file, not the workspace root.
+* Preserve the original artifact suffix, such as `.instructions.md`, `.agent.md`, or `.prompt.md`.
+* Use relative paths; do not use absolute paths or a `.github/` prefix. Plugin and extension packaging strip `.github/` while preserving relative depth between artifact-kind directories.
+* For example, from `.github/agents/{collection-id}/`, a same-collection instruction target uses `#file:../../instructions/{collection-id}/name.instructions.md`.
+* Keep a cross-kind target in the same collection manifest as the referencing artifact.
+
 ### Documentation Structure
 
 * HVE Guide (`docs/hve-guide/`) - Project lifecycle stages and role-specific guides.
