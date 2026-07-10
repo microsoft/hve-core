@@ -3,7 +3,7 @@ title: Contributing Skills to HVE Core
 description: Requirements and standards for contributing skill packages to hve-core
 sidebar_position: 6
 author: Microsoft
-ms.date: 2026-06-30
+ms.date: 2026-07-10
 ms.topic: how-to
 keywords:
   - skills
@@ -58,6 +58,7 @@ Skill files are typically organized in a collection subdirectory by convention:
 ```text
 .github/skills/{collection-id}/<skill-name>/
 ├── SKILL.md                    # Main skill definition (required)
+├── SECURITY.md                 # Required for skills with executable runtimes (network, credentials, subprocess, untrusted parsing); see [Skill Security Models](../security/security-model.md#skill-security-models)
 ├── scripts/                    # Executable scripts or Python package entry points (optional)
 │   ├── <pkg>/                  # Python package directory (optional for Python skills)
 │   │   └── __init__.py
@@ -86,6 +87,18 @@ The `scripts/` directory is **optional**. When present, it **MUST** contain at l
 * Main definition file MUST be named `SKILL.md`
 * Script names should describe their action: `convert.sh`, `validate.ps1`
 * Only recognized subdirectories are allowed: `scripts`, `references`, `assets`, `examples`, `tests`, `templates` (the `tests` directory is excluded from extension and CLI outputs)
+
+## Skill Security Model
+
+Skills that include executable runtimes (network egress, credential handling, subprocess execution, or untrusted content parsing) **MUST** include a `SECURITY.md` next to `SKILL.md`.
+
+Authoring guidance:
+
+* Template: [`docs/templates/skill-security-model-template.md`](../templates/skill-security-model-template.md)
+* Instructions: [`.github/instructions/skill-security-model.instructions.md`](../../.github/instructions/skill-security-model.instructions.md)
+* Controls model: [Skill Security Models](../security/security-model.md#skill-security-models)
+
+When `SECURITY.md` is present, `npm run validate:skills` validates its required heading structure.
 
 ## Frontmatter Requirements
 
@@ -434,6 +447,7 @@ Python skill scripts require pytest:
 * Configure pytest and ruff in a `pyproject.toml` at the skill root
 * When a Python skill has a `tests/` directory, `[tool.ruff.lint].select` in `pyproject.toml` MUST include `"I"` so isort enforcement is active for test files
 * Commit `uv.lock` alongside `pyproject.toml` at the skill root so Dependabot can resolve and patch Python dependencies under `.github/skills/**`
+* `npm run validate:skills` enforces `SECURITY.md` heading structure via `Test-SecurityModelStructure` when the file is present (required for skills with executable runtimes)
 * `npm run validate:skills` warns when `pyproject.toml` is present without `uv.lock`, and it fails when the validation run is executed with `-WarningsAsErrors`
 
 ### Fuzz Harness (Python Skills)
