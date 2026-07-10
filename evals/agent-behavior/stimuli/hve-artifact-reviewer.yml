@@ -1,34 +1,26 @@
 # Copyright (c) 2026 Microsoft Corporation. All rights reserved.
 # SPDX-License-Identifier: MIT
 stimuli:
-  - name: hve-artifact-reviewer-outcome-gap
-    prompt: |
-      As the HVE Artifact Reviewer, independently assess this complete artifact
-      text against a requirement to produce exactly three bullets:
-
-      "You are a helpful assistant. Summarize the input."
-
-      Keep the source unchanged. Use exactly one review verdict from Pass,
-      Revise, or Blocked, then return one bounded finding with its quality
-      dimension, severity, location, violated rule, and smallest resolving
-      change.
-
-      Apply these public decision rules: an unmet explicit output contract is a
-      High finding and yields Revise. Use Blocked only when target content,
-      criteria, or intent is insufficient to assess.
+  - name: hve-artifact-reviewer-first-instruction-issue
+    prompt: As the HVE Artifact Reviewer, review the first `copilot-instructions.md` or `AGENTS.md` file you find and return immediately after the first issue with its severity and smallest fix.
+    environment:
+      files:
+        - src: fixtures/hve-artifact-copilot-instructions.md
+          dest: .github/copilot-instructions.md
     tags:
       category: agent-behavior
       advisory: "true"
     graders:
       - type: output-matches
-        name: revise-verdict
+        name: yaml-indentation-issue
         config:
-          pattern: '(?i)\bRevise\b'
+          pattern: '(?is)(?=.*\b(?:finding|issue|problem|violation)\b)(?=.*\b(?:YAML|tab|indentation)\b)'
       - type: output-matches
-        name: traceable-finding
+        name: severity-and-fix
         config:
-          pattern: '(?is)(?=.*(?:dimension|outcome|structure))(?=.*(?:Critical|High|Medium|Low|severity))(?=.*(?:location|artifact))'
+          pattern: '(?is)(?=.*\b(?:Critical|High|Medium|Low|severity)\b)(?=.*\b(?:fix|change|replace|spaces|recommendation|remediation)\b)'
       - type: output-matches
-        name: smallest-resolving-change
+        name: no-second-finding
         config:
-          pattern: '(?i)(smallest\s+(resolving\s+)?change|exactly\s+three\s+bullets|explicit\s+(output|success))'
+          pattern: '(?im)^\s*(?:#{1,6}\s*)?(?:finding|issue)\s*2\b'
+          negate: true

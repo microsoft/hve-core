@@ -1,37 +1,25 @@
 # Copyright (c) 2026 Microsoft Corporation. All rights reserved.
 # SPDX-License-Identifier: MIT
 stimuli:
-  - name: hve-artifact-test-designer-black-box-coverage
-    prompt: |
-      As the HVE Artifact Test Designer, design but do not execute one isolation
-      scenario and one together scenario for a summarizer and its companion
-      output-format instruction. Their public contract accepts text and returns
-      exactly three bullets. Return status, black-box prompts, targeted
-      behaviors, observable success signals, omitted coverage, and the
-      black-box self-check.
-
-      Apply these public decision rules: return Complete when the scenarios and
-      coverage expectations are ready, Partial only when a contracted behavior
-      cannot be exercised, and Blocked only when the purpose, contract, or
-      target set is ambiguous. A black-box prompt must omit artifact names,
-      paths, internal headings, step numbers, test framing, and answer keys.
+  - name: hve-artifact-test-designer-instruction-scenario
+    prompt: As the HVE Artifact Test Designer, design one black-box isolation scenario for the first `copilot-instructions.md` or `AGENTS.md` file you find, write `test-design.md` under `.copilot-tracking/sandbox/`, and immediately return using your response template without executing it.
+    environment:
+      files:
+        - src: fixtures/hve-artifact-copilot-instructions.md
+          dest: .github/copilot-instructions.md
     tags:
       category: agent-behavior
       advisory: "true"
     graders:
       - type: output-matches
-        name: design-status
+        name: design-log-path
         config:
-          pattern: '(?i)\bComplete\b'
+          pattern: '(?i)\.copilot-tracking[/\\]sandbox[/\\].*test-design\.md'
       - type: output-matches
-        name: isolation-and-together
+        name: black-box-isolation-scenario
         config:
-          pattern: '(?is)(?=.*\bisolation\b)(?=.*\btogether\b)'
+          pattern: '(?is)(?=.*\b(?:black[- ]box|isolation)\b)(?=.*\bscenario\b)'
       - type: output-matches
-        name: observable-success
+        name: design-only
         config:
-          pattern: '(?i)(observable\s+(success|outcome|signal)|success\s+signal)'
-      - type: output-matches
-        name: black-box-check
-        config:
-          pattern: '(?i)(black[- ]box|omitted\s+coverage|do\s+not\s+execute)'
+          pattern: '(?i)(?:not\s+(?:executed|run)|design(?:ed)?\s+only|did\s+not\s+execute|without\s+executing)'

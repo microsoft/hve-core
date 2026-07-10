@@ -1,33 +1,26 @@
 # Copyright (c) 2026 Microsoft Corporation. All rights reserved.
 # SPDX-License-Identifier: MIT
 stimuli:
-  - name: hve-artifact-explorer-ranked-reuse
-    prompt: |
-      As the HVE Artifact Explorer, describe the bounded discovery result for a
-      request to reuse prompt-engineering artifacts for independent artifact
-      review. Assume the target and purpose are unambiguous, every artifact
-      convention was searchable, and at least one related candidate was found.
-      Return ranked candidates with type and relatedness, suggest a reuse
-      disposition for each, mention search coverage or near-misses, and
-      preserve the read-only source boundary.
-
-      Apply these public decision rules: return Complete when the candidate set
-      is ranked and coverage is recorded, Partial only when a required search
-      surface is unavailable, and Blocked only when target or purpose is too
-      ambiguous to judge relatedness.
+  - name: hve-artifact-explorer-instruction-discovery
+    prompt: As the HVE Artifact Explorer, find and return the paths of any `copilot-instructions.md` or `AGENTS.md` files in the repository without modifying files.
+    environment:
+      files:
+        - src: fixtures/hve-artifact-copilot-instructions.md
+          dest: .github/copilot-instructions.md
     tags:
       category: agent-behavior
       advisory: "true"
     graders:
       - type: output-matches
-        name: discovery-status
+        name: instruction-file-result
         config:
-          pattern: '(?i)\bComplete\b'
+          pattern: '(?i)(?:copilot-instructions|AGENTS)\.md'
       - type: output-matches
-        name: ranked-relatedness
+        name: repository-path
         config:
-          pattern: '(?is)(?=.*(?:rank|candidate))(?=.*(?:related|relevance))'
+          pattern: '(?i)\.github[/\\](?:copilot-instructions|AGENTS)\.md'
       - type: output-matches
-        name: read-only-boundary
+        name: no-source-edit
         config:
-          pattern: '(?i)(read[- ]only|no\s+(source\s+)?edits|does\s+not\s+modify|unchanged)'
+          pattern: '(?i)(created|wrote|modified|edited|patched|added)\s+\S{0,80}(?:copilot-instructions|AGENTS)\.md'
+          negate: true

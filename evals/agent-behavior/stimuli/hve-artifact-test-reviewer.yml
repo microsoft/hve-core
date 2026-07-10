@@ -1,37 +1,21 @@
 # Copyright (c) 2026 Microsoft Corporation. All rights reserved.
 # SPDX-License-Identifier: MIT
 stimuli:
-  - name: hve-artifact-test-reviewer-evidence-gap
-    prompt: |
-      As the HVE Artifact Test Reviewer, treat these facts as the complete
-      finalized simulation evidence: the contract requires exactly three
-      bullets, the design covers that requirement, and observation 2 records
-      only two bullets. No files or additional artifacts are needed. Use one
-      verdict from Pass, Revise, or Blocked and one action category from
-      improvement, adjustment, deletion, correction, or miss. Return the
-      finding with its mapped dimension, simulated evidence class, severity,
-      evidence pointer, and smallest resolving change.
-
-      Apply these public decision rules: a material contracted-behavior miss is
-      High, uses action category miss, and yields Revise. Grade only claims
-      supported by simulation; do not promote them to native-runtime evidence.
+  - name: hve-artifact-test-reviewer-first-instruction-finding
+    prompt: As the HVE Artifact Test Reviewer, review simulation evidence where valid YAML was required but observation 1 used tab indentation, then return only the first finding with its severity and smallest fix.
     tags:
       category: agent-behavior
       advisory: "true"
     graders:
       - type: output-matches
-        name: revise-verdict
+        name: yaml-indentation-finding
         config:
-          pattern: '(?i)\bRevise\b'
+          pattern: '(?is)(?=.*\b(?:finding|issue|invalid)\b)(?=.*\b(?:tab|indentation|YAML)\b)'
       - type: output-matches
-        name: action-category
+        name: severity
         config:
-          pattern: '(?i)\b(improvement|adjustment|deletion|correction|miss)\b'
+          pattern: '(?i)\b(?:Blocker|Critical|Major|High|Medium|Low|severity|Fail)\b'
       - type: output-matches
-        name: fidelity-aware-evidence
+        name: smallest-fix
         config:
-          pattern: '(?is)(?=.*(?:simulated|simulation))(?=.*(?:observation\s*2|evidence\s+pointer))'
-      - type: output-matches
-        name: resolving-change
-        config:
-          pattern: '(?i)(smallest\s+(resolving\s+)?change|exactly\s+three\s+bullets)'
+          pattern: '(?i)(?:replace.{0,30}tabs?.{0,20}spaces|use\s+spaces|revalidat(?:e|ion)|recommendation|remediation|smallest\s+(?:resolving\s+)?(?:change|fix))'

@@ -924,240 +924,161 @@ stimuli:
     config:
       pattern: (?i)(created|wrote|modified|edited|patched|added)\s+\S{0,40}(\.cs|\.py|\.ts|\.js|package\.json)
       negate: true
-- name: hve-artifact-author-write-boundary
-  prompt: |
-    As the HVE Artifact Author, handle an improve dispatch whose approved
-    write boundary contains only `sample.prompt.md` and its author log. You
-    determine that the requirement instead needs a new, unapproved
-    `helper.instructions.md`. Do not edit files. Use the worker's Complete,
-    Partial, or Blocked status vocabulary, then explain the boundary decision,
-    state what belongs in the author log, and identify the approval or
-    clarification needed to continue.
-
-    Apply these public decision rules: return Partial before editing when the
-    architecture requires a different artifact type, a split, or an
-    out-of-bound support artifact that the caller has not approved. Reserve
-    Blocked for requirements that conflict with safety, protected paths, or
-    each other.
+- name: hve-artifact-author-yaml-instructions
+  prompt: As the HVE Artifact Author, create a brief `.copilot-tracking/sandbox/yaml.instructions.md` file with basic instructions for making valid `.yml` files, then return Complete with the path and a short summary.
   tags:
     category: agent-behavior
     advisory: "true"
     agent: hve-artifact-author
   graders:
   - type: output-matches
-    name: partial-status
+    name: complete-status
     config:
-      pattern: (?i)\bPartial\b
+      pattern: (?i)\bComplete\b
   - type: output-matches
-    name: write-boundary-preserved
+    name: sandbox-instruction-write
     config:
-      pattern: (?i)(write\s+boundary|outside\s+(the\s+)?approved|out[- ]of[- ]bound|unapproved)
+      pattern: (?i)\.copilot-tracking[/\\]sandbox[/\\]yaml\.instructions\.md
   - type: output-matches
-    name: author-log-and-approval
+    name: yaml-guidance-summary
     config:
-      pattern: (?is)(?=.*author\s+log)(?=.*(?:approval|approve|clarif))
-- name: hve-artifact-explorer-ranked-reuse
-  prompt: |
-    As the HVE Artifact Explorer, describe the bounded discovery result for a
-    request to reuse prompt-engineering artifacts for independent artifact
-    review. Assume the target and purpose are unambiguous, every artifact
-    convention was searchable, and at least one related candidate was found.
-    Return ranked candidates with type and relatedness, suggest a reuse
-    disposition for each, mention search coverage or near-misses, and
-    preserve the read-only source boundary.
-
-    Apply these public decision rules: return Complete when the candidate set
-    is ranked and coverage is recorded, Partial only when a required search
-    surface is unavailable, and Blocked only when target or purpose is too
-    ambiguous to judge relatedness.
+      pattern: (?is)(?=.*\b(?:YAML|yml)\b)(?=.*\b(?:indent(?:ation)?|key|value|mapping|sequence|list|syntax|validat(?:e|ion))\b)
+- name: hve-artifact-explorer-instruction-discovery
+  prompt: As the HVE Artifact Explorer, find and return the paths of any `copilot-instructions.md` or `AGENTS.md` files in the repository without modifying files.
+  environment:
+    files:
+    - src: fixtures/hve-artifact-copilot-instructions.md
+      dest: .github/copilot-instructions.md
   tags:
     category: agent-behavior
     advisory: "true"
     agent: hve-artifact-explorer
   graders:
   - type: output-matches
-    name: discovery-status
+    name: instruction-file-result
     config:
-      pattern: (?i)\bComplete\b
+      pattern: (?i)(?:copilot-instructions|AGENTS)\.md
   - type: output-matches
-    name: ranked-relatedness
+    name: repository-path
     config:
-      pattern: (?is)(?=.*(?:rank|candidate))(?=.*(?:related|relevance))
+      pattern: (?i)\.github[/\\](?:copilot-instructions|AGENTS)\.md
   - type: output-matches
-    name: read-only-boundary
+    name: no-source-edit
     config:
-      pattern: (?i)(read[- ]only|no\s+(source\s+)?edits|does\s+not\s+modify|unchanged)
-- name: hve-artifact-reviewer-outcome-gap
-  prompt: |
-    As the HVE Artifact Reviewer, independently assess this complete artifact
-    text against a requirement to produce exactly three bullets:
-
-    "You are a helpful assistant. Summarize the input."
-
-    Keep the source unchanged. Use exactly one review verdict from Pass,
-    Revise, or Blocked, then return one bounded finding with its quality
-    dimension, severity, location, violated rule, and smallest resolving
-    change.
-
-    Apply these public decision rules: an unmet explicit output contract is a
-    High finding and yields Revise. Use Blocked only when target content,
-    criteria, or intent is insufficient to assess.
+      pattern: (?i)(created|wrote|modified|edited|patched|added)\s+\S{0,80}(?:copilot-instructions|AGENTS)\.md
+      negate: true
+- name: hve-artifact-reviewer-first-instruction-issue
+  prompt: As the HVE Artifact Reviewer, review the first `copilot-instructions.md` or `AGENTS.md` file you find and return immediately after the first issue with its severity and smallest fix.
+  environment:
+    files:
+    - src: fixtures/hve-artifact-copilot-instructions.md
+      dest: .github/copilot-instructions.md
   tags:
     category: agent-behavior
     advisory: "true"
     agent: hve-artifact-reviewer
   graders:
   - type: output-matches
-    name: revise-verdict
+    name: yaml-indentation-issue
     config:
-      pattern: (?i)\bRevise\b
+      pattern: (?is)(?=.*\b(?:finding|issue|problem|violation)\b)(?=.*\b(?:YAML|tab|indentation)\b)
   - type: output-matches
-    name: traceable-finding
+    name: severity-and-fix
     config:
-      pattern: (?is)(?=.*(?:dimension|outcome|structure))(?=.*(?:Critical|High|Medium|Low|severity))(?=.*(?:location|artifact))
+      pattern: (?is)(?=.*\b(?:Critical|High|Medium|Low|severity)\b)(?=.*\b(?:fix|change|replace|spaces|recommendation|remediation)\b)
   - type: output-matches
-    name: smallest-resolving-change
+    name: no-second-finding
     config:
-      pattern: (?i)(smallest\s+(resolving\s+)?change|exactly\s+three\s+bullets|explicit\s+(output|success))
-- name: hve-artifact-test-designer-black-box-coverage
-  prompt: |
-    As the HVE Artifact Test Designer, design but do not execute one isolation
-    scenario and one together scenario for a summarizer and its companion
-    output-format instruction. Their public contract accepts text and returns
-    exactly three bullets. Return status, black-box prompts, targeted
-    behaviors, observable success signals, omitted coverage, and the
-    black-box self-check.
-
-    Apply these public decision rules: return Complete when the scenarios and
-    coverage expectations are ready, Partial only when a contracted behavior
-    cannot be exercised, and Blocked only when the purpose, contract, or
-    target set is ambiguous. A black-box prompt must omit artifact names,
-    paths, internal headings, step numbers, test framing, and answer keys.
+      pattern: (?im)^\s*(?:#{1,6}\s*)?(?:finding|issue)\s*2\b
+      negate: true
+- name: hve-artifact-test-designer-instruction-scenario
+  prompt: As the HVE Artifact Test Designer, design one black-box isolation scenario for the first `copilot-instructions.md` or `AGENTS.md` file you find, write `test-design.md` under `.copilot-tracking/sandbox/`, and immediately return using your response template without executing it.
+  environment:
+    files:
+    - src: fixtures/hve-artifact-copilot-instructions.md
+      dest: .github/copilot-instructions.md
   tags:
     category: agent-behavior
     advisory: "true"
     agent: hve-artifact-test-designer
   graders:
   - type: output-matches
-    name: design-status
+    name: design-log-path
     config:
-      pattern: (?i)\bComplete\b
+      pattern: (?i)\.copilot-tracking[/\\]sandbox[/\\].*test-design\.md
   - type: output-matches
-    name: isolation-and-together
+    name: black-box-isolation-scenario
     config:
-      pattern: (?is)(?=.*\bisolation\b)(?=.*\btogether\b)
+      pattern: (?is)(?=.*\b(?:black[- ]box|isolation)\b)(?=.*\bscenario\b)
   - type: output-matches
-    name: observable-success
+    name: design-only
     config:
-      pattern: (?i)(observable\s+(success|outcome|signal)|success\s+signal)
-  - type: output-matches
-    name: black-box-check
-    config:
-      pattern: (?i)(black[- ]box|omitted\s+coverage|do\s+not\s+execute)
-- name: hve-artifact-test-reviewer-evidence-gap
-  prompt: |
-    As the HVE Artifact Test Reviewer, treat these facts as the complete
-    finalized simulation evidence: the contract requires exactly three
-    bullets, the design covers that requirement, and observation 2 records
-    only two bullets. No files or additional artifacts are needed. Use one
-    verdict from Pass, Revise, or Blocked and one action category from
-    improvement, adjustment, deletion, correction, or miss. Return the
-    finding with its mapped dimension, simulated evidence class, severity,
-    evidence pointer, and smallest resolving change.
-
-    Apply these public decision rules: a material contracted-behavior miss is
-    High, uses action category miss, and yields Revise. Grade only claims
-    supported by simulation; do not promote them to native-runtime evidence.
+      pattern: (?i)(?:not\s+(?:executed|run)|design(?:ed)?\s+only|did\s+not\s+execute|without\s+executing)
+- name: hve-artifact-test-reviewer-first-instruction-finding
+  prompt: As the HVE Artifact Test Reviewer, review simulation evidence where valid YAML was required but observation 1 used tab indentation, then return only the first finding with its severity and smallest fix.
   tags:
     category: agent-behavior
     advisory: "true"
     agent: hve-artifact-test-reviewer
   graders:
   - type: output-matches
-    name: revise-verdict
+    name: yaml-indentation-finding
     config:
-      pattern: (?i)\bRevise\b
+      pattern: (?is)(?=.*\b(?:finding|issue|invalid)\b)(?=.*\b(?:tab|indentation|YAML)\b)
   - type: output-matches
-    name: action-category
+    name: severity
     config:
-      pattern: (?i)\b(improvement|adjustment|deletion|correction|miss)\b
+      pattern: (?i)\b(?:Blocker|Critical|Major|High|Medium|Low|severity|Fail)\b
   - type: output-matches
-    name: fidelity-aware-evidence
+    name: smallest-fix
     config:
-      pattern: (?is)(?=.*(?:simulated|simulation))(?=.*(?:observation\s*2|evidence\s+pointer))
-  - type: output-matches
-    name: resolving-change
-    config:
-      pattern: (?i)(smallest\s+(resolving\s+)?change|exactly\s+three\s+bullets)
-- name: hve-artifact-tester-unresolved-target
-  prompt: |
-    As the HVE Artifact Tester, handle a run state that supplies the Low
-    profile, model `gpt-5.6-luna`, simulation fidelity, and a sandbox path,
-    but no target artifact name, path, purpose, isolation set, or together
-    set. Searching cannot distinguish a target. Do not invent an artifact or
-    fabricate behavior evidence. Use the Complete, Partial, or Blocked
-    execution-status vocabulary and return the appropriate status, reason,
-    fidelity, missing input, and clarification needed to continue.
-    Repeat the supplied Low profile, `gpt-5.6-luna` model, and simulation
-    fidelity explicitly in the response.
-
-    Apply these public decision rules: unresolved target identity requires
-    Blocked before any action. Use Partial only after useful evidence exists,
-    and Complete only after every supplied scenario and coverage are recorded.
+      pattern: (?i)(?:replace.{0,30}tabs?.{0,20}spaces|use\s+spaces|revalidat(?:e|ion)|recommendation|remediation|smallest\s+(?:resolving\s+)?(?:change|fix))
+- name: hve-artifact-tester-instruction-simulation
+  prompt: As the HVE Artifact Tester, simulate one request to create a two-key `.yml` file using the first `copilot-instructions.md` or `AGENTS.md` file you find, keep writes under `.copilot-tracking/sandbox/`, and return Complete, Partial, or Blocked with the result path.
+  environment:
+    files:
+    - src: fixtures/hve-artifact-copilot-instructions.md
+      dest: .github/copilot-instructions.md
   tags:
     category: agent-behavior
     advisory: "true"
     agent: hve-artifact-tester
   graders:
   - type: output-matches
-    name: blocked-status
+    name: sandbox-result
     config:
-      pattern: (?i)\bBlocked\b
+      pattern: (?i)\.copilot-tracking[/\\]sandbox[/\\]\S+\.ya?ml\b
   - type: output-matches
-    name: unresolved-target
+    name: execution-summary
     config:
-      pattern: (?is)(?=.*target)(?=.*(?:unresolved|cannot\s+be\s+(?:uniquely\s+)?identified|cannot\s+distinguish|missing\s+(?:required\s+)?input|no\s+(?:specific\s+)?target))
+      pattern: (?i)\b(?:Complete|Partial|Blocked)\b
   - type: output-matches
-    name: fidelity-disclosure
+    name: yaml-result
     config:
-      pattern: (?is)(?=.*(?:Low|gpt-5\.6-luna))(?=.*(?:simulation|fidelity))
-  - type: output-matches
-    name: clarification-request
-    config:
-      pattern: (?is)(clarif|provide|need|to\s+continue).*(artifact|target|path|name|purpose|isolation|together)
-- name: hve-artifact-validator-deferred-check
-  prompt: |
-    As the HVE Artifact Validator, the host requires
-    `npm run lint:frontmatter` for `sample.agent.md`, but command execution is
-    unavailable. Do not run commands or mutate files. Return the per-check
-    result and overall status, the exact command, the deferral reason, the
-    rerun condition, and whether the source remained unchanged.
-
-    Apply these public decision rules: a required check that cannot run is
-    Deferred with a rerun condition, not Pass or Fail. Pass requires every
-    applicable check to run successfully; Fail requires a check failure or an
-    unexpected source mutation.
+      pattern: (?i)\b(?:YAML|yml)\b
+- name: hve-artifact-validator-first-instruction-check
+  prompt: As the HVE Artifact Validator, run one non-mutating YAML-guidance check on the first `copilot-instructions.md` or `AGENTS.md` file you find and return Pass, Fail, or Deferred with the source unchanged.
+  environment:
+    files:
+    - src: fixtures/hve-artifact-copilot-instructions.md
+      dest: .github/copilot-instructions.md
   tags:
     category: agent-behavior
     advisory: "true"
     agent: hve-artifact-validator
   graders:
   - type: output-matches
-    name: deferred-status
+    name: instruction-target
     config:
-      pattern: (?i)\bDeferred\b
+      pattern: (?i)(?:copilot-instructions|AGENTS)\.md
   - type: output-matches
-    name: exact-command
+    name: validation-status
     config:
-      pattern: (?i)npm\s+run\s+lint:frontmatter
-  - type: output-matches
-    name: rerun-condition
-    config:
-      pattern: (?i)(rerun\s+condition|when\s+command\s+execution|terminal.*available|execution.*available)
+      pattern: (?i)\b(?:Pass|Fail|Deferred)\b
   - type: output-matches
     name: source-unchanged
     config:
-      pattern: (?is)(?=.*(?:source|file|artifact))(?=.*(?:unchanged|not\s+mutat))
+      pattern: (?is)(?:source|file|artifact).{0,80}(?:unchanged|not\s+(?:modified|mutated)|read[- ]only|no\s+edits)
 - name: implementation-validator-full-quality-recipe
   prompt: |
     Validate the changed file `src/services/PaymentService.cs` with `full-quality`
@@ -1595,62 +1516,27 @@ stimuli:
       pattern: (?i)(created|wrote|modified|edited|patched|added)\s+\S{0,40}(\.cs|\.py|\.ts|\.js|package\.json)
       negate: true
 - name: prompt-builder-class-recipe
-  prompt: |
-    Through the legacy Prompt Builder entry point, explain how you would improve
-    `.github/instructions/rust-testing.instructions.md` using `src/lib.rs` as
-    read-only reference context. Name the HVE Builder mode, source-write
-    boundary, required quality gates, behavior-test fidelity, and final outcome
-    vocabulary. Explain what next action or rerun guidance accompanies each
-    non-Pass outcome. Do not edit files.
+  prompt: Plan the creation of a new custom instruction file for "Rust testing standards" in research, draft, and validate phases, write the plan under `.copilot-tracking/`, and report the path.
+  environment:
+    skills:
+    - ../../.github/skills/hve-core/hve-builder
   tags:
     category: agent-behavior
     agent: prompt-builder
   graders:
   - type: output-matches
-    name: canonical-lifecycle-routing
+    name: phase-marker-present
     config:
-      pattern: (?i)(hve-builder|HVE Builder).*(improve|mode)|(improve|mode).*(hve-builder|HVE Builder)
+      pattern: (?im)(^\s*(#{2,3}\s|step\s+\d+|phase\s+\d+|\d+[.)])|\|\s*\d+\s*[—–-]|\b(?:phases?|phased|stages?)\b|\bresearch\b.*\bdraft\b.*\bvalidat(?:e|ion)\b)
   - type: output-matches
-    name: write-boundary-preserved
+    name: tracking-file-write
     config:
-      pattern: (?i)(rust-testing\.instructions\.md).*(target|write|edit).*(src/lib\.rs).*(reference|read-only)|(src/lib\.rs).*(reference|read-only).*(rust-testing\.instructions\.md).*(target|write|edit)
+      pattern: (?i)\.copilot-tracking[-/\\]
   - type: output-matches
-    name: lifecycle-gates-reported
+    name: no-source-edit
     config:
-      pattern: (?is)(static|review).*(behavior|fidelity).*(validate|validates|validated|validation).*(Pass|Revise|Deferred|Blocked)
-  - type: output-matches
-    name: no-active-retired-worker-dispatch
-    config:
-      pattern: (?i)(?<!not )(?<!never )(?<!without )(dispatch(?:es|ed|ing)?|invoke(?:s|d|ing)?|route(?:s|d|ing)?\s+(?:work\s+)?to|(?:run|runs|running))\s+(?:the\s+)?(Prompt Tester|Prompt Evaluator|Prompt Updater)
+      pattern: (?i)(created|wrote|modified|edited|patched|added)\s+\S{0,40}(\.cs|\.py|\.ts|\.js|package\.json)
       negate: true
-  - type: output-matches
-    name: overall-outcome-pass
-    config:
-      pattern: (?i)\bPass\b
-  - type: output-matches
-    name: overall-outcome-revise
-    config:
-      pattern: (?i)\bRevise\b
-  - type: output-matches
-    name: overall-outcome-deferred
-    config:
-      pattern: (?i)\bDeferred\b
-  - type: output-matches
-    name: overall-outcome-blocked
-    config:
-      pattern: (?i)\bBlocked\b
-  - type: output-matches
-    name: revise-condition-and-guidance
-    config:
-      pattern: (?is)(\bRevise\b.{0,500}(finding|validation|acceptance|source|requirement).{0,500}(fix|edit|author|correct|rerun)|(finding|validation|acceptance|source|requirement).{0,500}\bRevise\b.{0,500}(fix|edit|author|correct|rerun))
-  - type: output-matches
-    name: deferred-condition-and-rerun
-    config:
-      pattern: (?is)(\bDeferred\b.{0,500}(unavailable|could\s+not\s+run|required\s+stage|capability|environment).{0,500}(rerun|condition|enable|available|provide)|(unavailable|could\s+not\s+run|required\s+stage|capability|environment).{0,500}\bDeferred\b.{0,500}(rerun|condition|enable|available|provide))
-  - type: output-matches
-    name: blocked-condition-and-resolution
-    config:
-      pattern: (?is)(\bBlocked\b.{0,500}(scope|safety|target|evidence|clarification|ambiguous|approval).{0,500}(clarify|resolve|provide|approve|identify)|(scope|safety|target|evidence|clarification|ambiguous|approval).{0,500}\bBlocked\b.{0,500}(clarify|resolve|provide|approve|identify))
 - name: rai-planner-class-recipe
   prompt: |
     Begin an RAI planning session for an AI feature that auto-generates customer support replies. List the next phases of the assessment. Write the planning state under `.copilot-tracking/rai-plans/` and report the path you wrote it to.

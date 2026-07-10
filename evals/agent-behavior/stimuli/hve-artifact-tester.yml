@@ -1,38 +1,25 @@
 # Copyright (c) 2026 Microsoft Corporation. All rights reserved.
 # SPDX-License-Identifier: MIT
 stimuli:
-  - name: hve-artifact-tester-unresolved-target
-    prompt: |
-      As the HVE Artifact Tester, handle a run state that supplies the Low
-      profile, model `gpt-5.6-luna`, simulation fidelity, and a sandbox path,
-      but no target artifact name, path, purpose, isolation set, or together
-      set. Searching cannot distinguish a target. Do not invent an artifact or
-      fabricate behavior evidence. Use the Complete, Partial, or Blocked
-      execution-status vocabulary and return the appropriate status, reason,
-      fidelity, missing input, and clarification needed to continue.
-      Repeat the supplied Low profile, `gpt-5.6-luna` model, and simulation
-      fidelity explicitly in the response.
-
-      Apply these public decision rules: unresolved target identity requires
-      Blocked before any action. Use Partial only after useful evidence exists,
-      and Complete only after every supplied scenario and coverage are recorded.
+  - name: hve-artifact-tester-instruction-simulation
+    prompt: As the HVE Artifact Tester, simulate one request to create a two-key `.yml` file using the first `copilot-instructions.md` or `AGENTS.md` file you find, keep writes under `.copilot-tracking/sandbox/`, and return Complete, Partial, or Blocked with the result path.
+    environment:
+      files:
+        - src: fixtures/hve-artifact-copilot-instructions.md
+          dest: .github/copilot-instructions.md
     tags:
       category: agent-behavior
       advisory: "true"
     graders:
       - type: output-matches
-        name: blocked-status
+        name: sandbox-result
         config:
-          pattern: '(?i)\bBlocked\b'
+          pattern: '(?i)\.copilot-tracking[/\\]sandbox[/\\]\S+\.ya?ml\b'
       - type: output-matches
-        name: unresolved-target
+        name: execution-summary
         config:
-          pattern: '(?is)(?=.*target)(?=.*(?:unresolved|cannot\s+be\s+(?:uniquely\s+)?identified|cannot\s+distinguish|missing\s+(?:required\s+)?input|no\s+(?:specific\s+)?target))'
+          pattern: '(?i)\b(?:Complete|Partial|Blocked)\b'
       - type: output-matches
-        name: fidelity-disclosure
+        name: yaml-result
         config:
-          pattern: '(?is)(?=.*(?:Low|gpt-5\.6-luna))(?=.*(?:simulation|fidelity))'
-      - type: output-matches
-        name: clarification-request
-        config:
-          pattern: '(?is)(clarif|provide|need|to\s+continue).*(artifact|target|path|name|purpose|isolation|together)'
+          pattern: '(?i)\b(?:YAML|yml)\b'

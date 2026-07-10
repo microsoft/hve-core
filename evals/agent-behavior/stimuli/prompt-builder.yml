@@ -2,58 +2,23 @@
 # SPDX-License-Identifier: MIT
 stimuli:
   - name: prompt-builder-class-recipe
-    prompt: |
-      Through the legacy Prompt Builder entry point, explain how you would improve
-      `.github/instructions/rust-testing.instructions.md` using `src/lib.rs` as
-      read-only reference context. Name the HVE Builder mode, source-write
-      boundary, required quality gates, behavior-test fidelity, and final outcome
-      vocabulary. Explain what next action or rerun guidance accompanies each
-      non-Pass outcome. Do not edit files.
+    prompt: Plan the creation of a new custom instruction file for "Rust testing standards" in research, draft, and validate phases, write the plan under `.copilot-tracking/`, and report the path.
+    environment:
+      skills:
+        - ../../.github/skills/hve-core/hve-builder
     tags:
       category: agent-behavior
     graders:
       - type: output-matches
-        name: canonical-lifecycle-routing
+        name: phase-marker-present
         config:
-          pattern: '(?i)(hve-builder|HVE Builder).*(improve|mode)|(improve|mode).*(hve-builder|HVE Builder)'
+          pattern: '(?im)(^\s*(#{2,3}\s|step\s+\d+|phase\s+\d+|\d+[.)])|\|\s*\d+\s*[—–-]|\b(?:phases?|phased|stages?)\b|\bresearch\b.*\bdraft\b.*\bvalidat(?:e|ion)\b)'
       - type: output-matches
-        name: write-boundary-preserved
+        name: tracking-file-write
         config:
-          pattern: '(?i)(rust-testing\.instructions\.md).*(target|write|edit).*(src/lib\.rs).*(reference|read-only)|(src/lib\.rs).*(reference|read-only).*(rust-testing\.instructions\.md).*(target|write|edit)'
+          pattern: '(?i)\.copilot-tracking[-/\\]'
       - type: output-matches
-        name: lifecycle-gates-reported
+        name: no-source-edit
         config:
-          pattern: '(?is)(static|review).*(behavior|fidelity).*(validate|validates|validated|validation).*(Pass|Revise|Deferred|Blocked)'
-      - type: output-matches
-        name: no-active-retired-worker-dispatch
-        config:
-          pattern: '(?i)(?<!not )(?<!never )(?<!without )(dispatch(?:es|ed|ing)?|invoke(?:s|d|ing)?|route(?:s|d|ing)?\s+(?:work\s+)?to|(?:run|runs|running))\s+(?:the\s+)?(Prompt Tester|Prompt Evaluator|Prompt Updater)'
+          pattern: '(?i)(created|wrote|modified|edited|patched|added)\s+\S{0,40}(\.cs|\.py|\.ts|\.js|package\.json)'
           negate: true
-      - type: output-matches
-        name: overall-outcome-pass
-        config:
-          pattern: '(?i)\bPass\b'
-      - type: output-matches
-        name: overall-outcome-revise
-        config:
-          pattern: '(?i)\bRevise\b'
-      - type: output-matches
-        name: overall-outcome-deferred
-        config:
-          pattern: '(?i)\bDeferred\b'
-      - type: output-matches
-        name: overall-outcome-blocked
-        config:
-          pattern: '(?i)\bBlocked\b'
-      - type: output-matches
-        name: revise-condition-and-guidance
-        config:
-          pattern: '(?is)(\bRevise\b.{0,500}(finding|validation|acceptance|source|requirement).{0,500}(fix|edit|author|correct|rerun)|(finding|validation|acceptance|source|requirement).{0,500}\bRevise\b.{0,500}(fix|edit|author|correct|rerun))'
-      - type: output-matches
-        name: deferred-condition-and-rerun
-        config:
-          pattern: '(?is)(\bDeferred\b.{0,500}(unavailable|could\s+not\s+run|required\s+stage|capability|environment).{0,500}(rerun|condition|enable|available|provide)|(unavailable|could\s+not\s+run|required\s+stage|capability|environment).{0,500}\bDeferred\b.{0,500}(rerun|condition|enable|available|provide))'
-      - type: output-matches
-        name: blocked-condition-and-resolution
-        config:
-          pattern: '(?is)(\bBlocked\b.{0,500}(scope|safety|target|evidence|clarification|ambiguous|approval).{0,500}(clarify|resolve|provide|approve|identify)|(scope|safety|target|evidence|clarification|ambiguous|approval).{0,500}\bBlocked\b.{0,500}(clarify|resolve|provide|approve|identify))'

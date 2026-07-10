@@ -1,35 +1,25 @@
 # Copyright (c) 2026 Microsoft Corporation. All rights reserved.
 # SPDX-License-Identifier: MIT
 stimuli:
-  - name: hve-artifact-validator-deferred-check
-    prompt: |
-      As the HVE Artifact Validator, the host requires
-      `npm run lint:frontmatter` for `sample.agent.md`, but command execution is
-      unavailable. Do not run commands or mutate files. Return the per-check
-      result and overall status, the exact command, the deferral reason, the
-      rerun condition, and whether the source remained unchanged.
-
-      Apply these public decision rules: a required check that cannot run is
-      Deferred with a rerun condition, not Pass or Fail. Pass requires every
-      applicable check to run successfully; Fail requires a check failure or an
-      unexpected source mutation.
+  - name: hve-artifact-validator-first-instruction-check
+    prompt: As the HVE Artifact Validator, run one non-mutating YAML-guidance check on the first `copilot-instructions.md` or `AGENTS.md` file you find and return Pass, Fail, or Deferred with the source unchanged.
+    environment:
+      files:
+        - src: fixtures/hve-artifact-copilot-instructions.md
+          dest: .github/copilot-instructions.md
     tags:
       category: agent-behavior
       advisory: "true"
     graders:
       - type: output-matches
-        name: deferred-status
+        name: instruction-target
         config:
-          pattern: '(?i)\bDeferred\b'
+          pattern: '(?i)(?:copilot-instructions|AGENTS)\.md'
       - type: output-matches
-        name: exact-command
+        name: validation-status
         config:
-          pattern: '(?i)npm\s+run\s+lint:frontmatter'
-      - type: output-matches
-        name: rerun-condition
-        config:
-          pattern: '(?i)(rerun\s+condition|when\s+command\s+execution|terminal.*available|execution.*available)'
+          pattern: '(?i)\b(?:Pass|Fail|Deferred)\b'
       - type: output-matches
         name: source-unchanged
         config:
-          pattern: '(?is)(?=.*(?:source|file|artifact))(?=.*(?:unchanged|not\s+mutat))'
+          pattern: '(?is)(?:source|file|artifact).{0,80}(?:unchanged|not\s+(?:modified|mutated)|read[- ]only|no\s+edits)'
