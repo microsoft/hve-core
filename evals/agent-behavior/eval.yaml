@@ -1146,23 +1146,36 @@ stimuli:
       negate: true
 - name: plan-validator-discrepancy-log
   prompt: |
-    Validate the implementation plan at `.copilot-tracking/plans/example.md`
-    against the research document at `.copilot-tracking/research/example.md`.
-    Update only the Discrepancy Log section in the Planning Log with DR-
-    and DD- prefixed entries, and report your validation status.
+    Validate this implementation plan against its research, then report your
+    findings and validation status.
+
+    Research findings:
+    1. Callers must be authenticated with OAuth 2.0 before any report data is
+       returned.
+    2. Report responses must be paginated; the data API rejects any response
+       larger than 500 rows.
+
+    Plan summary:
+    - Adds a `/reports` endpoint that returns every matching row in a single
+      response.
+    - Describes no authentication step for the endpoint.
   tags:
     category: agent-behavior
     advisory: "true"
     agent: plan-validator
   graders:
   - type: output-matches
-    name: discrepancy-log-vocabulary
+    name: discrepancy-detected
     config:
-      pattern: (?i)(discrepancy log|DR-\d|DD-\d|unaddressed research|plan deviation)
+      pattern: (?im)(discrepanc|deviat|not addressed|unaddressed|missing|gap|conflict|does not (match|align)|\bDR-\d|\bDD-\d)
   - type: output-matches
-    name: planning-log-path
+    name: substantive-gap-named
     config:
-      pattern: (?i)(planning log|\.copilot-tracking[-/\\]plans)
+      pattern: (?i)(authenticat|oauth|paginat|500)
+  - type: output-matches
+    name: validation-status-reported
+    config:
+      pattern: (?i)(valid|pass|fail|complete|incomplete|ready|not ready|block|status)
 - name: plan-validator-coverage-matrix
   prompt: |
     As a plan-validator subagent, describe how you build an internal coverage
