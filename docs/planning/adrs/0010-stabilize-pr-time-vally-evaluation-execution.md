@@ -277,7 +277,7 @@ this record in place.
 
 ## More Information
 
-* Related decision: [ADR 0002](0002-adopt-vally-as-agent-and-skill-behavior-evaluation-framework)
+* Related decision: [ADR 0002](0002)
 * PR execution workflow: `.github/workflows/eval-validation.yml`
 * Result parsing and moderation batching: `scripts/evals/Modules/VallyRunner.psm1`
 * Failure-policy reconciliation: `scripts/evals/Invoke-VallyEvals.ps1`
