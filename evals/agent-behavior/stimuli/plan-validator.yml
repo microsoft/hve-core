@@ -1,5 +1,6 @@
 # Copyright (c) 2026 Microsoft Corporation. All rights reserved.
 # SPDX-License-Identifier: MIT
+# cspell:ignore discrepanc deviat authenticat paginat
 stimuli:
   - name: plan-validator-discrepancy-log
     prompt: |
