@@ -16,7 +16,8 @@
     silently skips .github/** and other dot-prefixed paths on Windows. This
     wrapper bypasses that bug by passing an explicit file list to the library.
 
-    File discovery includes tracked Markdown files only.
+    File discovery includes tracked and untracked, nonignored Markdown files
+    that exist in the working tree. Paths deleted without staging are skipped.
 
 .PARAMETER Check
     Check only; exit with non-zero status if any tables would be reformatted.
@@ -53,14 +54,21 @@ function Invoke-MarkdownTableFormatter {
 
     Push-Location $repoRoot
     try {
-        $gitOutput = & git ls-files -z --cached -- '*.md'
+        $gitOutput = & git ls-files -z --cached --others --exclude-standard -- '*.md'
         if ($LASTEXITCODE -ne 0) {
             [System.Console]::Error.WriteLine('git ls-files failed; not running inside a git checkout?')
             $script:MarkdownTableFormatterExitCode = 2
             return
         }
 
-        $files = if ($gitOutput) { $gitOutput -split "`0" | Where-Object { $_ } } else { @() }
+        $files = if ($gitOutput) {
+            $gitOutput -split "`0" | Where-Object {
+                $_ -and (Test-Path -LiteralPath $_ -PathType Leaf)
+            }
+        }
+        else {
+            @()
+        }
         if ($files.Count -eq 0) {
             Write-Output 'No markdown files found.'
             $script:MarkdownTableFormatterExitCode = 0

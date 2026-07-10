@@ -62,6 +62,17 @@ Describe 'Get-MarkdownTarget' -Tag 'Unit' {
             $result = Get-MarkdownTarget -InputPath $script:TempDir
             $result | Should -Not -BeNullOrEmpty
         }
+
+        It 'Requests tracked and untracked nonignored files' {
+            Get-MarkdownTarget -InputPath $script:TempDir | Out-Null
+
+            Should -Invoke git -ParameterFilter {
+                $args -contains 'ls-files' -and
+                $args -contains '--cached' -and
+                $args -contains '--others' -and
+                $args -contains '--exclude-standard'
+            } -Times 1 -Exactly
+        }
     }
 
     Context 'Non-git fallback mode' {
@@ -102,12 +113,39 @@ Describe 'Get-MarkdownTarget' -Tag 'Unit' {
         }
     }
 
+    Context 'Git file discovery failure' {
+        BeforeEach {
+            Mock git {
+                if ($args -contains 'rev-parse') {
+                    $global:LASTEXITCODE = 0
+                    return $script:TempDir
+                }
+
+                $global:LASTEXITCODE = 1
+                return $null
+            }
+        }
+
+        It 'Throws instead of treating a failed directory query as no files' {
+            { Get-MarkdownTarget -InputPath $script:TempDir } |
+                Should -Throw '*git ls-files failed*'
+        }
+
+        It 'Throws instead of reporting a specific file as ignored' {
+            $file = Join-Path $script:TempDir 'git-failure.md'
+            Set-Content -LiteralPath $file -Value '# Git failure'
+
+            { Get-MarkdownTarget -InputPath $file } |
+                Should -Throw '*git ls-files failed*'
+        }
+    }
+
     Context 'Fixture exclusion filtering' {
         BeforeEach {
             # Create test files including fixture path
             $script:IncludeFile = Join-Path $script:TempDir 'docs' 'readme.md'
             $script:ExcludeFile = Join-Path $script:TempDir 'scripts' 'tests' 'fixtures' 'test.md'
-            
+
             New-Item -ItemType Directory -Path (Join-Path $script:TempDir 'docs') -Force | Out-Null
             New-Item -ItemType Directory -Path (Join-Path $script:TempDir 'scripts' 'tests' 'fixtures') -Force | Out-Null
             Set-Content -Path $script:IncludeFile -Value '# Include This'
@@ -130,7 +168,7 @@ Describe 'Get-MarkdownTarget' -Tag 'Unit' {
         It 'Filters out test fixture files from results' {
             # Act
             $result = Get-MarkdownTarget -InputPath $script:TempDir
-            
+
             # Assert - Should exclude files in scripts/tests/fixtures/
             $fixtureFiles = $result | Where-Object { $_ -like '*fixtures*' }
             $fixtureFiles | Should -BeNullOrEmpty
@@ -139,7 +177,7 @@ Describe 'Get-MarkdownTarget' -Tag 'Unit' {
         It 'Includes non-fixture files in results' {
             # Act
             $result = Get-MarkdownTarget -InputPath $script:TempDir
-            
+
             # Assert - Should include docs files
             $docsFiles = $result | Where-Object { $_ -like '*docs*readme.md' }
             $docsFiles | Should -Not -BeNullOrEmpty
@@ -149,7 +187,7 @@ Describe 'Get-MarkdownTarget' -Tag 'Unit' {
             # Test the exact filter pattern used in the code
             $testPaths = @('docs/readme.md', 'scripts/tests/fixtures/test.md', 'src/guide.md')
             $filtered = $testPaths | Where-Object { $_ -notlike 'scripts/tests/fixtures/*' }
-            
+
             $filtered | Should -Contain 'docs/readme.md'
             $filtered | Should -Contain 'src/guide.md'
             $filtered | Should -Not -Contain 'scripts/tests/fixtures/test.md'
@@ -264,11 +302,11 @@ Describe 'Markdown-Link-Check Integration' -Tag 'Integration' {
         It 'Outputs GitHub error annotation when script fails in CI' {
             # Arrange
             $env:GITHUB_ACTIONS = 'true'
-            
+
             # Create temp directory with no markdown files
             $emptyDir = Join-Path $TestDrive 'empty-no-md'
             New-Item -ItemType Directory -Path $emptyDir -Force | Out-Null
-            
+
             # Mock git to simulate no tracked markdown files
             Mock git {
                 if ($args -contains 'rev-parse') {
@@ -280,10 +318,10 @@ Describe 'Markdown-Link-Check Integration' -Tag 'Integration' {
                     return @()  # No markdown files
                 }
             }
-            
+
             # Act - Run script with empty directory (will fail with no files found)
             $output = & $script:LinkCheckScript -Path $emptyDir 2>&1
-            
+
             # Assert - Should output error
             $errors = $output | Where-Object { $_ -is [System.Management.Automation.ErrorRecord] }
             $errors | Should -Not -BeNullOrEmpty
@@ -351,6 +389,13 @@ Describe 'Invoke-MarkdownLinkCheck' -Tag 'Unit' {
             $src = Get-Content (Join-Path $PSScriptRoot '../../linting/Markdown-Link-Check.ps1') -Raw
             $src | Should -Match 'Timestamp\s*=\s*Get-StandardTimestamp'
             $src | Should -Not -Match 'ToUniversalTime\(\)\.ToString'
+        }
+    }
+
+    Context 'Malformed report handling' {
+        It 'Marks XML parsing failures as file failures regardless of the CLI exit code' {
+            $src = Get-Content (Join-Path $PSScriptRoot '../../linting/Markdown-Link-Check.ps1') -Raw
+            $src | Should -Match '(?s)catch\s*\{\s*Write-Warning "Failed to parse XML output.*?\$failedFiles \+= \$relative'
         }
     }
 }

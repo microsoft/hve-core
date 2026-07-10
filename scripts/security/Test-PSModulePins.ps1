@@ -15,7 +15,8 @@
     Validates PowerShell module version pins against the canonical pin config.
 
 .DESCRIPTION
-    Scans tracked repository files for module pins of the form:
+    Scans tracked and untracked, nonignored repository files for module pins of
+    the form:
       Install-Module -Name <Module> -RequiredVersion <version>
       Import-Module  -Name <Module> -RequiredVersion <version>
       #Requires -Modules @{ ModuleName='<Module>'; RequiredVersion='<version>' }
@@ -91,11 +92,16 @@ function Invoke-PSModulePinScan {
         "ModuleName\s*=\s*['""](?<module>$moduleAlt)['""]\s*;\s*RequiredVersion\s*=\s*['""](?<version>\d+\.\d+\.\d+)['""]"
     )
 
-    # Enumerate tracked files only (avoid logs/, node_modules/, .git/, build outputs).
+    # Include tracked and untracked, nonignored files so local validation does
+    # not require staging. Git exclusions avoid logs/, node_modules/, .git/, and
+    # build outputs.
     Push-Location $repoRoot
     try {
-        $trackedFiles = git ls-files | Where-Object {
+        $trackedFiles = git ls-files --cached --others --exclude-standard | Where-Object {
             $_ -match '\.(ps1|psm1|psd1|yml|yaml|sh|md)$'
+        }
+        if ($LASTEXITCODE -ne 0) {
+            throw 'git ls-files failed while discovering files for PowerShell module pin validation.'
         }
     } finally {
         Pop-Location
