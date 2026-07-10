@@ -143,6 +143,7 @@
     "prval",
     "pylint",
     "refus",
+    "revalidat",
     "scal",
     "scorecard",
     "Sigstore",
