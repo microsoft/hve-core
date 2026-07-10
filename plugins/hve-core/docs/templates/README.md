@@ -1,0 +1,34 @@
+---
+title: Templates
+description: Reusable document templates for architecture decisions, root cause analysis, security planning, and user journey mapping
+sidebar_position: 1
+author: Microsoft
+ms.date: 2026-06-15
+ms.topic: overview
+keywords:
+  - templates
+  - architecture decision record
+  - root cause analysis
+  - security plan
+  - user journey
+estimated_reading_time: 2
+---
+
+Standardized templates for common documentation tasks. Each template provides a consistent structure with guided sections and placeholders.
+
+## Available Templates
+
+| Template                                     | Purpose                                                          |
+|----------------------------------------------|------------------------------------------------------------------|
+| [ADR Template](adr-template-solutions.md)    | Record architecture decisions with context, options, and outcome |
+| [RAI Assessment](rai-plan-template.md)       | RAI assessment output structure                                  |
+| [Root Cause Analysis](rca-template.md)       | Investigate incidents with timeline, analysis, and action items  |
+| [Security Plan](security-plan-template.md)   | Define security controls, threat models, and compliance measures |
+| [SSSC Assessment](sssc-plan-template.md)     | Supply chain security assessment output structure                |
+| [User Journey Map](user-journey-template.md) | Map user interactions across touchpoints with pain points        |
+
+## Usage
+
+Copy any template into your project and fill in the bracketed placeholders. Remove sections that do not apply to your use case.
+
+*🤖 Crafted with precision by ✨Copilot following brilliant human instruction, then carefully refined by our team of discerning human reviewers.*

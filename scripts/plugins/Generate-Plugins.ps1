@@ -9,7 +9,7 @@
 
 .DESCRIPTION
     Reads collection YAML manifests from the collections/ directory and generates
-    plugin directories under plugins/ with symlinks to source artifacts, plugin.json
+    plugin directories under plugins/ with copied source artifacts, plugin.json
     manifests, and auto-generated README files.
 
     Supports generating all plugins or specific collections. Use -Refresh to
@@ -155,7 +155,7 @@ function Invoke-PluginGeneration {
     .DESCRIPTION
         Loads collection manifests from the collections/ directory, optionally
         filters to specified IDs, and generates plugin directory structures
-        under plugins/. Each plugin receives symlinks to source artifacts,
+        under plugins/. Each plugin receives copied source artifacts,
         a plugin.json manifest, and an auto-generated README.
 
     .PARAMETER RepoRoot
@@ -208,10 +208,6 @@ function Invoke-PluginGeneration {
     # Auto-update hve-core-all collection with discovered artifacts
     $updateResult = Update-HveCoreAllCollection -RepoRoot $RepoRoot -DryRun:$DryRun
     Write-Verbose "hve-core-all updated: $($updateResult.ItemCount) items ($($updateResult.AddedCount) added, $($updateResult.RemovedCount) removed)"
-
-    # Probe symlink capability once for the entire generation run
-    $symlinkCapable = Test-SymlinkCapability
-    Write-Verbose "Symlink capability: $symlinkCapable ($(if ($symlinkCapable) { 'using symlinks' } else { 'using file copies' }))"
 
     # Load all collection manifests
     $allCollections = Get-AllCollections -CollectionsDir $collectionsDir
@@ -348,8 +344,7 @@ function Invoke-PluginGeneration {
             -RepoRoot $RepoRoot `
             -Version $repoVersion `
             -Maturity $collectionMaturity `
-            -DryRun:$DryRun `
-            -SymlinkCapable:$symlinkCapable
+            -DryRun:$DryRun
 
         # Orphan cleanup in Refresh mode
         if ($Refresh -and (Test-Path -LiteralPath $pluginDir)) {
@@ -360,7 +355,7 @@ function Invoke-PluginGeneration {
             while ($scanQueue.Count -gt 0) {
                 $currentDir = $scanQueue.Dequeue()
                 foreach ($entry in Get-ChildItem -LiteralPath $currentDir -Force) {
-                    if ($entry.PSIsContainer -and -not $entry.LinkType) {
+                    if ($entry.PSIsContainer) {
                         $scanQueue.Enqueue($entry.FullName)
                     }
                     else {
@@ -379,12 +374,35 @@ function Invoke-PluginGeneration {
                     }
                 }
             }
-            # Remove empty directories bottom-up
+            # Remove empty directories bottom-up, but preserve directories that
+            # were explicitly generated or contain generated content.
             if (-not $DryRun) {
+                $generatedPaths = [System.Collections.Generic.HashSet[string]]::new(
+                    [System.StringComparer]::OrdinalIgnoreCase
+                )
+                foreach ($generatedPath in $generatedFiles) {
+                    [void]$generatedPaths.Add([string]$generatedPath)
+                }
+
                 Get-ChildItem -LiteralPath $pluginDir -Recurse -Directory |
-                    Where-Object { -not $_.LinkType } |
                     Sort-Object { $_.FullName.Length } -Descending |
-                    Where-Object { @(Get-ChildItem -LiteralPath $_.FullName).Count -eq 0 } |
+                    Where-Object {
+                        $dirPath = $_.FullName
+                        $isGeneratedDirectory = $generatedPaths.Contains($dirPath)
+                        if (-not $isGeneratedDirectory) {
+                            foreach ($generatedPath in $generatedPaths) {
+                                if ($generatedPath.StartsWith($dirPath, [System.StringComparison]::OrdinalIgnoreCase)) {
+                                    $isGeneratedDirectory = $true
+                                    break
+                                }
+                            }
+                        }
+                        if ($isGeneratedDirectory) {
+                            return $false
+                        }
+
+                        @(Get-ChildItem -LiteralPath $dirPath).Count -eq 0
+                    } |
                     ForEach-Object {
                         Remove-Item -LiteralPath $_.FullName -Force -ErrorAction Stop
                         Write-Verbose "Removed empty directory: $($_.FullName)"
@@ -408,15 +426,6 @@ function Invoke-PluginGeneration {
         -RepoRoot $RepoRoot `
         -Collections $allCollections `
         -DryRun:$DryRun
-
-    # Fix git index modes for text stubs on non-symlink systems so Linux
-    # checkouts materialize real symbolic links instead of plain files.
-    if (-not $symlinkCapable) {
-        $fixedCount = Repair-PluginSymlinkIndex -PluginsDir $pluginsDir -RepoRoot $RepoRoot -DryRun:$DryRun
-        if ($fixedCount -gt 0) {
-            Write-Host "  Symlink index: $fixedCount entries fixed (100644 -> 120000)" -ForegroundColor Green
-        }
-    }
 
     Write-Host "`n--- Summary ---" -ForegroundColor Cyan
     Write-Host "  Plugins generated: $generated"

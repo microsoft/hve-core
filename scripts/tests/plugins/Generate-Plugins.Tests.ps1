@@ -511,13 +511,13 @@ items:
         $warnings[0].Message | Should -Match 'No collection manifests found'
     }
 
-    It 'Outputs verbose symlink capability detection' {
+    It 'Does not emit symlink capability messages during generation' {
         $output = Invoke-PluginGeneration -RepoRoot $script:tempDir `
             -CollectionIds @('hve-core-all') `
             -Channel 'PreRelease' -Verbose 4>&1
 
         $capMsg = @($output | Where-Object { "$_" -match 'Symlink capability' })
-        $capMsg.Count | Should -BeGreaterOrEqual 1
+        $capMsg.Count | Should -Be 0
     }
 
     Context 'Orphan Cleanup' {

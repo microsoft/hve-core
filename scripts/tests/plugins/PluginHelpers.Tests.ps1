@@ -369,36 +369,38 @@ Describe 'Write-PluginDirectory - DryRun mode' {
     }
 }
 
-Describe 'Test-SymlinkCapability' {
-    It 'Returns a boolean' {
-        $result = Test-SymlinkCapability
-        $result | Should -BeOfType [bool]
-    }
-
-    It 'Cleans up probe directory' {
-        $probeDirPattern = Join-Path ([System.IO.Path]::GetTempPath()) "hve-symlink-probe-$PID"
-        Test-SymlinkCapability | Out-Null
-        Test-Path $probeDirPattern | Should -BeFalse
-    }
-}
-
 Describe 'New-PluginLink' {
     BeforeAll {
         $script:linkRoot = Join-Path $TestDrive 'link-test'
         New-Item -ItemType Directory -Path $script:linkRoot -Force | Out-Null
     }
 
-    It 'Writes text stub when SymlinkCapable is false' {
-        $src = Join-Path $script:linkRoot 'src-stub.txt'
-        Set-Content -Path $src -Value 'content' -NoNewline
-        $dest = Join-Path $script:linkRoot 'dest-stub.txt'
+    It 'Copies file content into destination without creating a stub' {
+        $src = Join-Path $script:linkRoot 'src-file.txt'
+        Set-Content -Path $src -Value 'payload' -NoNewline
+        $dest = Join-Path $script:linkRoot 'dest-file.txt'
 
         New-PluginLink -SourcePath $src -DestinationPath $dest
 
         Test-Path $dest | Should -BeTrue
-        $stubContent = [System.IO.File]::ReadAllText($dest)
-        $expectedPath = [System.IO.Path]::GetRelativePath((Split-Path -Parent $dest), $src) -replace '\\', '/'
-        $stubContent | Should -Be $expectedPath
+        (Get-Item -LiteralPath $dest).Attributes -band [System.IO.FileAttributes]::ReparsePoint | Should -Be 0
+        [System.IO.File]::ReadAllText($dest) | Should -Be 'payload'
+    }
+
+    It 'Copies directory content into destination preserving nested files' {
+        $srcDir = Join-Path $script:linkRoot 'src-dir'
+        $nestedDir = Join-Path $srcDir 'nested'
+        New-Item -ItemType Directory -Path $nestedDir -Force | Out-Null
+        Set-Content -Path (Join-Path $srcDir 'root.txt') -Value 'root'
+        Set-Content -Path (Join-Path $nestedDir 'child.txt') -Value 'child'
+        $destDir = Join-Path $script:linkRoot 'dest-dir'
+
+        New-PluginLink -SourcePath $srcDir -DestinationPath $destDir
+
+        Test-Path (Join-Path $destDir 'root.txt') | Should -BeTrue
+        Test-Path (Join-Path $destDir 'nested/child.txt') | Should -BeTrue
+        [System.IO.File]::ReadAllText((Join-Path $destDir 'root.txt')).Trim() | Should -Be 'root'
+        [System.IO.File]::ReadAllText((Join-Path $destDir 'nested/child.txt')).Trim() | Should -Be 'child'
     }
 
     It 'Creates parent directory when destination parent does not exist' {
@@ -409,117 +411,6 @@ Describe 'New-PluginLink' {
         New-PluginLink -SourcePath $src -DestinationPath $dest
 
         Test-Path $dest | Should -BeTrue
-    }
-}
-
-Describe 'Repair-PluginSymlinkIndex' {
-    Context 'When PluginsDir does not exist' {
-        It 'Returns 0' {
-            $result = Repair-PluginSymlinkIndex `
-                -PluginsDir (Join-Path $TestDrive 'nonexistent') `
-                -RepoRoot $TestDrive
-            $result | Should -Be 0
-        }
-    }
-
-    Context 'In a git repository with text stubs' {
-        BeforeAll {
-            $script:repoRoot = Join-Path $TestDrive 'symlink-repo'
-            New-Item -ItemType Directory -Path $script:repoRoot -Force | Out-Null
-
-            Push-Location $script:repoRoot
-            try {
-                git init --quiet 2>$null
-                git config user.email 'test@test.com'
-                git config user.name 'Test'
-
-                $script:pluginsDir = Join-Path $script:repoRoot 'plugins'
-                New-Item -ItemType Directory -Path $script:pluginsDir -Force | Out-Null
-
-                # Valid text stub: small, starts with ../, no newlines
-                [System.IO.File]::WriteAllText(
-                    (Join-Path $script:pluginsDir 'valid-stub.md'),
-                    '../some/source.md'
-                )
-
-                # Large file (>500 bytes) — skipped by size filter
-                [System.IO.File]::WriteAllText(
-                    (Join-Path $script:pluginsDir 'large-file.md'),
-                    ('x' * 501)
-                )
-
-                # Non-stub content — skipped by pattern filter
-                [System.IO.File]::WriteAllText(
-                    (Join-Path $script:pluginsDir 'non-stub.md'),
-                    '# Regular markdown'
-                )
-
-                # Stub with newline — skipped by newline filter
-                [System.IO.File]::WriteAllText(
-                    (Join-Path $script:pluginsDir 'newline-stub.md'),
-                    "../path/file.md`n"
-                )
-
-                git add -- plugins/ 2>$null
-                git commit -m 'initial' --quiet 2>$null
-            } finally {
-                Pop-Location
-            }
-        }
-
-        It 'Counts only valid stubs in DryRun mode' {
-            Push-Location $script:repoRoot
-            try {
-                $result = Repair-PluginSymlinkIndex `
-                    -PluginsDir $script:pluginsDir `
-                    -RepoRoot $script:repoRoot -DryRun
-                $result | Should -Be 1
-            } finally {
-                Pop-Location
-            }
-        }
-
-        It 'Does not modify index in DryRun mode' {
-            Push-Location $script:repoRoot
-            try {
-                $before = git ls-files --stage -- plugins/valid-stub.md 2>$null
-                Repair-PluginSymlinkIndex `
-                    -PluginsDir $script:pluginsDir `
-                    -RepoRoot $script:repoRoot -DryRun | Out-Null
-                $after = git ls-files --stage -- plugins/valid-stub.md 2>$null
-                $before | Should -Be $after
-            } finally {
-                Pop-Location
-            }
-        }
-
-        It 'Re-indexes tracked text stub as mode 120000' {
-            Push-Location $script:repoRoot
-            try {
-                $result = Repair-PluginSymlinkIndex `
-                    -PluginsDir $script:pluginsDir `
-                    -RepoRoot $script:repoRoot
-                $result | Should -Be 1
-
-                $lsOutput = git ls-files --stage -- plugins/valid-stub.md 2>$null
-                $lsOutput | Should -Match '^120000'
-            } finally {
-                Pop-Location
-            }
-        }
-
-        It 'Skips entries already at mode 120000' {
-            Push-Location $script:repoRoot
-            try {
-                # Previous test fixed the stub; second run finds nothing new
-                $result = Repair-PluginSymlinkIndex `
-                    -PluginsDir $script:pluginsDir `
-                    -RepoRoot $script:repoRoot
-                $result | Should -Be 0
-            } finally {
-                Pop-Location
-            }
-        }
     }
 }
 

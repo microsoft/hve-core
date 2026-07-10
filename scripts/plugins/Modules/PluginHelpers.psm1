@@ -576,59 +576,15 @@ function New-GenerateResult {
 # I/O Functions (file system operations)
 # ---------------------------------------------------------------------------
 
-function Test-SymlinkCapability {
+function Add-GeneratedFilesForCopiedTree {
     <#
     .SYNOPSIS
-    Probes whether the current process can create symbolic links.
+    Registers copied file paths for orphan cleanup tracking.
 
     .DESCRIPTION
-    Creates a temporary file and attempts to symlink to it. Returns $true
-    when the OS and process privileges allow symlink creation, $false
-    otherwise. The probe directory is cleaned up unconditionally.
-    #>
-    [CmdletBinding()]
-    [OutputType([bool])]
-    param()
-
-    $tempDir = Join-Path -Path ([System.IO.Path]::GetTempPath()) -ChildPath "hve-symlink-probe-$PID"
-    $targetFile = Join-Path -Path $tempDir -ChildPath 'target.txt'
-    $linkFile = Join-Path -Path $tempDir -ChildPath 'link.txt'
-    try {
-        New-Item -ItemType Directory -Path $tempDir -Force | Out-Null
-        Set-Content -Path $targetFile -Value 'probe' -NoNewline
-        New-Item -ItemType SymbolicLink -Path $linkFile -Target $targetFile -ErrorAction Stop | Out-Null
-        return $true
-    }
-    catch {
-        return $false
-    }
-    finally {
-        if (Test-Path -Path $tempDir) {
-            Remove-Item -Path $tempDir -Recurse -Force -ErrorAction SilentlyContinue
-        }
-    }
-}
-
-function New-PluginLink {
-    <#
-    .SYNOPSIS
-    Links a source path into a plugin destination via symlink or text stub.
-
-    .DESCRIPTION
-    When SymlinkCapable is set, creates a relative symbolic link from
-    DestinationPath to SourcePath. Otherwise writes a text stub file
-    containing the relative path, matching the format git produces when
-    core.symlinks is false. Text stubs keep git status clean on Windows
-    without Developer Mode or elevated privileges.
-
-    .PARAMETER SourcePath
-    Absolute path to the real file or directory.
-
-    .PARAMETER DestinationPath
-    Absolute path where the link or text stub will be created.
-
-    .PARAMETER SymlinkCapable
-    When set, create a symbolic link; otherwise write a text stub.
+    When a directory tree is materialized into a plugin package, register each
+    copied file path with the generated-files set so orphan cleanup preserves
+    the full tree.
     #>
     [CmdletBinding()]
     param(
@@ -636,24 +592,57 @@ function New-PluginLink {
         [string]$SourcePath,
 
         [Parameter(Mandatory = $true)]
-        [string]$DestinationPath,
+        [System.Collections.Generic.HashSet[string]]$GeneratedFiles
+    )
 
-        [Parameter(Mandatory = $false)]
-        [switch]$SymlinkCapable
+    if (-not (Test-Path -LiteralPath $SourcePath)) {
+        return
+    }
+
+    foreach ($child in Get-ChildItem -LiteralPath $SourcePath -File -Recurse -Force) {
+        [void]$GeneratedFiles.Add($child.FullName)
+    }
+}
+
+function New-PluginLink {
+    <#
+    .SYNOPSIS
+    Copies a source path into a plugin destination.
+
+    .DESCRIPTION
+    Materializes a real file or directory tree into the plugin package.
+    Existing destinations are removed first so stale symlinks or files do not
+    survive between generations.
+
+    .PARAMETER SourcePath
+    Absolute path to the real file or directory.
+
+    .PARAMETER DestinationPath
+    Absolute path where the copied content will be created.
+    #>
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$SourcePath,
+
+        [Parameter(Mandatory = $true)]
+        [string]$DestinationPath
     )
 
     $destinationDir = Split-Path -Parent $DestinationPath
-    if (-not (Test-Path -Path $destinationDir)) {
+    if (-not (Test-Path -LiteralPath $destinationDir)) {
         New-Item -ItemType Directory -Path $destinationDir -Force | Out-Null
     }
 
-    $relativePath = [System.IO.Path]::GetRelativePath($destinationDir, $SourcePath) -replace '\\', '/'
+    if (Test-Path -LiteralPath $DestinationPath) {
+        Remove-Item -LiteralPath $DestinationPath -Recurse -Force -ErrorAction SilentlyContinue
+    }
 
-    if ($SymlinkCapable) {
-        New-Item -ItemType SymbolicLink -Path $DestinationPath -Value $relativePath -Force | Out-Null
+    if (Test-Path -LiteralPath $SourcePath -PathType Leaf) {
+        Copy-Item -LiteralPath $SourcePath -Destination $DestinationPath -Force
     }
     else {
-        Set-ContentIfChanged -Path $DestinationPath -Value $relativePath | Out-Null
+        Copy-Item -LiteralPath $SourcePath -Destination $DestinationPath -Recurse -Force
     }
 }
 
@@ -668,7 +657,7 @@ function Write-PluginHookArtifact {
     when the hook is auto-loaded from a checked-out repository. Inside an
     installed plugin the same scripts live under the plugin root, so this
     function writes a transformed copy of the manifest with those paths
-    rewritten to the ${PLUGIN_ROOT} placeholder, then links the sibling script
+    rewritten to the ${PLUGIN_ROOT} placeholder, then copies the sibling script
     directory (the manifest path without its .json extension) alongside it.
 
     .PARAMETER SourceManifest
@@ -678,11 +667,8 @@ function Write-PluginHookArtifact {
     Absolute path where the transformed manifest is written in the plugin.
 
     .PARAMETER GeneratedFiles
-    Set tracking generated paths for orphan cleanup; the linked script
+    Set tracking generated paths for orphan cleanup; the copied script
     directory is added to it.
-
-    .PARAMETER SymlinkCapable
-    When set, links the script directory; otherwise writes a text stub.
     #>
     [CmdletBinding()]
     param(
@@ -693,10 +679,7 @@ function Write-PluginHookArtifact {
         [string]$DestinationManifest,
 
         [Parameter(Mandatory = $true)]
-        [System.Collections.Generic.HashSet[string]]$GeneratedFiles,
-
-        [Parameter(Mandatory = $false)]
-        [switch]$SymlinkCapable
+        [System.Collections.Generic.HashSet[string]]$GeneratedFiles
     )
 
     # Degrade gracefully when the manifest is missing, matching how other kinds
@@ -713,12 +696,13 @@ function Write-PluginHookArtifact {
     $manifestText = $manifestText.Replace('.github/hooks/', '${PLUGIN_ROOT}/hooks/')
     Set-ContentIfChanged -Path $DestinationManifest -Value $manifestText | Out-Null
 
-    # Link the sibling script directory (manifest path without .json extension).
+    # Copy the sibling script directory (manifest path without .json extension).
     $scriptSrc = $SourceManifest -replace '\.json$', ''
     if (Test-Path -LiteralPath $scriptSrc) {
         $scriptDest = $DestinationManifest -replace '\.json$', ''
         [void]$GeneratedFiles.Add($scriptDest)
-        New-PluginLink -SourcePath $scriptSrc -DestinationPath $scriptDest -SymlinkCapable:$SymlinkCapable
+        New-PluginLink -SourcePath $scriptSrc -DestinationPath $scriptDest
+        Add-GeneratedFilesForCopiedTree -SourcePath $scriptDest -GeneratedFiles $GeneratedFiles
     }
 }
 
@@ -730,8 +714,8 @@ function Write-PluginDirectory {
     .DESCRIPTION
     Builds the full plugin layout under the specified plugins directory,
     including subdirectories for agents, commands, instructions, and skills.
-    Each item is linked or copied from the plugin directory back to its
-    source in the repository. Generates plugin.json and README.md.
+    Each item is copied from the repository into the plugin package.
+    Generates plugin.json and README.md.
 
     .PARAMETER Collection
     Parsed collection manifest hashtable with id, name, description, and items.
@@ -751,9 +735,6 @@ function Write-PluginDirectory {
 
     .PARAMETER DryRun
     When specified, logs actions without creating files or directories.
-
-    .PARAMETER SymlinkCapable
-    When specified, creates symbolic links; otherwise copies files.
 
     .OUTPUTS
     [hashtable] Result with Success, AgentCount, CommandCount, InstructionCount,
@@ -780,10 +761,7 @@ function Write-PluginDirectory {
         [string]$Maturity,
 
         [Parameter(Mandatory = $false)]
-        [switch]$DryRun,
-
-        [Parameter(Mandatory = $false)]
-        [switch]$SymlinkCapable
+        [switch]$DryRun
     )
 
     $collectionId = $Collection.id
@@ -907,18 +885,22 @@ function Write-PluginDirectory {
         [void]$generatedFiles.Add($destPath)
 
         if ($DryRun) {
-            Write-Verbose "DryRun: Would create link $destPath -> $sourcePath"
+            Write-Verbose "DryRun: Would copy $destPath <- $sourcePath"
             continue
         }
 
         # Hooks bundle a sibling script directory and need plugin-relative
-        # command paths; other kinds link their single source file directly.
+        # command paths; other kinds copy their single source file directly.
         if ($kind -eq 'hook') {
             Write-PluginHookArtifact -SourceManifest $sourcePath -DestinationManifest $destPath `
-                -GeneratedFiles $generatedFiles -SymlinkCapable:$SymlinkCapable
+                -GeneratedFiles $generatedFiles
         }
         else {
-            New-PluginLink -SourcePath $sourcePath -DestinationPath $destPath -SymlinkCapable:$SymlinkCapable
+            New-PluginLink -SourcePath $sourcePath -DestinationPath $destPath
+        }
+
+        if ($kind -eq 'skill') {
+            Add-GeneratedFilesForCopiedTree -SourcePath $destPath -GeneratedFiles $generatedFiles
         }
     }
 
@@ -940,11 +922,12 @@ function Write-PluginDirectory {
         [void]$generatedFiles.Add($destPath)
 
         if ($DryRun) {
-            Write-Verbose "DryRun: Would create shared directory link $destPath -> $sourcePath"
+            Write-Verbose "DryRun: Would copy shared directory $destPath <- $sourcePath"
             continue
         }
 
-        New-PluginLink -SourcePath $sourcePath -DestinationPath $destPath -SymlinkCapable:$SymlinkCapable
+        New-PluginLink -SourcePath $sourcePath -DestinationPath $destPath
+        Add-GeneratedFilesForCopiedTree -SourcePath $destPath -GeneratedFiles $generatedFiles
     }
 
     # Generate plugin.json with explicit path arrays for CLI discovery
@@ -998,133 +981,8 @@ function Write-PluginDirectory {
     }
 }
 
-function Repair-PluginSymlinkIndex {
-    <#
-    .SYNOPSIS
-    Fixes git index modes for text stub files so they register as symlinks.
-
-    .DESCRIPTION
-    On systems where symlinks are unavailable (Windows without Developer Mode),
-    New-PluginLink writes text stubs containing relative paths. Git stages
-    these as mode 100644 (regular file). This function re-indexes each text
-    stub as mode 120000 (symlink) so that Linux/macOS checkouts materialize
-    real symbolic links.
-
-    .PARAMETER PluginsDir
-    Absolute path to the plugins output directory.
-
-    .PARAMETER RepoRoot
-    Absolute path to the repository root (git working tree).
-
-    .PARAMETER DryRun
-    When specified, logs what would be fixed without modifying the index.
-
-    .OUTPUTS
-    [int] Number of index entries corrected.
-    #>
-    [CmdletBinding()]
-    [OutputType([int])]
-    param(
-        [Parameter(Mandatory = $true)]
-        [ValidateNotNullOrEmpty()]
-        [string]$PluginsDir,
-
-        [Parameter(Mandatory = $true)]
-        [ValidateNotNullOrEmpty()]
-        [string]$RepoRoot,
-
-        [Parameter(Mandatory = $false)]
-        [switch]$DryRun
-    )
-
-    if (-not (Test-Path -Path $PluginsDir)) {
-        return 0
-    }
-
-    # Build a set of paths already tracked in the git index under plugins/.
-    # --index-info silently ignores untracked paths (PowerShell pipe encoding
-    # issue), so new files must be added individually via --cacheinfo.
-    $trackedPaths = [System.Collections.Generic.HashSet[string]]::new(
-        [System.StringComparer]::OrdinalIgnoreCase
-    )
-    $alreadySymlink = [System.Collections.Generic.HashSet[string]]::new(
-        [System.StringComparer]::OrdinalIgnoreCase
-    )
-    $pluginsRel = [System.IO.Path]::GetRelativePath($RepoRoot, $PluginsDir) -replace '\\', '/'
-    $lsOutput = git ls-files --stage -- $pluginsRel 2>$null
-    if ($lsOutput) {
-        foreach ($line in @($lsOutput)) {
-            if ($line -match '^(\d+)\s+[0-9a-f]+\s+\d+\t(.+)$') {
-                [void]$trackedPaths.Add($Matches[2])
-                if ($Matches[1] -eq '120000') {
-                    [void]$alreadySymlink.Add($Matches[2])
-                }
-            }
-        }
-    }
-
-    $fixedCount = 0
-    $files = Get-ChildItem -Path $PluginsDir -File -Recurse
-
-    foreach ($file in $files) {
-        # Text stubs are small files whose content is a relative path with
-        # forward slashes, no line breaks, starting with ../
-        if ($file.Length -gt 500) {
-            continue
-        }
-
-        $content = [System.IO.File]::ReadAllText($file.FullName)
-
-        if ($content -notmatch '^\.\./') {
-            continue
-        }
-        if ($content.Contains("`n") -or $content.Contains("`r")) {
-            continue
-        }
-
-        $repoRelPath = [System.IO.Path]::GetRelativePath($RepoRoot, $file.FullName) -replace '\\', '/'
-
-        if ($alreadySymlink.Contains($repoRelPath)) {
-            continue
-        }
-
-        if ($DryRun) {
-            Write-Verbose "DryRun: Would fix index mode for $repoRelPath"
-            $fixedCount++
-            continue
-        }
-
-        $hashOutput = git hash-object -w -- $file.FullName 2>&1
-        if ($LASTEXITCODE -ne 0) {
-            Write-Warning "Failed to hash-object for $repoRelPath"
-            continue
-        }
-
-        # Extract clean SHA string, filtering out any ErrorRecord objects
-        $sha = @($hashOutput | Where-Object { $_ -is [string] -and $_ -match '^[0-9a-f]{40}' })[0]
-        if (-not $sha) {
-            Write-Warning "No valid SHA returned for $repoRelPath"
-            continue
-        }
-
-        # Use --add for untracked files; harmless for already-tracked entries.
-        # Avoids --index-info piping which breaks on Windows due to CRLF stdin.
-        $addFlag = if (-not $trackedPaths.Contains($repoRelPath)) { '--add' } else { $null }
-        $cacheArgs = @('update-index') + @($addFlag | Where-Object { $_ }) + @('--cacheinfo', "120000,$sha,$repoRelPath")
-        $cacheResult = & git @cacheArgs 2>&1
-        if ($LASTEXITCODE -ne 0) {
-            $errorMsg = @($cacheResult | ForEach-Object { $_.ToString() }) -join '; '
-            Write-Warning "Failed to update index entry for ${repoRelPath}: $errorMsg"
-            continue
-        }
-        $fixedCount++
-        Write-Verbose "Fixed index mode: $repoRelPath -> 120000"
-    }
-
-    return $fixedCount
-}
-
 Export-ModuleMember -Function @(
+    'Add-GeneratedFilesForCopiedTree',
     'Get-PluginItemName',
     'Get-PluginItemSubpath',
     'Get-PluginSubdirectory',
@@ -1133,8 +991,6 @@ Export-ModuleMember -Function @(
     'New-PluginLink',
     'New-PluginManifestContent',
     'New-PluginReadmeContent',
-    'Repair-PluginSymlinkIndex',
-    'Test-SymlinkCapability',
     'Write-MarketplaceManifest',
     'Write-PluginDirectory'
 )

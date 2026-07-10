@@ -2,6 +2,26 @@
 # Copyright (c) Microsoft Corporation.
 # SPDX-License-Identifier: MIT
 
+function script:New-TestPluginPackage {
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$RepoRoot,
+
+        [Parameter(Mandatory = $true)]
+        [string]$PluginName
+    )
+
+    $pluginDir = Join-Path $RepoRoot "plugins/$PluginName"
+    New-Item -ItemType Directory -Path $pluginDir -Force | Out-Null
+    New-Item -ItemType Directory -Path (Join-Path $pluginDir '.github/plugin') -Force | Out-Null
+    Set-Content -Path (Join-Path $pluginDir 'README.md') -Value "# $PluginName"
+    @{ name = $PluginName; description = 'A plugin'; version = '1.0.0'; agents = @(); commands = @(); skills = @(); hooks = @() } |
+        ConvertTo-Json -Depth 5 |
+        Set-Content -Path (Join-Path $pluginDir '.github/plugin/plugin.json') -Encoding UTF8
+
+    return $pluginDir
+}
+
 BeforeAll {
     . $PSScriptRoot/../../plugins/Validate-Marketplace.ps1
 }
@@ -119,8 +139,7 @@ Describe 'Invoke-MarketplaceValidation - missing owner name' {
         $script:repoRoot = Join-Path $TestDrive 'repo-missing-owner'
         $manifestDir = Join-Path $script:repoRoot '.github/plugin'
         New-Item -ItemType Directory -Path $manifestDir -Force | Out-Null
-        $pluginsDir = Join-Path $script:repoRoot 'plugins/my-plugin'
-        New-Item -ItemType Directory -Path $pluginsDir -Force | Out-Null
+        New-TestPluginPackage -RepoRoot $script:repoRoot -PluginName 'my-plugin' | Out-Null
         Set-Content -Path (Join-Path $script:repoRoot 'package.json') -Value '{"version":"1.0.0"}'
         $json = @{
             name     = 'test'
@@ -143,8 +162,7 @@ Describe 'Invoke-MarketplaceValidation - version mismatch' {
         $script:repoRoot = Join-Path $TestDrive 'repo-version-mismatch'
         $manifestDir = Join-Path $script:repoRoot '.github/plugin'
         New-Item -ItemType Directory -Path $manifestDir -Force | Out-Null
-        $pluginsDir = Join-Path $script:repoRoot 'plugins/my-plugin'
-        New-Item -ItemType Directory -Path $pluginsDir -Force | Out-Null
+        New-TestPluginPackage -RepoRoot $script:repoRoot -PluginName 'my-plugin' | Out-Null
         Set-Content -Path (Join-Path $script:repoRoot 'package.json') -Value '{"version":"2.0.0"}'
         $json = @{
             name     = 'test'
@@ -189,7 +207,7 @@ Describe 'Invoke-MarketplaceValidation - duplicate plugin names' {
         $script:repoRoot = Join-Path $TestDrive 'repo-dupes'
         $manifestDir = Join-Path $script:repoRoot '.github/plugin'
         New-Item -ItemType Directory -Path $manifestDir -Force | Out-Null
-        New-Item -ItemType Directory -Path (Join-Path $script:repoRoot 'plugins/my-plugin') -Force | Out-Null
+        New-TestPluginPackage -RepoRoot $script:repoRoot -PluginName 'my-plugin' | Out-Null
         Set-Content -Path (Join-Path $script:repoRoot 'package.json') -Value '{"version":"1.0.0"}'
         $json = @{
             name     = 'test'
@@ -239,7 +257,7 @@ Describe 'Invoke-MarketplaceValidation - name-source mismatch' {
         $script:repoRoot = Join-Path $TestDrive 'repo-name-mismatch'
         $manifestDir = Join-Path $script:repoRoot '.github/plugin'
         New-Item -ItemType Directory -Path $manifestDir -Force | Out-Null
-        New-Item -ItemType Directory -Path (Join-Path $script:repoRoot 'plugins/actual-source') -Force | Out-Null
+        New-TestPluginPackage -RepoRoot $script:repoRoot -PluginName 'actual-source' | Out-Null
         Set-Content -Path (Join-Path $script:repoRoot 'package.json') -Value '{"version":"1.0.0"}'
         $json = @{
             name     = 'test'
@@ -264,7 +282,7 @@ Describe 'Invoke-MarketplaceValidation - plugin version mismatch' {
         $script:repoRoot = Join-Path $TestDrive 'repo-plugin-version'
         $manifestDir = Join-Path $script:repoRoot '.github/plugin'
         New-Item -ItemType Directory -Path $manifestDir -Force | Out-Null
-        New-Item -ItemType Directory -Path (Join-Path $script:repoRoot 'plugins/my-plugin') -Force | Out-Null
+        New-TestPluginPackage -RepoRoot $script:repoRoot -PluginName 'my-plugin' | Out-Null
         Set-Content -Path (Join-Path $script:repoRoot 'package.json') -Value '{"version":"2.0.0"}'
         $json = @{
             name     = 'test'
@@ -314,7 +332,7 @@ Describe 'Invoke-MarketplaceValidation - valid manifest' {
         $script:repoRoot = Join-Path $TestDrive 'repo-valid'
         $manifestDir = Join-Path $script:repoRoot '.github/plugin'
         New-Item -ItemType Directory -Path $manifestDir -Force | Out-Null
-        New-Item -ItemType Directory -Path (Join-Path $script:repoRoot 'plugins/my-plugin') -Force | Out-Null
+        New-TestPluginPackage -RepoRoot $script:repoRoot -PluginName 'my-plugin' | Out-Null
         Set-Content -Path (Join-Path $script:repoRoot 'package.json') -Value '{"version":"1.0.0"}'
         $json = @{
             name     = 'test'
@@ -334,7 +352,7 @@ Describe 'Invoke-MarketplaceValidation - valid manifest' {
     }
 
     It 'Returns success with multiple valid plugins' {
-        New-Item -ItemType Directory -Path (Join-Path $script:repoRoot 'plugins/other-plugin') -Force | Out-Null
+        New-TestPluginPackage -RepoRoot $script:repoRoot -PluginName 'other-plugin' | Out-Null
         $json = @{
             name     = 'test'
             metadata = @{ description = 'd'; version = '1.0.0'; pluginRoot = 'plugins' }
@@ -353,12 +371,67 @@ Describe 'Invoke-MarketplaceValidation - valid manifest' {
     }
 }
 
+Describe 'Invoke-MarketplaceValidation - in-package content' {
+    BeforeAll {
+        $script:repoRoot = Join-Path $TestDrive 'repo-in-package-content'
+        $script:manifestDir = Join-Path $script:repoRoot '.github/plugin'
+        New-Item -ItemType Directory -Path $script:manifestDir -Force | Out-Null
+        Set-Content -Path (Join-Path $script:repoRoot 'package.json') -Value '{"version":"1.0.0"}'
+    }
+
+    It 'Returns error when README.md is missing from the packaged plugin' {
+        $pluginDir = Join-Path $script:repoRoot 'plugins/missing-readme'
+        New-Item -ItemType Directory -Path $pluginDir -Force | Out-Null
+        New-Item -ItemType Directory -Path (Join-Path $pluginDir '.github/plugin') -Force | Out-Null
+        @{ name = 'missing-readme'; description = 'd'; version = '1.0.0'; agents = @(); commands = @(); skills = @(); hooks = @() } |
+            ConvertTo-Json -Depth 5 |
+            Set-Content -Path (Join-Path $pluginDir '.github/plugin/plugin.json') -Encoding UTF8
+        $json = @{
+            name     = 'test'
+            metadata = @{ description = 'd'; version = '1.0.0'; pluginRoot = 'plugins' }
+            owner    = @{ name = 'owner' }
+            plugins  = @(@{ name = 'missing-readme'; source = 'missing-readme'; description = 'd'; version = '1.0.0' })
+        } | ConvertTo-Json -Depth 5
+        Set-Content -Path (Join-Path $script:manifestDir 'marketplace.json') -Value $json
+
+        $result = Invoke-MarketplaceValidation -RepoRoot $script:repoRoot
+        $result.Success | Should -BeFalse
+        $result.ErrorCount | Should -BeGreaterThan 0
+    }
+
+    It 'Returns error when a declared manifest component path is missing inside the package' {
+        $pluginDir = New-TestPluginPackage -RepoRoot $script:repoRoot -PluginName 'missing-component'
+        Remove-Item -Path (Join-Path $pluginDir 'README.md') -Force
+        $pluginJson = @{
+            name = 'missing-component'
+            description = 'd'
+            version = '1.0.0'
+            agents = @('agents/example/')
+            commands = @()
+            skills = @()
+            hooks = @()
+        } | ConvertTo-Json -Depth 5
+        Set-Content -Path (Join-Path $pluginDir '.github/plugin/plugin.json') -Value $pluginJson -Encoding UTF8
+        $json = @{
+            name     = 'test'
+            metadata = @{ description = 'd'; version = '1.0.0'; pluginRoot = 'plugins' }
+            owner    = @{ name = 'owner' }
+            plugins  = @(@{ name = 'missing-component'; source = 'missing-component'; description = 'd'; version = '1.0.0' })
+        } | ConvertTo-Json -Depth 5
+        Set-Content -Path (Join-Path $script:manifestDir 'marketplace.json') -Value $json
+
+        $result = Invoke-MarketplaceValidation -RepoRoot $script:repoRoot
+        $result.Success | Should -BeFalse
+        $result.ErrorCount | Should -BeGreaterThan 0
+    }
+}
+
 Describe 'Invoke-MarketplaceValidation - JSON output' {
     BeforeEach {
         $script:repoRoot = Join-Path $TestDrive 'repo-json-output'
         $script:manifestDir = Join-Path $script:repoRoot '.github/plugin'
         New-Item -ItemType Directory -Path $script:manifestDir -Force | Out-Null
-        New-Item -ItemType Directory -Path (Join-Path $script:repoRoot 'plugins/my-plugin') -Force | Out-Null
+        New-TestPluginPackage -RepoRoot $script:repoRoot -PluginName 'my-plugin' | Out-Null
         Set-Content -Path (Join-Path $script:repoRoot 'package.json') -Value '{"version":"1.0.0"}'
     }
 
@@ -390,7 +463,7 @@ Describe 'Invoke-MarketplaceValidation - JSON output' {
 
     It 'Writes per-plugin errors into JSON results' {
         $outputPath = Join-Path $TestDrive 'logs/marketplace-validation-results.json'
-        New-Item -ItemType Directory -Path (Join-Path $script:repoRoot 'plugins/actual-source') -Force | Out-Null
+        New-TestPluginPackage -RepoRoot $script:repoRoot -PluginName 'actual-source' | Out-Null
         $json = @{
             name     = 'test'
             metadata = @{ description = 'd'; version = '1.0.0'; pluginRoot = 'plugins' }

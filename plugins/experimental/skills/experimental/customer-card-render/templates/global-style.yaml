@@ -1,0 +1,13 @@
+dimensions:
+  width_inches: 13.333
+  height_inches: 7.5
+  format: "16:9"
+
+metadata:
+  title: "Customer Cards"
+  subject: "HVE-Core Design Thinking Customer Cards"
+  keywords: "HVE, design thinking, customer cards"
+  category: "Customer Presentation"
+
+defaults:
+  speaker_notes_required: true

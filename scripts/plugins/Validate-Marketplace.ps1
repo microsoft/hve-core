@@ -154,6 +154,75 @@ function Test-PluginSourceFormat {
     return ''
 }
 
+function Test-PluginPackageContent {
+    <#
+    .SYNOPSIS
+        Validates that a packaged plugin contains real content expected by the marketplace manifest.
+
+    .PARAMETER PluginRoot
+        Absolute path to the plugin package directory.
+
+    .PARAMETER PluginName
+        Marketplace plugin name for error messages.
+
+    .OUTPUTS
+        [string[]] Validation errors for missing in-package content.
+    #>
+    [CmdletBinding()]
+    [OutputType([string[]])]
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$PluginRoot,
+
+        [Parameter(Mandatory = $true)]
+        [string]$PluginName
+    )
+
+    $pluginErrors = @()
+
+    $readmePath = Join-Path -Path $PluginRoot -ChildPath 'README.md'
+    if (-not (Test-Path -Path $readmePath -PathType Leaf)) {
+        $pluginErrors += "plugin '$PluginName' is missing README.md inside the packaged plugin"
+    }
+
+    $manifestPath = Join-Path -Path $PluginRoot -ChildPath '.github/plugin/plugin.json'
+    if (-not (Test-Path -Path $manifestPath -PathType Leaf)) {
+        $pluginErrors += "plugin '$PluginName' is missing .github/plugin/plugin.json inside the packaged plugin"
+    }
+
+    if (Test-Path -Path $manifestPath -PathType Leaf) {
+        try {
+            $manifest = Get-Content -Path $manifestPath -Raw | ConvertFrom-Json -AsHashtable
+        }
+        catch {
+            $pluginErrors += "plugin '$PluginName' has invalid plugin.json content"
+            return $pluginErrors
+        }
+
+        $componentCollections = @(
+            @{ Name = 'agents'; Paths = @($manifest['agents']) },
+            @{ Name = 'commands'; Paths = @($manifest['commands']) },
+            @{ Name = 'skills'; Paths = @($manifest['skills']) },
+            @{ Name = 'hooks'; Paths = @($manifest['hooks']) }
+        )
+
+        foreach ($component in $componentCollections) {
+            foreach ($pathValue in @($component.Paths)) {
+                if ([string]::IsNullOrWhiteSpace([string]$pathValue)) {
+                    continue
+                }
+
+                $resolvedPath = Join-Path -Path $PluginRoot -ChildPath $pathValue
+                if (-not (Test-Path -Path $resolvedPath)) {
+                    $pluginErrors += "plugin '$PluginName' declares missing component path '$($pathValue)' inside the packaged plugin"
+                }
+            }
+        }
+    }
+
+    return $pluginErrors
+}
+
 #endregion Validation Helpers
 
 #region Orchestration
@@ -314,6 +383,10 @@ function Invoke-MarketplaceValidation {
                 $dirError = Test-PluginSourceDirectory -Source $plugin.source -PluginsRoot $pluginsRoot
                 if ($dirError) {
                     $pluginErrors += $dirError
+                }
+                else {
+                    $pluginPackageRoot = Join-Path -Path $pluginsRoot -ChildPath $plugin.source
+                    $pluginErrors += Test-PluginPackageContent -PluginRoot $pluginPackageRoot -PluginName $pluginName
                 }
             }
 

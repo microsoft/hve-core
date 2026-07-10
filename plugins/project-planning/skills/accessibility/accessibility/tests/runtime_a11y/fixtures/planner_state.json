@@ -1,0 +1,25 @@
+{
+  "project": {
+    "surfaces": ["web", "mobile"]
+  },
+  "controlMappings": [
+    {
+      "controlId": "2.1.1",
+      "status": "covered",
+      "notes": "Keyboard navigation covered",
+      "surfaces": ["web"]
+    },
+    {
+      "controlId": "3.3.2",
+      "status": "gap",
+      "surfaces": ["mobile"]
+    }
+  ],
+  "evidenceRegister": [
+    {
+      "frameworkId": "wcag-22",
+      "controlId": "2.1.1",
+      "sourceUri": "https://example.com/plan"
+    }
+  ]
+}
