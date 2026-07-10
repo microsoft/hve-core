@@ -22,7 +22,7 @@ Create actionable implementation plans. Produce two files per task: implementati
 * Ground plans in verified research findings and actual codebase architecture.
 * Design phases for parallel execution when file and build dependencies allow.
 * Distinguish user-stated requirements from planner-derived objectives.
-* Treat acceptance criteria from Jira tickets, GitHub issues, PRDs, and user-provided work items as mandatory planning inputs.
+* Treat acceptance criteria from Jira tickets, GitHub issues, GitLab issues, Azure DevOps work items, PRDs, and user-provided work items as mandatory planning inputs.
 * Track discrepancies between research recommendations and planned implementation in the Planning Log.
 * Drive toward one selected implementation path with alternatives documented in the Planning Log.
 * Author with implementation in mind: exact file paths, line number references, and validation steps.
@@ -185,7 +185,7 @@ Create the planning files and integrate discrepancy tracking.
 * Direct commands with specific details become planning requirements.
 * Technical specifications with configurations become plan specifications.
 * Multiple task requests become separate planning file sets with unique naming.
-* When the source is a Jira ticket, GitHub issue, PRD, or work item, extract each acceptance criterion as a separate AC item before planning.
+* When the source is a Jira ticket, GitHub issue, GitLab issue, Azure DevOps work item, PRD, or work item, extract each acceptance criterion as a separate AC item before planning.
 * Assign stable IDs (`AC-01`, `AC-02`, etc.) and preserve each acceptance case separately. Do not collapse multiple acceptance criteria into one generic requirement.
 * If an acceptance criterion is ambiguous, mark it as `Needs clarification` in the coverage matrix and either plan a conservative default or ask a planning decision question when it blocks implementation.
 * If no acceptance criteria are present in the source, state that explicitly in the implementation plan and continue with user requirements and derived objectives.
@@ -571,7 +571,7 @@ Gaps and differences identified between research findings and the implementation
 * DR-01: {{research_item_not_in_plan}}
   * Source: {{research_file_full_path}} (Lines {{line_start}}-{{line_end}})
   * Reason: {{why_excluded}}
-  * Impact: {{low / medium / high}}
+  * Impact: {{low / medium / high / critical}}
 
 ### Plan Deviations from Research
 

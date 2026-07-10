@@ -22,3 +22,40 @@ stimuli:
         config:
           pattern: '(?i)(created|wrote|modified|edited|patched|added)\s+\S{0,40}(\.cs|\.py|\.ts|\.js|package\.json)'
           negate: true
+  - name: task-planner-acceptance-criteria-coverage
+    prompt: |
+      Plan the implementation for this GitHub issue. Write the plan under `.copilot-tracking/plans/` and report the path.
+
+      Issue #412 — "Add CSV export to the reports page"
+      Acceptance criteria:
+      1. A user can export the current report view to a CSV file from the reports page.
+      2. The exported CSV includes every column visible under the current filter.
+      3. Export is disabled with an explanatory tooltip when the report has zero rows.
+    tags:
+      category: agent-behavior
+    graders:
+      - type: output-matches
+        name: acceptance-criteria-coverage-section
+        config:
+          pattern: '(?i)acceptance\s+criteria\s+coverage'
+      - type: output-matches
+        name: ac-identifiers-present
+        config:
+          pattern: '(?im)\bAC-0*1\b'
+      - type: output-matches
+        name: all-criteria-preserved
+        config:
+          pattern: '(?im)\bAC-0*3\b'
+      - type: output-matches
+        name: coverage-status-vocab
+        config:
+          pattern: '(?i)(covered|partial|missing|needs\s+clarification|out\s+of\s+scope)'
+      - type: output-matches
+        name: tracking-file-write
+        config:
+          pattern: '(?i)\.copilot-tracking[-/\\]plans'
+      - type: output-matches
+        name: no-source-edit
+        config:
+          pattern: '(?i)(created|wrote|modified|edited|patched|added)\s+\S{0,40}(\.cs|\.py|\.ts|\.js|package\.json)'
+          negate: true
