@@ -2,7 +2,7 @@
 title: Creating Custom Prompts
 description: Author reusable prompt templates with variables, agent delegation, and tool restrictions for team workflows
 author: Microsoft
-ms.date: 2026-06-27
+ms.date: 2026-07-10
 ms.topic: how-to
 keywords:
   - prompts
@@ -61,7 +61,7 @@ Frontmatter fields:
 * `description` (required): A one-line summary displayed in the prompt picker
 * `name` (optional): A human-readable identifier for the prompt
 * `argument-hint` (optional): Hint text shown in the prompt picker for expected inputs
-* `agent` (optional): Delegates execution to a specific custom agent
+* `agent` (optional): Either a **mode selector** (`ask`, `edit`, or `agent` — default when omitted) or a **custom agent name** that delegates execution to that agent
 * `model` (optional): Pins the prompt to a specific model or prioritized model list
 * `tools` (optional): Restricts available tools for the prompt
 
@@ -138,6 +138,9 @@ defined in #file:.github/instructions/coding-standards/typescript.instructions.m
 ```
 
 ## Agent Delegation from Prompts
+
+Use the built-in mode values (`ask`, `edit`, `agent`) when you want to control how Copilot is invoked. Use a human-readable custom agent name only when routing to a named custom agent package.
+
 
 The `agent:` frontmatter field delegates prompt execution to a custom agent. The value uses the agent's human-readable `name:` from its frontmatter.
 
