@@ -163,7 +163,6 @@ Prompts are single-session workflows a user invokes and Copilot executes to comp
 * `tools:` restricts an agent or subagent to the listed tools; omission allows every available tool and therefore requires an explicit reason during review.
 * `user-invocable:` defaults to true; set it to false for background-only artifacts. Use this spelling consistently.
 * `model:` is optional. An omitted subagent model inherits the invoking parent's model. An omitted directly invoked agent or prompt model uses the current session or model-picker selection. When present on an agent or prompt, select the responsibility-based profile and use exactly one canonical ordered list: High is `GPT-5.6 Sol (copilot)`, `Claude Opus 4.8 (copilot)`, `GPT-5.5 (copilot)`; Medium is `GPT-5.6 Terra (copilot)`, `Claude Sonnet 5 (copilot)`, `MAI-Code-1-Flash (copilot)`; Low is `GPT-5.6 Luna (copilot)`, `MAI-Code-1-Flash (copilot)`, `Claude Haiku 4.5 (copilot)`.
-* Do not include a `maturity` field; collection manifests track maturity.
 
 ## Referencing Other Artifacts
 
