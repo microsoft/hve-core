@@ -30,7 +30,7 @@ A single request often decomposes into several artifact types. Separate responsi
 
 | Responsibility                                                                     | Artifact    | Form                                                 | Activation                                  |
 |------------------------------------------------------------------------------------|-------------|------------------------------------------------------|---------------------------------------------|
-| Reusable workflow, domain knowledge, references, templates, or scripts             | Skill       | `SKILL.md` in `.github/skills/<collection>/<skill>/` | Semantic description match or `/skill-name` |
+| Reusable workflow, domain knowledge, references, templates, or scripts             | Skill       | `SKILL.md` in `.github/skills/<skill>/`              | Semantic description match or `/skill-name` |
 | Isolated, high-volume, parallel, fresh-context, mechanical, or model-specific work | Subagent    | `.agent.md` under a `subagents/` folder              | Parent dispatch by stable `name`            |
 | Convention that applies whenever matching paths are edited                         | Instruction | `.instructions.md`                                   | Automatic `applyTo` match                   |
 | User-selected multi-turn role or bounded autonomous workflow                       | Agent       | `.agent.md`                                          | Agent picker or handoff                     |
@@ -82,7 +82,7 @@ This section defines authoring patterns for the artifact types authored here. Se
 
 ### Skill Files
 
-*File name*: `SKILL.md`. *Location*: `.github/skills/<collection>/<skill>/SKILL.md`.
+*File name*: `SKILL.md`. *Location*: `.github/skills/<skill>/SKILL.md`.
 
 Skills are self-contained, relocatable packages that bundle on-demand knowledge with optional references, templates, and scripts.
 
