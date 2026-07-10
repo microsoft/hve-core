@@ -1,0 +1,27 @@
+# Copyright (c) 2026 Microsoft Corporation. All rights reserved.
+# SPDX-License-Identifier: MIT
+stimuli:
+  - name: hve-artifact-explorer-ranked-reuse
+    prompt: |
+      As the HVE Artifact Explorer, describe the bounded discovery result for a
+      request to reuse prompt-engineering artifacts for independent artifact
+      review. Use one status from Complete, Partial, or Blocked. Return ranked
+      candidates with type and relatedness, suggest a reuse disposition for
+      each, mention search coverage or near-misses, and preserve the read-only
+      source boundary.
+    tags:
+      category: agent-behavior
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: discovery-status
+        config:
+          pattern: '(?i)\b(Complete|Partial|Blocked)\b'
+      - type: output-matches
+        name: ranked-relatedness
+        config:
+          pattern: '(?is)(rank|candidate).*(related|relevance)|(related|relevance).*(rank|candidate)'
+      - type: output-matches
+        name: read-only-boundary
+        config:
+          pattern: '(?i)(read[- ]only|no\s+(source\s+)?edits|does\s+not\s+modify|unchanged)'

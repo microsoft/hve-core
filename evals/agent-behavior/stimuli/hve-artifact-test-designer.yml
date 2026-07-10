@@ -1,0 +1,31 @@
+# Copyright (c) 2026 Microsoft Corporation. All rights reserved.
+# SPDX-License-Identifier: MIT
+stimuli:
+  - name: hve-artifact-test-designer-black-box-coverage
+    prompt: |
+      As the HVE Artifact Test Designer, design but do not execute one isolation
+      scenario and one together scenario for a summarizer and its companion
+      output-format instruction. Their public contract accepts text and returns
+      exactly three bullets. Return status, black-box prompts, targeted
+      behaviors, observable success signals, omitted coverage, and the
+      black-box self-check.
+    tags:
+      category: agent-behavior
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: design-status
+        config:
+          pattern: '(?i)\b(Complete|Partial|Blocked)\b'
+      - type: output-matches
+        name: isolation-and-together
+        config:
+          pattern: '(?is)(?=.*\bisolation\b)(?=.*\btogether\b)'
+      - type: output-matches
+        name: observable-success
+        config:
+          pattern: '(?i)(observable\s+(success|outcome|signal)|success\s+signal)'
+      - type: output-matches
+        name: black-box-check
+        config:
+          pattern: '(?i)(black[- ]box|omitted\s+coverage|do\s+not\s+execute)'

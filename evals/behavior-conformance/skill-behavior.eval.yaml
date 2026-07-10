@@ -1,7 +1,7 @@
 name: behavior-conformance-skills
 description: >
   Advisory-tier behavior conformance evals for skills exercised through
-  knowledge, tool-trigger, and bleed-detection stimulus shapes. Total: 100
+  knowledge, tool-trigger, and bleed-detection stimulus shapes. Total: 118
   stimuli, including complete branch coverage for the RPI and prompt-builder
   skill updates. Each tool-trigger stimulus uses two graders with AND logic,
   and the suite-level scoring threshold gates the aggregate pass rate across
@@ -1376,6 +1376,68 @@ stimuli:
         name: scope-language
         config:
           pattern: '(?i)(safety-boundary|prohibited|conformance|scope|probe)'
+  - name: skill-hve-builder-knowledge
+    prompt: |
+      An existing custom agent needs behavioral improvement without an
+      architecture change. Summarize how the `hve-builder` skill handles the
+      request from baseline assessment through its final outcome. Include the
+      write boundary, required quality gates, and terminal outcome vocabulary.
+    environment:
+      skills:
+        - ../../.github/skills/hve-core/hve-builder
+    tags:
+      category: behavior-conformance
+      skill: hve-builder
+      shape: knowledge
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: lifecycle-routing
+        config:
+          pattern: '(?is)(hve-builder|HVE Builder).*(improve|baseline)|(improve|baseline).*(hve-builder|HVE Builder)'
+      - type: output-matches
+        name: write-boundary
+        config:
+          pattern: '(?i)(write\s+boundary|approved\s+(target|artifact|path|scope))'
+      - type: output-matches
+        name: required-gates
+        config:
+          pattern: '(?is)(?=.*(?:static\s+review|review))(?=.*behavior)(?=.*validat)'
+      - type: output-matches
+        name: terminal-outcomes
+        config:
+          pattern: '(?is)(?=.*\bPass\b)(?=.*\bRevise\b)(?=.*\bDeferred\b)(?=.*\bBlocked\b)'
+  - name: skill-hve-builder-tester-knowledge
+    prompt: |
+      Summarize how the `hve-builder-tester` skill evaluates a behavior-bearing
+      prompt-engineering artifact. Include profile and fidelity selection,
+      design, execution, independent grading, containment, and the distinction
+      between execution status and quality verdict.
+    environment:
+      skills:
+        - ../../.github/skills/hve-core/hve-builder-tester
+    tags:
+      category: behavior-conformance
+      skill: hve-builder-tester
+      shape: knowledge
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: skill-attribution
+        config:
+          pattern: '(?i)(hve-builder-tester|HVE Builder Tester|behavior[- ]test)'
+      - type: output-matches
+        name: fidelity-and-containment
+        config:
+          pattern: '(?is)(simulation|native).*(sandbox|contain)|(sandbox|contain).*(simulation|native)'
+      - type: output-matches
+        name: delegated-test-roles
+        config:
+          pattern: '(?is)(design|scenario).*(execut|test).*(review|grad)'
+      - type: output-matches
+        name: status-verdict-separation
+        config:
+          pattern: '(?is)(execution\s+status|Complete|Partial|Deferred|Blocked).*(verdict|Pass|Revise|Not available)'
   - name: skill-prompt-builder-knowledge
     prompt: |
       Summarize the `prompt-builder` compatibility skill. Include legacy input
@@ -1547,6 +1609,38 @@ stimuli:
         name: scope-language
         config:
           pattern: '(?i)(read-only|analysis\s+report|source\s+edit|modify|follow-up)'
+  - name: skill-rpi-walkthrough-knowledge
+    prompt: |
+      Summarize how the `rpi-walkthrough` skill guides a user through existing
+      code or an artifact. Include target resolution, deep review and the
+      durable session record, the required shape and pacing of each segment,
+      how requested changes respect the source boundary, and the final RPI
+      handoff.
+    environment:
+      skills:
+        - ../../.github/skills/rpi/rpi-walkthrough
+    tags:
+      category: behavior-conformance
+      skill: rpi-walkthrough
+      shape: knowledge
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: skill-attribution
+        config:
+          pattern: '(?i)(rpi-walkthrough|RPI Walkthrough|guided\s+walkthrough)'
+      - type: output-matches
+        name: review-and-record
+        config:
+          pattern: '(?is)(deep\s+review|subagent).*(\.copilot-tracking[-/\\]walkthroughs|walkthrough\s+file|durable\s+(record|session))'
+      - type: output-matches
+        name: segment-contract
+        config:
+          pattern: '(?is)(?=.*segment)(?=.*mermaid)(?=.*(?:markdown\s+link|reference\s+table))(?=.*(?:one\s+or\s+two\s+questions|vscode_askQuestions|segment\s+boundary))'
+      - type: output-matches
+        name: source-boundary-and-handoff
+        config:
+          pattern: '(?is)(read[- ]only|do\s+not\s+(edit|modify)|requested\s+changes).*(rpi-quick|rpi-research|RPI\s+(follow-on|handoff|sequence))'
   - name: skill-rpi-quick-knowledge
     prompt: |
       Summarize the `rpi-quick` umbrella skill. Include the ordered phases,

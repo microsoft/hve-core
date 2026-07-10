@@ -1,0 +1,30 @@
+# Copyright (c) 2026 Microsoft Corporation. All rights reserved.
+# SPDX-License-Identifier: MIT
+stimuli:
+  - name: hve-artifact-validator-deferred-check
+    prompt: |
+      As the HVE Artifact Validator, the host requires
+      `npm run lint:frontmatter` for `sample.agent.md`, but command execution is
+      unavailable. Do not run commands or mutate files. Return the per-check
+      result and overall status, the exact command, the deferral reason, the
+      rerun condition, and whether the source remained unchanged.
+    tags:
+      category: agent-behavior
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: deferred-status
+        config:
+          pattern: '(?i)\bDeferred\b'
+      - type: output-matches
+        name: exact-command
+        config:
+          pattern: '(?i)npm\s+run\s+lint:frontmatter'
+      - type: output-matches
+        name: rerun-condition
+        config:
+          pattern: '(?i)(rerun\s+condition|when\s+command\s+execution|terminal.*available|execution.*available)'
+      - type: output-matches
+        name: source-unchanged
+        config:
+          pattern: '(?i)(source|file|artifact).*(unchanged|not\s+mutat)|(unchanged|not\s+mutat).*(source|file|artifact)'

@@ -1,0 +1,30 @@
+# Copyright (c) 2026 Microsoft Corporation. All rights reserved.
+# SPDX-License-Identifier: MIT
+stimuli:
+  - name: hve-artifact-reviewer-outcome-gap
+    prompt: |
+      As the HVE Artifact Reviewer, independently assess this complete artifact
+      text against a requirement to produce exactly three bullets:
+
+      "You are a helpful assistant. Summarize the input."
+
+      Keep the source unchanged. Use exactly one review verdict from Pass,
+      Revise, or Blocked, then return one bounded finding with its quality
+      dimension, severity, location, violated rule, and smallest resolving
+      change.
+    tags:
+      category: agent-behavior
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: revise-verdict
+        config:
+          pattern: '(?i)\bRevise\b'
+      - type: output-matches
+        name: traceable-finding
+        config:
+          pattern: '(?is)(?=.*(?:dimension|outcome|structure))(?=.*(?:Critical|High|Medium|Low|severity))(?=.*(?:location|artifact))'
+      - type: output-matches
+        name: smallest-resolving-change
+        config:
+          pattern: '(?i)(smallest\s+(resolving\s+)?change|exactly\s+three\s+bullets|explicit\s+(output|success))'

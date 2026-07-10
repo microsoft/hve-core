@@ -1,0 +1,33 @@
+# Copyright (c) 2026 Microsoft Corporation. All rights reserved.
+# SPDX-License-Identifier: MIT
+stimuli:
+  - name: hve-artifact-test-reviewer-evidence-gap
+    prompt: |
+      As the HVE Artifact Test Reviewer, treat these facts as the complete
+      finalized simulation evidence: the contract requires exactly three
+      bullets, the design covers that requirement, and observation 2 records
+      only two bullets. No files or additional artifacts are needed. Use one
+      verdict from Pass, Revise, or Blocked and one action category from
+      improvement, adjustment, deletion, correction, or miss. Return the
+      finding with its mapped dimension, simulated evidence class, severity,
+      evidence pointer, and smallest resolving change.
+    tags:
+      category: agent-behavior
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: revise-verdict
+        config:
+          pattern: '(?i)\bRevise\b'
+      - type: output-matches
+        name: action-category
+        config:
+          pattern: '(?i)\b(improvement|adjustment|deletion|correction|miss)\b'
+      - type: output-matches
+        name: fidelity-aware-evidence
+        config:
+          pattern: '(?is)(simulated|simulation).*(observation\s*2|evidence\s+pointer)|(observation\s*2|evidence\s+pointer).*(simulated|simulation)'
+      - type: output-matches
+        name: resolving-change
+        config:
+          pattern: '(?i)(smallest\s+(resolving\s+)?change|exactly\s+three\s+bullets)'

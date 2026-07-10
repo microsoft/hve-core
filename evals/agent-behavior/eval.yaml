@@ -924,6 +924,203 @@ stimuli:
     config:
       pattern: (?i)(created|wrote|modified|edited|patched|added)\s+\S{0,40}(\.cs|\.py|\.ts|\.js|package\.json)
       negate: true
+- name: hve-artifact-author-write-boundary
+  prompt: |
+    As the HVE Artifact Author, handle an improve dispatch whose approved
+    write boundary contains only `sample.prompt.md` and its author log. You
+    determine that the requirement instead needs a new, unapproved
+    `helper.instructions.md`. Do not edit files. Use the worker's Complete,
+    Partial, or Blocked status vocabulary, then explain the boundary decision,
+    state what belongs in the author log, and identify the approval or
+    clarification needed to continue.
+  tags:
+    category: agent-behavior
+    advisory: "true"
+    agent: hve-artifact-author
+  graders:
+  - type: output-matches
+    name: partial-status
+    config:
+      pattern: (?i)\bPartial\b
+  - type: output-matches
+    name: write-boundary-preserved
+    config:
+      pattern: (?i)(write\s+boundary|outside\s+(the\s+)?approved|out[- ]of[- ]bound|unapproved)
+  - type: output-matches
+    name: author-log-and-approval
+    config:
+      pattern: (?is)(author\s+log).*(approval|approve|clarif)|(approval|approve|clarif).*(author\s+log)
+- name: hve-artifact-explorer-ranked-reuse
+  prompt: |
+    As the HVE Artifact Explorer, describe the bounded discovery result for a
+    request to reuse prompt-engineering artifacts for independent artifact
+    review. Use one status from Complete, Partial, or Blocked. Return ranked
+    candidates with type and relatedness, suggest a reuse disposition for
+    each, mention search coverage or near-misses, and preserve the read-only
+    source boundary.
+  tags:
+    category: agent-behavior
+    advisory: "true"
+    agent: hve-artifact-explorer
+  graders:
+  - type: output-matches
+    name: discovery-status
+    config:
+      pattern: (?i)\b(Complete|Partial|Blocked)\b
+  - type: output-matches
+    name: ranked-relatedness
+    config:
+      pattern: (?is)(rank|candidate).*(related|relevance)|(related|relevance).*(rank|candidate)
+  - type: output-matches
+    name: read-only-boundary
+    config:
+      pattern: (?i)(read[- ]only|no\s+(source\s+)?edits|does\s+not\s+modify|unchanged)
+- name: hve-artifact-reviewer-outcome-gap
+  prompt: |
+    As the HVE Artifact Reviewer, independently assess this complete artifact
+    text against a requirement to produce exactly three bullets:
+
+    "You are a helpful assistant. Summarize the input."
+
+    Keep the source unchanged. Use exactly one review verdict from Pass,
+    Revise, or Blocked, then return one bounded finding with its quality
+    dimension, severity, location, violated rule, and smallest resolving
+    change.
+  tags:
+    category: agent-behavior
+    advisory: "true"
+    agent: hve-artifact-reviewer
+  graders:
+  - type: output-matches
+    name: revise-verdict
+    config:
+      pattern: (?i)\bRevise\b
+  - type: output-matches
+    name: traceable-finding
+    config:
+      pattern: (?is)(?=.*(?:dimension|outcome|structure))(?=.*(?:Critical|High|Medium|Low|severity))(?=.*(?:location|artifact))
+  - type: output-matches
+    name: smallest-resolving-change
+    config:
+      pattern: (?i)(smallest\s+(resolving\s+)?change|exactly\s+three\s+bullets|explicit\s+(output|success))
+- name: hve-artifact-test-designer-black-box-coverage
+  prompt: |
+    As the HVE Artifact Test Designer, design but do not execute one isolation
+    scenario and one together scenario for a summarizer and its companion
+    output-format instruction. Their public contract accepts text and returns
+    exactly three bullets. Return status, black-box prompts, targeted
+    behaviors, observable success signals, omitted coverage, and the
+    black-box self-check.
+  tags:
+    category: agent-behavior
+    advisory: "true"
+    agent: hve-artifact-test-designer
+  graders:
+  - type: output-matches
+    name: design-status
+    config:
+      pattern: (?i)\b(Complete|Partial|Blocked)\b
+  - type: output-matches
+    name: isolation-and-together
+    config:
+      pattern: (?is)(?=.*\bisolation\b)(?=.*\btogether\b)
+  - type: output-matches
+    name: observable-success
+    config:
+      pattern: (?i)(observable\s+(success|outcome|signal)|success\s+signal)
+  - type: output-matches
+    name: black-box-check
+    config:
+      pattern: (?i)(black[- ]box|omitted\s+coverage|do\s+not\s+execute)
+- name: hve-artifact-test-reviewer-evidence-gap
+  prompt: |
+    As the HVE Artifact Test Reviewer, treat these facts as the complete
+    finalized simulation evidence: the contract requires exactly three
+    bullets, the design covers that requirement, and observation 2 records
+    only two bullets. No files or additional artifacts are needed. Use one
+    verdict from Pass, Revise, or Blocked and one action category from
+    improvement, adjustment, deletion, correction, or miss. Return the
+    finding with its mapped dimension, simulated evidence class, severity,
+    evidence pointer, and smallest resolving change.
+  tags:
+    category: agent-behavior
+    advisory: "true"
+    agent: hve-artifact-test-reviewer
+  graders:
+  - type: output-matches
+    name: revise-verdict
+    config:
+      pattern: (?i)\bRevise\b
+  - type: output-matches
+    name: action-category
+    config:
+      pattern: (?i)\b(improvement|adjustment|deletion|correction|miss)\b
+  - type: output-matches
+    name: fidelity-aware-evidence
+    config:
+      pattern: (?is)(simulated|simulation).*(observation\s*2|evidence\s+pointer)|(observation\s*2|evidence\s+pointer).*(simulated|simulation)
+  - type: output-matches
+    name: resolving-change
+    config:
+      pattern: (?i)(smallest\s+(resolving\s+)?change|exactly\s+three\s+bullets)
+- name: hve-artifact-tester-unresolved-target
+  prompt: |
+    As the HVE Artifact Tester, handle a run state that supplies the Low
+    profile, model `claude-haiku-4.5`, simulation fidelity, and a sandbox path,
+    but no target artifact name, path, purpose, isolation set, or together
+    set. Searching cannot distinguish a target. Do not invent an artifact or
+    fabricate behavior evidence. Use the Complete, Partial, or Blocked
+    execution-status vocabulary and return the appropriate status, reason,
+    fidelity, missing input, and clarification needed to continue.
+  tags:
+    category: agent-behavior
+    advisory: "true"
+    agent: hve-artifact-tester
+  graders:
+  - type: output-matches
+    name: blocked-status
+    config:
+      pattern: (?i)\bBlocked\b
+  - type: output-matches
+    name: unresolved-target
+    config:
+      pattern: (?is)(unresolved\s+target|target\s+identity|missing\s+required\s+inputs.*target|lacks?.*target\s+artifact|no\s+target\s+artifact)
+  - type: output-matches
+    name: fidelity-disclosure
+    config:
+      pattern: (?is)(Low|claude-haiku-4\.5).*(simulation|fidelity)|(simulation|fidelity).*(Low|claude-haiku-4\.5)
+  - type: output-matches
+    name: clarification-request
+    config:
+      pattern: (?is)(clarif|provide|need|to\s+continue).*(artifact|target|path|name|purpose|isolation|together)
+- name: hve-artifact-validator-deferred-check
+  prompt: |
+    As the HVE Artifact Validator, the host requires
+    `npm run lint:frontmatter` for `sample.agent.md`, but command execution is
+    unavailable. Do not run commands or mutate files. Return the per-check
+    result and overall status, the exact command, the deferral reason, the
+    rerun condition, and whether the source remained unchanged.
+  tags:
+    category: agent-behavior
+    advisory: "true"
+    agent: hve-artifact-validator
+  graders:
+  - type: output-matches
+    name: deferred-status
+    config:
+      pattern: (?i)\bDeferred\b
+  - type: output-matches
+    name: exact-command
+    config:
+      pattern: (?i)npm\s+run\s+lint:frontmatter
+  - type: output-matches
+    name: rerun-condition
+    config:
+      pattern: (?i)(rerun\s+condition|when\s+command\s+execution|terminal.*available|execution.*available)
+  - type: output-matches
+    name: source-unchanged
+    config:
+      pattern: (?i)(source|file|artifact).*(unchanged|not\s+mutat)|(unchanged|not\s+mutat).*(source|file|artifact)
 - name: implementation-validator-full-quality-recipe
   prompt: |
     Validate the changed file `src/services/PaymentService.cs` with `full-quality`
