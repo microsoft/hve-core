@@ -28,14 +28,14 @@ Write every artifact outcome-first. Personality and process serve the outcome; t
 
 A single request often decomposes into several artifact types. Separate responsibilities before authoring, then choose every type needed for activation and load timing. Prefer skills for reusable on-demand capability and subagents for isolated work, but do not force a convention or user entry point into the wrong type because of a universal ranking.
 
-| Responsibility                                                                     | Artifact    | Form                                                 | Activation                                  |
-|------------------------------------------------------------------------------------|-------------|------------------------------------------------------|---------------------------------------------|
-| Reusable workflow, domain knowledge, references, templates, or scripts             | Skill       | `SKILL.md` in `.github/skills/<skill>/`              | Semantic description match or `/skill-name` |
-| Isolated, high-volume, parallel, fresh-context, mechanical, or model-specific work | Subagent    | `.agent.md` under a `subagents/` folder              | Parent dispatch by stable `name`            |
-| Convention that applies whenever matching paths are edited                         | Instruction | `.instructions.md`                                   | Automatic `applyTo` match                   |
-| User-selected multi-turn role or bounded autonomous workflow                       | Agent       | `.agent.md`                                          | Agent picker or handoff                     |
-| Repeatable, parameterized user entry point                                         | Prompt      | `.prompt.md`                                         | Slash invocation                            |
-| Concrete action capability                                                         | Tool        | VS Code or MCP registration                          | Agent `tools:` frontmatter                  |
+| Responsibility                                                                     | Artifact    | Form                                    | Activation                                  |
+|------------------------------------------------------------------------------------|-------------|-----------------------------------------|---------------------------------------------|
+| Reusable workflow, domain knowledge, references, templates, or scripts             | Skill       | `SKILL.md` in `.github/skills/<skill>/` | Semantic description match or `/skill-name` |
+| Isolated, high-volume, parallel, fresh-context, mechanical, or model-specific work | Subagent    | `.agent.md` under a `subagents/` folder | Parent dispatch by stable `name`            |
+| Convention that applies whenever matching paths are edited                         | Instruction | `.instructions.md`                      | Automatic `applyTo` match                   |
+| User-selected multi-turn role or bounded autonomous workflow                       | Agent       | `.agent.md`                             | Agent picker or handoff                     |
+| Repeatable, parameterized user entry point                                         | Prompt      | `.prompt.md`                            | Slash invocation                            |
+| Concrete action capability                                                         | Tool        | VS Code or MCP registration             | Agent `tools:` frontmatter                  |
 
 ### Guiding Questions
 
