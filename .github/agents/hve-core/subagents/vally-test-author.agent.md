@@ -2,7 +2,10 @@
 name: Vally Test Author
 description: 'Authors Vally conformance test stimuli in two modes: from-artifact (read a prompt, instructions, agent, or skill file and draft a stimulus block) and corpus-import (turn a CSV or XLSX corpus into stimulus blocks), with safety-lint refusal enforcement and SHA-256 dedupe before append-only writes to the routed eval file'
 user-invocable: false
-model: GPT-5.6 Terra (copilot)
+model:
+  - GPT-5.6 Terra (copilot)
+  - Claude Sonnet 5 (copilot)
+  - MAI-Code-1-Flash (copilot)
 tools:
   - read
   - search

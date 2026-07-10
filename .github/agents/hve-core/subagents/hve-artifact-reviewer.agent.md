@@ -2,7 +2,10 @@
 name: HVE Artifact Reviewer
 description: 'Independently reviews prompt-engineering artifacts against the HVE rubric and returns bounded findings plus a verdict. Dispatched by hve-builder.'
 user-invocable: false
-model: GPT-5.6 Terra (copilot)
+model:
+  - GPT-5.6 Terra (copilot)
+  - Claude Sonnet 5 (copilot)
+  - MAI-Code-1-Flash (copilot)
 tools:
   - read/readFile
   - search/codebase

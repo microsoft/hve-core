@@ -48,10 +48,10 @@ Grader identifiers below use the Vally CLI 0.4.0 catalog (`semantic_similarity`,
 ### Check 3: Subagent Dependencies Declared in Frontmatter
 
 * Contract source: `hve-builder.instructions.md`, File Types > Subagents.
-* Testable behavior: when an agent invokes subagents, the parent's `agents:` frontmatter field MUST list each subagent by the human-readable `name:` from the subagent's own frontmatter, not by filename or path.
-* Suggested stimulus: ask the assistant which subagents a named parent agent depends on.
-* Grader recommendation: `regex` with pattern `(?ms)^agents:\s*\n(?:\s*-\s+['"]?[A-Z][A-Za-z0-9 ]+['"]?\s*\n)+`.
-* Evidence: `.github/agents/hve-core/task-researcher.agent.md` L6-L7 declares `agents:` with `- Researcher Subagent`.
+* Testable behavior: omit `agents:` when a parent may invoke any available subagent. Use an explicit array when the parent has a fixed allowlist, including `agents: []` when it may invoke none. Fixed entries MUST use each subagent's human-readable `name:` rather than a filename or path. A wildcard string is non-conforming.
+* Suggested stimulus: ask whether a named parent has unrestricted, fixed, or empty subagent access and, for a fixed set, which human-readable names it declares.
+* Grader recommendation: use `semantic_similarity` with rubric "Does the response distinguish omitted `agents:` as unrestricted access from explicit fixed arrays, accept `[]` as an empty fixed set, reject wildcard strings, and use human-readable names for fixed entries?" A single mandatory-list regex cannot represent all valid modes.
+* Evidence: `.github/agents/hve-core/prompt-builder.agent.md` omits `agents:` for unrestricted dispatch; `.github/agents/hve-core/task-researcher.agent.md` declares a fixed `Researcher Subagent` array; `.github/agents/security/subagents/cve-analyzer.agent.md` declares `agents: []`.
 
 ### Check 4: Subagent user-invocable Flag
 

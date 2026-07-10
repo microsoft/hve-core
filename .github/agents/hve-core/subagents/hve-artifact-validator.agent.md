@@ -2,7 +2,10 @@
 name: HVE Artifact Validator
 description: 'Discovers and runs non-mutating host checks for changed prompt-engineering artifacts, returning Pass, Fail, or Deferred. Dispatched by hve-builder.'
 user-invocable: false
-model: GPT-5.6 Luna (copilot)
+model:
+  - GPT-5.6 Luna (copilot)
+  - MAI-Code-1-Flash (copilot)
+  - Claude Haiku 4.5 (copilot)
 tools:
   - read
   - search

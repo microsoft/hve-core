@@ -111,8 +111,8 @@ Subagents execute specialized, isolated, or parallelizable work on behalf of a p
 * Match tools to the body contract. A create-only worker gathers evidence and writes its owned file once; progressive logging requires edit capability. An orchestrator that dispatches agents includes the `agent` tool.
 * When a subagent targets a lower-reasoning-effort model and tools are available, name the tools or tool groupings it should use and when to use each grouping, rather than leaving tool selection implicit. A passing low-reasoning subagent states, for example, to search before reading a full file, and which tool group handles which step.
 * Return a condensed summary: explore widely, but return a distilled result, and write full fidelity to a tracking artifact when the work warrants it.
-* Set `user-invocable: false` for background-only subagents. Parent agents with a fixed subagent set declare dependencies in `agents:` by the subagent's `name:` value. Use `agents: "*"` only for a genuine dynamic router whose selectable agent set comes from the user's approved input, and explain that exception in the body.
-* Pin one `model:` when a fixed responsibility determines the reasoning profile. Use an array only as a deliberate availability fallback, not as a substitute for model selection. When the parent intentionally chooses the model per dispatch, document the bounded override rule.
+* Set `user-invocable: false` for background-only subagents. Parent agents with a fixed subagent set declare dependencies in `agents:` by the subagent's `name:` value. Omit `agents:` for unrestricted subagent access; use an explicit array for a fixed allowlist, including `[]` when no subagent is allowed.
+* `model:` is optional for subagents. Omit it to inherit the invoking parent's model. When a stable profile is needed, select High, Medium, or Low from the responsibility and declare that profile's exact ordered three-model list. The order is an availability fallback within the selected profile, not a substitute for profile selection. When the parent intentionally chooses the profile per dispatch, document the bounded override rule.
 * Subagents do not run their own subagents unless the harness supports nested calls; otherwise the parent orchestrates.
 * Include a Response Format section. Use the Compact Pointer format for read-only or analysis subagents that write findings to a `.copilot-tracking/` artifact and return an executive summary, and the Structured Template format for subagents that modify workspace files.
 
@@ -141,7 +141,7 @@ Agents support conversational workflows (multi-turn interaction) and autonomous 
 * Conversational agents use phase-based protocols for stages the user moves between; autonomous agents use step-based protocols for bounded execution.
 * Declare available `tools` and any fixed subagent dependencies in `agents:` frontmatter.
 * Set `disable-model-invocation: true` when the agent must not be invoked *as a subagent* by another model, including user-facing orchestrators with side effects. This field does not prevent the agent from dispatching its own allowed subagents.
-* Agents that dispatch subagents declare the `agent` tool and an `agents:` allowlist. Use the wildcard exception only for a user-approved dynamic router.
+* Agents that dispatch subagents declare the `agent` tool. Use an explicit `agents:` array for a fixed allowlist; omit `agents:` when the agent intentionally needs unrestricted subagent access.
 * Keep the agent body outcome-first and delegate isolated or tier-specific work to subagents rather than inlining it.
 
 ### Prompt Files
@@ -157,12 +157,12 @@ Prompts are single-session workflows a user invokes and Copilot executes to comp
 ## Frontmatter Requirements
 
 * `description:` is required for all file types. Write it as trigger metadata that front-loads the most important terms, aiming near 120 characters; a brief capability statement followed by a `Use when ...` trigger is fine, and modest overage is acceptable when it sharpens routing. Flag descriptions that ramble across several sentences or bury the trigger terms. Omit any attribution suffix.
-* `name:` is required for skills (matching the directory in lowercase kebab-case) and preferred for agents (human-readable).
+* `name:` is required for skills (matching the directory in lowercase kebab-case) and agents (human-readable). Agent names are the dispatch identity used by prompts, fixed subagent lists, and handoffs.
 * `applyTo:` is required for instruction files only.
 * `argument-hint:` is optional for user-invocable skills and prompts; keep it brief with the required arguments first.
 * `tools:` restricts an agent or subagent to the listed tools; omission allows every available tool and therefore requires an explicit reason during review.
 * `user-invocable:` defaults to true; set it to false for background-only artifacts. Use this spelling consistently.
-* `model:` is optional; set one model when responsibility fixes the profile. Use an ordered array only for intentional availability fallback. When model selection happens at dispatch, omit it or document the narrow override contract.
+* `model:` is optional. An omitted subagent model inherits the invoking parent's model. An omitted directly invoked agent or prompt model uses the current session or model-picker selection. When present on an agent or prompt, select the responsibility-based profile and use exactly one canonical ordered list: High is `GPT-5.6 Sol (copilot)`, `Claude Opus 4.8 (copilot)`, `GPT-5.5 (copilot)`; Medium is `GPT-5.6 Terra (copilot)`, `Claude Sonnet 5 (copilot)`, `MAI-Code-1-Flash (copilot)`; Low is `GPT-5.6 Luna (copilot)`, `MAI-Code-1-Flash (copilot)`, `Claude Haiku 4.5 (copilot)`.
 * Do not include a `maturity` field; collection manifests track maturity.
 
 ## Referencing Other Artifacts
@@ -222,7 +222,7 @@ Every item applies to the whole file. Mark an item not applicable when it does n
 * [ ] Delegation is used where it isolates or right-sizes work, and existing subagents, skills, and instructions are reused before new ones are created.
 * [ ] Connected artifacts agree on modes, stage gates, result vocabulary, and terminal outcomes.
 * [ ] Every required step is executable with the declared tools, and write behavior matches create or edit capability.
-* [ ] Each fixed-responsibility subagent has one appropriate default model; any override or proxy run is narrow and disclosed.
+* [ ] Each model declaration uses the exact ordered list for its responsibility-selected profile; any override or proxy run is narrow and disclosed.
 * [ ] A subagent that targets a lower-reasoning-effort model names its tools or tool groupings and when to use each.
 * [ ] Absolute words are reserved for true invariants; judgment calls are decision rules.
 * [ ] Canonical files are referenced, not copied, and reference chains are shallow.
@@ -251,5 +251,5 @@ Remove these on sight when improving or replacing an artifact. Each is supersede
 * Singular AGENT.md where AGENTS.md is the current format; keep a compatibility link where needed.
 * Universal secondhand length ceilings. Use the host's own published numbers and scope or defer the rest.
 * Fixed iteration counts used as quality theater rather than responses to observed findings.
-* Model fallback lists used instead of a responsibility-based profile decision.
+* Model fallback lists chosen without first selecting a responsibility-based reasoning profile.
 * Calling simulation or emulation native runtime validation.

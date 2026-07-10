@@ -175,7 +175,9 @@ The [Prompt Builder](https://github.com/microsoft/hve-core/blob/main/.github/age
 3. Run fresh-context static review and fidelity-labeled behavior testing
 4. Run non-mutating host validation and resolve one overall outcome
 
-Semantic discovery, authoring, research, and review use GPT-5.6 Terra. Literal simulation and mechanical validation use GPT-5.6 Luna. Legacy `/prompt-build`, `/prompt-analyze`, and `/prompt-refactor` commands remain compatibility routes to this lifecycle.
+HVE Builder selects a reasoning profile from each worker's responsibility. High uses GPT-5.6 Sol, Claude Opus 4.8, then GPT-5.5 for architecture and consequential decisions. Medium uses GPT-5.6 Terra, Claude Sonnet 5, then MAI-Code-1-Flash for semantic discovery, authoring, research, implementation, and review. Low uses GPT-5.6 Luna, MAI-Code-1-Flash, then Claude Haiku 4.5 for literal simulation and mechanical validation.
+
+Each ordered list is an availability fallback within its selected profile. Legacy `/prompt-build`, `/prompt-analyze`, and `/prompt-refactor` commands remain compatibility routes to this lifecycle.
 
 ### Security Review
 

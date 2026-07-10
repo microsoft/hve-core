@@ -59,7 +59,7 @@ For simulation, the wrapper says which target to read, where side effects may oc
 
 ## Profile selection
 
-Use GPT-5.6 Terra for the Medium profile and GPT-5.6 Luna for the Low profile. Prefer explicit target metadata. Otherwise choose Low for literal, bounded, mechanical responsibilities and Medium for semantic synthesis, architecture, authoring, or calibrated review. When the target declares another model, label Terra or Luna as a proxy and avoid equivalence claims.
+Use the canonical ordered Medium profile (`GPT-5.6 Terra`, `Claude Sonnet 5`, `MAI-Code-1-Flash`) or Low profile (`GPT-5.6 Luna`, `MAI-Code-1-Flash`, `Claude Haiku 4.5`), with the `(copilot)` suffix in frontmatter. Prefer explicit target metadata. Otherwise choose Low for literal, bounded, mechanical responsibilities and Medium for semantic synthesis, architecture, authoring, or calibrated review. Use the first available model in the selected profile's order. When the target declares another profile, label the selected profile as a proxy and avoid equivalence claims.
 
 ## Sandbox and run-state conventions
 

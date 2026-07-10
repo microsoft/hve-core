@@ -2,7 +2,10 @@
 name: HVE Artifact Tester
 description: 'Performs contained literal conformance simulation of an HVE artifact and records simulated, emulated, and observed behavior. Dispatched by hve-builder-tester.'
 user-invocable: false
-model: GPT-5.6 Luna (copilot)
+model:
+  - GPT-5.6 Luna (copilot)
+  - MAI-Code-1-Flash (copilot)
+  - Claude Haiku 4.5 (copilot)
 tools:
   - read/readFile
   - search/codebase
@@ -26,7 +29,7 @@ Performs contained conformance simulation by reading a target prompt-engineering
 ## Inputs
 
 * Target artifact file(s) to test, split into an isolation set and a together set.
-* The selected profile (Medium or Low) and model (GPT-5.6 Terra or GPT-5.6 Luna) from run state. Luna is the default; Terra is the only permitted override.
+* The selected profile (Medium or Low) and resolved model from run state. The Low profile is the default; Medium is the only permitted override, and each uses the first available model from its canonical ordered list.
 * Sandbox folder path in `.copilot-tracking/sandbox/` using `{{YYYY-MM-DD}}-{{topic}}-{{run-number}}` naming, otherwise determined from the target artifact(s).
 * The stated purpose, requirements, and expectations for the artifact(s).
 * (Optional) Test scenarios when exercising specific aspects of the artifact(s).

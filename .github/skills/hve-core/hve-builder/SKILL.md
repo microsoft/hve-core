@@ -100,7 +100,7 @@ Testing is a sub-skill dispatch rather than a direct worker call. The `hve-build
 
 ## Reasoning profile for testing
 
-Name the target reasoning profile when dispatching behavior tests: Medium uses GPT-5.6 Terra and Low uses GPT-5.6 Luna. Choose the profile the finished artifact expects, not the effort used to author it. Label any proxy run honestly; a simulation is not native activation.
+Name the target reasoning profile when dispatching behavior tests. Medium uses the ordered `GPT-5.6 Terra`, `Claude Sonnet 5`, and `MAI-Code-1-Flash` profile; Low uses `GPT-5.6 Luna`, `MAI-Code-1-Flash`, and `Claude Haiku 4.5`; High uses `GPT-5.6 Sol`, `Claude Opus 4.8`, and `GPT-5.5`. Each frontmatter name carries the `(copilot)` suffix. Choose the profile the finished artifact expects, not the effort used to author it, and use the first available model in order. Label any proxy run honestly; a simulation is not native activation.
 
 ## Handoff
 

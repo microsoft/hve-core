@@ -23,10 +23,10 @@ Ownership: [Lead] is this skill's own Flow prose in the running context; [Subage
 1. Intake and scope. [Lead]. Resolve targets, types, purpose, requirements, Medium or Low profile, requested fidelity, isolation and together sets, and sandbox root. Use a valid caller-supplied report path, or allocate a unique default by scanning `.copilot-tracking/hve-builder/{{YYYY-MM-DD}}/` and incrementing `{{topic}}-behavior-report-{{attempt}}.md`. Apply the runtime-behavior rule. For a no-behavior target, record disposition `Satisfied-and-skipped`, execution `Not run`, verdict `Not applicable`, fidelity `Not applicable`, and the reason; write the report and return without design, execution, or grading.
 2. Select fidelity. [Lead]. Apply the preconditions in [references/test-methodology.md](references/test-methodology.md). Use `simulation` unless native activation is supported and either the target is read-only or an enforced sandbox contains its writes. If native was requested but is unsafe or unsupported, use simulation only with caller acceptance. Without that acceptance, set execution status Deferred and verdict Not available, write the durable report with the rerun condition, skip design, execution, and grading, then clean up and return.
 3. Set up evidence. [Lead]. Resolve `.copilot-tracking/sandbox/{{YYYY-MM-DD}}-{{topic}}-{{run-number}}`, capture the pre-run workspace status, and write `run-state.md` with targets, types, profile and model, fidelity, groupings, purpose, and containment controls.
-4. Design scenarios. [Subagent]. Dispatch `HVE Artifact Test Designer` on GPT-5.6 Terra with the run-state path and canonical criteria. It writes black-box prompts and coverage expectations to `test-design.md`. If dispatch fails before gradeable evidence exists, set execution Deferred and verdict Not available, write the report with the rerun condition, then clean up and return.
+4. Design scenarios. [Subagent]. Dispatch `HVE Artifact Test Designer` on the Medium profile, led by GPT-5.6 Terra, with the run-state path and canonical criteria. It writes black-box prompts and coverage expectations to `test-design.md`. If dispatch fails before gradeable evidence exists, set execution Deferred and verdict Not available, write the report with the rerun condition, then clean up and return.
 5. Execute. [Subagent]. For simulation, dispatch `HVE Artifact Tester` on the selected profile with the Designer's prompts and artifact pointer. For native fidelity, dispatch the registered target agent, subagent, or skill directly on the selected profile and capture its raw return. Never silently substitute simulation for native execution. If execution fails before gradeable evidence exists, use Deferred plus Not available rather than fabricating a grade.
 6. Finalize evidence. [Lead]. Write or complete `test-log.md` from the executor return, including fidelity, observed versus emulated actions, containment checks, workspace status delta, and untested behavior. The lead owns log integrity.
-7. Grade independently. [Subagent]. Dispatch `HVE Artifact Test Reviewer` on GPT-5.6 Terra with the finalized test log, design log, targets, purpose, requirements, catalog, and rubric. It writes a Pass, Revise, or Blocked verdict with bounded findings.
+7. Grade independently. [Subagent]. Dispatch `HVE Artifact Test Reviewer` on the Medium profile, led by GPT-5.6 Terra, with the finalized test log, design log, targets, purpose, requirements, catalog, and rubric. It writes a Pass, Revise, or Blocked verdict with bounded findings.
 8. Report and clean up. [Lead]. Compose the durable report outside the sandbox, resolve execution status and verdict, then clean up the sandbox unless retention was requested. Preserve the report and any caller-requested evidence.
 
 ## Roles
@@ -44,7 +44,7 @@ The Designer and Reviewer stay on Terra even when the tested artifact targets Lu
 
 * `targets`: the artifact file(s) to test. Infer from the caller's dispatch or the open and attached files when not provided.
 * `types`: the per-target artifact type (prompt, instructions, agent, subagent, or skill). Infer from each target's location and extension when omitted.
-* `profile`: `medium` or `low`, mapped to Terra or Luna. Infer from explicit artifact metadata and responsibility when omitted; record uncertainty rather than guessing silently.
+* `profile`: `medium` or `low`, mapped to the canonical ordered profile list led by Terra or Luna. Infer from explicit artifact metadata and responsibility when omitted; record uncertainty rather than guessing silently.
 * `fidelity`: `simulation` or `native`. Defaults to simulation unless native execution meets the methodology preconditions.
 * `purpose`: the stated purpose, requirements, and expectations the artifacts are tested against.
 * `isolation` and `together`: which artifacts to exercise alone and which to exercise as a connected workflow. Default to isolation for a single target and together for a co-authored set.
@@ -72,14 +72,15 @@ The Designer and Reviewer stay on Terra even when the tested artifact targets Lu
 
 ## Reasoning profile model map
 
-Use exactly one model per profile:
+Select one responsibility-based profile and use its exact ordered availability-fallback list:
 
-| Reasoning profile | Model                   | Use for                                                            |
-|-------------------|-------------------------|--------------------------------------------------------------------|
-| Medium            | GPT-5.6 Terra (copilot) | Semantic design, review, and behavior requiring trade-off judgment |
-| Low               | GPT-5.6 Luna (copilot)  | Literal, bounded, mechanical behavior                              |
+| Reasoning profile | Ordered model list                                                             | Use for                                                             |
+|-------------------|--------------------------------------------------------------------------------|---------------------------------------------------------------------|
+| High              | GPT-5.6 Sol (copilot), Claude Opus 4.8 (copilot), GPT-5.5 (copilot)            | Deepest reasoning responsibilities outside this tester's normal map |
+| Medium            | GPT-5.6 Terra (copilot), Claude Sonnet 5 (copilot), MAI-Code-1-Flash (copilot) | Semantic design, review, and behavior requiring trade-off judgment  |
+| Low               | GPT-5.6 Luna (copilot), MAI-Code-1-Flash (copilot), Claude Haiku 4.5 (copilot) | Literal, bounded, mechanical behavior                               |
 
-Choose the profile the finished artifact expects, not the effort used to author it. When an artifact declares another model, select the closest profile and label the run as a proxy; do not claim target-model equivalence.
+Choose the profile the finished artifact expects, not the effort used to author it. Use the first available model in that profile's order. When an artifact declares another model list, select the closest profile and label the run as a proxy; do not claim target-model equivalence.
 
 ## Subagent dispatch
 

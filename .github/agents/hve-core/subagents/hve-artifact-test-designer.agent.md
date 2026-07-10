@@ -2,7 +2,10 @@
 name: HVE Artifact Test Designer
 description: 'Designs black-box behavior scenarios and coverage expectations from an HVE artifact contract. Dispatched by hve-builder-tester.'
 user-invocable: false
-model: GPT-5.6 Terra (copilot)
+model:
+  - GPT-5.6 Terra (copilot)
+  - Claude Sonnet 5 (copilot)
+  - MAI-Code-1-Flash (copilot)
 tools:
   - read/readFile
   - search/codebase

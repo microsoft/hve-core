@@ -36,18 +36,24 @@ Stages may run in parallel only when neither consumes the other's output. Discov
 
 ## Worker model assignments
 
-Each worker has one frontmatter default. A prioritized fallback list is not a reasoning policy and is not used by this suite.
+The HVE Builder workers intentionally pin responsibility-based profiles, so their frontmatter carries each profile's full ordered availability-fallback list and prose names the first model as primary. This suite-specific pinning does not make `model:` mandatory elsewhere. An omitted subagent model inherits the invoking parent's model; an omitted directly invoked agent or prompt model uses the current session selection.
 
-| Worker                       | Default model           | Profile | Why                                                                                |
-|------------------------------|-------------------------|---------|------------------------------------------------------------------------------------|
-| `HVE Artifact Explorer`      | GPT-5.6 Terra (copilot) | Medium  | Semantic relatedness and reuse decisions span heterogeneous artifacts              |
-| `HVE Artifact Author`        | GPT-5.6 Terra (copilot) | Medium  | Architecture-aware multi-file authoring requires trade-off judgment                |
-| `HVE Artifact Reviewer`      | GPT-5.6 Terra (copilot) | Medium  | Independent rubric application and severity calibration require judgment           |
-| `HVE Artifact Validator`     | GPT-5.6 Luna (copilot)  | Low     | Check discovery and command execution follow a bounded mechanical protocol         |
-| `HVE Artifact Test Designer` | GPT-5.6 Terra (copilot) | Medium  | Black-box scenario design requires semantic coverage analysis                      |
-| `HVE Artifact Tester`        | GPT-5.6 Luna (copilot)  | Low     | Literal conformance simulation is bounded and intentionally non-interpretive       |
-| `HVE Artifact Test Reviewer` | GPT-5.6 Terra (copilot) | Medium  | Behavior-evidence grading and coverage analysis require independent judgment       |
-| `Researcher Subagent`        | GPT-5.6 Terra (copilot) | Medium  | Decision-critical research requires source comparison and contradiction resolution |
+| Worker                       | Primary model            | Profile | Why                                                                                |
+|------------------------------|--------------------------|---------|------------------------------------------------------------------------------------|
+| `HVE Artifact Explorer`      | GPT-5.6 Terra (copilot)  | Medium  | Semantic relatedness and reuse decisions span heterogeneous artifacts              |
+| `HVE Artifact Author`        | GPT-5.6 Terra (copilot)  | Medium  | Architecture-aware multi-file authoring requires trade-off judgment                |
+| `HVE Artifact Reviewer`      | GPT-5.6 Terra (copilot)  | Medium  | Independent rubric application and severity calibration require judgment           |
+| `HVE Artifact Validator`     | GPT-5.6 Luna (copilot)   | Low     | Check discovery and command execution follow a bounded mechanical protocol         |
+| `HVE Artifact Test Designer` | GPT-5.6 Terra (copilot)  | Medium  | Black-box scenario design requires semantic coverage analysis                      |
+| `HVE Artifact Tester`        | GPT-5.6 Luna (copilot)   | Low     | Literal conformance simulation is bounded and intentionally non-interpretive       |
+| `HVE Artifact Test Reviewer` | GPT-5.6 Terra (copilot)  | Medium  | Behavior-evidence grading and coverage analysis require independent judgment       |
+| `Researcher Subagent`        | GPT-5.6 Terra (copilot)  | Medium  | Decision-critical research requires source comparison and contradiction resolution |
+
+Canonical profile lists:
+
+* High: `GPT-5.6 Sol (copilot)`, `Claude Opus 4.8 (copilot)`, `GPT-5.5 (copilot)`
+* Medium: `GPT-5.6 Terra (copilot)`, `Claude Sonnet 5 (copilot)`, `MAI-Code-1-Flash (copilot)`
+* Low: `GPT-5.6 Luna (copilot)`, `MAI-Code-1-Flash (copilot)`, `Claude Haiku 4.5 (copilot)`
 
 The `hve-builder-tester` lead may override only `HVE Artifact Tester` from Luna to Terra when the target contract explicitly expects the Medium profile. Record the override in run state and the report. Do not override semantic workers to Luna or mechanical workers to Terra for convenience.
 

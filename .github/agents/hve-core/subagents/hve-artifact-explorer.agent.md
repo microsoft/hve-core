@@ -2,7 +2,10 @@
 name: HVE Artifact Explorer
 description: 'Finds and ranks prompt-engineering artifacts that could be reused or applied as scoped extensions. Dispatched by the hve-builder skill.'
 user-invocable: false
-model: GPT-5.6 Terra (copilot)
+model:
+  - GPT-5.6 Terra (copilot)
+  - Claude Sonnet 5 (copilot)
+  - MAI-Code-1-Flash (copilot)
 tools:
   - read/readFile
   - search/codebase

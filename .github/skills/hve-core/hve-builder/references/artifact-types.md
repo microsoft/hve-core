@@ -61,7 +61,13 @@ Treat delegation as a first-class architecture decision, not an afterthought. Du
 
 ## Choose the model profile
 
-Pin one default model when responsibility determines the profile. Use GPT-5.6 Luna for bounded, literal, mechanical execution with explicit tool order. Use GPT-5.6 Terra for semantic discovery, architecture, authoring, research, and calibrated review. A model array is an availability fallback, not a substitute for selecting a profile.
+The `model:` field is optional. An omitted subagent model inherits the invoking parent's model; an omitted directly invoked agent or prompt model uses the current session or model-picker selection. When a stable profile is needed, select High, Medium, or Low from the responsibility before authoring `model:`. Use Low for bounded, literal, mechanical execution with explicit tool order, Medium for semantic discovery, architecture, authoring, research, and calibrated review, and High only when the responsibility requires the deepest reasoning profile. Declare the selected profile's exact ordered list:
+
+* High: `GPT-5.6 Sol (copilot)`, `Claude Opus 4.8 (copilot)`, `GPT-5.5 (copilot)`
+* Medium: `GPT-5.6 Terra (copilot)`, `Claude Sonnet 5 (copilot)`, `MAI-Code-1-Flash (copilot)`
+* Low: `GPT-5.6 Luna (copilot)`, `MAI-Code-1-Flash (copilot)`, `Claude Haiku 4.5 (copilot)`
+
+The list order provides availability fallback within the selected profile; it never replaces profile selection.
 
 ## Worked example: compact skill plus one low-reasoning worker
 
@@ -86,7 +92,10 @@ Worker subagent (`.agent.md` under `subagents/`), pinned to a fixed low tier bec
 name: CSV Profiler Worker
 description: "Profiles a CSV with a bundled script and returns a summary. Use when profiling CSV data."
 user-invocable: false
-model: GPT-5.6 Luna (copilot)
+model:
+  - GPT-5.6 Luna (copilot)
+  - MAI-Code-1-Flash (copilot)
+  - Claude Haiku 4.5 (copilot)
 tools:
   - search/fileSearch
   - read/readFile

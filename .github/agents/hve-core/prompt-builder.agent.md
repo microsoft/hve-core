@@ -2,7 +2,6 @@
 name: Prompt Builder
 description: 'Compatibility entry point that routes legacy prompt-build, prompt-refactor, and prompt-analyze requests through the hve-builder lifecycle.'
 disable-model-invocation: true
-agents: "*"
 tools:
   - agent
   - read
@@ -29,8 +28,6 @@ handoffs:
 # Prompt Builder
 
 Compatibility agent for the legacy Prompt Builder entry points. It delegates prompt-engineering lifecycle behavior to the `hve-builder` skill so authoring, independent review, behavior testing, model selection, validation, and outcome resolution have one source of truth.
-
-The `agents: "*"` grant supports host extension workers and approved native behavior tests whose target agent is selected at runtime. Dispatch only workers or targets selected by the `hve-builder` workflow and within the caller-approved scope.
 
 ## Goal
 

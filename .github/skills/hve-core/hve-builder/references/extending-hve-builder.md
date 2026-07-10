@@ -60,8 +60,8 @@ Use a subagent when the host needs a specialized review dimension or a tier-spec
 * Routing `description`: write it so a parent can decide when to delegate, in the shape "Use when ..." naming the specialization. hve-builder's intake survey reads descriptions to decide which subagents to dispatch, so the description is the discovery surface.
 * Stable `name`: hve-builder dispatches by the `name` from frontmatter, not by file path or glob. Give it a distinct, namespaced name to avoid collisions across installed libraries.
 * Least-privilege `tools` and a structured return: grant only the tools the subagent needs (a reviewer gets read and search, not edit), and return a bounded, structured summary the orchestrator can act on.
-* Model fit: pin one default model when the responsibility has a fixed profile. Use GPT-5.6 Terra for semantic authoring or calibrated review and GPT-5.6 Luna for bounded mechanical work with explicit tool order.
-* Host registration: confirm the host registers the subagent (for example, in a parent agent's `agents:` list or the collection manifest) so hve-builder's survey can see it.
+* Model fit: `model:` is optional. An omitted extension subagent model inherits the invoking parent's model; an omitted directly invoked extension agent or prompt model uses the current session selection. When the extension needs a stable profile, select it by responsibility and declare its exact ordered list. Use Medium (`GPT-5.6 Terra`, `Claude Sonnet 5`, `MAI-Code-1-Flash`) for semantic authoring or calibrated review, Low (`GPT-5.6 Luna`, `MAI-Code-1-Flash`, `Claude Haiku 4.5`) for bounded mechanical work with explicit tool order, and High (`GPT-5.6 Sol`, `Claude Opus 4.8`, `GPT-5.5`) only for responsibilities that require the deepest reasoning profile. Each declared name carries the `(copilot)` suffix in frontmatter.
+* Host registration: confirm the host registers the subagent through a fixed parent `agents:` array, an intentionally unrestricted parent that omits `agents:`, or the collection manifest so hve-builder's survey can see it.
 
 Example frontmatter:
 
@@ -70,7 +70,10 @@ Example frontmatter:
 name: Terraform Module Reviewer
 description: "Reviews a Terraform module and returns severity-graded findings. Use when reviewing Terraform module changes."
 user-invocable: false
-model: GPT-5.6 Terra (copilot)
+model:
+  - GPT-5.6 Terra (copilot)
+  - Claude Sonnet 5 (copilot)
+  - MAI-Code-1-Flash (copilot)
 tools:
   - read/readFile
   - search/codebase
@@ -78,7 +81,7 @@ tools:
 ---
 ```
 
-When you author a standalone subagent before its parent or manifest exists, do not invent a parent to register it. Record the deferred registration explicitly: the exact pending target (a parent agent's `agents:` list or the collection manifest), the owner responsible for wiring it, and the validation command that confirms it (for example `npm run plugin:validate` for collection manifests). Leave subagent discoverability marked incomplete until that registration is done, because hve-builder's survey cannot reach an unregistered subagent by name.
+When you author a standalone subagent before its parent or manifest exists, do not invent a parent to register it. Record the deferred registration explicitly: the exact pending target (a fixed parent `agents:` array, a parent whose omission intentionally grants unrestricted access, or the collection manifest), the owner responsible for wiring it, and the validation command that confirms it (for example `npm run plugin:validate` for collection manifests). Leave subagent discoverability marked incomplete until that registration is done, because hve-builder's survey cannot reach an unregistered subagent by name.
 
 ## Worked example
 
