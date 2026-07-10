@@ -215,6 +215,26 @@ Describe 'Python Skill Discovery for Testing' -Tag 'Unit' {
             $result.skillsTested | Should -Be 0
         }
     }
+
+    Context 'Excludes plugins from discovery' {
+        BeforeEach {
+            Mock Push-Location {}
+            Mock Pop-Location {}
+            Mock Get-Command { [PSCustomObject]@{ Source = 'pytest' } } -ParameterFilter { $Name -eq 'pytest' }
+            Mock Get-Command { $null } -ParameterFilter { $Name -eq 'uv' }
+            Mock Get-ChildItem {
+                @([PSCustomObject]@{
+                    FullName = (Join-Path $TestDrive 'plugins/experimental/skills/copy/pyproject.toml')
+                    Directory = [PSCustomObject]@{ FullName = (Join-Path $TestDrive 'plugins/experimental/skills/copy') }
+                })
+            }
+        }
+
+        It 'Filters out plugins paths' {
+            $result = Invoke-PythonTests -RepoRoot $TestDrive
+            $result.skillsTested | Should -Be 0
+        }
+    }
 }
 
 #endregion

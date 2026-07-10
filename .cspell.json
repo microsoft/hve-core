@@ -25,6 +25,7 @@
     "CHANGELOG.md",
     "logs/**",
     ".copilot-tracking/**",
+    "plugins/**",
     "docs/docusaurus/build/**",
     "docs/docusaurus/coverage/**",
     "dependency-pinning-artifacts/**",

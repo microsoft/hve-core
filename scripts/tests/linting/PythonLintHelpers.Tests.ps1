@@ -52,6 +52,21 @@ Describe 'Get-PythonSkill' -Tag 'Unit' {
             $result.Count | Should -Be 1
             ($result -join ';') | Should -Not -Match 'node_modules'
         }
+
+        It 'Excludes pyproject.toml under plugins' {
+            $repo = Join-Path $TestDrive 'generated-tree-repo'
+            $skill = Join-Path $repo 'skills/real'
+            $plugin = Join-Path $repo 'plugins/experimental/skills/copy'
+            New-Item -ItemType Directory -Path $skill -Force | Out-Null
+            New-Item -ItemType Directory -Path $plugin -Force | Out-Null
+            Set-Content -Path (Join-Path $skill 'pyproject.toml') -Value ''
+            Set-Content -Path (Join-Path $plugin 'pyproject.toml') -Value ''
+
+            $result = Get-PythonSkill -RepoRoot $repo
+
+            $result.Count | Should -Be 1
+            ($result -join ';') | Should -Not -Match 'plugins'
+        }
     }
 
     Context 'When repository contains no pyproject.toml files' {

@@ -1,0 +1,10 @@
+# Copyright (c) 2026 Microsoft Corporation. All rights reserved.
+# SPDX-License-Identifier: MIT
+name: "HVE Core CodeQL config"
+
+# The plugins/ tree is auto-generated: every file is a verbatim copy of an
+# already-scanned source under .github/ (agents, prompts, instructions,
+# skills, scripts). Scanning the copies only duplicates alerts, so exclude
+# the generated tree from analysis.
+paths-ignore:
+  - plugins

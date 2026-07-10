@@ -46,6 +46,7 @@ coverage:
 ignore:
   - "scripts/tests/**"
   - "logs/**"
+  - "plugins/**"
 
 comment:
   layout: "reach,diff,flags,files"

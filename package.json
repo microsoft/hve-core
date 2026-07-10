@@ -15,7 +15,7 @@
     "lint:ps": "pwsh -File scripts/linting/Invoke-PSScriptAnalyzer.ps1",
     "lint:yaml": "pwsh -File scripts/linting/Invoke-YamlLint.ps1",
     "lint:json": "pwsh -File scripts/linting/Invoke-JsonLint.ps1",
-    "lint:links": "pwsh -NoProfile -Command \"& scripts/linting/Invoke-LinkLanguageCheck.ps1 -ExcludePaths 'scripts/tests/**'\"",
+    "lint:links": "pwsh -NoProfile -Command \"& scripts/linting/Invoke-LinkLanguageCheck.ps1 -ExcludePaths 'scripts/tests/**','plugins/**'\"",
     "lint:md-links": "pwsh -File scripts/linting/Markdown-Link-Check.ps1",
     "lint:frontmatter": "pwsh -NoProfile -Command \"& './scripts/linting/Validate-MarkdownFrontmatter.ps1' -WarningsAsErrors -EnableSchemaValidation\"",
     "lint:adr-consistency": "pwsh -NoProfile -File scripts/linting/Validate-AdrConsistency.ps1 -Paths docs/planning/adrs",
