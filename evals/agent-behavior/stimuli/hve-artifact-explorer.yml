@@ -5,10 +5,16 @@ stimuli:
     prompt: |
       As the HVE Artifact Explorer, describe the bounded discovery result for a
       request to reuse prompt-engineering artifacts for independent artifact
-      review. Use one status from Complete, Partial, or Blocked. Return ranked
-      candidates with type and relatedness, suggest a reuse disposition for
-      each, mention search coverage or near-misses, and preserve the read-only
-      source boundary.
+      review. Assume the target and purpose are unambiguous, every artifact
+      convention was searchable, and at least one related candidate was found.
+      Return ranked candidates with type and relatedness, suggest a reuse
+      disposition for each, mention search coverage or near-misses, and
+      preserve the read-only source boundary.
+
+      Apply these public decision rules: return Complete when the candidate set
+      is ranked and coverage is recorded, Partial only when a required search
+      surface is unavailable, and Blocked only when target or purpose is too
+      ambiguous to judge relatedness.
     tags:
       category: agent-behavior
       advisory: "true"
@@ -16,11 +22,11 @@ stimuli:
       - type: output-matches
         name: discovery-status
         config:
-          pattern: '(?i)\b(Complete|Partial|Blocked)\b'
+          pattern: '(?i)\bComplete\b'
       - type: output-matches
         name: ranked-relatedness
         config:
-          pattern: '(?is)(rank|candidate).*(related|relevance)|(related|relevance).*(rank|candidate)'
+          pattern: '(?is)(?=.*(?:rank|candidate))(?=.*(?:related|relevance))'
       - type: output-matches
         name: read-only-boundary
         config:

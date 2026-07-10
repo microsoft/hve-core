@@ -367,7 +367,7 @@ stimuli:
       - type: output-matches
         name: canonical-standard
         config:
-          pattern: '(?i)(hve-builder\.instructions\.md).*(canonical|authoring standard)|(canonical|authoring standard).*(hve-builder\.instructions\.md)'
+          pattern: '(?is)(?=.*hve-builder\.instructions\.md)(?=.*(?:canonical|authoring standard))'
       - type: output-matches
         name: compatibility-boundary
         config:

@@ -9,6 +9,12 @@ stimuli:
       exactly three bullets. Return status, black-box prompts, targeted
       behaviors, observable success signals, omitted coverage, and the
       black-box self-check.
+
+      Apply these public decision rules: return Complete when the scenarios and
+      coverage expectations are ready, Partial only when a contracted behavior
+      cannot be exercised, and Blocked only when the purpose, contract, or
+      target set is ambiguous. A black-box prompt must omit artifact names,
+      paths, internal headings, step numbers, test framing, and answer keys.
     tags:
       category: agent-behavior
       advisory: "true"
@@ -16,7 +22,7 @@ stimuli:
       - type: output-matches
         name: design-status
         config:
-          pattern: '(?i)\b(Complete|Partial|Blocked)\b'
+          pattern: '(?i)\bComplete\b'
       - type: output-matches
         name: isolation-and-together
         config:

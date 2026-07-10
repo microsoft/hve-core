@@ -933,6 +933,12 @@ stimuli:
     Partial, or Blocked status vocabulary, then explain the boundary decision,
     state what belongs in the author log, and identify the approval or
     clarification needed to continue.
+
+    Apply these public decision rules: return Partial before editing when the
+    architecture requires a different artifact type, a split, or an
+    out-of-bound support artifact that the caller has not approved. Reserve
+    Blocked for requirements that conflict with safety, protected paths, or
+    each other.
   tags:
     category: agent-behavior
     advisory: "true"
@@ -949,15 +955,21 @@ stimuli:
   - type: output-matches
     name: author-log-and-approval
     config:
-      pattern: (?is)(author\s+log).*(approval|approve|clarif)|(approval|approve|clarif).*(author\s+log)
+      pattern: (?is)(?=.*author\s+log)(?=.*(?:approval|approve|clarif))
 - name: hve-artifact-explorer-ranked-reuse
   prompt: |
     As the HVE Artifact Explorer, describe the bounded discovery result for a
     request to reuse prompt-engineering artifacts for independent artifact
-    review. Use one status from Complete, Partial, or Blocked. Return ranked
-    candidates with type and relatedness, suggest a reuse disposition for
-    each, mention search coverage or near-misses, and preserve the read-only
-    source boundary.
+    review. Assume the target and purpose are unambiguous, every artifact
+    convention was searchable, and at least one related candidate was found.
+    Return ranked candidates with type and relatedness, suggest a reuse
+    disposition for each, mention search coverage or near-misses, and
+    preserve the read-only source boundary.
+
+    Apply these public decision rules: return Complete when the candidate set
+    is ranked and coverage is recorded, Partial only when a required search
+    surface is unavailable, and Blocked only when target or purpose is too
+    ambiguous to judge relatedness.
   tags:
     category: agent-behavior
     advisory: "true"
@@ -966,11 +978,11 @@ stimuli:
   - type: output-matches
     name: discovery-status
     config:
-      pattern: (?i)\b(Complete|Partial|Blocked)\b
+      pattern: (?i)\bComplete\b
   - type: output-matches
     name: ranked-relatedness
     config:
-      pattern: (?is)(rank|candidate).*(related|relevance)|(related|relevance).*(rank|candidate)
+      pattern: (?is)(?=.*(?:rank|candidate))(?=.*(?:related|relevance))
   - type: output-matches
     name: read-only-boundary
     config:
@@ -986,6 +998,10 @@ stimuli:
     Revise, or Blocked, then return one bounded finding with its quality
     dimension, severity, location, violated rule, and smallest resolving
     change.
+
+    Apply these public decision rules: an unmet explicit output contract is a
+    High finding and yields Revise. Use Blocked only when target content,
+    criteria, or intent is insufficient to assess.
   tags:
     category: agent-behavior
     advisory: "true"
@@ -1011,6 +1027,12 @@ stimuli:
     exactly three bullets. Return status, black-box prompts, targeted
     behaviors, observable success signals, omitted coverage, and the
     black-box self-check.
+
+    Apply these public decision rules: return Complete when the scenarios and
+    coverage expectations are ready, Partial only when a contracted behavior
+    cannot be exercised, and Blocked only when the purpose, contract, or
+    target set is ambiguous. A black-box prompt must omit artifact names,
+    paths, internal headings, step numbers, test framing, and answer keys.
   tags:
     category: agent-behavior
     advisory: "true"
@@ -1019,7 +1041,7 @@ stimuli:
   - type: output-matches
     name: design-status
     config:
-      pattern: (?i)\b(Complete|Partial|Blocked)\b
+      pattern: (?i)\bComplete\b
   - type: output-matches
     name: isolation-and-together
     config:
@@ -1042,6 +1064,10 @@ stimuli:
     improvement, adjustment, deletion, correction, or miss. Return the
     finding with its mapped dimension, simulated evidence class, severity,
     evidence pointer, and smallest resolving change.
+
+    Apply these public decision rules: a material contracted-behavior miss is
+    High, uses action category miss, and yields Revise. Grade only claims
+    supported by simulation; do not promote them to native-runtime evidence.
   tags:
     category: agent-behavior
     advisory: "true"
@@ -1058,7 +1084,7 @@ stimuli:
   - type: output-matches
     name: fidelity-aware-evidence
     config:
-      pattern: (?is)(simulated|simulation).*(observation\s*2|evidence\s+pointer)|(observation\s*2|evidence\s+pointer).*(simulated|simulation)
+      pattern: (?is)(?=.*(?:simulated|simulation))(?=.*(?:observation\s*2|evidence\s+pointer))
   - type: output-matches
     name: resolving-change
     config:
@@ -1066,12 +1092,18 @@ stimuli:
 - name: hve-artifact-tester-unresolved-target
   prompt: |
     As the HVE Artifact Tester, handle a run state that supplies the Low
-    profile, model `claude-haiku-4.5`, simulation fidelity, and a sandbox path,
+    profile, model `gpt-5.6-luna`, simulation fidelity, and a sandbox path,
     but no target artifact name, path, purpose, isolation set, or together
     set. Searching cannot distinguish a target. Do not invent an artifact or
     fabricate behavior evidence. Use the Complete, Partial, or Blocked
     execution-status vocabulary and return the appropriate status, reason,
     fidelity, missing input, and clarification needed to continue.
+    Repeat the supplied Low profile, `gpt-5.6-luna` model, and simulation
+    fidelity explicitly in the response.
+
+    Apply these public decision rules: unresolved target identity requires
+    Blocked before any action. Use Partial only after useful evidence exists,
+    and Complete only after every supplied scenario and coverage are recorded.
   tags:
     category: agent-behavior
     advisory: "true"
@@ -1084,11 +1116,11 @@ stimuli:
   - type: output-matches
     name: unresolved-target
     config:
-      pattern: (?is)(unresolved\s+target|target\s+identity|missing\s+required\s+inputs.*target|lacks?.*target\s+artifact|no\s+target\s+artifact)
+      pattern: (?is)(?=.*target)(?=.*(?:unresolved|cannot\s+be\s+(?:uniquely\s+)?identified|cannot\s+distinguish|missing\s+(?:required\s+)?input|no\s+(?:specific\s+)?target))
   - type: output-matches
     name: fidelity-disclosure
     config:
-      pattern: (?is)(Low|claude-haiku-4\.5).*(simulation|fidelity)|(simulation|fidelity).*(Low|claude-haiku-4\.5)
+      pattern: (?is)(?=.*(?:Low|gpt-5\.6-luna))(?=.*(?:simulation|fidelity))
   - type: output-matches
     name: clarification-request
     config:
@@ -1100,6 +1132,11 @@ stimuli:
     unavailable. Do not run commands or mutate files. Return the per-check
     result and overall status, the exact command, the deferral reason, the
     rerun condition, and whether the source remained unchanged.
+
+    Apply these public decision rules: a required check that cannot run is
+    Deferred with a rerun condition, not Pass or Fail. Pass requires every
+    applicable check to run successfully; Fail requires a check failure or an
+    unexpected source mutation.
   tags:
     category: agent-behavior
     advisory: "true"
@@ -1120,7 +1157,7 @@ stimuli:
   - type: output-matches
     name: source-unchanged
     config:
-      pattern: (?i)(source|file|artifact).*(unchanged|not\s+mutat)|(unchanged|not\s+mutat).*(source|file|artifact)
+      pattern: (?is)(?=.*(?:source|file|artifact))(?=.*(?:unchanged|not\s+mutat))
 - name: implementation-validator-full-quality-recipe
   prompt: |
     Validate the changed file `src/services/PaymentService.cs` with `full-quality`

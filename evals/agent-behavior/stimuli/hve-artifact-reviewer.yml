@@ -12,6 +12,10 @@ stimuli:
       Revise, or Blocked, then return one bounded finding with its quality
       dimension, severity, location, violated rule, and smallest resolving
       change.
+
+      Apply these public decision rules: an unmet explicit output contract is a
+      High finding and yields Revise. Use Blocked only when target content,
+      criteria, or intent is insufficient to assess.
     tags:
       category: agent-behavior
       advisory: "true"

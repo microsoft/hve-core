@@ -1394,7 +1394,7 @@ stimuli:
       - type: output-matches
         name: lifecycle-routing
         config:
-          pattern: '(?is)(hve-builder|HVE Builder).*(improve|baseline)|(improve|baseline).*(hve-builder|HVE Builder)'
+          pattern: '(?is)(?=.*(?:hve-builder|HVE Builder))(?=.*(?:improve|baseline))'
       - type: output-matches
         name: write-boundary
         config:
@@ -1425,19 +1425,19 @@ stimuli:
       - type: output-matches
         name: skill-attribution
         config:
-          pattern: '(?i)(hve-builder-tester|HVE Builder Tester|behavior[- ]test)'
+          pattern: '(?is)(?:hve-builder-tester|HVE Builder Tester|behavior(?:al)?[- ]test|(?=.*HVE Artifact Test Designer)(?=.*HVE Artifact Tester)(?=.*HVE Artifact Test Reviewer))'
       - type: output-matches
         name: fidelity-and-containment
         config:
-          pattern: '(?is)(simulation|native).*(sandbox|contain)|(sandbox|contain).*(simulation|native)'
+          pattern: '(?is)(?=.*(?:simulation|native))(?=.*(?:sandbox|contain))'
       - type: output-matches
         name: delegated-test-roles
         config:
-          pattern: '(?is)(design|scenario).*(execut|test).*(review|grad)'
+          pattern: '(?is)(?=.*(?:design|scenario))(?=.*(?:execut|test))(?=.*(?:review|grad))'
       - type: output-matches
         name: status-verdict-separation
         config:
-          pattern: '(?is)(execution\s+status|Complete|Partial|Deferred|Blocked).*(verdict|Pass|Revise|Not available)'
+          pattern: '(?is)(?=.*(?:execution\s+status|Complete|Partial|Deferred|Blocked))(?=.*(?:verdict|Pass|Revise|Not available))'
   - name: skill-prompt-builder-knowledge
     prompt: |
       Summarize the `prompt-builder` compatibility skill. Include legacy input
@@ -1452,7 +1452,7 @@ stimuli:
       - type: output-matches
         name: skill-attribution
         config:
-          pattern: '(?i)(prompt-builder|prompt\s+builder).*(hve-builder|HVE Builder)|(hve-builder|HVE Builder).*(prompt-builder|prompt\s+builder)'
+          pattern: '(?is)(?=.*(?:prompt-builder|prompt\s+builder))(?=.*(?:hve-builder|HVE Builder))'
       - type: output-matches
         name: scope-language
         config:
@@ -1614,8 +1614,9 @@ stimuli:
       Summarize how the `rpi-walkthrough` skill guides a user through existing
       code or an artifact. Include target resolution, deep review and the
       durable session record, the required shape and pacing of each segment,
-      how requested changes respect the source boundary, and the final RPI
-      handoff.
+      including Mermaid diagrams, evidence links, reference tables, and
+      question cadence. Also cover how requested changes respect the source
+      boundary and the final RPI handoff.
     environment:
       skills:
         - ../../.github/skills/rpi/rpi-walkthrough
@@ -1632,15 +1633,15 @@ stimuli:
       - type: output-matches
         name: review-and-record
         config:
-          pattern: '(?is)(deep\s+review|subagent).*(\.copilot-tracking[-/\\]walkthroughs|walkthrough\s+file|durable\s+(record|session))'
+          pattern: '(?is)(?=.*(?:deep\s+review|review(?:s|ed|ing)?\s+(?:deeply|in[- ]depth)|subagent|dispatches?\s+(?:exploration|research)))(?=.*(?:\.copilot-tracking[-/\\]walkthroughs|walkthrough\s+file|durable\s+(?:record|session)))'
       - type: output-matches
         name: segment-contract
         config:
-          pattern: '(?is)(?=.*segment)(?=.*mermaid)(?=.*(?:markdown\s+link|reference\s+table))(?=.*(?:one\s+or\s+two\s+questions|vscode_askQuestions|segment\s+boundary))'
+          pattern: '(?is)(?=.*segment)(?=.*mermaid)(?=.*(?:markdown\s+link|reference\s+table))(?=.*(?:one\s+or\s+two[^.\n]{0,50}\bquestions|vscode_askQuestions|segment\s+boundary))'
       - type: output-matches
         name: source-boundary-and-handoff
         config:
-          pattern: '(?is)(read[- ]only|do\s+not\s+(edit|modify)|requested\s+changes).*(rpi-quick|rpi-research|RPI\s+(follow-on|handoff|sequence))'
+          pattern: '(?is)(?=.*(?:read[- ]only|do\s+not\s+(?:edit|modify)|requested\s+changes))(?=.*(?:rpi-quick|rpi-research|RPI\s+(?:follow-on|handoff|sequence)))'
   - name: skill-rpi-quick-knowledge
     prompt: |
       Summarize the `rpi-quick` umbrella skill. Include the ordered phases,

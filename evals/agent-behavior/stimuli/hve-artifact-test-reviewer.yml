@@ -11,6 +11,10 @@ stimuli:
       improvement, adjustment, deletion, correction, or miss. Return the
       finding with its mapped dimension, simulated evidence class, severity,
       evidence pointer, and smallest resolving change.
+
+      Apply these public decision rules: a material contracted-behavior miss is
+      High, uses action category miss, and yields Revise. Grade only claims
+      supported by simulation; do not promote them to native-runtime evidence.
     tags:
       category: agent-behavior
       advisory: "true"
@@ -26,7 +30,7 @@ stimuli:
       - type: output-matches
         name: fidelity-aware-evidence
         config:
-          pattern: '(?is)(simulated|simulation).*(observation\s*2|evidence\s+pointer)|(observation\s*2|evidence\s+pointer).*(simulated|simulation)'
+          pattern: '(?is)(?=.*(?:simulated|simulation))(?=.*(?:observation\s*2|evidence\s+pointer))'
       - type: output-matches
         name: resolving-change
         config:

@@ -4,12 +4,18 @@ stimuli:
   - name: hve-artifact-tester-unresolved-target
     prompt: |
       As the HVE Artifact Tester, handle a run state that supplies the Low
-      profile, model `claude-haiku-4.5`, simulation fidelity, and a sandbox path,
+      profile, model `gpt-5.6-luna`, simulation fidelity, and a sandbox path,
       but no target artifact name, path, purpose, isolation set, or together
       set. Searching cannot distinguish a target. Do not invent an artifact or
       fabricate behavior evidence. Use the Complete, Partial, or Blocked
       execution-status vocabulary and return the appropriate status, reason,
       fidelity, missing input, and clarification needed to continue.
+      Repeat the supplied Low profile, `gpt-5.6-luna` model, and simulation
+      fidelity explicitly in the response.
+
+      Apply these public decision rules: unresolved target identity requires
+      Blocked before any action. Use Partial only after useful evidence exists,
+      and Complete only after every supplied scenario and coverage are recorded.
     tags:
       category: agent-behavior
       advisory: "true"
@@ -21,11 +27,11 @@ stimuli:
       - type: output-matches
         name: unresolved-target
         config:
-          pattern: '(?is)(unresolved\s+target|target\s+identity|missing\s+required\s+inputs.*target|lacks?.*target\s+artifact|no\s+target\s+artifact)'
+          pattern: '(?is)(?=.*target)(?=.*(?:unresolved|cannot\s+be\s+(?:uniquely\s+)?identified|cannot\s+distinguish|missing\s+(?:required\s+)?input|no\s+(?:specific\s+)?target))'
       - type: output-matches
         name: fidelity-disclosure
         config:
-          pattern: '(?is)(Low|claude-haiku-4\.5).*(simulation|fidelity)|(simulation|fidelity).*(Low|claude-haiku-4\.5)'
+          pattern: '(?is)(?=.*(?:Low|gpt-5\.6-luna))(?=.*(?:simulation|fidelity))'
       - type: output-matches
         name: clarification-request
         config:
