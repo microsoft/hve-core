@@ -164,7 +164,7 @@ description: "Test agent"
 ---
 '@ | Set-Content -Path (Join-Path $agentsDir 'test.agent.md')
 
-        # Create shared directories for symlinks
+        # Create shared directories for copied content
         New-Item -ItemType Directory -Path (Join-Path $script:maturityDir 'docs/templates') -Force | Out-Null
         New-Item -ItemType Directory -Path (Join-Path $script:maturityDir 'scripts/lib') -Force | Out-Null
 
@@ -280,7 +280,7 @@ description: "Test skill"
 ---
 '@ | Set-Content -Path (Join-Path $skillsDir 'SKILL.md')
 
-        # Create docs/templates and scripts directories for shared symlinking
+        # Create docs/templates and scripts directories for shared copied content
         New-Item -ItemType Directory -Path (Join-Path $script:tempDir 'docs/templates') -Force | Out-Null
         New-Item -ItemType Directory -Path (Join-Path $script:tempDir 'scripts/lib') -Force | Out-Null
 
