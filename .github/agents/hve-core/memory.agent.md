@@ -5,15 +5,15 @@ handoffs:
   - label: "🗑️ Clear"
     agent: RPI Agent
     prompt: "/clear"
-    send: true
+    send: false
   - label: "🚀 Continue with RPI"
     agent: RPI Agent
     prompt: "/rpi suggest"
-    send: true
+    send: false
   - label: "🚀 Continue with Backlog"
     agent: GitHub Backlog Manager
     prompt: "/github-suggest"
-    send: true
+    send: false
 ---
 
 # Memory Agent

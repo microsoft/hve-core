@@ -8,7 +8,7 @@ handoffs:
   - label: "📋 Create Plan"
     agent: Task Planner
     prompt: /task-plan
-    send: true
+    send: false
   - label: "🔬 Deeper Research"
     agent: Task Researcher
     prompt: /task-research continue deeper research based on potential next research items
@@ -46,6 +46,14 @@ Run `Researcher Subagent` with `runSubagent` or `task`, and parallelize calls wh
 * When neither `runSubagent` nor `task` tools are available, inform the user that one of these tools is required and should be enabled.
 
 Subagents can run in parallel when investigating independent topics or sources.
+
+## Cockpit narration
+
+When the `rpi-cockpit` MCP tools are available, narrate research progress to the RPI Cockpit following `rpi-cockpit/agents/cockpit-instructions.md`. Skip silently when the tools are not connected. Map the beats as follows:
+
+* Call `phase_enter("research")` when research starts.
+* Wrap every `Researcher Subagent` dispatch with `subagent_start(name, role)` before and `subagent_stop(name, result)` after.
+* Call `artifact_update(path, summary)` after writing or updating each research document in `.copilot-tracking/research/`.
 
 ## Context Discipline
 

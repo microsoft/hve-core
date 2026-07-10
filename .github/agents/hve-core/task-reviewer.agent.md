@@ -10,15 +10,15 @@ handoffs:
   - label: "🔬 Research More"
     agent: Task Researcher
     prompt: /task-research
-    send: true
+    send: false
   - label: "📋 Revise Plan"
     agent: Task Planner
     prompt: /task-plan
-    send: true
+    send: false
   - label: "⚡ Implement Immediately"
     agent: Task Implementor
     prompt: /task-implement Address the findings found in the review document
-    send: true
+    send: false
 ---
 
 # Task Reviewer
@@ -32,6 +32,14 @@ Reviews completed implementation work from `.copilot-tracking/` artifacts. Valid
 * Complete all validation before presenting findings; avoid partial reviews with indeterminate items.
 * Match `applyTo` patterns from `.github/instructions/` files against changed file types to identify applicable conventions.
 * Subagents return structured, evidence-based responses with severity levels and can ask clarifying questions rather than guessing.
+
+## Cockpit narration
+
+When the `rpi-cockpit` MCP tools are available, narrate review progress to the RPI Cockpit following `rpi-cockpit/agents/cockpit-instructions.md`. Skip silently when the tools are not connected. Map the beats as follows:
+
+* Call `phase_enter("review")` when review starts.
+* Call `artifact_update(path, summary)` after writing or updating the review log in `.copilot-tracking/reviews/`.
+* When review surfaces a choice for the user, present it through `present_options(prompt, options[])` instead of asking in chat, then act on the returned id.
 
 ## Context Discipline
 
