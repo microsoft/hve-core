@@ -186,6 +186,9 @@ function New-AssetDocContent {
         Page model from New-AssetPageModel.
     .PARAMETER RepoRoot
         Repository root directory.
+    .PARAMETER ExistingContent
+        Existing page content preloaded by the caller. When omitted, the
+        function reads an existing page from disk for direct-call compatibility.
     .PARAMETER TemplatePath
         Path to the asset documentation template.
     .PARAMETER SidebarPosition
@@ -198,6 +201,7 @@ function New-AssetDocContent {
     param(
         [Parameter(Mandatory = $true)][PSCustomObject]$Model,
         [Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string]$RepoRoot,
+        [Parameter(Mandatory = $false)][AllowNull()][string]$ExistingContent = $null,
         [Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string]$TemplatePath,
         [Parameter(Mandatory = $true)][int]$SidebarPosition
     )
@@ -205,9 +209,13 @@ function New-AssetDocContent {
     $docFull = Join-Path $RepoRoot $Model.DocRel
     $today = Get-Date -Format 'yyyy-MM-dd'
 
-    $existing = $null
     if (Test-Path -LiteralPath $docFull) {
-        $existing = Get-Content -LiteralPath $docFull -Raw
+        $existing = if ($PSBoundParameters.ContainsKey('ExistingContent')) {
+            $ExistingContent
+        }
+        else {
+            Get-Content -LiteralPath $docFull -Raw
+        }
         $existingFm = Get-AssetFrontmatter -FilePath $docFull
         $msDate = if ($existingFm.ContainsKey('ms.date') -and $existingFm['ms.date']) {
             [string]$existingFm['ms.date']
@@ -486,16 +494,22 @@ function Invoke-AssetDocsGeneration {
 
     foreach ($page in $pages) {
         $docFull = Join-Path $RepoRoot $page.DocRel
+        $existingContent = if (Test-Path -LiteralPath $docFull) {
+            Get-Content -LiteralPath $docFull -Raw
+        }
+        else {
+            $null
+        }
         # Option B guard: an existing page whose overview markers are missing cannot
         # be regenerated without discarding its human-authored sections. Skip it,
         # leave the file untouched, and report it as drift needing manual attention.
-        if ((Test-Path -LiteralPath $docFull) -and
-            -not (Split-AssetDocByMarkers -Content (Get-Content -LiteralPath $docFull -Raw) -Region 'overview').HasMarkers) {
+        if ($null -ne $existingContent -and
+            -not (Split-AssetDocByMarkers -Content $existingContent -Region 'overview').HasMarkers) {
             Write-Warning "Overview markers missing in $($page.DocRel); skipping regeneration to preserve human-authored sections. Restore the AUTO-GENERATED markers (or delete the page to re-scaffold) and re-run."
             $needsAttention.Add($page.DocRel)
             continue
         }
-        $content = New-AssetDocContent -Model $page -RepoRoot $RepoRoot -TemplatePath $TemplatePath -SidebarPosition $positions[$page.DocRel]
+        $content = New-AssetDocContent -Model $page -RepoRoot $RepoRoot -ExistingContent $existingContent -TemplatePath $TemplatePath -SidebarPosition $positions[$page.DocRel]
         $status = Write-DocIfChanged -Path (Join-Path $RepoRoot $page.DocRel) -Content $content
         & $record $status $page.DocRel
     }
