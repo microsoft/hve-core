@@ -1,13 +1,19 @@
 .card {
-  display: block;
+  display: flex;
+  flex-direction: column;
   position: relative;
   background: var(--ifm-card-background-color);
   border: 1px solid rgba(0, 0, 0, 0.25);
   border-radius: 2px;
   padding: 16px 0 0;
-  box-shadow: rgba(0, 0, 0, 0.13) 0px 1.6px 3.6px 0px, rgba(0, 0, 0, 0.11) 0px 0.3px 0.9px 0px;
+  box-shadow:
+    rgba(0, 0, 0, 0.13) 0px 1.6px 3.6px 0px,
+    rgba(0, 0, 0, 0.11) 0px 0.3px 0.9px 0px;
   min-height: 100px;
   overflow: visible;
+  width: 100%;
+  height: 100%;
+  box-sizing: border-box;
 }
 
 .card:hover .cardTitle {
@@ -57,7 +63,7 @@
 }
 
 .cardTitle::after {
-  content: '';
+  content: "";
   position: absolute;
   inset: 0;
 }
@@ -78,12 +84,19 @@
 
 /* Box card variant */
 .boxCard {
+  display: flex;
+  flex-direction: column;
   background: var(--ifm-card-background-color);
   border: 1px solid rgba(0, 0, 0, 0.25);
   border-radius: 0;
-  box-shadow: rgba(0, 0, 0, 0.13) 0px 1.6px 3.6px 0px, rgba(0, 0, 0, 0.11) 0px 0.3px 0.9px 0px;
+  box-shadow:
+    rgba(0, 0, 0, 0.13) 0px 1.6px 3.6px 0px,
+    rgba(0, 0, 0, 0.11) 0px 0.3px 0.9px 0px;
   padding: 1.5rem;
   overflow: visible;
+  width: 100%;
+  height: 100%;
+  box-sizing: border-box;
 }
 
 .boxCardIcon {
@@ -128,12 +141,14 @@
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 1.5rem;
   list-style: none;
-  padding: 0;
-  margin: 0;
+  padding: 30px;
+  margin-top: -40px;
 }
 
 .cardGridItem {
   display: flex;
+  height: 100%;
+  width: 100%;
 }
 
 .cardGridTwo {
