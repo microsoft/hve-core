@@ -3,6 +3,7 @@
   "description": "Skill-forward Research, Plan, Implement, and Review entry points with an umbrella RPI skill and existing subagent dispatch.",
   "version": "3.3.101",
   "agents": [
+    "agents/hve-core/",
     "agents/hve-core/subagents/"
   ],
   "skills": [

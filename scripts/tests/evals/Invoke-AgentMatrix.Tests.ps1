@@ -71,6 +71,7 @@ Describe 'Invoke-AgentMatrix.ps1 (dry-run)' -Tag 'Unit' {
         It 'Plans a vally command per slug using --eval-spec eval.yaml with an agent tag' {
             $first = $script:Summary.plannedCommands[0]
             $first | Should -Match '^npx vally eval --eval-spec evals/agent-behavior/eval\.yaml --tag agent=[^ ]+ --model \S+$'
+            $first | Should -Match '--model gpt-5\.6-luna$'
         }
     }
 

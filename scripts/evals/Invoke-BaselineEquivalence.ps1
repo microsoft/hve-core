@@ -210,7 +210,7 @@ function Resolve-ModelList {
 
     if ($ModelOverride) { return @($ModelOverride) }
     if ($Hint) { return @($Hint) }
-    return @('claude-haiku-4.5')
+    return @('gpt-5.6-luna')
 }
 
 function New-DryRunSummary {

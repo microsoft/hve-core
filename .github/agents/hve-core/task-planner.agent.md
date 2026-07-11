@@ -1,7 +1,7 @@
 ---
 name: Task Planner
 description: 'Implementation planner that creates actionable, step-by-step plans'
-disable-model-invocation: true
+disable-model-invocation: false
 agents:
   - Researcher Subagent
   - Plan Validator

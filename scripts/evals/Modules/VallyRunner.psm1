@@ -175,6 +175,15 @@ function Read-VallyResultsJsonl {
             continue
         }
 
+        # Vally 0.6 writes a typed run-summary record after the trial records.
+        # Legacy Vally versions emitted untyped trial records, so accept those
+        # while ignoring every explicitly typed non-trial record.
+        if ($obj.PSObject.Properties['type'] -and
+            -not [string]::IsNullOrWhiteSpace([string]$obj.type) -and
+            [string]$obj.type -ne 'trial-result') {
+            continue
+        }
+
         $trials++
 
         $trialPassed = $false
@@ -506,6 +515,221 @@ function Test-SpecInputModeration {
     }
 }
 
+function Test-SpecOutputModerationBatch {
+    <#
+    .SYNOPSIS
+    Moderates model outputs from multiple Vally runs in one backend invocation.
+
+    .DESCRIPTION
+    Extracts trial outputs from each run, attaches the run's effective threshold
+    to every moderation record, and invokes Invoke-ContentModeration.ps1 once.
+    Results are attributed back to their originating run key. Typed Vally
+    metadata records are ignored while legacy untyped trial records remain
+    supported.
+
+    .PARAMETER Run
+    Run descriptors with runKey, runDir, and threshold entries.
+
+    .PARAMETER BatchId
+    Safe shard identifier used for the moderation output file.
+
+    .PARAMETER ModerationScript
+    Path to Invoke-ContentModeration.ps1.
+
+    .PARAMETER Threshold
+    Default toxicity threshold for records without an explicit run threshold.
+
+    .PARAMETER RepoRoot
+    Repository root.
+
+    .OUTPUTS
+    [hashtable] Aggregate moderation result with a byRun map.
+    #>
+    [CmdletBinding()]
+    [OutputType([hashtable])]
+    param(
+        [Parameter(Mandatory = $true)]
+        [AllowEmptyCollection()]
+        [hashtable[]]$Run,
+        [Parameter(Mandatory = $true)]
+        [ValidateNotNullOrEmpty()]
+        [string]$BatchId,
+        [string]$ModerationScript,
+        [double]$Threshold = 0.5,
+        [string]$RepoRoot
+    )
+
+    if (-not $RepoRoot) {
+        $RepoRoot = git rev-parse --show-toplevel 2>$null
+        if (-not $RepoRoot) { $RepoRoot = Join-Path $PSScriptRoot '../../..' }
+    }
+    if (-not $ModerationScript) {
+        $ModerationScript = Join-Path $RepoRoot 'scripts/evals/Invoke-ContentModeration.ps1'
+    }
+
+    $byRun = @{}
+    foreach ($entry in $Run) {
+        $runKey = [string]$entry.runKey
+        if ([string]::IsNullOrWhiteSpace($runKey)) { continue }
+        $byRun[$runKey] = @{
+            flagged       = $false
+            flaggedCount  = 0
+            flaggedLabels = @()
+            outputPath    = $null
+            error         = $false
+        }
+    }
+
+    $empty = @{
+        flagged      = $false
+        flaggedCount = 0
+        outputPath   = $null
+        error        = $false
+        byRun        = $byRun
+    }
+    if ($Run.Count -eq 0) { return $empty }
+
+    $records = [System.Collections.Generic.List[hashtable]]::new()
+    $recordOwners = @{}
+    $index = 0
+
+    foreach ($entry in $Run) {
+        $runKey = [string]$entry.runKey
+        $runDir = [string]$entry.runDir
+        if ([string]::IsNullOrWhiteSpace($runKey) -or -not $byRun.ContainsKey($runKey)) { continue }
+        if ([string]::IsNullOrWhiteSpace($runDir) -or -not (Test-Path -LiteralPath $runDir -PathType Container)) {
+            Write-Warning "Run directory not found: $runDir"
+            continue
+        }
+
+        $jsonl = Get-ChildItem -LiteralPath $runDir -Filter 'results.jsonl' -Recurse -File -ErrorAction SilentlyContinue |
+            Select-Object -First 1
+        if (-not $jsonl) {
+            Write-Warning "results.jsonl not found in $runDir"
+            continue
+        }
+
+        $effectiveThreshold = if ($entry.ContainsKey('threshold') -and $null -ne $entry.threshold) {
+            [double]$entry.threshold
+        }
+        else {
+            $Threshold
+        }
+
+        foreach ($line in Get-Content -LiteralPath $jsonl.FullName -Encoding utf8) {
+            if ([string]::IsNullOrWhiteSpace($line)) { continue }
+            try {
+                $obj = $line | ConvertFrom-Json -Depth 100
+            }
+            catch {
+                continue
+            }
+
+            if ($obj.PSObject.Properties['type'] -and
+                -not [string]::IsNullOrWhiteSpace([string]$obj.type) -and
+                [string]$obj.type -ne 'trial-result') {
+                continue
+            }
+
+            $outputText = $null
+            if ($obj.PSObject.Properties['trajectory'] -and $obj.trajectory -and
+                $obj.trajectory.PSObject.Properties['output'] -and $obj.trajectory.output) {
+                $outputText = [string]$obj.trajectory.output
+            }
+            if (-not $outputText) { continue }
+
+            $recordId = "output-$index"
+            $records.Add(@{
+                id        = $recordId
+                text      = $outputText
+                threshold = $effectiveThreshold
+            })
+            $recordOwners[$recordId] = $runKey
+            $index++
+        }
+    }
+
+    if ($records.Count -eq 0) {
+        Write-Verbose 'No model outputs to moderate in the shard batch.'
+        return $empty
+    }
+
+    $scope = "output-$BatchId"
+    $outFile = Join-Path $RepoRoot "logs/moderation-$scope.json"
+    Write-Verbose "Moderating $($records.Count) model outputs in shard batch: $BatchId"
+    try {
+        & $ModerationScript -Records $records.ToArray() -Scope $scope -Threshold $Threshold -OutFile $outFile -ErrorAction Stop
+        $moderationExitCode = $LASTEXITCODE
+    }
+    catch {
+        Write-Warning "Content moderation script failed: $_"
+        foreach ($runKey in $byRun.Keys) {
+            $byRun[$runKey].error = $true
+            $byRun[$runKey].outputPath = $outFile
+        }
+        return @{ flagged = $false; flaggedCount = 0; outputPath = $outFile; error = $true; byRun = $byRun }
+    }
+
+    $moderationError = $moderationExitCode -ge 2
+    $flaggedCount = 0
+    $mappedFlaggedCount = 0
+    if (Test-Path -LiteralPath $outFile) {
+        try {
+            $output = Get-Content -LiteralPath $outFile -Raw | ConvertFrom-Json
+            $flaggedCount = [int]$output.summary.flaggedCount
+            foreach ($record in @($output.records)) {
+                if (-not $record.PSObject.Properties['id']) { continue }
+                $recordId = [string]$record.id
+                if (-not $recordOwners.ContainsKey($recordId)) { continue }
+                if (-not ($record.PSObject.Properties['flagged'] -and [bool]$record.flagged)) { continue }
+
+                $runKey = $recordOwners[$recordId]
+                $bucket = $byRun[$runKey]
+                $bucket.flagged = $true
+                $bucket.flaggedCount++
+                $mappedFlaggedCount++
+                if ($record.PSObject.Properties['flaggedLabels']) {
+                    $bucket.flaggedLabels = @($bucket.flaggedLabels) + @($record.flaggedLabels | ForEach-Object { [string]$_ })
+                }
+            }
+        }
+        catch {
+            Write-Warning "Failed to parse moderation output '$outFile': $_"
+            $moderationError = $true
+        }
+    }
+    else {
+        $moderationError = $true
+    }
+
+    if ($moderationExitCode -eq 1 -and $flaggedCount -eq 0) { $flaggedCount = 1 }
+    $unattributedFlags = $flaggedCount - $mappedFlaggedCount
+    if ($unattributedFlags -gt 0) {
+        if ($byRun.Count -eq 1) {
+            $onlyKey = @($byRun.Keys)[0]
+            $byRun[$onlyKey].flagged = $true
+            $byRun[$onlyKey].flaggedCount += $unattributedFlags
+        }
+        else {
+            Write-Warning "$unattributedFlags moderation flag(s) could not be attributed to a Vally run."
+            $moderationError = $true
+        }
+    }
+
+    foreach ($runKey in $byRun.Keys) {
+        $byRun[$runKey].outputPath = $outFile
+        if ($moderationError) { $byRun[$runKey].error = $true }
+    }
+
+    return @{
+        flagged      = ($flaggedCount -gt 0)
+        flaggedCount = $flaggedCount
+        outputPath   = $outFile
+        error        = $moderationError
+        byRun        = $byRun
+    }
+}
+
 function Test-SpecOutputModeration {
     <#
     .SYNOPSIS
@@ -572,6 +796,12 @@ function Test-SpecOutputModeration {
             $obj = $line | ConvertFrom-Json -Depth 100
         }
         catch {
+            continue
+        }
+
+        if ($obj.PSObject.Properties['type'] -and
+            -not [string]::IsNullOrWhiteSpace([string]$obj.type) -and
+            [string]$obj.type -ne 'trial-result') {
             continue
         }
 
@@ -764,6 +994,7 @@ Export-ModuleMember -Function @(
     'Read-VallyResultsJsonl',
     'Invoke-VallySpec',
     'Test-SpecInputModeration',
+    'Test-SpecOutputModerationBatch',
     'Test-SpecOutputModeration',
     'Get-VallySpecBacklinkCount',
     'Get-VallySpecRunPlan'
