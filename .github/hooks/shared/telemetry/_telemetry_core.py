@@ -50,6 +50,10 @@ EVENT_ALIASES = {
     "preCompact": "PreCompact",
 }
 
+_ROOT_AGENT_MAX_LENGTH = 128
+ROOT_AGENT_ATTRIBUTE = "gen_ai.agent.name"
+BUDGET_THRESHOLDS = (30, 50, 70)
+
 
 def iter_jsonl(path: str | os.PathLike[str]) -> Iterator[dict]:
     """Yield each well-formed JSON object from a JSONL file, skipping junk."""
@@ -88,6 +92,219 @@ def collect_sids(hook_files: Iterable[str]) -> set[str]:
             if sid and _is_safe_sid(sid):
                 sids.add(sid)
     return sids
+
+
+def normalize_root_agent_label(value: object) -> str:
+    """Return a bounded, single-line root-agent label or an empty string."""
+    if not isinstance(value, str):
+        return ""
+    label = " ".join(value.split())
+    return label[:_ROOT_AGENT_MAX_LENGTH]
+
+
+def root_agent_hint(data: dict, event: str) -> str:
+    """Resolve an explicit root-agent hint without inspecting prompt content."""
+    candidates = [
+        data.get(ROOT_AGENT_ATTRIBUTE),
+        data.get("root_agent"),
+        data.get("rootAgent"),
+    ]
+    if event == "SessionStart":
+        candidates.extend(
+            (
+                data.get("agent_name"),
+                data.get("agentName"),
+                data.get("agent_type"),
+                data.get("agentType"),
+            )
+        )
+        candidates.append(os.environ.get("HVE_TELEMETRY_ROOT_AGENT"))
+    for candidate in candidates:
+        label = normalize_root_agent_label(candidate)
+        if label:
+            return label
+    return ""
+
+
+def collect_root_agent_candidates(hook_files: Iterable[str]) -> dict[str, set[str]]:
+    """Collect explicit root-agent labels by session from hook records."""
+    candidates: dict[str, set[str]] = {}
+    for hook_file in hook_files:
+        for obj in iter_jsonl(hook_file):
+            sid = obj.get("sid")
+            label = normalize_root_agent_label(
+                obj.get(ROOT_AGENT_ATTRIBUTE) or obj.get("root_agent")
+            )
+            if sid and _is_safe_sid(sid) and label:
+                candidates.setdefault(sid, set()).add(label)
+    return candidates
+
+
+def parse_token_budget(value: object | None = None) -> int | None:
+    """Return a positive configured session token budget, if valid."""
+    raw_value = os.environ.get("HVE_TOKEN_BUDGET") if value is None else value
+    if isinstance(raw_value, bool):
+        return None
+    try:
+        budget = int(str(raw_value).strip())
+    except (TypeError, ValueError):
+        return None
+    return budget if budget > 0 else None
+
+
+def _nonnegative_int(value: object) -> int | None:
+    """Return a nonnegative integer counter without coercing booleans."""
+    if isinstance(value, bool) or not isinstance(value, int) or value < 0:
+        return None
+    return value
+
+
+def build_budget_status(
+    summary: dict,
+    budget_tokens: int,
+    event: str,
+    previous: dict | None = None,
+    notify: bool = True,
+) -> tuple[dict, int | None]:
+    """Build budget status and return the highest newly notified threshold."""
+    previous = previous if isinstance(previous, dict) else {}
+    previous_budget = _nonnegative_int(previous.get("budget_tokens"))
+    previous_notified = previous.get("notified_thresholds", [])
+    if previous_budget != budget_tokens or not isinstance(previous_notified, list):
+        previous_notified = []
+    notified = {
+        threshold
+        for threshold in previous_notified
+        if isinstance(threshold, int) and threshold in BUDGET_THRESHOLDS
+    }
+
+    input_tokens = _nonnegative_int(summary.get("input_tokens"))
+    output_tokens = _nonnegative_int(summary.get("output_tokens"))
+    observed_tokens = None
+    usage_percent = None
+    crossed: list[int] = []
+    accuracy = "unavailable"
+    token_source = summary.get("token_source", "unknown")
+    if input_tokens is not None and output_tokens is not None:
+        observed_tokens = input_tokens + output_tokens
+        usage_percent = round((observed_tokens / budget_tokens) * 100, 2)
+        crossed = [
+            threshold
+            for threshold in BUDGET_THRESHOLDS
+            if observed_tokens * 100 >= budget_tokens * threshold
+        ]
+        accuracy = "exact" if token_source == "process_log" else "approximate"
+
+    newly_crossed = sorted(set(crossed) - notified)
+    notified_threshold = max(newly_crossed) if notify and newly_crossed else None
+    if notified_threshold is not None:
+        notified.update(newly_crossed)
+
+    updated_at = summary.get("last_ts") or summary.get("ts")
+    if not isinstance(updated_at, str) or not updated_at:
+        updated_at = datetime.datetime.now(datetime.UTC).isoformat()
+    status = {
+        "budget_tokens": budget_tokens,
+        "observed_tokens": observed_tokens,
+        "usage_percent": usage_percent,
+        "crossed_thresholds": crossed,
+        "notified_thresholds": sorted(notified),
+        "token_source": token_source,
+        "accuracy": accuracy,
+        "updated_at": updated_at,
+        "last_event": event,
+    }
+    return status, notified_threshold
+
+
+def format_budget_advisory(status: dict, threshold: int) -> str:
+    """Format a concise, non-blocking budget threshold message."""
+    observed = status.get("observed_tokens")
+    budget = status.get("budget_tokens")
+    usage_percent = status.get("usage_percent")
+    values = (observed, budget, usage_percent)
+    if not all(isinstance(value, (int, float)) for value in values):
+        return ""
+
+    source_labels = {
+        "process_log": "process log",
+        "state_fallback": "session fallback",
+    }
+    source = source_labels.get(status.get("token_source"), "unknown source")
+    accuracy = str(status.get("accuracy", "unavailable"))
+    updated_at = str(status.get("updated_at", "unknown time"))
+    if threshold >= 70:
+        action = "Consider saving progress and starting a new session."
+    elif threshold >= 50:
+        action = "Consider completing the current phase before starting additional work."
+    else:
+        action = "No action is required."
+    return (
+        f"Token budget advisory: {round(usage_percent)}% used "
+        f"({observed:,} of {budget:,} session tokens). "
+        f"Source: {source}; {accuracy} as of {updated_at}. "
+        f"{action} Execution will continue."
+    )
+
+
+class _BudgetStateStore:
+    """Persist advisory budget status for one safe session id."""
+
+    def __init__(self, state_dir: Path, sid: str) -> None:
+        self.state_dir = state_dir
+        self.state_file = state_dir / f"{sid}.json" if _is_safe_sid(sid) else None
+
+    def read(self) -> dict:
+        """Return persisted status or an empty object when unavailable."""
+        if not self.state_file or not self.state_file.exists():
+            return {}
+        try:
+            with open(self.state_file, encoding="utf-8") as handle:
+                data = json.load(handle)
+        except (OSError, ValueError):
+            return {}
+        return data if isinstance(data, dict) else {}
+
+    def write(self, status: dict) -> None:
+        """Atomically persist a status object when the session id is safe."""
+        if not self.state_file:
+            return
+        self.state_dir.mkdir(parents=True, exist_ok=True)
+        temporary = self.state_file.with_suffix(".tmp")
+        try:
+            with open(temporary, "w", encoding="utf-8") as handle:
+                json.dump(status, handle, sort_keys=True)
+            os.replace(temporary, self.state_file)
+        except OSError:
+            temporary.unlink(missing_ok=True)
+
+    def evaluate(
+        self,
+        summary: dict,
+        budget_tokens: int,
+        event: str,
+        notify: bool,
+    ) -> str | None:
+        """Update status and return a newly crossed threshold message."""
+        status, threshold = build_budget_status(
+            summary,
+            budget_tokens,
+            event,
+            previous=self.read(),
+            notify=notify,
+        )
+        self.write(status)
+        if threshold is None:
+            return None
+        message = format_budget_advisory(status, threshold)
+        return message or None
+
+
+def _finish_collect(response: dict, emit_response: bool) -> int:
+    """Optionally emit one compact hook response and return success."""
+    if emit_response:
+        sys.stdout.write(json.dumps(response, separators=(",", ":")) + "\n")
+    return 0
 
 
 def copilot_home() -> Path:
@@ -611,6 +828,7 @@ def build_session_summary(
     home: Path,
     ts_override: str | None = None,
     client: str = "",
+    root_agent: str = "",
 ) -> dict:
     """Build a SessionSummary event for a session.
 
@@ -670,6 +888,9 @@ def build_session_summary(
         summary["agent_usage"] = agent_usage
     if client:
         summary["client"] = client
+    normalized_root_agent = normalize_root_agent_label(root_agent)
+    if normalized_root_agent:
+        summary[ROOT_AGENT_ATTRIBUTE] = normalized_root_agent
     return summary
 
 
@@ -759,7 +980,62 @@ class _AgentStack:
             self.stack_file.unlink(missing_ok=True)
 
 
-def build_entry(data: dict, event: str, stack: _AgentStack) -> dict | None:
+class _RootAgentStore:
+    """Persist distinct root-agent hints observed during one session."""
+
+    def __init__(self, store_dir: Path, sid: str) -> None:
+        self.store_dir = store_dir
+        self.store_file = store_dir / f"root-{sid}.json" if _is_safe_sid(sid) else None
+
+    def _read(self) -> list[str]:
+        if not self.store_file or not self.store_file.exists():
+            return []
+        try:
+            with open(self.store_file, encoding="utf-8") as handle:
+                data = json.load(handle)
+        except (OSError, ValueError):
+            return []
+        if not isinstance(data, list):
+            return []
+        return sorted(
+            {
+                label
+                for value in data
+                if (label := normalize_root_agent_label(value))
+            }
+        )
+
+    def record(self, label: str) -> bool:
+        """Record a label and return whether it was newly observed."""
+        normalized = normalize_root_agent_label(label)
+        if not self.store_file or not normalized:
+            return False
+        labels = self._read()
+        if normalized in labels:
+            return False
+        labels.append(normalized)
+        self.store_dir.mkdir(parents=True, exist_ok=True)
+        with open(self.store_file, "w", encoding="utf-8") as handle:
+            json.dump(sorted(labels), handle)
+        return True
+
+    def resolved(self) -> str:
+        """Return the unique label, or empty when absent or conflicting."""
+        labels = self._read()
+        return labels[0] if len(labels) == 1 else ""
+
+    def clear(self) -> None:
+        """Remove persisted attribution state for the session."""
+        if self.store_file and self.store_file.exists():
+            self.store_file.unlink(missing_ok=True)
+
+
+def build_entry(
+    data: dict,
+    event: str,
+    stack: _AgentStack,
+    root_agent: str = "",
+) -> dict | None:
     """Build the JSONL telemetry entry for a single hook event.
 
     Returns ``None`` for unrecognized events, which the caller drops.
@@ -775,6 +1051,9 @@ def build_entry(data: dict, event: str, stack: _AgentStack) -> dict | None:
         return None
 
     entry: dict = {"ts": ts, "sid": sid, "event": event, "cwd": cwd}
+    normalized_root_agent = normalize_root_agent_label(root_agent)
+    if normalized_root_agent:
+        entry[ROOT_AGENT_ATTRIBUTE] = normalized_root_agent
 
     if event == "SessionStart":
         entry["source"] = data.get("source", "")
@@ -836,20 +1115,21 @@ def build_entry(data: dict, event: str, stack: _AgentStack) -> dict | None:
     return entry
 
 
-def _mode_collect() -> int:
+def _mode_collect(emit_response: bool = False) -> int:
     """Process a single hook event from stdin; returns a process exit code."""
+    response: dict = {"continue": True}
     try:
         data = json.load(sys.stdin)
     except ValueError:
-        return 0
+        return _finish_collect(response, emit_response)
     if not isinstance(data, dict):
-        return 0
+        return _finish_collect(response, emit_response)
 
     sid = data.get("session_id") or data.get("sessionId", "")
     # Reject session IDs containing path separators or traversal sequences
     # to prevent writes outside the telemetry directory.
     if sid and not _is_safe_sid(sid):
-        return 0
+        return _finish_collect(response, emit_response)
 
     event = _normalize_event(data)
     tel_dir = Path(os.environ.get("HVE_TELEMETRY_DIR", ".copilot-tracking/telemetry"))
@@ -857,10 +1137,15 @@ def _mode_collect() -> int:
     log_file = tel_dir / f"sessions-{date_str}.jsonl"
     stack_dir = tel_dir / ".stacks"
     stack = _AgentStack(stack_dir, sid)
+    root_agents = _RootAgentStore(stack_dir, sid)
+    budget_state = _BudgetStateStore(tel_dir / ".budget-state", sid)
+    budget_tokens = parse_token_budget()
+    hint = root_agent_hint(data, event)
+    new_hint = root_agents.record(hint)
 
-    entry = build_entry(data, event, stack)
+    entry = build_entry(data, event, stack, root_agent=hint if new_hint else "")
     if entry is None:
-        return 0
+        return _finish_collect(response, emit_response)
 
     tel_dir.mkdir(parents=True, exist_ok=True)
     # Record this project's telemetry dir once per session so cross-project
@@ -879,7 +1164,10 @@ def _mode_collect() -> int:
     # compaction-only state fallback once the log is gone. Multiple summaries
     # per session are expected; the report replaces by provenance rank and
     # freshness rather than accumulating, so snapshots never double-count.
-    if event in ("Stop", "PreCompact") and sid:
+    summary = None
+    summary_events = ("Stop", "PreCompact")
+    budget_events = ("UserPromptSubmit", "PreCompact", "Stop")
+    if sid and (event in summary_events or (budget_tokens and event in budget_events)):
         home = copilot_home()
         state_dir = home / "session-state" / sid
         state_file = state_dir / "events.jsonl"
@@ -891,11 +1179,23 @@ def _mode_collect() -> int:
                 home,
                 ts_override=entry["ts"],
                 client=_detect_client(),
+                root_agent=root_agents.resolved(),
             )
-            if summary is not None:
+            if summary is not None and event in summary_events:
                 with open(log_file, "a", encoding="utf-8") as handle:
                     handle.write(json.dumps(summary) + "\n")
-    return 0
+    if summary is not None and budget_tokens and event in budget_events:
+        message = budget_state.evaluate(
+            summary,
+            budget_tokens,
+            event,
+            notify=event != "Stop",
+        )
+        if message:
+            response["systemMessage"] = message
+    if event == "Stop":
+        root_agents.clear()
+    return _finish_collect(response, emit_response)
 
 
 def _mode_aggregate_debug(out: str, hook_files: list[str]) -> int:
@@ -926,6 +1226,7 @@ def _mode_aggregate_session(out: str, hook_files: list[str]) -> int:
     if not sids:
         return 1
 
+    root_agent_candidates = collect_root_agent_candidates(hook_files)
     home = copilot_home()
     state_base = home / "session-state"
     count = 0
@@ -935,7 +1236,16 @@ def _mode_aggregate_session(out: str, hook_files: list[str]) -> int:
             state_file = state_dir / "events.jsonl"
             if not state_file.is_file():
                 continue
-            summary = build_session_summary(sid, state_dir, state_file, home, client="cli")
+            candidates = root_agent_candidates.get(sid, set())
+            root_agent = next(iter(candidates)) if len(candidates) == 1 else ""
+            summary = build_session_summary(
+                sid,
+                state_dir,
+                state_file,
+                home,
+                client="cli",
+                root_agent=root_agent,
+            )
             if summary is not None:
                 writer.write(json.dumps(summary) + "\n")
                 count += 1
@@ -947,7 +1257,7 @@ def _mode_aggregate_session(out: str, hook_files: list[str]) -> int:
 # never removed wholesale.
 _TELEMETRY_FILE_ARTIFACTS = ("raw-input.jsonl", "report.generated.html")
 _TELEMETRY_GLOB_ARTIFACTS = ("sessions-*.jsonl",)
-_TELEMETRY_DIR_ARTIFACTS = (".stacks",)
+_TELEMETRY_DIR_ARTIFACTS = (".stacks", ".budget-state")
 
 # Artifacts written into the HVE home directory (registry plus generated
 # cross-project launchers and report).
@@ -1066,7 +1376,7 @@ def main(argv: list[str]) -> int:
         return 2
     mode = argv[0]
     if mode == "collect":
-        return _mode_collect()
+        return _mode_collect(emit_response=True)
     if mode == "aggregate-debug":
         if len(argv) < 2:
             return 2

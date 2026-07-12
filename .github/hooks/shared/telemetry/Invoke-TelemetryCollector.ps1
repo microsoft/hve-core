@@ -11,13 +11,30 @@
     and delegates all processing to _telemetry_core.py. This thin wrapper keeps
     the collection logic in a single implementation (Python) shared with the bash
     hook entry point.
+.PARAMETER HookInput
+    JSON hook payload received from standard input through the PowerShell pipeline.
 .NOTES
     Runs via: Copilot agent hook (stdin JSON, stdout JSON)
 #>
 [CmdletBinding()]
-param()
+param(
+    [Parameter(ValueFromPipeline = $true)]
+    [AllowEmptyString()]
+    [string]$HookInput
+)
 
-$ErrorActionPreference = 'Stop'
+begin {
+    $ErrorActionPreference = 'Stop'
+    $HookLines = [System.Collections.Generic.List[string]]::new()
+}
+
+process {
+    if (-not [string]::IsNullOrEmpty($HookInput)) {
+        [void]$HookLines.Add($HookInput)
+    }
+}
+
+end {
 
 #region Resolve repo root
 $RepoRoot = $env:HVE_REPO_ROOT
@@ -67,7 +84,12 @@ if (-not (Test-Path $TelemetryDir)) {
 }
 
 # Delegate all JSON processing to the shared Python telemetry engine
-$RawInput = $input | Out-String
+$RawInput = if ($HookLines.Count -gt 0) {
+    $HookLines -join [Environment]::NewLine
+}
+else {
+    [Console]::In.ReadToEnd()
+}
 
 # Dump raw input for diagnostics (first 5 events only). This records hook
 # payloads verbatim, including the full prompt text and tool inputs such as
@@ -89,10 +111,16 @@ if ($env:HVE_TELEMETRY_RAW -eq '1') {
 try {
     $env:HVE_REPO_ROOT = $RepoRoot
     $env:HVE_TELEMETRY_DIR = $TelemetryDir
-    $RawInput | & $Python.Source $CorePy collect 2>$null
+    $Response = $RawInput | & $Python.Source $CorePy collect 2>$null | Out-String
+    if ($LASTEXITCODE -eq 0 -and -not [string]::IsNullOrWhiteSpace($Response)) {
+        $Response.Trim()
+    }
+    else {
+        '{"continue":true}'
+    }
 }
 catch {
     Write-Verbose "Telemetry collection error: $_"
+    '{"continue":true}'
 }
-
-'{"continue":true}'
+}

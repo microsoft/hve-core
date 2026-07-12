@@ -3,7 +3,7 @@ title: Local Telemetry
 description: Enable local Copilot session telemetry, understand capture mechanics, and generate local reports
 sidebar_position: 10
 author: Microsoft
-ms.date: 2026-06-18
+ms.date: 2026-07-12
 ms.topic: how-to
 keywords:
   - telemetry
@@ -30,6 +30,8 @@ Events currently captured include:
 
 At stop time, telemetry also appends a session summary with model and token usage when available.
 
+When a token budget is configured, the hook also emits best-effort, non-blocking budget advisories as sessions grow. See [Token Budget Advisories](#token-budget-advisories).
+
 ## Enable Local Telemetry
 
 Telemetry is opt-in. Enable it with either an environment variable or a repository marker file.
@@ -54,8 +56,6 @@ touch .hve-telemetry
 
 Either option enables collection. If both are absent, the hook exits in no-op mode.
 
-### Optional: Verbatim Raw Payload Capture
-
 Processed telemetry never stores full prompt text or full tool inputs (see
 [Sensitive Data and Privacy](#sensitive-data-and-privacy)). A separate,
 explicit opt-in records the first few hook payloads **verbatim** to
@@ -69,6 +69,76 @@ export HVE_TELEMETRY_RAW=1
 Leave this unset unless you are actively debugging the hook payload shape, and
 remove the captured file afterward. Because it stores prompts and tool inputs in
 the clear, treat any session run with it enabled as potentially sensitive.
+
+## Token Budget Advisories
+
+When you set a positive integer token budget, the telemetry hook tracks observed
+session token usage and emits a concise, non-blocking advisory as usage crosses
+fixed thresholds. Advisories are best-effort context: they always allow
+execution to continue and never block, cancel, or compact a session.
+
+Budget advisories build on the same session usage totals as the session summary,
+so local telemetry must be enabled for them to appear.
+
+### Enable a Budget
+
+Set `HVE_TOKEN_BUDGET` to the number of session tokens to treat as the full
+budget. Only positive integers are honored; any other value disables advisories.
+
+```bash
+export HVE_TOKEN_BUDGET=200000
+```
+
+```powershell
+$env:HVE_TOKEN_BUDGET = "200000"
+```
+
+### What You See
+
+When usage crosses a threshold, the hook returns a `systemMessage` alongside its
+normal `{"continue": true}` response. A message reads like:
+
+```text
+Token budget advisory: 60% used (60,000 of 200,000 session tokens). Source: session fallback; approximate as of 2026-07-12T12:00:00Z. Consider completing the current phase before starting additional work. Execution will continue.
+```
+
+Each message reports the usage percentage, observed and budgeted tokens, the
+measurement source and accuracy, the snapshot time, and a suggested action.
+
+### Thresholds and Guidance
+
+Advisories fire at three fixed thresholds, each with escalating guidance:
+
+| Threshold | Suggested action                                                       |
+|-----------|------------------------------------------------------------------------|
+| 30%       | No action is required.                                                 |
+| 50%       | Consider completing the current phase before starting additional work. |
+| 70%       | Consider saving progress and starting a new session.                   |
+
+### Behavior
+
+* **Evaluated at** `UserPromptSubmit`, `PreCompact`, and `Stop`.
+* **One message per event.** When a single snapshot crosses more than one new
+  threshold, only the highest newly crossed threshold is reported.
+* **Once per session.** Each threshold notifies at most once; crossings are
+  deduplicated using per-session state under `.budget-state/`.
+* **`Stop` is silent.** The stop event refreshes budget state as a final record
+  but never emits a new advisory.
+* **Source and accuracy.** Usage sourced from the live process log is labeled
+  `process log` and `exact`; usage reconstructed from session-state fallback is
+  labeled `session fallback` and `approximate`. When usage cannot be determined,
+  status is `unavailable` and no percentage is shown.
+* **Non-blocking.** The response always keeps `continue` true and every message
+  ends with "Execution will continue."
+
+### Disable Budget Advisories
+
+Unset `HVE_TOKEN_BUDGET` (or set it to a non-positive value). Telemetry
+collection continues unaffected.
+
+```bash
+unset HVE_TOKEN_BUDGET
+```
 
 ## View Reports
 
@@ -110,6 +180,7 @@ Key files and folders:
 | `sessions-YYYY-MM-DD.jsonl` | Daily event stream with hook events and session summaries                                                |
 | `raw-input.jsonl`           | First few hook payloads stored verbatim; written only when `HVE_TELEMETRY_RAW=1` is set (Bash collector) |
 | `.stacks/`                  | Per-session agent stack tracking used for attribution                                                    |
+| `.budget-state/`            | Per-session token budget advisory state; written only when `HVE_TOKEN_BUDGET` is set                     |
 | `report.generated.html`     | Optional self-contained report output                                                                    |
 
 ## Data Captured and Storage Schema
