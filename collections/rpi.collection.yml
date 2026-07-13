@@ -1,6 +1,6 @@
 id: rpi
 name: RPI Skills
-description: Skill-forward Research, Plan, Implement, and Review entry points with an umbrella RPI skill and existing subagent dispatch.
+description: Skill-forward Research, Plan, Implement, and Review entry points with default RPI Researcher dispatch and retained shared-worker support.
 tags:
   - rpi
   - research
@@ -24,6 +24,8 @@ items:
   - path: .github/agents/hve-core/task-researcher.agent.md
     kind: agent
   - path: .github/agents/hve-core/subagents/researcher-subagent.agent.md
+    kind: agent
+  - path: .github/agents/hve-core/subagents/rpi-researcher.agent.md
     kind: agent
   - path: .github/agents/hve-core/subagents/plan-validator.agent.md
     kind: agent

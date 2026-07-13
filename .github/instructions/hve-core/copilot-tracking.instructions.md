@@ -18,6 +18,12 @@ Apply these conventions whenever an RPI, HVE Builder, or compatibility workflow 
 * Keep the parent skill response compact and evidence-first. Write full detail to the tracking file that the phase owns.
 * When a handoff is required, name the next phase and the expected artifact path instead of inlining the downstream workflow.
 
+## RPI Research Evidence Ownership
+
+* The primary research artifact owns synthesized questions, findings, canonical evidence IDs, current and unresolved decisions, planning readiness, and user research decisions.
+* A delegated worker artifact owns the full evidence for its assigned lane. Its return contains compact status, provenance, and artifact pointers so the parent can synthesize without duplicating raw evidence.
+* Persist user answers, unanswered questions, resulting decisions, and selected further-research items in the primary research artifact before the next research action.
+
 ## Tracking File Conventions
 
 * Primary research notes stay under `.copilot-tracking/research/{{YYYY-MM-DD}}/{{task_slug}}-research.md`.

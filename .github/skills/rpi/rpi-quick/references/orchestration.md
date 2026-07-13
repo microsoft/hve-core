@@ -27,7 +27,7 @@ If Review or Discover reveals more work on the active task, restart from the ear
 ## Artifact path matrix
 
 * `.copilot-tracking/research/{{YYYY-MM-DD}}/<task_slug>-research.md`: Research consumes the task and produces evidence and scope.
-* `.copilot-tracking/research/subagents/{{YYYY-MM-DD}}/<topic>-research.md`: Researcher Subagent outputs add deeper evidence when needed.
+* `.copilot-tracking/research/subagents/{{YYYY-MM-DD}}/<topic>-subagent-research.md`: `RPI Researcher` lane evidence adds deeper research when needed.
 * `.copilot-tracking/plans/{{YYYY-MM-DD}}/<task_slug>-plan.instructions.md`: Plan consumes the research artifact and produces the implementation plan.
 * `.copilot-tracking/details/{{YYYY-MM-DD}}/<task_slug>-details.md`: Plan consumes research context and produces the detailed execution notes.
 * `.copilot-tracking/plans/logs/{{YYYY-MM-DD}}/<task_slug>-log.md`: Plan and Review record validation findings and follow-up work.
@@ -39,13 +39,13 @@ Define `<plan-file-name-without-instructions-md>` as the plan artifact name with
 
 ## Delegation crosswalk and fallback
 
-* Research -> `/rpi-research` (internally uses Researcher Subagent).
+* Research -> `/rpi-research` (internally uses `RPI Researcher` for default delegated lanes).
 * Plan -> `/rpi-plan` (internally uses Plan Validator).
 * Implement -> `/rpi-implement` (internally uses Phase Implementor and Implementation Validator).
 * Review -> `/rpi-review` (internally uses RPI Validator and Implementation Validator).
 * Discover -> handled by the orchestrator in its own context, with no sub-skill.
 
-The orchestrator delegates each phase to the listed sub-skill. Each sub-skill owns its internal validator or quality gate; the orchestrator does not add a separate validator layer. When sub-skill dispatch is unavailable, run the phase inline by dispatching that phase's listed subagent(s) or validator(s) directly via `runSubagent` or `task`; when those are also unavailable, perform the equivalent work inline and record it.
+The orchestrator delegates each phase to the listed sub-skill. Each sub-skill owns its internal validator or quality gate; the orchestrator does not add a separate validator layer. When sub-skill dispatch is unavailable, dispatch that phase's listed subagent(s) or validator(s) directly via `runSubagent` or `task`. For Research, direct fallback dispatches `RPI Researcher` for default internal, external, or hybrid delegated lanes. When direct dispatch is also unavailable, perform the equivalent work inline and record it.
 
 ## Checkpoint and continuation policy
 
@@ -77,7 +77,7 @@ Input modes:
 * Use the matrix to choose the narrowest validation that can falsify the change, then broaden only when shared behavior, cross-artifact contracts, generated outputs, configuration, or release readiness is affected.
 * For readiness tasks, review affected-behavior coverage before finalizing. Identify the behaviors or contracts touched by the changes, map each to an existing check or equivalent evidence, add or update coverage when it is in scope, and document any deferred coverage with the reason and risk.
 * Retry failed subagent calls with a more specific prompt before changing approach.
-* Run an additional research subagent when missing context is blocking the next gate.
+* Dispatch an additional `RPI Researcher` lane when missing context is blocking the next gate.
 * Fall back to direct tool usage only after subagent retries fail, and only for the smallest safe scope that still maintains the required validation gate.
 * Keep the response brief and evidence-first: phase status, iteration count, artifact paths, validation coverage, review outcome, and Suggested Next Work.
 * Report validation coverage with enough detail to audit omissions: checks considered, checks run, pass or fail results, skipped checks with rationale, unavailable checks with the blocking condition, and out-of-scope checks with the boundary that excluded them.

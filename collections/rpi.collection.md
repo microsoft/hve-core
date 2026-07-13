@@ -1,10 +1,10 @@
 # RPI Skills
 
-This collection packages the `rpi-research` skill, Task Researcher, and skill-forward RPI entry points for research, planning, implementation, review, and guided walkthroughs.
+This collection packages the `rpi-research` skill, its default `RPI Researcher` delegated worker, Task Researcher, and skill-forward RPI entry points for research, planning, implementation, review, and guided walkthroughs. The shared `Researcher Subagent` remains included because Task Researcher still depends on it.
 
 ## Local enablement
 
-For local testing in VS Code, enable the RPI skill folder, Task Researcher agent folder, and existing subagent folder in your workspace settings:
+For local testing in VS Code, enable the RPI skill folder, Task Researcher agent folder, and subagent folder so both the RPI-specific and shared research workers are available:
 
 ```json
 {

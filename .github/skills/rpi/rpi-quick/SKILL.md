@@ -28,13 +28,13 @@ If Review or Discover reveals more work on the active task, restart from the ear
 
 ## Delegation crosswalk
 
-* Research -> /rpi-research, which uses its internal Researcher Subagent path.
+* Research -> /rpi-research, which uses `RPI Researcher` for its default internal, external, or hybrid delegated lanes.
 * Plan -> /rpi-plan, which uses its internal Plan Validator path.
 * Implement -> /rpi-implement, which uses its internal Phase Implementor and Implementation Validator path.
 * Review -> /rpi-review, which uses its internal RPI Validator and Implementation Validator path.
 * Discover -> handled by the orchestrator in its own context, with no separate sub-skill.
 
-When sub-skill dispatch is unavailable, run the phase inline by dispatching that phase's listed subagent(s) or validator(s) directly via `runSubagent` or `task`; when those are also unavailable, perform the equivalent work inline and record it.
+When sub-skill dispatch is unavailable, dispatch that phase's listed subagent(s) or validator(s) directly via `runSubagent` or `task`. For Research, direct fallback dispatches `RPI Researcher` for default internal, external, or hybrid delegated lanes. When direct dispatch is also unavailable, perform the equivalent work inline and record it.
 
 ## Inputs
 
@@ -70,10 +70,10 @@ When the run ends or conversation history is compacted, include:
 
 * Keep the umbrella skill as the sequencing layer, not as a full duplicate of every granular phase playbook.
 * Dispatch each phase to its sub-skill; each sub-skill owns its internal validator or quality gate, and the orchestrator does not add a separate validator layer.
-* If dispatch tooling is unavailable, run the phase inline by dispatching the listed subagent(s) or validator(s) directly via `runSubagent` or `task`; when those are also unavailable, perform the equivalent work inline and record it.
+* If dispatch tooling is unavailable, dispatch the listed subagent(s) or validator(s) directly via `runSubagent` or `task`. For Research, direct fallback dispatches `RPI Researcher` for default internal, external, or hybrid delegated lanes. When direct dispatch is also unavailable, perform the equivalent work inline and record it.
 * Ensure delegated phases keep `.copilot-tracking/` paths and other internal planning, research, or implementation artifact references out of production code, code comments, documentation strings, and commit messages; internal artifacts still guide implementation logic.
 * Stop only when a real product decision or acceptance criterion cannot be responsibly inferred and requires user input.
-* Retry failed subagent calls with a more specific prompt, and run an additional research subagent when missing context is blocking.
+* Retry failed subagent calls with a more specific prompt, and dispatch an additional `RPI Researcher` lane when missing context is blocking.
 * Fall back to direct tool usage only after subagent retries fail, and only for the smallest safe scope that still maintains the required quality gate.
 * Genuine blockers remain hard stops: missing required inputs or an unresolvable task.
 

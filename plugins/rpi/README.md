@@ -1,15 +1,15 @@
 <!-- markdownlint-disable-file -->
 # RPI Skills
 
-Skill-forward Research, Plan, Implement, and Review entry points with an umbrella RPI skill and existing subagent dispatch.
+Skill-forward Research, Plan, Implement, and Review entry points with default RPI Researcher dispatch and retained shared-worker support.
 
 ## Overview
 
-This collection packages the `rpi-research` skill, Task Researcher, and skill-forward RPI entry points for research, planning, implementation, review, and guided walkthroughs.
+This collection packages the `rpi-research` skill, its default `RPI Researcher` delegated worker, Task Researcher, and skill-forward RPI entry points for research, planning, implementation, review, and guided walkthroughs. The shared `Researcher Subagent` remains included because Task Researcher still depends on it.
 
 ## Local enablement
 
-For local testing in VS Code, enable the RPI skill folder, Task Researcher agent folder, and existing subagent folder in your workspace settings:
+For local testing in VS Code, enable the RPI skill folder, Task Researcher agent folder, and subagent folder so both the RPI-specific and shared research workers are available:
 
 ```json
 {
@@ -38,14 +38,15 @@ copilot plugin install rpi@hve-core
 
 ## Agents
 
-| Agent                    | Description                                                                                                                              |
-|--------------------------|------------------------------------------------------------------------------------------------------------------------------------------|
-| task-researcher          | Task research specialist for comprehensive project analysis                                                                              |
-| researcher-subagent      | Research subagent using search, read, web-fetch, GitHub repo, and MCP tools                                                              |
-| plan-validator           | Validates implementation plans against research documents with severity-graded findings                                                  |
-| phase-implementor        | Executes a single implementation phase from a plan with full codebase access and change tracking                                         |
-| implementation-validator | Validates implementation quality against architectural requirements, design principles, and code standards with severity-graded findings |
-| rpi-validator            | Validates a Changes Log against the Implementation Plan, Planning Log, and Research Documents for a specific plan phase                  |
+| Agent                    | Description                                                                                                                                           |
+|--------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------|
+| task-researcher          | Task research specialist for comprehensive project analysis                                                                                           |
+| researcher-subagent      | Research subagent using search, read, web-fetch, GitHub repo, and MCP tools                                                                           |
+| rpi-researcher           | Executes one delegated internal, external, or hybrid RPI research lane and progressively writes owned evidence. Use for independent research threads. |
+| plan-validator           | Validates implementation plans against research documents with severity-graded findings                                                               |
+| phase-implementor        | Executes a single implementation phase from a plan with full codebase access and change tracking                                                      |
+| implementation-validator | Validates implementation quality against architectural requirements, design principles, and code standards with severity-graded findings              |
+| rpi-validator            | Validates a Changes Log against the Implementation Plan, Planning Log, and Research Documents for a specific plan phase                               |
 
 ## Instructions
 
