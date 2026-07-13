@@ -31,7 +31,7 @@ Compatibility agent for the legacy Prompt Builder entry points. It delegates pro
 
 ## Goal
 
-Translate a legacy build, refactor, or analyze request into the narrowest `hve-builder` mode and return its evidence-backed outcome without running the retired Prompt Tester, Prompt Evaluator, or Prompt Updater loop.
+Translate a legacy build, refactor, or analyze request into the narrowest `hve-builder` mode and return its evidence-backed outcome without recreating a retired lifecycle loop.
 
 ## Inputs
 

@@ -1425,7 +1425,7 @@ stimuli:
       - type: output-matches
         name: skill-attribution
         config:
-          pattern: '(?is)(?:hve-builder-tester|HVE Builder Tester|behavior(?:al)?[- ]test|(?=.*HVE Artifact Test Designer)(?=.*HVE Artifact Tester)(?=.*HVE Artifact Test Reviewer))'
+          pattern: '(?is)(?:hve-builder-tester|HVE Builder Tester|behavior(?:al)?[- ]test|(?=.*generic\s+(?:subagent|stage))(?=.*HVE Artifact Tester))'
       - type: output-matches
         name: fidelity-and-containment
         config:

@@ -15,7 +15,7 @@ A black-box scenario exercises the target through its documented interface, usin
 * the fact that this is a test,
 * its authoring history.
 
-`HVE Artifact Test Designer` may inspect internals to design coverage, but its emitted scenario stays black-box. The lead adds a separate dispatch wrapper containing the artifact pointer, profile, fidelity, and sandbox controls. Do not leak those controls into the scenario.
+The generic test-design subagent may inspect internals to design coverage, but its emitted scenario stays black-box. The lead adds a separate dispatch wrapper containing the artifact pointer, profile, fidelity, and sandbox controls. Do not leak those controls into the scenario.
 
 ## Fidelity modes
 
@@ -43,6 +43,8 @@ Test only what has runtime behavior to exercise. The decision rule:
 * By type: prompts, agents, subagents, and skills always carry runtime behavior and are tested. A skill's own references, templates, and assets under its directory are part of the skill's runtime behavior (the skill loads and acts on them), so they are tested with the skill, not skipped. Only standalone documentation that no executable artifact loads (for example top-level docs and READMEs) carries no runtime behavior and is skipped with a reason. An instruction file carries runtime behavior when a change adds or alters a rule or convention that steers model actions, and none when the change is purely editorial.
 * By change: on a behavioral type, a change that provably cannot alter model actions (formatting, link fixes, comment-only edits, or a reference path change with no rule change) has no runtime behavior to exercise for that change; record the reason. Modifications applied by linters or formatters are formatting-only by definition and do not require re-testing.
 
+When `hve-builder` is the caller, its change-classification policy is more specific: all minor and medium changes are satisfied-and-skipped, including every frontmatter-only change and name-reference update. This skill receives only major changes from that route. Direct callers may still request a behavior test under the runtime-behavior decision above.
+
 ## Artifact dispatch
 
 The lead selects profile, fidelity, grouping, and wrapper. The Designer supplies only the black-box scenario.
@@ -65,7 +67,7 @@ Use the canonical ordered Medium profile (`GPT-5.6 Terra`, `Claude Sonnet 5`, `M
 
 * Resolve the run folder as `.copilot-tracking/sandbox/{{YYYY-MM-DD}}-{{topic}}-{{run-number}}` by scanning existing folders for the date and topic and incrementing the run number.
 * Write `run-state.md` with targets and types, profile and model, fidelity, containment controls, isolation and together sets, purpose, requirements, and pre-run workspace status.
-* The Designer writes `test-design.md`, the executor writes `test-log.md`, and the Reviewer writes `test-review.md`, all in the run folder.
+* The lead writes `run-state.md`, `test-design.md`, `test-log.md`, and `test-review.md` in the run folder from its setup and generic-stage or executor returns. The executor is read-only and returns its trace for the lead to persist.
 * The canonical test log distinguishes observed, simulated, and emulated actions and records post-run workspace status. Any unexpected out-of-sandbox change blocks a clean verdict.
 * Clean up after review unless retention was requested. Write the durable report outside the sandbox first.
 

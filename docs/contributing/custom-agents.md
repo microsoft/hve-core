@@ -3,7 +3,7 @@ title: 'Contributing Agents to HVE Core'
 description: 'Requirements and standards for contributing GitHub Copilot agent files to hve-core'
 sidebar_position: 5
 author: Microsoft
-ms.date: 2026-07-09
+ms.date: 2026-07-13
 ms.topic: how-to
 ---
 
@@ -310,11 +310,12 @@ Example:
 description: 'Validates and reviews contributed agents, prompts, and instructions for quality and compliance'
 tools: ['agent', 'read', 'search']
 disable-model-invocation: true
-agents:
-  - HVE Artifact Reviewer
-  - HVE Artifact Validator
 ---
 ```
+
+Use generic dispatch prompts when a lifecycle stage needs isolated work and no
+stable specialized worker is required. Reserve an `agents:` allowlist for
+named dependencies that the agent must dispatch by name.
 
 ## Collection Entry Requirements
 

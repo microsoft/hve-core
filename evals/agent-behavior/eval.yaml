@@ -924,117 +924,8 @@ stimuli:
     config:
       pattern: (?i)(created|wrote|modified|edited|patched|added)\s+\S{0,40}(\.cs|\.py|\.ts|\.js|package\.json)
       negate: true
-- name: hve-artifact-author-yaml-instructions
-  prompt: As the HVE Artifact Author, create a brief `.copilot-tracking/sandbox/yaml.instructions.md` file with basic instructions for making valid `.yml` files, then return Complete with the path and a short summary.
-  tags:
-    category: agent-behavior
-    advisory: "true"
-    agent: hve-artifact-author
-  graders:
-  - type: output-matches
-    name: complete-status
-    config:
-      pattern: (?i)\bComplete\b
-  - type: output-matches
-    name: sandbox-instruction-write
-    config:
-      pattern: (?i)\.copilot-tracking[/\\]sandbox[/\\]yaml\.instructions\.md
-  - type: output-matches
-    name: yaml-guidance-summary
-    config:
-      pattern: (?is)(?=.*\b(?:YAML|yml)\b)(?=.*\b(?:indent(?:ation)?|key|value|mapping|sequence|list|syntax|validat(?:e|ion))\b)
-- name: hve-artifact-explorer-instruction-discovery
-  prompt: As the HVE Artifact Explorer, find and return the paths of any `copilot-instructions.md` or `AGENTS.md` files in the repository without modifying files.
-  environment:
-    files:
-    - src: fixtures/hve-artifact-copilot-instructions.md
-      dest: .github/copilot-instructions.md
-  tags:
-    category: agent-behavior
-    advisory: "true"
-    agent: hve-artifact-explorer
-  graders:
-  - type: output-matches
-    name: instruction-file-result
-    config:
-      pattern: (?i)(?:copilot-instructions|AGENTS)\.md
-  - type: output-matches
-    name: repository-path
-    config:
-      pattern: (?i)\.github[/\\](?:copilot-instructions|AGENTS)\.md
-  - type: output-matches
-    name: no-source-edit
-    config:
-      pattern: (?i)(created|wrote|modified|edited|patched|added)\s+\S{0,80}(?:copilot-instructions|AGENTS)\.md
-      negate: true
-- name: hve-artifact-reviewer-first-instruction-issue
-  prompt: As the HVE Artifact Reviewer, review the first `copilot-instructions.md` or `AGENTS.md` file you find and return immediately after the first issue with its severity and smallest fix.
-  environment:
-    files:
-    - src: fixtures/hve-artifact-copilot-instructions.md
-      dest: .github/copilot-instructions.md
-  tags:
-    category: agent-behavior
-    advisory: "true"
-    agent: hve-artifact-reviewer
-  graders:
-  - type: output-matches
-    name: yaml-indentation-issue
-    config:
-      pattern: (?is)(?=.*\b(?:finding|issue|problem|violation)\b)(?=.*\b(?:YAML|tab|indentation)\b)
-  - type: output-matches
-    name: severity-and-fix
-    config:
-      pattern: (?is)(?=.*\b(?:Critical|High|Medium|Low|severity)\b)(?=.*\b(?:fix|change|replace|spaces|recommendation|remediation)\b)
-  - type: output-matches
-    name: no-second-finding
-    config:
-      pattern: (?im)^\s*(?:#{1,6}\s*)?(?:finding|issue)\s*2\b
-      negate: true
-- name: hve-artifact-test-designer-instruction-scenario
-  prompt: As the HVE Artifact Test Designer, design one black-box isolation scenario for the first `copilot-instructions.md` or `AGENTS.md` file you find, write `test-design.md` under `.copilot-tracking/sandbox/`, and immediately return using your response template without executing it.
-  environment:
-    files:
-    - src: fixtures/hve-artifact-copilot-instructions.md
-      dest: .github/copilot-instructions.md
-  tags:
-    category: agent-behavior
-    advisory: "true"
-    agent: hve-artifact-test-designer
-  graders:
-  - type: output-matches
-    name: design-log-path
-    config:
-      pattern: (?i)\.copilot-tracking[/\\]sandbox[/\\].*test-design\.md
-  - type: output-matches
-    name: black-box-isolation-scenario
-    config:
-      pattern: (?is)(?=.*\b(?:black[- ]box|isolation)\b)(?=.*\bscenario\b)
-  - type: output-matches
-    name: design-only
-    config:
-      pattern: (?i)(?:not\s+(?:executed|run)|design(?:ed)?\s+only|did\s+not\s+execute|without\s+executing)
-- name: hve-artifact-test-reviewer-first-instruction-finding
-  prompt: As the HVE Artifact Test Reviewer, review simulation evidence where valid YAML was required but observation 1 used tab indentation, then return only the first finding with its severity and smallest fix.
-  tags:
-    category: agent-behavior
-    advisory: "true"
-    agent: hve-artifact-test-reviewer
-  graders:
-  - type: output-matches
-    name: yaml-indentation-finding
-    config:
-      pattern: (?is)(?=.*\b(?:finding|issue|invalid)\b)(?=.*\b(?:tab|indentation|YAML)\b)
-  - type: output-matches
-    name: severity
-    config:
-      pattern: (?i)\b(?:Blocker|Critical|Major|High|Medium|Low|severity|Fail)\b
-  - type: output-matches
-    name: smallest-fix
-    config:
-      pattern: (?i)(?:replace.{0,30}tabs?.{0,20}spaces|use\s+spaces|revalidat(?:e|ion)|recommendation|remediation|smallest\s+(?:resolving\s+)?(?:change|fix))
-- name: hve-artifact-tester-instruction-simulation
-  prompt: As the HVE Artifact Tester, simulate one request to create a two-key `.yml` file using the first `copilot-instructions.md` or `AGENTS.md` file you find, keep writes under `.copilot-tracking/sandbox/`, and return Complete, Partial, or Blocked with the result path.
+- name: hve-artifact-tester-read-only-simulation
+  prompt: As the HVE Artifact Tester, simulate one request to create a two-key `.yml` file using the first `copilot-instructions.md` or `AGENTS.md` file you find. Return a read-only trace for the tester skill lead, labeling the file creation as emulated and reporting Complete, Partial, or Blocked.
   environment:
     files:
     - src: fixtures/hve-artifact-copilot-instructions.md
@@ -1045,40 +936,51 @@ stimuli:
     agent: hve-artifact-tester
   graders:
   - type: output-matches
-    name: sandbox-result
+    name: emulated-write
     config:
-      pattern: (?i)\.copilot-tracking[/\\]sandbox[/\\]\S+\.ya?ml\b
+      pattern: (?i)\b(?:emulated|simulated)\b
   - type: output-matches
     name: execution-summary
     config:
       pattern: (?i)\b(?:Complete|Partial|Blocked)\b
   - type: output-matches
-    name: yaml-result
+    name: trace-owned-by-lead
     config:
-      pattern: (?i)\b(?:YAML|yml)\b
-- name: hve-artifact-validator-first-instruction-check
-  prompt: As the HVE Artifact Validator, run one non-mutating YAML-guidance check on the first `copilot-instructions.md` or `AGENTS.md` file you find and return Pass, Fail, or Deferred with the source unchanged.
-  environment:
-    files:
-    - src: fixtures/hve-artifact-copilot-instructions.md
-      dest: .github/copilot-instructions.md
+      pattern: (?i)(?:returned\s+trace|tester\s+skill\s+lead|lead\s+to\s+persist)
+- name: hve-builder-minor-change-skip
+  prompt: As HVE Builder, assess a frontmatter-only change that updates an agent description. Classify the change and return the behavior-gate disposition, execution status, verdict, fidelity, and reason without editing source files.
   tags:
     category: agent-behavior
     advisory: "true"
-    agent: hve-artifact-validator
+    agent: hve-builder
   graders:
   - type: output-matches
-    name: instruction-target
+    name: minor-change-classification
     config:
-      pattern: (?i)(?:copilot-instructions|AGENTS)\.md
+      pattern: (?i)\bminor\b
   - type: output-matches
-    name: validation-status
+    name: canonical-skip-fields
     config:
-      pattern: (?i)\b(?:Pass|Fail|Deferred)\b
+      pattern: (?is)(?=.*Satisfied-and-skipped)(?=.*Not\s+run)(?=.*Not\s+applicable)
   - type: output-matches
-    name: source-unchanged
+    name: frontmatter-reason
     config:
-      pattern: (?is)(?:source|file|artifact).{0,80}(?:unchanged|not\s+(?:modified|mutated)|read[- ]only|no\s+edits)
+      pattern: (?i)frontmatter
+- name: hve-builder-major-change-route
+  prompt: As HVE Builder, assess a change that adds a new tool call to an existing subagent. Classify the change and state the required behavior-test route without editing source files.
+  tags:
+    category: agent-behavior
+    advisory: "true"
+    agent: hve-builder
+  graders:
+  - type: output-matches
+    name: major-change-classification
+    config:
+      pattern: (?i)\bmajor\b
+  - type: output-matches
+    name: tester-route
+    config:
+      pattern: (?i)hve-builder-tester
 - name: implementation-validator-full-quality-recipe
   prompt: |
     Validate the changed file `src/services/PaymentService.cs` with `full-quality`

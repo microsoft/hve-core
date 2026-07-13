@@ -4,7 +4,7 @@ description: 'Action categories, evidence-bounded findings, fidelity disclosure,
 <!-- markdownlint-disable-file -->
 # HVE Artifact Test Report Format
 
-The `hve-builder-tester` lead merges `HVE Artifact Test Reviewer` findings into this durable report outside the sandbox. The report separates execution status, quality verdict, fidelity, and limitations so simulation evidence cannot be mistaken for native behavior.
+The `hve-builder-tester` lead merges generic evidence-grading findings into this durable report outside the sandbox. The report separates execution status, quality verdict, fidelity, and limitations so simulation evidence cannot be mistaken for native behavior.
 
 ## Action-category taxonomy
 
@@ -78,7 +78,7 @@ Record each finding with a stable shape so the author can act on it directly:
 
 * Order findings by severity, Critical and High first.
 * Keep the finding set bounded and high-leverage; consolidate overlapping issues rather than padding the list.
-* Do not use the legacy Prompt Evaluator taxonomy; use the action categories above tagged with the mapped standard dimension.
+* Use the action categories above tagged with the mapped standard dimension; do not introduce a retired taxonomy.
 * Use `runtime` or `native` only for behavior observed through native fidelity. Use `simulation` for literal conformance execution and `emulated` for actions that did not run.
 * A proxy-model run cannot claim target-model equivalence. An unexpected out-of-sandbox write prevents Pass.
 * Use Not available only when execution is Deferred before independent grading. Pass, Revise, and Blocked require grading evidence.

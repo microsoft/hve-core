@@ -1,10 +1,10 @@
 ---
-description: 'Bounded review dimensions, severity scale, and verdict the HVE Artifact Reviewer applies.'
+description: 'Bounded review dimensions, severity scale, and verdict rules for hve-builder static review.'
 ---
 <!-- markdownlint-disable-file -->
 # Instruction Artifact Review Rubric
 
-The `HVE Artifact Reviewer` subagent applies this rubric in fresh context against a finished or draft artifact. The rubric turns the requirements catalog into checkable dimensions with a fixed severity scale and a bounded scope, so review stays diagnostic rather than open-ended.
+A generic fresh-context static-review subagent applies this rubric against a finished or draft artifact. The rubric turns the requirements catalog into checkable dimensions with a fixed severity scale and a bounded scope, so review stays diagnostic rather than open-ended.
 
 ## Scope discipline
 

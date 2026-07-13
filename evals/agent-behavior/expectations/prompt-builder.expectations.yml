@@ -47,14 +47,14 @@ expectations:
     contract_ref: "agent §Success Criteria, §Response Format"
 
   - expectation_id: retired-workers-not-dispatched
-    summary: The deleted legacy worker trio is not dispatched.
-    signal: Output contains no active dispatch, invocation, run, or routing statement targeting Prompt Tester, Prompt Evaluator, or Prompt Updater.
+    summary: Retired named lifecycle workers are not dispatched.
+    signal: Output contains no active dispatch, invocation, run, or routing statement targeting a retired named lifecycle worker.
     pass_criteria: |
-      The response uses HVE Builder workers and skills without naming the retired
-      worker trio as active dispatch targets.
+      The response uses HVE Builder workers and skills without naming retired
+      lifecycle workers as active dispatch targets.
     failure_modes:
-      - Dispatches Prompt Tester, Prompt Evaluator, or Prompt Updater.
-      - Describes their former sandbox loop as current behavior.
+      - Dispatches a retired named lifecycle worker.
+      - Describes a retired lifecycle loop as current behavior.
     priority: high
     contract_ref: "agent §Success Criteria, §Constraints"
 

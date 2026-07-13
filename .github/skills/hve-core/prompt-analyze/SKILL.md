@@ -35,7 +35,7 @@ Preserve legacy `prompt-analyze` activation while producing independent static a
 
 ## Constraints
 
-* Do not dispatch legacy Prompt Tester or Prompt Evaluator workers.
+* Do not dispatch retired named lifecycle workers.
 * Do not research, fix, refactor, or create source artifacts in this mode.
 * Do not describe simulation as native runtime evidence.
 

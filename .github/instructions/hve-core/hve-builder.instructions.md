@@ -165,7 +165,7 @@ Prompts are single-session workflows a user invokes and Copilot executes to comp
 
 ## Referencing Other Artifacts
 
-* Refer to a skill, agent, subagent, or prompt by the `name:` value from its frontmatter wrapped in backticks (for example, run `HVE Artifact Tester` or route to the `hve-builder` skill), not by a hard-coded path.
+* Refer to a skill, agent, subagent, or prompt by the `name:` value from its frontmatter wrapped in backticks (for example, run `HVE Builder` or route to the `hve-builder` skill), not by a hard-coded path.
 * Instruction files have no `name:`, so refer to them by their full `<name>.instructions.md` filename, naming the specific section when only part applies.
 * Reserve file paths for a skill's own bundled resources (relative to its root), for caller-defined tracking or evidence output locations, and for frontmatter wiring such as `agents:`, `agent:`, and `applyTo`.
 * Never hard-code a skill's `SKILL.md` path to load it; the skill root differs across distributions. Name the skill and let progressive disclosure load it.

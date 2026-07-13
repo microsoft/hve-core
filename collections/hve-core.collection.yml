@@ -50,20 +50,9 @@ items:
   - path: .github/agents/hve-core/subagents/researcher-subagent.agent.md
     kind: agent
   # HVE Builder subagents
-  - path: .github/agents/hve-core/subagents/hve-artifact-explorer.agent.md
-    kind: agent
-  - path: .github/agents/hve-core/subagents/hve-artifact-author.agent.md
-    kind: agent
-  - path: .github/agents/hve-core/subagents/hve-artifact-reviewer.agent.md
-    kind: agent
-  - path: .github/agents/hve-core/subagents/hve-artifact-validator.agent.md
+  - path: .github/agents/hve-core/subagents/hve-builder.agent.md
     kind: agent
   - path: .github/agents/hve-core/subagents/hve-artifact-tester.agent.md
-    kind: agent
-  # HVE Builder Tester subagents
-  - path: .github/agents/hve-core/subagents/hve-artifact-test-designer.agent.md
-    kind: agent
-  - path: .github/agents/hve-core/subagents/hve-artifact-test-reviewer.agent.md
     kind: agent
   # Code Review subagents
   - path: .github/agents/coding-standards/subagents/code-review-functional.agent.md

@@ -105,7 +105,7 @@ tools:
 
 Because the worker targets Luna, its body names the tool order: use `search/fileSearch` to locate the CSV, `read/readFile` to confirm the header, then run the bundled profiling script and write the summary with `edit/createFile`.
 
-Parent-owned test step: the skill tests the workflow through the `hve-builder-tester` skill at the Low profile. Select simulation or native fidelity explicitly and report the evidence limitation. Do not dispatch `HVE Artifact Tester` directly; the tester skill owns design, fidelity, evidence integrity, grading, and cleanup.
+Parent-owned test step: classify the change first. The `hve-builder` skill records a satisfied-and-skipped behavior gate for minor and medium changes, including frontmatter-only and name-reference changes. For a major change, test the workflow through the `hve-builder-tester` skill at the Low profile. Select simulation or native fidelity explicitly and report the evidence limitation. Do not dispatch `HVE Artifact Tester` directly; the tester skill owns design, fidelity, evidence integrity, grading, and cleanup.
 
 ## Placement heuristics
 

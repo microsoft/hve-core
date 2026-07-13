@@ -19,35 +19,32 @@ Infer the narrowest mode that satisfies the request. Ask only when two plausible
 | `review`   | Read source artifacts; write review and test evidence only                   | static review, behavior test when runtime behavior exists                      | Return an independent quality verdict without source edits                                       |
 | `validate` | Read source artifacts; write validation evidence only                        | validate                                                                       | Run the host project's mechanical checks without source edits                                    |
 
-A behavior test is satisfied-and-skipped only when the runtime-behavior rule in the `hve-builder-tester` skill says the target or change has no behavior to exercise. Record the reason. Validation is required for every mutating mode and for `validate`; it is optional in `review` unless the caller asks for mechanical conformance evidence.
+The behavior gate is satisfied-and-skipped for every minor or medium change. This includes all frontmatter-only changes and reference-only changes that update an agent, subagent, or skill name. Major changes alone dispatch `hve-builder-tester`. Record the required skip fields and reason. Validation is required for every mutating mode and for `validate`; it is optional in `review` unless the caller asks for mechanical conformance evidence.
 
 ## Stage order and gates
 
 1. Scope and route. Resolve targets, mode, requirements, write boundary, evidence root, artifact architecture, applicable repository conventions, and directly required support artifacts.
 2. Establish the baseline. For `improve`, `refactor`, and `replace`, capture the current contract and static findings before edits. Skip the baseline for a target that does not yet exist; `review` performs its single static assessment in step 5.
 3. Research only decision-critical unknowns. Use repository evidence first. Dispatch `Researcher Subagent` when an unresolved external or behavioral fact could change the architecture or acceptance criteria. On `Needs Clarification`, answer from approved evidence and re-dispatch; when the missing answer is decision-critical and cannot be inferred, ask the caller. If it remains unavailable, stop Blocked rather than guessing.
-4. Author. For mutating modes, dispatch `HVE Artifact Author` inside the approved write boundary. A proposed type change, artifact split, or new support artifact outside that boundary returns to scope and route before edits continue.
-5. Review. For mutating modes and `review`, dispatch `HVE Artifact Reviewer` in fresh context. Do not provide author reasoning or the author log; provide targets, purpose, requirements, and canonical criteria. Skip this stage for `validate`.
-6. Test behavior. For mutating modes and `review`, dispatch the `hve-builder-tester` skill for behavior-bearing targets. Pass the intended reasoning profile, fidelity, isolation set, together set, and requirements. Skip this stage for `validate`.
-7. Validate. For mutating modes and `validate`, dispatch `HVE Artifact Validator` after source artifacts are at their real paths. Run non-mutating host checks that apply to the changed artifact types. In `review`, run validation only when requested.
+4. Author. For mutating modes, dispatch a generic Medium-profile authoring subagent using `stage-dispatch.md` inside the approved write boundary. A proposed type change, artifact split, or new support artifact outside that boundary returns to scope and route before edits continue.
+5. Review. For mutating modes and `review`, dispatch a generic Medium-profile static-review subagent in fresh context. Do not provide author reasoning or the author log; provide targets, purpose, requirements, and canonical criteria. Skip this stage for `validate`.
+6. Test behavior. Classify every changed target before testing. For minor and medium changes, record a satisfied-and-skipped behavior gate. For major changes only, dispatch the `hve-builder-tester` skill with the intended reasoning profile, fidelity, isolation set, together set, and requirements. Skip this stage for `validate`.
+7. Validate. For mutating modes and `validate`, dispatch a generic Low-profile validation subagent using `stage-dispatch.md` after source artifacts are at their real paths. Run non-mutating host checks that apply to the changed artifact types. In `review`, run validation only when requested.
 8. Resolve and iterate. Apply the outcome resolver below. Re-enter authoring only for actionable findings inside scope; return to routing for architecture changes; stop on Pass, Revise, Deferred, or Blocked.
 
 Stages may run in parallel only when neither consumes the other's output. Discovery of unrelated candidates can run beside baseline review. Authoring, post-edit review, behavior testing, and validation remain ordered because each consumes the preceding source state.
 
-## Worker model assignments
+## Stage model selection
 
-The HVE Builder workers intentionally pin responsibility-based profiles, so their frontmatter carries each profile's full ordered availability-fallback list and prose names the first model as primary. This suite-specific pinning does not make `model:` mandatory elsewhere. An omitted subagent model inherits the invoking parent's model; an omitted directly invoked agent or prompt model uses the current session selection.
+The lifecycle uses generic subagent dispatches with a model selected at invocation time rather than named worker frontmatter. `stage-dispatch.md` defines the prompt and evidence contract. This keeps the stage isolated while allowing the parent to select a responsibility-appropriate profile.
 
-| Worker                       | Primary model           | Profile | Why                                                                                |
-|------------------------------|-------------------------|---------|------------------------------------------------------------------------------------|
-| `HVE Artifact Explorer`      | GPT-5.6 Terra (copilot) | Medium  | Semantic relatedness and reuse decisions span heterogeneous artifacts              |
-| `HVE Artifact Author`        | GPT-5.6 Terra (copilot) | Medium  | Architecture-aware multi-file authoring requires trade-off judgment                |
-| `HVE Artifact Reviewer`      | GPT-5.6 Terra (copilot) | Medium  | Independent rubric application and severity calibration require judgment           |
-| `HVE Artifact Validator`     | GPT-5.6 Luna (copilot)  | Low     | Check discovery and command execution follow a bounded mechanical protocol         |
-| `HVE Artifact Test Designer` | GPT-5.6 Terra (copilot) | Medium  | Black-box scenario design requires semantic coverage analysis                      |
-| `HVE Artifact Tester`        | GPT-5.6 Luna (copilot)  | Low     | Literal conformance simulation is bounded and intentionally non-interpretive       |
-| `HVE Artifact Test Reviewer` | GPT-5.6 Terra (copilot) | Medium  | Behavior-evidence grading and coverage analysis require independent judgment       |
-| `Researcher Subagent`        | GPT-5.6 Terra (copilot) | Medium  | Decision-critical research requires source comparison and contradiction resolution |
+| Stage                       | Primary model           | Profile | Why                                                                                |
+|-----------------------------|-------------------------|---------|------------------------------------------------------------------------------------|
+| Discovery, authoring, review | GPT-5.6 Terra (copilot) | Medium  | Relatedness, architecture, authoring, and calibrated review require judgment      |
+| Validation                  | GPT-5.6 Luna (copilot)  | Low     | Check discovery and command execution follow a bounded mechanical protocol         |
+| Test design and grading     | GPT-5.6 Terra (copilot) | Medium  | Coverage and evidence grading require semantic judgment                            |
+| `HVE Artifact Tester`       | GPT-5.6 Luna (copilot)  | Low     | Literal conformance simulation is bounded and intentionally non-interpretive       |
+| `Researcher Subagent`       | GPT-5.6 Terra (copilot) | Medium  | Decision-critical research requires source comparison and contradiction resolution |
 
 Canonical profile lists:
 
@@ -55,7 +52,7 @@ Canonical profile lists:
 * Medium: `GPT-5.6 Terra (copilot)`, `Claude Sonnet 5 (copilot)`, `MAI-Code-1-Flash (copilot)`
 * Low: `GPT-5.6 Luna (copilot)`, `MAI-Code-1-Flash (copilot)`, `Claude Haiku 4.5 (copilot)`
 
-The `hve-builder-tester` lead may override only `HVE Artifact Tester` from Luna to Terra when the target contract explicitly expects the Medium profile. Record the override in run state and the report. Do not override semantic workers to Luna or mechanical workers to Terra for convenience.
+The `hve-builder-tester` lead may select Terra for `HVE Artifact Tester` only when the target contract explicitly expects the Medium profile. Record the override in run state and the report. Do not select Luna for semantic work or Terra for mechanical work merely for convenience.
 
 ## Stage result vocabulary
 
@@ -70,6 +67,18 @@ Workers report execution separately from judgment:
 * Behavior gate disposition: `Executed` or `Satisfied-and-skipped`. For `Satisfied-and-skipped`, display execution status `Not run`, verdict `Not applicable`, fidelity `Not applicable`, and the no-behavior reason. These display values are not execution or review results.
 
 `Partial` means a worker produced usable evidence but did not complete its contract. `Deferred` means a required action could not run in the current environment and names the exact rerun condition. Neither is a pass.
+
+## Change classification
+
+Classify the requested source delta before the behavior gate. When mixed changes exist, use the highest applicable class.
+
+| Class  | Decision rule                                                                                                                           | Behavior gate                         |
+|--------|-----------------------------------------------------------------------------------------------------------------------------------------|---------------------------------------|
+| Minor  | Editorial, formatting, frontmatter-only, comments, link repairs, or an agent, subagent, or skill name-reference update with no rule change | Satisfied-and-skipped                 |
+| Medium | Clarifies, reorganizes, or adjusts existing workflow text without adding, removing, or materially changing a model action or output    | Satisfied-and-skipped                 |
+| Major  | Adds, removes, or materially changes a model action, output, tool use, write authority, decision rule, stage gate, or safety behavior | Dispatch `hve-builder-tester`         |
+
+For a satisfied-and-skipped gate, record the classification, the specific non-behavior reason, execution `Not run`, verdict `Not applicable`, and fidelity `Not applicable`. Static review and validation remain required for their applicable routes.
 
 ## Overall outcome resolver
 

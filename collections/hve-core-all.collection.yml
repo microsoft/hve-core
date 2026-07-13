@@ -81,19 +81,9 @@ items:
   kind: agent
 - path: .github/agents/hve-core/rpi-agent.agent.md
   kind: agent
-- path: .github/agents/hve-core/subagents/hve-artifact-author.agent.md
-  kind: agent
-- path: .github/agents/hve-core/subagents/hve-artifact-explorer.agent.md
-  kind: agent
-- path: .github/agents/hve-core/subagents/hve-artifact-reviewer.agent.md
-  kind: agent
-- path: .github/agents/hve-core/subagents/hve-artifact-test-designer.agent.md
-  kind: agent
-- path: .github/agents/hve-core/subagents/hve-artifact-test-reviewer.agent.md
-  kind: agent
 - path: .github/agents/hve-core/subagents/hve-artifact-tester.agent.md
   kind: agent
-- path: .github/agents/hve-core/subagents/hve-artifact-validator.agent.md
+- path: .github/agents/hve-core/subagents/hve-builder.agent.md
   kind: agent
 - path: .github/agents/hve-core/subagents/implementation-validator.agent.md
   kind: agent
