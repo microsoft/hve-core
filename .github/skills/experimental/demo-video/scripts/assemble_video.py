@@ -102,7 +102,7 @@ def _validate_manifest(
     allowed_top_level_keys = {"output", "resolution", "fps", "segments"}
     unexpected_top_level = set(data) - allowed_top_level_keys
     if unexpected_top_level:
-        unexpected = ", ".join(sorted(unexpected_top_level))
+        unexpected = ", ".join(sorted(str(key) for key in unexpected_top_level))
         raise ManifestError(
             f"Manifest contains unsupported top-level keys: {unexpected}"
         )
@@ -126,7 +126,7 @@ def _validate_manifest(
         }
         unexpected_segment_keys = set(item) - allowed_segment_keys
         if unexpected_segment_keys:
-            unexpected = ", ".join(sorted(unexpected_segment_keys))
+            unexpected = ", ".join(sorted(str(key) for key in unexpected_segment_keys))
             raise ManifestError(
                 f"Segment #{index} contains unsupported keys: {unexpected}"
             )
@@ -386,9 +386,7 @@ def assemble_video(
 
     selected_fps = int(fps if fps is not None else config.get("fps") or 24)
     if selected_fps <= 0:
-        raise ManifestError(
-            f"Frame rate must be greater than zero, got {selected_fps}"
-        )
+        raise ManifestError(f"Frame rate must be greater than zero, got {selected_fps}")
     selected_resolution = resolution or config.get("resolution") or "1280x720"
     _validate_resolution(selected_resolution)
 

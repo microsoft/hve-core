@@ -270,6 +270,21 @@ class TestAssembleVideo:
                 assemble_video._read_manifest(manifest_path),
             )
 
+    def test_given_non_string_top_level_key_when_validate_manifest_then_raises(
+        self, tmp_path
+    ):
+        # Arrange
+        manifest_path = tmp_path / "segments.yml"
+        manifest_path.write_text("null: true\n", encoding="utf-8")
+
+        # Act / Assert
+        with pytest.raises(
+            assemble_video.ManifestError, match="unsupported top-level keys"
+        ):
+            assemble_video._validate_manifest(
+                assemble_video._read_manifest(manifest_path),
+            )
+
     def test_given_type_mismatched_source_when_validate_manifest_then_raises(
         self, tmp_path
     ):
@@ -284,9 +299,7 @@ class TestAssembleVideo:
         )
 
         # Act / Assert
-        with pytest.raises(
-            assemble_video.ManifestError, match="declares type 'frame'"
-        ):
+        with pytest.raises(assemble_video.ManifestError, match="declares type 'frame'"):
             assemble_video._validate_manifest(
                 assemble_video._read_manifest(manifest_path),
             )
