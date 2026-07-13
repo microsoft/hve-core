@@ -38,7 +38,7 @@ def fuzz_manifest_validator(data):
         tmp.write(payload)
         tmp_path = Path(tmp.name)
     try:
-        with suppress(Exception):
+        with suppress(ManifestError):
             manifest_data = _read_manifest(tmp_path)
             _validate_manifest(manifest_data)
     finally:

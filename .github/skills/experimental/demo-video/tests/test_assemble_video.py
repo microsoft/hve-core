@@ -270,6 +270,56 @@ class TestAssembleVideo:
                 assemble_video._read_manifest(manifest_path),
             )
 
+    def test_given_type_mismatched_source_when_validate_manifest_then_raises(
+        self, tmp_path
+    ):
+        # Arrange
+        manifest_path = tmp_path / "segments.yml"
+        manifest_path.write_text(
+            "segments:\n"
+            "  - type: frame\n"
+            "    clip: motion.mp4\n"
+            "    narration: intro.wav\n",
+            encoding="utf-8",
+        )
+
+        # Act / Assert
+        with pytest.raises(
+            assemble_video.ManifestError, match="declares type 'frame'"
+        ):
+            assemble_video._validate_manifest(
+                assemble_video._read_manifest(manifest_path),
+            )
+
+    def test_given_non_positive_fps_when_assemble_video_then_raises(
+        self, tmp_path, mock_ffmpeg_dependencies
+    ):
+        # Arrange
+        manifest_path = tmp_path / "segments.yml"
+        visual_path = tmp_path / "intro.png"
+        narration_path = tmp_path / "intro.wav"
+        visual_path.write_bytes(b"png")
+        narration_path.write_bytes(b"wav")
+        manifest_path.write_text(
+            "output: demo.mp4\n"
+            "segments:\n"
+            "  - visual: intro.png\n"
+            "    narration: intro.wav\n"
+            "    duration: 1.0\n",
+            encoding="utf-8",
+        )
+
+        # Act / Assert
+        with pytest.raises(
+            assemble_video.ManifestError, match="Frame rate must be greater than zero"
+        ):
+            assemble_video.assemble_video(
+                manifest_path=manifest_path,
+                output_path=tmp_path / "demo.mp4",
+                fps=0,
+                resolution=None,
+            )
+
     def test_given_subprocess_run_when_ffmpeg_command_then_uses_list_args_without_shell(
         self, mocker
     ):

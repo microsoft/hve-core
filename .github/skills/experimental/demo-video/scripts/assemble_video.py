@@ -146,6 +146,16 @@ def _validate_manifest(
                 f"Segment #{index} must define exactly one of 'visual' or 'clip'"
             )
 
+        inferred_type = "frame" if has_visual else "clip"
+        if segment_type is None:
+            segment_type = inferred_type
+        elif segment_type != inferred_type:
+            provided_source = "visual" if has_visual else "clip"
+            raise ManifestError(
+                f"Segment #{index} declares type '{segment_type}' but provides a "
+                f"'{provided_source}' source"
+            )
+
         narration_value = item.get("narration")
         if narration_value is None and "narration_wav" in item:
             narration_value = item.get("narration_wav")
@@ -374,7 +384,11 @@ def assemble_video(
     else:
         output_path = output_path.resolve()
 
-    selected_fps = fps if fps is not None else config.get("fps") or 24
+    selected_fps = int(fps if fps is not None else config.get("fps") or 24)
+    if selected_fps <= 0:
+        raise ManifestError(
+            f"Frame rate must be greater than zero, got {selected_fps}"
+        )
     selected_resolution = resolution or config.get("resolution") or "1280x720"
     _validate_resolution(selected_resolution)
 
