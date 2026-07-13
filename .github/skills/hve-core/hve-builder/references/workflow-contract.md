@@ -1,5 +1,5 @@
 ---
-description: 'Mode routing, stage gates, model assignments, iteration rules, and outcome resolution for the hve-builder workflow.'
+description: 'Mode routing, stage gates, profile selection, iteration rules, and outcome resolution for the hve-builder workflow.'
 ---
 <!-- markdownlint-disable-file -->
 # HVE Builder Workflow Contract
@@ -25,7 +25,7 @@ The behavior gate is satisfied-and-skipped for every minor or medium change. Thi
 
 1. Scope and route. Resolve targets, mode, requirements, write boundary, evidence root, artifact architecture, applicable repository conventions, and directly required support artifacts.
 2. Establish the baseline. For `improve`, `refactor`, and `replace`, capture the current contract and static findings before edits. Skip the baseline for a target that does not yet exist; `review` performs its single static assessment in step 5.
-3. Research only decision-critical unknowns. Use repository evidence first. Dispatch `Researcher Subagent` when an unresolved external or behavioral fact could change the architecture or acceptance criteria. On `Needs Clarification`, answer from approved evidence and re-dispatch; when the missing answer is decision-critical and cannot be inferred, ask the caller. If it remains unavailable, stop Blocked rather than guessing.
+3. Research only decision-critical unknowns. Use repository evidence first. When an unresolved internal, external, or hybrid question could change architecture or acceptance criteria, create or resume the parent primary research artifact and dispatch `RPI Researcher` with the complete input contract and exact lane path from `stage-dispatch.md`. Synthesize the returned lane evidence into the parent artifact. On `Needs clarification`, answer from approved evidence and re-dispatch; when the missing answer is decision-critical and cannot be inferred, ask the caller. If it remains unavailable, stop Blocked rather than guessing.
 4. Author. For mutating modes, dispatch a generic Medium-profile authoring subagent using `stage-dispatch.md` inside the approved write boundary. A proposed type change, artifact split, or new support artifact outside that boundary returns to scope and route before edits continue.
 5. Review. For mutating modes and `review`, dispatch a generic Medium-profile static-review subagent in fresh context. Do not provide author reasoning or the author log; provide targets, purpose, requirements, and canonical criteria. Skip this stage for `validate`.
 6. Test behavior. Classify every changed target before testing. For minor and medium changes, record a satisfied-and-skipped behavior gate. For major changes only, dispatch the `hve-builder-tester` skill with the intended reasoning profile, fidelity, isolation set, together set, and requirements. Skip this stage for `validate`.
@@ -38,13 +38,13 @@ Stages may run in parallel only when neither consumes the other's output. Discov
 
 The lifecycle uses generic subagent dispatches with a model selected at invocation time rather than named worker frontmatter. `stage-dispatch.md` defines the prompt and evidence contract. This keeps the stage isolated while allowing the parent to select a responsibility-appropriate profile.
 
-| Stage                       | Primary model           | Profile | Why                                                                                |
-|-----------------------------|-------------------------|---------|------------------------------------------------------------------------------------|
-| Discovery, authoring, review | GPT-5.6 Terra (copilot) | Medium  | Relatedness, architecture, authoring, and calibrated review require judgment      |
-| Validation                  | GPT-5.6 Luna (copilot)  | Low     | Check discovery and command execution follow a bounded mechanical protocol         |
-| Test design and grading     | GPT-5.6 Terra (copilot) | Medium  | Coverage and evidence grading require semantic judgment                            |
-| `HVE Artifact Tester`       | GPT-5.6 Luna (copilot)  | Low     | Literal conformance simulation is bounded and intentionally non-interpretive       |
-| `Researcher Subagent`       | GPT-5.6 Terra (copilot) | Medium  | Decision-critical research requires source comparison and contradiction resolution |
+| Stage                         | Profile | Why                                                                                 |
+|-------------------------------|---------|-------------------------------------------------------------------------------------|
+| Discovery, authoring, review  | Medium  | Relatedness, architecture, authoring, and calibrated review require judgment       |
+| Validation                    | Low     | Check discovery and command execution follow a bounded mechanical protocol          |
+| Test design and grading       | Medium  | Coverage and evidence grading require semantic judgment                             |
+| `HVE Artifact Tester`         | Low     | Literal conformance simulation is bounded and intentionally non-interpretive        |
+| `RPI Researcher`              | Medium  | Decision-critical research requires source comparison and contradiction resolution |
 
 Canonical profile lists:
 
@@ -52,7 +52,7 @@ Canonical profile lists:
 * Medium: `GPT-5.6 Terra (copilot)`, `Claude Sonnet 5 (copilot)`, `MAI-Code-1-Flash (copilot)`
 * Low: `GPT-5.6 Luna (copilot)`, `MAI-Code-1-Flash (copilot)`, `Claude Haiku 4.5 (copilot)`
 
-The `hve-builder-tester` lead may select Terra for `HVE Artifact Tester` only when the target contract explicitly expects the Medium profile. Record the override in run state and the report. Do not select Luna for semantic work or Terra for mechanical work merely for convenience.
+After selecting the responsibility-appropriate profile, choose the first model from its canonical ordered list that appears in the user's available model list. The `hve-builder-tester` lead may select the Medium profile for `HVE Artifact Tester` only when the target contract explicitly expects Medium. Record the profile override in run state and the report; do not raise or lower a profile merely for convenience.
 
 ## Stage result vocabulary
 
@@ -103,6 +103,4 @@ Never convert validation failure into Pass because static prose looks correct. N
 
 ## Evidence boundary
 
-Default durable evidence to `.copilot-tracking/hve-builder/{{YYYY-MM-DD}}/`. The parent allocates a unique `{{artifact_slug}}-{{stage}}-{{attempt}}.md` path before dispatch by scanning and incrementing the attempt suffix. Read-only workers gather evidence in memory and write their owned log once; workers that promise progressive logging must have edit capability for that log. Use plain-text workspace-relative paths inside tracking files.
-
-> Brought to you by microsoft/hve-core
+Default durable evidence to `.copilot-tracking/hve-builder/{{YYYY-MM-DD}}/`. The parent allocates a unique `{{artifact_slug}}-{{stage}}-{{attempt}}.md` path before dispatch by scanning and incrementing the attempt suffix. Read-only workers gather evidence in memory and write their owned log once; workers that promise progressive logging must have edit capability for that log. Use plain-text workspace-relative paths inside tracking files. The final response links durable user-facing evidence and preserves plain-text paths inside tracking artifacts.

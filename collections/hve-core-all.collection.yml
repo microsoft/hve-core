@@ -83,8 +83,6 @@ items:
   kind: agent
 - path: .github/agents/hve-core/subagents/hve-artifact-tester.agent.md
   kind: agent
-- path: .github/agents/hve-core/subagents/hve-builder.agent.md
-  kind: agent
 - path: .github/agents/hve-core/subagents/implementation-validator.agent.md
   kind: agent
 - path: .github/agents/hve-core/subagents/phase-implementor.agent.md

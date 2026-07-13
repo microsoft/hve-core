@@ -1381,7 +1381,8 @@ stimuli:
       An existing custom agent needs behavioral improvement without an
       architecture change. Summarize how the `hve-builder` skill handles the
       request from baseline assessment through its final outcome. Include the
-      write boundary, required quality gates, and terminal outcome vocabulary.
+      write boundary, decision-critical research routing, required quality
+      gates, and terminal outcome vocabulary.
     environment:
       skills:
         - ../../.github/skills/hve-core/hve-builder
@@ -1407,6 +1408,10 @@ stimuli:
         name: terminal-outcomes
         config:
           pattern: '(?is)(?=.*\bPass\b)(?=.*\bRevise\b)(?=.*\bDeferred\b)(?=.*\bBlocked\b)'
+      - type: output-matches
+        name: research-routing
+        config:
+          pattern: '(?is)(?=.*RPI Researcher)(?=.*(?:lane|research[/\\]subagents|parent primary))'
   - name: skill-hve-builder-tester-knowledge
     prompt: |
       Summarize how the `hve-builder-tester` skill evaluates a behavior-bearing

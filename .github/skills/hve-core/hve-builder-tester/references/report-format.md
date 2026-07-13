@@ -84,6 +84,4 @@ Record each finding with a stable shape so the author can act on it directly:
 * Use Not available only when execution is Deferred before independent grading. Pass, Revise, and Blocked require grading evidence.
 * Use `Satisfied-and-skipped` only for a target or change with no runtime behavior. Pair it with fidelity `Not applicable`, execution `Not run`, verdict `Not applicable`, and a reason.
 * Never check the human-review checkbox; only a human converts `[ ]` to `[x]`.
-* Cite `.copilot-tracking/` and sandbox log paths as plain text; use markdown links only for durable, human-facing files.
-
-> Brought to you by microsoft/hve-core
+* Cite `.copilot-tracking/` and sandbox log paths as plain text; use markdown links only for durable, human-facing files. The durable report is the source of truth for the behavior-test outcome.

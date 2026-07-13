@@ -947,40 +947,6 @@ stimuli:
     name: trace-owned-by-lead
     config:
       pattern: (?i)(?:returned\s+trace|tester\s+skill\s+lead|lead\s+to\s+persist)
-- name: hve-builder-minor-change-skip
-  prompt: As HVE Builder, assess a frontmatter-only change that updates an agent description. Classify the change and return the behavior-gate disposition, execution status, verdict, fidelity, and reason without editing source files.
-  tags:
-    category: agent-behavior
-    advisory: "true"
-    agent: hve-builder
-  graders:
-  - type: output-matches
-    name: minor-change-classification
-    config:
-      pattern: (?i)\bminor\b
-  - type: output-matches
-    name: canonical-skip-fields
-    config:
-      pattern: (?is)(?=.*Satisfied-and-skipped)(?=.*Not\s+run)(?=.*Not\s+applicable)
-  - type: output-matches
-    name: frontmatter-reason
-    config:
-      pattern: (?i)frontmatter
-- name: hve-builder-major-change-route
-  prompt: As HVE Builder, assess a change that adds a new tool call to an existing subagent. Classify the change and state the required behavior-test route without editing source files.
-  tags:
-    category: agent-behavior
-    advisory: "true"
-    agent: hve-builder
-  graders:
-  - type: output-matches
-    name: major-change-classification
-    config:
-      pattern: (?i)\bmajor\b
-  - type: output-matches
-    name: tester-route
-    config:
-      pattern: (?i)hve-builder-tester
 - name: implementation-validator-full-quality-recipe
   prompt: |
     Validate the changed file `src/services/PaymentService.cs` with `full-quality`

@@ -12,6 +12,12 @@ Every generic stage receives its target paths, purpose, requirements, applicable
 
 Use the Medium profile for discovery, authoring, and independent static review. Use the Low profile for mechanical validation. The parent may select a different profile only when the target contract requires it and records the reason in the evidence.
 
+## RPI Researcher dispatch
+
+Use `RPI Researcher` only when a decision-critical internal, external, or hybrid question could change architecture or acceptance. Before dispatch, create or resume the parent primary artifact at `.copilot-tracking/research/{{YYYY-MM-DD}}/{{artifact-slug}}-hve-builder-research.md`. Allocate each independent lane at `.copilot-tracking/research/subagents/{{YYYY-MM-DD}}/{{artifact-slug}}-{{lane-slug}}-research.md`; the lane path must be distinct from the parent path.
+
+Provide all required inputs: topic and lane type; explicit questions and evidence criteria; scope and non-goals, including workspace and external-source boundaries; a task-specific budget or permission to establish one from evidence; the exact caller-approved lane path; and the distinct parent primary artifact path. The worker owns only the lane artifact. The hve-builder lead owns the parent artifact, synthesizes lane findings and provenance into it, and resolves `Needs clarification` from approved evidence or caller input before re-dispatch.
+
 ## Discovery template
 
 Use when non-obvious reuse or extension candidates could change architecture. The generic subagent searches prompts, instructions, agents, subagents, and skills; reads only candidates needed to assess relatedness; and writes one discovery log. It returns ranked candidates with path, type, relatedness, disposition, and search coverage. It does not choose the architecture, edit targets, or widen scope.
@@ -30,4 +36,4 @@ Use after source artifacts are at their real paths. The generic subagent discove
 
 ## Evidence shapes
 
-Stage logs use plain-text workspace-relative paths. Each log records the stage inputs, evidence inspected, result, limitations, and next action. Author and discovery stages report `Complete`, `Partial`, or `Blocked`; static review reports `Pass`, `Revise`, or `Blocked`; validation reports `Pass`, `Fail`, or `Deferred`.
+Stage logs use plain-text workspace-relative paths. Each log records the stage inputs, evidence inspected, result, limitations, and next action. Author and discovery stages report `Complete`, `Partial`, or `Blocked`; research reports execution status `Complete`, `Partial`, `Blocked`, or `Needs clarification` separately from confidence and synthesis readiness; static review reports `Pass`, `Revise`, or `Blocked`; validation reports `Pass`, `Fail`, or `Deferred`.

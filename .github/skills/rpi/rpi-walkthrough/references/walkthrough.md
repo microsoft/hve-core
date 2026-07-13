@@ -37,7 +37,7 @@ Always understand the target through subagents before narrating it, and capture 
 Turn the reviewed target into an ordered list of segments that each cover one coherent idea:
 
 * Code or feature: order from entry point through the main flow to the key blocks and lines, grouping tightly-coupled lines into one segment.
-* UI or UX: order along the user-facing flow, connecting each view or component to the state, events, and styles that drive it.
+* UI or UX: order along the user-facing flow, connecting each view or component to the state, events, and styles that drive them.
 * Artifact: follow the document's own section order, pairing each decision with its rationale and evidence.
 
 Record the segment list in the walkthrough artifact before starting segment one so the session can resume if interrupted. Do not over-condense the walkthrough. When the target is large or nuanced, use more segments rather than forcing a compact summary, and 25 or more segments is acceptable when that is the clearest way to explain the material.
@@ -183,6 +183,4 @@ Close with a concise summary that contains:
 
 ## Re-entry
 
-When the user returns to an existing walkthrough, read the walkthrough artifact, resume at the next uncovered segment, and re-review only the segments whose depth or target the user changed.
-
-> Brought to you by microsoft/hve-core
+When the user returns to an existing walkthrough, read the walkthrough artifact, resume at the next uncovered segment, and re-review only the segments whose depth or target the user changed. Preserve prior segment evidence unless the re-entry changes its target or requested depth.

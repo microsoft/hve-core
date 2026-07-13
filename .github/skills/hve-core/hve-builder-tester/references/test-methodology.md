@@ -73,6 +73,4 @@ Use the canonical ordered Medium profile (`GPT-5.6 Terra`, `Claude Sonnet 5`, `M
 
 ## File reference formatting
 
-Files under .copilot-tracking/ are consumed by AI agents, not humans clicking links. When citing workspace files in sandbox logs, use plain-text workspace-relative paths, not markdown links or #file: directives, because VS Code resolves them and reports missing-target errors that flood the Problems tab.
-
-> Brought to you by microsoft/hve-core
+Files under .copilot-tracking/ are consumed by AI agents, not humans clicking links. When citing workspace files in sandbox logs, use plain-text workspace-relative paths, not markdown links or #file: directives, because VS Code resolves them and reports missing-target errors that flood the Problems tab. The durable behavior report owns user-facing links to retained evidence.

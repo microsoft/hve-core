@@ -50,7 +50,7 @@ items:
   - path: .github/agents/hve-core/subagents/researcher-subagent.agent.md
     kind: agent
   # HVE Builder subagents
-  - path: .github/agents/hve-core/subagents/hve-builder.agent.md
+  - path: .github/agents/hve-core/subagents/rpi-researcher.agent.md
     kind: agent
   - path: .github/agents/hve-core/subagents/hve-artifact-tester.agent.md
     kind: agent
