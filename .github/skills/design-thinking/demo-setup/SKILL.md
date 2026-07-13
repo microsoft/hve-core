@@ -12,7 +12,7 @@ metadata:
 
 ## Overview
 
-Creates demo-ready prototypes by guiding you through a simulated Design Thinking Coach session with a customer persona, then scaffolding a hi-fi prototype. The skill generates a customer persona brief with realistic conversation seeds, accelerates through DT Methods 1 through 6 with simulated customer dialogue, and hands off to the hifi-prototype skill for Method 7 scaffolding. The result is a complete, runnable demo with a presenter's walkthrough guide and a video script for recording.
+Creates demo-ready prototypes by guiding you through a simulated Design Thinking Coach session with a customer persona, then scaffolding a hi-fi prototype. The skill generates a customer persona brief with realistic conversation seeds, accelerates through DT Methods 1 through 6 with simulated customer dialogue, and scaffolds a runnable hi-fi prototype directly at Method 7. The result is a complete, runnable demo with a presenter's walkthrough guide and a video script for recording.
 
 Primary audience: new users learning HVE Core tools.
 
@@ -20,14 +20,13 @@ Core design constraints:
 
 * Every demo starts with a customer persona brief that drives the simulated conversation.
 * DT Coach interactions use accelerated pacing (2 to 3 exchanges per method) for demo efficiency.
-* The hifi-prototype skill handles all scaffold generation and experiment framing.
+* Step 4 scaffolds the hi-fi prototype directly, handling all scaffold generation and experiment framing.
 * Presenter's guide included so demos are repeatable without memorizing the flow.
 * Demo video script generated for recording a polished walkthrough video.
 
 ## Prerequisites
 
 * DT Coach agent accessible (provided by the HVE Core extension)
-* hifi-prototype skill accessible (workspace `.github/skills/hifi-prototype/`)
 * `.copilot-tracking/` directory exists at the workspace root
 
 ## Quick Start
@@ -36,7 +35,7 @@ Run a demo with custom inputs:
 
 1. Invoke `/demo-setup` with `customer={name}`, `industry={vertical}`, and optionally `persona` and `problem`.
 2. The DT Coach walks through Methods 1 through 6 with a generated persona and conversation seeds.
-3. At Method 7 the hifi-prototype skill scaffolds a runnable prototype.
+3. At Method 7 the skill scaffolds a runnable prototype.
 4. Open `index.html` in a browser and follow the presenter's guide in `README.md`.
 
 ## When to Use
@@ -169,26 +168,26 @@ The DT Coach guides through each method with simulated customer conversations dr
    - M3 to M4: problem-to-solution space transition
    - M4 to M5: concept cards with D/F/V evaluation
    - M5 to M6: canonical deck snapshot (optional)
-   - M6 to M7: hifi-prototype skill handoff
+   - M6 to M7: hi-fi prototype scaffold generation
 
 Checkpoint: Methods 1 through 6 have generated artifacts in the coaching state.
 
 ### Step 4: Prototype Scaffold (Method 7)
 
-Transition to Method 7 and invoke the hifi-prototype skill for scaffold generation.
+Transition to Method 7 and generate the hi-fi prototype scaffold directly.
 
-1. Invoke the hifi-prototype skill with the inputs from the Hifi-Prototype Input Mapping table below.
+1. Derive the scaffold inputs from the DT session artifacts using the Prototype Input Mapping table below.
 2. Populate the experiment card from DT session artifacts (hypothesis from M3 themes, success criteria from M5 concepts).
-3. Generate the scaffold using demo template patterns from existing examples.
+3. Generate the scaffold using the fixed and variable elements defined in the Demo Scaffold Template section below.
 4. Fixture data derived from the persona brief and domain vocabulary.
 5. Name the fixture file after the primary domain noun in plural form (for example, `machines.js`, `vehicles.js`, `patients.js`).
 6. Include experiment banner on every page with hypothesis text.
 7. Apply `[SIMULATED]` badges to all mock components.
 8. Pre-wire telemetry for page views, clicks, and task timing.
 
-#### Hifi-Prototype Input Mapping
+#### Prototype Input Mapping
 
-| hifi-prototype Input | Source DT Artifact                           | Derivation                                                                          |
+| Scaffold Input       | Source DT Artifact                           | Derivation                                                                          |
 |----------------------|----------------------------------------------|-------------------------------------------------------------------------------------|
 | Hypothesis           | M3 problem statement                         | Reframe as a testable prediction about user behavior                                |
 | Success criteria     | M5 concept D/F/V assessment                  | Convert desirability, feasibility, and viability ratings into measurable conditions |
@@ -210,7 +209,7 @@ Generate a presenter's guide in the prototype README with everything needed to d
    - DT Coach agent and coaching state management
    - Customer persona brief and conversation simulation
    - Experiment cards and hypothesis-driven development
-   - hifi-prototype skill and scaffold generation
+   - Hi-fi prototype scaffold generation
    - Telemetry instrumentation
 4. Common audience questions and suggested responses.
 5. Timing guidance (approximate duration per section).
@@ -236,7 +235,7 @@ Checkpoint: `demo-video-script.md` exists with all sections populated and timing
 
 ## Demo Scaffold Template
 
-Every demo scaffold follows a fixed structure. The hifi-prototype skill generates this layout with demo-specific content.
+Every demo scaffold follows a fixed structure. Step 4 generates this layout with demo-specific content.
 
 ```text
 {project-slug}/
@@ -282,7 +281,7 @@ Each step of the demo workflow showcases specific HVE Core tools and features.
 | DT Coach agent            | Methods 1-6 coaching               | AI-guided Design Thinking with structured method progression    |
 | Customer persona brief    | Step 1 scenario setup              | Simulated customer conversations grounded in realistic personas |
 | Coaching state management | Session persistence across methods | Session recovery, method tracking, and artifact lineage         |
-| hifi-prototype skill      | Method 7 scaffold generation       | Experiment-framed prototypes with hypothesis-driven development |
+| Prototype scaffold        | Method 7 scaffold generation       | Experiment-framed prototypes with hypothesis-driven development |
 | Experiment cards          | Prototype setup                    | Every prototype starts with a falsifiable hypothesis            |
 | Telemetry instrumentation | Prototype scaffold                 | Measurement built in from day one, not added later              |
 | Canonical deck (optional) | Method 1, 3, and 5 snapshots       | Visual summaries at scope, synthesis, and concept milestones    |
@@ -306,7 +305,7 @@ Each step of the demo workflow showcases specific HVE Core tools and features.
 |------------------------------------------------|----------------------------------------------|---------------------------------------------------------------------------------------------------------------------------|
 | Persona brief feels generic                    | Insufficient industry context provided       | Add specific domain vocabulary and 3 to 5 concrete workflow details to the inputs                                         |
 | DT Coach exits accelerated mode                | Coaching state missing `session_mode: demo`  | Verify coaching-state.md has `session_mode: demo` under the project block in Step 2                                       |
-| Prototype scaffold missing telemetry           | hifi-prototype skill not invoked correctly   | Ensure the experiment card is complete before triggering Method 7 transition                                              |
+| Prototype scaffold missing telemetry           | Telemetry skeleton omitted from scaffold     | Pre-wire the telemetry skeleton (page views, clicks, task timing) when generating the scaffold in Step 4                  |
 | Audience confuses demo with real product       | Missing simulation labels                    | Every mock component requires a visible `[SIMULATED]` badge; check the validation list                                    |
 | Demo takes too long to present                 | Full coaching mode active                    | Set `accelerated` input to `true` (default) for 2 to 3 exchanges per method                                               |
 | Fixture data does not match domain             | Conversation seeds missing domain vocabulary | Update the Domain Vocabulary section of the persona brief before starting the session                                     |
