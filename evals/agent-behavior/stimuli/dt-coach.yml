@@ -1,0 +1,22 @@
+# Copyright (c) 2026 Microsoft Corporation. All rights reserved.
+# SPDX-License-Identifier: MIT
+stimuli:
+  - name: dt-coach-class-recipe
+    prompt: |
+      Coach me through scoping a Design Thinking project (use the project slug `cafeteria-night-shift`) on "improving cafeteria experience for night-shift workers." Lay out the next 2-3 methods as phases. Write the coaching state under `.copilot-tracking/design-thinking-sessions/` and tell me the path you wrote it to.
+    tags:
+      category: agent-behavior
+    graders:
+      - type: output-matches
+        name: phase-marker-present
+        config:
+          pattern: '(?im)(^\s*(#{2,3}\s|step\s+\d+|phase\s+\d+|\d+[.)])|\|\s*\d+\s*[—–-]|\bphases?\b)'
+      - type: output-matches
+        name: tracking-file-write
+        config:
+          pattern: '(?i)\.copilot-tracking[-/\\]design-thinking-sessions'
+      - type: output-matches
+        name: no-source-edit
+        config:
+          pattern: '(?i)(created|wrote|modified|edited|patched|added)\s+\S{0,40}(\.cs|\.py|\.ts|\.js|package\.json)'
+          negate: true

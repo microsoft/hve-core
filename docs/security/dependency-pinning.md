@@ -3,7 +3,7 @@ title: Dependency Pinning
 description: How HVE Core enforces dependency pinning across GitHub Actions, npm, pip, and shell downloads with automated CI validation
 sidebar_position: 3
 author: Microsoft
-ms.date: 2026-03-02
+ms.date: 2026-06-25
 ms.topic: concept
 keywords:
   - dependency pinning
@@ -77,21 +77,67 @@ GitHub Actions references must use full 40-character commit SHAs because action 
 - uses: actions/checkout@a5ac7e51b41094c92402da3b24376905380afc29 # v4.2.2
 ```
 
-The scanner validates that the SHA is a real 40-character hexadecimal string and optionally checks staleness against the GitHub API.
+The scanner validates that the SHA is a real 40-character hexadecimal string and optionally checks staleness against the GitHub API. SHA-pin validation applies the same expanded scope as the npm-command scan: it covers workflow files (`.github/workflows/*.yml` and `.github/workflows/*.yaml`) and composite action definitions (`.github/actions/**/*.yml` and `.github/actions/**/*.yaml`).
 
-## pip: Exact-Version Pinning
+## DevContainer Features: Lockfile Integrity
 
-Python dependencies must use the `==` operator for exact version pinning. The scanner excludes virtual environment directories (`.venv`, `venv`, `.tox`, `.nox`, `__pypackages__`) to avoid false positives from installed package metadata.
+DevContainer features declared in `.devcontainer/devcontainer.json` are pinned through a lockfile (`devcontainer-lock.json`) that records the exact version, OCI digest, and SHA-256 integrity hash for each feature. This follows the [devcontainer lockfile spec](https://github.com/devcontainers/spec/blob/main/docs/specs/devcontainer-lockfile.md), modeled after `package-lock.json`.
+
+### What Is Validated
+
+The `devcontainer-lockfile-check.yml` workflow enforces three checks during PR validation:
+
+| Check              | Failure Condition                                                          |
+|--------------------|----------------------------------------------------------------------------|
+| Lockfile existence | `devcontainer-lock.json` is absent from the repository                     |
+| SHA-256 integrity  | A feature entry is missing `resolved` or `integrity` with `sha256:` prefix |
+| Feature coverage   | A feature in `devcontainer.json` has no corresponding lockfile entry       |
+
+### Lockfile Format
+
+Each feature entry records the resolved OCI reference and integrity hash:
+
+```json
+{
+  "features": {
+    "ghcr.io/devcontainers/features/node:1": {
+      "version": "1.7.1",
+      "resolved": "ghcr.io/devcontainers/features/node@sha256:8c0de46...",
+      "integrity": "sha256:8c0de46..."
+    }
+  }
+}
+```
+
+### Regenerating the Lockfile
+
+Rebuild the dev container to regenerate the lockfile. In VS Code, use the **Dev Containers: Rebuild Container** command. Commit the updated `devcontainer-lock.json` alongside any changes to `devcontainer.json`.
+
+## pip: Exact-Version Staleness Validation
+
+The `==` exact-version convention applies to `requirements*.txt` and `Pipfile`-style dependency declarations.
+The pip scanner validates packages that are *already* pinned with the `==` operator, checking each pinned version for staleness against PyPI.
+It does not flag range specifiers (`>=`, `~=`, `<`) as violations: its regex only matches `package==version` references, so range pins are simply not inspected.
+The scanner excludes virtual environment directories (`.venv`, `venv`, `.tox`, `.nox`, `__pypackages__`) to avoid false positives from installed package metadata.
 
 ```text
-# Accepted
+# Validated for staleness (exact pin in requirements.txt / Pipfile)
 requests==2.31.0
 flask==3.0.0
 
-# Rejected
+# Not flagged (range pins are not matched by the scanner)
 requests>=2.31.0
 flask~=3.0
 ```
+
+### Lockfile-Backed Pinning for uv Skills
+
+Python skills managed with `uv` and `pyproject.toml` achieve exact pinning through `uv.lock` rather than `==` constraints in `pyproject.toml`.
+The `uv.lock` file records the exact resolved version and a per-package integrity hash for every dependency, so a range pin in `pyproject.toml` is equivalent in supply-chain terms to an `==` pin in `requirements.txt`.
+Range pins in `pyproject.toml` are therefore acceptable for uv-managed skills: prefer expressing compatible-version ranges in `pyproject.toml` and committing `uv.lock` to lock the resolved versions, syncing with `uv sync --locked` to verify against the lock.
+
+> [!NOTE]
+> `Test-DependencyPinning.ps1` does not flag range pins in `pyproject.toml`. Supply-chain security for uv-managed skills is enforced through `uv.lock` integrity hashes rather than `==` constraints, so no scanner violation is raised for ranged `pyproject.toml` dependencies.
 
 ## Workflow npm Commands: npm ci Enforcement
 
@@ -132,7 +178,10 @@ Replace flagged commands with `npm ci` for deterministic, lockfile-based install
 
 ### File Scope
 
-The scanner processes files matching `.github/workflows/*.yml` and `.github/workflows/*.yaml`.
+The scanner processes files matching:
+
+* `.github/workflows/*.yml` and `.github/workflows/*.yaml`
+* `.github/actions/**/*.yml` and `.github/actions/**/*.yaml` (composite actions)
 
 ## Shell Downloads: Checksum Verification
 

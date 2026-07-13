@@ -16,20 +16,46 @@ tags:
   - uv
 items:
   # Agents
-  - path: .github/agents/coding-standards/code-review-full.agent.md
+  - path: .github/agents/coding-standards/code-review.agent.md
     kind: agent
     maturity: experimental
-  - path: .github/agents/coding-standards/code-review-functional.agent.md
-    kind: agent
-  - path: .github/agents/coding-standards/code-review-standards.agent.md
+  - path: .github/agents/accessibility/accessibility-reviewer.agent.md
     kind: agent
     maturity: experimental
-  # Prompts
-  - path: .github/prompts/coding-standards/code-review-functional.prompt.md
-    kind: prompt
-  - path: .github/prompts/coding-standards/code-review-full.prompt.md
-    kind: prompt
+  # Subagents
+  - path: .github/agents/accessibility/subagents/accessibility-framework-assessor.agent.md
+    kind: agent
     maturity: experimental
+  - path: .github/agents/accessibility/subagents/accessibility-surface-inventory.agent.md
+    kind: agent
+    maturity: experimental
+  - path: .github/agents/coding-standards/subagents/code-review-functional.agent.md
+    kind: agent
+    maturity: experimental
+  - path: .github/agents/coding-standards/subagents/code-review-standards.agent.md
+    kind: agent
+    maturity: experimental
+  - path: .github/agents/coding-standards/subagents/code-review-accessibility.agent.md
+    kind: agent
+    maturity: experimental
+  - path: .github/agents/coding-standards/subagents/code-review-security.agent.md
+    kind: agent
+    maturity: experimental
+  - path: .github/agents/coding-standards/subagents/code-review-pr.agent.md
+    kind: agent
+    maturity: experimental
+  - path: .github/agents/coding-standards/subagents/code-review-readiness.agent.md
+    kind: agent
+    maturity: experimental
+  - path: .github/agents/coding-standards/subagents/code-review-explainer.agent.md
+    kind: agent
+    maturity: experimental
+  - path: .github/agents/coding-standards/subagents/code-review-walkback.agent.md
+    kind: agent
+    maturity: experimental
+  - path: .github/agents/hve-core/subagents/researcher-subagent.agent.md
+    kind: agent
+    maturity: stable
   # Instructions
   - path: .github/instructions/coding-standards/code-review/diff-computation.instructions.md
     kind: instruction
@@ -64,10 +90,18 @@ items:
   - path: .github/instructions/shared/hve-core-location.instructions.md
     kind: instruction
   # Skills
+  - path: .github/skills/coding-standards/code-review
+    kind: skill
+    maturity: experimental
   - path: .github/skills/coding-standards/python-foundational
     kind: skill
     maturity: experimental
   - path: .github/skills/shared/pr-reference
     kind: skill
+  - path: .github/skills/shared/telemetry-foundations
+    kind: skill
+  # Telemetry overlays
+  - path: .github/instructions/shared/telemetry-overlay.instructions.md
+    kind: instruction
 display:
   ordering: alpha

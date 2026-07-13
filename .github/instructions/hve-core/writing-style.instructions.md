@@ -1,5 +1,5 @@
 ---
-description: "Required writing style conventions for voice, tone, and language in all markdown content"
+description: "Writing style conventions for voice, tone, and language in markdown content"
 applyTo: '**/*.md'
 ---
 

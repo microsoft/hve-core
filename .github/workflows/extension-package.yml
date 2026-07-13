@@ -1,3 +1,5 @@
+# Copyright (c) 2026 Microsoft Corporation. All rights reserved.
+# SPDX-License-Identifier: MIT
 name: Package Extension
 
 on:
@@ -45,21 +47,22 @@ jobs:
       version: ${{ steps.read-version.outputs.version }}
     steps:
       - name: Checkout code
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
         with:
           persist-credentials: false
 
       - name: Setup PowerShell modules
-        shell: pwsh
-        run: |
-          Install-Module -Name PowerShell-Yaml -RequiredVersion 0.4.7 -Force -Scope CurrentUser
+        uses: ./.github/actions/setup-ps-modules
 
       - name: Resolve effective version
         id: read-version
         shell: bash
+        env:
+          INPUT_VERSION: ${{ inputs.version }}
+          INPUT_DEV_PATCH: ${{ inputs.dev-patch-number }}
         run: |
-          version="${{ inputs.version }}"
-          dev_patch="${{ inputs.dev-patch-number }}"
+          version="$INPUT_VERSION"
+          dev_patch="$INPUT_DEV_PATCH"
           if [ -z "$version" ]; then
             version=$(jq -r .version extension/templates/package.template.json)
           fi
@@ -85,7 +88,7 @@ jobs:
       matrix: ${{ fromJson(needs.discover-collections.outputs.matrix) }}
     steps:
       - name: Checkout code
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
         with:
           persist-credentials: false
 
@@ -94,14 +97,14 @@ jobs:
         with:
           node-version: "24"
 
+      # Opt back into dependency lifecycle scripts (the repo .npmrc sets
+      # ignore-scripts=true for dev safety). Packaging needs vsce's native
+      # install hooks (@vscode/vsce-sign, keytar) to run.
       - name: Install dependencies
-        run: npm ci
+        run: npm ci --ignore-scripts=false
 
-      - name: Setup PowerShell
-        shell: pwsh
-        run: |
-          Write-Host "PowerShell version: $($PSVersionTable.PSVersion)"
-          Install-Module -Name PowerShell-Yaml -RequiredVersion 0.4.7 -Force -Scope CurrentUser
+      - name: Setup PowerShell modules
+        uses: ./.github/actions/setup-ps-modules
 
       - name: Download changelog artifact
         if: inputs.use-changelog
@@ -114,8 +117,10 @@ jobs:
       - name: Prepare extension resources
         id: prepare
         shell: pwsh
+        env:
+          INPUT_CHANNEL: ${{ inputs.channel }}
         run: |
-          $channel = "${{ inputs.channel }}".Trim()
+          $channel = "$env:INPUT_CHANNEL".Trim()
           if (-not $channel) { $channel = 'Stable' }
           $collection = "${{ matrix.manifest }}"
 
@@ -125,10 +130,14 @@ jobs:
       - name: Package extension
         id: package
         shell: pwsh
+        env:
+          INPUT_VERSION: ${{ inputs.version }}
+          INPUT_DEV_PATCH: ${{ inputs.dev-patch-number }}
+          INPUT_CHANNEL: ${{ inputs.channel }}
         run: |
-          $version = "${{ inputs.version }}".Trim()
-          $devPatch = "${{ inputs.dev-patch-number }}".Trim()
-          $channel = "${{ inputs.channel }}".Trim()
+          $version = "$env:INPUT_VERSION".Trim()
+          $devPatch = "$env:INPUT_DEV_PATCH".Trim()
+          $channel = "$env:INPUT_CHANNEL".Trim()
           if (-not $channel) { $channel = 'Stable' }
           $collection = "${{ matrix.manifest }}"
 

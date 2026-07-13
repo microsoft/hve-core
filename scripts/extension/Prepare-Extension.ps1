@@ -1,7 +1,7 @@
 ﻿#!/usr/bin/env pwsh
-# Copyright (c) Microsoft Corporation.
+# Copyright (c) 2026 Microsoft Corporation. All rights reserved.
 # SPDX-License-Identifier: MIT
-#Requires -Version 7.0
+#Requires -Version 7.4
 
 <#
 .SYNOPSIS
@@ -411,6 +411,7 @@ function New-CollectionReadme {
     $prompts = @()
     $instructions = @()
     $skills = @()
+    $hooks = @()
 
     if ($Collection.ContainsKey('items')) {
         foreach ($item in $Collection.items) {
@@ -438,6 +439,7 @@ function New-CollectionReadme {
                 'prompt' { $prompts += $entry }
                 'instruction' { $instructions += $entry }
                 'skill' { $skills += $entry }
+                'hook' { $hooks += $entry }
             }
         }
     }
@@ -449,7 +451,8 @@ function New-CollectionReadme {
         @{ Title = 'Chat Agents'; Items = $agents },
         @{ Title = 'Prompts'; Items = $prompts },
         @{ Title = 'Instructions'; Items = $instructions },
-        @{ Title = 'Skills'; Items = $skills }
+        @{ Title = 'Skills'; Items = $skills },
+        @{ Title = 'Hooks'; Items = $hooks }
     )) {
         if ($section.Items.Count -eq 0) { continue }
 
@@ -464,10 +467,10 @@ function New-CollectionReadme {
     }
 
     # Write back updated artifact section into collection.md when markers are present.
-    # Wrap the generated h3 sections under an h2 so collection.md stays compliant
-    # with MD001 heading-increment when the file begins with an h1 title.
+    # The hand-authored intro provides the `## Included Artifacts` H2 immediately
+    # before the BEGIN marker, so the generated block contains only the H3 tables.
     if ($parsed.HasMarkers) {
-        $generatedBlock = "## Included Artifacts`n`n" + $artifactSections.ToString().TrimEnd()
+        $generatedBlock = $artifactSections.ToString().TrimEnd()
         $updatedCollectionMd = "$($parsed.Intro)`n`n$($CollectionMdBeginMarker)`n`n$generatedBlock`n`n$($CollectionMdEndMarker)"
         if (-not [string]::IsNullOrWhiteSpace($parsed.Footer)) {
             $updatedCollectionMd += "`n`n$($parsed.Footer.TrimEnd())"

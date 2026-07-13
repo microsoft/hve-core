@@ -110,8 +110,6 @@ Run a `PowerPoint Subagent` with task type `validate` providing:
 * Image output directory: `slide-deck/validation/`.
 * Execution log path: `changes/validate-{{timestamp}}.md`.
 * The `validate_slides.py` script has a built-in issue-only system message that checks overlapping elements, text overflow/cutoff, decorative line mismatch after title wrapping, citation/footer collisions, spacing/alignment problems, low contrast, narrow text boxes, and leftover placeholders. It treats dense near-edge layouts as acceptable when readability remains acceptable. Do not pass a `-ValidationPrompt` unless the user requests additional task-specific checks. To activate vision validation, pass `-ValidationPrompt "Validate visual quality"`.
-* Optional overrides: validation model (default: `claude-haiku-4.5`).
-
 The pipeline automatically clears stale images before exporting and names output files to match original slide numbers when `-Slides` is used. This ensures `validate_slides.py` reads the correct, freshly-exported images.
 
 **This phase must always run with a subagent, regardless of how many slides were modified or added. Even when slides appear correct, run validation.**

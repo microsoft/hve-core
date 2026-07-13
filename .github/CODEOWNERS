@@ -24,3 +24,6 @@
 
 # Documentation
 /docs/ @microsoft/edge-ai-core-dev
+
+# Security artifacts
+/security/vex/ @microsoft/edge-ai-core-dev

@@ -1,7 +1,9 @@
 ---
 agent: 'agent'
-description: 'Generates a commit message following the commit-message.instructions.md rules based on all changes in the branch'
-model: Claude Haiku 4.5 (copilot)
+description: 'Generate a conventional commit message from all branch changes'
+model:
+  - MAI-Code-1-Flash (copilot)
+  - Claude Haiku 4.5 (copilot)
 ---
 
 # Generate Commit Message

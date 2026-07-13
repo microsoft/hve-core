@@ -1,7 +1,7 @@
 ﻿#!/usr/bin/env pwsh
-# Copyright (c) Microsoft Corporation.
+# Copyright (c) 2026 Microsoft Corporation. All rights reserved.
 # SPDX-License-Identifier: MIT
-#Requires -Version 7.0
+#Requires -Version 7.4
 
 <#
 .SYNOPSIS
@@ -127,7 +127,7 @@ $script:GitHubApiBase = Get-GitHubApiBase
 # Define dependency patterns for different ecosystems
 $DependencyPatterns = @{
     'github-actions' = @{
-        FilePatterns    = @('**/.github/workflows/*.yml', '**/.github/workflows/*.yaml')
+        FilePatterns    = @('**/.github/workflows/*.yml', '**/.github/workflows/*.yaml', '**/.github/actions/**/*.yml', '**/.github/actions/**/*.yaml')
         VersionPatterns = @(
             @{
                 Pattern     = 'uses:\s*([^@\s]+)@([^#\s]+)'
@@ -135,7 +135,7 @@ $DependencyPatterns = @{
                 Description = 'GitHub Actions uses statements'
             }
         )
-        SHAPattern      = '^[a-fA-F0-9]{40}$'
+        PinPattern      = '^[a-fA-F0-9]{40}$'
         RemediationUrl  = "$script:GitHubApiBase/repos/{0}/commits/{1}"
     }
 
@@ -151,24 +151,24 @@ $DependencyPatterns = @{
         ExcludePatterns = @('.venv', 'venv', '.tox', '.nox', '__pypackages__')
         VersionPatterns = @(
             @{
-                Pattern     = '([a-zA-Z0-9\-_]+)==([^#\s]+)'
+                Pattern     = '([a-zA-Z0-9._-]+(?:\[[a-zA-Z0-9._,-]+\])?)\s*==\s*([^#\s,";]+)'
                 Groups      = @{ Package = 1; Version = 2 }
                 Description = 'Python pip requirements'
             }
         )
-        SHAPattern      = '^[a-fA-F0-9]{40}$'
+        PinPattern      = '^(?i:v?(?:\d+!)?\d+(?:\.\d+)*(?:(?:a|b|rc)\d+)?(?:\.post\d+)?(?:\.dev\d+)?(?:\+[a-z0-9]+(?:[._-][a-z0-9]+)*)?)$'
         RemediationUrl  = 'https://pypi.org/pypi/{0}/{1}/json'
     }
 
     'shell-downloads'  = @{
         FilePatterns    = @('**/.devcontainer/scripts/*.sh', '**/scripts/*.sh')
-        ExcludePatterns = @('Fixtures')
+        ExcludePatterns = @('fixtures')
         ValidationFunc  = 'Test-ShellDownloadSecurity'
         Description     = 'Shell script downloads must include checksum verification'
     }
 
     'workflow-npm-commands' = @{
-        FilePatterns   = @('**/.github/workflows/*.yml', '**/.github/workflows/*.yaml')
+        FilePatterns   = @('**/.github/workflows/*.yml', '**/.github/workflows/*.yaml', '**/.github/actions/**/*.yml', '**/.github/actions/**/*.yaml')
         ValidationFunc = 'Get-WorkflowNpmCommandViolations'
         Description    = 'Workflow npm install/update commands should use npm ci'
     }
@@ -496,6 +496,9 @@ function Test-NpmExactVersion {
         Tests whether an npm version string is an exact pinned version.
     .DESCRIPTION
         Returns $true for exact semver versions (e.g. 1.2.3, 1.0.0-beta.1).
+        Returns $true for local-path protocol references (file:, link:) because
+        they resolve to in-repo paths rather than registry downloads and cannot
+        be version- or SHA-pinned.
         Returns $false for ranges, wildcards, URLs, tags, and git references.
     #>
     [CmdletBinding()]
@@ -503,6 +506,12 @@ function Test-NpmExactVersion {
         [Parameter(Mandatory)]
         [string]$Version
     )
+
+    # Local-path protocol references resolve to in-repo paths, not registry
+    # downloads, so they pose no supply-chain pinning risk.
+    if ($Version -match '^(file|link):') {
+        return $true
+    }
 
     # Reject range operators, wildcards, URLs, git refs, and tags like "latest"
     if ($Version -match '^[~^>=<*|]' -or
@@ -587,13 +596,13 @@ function Get-FilesToScan {
         }
     }
 
-    return $allFiles | Sort-Object Path -Unique
+    return $allFiles | Sort-Object Path, Type -Unique
 }
 
-function Test-SHAPinning {
+function Test-DependencyPinned {
     <#
     .SYNOPSIS
-    Tests if a version reference is properly SHA-pinned.
+    Tests whether a dependency reference matches its ecosystem pin pattern.
     #>
     [CmdletBinding()]
     param(
@@ -601,9 +610,9 @@ function Test-SHAPinning {
         [string]$Type
     )
 
-    if ($DependencyPatterns.ContainsKey($Type) -and $DependencyPatterns[$Type].SHAPattern) {
-        $shaPattern = $DependencyPatterns[$Type].SHAPattern
-        return $Version -match $shaPattern
+    if ($DependencyPatterns.ContainsKey($Type) -and $DependencyPatterns[$Type].PinPattern) {
+        $pinPattern = $DependencyPatterns[$Type].PinPattern
+        return $Version -match $pinPattern
     }
 
     return $false
@@ -691,7 +700,7 @@ function Get-DependencyViolation {
                 $version = $match.Groups[2].Value
 
                 # Check if properly pinned
-                if (!(Test-SHAPinning -Version $version -Type $fileType)) {
+                if (!(Test-DependencyPinned -Version $version -Type $fileType)) {
                     $violation = [DependencyViolation]::new()
                     $violation.File = $FileInfo.RelativePath
                     $violation.Line = $lineNumber
@@ -725,7 +734,7 @@ function Get-RemediationSuggestion {
     [CmdletBinding()]
     param(
         [DependencyViolation]$Violation,
-        
+
         [switch]$Remediate
     )
 

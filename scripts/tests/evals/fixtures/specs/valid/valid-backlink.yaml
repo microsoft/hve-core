@@ -1,0 +1,20 @@
+name: fixture-valid-spec-with-backlink
+description: Compliant spec that exercises a skill backlink resolution path.
+type: capability
+defaults:
+  runs: 1
+  timeout: 60s
+  executor: copilot-sdk
+scoring:
+  threshold: 0.7
+
+stimuli:
+  - name: stimulus-with-skill-backlink
+    prompt: "Summarize the pr-reference skill's purpose."
+    tags:
+      category: fixture
+      skill: pr-reference
+    graders:
+      - type: output-matches
+        name: mentions-pr-reference
+        config: {pattern: '(?i)pr-reference'}

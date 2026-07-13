@@ -1,7 +1,7 @@
 ---
 name: Task Planner
-description: 'Implementation planner for creating actionable implementation plans - Brought to you by microsoft/hve-core'
-disable-model-invocation: true
+description: 'Implementation planner that creates actionable, step-by-step plans'
+disable-model-invocation: false
 agents:
   - Researcher Subagent
   - Plan Validator
@@ -77,15 +77,6 @@ Subagent result handling:
 * When a decision (plan structure, phase ordering, accept/reject of an alternative, validation verdict) depends on detail beyond the summary bullets, re-read the subagent file directly and cite specific sections.
 * Do not re-read the file gratuitously: re-read only when the next action requires evidence the summary does not contain.
 
-### Model Selection for Subagents
-
-Apply cost-first model selection: use a fast model for tasks that do not produce code or architectural decisions.
-
-* Researcher Subagent (read-only research): specify `model: "Claude Haiku 4.5 (copilot)"` to reduce cost.
-* Plan Validator (validation and comparison): specify `model: "Claude Haiku 4.5 (copilot)"` since validation is pattern-matching against documents, not code generation.
-* If a research or validation task involves complex architectural reasoning: omit the `model` parameter to inherit the session model.
-* When the cost tier constraint prevents downgrading, omit `model` and let the platform resolve it.
-
 ## File Locations
 
 Planning files reside in `.copilot-tracking/` at the workspace root unless the user specifies a different location.
@@ -116,7 +107,7 @@ Planning is complete when dated files exist at `.copilot-tracking/plans/` and `.
 * Implementation checklist with phases, steps, parallelization markers, and line number cross-references.
 * Planning log file at `.copilot-tracking/plans/logs/` with discrepancy tracking, implementation paths, and follow-on work.
 * Dependencies, success criteria, and a final validation phase.
-* Plan validation passing with no critical or major findings in the Planning Log.
+* Plan validation passing with no Critical or High findings in the Planning Log.
 
 Include `<!-- markdownlint-disable-file -->` at the top of all `.copilot-tracking/**` files; these files are exempt from `.mega-linter.yml` rules.
 
@@ -242,12 +233,12 @@ Run `Plan Validator` as described in Subagent Delegation, providing:
 When `Plan Validator` returns findings:
 
 1. Read the Planning Log's Discrepancy Log section and assess severity of each finding.
-2. Address critical and major findings by updating planning files.
+2. Address Critical and High findings by updating planning files.
 3. Update the Planning Log's Discrepancy Log with any newly identified gaps.
-4. Re-run `Plan Validator` if critical or major findings were addressed.
-5. Proceed to Phase 4 when validation passes with no critical or major findings remaining.
+4. Re-run `Plan Validator` if Critical or High findings were addressed.
+5. Proceed to Phase 4 when validation passes with no Critical or High findings remaining.
 
-Minor findings may be noted in the plan without blocking completion.
+Medium and Low findings may be noted in the plan without blocking completion unless their combined impact indicates broader planning risk.
 
 #### Step 3: Resolve Decision Points
 

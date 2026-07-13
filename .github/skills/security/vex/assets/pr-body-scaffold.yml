@@ -1,0 +1,40 @@
+# PR-body scaffold for VEX triage pull requests.
+#
+# Relocated from .github/PULL_REQUEST_TEMPLATE/vex-triage.md so the scaffold does
+# not surface in GitHub's native pull-request template picker. The VEX drafting
+# workflow renders the pull-request body from these fields; this file is not a
+# GitHub PR template and is intentionally kept outside .github/PULL_REQUEST_TEMPLATE/.
+title: "VEX: draft status for untriaged findings"
+
+summary_prompt: "Brief overview of the CVEs addressed in this triage pull request."
+
+evidence_checklist:
+  - id: code-citations
+    label: "Code citations provided (file path and line range for reachability evidence per CVE)"
+    required: true
+  - id: vulnerability-details
+    label: "Vulnerability details included (CVE ID, advisory URL, CVSS score per CVE)"
+    required: true
+  - id: reachability-analysis
+    label: "Reachability analysis completed (import path traced, dead code confirmed, or mitigation identified)"
+    required: true
+  - id: licensing-compliance
+    label: "Licensing compliance verified (data sourced from CC0/public-domain sources; GHSA prose not quoted)"
+    required: true
+
+cve_assessment_template:
+  heading_template: "### {cve_id}"
+  status_options:
+    - not_affected
+    - affected
+    - under_investigation
+    - fixed
+  confidence_options:
+    - "High: not_affected (vulnerable symbol provably unreachable)"
+    - "High: affected (vulnerable symbol on a reachable execution path)"
+    - "Medium (symbol reachable in some configurations but ambiguous)"
+    - "Low (cannot determine reachability)"
+    - "Vendor-disputed (OSV/NVD shows dispute or CVSS < 4.0 with no known exploit)"
+  impact_prompt: "Describe the impact on hve-core consumers: the affected component, the vulnerable symbol, and whether any mitigation exists."
+
+additional_context_prompt: "Link to related advisories, remediation issues, or scan reports."

@@ -1,7 +1,7 @@
 ---
 name: Task Researcher
-description: 'Task research specialist for comprehensive project analysis - Brought to you by microsoft/hve-core'
-disable-model-invocation: true
+description: 'Task research specialist for comprehensive project analysis'
+disable-model-invocation: false
 agents:
   - Researcher Subagent
 handoffs:
@@ -12,6 +12,7 @@ handoffs:
   - label: "🔬 Deeper Research"
     agent: Task Researcher
     prompt: /task-research continue deeper research based on potential next research items
+    send: true
 ---
 
 # Task Researcher
@@ -68,14 +69,6 @@ Subagent result handling:
 * Treat the subagent's chat response as an index, not the full result.
 * When a decision (plan structure, phase ordering, accept/reject of an alternative, validation verdict) depends on detail beyond the summary bullets, re-read the subagent file directly and cite specific sections.
 * Do not re-read the file gratuitously: re-read only when the next action requires evidence the summary does not contain.
-
-### Model Selection for Subagents
-
-Apply cost-first model selection when invoking subagents. Research tasks are read-heavy and do not generate code, so they benefit from a fast-tier model without sacrificing quality.
-
-* Research subagent calls: specify `model: "Claude Haiku 4.5 (copilot)"` on the `runSubagent` invocation to reduce cost.
-* If the research task involves complex code-level reasoning (tracing execution paths, analyzing architecture): omit the `model` parameter to inherit the session model.
-* When the fast model is unavailable or the cost tier constraint prevents downgrading, omit `model` and let the platform resolve it.
 
 ## File Locations
 

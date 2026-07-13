@@ -14,6 +14,7 @@ Items in the Highest Priority Rules section from attached instructions files ove
 * Breaking changes are acceptable.
 * Backward-compatibility layers or legacy support are added only when explicitly requested.
 * Tests, scripts, and one-off markdown docs are created or modified only when explicitly requested.
+* Ensure `npm ci` has ran recently before running any npm scripts in `package.json`.
 
 Rules for comments:
 
@@ -21,6 +22,16 @@ Rules for comments:
 * Thought processes, step-by-step reasoning, and narrative comments do not appear in code.
 * Comments that contradict current behavior are removed or updated.
 * Temporal markers (phase references, dates, task IDs) are removed from code files during any edit.
+
+Rules for markdown frontmatter:
+
+* When editing any Markdown file whose frontmatter already contains an `ms.date` field, update that field to today's date.
+* Format the date using ISO 8601 (`YYYY-MM-DD`), matching the existing `ms.date` convention.
+
+Rules for human review checkboxes:
+
+* Agents never check or mark complete any human review checkbox (for example, `- [ ] Reviewed and validated by a qualified human reviewer`). Only a human may convert `[ ]` to `[x]` on review checkboxes.
+* Backlog managers must verify that all human review checkboxes are checked before processing artifacts into a backlog. If any checkbox is unchecked, halt processing and inform the user that human review is required first.
 
 Rules for fixing errors:
 
@@ -41,8 +52,9 @@ The project is organized into these main areas:
 * Documentation (`docs/`) - Getting started guides, templates, RPI workflow documentation, and contribution guidelines.
 * Scripts (`scripts/`) - Automation for linting, security validation, extension packaging, and development tools.
 * Skills (`.github/skills/{collection-id}/`) - Self-contained skill packages, by convention organized by collection.
+* Hooks (`.github/hooks/{collection-id}/`) - Collection-scoped Copilot hook manifests (JSON) that wire lifecycle event commands.
 * Extension (`extension/`) - VS Code extension source and packaging.
-* GitHub Configuration (`.github/`) - Workflows, instructions, prompts, agents, and issue templates, typically organized into `{collection-id}` subdirectories.
+* GitHub Configuration (`.github/`) - Workflows, instructions, prompts, agents, composite actions, and issue templates, typically organized into `{collection-id}` subdirectories.
 * Collections (`collections/`) - YAML and markdown manifests defining bundled sets of agents, prompts, instructions, and skills.
 * Logs (`logs/`) - Output from validation and analysis scripts.
 
@@ -53,6 +65,7 @@ Scripts are organized by function:
 * Collections (`scripts/collections/`) - Collection validation and shared helper modules.
 * Extension (`scripts/extension/`) - Extension packaging and preparation.
 * Linting (`scripts/linting/`) - Markdown validation, link checking, frontmatter validation, model reference validation, and PowerShell analysis.
+* Devcontainer (`scripts/devcontainer/`) - Lockfile integrity validation and infrastructure change log generation.
 * Security (`scripts/security/`) - Dependency pinning validation, SHA staleness checks, and action version consistency.
 * Library (`scripts/lib/`) - Shared utilities such as verified downloads.
 * Plugins (`scripts/plugins/`) - Plugin generation and marketplace validation.
@@ -60,6 +73,18 @@ Scripts are organized by function:
 ### Skills Organization
 
 By convention, skills are self-contained packages organized under `.github/skills/{collection-id}/{skill-name}/`. Each skill folder contains a `SKILL.md` file with domain-specific instructions, and may include other markdown files that are referenced by `SKILL.md` along with `scripts/`, `references/`, `assets/`, or other subdirectories.
+
+### Cross-Kind Artifact References
+
+Generic authoring guidance uses portable paths such as `.github/skills/<skill>/SKILL.md` and does not assume a collection directory. HVE-Core packaging may add a `{collection-id}` layer as an optional host packaging convention.
+
+When a prompt, agent, or instruction uses `#file:`:
+
+* Resolve the path relative to the containing file, not the workspace root.
+* Preserve the original artifact suffix, such as `.instructions.md`, `.agent.md`, or `.prompt.md`.
+* Use relative paths; do not use absolute paths or a `.github/` prefix. Plugin and extension packaging strip `.github/` while preserving relative depth between artifact-kind directories.
+* For example, from `.github/agents/{collection-id}/`, a same-collection instruction target uses `#file:../../instructions/{collection-id}/name.instructions.md`.
+* Keep a cross-kind target in the same collection manifest as the referencing artifact.
 
 ### Documentation Structure
 
@@ -78,10 +103,11 @@ Templates for agent and prompt outputs are stored in `docs/templates/`:
 * `docs/templates/full-review-output-format.md` - Code review full output format.
 * `docs/templates/standards-review-output-format.md` - Standards review output format.
 * `docs/templates/engineering-fundamentals.md` - Engineering fundamentals reference.
-* `docs/templates/brd-template.md` - Business requirements document template.
 * `docs/templates/user-journey-template.md` - User journey template.
 * `docs/templates/adr-template-solutions.md` - Architecture decision record template.
 * `docs/templates/rca-template.md` - Root cause analysis template.
+
+The canonical Business Requirements Document template lives in `.github/skills/project-planning/requirements-author/templates/brd/brd-full.md` as part of the `requirements-author` skill.
 
 ### Copilot Tracking
 
@@ -99,8 +125,8 @@ The `.copilot-tracking/` directory (gitignored) contains AI-assisted workflow ar
 * PRD Sessions (`.copilot-tracking/prd-sessions/`) - Product requirements document session state.
 * GitHub Issues (`.copilot-tracking/github-issues/`) - GitHub issue search, triage, and workflow tracking.
 * Sandbox (`.copilot-tracking/sandbox/`) - Prompt testing sandbox environments.
-* Prompts (`.copilot-tracking/prompts/`) - Prompt updater tracking files.
-* Doc Ops (`.copilot-tracking/doc-ops/`) - Documentation operations session tracking.
+* HVE Builder (`.copilot-tracking/hve-builder/`) - Prompt-engineering discovery, authoring, review, behavior-test, and validation evidence.
+* Documentation (`.copilot-tracking/documentation/`) - Documentation workflow session tracking.
 * Memory (`.copilot-tracking/memory/`) - Cross-session memory files.
 * Challenges (`.copilot-tracking/challenges/`) - Challenge session Q&A logs, unresolved items, and scope records from Task Challenger sessions.
 
@@ -140,6 +166,7 @@ Commit message scopes map to repository directories:
 * `(prompts)` = `.github/prompts/`
 * `(instructions)` = `.github/instructions/`
 * `(skills)` = `.github/skills/`
+* `(hooks)` = `.github/hooks/`
 * `(templates)` = `.github/ISSUE_TEMPLATE/`
 * `(workflows)` = `.github/workflows/`
 * `(extension)` = `extension/`
@@ -164,7 +191,7 @@ Frontmatter schemas are stored in `scripts/linting/schemas/`. Schema-to-file map
 
 ### Documentation Operations
 
-The doc-ops agent scans these directories for documentation coverage analysis:
+The Documentation agent scans these directories for documentation coverage analysis:
 
 * `docs/` - Primary documentation tree.
 * `scripts/` - Script-level markdown files and inline documentation.
@@ -210,8 +237,12 @@ Agents should use npm scripts for all validation:
 * `npm run lint:py` - Python linting via ruff
 * `npm run lint:models` - Model reference validation against catalog
 * `npm run lint:models:refresh` - Refresh model catalog from upstream documentation
-* `npm run lint:all` - Run all linters (chains `format:tables`, `lint:md`, `lint:ps`, `lint:yaml`, `lint:links`, `lint:frontmatter`, `lint:collections-metadata`, `lint:marketplace`, `lint:version-consistency`, `lint:permissions`, `lint:dependency-pinning`, `lint:py`, `validate:skills`, `lint:ai-artifacts`, and `lint:models`)
+* `npm run lint:permissions` - Workflow permissions validation
+* `npm run lint:dependency-pinning` - Dependency pinning and SHA staleness validation
+* `npm run lint:all` - Run all linters (chains `format:tables`, `lint:md`, `lint:ps`, `lint:yaml`, `lint:json`, `lint:links`, `lint:frontmatter`, `lint:adr-consistency`, `lint:collections-metadata`, `lint:marketplace`, `lint:version-consistency`, `lint:permissions`, `lint:dependency-pinning`, `lint:ps-module-pins`, `lint:py`, `validate:skills`, `lint:ai-artifacts`, `lint:models`, `eval:lint:vally`, `eval:lint:schema`, `eval:lint:text`, `eval:lint:safety`, and `validate:devcontainer-lockfile`)
 * `npm run validate:copyright` - Copyright header validation
+* `npm run validate:devcontainer-lockfile` - Devcontainer lockfile integrity validation
+* `npm run validate:devcontainer-changelog` - Devcontainer infrastructure change summary
 * `npm run validate:skills` - Skill structure validation
 * `npm run spell-check` - Spelling validation
 * `npm run format:tables` - Markdown table formatting
@@ -256,6 +287,22 @@ Python skills include a `pyproject.toml` validated by `validate:skills` via `Tes
 * `fuzz` dependency group with `atheris>=3.0` - Required alongside `fuzz_harness.py`. Kept separate from `dev` (no macOS wheels).
 * `python_files = ["test_*.py", "fuzz_harness.py"]` in `[tool.pytest.ini_options]` - Required alongside `fuzz_harness.py`. Enables pytest discovery.
 * `ruff` in dev dependencies - Recommended. Ensures the linter is available in the skill's virtual environment.
+* `uv.lock` - Required at the skill root when Python dependencies exist. Skills must commit both `pyproject.toml` and `uv.lock` so Dependabot can resolve and patch vulnerable dependencies via the `.github/skills/**` uv glob.
+
+### PowerShell Module Installation in Workflows
+
+Workflows install PowerShell modules via the composite action
+`.github/actions/setup-ps-modules/action.yml`. This action caches modules
+keyed on `scripts/security/ps-module-versions.json` and retries installation
+with exponential backoff on PSGallery failures. The action always installs to
+`CurrentUser` scope because the cache path is hardcoded to the CurrentUser
+module location. Do not use inline `Install-Module` steps in workflows; use
+the composite action instead. The `copilot-setup-steps.yml` workflow calls
+`scripts/security/Install-PSModules.ps1` directly with `-Scope CurrentUser`
+because the Copilot coding-agent runner is not elevated; `AllUsers` targets
+`/usr/local/share/powershell/Modules` and fails with admin-rights errors that
+retries cannot recover. `CurrentUser` installs to the same runner user's module
+path the agent reads, so no caching or elevation is required.
 
 ### Environment Synchronization
 

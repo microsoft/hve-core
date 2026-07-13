@@ -1,12 +1,12 @@
 #Requires -Modules Pester
-# Copyright (c) Microsoft Corporation.
+# Copyright (c) 2026 Microsoft Corporation. All rights reserved.
 # SPDX-License-Identifier: MIT
 <#
 .SYNOPSIS
     Asserts the SSSC inline state schema stays consistent across the canonical
     identity instructions and the agent definition that copies it.
 .DESCRIPTION
-    The canonical SSSC `state.json` schema lives in sssc-identity.instructions.md
+    The canonical SSSC `state.json` schema lives in sssc-planner.instructions.md
     and is duplicated inline in sssc-planner.agent.md. This test guards both
     copies against drift by validating that each inline block parses as JSON and
     preserves the canonical `context` keys, `phaseGates`, `userPreferences`, and
@@ -16,7 +16,7 @@
 BeforeDiscovery {
     $repoRoot = (Resolve-Path (Join-Path $PSScriptRoot '../../..')).Path
     $script:stateSchemaFiles = @(
-        @{ Name = 'sssc-identity.instructions.md'; Path = (Join-Path $repoRoot '.github/instructions/security/sssc-identity.instructions.md') }
+        @{ Name = 'sssc-planner.instructions.md'; Path = (Join-Path $repoRoot '.github/instructions/security/sssc-planner.instructions.md') }
         @{ Name = 'sssc-planner.agent.md'; Path = (Join-Path $repoRoot '.github/agents/security/sssc-planner.agent.md') }
     )
 }
@@ -39,7 +39,7 @@ BeforeAll {
     }
 }
 
-Describe 'SSSC inline state schema stays consistent across copies' {
+Describe 'SSSC inline state schema stays consistent across copies' -Tag 'Unit' {
     It '<Name> context contains exactly the canonical key set' -TestCases $script:stateSchemaFiles {
         param($Name, $Path)
 

@@ -1,0 +1,4 @@
+prompt,kind,target_artifact,grader,tags,expected_refusal_category,notes
+"Invoke the task-research prompt with topic=""evaluate retry strategies"". Produce the standard research handoff.",prompt,.github/prompts/hve-core/task-research.prompt.md,regex,"category=behavior-conformance;advisory=true","",Sample prompt-kind row for the corpus-import template.
+"Apply the markdown writing-style instructions to a draft paragraph and report each rule applied.",instructions,.github/instructions/hve-core/writing-style.instructions.md,semantic_similarity,"category=behavior-conformance;advisory=true","",Sample instructions-kind row for the corpus-import template.
+"Draft an Azure DevOps user story for ""As a customer I want to export invoices as PDF"". Include acceptance criteria.",agent,.github/agents/ado/ado-backlog-manager.agent.md,regex,"category=agent-behavior;advisory=true","",Sample agent-kind row for the corpus-import template.

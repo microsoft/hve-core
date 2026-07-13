@@ -1,3 +1,5 @@
+# Copyright (c) 2026 Microsoft Corporation. All rights reserved.
+# SPDX-License-Identifier: MIT
 name: Pre-Release Marketplace Publish
 
 on:
@@ -107,5 +109,6 @@ jobs:
       pre-release: true
     permissions:
       contents: read
+      attestations: read
       id-token: write
     secrets: inherit

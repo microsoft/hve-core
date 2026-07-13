@@ -13,7 +13,7 @@ tags:
   - architecture
   - reference
 author: Microsoft
-ms.date: 2026-03-11
+ms.date: 2026-06-27
 ms.topic: reference
 estimated_reading_time: 7
 ---
@@ -36,36 +36,33 @@ flowchart TD
 
   subgraph Instructions ["Instruction Files"]
     I1["rai-identity"]
-    I2["rai-standards"]
-    I3["rai-security-model"]
-    I4["rai-impact-assessment"]
-    I5["rai-backlog-handoff"]
-    I6["rai-risk-classification"]
-    I7["rai-capture-coaching"]
+    I2["rai-license-posture"]
+  end
+
+  subgraph Skills ["Skills"]
+    S1["rai-planner"]
+    S2["rai-standards"]
   end
 
   RP -->|"reads/writes"| SJ
   RP -->|"generates"| AF
   RP -->|"follows"| I1
   RP -->|"follows"| I2
-  RP -->|"follows"| I3
-  RP -->|"follows"| I4
-  RP -->|"follows"| I5
-  RP -->|"follows"| I6
-  RP -->|"follows"| I7
+  RP -->|"uses"| S1
+  RP -->|"uses"| S2
 ```
 
-The RAI Planner agent definition lives at `.github/agents/rai-planning/rai-planner.agent.md`. Seven instruction files under `.github/instructions/rai-planning/` provide domain-specific guidance, auto-applied via `applyTo` patterns when working within `.copilot-tracking/rai-plans/`.
+The RAI Planner agent definition lives at `.github/agents/rai-planning/rai-planner.agent.md`. Two instruction files under `.github/instructions/rai-planning/` provide domain-specific guidance, auto-applied via `applyTo` patterns when working within `.copilot-tracking/rai-plans/`. Phase-specific assessment guidance lives in the shared `backlog-templates` skill and the `rai-standards` skill.
 
-| Instruction file                          | Domain                                                                                                  |
-|-------------------------------------------|---------------------------------------------------------------------------------------------------------|
-| `rai-identity.instructions.md`            | Agent identity, orchestration, state management, session recovery                                       |
-| `rai-risk-classification.instructions.md` | Risk classification screening, depth tier assignment, prohibited uses gate                              |
-| `rai-standards.instructions.md`           | NIST AI RMF 1.0 trustworthiness characteristics, subcategory mappings, framework isolation architecture |
-| `rai-security-model.instructions.md`      | AI-specific threat taxonomy, `T-RAI-{NNN}` format, concern level assessment                             |
-| `rai-impact-assessment.instructions.md`   | Control surface evaluation, evidence register, characteristic tradeoff analysis                         |
-| `rai-backlog-handoff.instructions.md`     | Dual-format backlog handoff, content sanitization, autonomy tiers                                       |
-| `rai-capture-coaching.instructions.md`    | Exploration-first questioning techniques for capture mode                                               |
+| Instruction file                      | Domain                                                                    |
+|---------------------------------------|---------------------------------------------------------------------------|
+| `rai-identity.instructions.md`        | Agent identity, orchestration, state management, session recovery         |
+| `rai-license-posture.instructions.md` | RAI standards licensing posture, source-class mapping, attribution gating |
+
+| Skill           | Domain                                                                                                         |
+|-----------------|----------------------------------------------------------------------------------------------------------------|
+| `rai-planner`   | Risk classification, impact assessment, security model, capture coaching, and backlog handoff phase references |
+| `rai-standards` | NIST AI RMF 1.0 trustworthiness characteristics, subcategory mappings, framework isolation, AI STRIDE overlay  |
 
 ## State Management
 
@@ -121,29 +118,31 @@ The agent asks up to 7 focused questions per turn, using emoji checklists to tra
 | ✅      | Complete: answer received and recorded             |
 | ❌      | Blocked or skipped: user indicated "skip" or "n/a" |
 
-Each turn begins by showing the current phase checklist status. When all questions for a phase reach ✅ or ❌, the agent summarizes findings and asks for explicit confirmation before advancing.
+Each turn begins by showing the current phase checklist status. When all questions for a phase reach ✅ or ❌, the agent summarizes findings. At hard gates (Phases 2, 3, and 6) it then asks for explicit confirmation before advancing; at summary-and-advance gates (Phases 1, 4, and 5) it advances unless the user objects.
 
 > [!NOTE]
-> The agent never advances to the next phase without user confirmation. This ensures the user maintains control over assessment pacing and can revisit questions before moving forward.
+> Phases 2, 3, and 6 are hard gates that require explicit user confirmation before advancing. Phases 1, 4, and 5 are summary-and-advance gates: the agent presents a summary and advances unless the user objects. This keeps the user in control at the decision points that carry irreversible downstream effect while keeping lighter phases moving.
 
 ## Session Resume Protocol
 
-When returning to an existing RAI assessment, the agent follows a four-step resume protocol:
+When returning to an existing RAI assessment, the agent follows a five-step resume protocol:
 
 1. Read `state.json` from the project slug directory
-2. Display the disclaimer blockquote and attribution notices
-3. Display current phase progress and checklist status. Summarize completed phases and remaining work
-4. Continue from the last incomplete action
+2. If `disclaimerShownAt` is `null`, display the Startup Announcement verbatim and record the timestamp
+3. Display current phase progress and checklist status
+4. Summarize what was completed and what remains
+5. Continue from the last incomplete action
 
 ### Post-Summarization Recovery
 
-When conversation context is compacted, a five-step recovery process reconstructs state:
+When conversation context is compacted, a six-step recovery process reconstructs state:
 
 1. Read `state.json` for project slug and current phase
-2. Read the RAI plan markdown file referenced in `raiPlanFile`
-3. Reconstruct context from existing artifacts (system definition pack, standards mapping, security model addendum, control surface catalog, evidence register, and tradeoffs)
-4. Identify the next incomplete task within the current phase
-5. Display the disclaimer blockquote and attribution notices, then resume with a brief summary of recovered state and the next action
+2. If `disclaimerShownAt` is `null`, display the Startup Announcement verbatim and record the timestamp
+3. Read the RAI plan markdown file referenced in `raiPlanFile`
+4. Reconstruct context from existing artifacts (system definition pack, standards mapping, security model addendum, and control surface catalog)
+5. Identify the next incomplete task within the current phase
+6. Resume with a brief summary of recovered state and the next action
 
 > [!NOTE]
 > The disclaimer and attribution notices described above are conversational, displayed in the chat interface during session starts, resumes, and exit points. Generated artifacts in Phases 5 and 6 carry separate persisted footers (AI-content transparency notes, human review checkboxes, and full disclaimers on handoff deliverables) written directly into the markdown files. See [Handoff Pipeline](handoff-pipeline#artifact-attribution-and-review) for details on persisted artifact footers.

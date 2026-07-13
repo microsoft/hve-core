@@ -1,5 +1,5 @@
 ---
-description: 'Generates pull request descriptions from branch diffs - Brought to you by microsoft/hve-core'
+description: 'Generate pull request descriptions from branch diffs'
 agent: agent
 argument-hint: "[branch=origin/main] [createPullRequest=false] [excludeMarkdown={true|false}]"
 ---
@@ -14,7 +14,9 @@ argument-hint: "[branch=origin/main] [createPullRequest=false] [excludeMarkdown=
 
 ## Requirements
 
-Read and follow all instructions from `hve-core/pull-request.instructions.md` to generate a pull request body of changes using the pr-reference Skill with parallel subagent review.
+Read and follow all instructions from #file:../../instructions/hve-core/pull-request.instructions.md to generate a pull request body of changes using the pr-reference Skill with parallel subagent review.
+
+Before producing `.copilot-tracking/pr/pr.md` or creating a pull request, search for and apply `content-policy-citation.instructions.md`.
 
 ---
 

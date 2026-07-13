@@ -1,6 +1,6 @@
 ---
 name: gitlab
-description: 'Manage GitLab merge requests and pipelines with a Python CLI - Brought to you by microsoft/hve-core'
+description: 'Manage GitLab merge requests and pipelines with a Python CLI'
 license: MIT
 compatibility: 'Requires Python 3.11+. GitLab credentials via GITLAB_URL and GITLAB_TOKEN environment variables.'
 metadata:
@@ -38,6 +38,26 @@ Set these environment variables before running any command:
 If `GITLAB_PROJECT` is not set, the script attempts to detect the project from
 `git remote get-url origin`. Set the variable explicitly when you are not in a
 git repository or when you want to target a different project.
+
+### Operational Variables
+
+| Variable             | Required | Purpose                                                                                 |
+|----------------------|----------|-----------------------------------------------------------------------------------------|
+| `GITLAB_AUDIT_LOG`   | No       | Path to a JSON Lines audit log. When set, every request is audited (see Audit Logging). |
+| `GITLAB_AUDIT_ACTOR` | No       | Overrides the recorded actor identity (for example, a CI service principal).            |
+
+### Audit Logging
+
+When `GITLAB_AUDIT_LOG` is set, the script writes a structured JSON Lines audit trail for every API request. Auditing is fail-closed and write-ahead:
+
+* An `attempt` record is written **before** the request is sent. If the audit log cannot be written, the operation is aborted and nothing is sent to GitLab.
+* An `outcome` record (`success` or `error`, with HTTP status on failure) is written after the request completes.
+
+Each record includes a UTC timestamp, the `actor` (from `GITLAB_AUDIT_ACTOR`, otherwise `gitlab-token`), the operation, HTTP method, and the request path. Tokens, authorization headers, and query strings are never written. Audit failures after the request emit a warning without altering the result.
+
+### Credential Rotation
+
+The script reads `GITLAB_TOKEN` from the environment on every invocation, so an external rotator can swap it between calls without code changes. A `401` or `403` response indicates the token may be expired or revoked; rotate the personal access token in GitLab user settings. Full OAuth-style refresh flows are out of scope for this CLI.
 
 ## Quick Start
 
@@ -132,5 +152,3 @@ python scripts/gitlab.py job-log 67890
 
 GitLab uses MR IIDs such as `!42` inside a project. This skill expects the
 numeric IID, not the global merge request ID.
-
-*🤖 Crafted with precision by ✨Copilot following brilliant human instruction, then carefully refined by our team of discerning human reviewers.*

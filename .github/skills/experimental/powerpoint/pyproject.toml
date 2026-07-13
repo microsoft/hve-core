@@ -3,12 +3,17 @@ name = "powerpoint-skill-tests"
 version = "0.0.0"
 requires-python = ">=3.11"
 dependencies = [
-    "python-pptx",
+    # Fixture generator assumes python-pptx's bundled default.pptx layout/theme
+    # names; pin a lower bound so out-of-lock contributors don't drift.
+    "python-pptx>=1.0.2",
+    "lxml>=5.0",
     "pyyaml",
     "ruamel.yaml",  # required by generate_themes.py for round-trip YAML fidelity
     "cairosvg",
     "Pillow",
-    "pymupdf",
+    # MuPDF C library — pin to track security fixes; review on every minor bump.
+    # Update policy: re-check NVD + OSV advisories quarterly and on any pip-audit alert.
+    "pymupdf>=1.27.1,<2.0",
     "github-copilot-sdk",
 ]
 

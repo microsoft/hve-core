@@ -2,7 +2,7 @@
 title: Authoring Custom Skills
 description: Build self-contained skill packages that bundle domain knowledge, reference materials, and scripts for on-demand use
 author: Microsoft
-ms.date: 2026-02-24
+ms.date: 2026-06-27
 ms.topic: how-to
 keywords:
   - skills
@@ -153,8 +153,8 @@ The [pr-reference skill](pathname://../../.github/skills/shared/pr-reference/SKI
 Reference materials expand the skill's knowledge base without bloating the core instructions. Link to reference files from within SKILL.md using relative paths:
 
 ```markdown
-For the full list of approved error codes, see
-[Error Codes](references/error-codes.md).
+For the detailed technical reference, see
+[Detailed Reference](references/REFERENCE.md).
 
 Run the validation script to check for breaking changes:
 

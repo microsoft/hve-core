@@ -105,7 +105,3 @@ deployment credentials.
 * Isolate pre-install script execution from secrets and sensitive build resources.
 * Remove any references to internal package names from public repositories.
 * Harden all build environments according to the guidelines under CICD-SEC-7.
-
----
-
-*🤖 Crafted with precision by ✨Copilot following brilliant human instruction, then carefully refined by our team of discerning human reviewers.*

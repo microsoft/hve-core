@@ -1,3 +1,5 @@
+// Copyright (c) 2026 Microsoft Corporation. All rights reserved.
+// SPDX-License-Identifier: MIT
 import React from 'react';
 import { render, screen } from '@testing-library/react';
 import '@testing-library/jest-dom';
@@ -9,21 +11,27 @@ expect.extend(toHaveNoViolations);
 describe('CollectionCard', () => {
   const defaultProps = {
     name: 'hve-core',
+    title: 'HVE Core',
     description: 'RPI workflow, planning, and implementation',
     artifacts: 40,
     maturity: 'Stable' as const,
     href: '/docs/getting-started/collections',
   };
 
-  it('renders name and description', () => {
+  it('renders the human-readable title and description', () => {
     render(<CollectionCard {...defaultProps} />);
-    expect(screen.getByText('hve-core')).toBeInTheDocument();
+    expect(screen.getByText('HVE Core')).toBeInTheDocument();
     expect(screen.getByText('RPI workflow, planning, and implementation')).toBeInTheDocument();
+  });
+
+  it('exposes the machine name as a data attribute', () => {
+    const { container } = render(<CollectionCard {...defaultProps} />);
+    expect(container.querySelector('[data-name="hve-core"]')).toBeInTheDocument();
   });
 
   it('links to the correct href', () => {
     render(<CollectionCard {...defaultProps} />);
-    const link = screen.getByText('hve-core').closest('a');
+    const link = screen.getByText('HVE Core').closest('a');
     expect(link).toHaveAttribute('href', '/docs/getting-started/collections');
   });
 

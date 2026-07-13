@@ -3,7 +3,7 @@ title: 'AI Artifacts Common Standards'
 description: 'Common standards and quality gates for all AI artifact contributions to hve-core'
 sidebar_position: 2
 author: Microsoft
-ms.date: 2026-03-12
+ms.date: 2026-06-28
 ms.topic: reference
 ---
 
@@ -77,23 +77,18 @@ Focus on agents that:
 
 ## Model Version Requirements
 
-All AI artifacts (agents, instructions, prompts) **MUST** target the **latest available models** from Anthropic and OpenAI only.
-
-The model catalog (`scripts/linting/model-catalog.json`) contains the full list of models available in GitHub Copilot for validation purposes, but not all cataloged models are accepted for use in hve-core artifacts, per above.
+All AI artifacts (agents, instructions, prompts) **MUST** target models listed in the model catalog (`scripts/linting/model-catalog.json`). The catalog defines which models are available in GitHub Copilot and which providers are accepted via the `providerAllowlist` field.
 
 ### Accepted Models
 
-| Provider  | Models                                                          |
-|-----------|-----------------------------------------------------------------|
-| Anthropic | Latest Claude models (e.g., Claude Sonnet 4.6, Claude Opus 4.6) |
-| OpenAI    | Latest GPT models (e.g., GPT-5.4, GPT-5.3-Codex)                |
+Any model in the catalog whose provider appears in `providerAllowlist` and whose status is `ga` or `preview`. Run `npm run lint:models` to validate references against the catalog.
 
 ### Not Accepted
 
-* ❌ Models from other providers
-* ❌ Older model versions not in the catalog (e.g., GPT-4o, Claude 3.5)
+* ❌ Models not present in the catalog
+* ❌ Models from providers outside the catalog's `providerAllowlist`
 * ❌ Custom or fine-tuned models
-* ❌ Deprecated or retired model versions
+* ❌ Models with `retiring` or `retired` status
 
 ### Model Name Format
 
@@ -286,19 +281,19 @@ Collections represent role-targeted artifact packages for HVE Core artifacts. Th
 
 ### Defined Collections
 
-| Collection            | Identifier         | Description                                                                          |
-|-----------------------|--------------------|--------------------------------------------------------------------------------------|
-| **All**               | `hve-core-all`     | Full bundle of all stable HVE Core agents, prompts, instructions, and skills         |
-| **Azure DevOps**      | `ado`              | Azure DevOps work item management, build monitoring, and pull request creation       |
-| **Coding Standards**  | `coding-standards` | Language-specific coding instructions for bash, Bicep, C#, Python, and Terraform     |
-| **Data Science**      | `data-science`     | Data specification generation, Jupyter notebooks, and Streamlit dashboards           |
-| **Design Thinking**   | `design-thinking`  | Design Thinking coaching identity, quality constraints, and methodology instructions |
-| **Experimental**      | `experimental`     | Experimental skills and utilities in early development                               |
-| **GitHub Backlog**    | `github`           | GitHub issue discovery, triage, sprint planning, and backlog execution               |
-| **Installer**         | `installer`        | HVE Core installation skill (installer) and environment setup                        |
-| **Project Planning**  | `project-planning` | PRDs, BRDs, ADRs, architecture diagrams, and documentation operations                |
-| **HVE Core Workflow** | `hve-core`         | Research, Plan, Implement, Review workflow agents and prompts                        |
-| **Security**          | `security`         | Security review, planning, incident response, and risk assessment                    |
+| Collection            | Identifier         | Description                                                                                                                        |
+|-----------------------|--------------------|------------------------------------------------------------------------------------------------------------------------------------|
+| **All**               | `hve-core-all`     | Full bundle of all stable HVE Core agents, prompts, instructions, and skills                                                       |
+| **Azure DevOps**      | `ado`              | Azure DevOps work item management, build monitoring, and pull request creation                                                     |
+| **Coding Standards**  | `coding-standards` | Language-specific coding instructions for bash, Bicep, C#, Python, and Terraform                                                   |
+| **Data Science**      | `data-science`     | Data specification generation, Jupyter notebooks, and Streamlit dashboards                                                         |
+| **Design Thinking**   | `design-thinking`  | Design Thinking coaching identity, quality constraints, and methodology skills for AI-enhanced design thinking across nine methods |
+| **Experimental**      | `experimental`     | Experimental skills and utilities in early development                                                                             |
+| **GitHub Backlog**    | `github`           | GitHub issue discovery, triage, sprint planning, and backlog execution                                                             |
+| **Installer**         | `installer`        | HVE Core installation skill (installer) and environment setup                                                                      |
+| **Project Planning**  | `project-planning` | PRDs, BRDs, ADRs, architecture diagrams, and documentation operations                                                              |
+| **HVE Core Workflow** | `hve-core`         | Research, Plan, Implement, Review workflow agents and prompts                                                                      |
+| **Security**          | `security`         | Security review, planning, incident response, and risk assessment                                                                  |
 
 ### Collection Assignment Guidelines
 
@@ -654,7 +649,7 @@ See [official documentation](https://example.com) for details.
 
 * Starts with frontmatter (YAML between `---` delimiters)
 * Followed by markdown content
-* Includes attribution in frontmatter `description` field
+* Omits attribution suffix from the `description` field (added automatically at distribution)
 * Single newline at EOF
 
 ## RFC 2119 Directive Language
@@ -848,19 +843,7 @@ Jumping from H1 to H3 without an H2, breaking document hierarchy. Follow proper 
 
 ## Attribution Requirements
 
-All AI artifacts MUST include attribution as a suffix in the frontmatter `description` field:
-
-```yaml
-description: 'Tests prompt files in a sandbox environment - Brought to you by microsoft/hve-core'
-```
-
-Format: `- Brought to you by organization/repository-name` appended to the description value.
-
-Skill files (`SKILL.md`) additionally include a blockquote attribution footer as the last line of body content:
-
-```markdown
-> Brought to you by microsoft/hve-core
-```
+Source artifacts carry no attribution suffix or footer. Author `description:` fields without a trailing attribution string, and do not add a blockquote attribution footer to `SKILL.md` bodies.
 
 ## GitHub Issue Title Conventions
 

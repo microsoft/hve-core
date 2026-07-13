@@ -1,4 +1,4 @@
-﻿# Copyright (c) Microsoft Corporation.
+﻿# Copyright (c) 2026 Microsoft Corporation. All rights reserved.
 # SPDX-License-Identifier: MIT
 
 # Validate-MarkdownFrontmatter.ps1
@@ -12,7 +12,7 @@
 # - Standard Copilot attribution footer (excludes Microsoft template files)
 # - Content structure by file type (GitHub configs, DevContainer docs, etc.)
 
-#Requires -Version 7.0
+#Requires -Version 7.4
 
 using namespace System.Collections.Generic
 # Import FrontmatterValidation module with 'using' to make PowerShell class types
@@ -29,14 +29,17 @@ param(
 
     [Parameter(Mandatory = $false)]
     [string[]]$ExcludePaths = @(
-        'scripts/tests/Fixtures/**',
+        'scripts/tests/fixtures/**',
         'scripts/tests/linting/fixtures/**',
         'extension/README.md',
         'extension/README.*.md',
         'extension/templates/README.template.md',
+        'scripts/docs/templates/**',
         'collections/*.collection.md',
         'pr.md',
         '.github/PULL_REQUEST_TEMPLATE.md',
+        '.github/PULL_REQUEST_TEMPLATE/**',
+        '.copilot-tracking/**',
         'plugins/**'
     ),
 
@@ -55,7 +58,8 @@ param(
     [Parameter(Mandatory = $false)]
     [string[]]$FooterExcludePaths = @(
         'CHANGELOG.md',
-        'dependency-pinning-artifacts/**'
+        'dependency-pinning-artifacts/**',
+        '.github/ISSUE_TEMPLATE/**'
     ),
 
     [Parameter(Mandatory = $false)]
@@ -345,6 +349,7 @@ function Test-ValueAgainstSchema {
     [OutputType([string[]])]
     param(
         [Parameter(Mandatory = $true)]
+        [AllowNull()]
         [object]$Value,
 
         [Parameter(Mandatory = $true)]
@@ -355,6 +360,20 @@ function Test-ValueAgainstSchema {
     )
 
     $localErrors = [List[string]]::new()
+
+    # Null handling: a null value is valid when the schema permits the 'null' type
+    # (e.g. nullable fields declared as type ['string', 'null']). With no type
+    # constraint, null is treated as acceptable for this soft validation.
+    if ($null -eq $Value) {
+        if ($Schema.type) {
+            $allowsNull = if ($Schema.type -is [array]) { $Schema.type -contains 'null' } else { $Schema.type -eq 'null' }
+            if (-not $allowsNull) {
+                $localErrors.Add("Field '$Path' must not be null")
+            }
+        }
+
+        return $localErrors.ToArray()
+    }
 
     # Handle oneOf by validating against each subschema.
     if ($Schema.oneOf) {

@@ -1,6 +1,6 @@
 ---
 description: >-
-  Initiate responsible AI assessment planning from PRD/BRD artifacts using the
+  Start responsible AI assessment planning from PRD/BRD artifacts using the
   RAI Planner agent in from-prd mode
 agent: "RAI Planner"
 ---

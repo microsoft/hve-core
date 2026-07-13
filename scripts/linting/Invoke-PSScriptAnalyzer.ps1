@@ -1,5 +1,5 @@
 ﻿#!/usr/bin/env pwsh
-# Copyright (c) Microsoft Corporation.
+# Copyright (c) 2026 Microsoft Corporation. All rights reserved.
 # SPDX-License-Identifier: MIT
 #
 # Invoke-PSScriptAnalyzer.ps1
@@ -7,7 +7,7 @@
 # Purpose: Wrapper for PSScriptAnalyzer with GitHub Actions integration
 # Author: HVE Core Team
 
-#Requires -Version 7.0
+#Requires -Version 7.4
 
 [CmdletBinding()]
 param(
@@ -90,10 +90,11 @@ function Invoke-PSScriptAnalyzerCore {
 
     Write-Host "🔍 Running PSScriptAnalyzer..." -ForegroundColor Cyan
 
-    # Ensure PSScriptAnalyzer 1.25.0 is available (presence-only check would allow a different installed version to bypass the pin)
+    # Ensure pinned modules are available via the centralized install script
+    $installScript = Join-Path $PSScriptRoot '../../scripts/security/Install-PSModules.ps1'
     if (-not (Get-Module -ListAvailable -Name PSScriptAnalyzer | Where-Object { $_.Version -eq [version]'1.25.0' })) {
-        Write-Host "Installing PSScriptAnalyzer 1.25.0..." -ForegroundColor Yellow
-        Install-Module -Name PSScriptAnalyzer -RequiredVersion 1.25.0 -Force -Scope CurrentUser -Repository PSGallery
+        Write-Host "Installing pinned PowerShell modules..." -ForegroundColor Yellow
+        & $installScript
     }
 
     Import-Module PSScriptAnalyzer -RequiredVersion 1.25.0

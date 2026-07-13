@@ -90,7 +90,3 @@ containers.
 * Audit and remove unnecessary SUID/SGID binaries from container images.
 * Reconfigure services to bind to unprivileged ports (above 1024).
 * Validate remediation by inspecting the runtime user of all deployed containers.
-
----
-
-*🤖 Crafted with precision by ✨Copilot following brilliant human instruction, then carefully refined by our team of discerning human reviewers.*

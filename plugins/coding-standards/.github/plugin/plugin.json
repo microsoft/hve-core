@@ -3,10 +3,11 @@
   "description": "Language-specific coding instructions and pre-PR code review agents for bash, Bicep, C#, PowerShell, Python, Rust, and Terraform projects",
   "version": "3.3.101",
   "agents": [
-    "agents/coding-standards/"
-  ],
-  "commands": [
-    "commands/coding-standards/"
+    "agents/accessibility/",
+    "agents/accessibility/subagents/",
+    "agents/coding-standards/",
+    "agents/coding-standards/subagents/",
+    "agents/hve-core/subagents/"
   ],
   "skills": [
     "skills/coding-standards/",

@@ -1,4 +1,4 @@
-# Copyright (c) Microsoft Corporation.
+# Copyright (c) 2026 Microsoft Corporation. All rights reserved.
 # SPDX-License-Identifier: MIT
 # Licensed under the MIT license.
 
@@ -7,7 +7,7 @@
 # Purpose: Shared security utility functions for hve-core security scripts.
 # Author: HVE Core Team
 
-#Requires -Version 7.0
+#Requires -Version 7.4
 
 # Omit -Force so the standalone CIHelpers export is not shadowed by a nested re-import.
 Import-Module (Join-Path $PSScriptRoot '../../lib/Modules/CIHelpers.psm1')

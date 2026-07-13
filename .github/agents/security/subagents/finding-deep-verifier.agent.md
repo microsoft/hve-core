@@ -1,6 +1,6 @@
 ---
 name: Finding Deep Verifier
-description: "Deep adversarial verification of FAIL and PARTIAL findings for a single security skill - Brought to you by microsoft/hve-core"
+description: "Deep adversarial verification of FAIL and PARTIAL findings for a single security skill"
 tools:
   - search/codebase
   - search/fileSearch

@@ -1,0 +1,37 @@
+id: rpi
+name: RPI Skills
+description: Skill-forward Research, Plan, Implement, and Review entry points with an umbrella RPI skill and existing subagent dispatch.
+tags:
+  - rpi
+  - research
+  - planning
+  - implementation
+  - review
+  - skills
+items:
+  - path: .github/skills/rpi/rpi-quick
+    kind: skill
+  - path: .github/skills/rpi/rpi-research
+    kind: skill
+  - path: .github/skills/rpi/rpi-plan
+    kind: skill
+  - path: .github/skills/rpi/rpi-implement
+    kind: skill
+  - path: .github/skills/rpi/rpi-review
+    kind: skill
+  - path: .github/skills/rpi/rpi-walkthrough
+    kind: skill
+  - path: .github/agents/hve-core/task-researcher.agent.md
+    kind: agent
+  - path: .github/agents/hve-core/subagents/researcher-subagent.agent.md
+    kind: agent
+  - path: .github/agents/hve-core/subagents/plan-validator.agent.md
+    kind: agent
+  - path: .github/agents/hve-core/subagents/phase-implementor.agent.md
+    kind: agent
+  - path: .github/agents/hve-core/subagents/implementation-validator.agent.md
+    kind: agent
+  - path: .github/agents/hve-core/subagents/rpi-validator.agent.md
+    kind: agent
+  - path: .github/instructions/hve-core/copilot-tracking.instructions.md
+    kind: instruction

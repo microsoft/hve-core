@@ -89,7 +89,3 @@ privileged functions intended only for admins.
 * Enable mTLS and strict API key binding.
 * Audit existing agents, tools, and connectors for excessive privileges.
 * Patch authorization middleware to enforce scope validation.
-
----
-
-*🤖 Crafted with precision by ✨Copilot following brilliant human instruction, then carefully refined by our team of discerning human reviewers.*

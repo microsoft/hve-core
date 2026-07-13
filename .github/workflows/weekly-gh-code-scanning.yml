@@ -1,3 +1,5 @@
+# Copyright (c) 2026 Microsoft Corporation. All rights reserved.
+# SPDX-License-Identifier: MIT
 name: Weekly GitHub Code Scanning
 
 on:
@@ -28,4 +30,5 @@ jobs:
     uses: ./.github/workflows/create-gh-code-scanning-issues.yml
     permissions:
       issues: write
+      actions: read
       security-events: read

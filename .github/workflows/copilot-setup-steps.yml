@@ -1,4 +1,4 @@
-# Copyright (c) Microsoft Corporation.
+# Copyright (c) 2026 Microsoft Corporation. All rights reserved.
 # SPDX-License-Identifier: MIT
 #
 # copilot-setup-steps.yml
@@ -31,7 +31,7 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
         with:
           persist-credentials: false
 
@@ -48,7 +48,7 @@ jobs:
         run: npm ci
 
       - name: Set up Python
-        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
+        uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6.3.0
         with:
           python-version: "3.11"
 
@@ -72,9 +72,9 @@ jobs:
           fi
           curl -sSfL "${GITHUB_RELEASES_URL}/rhysd/actionlint/releases/download/v${ACTIONLINT_VERSION}/actionlint_${ACTIONLINT_VERSION}_linux_${ACTIONLINT_ARCH}.tar.gz" -o /tmp/actionlint.tar.gz
           echo "${ACTIONLINT_SHA256}  /tmp/actionlint.tar.gz" | sha256sum -c -
-          tar -xzf /tmp/actionlint.tar.gz actionlint
-          sudo install actionlint /usr/local/bin/actionlint
-          rm actionlint /tmp/actionlint.tar.gz
+          tar -xzf /tmp/actionlint.tar.gz -C /tmp actionlint
+          sudo install /tmp/actionlint /usr/local/bin/actionlint
+          rm /tmp/actionlint.tar.gz /tmp/actionlint
           actionlint --version
 
       - name: Install PowerShell modules
@@ -87,9 +87,9 @@ jobs:
           if ($env:HVE_PSGALLERY_SOURCE_URL) {
             Register-PSRepository -Name $repo -SourceLocation $env:HVE_PSGALLERY_SOURCE_URL -InstallationPolicy Trusted -ErrorAction SilentlyContinue
           }
-          Install-Module -Name PowerShell-Yaml -RequiredVersion 0.4.7 -Force -Scope CurrentUser -Repository $repo
-          Install-Module -Name PSScriptAnalyzer -RequiredVersion 1.25.0 -Force -Scope CurrentUser -Repository $repo
-          Install-Module -Name Pester -RequiredVersion 5.7.1 -Force -Scope CurrentUser -Repository $repo
+          # CurrentUser scope: the coding-agent runner is not elevated, so
+          # AllUsers (/usr/local/share/powershell/Modules) fails with admin-rights errors.
+          & "$env:GITHUB_WORKSPACE/scripts/security/Install-PSModules.ps1" -Scope CurrentUser -Repository $repo
 
       - name: Install uv package manager
         env:
@@ -129,6 +129,11 @@ jobs:
             echo "::error::One or more skill dependency installations failed"
             exit 1
           fi
+          echo "Syncing Python environment for moderation eval..."
+          if ! (cd scripts/evals/moderation && uv sync --locked); then
+            echo "::error::uv sync failed in scripts/evals/moderation"
+            exit 1
+          fi
 
       - name: Install cosign
         env:
@@ -157,6 +162,33 @@ jobs:
           rm /tmp/cosign
           cosign version
 
+      - name: Install OSV-Scanner
+        env:
+          OSV_SCANNER_VERSION: '2.3.8'
+          OSV_SCANNER_AMD64_SHA256: 'bc98e15319ed0d515e3f9235287ba53cdc5535d576d24fd573978ecfe9ab92dc'
+          OSV_SCANNER_ARM64_SHA256: '8158b18edd2d03b1a30d905ca91b032bc62262167be8f206c27114f08823e27c'
+          GITHUB_RELEASES_URL: ${{ vars.HVE_GITHUB_RELEASES_URL || 'https://github.com' }}
+        run: |
+          ARCH=$(uname -m)
+          if [[ "${ARCH}" == "x86_64" ]]; then
+            OSV_ARCH="amd64"
+            OSV_SHA256="${OSV_SCANNER_AMD64_SHA256}"
+          elif [[ "${ARCH}" == "aarch64" ]]; then
+            OSV_ARCH="arm64"
+            OSV_SHA256="${OSV_SCANNER_ARM64_SHA256}"
+          else
+            echo "ERROR: Unsupported architecture for osv-scanner: ${ARCH}" >&2
+            exit 1
+          fi
+          curl -sSfL "${GITHUB_RELEASES_URL}/google/osv-scanner/releases/download/v${OSV_SCANNER_VERSION}/osv-scanner_linux_${OSV_ARCH}" -o /tmp/osv-scanner
+          if ! echo "${OSV_SHA256}  /tmp/osv-scanner" | sha256sum -c --quiet -; then
+            echo "ERROR: osv-scanner checksum verification failed" >&2
+            exit 1
+          fi
+          sudo install /tmp/osv-scanner /usr/local/bin/osv-scanner
+          rm /tmp/osv-scanner
+          osv-scanner --version
+
       - name: Verify tool availability
         run: |
           echo "=== Tool Versions ==="
@@ -169,7 +201,7 @@ jobs:
           uv --version
           uvx --version
           cosign version
-          npx --no vally -- --version
+          osv-scanner --version
           echo ""
           echo "=== npm Scripts Available ==="
           npm run --list

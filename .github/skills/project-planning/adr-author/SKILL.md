@@ -1,13 +1,13 @@
 ---
 name: adr-author
-description: Authoring skill for Architecture Decision Records (ADRs) supporting capture, from-planner-handoff, and adopt-template entry modes with selectable Y-Statement or MADR v4.0.0 output templates, supersession lineage, and ASR trigger evaluation - Brought to you by microsoft/hve-core.
+description: Authoring skill for Architecture Decision Records (ADRs) supporting capture, from-planner-handoff, and adopt-template entry modes with selectable Y-Statement or MADR v4.0.0 output templates, supersession lineage, and ASR trigger evaluation.
 ---
 
 # adr-author
 
 ## Overview
 
-This skill encodes the per-phase authoring conventions for Architecture Decision Records consumed by the ADR Creator agent. It supports three entry modes and two output templates and converges all of them at the Govern phase, where the final ADR file is written and lineage is updated atomically.
+This skill encodes the per-phase authoring conventions for Architecture Decision Records consumed by the ADR Creator agent. It also supports direct invocation when no ADR Creator state file exists. Direct callers first run the session recovery and bootstrap protocol from `adr-identity.instructions.md`: resolve or create `.copilot-tracking/adr-plans/{projectSlug}/state.json`, confirm `entryMode`, `projectSlug`, and `outputTemplate`, then continue at the phase recorded in state. It supports three entry modes and two output templates and converges all of them at the Govern phase, where the final ADR file is written and lineage is updated atomically.
 
 Entry modes (`state.entryMode`):
 
@@ -24,11 +24,11 @@ Entry mode and output template are independent: a `from-planner-handoff` session
 
 Lifecycle at a glance:
 
-| Mode                   | Phase sequence                                              | Output                                              |
-| ---------------------- | ----------------------------------------------------------- | --------------------------------------------------- |
-| `capture`              | Frame → Decide → Govern                                     | Shaped by `outputTemplate` (y-statement or madr-v4) |
-| `from-planner-handoff` | Frame (confirm pre-populated) → Decide → Govern             | Shaped by `outputTemplate` (y-statement or madr-v4) |
-| `adopt-template`       | Ingest → Normalize → Derive Questions → Fill → Govern       | First ADR + `.adr-config.yml` per the BYO contract  |
+| Mode                   | Phase sequence                                        | Output                                              |
+|------------------------|-------------------------------------------------------|-----------------------------------------------------|
+| `capture`              | Frame → Decide → Govern                               | Shaped by `outputTemplate` (y-statement or madr-v4) |
+| `from-planner-handoff` | Frame (confirm pre-populated) → Decide → Govern       | Shaped by `outputTemplate` (y-statement or madr-v4) |
+| `adopt-template`       | Ingest → Normalize → Derive Questions → Fill → Govern | First ADR + `.adr-config.yml` per the BYO contract  |
 
 The state machine, hard exit gates, autonomy tiers (`manual`, `partial`, `full`), and the canonical `state.json` schema are defined in `adr-identity.instructions.md`. This skill provides the authoring activities and artifact contracts; it does not redefine the state machine.
 
@@ -37,11 +37,11 @@ The state machine, hard exit gates, autonomy tiers (`manual`, `partial`, `full`)
 Activities:
 
 - **Scope** — capture the decision in one or two sentences; bound it to a single project.
-- **Decision-makers** — record `deciders`, `consulted`, `informed` (RACI-aligned).
+- **Decision-makers** — record `deciders`, `consulted`, `informed` (RACI-aligned). Prefer a role or team handle over a personal name, and never record personal contact details, secrets, credentials, or third-party or customer PII in any ADR field.
 - **Drivers** — list decision drivers (functional needs, business goals).
 - **Constraints** — list non-negotiables (regulatory, platform, contractual, time).
 - **ASR trigger evaluation** — required when `state.outputTemplate == 'madr-v4'`. Evaluate triggers against the rubric in `adr-standards.instructions.md` and record results in `state.asrTriggers[]`. Defer the rubric and full taxonomy to that file and to `references/asr-trigger-taxonomy.md`.
-- **Diagram-format prompt** — when `state.userPreferences.diagramFormat` is unset, ask the user `ascii` or `mermaid` and persist the answer to `state.userPreferences.diagramFormat`. Required before Frame can exit.
+- **Diagram-format prompt** — when `state.userPreferences.diagramFormat` is unset, check the architecture-diagrams root state at `.copilot-tracking/architecture-diagrams/state.json`; if that file provides `userPreferences.diagramFormat`, use it. Otherwise ask the user for `ascii` or `mermaid`, persist the answer to `state.userPreferences.diagramFormat`, and persist it to the architecture-diagrams root state for standalone reuse. When a caller, handoff, or existing ADR state already provides `state.userPreferences.diagramFormat`, treat that value as authoritative and do not ask again. Required before Frame can exit.
 
 Hard exit gate (restated from `adr-identity.instructions.md`):
 
@@ -80,7 +80,7 @@ This phase converges all three entry modes and is the only phase that writes ADR
 Activities:
 
 1. **MADR v4 frontmatter assembly** — render the ADR frontmatter from `templates/madr-v4.md`. The template is reproduced verbatim from MADR v4.0.0 (CC0); see `references/standards-excerpts.md` for attribution. Merge `templates/madr-v4-frontmatter-overlay.md` on top to inject hve-core extension fields (`id`, `deciders`, `tags`, `supersedes`, `superseded-by`, `related`, `asr_triggers`) without modifying the verbatim upstream template (GP-17).
-2. **Diagram render** — based on `state.userPreferences.diagramFormat`, embed the diagram body from either `templates/diagram-ascii.md` or `templates/diagram-mermaid.md`. Skill callers do not branch on platform; the template selection is purely data-driven.
+2. **Diagram render** — based on `state.userPreferences.diagramFormat`, embed the diagram body from either `templates/diagram-ascii.md` or `templates/diagram-mermaid.md`. Skill callers do not branch on platform; the template selection is purely data-driven. When the diagram is derived from infrastructure source files (Terraform, Bicep, ARM), invoke the `architecture-diagrams` skill with the authoritative format recorded in `state.userPreferences.diagramFormat`, and embed that output in place of the scaffold fragment. Standalone diagram generation uses the architecture-diagrams root state contract rather than ADR state.
 3. **Lineage validation** — apply the six supersession rules summarized below; full text is in `references/lineage-rules.md`.
 4. **Frontmatter validation** — invoke `scripts/validate_frontmatter.py` against the staged ADR file. The script returns a non-zero exit code on schema or enum violations and is the single authority for frontmatter shape.
 5. **Lineage allocator** — invoke `scripts/update_lineage.py` to mutate `.adr-config.yml`. The allocator is the only writer of `last_decision_id`. Manual edits to `last_decision_id` are forbidden.
@@ -154,6 +154,7 @@ Five-step pointer. Full lifecycle, including GP-13 (the `.adr-config.yml` schema
 - `scripts/validate_frontmatter.py` — Validates ADR frontmatter against the MADR v4 schema and the closed enums. Returns non-zero on violation. Path-traversal guarded against the same root.
 - `scripts/update_lineage.py` — Single writer of `last_decision_id` in `.adr-config.yml`. Mutates predecessor ADRs' `superseded-by` atomically with the new ADR's `supersedes`. Path-traversal guarded.
 - `scripts/normalize_template.py` — Converts a user-supplied ADR template into the canonical structure used by `templates/madr-v4.md`. Used only by the `adopt-template` lifecycle. Path-traversal guarded.
+- `scripts/scan_sensitive_content.py` — Deterministic disclosure-risk scanner accepting a file path or stdin and emitting JSON findings. Returns non-zero when high-confidence PII is present, including personal email addresses, phone numbers, and national-identifier-shaped values. Internal-only URL and hostname detection is gated behind `--public` and runs only when `state.repoVisibility` is `public`, since internal URLs are a leak concern only for publicly accessible repositories. Required gate before any durable ADR write (Govern phase) and before any external or handoff emission. Path-traversal guarded.
 
 All scripts treat their working directory as untrusted input and reject paths that resolve outside the project ADR root.
 
@@ -166,15 +167,9 @@ All scripts treat their working directory as untrusted input and reject paths th
 The ADR Creator agent enforces a phase→section load contract per `adr-identity.instructions.md`. Each phase MUST load its section of this skill before executing phase work, and MUST append the section anchor to `state.phaseSkillsLoaded`:
 
 | Phase  | Section anchor | Required `phaseSkillsLoaded` entry |
-| ------ | -------------- | ---------------------------------- |
+|--------|----------------|------------------------------------|
 | Frame  | `#frame`       | `adr-author#frame`                 |
 | Decide | `#decide`      | `adr-author#decide`                |
 | Govern | `#govern`      | `adr-author#govern`                |
 
 The agent loads sections via `read_file` against this skill file and records the entry in `state.phaseSkillsLoaded` before any phase work executes. Re-entering a previously loaded phase does not require reloading; the agent checks `phaseSkillsLoaded` first.
-
----
-
-> Brought to you by microsoft/hve-core
-
-*🤖 Crafted with precision by ✨Copilot following brilliant human instruction, then carefully refined by our team of discerning human reviewers.*

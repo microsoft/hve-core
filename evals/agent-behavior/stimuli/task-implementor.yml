@@ -1,0 +1,25 @@
+stimuli:
+  - name: task-implementor-edits-source
+    prompt: |
+      Implement a simple "hello world" function in a new file called `hello.py`.
+      Use proper Python conventions and add a docstring. After writing, state the
+      ruff or lint command you would run to validate it.
+    tags:
+      category: agent-behavior
+    graders:
+      - type: output-matches
+        name: docstring-present
+        config:
+          pattern: '(?i)(docstring|""")'
+      - type: output-matches
+        name: source-edit-present
+        config:
+          pattern: '(?i)(```python|created.*hello\.py|file:.*hello\.py)'
+      - type: output-matches
+        name: lint-invocation
+        config:
+          pattern: '(?i)(ruff|pylint|lint|format|validate)'
+      - type: output-matches
+        name: scope-respect
+        config:
+          pattern: 'hello\.py'

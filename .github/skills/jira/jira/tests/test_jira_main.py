@@ -1,4 +1,4 @@
-# Copyright (c) Microsoft Corporation.
+# Copyright (c) 2026 Microsoft Corporation. All rights reserved.
 # SPDX-License-Identifier: MIT
 """Entry-point and parser tests for jira.py."""
 
@@ -63,6 +63,59 @@ def test_main_dispatches_and_splits_fields(monkeypatch: pytest.MonkeyPatch) -> N
     assert result == jira.EXIT_SUCCESS
     assert seen == [fake_client, FIELDS_ISSUE]
     assert print_recorder.calls == [({"key": TEST_ISSUE_KEY}, FIELDS_ISSUE)]
+
+
+def test_main_refuses_unconfirmed_write_operations(
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    class FakeParser:
+        def parse_args(self) -> argparse.Namespace:
+            return argparse.Namespace(
+                fields=None,
+                command="create",
+                confirm=False,
+                handler=lambda *_args: None,
+            )
+
+    monkeypatch.setattr(jira, "create_parser", FakeParser)
+    monkeypatch.setattr(jira.JiraClient, "from_environment", object)
+
+    result = jira.main()
+
+    assert result == jira.EXIT_USAGE
+    assert capsys.readouterr().err.strip() == (
+        "error: Write operations require explicit confirmation; "
+        "rerun with --confirm, --yes, or set JIRA_CONFIRM_WRITES=1"
+    )
+
+
+def test_main_allows_confirmed_write_operations_via_environment(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    seen: list[object] = []
+
+    def fake_handler(client: object, args: argparse.Namespace) -> dict[str, str]:
+        seen.append((client, args.command, args.confirm))
+        return {"key": TEST_ISSUE_KEY}
+
+    class FakeParser:
+        def parse_args(self) -> argparse.Namespace:
+            return argparse.Namespace(
+                fields=None,
+                command="create",
+                confirm=False,
+                handler=fake_handler,
+            )
+
+    monkeypatch.setattr(jira, "create_parser", FakeParser)
+    sentinel_client = object()
+    monkeypatch.setattr(jira.JiraClient, "from_environment", lambda: sentinel_client)
+    monkeypatch.setenv("JIRA_CONFIRM_WRITES", "1")
+    monkeypatch.setattr(jira, "_print_result", lambda _result, _fields: None)
+
+    assert jira.main() == jira.EXIT_SUCCESS
+    assert seen == [(sentinel_client, "create", False)]
 
 
 def test_main_returns_script_error_exit_code(

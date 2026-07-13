@@ -1,5 +1,5 @@
 ---
-description: 'Reference specification for GitHub backlog management tooling - planning files, search protocols, similarity assessment, and state persistence'
+description: 'GitHub backlog management: planning files, search protocols, similarity assessment, and state persistence'
 applyTo: '**/.copilot-tracking/github-issues/**'
 ---
 
@@ -72,6 +72,8 @@ Common PR field operations via the Issues API:
 ### Community Communication
 
 When an operation produces a comment visible to external contributors, the comment body follows scenario templates from `community-interaction.instructions.md`. This applies to closure messages, information requests, acknowledgments, and redirects.
+
+When an operation creates or updates GitHub-visible text that references a suspected content-policy or terms-of-service concern, search for and apply `content-policy-citation.instructions.md` before the API call. Public comments and issue bodies must use neutral wording and must not include classification labels, rationale, quoted snippets, paraphrases, or payload examples.
 
 | Operation       | Scenario                                             | Template Guidance                    |
 |-----------------|------------------------------------------------------|--------------------------------------|
@@ -676,6 +678,7 @@ Resolve milestone selection deterministically using these targets:
 Security vulnerabilities follow the same resolution logic but are escalated in priority: they skip lower-priority work in the target milestone and ship in the earliest available release.
 
 When uncertain about milestone assignment, or when no milestone clearly matches these rules, default to the nearest pre-release or next milestone and flag for human review.
+
 ## Issue Field Matrix
 
 Track field usage explicitly so downstream automation can rely on consistent data. The matrix defines required and optional fields per operation type. These field requirements apply to both issues and pull requests. When targeting a pull request, pass the PR number as `issue_number` (see the Pull Request Field Operations section in the MCP Tool Catalog).
@@ -703,6 +706,80 @@ Rules:
 * When closing as `duplicate`, the `duplicate_of` field should reference the original issue number.
 * Comment operations must provide issue_number and body (passed to `mcp_github_add_issue_comment`).
 * Call `mcp_github_list_issue_types` before using the `type` field to confirm the organization supports issue types.
+
+## Issue Body Template
+
+Issue bodies must follow a consistent structure to ensure clarity and completeness. The template below applies to all Create operations and serves as the target structure when updating existing issues.
+
+### Template
+
+    [1-5 sentence description of the issue's purpose and scope]
+
+    **Children:** *(Feature issues only)*
+
+    - #[child_issue_number] [brief title]
+
+    **Acceptance Criteria:**
+
+    - [ ] [Criterion 1]
+    - [ ] [Criterion 2]
+    - [ ] [Criterion 3]
+
+    **Related:**
+
+    - Parent: #[parent_issue_number] (if applicable)
+    - Depends on: #[dependency_number] ([brief description]) (if applicable)
+    - [Additional context references (hypotheses, decisions, documents)]
+
+### Guidelines
+
+* Every Create operation must include an **Acceptance Criteria** section with at least one checkbox item. Acceptance criteria define the conditions that must be met for the issue to be considered complete. The term "Definition of Done" (DoD) is an acceptable alternative when it better fits the team's conventions.
+* Acceptance criteria should be specific, measurable, and verifiable — not vague aspirations.
+* Feature-type issues (parent/grouping issues) should have acceptance criteria that summarize the aggregate outcomes of their children, not duplicate individual task criteria.
+* Feature-type issues must include a **Children** section listing linked sub-issues by number and title, placed after the description and before **Acceptance Criteria**. Omit the section entirely for Task and Bug issues that have no children.
+* Task-type issues (leaf work items) should have acceptance criteria that describe the concrete deliverable or state change.
+* The **Related** section captures structural relationships not expressed through GitHub's sub-issue mechanism:
+  * `Parent:` references the parent issue when the issue is a sub-issue.
+  * `Depends on:` lists issues that must be completed before this issue can start or be completed.
+  * Additional context lines reference domain-specific artifacts (hypotheses, ADRs, design documents) relevant to the issue.
+* Avoid narrative "Expected output" sections in issue bodies. Prefer acceptance criteria checkboxes that define completion conditions.
+
+## Issue Type Strategy
+
+When the organization supports issue types (verified via `mcp_github_list_issue_types`), apply the following strategy to classify issues into types.
+
+### Type Definitions
+
+| Type    | Purpose                                                             | Children         |
+|---------|---------------------------------------------------------------------|------------------|
+| Feature | Grouping container for related work items that deliver a capability | Features, Tasks  |
+| Task    | Individual actionable work item assignable to one person            | None (leaf node) |
+| Bug     | Defect in existing functionality requiring a fix                    | Tasks (optional) |
+
+### Assignment Rules
+
+* **Feature** issues group two or more related Tasks or sub-Features. A Feature describes what capability is delivered, not how.
+* **Task** issues are leaf nodes representing assignable work. A Task describes a concrete deliverable with clear acceptance criteria.
+* **Bug** issues describe defects. A Bug may optionally have Task sub-issues when the fix requires multiple steps.
+* Multi-level nesting is supported: Feature → Feature → Task. Use nested Features when a capability naturally decomposes into sub-capabilities with their own task sets.
+* Do not create a Feature for a single Task. If a requirement maps to exactly one work item, create a Task directly.
+
+### Hierarchy Examples
+
+Simple hierarchy:
+
+    Feature: Provision Azure resources
+    ├── Task: Provision AI Foundry workspace
+    ├── Task: Provision Fabric workspace
+    └── Feature: Provision Data Sources
+        ├── Task: Provision PostgreSQL
+        ├── Task: Provision Blob Storage
+        └── Task: Provision Databricks
+
+Flat structure (no Feature wrapper needed):
+
+    Task: Create ADR for architecture decision
+    Task: Define evaluation metrics
 
 ## Content Sanitization Guards
 
@@ -738,6 +815,17 @@ When found:
 2. If the template ID has no known mapping, replace with a descriptive phrase.
 
 Never send planning reference IDs or template ID placeholders to GitHub APIs.
+
+### Content Policy Public Output Guard
+
+Before sending a GitHub-bound title, body, comment, or PR text field, remove any internal content-policy classification details copied from planning files. This includes category names, sub-anchors, rationale notes, quoted snippets, paraphrased flagged content, and payload examples.
+
+When a public GitHub field must identify a concern:
+
+1. Cite only the file path and line range when the concern is tied to repository content.
+2. Search for and apply `content-policy-citation.instructions.md`, then use the neutral shared template.
+3. Link only to `https://learn.microsoft.com/legal/ai-code-of-conduct` when a policy link is needed.
+4. Replace copied classification or payload text with a neutral phrase such as "content-policy review needed" when no file line is available.
 
 ## Three-Tier Autonomy Model
 
@@ -846,7 +934,3 @@ Next steps:
 
 Proceed with this approach?
 ```
-
----
-
-Brought to you by microsoft/hve-core

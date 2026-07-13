@@ -12,32 +12,51 @@
     "serve": "docusaurus serve",
     "write-translations": "docusaurus write-translations",
     "write-heading-ids": "docusaurus write-heading-ids",
-    "test": "jest --verbose"
+    "test": "jest --verbose",
+    "test:coverage": "jest --coverage",
+    "typecheck": "tsc --noEmit",
+    "lint:a11y": "eslint .",
+    "lint:label-registry": "node scripts/check-label-registry.mjs",
+    "serve:ci": "node e2e/static-server.mjs",
+    "serve:preview": "docusaurus build && node e2e/static-server.mjs",
+    "test:e2e": "playwright test",
+    "test:e2e:fast": "playwright test --workers=4",
+    "test:e2e:ui": "playwright test --ui"
   },
   "dependencies": {
-    "@docusaurus/core": "3.9.2",
-    "@docusaurus/preset-classic": "3.9.2",
-    "@easyops-cn/docusaurus-search-local": "0.55.1",
-    "@mdx-js/react": "3.0.0",
-    "clsx": "2.0.0",
-    "prism-react-renderer": "2.3.0",
-    "react": "19.0.0",
-    "react-dom": "19.0.0",
-    "remark-github-blockquote-alert": "2.0.1"
+    "@docusaurus/core": "3.10.1",
+    "@docusaurus/faster": "3.10.1",
+    "@docusaurus/preset-classic": "3.10.1",
+    "@easyops-cn/docusaurus-search-local": "0.55.2",
+    "@mdx-js/react": "3.1.1",
+    "clsx": "2.1.1",
+    "prism-react-renderer": "2.4.1",
+    "react": "19.2.7",
+    "react-dom": "19.2.7",
+    "remark-github-blockquote-alert": "2.1.0"
   },
   "devDependencies": {
-    "@docusaurus/module-type-aliases": "3.9.2",
-    "@docusaurus/types": "3.9.2",
-    "@happy-dom/jest-environment": "20.8.8",
+    "@axe-core/playwright": "4.12.1",
+    "@docusaurus/module-type-aliases": "3.10.1",
+    "@docusaurus/types": "3.10.1",
+    "@happy-dom/jest-environment": "20.10.6",
+    "@playwright/test": "1.61.1",
     "@testing-library/jest-dom": "6.9.1",
     "@testing-library/react": "16.3.2",
     "@types/jest": "30.0.0",
     "@types/jest-axe": "3.5.9",
-    "@types/react": "19.2.14",
+    "@types/react": "19.2.17",
+    "@typescript-eslint/parser": "8.62.0",
+    "compression": "1.8.1",
+    "eslint": "9.39.4",
+    "eslint-plugin-jsx-a11y": "6.10.2",
+    "eslint-plugin-mdx": "3.8.1",
+    "express": "5.2.1",
     "identity-obj-proxy": "3.0.0",
-    "jest": "30.2.0",
+    "jest": "30.4.2",
     "jest-axe": "10.0.0",
-    "ts-jest": "29.4.6"
+    "ts-jest": "29.4.11",
+    "wait-on": "9.0.10"
   },
   "browserslist": {
     "production": [
@@ -55,13 +74,20 @@
     "node": ">=20.0"
   },
   "overrides": {
+    "brace-expansion@^1": "1.1.15",
     "brace-expansion@^5": "5.0.6",
-    "express": ">=4.21.2",
-    "minimatch": ">=3.1.3",
-    "picomatch": ">=2.3.2",
-    "postcss": ">=8.5.10",
-    "serialize-javascript": ">=7.0.5",
-    "undici": ">=7.24.1",
-    "uuid": ">=14.0.0"
+    "express": "5.2.1",
+    "http-proxy-middleware": "2.0.10",
+    "joi": "17.13.4",
+    "minimatch@^3": "3.1.5",
+    "minimatch@^10": "10.2.4",
+    "picomatch": "4.0.4",
+    "postcss": "8.5.15",
+    "serialize-javascript": "7.0.5",
+    "test-exclude": {
+      "minimatch": "3.1.5"
+    },
+    "undici": "8.5.0",
+    "uuid": "14.0.0"
   }
 }

@@ -3,7 +3,7 @@ title: "Stage 3: Product Definition"
 description: Transform business requirements into product specifications and architecture decisions
 sidebar_position: 3
 author: Microsoft
-ms.date: 2026-02-18
+ms.date: 2026-06-28
 ms.topic: how-to
 keywords:
   - ai-assisted project lifecycle
@@ -23,7 +23,7 @@ Product Definition transforms Discovery outputs into actionable specifications. 
 You enter Product Definition after completing [Stage 2: Discovery](discovery.md) with a finalized BRD.
 
 > [!NOTE]
-> Prerequisites: BRD complete and available at `docs/brds/`. Architecture options explored during Discovery.
+> Prerequisites: BRD complete and available at `docs/project-planning/`. Architecture options explored during Discovery.
 
 ## Available Tools
 
@@ -32,7 +32,7 @@ You enter Product Definition after completing [Stage 2: Discovery](discovery.md)
 | prd-builder             | Agent | Select **prd-builder** agent             | Create product requirements documents from BRDs |
 | product-manager-advisor | Agent | Select **product-manager-advisor** agent | Get product management guidance and feedback    |
 | adr-creation            | Agent | Select **adr-creation** agent            | Document architecture decisions formally        |
-| arch-diagram-builder    | Agent | Select **arch-diagram-builder** agent    | Generate architecture diagrams for PRDs         |
+| architecture-diagrams   | Skill | Use the **architecture-diagrams** skill  | Generate ASCII architecture diagrams for PRDs   |
 | security-planner        | Agent | Select **security-planner** agent        | Validate security requirements in product specs |
 | sssc-planner            | Agent | Select **sssc-planner** agent            | Validate supply chain security in product specs |
 | rai-planner             | Agent | Select **rai-planner** agent             | Validate RAI requirements in product specs      |
@@ -54,7 +54,7 @@ TPMs own Product Definition, translating BRDs into PRDs with clear acceptance cr
 Select **prd-builder** agent:
 
 ```text
-Create a PRD from the BRD at docs/brds/fleet-management-v1.md. Define
+Create a PRD from the BRD at docs/project-planning/fleet-management-v1.md. Define
 the vehicle tracking dashboard requirements with acceptance criteria for
 real-time GPS updates, geofence alerting, and non-functional requirements
 for sub-500ms map tile rendering at 10,000 concurrent sessions.
@@ -69,13 +69,13 @@ complexity and transaction support, alternatives considered, and the
 migration path from the existing MongoDB deployment.
 ```
 
-Select **arch-diagram-builder** agent:
+Use the **architecture-diagrams** skill:
 
 ```text
-Generate an architecture diagram for the event-driven order processing
-pipeline. Show the message flow from API gateway through the event bus
-to worker services, including the dead-letter queue and monitoring
-integration. Use mermaid flowchart syntax.
+Generate an ASCII architecture diagram for the event-driven order
+processing pipeline. Show the message flow from API gateway through the
+event bus to worker services, including the dead-letter queue and
+monitoring integration. Use ASCII block diagram syntax.
 ```
 
 ## Stage Outputs and Next Stage

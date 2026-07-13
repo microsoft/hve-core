@@ -1,4 +1,4 @@
-﻿# Copyright (c) Microsoft Corporation.
+﻿# Copyright (c) 2026 Microsoft Corporation. All rights reserved.
 # SPDX-License-Identifier: MIT
 
 <#
@@ -1390,6 +1390,72 @@ No footer
             $footerIssues | Should -BeNullOrEmpty
         }
     }
+
+    Context 'Agentic GHCP asset footers' {
+        It 'Does not require footer for agentic GHCP asset <RelativePath>' -ForEach @(
+            @{ RelativePath = '.github/workflows/workflow-notes.md' }
+            @{ RelativePath = '.github/skills/example/references/reference.md' }
+            @{ RelativePath = '.github/skills/example/SKILL.md' }
+        ) {
+            $mockContent = @"
+---
+title: Agentic Asset
+description: Test asset
+---
+
+# Agentic Asset
+
+No Copilot footer here
+"@
+            $testFile = Join-Path $script:TestRepoRoot $RelativePath
+            $result = Test-SingleFileFrontmatter `
+                -FilePath $testFile `
+                -RepoRoot $script:TestRepoRoot `
+                -FileReader { $mockContent }.GetNewClosure()
+
+            $footerIssues = $result.Issues | Where-Object { $_.Field -eq 'footer' }
+            $footerIssues | Should -BeNullOrEmpty
+        }
+
+        It 'Rejects standard Copilot footer for agentic GHCP asset <RelativePath>' -ForEach @(
+            @{
+                RelativePath = '.github/workflows/workflow-notes.md'
+                FooterText   = '🤖 Crafted with precision by ✨Copilot following brilliant human instruction, carefully refined by our team of discerning human reviewers.'
+            }
+            @{
+                RelativePath = '.github/workflows/README.md'
+                FooterText   = '🤖 Crafted with precision by ✨Copilot following brilliant human instruction, then carefully refined by our team of discerning human reviewers.'
+            }
+            @{
+                RelativePath = '.github/skills/example/references/reference.md'
+                FooterText   = '🤖 Crafted with precision by ✨Copilot following brilliant human instruction, carefully refined by our team of discerning human reviewers.'
+            }
+            @{
+                RelativePath = '.github/skills/example/SKILL.md'
+                FooterText   = '🤖 Crafted with precision by ✨Copilot following brilliant human instruction, carefully refined by our team of discerning human reviewers.'
+            }
+        ) {
+            $mockContent = @"
+---
+title: Agentic Asset
+description: Test asset
+---
+
+# Agentic Asset
+
+$FooterText
+"@
+            $testFile = Join-Path $script:TestRepoRoot $RelativePath
+            $result = Test-SingleFileFrontmatter `
+                -FilePath $testFile `
+                -RepoRoot $script:TestRepoRoot `
+                -FileReader { $mockContent }.GetNewClosure()
+
+            $footerIssues = $result.Issues | Where-Object { $_.Field -eq 'footer' }
+            $footerIssues | Should -Not -BeNullOrEmpty
+            $footerIssues[0].Message | Should -Be 'Standard Copilot footer is not allowed on agentic GHCP assets'
+        }
+    }
 }
 
 Describe 'Invoke-FrontmatterValidation' -Tag 'Unit' {
@@ -1603,7 +1669,7 @@ Describe 'Write-CIAnnotations' -Tag 'Unit' {
         $result.AddError('Test error', 'field')
         $summary.AddResult($result)
 
-        $output = Write-CIAnnotations -Summary $summary
+        $output = Write-CIAnnotations -Summary $summary 6>&1 | ForEach-Object { [string]$_ }
         $output | Should -BeLike '::error file=test.md*::Test error'
     }
 
@@ -1613,7 +1679,7 @@ Describe 'Write-CIAnnotations' -Tag 'Unit' {
         $result.AddWarning('Test warning', 'field')
         $summary.AddResult($result)
 
-        $output = Write-CIAnnotations -Summary $summary
+        $output = Write-CIAnnotations -Summary $summary 6>&1 | ForEach-Object { [string]$_ }
         $output | Should -BeLike '::warning file=test.md*::Test warning'
     }
 
@@ -1624,7 +1690,7 @@ Describe 'Write-CIAnnotations' -Tag 'Unit' {
         $result.AddError('Error at line', 'field', 42)
         $summary.AddResult($result)
 
-        $output = Write-CIAnnotations -Summary $summary
+        $output = Write-CIAnnotations -Summary $summary 6>&1 | ForEach-Object { [string]$_ }
         $output | Should -BeLike '::error file=test.md,line=42::Error at line'
     }
 
@@ -1634,7 +1700,7 @@ Describe 'Write-CIAnnotations' -Tag 'Unit' {
         $result.HasFrontmatter = $true
         $summary.AddResult($result)
 
-        $output = Write-CIAnnotations -Summary $summary
+        $output = Write-CIAnnotations -Summary $summary 6>&1 | ForEach-Object { [string]$_ }
         $output | Should -BeNullOrEmpty
     }
 
@@ -1644,7 +1710,7 @@ Describe 'Write-CIAnnotations' -Tag 'Unit' {
         $result.AddError('50% complete', 'field')
         $summary.AddResult($result)
 
-        $output = Write-CIAnnotations -Summary $summary
+        $output = Write-CIAnnotations -Summary $summary 6>&1 | ForEach-Object { [string]$_ }
         $output | Should -Match '50%25 complete'
     }
 
@@ -1654,7 +1720,7 @@ Describe 'Write-CIAnnotations' -Tag 'Unit' {
         $result.AddError("line1`rline2", 'field')
         $summary.AddResult($result)
 
-        $output = Write-CIAnnotations -Summary $summary
+        $output = Write-CIAnnotations -Summary $summary 6>&1 | ForEach-Object { [string]$_ }
         $output | Should -Match 'line1%0Dline2'
     }
 
@@ -1664,7 +1730,7 @@ Describe 'Write-CIAnnotations' -Tag 'Unit' {
         $result.AddError("line1`nline2", 'field')
         $summary.AddResult($result)
 
-        $output = Write-CIAnnotations -Summary $summary
+        $output = Write-CIAnnotations -Summary $summary 6>&1 | ForEach-Object { [string]$_ }
         $output | Should -Match 'line1%0Aline2'
     }
 
@@ -1674,7 +1740,7 @@ Describe 'Write-CIAnnotations' -Tag 'Unit' {
         $result.AddError('scope::value', 'field')
         $summary.AddResult($result)
 
-        $output = Write-CIAnnotations -Summary $summary
+        $output = Write-CIAnnotations -Summary $summary 6>&1 | ForEach-Object { [string]$_ }
         $output | Should -Match 'scope%3A%3Avalue'
     }
 
@@ -1684,7 +1750,7 @@ Describe 'Write-CIAnnotations' -Tag 'Unit' {
         $result.AddError('Test error', 'field')
         $summary.AddResult($result)
 
-        $output = Write-CIAnnotations -Summary $summary
+        $output = Write-CIAnnotations -Summary $summary 6>&1 | ForEach-Object { [string]$_ }
         $output | Should -Match 'file=path%3Afile\.md'
     }
 
@@ -1694,7 +1760,7 @@ Describe 'Write-CIAnnotations' -Tag 'Unit' {
         $result.AddError('Test error', 'field')
         $summary.AddResult($result)
 
-        $output = Write-CIAnnotations -Summary $summary
+        $output = Write-CIAnnotations -Summary $summary 6>&1 | ForEach-Object { [string]$_ }
         $output | Should -Match 'file=file%2Cbackup\.md'
     }
 
@@ -1704,7 +1770,7 @@ Describe 'Write-CIAnnotations' -Tag 'Unit' {
         $result.AddError('Test error', 'field')
         $summary.AddResult($result)
 
-        $output = Write-CIAnnotations -Summary $summary
+        $output = Write-CIAnnotations -Summary $summary 6>&1 | ForEach-Object { [string]$_ }
         $output | Should -Match 'file=file%2520name\.md'
     }
 

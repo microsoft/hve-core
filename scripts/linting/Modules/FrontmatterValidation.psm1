@@ -1,4 +1,4 @@
-﻿# Copyright (c) Microsoft Corporation.
+﻿# Copyright (c) 2026 Microsoft Corporation. All rights reserved.
 # SPDX-License-Identifier: MIT
 
 <#
@@ -835,6 +835,7 @@ function Test-SingleFileFrontmatter {
     # or Copilot footers (which would leak into rendered output).
     $normalizedForSkillCheck = $relativePath -replace '\\', '/'
     $isSkillTemplate = $normalizedForSkillCheck -like '*.github/skills/*/templates/*'
+    $isSkillTestFixture = $normalizedForSkillCheck -like '*.github/skills/*/tests/*fixtures/*'
 
     # Read file content
     try {
@@ -872,7 +873,8 @@ function Test-SingleFileFrontmatter {
     # Only warn about missing frontmatter for content types that require it
     # AI artifacts (.github prompts, instructions, agents, chatmodes) are exempt
     # Skill template assets are exempt (verbatim content rendered into other documents)
-    if (-not $result.HasFrontmatter -and -not $isAiArtifact -and -not $isSkillTemplate) {
+    # Skill test fixtures are exempt (verbatim test data parsed by skill unit tests)
+    if (-not $result.HasFrontmatter -and -not $isAiArtifact -and -not $isSkillTemplate -and -not $isSkillTestFixture) {
         $result.AddWarning('No frontmatter found', 'frontmatter')
         # Continue to footer validation even without frontmatter
     }
@@ -921,9 +923,24 @@ function Test-SingleFileFrontmatter {
             break
         }
     }
+    # Skill test fixtures are verbatim test data; skip footer validation entirely
+    if ($isSkillTestFixture) {
+        $skipFooterForFile = $true
+    }
 
-    # Footer validation for all markdown EXCEPT AI artifacts (prompts, instructions, agents, chatmodes)
-    if (-not $isAiArtifact -and -not $isSkillTemplate -and -not $SkipFooterValidation -and -not $skipFooterForFile) {
+    $isAgenticGhcpAsset = $isAiArtifact -or
+        $isSkillTemplate -or
+        ($normalizedRelativePath -like '.github/workflows/*.md') -or
+        ($normalizedRelativePath -like '.github/skills/*/references/*.md') -or
+        ($normalizedRelativePath -like '.github/skills/*/SKILL.md')
+
+    if ($isAgenticGhcpAsset -and -not $SkipFooterValidation) {
+        $hasFooter = Test-MarkdownFooter -Content $content
+        if ($hasFooter) {
+            $result.AddIssue([ValidationIssue]::new('Error', 'footer', 'Standard Copilot footer is not allowed on agentic GHCP assets', $relativePath))
+        }
+    }
+    elseif (-not $SkipFooterValidation -and -not $skipFooterForFile) {
         # Determine severity based on file type
         $footerSeverity = 'Warning'
         if ($fileTypeInfo.IsRootCommunityFile -or $fileTypeInfo.IsDevContainer -or $fileTypeInfo.IsVSCodeReadme) {

@@ -1,4 +1,4 @@
-﻿# Copyright (c) Microsoft Corporation.
+﻿# Copyright (c) 2026 Microsoft Corporation. All rights reserved.
 # SPDX-License-Identifier: MIT
 
 # Validate-SkillStructure.ps1
@@ -12,7 +12,7 @@
 # .EXAMPLE
 # pwsh -File scripts/linting/Validate-SkillStructure.ps1 -OutputPath "custom-dir/custom-results.json"
 
-#Requires -Version 7.0
+#Requires -Version 7.4
 
 [CmdletBinding()]
 param(
@@ -42,6 +42,9 @@ $script:RecognizedSubdirectories = @('scripts', 'references', 'assets', 'example
 
 # Python environment directories excluded from unrecognized-subdirectory warnings in Python skills
 $script:PythonEnvironmentDirs = @('.hypothesis', '.pytest_cache', '.ruff_cache', '.venv')
+
+# Build artifact directories excluded from unrecognized-subdirectory warnings in any skill (always gitignored)
+$script:BuildArtifactDirs = @('node_modules')
 
 function Get-SkillFrontmatter {
     <#
@@ -173,11 +176,26 @@ function Test-PythonSkillConfig {
         if ($content -notmatch '\[tool\.pytest') {
             $errors.Add("pyproject.toml missing [tool.pytest.ini_options] section in '$RelativePath' (tests/ directory exists)")
         }
+
+        # When tests/ exists, [tool.ruff.lint].select must include 'I' (isort)
+        # so import-order regressions in test files cannot ship past lint:py.
+        if ($content -match '\[tool\.ruff\.lint\][\s\S]*?select\s*=\s*\[([\s\S]*?)\]') {
+            $selectArray = $Matches[1]
+            if ($selectArray -notmatch '"I"|''I''') {
+                $errors.Add("pyproject.toml [tool.ruff.lint].select must include 'I' (isort) in '$RelativePath' (tests/ directory exists)")
+            }
+        }
     }
 
     # Require ruff in dev dependencies (inline or multi-line TOML arrays)
     if ($content -notmatch '"ruff') {
         $warnings.Add("pyproject.toml does not list ruff in dev dependencies in '$RelativePath'")
+    }
+
+    # Warn when uv.lock is absent so Dependabot can resolve and patch dependencies
+    $uvLockPath = Join-Path (Split-Path $PyprojectPath -Parent) 'uv.lock'
+    if (-not (Test-Path $uvLockPath -PathType Leaf)) {
+        $warnings.Add("pyproject.toml present without committed uv.lock in '$RelativePath' (required for Dependabot uv coverage)")
     }
 
     # Fuzz harness convention check
@@ -194,6 +212,135 @@ function Test-PythonSkillConfig {
             if ($content -notmatch 'fuzz_harness\.py') {
                 $errors.Add("$RelativePath pyproject.toml python_files must include 'fuzz_harness.py' for pytest discovery")
             }
+        }
+    }
+
+    return @{ Errors = $errors; Warnings = $warnings }
+}
+
+function Test-SecurityModelStructure {
+    <#
+    .SYNOPSIS
+    Validates that a skill's SECURITY.md follows the canonical heading structure.
+
+    .DESCRIPTION
+    Enforces the per-skill STRIDE model layout defined in
+    .github/instructions/skill-security-model.instructions.md: trust buckets are
+    top-level '## Bucket Bn' sections (there is no '## Trust Buckets' umbrella),
+    and each bucket's STRIDE categories and Risk Rating are '###' headings. Files
+    that use the umbrella, H3 buckets, or H4 STRIDE/Risk Rating headings are
+    flagged so the fleet cannot drift back to the deeper-nested variant.
+
+    .PARAMETER Path
+    Absolute path to the SECURITY.md file.
+
+    .PARAMETER RelativePath
+    Repository-relative path to the skill directory, used in messages.
+
+    .OUTPUTS
+    [string[]] Conformance errors (empty when the file conforms).
+
+    .EXAMPLE
+    $errs = Test-SecurityModelStructure -Path '/repo/.github/skills/jira/jira/SECURITY.md' -RelativePath 'jira/jira'
+    #>
+    [CmdletBinding()]
+    [OutputType([string[]])]
+    param(
+        [Parameter(Mandatory = $true)]
+        [ValidateNotNullOrEmpty()]
+        [string]$Path,
+
+        [Parameter(Mandatory = $true)]
+        [ValidateNotNullOrEmpty()]
+        [string]$RelativePath
+    )
+
+    $errors = [System.Collections.Generic.List[string]]::new()
+    $lines = @(Get-Content -Path $Path -ErrorAction SilentlyContinue)
+    if ($lines.Count -eq 0) {
+        return [string[]]@()
+    }
+
+    $strideCategories = 'Spoofing|Tampering|Repudiation|Information Disclosure|Denial of Service|Elevation of Privilege|Risk Rating'
+
+    if (@($lines | Where-Object { $_ -match '^## Trust Buckets\s*$' }).Count -gt 0) {
+        $errors.Add("SECURITY.md uses the deprecated '## Trust Buckets' umbrella heading in '$RelativePath'; trust buckets must be top-level '## Bucket Bn' sections (see .github/instructions/skill-security-model.instructions.md)")
+    }
+
+    if (@($lines | Where-Object { $_ -match '^### Bucket B' }).Count -gt 0) {
+        $errors.Add("SECURITY.md places trust buckets at H3 '### Bucket Bn' in '$RelativePath'; buckets must be H2 '## Bucket Bn'")
+    }
+
+    if (@($lines | Where-Object { $_ -match "^#### ($strideCategories)\s*`$" }).Count -gt 0) {
+        $errors.Add("SECURITY.md places STRIDE or Risk Rating headings at H4 in '$RelativePath'; they must be H3 '### <Category>'")
+    }
+
+    return [string[]]$errors.ToArray()
+}
+
+function Test-NodeSkillConfig {
+    <#
+    .SYNOPSIS
+    Validates Node unit-test coverage for a skill that ships JS-family modules.
+
+    .DESCRIPTION
+    When a skill contains non-test .mjs/.cjs/.js files under scripts/, requires
+    at least one *.test.* or *.spec.* (mjs/cjs/js) unit test so shipped Node
+    logic is tested. This mirrors the Python tests/ + pytest requirement and the
+    node-tests CI job + Codecov 'node' flag, keeping Node skills at parity with
+    Python skills.
+
+    .PARAMETER SkillPath
+    Absolute path to the skill directory.
+
+    .PARAMETER RelativePath
+    Relative skill path for messages.
+
+    .OUTPUTS
+    [hashtable] With 'Errors' and 'Warnings' lists.
+    #>
+    [CmdletBinding()]
+    [OutputType([hashtable])]
+    param(
+        [Parameter(Mandatory = $true)]
+        [ValidateNotNullOrEmpty()]
+        [string]$SkillPath,
+
+        [Parameter(Mandatory = $true)]
+        [ValidateNotNullOrEmpty()]
+        [string]$RelativePath
+    )
+
+    $errors = [System.Collections.Generic.List[string]]::new()
+    $warnings = [System.Collections.Generic.List[string]]::new()
+
+    $scriptsDir = Join-Path -Path $SkillPath -ChildPath 'scripts'
+    if (-not (Test-Path $scriptsDir -PathType Container)) {
+        return @{ Errors = $errors; Warnings = $warnings }
+    }
+
+    # Non-test .mjs/.cjs/.js modules under scripts/ are shippable Node logic.
+    $sourceModules = @(Get-ChildItem -Path $scriptsDir -File -Recurse -ErrorAction SilentlyContinue |
+        Where-Object {
+            $_.Extension -in @('.mjs', '.cjs', '.js') -and
+            $_.Name -notmatch '\.(test|spec)\.(mjs|cjs|js)$' -and
+            $_.FullName -notmatch 'node_modules'
+        })
+    if ($sourceModules.Count -eq 0) {
+        return @{ Errors = $errors; Warnings = $warnings }
+    }
+
+    # Test files follow the *.test.* / *.spec.* convention across the JS family.
+    $testModules = @(Get-ChildItem -Path $SkillPath -File -Recurse -ErrorAction SilentlyContinue |
+        Where-Object { $_.Name -match '\.(test|spec)\.(mjs|cjs|js)$' -and $_.FullName -notmatch 'node_modules' })
+
+    if ($testModules.Count -eq 0) {
+        $errors.Add("$RelativePath ships Node modules (scripts/**/*.{mjs,cjs,js}) but has no *.test.* / *.spec.* unit tests (required for 'node --test' + Codecov 'node' flag parity)")
+    }
+    else {
+        $underTestsDir = @($testModules | Where-Object { ($_.FullName -replace '\\', '/') -match '/tests/' })
+        if ($underTestsDir.Count -eq 0) {
+            $warnings.Add("$RelativePath - test modules should live under a tests/ directory for 'node --test' discovery")
         }
     }
 
@@ -290,13 +437,21 @@ function Test-SkillDirectory {
         $allScriptFiles = Get-ChildItem -Path $scriptsDirPath -File -ErrorAction SilentlyContinue
         $hasPowerShell = @($allScriptFiles | Where-Object { $_.Extension -eq '.ps1' }).Count -gt 0
         $hasBash = @($allScriptFiles | Where-Object { $_.Extension -eq '.sh' }).Count -gt 0
-        $hasPython = @($allScriptFiles | Where-Object { $_.Extension -eq '.py' }).Count -gt 0
+        # Python files may be packaged in subdirectories (e.g., scripts/<pkg>/__init__.py); search recursively.
+        $hasPython = @(Get-ChildItem -Path $scriptsDirPath -File -Recurse -Filter '*.py' -ErrorAction SilentlyContinue).Count -gt 0
+        # Node modules (.mjs/.cjs/.js, excluding *.test.*/*.spec.*) may be packaged in subdirectories; search recursively.
+        $hasNode = @(Get-ChildItem -Path $scriptsDirPath -File -Recurse -ErrorAction SilentlyContinue |
+            Where-Object { $_.Extension -in @('.mjs', '.cjs', '.js') -and $_.Name -notmatch '\.(test|spec)\.(mjs|cjs|js)$' -and $_.FullName -notmatch 'node_modules' }).Count -gt 0
 
         if ($isPythonSkill) {
             # Python skills: require at least one .py, OR the traditional .ps1+.sh pair
             if (-not $hasPython -and -not ($hasPowerShell -and $hasBash)) {
                 $errors.Add("'scripts/' subdirectory exists but contains no .py files and no .ps1/.sh pair in '$relativePath'")
             }
+        }
+        elseif ($hasNode) {
+            # Node skills: .mjs modules are the entrypoints; test presence is
+            # enforced separately by Test-NodeSkillConfig.
         }
         else {
             # Non-Python skills: require both .ps1 and .sh
@@ -321,6 +476,18 @@ function Test-SkillDirectory {
         foreach ($warn in $pyResult.Warnings) { $warnings.Add($warn) }
     }
 
+    # Validate per-skill SECURITY.md heading structure when a model is present
+    $securityMdPath = Join-Path -Path $Directory.FullName -ChildPath 'SECURITY.md'
+    if (Test-Path $securityMdPath -PathType Leaf) {
+        $secErrors = Test-SecurityModelStructure -Path $securityMdPath -RelativePath $relativePath
+        foreach ($err in $secErrors) { $errors.Add($err) }
+    }
+
+    # Validate Node unit-test presence for skills that ship .mjs modules
+    $nodeResult = Test-NodeSkillConfig -SkillPath $Directory.FullName -RelativePath $relativePath
+    foreach ($err in $nodeResult.Errors) { $errors.Add($err) }
+    foreach ($warn in $nodeResult.Warnings) { $warnings.Add($warn) }
+
     # Check for unrecognized subdirectories (-Force includes dot-prefixed dirs hidden on Linux)
     $subdirs = Get-ChildItem -Path $Directory.FullName -Directory -Force -ErrorAction SilentlyContinue
     foreach ($subdir in $subdirs) {
@@ -332,6 +499,10 @@ function Test-SkillDirectory {
             }
             # Standard Python environment directories are expected in Python skills
             if ($isPythonSkill -and $subdir.Name -in $script:PythonEnvironmentDirs) {
+                continue
+            }
+            # Build artifact directories (e.g. node_modules) are always gitignored and not skill content
+            if ($subdir.Name -in $script:BuildArtifactDirs) {
                 continue
             }
             $warnings.Add("Unrecognized subdirectory '$($subdir.Name)' in '$relativePath' (recognized: $($script:RecognizedSubdirectories -join ', '))")
