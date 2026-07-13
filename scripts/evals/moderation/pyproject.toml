@@ -6,7 +6,7 @@ requires-python = ">=3.11"
 dependencies = [
     "detoxify==0.5.2",
     "torch==2.12.1",
-    "transformers>=4.40,<5",
+    "transformers>=5.3.0,<6",
 ]
 
 # Resolve torch from the CPU-only wheel index. This eval is a CPU-bound
