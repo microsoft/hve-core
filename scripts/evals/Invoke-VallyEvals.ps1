@@ -50,7 +50,7 @@
 .PARAMETER Model
     Model passed to `vally eval --model`. Also forwarded to
     `Invoke-BaselineEquivalence.ps1` when baseline equivalence is explicitly
-    enabled. Defaults to `claude-haiku-4.5`.
+    enabled. Defaults to `gpt-5.6-luna`.
 
 .PARAMETER VallyCommand
     Path or name of the vally executable. Defaults to `vally`. Tests pass the
@@ -108,7 +108,7 @@ param(
     [string]$LogsDir,
     [ValidateSet('agent','prompt','instruction','skill')]
     [string[]]$Kind = @(),
-    [string]$Model = 'claude-haiku-4.5',
+    [string]$Model = 'gpt-5.6-luna',
     [string]$VallyCommand = 'vally',
     [string]$EquivalenceDriverPath,
     [ValidateSet('pr','nightly')]
@@ -524,6 +524,8 @@ $moderationScript = Join-Path -Path $resolvedRoot -ChildPath 'scripts/evals/Invo
 
 $specResults = @{}
 $failedSpecs = 0
+$promotedRunKeys = @{}
+$outputModerationRuns = [System.Collections.Generic.List[hashtable]]::new()
 
 foreach ($runKey in $uniqueSpecRuns.Keys) {
     $run     = $uniqueSpecRuns[$runKey]
@@ -604,25 +606,15 @@ foreach ($runKey in $uniqueSpecRuns.Keys) {
     $result['specRel'] = $specRel
     $result['tag'] = $tag
 
-    # Post-eval content moderation (output)
+    # Output moderation is deferred until all tag-filtered runs finish so the
+    # shard pays the Detoxify model startup cost once.
     $outputModeration = @{ flagged = $false; flaggedCount = 0; outputPath = $null; error = $false }
     if (-not $SkipOutputModeration -and $result.runDir) {
-        Write-Verbose "Post-eval content moderation for spec: $specRel"
-        $outputModeration = Test-SpecOutputModeration `
-            -RunDir $result.runDir `
-            -ArtifactId $specKey `
-            -ModerationScript $moderationScript `
-            -Threshold $effectiveThreshold `
-            -RepoRoot $resolvedRoot
-
-        if ($outputModeration.flagged) {
-            Write-Host "::warning file=$specRel::Content moderation flagged $($outputModeration.flaggedCount) model output(s)"
-            $result.status = 'content-moderation-output'
-            $result.assertionsFailed = [Math]::Max($result.assertionsFailed, $outputModeration.flaggedCount)
-        }
-        elseif ($outputModeration.error) {
-            Write-Host "::error file=$specRel::Output content moderation could not run (infrastructure error)"
-        }
+        $outputModerationRuns.Add(@{
+            runKey    = $runKey
+            runDir    = $result.runDir
+            threshold = $effectiveThreshold
+        })
     }
 
     $result['moderationInput'] = $inputModeration
@@ -721,6 +713,7 @@ foreach ($runKey in $uniqueSpecRuns.Keys) {
 
         if ($promote) {
             $failedSpecs++
+            $promotedRunKeys[$runKey] = $true
             if ($outputModeration.error) {
                 Write-Host "::error file=$specRel::Output content moderation could not run (infrastructure error); promoting to CI failure"
             }
@@ -772,6 +765,7 @@ foreach ($runKey in $uniqueSpecRuns.Keys) {
             }
             else {
                 $failedSpecs++
+                $promotedRunKeys[$runKey] = $true
                 if ($FailFast) {
                     Write-Host "::warning::FailFast set; skipping remaining specs after failure in $specRel"
                     break
@@ -780,6 +774,65 @@ foreach ($runKey in $uniqueSpecRuns.Keys) {
         }
         elseif ($subThresholdDip) {
             Write-Host "::warning file=$specRel::Sub-threshold per-trial dips (exit=0, assertionsFailed=$($result.assertionsFailed)); aggregate threshold met, not promoting to CI failure"
+        }
+    }
+}
+
+if (-not $SkipOutputModeration -and $outputModerationRuns.Count -gt 0) {
+    $batchId = if ($kindFilter.Count -gt 0) { $kindFilter -join '-' } else { 'all' }
+    Write-Verbose "Post-eval content moderation for $($outputModerationRuns.Count) run(s) in shard: $batchId"
+    $batchModeration = Test-SpecOutputModerationBatch `
+        -Run $outputModerationRuns.ToArray() `
+        -BatchId (ConvertTo-SafeKey -Value $batchId) `
+        -ModerationScript $moderationScript `
+        -Threshold $ModerationThreshold `
+        -RepoRoot $resolvedRoot
+
+    foreach ($runKey in $batchModeration.byRun.Keys) {
+        if (-not $specResults.ContainsKey($runKey)) { continue }
+        $result = $specResults[$runKey]
+        $outputModeration = $batchModeration.byRun[$runKey]
+        $result['moderationOutput'] = $outputModeration
+
+        if ($outputModeration.flagged) {
+            Write-Host "::warning file=$($result.specRel)::Content moderation flagged $($outputModeration.flaggedCount) model output(s)"
+            $previousFailed = [int]$result.assertionsFailed
+            $result.assertionsFailed = [Math]::Max($previousFailed, [int]$outputModeration.flaggedCount)
+            $moderationFailureDelta = [int]$result.assertionsFailed - $previousFailed
+
+            $hasAdvisoryMap = $result.ContainsKey('perStimulusAdvisory') -and $null -ne $result.perStimulusAdvisory
+            if ($hasAdvisoryMap -and $moderationFailureDelta -gt 0) {
+                $specAllAdvisory = ($result.perStimulusAdvisory.Values.Count -gt 0) -and
+                    (@($result.perStimulusAdvisory.Values | Where-Object { -not $_ }).Count -eq 0)
+                if ($specAllAdvisory) {
+                    $result.advisoryFailed = [int]$result.advisoryFailed + $moderationFailureDelta
+                }
+                else {
+                    $result.authoritativeFailed = [int]$result.authoritativeFailed + $moderationFailureDelta
+                }
+                $result.isAdvisory = ([int]$result.authoritativeFailed -eq 0 -and [int]$result.advisoryFailed -gt 0)
+            }
+
+            $isLegacyAdvisory = -not $hasAdvisoryMap -and $result.ContainsKey('isAdvisory') -and [bool]$result.isAdvisory
+            if ($isLegacyAdvisory) {
+                $result.status = 'advisory-fail'
+            }
+            else {
+                $result.status = 'content-moderation-output'
+                if (-not $promotedRunKeys.ContainsKey($runKey)) {
+                    $failedSpecs++
+                    $promotedRunKeys[$runKey] = $true
+                }
+            }
+        }
+
+        if ($outputModeration.error) {
+            Write-Host "::error file=$($result.specRel)::Output content moderation could not run or could not be attributed (infrastructure error)"
+            $result.status = 'content-moderation-error-output'
+            if (-not $promotedRunKeys.ContainsKey($runKey)) {
+                $failedSpecs++
+                $promotedRunKeys[$runKey] = $true
+            }
         }
     }
 }
@@ -861,7 +914,13 @@ if ($EnableBaselineEquivalence -and $shardOwnsEquivalence) {
     }
 }
 
-$hardFailStatuses = @('fail', 'content-moderation-input', 'content-moderation-error-input', 'content-moderation-output')
+$hardFailStatuses = @(
+    'fail',
+    'content-moderation-input',
+    'content-moderation-error-input',
+    'content-moderation-output',
+    'content-moderation-error-output'
+)
 $perArtifact = [System.Collections.Generic.List[object]]::new()
 foreach ($plan in $artifactPlan) {
     $artifactPassed    = 0

@@ -1,7 +1,7 @@
 ---
 name: Task Implementor
 description: 'Executes implementation plans from .copilot-tracking/plans with progressive tracking and change records'
-disable-model-invocation: true
+disable-model-invocation: false
 agents:
   - Phase Implementor
   - Researcher Subagent

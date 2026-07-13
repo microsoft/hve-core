@@ -8,6 +8,8 @@
 # Behavior is driven by environment variables:
 #   STUB_MODERATION_EXIT  - exit code to return (default 0).
 #   STUB_MODERATION_COUNT - summary.flaggedCount to write (default 0).
+#   STUB_MODERATION_FLAG_IDS - comma-separated record ids to mark flagged.
+#   STUB_MODERATION_CAPTURE - optional path that receives the input records.
 
 [CmdletBinding()]
 param(
@@ -23,9 +25,35 @@ if ($env:STUB_MODERATION_EXIT) { $exitCode = [int]$env:STUB_MODERATION_EXIT }
 $flaggedCount = 0
 if ($env:STUB_MODERATION_COUNT) { $flaggedCount = [int]$env:STUB_MODERATION_COUNT }
 
+$flaggedIds = @()
+if ($env:STUB_MODERATION_FLAG_IDS) {
+    $flaggedIds = @($env:STUB_MODERATION_FLAG_IDS -split ',' | ForEach-Object { $_.Trim() } | Where-Object { $_ })
+}
+
+if ($env:STUB_MODERATION_CAPTURE) {
+    $captureDir = Split-Path -Parent $env:STUB_MODERATION_CAPTURE
+    if ($captureDir -and -not (Test-Path -LiteralPath $captureDir)) {
+        New-Item -ItemType Directory -Path $captureDir -Force | Out-Null
+    }
+    $Records | ConvertTo-Json -Depth 6 | Set-Content -LiteralPath $env:STUB_MODERATION_CAPTURE -Encoding utf8
+}
+
+$resultRecords = @($Records | ForEach-Object {
+    $recordId = [string]$_.id
+    $isFlagged = $flaggedIds -contains $recordId
+    [ordered]@{
+        id            = $recordId
+        flagged       = $isFlagged
+        flaggedLabels = $(if ($isFlagged) { @('toxicity') } else { @() })
+    }
+})
+if (-not $env:STUB_MODERATION_COUNT) {
+    $flaggedCount = @($resultRecords | Where-Object { $_.flagged }).Count
+}
+
 $payload = [ordered]@{
     scope   = $Scope
-    records = @()
+    records = $resultRecords
     summary = [ordered]@{
         total        = $Records.Count
         flaggedCount = $flaggedCount

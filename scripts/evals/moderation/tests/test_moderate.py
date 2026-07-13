@@ -48,7 +48,7 @@ def fake_detoxify(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setitem(sys.modules, "detoxify", fake_module)
 
 
-def _write_records(tmp_path: Path, records: list[dict[str, str]]) -> Path:
+def _write_records(tmp_path: Path, records: list[dict[str, Any]]) -> Path:
     """Write JSON-lines records to a temporary file and return its path."""
     path = tmp_path / "input.jsonl"
     with path.open("w", encoding="utf-8") as f:
@@ -120,6 +120,22 @@ def test_threshold_above_score_passes(tmp_path: Path, fake_detoxify: None) -> No
 
     data = _read_output(output_path)
     assert data["records"][0]["flagged"] is False
+
+
+def test_per_record_threshold_overrides_batch_default(tmp_path: Path, fake_detoxify: None) -> None:
+    records = [
+        {"id": "strict", "text": "You are an idiot", "threshold": 0.3},
+        {"id": "lenient", "text": "You are an idiot", "threshold": 0.95},
+    ]
+    input_path = _write_records(tmp_path, records)
+
+    loaded = moderate.load_records(input_path)
+    results = moderate.classify_records(loaded, "unbiased", threshold=0.5)
+
+    assert results[0]["flagged"] is True
+    assert results[0]["threshold"] == 0.3
+    assert results[1]["flagged"] is False
+    assert results[1]["threshold"] == 0.95
 
 
 def test_multilingual_model_selectable(tmp_path: Path, fake_detoxify: None) -> None:

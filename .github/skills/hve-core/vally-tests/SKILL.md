@@ -43,16 +43,15 @@ Do not invoke this skill to:
 
 ## Authoring Workflow
 
-Each invocation follows the same six-step pipeline:
+Each invocation follows the same five-step pipeline:
 
 1. **Artifact-kind detection.** Resolve the kind from the artifact path or the corpus row's `kind` column. Supported kinds: `prompt`, `instructions`, `agent`, `skill`. Reject unknown kinds with a refusal block.
 2. **Reference lookup.** Load the matching reference file from `references/` and select the check or checks the stimulus exercises.
 3. **Grader selection.** Use `references/grader-catalog.md` to pick a Vally grader (`semantic_similarity`, `contains`, `regex`, `json_schema`) appropriate for the check's expected response shape.
-4. **Stimulus emission.** Run a safety self-check against the refusal taxonomy regex set. Refusing here is the correct outcome for any stimulus that matches a refusal category.
-5. **Safety self-check.** Run a safety self-check against the refusal taxonomy regex set. Refusing here is the correct outcome for any stimulus that matches a refusal category.
-6. **Dedupe and append.** Compute a SHA-256 hash of the normalized prompt text, compare against existing stimuli in the target eval file, and append only when novel.
+4. **Safety self-check.** Run a safety self-check against the refusal taxonomy regex set. Refusing here is the correct outcome for any stimulus that matches a refusal category.
+5. **Dedupe and append.** Compute a SHA-256 hash of the normalized prompt text, compare against existing stimuli in the target eval file, and append only when novel.
 
-The pipeline is identical for both invocation modes. Corpus-import mode runs steps 2 through 6 once per row.
+The pipeline is identical for both invocation modes. Corpus-import mode runs steps 2 through 5 once per row.
 
 ## Safety Refusal Taxonomy
 
@@ -96,15 +95,15 @@ The helpers emit a JSON run report to `logs/vally-test-author-<timestamp>.json`,
 
 References capture the conformance taxonomy, grader selection rules, eval-suite routing, and the regex source of truth for the refusal taxonomy. Each file targets a specific decision point in the authoring workflow.
 
-| Reference                          | Covers                                                                  |
-|------------------------------------|-------------------------------------------------------------------------|
-| `references/prompts.md`            | The 12 conformance checks emitted for `.prompt.md` artifacts.           |
-| `references/instructions.md`       | The 8 conformance checks emitted for `.instructions.md` artifacts.      |
-| `references/agents.md`             | The 10 conformance checks emitted for `.agent.md` artifacts.            |
-| `references/skills.md`             | The 10 conformance checks emitted for `SKILL.md` artifacts.             |
-| `references/grader-catalog.md`     | Vally CLI 0.4.0 grader types, selection rules, and gotchas.             |
-| `references/refusal-taxonomy.md`   | Regex source of truth for the 7 refusal categories and worked examples. |
-| `references/eval-suite-routing.md` | Maps artifact kind to the canonical Vally eval file under `evals/`.     |
+| Reference                                                 | Covers                                                                  |
+|-----------------------------------------------------------|-------------------------------------------------------------------------|
+| [prompts.md](references/prompts.md)                       | The 12 conformance checks emitted for `.prompt.md` artifacts.           |
+| [instructions.md](references/instructions.md)             | The 8 conformance checks emitted for `.instructions.md` artifacts.      |
+| [agents.md](references/agents.md)                         | The 9 conformance checks emitted for `.agent.md` artifacts.             |
+| [skills.md](references/skills.md)                         | The 9 conformance checks emitted for `SKILL.md` artifacts.              |
+| [grader-catalog.md](references/grader-catalog.md)         | Vally CLI 0.4.0 grader types, selection rules, and gotchas.             |
+| [refusal-taxonomy.md](references/refusal-taxonomy.md)     | Regex source of truth for the 7 refusal categories and worked examples. |
+| [eval-suite-routing.md](references/eval-suite-routing.md) | Maps artifact kind to the canonical Vally eval file under `evals/`.     |
 
 ## Asset Index
 
