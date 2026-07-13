@@ -13,7 +13,7 @@ tags:
   - agents
   - accessibility
 author: Microsoft
-ms.date: 2026-06-12
+ms.date: 2026-07-08
 ms.topic: concept
 estimated_reading_time: 6
 ---
@@ -80,11 +80,11 @@ If a subagent response is incomplete or malformed, the orchestrator retries once
 
 ## Outputs
 
-The reviewer writes a consolidated report under `.copilot-tracking/accessibility-reviews/{{YYYY-MM-DD}}/`. Report filenames encode the review mode and a three-digit sequence:
+The reviewer writes a consolidated report under `.copilot-tracking/accessibility/{{YYYY-MM-DD}}/`. Report filenames encode the review mode, repository slug, and date:
 
-* `accessibility-report-{{NNN}}.md` for audit mode
-* `accessibility-report-diff-{{NNN}}.md` for diff mode
-* `accessibility-plan-risk-assessment-{{NNN}}.md` for plan mode
+* `accessibility-report-{{REPO}}-{{YYYYMMDD}}.md` for audit mode
+* `accessibility-report-diff-{{REPO}}-{{YYYYMMDD}}.md` for diff mode
+* `accessibility-plan-assessment-{{REPO}}-{{YYYYMMDD}}.md` for plan mode
 
 The report includes summary counts, the list of assessed skills, a severity breakdown, and any excluded skills with reasons.
 
@@ -94,16 +94,19 @@ The reviewer's deterministic signals can be shared with the Security Planner's p
 
 ## Related Files
 
-| File type | Location                                                       |
-|-----------|----------------------------------------------------------------|
-| Agent     | `.github/agents/accessibility/accessibility-reviewer.agent.md` |
-| Skills    | `.github/skills/accessibility/`                                |
-| Reports   | `.copilot-tracking/accessibility-reviews/`                     |
+| File type | Location                                                                          |
+|-----------|-----------------------------------------------------------------------------------|
+| Agent     | `.github/agents/accessibility/accessibility-reviewer.agent.md`                    |
+| Prompt    | `.github/prompts/accessibility/accessibility-coverage-matrix.prompt.md`           |
+| Subagent  | `.github/agents/accessibility/subagents/accessibility-surface-inventory.agent.md` |
+| Skills    | `.github/skills/accessibility/`                                                   |
+| Reports   | `.copilot-tracking/accessibility/`                                                |
 
 ## Next Steps
 
-* [Accessibility Planner](accessibility-planner.md) for upstream framework selection and backlog handoff.
-* [Accessibility Planner Quickstart](../../getting-started/accessibility-planner.md) for a five-minute walkthrough.
+* [Accessibility Planner](accessibility-planner) for upstream framework selection and backlog handoff.
+* [Coverage matrix workflow](coverage-matrix) as a complementary runtime probe capability for accessibility coverage analysis.
+* [Accessibility Planner Quickstart](../../getting-started/accessibility-planner) for a five-minute walkthrough.
 
 <!-- markdownlint-disable MD036 -->
 *🤖 Crafted with precision by ✨Copilot following brilliant human instruction,
