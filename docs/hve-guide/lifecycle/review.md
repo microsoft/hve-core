@@ -3,7 +3,7 @@ title: "Stage 7: Review"
 description: Validate implementations through code review, PR management, and quality assessment
 sidebar_position: 8
 author: Microsoft
-ms.date: 2026-06-26
+ms.date: 2026-07-09
 ms.topic: how-to
 keywords:
   - ai-assisted project lifecycle
@@ -37,12 +37,12 @@ You enter Review after completing implementation work in [Stage 6: Implementatio
 
 ### Supporting Agents
 
-| Tool                     | Type  | How to Invoke                             | Purpose                                     |
-|--------------------------|-------|-------------------------------------------|---------------------------------------------|
-| rpi-validator            | Agent | Select **rpi-validator** agent            | Validate RPI workflow compliance            |
-| implementation-validator | Agent | Select **implementation-validator** agent | Check implementation against specifications |
-| prompt-tester            | Agent | Select **prompt-tester** agent            | Test prompt engineering artifacts           |
-| prompt-evaluator         | Agent | Select **prompt-evaluator** agent         | Evaluate prompt quality and effectiveness   |
+| Tool                     | Type  | How to Invoke                                             | Purpose                                                                    |
+|--------------------------|-------|-----------------------------------------------------------|----------------------------------------------------------------------------|
+| rpi-validator            | Agent | Select **rpi-validator** agent                            | Validate RPI workflow compliance                                           |
+| implementation-validator | Agent | Select **implementation-validator** agent                 | Check implementation against specifications                                |
+| Prompt Builder           | Agent | Select **Prompt Builder** agent                           | Test prompt engineering artifacts through the HVE Builder review lifecycle |
+| Prompt Builder           | Agent | Select **Prompt Builder** agent and use `/prompt-analyze` | Evaluate prompt quality and effectiveness                                  |
 
 ### Prompts and Instructions
 
@@ -125,16 +125,16 @@ Select **implementation-validator** agent:
 Run full-quality validation on the files changed in src/services/auth/ against the architecture requirements in docs/architecture/auth-design.md
 ```
 
-Select **prompt-tester** agent:
+Select **Prompt Builder** agent to perform behavior testing as part of the HVE Builder review lifecycle:
 
 ```text
 Execute .github/prompts/hve-core/task-review.prompt.md literally in a sandbox to verify the review workflow produces expected validation outputs
 ```
 
-Select **prompt-evaluator** agent:
+Select **Prompt Builder** agent and use `/prompt-analyze`:
 
 ```text
-Evaluate the execution log from .copilot-tracking/sandbox/2025-01-15-task-review-001/execution-log.md against the prompt quality criteria in .github/instructions/hve-core/prompt-builder.instructions.md
+Evaluate the execution log from .copilot-tracking/sandbox/2025-01-15-task-review-001/execution-log.md against the prompt quality criteria in .github/instructions/hve-core/hve-builder.instructions.md
 ```
 
 ### Documentation Review

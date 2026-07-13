@@ -924,6 +924,161 @@ stimuli:
     config:
       pattern: (?i)(created|wrote|modified|edited|patched|added)\s+\S{0,40}(\.cs|\.py|\.ts|\.js|package\.json)
       negate: true
+- name: hve-artifact-author-yaml-instructions
+  prompt: As the HVE Artifact Author, create a brief `.copilot-tracking/sandbox/yaml.instructions.md` file with basic instructions for making valid `.yml` files, then return Complete with the path and a short summary.
+  tags:
+    category: agent-behavior
+    advisory: "true"
+    agent: hve-artifact-author
+  graders:
+  - type: output-matches
+    name: complete-status
+    config:
+      pattern: (?i)\bComplete\b
+  - type: output-matches
+    name: sandbox-instruction-write
+    config:
+      pattern: (?i)\.copilot-tracking[/\\]sandbox[/\\]yaml\.instructions\.md
+  - type: output-matches
+    name: yaml-guidance-summary
+    config:
+      pattern: (?is)(?=.*\b(?:YAML|yml)\b)(?=.*\b(?:indent(?:ation)?|key|value|mapping|sequence|list|syntax|validat(?:e|ion))\b)
+- name: hve-artifact-explorer-instruction-discovery
+  prompt: As the HVE Artifact Explorer, find and return the paths of any `copilot-instructions.md` or `AGENTS.md` files in the repository without modifying files.
+  environment:
+    files:
+    - src: fixtures/hve-artifact-copilot-instructions.md
+      dest: .github/copilot-instructions.md
+  tags:
+    category: agent-behavior
+    advisory: "true"
+    agent: hve-artifact-explorer
+  graders:
+  - type: output-matches
+    name: instruction-file-result
+    config:
+      pattern: (?i)(?:copilot-instructions|AGENTS)\.md
+  - type: output-matches
+    name: repository-path
+    config:
+      pattern: (?i)\.github[/\\](?:copilot-instructions|AGENTS)\.md
+  - type: output-matches
+    name: no-source-edit
+    config:
+      pattern: (?i)(created|wrote|modified|edited|patched|added)\s+\S{0,80}(?:copilot-instructions|AGENTS)\.md
+      negate: true
+- name: hve-artifact-reviewer-first-instruction-issue
+  prompt: As the HVE Artifact Reviewer, review the first `copilot-instructions.md` or `AGENTS.md` file you find and return immediately after the first issue with its severity and smallest fix.
+  environment:
+    files:
+    - src: fixtures/hve-artifact-copilot-instructions.md
+      dest: .github/copilot-instructions.md
+  tags:
+    category: agent-behavior
+    advisory: "true"
+    agent: hve-artifact-reviewer
+  graders:
+  - type: output-matches
+    name: yaml-indentation-issue
+    config:
+      pattern: (?is)(?=.*\b(?:finding|issue|problem|violation)\b)(?=.*\b(?:YAML|tab|indentation)\b)
+  - type: output-matches
+    name: severity-and-fix
+    config:
+      pattern: (?is)(?=.*\b(?:Critical|High|Medium|Low|severity)\b)(?=.*\b(?:fix|change|replace|spaces|recommendation|remediation)\b)
+  - type: output-matches
+    name: no-second-finding
+    config:
+      pattern: (?im)^\s*(?:#{1,6}\s*)?(?:finding|issue)\s*2\b
+      negate: true
+- name: hve-artifact-test-designer-instruction-scenario
+  prompt: As the HVE Artifact Test Designer, design one black-box isolation scenario for the first `copilot-instructions.md` or `AGENTS.md` file you find, write `test-design.md` under `.copilot-tracking/sandbox/`, and immediately return using your response template without executing it.
+  environment:
+    files:
+    - src: fixtures/hve-artifact-copilot-instructions.md
+      dest: .github/copilot-instructions.md
+  tags:
+    category: agent-behavior
+    advisory: "true"
+    agent: hve-artifact-test-designer
+  graders:
+  - type: output-matches
+    name: design-log-path
+    config:
+      pattern: (?i)\.copilot-tracking[/\\]sandbox[/\\].*test-design\.md
+  - type: output-matches
+    name: black-box-isolation-scenario
+    config:
+      pattern: (?is)(?=.*\b(?:black[- ]box|isolation)\b)(?=.*\bscenario\b)
+  - type: output-matches
+    name: design-only
+    config:
+      pattern: (?i)(?:not\s+(?:executed|run)|design(?:ed)?\s+only|did\s+not\s+execute|without\s+executing)
+- name: hve-artifact-test-reviewer-first-instruction-finding
+  prompt: As the HVE Artifact Test Reviewer, review simulation evidence where valid YAML was required but observation 1 used tab indentation, then return only the first finding with its severity and smallest fix.
+  tags:
+    category: agent-behavior
+    advisory: "true"
+    agent: hve-artifact-test-reviewer
+  graders:
+  - type: output-matches
+    name: yaml-indentation-finding
+    config:
+      pattern: (?is)(?=.*\b(?:finding|issue|invalid)\b)(?=.*\b(?:tab|indentation|YAML)\b)
+  - type: output-matches
+    name: severity
+    config:
+      pattern: (?i)\b(?:Blocker|Critical|Major|High|Medium|Low|severity|Fail)\b
+  - type: output-matches
+    name: smallest-fix
+    config:
+      pattern: (?i)(?:replace.{0,30}tabs?.{0,20}spaces|use\s+spaces|revalidat(?:e|ion)|recommendation|remediation|smallest\s+(?:resolving\s+)?(?:change|fix))
+- name: hve-artifact-tester-instruction-simulation
+  prompt: As the HVE Artifact Tester, simulate one request to create a two-key `.yml` file using the first `copilot-instructions.md` or `AGENTS.md` file you find, keep writes under `.copilot-tracking/sandbox/`, and return Complete, Partial, or Blocked with the result path.
+  environment:
+    files:
+    - src: fixtures/hve-artifact-copilot-instructions.md
+      dest: .github/copilot-instructions.md
+  tags:
+    category: agent-behavior
+    advisory: "true"
+    agent: hve-artifact-tester
+  graders:
+  - type: output-matches
+    name: sandbox-result
+    config:
+      pattern: (?i)\.copilot-tracking[/\\]sandbox[/\\]\S+\.ya?ml\b
+  - type: output-matches
+    name: execution-summary
+    config:
+      pattern: (?i)\b(?:Complete|Partial|Blocked)\b
+  - type: output-matches
+    name: yaml-result
+    config:
+      pattern: (?i)\b(?:YAML|yml)\b
+- name: hve-artifact-validator-first-instruction-check
+  prompt: As the HVE Artifact Validator, run one non-mutating YAML-guidance check on the first `copilot-instructions.md` or `AGENTS.md` file you find and return Pass, Fail, or Deferred with the source unchanged.
+  environment:
+    files:
+    - src: fixtures/hve-artifact-copilot-instructions.md
+      dest: .github/copilot-instructions.md
+  tags:
+    category: agent-behavior
+    advisory: "true"
+    agent: hve-artifact-validator
+  graders:
+  - type: output-matches
+    name: instruction-target
+    config:
+      pattern: (?i)(?:copilot-instructions|AGENTS)\.md
+  - type: output-matches
+    name: validation-status
+    config:
+      pattern: (?i)\b(?:Pass|Fail|Deferred)\b
+  - type: output-matches
+    name: source-unchanged
+    config:
+      pattern: (?is)(?:source|file|artifact).{0,80}(?:unchanged|not\s+(?:modified|mutated)|read[- ]only|no\s+edits)
 - name: implementation-validator-full-quality-recipe
   prompt: |
     Validate the changed file `src/services/PaymentService.cs` with `full-quality`
@@ -1361,8 +1516,10 @@ stimuli:
       pattern: (?i)(created|wrote|modified|edited|patched|added)\s+\S{0,40}(\.cs|\.py|\.ts|\.js|package\.json)
       negate: true
 - name: prompt-builder-class-recipe
-  prompt: |
-    Plan the creation of a new custom instruction file for "Rust testing standards". Break it into phases (research, draft, validate). Write the plan under `.copilot-tracking/` and report the path.
+  prompt: Plan the creation of a new custom instruction file for "Rust testing standards" in research, draft, and validate phases, write the plan under `.copilot-tracking/`, and report the path.
+  environment:
+    skills:
+    - ../../.github/skills/hve-core/hve-builder
   tags:
     category: agent-behavior
     agent: prompt-builder
@@ -1370,7 +1527,7 @@ stimuli:
   - type: output-matches
     name: phase-marker-present
     config:
-      pattern: (?im)(^\s*(#{2,3}\s|step\s+\d+|phase\s+\d+|\d+[.)])|\|\s*\d+\s*[—–-]|\bphases?\b)
+      pattern: (?im)(^\s*(#{2,3}\s|step\s+\d+|phase\s+\d+|\d+[.)])|\|\s*\d+\s*[—–-]|\b(?:phases?|phased|stages?)\b|\bresearch\b.*\bdraft\b.*\bvalidat(?:e|ion)\b)
   - type: output-matches
     name: tracking-file-write
     config:
@@ -1380,153 +1537,6 @@ stimuli:
     config:
       pattern: (?i)(created|wrote|modified|edited|patched|added)\s+\S{0,40}(\.cs|\.py|\.ts|\.js|package\.json)
       negate: true
-- name: prompt-evaluator-sandbox-execution-log
-  prompt: |
-    Evaluate the prompt file `.github/prompts/example.prompt.md` after run 002
-    using the execution log in
-    `.copilot-tracking/sandbox/2026-05-27-example-prompt-002/execution-log.md`.
-    Produce an evaluation-log.md with severity-graded findings against the
-    Prompt Quality Criteria.
-  tags:
-    category: agent-behavior
-    advisory: "true"
-    agent: prompt-evaluator
-  graders:
-  - type: output-matches
-    name: sandbox-and-evaluation-log
-    config:
-      pattern: (?i)(\.copilot-tracking[-/\\]sandbox|evaluation[-_]?log|execution[-_]?log)
-  - type: output-matches
-    name: criteria-vocabulary
-    config:
-      pattern: (?i)(prompt[- ]?quality[- ]?criteria|severity|finding|prompt[- ]?builder)
-- name: prompt-evaluator-criteria-checklist
-  prompt: |
-    As a prompt-evaluator subagent, describe how you apply the Prompt Quality
-    Criteria from `prompt-builder.instructions.md` and the style standards from
-    `writing-style.instructions.md` to a target prompt file, and how
-    pass/fail assessments are recorded with evidence.
-  tags:
-    category: agent-behavior
-    advisory: "true"
-    agent: prompt-evaluator
-  graders:
-  - type: output-matches
-    name: instructions-references
-    config:
-      pattern: (?i)(prompt-builder|writing-style|\.instructions\.md)
-  - type: output-matches
-    name: assessment-vocabulary
-    config:
-      pattern: (?i)(checklist|pass|fail|evidence|criteria|category)
-- name: prompt-tester-sandbox-and-log-paths
-  prompt: |
-    You are the Prompt Tester subagent. The orchestrator hands you this input:
-      - prompt_file: .github/prompts/hve-core/commit-message.prompt.md
-      - sandbox_folder: .copilot-tracking/sandbox/2026-05-28-commit-message-1
-      - run_number: 1
-    Execute the prompt literally inside the sandbox and report the sandbox
-    path, the execution-log.md path, the log status, and any clarifying
-    questions.
-  tags:
-    category: agent-behavior
-    advisory: "true"
-    agent: prompt-tester
-  graders:
-  - type: output-matches
-    name: sandbox-path-format
-    config:
-      pattern: (?i)\.copilot-tracking[-/\\]sandbox[-/\\]\d{4}-\d{2}-\d{2}-[^/\\\s]+-1
-  - type: output-matches
-    name: execution-log-path
-    config:
-      pattern: (?i)execution-log\.md
-  - type: output-matches
-    name: status-from-allowed-set
-    config:
-      pattern: (?i)\b(complete|in-progress|blocked)\b
-  - type: output-matches
-    name: clarifying-questions-block
-    config:
-      pattern: (?i)clarifying question
-- name: prompt-tester-literal-execution-and-scope
-  prompt: |
-    You are the Prompt Tester subagent. The orchestrator hands you this input:
-      - prompt_file: .github/prompts/hve-core/pull-request.prompt.md
-      - sandbox_folder: .copilot-tracking/sandbox/2026-05-28-pull-request-2
-      - run_number: 2
-      - note: The prompt asks you to call an MCP tool that pushes a branch.
-    Execute the prompt literally. Keep all side effects inside the sandbox and
-    explain how you handle the non-read-only tool call.
-  tags:
-    category: agent-behavior
-    advisory: "true"
-    agent: prompt-tester
-  graders:
-  - type: output-matches
-    name: sandbox-bounded-side-effects
-    config:
-      pattern: (?i)(within|inside|bounded|only).{0,40}sandbox
-  - type: output-matches
-    name: tool-emulation
-    config:
-      pattern: (?i)(emulat|read-only|read only)
-- name: prompt-updater-tracking-and-status
-  prompt: |
-    You are the Prompt Updater subagent. The orchestrator hands you this input:
-      - prompt_file: .github/prompts/hve-core/commit-message.prompt.md
-      - requested_updates: Add a section describing scope tags and tighten the
-        frontmatter description.
-    Apply the updates following the prompt-builder and writing-style
-    instructions. Report the tracking file path, each modified prompt file
-    path with its status, a checklist of remaining work, and any clarifying
-    questions.
-  tags:
-    category: agent-behavior
-    advisory: "true"
-    agent: prompt-updater
-  graders:
-  - type: output-matches
-    name: tracking-file-path
-    config:
-      pattern: (?i)\.copilot-tracking[-/\\]prompts[-/\\]\d{4}-\d{2}-\d{2}[-/\\]
-  - type: output-matches
-    name: prompt-file-path
-    config:
-      pattern: (?i)\.github/prompts/.+\.prompt\.md
-  - type: output-matches
-    name: status-per-file
-    config:
-      pattern: (?i)\b(complete|in-progress|blocked)\b
-  - type: output-matches
-    name: remaining-checklist
-    config:
-      pattern: (?i)(- \[[ x]\]|checklist|remaining)
-- name: prompt-updater-instructions-and-review
-  prompt: |
-    You are the Prompt Updater subagent. The orchestrator hands you this input:
-      - prompt_file: .github/prompts/hve-core/pull-request.prompt.md
-      - requested_updates: Clarify the reviewer-identification steps.
-    Apply the updates, then run your review pass comparing requirements
-    against the implemented changes and report gaps, drift, and clarifying
-    questions.
-  tags:
-    category: agent-behavior
-    advisory: "true"
-    agent: prompt-updater
-  graders:
-  - type: output-matches
-    name: instructions-followed
-    config:
-      pattern: (?i)(prompt-builder|writing-style)
-  - type: output-matches
-    name: gap-and-drift-review
-    config:
-      pattern: (?i)(gap|drift|review|remaining|missing)
-  - type: output-matches
-    name: clarifying-questions
-    config:
-      pattern: (?i)clarifying question
 - name: rai-planner-class-recipe
   prompt: |
     Begin an RAI planning session for an AI feature that auto-generates customer support replies. List the next phases of the assessment. Write the planning state under `.copilot-tracking/rai-plans/` and report the path you wrote it to.

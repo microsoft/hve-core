@@ -1,0 +1,21 @@
+# Copyright (c) 2026 Microsoft Corporation. All rights reserved.
+# SPDX-License-Identifier: MIT
+stimuli:
+  - name: hve-artifact-test-reviewer-first-instruction-finding
+    prompt: As the HVE Artifact Test Reviewer, review simulation evidence where valid YAML was required but observation 1 used tab indentation, then return only the first finding with its severity and smallest fix.
+    tags:
+      category: agent-behavior
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: yaml-indentation-finding
+        config:
+          pattern: '(?is)(?=.*\b(?:finding|issue|invalid)\b)(?=.*\b(?:tab|indentation|YAML)\b)'
+      - type: output-matches
+        name: severity
+        config:
+          pattern: '(?i)\b(?:Blocker|Critical|Major|High|Medium|Low|severity|Fail)\b'
+      - type: output-matches
+        name: smallest-fix
+        config:
+          pattern: '(?i)(?:replace.{0,30}tabs?.{0,20}spaces|use\s+spaces|revalidat(?:e|ion)|recommendation|remediation|smallest\s+(?:resolving\s+)?(?:change|fix))'

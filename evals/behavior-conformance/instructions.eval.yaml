@@ -321,7 +321,7 @@ stimuli:
         config:
           pattern: "(?i)markdownlint|heading|atx|list|frontmatter"
 
-  - name: instruction-prompt-builder-conformance
+  - name: instruction-hve-builder-conformance
     prompt: |
       You are authoring a new custom agent file at
       `.github/agents/example/my-agent.agent.md`. Which
@@ -330,7 +330,7 @@ stimuli:
       engineering artifacts?
     tags:
       category: behavior-conformance
-      instruction: prompt-builder
+      instruction: hve-builder
       advisory: "true"
     graders:
       - type: output-matches
@@ -341,6 +341,37 @@ stimuli:
         name: scope-language
         config:
           pattern: "(?i)prompt|agent|instruction|skill|frontmatter|authoring"
+
+  - name: instruction-prompt-builder-conformance
+    prompt: |
+      A legacy workflow resolves `prompt-builder.instructions.md` while editing
+      a custom prompt artifact. Explain which files the compatibility
+      instruction applies to, which instruction owns the canonical authoring
+      standard, and whether the compatibility file defines or overrides any
+      independent quality rules.
+    environment:
+      files:
+        - src: ../../.github/instructions/hve-core/prompt-builder.instructions.md
+          dest: .github/instructions/hve-core/prompt-builder.instructions.md
+        - src: ../../.github/instructions/hve-core/hve-builder.instructions.md
+          dest: .github/instructions/hve-core/hve-builder.instructions.md
+    tags:
+      category: behavior-conformance
+      instruction: prompt-builder
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: compatibility-identity
+        config:
+          pattern: '(?i)prompt-builder\.instructions\.md|Prompt Builder Compatibility Instructions'
+      - type: output-matches
+        name: canonical-standard
+        config:
+          pattern: '(?is)(?=.*hve-builder\.instructions\.md)(?=.*(?:canonical|authoring standard))'
+      - type: output-matches
+        name: compatibility-boundary
+        config:
+          pattern: '(?i)(no independent quality rules|does not override|compatibility (alias|boundary|identifier))'
 
   - name: instruction-copilot-tracking-conformance
     prompt: |

@@ -241,6 +241,42 @@ class TestImportCorpus:
         assert report.totals()["duplicates"] == 1
         assert report.totals()["accepted"] == 0
 
+    def test_duplicate_row_runs_safety_before_dedupe(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        # Arrange
+        row = _sample_row()
+        digest = import_corpus.hash_prompt(
+            import_corpus.normalize_prompt(row["prompt"])
+        )
+        target = tmp_path / "stimuli.yml"
+        target.write_text(f"# sha256:{digest}\n", encoding="utf-8")
+        source = tmp_path / "in.csv"
+        _write_csv(source, [row])
+        safety_calls: list[str] = []
+
+        def flagged_safety_check(
+            prompt: str, lint_script: Path, *, pwsh: str = "pwsh"
+        ) -> dict[str, object]:
+            del lint_script, pwsh
+            safety_calls.append(prompt)
+            return {"exit_code": 1, "output": "flagged", "category": None}
+
+        monkeypatch.setattr(import_corpus, "safety_check", flagged_safety_check)
+
+        # Act
+        report, _, _ = import_corpus.import_corpus(
+            source,
+            target=target,
+            report_dir=tmp_path / "out",
+            lint_script=tmp_path / "lint.ps1",
+        )
+
+        # Assert
+        assert safety_calls == [row["prompt"]]
+        assert report.totals()["flagged"] == 1
+        assert report.totals()["duplicates"] == 0
+
     def test_rejected_rows_propagate(self, tmp_path: Path) -> None:
         source = tmp_path / "in.csv"
         _write_csv(source, [_sample_row(kind="container")])

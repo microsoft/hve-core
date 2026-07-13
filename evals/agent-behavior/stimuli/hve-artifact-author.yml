@@ -1,0 +1,21 @@
+# Copyright (c) 2026 Microsoft Corporation. All rights reserved.
+# SPDX-License-Identifier: MIT
+stimuli:
+  - name: hve-artifact-author-yaml-instructions
+    prompt: As the HVE Artifact Author, create a brief `.copilot-tracking/sandbox/yaml.instructions.md` file with basic instructions for making valid `.yml` files, then return Complete with the path and a short summary.
+    tags:
+      category: agent-behavior
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: complete-status
+        config:
+          pattern: '(?i)\bComplete\b'
+      - type: output-matches
+        name: sandbox-instruction-write
+        config:
+          pattern: '(?i)\.copilot-tracking[/\\]sandbox[/\\]yaml\.instructions\.md'
+      - type: output-matches
+        name: yaml-guidance-summary
+        config:
+          pattern: '(?is)(?=.*\b(?:YAML|yml)\b)(?=.*\b(?:indent(?:ation)?|key|value|mapping|sequence|list|syntax|validat(?:e|ion))\b)'

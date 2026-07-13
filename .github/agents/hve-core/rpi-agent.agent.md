@@ -2,7 +2,7 @@
 name: RPI Agent
 description: 'Autonomous RPI orchestrator running Research → Plan → Implement → Review → Discover phases with specialized subagents'
 argument-hint: 'Autonomous RPI agent. Uses subagents when task difficulty warrants them.'
-disable-model-invocation: true
+disable-model-invocation: false
 agents:
   - Researcher Subagent
   - Phase Implementor
