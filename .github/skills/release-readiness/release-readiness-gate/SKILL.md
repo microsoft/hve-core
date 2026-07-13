@@ -47,20 +47,31 @@ When no rubric is supplied, assess these. Mark any pillar `N/A` with a one-line 
    - **Green:** evidence shows the pillar meets the bar.
    - **Amber:** partial: gaps exist but none are launch-blocking for the stated scope.
    - **Red:** a launch-blocking gap exists, or there is no evidence.
-4. **Mark blocking gaps.** Tag each gap `Blocking` or `Non-blocking` for the stated scope. A bounded soft-launch may tolerate gaps that full production cannot; record the rationale.
+4. **Apply scope to the RAG, not after it.** Decide tolerability *when scoring*: a gap that is launch-blocking for the stated scope makes the pillar Red; a gap that is bounded and tolerable for that scope makes it Amber. The same gap may be Red for full production yet Amber for a bounded soft-launch; record the rationale. A Red pillar is launch-blocking by definition, so a Red gap is never tagged non-blocking.
 5. **Compute the verdict** using the Verdict Rules below.
 6. **Write the scorecard** to `.copilot-tracking/release-readiness/<date>-<scope>-readiness.md` using the Output Format.
 
 ## Verdict Rules
 
-- **No-Go:** any pillar is Red with a `Blocking` gap.
-- **Conditional-Go:** no Red blockers, but one or more Amber pillars with named conditions and owners that must close before or shortly after launch.
-- **Go:** all pillars Green (or justified `N/A`) with no open blockers.
+Exactly one verdict applies. Every pillar is Green/`N/A`, Amber, or Red, so a scored rubric always resolves to one of these three, and only one:
+
+- **No-Go:** any pillar is Red. A Red pillar is launch-blocking by definition, including a pillar that is Red because evidence is missing.
+- **Conditional-Go:** no Red pillars, and one or more Amber pillars, each with named conditions and owners that must close before or shortly after launch.
+- **Go:** every pillar is Green or a justified `N/A`, with no open blockers.
+
+### Worked example
+
+| Reliability | Security              | Privacy | Verdict            | Why                                                 |
+|-------------|-----------------------|---------|--------------------|-----------------------------------------------------|
+| 🟢          | 🟢                    | 🟢      | **Go**             | All Green or justified `N/A`                        |
+| 🟢          | 🟡                    | 🟢      | **Conditional-Go** | No Red; one Amber with named conditions and owners  |
+| 🟢          | 🔴 (missing evidence) | 🟢      | **No-Go**          | A Red pillar (here, no evidence) is launch-blocking |
+| 🟡          | 🔴                    | 🟢      | **No-Go**          | Any Red dominates Amber                             |
 
 ## Success criteria
 
 - Every pillar in the rubric is scored RAG with a citable evidence reference, or marked `N/A` with a justification.
-- Every gap is tagged `Blocking` or `Non-blocking` for the stated scope, with a rationale.
+- Every gap is reflected in its pillar's RAG for the stated scope (Red = launch-blocking, Amber = bounded and tolerable), with a rationale.
 - A single verdict is computed from the Verdict Rules, with the scored scope stated explicitly.
 - The scorecard and sign-off checklist are written to the Output Format path.
 
