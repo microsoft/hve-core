@@ -49,9 +49,10 @@ items:
     kind: agent
   - path: .github/agents/hve-core/subagents/researcher-subagent.agent.md
     kind: agent
-  # HVE Builder subagents
+  # RPI Research subagents
   - path: .github/agents/hve-core/subagents/rpi-researcher.agent.md
     kind: agent
+  # HVE Builder subagents
   - path: .github/agents/hve-core/subagents/hve-artifact-tester.agent.md
     kind: agent
   # Code Review subagents
@@ -185,6 +186,8 @@ items:
   - path: .github/skills/hve-core/prompt-refactor
     kind: skill
   - path: .github/skills/hve-core/hve-builder
+    kind: skill
+  - path: .github/skills/rpi/rpi-research
     kind: skill
   - path: .github/skills/hve-core/hve-builder-tester
     kind: skill
