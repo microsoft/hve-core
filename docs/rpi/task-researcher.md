@@ -3,7 +3,7 @@ title: Task Researcher Guide
 description: Use Task Researcher for a demonstrated evidence gap before planning or implementation
 sidebar_position: 4
 author: Microsoft
-ms.date: 2026-07-13
+ms.date: 2026-07-14
 ms.topic: tutorial
 keywords:
   - task researcher
@@ -140,7 +140,7 @@ After Task Researcher completes:
 
 1. Review `.copilot-tracking/research/{{YYYY-MM-DD}}/{{task_slug}}-research.md`.
 2. Resume deliberately from the durable artifact, using a fresh context when the conversation has accumulated unrelated detail.
-3. Proceed to planning with [Task Planner](task-planner.md).
+3. Proceed to planning with [Task Planner](task-planner).
 
 Pass the research document path to Task Planner so it can create an actionable implementation plan.
 

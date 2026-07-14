@@ -2,7 +2,7 @@
 title: GitHub Copilot Custom Agents
 description: Specialized AI agents for planning, research, prompt engineering, documentation, and code review workflows
 author: HVE Core Team
-ms.date: 2026-07-13
+ms.date: 2026-07-14
 ms.topic: guide
 keywords:
   - copilot

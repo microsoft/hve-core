@@ -3,7 +3,7 @@ title: Task Implementor Guide
 description: Use the Task Implementor custom agent to execute implementation plans with precision and tracking
 sidebar_position: 6
 author: Microsoft
-ms.date: 2026-07-13
+ms.date: 2026-07-14
 ms.topic: tutorial
 keywords:
   - task implementor
@@ -65,7 +65,7 @@ After clearing, open the plan and matching phase-details artifact before invokin
 Use the matching `Pxx` and `Pxx-Txx` headings and markers to locate the requested work. Include the plan critique when a prior amendment or residual risk matters.
 
 > [!TIP]
-> Context management is an engineering practice, not a ritual. Clearing context removes accumulated tokens that cause the model to ignore its instructions. See [Context Engineering](context-engineering.md) for the full explanation.
+> Context management is an engineering practice, not a ritual. Clearing context removes accumulated tokens that cause the model to ignore its instructions. See [Context Engineering](context-engineering) for the full explanation.
 
 ### Step 2: Select the Custom Agent
 
@@ -176,7 +176,7 @@ When all phases are complete, Task Implementor provides:
 | Ambiguous scope                  | Specify the exact `Pxx` phase or `Pxx-Txx` task                                             |
 | Significant divergence           | Record linked `DIV-xxx` and `AM-xxx`, update details, and wait for fresh critique           |
 | Not running validations          | Record the executed validation or an explicit skip reason                                    |
-| Context issues                   | Use `/clear` before starting; see [Context Engineering](context-engineering.md)             |
+| Context issues                   | Use `/clear` before starting; see [Context Engineering](context-engineering)             |
 
 ## Next Steps
 
@@ -184,7 +184,7 @@ After Task Implementor completes:
 
 1. If a significant amendment awaits critique, return the plan, phase-details artifact, and evidence to Task Planner before continuing affected dependent work.
 2. Otherwise, **clear context** using `/clear` or starting a new chat.
-3. **Review** using `/task-review` to switch to [Task Reviewer](task-reviewer.md), providing the plan, phase details, critique, and changes record.
+3. **Review** using `/task-review` to switch to [Task Reviewer](task-reviewer), providing the plan, phase details, critique, and changes record.
 4. **Address** review findings through the routed owner before committing.
 5. **Commit** your changes with a descriptive message when the review outcome supports it.
 

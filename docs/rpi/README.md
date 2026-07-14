@@ -3,7 +3,7 @@ title: Understanding the RPI Workflow
 description: Learn how Research, Plan, Implement, Review, and Follow-up guide evidence-led delivery
 sidebar_position: 1
 author: Microsoft
-ms.date: 2026-07-13
+ms.date: 2026-07-14
 ms.topic: concept
 keywords:
   - rpi workflow
@@ -33,7 +33,7 @@ RPI solves this through a counterintuitive insight: when AI knows it cannot impl
 * Preserves decisions, changes, validation, and review routing in durable task artifacts.
 
 > [!TIP]
-> **Want the full explanation?** See [Why the RPI Workflow Works](why-rpi.md) for the psychology, quality comparisons, and RPI entry surfaces.
+> **Want the full explanation?** See [Why the RPI Workflow Works](why-rpi) for the psychology, quality comparisons, and RPI entry surfaces.
 
 RPI separates lifecycle concepts without requiring an autonomous chain of specialized task workers. Use `RPI Agent` as a user-selected lifecycle wrapper, `/rpi-quick` as a skill-based full-flow entry point, or a direct phase skill when you need focused work.
 
@@ -95,7 +95,7 @@ research, when it runs → plan and details → changes → review and routed fo
 
 Resume with the same stable task ID and open or reference the relevant dated artifacts. Navigate plan and detail sections with `Pxx`, `Pxx-Txx`, headings, and `<!-- rpi:... -->` markers.
 
-For the technical explanation of why this matters, see [Context Engineering](context-engineering.md).
+For the technical explanation of why this matters, see [Context Engineering](context-engineering).
 
 ## When to Use RPI
 
@@ -120,20 +120,20 @@ For the technical explanation of why this matters, see [Context Engineering](con
 
 ## Next Steps
 
-* [Task Researcher Guide](task-researcher.md) - Deep dive into research phase
-* [Task Planner Guide](task-planner.md) - Create actionable plans
-* [Task Implementor Guide](task-implementor.md) - Execute with precision
-* [Task Reviewer Guide](task-reviewer.md) - Validate implementations
-* [Using Them Together](using-together.md) - Complete workflow example
-* [Context Engineering](context-engineering.md) - Why context management matters
+* [Task Researcher Guide](task-researcher) - Deep dive into research phase
+* [Task Planner Guide](task-planner) - Create actionable plans
+* [Task Implementor Guide](task-implementor) - Execute with precision
+* [Task Reviewer Guide](task-reviewer) - Validate implementations
+* [Using Them Together](using-together) - Complete workflow example
+* [Context Engineering](context-engineering) - Why context management matters
 * [Agents Reference](https://github.com/microsoft/hve-core/blob/main/.github/CUSTOM-AGENTS.md) - All available agents
 * [Agent Systems Catalog](../agents/) - Browse all agent families beyond RPI
 
 ## See Also
 
-* [Engineer Guide](../hve-guide/roles/engineer.md) - Role-specific guide for engineers using RPI agents
-* [Tech Lead Guide](../hve-guide/roles/tech-lead.md) - Architecture review and prompt engineering workflows
-* [Stage 6: Implementation](../hve-guide/lifecycle/implementation.md) - Where RPI fits in the project lifecycle
+* [Engineer Guide](../hve-guide/roles/engineer) - Role-specific guide for engineers using RPI agents
+* [Tech Lead Guide](../hve-guide/roles/tech-lead) - Architecture review and prompt engineering workflows
+* [Stage 6: Implementation](../hve-guide/lifecycle/implementation) - Where RPI fits in the project lifecycle
 
 ---
 

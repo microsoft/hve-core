@@ -3,7 +3,7 @@ title: "Context Engineering: Why AI Context Management Matters"
 description: Understand how long RPI lifecycles accumulate context and how durable artifacts support deliberate resumption
 sidebar_position: 3
 author: Microsoft
-ms.date: 2026-07-13
+ms.date: 2026-07-14
 ms.topic: concept
 keywords:
   - context engineering
@@ -142,9 +142,9 @@ Context degradation produces observable symptoms. Catching them early prevents w
 
 ## Next Steps
 
-* [Why RPI?](why-rpi.md): the psychology behind phase separation
+* [Why RPI?](why-rpi): the psychology behind phase separation
 * [RPI Overview](./): complete workflow guide
-* [Using Tasks Together](using-together.md): phase transitions and handoffs
+* [Using Tasks Together](using-together): phase transitions and handoffs
 
 ---
 

@@ -6,7 +6,7 @@ description: "Detailed research, delegation, extension, participation, and evide
 
 ## Intended Use
 
-Read this reference while executing `rpi-research`. It defines the detailed research loop, extension and participation rules, evidence ownership, and final response contract. Copy `../templates/research.md` to create the primary artifact, then fill it progressively rather than recreating its structure in chat.
+Read this reference while executing `rpi-research`. It defines the detailed research loop, extension and participation rules, evidence ownership, and final response contract. Copy only the `../templates/research.md` template body, beginning with `<!-- markdownlint-disable-file -->` and excluding the source-template YAML frontmatter, to create the primary artifact so it begins with that comment. Then fill it progressively rather than recreating its structure in chat.
 
 ## Artifact and Ownership Contract
 

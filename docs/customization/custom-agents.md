@@ -2,7 +2,7 @@
 title: Creating Custom Agents
 description: Build specialized agents with tool restrictions, subagent delegation, and mode-based workflows for your team
 author: Microsoft
-ms.date: 2026-07-13
+ms.date: 2026-07-14
 ms.topic: how-to
 keywords:
   - agents
@@ -220,7 +220,7 @@ HVE Core includes several mode-based agents you can study as patterns: task plan
 
 **Tailspin Toys' engineering manager** authors a PR triage agent that categorizes incoming pull requests by area (frontend, backend, infrastructure), estimates review complexity, and suggests appropriate reviewers based on file ownership patterns.
 
-For full frontmatter schema, naming conventions, and contribution requirements, see [Contributing: Custom Agents](../contributing/custom-agents.md).
+For full frontmatter schema, naming conventions, and contribution requirements, see [Contributing: Custom Agents](../contributing/custom-agents).
 
 ## Frontmatter Reference
 
@@ -274,7 +274,7 @@ Tool values support four naming patterns:
 | Category-specific | `edit/createFile`, `execute/runInTerminal`    |
 | Wildcard          | `github/*`, `ado/*`                           |
 
-The set of available tools evolves with GitHub Copilot and VS Code. For the authoritative, current list, see the official [VS Code custom agents documentation](https://code.visualstudio.com/docs/copilot/customization/custom-agents). To invoke a granted tool from the agent body, use the `#tool:` reference syntax (for example, `#tool:codebase`); see [Contributing: Custom Agents](../contributing/custom-agents.md) for details.
+The set of available tools evolves with GitHub Copilot and VS Code. For the authoritative, current list, see the official [VS Code custom agents documentation](https://code.visualstudio.com/docs/copilot/customization/custom-agents). To invoke a granted tool from the agent body, use the `#tool:` reference syntax (for example, `#tool:codebase`); see [Contributing: Custom Agents](../contributing/custom-agents) for details.
 
 ### agents
 

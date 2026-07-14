@@ -2,7 +2,7 @@
 title: Managing Collections
 description: Bundle agents, prompts, instructions, and skills into distributable collection packages with maturity filtering
 author: Microsoft
-ms.date: 2026-07-13
+ms.date: 2026-07-14
 ms.topic: how-to
 keywords:
   - collections
@@ -26,7 +26,7 @@ Together, these two files form a complete, self-contained collection package tha
 generation pipeline processes into distributable output under `plugins/`.
 
 > [!IMPORTANT]
-> The HVE Core installer skill supports agent bundle selection by collection during clone-based setup. This copies agents only. Prompts, instructions, and skills are not filtered by collection. See the [installation guide](../getting-started/install.md) for setup options.
+> The HVE Core installer skill supports agent bundle selection by collection during clone-based setup. This copies agents only. Prompts, instructions, and skills are not filtered by collection. See the [installation guide](../getting-started/install) for setup options.
 
 ## YAML Manifest Format
 

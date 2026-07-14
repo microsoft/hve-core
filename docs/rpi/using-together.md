@@ -3,7 +3,7 @@ title: Using RPI Agents Together
 description: Complete walkthrough of an evidence-led RPI lifecycle from research readiness through Follow-up
 sidebar_position: 8
 author: Microsoft
-ms.date: 2026-07-13
+ms.date: 2026-07-14
 ms.topic: tutorial
 keywords:
   - rpi workflow
@@ -44,7 +44,7 @@ Why this matters:
 * Durable task artifacts carry context through a reset or a later session.
 * Stable IDs and markers locate the relevant scope when surrounding prose changes.
 
-For the deeper explanation of how LLM context affects agent behavior, see [Context Engineering](context-engineering.md).
+For the deeper explanation of how LLM context affects agent behavior, see [Context Engineering](context-engineering).
 
 ## Walkthrough: Adding Azure Blob Storage
 
@@ -218,9 +218,10 @@ Ready for review.
 |----------------------|----------------------------------------------------------------------------|
 | Review Record        | .copilot-tracking/reviews/logs/2025-01-28/blob-storage-review.md          |
 | Execution Status     | Complete                                                                   |
-| Outcome              | Residual work                                                              |
+| Outcome              | Defects found                                                              |
 | Critical Findings    | 0                                                                          |
-| Medium Findings      | 2                                                                          |
+| Medium Findings      | 1                                                                          |
+| Low Findings         | 1                                                                          |
 | Residual Work        | 1                                                                          |
 
 RV-001 [Medium]: Missing docstring on BlobStorageClient.upload_stream().
@@ -232,12 +233,13 @@ Destination: distinct follow-up
 Follow-up item:
 - Add performance benchmarks for large file uploads (deferred from research)
 
-Ready for commit.
+Return RV-001 to `rpi-implement`, then review it again before committing.
 ```
 
 1. Address findings through their recorded next owner:
 
    * Address each `RV-xxx` finding through its recorded next owner
+   * Return the implementation defect in `RV-001` to `rpi-implement`, then review it again with `rpi-review` before committing
    * Resolve or explicitly accept material findings before committing
    * Track residual work as a distinct follow-up item
 
@@ -361,18 +363,18 @@ A long lifecycle can accumulate context. Resume from the durable RPI artifact se
 4. Keep a memory or checkpoint record as a supplement, not a replacement, for plan, details, changes, or review evidence.
 
 > [!TIP]
-> For the full explanation of how context affects the lifecycle, see [Context Engineering](context-engineering.md).
+> For the full explanation of how context affects the lifecycle, see [Context Engineering](context-engineering).
 
 See [Agents Reference](https://github.com/microsoft/hve-core/blob/main/.github/CUSTOM-AGENTS.md) for RPI Agent details.
 
 ## Related Guides
 
 * [RPI Overview](./) - Understand the workflow
-* [Context Engineering](context-engineering.md) - Why context management matters
-* [Task Researcher](task-researcher.md) - Deep research phase
-* [Task Planner](task-planner.md) - Create actionable plans
-* [Task Implementor](task-implementor.md) - Execute with precision
-* [Task Reviewer](task-reviewer.md) - Validate implementations
+* [Context Engineering](context-engineering) - Why context management matters
+* [Task Researcher](task-researcher) - Deep research phase
+* [Task Planner](task-planner) - Create actionable plans
+* [Task Implementor](task-implementor) - Execute with precision
+* [Task Reviewer](task-reviewer) - Validate implementations
 
 ---
 

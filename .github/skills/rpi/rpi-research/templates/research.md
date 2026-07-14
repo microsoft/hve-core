@@ -12,7 +12,7 @@ Fill every `{{placeholder}}`. Update this file continuously during research, not
 | Date               | {{YYYY-MM-DD}}                                                        |
 | Researcher / agent | {{skill or agent name}}                                               |
 | Status             | {{In progress \| Complete \| Partial \| Blocked \| Needs clarification}} |
-| Artifact path      | `.copilot-tracking/research/{{YYYY-MM-DD}}/{{task_slug}}-research.md` |
+| Artifact path      | .copilot-tracking/research/{{YYYY-MM-DD}}/{{task_slug}}-research.md |
 
 ## Research Brief
 
@@ -249,7 +249,7 @@ Flow diagram (when a multi-component flow is involved):
 * Acting owner: user or rpi-quick.
 * Advisory recommendation: {{rpi_plan_recommendation_when_convergence_and_ready_or_no_handoff_reason}}
 * Why further research would not change the current decision state: {{criteria_met_saturation_or_budget_rationale}}
-* Primary evidence file: `.copilot-tracking/research/{{YYYY-MM-DD}}/{{task_slug}}-research.md`
+* Primary evidence file: .copilot-tracking/research/{{YYYY-MM-DD}}/{{task_slug}}-research.md
 * Notes for planning: {{planning_notes}}
 
 ## Sources

@@ -3,7 +3,7 @@ title: Why the RPI Workflow Works
 description: The psychology and principles behind the evidence-led RPI lifecycle and its entry surfaces
 sidebar_position: 2
 author: Microsoft
-ms.date: 2026-07-13
+ms.date: 2026-07-14
 ms.topic: concept
 keywords:
   - rpi workflow
@@ -42,10 +42,10 @@ The solution isn't teaching AI to be smarter. It's preventing AI from doing cert
 
 RPI keeps Research, Plan, Implement, Review, and Follow-up distinct so a task uses the smallest credible action at each point. It starts with research readiness: supplied or completed research is reused when adequate, while Task Researcher or `/rpi-research` investigates a demonstrated requirements, acceptance, dependency, material-risk, complexity, uncertainty, or decision-critical gap.
 
-* [Task Researcher](task-researcher.md) investigates a demonstrated gap and produces evidence for planning readiness.
-* [Task Planner](task-planner.md) owns the overall plan and phase details, may use `RPI Planner` for one bounded phase, and records independent critique.
-* [Task Implementor](task-implementor.md) directly executes approved work, records changes and validation, and returns material amendments for fresh critique.
-* [Task Reviewer](task-reviewer.md) creates one evidence-reconciliation record and routes defects, decision gaps, research gaps, and residual work.
+* [Task Researcher](task-researcher) investigates a demonstrated gap and produces evidence for planning readiness.
+* [Task Planner](task-planner) owns the overall plan and phase details, may use `RPI Planner` for one bounded phase, and records independent critique.
+* [Task Implementor](task-implementor) directly executes approved work, records changes and validation, and returns material amendments for fresh critique.
+* [Task Reviewer](task-reviewer) creates one evidence-reconciliation record and routes defects, decision gaps, research gaps, and residual work.
 
 When a long lifecycle needs a fresh context, durable artifacts preserve the task identity, evidence, decisions, and next action. A reset can reduce accumulated context, but it does not require a new research stage or a fresh run of every lifecycle concept.
 
@@ -168,10 +168,10 @@ Research readiness, planning critique, implementation amendments, and review fin
 
 Ready to try it yourself?
 
-* [Your First RPI Workflow](../getting-started/first-workflow.md): 15-minute hands-on tutorial
-* [Using the Agents Together](using-together.md): context management and handoffs
+* [Your First RPI Workflow](../getting-started/first-workflow): 15-minute hands-on tutorial
+* [Using the Agents Together](using-together): context management and handoffs
 * [RPI Overview](./): the lifecycle concepts explained
-* [Task Reviewer Guide](task-reviewer.md): validation and iteration
+* [Task Reviewer Guide](task-reviewer): validation and iteration
 
 ---
 
