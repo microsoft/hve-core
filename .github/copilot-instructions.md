@@ -115,11 +115,11 @@ The `.copilot-tracking/` directory (gitignored) contains AI-assisted workflow ar
 
 * Work Items (`.copilot-tracking/workitems/`) - ADO work item discovery and planning.
 * Pull Requests (`.copilot-tracking/pr/`) - PR reference generation, handoff, and review tracking.
-* Changes (`.copilot-tracking/changes/`) - Change tracking and implementation logs.
-* Plans (`.copilot-tracking/plans/`) - Task implementation plans and planning logs.
-* Details (`.copilot-tracking/details/`) - Task plan implementation details.
+* Changes (`.copilot-tracking/changes/`) - Implementation changes, amendments, and divergences.
+* Plans (`.copilot-tracking/plans/`) - Ordinary plan checklists.
+* Details (`.copilot-tracking/details/`) - Phase details.
 * Research (`.copilot-tracking/research/`) - Technical research findings and subagent research outputs.
-* Reviews (`.copilot-tracking/reviews/`) - Review logs and validation findings.
+* Reviews (`.copilot-tracking/reviews/`) - Completed review evidence.
 * ADRs (`.copilot-tracking/adrs/`) - Architecture Decision Record drafts.
 * BRD Sessions (`.copilot-tracking/brd-sessions/`) - Business requirements document session state.
 * PRD Sessions (`.copilot-tracking/prd-sessions/`) - Product requirements document session state.
@@ -130,7 +130,7 @@ The `.copilot-tracking/` directory (gitignored) contains AI-assisted workflow ar
 * Memory (`.copilot-tracking/memory/`) - Cross-session memory files.
 * Challenges (`.copilot-tracking/challenges/`) - Challenge session Q&A logs, unresolved items, and scope records from Task Challenger sessions.
 
-All tracking files use markdown format with frontmatter and follow patterns from `.github/instructions/ado/ado-*.instructions.md`.
+RPI and HVE Builder tracking records follow `.github/instructions/hve-core/copilot-tracking.instructions.md`; ADO, Jira, and GitHub backlog tracking follows its domain-specific instructions.
 
 ### Agents and Subagents
 

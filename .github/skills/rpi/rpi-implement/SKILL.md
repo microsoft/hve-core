@@ -1,66 +1,61 @@
 ---
 name: rpi-implement
-description: Execute approved implementation phases, update tracking artifacts, and hand off review-ready results.
-argument-hint: "[plan=...] [phaseStop] [stepStop]"
+description: "Execute an approved RPI plan, preserve amendments, and record evidence-led changes. Use when implementation is ready to begin or resume."
+argument-hint: "[plan=...] [phase=...] [task=...]"
 license: MIT
 user-invocable: true
 ---
 
-# Task Implementor
-
-Follow the shared conventions in `copilot-tracking.instructions.md`.
+# RPI Implement
 
 ## Goal
 
-Execute an approved implementation plan with phase-by-phase tracking, validation evidence, and review-ready handoff.
+Deliver the approved outcome using the plan and phase details as evidence, while keeping task completion, changes, divergences, amendments, and validation evidence trustworthy for review.
 
-## What to do
+## Flow
 
-1. Discover the implementation plan by priority: use the explicit `plan` input when provided; otherwise inspect the currently open file for plan content, extract a plan reference from an open changes log, or select the most recent file in `.copilot-tracking/plans/`.
-2. Discover the details, research, and current tracking files from `.copilot-tracking/plans/**`, `.copilot-tracking/details/**`, and `.copilot-tracking/changes/**`.
-3. Prefer `Phase Implementor` via `runSubagent` or `task`; use `Implementation Validator` when the phase plan includes `Validation:` or `required`, when blockers or deviations appear, or when review evidence is requested. Use `Researcher Subagent` as the fallback for missing context.
-4. If `runSubagent` or `task` is unavailable, perform the equivalent work inline and record the result; do not dead-stop solely because dispatch tooling is missing.
-5. Derive the canonical task slug as `lower-kebab-case(primary task/target) + '-' + YYYY-MM-DD + '-' + <phase>`; when the plan is provided as request text rather than a file, derive the slug from the plan title or the user request summary and keep the same tokens.
-6. When `phaseStop` is true, pause after each completed phase and present progress before continuing; when `stepStop` is true, pause after each completed step within a phase and present progress before continuing.
-7. When execution pauses or stops, summarize completed phases and steps, blockers or clarification requests, and the next resumption point.
-8. Continue from the next unchecked phase when work resumes, update the implementation plan checklist, changes log, and planning log after each completed phase or bounded step, and stop when dependencies or blockers require user clarification.
-9. Return a brief status summary with the next review command and the tracked files.
+1. Resolve the exact plan at `.copilot-tracking/plans/{{YYYY-MM-DD}}/{{task_slug}}-plan.md`, its phase details, relevant evidence, critique disposition, and any prior changes record. Use markers and headings to locate `Pxx` and `Pxx-Txx`, not line positions.
+2. Create or continue `.copilot-tracking/changes/{{YYYY-MM-DD}}/{{task_slug}}-changes.md` using [templates/changes-log.md](templates/changes-log.md). Record material work with `CHG-xxx` entries.
+3. Execute the approved tasks with judgment. Work directly when the task is coupled or small. Use a generic bounded subagent only when isolated execution materially improves the outcome, and provide the exact phase or task, evidence, allowed write boundary, and expected return.
+4. Mark completed tasks and phases in the plan after their completion evidence is available. Update the changes log with affected files, validation evidence, blockers, and remaining work.
+5. When a significant divergence is necessary, create a linked `DIV-xxx` record in the changes log, create or request its `AM-xxx` amendment in the plan, and update the affected plan and phase details before returning the material amendment to planning.
+6. For each significant divergence, return the changed plan, phase details, and supplied evidence to the planning parent. The planning parent dispatches a fresh generic subagent that activates `rpi-plan-critique` for the material amendment and applies the existing critique disposition and planning decision logic. Pass permits affected dependent work to resume, Revise returns to planning for correction, and Blocked stops affected dependent work. Preserve unrelated completed work and evidence.
+7. Run the validation expected by the plan or by completed changed behavior without treating it as permission to resume affected dependent work. Record executed checks, results, and explicit skip reasons in the changes log.
+8. When the implementation scope is ready for review and no affected dependent work awaits critique, hand off the plan, phase details, critique disposition, amendments, and changes record to `rpi-review`.
 
 ## Inputs
 
-* `plan` (optional): path to the approved implementation plan; when omitted, discover it using the priority order in step 1 of What to do.
-* `phaseStop` (optional, default `false`): when `true`, pause after each completed phase and present progress before continuing.
-* `stepStop` (optional, default `false`): when `true`, pause after each completed step within a phase and present progress before continuing.
+* Approved plan path or task context
+* Optional exact `Pxx` phase or `Pxx-Txx` task scope
+* Phase details, supplied evidence, critique disposition, and prior amendments when available
 
 ## Success criteria
 
-* The plan and details are available before implementation starts.
-* The implementation plan is discovered using the priority order of explicit `plan` input, open file, open changes log, or the most recent plan under `.copilot-tracking/plans/`.
-* The implementation plan checklist, changes log, and planning log are updated after each phase or bounded step and remain review-ready.
-* Optional `phaseStop` and `stepStop` pause controls are honored, and pause summaries capture completed phases and steps, blockers or clarifications, and the next resumption point.
-* `Phase Implementor`, `Researcher Subagent`, and `Implementation Validator` use `runSubagent` or `task` when available; if they are not available, the work is performed inline and recorded.
-* Validation evidence is captured when the phase plan says `Validation:` or `required`, or when blockers, deviations, or review evidence are present.
-* Planned validation, linting, and testing checks have completed before handoff, or skipped checks are recorded with the reason.
-* The canonical task slug and phase tokens are applied consistently across the handoff and changes log.
-* The next review command is `/rpi-review`.
+* The implementation follows the approved plan or records its material divergence explicitly.
+* Completed `Pxx-Txx` tasks and `Pxx` phases are checked off only after completion evidence exists.
+* The changes log uses `CHG-xxx` for material changes and `DIV-xxx` only for significant divergence.
+* Each `DIV-xxx` links to an `AM-xxx` amendment in the plan, matching phase-detail updates when applicable, and its critique disposition through a stable `PC-xxx` ID or critique-artifact pointer.
+* Affected dependent work resumes only after an explicit Pass disposition. Revise returns the amendment to planning, and Blocked stops the affected work.
+* Validation evidence or an explicit skip reason is available for changed behavior.
+* The review handoff identifies the current execution status and any unresolved work.
 
 ## Constraints
 
-* Do not expand scope beyond the approved phase.
-* Use [references/implementation.md](references/implementation.md) for the detailed protocol, subagent contracts, dependency rules, and template guidance.
-* Keep `.copilot-tracking/` paths and other internal planning, research, or implementation artifact references out of produced code, code comments, documentation strings, and commit messages; see [references/implementation.md](references/implementation.md) for the comment-reference rule.
-* Stop when required artifacts or subagent dispatch are unavailable.
+* Use [references/implementation.md](references/implementation.md) for the tracking and amendment protocol.
+* Do not expand scope without an evidence-backed amendment or an explicit follow-up item.
+* Apply the fresh critique gate only to significant divergence. Ordinary local judgment and non-material divergence remain implementation decisions.
+* Do not use line numbers, separate legacy log artifacts, or retired dedicated RPI execution workers.
+* Keep `.copilot-tracking/` references out of production code, code comments, documentation strings, and commit messages.
 
 ## Stop rules
 
-* Stop if the plan or details file is missing or invalid.
-* Stop if a genuine blocker prevents the current phase from proceeding, even when subagent dispatch is unavailable.
-* For a bounded run such as one phase or one step, stop after that phase or step, update the changes log and planning log, capture validation evidence when available, and hand off the current status with blockers or follow-on work and the next review command; do not require all phases to complete before a bounded handoff.
-* Stop if validation finds blocking Critical or High issues that must be resolved before review handoff.
+* Stop as Blocked when the approved plan, required details, or a dependency prevents credible execution.
+* Stop and return to planning when a material change cannot be supported by an `AM-xxx` amendment.
+* Pause affected dependent work after recording a significant divergence, amendment, and phase-detail update. Return the amended artifacts to planning for fresh critique, and do not resume that work unless the disposition is Pass.
+* Stop after a caller-bounded phase or task once its plan state and changes evidence are current.
 
 ## Handoff
 
-* End with a brief bullet list of phase status, files changed, validation status, and the next review command.
-* Name `/rpi-review` as the next review command when review evidence is requested.
+For an unreviewed significant amendment, return the changed plan, phase details, linked `DIV-xxx` and `AM-xxx` records, supplied evidence, and affected dependent scope to the planning parent. Otherwise return the changes path, completed and remaining `Pxx` or `Pxx-Txx` items, validation status, linked divergences and amendments, and the recommended `rpi-review` handoff.
 
 

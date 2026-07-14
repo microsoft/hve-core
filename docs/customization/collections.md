@@ -2,7 +2,7 @@
 title: Managing Collections
 description: Bundle agents, prompts, instructions, and skills into distributable collection packages with maturity filtering
 author: Microsoft
-ms.date: 2026-06-27
+ms.date: 2026-07-13
 ms.topic: how-to
 keywords:
   - collections
@@ -146,14 +146,14 @@ When a parent agent declares subagents in its `agents:` frontmatter, those subag
 must also appear in the collection YAML. The plugin generation pipeline does not
 automatically resolve transitive agent dependencies.
 
-For example, if `rpi-agent.agent.md` references `phase-implementor.agent.md` as a subagent,
-both files must have entries in the collection manifest:
+For example, if a collection includes `rpi-agent.agent.md` and its `rpi-planner.agent.md`
+dependency, both files must have entries in the collection manifest:
 
 ```yaml
 items:
   - path: .github/agents/hve-core/rpi-agent.agent.md
     kind: agent
-  - path: .github/agents/hve-core/subagents/phase-implementor.agent.md
+  - path: .github/agents/hve-core/subagents/rpi-planner.agent.md
     kind: agent
 ```
 

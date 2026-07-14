@@ -1,9 +1,9 @@
 ---
 title: Understanding the RPI Workflow
-description: Learn the Research, Plan, Implement, Review workflow for transforming complex tasks into validated code
+description: Learn how Research, Plan, Implement, Review, and Follow-up guide evidence-led delivery
 sidebar_position: 1
 author: Microsoft
-ms.date: 2026-06-24
+ms.date: 2026-07-13
 ms.topic: concept
 keywords:
   - rpi workflow
@@ -11,13 +11,14 @@ keywords:
   - task planner
   - task implementor
   - task reviewer
+  - follow-up
   - github copilot
 estimated_reading_time: 4
 ---
 
-The RPI (Research, Plan, Implement, Review) workflow transforms complex coding tasks into validated solutions through four structured phases. Think of it as a type transformation pipeline:
+The RPI (Research, Plan, Implement, Review) lifecycle guides complex coding tasks toward verified outcomes and explicit follow-up. It keeps five concepts distinct without requiring every run to execute all of them. Start with research readiness: reuse supplied or completed evidence when it is adequate, and activate research only for a demonstrated gap.
 
-> Uncertainty → Knowledge → Strategy → Working Code → Validated Code
+> Task context and evidence → Research when needed → Plan → Implement → Review → Follow-up
 
 ## Why Use RPI?
 
@@ -27,104 +28,95 @@ RPI solves this through a counterintuitive insight: when AI knows it cannot impl
 
 ### Key Benefits
 
+* Assesses evidence before opening a research stage, so adequate research is reused rather than repeated.
 * Uses verified existing patterns instead of inventing plausible ones.
-* Traces every decision to specific files and line numbers.
-* Creates research documents anyone can follow, eliminating tribal knowledge.
+* Preserves decisions, changes, validation, and review routing in durable task artifacts.
 
 > [!TIP]
-> **Want the full explanation?** See [Why the RPI Workflow Works](why-rpi.md) for the psychology, quality comparisons, and guidance on choosing between strict RPI and rpi-agent.
+> **Want the full explanation?** See [Why the RPI Workflow Works](why-rpi.md) for the psychology, quality comparisons, and RPI entry surfaces.
 
-RPI separates concerns into distinct phases, each with its own specialized custom agent.
+RPI separates lifecycle concepts without requiring an autonomous chain of specialized task workers. Use `RPI Agent` as a user-selected lifecycle wrapper, `/rpi-quick` as a skill-based full-flow entry point, or a direct phase skill when you need focused work.
 
-## The Four Phases
+## The Lifecycle Concepts
 
 ### 🔬 Research Phase (Task Researcher)
 
-This phase transforms uncertainty into verified knowledge.
+Research begins only when readiness identifies a requirements, acceptance, dependency, material-risk, complexity, uncertainty, or decision-critical gap. Task Researcher and `/rpi-research` are appropriate when such investigation is needed.
 
-* Investigates codebase, external APIs, and documentation
-* Documents findings with evidence and sources
-* Creates ONE recommended approach per scenario
-* Output: `{{YYYY-MM-DD}}-<topic>-research.md`
+* Investigates codebase, external APIs, and documentation within the demonstrated gap.
+* Documents evidence, source locations, decisions, and planning readiness.
+* Produces `.copilot-tracking/research/{{YYYY-MM-DD}}/{{task_slug}}-research.md` when research runs.
 
 ### 📋 Plan Phase (Task Planner)
 
-This phase transforms knowledge into actionable strategy.
+Planning transforms adequate evidence into an actionable strategy. The planning parent owns the overall checklist and phase details, may use `RPI Planner` for one bounded `Pxx` phase, and records an independent `rpi-plan-critique` disposition.
 
-* Creates coordinated planning files with checkboxes and details
-* Includes line number references for precision
-* Validates research exists before proceeding
-* Output: Plan and details files
+* Creates `.copilot-tracking/plans/{{YYYY-MM-DD}}/{{task_slug}}-plan.md`.
+* Creates `.copilot-tracking/details/{{YYYY-MM-DD}}/{{task_slug}}-phase-details.md`.
+* Creates `.copilot-tracking/reviews/plans/{{YYYY-MM-DD}}/{{task_slug}}-plan-critique.md`.
 
 ### ⚡ Implement Phase (Task Implementor)
 
-This phase transforms strategy into working code.
+Implementation directly and flexibly executes approved `Pxx` or `Pxx-Txx` work. Task Implementor or `/rpi-implement` records completion evidence, `CHG-xxx` changes, and truthful validation in `.copilot-tracking/changes/{{YYYY-MM-DD}}/{{task_slug}}-changes.md`.
 
-* Executes plan task by task with verification
-* Tracks all changes in a changes log
-* Supports stop controls for review
-* Output: Working code + `{{YYYY-MM-DD}}-<topic>-changes.md`
+Significant divergence creates a linked `DIV-xxx` and `AM-xxx`, updates affected phase details, and returns to planning for fresh critique before affected dependent work resumes.
 
 ### ✅ Review Phase (Task Reviewer)
 
-This phase transforms working code into validated code.
+Review writes one evidence-reconciliation record at `.copilot-tracking/reviews/logs/{{YYYY-MM-DD}}/{{task_slug}}-review.md`. It compares the plan, phase details, critique, amendments, changes, and validation evidence; optional generic bounded lenses are used only when they reduce a specific uncertainty.
 
-* Validates implementation against research and plan specifications
-* Checks convention compliance using instruction files
-* Runs validation commands (lint, build, test)
-* Identifies follow-up work and iteration needs
-* Output: `{{YYYY-MM-DD}}-<topic>-review.md`
+Review keeps execution status (`Complete`, `Partial`, or `Blocked`) separate from its outcome and routes actionable gaps to the earliest responsible stage.
+
+### ➡️ Follow-up
+
+Follow-up does not rename or repeat another lifecycle concept. It routes defects to implementation, decision gaps to planning, evidence gaps to research, and residual work to a distinct next item.
 
 ## RPI Skill Commands
 
 Use the skill-style slash commands when you want explicit RPI entry points in chat:
 
-* `/rpi-quick` starts the full end-to-end workflow for a task.
-* `/rpi-research` focuses on the research phase.
-* `/rpi-plan` creates the implementation plan from research.
-* `/rpi-implement` executes the plan.
-* `/rpi-review` validates the changes against the plan and evidence.
+* `/rpi-quick` is the skill-based full-flow entry point. It assesses research readiness, then coordinates the applicable lifecycle concepts with one task identity.
+* `/rpi-research` focuses on a demonstrated research gap.
+* `/rpi-plan` creates or revises the plan, phase details, and critique disposition from adequate evidence.
+* `/rpi-implement` directly executes approved work and records evidence-led changes.
+* `/rpi-review` reconciles evidence in one review record and routes follow-up.
 
-These commands surface the same workflow stages as the prompt-based shortcuts, but they are the right choice when you want the RPI skills themselves to be the entry point.
+Select `RPI Agent` when you want a user-selected lifecycle wrapper that activates these same skills. `RPI Agent` and `/rpi-quick` are alternative entry surfaces, not autonomous dispatchers of specialized task workers.
 
-## The Critical Rule: Clear Context Between Phases
+## Managing Context Between Lifecycle Concepts
 
-🔴 **Always use `/clear` or start a new chat between phases.**
+Use `/clear` or a new chat when a long lifecycle has accumulated context, you are switching concepts, or the conversation is no longer serving the task well. A context reset is a tool for clarity, not a requirement to repeat research or restart the lifecycle.
 
-Each custom agent has different instructions. Accumulated context causes confusion:
+Durable artifacts carry the necessary context:
 
 ```text
-Task Researcher → /clear → Task Planner → /clear → Task Implementor → /clear → Task Reviewer
+research, when it runs → plan and details → changes → review and routed follow-up
 ```
 
-Research findings are preserved in files, not chat history. Clean context lets each agent work optimally. After clearing, open the relevant `.copilot-tracking/` artifact in your editor so the next agent can see it (for example, open the research document before invoking Task Planner).
+Resume with the same stable task ID and open or reference the relevant dated artifacts. Navigate plan and detail sections with `Pxx`, `Pxx-Txx`, headings, and `<!-- rpi:... -->` markers.
 
 For the technical explanation of why this matters, see [Context Engineering](context-engineering.md).
 
 ## When to Use RPI
 
-| Use RPI When...                | Use Quick Edits When... |
-|--------------------------------|-------------------------|
-| Changes span multiple files    | Fixing a typo           |
-| Learning new patterns/APIs     | Adding a log statement  |
-| External dependencies involved | Refactoring < 50 lines  |
-| Requirements are unclear       | Change is obvious       |
+| Use RPI artifacts when...                                      | Use a smaller direct edit when...              |
+|-----------------------------------------------------------------|-------------------------------------------------|
+| The task needs evidence, planning, or review routing           | The change is clear and isolated                |
+| Dependencies, risk, or uncertainty need explicit handling      | Existing evidence and acceptance are sufficient  |
+| A handoff needs durable task evidence                           | No durable lifecycle evidence is needed          |
 
-**Rule of Thumb:** If you need to understand something before implementing, use RPI.
+**Rule of Thumb:** Use research when readiness identifies a gap; use the smallest lifecycle action that gives the task credible evidence and a clear owner.
 
 ## Quick Start
 
-1. **Define the problem** clearly
-2. **Research** using `/rpi-research <topic>`
-3. **Clear context** with `/clear`
-4. **Plan** using `/rpi-plan`
-5. **Clear context** with `/clear`
-6. **Implement** using `/rpi-implement`
-7. **Clear context** with `/clear`
-8. **Review** using `/rpi-review`
+1. **Define the task** with requirements, acceptance criteria, decisions, dependencies, and available evidence.
+2. **Assess research readiness** and use `/rpi-research` or Task Researcher only if a demonstrated gap remains.
+3. **Plan** with `/rpi-plan` when durable planning is needed.
+4. **Implement** approved work with `/rpi-implement` or Task Implementor.
+5. **Review** with `/rpi-review`, then route defects, decisions, evidence gaps, or residual work through Follow-up.
 
 > [!TIP]
-> If you prefer the prompt-based entry points, the `/task-research`, `/task-plan`, `/task-implement`, and `/task-review` prompts still switch to their respective custom agents. The new `/rpi-*` skills are the direct skill-commands for the same workflow but they will not switch their corresponding Agents.
+> Use `/rpi-quick` or select `RPI Agent` when you want a lifecycle entry surface. Use a direct phase skill when the required next action is already clear.
 
 ## Next Steps
 

@@ -3,7 +3,7 @@ title: Task Implementor Guide
 description: Use the Task Implementor custom agent to execute implementation plans with precision and tracking
 sidebar_position: 6
 author: Microsoft
-ms.date: 2026-06-24
+ms.date: 2026-07-13
 ms.topic: tutorial
 keywords:
   - task implementor
@@ -13,37 +13,38 @@ keywords:
 estimated_reading_time: 4
 ---
 
-The Task Implementor custom agent transforms planning files into working code. It executes plans task by task, tracks all changes, and supports stop controls for review between phases.
+The Task Implementor custom agent transforms an approved plan and matching phase-details artifact into working code. It executes approved tasks directly, records trustworthy change evidence, and prepares the artifact set for review.
 
 ## When to Use Task Implementor
 
 Use Task Implementor after completing planning when you need:
 
-* ⚡ **Precise execution** following the plan exactly
+* ⚡ **Precise execution** following approved `Pxx` and `Pxx-Txx` work
 * 📝 **Change tracking** documenting all modifications
-* ⏸️ **Stop controls** for review between phases
+* ↔️ **Divergence handling** for evidence-backed plan amendments
 * ✅ **Verification** that success criteria are met
 
 ## What Task Implementor Does
 
-1. **Reads** the plan phase by phase, task by task
-2. **Loads** only needed details using line ranges
-3. **Implements** code following workspace conventions
-4. **Tracks** changes in a changes log
-5. **Verifies** success criteria before marking complete
-6. **Pauses** at stop points for your review
+1. **Resolves** the dated plan, matching phase details, critique disposition, and prior changes by stable IDs and markers
+2. **Implements** approved work directly for the requested `Pxx` phase or `Pxx-Txx` task
+3. **Tracks** material work with `CHG-xxx` entries in the changes record
+4. **Verifies** success criteria before marking completed phases and tasks
+5. **Records** a significant divergence as linked `DIV-xxx` and `AM-xxx` evidence, with a matching phase-details update
+6. **Runs** expected validation and hands the complete evidence set to review when no affected dependent work awaits critique
 
 > [!NOTE]
-> **Why the constraint matters:** Task Implementor has one job: execute the plan using patterns documented in research. No time wasted rediscovering conventions, no "creative" decisions that break existing patterns. Just verified facts applied methodically.
+> **Why the constraint matters:** Task Implementor follows approved evidence while keeping actual work, validation, and material divergence visible. A significant divergence receives an amendment and fresh critique before affected dependent work resumes, so review can distinguish justified change from unsupported scope drift.
 
 ## Output Artifacts
 
-Task Implementor creates working code and a changes log:
+Task Implementor creates working code and a changes record:
 
 ```text
 .copilot-tracking/
 └── changes/
-    └── {{YYYY-MM-DD}}-<topic>-changes.md    # Log of all changes made
+  └── {{YYYY-MM-DD}}/
+    └── {{task_slug}}-changes.md    # Changes, divergences, validation, and handoff evidence
 ```
 
 Plus all the actual code files created or modified during implementation.
@@ -54,7 +55,14 @@ Plus all the actual code files created or modified during implementation.
 
 🔴 **Start with `/clear` or a new chat** after Task Planner completes.
 
-After clearing, open your plan file (`.copilot-tracking/plans/<topic>-plan.instructions.md`) in the editor before invoking Task Implementor. This ensures the agent can locate and follow the plan without relying on chat history.
+After clearing, open the plan and matching phase-details artifact before invoking Task Implementor:
+
+```text
+.copilot-tracking/plans/{{YYYY-MM-DD}}/{{task_slug}}-plan.md
+.copilot-tracking/details/{{YYYY-MM-DD}}/{{task_slug}}-phase-details.md
+```
+
+Use the matching `Pxx` and `Pxx-Txx` headings and markers to locate the requested work. Include the plan critique when a prior amendment or residual risk matters.
 
 > [!TIP]
 > Context management is an engineering practice, not a ritual. Clearing context removes accumulated tokens that cause the model to ignore its instructions. See [Context Engineering](context-engineering.md) for the full explanation.
@@ -67,24 +75,24 @@ After clearing, open your plan file (`.copilot-tracking/plans/<topic>-plan.instr
 
 ### Step 3: Reference Your Plan
 
-Use `/task-implement` or `/rpi-implement` to start execution. The prompt automatically locates the plan and switches to Task Implementor. Alternatively, provide the path to your plan file directly.
+Use `/task-implement` or `/rpi-implement` to start execution. Provide the plan, phase-details artifact, and an optional exact `Pxx` phase or `Pxx-Txx` task when you want to bound the work.
 
-### Step 4: Set Stop Controls
+### Step 4: Set the Execution Scope
 
-Choose your review cadence:
+Use a stable phase or task identifier with matching headings and markers to focus execution:
 
-* `phaseStop=true` (default): Pause after each phase
-* `taskStop=true`: Pause after each task
-* Both false: Run to completion
+* `P01` executes the approved work in Phase 1
+* `P01-T02` executes only Task 2 in Phase 1
+* Omit the scope only when the complete approved plan is ready to execute
 
-### Step 5: Review and Continue
+### Step 5: Record Evidence and Continue
 
-At each stop point:
+As work completes:
 
-1. Review the changes made
-2. Verify code compiles and lints
-3. Approve or request adjustments
-4. Continue to next phase/task
+1. Record each material change as `CHG-xxx` in the changes record
+2. Mark a `Pxx-Txx` task or `Pxx` phase complete only after completion evidence exists
+3. Run the validation expected by the plan or changed behavior, and record results or an explicit skip reason
+4. Hand off to review when the approved scope is complete and no affected dependent work awaits a critique disposition
 
 ## Example Prompt
 
@@ -92,31 +100,25 @@ At each stop point:
 /task-implement
 ```
 
-Or reference a specific generated prompt:
+Or provide a bounded artifact set:
 
 ```text
-/implement-blob-storage
+/task-implement plan=.copilot-tracking/plans/2025-01-28/blob-storage-plan.md details=.copilot-tracking/details/2025-01-28/blob-storage-phase-details.md task=P01-T01
 ```
 
-## Understanding Stop Controls
+## Changes, Divergences, and Amendments
 
-### Phase Stop (Default: true)
+Record a material implementation change with a `CHG-xxx` identifier tied to the affected `Pxx-Txx` task. The changes record also captures files, completion evidence, validation, blockers, and remaining work.
 
-Pauses after completing all tasks in a phase:
+A significant divergence is different from ordinary local judgment. When a material departure from the approved plan is necessary:
 
-```text
-Phase 1: [x] Task 1.1, [x] Task 1.2 → STOP for review
-Phase 2: [ ] Task 2.1, [ ] Task 2.2
-```
+1. Add a `DIV-xxx` entry in `.copilot-tracking/changes/{{YYYY-MM-DD}}/{{task_slug}}-changes.md`.
+2. Link it to an `AM-xxx` amendment in `.copilot-tracking/plans/{{YYYY-MM-DD}}/{{task_slug}}-plan.md`.
+3. Update the affected section in `.copilot-tracking/details/{{YYYY-MM-DD}}/{{task_slug}}-phase-details.md`.
+4. Return the amended evidence to planning for a fresh `rpi-plan-critique` assessment.
+5. Do not resume affected dependent work until the new critique disposition is `Pass`. Preserve unrelated completed work and evidence.
 
-### Task Stop (Default: false)
-
-Pauses after each individual task:
-
-```text
-Phase 1: [x] Task 1.1 → STOP
-         [ ] Task 1.2
-```
+Fresh critique is required only for significant divergence. Ordinary local implementation judgment and non-material divergence remain implementation decisions.
 
 ## Tips for Better Implementation
 
@@ -133,49 +135,58 @@ Phase 1: [x] Task 1.1 → STOP
 * Ignore failing tests or lints
 * Rush through all phases without checking
 
-## The Changes Log
+## The Changes Record
 
-Task Implementor maintains a changes log with sections:
+Task Implementor maintains a changes record with stable identifiers:
 
 ```markdown
 ## Changes
 
-### Added
-* src/storage/blob_client.py - Azure Blob Storage client class
+<!-- rpi:change id=CHG-001 -->
+### CHG-001: Add Blob Storage client
 
-### Modified
-* src/pipeline/config.py - Added blob storage configuration
+* Related task: P01-T01
+* Files: src/storage/blob_client.py
+* Completion evidence: BlobStorageClient is available to the writer
+* Validation: Passed
 
-### Removed
-* (none this implementation)
+## Divergences
+
+<!-- rpi:divergence id=DIV-001 -->
+### DIV-001: Add retry configuration
+
+* Related task: P01-T02
+* Linked amendment: AM-001
+* Critique disposition: Pass after fresh critique
 ```
 
 ## At Completion
 
 When all phases are complete, Task Implementor provides:
 
-1. **Summary** of all changes from the changes log
-2. **Links** to planning files for reference
-3. **Recommendation** to proceed to review
+1. **Summary** of completed and remaining `Pxx` and `Pxx-Txx` work from the changes record
+2. **Validation** evidence, explicit skips, and linked `CHG-xxx`, `DIV-xxx`, and `AM-xxx` records
+3. **Recommendation** to proceed to `.copilot-tracking/reviews/logs/{{YYYY-MM-DD}}/{{task_slug}}-review.md` when no significant amendment awaits critique
 
 ## Common Pitfalls
 
 | Pitfall                 | Solution                                                                        |
 |-------------------------|---------------------------------------------------------------------------------|
-| Plan not found          | Complete Task Planner first                                                     |
-| Skipping reviews        | Use phaseStop=true for important changes                                        |
-| Not running validations | Check lint/test after each phase                                                |
-| Context issues          | Use `/clear` before starting; see [Context Engineering](context-engineering.md) |
+| Plan or details not found        | Provide the dated plan and matching phase-details paths                                      |
+| Ambiguous scope                  | Specify the exact `Pxx` phase or `Pxx-Txx` task                                             |
+| Significant divergence           | Record linked `DIV-xxx` and `AM-xxx`, update details, and wait for fresh critique           |
+| Not running validations          | Record the executed validation or an explicit skip reason                                    |
+| Context issues                   | Use `/clear` before starting; see [Context Engineering](context-engineering.md)             |
 
 ## Next Steps
 
 After Task Implementor completes:
 
-1. **Clear context** using `/clear` or starting a new chat
-2. **Review** using `/task-review` to switch to [Task Reviewer](task-reviewer.md)
-3. **Address findings** from the review before committing
-4. **Commit** your changes with a descriptive message
-5. **Clean up** planning files if no longer needed
+1. If a significant amendment awaits critique, return the plan, phase-details artifact, and evidence to Task Planner before continuing affected dependent work.
+2. Otherwise, **clear context** using `/clear` or starting a new chat.
+3. **Review** using `/task-review` to switch to [Task Reviewer](task-reviewer.md), providing the plan, phase details, critique, and changes record.
+4. **Address** review findings through the routed owner before committing.
+5. **Commit** your changes with a descriptive message when the review outcome supports it.
 
 > [!TIP]
 > Use the **✅ Review** handoff button when available to transition directly to Task Reviewer with context.

@@ -39,18 +39,12 @@ items:
     maturity: experimental
 
   # Subagents
-  - path: .github/agents/hve-core/subagents/rpi-validator.agent.md
-    kind: agent
-  - path: .github/agents/hve-core/subagents/implementation-validator.agent.md
-    kind: agent
-  - path: .github/agents/hve-core/subagents/plan-validator.agent.md
-    kind: agent
-  - path: .github/agents/hve-core/subagents/phase-implementor.agent.md
-    kind: agent
   - path: .github/agents/hve-core/subagents/researcher-subagent.agent.md
     kind: agent
   # RPI Research subagents
   - path: .github/agents/hve-core/subagents/rpi-researcher.agent.md
+    kind: agent
+  - path: .github/agents/hve-core/subagents/rpi-planner.agent.md
     kind: agent
   # HVE Builder subagents
   - path: .github/agents/hve-core/subagents/hve-artifact-tester.agent.md
@@ -188,6 +182,16 @@ items:
   - path: .github/skills/hve-core/hve-builder
     kind: skill
   - path: .github/skills/rpi/rpi-research
+    kind: skill
+  - path: .github/skills/rpi/rpi-plan
+    kind: skill
+  - path: .github/skills/rpi/rpi-plan-critique
+    kind: skill
+  - path: .github/skills/rpi/rpi-implement
+    kind: skill
+  - path: .github/skills/rpi/rpi-review
+    kind: skill
+  - path: .github/skills/rpi/rpi-quick
     kind: skill
   - path: .github/skills/hve-core/hve-builder-tester
     kind: skill

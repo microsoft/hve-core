@@ -3,7 +3,7 @@ title: "Stage 6: Implementation"
 description: Build features, write code, and create content with the full suite of AI-assisted development tools
 sidebar_position: 7
 author: Microsoft
-ms.date: 2026-06-30
+ms.date: 2026-07-13
 ms.topic: how-to
 keywords:
   - ai-assisted project lifecycle
@@ -16,7 +16,7 @@ estimated_reading_time: 8
 
 ## Overview
 
-Implementation is the highest-density stage in the project lifecycle, with 30 assets spanning agents, prompts, instructions, and skills. This stage covers coding, content creation, prompt engineering, data analysis, and infrastructure work. The RPI (Research, Plan, Implement, Review) methodology provides structured execution guidance for complex tasks.
+Implementation is the highest-density stage in the project lifecycle, with 30 assets spanning agents, prompts, instructions, and skills. This stage covers coding, content creation, prompt engineering, data analysis, and infrastructure work. The RPI lifecycle keeps Research, Plan, Implement, Review, and Follow-up distinct while providing structured execution guidance for complex tasks.
 
 ## When You Enter This Stage
 
@@ -31,10 +31,10 @@ You enter Implementation after completing [Stage 5: Sprint Planning](sprint-plan
 
 | Tool                    | Type  | How to Invoke                            | Purpose                                               |
 |-------------------------|-------|------------------------------------------|-------------------------------------------------------|
-| rpi-agent               | Agent | Select **rpi-agent** agent               | Orchestrate the full research-plan-implement workflow |
+| RPI Agent               | Agent | Select **RPI Agent** agent               | Activate matching RPI skills for applicable lifecycle work |
 | task-researcher         | Agent | Select **task-researcher** agent         | Research requirements and gather codebase evidence    |
 | task-planner            | Agent | Select **task-planner** agent            | Create implementation plans from research findings    |
-| task-implementor        | Agent | Select **task-implementor** agent        | Build components following plans                      |
+| task-implementor        | Agent | Select **task-implementor** agent        | Directly execute approved `Pxx` or `Pxx-Txx` work     |
 | task-reviewer           | Agent | Select **task-reviewer** agent           | Validate implementation against plan and research     |
 | gen-jupyter-notebook    | Agent | Select **gen-jupyter-notebook** agent    | Create data analysis notebooks                        |
 | gen-streamlit-dashboard | Agent | Select **gen-streamlit-dashboard** agent | Generate Streamlit dashboards                         |
@@ -44,7 +44,6 @@ You enter Implementation after completing [Stage 5: Sprint Planning](sprint-plan
 
 | Tool                | Type  | How to Invoke                        | Purpose                                  |
 |---------------------|-------|--------------------------------------|------------------------------------------|
-| phase-implementor   | Agent | Select **phase-implementor** agent   | Execute individual implementation phases |
 | prompt-updater      | Agent | Select **prompt-updater** agent      | Update existing prompts and instructions |
 | researcher-subagent | Agent | Select **researcher-subagent** agent | Conduct focused research within tasks    |
 
@@ -111,7 +110,7 @@ src/api/handlers/list-resources.py.
 
 ### Step-by-Step RPI Agents
 
-Use individual task agents when you want more control over each phase.
+Use individual task agents or the matching phase skills when you want more control over each phase.
 
 ```text
 /task-research Investigate how the existing list-resources handler in
@@ -134,8 +133,9 @@ Select **task-implementor** agent:
 
 ```text
 Build the webhook delivery system following the plan in
-.copilot-tracking/plans/webhook-delivery-plan.md. Start with the event
-dispatcher component and implement the retry queue second.
+.copilot-tracking/plans/2026-07-13/webhook-delivery-plan.md and phase details in
+.copilot-tracking/details/2026-07-13/webhook-delivery-phase-details.md. Start
+with the event dispatcher component and implement the retry queue second.
 ```
 
 Select **gen-jupyter-notebook** agent:

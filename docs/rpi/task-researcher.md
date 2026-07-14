@@ -1,9 +1,9 @@
 ---
 title: Task Researcher Guide
-description: Use the Task Researcher custom agent to conduct deep, evidence-based research before coding
+description: Use Task Researcher for a demonstrated evidence gap before planning or implementation
 sidebar_position: 4
 author: Microsoft
-ms.date: 2026-06-24
+ms.date: 2026-07-13
 ms.topic: tutorial
 keywords:
   - task researcher
@@ -13,56 +13,57 @@ keywords:
 estimated_reading_time: 4
 ---
 
-The Task Researcher custom agent transforms uncertainty into verified knowledge through deep, autonomous research. It investigates your codebase, external documentation, and APIs to create evidence-backed recommendations.
+Task Researcher investigates a demonstrated readiness gap before planning or implementation. It examines your codebase, external documentation, and APIs within the assigned boundary, then creates evidence-backed recommendations for the next lifecycle concept.
 
 ## When to Use Task Researcher
 
-Escalate to Task Researcher when your task involves:
+Use Task Researcher when supplied or completed research is not adequate for a task's:
 
-* 🔄 **Multi-file changes** requiring coordination
-* 📚 **New patterns or frameworks** you haven't used before
-* 🔌 **External API integrations** with authentication or complex workflows
-* ❓ **Unclear requirements** needing investigation
-* 🏗️ **Architecture decisions** affecting multiple components
+* Requirements or acceptance criteria
+* Dependencies or material risks
+* Complexity or uncertainty
+* Decision-critical question
+
+Multi-file changes, new patterns, external integrations, unclear requirements, and architecture decisions can demonstrate one of these gaps, but they do not automatically require fresh research. Reuse adequate evidence and record why Research is reused or satisfied-and-skipped.
 
 ## What Task Researcher Does
 
-1. **Investigates** using workspace search, file reads, and external tools
-2. **Documents** findings with evidence, sources, and line references
-3. **Evaluates** alternatives with benefits and trade-offs
-4. **Recommends** ONE approach per technical scenario
-5. **Outputs** a comprehensive research document
+1. Investigates using workspace search, file reads, and external tools.
+2. Documents findings with evidence, sources, and precise source locations when useful.
+3. Evaluates alternatives with benefits and trade-offs.
+4. Recommends one approach per technical scenario.
+5. Outputs a research document with planning-readiness evidence.
 
 > [!NOTE]
-> **Why the constraint matters:** Task Researcher knows it will never write the code. This single constraint transforms its behavior: it searches for existing patterns instead of inventing new ones, cites specific files as evidence, and questions its own assumptions because it can't hide them in implementation.
+> **Why the constraint matters:** Task Researcher does not write implementation code. It searches for existing patterns instead of inventing new ones, cites supporting sources, and records assumptions that the evidence cannot resolve.
 
 ## Output Artifact
 
 Task Researcher creates a research document at:
 
 ```text
-.copilot-tracking/research/{{YYYY-MM-DD}}-<topic>-research.md
+.copilot-tracking/research/{{YYYY-MM-DD}}/{{task_slug}}-research.md
 ```
 
 This document includes:
 
-* Scope and success criteria
-* Evidence log with sources
-* Code examples from the codebase
-* External research findings
-* Recommended approach with rationale
+* Scope, readiness gap, and success criteria
+* Evidence log with sources and supported source locations
+* Codebase and external findings
+* Recommended approach, rationale, and unresolved decisions
+* Planning-readiness disposition
 
 ## How to Use Task Researcher
 
-### Option 1: Use the Prompt Shortcut (Recommended)
+### Option 1: Use the RPI Research Skill
 
-Type `/task-research <topic>` or `/rpi-research <topic>` in GitHub Copilot Chat where `<topic>` describes what you want to research:
+Type `/rpi-research <topic>` in GitHub Copilot Chat when research readiness identifies a gap:
 
 ```text
-/task-research Azure Blob Storage integration for Python pipelines
+/rpi-research Azure Blob Storage integration for Python pipelines
 ```
 
-This automatically switches to Task Researcher and begins the research protocol.
+This activates the research phase for the stated gap.
 
 ### Option 2: Select the Custom Agent Manually
 
@@ -81,12 +82,12 @@ Provide context about what you're trying to accomplish. Be specific about:
 
 ### Step 3: Let It Research
 
-Task Researcher works autonomously for 20-60 minutes. It will:
+Task Researcher works within its assigned research boundary. It will:
 
 * Search your codebase for patterns
 * Read relevant files and documentation
 * Use external tools (Context7, Azure docs, etc.)
-* Create the research document
+* Create the canonical research document
 
 ### Step 4: Review the Research
 
@@ -121,30 +122,30 @@ Focus on approaches that match our existing patterns in the codebase.
 
 ❌ **Don't:**
 
-* Ask for implementation (that's Task Implementor's job)
-* Skip research for complex tasks
-* Provide vague descriptions
+* Ask for implementation (that is Task Implementor's job)
+* Repeat research when supplied evidence is adequate
+* Provide vague descriptions of the demonstrated gap
 
 ## Common Pitfalls
 
-| Pitfall              | Solution                                         |
-|----------------------|--------------------------------------------------|
-| Research too broad   | Focus on specific technical questions            |
-| Skipping research    | Always research multi-file or unfamiliar changes |
-| Not reviewing output | Read the research doc before planning            |
+| Pitfall                        | Solution                                               |
+|--------------------------------|--------------------------------------------------------|
+| Research too broad             | Focus on the demonstrated technical question           |
+| Research started without a gap | Reassess readiness and reuse adequate evidence         |
+| Not reviewing output           | Read the research artifact before planning             |
 
 ## Next Steps
 
 After Task Researcher completes:
 
-1. **Review** the research document in `.copilot-tracking/research/`
-2. **Clear context** using `/clear` or starting a new chat
-3. **Proceed to planning** with [Task Planner](task-planner.md)
+1. Review `.copilot-tracking/research/{{YYYY-MM-DD}}/{{task_slug}}-research.md`.
+2. Resume deliberately from the durable artifact, using a fresh context when the conversation has accumulated unrelated detail.
+3. Proceed to planning with [Task Planner](task-planner.md).
 
 Pass the research document path to Task Planner so it can create an actionable implementation plan.
 
 > [!TIP]
-> Use the **📋 Create Plan** handoff button when available to transition directly to Task Planner with context.
+> The planning parent uses the research evidence with the stable task ID, then navigates plan and detail work through `Pxx`, `Pxx-Txx`, headings, and `<!-- rpi:... -->` markers.
 
 ---
 

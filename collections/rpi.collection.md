@@ -1,6 +1,6 @@
 # RPI Skills
 
-This collection packages the `rpi-research` skill, its default `RPI Researcher` delegated worker, Task Researcher, and skill-forward RPI entry points for research, planning, implementation, review, and guided walkthroughs. The shared `Researcher Subagent` remains included because Task Researcher still depends on it.
+This collection packages the `rpi-research` skill, its default `RPI Researcher` delegated worker, Task Researcher, and skill-forward RPI entry points for research, planning, implementation, review, follow-up, and guided walkthroughs. `RPI Planner` provides bounded authoring for one assigned phase, and `rpi-plan-critique` provides an independent read-only plan assessment. The shared `Researcher Subagent` remains included because Task Researcher still depends on it.
 
 ## Local enablement
 
@@ -23,4 +23,4 @@ Prompt overlap is handled at directory scope. `chat.promptFilesLocations` only s
 * disable the whole `.github/prompts/hve-core` directory, or
 * rely on host prompt precedence while testing skill commands.
 
-The collection intentionally delegates phase work to the existing RPI subagents so the skills stay compact and the packaging model remains additive.
+The collection keeps planning and review parent-owned. `RPI Planner` is available only for a single bounded phase, while independent critique and review fan-out use generic bounded workers when warranted.

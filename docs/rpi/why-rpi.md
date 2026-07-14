@@ -1,14 +1,14 @@
 ---
 title: Why the RPI Workflow Works
-description: The psychology, research, and principles behind the Research-Plan-Implement-Review framework, plus guidance on when to use RPI vs rpi-agent
+description: The psychology and principles behind the evidence-led RPI lifecycle and its entry surfaces
 sidebar_position: 2
 author: Microsoft
-ms.date: 2026-06-24
+ms.date: 2026-07-13
 ms.topic: concept
 keywords:
   - rpi workflow
   - ai constraints
-  - research first
+  - research readiness
   - hallucination prevention
   - ai coding
   - task reviewer
@@ -40,82 +40,85 @@ AI writes first and thinks never. Not because it's broken, but because that's th
 
 The solution isn't teaching AI to be smarter. It's preventing AI from doing certain things at certain times.
 
-RPI (Research → Plan → Implement → Review) works by separating AI work into four distinct phases, each handled by a specialized agent:
+RPI keeps Research, Plan, Implement, Review, and Follow-up distinct so a task uses the smallest credible action at each point. It starts with research readiness: supplied or completed research is reused when adequate, while Task Researcher or `/rpi-research` investigates a demonstrated requirements, acceptance, dependency, material-risk, complexity, uncertainty, or decision-critical gap.
 
-* [Task Researcher](task-researcher.md): investigates your codebase and external sources, producing verified findings with citations
-* [Task Planner](task-planner.md): transforms research into actionable implementation plans with clear success criteria
-* [Task Implementor](task-implementor.md): executes plans methodically, following established patterns discovered during research
-* [Task Reviewer](task-reviewer.md): validates implementation against specifications, checks compliance, and identifies follow-up work
+* [Task Researcher](task-researcher.md) investigates a demonstrated gap and produces evidence for planning readiness.
+* [Task Planner](task-planner.md) owns the overall plan and phase details, may use `RPI Planner` for one bounded phase, and records independent critique.
+* [Task Implementor](task-implementor.md) directly executes approved work, records changes and validation, and returns material amendments for fresh critique.
+* [Task Reviewer](task-reviewer.md) creates one evidence-reconciliation record and routes defects, decision gaps, research gaps, and residual work.
 
-The magic happens because each phase starts fresh. When you clear context between phases, the implementation session doesn't carry forward the assumptions from research. It only has the documented artifacts: verified findings, explicit decisions, and cited evidence.
+When a long lifecycle needs a fresh context, durable artifacts preserve the task identity, evidence, decisions, and next action. A reset can reduce accumulated context, but it does not require a new research stage or a fresh run of every lifecycle concept.
 
-If you want to invoke the workflow as Copilot skills rather than as prompt shortcuts, use `/rpi-quick` for the full flow or `/rpi-research`, `/rpi-plan`, `/rpi-implement`, and `/rpi-review` for the phase-specific entry points.
+Use `RPI Agent` as a user-selected wrapper that activates the applicable RPI skills. Use `/rpi-quick` as the skill-based full-flow entry point. They are alternative entry surfaces for the same phase skills, not autonomous dispatchers of specialized task workers.
 
 ### The Difference in Practice
 
 **Without RPI**, AI thinks: "This looks like a reasonable variable name. I'll use `prefix`."
 
-**With RPI**, Task Researcher finds: "12 existing modules in this repository use `resource_prefix`, not `prefix`. See `variables.tf#L47` for the established pattern."
+**With RPI**, research evidence can find: "12 existing modules in this repository use `resource_prefix`, not `prefix`; `variables.tf` contains the established pattern."
 
 When AI knows it cannot implement during research, it stops optimizing for "plausible code" and starts optimizing for "verified truth." The constraint changes the goal.
 
-## What Happens in Each Phase
+## What Happens in Each Lifecycle Concept
 
 Understanding what AI does differently in each phase helps explain why separation works.
 
-### Research Phase: Investigating, Not Guessing
+### Research: Investigating a Demonstrated Gap
 
-Task Researcher knows it will never write the code. This single constraint transforms its behavior:
+Research runs when readiness shows that planning cannot responsibly proceed with the supplied evidence. Task Researcher remains focused on the gap:
 
 * Searches for existing patterns instead of inventing new ones.
-* Cites specific files and line numbers as evidence.
-* Questions its own assumptions because it can't hide them in implementation.
-* Documents dependencies, APIs, and conventions with precision.
+* Cites precise source locations when they support a finding.
+* Distinguishes evidence, assumptions, and unresolved questions.
+* Documents dependencies, APIs, conventions, and planning readiness.
 
-The output is a research document that anyone can verify. No tribal knowledge. No "I think this is how it works."
+When evidence is adequate, Research is reused or satisfied-and-skipped instead of repeated.
 
 ### Planning Phase: Sequencing, Not Improvising
 
-Task Planner receives verified research and transforms it into actionable steps. Because it can't implement, it focuses entirely on:
+Task Planner synthesizes adequate evidence into actionable steps. The planning parent owns the overall checklist and phase details, and it can delegate one exact `Pxx` phase to `RPI Planner` when bounded authoring materially helps. Planning focuses on:
 
 * Breaking work into logical, sequenced tasks.
 * Identifying dependencies between changes.
 * Defining clear success criteria for each step.
-* Anticipating edge cases before code is written.
+* Recording marker-addressed `Pxx` and `Pxx-Txx` work, assumptions, and dependencies.
+* Recording independent `rpi-plan-critique` evidence before implementation readiness.
 
 The plan becomes a contract. When implementation begins, the AI follows the plan rather than making decisions on the fly.
 
 ### Implementation Phase: Following, Not Inventing
 
-Task Implementor has one job: execute the plan using the patterns documented in research. This is where the payoff becomes obvious:
+Task Implementor or `/rpi-implement` directly executes approved `Pxx` or `Pxx-Txx` work. It remains flexible within the evidence boundary:
 
 * No time wasted rediscovering conventions.
-* No "creative" decisions that break existing patterns.
-* No assumptions about how things work, only verified facts.
-* Clear accountability when something goes wrong.
+* Completion checkboxes change only after completion evidence exists.
+* `CHG-xxx` changes and truthful validation establish what happened.
+* A significant `DIV-xxx` links to an `AM-xxx` amendment, updates affected details, and receives fresh critique before affected dependent work resumes.
 
 ### Review Phase: Validating, Not Assuming
 
-Task Reviewer closes the feedback loop by validating implementation against documented specifications:
+Task Reviewer or `/rpi-review` writes one record that reconciles implementation against documented evidence:
 
-* Checks each item from research and plan against actual implementation.
-* Verifies convention compliance using instruction files.
-* Runs validation commands to catch issues early.
-* Identifies gaps that require iteration back to earlier phases.
+* Compares the plan, phase details, critique, amendments, changes, and validation evidence.
+* Uses optional generic bounded lenses only when they reduce a specific uncertainty.
+* Separates execution status from outcome and records validation as passed, failed, skipped, or unavailable.
+* Routes defects to implementation, decision gaps to planning, research gaps to research, and residual work to follow-up.
 
-The review phase surfaces discrepancies between intent and implementation. When findings require rework, the workflow iterates: back to research for deeper investigation, back to planning for scope adjustments, or back to implementation for fixes.
+### Follow-up: Routing, Not Relabeling
+
+Follow-up records the next owner after review. It does not hide work inside a generic loop or merge residual work into the active task. A task can return to the earliest affected concept, or residual work can become a distinct next item.
 
 ## The Quality Difference
 
 RPI produces measurably different outcomes than traditional AI coding:
 
-| Aspect                 | Traditional Approach                               | RPI Approach                                   |
-|------------------------|----------------------------------------------------|------------------------------------------------|
-| **Pattern matching**   | Invents plausible patterns                         | Uses verified existing patterns                |
-| **Traceability**       | "The AI wrote it this way"                         | "Research document cites lines 47-52"          |
-| **Knowledge transfer** | Tribal knowledge in your head                      | Research documents anyone can follow           |
-| **Rework**             | Frequent, after discovering assumptions were wrong | Rare, because assumptions are verified first   |
-| **Validation**         | Hope it works or manual testing                    | Validated against specifications with evidence |
+| Aspect             | Traditional Approach                       | RPI Approach                                                        |
+|--------------------|--------------------------------------------|---------------------------------------------------------------------|
+| Pattern matching   | Invents plausible patterns                 | Uses verified patterns when evidence is needed                      |
+| Traceability       | "The AI wrote it this way"                | Links decisions and changes to durable evidence                     |
+| Knowledge transfer | Context remains in one conversation        | Reusable research, plan, change, and review artifacts               |
+| Rework             | Assumptions surface late                   | Review routes each gap to the earliest responsible lifecycle concept |
+| Validation         | Hope it works or manual testing            | Records evidence or an explicit unavailable or skipped reason       |
 
 ### The Paradigm Shift
 
@@ -123,62 +126,43 @@ Stop asking AI: "Write this code."
 
 Start asking: "Help me research, plan, then implement with evidence."
 
-RPI treats AI as a research partner first, code generator second. The code comes last, after the hard work of understanding is complete.
+RPI treats research as a readiness decision, planning as evidence-led coordination, implementation as direct execution, and review as evidence reconciliation. The task takes only the lifecycle actions it needs.
 
 ## The Learning Curve
 
-Let's be honest: your first RPI workflow will feel slower. You're learning a new process, building muscle memory for context clearing, and adjusting to the handoff between phases.
+Let's be honest: your first RPI lifecycle may feel slower. You're learning to judge research readiness, preserve durable evidence, and choose the smallest responsible next action.
 
-By your third feature, the workflow feels natural. The research phase becomes faster because you know what questions to ask. The planning phase tightens because you recognize what level of detail works for your codebase. Implementation becomes almost mechanical.
+By your third feature, the lifecycle feels natural. Research becomes faster because you can identify a genuine gap, planning tightens because you recognize the evidence needed for your codebase, and implementation can remain focused on approved work.
 
-The value compounds over time. Research documents accumulate into institutional memory. New team members can read how past decisions were made. Patterns get documented once and referenced forever.
+The value compounds over time. Research, planning, change, and review artifacts can accumulate into institutional memory when the task needs them. New team members can understand how decisions were made and which work remains.
 
-## Choosing Your Workflow: RPI vs rpi-agent
+## Choosing an RPI Entry Surface
 
-HVE Core provides two workflow options. The right choice depends on the task, not personal preference.
+HVE Core provides alternative surfaces for the same RPI phase skills. Choose the entry point that matches how you want to begin, then take only the lifecycle actions the task needs.
 
-### Strict RPI: When Quality Matters Most
+### RPI Agent
 
-Use the four-phase workflow ([Task Researcher](task-researcher.md) → [Task Planner](task-planner.md) → [Task Implementor](task-implementor.md) → [Task Reviewer](task-reviewer.md)) when:
+Select `RPI Agent` when you want a user-selected lifecycle wrapper. It activates matching RPI skills, begins with research readiness, and preserves one task identity across any durable artifacts.
 
-* 🔍 New frameworks, external APIs, or compliance requirements demand deep research
-* 📁 Pattern discovery across the codebase requires multi-file changes
-* 👥 Artifacts that document decisions support team handoff
-* 🛠️ Work you'll maintain and evolve over time benefits from long-term maintenance records
+### rpi-quick
 
-#### The workflow
+Use `/rpi-quick` when you want the skill-based full-flow entry point. It follows the same research-readiness, planning, implementation, review, and follow-up contract as `RPI Agent`.
 
-1. Invoke `/rpi-research` (Task Researcher) → produces research document with citations
-2. Clear context, invoke `/rpi-plan` (Task Planner) → produces implementation plan
-3. Clear context, invoke `/rpi-implement` (Task Implementor) → implements following the plan
-4. Clear context, invoke `/rpi-review` (Task Reviewer) → validates against specifications
+### Direct Phase Skills
 
-### rpi-agent: When Simplicity Fits
+Use `/rpi-research`, `/rpi-plan`, `/rpi-implement`, or `/rpi-review` when the next responsible lifecycle action is known. Task Researcher remains appropriate when readiness shows that dedicated investigation is needed.
 
-Use the [autonomous agent](https://github.com/microsoft/hve-core/blob/main/.github/agents/hve-core/rpi-agent.agent.md) when:
+### Matching the Entry Surface to the Task
 
-* ✅ Straightforward feature or bug fix with clear scope
-* ✅ Codebase-only investigation requiring minimal research
-* ✅ Active development with fast feedback loops for quick iteration
+| Entry surface       | Use it when                                          | Lifecycle contract                                 |
+|---------------------|------------------------------------------------------|----------------------------------------------------|
+| `RPI Agent`         | You want a user-selected wrapper around phase skills | Research readiness and applicable phase activation |
+| `/rpi-quick`        | You want a skill-based full-flow entry point         | Same phase skills and durable task identity        |
+| Direct phase skills | The next responsible action is already known         | Bounded Research, Plan, Implement, or Review work  |
 
-**The workflow:** Single rpi-agent session that orchestrates all four phases using subagent dispatch. The agent uses `runSubagent` to delegate work to specialized task agents while maintaining overall control.
+### Evidence-Driven Escalation
 
-> [!NOTE]
-> rpi-agent requires the `runSubagent` tool to be available. When unavailable, use strict RPI with manual phase transitions instead.
-
-### Matching Tool to Task
-
-| Factor                | Strict RPI                     | rpi-agent                    |
-|-----------------------|--------------------------------|------------------------------|
-| Research depth        | Deep, verified, cited          | Moderate, inline             |
-| Context contamination | Eliminated via `/clear`        | Possible                     |
-| Audit trail           | Complete artifacts             | Summary only                 |
-| Review phase          | Explicit with findings log     | Integrated in iteration loop |
-| Best for              | Complex, unfamiliar, team work | Simple, familiar, solo work  |
-
-### Escalation Path
-
-rpi-agent can hand off to Task Researcher when it encounters complexity beyond its scope. The Review phase can also trigger iteration: when findings reveal gaps, the workflow escalates back to research or planning. This hybrid approach gives you speed for simple tasks and depth when needed. You don't have to decide upfront; start with rpi-agent and escalate if the task reveals hidden complexity.
+Research readiness, planning critique, implementation amendments, and review findings determine when the task returns to an earlier concept. Start with adequate evidence when it exists; activate Task Researcher or `/rpi-research` when a demonstrated gap prevents credible planning or review.
 
 ## Next Steps
 
@@ -186,7 +170,7 @@ Ready to try it yourself?
 
 * [Your First RPI Workflow](../getting-started/first-workflow.md): 15-minute hands-on tutorial
 * [Using the Agents Together](using-together.md): context management and handoffs
-* [RPI Overview](./): the four phases explained
+* [RPI Overview](./): the lifecycle concepts explained
 * [Task Reviewer Guide](task-reviewer.md): validation and iteration
 
 ---

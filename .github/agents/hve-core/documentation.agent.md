@@ -4,7 +4,6 @@ description: "Orchestrates documentation audit, drift, authoring, and validation
 disable-model-invocation: true
 agents:
   - Researcher Subagent
-  - Phase Implementor
 ---
 
 # Documentation
@@ -57,5 +56,5 @@ Do not author standards logic or assessment content in this agent. Summarize the
 ## Working Notes
 
 * Create or update a session file at `.copilot-tracking/documentation/{{YYYY-MM-DD}}-session.md` for the run.
-* Use `Researcher Subagent` for discovery and `Phase Implementor` for implementation work when those tools are available.
+* Use `Researcher Subagent` for discovery when useful. For authoring, use the `documentation` skill and this agent's declared edit capability.
 * Keep the workflow focused on the selected mode and the supplied context.

@@ -13,85 +13,75 @@ latest_result: evals/results/agent-matrix/2026-05-28/task-planner.json
 source_review_date: 2026-05-28
 
 expectations:
-  - expectation_id: response-header-format
-    summary: Response begins with the agent's branded header line including the task description.
-    signal: First non-blank line of output matches the literal header pattern.
-    pass_criteria: |
-      Output starts with `## 📋 Task Planner: <Task Description>` where
-      <Task Description> is a non-empty phrase (not the literal placeholder).
-    failure_modes:
-      - Header missing entirely (current `header-present` failure on 2026-05-28).
-      - Emoji omitted or replaced.
-      - Colon missing or placeholder left in.
-    priority: high
-    contract_ref: "agent §User Interaction → Response Format"
 
-  - expectation_id: plan-file-under-tracking
-    summary: Implementation plan path is written under the dated tracking plans dir.
-    signal: Output names a path matching `.copilot-tracking/plans/<YYYY-MM-DD>/<slug>-plan.instructions.md`.
+  - expectation_id: plan-and-phase-details-under-tracking
+    summary: Planning produces an ordinary dated Markdown plan and a matching phase-details artifact.
+    signal: Output names paths matching `.copilot-tracking/plans/<YYYY-MM-DD>/<slug>-plan.md` and `.copilot-tracking/details/<YYYY-MM-DD>/<slug>-phase-details.md`.
     pass_criteria: |
-      Path is workspace-relative, dated subdir present, suffix
-      `-plan.instructions.md`.
+      Both paths are workspace-relative and use dated subdirectories. The plan
+      ends in `-plan.md`, and the matching details artifact ends in
+      `-phase-details.md`.
     failure_modes:
-      - Plan written to a non-`.copilot-tracking/` location (current
-        `tracking-file-write` failure on 2026-05-28: plan reported at
-        `C:\\Users\\...\\.copilot\\session-state\\.../plan.md`).
-      - Missing date subdir or `-plan.instructions.md` suffix.
+      - Plan written outside the workspace tracking subtree in the current tracking-file-write failure.
+      - Missing date subdir, `-plan.md` suffix, or matching phase-details path.
       - Plan path given as absolute filesystem path rather than workspace-relative.
     priority: high
-    contract_ref: "agent §File Locations; §Planning File Structure → Implementation Plan File"
+    contract_ref: "rpi-plan artifact contract and `.copilot-tracking/` conventions"
 
-  - expectation_id: details-and-log-paths-named
-    summary: Output names the implementation details and planning log paths alongside the plan.
-    signal: Output mentions paths matching `.copilot-tracking/details/<YYYY-MM-DD>/<slug>-details.md` and `.copilot-tracking/plans/logs/<YYYY-MM-DD>/<slug>-log.md`.
+  - expectation_id: stable-identifiers-and-markers
+    summary: Plan and phase details use stable task, phase, and task IDs with contextual markers.
+    signal: Output uses a task ID, `Pxx`, `Pxx-Txx`, and matching `rpi:phase` and `rpi:task` markers.
     pass_criteria: |
-      Both details path and planning log path are present with correct
-      directories and suffixes (`-details.md`, `-log.md`).
+      The plan and phase-details artifact use one stable task ID. Each phase
+      is identified as `Pxx` and each task as `Pxx-Txx`; markers such as
+      `<!-- rpi:phase id=P01 -->` and `<!-- rpi:task id=P01-T01 -->` appear
+      immediately before matching headings.
     failure_modes:
-      - Only the plan path is mentioned; details/log omitted.
-      - Paths placed under wrong subdirectory (e.g., details under plans/).
+      - IDs or markers are absent or mismatch their headings.
+      - Navigation depends on mutable location data rather than identifiers and markers.
     priority: high
-    contract_ref: "agent §File Locations; §Success Criteria (planning is complete when dated files exist at plans/, details/, and plans/logs/)"
+    contract_ref: "RPI identity and marker conventions"
 
   - expectation_id: phase-and-step-structure
-    summary: Output presents implementation work organized as numbered phases with steps.
-    signal: Output contains phase/step headings or list markers (e.g., `Phase 1`, `Step 1.1`, or numbered list under a Phase heading).
+    summary: Output presents implementation work organized as stable phases and tasks.
+    signal: Output contains `Pxx` phase headings and `Pxx-Txx` task headings.
     pass_criteria: |
-      Output contains at least one phase marker (e.g., `Phase 1`, `### Phase 1`,
-      `Implementation Phase 1`) AND at least one step marker beneath it
-      (e.g., `Step 1.1`, `1.`, `- [ ]`).
+      Output contains at least one `Pxx` phase heading and one matching
+      `Pxx-Txx` task heading with observable expected results or completion
+      evidence. The phase-details artifact supplies context and validation
+      expectations for the same IDs.
     failure_modes:
-      - Plan presented as a flat table with no phase/step headings
-        (mirrors current `phase-marker-present` failure on 2026-05-28).
-      - Phases listed without any steps.
+      - Plan presents flat tasks without stable phase and task IDs.
+      - Details do not cover the plan's IDs.
     priority: high
-    contract_ref: "agent §Templates → Implementation Plan Template (Implementation Checklist with phases and steps)"
+    contract_ref: "rpi-plan templates (implementation plan and phase details)"
 
-  - expectation_id: parallelization-markers
-    summary: Each phase is annotated with a parallelization marker.
-    signal: Output contains the HTML comment `<!-- parallelizable: true -->` or `<!-- parallelizable: false -->` per phase, or an equivalent explicit per-phase marker.
+  - expectation_id: evidence-readiness-and-conditional-research
+    summary: Planning reuses supplied or complete evidence and activates research only for a demonstrated readiness gap.
+    signal: Output names the evidence assessed and either states readiness or identifies a specific gap that requires research.
     pass_criteria: |
-      Every implementation phase in the output (or referenced plan summary)
-      carries a parallelization marker. A summary table column named
-      `Parallelizable` with `true|false` values also satisfies this.
+      The planner assesses supplied context, completed research, decisions,
+      dependencies, and acceptance criteria. It does not activate research
+      merely because no research artifact is attached; it activates research
+      only when a demonstrated planning-readiness gap remains.
     failure_modes:
-      - No parallelization annotation present.
-      - Some phases marked, others not.
+      - Automatically requires research despite adequate supplied evidence.
+      - Declares readiness while a decision-critical gap is not recorded.
     priority: medium
-    contract_ref: "agent §Parallelization Design; §Templates (parallelizable comment per phase)"
+    contract_ref: "rpi-plan Flow and Success criteria"
 
-  - expectation_id: final-validation-phase-present
-    summary: The plan includes a final validation phase covering lint/build/test for the project.
-    signal: Output describes a final phase (or step) running full project validation after implementation phases.
+  - expectation_id: critique-gate-routing
+    summary: Planning records independent generic fresh-context critique without a fixed worker allowlist.
+    signal: Output names a plan critique path and routes a fresh generic critique through `rpi-plan-critique`.
     pass_criteria: |
-      Output references a final validation phase that runs lint/build/test
-      across modified components, separate from per-phase validation.
+      Planning names `.copilot-tracking/reviews/plans/<YYYY-MM-DD>/<slug>-plan-critique.md`
+      and records a Pass, Revise, or Blocked disposition. The critique route is
+      generic and fresh-context, rather than limited to a fixed worker list.
     failure_modes:
-      - No final validation phase mentioned.
-      - Validation referenced only inline within feature phases with no
-        end-of-plan consolidation step.
+      - No critique disposition before implementation handoff.
+      - Fixed critique-worker allowlist or retired validation worker is required.
     priority: medium
-    contract_ref: "agent §Final Validation Phase; §Templates (Implementation Phase N: Validation)"
+    contract_ref: "rpi-plan Flow, critique requirements, and Handoff"
 
   - expectation_id: no-source-modifications
     summary: Planning-only — no edits to source code or build manifests.
@@ -105,20 +95,20 @@ expectations:
       - Claims to edit source files during planning.
       - Modifies `package.json` while planning (e.g., adding scripts).
     priority: high
-    contract_ref: "agent §Operational Constraints (Write only to .copilot-tracking/plans/, plans/logs/, details/, and research/)"
+    contract_ref: "Task Planner Constraints (planning-only; no source changes)"
 
-  - expectation_id: handoff-summary-table
-    summary: On completion, output provides the structured Planning Completion handoff table.
-    signal: Output contains a markdown table headed `📊 Summary` with rows for Plan File, Details File, Planning Log, Phase Count, and Parallelizable Phases.
+  - expectation_id: planning-handoff-artifacts
+    summary: Planning handoff names the plan, phase details, critique, readiness, unresolved decisions, and recommended next stage.
+    signal: Output identifies each durable planning artifact and implementation handoff state.
     pass_criteria: |
-      A markdown table is present whose header cell contains `📊 Summary` and
-      whose rows include at least: `Plan File`, `Details File`,
-      `Planning Log`, `Phase Count`, and `Parallelizable Phases`.
+      Completion identifies the plan, phase-details, and critique paths;
+      planning readiness; unresolved decisions; and the recommended next
+      RPI stage. Normal implementation handoff names the expected changes path.
     failure_modes:
-      - Completion described in prose only, no table.
-      - Table missing required rows (e.g., omits Planning Log).
+      - Handoff omits a matching artifact or unresolved decision.
+      - Handoff omits the stable artifact and marker contract.
     priority: medium
-    contract_ref: "agent §User Interaction → Planning Completion"
+    contract_ref: "rpi-plan Handoff"
     applies_when: "Planning reaches completion; not for clarification-only turns."
 
   - expectation_id: plain-text-tracking-paths

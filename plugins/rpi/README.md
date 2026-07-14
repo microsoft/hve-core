@@ -1,11 +1,11 @@
 <!-- markdownlint-disable-file -->
 # RPI Skills
 
-Skill-forward Research, Plan, Implement, and Review entry points with default RPI Researcher dispatch and retained shared-worker support.
+Skill-forward Research, Plan, Implement, Review, and Follow-up entry points with bounded planning and critique support.
 
 ## Overview
 
-This collection packages the `rpi-research` skill, its default `RPI Researcher` delegated worker, Task Researcher, and skill-forward RPI entry points for research, planning, implementation, review, and guided walkthroughs. The shared `Researcher Subagent` remains included because Task Researcher still depends on it.
+This collection packages the `rpi-research` skill, its default `RPI Researcher` delegated worker, Task Researcher, and skill-forward RPI entry points for research, planning, implementation, review, follow-up, and guided walkthroughs. `RPI Planner` provides bounded authoring for one assigned phase, and `rpi-plan-critique` provides an independent read-only plan assessment. The shared `Researcher Subagent` remains included because Task Researcher still depends on it.
 
 ## Local enablement
 
@@ -28,7 +28,7 @@ Prompt overlap is handled at directory scope. `chat.promptFilesLocations` only s
 * disable the whole `.github/prompts/hve-core` directory, or
 * rely on host prompt precedence while testing skill commands.
 
-The collection intentionally delegates phase work to the existing RPI subagents so the skills stay compact and the packaging model remains additive.
+The collection keeps planning and review parent-owned. `RPI Planner` is available only for a single bounded phase, while independent critique and review fan-out use generic bounded workers when warranted.
 
 ## Install
 
@@ -38,15 +38,12 @@ copilot plugin install rpi@hve-core
 
 ## Agents
 
-| Agent                    | Description                                                                                                                                           |
-|--------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------|
-| task-researcher          | Task research specialist for comprehensive project analysis                                                                                           |
-| researcher-subagent      | Research subagent using search, read, web-fetch, GitHub repo, and MCP tools                                                                           |
-| rpi-researcher           | Executes one delegated internal, external, or hybrid RPI research lane and progressively writes owned evidence. Use for independent research threads. |
-| plan-validator           | Validates implementation plans against research documents with severity-graded findings                                                               |
-| phase-implementor        | Executes a single implementation phase from a plan with full codebase access and change tracking                                                      |
-| implementation-validator | Validates implementation quality against architectural requirements, design principles, and code standards with severity-graded findings              |
-| rpi-validator            | Validates a Changes Log against the Implementation Plan, Planning Log, and Research Documents for a specific plan phase                               |
+| Agent               | Description                                                                                                                                           |
+|---------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------|
+| task-researcher     | Task research specialist for comprehensive project analysis                                                                                           |
+| researcher-subagent | Research subagent using search, read, web-fetch, GitHub repo, and MCP tools                                                                           |
+| rpi-researcher      | Executes one delegated internal, external, or hybrid RPI research lane and progressively writes owned evidence. Use for independent research threads. |
+| rpi-planner         | Revise one assigned RPI plan phase and matching phase details within a shared planning artifact. Use when a parent needs bounded phase authoring.     |
 
 ## Instructions
 
@@ -56,14 +53,15 @@ copilot plugin install rpi@hve-core
 
 ## Skills
 
-| Skill           | Description                                                                                                                                                                                                                                                                                                             |
-|-----------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| rpi-quick       | Umbrella RPI playbook that sequences Research, Plan, Implement, Review, and Discover for one-shot task execution with quality gates.                                                                                                                                                                                    |
-| rpi-research    | Research-only RPI playbook that gathers task evidence, writes dated research artifacts under .copilot-tracking/research/, and hands off planning-ready findings. Use when the user needs evidence, alternatives, or task framing first.                                                                                 |
-| rpi-plan        | Create implementation-ready planning artifacts and validation evidence for RPI tasks.                                                                                                                                                                                                                                   |
-| rpi-implement   | Execute approved implementation phases, update tracking artifacts, and hand off review-ready results.                                                                                                                                                                                                                   |
-| rpi-review      | Review-only RPI playbook that validates implementation evidence, checks phase completion, and closes the loop with explicit next steps. Use when the user needs review coverage or acceptance evidence.                                                                                                                 |
-| rpi-walkthrough | Guided, conversational walkthrough that explains code, UI, UX, features, or .copilot-tracking artifacts one line or block at a time with navigable evidence links, deep subagent review, and captured change requests for RPI handoff. Use when the user wants to understand how something works or why it was changed. |
+| Skill             | Description                                                                                                                                                                                                                                                                                                             |
+|-------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| rpi-quick         | Sequence Research, Plan, Implement, Review, and Follow-up for an RPI task. Use when one workflow should coordinate the full delivery lifecycle.                                                                                                                                                                         |
+| rpi-research      | Research-only RPI playbook that gathers task evidence, writes dated research artifacts under .copilot-tracking/research/, and hands off planning-ready findings. Use when the user needs evidence, alternatives, or task framing first.                                                                                 |
+| rpi-plan          | Create evidence-based RPI plans and phase details from supplied context, research, drafts, and decisions. Use when implementation planning is needed.                                                                                                                                                                   |
+| rpi-plan-critique | Independently critique an RPI plan and phase details against supplied evidence without editing plan sources. Use when planning credibility needs a read-only assessment.                                                                                                                                                |
+| rpi-implement     | Execute an approved RPI plan, preserve amendments, and record evidence-led changes. Use when implementation is ready to begin or resume.                                                                                                                                                                                |
+| rpi-review        | Compare RPI planning and implementation evidence, record review findings, and route follow-up work. Use when an implementation needs acceptance review.                                                                                                                                                                 |
+| rpi-walkthrough   | Guided, conversational walkthrough that explains code, UI, UX, features, or .copilot-tracking artifacts one line or block at a time with navigable evidence links, deep subagent review, and captured change requests for RPI handoff. Use when the user wants to understand how something works or why it was changed. |
 
 ---
 

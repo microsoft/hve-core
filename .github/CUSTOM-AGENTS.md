@@ -2,7 +2,7 @@
 title: GitHub Copilot Custom Agents
 description: Specialized AI agents for planning, research, prompt engineering, documentation, and code review workflows
 author: HVE Core Team
-ms.date: 2026-07-09
+ms.date: 2026-07-13
 ms.topic: guide
 keywords:
   - copilot
@@ -36,18 +36,18 @@ Select from the **agent picker dropdown** in the Chat view:
 
 ### RPI Workflow Agents
 
-The Research-Plan-Implement (RPI) workflow provides a structured approach to complex development tasks.
+The RPI lifecycle keeps Research, Plan, Implement, Review, and Follow-up distinct for complex development tasks. It begins with research readiness: supplied or completed evidence is reused when adequate, and research runs only for a demonstrated requirements, acceptance, dependency, material-risk, complexity, uncertainty, or decision-critical gap.
 
-Each phase has two entry points: the `/task-*` prompt commands (`/task-research`, `/task-plan`, `/task-implement`, `/task-review`) and the `/rpi-*` skill commands (`/rpi-research`, `/rpi-plan`, `/rpi-implement`, `/rpi-review`, plus `/rpi-quick` for the full end-to-end flow). See the [RPI Documentation](../docs/rpi/README.md) for both surfaces.
+`RPI Agent` is a user-selected lifecycle wrapper that activates the matching RPI skills. `/rpi-quick` is a skill-based full-flow entry point. They are alternative entry surfaces for the same phase skills, not autonomous dispatchers of specialized task workers. Use `/rpi-research`, `/rpi-plan`, `/rpi-implement`, and `/rpi-review` when you need a direct phase entry point. See the [RPI Documentation](../docs/rpi/README.md) for both surfaces.
 
-| Agent                | Purpose                                                                                               | Key Constraint                                            |
-|----------------------|-------------------------------------------------------------------------------------------------------|-----------------------------------------------------------|
-| **rpi-agent**        | Autonomous agent with subagent delegation for complex tasks                                           | Requires a subagent tool enabled                          |
-| **task-researcher**  | Produces research documents with evidence-based recommendations                                       | Research-only; never plans or implements                  |
-| **task-planner**     | Creates 2 planning files (plan, details)                                                              | Requires research first; never implements code            |
-| **task-implementor** | Executes implementation plans with subagent delegation                                                | Requires completed plan files                             |
-| **task-reviewer**    | Validates implementation against research and plan specifications                                     | Requires research/plan artifacts                          |
-| **task-challenger**  | Adversarial questioning agent that interrogates completed implementations with What/Why/How questions | Experimental; no suggestions, hints, or leading questions |
+| Agent                | Purpose                                                                                               | Key Constraint                                                                    |
+|----------------------|-------------------------------------------------------------------------------------------------------|-----------------------------------------------------------------------------------|
+| **RPI Agent**        | User-selected lifecycle wrapper that activates matching RPI skills                                   | Uses research readiness and has no fixed specialized task-worker roster           |
+| **task-researcher**  | Produces research evidence and recommendations for a demonstrated readiness gap                      | Research-only; never plans or implements                                          |
+| **task-planner**     | Produces a dated plan and matching phase-details artifact, then records independent critique          | Uses supplied or complete evidence; activates research only for a demonstrated readiness gap |
+| **task-implementor** | Directly executes approved `Pxx` or `Pxx-Txx` work and records change evidence                        | Significant divergence requires a fresh critique before affected dependent work resumes |
+| **task-reviewer**    | Reconciles plan, details, critique, amendments, changes, and validation evidence                      | Review-only; separates execution status from outcome and routes open work         |
+| **task-challenger**  | Adversarial questioning agent that interrogates completed implementations with What/Why/How questions | Experimental; no suggestions, hints, or leading questions                         |
 
 ### Documentation and Planning Agents
 
@@ -104,22 +104,34 @@ Each phase has two entry points: the `/task-*` prompt commands (`/task-research`
 
 ## Agent Details
 
-### rpi-agent
+### RPI Agent
 
-**Creates:** Subagent research artifacts when needed:
+**Activates:** The matching RPI skills for the applicable lifecycle concepts:
 
-* `.copilot-tracking/subagent/YYYY-MM-DD/topic-research.md`
+* `rpi-research` only when research readiness identifies a demonstrated gap
+* `rpi-plan` for the parent-owned plan, phase details, and independent critique
+* `rpi-implement` for direct execution and change evidence
+* `rpi-review` for one evidence-reconciliation record and outcome routing
 
-**Workflow:** Understand → Implement → Verify → Continue or Complete
+**Workflow:** Research readiness → Plan → Implement → Review → Follow-up. Research can be reused or satisfied-and-skipped when the evidence set is adequate. Follow-up routes defects to implementation, decisions to planning, evidence gaps to research, and residual work to a distinct next item.
 
-**Critical:** Requires a subagent tool enabled. Delegates MCP tools, heavy terminal commands, and complex research to subagents. Provides autonomous execution with loop guard for detecting stuck states.
+**Artifacts:** When a stage needs a durable record, the lifecycle uses one stable task ID and these marker-addressed paths:
+
+* `.copilot-tracking/research/{{YYYY-MM-DD}}/{{task_slug}}-research.md`
+* `.copilot-tracking/plans/{{YYYY-MM-DD}}/{{task_slug}}-plan.md`
+* `.copilot-tracking/details/{{YYYY-MM-DD}}/{{task_slug}}-phase-details.md`
+* `.copilot-tracking/reviews/plans/{{YYYY-MM-DD}}/{{task_slug}}-plan-critique.md`
+* `.copilot-tracking/changes/{{YYYY-MM-DD}}/{{task_slug}}-changes.md`
+* `.copilot-tracking/reviews/logs/{{YYYY-MM-DD}}/{{task_slug}}-review.md`
+
+**Critical:** `RPI Agent` is a user-selected lifecycle wrapper, not an autonomous loop or a dispatcher for named specialized task workers. It may use generic bounded delegation only when it materially improves an isolated activity. Navigate durable artifacts with the task ID, `Pxx`, `Pxx-Txx`, headings, and `<!-- rpi:... -->` markers.
 
 ### task-researcher
 
 **Creates:** Single authoritative research document:
 
-* `.copilot-tracking/research/{{YYYY-MM-DD}}-topic-research.md` (primary research with evidence-based recommendations)
-* `.copilot-tracking/subagent/{{YYYY-MM-DD}}/task-research.md` (subagent research outputs when delegating)
+* `.copilot-tracking/research/{{YYYY-MM-DD}}/{{task_slug}}-research.md` (primary research with evidence-based recommendations)
+* `.copilot-tracking/research/subagents/{{YYYY-MM-DD}}/{{task_slug}}-subagent-research.md` (subagent research outputs when delegating)
 
 **Workflow:** Deep tool-based research → Document findings → Consolidate to one approach → Hand off to planner
 
@@ -127,34 +139,35 @@ Each phase has two entry points: the `/task-*` prompt commands (`/task-research`
 
 ### task-planner
 
-**Creates:** Two interconnected files per task:
+**Creates:** Planning records per task:
 
-* `.copilot-tracking/plans/{{YYYY-MM-DD}}-task-plan.instructions.md` (implementation plan with checklist items)
-* `.copilot-tracking/details/{{YYYY-MM-DD}}-task-details.md` (step-by-step execution details)
+* `.copilot-tracking/plans/{{YYYY-MM-DD}}/{{task_slug}}-plan.md` (implementation plan with checklist items)
+* `.copilot-tracking/details/{{YYYY-MM-DD}}/{{task_slug}}-phase-details.md` (evidence-based phase and task details)
+* `.copilot-tracking/reviews/plans/{{YYYY-MM-DD}}/{{task_slug}}-plan-critique.md` (independent plan critique)
 
-**Workflow:** Validates research → Creates plan files → User implements separately
+**Workflow:** Assess supplied evidence → Create plan and phase details → Record critique disposition → Hand off for implementation
 
-**Critical:** Automatically calls task-researcher if research is missing. Treats all user input as planning requests. Never implements actual code.
+**Critical:** Uses supplied or complete evidence and activates research only for a demonstrated readiness gap. The plan and details use `Pxx` and `Pxx-Txx` IDs with stable markers. Never implements actual code.
 
 ### task-implementor
 
-**Creates:** Change tracking logs:
+**Creates:** Change evidence:
 
-* `.copilot-tracking/changes/{{YYYY-MM-DD}}-task-changes.md` (chronological log with Added/Modified/Removed sections)
+* `.copilot-tracking/changes/{{YYYY-MM-DD}}/{{task_slug}}-changes.md` (changes, divergences, validation, and handoff evidence)
 
-**Workflow:** Analyze plan → Run subagents per phase → Track progress → Validate
+**Workflow:** Resolve plan and phase details by marker → Implement approved work directly → Record changes and validation → Hand off for review
 
-**Critical:** Requires completed plan files. Uses subagent architecture for parallel phase execution. Updates tracking artifacts after each phase.
+**Critical:** Checks off completed `Pxx` and `Pxx-Txx` work only after evidence exists. Uses `CHG-xxx` entries for material changes. A significant `DIV-xxx` links to an `AM-xxx` amendment and matching phase-detail update, then requires a fresh critique before affected dependent work resumes.
 
 ### task-reviewer
 
-**Creates:** Review validation logs:
+**Creates:** Review records:
 
-* `.copilot-tracking/reviews/{{YYYY-MM-DD}}-{{topic}}-review.md` (findings with severity levels and follow-up work)
+* `.copilot-tracking/reviews/logs/{{YYYY-MM-DD}}/{{task_slug}}-review.md` (evidence reconciliation, findings, outcome, and routing)
 
-**Workflow:** Locate artifacts → Extract checklist → Validate items → Run commands → Document findings
+**Workflow:** Reconcile plan, phase details, critique, amendments, changes, and validation evidence → Record findings → Route each open item
 
-**Critical:** Review-only specialist. Validates against documentation, not assumptions. Produces findings with severity levels (Critical, Major, Minor).
+**Critical:** Review-only specialist. Produces severity-graded `RV-xxx` findings and keeps execution status (`Complete`, `Partial`, or `Blocked`) distinct from the review outcome and next-owner routing.
 
 **Documentation:** See [Task Reviewer Guide](../docs/rpi/task-reviewer.md) for detailed usage.
 
@@ -449,21 +462,20 @@ It dispatches thin perspective subagents under `.github/agents/coding-standards/
 
 ## Common Workflows
 
-### Autonomous Task Completion
+### Coordinating an RPI Lifecycle
 
-1. Select **rpi-agent** from agent picker
-2. Provide your request
-3. Agent autonomously researches, implements, and verifies
-4. Review results; agent continues if more work remains
-5. Requires a subagent tool enabled in settings
+1. Select **RPI Agent** from the agent picker, or use `/rpi-quick` for the skill-based full-flow entry point.
+2. Provide the task, acceptance criteria, decisions, dependencies, and any completed research.
+3. Assess research readiness before activating `rpi-research`; reuse adequate evidence instead of repeating research.
+4. Continue through the applicable phase skills and resume from the durable artifact set when a long lifecycle needs a fresh context.
 
 ### Planning a Feature
 
-1. Select **task-researcher** from agent picker and create research document
-2. Review research and provide decisions on approach
+1. Gather task context, decisions, acceptance criteria, and any completed research
+2. Use **task-researcher** when a demonstrated planning-readiness gap remains
 3. Clear context or start new chat
-4. Select **task-planner** from agent picker and attach research doc
-5. Generate 3-file plan set
+4. Select **task-planner** from agent picker and attach the available evidence
+5. Generate a plan, matching phase-details artifact, and independent critique
 6. Use `/task-implement` to execute the plan (automatically switches to **task-implementor**)
 
 ### Code Review
@@ -493,16 +505,16 @@ It dispatches thin perspective subagents under `.github/agents/coding-standards/
 
 * **Linting Exemption:** Files in `.copilot-tracking/**` are exempt from repository linting rules
 * **Agent Switching:** Clear context or start a new chat when switching between specialized agents
-* **Research First:** Task planner requires completed research; will automatically invoke researcher if missing
+* **Evidence Readiness:** Task Planner uses supplied or complete evidence and activates research only for a demonstrated readiness gap
 * **No Implementation:** Task planner and researcher never implement actual project code. They create planning artifacts only
-* **Subagent Requirements:** Several agents require a subagent tool enabled in Copilot settings
+* **RPI entry surfaces:** `RPI Agent` and `/rpi-quick` activate the same phase skills; neither requires a fixed specialized task-worker roster
 
 ## Tips
 
 * Be specific in your requests for better results
 * Provide context about what you're working on
 * Review generated outputs before using
-* Chain agents together for complex tasks
-* Use the RPI workflow (Researcher → Planner → Implementor) for substantial features
+* Use the RPI lifecycle when research readiness identifies a gap or the task needs durable planning, implementation evidence, review, or follow-up routing
+* Resume long-lived work from the stable task ID and dated RPI artifacts instead of relying on conversation history
 
 🤖 Crafted with precision by ✨Copilot following brilliant human instruction, then carefully refined by our team of discerning human reviewers.

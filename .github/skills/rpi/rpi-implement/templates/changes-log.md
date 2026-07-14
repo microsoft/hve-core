@@ -1,41 +1,62 @@
-# Release Changes: {{task_name}}
+<!-- markdownlint-disable-file -->
+# RPI Changes: {{task_name}}
 
-**Task Slug**: {{task_slug}}
-**Phase**: {{phase}}
-**Related Plan**: {{plan_file_name}}
-**Implementation Date**: {{YYYY-MM-DD}}
+## Metadata
 
-## Summary
+* Task ID: {{task_id}}
+* Related plan: .copilot-tracking/plans/{{YYYY-MM-DD}}/{{task_slug}}-plan.md
+* Phase details: .copilot-tracking/details/{{YYYY-MM-DD}}/{{task_slug}}-phase-details.md
+* Implementation date: {{YYYY-MM-DD}}
 
-{{brief_description_of_the_overall_changes}}
+## Execution Status
 
-## Bounded Run Handoff
+* Status: {{Complete_Partial_or_Blocked}}
+* Completed phases and tasks: {{Pxx_and_Pxx_Txx_list}}
+* Remaining phases and tasks: {{none_or_Pxx_and_Pxx_Txx_list}}
 
-* Bounded status: {{phase_or_step_scope_and_status}}
-* Completed work: {{completed_work_for_this_bounded_run}}
-* Blockers / follow-on work: {{blockers_follow_on_work}}
-* Validation evidence: {{validation_commands_and_results}}
-* Next review command: {{/rpi-review_or_other_review_command}}
+## Execution Summary
+
+{{outcome_and_actual_progress_across_completed_phases_and_tasks}}
 
 ## Changes
 
-### Added
+<!-- rpi:change id=CHG-001 -->
+### CHG-001: {{change_title}}
 
-* {{relative_file_path}} - {{summary}}
+* Related task: {{Pxx_Txx}}
+* Files: {{workspace_relative_paths}}
+* Change: {{what_changed}}
+* Completion evidence: {{evidence}}
+* Validation: {{run_passed_failed_skipped_or_unavailable}}
 
-### Modified
+## Divergences
 
-* {{relative_file_path}} - {{summary}}
+<!-- rpi:divergence id=DIV-001 -->
+### DIV-001: {{divergence_title}}
 
-### Removed
+* Related task: {{Pxx_or_Pxx_Txx}}
+* Linked amendment: AM-001
+* Trigger and evidence: {{why_divergence_was_needed}}
+* Actual change: {{what_differed}}
+* Impact: {{scope_acceptance_or_dependency_impact}}
+* Critique disposition: {{Pass_Revise_or_Blocked_after_fresh_critique}}
+* Critique evidence: {{PC_xxx_or_critique_artifact_pointer}}
 
-* {{relative_file_path}} - {{summary}}
+## Validation Record
 
-## Additional or Deviating Changes
+| Check | Scope | Status | Evidence or reason |
+|-------|-------|--------|--------------------|
+| {{check}} | {{scope}} | {{Passed_Failed_Skipped_or_Unavailable}} | {{evidence_or_reason}} |
 
-* {{explanation_of_deviation_or_non_change}}
-  * {{reason_for_deviation}}
+## Blockers
 
-## Release Summary
+* {{none_or_blocker_with_affected_pxx_or_pxx_txx_and_next_action}}
 
-{{total_files_affected_dependency_changes_deployment_notes_and_validation_outcome}}
+## Follow-On Work
+
+* {{none_or_distinct_follow_on_item_with_reason_and_owner}}
+
+## Handoff
+
+* Review record: .copilot-tracking/reviews/logs/{{YYYY-MM-DD}}/{{task_slug}}-review.md
+* Open blocker or residual work: {{none_or_description}}

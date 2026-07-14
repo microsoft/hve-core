@@ -3,7 +3,7 @@ title: "Stage 7: Review"
 description: Validate implementations through code review, PR management, and quality assessment
 sidebar_position: 8
 author: Microsoft
-ms.date: 2026-07-09
+ms.date: 2026-07-13
 ms.topic: how-to
 keywords:
   - ai-assisted project lifecycle
@@ -16,7 +16,7 @@ estimated_reading_time: 6
 
 ## Overview
 
-Review validates that implementations meet acceptance criteria and quality standards before delivery. This stage covers code review, pull request creation, dashboard testing, prompt evaluation, and implementation validation against plans.
+Review validates that implementations meet acceptance criteria and quality standards before delivery. RPI review reconciles the plan, phase details, critique dispositions, amendments, changes, and validation evidence before routing open work. This stage also covers code review, pull request creation, dashboard testing, and prompt evaluation.
 
 ## When You Enter This Stage
 
@@ -37,12 +37,10 @@ You enter Review after completing implementation work in [Stage 6: Implementatio
 
 ### Supporting Agents
 
-| Tool                     | Type  | How to Invoke                                             | Purpose                                                                    |
-|--------------------------|-------|-----------------------------------------------------------|----------------------------------------------------------------------------|
-| rpi-validator            | Agent | Select **rpi-validator** agent                            | Validate RPI workflow compliance                                           |
-| implementation-validator | Agent | Select **implementation-validator** agent                 | Check implementation against specifications                                |
-| Prompt Builder           | Agent | Select **Prompt Builder** agent                           | Test prompt engineering artifacts through the HVE Builder review lifecycle |
-| Prompt Builder           | Agent | Select **Prompt Builder** agent and use `/prompt-analyze` | Evaluate prompt quality and effectiveness                                  |
+| Tool           | Type  | How to Invoke                                             | Purpose                                                                    |
+|----------------|-------|-----------------------------------------------------------|----------------------------------------------------------------------------|
+| Prompt Builder | Agent | Select **Prompt Builder** agent                           | Test prompt engineering artifacts through the HVE Builder review lifecycle |
+| Prompt Builder | Agent | Select **Prompt Builder** agent and use `/prompt-analyze` | Evaluate prompt quality and effectiveness                                  |
 
 ### Prompts and Instructions
 
@@ -72,7 +70,7 @@ Engineers submit work for review and participate as peer reviewers. Tech Leads s
 Select **task-reviewer** agent:
 
 ```text
-Review today's changes to the authentication service against .copilot-tracking/plans/2025-01-15/auth-refactor-plan.instructions.md and check for missing input validation on the new endpoints
+Review today's changes to the authentication service against .copilot-tracking/plans/2025-01-15/auth-refactor-plan.md and .copilot-tracking/details/2025-01-15/auth-refactor-phase-details.md. Reconcile the `Pxx` and `Pxx-Txx` completion evidence and check for missing input validation on the new endpoints.
 ```
 
 ```text
@@ -80,7 +78,7 @@ Review today's changes to the authentication service against .copilot-tracking/p
 ```
 
 ```text
-/task-review plan=.copilot-tracking/plans/2025-01-15/pagination-plan.instructions.md changes=.copilot-tracking/changes/2025-01-15/pagination-changes.md research=.copilot-tracking/research/2025-01-15/pagination-research.md
+/task-review plan=.copilot-tracking/plans/2025-01-15/pagination-plan.md details=.copilot-tracking/details/2025-01-15/pagination-phase-details.md critique=.copilot-tracking/reviews/plans/2025-01-15/pagination-plan-critique.md changes=.copilot-tracking/changes/2025-01-15/pagination-changes.md research=.copilot-tracking/research/2025-01-15/pagination-research.md
 ```
 
 ### Pull Request Workflow
@@ -111,18 +109,18 @@ Select **test-streamlit-dashboard** agent:
 Test the sensor monitoring dashboard at src/dashboards/sensor_monitor.py, verifying that temperature readings render within the 15-45°C expected range and all navigation links resolve correctly
 ```
 
-### Quality Validation
+### RPI Evidence Reconciliation
 
-Select **rpi-validator** agent:
-
-```text
-Validate phase 2 of .copilot-tracking/plans/2025-01-15/api-redesign-plan.instructions.md against .copilot-tracking/changes/2025-01-15/api-redesign-changes.md
-```
-
-Select **implementation-validator** agent:
+Select **task-reviewer** agent:
 
 ```text
-Run full-quality validation on the files changed in src/services/auth/ against the architecture requirements in docs/architecture/auth-design.md
+Review the API redesign evidence set:
+- Plan: .copilot-tracking/plans/2025-01-15/api-redesign-plan.md
+- Phase details: .copilot-tracking/details/2025-01-15/api-redesign-phase-details.md
+- Plan critique: .copilot-tracking/reviews/plans/2025-01-15/api-redesign-plan-critique.md
+- Changes: .copilot-tracking/changes/2025-01-15/api-redesign-changes.md
+
+Reconcile requirements, `Pxx` and `Pxx-Txx` completion evidence, amendments, divergences, and validation. Record severity-graded `RV-xxx` findings and route each open item.
 ```
 
 Select **Prompt Builder** agent to perform behavior testing as part of the HVE Builder review lifecycle:
@@ -134,7 +132,7 @@ Execute .github/prompts/hve-core/task-review.prompt.md literally in a sandbox to
 Select **Prompt Builder** agent and use `/prompt-analyze`:
 
 ```text
-Evaluate the execution log from .copilot-tracking/sandbox/2025-01-15-task-review-001/execution-log.md against the prompt quality criteria in .github/instructions/hve-core/hve-builder.instructions.md
+Evaluate the execution log from .copilot-tracking/sandbox/2025-01-15-task-review-001/execution-log.md against the quality criteria in the `hve-builder` skill
 ```
 
 ### Documentation Review

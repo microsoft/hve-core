@@ -1,65 +1,87 @@
 <!-- markdownlint-disable-file -->
-# Implementation Details: {{task_name}}
+# RPI Phase Details: {{task_name}}
 
-## Context Reference
+## Metadata
 
-Sources: {{context_sources}}
+* Task ID: {{task_id}}
+* Task slug: {{task_slug}}
+* Related plan: .copilot-tracking/plans/{{YYYY-MM-DD}}/{{task_slug}}-plan.md
+* Evidence sources: {{research_or_context_paths}}
 
-Author this file first, then cite its line ranges from the implementation plan with the `Details: (Lines X-Y)` convention.
+## Phase Index
 
-## Requirement Evidence
+| Phase ID | Name | Status | Detail sections |
+|----------|------|--------|-----------------|
+| P01 | {{phase_name}} | {{not_started_or_ready}} | P01, P01-T01 |
 
-* User requirement source: {{requirement_source_reference}}
-* Derived objective evidence: {{research_or_reasoning_reference}}
+<!-- rpi:phase id=P01 -->
+## P01: {{phase_name}}
 
-## Implementation Phase 1: {{phase_1_name}}
+### Context
 
-<!-- parallelizable: {{true_or_false}} -->
+{{evidence_based_phase_context}}
 
-### Step 1.1: {{specific_action_1_1}}
+### Intent
 
-{{specific_action_description}}
+{{phase_outcome}}
 
-Files:
+### Boundaries
 
-* {{file_1_full_path}} - {{file_1_description}}
-* {{file_2_full_path}} - {{file_2_description}}
+* Included: {{included_work}}
+* Excluded: {{excluded_work}}
 
-Discrepancy references:
+### Likely Targets
 
-* {{addresses_or_deviates_from_DR_DD_or_RI_item}}
+* {{workspace_relative_path_or_component}}: {{reason_for_likely_change}}
 
-Success criteria:
+### Dependencies
 
-* {{completion_criteria_1}}
-* {{completion_criteria_2}}
+* {{dependency_or_none}}
 
-Context references:
+### Validation Expectations
 
-* {{reference_full_path}} (Lines {{line_start}}-{{line_end}}) - {{section_description}}
+* {{relevant_observable_check_or_evidence}}
 
-Dependencies:
+### Completion Evidence
 
-* {{previous_step_requirement_or_none}}
+* {{evidence_that_supports_completion}}
 
-Validation commands:
+### Unresolved Items
 
-* {{lint_build_or_test_command}} - {{scope}}
+* {{none_or_supported_assumption_question_or_decision_gap}}
 
-## Implementation Phase N: Validation
+<!-- rpi:task id=P01-T01 -->
+### P01-T01: {{task_name}}
 
-<!-- parallelizable: false -->
+#### Context
 
-### Step N.1: Run full project validation
+{{task_specific_context_and_evidence}}
 
-* {{full_lint_command}}
-* {{full_build_command}}
-* {{full_test_command}}
+#### Intent
 
-### Step N.2: Fix minor validation issues
+{{task_outcome}}
 
-{{minor_fix_iteration_guidance}}
+#### Boundaries
 
-### Step N.3: Report blocking issues
+* Included: {{task_included_work}}
+* Excluded: {{task_excluded_work}}
 
-{{blocking_issue_reporting_guidance}}
+#### Likely Targets
+
+* {{workspace_relative_path_or_component}}: {{reason_for_likely_change}}
+
+#### Dependencies
+
+* {{dependency_or_none}}
+
+#### Validation Expectations
+
+* {{relevant_observable_check_or_evidence}}
+
+#### Completion Evidence
+
+* {{evidence_that_supports_task_completion}}
+
+#### Unresolved Items
+
+* {{none_or_supported_assumption_question_or_decision_gap}}

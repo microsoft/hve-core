@@ -1649,9 +1649,11 @@ stimuli:
           pattern: '(?is)(?=.*(?:read[- ]only|do\s+not\s+(?:edit|modify)|requested\s+changes))(?=.*(?:rpi-quick|rpi-research|RPI\s+(?:follow-on|handoff|sequence)))'
   - name: skill-rpi-quick-knowledge
     prompt: |
-      Summarize the `rpi-quick` umbrella skill. Include the ordered phases,
-      artifact strategy by task difficulty, validation/restart behavior, and
-      final response contract.
+      Summarize the `rpi-quick` skill. Explain conditional research readiness,
+      then Plan, Implement, Review, and Follow-up. Include one stable task
+      identity and the canonical research, plan, phase-details, critique,
+      changes, and review artifact paths. Clarify that it is a sequencing
+      layer, not an autonomous dispatcher.
     tags:
       category: behavior-conformance
       skill: rpi-quick
@@ -1659,17 +1661,20 @@ stimuli:
       advisory: "true"
     graders:
       - type: output-matches
-        name: skill-attribution
+        name: research-readiness-and-lifecycle
         config:
-          pattern: '(?i)(rpi-quick|research|plan|implement|review|discover|umbrella)'
+          pattern: '(?is)(?=.*(?:rpi-quick|rpi\s+quick))(?=.*(?:research\s+readiness|evidence\s+(?:is\s+)?(?:adequate|missing|stale|contradictory)))(?=.*\bPlan\b)(?=.*\bImplement\b)(?=.*\bReview\b)(?=.*Follow[- ]?up)'
       - type: output-matches
-        name: scope-language
+        name: identity-artifacts-and-sequencing-boundary
         config:
-          pattern: '(?i)(copilot-tracking|artifact|validation|restart|iteration|suggested\s+next\s+work)'
+          pattern: '(?is)(?=.*(?:(?:one\s+)?(?:same|stable)\s+task\s+(?:identity|ID)|one\s+task\s+identity))(?=.*\.copilot-tracking/research/)(?=.*\.copilot-tracking/plans/)(?=.*\.copilot-tracking/details/)(?=.*\.copilot-tracking/reviews/plans/)(?=.*\.copilot-tracking/changes/)(?=.*\.copilot-tracking/reviews/logs/)(?=.*(?:not\s+(?:an?\s+)?autonomous|sequencing\s+layer|not\s+(?:a\s+)?dispatcher))'
   - name: skill-rpi-quick-tool-trigger
     prompt: |
-      I need an autonomous Research, Plan, Implement, Review, Discover loop
-      that manages state through `.copilot-tracking/` artifacts. Which skill
+      I need a skill-based full-flow RPI entry point that first assesses whether
+      supplied or completed evidence is adequate, activates research only for a
+      demonstrated gap, and then coordinates Plan, Implement, Review, and
+      Follow-up for one task identity. It must use the canonical dated research,
+      plan, phase-details, critique, changes, and review artifacts. Which skill
       under `.github/skills/**/SKILL.md` applies?
     tags:
       category: behavior-conformance
@@ -1678,13 +1683,13 @@ stimuli:
       advisory: "true"
     graders:
       - type: output-matches
-        name: skill-domain-attribution
+        name: skill-attribution-and-lifecycle
         config:
-          pattern: '(?i)(rpi-quick|rpi\s+quick|rpi|research|plan|implement|review|discover|copilot-tracking)'
+          pattern: '(?is)(?=.*(?:rpi-quick|rpi\s+quick))(?=.*(?:research\s+readiness|adequate\s+evidence|demonstrated\s+gap))(?=.*\bPlan\b)(?=.*\bImplement\b)(?=.*\bReview\b)(?=.*Follow[- ]?up)'
       - type: output-matches
-        name: scope-language
+        name: stable-task-and-artifacts
         config:
-          pattern: '(?i)(phase|workflow|artifact|research|plan|implement|review|discover)'
+          pattern: '(?is)(?=.*(?:(?:one\s+)?(?:same|stable)\s+task\s+(?:identity|ID)|one\s+task\s+identity))(?=.*\.copilot-tracking/research/)(?=.*\.copilot-tracking/plans/)(?=.*\.copilot-tracking/details/)(?=.*\.copilot-tracking/reviews/plans/)(?=.*\.copilot-tracking/changes/)(?=.*\.copilot-tracking/reviews/logs/)'
   - name: skill-rpi-quick-bleed-detection
     prompt: |
       I only need to clean up an existing `.prompt.md` file against explicit
@@ -1761,8 +1766,10 @@ stimuli:
           pattern: '(?i)(research\s+complete|code\s+changes|implement|plan|phase)'
   - name: skill-rpi-plan-knowledge
     prompt: |
-      Summarize the `rpi-plan` skill. Include the artifacts it creates, how it
-      uses research, the Plan Validator role, and the implementation handoff.
+      Summarize the `rpi-plan` skill. Explain its ordinary Markdown plan and
+      phase-details artifacts, conditional research readiness, `RPI Planner`
+      phase delegation, independent `rpi-plan-critique`, stable IDs and markers,
+      and implementation handoff.
     tags:
       category: behavior-conformance
       skill: rpi-plan
@@ -1772,11 +1779,19 @@ stimuli:
       - type: output-matches
         name: skill-attribution
         config:
-          pattern: '(?i)(rpi-plan|implementation\s+plan|planning\s+log|details|plan\s+validator)'
+          pattern: '(?i)(rpi-plan|rpi\s+plan)'
       - type: output-matches
-        name: scope-language
+        name: plan-artifacts-and-delegation
         config:
-          pattern: '(?i)(research|artifact|validation|handoff|do\s+not\s+implement)'
+          pattern: '(?is)(?=.*(?:markdown\s+plan|plan\s+artifact))(?=.*phase[-\s]details)(?=.*RPI\s+Planner)'
+      - type: output-matches
+        name: readiness-and-critique
+        config:
+          pattern: '(?is)(?=.*research\s+readiness)(?=.*rpi-plan-critique)'
+      - type: output-matches
+        name: stable-markers-and-handoff
+        config:
+          pattern: '(?is)(?=.*(?:stable\s+(?:task\s+)?IDs?|stable\s+markers?|IDs?\s+and\s+markers?))(?=.*(?:implementation\s+handoff|handoff\s+to\s+(?:rpi-implement|implementation)))'
   - name: skill-rpi-plan-tool-trigger
     prompt: |
       I have completed task research and need an implementation plan with
@@ -1817,8 +1832,11 @@ stimuli:
           pattern: '(?i)(implementation\s+complete|validation\s+evidence|handoff|review)'
   - name: skill-rpi-implement-knowledge
     prompt: |
-      Summarize the `rpi-implement` skill. Include how it discovers the plan,
-      dispatches implementation work, updates tracking, and handles validation.
+      Summarize the `rpi-implement` skill. Include contextual `Pxx` and
+      `Pxx-Txx` lookup through markers and headings, direct flexible execution,
+      checklist and `CHG-xxx` evidence, truthful validation, linked `DIV-xxx`
+      and `AM-xxx` records, affected phase-detail updates, and the fresh critique
+      gate for material amendments.
     tags:
       category: behavior-conformance
       skill: rpi-implement
@@ -1826,13 +1844,13 @@ stimuli:
       advisory: "true"
     graders:
       - type: output-matches
-        name: skill-attribution
+        name: marker-addressed-direct-execution
         config:
-          pattern: '(?i)(rpi-implement|phase\s+implementor|changes\s+log|implementation\s+plan|validation)'
+          pattern: '(?is)(?=.*(?:rpi-implement|rpi\s+implement))(?=.*(?:Pxx|P\d{2}))(?=.*(?:Pxx-Txx|P\d{2}-T\d{2}))(?=.*(?:marker|heading))(?=.*(?:direct(?:ly)?|flexib(?:le|ly)))(?=.*(?:execute|execution|implement|implementation))(?=.*(?:checklist|completion\s+evidence))(?=.*(?:CHG-\d+|CHG-xxx))'
       - type: output-matches
-        name: scope-language
+        name: amendment-gate-and-validation
         config:
-          pattern: '(?i)(phaseStop|stepStop|tracked\s+files|checklist|handoff|review)'
+          pattern: '(?is)(?=.*(?:DIV-\d+|DIV-xxx))(?=.*(?:AM-\d+|AM-xxx))(?=.*(?:phase[- ]details|affected\s+details))(?=.*(?:fresh\s+(?:rpi-plan-critique|critique)|material\s+amendment))(?=.*validat)(?=.*(?:Passed|Failed|Skipped|Unavailable|skip\s+reason))'
   - name: skill-rpi-implement-tool-trigger
     prompt: |
       I need to execute a task plan phase, apply the scoped code changes,
@@ -1873,9 +1891,13 @@ stimuli:
           pattern: '(?i)(initial\s+evidence|before\s+deciding|implementation\s+plan|implement)'
   - name: skill-rpi-review-knowledge
     prompt: |
-      Summarize the `rpi-review` skill. Include scope resolution, validator
-      dispatch, review log creation, validation command evidence, and the
-      possible review outcomes.
+      Summarize the `rpi-review` skill. Include one review record that
+      reconciles the plan, phase details, critique, amendments, changes, and
+      validation evidence; optional generic bounded lenses; separate execution
+      status (`Complete`, `Partial`, or `Blocked`) and outcomes (`Conformant`,
+      `Conformant with justified divergence`, `Defects found`, `Residual work`,
+      or `Not accepted`); validation `Unavailable`; and routing of defects,
+      decision gaps, evidence gaps, and residual work.
     tags:
       category: behavior-conformance
       skill: rpi-review
@@ -1883,13 +1905,13 @@ stimuli:
       advisory: "true"
     graders:
       - type: output-matches
-        name: skill-attribution
+        name: one-record-and-evidence-reconciliation
         config:
-          pattern: '(?i)(rpi-review|review\s+log|rpi\s+validator|implementation\s+validator|validation)'
+          pattern: '(?is)(?=.*(?:rpi-review|rpi\s+review))(?=.*(?:one|single)\s+(?:canonical\s+)?review\s+record)(?=.*\bplan\b)(?=.*phase[- ]details)(?=.*critique)(?=.*amendments?)(?=.*changes)(?=.*validation)(?=.*(?:optional\s+(?:generic\s+)?bounded\s+lens|generic\s+bounded\s+lens))'
       - type: output-matches
-        name: scope-language
+        name: status-outcomes-validation-and-routing
         config:
-          pattern: '(?i)(complete|needs\s+rework|blocked|severity|follow-up|handoff)'
+          pattern: '(?is)(?=.*(?:Complete|Partial|Blocked))(?=.*Conformant)(?=.*Conformant\s+with\s+justified\s+divergence)(?=.*Defects\s+found)(?=.*Residual\s+work)(?=.*Not\s+accepted)(?=.*(?:Unavailable|validation\s+unavailable))(?=.*defects?.{0,80}rpi-implement)(?=.*decision.{0,80}rpi-plan)(?=.*(?:evidence|research).{0,80}rpi-research)(?=.*residual.{0,80}(?:follow[- ]?up|distinct\s+(?:next\s+)?item))'
   - name: skill-rpi-review-tool-trigger
     prompt: |
       I need to review completed implementation work against the user

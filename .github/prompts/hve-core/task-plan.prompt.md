@@ -1,18 +1,22 @@
 ---
-description: "Initiate implementation planning from user context or research documents"
+description: "Initiate evidence-based RPI planning from supplied task context, research, drafts, and decisions"
 agent: Task Planner
-argument-hint: "[research=...] [chat={true|false}]"
+argument-hint: "[task=...] [research=...] [context=...] [draft=...] [decisions=...]"
 ---
 
 # Task Plan
 
 ## Inputs
 
-* ${input:chat:true}: (Optional, defaults to true) Include conversation context for planning analysis.
-* ${input:research}: (Optional) Research file path from user prompt, open file, or conversation.
+* ${input:task}: (Optional) Task description or target outcome.
+* ${input:research}: (Optional) Completed research or evidence path.
+* ${input:context}: (Optional) Caller-supplied task context.
+* ${input:draft}: (Optional) Draft plan or phase details.
+* ${input:decisions}: (Optional) Decisions, dependencies, and acceptance criteria.
 
 ## Requirements
 
-1. Use `${input:research}` when provided; otherwise check `.copilot-tracking/research/` for relevant files.
-2. Accept user-provided context, attached files, or conversation history as sufficient input for planning.
-3. Summarize planning outcomes including implementation plan files created and scope items deferred for future planning.
+1. Treat supplied research, context, drafts, and decisions as the starting point. Activate `rpi-research` only when a planning-readiness gap is material.
+2. Create or revise the plain Markdown plan and phase-details artifacts through `rpi-plan`, using stable task, phase, and task IDs plus contextual markers.
+3. Obtain an independent `rpi-plan-critique` result through the planning workflow before finalizing a durable plan.
+4. Summarize planning readiness, artifact paths, critique disposition, unresolved decisions, and the recommended next RPI stage.

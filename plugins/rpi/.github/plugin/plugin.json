@@ -1,6 +1,6 @@
 {
   "name": "rpi",
-  "description": "Skill-forward Research, Plan, Implement, and Review entry points with default RPI Researcher dispatch and retained shared-worker support.",
+  "description": "Skill-forward Research, Plan, Implement, Review, and Follow-up entry points with bounded planning and critique support.",
   "version": "3.3.101",
   "agents": [
     "agents/hve-core/",

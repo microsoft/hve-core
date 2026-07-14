@@ -12,6 +12,8 @@ Apply these conventions whenever an RPI, HVE Builder, or compatibility workflow 
 * Default to `.copilot-tracking/` for every intermediate, working, or scratch file a skill produces. This file-based tracking takes precedence over memory: persist durable working state to the dated tracking artifact rather than relying on session, conversation, or working memory.
 * Persist research, planning, details, changes, and review outputs under `.copilot-tracking/` using the conventions below.
 * Use `{{task_slug}}` for task slugs and `{{YYYY-MM-DD}}` for dates. Keep `{{task_slug}}` lower-kebab-case.
+* Generated tracking Markdown starts with `<!-- markdownlint-disable-file -->` and uses plain-text workspace-relative paths. Do not use markdown links, backticks around paths, or `#file:` directives in tracking artifacts.
+* Tracking artifacts are ordinary Markdown. Do not add `applyTo` metadata or create a `.instructions.md` tracking artifact.
 
 ## Handoff Expectations
 
@@ -28,14 +30,21 @@ Apply these conventions whenever an RPI, HVE Builder, or compatibility workflow 
 
 * Primary research notes stay under `.copilot-tracking/research/{{YYYY-MM-DD}}/{{task_slug}}-research.md`.
 * Subagent research outputs stay under `.copilot-tracking/research/subagents/{{YYYY-MM-DD}}/{{task_slug}}-subagent-research.md`.
-* Planning evidence stays under `.copilot-tracking/plans/{{YYYY-MM-DD}}/{{task_slug}}-plan.instructions.md`.
-* Planning log evidence stays under `.copilot-tracking/plans/logs/{{YYYY-MM-DD}}/{{task_slug}}-log.md`.
-* Details and validation evidence stay under `.copilot-tracking/details/{{YYYY-MM-DD}}/{{task_slug}}-details.md`.
-* Implementation and validation results stay under `.copilot-tracking/changes/{{YYYY-MM-DD}}/{{task_slug}}-changes.md`.
+* Planning evidence stays under `.copilot-tracking/plans/{{YYYY-MM-DD}}/{{task_slug}}-plan.md`.
+* Phase details stay under `.copilot-tracking/details/{{YYYY-MM-DD}}/{{task_slug}}-phase-details.md`.
+* Plan critique evidence stays under `.copilot-tracking/reviews/plans/{{YYYY-MM-DD}}/{{task_slug}}-plan-critique.md`.
+* Implementation evidence stays under `.copilot-tracking/changes/{{YYYY-MM-DD}}/{{task_slug}}-changes.md`.
 * Review evidence stays under `.copilot-tracking/reviews/logs/{{YYYY-MM-DD}}/{{task_slug}}-review.md`.
 * HVE Builder stage evidence stays under `.copilot-tracking/hve-builder/{{YYYY-MM-DD}}/{{artifact_slug}}-{{stage}}-{{attempt}}.md`. Scan existing files and increment `{{attempt}}` rather than overwriting another run.
-* Generated `.copilot-tracking/**` markdown artifacts include `<!-- markdownlint-disable-file -->` near the top because tracking files are exempt from repository markdownlint rules.
-* Use plain-text workspace-relative paths in tracking documents for AI consumption.
 * Keep `.copilot-tracking/` paths and other internal planning, research, or implementation artifact references out of production code, code comments, documentation strings, and commit messages. Internal artifacts guide implementation logic; comments stay self-contained and may cite public materials such as RFCs, specifications, or official documentation.
 * For the research phase, keep writes inside `.copilot-tracking/research/` except for subagent outputs or workflow tracking files that the current execution explicitly requires.
 * When material gaps remain, re-enter the current phase and update the dated artifact rather than skipping ahead.
+
+## RPI Identity and Marker Conventions
+
+* Use one stable task ID across the plan, phase details, critique, changes, and review records.
+* Use `Pxx` for phases and `Pxx-Txx` for tasks. Place `<!-- rpi:phase id=P01 -->` or `<!-- rpi:task id=P01-T01 -->` immediately before the matching heading.
+* Use `AM-xxx` only in the plan amendment register.
+* Use `CHG-xxx` and `DIV-xxx` only in the changes record. Link every significant `DIV-xxx` to its `AM-xxx` amendment and affected plan or detail sections.
+* Use `PC-xxx` only in the plan critique and `RV-xxx` only in the review record.
+* Use stable IDs, markers, and headings to navigate. Do not maintain line numbers, line ranges, or detail-line verification.

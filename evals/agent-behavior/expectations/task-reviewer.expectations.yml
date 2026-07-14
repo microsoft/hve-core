@@ -13,94 +13,88 @@ latest_result: evals/results/agent-matrix/2026-05-28/task-reviewer.json
 source_review_date: 2026-05-28
 
 expectations:
-  - expectation_id: response-header-format
-    summary: Response begins with a status-conditional Task Reviewer header.
-    signal: First non-blank line of output matches one of the three branded headers.
+  - expectation_id: evidence-set-reconciliation
+    summary: Review reconciles one complete task evidence set without mutating it.
+    signal: Output names plan, phase details, critique, amendments, changes, validation, and relevant research evidence.
     pass_criteria: |
-      Output starts with one of:
-      `## ✅ Task Reviewer: <Task Description>`,
-      `## ⚠️ Task Reviewer: <Task Description>`, or
-      `## 🚫 Task Reviewer: <Task Description>`,
-      where <Task Description> is a non-empty phrase.
+      Review compares requirements, acceptance criteria, `Pxx` and `Pxx-Txx`
+      completion evidence, critique dispositions, `AM-xxx` amendments,
+      `CHG-xxx` changes, `DIV-xxx` divergences, and validation evidence for
+      one task artifact set. It does not edit the plan, details, critique,
+      research, or changes record.
     failure_modes:
-      - Header missing entirely.
-      - Emoji omitted, replaced, or status emoji does not match the verdict.
-      - Header uses a different label (e.g., `## Review Findings`).
+      - Reviews only a plan or changes file while claiming a complete verdict.
+      - Mutates implementation or planning evidence during review.
     priority: high
-    contract_ref: "agent §User Interaction (status-conditional headers)"
+    contract_ref: "Task Reviewer and rpi-review Flow"
 
   - expectation_id: findings-with-severity
-    summary: Output presents findings grouped or labeled by severity.
-    signal: Output contains severity vocabulary tied to individual findings.
+    summary: Output presents severity-graded `RV-xxx` findings tied to individual evidence.
+    signal: Findings use `RV-xxx` identifiers, one of Critical, High, Medium, or Low, and an explicit destination.
     pass_criteria: |
-      Output uses at least one of the recognized severity tiers (critical,
-      major, minor, high, medium, low) on each finding or in a severity-count
-      summary; severity is attached to specific findings, not only mentioned
-      in the abstract.
+      Each substantive finding has an `RV-xxx` ID, a severity of Critical,
+      High, Medium, or Low, related `Pxx` or `Pxx-Txx` scope, evidence, impact,
+      and the smallest useful next action with a destination.
     failure_modes:
-      - Findings listed without any severity labels.
-      - Severity vocabulary appears only in unrelated prose.
+      - Findings lack `RV-xxx`, severity, evidence, or routing.
+      - Cosmetic or formatting preferences are recorded as substantive findings.
     priority: high
-    contract_ref: "agent §Review Log (severity counts: critical, major, minor); §User Interaction (Findings summary with severity counts)"
+    contract_ref: "rpi-review Flow and review-log template"
 
   - expectation_id: review-log-path-named
-    summary: Output names the review log path under `.copilot-tracking/reviews/<date>/`.
-    signal: Output contains a path matching `.copilot-tracking/reviews/<YYYY-MM-DD>/<plan-slug>-review.md`.
+    summary: Output names the canonical review record path.
+    signal: Output contains a path matching `.copilot-tracking/reviews/logs/<YYYY-MM-DD>/<slug>-review.md`.
     pass_criteria: |
-      Path is workspace-relative, dated subdir present, suffix `-review.md`.
-      The path may appear in prose, the handoff summary table, or the
-      Handoff steps section.
+      Path is workspace-relative, includes `reviews/logs`, has a dated
+      subdirectory, and ends in `-review.md`.
+      The path may appear in the review response or its handoff.
     failure_modes:
       - Review log not referenced.
-      - Path written outside `.copilot-tracking/reviews/`.
+      - Path written outside `.copilot-tracking/reviews/logs/`.
       - Missing date subdir or `-review.md` suffix.
     priority: high
-    contract_ref: "agent §Review Log (Create and progressively update the review log at .copilot-tracking/reviews/...)"
+    contract_ref: "RPI tracking convention (`.copilot-tracking/reviews/logs/{{YYYY-MM-DD}}/{{task_slug}}-review.md`)"
 
-  - expectation_id: overall-status-stated
-    summary: Output explicitly states an overall review status from the allowed vocabulary.
-    signal: Output contains one of `Complete`, `Needs Rework`, or `Blocked` as the overall verdict.
+  - expectation_id: execution-status-and-outcome-separated
+    summary: Output separates execution state from acceptance outcome.
+    signal: Output records execution as Complete, Partial, or Blocked and outcome as one of the canonical review verdicts.
     pass_criteria: |
-      Output includes a clearly identified Overall Status line or row whose
-      value is exactly one of: `Complete`, `Needs Rework`, `Blocked`
-      (case-insensitive; emoji prefix allowed).
+      Review records execution status as `Complete`, `Partial`, or `Blocked`
+      separately from outcome: `Conformant`, `Conformant with justified
+      divergence`, `Defects found`, `Residual work`, or `Not accepted`.
     failure_modes:
-      - Verdict expressed only in prose (e.g., "looks good") without the
-        allowed vocabulary.
-      - Uses a non-matching label (e.g., "Approved", "Rejected").
+      - Uses one undifferentiated status such as Complete or Needs Rework.
+      - Implies acceptance from execution progress alone.
     priority: high
-    contract_ref: "agent §Phase 4 Step 1 (Overall status determination: Complete, Needs Rework, Blocked); §User Interaction"
+    contract_ref: "rpi-review Flow, Success criteria, and review-log template"
 
-  - expectation_id: subagent-delegation-evidence
-    summary: Validation is delegated to RPI Validator (and Implementation Validator) rather than performed inline.
-    signal: Output mentions invoking `RPI Validator` and/or `Implementation Validator` (or notes the delegation tooling is unavailable).
+  - expectation_id: bounded-uncertainty-fan-out
+    summary: Optional generic bounded fan-out occurs only to reduce a defined review uncertainty.
+    signal: Output identifies the uncertainty, exact read boundary, and read-only authority for any independent review lens.
     pass_criteria: |
-      Output contains an explicit reference to running `RPI Validator` per
-      plan phase, OR `Implementation Validator` for quality, OR an explicit
-      notice that `runSubagent`/`task` tooling is unavailable and direct
-      review was used as fallback.
+      A generic bounded subagent is used only when an independent lens reduces
+      a stated uncertainty. Its question, exact read boundary, and no-source-
+      write restriction are explicit. No dedicated review worker or fixed
+      review-worker allowlist is required.
     failure_modes:
-      - All validation performed inline with no delegation mention and no
-        unavailability notice.
-      - Delegates but uses filenames (e.g., `rpi-validator.agent.md`)
-        instead of human-readable names.
+      - Requires a dedicated review worker.
+      - Fans out without a defined uncertainty or grants source-write authority.
     priority: medium
-    contract_ref: "agent §Phase 2 Step 2 (Spawn RPI Validators); §Phase 3 Step 1 (Implementation Quality)"
+    contract_ref: "rpi-review Flow"
 
-  - expectation_id: handoff-summary-table
-    summary: On completion, output provides the structured review handoff table.
-    signal: Output contains a markdown table headed `📊 Summary` with rows for Review Log, Overall Status, Critical Findings, Major Findings, Minor Findings, and Follow-Up Items.
+  - expectation_id: next-owner-routing
+    summary: Each actionable review gap routes to its responsible next owner.
+    signal: Output routes defects to `rpi-implement`, decision gaps to `rpi-plan`, research gaps to `rpi-research`, and residual work to a distinct follow-up.
     pass_criteria: |
-      A markdown table is present whose header cell contains `📊 Summary` and
-      whose rows include at least: `Review Log`, `Overall Status`,
-      `Critical Findings`, `Major Findings`, `Minor Findings`,
-      `Follow-Up Items`.
+      Defects route to `rpi-implement`, decision gaps to `rpi-plan`, research
+      gaps to `rpi-research`, and residual work to a distinct follow-up item.
+      The review record names the next owner rather than silently merging
+      residual work into a defect or plan decision.
     failure_modes:
-      - Completion described in prose only, no table.
-      - Table missing required rows (e.g., omits Review Log or severity counts).
+      - Routes every finding back to implementation.
+      - Omits next-owner routing or collapses residual work into another type.
     priority: medium
-    contract_ref: "agent §User Interaction (structured handoff table)"
-    applies_when: "Review reaches completion; not for clarification-only turns."
+    contract_ref: "rpi-review Flow, Success criteria, and Handoff"
 
   - expectation_id: no-source-modifications
     summary: Review-only — no edits to source code or build manifests.
@@ -114,18 +108,4 @@ expectations:
       - Claims to edit source files during review.
       - Modifies `package.json` or build manifests while reviewing.
     priority: high
-    contract_ref: "agent §Required Phases (review log under .copilot-tracking/reviews/, no source edits)"
-
-  - expectation_id: bottom-up-handoff-last
-    summary: The completion handoff (summary table + next steps) appears at the end of the response.
-    signal: The `📊 Summary` table and Handoff steps follow findings, not preceding them.
-    pass_criteria: |
-      In the rendered output, the `📊 Summary` table and any `Handoff steps`
-      block appear after the findings/severity content. No findings appear
-      below the handoff steps.
-    failure_modes:
-      - Handoff table placed at the top of the response.
-      - New findings appended after the handoff steps.
-    priority: low
-    contract_ref: "agent §User Interaction (structured handoff at end); review log content ordering"
-    applies_when: "Review reaches completion."
+    contract_ref: "Task Reviewer Constraints and rpi-review Constraints"

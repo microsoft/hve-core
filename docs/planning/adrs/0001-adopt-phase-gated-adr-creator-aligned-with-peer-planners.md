@@ -3,7 +3,7 @@ id: "0001"
 title: "Adopt phase-gated ADR Creator aligned with peer planners"
 description: "Adopt a phase-gated ADR Creator agent and supporting skills/instructions that align ADR authoring with peer planners (Security, RAI, SSSC) under MADR v4.0.0 plus hve-core extensions for IDs, lineage, and ASR triggers."
 author: "HVE Core Maintainers"
-ms.date: "2026-05-08"
+ms.date: "2026-07-13"
 ms.topic: "reference"
 status: "accepted"
 proposed_date: "2026-05-01"
@@ -286,7 +286,7 @@ No data migration is required: ADRs are markdown files with stable frontmatter a
 
 ## More Information
 
-* Plan: `.copilot-tracking/plans/2026-05-05/adr-mode-autonomy-alignment-plan.instructions.md`
+* Plan: `.copilot-tracking/plans/2026-05-05/adr-mode-autonomy-alignment-plan.md`
 * Implementation log: `.copilot-tracking/changes/2026-05-05/adr-mode-autonomy-alignment-changes.md`
 * Review log: `.copilot-tracking/reviews/2026-05-06/adr-mode-autonomy-alignment-plan-review.md`
 * Agent body: `.github/agents/project-planning/adr-creation.agent.md`

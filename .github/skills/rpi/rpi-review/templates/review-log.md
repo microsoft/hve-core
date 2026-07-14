@@ -1,60 +1,63 @@
 <!-- markdownlint-disable-file -->
 # Review: {{task_name}}
 
-**Related Plan**: {{plan_path}}
-**Changes Log**: {{changes_path}}
-**Research**: {{research_path_or_not_available}}
-**Review Date**: {{YYYY-MM-DD}}
+## Scope and Evidence
 
-## Metadata
+* Task ID: {{task_id}}
+* Review date: {{YYYY-MM-DD}}
+* Review scope: {{full_task_or_bounded_pxx_or_pxx_txx_scope}}
+* Plan: .copilot-tracking/plans/{{YYYY-MM-DD}}/{{task_slug}}-plan.md
+* Phase details: .copilot-tracking/details/{{YYYY-MM-DD}}/{{task_slug}}-phase-details.md
+* Plan critique: .copilot-tracking/reviews/plans/{{YYYY-MM-DD}}/{{task_slug}}-plan-critique.md
+* Changes: .copilot-tracking/changes/{{YYYY-MM-DD}}/{{task_slug}}-changes.md
+* Other evidence considered: {{research_validation_or_bounded_lens_evidence}}
 
-* Review Scope: {{phase_scope_or_full_review}}
-* Validation Status: {{In Progress / Complete / Needs Rework / Blocked}}
-* Severity Summary: Critical {{N}}, High {{N}}, Medium {{N}}, Low {{N}}
+## Execution Status
 
-## Plan-to-Research Alignment
+* Execution status: {{Complete_Partial_or_Blocked}}
 
-* Status: {{Aligned / Partial / Misaligned / Not assessed}}
-* Rationale: {{why planning evidence aligns or does not align with the review target}}
-* Evidence: {{evidence_path_or_paths}}
-* Distinction: {{planning alignment is separate from implementation acceptance}}
+## Plan-to-Change Reconciliation
 
-## RPI Validator Findings
+| Plan scope | Change evidence | Reconciliation status | Gap or rationale |
+|------------|-----------------|-----------------------|------------------|
+| {{Pxx_or_Pxx_Txx}} | {{CHG_xxx_or_other_evidence}} | {{Reconciled_Partial_or_Missing}} | {{gap_or_rationale}} |
 
-### Phase 001
+## Critique and Divergence Assessment
 
-* Phase Status: {{Pass / Fail / Blocked}}
-* Evidence: {{summary}}
-* Findings: {{list_of_phase_findings}}
+* Critique dispositions: {{coverage_summary}}
+* Amendments and divergences: {{coverage_summary}}
+* Justification assessment: {{supported_or_unresolved_rationale}}
 
-## Implementation Quality Findings
+## Findings
 
-* IV-001 [High] {{category}}: {{issue}}
-  * Evidence: {{file_path}} (Lines {{start}}-{{end}})
-  * Evidence Artifact: {{quality_artifact_path_or_not_applicable}}
-  * Impact: {{impact}}
-  * Recommendation: {{fix}}
+<!-- rpi:review id=RV-001 -->
+### RV-001 [{{Critical_High_Medium_or_Low}}]: {{finding_title}}
 
-## Missing Work and Deviations
+* Related scope: {{Pxx_or_Pxx_Txx}}
+* Evidence: {{plain_text_workspace_relative_path_or_summary}}
+* Impact: {{why_it_matters}}
+* Destination: {{rpi_implement_rpi_plan_rpi_research_or_follow_up}}
+* Smallest useful next action: {{action}}
 
-* {{missing_implementation_or_plan_to_change_gap}}
-* {{unplanned_change_or_deviation}}
+## Defects
 
-## Follow-Up Recommendations
+* {{none_or_rv_xxx_defect_with_destination_rpi_implement}}
 
-* Deferred from planning log: {{item}}
-* Discovered during review: {{item}}
+## Residual Work
 
-## Reviewer Notes
+* {{none_or_distinct_follow_up_item_with_scope_and_reason}}
 
-* {{final_rationale_and_next_command}}
-
-## Validation Activities Completed
-
-* {{subagents, commands, or evidence checks that actually ran}}
-
-## Validation Commands
+## Validation Evidence
 
 | Command     | Scope                                | Status                        | Summary                                        |
 |-------------|--------------------------------------|-------------------------------|------------------------------------------------|
-| {{command}} | {{changed_files_package_or_project}} | {{Passed / Failed / Skipped}} | {{important_output_summary_or_skip_rationale}} |
+| {{command}} | {{changed_files_package_or_project}} | {{Passed / Failed / Skipped / Unavailable}} | {{important_output_summary_or_skip_rationale}} |
+
+## Outcome
+
+* Outcome: {{Conformant_Conformant_with_justified_divergence_Defects_found_Residual_work_or_Not_accepted}}
+* Outcome rationale: {{evidence_based_rationale}}
+
+## Next Owner
+
+* {{rpi_implement_rpi_plan_rpi_research_or_distinct_follow_up_owner}}

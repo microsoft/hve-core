@@ -3,7 +3,7 @@ title: Task Planner Guide
 description: Use the Task Planner custom agent to create actionable implementation plans from research findings
 sidebar_position: 5
 author: Microsoft
-ms.date: 2026-06-24
+ms.date: 2026-07-13
 ms.topic: tutorial
 keywords:
   - task planner
@@ -13,11 +13,11 @@ keywords:
 estimated_reading_time: 4
 ---
 
-The Task Planner custom agent transforms research findings into actionable implementation plans. It creates coordinated planning files with checkboxes, detailed specifications, and line number references for precise execution.
+The Task Planner custom agent transforms supplied evidence, research findings, and decisions into actionable implementation plans. It creates a coordinated plan and phase-details artifact with stable IDs for precise execution.
 
 ## When to Use Task Planner
 
-Use Task Planner after completing research when you need:
+Use Task Planner when you have supplied evidence, completed research, or task context and need:
 
 * 📋 **Structured implementation steps** with clear checkboxes
 * 📐 **Detailed specifications** for each task
@@ -26,33 +26,38 @@ Use Task Planner after completing research when you need:
 
 ## What Task Planner Does
 
-1. **Validates** that research exists (MANDATORY first step)
-2. **Creates** two coordinated planning files
-3. **Links** specifications to research with line numbers
-4. **Organizes** tasks into logical phases with dependencies
+1. **Assesses** supplied and completed evidence against planning readiness
+2. **Activates research** only when a demonstrated readiness gap remains
+3. **Creates** a dated plan and matching phase-details artifact
+4. **Organizes** tasks into logical phases with dependencies and stable markers
+5. **Records** an independent critique disposition before implementation handoff
 
 > [!NOTE]
-> **Why the constraint matters:** Task Planner receives verified research and transforms it into actionable steps. Because it can't implement, it focuses entirely on sequencing, dependencies, and success criteria. The plan becomes a contract that prevents improvisation during implementation.
+> **Why the constraint matters:** Task Planner uses evidence that is already supplied or complete before activating more research. Because it cannot implement, it focuses on sequencing, dependencies, acceptance criteria, and a credible handoff rather than making source changes.
 
 ## Output Artifacts
 
-Task Planner creates two files:
+Task Planner creates a plan, matching phase-details artifact, and independent critique:
 
 ```text
 .copilot-tracking/
 ├── plans/
-│   └── {{YYYY-MM-DD}}-<topic>-plan.instructions.md   # Checklist with phases
+│   └── {{YYYY-MM-DD}}/
+│       └── {{task_slug}}-plan.md                     # Checklist with phases
 └── details/
-    └── {{YYYY-MM-DD}}-<topic>-details.md             # Specifications for each task
+  └── {{YYYY-MM-DD}}/
+    └── {{task_slug}}-phase-details.md            # Evidence-based details for each task
+
+.copilot-tracking/reviews/plans/{{YYYY-MM-DD}}/{{task_slug}}-plan-critique.md
 ```
 
 ### Plan File
 
-Contains checkboxes for phases and tasks, references to details with line numbers.
+Contains checkboxes for phases and tasks, requirements, decisions, amendments, critique disposition, and a handoff. `Pxx` and `Pxx-Txx` IDs are paired with stable markers immediately before the matching headings.
 
 ### Details File
 
-Contains specifications for each task: files to modify, success criteria, research references.
+Contains evidence-based context, boundaries, likely targets, dependencies, validation expectations, completion evidence, and unresolved items for each phase and task.
 
 ## How to Use Task Planner
 
@@ -72,7 +77,7 @@ Type `/task-plan` in GitHub Copilot Chat with the research document opened in th
 
 If you want to invoke the planning step as the skill command instead of the prompt shortcut, use `/rpi-plan`.
 
-If you don't specify a file, Task Planner will search for recent research documents in `.copilot-tracking/research/` and ask you to confirm which one to use.
+Provide supplied research, decisions, and acceptance criteria when available. Task Planner reuses adequate evidence and activates research only when it identifies a demonstrated planning-readiness gap.
 
 #### Option 2: Select the Custom Agent Manually
 
@@ -80,13 +85,13 @@ If you don't specify a file, Task Planner will search for recent research docume
 2. Click the agent picker dropdown
 3. Select **Task Planner**
 
-### Step 3: Reference Your Research
+### Step 3: Reference Your Evidence
 
-Provide the path to your research document and any additional context.
+Provide available research, task context, decisions, dependencies, and acceptance criteria.
 
 ### Step 4: Review the Plan
 
-Task Planner will create all three files. Review:
+Task Planner will create the plan, phase-details artifact, and critique. Review:
 
 * Are phases in logical order?
 * Do tasks have clear success criteria?
@@ -94,7 +99,7 @@ Task Planner will create all three files. Review:
 
 ## Example Prompt
 
-With `.copilot-tracking/research/2025-01-28-blob-storage-research.md` opened in the editor
+With `.copilot-tracking/research/2025-01-28/blob-storage-research.md` opened in the editor
 
 ```text
 /task-plan
@@ -108,14 +113,14 @@ Focus on:
 
 ✅ **Do:**
 
-* Reference specific research document
+* Reference supplied research and decisions when available
 * Mention which recommended approach to use
 * Suggest logical phases if you have preferences
 * Include any additional constraints
 
 ❌ **Don't:**
 
-* Skip the research phase
+* Treat research as mandatory when the supplied evidence is already ready
 * Ask for implementation (that's next step)
 * Ignore the planning files once created
 
@@ -126,9 +131,14 @@ Focus on:
 High-level groupings of related work:
 
 ```markdown
-### [ ] Phase 1: Storage Client Setup
-### [ ] Phase 2: Writer Implementation
-### [ ] Phase 3: Integration Testing
+<!-- rpi:phase id=P01 -->
+### [ ] P01: Storage Client Setup
+
+<!-- rpi:phase id=P02 -->
+### [ ] P02: Writer Implementation
+
+<!-- rpi:phase id=P03 -->
+### [ ] P03: Integration Testing
 ```
 
 ### Tasks
@@ -136,23 +146,25 @@ High-level groupings of related work:
 Specific work items within phases:
 
 ```markdown
-* [ ] Task 1.1: Create BlobStorageClient class
-  * Details: .copilot-tracking/details/2025-01-28-blob-storage-details.md (Lines 10-25)
+<!-- rpi:task id=P01-T01 -->
+#### [ ] P01-T01: Create BlobStorageClient class
+
+* Detail section: P01-T01 in .copilot-tracking/details/2025-01-28/blob-storage-phase-details.md
 ```
 
-### Line References
+### Stable Marker Navigation
 
-Every task references exact lines in the details file, which in turn references research:
+Every task uses the same stable ID, heading, and marker in the plan and phase-details artifact. These references remain stable as the artifact evolves:
 
 ```text
-Plan → Details (Lines X-Y) → Research (Lines A-B)
+Plan P01-T01 → Phase details P01-T01 → Supporting evidence
 ```
 
 ## Common Pitfalls
 
 | Pitfall              | Solution                             |
 |----------------------|--------------------------------------|
-| Research not found   | Complete Task Researcher first       |
+| Evidence gap remains | Use Task Researcher for the specific planning-readiness gap |
 | Phases too large     | Break into smaller, verifiable tasks |
 | Missing dependencies | Review task order and prerequisites  |
 
@@ -160,7 +172,7 @@ Plan → Details (Lines X-Y) → Research (Lines A-B)
 
 After Task Planner completes:
 
-1. **Review** all three planning files
+1. **Review** the plan, phase-details artifact, and critique disposition
 2. **Clear context** using `/clear` or starting a new chat
 3. **Proceed to implementation** using `/task-implement` to switch to [Task Implementor](task-implementor.md)
 

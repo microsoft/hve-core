@@ -5,7 +5,7 @@ HVE Core RPI (Research, Plan, Implement, Review) workflow with Git commit, merge
 
 ## Overview
 
-HVE Core provides the flagship RPI (Research, Plan, Implement, Review) workflow for completing complex tasks through a structured four-phase process. The RPI workflow dispatches specialized agents that collaborate autonomously to deliver well-researched, planned, and validated implementations. This collection also includes Git workflow prompts for commit messages, merge operations, repository setup, and pull request management.
+HVE Core provides the flagship RPI (Research, Plan, Implement, Review, Follow-up) workflow for completing complex tasks through an evidence-led lifecycle. The RPI workflow coordinates skills and bounded delegation to deliver researched, planned, implemented, reviewed, and routed outcomes. This collection also includes Git workflow prompts for commit messages, merge operations, repository setup, and pull request management.
 
 ## Included Artifacts
 
@@ -26,20 +26,17 @@ HVE Core provides the flagship RPI (Research, Plan, Implement, Review) workflow 
 | **code-review-walkback**      | Thin wrapper subagent that dispatches deep Register 2 questions to the generic Researcher Subagent and anchors the output to a board item                                                 |
 | **documentation**             | Orchestrates documentation audit, drift, authoring, and validation work through the documentation skill                                                                                   |
 | **hve-artifact-tester**       | Performs contained literal conformance simulation of an HVE artifact and records simulated, emulated, and observed behavior. Dispatched by hve-builder-tester.                            |
-| **implementation-validator**  | Validates implementation quality against architectural requirements, design principles, and code standards with severity-graded findings                                                  |
 | **memory**                    | Conversation memory persistence for session continuity                                                                                                                                    |
-| **phase-implementor**         | Executes a single implementation phase from a plan with full codebase access and change tracking                                                                                          |
-| **plan-validator**            | Validates implementation plans against research documents with severity-graded findings                                                                                                   |
 | **prompt-builder**            | Compatibility entry point that routes legacy prompt-build, prompt-refactor, and prompt-analyze requests through the hve-builder lifecycle.                                                |
 | **researcher-subagent**       | Research subagent using search, read, web-fetch, GitHub repo, and MCP tools                                                                                                               |
-| **rpi-agent**                 | Autonomous RPI orchestrator running Research → Plan → Implement → Review → Discover phases with specialized subagents                                                                     |
+| **rpi-agent**                 | User-selected RPI workflow wrapper for Research, Plan, Implement, Review, and Follow-up. Use when one task needs lifecycle coordination.                                                  |
+| **rpi-planner**               | Revise one assigned RPI plan phase and matching phase details within a shared planning artifact. Use when a parent needs bounded phase authoring.                                         |
 | **rpi-researcher**            | Executes one delegated internal, external, or hybrid RPI research lane and progressively writes owned evidence. Use for independent research threads.                                     |
-| **rpi-validator**             | Validates a Changes Log against the Implementation Plan, Planning Log, and Research Documents for a specific plan phase                                                                   |
 | **task-challenger**           | Adversarial questioning agent that interrogates implementations with What/Why/How questions: no suggestions, no hints, no leading                                                         |
-| **task-implementor**          | Executes implementation plans from .copilot-tracking/plans with progressive tracking and change records                                                                                   |
-| **task-planner**              | Implementation planner that creates actionable, step-by-step plans                                                                                                                        |
+| **task-implementor**          | User-selected wrapper for executing an approved RPI plan with evidence-led change and divergence tracking. Use when planned work is ready to implement.                                   |
+| **task-planner**              | User-selected wrapper for evidence-based RPI planning and plan critique. Use when a task needs an implementation-ready plan.                                                              |
 | **task-researcher**           | Task research specialist for comprehensive project analysis                                                                                                                               |
-| **task-reviewer**             | Reviews completed implementation work for accuracy, completeness, and convention compliance                                                                                               |
+| **task-reviewer**             | User-selected wrapper for reviewing RPI plan and implementation evidence with explicit outcome routing. Use when implementation acceptance needs assessment.                              |
 
 ### Prompts
 
@@ -55,12 +52,12 @@ HVE Core provides the flagship RPI (Research, Plan, Implement, Review) workflow 
 | **prompt-build**       | Create or improve prompt-engineering artifacts through the HVE Builder lifecycle                  |
 | **prompt-refactor**    | Refactor prompt-engineering artifacts while preserving behavior through HVE Builder refactor mode |
 | **pull-request**       | Generate pull request descriptions from branch diffs                                              |
-| **rpi**                | Autonomous Research-Plan-Implement-Review-Discover workflow for completing tasks                  |
+| **rpi**                | Coordinate one task through the Research, Plan, Implement, Review, and Follow-up RPI workflow     |
 | **task-challenge**     | Adversarial What/Why/How interrogation of completed implementation artifacts                      |
-| **task-implement**     | Locate and execute implementation plans using Task Implementor                                    |
-| **task-plan**          | Initiate implementation planning from user context or research documents                          |
+| **task-implement**     | Execute an approved marker-based RPI plan using Task Implementor                                  |
+| **task-plan**          | Initiate evidence-based RPI planning from supplied task context, research, drafts, and decisions  |
 | **task-research**      | Initiate research for implementation planning from user requirements                              |
-| **task-review**        | Initiate implementation review from user context or artifact discovery                            |
+| **task-review**        | Initiate RPI acceptance review from plan, detail, critique, amendment, and change evidence        |
 
 ### Instructions
 
@@ -101,7 +98,12 @@ HVE Core provides the flagship RPI (Research, Plan, Implement, Review) workflow 
 | **prompt-analyze**        | Compatibility alias for read-only prompt artifact review. Routes static and behavior analysis to hve-builder review mode.                                                                                                                                                                        |
 | **prompt-builder**        | Compatibility alias for legacy prompt-building requests. Routes creation and improvement to the hve-builder skill.                                                                                                                                                                               |
 | **prompt-refactor**       | Compatibility alias for behavior-preserving prompt artifact cleanup. Routes refactoring to hve-builder refactor mode.                                                                                                                                                                            |
+| **rpi-implement**         | Execute an approved RPI plan, preserve amendments, and record evidence-led changes. Use when implementation is ready to begin or resume.                                                                                                                                                         |
+| **rpi-plan**              | Create evidence-based RPI plans and phase details from supplied context, research, drafts, and decisions. Use when implementation planning is needed.                                                                                                                                            |
+| **rpi-plan-critique**     | Independently critique an RPI plan and phase details against supplied evidence without editing plan sources. Use when planning credibility needs a read-only assessment.                                                                                                                         |
+| **rpi-quick**             | Sequence Research, Plan, Implement, Review, and Follow-up for an RPI task. Use when one workflow should coordinate the full delivery lifecycle.                                                                                                                                                  |
 | **rpi-research**          | Research-only RPI playbook that gathers task evidence, writes dated research artifacts under .copilot-tracking/research/, and hands off planning-ready findings. Use when the user needs evidence, alternatives, or task framing first.                                                          |
+| **rpi-review**            | Compare RPI planning and implementation evidence, record review findings, and route follow-up work. Use when an implementation needs acceptance review.                                                                                                                                          |
 | **telemetry-foundations** | Declarative OpenTelemetry-aligned telemetry vocabulary and instrumentation conventions for traces, metrics, logs, and PII handling                                                                                                                                                               |
 
 ### Hooks

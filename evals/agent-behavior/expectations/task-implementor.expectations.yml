@@ -13,101 +13,109 @@ latest_result: evals/results/agent-matrix/2026-05-28/task-implementor.json
 source_review_date: 2026-05-28
 
 expectations:
-  - expectation_id: response-header-format
-    summary: Response begins with the agent's branded header line including the task description.
-    signal: First non-blank line of output matches the literal header pattern.
+  - expectation_id: direct-rpi-implement-execution
+    summary: Implementation activates `rpi-implement` and performs approved work directly.
+    signal: Output identifies `rpi-implement` and records direct execution for the approved phase or task scope.
     pass_criteria: |
-      Output starts with `## ⚡ Task Implementor: <Task Description>` where
-      <Task Description> is a non-empty phrase (not the literal placeholder).
+      Output resolves the approved plan, phase details, critique disposition,
+      amendments, and prior changes record, then executes coupled or small
+      approved work directly. A generic bounded subagent is optional only when
+      an isolated task materially benefits from context isolation; no fixed
+      execution-worker allowlist is required.
     failure_modes:
-      - Header missing entirely (current `header-present` failure on 2026-05-28).
-      - Emoji omitted or replaced.
-      - Colon missing or placeholder left in.
+      - Requires fixed executor delegation before implementation can begin.
+      - Performs work outside the approved scope without an amendment or follow-up.
     priority: high
-    contract_ref: "agent §User Interaction → Response Format"
+    contract_ref: "Task Implementor and rpi-implement Flow"
 
-  - expectation_id: scope-respect-target-file
-    summary: Output references the exact file path named in the stimulus.
-    signal: Output mentions the requested file path verbatim (e.g., `hello.py`).
+  - expectation_id: marker-based-scope-resolution
+    summary: Implementation resolves the requested phase or task through stable IDs, markers, and headings.
+    signal: Output identifies the plan and phase-details artifacts and uses `Pxx` or `Pxx-Txx` scope references.
     pass_criteria: |
-      The file path provided in the stimulus appears at least once in the output
-      (in prose, code fence, or file-change list).
+      Output resolves `.copilot-tracking/plans/<YYYY-MM-DD>/<slug>-plan.md`
+      and `.copilot-tracking/details/<YYYY-MM-DD>/<slug>-phase-details.md`,
+      then locates the requested `Pxx` phase or `Pxx-Txx` task through matching
+      headings and `rpi:phase` or `rpi:task` markers. It names exact target
+      files and evidence through stable artifact context.
     failure_modes:
-      - Output describes a different filename (current `scope-respect` failure on 2026-05-28).
-      - Output speaks only in generic terms without naming the requested file.
+      - Uses mutable location data rather than markers and headings to locate work.
+      - Executes a different phase, task, or source target without evidence.
     priority: high
-    contract_ref: "agent §Core Principles (Follow exact file paths cited in implementation details)"
-    stimulus_scoped: true
+    contract_ref: "rpi-implement Flow and RPI marker conventions"
 
-  - expectation_id: source-edit-evidence
-    summary: When implementation work is requested, output shows concrete edit evidence.
-    signal: Output contains a fenced code block in the target language, a "Created"/"Added"/"Modified" file entry for the target, or a Files Changed listing the target.
+  - expectation_id: task-checklist-and-change-evidence
+    summary: Completed plan work has checklist and `CHG-xxx` evidence.
+    signal: Output identifies completed `Pxx` or `Pxx-Txx` work and related `CHG-xxx` entries with exact affected files and completion evidence.
     pass_criteria: |
-      At least one of: (a) fenced code block whose info string matches the target
-      language; (b) `Added:` or `Modified:` line listing the target file path;
-      (c) explicit "Created <path>" / "Wrote <path>" prose.
+      A phase or task is checked complete only after supporting completion
+      evidence exists. Material work is recorded in the changes record as a
+      `CHG-xxx` entry that names the related `Pxx` or `Pxx-Txx` task, affected
+      files, actual change, completion evidence, and validation state.
     failure_modes:
-      - Output only asserts work was done without showing or naming the change
-        (current `source-edit-present` failure on 2026-05-28: "Verified — runs and outputs `Hello, World!` as expected.").
-      - Output describes the change in prose without any code fence or file list.
+      - Marks a plan task complete before evidence exists.
+      - Reports source edits without a `CHG-xxx` record or exact target evidence.
     priority: high
-    contract_ref: "agent §Core Principles, §Changes Log Format (Added/Modified/Removed)"
-    applies_when: "Stimulus requests implementation (not status/clarification)."
+    contract_ref: "rpi-implement Success criteria and changes-log template"
+    applies_when: "Approved implementation work is performed."
 
-  - expectation_id: validation-invocation
-    summary: Output mentions running a relevant lint/validate/test command for the changed files.
-    signal: Output contains a recognizable validation token (lint/ruff/pylint/format/validate/build/test) tied to the change.
+  - expectation_id: validation-evidence-or-explicit-skip
+    summary: Changed behavior has validation evidence or an explicit skip reason.
+    signal: Output records expected validation checks, results, and evidence or a reason for skipping or unavailability.
     pass_criteria: |
-      At least one validation verb or command appears alongside the change
-      description, OR the output explicitly states validation was skipped with
-      a stated reason (e.g., "validation deferred to final phase per plan").
+      The changes record identifies validation expected by the plan or changed
+      behavior. It records executed checks and results, or an explicit reason
+      when a check is skipped or unavailable, without treating validation as
+      permission to resume work gated by a significant divergence critique.
     failure_modes:
-      - No mention of validation at all (current `lint-invocation` failure on 2026-05-28).
-      - Mentions validation in the abstract without binding it to this work.
+      - No validation evidence or skip reason accompanies changed behavior.
+      - Treats a validation result as replacing the required critique gate.
     priority: high
-    contract_ref: "agent §Subagent Delegation (Validation commands to run after completing the phase); §Phase 3 Step 1 (confirm all phases reported passing validation)"
+    contract_ref: "rpi-implement Flow and Success criteria"
 
-  - expectation_id: changes-log-path-named
-    summary: Output names the changes log path under `.copilot-tracking/changes/<date>/`.
+  - expectation_id: changes-record-path-named
+    summary: Output names the changes record path under `.copilot-tracking/changes/<date>/`.
     signal: Output contains a path matching `.copilot-tracking/changes/<YYYY-MM-DD>/<slug>-changes.md`.
     pass_criteria: |
       Path is workspace-relative, dated subdir present, suffix `-changes.md`.
-      The path may appear in prose, the Implementation Completion summary
-      table, or the Ready for Next Steps section.
+      The path may appear in the execution summary or review handoff.
     failure_modes:
       - Changes log not referenced.
       - Path written outside `.copilot-tracking/changes/` (e.g., session-state directories).
       - Missing date subdir or `-changes.md` suffix.
     priority: high
-    contract_ref: "agent §Required Artifacts; §Changes Log Format"
+    contract_ref: "RPI tracking convention (`.copilot-tracking/changes/{{YYYY-MM-DD}}/{{task_slug}}-changes.md`)"
 
-  - expectation_id: subagent-delegation-evidence
-    summary: Phase execution is delegated to Phase Implementor, not performed inline.
-    signal: Output references invoking `Phase Implementor` (or notes the delegation tooling is unavailable).
+  - expectation_id: significant-divergence-critique-gate
+    summary: Significant divergence links changes, amendments, phase details, and fresh critique before affected dependent work resumes.
+    signal: Output identifies linked `DIV-xxx` and `AM-xxx` records, matching phase-detail updates, and a fresh generic `rpi-plan-critique` disposition.
     pass_criteria: |
-      Output contains an explicit reference to running `Phase Implementor`
-      (or `Researcher Subagent` for context gaps), OR an explicit notice that
-      `runSubagent`/`task` tooling is unavailable and direct execution was used
-      as fallback.
+      For a significant divergence, the changes record contains `DIV-xxx`, the
+      plan contains its linked `AM-xxx` amendment, and the affected phase
+      details are updated. Planning obtains a fresh generic critique that
+      activates `rpi-plan-critique`; affected dependent work resumes only after
+      a Pass disposition. Ordinary local judgment and non-material divergence
+      do not activate this gate.
     failure_modes:
-      - Edits described inline with no delegation mention and no unavailability notice.
-      - Delegates but uses filename `phase-implementor.agent.md` instead of human-readable name.
+      - Significant divergence resumes dependent work without a fresh critique.
+      - DIV-xxx lacks a linked AM-xxx or phase-detail update.
     priority: medium
-    contract_ref: "agent §Subagent Delegation"
+    contract_ref: "rpi-implement Flow, Constraints, and Stop rules"
 
-  - expectation_id: handoff-summary-table
-    summary: On completion, output provides the structured Implementation Completion handoff table.
-    signal: Output contains a markdown table headed `📊 Summary` with rows for Changes Log, Phases Completed, Files Changed, and Validation Status.
+  - expectation_id: review-handoff-with-current-evidence
+    summary: Completed implementation hands the complete evidence set to the canonical review record.
+    signal: Output names completed and remaining IDs, validation state, linked changes or amendments, and the review-record path.
     pass_criteria: |
-      A markdown table is present whose header cell contains `📊 Summary` and
-      whose rows include at least: `Changes Log`, `Phases Completed`,
-      `Files Changed`, and `Validation Status`.
+      When no affected dependent work awaits critique, the handoff identifies
+      the changes path, completed and remaining `Pxx` or `Pxx-Txx` items,
+      validation status, linked `CHG-xxx`, `DIV-xxx`, and `AM-xxx` evidence,
+      and `.copilot-tracking/reviews/logs/<YYYY-MM-DD>/<slug>-review.md` for
+      the review record.
     failure_modes:
-      - Completion described in prose only, no table.
-      - Table missing required rows (e.g., omits Validation Status).
+      - Sends a significant amendment to review before its fresh critique.
+      - Omits the changes evidence or canonical review path.
     priority: medium
-    contract_ref: "agent §User Interaction → Implementation Completion"
-    applies_when: "Implementation reaches completion or pause; not for status-only queries."
+    contract_ref: "rpi-implement Handoff and review-log template"
+    applies_when: "Implementation scope is ready for review."
 
   - expectation_id: no-tracking-path-leak-outside-workspace
     summary: Tracking artifacts are written under workspace-relative `.copilot-tracking/`, not absolute or external paths.
@@ -121,4 +129,4 @@ expectations:
         (mirrors current `task-planner` matrix failure mode).
       - Tracking files placed under non-`.copilot-tracking/` roots.
     priority: medium
-    contract_ref: "agent §File Reference Formatting (workspace-relative paths); §Required Artifacts (paths under `.copilot-tracking/`)"
+    contract_ref: "RPI tracking conventions"

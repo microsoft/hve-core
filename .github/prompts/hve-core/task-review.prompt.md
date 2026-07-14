@@ -1,21 +1,21 @@
 ---
-description: "Initiate implementation review from user context or artifact discovery"
+description: "Initiate RPI acceptance review from plan, detail, critique, amendment, and change evidence"
 agent: Task Reviewer
-argument-hint: "[plan=...] [changes=...] [research=...] [scope=...]"
+argument-hint: "[task=...] [plan=...] [details=...] [changes=...]"
 ---
 
 # Task Review
 
 ## Inputs
 
-* ${input:chat:true}: (Optional, defaults to true) Include conversation context for review analysis.
-* ${input:plan}: (Optional) Implementation plan file path.
-* ${input:changes}: (Optional) Changes log file path.
-* ${input:research}: (Optional) Research file path.
-* ${input:scope}: (Optional) Time-based scope such as "today", "this week", or "since last review".
+* ${input:task}: (Optional) Task description or task slug.
+* ${input:plan}: (Optional) Plain Markdown RPI plan path.
+* ${input:details}: (Optional) RPI phase-details path.
+* ${input:changes}: (Optional) RPI changes path.
 
 ## Requirements
 
-1. Resolve review scope using this priority: explicitly provided inputs, attached or open files, time-based scope from `${input:scope}`, then artifacts since the last review log.
-2. When `${input:chat}` is true, extract artifact references and context from the conversation history.
-3. Summarize findings with severity counts, review log path, and recommended next steps.
+1. Resolve one coherent task artifact set, including plan critique and amendments when available.
+2. Use `rpi-review` to compare evidence and write one review record with `RV-xxx` findings.
+3. Keep execution status separate from outcome, and route defects, decision gaps, research gaps, and residual work to distinct next actions.
+4. Summarize the review record, severity counts, validation evidence, status, outcome, and recommended destination.

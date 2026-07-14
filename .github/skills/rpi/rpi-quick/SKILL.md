@@ -1,110 +1,72 @@
 ---
 name: rpi-quick
-description: Umbrella RPI playbook that sequences Research, Plan, Implement, Review, and Discover for one-shot task execution with quality gates.
-argument-hint: "[task=...] [continue={1|1,2|all}] [suggest]"
+description: "Sequence Research, Plan, Implement, Review, and Follow-up for an RPI task. Use when one workflow should coordinate the full delivery lifecycle."
+argument-hint: "[task=...] [continue=...] [followUp=...]"
 license: MIT
 user-invocable: true
 ---
 
 # RPI
 
-Use [references/orchestration.md](references/orchestration.md) for the orchestration contract, artifact-path matrix, and validator dispatch rules.
-
-Follow the shared conventions in `copilot-tracking.instructions.md`.
-
 ## Goal
 
-Run the full RPI flow as the primary umbrella entry point for one-shot task execution, and delegate each phase to the matching task skill.
+Coordinate one task through evidence, planning, execution, review, and explicit follow-up without duplicating the phase skills' detailed responsibilities.
 
 ## Flow
 
-1. Research: establish task scope, evidence, and difficulty.
-2. Plan: create or refresh the plan and supporting notes when the task needs them.
-3. Implement: apply the current plan and update the changes log.
-4. Review: validate the result and record the review outcome.
-5. Discover: run before completion, pause, escalation, or handoff to produce Suggested Next Work.
+1. Research readiness: assess caller-supplied research, task details, decisions, and plan inputs for a credible evidence set. Activate `rpi-research` only when evidence is missing, stale, contradictory, insufficient for planning, or when complexity, uncertainty, dependencies, risk, or a decision-critical question warrants investigation. If evidence is adequate, record why Research is reused or satisfied-and-skipped, then continue to Plan.
+2. Plan: create or revise the ordinary Markdown plan, phase details, and critique disposition when durable planning is needed.
+3. Implement: execute approved `Pxx` and `Pxx-Txx` work, maintain the changes record, and amend significant divergence explicitly. Return a material amendment to the planning parent for fresh `rpi-plan-critique`; affected dependent work resumes only with Pass.
+4. Review: compare plan, details, critique, amendments, changes, and validation evidence, then record a separate execution status and outcome.
+5. Follow-up: route defects, decision gaps, research gaps, and residual work to their correct next destination.
 
-If Review or Discover reveals more work on the active task, restart from the earliest affected phase of that task.
+If Review finds active-task work, return to the earliest affected stage. If Review identifies residual work outside the active task, create a distinct follow-up item rather than reopening the completed scope.
 
 ## Delegation crosswalk
 
-* Research -> /rpi-research, which uses `RPI Researcher` for its default internal, external, or hybrid delegated lanes.
-* Plan -> /rpi-plan, which uses its internal Plan Validator path.
-* Implement -> /rpi-implement, which uses its internal Phase Implementor and Implementation Validator path.
-* Review -> /rpi-review, which uses its internal RPI Validator and Implementation Validator path.
-* Discover -> handled by the orchestrator in its own context, with no separate sub-skill.
-
-When sub-skill dispatch is unavailable, dispatch that phase's listed subagent(s) or validator(s) directly via `runSubagent` or `task`. For Research, direct fallback dispatches `RPI Researcher` for default internal, external, or hybrid delegated lanes. When direct dispatch is also unavailable, perform the equivalent work inline and record it.
+* Research readiness -> assess existing evidence, then use `rpi-research` only for a demonstrated investigation need
+* Plan -> `rpi-plan`, which may use `RPI Planner` for one exact phase and `rpi-plan-critique` for an independent critique
+* Implement -> `rpi-implement`
+* Review -> `rpi-review`
+* Follow-up -> handled by the parent from the review record
 
 ## Inputs
 
-* `task=...`: primary task description or inferred intent from the conversation, attached files, or current file when no explicit task input is provided.
-* `continue={1|1,2|all}`: select one or more saved Discover suggestions; each selected suggestion starts a new RPI cycle at Research (Phase 1); `all` processes every saved suggestion in listed priority order.
-* `suggest`: run Discover directly to refresh next-work suggestions.
-* `task_slug`: lower-kebab-case derived from the primary task or target; use the current date in `YYYY-MM-DD` for dated artifacts.
+* `task`: primary task description or inferred task context
+* `evidence`: caller-supplied research, task details, decisions, and plan inputs to assess for research readiness
+* `continue`: resume an active task from its durable artifacts
+* `followUp`: select a distinct review follow-up item
 
 ## Success criteria
 
-* For Simple and Medium work, the orchestrator may keep phases in its own context and skip durable artifacts; for Medium-hard and Challenging work, use the dated `.copilot-tracking/` artifact set and carry it forward.
-* Dated artifacts share one `task_slug` and `YYYY-MM-DD` date across every phase of a task.
-* Research, planning, implementation, review, and Discover run in order and stop on blocking findings.
-* The umbrella skill delegates detailed phase work to `/rpi-research`, `/rpi-plan`, `/rpi-implement`, and `/rpi-review`.
-* Review selects validation from the changed artifacts and affected behaviors, records considered checks, and distinguishes run, skipped, unavailable, and out-of-scope checks.
-* When no explicit `task`, `continue`, or `suggest` input is present, infer the next intent from the conversation, attached files, or the current file.
-* When `continue={1|1,2|all}` selects saved suggestions, each selection starts a new RPI cycle at Research (Phase 1); `all` processes every saved suggestion in the saved priority order.
-* The final response includes phase status, iteration count, artifact paths, validation coverage, review outcome, and Suggested Next Work.
-* When review outcome is Complete, include a commit message in a markdown code block following `.github/instructions/hve-core/commit-message.instructions.md`, excluding `.copilot-tracking` files.
-* Still run Discover before any user-facing finish, pause, escalation, or handoff.
-
-## Conversation-history summary contract
-
-When the run ends or conversation history is compacted, include:
-
-* confirmation that state is managed through `.copilot-tracking/` files;
-* the tracking artifact paths with percent complete;
-* the last completed phase and current step;
-* recent Review findings; and
-* recent Discover follow-up work items in order.
+* One task identity, date, and task slug link any durable artifacts.
+* Research readiness records why `rpi-research` is activated or why Research is reused or satisfied-and-skipped.
+* Each phase uses the matching RPI skill rather than duplicating its workflow.
+* Planning uses marker-addressed plain Markdown artifacts and independent critique evidence, including a fresh disposition for a material implementation amendment.
+* Implementation records `CHG-xxx` changes, links significant `DIV-xxx` records to `AM-xxx` amendments, and does not resume affected dependent work before Pass.
+* Review separates execution status from outcome and routes every open item.
+* Follow-up identifies whether work returns to research, planning, implementation, or a distinct future item.
 
 ## Constraints
 
-* Keep the umbrella skill as the sequencing layer, not as a full duplicate of every granular phase playbook.
-* Dispatch each phase to its sub-skill; each sub-skill owns its internal validator or quality gate, and the orchestrator does not add a separate validator layer.
-* If dispatch tooling is unavailable, dispatch the listed subagent(s) or validator(s) directly via `runSubagent` or `task`. For Research, direct fallback dispatches `RPI Researcher` for default internal, external, or hybrid delegated lanes. When direct dispatch is also unavailable, perform the equivalent work inline and record it.
-* Ensure delegated phases keep `.copilot-tracking/` paths and other internal planning, research, or implementation artifact references out of production code, code comments, documentation strings, and commit messages; internal artifacts still guide implementation logic.
-* Stop only when a real product decision or acceptance criterion cannot be responsibly inferred and requires user input.
-* Retry failed subagent calls with a more specific prompt, and dispatch an additional `RPI Researcher` lane when missing context is blocking.
-* Fall back to direct tool usage only after subagent retries fail, and only for the smallest safe scope that still maintains the required quality gate.
-* Genuine blockers remain hard stops: missing required inputs or an unresolvable task.
-
-## Quality gates
-
-* Treat task difficulty as dynamic: Simple, Medium, Medium-hard, or Challenging, and escalate to the document-backed path when findings increase the scope or risk.
-* Critical and major validation findings block advancement until fixed and revalidated.
-* Minor findings may remain only when they are explicitly documented as non-blocking.
+* Keep this skill as a sequencing layer, not a duplicate of phase protocols.
+* Use the smallest appropriate stage action. Do not create process work solely to satisfy a lifecycle label.
+* Treat caller-supplied research, task details, decisions, and plan inputs as evidence to assess, not as a requirement to repeat Research.
+* Keep internal tracking paths out of production code, code comments, documentation strings, and commit messages.
+* Treat unresolved product decisions and decision-critical evidence gaps as hard stops for the affected stage.
 
 ## Stop rules
 
-* Stop if research evidence is missing before planning begins.
-* Stop if Plan Validator reports blocking findings.
-* Stop if implementation is blocked by a dependency or validation failure.
-* Stop if review validation fails or the evidence trail is incomplete.
-* Stop when required inputs are missing for the current task.
-* Stop only when a real product decision or acceptance criterion cannot be responsibly inferred and requires user input.
-* Stop if the dated artifact set cannot be discovered or resumed for the current task when the workflow uses durable artifacts.
+* Stop the active stage when its needed evidence, decision, or dependency is unavailable. Pause affected dependent implementation when a material amendment awaits a fresh critique disposition.
+* Do not claim an accepted outcome while critical review findings remain open.
+* Return to the earliest affected stage after review instead of hiding work in a generic follow-up.
 
 ## Handoff
 
-Use the granular phase skills for the detailed execution path: `/rpi-research`, `/rpi-plan`, `/rpi-implement`, and `/rpi-review`.
+Use `rpi-research` only when the research-readiness assessment warrants investigation. Otherwise hand adequate evidence to `rpi-plan` and record its reused or satisfied-and-skipped disposition. Use `rpi-implement` and `rpi-review` for their respective phase work. Follow-up routes to one of those stages or to a distinct next task.
 
 ## Final response contract
 
-Return a brief summary that includes:
-
-* phase status and iteration count,
-* the dated artifact paths used or updated,
-* validation coverage, including checks considered, run, passed, failed, skipped, unavailable, and out of scope,
-* the current review outcome, and
-* Suggested Next Work from Discover.
+Return phase status, the research-readiness disposition and reason, durable artifact paths, validation coverage, review execution status and outcome, and the routed follow-up items.
 
 

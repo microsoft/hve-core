@@ -1,71 +1,62 @@
 ---
 name: rpi-plan
-description: Create implementation-ready planning artifacts and validation evidence for RPI tasks.
-argument-hint: "[research=...] [chat]"
+description: "Create evidence-based RPI plans and phase details from supplied context, research, drafts, and decisions. Use when implementation planning is needed."
+argument-hint: "[task=...] [research=...] [context=...] [draft=...] [decisions=...]"
 license: MIT
 user-invocable: true
 ---
 
 # RPI Plan
 
-Use [references/planning.md](references/planning.md) for the planning template and protocol detail.
-
-Follow the shared conventions in `copilot-tracking.instructions.md`.
-
 ## Goal
 
-Convert validated research into an implementation-ready plan, supporting details, and a dated planning log with explicit validation evidence.
+Produce an implementation-ready, ordinary Markdown plan and a separate phase-details artifact that preserve the caller's requirements, evidence, decisions, and acceptance criteria. The planning parent owns the overall checklist and final readiness decision.
 
-Derive `{{task_slug}}` from the primary task or target with lower-kebab-case, and use the current date in `YYYY-MM-DD` for the dated folders and files.
+Read [references/planning.md](references/planning.md) for the readiness and artifact protocol.
 
-## What to do
+## Flow
 
-1. Confirm the task scope and the current research state. Prefer a completed `/rpi-research` artifact when available.
-2. Follow the four phases in order: Context Assessment, Planning, Plan Validation, Completion.
-3. If research is missing or incomplete, create or extend `.copilot-tracking/research/{{YYYY-MM-DD}}/{{task_slug}}-research.md`. When deeper gaps remain, prefer the Researcher Subagent at `.github/agents/hve-core/subagents/researcher-subagent.agent.md` via `runSubagent` or `task`, writing subagent evidence under `.copilot-tracking/research/subagents/{{YYYY-MM-DD}}/<topic>-research.md`.
-4. Create or update the dated planning artifacts for this phase:
-   * `.copilot-tracking/plans/{{YYYY-MM-DD}}/{{task_slug}}-plan.instructions.md`
-   * `.copilot-tracking/details/{{YYYY-MM-DD}}/{{task_slug}}-details.md`
-   * `.copilot-tracking/plans/logs/{{YYYY-MM-DD}}/{{task_slug}}-log.md`
-   * `.copilot-tracking/research/{{YYYY-MM-DD}}/{{task_slug}}-research.md`
-   Derive `.copilot-tracking/changes/{{YYYY-MM-DD}}/{{task_slug}}-changes.md` as the downstream implementation handoff path, but do not create or update it during planning.
-5. Add `<!-- markdownlint-disable-file -->` to generated `.copilot-tracking/**` markdown artifacts. The implementation plan also includes `applyTo: '.copilot-tracking/changes/{{YYYY-MM-DD}}/{{task_slug}}-changes.md'` frontmatter.
-6. Prefer the Plan Validator at `.github/agents/hve-core/subagents/plan-validator.agent.md` via `runSubagent` or `task`, providing the research path, plan path, details path, planning log path, and a concise user-requirements summary. If neither dispatch tool is available, perform the equivalent validation inline and record the findings in the Planning Log Validator Findings section instead of dead-stopping on tooling alone.
-7. Fix Critical and High findings in the planning artifacts, update the Planning Log Discrepancy Log and Validator Findings section, and rerun validation until only non-blocking findings remain.
-8. Re-enter dated artifacts in place, keep completed work, refresh line references, and rerun validation after material edits.
-9. Complete the run by summarizing the implementation plan artifacts created and any scope items deferred for future planning, drawing the deferred items from the planning log.
+1. Establish the task identity and synthesize the caller-supplied task context, completed research, draft plan material, and decisions deeply enough to distinguish evidence, assumptions, and open choices. Treat supplied evidence as the starting point, not as a reason to repeat investigation.
+2. Assess supplied and completed evidence against requirements, acceptance criteria, dependencies, material risks, complexity, uncertainty, and decision-critical choices. Reuse adequate evidence and orchestrate only the applicable skills or bounded subagents needed to close a demonstrated gap. Activate `rpi-research` only when one of those dimensions reveals a demonstrated planning gap.
+3. Create or revise these artifacts with one stable task ID, `Pxx` phase IDs, and `Pxx-Txx` task IDs:
+   * `.copilot-tracking/plans/{{YYYY-MM-DD}}/{{task_slug}}-plan.md`
+   * `.copilot-tracking/details/{{YYYY-MM-DD}}/{{task_slug}}-phase-details.md`
+4. Use [templates/implementation-plan.md](templates/implementation-plan.md) for the overall plan and [templates/implementation-details.md](templates/implementation-details.md) for evidence-based phase detail. Put contextual phase and task markers immediately before their headings.
+5. Create an independent critique at `.copilot-tracking/reviews/plans/{{YYYY-MM-DD}}/{{task_slug}}-plan-critique.md`. Dispatch a fresh generic native critique worker through `runSubagent`, instruct it to activate `rpi-plan-critique`, and provide the exact task context, caller requirements, supplied research and evidence pointers, current plan and details paths, decisions, dependencies, acceptance criteria, and this one critique output path. Give that worker read access to supplied evidence and write access only to the critique output. Do not use a fixed critique-worker allowlist.
+6. Act on the critique with judgment. Choose the smallest suitable next action: revise the plan directly, dispatch `RPI Planner` for one exact phase, ask a small decision-critical question set, rerun the critique after material changes, or finalize. Do not iterate for ceremony.
+7. Record critique dispositions and hand off the plan, phase details, critique, and downstream changes path. The implementation phase owns creation of `.copilot-tracking/changes/{{YYYY-MM-DD}}/{{task_slug}}-changes.md`.
+
+## Inputs
+
+* Task context and caller requirements
+* Completed or supplied research and evidence pointers
+* Draft plan details, decisions, dependencies, and acceptance criteria when available
+* Existing plan and phase-details artifacts when resuming
 
 ## Success criteria
 
-* The dated planning artifact set exists under `.copilot-tracking/plans/`, `.copilot-tracking/details/`, `.copilot-tracking/plans/logs/`, and `.copilot-tracking/research/`.
-* The Plan Validator result is captured and any Critical and High findings are resolved before handoff.
-* The plan includes a final validation phase for full project validation and fix iteration.
-* The completion summary names the implementation plan files created and any scope items deferred for future planning.
-* For normal progression, the completion summary may include an implementation handoff to `/rpi-implement` and the dated artifact set for the next phase.
-* For planning-only, comparison, audit, analysis, or explicitly no-handoff invocations, return validated planning artifacts and next-step guidance without presenting `/rpi-implement` as an immediate handoff.
+* The plan and phase-details artifacts use the prescribed plain Markdown paths and contain no `applyTo` metadata.
+* The plan has one stable task ID, phase and task IDs, contextual markers, requirements, acceptance criteria, dependencies, decisions, amendments, critique disposition, and a clear handoff.
+* Details provide evidence-based context and completion expectations for every planned task without prescribing unsupported choreography.
+* Research is activated only for a demonstrated readiness gap.
+* A critique result is recorded with a Pass, Revise, or Blocked verdict before finalization.
 
 ## Constraints
 
-* Do not implement code in this phase.
-* Write only to `.copilot-tracking/plans/`, `.copilot-tracking/plans/logs/`, `.copilot-tracking/details/`, and `.copilot-tracking/research/` in this phase, except for workflow tracking files explicitly required by the current execution.
-* Keep the output evidence-oriented; use subagents for research and validation instead of repeating planning logic in the skill.
+* Keep planning evidence-based. State assumptions and unresolved items when evidence does not support a local choice.
+* The parent may delegate one exact phase to `RPI Planner`, but retains ownership of the complete plan and phase checklist.
+* Do not create separate legacy log artifacts, line-number references, line-refresh work, or detail-line verification.
+* Do not implement production changes in this phase.
+* Use plain-text workspace-relative paths in tracking artifacts.
 
 ## Stop rules
 
-* Stop if the research artifact is missing or incomplete and deeper research is not available.
-* Stop only for genuine blockers, such as missing task context, an unwritable research path, or unresolved validation findings that materially affect implementation readiness.
-* Stop if the Plan Validator reports Critical and High findings that must be resolved before implementation.
+* Stop as Blocked when the task, required acceptance criteria, or a decision-critical evidence gap cannot be resolved responsibly.
+* Stop as Revise when critique findings require plan changes that remain open.
+* Finalize when the plan is credible for implementation and the critique disposition explains any accepted residual risk.
 
 ## Handoff
 
-After the plan is validated, continue with `/rpi-implement` only when the caller expects normal progression.
-
-* Return the plan file path, details file path, planning log path, validation status, and next implementation steps.
-* When the request is planning-only, comparison, audit, analysis, or explicitly no-handoff, return the validated planning artifacts and next-step guidance without presenting `/rpi-implement` as an immediate handoff.
-* `.copilot-tracking/plans/{{YYYY-MM-DD}}/{{task_slug}}-plan.instructions.md`
-* `.copilot-tracking/details/{{YYYY-MM-DD}}/{{task_slug}}-details.md`
-* `.copilot-tracking/plans/logs/{{YYYY-MM-DD}}/{{task_slug}}-log.md`
-* `.copilot-tracking/research/{{YYYY-MM-DD}}/{{task_slug}}-research.md`
-* `.copilot-tracking/changes/{{YYYY-MM-DD}}/{{task_slug}}-changes.md`
+Return the plan, phase-details, and critique paths; planning readiness; unresolved decisions; and the next recommended RPI stage. For normal progression, hand off to `rpi-implement` with `.copilot-tracking/changes/{{YYYY-MM-DD}}/{{task_slug}}-changes.md` as its changes-record path.
 
 

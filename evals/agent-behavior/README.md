@@ -2,7 +2,7 @@
 title: Agent Behavior Suite
 description: 'Per-agent behavioral evals assembled from per-agent stimulus partials and graded against five class recipes'
 author: HVE Core Team
-ms.date: 2026-07-09
+ms.date: 2026-07-13
 ---
 
 ## Purpose
@@ -44,7 +44,7 @@ The drift check is wired into the repository's `eval:lint:vally` npm script in [
 
 ## Class Recipes
 
-Each parent agent belongs to exactly one class. The class selects the stimulus shape (a generic prompt the agent should reasonably respond to) and the functional grader (a regex over the agent's response that captures one declared behavior of the class). Placeholder partials authored in Phase 1 use these templates; Phase 2 replaces each placeholder with a tuned, class-specific stimulus per [the plan](../../.copilot-tracking/plans/2026-05-25/per-agent-vally-eval-coverage-plan.instructions.md).
+Each parent agent belongs to exactly one class. The class selects the stimulus shape (a generic prompt the agent should reasonably respond to) and the functional grader (a regex over the agent's response that captures one declared behavior of the class). Placeholder partials authored in Phase 1 use these templates; Phase 2 replaces each placeholder with a tuned, class-specific stimulus per [the plan](../../.copilot-tracking/plans/2026-05-25/per-agent-vally-eval-coverage-plan.md).
 
 | Class           | Members | Prompt Theme                                                    | Grader Regex (case-insensitive)                           |
 |-----------------|---------|-----------------------------------------------------------------|-----------------------------------------------------------|

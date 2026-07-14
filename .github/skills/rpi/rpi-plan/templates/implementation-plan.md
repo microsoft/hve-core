@@ -1,75 +1,75 @@
----
-applyTo: '.copilot-tracking/changes/{{YYYY-MM-DD}}/{{task_slug}}-changes.md'
----
 <!-- markdownlint-disable-file -->
-# Implementation Plan: {{task_name}}
+# RPI Plan: {{task_name}}
 
-## Overview
+## Task Metadata
 
-{{task_overview_sentence}}
+* Task ID: {{task_id}}
+* Task slug: {{task_slug}}
+* Planning status: {{draft_or_ready}}
+* Plan date: {{YYYY-MM-DD}}
+* Phase details: .copilot-tracking/details/{{YYYY-MM-DD}}/{{task_slug}}-phase-details.md
+* Plan critique: .copilot-tracking/reviews/plans/{{YYYY-MM-DD}}/{{task_slug}}-plan-critique.md
 
-## Objectives
+## Sources
 
-### User Requirements
+* {{source_path_or_caller_context}}: {{how_this_evidence_informs_the_plan}}
 
-* {{user_stated_goal}} - Source: {{caller_stated_requirement_source_or_evidence}}
+## Scope and Non-Goals
 
-### Derived Objectives
+### In Scope
 
-* {{planner_identified_goal}} - Derived from: {{research_findings_or_reasoning}}
+* {{in_scope_outcome}}
 
-## Context Summary
+### Non-Goals
 
-### Project Files
+* {{out_of_scope_item}}
 
-* {{full_file_path}} - {{file_relevance_description}}
+## Requirements and Acceptance
 
-### References
+* {{caller_requirement}}: {{observable_acceptance_criterion}}
 
-* {{reference_full_file_path_or_url}} - {{reference_description}}
+## Phase Checklist
 
-### Standards References
+<!-- rpi:phase id=P01 -->
+### [ ] P01: {{phase_name}}
 
-* {{instruction_full_file_path}} - {{instruction_description}}
+* Intent: {{phase_outcome}}
+* Dependencies: {{phase_dependencies_or_none}}
 
-## Risks and Mitigations
+<!-- rpi:task id=P01-T01 -->
+#### [ ] P01-T01: {{task_name}}
 
-* {{material_risk}} - Likelihood: {{low_medium_high_or_unknown}} - Impact: {{low_medium_high_or_scope}} - Priority: {{likelihood_impact_basis_or_model_reference}} - Status: {{resolved_mitigated_deferred_blocker}} - Rationale: {{rationale}}
-
-## Implementation Checklist
-
-### [ ] Implementation Phase 1: {{phase_1_name}}
-
-<!-- parallelizable: {{true_or_false}} -->
-
-* [ ] Step 1.1: {{specific_action_1_1}}
-  * Details: `.copilot-tracking/details/{{YYYY-MM-DD}}/{{task_slug}}-details.md` (Lines {{line_start}}-{{line_end}})
-* [ ] Step 1.2: {{specific_action_1_2}}
-  * Details: `.copilot-tracking/details/{{YYYY-MM-DD}}/{{task_slug}}-details.md` (Lines {{line_start}}-{{line_end}})
-* [ ] Step 1.3: Validate phase changes
-  * Run {{phase_validation_command_or_skip_reason}}
-
-### [ ] Implementation Phase N: Validation
-
-<!-- parallelizable: false -->
-
-* [ ] Step N.1: Run full project validation
-  * {{full_lint_command}}
-  * {{full_build_command}}
-  * {{full_test_command}}
-* [ ] Step N.2: Fix minor validation issues
-  * {{minor_fix_iteration_guidance}}
-* [ ] Step N.3: Report blocking issues
-  * {{blocking_issue_reporting_guidance}}
-
-## Planning Log
-
-See `.copilot-tracking/plans/logs/{{YYYY-MM-DD}}/{{task_slug}}-log.md` for discrepancy tracking, validator findings, implementation paths considered, and suggested follow-on work.
+* Requirement and evidence: {{requirement_or_source}}
+* Expected result: {{observable_result}}
+* Detail section: P01-T01 in .copilot-tracking/details/{{YYYY-MM-DD}}/{{task_slug}}-phase-details.md
 
 ## Dependencies
 
-* {{required_tool_or_framework}}
+* {{dependency_or_prerequisite}}: {{why_it_matters}}
 
-## Success Criteria
+## Decision Register
 
-* {{overall_completion_indicator}} - Traces to: {{research_item_or_user_requirement}}
+| Decision | Status | Evidence or rationale | Owner or next action |
+|----------|--------|-----------------------|----------------------|
+| {{decision}} | {{decided_open_deferred}} | {{evidence_or_rationale}} | {{owner_or_next_action}} |
+
+## Amendment Register
+
+### AM-001: {{amendment_title}}
+
+* Trigger: {{why_the_plan_changed}}
+* Affected scope: {{phase_or_task_ids}}
+* Updated plan or detail: {{what_changed}}
+* Rationale: {{evidence_or_decision}}
+
+## Critique Disposition
+
+| Critique finding | Disposition | Plan response or residual risk |
+|------------------|-------------|--------------------------------|
+| {{finding_title}} | {{accepted_resolved_deferred}} | {{response_or_risk}} |
+
+## Handoff
+
+* Implementation artifact: .copilot-tracking/changes/{{YYYY-MM-DD}}/{{task_slug}}-changes.md
+* Ready phase or task: {{next_pxx_or_pxx_txx}}
+* Remaining decision or blocker: {{none_or_description}}

@@ -1,6 +1,6 @@
 id: rpi
 name: RPI Skills
-description: Skill-forward Research, Plan, Implement, and Review entry points with default RPI Researcher dispatch and retained shared-worker support.
+description: Skill-forward Research, Plan, Implement, Review, and Follow-up entry points with bounded planning and critique support.
 tags:
   - rpi
   - research
@@ -15,6 +15,8 @@ items:
     kind: skill
   - path: .github/skills/rpi/rpi-plan
     kind: skill
+  - path: .github/skills/rpi/rpi-plan-critique
+    kind: skill
   - path: .github/skills/rpi/rpi-implement
     kind: skill
   - path: .github/skills/rpi/rpi-review
@@ -27,13 +29,7 @@ items:
     kind: agent
   - path: .github/agents/hve-core/subagents/rpi-researcher.agent.md
     kind: agent
-  - path: .github/agents/hve-core/subagents/plan-validator.agent.md
-    kind: agent
-  - path: .github/agents/hve-core/subagents/phase-implementor.agent.md
-    kind: agent
-  - path: .github/agents/hve-core/subagents/implementation-validator.agent.md
-    kind: agent
-  - path: .github/agents/hve-core/subagents/rpi-validator.agent.md
+  - path: .github/agents/hve-core/subagents/rpi-planner.agent.md
     kind: agent
   - path: .github/instructions/hve-core/copilot-tracking.instructions.md
     kind: instruction
