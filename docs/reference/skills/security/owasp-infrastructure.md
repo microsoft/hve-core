@@ -2,7 +2,7 @@
 title: owasp-infrastructure
 description: "OWASP Infrastructure Top 10 knowledge base for identifying, assessing, and remediating internal IT infrastructure security risks."
 sidebar_position: 4
-ms.date: 2026-07-03
+ms.date: 2026-07-13
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->

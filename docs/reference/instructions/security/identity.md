@@ -2,7 +2,7 @@
 title: Security/Identity
 description: "Security Planner identity, six-phase orchestration, state management, and session recovery protocols"
 sidebar_position: 1
-ms.date: 2026-07-03
+ms.date: 2026-07-13
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->

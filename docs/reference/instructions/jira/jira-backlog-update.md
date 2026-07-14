@@ -2,7 +2,7 @@
 title: Jira/Jira Backlog Update
 description: "Jira backlog execution: consumes planning handoffs and applies sequential Jira operations"
 sidebar_position: 4
-ms.date: 2026-07-03
+ms.date: 2026-07-13
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->

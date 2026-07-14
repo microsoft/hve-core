@@ -2,7 +2,7 @@
 title: Github Discover Issues
 description: "Discover GitHub issues via user queries, artifact analysis, or search and produce planning files"
 sidebar_position: 2
-ms.date: 2026-07-03
+ms.date: 2026-07-13
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->

@@ -1,8 +1,8 @@
 ---
 title: Plan Validator
 description: Validates implementation plans against research documents with severity-graded findings
-sidebar_position: 3
-ms.date: 2026-07-05
+sidebar_position: 10
+ms.date: 2026-07-13
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->

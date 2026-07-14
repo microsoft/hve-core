@@ -2,7 +2,7 @@
 title: Dt Figma Export
 description: Export Design Thinking artifacts to a FigJam board or Figma Design file via the Figma MCP server
 sidebar_position: 2
-ms.date: 2026-07-03
+ms.date: 2026-07-13
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->

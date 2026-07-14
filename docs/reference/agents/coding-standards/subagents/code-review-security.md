@@ -2,7 +2,7 @@
 title: Code Review Security
 description: Thin skill-backed perspective subagent that reviews a precomputed diff for security issues and writes structured findings
 sidebar_position: 6
-ms.date: 2026-07-05
+ms.date: 2026-07-13
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->

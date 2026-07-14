@@ -2,7 +2,7 @@
 title: Jira/Jira Backlog Discovery
 description: "Jira issue backlog discovery: user-centric, artifact-driven, JQL-based"
 sidebar_position: 1
-ms.date: 2026-07-03
+ms.date: 2026-07-13
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->

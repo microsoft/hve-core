@@ -2,7 +2,7 @@
 title: owasp-cicd
 description: "OWASP CI/CD Top 10 knowledge base for identifying, assessing, and remediating CI/CD pipeline security risks."
 sidebar_position: 2
-ms.date: 2026-07-03
+ms.date: 2026-07-13
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->

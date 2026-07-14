@@ -2,7 +2,7 @@
 title: SSSC Planner
 description: "Six-phase repository supply chain security assessment against OpenSSF Scorecard, SLSA, Sigstore, and SBOM standards, producing a prioritized backlog of reusable workflows."
 sidebar_position: 3
-ms.date: 2026-07-03
+ms.date: 2026-07-13
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->

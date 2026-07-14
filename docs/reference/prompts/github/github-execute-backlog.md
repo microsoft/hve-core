@@ -2,7 +2,7 @@
 title: Github Execute Backlog
 description: "Execute a GitHub backlog plan by creating, updating, linking, closing, and commenting on issues from a handoff file"
 sidebar_position: 3
-ms.date: 2026-07-03
+ms.date: 2026-07-13
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->

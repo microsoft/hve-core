@@ -2,7 +2,7 @@
 title: Ado Get Build Info
 description: Retrieve Azure DevOps build status and logs for a pull request or build number
 sidebar_position: 4
-ms.date: 2026-07-03
+ms.date: 2026-07-13
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->

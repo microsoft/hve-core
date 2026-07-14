@@ -2,7 +2,7 @@
 title: Coding Standards/Code Review/Diff Computation
 description: "Code review diff computation: branch detection, scope locking, large-diff handling, and non-source filtering"
 sidebar_position: 1
-ms.date: 2026-07-03
+ms.date: 2026-07-13
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->

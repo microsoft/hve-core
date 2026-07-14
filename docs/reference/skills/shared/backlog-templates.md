@@ -2,7 +2,7 @@
 title: backlog-templates
 description: "Shared work-item templates and conventions for ADO and GitHub backlog handoff across the RAI, Security, SSSC, Accessibility, and Privacy planners"
 sidebar_position: 1
-ms.date: 2026-07-03
+ms.date: 2026-07-13
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->

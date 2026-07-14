@@ -2,7 +2,7 @@
 title: security-review
 description: Run an OWASP vulnerability assessment against the current codebase
 sidebar_position: 8
-ms.date: 2026-07-03
+ms.date: 2026-07-13
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->

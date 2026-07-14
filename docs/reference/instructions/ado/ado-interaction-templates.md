@@ -2,7 +2,7 @@
 title: Ado/Ado Interaction Templates
 description: Work item description and comment templates for consistent Azure DevOps content formatting
 sidebar_position: 5
-ms.date: 2026-07-03
+ms.date: 2026-07-13
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->

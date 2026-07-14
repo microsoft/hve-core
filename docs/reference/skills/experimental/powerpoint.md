@@ -2,7 +2,7 @@
 title: powerpoint
 description: PowerPoint slide deck generation and management using python-pptx with YAML-driven content and styling
 sidebar_position: 4
-ms.date: 2026-07-03
+ms.date: 2026-07-13
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->

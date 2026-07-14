@@ -2,7 +2,7 @@
 title: Agile Coach
 description: Creates and refines goal-oriented user stories with clear acceptance criteria for any tracking tool
 sidebar_position: 2
-ms.date: 2026-07-03
+ms.date: 2026-07-13
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->

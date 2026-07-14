@@ -2,7 +2,7 @@
 title: risk-register
 description: Create a qualitative risk register using a Probability × Impact (P×I) matrix
 sidebar_position: 2
-ms.date: 2026-07-03
+ms.date: 2026-07-13
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->

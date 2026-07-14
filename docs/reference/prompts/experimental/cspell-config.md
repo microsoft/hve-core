@@ -2,7 +2,7 @@
 title: Cspell Config
 description: Create or update the project cspell configuration with project words and ignores
 sidebar_position: 1
-ms.date: 2026-07-03
+ms.date: 2026-07-13
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->

@@ -1,8 +1,8 @@
 ---
 title: Researcher Subagent
 description: "Research subagent using search, read, web-fetch, GitHub repo, and MCP tools"
-sidebar_position: 7
-ms.date: 2026-07-05
+sidebar_position: 11
+ms.date: 2026-07-13
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->

@@ -2,7 +2,7 @@
 title: Github/Github Backlog Planning
 description: "GitHub backlog management: planning files, search protocols, similarity assessment, and state persistence"
 sidebar_position: 3
-ms.date: 2026-07-03
+ms.date: 2026-07-13
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->

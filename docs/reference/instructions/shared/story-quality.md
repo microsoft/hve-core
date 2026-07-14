@@ -2,7 +2,7 @@
 title: Shared/Story Quality
 description: Shared story quality conventions for work item creation and evaluation across agents and workflows
 sidebar_position: 6
-ms.date: 2026-07-03
+ms.date: 2026-07-13
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->

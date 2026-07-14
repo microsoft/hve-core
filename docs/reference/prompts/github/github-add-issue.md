@@ -2,7 +2,7 @@
 title: Github Add Issue
 description: Create a GitHub issue using discovered repository templates and conversational field collection
 sidebar_position: 1
-ms.date: 2026-07-03
+ms.date: 2026-07-13
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->

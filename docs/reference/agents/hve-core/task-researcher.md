@@ -2,7 +2,7 @@
 title: Task Researcher
 description: Task research specialist for comprehensive project analysis
 sidebar_position: 8
-ms.date: 2026-07-03
+ms.date: 2026-07-13
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->

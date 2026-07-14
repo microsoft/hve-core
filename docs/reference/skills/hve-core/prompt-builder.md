@@ -1,8 +1,8 @@
 ---
 title: prompt-builder
-description: "Create or update prompt artifacts through the full prompt-builder phase loop, routing refactor and analyze requests to the specialized skills."
-sidebar_position: 4
-ms.date: 2026-07-03
+description: Compatibility alias for legacy prompt-building requests. Routes creation and improvement to the hve-builder skill.
+sidebar_position: 6
+ms.date: 2026-07-13
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->
@@ -17,7 +17,7 @@ ms.date: 2026-07-03
 ## What it does
 
 <!-- BEGIN AUTO-GENERATED: overview -->
-Create or update prompt artifacts through the full prompt-builder phase loop, routing refactor and analyze requests to the specialized skills.
+Compatibility alias for legacy prompt-building requests. Routes creation and improvement to the hve-builder skill.
 <!-- END AUTO-GENERATED: overview -->
 
 ## When to use it

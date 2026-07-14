@@ -2,7 +2,7 @@
 title: Experimental/Experiment Designer
 description: MVE domain knowledge and coaching conventions for the Experiment Designer agent
 sidebar_position: 1
-ms.date: 2026-07-03
+ms.date: 2026-07-13
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->

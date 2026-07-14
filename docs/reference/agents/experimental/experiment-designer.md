@@ -2,7 +2,7 @@
 title: Experiment Designer
 description: "Coach for designing a Minimum Viable Experiment (MVE) with hypothesis formation, vetting, and experiment planning"
 sidebar_position: 1
-ms.date: 2026-07-03
+ms.date: 2026-07-13
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->

@@ -2,7 +2,7 @@
 title: Jira Execute Backlog
 description: "Execute a Jira backlog plan by creating, updating, transitioning, and commenting on issues from a handoff file"
 sidebar_position: 2
-ms.date: 2026-07-03
+ms.date: 2026-07-13
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->

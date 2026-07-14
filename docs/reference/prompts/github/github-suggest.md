@@ -2,7 +2,7 @@
 title: Github Suggest
 description: Resume GitHub backlog management workflow after session restore
 sidebar_position: 5
-ms.date: 2026-07-03
+ms.date: 2026-07-13
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->

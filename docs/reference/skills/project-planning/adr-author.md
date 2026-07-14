@@ -2,7 +2,7 @@
 title: adr-author
 description: "Authoring skill for Architecture Decision Records (ADRs) supporting capture, from-planner-handoff, and adopt-template entry modes with selectable Y-Statement or MADR v4.0.0 output templates, supersession lineage, and ASR trigger evaluation."
 sidebar_position: 1
-ms.date: 2026-07-03
+ms.date: 2026-07-13
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->

@@ -2,7 +2,7 @@
 title: PowerPoint Builder
 description: "Creates, updates, and manages PowerPoint slide decks using YAML-driven content with python-pptx"
 sidebar_position: 2
-ms.date: 2026-07-03
+ms.date: 2026-07-13
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->

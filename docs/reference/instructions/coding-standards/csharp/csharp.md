@@ -2,7 +2,7 @@
 title: Coding Standards/Csharp/Csharp
 description: "C# (CSharp) code authoring conventions"
 sidebar_position: 2
-ms.date: 2026-07-03
+ms.date: 2026-07-13
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->

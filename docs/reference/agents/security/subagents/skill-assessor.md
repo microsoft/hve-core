@@ -2,7 +2,7 @@
 title: Skill Assessor
 description: Assesses a single security skill against the codebase and returns structured findings
 sidebar_position: 5
-ms.date: 2026-07-05
+ms.date: 2026-07-13
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->

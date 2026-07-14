@@ -2,7 +2,7 @@
 title: Experimental/Mural/Mural Destinations
 description: "Open destination registry for Mural extractor writeback: registered adapters, intent axis, and per-destination loop-closure metrics."
 sidebar_position: 2
-ms.date: 2026-07-03
+ms.date: 2026-07-13
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->

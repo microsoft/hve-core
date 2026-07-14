@@ -2,7 +2,7 @@
 title: Checkpoint
 description: Save or restore conversation context using memory files
 sidebar_position: 1
-ms.date: 2026-07-03
+ms.date: 2026-07-13
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->

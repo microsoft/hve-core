@@ -2,7 +2,7 @@
 title: Dt Method 05 Concepts
 description: Concept articulation for Design Thinking Method 5b from brainstorming themes
 sidebar_position: 8
-ms.date: 2026-07-03
+ms.date: 2026-07-13
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->

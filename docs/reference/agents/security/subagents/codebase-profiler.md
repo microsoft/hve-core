@@ -2,7 +2,7 @@
 title: Codebase Profiler
 description: Scans the repository to build a technology profile and select applicable security skills
 sidebar_position: 1
-ms.date: 2026-07-05
+ms.date: 2026-07-13
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->

@@ -2,7 +2,7 @@
 title: Accessibility/Accessibility License Posture
 description: Accessibility-specific overlay mapping accessibility standards onto the repository licensing posture
 sidebar_position: 2
-ms.date: 2026-07-03
+ms.date: 2026-07-13
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->

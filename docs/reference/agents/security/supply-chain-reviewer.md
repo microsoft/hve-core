@@ -2,7 +2,7 @@
 title: Supply Chain Reviewer
 description: Supply-chain posture assessment orchestrator for codebase profiling and reporting
 sidebar_position: 5
-ms.date: 2026-07-03
+ms.date: 2026-07-13
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->

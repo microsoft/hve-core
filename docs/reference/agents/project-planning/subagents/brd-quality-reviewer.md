@@ -2,7 +2,7 @@
 title: BRD Quality Reviewer
 description: Read-only BRD quality reviewer that emits both BRD_STANDARD_FINDINGS_V1 and BRD_QUALITY_REPORT_V1 payloads
 sidebar_position: 1
-ms.date: 2026-07-05
+ms.date: 2026-07-13
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->

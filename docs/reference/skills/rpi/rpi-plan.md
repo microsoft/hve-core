@@ -2,7 +2,7 @@
 title: rpi-plan
 description: Create implementation-ready planning artifacts and validation evidence for RPI tasks.
 sidebar_position: 2
-ms.date: 2026-07-03
+ms.date: 2026-07-13
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->

@@ -2,7 +2,7 @@
 title: Ado Triage Work Items
 description: "Triage untriaged Azure DevOps work items with field classification, iteration assignment, and duplicate detection"
 sidebar_position: 8
-ms.date: 2026-07-03
+ms.date: 2026-07-13
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->

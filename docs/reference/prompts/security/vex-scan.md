@@ -2,7 +2,7 @@
 title: vex-scan
 description: "Run a full VEX pipeline that scans dependencies, enriches CVEs, analyzes exploitability, and drafts an OpenVEX document for review - Brought to you by microsoft/hve-core"
 sidebar_position: 14
-ms.date: 2026-07-03
+ms.date: 2026-07-13
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->

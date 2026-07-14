@@ -2,7 +2,7 @@
 title: Github Sprint Plan
 description: "Plan a GitHub milestone sprint by analyzing issue coverage, gaps, and prioritized backlog"
 sidebar_position: 4
-ms.date: 2026-07-03
+ms.date: 2026-07-13
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->

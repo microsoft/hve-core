@@ -2,7 +2,7 @@
 title: RAI Skill Assessor
 description: "Assesses a single Responsible AI framework from the rai-standards skill against the codebase, reading framework references and returning structured findings"
 sidebar_position: 1
-ms.date: 2026-07-05
+ms.date: 2026-07-13
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->
