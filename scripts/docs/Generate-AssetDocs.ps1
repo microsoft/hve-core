@@ -186,6 +186,9 @@ function New-AssetDocContent {
         Page model from New-AssetPageModel.
     .PARAMETER RepoRoot
         Repository root directory.
+    .PARAMETER ExistingContent
+        Existing page content preloaded by the caller. When omitted, the
+        function reads an existing page from disk for direct-call compatibility.
     .PARAMETER TemplatePath
         Path to the asset documentation template.
     .PARAMETER SidebarPosition
@@ -198,6 +201,7 @@ function New-AssetDocContent {
     param(
         [Parameter(Mandatory = $true)][PSCustomObject]$Model,
         [Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string]$RepoRoot,
+        [Parameter(Mandatory = $false)][AllowNull()][string]$ExistingContent = $null,
         [Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string]$TemplatePath,
         [Parameter(Mandatory = $true)][int]$SidebarPosition
     )
@@ -205,9 +209,13 @@ function New-AssetDocContent {
     $docFull = Join-Path $RepoRoot $Model.DocRel
     $today = Get-Date -Format 'yyyy-MM-dd'
 
-    $existing = $null
     if (Test-Path -LiteralPath $docFull) {
-        $existing = Get-Content -LiteralPath $docFull -Raw
+        $existing = if ($PSBoundParameters.ContainsKey('ExistingContent')) {
+            $ExistingContent
+        }
+        else {
+            Get-Content -LiteralPath $docFull -Raw
+        }
         $existingFm = Get-AssetFrontmatter -FilePath $docFull
         $msDate = if ($existingFm.ContainsKey('ms.date') -and $existingFm['ms.date']) {
             [string]$existingFm['ms.date']
@@ -283,18 +291,17 @@ function New-KindIndexContent {
     $indexRel = "docs/reference/$KindDir/README.md"
     $indexDir = Split-Path -Path (Join-Path $RepoRoot $indexRel) -Parent
 
-    $rows = [System.Collections.Generic.List[string]]::new()
-    $rows.Add('| Asset | Description |')
-    $rows.Add('| ----- | ----------- |')
+    $rows = [System.Collections.Generic.List[object]]::new()
     foreach ($page in ($Pages | Sort-Object DocRel)) {
         $target = Join-Path $RepoRoot $page.DocRel
         $link = ([System.IO.Path]::GetRelativePath($indexDir, $target)) -replace '\\', '/'
         $descCell = if ([string]::IsNullOrWhiteSpace($page.Description)) { '' } else { ConvertTo-TableCell -Value $page.Description }
         $titleCell = ConvertTo-TableCell -Value $page.Title
-        $rows.Add("| [$titleCell]($link) | $descCell |")
+        $rows.Add(@("[$titleCell]($link)", $descCell))
     }
 
-    $body = "This page lists the generated reference documentation for HVE Core $KindDir.`n`n" + ($rows -join "`n")
+    $table = Format-MarkdownTable -Header @('Asset', 'Description') -Rows $rows.ToArray()
+    $body = "This page lists the generated reference documentation for HVE Core $KindDir.`n`n" + $table
     $description = "Reference documentation for HVE Core $KindDir."
     return (New-IndexContent -Title $title -Description $description -SidebarPosition 0 -RegionBody $body -ExistingPath (Join-Path $RepoRoot $indexRel))
 }
@@ -317,15 +324,14 @@ function New-RootIndexContent {
         [Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string]$RepoRoot
     )
 
-    $rows = [System.Collections.Generic.List[string]]::new()
-    $rows.Add('| Category | Assets |')
-    $rows.Add('| -------- | ------ |')
+    $rows = [System.Collections.Generic.List[object]]::new()
     foreach ($group in ($Pages | Group-Object KindDir | Sort-Object Name)) {
         $categoryTitle = (Get-Culture).TextInfo.ToTitleCase($group.Name)
-        $rows.Add("| [$categoryTitle]($($group.Name)/README.md) | $($group.Count) |")
+        $rows.Add(@("[$categoryTitle]($($group.Name)/README.md)", [string]$group.Count))
     }
 
-    $body = "This page lists the generated reference documentation, grouped by asset kind.`n`n" + ($rows -join "`n")
+    $table = Format-MarkdownTable -Header @('Category', 'Assets') -Rows $rows.ToArray()
+    $body = "This page lists the generated reference documentation, grouped by asset kind.`n`n" + $table
     return (New-IndexContent -Title 'Reference' -Description 'Generated reference documentation for HVE Core GenAI assets.' -SidebarPosition 0 -RegionBody $body -ExistingPath (Join-Path $RepoRoot 'docs/reference/README.md'))
 }
 
@@ -488,16 +494,22 @@ function Invoke-AssetDocsGeneration {
 
     foreach ($page in $pages) {
         $docFull = Join-Path $RepoRoot $page.DocRel
+        $existingContent = if (Test-Path -LiteralPath $docFull) {
+            Get-Content -LiteralPath $docFull -Raw
+        }
+        else {
+            $null
+        }
         # Option B guard: an existing page whose overview markers are missing cannot
         # be regenerated without discarding its human-authored sections. Skip it,
         # leave the file untouched, and report it as drift needing manual attention.
-        if ((Test-Path -LiteralPath $docFull) -and
-            -not (Split-AssetDocByMarkers -Content (Get-Content -LiteralPath $docFull -Raw) -Region 'overview').HasMarkers) {
+        if ($null -ne $existingContent -and
+            -not (Split-AssetDocByMarkers -Content $existingContent -Region 'overview').HasMarkers) {
             Write-Warning "Overview markers missing in $($page.DocRel); skipping regeneration to preserve human-authored sections. Restore the AUTO-GENERATED markers (or delete the page to re-scaffold) and re-run."
             $needsAttention.Add($page.DocRel)
             continue
         }
-        $content = New-AssetDocContent -Model $page -RepoRoot $RepoRoot -TemplatePath $TemplatePath -SidebarPosition $positions[$page.DocRel]
+        $content = New-AssetDocContent -Model $page -RepoRoot $RepoRoot -ExistingContent $existingContent -TemplatePath $TemplatePath -SidebarPosition $positions[$page.DocRel]
         $status = Write-DocIfChanged -Path (Join-Path $RepoRoot $page.DocRel) -Content $content
         & $record $status $page.DocRel
     }
