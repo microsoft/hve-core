@@ -278,6 +278,16 @@ jobs:
     with:
       soft-fail: false
 
+  asset-docs-validation:
+    name: Asset Docs Validation
+    uses: ./.github/workflows/asset-docs-validation.yml
+    permissions:
+      contents: read
+    with:
+      soft-fail: false
+      changed-files-only: true
+      base-branch: ${{ github.event.pull_request.base.sha || format('origin/{0}', github.base_ref) }}
+
   msdate-freshness:
     name: ms.date Freshness Check
     uses: ./.github/workflows/msdate-freshness-check.yml
@@ -476,6 +486,7 @@ jobs:
       - frontmatter-validation
       - adr-consistency-validation
       - ai-artifact-validation
+      - asset-docs-validation
       - msdate-freshness
       - plugin-validation
       - skill-validation
