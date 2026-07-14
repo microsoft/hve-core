@@ -1,6 +1,11 @@
 name: Behavioral Evaluation (beval)
 
 on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+    branches:
+      - main
+      - develop
   workflow_call:
     secrets:
       COPILOT_TOKEN:
@@ -16,6 +21,10 @@ concurrency:
 
 jobs:
   evaluate:
+    if: >-
+      github.event_name != 'pull_request' ||
+      (github.event.pull_request.head.repo.fork == false &&
+      github.actor != 'dependabot[bot]')
     runs-on: ubuntu-latest
     timeout-minutes: 30
 
