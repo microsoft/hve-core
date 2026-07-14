@@ -2,7 +2,7 @@
 title: Report Generator
 description: Collates verified security or accessibility skill assessment findings and generates a comprehensive report written to the domain-appropriate reports directory
 sidebar_position: 4
-ms.date: 2026-07-13
+ms.date: 2026-07-05
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->

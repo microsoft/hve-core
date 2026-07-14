@@ -2,7 +2,7 @@
 title: Jira PRD to WIT
 description: Product Manager expert for analyzing PRDs and planning Jira issue hierarchies without mutating Jira
 sidebar_position: 2
-ms.date: 2026-07-13
+ms.date: 2026-07-03
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->

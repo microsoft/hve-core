@@ -2,7 +2,7 @@
 title: Code Review Accessibility
 description: Thin skill-backed perspective subagent that reviews a precomputed diff for accessibility conformance and writes structured findings
 sidebar_position: 1
-ms.date: 2026-07-13
+ms.date: 2026-07-05
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->

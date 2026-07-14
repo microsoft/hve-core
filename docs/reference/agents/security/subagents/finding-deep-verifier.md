@@ -2,7 +2,7 @@
 title: Finding Deep Verifier
 description: Deep adversarial verification of FAIL and PARTIAL findings for a single security skill
 sidebar_position: 3
-ms.date: 2026-07-13
+ms.date: 2026-07-05
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->

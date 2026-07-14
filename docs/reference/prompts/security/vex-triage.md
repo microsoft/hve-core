@@ -2,7 +2,7 @@
 title: vex-triage
 description: "Triage CVEs from an existing scan report or SBOM and draft an OpenVEX document, skipping the scan phase - Brought to you by microsoft/hve-core"
 sidebar_position: 15
-ms.date: 2026-07-13
+ms.date: 2026-07-03
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->

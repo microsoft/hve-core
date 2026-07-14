@@ -2,7 +2,7 @@
 title: Task Challenger
 description: "Adversarial questioning agent that interrogates implementations with What/Why/How questions: no suggestions, no hints, no leading"
 sidebar_position: 5
-ms.date: 2026-07-13
+ms.date: 2026-07-03
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->

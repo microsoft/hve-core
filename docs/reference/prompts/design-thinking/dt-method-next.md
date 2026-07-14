@@ -2,7 +2,7 @@
 title: Dt Method Next
 description: Assess DT project state and recommend next method with sequencing validation
 sidebar_position: 13
-ms.date: 2026-07-13
+ms.date: 2026-07-03
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->

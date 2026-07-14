@@ -2,7 +2,7 @@
 title: Ado Get My Work Items
 description: Retrieve your assigned Azure DevOps work items into a planning file
 sidebar_position: 5
-ms.date: 2026-07-13
+ms.date: 2026-07-03
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->

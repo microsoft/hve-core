@@ -2,7 +2,7 @@
 title: Dt Method 04 Convergence
 description: Theme discovery for Design Thinking Method 4c through philosophy-based clustering
 sidebar_position: 6
-ms.date: 2026-07-13
+ms.date: 2026-07-03
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->

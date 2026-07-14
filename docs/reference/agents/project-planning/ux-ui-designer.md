@@ -2,7 +2,7 @@
 title: UX UI Designer
 description: "UX research specialist for Jobs-to-be-Done analysis, user journey mapping, and accessibility requirements"
 sidebar_position: 9
-ms.date: 2026-07-13
+ms.date: 2026-07-03
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->

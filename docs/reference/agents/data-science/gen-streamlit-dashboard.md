@@ -2,7 +2,7 @@
 title: DS Gen Streamlit Dashboard
 description: Develop a multi-page Streamlit dashboard
 sidebar_position: 4
-ms.date: 2026-07-13
+ms.date: 2026-07-03
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->

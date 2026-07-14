@@ -2,7 +2,7 @@
 title: Jira/Jira Wit Planning
 description: "Jira PRD work item planning: hierarchy mapping, field validation, and handoff contracts"
 sidebar_position: 5
-ms.date: 2026-07-13
+ms.date: 2026-07-03
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->

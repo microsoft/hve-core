@@ -2,7 +2,7 @@
 title: Jira Setup
 description: "Interactive, verification-first Jira credential configuration assistant (non-destructive)"
 sidebar_position: 4
-ms.date: 2026-07-13
+ms.date: 2026-07-03
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->

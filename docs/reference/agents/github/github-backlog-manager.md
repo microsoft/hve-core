@@ -2,7 +2,7 @@
 title: GitHub Backlog Manager
 description: "GitHub backlog orchestrator for triage, discovery, sprint planning, and execution"
 sidebar_position: 1
-ms.date: 2026-07-13
+ms.date: 2026-07-03
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->

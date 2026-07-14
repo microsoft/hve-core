@@ -2,7 +2,7 @@
 title: Sssc From Security Plan
 description: Extend a Security Planner assessment with supply chain coverage using the SSSC Planner agent in from-security-plan mode
 sidebar_position: 12
-ms.date: 2026-07-13
+ms.date: 2026-07-03
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->

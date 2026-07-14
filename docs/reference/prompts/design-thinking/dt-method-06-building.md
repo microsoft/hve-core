@@ -2,7 +2,7 @@
 title: Dt Method 06 Building
 description: Scrappy prototype building with fidelity enforcement for Design Thinking Method 6b
 sidebar_position: 10
-ms.date: 2026-07-13
+ms.date: 2026-07-03
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->

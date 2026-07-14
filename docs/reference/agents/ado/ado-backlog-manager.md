@@ -2,7 +2,7 @@
 title: ADO Backlog Manager
 description: "Azure DevOps backlog orchestrator for triage, discovery, sprint planning, PRD-to-work-item conversion, and execution"
 sidebar_position: 1
-ms.date: 2026-07-13
+ms.date: 2026-07-03
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->

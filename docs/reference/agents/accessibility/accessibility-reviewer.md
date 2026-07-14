@@ -2,7 +2,7 @@
 title: Accessibility Reviewer
 description: Accessibility skill assessment orchestrator for codebase profiling and accessibility findings reporting
 sidebar_position: 2
-ms.date: 2026-07-13
+ms.date: 2026-07-03
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->

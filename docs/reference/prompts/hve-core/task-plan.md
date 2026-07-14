@@ -2,7 +2,7 @@
 title: Task Plan
 description: Initiate implementation planning from user context or research documents
 sidebar_position: 15
-ms.date: 2026-07-13
+ms.date: 2026-07-03
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->

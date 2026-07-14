@@ -2,7 +2,7 @@
 title: Accessibility Framework Assessor
 description: Assesses accessibility framework scopes through the consolidated Accessibility skill and returns structured findings
 sidebar_position: 1
-ms.date: 2026-07-13
+ms.date: 2026-07-05
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->

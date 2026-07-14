@@ -2,7 +2,7 @@
 title: System Architecture Reviewer
 description: "System architecture reviewer for design trade-offs, ADR creation, and well-architected alignment"
 sidebar_position: 8
-ms.date: 2026-07-13
+ms.date: 2026-07-03
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->

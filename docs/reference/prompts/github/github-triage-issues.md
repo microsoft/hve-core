@@ -2,7 +2,7 @@
 title: Github Triage Issues
 description: "Triage untriaged GitHub issues with label suggestions, milestone assignment, and duplicate detection"
 sidebar_position: 6
-ms.date: 2026-07-13
+ms.date: 2026-07-03
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->

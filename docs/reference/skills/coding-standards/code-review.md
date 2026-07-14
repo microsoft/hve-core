@@ -2,7 +2,7 @@
 title: code-review
 description: "Review code changes from multiple perspectives with context bootstrap, depth-tier rigor, and structured findings output."
 sidebar_position: 1
-ms.date: 2026-07-13
+ms.date: 2026-07-03
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->

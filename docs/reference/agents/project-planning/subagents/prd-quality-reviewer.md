@@ -2,7 +2,7 @@
 title: PRD Quality Reviewer
 description: Read-only PRD quality reviewer that emits both PRD_STANDARD_FINDINGS_V1 and PRD_QUALITY_REPORT_V1 payloads
 sidebar_position: 2
-ms.date: 2026-07-13
+ms.date: 2026-07-05
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->

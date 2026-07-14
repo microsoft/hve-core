@@ -2,7 +2,7 @@
 title: Rai Plan From Security Plan
 description: Start responsible AI assessment planning from a completed Security Plan using the RAI Planner agent in from-security-plan mode (recommended)
 sidebar_position: 3
-ms.date: 2026-07-13
+ms.date: 2026-07-03
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->

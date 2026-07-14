@@ -2,7 +2,7 @@
 title: Rpi
 description: Autonomous Research-Plan-Implement-Review-Discover workflow for completing tasks
 sidebar_position: 12
-ms.date: 2026-07-13
+ms.date: 2026-07-03
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->

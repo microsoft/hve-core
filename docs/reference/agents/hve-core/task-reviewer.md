@@ -2,7 +2,7 @@
 title: Task Reviewer
 description: "Reviews completed implementation work for accuracy, completeness, and convention compliance"
 sidebar_position: 9
-ms.date: 2026-07-13
+ms.date: 2026-07-03
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->

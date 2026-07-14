@@ -2,7 +2,7 @@
 title: Dt Method 06 Planning
 description: Concept analysis and prototype approach design for Design Thinking Method 6a
 sidebar_position: 11
-ms.date: 2026-07-13
+ms.date: 2026-07-03
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->

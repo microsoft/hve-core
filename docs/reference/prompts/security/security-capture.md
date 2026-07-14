@@ -2,7 +2,7 @@
 title: Security Capture
 description: Start security planning from existing notes using the Security Planner agent (capture mode)
 sidebar_position: 3
-ms.date: 2026-07-13
+ms.date: 2026-07-03
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->

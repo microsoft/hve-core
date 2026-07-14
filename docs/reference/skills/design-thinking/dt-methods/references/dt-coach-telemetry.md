@@ -2,7 +2,7 @@
 title: .Github/Skills/Design Thinking/Dt Methods/References/Dt Coach Telemetry
 description: Design Thinking Coach telemetry overlay applying telemetry-foundations vocabulary to DT session artifacts
 sidebar_position: 1
-ms.date: 2026-07-13
+ms.date: 2026-07-03
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->

@@ -2,7 +2,7 @@
 title: Rai Plan From Prd
 description: Start responsible AI assessment planning from PRD/BRD artifacts using the RAI Planner agent in from-prd mode
 sidebar_position: 2
-ms.date: 2026-07-13
+ms.date: 2026-07-03
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->

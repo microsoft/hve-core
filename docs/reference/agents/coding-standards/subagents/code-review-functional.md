@@ -2,7 +2,7 @@
 title: Code Review Functional
 description: Thin skill-backed perspective subagent that reviews a precomputed diff for functional correctness and writes structured findings
 sidebar_position: 3
-ms.date: 2026-07-13
+ms.date: 2026-07-05
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->

@@ -2,7 +2,7 @@
 title: Task Review
 description: Initiate implementation review from user context or artifact discovery
 sidebar_position: 17
-ms.date: 2026-07-13
+ms.date: 2026-07-03
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->

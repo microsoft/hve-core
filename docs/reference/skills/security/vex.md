@@ -2,7 +2,7 @@
 title: vex
 description: OpenVEX v0.2.0 specification reference plus VEX management playbooks - Brought to you by microsoft/hve-core.
 sidebar_position: 11
-ms.date: 2026-07-13
+ms.date: 2026-07-03
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->

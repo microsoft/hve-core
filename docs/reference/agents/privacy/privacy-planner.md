@@ -2,7 +2,7 @@
 title: Privacy Planner
 description: "Phase-based privacy planner producing data maps, DPIA assessments, controls, and backlog handoffs for processing activities"
 sidebar_position: 1
-ms.date: 2026-07-13
+ms.date: 2026-07-03
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->

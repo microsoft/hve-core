@@ -2,7 +2,7 @@
 title: DT Learning Tutor
 description: "Design Thinking learning tutor providing structured curriculum, comprehension checks, and adaptive pacing"
 sidebar_position: 2
-ms.date: 2026-07-13
+ms.date: 2026-07-03
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->

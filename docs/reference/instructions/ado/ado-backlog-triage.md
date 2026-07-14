@@ -2,7 +2,7 @@
 title: Ado/Ado Backlog Triage
 description: "Triage workflow for Azure DevOps work items with field classification, iteration assignment, and duplicate detection"
 sidebar_position: 2
-ms.date: 2026-07-13
+ms.date: 2026-07-03
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->

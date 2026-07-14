@@ -2,7 +2,7 @@
 title: Experimental/Mural/Mural Writing Style
 description: "Asymmetric writing style for Mural: outbound (writing into Mural) is sticky-concise; inbound (extracting from Mural) is context-hydrated."
 sidebar_position: 7
-ms.date: 2026-07-13
+ms.date: 2026-07-03
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->

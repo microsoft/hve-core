@@ -2,7 +2,7 @@
 title: Github/Github Backlog Triage
 description: "GitHub issue backlog triage: label suggestion, milestone assignment, and duplicate detection"
 sidebar_position: 4
-ms.date: 2026-07-13
+ms.date: 2026-07-03
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->

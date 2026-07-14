@@ -2,7 +2,7 @@
 title: Coding Standards/Bicep/Bicep
 description: Bicep infrastructure-as-code authoring conventions
 sidebar_position: 1
-ms.date: 2026-07-13
+ms.date: 2026-07-03
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->

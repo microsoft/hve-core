@@ -2,7 +2,7 @@
 title: Coding Standards/Bash/Bash
 description: Bash script authoring conventions
 sidebar_position: 1
-ms.date: 2026-07-13
+ms.date: 2026-07-03
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->

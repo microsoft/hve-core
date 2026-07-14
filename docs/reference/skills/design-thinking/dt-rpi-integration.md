@@ -2,7 +2,7 @@
 title: dt-rpi-integration
 description: "Design Thinking to RPI handoff knowledge covering the DT-to-RPI handoff contract, DT-aware research/planning/implement/review contexts, subagent handoff workflow, and Method 5 image prompt generation"
 sidebar_position: 4
-ms.date: 2026-07-13
+ms.date: 2026-07-03
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->

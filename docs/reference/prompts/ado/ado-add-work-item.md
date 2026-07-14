@@ -2,7 +2,7 @@
 title: Ado Add Work Item
 description: Create a single Azure DevOps work item with conversational field collection and parent validation
 sidebar_position: 1
-ms.date: 2026-07-13
+ms.date: 2026-07-03
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->

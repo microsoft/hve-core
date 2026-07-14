@@ -2,7 +2,7 @@
 title: RPI Agent
 description: Autonomous RPI orchestrator running Research → Plan → Implement → Review → Discover phases with specialized subagents
 sidebar_position: 4
-ms.date: 2026-07-13
+ms.date: 2026-07-03
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->

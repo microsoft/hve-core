@@ -2,7 +2,7 @@
 title: Coding Standards/Code Review/Review Artifacts
 description: "Code review artifact persistence: folder structure, metadata schema, verdict normalization, and writing rules"
 sidebar_position: 2
-ms.date: 2026-07-13
+ms.date: 2026-07-03
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->

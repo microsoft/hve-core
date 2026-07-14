@@ -2,7 +2,7 @@
 title: Experimental/Mural/Mural Bootstrap
 description: "Fresh-session Mural bootstrap requirements for doctor checks, credential backend selection, and safe escalation before Mural tool use."
 sidebar_position: 1
-ms.date: 2026-07-13
+ms.date: 2026-07-03
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->

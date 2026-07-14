@@ -2,7 +2,7 @@
 title: RAI Reviewer
 description: "Responsible AI standards assessment orchestrator for codebase profiling and RAI findings reporting against NIST AI RMF, the AI STRIDE overlay, and the EU AI Act"
 sidebar_position: 2
-ms.date: 2026-07-13
+ms.date: 2026-07-03
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->

@@ -2,7 +2,7 @@
 title: python-foundational
 description: "Foundational Python best practices, idioms, and code quality fundamentals"
 sidebar_position: 2
-ms.date: 2026-07-13
+ms.date: 2026-07-03
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->

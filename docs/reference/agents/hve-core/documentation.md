@@ -2,7 +2,7 @@
 title: Documentation
 description: "Orchestrates documentation audit, drift, authoring, and validation work through the documentation skill"
 sidebar_position: 1
-ms.date: 2026-07-13
+ms.date: 2026-07-03
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->

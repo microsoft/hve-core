@@ -2,7 +2,7 @@
 title: Task Challenge
 description: Adversarial What/Why/How interrogation of completed implementation artifacts
 sidebar_position: 13
-ms.date: 2026-07-13
+ms.date: 2026-07-03
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->

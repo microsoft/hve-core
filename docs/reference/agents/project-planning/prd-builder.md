@@ -2,7 +2,7 @@
 title: PRD Builder
 description: "Product Requirements Document builder with guided Q&A and references"
 sidebar_position: 6
-ms.date: 2026-07-13
+ms.date: 2026-07-03
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->

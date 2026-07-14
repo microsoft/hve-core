@@ -2,7 +2,7 @@
 title: Rai Planning/Rai License Posture
 description: RAI-specific overlay mapping RAI standards onto the repository licensing posture
 sidebar_position: 2
-ms.date: 2026-07-13
+ms.date: 2026-07-03
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->

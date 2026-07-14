@@ -2,7 +2,7 @@
 title: Dt Start Project
 description: Start a new Design Thinking coaching project with state initialization and first coaching interaction
 sidebar_position: 15
-ms.date: 2026-07-13
+ms.date: 2026-07-03
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->

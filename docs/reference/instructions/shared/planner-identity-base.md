@@ -2,7 +2,7 @@
 title: Shared/Planner Identity Base
 description: "Shared identity scaffold for phase-based planning agents (SSSC, RAI, Security, Accessibility, Privacy) covering state-file convention, six-phase orchestration template, state protocol, resume protocol, question cadence mechanics, optional disclaimer cadence, and error handling"
 sidebar_position: 5
-ms.date: 2026-07-13
+ms.date: 2026-07-03
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->

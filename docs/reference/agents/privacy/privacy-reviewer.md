@@ -2,7 +2,7 @@
 title: Privacy Reviewer
 description: "Privacy-focused reviewer orchestrator for assessment planning, evidence review, and report generation"
 sidebar_position: 2
-ms.date: 2026-07-13
+ms.date: 2026-07-03
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->

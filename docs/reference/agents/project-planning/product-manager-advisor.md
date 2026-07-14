@@ -2,7 +2,7 @@
 title: Product Manager Advisor
 description: "Product management advisor for requirements discovery, validation, and issue creation"
 sidebar_position: 7
-ms.date: 2026-07-13
+ms.date: 2026-07-03
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->

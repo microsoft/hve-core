@@ -2,7 +2,7 @@
 title: Coding Standards/Uv Projects
 description: Create and manage Python virtual environments using uv commands
 sidebar_position: 3
-ms.date: 2026-07-13
+ms.date: 2026-07-03
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->
