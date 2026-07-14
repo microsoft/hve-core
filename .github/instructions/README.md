@@ -51,12 +51,12 @@ See [Contributing Instructions](../../docs/contributing/instructions.md) for aut
 
 ### Documentation and Content
 
-| File                                                                               | Applies To                                            | Purpose                               |
-|------------------------------------------------------------------------------------|-------------------------------------------------------|---------------------------------------|
-| [hve-core/markdown.instructions.md](hve-core/markdown.instructions.md)             | `**/*.md`                                             | Markdown formatting standards         |
-| [hve-core/writing-style.instructions.md](hve-core/writing-style.instructions.md)   | `**/*.md`                                             | Voice, tone, and language conventions |
-| [hve-core/prompt-builder.instructions.md](hve-core/prompt-builder.instructions.md) | `**/*.prompt.md, **/*.agent.md, **/*.instructions.md` | Prompt engineering artifact authoring |
-| [docusaurus-edits.instructions.md](docusaurus-edits.instructions.md)               | `docs/**`                                             | Docusaurus documentation authoring    |
+| File                                                                             | Applies To                                                         | Purpose                               |
+|----------------------------------------------------------------------------------|--------------------------------------------------------------------|---------------------------------------|
+| [hve-core/markdown.instructions.md](hve-core/markdown.instructions.md)           | `**/*.md`                                                          | Markdown formatting standards         |
+| [hve-core/writing-style.instructions.md](hve-core/writing-style.instructions.md) | `**/*.md`                                                          | Voice, tone, and language conventions |
+| [hve-core/hve-builder.instructions.md](hve-core/hve-builder.instructions.md)     | `**/*.prompt.md, **/*.agent.md, **/*.instructions.md, **/SKILL.md` | HVE artifact authoring standards      |
+| [docusaurus-edits.instructions.md](docusaurus-edits.instructions.md)             | `docs/**`                                                          | Docusaurus documentation authoring    |
 
 ### Git and Workflow
 
@@ -205,13 +205,13 @@ resource "azurerm_resource_group" "example" {
 
 ## Creating New Instructions
 
-Use the **prompt-builder** agent to create new instruction files:
+Use the **Prompt Builder** compatibility agent or activate the `hve-builder` skill directly:
 
 1. Open Copilot Chat and select **prompt-builder** from the agent picker
 2. Provide context (files, folders, or requirements)
-3. Prompt Builder researches and drafts instructions
-4. Auto-validates with Prompt Tester (up to 3 iterations)
-5. Delivered to `.github/instructions/`
+3. HVE Builder resolves the mode, write boundary, and applicable conventions
+4. HVE Builder authors, independently reviews, behavior-tests, and validates the artifact
+5. The final response reports each gate and an overall Pass, Revise, Deferred, or Blocked outcome
 
 For manual creation, see [Contributing Instructions](../../docs/contributing/instructions.md).
 
@@ -278,7 +278,7 @@ For manual creation, see [Contributing Instructions](../../docs/contributing/ins
 │   ├── git-merge.instructions.md
 │   ├── licensing-posture.instructions.md
 │   ├── markdown.instructions.md
-│   ├── prompt-builder.instructions.md
+│   ├── hve-builder.instructions.md
 │   ├── pull-request.instructions.md
 │   └── writing-style.instructions.md
 ├── jira/                             # Jira backlog workflows

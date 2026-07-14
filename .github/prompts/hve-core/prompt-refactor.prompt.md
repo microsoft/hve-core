@@ -1,21 +1,20 @@
 ---
-description: "Refactor and clean up prompt engineering artifacts through iterative improvement"
-argument-hint: "[promptFiles=...] [requirements=...]"
+description: 'Refactor prompt-engineering artifacts while preserving behavior through HVE Builder refactor mode'
 agent: Prompt Builder
+argument-hint: "[promptFiles=...] [requirements=...]"
 ---
 
 # Prompt Refactor
 
 ## Inputs
 
-* (Optional) promptFiles - ${input:promptFiles}: Existing target prompt file(s) for creation or modification. Defaults to the current open file or attached file.
-* (Optional) requirements - ${input:requirements}: Additional requirements or objectives.
+* `${input:promptFiles}`: existing prompt-engineering artifacts inside the approved write boundary; defaults to current open or attached files
+* `${input:requirements}`: cleanup objectives, constraints, and behavior that must remain unchanged
 
-## Prompt File(s) Requirements
+## Requirements
 
-1. Refactor the promptFiles with a focus on cleaning up instructions, consolidating instructions, removing confusing instructions, removing duplicate instructions or examples when they are not needed.
-2. If user provided additional requirements in the conversation then be sure to also consider all of their requirements as well.
-
-## Required Protocol
-
-Follow all instructions in Required Phases, iterate and repeat Required Phases until promptFiles or related prompt file(s) meet the requirements.
+1. Route the targets to `hve-builder` refactor mode.
+2. Derive evidence-backed cleanup objectives from baseline review when requirements are omitted.
+3. Preserve documented behavior unless the user explicitly approves a behavior change.
+4. Complete static review, behavior testing, and host validation before reporting Pass.
+5. Return changed files, rationale, gate results, overall outcome, and evidence links.

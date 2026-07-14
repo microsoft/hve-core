@@ -1,7 +1,7 @@
 name: behavior-conformance-skills
 description: >
   Advisory-tier behavior conformance evals for skills exercised through
-  knowledge, tool-trigger, and bleed-detection stimulus shapes. Total: 100
+  knowledge, tool-trigger, and bleed-detection stimulus shapes. Total: 118
   stimuli, including complete branch coverage for the RPI and prompt-builder
   skill updates. Each tool-trigger stimulus uses two graders with AND logic,
   and the suite-level scoring threshold gates the aggregate pass rate across
@@ -1376,11 +1376,73 @@ stimuli:
         name: scope-language
         config:
           pattern: '(?i)(safety-boundary|prohibited|conformance|scope|probe)'
+  - name: skill-hve-builder-knowledge
+    prompt: |
+      An existing custom agent needs behavioral improvement without an
+      architecture change. Summarize how the `hve-builder` skill handles the
+      request from baseline assessment through its final outcome. Include the
+      write boundary, required quality gates, and terminal outcome vocabulary.
+    environment:
+      skills:
+        - ../../.github/skills/hve-core/hve-builder
+    tags:
+      category: behavior-conformance
+      skill: hve-builder
+      shape: knowledge
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: lifecycle-routing
+        config:
+          pattern: '(?is)(?=.*(?:hve-builder|HVE Builder))(?=.*(?:improve|baseline))'
+      - type: output-matches
+        name: write-boundary
+        config:
+          pattern: '(?i)(write\s+boundary|approved\s+(target|artifact|path|scope))'
+      - type: output-matches
+        name: required-gates
+        config:
+          pattern: '(?is)(?=.*(?:static\s+review|review))(?=.*behavior)(?=.*validat)'
+      - type: output-matches
+        name: terminal-outcomes
+        config:
+          pattern: '(?is)(?=.*\bPass\b)(?=.*\bRevise\b)(?=.*\bDeferred\b)(?=.*\bBlocked\b)'
+  - name: skill-hve-builder-tester-knowledge
+    prompt: |
+      Summarize how the `hve-builder-tester` skill evaluates a behavior-bearing
+      prompt-engineering artifact. Include profile and fidelity selection,
+      design, execution, independent grading, containment, and the distinction
+      between execution status and quality verdict.
+    environment:
+      skills:
+        - ../../.github/skills/hve-core/hve-builder-tester
+    tags:
+      category: behavior-conformance
+      skill: hve-builder-tester
+      shape: knowledge
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: skill-attribution
+        config:
+          pattern: '(?is)(?:hve-builder-tester|HVE Builder Tester|behavior(?:al)?[- ]test|(?=.*HVE Artifact Test Designer)(?=.*HVE Artifact Tester)(?=.*HVE Artifact Test Reviewer))'
+      - type: output-matches
+        name: fidelity-and-containment
+        config:
+          pattern: '(?is)(?=.*(?:simulation|native))(?=.*(?:sandbox|contain))'
+      - type: output-matches
+        name: delegated-test-roles
+        config:
+          pattern: '(?is)(?=.*(?:design|scenario))(?=.*(?:execut|test))(?=.*(?:review|grad))'
+      - type: output-matches
+        name: status-verdict-separation
+        config:
+          pattern: '(?is)(?=.*(?:execution\s+status|Complete|Partial|Deferred|Blocked))(?=.*(?:verdict|Pass|Revise|Not available))'
   - name: skill-prompt-builder-knowledge
     prompt: |
-      Summarize the `prompt-builder` skill's full workflow. Include its phase
-      loop, routing to specialized skills, tracking evidence, and optional
-      Vally conformance authoring.
+      Summarize the `prompt-builder` compatibility skill. Include legacy input
+      translation, HVE Builder mode selection, source-write boundaries, required
+      quality gates, and outcome preservation.
     tags:
       category: behavior-conformance
       skill: prompt-builder
@@ -1390,11 +1452,11 @@ stimuli:
       - type: output-matches
         name: skill-attribution
         config:
-          pattern: '(?i)(prompt-builder|prompt\s+builder|execution|evaluation|research|modification|vally)'
+          pattern: '(?is)(?=.*(?:prompt-builder|prompt\s+builder))(?=.*(?:hve-builder|HVE Builder))'
       - type: output-matches
         name: scope-language
         config:
-          pattern: '(?i)(route|prompt-refactor|prompt-analyze|copilot-tracking|sandbox|artifact)'
+          pattern: '(?i)(create|improve|target|write\s+boundary|reference|static\s+review|behavior|validation|outcome)'
   - name: skill-prompt-builder-tool-trigger
     prompt: |
       I need to create a new prompt artifact, research the existing prompt
@@ -1409,7 +1471,7 @@ stimuli:
       - type: output-matches
         name: skill-domain-attribution
         config:
-          pattern: '(?i)(prompt-builder|prompt\s+builder|prompt|research|validate|collection)'
+          pattern: '(?i)(hve-builder|prompt-builder|prompt\s+builder|create|improve)'
       - type: output-matches
         name: scope-language
         config:
@@ -1428,16 +1490,16 @@ stimuli:
       - type: output-matches
         name: skill-attribution
         config:
-          pattern: '(?i)(prompt-analyze|read-only|analysis|report|route|specialized)'
+          pattern: '(?i)(prompt-analyze|hve-builder|review|read-only|report|route)'
       - type: output-matches
         name: scope-language
         config:
           pattern: '(?i)(no\s+source\s+edit|without\s+modifying|analyze|analyse|quality|report)'
   - name: skill-prompt-refactor-knowledge
     prompt: |
-      Summarize the `prompt-refactor` skill. Include how it handles baseline
-      evaluation, cleanup objectives, validation selection, and preserving
-      functional intent.
+      Summarize the `prompt-refactor` compatibility skill. Include baseline
+      review, HVE Builder refactor mode, preserved behavior, required quality
+      gates, and outcome preservation.
     tags:
       category: behavior-conformance
       skill: prompt-refactor
@@ -1447,11 +1509,11 @@ stimuli:
       - type: output-matches
         name: skill-attribution
         config:
-          pattern: '(?i)(prompt-refactor|prompt\s+refactor|baseline|evaluation|cleanup|validation)'
+          pattern: '(?i)(prompt-refactor|prompt\s+refactor).*(hve-builder|refactor)|(hve-builder|refactor).*(prompt-refactor|prompt\s+refactor)'
       - type: output-matches
         name: scope-language
         config:
-          pattern: '(?i)((preserve|preserving)\s+functional\s+intent|refactor|requirements|sandbox|checklist|matrix)'
+          pattern: '(?i)((?:preserve|preserving)\s+(behavior|intent)|baseline\s+review|static\s+review|behavior\s+test|validation|outcome)'
   - name: skill-prompt-refactor-tool-trigger
     prompt: |
       I have an existing `.prompt.md` file and explicit requirements for
@@ -1485,16 +1547,16 @@ stimuli:
       - type: output-matches
         name: skill-attribution
         config:
-          pattern: '(?i)(prompt-builder|not\s+apply|does\s+not|new\s+prompt|create)'
+          pattern: '(?i)(prompt-builder|hve-builder|not\s+apply|does\s+not|new\s+prompt|create)'
       - type: output-matches
         name: scope-language
         config:
           pattern: '(?i)(existing\s+artifact|refactor|create|new|requirements)'
   - name: skill-prompt-analyze-knowledge
     prompt: |
-      Summarize the `prompt-analyze` skill. Include the read-only boundary,
-      subagents it dispatches, durable Analysis Report, severity normalization,
-      and cleanup behavior.
+      Summarize the `prompt-analyze` compatibility skill. Include the read-only
+      boundary, HVE Builder review mode, static and behavior evidence, fidelity,
+      report links, and outcome preservation.
     tags:
       category: behavior-conformance
       skill: prompt-analyze
@@ -1504,11 +1566,11 @@ stimuli:
       - type: output-matches
         name: skill-attribution
         config:
-          pattern: '(?i)(prompt-analyze|prompt\s+(analyze|analyse)|read-only|analysis\s+report|prompt\s+tester|prompt\s+evaluator)'
+          pattern: '(?i)(prompt-analyze|prompt\s+(analyze|analyse)).*(hve-builder|review)|(hve-builder|review).*(prompt-analyze|prompt\s+(analyze|analyse))'
       - type: output-matches
         name: scope-language
         config:
-          pattern: '(?i)(severity|critical|high|medium|low|durable|cleanup|sandbox)'
+          pattern: '(?i)(read-only|static\s+review|behavior|fidelity|report|Pass|Revise|Deferred|Blocked)'
   - name: skill-prompt-analyze-tool-trigger
     prompt: |
       I need to evaluate an existing prompt artifact and produce an analysis
@@ -1542,11 +1604,44 @@ stimuli:
       - type: output-matches
         name: skill-attribution
         config:
-          pattern: '(?i)(prompt-builder|prompt-refactor|not\s+apply|does\s+not|modify|fix)'
+          pattern: '(?i)(prompt-builder|prompt-refactor|hve-builder|not\s+apply|does\s+not|modify|fix)'
       - type: output-matches
         name: scope-language
         config:
           pattern: '(?i)(read-only|analysis\s+report|source\s+edit|modify|follow-up)'
+  - name: skill-rpi-walkthrough-knowledge
+    prompt: |
+      Summarize how the `rpi-walkthrough` skill guides a user through existing
+      code or an artifact. Include target resolution, deep review and the
+      durable session record, the required shape and pacing of each segment,
+      including Mermaid diagrams, evidence links, reference tables, and
+      question cadence. Also cover how requested changes respect the source
+      boundary and the final RPI handoff.
+    environment:
+      skills:
+        - ../../.github/skills/rpi/rpi-walkthrough
+    tags:
+      category: behavior-conformance
+      skill: rpi-walkthrough
+      shape: knowledge
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: skill-attribution
+        config:
+          pattern: '(?i)(rpi-walkthrough|RPI Walkthrough|guided\s+walkthrough)'
+      - type: output-matches
+        name: review-and-record
+        config:
+          pattern: '(?is)(?=.*(?:deep\s+review|review(?:s|ed|ing)?\s+(?:deeply|in[- ]depth)|subagent|dispatches?\s+(?:exploration|research)))(?=.*(?:\.copilot-tracking[-/\\]walkthroughs|walkthrough\s+file|durable\s+(?:record|session)))'
+      - type: output-matches
+        name: segment-contract
+        config:
+          pattern: '(?is)(?=.*segment)(?=.*mermaid)(?=.*(?:markdown\s+link|reference\s+table))(?=.*(?:one\s+or\s+two[^.\n]{0,50}\bquestions|vscode_askQuestions|segment\s+boundary))'
+      - type: output-matches
+        name: source-boundary-and-handoff
+        config:
+          pattern: '(?is)(?=.*(?:read[- ]only|do\s+not\s+(?:edit|modify)|requested\s+changes))(?=.*(?:rpi-quick|rpi-research|RPI\s+(?:follow-on|handoff|sequence)))'
   - name: skill-rpi-quick-knowledge
     prompt: |
       Summarize the `rpi-quick` umbrella skill. Include the ordered phases,

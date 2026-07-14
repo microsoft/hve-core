@@ -255,6 +255,58 @@ Describe 'Format-MarkdownTables' -Tag 'Unit' -Skip:$script:SkipFormatterTests {
         }
     }
 
+    Context 'when a tracked markdown file is deleted without staging' {
+        BeforeAll {
+            $script:Fixture = New-FixtureRepo -Name "unstaged-delete-$(Get-Random)" -InitGit
+            $deletedFile = Add-TrackedFixtureFile -FixtureRoot $script:Fixture -RelativePath 'deleted.md' -Content $script:BadTable
+
+            Push-Location $script:Fixture
+            try {
+                & git commit --quiet -m 'Add fixture markdown' 2>&1 | Out-Null
+            }
+            finally {
+                Pop-Location
+            }
+
+            Remove-Item -LiteralPath $deletedFile -Force
+            $script:Result = Invoke-SutInFixture -FixtureRoot $script:Fixture
+        }
+
+        It 'Exits 0 without requiring the deletion to be staged' {
+            $script:Result.ExitCode | Should -Be 0
+        }
+
+        It 'Does not pass the missing path to the formatter' {
+            $script:Result.StdErr | Should -Not -Match 'ENOENT|deleted\.md'
+        }
+
+        It 'Exits 0 in -Check mode' {
+            $checkResult = Invoke-SutInFixture -FixtureRoot $script:Fixture -Check
+            $checkResult.ExitCode | Should -Be 0
+        }
+    }
+
+    Context 'when a markdown file is untracked' {
+        BeforeEach {
+            $script:Fixture = New-FixtureRepo -Name "untracked-$(Get-Random)" -InitGit
+            $script:UntrackedFile = Join-Path $script:Fixture 'untracked.md'
+            Set-Content -LiteralPath $script:UntrackedFile -Value $script:BadTable -NoNewline
+        }
+
+        It 'Detects the untracked file in -Check mode' {
+            $result = Invoke-SutInFixture -FixtureRoot $script:Fixture -Check
+            $result.ExitCode | Should -Not -Be 0
+        }
+
+        It 'Reformats the untracked file without staging it' {
+            $before = Get-Content -LiteralPath $script:UntrackedFile -Raw
+            $result = Invoke-SutInFixture -FixtureRoot $script:Fixture
+            $result.ExitCode | Should -Be 0
+            $after = Get-Content -LiteralPath $script:UntrackedFile -Raw
+            $after | Should -Not -BeExactly $before
+        }
+    }
+
     Context 'when markdown tables need reformatting' {
         BeforeEach {
             $script:Fixture = New-FixtureRepo -Name "bad-$(Get-Random)" -InitGit
