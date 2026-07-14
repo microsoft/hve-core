@@ -621,13 +621,13 @@ Foglight is successful if it enables crews to:
 
 Pilot metrics are intentionally lightweight (no status bureaucracy):
 
-| Metric | Description |
-| --- | --- |
-| Adoption | Crews and sessions invoking the orchestrator on a real pending decision |
-| Decision speed | Time to a usable artifact within a single working session |
-| Crew confidence change | Short pre/post self-rating tied to a named decision |
-| Artifact usefulness | Whether the artifact informed the decision or handed off cleanly to an adjacent HVE Core agent |
-| Cost guardrail | Token/cost per session, to validate that bounded context and the input-sufficiency gate keep generation efficient |
+| Metric                 | Description                                                                                                       |
+|------------------------|-------------------------------------------------------------------------------------------------------------------|
+| Adoption               | Crews and sessions invoking the orchestrator on a real pending decision                                           |
+| Decision speed         | Time to a usable artifact within a single working session                                                         |
+| Crew confidence change | Short pre/post self-rating tied to a named decision                                                               |
+| Artifact usefulness    | Whether the artifact informed the decision or handed off cleanly to an adjacent HVE Core agent                    |
+| Cost guardrail         | Token/cost per session, to validate that bounded context and the input-sufficiency gate keep generation efficient |
 
 Milestone gate: an artifact graduates from Phase 1 to Phase 2 only if it helped a
 crew make a safer decision faster without adding process weight.
