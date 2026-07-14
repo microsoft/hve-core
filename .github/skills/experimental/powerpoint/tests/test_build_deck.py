@@ -720,6 +720,51 @@ class TestAddArrowFlowElement:
         result = add_arrow_flow_element(blank_slide, elem, {}, {})
         assert result is None
 
+    def test_label_margin_and_font_overrides(self, blank_slide):
+        elem = {
+            "left": 1.0,
+            "top": 2.0,
+            "width": 10.0,
+            "height": 1.5,
+            "label_margin": 0.02,
+            "font": "Arial",
+            "font_size": 11,
+            "items": [
+                {"label": "Ingest", "color": "#0078D4"},
+                {"label": "Transform", "color": "#00B050"},
+            ],
+        }
+        add_arrow_flow_element(blank_slide, elem, {}, {})
+        shapes = [s for s in blank_slide.shapes if s.has_text_frame]
+        assert len(shapes) == 2
+        for shape in shapes:
+            tf = shape.text_frame
+            assert tf.margin_left == Inches(0.02)
+            assert tf.margin_right == Inches(0.02)
+            run = tf.paragraphs[0].runs[0]
+            assert run.font.name == "Arial"
+            assert run.font.size == Pt(11)
+
+    def test_per_item_overrides_take_precedence(self, blank_slide):
+        elem = {
+            "left": 1.0,
+            "top": 2.0,
+            "width": 10.0,
+            "height": 1.5,
+            "font_size": 14,
+            "items": [
+                {"label": "Small", "size": 9, "label_margin": 0.01},
+                {"label": "Default"},
+            ],
+        }
+        add_arrow_flow_element(blank_slide, elem, {}, {})
+        shapes = [s for s in blank_slide.shapes if s.has_text_frame]
+        small = shapes[0].text_frame
+        assert small.paragraphs[0].runs[0].font.size == Pt(9)
+        assert small.margin_left == Inches(0.01)
+        # Default item falls back to elem font_size and python-pptx default margin
+        assert shapes[1].text_frame.paragraphs[0].runs[0].font.size == Pt(14)
+
 
 class TestAddNumberedStepElement:
     """Tests for add_numbered_step_element."""
