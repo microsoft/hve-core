@@ -10,7 +10,7 @@ argument-hint: "project-slug=..."
 Compile Design Thinking Methods 4-6 outputs into an RPI-ready handoff artifact targeting Task Researcher.
 Invoke when a team graduates from the Solution Space and chooses lateral handoff to the RPI pipeline.
 
-Methods 4-6 (Brainstorming, User Concepts, Lo-fi Prototypes) correspond to Tier 2 "Concept Validated" in the three-tier exit schema, routing to RPI Researcher for investigation with rich Solution Space context. The handoff transfers tested concepts, constraint discoveries, lo-fi prototype feedback, and narrowed directions.
+Methods 4-6 (Brainstorming, User Concepts, Lo-fi Prototypes) correspond to Tier 2 "Concept Validated" in the three-tier exit schema, routing to Task Researcher for investigation with rich Solution Space context. The handoff transfers tested concepts, constraint discoveries, lo-fi prototype feedback, and narrowed directions.
 
 ## Inputs
 
@@ -117,8 +117,8 @@ Record a lateral transition in the coaching state `transition_log`:
 ```yaml
 - type: lateral
   from_method: 6
-  to: rpi-researcher
-  rationale: "Solution Space complete: handoff to RPI Researcher with validated concepts"
+  to: task-researcher
+  rationale: "Solution Space complete: handoff to Task Researcher with validated concepts"
   date: "{today's date}"
 ```
 

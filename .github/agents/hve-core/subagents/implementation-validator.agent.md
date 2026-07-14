@@ -6,6 +6,7 @@ tools:
   - read
   - search
 model:
+  - Claude Sonnet 5 (copilot)
   - MAI-Code-1-Flash (copilot)
   - Claude Sonnet 4.6 (copilot)
 ---

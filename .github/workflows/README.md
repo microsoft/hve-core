@@ -2,7 +2,7 @@
 title: GitHub Actions Workflows
 description: Modular CI/CD workflow architecture for validation, security scanning, and automated maintenance
 author: HVE Core Team
-ms.date: 2026-06-27
+ms.date: 2026-07-08
 ms.topic: reference
 keywords:
   - github actions
@@ -50,13 +50,13 @@ Compose multiple reusable workflows for comprehensive validation and security sc
 | Workflow                          | Triggers                                | Jobs                                                                                                                                 | Mode                       | Purpose                              |
 |-----------------------------------|-----------------------------------------|--------------------------------------------------------------------------------------------------------------------------------------|----------------------------|--------------------------------------|
 | `pr-validation.yml`               | PR to main/develop (open, push, reopen) | 31 jobs (29 validation jobs + `pr-validation-success` gate + `gate-completeness-check`); `pr-validation-success` is the merge signal | Strict validation          | Pre-merge quality gate with security |
-| `release-stable.yml`              | Push to main                            | 5 jobs (5 reusable workflows)                                                                                                        | Strict mode, SARIF uploads | Post-merge validation                |
+| `release-stable.yml`              | Push to main                            | 23 jobs                                                                                                                              | Strict mode, SARIF uploads | Post-merge validation                |
 | `weekly-security-maintenance.yml` | Schedule (Sun 2AM UTC)                  | 4 (validate-pinning, check-staleness, codeql-analysis, summary)                                                                      | Soft-fail warnings         | Weekly security posture              |
 | `scorecard.yml`                   | Push to main, Schedule (Sun 3AM UTC)    | 1 (scorecard)                                                                                                                        | SARIF upload               | OpenSSF Scorecard security posture   |
 
 pr-validation.yml jobs: 29 validation jobs feed a single `pr-validation-success` aggregator gate, which is the only required status check that gates merge; a `gate-completeness-check` job verifies every validation job is wired into that gate's `needs:` list.
 
-release-stable.yml jobs: spell-check, markdown-lint, table-format, codeql-analysis, dependency-pinning-scan
+release-stable.yml jobs: spell-check, markdown-lint, table-format, dependency-pinning-scan, action-version-consistency-scan, gitleaks-scan, pester-tests, docusaurus-tests, discover-python-projects, python-lint, pytest, release-please, close-milestone, reset-prerelease, generate-dependency-sbom, plugin-package-release, extension-provenance, upload-plugin-packages, vex-attest, sbom-diff, verify-provenance, append-verification-notes, publish-release
 
 ## Reusable Workflows
 
@@ -233,11 +233,12 @@ Outputs: SARIF results uploaded to GitHub Security tab, job summary with badge l
 
 **Previous Behavior:** CodeQL previously ran as both a standalone workflow (on PR/push events) AND within orchestrator workflows, causing duplicate analyses on the same commits and wasting GitHub Actions minutes.
 
-**Current Architecture:** CodeQL now runs exclusively through orchestrator workflows to prevent duplicate runs and ensure consistent security scanning:
+**Current Architecture:** CodeQL now runs through dedicated entrypoint workflows to prevent duplicate runs and ensure consistent security scanning:
 
 * CodeQL PR validation: Runs via `pr-validation.yml` on all PR activity (open, push, reopen)
-* Main branch: Runs via `release-stable.yml` on every push to main
+* Main branch: Runs via `security-scan.yml` on pushes to `main` and `develop`, which calls the reusable workflow `codeql-analysis.yml`
 * Weekly scan: Standalone scheduled run every Sunday at 4 AM UTC for continuous security monitoring
+* `release-stable.yml` does not run CodeQL
 
 This architecture ensures:
 
@@ -248,13 +249,13 @@ This architecture ensures:
 
 Workflow Execution Matrix:
 
-| Event                                | Workflows That Run                                       | CodeQL Included     |
-|--------------------------------------|----------------------------------------------------------|---------------------|
-| Open PR to main/develop              | `pr-validation.yml` (31 jobs)                            | ✅  Yes              |
-| Push to PR branch                    | `pr-validation.yml` (31 jobs)                            | ✅  Yes              |
-| Merge to main                        | `release-stable.yml` (5 jobs)                            | ✅  Yes              |
-| Sunday 4AM UTC                       | `codeql-analysis.yml`, `weekly-security-maintenance.yml` | ✅  Yes (standalone) |
-| Feature branch push (no open PR)[^1] | None                                                     | ❌  No               |
+| Event                                | Workflows That Run                                          | CodeQL Included                                          |
+|--------------------------------------|-------------------------------------------------------------|----------------------------------------------------------|
+| Open PR to main/develop              | `pr-validation.yml` (31 jobs)                               | ✅ Yes                                                    |
+| Push to PR branch                    | `pr-validation.yml` (31 jobs)                               | ✅ Yes                                                    |
+| Merge to main                        | `release-stable.yml` (23 jobs), `security-scan.yml` (1 job) | ✅ Yes (via `security-scan.yml` -> `codeql-analysis.yml`) |
+| Sunday 4AM UTC                       | `codeql-analysis.yml`, `weekly-security-maintenance.yml`    | ✅ Yes (standalone)                                       |
+| Feature branch push (no open PR)[^1] | None                                                        | ❌ No                                                     |
 
 [^1]: Feature branches without an open PR are not validated. Open a PR to main or develop to trigger validation workflows.
 

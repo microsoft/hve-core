@@ -381,7 +381,10 @@ jobs:
       channel: Stable
       release-tag: ${{ needs.release-please.outputs.tag_name }}
     permissions:
-      contents: read
+      contents: write
+      id-token: write
+      attestations: write
+      artifact-metadata: write
 
   plugin-package-release:
     name: Package Plugins (Release)
@@ -539,7 +542,10 @@ jobs:
       version: ${{ needs.release-please.outputs.tag_name }}
       sbom-artifact: sbom-dependencies
     permissions:
-      contents: read
+      contents: write
+      id-token: write
+      attestations: write
+      artifact-metadata: write
 
   verify-provenance:
     name: Verify Provenance
