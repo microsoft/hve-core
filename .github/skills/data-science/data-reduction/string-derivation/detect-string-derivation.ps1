@@ -1,4 +1,6 @@
 #!/usr/bin/env pwsh
+# Copyright (c) 2026 Microsoft Corporation. All rights reserved.
+# SPDX-License-Identifier: MIT
 # Detect string derivations in tabular data
 # Brought to you by microsoft/hve-core
 
