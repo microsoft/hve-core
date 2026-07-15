@@ -455,14 +455,8 @@ def assemble_video(
             "0",
             "-i",
             str(concat_list_path),
-            "-c:v",
-            "libx264",
-            "-pix_fmt",
-            "yuv420p",
-            "-c:a",
-            "aac",
-            "-b:a",
-            "192k",
+            "-c",
+            "copy",
             str(output_path),
         ]
         _run_ffmpeg(concat_command)
