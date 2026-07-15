@@ -2,7 +2,7 @@
 title: Demo Video Examples
 description: Example manifest and fixture setup for the demo-video skill
 author: Microsoft
-ms.date: 2026-07-09
+ms.date: 2026-07-15
 ms.topic: reference
 keywords:
   - video
