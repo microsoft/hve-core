@@ -125,12 +125,12 @@ for col, deriv in all_findings.items():
 
 Filters candidate columns based on cardinality and naming patterns. **Call once before batch processing.**
 
-| Parameter | Type | Default | Description |
-|-----------|------|---------|-------------|
-| `df` | DataFrame | Required | DataFrame containing the data |
-| `candidate_cols` | list[str] | Required | Column names to filter |
-| `max_cardinality` | int | 1000 | Skip columns with >N unique values (likely IDs) |
-| `max_candidates` | int | 50 | Maximum candidates to return |
+| Parameter         | Type      | Default  | Description                                     |
+|-------------------|-----------|----------|-------------------------------------------------|
+| `df`              | DataFrame | Required | DataFrame containing the data                   |
+| `candidate_cols`  | list[str] | Required | Column names to filter                          |
+| `max_cardinality` | int       | 1000     | Skip columns with >N unique values (likely IDs) |
+| `max_candidates`  | int       | 50       | Maximum candidates to return                    |
 
 **Returns:** `list[str]` - Filtered column names prioritizing CODE/NAME/DESC/TYPE/STATUS patterns
 
@@ -138,13 +138,13 @@ Filters candidate columns based on cardinality and naming patterns. **Call once 
 
 Detects all string derivations for a target column using progressive sampling.
 
-| Parameter | Type | Default | Description |
-|-----------|------|---------|-------------|
-| `df` | DataFrame | Required | DataFrame containing the data |
-| `target_col` | str | Required | Column to analyze for derivations |
-| `candidate_cols` | list[str] | Required | All column names (used if filtered_candidates=None) |
-| `filtered_candidates` | list[str] | None | Pre-filtered candidates (RECOMMENDED for batch) |
-| `verbose` | bool | False | Print phase-by-phase progress |
+| Parameter             | Type      | Default  | Description                                         |
+|-----------------------|-----------|----------|-----------------------------------------------------|
+| `df`                  | DataFrame | Required | DataFrame containing the data                       |
+| `target_col`          | str       | Required | Column to analyze for derivations                   |
+| `candidate_cols`      | list[str] | Required | All column names (used if filtered_candidates=None) |
+| `filtered_candidates` | list[str] | None     | Pre-filtered candidates (RECOMMENDED for batch)     |
+| `verbose`             | bool      | False    | Print phase-by-phase progress                       |
 
 **Returns:** `list[dict]` - Derivation findings sorted by confidence (highest first)
 
