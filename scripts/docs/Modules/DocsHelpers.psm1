@@ -107,6 +107,64 @@ function ConvertTo-TableCell {
     return (($Value -replace '\r?\n', ' ') -replace '\|', '\|').Trim()
 }
 
+function Format-MarkdownTable {
+    <#
+    .SYNOPSIS
+        Renders a left-aligned GitHub-Flavored Markdown table.
+
+    .DESCRIPTION
+        Produces a table whose columns are padded to the widest cell so the
+        output is byte-for-byte identical to markdown-table-formatter (the tool
+        behind npm run format:tables). Emitting pre-aligned tables keeps the
+        generated pages idempotent under the repository table formatter, so the
+        committed pages neither drift from the generator nor from format:tables.
+
+    .PARAMETER Header
+        The header cell values.
+
+    .PARAMETER Rows
+        The data rows, each an array of cell values with the same length as
+        Header.
+
+    .OUTPUTS
+        [string] The aligned table (header, delimiter, and data rows) joined by
+        newlines, without a trailing newline.
+    #>
+    [CmdletBinding()]
+    [OutputType([string])]
+    param(
+        [Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string[]]$Header,
+        [Parameter(Mandatory = $true)][AllowEmptyCollection()][object[]]$Rows
+    )
+
+    $columnCount = $Header.Count
+    $widths = [int[]]::new($columnCount)
+    for ($i = 0; $i -lt $columnCount; $i++) {
+        $widths[$i] = $Header[$i].Length
+    }
+    foreach ($row in $Rows) {
+        for ($i = 0; $i -lt $columnCount; $i++) {
+            $cell = [string]$row[$i]
+            if ($cell.Length -gt $widths[$i]) { $widths[$i] = $cell.Length }
+        }
+    }
+
+    $lines = [System.Collections.Generic.List[string]]::new()
+
+    $headerCells = for ($i = 0; $i -lt $columnCount; $i++) { $Header[$i].PadRight($widths[$i]) }
+    $lines.Add('| ' + ($headerCells -join ' | ') + ' |')
+
+    $delimiterCells = for ($i = 0; $i -lt $columnCount; $i++) { '-' * ($widths[$i] + 2) }
+    $lines.Add('|' + ($delimiterCells -join '|') + '|')
+
+    foreach ($row in $Rows) {
+        $dataCells = for ($i = 0; $i -lt $columnCount; $i++) { ([string]$row[$i]).PadRight($widths[$i]) }
+        $lines.Add('| ' + ($dataCells -join ' | ') + ' |')
+    }
+
+    return ($lines -join "`n")
+}
+
 # ---------------------------------------------------------------------------
 # Frontmatter
 # ---------------------------------------------------------------------------
@@ -278,6 +336,11 @@ function Get-AssetInvocation {
         Optional parsed frontmatter hashtable. Used to resolve the applyTo glob for
         instructions and to prefer an agent's declared display name.
 
+    .PARAMETER Path
+        Optional repo-relative source path. When an agent's path lies under a
+        subagents directory the invocation is classified as a delegated subagent
+        rather than a chat-picker agent.
+
     .OUTPUTS
         [hashtable] With Mechanism and Token keys.
     #>
@@ -293,7 +356,10 @@ function Get-AssetInvocation {
         [string]$Name,
 
         [Parameter(Mandatory = $false)]
-        [hashtable]$Frontmatter = @{}
+        [hashtable]$Frontmatter = @{},
+
+        [Parameter(Mandatory = $false)]
+        [string]$Path = ''
     )
 
     switch ($Kind) {
@@ -303,6 +369,9 @@ function Get-AssetInvocation {
             }
             else {
                 $Name
+            }
+            if ($Path -match '(?:^|[\\/])subagents[\\/]') {
+                return @{ Mechanism = 'subagent-delegated'; Token = $displayName }
             }
             return @{ Mechanism = 'agent-picker'; Token = $displayName }
         }
@@ -347,6 +416,10 @@ function Test-AssetInteractive {
         Optional parsed frontmatter hashtable used to detect prompt inputs and
         agent binding.
 
+    .PARAMETER Path
+        Optional repo-relative source path. Agents under a subagents directory are
+        delegated (non-interactive) and return false.
+
     .OUTPUTS
         [bool] True when the asset has an interactive usage flow.
     #>
@@ -358,11 +431,17 @@ function Test-AssetInteractive {
         [string]$Kind,
 
         [Parameter(Mandatory = $false)]
-        [hashtable]$Frontmatter = @{}
+        [hashtable]$Frontmatter = @{},
+
+        [Parameter(Mandatory = $false)]
+        [string]$Path = ''
     )
 
     switch ($Kind) {
         'agent' {
+            if ($Path -match '(?:^|[\\/])subagents[\\/]') {
+                return $false
+            }
             return $true
         }
         'prompt' {
@@ -404,6 +483,7 @@ function Format-AssetInvocation {
             return "Applied automatically to $tick$token$tick"
         }
         'skill-load' { return 'Loaded on demand by referencing agents' }
+        'subagent-delegated' { return 'Delegated subagent, dispatched by a parent agent (not selected directly)' }
         default {
             $mechanism = ConvertTo-TableCell -Value ([string]$Invocation.Mechanism)
             Write-Warning "Format-AssetInvocation: unrecognized mechanism '$mechanism'; rendering drift marker."
@@ -708,8 +788,8 @@ function New-AssetPageModel {
         DocRel      = $docRel
         Folder      = $folder
         KindDir     = $kindDir
-        Invocation  = Get-AssetInvocation -Kind $kind -Name $key -Frontmatter $frontmatter
-        Interactive = Test-AssetInteractive -Kind $kind -Frontmatter $frontmatter
+        Invocation  = Get-AssetInvocation -Kind $kind -Name $key -Frontmatter $frontmatter -Path $relPath
+        Interactive = Test-AssetInteractive -Kind $kind -Frontmatter $frontmatter -Path $relPath
     }
 }
 
@@ -745,14 +825,12 @@ function New-AssetMetadataBlock {
     $tick = '`'
     $interactiveText = if ($Interactive) { 'Yes' } else { 'No' }
 
-    return (@(
-            '| Field | Value |'
-            '| ----- | ----- |'
-            "| Kind | $Kind |"
-            "| Source | $tick$SourcePath$tick |"
-            "| Invocation | $(Format-AssetInvocation -Invocation $Invocation) |"
-            "| Interactive | $interactiveText |"
-        ) -join "`n")
+    return (Format-MarkdownTable -Header @('Field', 'Value') -Rows @(
+            , @('Kind', $Kind)
+            , @('Source', "$tick$SourcePath$tick")
+            , @('Invocation', (Format-AssetInvocation -Invocation $Invocation))
+            , @('Interactive', $interactiveText)
+        ))
 }
 
 function New-AssetOverviewBody {
@@ -786,6 +864,7 @@ function New-AssetOverviewBody {
 Export-ModuleMember -Function @(
     'ConvertTo-TableCell',
     'Format-AssetInvocation',
+    'Format-MarkdownTable',
     'Format-YamlScalar',
     'Get-AssetDocMarker',
     'Get-AssetDocsPath',
