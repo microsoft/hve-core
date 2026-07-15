@@ -1,3 +1,7 @@
+---
+description: "Reference implementation of 9 string derivation detection algorithms with progressive sampling optimization"
+---
+
 # String Derivation Detection - Algorithm Reference
 
 Detailed implementation of all 9 string derivation detection algorithms with progressive sampling optimization.
