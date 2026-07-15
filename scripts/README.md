@@ -24,6 +24,7 @@ scripts/
 ├── evals/           Eval runner and moderation automation
 ├── release/         Release version-file update helper
 ├── devcontainer/    Devcontainer lockfile and change log validation
+├── docs/            Asset documentation generator, helper modules, and templates
 ├── extension/       VS Code extension packaging utilities
 ├── lib/             Shared utility modules
 ├── linting/         PowerShell linting and validation scripts
@@ -120,6 +121,22 @@ Run locally:
 ```bash
 npm run validate:devcontainer-lockfile
 npm run validate:devcontainer-changelog
+```
+
+## Docs
+
+The `docs/` directory contains the asset documentation generator, shared helper modules, and templates.
+
+| Script                     | Purpose                                                                                                                                                                 |
+|----------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `Generate-AssetDocs.ps1`   | Deterministic, idempotent generator that scaffolds one reference page per documentable asset, refreshes AUTO-GENERATED regions, and supports `-WhatIf` drift reporting. |
+| `Modules/DocsHelpers.psm1` | Shared helper module for asset enumeration, path resolution, and generated-region marker split/merge.                                                                   |
+
+Run locally:
+
+```bash
+npm run docs:generate
+npm run docs:generate:check
 ```
 
 ## Security Scripts
