@@ -753,8 +753,9 @@ class TestAddArrowFlowElement:
             "width": 10.0,
             "height": 1.5,
             "font_size": 14,
+            "font_color": "#112233",
             "items": [
-                {"label": "Small", "size": 9, "label_margin": 0.01},
+                {"label": "Small", "size": 9, "label_margin": 0.01, "color_text": "#AA0000"},
                 {"label": "Default"},
             ],
         }
@@ -763,9 +764,10 @@ class TestAddArrowFlowElement:
         small = shapes[0].text_frame
         assert small.paragraphs[0].runs[0].font.size == Pt(9)
         assert small.margin_left == Inches(0.01)
-        # Default item falls back to elem font_size and python-pptx default margin
+        assert f"#{small.paragraphs[0].runs[0].font.color.rgb}".lower() == "#aa0000"
+        # Default item falls back to elem font_size and font_color, and python-pptx default margin
         assert shapes[1].text_frame.paragraphs[0].runs[0].font.size == Pt(14)
-
+        assert f"#{shapes[1].text_frame.paragraphs[0].runs[0].font.color.rgb}".lower() == "#112233"
 
 class TestAddNumberedStepElement:
     """Tests for add_numbered_step_element."""
