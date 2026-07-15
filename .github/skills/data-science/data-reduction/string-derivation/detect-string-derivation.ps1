@@ -67,7 +67,6 @@ param(
 )
 
 $ErrorActionPreference = "Stop"
-$ScriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
 
 # Check Python
 $pythonCmd = Get-Command python -ErrorAction SilentlyContinue
@@ -83,7 +82,7 @@ if (-not $pythonCmd) {
 $python = $pythonCmd.Source
 
 # Check Python packages
-$packageCheck = & $python -c "import pandas, numpy" 2>&1
+$null = & $python -c "import pandas, numpy" 2>&1
 if ($LASTEXITCODE -ne 0) {
     Write-Error "Missing Python dependencies. Install with: pip install pandas numpy"
     exit 2
@@ -209,7 +208,7 @@ sys.exit(0)
     Set-Content -Path $pythonScriptPath -Value $pythonCode -Encoding UTF8
 
     # Prepare arguments
-    $args = @{
+    $pythonArgs = @{
         input_file       = (Resolve-Path $InputFile).Path
         target_column    = $TargetColumn
         output_file      = $OutputFile
@@ -223,7 +222,7 @@ sys.exit(0)
         Write-Verbose "Starting string derivation detection..."
     }
 
-    & $python $pythonScriptPath $args
+    & $python $pythonScriptPath $pythonArgs
     
     if ($LASTEXITCODE -ne 0) {
         Write-Error "Python detection failed with exit code $LASTEXITCODE"
