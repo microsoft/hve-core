@@ -100,7 +100,7 @@ Record a lateral transition in the coaching state `transition_log`:
 ```yaml
 - type: lateral
   from_method: 3
-  to: rpi-researcher
+  to: task-researcher
   rationale: "Problem Space complete: handoff to RPI pipeline"
   date: "{today's date}"
 ```
