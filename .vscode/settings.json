@@ -79,7 +79,12 @@
     ".github/prompts/security": true
   },
   "chat.agentSkillsLocations": {
+    ".agents/skills": true,
     ".github/skills": true,
+    ".claude/skills": true,
+    "~/.agents/skills": true,
+    "~/.copilot/skills": true,
+    "~/.claude/skills": true,
     ".github/skills/accessibility": true,
     ".github/skills/coding-standards": true,
     ".github/skills/design-thinking": true,
@@ -92,7 +97,8 @@
     ".github/skills/rpi": true,
     ".github/skills/hve-core": true,
     ".github/skills/security": true,
-    ".github/skills/shared": true
+    ".github/skills/shared": true,
+    "~/.vscode/extensions/synapsevscode.synapse-1.25.0/copilot/skills": true
   },
   "github.copilot.chat.commitMessageGeneration.instructions": [
     {
