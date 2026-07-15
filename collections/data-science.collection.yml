@@ -46,6 +46,8 @@ items:
   - path: .github/instructions/shared/untrusted-content-boundary.instructions.md
     kind: instruction
   # Skills
+  - path: .github/skills/data-science/data-reduction/string-derivation
+    kind: skill
   - path: .github/skills/project-planning/rai-planner
     kind: skill
     maturity: experimental

@@ -12,6 +12,7 @@
     "commands/rai-planning/"
   ],
   "skills": [
+    "skills/data-science/data-reduction/",
     "skills/project-planning/",
     "skills/rai/"
   ]
