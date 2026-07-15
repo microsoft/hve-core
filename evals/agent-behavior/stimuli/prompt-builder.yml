@@ -2,15 +2,17 @@
 # SPDX-License-Identifier: MIT
 stimuli:
   - name: prompt-builder-class-recipe
-    prompt: |
-      Plan the creation of a new custom instruction file for "Rust testing standards". Break it into phases (research, draft, validate). Write the plan under `.copilot-tracking/` and report the path.
+    prompt: Plan the creation of a new custom instruction file for "Rust testing standards" in research, draft, and validate phases, write the plan under `.copilot-tracking/`, and report the path.
+    environment:
+      skills:
+        - ../../.github/skills/hve-core/hve-builder
     tags:
       category: agent-behavior
     graders:
       - type: output-matches
         name: phase-marker-present
         config:
-          pattern: '(?im)(^\s*(#{2,3}\s|step\s+\d+|phase\s+\d+|\d+[.)])|\|\s*\d+\s*[—–-]|\bphases?\b)'
+          pattern: '(?im)(^\s*(#{2,3}\s|step\s+\d+|phase\s+\d+|\d+[.)])|\|\s*\d+\s*[—–-]|\b(?:phases?|phased|stages?)\b|\bresearch\b.*\bdraft\b.*\bvalidat(?:e|ion)\b)'
       - type: output-matches
         name: tracking-file-write
         config:

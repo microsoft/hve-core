@@ -1,60 +1,53 @@
 ---
 name: prompt-refactor
-description: Refactor existing prompt artifacts against explicit requirements through the full prompt-builder loop.
+description: 'Compatibility alias for behavior-preserving prompt artifact cleanup. Routes refactoring to hve-builder refactor mode.'
 argument-hint: "[promptFiles=...] [requirements=...]"
 license: MIT
 user-invocable: true
 ---
 
-# Prompt Refactor Skill
-
-This skill runs the full phase loop of the `prompt-builder` skill—test, evaluate, research, and update—focused on refactoring existing artifacts. Use the `prompt-builder` skill's orchestration reference for the phase loop, the sandbox contract, the `Prompt Tester`, `Prompt Evaluator`, `Researcher Subagent`, and `Prompt Updater` dispatch matrix, the artifact paths, and the cleanup contract. This skill adds only the refactor scope, the cleanup heuristics in [references/refactor-checklist.md](references/refactor-checklist.md), and the validation-selection guidance in [references/validation-matrix.md](references/validation-matrix.md).
+# Prompt Refactor Compatibility Skill
 
 ## Goal
 
-Refactor existing prompt-engineering artifacts by simplifying, consolidating, and removing confusion while preserving functional intent. When no explicit requirements are supplied, run a baseline evaluation first and derive refactoring objectives from the evaluation findings plus the standard cleanup checklist.
+Preserve legacy `prompt-refactor` activation while simplifying approved prompt-engineering artifacts through the `hve-builder` refactor route and its independent quality gates.
 
 ## Flow
 
-1. Confirm the target existing artifacts and any explicit requirements. Derive the sandbox path from the primary target artifact using the deterministic pattern `.copilot-tracking/sandbox/{{YYYY-MM-DD}}-{{topic}}-{{run-number}}`, where `{{YYYY-MM-DD}}` is today's date and `{{topic}}` is the primary artifact's base name with the suffix stripped, or the parent folder name when the target is a `SKILL.md`, in kebab-case. When multiple `promptFiles` are supplied, use the lexically first entry as the primary artifact. See the `prompt-builder` skill's orchestration reference for the full sandbox and dispatch contract.
-2. Run one baseline execution and evaluation in the sandbox with `Prompt Tester` and `Prompt Evaluator`, then inspect the evaluation log. When `requirements` were omitted, derive the refactor objectives from this baseline evaluation plus the standard cleanup checklist.
-3. Review the artifacts for clarity problems, duplication, confusing structure, and unnecessary examples by using [references/refactor-checklist.md](references/refactor-checklist.md).
-4. Apply focused refactor edits that align to the requirements or derived objectives and the Prompt Quality Criteria through `Prompt Updater`, preserving functional intent unless a requirement changes it.
-5. Select and run the narrowest relevant validation from [references/validation-matrix.md](references/validation-matrix.md), including changed-file scope checks and any artifact-specific validation available in the repository. Record skipped validations with reasons.
-6. Re-enter the execution and evaluation loop until the requirements or derived objectives are satisfied, the evaluation log shows no remaining issues, and the selected validations pass or are documented as skipped.
+1. Translate `promptFiles` to existing `targets` and resolve the behavior that must remain unchanged.
+2. When requirements are omitted, use the HVE Builder baseline review to derive evidence-backed cleanup objectives.
+3. Activate `hve-builder` with `mode=refactor`, the approved write boundary, requirements, and any caller-owned evidence root.
+4. Return the HVE Builder static verdict, behavior-test fidelity and verdict, validation result, and overall outcome.
 
 ## Inputs
 
-* `promptFiles`: (Optional) Existing prompt artifact(s) to refactor. Defaults to the current open or attached file(s).
-* `requirements`: (Optional) Explicit refactoring objectives, constraints, or acceptance criteria. When omitted, derive the objectives from a baseline evaluation and the standard cleanup checklist.
+* `promptFiles`: existing prompt-engineering artifacts to refactor
+* `requirements`: optional cleanup objectives, constraints, and preserved behavior
+* `evidenceRoot`: optional caller-owned HVE Builder evidence path
 
-## Success criteria
+## Success Criteria
 
-* The target artifacts are cleaner, more consistent, and easier to follow.
-* Duplication and confusing structure are consolidated or removed.
-* The baseline and follow-up execution and evaluation loops complete, selected validations are reported, and the stated requirements or derived refactor objectives are met.
-* The sandbox files created for the run are cleaned up before the final response unless the user asked to keep them.
+* The approved targets are simpler without unintended behavior change.
+* Static review, behavior testing, and host validation pass.
+* Source changes stay inside the approved write boundary.
+* The returned overall outcome is unchanged from `hve-builder`.
 
 ## Constraints
 
-* Focus on existing artifacts; do not create new prompt artifacts as the primary outcome.
-* Use the execution and evaluation loop rather than a one-pass edit.
-* Preserve functional intent unless a requirement explicitly changes it.
-* Keep sandbox edits inside the assigned sandbox folder and clean them up before the final response unless the user asked to keep them.
-* When requirements are omitted, run a baseline evaluation first and derive the refactor objectives from the evaluation findings plus the standard cleanup checklist.
+* Do not dispatch legacy Prompt Tester, Prompt Evaluator, or Prompt Updater workers.
+* Do not create a second orchestration loop or sandbox contract.
+* Route a requested type change, artifact split, or new support artifact back through HVE Builder scope approval.
 
-## Stop rules
+## Stop Rules
 
-* Finalize when the requirements or derived refactor objectives are satisfied and the loop is complete.
-* Re-enter the loop when the evaluation log or evaluator findings show remaining issues.
-* Stop and ask when the request or requirements are too vague to act on safely.
+* Stop Pass only when the HVE Builder refactor route passes every required gate.
+* Preserve Revise, Deferred, or Blocked and its rerun condition.
+* Ask when preserved behavior or write scope cannot be inferred safely.
 
 ## Handoff
 
-If the request needs a deeper read-only review, recommend `/prompt-analyze`. For broader create or update work, recommend `/prompt-builder`.
+Use `prompt-analyze` for read-only follow-up review and `prompt-builder` when the requested work intentionally changes behavior or creates artifacts.
 
-## Final response contract
+## Final Response Contract
 
-Report the changed files, refactor rationale, evaluation or validation status, skipped validations with reasons, and any remaining issues.
-
-
+Return targets, changed files, refactor rationale, static verdict, behavior-test fidelity and verdict, validation result, overall outcome, evidence links, and next action.

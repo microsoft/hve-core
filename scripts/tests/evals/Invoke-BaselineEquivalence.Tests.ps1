@@ -243,6 +243,18 @@ Describe 'Measure-InvariantFailures' -Tag 'Unit' {
     }
 }
 
+Describe 'Resolve-ModelList' -Tag 'Unit' {
+    BeforeAll {
+        . $script:ScriptPath
+    }
+
+    It 'Uses GPT-5.6 Luna as the low-cost PR default' {
+        $models = Resolve-ModelList -Tier 'pr' -Hint '' -ModelOverride ''
+
+        $models | Should -Be @('gpt-5.6-luna')
+    }
+}
+
 Describe 'Get-InvariantFailureCount' -Tag 'Unit' {
     BeforeAll {
         . $script:ScriptPath

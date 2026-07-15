@@ -1,0 +1,25 @@
+# Copyright (c) 2026 Microsoft Corporation. All rights reserved.
+# SPDX-License-Identifier: MIT
+stimuli:
+  - name: hve-artifact-tester-instruction-simulation
+    prompt: As the HVE Artifact Tester, simulate one request to create a two-key `.yml` file using the first `copilot-instructions.md` or `AGENTS.md` file you find, keep writes under `.copilot-tracking/sandbox/`, and return Complete, Partial, or Blocked with the result path.
+    environment:
+      files:
+        - src: fixtures/hve-artifact-copilot-instructions.md
+          dest: .github/copilot-instructions.md
+    tags:
+      category: agent-behavior
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: sandbox-result
+        config:
+          pattern: '(?i)\.copilot-tracking[/\\]sandbox[/\\]\S+\.ya?ml\b'
+      - type: output-matches
+        name: execution-summary
+        config:
+          pattern: '(?i)\b(?:Complete|Partial|Blocked)\b'
+      - type: output-matches
+        name: yaml-result
+        config:
+          pattern: '(?i)\b(?:YAML|yml)\b'

@@ -14,7 +14,7 @@ tags:
   - agents
   - accessibility
 author: Microsoft
-ms.date: 2026-05-28
+ms.date: 2026-07-08
 ms.topic: concept
 estimated_reading_time: 7
 ---
@@ -113,11 +113,14 @@ See [Cross-Planner Integration](../../getting-started/cross-planner-integration.
 
 ## Related Files
 
-| File type    | Location                                                      |
-|--------------|---------------------------------------------------------------|
-| Agent        | `.github/agents/accessibility/accessibility-planner.agent.md` |
-| State schema | `scripts/linting/schemas/accessibility-state.schema.json`     |
-| Instructions | `.github/instructions/accessibility/`                         |
+| File type    | Location                                                                                                                                                           |
+|--------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| Agent        | `.github/agents/accessibility/accessibility-planner.agent.md`                                                                                                      |
+| State schema | `scripts/linting/schemas/accessibility-state.schema.json`                                                                                                          |
+| Skill        | `.github/skills/accessibility/accessibility/SKILL.md`                                                                                                              |
+| Instructions | `.github/instructions/accessibility/accessibility-identity.instructions.md` and `.github/instructions/accessibility/accessibility-license-posture.instructions.md` |
+
+The instructions directory now contains only the identity and license-posture guidance files. Per-phase planner guidance for framework selection, capture coaching, impact assessment, and backlog handoff now loads on demand through the consolidated accessibility skill.
 
 ## Next Steps
 

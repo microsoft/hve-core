@@ -1,26 +1,20 @@
 ---
-description: "Build or improve prompt engineering artifacts following quality criteria"
+description: 'Create or improve prompt-engineering artifacts through the HVE Builder lifecycle'
 agent: Prompt Builder
-argument-hint: "[files=...] [promptFiles=...] [create or update based on target files otherwise improve and cleanup existing promptFiles]"
+argument-hint: "[promptFiles=...] [files=...] [requirements=...]"
 ---
 
 # Prompt Build
 
 ## Inputs
 
-* (Optional) files - ${input:files}: Target file(s) to use as reference for creating or modifying prompt file(s). Defaults to the current open file or attached file(s).
-* (Optional) promptFiles - ${input:promptFiles}: New or existing target prompt file(s) for creation or modification. Defaults to the current open file or attached file.
+* `${input:promptFiles}`: approved target prompt, instruction, agent, subagent, skill, reference, or template files; defaults to current open or attached files
+* `${input:files}`: reference artifacts that inform requirements and remain read-only unless explicitly added to the write boundary
+* `${input:requirements}`: objectives, constraints, and acceptance criteria
 
-## Prompt File(s) Requirements
+## Requirements
 
-Thoroughly and accurately create, modify, improve, clean up, and refactor promptFiles based on the user provided requirements.
-
-When the user provides files and/or promptFiles, with no other requirements then the requirements should be:
-
-1. Identify prompt instruction file(s) that relate to the target files if provided.
-2. Prompt instruction file(s) should be modified or created to be able to produce target files.
-3. The promptFiles should be improved and cleaned up.
-
-## Required Protocol
-
-Follow all instructions in Required Phases, iterate and repeat Required Phases until promptFiles or related prompt file(s) meet the requirements.
+1. Route missing targets to `hve-builder` create mode and existing targets to improve mode.
+2. Treat `promptFiles` as the source-write boundary and `files` as reference context unless the user explicitly says otherwise.
+3. Complete independent static review, behavior testing at the intended profile and fidelity, and host validation before reporting Pass.
+4. Return the HVE Builder overall outcome and evidence links without running the retired Prompt Builder phase loop.
