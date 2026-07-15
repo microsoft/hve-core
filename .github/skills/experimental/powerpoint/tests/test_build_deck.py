@@ -729,6 +729,7 @@ class TestAddArrowFlowElement:
             "label_margin": 0.02,
             "font": "Arial",
             "font_size": 11,
+            "font_color": "#112233",
             "items": [
                 {"label": "Ingest", "color": "#0078D4"},
                 {"label": "Transform", "color": "#00B050"},
@@ -744,7 +745,7 @@ class TestAddArrowFlowElement:
             run = tf.paragraphs[0].runs[0]
             assert run.font.name == "Arial"
             assert run.font.size == Pt(11)
-
+            assert f"#{run.font.color.rgb}".lower() == "#112233"
     def test_per_item_overrides_take_precedence(self, blank_slide):
         elem = {
             "left": 1.0,
