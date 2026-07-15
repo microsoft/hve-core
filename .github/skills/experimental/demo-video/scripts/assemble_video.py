@@ -321,6 +321,8 @@ def _render_segment(
         command = [
             ffmpeg_path,
             "-y",
+            "-stream_loop",
+            "-1",
             "-i",
             str(clip_source),
             "-i",
@@ -339,7 +341,6 @@ def _render_segment(
             "aac",
             "-b:a",
             "192k",
-            "-shortest",
             "-t",
             f"{duration}",
             str(output_path),
