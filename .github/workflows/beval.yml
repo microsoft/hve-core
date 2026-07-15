@@ -19,6 +19,17 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 30
 
+    strategy:
+      fail-fast: false
+      matrix:
+        agent:
+          - dt-coach
+          - rai-planner
+          - security-planner
+          - sssc-planner
+          - privacy-planner
+          - accessibility-planner
+
     env:
       AGENT_REPO_ROOT: ${{ github.workspace }}
 
@@ -71,17 +82,17 @@ jobs:
       - name: Run evaluations
         run: |
           beval \
-            -c evals/beval/dt-coach/eval.config.yaml \
+            -c evals/beval/${{ matrix.agent }}/eval.config.yaml \
             run \
-            --cases evals/beval/dt-coach/cases/ \
-            --agent evals/beval/dt-coach/agent.yaml \
+            --cases evals/beval/${{ matrix.agent }}/cases/ \
+            --agent evals/beval/${{ matrix.agent }}/agent.yaml \
             -m validation \
-            -o evals/beval/dt-coach/results/results.json
+            -o evals/beval/${{ matrix.agent }}/results/results.json
 
       - name: Upload results
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         if: always()
         with:
-          name: beval-results-${{ github.run_id }}
-          path: evals/beval/dt-coach/results/
+          name: beval-results-${{ matrix.agent }}-${{ github.run_id }}
+          path: evals/beval/${{ matrix.agent }}/results/
           retention-days: 30

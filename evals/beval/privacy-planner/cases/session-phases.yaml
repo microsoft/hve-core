@@ -1,0 +1,93 @@
+background:
+  category: session-phases
+  given:
+    domain: privacy
+
+cases:
+  # ── Startup: Disclaimer Before Questions ──────────────────────────
+
+  - id: startup_disclaimer_before_questions
+    name: Display privacy planning disclaimer before questions
+    tags: [startup, disclaimer, core]
+    given:
+      query: >
+        Hi, I want to plan a privacy review for a new feature that
+        collects location data from our mobile app users.
+    stages:
+      - when: the agent processes the request
+        then:
+          - completion time should be under: 120
+      - when: the agent responds
+        then:
+          - response length should be: [50, 3000]
+          - the answer should be: >
+              displays the canonical privacy planning disclaimer block
+              verbatim before any questions or analysis, rather than
+              immediately asking about the processing activity
+
+  # ── Phase 1: Capture (Exploratory, Data-Flow First) ────────────────
+
+  - id: capture_phase_exploratory_data_flow_questions
+    name: Lead with the user's description of data flows before standards
+    tags: [phase-1, capture, core]
+    given:
+      query: >
+        The feature stores precise GPS coordinates every 5 minutes
+        while the app is open, and shares aggregated location data with
+        a third-party analytics vendor.
+    stages:
+      - when: the agent processes the request
+        then:
+          - completion time should be under: 120
+      - when: the agent responds
+        then:
+          - response length should be: [50, 3000]
+          - the answer should be: >
+              asks methodical, exploratory follow-up questions (3-5 per
+              turn) about the processing activity and data flows — such
+              as retention, purpose, or the third-party sharing
+              arrangement — before introducing DPIA thresholds or
+              standards vocabulary
+
+  # ── Risk / DPIA Threshold Signal ────────────────────────────────────
+
+  - id: high_risk_signal_flags_dpia_consideration
+    name: Recognize high-risk processing signals for DPIA consideration
+    tags: [phase-3, risk-dpia, core]
+    given:
+      query: >
+        We'd also like to use this precise location history to build
+        individual behavioral profiles for targeted advertising.
+    stages:
+      - when: the agent processes the request
+        then:
+          - completion time should be under: 120
+      - when: the agent responds
+        then:
+          - response length should be: [50, 3000]
+          - the answer should be: >
+              recognizes systematic profiling of precise location data
+              for targeted advertising as a potential high-risk signal
+              worth surfacing for DPIA consideration, rather than
+              treating it as routine, low-risk processing
+
+  # ── Phase Boundary: Explicit Confirmation Before Advancing ─────────
+
+  - id: phase_advance_requires_explicit_confirmation
+    name: Do not silently advance phases without user confirmation
+    tags: [phase-boundary, gate, core]
+    given:
+      query: >
+        I think we've covered the data inventory and flows.  What's
+        next?
+    stages:
+      - when: the agent processes the request
+        then:
+          - completion time should be under: 120
+      - when: the agent responds
+        then:
+          - response length should be: [50, 3000]
+          - the answer should be: >
+              summarizes what has been captured for the current phase
+              and asks the user to confirm before advancing to the next
+              phase, rather than silently moving ahead

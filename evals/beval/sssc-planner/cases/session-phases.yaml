@@ -1,0 +1,97 @@
+background:
+  category: session-phases
+  given:
+    domain: supply-chain-security
+
+cases:
+  # ── Startup: Disclaimer and Standards Attribution ─────────────────
+
+  - id: startup_disclaimer_and_standards_attribution
+    name: Display SSSC disclaimer and standards attribution before questions
+    tags: [startup, disclaimer, core]
+    given:
+      query: >
+        Hi, I want to assess our repository's supply chain security
+        posture.
+    stages:
+      - when: the agent processes the request
+        then:
+          - completion time should be under: 120
+      - when: the agent responds
+        then:
+          - response length should be: [50, 3000]
+          - response should contain: "CAUTION"
+          - the answer should be: >
+              displays a CAUTION-style disclaimer and names the
+              standards the assessment is conducted against (OpenSSF
+              Scorecard, SLSA, Sigstore, SBOM, Best Practices Badge)
+              before any scoping questions
+
+  # ── Phase 1: Curiosity-First Scoping ────────────────────────────────
+
+  - id: phase1_curiosity_first_invitation
+    name: Open with curiosity before Scorecard/SLSA/Sigstore vocabulary
+    tags: [phase-1, scoping, core]
+    given:
+      query: >
+        This repository publishes an npm package that several internal
+        teams depend on for their build pipelines.
+    stages:
+      - when: the agent processes the request
+        then:
+          - completion time should be under: 120
+      - when: the agent responds
+        then:
+          - response length should be: [50, 3000]
+          - the answer should be: >
+              asks, in the user's own words, what the repository
+              produces, who consumes its artifacts, what the worst
+              supply-chain outcome would be if a build, dependency, or
+              release was compromised, or what they are most worried
+              about, rather than immediately listing Scorecard checks,
+              SLSA levels, or capability batches
+
+  # ── Linking Existing Security Planner Context ──────────────────────
+
+  - id: links_existing_security_plan_context
+    name: Check for and link existing Security Planner artifacts
+    tags: [phase-1, cross-planner, core]
+    given:
+      query: >
+        We already ran a Security Planner assessment on this repo last
+        month.  Can you use that instead of starting from scratch?
+    stages:
+      - when: the agent processes the request
+        then:
+          - completion time should be under: 120
+      - when: the agent responds
+        then:
+          - response length should be: [50, 3000]
+          - the answer should be: >
+              acknowledges checking for existing Security Planner
+              artifacts under the security-plans tracking location and
+              offers to reuse relevant context, rather than ignoring the
+              existing assessment or re-asking every scoping question
+              from scratch
+
+  # ── Phase Boundary: Hard Gate on Phase 1 ─────────────────────────────
+
+  - id: phase1_hard_gate_requires_confirmation
+    name: Stop and wait for explicit approval before advancing past Phase 1
+    tags: [phase-boundary, gate, core]
+    given:
+      query: >
+        That covers our tech stack, CI/CD platform, and release
+        strategy.  Let's continue.
+    stages:
+      - when: the agent processes the request
+        then:
+          - completion time should be under: 120
+      - when: the agent responds
+        then:
+          - response length should be: [50, 3000]
+          - the answer should be: >
+              surfaces a structured confirmation prompt summarizing the
+              scoping inputs and technology inventory, and waits for
+              explicit user approval before advancing to Phase 2 supply
+              chain assessment, rather than proceeding immediately

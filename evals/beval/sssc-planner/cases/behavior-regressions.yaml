@@ -1,0 +1,147 @@
+background:
+  category: behavior-regressions
+  given:
+    domain: supply-chain-security
+
+cases:
+  # ── Build Provenance ─────────────────────────────────────────────
+
+  - id: build_provenance_gap
+    name: Flag missing build provenance for release artifacts
+    tags: [build-provenance, phase-2, regression]
+    given:
+      query: >
+        Our release pipeline builds artifacts and publishes them to
+        our package registry, but we don't generate or attach any SLSA
+        provenance attestation to those builds.
+    stages:
+      - when: the agent processes the request
+        then:
+          - completion time should be under: 120
+      - when: the agent responds
+        then:
+          - response length should be: [50, 3000]
+          - the answer should be: >
+              identifies the missing build provenance attestation as a
+              supply-chain gap relevant to SLSA Build levels, rather
+              than treating the absence of any provenance as already
+              adequate for a mid-to-high SLSA level
+
+  # ── Dependency Maintenance ───────────────────────────────────────
+
+  - id: dependency_maintenance_pinning_gap
+    name: Flag unpinned dependencies as a maintenance risk
+    tags: [dependency-maintenance, phase-2, regression]
+    given:
+      query: >
+        Our CI workflow installs dependencies using unpinned version
+        ranges (like "^2.0.0") and doesn't use a lockfile, so the
+        exact resolved versions can change between builds.
+    stages:
+      - when: the agent processes the request
+        then:
+          - completion time should be under: 120
+      - when: the agent responds
+        then:
+          - response length should be: [50, 3000]
+          - the answer should be: >
+              flags the unpinned, non-lockfile dependency resolution as
+              a dependency-maintenance and reproducibility risk relevant
+              to Scorecard's pinned-dependencies posture, rather than
+              treating floating version ranges as an acceptable default
+
+  # ── Workflow Token Permissions ───────────────────────────────────
+
+  - id: workflow_token_permissions_overbroad
+    name: Flag overly broad workflow token permissions
+    tags: [token-permissions, phase-2, regression]
+    given:
+      query: >
+        Our GitHub Actions workflows all declare "permissions:
+        write-all" at the top level by default, even for workflows
+        that only need to read repository contents.
+    stages:
+      - when: the agent processes the request
+        then:
+          - completion time should be under: 120
+      - when: the agent responds
+        then:
+          - response length should be: [50, 3000]
+          - the answer should be: >
+              flags the blanket write-all permission grant as overly
+              broad relative to least-privilege workflow token
+              permissions, and does NOT treat write-all as an
+              acceptable default for workflows that only need read
+              access
+
+  # ── Artifact Signing and SBOMs ───────────────────────────────────
+
+  - id: artifact_signing_and_sbom_gap
+    name: Flag missing artifact signing and SBOM generation
+    tags: [artifact-signing, sbom, phase-3, regression]
+    given:
+      query: >
+        We publish container images to our registry, but we don't
+        sign them with Sigstore/cosign and we don't generate an SBOM
+        (CycloneDX or SPDX) for any release.
+    stages:
+      - when: the agent processes the request
+        then:
+          - completion time should be under: 120
+      - when: the agent responds
+        then:
+          - response length should be: [50, 3000]
+          - the answer should be: >
+              identifies both the missing keyless signing
+              (Sigstore/cosign) and the missing SBOM generation as
+              distinct supply-chain gaps to map against the Sigstore
+              and SBOM standards, rather than treating either omission
+              as out of scope for the assessment
+
+  # ── Missing-Evidence Handling ────────────────────────────────────
+
+  - id: missing_evidence_handling_unverified_claim
+    name: Require evidence rather than accepting an unverified adoption claim
+    tags: [missing-evidence, phase-4, regression]
+    given:
+      query: >
+        Our team says "we already enabled branch protection and
+        required reviews on the default branch" for the gap analysis,
+        but no one has shown the actual repository settings or a
+        screenshot confirming it.
+    stages:
+      - when: the agent processes the request
+        then:
+          - completion time should be under: 120
+      - when: the agent responds
+        then:
+          - response length should be: [50, 3000]
+          - the answer should be: >
+              notes the absence of confirming evidence (such as the
+              actual repository settings or a screenshot) for the
+              claimed branch-protection control, rather than marking
+              the gap as closed based on the unverified claim alone
+
+  # ── Prioritized Backlog Handoff ───────────────────────────────────
+
+  - id: phase5_prioritized_backlog_handoff
+    name: Prioritize backlog items by Scorecard risk rather than listing them unordered
+    tags: [phase-5, handoff, regression]
+    given:
+      query: >
+        Our gap analysis found three issues: (1) no branch protection
+        on the default branch, (2) no CODEOWNERS file, and (3) the
+        README is missing a badge linking to the Scorecard results.
+        Please generate the backlog now.
+    stages:
+      - when: the agent processes the request
+        then:
+          - completion time should be under: 120
+      - when: the agent responds
+        then:
+          - response length should be: [50, 3000]
+          - the answer should be: >
+              presents the missing branch protection as materially
+              higher priority than the missing Scorecard badge in the
+              README, reflecting proportionate risk-based ordering,
+              rather than listing all three items with equal urgency

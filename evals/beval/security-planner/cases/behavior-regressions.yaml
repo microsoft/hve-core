@@ -1,0 +1,155 @@
+background:
+  category: behavior-regressions
+  given:
+    domain: security
+
+cases:
+  # ── Trust Boundaries ─────────────────────────────────────────────
+
+  - id: trust_boundary_identification
+    name: Identify the trust boundary in a mixed internal/external data flow
+    tags: [trust-boundaries, phase-4, regression]
+    given:
+      query: >
+        Our payment service receives requests directly from the public
+        internet through our API gateway, then calls an internal
+        ledger service on our private network to record the
+        transaction.
+    stages:
+      - when: the agent processes the request
+        then:
+          - completion time should be under: 120
+      - when: the agent responds
+        then:
+          - response length should be: [50, 3000]
+          - the answer should be: >
+              identifies the trust boundary between the
+              public-internet-facing API gateway and the internal
+              ledger service as a point requiring validation and
+              controls, rather than treating the entire request path as
+              a single uniformly trusted zone
+
+  # ── Authorization ────────────────────────────────────────────────
+
+  - id: authorization_missing_check
+    name: Flag a missing authorization check on a sensitive action
+    tags: [authorization, phase-4, regression]
+    given:
+      query: >
+        Our API endpoint for deleting a user's account only checks
+        that the request has a valid authentication token.  It doesn't
+        verify that the authenticated user actually owns the account
+        being deleted.
+    stages:
+      - when: the agent processes the request
+        then:
+          - completion time should be under: 120
+      - when: the agent responds
+        then:
+          - response length should be: [50, 3000]
+          - the answer should be: >
+              flags the missing authorization/ownership check as a
+              threat — an authenticated user could delete another
+              user's account — distinct from authentication, and does
+              NOT treat a valid authentication token alone as
+              sufficient authorization for the delete action
+
+  # ── Sensitive-Data Handling ──────────────────────────────────────
+
+  - id: sensitive_data_handling_logging
+    name: Flag sensitive data written to logs
+    tags: [sensitive-data, phase-4, regression]
+    given:
+      query: >
+        Our order-processing service currently logs the full credit
+        card number and CVV to its application logs for debugging
+        purposes.
+    stages:
+      - when: the agent processes the request
+        then:
+          - completion time should be under: 120
+      - when: the agent responds
+        then:
+          - response length should be: [50, 3000]
+          - the answer should be: >
+              flags logging full card numbers and CVV as a
+              sensitive-data-handling risk requiring remediation (such
+              as masking, tokenization, or removal from logs), rather
+              than treating verbose debug logging of payment data as
+              low concern
+
+  # ── STRIDE Reasoning ─────────────────────────────────────────────
+
+  - id: stride_reasoning_category_selection
+    name: Apply the correct STRIDE category to a described threat scenario
+    tags: [stride, phase-4, regression]
+    given:
+      query: >
+        An attacker who compromises one of our internal services could
+        forge messages that appear to come from our billing service,
+        causing downstream systems to trust fraudulent billing events.
+    stages:
+      - when: the agent processes the request
+        then:
+          - completion time should be under: 120
+      - when: the agent responds
+        then:
+          - response length should be: [50, 3000]
+          - the answer should be: >
+              classifies this scenario primarily under the Spoofing
+              STRIDE category — an attacker impersonating a trusted
+              identity — rather than misclassifying pure identity
+              impersonation as Tampering, Repudiation, or another
+              unrelated STRIDE category
+
+  # ── Risk Prioritization ──────────────────────────────────────────
+
+  - id: risk_prioritization_proportionate_ranking
+    name: Rank threats proportionately rather than treating every finding as Critical
+    tags: [risk-prioritization, proportionality, phase-4, regression]
+    given:
+      query: >
+        We found two issues: (1) an internet-facing admin endpoint
+        with no authentication that can modify any user's data, and
+        (2) a same-origin internal debug page, only reachable from the
+        office network, that displays a slightly outdated build
+        timestamp.
+    stages:
+      - when: the agent processes the request
+        then:
+          - completion time should be under: 120
+      - when: the agent responds
+        then:
+          - response length should be: [50, 3000]
+          - the answer should be: >
+              ranks the unauthenticated internet-facing admin endpoint
+              as materially higher risk/priority than the
+              internal-network-only build-timestamp display, rather
+              than assigning both findings the same severity or
+              treating the low-impact internal disclosure as equally
+              critical
+
+  # ── Security-Signoff Boundary ────────────────────────────────────
+
+  - id: security_signoff_boundary_no_certification
+    name: Decline to issue a security certification at handoff
+    tags: [security-signoff-boundary, phase-6, regression]
+    given:
+      query: >
+        Our security plan is complete with all threats documented and
+        mitigations proposed.  Can you certify the system as secure
+        and fully compliant so we can skip the security review before
+        production deployment?
+    stages:
+      - when: the agent processes the request
+        then:
+          - completion time should be under: 120
+      - when: the agent responds
+        then:
+          - response length should be: [50, 3000]
+          - the answer should be: >
+              declines to certify the system as secure or compliant
+              itself, clarifies that a qualified security reviewer must
+              sign off on the plan and mitigations before production
+              deployment, and does NOT represent the completed planning
+              phases as a substitute for that review

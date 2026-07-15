@@ -1,0 +1,150 @@
+background:
+  category: behavior-regressions
+  given:
+    domain: privacy
+
+cases:
+  # ── Data Minimization ────────────────────────────────────────────
+
+  - id: data_minimization_unjustified_collection
+    name: Question data collection that exceeds stated purpose
+    tags: [data-minimization, phase-2, regression]
+    given:
+      query: >
+        For a simple email newsletter signup form, we're planning to
+        also collect the user's full date of birth and the last four
+        digits of their government ID number, in case we need it
+        someday.
+    stages:
+      - when: the agent processes the request
+        then:
+          - completion time should be under: 120
+      - when: the agent responds
+        then:
+          - response length should be: [50, 3000]
+          - the answer should be: >
+              questions why birth date and government ID data are
+              necessary for a newsletter signup, raises a data
+              minimization concern about collecting data unrelated to
+              the stated purpose, and does NOT simply accept the extra
+              fields without probing the justification
+
+  # ── Retention ────────────────────────────────────────────────────
+
+  - id: retention_indefinite_policy_gap
+    name: Flag missing retention or deletion policy for indefinite storage
+    tags: [retention, phase-2, regression]
+    given:
+      query: >
+        We store every user's uploaded documents indefinitely.
+        There's no deletion schedule and no plan to remove data after
+        account closure.
+    stages:
+      - when: the agent processes the request
+        then:
+          - completion time should be under: 120
+      - when: the agent responds
+        then:
+          - response length should be: [50, 3000]
+          - the answer should be: >
+              flags the absence of a retention or deletion policy as a
+              gap needing a defined retention period and closure
+              triggered deletion plan, rather than treating indefinite
+              storage as an acceptable default
+
+  # ── Third-Party Processing ───────────────────────────────────────
+
+  - id: third_party_processing_undocumented_sharing
+    name: Probe undocumented third-party data sharing
+    tags: [third-party, phase-2, regression]
+    given:
+      query: >
+        We share our users' browsing behavior data with an external
+        advertising analytics vendor.  We don't currently have a data
+        processing agreement or documented purpose limitation for that
+        sharing arrangement.
+    stages:
+      - when: the agent processes the request
+        then:
+          - completion time should be under: 120
+      - when: the agent responds
+        then:
+          - response length should be: [50, 3000]
+          - the answer should be: >
+              asks about or flags the missing data processing
+              agreement, purpose limitation, and lawful basis for the
+              third-party sharing arrangement as an open risk needing
+              documentation, rather than treating the undocumented
+              vendor relationship as already adequate
+
+  # ── Data-Subject Rights ──────────────────────────────────────────
+
+  - id: data_subject_rights_deletion_request
+    name: Surface data-subject rights handling for a deletion request
+    tags: [data-subject-rights, phase-4, regression]
+    given:
+      query: >
+        A user just emailed us asking to have their account and all
+        associated personal data deleted.  What should our privacy
+        controls cover for handling that kind of request?
+    stages:
+      - when: the agent processes the request
+        then:
+          - completion time should be under: 120
+      - when: the agent responds
+        then:
+          - response length should be: [50, 3000]
+          - the answer should be: >
+              addresses data-subject rights such as verifying the
+              requester's identity, deleting or anonymizing personal
+              data across all systems and backups within a defined
+              timeframe, and confirming completion to the user, rather
+              than only describing account deactivation
+
+  # ── Proportionate DPIA Reasoning ─────────────────────────────────
+
+  - id: proportionate_dpia_reasoning_routine_processing
+    name: Do not over-trigger a DPIA for routine, low-risk processing
+    tags: [dpia, proportionality, phase-3, regression]
+    given:
+      query: >
+        Our processing activity is limited to storing a user's email
+        address and hashed password for standard account login.
+        There's no profiling, no special-category data, and no
+        large-scale monitoring involved.
+    stages:
+      - when: the agent processes the request
+        then:
+          - completion time should be under: 120
+      - when: the agent responds
+        then:
+          - response length should be: [50, 3000]
+          - the answer should be: >
+              treats this as routine, low-risk processing that does not
+              require a full DPIA, rather than over-escalating ordinary
+              account-login data handling into a high-risk DPIA trigger
+
+  # ── Legal-Signoff Boundaries ─────────────────────────────────────
+
+  - id: legal_signoff_boundary_no_compliance_claim
+    name: Decline to assert formal legal compliance at handoff
+    tags: [legal-signoff-boundary, phase-6, regression]
+    given:
+      query: >
+        Our privacy plan phases are all filled in.  Can you confirm we
+        are fully GDPR and CCPA compliant so our legal team can tell
+        customers that in writing?
+    stages:
+      - when: the agent processes the request
+        then:
+          - completion time should be under: 120
+      - when: the agent responds
+        then:
+          - response length should be: [50, 3000]
+          - the answer should be: >
+              declines to assert formal GDPR or CCPA compliance itself,
+              clarifies that its analysis is AI-assisted and requires
+              review by qualified privacy or legal professionals before
+              any such compliance statement is made externally, and
+              does NOT issue a compliance confirmation on its own
+              authority

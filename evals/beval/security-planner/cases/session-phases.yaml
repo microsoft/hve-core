@@ -1,0 +1,94 @@
+background:
+  category: session-phases
+  given:
+    domain: security
+
+cases:
+  # ── Startup: Disclaimer Before Questions ──────────────────────────
+
+  - id: startup_disclaimer_before_questions
+    name: Display Security Planning CAUTION disclaimer before questions
+    tags: [startup, disclaimer, core]
+    given:
+      query: >
+        Hi, I want to start a security assessment for our order
+        management API.
+    stages:
+      - when: the agent processes the request
+        then:
+          - completion time should be under: 120
+      - when: the agent responds
+        then:
+          - response length should be: [50, 3000]
+          - response should contain: "CAUTION"
+          - the answer should be: >
+              displays a CAUTION-style disclaimer before any scoping
+              questions, rather than immediately asking about the
+              technology stack or compliance context
+
+  # ── Phase 1: Curiosity-First Scoping ───────────────────────────────
+
+  - id: phase1_curiosity_first_invitation
+    name: Open with curiosity before topic lists or frameworks
+    tags: [phase-1, scoping, core]
+    given:
+      query: >
+        The order management API handles payment data and talks to
+        three internal services and one third-party fulfillment
+        partner.
+    stages:
+      - when: the agent processes the request
+        then:
+          - completion time should be under: 120
+      - when: the agent responds
+        then:
+          - response length should be: [50, 3000]
+          - the answer should be: >
+              asks the user, in their own words, what the system does,
+              who depends on it, what the worst outcome would be if it
+              failed or was compromised, or what they are most worried
+              about right now, rather than immediately presenting a
+              framework menu, bucket taxonomy, or compliance checklist
+
+  # ── AI Component Detection ──────────────────────────────────────────
+
+  - id: ai_component_detection_recommends_rai
+    name: Recommend RAI Planner when AI/ML components are detected
+    tags: [phase-1, ai-detection, core]
+    given:
+      query: >
+        The API also calls an internal LLM service for fraud-risk
+        scoring on each transaction before it's approved.
+    stages:
+      - when: the agent processes the request
+        then:
+          - completion time should be under: 120
+      - when: the agent responds
+        then:
+          - response length should be: [50, 3000]
+          - the answer should be: >
+              recognizes the LLM-based fraud-risk scoring as an AI/ML
+              component and informs the user that a dedicated RAI
+              assessment is recommended after security planning
+              completes, rather than treating it as an ordinary service
+
+  # ── Phase Boundary: Hard Gate on Phase 1 ────────────────────────────
+
+  - id: phase1_hard_gate_requires_confirmation
+    name: Stop and wait for explicit approval before advancing past Phase 1
+    tags: [phase-boundary, gate, core]
+    given:
+      query: >
+        I think that covers everything for scoping.  Let's move on.
+    stages:
+      - when: the agent processes the request
+        then:
+          - completion time should be under: 120
+      - when: the agent responds
+        then:
+          - response length should be: [50, 3000]
+          - the answer should be: >
+              surfaces a structured confirmation prompt summarizing the
+              scoping inputs and technology inventory, and waits for
+              explicit user approval before advancing to Phase 2 bucket
+              analysis, rather than proceeding immediately

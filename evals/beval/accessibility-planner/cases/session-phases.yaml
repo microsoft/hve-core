@@ -1,0 +1,94 @@
+background:
+  category: session-phases
+  given:
+    domain: accessibility
+
+cases:
+  # ── Startup: Disclaimer Before Phase 1 Work ───────────────────────
+
+  - id: startup_disclaimer_before_phase1
+    name: Display planning disclaimer on the first turn before Phase 1 work
+    tags: [startup, disclaimer, core]
+    given:
+      query: >
+        Hi, I want to plan an accessibility assessment for our new
+        patient portal web app.
+    stages:
+      - when: the agent processes the request
+        then:
+          - completion time should be under: 120
+      - when: the agent responds
+        then:
+          - response length should be: [50, 3000]
+          - the answer should be: >
+              emits the planning disclaimer before any Phase 1 Discovery
+              questions or analysis, rather than immediately asking
+              about audience scope or surfaces
+
+  # ── Phase 1: Discovery ──────────────────────────────────────────────
+
+  - id: phase1_discovery_questions
+    name: Capture project context, audience scope, and surface inventory
+    tags: [phase-1, discovery, core]
+    given:
+      query: >
+        The patient portal lets patients view lab results, message
+        their care team, and schedule appointments.  It's used by
+        patients of all ages and by clinical staff.
+    stages:
+      - when: the agent processes the request
+        then:
+          - completion time should be under: 120
+      - when: the agent responds
+        then:
+          - response length should be: [50, 3000]
+          - the answer should be: >
+              asks 3-5 focused questions about audience scope, in-scope
+              surfaces, regulatory drivers, or existing accessibility
+              artifacts, presented as an emoji checklist, rather than
+              jumping straight to framework selection
+
+  # ── Phase 2: Framework Selection Defaults ───────────────────────────
+
+  - id: phase2_framework_selection_with_defaults
+    name: Present five frameworks with WCAG 2.2 AA and Section 508 pre-checked
+    tags: [phase-2, framework-selection, core]
+    given:
+      query: >
+        We've covered discovery.  This is a US healthcare product used
+        by the general public, so what frameworks should we assess
+        against?
+    stages:
+      - when: the agent processes the request
+        then:
+          - completion time should be under: 120
+      - when: the agent responds
+        then:
+          - response length should be: [50, 3000]
+          - the answer should be: >
+              presents the five supported frameworks (WCAG 2.2, ARIA
+              APG, Cognitive Accessibility, Section 508, EN 301 549)
+              with WCAG 2.2 AA and Section 508 pre-checked as defaults,
+              rather than silently picking frameworks without user
+              confirmation
+
+  # ── Phase Boundary: Explicit Confirmation Before Advancing ──────────
+
+  - id: phase_advance_requires_explicit_confirmation
+    name: Never advance phases without explicit user confirmation
+    tags: [phase-boundary, gate, core]
+    given:
+      query: >
+        I think discovery is done — audience scope, surfaces, and
+        regulatory drivers are all covered.
+    stages:
+      - when: the agent processes the request
+        then:
+          - completion time should be under: 120
+      - when: the agent responds
+        then:
+          - response length should be: [50, 3000]
+          - the answer should be: >
+              summarizes the completed Discovery checklist and asks the
+              user to explicitly confirm before advancing to Phase 2
+              Framework Selection, rather than advancing automatically

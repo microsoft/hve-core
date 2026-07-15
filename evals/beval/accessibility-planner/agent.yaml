@@ -1,0 +1,21 @@
+name: accessibility-planner
+description: >
+  Accessibility Planner — a six-phase accessibility planning agent that
+  assesses digital products against WCAG 2.2, ARIA APG, Cognitive
+  Accessibility, Section 508, and EN 301 549, producing framework
+  selections and backlog handoff.
+protocol: acp
+connection:
+  transport: tcp
+  host: ${AGENT_HOST:-127.0.0.1}
+  port: ${AGENT_PORT:-3000}
+  cwd: ${AGENT_REPO_ROOT:-.}
+  model: ${AGENT_MODEL:-claude-opus-4.6-1m}
+init_prompt: "Launch .github/agents/accessibility/accessibility-planner.agent.md"
+timeout: 120
+retry:
+  max_attempts: 2
+  backoff: 5.0
+metadata:
+  domain: accessibility
+  version: "0.1"
