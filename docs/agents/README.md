@@ -3,7 +3,7 @@ title: Agent Systems Catalog
 description: Overview of all hve-core agent systems with workflow documentation and quick links
 sidebar_position: 1
 author: Microsoft
-ms.date: 2026-06-30
+ms.date: 2026-07-14
 ms.topic: overview
 keywords:
   - github copilot
@@ -16,7 +16,7 @@ hve-core organizes specialized agents into functional groups. Each group combine
 
 | Group                                   | Agents   | Complexity  | Documentation                                                                                                                                                      |
 |-----------------------------------------|----------|-------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| RPI Orchestration                       | 6        | High        | [RPI Documentation](../rpi/README.md)                                                                                                                              |
+| RPI Orchestration                       | 5        | High        | [RPI Documentation](../rpi/README.md)                                                                                                                              |
 | [Code Review](#code-review)             | 3        | Medium      | [Code Review](code-review/README.md)                                                                                                                               |
 | GitHub Backlog Management               | 1 active | Very High   | [Backlog Manager](github-backlog/README.md)                                                                                                                        |
 | ADO Backlog Management                  | 2 active | Very High   | [Backlog Manager](ado-backlog/README.md)                                                                                                                           |
@@ -34,7 +34,7 @@ hve-core organizes specialized agents into functional groups. Each group combine
 
 ## RPI Orchestration
 
-The Research, Plan, Implement, Review methodology separates complex tasks into specialized phases. Six agents (task-researcher, task-planner, task-implementor, task-reviewer, task-challenger, and the RPI orchestrator) coordinate through planning files to deliver structured engineering workflows. See the [RPI Documentation](../rpi/) for the full guide.
+The Research, Plan, Implement, Review methodology separates complex tasks into specialized phases. Five agents (task-researcher, task-planner, task-implementor, task-reviewer, and the RPI orchestrator) coordinate through planning files to deliver structured engineering workflows. The self-contained `rpi-challenger` skill complements these agents by challenging a confirmed subject through adaptive skeptical questions. See the [RPI Documentation](../rpi/) for the full guide.
 
 ## Code Review
 

@@ -1,6 +1,8 @@
 # RPI Skills
 
-This collection packages the `rpi-research` skill, its default `RPI Researcher` delegated worker, Task Researcher, and skill-forward RPI entry points for research, planning, implementation, review, follow-up, and guided walkthroughs. `RPI Planner` provides bounded authoring for one assigned phase, and `rpi-plan-critique` provides an independent read-only plan assessment. The shared `Researcher Subagent` remains included because Task Researcher still depends on it.
+This collection packages skill-forward RPI entry points for research, planning, implementation, review, follow-up, guided walkthroughs, and self-contained challenge sessions.
+
+`rpi-research` includes its default `RPI Researcher` delegated worker, while `rpi-challenger` conducts adaptive challenge questioning without a worker dependency. `RPI Planner` provides bounded authoring for one assigned phase, and `rpi-plan-critique` provides an independent read-only plan assessment. The shared `Researcher Subagent` remains included because Task Researcher still depends on it.
 
 ## Local enablement
 

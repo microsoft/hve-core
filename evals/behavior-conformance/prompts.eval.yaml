@@ -83,24 +83,6 @@ stimuli:
         config:
           pattern: "(?i)review\\s+log|severity|scope|task-review"
 
-  - name: prompt-task-challenge-conformance
-    prompt: |
-      Invoke the `task-challenge` prompt with focus="error handling" against
-      the most recent changes log.
-    tags:
-      category: behavior-conformance
-      prompt: task-challenge
-      advisory: "true"
-    graders:
-      - type: output-matches
-        name: agent-attribution
-        config:
-          pattern: "(?i)\\btask\\s+challenger\\b|task-challenge"
-      - type: output-matches
-        name: scope-language
-        config:
-          pattern: "(?i)challenge|scope|focus"
-
   - name: prompt-security-review-conformance
     prompt: |
       Invoke the `security-review` prompt with mode=audit and

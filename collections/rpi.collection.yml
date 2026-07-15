@@ -11,6 +11,8 @@ tags:
 items:
   - path: .github/skills/rpi/rpi-quick
     kind: skill
+  - path: .github/skills/rpi/rpi-challenger
+    kind: skill
   - path: .github/skills/rpi/rpi-research
     kind: skill
   - path: .github/skills/rpi/rpi-plan

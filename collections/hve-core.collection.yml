@@ -31,9 +31,6 @@ items:
     kind: agent
   - path: .github/agents/hve-core/task-reviewer.agent.md
     kind: agent
-  - path: .github/agents/hve-core/task-challenger.agent.md
-    kind: agent
-    maturity: experimental
   - path: .github/agents/coding-standards/code-review.agent.md
     kind: agent
     maturity: experimental
@@ -86,9 +83,6 @@ items:
   - path: .github/prompts/hve-core/task-review.prompt.md
     kind: prompt
   - path: .github/prompts/hve-core/pr-review.prompt.md
-    kind: prompt
-    maturity: experimental
-  - path: .github/prompts/hve-core/task-challenge.prompt.md
     kind: prompt
     maturity: experimental
   - path: .github/prompts/hve-core/checkpoint.prompt.md
@@ -180,6 +174,8 @@ items:
   - path: .github/skills/hve-core/prompt-refactor
     kind: skill
   - path: .github/skills/hve-core/hve-builder
+    kind: skill
+  - path: .github/skills/rpi/rpi-challenger
     kind: skill
   - path: .github/skills/rpi/rpi-research
     kind: skill

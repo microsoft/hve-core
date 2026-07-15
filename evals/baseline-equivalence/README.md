@@ -2,7 +2,7 @@
 title: Baseline Equivalence Suite
 description: 'Pairs identical probes across baseline and customized environments to assert only documented divergences appear'
 author: HVE Core Team
-ms.date: 2026-07-10
+ms.date: 2026-07-14
 ---
 
 ## Purpose
@@ -138,7 +138,6 @@ relies on shared corpus coverage rather than per-agent backlinks. New agents lan
 | security-reviewer            | security         | [surface-signatures/security-reviewer.yml](surface-signatures/security-reviewer.yml)                       | 0                 | authoritative |
 | sssc-planner                 | security         | [surface-signatures/sssc-planner.yml](surface-signatures/sssc-planner.yml)                                 | 0                 | authoritative |
 | system-architecture-reviewer | project-planning | [surface-signatures/system-architecture-reviewer.yml](surface-signatures/system-architecture-reviewer.yml) | 0                 | authoritative |
-| task-challenger              | hve-core         | [surface-signatures/task-challenger.yml](surface-signatures/task-challenger.yml)                           | 7                 | authoritative |
 | task-implementor             | hve-core         | [surface-signatures/task-implementor.yml](surface-signatures/task-implementor.yml)                         | 9                 | authoritative |
 | task-planner                 | hve-core         | [surface-signatures/task-planner.yml](surface-signatures/task-planner.yml)                                 | 6                 | authoritative |
 | task-researcher              | hve-core         | [surface-signatures/task-researcher.yml](surface-signatures/task-researcher.yml)                           | 0                 | authoritative |

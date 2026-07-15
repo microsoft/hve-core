@@ -38,7 +38,9 @@ Select from the **agent picker dropdown** in the Chat view:
 
 The RPI lifecycle keeps Research, Plan, Implement, Review, and Follow-up distinct for complex development tasks. It begins with research readiness: supplied or completed evidence is reused when adequate, and research runs only for a demonstrated requirements, acceptance, dependency, material-risk, complexity, uncertainty, or decision-critical gap.
 
-`RPI Agent` is a user-selected lifecycle wrapper that activates the matching RPI skills. `/rpi-quick` is a skill-based full-flow entry point. They are alternative entry surfaces for the same phase skills, not autonomous dispatchers of specialized task workers. Use `/rpi-research`, `/rpi-plan`, `/rpi-implement`, and `/rpi-review` when you need a direct phase entry point. See the [RPI Documentation](../docs/rpi/README.md) for both surfaces.
+`RPI Agent` is a user-selected lifecycle wrapper that activates the matching RPI skills. `/rpi-quick` is a skill-based full-flow entry point. They are alternative entry surfaces for the same phase skills, not autonomous dispatchers of specialized task workers. Use `/rpi-research`, `/rpi-plan`, `/rpi-implement`, and `/rpi-review` when you need a direct phase entry point.
+
+Use the self-contained `rpi-challenger` skill to interrogate a confirmed subject through adaptive skeptical questions. See the [RPI Documentation](../docs/rpi/README.md) for both surfaces.
 
 | Agent                | Purpose                                                                                               | Key Constraint                                                                    |
 |----------------------|-------------------------------------------------------------------------------------------------------|-----------------------------------------------------------------------------------|
@@ -47,7 +49,6 @@ The RPI lifecycle keeps Research, Plan, Implement, Review, and Follow-up distinc
 | **task-planner**     | Produces a dated plan and matching phase-details artifact, then records independent critique          | Uses supplied or complete evidence; activates research only for a demonstrated readiness gap |
 | **task-implementor** | Directly executes approved `Pxx` or `Pxx-Txx` work and records change evidence                        | Significant divergence requires a fresh critique before affected dependent work resumes |
 | **task-reviewer**    | Reconciles plan, details, critique, amendments, changes, and validation evidence                      | Review-only; separates execution status from outcome and routes open work         |
-| **task-challenger**  | Adversarial questioning agent that interrogates completed implementations with What/Why/How questions | Experimental; no suggestions, hints, or leading questions                         |
 
 ### Documentation and Planning Agents
 

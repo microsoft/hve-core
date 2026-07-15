@@ -2,7 +2,7 @@
 title: GitHub Copilot Prompts
 description: Coaching and guidance prompts for specific development tasks that provide step-by-step assistance and context-aware support
 author: Edge AI Team
-ms.date: 2026-07-09
+ms.date: 2026-07-14
 ms.topic: hub-page
 estimated_reading_time: 3
 keywords:
@@ -35,7 +35,6 @@ Prompts can be invoked in GitHub Copilot Chat using `/prompt-name` syntax (e.g.,
 * **[Task Plan](./hve-core/task-plan.prompt.md)** - Creates implementation plans from research documents (use `/task-plan` to invoke)
 * **[Task Implement](./hve-core/task-implement.prompt.md)** - Executes implementation plans with tracking and stop controls (use `/task-implement` to invoke)
 * **[Task Review](./hve-core/task-review.prompt.md)** - Initiates implementation review from context or artifact discovery
-* **[Task Challenge](./hve-core/task-challenge.prompt.md)** - Adversarial What/Why/How interrogation of completed implementation artifacts
 * **[RPI](./hve-core/rpi.prompt.md)** - Autonomous Research-Plan-Implement-Review-Discover workflow for completing tasks
 * **[Checkpoint](./hve-core/checkpoint.prompt.md)** - Save or restore conversation context using memory files
 
