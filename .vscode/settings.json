@@ -97,8 +97,7 @@
     ".github/skills/rpi": true,
     ".github/skills/hve-core": true,
     ".github/skills/security": true,
-    ".github/skills/shared": true,
-    "~/.vscode/extensions/synapsevscode.synapse-1.25.0/copilot/skills": true
+    ".github/skills/shared": true
   },
   "github.copilot.chat.commitMessageGeneration.instructions": [
     {
