@@ -3,7 +3,7 @@ title: Roadmap
 description: Project direction and priorities for HVE Core over the next 12-18 months
 sidebar_position: 10
 author: HVE Core Team
-ms.date: 2026-06-30
+ms.date: 2026-07-15
 ms.topic: reference
 keywords:
   - roadmap
@@ -24,7 +24,7 @@ Actual delivery may vary based on contributor availability, community feedback, 
 
 HVE Core v1.1.0 provides:
 
-* Task researcher, planner, and implementor agents for structured AI workflows (RPI Framework)
+* RPI Agent for lifecycle coordination, with `rpi-research`, `rpi-plan`, `rpi-implement`, and `rpi-review` skills for direct phase workflows
 * Marketplace distribution via VS Code extension for zero-configuration setup
 * 15+ specialized agents for BRD building, architecture diagrams, issue management, and more
 * 20+ instruction files covering C#, Terraform, Bicep, Python, bash, and prompt engineering

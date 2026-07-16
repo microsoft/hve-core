@@ -2,7 +2,7 @@
 title: Behavior Conformance Suite
 description: 'Tier 3 conformance evaluations for prompts, instructions, and skill behavior'
 author: HVE Core Team
-ms.date: 2026-06-27
+ms.date: 2026-07-15
 ---
 
 This directory hosts the behavior conformance suite. It is the only suite under `evals/` that ships in advisory mode by default: failures are reported in the pull request summary but do not block the build until each spec graduates per the graduation policy below.
@@ -21,21 +21,23 @@ Each tier shares the same advisory contract, the same `output-matches` grader fa
 
 | Spec                       | Tier | Mode     | Stimuli | Category               | Status            |
 |----------------------------|------|----------|---------|------------------------|-------------------|
-| `prompts.eval.yaml`        | 3p   | Advisory | 9       | `behavior-conformance` | Active (Phase 9)  |
-| `instructions.eval.yaml`   | 3i   | Advisory | 44      | `behavior-conformance` | Active (Phase 11) |
-| `skill-behavior.eval.yaml` | 3s   | Advisory | 100     | `behavior-conformance` | Active (Phase 13) |
+| `prompts.eval.yaml`        | 3p   | Advisory | 69      | `behavior-conformance` | Active (Phase 9)  |
+| `instructions.eval.yaml`   | 3i   | Advisory | 71      | `behavior-conformance` | Active (Phase 11) |
+| `skill-behavior.eval.yaml` | 3s   | Advisory | 118     | `behavior-conformance` | Active (Phase 13) |
 
-The Phase 9 cut of `prompts.eval.yaml` covers nine high-traffic prompts: the four RPI prompts (`task-research`, `task-plan`, `task-implement`, `task-review`), `security-review`, `ado/ado-create-pull-request`, `github/github-execute-backlog`, `jira/jira-execute-backlog`, and `design-thinking/dt-start-project`. Phase 10 expands the inventory to the full prompt catalog.
+The maintained `prompts.eval.yaml` inventory contains 69 stimuli across 66 prompt subjects. Coverage includes RPI orchestration, security review and planning, ADO, GitHub and Jira backlog workflows, Design Thinking, Git operations, evaluation authoring, and VEX workflows.
 
-The Phase 11 cut of `instructions.eval.yaml` covers 44 high-signal instructions whose `applyTo` matches Markdown files. Coverage spans:
+The maintained `instructions.eval.yaml` inventory contains 71 stimuli across 56 instruction subjects. Coverage spans:
 
 * ADO backlog and PR families: `ado-backlog-sprint`, `ado-backlog-triage`, `ado-create-pull-request`, `ado-get-build-info`, `ado-update-wit-items`, `ado-wit-discovery`, `ado-wit-planning`.
 * GitHub and Jira backlog flows: `github-backlog-discovery`, `github-backlog-planning`, `github-backlog-triage`, `github-backlog-update`, `jira-backlog-planning`, `jira-wit-planning`.
-* HVE-Core authoring: `markdown`, `prompt-builder`, `pull-request`, `writing-style`.
+* HVE-Core authoring: `copilot-tracking`, `hve-builder`, `markdown`, `pull-request`, and `writing-style`.
 * RAI and Security planning: `rai-identity`, `rai-risk-classification`, `backlog-handoff`, `sssc-assessment`.
 * Additional: `docusaurus-edits`, `experiment-designer`, `story-quality`, `disclaimer-language`.
 
-The Phase 13 cut of `skill-behavior.eval.yaml` covers the RPI and prompt-engineering skill workflows in advisory mode. The current branch-specific calibration status is not yet established for gating: pass-rate and false-positive measurements are collected from advisory CI runs before graduation, and regex-only `output-matches` graders check contract vocabulary and routing signals rather than full semantic correctness.
+The maintained `skill-behavior.eval.yaml` inventory contains 118 stimuli across 48 skill subjects. It covers RPI and HVE Builder workflows, the retained `prompt-analyze`, `prompt-builder`, and `prompt-refactor` compatibility routes, and other installed skill domains in advisory mode.
+
+The current branch-specific calibration status is not yet established for gating. Pass-rate and false-positive measurements are collected from advisory CI runs before graduation, and regex-only `output-matches` graders check contract vocabulary and routing signals rather than full semantic correctness.
 
 ## Pipeline integration
 
