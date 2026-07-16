@@ -746,6 +746,7 @@ class TestAddArrowFlowElement:
             assert run.font.name == "Arial"
             assert run.font.size == Pt(11)
             assert f"#{run.font.color.rgb}".lower() == "#112233"
+
     def test_per_item_overrides_take_precedence(self, blank_slide):
         elem = {
             "left": 1.0,
@@ -755,7 +756,12 @@ class TestAddArrowFlowElement:
             "font_size": 14,
             "font_color": "#112233",
             "items": [
-                {"label": "Small", "size": 9, "label_margin": 0.01, "color_text": "#AA0000"},
+                {
+                    "label": "Small",
+                    "size": 9,
+                    "label_margin": 0.01,
+                    "color_text": "#AA0000",
+                },
                 {"label": "Default"},
             ],
         }
@@ -765,9 +771,11 @@ class TestAddArrowFlowElement:
         assert small.paragraphs[0].runs[0].font.size == Pt(9)
         assert small.margin_left == Inches(0.01)
         assert f"#{small.paragraphs[0].runs[0].font.color.rgb}".lower() == "#aa0000"
-        # Default item falls back to elem font_size and font_color, and python-pptx default margin
-        assert shapes[1].text_frame.paragraphs[0].runs[0].font.size == Pt(14)
-        assert f"#{shapes[1].text_frame.paragraphs[0].runs[0].font.color.rgb}".lower() == "#112233"
+        # Default item falls back to elem font_size/font_color and default margin
+        default = shapes[1].text_frame
+        assert default.paragraphs[0].runs[0].font.size == Pt(14)
+        assert f"#{default.paragraphs[0].runs[0].font.color.rgb}".lower() == "#112233"
+
 
 class TestAddNumberedStepElement:
     """Tests for add_numbered_step_element."""
