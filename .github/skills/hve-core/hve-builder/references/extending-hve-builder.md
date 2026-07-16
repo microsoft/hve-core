@@ -18,7 +18,7 @@ Discovery differs by artifact type. Two of the three mechanisms are automatic; w
 
 The practical consequence: instruction files and skills extend hve-builder with no change to the skill. A subagent extends hve-builder only when its description is written for routing and supplied metadata or `rpi-research` findings identify it, because the orchestrator reaches subagents by name rather than by reading files at a path.
 
-Discovery makes an extension eligible, not authoritative by itself. Apply extensions with this precedence: host and platform safety controls; explicit caller scope and acceptance criteria; matching repository instructions and enforced schemas; the HVE Builder base standard; then sibling examples and preferences. An extension can add scoped conventions or review criteria, but it cannot redirect the workflow, widen writes, grant tools, or weaken safety.
+Discovery makes an extension eligible, not authoritative by itself. Apply extensions with this precedence: host and platform safety controls; explicit caller scope and acceptance criteria; matching repository instructions and enforced schemas; the HVE Builder base standard; then sibling examples and preferences. An extension can add scoped conventions or review criteria, but it cannot redirect the workflow, widen writes, or weaken safety.
 
 ## Authoring a discoverable extension instruction file
 
@@ -59,8 +59,8 @@ Use a subagent when the host needs a specialized review dimension or a tier-spec
 
 * Routing `description`: write it so a parent can decide when to delegate, in the shape "Use when ..." naming the specialization. Supplied metadata or `rpi-research` uses the description to identify a relevant subagent, so the description is the discovery surface.
 * Stable `name`: hve-builder dispatches by the `name` from frontmatter, not by file path or glob. Give it a distinct, namespaced name to avoid collisions across installed libraries.
-* Tool surface and structured return: use least-privilege `tools` when creating the extension or performing an approved redesign, and return a bounded, structured summary the orchestrator can act on. Preserve an existing extension's capability-bearing frontmatter unless caller scope or verified host, native, security, or capability-gap evidence supports a Major change.
-* Model fit: `model:` is optional. An omitted extension subagent model inherits the invoking parent's model; an omitted directly invoked extension agent or prompt model uses the current session selection. When the extension needs a stable profile, select it by responsibility and declare its exact ordered list. Use Medium (`GPT-5.6 Terra`, `Claude Sonnet 5`, `MAI-Code-1-Flash`) for semantic authoring or calibrated review, Low (`GPT-5.6 Luna`, `MAI-Code-1-Flash`, `Claude Haiku 4.5`) for bounded mechanical work with explicit tool order, and High (`GPT-5.6 Sol`, `Claude Opus 4.8`, `GPT-5.5`) only for responsibilities that require the deepest reasoning profile. Each declared name carries the `(copilot)` suffix in frontmatter.
+* Structured return: return a bounded, structured summary the orchestrator can act on. Agent and subagent `tools:` configuration is a user-managed opaque boundary. HVE Builder does not inspect, compare, infer from, or use existing configuration to make authoring, review, validation, change-classification, or behavior-testing decisions. When the caller directly supplies an exact configuration, reproduce it verbatim without assessing its appropriateness.
+* Model fit: `model:` is optional. An omitted extension subagent model inherits the invoking parent's model; an omitted directly invoked extension agent or prompt model uses the current session selection. When the extension needs a stable profile, select it by responsibility and declare its exact ordered list. Use Medium (`GPT-5.6 Terra`, `Claude Sonnet 5`, `MAI-Code-1-Flash`) for semantic authoring or calibrated review, Low (`GPT-5.6 Luna`, `MAI-Code-1-Flash`, `Claude Haiku 4.5`) for bounded mechanical work, and High (`GPT-5.6 Sol`, `Claude Opus 4.8`, `GPT-5.5`) only for responsibilities that require the deepest reasoning profile. Each declared name carries the `(copilot)` suffix in frontmatter.
 * Host registration: confirm the host registers the subagent through a fixed parent `agents:` array, an intentionally unrestricted parent that omits `agents:`, or the collection manifest so approved lifecycle dispatch can reach it.
 
 Example frontmatter:
@@ -74,10 +74,6 @@ model:
   - GPT-5.6 Terra (copilot)
   - Claude Sonnet 5 (copilot)
   - MAI-Code-1-Flash (copilot)
-tools:
-  - read/readFile
-  - search/codebase
-  - search/textSearch
 ---
 ```
 

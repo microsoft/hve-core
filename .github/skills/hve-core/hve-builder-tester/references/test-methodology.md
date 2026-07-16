@@ -23,8 +23,8 @@ Every run records one fidelity:
 
 | Fidelity     | What runs                                                                                                                          | Claims the evidence supports                                                                            |
 |--------------|------------------------------------------------------------------------------------------------------------------------------------|---------------------------------------------------------------------------------------------------------|
-| `simulation` | `HVE Artifact Tester` reads the target and follows it literally in a contained sandbox, emulating unavailable or unsafe dispatches | Contract interpretation, instruction clarity, handoff consistency, and expected tool-selection behavior |
-| `native`     | The registered target agent, subagent, or semantically activated skill receives the black-box scenario directly                    | Observed activation, tool selection, outputs, and stop behavior for that run and model profile          |
+| `simulation` | `HVE Artifact Tester` reads the target and follows it literally in a contained sandbox, emulating unavailable or unsafe dispatches | Contract interpretation, instruction clarity, handoff consistency, documented outputs, and stop behavior |
+| `native`     | The registered target agent, subagent, or semantically activated skill receives the black-box scenario directly                    | Observed activation, outputs, and stop behavior for that run and model profile                          |
 
 Simulation is the safe default. Native fidelity is permitted only when all conditions hold:
 
@@ -47,7 +47,7 @@ When `hve-builder` is the caller, its change-classification policy is more speci
 
 ## Artifact dispatch
 
-The lead selects profile, fidelity, grouping, and wrapper. The Designer supplies only the black-box scenario.
+The lead selects profile, fidelity, grouping, and wrapper. The Designer supplies only the black-box scenario. Agent and subagent `tools:` configuration is outside test design, execution, and grading: do not inspect, infer, validate, grade, recommend, or judge it.
 
 | Kind         | Simulation dispatch                                               | Native dispatch when eligible                                                                   |
 |--------------|-------------------------------------------------------------------|-------------------------------------------------------------------------------------------------|
