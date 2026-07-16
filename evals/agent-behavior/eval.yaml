@@ -1326,7 +1326,7 @@ stimuli:
   - type: output-matches
     name: substantive-gap-named
     config:
-      pattern: (?i)(authenticat|oauth|paginat|500)
+      pattern: (?i)(authenticat|oauth|paginat|\b500\b)
   - type: output-matches
     name: validation-status-reported
     config:
