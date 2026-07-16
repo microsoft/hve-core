@@ -24,9 +24,21 @@
 
 * {{out_of_scope_item}}
 
-## Requirements and Acceptance
+## Functional Requirements
 
-* {{caller_requirement}}: {{observable_acceptance_criterion}}
+* {{functional_requirement_id}}: {{observable_behavior_capability_workflow_step_user_action_or_system_response}}
+  * Observable acceptance criteria: {{acceptance_criterion_id}}
+
+## Non-Functional Requirements
+
+* {{non_functional_requirement_id}}: {{measurable_quality_property}}
+  * Objective threshold or evaluation condition: {{objective_threshold_or_evaluation_condition}}
+  * Operating condition or verification approach, if needed: {{concise_condition_or_objective_verification}}
+  * Observable acceptance criteria: {{acceptance_criterion_id}}
+
+## Acceptance Criteria
+
+* {{acceptance_criterion_id}}: {{observable_acceptance_criterion}}
 
 ## Phase Checklist
 

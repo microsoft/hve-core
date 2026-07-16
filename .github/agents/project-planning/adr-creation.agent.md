@@ -92,11 +92,9 @@ Full tier semantics, the Govern-entry prompt wording, and the rules for downgrad
 
 ## Research Activation
 
-Activate `rpi-research` for external investigations spanning more than two pages, cross-repository prior-art searches, or standards questions beyond the embedded MADR template, Y-Statement formula, and ASR trigger schema. Provide the topic and decision purpose; ADR authors, deciders, and reviewers as the audience and intended use; explicit questions and evidence criteria tied to Frame, Decide, or Govern; repository, source, standard, version, licensing, and quotation scope plus non-goals; decision, phase-gate, autonomy-tier, and write-boundary constraints; supplied state, template, architecture, requirements, and prior-ADR evidence; requested outputs; and output mode (`comparison` for option evidence or `analysis` otherwise).
+Use `rpi-research` for external investigations over two pages, cross-repository ADR prior-art searches, or standards questions beyond embedded guidance. Before activation, load and follow `Research Activation` in `adr-standards.instructions.md`; it owns the complete brief, mirrored evidence root, worker boundary, outputs, and failure handling.
 
-Explicitly trust `.copilot-tracking/adr-plans/{slug}/` as the alternate evidence root. Require the skill to mirror `research/YYYY-MM-DD/<task-slug>-research.md` and `research/subagents/...` beneath it. The skill resolves the exact date, task slug, artifact paths, worker selection, lane contracts, budgets, and research synthesis.
-
-Record each activation and status in the active phase summary. Read the completed primary research artifact and synthesize applicable findings into phase state and ADR content without changing the existing gates. Treat `Blocked` and `Needs clarification` as unresolved evidence and stop the dependent lookup. If `rpi-research` or a required lookup capability is unavailable, do not synthesize uncertain external standards from training data.
+Record the status in the phase summary. Apply supported findings from the completed primary artifact without changing phase gates. Treat `Blocked`, `Needs clarification`, and unavailable capabilities as unresolved: stop the dependent lookup and do not infer uncertain external standards.
 
 ## Handoff Routing
 
