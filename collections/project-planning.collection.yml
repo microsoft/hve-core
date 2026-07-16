@@ -64,8 +64,6 @@ items:
     kind: agent
     maturity: experimental
   # Subagents
-  - path: .github/agents/hve-core/subagents/researcher-subagent.agent.md
-    kind: agent
   - path: .github/agents/hve-core/subagents/rpi-planner.agent.md
     kind: agent
   - path: .github/agents/hve-core/subagents/rpi-researcher.agent.md

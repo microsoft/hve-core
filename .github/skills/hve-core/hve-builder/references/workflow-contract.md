@@ -46,12 +46,12 @@ Stages may run in parallel only when neither consumes the other's output. An ind
 
 The lifecycle uses generic subagent dispatches with a model selected at invocation time rather than named worker frontmatter. `stage-dispatch.md` defines the prompt and evidence contract. This keeps the stage isolated while allowing the parent to select a responsibility-appropriate profile.
 
-| Stage                   | Profile | Why                                                                             |
-|-------------------------|---------|---------------------------------------------------------------------------------|
-| Authoring, review       | Medium  | Architecture, authoring, and calibrated review require judgment                 |
-| Validation              | Low     | Known-check execution follows a bounded mechanical protocol                     |
-| Test design and grading | Medium  | Coverage and evidence grading require semantic judgment                         |
-| `HVE Artifact Tester`   | Low     | Literal conformance simulation is bounded and intentionally non-interpretive    |
+| Stage                   | Profile | Why                                                                          |
+|-------------------------|---------|------------------------------------------------------------------------------|
+| Authoring, review       | Medium  | Architecture, authoring, and calibrated review require judgment              |
+| Validation              | Low     | Known-check execution follows a bounded mechanical protocol                  |
+| Test design and grading | Medium  | Coverage and evidence grading require semantic judgment                      |
+| `HVE Artifact Tester`   | Low     | Literal conformance simulation is bounded and intentionally non-interpretive |
 
 Canonical profile lists:
 
@@ -80,10 +80,10 @@ Workers report execution separately from judgment:
 
 Classify the requested source delta before the behavior gate. When mixed changes exist, use the highest applicable class.
 
-| Class  | Decision rule                                                                                                                           | Behavior gate                         |
-|--------|-----------------------------------------------------------------------------------------------------------------------------------------|---------------------------------------|
-| Minor  | Editorial, formatting, comments, link repairs, or frontmatter-only and name-reference updates with no capability or rule change            | Satisfied-and-skipped                 |
-| Medium | Clarifies, reorganizes, or adjusts existing workflow text without adding, removing, or materially changing a model action or output    | Satisfied-and-skipped                 |
+| Class  | Decision rule                                                                                                                                                         | Behavior gate                 |
+|--------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------|-------------------------------|
+| Minor  | Editorial, formatting, comments, link repairs, or frontmatter-only and name-reference updates with no capability or rule change                                       | Satisfied-and-skipped         |
+| Medium | Clarifies, reorganizes, or adjusts existing workflow text without adding, removing, or materially changing a model action or output                                   | Satisfied-and-skipped         |
 | Major  | Adds, removes, or materially changes a model action, output, capability-bearing frontmatter, tool use, write authority, decision rule, stage gate, or safety behavior | Dispatch `hve-builder-tester` |
 
 For a satisfied-and-skipped gate, record the classification, the specific non-behavior reason, execution `Not run`, verdict `Not applicable`, and fidelity `Not applicable`. Static review and validation remain required for their applicable routes.
@@ -92,12 +92,12 @@ For a satisfied-and-skipped gate, record the classification, the specific non-be
 
 Resolve the run once, using the first matching row from top to bottom.
 
-| Overall outcome | Condition                                                                                                                                                                              |
-|-----------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `Blocked`       | Scope, safety, target identity, decision-critical clarification, or required evidence is too ambiguous to proceed responsibly                                                          |
+| Overall outcome | Condition                                                                                                                                                                                      |
+|-----------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `Blocked`       | Scope, safety, target identity, decision-critical clarification, or required evidence is too ambiguous to proceed responsibly                                                                  |
 | `Deferred`      | A required stage could not run, a required behavior verdict is Not available, or research, exploration, or behavior execution is Partial because an unavailable capability prevents completion |
-| `Revise`        | A review verdict is Revise, validation is Fail, authoring is Partial, or an actionable acceptance criterion remains unmet                                                              |
-| `Pass`          | Every required stage completed or was legitimately satisfied-and-skipped, every required review verdict is Pass, validation is Pass when required, and all acceptance criteria are met |
+| `Revise`        | A review verdict is Revise, validation is Fail, authoring is Partial, or an actionable acceptance criterion remains unmet                                                                      |
+| `Pass`          | Every required stage completed or was legitimately satisfied-and-skipped, every required review verdict is Pass, validation is Pass when required, and all acceptance criteria are met         |
 
 Never convert validation failure into Pass because static prose looks correct. Never convert an unavailable stage into Pass because another stage succeeded.
 

@@ -15,7 +15,6 @@ Describe 'Invoke-BaselineEquivalence.ps1 (dry-run)' -Tag 'Unit' {
     Context 'PR tier defaults' {
         BeforeEach {
             & $script:ScriptPath `
-                -Agent 'task-researcher' `
                 -Tier 'pr' `
                 -RepoRoot $script:RepoRoot `
                 -OutputPath $script:OutputPath `
@@ -32,7 +31,7 @@ Describe 'Invoke-BaselineEquivalence.ps1 (dry-run)' -Tag 'Unit' {
         }
 
         It 'Records the agent slug' {
-            $script:Summary.agent | Should -Be 'task-researcher'
+            $script:Summary.agent | Should -Be 'rpi-agent'
         }
 
         It 'Records tier=pr' {
@@ -86,15 +85,15 @@ Describe 'Invoke-BaselineEquivalence.ps1 (dry-run)' -Tag 'Unit' {
             $script:Summary.variants.a | Should -Not -BeNullOrEmpty
             $script:Summary.variants.b | Should -Not -BeNullOrEmpty
             $script:Summary.variants.a.kind | Should -Be 'baseline'
-            $script:Summary.variants.b.name | Should -Be 'task-researcher'
-            $script:Summary.variants.subject | Should -Be 'task-researcher'
+            $script:Summary.variants.b.name | Should -Be 'rpi-agent'
+            $script:Summary.variants.subject | Should -Be 'rpi-agent'
         }
     }
 
     Context 'Nightly tier expansion' {
         BeforeEach {
             & $script:ScriptPath `
-                -Agent 'task-researcher' `
+                -Agent 'rpi-agent' `
                 -Tier 'nightly' `
                 -RepoRoot $script:RepoRoot `
                 -OutputPath $script:OutputPath `
@@ -118,7 +117,7 @@ Describe 'Invoke-BaselineEquivalence.ps1 (dry-run)' -Tag 'Unit' {
     Context 'Stimulus filter passthrough' {
         It 'Embeds the filter in the planned commands' {
             & $script:ScriptPath `
-                -Agent 'task-researcher' `
+                -Agent 'rpi-agent' `
                 -Tier 'pr' `
                 -StimulusFilter '^code-' `
                 -RepoRoot $script:RepoRoot `
@@ -134,7 +133,7 @@ Describe 'Invoke-BaselineEquivalence.ps1 (dry-run)' -Tag 'Unit' {
     Context 'Model override' {
         It 'Pins the PR-tier model to the supplied override' {
             & $script:ScriptPath `
-                -Agent 'task-researcher' `
+                -Agent 'rpi-agent' `
                 -Tier 'pr' `
                 -Model 'gpt-5-mini' `
                 -RepoRoot $script:RepoRoot `
@@ -148,7 +147,7 @@ Describe 'Invoke-BaselineEquivalence.ps1 (dry-run)' -Tag 'Unit' {
 
         It 'Ignores the override for the nightly tier' {
             & $script:ScriptPath `
-                -Agent 'task-researcher' `
+                -Agent 'rpi-agent' `
                 -Tier 'nightly' `
                 -Model 'gpt-5-mini' `
                 -RepoRoot $script:RepoRoot `
@@ -252,6 +251,19 @@ Describe 'Resolve-ModelList' -Tag 'Unit' {
         $models = Resolve-ModelList -Tier 'pr' -Hint '' -ModelOverride ''
 
         $models | Should -Be @('gpt-5.6-luna')
+    }
+}
+
+Describe 'Resolve-AgentSurfaceSignaturePath' -Tag 'Unit' {
+    BeforeAll {
+        . $script:ScriptPath
+    }
+
+    It 'Resolves the retained rpi-agent signature by default target slug' {
+        $path = Resolve-AgentSurfaceSignaturePath -RepoRoot $script:RepoRoot -Agent 'rpi-agent'
+
+        $path | Should -Be (Join-Path $script:RepoRoot 'evals/baseline-equivalence/surface-signatures/rpi-agent.yml')
+        Test-Path -LiteralPath $path | Should -BeTrue
     }
 }
 

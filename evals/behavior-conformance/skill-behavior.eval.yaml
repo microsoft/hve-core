@@ -1411,7 +1411,7 @@ stimuli:
       - type: output-matches
         name: research-routing
         config:
-          pattern: '(?is)(?=.*RPI Researcher)(?=.*(?:lane|research[/\\]subagents|parent primary))'
+          pattern: '(?is)(?=.*rpi-research)(?=.*(?:bridge|research\s+artifact|evidence\s+root|Deferred))'
   - name: skill-hve-builder-tester-knowledge
     prompt: |
       Summarize how the `hve-builder-tester` skill evaluates a behavior-bearing

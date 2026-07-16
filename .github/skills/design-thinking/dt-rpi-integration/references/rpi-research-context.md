@@ -1,9 +1,9 @@
 ---
 title: 'DT Research Context'
-description: Adjustments augmenting Task Researcher behavior when receiving a handoff from the Design Thinking coach.
+description: Adjustments augmenting rpi-research when receiving a handoff from the Design Thinking coach.
 ---
 
-When Task Researcher receives a handoff from the DT coach, these adjustments augment standard research behavior. The research question originates from a Design Thinking process rather than a technical spec, so stakeholder perspectives and empathy-driven inquiry shape the research framing.
+When `rpi-research` receives a handoff from the DT coach, these adjustments augment the standard research workflow. The research question originates from a Design Thinking process rather than a technical spec, so stakeholder perspectives and empathy-driven inquiry shape the research framing.
 
 ## Research Framing Adjustments
 
@@ -12,7 +12,7 @@ When Task Researcher receives a handoff from the DT coach, these adjustments aug
 | Technical feasibility focus     | Stakeholder impact and technical feasibility                    |
 | Single-perspective analysis     | Multi-stakeholder analysis across roles and contexts            |
 | Binary findings (works/doesn't) | Quality-marked findings (validated/assumed/unknown/conflicting) |
-| Forward-only to planner         | May return to DT coach when findings warrant revisiting         |
+| Forward-only to `rpi-plan`      | May return to DT coach when findings warrant revisiting         |
 | Code-centric results            | Human-centric results with code implications                    |
 
 ## DT-Specific Research Patterns
@@ -25,7 +25,7 @@ When Task Researcher receives a handoff from the DT coach, these adjustments aug
 
 ## Tiered Artifact Handling
 
-All DT exits route to Task Researcher. The depth of completed DT methods determines what the researcher already knows and where investigation effort concentrates.
+All DT exits route to `rpi-research`. The depth of completed DT methods determines what the research phase already knows and where investigation effort concentrates.
 
 ### Problem Space Exit (Methods 1-3)
 

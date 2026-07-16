@@ -49,8 +49,8 @@
 
 ## Decision Register
 
-| Decision | Status | Evidence or rationale | Owner or next action |
-|----------|--------|-----------------------|----------------------|
+| Decision     | Status                    | Evidence or rationale     | Owner or next action     |
+|--------------|---------------------------|---------------------------|--------------------------|
 | {{decision}} | {{decided_open_deferred}} | {{evidence_or_rationale}} | {{owner_or_next_action}} |
 
 ## Amendment Register
@@ -64,9 +64,9 @@
 
 ## Critique Disposition
 
-| Critique finding | Disposition | Plan response or residual risk |
-|------------------|-------------|--------------------------------|
-| {{finding_title}} | {{accepted_resolved_deferred}} | {{response_or_risk}} |
+| Critique finding  | Disposition                    | Plan response or residual risk |
+|-------------------|--------------------------------|--------------------------------|
+| {{finding_title}} | {{accepted_resolved_deferred}} | {{response_or_risk}}           |
 
 ## Handoff
 

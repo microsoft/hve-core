@@ -3,7 +3,7 @@ title: Why Design Thinking?
 description: Understanding when and why to use Design Thinking in your projects
 sidebar_position: 2
 author: Microsoft
-ms.date: 2026-06-28
+ms.date: 2026-07-15
 ms.topic: concept
 keywords:
   - design thinking
@@ -58,11 +58,11 @@ Design Thinking and RPI are complementary, not competing.
 
 Design Thinking answers **what to build and why**. RPI answers **how to build it correctly**.
 
-When a Design Thinking session reaches a natural exit point, the DT Coach prepares a structured handoff artifact containing validated findings, confidence markers, and stakeholder maps. That artifact enters the RPI pipeline at Task Researcher before the downstream Plan and Implement phases begin:
+When a Design Thinking session reaches a natural exit point, the DT Coach prepares a structured handoff artifact containing validated findings, confidence markers, and stakeholder maps. That artifact enters the RPI pipeline through `rpi-research` before the downstream Plan and Implement phases begin:
 
-* Problem Statement Complete (after Methods 1-3): Task Researcher receives the handoff first and uses validated problem framing to scope technical research.
-* Concept Validated (after Methods 4-6): Task Researcher receives the handoff first and uses stakeholder-validated concepts to scope implementation research.
-* Implementation Spec Ready (after Methods 7-9): Task Researcher receives the handoff first and uses functionally rigorous specifications for focused technical investigation.
+* Problem Statement Complete (after Methods 1-3): `rpi-research` uses validated problem framing to scope technical research.
+* Concept Validated (after Methods 4-6): `rpi-research` uses stakeholder-validated concepts to scope implementation research.
+* Implementation Spec Ready (after Methods 7-9): `rpi-research` uses functionally rigorous specifications for focused technical investigation.
 
 See [DT to RPI Integration](dt-rpi-integration.md) for the full handoff protocol.
 

@@ -7,12 +7,12 @@ description: "Primary evidence artifact template for rpi-research"
 
 Fill every `{{placeholder}}`. Update this file continuously during research, not once at the end. Sections wrapped in `<!-- <per_alternative> -->` and `<!-- <per_wave> -->` comments repeat, one block per evaluated alternative or research wave. Evaluate alternatives when the design space and requested output mode call for them. Delete optional sections marked `(when applicable)` that do not apply, and omit the guidance comments in the actual document.
 
-| Field              | Value                                                                 |
-|--------------------|-----------------------------------------------------------------------|
-| Date               | {{YYYY-MM-DD}}                                                        |
-| Researcher / agent | {{skill or agent name}}                                               |
+| Field              | Value                                                                    |
+|--------------------|--------------------------------------------------------------------------|
+| Date               | {{YYYY-MM-DD}}                                                           |
+| Researcher / agent | {{skill or agent name}}                                                  |
 | Status             | {{In progress \| Complete \| Partial \| Blocked \| Needs clarification}} |
-| Artifact path      | .copilot-tracking/research/{{YYYY-MM-DD}}/{{task_slug}}-research.md |
+| Artifact path      | .copilot-tracking/research/{{YYYY-MM-DD}}/{{task_slug}}-research.md      |
 
 ## Research Brief
 
@@ -29,15 +29,15 @@ Fill every `{{placeholder}}`. Update this file continuously during research, not
 
 <!-- Confirm scope before spending budget. If a required field is missing and blocks progress, ask the smallest useful batch of clarifying questions, then proceed. Budgets are task-specific guidance, not caps. -->
 
-| Field | Value |
-|-------|-------|
-| Research question(s) | {{primary_question}} |
-| Codebase scope | {{repos / paths / modules in scope, or "none"}} |
-| External scope | {{domains / doc sets / "open web", or "none"}} |
-| Task-specific budget / deadline | {{caller-supplied budget or evidence-based budget with rationale}} |
-| Budget adjustment trigger | {{what evidence, uncertainty, or constraint would justify changing the budget}} |
-| Edits allowed during research? | no, research-only |
-| Resolved evidence root | {{.copilot-tracking/ default, or the trusted sandbox / caller-owned root used}} |
+| Field                                | Value                                                                                                              |
+|--------------------------------------|--------------------------------------------------------------------------------------------------------------------|
+| Research question(s)                 | {{primary_question}}                                                                                               |
+| Codebase scope                       | {{repos / paths / modules in scope, or "none"}}                                                                    |
+| External scope                       | {{domains / doc sets / "open web", or "none"}}                                                                     |
+| Task-specific budget / deadline      | {{caller-supplied budget or evidence-based budget with rationale}}                                                 |
+| Budget adjustment trigger            | {{what evidence, uncertainty, or constraint would justify changing the budget}}                                    |
+| Edits allowed during research?       | no, research-only                                                                                                  |
+| Resolved evidence root               | {{.copilot-tracking/ default, or the trusted sandbox / caller-owned root used}}                                    |
 | Known constraints / excluded sources | {{versions, licenses, sources to avoid, or research-only / no-handoff / analysis / audit / comparison boundaries}} |
 
 ## Extension Registry and Provenance
@@ -46,21 +46,21 @@ Fill every `{{placeholder}}`. Update this file continuously during research, not
 
 * Precedence: platform and host safety; caller scope and criteria; matching repository instructions and enforced schemas; rpi-research contract; domain skills and specialists; examples and preferences.
 
-| Kind | Candidate | Match and provenance | Scoped authority or declared contract | Selected / skipped reason |
-|------|-----------|----------------------|----------------------------------------|---------------------------|
-| Instruction | {{instruction_filename_or_none}} | {{applyTo match against inputs or evidence path}} | {{criteria or schema added}} | {{selected_or_skipped_reason}} |
-| Skill | {{skill_name_or_none}} | {{semantic topic or domain match}} | {{on-demand knowledge used}} | {{selected_or_skipped_reason}} |
-| Research specialist | {{stable_agent_name_or_none}} | {{routing-description match and host visibility}} | {{declared tools and output-contract fit}} | {{selected_or_skipped_reason}} |
+| Kind                | Candidate                        | Match and provenance                              | Scoped authority or declared contract      | Selected / skipped reason      |
+|---------------------|----------------------------------|---------------------------------------------------|--------------------------------------------|--------------------------------|
+| Instruction         | {{instruction_filename_or_none}} | {{applyTo match against inputs or evidence path}} | {{criteria or schema added}}               | {{selected_or_skipped_reason}} |
+| Skill               | {{skill_name_or_none}}           | {{semantic topic or domain match}}                | {{on-demand knowledge used}}               | {{selected_or_skipped_reason}} |
+| Research specialist | {{stable_agent_name_or_none}}    | {{routing-description match and host visibility}} | {{declared tools and output-contract fit}} | {{selected_or_skipped_reason}} |
 
 ## User Participation and Research Decisions
 
 <!-- Use vscode_askQuestions only when answers materially change research. Batch a small number of decision-relevant questions, prefer fixed options plus freeform where useful, do not request secrets, and continue when interaction is sufficient, declined, unavailable, or unnecessary. Write the record before continuing. -->
 
-| Checkpoint | Questions or no-interaction rationale | Answers / unanswered | Resulting decision or selected further research |
-|------------|----------------------------------------|----------------------|-------------------------------------------------|
-| Intake | {{topic_scope_criteria_or_priority_questions_or_rationale}} | {{answers_or_unanswered}} | {{resulting_scope_or_priority_decision}} |
-| Convergence | {{further_research_defer_or_stop_question_or_rationale}} | {{answers_or_unanswered}} | {{selected_items_deferred_items_or_stop_decision}} |
-| Walkthrough | {{researched_items_or_questions_to_walk_through_or_rationale}} | {{answers_or_unanswered}} | {{selected_navigable_items_or_no_walkthrough}} |
+| Checkpoint  | Questions or no-interaction rationale                          | Answers / unanswered      | Resulting decision or selected further research    |
+|-------------|----------------------------------------------------------------|---------------------------|----------------------------------------------------|
+| Intake      | {{topic_scope_criteria_or_priority_questions_or_rationale}}    | {{answers_or_unanswered}} | {{resulting_scope_or_priority_decision}}           |
+| Convergence | {{further_research_defer_or_stop_question_or_rationale}}       | {{answers_or_unanswered}} | {{selected_items_deferred_items_or_stop_decision}} |
+| Walkthrough | {{researched_items_or_questions_to_walk_through_or_rationale}} | {{answers_or_unanswered}} | {{selected_navigable_items_or_no_walkthrough}}     |
 
 ## Scope and Success Criteria
 
@@ -147,9 +147,9 @@ Cite these IDs from findings, alternatives, decisions, readiness, open questions
 
 ## Findings Mapped to Questions and Evidence
 
-| Question | Finding | Evidence IDs | Confidence | Decision or readiness implication |
-|----------|---------|--------------|------------|-----------------------------------|
-| Q1 | {{finding_summary}} | {{C1, W1}} | {{high/medium/low}} | {{what_this_changes_or_leaves_open}} |
+| Question | Finding             | Evidence IDs | Confidence          | Decision or readiness implication    |
+|----------|---------------------|--------------|---------------------|--------------------------------------|
+| Q1       | {{finding_summary}} | {{C1, W1}}   | {{high/medium/low}} | {{what_this_changes_or_leaves_open}} |
 
 ## Key Discoveries
 
@@ -218,21 +218,21 @@ Flow diagram (when a multi-component flow is involved):
 
 ## Current Decisions
 
-| Decision | Status (proposed / confirmed / deferred / superseded) | Owner / source (user / evidence / constraint) | Rationale | Evidence IDs | Implications |
-|----------|-------------------------------------------------------|------------------------------------------------|-----------|--------------|--------------|
-| {{decision}} | {{status}} | {{owner_or_source}} | {{rationale}} | {{C1, W1}} | {{scope_plan_or_risk_implication}} |
+| Decision     | Status (proposed / confirmed / deferred / superseded) | Owner / source (user / evidence / constraint) | Rationale     | Evidence IDs | Implications                       |
+|--------------|-------------------------------------------------------|-----------------------------------------------|---------------|--------------|------------------------------------|
+| {{decision}} | {{status}}                                            | {{owner_or_source}}                           | {{rationale}} | {{C1, W1}}   | {{scope_plan_or_risk_implication}} |
 
 ## Unresolved Decisions
 
-| Decision | Smallest evidence or answer needed | Owner | Impact | Blocker status |
-|----------|------------------------------------|-------|--------|----------------|
+| Decision     | Smallest evidence or answer needed     | Owner                                  | Impact     | Blocker status                       |
+|--------------|----------------------------------------|----------------------------------------|------------|--------------------------------------|
 | {{decision}} | {{minimal_missing_evidence_or_answer}} | {{user / research / downstream owner}} | {{impact}} | {{blocking / important / follow-up}} |
 
 ## Potential Next Research
 
-| Priority | Research item | Expected value | Trigger | Selected? | Related questions / evidence |
-|----------|---------------|----------------|---------|-----------|------------------------------|
-| {{H/M/L}} | {{next_research_item_or_none}} | {{why_it_matters}} | {{source_gap_or_decision_trigger}} | {{yes / no / deferred}} | {{Q1; C1, W1}} |
+| Priority  | Research item                  | Expected value     | Trigger                            | Selected?               | Related questions / evidence |
+|-----------|--------------------------------|--------------------|------------------------------------|-------------------------|------------------------------|
+| {{H/M/L}} | {{next_research_item_or_none}} | {{why_it_matters}} | {{source_gap_or_decision_trigger}} | {{yes / no / deferred}} | {{Q1; C1, W1}}               |
 
 ## Planning Readiness
 

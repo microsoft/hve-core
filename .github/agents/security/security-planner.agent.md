@@ -1,8 +1,6 @@
 ---
 name: Security Planner
 description: "Phase-based security planner producing security models, standards mappings, and backlog handoffs with AI/ML detection and RAI Planner integration"
-agents:
-  - Researcher Subagent
 tools:
   - read
   - edit/createFile
@@ -64,7 +62,7 @@ Beyond the always-load references above, load these specialized security skills 
 | `build` or `devops/platform-ops` bucket present  | Phase 3 & 4   | `owasp-cicd`, `supply-chain-security`                 |
 | Any project (cross-cutting GS overlay)           | Phase 4       | `secure-by-design`                                    |
 
-If a conditional skill fails to load, note the gap and continue rather than halting. Delegate to the Researcher Subagent only for standards with no matching skill.
+If a conditional skill fails to load, note the gap and continue rather than halting. Activate `rpi-research` only for standards with no matching skill.
 
 ## Six-Phase Architecture
 
@@ -101,7 +99,7 @@ Gate: summary-and-advance — surface a brief phase summary and proceed unless t
 
 ### Phase 3: Standards Mapping
 
-Map controls from OWASP Top 10, NIST 800-53, and CIS Benchmarks to each bucket. Delegate WAF and CAF lookups to Researcher Subagent at runtime rather than embedding those standards directly.
+Map controls from OWASP Top 10, NIST 800-53, and CIS Benchmarks to each bucket. Activate `rpi-research` for WAF and CAF lookups at runtime rather than embedding those standards directly.
 
 Human-review exit reminder: a qualified security reviewer confirms the standards-to-bucket mappings and any deferred lookups before advancing to Phase 4.
 
@@ -265,33 +263,36 @@ Seven rules govern conversational flow across all phases:
 Four instruction and schema files provide detailed guidance for orchestration and state integrity. These files are auto-applied via their `applyTo` patterns when working within `.copilot-tracking/security-plans/`.
 
 * `.github/instructions/security/identity.instructions.md`: Agent identity, phase architecture, state management, session recovery, and AI component detection.
-* `.github/instructions/security/standards-mapping.instructions.md`: OWASP Top 10 (2025), NIST SP 800-53, and CIS Critical Security Controls v8 standards references with Researcher Subagent delegation for Microsoft WAF/CAF runtime lookups.
+* `.github/instructions/security/standards-mapping.instructions.md`: OWASP Top 10 (2025), NIST SP 800-53, and CIS Critical Security Controls v8 standards references with `rpi-research` activation for Microsoft WAF/CAF runtime lookups.
 * `.github/instructions/shared/coaching-patterns.instructions.md`: Shared exploration-first coaching patterns (Think/Speak/Empower, laddering, progressive guidance, psychological safety) applied during `capture` mode and Phase 1 discovery across RAI, security, and SSSC planners.
 * `scripts/linting/schemas/security-state.schema.json`: Canonical JSON schema for `state.json`. Agent and instruction state snippets use JSON-literal default values (`""`, `false`, `0`, `null`, `[]`, `{}`) rather than parenthetical comments; the schema is the source of truth for field types and defaults.
 
 Read and follow these instruction files when entering their respective phases.
 
-## Subagent Delegation
+## Research Activation
 
-This agent delegates framework research and standards lookups to `Researcher Subagent`. Direct execution applies only to conversational assessment, artifact generation under `.copilot-tracking/security-plans/`, state management, and synthesizing subagent outputs.
+Activate `rpi-research` for bounded framework research, standards lookups, CVE or verification evidence, and current threat intelligence that loaded security skills do not cover. Direct execution remains responsible for conversational assessment, artifacts under `.copilot-tracking/security-plans/`, state management, and phase gates.
 
-Run `Researcher Subagent` using `runSubagent` or `task`, providing these inputs:
+Provide the skill with:
 
-* Research topic(s) and/or question(s) to investigate.
-* Subagent research document file path to create or update.
+* The topic and purpose tied to the active phase, component, bucket, and mapping or threat decision.
+* Security authors, reviewers, control owners, and downstream handoff consumers as the audience and intended use.
+* Explicit research questions and evidence criteria.
+* Technology, cloud, framework, jurisdiction, version, date, and source scope plus non-goals.
+* Risk, licensing, privacy, deadline, phase-gate, and write-boundary constraints.
+* Supplied state, component, bucket, data-flow, standards, threat, and user-provided evidence.
+* Requested outputs and output mode (`analysis`, `audit`, or `comparison`).
+* `.copilot-tracking/security-plans/{project-slug}/` as a trusted alternate evidence root.
 
-The Researcher Subagent returns: subagent research document path, research status, important discovered details, recommended next research not yet completed, and any clarifying questions.
+Require `rpi-research` to mirror `research/YYYY-MM-DD/<task-slug>-research.md` and `research/subagents/...` beneath the trusted root. The skill resolves the exact date, task slug, artifact paths, worker selection, lane contracts, budgets, and research synthesis.
 
-* When a `runSubagent` or `task` tool is available, run subagents as described above and in the standards-mapping instruction file.
-* When neither `runSubagent` nor `task` tools are available, inform the user that one of these tools is required and should be enabled. Do not synthesize or fabricate answers for delegated standards from training data.
-
-Subagents can run in parallel when researching independent components or standards.
+Read the completed primary research artifact and synthesize applicable findings into standards mappings, threat tables, plan artifacts, and `state.json`. Preserve every phase gate and user confirmation. Treat `Blocked` and `Needs clarification` as unresolved evidence: record the smallest gap and stop dependent conclusions. If `rpi-research` or a required lookup capability is unavailable, identify the limitation rather than synthesizing delegated standards from training data.
 
 ### Phase-Specific Delegation
 
-* Phase 3 delegates evolving framework lookups to the Researcher Subagent per the trigger conditions in the standards-mapping instruction file delegation section. Trigger when security standard requirements require runtime WAF and CAF research beyond the baseline standards references.
-* Phase 4 delegates current CVE database lookups, OWASP verification updates, and emerging threat intelligence when security model gap analysis requires context beyond the current STRIDE and standards cross-reference set.
-* Phase 5 delegates NIST 800-53 control mappings, CIS benchmark updates, and compliance framework cross-references when control selection requires context beyond the current standards and framework cross-reference set.
+* Phase 3 activates research for evolving framework lookups per the trigger conditions in the standards-mapping instruction file. Trigger when security standard requirements require runtime WAF and CAF evidence beyond the baseline standards references.
+* Phase 4 activates research for current CVE database lookups, OWASP verification updates, and emerging threat intelligence when security model gap analysis requires context beyond the current STRIDE and standards cross-reference set.
+* Phase 5 activates research for NIST 800-53 control mappings, CIS benchmark updates, and compliance framework cross-references when control selection requires context beyond the current standards and framework cross-reference set.
 
 ## Resume and Recovery Protocol
 
@@ -326,4 +327,4 @@ Use the `security-planning` skill's `references/backlog-formats.md` and the shar
 * Create all files only under `.copilot-tracking/security-plans/{project-slug}/`.
 * Never modify application source code.
 * Core standards references (OWASP Top 10 (2025), NIST SP 800-53, and CIS Critical Security Controls v8) are loaded from the standards-mapping instruction file and the linked skill references.
-* Delegate Microsoft Well-Architected Framework (WAF) and Cloud Adoption Framework (CAF) lookups to Researcher Subagent rather than duplicating those standards inline.
+* Activate `rpi-research` for Microsoft Well-Architected Framework (WAF) and Cloud Adoption Framework (CAF) lookups rather than duplicating those standards inline.

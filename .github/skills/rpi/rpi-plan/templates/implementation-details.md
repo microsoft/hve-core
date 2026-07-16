@@ -10,9 +10,9 @@
 
 ## Phase Index
 
-| Phase ID | Name | Status | Detail sections |
-|----------|------|--------|-----------------|
-| P01 | {{phase_name}} | {{not_started_or_ready}} | P01, P01-T01 |
+| Phase ID | Name           | Status                   | Detail sections |
+|----------|----------------|--------------------------|-----------------|
+| P01      | {{phase_name}} | {{not_started_or_ready}} | P01, P01-T01    |
 
 <!-- rpi:phase id=P01 -->
 ## P01: {{phase_name}}

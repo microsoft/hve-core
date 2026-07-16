@@ -3,13 +3,16 @@
   "description": "Design Thinking coaching identity, quality constraints, and methodology skills for AI-enhanced design thinking across nine methods",
   "version": "3.3.101",
   "agents": [
-    "agents/design-thinking/"
+    "agents/design-thinking/",
+    "agents/hve-core/",
+    "agents/hve-core/subagents/"
   ],
   "commands": [
     "commands/design-thinking/"
   ],
   "skills": [
     "skills/design-thinking/",
+    "skills/rpi/",
     "skills/shared/"
   ]
 }

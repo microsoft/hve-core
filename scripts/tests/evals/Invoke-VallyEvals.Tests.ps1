@@ -645,7 +645,7 @@ Describe 'VallyRunner module' -Tag 'Unit' {
             $counts = Get-VallySpecBacklinkCount -Index @{
                 coverage = @{
                     'skill:pr-reference' = @('specs/shared.yaml')
-                    'agent:task-research' = @('specs/shared.yaml')
+                    'agent:sample-agent' = @('specs/shared.yaml')
                 }
             }
             $counts['specs/shared.yaml'] | Should -Be 2
@@ -779,12 +779,12 @@ stimuli:
   - name: s1
     prompt: hi
     tags:
-      agent: task-research
+            agent: sample-agent
 '@
         $artifacts = @(
-            @{ kind = 'agent'; artifactId = 'task-research'; path = '.github/agents/hve-core/task-research.agent.md'; status = 'M' }
+                        @{ kind = 'agent'; artifactId = 'sample-agent'; path = '.github/agents/hve-core/sample-agent.agent.md'; status = 'M' }
         )
-        $fx = New-EvalFixture -Artifacts $artifacts -Specs @(@{ Name = 'agent-task-research.yaml'; Yaml = $spec })
+                $fx = New-EvalFixture -Artifacts $artifacts -Specs @(@{ Name = 'agent-sample-agent.yaml'; Yaml = $spec })
 
         $env:STUB_VALLY_MODE = 'fail'
         try {
@@ -864,11 +864,11 @@ stimuli:
   - name: s2
     prompt: hi
     tags:
-      agent: task-research
+      agent: sample-agent
 '@
         $artifacts = @(
             @{ kind = 'skill'; artifactId = 'pr-reference'; path = '.github/skills/shared/pr-reference/SKILL.md'; status = 'M' }
-            @{ kind = 'agent'; artifactId = 'task-research'; path = '.github/agents/hve-core/task-research.agent.md'; status = 'M' }
+            @{ kind = 'agent'; artifactId = 'sample-agent'; path = '.github/agents/hve-core/sample-agent.agent.md'; status = 'M' }
         )
         $fx = New-EvalFixture -Artifacts $artifacts -Specs @(@{ Name = 'shared.yaml'; Yaml = $spec })
 
@@ -896,7 +896,7 @@ stimuli:
         $summary.totals.specs | Should -Be 2
         $summary.perSpec.Count | Should -Be 2
         ($summary.perSpec.specPath | Sort-Object -Unique) | Should -Be 'shared.yaml'
-        ($summary.perSpec.tag | Sort-Object) | Should -Be @('agent=task-research', 'skill=pr-reference')
+        ($summary.perSpec.tag | Sort-Object) | Should -Be @('agent=sample-agent', 'skill=pr-reference')
     }
 
     It 'Totals assertions from unique spec runs instead of duplicated artifact rows' {
@@ -953,11 +953,11 @@ stimuli:
   - name: s1
     prompt: hi
     tags:
-      agent: task-research
+        agent: sample-agent
 '@
         $artifacts = @(
             @{ kind = 'skill'; artifactId = 'pr-reference'; path = '.github/skills/shared/pr-reference/SKILL.md'; status = 'M' }
-            @{ kind = 'agent'; artifactId = 'task-research'; path = '.github/agents/hve-core/task-research.agent.md'; status = 'M' }
+            @{ kind = 'agent'; artifactId = 'sample-agent'; path = '.github/agents/hve-core/sample-agent.agent.md'; status = 'M' }
         )
         $fx = New-EvalFixture -Artifacts $artifacts -Specs @(
             @{ Name = 'spec-a.yaml'; Yaml = $specA },
@@ -983,7 +983,7 @@ stimuli:
         $summary = Get-Content -LiteralPath $fx.SummaryPath -Raw | ConvertFrom-Json
         $summary.totals.failedSpecs | Should -Be 1
         ($summary.perArtifact | Where-Object { $_.artifactId -eq 'pr-reference' }).status | Should -Be 'pass'
-        ($summary.perArtifact | Where-Object { $_.artifactId -eq 'task-research' }).status | Should -Be 'fail'
+        ($summary.perArtifact | Where-Object { $_.artifactId -eq 'sample-agent' }).status | Should -Be 'fail'
     }
 
     It 'Filters stimulus artifacts to the requested kind' {
@@ -1001,11 +1001,11 @@ stimuli:
   - name: s1
     prompt: hi
     tags:
-      agent: task-research
+        agent: sample-agent
 '@
         $artifacts = @(
             @{ kind = 'skill'; artifactId = 'pr-reference'; path = '.github/skills/shared/pr-reference/SKILL.md'; status = 'M' }
-            @{ kind = 'agent'; artifactId = 'task-research'; path = '.github/agents/hve-core/task-research.agent.md'; status = 'M' }
+            @{ kind = 'agent'; artifactId = 'sample-agent'; path = '.github/agents/hve-core/sample-agent.agent.md'; status = 'M' }
         )
         $fx = New-EvalFixture -Artifacts $artifacts -Specs @(
             @{ Name = 'spec-a.yaml'; Yaml = $specA },
@@ -1074,10 +1074,10 @@ stimuli:
   - name: s1
     prompt: hi
     tags:
-      agent: task-research
+        agent: sample-agent
 '@
         $artifacts = @(
-            @{ kind = 'agent'; artifactId = 'task-research'; path = '.github/agents/hve-core/task-research.agent.md'; status = 'M' }
+            @{ kind = 'agent'; artifactId = 'sample-agent'; path = '.github/agents/hve-core/sample-agent.agent.md'; status = 'M' }
         )
         $fx = New-EvalFixture -Artifacts $artifacts -Specs @(@{ Name = 'agent.yaml'; Yaml = $spec })
 
@@ -1641,12 +1641,12 @@ stimuli:
   - name: stim-a
     prompt: hi
     tags:
-      agent: task-research
+            agent: sample-agent
 '@
         $fx = New-PerStimFixture `
             -SpecName 'legacy.yaml' `
             -SpecYaml $spec `
-            -Artifact @{ kind = 'agent'; artifactId = 'task-research'; path = '.github/agents/hve-core/task-research.agent.md'; status = 'M' }
+            -Artifact @{ kind = 'agent'; artifactId = 'sample-agent'; path = '.github/agents/hve-core/sample-agent.agent.md'; status = 'M' }
 
         $env:STUB_VALLY_MODE = 'fail'
 
@@ -1680,12 +1680,12 @@ stimuli:
   - name: stim-a
     prompt: hi
     tags:
-      agent: task-research
+            agent: sample-agent
 '@
         $fx = New-PerStimFixture `
             -SpecName 'no-advisory-aggregate-pass.yaml' `
             -SpecYaml $spec `
-            -Artifact @{ kind = 'agent'; artifactId = 'task-research'; path = '.github/agents/hve-core/task-research.agent.md'; status = 'M' }
+            -Artifact @{ kind = 'agent'; artifactId = 'sample-agent'; path = '.github/agents/hve-core/sample-agent.agent.md'; status = 'M' }
 
         $env:STUB_VALLY_MODE = 'mixed'
 
@@ -1718,12 +1718,12 @@ stimuli:
   - name: tool-trigger-list-scripts
     prompt: hi
     tags:
-      agent: task-research
+            agent: sample-agent
 '@
         $fx = New-PerStimFixture `
             -SpecName 'baseline-equivalence/stimuli.yml' `
             -SpecYaml $spec `
-            -Artifact @{ kind = 'agent'; artifactId = 'task-research'; path = '.github/agents/hve-core/task-research.agent.md'; status = 'M' }
+            -Artifact @{ kind = 'agent'; artifactId = 'sample-agent'; path = '.github/agents/hve-core/sample-agent.agent.md'; status = 'M' }
 
         $env:STUB_VALLY_MODE = 'fail'
 

@@ -2,7 +2,7 @@
 title: UX Designer
 description: Design Thinking coaching, user research, and prototyping workflows for UX Designers
 author: Microsoft
-ms.date: 2026-06-28
+ms.date: 2026-07-15
 ms.topic: tutorial
 keywords:
   - ux designer
@@ -87,13 +87,12 @@ them against desirability, feasibility, and viability criteria.
 
 ## Key Agents and Workflows
 
-| Agent                 | Purpose                                             | Docs                                                   |
+| Agent or skill        | Purpose                                             | Docs                                                   |
 |-----------------------|-----------------------------------------------------|--------------------------------------------------------|
 | **dt-coach**          | Full nine-method Design Thinking coaching           | [DT Coach](../../design-thinking/dt-coach.md)          |
 | **dt-learning-tutor** | Self-paced Design Thinking curriculum and exercises | [DT Tutor](../../design-thinking/dt-learning-tutor.md) |
 | **ux-ui-designer**    | UX/UI design guidance and interface review          | Agent file                                             |
-| **task-researcher**   | Deep technical and market research                  | [Task Researcher](../../rpi/task-researcher.md)        |
-| **memory**            | Session context and preference persistence          | Agent file                                             |
+| **rpi-research**      | Deep technical and market research                  | [RPI workflow](../../rpi/)                             |
 
 ## Tips
 

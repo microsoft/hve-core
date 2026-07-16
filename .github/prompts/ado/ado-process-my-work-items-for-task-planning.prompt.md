@@ -7,7 +7,7 @@ agent: ADO Backlog Manager
 
 Follow all instructions from #file:../../instructions/ado/ado-wit-planning.instructions.md for work item planning and planning file definitions.
 
-You WILL process work items from the planning file structure created by `ado-get-my-work-items.prompt.md` and generate a comprehensive task planning handoff file. This creates enriched work item documentation ready for task research and detailed implementation planning.
+You WILL process work items from the planning file structure created by `ado-get-my-work-items.prompt.md` and generate a comprehensive task planning handoff file. This creates enriched work item documentation ready for RPI research and detailed implementation planning.
 
 ## Inputs
 
@@ -23,8 +23,8 @@ Processing protocol:
 
 * Read planning files from specified directory (`work-items.md`, `artifact-analysis.md`, `planning-log.md`)
 * Enrich work items with repository context using semantic search and file analysis
-* Generate comprehensive `task-planning-logs.md` handoff file for task research and planning
-* Create structured handoff sections ready for `task-researcher.agent.md` and `task-planner.agent.md`
+* Generate comprehensive `task-planning-logs.md` handoff file for RPI research and planning
+* Create structured handoff sections ready for `rpi-research` and `rpi-plan`
 * Update planning-log.md with processing progress and discoveries
 * Provide conversational summary of processed work items and handoff file location
 
@@ -138,12 +138,12 @@ Processed: X / Total: Y work items
 Top Recommendation: WI {id}
 Additional Items: [WI IDs]
 
-## Task Researcher Handoff Payload
+## RPI Handoff Payload
 * Planning Directory: {planningDir}
 * Top Recommendation ID: {id}
 * All Processed IDs: [comma-separated list]
 * Processing Date: YYYY-MM-DD
-* Ready for: task-researcher.agent.md, task-planner.agent.md
+* Ready for: rpi-research, rpi-plan
 ```
 
 **Conversation Summary:**
@@ -152,7 +152,7 @@ Additional Items: [WI IDs]
 * Top recommendation selection rationale
 * Task planning handoff file location
 * Summary of repository context discoveries
-* Guidance for next steps with task research/planning tools
+* Guidance for next steps with RPI research and planning
 
 ## 6. Processing Protocol
 

@@ -20,7 +20,7 @@ Report that the repository template was used once generation completes.
 These sections require human verification. The agent does not modify them:
 
 * AI artifact contribution verification checkboxes (under the checklist section)
-* Prompt-builder review attestation checkbox (under type of change)
+* HVE Builder review attestation checkbox (under type of change)
 * Free-form other type checkbox (under type of change)
 
 ### Section Fill Guidance
@@ -67,7 +67,7 @@ Single authoritative reference for all checkbox handling in the PR template. All
 | Template Location                     | Checkbox Purpose                      | Handling            | Step   | Rule Summary                                                          |
 |---------------------------------------|---------------------------------------|---------------------|--------|-----------------------------------------------------------------------|
 | Type of Change                        | Auto-detected change type categories  | Agent (auto)        | Step 5 | Check via Change Type Detection pattern match                         |
-| Type of Change                        | Prompt-builder review attestation     | Manual              | N/A    | Human verification; never checked by agent                            |
+| Type of Change                        | HVE Builder review attestation        | Manual              | N/A    | Human verification; never checked by agent                            |
 | Type of Change                        | Free-form other type                  | Manual              | N/A    | Human verification; never checked by agent                            |
 | Security Considerations               | Sensitive data attestation            | Agent (auto)        | Step 5 | Check when customer data and secrets analysis both pass               |
 | Security Considerations               | Dependency security review            | Agent (conditional) | Step 5 | Evaluate only when dependency changes exist                           |

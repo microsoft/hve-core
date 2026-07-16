@@ -92,7 +92,7 @@ When a prompt, agent, or instruction uses `#file:`:
   * Lifecycle (`docs/hve-guide/lifecycle/`) - AI-assisted project lifecycle stage documentation.
   * Roles (`docs/hve-guide/roles/`) - Role-specific guides for engineers, leads, architects, and other contributors.
 * Getting Started (`docs/getting-started/`) - Installation and first workflow guides with multiple setup methods.
-* RPI (`docs/rpi/`) - Task researcher, planner, and implementor workflow documentation.
+* RPI (`docs/rpi/`) - Research, Plan, Implement, Review, and Follow-up workflow documentation.
 * Contributing (`docs/contributing/`) - Guidelines for instructions, prompts, agents, and AI artifacts.
 * Templates (`docs/templates/`) - Templates for custom agents, instructions, and prompts.
 
@@ -127,7 +127,6 @@ The `.copilot-tracking/` directory (gitignored) contains AI-assisted workflow ar
 * Sandbox (`.copilot-tracking/sandbox/`) - Prompt testing sandbox environments.
 * HVE Builder (`.copilot-tracking/hve-builder/`) - Prompt-engineering discovery, authoring, review, behavior-test, and validation evidence.
 * Documentation (`.copilot-tracking/documentation/`) - Documentation workflow session tracking.
-* Memory (`.copilot-tracking/memory/`) - Cross-session memory files.
 * Challenges (`.copilot-tracking/challenges/YYYY-MM-DD/`) - Challenge session Q&A logs, unresolved items, and scope records from `rpi-challenger` sessions.
 
 RPI and HVE Builder tracking records follow `.github/instructions/hve-core/copilot-tracking.instructions.md`; ADO, Jira, and GitHub backlog tracking follows its domain-specific instructions.
@@ -135,7 +134,7 @@ RPI and HVE Builder tracking records follow `.github/instructions/hve-core/copil
 ### Agents and Subagents
 
 By convention, custom agents are organized under `.github/agents/{collection-id}/`. Each collection typically places its agents in a dedicated subdirectory (e.g., `.github/agents/hve-core/`, `.github/agents/ado/`). Subagents are typically organized under `.github/agents/{collection-id}/subagents/`.
-Parent agents reference subagents using glob paths like `.github/agents/**/researcher-subagent.agent.md` so resolution works regardless of nesting depth.
+Parent agents reference subagents using glob paths like `.github/agents/**/code-review-functional.agent.md` so resolution works regardless of nesting depth.
 
 Collection manifests in `collections/` define bundles of agents, prompts, instructions, and skills:
 

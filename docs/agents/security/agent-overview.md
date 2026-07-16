@@ -11,7 +11,7 @@ tags:
   - agents
   - security
 author: Microsoft
-ms.date: 2026-06-27
+ms.date: 2026-07-15
 ms.topic: reference
 estimated_reading_time: 7
 ---
@@ -24,7 +24,7 @@ The Security Planner is a phase-based conversational agent that produces securit
 flowchart TD
   subgraph Agent
     SP["Security Planner"]
-    RS["Researcher Subagent"]
+    RR["rpi-research"]
   end
 
   subgraph State
@@ -38,7 +38,7 @@ flowchart TD
     I3["planner base (shared)"]
   end
 
-  SP -->|"delegates"| RS
+  SP -->|"activates standards research"| RR
   SP -->|"reads/writes"| SJ
   SP -->|"generates"| PF
   SP -->|"follows"| I1 & I2 & I3
@@ -112,7 +112,7 @@ A five-step post-summarization recovery handles cases where conversation context
 
 * All generated files are placed under `.copilot-tracking/security-plans/{project-slug}/`.
 * The agent never modifies source code or files outside its tracking directory.
-* The Researcher Subagent is dispatched for runtime standards and framework lookups during Phase 3, covering WAF and CAF as well as MCSB, PCI-DSS, S2C2F, SLSA, SOC 2, HIPAA, and FedRAMP when those are in scope.
+* The planner activates `rpi-research` for runtime standards and framework lookups during Phase 3, covering WAF and CAF as well as MCSB, PCI-DSS, S2C2F, SLSA, SOC 2, HIPAA, and FedRAMP when those are in scope.
 * When AI/ML components were detected, Phase 6 recommends the RAI Planner and suggests the `from-security-plan` entry mode pointed at the Security Planner `state.json`, but the handoff is marked dispatched only once the user starts it.
 
 ## Related Files

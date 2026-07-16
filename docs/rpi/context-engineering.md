@@ -3,7 +3,7 @@ title: "Context Engineering: Why AI Context Management Matters"
 description: Understand how long RPI lifecycles accumulate context and how durable artifacts support deliberate resumption
 sidebar_position: 3
 author: Microsoft
-ms.date: 2026-07-14
+ms.date: 2026-07-15
 ms.topic: concept
 keywords:
   - context engineering
@@ -72,19 +72,19 @@ Two mechanisms work reliably:
 
 ### What to Open at Each Transition
 
-| Transition or resumption point | Open or Reference                                                                                                                                |
-|-------------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------|
-| Research, when it runs → Plan | `.copilot-tracking/research/{{YYYY-MM-DD}}/{{task_slug}}-research.md`                                                                           |
-| Plan → Implement              | `.copilot-tracking/plans/{{YYYY-MM-DD}}/{{task_slug}}-plan.md`, `.copilot-tracking/details/{{YYYY-MM-DD}}/{{task_slug}}-phase-details.md`, and `.copilot-tracking/reviews/plans/{{YYYY-MM-DD}}/{{task_slug}}-plan-critique.md` |
-| Implement → Review            | `.copilot-tracking/changes/{{YYYY-MM-DD}}/{{task_slug}}-changes.md` with the plan, details, and critique                                       |
-| Review → Follow-up            | `.copilot-tracking/reviews/logs/{{YYYY-MM-DD}}/{{task_slug}}-review.md`                                                                         |
+| Transition or resumption point | Open or Reference                                                                                                                                                                                                              |
+|--------------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| Research, when it runs → Plan  | `.copilot-tracking/research/{{YYYY-MM-DD}}/{{task_slug}}-research.md`                                                                                                                                                          |
+| Plan → Implement               | `.copilot-tracking/plans/{{YYYY-MM-DD}}/{{task_slug}}-plan.md`, `.copilot-tracking/details/{{YYYY-MM-DD}}/{{task_slug}}-phase-details.md`, and `.copilot-tracking/reviews/plans/{{YYYY-MM-DD}}/{{task_slug}}-plan-critique.md` |
+| Implement → Review             | `.copilot-tracking/changes/{{YYYY-MM-DD}}/{{task_slug}}-changes.md` with the plan, details, and critique                                                                                                                       |
+| Review → Follow-up             | `.copilot-tracking/reviews/logs/{{YYYY-MM-DD}}/{{task_slug}}-review.md`                                                                                                                                                        |
 
 When resuming a plan or phase-details artifact, navigate by the stable task ID, `Pxx`, `Pxx-Txx`, headings, and `<!-- rpi:... -->` markers such as `<!-- rpi:phase id=P01 -->` or `<!-- rpi:task id=P01-T01 -->`.
 
 When multiple artifact sets exist, open the relevant file or reference its path explicitly so the resumed work uses the intended task identity.
 
 > [!TIP]
-> For longer workflows spanning multiple sessions, resume from the RPI task artifacts first. A **memory** record or `/checkpoint` can supplement file paths, decisions, and progress, but it does not replace the plan, details, changes, or review evidence.
+> For longer workflows spanning multiple sessions, resume from the dated RPI artifacts and stable task identifiers. These files preserve evidence and progress without relying on chat history.
 
 ## The /compact Alternative
 
@@ -103,16 +103,16 @@ When to use `/clear` instead:
 * When switching to a different task entirely
 * When agent behavior has visibly degraded
 
-For session persistence, resume from the dated RPI artifacts rather than relying on `/compact`. A Memory Agent (`/checkpoint`) record can supplement that durable task evidence when you need session notes or a compact resume summary.
+For session persistence, resume from the dated RPI artifacts rather than relying on `/compact`. Open or reference only the files needed for the next action so the fresh context remains focused.
 
 The tradeoff is precision. `/compact` summaries lose detail because the model decides what to keep and what to discard. Critical nuances from earlier in the conversation may not survive the summarization.
 
-| Command       | Effect                             | Use When                             |
-|---------------|------------------------------------|--------------------------------------|
-| `/clear`      | Removes all conversation history   | Changing concepts, switching tasks   |
-| `/compact`    | Summarizes history, reduces tokens | Mid-phase, conversation growing long |
-| `/checkpoint` | Persists state to disk             | Between sessions, preserving context |
-| New chat      | Fresh conversation, new context    | Starting unrelated work              |
+| Command or action | Effect                             | Use when                             |
+|-------------------|------------------------------------|--------------------------------------|
+| `/clear`          | Removes all conversation history   | Changing concepts, switching tasks   |
+| `/compact`        | Summarizes history, reduces tokens | Mid-phase, conversation growing long |
+| New chat          | Starts with a fresh context        | Starting unrelated work              |
+| Open artifacts    | Restores selected durable evidence | Resuming an existing RPI task        |
 
 ## Long-Lifecycle Context
 
@@ -133,18 +133,18 @@ Context degradation produces observable symptoms. Catching them early prevents w
 
 ## Common Pitfalls
 
-| Pitfall                                         | What Happens                                      | Solution                                                       |
-|-------------------------------------------------|---------------------------------------------------|----------------------------------------------------------------|
-| Reusing a long lifecycle conversation for a new task | Recency bias bypasses readiness and evidence checks | Reset context, then begin from the new task's evidence         |
-| Long accumulated sessions                       | Token budget is consumed by history               | Use `/compact` or start a new chat                             |
-| Mixing unrelated tasks                          | Cross-contamination between task contexts         | Use `/clear` and resume from the relevant durable artifacts    |
-| Ignoring degradation signs                      | Progressively worse output quality                | Recognize the signs and reset or compact context deliberately  |
+| Pitfall                                              | What Happens                                        | Solution                                                      |
+|------------------------------------------------------|-----------------------------------------------------|---------------------------------------------------------------|
+| Reusing a long lifecycle conversation for a new task | Recency bias bypasses readiness and evidence checks | Reset context, then begin from the new task's evidence        |
+| Long accumulated sessions                            | Token budget is consumed by history                 | Use `/compact` or start a new chat                            |
+| Mixing unrelated tasks                               | Cross-contamination between task contexts           | Use `/clear` and resume from the relevant durable artifacts   |
+| Ignoring degradation signs                           | Progressively worse output quality                  | Recognize the signs and reset or compact context deliberately |
 
 ## Next Steps
 
 * [Why RPI?](why-rpi): the psychology behind phase separation
 * [RPI Overview](./): complete workflow guide
-* [Using Tasks Together](using-together): phase transitions and handoffs
+* [Using RPI Together](using-together): phase transitions and handoffs
 
 ---
 

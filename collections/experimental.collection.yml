@@ -13,6 +13,9 @@ items:
     kind: agent
   - path: .github/agents/experimental/subagents/pptx-subagent.agent.md
     kind: agent
+  - path: .github/agents/hve-core/subagents/rpi-researcher.agent.md
+    kind: agent
+    maturity: stable
   # Skills
   - path: .github/skills/experimental/caveman
     kind: skill
@@ -31,6 +34,9 @@ items:
   - path: .github/skills/experimental/mural
     kind: skill
     maturity: experimental
+  - path: .github/skills/rpi/rpi-research
+    kind: skill
+    maturity: stable
   # Prompts
   - path: .github/prompts/experimental/cspell-config.prompt.md
     kind: prompt

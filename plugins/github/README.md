@@ -25,7 +25,7 @@ Manage GitHub issue backlogs with agents for discovery, triage, sprint planning,
 | **github-discover-issues** | Discover GitHub issues via user queries, artifact analysis, or search and produce planning files                    |
 | **github-execute-backlog** | Execute a GitHub backlog plan by creating, updating, linking, closing, and commenting on issues from a handoff file |
 | **github-sprint-plan**     | Plan a GitHub milestone sprint by analyzing issue coverage, gaps, and prioritized backlog                           |
-| **github-suggest**         | Resume GitHub backlog management workflow after session restore                                                     |
+| **github-suggest**         | Resume GitHub backlog management from its durable planning artifacts                                                |
 | **github-triage-issues**   | Triage untriaged GitHub issues with label suggestions, milestone assignment, and duplicate detection                |
 
 ### Instructions

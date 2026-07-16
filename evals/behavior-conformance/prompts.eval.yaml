@@ -11,78 +11,6 @@ defaults:
   executor: copilot-sdk
 
 stimuli:
-  - name: prompt-task-research-conformance
-    prompt: |
-      Invoke the `task-research` prompt with topic="evaluate retry strategies
-      for the eval runner". Produce the standard research handoff.
-    tags:
-      category: behavior-conformance
-      prompt: task-research
-      advisory: "true"
-    graders:
-      - type: output-matches
-        name: agent-attribution
-        config:
-          pattern: "(?i)\\btask\\s+researcher\\b|task-research"
-      - type: output-matches
-        name: scope-language
-        config:
-          pattern: "(?i)research|implementation\\s+alternatives|tracking"
-
-  - name: prompt-task-plan-conformance
-    prompt: |
-      Invoke the `task-plan` prompt against an existing research document
-      under `.copilot-tracking/research/`. Produce an implementation plan.
-    tags:
-      category: behavior-conformance
-      prompt: task-plan
-      advisory: "true"
-    graders:
-      - type: output-matches
-        name: agent-attribution
-        config:
-          pattern: "(?i)\\btask\\s+planner\\b|task-plan"
-      - type: output-matches
-        name: scope-language
-        config:
-          pattern: "(?i)implementation\\s+plan|planning|deferred|task-plan"
-
-  - name: prompt-task-implement-conformance
-    prompt: |
-      Invoke the `task-implement` prompt with `phaseStop=true`. Execute the
-      first phase of the most recent plan in `.copilot-tracking/plans/`.
-    tags:
-      category: behavior-conformance
-      prompt: task-implement
-      advisory: "true"
-    graders:
-      - type: output-matches
-        name: agent-attribution
-        config:
-          pattern: "(?i)\\btask\\s+implementor\\b|task-implement|\\bplan\\b"
-      - type: output-matches
-        name: scope-language
-        config:
-          pattern: "(?i)\\bphase\\b|\\bstep\\b|implementation\\s+plan|task-implement|\\bplan\\b"
-
-  - name: prompt-task-review-conformance
-    prompt: |
-      Invoke the `task-review` prompt with scope="today". Produce a review
-      log with severity counts.
-    tags:
-      category: behavior-conformance
-      prompt: task-review
-      advisory: "true"
-    graders:
-      - type: output-matches
-        name: agent-attribution
-        config:
-          pattern: "(?i)\\btask\\s+reviewer\\b|task-review"
-      - type: output-matches
-        name: scope-language
-        config:
-          pattern: "(?i)review\\s+log|severity|scope|task-review"
-
   - name: prompt-security-review-conformance
     prompt: |
       Invoke the `security-review` prompt with mode=audit and
@@ -257,11 +185,11 @@ stimuli:
       - type: output-matches
         name: agent-attribution
         config:
-          pattern: "(?i)ADO\\s+backlog\\s+manager|task\\s+planner|ado-process-my-work-items-for-task-planning"
+          pattern: "(?i)ADO\\s+backlog\\s+manager|rpi-(research|plan)|ado-process-my-work-items-for-task-planning"
       - type: output-matches
         name: scope-language
         config:
-          pattern: "(?i)task\\s+plan|work\\s+item|handoff|plan"
+          pattern: "(?i)work\\s+item|handoff|rpi|research|plan"
 
   - name: prompt-ado-sprint-plan-conformance
     prompt: |
@@ -316,24 +244,6 @@ stimuli:
         name: scope-language
         config:
           pattern: "(?i)update|patch|field|work\\s+item|handoff"
-
-  - name: prompt-checkpoint-conformance
-    prompt: |
-      Invoke the `checkpoint` prompt with minimal arguments and explain how it
-      coordinates the workflow.
-    tags:
-      category: behavior-conformance
-      prompt: checkpoint
-      advisory: "true"
-    graders:
-      - type: output-matches
-        name: agent-attribution
-        config:
-          pattern: "(?i)memory|checkpoint|session"
-      - type: output-matches
-        name: scope-language
-        config:
-          pattern: "(?i)checkpoint|session|memory|state|save|resume"
 
   - name: prompt-cspell-config-conformance
     prompt: |
@@ -839,60 +749,6 @@ stimuli:
         config:
           pattern: "(?i)triage|label|duplicate|sprint|classify"
 
-  - name: prompt-prompt-analyze-conformance
-    prompt: |
-      Invoke the `prompt-analyze` prompt with minimal arguments and explain how it
-      coordinates the workflow.
-    tags:
-      category: behavior-conformance
-      prompt: prompt-analyze
-      advisory: "true"
-    graders:
-      - type: output-matches
-        name: agent-attribution
-        config:
-          pattern: "(?i)prompt\\s+builder|analyze"
-      - type: output-matches
-        name: scope-language
-        config:
-          pattern: "(?i)prompt|review|read-only|behavior|fidelity|report|hve-builder"
-
-  - name: prompt-prompt-build-conformance
-    prompt: |
-      Invoke the `prompt-build` prompt with minimal arguments and explain how it
-      coordinates the workflow.
-    tags:
-      category: behavior-conformance
-      prompt: prompt-build
-      advisory: "true"
-    graders:
-      - type: output-matches
-        name: agent-attribution
-        config:
-          pattern: "(?i)prompt\\s+builder|build"
-      - type: output-matches
-        name: scope-language
-        config:
-          pattern: "(?i)prompt|create|improve|write\\s+boundary|review|behavior|validation|hve-builder"
-
-  - name: prompt-prompt-refactor-conformance
-    prompt: |
-      Invoke the `prompt-refactor` prompt with minimal arguments and explain how it
-      coordinates the workflow.
-    tags:
-      category: behavior-conformance
-      prompt: prompt-refactor
-      advisory: "true"
-    graders:
-      - type: output-matches
-        name: agent-attribution
-        config:
-          pattern: "(?i)prompt\\s+builder|refactor"
-      - type: output-matches
-        name: scope-language
-        config:
-          pattern: "(?i)prompt|refactor|(?:preserve|preserving)|review|behavior|validation|hve-builder"
-
   - name: prompt-pull-request-conformance
     prompt: |
       Invoke the `pull-request` prompt with minimal arguments and explain how it
@@ -1193,7 +1049,7 @@ stimuli:
       - type: output-matches
         name: agent-attribution
         config:
-          pattern: "(?i)\\btask\\s+researcher\\b|graph-research|graphify"
+          pattern: "(?i)rpi-research|graph-research|graphify"
       - type: output-matches
         name: scope-language
         config:

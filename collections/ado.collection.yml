@@ -13,6 +13,11 @@ items:
     kind: agent
   - path: .github/agents/ado/ado-backlog-manager.agent.md
     kind: agent
+  # RPI Subagents
+  - path: .github/agents/hve-core/subagents/rpi-researcher.agent.md
+    kind: agent
+  - path: .github/agents/hve-core/subagents/rpi-planner.agent.md
+    kind: agent
   # Prompts
   - path: .github/prompts/ado/ado-create-pull-request.prompt.md
     kind: prompt
@@ -53,6 +58,12 @@ items:
     kind: instruction
   # Skills
   - path: .github/skills/shared/pr-reference
+    kind: skill
+  - path: .github/skills/rpi/rpi-research
+    kind: skill
+  - path: .github/skills/rpi/rpi-plan
+    kind: skill
+  - path: .github/skills/rpi/rpi-plan-critique
     kind: skill
 display:
   ordering: manual

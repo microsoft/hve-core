@@ -3,7 +3,7 @@ title: Using Workflows Together
 description: Connect discovery, triage, sprint planning, and execution into a complete backlog management pipeline
 sidebar_position: 7
 author: Microsoft
-ms.date: 2026-05-20
+ms.date: 2026-07-15
 ms.topic: tutorial
 keywords:
   - github backlog manager
@@ -46,26 +46,20 @@ All GitHub-facing comments (issue replies, label rationale, duplicate explanatio
 
 ## Session Persistence
 
-The GitHub Backlog Manager includes a **Save** button that captures workflow context to a memory file, enabling you to resume after a context reset or across sessions.
+GitHub backlog workflows persist resumable state in their own discovery,
+triage, sprint, handoff, and execution-log files under
+`.copilot-tracking/github-issues/`.
 
-### Save a Session
+To resume after `/clear` or in a new chat:
 
-Click **Save** in the GitHub Backlog Manager chat interface at any point during a backlog workflow. The memory agent creates a file at `.copilot-tracking/memory/YYYY-MM-DD/<description>-memory.md` containing:
-
-* Workflow state and current pipeline stage
-* Completed operations and key decisions
-* Next steps and pending handoff files
-* Repository scope and filter criteria
-
-### Resume a Session
-
-1. Start a new chat and type `/clear` to ensure a clean context.
-2. Type `/checkpoint continue <description>` to restore the saved session.
-3. The memory agent displays restored workflow state and next steps.
-4. Click **🚀 Continue with Backlog** to return to the GitHub Backlog Manager and continue where you left off.
+1. Start the GitHub Backlog Manager.
+2. Name or attach the latest planning or handoff artifact for the workflow.
+3. Review its completed operations, pending items, and next action.
+4. Continue from the first incomplete operation.
 
 > [!TIP]
-> Save before each `/clear` between pipeline stages to preserve discovery or triage notes that are not captured in the planning artifacts.
+> Confirm that each planning artifact is current before clearing context. The
+> workflow files, not conversation history, are the durable record.
 
 ## End-to-End Walkthrough
 

@@ -2,7 +2,7 @@
 title: ADO Backlog Manager
 description: Automated work item discovery, triage, sprint planning, and execution for Azure DevOps projects
 author: Microsoft
-ms.date: 2026-06-26
+ms.date: 2026-07-15
 ms.topic: concept
 keywords:
   - azure devops backlog manager
@@ -175,7 +175,10 @@ The agent provides handoff buttons for transitioning between workflows:
 | PRD      | PRD Planning    | Converting a requirements document to work items |
 | Build    | Build Info      | Checking pipeline status                         |
 | PR       | PR Creation     | Creating an Azure DevOps pull request            |
-| Save     | Memory          | Saving session state for later resumption        |
+
+Resume interrupted work from the ADO workflow's planning, handoff, and
+execution-log files. These artifacts record completed operations, pending
+items, and the next workflow action without a separate memory handoff.
 
 ## Next Steps
 

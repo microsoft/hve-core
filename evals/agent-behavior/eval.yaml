@@ -1027,26 +1027,6 @@ stimuli:
     config:
       pattern: (?i)(created|wrote|modified|edited|patched|added)\s+\S{0,40}(\.cs|\.py|\.ts|\.js|package\.json)
       negate: true
-- name: memory-class-recipe
-  prompt: |
-    Plan a memory consolidation pass: list session notes to promote to user memory and the phases for doing it safely. Write the plan under `.copilot-tracking/` and report the path.
-  tags:
-    category: agent-behavior
-    agent: memory
-  graders:
-  - type: output-matches
-    name: phase-marker-present
-    config:
-      pattern: (?im)(^\s*(#{2,3}\s|step\s+\d+|phase\s+\d+|\d+[.)])|\|\s*\d+\s*[—–-]|\bphases?\b)
-  - type: output-matches
-    name: tracking-file-write
-    config:
-      pattern: (?i)(/memories|\.copilot-tracking)
-  - type: output-matches
-    name: no-source-edit
-    config:
-      pattern: (?i)(created|wrote|modified|edited|patched|added)\s+\S{0,40}(\.cs|\.py|\.ts|\.js|package\.json)
-      negate: true
 - name: network-isa95-planner-class-recipe
   prompt: |
     Sketch an ISA-95 level-2-to-level-3 network plan for a single packaging line. List zones, conduits, and primary data flows in a structured document. Write the plan under `.copilot-tracking/` and report the path.
@@ -1245,28 +1225,6 @@ stimuli:
     config:
       pattern: (?i)(created|wrote|modified|edited|patched|added)\s+\S{0,40}(\.cs|\.py|\.ts|\.js|package\.json)
       negate: true
-- name: prompt-builder-class-recipe
-  prompt: Plan the creation of a new custom instruction file for "Rust testing standards" in research, draft, and validate phases, write the plan under `.copilot-tracking/`, and report the path.
-  environment:
-    skills:
-    - ../../.github/skills/hve-core/hve-builder
-  tags:
-    category: agent-behavior
-    agent: prompt-builder
-  graders:
-  - type: output-matches
-    name: phase-marker-present
-    config:
-      pattern: (?im)(^\s*(#{2,3}\s|step\s+\d+|phase\s+\d+|\d+[.)])|\|\s*\d+\s*[—–-]|\b(?:phases?|phased|stages?)\b|\bresearch\b.*\bdraft\b.*\bvalidat(?:e|ion)\b)
-  - type: output-matches
-    name: tracking-file-write
-    config:
-      pattern: (?i)\.copilot-tracking[-/\\]
-  - type: output-matches
-    name: no-source-edit
-    config:
-      pattern: (?i)(created|wrote|modified|edited|patched|added)\s+\S{0,40}(\.cs|\.py|\.ts|\.js|package\.json)
-      negate: true
 - name: rai-planner-class-recipe
   prompt: |
     Begin an RAI planning session for an AI feature that auto-generates customer support replies. List the next phases of the assessment. Write the planning state under `.copilot-tracking/rai-plans/` and report the path you wrote it to.
@@ -1369,45 +1327,6 @@ stimuli:
     name: plan-status-vocabulary
     config:
       pattern: (?i)(RISK|CAUTION|COVERED|NOT_APPLICABLE|plan[-_]?report[-_]?v1)
-- name: researcher-subagent-scope-acknowledgment
-  prompt: |
-    As a researcher subagent, investigate only the question "Which YAML keys
-    does `Build-AgentBehaviorSpec.ps1` require in a stimulus partial?" Do not
-    pursue tangential threads. Write your findings to a subagent research
-    document and report the path.
-  tags:
-    category: agent-behavior
-    advisory: "true"
-    agent: researcher-subagent
-  graders:
-  - type: output-matches
-    name: subagent-research-path
-    config:
-      pattern: (?i)\.copilot-tracking[-/\\]research[-/\\]subagents
-  - type: output-matches
-    name: scope-acknowledgment
-    config:
-      pattern: (?i)(scope|only|stop|do not pursue|original (question|scope)|tangential)
-- name: researcher-subagent-executive-summary
-  prompt: |
-    You are completing a researcher subagent invocation on the topic
-    "behavior-conformance stimulus authoring". Produce the chat response in the
-    executive-summary shape (file path pointer, status, bullet findings,
-    next-step checklist, optional clarifying questions, full-detail pointer)
-    and report the subagent file path you wrote.
-  tags:
-    category: agent-behavior
-    advisory: "true"
-    agent: researcher-subagent
-  graders:
-  - type: output-matches
-    name: response-shape-vocabulary
-    config:
-      pattern: (?i)(status|complete|blocked|finding|next|clarifying|full[- ]?detail)
-  - type: output-matches
-    name: subagent-research-path
-    config:
-      pattern: (?i)\.copilot-tracking[-/\\]research[-/\\]subagents
 - name: rpi-agent-class-recipe
   prompt: |
     Coach me through starting an RPI workflow for adding a "feature flags" service. Outline the research, planning, and implementation phases. Write the state under `.copilot-tracking/` and report the path.
@@ -1656,112 +1575,6 @@ stimuli:
     name: topic-coverage
     config:
       pattern: (?i)(architecture|monolith|sqlite|risk|strength|scalability|reliability)
-  - type: output-matches
-    name: no-source-edit
-    config:
-      pattern: (?i)(created|wrote|modified|edited|patched|added)\s+\S{0,40}(\.cs|\.py|\.ts|\.js|package\.json)
-      negate: true
-- name: task-implementor-edits-source
-  prompt: |
-    Implement a simple "hello world" function in a new file called `hello.py`.
-    Use proper Python conventions and add a docstring. After writing, state the
-    ruff or lint command you would run to validate it.
-  tags:
-    category: agent-behavior
-    agent: task-implementor
-  graders:
-  - type: output-matches
-    name: docstring-present
-    config:
-      pattern: (?i)(docstring|""")
-  - type: output-matches
-    name: source-edit-present
-    config:
-      pattern: (?i)(```python|created.*hello\.py|file:.*hello\.py)
-  - type: output-matches
-    name: lint-invocation
-    config:
-      pattern: (?i)(ruff|pylint|lint|format|validate)
-  - type: output-matches
-    name: scope-respect
-    config:
-      pattern: hello\.py
-- name: task-planner-class-recipe
-  prompt: |
-    Plan the implementation of a "forgot password" feature for a web app. Break it into phases with clear success criteria. Write the plan under `.copilot-tracking/plans/` and report the path.
-  tags:
-    category: agent-behavior
-    agent: task-planner
-  graders:
-  - type: output-matches
-    name: success-criteria
-    config:
-      pattern: (?i)success\s+criteria|criteria
-  - type: output-matches
-    name: phase-marker-present
-    config:
-      pattern: (?im)(^\s*(#{2,3}\s|step\s+\d+|phase\s+\d+|\d+[.)])|\|\s*\d+\s*[—–-]|\bphases?\b)
-  - type: output-matches
-    name: tracking-file-write
-    config:
-      pattern: (?i)\.copilot-tracking[-/\\]plans
-  - type: output-matches
-    name: no-source-edit
-    config:
-      pattern: (?i)(created|wrote|modified|edited|patched|added)\s+\S{0,40}(\.cs|\.py|\.ts|\.js|package\.json)
-      negate: true
-- name: task-researcher-produces-research-writeup
-  prompt: |
-    You are operating in an isolated sandbox with no repository checked out and
-    no subagents available. Do not attempt to clone, create, or set up a
-    repository, and do not delegate to subagents. Using only the notes provided
-    below, synthesize a structured research writeup.
-
-    Notes to synthesize (npm scripts that validate markdown in a repository):
-    - `npm run lint:md` runs markdownlint across all Markdown files.
-    - `npm run lint:md-links` checks Markdown for broken links.
-    - `npm run lint:frontmatter` validates YAML frontmatter against schemas.
-
-    Produce a structured writeup covering each script, what it validates, and
-    where it is wired into the codebase (the package.json scripts section).
-    Write your research file under `.copilot-tracking/research/` and tell me the
-    path you wrote it to. Limit the work to one pass.
-  tags:
-    category: agent-behavior
-    agent: task-researcher
-  graders:
-  - type: output-matches
-    name: structured-writeup
-    config:
-      pattern: (?i)(finding|summary|writeup|section|where|wired|location)
-  - type: output-matches
-    name: tracking-file-write
-    config:
-      pattern: (?i)\.copilot-tracking[-/\\]research
-  - type: output-matches
-    name: topic-coverage
-    config:
-      pattern: (?i)(npm|script|lint|markdown|validate)
-  - type: output-matches
-    name: no-source-edit
-    config:
-      pattern: (?i)(created|wrote|modified|edited|patched|added)\s+\S{0,40}(\.cs|\.py|\.ts|\.js|\.go|\.rs|\.java)
-      negate: true
-- name: task-reviewer-class-recipe
-  prompt: |
-    Review this implementation summary: "Phase 3 complete. Added forgot-password endpoint, no tests written, no validation run." Produce review findings with severity levels.
-  tags:
-    category: agent-behavior
-    agent: task-reviewer
-  graders:
-  - type: output-matches
-    name: findings-table-present
-    config:
-      pattern: (?i)(\|.*severity.*\||finding|issue|concern|recommendation)
-  - type: output-matches
-    name: severity-vocab
-    config:
-      pattern: (?i)(critical|high|medium|low|info|severity|warning)
   - type: output-matches
     name: no-source-edit
     config:

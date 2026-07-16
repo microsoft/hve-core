@@ -3,7 +3,6 @@ name: PRD Builder
 description: "Product Requirements Document builder with guided Q&A and references"
 agents:
   - PRD Quality Reviewer
-  - Researcher Subagent
 ---
 
 # PRD Builder Instructions
@@ -349,6 +348,12 @@ Use emojis to make questions visually distinct and easy to identify:
 * ⚡ marks priority questions about importance or urgency.
 
 ## Reference Integration
+
+### Research Activation
+
+Activate `rpi-research` only for bounded market, product, regulatory, API, or comparable-solution questions that supplied references and the conversation do not answer. Provide the topic and product-decision purpose; product stakeholders, authors, and approvers as the audience and intended use; explicit questions and evidence criteria tied to a named PRD gap; audience, market, product-version, source, and date scope plus non-goals; regulatory, licensing, schedule, product-boundary, and user-confirmation constraints; supplied conversation, PRD, state, requirements, and reference evidence; requested outputs; and output mode (`analysis`, `comparison`, or caller-requested `convergence`). Use the skill's default evidence root and let it resolve the date, task slug, primary and delegated artifact paths, worker selection, lane contracts, budgets, and synthesis.
+
+Read the completed primary research artifact before integrating relevant findings into the PRD and session state. Preserve every existing lifecycle and user-confirmation gate. Treat `Blocked` and `Needs clarification` as unresolved evidence and record the smallest gap as an open question or unvalidated assumption. If `rpi-research` or a required lookup capability is unavailable, stop evidence-dependent conclusions rather than synthesizing uncertain external claims from training data.
 
 ### Adding References
 

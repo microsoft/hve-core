@@ -7,13 +7,13 @@ description: "Challenge session record template for rpi-challenger"
 
 ## Session Details
 
-| Field | Value |
-|-------|-------|
-| Date | {{YYYY-MM-DD}} |
-| Status | {{In progress \| Complete \| Partial \| Blocked}} |
-| Record path | .copilot-tracking/challenges/{{YYYY-MM-DD}}/{{task_slug}}-challenge.md |
-| Scope source | {{caller-supplied targets, context, or bounded inspection}} |
-| Focus | {{caller-supplied focus or none}} |
+| Field        | Value                                                                  |
+|--------------|------------------------------------------------------------------------|
+| Date         | {{YYYY-MM-DD}}                                                         |
+| Status       | {{In progress \| Complete \| Partial \| Blocked}}                      |
+| Record path  | .copilot-tracking/challenges/{{YYYY-MM-DD}}/{{task_slug}}-challenge.md |
+| Scope source | {{caller-supplied targets, context, or bounded inspection}}            |
+| Focus        | {{caller-supplied focus or none}}                                      |
 
 ## Confirmed Scope
 
@@ -24,14 +24,14 @@ description: "Challenge session record template for rpi-challenger"
 
 ## Related Artifacts
 
-| Artifact | Relationship to the challenge | Evidence used |
-|----------|-------------------------------|---------------|
+| Artifact                            | Relationship to the challenge   | Evidence used      |
+|-------------------------------------|---------------------------------|--------------------|
 | {{workspace-relative path or none}} | {{scope, context, or evidence}} | {{material facts}} |
 
 ## Challenge Coverage
 
-| Angle or topic | Material uncertainty examined | Status | Notes |
-|----------------|-------------------------------|--------|-------|
+| Angle or topic     | Material uncertainty examined                   | Status                                                | Notes              |
+|--------------------|-------------------------------------------------|-------------------------------------------------------|--------------------|
 | {{adaptive label}} | {{assumption, boundary, evidence, or decision}} | {{explored \| unresolved \| skipped \| out of scope}} | {{concise result}} |
 
 ## Q&A Log
@@ -52,9 +52,9 @@ Record note:
 
 ## Unresolved Items
 
-| Item | Why unresolved | Smallest missing evidence or decision | Suggested next owner |
-|------|----------------|---------------------------------------|----------------------|
-| {{assumption or decision}} | {{remaining uncertainty}} | {{specific evidence or decision}} | {{user, rpi-research, rpi-plan, rpi-implement, rpi-review, or none}} |
+| Item                       | Why unresolved            | Smallest missing evidence or decision | Suggested next owner                                                 |
+|----------------------------|---------------------------|---------------------------------------|----------------------------------------------------------------------|
+| {{assumption or decision}} | {{remaining uncertainty}} | {{specific evidence or decision}}     | {{user, rpi-research, rpi-plan, rpi-implement, rpi-review, or none}} |
 
 ## Session Outcome
 

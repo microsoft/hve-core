@@ -17,9 +17,9 @@
 
 ## Coverage Assessment
 
-| Requirement, research, phase, or task ID | Coverage | Evidence or concern |
-|-------------------------------------------|----------|---------------------|
-| {{requirement_research_or_pxx_txx_id}} | {{Covered_Partial_or_Missing}} | {{evidence_or_concern}} |
+| Requirement, research, phase, or task ID | Coverage                       | Evidence or concern     |
+|------------------------------------------|--------------------------------|-------------------------|
+| {{requirement_research_or_pxx_txx_id}}   | {{Covered_Partial_or_Missing}} | {{evidence_or_concern}} |
 
 ## Verdict
 

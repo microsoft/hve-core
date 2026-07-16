@@ -26,8 +26,8 @@ Enforce language-specific coding conventions and best practices across your proj
 | **code-review-readiness**            | Thin skill-backed perspective subagent that reviews PR deliverable readiness and changed non-code documentation against a precomputed diff and PR context, and writes structured findings |
 | **code-review-security**             | Thin skill-backed perspective subagent that reviews a precomputed diff for security issues and writes structured findings                                                                 |
 | **code-review-standards**            | Thin skill-backed perspective subagent that reviews a precomputed diff against project coding standards and writes structured findings                                                    |
-| **code-review-walkback**             | Thin wrapper subagent that dispatches deep Register 2 questions to the generic Researcher Subagent and anchors the output to a board item                                                 |
-| **researcher-subagent**              | Research subagent using search, read, web-fetch, GitHub repo, and MCP tools                                                                                                               |
+| **code-review-walkback**             | Thin wrapper subagent that activates rpi-research for bounded Register 2 investigations and anchors results to a review board item                                                        |
+| **rpi-researcher**                   | Executes one delegated internal, external, or hybrid RPI research lane and progressively writes owned evidence. Use for independent research threads.                                     |
 
 ### Instructions
 
@@ -57,6 +57,7 @@ Enforce language-specific coding conventions and best practices across your proj
 | **code-review**           | Review code changes from multiple perspectives with context bootstrap, depth-tier rigor, and structured findings output.                                                                                                                                                                         |
 | **pr-reference**          | Generates PR reference XML with commit history and unified diffs between branches, with extension and path filtering. Use when creating pull request descriptions, preparing code reviews, analyzing branch changes, discovering work items from diffs, or generating structured diff summaries. |
 | **python-foundational**   | Foundational Python best practices, idioms, and code quality fundamentals                                                                                                                                                                                                                        |
+| **rpi-research**          | Research-only RPI playbook that gathers task evidence, writes dated research artifacts under .copilot-tracking/research/, and hands off planning-ready findings. Use when the user needs evidence, alternatives, or task framing first.                                                          |
 | **telemetry-foundations** | Declarative OpenTelemetry-aligned telemetry vocabulary and instrumentation conventions for traces, metrics, logs, and PII handling                                                                                                                                                               |
 
 <!-- END AUTO-GENERATED ARTIFACTS -->

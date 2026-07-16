@@ -2,11 +2,11 @@
 
 This collection packages skill-forward RPI entry points for research, planning, implementation, review, follow-up, guided walkthroughs, and self-contained challenge sessions.
 
-`rpi-research` includes its default `RPI Researcher` delegated worker, while `rpi-challenger` conducts adaptive challenge questioning without a worker dependency. `RPI Planner` provides bounded authoring for one assigned phase, and `rpi-plan-critique` provides an independent read-only plan assessment. The shared `Researcher Subagent` remains included because Task Researcher still depends on it.
+`rpi-research` includes its default `RPI Researcher` delegated worker, while `rpi-challenger` conducts adaptive challenge questioning without a worker dependency. `rpi-plan` can use `RPI Planner` for bounded authoring of one assigned phase, and `rpi-plan-critique` provides an independent read-only plan assessment.
 
 ## Local enablement
 
-For local testing in VS Code, enable the RPI skill folder, Task Researcher agent folder, and subagent folder so both the RPI-specific and shared research workers are available:
+For local testing in VS Code, enable the RPI skill folder and HVE Core subagent folder so the RPI research and planning workers are available:
 
 ```json
 {
@@ -14,7 +14,6 @@ For local testing in VS Code, enable the RPI skill folder, Task Researcher agent
     ".github/skills/rpi": true
   },
   "chat.agentFilesLocations": {
-    ".github/agents/hve-core": true,
     ".github/agents/hve-core/subagents": true
   }
 }

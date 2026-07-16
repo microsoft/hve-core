@@ -3,7 +3,6 @@
   "description": "Skill-forward Research, Plan, Implement, Review, and Follow-up entry points with bounded planning and critique support.",
   "version": "3.3.101",
   "agents": [
-    "agents/hve-core/",
     "agents/hve-core/subagents/"
   ],
   "skills": [

@@ -3,7 +3,7 @@ title: Why the RPI Workflow Works
 description: The psychology and principles behind the evidence-led RPI lifecycle and its entry surfaces
 sidebar_position: 2
 author: Microsoft
-ms.date: 2026-07-14
+ms.date: 2026-07-15
 ms.topic: concept
 keywords:
   - rpi workflow
@@ -11,7 +11,7 @@ keywords:
   - research readiness
   - hallucination prevention
   - ai coding
-  - task reviewer
+  - evidence-led review
 estimated_reading_time: 8
 ---
 
@@ -40,12 +40,12 @@ AI writes first and thinks never. Not because it's broken, but because that's th
 
 The solution isn't teaching AI to be smarter. It's preventing AI from doing certain things at certain times.
 
-RPI keeps Research, Plan, Implement, Review, and Follow-up distinct so a task uses the smallest credible action at each point. It starts with research readiness: supplied or completed research is reused when adequate, while Task Researcher or `/rpi-research` investigates a demonstrated requirements, acceptance, dependency, material-risk, complexity, uncertainty, or decision-critical gap.
+RPI keeps Research, Plan, Implement, Review, and Follow-up distinct so a task uses the smallest credible action at each point. It starts with research readiness: supplied or completed research is reused when adequate, while `/rpi-research` investigates a demonstrated requirements, acceptance, dependency, material-risk, complexity, uncertainty, or decision-critical gap.
 
-* [Task Researcher](task-researcher) investigates a demonstrated gap and produces evidence for planning readiness.
-* [Task Planner](task-planner) owns the overall plan and phase details, may use `RPI Planner` for one bounded phase, and records independent critique.
-* [Task Implementor](task-implementor) directly executes approved work, records changes and validation, and returns material amendments for fresh critique.
-* [Task Reviewer](task-reviewer) creates one evidence-reconciliation record and routes defects, decision gaps, research gaps, and residual work.
+* `/rpi-research` investigates a demonstrated gap and produces evidence for planning readiness.
+* `/rpi-plan` owns the overall plan and phase details and records independent critique.
+* `/rpi-implement` directly executes approved work, records changes and validation, and returns material amendments for fresh critique.
+* `/rpi-review` creates one evidence-reconciliation record and routes defects, decision gaps, research gaps, and residual work.
 
 When a long lifecycle needs a fresh context, durable artifacts preserve the task identity, evidence, decisions, and next action. A reset can reduce accumulated context, but it does not require a new research stage or a fresh run of every lifecycle concept.
 
@@ -65,7 +65,7 @@ Understanding what AI does differently in each phase helps explain why separatio
 
 ### Research: Investigating a Demonstrated Gap
 
-Research runs when readiness shows that planning cannot responsibly proceed with the supplied evidence. Task Researcher remains focused on the gap:
+Research runs when readiness shows that planning cannot responsibly proceed with the supplied evidence. `/rpi-research` remains focused on the gap:
 
 * Searches for existing patterns instead of inventing new ones.
 * Cites precise source locations when they support a finding.
@@ -76,7 +76,7 @@ When evidence is adequate, Research is reused or satisfied-and-skipped instead o
 
 ### Planning Phase: Sequencing, Not Improvising
 
-Task Planner synthesizes adequate evidence into actionable steps. The planning parent owns the overall checklist and phase details, and it can delegate one exact `Pxx` phase to `RPI Planner` when bounded authoring materially helps. Planning focuses on:
+`/rpi-plan` synthesizes adequate evidence into actionable steps. It owns the overall checklist and phase details and can use bounded assistance when that materially improves one exact `Pxx` phase. Planning focuses on:
 
 * Breaking work into logical, sequenced tasks.
 * Identifying dependencies between changes.
@@ -88,7 +88,7 @@ The plan becomes a contract. When implementation begins, the AI follows the plan
 
 ### Implementation Phase: Following, Not Inventing
 
-Task Implementor or `/rpi-implement` directly executes approved `Pxx` or `Pxx-Txx` work. It remains flexible within the evidence boundary:
+`/rpi-implement` directly executes approved `Pxx` or `Pxx-Txx` work. It remains flexible within the evidence boundary:
 
 * No time wasted rediscovering conventions.
 * Completion checkboxes change only after completion evidence exists.
@@ -97,7 +97,7 @@ Task Implementor or `/rpi-implement` directly executes approved `Pxx` or `Pxx-Tx
 
 ### Review Phase: Validating, Not Assuming
 
-Task Reviewer or `/rpi-review` writes one record that reconciles implementation against documented evidence:
+`/rpi-review` writes one record that reconciles implementation against documented evidence:
 
 * Compares the plan, phase details, critique, amendments, changes, and validation evidence.
 * Uses optional generic bounded lenses only when they reduce a specific uncertainty.
@@ -112,13 +112,13 @@ Follow-up records the next owner after review. It does not hide work inside a ge
 
 RPI produces measurably different outcomes than traditional AI coding:
 
-| Aspect             | Traditional Approach                       | RPI Approach                                                        |
-|--------------------|--------------------------------------------|---------------------------------------------------------------------|
-| Pattern matching   | Invents plausible patterns                 | Uses verified patterns when evidence is needed                      |
-| Traceability       | "The AI wrote it this way"                | Links decisions and changes to durable evidence                     |
-| Knowledge transfer | Context remains in one conversation        | Reusable research, plan, change, and review artifacts               |
-| Rework             | Assumptions surface late                   | Review routes each gap to the earliest responsible lifecycle concept |
-| Validation         | Hope it works or manual testing            | Records evidence or an explicit unavailable or skipped reason       |
+| Aspect             | Traditional Approach                | RPI Approach                                                         |
+|--------------------|-------------------------------------|----------------------------------------------------------------------|
+| Pattern matching   | Invents plausible patterns          | Uses verified patterns when evidence is needed                       |
+| Traceability       | "The AI wrote it this way"          | Links decisions and changes to durable evidence                      |
+| Knowledge transfer | Context remains in one conversation | Reusable research, plan, change, and review artifacts                |
+| Rework             | Assumptions surface late            | Review routes each gap to the earliest responsible lifecycle concept |
+| Validation         | Hope it works or manual testing     | Records evidence or an explicit unavailable or skipped reason        |
 
 ### The Paradigm Shift
 
@@ -150,7 +150,7 @@ Use `/rpi-quick` when you want the skill-based full-flow entry point. It follows
 
 ### Direct Phase Skills
 
-Use `/rpi-research`, `/rpi-plan`, `/rpi-implement`, or `/rpi-review` when the next responsible lifecycle action is known. Task Researcher remains appropriate when readiness shows that dedicated investigation is needed.
+Use `/rpi-research`, `/rpi-plan`, `/rpi-implement`, or `/rpi-review` when the next responsible lifecycle action is known.
 
 ### Matching the Entry Surface to the Task
 
@@ -162,16 +162,16 @@ Use `/rpi-research`, `/rpi-plan`, `/rpi-implement`, or `/rpi-review` when the ne
 
 ### Evidence-Driven Escalation
 
-Research readiness, planning critique, implementation amendments, and review findings determine when the task returns to an earlier concept. Start with adequate evidence when it exists; activate Task Researcher or `/rpi-research` when a demonstrated gap prevents credible planning or review.
+Research readiness, planning critique, implementation amendments, and review findings determine when the task returns to an earlier concept. Start with adequate evidence when it exists; activate `/rpi-research` when a demonstrated gap prevents credible planning or review.
 
 ## Next Steps
 
 Ready to try it yourself?
 
 * [Your First RPI Workflow](../getting-started/first-workflow): 15-minute hands-on tutorial
-* [Using the Agents Together](using-together): context management and handoffs
+* [Using RPI Together](using-together): context management and handoffs
 * [RPI Overview](./): the lifecycle concepts explained
-* [Task Reviewer Guide](task-reviewer): validation and iteration
+* [Context Engineering](context-engineering): deliberate context reset and artifact-based resumption
 
 ---
 

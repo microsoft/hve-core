@@ -28,7 +28,7 @@ items:
   - path: .github/agents/rai-planning/rai-planner.agent.md
     kind: agent
     maturity: experimental
-  - path: .github/agents/hve-core/subagents/researcher-subagent.agent.md
+  - path: .github/agents/hve-core/subagents/rpi-researcher.agent.md
     kind: agent
   # Instructions
   - path: .github/instructions/coding-standards/python-script.instructions.md
@@ -52,6 +52,8 @@ items:
   - path: .github/skills/rai/rai-standards
     kind: skill
     maturity: experimental
+  - path: .github/skills/rpi/rpi-research
+    kind: skill
   # Prompts
   - path: .github/prompts/rai-planning/rai-capture.prompt.md
     kind: prompt

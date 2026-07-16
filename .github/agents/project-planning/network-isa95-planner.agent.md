@@ -6,8 +6,6 @@ tools:
   - agent
   - edit/editFiles
   - microsoft-docs/*
-agents:
-  - Researcher Subagent
 ---
 
 # Network ISA-95 Planner
@@ -354,28 +352,29 @@ The intake-gate-pending schema is a transitional structure. Upon intake completi
 
 MUST include one validation check for each Priority 0 or Priority 1 remediation item.
 
-## Microsoft Guidance Delegation
+## Microsoft Guidance Research
 
-MUST delegate Microsoft guidance lookups at runtime through `Researcher Subagent` and MUST NOT embed static standards text.
+MUST activate `rpi-research` for Microsoft guidance lookups at runtime and MUST NOT embed static standards text.
 
-Delegation trigger conditions (MUST trigger delegation when applicable):
+Research trigger conditions (MUST activate the skill when applicable):
 
 * The user asks for Microsoft architecture alignment.
 * Greenfield planning requires target reference architecture mapping.
 * Brownfield reuse decisions require cloud architecture tradeoff justification.
 
-Delegation topics (SHOULD include as applicable):
+Research topics (SHOULD include as applicable):
 
 * Platform-specific layered networking guidance for the identified edge stack.
 * Microsoft Well-Architected Framework guidance relevant to identified gaps.
 * Microsoft Cloud Adoption Framework guidance relevant to landing-zone and platform guardrails.
 
-Delegation protocol:
+Research protocol:
 
-1. MUST run `Researcher Subagent` with specific research questions and an output path under `.copilot-tracking/research/subagents/`.
-2. MUST synthesize delegated findings into scenario-specific recommendations.
-3. MUST cite delegated findings in the assessment file as references used.
-4. If delegated lookup tools are unavailable, MUST state that limitation and continue with clearly marked low-confidence assumptions.
+1. MUST provide the topic and architecture decision purpose; network operators, security reviewers, and remediation owners as the audience and intended use; explicit questions and evidence criteria; site, technology, cloud, guidance-version, and source scope plus non-goals; intake-gate, safety, uptime, licensing, and deployment constraints; supplied intake, architecture, conduit, and assessment evidence; requested outputs; and output mode (`analysis` or `comparison`).
+2. MUST use the skill's default evidence root and let it resolve the date, task slug, primary and delegated artifact paths, worker selection, lane contracts, budgets, and synthesis.
+3. MUST read the completed primary research artifact before incorporating applicable findings into scenario-specific recommendations.
+4. MUST cite applicable findings in the assessment file as references used.
+5. MUST treat `Blocked` and `Needs clarification` as unresolved evidence. If `rpi-research` or a required lookup capability is unavailable, MUST state that limitation and stop Microsoft-guidance-dependent mapping. MUST NOT replace unavailable evidence with low-confidence standards claims synthesized from training data.
 
 ## Escalation Criteria
 

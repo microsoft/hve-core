@@ -2,7 +2,7 @@
 title: SSSC Planner - Product Requirements Document
 description: Product requirements for an SSSC Planner that helps HVE-Core and downstream projects keep supply chain security planning consistent, auditable, and actionable.
 author: GitHub Copilot
-ms.date: 2026-06-30
+ms.date: 2026-07-15
 ms.topic: concept
 sidebar_position: 1
 keywords: [prd, sssc, supply chain security, planner, governance]
@@ -165,9 +165,9 @@ graph LR
     Agent --> Instructions["SSSC planner instructions<br/>phase protocol and state rules"]
     Agent --> State["state.json<br/>phase, gates, notices, references"]
     Agent --> Skill["supply-chain-security skill<br/>standards and taxonomies"]
-    Agent --> Researcher["Researcher Subagent<br/>external or evolving standards"]
+    Agent --> Research["rpi-research capability<br/>external or evolving standards"]
     Skill --> Artifacts["Assessment, mapping,<br/>gap analysis, backlog, handoff"]
-    Researcher --> Artifacts
+    Research --> Artifacts
     State --> Artifacts
     Artifacts --> Review["Qualified human review"]
     Review --> Handoff["Shared handoff contract"]
@@ -416,7 +416,7 @@ SSSC Planner Product
 | State schema | Validation | High | Maintainers | Resume breaks or audit fields disappear | Schema tests and fixtures |
 | Collection manifests | Packaging | High | Release managers | Users cannot discover planner assets | Collection validation and generated output checks |
 | Backlog manager conventions | Handoff | Medium | Backlog workflow owners | Generated work items are rejected or ambiguous | Shared templates and target-system validation |
-| Researcher Subagent | External research | Medium | Agent authors | Emerging standards needs exceed embedded references | Delegate external lookups with documented source paths |
+| `rpi-research` | External research capability | Medium | RPI maintainers | Emerging standards needs exceed embedded references | Activate bounded external research with documented evidence paths |
 
 ## 10. Risks & Mitigations
 
@@ -445,7 +445,7 @@ The planner should avoid collecting PII. If telemetry or audit events need user 
 
 | Threat | Product Concern | Control |
 |--------|-----------------|---------|
-| Prompt overreach | Planner invents standards mappings or remediation guidance | Mandatory skill-reference loading and subagent delegation for unsupported external research |
+| Prompt overreach | Planner invents standards mappings or remediation guidance | Mandatory skill-reference loading and `rpi-research` activation for unsupported external research |
 | Sensitive data leakage | User-provided secrets or internal URLs appear in backlog items | Content sanitization guardrails and review before handoff |
 | State tampering | Planning state is edited or corrupted between sessions | Schema validation, resume checks, and optional manifest signing |
 | Misapplied downstream guidance | Recommendations do not fit local stack or governance | Downstream applicability capture and local reviewer sign-off |

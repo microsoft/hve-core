@@ -3,7 +3,7 @@ title: DT to RPI Integration
 description: How Design Thinking outputs feed into the RPI workflow
 sidebar_position: 14
 author: Microsoft
-ms.date: 2026-06-28
+ms.date: 2026-07-15
 ms.topic: how-to
 keywords:
   - design thinking
@@ -13,7 +13,7 @@ keywords:
 estimated_reading_time: 6
 ---
 
-Design Thinking and RPI connect through structured handoff artifacts. When a DT session reaches a natural exit point, the DT Coach prepares an artifact containing validated findings, confidence markers, and stakeholder maps that RPI agents consume as input.
+Design Thinking and RPI connect through structured handoff artifacts. When a DT session reaches a natural exit point, the DT Coach prepares an artifact containing validated findings, confidence markers, and stakeholder maps that the RPI phase skills consume as input.
 
 ## Handoff Pipeline Overview
 
@@ -35,12 +35,12 @@ flowchart TD
 
     DT --> M13 --> M46 --> M79
 
-    M13 -.->|"Exit 1 · problem statement complete"| TR["Task Researcher"]
-    M46 -.->|"Exit 2 · concept validated"| TR
-    M79 -.->|"Exit 3 · implementation spec ready"| TR
+    M13 -.->|"Exit 1 · problem statement complete"| RR["rpi-research"]
+    M46 -.->|"Exit 2 · concept validated"| RR
+    M79 -.->|"Exit 3 · implementation spec ready"| RR
 
-    TR --> TP["Task Planner"] --> TI["Task Implementor"]
-    TR -.->|"return when DT assumptions need revision"| DT
+    RR --> RP["rpi-plan"] --> RI["rpi-implement"] --> RV["rpi-review"]
+    RR -.->|"return when DT assumptions need revision"| DT
 ```
 
 Each exit point produces a handoff artifact with the current contract fields: `exit_point`, `dt_method`, `dt_space`, `handoff_target`, `date`, `artifacts`, `constraints`, and `assumptions`. The coach keeps the session state in `.copilot-tracking/design-thinking-sessions/{project-slug}/`, while the handoff artifacts live alongside project artifacts in `docs/design-thinking/{project-slug}/`.
@@ -49,7 +49,7 @@ Each exit point produces a handoff artifact with the current contract fields: `e
 exit_point: "implementation-spec-ready"
 dt_method: 9
 dt_space: "implementation"
-handoff_target: "researcher"
+handoff_target: "rpi-research"
 date: "2026-06-26"
 
 artifacts:
@@ -70,42 +70,42 @@ assumptions:
 
 ## Subagent Handoff Workflow
 
-When the DT coach detects handoff readiness, it can dispatch assessment, compilation, and validation subagents to make the transition more reliable. The workflow checks artifact readiness, compiles the handoff payload into the current schema, and validates the generated RPI entry artifact before it reaches Task Researcher. At Method 5b, the workflow can also generate image prompts that help turn concept artifacts into visual directions for downstream review.
+When the DT Coach detects handoff readiness, it can dispatch assessment, compilation, and validation subagents to make the transition more reliable. The workflow checks artifact readiness, compiles the handoff payload into the current schema, and validates the generated RPI entry artifact before `rpi-research` consumes it. At Method 5b, the workflow can also generate image prompts that help turn concept artifacts into visual directions for downstream review.
 
 ## Exit Points
 
-### Problem Statement Complete (Methods 1-3 → Task Researcher)
+### Problem Statement Complete (Methods 1-3 to rpi-research)
 
-After completing Scope Conversations, Design Research, and Input Synthesis, the team has a validated problem statement backed by multi-source evidence. Task Researcher uses this framing to:
+After completing Scope Conversations, Design Research, and Input Synthesis, the team has a validated problem statement backed by multi-source evidence. `rpi-research` uses this framing to:
 
 * Scope technical research around stakeholder-validated needs rather than assumed requirements
 * Treat `assumed` items as verification targets
 * Treat `unknown` items as primary research targets
 * Investigate from each stakeholder perspective identified in the handoff
 
-### Concept Validated (Methods 4-6 → Task Researcher)
+### Concept Validated (Methods 4-6 to rpi-research)
 
-After Brainstorming, User Concepts, and Low-Fidelity Prototypes, the team has a stakeholder-validated concept with known constraints. Task Researcher receives these richer artifacts to:
+After Brainstorming, User Concepts, and Low-Fidelity Prototypes, the team has a stakeholder-validated concept with known constraints. `rpi-research` receives these richer artifacts to:
 
 * Validate the narrowed solution directions through technical investigation
 * Resolve constraints marked `assumed` or `unknown` from low-fidelity prototype testing
 * Assess feasibility of tested concepts across stakeholder perspectives
 * Investigate integration and scaling concerns before planning begins
 
-### Implementation Spec Ready (Methods 7-9 → Task Researcher)
+### Implementation Spec Ready (Methods 7-9 to rpi-research)
 
-After High-Fidelity Prototypes and User Testing, the team has functionally validated specifications. Task Researcher receives the richest artifact set to:
+After High-Fidelity Prototypes and User Testing, the team has functionally validated specifications. `rpi-research` receives the richest artifact set to:
 
 * Investigate production readiness, scaling gaps, and integration concerns
 * Verify items where testing evidence was limited or conflicting
 * Assess whether architecture decisions hold under production constraints
 * Narrow research scope significantly because extensive DT validation already occurred
 
-## Per-Agent Input Mapping
+## Per-Phase Input Mapping
 
-Each RPI agent applies DT-specific adjustments when it receives a handoff artifact.
+Each RPI phase applies DT-specific adjustments when it receives the handoff evidence.
 
-### Task Researcher
+### rpi-research
 
 | Standard Behavior               | DT-Informed Behavior                                 |
 |---------------------------------|------------------------------------------------------|
@@ -118,7 +118,7 @@ When research reveals that the DT problem statement needs revision, fundamental 
 
 Source: direct from DT handoff.
 
-### Task Planner
+### rpi-plan
 
 | Standard Behavior               | DT-Informed Behavior                                        |
 |---------------------------------|-------------------------------------------------------------|
@@ -129,9 +129,9 @@ Source: direct from DT handoff.
 
 Plans include a DT Reconnection phase that assesses whether findings warrant returning to DT coaching before downstream implementation.
 
-Source: indirect, via upstream Researcher output.
+Source: indirect, via the upstream `rpi-research` output.
 
-### Task Implementor
+### rpi-implement
 
 | Standard Behavior            | DT-Informed Behavior                                        |
 |------------------------------|-------------------------------------------------------------|
@@ -140,11 +140,11 @@ Source: indirect, via upstream Researcher output.
 | Technical correctness focus  | Stakeholder experience validation alongside correctness     |
 | Full polish and optimization | Anti-polish: functional core without premature optimization |
 
-The implementor enforces fidelity constraints from the originating DT space and references DT artifact paths in implementation logs.
+The implementation phase enforces fidelity constraints from the originating DT space and references DT artifact paths in change evidence.
 
-Source: indirect, via upstream Researcher→Planner pipeline chain.
+Source: indirect, through the upstream `rpi-research` and `rpi-plan` artifacts.
 
-### Task Reviewer
+### rpi-review
 
 | Standard Behavior        | DT-Informed Behavior                              |
 |--------------------------|---------------------------------------------------|
@@ -153,7 +153,7 @@ Source: indirect, via upstream Researcher→Planner pipeline chain.
 | Style guide conformance  | Think/Speak/Empower coaching identity conformance |
 | Single output evaluation | Multi-stakeholder coverage evaluation             |
 
-The reviewer checks that all identified stakeholder groups are represented, confidence markers are applied correctly, and output fidelity matches the originating space.
+The review phase checks that all identified stakeholder groups are represented, confidence markers are applied correctly, and output fidelity matches the originating space.
 
 ## Confidence Markers
 
@@ -168,24 +168,24 @@ Every handoff artifact tags its contents with confidence markers that downstream
 
 ## Iteration Support
 
-The DT-to-RPI handoff is not one-way. When the Researcher encounters issues that trace back to DT assumptions, it recommends returning to DT coaching:
+The DT-to-RPI handoff is not one-way. When `rpi-research` encounters issues that trace back to DT assumptions, it recommends returning to DT coaching:
 
-* Task Researcher returns directly to DT Coach when the problem statement needs revision, unrepresented stakeholders emerge, or fundamental assumptions are invalidated.
-* Task Planner and Task Implementor surface DT-related issues through the standard RPI chain back to the Researcher, who may recommend returning to DT.
-* Task Reviewer flags items that need DT method re-entry based on artifact quality criteria.
+* `rpi-research` returns directly to DT Coach when the problem statement needs revision, unrepresented stakeholders emerge, or fundamental assumptions are invalidated.
+* `rpi-plan` and `rpi-implement` route DT-related evidence gaps back to `rpi-research`, which may recommend returning to DT.
+* `rpi-review` flags items that need DT method re-entry based on artifact quality criteria.
 
 > [!TIP]
 > Returning to DT from RPI is a sign of thoroughness, not failure. The integration is designed for non-linear iteration across both frameworks.
 
 ## Shared Prompts
 
-Three prompts compile DT artifacts for the single RPI entry point at Task Researcher:
+Three prompts compile DT artifacts for the single RPI entry point at `rpi-research`:
 
-* `dt-handoff-problem-space.prompt.md`: Packages Problem Space artifacts (Methods 1-3) for Task Researcher
-* `dt-handoff-solution-space.prompt.md`: Packages Solution Space artifacts (Methods 4-6) for Task Researcher
-* `dt-handoff-implementation-space.prompt.md`: Packages Implementation Space artifacts (Methods 7-9) for Task Researcher
+* `dt-handoff-problem-space.prompt.md`: Packages Problem Space artifacts (Methods 1-3) for `rpi-research`
+* `dt-handoff-solution-space.prompt.md`: Packages Solution Space artifacts (Methods 4-6) for `rpi-research`
+* `dt-handoff-implementation-space.prompt.md`: Packages Implementation Space artifacts (Methods 7-9) for `rpi-research`
 
-Each prompt collects the relevant method outputs, confidence markers, and open questions into a structured handoff that Task Researcher consumes directly. Later exit prompts produce richer artifacts that narrow the Researcher's investigation scope.
+Each prompt collects the relevant method outputs, confidence markers, and open questions into a structured handoff that `rpi-research` consumes directly. Later exit prompts produce richer artifacts that narrow the Research phase scope.
 
 ## Related Resources
 

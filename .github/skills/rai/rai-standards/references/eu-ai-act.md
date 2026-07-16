@@ -35,4 +35,4 @@ Adapted from Regulation (EU) 2024/1689 (EU AI Act). Use the EUR-Lex entry for au
 
 ## Delegation note
 
-Detailed clause lookups, jurisdiction-specific interpretation, and current legal updates should be delegated to the Researcher Subagent when a review requires authoritative legal analysis.
+Activate `rpi-research` for detailed clause lookups, jurisdiction-specific interpretation, and current legal updates when a review requires authoritative legal evidence.

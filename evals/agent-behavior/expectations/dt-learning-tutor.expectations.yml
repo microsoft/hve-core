@@ -105,7 +105,7 @@ expectations:
     failure_modes:
       - Lesson ends with no mention of the DT Coach handoff.
       - Tutor claims to start a project itself instead of routing to DT Coach.
-      - Handoff named with the wrong agent (e.g. Task Researcher).
+      - Handoff named with the wrong retained agent (e.g. RPI Agent).
     priority: medium
     applies_when: "response includes Phase 5: Completion content"
     contract_ref: "agent §Phase 5 (`Offer the \"Start Project\" handoff`); frontmatter `handoffs:` to `DT Coach`"

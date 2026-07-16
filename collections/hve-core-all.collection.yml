@@ -75,15 +75,9 @@ items:
   kind: agent
 - path: .github/agents/hve-core/documentation.agent.md
   kind: agent
-- path: .github/agents/hve-core/memory.agent.md
-  kind: agent
-- path: .github/agents/hve-core/prompt-builder.agent.md
-  kind: agent
 - path: .github/agents/hve-core/rpi-agent.agent.md
   kind: agent
 - path: .github/agents/hve-core/subagents/hve-artifact-tester.agent.md
-  kind: agent
-- path: .github/agents/hve-core/subagents/researcher-subagent.agent.md
   kind: agent
 - path: .github/agents/hve-core/subagents/rpi-planner.agent.md
   kind: agent
@@ -92,14 +86,6 @@ items:
 - path: .github/agents/hve-core/subagents/vally-test-author.agent.md
   kind: agent
   maturity: experimental
-- path: .github/agents/hve-core/task-implementor.agent.md
-  kind: agent
-- path: .github/agents/hve-core/task-planner.agent.md
-  kind: agent
-- path: .github/agents/hve-core/task-researcher.agent.md
-  kind: agent
-- path: .github/agents/hve-core/task-reviewer.agent.md
-  kind: agent
 - path: .github/agents/jira/jira-backlog-manager.agent.md
   kind: agent
 - path: .github/agents/jira/jira-prd-to-wit.agent.md
@@ -262,8 +248,6 @@ items:
   kind: prompt
 - path: .github/prompts/github/github-triage-issues.prompt.md
   kind: prompt
-- path: .github/prompts/hve-core/checkpoint.prompt.md
-  kind: prompt
 - path: .github/prompts/hve-core/evals-import.prompt.md
   kind: prompt
   maturity: experimental
@@ -278,23 +262,9 @@ items:
 - path: .github/prompts/hve-core/pr-review.prompt.md
   kind: prompt
   maturity: experimental
-- path: .github/prompts/hve-core/prompt-analyze.prompt.md
-  kind: prompt
-- path: .github/prompts/hve-core/prompt-build.prompt.md
-  kind: prompt
-- path: .github/prompts/hve-core/prompt-refactor.prompt.md
-  kind: prompt
 - path: .github/prompts/hve-core/pull-request.prompt.md
   kind: prompt
 - path: .github/prompts/hve-core/rpi.prompt.md
-  kind: prompt
-- path: .github/prompts/hve-core/task-implement.prompt.md
-  kind: prompt
-- path: .github/prompts/hve-core/task-plan.prompt.md
-  kind: prompt
-- path: .github/prompts/hve-core/task-research.prompt.md
-  kind: prompt
-- path: .github/prompts/hve-core/task-review.prompt.md
   kind: prompt
 - path: .github/prompts/hve-core/vally-test-write.prompt.md
   kind: prompt
@@ -464,8 +434,6 @@ items:
 - path: .github/instructions/hve-core/licensing-posture.instructions.md
   kind: instruction
 - path: .github/instructions/hve-core/markdown.instructions.md
-  kind: instruction
-- path: .github/instructions/hve-core/prompt-builder.instructions.md
   kind: instruction
 - path: .github/instructions/hve-core/pull-request.instructions.md
   kind: instruction

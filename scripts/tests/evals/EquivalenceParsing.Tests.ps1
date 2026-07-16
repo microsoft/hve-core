@@ -257,7 +257,7 @@ Describe 'ConvertTo-EquivalenceHtml' -Tag 'Unit' {
         $script:Customized = ConvertFrom-EquivalenceResults -RunDir (Join-Path $script:FixturesRoot 'customized') -WarningAction SilentlyContinue
         $script:Compare = Measure-CompareTrials -Lines (Get-Content -LiteralPath (Join-Path $script:FixturesRoot 'vally-compare.log'))
         $script:Merged = Merge-EquivalenceStimuli -Baseline $script:Baseline -Customized $script:Customized -Compare $script:Compare
-        $script:Html = ConvertTo-EquivalenceHtml -Stimuli $script:Merged -Model 'test-model' -RunId 'test-run-id' -Agent 'task-researcher'
+        $script:Html = ConvertTo-EquivalenceHtml -Stimuli $script:Merged -Model 'test-model' -RunId 'test-run-id' -Agent 'sample-agent'
     }
 
     It 'Includes the model and run id in escaped form' {
@@ -266,7 +266,7 @@ Describe 'ConvertTo-EquivalenceHtml' -Tag 'Unit' {
     }
 
     It 'Renders the Agent identity in the meta line' {
-        $script:Html | Should -Match 'Agent: <strong>task-researcher</strong>'
+        $script:Html | Should -Match 'Agent: <strong>sample-agent</strong>'
         $script:Html | Should -Not -Match 'Subject: <strong>'
     }
 

@@ -18,8 +18,8 @@
 
 ## Plan-to-Change Reconciliation
 
-| Plan scope | Change evidence | Reconciliation status | Gap or rationale |
-|------------|-----------------|-----------------------|------------------|
+| Plan scope         | Change evidence               | Reconciliation status             | Gap or rationale     |
+|--------------------|-------------------------------|-----------------------------------|----------------------|
 | {{Pxx_or_Pxx_Txx}} | {{CHG_xxx_or_other_evidence}} | {{Reconciled_Partial_or_Missing}} | {{gap_or_rationale}} |
 
 ## Critique and Divergence Assessment
@@ -49,8 +49,8 @@
 
 ## Validation Evidence
 
-| Command     | Scope                                | Status                        | Summary                                        |
-|-------------|--------------------------------------|-------------------------------|------------------------------------------------|
+| Command     | Scope                                | Status                                      | Summary                                        |
+|-------------|--------------------------------------|---------------------------------------------|------------------------------------------------|
 | {{command}} | {{changed_files_package_or_project}} | {{Passed / Failed / Skipped / Unavailable}} | {{important_output_summary_or_skip_rationale}} |
 
 ## Outcome

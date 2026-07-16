@@ -2,7 +2,7 @@
 title: Agentic Workflows
 description: End-to-end process flow for AI-driven issue triage, implementation, and review workflows in hve-core
 author: HVE Core Team
-ms.date: 2026-07-09
+ms.date: 2026-07-15
 ms.topic: concept
 sidebar_position: 4
 keywords:
@@ -92,10 +92,10 @@ flowchart TD
 
 ## Workflow Details
 
-| Workflow             | Trigger                                                             | Agent                                                                                                                              | Key Actions                                                                                                                                             |
+| Workflow             | Trigger                                                             | Execution Owner                                                                                                                    | Key Actions                                                                                                                                             |
 |----------------------|---------------------------------------------------------------------|------------------------------------------------------------------------------------------------------------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------|
 | Issue Triage         | Issue opened or labeled `needs-triage`                              | [Issue Triage Agent](https://github.com/microsoft/hve-core/blob/main/.github/agents/issue-triage.agent.md)                         | Classify, detect duplicates, assess quality, decompose, label, evaluate readiness                                                                       |
-| Issue Implementation | Issue labeled `agent-ready`                                         | [Task Implementor Agent](https://github.com/microsoft/hve-core/blob/main/.github/agents/hve-core/task-implementor.agent.md)        | Research codebase, plan changes, implement, open PR                                                                                                     |
+| Issue Implementation | Issue labeled `agent-ready`                                         | Workflow-owned procedure in `.github/workflows/issue-implement.md`                                                                 | Research codebase, plan changes, implement, open PR                                                                                                     |
 | PR Review            | PR opened or marked ready for review                                | [Code Review Agent](https://github.com/microsoft/hve-core/blob/main/.github/agents/coding-standards/code-review.agent.md)          | Review correctness, conventions, security; label `review-passed` or `needs-revision` for non-maintainer PRs, advisory `COMMENT` only for maintainer PRs |
 | Dependabot PR Review | Dependabot PR opened or updated                                     | [Dependency Reviewer Agent](https://github.com/microsoft/hve-core/blob/main/.github/agents/dependency-reviewer.agent.md)           | Validate licensing, SHA pinning, environment sync; approve safe bumps                                                                                   |
 | Documentation Drift  | Push to main                                                        | [Documentation Agent](https://github.com/microsoft/hve-core/blob/main/.github/agents/hve-core/documentation.agent.md) (drift mode) | Map code changes to docs, flag stale documentation for follow-up                                                                                        |
@@ -120,14 +120,14 @@ flowchart TD
 
 All six workflows are defined as GitHub Agentic Workflow markdown files under `.github/workflows/` and compiled to lock files using `gh aw compile`:
 
-| Workflow File             | Lock File                       | Trigger                                 | Agent                  |
-|---------------------------|---------------------------------|-----------------------------------------|------------------------|
-| `issue-triage.md`         | `issue-triage.lock.yml`         | Issue opened or labeled `needs-triage`  | Issue Triage Agent     |
-| `issue-implement.md`      | `issue-implement.lock.yml`      | Issue labeled `agent-ready`             | Task Implementor Agent |
-| `pr-review.md`            | `pr-review.lock.yml`            | PR opened or marked ready for review    | Code Review Agent      |
-| `dependency-pr-review.md` | `dependency-pr-review.lock.yml` | Dependabot PR opened or updated         | Dependency Reviewer    |
-| `doc-update-check.md`     | `doc-update-check.lock.yml`     | Push to main                            | Documentation Checker  |
-| `vex-draft.md`            | `vex-draft.lock.yml`            | VEX Detection `workflow_run` + dispatch | SSSC Reviewer          |
+| Workflow File             | Lock File                       | Trigger                                 | Execution Owner          |
+|---------------------------|---------------------------------|-----------------------------------------|--------------------------|
+| `issue-triage.md`         | `issue-triage.lock.yml`         | Issue opened or labeled `needs-triage`  | Issue Triage Agent       |
+| `issue-implement.md`      | `issue-implement.lock.yml`      | Issue labeled `agent-ready`             | Workflow-owned procedure |
+| `pr-review.md`            | `pr-review.lock.yml`            | PR opened or marked ready for review    | Code Review Agent        |
+| `dependency-pr-review.md` | `dependency-pr-review.lock.yml` | Dependabot PR opened or updated         | Dependency Reviewer      |
+| `doc-update-check.md`     | `doc-update-check.lock.yml`     | Push to main                            | Documentation Checker    |
+| `vex-draft.md`            | `vex-draft.lock.yml`            | VEX Detection `workflow_run` + dispatch | SSSC Reviewer            |
 
 Each workflow file declares permissions, safe output limits, and activation guards that prevent unintended execution.
 
@@ -155,20 +155,20 @@ Beyond the automated GitHub event-driven pipeline, hve-core provides interactive
 
 ### RPI Orchestration
 
-The [RPI Agent](https://github.com/microsoft/hve-core/blob/main/.github/agents/hve-core/rpi-agent.agent.md) runs a five-phase iterative cycle: Research, Plan, Implement, Review, and Discover. It delegates to four specialized subagents:
+The [RPI Agent](https://github.com/microsoft/hve-core/blob/main/.github/agents/hve-core/rpi-agent.agent.md) coordinates Research, Plan, Implement, Review, and Follow-up by activating four reusable phase skills:
 
-| Agent            | Role                                                           |
-|------------------|----------------------------------------------------------------|
-| Task Researcher  | Deep codebase and domain analysis, produces research documents |
-| Task Planner     | Creates phased implementation plans with validation steps      |
-| Task Implementor | Executes plans through subagent delegation and tracks changes  |
-| Task Reviewer    | Validates completed work against plans and conventions         |
+| Skill           | Responsibility                                                          |
+|-----------------|-------------------------------------------------------------------------|
+| `rpi-research`  | Closes demonstrated evidence gaps and produces research evidence        |
+| `rpi-plan`      | Creates marker-addressed plans, phase details, and independent critique |
+| `rpi-implement` | Executes approved work and records changes, amendments, and validation  |
+| `rpi-review`    | Reconciles evidence, records findings, and routes the next action       |
 
-Each agent hands off to the next through structured artifacts stored in `.copilot-tracking/`.
+The skills coordinate through durable artifacts stored in `.copilot-tracking/`.
 
 ### Prompt Engineering
 
-The [Prompt Builder](https://github.com/microsoft/hve-core/blob/main/.github/agents/hve-core/prompt-builder.agent.md) preserves legacy entry points while routing prompt-engineering work to the `hve-builder` skill. HVE Builder uses one lifecycle for agents, prompts, instructions, subagents, and skills:
+The `hve-builder` skill uses one lifecycle for agents, prompts, instructions, subagents, and skills:
 
 1. Resolve mode, targets, write boundary, architecture, and applicable conventions
 2. Author or perform read-only review according to the selected mode
@@ -177,7 +177,7 @@ The [Prompt Builder](https://github.com/microsoft/hve-core/blob/main/.github/age
 
 HVE Builder selects a reasoning profile from each worker's responsibility. High uses GPT-5.6 Sol, Claude Opus 4.8, then GPT-5.5 for architecture and consequential decisions. Medium uses GPT-5.6 Terra, Claude Sonnet 5, then MAI-Code-1-Flash for semantic discovery, authoring, research, implementation, and review. Low uses GPT-5.6 Luna, MAI-Code-1-Flash, then Claude Haiku 4.5 for literal simulation and mechanical validation.
 
-Each ordered list is an availability fallback within its selected profile. Legacy `/prompt-build`, `/prompt-analyze`, and `/prompt-refactor` commands remain compatibility routes to this lifecycle.
+Each ordered list is an availability fallback within its selected profile. The retained `prompt-builder`, `prompt-analyze`, and `prompt-refactor` skills are compatibility aliases that route legacy requests to this lifecycle.
 
 ### Security Review
 
@@ -228,7 +228,7 @@ flowchart LR
     subgraph INTERACTIVE["Interactive Agents"]
         direction TB
         RPI["RPI Orchestration"]
-        PB["Prompt Builder"]
+        HB["HVE Builder"]
         SR["Security Reviewer"]
         CR["Code Review"]
         DOC["Documentation"]

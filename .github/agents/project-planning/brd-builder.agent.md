@@ -3,7 +3,6 @@ name: BRD Builder
 description: "Business Requirements Document builder with guided Q&A and references"
 agents:
   - BRD Quality Reviewer
-  - Researcher Subagent
 ---
 
 # BRD Builder Instructions
@@ -30,9 +29,15 @@ Load `brd-author#discover` first. Clarify the business problem before discussing
 
 Create files immediately when the user provides an explicit initiative name, a clear business change, or a specific project reference. Gather context first when the user provides vague requests, problem-only statements, or multiple unrelated ideas.
 
-Coach the conversation toward complete stakeholder coverage. Surface missing voices, unclear ownership, and unrepresented impacted groups as they emerge, and when a stakeholder cohort, decision owner, or sign-off authority is implied but not named, ask for it directly rather than proceeding. Use the `requirements-author` skill reference `references/_shared/stakeholder-analysis.md` (the Mendelow Power/Interest grid and RACI variants) to classify each identified party and to detect ownership gaps. Delegate broader discovery research, such as market context, the regulatory landscape, or comparable initiatives, to the Researcher Subagent when a question exceeds the conversation's immediate scope.
+Coach the conversation toward complete stakeholder coverage. Surface missing voices, unclear ownership, and unrepresented impacted groups as they emerge, and when a stakeholder cohort, decision owner, or sign-off authority is implied but not named, ask for it directly rather than proceeding. Use the `requirements-author` skill reference `references/_shared/stakeholder-analysis.md` (the Mendelow Power/Interest grid and RACI variants) to classify each identified party and to detect ownership gaps. Activate `rpi-research` for bounded market, regulatory, or comparable-initiative questions when the question exceeds the conversation's immediate evidence.
 
 Discover exits only through the brd-author Discover hard gate: scope is bounded, stakeholder ownership is explicit, and the seed requirement and traceability scaffold for Define is present and internally consistent.
+
+### Discover Research Activation
+
+Provide `rpi-research` with the topic and BRD decision purpose; business stakeholders, authors, and approvers as the audience and intended use; explicit questions and evidence criteria tied to a named BRD gap; market, jurisdiction, source, and date scope plus non-goals; regulatory, licensing, schedule, solution-neutrality, and Discover-gate constraints; supplied conversation, BRD, state, stakeholder, and reference evidence; requested outputs; and output mode (`analysis` unless comparison or convergence is explicitly requested). Use the skill's default evidence root and let it resolve the date, task slug, primary and delegated artifact paths, worker selection, lane contracts, budgets, and synthesis.
+
+Read the completed primary research artifact before evaluating sources or synthesizing findings into the BRD and session state. Preserve all Discover gates. Treat `Blocked` and `Needs clarification` as unresolved evidence and record the smallest gap as an unvalidated assumption or open question. If `rpi-research` or a required lookup capability is unavailable, stop the evidence-dependent conclusion rather than synthesizing uncertain market or regulatory claims from training data.
 
 ### Define
 

@@ -3,7 +3,7 @@ title: Design Thinking Guide
 description: AI-assisted Design Thinking using the dt-coach agent
 sidebar_position: 1
 author: Microsoft
-ms.date: 2026-06-28
+ms.date: 2026-07-15
 ms.topic: concept
 keywords:
   - design thinking
@@ -48,14 +48,14 @@ flowchart LR
     M3 --> M4
     M6 --> M7
 
-    M3 -.->|"Exit 1 · problem statement"| TR["Task Researcher"]
-    M6 -.->|"Exit 2 · validated concept"| TR
-    M9 -.->|"Exit 3 · implementation spec"| TR
+    M3 -.->|"Exit 1 · problem statement"| RR["rpi-research"]
+    M6 -.->|"Exit 2 · validated concept"| RR
+    M9 -.->|"Exit 3 · implementation spec"| RR
 
-    TR -.->|"return signal"| M1
+    RR -.->|"return signal"| M1
 ```
 
-Each exit point produces a handoff artifact with confidence markers and a stakeholder map. RPI agents can also return work to DT when assumptions need revision. See [DT to RPI Integration](dt-rpi-integration.md) for details.
+Each exit point produces a handoff artifact with confidence markers and a stakeholder map. The RPI workflow can also return work to DT when assumptions need revision. See [DT to RPI Integration](dt-rpi-integration.md) for details.
 
 ## The Three Spaces
 
@@ -105,10 +105,10 @@ Use the [DT Coach](dt-coach.md) agent to start a guided Design Thinking session.
 
 ## Integration with RPI
 
-Design Thinking outputs feed directly into the RPI (Research, Plan, Implement, Review) pipeline. When your DT session reaches a natural exit point, the coach prepares a structured handoff artifact that Task Researcher receives and processes before passing findings through the standard RPI pipeline to Planner and Implementor.
+Design Thinking outputs feed directly into the RPI (Research, Plan, Implement, Review) pipeline. When your DT session reaches a natural exit point, the coach prepares a structured handoff artifact for `rpi-research`. The resulting evidence then flows through `rpi-plan`, `rpi-implement`, and `rpi-review` as needed.
 
 * [Tutorial: Handing Off from DT to RPI](tutorial-handoff-to-rpi.md): Step-by-step guide with practical examples at each exit point
-* [DT to RPI Integration](dt-rpi-integration.md): Reference for the handoff contract, per-agent mappings, and confidence markers
+* [DT to RPI Integration](dt-rpi-integration.md): Reference for the handoff contract, per-phase mappings, and confidence markers
 
 ## Learn at Your Own Pace
 

@@ -3,7 +3,7 @@ title: "Stage 7: Review"
 description: Validate implementations through code review, PR management, and quality assessment
 sidebar_position: 8
 author: Microsoft
-ms.date: 2026-07-14
+ms.date: 2026-07-15
 ms.topic: how-to
 keywords:
   - ai-assisted project lifecycle
@@ -31,22 +31,20 @@ You enter Review after completing implementation work in [Stage 6: Implementatio
 
 | Tool                     | Type  | How to Invoke                             | Purpose                                  |
 |--------------------------|-------|-------------------------------------------|------------------------------------------|
-| task-reviewer            | Agent | Select **task-reviewer** agent            | Review implementation against the plan   |
 | code-review              | Agent | Select **code-review** agent              | Multi-perspective review of code changes |
 | test-streamlit-dashboard | Agent | Select **test-streamlit-dashboard** agent | Test Streamlit dashboard implementations |
 
-### Supporting Agents
+### Review Skills
 
-| Tool           | Type  | How to Invoke                                             | Purpose                                                                    |
-|----------------|-------|-----------------------------------------------------------|----------------------------------------------------------------------------|
-| Prompt Builder | Agent | Select **Prompt Builder** agent                           | Test prompt engineering artifacts through the HVE Builder review lifecycle |
-| Prompt Builder | Agent | Select **Prompt Builder** agent and use `/prompt-analyze` | Evaluate prompt quality and effectiveness                                  |
+| Tool        | How to Invoke     | Purpose                                                      |
+|-------------|-------------------|--------------------------------------------------------------|
+| rpi-review  | `/rpi-review`     | Review implementation evidence against the approved RPI plan |
+| hve-builder | Use `hve-builder` | Review or validate prompts, instructions, agents, and skills |
 
 ### Prompts and Instructions
 
 | Tool                    | Type        | How to Invoke                  | Purpose                                          |
 |-------------------------|-------------|--------------------------------|--------------------------------------------------|
-| task-review             | Prompt      | `/task-review`                 | Start a structured task review                   |
 | pr-review               | Prompt      | `/pr-review`                   | Run a multi-perspective review of a pull request |
 | pull-request            | Prompt      | `/pull-request`                | Create a pull request for current changes        |
 | ado-create-pull-request | Prompt      | `/ado-create-pull-request`     | Create an ADO-linked pull request                |
@@ -67,18 +65,16 @@ Engineers submit work for review and participate as peer reviewers. Tech Leads s
 
 ### Implementation Review
 
-Select **task-reviewer** agent:
-
 ```text
-Review today's changes to the authentication service against .copilot-tracking/plans/2025-01-15/auth-refactor-plan.md and .copilot-tracking/details/2025-01-15/auth-refactor-phase-details.md. Reconcile the `Pxx` and `Pxx-Txx` completion evidence and check for missing input validation on the new endpoints.
+/rpi-review Review today's changes to the authentication service against
+.copilot-tracking/plans/2025-01-15/auth-refactor-plan.md and
+.copilot-tracking/details/2025-01-15/auth-refactor-phase-details.md. Reconcile
+the `Pxx` and `Pxx-Txx` completion evidence and check for missing input
+validation on the new endpoints.
 ```
 
 ```text
-/task-review scope=today
-```
-
-```text
-/task-review plan=.copilot-tracking/plans/2025-01-15/pagination-plan.md details=.copilot-tracking/details/2025-01-15/pagination-phase-details.md critique=.copilot-tracking/reviews/plans/2025-01-15/pagination-plan-critique.md changes=.copilot-tracking/changes/2025-01-15/pagination-changes.md research=.copilot-tracking/research/2025-01-15/pagination-research.md
+/rpi-review plan=.copilot-tracking/plans/2025-01-15/pagination-plan.md details=.copilot-tracking/details/2025-01-15/pagination-phase-details.md critique=.copilot-tracking/reviews/plans/2025-01-15/pagination-plan-critique.md changes=.copilot-tracking/changes/2025-01-15/pagination-changes.md research=.copilot-tracking/research/2025-01-15/pagination-research.md
 ```
 
 ### Pull Request Workflow
@@ -111,10 +107,8 @@ Test the sensor monitoring dashboard at src/dashboards/sensor_monitor.py, verify
 
 ### RPI Evidence Reconciliation
 
-Select **task-reviewer** agent:
-
 ```text
-Review the API redesign evidence set:
+/rpi-review Review the API redesign evidence set:
 - Plan: .copilot-tracking/plans/2025-01-15/api-redesign-plan.md
 - Phase details: .copilot-tracking/details/2025-01-15/api-redesign-phase-details.md
 - Plan critique: .copilot-tracking/reviews/plans/2025-01-15/api-redesign-plan-critique.md
@@ -123,16 +117,12 @@ Review the API redesign evidence set:
 Reconcile requirements, `Pxx` and `Pxx-Txx` completion evidence, amendments, divergences, and validation. Record severity-graded `RV-xxx` findings and route each open item.
 ```
 
-Select **Prompt Builder** agent to perform behavior testing as part of the HVE Builder review lifecycle:
+Use `hve-builder` review mode for an AI artifact:
 
 ```text
-Execute .github/prompts/hve-core/task-review.prompt.md literally in a sandbox to verify the review workflow produces expected validation outputs
-```
-
-Select **Prompt Builder** agent and use `/prompt-analyze`:
-
-```text
-Evaluate the execution log from .copilot-tracking/sandbox/2025-01-15-task-review-001/execution-log.md against the quality criteria in the `hve-builder` skill
+Use hve-builder with mode=review and
+targets=.github/prompts/hve-core/rpi.prompt.md. Evaluate activation,
+lifecycle routing, behavior-test requirements, and host compatibility.
 ```
 
 ### Documentation Review

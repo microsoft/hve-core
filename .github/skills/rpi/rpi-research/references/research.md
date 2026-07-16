@@ -12,11 +12,11 @@ Read this reference while executing `rpi-research`. It defines the detailed rese
 
 Resolve the primary artifact before research starts. Use .copilot-tracking/research/YYYY-MM-DD/{{task_slug}}-research.md by default, where `{{task_slug}}` is lower-kebab-case. When the caller explicitly supplies a trusted sandbox or evidence root, mirror research/YYYY-MM-DD/{{task_slug}}-research.md beneath it and record the resolved root.
 
-| Artifact | Owner | Intended contents |
-|----------|-------|-------------------|
-| Primary research artifact | `rpi-research` | Research brief, extension provenance, participation, synthesized questions and findings, canonical `C#` and `W#` IDs, decisions, further research, planning readiness, and self-check |
-| Delegated lane artifact | `RPI Researcher` or selected specialist | Full lane inputs, actions, provenance, findings, confidence, gaps, and stop decision |
-| Chat response | Parent skill | Compact evidence-first summary and pointers, never a replacement for either artifact |
+| Artifact                  | Owner                                   | Intended contents                                                                                                                                                                     |
+|---------------------------|-----------------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| Primary research artifact | `rpi-research`                          | Research brief, extension provenance, participation, synthesized questions and findings, canonical `C#` and `W#` IDs, decisions, further research, planning readiness, and self-check |
+| Delegated lane artifact   | `RPI Researcher` or selected specialist | Full lane inputs, actions, provenance, findings, confidence, gaps, and stop decision                                                                                                  |
+| Chat response             | Parent skill                            | Compact evidence-first summary and pointers, never a replacement for either artifact                                                                                                  |
 
 ## Research Brief and Output Mode
 
@@ -130,11 +130,11 @@ Return a concise, evidence-first response with:
 
 Use the available host tool in each category and record a gap or fallback in the primary artifact. No tool category changes the research-only or evidence-root boundary.
 
-| Category | Use for | Typical Copilot capability |
-|----------|---------|----------------------------|
-| Code search | Unknown concepts, known symbols, paths, and usages | Semantic search, exact search, file discovery, file reads, and symbol usages |
-| External research | Current facts and specific pages | Web search and fetch |
-| Repository research | Patterns from authoritative repositories | Repository and repository text search |
-| Documentation research | Version-aware official documentation | Documentation MCP or approved documentation tools |
-| Optional participation | Decision-relevant caller checkpoints | `vscode_askQuestions` |
-| Delegated research | Independent internal, external, or hybrid lanes | `RPI Researcher` or a selected specialist by stable name |
+| Category               | Use for                                            | Typical Copilot capability                                                   |
+|------------------------|----------------------------------------------------|------------------------------------------------------------------------------|
+| Code search            | Unknown concepts, known symbols, paths, and usages | Semantic search, exact search, file discovery, file reads, and symbol usages |
+| External research      | Current facts and specific pages                   | Web search and fetch                                                         |
+| Repository research    | Patterns from authoritative repositories           | Repository and repository text search                                        |
+| Documentation research | Version-aware official documentation               | Documentation MCP or approved documentation tools                            |
+| Optional participation | Decision-relevant caller checkpoints               | `vscode_askQuestions`                                                        |
+| Delegated research     | Independent internal, external, or hybrid lanes    | `RPI Researcher` or a selected specialist by stable name                     |

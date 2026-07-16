@@ -28,7 +28,7 @@
         emits one disallow per sibling agent in the same collection directory.
 
 .PARAMETER Agent
-    Slug of the agent to generate (e.g., `task-researcher`). Must match exactly
+    Slug of the agent to generate (e.g., `rpi-agent`). Must match exactly
     one `<slug>.agent.md` under `.github/agents/`.
 
 .PARAMETER RepoRoot
@@ -45,10 +45,10 @@
 .PARAMETER IncludePersonaBleed
     Emit `persona-bleed-<sibling>` disallow rules for every sibling agent in
     the same collection directory. Off by default to preserve parity with the
-    original `task-researcher` inline block (which had no persona-bleed rules).
+    original inline block, which had no persona-bleed rules.
 
 .EXAMPLE
-    pwsh scripts/evals/New-AgentSurfaceSignatures.ps1 -Agent task-researcher
+    pwsh scripts/evals/New-AgentSurfaceSignatures.ps1 -Agent rpi-agent
 #>
 [CmdletBinding(SupportsShouldProcess)]
 [OutputType([string])]

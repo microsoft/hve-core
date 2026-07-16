@@ -3,7 +3,7 @@ title: Business Program Manager Guide
 description: HVE Core support for business program managers driving stakeholder alignment, business outcomes, and program coordination
 sidebar_position: 6
 author: Microsoft
-ms.date: 2026-06-26
+ms.date: 2026-07-15
 ms.topic: how-to
 keywords:
   - BPM
@@ -57,7 +57,7 @@ For technical backlog management, Azure DevOps integration, or GitHub issue work
 
 ## Stage Walkthrough
 
-1. Stage 2: Discovery. Use the **task-researcher** agent to investigate business context, competitive landscape, and stakeholder needs.
+1. Stage 2: Discovery. Use `/rpi-research` to investigate business context, competitive landscape, and stakeholder needs.
 2. Stage 3: Product Definition. Run the **brd-builder** agent to create business requirements documents from stakeholder conversations and strategy inputs.
 3. Stage 3: Advisory. Consult the **product-manager-advisor** agent for prioritization guidance, go-to-market strategy, and product positioning.
 4. Stage 4: Decomposition. Break business objectives into program milestones and coordinate cross-team dependencies.
@@ -125,7 +125,7 @@ tied to specific API endpoints.
 
 ### Business Context Research
 
-Select **task-researcher** agent:
+Use `/rpi-research`:
 
 ```text
 Research best practices for migrating from manual invoice approval workflows
@@ -150,14 +150,13 @@ navigation support.
 
 ## Key Agents and Workflows
 
-| Agent                       | Purpose                                                   | Docs                                               |
+| Agent or skill              | Purpose                                                   | Docs                                               |
 |-----------------------------|-----------------------------------------------------------|----------------------------------------------------|
 | **brd-builder**             | Business requirements document creation                   | Agent file                                         |
 | **product-manager-advisor** | Product strategy and prioritization guidance              | Agent file                                         |
 | **agile-coach**             | User story creation and refinement coaching               | Agent file                                         |
-| **task-researcher**         | Business context and market research                      | Agent file                                         |
+| **rpi-research**            | Business context and market research                      | [RPI workflow](../../rpi/)                         |
 | **ux-ui-designer**          | UX/UI guidance for business-facing deliverables           | Agent file                                         |
-| **memory**                  | Session context and preference persistence                | Agent file                                         |
 | **dt-coach**                | Design Thinking coaching for user-centered program design | [Design Thinking](../../design-thinking/README.md) |
 
 BPMs benefit from **dt-coach** when program design requires user-centered validation. Design Thinking scope conversations (Method 1) and user concepts (Method 5) help BPMs ground business requirements in validated user needs before formal BRD creation.

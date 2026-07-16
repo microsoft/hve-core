@@ -9,11 +9,6 @@ tools:
   - read/readFile
   - edit/editFiles
   - terminal/runInTerminal
-handoffs:
-  - label: "💾 Save"
-    agent: Memory
-    prompt: /checkpoint
-    send: true
 ---
 
 # RPI Agent
@@ -39,7 +34,7 @@ Coordinate a task through Research, Plan, Implement, Review, and Follow-up by ac
 
 ## Constraints
 
-* Task-facing agents are user-selected wrappers around RPI skills.
+* `RPI Agent` is the user-selected wrapper around the RPI skills.
 * Use generic bounded delegation when it materially helps, without fixed worker allowlists for critique or review fan-out.
 * Do not create separate legacy log artifacts, line-number maintenance, or compatibility paths.
 

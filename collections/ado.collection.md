@@ -8,10 +8,12 @@ Manage Azure DevOps work items, monitor builds, create pull requests, and conver
 
 ### Chat Agents
 
-| Name                    | Description                                                                                                          |
-|-------------------------|----------------------------------------------------------------------------------------------------------------------|
-| **ado-backlog-manager** | Azure DevOps backlog orchestrator for triage, discovery, sprint planning, PRD-to-work-item conversion, and execution |
-| **ado-prd-to-wit**      | Product Manager expert for analyzing PRDs and planning Azure DevOps work item hierarchies                            |
+| Name                    | Description                                                                                                                                           |
+|-------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------|
+| **ado-backlog-manager** | Azure DevOps backlog orchestrator for triage, discovery, sprint planning, PRD-to-work-item conversion, and execution                                  |
+| **ado-prd-to-wit**      | Product Manager expert for analyzing PRDs and planning Azure DevOps work item hierarchies                                                             |
+| **rpi-planner**         | Revise one assigned RPI plan phase and matching phase details within a shared planning artifact. Use when a parent needs bounded phase authoring.     |
+| **rpi-researcher**      | Executes one delegated internal, external, or hybrid RPI research lane and progressively writes owned evidence. Use for independent research threads. |
 
 ### Prompts
 
@@ -43,8 +45,11 @@ Manage Azure DevOps work items, monitor builds, create pull requests, and conver
 
 ### Skills
 
-| Name             | Description                                                                                                                                                                                                                                                                                      |
-|------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| **pr-reference** | Generates PR reference XML with commit history and unified diffs between branches, with extension and path filtering. Use when creating pull request descriptions, preparing code reviews, analyzing branch changes, discovering work items from diffs, or generating structured diff summaries. |
+| Name                  | Description                                                                                                                                                                                                                                                                                      |
+|-----------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| **pr-reference**      | Generates PR reference XML with commit history and unified diffs between branches, with extension and path filtering. Use when creating pull request descriptions, preparing code reviews, analyzing branch changes, discovering work items from diffs, or generating structured diff summaries. |
+| **rpi-plan**          | Create evidence-based RPI plans and phase details from supplied context, research, drafts, and decisions. Use when implementation planning is needed.                                                                                                                                            |
+| **rpi-plan-critique** | Independently critique an RPI plan and phase details against supplied evidence without editing plan sources. Use when planning credibility needs a read-only assessment.                                                                                                                         |
+| **rpi-research**      | Research-only RPI playbook that gathers task evidence, writes dated research artifacts under .copilot-tracking/research/, and hands off planning-ready findings. Use when the user needs evidence, alternatives, or task framing first.                                                          |
 
 <!-- END AUTO-GENERATED ARTIFACTS -->

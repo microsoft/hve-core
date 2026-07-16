@@ -3,7 +3,7 @@ title: AI Artifacts Architecture
 description: Prompt, agent, and instruction delegation model for Copilot customizations
 sidebar_position: 2
 author: Microsoft
-ms.date: 2026-06-10
+ms.date: 2026-07-15
 ms.topic: concept
 ---
 
@@ -28,7 +28,7 @@ Prompts (`.prompt.md`) serve as workflow entry points. They capture user intent 
 ```yaml
 ---
 description: 'Protocol for creating ADO pull requests'
-agent: Task Planner
+agent: RPI Agent
 ---
 ```
 
@@ -52,13 +52,9 @@ Agents (`.agent.md`) define task-specific behaviors with access to Copilot tools
 description: 'Orchestrates task planning with research integration'
 tools: ['codebase', 'search', 'editFiles', 'changes']
 handoffs:
-  - label: "⚡ Implement"
-    agent: Task Implementor
-    prompt: /task-implement
-    send: true
-  - label: "🔬 Research"
-    agent: Task Researcher
-    prompt: /task-research
+    - label: "Coordinate RPI Work"
+        agent: RPI Agent
+        prompt: "Coordinate this task through the applicable RPI phases"
     send: true
 ---
 ```
@@ -250,8 +246,8 @@ items:
     - path: .github/agents/hve-core/rpi-agent.agent.md
         kind: agent
         maturity: stable
-    - path: .github/prompts/hve-core/task-plan.prompt.md
-        kind: prompt
+    - path: .github/skills/rpi/rpi-plan/SKILL.md
+        kind: skill
         maturity: preview
 ```
 
@@ -326,15 +322,15 @@ Agents may declare dependencies on other artifacts through the `requires` field.
 
 ```mermaid
 graph TD
-    A[rpi-agent] --> B[task-researcher]
-    A --> C[task-planner]
-    A --> D[task-implementor]
-    A --> E[task-reviewer]
-    A --> F[checkpoint.prompt]
-    A --> G[rpi.prompt]
+    A[RPI Agent] --> B[rpi-research skill]
+    A --> C[rpi-plan skill]
+    A --> D[rpi-implement skill]
+    A --> E[rpi-review skill]
+    G[rpi prompt] --> A
 ```
 
-When installing `rpi-agent`, all dependent agents and prompts are automatically included regardless of collection filter.
+Collections that package RPI Agent must also package the entry prompt and phase
+skills required by its lifecycle contract.
 
 ## Extension Integration
 

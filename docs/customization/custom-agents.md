@@ -2,7 +2,7 @@
 title: Creating Custom Agents
 description: Build specialized agents with tool restrictions, subagent delegation, and mode-based workflows for your team
 author: Microsoft
-ms.date: 2026-07-14
+ms.date: 2026-07-15
 ms.topic: how-to
 keywords:
   - agents
@@ -46,50 +46,46 @@ Agent files live in `.github/agents/{collection-id}/`. Subagents go in a `subage
 
 ## Improving an Existing Agent
 
-Walk through improving the current RPI Planner subagent using Prompt Builder.
+Walk through improving the current RPI Planner subagent using `hve-builder`.
 
-**Step 1:** Use Task Planner as the parent context and RPI Planner as the artifact-authoring target:
+### Step 1: Identify the target and requirements
 
 ```text
-Task Planner context: .github/agents/hve-core/task-planner.agent.md
 RPI Planner target: .github/agents/hve-core/subagents/rpi-planner.agent.md
+Requirements: Preserve bounded phase ownership, marker-based addressing, and
+the structured response contract.
 ```
 
-**Step 2:** Use `/prompt-build` to generate the agent body. Provide existing agents as reference context with `files` and specify the target file with `promptFiles`:
+### Step 2: Run HVE Builder in improve mode
 
 ```text
-/prompt-build files=.github/agents/hve-core/task-planner.agent.md promptFiles=.github/agents/hve-core/subagents/rpi-planner.agent.md
+Use hve-builder with mode=improve and
+targets=.github/agents/hve-core/subagents/rpi-planner.agent.md. Preserve its
+existing capability-bearing frontmatter and the rpi-plan phase contract.
 ```
 
-Prompt Builder analyzes the Task Planner context and refines the RPI Planner protocol with its purpose, bounded phase steps, and response format.
+HVE Builder reads the known target and applicable conventions, confirms the
+write boundary, then authors within the current `rpi-plan` architecture.
 
-**Step 3:** Evaluate the generated agent with `/prompt-analyze`:
+### Step 3: Review the evidence
 
-```text
-/prompt-analyze promptFiles=.github/agents/hve-core/subagents/rpi-planner.agent.md
-```
-
-This produces a structured report covering purpose, capabilities, issues organized by severity, and an overall quality assessment. Address any critical or major findings before committing.
-
-**Step 4:** Iterate with `/prompt-build` to apply fixes identified by the analysis:
-
-```text
-/prompt-build files=.github/agents/hve-core/subagents/rpi-planner.agent.md promptFiles=.github/agents/hve-core/subagents/rpi-planner.agent.md
-```
-
-When `promptFiles` points to an existing file, Prompt Builder refines it rather than starting from scratch.
+Review HVE Builder's independent static verdict, behavior-test disposition,
+host validation result, and overall outcome. Address actionable findings before
+committing.
 
 > [!TIP]
-> Run `/prompt-analyze` first to identify quality issues, then use `/prompt-build` to apply fixes. This two-step pattern produces consistent, well-structured agents.
-
-**Step 5:** Use Task Planner in Copilot Chat when bounded phase authoring is needed. It delegates to RPI Planner only when that one-phase contract fits the work.
+> Use `hve-builder` review mode for read-only assessment. Use improve mode only
+> when source changes are approved.
 
 ### Consolidating Agents
 
-Use `/prompt-refactor` to merge overlapping agents or clean up related agent files:
+Use `hve-builder` refactor mode to merge overlapping agents or clean up related
+agent files without intentionally changing behavior:
 
 ```text
-/prompt-refactor promptFiles=.github/agents/contoso/*.agent.md requirements="merge overlapping review agents into a single orchestrator"
+Use hve-builder with mode=refactor,
+targets=.github/agents/contoso/*.agent.md, and requirements="merge overlapping
+review agents into a single orchestrator without changing supported behavior".
 ```
 
 ## Subagent Patterns
@@ -210,7 +206,7 @@ Create the requested artifacts based on analysis.
 Run validation commands and report results.
 ```
 
-HVE Core includes several mode-based agents you can study as patterns: task planners for research-plan-implement workflows, PR analyzers for autonomous review, and design thinking coaches for facilitated multi-turn sessions.
+HVE Core includes several mode-based agents you can study as patterns: RPI Agent for lifecycle coordination, PR analyzers for autonomous review, and Design Thinking coaches for facilitated multi-turn sessions.
 
 ## Role Scenarios
 
@@ -282,13 +278,14 @@ Declares subagent dependencies using their human-readable `name` values. Referen
 
 ```yaml
 agents:
-  - Researcher Subagent
+  - Contoso Research Analyst
   - RPI Planner
 ```
 
 ```markdown
-Delegate research to the researcher subagent
-at `.github/agents/**/researcher-subagent.agent.md`.
+Activate `rpi-research` for open-ended or decision-critical research. Dispatch
+the RPI Planner only from the canonical `rpi-plan` workflow when bounded phase
+authoring is required.
 ```
 
 ### handoffs
@@ -297,13 +294,9 @@ Defines structured transitions between agents. Each entry specifies a label (sho
 
 ```yaml
 handoffs:
-  - label: "Research Topic"
-    agent: "Researcher Subagent"
-    prompt: "Research the following topic"
-    send: true
-  - label: "Address Findings"
-    agent: "Task Implementor"
-    prompt: "Address the implementation findings"
+  - label: "Coordinate RPI Work"
+    agent: "RPI Agent"
+    prompt: "Coordinate this task through the applicable RPI phases"
     send: true
 ```
 
@@ -314,8 +307,8 @@ Set to `true` for orchestrator agents that coordinate subagents without performi
 ```yaml
 disable-model-invocation: true
 agents:
-  - Researcher Subagent
-  - RPI Planner
+  - Contoso Security Checker
+  - Contoso Style Validator
 ```
 
 ### user-invocable

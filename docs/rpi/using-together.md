@@ -1,19 +1,20 @@
 ---
-title: Using RPI Agents Together
+title: Using RPI Together
 description: Complete walkthrough of an evidence-led RPI lifecycle from research readiness through Follow-up
-sidebar_position: 8
+sidebar_position: 4
 author: Microsoft
-ms.date: 2026-07-14
+ms.date: 2026-07-15
 ms.topic: tutorial
 keywords:
   - rpi workflow
-  - task researcher
-  - task planner
-  - task implementor
-  - task reviewer
+   - rpi agent
+   - rpi research
+   - rpi plan
+   - rpi implement
+   - rpi review
   - complete workflow
    - follow-up
-estimated_reading_time: 5
+estimated_reading_time: 8
 ---
 
 This guide walks through an evidence-led RPI lifecycle for a complex task. `RPI Agent` is a user-selected lifecycle wrapper, and `/rpi-quick` is a skill-based full-flow entry point. They activate the same phase skills, use one task identity, and do not require an autonomous pipeline of specialized task workers.
@@ -30,7 +31,7 @@ This guide walks through an evidence-led RPI lifecycle for a complex task. `RPI 
      │                                                                    │
      │ demonstrated gap                                                   │ routes open work
      ▼                                                                    ▼
-   rpi-research or Task Researcher                                      Follow-up
+   rpi-research                                                         Follow-up
    research/{{YYYY-MM-DD}}/{{task_slug}}-research.md                    earliest stage or next item
 ```
 
@@ -54,7 +55,7 @@ Let's walk through adding Azure Blob Storage to a Python data pipeline.
 
 1. Assess the available task context, acceptance criteria, decisions, dependencies, and completed research. For this Azure Blob Storage example, external SDK choices, authentication, and large-file streaming demonstrate a research gap.
 
-2. Use `/rpi-research` or select Task Researcher for that bounded gap:
+2. Use `/rpi-research` for that bounded gap:
 
 ```text
 /rpi-research Azure Blob Storage integration for Python data pipeline
@@ -75,17 +76,17 @@ Research:
 Focus on approaches that match our existing patterns in the codebase.
 ```
 
-1. Task Researcher will:
+1. `/rpi-research` will:
 
    * Search your codebase for existing patterns
    * Research Azure SDK documentation
    * Evaluate authentication options
    * Create a research document with recommendations
 
-1. Review the output:
+2. Review the output:
 
 ```text
-## 🔬 Task Researcher: Azure Blob Storage Integration
+## 🔬 Research: Azure Blob Storage Integration
 
 ✅ Research document created at:
 .copilot-tracking/research/2025-01-28/blob-storage-research.md
@@ -115,7 +116,7 @@ Key findings:
    - Include error handling and retry logic
    ```
 
-4. Review the output. The planning parent creates a plan, matching phase-details artifact, and independent critique:
+4. Review the output. `/rpi-plan` creates a plan, matching phase-details artifact, and independent critique:
 
    ```text
    .copilot-tracking/plans/2025-01-28/blob-storage-plan.md
@@ -147,12 +148,12 @@ Key findings:
 
 Use `Pxx` and `Pxx-Txx` IDs, headings, and markers to navigate between the plan and phase-details artifact. They remain stable when surrounding text changes.
 
-The planning parent owns the overall checklist and phase details. It may use `RPI Planner` only for a bounded one-phase authoring task, while `rpi-plan-critique` independently assesses the complete plan and details.
+`/rpi-plan` owns the overall checklist and phase details. It may use bounded assistance internally for one exact phase, while `rpi-plan-critique` independently assesses the complete plan and details.
 
 ### Implement
 
 1. Open or reference the plan, phase-details, and critique artifacts. Use a fresh context only when accumulated conversation detail would impede the approved work.
-2. Use `/rpi-implement` or select Task Implementor to execute directly and flexibly within the approved scope:
+2. Use `/rpi-implement` to execute directly and flexibly within the approved scope:
 
    ```text
    /rpi-implement plan=.copilot-tracking/plans/2025-01-28/blob-storage-plan.md details=.copilot-tracking/details/2025-01-28/blob-storage-phase-details.md task=P01-T01
@@ -195,13 +196,13 @@ Ready for review.
 ### Review
 
 1. Open or reference the complete evidence set. Begin a fresh context only when it will help evidence reconciliation.
-2. Use `/rpi-review` or select Task Reviewer to reconcile the implementation:
+2. Use `/rpi-review` to reconcile the implementation:
 
    ```text
    /rpi-review task=blob-storage
    ```
 
-3. Task Reviewer creates or updates one review record:
+3. `/rpi-review` creates or updates one review record:
 
    * Locates research, plan, phase details, plan critique, amendments, changes, and validation evidence
    * Reconciles each `Pxx` and `Pxx-Txx` item with completion and change evidence
@@ -212,17 +213,17 @@ Ready for review.
 4. Review the findings:
 
 ```text
-## ✅ Task Reviewer: Blob Storage Integration
+## ✅ Review: Blob Storage Integration
 
-| Summary              |                                                                            |
-|----------------------|----------------------------------------------------------------------------|
-| Review Record        | .copilot-tracking/reviews/logs/2025-01-28/blob-storage-review.md          |
-| Execution Status     | Complete                                                                   |
-| Outcome              | Defects found                                                              |
-| Critical Findings    | 0                                                                          |
-| Medium Findings      | 1                                                                          |
-| Low Findings         | 1                                                                          |
-| Residual Work        | 1                                                                          |
+| Summary           |                                                                  |
+|-------------------|------------------------------------------------------------------|
+| Review Record     | .copilot-tracking/reviews/logs/2025-01-28/blob-storage-review.md |
+| Execution Status  | Complete                                                         |
+| Outcome           | Defects found                                                    |
+| Critical Findings | 0                                                                |
+| Medium Findings   | 1                                                                |
+| Low Findings      | 1                                                                |
+| Residual Work     | 1                                                                |
 
 RV-001 [Medium]: Missing docstring on BlobStorageClient.upload_stream().
 Destination: rpi-implement
@@ -256,15 +257,15 @@ Review routes work rather than silently looping it through a generic worker chai
 
 After completing RPI, you have:
 
-| Artifact      | Location                                                                                 | Purpose                                               |
-|---------------|------------------------------------------------------------------------------------------|-------------------------------------------------------|
-| Research, when it runs | `.copilot-tracking/research/{{YYYY-MM-DD}}/{{task_slug}}-research.md`                   | Evidence and recommendations                          |
-| Plan          | `.copilot-tracking/plans/{{YYYY-MM-DD}}/{{task_slug}}-plan.md`                           | Checkboxes, requirements, decisions, and amendments   |
-| Phase details | `.copilot-tracking/details/{{YYYY-MM-DD}}/{{task_slug}}-phase-details.md`                | Evidence-based context for `Pxx` and `Pxx-Txx` work   |
-| Plan critique | `.copilot-tracking/reviews/plans/{{YYYY-MM-DD}}/{{task_slug}}-plan-critique.md`          | Independent planning credibility assessment            |
-| Changes       | `.copilot-tracking/changes/{{YYYY-MM-DD}}/{{task_slug}}-changes.md`                      | `CHG-xxx`, `DIV-xxx`, validation, and handoff evidence |
-| Review        | `.copilot-tracking/reviews/logs/{{YYYY-MM-DD}}/{{task_slug}}-review.md`                  | Reconciliation, `RV-xxx` findings, outcome, and routing |
-| Code          | Your source directories                                                                  | Working implementation                                |
+| Artifact               | Location                                                                        | Purpose                                                 |
+|------------------------|---------------------------------------------------------------------------------|---------------------------------------------------------|
+| Research, when it runs | `.copilot-tracking/research/{{YYYY-MM-DD}}/{{task_slug}}-research.md`           | Evidence and recommendations                            |
+| Plan                   | `.copilot-tracking/plans/{{YYYY-MM-DD}}/{{task_slug}}-plan.md`                  | Checkboxes, requirements, decisions, and amendments     |
+| Phase details          | `.copilot-tracking/details/{{YYYY-MM-DD}}/{{task_slug}}-phase-details.md`       | Evidence-based context for `Pxx` and `Pxx-Txx` work     |
+| Plan critique          | `.copilot-tracking/reviews/plans/{{YYYY-MM-DD}}/{{task_slug}}-plan-critique.md` | Independent planning credibility assessment             |
+| Changes                | `.copilot-tracking/changes/{{YYYY-MM-DD}}/{{task_slug}}-changes.md`             | `CHG-xxx`, `DIV-xxx`, validation, and handoff evidence  |
+| Review                 | `.copilot-tracking/reviews/logs/{{YYYY-MM-DD}}/{{task_slug}}-review.md`         | Reconciliation, `RV-xxx` findings, outcome, and routing |
+| Code                   | Your source directories                                                         | Working implementation                                  |
 
 ## Common Patterns
 
@@ -273,7 +274,7 @@ After completing RPI, you have:
 If implementation or review reveals a demonstrated evidence gap:
 
 1. Record the gap and its affected task scope.
-2. Return to Task Researcher or `/rpi-research` for the bounded investigation.
+2. Return to `/rpi-research` for the bounded investigation.
 3. Update planning only when the evidence changes the approved scope, decision, or acceptance criteria.
 4. Resume the earliest affected lifecycle concept from the durable artifacts.
 
@@ -301,26 +302,26 @@ The Review concept routes findings to the earliest responsible lifecycle concept
 
 ### Iteration Paths
 
-| Review result          | Action                              | Target phase or owner |
-|------------------------|-------------------------------------|-----------------------|
-| Conformant             | Commit changes                      | Done                  |
-| Defects found          | Fix implementation issues           | Implement             |
-| Research-gap finding   | Investigate missing context         | Research              |
-| Decision-gap finding   | Revise supported scope or decision  | Plan                  |
-| Residual work          | Create distinct follow-up work      | Follow-up owner       |
+| Review result        | Action                             | Target phase or owner |
+|----------------------|------------------------------------|-----------------------|
+| Conformant           | Commit changes                     | Done                  |
+| Defects found        | Fix implementation issues          | Implement             |
+| Research-gap finding | Investigate missing context        | Research              |
+| Decision-gap finding | Revise supported scope or decision | Plan                  |
+| Residual work        | Create distinct follow-up work     | Follow-up owner       |
 
 ### Defect Flow
 
-When Task Reviewer identifies Critical or High findings:
+When `/rpi-review` identifies Critical or High findings:
 
 1. Open the review log in your editor.
-2. Use `/rpi-implement` or Task Implementor to address implementation findings.
+2. Use `/rpi-implement` to address implementation findings.
 3. Preserve the relevant changes and validation evidence.
 4. Return to review with `/rpi-review` when the evidence is ready.
 
 ### Research and Planning Flow
 
-When Task Reviewer identifies research or planning gaps:
+When `/rpi-review` identifies research or planning gaps:
 
 1. Open the review log and the referenced task artifacts.
 2. Choose the appropriate direct phase skill:
@@ -330,13 +331,13 @@ When Task Reviewer identifies research or planning gaps:
 
 ## Quick Reference
 
-| Lifecycle concept      | Direct skill       | User-selected agent, when applicable | Output                                                                 |
-|------------------------|--------------------|--------------------------------------|------------------------------------------------------------------------|
-| Research, when needed  | `/rpi-research`    | Task Researcher                      | `.copilot-tracking/research/{{YYYY-MM-DD}}/{{task_slug}}-research.md` |
-| Plan                   | `/rpi-plan`        | Task Planner                         | Plan, phase details, and critique                                     |
-| Implement              | `/rpi-implement`   | Task Implementor                     | Code and changes evidence                                             |
-| Review                 | `/rpi-review`      | Task Reviewer                        | One review record with status, outcome, and routing                   |
-| Follow-up              | Routed from review | `RPI Agent` or the next owner        | Earliest responsible stage or a distinct next item                    |
+| Lifecycle concept     | Direct skill       | Output                                                                |
+|-----------------------|--------------------|-----------------------------------------------------------------------|
+| Research, when needed | `/rpi-research`    | `.copilot-tracking/research/{{YYYY-MM-DD}}/{{task_slug}}-research.md` |
+| Plan                  | `/rpi-plan`        | Plan, phase details, and critique                                     |
+| Implement             | `/rpi-implement`   | Source changes and changes evidence                                   |
+| Review                | `/rpi-review`      | One review record with status, outcome, and routing                   |
+| Follow-up             | Routed from review | Earliest responsible stage or a distinct next item                    |
 
 > [!TIP]
 > `RPI Agent` and `/rpi-quick` are alternative lifecycle entry surfaces for the same phase skills. They use research readiness and do not require fresh research or every lifecycle concept in one conversation.
@@ -347,11 +348,11 @@ For a long lifecycle, resume with the stable task ID, `Pxx`, `Pxx-Txx`, headings
 
 Choose the entry surface that best fits the task. Both `RPI Agent` and `/rpi-quick` activate the same phase skills.
 
-| Entry surface       | Use it when                                             | Contract                                                     |
-|---------------------|---------------------------------------------------------|--------------------------------------------------------------|
-| `RPI Agent`         | You want a user-selected lifecycle wrapper              | Activates applicable phase skills from research readiness    |
-| `/rpi-quick`        | You want a skill-based full-flow entry point            | Same lifecycle contract and one task identity                |
-| Direct phase skills | The next responsible action is already known            | Bounded Research, Plan, Implement, or Review work            |
+| Entry surface       | Use it when                                  | Contract                                                  |
+|---------------------|----------------------------------------------|-----------------------------------------------------------|
+| `RPI Agent`         | You want a user-selected lifecycle wrapper   | Activates applicable phase skills from research readiness |
+| `/rpi-quick`        | You want a skill-based full-flow entry point | Same lifecycle contract and one task identity             |
+| Direct phase skills | The next responsible action is already known | Bounded Research, Plan, Implement, or Review work         |
 
 ## Resuming a Long Lifecycle
 
@@ -360,7 +361,7 @@ A long lifecycle can accumulate context. Resume from the durable RPI artifact se
 1. Open or reference the dated artifact that establishes the next action.
 2. Use the stable task ID, `Pxx`, `Pxx-Txx`, headings, and `<!-- rpi:... -->` markers to find the affected scope.
 3. Start a fresh chat or use `/compact` only when it will improve the next responsible action.
-4. Keep a memory or checkpoint record as a supplement, not a replacement, for plan, details, changes, or review evidence.
+4. Treat the durable artifact set, rather than the conversation transcript, as the source of truth.
 
 > [!TIP]
 > For the full explanation of how context affects the lifecycle, see [Context Engineering](context-engineering).
@@ -370,11 +371,8 @@ See [Agents Reference](https://github.com/microsoft/hve-core/blob/main/.github/C
 ## Related Guides
 
 * [RPI Overview](./) - Understand the workflow
+* [Why the RPI Workflow Works](why-rpi) - Understand the rationale for phase separation
 * [Context Engineering](context-engineering) - Why context management matters
-* [Task Researcher](task-researcher) - Deep research phase
-* [Task Planner](task-planner) - Create actionable plans
-* [Task Implementor](task-implementor) - Execute with precision
-* [Task Reviewer](task-reviewer) - Validate implementations
 
 ---
 

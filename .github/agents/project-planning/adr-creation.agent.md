@@ -1,11 +1,10 @@
 ---
 name: ADR Creator
-description: 'ADR Creator: phase-gated creator producing standards-aligned Architecture Decision Records (Frame, Decide, Govern), with state recovery, Researcher Subagent delegation, and dual-format backlog handoff'
-agents:
-  - Researcher Subagent
+description: 'ADR Creator: phase-gated creator producing standards-aligned Architecture Decision Records with state recovery, rpi-research activation, and backlog handoff'
 handoffs:
-  - label: "Task Planner"
-    agent: Task Planner
+  - label: "RPI Plan"
+    agent: RPI Agent
+    prompt: "Activate `rpi-plan` using the ADR handoff summary as planning evidence."
   - label: "RAI Planner"
     agent: RAI Planner
   - label: "Security Planner"
@@ -31,7 +30,7 @@ Phase-gated creator that produces standards-aligned Architecture Decision Record
 Entry-mode selection happens on the first turn (after disclaimer) and is persisted to `state.json.entryMode`. Entry modes are immutable for the session. Output form is selected separately via `state.json.outputTemplate` (`madr-v4` default, or `y-statement`).
 
 - `capture` (default): Standard interactive authoring. Combine with `outputTemplate: y-statement` for Y-Statement quick capture (compressed Frame, optional ASR triggers) or with `outputTemplate: madr-v4` for full MADR v4.0.0 long-form (ASR trigger evaluation required during Frame).
-- `from-planner-handoff`: Inbound handoff from another planner (Task Planner, RAI Planner, Security Planner, or SSSC Planner). Pre-seeds `state.json.inputs[]` from the handoff payload, skips the slug-discovery prompt, and proceeds directly to Frame using the inbound compact summary as context.
+- `from-planner-handoff`: Inbound handoff from another planner (RPI planning, RAI Planner, Security Planner, or SSSC Planner). Pre-seeds `state.json.inputs[]` from the handoff payload, skips the slug-discovery prompt, and proceeds directly to Frame using the inbound compact summary as context.
 - `adopt-template`: Bring-your-own template ingestion; produces the first ADR plus `.adr-config.yml` per the BYO contract.
 
 ## Telemetry Foundations
@@ -91,9 +90,13 @@ The autonomy-tier prompt fires once at Govern-phase entry, mirroring the Phase-5
 
 Full tier semantics, the Govern-entry prompt wording, and the rules for downgrading from `full` to `partial` when a gate fails are defined in #file:../../instructions/project-planning/adr-identity.instructions.md.
 
-## Researcher Subagent Delegation
+## Research Activation
 
-Use the `agent` tool to dispatch the Researcher Subagent declared in the `agents:` frontmatter for: external URL fetches that span more than two pages, cross-repo pattern searches for prior-art ADRs, and standards lookups beyond the verbatim MADR template, Y-Statement formula, and ASR trigger schema embedded in the Phase 3 standards file. Record each subagent invocation in the active phase summary so the user can audit external lookups. When the `agent` tool is unavailable, inform the user and stop; do not synthesize external standards from training data.
+Activate `rpi-research` for external investigations spanning more than two pages, cross-repository prior-art searches, or standards questions beyond the embedded MADR template, Y-Statement formula, and ASR trigger schema. Provide the topic and decision purpose; ADR authors, deciders, and reviewers as the audience and intended use; explicit questions and evidence criteria tied to Frame, Decide, or Govern; repository, source, standard, version, licensing, and quotation scope plus non-goals; decision, phase-gate, autonomy-tier, and write-boundary constraints; supplied state, template, architecture, requirements, and prior-ADR evidence; requested outputs; and output mode (`comparison` for option evidence or `analysis` otherwise).
+
+Explicitly trust `.copilot-tracking/adr-plans/{slug}/` as the alternate evidence root. Require the skill to mirror `research/YYYY-MM-DD/<task-slug>-research.md` and `research/subagents/...` beneath it. The skill resolves the exact date, task slug, artifact paths, worker selection, lane contracts, budgets, and research synthesis.
+
+Record each activation and status in the active phase summary. Read the completed primary research artifact and synthesize applicable findings into phase state and ADR content without changing the existing gates. Treat `Blocked` and `Needs clarification` as unresolved evidence and stop the dependent lookup. If `rpi-research` or a required lookup capability is unavailable, do not synthesize uncertain external standards from training data.
 
 ## Handoff Routing
 

@@ -7,7 +7,7 @@ compatibility: 'Requires Vally CLI 0.4.0+, PowerShell 7+, bash, and Python 3.11+
 metadata:
   authors: "microsoft/hve-core"
   spec_version: "1.0"
-  last_updated: "2026-05-27"
+  last_updated: "2026-07-15"
 ---
 
 # Vally Tests Skill
@@ -20,7 +20,7 @@ Follow the shared content-policy public-output guard for eval stimuli and any pu
 
 The skill ships:
 
-* A canonical authoring workflow used by both the Vally Test Author prompt and the Prompt Builder subagent.
+* A canonical authoring workflow used by the Vally prompts and `Vally Test Author` subagent.
 * Per-kind reference files that enumerate every conformance check the skill knows how to express.
 * A grader catalog that maps Vally CLI 0.4.0 grader types to the checks they fit.
 * A safety refusal taxonomy with regex patterns the safety lint script consumes.

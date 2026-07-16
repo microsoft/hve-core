@@ -27,7 +27,7 @@ Select all that apply:
 
 **AI Artifacts:**
 
-* [ ] Reviewed contribution with `prompt-builder` agent and addressed all feedback
+* [ ] Reviewed contribution with `hve-builder` and addressed all actionable findings
 * [ ] Copilot instructions (`.github/instructions/*.instructions.md`)
 * [ ] Copilot prompt (`.github/prompts/*.prompt.md`)
 * [ ] Copilot agent (`.github/agents/*.agent.md`)
@@ -86,8 +86,8 @@ For detailed contribution requirements, see:
 
 ### AI Artifact Contributions
 <!-- If contributing an agent, prompt, instruction, or skill, complete these checks -->
-* [ ] Used `/prompt-analyze` to review contribution
-* [ ] Addressed all feedback from `prompt-builder` review
+* [ ] Used `hve-builder` review mode to review contribution
+* [ ] Addressed all actionable findings from the `hve-builder` review
 * [ ] Verified contribution follows common standards and type-specific requirements
 
 ### Required Automated Checks

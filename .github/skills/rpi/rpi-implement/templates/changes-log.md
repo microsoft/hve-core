@@ -44,8 +44,8 @@
 
 ## Validation Record
 
-| Check | Scope | Status | Evidence or reason |
-|-------|-------|--------|--------------------|
+| Check     | Scope     | Status                                   | Evidence or reason     |
+|-----------|-----------|------------------------------------------|------------------------|
 | {{check}} | {{scope}} | {{Passed_Failed_Skipped_or_Unavailable}} | {{evidence_or_reason}} |
 
 ## Blockers

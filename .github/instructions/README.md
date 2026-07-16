@@ -2,7 +2,7 @@
 title: GitHub Copilot Instructions
 description: Repository-specific coding guidelines and conventions for GitHub Copilot
 author: HVE Core Team
-ms.date: 2026-07-09
+ms.date: 2026-07-15
 ms.topic: reference
 keywords:
   - copilot
@@ -25,7 +25,7 @@ the codebase.
 2. GitHub Copilot reads instructions when editing matching files
 3. Suggestions follow the documented standards automatically
 
-Custom agents and the `prompt-builder` agent respect these instructions and can create new ones.
+Custom agents and the `hve-builder` skill respect these instructions and can create new ones.
 See [Contributing Instructions](../../docs/contributing/instructions.md) for authoring guidance.
 
 ## Available Instructions
@@ -205,9 +205,9 @@ resource "azurerm_resource_group" "example" {
 
 ## Creating New Instructions
 
-Use the **Prompt Builder** compatibility agent or activate the `hve-builder` skill directly:
+Activate the `hve-builder` skill:
 
-1. Open Copilot Chat and select **prompt-builder** from the agent picker
+1. Open Copilot Chat and ask to create or improve an instruction artifact
 2. Provide context (files, folders, or requirements)
 3. HVE Builder resolves the mode, write boundary, and applicable conventions
 4. HVE Builder authors, independently reviews, behavior-tests, and validates the artifact
