@@ -14,7 +14,9 @@ function Get-ChangedFilesFromGit {
     Gets changed files from git with intelligent fallback strategies.
 
     .DESCRIPTION
-    Attempts to detect changed files using merge-base, with fallbacks for different scenarios.
+    Detects committed branch changes using merge-base, with fallbacks for
+    different scenarios, then merges staged, unstaged, and untracked,
+    nonignored working-tree files into the result.
 
     .PARAMETER BaseBranch
     The base branch to compare against (default: origin/main).
@@ -39,7 +41,7 @@ function Get-ChangedFilesFromGit {
     try {
         # Try merge-base first (best for PRs)
         $mergeBase = git merge-base HEAD $BaseBranch 2>$null
-        
+
         if ($LASTEXITCODE -eq 0 -and $mergeBase) {
             Write-Verbose "Using merge-base: $mergeBase"
             $changedFiles = git diff --name-only --diff-filter=ACMR $mergeBase HEAD 2>$null
@@ -54,14 +56,26 @@ function Get-ChangedFilesFromGit {
         }
 
         if ($LASTEXITCODE -ne 0) {
-            Write-Warning "Unable to determine changed files from git"
-            return @()
+            throw 'Unable to determine changed files from git'
         }
+
+        $workingTreeFiles = git diff --name-only --diff-filter=ACMR HEAD 2>$null
+        if ($LASTEXITCODE -ne 0) {
+            throw 'Unable to determine staged and unstaged files from git'
+        }
+
+        $untrackedFiles = git ls-files --others --exclude-standard 2>$null
+        if ($LASTEXITCODE -ne 0) {
+            throw 'Unable to determine untracked files from git'
+        }
+
+        $changedFiles = @($changedFiles) + @($workingTreeFiles) + @($untrackedFiles) |
+            Sort-Object -Unique
 
         # Filter by extensions and verify files exist
         $filteredFiles = $changedFiles | Where-Object {
             if ([string]::IsNullOrEmpty($_)) { return $false }
-            
+
             # Check if file matches any of the allowed extensions
             $currentFile = $_
             $matchesExtension = $false
@@ -71,7 +85,7 @@ function Get-ChangedFilesFromGit {
                     break
                 }
             }
-            
+
             $matchesExtension -and (Test-Path $currentFile -PathType Leaf)
         }
 
@@ -80,7 +94,7 @@ function Get-ChangedFilesFromGit {
     }
     catch {
         Write-Warning "Error getting changed files: $($_.Exception.Message)"
-        return @()
+        throw
     }
 }
 
@@ -212,10 +226,10 @@ function Get-GitIgnorePatterns {
         $_ -and -not $_.StartsWith('#') -and $_.Trim() -ne ''
     } | ForEach-Object {
         $pattern = $_.Trim()
-        
+
         # Normalize to platform separator
         $normalizedPattern = $pattern.Replace('/', $sep).Replace('\', $sep)
-        
+
         if ($pattern.EndsWith('/')) {
             "*$sep$($normalizedPattern.TrimEnd($sep))$sep*"
         }

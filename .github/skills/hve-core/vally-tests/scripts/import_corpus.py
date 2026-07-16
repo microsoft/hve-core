@@ -4,10 +4,10 @@
 """Vally corpus importer.
 
 Reads a CSV or XLSX file matching the canonical column contract, validates each
-row, normalizes prompts (trim + lowercase + collapse-whitespace), hashes them
-with SHA-256, runs the skill-local safety lint as a per-row subprocess, dedupes
+row, runs the skill-local safety lint as a per-row subprocess, normalizes prompts
+(trim + lowercase + collapse-whitespace), hashes them with SHA-256, dedupes
 against an optional target eval YAML, and emits both an append-only YAML patch
-and a JSON report.  Every accepted row is forced to ``tags.advisory: true``.
+and a JSON report. Every accepted row is forced to ``tags.advisory: true``.
 """
 
 from __future__ import annotations
@@ -339,18 +339,18 @@ def import_corpus(
             report.rejected.append({"line": index, "reason": error, "row": row})
             continue
 
+        if not skip_safety:
+            safety = safety_check(row["prompt"], lint_script, pwsh=pwsh)
+            if safety["exit_code"] != 0:
+                report.flagged.append({"line": index, "safety": safety, "row": row})
+                continue
+
         normalized = normalize_prompt(row["prompt"])
         digest = hash_prompt(normalized)
         if digest in existing_hashes:
             report.duplicates.append({"line": index, "sha256": digest, "row": row})
             continue
         existing_hashes.add(digest)
-
-        if not skip_safety:
-            safety = safety_check(row["prompt"], lint_script, pwsh=pwsh)
-            if safety["exit_code"] != 0:
-                report.flagged.append({"line": index, "safety": safety, "row": row})
-                continue
 
         accepted_blocks.append(build_patch_entry(row, digest))
         report.accepted.append({"line": index, "sha256": digest, "row": row})

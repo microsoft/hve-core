@@ -2,7 +2,7 @@
 title: GitHub Copilot Custom Agents
 description: Specialized AI agents for planning, research, prompt engineering, documentation, and code review workflows
 author: HVE Core Team
-ms.date: 2026-06-28
+ms.date: 2026-07-09
 ms.topic: guide
 keywords:
   - copilot
@@ -75,7 +75,7 @@ Each phase has two entry points: the `/task-*` prompt commands (`/task-research`
 
 | Agent                 | Purpose                                                                | Key Constraint                                                |
 |-----------------------|------------------------------------------------------------------------|---------------------------------------------------------------|
-| **prompt-builder**    | Engineers and validates instruction/prompt files                       | Dual-persona system with auto-testing                         |
+| **prompt-builder**    | Compatibility entry point for HVE Builder artifact lifecycle work      | Routes to one author-review-test-validation implementation    |
 | **security-reviewer** | OWASP vulnerability assessment with subagent-driven verification       | Delegates all reference reading to subagents                  |
 | **code-review**       | Human-gated review orchestrator dispatching five perspective subagents | Operator confirms scope, perspectives, and depth; review-only |
 
@@ -164,12 +164,12 @@ Each phase has two entry points: the `/task-*` prompt commands (`/task-research`
 
 * `.github/instructions/{collection-id}/*.instructions.md` (coding guidelines and conventions, by convention)
 * `.github/prompts/{collection-id}/*.prompt.md` (reusable workflow prompts, by convention)
-* `.copilot-tracking/sandbox/{{YYYY-MM-DD}}-{{prompt-name}}-{{run-number}}/execution-log.md` (test execution trace)
-* `.copilot-tracking/sandbox/{{YYYY-MM-DD}}-{{prompt-name}}-{{run-number}}/evaluation-log.md` (quality validation results)
+* `.copilot-tracking/hve-builder/{{YYYY-MM-DD}}/*-review-*.md` (independent static review evidence)
+* `.copilot-tracking/hve-builder/{{YYYY-MM-DD}}/*-behavior-report-*.md` (fidelity-labeled behavior evidence)
 
-**Workflow:** Research sources → Draft → Auto-validate with Prompt Tester → Iterate (up to 3 cycles)
+**Workflow:** Route mode and write boundary → Author → Fresh-context review → Behavior test → Host validation
 
-**Critical:** Dual-persona system with execution and evaluation subagents. Uses sandbox environment for testing. Links to authoritative sources.
+**Critical:** Compatibility surface only. The `hve-builder` skill owns the lifecycle, stage gates, Terra/Luna worker models, and final outcome.
 
 ### product-manager-advisor
 
@@ -476,10 +476,10 @@ It dispatches thin perspective subagents under `.github/agents/coding-standards/
 ### Creating Instructions
 
 1. Select **prompt-builder** from agent picker
-2. Draft instruction file with conventions
-3. Auto-validates with Prompt Tester persona
-4. Iterates up to 3 times for quality
-5. Delivered to `.github/instructions/{collection-id}/` by convention
+2. Provide the target path, reference context, and requirements
+3. HVE Builder resolves the create or improve mode and source-write boundary
+4. HVE Builder authors, independently reviews, behavior-tests, and validates the artifact
+5. Review the overall outcome and evidence links before merging
 
 ### Creating Documentation
 

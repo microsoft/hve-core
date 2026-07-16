@@ -1,0 +1,25 @@
+# Copyright (c) 2026 Microsoft Corporation. All rights reserved.
+# SPDX-License-Identifier: MIT
+stimuli:
+  - name: hve-artifact-test-designer-instruction-scenario
+    prompt: As the HVE Artifact Test Designer, design one black-box isolation scenario for the first `copilot-instructions.md` or `AGENTS.md` file you find, write `test-design.md` under `.copilot-tracking/sandbox/`, and immediately return using your response template without executing it.
+    environment:
+      files:
+        - src: fixtures/hve-artifact-copilot-instructions.md
+          dest: .github/copilot-instructions.md
+    tags:
+      category: agent-behavior
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: design-log-path
+        config:
+          pattern: '(?i)\.copilot-tracking[/\\]sandbox[/\\].*test-design\.md'
+      - type: output-matches
+        name: black-box-isolation-scenario
+        config:
+          pattern: '(?is)(?=.*\b(?:black[- ]box|isolation)\b)(?=.*\bscenario\b)'
+      - type: output-matches
+        name: design-only
+        config:
+          pattern: '(?i)(?:not\s+(?:executed|run)|design(?:ed)?\s+only|did\s+not\s+execute|without\s+executing)'
