@@ -36,7 +36,7 @@ Record each obligation's status as `Present`, `Partial`, or `Missing` with a sou
 
 ## Role-aware redaction
 
-Redaction is a role decision, not a blanket rule. State explicitly who is redacted and who is retained for each output surface. For example, a public or cross-tenant export may redact impacted-person PII while retaining operator identifiers needed for accountability. Never specify "redact everything"; that hides the accountability trail as well as the sensitive data.
+Redaction is a role decision, not a blanket rule. For each output surface, state which subject and operator identifiers are visible, pseudonymized, or redacted. Public and cross-tenant outputs should redact or pseudonymize both subject and operator identifiers unless the recipient has a documented need, authorization, and lawful basis. Preserve the operator's direct identity in the access-controlled audit trail, and link external outputs to it through a non-identifying event or case reference. Output redaction must not delete or rewrite the underlying audit evidence, and "redact everything" is still the wrong instruction because it hides the accountability trail along with the sensitive data.
 
 ## Tiered retention
 
@@ -53,7 +53,7 @@ Anchor windows to the applicable regime or contractual requirement; mark propose
 
 An audit trail that can be edited is not evidence. Require tamper-evidence and define what each entry captures and how a per-record evidence bundle is produced.
 
-- Tamper-evidence: append-only or hash-chained log so entries cannot be silently altered.
+- Tamper-evidence: use immutable or write-once storage, or cryptographically chain entries and periodically sign or anchor checkpoints in an independently protected system. Restrict and audit administrative access, protect signing keys, define retention enforcement, and verify the chain and anchors when producing an evidence bundle.
 - Entry captures: actor identity, timestamp, context, and stage or state change.
 - Evidence bundle: for a regulated export (for example, FOIA or litigation hold), the set of audit entries and source records for one subject, plus a verification step that proves the chain is intact.
 
