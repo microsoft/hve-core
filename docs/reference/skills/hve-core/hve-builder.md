@@ -1,6 +1,6 @@
 ---
-title: rpi-plan
-description: "Create evidence-based RPI plans and phase details from supplied context, research, drafts, and decisions. Use when implementation planning is needed."
+title: hve-builder
+description: "Author, review, or validate Copilot prompt-engineering artifacts through independent review, behavior testing, and host checks."
 sidebar_position: 4
 ms.date: 2026-07-16
 ---
@@ -9,7 +9,7 @@ ms.date: 2026-07-16
 | Field       | Value                                  |
 |-------------|----------------------------------------|
 | Kind        | skill                                  |
-| Source      | `.github/skills/rpi/rpi-plan`          |
+| Source      | `.github/skills/hve-core/hve-builder`  |
 | Invocation  | Loaded on demand by referencing agents |
 | Interactive | No                                     |
 <!-- END AUTO-GENERATED: metadata -->
@@ -17,7 +17,7 @@ ms.date: 2026-07-16
 ## What it does
 
 <!-- BEGIN AUTO-GENERATED: overview -->
-Create evidence-based RPI plans and phase details from supplied context, research, drafts, and decisions. Use when implementation planning is needed.
+Author, review, or validate Copilot prompt-engineering artifacts through independent review, behavior testing, and host checks.
 <!-- END AUTO-GENERATED: overview -->
 
 ## When to use it

@@ -10,11 +10,11 @@ user-invocable: true
 
 Role: lifecycle lead for Copilot instruction artifacts. Goal: create, improve, refactor, replace, review, or validate prompts, instruction files, agents, subagents, and skills through one evidence-backed workflow.
 
-Read [references/workflow-contract.md](references/workflow-contract.md) first. It owns mode routing, stage gates, model selection, iteration rules, and overall outcomes. Apply [references/requirements-catalog.md](references/requirements-catalog.md) as the quality standard, [references/artifact-types.md](references/artifact-types.md) for architecture and load timing, [references/review-rubric.md](references/review-rubric.md) for static verdicts, [references/stage-dispatch.md](references/stage-dispatch.md) for generic lifecycle-stage dispatches and the `rpi-research` bridge, and [references/extending-hve-builder.md](references/extending-hve-builder.md) for host extensions. Delegate behavior testing to the `hve-builder-tester` skill only for major changes.
+Read [references/workflow-contract.md](references/workflow-contract.md) first. It owns mode routing, stage gates, model selection, iteration rules, and overall outcomes. Apply [references/requirements-catalog.md](references/requirements-catalog.md) as the quality standard, [references/artifact-types.md](references/artifact-types.md) for architecture and load timing, [references/review-rubric.md](references/review-rubric.md) for static verdicts, [references/stage-dispatch.md](references/stage-dispatch.md) for generic lifecycle-stage dispatches and the `rpi-research` bridge, and [references/extending-hve-builder.md](references/extending-hve-builder.md) for host extensions. The `hve-builder-tester` skill is the sole behavior-testing entrypoint for Major mutations and behavior-bearing review targets.
 
 ## Goal
 
-Deliver the requested artifact set or evidence report with the narrowest necessary write authority. A passing mutating run has independent static and behavior verdicts, passing host validation, and no unmet acceptance criteria. A read-only run changes only its evidence files.
+Deliver the requested artifact set or evidence report with the narrowest necessary write authority. A passing route has an applicable behavior-gate result, required static verdicts, passing host validation when required, and no unmet acceptance criteria. A read-only run changes only its evidence files.
 
 ## Modes
 
@@ -42,7 +42,7 @@ Follow the stage order, gates, classification, validation, and outcome resolver 
 * The requested source artifacts or read-only evidence reports exist within the approved write boundary.
 * Each artifact satisfies its stated purpose, routes facts by load timing and authority, and carries none of the retired stale patterns.
 * Every required stage completed or was legitimately satisfied-and-skipped with execution `Not run`, verdict and fidelity `Not applicable`, and a reason; deferrals are stated explicitly.
-* Required static and behavior verdicts are Pass, or behavior is legitimately satisfied-and-skipped for a minor or medium change, and host validation is Pass when required. A behavior verdict of Not available resolves the run to Deferred. Any other state resolves through the workflow contract rather than being described as a clean pass.
+* Required static verdicts are Pass, and the behavior gate either executes for a Major mutation or behavior-bearing review target, or is legitimately satisfied-and-skipped for an eligible Minor or Medium mutation or no-runtime review target. Host validation is Pass when required. A behavior verdict of Not available resolves the run to Deferred. Any other state resolves through the workflow contract rather than being described as a clean pass.
 * Every open-ended codebase exploration and decision-critical research activity uses `rpi-research`, while bounded reads of already-known lifecycle-stage targets remain local to their stage.
 * Existing non-tool capability-bearing frontmatter is preserved as baseline behavior unless the workflow contract records approved, verified grounds to change it.
 
@@ -81,7 +81,7 @@ Use [references/stage-dispatch.md](references/stage-dispatch.md) for the `rpi-re
 
 ## Handoff
 
-The behavior gate is required for mutating and review routes: execute `hve-builder-tester` only for major changes, and record the canonical satisfied-and-skipped fields for minor and medium changes. Beyond that, do not auto-invoke downstream skills. When stable behavior is worth pinning as conformance coverage and `Vally Test Author` is available in the host, name it as an advisory next step; otherwise omit that recommendation.
+The behavior gate is required for mutating and review routes: Major mutations and behavior-bearing review targets execute `hve-builder-tester`; eligible no-runtime review targets and Minor or Medium mutations use the canonical satisfied-and-skipped fields. Beyond that, do not auto-invoke downstream skills. When stable behavior is worth pinning as conformance coverage and `Vally Test Author` is available in the host, name it as an advisory next step; otherwise omit that recommendation.
 
 ## Final response contract
 

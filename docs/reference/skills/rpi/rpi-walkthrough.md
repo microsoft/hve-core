@@ -1,7 +1,7 @@
 ---
-title: rpi-plan
-description: "Create evidence-based RPI plans and phase details from supplied context, research, drafts, and decisions. Use when implementation planning is needed."
-sidebar_position: 4
+title: rpi-walkthrough
+description: "Guided, conversational walkthrough that explains code, UI, UX, features, or .copilot-tracking artifacts one line or block at a time with navigable evidence links, deep subagent review, and captured change requests for RPI handoff. Use when the user wants to understand how something works or why it was changed."
+sidebar_position: 8
 ms.date: 2026-07-16
 ---
 
@@ -9,7 +9,7 @@ ms.date: 2026-07-16
 | Field       | Value                                  |
 |-------------|----------------------------------------|
 | Kind        | skill                                  |
-| Source      | `.github/skills/rpi/rpi-plan`          |
+| Source      | `.github/skills/rpi/rpi-walkthrough`   |
 | Invocation  | Loaded on demand by referencing agents |
 | Interactive | No                                     |
 <!-- END AUTO-GENERATED: metadata -->
@@ -17,7 +17,7 @@ ms.date: 2026-07-16
 ## What it does
 
 <!-- BEGIN AUTO-GENERATED: overview -->
-Create evidence-based RPI plans and phase details from supplied context, research, drafts, and decisions. Use when implementation planning is needed.
+Guided, conversational walkthrough that explains code, UI, UX, features, or .copilot-tracking artifacts one line or block at a time with navigable evidence links, deep subagent review, and captured change requests for RPI handoff. Use when the user wants to understand how something works or why it was changed.
 <!-- END AUTO-GENERATED: overview -->
 
 ## When to use it

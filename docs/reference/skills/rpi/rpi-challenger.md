@@ -1,7 +1,7 @@
 ---
-title: rpi-plan
-description: "Create evidence-based RPI plans and phase details from supplied context, research, drafts, and decisions. Use when implementation planning is needed."
-sidebar_position: 4
+title: rpi-challenger
+description: "Challenge a confirmed task, decision, plan, or artifact through adaptive skeptical questions. Use when you need to expose assumptions before acting."
+sidebar_position: 1
 ms.date: 2026-07-16
 ---
 
@@ -9,7 +9,7 @@ ms.date: 2026-07-16
 | Field       | Value                                  |
 |-------------|----------------------------------------|
 | Kind        | skill                                  |
-| Source      | `.github/skills/rpi/rpi-plan`          |
+| Source      | `.github/skills/rpi/rpi-challenger`    |
 | Invocation  | Loaded on demand by referencing agents |
 | Interactive | No                                     |
 <!-- END AUTO-GENERATED: metadata -->
@@ -17,7 +17,7 @@ ms.date: 2026-07-16
 ## What it does
 
 <!-- BEGIN AUTO-GENERATED: overview -->
-Create evidence-based RPI plans and phase details from supplied context, research, drafts, and decisions. Use when implementation planning is needed.
+Challenge a confirmed task, decision, plan, or artifact through adaptive skeptical questions. Use when you need to expose assumptions before acting.
 <!-- END AUTO-GENERATED: overview -->
 
 ## When to use it

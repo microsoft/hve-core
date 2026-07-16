@@ -2,7 +2,7 @@
 title: Customizing HVE Core
 description: Overview of customization approaches from lightweight settings to full fork-and-extend, with role-based entry points
 author: Microsoft
-ms.date: 2026-07-15
+ms.date: 2026-07-16
 ms.topic: overview
 keywords:
   - customization
@@ -79,12 +79,16 @@ graph LR
 
 Use the `hve-builder` skill to create, improve, refactor, replace, review, or
 validate prompts, instructions, agents, subagents, and skills. It resolves the
-write boundary, runs independent static review, adds behavior testing when the
-change requires it, and performs host validation through one lifecycle.
+write boundary, runs independent static review, and applies one behavior gate
+with route-specific execution. Major mutations and behavior-bearing review
+targets execute testing, while eligible no-runtime review targets and Minor or
+Medium mutations are satisfied-and-skipped. Known target files and
+caller-supplied canonical references remain bounded lifecycle reads;
+open-ended exploration and decision-critical research activate `rpi-research`.
 
 The retained `prompt-builder`, `prompt-analyze`, and `prompt-refactor` skills
-are compatibility aliases for legacy requests. They route to `hve-builder` and
-do not own separate authoring workflows.
+remain compatibility aliases for legacy requests. They route to `hve-builder`
+and do not own separate authoring workflows.
 
 Each artifact guide below includes an "Authoring with HVE Builder" section
 with type-specific examples.

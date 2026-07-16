@@ -1,8 +1,8 @@
 ---
 title: prompt-refactor
-description: Refactor existing prompt artifacts against explicit requirements through the full prompt-builder loop.
-sidebar_position: 5
-ms.date: 2026-07-03
+description: Compatibility alias for behavior-preserving prompt artifact cleanup. Routes refactoring to hve-builder refactor mode.
+sidebar_position: 7
+ms.date: 2026-07-16
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->
@@ -17,7 +17,7 @@ ms.date: 2026-07-03
 ## What it does
 
 <!-- BEGIN AUTO-GENERATED: overview -->
-Refactor existing prompt artifacts against explicit requirements through the full prompt-builder loop.
+Compatibility alias for behavior-preserving prompt artifact cleanup. Routes refactoring to hve-builder refactor mode.
 <!-- END AUTO-GENERATED: overview -->
 
 ## When to use it

@@ -2,7 +2,7 @@
 name: RPI Agent
 description: "User-selected RPI workflow wrapper for Research, Plan, Implement, Review, and Follow-up. Use when one task needs lifecycle coordination."
 argument-hint: "task=... [continue=...] [followUp=...]"
-disable-model-invocation: false
+disable-model-invocation: true
 tools:
   - agent
   - search/fileSearch

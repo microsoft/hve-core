@@ -1,8 +1,8 @@
 ---
 title: rpi-implement
-description: "Execute approved implementation phases, update tracking artifacts, and hand off review-ready results."
-sidebar_position: 1
-ms.date: 2026-07-03
+description: "Execute an approved RPI plan, preserve amendments, and record evidence-led changes. Use when implementation is ready to begin or resume."
+sidebar_position: 2
+ms.date: 2026-07-16
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->
@@ -17,7 +17,7 @@ ms.date: 2026-07-03
 ## What it does
 
 <!-- BEGIN AUTO-GENERATED: overview -->
-Execute approved implementation phases, update tracking artifacts, and hand off review-ready results.
+Execute an approved RPI plan, preserve amendments, and record evidence-led changes. Use when implementation is ready to begin or resume.
 <!-- END AUTO-GENERATED: overview -->
 
 ## When to use it

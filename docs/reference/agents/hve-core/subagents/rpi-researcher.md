@@ -1,15 +1,15 @@
 ---
-title: Researcher Subagent
-description: "Research subagent using search, read, web-fetch, GitHub repo, and MCP tools"
-sidebar_position: 7
-ms.date: 2026-07-05
+title: RPI Researcher
+description: "Executes one delegated internal, external, or hybrid RPI research lane and progressively writes owned evidence. Use for independent research threads."
+sidebar_position: 3
+ms.date: 2026-07-16
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->
 | Field       | Value                                                                    |
 |-------------|--------------------------------------------------------------------------|
 | Kind        | agent                                                                    |
-| Source      | `.github/agents/hve-core/subagents/researcher-subagent.agent.md`         |
+| Source      | `.github/agents/hve-core/subagents/rpi-researcher.agent.md`              |
 | Invocation  | Delegated subagent, dispatched by a parent agent (not selected directly) |
 | Interactive | No                                                                       |
 <!-- END AUTO-GENERATED: metadata -->
@@ -17,7 +17,7 @@ ms.date: 2026-07-05
 ## What it does
 
 <!-- BEGIN AUTO-GENERATED: overview -->
-Research subagent using search, read, web-fetch, GitHub repo, and MCP tools
+Executes one delegated internal, external, or hybrid RPI research lane and progressively writes owned evidence. Use for independent research threads.
 <!-- END AUTO-GENERATED: overview -->
 
 ## When to use it

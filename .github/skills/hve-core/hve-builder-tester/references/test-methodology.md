@@ -21,10 +21,10 @@ The generic test-design subagent may inspect internals to design coverage, but i
 
 Every run records one fidelity:
 
-| Fidelity     | What runs                                                                                                                          | Claims the evidence supports                                                                            |
-|--------------|------------------------------------------------------------------------------------------------------------------------------------|---------------------------------------------------------------------------------------------------------|
+| Fidelity     | What runs                                                                                                                          | Claims the evidence supports                                                                             |
+|--------------|------------------------------------------------------------------------------------------------------------------------------------|----------------------------------------------------------------------------------------------------------|
 | `simulation` | `HVE Artifact Tester` reads the target and follows it literally in a contained sandbox, emulating unavailable or unsafe dispatches | Contract interpretation, instruction clarity, handoff consistency, documented outputs, and stop behavior |
-| `native`     | The registered target agent, subagent, or semantically activated skill receives the black-box scenario directly                    | Observed activation, outputs, and stop behavior for that run and model profile                          |
+| `native`     | The registered target agent, subagent, or semantically activated skill receives the black-box scenario directly                    | Observed activation, outputs, and stop behavior for that run and model profile                           |
 
 Simulation is the safe default. Native fidelity is permitted only when all conditions hold:
 
@@ -43,7 +43,7 @@ Test only what has runtime behavior to exercise. The decision rule:
 * By type: prompts, agents, subagents, and skills always carry runtime behavior and are tested. A skill's own references, templates, and assets under its directory are part of the skill's runtime behavior (the skill loads and acts on them), so they are tested with the skill, not skipped. Only standalone documentation that no executable artifact loads (for example top-level docs and READMEs) carries no runtime behavior and is skipped with a reason. An instruction file carries runtime behavior when a change adds or alters a rule or convention that steers model actions, and none when the change is purely editorial.
 * By change: on a behavioral type, a change that provably cannot alter model actions (formatting, link fixes, comment-only edits, or a reference path change with no rule change) has no runtime behavior to exercise for that change; record the reason. Modifications applied by linters or formatters are formatting-only by definition and do not require re-testing.
 
-When `hve-builder` is the caller, its change-classification policy is more specific: all minor and medium changes are satisfied-and-skipped, including every frontmatter-only change and name-reference update. This skill receives only major changes from that route. Direct callers may still request a behavior test under the runtime-behavior decision above.
+When `hve-builder` is the caller, its change-classification policy is more specific: all minor and medium changes are satisfied-and-skipped, including every frontmatter-only change and name-reference update. This skill receives Major mutations and behavior-bearing review targets from that route. Direct callers may still request a behavior test under the runtime-behavior decision above.
 
 ## Artifact dispatch
 

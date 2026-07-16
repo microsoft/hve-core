@@ -281,6 +281,134 @@ Describe 'Invoke-AssetDocsGeneration - human section preservation' -Tag 'Unit' {
     }
 }
 
+Describe 'Invoke-AssetDocsGeneration - orphan reconciliation' -Tag 'Unit' {
+    It 'Removes an untouched interactive scaffold after its source is deleted' {
+        $repo = New-AssetFixtureRepo
+        Invoke-AssetDocsGeneration -RepoRoot $repo -TemplatePath $script:TemplatePath | Out-Null
+        $source = Join-Path $repo '.github/agents/hve-core/alpha-agent.agent.md'
+        $pageRel = 'docs/reference/agents/hve-core/alpha-agent.md'
+        Remove-Item -LiteralPath $source -Force
+
+        $result = Invoke-AssetDocsGeneration -RepoRoot $repo -TemplatePath $script:TemplatePath
+
+        $result.Removed | Should -Contain $pageRel
+        Test-Path -LiteralPath (Join-Path $repo $pageRel) | Should -BeFalse
+    }
+
+    It 'Removes an untouched non-interactive scaffold after its source is deleted' {
+        $repo = New-AssetFixtureRepo
+        Invoke-AssetDocsGeneration -RepoRoot $repo -TemplatePath $script:TemplatePath | Out-Null
+        $source = Join-Path $repo '.github/instructions/shared/demo.instructions.md'
+        $pageRel = 'docs/reference/instructions/shared/demo.md'
+        Remove-Item -LiteralPath $source -Force
+
+        $result = Invoke-AssetDocsGeneration -RepoRoot $repo -TemplatePath $script:TemplatePath
+
+        $result.Removed | Should -Contain $pageRel
+        Test-Path -LiteralPath (Join-Path $repo $pageRel) | Should -BeFalse
+    }
+
+    It 'Preserves an authored orphan and reports it as needing attention' {
+        $repo = New-AssetFixtureRepo
+        Invoke-AssetDocsGeneration -RepoRoot $repo -TemplatePath $script:TemplatePath | Out-Null
+        $source = Join-Path $repo '.github/agents/hve-core/alpha-agent.agent.md'
+        $pageRel = 'docs/reference/agents/hve-core/alpha-agent.md'
+        $page = Join-Path $repo $pageRel
+        $authored = (Get-Content -LiteralPath $page -Raw) -replace 'Describe the situations[^\n]*', 'Use this authored guidance.'
+        Set-Content -LiteralPath $page -Value $authored -Encoding utf8NoBOM -NoNewline
+        Remove-Item -LiteralPath $source -Force
+        $before = Get-Content -LiteralPath $page -Raw
+
+        $result = Invoke-AssetDocsGeneration -RepoRoot $repo -TemplatePath $script:TemplatePath
+
+        $result.Removed | Should -Not -Contain $pageRel
+        $result.NeedsAttention | Should -Contain $pageRel
+        (Get-Content -LiteralPath $page -Raw) | Should -Be $before
+    }
+
+    It 'Preserves an orphan with a missing generated marker' {
+        $repo = New-AssetFixtureRepo
+        Invoke-AssetDocsGeneration -RepoRoot $repo -TemplatePath $script:TemplatePath | Out-Null
+        $source = Join-Path $repo '.github/agents/hve-core/alpha-agent.agent.md'
+        $pageRel = 'docs/reference/agents/hve-core/alpha-agent.md'
+        $page = Join-Path $repo $pageRel
+        $ambiguous = (Get-Content -LiteralPath $page -Raw) -replace '<!-- BEGIN AUTO-GENERATED: metadata -->', ''
+        Set-Content -LiteralPath $page -Value $ambiguous -Encoding utf8NoBOM -NoNewline
+        Remove-Item -LiteralPath $source -Force
+
+        $result = Invoke-AssetDocsGeneration -RepoRoot $repo -TemplatePath $script:TemplatePath
+
+        $result.Removed | Should -Not -Contain $pageRel
+        $result.NeedsAttention | Should -Contain $pageRel
+        Test-Path -LiteralPath $page | Should -BeTrue
+    }
+
+    It 'Preserves an orphan with a duplicate generated marker' {
+        $repo = New-AssetFixtureRepo
+        Invoke-AssetDocsGeneration -RepoRoot $repo -TemplatePath $script:TemplatePath | Out-Null
+        $source = Join-Path $repo '.github/agents/hve-core/alpha-agent.agent.md'
+        $pageRel = 'docs/reference/agents/hve-core/alpha-agent.md'
+        $page = Join-Path $repo $pageRel
+        $content = Get-Content -LiteralPath $page -Raw
+        $duplicate = $content -replace '<!-- BEGIN AUTO-GENERATED: metadata -->', "<!-- BEGIN AUTO-GENERATED: metadata -->`n<!-- BEGIN AUTO-GENERATED: metadata -->"
+        Set-Content -LiteralPath $page -Value $duplicate -Encoding utf8NoBOM -NoNewline
+        Remove-Item -LiteralPath $source -Force
+
+        $result = Invoke-AssetDocsGeneration -RepoRoot $repo -TemplatePath $script:TemplatePath
+
+        $result.Removed | Should -Not -Contain $pageRel
+        $result.NeedsAttention | Should -Contain $pageRel
+        Test-Path -LiteralPath $page | Should -BeTrue
+    }
+
+    It 'Reports a safe removal under WhatIf without deleting the page' {
+        $repo = New-AssetFixtureRepo
+        Invoke-AssetDocsGeneration -RepoRoot $repo -TemplatePath $script:TemplatePath | Out-Null
+        $source = Join-Path $repo '.github/agents/hve-core/alpha-agent.agent.md'
+        $pageRel = 'docs/reference/agents/hve-core/alpha-agent.md'
+        $page = Join-Path $repo $pageRel
+        Remove-Item -LiteralPath $source -Force
+
+        $result = Invoke-AssetDocsGeneration -RepoRoot $repo -TemplatePath $script:TemplatePath -WhatIf
+
+        $result.Removed | Should -Contain $pageRel
+        $result.Removed.Count | Should -Be 1
+        $result.DriftCount | Should -Be ($result.Created.Count + $result.Updated.Count + $result.Removed.Count + $result.NeedsAttention.Count)
+        Test-Path -LiteralPath $page | Should -BeTrue
+    }
+
+    It 'Preserves a current page whose on-disk path differs only by case' {
+        $repo = New-AssetFixtureRepo
+        Invoke-AssetDocsGeneration -RepoRoot $repo -TemplatePath $script:TemplatePath | Out-Null
+        $expectedRel = 'docs/reference/agents/hve-core/alpha-agent.md'
+        $miscasedRel = 'docs/reference/agents/hve-core/Alpha-Agent.md'
+        $expected = Join-Path $repo $expectedRel
+        $intermediate = Join-Path $repo 'docs/reference/agents/hve-core/alpha-agent.rename.md'
+        $miscased = Join-Path $repo $miscasedRel
+        Move-Item -LiteralPath $expected -Destination $intermediate
+        Move-Item -LiteralPath $intermediate -Destination $miscased
+
+        $result = Invoke-AssetDocsGeneration -RepoRoot $repo -TemplatePath $script:TemplatePath
+
+        $result.Removed | Should -Not -Contain $miscasedRel
+        $result.NeedsAttention | Should -Contain $miscasedRel
+        Test-Path -LiteralPath $miscased | Should -BeTrue
+    }
+
+    It 'Reports no orphan drift on the second run after safe removal' {
+        $repo = New-AssetFixtureRepo
+        Invoke-AssetDocsGeneration -RepoRoot $repo -TemplatePath $script:TemplatePath | Out-Null
+        Remove-Item -LiteralPath (Join-Path $repo '.github/agents/hve-core/alpha-agent.agent.md') -Force
+        Invoke-AssetDocsGeneration -RepoRoot $repo -TemplatePath $script:TemplatePath | Out-Null
+
+        $second = Invoke-AssetDocsGeneration -RepoRoot $repo -TemplatePath $script:TemplatePath
+
+        $second.Removed.Count | Should -Be 0
+        $second.NeedsAttention.Count | Should -Be 0
+        $second.DriftCount | Should -Be 0
+    }
+}
+
 Describe 'Invoke-AssetDocsGeneration - missing overview markers' -Tag 'Unit' {
     BeforeAll {
         $script:repo = New-AssetFixtureRepo

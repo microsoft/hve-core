@@ -287,4 +287,9 @@ Describe 'Invoke-AssetDocsValidation' -Tag 'Unit' {
         Set-Content -LiteralPath $page -Value $tampered -Encoding utf8NoBOM -NoNewline
         (Invoke-AssetDocsValidation -RepoRoot $repo -CheckSync) | Should -Be 1
     }
+
+    It 'Exits 0 for a freshly generated tree under strict coverage and sync checks' {
+        $repo = New-ValidatorFixture
+        (Invoke-AssetDocsValidation -RepoRoot $repo -FailOnMissing -CheckSync) | Should -Be 0
+    }
 }

@@ -1,8 +1,8 @@
 ---
 title: Dt Handoff Implementation Space
-description: Compiles DT Methods 7-9 outputs into an RPI-ready handoff artifact targeting Task Researcher
+description: Compiles DT Methods 7-9 into research-ready input for rpi-research at the Implementation Space exit
 sidebar_position: 3
-ms.date: 2026-07-03
+ms.date: 2026-07-16
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->
@@ -17,7 +17,7 @@ ms.date: 2026-07-03
 ## What it does
 
 <!-- BEGIN AUTO-GENERATED: overview -->
-Compiles DT Methods 7-9 outputs into an RPI-ready handoff artifact targeting Task Researcher
+Compiles DT Methods 7-9 into research-ready input for rpi-research at the Implementation Space exit
 <!-- END AUTO-GENERATED: overview -->
 
 ## When to use it

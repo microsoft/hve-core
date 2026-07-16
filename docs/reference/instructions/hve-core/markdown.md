@@ -1,8 +1,8 @@
 ---
 title: Hve Core/Markdown
 description: Markdown authoring conventions for all .md files
-sidebar_position: 5
-ms.date: 2026-07-03
+sidebar_position: 6
+ms.date: 2026-07-16
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->

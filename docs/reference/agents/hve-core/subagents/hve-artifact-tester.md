@@ -1,15 +1,15 @@
 ---
-title: RPI Validator
-description: "Validates a Changes Log against the Implementation Plan, Planning Log, and Research Documents for a specific plan phase"
-sidebar_position: 8
-ms.date: 2026-07-05
+title: HVE Artifact Tester
+description: "Performs contained literal conformance simulation of an HVE artifact and records simulated, emulated, and observed behavior. Dispatched by hve-builder-tester."
+sidebar_position: 1
+ms.date: 2026-07-16
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->
 | Field       | Value                                                                    |
 |-------------|--------------------------------------------------------------------------|
 | Kind        | agent                                                                    |
-| Source      | `.github/agents/hve-core/subagents/rpi-validator.agent.md`               |
+| Source      | `.github/agents/hve-core/subagents/hve-artifact-tester.agent.md`         |
 | Invocation  | Delegated subagent, dispatched by a parent agent (not selected directly) |
 | Interactive | No                                                                       |
 <!-- END AUTO-GENERATED: metadata -->
@@ -17,7 +17,7 @@ ms.date: 2026-07-05
 ## What it does
 
 <!-- BEGIN AUTO-GENERATED: overview -->
-Validates a Changes Log against the Implementation Plan, Planning Log, and Research Documents for a specific plan phase
+Performs contained literal conformance simulation of an HVE artifact and records simulated, emulated, and observed behavior. Dispatched by hve-builder-tester.
 <!-- END AUTO-GENERATED: overview -->
 
 ## When to use it

@@ -1,15 +1,15 @@
 ---
-title: Hve Core/Prompt Builder
-description: "Authoring standards for prompts, agents, instructions, and skills"
-sidebar_position: 6
-ms.date: 2026-07-03
+title: Hve Core/Hve Builder
+description: "Authoring standards for prompts, agents, subagents, instructions, and skills, grounded in the frontier-LLM instruction-quality research"
+sidebar_position: 4
+ms.date: 2026-07-16
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->
 | Field       | Value                                                                                       |
 |-------------|---------------------------------------------------------------------------------------------|
 | Kind        | instruction                                                                                 |
-| Source      | `.github/instructions/hve-core/prompt-builder.instructions.md`                              |
+| Source      | `.github/instructions/hve-core/hve-builder.instructions.md`                                 |
 | Invocation  | Applied automatically to `**/*.prompt.md, **/*.agent.md, **/*.instructions.md, **/SKILL.md` |
 | Interactive | No                                                                                          |
 <!-- END AUTO-GENERATED: metadata -->
@@ -17,7 +17,7 @@ ms.date: 2026-07-03
 ## What it does
 
 <!-- BEGIN AUTO-GENERATED: overview -->
-Authoring standards for prompts, agents, instructions, and skills
+Authoring standards for prompts, agents, subagents, instructions, and skills, grounded in the frontier-LLM instruction-quality research
 <!-- END AUTO-GENERATED: overview -->
 
 ## When to use it

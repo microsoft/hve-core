@@ -1,7 +1,7 @@
 name: behavior-conformance-skills
 description: >
   Advisory-tier behavior conformance evals for skills exercised through
-  knowledge, tool-trigger, and bleed-detection stimulus shapes. Total: 118
+  knowledge, tool-trigger, and bleed-detection stimulus shapes. Total: 124
   stimuli, including complete branch coverage for the RPI and prompt-builder
   skill updates. Each tool-trigger stimulus uses two graders with AND logic,
   and the suite-level scoring threshold gates the aggregate pass rate across
@@ -1412,6 +1412,96 @@ stimuli:
         name: research-routing
         config:
           pattern: '(?is)(?=.*rpi-research)(?=.*(?:bridge|research\s+artifact|evidence\s+root|Deferred))'
+  - name: skill-hve-builder-bounded-read-routing
+    prompt: |
+      I supplied one known custom-agent target, its requirements, and the
+      canonical references needed to improve it. Before baseline review, should
+      HVE Builder run a workspace research scan? Explain the routing boundary.
+    environment:
+      skills:
+        - ../../.github/skills/hve-core/hve-builder
+    tags:
+      category: behavior-conformance
+      skill: hve-builder
+      shape: knowledge
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: bounded-read-route
+        config:
+          pattern: '(?is)(?=.*(?:known|supplied).{0,80}(?:target|reference))(?=.*(?:bounded|local).{0,80}(?:read|lifecycle))'
+      - type: output-matches
+        name: no-unnecessary-research
+        config:
+          pattern: '(?is)(?=.*(?:do\s+not|does\s+not|no\s+need|without).{0,100}(?:activate|invoke|run).{0,40}rpi-research)'
+  - name: skill-hve-builder-open-ended-research-routing
+    prompt: |
+      Before choosing an artifact architecture, I need HVE Builder to survey
+      the workspace for non-obvious reusable skills and subagents. Explain how
+      it obtains that open-ended evidence and who owns the research artifacts.
+    environment:
+      skills:
+        - ../../.github/skills/hve-core/hve-builder
+    tags:
+      category: behavior-conformance
+      skill: hve-builder
+      shape: tool-trigger
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: research-bridge-route
+        config:
+          pattern: '(?is)(?=.*rpi-research)(?=.*(?:open-ended|workspace|survey|exploration))(?=.*(?:research\s+artifact|evidence))'
+      - type: output-matches
+        name: no-local-worker-route
+        config:
+          pattern: '(?is)(?=.*(?:do\s+not|does\s+not|no).{0,100}(?:direct|local).{0,50}(?:research\s+worker|research\s+route|fallback))'
+  - name: skill-hve-builder-unavailable-research-bridge
+    prompt: |
+      HVE Builder has an approved decision-critical research brief, but the
+      `rpi-research` entrypoint is unavailable in this host. What outcome and
+      rerun information should it record, and may it dispatch a research worker
+      directly instead?
+    environment:
+      skills:
+        - ../../.github/skills/hve-core/hve-builder
+    tags:
+      category: behavior-conformance
+      skill: hve-builder
+      shape: bleed-detection
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: deferred-with-rerun-condition
+        config:
+          pattern: '(?is)(?=.*\bDeferred\b)(?=.*rpi-research)(?=.*(?:rerun\s+condition|rerun\s+when|when.{0,60}available))'
+      - type: output-matches
+        name: reject-direct-worker-fallback
+        config:
+          pattern: '(?is)(?=.*(?:do\s+not|must\s+not|cannot|no).{0,100}(?:direct|local).{0,40}(?:worker|fallback|research\s+route))'
+  - name: skill-hve-builder-read-only-review-behavior
+    prompt: |
+      I requested read-only HVE Builder review of an instruction whose rules
+      can change model actions. There is no proposed source delta. Explain the
+      behavior-gate decision, including what happens if required execution is
+      unavailable.
+    environment:
+      skills:
+        - ../../.github/skills/hve-core/hve-builder
+    tags:
+      category: behavior-conformance
+      skill: hve-builder
+      shape: knowledge
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: review-runtime-route
+        config:
+          pattern: '(?is)(?=.*(?:read-only|review))(?=.*(?:behavior-bearing|affect.{0,30}model\s+action|runtime\s+behavior))(?=.*hve-builder-tester)(?=.*(?:no|without).{0,30}source\s+delta)'
+      - type: output-matches
+        name: unavailable-review-behavior
+        config:
+          pattern: '(?is)(?=.*\bDeferred\b)(?=.*Not\s+available)(?=.*(?:rerun\s+condition|rerun\s+when|when.{0,60}available))'
   - name: skill-hve-builder-tester-knowledge
     prompt: |
       Summarize how the `hve-builder-tester` skill evaluates a behavior-bearing
@@ -1647,6 +1737,51 @@ stimuli:
         name: source-boundary-and-handoff
         config:
           pattern: '(?is)(?=.*(?:read[- ]only|do\s+not\s+(?:edit|modify)|requested\s+changes))(?=.*(?:rpi-quick|rpi-research|RPI\s+(?:follow-on|handoff|sequence)))'
+  - name: skill-rpi-challenger-contract
+    prompt: |
+      Summarize how `rpi-challenger` examines a confirmed plan without solving
+      or approving it. Include scope confirmation, active-turn question cadence,
+      its writable artifact boundary, completion behavior, and downstream
+      routing authority.
+    environment:
+      skills:
+        - ../../.github/skills/rpi/rpi-challenger
+    tags:
+      category: behavior-conformance
+      skill: rpi-challenger
+      shape: knowledge
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: scope-cadence-and-record
+        config:
+          pattern: '(?is)(?=.*(?:confirm|confirmed).{0,40}scope)(?=.*one.{0,40}(?:question|open-ended).{0,30}(?:per\s+turn|each\s+turn))(?=.*\.copilot-tracking/challenges/)'
+      - type: output-matches
+        name: advisory-read-only-boundary
+        config:
+          pattern: '(?is)(?=.*(?:read-only|do\s+not\s+(?:edit|modify)))(?=.*(?:advisory|do\s+not\s+(?:invoke|auto-invoke)|user\s+control))(?=.*(?:unresolved|saturat|user\s+(?:ends|stops)))'
+  - name: skill-rpi-plan-critique-contract
+    prompt: |
+      Summarize the `rpi-plan-critique` contract. Include its supplied-evidence
+      boundary, source-mutation rules, owned output, finding identity, verdicts,
+      and who decides what happens after the critique.
+    environment:
+      skills:
+        - ../../.github/skills/rpi/rpi-plan-critique
+    tags:
+      category: behavior-conformance
+      skill: rpi-plan-critique
+      shape: knowledge
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: evidence-and-write-boundary
+        config:
+          pattern: '(?is)(?=.*(?:supplied\s+(?:evidence|inputs)|no\s+open-ended\s+research))(?=.*(?:do\s+not\s+edit|read-only).{0,80}(?:plan|source))(?=.*(?:one|single).{0,40}critique.{0,40}(?:artifact|output))'
+      - type: output-matches
+        name: findings-verdict-and-parent
+        config:
+          pattern: '(?is)(?=.*PC-(?:xxx|\d+))(?=.*\bPass\b)(?=.*\bRevise\b)(?=.*\bBlocked\b)(?=.*(?:planning\s+parent|parent).{0,80}(?:decides|owns|selects))'
   - name: skill-rpi-quick-knowledge
     prompt: |
       Summarize the `rpi-quick` skill. Explain conditional research readiness,

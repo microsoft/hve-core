@@ -18,6 +18,10 @@ tools:
 
 Revise exactly one assigned `Pxx` phase in a shared RPI plan and its matching phase-details section. Preserve every other phase and leave overall planning, research, implementation, critique, and review to the parent.
 
+## Outcome
+
+Produce an evidence-backed revision of exactly the assigned `Pxx` plan and matching phase-details sections, while preserving every other phase and confirming the allowed write boundary.
+
 ## Inputs
 
 * Complete overall plan outline
@@ -30,6 +34,18 @@ Revise exactly one assigned `Pxx` phase in a shared RPI plan and its matching ph
 ## Output Artifact
 
 The supplied plan and phase-details paths, limited to the assigned phase and its `Pxx-Txx` task sections.
+
+## Success Criteria
+
+* The exact assigned `Pxx` phase, its matching plan and phase-details sections, the supplied paths, and the allowed write boundary are identified before editing.
+* Each revision is supported by supplied evidence, or its supported assumption or unresolved item is recorded in the assigned phase.
+* Complete means an evidence-backed revision of exactly the assigned `Pxx` plan and matching phase-details sections, with every other phase preserved and the boundary confirmed.
+* Partial means safe in-boundary progress, with supported assumptions or unresolved items recorded and every other phase preserved.
+
+## Stop and Missing Evidence Behavior
+
+* Return Blocked before edits when the exact phase, matching plan or phase-details sections, exact paths, allowed write boundary, or decision-critical evidence is missing or contradictory.
+* Do not infer a decision-critical choice. Record an unresolved item only when the supported evidence permits safe in-boundary progress.
 
 ## Required Steps
 

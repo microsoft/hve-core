@@ -2,7 +2,7 @@
 title: Scripts
 description: PowerShell scripts for linting, validation, and security automation
 author: HVE Core Team
-ms.date: 2026-06-27
+ms.date: 2026-07-16
 ms.topic: reference
 keywords:
   - powershell
@@ -127,17 +127,23 @@ npm run validate:devcontainer-changelog
 
 The `docs/` directory contains the asset documentation generator, shared helper modules, and templates.
 
-| Script                     | Purpose                                                                                                                                                                 |
-|----------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `Generate-AssetDocs.ps1`   | Deterministic, idempotent generator that scaffolds one reference page per documentable asset, refreshes AUTO-GENERATED regions, and supports `-WhatIf` drift reporting. |
-| `Modules/DocsHelpers.psm1` | Shared helper module for asset enumeration, path resolution, and generated-region marker split/merge.                                                                   |
+| Script                     | Purpose                                                                                                                                                                                         |
+|----------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `Generate-AssetDocs.ps1`   | Deterministic generator that creates and refreshes reference pages, safely removes untouched orphan scaffolds, preserves authored or ambiguous orphans, and supports `-WhatIf` drift reporting. |
+| `Modules/DocsHelpers.psm1` | Shared helper module for asset enumeration, path resolution, and generated-region marker split/merge.                                                                                           |
 
 Run locally:
 
 ```bash
 npm run docs:generate
 npm run docs:generate:check
+npm run lint:asset-docs
 ```
+
+The generator removes an orphan only when its generated markers are intact and
+its human-section tail still matches a canonical scaffold exactly. Other
+orphans are preserved and reported for manual disposition. The asset-doc lint
+fails on orphan pages, missing current pages, and generated-region drift.
 
 ## Security Scripts
 

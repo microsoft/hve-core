@@ -1,8 +1,8 @@
 ---
 title: Graph Research
-description: "Research a codebase using an existing graphify knowledge graph, with audit-tagged evidence reporting"
+description: "Research a codebase through rpi-research using an existing graphify knowledge graph, with audit-tagged evidence reporting"
 sidebar_position: 2
-ms.date: 2026-07-03
+ms.date: 2026-07-16
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->
@@ -17,7 +17,7 @@ ms.date: 2026-07-03
 ## What it does
 
 <!-- BEGIN AUTO-GENERATED: overview -->
-Research a codebase using an existing graphify knowledge graph, with audit-tagged evidence reporting
+Research a codebase through rpi-research using an existing graphify knowledge graph, with audit-tagged evidence reporting
 <!-- END AUTO-GENERATED: overview -->
 
 ## When to use it

@@ -1,8 +1,8 @@
 ---
 title: prompt-analyze
-description: Execute prompt evaluation for existing prompt artifacts and produce an analysis report without modifying files.
-sidebar_position: 3
-ms.date: 2026-07-03
+description: Compatibility alias for read-only prompt artifact review. Routes static and behavior analysis to hve-builder review mode.
+sidebar_position: 5
+ms.date: 2026-07-16
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->
@@ -17,7 +17,7 @@ ms.date: 2026-07-03
 ## What it does
 
 <!-- BEGIN AUTO-GENERATED: overview -->
-Execute prompt evaluation for existing prompt artifacts and produce an analysis report without modifying files.
+Compatibility alias for read-only prompt artifact review. Routes static and behavior analysis to hve-builder review mode.
 <!-- END AUTO-GENERATED: overview -->
 
 ## When to use it

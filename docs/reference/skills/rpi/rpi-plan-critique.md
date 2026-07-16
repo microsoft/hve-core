@@ -1,7 +1,7 @@
 ---
-title: rpi-plan
-description: "Create evidence-based RPI plans and phase details from supplied context, research, drafts, and decisions. Use when implementation planning is needed."
-sidebar_position: 4
+title: rpi-plan-critique
+description: Independently critique an RPI plan and phase details against supplied evidence without editing plan sources. Use when planning credibility needs a read-only assessment.
+sidebar_position: 3
 ms.date: 2026-07-16
 ---
 
@@ -9,7 +9,7 @@ ms.date: 2026-07-16
 | Field       | Value                                  |
 |-------------|----------------------------------------|
 | Kind        | skill                                  |
-| Source      | `.github/skills/rpi/rpi-plan`          |
+| Source      | `.github/skills/rpi/rpi-plan-critique` |
 | Invocation  | Loaded on demand by referencing agents |
 | Interactive | No                                     |
 <!-- END AUTO-GENERATED: metadata -->
@@ -17,7 +17,7 @@ ms.date: 2026-07-16
 ## What it does
 
 <!-- BEGIN AUTO-GENERATED: overview -->
-Create evidence-based RPI plans and phase details from supplied context, research, drafts, and decisions. Use when implementation planning is needed.
+Independently critique an RPI plan and phase details against supplied evidence without editing plan sources. Use when planning credibility needs a read-only assessment.
 <!-- END AUTO-GENERATED: overview -->
 
 ## When to use it

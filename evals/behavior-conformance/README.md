@@ -2,7 +2,7 @@
 title: Behavior Conformance Suite
 description: 'Tier 3 conformance evaluations for prompts, instructions, and skill behavior'
 author: HVE Core Team
-ms.date: 2026-07-15
+ms.date: 2026-07-16
 ---
 
 This directory hosts the behavior conformance suite. It is the only suite under `evals/` that ships in advisory mode by default: failures are reported in the pull request summary but do not block the build until each spec graduates per the graduation policy below.
@@ -23,7 +23,7 @@ Each tier shares the same advisory contract, the same `output-matches` grader fa
 |----------------------------|------|----------|---------|------------------------|-------------------|
 | `prompts.eval.yaml`        | 3p   | Advisory | 69      | `behavior-conformance` | Active (Phase 9)  |
 | `instructions.eval.yaml`   | 3i   | Advisory | 71      | `behavior-conformance` | Active (Phase 11) |
-| `skill-behavior.eval.yaml` | 3s   | Advisory | 118     | `behavior-conformance` | Active (Phase 13) |
+| `skill-behavior.eval.yaml` | 3s   | Advisory | 124     | `behavior-conformance` | Active (Phase 13) |
 
 The maintained `prompts.eval.yaml` inventory contains 69 stimuli across 66 prompt subjects. Coverage includes RPI orchestration, security review and planning, ADO, GitHub and Jira backlog workflows, Design Thinking, Git operations, evaluation authoring, and VEX workflows.
 
@@ -35,7 +35,7 @@ The maintained `instructions.eval.yaml` inventory contains 71 stimuli across 56 
 * RAI and Security planning: `rai-identity`, `rai-risk-classification`, `backlog-handoff`, `sssc-assessment`.
 * Additional: `docusaurus-edits`, `experiment-designer`, `story-quality`, `disclaimer-language`.
 
-The maintained `skill-behavior.eval.yaml` inventory contains 118 stimuli across 48 skill subjects. It covers RPI and HVE Builder workflows, the retained `prompt-analyze`, `prompt-builder`, and `prompt-refactor` compatibility routes, and other installed skill domains in advisory mode.
+The maintained `skill-behavior.eval.yaml` inventory contains 124 stimuli across 50 skill subjects. It covers RPI and HVE Builder workflows, including the HVE Builder bounded-read, research-bridge, unavailable-bridge, and read-only-review decisions plus direct `rpi-challenger` and `rpi-plan-critique` contracts. The retained `prompt-analyze`, `prompt-builder`, and `prompt-refactor` compatibility routes and other installed skill domains remain in advisory mode.
 
 The current branch-specific calibration status is not yet established for gating. Pass-rate and false-positive measurements are collected from advisory CI runs before graduation, and regex-only `output-matches` graders check contract vocabulary and routing signals rather than full semantic correctness.
 
@@ -66,12 +66,13 @@ Driver and workflow changes are not required to graduate a stimulus: the per-sti
 
 ## Graders
 
-Per **DD-23** and **DD-24**, each stimulus declares exactly two `output-matches` graders:
+Per **DD-23** and **DD-24**, each stimulus declares one or more `output-matches` graders. Simple routing cases commonly use two graders, while richer contract cases use additional graders when distinct requirements need independent signals:
 
-| Grader              | Pattern source   | Intent                                                                              |
-|---------------------|------------------|-------------------------------------------------------------------------------------|
-| `agent-attribution` | Per-prompt regex | Asserts the response identifies itself with the prompt's documented agent identity. |
-| `scope-language`    | Per-prompt regex | Asserts the response stays in scope and uses the prompt's canonical vocabulary.     |
+| Grader role                  | Pattern source     | Intent                                                                    |
+|------------------------------|--------------------|---------------------------------------------------------------------------|
+| Routing or attribution       | Per-stimulus regex | Asserts the response selects or identifies the documented capability.     |
+| Scope or contract vocabulary | Per-stimulus regex | Asserts the response stays in scope and carries required contract terms.  |
+| Additional contract signal   | Per-stimulus regex | Separately checks a material boundary, status, artifact, or handoff rule. |
 
 The repository's grader registry exposes `output-matches` (regex), `exact-match`, `contains`, and the hygiene-only `orphan-files`/`valid-refs` graders. No `type: prompt` (model judge) grader is registered, so this suite does not add LLM-judge grading; deeper semantic coverage is intentionally deferred to Phase 15 custom-grader work tracked under WI-16.
 

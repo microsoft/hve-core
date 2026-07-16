@@ -4,15 +4,15 @@ description: 'Generic test-design and evidence-grading dispatch templates for th
 <!-- markdownlint-disable-file -->
 # HVE Builder Tester Stage Dispatch
 
-Use these templates for fresh-context test design and evidence grading. Dispatch a generic subagent with no selected `agent` and include the complete relevant template in its prompt. Both stages use the Medium profile. The generic subagent owns only the named sandbox log and must not modify the target artifact or other evidence.
+Use these templates for fresh-context test design and evidence grading. Dispatch a generic subagent with no selected `agent` and include the complete relevant template in its prompt. Both stages use the Medium profile. Generic subagents return structured content to the HVE Builder Tester lead and do not write sandbox logs, target artifacts, or other evidence. The lead validates and persists each return.
 
 ## Test-design template
 
-Read each target and its directly referenced contract to identify purpose, documented inputs, output, and observable behavior. Write one black-box scenario for the isolation set and one for a together set when present. A scenario must not name the artifact, path, internal headings, authoring history, expected answer, or test framing. Record coverage, observable success signals, intentionally untested behavior, and a black-box self-check in `test-design.md`. Return Complete, Partial, or Blocked with the log path and coverage gaps.
+Read each target and its directly referenced contract to identify purpose, documented inputs, output, and observable behavior. Compose one black-box scenario for the isolation set and one for a together set when present. A scenario must not name the artifact, path, internal headings, authoring history, expected answer, or test framing. Return Complete, Partial, or Blocked with the complete scenario content, coverage, observable success signals, intentionally untested behavior, coverage gaps, and a black-box self-check. A Blocked return also names the blocking reason and exact rerun condition. Do not write `test-design.md`; the lead persists the validated return.
 
 ## Evidence-grading template
 
-Read the finalized test log, design log, targets, purpose, requirements, requirements catalog, and review rubric. Judge only claims supported by their observed, simulated, or emulated evidence class. Assess whether the scenarios covered the documented contract, record untested contracted behavior as a `miss`, and create a bounded `test-review.md` with action category, mapped dimension, profile, fidelity, evidence pointer, severity, and smallest resolving change. Return Pass, Revise, or Blocked.
+Read the finalized test log, design log, targets, purpose, requirements, requirements catalog, and review rubric. Judge only claims supported by their observed, simulated, or emulated evidence class. Assess whether the scenarios covered the documented contract and record untested contracted behavior as a `miss`. Return Pass, Revise, or Blocked with the complete bounded review content: action category, mapped dimension, profile, fidelity, evidence pointer, severity, smallest resolving change, coverage, and limitations. Do not write `test-review.md`; the lead persists the validated return.
 
 ## Dispatch restrictions
 

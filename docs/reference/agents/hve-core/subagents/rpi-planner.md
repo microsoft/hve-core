@@ -1,15 +1,15 @@
 ---
-title: Plan Validator
-description: Validates implementation plans against research documents with severity-graded findings
-sidebar_position: 3
-ms.date: 2026-07-05
+title: RPI Planner
+description: Revise one assigned RPI plan phase and matching phase details within a shared planning artifact. Use when a parent needs bounded phase authoring.
+sidebar_position: 2
+ms.date: 2026-07-16
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->
 | Field       | Value                                                                    |
 |-------------|--------------------------------------------------------------------------|
 | Kind        | agent                                                                    |
-| Source      | `.github/agents/hve-core/subagents/plan-validator.agent.md`              |
+| Source      | `.github/agents/hve-core/subagents/rpi-planner.agent.md`                 |
 | Invocation  | Delegated subagent, dispatched by a parent agent (not selected directly) |
 | Interactive | No                                                                       |
 <!-- END AUTO-GENERATED: metadata -->
@@ -17,7 +17,7 @@ ms.date: 2026-07-05
 ## What it does
 
 <!-- BEGIN AUTO-GENERATED: overview -->
-Validates implementation plans against research documents with severity-graded findings
+Revise one assigned RPI plan phase and matching phase details within a shared planning artifact. Use when a parent needs bounded phase authoring.
 <!-- END AUTO-GENERATED: overview -->
 
 ## When to use it
