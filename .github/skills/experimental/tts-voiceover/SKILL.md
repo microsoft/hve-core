@@ -68,15 +68,16 @@ uv run scripts/embed_audio.py --input deck.pptx --audio-dir voice-over --output 
 
 ### generate_voiceover.py
 
-| Parameter          | Type   | Default                             | Description                                   |
-|:-------------------|:-------|:------------------------------------|:----------------------------------------------|
-| `--dry-run`        | flag   | `false`                             | Print SSML templates without generating audio |
-| `--voice`          | string | `en-US-Andrew:DragonHDLatestNeural` | Azure TTS voice name                          |
-| `--rate`           | string | `+10%`                              | Speech prosody rate                           |
-| `--content-dir`    | path   | `content`                           | Path to slide content directory               |
-| `--output-dir`     | path   | `voice-over`                        | Path to WAV output directory                  |
-| `--lexicon`        | path   | *(auto-detect)*                     | Custom acronyms.yaml path                     |
-| `--verbose` / `-v` | flag   | `false`                             | Enable verbose (DEBUG) logging output         |
+| Parameter             | Type   | Default                             | Description                                                                                |
+|:----------------------|:-------|:------------------------------------|:-------------------------------------------------------------------------------------------|
+| `--dry-run`           | flag   | `false`                             | Print SSML templates without generating audio                                              |
+| `--voice`             | string | `en-US-Andrew:DragonHDLatestNeural` | Azure TTS voice name                                                                       |
+| `--rate`              | string | `+10%`                              | Speech prosody rate                                                                        |
+| `--content-dir`       | path   | `content`                           | Path to slide content directory                                                            |
+| `--output-dir`        | path   | `voice-over`                        | Path to WAV output directory                                                               |
+| `--lexicon`           | path   | *(auto-detect)*                     | Custom acronyms.yaml path                                                                  |
+| `--collapse-newlines` | flag   | `false`                             | Collapse newlines and whitespace runs in speaker notes into single spaces before synthesis |
+| `--verbose` / `-v`    | flag   | `false`                             | Enable verbose (DEBUG) logging output                                                      |
 
 ### embed_audio.py
 
@@ -109,6 +110,15 @@ Use a custom lexicon:
 uv run scripts/generate_voiceover.py \
   --content-dir content \
   --lexicon custom-acronyms.yaml
+```
+
+Collapse newlines in speaker notes (recommended for block-scalar `|` notes,
+whose line breaks are otherwise spoken as pauses):
+
+```bash
+uv run scripts/generate_voiceover.py \
+  --content-dir content \
+  --collapse-newlines
 ```
 
 Embed generated audio:
