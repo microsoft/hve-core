@@ -12,6 +12,8 @@
   overflow: visible;
   width: 100%;
   min-height: 100px;
+  height: 100%;
+  box-sizing: border-box;
 }
 
 .collectionCard:hover .collectionName {
