@@ -16,22 +16,22 @@ Grader identifiers below use the Vally CLI 0.4.0 catalog (`semantic_similarity`,
 
 ## Contract Summary
 
-| Topic                              | Section in prompt-builder.instructions.md | Line range |
-|------------------------------------|-------------------------------------------|------------|
-| Frontmatter and metadata           | Prompt frontmatter structure              | L124-L135  |
-| Agent delegation                   | Delegated-agent pattern                   | L136-L150  |
-| Input variables and argument hints | Input variable and hint format            | L151-L170  |
-| Protocol structure                 | Required Steps and Required Phases        | L527-L657  |
-| Step and phase headings            | Protocol heading conventions              | L569-L604  |
-| Writing style and link format      | Prompt writing style                      | L703-L800  |
-| Subagent invocation                | Invocation by human-readable name         | L666-L701  |
-| Quality criteria checklist         | Prompt quality checklist                  | L817-L829  |
+| Topic                              | Section in hve-builder.instructions.md              |
+|------------------------------------|-----------------------------------------------------|
+| Frontmatter and metadata           | Frontmatter Requirements; File Types > Prompt Files |
+| Agent delegation                   | File Types > Prompt Files                           |
+| Input variables and argument hints | File Types > Prompt Files; Frontmatter Requirements |
+| Protocol structure                 | File Types > Agent Files                            |
+| Step and phase headings            | File Types > Agent Files                            |
+| Writing style and link format      | Writing Style                                       |
+| Subagent invocation                | Referencing Other Artifacts                         |
+| Quality criteria checklist         | Quality Criteria                                    |
 
 ## Conformance Checks
 
 ### Check 1: Required Frontmatter Fields
 
-* Contract source: `prompt-builder.instructions.md` L124-L135.
+* Contract source: `hve-builder.instructions.md`, Frontmatter Requirements and File Types > Prompt Files.
 * Testable behavior: prompt frontmatter MUST include a non-empty `description:` field under 120 characters; OPTIONAL fields `agent:`, `argument-hint:`, and a `---` activation line MAY be present when the prompt delegates or accepts arguments.
 * Suggested stimulus: ask the assistant to summarize the frontmatter of a named prompt under `.github/prompts/hve-core/`, then assert that the description value is surfaced in the response.
 * Grader recommendation: `regex` with pattern `(?m)^description:\s*['"]?.{1,120}['"]?`.
@@ -39,7 +39,7 @@ Grader identifiers below use the Vally CLI 0.4.0 catalog (`semantic_similarity`,
 
 ### Check 2: Agent Delegation Without Duplication
 
-* Contract source: `prompt-builder.instructions.md` L136-L150.
+* Contract source: `hve-builder.instructions.md`, File Types > Prompt Files.
 * Testable behavior: when the prompt sets `agent:`, it MUST NOT duplicate the delegated agent's Required Phases or Required Steps; instead the prompt references the specific phases or sections that differ and extends rather than substitutes the agent's requirements section.
 * Suggested stimulus: ask the assistant to describe what a delegating prompt adds on top of its agent, naming the delegated agent and any sections that differ.
 * Grader recommendation: `semantic_similarity` with rubric "Does the response identify the delegated agent and confirm that the prompt extends rather than duplicates the agent's protocol?".
@@ -47,7 +47,7 @@ Grader identifiers below use the Vally CLI 0.4.0 catalog (`semantic_similarity`,
 
 ### Check 3: Inputs Documentation Format
 
-* Contract source: `prompt-builder.instructions.md` L151-L170.
+* Contract source: `hve-builder.instructions.md`, File Types > Prompt Files and Frontmatter Requirements.
 * Testable behavior: when the prompt defines inputs, the Inputs section MUST document every input variable using `${input:varName}` for required inputs or `${input:varName:defaultValue}` for optional inputs.
 * Suggested stimulus: ask the assistant to list the inputs a named prompt accepts and the default value (if any) for each.
 * Grader recommendation: `regex` with pattern `\$\{input:[a-zA-Z_][a-zA-Z0-9_]*(?::[^}]*)?\}`.
@@ -55,7 +55,7 @@ Grader identifiers below use the Vally CLI 0.4.0 catalog (`semantic_similarity`,
 
 ### Check 4: Argument Hint Format
 
-* Contract source: `prompt-builder.instructions.md` L160-L169.
+* Contract source: `hve-builder.instructions.md`, File Types > Prompt Files and Frontmatter Requirements.
 * Testable behavior: when the prompt declares `argument-hint:`, the value MUST use `[]` for positional arguments, `key=value` for named arguments, `{option1|option2}` for enumerated choices, and `...` for free-form remainders.
 * Suggested stimulus: ask the assistant to show the argument hint a named prompt advertises in the VS Code picker.
 * Grader recommendation: `regex` with pattern `argument-hint:\s*["'][^"']*(?:\[.*\]|\{.*\|.*\}|=|\.\.\.)`.
@@ -63,7 +63,7 @@ Grader identifiers below use the Vally CLI 0.4.0 catalog (`semantic_similarity`,
 
 ### Check 5: Protocol Structure Presence
 
-* Contract source: `prompt-builder.instructions.md` L527-L657.
+* Contract source: `hve-builder.instructions.md`, File Types > Agent Files.
 * Testable behavior: a prompt with multiple ordered stages or a complex workflow MUST include either `## Required Steps` (autonomous, step-based) or `## Required Phases` (conversational, phase-based). Single-task prompts MAY omit a protocol section.
 * Suggested stimulus: ask the assistant whether a named prompt uses a step-based or phase-based protocol and to name the section heading.
 * Grader recommendation: `regex` with pattern `(?m)^##\s+Required\s+(Steps|Phases|Protocol)\b`.
@@ -71,7 +71,7 @@ Grader identifiers below use the Vally CLI 0.4.0 catalog (`semantic_similarity`,
 
 ### Check 6: Step and Phase Heading Consistency
 
-* Contract source: `prompt-builder.instructions.md` L569-L604.
+* Contract source: `hve-builder.instructions.md`, File Types > Agent Files.
 * Testable behavior: when a protocol section is present, each step heading MUST take the form `### Step N: Short Summary` and each phase heading MUST take the form `### Phase N: Short Summary` with a descriptive summary after the colon.
 * Suggested stimulus: ask the assistant to list the step or phase headings of a named prompt in order.
 * Grader recommendation: `regex` with pattern `(?m)^###\s+(?:Step|Phase)\s+\d+:\s+\S.+`.
@@ -79,23 +79,23 @@ Grader identifiers below use the Vally CLI 0.4.0 catalog (`semantic_similarity`,
 
 ### Check 7: File References as Markdown Links
 
-* Contract source: `prompt-builder.instructions.md` L763-L800.
+* Contract source: `hve-builder.instructions.md`, Writing Style.
 * Testable behavior: file path references that appear in user-facing response sections MUST be formatted as markdown links `[filename](path/to/file)`. Such references MUST NOT be wrapped in backticks, because backticks suppress link rendering.
 * Suggested stimulus: ask the assistant to point to a specific file the prompt references and confirm the response surfaces a clickable markdown link.
 * Grader recommendation: `regex` with positive pattern `\[[^\]]+\]\([^)]+\.(?:md|py|ts|js|sh|ps1|yml|yaml)\)` and negate pattern ``(?<!\\)`[a-zA-Z0-9_./-]+\.(?:md|py|ts|js|sh|ps1|yml|yaml)` ``.
-* Evidence: `prompt-builder.instructions.md` L793-L801 demonstrates the canonical markdown link form for file references.
+* Evidence: the Writing Style section in `hve-builder.instructions.md` states the markdown-link surface rule for user-facing file references.
 
 ### Check 8: URL References as Markdown Links
 
-* Contract source: `prompt-builder.instructions.md` L771-L776.
+* Contract source: `hve-builder.instructions.md`, Writing Style.
 * Testable behavior: external URL references MUST be formatted as markdown links `[display text](https://example.com)`. Raw URLs and backtick-wrapped URLs are non-conforming.
 * Suggested stimulus: ask the assistant to cite an external resource the prompt or its delegated agent points to.
 * Grader recommendation: `regex` with pattern `\[[^\]]+\]\(https?://[^\s)]+\)`.
-* Evidence: `prompt-builder.instructions.md` L771-L776 and `writing-style.instructions.md` reinforce the markdown link requirement for URLs.
+* Evidence: the Writing Style section in `hve-builder.instructions.md` and `writing-style.instructions.md` reinforce the markdown link requirement for URLs.
 
 ### Check 9: List Type Matches Purpose
 
-* Contract source: `prompt-builder.instructions.md` L756-L762.
+* Contract source: `hve-builder.instructions.md`, Writing Style.
 * Testable behavior: bulleted lists (`*` or `-`) MUST be used for groupings and option lists; numbered lists (`1.`, `2.`, ...) MUST be used for sequential action steps. Sequence vs grouping intent MUST match the list type.
 * Suggested stimulus: ask the assistant to walk through the ordered steps of a named prompt's protocol and separately to enumerate the groupings of optional inputs.
 * Grader recommendation: `semantic_similarity` with rubric "Does the response use ordered lists for sequential steps and bulleted lists for groupings consistent with the prompt's structure?".
@@ -103,7 +103,7 @@ Grader identifiers below use the Vally CLI 0.4.0 catalog (`semantic_similarity`,
 
 ### Check 10: Prompt Design Principles
 
-* Contract source: `prompt-builder.instructions.md` L773-L806.
+* Contract source: `hve-builder.instructions.md`, Outcome-First Authoring Core and Quality Criteria.
 * Testable behavior: prompt outputs MUST exhibit clarity (followable without guessing), consistency (similar inputs yield similar shapes), alignment (matches repo conventions), coherence (no internal conflicts), calibration (just enough instruction), and correctness (asks rather than guesses when inputs are ambiguous).
 * Suggested stimulus: invoke the prompt with a deliberately ambiguous or incomplete input and observe whether the assistant asks for clarification rather than fabricating values.
 * Grader recommendation: `semantic_similarity` with rubric "Does the response demonstrate the six prompt-design principles, in particular asking for clarification on ambiguous inputs instead of guessing?".
@@ -111,15 +111,15 @@ Grader identifiers below use the Vally CLI 0.4.0 catalog (`semantic_similarity`,
 
 ### Check 11: Few-Shot Examples in Fenced Code Blocks
 
-* Contract source: `prompt-builder.instructions.md` L820-L821.
+* Contract source: `hve-builder.instructions.md`, Writing Style.
 * Testable behavior: when the prompt presents code examples or few-shot demonstrations, those examples MUST appear inside correctly fenced code blocks with a language identifier where one applies.
 * Suggested stimulus: ask the assistant to reproduce a short example the prompt references.
 * Grader recommendation: `regex` with pattern ``(?ms)^```[a-z0-9_+-]*\n.+?\n```$``.
-* Evidence: `prompt-builder.instructions.md` L820-L821 codifies the fenced-block requirement; skill reference files such as `.github/skills/hve-core/vally-tests/references/refusal-taxonomy.md` apply it consistently.
+* Evidence: the Writing Style guidance in `hve-builder.instructions.md` and skill reference files such as `.github/skills/hve-core/vally-tests/references/refusal-taxonomy.md` apply fenced code blocks consistently.
 
 ### Check 12: Subagent Invocation Uses Human-Readable Names
 
-* Contract source: `prompt-builder.instructions.md` L666-L701.
+* Contract source: `hve-builder.instructions.md`, Referencing Other Artifacts.
 * Testable behavior: when the prompt or its delegated agent invokes a subagent, invocation text MUST reference the subagent by the human-readable `name:` from the subagent's frontmatter (for example, "Run Researcher Subagent"). Invocation by filename or by file path is non-conforming.
 * Suggested stimulus: ask the assistant which subagent a named prompt invokes and how the invocation reads.
 * Grader recommendation: `regex` with positive pattern `(?i)\brun\s+[A-Z][A-Za-z0-9 ]+\s+Subagent\b` and negate pattern `(?i)[A-Za-z0-9_-]+\.agent\.md`.

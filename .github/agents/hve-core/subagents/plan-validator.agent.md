@@ -3,6 +3,7 @@ name: Plan Validator
 description: 'Validates implementation plans against research documents with severity-graded findings'
 user-invocable: false
 model:
+  - Claude Sonnet 5 (copilot)
   - MAI-Code-1-Flash (copilot)
   - Claude Sonnet 4.6 (copilot)
 ---

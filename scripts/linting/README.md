@@ -234,6 +234,7 @@ Purpose: Detect broken links before deployment.
 
 ##### Features
 
+* Discovers tracked and untracked, non-ignored Markdown files so local validation does not require staging
 * Checks internal and external links
 * Configurable via `markdown-link-check.config.json`
 * Retries failed links
@@ -569,7 +570,7 @@ Common helper functions for file discovery and git operations.
 
 #### `Get-ChangedFilesFromGit`
 
-Detects files changed in current branch compared to main.
+Detects files changed in the current branch compared to a base branch, and always supplements this list with working-tree (staged/unstaged) and untracked files, regardless of the branch context.
 
 ##### Parameters
 
@@ -582,7 +583,8 @@ Returns: Array of changed file paths
 
 1. `git merge-base` with specified base branch
 2. `git diff HEAD~1` when merge-base fails
-3. `git diff HEAD` for staged/unstaged files
+3. `git diff --name-only HEAD` for working tree staged/unstaged files
+4. `git ls-files --others --exclude-standard` for untracked, non-ignored files
 
 #### `Get-FilesRecursive`
 
