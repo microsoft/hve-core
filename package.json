@@ -96,7 +96,7 @@
     "eval:agent": "pwsh -NoProfile -File scripts/evals/Invoke-AgentMatrix.ps1",
     "eval:agent:matrix": "pwsh -NoProfile -File scripts/evals/Invoke-AgentMatrix.ps1 -All -Tier nightly",
     "eval:agent:matrix:dryrun": "pwsh -NoProfile -Command \"& scripts/evals/Invoke-AgentMatrix.ps1 -All -Tier nightly -WhatIf\"",
-    "eval:agent:changed": "pwsh -NoProfile -Command \"& { $base = $env:EVAL_BASE_REF; if (-not $base) { $base = (git symbolic-ref --quiet --short refs/remotes/origin/HEAD) }; if (-not $base) { $base = 'origin/main' }; $changed = (git diff --name-only ($base + '...HEAD')); if (-not $changed) { $changed = @() } ; & scripts/evals/Invoke-AgentMatrix.ps1 -Changed $changed -Tier pr }\"",
+    "eval:agent:changed": "pwsh -NoProfile -Command \"& scripts/evals/Invoke-AgentMatrix.ps1 -Changed @((git diff --name-only (([Environment]::GetEnvironmentVariable('EVAL_BASE_REF') ?? (git symbolic-ref --quiet --short refs/remotes/origin/HEAD) ?? 'origin/main') + '...HEAD'))) -Tier pr\"",
     "eval:agent:dashboard": "pwsh -NoProfile -File scripts/evals/New-AgentMatrixDashboard.ps1",
     "eval:agent:dashboard:open": "pwsh -NoProfile -File scripts/evals/New-AgentMatrixDashboard.ps1 -Open",
     "eval:agent:report": "npm run eval:agent:matrix && npm run eval:agent:dashboard:open",

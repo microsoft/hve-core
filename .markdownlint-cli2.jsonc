@@ -5,6 +5,8 @@
     ".copilot-tracking/**",
     "logs/**",
     "evals/results/**",
+    "docs/docusaurus/playwright-report/**",
+    "docs/docusaurus/test-results/**",
     "vally-results/**",
     "venv/**",
     ".venv/**",
