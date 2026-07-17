@@ -29,6 +29,13 @@
             "provider": "Anthropic"
         },
         {
+            "name": "Claude Sonnet 5 (copilot)",
+            "tier": "standard",
+            "multiplier": 1,
+            "status": "ga",
+            "provider": "Anthropic"
+        },
+        {
             "name": "Claude Opus 4.5 (copilot)",
             "tier": "premium",
             "multiplier": 3,
@@ -44,6 +51,13 @@
         },
         {
             "name": "Claude Opus 4.7 (copilot)",
+            "tier": "premium",
+            "multiplier": 15,
+            "status": "ga",
+            "provider": "Anthropic"
+        },
+        {
+            "name": "Claude Opus 4.8 (copilot)",
             "tier": "premium",
             "multiplier": 15,
             "status": "ga",
@@ -102,6 +116,27 @@
             "name": "GPT-5.5 (copilot)",
             "tier": "premium",
             "multiplier": 7.5,
+            "status": "ga",
+            "provider": "OpenAI"
+        },
+        {
+            "name": "GPT-5.6 Luna (copilot)",
+            "tier": "standard",
+            "multiplier": 1,
+            "status": "ga",
+            "provider": "OpenAI"
+        },
+        {
+            "name": "GPT-5.6 Sol (copilot)",
+            "tier": "standard",
+            "multiplier": 1,
+            "status": "ga",
+            "provider": "OpenAI"
+        },
+        {
+            "name": "GPT-5.6 Terra (copilot)",
+            "tier": "standard",
+            "multiplier": 1,
             "status": "ga",
             "provider": "OpenAI"
         },
@@ -177,6 +212,6 @@
         "Microsoft"
     ],
     "$schema": "./schemas/model-catalog.schema.json",
-    "lastUpdated": "2026-06-12",
+    "lastUpdated": "2026-07-09",
     "source": "https://docs.github.com/en/copilot/reference/ai-models/supported-models"
 }

@@ -47,13 +47,23 @@ items:
     kind: agent
   - path: .github/agents/hve-core/subagents/phase-implementor.agent.md
     kind: agent
-  - path: .github/agents/hve-core/subagents/prompt-evaluator.agent.md
-    kind: agent
-  - path: .github/agents/hve-core/subagents/prompt-tester.agent.md
-    kind: agent
-  - path: .github/agents/hve-core/subagents/prompt-updater.agent.md
-    kind: agent
   - path: .github/agents/hve-core/subagents/researcher-subagent.agent.md
+    kind: agent
+  # HVE Builder subagents
+  - path: .github/agents/hve-core/subagents/hve-artifact-explorer.agent.md
+    kind: agent
+  - path: .github/agents/hve-core/subagents/hve-artifact-author.agent.md
+    kind: agent
+  - path: .github/agents/hve-core/subagents/hve-artifact-reviewer.agent.md
+    kind: agent
+  - path: .github/agents/hve-core/subagents/hve-artifact-validator.agent.md
+    kind: agent
+  - path: .github/agents/hve-core/subagents/hve-artifact-tester.agent.md
+    kind: agent
+  # HVE Builder Tester subagents
+  - path: .github/agents/hve-core/subagents/hve-artifact-test-designer.agent.md
+    kind: agent
+  - path: .github/agents/hve-core/subagents/hve-artifact-test-reviewer.agent.md
     kind: agent
   # Code Review subagents
   - path: .github/agents/coding-standards/subagents/code-review-functional.agent.md
@@ -126,6 +136,8 @@ items:
     kind: instruction
   - path: .github/instructions/hve-core/commit-message.instructions.md
     kind: instruction
+  - path: .github/instructions/hve-core/hve-builder.instructions.md
+    kind: instruction
   - path: .github/instructions/hve-core/prompt-builder.instructions.md
     kind: instruction
   - path: .github/instructions/hve-core/copilot-tracking.instructions.md
@@ -178,6 +190,14 @@ items:
     kind: skill
     maturity: experimental
   - path: .github/skills/hve-core/prompt-builder
+    kind: skill
+  - path: .github/skills/hve-core/prompt-analyze
+    kind: skill
+  - path: .github/skills/hve-core/prompt-refactor
+    kind: skill
+  - path: .github/skills/hve-core/hve-builder
+    kind: skill
+  - path: .github/skills/hve-core/hve-builder-tester
     kind: skill
   - path: .github/skills/shared/telemetry-foundations
     kind: skill

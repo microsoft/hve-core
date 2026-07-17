@@ -2,7 +2,7 @@
 title: Jira JQL Reference for the Jira Skill
 description: Practical JQL patterns for the hve-core Jira skill, including bounded searches, common filters, and safe query shaping
 author: Microsoft
-ms.date: 2026-03-22
+ms.date: 2026-07-08
 ms.topic: reference
 keywords:
   - jira

@@ -81,17 +81,25 @@ items:
   kind: agent
 - path: .github/agents/hve-core/rpi-agent.agent.md
   kind: agent
+- path: .github/agents/hve-core/subagents/hve-artifact-author.agent.md
+  kind: agent
+- path: .github/agents/hve-core/subagents/hve-artifact-explorer.agent.md
+  kind: agent
+- path: .github/agents/hve-core/subagents/hve-artifact-reviewer.agent.md
+  kind: agent
+- path: .github/agents/hve-core/subagents/hve-artifact-test-designer.agent.md
+  kind: agent
+- path: .github/agents/hve-core/subagents/hve-artifact-test-reviewer.agent.md
+  kind: agent
+- path: .github/agents/hve-core/subagents/hve-artifact-tester.agent.md
+  kind: agent
+- path: .github/agents/hve-core/subagents/hve-artifact-validator.agent.md
+  kind: agent
 - path: .github/agents/hve-core/subagents/implementation-validator.agent.md
   kind: agent
 - path: .github/agents/hve-core/subagents/phase-implementor.agent.md
   kind: agent
 - path: .github/agents/hve-core/subagents/plan-validator.agent.md
-  kind: agent
-- path: .github/agents/hve-core/subagents/prompt-evaluator.agent.md
-  kind: agent
-- path: .github/agents/hve-core/subagents/prompt-tester.agent.md
-  kind: agent
-- path: .github/agents/hve-core/subagents/prompt-updater.agent.md
   kind: agent
 - path: .github/agents/hve-core/subagents/researcher-subagent.agent.md
   kind: agent
@@ -473,6 +481,8 @@ items:
   kind: instruction
 - path: .github/instructions/hve-core/git-merge.instructions.md
   kind: instruction
+- path: .github/instructions/hve-core/hve-builder.instructions.md
+  kind: instruction
 - path: .github/instructions/hve-core/licensing-posture.instructions.md
   kind: instruction
 - path: .github/instructions/hve-core/markdown.instructions.md
@@ -596,6 +606,10 @@ items:
   maturity: experimental
 - path: .github/skills/hve-core/documentation
   kind: skill
+- path: .github/skills/hve-core/hve-builder
+  kind: skill
+- path: .github/skills/hve-core/hve-builder-tester
+  kind: skill
 - path: .github/skills/hve-core/prompt-analyze
   kind: skill
 - path: .github/skills/hve-core/prompt-builder
@@ -635,6 +649,8 @@ items:
 - path: .github/skills/rpi/rpi-research
   kind: skill
 - path: .github/skills/rpi/rpi-review
+  kind: skill
+- path: .github/skills/rpi/rpi-walkthrough
   kind: skill
 - path: .github/skills/security/owasp-agentic
   kind: skill

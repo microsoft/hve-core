@@ -2,7 +2,7 @@
 title: Security
 description: Security vulnerability reporting procedures and Microsoft's coordinated disclosure policy
 author: Microsoft Security Response Center
-ms.date: 2026-07-03
+ms.date: 2026-07-08
 ms.topic: reference
 keywords:
   - security

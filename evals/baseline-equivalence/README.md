@@ -2,7 +2,7 @@
 title: Baseline Equivalence Suite
 description: 'Pairs identical probes across baseline and customized environments to assert only documented divergences appear'
 author: HVE Core Team
-ms.date: 2026-06-24
+ms.date: 2026-07-10
 ---
 
 ## Purpose
@@ -55,21 +55,21 @@ The driver writes a machine-readable summary to `logs/baseline-equivalence-summa
 
 The driver parses each `vally compare --run-a <baseline> --run-b <customized>` invocation line by line and aggregates the trial verdicts into a single JSON summary. The summary is the contract every downstream consumer (PR bot, nightly dashboard, future change-detection workflow) reads.
 
-| Field                | Type   | Meaning                                                                                                                                                                        |
-|----------------------|--------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `agent`              | string | Agent slug under test (matches `-Agent`)                                                                                                                                       |
-| `tier`               | string | `pr` (advisory, exit 0) or `nightly` (authoritative, exit 1 on fail)                                                                                                           |
-| `model`              | string | Primary model for the run: PR tier resolves `-Model` override, then frontmatter `model:` hint, then the cheap default (`claude-haiku-4.5`); nightly runs its fixed model array |
-| `stimulusFilter`     | string | Regex applied to stimulus names; empty when the full corpus ran                                                                                                                |
-| `runs`               | int    | Total trial lines parsed across all compare logs                                                                                                                               |
-| `ties`               | int    | Trials the judge marked `tie`; counts toward the equivalence threshold                                                                                                         |
-| `aWins`              | int    | Trials the judge preferred run-a (baseline); the customization underperformed                                                                                                  |
-| `bWins`              | int    | Trials the judge preferred run-b (customized); the customization outperformed                                                                                                  |
-| `invariantFailures`  | int    | Spec-level invariant violations (model equality, response-length parity, baseline-no-customized-skills)                                                                        |
-| `divergenceFailures` | int    | `vally compare` exit codes other than zero, or compare runs that emitted no parseable trial lines                                                                              |
-| `verdict`            | string | Aggregated verdict; see [Pass and Fail Interpretation](#pass-and-fail-interpretation)                                                                                          |
-| `variants`           | list   | Per-model variant metadata (model id, baseline run directory, customized run directory)                                                                                        |
-| `compareLogs`        | list   | Absolute paths to every captured `vally compare` log; failed runs leave the log on disk for inspection                                                                         |
+| Field                | Type   | Meaning                                                                                                                                                                    |
+|----------------------|--------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `agent`              | string | Agent slug under test (matches `-Agent`)                                                                                                                                   |
+| `tier`               | string | `pr` (advisory, exit 0) or `nightly` (authoritative, exit 1 on fail)                                                                                                       |
+| `model`              | string | Primary model for the run: PR tier resolves `-Model` override, then frontmatter `model:` hint, then the cheap default (`gpt-5.6-luna`); nightly runs its fixed model array |
+| `stimulusFilter`     | string | Regex applied to stimulus names; empty when the full corpus ran                                                                                                            |
+| `runs`               | int    | Total trial lines parsed across all compare logs                                                                                                                           |
+| `ties`               | int    | Trials the judge marked `tie`; counts toward the equivalence threshold                                                                                                     |
+| `aWins`              | int    | Trials the judge preferred run-a (baseline); the customization underperformed                                                                                              |
+| `bWins`              | int    | Trials the judge preferred run-b (customized); the customization outperformed                                                                                              |
+| `invariantFailures`  | int    | Spec-level invariant violations (model equality, response-length parity, baseline-no-customized-skills)                                                                    |
+| `divergenceFailures` | int    | `vally compare` exit codes other than zero, or compare runs that emitted no parseable trial lines                                                                          |
+| `verdict`            | string | Aggregated verdict; see [Pass and Fail Interpretation](#pass-and-fail-interpretation)                                                                                      |
+| `variants`           | list   | Per-model variant metadata (model id, baseline run directory, customized run directory)                                                                                    |
+| `compareLogs`        | list   | Absolute paths to every captured `vally compare` log; failed runs leave the log on disk for inspection                                                                     |
 
 The verdict field is derived from these counts by `Get-VerdictFromAggregate` in [scripts/evals/lib/EquivalenceParsing.psm1](../../scripts/evals/lib/EquivalenceParsing.psm1); the exact thresholds are documented below.
 

@@ -30,4 +30,5 @@ jobs:
     uses: ./.github/workflows/create-gh-code-scanning-issues.yml
     permissions:
       issues: write
+      actions: read
       security-events: read
