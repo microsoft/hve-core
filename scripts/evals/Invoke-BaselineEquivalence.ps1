@@ -54,12 +54,12 @@
     Prints the planned commands and writes a dry-run summary.
 
 .EXAMPLE
-    npm run eval:equivalence -- -Agent rpi-agent -Tier pr
+    npm run ci:eval:equivalence -- -Agent rpi-agent -Tier pr
 
     Runs the PR-tier flow via the npm wrapper.
 
 .NOTES
-    Runs via: npm run eval:equivalence
+    Runs via: npm run ci:eval:equivalence
 #>
 
 [CmdletBinding(SupportsShouldProcess = $true)]

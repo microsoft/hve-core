@@ -2,7 +2,7 @@
 title: Skill Hygiene
 description: 'Lint-based skill hygiene suite for .github/skills/ delivered via vally lint'
 author: HVE Core Team
-ms.date: 2026-05-24
+ms.date: 2026-07-16
 ---
 
 This directory documents the **skill hygiene** suite. It is the only suite that ships through `vally lint` rather than `vally eval` and so contains no `eval.yaml`.
@@ -13,7 +13,7 @@ Skill hygiene applies fast, deterministic structural checks to every `SKILL.md` 
 
 ## How it runs
 
-* Local: `npm run eval:lint:skills` (wraps `vally lint .github/skills/`).
+* CI-owned command: `npm run ci:eval:lint:skills` (wraps `vally lint .github/skills/`).
 * CI: the `Run skill hygiene lint` step inside the `eval-lint` job in [`pr-validation.yml`](../../.github/workflows/pr-validation.yml). The step is gated on the changed-artifact manifest containing at least one entry with `kind: skill` and is authoritative; a non-zero exit code blocks the pull request.
 
 ## Coverage

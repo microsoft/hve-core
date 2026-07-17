@@ -2,7 +2,7 @@
 title: Build System and Validation
 description: Understand the plugin generation pipeline, schema validation system, npm scripts, and CI checks for customizing and extending HVE Core
 author: Microsoft
-ms.date: 2026-06-27
+ms.date: 2026-07-16
 ms.topic: how-to
 keywords:
   - build system
@@ -82,7 +82,7 @@ for the complete set.
 
 | Script                      | Command                             | Description                                |
 |-----------------------------|-------------------------------------|--------------------------------------------|
-| `lint:all`                  | `npm run lint:all`                  | Runs all linters in sequence               |
+| `validate:local`            | `npm run validate:local`            | Runs the local-safe validation aggregate   |
 | `lint:md`                   | `npm run lint:md`                   | Markdown linting via markdownlint-cli2     |
 | `lint:md:fix`               | `npm run lint:md:fix`               | Markdown linting with auto-fix             |
 | `lint:ps`                   | `npm run lint:ps`                   | PowerShell analysis via PSScriptAnalyzer   |
@@ -129,11 +129,14 @@ for the complete set.
 | `extension:package`            | `npm run extension:package`            | Package VS Code extension                          |
 | `extension:package:prerelease` | `npm run extension:package:prerelease` | Package extension as pre-release                   |
 
-## Linting Pipeline
+For local-safe defaults, CI-owned lanes, and package-root-specific setup, see
+[Validation Commands and CI-Owned Lanes](../contributing/validation).
 
-The `lint:all` script chains every linter in a fixed sequence:
+## Local Validation Pipeline
 
-1. `format:tables` aligns markdown table columns
+The `validate:local` script chains local-safe checks in a fixed sequence:
+
+1. `lint:tables` checks markdown table columns without modifying them
 2. `lint:md` checks markdown style rules (`.markdownlint.json`)
 3. `lint:ps` analyzes PowerShell scripts (`PSScriptAnalyzer.psd1`)
 4. `lint:yaml` validates YAML file syntax
@@ -153,10 +156,6 @@ The `lint:all` script chains every linter in a fixed sequence:
 18. `lint:ai-artifacts` validates planner AI artifacts
 19. `lint:models` validates model references against the catalog
 20. `validate:devcontainer-lockfile` checks devcontainer lockfile integrity
-21. `eval:lint:vally` lints Vally eval specs
-22. `eval:lint:schema` validates eval schema conformance
-23. `eval:lint:text` checks eval text content
-24. `eval:lint:safety` validates eval safety stimuli
 
 Each linter outputs results to `logs/` for inspection. Run individual linters for faster
 feedback during development:
@@ -171,10 +170,10 @@ Pull request validation runs linters in parallel CI jobs. Each job executes one 
 npm scripts from the list above. To reproduce CI checks locally, run the same npm scripts
 against your changed files.
 
-Full local validation:
+Full local-safe validation:
 
 ```bash
-npm run lint:all
+npm run validate:local
 ```
 
 Targeted validation for specific files:
@@ -185,8 +184,10 @@ npm run lint:frontmatter
 ```
 
 > [!TIP]
-> Run `lint:all` before pushing to catch issues that CI would flag. Individual linters
-> provide faster feedback when you know which validation applies to your changes.
+> Run `validate:local` before pushing for the repository default. Individual
+> checks provide faster feedback when you know which validation applies to your
+> changes. Reproduce browser, model, moderation, or credential-dependent CI
+> lanes separately when they are relevant.
 
 ## Customizing Validation
 
@@ -214,12 +215,12 @@ Add new validation scripts to `scripts/linting/` and register them as npm script
 `package.json`. Follow the existing pattern: scripts accept file paths or glob patterns
 as input and write structured results to `logs/`.
 
-To include a new linter in the full pipeline, add it to the `lint:all` chain in
+To include a new local-safe linter in the default pipeline, add it to the `validate:local` chain in
 `package.json`.
 
 ## Role Scenarios
 
-**Northwind Traders' SRE/Operations lead** runs `npm run lint:all` as a pre-push hook to
+**Northwind Traders' SRE/Operations lead** runs `npm run validate:local` as a pre-push hook to
 catch markdown formatting issues, broken links, and frontmatter schema violations before
 they reach CI. When a new deployment instruction file needs custom frontmatter fields, the
 lead adds a schema to `scripts/linting/schemas/` and registers the pattern in
@@ -227,7 +228,7 @@ lead adds a schema to `scripts/linting/schemas/` and registers the pattern in
 
 **Adventure Works' security architect** extends the validation pipeline with a custom script
 that checks instruction files for required security disclaimer sections. The script follows
-the existing pattern of writing JSON results to `logs/` and integrates into the `lint:all`
+the existing pattern of writing JSON results to `logs/` and integrates into the `validate:local`
 chain through `package.json`.
 
 <!-- markdownlint-disable MD036 -->

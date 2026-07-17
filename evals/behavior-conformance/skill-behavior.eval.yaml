@@ -1707,11 +1707,13 @@ stimuli:
   - name: skill-rpi-walkthrough-knowledge
     prompt: |
       Summarize how the `rpi-walkthrough` skill guides a user through existing
-      code or an artifact. Include target resolution, deep review and the
-      durable session record, the required shape and pacing of each segment,
-      including Mermaid diagrams, evidence links, reference tables, and
-      question cadence. Also cover how requested changes respect the source
-      boundary and the final RPI handoff.
+      code or an artifact. Include target resolution, deep review, how the
+      conversation owns walkthrough continuity, and when the optional
+      decisions-and-changes ledger is created. Cover the required shape and
+      pacing of each segment, including useful, dark-mode-readable Mermaid
+      diagrams when they add information, evidence links, reference tables,
+      and question cadence. Also explain the four reconciliation choices,
+      the read-only immediate-edit boundary, and any conditional RPI handoff.
     environment:
       skills:
         - ../../.github/skills/rpi/rpi-walkthrough
@@ -1726,17 +1728,17 @@ stimuli:
         config:
           pattern: '(?i)(rpi-walkthrough|RPI Walkthrough|guided\s+walkthrough)'
       - type: output-matches
-        name: review-and-record
+        name: review-and-ledger
         config:
-          pattern: '(?is)(?=.*(?:deep\s+review|review(?:s|ed|ing)?\s+(?:deeply|in[- ]depth)|subagent|dispatches?\s+(?:exploration|research)))(?=.*(?:\.copilot-tracking[-/\\]walkthroughs|walkthrough\s+file|durable\s+(?:record|session)))'
+          pattern: '(?is)(?=.*(?:deep\s+review|review(?:s|ed|ing)?\s+(?:deeply|in[- ]depth)|subagent|dispatches?\s+(?:exploration|research)))(?=.*(?:conversation(?:al)?\s+(?:context|continuity)|(?:conversation|chat).{0,80}(?:owns?|keeps?|holds?|retains?).{0,80}(?:continuity|pacing|progress)|(?:keeps?|holds?|retains?)\s+(?:continuity|pacing|progress).{0,80}\s+in\s+(?:the\s+)?(?:conversation|chat)|(?:continuity|pacing|progress).{0,80}(?:stays?|remains?)\s+in\s+(?:the\s+)?(?:conversation|chat)))(?=.*(?:decisions?(?:-and-changes)?\s+(?:ledger|artifact)|\.copilot-tracking[-/\\]walkthroughs))(?=.*(?:material\s+(?:decision|change)|requested\s+change|change\s+request|laz(?:y|ily)|only\s+(?:when|after)))'
       - type: output-matches
         name: segment-contract
         config:
-          pattern: '(?is)(?=.*segment)(?=.*mermaid)(?=.*(?:markdown\s+link|reference\s+table))(?=.*(?:one\s+or\s+two[^.\n]{0,50}\bquestions|vscode_askQuestions|segment\s+boundary))'
+          pattern: '(?is)(?=.*segment)(?=.*mermaid)(?=.*(?:actual\s+(?:structure|flow|relationship)|target[- ]derived|meaningful|when\s+(?:useful|informative)|dark\s*mode|contrast))(?=.*(?:markdown\s+link|reference\s+table))(?=.*(?:one\s+or\s+two[^.\n]{0,50}\bquestions|vscode_askQuestions|segment\s+boundary))'
       - type: output-matches
-        name: source-boundary-and-handoff
+        name: reconciliation-boundary-and-handoff
         config:
-          pattern: '(?is)(?=.*(?:read[- ]only|do\s+not\s+(?:edit|modify)|requested\s+changes))(?=.*(?:rpi-quick|rpi-research|RPI\s+(?:follow-on|handoff|sequence)))'
+          pattern: '(?is)(?=.*(?:read[- ]only|do\s+not\s+(?:edit|modify)))(?=.*(?:(?:edit|modify).{0,80}(?:only|after).{0,80}explicit(?:ly)?.{0,80}(?:immediate|now).{0,80}(?:reconcil|change)|explicit(?:ly)?.{0,80}(?:immediate|now).{0,80}(?:reconcil|change).{0,80}(?:edit|modify)))(?=.*(?:appl(?:y|ied)|implement(?:ed)?).{0,60}(?:now|immediate))(?=.*(?:hand(?:ed)?\s*off|handoff).{0,120}(?:RPI|rpi))(?=.*(?:defer(?:red)?|later))(?=.*(?:declin(?:e|ed)|reject(?:ed)?|not\s+(?:pursue|apply)))(?=.*(?:(?:only|when|if).{0,120}(?:rpi-quick|rpi-research|RPI\s+(?:follow-on|handoff|sequence))|(?:rpi-quick|rpi-research|RPI\s+(?:follow-on|handoff|sequence)).{0,120}(?:only|when|if|downstream)))'
   - name: skill-rpi-challenger-contract
     prompt: |
       Summarize how `rpi-challenger` examines a confirmed plan without solving

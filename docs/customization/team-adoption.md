@@ -2,7 +2,7 @@
 title: Team Adoption and Governance
 description: Establish governance practices, naming conventions, onboarding patterns, and change management for team-wide HVE Core adoption
 author: Microsoft
-ms.date: 2026-07-15
+ms.date: 2026-07-16
 ms.topic: how-to
 keywords:
   - governance
@@ -113,7 +113,7 @@ Treat Copilot customization files with the same rigor as production code:
 
 * Require pull request review for changes to instructions, agents, and skills
 * Use CODEOWNERS to route reviews to artifact owners
-* Validate changes with `npm run lint:all` before merging
+* Validate changes with `npm run validate:local` before merging
 * Run `npm run plugin:generate` after modifying collection manifests
 
 ### Handling Conflicting Instructions
@@ -169,7 +169,7 @@ Follow a structured process when adding new instructions, agents, or skills:
 1. Create the artifact file with minimal frontmatter in a feature branch
 2. Run `hve-builder` in create or improve mode with the relevant known references
 3. Resolve its static, behavior, and validation gates until the overall outcome passes
-4. Run `npm run lint:all` to validate formatting and frontmatter
+4. Run `npm run validate:local` to validate local-safe checks, then reproduce any relevant CI-owned lane separately
 5. Update affected collection manifests in `collections/`
 6. Run `npm run plugin:generate` to regenerate plugin outputs
 7. Submit a pull request with clear description of what the artifact does and

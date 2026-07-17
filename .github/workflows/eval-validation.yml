@@ -96,9 +96,9 @@ jobs:
 
           # package.json and package-lock.json change often for reasons unrelated to
           # evals. Treat them as eval-relevant only when the change touches the vally
-          # CLI dependency or an eval:* npm script, detected from the diff content.
+          # CLI dependency or a ci:eval:* npm script, detected from the diff content.
           $contentScopedFiles = @('package.json', 'package-lock.json')
-          $evalContentPattern = 'vally|"eval:'
+          $evalContentPattern = 'vally|"ci:eval:'
 
           $relevant = $false
           foreach ($file in $changed) {
@@ -136,28 +136,28 @@ jobs:
       - name: Run eval vally lint
         if: env.EVAL_RELEVANT == 'true'
         run: |
-          npm run eval:lint:vally > eval-vally-output.txt 2>&1 || echo "EVAL_FAILED=true" >> "$GITHUB_ENV"
+          npm run ci:eval:lint:vally > eval-vally-output.txt 2>&1 || echo "EVAL_FAILED=true" >> "$GITHUB_ENV"
           cat eval-vally-output.txt
         continue-on-error: true
 
       - name: Run eval schema lint
         if: env.EVAL_RELEVANT == 'true'
         run: |
-          npm run eval:lint:schema > eval-schema-output.txt 2>&1 || echo "EVAL_FAILED=true" >> "$GITHUB_ENV"
+          npm run ci:eval:lint:schema > eval-schema-output.txt 2>&1 || echo "EVAL_FAILED=true" >> "$GITHUB_ENV"
           cat eval-schema-output.txt
         continue-on-error: true
 
       - name: Run eval text lint
         if: env.EVAL_RELEVANT == 'true'
         run: |
-          npm run eval:lint:text > eval-text-output.txt 2>&1 || echo "EVAL_FAILED=true" >> "$GITHUB_ENV"
+          npm run ci:eval:lint:text > eval-text-output.txt 2>&1 || echo "EVAL_FAILED=true" >> "$GITHUB_ENV"
           cat eval-text-output.txt
         continue-on-error: true
 
       - name: Run eval safety lint
         if: env.EVAL_RELEVANT == 'true'
         run: |
-          npm run eval:lint:safety > eval-safety-output.txt 2>&1 || echo "EVAL_FAILED=true" >> "$GITHUB_ENV"
+          npm run ci:eval:lint:safety > eval-safety-output.txt 2>&1 || echo "EVAL_FAILED=true" >> "$GITHUB_ENV"
           cat eval-safety-output.txt
         continue-on-error: true
 
@@ -266,7 +266,7 @@ jobs:
         id: moderate
         shell: pwsh
         run: |
-          npm run eval:moderate:artifacts
+          npm run ci:eval:moderate:artifacts
           if ($LASTEXITCODE -ne 0) {
             'MODERATION_FAILED=true' >> $env:GITHUB_ENV
           }
@@ -398,14 +398,14 @@ jobs:
 
       - name: Check stimulus presence
         if: env.EVAL_EXECUTE == 'true'
-        run: npm run eval:presence
+        run: npm run ci:eval:presence
 
       - name: Execute evals
         id: execute
         if: env.EVAL_EXECUTE == 'true'
         shell: pwsh
         run: |
-          npm run eval:execute -- -Kind ${{ matrix.kind }} -ChangedSpecManifestPath logs/changed-spec-stimuli.json -Model gpt-5.6-luna -SkipInputModeration
+          npm run ci:eval:execute -- -Kind ${{ matrix.kind }} -ChangedSpecManifestPath logs/changed-spec-stimuli.json -Model gpt-5.6-luna -SkipInputModeration
           if ($LASTEXITCODE -ne 0) {
             'EVAL_EXECUTE_FAILED=true' >> $env:GITHUB_ENV
           }

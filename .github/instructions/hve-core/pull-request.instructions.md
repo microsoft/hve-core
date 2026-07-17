@@ -50,7 +50,8 @@ Entry criteria:
 4. Persist template state for later steps:
    * `templatePath`: chosen template path, or `None`.
    * `templateSections`: parsed H2 section structure when a template exists.
-   * `checkCommands`: Extract backtick-wrapped required check commands from template checklist sections.
+   * `checkCommands`: Extract backtick-wrapped commands only from the Required Local Checks section.
+   * `ciCheckNames`: Extract checklist labels from the Required CI Status Checks section without treating them as shell commands.
 
 When no template is resolved, apply Canonical Fallback Rules and continue.
 
@@ -219,9 +220,10 @@ Run PR-readiness validation even when the user has not explicitly requested dire
 #### Step 7A: Discover Required Checks
 
 1. Start with `checkCommands` captured from the selected PR template in Step 1.
-2. Expand required checks by reading instruction files whose `applyTo` patterns match the changed files, looking for validation commands or required check references.
-3. Build one de-duplicated ordered command list and record the source for each command (template or instruction).
-4. If required checks cannot be discovered confidently, ask the user for direction before running commands.
+2. Start with `ciCheckNames` captured from the selected PR template as status-only evidence targets.
+3. Expand local checks and CI status names by reading instruction files whose `applyTo` patterns match the changed files.
+4. Build one de-duplicated ordered local command list and one de-duplicated CI status-name list, recording the source for each item.
+5. If required checks cannot be discovered confidently, ask the user for direction before running commands.
 
 Exit criteria:
 
@@ -229,10 +231,11 @@ Exit criteria:
 
 #### Step 7B: Run and Triage Validation
 
-1. Run all discovered required checks.
-2. Record each check result as `Passed`, `Failed`, or `Skipped` (with reason).
-3. For failures, categorize as `blocking` or `non-blocking` and note the root-cause area and recommended next action.
-4. Update the pr.md checklist checkboxes to reflect results: for each check that passed, replace the matching `- [ ]` with `- [x]` in pr.md.
+1. Run only discovered local `checkCommands`. A command reference elsewhere in the template, instructions, plan, log, or error is not an execution request.
+2. Read existing PR status summaries for `ciCheckNames` when available. Missing or not-yet-run CI remains `Pending CI`; do not invoke a `ci:*` command to replace hosted status evidence.
+3. Record local command results as `Passed`, `Failed`, or `Skipped` with a reason. Record CI status as `Passed`, `Failed`, `Pending CI`, `Skipped`, `Deferred`, or `Unavailable`.
+4. For failures, categorize as `blocking` or `non-blocking` and note the root-cause area and recommended next action.
+5. Update matching local and CI checklist checkboxes only when their own evidence passed.
 
 Exit criteria:
 

@@ -45,7 +45,7 @@ Leave the section empty with placeholder comments intact when the PR does not in
 
 Document all testing performed by the agent:
 
-* List each automated validation command run in Step 6 and its pass/fail status.
+* List each automated validation command run in Step 7 and its pass/fail status.
 * Summarize security analysis findings.
 * Summarize diff-based assessments performed.
 * Note that manual testing was not performed when applicable.
@@ -64,21 +64,22 @@ Single authoritative reference for all checkbox handling in the PR template. All
 > [!NOTE]
 > Review this table when the PR template changes to ensure checkbox purposes and template locations remain accurate.
 
-| Template Location                     | Checkbox Purpose                      | Handling            | Step   | Rule Summary                                                          |
-|---------------------------------------|---------------------------------------|---------------------|--------|-----------------------------------------------------------------------|
-| Type of Change                        | Auto-detected change type categories  | Agent (auto)        | Step 5 | Check via Change Type Detection pattern match                         |
-| Type of Change                        | HVE Builder review attestation        | Manual              | N/A    | Human verification; never checked by agent                            |
-| Type of Change                        | Free-form other type                  | Manual              | N/A    | Human verification; never checked by agent                            |
-| Security Considerations               | Sensitive data attestation            | Agent (auto)        | Step 5 | Check when customer data and secrets analysis both pass               |
-| Security Considerations               | Dependency security review            | Agent (conditional) | Step 5 | Evaluate only when dependency changes exist                           |
-| Security Considerations               | Privilege scope attestation           | Agent (conditional) | Step 5 | Evaluate only when security scripts are modified                      |
-| Checklist > Required Checks           | Documentation update verification     | Agent (assessed)    | Step 5 | Check when docs/ changes accompany code changes                       |
-| Checklist > Required Checks           | Naming convention compliance          | Agent (assessed)    | Step 5 | Check when changed files follow repository patterns                   |
-| Checklist > Required Checks           | Backwards compatibility verification  | Agent (assessed)    | Step 5 | Check only when diff shows no removal of public API surfaces          |
-| Checklist > Required Checks           | Test coverage verification            | Agent (assessed)    | Step 5 | Check only when test files are in changes                             |
-| Checklist > AI Artifact Contributions | AI artifact contribution verification | Manual              | N/A    | Human verification; never checked by agent                            |
-| Checklist > Required Automated Checks | Validation command results            | Agent (automated)   | Step 6 | Check for each command that passed in Step 6B                         |
-| GHCP Maturity (inserted)              | Non-stable artifact acknowledgment    | Manual              | N/A    | Inserted only when non-stable GHCP artifacts detected; left unchecked |
+| Template Location                     | Checkbox Purpose                      | Handling            | Step   | Rule Summary                                                                  |
+|---------------------------------------|---------------------------------------|---------------------|--------|-------------------------------------------------------------------------------|
+| Type of Change                        | Auto-detected change type categories  | Agent (auto)        | Step 5 | Check via Change Type Detection pattern match                                 |
+| Type of Change                        | HVE Builder review attestation        | Manual              | N/A    | Human verification; never checked by agent                                    |
+| Type of Change                        | Free-form other type                  | Manual              | N/A    | Human verification; never checked by agent                                    |
+| Security Considerations               | Sensitive data attestation            | Agent (auto)        | Step 5 | Check when customer data and secrets analysis both pass                       |
+| Security Considerations               | Dependency security review            | Agent (conditional) | Step 5 | Evaluate only when dependency changes exist                                   |
+| Security Considerations               | Privilege scope attestation           | Agent (conditional) | Step 5 | Evaluate only when security scripts are modified                              |
+| Checklist > Required Checks           | Documentation update verification     | Agent (assessed)    | Step 5 | Check when docs/ changes accompany code changes                               |
+| Checklist > Required Checks           | Naming convention compliance          | Agent (assessed)    | Step 5 | Check when changed files follow repository patterns                           |
+| Checklist > Required Checks           | Backwards compatibility verification  | Agent (assessed)    | Step 5 | Check only when diff shows no removal of public API surfaces                  |
+| Checklist > Required Checks           | Test coverage verification            | Agent (assessed)    | Step 5 | Check only when test files are in changes                                     |
+| Checklist > AI Artifact Contributions | AI artifact contribution verification | Manual              | N/A    | Human verification; never checked by agent                                    |
+| Checklist > Required Local Checks     | Local validation command results      | Agent (automated)   | Step 7 | Check only when the matching local command passed                             |
+| Checklist > Required CI Status Checks | Hosted workflow status results        | Agent (status)      | Step 7 | Check only when the matching hosted status passed; leave Pending CI unchecked |
+| GHCP Maturity (inserted)              | Non-stable artifact acknowledgment    | Manual              | N/A    | Inserted only when non-stable GHCP artifacts detected; left unchecked         |
 
 When a conditional checkbox's trigger condition is not met, annotate the checkbox inline with `(N/A — {brief reason})` to distinguish skipped-as-not-applicable from evaluated-and-failed.
 

@@ -1,59 +1,27 @@
 <!-- markdownlint-disable-file -->
-<!-- Session artifact for the rpi-walkthrough skill. AI-consumed; references use plain workspace-relative paths. -->
+<!-- Decisions-and-changes ledger for the rpi-walkthrough skill. AI-consumed; references use plain workspace-relative paths. -->
 
-# Walkthrough: {{task_slug}}
+# Walkthrough decisions and changes: {{task_slug}}
 
-- Date: {{YYYY-MM-DD}}
+- Created: {{YYYY-MM-DD}}
 - Target: {{target_description}}
-- Target type: {{code | feature | ui-ux | prompt-artifact | tracking-artifact | document}} (name all that apply)
-- Detail level: {{brief | normal | deep}}
-- Status: {{in-progress | complete}}
 
-## Scope
+## Reconciliation
 
-{{One or two sentences naming exactly what is being walked through and what is out of scope.}}
+Resolve each open entry with the user as applied now, handed off to an RPI follow-on, deferred for later, or declined. Record the selected disposition and any outcome or evidence pointer in the matching entry.
 
-## Evidence map
+## Material decisions
 
-Captured from the deep subagent review before explanation. One row per planned segment.
+Capture only material user decisions that need later action or accountability.
 
-| Segment | Reference (path and lines or section) | What it does | Why it is this way | Evidence         |
-|---------|---------------------------------------|--------------|--------------------|------------------|
-| 1       | {{path/to/file.ext:L10-L24}}          | {{behavior}} | {{rationale}}      | {{path or note}} |
-| 2       | {{path/to/file.ext:L30}}              | {{behavior}} | {{rationale}}      | {{path or note}} |
-
-## Segment plan
-
-1. {{segment-1 title}}
-2. {{segment-2 title}}
-3. {{segment-3 title}}
-
-## Working notes
-
-Scratch space for the current session: open questions, partial findings from the deep review, and anything needed to resume after an interruption. Keep working notes here so the walkthrough artifact stays the single durable record.
-
-- {{note}}
-
-## Walkthrough log
-
-Append one entry per segment as it is explained.
-
-### Segment {{n}}: {{title}} ({{covered | revisited}})
-
-- References: {{path/to/file.ext:L10-L24}}
-- Summary: {{the explanation given to the user, condensed}}
-- Reminder: each segment explanation should follow the human-voice writing rules in references/walkthrough.md.
-- User feedback: {{more detail | continue | change request | none}}
+| # | Date | Target | References | Decision | User rationale | Reconciliation | Outcome or handoff evidence |
+|---|------|--------|------------|----------|----------------|----------------|-----------------------------|
+| 1 | {{YYYY-MM-DD}} | {{target}} | {{path/to/file.ext:L10-L24}} | {{decision}} | {{rationale}} | {{open | applied now | handed off | deferred | declined}} | {{evidence or outcome}} |
 
 ## Requested changes
 
-Captured during the walkthrough. Not applied to the codebase unless the user asked for an immediate change.
+Capture only user-requested changes that need later action or accountability.
 
-| # | Reference (path and lines) | Requested change | Reason | Evidence | Applied now? |
-|---|----------------------------|------------------|--------|----------|--------------|
-| 1 | {{path/to/file.ext:L42}} | {{what to change}} | {{why the user wants it}} | {{path or note}} | {{no | yes}} |
-
-## Next step
-
-- Recommended: {{/rpi-quick | /rpi-research, /rpi-plan, /rpi-implement, /rpi-review}}
-- Seed: this walkthrough artifact and its Requested Changes section.
+| # | Date | Target | References | Requested change | User rationale | Reconciliation | Outcome or handoff evidence |
+|---|------|--------|------------|------------------|----------------|----------------|-----------------------------|
+| 1 | {{YYYY-MM-DD}} | {{target}} | {{path/to/file.ext:L42}} | {{requested change}} | {{rationale}} | {{open | applied now | handed off | deferred | declined}} | {{evidence or outcome}} |

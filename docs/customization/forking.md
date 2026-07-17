@@ -2,7 +2,7 @@
 title: Forking and Extending HVE Core
 description: Fork HVE Core to create a fully customized prompt engineering framework with upstream sync and Copilot-assisted adaptation
 author: Microsoft
-ms.date: 2026-06-27
+ms.date: 2026-07-16
 ms.topic: tutorial
 keywords:
   - forking
@@ -60,7 +60,7 @@ git fetch upstream
 ### Step 3: Install dependencies
 
 ```bash
-npm install
+npm ci
 ```
 
 ### Step 4: Make initial configuration changes
@@ -75,7 +75,7 @@ Update these files to reflect your organization:
 ### Step 5: Verify the build
 
 ```bash
-npm run lint:all
+npm run validate:local
 npm run plugin:generate
 ```
 
@@ -157,7 +157,7 @@ For each conflict, evaluate whether to keep your change, accept the upstream cha
 combine both. Validate after resolution:
 
 ```bash
-npm run lint:all
+npm run validate:local
 npm run plugin:generate
 ```
 
@@ -230,7 +230,7 @@ When upstream deprecates an artifact, evaluate whether to:
 Run the full validation suite after every sync:
 
 ```bash
-npm run lint:all
+npm run validate:local
 npm run plugin:generate
 npm run plugin:validate
 ```
@@ -254,6 +254,7 @@ upstream change against regulatory requirements before merging.
 * [VS Code Extension API](https://code.visualstudio.com/api) for extension packaging and
   distribution
 * [docs/contributing/](../contributing/) for artifact syntax and contribution guidelines
+* [Validation Commands and CI-Owned Lanes](../contributing/validation) for local-safe defaults and separate CI lanes
 
 <!-- markdownlint-disable MD036 -->
 *🤖 Crafted with precision by ✨Copilot following brilliant human instruction,

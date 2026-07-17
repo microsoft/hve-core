@@ -3,7 +3,7 @@ title: AI Artifacts Architecture
 description: Prompt, agent, and instruction delegation model for Copilot customizations
 sidebar_position: 2
 author: Microsoft
-ms.date: 2026-07-15
+ms.date: 2026-07-16
 ms.topic: concept
 ---
 
@@ -460,7 +460,7 @@ To reactivate a previously removed artifact:
    * In the relevant plugin manifests
    * In `collections/hve-core-all.collection.yml`
 
-5. Run `npm run lint:all` and `npm run test:ps` to confirm the reactivation is clean.
+5. Run `npm run validate:local` and `npm run test:ps` to confirm the reactivation is clean.
 
 ### Automatic Exclusion
 

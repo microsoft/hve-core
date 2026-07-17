@@ -1,10 +1,10 @@
 ---
-description: Full walkthrough protocol for the rpi-walkthrough skill, covering target resolution, deep subagent review, the segment explanation loop, the reference-table format, the change-capture format, and RPI handoff.
+description: Full walkthrough protocol for the rpi-walkthrough skill, covering target resolution, deep subagent review, segment explanations, a decisions-and-changes ledger, reconciliation, and RPI handoff.
 ---
 
 # RPI Walkthrough Protocol
 
-This reference expands the `rpi-walkthrough` SKILL with the operational detail for a guided, conversational walkthrough. Use [../templates/walkthrough.md](../templates/walkthrough.md) as the structure for the session artifact at `.copilot-tracking/walkthroughs/{{YYYY-MM-DD}}/{{task_slug}}-walkthrough.md`.
+This reference expands the `rpi-walkthrough` SKILL with the operational detail for a guided, conversational walkthrough. Conversation context owns the target refinement, detail level, segment pacing, current position, and follow-up depth. Use [../templates/walkthrough.md](../templates/walkthrough.md) only when a material user decision or requested change requires the optional ledger at `.copilot-tracking/walkthroughs/{{YYYY-MM-DD}}/{{task_slug}}-decisions.md`.
 
 Follow the shared conventions in `copilot-tracking.instructions.md`. References inside `.copilot-tracking` artifacts use plain workspace-relative paths; references shown to the user in the conversation use markdown links with line numbers.
 
@@ -20,17 +20,16 @@ Resolve the walkthrough target before any review or explanation:
   * Artifact or document: a `.copilot-tracking` research, plan, details, changes, review, or log document, or another project document such as an architecture or planning record.
 * Set `detail` to `brief`, `normal`, or `deep` (default `normal`). The user can change it at any segment boundary.
 * When no target can be formed, stop and ask. When several unrelated targets match, ask the user to choose one before proceeding.
+* When conversation context is unavailable, ask the user to identify the target and desired starting point. Do not treat a prior ledger as walkthrough progress or reconstruct pacing from it.
 
 ## Deep review before explaining
 
-Always understand the target through subagents before narrating it, and capture what you learn so the explanation stays accurate and grounded.
+Understand the target through subagents before narrating it so the explanation stays accurate and grounded. Keep review results in active conversation and subagent returns.
 
-* Create the walkthrough artifact from [../templates/walkthrough.md](../templates/walkthrough.md) at the dated path before recording anything, so the session can resume if interrupted.
 * Dispatch a generic exploration subagent (`Explore`, or `runSubagent` with no named agent) to trace how the code, UI, UX, feature, or artifact actually works: entry points, call paths, data flow, connected files, and the decisions or evidence recorded inside `.copilot-tracking` artifacts.
 * Activate `rpi-research` when the explanation depends on an external library, framework, standard, or anything that benefits from web or repository research with citations. Supply the walkthrough topic, purpose, audience, questions, evidence criteria, scope and non-goals, constraints, existing evidence, requested outputs, and analysis output mode, then read the completed primary research artifact before explaining.
 * Scale the review to `detail`: a focused single pass for `brief`, a normal pass for `normal`, and a thorough multi-pass review with cross-references for `deep`.
-* Record the results in the walkthrough artifact as the evidence map and system of record: for each planned segment capture the target reference (file and line range or artifact section), what it does, why it is this way, and the supporting evidence paths and lines. Keep any lightweight working or scratch notes in that same artifact so it stays the single system of record and the walkthrough can resume after an interruption.
-* When dispatch tooling is unavailable, perform the equivalent review inline and record the fallback and its reason in the walkthrough artifact.
+* When dispatch tooling is unavailable, perform the equivalent review inline and state the fallback reason in the conversation.
 
 ## Segment planning
 
@@ -40,32 +39,40 @@ Turn the reviewed target into an ordered list of segments that each cover one co
 * UI or UX: order along the user-facing flow, connecting each view or component to the state, events, and styles that drive them.
 * Artifact: follow the document's own section order, pairing each decision with its rationale and evidence.
 
-Record the segment list in the walkthrough artifact before starting segment one so the session can resume if interrupted. Do not over-condense the walkthrough. When the target is large or nuanced, use more segments rather than forcing a compact summary, and 25 or more segments is acceptable when that is the clearest way to explain the material.
+Keep the segment list, coverage, and current position in the conversation. Do not over-condense the walkthrough. When the target is large or nuanced, use more segments rather than forcing a compact summary, and 25 or more segments is acceptable when that is the clearest way to explain the material.
 
 ## Conversation markdown format
 
 Use well-formatted markdown in every walkthrough turn.
 
 * Start each segment with a segment header such as `### Segment 1: ...` before any narrative explanation.
-* Before the first segment explanation, render an overview mermaid diagram that shows the overall flow or structure of the target and the planned segment sequence. Color-code its nodes with the same state classes as the zoom diagram below (done in green, current in gold, upcoming in blue), marking the first segment current and the rest upcoming. Render the overview once as a map; the per-segment zoom diagram is what tracks progress as the walkthrough advances.
-* For each segment, render a compact zoomed mermaid diagram that shows only the previous segment, the current segment, and the next segment, and color the nodes by the same states so the current one stands out.
-* Use a mermaid pattern like this for each zoom diagram, styling the previous node as done, the current node as current, and the next node as upcoming:
+* Before the first segment, render an overview Mermaid diagram when the target has meaningful architecture, control or data flow, section relationships, or a user journey. The diagram shows the target's actual structure or flow. Segment numbers may appear only as navigation cues.
+* During a segment, include a compact focus diagram only when it adds useful information beyond the overview and prose. Show the current component or section and its real inbound or outbound relationships. Omit a diagram rather than fabricate or repeat decorative boxes.
+* Keep labels short, add meaningful relationship labels when helpful, and follow every diagram with one sentence that states its takeaway. Classes describe target roles, not walkthrough progress; labels and prose carry the meaning independently of color.
+* Use a contrast-safe Mermaid pattern like this when a diagram is useful. Adapt the nodes and edges to the actual target rather than reusing it as a progress diagram:
 
 ```mermaid
 flowchart LR
-    prev[Previous segment]
-    current[Current segment]
-    next[Next segment]
-    prev --> current --> next
-    classDef done fill:#dcfce7,stroke:#166534,stroke-width:1px;
-    classDef current fill:#fef3c7,stroke:#92400e,stroke-width:2px;
-    classDef upcoming fill:#dbeafe,stroke:#1e40af,stroke-width:1px;
-    class prev done;
-    class current current;
-    class next upcoming;
+  action[User action]
+  handler[Handler: S2]
+  store[Data store]
+  result[Response]
+  action -->|submits| handler
+  handler -->|reads and writes| store
+  handler -->|returns| result
+  classDef context fill:#166534,color:#f8fafc,stroke:#bbf7d0,stroke-width:2px;
+  classDef focus fill:#854d0e,color:#f8fafc,stroke:#fde68a,stroke-width:2px;
+  classDef dependency fill:#1e40af,color:#f8fafc,stroke:#bfdbfe,stroke-width:2px;
+  classDef outcome fill:#334155,color:#f8fafc,stroke:#cbd5e1,stroke-width:2px;
+  class action context;
+  class handler focus;
+  class store dependency;
+  class result outcome;
+  linkStyle default stroke:#94a3b8,stroke-width:2px;
 ```
 
-* For the first segment omit the previous node, and for the last segment omit the next node, keeping the current node styled as current in both cases.
+The handler is the focus because it receives the user action, coordinates data access, and produces the response.
+
 * Keep the prose scannable. Each sentence or paragraph that discusses a file, line range, block, or artifact must include a nearby markdown link to that reference, rather than relying only on the reference table.
 * Keep the reference table requirement. Render it near the bottom of each segment turn, immediately before the questions.
 
@@ -74,7 +81,7 @@ flowchart LR
 Run this loop once per segment, and never advance more than one segment per turn:
 
 1. Explain the segment in the conversation. Start with the segment header, then move from what it does to how it connects to the rest of the target and why it is this way, without labeling those parts. Match the depth to `detail`. Keep the writing scannable: short paragraphs, a tight bullet list when it helps, and bold only for the few terms that carry the idea, and follow the "Writing the explanation for human eyes" section in this reference. Do not paste large code blocks; describe the code and point to it.
-2. Render the overview diagram before the first segment explanation, and then render a compact zoomed mermaid diagram for every segment. Each zoomed diagram shows only the previous segment, the current segment, and the next segment, color-coded by state so the current one stands out.
+2. Render an overview diagram before the first segment only when the target has meaningful structure or flow. Add a compact focus diagram only when it clarifies a real relationship beyond the overview and prose, then state the diagram's takeaway in one sentence.
 3. Add inline markdown links beside the explanatory prose for any file, block, or artifact being discussed. Do not rely only on the reference table for navigation.
 4. Render the reference table for the segment (see Reference table format) so the user can navigate to every place being discussed.
 5. Call `vscode_askQuestions` with one or two clear questions written in the same plain voice, with no praise or filler. The first offers more detail or a why on the current segment; the second continues to the next segment.
@@ -146,41 +153,39 @@ For a `.copilot-tracking` artifact walkthrough, link the artifact section being 
 
 Interpret the user's `vscode_askQuestions` answer and respond in kind:
 
-* More detail or why: repeat the deep review with subagents and tools as needed, extend the evidence map, then re-explain the same segment at greater depth before offering to continue.
+* More detail or why: repeat the deep review with subagents and tools as needed, then re-explain the same segment at greater depth before offering to continue.
 * Less detail or a depth change: adjust `detail` and continue.
 * Continue: advance to the next segment and run the loop again.
-* A change request: capture it (see Capturing requested changes) and continue, unless the user asks for the change immediately.
+* A material decision or change request: capture it (see Recording decisions and requested changes) and offer immediate reconciliation or continuing with the entry open within the existing one-or-two-question cadence.
 * A new or refined target: re-resolve the target, re-review, and re-plan the segments.
 
-## Capturing requested changes
+## Recording decisions and requested changes
 
-The walkthrough is read-only by default. When the user requests a change while explaining:
+The walkthrough is read-only by default. Create the ledger lazily, from [../templates/walkthrough.md](../templates/walkthrough.md), only when the user makes a material decision or requests a change. Do not create one for navigation, segment progress, evidence maps, explanations, scratch notes, or ordinary follow-up questions.
 
-* Append it to the Requested Changes section of the walkthrough artifact with the file and line reference, the requested change, the reason the user gave, and the relevant evidence path.
-* Do not modify source files, and do not stage edits to the codebase.
-* The only exception is an explicit request to make the change immediately: confirm scope, apply the change, then record what was applied in the artifact and resume the walkthrough.
+* Record the entry date, target, material decision or requested change, references, user rationale, reconciliation choice or status, and outcome or handoff evidence. The ledger stores only enough context to act on its entries later.
+* When capturing an entry during a segment, ask whether the user wants to reconcile it now or keep it open while continuing. Include that choice in an existing segment-boundary question when possible rather than forcing an extra question.
+* Reconcile each open entry with the user as one of: applied now, handed off to an RPI follow-on, deferred for later, or declined. Record the chosen disposition and any outcome or evidence pointer.
+* Apply a source change only after the user explicitly chooses immediate reconciliation and the change is safely scoped. Confirm or clarify unsafe, ambiguous, destructive, externally visible, or out-of-scope work before acting. Record what happened in the ledger.
+* A later request can read the ledger and reconcile open entries without treating it as walkthrough resumption state.
 
 ## Closing the walkthrough
 
 When every planned segment is covered, or when the user declines another segment, asks for a summary, or ends the session:
 
-* Mark the walkthrough artifact complete or partial, and record any uncovered segments so the session can resume later.
-* Review the captured Requested Changes with the user in the conversation.
-* Recommend `/rpi-quick` for a one-shot pass, or the full `/rpi-research`, `/rpi-plan`, `/rpi-implement`, and `/rpi-review` sequence for larger work, seeded with the walkthrough artifact. Keep these as recommendations unless the user asks to proceed.
+* If a ledger exists, review its open entries and ask whether to reconcile them now or leave them for later.
+* Recommend `/rpi-quick` for a one-shot pass, or the full `/rpi-research`, `/rpi-plan`, `/rpi-implement`, and `/rpi-review` sequence only for entries handed off or still requiring downstream work. Keep these as recommendations unless the user asks to proceed.
 
 ## Final response contract
 
 Close with a concise summary that contains:
 
-* The walkthrough artifact path.
 * The segments covered and the detail level used.
-* The count of captured change requests.
-* A markdown table linking the walkthrough artifact and its Requested Changes section alongside the recommended next command.
+* No ledger link when no material decision or requested change occurred. State that no decisions-and-changes artifact was needed.
+* When a ledger exists, its path, the counts of material decisions and requested changes, and any remaining open entries.
+* Markdown links to the ledger and its Reconciliation section when a ledger exists.
+* An RPI recommendation only for entries handed off or still requiring downstream work.
 
-| Artifact                                                                                                                                                 | Requested Changes                                                                                                 | Next step                                                         |
-|----------------------------------------------------------------------------------------------------------------------------------------------------------|-------------------------------------------------------------------------------------------------------------------|-------------------------------------------------------------------|
-| [.copilot-tracking/walkthroughs/{{YYYY-MM-DD}}/{{task_slug}}-walkthrough.md](.copilot-tracking/walkthroughs/{{YYYY-MM-DD}}/{{task_slug}}-walkthrough.md) | [Requested Changes](.copilot-tracking/walkthroughs/{{YYYY-MM-DD}}/{{task_slug}}-walkthrough.md#requested-changes) | Run `/rpi-quick` with this artifact, or run the full RPI sequence |
-
-## Re-entry
-
-When the user returns to an existing walkthrough, read the walkthrough artifact, resume at the next uncovered segment, and re-review only the segments whose depth or target the user changed. Preserve prior segment evidence unless the re-entry changes its target or requested depth.
+| Ledger | Reconciliation | Next step |
+|--------|----------------|-----------|
+| [.copilot-tracking/walkthroughs/{{YYYY-MM-DD}}/{{task_slug}}-decisions.md](.copilot-tracking/walkthroughs/{{YYYY-MM-DD}}/{{task_slug}}-decisions.md) | [Reconciliation](.copilot-tracking/walkthroughs/{{YYYY-MM-DD}}/{{task_slug}}-decisions.md#reconciliation) | Recommend only when an entry needs downstream work |

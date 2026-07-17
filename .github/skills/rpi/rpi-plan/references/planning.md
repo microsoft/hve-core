@@ -31,6 +31,23 @@ Use one stable task ID throughout the artifact set. Use `Pxx` for phase IDs and 
 
 The plan owns amendment IDs in the form `AM-xxx`. Do not use line numbers, line ranges, detail-line verification, or separate legacy log artifacts. Navigate by task ID, marker, and heading.
 
+## Executive summary
+
+Every plan checklist includes a user-facing `## Executive Summary` immediately after `## Task Metadata` and before `## Sources`. It gives readers a useful overview before the detailed evidence, scope, and phases.
+
+Include these elements when evidence supports them:
+
+* Explain, in approachable language, what the plan will implement and why the outcome matters.
+* Highlight material decisions and their practical consequences.
+* Include a `### What You May Not Know` subsection for important context, dependencies, risks, or constraints that a user might otherwise miss.
+* State unresolved decisions or blockers and the next action when they remain. Do not present an unsupported assumption as a settled decision.
+
+Keep summary claims synchronized with the evidence and the detailed plan. Do not invent claims, decisions, resources, risks, or links. Link to same-plan sections when navigation helps, and add an authoritative external explanatory link only when supplied evidence supports it and it materially improves comprehension. Keep workspace-relative paths as plain text, not Markdown links.
+
+Use readable Markdown selectively: concise paragraphs and lists for structure, bold for essential reader attention, and italics when introducing a term. Plain Markdown has no underline syntax. Use renderer-specific underline only when the generated tracking artifact's renderer is known to support it and the emphasis is essential; pair it with a plain-Markdown fallback, preferably bold. Do not use underline as decoration or repeat it for routine emphasis.
+
+Update the executive summary after every material plan change, including critique-driven revisions, amendments, decisions or their consequences, scope, phases, dependencies, acceptance criteria, risks, and readiness. Before critique handoff and again before finalization, reconcile the summary with the current plan. Summary synchronization is a readiness condition.
+
 ## Research readiness
 
 Read and understand the supplied research before deciding whether to activate `rpi-research`. Additional research is justified only when at least one condition holds:
@@ -73,4 +90,4 @@ Phase details describe context, intent, boundaries, likely targets, dependencies
 
 ## Final planning handoff
 
-The final plan identifies the implementation handoff with task IDs, markers, and artifact paths. It does not create a separate legacy log artifact or require a line-based verification pass.
+The final plan identifies the implementation handoff with task IDs, markers, and artifact paths. The final user-facing planning response concisely restates the executive-summary outcome, important decisions and consequences, information the user may not immediately know, and unresolved decisions or blockers before naming artifact paths and the next RPI stage. It does not create a separate legacy log artifact or require a line-based verification pass.

@@ -2,7 +2,7 @@
 title: Baseline Equivalence Suite
 description: 'Pairs identical probes across baseline and customized environments to assert only documented divergences appear'
 author: HVE Core Team
-ms.date: 2026-07-15
+ms.date: 2026-07-16
 ---
 
 ## Purpose
@@ -41,16 +41,16 @@ The PowerShell driver at [scripts/evals/Invoke-BaselineEquivalence.ps1](../../sc
 
 ```bash
 # PR tier (default): single primary model, advisory verdict, always exits 0
-npm run eval:equivalence -- -Agent rpi-agent -Tier pr
+npm run ci:eval:equivalence -- -Agent rpi-agent -Tier pr
 
 # Nightly tier: three-model sweep, authoritative verdict, exits non-zero on fail
-npm run eval:equivalence -- -Agent rpi-agent -Tier nightly
+npm run ci:eval:equivalence -- -Agent rpi-agent -Tier nightly
 
 # Narrow the stimulus set during smoke testing
-npm run eval:equivalence -- -Agent rpi-agent -Tier pr -StimulusFilter '^factual-'
+npm run ci:eval:equivalence -- -Agent rpi-agent -Tier pr -StimulusFilter '^factual-'
 
 # Dry run: print planned vally commands and emit a placeholder summary without SDK calls
-npm run eval:equivalence -- -Agent rpi-agent -WhatIf
+npm run ci:eval:equivalence -- -Agent rpi-agent -WhatIf
 ```
 
 The driver writes a machine-readable summary to `logs/baseline-equivalence-summary.json` and per-environment trajectories under `evals/results/`. The trajectory directories are gitignored.
@@ -79,14 +79,14 @@ The verdict field is derived from these counts by `Get-VerdictFromAggregate` in 
 
 ### Lint commands
 
-The baseline-equivalence specs live in two subdirectories (`baseline/eval.yaml` and `customized/eval.yaml`) so the driver can invoke them as a paired set. The repository-wide `npm run eval:lint:vally` task runs `vally lint --eval evals/` against the top of the tree and does not descend into these nested directories. Lint the specs explicitly:
+The baseline-equivalence specs live in two subdirectories (`baseline/eval.yaml` and `customized/eval.yaml`) so the driver can invoke them as a paired set. The repository-wide `npm run ci:eval:lint:vally` task runs `vally lint --eval evals/` against the top of the tree and does not descend into these nested directories. Lint the specs explicitly:
 
 | Command                                                             | Purpose                                                                            |
 |---------------------------------------------------------------------|------------------------------------------------------------------------------------|
 | `vally lint --eval evals/baseline-equivalence/baseline/eval.yaml`   | Schema-validate the empty baseline spec                                            |
 | `vally lint --eval evals/baseline-equivalence/customized/eval.yaml` | Schema-validate the materialized customized spec (includes the divergence graders) |
 | `vally lint --eval evals/baseline-equivalence/compare.eval.yml`     | Validate the pairwise compare spec consumed by `vally compare`                     |
-| `npm run eval:run:equivalence`                                      | Run both specs end to end via `vally eval --eval-spec ...` (no driver, no compare) |
+| `npm run ci:eval:run:equivalence`                                   | Run both specs end to end via `vally eval --eval-spec ...` (no driver, no compare) |
 
 Run the three `vally lint` commands before pushing a change to this suite. The presence linter ([scripts/evals/Test-StimulusPresence.ps1](../../scripts/evals/Test-StimulusPresence.ps1)) is wired into the changed-artifact lane and is documented in [docs/contributing/evals-ci.md](../../docs/contributing/evals-ci.md).
 

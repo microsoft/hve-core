@@ -2,7 +2,7 @@
 title: Agent Behavior Suite
 description: 'Per-agent behavioral evals assembled from per-agent stimulus partials and graded against five class recipes'
 author: HVE Core Team
-ms.date: 2026-07-15
+ms.date: 2026-07-16
 ---
 
 ## Purpose
@@ -40,7 +40,7 @@ pwsh -NoProfile -File scripts/evals/Build-AgentBehaviorSpec.ps1 -WhatIf
 
 When the drift check fails, a unified diff is written to [logs/agent-behavior-spec-drift.diff](../../logs/agent-behavior-spec-drift.diff). Inspect that file, re-run the generator with `-Force`, and commit the regenerated [eval.yaml](eval.yaml) alongside any stimulus partial change in the same commit.
 
-The drift check is wired into the repository's `eval:lint:vally` npm script in [package.json](../../package.json) so vally lint cannot pass while [eval.yaml](eval.yaml) is out of sync with the partials.
+The drift check is wired into the repository's `ci:eval:lint:vally` npm script in [package.json](../../package.json) so vally lint cannot pass while [eval.yaml](eval.yaml) is out of sync with the partials.
 
 ## Class Recipes
 
@@ -245,7 +245,7 @@ The harness does not need code changes to onboard a new agent or add a stimulus 
 
 1. Add or edit the partial at [stimuli/](stimuli/)`<agent-slug>.yml`. A partial is a list of stimulus objects. The shape mirrors a single entry under `tests:` in a vally spec, minus the `agent:` tag (the generator injects that automatically from the filename). Partials must declare `tags.category` and at least one grader.
 2. Run `pwsh -NoProfile -File scripts/evals/Build-AgentBehaviorSpec.ps1 -Force` to regenerate [eval.yaml](eval.yaml).
-3. Commit the partial and the regenerated [eval.yaml](eval.yaml) in the same commit. The drift check in `npm run eval:lint:vally` will reject the change otherwise.
+3. Commit the partial and the regenerated [eval.yaml](eval.yaml) in the same commit. The drift check in `npm run ci:eval:lint:vally` will reject the change otherwise.
 
 For an entirely new agent, also re-run [Build-AgentInventory.ps1](../../scripts/evals/Build-AgentInventory.ps1) so [AGENTS.yml](AGENTS.yml) picks up the new slug, then update the inventory table at the bottom of this README. Agents whose frontmatter declares `user-invocable: false` are excluded from this suite by design.
 

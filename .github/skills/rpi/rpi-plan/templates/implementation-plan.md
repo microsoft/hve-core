@@ -10,6 +10,27 @@
 * Phase details: .copilot-tracking/details/{{YYYY-MM-DD}}/{{task_slug}}-phase-details.md
 * Plan critique: .copilot-tracking/reviews/plans/{{YYYY-MM-DD}}/{{task_slug}}-plan-critique.md
 
+## Executive Summary
+
+{{approachable_evidence_based_explanation_of_what_the_plan_will_implement_and_why_it_matters}}
+
+### Key Decisions and Consequences
+
+* {{material_decision_and_its_practical_consequence}}
+
+### What You May Not Know
+
+* {{important_context_dependency_risk_or_constraint_and_why_it_matters}}
+
+### Unresolved Decisions or Blockers
+
+* {{none_or_unresolved_decision_or_blocker_with_owner_or_next_action}}
+
+For detail, see [Sources](#sources), [Scope and Non-Goals](#scope-and-non-goals), [Phase Checklist](#phase-checklist), [Decision Register](#decision-register), and [Handoff](#handoff).
+
+<!-- Add a Further Reading subsection only when an evidence-backed authoritative external link materially improves understanding. -->
+<!-- Use optional underline only when renderer support is confirmed and essential emphasis requires it: {{renderer_supported_underline_open}}**{{essential_text}}**{{renderer_supported_underline_close}}. Otherwise, use **{{essential_text}}**. -->
+
 ## Sources
 
 * {{source_path_or_caller_context}}: {{how_this_evidence_informs_the_plan}}

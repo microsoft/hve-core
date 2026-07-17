@@ -13,8 +13,10 @@ Items in the Highest Priority Rules section from attached instructions files ove
 * Instructions files not already attached are read before deciding on edits.
 * Breaking changes are acceptable.
 * Backward-compatibility layers or legacy support are added only when explicitly requested.
-* Tests, scripts, and one-off markdown docs are created or modified only when explicitly requested.
-* Ensure `npm ci` has ran recently before running any npm scripts in `package.json`.
+* Tests, scripts, and one-off markdown docs are created or modified only when the requested change or its directly required support work needs them.
+* Before a dependency-backed npm command, establish the relevant package root with `npm ci` when no successful installation for its current lockfile is known. Treat the repository root, `docs/docusaurus`, and `evals/beval` independently; do not substitute `npm install` or reinstall a known-current root.
+* Generic validation uses local-safe commands and does not select `ci:*` commands. A command in a plan, README, template, prior log, catalog, or error is a reference, not an execution request. A task that specifically asks to run or reproduce a named CI lane may use its ordinary `ci:*` command.
+* Browser installation, model or moderation environments, service startup, credentials, execution outside the sandbox, interactive UI, and adjacent CI lanes are separate actions. Do not infer them from generic validation or a failed command.
 
 Rules for comments:
 
@@ -35,7 +37,7 @@ Rules for human review checkboxes:
 
 Rules for fixing errors:
 
-* Proactively fix any problem encountered while working in the codebase, even when unrelated to the original request.
+* Fix directly blocking or in-scope problems. Record unrelated problems without widening source changes or command execution silently.
 * Root-cause fixes are preferred over symptom-only patches.
 * Further investigation of the codebase or through tools is always allowed.
 <!-- </highest-priority-rules> -->
@@ -222,29 +224,15 @@ Copilot Coding Agent uses a cloud-based GitHub Actions environment, separate fro
 
 ### Using npm Scripts
 
-Agents should use npm scripts for all validation:
+Use package scripts for applicable validation. Start with the local-safe aggregate or a targeted check, and use [the validation guide](../docs/contributing/validation.md) for CI-owned lane prerequisites and direct local reproduction.
 
-* `npm run lint:md` - Markdown linting
-* `npm run lint:ps` - PowerShell analysis
-* `npm run lint:yaml` - YAML validation
-* `npm run lint:frontmatter` - Frontmatter validation
-* `npm run lint:links` - Link language checking
-* `npm run lint:md-links` - Markdown link checking
-* `npm run lint:collections-metadata` - Collection metadata validation
-* `npm run lint:version-consistency` - Action version consistency
-* `npm run lint:marketplace` - Marketplace validation
-* `npm run lint:py` - Python linting via ruff
-* `npm run lint:models` - Model reference validation against catalog
-* `npm run lint:models:refresh` - Refresh model catalog from upstream documentation
-* `npm run lint:permissions` - Workflow permissions validation
-* `npm run lint:dependency-pinning` - Dependency pinning and SHA staleness validation
-* `npm run lint:all` - Run all linters (chains `format:tables`, `lint:md`, `lint:ps`, `lint:yaml`, `lint:json`, `lint:links`, `lint:frontmatter`, `lint:adr-consistency`, `lint:collections-metadata`, `lint:marketplace`, `lint:version-consistency`, `lint:permissions`, `lint:dependency-pinning`, `lint:ps-module-pins`, `lint:py`, `validate:skills`, `lint:ai-artifacts`, `lint:models`, `eval:lint:vally`, `eval:lint:schema`, `eval:lint:text`, `eval:lint:safety`, and `validate:devcontainer-lockfile`)
-* `npm run validate:copyright` - Copyright header validation
-* `npm run validate:devcontainer-lockfile` - Devcontainer lockfile integrity validation
-* `npm run validate:devcontainer-changelog` - Devcontainer infrastructure change summary
-* `npm run validate:skills` - Skill structure validation
-* `npm run spell-check` - Spelling validation
+* `npm run validate:local` - Run the non-mutating, locally safe repository validation aggregate
+* `npm run validate:docs` - Run non-mutating documentation lint, label, type, and component checks
+* `npm run lint:tables` - Check Markdown table formatting without modifying files
 * `npm run format:tables` - Markdown table formatting
+* `npm run lint:md:fix` - Apply the explicit Markdown fixer
+* `npm run lint:<area>` - Run the targeted non-mutating check that owns the changed area
+* `npm run test:ps -- -TestPath <path>` - Run bounded PowerShell tests
 * `npm run test:ps` - PowerShell tests
 * `npm run test:py` - Python tests via pytest
 

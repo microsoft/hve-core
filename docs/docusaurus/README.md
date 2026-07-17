@@ -2,14 +2,14 @@
 title: HVE Core Documentation Site
 description: Docusaurus 3 documentation site for HVE Core
 author: Microsoft
-ms.date: 2026-06-30
+ms.date: 2026-07-16
 ms.topic: reference
 ---
 
 ## Local Development
 
 ```bash
-npm install
+npm ci
 npm start
 ```
 
@@ -38,13 +38,15 @@ Accessibility is validated by three tools across four layers that run in `.githu
 
 Layers 3 and 4 both run on Playwright, so the four layers are covered by three tools.
 
-### Prerequisite
+### Browser E2E prerequisite
 
 The Playwright layer drives Google Chrome via the `chrome` channel, so a Chrome (or Chromium) install must be present. Provision Playwright's managed Chrome with:
 
+From the repository root, run the dedicated setup lane after installing both
+the root and Docusaurus dependencies with `npm ci`:
+
 ```bash
-npm run docusaurus -- --help >/dev/null # ensure dependencies are installed
-npx playwright install --with-deps chrome
+npm run ci:docs:setup:e2e
 ```
 
 ### Local commands
@@ -56,9 +58,13 @@ npm run lint:a11y            # static jsx-a11y lint
 npm run lint:label-registry # WCAG 3.2.4 consistent-label registry gate
 npm run typecheck           # TypeScript project typecheck
 npm test                    # Jest + jest-axe component assertions
-npm run test:e2e            # Playwright journeys + full-site axe crawl
+npm run ci:test:e2e         # Playwright journeys + full-site axe crawl
 ```
 
-From the repository root, `npm run lint:docs-site` runs the lint, label-registry, typecheck, component, and end-to-end layers in sequence, and `npm run docs:test:e2e:setup` installs the Chrome dependency for Playwright.
+From the repository root, `npm run validate:docs` runs the local-safe lint,
+label-registry, typecheck, and component layers. Run `npm run ci:docs:test:e2e`
+separately for the browser-backed E2E layer. See [Validation Commands and
+CI-Owned Lanes](../contributing/validation) for package-root setup, browser
+prerequisites, and output handling.
 
 🤖 *Crafted with precision by ✨Copilot following brilliant human instruction, then carefully refined by our team of discerning human reviewers.*

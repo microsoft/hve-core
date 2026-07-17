@@ -45,7 +45,7 @@ This suite follows the manifest-driven gating model established by DD-01:
 
 * Stimulus resolution is performed by `scripts/evals/Modules/StimulusIndex.psm1`, which already recognizes `kind: prompt` backlinks (added in Phase 9) alongside the existing `skill`, `agent`, and `instruction` kinds.
 * When the PR validation workflow's changed-artifact manifest contains at least one prompt, instruction, or skill, the existing `eval-execute` job in [`.github/workflows/pr-validation.yml`](../../.github/workflows/pr-validation.yml) dispatches the matching spec. No new workflow or per-suite job is introduced.
-* Local invocation: `npm run eval:behavior-prompts` for the prompt suite, `npm run eval:behavior-instructions` for the instruction suite, and `npm run eval:behavior-skills` for the skill behavior suite.
+* Named local reproduction: `npm run ci:eval:behavior-prompts` for the prompt suite, `npm run ci:eval:behavior-instructions` for the instruction suite, and `npm run ci:eval:behavior-skills` for the skill behavior suite.
 
 ## Advisory mode
 
