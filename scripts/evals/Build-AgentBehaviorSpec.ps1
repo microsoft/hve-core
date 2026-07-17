@@ -351,6 +351,8 @@ function Invoke-AgentBehaviorSpecCore {
         $diffText = Get-LineDiff -Expected $rendered -Actual $existingText -Path $OutputPath
         [System.IO.File]::WriteAllText($DriftDiffPath, $diffText)
         Write-Host "drift detected; diff written to $DriftDiffPath" -ForegroundColor Yellow
+        Write-Host "To fix: regenerate the spec from the stimuli partials and commit it:" -ForegroundColor Yellow
+        Write-Host "  pwsh -NoProfile -File scripts/evals/Build-AgentBehaviorSpec.ps1" -ForegroundColor Yellow
         return [pscustomobject]@{ Outcome = 'Drift'; OutputPath = $OutputPath; DiffPath = $DriftDiffPath }
     }
 
