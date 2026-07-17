@@ -3,7 +3,7 @@
 stimuli:
   - name: code-review-class-recipe
     prompt: |
-      Review this diff and produce findings with severity:
+      Begin an interactive review of this diff. Return a factual orientation and a short dispatch board, then ask me to confirm the review scope before deeper analysis. Do not modify source code.
       ```diff
       -def get_user(user_id):
       -    return db.query(f"SELECT * FROM users WHERE id = {user_id}")
@@ -15,13 +15,13 @@ stimuli:
       category: agent-behavior
     graders:
       - type: output-matches
-        name: findings-table-present
+        name: orientation-and-board
         config:
-          pattern: '(?i)(\|.*severity.*\||finding|issue|concern|recommendation|violation)'
+          pattern: '(?is)(orientation|walkthrough).{0,4000}dispatch\s+board|dispatch\s+board.{0,4000}(orientation|walkthrough)'
       - type: output-matches
-        name: severity-vocab
+        name: human-confirmation
         config:
-          pattern: '(?i)(critical|high|medium|low|info|severity|warning)'
+          pattern: '(?is)(confirm|adjust|edit).{0,80}(scope|orientation|walkthrough|dispatch\s+board)|(scope|orientation|walkthrough|dispatch\s+board).{0,80}(confirm|adjust|edit)'
       - type: output-matches
         name: no-source-edit
         config:
