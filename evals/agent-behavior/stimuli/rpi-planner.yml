@@ -1,0 +1,27 @@
+# Copyright (c) 2026 Microsoft Corporation. All rights reserved.
+# SPDX-License-Identifier: MIT
+stimuli:
+  - name: rpi-planner-bounded-phase-revision
+    prompt: |
+      As the RPI Planner, you are assigned only phase `P02` in an existing
+      implementation plan and its matching phase-details artifact. The caller
+      supplied exact paths, an allowed write boundary limited to `P02`, and
+      evidence supporting tasks `P02-T01` and `P02-T02`. Explain how you would
+      revise the assigned phase, handle an unsupported decision, and report the
+      result while preserving `P01` and `P03`.
+    tags:
+      category: agent-behavior
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: assigned-phase-boundary
+        config:
+          pattern: '(?is)(?=.*\bP02\b)(?=.*(?:P02-T01|P02-T02))(?=.*(?:assigned|write\s+boundary|only))'
+      - type: output-matches
+        name: evidence-and-unresolved-item
+        config:
+          pattern: '(?i)(evidence|assumption|unresolved|question|blocked)'
+      - type: output-matches
+        name: preserves-other-phases
+        config:
+          pattern: '(?is)(?=.*(?:preserve|preserved|preserves|preserving|unchanged))(?=.*\bP01\b)(?=.*\bP03\b)'

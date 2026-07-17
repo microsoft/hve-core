@@ -3,7 +3,7 @@ title: Evals in CI
 description: Auth contract, fork-PR policy, and how to add a new eval spec for the hve-core vally pipeline
 sidebar_position: 11
 author: Microsoft
-ms.date: 2026-07-16
+ms.date: 2026-07-17
 ms.topic: how-to
 keywords:
   - evals
@@ -209,7 +209,7 @@ False-positive lexical matches (e.g., `penetration test`, `attack surface`, `tok
 
 ### Baseline-equivalence specs
 
-`ci:eval:lint:vally` runs `vally lint --eval evals/`, which validates the eval YAML files immediately under `evals/` but does not recurse into nested subdirectories. The baseline-equivalence suite under [evals/baseline-equivalence/](../../evals/baseline-equivalence/README.md) ships nested specs (`baseline/eval.yaml`, `customized/eval.yaml`, and `compare.eval.yml`) that need explicit per-file lint invocations:
+`ci:eval:lint:vally` runs `vally lint --eval evals/`, which validates the eval YAML files immediately under `evals/` but does not recurse into nested subdirectories. The baseline-equivalence suite under [evals/baseline-equivalence/](https://github.com/microsoft/hve-core/blob/main/evals/baseline-equivalence/README.md) ships nested specs (`baseline/eval.yaml`, `customized/eval.yaml`, and `compare.eval.yml`) that need explicit per-file lint invocations:
 
 ```pwsh
 vally lint --eval evals/baseline-equivalence/baseline/eval.yaml
@@ -217,7 +217,7 @@ vally lint --eval evals/baseline-equivalence/customized/eval.yaml
 vally lint --eval evals/baseline-equivalence/compare.eval.yml
 ```
 
-[scripts/evals/Invoke-BaselineEquivalence.ps1](../../scripts/evals/Invoke-BaselineEquivalence.ps1) runs all three implicitly during `npm run ci:eval:run:equivalence`. See [evals/baseline-equivalence/README.md](../../evals/baseline-equivalence/README.md) for the suite operator guide and driver-output contract.
+[scripts/evals/Invoke-BaselineEquivalence.ps1](../../scripts/evals/Invoke-BaselineEquivalence.ps1) runs all three implicitly during `npm run ci:eval:run:equivalence`. See [evals/baseline-equivalence/README.md](https://github.com/microsoft/hve-core/blob/main/evals/baseline-equivalence/README.md) for the suite operator guide and driver-output contract.
 
 ## Running Pester Tests Locally
 

@@ -3,7 +3,7 @@ title: Validation Commands and CI-Owned Lanes
 description: Choose local-safe validation defaults and reproduce CI-owned documentation and evaluation lanes when their prerequisites are available
 sidebar_position: 12
 author: Microsoft
-ms.date: 2026-07-16
+ms.date: 2026-07-17
 ms.topic: how-to
 keywords:
   - validation
@@ -208,8 +208,8 @@ credentials, browser provisioning, and branch-protection policy.
   evaluation-spec contracts.
 * [Build System and Validation](../customization/build-system) explains the
   local validation commands and customization points.
-* [HVE Core Documentation Site](../docusaurus/README) covers the Docusaurus
-  project and accessibility layers.
+* [HVE Core Documentation Site](https://github.com/microsoft/hve-core/blob/main/docs/docusaurus/README.md)
+  covers the Docusaurus project and accessibility layers.
 
 <!-- markdownlint-disable MD036 -->
 *🤖 Crafted with precision by ✨Copilot following brilliant human instruction,

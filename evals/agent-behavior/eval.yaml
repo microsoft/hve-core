@@ -1347,6 +1347,58 @@ stimuli:
     config:
       pattern: (?i)(created|wrote|modified|edited|patched|added)\s+\S{0,40}(\.cs|\.py|\.ts|\.js|package\.json)
       negate: true
+- name: rpi-planner-bounded-phase-revision
+  prompt: |
+    As the RPI Planner, you are assigned only phase `P02` in an existing
+    implementation plan and its matching phase-details artifact. The caller
+    supplied exact paths, an allowed write boundary limited to `P02`, and
+    evidence supporting tasks `P02-T01` and `P02-T02`. Explain how you would
+    revise the assigned phase, handle an unsupported decision, and report the
+    result while preserving `P01` and `P03`.
+  tags:
+    category: agent-behavior
+    advisory: "true"
+    agent: rpi-planner
+  graders:
+  - type: output-matches
+    name: assigned-phase-boundary
+    config:
+      pattern: (?is)(?=.*\bP02\b)(?=.*(?:P02-T01|P02-T02))(?=.*(?:assigned|write\s+boundary|only))
+  - type: output-matches
+    name: evidence-and-unresolved-item
+    config:
+      pattern: (?i)(evidence|assumption|unresolved|question|blocked)
+  - type: output-matches
+    name: preserves-other-phases
+    config:
+      pattern: (?is)(?=.*(?:preserve|preserved|preserves|preserving|unchanged))(?=.*\bP01\b)(?=.*\bP03\b)
+- name: rpi-researcher-lane-preflight-and-return
+  prompt: |
+    As the RPI Researcher, evaluate a delegated internal research lane with
+    explicit questions, evidence criteria, scope, and budget. The approved
+    lane path is
+    `.copilot-tracking/research/subagents/2026-07-17/cache-policy-subagent-research.md`
+    and the distinct parent artifact is
+    `.copilot-tracking/research/2026-07-17/cache-policy-research.md`.
+    Describe the path preflight, progressive evidence handling, stop decision,
+    and compact return without editing the parent artifact.
+  tags:
+    category: agent-behavior
+    advisory: "true"
+    agent: rpi-researcher
+  graders:
+  - type: output-matches
+    name: lane-path-preflight
+    config:
+      pattern: (?is)(?=.*research[-/\\]subagents)(?=.*(?:distinct|parent))(?=.*(?:preflight|validat))
+  - type: output-matches
+    name: progressive-evidence-and-stop
+    config:
+      pattern: (?i)(progressive|material\s+(?:result|evidence)|provenance|confidence|budget|stop\s+(?:decision|reason))
+  - type: output-matches
+    name: compact-return-contract
+    config:
+      pattern: (?is)(?=.*execution\s+status)(?=.*evidence\s+confidence)(?=.*synthesis\s+readiness)(?=.*evidence\s+artifact)
 - name: security-planner-class-recipe
   prompt: |
     Start a security planning session for a public REST API. List the six phases the planner will walk through. Write the planning state under `.copilot-tracking/security-plans/` and report the path.
