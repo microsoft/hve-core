@@ -150,7 +150,7 @@ stimuli:
       negate: true
 - name: adr-creation-class-recipe
   prompt: |
-    Start an ADR planning session for "Adopt PostgreSQL for the primary data store" using entry mode `capture`, project slug `adopt-postgresql`, and output template `madr-v4`. Initialize `.copilot-tracking/adr-plans/adopt-postgresql/state.json` with current phase `frame`, then report the tracking path and phase. Do not modify source code.
+    Start an ADR planning session for "Adopt PostgreSQL for the primary data store" using entry mode `capture`, project slug `adopt-postgresql`, and the default long-form output template. Initialize `.copilot-tracking/adr-plans/adopt-postgresql/state.json` with current phase `frame`, then report the tracking path and phase. Do not modify source code.
   tags:
     category: agent-behavior
     agent: adr-creation
