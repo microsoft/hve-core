@@ -1,3 +1,4 @@
+# cspell:ignore brpi
 name: baseline-equivalence-customized
 description: >
   Customized run of the equivalence suite. Executed against a workspace

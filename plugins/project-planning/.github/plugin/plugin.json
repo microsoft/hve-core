@@ -15,6 +15,7 @@
   ],
   "commands": [
     "commands/accessibility/",
+    "commands/hve-core/",
     "commands/rai-planning/",
     "commands/security/"
   ],

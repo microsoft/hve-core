@@ -26,6 +26,9 @@ items:
     maturity: stable
 
   # Prompts
+  - path: .github/prompts/hve-core/rpi.prompt.md
+    kind: prompt
+    maturity: stable
   - path: .github/prompts/design-thinking/dt-start-project.prompt.md
     kind: prompt
     maturity: preview

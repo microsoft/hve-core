@@ -37,6 +37,7 @@ Coaching identity, quality constraints, and methodology skills for AI-enhanced d
 | **dt-method-next**                  | Assess DT project state and recommend next method with sequencing validation                                    |
 | **dt-resume-coaching**              | Resume a Design Thinking coaching session - reads coaching state and re-establishes context                     |
 | **dt-start-project**                | Start a new Design Thinking coaching project with state initialization and first coaching interaction           |
+| **rpi**                             | Coordinate one task through the Research, Plan, Implement, Review, and Follow-up RPI workflow                   |
 
 ### Instructions
 

@@ -186,6 +186,6 @@ Close with a concise summary that contains:
 * Markdown links to the ledger and its Reconciliation section when a ledger exists.
 * An RPI recommendation only for entries handed off or still requiring downstream work.
 
-| Ledger | Reconciliation | Next step |
-|--------|----------------|-----------|
+| Ledger                                                                                                                                               | Reconciliation                                                                                            | Next step                                          |
+|------------------------------------------------------------------------------------------------------------------------------------------------------|-----------------------------------------------------------------------------------------------------------|----------------------------------------------------|
 | [.copilot-tracking/walkthroughs/{{YYYY-MM-DD}}/{{task_slug}}-decisions.md](.copilot-tracking/walkthroughs/{{YYYY-MM-DD}}/{{task_slug}}-decisions.md) | [Reconciliation](.copilot-tracking/walkthroughs/{{YYYY-MM-DD}}/{{task_slug}}-decisions.md#reconciliation) | Recommend only when an entry needs downstream work |

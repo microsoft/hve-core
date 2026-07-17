@@ -49,6 +49,7 @@ Create architecture decision records (MADR v4 + Y-Statement) with phase-gated co
 | **rai-plan-from-prd**             | Start responsible AI assessment planning from PRD/BRD artifacts using the RAI Planner agent in from-prd mode                                 |
 | **rai-plan-from-security-plan**   | Start responsible AI assessment planning from a completed Security Plan using the RAI Planner agent in from-security-plan mode (recommended) |
 | **risk-register**                 | Create a qualitative risk register using a Probability × Impact (P×I) matrix                                                                 |
+| **rpi**                           | Coordinate one task through the Research, Plan, Implement, Review, and Follow-up RPI workflow                                                |
 | **security-capture**              | Start security planning from existing notes using the Security Planner agent (capture mode)                                                  |
 | **security-plan-from-prd**        | Start security planning from PRD/BRD artifacts using the Security Planner agent (from-prd mode)                                              |
 | **sssc-capture**                  | Start supply chain security planning from existing knowledge using the SSSC Planner agent in capture mode                                    |

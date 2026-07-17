@@ -52,9 +52,9 @@ Agents (`.agent.md`) define task-specific behaviors with access to Copilot tools
 description: 'Orchestrates task planning with research integration'
 tools: ['codebase', 'search', 'editFiles', 'changes']
 handoffs:
-    - label: "Coordinate RPI Work"
-        agent: RPI Agent
-        prompt: "Coordinate this task through the applicable RPI phases"
+  - label: "Coordinate RPI Work"
+    agent: RPI Agent
+    prompt: "Coordinate this task through the applicable RPI phases"
     send: true
 ---
 ```

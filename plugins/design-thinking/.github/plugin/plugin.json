@@ -8,7 +8,8 @@
     "agents/hve-core/subagents/"
   ],
   "commands": [
-    "commands/design-thinking/"
+    "commands/design-thinking/",
+    "commands/hve-core/"
   ],
   "skills": [
     "skills/design-thinking/",

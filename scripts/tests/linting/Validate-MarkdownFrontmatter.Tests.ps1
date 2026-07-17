@@ -1355,6 +1355,24 @@ Content
     }
 
     Context 'Pattern matching behavior' {
+        It 'Defines default exclusions for generated Docusaurus test output' {
+            $tokens = $null
+            $parseErrors = $null
+            $scriptAst = [System.Management.Automation.Language.Parser]::ParseFile(
+                $scriptPath,
+                [ref]$tokens,
+                [ref]$parseErrors
+            )
+            $excludeParameter = $scriptAst.ParamBlock.Parameters | Where-Object {
+                $_.Name.VariablePath.UserPath -eq 'ExcludePaths'
+            }
+            $defaultValue = $excludeParameter.DefaultValue.Extent.Text
+
+            $parseErrors | Should -BeNullOrEmpty
+            $defaultValue | Should -Match ([regex]::Escape("'docs/docusaurus/playwright-report/**'"))
+            $defaultValue | Should -Match ([regex]::Escape("'docs/docusaurus/test-results/**'"))
+        }
+
         It 'Matches glob pattern with double asterisk for relative paths' {
             $relativePath = 'tests/fixtures/exclude.md'
             $pattern = 'tests/**'

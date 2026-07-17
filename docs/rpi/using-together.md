@@ -3,7 +3,7 @@ title: Using RPI Together
 description: Complete walkthrough of an evidence-led RPI lifecycle from research readiness through Follow-up
 sidebar_position: 4
 author: Microsoft
-ms.date: 2026-07-15
+ms.date: 2026-07-16
 ms.topic: tutorial
 keywords:
   - rpi workflow
