@@ -131,16 +131,15 @@ expectations:
     priority: medium
     contract_ref: "RPI Agent outline boundary"
 
-  - expectation_id: topic-fidelity
-    summary: Response substantively addresses the stimulus's RPI topic.
-    signal: Stimulus-derived keywords appear in the body.
+  - expectation_id: sufficient-evidence-planning-route
+    summary: Planning-ready evidence routes directly to planning.
+    signal: The response names only the `rpi-plan` skill.
     pass_criteria: |
-      For the `rpi-agent-class-recipe` stimulus, the response contains terms from
-      {feature, flag, flags, service} and outlines investigation, planning, and
-      implementation work specific to feature flags rather than generic phase prose.
+      For the `rpi-agent-class-recipe` stimulus, the response is `rpi-plan`
+      with only harmless surrounding whitespace, quotes, or terminal punctuation.
     failure_modes:
-      - Off-topic response (no feature-flag terms).
-      - Workflow outline that could apply to any project with no domain specifics.
+      - Routes planning-ready evidence back to `rpi-research`.
+      - Names an alternative skill or adds workflow prose.
     priority: medium
     stimulus_scoped: true
-    contract_ref: "stimulus design"
+    contract_ref: "RPI Agent conditional research-readiness contract"

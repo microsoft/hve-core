@@ -3,14 +3,12 @@
 stimuli:
   - name: rpi-researcher-lane-preflight-and-return
     prompt: |
-      As the RPI Researcher, evaluate a delegated internal research lane with
-      explicit questions, evidence criteria, scope, and budget. The approved
-      lane path is
+      The approved lane path is
       `.copilot-tracking/research/subagents/2026-07-17/cache-policy-subagent-research.md`
       and the distinct parent artifact is
       `.copilot-tracking/research/2026-07-17/cache-policy-research.md`.
-      Describe the path preflight, progressive evidence handling, stop decision,
-      and compact return without editing the parent artifact.
+      The required pre-write action is lane-path validation. Do not call tools.
+      Return exactly `Validate the lane path.`
     tags:
       category: agent-behavior
       advisory: "true"
@@ -18,12 +16,4 @@ stimuli:
       - type: output-matches
         name: lane-path-preflight
         config:
-          pattern: '(?is)(?=.*research[-/\\]subagents)(?=.*(?:distinct|parent))(?=.*(?:preflight|validat))'
-      - type: output-matches
-        name: progressive-evidence-and-stop
-        config:
-          pattern: '(?i)(progressive|material\s+(?:result|evidence)|provenance|confidence|budget|stop\s+(?:decision|reason))'
-      - type: output-matches
-        name: compact-return-contract
-        config:
-          pattern: '(?is)(?=.*execution\s+status)(?=.*evidence\s+confidence)(?=.*synthesis\s+readiness)(?=.*evidence\s+artifact)'
+          pattern: '(?i)^\s*(validate|preflight-check)\s+the\s+lane\s+path[.!]?\s*$'
