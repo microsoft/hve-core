@@ -673,6 +673,41 @@ def build_session_summary(
     return summary
 
 
+def _infer_event_from_shape(data: dict) -> str:
+    """Infer a canonical event name from payload shape.
+
+    The Copilot CLI does not send an event-name field in the hook payload
+    (no ``hook_event_name``/``hookEventName``/``event``), unlike VS Code. It
+    also fires one shared command for every manifest event, so the event must
+    be inferred from which keys are present. Checks are ordered so that events
+    sharing keys are disambiguated by their distinguishing field:
+
+    * ``toolResult`` present -> PostToolUse (also carries ``toolName``)
+    * ``toolName`` present -> PreToolUse
+    * ``prompt`` present -> UserPromptSubmit
+    * ``agentName`` present -> SubagentStop when ``stopReason`` is set (a
+      Subagent stop), otherwise SubagentStart
+    * ``trigger`` present -> PreCompact
+    * ``stopReason`` present without ``agentName`` -> Stop (session end)
+    * ``source`` present -> SessionStart
+    """
+    if "toolResult" in data:
+        return "PostToolUse"
+    if "toolName" in data:
+        return "PreToolUse"
+    if "prompt" in data:
+        return "UserPromptSubmit"
+    if "agentName" in data:
+        return "SubagentStop" if "stopReason" in data else "SubagentStart"
+    if "trigger" in data:
+        return "PreCompact"
+    if "stopReason" in data:
+        return "Stop"
+    if "source" in data:
+        return "SessionStart"
+    return "unknown"
+
+
 def _normalize_event(data: dict) -> str:
     """Resolve the canonical PascalCase event name from a hook payload."""
     event = data.get("hook_event_name", "unknown")
@@ -682,6 +717,10 @@ def _normalize_event(data: dict) -> str:
             if value and value != "unknown":
                 event = value
                 break
+    if event == "unknown":
+        # The Copilot CLI omits the event name entirely; recover it from the
+        # payload shape so CLI sessions record telemetry like VS Code sessions.
+        event = _infer_event_from_shape(data)
     return EVENT_ALIASES.get(event, event)
 
 
@@ -770,6 +809,14 @@ def build_entry(data: dict, event: str, stack: _AgentStack) -> dict | None:
     tool_name = data.get("tool_name") or data.get("toolName", "")
     tool_input = data.get("tool_input") or data.get("toolArgs", {})
     tool_result = data.get("tool_result") or data.get("toolResult", "")
+
+    # The Copilot CLI serializes tool arguments as a JSON string rather than an
+    # object; decode it so key extraction and file-path detection below work.
+    if isinstance(tool_input, str):
+        try:
+            tool_input = json.loads(tool_input)
+        except ValueError:
+            tool_input = {}
 
     if event == "unknown":
         return None

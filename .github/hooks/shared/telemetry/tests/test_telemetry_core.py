@@ -384,6 +384,56 @@ def test_given_skill_path_when_build_entry_then_detects_skill(tmp_path):
     assert entry["skill"] == "my-skill"
 
 
+def test_given_cli_pretooluse_payload_when_normalize_event_then_infers_pretooluse():
+    # The CLI omits the event name and sends a tool payload without toolResult.
+    assert (
+        core._normalize_event({"sessionId": "s", "toolName": "bash", "toolArgs": "{}"})
+        == "PreToolUse"
+    )
+
+
+def test_given_cli_posttooluse_payload_when_normalize_event_then_infers_posttooluse():
+    data = {"sessionId": "s", "toolName": "bash", "toolArgs": "{}", "toolResult": {}}
+    assert core._normalize_event(data) == "PostToolUse"
+
+
+def test_given_cli_prompt_payload_when_normalize_event_then_infers_userpromptsubmit():
+    assert core._normalize_event({"sessionId": "s", "prompt": "hi"}) == "UserPromptSubmit"
+
+
+def test_given_cli_subagent_start_payload_when_normalize_event_then_infers_start():
+    data = {"sessionId": "s", "agentName": "explore", "agentDescription": "x"}
+    assert core._normalize_event(data) == "SubagentStart"
+
+
+def test_given_cli_subagent_stop_payload_when_normalize_event_then_infers_stop():
+    data = {"sessionId": "s", "agentName": "explore", "stopReason": "end_turn"}
+    assert core._normalize_event(data) == "SubagentStop"
+
+
+def test_given_cli_session_stop_payload_when_normalize_event_then_infers_stop():
+    # A session-level stop carries stopReason but no agentName.
+    assert core._normalize_event({"sessionId": "s", "stopReason": "end_turn"}) == "Stop"
+
+
+def test_given_explicit_event_name_when_normalize_event_then_shape_inference_skipped():
+    # VS Code supplies the event name, so inference must not override it.
+    data = {"hook_event_name": "SessionStart", "toolName": "bash"}
+    assert core._normalize_event(data) == "SessionStart"
+
+
+def test_given_cli_json_string_toolargs_when_build_entry_then_extracts_keys(tmp_path):
+    # The CLI serializes tool arguments as a JSON string; build_entry decodes it.
+    stack = core._AgentStack(tmp_path / ".stacks", "sid1")
+    data = {
+        "sessionId": "s",
+        "toolName": "bash",
+        "toolArgs": json.dumps({"command": "ls", "description": "list"}),
+    }
+    entry = core.build_entry(data, "PreToolUse", stack)
+    assert sorted(entry["tool_input_keys"]) == ["command", "description"]
+
+
 def test_given_stop_event_when_mode_collect_then_writes_entry_and_summary(tmp_path, monkeypatch):
     tel_dir = tmp_path / "tel"
     home = tmp_path / "home"
