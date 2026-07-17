@@ -42,16 +42,18 @@ jobs:
 
       - name: Run asset documentation validation
         shell: pwsh
+        env:
+          BASE_BRANCH: ${{ inputs.base-branch }}
+          CHANGED_FILES_ONLY: ${{ inputs.changed-files-only }}
         run: |
           $params = @{
             FailOnMissing = $true
             CheckSync = $true
           }
-          if ('${{ inputs.changed-files-only }}' -eq 'true') {
+          if ($env:CHANGED_FILES_ONLY -eq 'true') {
             $params['ChangedFilesOnly'] = $true
-            $baseBranch = '${{ inputs.base-branch }}'
-            if (-not [string]::IsNullOrEmpty($baseBranch)) {
-              $params['BaseBranch'] = $baseBranch
+            if (-not [string]::IsNullOrEmpty($env:BASE_BRANCH)) {
+              $params['BaseBranch'] = $env:BASE_BRANCH
             }
           }
           & './scripts/linting/Validate-AssetDocs.ps1' @params
