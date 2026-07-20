@@ -873,7 +873,7 @@ stimuli:
       - type: output-matches
         name: scope-language
         config:
-          pattern: "(?i)prompt|analyze|frontmatter|structure|standard"
+          pattern: "(?i)prompt|review|read-only|behavior|fidelity|report|hve-builder"
 
   - name: prompt-prompt-build-conformance
     prompt: |
@@ -891,7 +891,7 @@ stimuli:
       - type: output-matches
         name: scope-language
         config:
-          pattern: "(?i)prompt|build|create|frontmatter|template"
+          pattern: "(?i)prompt|create|improve|write\\s+boundary|review|behavior|validation|hve-builder"
 
   - name: prompt-prompt-refactor-conformance
     prompt: |
@@ -909,7 +909,7 @@ stimuli:
       - type: output-matches
         name: scope-language
         config:
-          pattern: "(?i)prompt|refactor|frontmatter|structure|improve"
+          pattern: "(?i)prompt|refactor|(?:preserve|preserving)|review|behavior|validation|hve-builder"
 
   - name: prompt-pull-request-conformance
     prompt: |

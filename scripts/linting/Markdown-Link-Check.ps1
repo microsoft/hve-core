@@ -9,8 +9,8 @@
 
 .DESCRIPTION
     Runs markdown-link-check with the repo-specific configuration to validate
-    all markdown links across the repository. Only checks files that are tracked
-    by git (respects .gitignore and only includes committed/staged files).
+    all markdown links across the repository. Checks tracked and untracked,
+    nonignored files so local validation does not require staging.
 
 .PARAMETER Path
     One or more files or directories to scan. Directories are searched
@@ -56,10 +56,9 @@ function Get-MarkdownTarget {
         Resolves Markdown files to validate from provided path arguments.
 
     .DESCRIPTION
-        Accepts files or directories, expanding directories to all git-tracked
-        Markdown files discovered recursively, and returns a sorted, unique list
-        of absolute file paths for downstream validation. Only checks files that
-        are tracked by git (respects .gitignore).
+        Accepts files or directories, expanding directories to all tracked and
+        untracked, nonignored Markdown files discovered recursively, and returns
+        a sorted, unique list of absolute file paths for downstream validation.
 
     .PARAMETER InputPath
         Files or directories that may contain Markdown content.
@@ -102,7 +101,7 @@ function Get-MarkdownTarget {
         return ($targets | Sort-Object -Unique)
     }
 
-    Write-Verbose "Searching for git-tracked markdown files..."
+    Write-Verbose "Searching for tracked and untracked, nonignored markdown files..."
     Write-Verbose "Repository root: $repoRoot"
 
     # Git-aware implementation
@@ -113,29 +112,35 @@ function Get-MarkdownTarget {
 
         # Check if it's a specific file or directory
         if (Test-Path -Path $item -PathType Leaf) {
-            # Specific file - check if it's tracked by git
+            # Specific file - check if it is tracked or untracked and nonignored.
             $absolutePath = (Resolve-Path $item).Path
-            $relativePath = [System.IO.Path]::GetRelativePath($repoRoot, $absolutePath)
-            $tracked = git ls-files $relativePath 2>$null
+            $relativePath = [System.IO.Path]::GetRelativePath($repoRoot, $absolutePath) -replace '\\', '/'
+            $listed = git ls-files --cached --others --exclude-standard -- $relativePath 2>$null
+            if ($LASTEXITCODE -ne 0) {
+                throw "git ls-files failed while resolving '$item'."
+            }
 
-            if ($tracked -and $item -like "*.md") {
+            if ($listed -and $item -like "*.md") {
                 $targets += $absolutePath
             }
-            elseif (-not $tracked) {
-                Write-Warning "File not tracked by git: $item"
+            elseif (-not $listed) {
+                Write-Warning "File is ignored by git: $item"
             }
         }
         elseif (Test-Path -Path $item -PathType Container) {
-            # Directory - get all tracked markdown files
+            # Directory - get all tracked and untracked, nonignored markdown files.
             $absolutePath = (Resolve-Path $item).Path
-            $relativePath = [System.IO.Path]::GetRelativePath($repoRoot, $absolutePath)
+            $relativePath = [System.IO.Path]::GetRelativePath($repoRoot, $absolutePath) -replace '\\', '/'
             $searchPath = if ($relativePath -eq '.') { '*.md' } else { "$relativePath/**/*.md" }
 
             Write-Verbose "Searching in: $searchPath"
-            $trackedFiles = git ls-files $searchPath 2>$null |
-    Where-Object { $_ -notlike 'scripts/tests/fixtures/*' }
+            $listedFiles = @(git ls-files --cached --others --exclude-standard -- $searchPath 2>$null)
+            if ($LASTEXITCODE -ne 0) {
+                throw "git ls-files failed while searching '$item'."
+            }
 
-
+            $trackedFiles = $listedFiles |
+                Where-Object { $_ -notlike 'scripts/tests/fixtures/*' }
 
             if ($trackedFiles) {
                 foreach ($file in $trackedFiles) {
@@ -151,7 +156,7 @@ function Get-MarkdownTarget {
         }
     }
 
-    Write-Verbose "Found $($targets.Count) git-tracked markdown files"
+    Write-Verbose "Found $($targets.Count) tracked and untracked markdown files"
     return ($targets | Sort-Object -Unique)
 }
 
@@ -245,7 +250,7 @@ function Invoke-MarkdownLinkCheck {
                 # Run markdown-link-check with XML output and capture output
                 $output = & $cli @commandArgs 2>&1
                 $exitCode = $LASTEXITCODE
-                
+
                 # Display output if verbose mode or if there were errors
                 if ($VerbosePreference -eq 'Continue' -or $exitCode -ne 0) {
                     Write-Host $output
@@ -297,7 +302,7 @@ function Invoke-MarkdownLinkCheck {
             }
             catch {
                 Write-Warning "Failed to parse XML output for $relative : $_"
-                if ($exitCode -ne 0) {
+                if ($failedFiles -notcontains $relative) {
                     $failedFiles += $relative
                 }
             }

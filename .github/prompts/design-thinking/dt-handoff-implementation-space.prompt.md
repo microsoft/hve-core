@@ -140,8 +140,8 @@ Record a lateral transition in the coaching state `transition_log`:
 ```yaml
 - type: lateral
   from_method: 9      # or 7/8 based on tier
-  to: "rpi-researcher"
-  rationale: "Implementation Space complete: handoff to RPI Researcher with validated implementation artifacts"
+   to: "task-researcher"
+   rationale: "Implementation Space complete: handoff to Task Researcher with validated implementation artifacts"
   date: "{today's date}"
   tier: "comprehensive"   # guided | structured | comprehensive
 ```

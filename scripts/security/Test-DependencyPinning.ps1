@@ -135,7 +135,7 @@ $DependencyPatterns = @{
                 Description = 'GitHub Actions uses statements'
             }
         )
-        SHAPattern      = '^[a-fA-F0-9]{40}$'
+        PinPattern      = '^[a-fA-F0-9]{40}$'
         RemediationUrl  = "$script:GitHubApiBase/repos/{0}/commits/{1}"
     }
 
@@ -151,12 +151,12 @@ $DependencyPatterns = @{
         ExcludePatterns = @('.venv', 'venv', '.tox', '.nox', '__pypackages__')
         VersionPatterns = @(
             @{
-                Pattern     = '([a-zA-Z0-9\-_]+)==([^#\s]+)'
+                Pattern     = '([a-zA-Z0-9._-]+(?:\[[a-zA-Z0-9._,-]+\])?)\s*==\s*([^#\s,";]+)'
                 Groups      = @{ Package = 1; Version = 2 }
                 Description = 'Python pip requirements'
             }
         )
-        SHAPattern      = '^[a-fA-F0-9]{40}$'
+        PinPattern      = '^(?i:v?(?:\d+!)?\d+(?:\.\d+)*(?:(?:a|b|rc)\d+)?(?:\.post\d+)?(?:\.dev\d+)?(?:\+[a-z0-9]+(?:[._-][a-z0-9]+)*)?)$'
         RemediationUrl  = 'https://pypi.org/pypi/{0}/{1}/json'
     }
 
@@ -596,13 +596,13 @@ function Get-FilesToScan {
         }
     }
 
-    return $allFiles | Sort-Object Path -Unique
+    return $allFiles | Sort-Object Path, Type -Unique
 }
 
-function Test-SHAPinning {
+function Test-DependencyPinned {
     <#
     .SYNOPSIS
-    Tests if a version reference is properly SHA-pinned.
+    Tests whether a dependency reference matches its ecosystem pin pattern.
     #>
     [CmdletBinding()]
     param(
@@ -610,9 +610,9 @@ function Test-SHAPinning {
         [string]$Type
     )
 
-    if ($DependencyPatterns.ContainsKey($Type) -and $DependencyPatterns[$Type].SHAPattern) {
-        $shaPattern = $DependencyPatterns[$Type].SHAPattern
-        return $Version -match $shaPattern
+    if ($DependencyPatterns.ContainsKey($Type) -and $DependencyPatterns[$Type].PinPattern) {
+        $pinPattern = $DependencyPatterns[$Type].PinPattern
+        return $Version -match $pinPattern
     }
 
     return $false
@@ -700,7 +700,7 @@ function Get-DependencyViolation {
                 $version = $match.Groups[2].Value
 
                 # Check if properly pinned
-                if (!(Test-SHAPinning -Version $version -Type $fileType)) {
+                if (!(Test-DependencyPinned -Version $version -Type $fileType)) {
                     $violation = [DependencyViolation]::new()
                     $violation.File = $FileInfo.RelativePath
                     $violation.Line = $lineNumber
@@ -734,7 +734,7 @@ function Get-RemediationSuggestion {
     [CmdletBinding()]
     param(
         [DependencyViolation]$Violation,
-        
+
         [switch]$Remediate
     )
 

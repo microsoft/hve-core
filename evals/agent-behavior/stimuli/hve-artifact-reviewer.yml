@@ -1,0 +1,26 @@
+# Copyright (c) 2026 Microsoft Corporation. All rights reserved.
+# SPDX-License-Identifier: MIT
+stimuli:
+  - name: hve-artifact-reviewer-first-instruction-issue
+    prompt: As the HVE Artifact Reviewer, review the first `copilot-instructions.md` or `AGENTS.md` file you find and return immediately after the first issue with its severity and smallest fix.
+    environment:
+      files:
+        - src: fixtures/hve-artifact-copilot-instructions.md
+          dest: .github/copilot-instructions.md
+    tags:
+      category: agent-behavior
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: yaml-indentation-issue
+        config:
+          pattern: '(?is)(?=.*\b(?:finding|issue|problem|violation)\b)(?=.*\b(?:YAML|tab|indentation)\b)'
+      - type: output-matches
+        name: severity-and-fix
+        config:
+          pattern: '(?is)(?=.*\b(?:Critical|High|Medium|Low|severity)\b)(?=.*\b(?:fix|change|replace|spaces|recommendation|remediation)\b)'
+      - type: output-matches
+        name: no-second-finding
+        config:
+          pattern: '(?im)^\s*(?:#{1,6}\s*)?(?:finding|issue)\s*2\b'
+          negate: true

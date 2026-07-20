@@ -15,6 +15,7 @@
 #
 # Supported modes:
 #   pass   - two passing trials, exit 0
+#   typed-pass - two typed passing trials plus a typed run-summary, exit 0
 #   fail   - two failing trials, exit 1
 #   fail-noname - two failing trials with no trajectory.stimulus.name, exit 1
 #                 (reproduces an empty perStimulus map)
@@ -92,9 +93,10 @@ function New-StubRecord {
     param(
         [string]$Name,
         [bool]$Passed,
-        [int]$WallMs = 12
+        [int]$WallMs = 12,
+        [switch]$Typed
     )
-    return [ordered]@{
+    $record = [ordered]@{
         trajectory  = [ordered]@{
             stimulus = [ordered]@{ name = $Name }
             output   = "stub output for $Name"
@@ -109,10 +111,18 @@ function New-StubRecord {
             details = @()
         }
     }
+    if ($Typed) { $record['type'] = 'trial-result' }
+    return $record
 }
 
 $records = switch ($mode) {
     'pass'  { @((New-StubRecord -Name 'stim-1' -Passed $true),  (New-StubRecord -Name 'stim-2' -Passed $true)) }
+    'typed-pass' {
+        @(
+            (New-StubRecord -Name 'stim-1' -Passed $true -Typed),
+            (New-StubRecord -Name 'stim-2' -Passed $true -Typed)
+        )
+    }
     'fail'  { @((New-StubRecord -Name 'stim-1' -Passed $false), (New-StubRecord -Name 'stim-2' -Passed $false)) }
     'fail-noname' {
         # Two failing trials whose trajectory carries no resolvable stimulus name,
@@ -170,6 +180,9 @@ $records = switch ($mode) {
 
 $resultsPath = Join-Path -Path $runDir -ChildPath 'results.jsonl'
 $lines = foreach ($r in $records) { $r | ConvertTo-Json -Depth 10 -Compress }
+if ($mode -eq 'typed-pass') {
+    $lines += [ordered]@{ type = 'run-summary'; passed = $true } | ConvertTo-Json -Compress
+}
 Set-Content -LiteralPath $resultsPath -Value $lines -Encoding utf8NoBOM
 
 Set-Content -LiteralPath (Join-Path $runDir 'eval-results.md') -Value "# stub eval ($mode)" -Encoding utf8NoBOM
