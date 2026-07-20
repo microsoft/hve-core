@@ -1,5 +1,5 @@
 ---
-description: "Required protocol for creating Azure DevOps pull requests with work item discovery, reviewer identification, and automated linking."
+description: "Azure DevOps pull request creation with work item discovery, reviewer identification, and automated linking"
 applyTo: '**/.copilot-tracking/pr/new/**'
 ---
 

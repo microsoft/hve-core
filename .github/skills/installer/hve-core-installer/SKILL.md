@@ -1,6 +1,6 @@
 ---
 name: hve-core-installer
-description: 'Decision-driven installer for HVE-Core with 6 clone-based installation methods, extension quick-install, environment detection, and agent customization workflows - Brought to you by microsoft/hve-core'
+description: 'Decision-driven HVE-Core installer with multiple clone-based and extension install methods, environment detection, and agent customization'
 compatibility: 'Requires VS Code or VS Code Insiders. Clone-based methods require git on PATH and network access.'
 license: MIT
 metadata:
@@ -197,6 +197,11 @@ The HVE Core extension has been installed from the VS Code Marketplace.
 • github-backlog-manager, adr-creation, doc-ops, pr-review
 • prompt-builder, memory, and more!
 
+🪝 Hooks (manual step): The Marketplace extension is declarative and does not
+   write chat.hookFilesLocations. To enable bundled hooks (e.g. telemetry), add
+   each collection's hook folder to that setting yourself, or use a clone-based
+   or CLI-plugin install which documents this configuration.
+
 📋 Configuring optional settings...
 ```
 <!-- </extension-success-report> -->
@@ -384,7 +389,7 @@ For Bash: Use `set -euo pipefail`, `test -d` for existence checks, and `echo` fo
 
 After cloning, update `.vscode/settings.json` with entries for each collection subdirectory. Replace `<PREFIX>` with the settings path prefix from the method table. Do not use `**` glob patterns in paths because `chat.*Locations` settings do not support them.
 
-Enumerate each collection subdirectory under `.github/agents/`, `.github/prompts/`, and `.github/instructions/` from the cloned HVE-Core directory. Create one entry per subdirectory. For `.github/agents/`, also check each collection folder for a `subagents/` subfolder and include it when present (e.g., `hve-core/subagents`). For `.github/skills/`, list only the collection-level folders directly under `.github/skills/` (e.g., `shared`); do not enumerate deeper subfolders (individual skill directories like `shared/pr-reference/` are not listed). Exclude the `installer` collection from `chat.agentSkillsLocations` because it is the installer skill itself and not intended for end-user settings.
+Enumerate each collection subdirectory under `.github/agents/`, `.github/prompts/`, `.github/instructions/`, and `.github/hooks/` from the cloned HVE-Core directory. Create one entry per subdirectory. For `.github/agents/`, also check each collection folder for a `subagents/` subfolder and include it when present (e.g., `hve-core/subagents`). For `.github/skills/`, list only the collection-level folders directly under `.github/skills/` (e.g., `shared`); do not enumerate deeper subfolders (individual skill directories like `shared/pr-reference/` are not listed). For `.github/hooks/`, list only the collection-level folders directly under `.github/hooks/` (e.g., `shared`); the default `chat.hookFilesLocations` value only covers the workspace `.github/hooks`, so clone-based installs must add each collection's hook folder explicitly. Exclude the `installer` collection from `chat.agentSkillsLocations` because it is the installer skill itself and not intended for end-user settings.
 
 Any folder named `experimental` under any artifact type (agents, prompts, instructions, or skills) must not be included without first asking the user whether they want experimental features. If the user opts in, add the `experimental` entries (and `experimental/subagents` for agents when that subfolder exists).
 
@@ -413,15 +418,21 @@ Any folder named `experimental` under any artifact type (agents, prompts, instru
   "chat.instructionsFilesLocations": {
     "<PREFIX>/.github/instructions/ado": true,
     "<PREFIX>/.github/instructions/coding-standards": true,
-    "<PREFIX>/.github/instructions/design-thinking": true,
     "<PREFIX>/.github/instructions/github": true,
     "<PREFIX>/.github/instructions/hve-core": true,
     "<PREFIX>/.github/instructions/shared": true
   },
   "chat.agentSkillsLocations": {
     "<PREFIX>/.github/skills": true,
-    "<PREFIX>/.github/skills/shared": true,
-    "<PREFIX>/.github/skills/coding-standards": true
+    "<PREFIX>/.github/skills/coding-standards": true,
+    "<PREFIX>/.github/skills/design-thinking": true,
+    "<PREFIX>/.github/skills/project-planning": true,
+    "<PREFIX>/.github/skills/rai": true,
+    "<PREFIX>/.github/skills/security": true,
+    "<PREFIX>/.github/skills/shared": true
+  },
+  "chat.hookFilesLocations": {
+    "<PREFIX>/.github/hooks/shared": true
   }
 }
 ```
@@ -502,15 +513,21 @@ Add to devcontainer.json:
         "chat.instructionsFilesLocations": {
           "/workspaces/hve-core/.github/instructions/ado": true,
           "/workspaces/hve-core/.github/instructions/coding-standards": true,
-          "/workspaces/hve-core/.github/instructions/design-thinking": true,
           "/workspaces/hve-core/.github/instructions/github": true,
           "/workspaces/hve-core/.github/instructions/hve-core": true,
           "/workspaces/hve-core/.github/instructions/shared": true
         },
         "chat.agentSkillsLocations": {
           "/workspaces/hve-core/.github/skills": true,
-          "/workspaces/hve-core/.github/skills/shared": true,
-          "/workspaces/hve-core/.github/skills/coding-standards": true
+          "/workspaces/hve-core/.github/skills/coding-standards": true,
+          "/workspaces/hve-core/.github/skills/design-thinking": true,
+          "/workspaces/hve-core/.github/skills/project-planning": true,
+          "/workspaces/hve-core/.github/skills/rai": true,
+          "/workspaces/hve-core/.github/skills/security": true,
+          "/workspaces/hve-core/.github/skills/shared": true
+        },
+        "chat.hookFilesLocations": {
+          "/workspaces/hve-core/.github/hooks/shared": true
         }
       }
     }
@@ -715,6 +732,9 @@ Some HVE-Core agents integrate with external services via MCP (Model Context Pro
 | github-backlog-manager | github                   | GitHub backlog management            |
 | task-researcher        | context7, microsoft-docs | Documentation lookup                 |
 | dt-coach               | figma                    | FigJam board export for DT artifacts |
+
+⚠️ Jira agents (jira-backlog-manager, jira-prd-to-wit) use environment variables
+   instead of MCP. Run /jira-setup in Copilot Chat to configure Jira credentials.
 
 Would you like to configure MCP servers? (yes/no)
 ```
@@ -929,7 +949,7 @@ Copying agents enables local customization and offline use.
   • product-manager-advisor, security-planner, ux-ui-designer
 
 ⚙️ Generators
-  • arch-diagram-builder, gen-data-spec, gen-jupyter-notebook, gen-streamlit-dashboard
+  • gen-data-spec, gen-jupyter-notebook, gen-streamlit-dashboard
 
 ✅ Review & Testing
   • pr-review, prompt-builder, test-streamlit-dashboard
@@ -1292,7 +1312,3 @@ Use these exact emojis for consistency:
 **Success:** Environment detected, method selected, HVE-Core directories validated (agents, prompts, instructions, skills), settings configured, user directed to reload.
 
 **Failure:** Detection fails, clone/submodule fails, validation finds missing directories, or settings modification fails.
-
----
-
-*🤖 Crafted with precision by ✨Copilot following brilliant human instruction, then carefully refined by our team of discerning human reviewers.*

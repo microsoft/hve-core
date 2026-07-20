@@ -3,7 +3,7 @@ title: Export DT Artifacts to Figma
 description: Optional workflow for exporting Design Thinking artifacts from HVE Core to FigJam boards and Figma Design files
 sidebar_position: 8
 author: Microsoft
-ms.date: 2026-03-27
+ms.date: 2026-07-08
 ms.topic: how-to
 keywords:
   - design thinking
@@ -14,7 +14,7 @@ keywords:
 estimated_reading_time: 5
 ---
 
-The Design Thinking collection includes an optional Figma export prompt for teams who want to move `.copilot-tracking/dt/` artifacts onto collaborative boards or structured design files.
+The Design Thinking collection includes an optional Figma export prompt for teams who want to move `.copilot-tracking/design-thinking-sessions/` artifacts onto collaborative boards or structured design files.
 
 ## When to Use
 
@@ -26,7 +26,7 @@ Use Figma export when your team wants to review or facilitate around artifacts s
 * Method 5 concepts and evaluation notes
 * Method 6 prototype plans and testing hypotheses
 
-The export is additive to Design Thinking coaching. It does not replace `.copilot-tracking/dt/` artifacts.
+The export is additive to Design Thinking coaching. It does not replace `.copilot-tracking/design-thinking-sessions/` artifacts.
 
 ## Output Types
 
@@ -38,7 +38,7 @@ The export is additive to Design Thinking coaching. It does not replace `.copilo
 
 ## Prerequisites
 
-* A completed or in-progress DT project under `.copilot-tracking/dt/{project-slug}/`
+* A completed or in-progress DT project under `.copilot-tracking/design-thinking-sessions/{project-slug}/`
 * A Figma account with a Dev or Full seat on a Professional, Organization, or Enterprise plan (recommended for sustained usage)
 * The `figma` MCP server configured in your workspace
 
@@ -135,7 +135,5 @@ The `use_figma` write capability is currently in beta and free during the beta p
 
 * [DT Coach Guide](dt-coach.md): Overview of the coaching agent and session workflow
 * [Design Thinking Guide](README.md): All nine methods and three spaces
-
-> Brought to you by microsoft/hve-core
 
 🤖 Crafted with precision by ✨Copilot following brilliant human instruction, then carefully refined by our team of discerning human reviewers.

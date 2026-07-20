@@ -1,5 +1,5 @@
 ---
-description: "Sprint planning workflow for Azure DevOps iterations with coverage analysis, capacity tracking, and gap detection - Brought to you by microsoft/hve-core"
+description: "Sprint planning workflow for Azure DevOps iterations with coverage analysis, capacity tracking, and gap detection"
 applyTo: '**/.copilot-tracking/workitems/sprint/**'
 ---
 
@@ -249,7 +249,3 @@ Sprint planning is complete when:
 * Backlog grooming candidates have been identified and ranked when capacity permits.
 * The user has reviewed the plan and any recommended actions.
 * planning-log.md reflects the final state of all analysis steps.
-
----
-
-Brought to you by microsoft/hve-core

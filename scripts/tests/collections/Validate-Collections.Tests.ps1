@@ -1,10 +1,31 @@
 #Requires -Modules Pester
-# Copyright (c) Microsoft Corporation.
+# Copyright (c) 2026 Microsoft Corporation. All rights reserved.
 # SPDX-License-Identifier: MIT
 
 BeforeAll {
     . $PSScriptRoot/../../collections/Validate-Collections.ps1
+
+    function New-CollectionYaml {
+        [CmdletBinding()]
+        param(
+            [Parameter(Mandatory)][string]$Id,
+            [string]$Name,
+            [string]$Description,
+            [string]$Maturity,
+            [Parameter(Mandatory)][object[]]$Items,
+            [switch]$NoCompanionMd
+        )
+        $Name        = if ($Name)        { $Name }        else { $Id }
+        $Description = if ($Description) { $Description } else { "$Id collection" }
+        $col = [ordered]@{ id = $Id; name = $Name; description = $Description; items = $Items }
+        if ($Maturity) { $col['maturity'] = $Maturity }
+        $col | ConvertTo-Yaml | Set-Content -Path (Join-Path $script:collectionsDir "$Id.collection.yml") -Encoding UTF8
+        if (-not $NoCompanionMd) {
+            "# $Name" | Set-Content -Path (Join-Path $script:collectionsDir "$Id.collection.md") -Encoding UTF8
+        }
+    }
 }
+
 
 Describe 'Test-KindSuffix' {
     It 'Returns empty for valid agent path' {
@@ -344,6 +365,11 @@ Describe 'Invoke-CollectionValidation - collection-to-folder name consistency' {
         New-Item -ItemType Directory -Path $raiPlanningDir -Force | Out-Null
         Set-Content -Path (Join-Path $raiPlanningDir 'rai.instructions.md') -Value '---\ndescription: rai-planning instruction\n---'
 
+        # accessibility sub-domain folder structure (shared across themed collections)
+        $accessibilityDir = Join-Path $script:repoRoot '.github/instructions/accessibility'
+        New-Item -ItemType Directory -Path $accessibilityDir -Force | Out-Null
+        Set-Content -Path (Join-Path $accessibilityDir 'accessibility.instructions.md') -Value '---\ndescription: accessibility instruction\n---'
+
         # hve-core folder structure (cross-collection reference allowed without warning)
         $hveCoreDir = Join-Path $script:repoRoot '.github/agents/hve-core'
         New-Item -ItemType Directory -Path $hveCoreDir -Force | Out-Null
@@ -493,6 +519,31 @@ Describe 'Invoke-CollectionValidation - collection-to-folder name consistency' {
         }
     }
 
+    It 'Allows items from accessibility/ folder in any collection' {
+        Mock Write-Host {}
+
+        $manifest = [ordered]@{
+            id          = 'my-collection'
+            name        = 'My Collection'
+            description = 'Collection referencing accessibility item'
+            items       = @(
+                [ordered]@{
+                    path = '.github/instructions/accessibility/accessibility.instructions.md'
+                    kind = 'instruction'
+                }
+            )
+        }
+        $yaml = ConvertTo-Yaml -Data $manifest
+        Set-Content -Path (Join-Path $script:collectionsDir 'my-collection.collection.yml') -Value $yaml
+
+        $result = Invoke-CollectionValidation -RepoRoot $script:repoRoot
+        $result.Success | Should -BeTrue
+        $result.ErrorCount | Should -Be 0
+        Should -Not -Invoke Write-Host -ParameterFilter {
+            $Object -match 'WARN collection'
+        }
+    }
+
     It 'Allows hve-core-all to reference items from any folder' {
         Mock Write-Host {}
 
@@ -515,6 +566,10 @@ Describe 'Invoke-CollectionValidation - collection-to-folder name consistency' {
                 },
                 [ordered]@{
                     path = '.github/instructions/rai-planning/rai.instructions.md'
+                    kind = 'instruction'
+                },
+                [ordered]@{
+                    path = '.github/instructions/accessibility/accessibility.instructions.md'
                     kind = 'instruction'
                 },
                 [ordered]@{
@@ -850,6 +905,124 @@ items:
 
         $result = Invoke-CollectionValidation -RepoRoot $script:repoRoot
         $result.Success | Should -BeFalse
+    }
+}
+
+Describe 'Invoke-CollectionValidation - cross-collection maturity conflicts' -Tag 'Unit' {
+    BeforeAll {
+        Import-Module PowerShell-Yaml -ErrorAction Stop
+
+        $script:repoRoot = Join-Path $TestDrive 'maturity-conflict-repo'
+        $script:collectionsDir = Join-Path $script:repoRoot 'collections'
+
+        $agentsDir = Join-Path $script:repoRoot '.github/agents/test'
+        New-Item -ItemType Directory -Path $agentsDir -Force | Out-Null
+        Set-Content -Path (Join-Path $agentsDir 'a.agent.md') -Value @"
+---
+description: shared agent
+---
+"@
+    }
+
+    BeforeEach {
+        if (Test-Path $script:collectionsDir) {
+            Remove-Item -Path $script:collectionsDir -Recurse -Force
+        }
+        New-Item -ItemType Directory -Path $script:collectionsDir -Force | Out-Null
+    }
+
+    It 'Detects maturity conflict across three or more themed collections' {
+        $item = [ordered]@{ path = '.github/agents/test/a.agent.md'; kind = 'agent' }
+
+        New-CollectionYaml -Id 'themed-cloud-aws'   -Name 'AWS'   -Maturity 'stable'    -Items @($item)
+        New-CollectionYaml -Id 'themed-cloud-azure'  -Name 'Azure' -Maturity 'removed'   -Items @($item)
+        New-CollectionYaml -Id 'themed-cloud-gcp'    -Name 'GCP'   -Maturity 'deprecated' -Items @($item)
+        New-CollectionYaml -Id 'hve-core-all'        -Name 'All'   -Items @($item)
+
+        $result = Invoke-CollectionValidation -RepoRoot $script:repoRoot
+
+        $result.Success | Should -BeFalse
+        $result.ErrorCount | Should -BeGreaterOrEqual 1
+
+        $conflicts = @($result.Results | Where-Object { $_.ErrorType -eq 'CrossCollectionMaturityConflict' })
+        $conflicts | Should -Not -BeNullOrEmpty
+
+        # Assert directly on the Message property without Out-String truncation
+        $conflicts[0].Message | Should -Match 'themed-cloud-aws'
+        $conflicts[0].Message | Should -Match 'themed-cloud-azure'
+        $conflicts[0].Message | Should -Match 'themed-cloud-gcp'
+        $conflicts[0].Message | Should -Match 'a\.agent\.md'
+    }
+
+    It 'Detects maturity conflict between removed and stable with clear error' {
+        $item = [ordered]@{ path = '.github/agents/test/a.agent.md'; kind = 'agent' }
+
+        New-CollectionYaml -Id 'themed-stable'  -Name 'Stable'  -Maturity 'stable'  -Items @($item)
+        New-CollectionYaml -Id 'themed-removed' -Name 'Removed' -Maturity 'removed' -Items @($item)
+        New-CollectionYaml -Id 'hve-core-all'   -Name 'All'     -Items @($item)
+
+        $result = Invoke-CollectionValidation -RepoRoot $script:repoRoot
+        $result.Success | Should -BeFalse
+
+        $conflicts = @($result.Results | Where-Object { $_.ErrorType -eq 'CrossCollectionMaturityConflict' })
+        $conflicts | Should -Not -BeNullOrEmpty
+
+        $conflicts[0].Message | Should -Match 'stable'
+        $conflicts[0].Message | Should -Match 'removed'
+    }
+
+    It 'Detects maturity conflict between removed and deprecated' {
+        $item = [ordered]@{ path = '.github/agents/test/a.agent.md'; kind = 'agent' }
+
+        New-CollectionYaml -Id 'themed-deprecated' -Name 'Deprecated' -Maturity 'deprecated' -Items @($item)
+        New-CollectionYaml -Id 'themed-removed-2'  -Name 'Removed 2'  -Maturity 'removed'    -Items @($item)
+        New-CollectionYaml -Id 'hve-core-all'      -Name 'All'        -Items @($item)
+
+        $result = Invoke-CollectionValidation -RepoRoot $script:repoRoot
+        $result.Success | Should -BeFalse
+
+        $conflicts = @($result.Results | Where-Object { $_.ErrorType -eq 'CrossCollectionMaturityConflict' })
+        $conflicts | Should -Not -BeNullOrEmpty
+
+        $conflicts[0].Message | Should -Match 'deprecated'
+        $conflicts[0].Message | Should -Match 'removed'
+    }
+
+    It 'Detects maturity conflict between deprecated and experimental' {
+        $item = [ordered]@{ path = '.github/agents/test/a.agent.md'; kind = 'agent' }
+
+        New-CollectionYaml -Id 'themed-experimental' -Name 'Experimental' -Maturity 'experimental' -Items @($item)
+        New-CollectionYaml -Id 'themed-deprecated-2' -Name 'Deprecated 2'  -Maturity 'deprecated'   -Items @($item)
+        New-CollectionYaml -Id 'hve-core-all'        -Name 'All'           -Items @($item)
+
+        $result = Invoke-CollectionValidation -RepoRoot $script:repoRoot
+        $result.Success | Should -BeFalse
+
+        $conflicts = @($result.Results | Where-Object { $_.ErrorType -eq 'CrossCollectionMaturityConflict' })
+        $conflicts | Should -Not -BeNullOrEmpty
+
+        # Assert directly on the Message property
+        $conflicts[0].Message | Should -Match 'experimental'
+        $conflicts[0].Message | Should -Match 'deprecated'
+    }
+
+    It 'Excludes hve-core-all canonical collection from cross-themed conflict detection (Regression Guard)' {
+        $item = [ordered]@{ path = '.github/agents/test/a.agent.md'; kind = 'agent' }
+        $itemExperimental = [ordered]@{ path = '.github/agents/test/a.agent.md'; kind = 'agent'; maturity = 'experimental' }
+
+        New-CollectionYaml -Id 'hve-core-all'                -Name 'All'              -Maturity 'stable'       -Items @($item)
+        New-CollectionYaml -Id 'themed-conflict-stable'       -Name 'Themed Stable'    -Maturity 'stable'       -Items @($item)
+        New-CollectionYaml -Id 'themed-conflict-experimental' -Name 'Themed Experimental' -Maturity 'stable'    -Items @($itemExperimental)
+
+        $result = Invoke-CollectionValidation -RepoRoot $script:repoRoot
+
+        $crossThemedErrors = @($result.Results | Where-Object { $_.ErrorType -eq 'CrossCollectionMaturityConflict' })
+        $crossThemedErrors.Count | Should -BeGreaterOrEqual 1 -Because 'two themed collections have conflicting maturities'
+
+        # Assert directly on the Message property
+        $crossThemedErrors[0].Message | Should -Not -Match 'hve-core-all' -Because 'canonical collection must be excluded from cross-themed conflict detection'
+        $crossThemedErrors[0].Message | Should -Match 'themed-conflict-stable'
+        $crossThemedErrors[0].Message | Should -Match 'themed-conflict-experimental'
     }
 }
 

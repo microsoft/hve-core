@@ -72,8 +72,11 @@ avanade
 avere
 avro
 Babelscape
+backlink
+backlinks
 backticked
 bargauge
+beforeall
 blockchain
 chatbot
 chatbots
@@ -107,6 +110,7 @@ cnab
 cname
 codefresh
 codegen
+cognitiveservices
 codeowners
 codespace
 codespaces
@@ -198,6 +202,7 @@ git
 gitops
 helm
 Holo
+hotspot
 hotspots
 Fulcio
 gitsign
@@ -417,6 +422,7 @@ exabytes
 exadata
 executables
 execs
+exploitability
 exponential
 failback
 failover
@@ -693,6 +699,7 @@ objc
 odata
 odbc
 offboarding
+offence
 okera
 okrs
 olas
@@ -717,7 +724,10 @@ organisation
 organisations
 organised
 otel
+ooxml
+lxml
 otlp
+overclaiming
 overfitting
 overoptimization
 overprivileged
@@ -827,6 +837,7 @@ qube
 querystring
 quickstart
 quickstarts
+quoteattr
 racf
 raci
 rackware
@@ -882,6 +893,7 @@ resiliency
 resourcegroups
 resourceless
 retargeted
+retarget
 retraining
 reuse
 reverification
@@ -902,6 +914,8 @@ rtmp
 rubrik
 runbook
 runbooks
+runspace
+runspaces
 runtime
 runtimes
 rx
@@ -1093,6 +1107,7 @@ unmanaged
 unoptimized
 unpublish
 unranked
+unredacted
 unregister
 unsnooze
 untrusted
@@ -1142,6 +1157,7 @@ vums
 vwan
 vxlan
 wafs
+walkback
 walkthrough
 wans
 webgui
@@ -1247,7 +1263,9 @@ gdpr
 hipaa
 oidc
 oldsha
+openvex
 OSSF
+osv
 passwordless
 siem
 sox
@@ -1370,18 +1388,27 @@ sql
 tcp
 udp
 url
+urlopen
 uri
 uuid
 vm
 vpc
 
 # Technical Terms
+affordances
 apis
 backend
+contentinfo
+describedby
 frontend
+haspopup
+hoverable
+hrefs
+labelledby
 middleware
 microservice
 microservices
+supertitle
 webhook
 webhooks
 
@@ -1412,6 +1439,7 @@ backlog
 pipeline
 blockquotes
 deinit
+deprioritize
 deprioritized
 deprioritizes
 experim
@@ -1502,6 +1530,7 @@ triaging
 untriaged
 unvalidated
 vscodeignore
+Pipfile
 
 # Video & Image Processing
 drawtext
@@ -1596,3 +1625,24 @@ scriptblock
 DSSE
 intoto
 SSML
+auditd
+callsite
+callsites
+DPAPI
+EADDRINUSE
+exfiltrates
+getpass
+Kerberoasting
+loggable
+NONINTERACTIVE
+reauthentication
+inlines
+referer
+Repoint
+synchronizable
+syncer
+transitioner
+urlsafe
+wberry
+writeback
+Brussee

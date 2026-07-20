@@ -4,6 +4,8 @@ agent: Target Agent Name
 argument-hint: 'arg=... [option={a|b}]'
 ---
 
+# Prompt Name
+
 ## Inputs
 
 * ${input:task}: Task description (required)

@@ -77,7 +77,3 @@ potentially endangering patient care.
 * Establish network segmentation between distinct operational areas.
 * Create and enforce a configuration management baseline with automated drift detection.
 * Schedule recurring security audits and remediate findings promptly.
-
----
-
-*🤖 Crafted with precision by ✨Copilot following brilliant human instruction, then carefully refined by our team of discerning human reviewers.*

@@ -1,5 +1,5 @@
 ---
-description: 'Execution workflow for Jira backlog management that consumes planning handoffs and applies sequential Jira operations - Brought to you by microsoft/hve-core'
+description: 'Jira backlog execution: consumes planning handoffs and applies sequential Jira operations'
 applyTo: '**/.copilot-tracking/jira-issues/**/handoff-logs.md'
 ---
 
@@ -150,7 +150,3 @@ Execution is complete when:
 * All `{{TEMP-N}}` placeholders are resolved to actual issue keys or logged as failed.
 * `handoff-logs.md` contains an entry for every operation in the plan.
 * A completion report has been presented to the user with Jira issue keys.
-
----
-
-Brought to you by microsoft/hve-core

@@ -2,7 +2,7 @@
 title: Code Style Patterns
 description: Concrete before/after examples for Sections 1 through 5 of the python-foundational skill checklist
 author: microsoft/hve-core
-ms.date: 2026-03-27
+ms.date: 2026-07-08
 ms.topic: reference
 keywords:
   - python
@@ -271,7 +271,3 @@ class Model:
         """Number of trainable parameters."""
         return sum(p.size for p in self.parameters())
 ```
-
----
-
-*🤖 Crafted with precision by ✨Copilot following brilliant human instruction, then carefully refined by our team of discerning human reviewers.*

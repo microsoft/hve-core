@@ -1,5 +1,5 @@
 #Requires -Modules Pester
-# Copyright (c) Microsoft Corporation.
+# Copyright (c) 2026 Microsoft Corporation. All rights reserved.
 # SPDX-License-Identifier: MIT
 
 <#
@@ -14,6 +14,9 @@
 #>
 
 BeforeAll {
+    # Stub uv when not installed so Pester can mock it
+    if (-not (Get-Command uv -ErrorAction SilentlyContinue)) { function global:uv { } }
+
     $script:RepoRoot = git rev-parse --show-toplevel 2>$null
     if (-not $script:RepoRoot) {
         $script:RepoRoot = Split-Path (Split-Path (Split-Path $PSScriptRoot))
@@ -25,6 +28,8 @@ BeforeAll {
 
 AfterAll {
     Remove-Module TtsVoiceoverHelpers -Force -ErrorAction SilentlyContinue
+    # Remove the uv stub so it does not leak into later test suites
+    Remove-Item -Path 'Function:\uv' -Force -ErrorAction SilentlyContinue
 }
 
 Describe 'Test-UvAvailability' -Tag 'Unit' {
@@ -104,7 +109,7 @@ Describe 'Get-VenvPythonPath' -Tag 'Unit' {
     Context 'On Windows' {
         It 'Returns Scripts/python.exe path' -Skip:(-not $IsWindows) {
             $result = Get-VenvPythonPath -VenvDir 'C:\venv'
-            $result | Should -Be 'C:\venv\Scripts/python.exe'
+            $result | Should -Be (Join-Path 'C:\venv' 'Scripts/python.exe')
         }
     }
 
@@ -113,7 +118,8 @@ Describe 'Get-VenvPythonPath' -Tag 'Unit' {
             $venvDir = Join-Path $TestDrive 'my-venv'
             $result = Get-VenvPythonPath -VenvDir $venvDir
             if ($IsWindows) {
-                $result | Should -BeLike '*Scripts/python.exe'
+                $expectedSuffix = Join-Path 'Scripts' 'python.exe'
+                $result | Should -BeLike "*$expectedSuffix"
             } else {
                 $result | Should -BeLike '*bin/python'
             }

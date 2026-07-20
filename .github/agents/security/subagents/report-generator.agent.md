@@ -1,6 +1,6 @@
 ---
 name: Report Generator
-description: "Collates verified security skill assessment findings and generates a comprehensive vulnerability report written to .copilot-tracking/security/ - Brought to you by microsoft/hve-core"
+description: "Collates verified security or accessibility skill assessment findings and generates a comprehensive report written to the domain-appropriate reports directory"
 tools:
   - edit/createDirectory
   - edit/createFile
@@ -23,6 +23,7 @@ Collate verified findings from all skill assessments into a single vulnerability
 * Sort detailed remediation or mitigation guidance by severity: CRITICAL, HIGH, MEDIUM, LOW.
 * Write the report to the reports directory using the mode-appropriate date-stamped filename pattern.
 * Group findings by skill and security framework.
+* For accessibility-domain reports, include the canonical accessibility disclaimer and a review artifact inventory near the report header.
 
 ## Inputs
 
@@ -31,26 +32,44 @@ Collate verified findings from all skill assessments into a single vulnerability
 * Report date in ISO 8601 format (YYYY-MM-DD).
 * Comma-separated list of skill names assessed.
 * (Optional) Mode: `audit`, `diff`, or `plan`. Determines report format and filename pattern. Defaults to `audit`.
+* (Optional) Domain: `security` or `accessibility`. Determines report directory, filename pattern, and report format. Defaults to `security`. Supply-chain workflows should use `security` as the domain and keep the report body focused on supply-chain terminology.
+* (Optional) Repository slug used in accessibility filenames (lowercase repository name with non-alphanumeric characters replaced by hyphens). Required when Domain is `accessibility`.
 * (Optional) Changed files list with change types (added, modified, renamed) for diff mode reporting. Included as an appendix in the generated report.
 * (Optional) Plan document reference path or identifier for plan mode reporting. Recorded in the report header.
+* (Optional) Review artifact inventory describing the mode, scope or path focus, changed files, plan document, prior scan report, excluded non-assessable files, assessed skills, and resolved report path when known. Required when Domain is `accessibility`.
+* (Optional) Accessibility disclaimer source. Defaults to `## Disclaimer Handling` in `.github/instructions/accessibility/accessibility-identity.instructions.md` when Domain is `accessibility`.
 
 ## Constants
 
-Report directory: `.copilot-tracking/security`
+Report directory (security domain): `.copilot-tracking/security`
 
-Report filename pattern (audit): `security-report-{{NNN}}.md`
+Report directory (accessibility domain): `.copilot-tracking/accessibility`
 
-Report filename pattern (diff): `security-report-diff-{{NNN}}.md`
+Report filename pattern (security, audit): `security-report-{{NNN}}.md`
 
-Report filename pattern (plan): `plan-risk-assessment-{{NNN}}.md`
+Report filename pattern (security, diff): `security-report-diff-{{NNN}}.md`
 
-Report path pattern (audit): `.copilot-tracking/security/{{YYYY-MM-DD}}/security-report-{{NNN}}.md`
+Report filename pattern (security, plan): `plan-risk-assessment-{{NNN}}.md`
 
-Report path pattern (diff): `.copilot-tracking/security/{{YYYY-MM-DD}}/security-report-diff-{{NNN}}.md`
+Report filename pattern (accessibility, audit): `accessibility-report-{{REPO}}-{{YYYYMMDD}}.md`
 
-Report path pattern (plan): `.copilot-tracking/security/{{YYYY-MM-DD}}/plan-risk-assessment-{{NNN}}.md`
+Report filename pattern (accessibility, diff): `accessibility-report-diff-{{REPO}}-{{YYYYMMDD}}.md`
 
-Where `{{NNN}}` is a zero-padded three-digit sequence number starting at `001`, incremented based on existing reports for the same date and mode.
+Report filename pattern (accessibility, plan): `accessibility-plan-assessment-{{REPO}}-{{YYYYMMDD}}.md`
+
+Report path pattern (security, audit): `.copilot-tracking/security/{{YYYY-MM-DD}}/security-report-{{NNN}}.md`
+
+Report path pattern (security, diff): `.copilot-tracking/security/{{YYYY-MM-DD}}/security-report-diff-{{NNN}}.md`
+
+Report path pattern (security, plan): `.copilot-tracking/security/{{YYYY-MM-DD}}/plan-risk-assessment-{{NNN}}.md`
+
+Report path pattern (accessibility, audit): `.copilot-tracking/accessibility/{{YYYY-MM-DD}}/accessibility-report-{{REPO}}-{{YYYYMMDD}}.md`
+
+Report path pattern (accessibility, diff): `.copilot-tracking/accessibility/{{YYYY-MM-DD}}/accessibility-report-diff-{{REPO}}-{{YYYYMMDD}}.md`
+
+Report path pattern (accessibility, plan): `.copilot-tracking/accessibility/{{YYYY-MM-DD}}/accessibility-plan-assessment-{{REPO}}-{{YYYYMMDD}}.md`
+
+Where `{{NNN}}` is a zero-padded three-digit sequence number starting at `001`, incremented based on existing reports for the same date and mode (security domain only). `{{REPO}}` is the repository slug. `{{YYYYMMDD}}` is the report date with hyphens removed.
 
 ## Report Formats
 
@@ -64,10 +83,14 @@ Read the `security-reviewer-formats` skill for full format specifications before
 
 ### Pre-requisite: Setup
 
-1. Create the `.copilot-tracking/security` directory if it does not exist.
+1. Resolve the report directory based on Domain: `.copilot-tracking/security` when Domain is `security`, `.copilot-tracking/accessibility` when Domain is `accessibility`. Create the directory if it does not exist.
 2. Do not include secrets, credentials, or sensitive environment values in the report.
+3. When Domain is `accessibility`, read the accessibility disclaimer source and extract the canonical CAUTION block verbatim before assembling the report. Do not substitute the shared planning disclaimer.
+4. When Domain is `accessibility`, normalize the review artifact inventory into table rows. Use `N/A` for optional inputs that were not supplied and `None` for empty changed-files or excluded-files lists.
 
 ### Step 1: Determine Sequence Number
+
+Applies to security domain only. Accessibility-domain filenames embed the repository slug and date, so no sequence number is computed; skip this step and use the resolved date directly when Domain is `accessibility`.
 
 1. Select the filename prefix based on mode:
    * When mode is `audit`: search for `security-report-*.md`.
@@ -96,41 +119,48 @@ Read the `security-reviewer-formats` skill for full format specifications before
 
 * When mode is `audit`:
   1. Write the executive summary as a 3–5 sentence narrative covering the most critical findings, skills assessed, total checks, and verification outcomes.
-  2. Build the Findings by Framework section with one H3 subsection per assessed skill. Each subsection contains a markdown table with rows ordered by severity: CRITICAL first, then HIGH, MEDIUM, LOW, PASS, NOT_ASSESSED. Include a Location column with markdown links in the form `[path/to/file.ext#L42](path/to/file.ext#L42)`. Include Verdict and Justification columns with the verification verdict for each finding.
-  3. Build the Detailed Remediation Guidance section grouped by severity (CRITICAL, HIGH, MEDIUM, LOW). For each FAIL or PARTIAL finding, include:
+  2. When Domain is `accessibility`, add the canonical accessibility disclaimer immediately after the title and header metadata, then add a `## Review Artifacts` section with a markdown table containing Artifact, Value, and Required columns before the findings sections.
+  3. Build the Findings by Framework section with one H3 subsection per assessed skill. Each subsection contains a markdown table with rows ordered by severity: CRITICAL first, then HIGH, MEDIUM, LOW, PASS, NOT_ASSESSED. Include a Location column with markdown links in the form `[path/to/file.ext#L42](path/to/file.ext#L42)`. Include Verdict and Justification columns with the verification verdict for each finding.
+  4. Build the Detailed Remediation Guidance section grouped by severity (CRITICAL, HIGH, MEDIUM, LOW). For each FAIL or PARTIAL finding, include:
      * A markdown file link to the vulnerable location.
      * An "Offending Code" fenced code block with the vulnerable snippet.
      * An "Example Fix" fenced code block with corrected code.
      * Numbered remediation steps.
      * The verification verdict and justification.
-  4. Group all affected file locations under a single remediation subsection when the same vulnerability appears in multiple files, listing each location with its own Offending Code and Example Fix blocks.
-  5. Build the Remediation Checklist with one row per CONFIRMED or DOWNGRADED item, each with NOT_STARTED status. Exclude DISPROVED findings from the checklist.
-  6. Note disproved findings in a separate "Disproved Findings" subsection within the Detailed Remediation Guidance section for transparency.
-  7. Build the Appendix: Skills Used table with one row per assessed skill.
-  8. Use "None identified." as the section content when a section has no findings.
+  5. Group all affected file locations under a single remediation subsection when the same vulnerability appears in multiple files, listing each location with its own Offending Code and Example Fix blocks.
+  6. Build the Remediation Checklist with one row per CONFIRMED or DOWNGRADED item, each with NOT_STARTED status. Exclude DISPROVED findings from the checklist.
+  7. Note disproved findings in a separate "Disproved Findings" subsection within the Detailed Remediation Guidance section for transparency.
+  8. Build the Appendix: Skills Used table with one row per assessed skill.
+  9. Use "None identified." as the section content when a section has no findings.
 * When mode is `diff`:
   1. Follow the same steps as audit mode with these modifications.
   2. Use the diff mode title: `# Security Assessment Report — Changed Files Only`.
   3. Add the `**Scope:** Changed files relative to {default_branch}` header field.
   4. Build all standard VULN_REPORT_V1 sections as in audit mode.
-  5. Append a "Changed Files" appendix section after the Skills Used appendix, listing each changed file with its change type (added, modified, renamed).
-  6. Use "None identified." as the section content when a section has no findings.
+  5. When Domain is `accessibility`, include changed files in the `## Review Artifacts` table; also append the existing "Changed Files" appendix after the Skills Used appendix for compatibility with prior report structure.
+  6. Append a "Changed Files" appendix section after the Skills Used appendix, listing each changed file with its change type (added, modified, renamed).
+  7. Use "None identified." as the section content when a section has no findings.
 * When mode is `plan`:
   1. Write the executive summary as a 3–5 sentence narrative summarizing theoretical risks identified in the plan, skills assessed, total checks, and severity distribution.
-  2. Build the Risk Findings by Framework section with one H3 subsection per assessed skill. Each subsection contains a markdown table with columns: ID, Title, Status, Severity, Risk Description, Mitigation. Rows are ordered by severity: CRITICAL first, then HIGH, MEDIUM, LOW, COVERED, NOT_APPLICABLE. COVERED and NOT_APPLICABLE rows use `N/A` for Risk Description and Mitigation.
-  3. Build the Mitigation Guidance section grouped by severity (CRITICAL, HIGH, MEDIUM, LOW). For each RISK or CAUTION finding, include: risk description, attack scenario, numbered mitigation steps, and an implementation checklist.
-  4. Build the Implementation Security Checklist with one row per RISK or CAUTION item, each with NOT_STARTED status.
-  5. Build the Appendix: Skills Used table with one row per assessed skill.
-  6. Use "None identified." as the section content when a section has no findings.
+  2. When Domain is `accessibility`, add the canonical accessibility disclaimer immediately after the title and header metadata, then add a `## Review Artifacts` section with a markdown table containing Artifact, Value, and Required columns before the risk findings sections.
+  3. Build the Risk Findings by Framework section with one H3 subsection per assessed skill. Each subsection contains a markdown table with columns: ID, Title, Status, Severity, Risk Description, Mitigation. Rows are ordered by severity: CRITICAL first, then HIGH, MEDIUM, LOW, COVERED, NOT_APPLICABLE. COVERED and NOT_APPLICABLE rows use `N/A` for Risk Description and Mitigation.
+  4. Build the Mitigation Guidance section grouped by severity (CRITICAL, HIGH, MEDIUM, LOW). For each RISK or CAUTION finding, include: risk description, attack scenario, numbered mitigation steps, and an implementation checklist.
+  5. Build the Implementation Security Checklist with one row per RISK or CAUTION item, each with NOT_STARTED status.
+  6. Build the Appendix: Skills Used table with one row per assessed skill.
+  7. Use "None identified." as the section content when a section has no findings.
 
 ### Step 4: Write Report File
 
-1. Select the report format and filename pattern based on mode:
-   * When mode is `audit`: assemble the report following VULN_REPORT_V1 and write to `.copilot-tracking/security/{REPORT_DATE}/security-report-{NNN}.md`.
-   * When mode is `diff`: assemble the report following VULN_REPORT_V1 with diff mode qualifiers and write to `.copilot-tracking/security/{REPORT_DATE}/security-report-diff-{NNN}.md`.
-   * When mode is `plan`: assemble the report following PLAN_REPORT_V1 and write to `.copilot-tracking/security/{REPORT_DATE}/plan-risk-assessment-{NNN}.md`.
-2. Write the assembled report to the resolved path where `{REPORT_DATE}` and `{NNN}` are the resolved date and sequence number.
-3. Print a one-line confirmation: "Report saved → {resolved_report_path}".
+1. Select the report format and filename pattern based on mode and Domain:
+   * When Domain is `security` and mode is `audit`: assemble the report following VULN_REPORT_V1 and write to `.copilot-tracking/security/{REPORT_DATE}/security-report-{NNN}.md`.
+   * When Domain is `security` and mode is `diff`: assemble the report following VULN_REPORT_V1 with diff mode qualifiers and write to `.copilot-tracking/security/{REPORT_DATE}/security-report-diff-{NNN}.md`.
+   * When Domain is `security` and mode is `plan`: assemble the report following PLAN_REPORT_V1 and write to `.copilot-tracking/security/{REPORT_DATE}/plan-risk-assessment-{NNN}.md`.
+   * When Domain is `accessibility` and mode is `audit`: assemble the report following VULN_REPORT_V1 with accessibility terminology (success criteria, conformance levels, assistive-technology impacts) and write to `.copilot-tracking/accessibility/{REPORT_DATE}/accessibility-report-{REPO}-{YYYYMMDD}.md`.
+   * When Domain is `accessibility` and mode is `diff`: assemble the report following VULN_REPORT_V1 with accessibility terminology and diff mode qualifiers and write to `.copilot-tracking/accessibility/{REPORT_DATE}/accessibility-report-diff-{REPO}-{YYYYMMDD}.md`.
+   * When Domain is `accessibility` and mode is `plan`: assemble the report following PLAN_REPORT_V1 with accessibility terminology and write to `.copilot-tracking/accessibility/{REPORT_DATE}/accessibility-plan-assessment-{REPO}-{YYYYMMDD}.md`.
+2. Write the assembled report to the resolved path where `{REPORT_DATE}` is the resolved date, `{NNN}` is the resolved sequence number (security domain only), `{REPO}` is the repository slug (accessibility domain only), and `{YYYYMMDD}` is the report date with hyphens removed (accessibility domain only).
+3. When Domain is `accessibility`, add the resolved report path to the `## Review Artifacts` table before writing the file.
+4. Print a one-line confirmation: "Report saved → {resolved_report_path}".
 
 ## Response Format
 

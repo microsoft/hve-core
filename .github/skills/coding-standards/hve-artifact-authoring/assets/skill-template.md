@@ -5,6 +5,8 @@ user-invocable: true
 argument-hint: '[input=...] [option=value]'
 ---
 
+# Skill Name
+
 ## What is This Skill?
 
 Brief description of purpose and use case.

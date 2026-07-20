@@ -1,6 +1,6 @@
 ---
 applyTo: '**/*.sh'
-description: 'Instructions for bash script implementation - Brought to you by microsoft/hve-core'
+description: 'Bash script authoring conventions'
 ---
 
 # Bash Script Instructions
@@ -71,7 +71,7 @@ CI validates copyright headers through the repository's copyright validation scr
 <!-- <example-copyright-header> -->
 ```bash
 #!/usr/bin/env bash
-# Copyright (c) Microsoft Corporation.
+# Copyright (c) 2026 Microsoft Corporation. All rights reserved.
 # SPDX-License-Identifier: MIT
 #
 # script-name.sh

@@ -1,5 +1,5 @@
 ---
-name: new-agent-name
+name: Agent Name
 description: 'One-line description of what this agent does — Brought to you by microsoft/hve-core'
 argument-hint: 'How users should interact with this agent'
 agents:

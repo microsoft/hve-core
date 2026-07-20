@@ -103,7 +103,3 @@ other containers.
 * Enable `--security-opt no-new-privileges` on all production containers.
 * Re-enable AppArmor or SELinux if previously disabled and address specific rule conflicts.
 * Decommission or replace host operating systems approaching end of support.
-
----
-
-*🤖 Crafted with precision by ✨Copilot following brilliant human instruction, then carefully refined by our team of discerning human reviewers.*

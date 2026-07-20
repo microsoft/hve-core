@@ -1,5 +1,5 @@
 #!/usr/bin/env pwsh
-# Copyright (c) Microsoft Corporation.
+# Copyright (c) 2026 Microsoft Corporation. All rights reserved.
 # SPDX-License-Identifier: MIT
 #
 # Find-CollectionManifests.ps1
@@ -7,7 +7,7 @@
 # Purpose: Discover and filter collection manifests for extension packaging matrix
 # Author: HVE Core Team
 
-#Requires -Version 7.0
+#Requires -Version 7.4
 #Requires -Modules @{ ModuleName='PowerShell-Yaml'; RequiredVersion='0.4.7' }
 
 [CmdletBinding()]

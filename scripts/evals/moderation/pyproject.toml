@@ -1,0 +1,49 @@
+[project]
+name = "hve-core-moderation"
+version = "1.0.0"
+description = "Content moderation tooling for eval input/output screening"
+requires-python = ">=3.11"
+dependencies = [
+    "detoxify==0.5.2",
+    "torch==2.13.0",
+    "transformers>=5.13.1,<6",
+]
+
+# Resolve torch from the CPU-only wheel index. This eval is a CPU-bound
+# Detoxify toxicity classifier with no GPU code path, so the default PyPI
+# torch wheel's nvidia-*-cu12 CUDA runtime dependencies are unnecessary.
+[[tool.uv.index]]
+name = "pytorch-cpu"
+url = "https://download.pytorch.org/whl/cpu"
+explicit = true
+
+[tool.uv.sources]
+torch = { index = "pytorch-cpu" }
+
+[tool.ruff]
+line-length = 120
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "W"]
+ignore = []
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py", "fuzz_harness.py"]
+addopts = [
+    "-v",
+    "--strict-markers",
+    "--tb=short",
+]
+
+[dependency-groups]
+dev = [
+    "pytest>=9.1.1",
+    "pytest-cov>=7.0",
+    "pytest-mock>=3.14",
+    "ruff>=0.15.21",
+]
+fuzz = [
+    "atheris>=3.1.0",
+]

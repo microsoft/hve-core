@@ -1,4 +1,4 @@
-# Copyright (c) Microsoft Corporation.
+# Copyright (c) 2026 Microsoft Corporation. All rights reserved.
 # SPDX-License-Identifier: MIT
 """Color resolution and conversion utilities for PowerPoint skill scripts.
 
@@ -138,6 +138,7 @@ def extract_color(color_obj) -> str | dict | None:
         if color_type == MSO_COLOR_TYPE.RGB:
             return rgb_to_hex(color_obj.rgb)
     except (AttributeError, TypeError):
+        # Color object has no resolvable RGB value; return None.
         pass
 
     return None

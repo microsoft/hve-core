@@ -1,3 +1,5 @@
+# Copyright (c) 2026 Microsoft Corporation. All rights reserved.
+# SPDX-License-Identifier: MIT
 # Docusaurus documentation site deployment
 # Prerequisite: Enable GitHub Pages in repo Settings → Pages → Source: GitHub Actions
 # and allow the target branch in Settings → Environments → github-pages → Deployment branches
@@ -26,6 +28,7 @@ jobs:
     uses: ./.github/workflows/docusaurus-tests.yml
     permissions:
       contents: read
+      id-token: write # Required for Codecov OIDC in the reusable workflow
     with:
       soft-fail: false
 
@@ -38,7 +41,7 @@ jobs:
       pages: write
     steps:
       - name: Checkout
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
         with:
           persist-credentials: false
           fetch-depth: 0
@@ -53,6 +56,13 @@ jobs:
       - name: Install dependencies
         working-directory: docs/docusaurus
         run: npm ci
+        env:
+          # The site build never launches a browser, but pa11y/puppeteer are dev
+          # dependencies whose postinstall downloads chrome-headless-shell. That
+          # download intermittently fails CI with a corrupt archive ("end of
+          # central directory record signature not found"), so skip it here as
+          # docusaurus-tests.yml already does for its own install step.
+          PUPPETEER_SKIP_DOWNLOAD: 'true'
 
       - name: Build site
         working-directory: docs/docusaurus

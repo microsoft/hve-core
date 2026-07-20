@@ -1,3 +1,5 @@
+// Copyright (c) 2026 Microsoft Corporation. All rights reserved.
+// SPDX-License-Identifier: MIT
 import React from 'react';
 import {
   GettingStartedIcon,
@@ -8,6 +10,7 @@ import {
   TemplatesExamplesIcon,
   VsCodeExtensionIcon
 } from '../components/Icons';
+import { labelRegistry } from '../data/labelRegistry';
 
 export interface IconCardData {
   icon: React.ReactNode;
@@ -27,53 +30,52 @@ export interface BoxCardData {
 export const iconCards: IconCardData[] = [
   {
     icon: <GettingStartedIcon />,
-    supertitle: 'Getting Started',
-    title: 'Set up HVE Core',
+    supertitle: labelRegistry.gettingStarted,
+    title: labelRegistry.setUpHveCore,
     href: '/docs/getting-started/',
     description: 'Install, configure, and run your first AI-assisted workflow',
   },
 
-  { 
+  {
     icon:<VsCodeExtensionIcon/>,
-    supertitle : 'Install',
-    title :'VS Code Extension',
-    href : 'https://marketplace.visualstudio.com/items?itemName=ise-hve-essentials.hve-core',
+    supertitle: labelRegistry.install,
+    title: labelRegistry.vsCodeExtension,
+    href: 'https://marketplace.visualstudio.com/items?itemName=ise-hve-essentials.hve-core',
     description: 'Install the HVE Core extension from the VS Code Marketplace',
-
   },
 
   {
     icon: <DesignThinkingIcon />,
-    supertitle: 'HVE Guide',
-    title: 'Project lifecycle',
+    supertitle: labelRegistry.hveGuide,
+    title: labelRegistry.projectLifecycle,
     href: '/docs/hve-guide/',
     description: 'Explore the HVE project lifecycle stages and role-specific guides',
   },
   {
     icon: <WorkflowsIcon />,
-    supertitle: 'RPI Workflow',
-    title: 'Research-Plan-Implement',
+    supertitle: labelRegistry.rpiWorkflow,
+    title: labelRegistry.researchPlanImplement,
     href: '/docs/rpi/',
     description: 'The Research-Plan-Implement loop for structured AI-assisted development',
   },
   {
     icon: <AgentsPromptsIcon />,
-    supertitle: 'Agents',
-    title: 'Custom AI agents',
+    supertitle: labelRegistry.agents,
+    title: labelRegistry.customAiAgents,
     href: '/docs/agents/',
     description: 'Build and configure specialized agents for your development tasks',
   },
   {
     icon: <InstructionsSkillsIcon />,
-    supertitle: 'Architecture',
-    title: 'System design',
+    supertitle: labelRegistry.architecture,
+    title: labelRegistry.systemDesign,
     href: '/docs/architecture/',
     description: 'Architecture decisions, design patterns, and system design references',
   },
   {
     icon: <TemplatesExamplesIcon />,
-    supertitle: 'Templates',
-    title: 'Reusable patterns',
+    supertitle: labelRegistry.templates,
+    title: labelRegistry.reusablePatterns,
     href: '/docs/templates/',
     description: 'Ready-to-use templates for ADRs, BRDs, agents, and instructions',
   },
@@ -82,7 +84,7 @@ export const iconCards: IconCardData[] = [
 export const boxCards: BoxCardData[] = [
   {
     icon: '/img/icons/i_quickstart.svg',
-    title: 'Quick Start',
+    title: labelRegistry.quickStart,
     description: 'Get up and running in minutes',
     links: [
       { label: 'Installation guide', href: '/docs/getting-started/' },
@@ -92,7 +94,7 @@ export const boxCards: BoxCardData[] = [
   },
   {
     icon: '/img/icons/i_build-ai.svg',
-    title: 'Build with AI',
+    title: labelRegistry.buildWithAi,
     description: 'Leverage AI across the development lifecycle',
     links: [
       { label: 'Configure agents', href: '/docs/agents/' },
@@ -102,7 +104,7 @@ export const boxCards: BoxCardData[] = [
   },
   {
     icon: '/img/icons/i_plan-architect.svg',
-    title: 'Plan & Architect',
+    title: labelRegistry.planAndArchitect,
     description: 'Structure work before coding',
     links: [
       { label: 'Explore and specify', href: '/docs/hve-guide/' },
@@ -112,7 +114,7 @@ export const boxCards: BoxCardData[] = [
   },
   {
     icon: '/img/icons/i_customize.svg',
-    title: 'Customize & Extend',
+    title: labelRegistry.customizeAndExtend,
     description: 'Tailor HVE Core to your team',
     links: [
       { label: 'Custom agents', href: '/docs/agents/' },

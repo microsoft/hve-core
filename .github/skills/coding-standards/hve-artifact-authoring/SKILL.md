@@ -7,7 +7,10 @@ description: >
   tracking, and CI validation pipelines. Use when building any markdown-based AI artifact that
   follows the four-tier delegation model (Prompts → Agents → Instructions → Skills) with
   schema-validated frontmatter and collection-based distribution.
-version: 1.0.0
+metadata:
+  authors: "microsoft/hve-core"
+  spec_version: "1.0.0"
+  last_updated: "2026-07-20"
 ---
 
 # HVE Artifact Authoring
@@ -25,12 +28,12 @@ naming conventions, and packaging rules that enable automated validation and dis
 
 Artifacts compose in a strict hierarchy. Each tier has a distinct responsibility:
 
-| Tier | Artifact | Role | Key Property |
-|------|----------|------|-------------|
-| 1 | **Prompt** (`.prompt.md`) | Captures user intent, routes to agent | `agent:` field delegates |
-| 2 | **Agent** (`.agent.md`) | Orchestrates multi-step workflow | `agents:` list, `handoffs:` array |
-| 3 | **Instruction** (`.instructions.md`) | Applies coding/style standards passively | `applyTo:` glob auto-matches |
-| 4 | **Skill** (`SKILL.md`) | Executes specialized utilities with scripts | Self-contained package |
+| Tier | Artifact                             | Role                                        | Key Property                      |
+|------|--------------------------------------|---------------------------------------------|-----------------------------------|
+| 1    | **Prompt** (`.prompt.md`)            | Captures user intent, routes to agent       | `agent:` field delegates          |
+| 2    | **Agent** (`.agent.md`)              | Orchestrates multi-step workflow            | `agents:` list, `handoffs:` array |
+| 3    | **Instruction** (`.instructions.md`) | Applies coding/style standards passively    | `applyTo:` glob auto-matches      |
+| 4    | **Skill** (`SKILL.md`)               | Executes specialized utilities with scripts | Self-contained package            |
 
 **Design rule:** Prompts never contain logic — they capture input and delegate. Agents
 orchestrate but reference instructions for standards. Instructions are passive guidance.
@@ -51,11 +54,11 @@ VS Code discovers artifacts by frontmatter metadata, not file location alone.
 Artifacts are never distributed individually. Collections bundle related artifacts with
 maturity filtering:
 
-| Channel | Includes | Use |
-|---------|----------|-----|
-| Stable | `stable` only | Production default |
-| Preview | `stable` + `preview` | Early access |
-| Experimental | `stable` + `preview` + `experimental` | Full access |
+| Channel      | Includes                              | Use                |
+|--------------|---------------------------------------|--------------------|
+| Stable       | `stable` only                         | Production default |
+| Preview      | `stable` + `preview`                  | Early access       |
+| Experimental | `stable` + `preview` + `experimental` | Full access        |
 
 ### 4. Subagent Delegation Without Recursion
 
@@ -157,13 +160,13 @@ audit trails.
    - `## Scope` — what files this applies to, what standard it enforces
    - `## [Topic]` sections — one per concern with practical guidance
    - Include XML-delimited example blocks for tool extraction:
-     ```
+     ````text
      <!-- <example-topic> -->
      ```code
      [example]
      ```
      <!-- </example-topic> -->
-     ```
+     ````
 
 4. **Design rules:**
    - `applyTo` glob patterns auto-match files — instructions are applied passively
@@ -178,7 +181,7 @@ audit trails.
 1. **Create directory:** `.github/skills/{collection-id}/{skill-name}/`
 
 2. **Required structure:**
-   ```
+   ```text
    {skill-name}/
    ├── SKILL.md          # Required
    ├── scripts/          # Optional
@@ -261,7 +264,7 @@ audit trails.
    - Each subagent returns findings; orchestrator synthesizes
 
 5. **State handoff** via `.copilot-tracking/`:
-   ```
+   ```text
    .copilot-tracking/
    ├── research/{YYYY-MM-DD}/     # Investigation findings
    ├── plans/{YYYY-MM-DD}/        # Implementation plans
@@ -279,15 +282,15 @@ audit trails.
    ```
 
 2. **Individual checks:**
-   | Command | What it validates |
-   |---------|------------------|
-   | `npm run lint:frontmatter` | Frontmatter against JSON schemas |
-   | `npm run lint:md` | Markdown style (markdownlint) |
-   | `npm run lint:yaml` | YAML syntax |
-   | `npm run lint:ps` | PowerShell static analysis |
-   | `npm run validate:skills` | Skill directory structure |
-   | `npm run lint:collections-metadata` | Collection manifests |
-   | `npm run test:ps` | PowerShell Pester tests |
+   | Command                             | What it validates                |
+   |-------------------------------------|----------------------------------|
+   | `npm run lint:frontmatter`          | Frontmatter against JSON schemas |
+   | `npm run lint:md`                   | Markdown style (markdownlint)    |
+   | `npm run lint:yaml`                 | YAML syntax                      |
+   | `npm run lint:ps`                   | PowerShell static analysis       |
+   | `npm run validate:skills`           | Skill directory structure        |
+   | `npm run lint:collections-metadata` | Collection manifests             |
+   | `npm run test:ps`                   | PowerShell Pester tests          |
 
 3. **Schema validation details:**
    - Schemas live in `scripts/linting/schemas/`
@@ -313,13 +316,9 @@ All artifact files must follow these markdown rules (enforced by markdownlint):
 ## Reference Links
 
 - Frontmatter schemas: [references/frontmatter-schemas.md](references/frontmatter-schemas.md)
-- Collection manifest schema: [references/collection-schema.md](references/collection-schema.md)
+- Collection manifest schema: [references/frontmatter-schemas.md](references/frontmatter-schemas.md)
 - Agent template: [assets/agent-template.md](assets/agent-template.md)
 - Prompt template: [assets/prompt-template.md](assets/prompt-template.md)
 - Instruction template: [assets/instruction-template.md](assets/instruction-template.md)
 - Skill template: [assets/skill-template.md](assets/skill-template.md)
 - Collection template: [assets/collection-template.yml](assets/collection-template.yml)
-
----
-
-*🤖 Crafted with precision by ✨Copilot following brilliant human instruction, then carefully refined by our team of discerning human reviewers.*

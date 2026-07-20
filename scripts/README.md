@@ -2,7 +2,7 @@
 title: Scripts
 description: PowerShell scripts for linting, validation, and security automation
 author: HVE Core Team
-ms.date: 2026-03-17
+ms.date: 2026-06-27
 ms.topic: reference
 keywords:
   - powershell
@@ -20,11 +20,16 @@ This directory contains PowerShell scripts for automating linting, validation, a
 ```text
 scripts/
 ├── collections/     Collection validation and shared helpers
+├── agents/          Agent activation harness and baseline snapshots
+├── evals/           Eval runner and moderation automation
+├── release/         Release version-file update helper
+├── devcontainer/    Devcontainer lockfile and change log validation
+├── docs/            Asset documentation generator, helper modules, and templates
 ├── extension/       VS Code extension packaging utilities
 ├── lib/             Shared utility modules
 ├── linting/         PowerShell linting and validation scripts
 ├── plugins/         Copilot CLI plugin generation
-└── security/        Security scanning and dependency pinning scripts
+├── security/        Security scanning and dependency pinning scripts
 └── tests/           Pester test organization
 ```
 
@@ -45,25 +50,94 @@ Shared utility modules used across scripts.
 |----------------------------|--------------------------------------|
 | `Get-VerifiedDownload.ps1` | Download files with SHA verification |
 
+## Agents
+
+The `agents/` directory contains the activation harness for Copilot agent cold-start validation.
+
+| Script                                                   | Purpose                                                                              |
+|----------------------------------------------------------|--------------------------------------------------------------------------------------|
+| `activation-harness/Get-AgentActivationFingerprint.psm1` | Compute deterministic activation fingerprints for custom agents across scenarios     |
+| `activation-harness/Update-AgentActivationBaseline.ps1`  | Regenerate baseline.json for the activation harness and support dry-run drift checks |
+| `activation-harness/baseline.json`                       | Snapshot of the current activation fingerprint baseline for the ADR creation agent   |
+
+See [activation-harness/README.md](agents/activation-harness/README.md) for the full harness contract and baseline workflow.
+
+## Release
+
+The `release/` directory contains the repository version-update helper used by release workflows.
+
+| Script                    | Purpose                                                                                                                    |
+|---------------------------|----------------------------------------------------------------------------------------------------------------------------|
+| `Update-VersionFiles.ps1` | Update version strings across package.json, package-lock.json, extension manifests, plugin metadata, and release manifests |
+
 ## Linting Scripts
 
 The `linting/` directory contains scripts for validating code quality and documentation:
 
-| Script                             | Purpose                                            |
-|------------------------------------|----------------------------------------------------|
-| `Invoke-PSScriptAnalyzer.ps1`      | Static analysis for PowerShell files               |
-| `Validate-MarkdownFrontmatter.ps1` | Validate YAML frontmatter in markdown files        |
-| `Validate-SkillStructure.ps1`      | Validate skill directory structure and frontmatter |
-| `Invoke-LinkLanguageCheck.ps1`     | Detect en-us language paths in URLs                |
-| `Link-Lang-Check.ps1`              | Link language checking entry point                 |
-| `Markdown-Link-Check.ps1`          | Validate markdown links                            |
-| `Invoke-YamlLint.ps1`              | YAML file validation                               |
-| `Test-CopyrightHeaders.ps1`        | Validate copyright headers in source files         |
-| `Invoke-MsDateFreshnessCheck.ps1`  | Check ms.date frontmatter freshness                |
-| `Invoke-PythonLint.ps1`            | Python linting via ruff                            |
-| `Invoke-PythonTests.ps1`           | Python tests via pytest                            |
+| Script                             | Purpose                                                   |
+|------------------------------------|-----------------------------------------------------------|
+| `Invoke-PSScriptAnalyzer.ps1`      | Static analysis for PowerShell files                      |
+| `Validate-MarkdownFrontmatter.ps1` | Validate YAML frontmatter in markdown files               |
+| `Validate-SkillStructure.ps1`      | Validate skill directory structure and frontmatter        |
+| `Invoke-LinkLanguageCheck.ps1`     | Detect en-us language paths in URLs                       |
+| `Link-Lang-Check.ps1`              | Link language checking entry point                        |
+| `Markdown-Link-Check.ps1`          | Validate markdown links                                   |
+| `Invoke-YamlLint.ps1`              | YAML file validation                                      |
+| `Test-CopyrightHeaders.ps1`        | Validate copyright headers in source files                |
+| `Invoke-MsDateFreshnessCheck.ps1`  | Check ms.date frontmatter freshness                       |
+| `Invoke-PythonLint.ps1`            | Python linting via ruff                                   |
+| `Invoke-PythonTests.ps1`           | Python tests via pytest                                   |
+| `Validate-AdrConsistency.ps1`      | Validate ADR structure and Govern-phase consistency rules |
 
 See [linting/README.md](linting/README.md) for detailed documentation.
+
+## Evals
+
+The `evals/` directory contains PowerShell entry points for agent-behavior, baseline-equivalence, moderation, and other eval automation.
+
+| Script                           | Purpose                                                                  |
+|----------------------------------|--------------------------------------------------------------------------|
+| `Build-AgentBehaviorSpec.ps1`    | Regenerate the agent-behavior eval spec from per-agent stimulus partials |
+| `Build-AgentInventory.ps1`       | Generate the authoritative agent inventory used by eval suites           |
+| `Invoke-AgentMatrix.ps1`         | Run the agent-behavior matrix and aggregate per-agent summaries          |
+| `Invoke-BaselineEquivalence.ps1` | Run baseline-vs-customized equivalence evals for a target agent          |
+| `Invoke-ContentModeration.ps1`   | Invoke the content moderation CLI over prompt or output content          |
+| `Invoke-CorpusModeration.ps1`    | Moderate changed AI corpus content from the changed-artifact manifest    |
+| `Invoke-VallyEvals.ps1`          | Execute vally evals for changed AI artifacts                             |
+
+See [../evals/README.md](../evals/README.md) for the broader eval framework documentation.
+
+## Devcontainer Scripts
+
+The `devcontainer/` directory contains scripts for devcontainer infrastructure validation:
+
+| Script                            | Purpose                                                  |
+|-----------------------------------|----------------------------------------------------------|
+| `Test-DevcontainerLockfile.ps1`   | Validate lockfile existence, SHA-256 integrity, coverage |
+| `Write-DevcontainerChangeLog.ps1` | Classify changed files and generate markdown summary     |
+
+Run locally:
+
+```bash
+npm run validate:devcontainer-lockfile
+npm run validate:devcontainer-changelog
+```
+
+## Docs
+
+The `docs/` directory contains the asset documentation generator, shared helper modules, and templates.
+
+| Script                     | Purpose                                                                                                                                                                 |
+|----------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `Generate-AssetDocs.ps1`   | Deterministic, idempotent generator that scaffolds one reference page per documentable asset, refreshes AUTO-GENERATED regions, and supports `-WhatIf` drift reporting. |
+| `Modules/DocsHelpers.psm1` | Shared helper module for asset enumeration, path resolution, and generated-region marker split/merge.                                                                   |
+
+Run locally:
+
+```bash
+npm run docs:generate
+npm run docs:generate:check
+```
 
 ## Security Scripts
 
@@ -97,16 +171,17 @@ Collection validation and shared helpers.
 
 Pester test organization matching the scripts structure.
 
-| Directory      | Tests For                 |
-|----------------|---------------------------|
-| `collections/` | Collection helpers tests  |
-| `extension/`   | Extension packaging tests |
-| `lib/`         | Library utility tests     |
-| `linting/`     | Linting script tests      |
-| `security/`    | Security validation tests |
-| `plugins/`     | Plugin generation tests   |
-| `Fixtures/`    | Shared test fixtures      |
-| `Mocks/`       | Shared mock data          |
+| Directory       | Tests For                     |
+|-----------------|-------------------------------|
+| `collections/`  | Collection helpers tests      |
+| `devcontainer/` | Devcontainer validation tests |
+| `extension/`    | Extension packaging tests     |
+| `lib/`          | Library utility tests         |
+| `linting/`      | Linting script tests          |
+| `security/`     | Security validation tests     |
+| `plugins/`      | Plugin generation tests       |
+| `Fixtures/`     | Shared test fixtures          |
+| `Mocks/`        | Shared mock data              |
 
 Run all tests:
 
@@ -193,6 +268,8 @@ Key rules:
 * [Plugin Generation Documentation](plugins/README.md)
 * [Security Scripts Documentation](security/README.md)
 * [Test Organization Documentation](tests/README.md)
+* [Agent Activation Harness Documentation](agents/activation-harness/README.md)
+* [Evaluation Framework Documentation](../evals/README.md)
 * [GitHub Workflows Documentation](../.github/workflows/README.md)
 * [Contributing Guidelines](../CONTRIBUTING.md)
 

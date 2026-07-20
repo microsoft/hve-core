@@ -1,0 +1,35 @@
+{
+  "projectSlug": "example-project",
+  "securityPlanFile": "security/plan.md",
+  "currentPhase": 4,
+  "entryMode": "capture",
+  "disclaimerShownAt": null,
+  "noticeLog": [],
+  "phaseGates": {
+    "phase1": { "gate": "hard", "confirmedAt": "2025-01-01T12:00:00Z" },
+    "phase2": { "gate": "summary-and-advance" },
+    "phase3": { "gate": "summary-and-advance" },
+    "phase4": { "gate": "hard", "confirmedAt": null },
+    "phase5": { "gate": "summary-and-advance" },
+    "phase6": { "gate": "hard", "confirmedAt": null }
+  },
+  "bucketsCompleted": ["networking"],
+  "standardsMapped": ["OWASP Top 10"],
+  "riskSurfaceStarted": true,
+  "handoffGenerated": { "ado": false, "github": false },
+  "context": {
+    "techStack": ["nodejs", "aws"],
+    "deploymentModel": "cloud-native",
+    "dataClassification": "confidential",
+    "complianceTargets": ["NIST"]
+  },
+  "referencesProcessed": [],
+  "nextActions": ["run-scan"],
+  "userPreferences": { "autonomyTier": "partial" },
+  "raiEnabled": false,
+  "raiScope": "none",
+  "raiTier": "none",
+  "raiRecommendationShown": false,
+  "raiPlannerDispatched": false,
+  "aiComponents": []
+}

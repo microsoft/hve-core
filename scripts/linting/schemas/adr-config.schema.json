@@ -1,0 +1,57 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://github.com/microsoft/hve-core/schemas/adr-config.schema.json",
+  "title": "ADR Per-Project Config Schema",
+  "description": "Schema for the per-project ADR configuration file at docs/planning/adrs/.adr-config.yml. Consumed by the ADR Planner agent on session start to resolve the project slug, default decision status, ID format, source template, and the most recently issued decision ID. Six fields per GP-13.",
+  "type": "object",
+  "required": [
+    "project_slug",
+    "owner",
+    "default_status",
+    "decision_id_format",
+    "template_source",
+    "last_decision_id"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "project_slug": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Kebab-case identifier of the owning project."
+    },
+    "owner": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Team or person accountable for ADRs in this project."
+    },
+    "default_status": {
+      "type": "string",
+      "enum": [
+        "proposed",
+        "accepted",
+        "rejected",
+        "deprecated",
+        "superseded",
+        "withdrawn"
+      ],
+      "description": "Default MADR v4.0.0 status applied to newly captured ADRs."
+    },
+    "decision_id_format": {
+      "type": "string",
+      "enum": [
+        "NNNN"
+      ],
+      "description": "ADR ID format token; only zero-padded four-digit (NNNN) is supported per GP-16."
+    },
+    "template_source": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Source template identifier the ADR Planner renders for this project: one of the starter template tokens ('madr-v4' or 'y-statement') or a workspace-relative path to a BYO template (per adr-byo-template.instructions.md)."
+    },
+    "last_decision_id": {
+      "type": "string",
+      "pattern": "^\\d{4}$",
+      "description": "Four-digit zero-padded ID of the most recently issued ADR; '0000' for new projects."
+    }
+  }
+}

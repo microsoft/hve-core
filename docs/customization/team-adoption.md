@@ -2,7 +2,7 @@
 title: Team Adoption and Governance
 description: Establish governance practices, naming conventions, onboarding patterns, and change management for team-wide HVE Core adoption
 author: Microsoft
-ms.date: 2026-03-10
+ms.date: 2026-06-27
 ms.topic: how-to
 keywords:
   - governance
@@ -187,12 +187,13 @@ Announce changes that affect team workflows:
 HVE Core uses maturity levels to signal artifact lifecycle stage. Transition
 artifacts through these stages:
 
-| Level        | Meaning                                                      |
-|--------------|--------------------------------------------------------------|
-| experimental | Early-stage artifact; behavior may change without notice     |
-| preview      | Functional but subject to refinement based on feedback       |
-| stable       | Production-ready; changes follow semver-style considerations |
-| deprecated   | Scheduled for removal; migration path documented             |
+| Level        | Meaning                                                                     |
+|--------------|-----------------------------------------------------------------------------|
+| experimental | Early-stage artifact; behavior may change without notice                    |
+| preview      | Functional but subject to refinement based on feedback                      |
+| stable       | Production-ready; changes follow semver-style considerations                |
+| deprecated   | Scheduled for removal; migration path documented                            |
+| removed      | Withdrawn from distribution; excluded from every channel and auto-discovery |
 
 To deprecate an artifact:
 

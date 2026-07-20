@@ -2,7 +2,7 @@
 title: Triage Workflow
 description: Classify, prioritize, and detect duplicate Azure DevOps work items using structured triage analysis
 author: Microsoft
-ms.date: 2026-02-26
+ms.date: 2026-06-26
 ms.topic: tutorial
 keywords:
   - azure devops backlog manager
@@ -111,7 +111,7 @@ When confidence exceeds the threshold, the workflow links the duplicate pair in 
 ```text
 .copilot-tracking/workitems/triage/<YYYY-MM-DD>/
 ├── planning-log.md    # Progress tracking and analysis results
-└── work-items.md      # Classification suggestions, duplicate findings, and recommended operations
+└── triage-plan.md     # Classification suggestions, duplicate findings, and recommended operations
 ```
 
 The triage plan includes reasoning for each classification, making it possible to adjust recommendations before execution applies them.

@@ -1,4 +1,4 @@
-# Copyright (c) Microsoft Corporation.
+# Copyright (c) 2026 Microsoft Corporation. All rights reserved.
 # SPDX-License-Identifier: MIT
 """Shared fixtures for GitLab skill tests."""
 
@@ -29,7 +29,7 @@ class FakeHttpResponse:
     def __exit__(self, exc_type: object, exc: object, tb: object) -> Literal[False]:
         return False
 
-    def read(self) -> bytes:
+    def read(self, amount: int | None = None) -> bytes:
         return self._body
 
 

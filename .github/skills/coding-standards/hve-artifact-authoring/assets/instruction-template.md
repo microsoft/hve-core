@@ -3,6 +3,8 @@ description: 'Target file type and standards scope'
 applyTo: '**/*.ext'
 ---
 
+# Standard Name
+
 ## Scope
 
 * Applies to all [file type] files in this codebase
@@ -15,7 +17,7 @@ applyTo: '**/*.ext'
 * Guideline two
 
 <!-- <example-topic1> -->
-```
+```text
 [Example code]
 ```
 <!-- </example-topic1> -->

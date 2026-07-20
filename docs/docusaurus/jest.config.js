@@ -1,3 +1,5 @@
+// Copyright (c) 2026 Microsoft Corporation. All rights reserved.
+// SPDX-License-Identifier: MIT
 /** @type {import('jest').Config} */
 module.exports = {
   testEnvironment: '@happy-dom/jest-environment',
@@ -20,5 +22,25 @@ module.exports = {
     '^@docusaurus/useDocusaurusContext$': '<rootDir>/src/__mocks__/@docusaurus/useDocusaurusContext',
     '^@theme/(.*)$': '<rootDir>/src/__mocks__/@theme/$1',
   },
-  testPathIgnorePatterns: ['/node_modules/', '/build/'],
+  testPathIgnorePatterns: ['/node_modules/', '/build/', '/e2e/'],
+  collectCoverageFrom: [
+    'src/**/*.{ts,tsx}',
+    '!src/**/*.d.ts',
+    '!src/**/__mocks__/**',
+    '!src/**/__tests__/**',
+    '!src/**/*.test.{ts,tsx}',
+    // Static content pages (no logic); rendering is validated by the e2e suite.
+    '!src/pages/accessibility.tsx',
+    '!src/pages/accessibility/vpat.tsx',
+  ],
+  coverageDirectory: 'coverage',
+  coverageReporters: ['lcov', 'text-summary'],
+  coverageThreshold: {
+    global: {
+      statements: 80,
+      branches: 80,
+      functions: 80,
+      lines: 80,
+    },
+  },
 };

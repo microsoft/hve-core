@@ -1,6 +1,6 @@
 #Requires -Modules Pester
 
-# Copyright (c) Microsoft Corporation.
+# Copyright (c) 2026 Microsoft Corporation. All rights reserved.
 # SPDX-License-Identifier: MIT
 
 using module ../../security/Modules/SecurityClasses.psm1
@@ -12,7 +12,7 @@ BeforeAll {
     Import-Module (Join-Path $PSScriptRoot '../Mocks/GitMocks.psm1') -Force
     Save-CIEnvironment
 
-    $script:FixturesPath = Join-Path $PSScriptRoot '../Fixtures/Workflows'
+    $script:FixturesPath = Join-Path $PSScriptRoot '../fixtures/Workflows'
 }
 
 AfterAll {
@@ -261,6 +261,20 @@ Describe 'Invoke-WorkflowPermissionsCheck' -Tag 'Integration' {
             $content = Get-Content $outputPath -Raw | ConvertFrom-Json
             $content.version | Should -Be '2.1.0'
             $content.'$schema' | Should -Not -BeNullOrEmpty
+        }
+
+        It 'Should produce console output when workflows are missing permissions' {
+            $testPath = Join-Path $TestDrive 'console-violation-scan'
+            New-Item -ItemType Directory -Path $testPath -Force | Out-Null
+            Copy-Item -Path (Join-Path $script:FixturesPath 'workflow-without-permissions.yml') -Destination $testPath
+
+            $outputPath = Join-Path $TestDrive 'console-results.txt'
+
+            Invoke-WorkflowPermissionsCheck -Path $testPath -Format console -OutputPath $outputPath
+
+            $content = Get-Content $outputPath -Raw
+            $content | Should -Match 'Workflow permissions violations found'
+            $content | Should -Match 'Remediation'
         }
 
         It 'Should produce JSON output by default' {

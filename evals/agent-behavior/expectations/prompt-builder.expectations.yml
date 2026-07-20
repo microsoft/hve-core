@@ -1,0 +1,84 @@
+# Copyright (c) 2026 Microsoft Corporation. All rights reserved.
+# SPDX-License-Identifier: MIT
+# Bucket-A expectations for the Prompt Builder compatibility agent.
+slug: prompt-builder
+class: planner-coach
+agent_file: .github/agents/hve-core/prompt-builder.agent.md
+stimulus_file: evals/agent-behavior/stimuli/prompt-builder.yml
+latest_result: evals/results/agent-matrix/2026-05-28/prompt-builder.json
+source_review_date: 2026-07-09
+
+expectations:
+  - expectation_id: canonical-lifecycle-routing
+    summary: Legacy requests route to the canonical hve-builder lifecycle.
+    signal: Output names `hve-builder` and selects create, improve, refactor, or review.
+    pass_criteria: |
+      The response identifies `hve-builder` as the lifecycle owner and names a
+      mode appropriate to the request rather than describing a separate legacy
+      phase loop.
+    failure_modes:
+      - Recreates a Prompt Builder-specific author-test-evaluate loop.
+      - Omits the selected HVE Builder mode.
+    priority: high
+    contract_ref: "agent §Goal, §Flow"
+
+  - expectation_id: write-boundary-preserved
+    summary: Legacy promptFiles are targets and files remain reference context.
+    signal: Output distinguishes writable targets from read-only reference files.
+    pass_criteria: |
+      The response treats `promptFiles` as the source-write boundary and `files`
+      as reference context unless the user explicitly widens the boundary.
+    failure_modes:
+      - Treats every supplied file as editable.
+      - Omits the protected reference boundary.
+    priority: high
+    contract_ref: "agent §Inputs, §Constraints"
+
+  - expectation_id: lifecycle-gates-reported
+    summary: Completion requires static review, behavior testing, and validation evidence.
+    signal: Output names static review, behavior-test fidelity or verdict, validation, and overall outcome.
+    pass_criteria: |
+      The response preserves HVE Builder gate reporting and does not report Pass
+      from authoring alone.
+    failure_modes:
+      - Reports success without independent review or validation.
+      - Calls simulation native runtime evidence.
+    priority: high
+    contract_ref: "agent §Success Criteria, §Response Format"
+
+  - expectation_id: retired-workers-not-dispatched
+    summary: The deleted legacy worker trio is not dispatched.
+    signal: Output contains no active dispatch, invocation, run, or routing statement targeting Prompt Tester, Prompt Evaluator, or Prompt Updater.
+    pass_criteria: |
+      The response uses HVE Builder workers and skills without naming the retired
+      worker trio as active dispatch targets.
+    failure_modes:
+      - Dispatches Prompt Tester, Prompt Evaluator, or Prompt Updater.
+      - Describes their former sandbox loop as current behavior.
+    priority: high
+    contract_ref: "agent §Success Criteria, §Constraints"
+
+  - expectation_id: overall-outcome-preserved
+    summary: The compatibility agent preserves the canonical overall outcome.
+    signal: Output uses Pass, Revise, Deferred, or Blocked.
+    pass_criteria: |
+      The final state is one of the HVE Builder outcomes and any Deferred or
+      Blocked state includes its next action or rerun condition.
+    failure_modes:
+      - Converts a non-Pass HVE Builder outcome into success.
+      - Uses legacy Complete or partial-pass language as the final quality outcome.
+    priority: medium
+    contract_ref: "agent §Stop Rules, §Response Format"
+
+  - expectation_id: topic-fidelity
+    summary: Response applies compatibility routing to the Rust testing instruction example.
+    signal: Output mentions Rust testing, an instruction artifact, and the example reference file.
+    pass_criteria: |
+      The response keeps the requested Rust testing instruction target and source
+      reference distinct while explaining the selected lifecycle route.
+    failure_modes:
+      - Produces a generic workflow with no Rust or testing context.
+      - Proposes editing the source reference file.
+    priority: medium
+    stimulus_scoped: true
+    contract_ref: "stimulus design"

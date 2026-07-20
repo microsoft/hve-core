@@ -1,5 +1,5 @@
 ---
-description: 'Triage workflow for Jira backlog management with field recommendations, duplicate detection, and controlled execution - Brought to you by microsoft/hve-core'
+description: 'Jira issue backlog triage: field recommendations, duplicate detection, and controlled execution'
 applyTo: '**/.copilot-tracking/jira-issues/triage/**'
 ---
 
@@ -116,7 +116,3 @@ The triage workflow produces files in `.copilot-tracking/jira-issues/triage/{{YY
 
 * `planning-log.md`
 * `triage-plan.md`
-
----
-
-Brought to you by microsoft/hve-core

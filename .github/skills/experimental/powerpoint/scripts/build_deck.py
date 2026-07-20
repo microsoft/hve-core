@@ -1,4 +1,4 @@
-# Copyright (c) Microsoft Corporation.
+# Copyright (c) 2026 Microsoft Corporation. All rights reserved.
 # SPDX-License-Identifier: MIT
 """Build a PowerPoint slide deck from YAML content and style definitions.
 
@@ -1238,7 +1238,7 @@ def main():
         slides_data = discover_slides(content_dir)
         if not slides_data:
             print("No slide content found in", content_dir)
-            sys.exit(1)
+            return EXIT_ERROR
 
         for num, slide_dir in slides_data:
             slide_content = load_yaml(slide_dir / "content.yaml")
@@ -1302,7 +1302,7 @@ def main():
         slides_data = discover_slides(content_dir)
         if not slides_data:
             print("No slide content found in", content_dir)
-            sys.exit(1)
+            return EXIT_ERROR
 
         for num, slide_dir in slides_data:
             slide_content = load_yaml(slide_dir / "content.yaml")
@@ -1318,7 +1318,8 @@ def main():
     prs.save(str(output_path))
     print(f"\nDeck saved to {output_path}")
     print(f"Total slides: {len(prs.slides)}")
+    return EXIT_SUCCESS
 
 
 if __name__ == "__main__":
-    main()
+    sys.exit(main())

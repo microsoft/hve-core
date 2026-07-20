@@ -1,5 +1,5 @@
 ﻿#Requires -Modules Pester
-# Copyright (c) Microsoft Corporation.
+# Copyright (c) 2026 Microsoft Corporation. All rights reserved.
 # SPDX-License-Identifier: MIT
 
 BeforeAll {
@@ -12,8 +12,8 @@ BeforeAll {
     Import-Module $mockPath -Force
 
     # Fixture paths
-    $script:FixturesPath = Join-Path $PSScriptRoot '../Fixtures/Workflows'
-    $script:SecurityFixturesPath = Join-Path $PSScriptRoot '../Fixtures/Security'
+    $script:FixturesPath = Join-Path $PSScriptRoot '../fixtures/Workflows'
+    $script:SecurityFixturesPath = Join-Path $PSScriptRoot '../fixtures/Security'
 
     # CI helper mocks — suppress console output and enable assertions
     Mock Write-Host {}
@@ -25,42 +25,67 @@ BeforeAll {
     Mock Write-CIStepSummary {} -ModuleName SecurityHelpers
 }
 
-Describe 'Test-SHAPinning' -Tag 'Unit' {
+Describe 'Test-DependencyPinned' -Tag 'Unit' {
     Context 'Valid SHA references for github-actions' {
         It 'Returns true for valid 40-char lowercase SHA' {
-            Test-SHAPinning -Version 'a5ac7e51b41094c92402da3b24376905380afc29' -Type 'github-actions' | Should -BeTrue
+            Test-DependencyPinned -Version 'a5ac7e51b41094c92402da3b24376905380afc29' -Type 'github-actions' | Should -BeTrue
         }
 
         It 'Returns true for valid 40-char mixed case SHA' {
-            Test-SHAPinning -Version 'A5AC7E51B41094c92402da3b24376905380afc29' -Type 'github-actions' | Should -BeTrue
+            Test-DependencyPinned -Version 'A5AC7E51B41094c92402da3b24376905380afc29' -Type 'github-actions' | Should -BeTrue
         }
     }
 
     Context 'Invalid SHA references for github-actions' {
         It 'Returns false for tag reference' {
-            Test-SHAPinning -Version 'v4' -Type 'github-actions' | Should -BeFalse
+            Test-DependencyPinned -Version 'v4' -Type 'github-actions' | Should -BeFalse
         }
 
         It 'Returns false for branch reference' {
-            Test-SHAPinning -Version 'main' -Type 'github-actions' | Should -BeFalse
+            Test-DependencyPinned -Version 'main' -Type 'github-actions' | Should -BeFalse
         }
 
         It 'Returns false for 39-char reference' {
-            Test-SHAPinning -Version 'a5ac7e51b41094c92402da3b24376905380afc2' -Type 'github-actions' | Should -BeFalse
+            Test-DependencyPinned -Version 'a5ac7e51b41094c92402da3b24376905380afc2' -Type 'github-actions' | Should -BeFalse
         }
 
         It 'Returns false for 41-char reference' {
-            Test-SHAPinning -Version 'a5ac7e51b41094c92402da3b24376905380afc291' -Type 'github-actions' | Should -BeFalse
+            Test-DependencyPinned -Version 'a5ac7e51b41094c92402da3b24376905380afc291' -Type 'github-actions' | Should -BeFalse
         }
 
         It 'Returns false for non-hex characters' {
-            Test-SHAPinning -Version 'g5ac7e51b41094c92402da3b24376905380afc29' -Type 'github-actions' | Should -BeFalse
+            Test-DependencyPinned -Version 'g5ac7e51b41094c92402da3b24376905380afc29' -Type 'github-actions' | Should -BeFalse
+        }
+    }
+
+    Context 'Python package references' {
+        It 'Returns true for an exact release version' {
+            Test-DependencyPinned -Version '2.12.1' -Type 'pip' | Should -BeTrue
+        }
+
+        It 'Returns true for an exact prerelease version' {
+            Test-DependencyPinned -Version '1.2.3rc1' -Type 'pip' | Should -BeTrue
+        }
+
+        It 'Returns true for an exact two-segment release version' {
+            Test-DependencyPinned -Version '1.2' -Type 'pip' | Should -BeTrue
+        }
+
+        It 'Returns false for a wildcard version' {
+            Test-DependencyPinned -Version '1.2.*' -Type 'pip' | Should -BeFalse
+        }
+
+        It 'Returns false for a release label without a numeric segment' -ForEach @(
+            @{ Version = 'latest' }
+            @{ Version = 'abc' }
+        ) {
+            Test-DependencyPinned -Version $Version -Type 'pip' | Should -BeFalse
         }
     }
 
     Context 'Unknown type' {
         It 'Returns false for unknown dependency type' {
-            Test-SHAPinning -Version 'a5ac7e51b41094c92402da3b24376905380afc29' -Type 'unknown-type' | Should -BeFalse
+            Test-DependencyPinned -Version 'a5ac7e51b41094c92402da3b24376905380afc29' -Type 'unknown-type' | Should -BeFalse
         }
     }
 }
@@ -77,6 +102,16 @@ Describe 'Test-NpmExactVersion' -Tag 'Unit' {
 
         It 'Returns true for semver with build metadata' {
             Test-NpmExactVersion -Version '2.0.0+build.42' | Should -BeTrue
+        }
+    }
+
+    Context 'Local-path protocol references' {
+        It 'Returns true for file: local path' {
+            Test-NpmExactVersion -Version 'file:../..' | Should -BeTrue
+        }
+
+        It 'Returns true for link: local path' {
+            Test-NpmExactVersion -Version 'link:../shared' | Should -BeTrue
         }
     }
 
@@ -299,6 +334,62 @@ Describe 'Test-ShellDownloadSecurity' -Tag 'Unit' {
 }
 
 Describe 'Get-DependencyViolation' -Tag 'Unit' {
+    Context 'Pinned Python dependencies' {
+        It 'Accepts exact versions embedded in a pyproject dependency array' {
+            $pyprojectPath = Join-Path $TestDrive 'pyproject.toml'
+            Set-Content -LiteralPath $pyprojectPath -Value @'
+dependencies = [
+    "detoxify==0.5.2",
+    "torch==2.12.1",
+]
+'@
+            $fileInfo = @{
+                Path         = $pyprojectPath
+                Type         = 'pip'
+                RelativePath = 'pyproject.toml'
+            }
+
+            $result = Get-DependencyViolation -FileInfo $fileInfo
+
+            $result.TotalCount | Should -Be 2
+            $result.Violations | Should -HaveCount 0
+        }
+
+        It 'Accepts extras and whitespace in exact requirement declarations' {
+            $requirementsPath = Join-Path $TestDrive 'requirements-extras.txt'
+            Set-Content -LiteralPath $requirementsPath -Value @(
+                'requests[security]==2.31.0'
+                'urllib3 == 2.2.1'
+            )
+            $fileInfo = @{
+                Path         = $requirementsPath
+                Type         = 'pip'
+                RelativePath = 'requirements-extras.txt'
+            }
+
+            $result = Get-DependencyViolation -FileInfo $fileInfo
+
+            $result.TotalCount | Should -Be 2
+            $result.Violations | Should -HaveCount 0
+        }
+
+        It 'Reports wildcard equality as unpinned' {
+            $requirementsPath = Join-Path $TestDrive 'requirements.txt'
+            Set-Content -LiteralPath $requirementsPath -Value 'requests==2.31.*'
+            $fileInfo = @{
+                Path         = $requirementsPath
+                Type         = 'pip'
+                RelativePath = 'requirements.txt'
+            }
+
+            $result = Get-DependencyViolation -FileInfo $fileInfo
+
+            $result.TotalCount | Should -Be 1
+            $result.Violations | Should -HaveCount 1
+            $result.Violations[0].Version | Should -Be '2.31.*'
+        }
+    }
+
     Context 'Pinned workflows' {
         It 'Returns no violations for fully pinned workflow' {
             $pinnedPath = Join-Path $script:FixturesPath 'pinned-workflow.yml'
@@ -648,13 +739,13 @@ Describe 'shell-downloads ExcludePatterns' -Tag 'Unit' {
         # Script file that should be scanned
         Set-Content -Path (Join-Path $scriptsDir 'install.sh') -Value 'echo hello'
 
-        # File inside Fixtures directory (should be excluded)
-        $fixturesDir = Join-Path $scriptsDir 'Fixtures'
+        # File inside fixtures directory (should be excluded)
+        $fixturesDir = Join-Path $scriptsDir 'fixtures'
         New-Item -Path $fixturesDir -ItemType Directory -Force | Out-Null
         Set-Content -Path (Join-Path $fixturesDir 'test-download.sh') -Value 'echo fixture'
     }
 
-    It 'Excludes Fixtures directory from shell-downloads scans' {
+    It 'Excludes fixtures directory from shell-downloads scans' {
         $files = @(Get-FilesToScan -ScanPath $shellTestRoot -Types 'shell-downloads')
         $files | Should -HaveCount 1
         $files[0].RelativePath | Should -Be (Join-Path 'scripts' 'install.sh')
@@ -666,12 +757,115 @@ Describe 'shell-downloads ExcludePatterns' -Tag 'Unit' {
     }
 }
 
-Describe 'Dot-sourced execution protection' -Tag 'Unit' {
+Describe 'github-actions composite action discovery' -Tag 'Unit' {
+    BeforeAll {
+        $ghaTestRoot = Join-Path $TestDrive 'gha-composite-test'
+
+        # Workflow file (should be scanned)
+        $workflowsDir = Join-Path $ghaTestRoot '.github' 'workflows'
+        New-Item -Path $workflowsDir -ItemType Directory -Force | Out-Null
+        Set-Content -Path (Join-Path $workflowsDir 'ci.yml') -Value 'name: CI'
+
+        # Composite action file (should be scanned)
+        $actionsDir = Join-Path $ghaTestRoot '.github' 'actions' 'setup-ps-modules'
+        New-Item -Path $actionsDir -ItemType Directory -Force | Out-Null
+        Set-Content -Path (Join-Path $actionsDir 'action.yml') -Value 'name: Setup'
+    }
+
+    It 'Discovers workflow files under .github/workflows' {
+        $files = @(Get-FilesToScan -ScanPath $ghaTestRoot -Types 'github-actions')
+        $workflowFile = $files | Where-Object { $_.RelativePath -like '*workflows*' }
+        $workflowFile | Should -Not -BeNullOrEmpty
+    }
+
+    It 'Discovers composite action files under .github/actions' {
+        $files = @(Get-FilesToScan -ScanPath $ghaTestRoot -Types 'github-actions')
+        $actionFile = $files | Where-Object { $_.RelativePath -like '*actions*setup*' }
+        $actionFile | Should -Not -BeNullOrEmpty
+    }
+
+    It 'Returns correct type metadata for github-actions files' {
+        $files = @(Get-FilesToScan -ScanPath $ghaTestRoot -Types 'github-actions')
+        $files | ForEach-Object { $_.Type | Should -Be 'github-actions' }
+    }
+
+    It 'Finds both workflow and composite action files in a single scan' {
+        $files = @(Get-FilesToScan -ScanPath $ghaTestRoot -Types 'github-actions')
+        $files.Count | Should -Be 2
+    }
+}
+
+Describe 'workflow-npm-commands composite action discovery' -Tag 'Unit' {
+    BeforeAll {
+        $npmTestRoot = Join-Path $TestDrive 'npm-composite-test'
+
+        # Workflow file (should be scanned)
+        $workflowsDir = Join-Path $npmTestRoot '.github' 'workflows'
+        New-Item -Path $workflowsDir -ItemType Directory -Force | Out-Null
+        Set-Content -Path (Join-Path $workflowsDir 'ci.yml') -Value 'name: CI'
+
+        # Composite action file (should be scanned)
+        $actionsDir = Join-Path $npmTestRoot '.github' 'actions' 'setup-node'
+        New-Item -Path $actionsDir -ItemType Directory -Force | Out-Null
+        Set-Content -Path (Join-Path $actionsDir 'action.yml') -Value 'name: Setup Node'
+    }
+
+    It 'Discovers workflow files under .github/workflows' {
+        $files = @(Get-FilesToScan -ScanPath $npmTestRoot -Types 'workflow-npm-commands')
+        $workflowFile = $files | Where-Object { $_.RelativePath -like '*workflows*' }
+        $workflowFile | Should -Not -BeNullOrEmpty
+    }
+
+    It 'Discovers composite action files under .github/actions' {
+        $files = @(Get-FilesToScan -ScanPath $npmTestRoot -Types 'workflow-npm-commands')
+        $actionFile = $files | Where-Object { $_.RelativePath -like '*actions*setup*' }
+        $actionFile | Should -Not -BeNullOrEmpty
+    }
+
+    It 'Returns correct type metadata for workflow-npm-commands files' {
+        $files = @(Get-FilesToScan -ScanPath $npmTestRoot -Types 'workflow-npm-commands')
+        $files | ForEach-Object { $_.Type | Should -Be 'workflow-npm-commands' }
+    }
+
+    It 'Finds both workflow and composite action files in a single scan' {
+        $files = @(Get-FilesToScan -ScanPath $npmTestRoot -Types 'workflow-npm-commands')
+        $files.Count | Should -Be 2
+    }
+}
+
+Describe 'overlapping dependency scanner discovery' -Tag 'Unit' {
+        BeforeAll {
+                $overlapRoot = Join-Path $TestDrive 'overlapping-scanners'
+                $workflowDir = Join-Path $overlapRoot '.github' 'workflows'
+                New-Item -Path $workflowDir -ItemType Directory -Force | Out-Null
+                Set-Content -Path (Join-Path $workflowDir 'ci.yml') -Value @'
+name: CI
+jobs:
+    test:
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/checkout@v4
+            - run: npm install
+'@
+        }
+
+        It 'Returns one entry per path and scanner type' {
+                $files = @(Get-FilesToScan -ScanPath $overlapRoot -Types @('github-actions', 'workflow-npm-commands'))
+
+                $files | Should -HaveCount 2
+                $files.Type | Should -Contain 'github-actions'
+                $files.Type | Should -Contain 'workflow-npm-commands'
+        }
+}
+
+Describe 'Dot-sourced execution protection' -Tag 'Integration' {
     Context 'When script is dot-sourced' {
         It 'Does not execute main block when dot-sourced' {
             # Arrange
             $testScript = Join-Path $PSScriptRoot '../../security/Test-DependencyPinning.ps1'
             $tempOutputPath = Join-Path $TestDrive 'dot-source-test.json'
+
+            # This retained smoke test exercises the guard in a child process.
 
             # Act - Invoke in new process with dot-sourcing simulation
             $scriptBlock = ". '$testScript' -OutputPath '$tempOutputPath'; [System.IO.File]::Exists('$tempOutputPath')"
@@ -705,13 +899,24 @@ Describe 'GitHub Actions error annotation' {
             New-Item -ItemType Directory -Path (Join-Path $testWorkflowDir '.github/workflows') -Force | Out-Null
             $corruptedFile = Join-Path $testWorkflowDir '.github/workflows/test.yml'
             "uses: actions/checkout@invalid!!!" | Out-File -FilePath $corruptedFile -Encoding UTF8
-            
-            # Act - Run script in new process with GITHUB_ACTIONS set
-            $scriptCommand = @"
-`$env:GITHUB_ACTIONS = 'true'
-& '$script:TestScript' -Path '$testWorkflowDir' -Format 'json' -OutputPath '$TestDrive/gha-test.json' -FailOnUnpinned 2>&1
-"@
-            $output = pwsh -Command $scriptCommand
+
+            # Act - Invoke the analysis core in-process with GITHUB_ACTIONS enabled
+            $originalGha = $env:GITHUB_ACTIONS
+            try {
+                $env:GITHUB_ACTIONS = 'true'
+                $output = Invoke-DependencyPinningAnalysis -Path $testWorkflowDir -Format 'json' -OutputPath "$TestDrive/gha-test.json" -FailOnUnpinned *>&1
+            }
+            catch {
+                $output = $_
+            }
+            finally {
+                if ($null -eq $originalGha) {
+                    Remove-Item Env:GITHUB_ACTIONS -ErrorAction SilentlyContinue
+                }
+                else {
+                    $env:GITHUB_ACTIONS = $originalGha
+                }
+            }
 
             # Assert - Should contain GitHub Actions error annotation or error output
             # The script should execute and potentially generate warnings/errors
@@ -728,7 +933,7 @@ Describe 'Get-ComplianceReportData' -Tag 'Unit' {
     Context 'Array coercion operations' {
         It 'Handles empty violations array' {
             $result = Get-ComplianceReportData -ScanPath 'TestDrive:/' -Violations @() -ScannedFiles @() -TotalDependencies 0
-            
+
             $result.TotalDependencies | Should -Be 0
             $result.UnpinnedDependencies | Should -Be 0
             $result.PinnedDependencies | Should -Be 0
@@ -739,20 +944,20 @@ Describe 'Get-ComplianceReportData' -Tag 'Unit' {
             $v1 = [DependencyViolation]::new()
             $v1.Type = 'github-actions'
             $v1.Severity = 'High'
-            
+
             $v2 = [DependencyViolation]::new()
             $v2.Type = 'github-actions'
             $v2.Severity = 'Medium'
-            
+
             $v3 = [DependencyViolation]::new()
             $v3.Type = 'npm'
             $v3.Severity = 'High'
-            
+
             $violations = @($v1, $v2, $v3)
             $scannedFiles = @(@{ Path = 'test1.yml' }, @{ Path = 'test2.json' })
-            
+
             $result = Get-ComplianceReportData -ScanPath 'TestDrive:/' -Violations $violations -ScannedFiles $scannedFiles -TotalDependencies 3
-            
+
             $result.TotalDependencies | Should -Be 3
             $result.UnpinnedDependencies | Should -Be 3
         }
@@ -761,20 +966,20 @@ Describe 'Get-ComplianceReportData' -Tag 'Unit' {
             $v1 = [DependencyViolation]::new()
             $v1.Type = 'github-actions'
             $v1.Severity = 'High'
-            
+
             $v2 = [DependencyViolation]::new()
             $v2.Type = 'github-actions'
             $v2.Severity = 'Low'
-            
+
             $v3 = [DependencyViolation]::new()
             $v3.Type = 'npm'
             $v3.Severity = 'Medium'
-            
+
             $violations = @($v1, $v2, $v3)
             $scannedFiles = @(@{ Path = 'test.yml' })
-            
+
             $result = Get-ComplianceReportData -ScanPath 'TestDrive:/' -Violations $violations -ScannedFiles $scannedFiles -TotalDependencies 3
-            
+
             $result.Summary.Keys | Should -Contain 'github-actions'
             $result.Summary.Keys | Should -Contain 'npm'
             $result.Summary['github-actions'].Total | Should -Be 2
@@ -795,9 +1000,9 @@ Describe 'Get-ComplianceReportData' -Tag 'Unit' {
                 $violations += $v
             }
             $scannedFiles = @(@{ Path = 'test.yml' })
-            
+
             $result = Get-ComplianceReportData -ScanPath 'TestDrive:/' -Violations $violations -ScannedFiles $scannedFiles -TotalDependencies 4
-            
+
             $result.Summary['github-actions'].High | Should -Be 2
             $result.Summary['github-actions'].Medium | Should -Be 1
             $result.Summary['github-actions'].Low | Should -Be 1
@@ -807,12 +1012,12 @@ Describe 'Get-ComplianceReportData' -Tag 'Unit' {
             $v = [DependencyViolation]::new()
             $v.Type = 'github-actions'
             $v.Severity = 'High'
-            
+
             $violations = @($v)
             $scannedFiles = @(@{ Path = 'test.yml' })
-            
+
             $result = Get-ComplianceReportData -ScanPath 'TestDrive:/' -Violations $violations -ScannedFiles $scannedFiles -TotalDependencies 1
-            
+
             $result.TotalDependencies | Should -Be 1
             $result.Summary['github-actions'].Total | Should -Be 1
             $result.Summary['github-actions'].High | Should -Be 1
@@ -862,7 +1067,7 @@ Describe 'Main Script Execution' {
         $script:TestScript = Join-Path $PSScriptRoot '../../security/Test-DependencyPinning.ps1'
         $script:TestWorkspaceDir = Join-Path $TestDrive 'test-workspace'
         New-Item -ItemType Directory -Path $script:TestWorkspaceDir -Force | Out-Null
-        
+
         # Create .github/workflows directory
         $workflowDir = Join-Path $script:TestWorkspaceDir '.github/workflows'
         New-Item -ItemType Directory -Path $workflowDir -Force | Out-Null
@@ -881,12 +1086,12 @@ jobs:
       - uses: actions/checkout@v4
 '@
             Set-Content -Path (Join-Path $script:TestWorkspaceDir '.github/workflows/test.yml') -Value $workflowContent
-            
+
             $jsonPath = Join-Path $TestDrive 'scan-output.json'
-            
+
             # Execute script with array coercion operations
-            & $script:TestScript -Path $script:TestWorkspaceDir -Format 'json' -OutputPath $jsonPath *>&1 | Out-Null
-            
+            Invoke-DependencyPinningAnalysis -Path $script:TestWorkspaceDir -Format 'json' -OutputPath $jsonPath *>&1 | Out-Null
+
             # Verify output was created (proves array operations executed)
             Test-Path $jsonPath | Should -BeTrue
             $result = Get-Content $jsonPath | ConvertFrom-Json
@@ -896,7 +1101,7 @@ jobs:
         It 'Handles empty scan results with array coercion' {
             # Remove workflow files
             Remove-Item -Path (Join-Path $script:TestWorkspaceDir '.github/workflows/*.yml') -Force -ErrorAction SilentlyContinue
-            
+
             # Create pinned workflow
             $pinnedContent = @'
 name: Pinned
@@ -908,12 +1113,12 @@ jobs:
       - uses: actions/checkout@8e5e7e5ab8b370d6c329ec480221332ada57f0ab
 '@
             Set-Content -Path (Join-Path $script:TestWorkspaceDir '.github/workflows/pinned.yml') -Value $pinnedContent
-            
+
             $jsonPath = Join-Path $TestDrive 'empty-output.json'
-            
+
             # Execute with all dependencies pinned (tests zero count array coercion)
-            & $script:TestScript -Path $script:TestWorkspaceDir -Format 'json' -OutputPath $jsonPath *>&1 | Out-Null
-            
+            Invoke-DependencyPinningAnalysis -Path $script:TestWorkspaceDir -Format 'json' -OutputPath $jsonPath *>&1 | Out-Null
+
             Test-Path $jsonPath | Should -BeTrue
             $result = Get-Content $jsonPath | ConvertFrom-Json
             $result.UnpinnedDependencies | Should -Be 0
@@ -924,7 +1129,7 @@ jobs:
 Describe 'Get-NpmDependencyViolations' -Tag 'Unit' {
     BeforeAll {
         . $PSScriptRoot/../../security/Test-DependencyPinning.ps1
-        $script:FixturesPath = Join-Path $PSScriptRoot '../Fixtures/Npm'
+        $script:FixturesPath = Join-Path $PSScriptRoot '../fixtures/Npm'
     }
 
     Context 'Metadata-only package.json' {
@@ -1591,7 +1796,7 @@ Describe 'Get-WorkflowNpmCommandViolations' -Tag 'Unit' {
         # Source the script to get functions
         . $PSScriptRoot/../../security/Test-DependencyPinning.ps1
 
-        $script:fixtureDir = Join-Path $PSScriptRoot '../Fixtures/Workflows'
+        $script:fixtureDir = Join-Path $PSScriptRoot '../fixtures/Workflows'
     }
 
     Context 'when workflow contains npm install commands' {

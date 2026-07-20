@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# Copyright (c) Microsoft Corporation.
+# Copyright (c) 2026 Microsoft Corporation. All rights reserved.
 # SPDX-License-Identifier: MIT
 """Generate per-slide TTS voice-over from YAML speaker notes via Azure Speech SDK.
 
@@ -267,6 +267,15 @@ def create_parser() -> argparse.ArgumentParser:
         action="store_true",
         help="Enable verbose (DEBUG) logging",
     )
+    parser.add_argument(
+        "--collapse-newlines",
+        action="store_true",
+        help=(
+            "Collapse newlines and runs of whitespace in speaker notes into "
+            "single spaces before synthesis. Use for block-scalar (|) notes "
+            "whose line breaks would otherwise be spoken as pauses."
+        ),
+    )
     return parser
 
 
@@ -369,6 +378,8 @@ def _run(args: argparse.Namespace) -> int:
 
         raw_notes = data.get("speaker_notes") or ""
         notes = str(raw_notes).strip()
+        if args.collapse_newlines:
+            notes = re.sub(r"\s+", " ", notes)
         title = data.get("title", slide_dir.name)
 
         if not notes:

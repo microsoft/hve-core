@@ -1,0 +1,142 @@
+{
+  "CleanWorkspace": {
+    "ScenarioName": "CleanWorkspace",
+    "AgentBytes": 10844,
+    "ColdStartBytes": 37891,
+    "LoadedFiles": [
+      {
+        "Path": ".github/agents/project-planning/adr-creation.agent.md",
+        "Bytes": 10844
+      },
+      {
+        "Path": ".github/instructions/project-planning/adr-identity.instructions.md",
+        "Bytes": 20827
+      },
+      {
+        "Path": ".github/instructions/shared/disclaimer-language.instructions.md",
+        "Bytes": 6220
+      }
+    ],
+    "Hash": "da528f5b8d981ad0778062ab5ea925acc339f14b4dd683bbb418e2ace270562f"
+  },
+  "SteadyState": {
+    "ScenarioName": "SteadyState",
+    "AgentBytes": 10844,
+    "ColdStartBytes": 84907,
+    "LoadedFiles": [
+      {
+        "Path": ".github/agents/project-planning/adr-creation.agent.md",
+        "Bytes": 10844
+      },
+      {
+        "Path": ".github/instructions/project-planning/adr-byo-template.instructions.md",
+        "Bytes": 9572
+      },
+      {
+        "Path": ".github/instructions/project-planning/adr-handoff.instructions.md",
+        "Bytes": 16731
+      },
+      {
+        "Path": ".github/instructions/project-planning/adr-identity.instructions.md",
+        "Bytes": 20827
+      },
+      {
+        "Path": ".github/instructions/project-planning/adr-standards.instructions.md",
+        "Bytes": 17516
+      },
+      {
+        "Path": ".github/instructions/shared/disclaimer-language.instructions.md",
+        "Bytes": 6220
+      },
+      {
+        "Path": ".github/instructions/shared/telemetry-overlay.instructions.md",
+        "Bytes": 3197
+      }
+    ],
+    "Hash": "0c6df2a8c542acb4c41c9daa0ec5cc410bc87ed5283bce3285e7e3c23e289ae1"
+  },
+  "GovernEntry": {
+    "ScenarioName": "GovernEntry",
+    "AgentBytes": 10844,
+    "ColdStartBytes": 98902,
+    "LoadedFiles": [
+      {
+        "Path": ".github/agents/project-planning/adr-creation.agent.md",
+        "Bytes": 10844
+      },
+      {
+        "Path": ".github/instructions/project-planning/adr-byo-template.instructions.md",
+        "Bytes": 9572
+      },
+      {
+        "Path": ".github/instructions/project-planning/adr-handoff.instructions.md",
+        "Bytes": 16731
+      },
+      {
+        "Path": ".github/instructions/project-planning/adr-identity.instructions.md",
+        "Bytes": 20827
+      },
+      {
+        "Path": ".github/instructions/project-planning/adr-standards.instructions.md",
+        "Bytes": 17516
+      },
+      {
+        "Path": ".github/instructions/shared/disclaimer-language.instructions.md",
+        "Bytes": 6220
+      },
+      {
+        "Path": ".github/instructions/shared/telemetry-overlay.instructions.md",
+        "Bytes": 3197
+      },
+      {
+        "Path": ".github/skills/project-planning/adr-author/SKILL.md",
+        "Bytes": 13995
+      }
+    ],
+    "Hash": "8db6ccb4565d2f81c20c9600663c59dbc07df86e99fc1e808cf88b6e7f8e0744"
+  },
+  "AdoptTemplate": {
+    "ScenarioName": "AdoptTemplate",
+    "AgentBytes": 10844,
+    "ColdStartBytes": 105896,
+    "LoadedFiles": [
+      {
+        "Path": ".github/agents/project-planning/adr-creation.agent.md",
+        "Bytes": 10844
+      },
+      {
+        "Path": ".github/instructions/project-planning/adr-byo-template.instructions.md",
+        "Bytes": 9572
+      },
+      {
+        "Path": ".github/instructions/project-planning/adr-handoff.instructions.md",
+        "Bytes": 16731
+      },
+      {
+        "Path": ".github/instructions/project-planning/adr-identity.instructions.md",
+        "Bytes": 20827
+      },
+      {
+        "Path": ".github/instructions/project-planning/adr-standards.instructions.md",
+        "Bytes": 17516
+      },
+      {
+        "Path": ".github/instructions/shared/disclaimer-language.instructions.md",
+        "Bytes": 6220
+      },
+      {
+        "Path": ".github/instructions/shared/telemetry-overlay.instructions.md",
+        "Bytes": 3197
+      },
+      {
+        "Path": ".github/skills/project-planning/adr-author/scripts/normalize_template.py",
+        "Bytes": 6994
+      },
+      {
+        "Path": ".github/skills/project-planning/adr-author/SKILL.md",
+        "Bytes": 13995
+      }
+    ],
+    "Hash": "e596baadf1c7a5b6b63c12725f075af7138fc5889b2cce92d7878b230aa30ca1"
+  }
+}

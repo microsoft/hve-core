@@ -1,5 +1,5 @@
 ﻿#!/usr/bin/env pwsh
-# Copyright (c) Microsoft Corporation.
+# Copyright (c) 2026 Microsoft Corporation. All rights reserved.
 # SPDX-License-Identifier: MIT
 #
 # Invoke-PSScriptAnalyzer.ps1
@@ -7,7 +7,7 @@
 # Purpose: Wrapper for PSScriptAnalyzer with GitHub Actions integration
 # Author: HVE Core Team
 
-#Requires -Version 7.0
+#Requires -Version 7.4
 
 [CmdletBinding()]
 param(
@@ -32,6 +32,45 @@ Import-Module (Join-Path $PSScriptRoot "../lib/Modules/CIHelpers.psm1") -Force
 
 #region Functions
 
+function Invoke-ScriptAnalyzerIsolated {
+    [CmdletBinding()]
+    [OutputType([System.Object[]])]
+    [Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSUseUsingScopeModifierInNewRunspaces', '', Justification = 'Variables are passed into the Start-Job script block via param() and -ArgumentList, so the $using: modifier does not apply.')]
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$Path,
+
+        [Parameter(Mandatory = $true)]
+        [string]$SettingsPath
+    )
+
+    # Analyze each file in its own child process so every file compiles into a
+    # fresh dynamic assembly. On Linux/CoreCLR a process permits only one dynamic
+    # module per dynamic assembly, so analyzing multiple module files in a shared
+    # runspace throws "more than one dynamic module" on the second .psm1 file.
+    $job = Start-Job -ScriptBlock {
+        param($FilePath, $ConfigPath)
+        Import-Module PSScriptAnalyzer -RequiredVersion 1.25.0
+        Invoke-ScriptAnalyzer -Path $FilePath -Settings $ConfigPath | ForEach-Object {
+            [pscustomobject]@{
+                RuleName = $_.RuleName
+                Message  = $_.Message
+                Severity = $_.Severity.ToString()
+                Line     = $_.Line
+                Column   = $_.Column
+            }
+        }
+    } -ArgumentList $Path, $SettingsPath
+
+    try {
+        $null = Wait-Job -Job $job
+        return @(Receive-Job -Job $job)
+    }
+    finally {
+        Remove-Job -Job $job -Force
+    }
+}
+
 function Invoke-PSScriptAnalyzerCore {
     [CmdletBinding()]
     [OutputType([void])]
@@ -51,10 +90,11 @@ function Invoke-PSScriptAnalyzerCore {
 
     Write-Host "🔍 Running PSScriptAnalyzer..." -ForegroundColor Cyan
 
-    # Ensure PSScriptAnalyzer 1.25.0 is available (presence-only check would allow a different installed version to bypass the pin)
+    # Ensure pinned modules are available via the centralized install script
+    $installScript = Join-Path $PSScriptRoot '../../scripts/security/Install-PSModules.ps1'
     if (-not (Get-Module -ListAvailable -Name PSScriptAnalyzer | Where-Object { $_.Version -eq [version]'1.25.0' })) {
-        Write-Host "Installing PSScriptAnalyzer 1.25.0..." -ForegroundColor Yellow
-        Install-Module -Name PSScriptAnalyzer -RequiredVersion 1.25.0 -Force -Scope CurrentUser -Repository PSGallery
+        Write-Host "Installing pinned PowerShell modules..." -ForegroundColor Yellow
+        & $installScript
     }
 
     Import-Module PSScriptAnalyzer -RequiredVersion 1.25.0
@@ -85,12 +125,15 @@ function Invoke-PSScriptAnalyzerCore {
     $allResults = @()
     $hasErrors = $false
 
+    $resolvedConfigPath = (Resolve-Path -LiteralPath $ConfigPath).Path
+
     foreach ($file in $filesToAnalyze) {
         $filePath = if ($file -is [System.IO.FileInfo]) { $file.FullName } else { $file }
         Write-Host "`n📄 Analyzing: $filePath" -ForegroundColor Cyan
-        
-        $results = Invoke-ScriptAnalyzer -Path $filePath -Settings $ConfigPath
-        
+
+        $resolvedFilePath = (Resolve-Path -LiteralPath $filePath).Path
+        $results = @(Invoke-ScriptAnalyzerIsolated -Path $resolvedFilePath -SettingsPath $resolvedConfigPath)
+
         if ($results) {
             $allResults += $results
             

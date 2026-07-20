@@ -1,4 +1,4 @@
-# Copyright (c) Microsoft Corporation.
+# Copyright (c) 2026 Microsoft Corporation. All rights reserved.
 # SPDX-License-Identifier: MIT
 """Polyglot fuzz harness for GitLab skill helper logic.
 
@@ -77,6 +77,22 @@ def fuzz_validate_positive_int(data: bytes) -> None:
         gitlab.validate_positive_int(text, "test-field")
 
 
+def fuzz_validate_state(data: bytes) -> None:
+    """Fuzz MR state validation with arbitrary byte strings."""
+    fdp = atheris.FuzzedDataProvider(data)
+    text = fdp.ConsumeUnicodeNoSurrogates(fdp.remaining_bytes())
+    with redirect_stderr(io.StringIO()), suppress(SystemExit):
+        gitlab.validate_state(text)
+
+
+def fuzz_validate_ref(data: bytes) -> None:
+    """Fuzz ref validation with arbitrary byte strings."""
+    fdp = atheris.FuzzedDataProvider(data)
+    text = fdp.ConsumeUnicodeNoSurrogates(fdp.remaining_bytes())
+    with redirect_stderr(io.StringIO()), suppress(SystemExit):
+        gitlab.validate_ref(text)
+
+
 def fuzz_parse_fields(data: bytes) -> None:
     """Fuzz parse_fields with arbitrary byte strings."""
     fdp = atheris.FuzzedDataProvider(data)
@@ -95,6 +111,8 @@ FUZZ_TARGETS = [
     fuzz_extract_field,
     fuzz_load_json_payload,
     fuzz_validate_positive_int,
+    fuzz_validate_state,
+    fuzz_validate_ref,
     fuzz_parse_fields,
 ]
 

@@ -1,5 +1,5 @@
 ﻿#!/usr/bin/env pwsh
-# Copyright (c) Microsoft Corporation.
+# Copyright (c) 2026 Microsoft Corporation. All rights reserved.
 # SPDX-License-Identifier: MIT
 #
 # Invoke-PesterTests.ps1
@@ -7,7 +7,7 @@
 # Purpose: Pester test runner that writes summary and failure details to logs/
 # Author: HVE Core Team
 
-#Requires -Version 7.0
+#Requires -Version 7.4
 
 <#
 .SYNOPSIS
@@ -27,11 +27,26 @@
 .PARAMETER CodeCoverage
     Enables JaCoCo code coverage reporting to logs/coverage.xml.
 
+.PARAMETER Tag
+    Run only tests whose Describe/Context/It blocks carry one of the supplied tags.
+    `-IncludeTag` is accepted as an alias.
+
+.PARAMETER ExcludeTag
+    Exclude tests whose blocks carry any of the supplied tags. When omitted, defaults
+    to @('Integration','Slow') to preserve historical behavior. Passing this parameter
+    (including `-ExcludeTag @()`) replaces the default rather than appending to it.
+
 .EXAMPLE
     ./scripts/tests/Invoke-PesterTests.ps1
 
 .EXAMPLE
     ./scripts/tests/Invoke-PesterTests.ps1 -TestPath "scripts/tests/linting/"
+
+.EXAMPLE
+    ./scripts/tests/Invoke-PesterTests.ps1 -Tag Unit
+
+.EXAMPLE
+    ./scripts/tests/Invoke-PesterTests.ps1 -ExcludeTag Slow
 
 .EXAMPLE
     ./scripts/tests/Invoke-PesterTests.ps1 -CI -CodeCoverage
@@ -45,7 +60,14 @@ param(
     [switch]$CI,
 
     [Parameter(Mandatory = $false)]
-    [switch]$CodeCoverage
+    [switch]$CodeCoverage,
+
+    [Parameter(Mandatory = $false)]
+    [Alias('IncludeTag')]
+    [string[]]$Tag,
+
+    [Parameter(Mandatory = $false)]
+    [string[]]$ExcludeTag
 )
 
 $ErrorActionPreference = 'Stop'
@@ -62,6 +84,11 @@ $failuresPath = Join-Path $logsDir 'pester-failures.json'
 if (-not (Test-Path $logsDir)) {
     New-Item -ItemType Directory -Force -Path $logsDir | Out-Null
 }
+
+# Pre-write placeholder outputs so tests that assert these files exist during
+# the run (activation harness) see them even before Invoke-Pester completes.
+'{}' | Out-File -FilePath $summaryPath -Encoding utf8
+'[]' | Out-File -FilePath $failuresPath -Encoding utf8
 
 # Pin Pester to the canonical version from scripts/security/ps-module-versions.json.
 # This is the single enforcement point: test files use plain `#Requires -Modules Pester`
@@ -97,6 +124,12 @@ if ($TestPath) {
         $configArgs['TestPath'] = $resolvedPaths
     }
 }
+if ($Tag) {
+    $configArgs['Tag'] = $Tag
+}
+if ($PSBoundParameters.ContainsKey('ExcludeTag')) {
+    $configArgs['ExcludeTag'] = $ExcludeTag
+}
 
 $configuration = & $configScript @configArgs
 
@@ -106,6 +139,13 @@ $configuration.Run.PassThru = $true
 Write-Host "🧪 Running Pester tests..." -ForegroundColor Cyan
 if ($TestPath) {
     Write-Host "   Test paths: $($TestPath -join ', ')" -ForegroundColor Cyan
+}
+if ($Tag) {
+    Write-Host "   Tag filter: $($Tag -join ', ')" -ForegroundColor Cyan
+}
+if ($PSBoundParameters.ContainsKey('ExcludeTag')) {
+    $excludeDisplay = if ($ExcludeTag -and $ExcludeTag.Count -gt 0) { $ExcludeTag -join ', ' } else { '(none)' }
+    Write-Host "   ExcludeTag override: $excludeDisplay" -ForegroundColor Cyan
 }
 
 $result = Invoke-Pester -Configuration $configuration
@@ -123,6 +163,10 @@ $summary = [ordered]@{
 
 if ($CodeCoverage -and $result.CodeCoverage) {
     $summary['CoveragePercent'] = [math]::Round($result.CodeCoverage.CoveragePercent, 2)
+    $coverageTarget = $configuration.CodeCoverage.CoveragePercentTarget.Value
+    if ($null -ne $coverageTarget) {
+        $summary['CoverageTarget'] = [math]::Round([double]$coverageTarget, 2)
+    }
 }
 
 $summary | ConvertTo-Json -Depth 3 | Out-File -FilePath $summaryPath -Encoding utf8

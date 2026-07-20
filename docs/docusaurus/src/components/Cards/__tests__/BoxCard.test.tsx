@@ -1,3 +1,5 @@
+// Copyright (c) 2026 Microsoft Corporation. All rights reserved.
+// SPDX-License-Identifier: MIT
 import React from 'react';
 import { render, screen } from '@testing-library/react';
 import '@testing-library/jest-dom';
@@ -43,6 +45,13 @@ describe('BoxCard', () => {
     expect(img).toHaveAttribute('src', '/img/test.svg');
   });
 
+  it('renders the icon as a decorative image', () => {
+    const { container } = render(<BoxCard {...defaultProps} icon="/img/test.svg" />);
+    const img = container.querySelector('img');
+    expect(img).toHaveAttribute('alt', '');
+    expect(img).toHaveAttribute('aria-hidden', 'true');
+  });
+
   it('omits icon when not provided', () => {
     const { container } = render(<BoxCard {...defaultProps} />);
     expect(container.querySelector('img')).toBeNull();
@@ -50,6 +59,14 @@ describe('BoxCard', () => {
 
   it('has no accessibility violations', async () => {
     const { container } = render(<BoxCard {...defaultProps} />);
+    const results = await axe(container, {
+      rules: { region: { enabled: false } },
+    });
+    expect(results).toHaveNoViolations();
+  });
+
+  it('has no accessibility violations when an icon is provided', async () => {
+    const { container } = render(<BoxCard {...defaultProps} icon="/img/test.svg" />);
     const results = await axe(container, {
       rules: { region: { enabled: false } },
     });

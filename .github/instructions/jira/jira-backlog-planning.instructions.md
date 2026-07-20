@@ -1,5 +1,5 @@
 ---
-description: 'Reference specification for Jira backlog management tooling, planning files, search conventions, similarity assessment, and state persistence - Brought to you by microsoft/hve-core'
+description: 'Jira backlog management: planning files, search conventions, similarity assessment, and state persistence'
 applyTo: '**/.copilot-tracking/jira-issues/**'
 ---
 
@@ -335,7 +335,3 @@ Pause and ask for guidance when:
 * Multiple existing issues are Similar matches for one candidate.
 * A transition target is not available for the issue.
 * A create or update would touch fields not covered by the validated field payload.
-
----
-
-Brought to you by microsoft/hve-core
