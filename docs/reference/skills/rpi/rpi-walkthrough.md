@@ -1,15 +1,15 @@
 ---
-title: vally-tests
-description: "Authors Vally conformance tests for prompts, instructions, agents, and skills, including refusals for jailbreak, prompt-injection, harmful-elicitation, TOS, CoC, and PII-extraction stimuli"
-sidebar_position: 8
-ms.date: 2026-07-03
+title: rpi-walkthrough
+description: "Guided, conversational walkthrough that explains code, UI, UX, features, or .copilot-tracking artifacts one line or block at a time with navigable evidence links, deep subagent review, and captured change requests for RPI handoff. Use when the user wants to understand how something works or why it was changed."
+sidebar_position: 6
+ms.date: 2026-07-13
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->
 | Field       | Value                                  |
 |-------------|----------------------------------------|
 | Kind        | skill                                  |
-| Source      | `.github/skills/hve-core/vally-tests`  |
+| Source      | `.github/skills/rpi/rpi-walkthrough`   |
 | Invocation  | Loaded on demand by referencing agents |
 | Interactive | No                                     |
 <!-- END AUTO-GENERATED: metadata -->
@@ -17,7 +17,7 @@ ms.date: 2026-07-03
 ## What it does
 
 <!-- BEGIN AUTO-GENERATED: overview -->
-Authors Vally conformance tests for prompts, instructions, agents, and skills, including refusals for jailbreak, prompt-injection, harmful-elicitation, TOS, CoC, and PII-extraction stimuli
+Guided, conversational walkthrough that explains code, UI, UX, features, or .copilot-tracking artifacts one line or block at a time with navigable evidence links, deep subagent review, and captured change requests for RPI handoff. Use when the user wants to understand how something works or why it was changed.
 <!-- END AUTO-GENERATED: overview -->
 
 ## When to use it

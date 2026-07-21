@@ -1,15 +1,15 @@
 ---
-title: Phase Implementor
-description: Executes a single implementation phase from a plan with full codebase access and change tracking
-sidebar_position: 9
-ms.date: 2026-07-05
+title: HVE Artifact Test Designer
+description: Designs black-box behavior scenarios and coverage expectations from an HVE artifact contract. Dispatched by hve-builder-tester.
+sidebar_position: 4
+ms.date: 2026-07-13
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->
 | Field       | Value                                                                    |
 |-------------|--------------------------------------------------------------------------|
 | Kind        | agent                                                                    |
-| Source      | `.github/agents/hve-core/subagents/phase-implementor.agent.md`           |
+| Source      | `.github/agents/hve-core/subagents/hve-artifact-test-designer.agent.md`  |
 | Invocation  | Delegated subagent, dispatched by a parent agent (not selected directly) |
 | Interactive | No                                                                       |
 <!-- END AUTO-GENERATED: metadata -->
@@ -17,7 +17,7 @@ ms.date: 2026-07-05
 ## What it does
 
 <!-- BEGIN AUTO-GENERATED: overview -->
-Executes a single implementation phase from a plan with full codebase access and change tracking
+Designs black-box behavior scenarios and coverage expectations from an HVE artifact contract. Dispatched by hve-builder-tester.
 <!-- END AUTO-GENERATED: overview -->
 
 ## When to use it

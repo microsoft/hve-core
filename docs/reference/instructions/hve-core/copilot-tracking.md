@@ -1,23 +1,23 @@
 ---
 title: Hve Core/Copilot Tracking
-description: "Shared .copilot-tracking conventions for intermediate artifacts, file paths, and subagent handoffs across the RPI and prompt-builder skills"
+description: "Shared .copilot-tracking conventions for RPI, HVE Builder, and compatibility workflow evidence"
 sidebar_position: 2
-ms.date: 2026-07-03
+ms.date: 2026-07-13
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->
-| Field       | Value                                                                                                                                                                                                                                      |
-|-------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| Kind        | instruction                                                                                                                                                                                                                                |
-| Source      | `.github/instructions/hve-core/copilot-tracking.instructions.md`                                                                                                                                                                           |
-| Invocation  | Applied automatically to `.copilot-tracking/research/**, .copilot-tracking/plans/**, .copilot-tracking/details/**, .copilot-tracking/changes/**, .copilot-tracking/reviews/**, .copilot-tracking/sandbox/**, .copilot-tracking/prompts/**` |
-| Interactive | No                                                                                                                                                                                                                                         |
+| Field       | Value                                                                                                                                                                                                                                                                                                           |
+|-------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| Kind        | instruction                                                                                                                                                                                                                                                                                                     |
+| Source      | `.github/instructions/hve-core/copilot-tracking.instructions.md`                                                                                                                                                                                                                                                |
+| Invocation  | Applied automatically to `.copilot-tracking/research/**, .copilot-tracking/plans/**, .copilot-tracking/details/**, .copilot-tracking/changes/**, .copilot-tracking/reviews/**, .copilot-tracking/sandbox/**, .copilot-tracking/prompts/**, .copilot-tracking/walkthroughs/**, .copilot-tracking/hve-builder/**` |
+| Interactive | No                                                                                                                                                                                                                                                                                                              |
 <!-- END AUTO-GENERATED: metadata -->
 
 ## What it does
 
 <!-- BEGIN AUTO-GENERATED: overview -->
-Shared .copilot-tracking conventions for intermediate artifacts, file paths, and subagent handoffs across the RPI and prompt-builder skills
+Shared .copilot-tracking conventions for RPI, HVE Builder, and compatibility workflow evidence
 <!-- END AUTO-GENERATED: overview -->
 
 ## When to use it
