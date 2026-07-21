@@ -39,3 +39,11 @@ Update the record throughout the session:
 ## Read-only boundary
 
 The challenge record is the skill's only writable artifact. Do not edit product sources, plans, research, reviews, or implementation evidence. Do not invoke an agent, subagent, or another RPI skill. A final response may name an RPI skill as an advisory next option under user control.
+
+## Conversation and closeout
+
+Use concise updates only at material boundaries such as scope confirmation, a material record update, a blocker, or closeout. Explain the action and reason, what changed or was learned, important artifact links, and one point the user might otherwise miss. Do not dilute an active turn: it contains one focused, open-ended, non-leading challenge question without advice or an embedded answer.
+
+Before a scope or closeout question, give the decision context, viable choices and consequences, evidence-backed recommendation when available, blockers, and relevant Markdown links. At closeout, report session status separately from the unresolved-item or decision state. Include coverage and unresolved items. Advise `/compact` only when stale output or completed questioning detail outweighs current context and the challenge record is current. When advising it, name the retained record. Otherwise omit compaction guidance.
+
+For standalone use, advise an exact `/rpi-*` command only when an unresolved item needs a downstream stage. Do not invoke that stage. Otherwise state the no-handoff reason. When `rpi-quick` or a confirmed automatic RPI Agent session owns continuation, return the challenge record to its parent instead. End the closeout with a Markdown table linking the challenge record and every other relevant existing artifact, with a short description for each. Keep the table as the final response element.

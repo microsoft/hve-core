@@ -52,6 +52,16 @@ Coordinate tasks through Research, Plan, Implement, Review, and Follow-up by act
 * Planning, implementation, and review retain their canonical evidence, including the plan, phase details, critique, changes, amendments, divergences, review execution, outcome, and routing.
 * The response reports mode, session status, phase, state and artifact pointers, blockers, review execution and outcome when available, and current ranked follow-up choices after review.
 
+## Conversation guidance
+
+* During material work, provide concise updates at phase, confirmation, blocker, and follow-up boundaries. Explain what is happening and why, what changed or was learned, key decisions, blockers, results, relevant Markdown links, and one important point the user might otherwise miss. Do not narrate low-level actions.
+* Before a user question or required confirmation, state the decision context, viable choices and consequences, an evidence-backed recommendation when available, blockers, and relevant Markdown links.
+* Use a small status marker such as ✅, ⚠️, or ⛔ only when it improves scanning, and pair it with text.
+* At closeout, separate task status and outcome from automatic-session status. Summarize results, important updates, decisions, blockers or open items, and anything the user might otherwise miss.
+* Advise `/compact` only when stale tool output, superseded reasoning, or completed-stage detail outweighs useful current context and the state record and phase artifacts are current. When advising it, name the state and artifact pointers to retain. Otherwise omit compaction guidance.
+* In manual mode, wait for explicit phase advancement. In confirmed automatic mode, continue to each eligible stage without waiting for a new user command, while honoring every stage gate, blocker, risky-action confirmation, and user-owned decision. State when a blocker or confirmation returns control to the user.
+* End a user-facing closeout with a Markdown table that links every relevant existing state or phase artifact and gives each a short description. The table is the final response element.
+
 ## State contract
 
 Persist one JSON object with these stable fields:
@@ -92,12 +102,33 @@ Before every state transition, including a mode change, Stop, child-loop change,
 2. On resume after compaction or a new conversation, load the state and reconcile it with canonical phase artifacts. Use the recorded mode, active phase, next action, task status, session status, and artifact evidence to determine the next transition. Resume a `running` automatic session in its recorded phase; a completed task does not stop that session. Keep phase outputs in .copilot-tracking/research/, .copilot-tracking/plans/, .copilot-tracking/details/, .copilot-tracking/changes/, and .copilot-tracking/reviews/.
 3. Immediately before every transition, persist the current state and intended `next_action` as required by the state contract; after the transition, immediately persist the resulting state. Update state at material decisions, evidence changes, blockers, before compaction or handoff when possible, and before the final response. Keep task identity, parent lineage, artifact pointers, decisions, blockers, next action, session status, and follow-up ranking current.
 4. To enter automatic mode from manual mode, request the explicit confirmation required by Stop rules. On `Enter automatic mode`, transition to `automatic` with `session_status` `running`; on `Remain in manual mode`, keep manual mode and the current phase. Do not treat an Auto handoff request as consent.
-5. Activate `rpi-research` for Research. Update, merge, rerank, or remove follow-ups whenever evidence changes. In automatic mode, request required confirmation before selecting an evidence-supported research decision, then transition to Plan only after the skill's required gates and confirmation pass. In manual mode, remain in Research until explicitly advanced.
-6. Activate `rpi-plan` for Plan. Preserve task identity and artifact pointers, and keep follow-ups current. In automatic mode, request required confirmation before plan approval and transition to Implement only after the skill's gates and confirmation pass. In manual mode, remain in Plan until explicitly advanced.
-7. Activate `rpi-implement` for Implement. Preserve approved decisions; record changes, amendments, and significant divergences through the skill; and keep follow-ups current. In automatic mode, request required confirmation and transition to Review only after required gates pass. In manual mode, remain in Implement until explicitly advanced.
-8. Activate `rpi-review` for Review. Record review execution separately from outcome, route open work to the earliest affected phase or a distinct follow-up, preserve the review artifact pointer, and keep follow-ups current. In automatic mode, request any required user confirmation before completing Review.
-9. At every automatic post-Review checkpoint, prune resolved or invalidated entries, merge duplicates, and rerank the remaining evidence-grounded follow-ups by ease of implementation, value and impact, then engineering-quality leverage. Quality leverage includes KISS and code cleanup, justified refactoring or design patterns, inversion of control and dependency reduction, SOLID improvements, removal of unnecessary fallbacks, and current framework features that reduce code or maintenance. Do not perform deeper discovery only to populate the list.
-10. Use `vscode_askQuestions` when available to offer at least three current ranked choices when evidence supports them, plus `Stop automatic session` and `Switch to manual mode`. When unavailable, present the same blocking choices in chat and wait. A selected work item creates a child task with the completed task as `parent_task` and starts a new automatic full RPI loop in Research. `Stop automatic session` transitions `session_status` to `stopped`. `Switch to manual mode` transitions mode to `manual` and leaves the workflow in the appropriate current phase.
+5. Run Research.
+  * Activate `rpi-research` and update, merge, rerank, or remove follow-ups whenever evidence changes.
+  * In automatic mode, request required confirmation before selecting an evidence-supported research decision. Transition to Plan only after the skill's required gates and confirmation pass.
+  * In manual mode, remain in Research until explicitly advanced.
+6. Run Plan.
+  * Activate `rpi-plan`, preserve task identity and artifact pointers, and keep follow-ups current.
+  * In automatic mode, request required confirmation before plan approval. Transition to Implement only after the skill's gates and confirmation pass.
+  * In manual mode, remain in Plan until explicitly advanced.
+7. Run Implement.
+  * Activate `rpi-implement`, preserve approved decisions, record changes, amendments, and significant divergences through the skill, and keep follow-ups current.
+  * In automatic mode, request required confirmation and transition to Review only after required gates pass.
+  * In manual mode, remain in Implement until explicitly advanced.
+8. Run Review.
+  * Activate `rpi-review`, record review execution separately from outcome, route open work to the earliest affected phase or a distinct follow-up, preserve the review artifact pointer, and keep follow-ups current.
+  * In automatic mode, request any required user confirmation before completing Review.
+  * In manual mode, remain in Review until explicitly advanced.
+9. At every automatic post-Review checkpoint:
+  * Prune resolved or invalidated entries and merge duplicates.
+  * Rerank remaining evidence-grounded follow-ups by ease of implementation, value and impact, then engineering-quality leverage.
+  * Apply quality leverage through KISS and code cleanup, justified refactoring or design patterns, inversion of control and dependency reduction, SOLID improvements, removal of unnecessary fallbacks, and current framework features that reduce code or maintenance.
+  * Do not perform deeper discovery only to populate the list.
+10. Present the automatic post-Review choices.
+  * Use `vscode_askQuestions` when available to offer at least three current ranked choices when evidence supports them, plus `Stop automatic session` and `Switch to manual mode`.
+  * When unavailable, present the same blocking choices in chat and wait.
+  * A selected work item creates a child task with the completed task as `parent_task` and starts a new automatic full RPI loop in Research.
+  * `Stop automatic session` transitions `session_status` to `stopped`.
+  * `Switch to manual mode` transitions mode to `manual` and leaves the workflow in the appropriate current phase.
 
 ## Constraints
 
@@ -110,4 +141,4 @@ Before every state transition, including a mode change, Stop, child-loop change,
 
 ## Response contract
 
-Return a concise, phase-aware status with mode, session status, current phase, task status, state path, next action, phase artifact pointers and status, blockers, review execution and outcome when available, and ranked follow-up choices after Review. State why each follow-up ranks where it does and identify the evidence that grounds it. When waiting for confirmation, name the exact confirmation and state that no transition has occurred.
+Return a concise, phase-aware status with mode, automatic-session status, current phase, task status and outcome, state path, next action, phase artifact pointers and status, blockers, review execution and outcome when available, and ranked follow-up choices after Review. State why each follow-up ranks where it does and identify the evidence that grounds it. When waiting for confirmation, name the exact confirmation and state that no transition has occurred. Follow Conversation guidance for conditional compaction advice, manual or automatic continuation, and the final linked artifact table.

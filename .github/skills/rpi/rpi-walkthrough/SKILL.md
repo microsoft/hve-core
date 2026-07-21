@@ -45,6 +45,16 @@ When a ledger is needed, derive `{{task_slug}}` in lower-kebab-case from the pri
 * Keep the explanation scannable. Each sentence or paragraph that discusses a specific file, line range, block, or artifact must include a nearby markdown link to that reference, rather than relying only on the reference table.
 * Keep the reference table requirement. Render it near the bottom of each segment turn, immediately before the questions.
 
+## Conversation guidance
+
+* During material walkthrough work, provide concise updates at meaningful boundaries through the target-resolution summary, each segment, ledger update, and closeout. Explain what is being covered and why, what changed or was learned, key decisions, blockers, relevant inline links and reference tables, and one important point the user might otherwise miss. Do not narrate low-level actions.
+* Before a user question, render the segment or decision context first. State viable choices and consequences, an evidence-backed recommendation when available, blockers, and relevant Markdown links, then keep the existing one-or-two-question cadence.
+* Do not use status emojis in walkthrough headings or bullets. The existing prose, headings, inline links, diagrams, and reference tables provide the visual structure.
+* At closeout, separate walkthrough session status from decisions-and-changes ledger state. Summarize covered segments, important updates, decisions, blockers or open entries, and anything the user might otherwise miss.
+* Advise `/compact` only when stale tool output, superseded reasoning, or completed-segment detail outweighs useful current context and the target and any ledger are current. When advising it, name the state and artifact pointers to retain. Otherwise omit compaction guidance.
+* In a standalone walkthrough, state `/rpi-quick` or the exact applicable `/rpi-*` command only when a ledger entry needs downstream work. Otherwise state the explicit no-handoff reason. In an active `rpi-quick` or confirmed automatic RPI Agent context, return the relevant ledger and evidence to the parent and state that it selects eligible continuation.
+* End the user-facing closeout with a Markdown table that links the walked target and every relevant existing artifact. Include a ledger row only when a ledger exists. The table is the final response element.
+
 ## Success criteria
 
 * The target, detail level, and segment plan are resolved before any explanation begins.
@@ -76,8 +86,8 @@ When a ledger is needed, derive `{{task_slug}}` in lower-kebab-case from the pri
 
 ## Handoff
 
-Recommend `/rpi-quick` or the full `/rpi-research`, `/rpi-plan`, `/rpi-implement`, and `/rpi-review` sequence only for ledger entries handed off to an RPI follow-on or still requiring downstream work. Keep these as recommendations unless the user asks to proceed.
+For a standalone walkthrough, recommend `/rpi-quick` or the exact applicable `/rpi-research`, `/rpi-plan`, `/rpi-implement`, or `/rpi-review` command only for a ledger entry handed off to RPI work or still requiring downstream work. Do not invoke it. State the no-handoff reason when no entry needs downstream work. Return the evidence to `rpi-quick` or a confirmed automatic RPI Agent parent when one owns continuation.
 
 ## Final response
 
-Return a concise summary that names the segments covered and detail level from conversation context. If no ledger exists, state that no decisions-and-changes artifact was needed and do not invent a link. If a ledger exists, report its path, the counts of material decisions and requested changes, and remaining open entries, with markdown links to the ledger and its Reconciliation section. Recommend RPI follow-on work only for entries handed off or still requiring downstream work.
+Return walkthrough session status, covered segments, detail level, important updates, blockers or open entries, and conditional compaction advice when warranted. If no ledger exists, state that no decisions-and-changes artifact was needed and do not invent a link. If a ledger exists, report its counts of material decisions and requested changes, remaining open entries, and a Markdown link to its Reconciliation section. Recommend RPI follow-on work only for entries handed off or still requiring downstream work. End with the linked target and artifact table required by Conversation guidance.

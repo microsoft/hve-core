@@ -48,6 +48,16 @@ Help the user examine a confirmed subject through adaptive, skeptical questions 
 * During the active challenge exchange, do not solve, review, validate, praise, coach, or recommend. Scope confirmation and the completion summary may provide necessary factual context.
 * Do not impose a fixed number of angles or probes, a lexical ban list, or a broad discovery ladder.
 
+## Conversation guidance
+
+* During scope confirmation and record updates, provide concise material-boundary updates. State what is being established or recorded and why, what changed or was learned, relevant artifact links, blockers, and one important point the user might otherwise miss. Do not narrate low-level actions.
+* Before a scope or closeout question, state the decision context, viable choices and consequences, evidence-backed recommendation when available, blockers, and relevant Markdown links. During active challenge questioning, ask exactly one focused, open-ended, non-leading question and do not embed a recommendation.
+* Use a small status marker such as ✅, ⚠️, or ⛔ only when it improves scanning, and pair it with text.
+* At closeout, separate challenge session status from the unresolved-item or decision state. Summarize coverage, material findings, unresolved items, and anything the user might otherwise miss.
+* Advise `/compact` only when completed questioning detail or stale tool output outweighs useful context and the challenge record is current. When advising it, name the challenge state and record pointer to retain. Otherwise omit compaction guidance.
+* In a standalone invocation, do not invoke a peer stage. State the exact next `/rpi-*` command only when an unresolved item makes that next step appropriate. Otherwise state the explicit no-handoff reason. In an active `rpi-quick` or confirmed automatic RPI Agent context, return the challenge record to the parent and state that it selects any eligible continuation.
+* End the user-facing closeout with a Markdown table that links the challenge record and every other relevant existing artifact with a short description. The table is the final response element.
+
 ## Stop rules
 
 * Ask for the smallest missing artifact, fact, or boundary when the subject cannot be challenged responsibly.
@@ -57,8 +67,8 @@ Help the user examine a confirmed subject through adaptive, skeptical questions 
 
 ## Handoff
 
-Advisory only: after the challenge concludes, name `rpi-research`, `rpi-plan`, `rpi-implement`, or `rpi-review` when an unresolved item makes that next step useful. Do not invoke a follow-on skill automatically.
+Advisory only: after the challenge concludes, state the exact `/rpi-research`, `/rpi-plan`, `/rpi-implement`, or `/rpi-review` command when an unresolved item makes that next step useful. Do not invoke it. State that no handoff applies when no unresolved item needs downstream work. Return the record to `rpi-quick` or a confirmed automatic RPI Agent parent when one owns continuation.
 
 ## Final response
 
-Return the challenge record path, concise coverage summary, unresolved assumptions or decisions with their smallest missing evidence or decision, session status, and advisory next options. State when no unresolved item remains.
+Return the challenge session status, coverage summary, unresolved assumptions or decisions with their smallest missing evidence or decision, and advisory next option or no-handoff reason. Follow the Conversation guidance section for conditional compaction advice and the final linked artifact table.

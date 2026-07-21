@@ -174,7 +174,9 @@ The walkthrough is read-only by default. Create the ledger lazily, from [../temp
 When every planned segment is covered, or when the user declines another segment, asks for a summary, or ends the session:
 
 * If a ledger exists, review its open entries and ask whether to reconcile them now or leave them for later.
-* Recommend `/rpi-quick` for a one-shot pass, or the full `/rpi-research`, `/rpi-plan`, `/rpi-implement`, and `/rpi-review` sequence only for entries handed off or still requiring downstream work. Keep these as recommendations unless the user asks to proceed.
+* In a standalone walkthrough, recommend `/rpi-quick` for a one-shot pass, or the exact applicable `/rpi-research`, `/rpi-plan`, `/rpi-implement`, or `/rpi-review` command only for entries handed off or still requiring downstream work. Do not invoke it.
+* State the no-handoff reason when no entry needs downstream work. In `rpi-quick` or confirmed automatic RPI Agent mode, return the evidence to the parent and state that it selects eligible continuation.
+* Separate walkthrough session status from the ledger decision state. Include covered segments, important updates, and blockers or open entries. Advise `/compact` only when stale output, superseded reasoning, or completed-segment detail outweighs current context and the target and any ledger are current. When advising it, name retained state and artifact pointers. Otherwise omit compaction guidance.
 
 ## Final response contract
 
@@ -185,7 +187,6 @@ Close with a concise summary that contains:
 * When a ledger exists, its path, the counts of material decisions and requested changes, and any remaining open entries.
 * Markdown links to the ledger and its Reconciliation section when a ledger exists.
 * An RPI recommendation only for entries handed off or still requiring downstream work.
+* A final Markdown table that links the walked target and every relevant existing artifact, with a short description.
 
-| Ledger                                                                                                                                               | Reconciliation                                                                                            | Next step                                          |
-|------------------------------------------------------------------------------------------------------------------------------------------------------|-----------------------------------------------------------------------------------------------------------|----------------------------------------------------|
-| [.copilot-tracking/walkthroughs/{{YYYY-MM-DD}}/{{task_slug}}-decisions.md](.copilot-tracking/walkthroughs/{{YYYY-MM-DD}}/{{task_slug}}-decisions.md) | [Reconciliation](.copilot-tracking/walkthroughs/{{YYYY-MM-DD}}/{{task_slug}}-decisions.md#reconciliation) | Recommend only when an entry needs downstream work |
+Do not use status emojis in walkthrough headings or bullets. Use the existing human-writing rules, headings, inline links, diagrams, and reference tables to make the message scannable. The final table includes a ledger row and its Reconciliation link only when a ledger exists. It does not invent a ledger link.

@@ -43,6 +43,16 @@ Return a substantive, evidence-grounded credibility assessment of an RPI plan an
 * Do not grade formatting, document cosmetics, or template adherence unless the issue conceals a substantive planning risk.
 * Use plain-text workspace-relative paths in the output artifact.
 
+## Conversation guidance
+
+* During material critique work, provide concise updates at meaningful boundaries. Explain the assessment action and why it matters, what was found, material decisions, blockers, relevant artifact links, and one important point the user might otherwise miss. Do not narrate low-level actions.
+* Before a user question, state the decision context, viable choices and consequences, an evidence-backed recommendation when available, blockers, and relevant Markdown links.
+* Use a small status marker such as ✅, ⚠️, or ⛔ only when it improves scanning, and pair it with text.
+* At closeout, separate critique execution status from its Pass, Revise, or Blocked verdict. Summarize results, material findings, blockers or open items, and anything the user might otherwise miss.
+* Advise `/compact` only when stale tool output or completed assessment detail outweighs useful current context and the plan, phase details, and critique artifact are current. When advising it, name the state and artifact pointers to retain. Otherwise omit compaction guidance.
+* When dispatched by `rpi-plan`, return the verdict to the planning parent and do not ask the user to invoke planning again. In a standalone invocation, do not invoke a peer stage. State `/rpi-plan` only when a revision needs the planning parent. Otherwise state the explicit stop or no-handoff reason. In an active `rpi-quick` or confirmed automatic RPI Agent context, return the verdict to the parent so it can continue after gates and required confirmations pass.
+* End the user-facing closeout with a Markdown table that links every relevant existing artifact and gives each a short description. The table is the final response element.
+
 ## Stop rules
 
 * Return Blocked when supplied evidence cannot support a decision-critical assessment.
@@ -51,8 +61,8 @@ Return a substantive, evidence-grounded credibility assessment of an RPI plan an
 
 ## Handoff
 
-Return the verdict, output path, severity summary, and the smallest next action. The planning parent decides whether to revise directly, delegate one phase to `RPI Planner`, obtain a decision, rerun critique, or finalize.
+Return the verdict, output path, severity summary, and the smallest next action to the planning parent. When `rpi-plan` dispatched the critique, the parent decides whether to revise directly, delegate one phase to `RPI Planner`, obtain a decision, rerun critique, or finalize. A standalone critique may advise `/rpi-plan` for needed revision but does not invoke it.
 
 ## Final response contract
 
-Return Pass, Revise, or Blocked; the critique output path; severity counts; the highest-impact `PC-xxx` findings; and the smallest recommended next action. Do not reproduce the full critique in the response.
+Return critique execution status, Pass, Revise, or Blocked verdict, the critique output path, severity counts, highest-impact `PC-xxx` findings, and the smallest recommended next action. Do not reproduce the full critique in the response. Follow the Conversation guidance section for parent return, standalone advice, conditional compaction advice, and the final linked artifact table.

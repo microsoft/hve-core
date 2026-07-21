@@ -44,7 +44,6 @@ Apply these conventions whenever an RPI, HVE Builder, or compatibility workflow 
 
 * Use one stable task ID across the plan, phase details, critique, changes, and review records.
 * Use `Pxx` for phases and `Pxx-Txx` for tasks. Place `<!-- rpi:phase id=P01 -->` or `<!-- rpi:task id=P01-T01 -->` immediately before the matching heading.
-* Use `AM-xxx` only in the plan amendment register.
-* Use `CHG-xxx` and `DIV-xxx` only in the changes record. Link every significant `DIV-xxx` to its `AM-xxx` amendment and affected plan or detail sections.
+* Use descriptive headings and related plan or task markers for implementation evidence. Do not create a second per-entry identity scheme in the changes record.
 * Use `PC-xxx` only in the plan critique and `RV-xxx` only in the review record.
 * Use stable IDs, markers, and headings to navigate. Do not maintain line numbers, line ranges, or detail-line verification.

@@ -6,11 +6,17 @@ description: "Orchestration reference for the Research, Plan, Implement, Review,
 
 ## Lifecycle
 
-1. Research starts with a readiness assessment of caller-supplied research, task details, decisions, and plan inputs. Activate `rpi-research` only when evidence is missing, stale, contradictory, insufficient for planning, or when complexity, uncertainty, dependencies, risk, or a decision-critical question warrants investigation. If evidence is adequate, record why Research is reused or satisfied-and-skipped, then continue to Plan.
-2. Plan creates or revises marker-addressed plan and phase-detail artifacts, then records independent critique disposition.
-3. Implement completes approved `Pxx` and `Pxx-Txx` tasks and records changes, validation, divergences, and amendments. A material amendment returns the changed plan, phase details, and evidence to planning for fresh `rpi-plan-critique`; Pass permits affected dependent work to resume, Revise returns to planning for correction, and Blocked stops affected dependent work.
-4. Review compares all planning and execution evidence, then separates execution status from outcome.
+1. Assess research readiness from caller-supplied research, task details, decisions, and plan inputs. Activate `rpi-research` only when evidence is missing, stale, contradictory, insufficient for planning, or when complexity, uncertainty, dependencies, risk, or a decision-critical question warrants investigation. When evidence is adequate, record why Research is reused or satisfied-and-skipped.
+2. Run Plan to create or revise marker-addressed plan and phase-detail artifacts. Its independent critique is an internal planning gate and returns to the planning parent.
+3. Run Implement to complete approved `Pxx` and `Pxx-Txx` tasks and record changes, validation, divergences, and amendments. For a material amendment:
+	* Return the changed plan, phase details, and evidence to planning for fresh `rpi-plan-critique`.
+	* Resume affected dependent work after Pass.
+	* Return to planning for correction after Revise.
+	* Stop affected dependent work after Blocked.
+4. Run Review to compare all planning and execution evidence, then separate execution status from outcome.
 5. Follow-up routes open work to research, planning, implementation, or a distinct future item.
+
+`rpi-quick` is the explicit parent that continues to an eligible next stage without a new user command. It does not bypass a stage gate, blocker, risky-action confirmation, or user-owned decision. A standalone child stage returns its evidence and advice to this parent; it does not self-sequence peer lifecycle stages.
 
 ## Artifact path matrix
 
@@ -33,3 +39,11 @@ Reuse the dated task artifacts in place. Use plain-text workspace-relative paths
 ## Lifecycle discipline
 
 Do not create a phase for ceremonial completeness. Research may be reused or satisfied-and-skipped when the readiness assessment finds adequate evidence, and must not be reported as executed in that case. A material implementation amendment re-enters Plan and does not resume affected dependent work before Pass. Re-enter only the earliest affected stage, retain durable evidence, and report validation truthfully as passed, failed, skipped, or unavailable.
+
+## Conversation and closeout
+
+Give concise updates at material stage boundaries. State the current stage and why it is eligible, changes or findings, decisions, blockers, results, relevant artifact links, and one important point the user might otherwise miss. Before a question or required confirmation, state the decision context, viable choices and consequences, evidence-backed recommendation when available, blockers, and relevant Markdown links.
+
+At closeout, report lifecycle execution or session status separately from outcome or decision state. Include the current results, important updates, decisions, and blockers or open items. Advise `/compact` only when stale output, superseded reasoning, or completed-stage detail outweighs current context and durable phase artifacts are current. When advising it, name the retained state and artifact pointers. Otherwise omit compaction guidance.
+
+State that the parent continues automatically when another stage is eligible. State the exact confirmation or blocker when control returns to the user. End the user-facing closeout with a Markdown table linking every relevant existing artifact and a short description. Keep the table as the final response element.

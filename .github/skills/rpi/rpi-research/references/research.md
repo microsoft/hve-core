@@ -99,7 +99,7 @@ Maintain the primary artifact as the authoritative synthesized record.
 
 Set Planning Readiness to one of `Ready`, `Not ready`, `Not applicable`, or `Blocked`. Support the status with evidence IDs, current decision state, and explicit blockers.
 
-Recommend deeper rpi-research when a targeted question, source, or independent lane could materially change the current readiness or decision. Update the same dated primary artifact rather than creating a parallel primary record. The user or rpi-quick owns any advisory transition to `/rpi-plan`.
+Recommend deeper rpi-research when a targeted question, source, or independent lane could materially change the current readiness or decision. Update the same dated primary artifact rather than creating a parallel primary record. A standalone research run may advise `/rpi-plan` only when readiness and output mode support planning. It does not invoke planning. The user owns that choice unless `rpi-quick` or a confirmed automatic RPI Agent parent owns continuation.
 
 ## Artifact Self-Check
 
@@ -123,8 +123,12 @@ Return a concise, evidence-first response with:
 * Selected approach and rejected alternatives only when convergence applies
 * Key evidence, unresolved decisions, risks, residual uncertainty, and planning-readiness status
 * Research-only constraint status and artifact self-check result
-* An advisory `/rpi-plan` next step or an explicit no-handoff reason
-* A summary table for Research Artifact, Output Mode and Decision State, Key Discoveries, Alternatives Evaluated, Open Decisions, and Advisory Next Step
+* An advisory `/rpi-plan` next step or an explicit no-handoff reason for standalone research, or a statement that an active parent continues automatically
+* Research execution status separate from planning readiness or decision state
+* Conditional `/compact` advice only when stale context warrants compaction, naming the primary research artifact and current state to retain; otherwise no compaction guidance
+* A final Markdown table linking every relevant existing artifact and giving each a short description
+
+During material research work, use concise boundary updates that name the current question or wave and reason, changes or findings, key decisions, blockers, results, relevant artifact or source links, and one point the user might otherwise miss. Before a user question, give decision context, viable choices and consequences, evidence-backed recommendation when available, blockers, and relevant Markdown links. Do not narrate low-level actions.
 
 ## Tool Category Reference
 

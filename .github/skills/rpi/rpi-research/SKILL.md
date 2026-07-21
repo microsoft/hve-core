@@ -54,6 +54,16 @@ Derive `{{task_slug}}` from the primary target with lower-kebab-case and use the
 * Set budgets from caller constraints, scope, source quality, uncertainty, dependencies, available capacity, and saturation. Record evidence-based adjustments; do not use a fixed global ceiling as a completion rule.
 * Cite internal research paths only inside tracking artifacts. Do not place `.copilot-tracking/` references in production code, code comments, documentation strings, or commit messages.
 
+## Conversation guidance
+
+* During material research work, provide concise updates at meaningful boundaries. Explain the current question or wave and why it matters, what changed or was learned, key decisions, blockers, results, relevant artifact or source links, and one important point the user might otherwise miss. Do not narrate low-level actions.
+* Before a user question, state the decision context, viable choices and consequences, an evidence-backed recommendation when available, blockers, and relevant Markdown links.
+* Use a small status marker such as ✅, ⚠️, or ⛔ only when it improves scanning, and pair it with text.
+* At closeout, separate research execution status from planning readiness or decision state. Summarize results, important updates, decisions, blockers or open items, and anything the user might otherwise miss.
+* Advise `/compact` only when stale tool output, superseded reasoning, or completed-wave detail outweighs useful current context and the primary research artifact is current. When advising it, name the state and artifact pointers to retain. Otherwise omit compaction guidance.
+* In a standalone invocation, remain research-only and do not invoke `rpi-plan`. State `/rpi-plan` as the exact advisory next command only when planning readiness and the requested output mode make a handoff appropriate. Otherwise state the explicit no-handoff reason. In an active `rpi-quick` or confirmed automatic RPI Agent context, return the artifact to the parent and state that it continues to the eligible stage automatically after gates and required confirmations pass.
+* End the user-facing closeout with a Markdown table that links every relevant existing artifact and gives each a short description. The table is the final response element.
+
 ## Stop Rules
 
 * Stop with `Needs clarification` when the minimum brief or trusted evidence path is missing and cannot be safely inferred.
@@ -63,12 +73,10 @@ Derive `{{task_slug}}` from the primary target with lower-kebab-case and use the
 
 ## Handoff
 
-The primary artifact owns synthesized questions, findings, canonical evidence IDs, current decisions, user research decisions, and planning readiness. `RPI Researcher` owns each delegated lane artifact and returns compact provenance pointers. The user or rpi-quick decides whether to act on any advisory next step.
+The primary artifact owns synthesized questions, findings, canonical evidence IDs, current decisions, user research decisions, and planning readiness. `RPI Researcher` owns each delegated lane artifact and returns compact provenance pointers. A standalone invocation may advise `/rpi-plan` when readiness and output mode support it, but does not invoke it. The user decides whether to act, unless `rpi-quick` or a confirmed automatic RPI Agent parent owns continuation.
 
 ## Final Response
 
-Return a concise, evidence-first response headed `## rpi-research: [Topic]`. Include the primary artifact path, output mode and decision state, selected approach only when applicable, key evidence, alternatives, unresolved decisions or risks, research-only constraint status, artifact self-check, and the advisory next step or explicit no-handoff reason.
-
-Close with a summary table for Research Artifact, Output Mode and Decision State, Key Discoveries, Alternatives Evaluated, Open Decisions, and Advisory Next Step.
+Return a concise, evidence-first response headed `## rpi-research: [Topic]`. Include research execution status, planning readiness or decision state, selected approach only when applicable, key evidence, alternatives, unresolved decisions or risks, research-only constraint status, artifact self-check, and advisory next step or explicit no-handoff reason. Follow Conversation guidance for conditional compaction advice, standalone or parent-orchestrated continuation, and the final linked artifact table.
 
 

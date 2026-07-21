@@ -18,15 +18,36 @@
 
 ## Plan-to-Change Reconciliation
 
-| Plan scope         | Change evidence               | Reconciliation status             | Gap or rationale     |
-|--------------------|-------------------------------|-----------------------------------|----------------------|
-| {{Pxx_or_Pxx_Txx}} | {{CHG_xxx_or_other_evidence}} | {{Reconciled_Partial_or_Missing}} | {{gap_or_rationale}} |
+| Current plan scope | Descriptive changes-record summary | Current-state reconciliation | Gap or rationale |
+|--------------------|------------------------------------|------------------------------|------------------|
+| {{Pxx_Pxx_Txx_or_Follow_Up_Items}} | {{completed_work_or_plan_update_heading}} | {{Reconciled_Partial_or_Missing}} | {{gap_or_rationale}} |
 
-## Critique and Divergence Assessment
+## Completed Work Assessment
 
-* Critique dispositions: {{coverage_summary}}
-* Amendments and divergences: {{coverage_summary}}
+| Related marker | Files | What changed and why | Completion evidence | Validation | Assessment |
+|----------------|-------|----------------------|---------------------|------------|------------|
+| {{Pxx_or_Pxx_Txx}} | {{workspace_relative_paths}} | {{summary}} | {{evidence}} | {{status_and_evidence}} | {{reconciled_or_gap}} |
+
+## Implementation-Time Plan and Detail Update Assessment
+
+| Affected area or marker | What changed and why | Triggering evidence and user decision | Reconciliation performed | Planning and critique state | Assessment |
+|-------------------------|----------------------|---------------------------------------|--------------------------|----------------------------|------------|
+| {{plan_section_Pxx_Pxx_Txx_or_Follow_Up_Items}} | {{summary}} | {{evidence_and_user_decision_or_none}} | {{current_state_sections_reconciled}} | {{not_needed_or_PC_xxx_and_readiness_state}} | {{reconciled_or_gap}} |
+
+## Critique and Material Revision Assessment
+
+* Latest critique dispositions: {{coverage_summary}}
+* Material revisions: {{discovery_plan_detail_reconciliation_and_fresh_planning_and_critique_coverage}}
+* Dependent-work pause assessment: {{no_early_resumption_or_gap}}
 * Justification assessment: {{supported_or_unresolved_rationale}}
+
+## Plan Follow-Up Assessment
+
+| Follow-up item | Why outside immediate scope | Owner or next action | Assessment and route |
+|----------------|------------------------------|----------------------|----------------------|
+| {{item_or_none}} | {{reason}} | {{owner_or_next_action}} | {{resolved_open_or_distinct_follow_up_route}} |
+
+Unresolved plan follow-up items remain distinct follow-up work. Do not treat them as defects or add them to active `Pxx` or `Pxx-Txx` implementation, completion, or acceptance scope.
 
 ## Findings
 
@@ -46,6 +67,11 @@
 ## Residual Work
 
 * {{none_or_distinct_follow_up_item_with_scope_and_reason}}
+
+## Blockers and Remaining Work
+
+* Blockers: {{none_or_blocker_with_affected_marker_and_next_action}}
+* Remaining active work: {{none_or_remaining_Pxx_or_Pxx_Txx_with_reason_and_next_action}}
 
 ## Validation Evidence
 

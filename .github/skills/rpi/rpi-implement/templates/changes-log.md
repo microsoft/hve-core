@@ -18,29 +18,33 @@
 
 {{outcome_and_actual_progress_across_completed_phases_and_tasks}}
 
-## Changes
+## Completed Work
 
-<!-- rpi:change id=CHG-001 -->
-### CHG-001: {{change_title}}
+Use a descriptive subheading for each completed-work item. Do not assign a per-entry formal ID.
 
-* Related task: {{Pxx_Txx}}
+### {{completed_work_heading}}
+
+* Related phase or task: {{Pxx_or_Pxx_Txx}}
 * Files: {{workspace_relative_paths}}
-* Change: {{what_changed}}
+* What changed and why: {{change_and_reason}}
 * Completion evidence: {{evidence}}
 * Validation: {{run_passed_failed_skipped_or_unavailable}}
 
-## Divergences
+## Implementation-Time Plan and Detail Updates
 
-<!-- rpi:divergence id=DIV-001 -->
-### DIV-001: {{divergence_title}}
+Use a descriptive subheading for each update. The plan and details remain the current-state authority; this record retains rationale and evidence history.
 
-* Related task: {{Pxx_or_Pxx_Txx}}
-* Linked amendment: AM-001
-* Trigger and evidence: {{why_divergence_was_needed}}
-* Actual change: {{what_differed}}
-* Impact: {{scope_acceptance_or_dependency_impact}}
-* Critique disposition: {{Pass_Revise_or_Blocked_after_fresh_critique}}
-* Critique evidence: {{PC_xxx_or_critique_artifact_pointer}}
+### {{plan_or_detail_update_heading}}
+
+* Affected plan area or markers: {{plan_section_Pxx_Pxx_Txx_or_Follow_Up_Items}}
+* What changed: {{current_plan_or_detail_change}}
+* Why: {{rationale}}
+* Triggering evidence: {{evidence}}
+* User answer or decision: {{none_or_confirmed_user_intent}}
+* Reconciliation performed: {{current_sections_details_markers_dependencies_summary_or_follow_up_items_reconciled}}
+* Planning and critique state: {{not_needed_or_awaiting_or_current_readiness_with_PC_xxx_when_material}}
+
+For a follow-up-only update, record why the item is outside immediate scope and its owner or next action here and in `## Follow-Up Items`. Keep it outside active `Pxx` and `Pxx-Txx` implementation, completion, and acceptance claims.
 
 ## Validation Record
 
@@ -52,11 +56,21 @@
 
 * {{none_or_blocker_with_affected_pxx_or_pxx_txx_and_next_action}}
 
-## Follow-On Work
+## Remaining Work
 
-* {{none_or_distinct_follow_on_item_with_reason_and_owner}}
+* {{none_or_remaining_Pxx_or_Pxx_Txx_with_reason_and_next_action}}
 
-## Handoff
+## Follow-Up Items
 
-* Review record: .copilot-tracking/reviews/logs/{{YYYY-MM-DD}}/{{task_slug}}-review.md
-* Open blocker or residual work: {{none_or_description}}
+* Canonical plan list: .copilot-tracking/plans/{{YYYY-MM-DD}}/{{task_slug}}-plan.md, `## Follow-Up Items`
+* {{none_or_follow_up_item_mirrored_from_the_plan_with_reason_and_owner_or_next_action}}
+
+## Return-to-Caller State
+
+* Implementation execution status: {{Complete_Partial_or_Blocked}}
+* Completed and remaining markers: {{Pxx_and_Pxx_Txx_summary}}
+* Validation coverage: {{validation_summary}}
+* Blockers: {{none_or_blocker_summary}}
+* Current plan and detail updates: {{none_or_descriptive_update_summary_with_planning_and_critique_state}}
+* Follow-up items: {{none_or_follow_up_summary}}
+* Affected work state: {{ready_or_awaiting_user_decision_or_fresh_planning_and_critique}}
