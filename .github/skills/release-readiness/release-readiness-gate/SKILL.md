@@ -28,16 +28,16 @@ Gather these before scoring. Note any that are missing; missing evidence is itse
 
 When no rubric is supplied, assess these. Mark any pillar `N/A` with a one-line justification rather than dropping it silently. The Evidence source column names the upstream planner that normally produces each pillar's evidence; pillars without a dedicated planner are assessed directly from codebase signals.
 
-| Pillar                    | Reads as ready when...                             | Evidence source                                                           |
-|---------------------------|----------------------------------------------------|---------------------------------------------------------------------------|
-| Reliability & Performance | SLOs defined and load behavior characterized       | performance-slo-planner (`performance-plans/`)                            |
-| Security                  | No high/critical findings open; controls in place  | Security Planner (`security-plans/`)                                      |
-| Supply Chain              | Dependencies scanned; provenance/SBOM produced     | SSSC Planner (`sssc-plans/`)                                              |
-| Privacy & Data Governance | PII handled, retention and audit defined           | Privacy Planner (`privacy-plans/`)                                        |
-| Responsible AI            | RAI evidence produced (or staged with a trigger)   | RAI Planner (`rai-plans/`)                                                |
-| Observability             | Logs, metrics, traces, and alerting wired          | No dedicated planner; codebase signals (telemetry-foundations vocabulary) |
-| Operational Readiness     | Runbooks, rollback, on-call, and deploy path exist | No dedicated planner; codebase and ops artifacts                          |
-| Accessibility             | Meets the target conformance bar                   | Accessibility Planner (`accessibility/`)                                  |
+| Pillar                    | Reads as ready when...                             | Evidence source                                                                                     |
+|---------------------------|----------------------------------------------------|-----------------------------------------------------------------------------------------------------|
+| Reliability & Performance | SLOs defined and load behavior characterized       | No dedicated planner; codebase signals (CI, load-test results, `performance-plans/` when available) |
+| Security                  | No high/critical findings open; controls in place  | Security Planner (`security-plans/`)                                                                |
+| Supply Chain              | Dependencies scanned; provenance/SBOM produced     | SSSC Planner (`sssc-plans/`)                                                                        |
+| Privacy & Data Governance | PII handled, retention and audit defined           | Privacy Planner (`privacy-plans/`)                                                                  |
+| Responsible AI            | RAI evidence produced (or staged with a trigger)   | RAI Planner (`rai-plans/`)                                                                          |
+| Observability             | Logs, metrics, traces, and alerting wired          | No dedicated planner; codebase signals (telemetry-foundations vocabulary)                           |
+| Operational Readiness     | Runbooks, rollback, on-call, and deploy path exist | No dedicated planner; codebase and ops artifacts                                                    |
+| Accessibility             | Meets the target conformance bar                   | Accessibility Planner (`accessibility/`)                                                            |
 
 ## Procedure
 
@@ -93,7 +93,7 @@ Exactly one verdict applies. Every pillar is Green/`N/A`, Amber, or Red, so a sc
 
 This skill produces a decision, not a fix. After writing the scorecard:
 
-- **No-Go / Red blockers:** route each blocking gap back to the pillar's owning planner (for example a Security Red → Security Planner, a Privacy Red → Privacy Planner, a Reliability Red → performance-slo-planner). Do not remediate here.
+- **No-Go / Red blockers:** route each blocking gap back to the pillar's owning planner (for example a Security Red → Security Planner, a Privacy Red → Privacy Planner, a Supply Chain Red → SSSC Planner). For a pillar with no dedicated planner (Reliability & Performance, Observability, Operational Readiness), open a backlog item against the relevant codebase signal. Do not remediate here.
 - **Conditional-Go:** record each condition with a named owner and a due point (before or shortly after launch), and track them to closure in the scorecard until they clear.
 - **Go:** hand the signed-off scorecard to the launch owner as the go/no-go record.
 - Re-run the gate whenever a routed gap closes or a specialist artifact changes, so the verdict reflects current evidence.
@@ -102,6 +102,8 @@ This skill produces a decision, not a fix. After writing the scorecard:
 
 ```markdown
 # Release Readiness Scorecard: <app> (<scope>)
+
+> **AI-assisted assessment:** This scorecard was produced with AI assistance and requires review and validation by a qualified human reviewer before use in a launch decision. It does not constitute professional advice.
 
 **Verdict:** Go | Conditional-Go | No-Go
 **Date:** <date> · **Rubric:** <trust bar source or "default pillars">
