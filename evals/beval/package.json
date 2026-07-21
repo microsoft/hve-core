@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "private": true,
   "dependencies": {
-    "@github/copilot": "1.0.63",
+    "@github/copilot": "1.0.73",
     "hve-core": "file:../.."
   }
 }
