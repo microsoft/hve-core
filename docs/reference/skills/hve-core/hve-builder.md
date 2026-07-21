@@ -1,15 +1,15 @@
 ---
-title: vally-tests
-description: "Authors Vally conformance tests for prompts, instructions, agents, and skills, including refusals for jailbreak, prompt-injection, harmful-elicitation, TOS, CoC, and PII-extraction stimuli"
-sidebar_position: 8
-ms.date: 2026-07-03
+title: hve-builder
+description: "Author, review, or validate Copilot prompt-engineering artifacts through independent review, behavior testing, and host checks."
+sidebar_position: 4
+ms.date: 2026-07-13
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->
 | Field       | Value                                  |
 |-------------|----------------------------------------|
 | Kind        | skill                                  |
-| Source      | `.github/skills/hve-core/vally-tests`  |
+| Source      | `.github/skills/hve-core/hve-builder`  |
 | Invocation  | Loaded on demand by referencing agents |
 | Interactive | No                                     |
 <!-- END AUTO-GENERATED: metadata -->
@@ -17,7 +17,7 @@ ms.date: 2026-07-03
 ## What it does
 
 <!-- BEGIN AUTO-GENERATED: overview -->
-Authors Vally conformance tests for prompts, instructions, agents, and skills, including refusals for jailbreak, prompt-injection, harmful-elicitation, TOS, CoC, and PII-extraction stimuli
+Author, review, or validate Copilot prompt-engineering artifacts through independent review, behavior testing, and host checks.
 <!-- END AUTO-GENERATED: overview -->
 
 ## When to use it
