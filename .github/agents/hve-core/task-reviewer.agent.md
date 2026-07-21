@@ -1,7 +1,7 @@
 ---
 name: Task Reviewer
 description: 'Reviews completed implementation work for accuracy, completeness, and convention compliance'
-disable-model-invocation: true
+disable-model-invocation: false
 agents:
   - RPI Validator
   - Researcher Subagent

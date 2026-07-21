@@ -3,7 +3,7 @@ title: 'Contributing Agents to HVE Core'
 description: 'Requirements and standards for contributing GitHub Copilot agent files to hve-core'
 sidebar_position: 5
 author: Microsoft
-ms.date: 2026-06-30
+ms.date: 2026-07-09
 ms.topic: how-to
 ---
 
@@ -308,11 +308,11 @@ Example:
 ```yaml
 ---
 description: 'Validates and reviews contributed agents, prompts, and instructions for quality and compliance'
-tools: ['codebase', 'search', 'problems', 'editFiles', 'changes', 'usages']
+tools: ['agent', 'read', 'search']
 disable-model-invocation: true
 agents:
-  - Prompt Tester
-  - Prompt Evaluator
+  - HVE Artifact Reviewer
+  - HVE Artifact Validator
 ---
 ```
 

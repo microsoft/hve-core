@@ -3,7 +3,7 @@ title: SBOM Verification
 description: Verify, download, and inspect the Software Bill of Materials published with each HVE Core release
 sidebar_position: 3
 author: Microsoft
-ms.date: 2026-07-03
+ms.date: 2026-07-08
 ms.topic: how-to
 keywords:
   - SBOM

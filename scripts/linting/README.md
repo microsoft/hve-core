@@ -2,7 +2,7 @@
 title: Linting Scripts
 description: PowerShell scripts for code quality validation and documentation checks
 author: HVE Core Team
-ms.date: 2026-06-30
+ms.date: 2026-07-08
 ms.topic: reference
 keywords:
   - powershell
@@ -234,6 +234,7 @@ Purpose: Detect broken links before deployment.
 
 ##### Features
 
+* Discovers tracked and untracked, non-ignored Markdown files so local validation does not require staging
 * Checks internal and external links
 * Configurable via `markdown-link-check.config.json`
 * Retries failed links
@@ -521,14 +522,21 @@ Purpose: Execute Python test suites for all Python skills that include a `tests/
 
 The linting directory also contains these scripts that are not yet covered in the earlier sections:
 
-| Script                          | Purpose                                                                       |
-|---------------------------------|-------------------------------------------------------------------------------|
-| `Invoke-JsonLint.ps1`           | Validate strict JSON syntax using System.Text.Json                            |
-| `Validate-HookManifests.ps1`    | Validate collection-scoped hook manifests under `.github/hooks/`              |
-| `Validate-PlannerArtifacts.ps1` | Validate AI artifact footer and disclaimer presence in instruction templates  |
-| `Test-ModelReferences.ps1`      | Validate model references in agent and prompt files against the model catalog |
-| `Update-ModelCatalog.ps1`       | Refresh the model catalog from GitHub docs data                               |
-| `Format-MarkdownTables.ps1`     | Normalize markdown tables to the repository formatting convention             |
+| Script                             | Purpose                                                                                              |
+|------------------------------------|------------------------------------------------------------------------------------------------------|
+| `Invoke-JsonLint.ps1`              | Validate strict JSON syntax using System.Text.Json                                                   |
+| `Validate-HookManifests.ps1`       | Validate collection-scoped hook manifests under `.github/hooks/`                                     |
+| `Validate-PlannerArtifacts.ps1`    | Validate AI artifact footer and disclaimer presence in instruction templates                         |
+| `Test-ModelReferences.ps1`         | Validate model references in agent and prompt files against the model catalog                        |
+| `Test-ExtensionArtifactNaming.ps1` | Validate extension-vsix artifact producer and consumer naming across the extension release workflows |
+| `Update-ModelCatalog.ps1`          | Refresh the model catalog from GitHub docs data                                                      |
+| `Format-MarkdownTables.ps1`        | Normalize markdown tables to the repository formatting convention                                    |
+
+## npm Scripts
+
+| npm Script                       | Description                                                                                                            |
+|----------------------------------|------------------------------------------------------------------------------------------------------------------------|
+| `lint:extension-artifact-naming` | Run `pwsh -NoProfile -File scripts/linting/Test-ExtensionArtifactNaming.ps1` to validate extension VSIX artifact names |
 
 ## Shared Module
 
@@ -562,7 +570,7 @@ Common helper functions for file discovery and git operations.
 
 #### `Get-ChangedFilesFromGit`
 
-Detects files changed in current branch compared to main.
+Detects files changed in the current branch compared to a base branch, and always supplements this list with working-tree (staged/unstaged) and untracked files, regardless of the branch context.
 
 ##### Parameters
 
@@ -575,7 +583,8 @@ Returns: Array of changed file paths
 
 1. `git merge-base` with specified base branch
 2. `git diff HEAD~1` when merge-base fails
-3. `git diff HEAD` for staged/unstaged files
+3. `git diff --name-only HEAD` for working tree staged/unstaged files
+4. `git ls-files --others --exclude-standard` for untracked, non-ignored files
 
 #### `Get-FilesRecursive`
 
