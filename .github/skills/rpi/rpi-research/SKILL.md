@@ -19,12 +19,35 @@ Derive `{{task_slug}}` from the primary target with lower-kebab-case and use the
 ## Flow
 
 1. Establish the research brief in the primary artifact: topic, purpose, audience or use, scope and non-goals, criteria, requested outputs, output mode, initial questions, and task-specific budget. Infer an initial topic only when the conversation provides enough context, and label assumptions for verification.
-2. At intake, survey available extensions for the research inputs and evidence path. Matching instruction files apply automatically by `applyTo` glob; skills activate from semantic description match; subagents require parent dispatch by stable frontmatter name and host visibility or registration. Record every relevant instruction, skill, and research-specialist subagent as selected or skipped with its provenance and authority boundary.
-3. Apply this precedence when resolving extensions: platform and host safety; explicit caller scope and criteria; matching repository instructions and enforced schemas; this rpi-research contract; domain skills and specialists; examples and preferences. Extensions may add scoped criteria or evidence, but cannot redirect the research phase, widen writes, grant tools, weaken safety, or silently decide for the user.
-4. Use the native `vscode_askQuestions` tool for an optional intake checkpoint only when answers about topic, scope, criteria, or priorities would materially change the research. Batch a small set of decision-relevant questions, prefer fixed options with a freeform choice where useful, and do not request secrets. If inputs are sufficient or the tool is unavailable, continue and record the no-interaction rationale.
-5. Run the prior-knowledge gate, decompose answerable questions, classify independent lanes, and establish an evidence-based budget. Use `RPI Researcher` as the default general worker for every delegated internal, external, or hybrid lane. Dispatch a discovered specialist only when its routing description materially fits an independent lane and its declared tools and output contract suit the need. Pass topic, questions, criteria, scope, budget, an exact caller-approved candidate lane path under the parent-approved research/subagents path or a mirrored trusted subagents path, and the distinct parent primary artifact path. Parallelize only independent lanes.
+2. Determine applicable extensions at intake.
+	* Apply matching instruction files by `applyTo` glob to the research inputs and evidence path.
+	* Identify domain skills whose descriptions match the topic or evidence need.
+	* Identify research-specialist subagents by stable frontmatter name, routing description, and host visibility or registration.
+	* Record every relevant instruction, skill, and specialist as selected or skipped with its provenance and scoped authority or output contract.
+3. Resolve extensions in this order:
+	1. Platform and host safety
+	2. Explicit caller scope and criteria
+	3. Matching repository instructions and enforced schemas
+	4. This rpi-research contract
+	5. Domain skills and specialists
+	6. Examples and preferences
+	Extensions may add scoped criteria or evidence. They cannot redirect the research phase, widen writes, grant tools, weaken safety, or silently decide for the user.
+4. Use the native `vscode_askQuestions` tool for an optional intake checkpoint only when an answer about topic, scope, criteria, or priorities would materially change the research.
+	1. Batch a small set of decision-relevant questions and prefer fixed options with a freeform choice where useful.
+	2. Do not request secrets.
+	3. When inputs are sufficient or interaction is unavailable, continue and record the no-interaction rationale.
+5. Select and run the research action.
+	1. Run the prior-knowledge gate, decompose answerable questions, classify independent lanes, and establish an evidence-based budget.
+	2. Use `RPI Researcher` as the default general worker for every delegated internal, external, or hybrid lane.
+	3. Select a discovered specialist only when its routing description fits an independent lane and its stable name, host visibility or registration, independent-lane fit, and output-contract fit support the dispatch.
+	4. Pass topic, questions, criteria, scope, budget, an exact caller-approved candidate lane path under the parent-approved research/subagents path or a mirrored trusted subagents path, and the distinct parent primary artifact path.
+	5. Parallelize only independent lanes. When suitable dispatch is unavailable, investigate the focused lane inline and record the fallback.
 6. Run and record each research wave: assess, classify, plan, delegate or investigate, reflect, narrow, stop, compress, and synthesize. Reflect after each material search or worker return as a separate action. Keep worker returns compact and lift their evidence into the primary artifact rather than duplicating raw output.
-7. Map findings to questions and stable `C#` and `W#` evidence IDs. Record alternatives, current and unresolved decisions, risks, potential further research, and planning readiness. Select one recommendation only when the caller requests convergence. For analysis, audit, comparison, research-only, or no-handoff output, record the requested output mode and decision state without selecting an implementation recommendation outside caller intent.
+7. Map findings to questions and stable `C#` and `W#` evidence IDs. Record alternatives, current and unresolved decisions, risks, potential further research, Planning Readiness, and Research disposition.
+	* In `convergence` mode, select one recommendation only when the evidence supports it.
+	* In `analysis`, `audit`, or `comparison` mode, record the decision state without selecting an implementation recommendation outside caller intent.
+	* In `research-only` or `no-handoff` mode, record the evidence and explicit no-handoff reason.
+	* Use `references/research.md` to record whether the selected output mode supports planning and to determine continuation.
 8. After initial findings, optionally use `vscode_askQuestions` to ask whether to pursue selected further research, defer it, or stop at current evidence. Before continuing, write answers, unanswered questions, resulting decisions, and selected further-research items into the primary artifact.
 9. Offer an optional walkthrough checkpoint after the research is usable. Use `vscode_askQuestions` to let the caller select researched items or questions to walk through, then use the primary artifact as the navigable source of truth. Continue without interaction when the checkpoint is unavailable, declined, or unnecessary.
 
@@ -61,7 +84,7 @@ Derive `{{task_slug}}` from the primary target with lower-kebab-case and use the
 * Use a small status marker such as ✅, ⚠️, or ⛔ only when it improves scanning, and pair it with text.
 * At closeout, separate research execution status from planning readiness or decision state. Summarize results, important updates, decisions, blockers or open items, and anything the user might otherwise miss.
 * Advise `/compact` only when stale tool output, superseded reasoning, or completed-wave detail outweighs useful current context and the primary research artifact is current. When advising it, name the state and artifact pointers to retain. Otherwise omit compaction guidance.
-* In a standalone invocation, remain research-only and do not invoke `rpi-plan`. State `/rpi-plan` as the exact advisory next command only when planning readiness and the requested output mode make a handoff appropriate. Otherwise state the explicit no-handoff reason. In an active `rpi-quick` or confirmed automatic RPI Agent context, return the artifact to the parent and state that it continues to the eligible stage automatically after gates and required confirmations pass.
+* Apply the continuation contract in `references/research.md` at closeout. In standalone context, remain research-only and do not invoke a peer phase. Return the primary artifact to an active `rpi-quick` or RPI Agent parent for parent-owned continuation.
 * End the user-facing closeout with a Markdown table that links every relevant existing artifact and gives each a short description. The table is the final response element.
 
 ## Stop Rules
@@ -73,10 +96,10 @@ Derive `{{task_slug}}` from the primary target with lower-kebab-case and use the
 
 ## Handoff
 
-The primary artifact owns synthesized questions, findings, canonical evidence IDs, current decisions, user research decisions, and planning readiness. `RPI Researcher` owns each delegated lane artifact and returns compact provenance pointers. A standalone invocation may advise `/rpi-plan` when readiness and output mode support it, but does not invoke it. The user decides whether to act, unless `rpi-quick` or a confirmed automatic RPI Agent parent owns continuation.
+The primary artifact owns synthesized questions, findings, canonical evidence IDs, current decisions, user research decisions, Research disposition, and Planning Readiness. `RPI Researcher` owns each delegated lane artifact and returns compact provenance pointers. Apply the canonical continuation contract in `references/research.md`: standalone research provides only its permitted advisory, while `rpi-quick` and a confirmed automatic RPI Agent own any eligible continuation.
 
 ## Final Response
 
-Return a concise, evidence-first response headed `## rpi-research: [Topic]`. Include research execution status, planning readiness or decision state, selected approach only when applicable, key evidence, alternatives, unresolved decisions or risks, research-only constraint status, artifact self-check, and advisory next step or explicit no-handoff reason. Follow Conversation guidance for conditional compaction advice, standalone or parent-orchestrated continuation, and the final linked artifact table.
+Return a concise, evidence-first response headed `## rpi-research: [Topic]`. Include research execution status, Research disposition, Planning Readiness or decision state, selected approach only when applicable, key evidence, alternatives, unresolved decisions or risks, research-only constraint status, artifact self-check, and the continuation record required by `references/research.md`. Follow Conversation guidance for conditional compaction advice, standalone or parent-owned continuation, and the final linked artifact table.
 
 

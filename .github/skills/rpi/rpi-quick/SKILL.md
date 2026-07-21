@@ -15,9 +15,10 @@ Coordinate one task through evidence, planning, execution, review, and explicit 
 ## Flow
 
 1. Assess research readiness from caller-supplied research, task details, decisions, and plan inputs.
-	* Activate `rpi-research` only when evidence is missing, stale, contradictory, insufficient for planning, or when complexity, uncertainty, dependencies, risk, or a decision-critical question warrants investigation.
-	* When evidence is adequate, record why Research is reused or satisfied-and-skipped.
-	* Continue to Plan only after the research-readiness decision is recorded.
+	1. Activate `rpi-research` only when evidence is missing, stale, contradictory, insufficient for planning, or when complexity, uncertainty, dependencies, risk, or a decision-critical question warrants investigation. Record Research disposition `executed` and consume the primary artifact's Planning Readiness.
+	2. When evidence is adequate, record disposition `reused` or `satisfied-and-skipped` with the evidence that supports it.
+	3. Apply the `rpi-research` continuation contract. Continue to Plan without another stage-start command only when either an executed Research primary artifact records Planning Readiness `Ready`, or reused or satisfied-and-skipped evidence is adequate, and all applicable gates pass, blockers clear, and required confirmations are explicit.
+	4. When Research is `Blocked`, `Needs clarification`, or `Not ready`, or another transition requirement is not met, stop in Research and record the blocker or next action.
 2. Run `rpi-plan` to create or revise the ordinary Markdown plan and phase details. Its `rpi-plan-critique` gate is internal to planning and returns its disposition to the planning parent.
 3. Run `rpi-implement` for approved `Pxx` and `Pxx-Txx` work. Consume its return, including completed and remaining markers, validation coverage, blockers, plan and detail updates, follow-up items, and readiness or the reason work is awaiting a decision or fresh planning and critique.
 4. Run `rpi-review` only after Implementation returns and no affected work awaits a user decision or fresh planning and critique. Compare the current plan, details, critique, descriptive changes record, and validation evidence. Record execution status separately from outcome.
@@ -43,7 +44,7 @@ When Review finds active-task work, return to the earliest affected stage. When 
 ## Success criteria
 
 * One task identity, date, and task slug link any durable artifacts.
-* Research readiness records why `rpi-research` is activated or why Research is reused or satisfied-and-skipped.
+* Research readiness records the `executed`, `reused`, or `satisfied-and-skipped` disposition, Planning Readiness or adequacy evidence, and the gates or confirmations that permit or stop continuation.
 * Each phase uses the matching RPI skill rather than duplicating its workflow.
 * Planning uses marker-addressed plain Markdown artifacts and independent critique evidence, including a fresh planning and critique pass for a material implementation revision.
 * Implementation returns descriptive evidence, current plan and detail updates, validation coverage, blockers, and follow-up items. Affected dependent work does not resume before the updated plan is implementation-ready under the planner's current critique contract.
@@ -76,7 +77,7 @@ When Review finds active-task work, return to the earliest affected stage. When 
 
 ## Handoff
 
-As the explicit parent, use `rpi-research` only when the research-readiness assessment warrants investigation. Otherwise hand adequate evidence to `rpi-plan` and record the reused or satisfied-and-skipped disposition. Continue through `rpi-implement` and `rpi-review` only when their prerequisites are met. Follow-up routes to the earliest affected stage or a distinct next task. Do not wait for another user command between eligible stages, but pause for a blocker or required confirmation.
+As the explicit parent, use the `rpi-research` continuation contract. Activate Research only when the research-readiness assessment warrants investigation; otherwise record the reused or satisfied-and-skipped disposition and adequacy evidence. Continue to Plan only through the contract's eligible Research outcome. Continue through `rpi-implement` and `rpi-review` only when their prerequisites are met. Follow-up routes to the earliest affected stage or a distinct next task. Do not wait for another user command between eligible stages, but pause for a blocker or required confirmation.
 
 ## Final response contract
 

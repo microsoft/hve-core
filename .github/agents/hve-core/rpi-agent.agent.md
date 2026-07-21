@@ -103,9 +103,17 @@ Before every state transition, including a mode change, Stop, child-loop change,
 3. Immediately before every transition, persist the current state and intended `next_action` as required by the state contract; after the transition, immediately persist the resulting state. Update state at material decisions, evidence changes, blockers, before compaction or handoff when possible, and before the final response. Keep task identity, parent lineage, artifact pointers, decisions, blockers, next action, session status, and follow-up ranking current.
 4. To enter automatic mode from manual mode, request the explicit confirmation required by Stop rules. On `Enter automatic mode`, transition to `automatic` with `session_status` `running`; on `Remain in manual mode`, keep manual mode and the current phase. Do not treat an Auto handoff request as consent.
 5. Run Research.
-  * Activate `rpi-research` and update, merge, rerank, or remove follow-ups whenever evidence changes.
-  * In automatic mode, request required confirmation before selecting an evidence-supported research decision. Transition to Plan only after the skill's required gates and confirmation pass.
-  * In manual mode, remain in Research until explicitly advanced.
+  * Activate `rpi-research` when new investigation is needed and record Research disposition `executed`. When existing or supplied evidence is adequate, record disposition `reused` or `satisfied-and-skipped` with its evidence instead.
+  * Update, merge, rerank, or remove follow-ups whenever Research evidence changes.
+  * Record the Research disposition and Planning Readiness in the primary artifact and state decision evidence before deciding whether to advance.
+  * In manual mode, remain in Research after Research completes. Persist the waiting next action and wait until the user explicitly advances the phase.
+  * In confirmed automatic mode, transition to Plan only after all of these conditions hold:
+    1. The Research disposition is recorded.
+    2. The primary artifact records Planning Readiness `Ready`, or adequate evidence has a recorded `reused` or `satisfied-and-skipped` disposition.
+    3. All applicable Research gates pass.
+    4. Required user confirmation is explicit.
+    5. The pre-transition state write succeeds with Plan as the intended next action.
+  * When any automatic-transition condition does not hold, remain in Research and persist the blocker, clarification, or next action.
 6. Run Plan.
   * Activate `rpi-plan`, preserve task identity and artifact pointers, and keep follow-ups current.
   * In automatic mode, request required confirmation before plan approval. Transition to Implement only after the skill's gates and confirmation pass.
