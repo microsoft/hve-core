@@ -1,15 +1,15 @@
 ---
-title: Phase Implementor
-description: Executes a single implementation phase from a plan with full codebase access and change tracking
-sidebar_position: 9
-ms.date: 2026-07-05
+title: HVE Artifact Author
+description: Creates or edits approved prompt-engineering artifacts against the HVE quality catalog and repository conventions. Dispatched by hve-builder.
+sidebar_position: 1
+ms.date: 2026-07-13
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->
 | Field       | Value                                                                    |
 |-------------|--------------------------------------------------------------------------|
 | Kind        | agent                                                                    |
-| Source      | `.github/agents/hve-core/subagents/phase-implementor.agent.md`           |
+| Source      | `.github/agents/hve-core/subagents/hve-artifact-author.agent.md`         |
 | Invocation  | Delegated subagent, dispatched by a parent agent (not selected directly) |
 | Interactive | No                                                                       |
 <!-- END AUTO-GENERATED: metadata -->
@@ -17,7 +17,7 @@ ms.date: 2026-07-05
 ## What it does
 
 <!-- BEGIN AUTO-GENERATED: overview -->
-Executes a single implementation phase from a plan with full codebase access and change tracking
+Creates or edits approved prompt-engineering artifacts against the HVE quality catalog and repository conventions. Dispatched by hve-builder.
 <!-- END AUTO-GENERATED: overview -->
 
 ## When to use it

@@ -1,7 +1,7 @@
 ---
 title: Hve Core/Pull Request
 description: "Pull request description generation and creation via diff analysis, subagent review, and MCP tools"
-sidebar_position: 7
+sidebar_position: 8
 ms.date: 2026-07-03
 ---
 

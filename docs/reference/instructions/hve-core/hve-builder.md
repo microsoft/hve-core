@@ -1,7 +1,7 @@
 ---
-title: Hve Core/Prompt Builder
-description: Legacy Prompt Builder instruction alias that points matching AI artifacts to the canonical HVE Builder standard
-sidebar_position: 7
+title: Hve Core/Hve Builder
+description: "Authoring standards for prompts, agents, subagents, instructions, and skills, grounded in the frontier-LLM instruction-quality research"
+sidebar_position: 4
 ms.date: 2026-07-13
 ---
 
@@ -9,7 +9,7 @@ ms.date: 2026-07-13
 | Field       | Value                                                                                       |
 |-------------|---------------------------------------------------------------------------------------------|
 | Kind        | instruction                                                                                 |
-| Source      | `.github/instructions/hve-core/prompt-builder.instructions.md`                              |
+| Source      | `.github/instructions/hve-core/hve-builder.instructions.md`                                 |
 | Invocation  | Applied automatically to `**/*.prompt.md, **/*.agent.md, **/*.instructions.md, **/SKILL.md` |
 | Interactive | No                                                                                          |
 <!-- END AUTO-GENERATED: metadata -->
@@ -17,7 +17,7 @@ ms.date: 2026-07-13
 ## What it does
 
 <!-- BEGIN AUTO-GENERATED: overview -->
-Legacy Prompt Builder instruction alias that points matching AI artifacts to the canonical HVE Builder standard
+Authoring standards for prompts, agents, subagents, instructions, and skills, grounded in the frontier-LLM instruction-quality research
 <!-- END AUTO-GENERATED: overview -->
 
 ## When to use it
