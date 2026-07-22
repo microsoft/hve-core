@@ -41,8 +41,6 @@ function Measure-CompareTrials {
     $winRates = [System.Collections.Generic.List[double]]::new()
     $ciLows = [System.Collections.Generic.List[double]]::new()
     $ciHighs = [System.Collections.Generic.List[double]]::new()
-    $mcnemar = $null
-    $metricDeltas = @()
 
     foreach ($line in $Lines) {
         if ([string]::IsNullOrWhiteSpace($line)) { continue }
@@ -88,8 +86,6 @@ function Measure-CompareTrials {
         }
         if ($summary.PSObject.Properties['meanScore'] -and $null -ne $summary.meanScore) { $meanScores.Add([double]$summary.meanScore) }
         if ($summary.PSObject.Properties['winRate'] -and $null -ne $summary.winRate) { $winRates.Add([double]$summary.winRate) }
-        if ($summary.PSObject.Properties['mcnemar'] -and $summary.mcnemar) { $mcnemar = $summary.mcnemar }
-        if ($summary.PSObject.Properties['metricDeltas'] -and $summary.metricDeltas) { $metricDeltas = @($summary.metricDeltas) }
     }
 
     $meanScore = if ($meanScores.Count -gt 0) { ($meanScores | Measure-Object -Average).Average } else { 0.0 }
@@ -108,8 +104,6 @@ function Measure-CompareTrials {
         WinRate      = [math]::Round($winRate, 4)
         CiLow        = [math]::Round($ciLow, 4)
         CiHigh       = [math]::Round($ciHigh, 4)
-        Mcnemar      = $mcnemar
-        MetricDeltas = $metricDeltas
     }
 }
 

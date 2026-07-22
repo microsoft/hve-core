@@ -123,7 +123,7 @@ if (Test-Path -LiteralPath $compareJsonlPath) {
 }
 else {
     Write-Warning "Compare output not found at $compareJsonlPath; compare tally will be zero."
-    $compare = @{ Total = 0; Ties = 0; AWins = 0; BWins = 0; PerStimulus = @{}; SummaryCount = 0; MeanScore = 0.0; WinRate = 0.0; CiLow = 0.0; CiHigh = 0.0; Mcnemar = $null; MetricDeltas = @() }
+    $compare = @{ Total = 0; Ties = 0; AWins = 0; BWins = 0; PerStimulus = @{}; SummaryCount = 0; MeanScore = 0.0; WinRate = 0.0; CiLow = 0.0; CiHigh = 0.0 }
 }
 
 $defaultVariantA = @{ kind = 'baseline'; name = 'baseline';   label = 'Baseline (A)';   description = ''; applied = @() }

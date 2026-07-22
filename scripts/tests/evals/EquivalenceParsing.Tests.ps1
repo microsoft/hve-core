@@ -54,12 +54,6 @@ Describe 'Measure-CompareTrials' -Tag 'Unit' {
         $script:Tally.WinRate | Should -Be 0.25
     }
 
-    It 'Carries the McNemar statistic' {
-        $script:Tally.Mcnemar.baselineOnly | Should -Be 1
-        $script:Tally.Mcnemar.treatmentOnly | Should -Be 1
-        $script:Tally.Mcnemar.pValue | Should -Be 1.0
-    }
-
     It 'Reports a summary count for records carrying confidence-interval statistics' {
         $script:Tally.SummaryCount | Should -Be 1
     }

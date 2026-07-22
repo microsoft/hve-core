@@ -61,40 +61,40 @@ Each `vally compare --eval-spec compare.eval.yml --baseline <baseline-run-dir> -
 The driver aggregates one JSONL per model into a single JSON summary; the summary is the contract every downstream consumer (PR bot, nightly dashboard, future change-detection workflow) reads.
 The compare invocation deliberately omits `--fail-on-regression` so `Get-VerdictFromAggregate` remains the single equivalence authority instead of double-counting the same regression signal.
 
-| Field                | Type   | Meaning                                                                                                                                                                    |
-|----------------------|--------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `agent`              | string | Agent slug under test (matches `-Agent`)                                                                                                                                   |
-| `tier`               | string | `pr` (advisory, exit 0) or `nightly` (authoritative, exit 1 on fail)                                                                                                       |
-| `model`              | string | Primary model for the run: PR tier resolves `-Model` override, then frontmatter `model:` hint, then the cheap default (`gpt-5.6-luna`); nightly runs its fixed model array |
-| `stimulusFilter`     | string | Regex applied to stimulus names; empty when the full corpus ran                                                                                                            |
-| `runs`               | int    | Total non-errored comparison trials parsed across all `--output` JSONL files                                                                                              |
-| `ties`               | int    | Trials with `winner: "tie"`; neither environment showed a clear preference                                                                                                |
-| `aWins`              | int    | Trials with `winner: "baseline"`; the customization underperformed                                                                                                        |
-| `bWins`              | int    | Trials with `winner: "treatment"`; the customization outperformed                                                                                                         |
-| `meanScore`          | number | Unweighted average, across records and models, of signed treatment-relative `summary.meanScore` values (positive favors the customization); reporting only                 |
-| `ciLow`              | number | Conservative maximum lower bound of `summary.ciLow` across records and models                                                                                              |
-| `ciHigh`             | number | Conservative minimum upper bound of `summary.ciHigh` across records and models                                                                                             |
-| `winRate`            | number | Unweighted average, across records and models, of `summary.winRate` values; reporting only                                                                                  |
-| `invariantFailures`  | int    | Spec-level invariant violations plus a baseline `vally eval` nonzero-exit fallback when no invariant count can be read                                                     |
+| Field                | Type   | Meaning                                                                                                                                                                      |
+|----------------------|--------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `agent`              | string | Agent slug under test (matches `-Agent`)                                                                                                                                     |
+| `tier`               | string | `pr` (advisory, exit 0) or `nightly` (authoritative, exit 1 on fail)                                                                                                         |
+| `model`              | string | Primary model for the run: PR tier resolves `-Model` override, then frontmatter `model:` hint, then the cheap default (`gpt-5.6-luna`); nightly runs its fixed model array   |
+| `stimulusFilter`     | string | Regex applied to stimulus names; empty when the full corpus ran                                                                                                              |
+| `runs`               | int    | Total non-errored comparison trials parsed across all `--output` JSONL files                                                                                                 |
+| `ties`               | int    | Trials with `winner: "tie"`; neither environment showed a clear preference                                                                                                   |
+| `aWins`              | int    | Trials with `winner: "baseline"`; the customization underperformed                                                                                                           |
+| `bWins`              | int    | Trials with `winner: "treatment"`; the customization outperformed                                                                                                            |
+| `meanScore`          | number | Unweighted average, across records and models, of signed treatment-relative `summary.meanScore` values (positive favors the customization); reporting only                   |
+| `ciLow`              | number | Conservative maximum lower bound of `summary.ciLow` across records and models                                                                                                |
+| `ciHigh`             | number | Conservative minimum upper bound of `summary.ciHigh` across records and models                                                                                               |
+| `winRate`            | number | Unweighted average, across records and models, of `summary.winRate` values; reporting only                                                                                   |
+| `invariantFailures`  | int    | Spec-level invariant violations plus a baseline `vally eval` nonzero-exit fallback when no invariant count can be read                                                       |
 | `divergenceFailures` | int    | Customized `vally eval` nonzero exits and one signal per compare run that exits nonzero, emits no parseable comparison records, or carries trials without summary statistics |
-| `verdict`            | string | Aggregated verdict; see [Pass and Fail Interpretation](#pass-and-fail-interpretation)                                                                                      |
-| `variants`           | list   | Per-model variant metadata (model id, baseline run directory, customized run directory)                                                                                    |
-| `compareLogs`        | list   | Absolute paths to every captured `vally compare` console log; the sibling `--output` JSONL lives at `logs/vally-compare-<model>-<runId>.jsonl`                            |
+| `verdict`            | string | Aggregated verdict; see [Pass and Fail Interpretation](#pass-and-fail-interpretation)                                                                                        |
+| `variants`           | list   | Per-model variant metadata (model id, baseline run directory, customized run directory)                                                                                      |
+| `compareLogs`        | list   | Absolute paths to every captured `vally compare` console log; the sibling `--output` JSONL lives at `logs/vally-compare-<model>-<runId>.jsonl`                               |
 
 The verdict field is derived from `ciLow`/`ciHigh` and the failure counts by `Get-VerdictFromAggregate` in [scripts/evals/lib/EquivalenceParsing.psm1](../../scripts/evals/lib/EquivalenceParsing.psm1); the exact rule is documented below.
 
-`meanScore` and `winRate` are unweighted diagnostics, not pooled estimates. When multiple comparison records are present, dashboard-only McNemar and metric-delta details come from the last record that supplies them.
+`meanScore` and `winRate` are unweighted diagnostics, not pooled estimates.
 
 ### Lint commands
 
 The baseline-equivalence specs live in two subdirectories (`baseline/eval.yaml` and `customized/eval.yaml`) so the driver can invoke them as a paired set. The repository-wide `npm run eval:lint:vally` task runs `vally lint --eval-spec evals/` and discovers both nested specs. Use the explicit commands below for targeted validation:
 
-| Command                                                                         | Purpose                                                                            |
-|---------------------------------------------------------------------------------|------------------------------------------------------------------------------------|
-| `vally lint --eval-spec evals/baseline-equivalence/baseline/eval.yaml`           | Schema-validate the empty baseline spec                                            |
-| `vally lint --eval-spec evals/baseline-equivalence/customized/eval.yaml`         | Schema-validate the materialized customized spec (includes the divergence graders) |
-| `vally lint --eval-spec evals/baseline-equivalence/compare.eval.yml`             | Validate the A/B compare spec consumed by `vally compare`                          |
-| `npm run eval:run:equivalence`                                                  | Run both specs end to end via `vally eval --eval-spec ...` (no driver, no compare) |
+| Command                                                                  | Purpose                                                                            |
+|--------------------------------------------------------------------------|------------------------------------------------------------------------------------|
+| `vally lint --eval-spec evals/baseline-equivalence/baseline/eval.yaml`   | Schema-validate the empty baseline spec                                            |
+| `vally lint --eval-spec evals/baseline-equivalence/customized/eval.yaml` | Schema-validate the materialized customized spec (includes the divergence graders) |
+| `vally lint --eval-spec evals/baseline-equivalence/compare.eval.yml`     | Validate the A/B compare spec consumed by `vally compare`                          |
+| `npm run eval:run:equivalence`                                           | Run both specs end to end via `vally eval --eval-spec ...` (no driver, no compare) |
 
 Run the three `vally lint` commands before pushing a change to this suite. The presence linter ([scripts/evals/Test-StimulusPresence.ps1](../../scripts/evals/Test-StimulusPresence.ps1)) is wired into the changed-artifact lane and is documented in [docs/contributing/evals-ci.md](../../docs/contributing/evals-ci.md).
 
