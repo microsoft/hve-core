@@ -53,6 +53,7 @@ Use HVE Core when you want AI-assisted work to be repeatable, standards-aligned,
 
 > [!TIP]
 > Use [HVE Core All Extension](https://marketplace.visualstudio.com/items?itemName=ise-hve-essentials.hve-core-all) when you want the full collection deployment. See [Collections Overview](docs/getting-started/collections.md).
+
 > [!TIP]
 > Using GitHub Copilot CLI? Install as a plugin instead:
 >

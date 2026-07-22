@@ -14,7 +14,10 @@ Use this edition when you want access to everything without choosing a focused c
 > Workflows, interfaces, architecture, and recommended practices may change substantially, including in ways that are not backward compatible, as the technology landscape evolves. Evaluate all materials for your own requirements and risk tolerance.
 > The HVE Builder skill (use with `/hve-builder`) and GitHub Copilot can help you adapt or copy relevant patterns into an agentic SDLC that you own and maintain independently.
 > To build an independent implementation, start with [Forking and Extending HVE Core](https://microsoft.github.io/hve-core/docs/customization/forking/) and review the [HVE Core documentation](https://microsoft.github.io/hve-core/) before adopting any component.
->
+
+<!-- Keep these cautions separate so each limitation renders independently. -->
+
+> [!CAUTION]
 > This collection includes security, responsible AI, and supply chain security agents and prompts that are **assistive tools only**.
 > They do not replace professional security tooling (SAST, DAST, SCA, penetration testing, compliance scanners) or qualified human review.
 > All AI-generated security and compliance artifacts **must** be reviewed and validated by qualified professionals before use.
