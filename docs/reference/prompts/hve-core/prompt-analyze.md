@@ -1,8 +1,8 @@
 ---
 title: Prompt Analyze
-description: Evaluate prompt engineering artifacts against quality criteria and report findings
+description: Review prompt-engineering artifacts without source edits through HVE Builder review mode
 sidebar_position: 8
-ms.date: 2026-07-03
+ms.date: 2026-07-13
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->
@@ -17,7 +17,7 @@ ms.date: 2026-07-03
 ## What it does
 
 <!-- BEGIN AUTO-GENERATED: overview -->
-Evaluate prompt engineering artifacts against quality criteria and report findings
+Review prompt-engineering artifacts without source edits through HVE Builder review mode
 <!-- END AUTO-GENERATED: overview -->
 
 ## When to use it

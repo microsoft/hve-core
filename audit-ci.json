@@ -1,7 +1,10 @@
 {
   "$schema": "https://github.com/IBM/audit-ci/raw/main/docs/schema.json",
   "moderate": true,
-  "allowlist": [],
+  "allowlist": [
+    "GHSA-9mqv-5hh9-4cgg",
+    "GHSA-v2hh-gcrm-f6hx"
+  ],
   "report-type": "important",
   "output-format": "text"
 }

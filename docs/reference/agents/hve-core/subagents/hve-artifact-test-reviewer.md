@@ -1,15 +1,15 @@
 ---
-title: Prompt Updater
-description: "Creates and modifies prompts, instructions, agents, and skills following prompt engineering conventions"
-sidebar_position: 6
-ms.date: 2026-07-05
+title: HVE Artifact Test Reviewer
+description: "Independently grades HVE behavior-test evidence with fidelity-aware, severity-graded findings and a verdict. Dispatched by hve-builder-tester."
+sidebar_position: 5
+ms.date: 2026-07-13
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->
 | Field       | Value                                                                    |
 |-------------|--------------------------------------------------------------------------|
 | Kind        | agent                                                                    |
-| Source      | `.github/agents/hve-core/subagents/prompt-updater.agent.md`              |
+| Source      | `.github/agents/hve-core/subagents/hve-artifact-test-reviewer.agent.md`  |
 | Invocation  | Delegated subagent, dispatched by a parent agent (not selected directly) |
 | Interactive | No                                                                       |
 <!-- END AUTO-GENERATED: metadata -->
@@ -17,7 +17,7 @@ ms.date: 2026-07-05
 ## What it does
 
 <!-- BEGIN AUTO-GENERATED: overview -->
-Creates and modifies prompts, instructions, agents, and skills following prompt engineering conventions
+Independently grades HVE behavior-test evidence with fidelity-aware, severity-graded findings and a verdict. Dispatched by hve-builder-tester.
 <!-- END AUTO-GENERATED: overview -->
 
 ## When to use it

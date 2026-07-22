@@ -1,7 +1,7 @@
 ---
 title: Phase Implementor
 description: Executes a single implementation phase from a plan with full codebase access and change tracking
-sidebar_position: 2
+sidebar_position: 9
 ms.date: 2026-07-05
 ---
 
