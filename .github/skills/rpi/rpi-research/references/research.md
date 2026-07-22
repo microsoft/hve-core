@@ -248,7 +248,7 @@ Return a concise, evidence-first response with:
 * The continuation record from Planning Readiness, including the permitted standalone `/rpi-plan` advisory or explicit no-handoff reason, or the active parent's automatic continuation or waiting state
 * Research execution status separate from planning readiness or decision state
 * Conditional `/compact` advice only when stale context warrants compaction, naming the primary research artifact and current state to retain; otherwise no compaction guidance
-* A final Markdown table linking every relevant existing artifact and giving each a short description
+* A final Markdown table linking every relevant existing artifact and giving each a short description. Every file or artifact entry must use a workspace-relative Markdown link in the form `[descriptive label](path/to/file.md)`, with a line or section fragment when useful; do not substitute a plain file name, artifact type, or inline-code path. Keep the table as the final response element.
 
 During material research work, apply Conversation Protocol. Use concise updates only at meaningful boundaries, with evidence, implication, research effect, and relevant artifact or source links. Do not narrate low-level actions, dump worker returns, or repeat unchanged state.
 

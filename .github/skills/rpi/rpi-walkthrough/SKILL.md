@@ -53,7 +53,7 @@ When a ledger is needed, derive `{{task_slug}}` in lower-kebab-case from the pri
 * At closeout, separate walkthrough session status from decisions-and-changes ledger state. Summarize covered segments, important updates, decisions, blockers or open entries, and anything the user might otherwise miss.
 * Advise `/compact` only when stale tool output, superseded reasoning, or completed-segment detail outweighs useful current context and the target and any ledger are current. When advising it, name the state and artifact pointers to retain. Otherwise omit compaction guidance.
 * In a standalone walkthrough, state `/rpi-quick` or the exact applicable `/rpi-*` command only when a ledger entry needs downstream work. Otherwise state the explicit no-handoff reason. In an active `rpi-quick` or confirmed automatic RPI Agent context, return the relevant ledger and evidence to the parent and state that it selects eligible continuation.
-* End the user-facing closeout with a Markdown table that links the walked target and every relevant existing artifact. Include a ledger row only when a ledger exists. The table is the final response element.
+* End the user-facing closeout with a Markdown table that links the walked target and every relevant existing artifact. Every file or artifact entry must use a workspace-relative Markdown link in the form `[descriptive label](path/to/file.md)`, with a line or section fragment when useful; do not substitute a plain file name, artifact type, or inline-code path. Give each entry a short description. Include a ledger row only when a ledger exists. The table is the final response element.
 
 ## Success criteria
 

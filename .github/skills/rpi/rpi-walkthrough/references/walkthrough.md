@@ -187,6 +187,6 @@ Close with a concise summary that contains:
 * When a ledger exists, its path, the counts of material decisions and requested changes, and any remaining open entries.
 * Markdown links to the ledger and its Reconciliation section when a ledger exists.
 * An RPI recommendation only for entries handed off or still requiring downstream work.
-* A final Markdown table that links the walked target and every relevant existing artifact, with a short description.
+* A final Markdown table that links the walked target and every relevant existing artifact, with a short description. Every file or artifact entry must use a workspace-relative Markdown link in the form `[descriptive label](path/to/file.md)`, with a line or section fragment when useful; do not substitute a plain file name, artifact type, or inline-code path. Keep the table as the final response element.
 
 Do not use status emojis in walkthrough headings or bullets. Use the existing human-writing rules, headings, inline links, diagrams, and reference tables to make the message scannable. The final table includes a ledger row and its Reconciliation link only when a ledger exists. It does not invent a ledger link.

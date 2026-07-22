@@ -92,7 +92,7 @@ Before a user question, state the affected decision, viable choices and conseque
 
 During material work, apply the Conversation protocol. Before a user decision, state the decision context, viable choices and consequences, evidence-backed recommendation when available, blockers, and relevant Markdown links.
 
-For standalone use, advise `/rpi-review` only when review prerequisites are met and do not invoke it. When planning or a decision is required, state the explicit stop or no-handoff reason. In `rpi-quick` or confirmed automatic RPI Agent mode, return the artifacts to the parent for automatic continuation after gates and required confirmations pass. End the closeout with a Markdown table linking every relevant existing artifact and a short description. Keep the table as the final response element.
+For standalone use, advise `/rpi-review` only when review prerequisites are met and do not invoke it. When planning or a decision is required, state the explicit stop or no-handoff reason. In `rpi-quick` or confirmed automatic RPI Agent mode, return the artifacts to the parent for automatic continuation after gates and required confirmations pass. End the closeout with a Markdown table linking every relevant existing artifact and a short description. Every file or artifact entry must use a workspace-relative Markdown link in the form `[descriptive label](path/to/file.md)`, with a line or section fragment when useful; do not substitute a plain file name, artifact type, or inline-code path. Keep the table as the final response element.
 
 ## Production-reference hygiene
 

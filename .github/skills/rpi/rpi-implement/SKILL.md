@@ -73,7 +73,7 @@ Deliver the approved outcome using the current plan and phase details as evidenc
 * At closeout, separate implementation execution status from implementation outcome or readiness for review. Summarize results, important updates, decisions, blockers or open items, and anything the user might otherwise miss.
 * Advise `/compact` only when stale tool output, superseded reasoning, or completed task detail outweighs useful current context and the plan, phase details, and changes record are current. When advising it, name the state and artifact pointers to retain. Otherwise omit compaction guidance.
 * In a standalone invocation, do not invoke `rpi-review`. State `/rpi-review` as the exact next command only when review prerequisites are met. When planning or a user decision is still required, state the explicit stop or no-handoff reason. In an active `rpi-quick` or confirmed automatic RPI Agent context, return the current artifacts to the parent so it can continue automatically after gates and required confirmations pass.
-* End the user-facing closeout with a Markdown table that links every relevant existing artifact and gives each a short description. The table is the final response element.
+* End the user-facing closeout with a Markdown table that links every relevant existing artifact and gives each a short description. Every file or artifact entry must use a workspace-relative Markdown link in the form `[descriptive label](path/to/file.md)`, with a line or section fragment when useful; do not substitute a plain file name, artifact type, or inline-code path. The table is the final response element.
 
 ## Stop rules
 
