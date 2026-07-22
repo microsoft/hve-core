@@ -1,15 +1,15 @@
 ---
-title: Prompt Evaluator
-description: Evaluates prompt execution results against Prompt Quality Criteria with severity-graded findings and remediation guidance
-sidebar_position: 4
-ms.date: 2026-07-05
+title: HVE Artifact Reviewer
+description: Independently reviews prompt-engineering artifacts against the HVE rubric and returns bounded findings plus a verdict. Dispatched by hve-builder.
+sidebar_position: 3
+ms.date: 2026-07-13
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->
 | Field       | Value                                                                    |
 |-------------|--------------------------------------------------------------------------|
 | Kind        | agent                                                                    |
-| Source      | `.github/agents/hve-core/subagents/prompt-evaluator.agent.md`            |
+| Source      | `.github/agents/hve-core/subagents/hve-artifact-reviewer.agent.md`       |
 | Invocation  | Delegated subagent, dispatched by a parent agent (not selected directly) |
 | Interactive | No                                                                       |
 <!-- END AUTO-GENERATED: metadata -->
@@ -17,7 +17,7 @@ ms.date: 2026-07-05
 ## What it does
 
 <!-- BEGIN AUTO-GENERATED: overview -->
-Evaluates prompt execution results against Prompt Quality Criteria with severity-graded findings and remediation guidance
+Independently reviews prompt-engineering artifacts against the HVE rubric and returns bounded findings plus a verdict. Dispatched by hve-builder.
 <!-- END AUTO-GENERATED: overview -->
 
 ## When to use it
