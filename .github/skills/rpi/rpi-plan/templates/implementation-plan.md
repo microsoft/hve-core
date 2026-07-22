@@ -77,6 +77,20 @@ The planner synthesizes and maintains these current criteria from the user list 
 
 * {{observable_acceptance_criterion}}
 
+## Implementation Context Record
+
+<!-- Persist current transfer facts only. The rpi-plan reference owns rendered standalone and parent continuation guidance. -->
+
+| Context item | Current artifact or record |
+|--------------|----------------------------|
+| Plan | .copilot-tracking/plans/{{YYYY-MM-DD}}/{{task_slug}}-plan.md |
+| Phase details | .copilot-tracking/details/{{YYYY-MM-DD}}/{{task_slug}}-phase-details.md |
+| Latest critique | .copilot-tracking/reviews/plans/{{YYYY-MM-DD}}/{{task_slug}}-plan-critique.md with {{Pass, Revise, Blocked, or unavailable disposition}} |
+| Relevant research | {{research_path_or_not_applicable_with_reason}} |
+| Changes-record role | .copilot-tracking/changes/{{YYYY-MM-DD}}/{{task_slug}}-changes.md is created or continued by implementation as its evidence record |
+| Planning execution and readiness | {{execution_status_and_ready_or_not_ready_state}} |
+| Continuation context | {{standalone advisory, parent return, waiting state, or no-handoff reason}} |
+
 ## Sources
 
 * {{source_path_or_caller_context}}: {{how_this_evidence_informs_the_plan}}

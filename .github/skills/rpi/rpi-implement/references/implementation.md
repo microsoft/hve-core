@@ -88,11 +88,19 @@ Use `✅` for completed or validated work, `⚠️` for a material discovery, fa
 
 Before a user question, state the affected decision, viable choices and consequences, an evidence-backed recommendation when available, blockers, and relevant Markdown links. At closeout, report implementation execution status separately from review readiness. Include results, material updates, decisions, and blockers or open items. Advise `/compact` only when stale output, superseded reasoning, or completed task detail outweighs current context and the plan, details, and changes record are current. When advising it, name the state and artifact pointers to retain. Otherwise omit compaction guidance.
 
+## Implementation Closeout Projection
+
+Qualify every Complete, Partial, or Blocked status by the declared invocation scope: full plan, `Pxx`, or `Pxx-Txx`. A Complete bounded scope confirms only its completed scope markers; it does not imply the full plan is complete. Show all remaining active-plan markers, including later work outside the declared scope, so the caller can distinguish bounded completion from task completion.
+
+The closeout also states validation coverage, blockers with their owner and clearing action, current planning and critique state, and review readiness or the explicit no-handoff reason. For a user-owned blocker, state that affected work cannot continue until the required response is recorded and any required fresh planning and critique complete. For a dependency-owned blocker, name the dependency owner and the evidence needed to clear it.
+
+In standalone use, do not present unchecked work as a retry or trigger implementation again. Advise `/rpi-review` only when review prerequisites are met; otherwise state the current no-handoff reason. In `rpi-quick` or confirmed automatic RPI Agent mode, return the same scope and readiness facts to the parent, which owns eligible continuation after its gates and required confirmations pass.
+
 ## Return to caller
 
 During material work, apply the Conversation protocol. Before a user decision, state the decision context, viable choices and consequences, evidence-backed recommendation when available, blockers, and relevant Markdown links.
 
-For standalone use, advise `/rpi-review` only when review prerequisites are met and do not invoke it. When planning or a decision is required, state the explicit stop or no-handoff reason. In `rpi-quick` or confirmed automatic RPI Agent mode, return the artifacts to the parent for automatic continuation after gates and required confirmations pass. End the closeout with a Markdown table linking every relevant existing artifact and a short description. Every file or artifact entry must use a workspace-relative Markdown link in the form `[descriptive label](path/to/file.md)`, with a line or section fragment when useful; do not substitute a plain file name, artifact type, or inline-code path. Keep the table as the final response element.
+Apply the Implementation Closeout Projection. End the closeout with a Markdown table linking every relevant existing artifact and a short description. Every file or artifact entry must use a workspace-relative Markdown link in the form `[descriptive label](path/to/file.md)`, with a line or section fragment when useful; do not substitute a plain file name, artifact type, or inline-code path. Keep the table as the final response element.
 
 ## Production-reference hygiene
 

@@ -285,6 +285,20 @@ Flow diagram (when a multi-component flow is involved):
 * Blockers: {{unresolved_decision_or_missing_evidence_or_none}}
 * Smallest action to change readiness: {{targeted_research_user_answer_or_none}}
 
+## Closeout Record
+
+<!-- Persist durable closeout facts only. The rpi-research reference owns rendered closeout wording. -->
+
+| Field | Record |
+|-------|--------|
+| Research execution status | {{Complete, Partial, Blocked, or Needs clarification}} |
+| Completed waves | {{Wider, Deeper, and Contrarian for each executed cycle, or not executed with reason}} |
+| Lane evidence or inline fallback | {{available delegated lane pointers, or inline fallback and limitation}} |
+| Research disposition | {{executed, reused, or satisfied-and-skipped}} |
+| Planning Readiness | {{Ready, Not ready, Not applicable, or Blocked with evidence IDs}} |
+| Blockers | {{none_or_current_blockers}} |
+| Continuation owner and state | {{user, rpi-quick, manual RPI Agent, or confirmed automatic RPI Agent with advisory, waiting, automatic, or no-handoff state}} |
+
 ## Advisory Next Step
 
 <!-- This record describes the next action. It does not trigger a phase. Use the continuation contract to select one context-specific outcome. -->

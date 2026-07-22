@@ -7,6 +7,7 @@
 * Critique date: {{YYYY-MM-DD}}
 * Plan: .copilot-tracking/plans/{{YYYY-MM-DD}}/{{task_slug}}-plan.md
 * Phase details: .copilot-tracking/details/{{YYYY-MM-DD}}/{{task_slug}}-phase-details.md
+* Critique execution status: {{Complete, Partial, or Blocked}}
 
 ## Inputs and Criterion Boundary
 
@@ -51,4 +52,7 @@
 
 ## Recommended Next Action
 
-* {{direct_revision_one_phase_planner_dispatch_decision_question_critique_rerun_or_finalization}}
+* Highest-impact finding: {{PC_xxx_or_none}}
+* Action owner: {{planning_parent, user, or none}}
+* Smallest next action: {{direct_revision_one_phase_planner_dispatch_decision_question_critique_rerun_or_finalization}}
+* User response required: {{yes_only_for_a_decision_critical_unresolved_choice, otherwise_no}}

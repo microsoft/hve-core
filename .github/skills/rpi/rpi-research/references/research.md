@@ -221,6 +221,17 @@ Set Planning Readiness to one of `Ready`, `Not ready`, `Not applicable`, or `Blo
 
 Recommend another complete three-wave cycle when a targeted question, source, or independent lane could materially change the current readiness or decision. Update the same dated primary artifact rather than creating a parallel primary record.
 
+## Research Closeout Projection
+
+At closeout, make the completed research depth and its limits inspectable without repeating the primary artifact. State research execution status separately from Research disposition and Planning Readiness. For an `executed` disposition, name the completed Wider, Deeper, and Contrarian waves, then identify the available lane evidence or the recorded inline fallback and its limitation. Do not imply delegated work occurred when a lane ran inline.
+
+Include the current disposition, readiness or decision state, blockers, material decisions or risks, and the continuation record. Apply the context-specific continuation contract:
+
+* In standalone context, advise exactly `/rpi-plan` only when disposition, output mode, and Planning Readiness permit it; otherwise state the no-handoff reason.
+* In `rpi-quick`, manual RPI Agent, or confirmed automatic RPI Agent context, return the same artifact and readiness facts to the active parent. State whether the parent continues automatically, waits for explicit advancement, or remains stopped by a recorded gate. Do not ask the user to attach the artifact.
+
+The final linked-artifact table follows this projection and remains the final response element.
+
 ## Artifact Self-Check
 
 When no executable validation ran, label the review an artifact self-check. Confirm that the primary artifact contains:
@@ -245,6 +256,7 @@ Return a concise, evidence-first response with:
 * Selected approach and rejected alternatives only when convergence applies
 * Key evidence, unresolved decisions, risks, residual uncertainty, and planning-readiness status
 * Research-only constraint status and artifact self-check result
+* The completed research depth, including Wider, Deeper, and Contrarian waves; available lane evidence or an inline fallback limitation; Research disposition; Planning Readiness; blockers; and continuation owner
 * The continuation record from Planning Readiness, including the permitted standalone `/rpi-plan` advisory or explicit no-handoff reason, or the active parent's automatic continuation or waiting state
 * Research execution status separate from planning readiness or decision state
 * Conditional `/compact` advice only when stale context warrants compaction, naming the primary research artifact and current state to retain; otherwise no compaction guidance

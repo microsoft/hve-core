@@ -94,6 +94,18 @@ Unresolved plan follow-up items remain distinct follow-up work. Do not treat the
 * Outcome: {{Conformant_Conformant_with_justified_divergence_Defects_found_Residual_work_or_Not_accepted}}
 * Outcome rationale: {{evidence_based_rationale}}
 
-## Next Owner
+## Closeout Routing Record
 
-* {{rpi_implement_rpi_plan_rpi_research_or_distinct_follow_up_owner}}
+<!-- Persist outcome and route facts only. The rpi-review reference owns rendered closeout prose. -->
+
+| Finding class | Destination | Owner or next action |
+|---------------|-------------|----------------------|
+| Implementation defect | {{rpi_implement_or_none}} | {{owner_or_smallest_action}} |
+| Decision gap or invalid assumption | {{rpi_plan_or_none}} | {{owner_or_smallest_action}} |
+| Material evidence gap | {{rpi_research_or_none}} | {{owner_or_smallest_action}} |
+| Non-blocking residual work | {{distinct_follow_up_or_none}} | {{owner_or_smallest_action}} |
+
+* Execution status: {{Complete_Partial_or_Blocked}}
+* Outcome: {{Conformant_Conformant_with_justified_divergence_Defects_found_Residual_work_or_Not_accepted}}
+* Validation coverage: {{validation_summary}}
+* Blockers: {{none_or_blocker_summary}}

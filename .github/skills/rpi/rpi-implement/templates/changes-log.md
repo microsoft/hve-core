@@ -11,8 +11,10 @@
 ## Execution Status
 
 * Status: {{Complete_Partial_or_Blocked}}
-* Completed phases and tasks: {{Pxx_and_Pxx_Txx_list}}
-* Remaining phases and tasks: {{none_or_Pxx_and_Pxx_Txx_list}}
+* Declared invocation scope: {{full_plan_Pxx_or_Pxx_Txx}}
+* Completed scope markers: {{Pxx_and_Pxx_Txx_completed_within_declared_scope}}
+* All remaining active-plan markers: {{none_or_Pxx_and_Pxx_Txx_including_later_work_outside_declared_scope}}
+* Status basis: {{why_the_declared_scope_is_complete_partial_or_blocked}}
 
 ## Execution Summary
 
@@ -54,7 +56,7 @@ For a follow-up-only update, record why the item is outside immediate scope and 
 
 ## Blockers
 
-* {{none_or_blocker_with_affected_pxx_or_pxx_txx_and_next_action}}
+* {{none_or_blocker_with_affected_pxx_or_pxx_txx_owner_clearing_action_and_required_fresh_planning_and_critique_when_applicable}}
 
 ## Remaining Work
 
@@ -68,9 +70,11 @@ For a follow-up-only update, record why the item is outside immediate scope and 
 ## Return-to-Caller State
 
 * Implementation execution status: {{Complete_Partial_or_Blocked}}
-* Completed and remaining markers: {{Pxx_and_Pxx_Txx_summary}}
+* Declared scope and markers: {{full_plan_Pxx_or_Pxx_Txx_with_completed_scope_markers_and_all_remaining_active_plan_markers}}
 * Validation coverage: {{validation_summary}}
 * Blockers: {{none_or_blocker_summary}}
-* Current plan and detail updates: {{none_or_descriptive_update_summary_with_planning_and_critique_state}}
+* Current plan and detail updates: {{none_or_descriptive_update_summary}}
+* Planning and critique state: {{current_ready_or_awaiting_state_with_relevant_PC_xxx_when_applicable}}
 * Follow-up items: {{none_or_follow_up_summary}}
-* Affected work state: {{ready_or_awaiting_user_decision_or_fresh_planning_and_critique}}
+* Review readiness or no-handoff reason: {{ready_for_review_or_explicit_reason}}
+* Continuation owner: {{user_for_standalone_or_parent_for_rpi_quick_or_confirmed_automatic_RPI_Agent}}

@@ -1875,24 +1875,6 @@ stimuli:
         name: scope-language
         config:
           pattern: '(?i)(implementation\s+complete|validation\s+evidence|handoff|review)'
-  - name: skill-rpi-implement-knowledge
-    prompt: |
-      Which identifier records a plan amendment for a significant implementation
-      divergence? The documented identifier form is `AM-xxx`. Your entire
-      response must be exactly `AM-xxx`, without Markdown or explanation.
-    environment:
-      skills:
-        - ../../.github/skills/rpi/rpi-implement
-    tags:
-      category: behavior-conformance
-      skill: rpi-implement
-      shape: knowledge
-      advisory: "true"
-    graders:
-      - type: output-matches
-        name: amendment-identifier
-        config:
-          pattern: '(?i)^\s*AM-(xxx|\d+)[.!]?\s*$'
   - name: skill-rpi-implement-tool-trigger
     prompt: |
       I need to execute a task plan phase, apply the scoped code changes,
@@ -1931,6 +1913,28 @@ stimuli:
         name: scope-language
         config:
           pattern: '(?i)(initial\s+evidence|before\s+deciding|implementation\s+plan|implement)'
+  - name: skill-rpi-implement-changes-record-heading
+    prompt: |
+      How should a P03-T02 changes-record entry be headed without a second ID?
+    environment:
+      skills:
+        - ../../.github/skills/rpi/rpi-implement
+    tags:
+      category: behavior-conformance
+      skill: rpi-implement
+      shape: knowledge
+      advisory: "true"
+      prompt_sha256: 743f1cf36dd1fb364db4fe9620030b683b9914855afffa0f683d624c568f7547
+    graders:
+      - type: prompt
+        name: changes-record-heading-contract
+        config:
+          prompt: |
+            Score 1 if the response says to use a descriptive evidence heading tied
+            to P03-T02 or its plan area and not to create a separate per-entry formal
+            identity. Score 0 otherwise.
+          scoring: binary
+          threshold: 0.85
   - name: skill-rpi-review-knowledge
     prompt: |
       The three `rpi-review` execution statuses are Complete, Partial, and
