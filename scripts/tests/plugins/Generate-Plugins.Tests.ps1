@@ -207,6 +207,14 @@ items:
   - path: .github/agents/col/test.agent.md
     kind: agent
 "@ | Set-Content -Path (Join-Path $collectionsDir 'experimental-col.collection.yml')
+
+    Push-Location $script:maturityDir
+    git init --quiet
+    git config user.email 'test@example.com'
+    git config user.name 'Test User'
+    git add --all
+    git commit --quiet -m 'initialize fixture'
+    Pop-Location
     }
 
     AfterAll {
@@ -309,6 +317,14 @@ items:
 display:
   color: blue
 "@ | Set-Content -Path (Join-Path $collectionsDir 'hve-core-all.collection.yml')
+
+    Push-Location $script:tempDir
+    git init --quiet
+    git config user.email 'test@example.com'
+    git config user.name 'Test User'
+    git add --all
+    git commit --quiet -m 'initialize fixture'
+    Pop-Location
     }
 
     AfterAll {
@@ -390,6 +406,14 @@ Old content.
 
 <!-- END AUTO-GENERATED ARTIFACTS -->
 "@ | Set-Content -Path $collectionMdPath -Encoding utf8NoBOM
+
+    Push-Location $headingRepo
+    git init --quiet
+    git config user.email 'test@example.com'
+    git config user.name 'Test User'
+    git add --all
+    git commit --quiet -m 'initialize fixture'
+    Pop-Location
 
     $result = Invoke-PluginGeneration -RepoRoot $headingRepo -CollectionIds @('heading-test') -Refresh -Channel 'PreRelease'
 
@@ -541,6 +565,29 @@ items:
             Test-Path (Join-Path $pluginDir '.github/plugin/plugin.json') | Should -BeTrue
             Test-Path (Join-Path $pluginDir 'docs/templates') | Should -BeTrue
             Test-Path (Join-Path $pluginDir 'scripts/lib') | Should -BeTrue
+        }
+
+        It 'Preserves copied descendants while removing stale and prefix-sibling orphans' {
+            $sourceRoot = Join-Path $script:tempDir 'docs/templates'
+            New-Item -ItemType Directory -Path (Join-Path $sourceRoot 'nested') -Force | Out-Null
+            'source' | Set-Content -Path (Join-Path $sourceRoot 'nested/source.txt')
+            Push-Location $script:tempDir
+            git add -- 'docs/templates/nested/source.txt'
+            Pop-Location
+
+            $pluginRoot = Join-Path $script:tempDir 'plugins/hve-core-all'
+            $copiedRoot = Join-Path $pluginRoot 'docs/templates'
+            New-Item -ItemType Directory -Path $copiedRoot -Force | Out-Null
+            'stale' | Set-Content -Path (Join-Path $copiedRoot 'stale.txt')
+            $prefixSibling = Join-Path $pluginRoot 'docs/templates-old'
+            New-Item -ItemType Directory -Path $prefixSibling -Force | Out-Null
+            'orphan' | Set-Content -Path (Join-Path $prefixSibling 'orphan.txt')
+
+            Invoke-PluginGeneration -RepoRoot $script:tempDir -CollectionIds @('hve-core-all') -Refresh -Channel 'PreRelease' | Out-Null
+
+            Test-Path (Join-Path $copiedRoot 'nested/source.txt') | Should -BeTrue
+            Test-Path (Join-Path $copiedRoot 'stale.txt') | Should -BeFalse
+            Test-Path $prefixSibling | Should -BeFalse
         }
 
         It 'Removes empty directories after orphan cleanup' {

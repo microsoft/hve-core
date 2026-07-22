@@ -610,15 +610,19 @@ function New-PluginLink {
     Copies a source path into a plugin destination.
 
     .DESCRIPTION
-    Materializes a real file or directory tree into the plugin package.
-    Existing destinations are removed first so stale symlinks or files do not
-    survive between generations.
+    Replaces the destination with a real file or directory copy. Directory
+    sources are rejected when they contain links or reparse points so plugin
+    packages cannot follow content outside the selected source tree.
 
     .PARAMETER SourcePath
     Absolute path to the real file or directory.
 
     .PARAMETER DestinationPath
     Absolute path where the copied content will be created.
+
+    .PARAMETER RepoRoot
+    Optional repository root. When supplied, directory sources copy only
+    Git-tracked regular files.
     #>
     [CmdletBinding()]
     param(
@@ -626,23 +630,159 @@ function New-PluginLink {
         [string]$SourcePath,
 
         [Parameter(Mandatory = $true)]
-        [string]$DestinationPath
+        [string]$DestinationPath,
+
+        [Parameter(Mandatory = $false)]
+        [string]$RepoRoot
     )
 
+    $sourceItem = Get-Item -LiteralPath $SourcePath -Force -ErrorAction Stop
+    if ($sourceItem.LinkType -or ($sourceItem.Attributes -band [System.IO.FileAttributes]::ReparsePoint)) {
+        throw "Plugin source cannot be a link or reparse point: $($sourceItem.FullName)"
+    }
+
+    $trackedFiles = $null
+    if ($RepoRoot) {
+        $pathComparison = if ($IsWindows) {
+            [System.StringComparison]::OrdinalIgnoreCase
+        }
+        else {
+            [System.StringComparison]::Ordinal
+        }
+        $canonicalRepoRoot = [System.IO.Path]::TrimEndingDirectorySeparator(
+            [System.IO.Path]::GetFullPath($RepoRoot)
+        )
+        $repoPrefix = $canonicalRepoRoot + [System.IO.Path]::DirectorySeparatorChar
+        $canonicalSource = [System.IO.Path]::GetFullPath($sourceItem.FullName)
+        if (-not $canonicalSource.Equals($canonicalRepoRoot, $pathComparison) -and
+            -not $canonicalSource.StartsWith($repoPrefix, $pathComparison)) {
+            throw "Plugin source must be inside the repository root: $canonicalSource"
+        }
+
+        if ($sourceItem.PSIsContainer) {
+            $sourcePrefix = [System.IO.Path]::TrimEndingDirectorySeparator($canonicalSource) +
+                [System.IO.Path]::DirectorySeparatorChar
+            $repoRelativeSource = [System.IO.Path]::GetRelativePath($canonicalRepoRoot, $canonicalSource) -replace '\\', '/'
+            $pathspec = ":(literal)$repoRelativeSource/"
+            $startInfo = [System.Diagnostics.ProcessStartInfo]::new()
+            $startInfo.FileName = 'git'
+            $startInfo.UseShellExecute = $false
+            $startInfo.RedirectStandardOutput = $true
+            $startInfo.RedirectStandardError = $true
+            [void]$startInfo.ArgumentList.Add('-C')
+            [void]$startInfo.ArgumentList.Add($canonicalRepoRoot)
+            [void]$startInfo.ArgumentList.Add('ls-files')
+            [void]$startInfo.ArgumentList.Add('--stage')
+            [void]$startInfo.ArgumentList.Add('-z')
+            [void]$startInfo.ArgumentList.Add('--')
+            [void]$startInfo.ArgumentList.Add($pathspec)
+
+            $process = [System.Diagnostics.Process]::Start($startInfo)
+            $stageOutput = $process.StandardOutput.ReadToEnd()
+            $stageError = $process.StandardError.ReadToEnd()
+            $process.WaitForExit()
+            if ($process.ExitCode -ne 0) {
+                throw "Failed to enumerate tracked plugin source files: $stageError"
+            }
+
+            $trackedFiles = [System.Collections.Generic.List[hashtable]]::new()
+            foreach ($record in $stageOutput.Split([char]0, [System.StringSplitOptions]::RemoveEmptyEntries)) {
+                $tabIndex = $record.IndexOf("`t")
+                if ($tabIndex -lt 0) {
+                    throw "Invalid Git stage record for plugin source: $record"
+                }
+
+                $metadata = $record.Substring(0, $tabIndex)
+                $repoRelativePath = $record.Substring($tabIndex + 1)
+                if ($metadata -notmatch '^(\d{6}) [0-9a-f]+ \d+$') {
+                    throw "Invalid Git stage metadata for plugin source: $metadata"
+                }
+                $mode = $Matches[1]
+                if ($mode -notin @('100644', '100755')) {
+                    throw "Plugin source contains unsupported tracked mode $mode`: $repoRelativePath"
+                }
+
+                $trackedSource = [System.IO.Path]::GetFullPath(
+                    (Join-Path -Path $canonicalRepoRoot -ChildPath $repoRelativePath)
+                )
+                if (-not $trackedSource.StartsWith($sourcePrefix, $pathComparison)) {
+                    throw "Tracked plugin source escapes selected directory: $repoRelativePath"
+                }
+
+                $trackedItem = Get-Item -LiteralPath $trackedSource -Force -ErrorAction SilentlyContinue
+                if (-not $trackedItem -or $trackedItem.PSIsContainer -or $trackedItem.LinkType -or
+                    ($trackedItem.Attributes -band [System.IO.FileAttributes]::ReparsePoint)) {
+                    throw "Tracked plugin source must be a real file: $trackedSource"
+                }
+                try {
+                    $readStream = [System.IO.File]::OpenRead($trackedSource)
+                    $readStream.Dispose()
+                }
+                catch {
+                    throw "Tracked plugin source must be readable: $trackedSource"
+                }
+
+                $trackedFiles.Add(@{
+                    Source       = $trackedSource
+                    RelativePath = [System.IO.Path]::GetRelativePath($canonicalSource, $trackedSource)
+                })
+            }
+        }
+        elseif ($sourceItem.PSIsContainer -or -not $sourceItem.Exists) {
+            throw "Plugin source must be a real file: $canonicalSource"
+        }
+        else {
+            try {
+                $readStream = [System.IO.File]::OpenRead($canonicalSource)
+                $readStream.Dispose()
+            }
+            catch {
+                throw "Plugin source must be readable: $canonicalSource"
+            }
+        }
+    }
+    elseif ($sourceItem.PSIsContainer) {
+        $nestedLink = Get-ChildItem -LiteralPath $SourcePath -Force -Recurse |
+            Where-Object {
+                $_.LinkType -or ($_.Attributes -band [System.IO.FileAttributes]::ReparsePoint)
+            } |
+            Select-Object -First 1
+        if ($nestedLink) {
+            throw "Plugin source cannot contain a link or reparse point: $($nestedLink.FullName)"
+        }
+    }
+
     $destinationDir = Split-Path -Parent $DestinationPath
-    if (-not (Test-Path -LiteralPath $destinationDir)) {
+    if (-not (Test-Path -Path $destinationDir)) {
         New-Item -ItemType Directory -Path $destinationDir -Force | Out-Null
     }
 
-    if (Test-Path -LiteralPath $DestinationPath) {
-        Remove-Item -LiteralPath $DestinationPath -Recurse -Force -ErrorAction SilentlyContinue
+    $destinationItem = Get-Item -LiteralPath $DestinationPath -Force -ErrorAction SilentlyContinue
+    if ($destinationItem) {
+        if ($destinationItem.LinkType -or -not $destinationItem.PSIsContainer) {
+            Remove-Item -LiteralPath $DestinationPath -Force
+        }
+        else {
+            Remove-Item -LiteralPath $DestinationPath -Recurse -Force
+        }
     }
 
-    if (Test-Path -LiteralPath $SourcePath -PathType Leaf) {
-        Copy-Item -LiteralPath $SourcePath -Destination $DestinationPath -Force
+    if ($null -ne $trackedFiles) {
+        New-Item -ItemType Directory -Path $DestinationPath -Force | Out-Null
+        foreach ($trackedFile in $trackedFiles) {
+            $trackedDestination = Join-Path -Path $DestinationPath -ChildPath $trackedFile.RelativePath
+            $trackedDestinationParent = Split-Path -Parent $trackedDestination
+            if (-not (Test-Path -LiteralPath $trackedDestinationParent -PathType Container)) {
+                New-Item -ItemType Directory -Path $trackedDestinationParent -Force | Out-Null
+            }
+            Copy-Item -LiteralPath $trackedFile.Source -Destination $trackedDestination
+        }
+    }
+    elseif (-not $sourceItem.PSIsContainer) {
+        Copy-Item -LiteralPath $SourcePath -Destination $DestinationPath
     }
     else {
-        Copy-Item -LiteralPath $SourcePath -Destination $DestinationPath -Recurse -Force
+        Copy-Item -LiteralPath $SourcePath -Destination $DestinationPath -Recurse
     }
 }
 
@@ -669,6 +809,12 @@ function Write-PluginHookArtifact {
     .PARAMETER GeneratedFiles
     Set tracking generated paths for orphan cleanup; the copied script
     directory is added to it.
+
+    .PARAMETER GeneratedDirectories
+    Set tracking copied directory roots for subtree-aware orphan cleanup.
+
+    .PARAMETER RepoRoot
+    Absolute path to the repository root.
     #>
     [CmdletBinding()]
     param(
@@ -679,7 +825,13 @@ function Write-PluginHookArtifact {
         [string]$DestinationManifest,
 
         [Parameter(Mandatory = $true)]
-        [System.Collections.Generic.HashSet[string]]$GeneratedFiles
+        [System.Collections.Generic.HashSet[string]]$GeneratedFiles,
+
+        [Parameter(Mandatory = $true)]
+        [System.Collections.Generic.HashSet[string]]$GeneratedDirectories,
+
+        [Parameter(Mandatory = $true)]
+        [string]$RepoRoot
     )
 
     # Degrade gracefully when the manifest is missing, matching how other kinds
@@ -701,7 +853,8 @@ function Write-PluginHookArtifact {
     if (Test-Path -LiteralPath $scriptSrc) {
         $scriptDest = $DestinationManifest -replace '\.json$', ''
         [void]$GeneratedFiles.Add($scriptDest)
-        New-PluginLink -SourcePath $scriptSrc -DestinationPath $scriptDest
+        [void]$GeneratedDirectories.Add([System.IO.Path]::GetFullPath($scriptDest))
+        New-PluginLink -SourcePath $scriptSrc -DestinationPath $scriptDest -RepoRoot $RepoRoot
         Add-GeneratedFilesForCopiedTree -SourcePath $scriptDest -GeneratedFiles $GeneratedFiles
     }
 }
@@ -791,6 +944,9 @@ function Write-PluginDirectory {
 
     $readmeItems = @()
     $generatedFiles = [System.Collections.Generic.HashSet[string]]::new(
+        [System.StringComparer]::OrdinalIgnoreCase
+    )
+    $generatedDirectories = [System.Collections.Generic.HashSet[string]]::new(
         [System.StringComparer]::OrdinalIgnoreCase
     )
 
@@ -883,6 +1039,9 @@ function Write-PluginDirectory {
         }
 
         [void]$generatedFiles.Add($destPath)
+        if (Test-Path -LiteralPath $sourcePath -PathType Container) {
+            [void]$generatedDirectories.Add([System.IO.Path]::GetFullPath($destPath))
+        }
 
         if ($DryRun) {
             Write-Verbose "DryRun: Would copy $destPath <- $sourcePath"
@@ -893,10 +1052,10 @@ function Write-PluginDirectory {
         # command paths; other kinds copy their single source file directly.
         if ($kind -eq 'hook') {
             Write-PluginHookArtifact -SourceManifest $sourcePath -DestinationManifest $destPath `
-                -GeneratedFiles $generatedFiles
+                -GeneratedFiles $generatedFiles -GeneratedDirectories $generatedDirectories -RepoRoot $RepoRoot
         }
         else {
-            New-PluginLink -SourcePath $sourcePath -DestinationPath $destPath
+            New-PluginLink -SourcePath $sourcePath -DestinationPath $destPath -RepoRoot $RepoRoot
         }
 
         if ($kind -eq 'skill') {
@@ -920,13 +1079,14 @@ function Write-PluginDirectory {
         }
 
         [void]$generatedFiles.Add($destPath)
+        [void]$generatedDirectories.Add([System.IO.Path]::GetFullPath($destPath))
 
         if ($DryRun) {
             Write-Verbose "DryRun: Would copy shared directory $destPath <- $sourcePath"
             continue
         }
 
-        New-PluginLink -SourcePath $sourcePath -DestinationPath $destPath
+        New-PluginLink -SourcePath $sourcePath -DestinationPath $destPath -RepoRoot $RepoRoot
         Add-GeneratedFilesForCopiedTree -SourcePath $destPath -GeneratedFiles $generatedFiles
     }
 
@@ -978,6 +1138,7 @@ function Write-PluginDirectory {
         SkillCount       = $counts.SkillCount
         HookCount        = $counts.HookCount
         GeneratedFiles   = $generatedFiles
+        GeneratedDirectories = $generatedDirectories
     }
 }
 

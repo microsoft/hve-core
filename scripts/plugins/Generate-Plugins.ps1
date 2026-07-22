@@ -349,13 +349,33 @@ function Invoke-PluginGeneration {
         # Orphan cleanup in Refresh mode
         if ($Refresh -and (Test-Path -LiteralPath $pluginDir)) {
             $generatedFiles = $result.GeneratedFiles
+            $generatedDirectories = $result.GeneratedDirectories
+            $isInGeneratedDirectory = {
+                param([string]$Path)
+
+                $canonicalPath = [System.IO.Path]::GetFullPath($Path)
+                foreach ($generatedDirectory in $generatedDirectories) {
+                    $canonicalDirectory = [System.IO.Path]::TrimEndingDirectorySeparator(
+                        [System.IO.Path]::GetFullPath($generatedDirectory)
+                    )
+                    if ($canonicalPath.Equals($canonicalDirectory, [System.StringComparison]::OrdinalIgnoreCase)) {
+                        return $true
+                    }
+
+                    $directoryPrefix = $canonicalDirectory + [System.IO.Path]::DirectorySeparatorChar
+                    if ($canonicalPath.StartsWith($directoryPrefix, [System.StringComparison]::OrdinalIgnoreCase)) {
+                        return $true
+                    }
+                }
+                return $false
+            }
             $existingFiles = [System.Collections.Generic.List[string]]::new()
             $scanQueue = [System.Collections.Generic.Queue[string]]::new()
             $scanQueue.Enqueue($pluginDir)
             while ($scanQueue.Count -gt 0) {
                 $currentDir = $scanQueue.Dequeue()
                 foreach ($entry in Get-ChildItem -LiteralPath $currentDir -Force) {
-                    if ($entry.PSIsContainer) {
+                    if ($entry.PSIsContainer -and -not $entry.LinkType) {
                         $scanQueue.Enqueue($entry.FullName)
                     }
                     else {
@@ -364,7 +384,8 @@ function Invoke-PluginGeneration {
                 }
             }
             foreach ($existingFile in $existingFiles) {
-                if (-not $generatedFiles.Contains($existingFile)) {
+                $canonicalPath = [System.IO.Path]::GetFullPath($existingFile)
+                if (-not $generatedFiles.Contains($canonicalPath) -and -not (& $isInGeneratedDirectory $canonicalPath)) {
                     if ($DryRun) {
                         Write-Host "  [DRY RUN] Would remove orphan: $existingFile" -ForegroundColor Yellow
                     }
@@ -374,34 +395,14 @@ function Invoke-PluginGeneration {
                     }
                 }
             }
-            # Remove empty directories bottom-up, but preserve directories that
-            # were explicitly generated or contain generated content.
+            # Remove empty directories bottom-up.
             if (-not $DryRun) {
-                $generatedPaths = [System.Collections.Generic.HashSet[string]]::new(
-                    [System.StringComparer]::OrdinalIgnoreCase
-                )
-                foreach ($generatedPath in $generatedFiles) {
-                    [void]$generatedPaths.Add([string]$generatedPath)
-                }
-
                 Get-ChildItem -LiteralPath $pluginDir -Recurse -Directory |
+                    Where-Object { -not $_.LinkType } |
                     Sort-Object { $_.FullName.Length } -Descending |
                     Where-Object {
-                        $dirPath = $_.FullName
-                        $isGeneratedDirectory = $generatedPaths.Contains($dirPath)
-                        if (-not $isGeneratedDirectory) {
-                            foreach ($generatedPath in $generatedPaths) {
-                                if ($generatedPath.StartsWith($dirPath, [System.StringComparison]::OrdinalIgnoreCase)) {
-                                    $isGeneratedDirectory = $true
-                                    break
-                                }
-                            }
-                        }
-                        if ($isGeneratedDirectory) {
-                            return $false
-                        }
-
-                        @(Get-ChildItem -LiteralPath $dirPath).Count -eq 0
+                        -not (& $isInGeneratedDirectory $_.FullName) -and
+                        @(Get-ChildItem -LiteralPath $_.FullName).Count -eq 0
                     } |
                     ForEach-Object {
                         Remove-Item -LiteralPath $_.FullName -Force -ErrorAction Stop

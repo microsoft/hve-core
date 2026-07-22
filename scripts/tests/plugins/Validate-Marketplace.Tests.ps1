@@ -65,6 +65,50 @@ Describe 'Test-PluginSourceDirectory' {
     }
 }
 
+Describe 'Test-PluginPackageContent' {
+    It 'Accepts real package-local component paths and inline hook configuration' {
+        $repoRoot = Join-Path $TestDrive 'valid-package'
+        $pluginRoot = New-TestPluginPackage -RepoRoot $repoRoot -PluginName 'valid'
+        New-Item -ItemType Directory -Path (Join-Path $pluginRoot 'agents/core') -Force | Out-Null
+        New-Item -ItemType Directory -Path (Join-Path $pluginRoot 'instructions/core') -Force | Out-Null
+        $manifest = @{
+            name = 'valid'; description = 'd'; version = '1.0.0'
+            agents = @('agents/core/'); rules = @('instructions/core/'); hooks = @{ hooks = @() }
+        }
+        $manifest | ConvertTo-Json -Depth 10 |
+            Set-Content -Path (Join-Path $pluginRoot '.github/plugin/plugin.json')
+
+        @(Test-PluginPackageContent -PluginRoot $pluginRoot -PluginName 'valid') |
+            Should -BeNullOrEmpty
+    }
+
+    It 'Rejects a component path that escapes the plugin root' {
+        $repoRoot = Join-Path $TestDrive 'escaping-package'
+        $pluginRoot = New-TestPluginPackage -RepoRoot $repoRoot -PluginName 'escape'
+        $manifest = @{
+            name = 'escape'; description = 'd'; version = '1.0.0'; skills = @('../outside/')
+        }
+        $manifest | ConvertTo-Json -Depth 10 |
+            Set-Content -Path (Join-Path $pluginRoot '.github/plugin/plugin.json')
+
+        (@(Test-PluginPackageContent -PluginRoot $pluginRoot -PluginName 'escape') -join "`n") |
+            Should -BeLike '*path escapes plugin root*../outside/*'
+    }
+
+    It 'Rejects links in a plugin package' {
+        $repoRoot = Join-Path $TestDrive 'linked-package'
+        $pluginRoot = New-TestPluginPackage -RepoRoot $repoRoot -PluginName 'linked'
+        $target = Join-Path $repoRoot 'outside'
+        New-Item -ItemType Directory -Path $target -Force | Out-Null
+        $instructionsRoot = Join-Path $pluginRoot 'instructions'
+        New-Item -ItemType Directory -Path $instructionsRoot -Force | Out-Null
+        New-Item -ItemType SymbolicLink -Path (Join-Path $instructionsRoot 'shared') -Target $target | Out-Null
+
+        (@(Test-PluginPackageContent -PluginRoot $pluginRoot -PluginName 'linked') -join "`n") |
+            Should -BeLike '*contains a link or reparse point*'
+    }
+}
+
 Describe 'Invoke-MarketplaceValidation - missing manifest' {
     BeforeAll {
         $script:repoRoot = Join-Path $TestDrive 'repo-no-manifest'

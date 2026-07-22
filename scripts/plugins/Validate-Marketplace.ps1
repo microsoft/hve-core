@@ -179,48 +179,86 @@ function Test-PluginPackageContent {
     )
 
     $pluginErrors = @()
+    $canonicalRoot = [System.IO.Path]::TrimEndingDirectorySeparator(
+        [System.IO.Path]::GetFullPath($PluginRoot)
+    )
+    $rootPrefix = $canonicalRoot + [System.IO.Path]::DirectorySeparatorChar
+    $rootItem = Get-Item -LiteralPath $canonicalRoot -Force -ErrorAction SilentlyContinue
+    if (-not $rootItem -or -not $rootItem.PSIsContainer) {
+        return @("plugin '$PluginName' package directory not found: $PluginRoot")
+    }
+    if ($rootItem.LinkType -or ($rootItem.Attributes -band [System.IO.FileAttributes]::ReparsePoint)) {
+        $pluginErrors += "plugin '$PluginName' package root is a link or reparse point"
+    }
 
-    $readmePath = Join-Path -Path $PluginRoot -ChildPath 'README.md'
-    if (-not (Test-Path -Path $readmePath -PathType Leaf)) {
+    foreach ($item in Get-ChildItem -LiteralPath $canonicalRoot -Force -Recurse) {
+        if ($item.LinkType -or ($item.Attributes -band [System.IO.FileAttributes]::ReparsePoint)) {
+            $pluginErrors += "plugin '$PluginName' package contains a link or reparse point: $($item.FullName)"
+        }
+    }
+
+    $readmePath = Join-Path -Path $canonicalRoot -ChildPath 'README.md'
+    if (-not (Test-Path -LiteralPath $readmePath -PathType Leaf)) {
         $pluginErrors += "plugin '$PluginName' is missing README.md inside the packaged plugin"
     }
 
-    $manifestPath = Join-Path -Path $PluginRoot -ChildPath '.github/plugin/plugin.json'
-    if (-not (Test-Path -Path $manifestPath -PathType Leaf)) {
+    $manifestPath = Join-Path -Path $canonicalRoot -ChildPath '.github' -AdditionalChildPath 'plugin', 'plugin.json'
+    if (-not (Test-Path -LiteralPath $manifestPath -PathType Leaf)) {
         $pluginErrors += "plugin '$PluginName' is missing .github/plugin/plugin.json inside the packaged plugin"
+        return @($pluginErrors)
     }
 
-    if (Test-Path -Path $manifestPath -PathType Leaf) {
-        try {
-            $manifest = Get-Content -Path $manifestPath -Raw | ConvertFrom-Json -AsHashtable
+    try {
+        $manifest = Get-Content -LiteralPath $manifestPath -Raw | ConvertFrom-Json -AsHashtable
+    }
+    catch {
+        $pluginErrors += "plugin '$PluginName' has invalid plugin.json content"
+        return @($pluginErrors)
+    }
+
+    foreach ($field in @('agents', 'commands', 'skills', 'rules', 'hooks')) {
+        if (-not $manifest.ContainsKey($field) -or $null -eq $manifest[$field]) {
+            continue
         }
-        catch {
-            $pluginErrors += "plugin '$PluginName' has invalid plugin.json content"
-            return $pluginErrors
+
+        $fieldValue = $manifest[$field]
+        if ($field -eq 'hooks' -and $fieldValue -is [System.Collections.IDictionary]) {
+            continue
         }
 
-        $componentCollections = @(
-            @{ Name = 'agents'; Paths = @($manifest['agents']) },
-            @{ Name = 'commands'; Paths = @($manifest['commands']) },
-            @{ Name = 'skills'; Paths = @($manifest['skills']) },
-            @{ Name = 'hooks'; Paths = @($manifest['hooks']) }
-        )
+        $declaredPaths = if ($fieldValue -is [string]) {
+            @($fieldValue)
+        }
+        elseif ($fieldValue -is [System.Collections.IEnumerable]) {
+            @($fieldValue)
+        }
+        else {
+            $pluginErrors += "plugin '$PluginName' manifest field '$field' must contain path strings"
+            continue
+        }
 
-        foreach ($component in $componentCollections) {
-            foreach ($pathValue in @($component.Paths)) {
-                if ([string]::IsNullOrWhiteSpace([string]$pathValue)) {
-                    continue
-                }
+        foreach ($declaredPath in $declaredPaths) {
+            if ($declaredPath -isnot [string] -or [string]::IsNullOrWhiteSpace($declaredPath)) {
+                $pluginErrors += "plugin '$PluginName' manifest field '$field' contains an invalid path"
+                continue
+            }
+            if ([System.IO.Path]::IsPathRooted($declaredPath)) {
+                $pluginErrors += "plugin '$PluginName' manifest field '$field' path escapes plugin root: $declaredPath"
+                continue
+            }
 
-                $resolvedPath = Join-Path -Path $PluginRoot -ChildPath $pathValue
-                if (-not (Test-Path -Path $resolvedPath)) {
-                    $pluginErrors += "plugin '$PluginName' declares missing component path '$($pathValue)' inside the packaged plugin"
-                }
+            $resolvedPath = [System.IO.Path]::GetFullPath((Join-Path -Path $canonicalRoot -ChildPath $declaredPath))
+            if (-not $resolvedPath.StartsWith($rootPrefix, [System.StringComparison]::OrdinalIgnoreCase)) {
+                $pluginErrors += "plugin '$PluginName' manifest field '$field' path escapes plugin root: $declaredPath"
+                continue
+            }
+            if (-not (Test-Path -LiteralPath $resolvedPath)) {
+                $pluginErrors += "plugin '$PluginName' declares missing component path '$declaredPath' inside the packaged plugin"
             }
         }
     }
 
-    return $pluginErrors
+    return @($pluginErrors)
 }
 
 #endregion Validation Helpers
