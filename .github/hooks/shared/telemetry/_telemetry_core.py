@@ -833,14 +833,16 @@ def build_entry(data: dict, event: str, stack: _AgentStack) -> dict | None:
         entry["tool_input_keys"] = list(tool_input.keys()) if isinstance(tool_input, dict) else []
         entry["agent"] = stack.current()
         # Detect instructions and skills by file path convention to track
-        # which artifacts the agent loaded during the session.
+        # which artifacts the agent loaded during the session. Normalize
+        # Windows backslash separators so splitting works cross-platform.
         fpath = tool_input.get("filePath") if isinstance(tool_input, dict) else None
         if isinstance(fpath, str):
-            if fpath.endswith(".instructions.md"):
-                entry["instruction"] = fpath.split("/")[-1]
+            norm = fpath.replace("\\", "/")
+            if norm.endswith(".instructions.md"):
+                entry["instruction"] = norm.split("/")[-1]
                 entry["tokens"] = _token_estimate(fpath)
-            elif fpath.endswith("SKILL.md"):
-                parts = fpath.rstrip("/").split("/")
+            elif norm.endswith("SKILL.md"):
+                parts = norm.rstrip("/").split("/")
                 idx = next((i for i, p in enumerate(parts) if p == "skills"), -1)
                 if idx >= 0 and idx + 2 < len(parts):
                     entry["skill"] = parts[idx + 2]
