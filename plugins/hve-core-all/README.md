@@ -1,7 +1,7 @@
 <!-- markdownlint-disable-file -->
 # HVE Core All
 
-Full bundle of all stable HVE Core agents, prompts, instructions, and skills
+Full bundle of opinionated, rapidly evolving HVE Core agentic SDLC patterns and tools
 
 ## Overview
 
@@ -10,6 +10,11 @@ HVE Core provides the complete collection of AI chat agents, prompts, instructio
 Use this edition when you want access to everything without choosing a focused collection.
 
 > [!CAUTION]
+> HVE Core is a highly opinionated, rapidly evolving agentic SDLC framework. It is best treated as a source of patterns and learning rather than a stable platform, foundation, or production dependency.
+> Workflows, interfaces, architecture, and recommended practices may change substantially, including in ways that are not backward compatible, as the technology landscape evolves. Evaluate all materials for your own requirements and risk tolerance.
+> The HVE Builder skill (use with `/hve-builder`) and GitHub Copilot can help you adapt or copy relevant patterns into an agentic SDLC that you own and maintain independently.
+> To build an independent implementation, start with [Forking and Extending HVE Core](https://microsoft.github.io/hve-core/docs/customization/forking/) and review the [HVE Core documentation](https://microsoft.github.io/hve-core/) before adopting any component.
+>
 > This collection includes security, responsible AI, and supply chain security agents and prompts that are **assistive tools only**.
 > They do not replace professional security tooling (SAST, DAST, SCA, penetration testing, compliance scanners) or qualified human review.
 > All AI-generated security and compliance artifacts **must** be reviewed and validated by qualified professionals before use.
