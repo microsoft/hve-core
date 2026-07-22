@@ -27,15 +27,19 @@ Fill every `{{placeholder}}`. Update this file continuously during research, not
 
 ## Research Parameters
 
-<!-- Confirm scope before spending budget. If a required field is missing and blocks progress, ask the smallest useful batch of clarifying questions, then proceed. Budgets are task-specific guidance, not caps. -->
+<!-- Confirm scope and select one research posture before substantial research. Record whether the caller, an applicable codebase instruction, or the default selected it. Record every explicit limit or deadline without inventing additional ceilings. If a required field is missing and blocks progress, ask the smallest useful batch of clarifying questions, then proceed. -->
 
 | Field                                | Value                                                                                                              |
 |--------------------------------------|--------------------------------------------------------------------------------------------------------------------|
 | Research question(s)                 | {{primary_question}}                                                                                               |
 | Codebase scope                       | {{repos / paths / modules in scope, or "none"}}                                                                    |
 | External scope                       | {{domains / doc sets / "open web", or "none"}}                                                                     |
-| Task-specific budget / deadline      | {{caller-supplied budget or evidence-based budget with rationale}}                                                 |
-| Budget adjustment trigger            | {{what evidence, uncertainty, or constraint would justify changing the budget}}                                    |
+| Initial internal candidate areas      | {{starting workspace paths, artifacts, contracts, or "none"}}                                                      |
+| Initial external candidate areas      | {{starting official documentation, standards, repositories, or "none"}}                                            |
+| Research posture                     | {{expansive | balanced | focused}}                                                                                 |
+| Posture provenance                   | {{caller-specified | applicable codebase instruction | default}}                                                   |
+| Explicit limits / deadline           | {{caller- or codebase-provided limit or deadline, or "none"}}                                                     |
+| Posture-specific completion basis    | {{expansive saturation and redundancy | balanced scope coverage and adequate evidence | focused scope and materiality}} |
 | Edits allowed during research?       | no, research-only                                                                                                  |
 | Resolved evidence root               | {{.copilot-tracking/ default, or the trusted sandbox / caller-owned root used}}                                    |
 | Known constraints / excluded sources | {{versions, licenses, sources to avoid, or research-only / no-handoff / analysis / audit / comparison boundaries}} |
@@ -56,11 +60,11 @@ Fill every `{{placeholder}}`. Update this file continuously during research, not
 
 <!-- Use vscode_askQuestions only when answers materially change research. Batch a small number of decision-relevant questions, prefer fixed options plus freeform where useful, do not request secrets, and continue when interaction is sufficient, declined, unavailable, or unnecessary. Write the record before continuing. -->
 
-| Checkpoint  | Questions or no-interaction rationale                          | Answers / unanswered      | Resulting decision or selected further research    |
-|-------------|----------------------------------------------------------------|---------------------------|----------------------------------------------------|
-| Intake      | {{topic_scope_criteria_or_priority_questions_or_rationale}}    | {{answers_or_unanswered}} | {{resulting_scope_or_priority_decision}}           |
-| Convergence | {{further_research_defer_or_stop_question_or_rationale}}       | {{answers_or_unanswered}} | {{selected_items_deferred_items_or_stop_decision}} |
-| Walkthrough | {{researched_items_or_questions_to_walk_through_or_rationale}} | {{answers_or_unanswered}} | {{selected_navigable_items_or_no_walkthrough}}     |
+| Checkpoint       | Questions or no-interaction rationale                          | Answers / unanswered      | Resulting decision or selected further research    |
+|------------------|----------------------------------------------------------------|---------------------------|----------------------------------------------------|
+| Intake           | {{topic_scope_criteria_or_priority_questions_or_rationale}}    | {{answers_or_unanswered}} | {{resulting_scope_or_priority_decision}}           |
+| Direction change | {{material_direction_question_or_rationale}}                   | {{answers_or_unanswered}} | {{revised_brief_or_revalidation_decision}}         |
+| Convergence      | {{further_research_defer_or_stop_question_or_rationale}}       | {{answers_or_unanswered}} | {{selected_items_deferred_items_or_stop_decision}} |
 
 ## Scope and Success Criteria
 
@@ -80,6 +84,14 @@ Fill every `{{placeholder}}`. Update this file continuously during research, not
 * Inferred research questions: {{inferred_research_questions}}
 * Caller constraints and non-goals: {{research_only_no_handoff_analysis_audit_or_comparison_boundaries}}
 
+## Direction Controls
+
+<!-- Treat caller controls as active boundaries. Persist every material change before the next research action. Specific-only requests and exclusions constrain contrarian research as well as wider and deeper research. -->
+
+| Control type (add / change / narrow / exclude / discard) | Direction or boundary | Source / checkpoint | Effect on active brief, evidence, or revalidation |
+|----------------------------------------------------------|-----------------------|---------------------|---------------------------------------------------|
+| {{control_type}}                                         | {{direction}}         | {{user_or_evidence}} | {{remaining_work_or_complete_cycle_required}}     |
+
 ## Research Questions
 
 <!-- Decompose the ask into answerable sub-questions ordered by dependency. Classify each to set fan-out:
@@ -98,24 +110,54 @@ depth = one topic, multiple angles; breadth = distinct independent sub-questions
 * Reused (verified) findings: {{what_was_confirmed_still_valid_and_how}}
 * Superseded / stale: {{what_was_outdated_and_why_or_none}}
 
-## Research Loop Log
+## Research Cycle Log
 
 <!--
-Run per wave: plan -> investigate or delegate -> reflect -> narrow -> stop. Reflection is a distinct step, never run in parallel with a search.
-Set and adjust the budget from caller constraints, scope, uncertainty, source quality, dependencies, available capacity, and saturation. Record the basis and every evidence-based adjustment.
-Stop a thread when its criteria are met, evidence has saturated, the task-specific budget is consumed, the next likely source is redundant, or the remaining gap is outside scope.
+Every executed cycle contains all three waves in order: Wider, Deeper, and Contrarian. A wave can contain multiple independent lanes, but each worker dispatch has one bounded lane, cycle number, and wave type. Reflection is a distinct step and is never parallel with the result it evaluates.
+Apply the selected research posture and explicit limits or deadline. Do not add fixed cycle, token, source-count, worker-count, or time ceilings. Use evidence sufficiency, substantial novelty, scope coverage, source redundancy, and materiality to decide whether to re-enter.
+The parent alone records accepted, rejected, and deferred material. Workers return compact evidence relationships and synthesis pointers without decision authority.
 -->
 
-<!-- <per_wave> -->
-### Wave {{n}}: {{plan_for_this_wave}}
+<!-- <per_cycle> -->
+### Cycle {{cycle_number}}
 
-* Plan: {{which sub-questions, which tool categories, which subagents}}
-* Tool calls used this wave: {{k}} / {{budget}}
-* Actions:
-  * {{tool_category}} -> {{query or target}} -> {{what was found (1 line)}}
-* Reflection: is_sufficient={{true/false}}; knowledge_gap={{what_is_still_missing}}; follow_up={{next_targeted_query_or_stop}}
-* Stop decision: {{continue | stop: reason (criteria met / saturation / budget / redundant / scope)}}
-<!-- </per_wave> -->
+* Active direction controls: {{control_ids_or_none}}
+* Active research posture and completion basis: {{expansive | balanced | focused}}; {{posture_specific_completion_basis}}
+* Explicit limits or deadline effect: {{none_or_effect_on_this_cycle}}
+
+#### Wave 1: Wider
+
+* Plan and independent lanes: {{breadth_for_ideas_claims_questions_and_candidate_evidence}}
+* Worker evidence relationships or inline fallback: {{question_to_claim_to_provenance_pointers}}
+* Reflection: {{what_is_supported_missing_or_needs_prioritization}}
+
+#### Wave 2: Deeper
+
+* Parent-prioritized material from Wave 1: {{questions_claims_or_evidence_pointers}}
+* Plan and independent lanes: {{details_examples_schemas_apis_contracts_standards_patterns_or_styles}}
+* Worker evidence relationships or inline fallback: {{question_to_claim_to_provenance_pointers}}
+* Reflection: {{what_is_supported_missing_or_needs_contrarian_testing}}
+
+#### Wave 3: Contrarian
+
+* In-scope challenge targets and boundaries: {{claims_questions_and_permitted_alternatives}}
+* Plan and independent lanes: {{credible_counter_evidence_or_in_scope_alternatives}}
+* Worker evidence relationships or inline fallback: {{support_weaken_disprove_or_unresolved_with_pointers}}
+* Reflection: {{effect_on_earlier_material_and_remaining_gap}}
+
+#### Parent Synthesis and Disposition
+
+| Material / claim | Evidence IDs or worker pointers | Parent disposition (accepted / rejected / deferred) | Evidence-based rationale | Primary-artifact treatment |
+|------------------|---------------------------------|-----------------------------------------------------|--------------------------|----------------------------|
+| {{material}}     | {{C1_W1_or_worker_pointer}}     | {{disposition}}                                   | {{rationale}}            | {{finding_decision_or_gap}} |
+
+#### Cycle Re-entry Evaluation
+
+* Another complete three-wave cycle needed: {{yes / no / limit-blocked}}
+* Trigger or stop basis: {{missing_evidence_unclear_conjecture_unresolved_hypothesis_missing_required_detail_contrarian_change_saturation_or_scope}}
+* Revised brief or revalidation required: {{direction_change_and_effect_or_none}}
+* Readiness effect: {{Ready / Not ready / Not applicable / Blocked with rationale}}
+<!-- </per_cycle> -->
 
 ## Evidence Log
 
@@ -123,7 +165,7 @@ Stop a thread when its criteria are met, evidence has saturated, the task-specif
 Give every row a stable evidence ID: C1, C2, ... for codebase evidence; W1, W2, ... for external/web evidence.
 Cite these IDs from findings, alternatives, decisions, readiness, open questions, and Advisory Next Step so every claim resolves unambiguously. -->
 
-* Delegation: {{RPI Researcher or selected-specialist evidence files under .copilot-tracking/research/subagents/YYYY-MM-DD/, or "inline: fallback reason" when suitable dispatch was unavailable}}
+* Delegation: {{cycle_and_wave_annotated RPI Researcher or selected-specialist evidence files under .copilot-tracking/research/subagents/YYYY-MM-DD/, or "inline: fallback reason" when suitable dispatch was unavailable}}
 
 ### Codebase Evidence
 
@@ -259,7 +301,7 @@ Flow diagram (when a multi-component flow is involved):
 | Notes for planning or re-entry   | {{planning notes, waiting action, blocker, clarification, or targeted research that could change readiness}} |
 
 * Advisory only: rpi-research does not invoke `/rpi-plan` or any follow-on skill.
-* Why further research would not change the current decision state: {{criteria_met_saturation_or_budget_rationale}}
+* Completion or limit-blocked basis: {{why_further_research_is_immaterial_or_which_material_gap_an_explicit_limit_blocks_and_how_readiness_is_affected}}
 
 ## Sources
 
@@ -275,12 +317,16 @@ No external sources used.
 ## Artifact Self-Check
 
 * [ ] Every research question is answered or marked unanswerable with the missing evidence named.
-* [ ] Budgets were respected; any over-run is justified in the Research Loop Log.
+* [ ] Every executed cycle includes Wave 1 Wider, Wave 2 Deeper, and Wave 3 Contrarian in that order, with no skipped wave.
+* [ ] Research posture, provenance, explicit limits or deadline, and posture-specific completion basis are recorded.
 * [ ] Every codebase finding carries a `C#` ID and a `path:line`; every external finding carries a `W#` ID with URL and retrieval date.
 * [ ] Every `W#` resolves to exactly one entry in Sources and the list is gap-free, or Sources states "No external sources used".
 * [ ] Findings, alternatives, decisions, and readiness claims cite Evidence Log IDs (`C#` / `W#`).
 * [ ] The Extension Registry records matching instructions, relevant skills, available specialist subagents, provenance, authority or output contract, and selected or skipped reasons.
 * [ ] User Participation records answers, unanswered questions, no-interaction rationale, decisions, and selected further-research items before work continued.
+* [ ] Direction Controls record caller additions, changes, narrowed scope, exclusions, and discarded directions, plus any required revalidation.
+* [ ] Parent Synthesis and Disposition records accepted, rejected, and deferred material with evidence-based rationale; workers supplied evidence relationships without decision authority.
+* [ ] Cycle Re-entry Evaluation records whether a complete next cycle is needed and honestly records a limit-blocked gap when applicable.
 * [ ] A recommendation is selected with why-rejected reasoning when Output mode is convergence; non-convergence modes record the decision state without a forced selection.
 * [ ] Current Decisions and Unresolved Decisions contain complete status, source or owner, rationale or smallest missing evidence, evidence IDs, implications, and blockers.
 * [ ] Potential Next Research includes priority, value, trigger, selected state, and related evidence.
