@@ -7,6 +7,8 @@ from __future__ import annotations
 import io
 import json
 
+import pytest
+
 import _telemetry_core as core
 
 
@@ -411,9 +413,35 @@ def test_given_cli_subagent_stop_payload_when_normalize_event_then_infers_stop()
     assert core._normalize_event(data) == "SubagentStop"
 
 
-def test_given_cli_session_stop_payload_when_normalize_event_then_infers_stop():
-    # A session-level stop carries stopReason but no agentName.
+def test_given_cli_agent_stop_payload_when_normalize_event_then_infers_stop():
+    # An agent turn end carries stopReason but no agentName.
     assert core._normalize_event({"sessionId": "s", "stopReason": "end_turn"}) == "Stop"
+
+
+def test_given_cli_session_end_payload_when_normalize_event_then_infers_sessionend():
+    # A real sessionEnd payload carries a top-level reason and no stopReason.
+    data = {"sessionId": "s", "reason": "user_exit"}
+    assert core._normalize_event(data) == "SessionEnd"
+
+
+@pytest.mark.parametrize("reason", ["complete", "error", "abort", "timeout", "user_exit"])
+def test_given_documented_reason_value_when_normalize_event_then_infers_sessionend(reason):
+    assert core._normalize_event({"sessionId": "s", "reason": reason}) == "SessionEnd"
+
+
+def test_given_unrelated_reason_value_when_normalize_event_then_stays_unknown():
+    # An arbitrary reason on an unrecognized payload must not be mistaken for
+    # a session end; only the documented sessionEnd values match.
+    assert core._normalize_event({"sessionId": "s", "reason": "tool_denied"}) == "unknown"
+
+
+def test_given_cli_session_start_payload_when_normalize_event_then_infers_sessionstart():
+    assert core._normalize_event({"sessionId": "s", "source": "startup"}) == "SessionStart"
+
+
+def test_given_vscode_session_end_payload_when_normalize_event_then_infers_sessionend():
+    data = {"hook_event_name": "SessionEnd", "session_id": "s", "reason": "complete"}
+    assert core._normalize_event(data) == "SessionEnd"
 
 
 def test_given_explicit_event_name_when_normalize_event_then_shape_inference_skipped():
@@ -432,6 +460,60 @@ def test_given_cli_json_string_toolargs_when_build_entry_then_extracts_keys(tmp_
     }
     entry = core.build_entry(data, "PreToolUse", stack)
     assert sorted(entry["tool_input_keys"]) == ["command", "description"]
+
+
+def test_given_session_end_when_build_entry_then_records_reason(tmp_path):
+    stack = core._AgentStack(tmp_path / ".stacks", "sid1")
+    data = {"sessionId": "sid1", "reason": "user_exit"}
+    entry = core.build_entry(data, "SessionEnd", stack)
+    assert entry["event"] == "SessionEnd"
+    assert entry["reason"] == "user_exit"
+    assert "stop_reason" not in entry
+
+
+def test_given_stop_event_with_reason_only_when_build_entry_then_falls_back_to_reason(tmp_path):
+    # A surface may name the event Stop yet send a session-end style payload.
+    stack = core._AgentStack(tmp_path / ".stacks", "sid1")
+    data = {"sessionId": "sid1", "reason": "complete"}
+    entry = core.build_entry(data, "Stop", stack)
+    assert entry["stop_reason"] == "complete"
+
+
+def test_given_session_end_event_when_mode_collect_then_writes_entry_and_summary(
+    tmp_path, monkeypatch
+):
+    tel_dir = tmp_path / "tel"
+    home = tmp_path / "home"
+    state_dir = home / "session-state" / "sid1"
+    state_dir.mkdir(parents=True)
+    _write_jsonl(
+        state_dir / "events.jsonl",
+        [
+            {
+                "type": "assistant.message",
+                "timestamp": "2026-01-01T00:00:00Z",
+                "data": {"model": "m", "outputTokens": 9},
+            }
+        ],
+    )
+    monkeypatch.setenv("HVE_TELEMETRY_DIR", str(tel_dir))
+    monkeypatch.setenv("COPILOT_HOME", str(home))
+    # A real CLI sessionEnd payload: top-level reason, no event name, no stopReason.
+    payload = {
+        "sessionId": "sid1",
+        "timestamp": 1753195629801,
+        "cwd": str(tmp_path),
+        "reason": "complete",
+    }
+    monkeypatch.setattr("sys.stdin", io.StringIO(json.dumps(payload)))
+    assert core._mode_collect() == 0
+
+    logs = list(tel_dir.glob("sessions-*.jsonl"))
+    assert len(logs) == 1
+    events = [json.loads(line) for line in logs[0].read_text().splitlines()]
+    assert events[0]["event"] == "SessionEnd"
+    assert events[0]["reason"] == "complete"
+    assert any(e["event"] == "SessionSummary" for e in events)
 
 
 def test_given_stop_event_when_mode_collect_then_writes_entry_and_summary(tmp_path, monkeypatch):

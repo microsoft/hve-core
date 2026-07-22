@@ -5,7 +5,8 @@
 
 This module is the single source of truth for telemetry collection. The bash
 collector invokes the ``collect`` mode to record one hook event (and enrich
-the session at ``Stop``), while the report generators invoke the
+the session at ``Stop``, ``SessionEnd``, and ``PreCompact``), while the report
+generators invoke the
 ``aggregate-debug``, ``aggregate-session``, and ``list-dirs`` modes to join
 model/token data and discover per-project telemetry stores for reports.
 Clean scripts invoke the ``clean`` mode to remove telemetry artifacts
@@ -46,9 +47,14 @@ EVENT_ALIASES = {
     "subagentStart": "SubagentStart",
     "subagentStop": "SubagentStop",
     "agentStop": "Stop",
-    "sessionEnd": "Stop",
+    "sessionEnd": "SessionEnd",
     "preCompact": "PreCompact",
 }
+
+# Documented sessionEnd ``reason`` values (GitHub Copilot hooks reference).
+# Shape inference matches only these so an unrelated ``reason`` key on some
+# other or future event is not mistaken for a session end.
+SESSION_END_REASONS = frozenset({"complete", "error", "abort", "timeout", "user_exit"})
 
 
 def iter_jsonl(path: str | os.PathLike[str]) -> Iterator[dict]:
@@ -688,8 +694,11 @@ def _infer_event_from_shape(data: dict) -> str:
     * ``agentName`` present -> SubagentStop when ``stopReason`` is set (a
       Subagent stop), otherwise SubagentStart
     * ``trigger`` present -> PreCompact
-    * ``stopReason`` present without ``agentName`` -> Stop (session end)
+    * ``stopReason`` present without ``agentName`` -> Stop (an agent turn end)
     * ``source`` present -> SessionStart
+    * ``reason`` holding a documented session-end value (``complete``,
+      ``error``, ``abort``, ``timeout``, ``user_exit``) -> SessionEnd (the
+      session terminates; unlike an agent Stop, no ``stopReason``)
     """
     if "toolResult" in data:
         return "PostToolUse"
@@ -705,6 +714,8 @@ def _infer_event_from_shape(data: dict) -> str:
         return "Stop"
     if "source" in data:
         return "SessionStart"
+    if data.get("reason") in SESSION_END_REASONS:
+        return "SessionEnd"
     return "unknown"
 
 
@@ -879,7 +890,14 @@ def build_entry(data: dict, event: str, stack: _AgentStack) -> dict | None:
     elif event == "PreCompact":
         entry["trigger"] = data.get("trigger", "")
     elif event == "Stop":
-        entry["stop_reason"] = data.get("stop_reason") or data.get("stopReason", "")
+        # Fall back to ``reason`` for surfaces that name the event Stop but
+        # supply a session-end style payload without ``stopReason``.
+        entry["stop_reason"] = (
+            data.get("stop_reason") or data.get("stopReason") or data.get("reason", "")
+        )
+        stack.clear()
+    elif event == "SessionEnd":
+        entry["reason"] = data.get("reason", "")
         stack.clear()
 
     return entry
@@ -922,13 +940,15 @@ def _mode_collect() -> int:
         handle.write(json.dumps(entry) + "\n")
 
     # Enrich the log with a SessionSummary of token totals and model usage.
-    # Emitted at Stop (session end) and at PreCompact: process logs rotate
-    # aggressively, so capturing a snapshot before compaction preserves
-    # per-request input data that would otherwise degrade to the
-    # compaction-only state fallback once the log is gone. Multiple summaries
-    # per session are expected; the report replaces by provenance rank and
-    # freshness rather than accumulating, so snapshots never double-count.
-    if event in ("Stop", "PreCompact") and sid:
+    # Emitted at SessionEnd (the authoritative final snapshot), at Stop (each
+    # agent turn end, capturing periodically before process logs rotate), and
+    # at PreCompact: process logs rotate aggressively, so capturing a snapshot
+    # before compaction preserves per-request input data that would otherwise
+    # degrade to the compaction-only state fallback once the log is gone.
+    # Multiple summaries per session are expected; the report replaces by
+    # provenance rank and freshness rather than accumulating, so snapshots
+    # never double-count.
+    if event in ("Stop", "SessionEnd", "PreCompact") and sid:
         home = copilot_home()
         state_dir = home / "session-state" / sid
         state_file = state_dir / "events.jsonl"
