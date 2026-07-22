@@ -59,10 +59,48 @@ Route an unresolved plan follow-up item to its distinct follow-up work owner or 
 
 Record relevant validation as passed, failed, skipped, or unavailable. Failed checks are review evidence, and skipped or unavailable checks need a reason. Do not claim unrun validation passed.
 
-## Conversation and closeout
+## Conversation protocol
 
-During material review work, give concise updates at evidence-comparison boundaries. State the comparison and reason, findings, decisions, blockers, validation results, relevant artifact links, and one important point the user might otherwise miss. Before a user question, state the decision context, viable choices and consequences, evidence-backed recommendation when available, blockers, and relevant Markdown links.
+Before substantive evidence comparison or delegation, create or update the one review record and persist its canonical opening state in `## Opening Review State`. Record the interpreted review goal, review scope, evidence readiness, acceptance basis, first comparison boundary, active read-only boundaries, and initial blockers. Then send one opening message:
 
-At closeout, report review execution status separately from outcome. Include results, material findings, decisions, and blockers or open items. Advise `/compact` only when stale output, superseded reasoning, or completed comparison detail outweighs current context and the review record and compared artifacts are current. When advising it, name the state and artifact pointers to retain. Otherwise omit compaction guidance.
+```markdown
+## RPI Review: [Task] | [Full task, Pxx, or Pxx-Txx scope]
 
-For standalone review, advise the exact `/rpi-implement`, `/rpi-plan`, or `/rpi-research` command only when an actionable finding needs that destination. Do not invoke it. Otherwise state the no-handoff reason. In `rpi-quick` or confirmed automatic RPI Agent mode, return the record to the parent for automatic continuation after gates and required confirmations pass. End the closeout with a Markdown table linking every relevant existing artifact and a short description. Keep the table as the final response element.
+[Interpreted review goal.]
+
+* Review scope: [full task, Pxx, or Pxx-Txx scope]
+* Evidence set and readiness: [available compared artifacts and readiness]
+* Acceptance basis: [requirements, acceptance criteria, critique dispositions, or other review basis]
+* Initial comparison boundary: [first evidence comparison and its limit]
+* Active read-only boundaries: [review record and evidence-only authority]
+* Current blockers: [active blockers]
+* Relevant links: [Markdown links when available]
+
+This is the starting review state and may evolve only through the existing evidence-comparison, finding, validation, and routing rules.
+```
+
+Omit Current blockers when none are active. Omit Relevant links when no valid link is available. Do not invent readiness, acceptance support, links, or an outcome before comparison supports one.
+
+Before each potential continual update, persist the item in the review-record section that owns it, including reconciliation, completed-work assessment, implementation-time update assessment, critique and material revision assessment, follow-up assessment, findings, blockers and remaining work, validation evidence, outcome, or next owner. Chat is a concise projection of that state, never a second history or delivery log.
+
+Send a continual update only when the item changes review direction, execution status or outcome, a material finding or artifact state, a blocker or decision need, validation state, routing or handoff, or the user's likely understanding. Suppress low-level actions, routine tool calls, raw worker returns, unchanged state, and minor rows or edits.
+
+Use this compact shape when a message is warranted:
+
+```markdown
+### [Marker when useful] [Review state]: [Short item]
+
+Evidence: [comparison basis and relevant Markdown links]
+
+Review consequence: [effect on execution status, outcome, RV finding, validation coverage, or routing]
+
+Next review action: [next comparison, validation assessment, focused question, route, closeout, or stop]
+```
+
+Use `✅` only for evidence-backed conformance, a completed comparison, or passed validation. Use `⚠️` for a substantive finding, residual work, failed, skipped, or unavailable validation, or a decision or evidence gap. Use `⛔` when review progress is blocked. Markers are optional and must be paired with text.
+
+Before a user question, persist its decision context and state the decision context, viable choices and consequences, evidence-backed recommendation when available, blockers, and relevant Markdown links.
+
+At closeout, report review execution status separately from outcome. Include results, material findings, decisions, blockers or open items, and anything the user might otherwise miss. Advise `/compact` only when stale output, superseded reasoning, or completed comparison detail outweighs current context and the review record and compared artifacts are current. When advising it, name the state and artifact pointers to retain. Otherwise omit compaction guidance.
+
+For standalone review, remain read-only and advise the exact `/rpi-implement`, `/rpi-plan`, or `/rpi-research` command only when an actionable finding needs that destination. Do not invoke it. Otherwise state the no-handoff reason. In `rpi-quick` or confirmed automatic RPI Agent mode, return the record to the parent for automatic continuation after gates and required confirmations pass. End the closeout with a Markdown table linking every relevant existing artifact and a short description. Keep the table as the final response element.

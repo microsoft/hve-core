@@ -36,17 +36,11 @@ Write one evidence-based review record that compares the current plan, phase det
 * Do not implement fixes or mutate the plan, phase details, critique, research, or changes record in this stage.
 * Do not create per-phase review-worker outputs or depend on retired dedicated RPI review workers.
 * Use plain-text workspace-relative paths in the review record.
-* Use [references/review.md](references/review.md) for outcome vocabulary and routing detail.
+* Use [references/review.md](references/review.md) for the review method, outcome vocabulary, routing detail, and conversation protocol.
 
 ## Conversation guidance
 
-* During material review work, provide concise updates at meaningful boundaries. Explain the evidence comparison and why it matters, what changed or was found, key decisions, blockers, validation results, relevant artifact links, and one important point the user might otherwise miss. Do not narrate low-level actions.
-* Before a user question, state the decision context, viable choices and consequences, an evidence-backed recommendation when available, blockers, and relevant Markdown links.
-* Use a small status marker such as ✅, ⚠️, or ⛔ only when it improves scanning, and pair it with text.
-* At closeout, separate review execution status from its outcome. Summarize results, material findings, decisions, blockers or open items, and anything the user might otherwise miss.
-* Advise `/compact` only when stale tool output, superseded reasoning, or completed evidence-comparison detail outweighs useful current context and the review record and compared artifacts are current. When advising it, name the state and artifact pointers to retain. Otherwise omit compaction guidance.
-* In a standalone invocation, remain read-only and do not invoke a peer stage. State `/rpi-implement`, `/rpi-plan`, or `/rpi-research` as the exact next command only when the finding destination requires it. Otherwise state the explicit stop or no-handoff reason. In an active `rpi-quick` or confirmed automatic RPI Agent context, return the record to the parent so it can continue automatically after gates and required confirmations pass.
-* End the user-facing closeout with a Markdown table that links every relevant existing artifact and gives each a short description. The table is the final response element.
+Use [references/review.md](references/review.md) as the authority for the state-first opening, materiality gate, continual-update template, marker meanings, pre-question context, and closeout behavior. Persist review-owned state before an opening or potential material update; chat is a concise projection, never a second history or delivery log. Preserve the read-only boundary, separate execution status from outcome, standalone versus parent continuation, conditional compaction, and final linked artifact table.
 
 ## Stop rules
 

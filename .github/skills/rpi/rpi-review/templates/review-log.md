@@ -12,6 +12,16 @@
 * Changes: .copilot-tracking/changes/{{YYYY-MM-DD}}/{{task_slug}}-changes.md
 * Other evidence considered: {{research_validation_or_bounded_lens_evidence}}
 
+## Opening Review State
+
+* Interpreted review goal: {{evidence_based_review_goal}}
+* Review scope: {{full_task_or_bounded_pxx_or_pxx_txx_scope}}
+* Evidence readiness: {{available_artifacts_and_readiness}}
+* Acceptance basis: {{requirements_acceptance_criteria_critique_or_other_basis}}
+* First comparison boundary: {{initial_evidence_comparison_and_limit}}
+* Active read-only boundaries: {{review_record_and_evidence_only_authority}}
+* Initial blockers: {{none_or_active_blocker_with_next_action}}
+
 ## Execution Status
 
 * Execution status: {{Complete_Partial_or_Blocked}}
