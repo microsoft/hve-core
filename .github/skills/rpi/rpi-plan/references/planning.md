@@ -41,7 +41,35 @@ The planner synthesizes the list and current evidence into separate top-level `#
 
 When the user makes a clear change, update the list and every affected synthesized section directly without asking a redundant question. Reconcile the plan, phase details, executive summary, phases, task markers, dependencies, references, critique inputs, and follow-up items after the update. Do not silently weaken or contradict a confirmed requirement.
 
-When a decision-critical change remains unclear, ask only a small focused question set. Immediately before every tool call, send a conversation message containing the affected user decision or requirement and plan area, the finding or conflict, viable choices, material consequences, an evidence-backed recommendation when available, and Markdown links to relevant planning artifacts, documents, code, or authoritative external sources when available. The question tool may refine the choice, but the decision context belongs in the conversation. Apply the user's answer to the freeform list and all affected synthesized sections.
+When a decision-critical change remains unclear, ask only a small focused question set. Before asking, send a conversation message containing the affected user decision or requirement and plan area, the finding or conflict, viable choices, material consequences, an evidence-backed recommendation when available, and Markdown links to relevant planning artifacts, documents, code, or authoritative external sources when available. The question tool may refine the choice, but the decision context belongs in the conversation. Apply the user's answer to the freeform list and all affected synthesized sections.
+
+## Planning opening and material updates
+
+Before substantive phase drafting or delegation, create or revise the plan and phase-details artifacts, then persist the canonical planning state in the sections that own it. The plan records task identity, interpreted planning goal, user decisions and requirements, goals, scope and non-goals, initial evidence and readiness assessment, active boundaries, unresolved decisions or blockers, and resolved artifact paths when applicable. Phase details record the initial phase direction and task-level context, evidence, boundaries, and blockers. This persistence gives the opening and later updates a durable planning basis.
+
+After that persistence, send one concise canonical `RPI Plan` opening. Include the following when applicable:
+
+* Identify `RPI Plan` and the task or topic
+* State execution state or readiness and the interpreted planning goal
+* Summarize the starting evidence or context and active boundaries
+* Name the planning focus or initial phase direction
+* Identify unresolved decisions or blockers
+* Include relevant Markdown links when available
+* State that the initial phase direction can change with evidence, critique, and caller direction
+
+Before each material planning update, persist the item in the canonical plan, phase details, or critique disposition section that owns it. Do not create a separate chat-delivery log. Material updates are limited to these planning milestones:
+
+* Evidence or readiness assessment
+* Initial artifact drafting
+* User decision or requirement changes
+* Research returns that change planning
+* Critique findings, dispositions, and revisions
+* Blockers
+* Readiness or handoff
+
+Use a compact update shape: state what changed, the basis or evidence, the planning consequence, and the next planning action. Preserve factual uncertainty. Identify proposals and unresolved items as such, rather than presenting them as settled decisions.
+
+Do not send an update for low-level actions, raw subagent returns, unchanged state, or routine tool calls. The pre-question decision-context requirement remains separate: provide it before a focused decision question, not before every tool call.
 
 ## Implementation-time updates and follow-up items
 
@@ -112,7 +140,7 @@ Phase details describe context, intent, boundaries, likely targets, dependencies
 
 ## Planning conversation and closeout
 
-During material planning work, give concise updates at meaningful boundaries. State the action and reason, changes or findings, key decisions, blockers, results, relevant artifact links, and one important point the user might otherwise miss. Before a decision question, state the decision context, viable choices and consequences, evidence-backed recommendation when available, blockers, and relevant Markdown links.
+Use the planning opening and material-update protocol above during planning work. Before a decision question, state the decision context, viable choices and consequences, evidence-backed recommendation when available, blockers, and relevant Markdown links.
 
 At closeout, report planning execution status separately from readiness or decision state. Include results, important updates, decisions, and blockers or open items. Advise `/compact` only when stale tool output, superseded reasoning, or completed-stage detail outweighs useful context and the durable plan, details, and critique artifacts are current. When advising it, name the state and artifact pointers to retain. Otherwise omit compaction guidance.
 
