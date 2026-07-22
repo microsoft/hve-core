@@ -1,8 +1,8 @@
 ---
 title: Prompt Builder
-description: "Prompt engineering assistant for creating and validating prompts, agents, and instructions"
+description: "Compatibility entry point that routes legacy prompt-build, prompt-refactor, and prompt-analyze requests through the hve-builder lifecycle."
 sidebar_position: 3
-ms.date: 2026-07-03
+ms.date: 2026-07-13
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->
@@ -17,7 +17,7 @@ ms.date: 2026-07-03
 ## What it does
 
 <!-- BEGIN AUTO-GENERATED: overview -->
-Prompt engineering assistant for creating and validating prompts, agents, and instructions
+Compatibility entry point that routes legacy prompt-build, prompt-refactor, and prompt-analyze requests through the hve-builder lifecycle.
 <!-- END AUTO-GENERATED: overview -->
 
 ## When to use it
