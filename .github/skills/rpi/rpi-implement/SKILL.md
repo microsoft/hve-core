@@ -65,38 +65,11 @@ Deliver the approved outcome using the current plan and phase details as evidenc
 
 ## Conversation guidance
 
-* Before substantive source edits or implementation delegation, persist the current approved implementation state from Flow step 3, then send one opening message in this shape:
-
-	```markdown
-	## 🛠️ RPI Implement: [Task] | [Full plan, Pxx, or Pxx-Txx]
-
-	[Interpreted implementation goal.]
-
-	* Starting scope: [active scope and first execution boundary]
-	* Approved write boundary: [allowed source and artifact targets]
-	* Planned validation: [expected checks or explicit validation intent]
-	* Current blockers: [active blockers]
-	* Relevant links: [Markdown links when available]
-
-	These describe the current approved implementation state and may change only through the existing implementation-time update rules.
-	```
-
-	Omit Current blockers when none are active. Omit Relevant links when no valid link is available. Do not invent state, links, or a separate conversation-delivery log.
-* Before each material continual update, persist the relevant canonical state first: update the current plan and phase details when approved state changes, and update the changes record for implementation evidence and history. Generate chat as a concise projection of that state, not as a second history or delivery audit.
-* Send a material update for meaningful completion, a material discovery, a blocker or decision need, or a validation boundary. Do not send one for low-level actions, unchanged state, or raw subagent returns. Use this shape, omitting a field only when it is genuinely not applicable:
-
-	```markdown
-	### [Functional marker] [Implementation state]: [Short item]
-
-	Result: [what completed, changed, failed, or remains blocked]
-	Evidence: [compact evidence basis and relevant Markdown links]
-	Plan effect: [current plan or phase-detail state, including any pause or decision need]
-	Next implementation effect: [next execution, validation, stop, or planning action]
-	```
-
-	Use `✅` for completed or validated work, `⚠️` for a material discovery, failed validation, or decision need, and `⛔` when progress is blocked.
+* Follow the detailed opening, continual-update, pre-question, and closeout protocol in [references/implementation.md](references/implementation.md). That reference is the authority for the rendered message templates.
+* Before substantive source edits or implementation delegation, persist canonical approved implementation state, then send one phase-specific opening. Before each potential continual update, persist the relevant canonical state first: update the current plan and phase details when approved state changes, and update the changes record for implementation evidence and history. Chat is a concise projection of that state, never a second history or delivery log.
+* Send an update only when the item changes phase direction, a current decision or readiness state, a material result or artifact state, a blocker or decision need, validation state where applicable, handoff, or the user's likely understanding. Suppress low-level actions, routine tool calls, raw subagent returns, unchanged state, and minor rows or edits. Preserve the implementation status meanings in the reference.
 * Before a user question, state the affected decision, viable choices and consequences, an evidence-backed recommendation when available, blockers, and relevant Markdown links.
-* Use a small status marker such as ✅, ⚠️, or ⛔ only when it improves scanning, and pair it with text.
+* Use a status marker only when it improves scanning and pair it with text.
 * At closeout, separate implementation execution status from implementation outcome or readiness for review. Summarize results, important updates, decisions, blockers or open items, and anything the user might otherwise miss.
 * Advise `/compact` only when stale tool output, superseded reasoning, or completed task detail outweighs useful current context and the plan, phase details, and changes record are current. When advising it, name the state and artifact pointers to retain. Otherwise omit compaction guidance.
 * In a standalone invocation, do not invoke `rpi-review`. State `/rpi-review` as the exact next command only when review prerequisites are met. When planning or a user decision is still required, state the explicit stop or no-handoff reason. In an active `rpi-quick` or confirmed automatic RPI Agent context, return the current artifacts to the parent so it can continue automatically after gates and required confirmations pass.

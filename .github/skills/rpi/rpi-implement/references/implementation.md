@@ -48,11 +48,49 @@ A material discovery may change confirmed user decisions or requirements, goals,
 
 On resumption, continue from the first unchecked applicable task or phase. Read prior descriptive changes-record sections, current plan markers, phase details, and latest critique disposition. Do not resume a task awaiting a user decision or fresh planning and critique.
 
+## Conversation protocol
+
+Before substantive source edits or implementation delegation, persist canonical approved implementation state in the plan, phase details, and changes record sections that own it. Record the active implementation scope, approved write boundary, validation intent, blockers, and first execution boundary. Then send one concise canonical `RPI Implement` opening using this shape:
+
+```markdown
+## 🛠️ RPI Implement: [Task] | [Full plan, Pxx, or Pxx-Txx]
+
+[Interpreted implementation goal.]
+
+* Starting scope: [active scope and first execution boundary]
+* Approved write boundary: [allowed source and artifact targets]
+* Planned validation: [expected checks or explicit validation intent]
+* Current blockers: [active blockers]
+* Relevant links: [Markdown links when available]
+
+These describe the current approved implementation state and may evolve only through the existing implementation-time update rules.
+```
+
+Omit Current blockers when none are active. Omit Relevant links when no valid link is available. Do not invent state, links, or a separate conversation-delivery log.
+
+Before each potential continual update, persist the relevant canonical state first: update the current plan and phase details when approved state changes, and update the changes record for implementation evidence and history. Chat is a concise projection of that state, not a second history or delivery audit. A continual update is warranted only when the item changes phase direction, a current decision or readiness state, a material result or artifact state, a blocker or decision need, validation state where applicable, handoff, or the user's likely understanding. Suppress low-level actions, routine tool calls, raw subagent returns, unchanged state, and minor rows or edits.
+
+Use this compact shape when a message is warranted, omitting a field only when it is genuinely not applicable:
+
+```markdown
+### [Functional marker when useful] [Implementation state]: [Short item]
+
+Result: [what completed, changed, failed, or remains blocked]
+
+Evidence: [compact evidence basis and relevant Markdown links]
+
+Plan effect: [current plan or phase-detail state, including any pause or decision need]
+
+Next implementation action: [next execution, validation, stop, or planning action]
+```
+
+Use `✅` for completed or validated work, `⚠️` for a material discovery, failed validation, or decision need, and `⛔` when progress is blocked. Use a marker only when it improves scanning and pair it with text.
+
+Before a user question, state the affected decision, viable choices and consequences, an evidence-backed recommendation when available, blockers, and relevant Markdown links. At closeout, report implementation execution status separately from review readiness. Include results, material updates, decisions, and blockers or open items. Advise `/compact` only when stale output, superseded reasoning, or completed task detail outweighs current context and the plan, details, and changes record are current. When advising it, name the state and artifact pointers to retain. Otherwise omit compaction guidance.
+
 ## Return to caller
 
-During material work, give concise updates at implementation boundaries. State the action and reason, changes or findings, decisions, blockers, validation results, relevant artifact or source links, and one important point the user might otherwise miss. Before a user decision, state the decision context, viable choices and consequences, evidence-backed recommendation when available, blockers, and relevant Markdown links.
-
-At closeout, report implementation execution status separately from review readiness. Include results, material updates, decisions, and blockers or open items. Advise `/compact` only when stale output, superseded reasoning, or completed task detail outweighs current context and the plan, details, and changes record are current. When advising it, name the state and artifact pointers to retain. Otherwise omit compaction guidance.
+During material work, apply the Conversation protocol. Before a user decision, state the decision context, viable choices and consequences, evidence-backed recommendation when available, blockers, and relevant Markdown links.
 
 For standalone use, advise `/rpi-review` only when review prerequisites are met and do not invoke it. When planning or a decision is required, state the explicit stop or no-handoff reason. In `rpi-quick` or confirmed automatic RPI Agent mode, return the artifacts to the parent for automatic continuation after gates and required confirmations pass. End the closeout with a Markdown table linking every relevant existing artifact and a short description. Keep the table as the final response element.
 

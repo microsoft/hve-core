@@ -93,8 +93,8 @@ Derive `{{task_slug}}` from the primary target with lower-kebab-case and use the
 ## Conversation guidance
 
 * Follow the detailed Conversation Protocol in `references/research.md`.
-* Before substantive search or delegation, persist the opening state and send the canonical `## 🔎 RPI Research: [Topic] | [Expansive, Balanced, or Focused]` message.
-* Persist a material item in its owning canonical research section before sending a concise evidence-first update. Send updates only at material boundaries, never for low-level actions, raw worker returns, or unchanged state.
+* Before substantive search or delegation, persist canonical opening state, then send one phase-specific opening. Before each potential continual update, persist the item in its owning canonical research section. Chat is a concise projection of that state, never a second history or delivery log.
+* Send an update only when the item changes phase direction, a current decision or readiness state, a material result or artifact state, a blocker or decision need, validation state where applicable, handoff, or the user's likely understanding. Suppress low-level actions, routine tool calls, raw worker returns, unchanged state, and minor evidence rows or edits.
 * Keep hypotheses, conjectures, claims, ideas, and discoveries distinct from facts by using the parent-owned evidence states and message shapes in the reference.
 * Before a user question, provide its decision context, viable choices and consequences, evidence-backed recommendation when available, blockers, and relevant Markdown links.
 * At closeout, separate research execution status from planning readiness or decision state. Summarize results, important updates, decisions, blockers or open items, and anything the user might otherwise miss.

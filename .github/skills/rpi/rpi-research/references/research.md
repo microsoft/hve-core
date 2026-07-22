@@ -28,7 +28,7 @@ Before the opening update, persist only canonical opening state in the Research 
 
 Before a material update, persist the item in the canonical section that owns it: Research Cycle Log reflection or parent synthesis, Evidence Log, Findings Mapped to Questions and Evidence, Key Discoveries, Alternatives and Decision State, Open Questions, Risks, and Residual Uncertainty, Current Decisions, Unresolved Decisions, Potential Next Research, or Planning Readiness. Do not create a separate conversation-delivery record.
 
-Generate conversation messages as concise projections of that canonical state. Do not separately audit delivery, sent or suppressed status, or what was output in chat. Retain the evidence-state labels, functional markers, evidence, implication, and next research effect; use links when available; keep updates at bounded material boundaries; and do not expose raw worker returns.
+Generate conversation messages as concise projections of that canonical state. Do not separately audit delivery, sent or suppressed status, or what was output in chat. Retain the evidence-state labels, functional markers when they improve scanning, evidence, implication, and next research effect; use links when available; keep updates at bounded material boundaries; and do not expose raw worker returns.
 
 ### Opening Update
 
@@ -42,16 +42,17 @@ Before substantive search or delegation, persist the Research Brief, Research Pa
 * Starting internal areas: [likely workspace paths, artifacts, or contracts]
 * Starting external areas: [likely official documentation, standards, or repositories]
 * Active boundaries: [scope, non-goals, explicit limits, or deadline]
+* Current blockers: [active blockers]
 * Relevant links: [Markdown links when available]
 
-These are starting points and may evolve with evidence, discoveries, posture, and caller direction.
+These are starting points and may evolve only through the existing evidence, discovery, posture, and caller-direction rules.
 ```
 
-Omit a link line when no valid link is available. Do not invent links, sources, or exhausted research areas. The candidate areas guide initial research only and do not expand caller scope.
+Omit Current blockers when none are active. Omit a link line when no valid link is available. Do not invent links, sources, or exhausted research areas. The candidate areas guide initial research only and do not expand caller scope.
 
 ### Material Conversation Updates
 
-When a hypothesis, conjecture, claim, idea, or discovery first materially shapes research, or when evidence materially changes understanding, direction, alternatives, readiness, or a claim, the parent first updates the owning canonical primary-artifact section. It then decides whether a short user update is useful.
+When a hypothesis, conjecture, claim, idea, or discovery first materially shapes research, or when evidence materially changes understanding, direction, alternatives, readiness, or a claim, the parent first updates the owning canonical primary-artifact section. Chat is a concise projection of that state, never a second history or delivery log.
 
 Use one parent-owned evidence state for each material item:
 
@@ -66,7 +67,7 @@ Use one parent-owned evidence state for each material item:
 Use this evidence-first update shape when a message is warranted:
 
 ```markdown
-### [Marker] [Evidence state]: [Short item]
+### [Marker when useful] [Evidence state]: [Short item]
 
 Evidence: [compact evidence basis and relevant Markdown links]
 
@@ -75,7 +76,7 @@ Implication: [what materially changed or remains uncertain]
 Next research effect: [the focused next question, wave, or revalidation]
 ```
 
-Use `⛔` only when a blocker prevents progress. A message is warranted when the item changes the active brief, a material research route, an alternative, a readiness assessment, a decision, or the user's likely understanding. Do not send a message for a low-level action, unchanged canonical state, a minor evidence row, or a raw worker return. Do not present an inference, a candidate, or an unresolved possibility as fact.
+Use the functional marker only when it improves scanning and pair it with the evidence-state text. Use `⛔` only when a blocker prevents progress. A message is warranted only when the item changes phase direction, a current decision or readiness state, a material result or artifact state, a blocker or decision need, validation state where applicable, handoff, or the user's likely understanding. Do not send a message for a low-level action, routine tool call, unchanged canonical state, minor evidence row or edit, or raw worker return. Do not present an inference, a candidate, or an unresolved possibility as fact.
 
 Before a user question, persist its decision context and ask only when the answer can materially change research. State the decision context, viable choices and consequences, evidence-backed recommendation when available, blockers, and relevant Markdown links.
 

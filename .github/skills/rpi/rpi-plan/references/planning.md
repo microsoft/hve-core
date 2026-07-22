@@ -47,29 +47,40 @@ When a decision-critical change remains unclear, ask only a small focused questi
 
 Before substantive phase drafting or delegation, create or revise the plan and phase-details artifacts, then persist the canonical planning state in the sections that own it. The plan records task identity, interpreted planning goal, user decisions and requirements, goals, scope and non-goals, initial evidence and readiness assessment, active boundaries, unresolved decisions or blockers, and resolved artifact paths when applicable. Phase details record the initial phase direction and task-level context, evidence, boundaries, and blockers. This persistence gives the opening and later updates a durable planning basis.
 
-After that persistence, send one concise canonical `RPI Plan` opening. Include the following when applicable:
+After that persistence, send one concise canonical `RPI Plan` opening using this shape:
 
-* Identify `RPI Plan` and the task or topic
-* State execution state or readiness and the interpreted planning goal
-* Summarize the starting evidence or context and active boundaries
-* Name the planning focus or initial phase direction
-* Identify unresolved decisions or blockers
-* Include relevant Markdown links when available
-* State that the initial phase direction can change with evidence, critique, and caller direction
+```markdown
+## 🧭 RPI Plan: [Task or topic] | [Readiness or planning focus]
 
-Before each material planning update, persist the item in the canonical plan, phase details, or critique disposition section that owns it. Do not create a separate chat-delivery log. Material updates are limited to these planning milestones:
+[Interpreted planning goal.]
 
-* Evidence or readiness assessment
-* Initial artifact drafting
-* User decision or requirement changes
-* Research returns that change planning
-* Critique findings, dispositions, and revisions
-* Blockers
-* Readiness or handoff
+* Starting evidence and readiness: [current basis and readiness state]
+* Initial phase direction: [first planning focus or artifact action]
+* Active boundaries: [scope, non-goals, constraints, or critique boundary]
+* Current decision state: [settled decisions, proposals, or unresolved items]
+* Current blockers: [active blockers]
+* Relevant links: [Markdown links when available]
 
-Use a compact update shape: state what changed, the basis or evidence, the planning consequence, and the next planning action. Preserve factual uncertainty. Identify proposals and unresolved items as such, rather than presenting them as settled decisions.
+These are the starting planning state and may evolve only through the existing evidence, critique, caller-direction, and planning-update rules.
+```
 
-Do not send an update for low-level actions, raw subagent returns, unchanged state, or routine tool calls. The pre-question decision-context requirement remains separate: provide it before a focused decision question, not before every tool call.
+Omit Current blockers when none are active. Omit Relevant links when no valid link is available. Do not invent state, links, or planning certainty.
+
+Before each potential continual update, persist the item in the canonical plan, phase details, or critique disposition section that owns it. Chat is a concise projection of that state, not a second history or delivery audit. A continual update is warranted only when the item changes phase direction, a current decision or readiness state, a material result or artifact state, a blocker or decision need, validation state where applicable, handoff, or the user's likely understanding. Suppress low-level actions, routine tool calls, raw subagent returns, unchanged state, and minor rows or edits.
+
+Use this compact shape when a message is warranted:
+
+```markdown
+### [Marker when useful] [Planning state]: [Short item]
+
+Basis: [compact evidence, critique, or decision context and relevant Markdown links]
+
+Planning consequence: [effect on goals, scope, requirements, phases, readiness, or unresolved work]
+
+Next planning action: [next draft, revision, critique, decision request, handoff, or stop]
+```
+
+Use `✅` only for an evidence-backed settled decision or achieved readiness, `⚠️` for a proposal, unresolved item, critique concern, or revision need, and `⛔` for a blocker. Preserve factual uncertainty and identify proposals and unresolved items as such rather than presenting them as settled decisions. The pre-question decision-context requirement remains separate: provide it before a focused decision question, not before every tool call.
 
 ## Implementation-time updates and follow-up items
 
