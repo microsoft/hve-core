@@ -114,9 +114,9 @@ Choose CLI event names that convert to valid VS Code events:
 
 * `sessionStart` -> `SessionStart`
 * `preToolUse` -> `PreToolUse`
-* `userPromptSubmit` -> `UserPromptSubmit` — VS Code converts this form; the Copilot CLI documents the camelCase name for this event as `userPromptSubmitted`, so the validator accepts both.
-* `stop` -> `Stop` — a per-turn signal in the Copilot CLI (documented as `agentStop`, fired when the main agent finishes a turn) whose payload carries `stopReason` (for example `end_turn`); VS Code documents `Stop` as the agent session end.
-* `sessionEnd` -> `SessionEnd` — the **session** termination, fired once; its payload carries `reason` (`complete`, `error`, `abort`, `timeout`, or `user_exit`) and no `stopReason`. Only the Copilot CLI and cloud agent fire `SessionEnd`; VS Code does not implement this event, so a `sessionEnd` hook never fires there.
+* `userPromptSubmit` -> `UserPromptSubmit`: VS Code converts this form; the Copilot CLI documents the camelCase name for this event as `userPromptSubmitted`, so the validator accepts both.
+* `stop` -> `Stop`: a per-turn signal in the Copilot CLI (documented as `agentStop`, fired when the main agent finishes a turn) whose payload carries `stopReason` (for example `end_turn`); VS Code documents `Stop` as the agent session end.
+* `sessionEnd` -> `SessionEnd`: the **session** termination, fired once; its payload carries `reason` (`complete`, `error`, `abort`, `timeout`, or `user_exit`) and no `stopReason`. Only the Copilot CLI and cloud agent fire `SessionEnd`; VS Code does not implement this event, so a `sessionEnd` hook never fires there.
 
 `stop` and `sessionEnd` are distinct events, not duplicates: a hook that needs a per-turn signal registers `stop`, while a hook that needs a session-end signal registers `sessionEnd`. Registering both is valid when both signals are required.
 
