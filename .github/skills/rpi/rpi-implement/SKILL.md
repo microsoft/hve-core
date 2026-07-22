@@ -16,26 +16,27 @@ Deliver the approved outcome using the current plan and phase details as evidenc
 
 1. Resolve the exact plan at `.copilot-tracking/plans/{{YYYY-MM-DD}}/{{task_slug}}-plan.md`, phase details, relevant evidence, latest critique disposition, and prior changes record. Use markers and headings to locate `Pxx` and `Pxx-Txx`, not line positions.
 2. Create or continue `.copilot-tracking/changes/{{YYYY-MM-DD}}/{{task_slug}}-changes.md` using [templates/changes-log.md](templates/changes-log.md). Record material evidence under descriptive headings tied to plan areas or markers, not per-entry formal IDs.
-3. Execute approved tasks with judgment.
+3. Before substantive source edits or implementation delegation, make the active implementation scope, approved write boundary, validation intent, blockers, and first execution boundary current in their owning artifacts. Keep current approved state in the plan and phase details, and implementation evidence and history in the changes record, as applicable. Then send the implementation opening defined in Conversation guidance.
+4. Execute approved tasks with judgment.
 	* Work directly when the task is coupled or small.
 	* Use a generic bounded subagent only when isolated execution materially improves the outcome.
 	* For a phase implementation subagent, select the Medium reasoning profile at dispatch with this ordered availability fallback: `GPT-5.6 Terra (copilot)`, `Claude Sonnet 5 (copilot)`, `MAI-Code-1-Flash (copilot)`.
 	* Provide the exact phase or task, evidence, allowed write boundary, and expected return.
-4. Mark completed tasks and phases in the plan only after completion evidence is available. Record completed work, validation evidence, blockers, and remaining work in the changes record.
-5. Classify new implementation information using [references/implementation.md](references/implementation.md).
+5. Mark completed tasks and phases in the plan only after completion evidence is available. Record completed work, validation evidence, blockers, and remaining work in the changes record.
+6. Classify new implementation information using [references/implementation.md](references/implementation.md).
 	* Retain ordinary local judgment in execution.
 	* Apply an immediately relevant current-state update only when it needs no new user decision or planning reconsideration.
 	* Place unrelated work in `## Follow-Up Items`.
 	* Pause only affected dependent work for a material discovery.
-6. Use the native `vscode_askQuestions` tool only when available evidence cannot support a responsible user-owned decision, including a major plan change, blocker, or proposed workaround.
+7. Use the native `vscode_askQuestions` tool only when available evidence cannot support a responsible user-owned decision, including a major plan change, blocker, or proposed workaround.
 	* Before the tool call, provide the required decision context in the conversation.
 	* Ask the smallest decision-critical set.
 	* Persist the answer in the current plan and changes record.
 	* Stop affected work as Blocked when feedback is unavailable.
 	* A user answer does not replace a required fresh planning and critique pass.
-7. For a material discovery, record the discovery and current state in the changes record. Return the current plan, phase details, and evidence to the planning owner. Pause only affected dependent work and preserve unrelated completed work and evidence.
-8. Run validation expected by the plan or by completed changed behavior. Record checks, results, and explicit skip reasons without treating validation alone as permission to resume paused dependent work.
-9. Return the current implementation result to the caller using the return contract below.
+8. For a material discovery, record the discovery and current state in the changes record. Return the current plan, phase details, and evidence to the planning owner. Pause only affected dependent work and preserve unrelated completed work and evidence.
+9. Run validation expected by the plan or by completed changed behavior. Record checks, results, and explicit skip reasons without treating validation alone as permission to resume paused dependent work.
+10. Return the current implementation result to the caller using the return contract below.
 
 ## Inputs
 
@@ -64,7 +65,36 @@ Deliver the approved outcome using the current plan and phase details as evidenc
 
 ## Conversation guidance
 
-* During material implementation work, provide concise updates at meaningful boundaries. Explain the action and why it matters, what changed or was learned, key decisions, blockers, validation results, relevant artifact or source links, and one important point the user might otherwise miss. Do not narrate low-level actions.
+* Before substantive source edits or implementation delegation, persist the current approved implementation state from Flow step 3, then send one opening message in this shape:
+
+	```markdown
+	## 🛠️ RPI Implement: [Task] | [Full plan, Pxx, or Pxx-Txx]
+
+	[Interpreted implementation goal.]
+
+	* Starting scope: [active scope and first execution boundary]
+	* Approved write boundary: [allowed source and artifact targets]
+	* Planned validation: [expected checks or explicit validation intent]
+	* Current blockers: [active blockers]
+	* Relevant links: [Markdown links when available]
+
+	These describe the current approved implementation state and may change only through the existing implementation-time update rules.
+	```
+
+	Omit Current blockers when none are active. Omit Relevant links when no valid link is available. Do not invent state, links, or a separate conversation-delivery log.
+* Before each material continual update, persist the relevant canonical state first: update the current plan and phase details when approved state changes, and update the changes record for implementation evidence and history. Generate chat as a concise projection of that state, not as a second history or delivery audit.
+* Send a material update for meaningful completion, a material discovery, a blocker or decision need, or a validation boundary. Do not send one for low-level actions, unchanged state, or raw subagent returns. Use this shape, omitting a field only when it is genuinely not applicable:
+
+	```markdown
+	### [Functional marker] [Implementation state]: [Short item]
+
+	Result: [what completed, changed, failed, or remains blocked]
+	Evidence: [compact evidence basis and relevant Markdown links]
+	Plan effect: [current plan or phase-detail state, including any pause or decision need]
+	Next implementation effect: [next execution, validation, stop, or planning action]
+	```
+
+	Use `✅` for completed or validated work, `⚠️` for a material discovery, failed validation, or decision need, and `⛔` when progress is blocked.
 * Before a user question, state the affected decision, viable choices and consequences, an evidence-backed recommendation when available, blockers, and relevant Markdown links.
 * Use a small status marker such as ✅, ⚠️, or ⛔ only when it improves scanning, and pair it with text.
 * At closeout, separate implementation execution status from implementation outcome or readiness for review. Summarize results, important updates, decisions, blockers or open items, and anything the user might otherwise miss.
