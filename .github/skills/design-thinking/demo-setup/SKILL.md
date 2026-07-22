@@ -5,7 +5,7 @@ user-invocable: true
 metadata:
   authors: "microsoft/hve-core"
   spec_version: "1.0"
-  last_updated: "2026-05-22"
+  last_updated: "2026-07-21"
 ---
 
 # Demo Setup
@@ -142,10 +142,12 @@ Checkpoint: persona brief exists with all sections populated.
 Create the project structure and start the DT Coach session with demo context.
 
 1. Use the project slug derived in Step 1.
-2. Initialize `coaching-state.md` with `initial_classification` set to `frozen` and add a `session_mode: demo` field under the `project` block to signal accelerated pacing.
+2. Initialize `coaching-state.md` with `initial_classification` set to `frozen`. Add a `session_mode: demo` marker under the `project` block to record that this is a demo session.
 3. Include at minimum these fields: `project.slug`, `project.name`, `project.initial_classification: frozen`, `project.session_mode: demo`, `current.method: 1`, `current.space: problem`, `current.phase: session-init`.
 4. The DT Coach loads the customer persona brief as simulated customer context.
 5. Begin Method 1 with the DT Coach greeting and session initialization.
+
+> **Note:** `session_mode: demo` is a demo-setup convention that the DT Coach does not natively recognize yet. Accelerated pacing is enforced by this skill's Step 3 direction to the Coach, not by the `coaching-state.md` schema. Formalizing `session_mode` in the DT Coach agent and coaching-state schema is tracked as a follow-up.
 
 Checkpoint: coaching-state.md exists with demo `initial_classification` and Method 1 active.
 
@@ -154,7 +156,7 @@ Checkpoint: coaching-state.md exists with demo `initial_classification` and Meth
 The DT Coach guides through each method with simulated customer conversations drawn from the persona brief.
 
 1. At each method, the persona brief's conversation seeds provide realistic customer responses.
-2. In accelerated mode, each method completes in 2 to 3 exchanges (one user turn plus one coach response per exchange), compared to 10 or more in full coaching.
+2. Direct the DT Coach to complete each method in 2 to 3 exchanges (one user turn plus one coach response per exchange), compared to 10 or more in full coaching. This skill drives the accelerated cadence; the Coach does not infer it from `session_mode`.
 3. Key artifacts are generated at each method exit:
    - M1: stakeholder map and scope summary
    - M2: research notes and interview synthesis
@@ -304,7 +306,7 @@ Each step of the demo workflow showcases specific HVE Core tools and features.
 | Issue                                          | Cause                                        | Solution                                                                                                                  |
 |------------------------------------------------|----------------------------------------------|---------------------------------------------------------------------------------------------------------------------------|
 | Persona brief feels generic                    | Insufficient industry context provided       | Add specific domain vocabulary and 3 to 5 concrete workflow details to the inputs                                         |
-| DT Coach exits accelerated mode                | Coaching state missing `session_mode: demo`  | Verify coaching-state.md has `session_mode: demo` under the project block in Step 2                                       |
+| DT Coach reverts to full-length pacing         | Step 3 accelerated-pacing not applied        | Re-issue the Step 3 direction to run each method in 2 to 3 exchanges; keep the `accelerated` input `true` (default)       |
 | Prototype scaffold missing telemetry           | Telemetry skeleton omitted from scaffold     | Pre-wire the telemetry skeleton (page views, clicks, task timing) when generating the scaffold in Step 4                  |
 | Audience confuses demo with real product       | Missing simulation labels                    | Every mock component requires a visible `[SIMULATED]` badge; check the validation list                                    |
 | Demo takes too long to present                 | Full coaching mode active                    | Set `accelerated` input to `true` (default) for 2 to 3 exchanges per method                                               |
