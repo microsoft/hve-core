@@ -6,7 +6,7 @@ description: >
   contracts, naming conventions, collection packaging, subagent delegation, workspace state
   tracking, and CI validation pipelines. Use when building any markdown-based AI artifact that
   follows the four-tier delegation model (Prompts → Agents → Instructions → Skills) with
-  schema-validated frontmatter and collection-based distribution.
+  schema-validated frontmatter.
 metadata:
   authors: "microsoft/hve-core"
   spec_version: "1.0.0"

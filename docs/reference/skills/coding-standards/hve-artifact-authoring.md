@@ -1,6 +1,6 @@
 ---
 title: hve-artifact-authoring
-description: "Create, validate, and package AI artifacts for HVE Core, GitHub Copilot's prompt engineering framework. Covers agents, prompts, instructions, skills, and collections with frontmatter contracts, naming conventions, collection packaging, subagent delegation, workspace state tracking, and CI validation pipelines. Use when building any markdown-based AI artifact that follows the four-tier delegation model (Prompts → Agents → Instructions → Skills) with schema-validated frontmatter and collection-based distribution."
+description: "Create, validate, and package AI artifacts for HVE Core, GitHub Copilot's prompt engineering framework. Covers agents, prompts, instructions, skills, and collections with frontmatter contracts, naming conventions, collection packaging, subagent delegation, workspace state tracking, and CI validation pipelines. Use when building any markdown-based AI artifact that follows the four-tier delegation model (Prompts → Agents → Instructions → Skills) with schema-validated frontmatter."
 sidebar_position: 2
 ms.date: 2026-07-22
 ---
@@ -17,7 +17,7 @@ ms.date: 2026-07-22
 ## What it does
 
 <!-- BEGIN AUTO-GENERATED: overview -->
-Create, validate, and package AI artifacts for HVE Core, GitHub Copilot's prompt engineering framework. Covers agents, prompts, instructions, skills, and collections with frontmatter contracts, naming conventions, collection packaging, subagent delegation, workspace state tracking, and CI validation pipelines. Use when building any markdown-based AI artifact that follows the four-tier delegation model (Prompts → Agents → Instructions → Skills) with schema-validated frontmatter and collection-based distribution.
+Create, validate, and package AI artifacts for HVE Core, GitHub Copilot's prompt engineering framework. Covers agents, prompts, instructions, skills, and collections with frontmatter contracts, naming conventions, collection packaging, subagent delegation, workspace state tracking, and CI validation pipelines. Use when building any markdown-based AI artifact that follows the four-tier delegation model (Prompts → Agents → Instructions → Skills) with schema-validated frontmatter.
 <!-- END AUTO-GENERATED: overview -->
 
 ## When to use it
