@@ -23,13 +23,14 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        # Repository contains GitHub Actions workflows, PowerShell, shell scripts, and Python
-        # CodeQL supports 'actions' for workflow scanning and 'python' for script analysis
-        language: [ 'actions', 'python' ]
+        # Repository contains GitHub Actions workflows, Python, and JavaScript/TypeScript (VS Code extension source)
+        # CodeQL 'actions' scans workflows, 'python' scans scripts, and 'javascript-typescript' covers both JS and TS
+        # PowerShell and shell scripts are not CodeQL-supported (covered by PSScriptAnalyzer and shellcheck)
+        language: [ 'actions', 'python', 'javascript-typescript' ]
     
     steps:
       - name: Checkout repository
-        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
 

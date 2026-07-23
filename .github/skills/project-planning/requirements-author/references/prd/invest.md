@@ -1,5 +1,5 @@
 ---
-description: 'PRD story-quality reference - the six INVEST attributes (Independent, Negotiable, Valuable, Estimable, Small, Testable) described in original Microsoft prose with cite-only attribution to Bill Wake; applied during functional-requirement decomposition into stories and epics - Brought to you by microsoft/hve-core'
+description: 'PRD story-quality reference - the six INVEST attributes (Independent, Negotiable, Valuable, Estimable, Small, Testable) described in original Microsoft prose with cite-only attribution to Bill Wake; applied during functional-requirement decomposition into stories and epics'
 ---
 
 # INVEST Story-Quality Reference
@@ -40,4 +40,4 @@ INVEST is a six-attribute checklist for judging whether a user story is well for
 
 This reference file is original Microsoft content licensed under [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/). The story-quality guidance is HVE-Core IP and may be reused under the same license. The INVEST acronym remains attributable to its author; the source is accessed by the reader through the cited URL and is never redistributed here.
 
-> Brought to you by microsoft/hve-core
+

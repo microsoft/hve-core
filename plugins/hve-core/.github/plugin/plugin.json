@@ -1,8 +1,10 @@
 {
   "name": "hve-core",
-  "description": "HVE Core RPI (Research, Plan, Implement, Review) workflow with Git commit, merge, setup, and pull request prompts",
+  "description": "Opinionated, rapidly evolving agentic SDLC patterns for RPI workflows, HVE Builder, and Git operations",
   "version": "3.3.101",
   "agents": [
+    "agents/coding-standards/",
+    "agents/coding-standards/subagents/",
     "agents/hve-core/",
     "agents/hve-core/subagents/"
   ],
@@ -10,8 +12,10 @@
     "commands/hve-core/"
   ],
   "skills": [
+    "skills/coding-standards/",
     "skills/experimental/",
     "skills/hve-core/",
     "skills/shared/"
-  ]
+  ],
+  "hooks": "hooks/shared/telemetry.json"
 }

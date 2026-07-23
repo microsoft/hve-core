@@ -6,23 +6,23 @@ on:
   workflow_call:
     inputs:
       soft-fail:
-        description: 'Whether to continue on eval validation failures'
+        description: "Whether to continue on eval validation failures"
         required: false
         type: boolean
         default: false
       changed-files-only:
-        description: 'Only run the eval suite when eval-relevant paths change'
+        description: "Only run the eval suite when eval-relevant paths change"
         required: false
         type: boolean
         default: true
       base-branch:
-        description: 'Base branch or SHA for change detection (defaults to origin/main)'
+        description: "Base branch or SHA for change detection (defaults to origin/main)"
         required: false
         type: string
-        default: ''
+        default: ""
     secrets:
       copilot-github-token:
-        description: 'GitHub credential exported as COPILOT_GITHUB_TOKEN for the Copilot CLI used by vally eval'
+        description: "GitHub credential exported as COPILOT_GITHUB_TOKEN for the Copilot CLI used by vally eval"
         required: false
 
 # Minimal permissions
@@ -35,18 +35,20 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
+    outputs:
+      eval-relevant: ${{ steps.detect.outputs.eval-relevant }}
     steps:
       - name: Checkout code
-        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
           fetch-depth: 0
 
       - name: Setup Node.js
-        uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6.4.0
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
-          node-version: '24'
-          cache: 'npm'
+          node-version: "24"
+          cache: "npm"
 
       - name: Install dependencies
         run: npm ci
@@ -65,6 +67,7 @@ jobs:
         run: |
           if ('${{ inputs.changed-files-only }}' -ne 'true') {
             'EVAL_RELEVANT=true' >> $env:GITHUB_ENV
+            'eval-relevant=true' >> $env:GITHUB_OUTPUT
             Write-Output 'changed-files-only is false; running full eval suite.'
             exit 0
           }
@@ -78,6 +81,7 @@ jobs:
           if ($LASTEXITCODE -ne 0 -or $null -eq $changed) {
             Write-Output "Could not compute diff against '$baseBranch'; running full eval suite."
             'EVAL_RELEVANT=true' >> $env:GITHUB_ENV
+            'eval-relevant=true' >> $env:GITHUB_OUTPUT
             exit 0
           }
 
@@ -87,8 +91,7 @@ jobs:
             '^\.github/agents/',
             '^\.github/prompts/',
             '^\.github/instructions/',
-            '^\.github/skills/',
-            '^\.github/workflows/eval-validation\.yml$'
+            '^\.github/skills/'
           )
 
           # package.json and package-lock.json change often for reasons unrelated to
@@ -122,9 +125,11 @@ jobs:
 
           if ($relevant) {
             'EVAL_RELEVANT=true' >> $env:GITHUB_ENV
+            'eval-relevant=true' >> $env:GITHUB_OUTPUT
             Write-Output 'Eval-relevant paths changed; running full eval suite.'
           } else {
             'EVAL_RELEVANT=false' >> $env:GITHUB_ENV
+            'eval-relevant=false' >> $env:GITHUB_OUTPUT
             Write-Output 'No eval-relevant paths changed; skipping eval suite.'
           }
 
@@ -213,16 +218,16 @@ jobs:
       contents: read
     steps:
       - name: Checkout code
-        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
           fetch-depth: 0
 
       - name: Setup Node.js
-        uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6.4.0
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
-          node-version: '24'
-          cache: 'npm'
+          node-version: "24"
+          cache: "npm"
 
       - name: Install dependencies
         run: npm ci
@@ -233,12 +238,12 @@ jobs:
           Install-Module -Name PowerShell-Yaml -RequiredVersion 0.4.7 -Force -Scope CurrentUser
 
       - name: Install uv
-        uses: astral-sh/setup-uv@fac544c07dec837d0ccb6301d7b5580bf5edae39 # v8.2.0
+        uses: astral-sh/setup-uv@c771a70e6277c0a99b617c7a806ffedaca235ff9 # v9.0.0
         with:
           version: "0.10.9"
 
       - name: Setup Python
-        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
         with:
           python-version: "3.12"
 
@@ -308,7 +313,8 @@ jobs:
     runs-on: ubuntu-latest
     needs: [eval-validation, content-moderation]
     # Repository secrets are not exposed to fork PRs; clean-skip execution there.
-    if: github.event.pull_request.head.repo.fork == false
+    # Only run when eval-relevant paths changed (see eval-validation detect step).
+    if: needs.eval-validation.outputs.eval-relevant == 'true' && github.event.pull_request.head.repo.fork == false
     permissions:
       contents: read
     strategy:
@@ -319,16 +325,16 @@ jobs:
       COPILOT_GITHUB_TOKEN: ${{ secrets.copilot-github-token }}
     steps:
       - name: Checkout code
-        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
           fetch-depth: 0
 
       - name: Setup Node.js
-        uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6.4.0
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
-          node-version: '24'
-          cache: 'npm'
+          node-version: "24"
+          cache: "npm"
 
       - name: Install dependencies
         run: npm ci
@@ -339,12 +345,12 @@ jobs:
           Install-Module -Name PowerShell-Yaml -RequiredVersion 0.4.7 -Force -Scope CurrentUser
 
       - name: Install uv
-        uses: astral-sh/setup-uv@fac544c07dec837d0ccb6301d7b5580bf5edae39 # v8.2.0
+        uses: astral-sh/setup-uv@c771a70e6277c0a99b617c7a806ffedaca235ff9 # v9.0.0
         with:
           version: "0.10.9"
 
       - name: Setup Python
-        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
         with:
           python-version: "3.12"
 
@@ -376,6 +382,15 @@ jobs:
           pwsh -NoProfile -File scripts/evals/Get-ChangedAIArtifact.ps1 `
             -BaseRef $base -HeadRef HEAD -OutFile logs/changed-ai-artifacts.json
 
+      - name: Generate changed-spec stimulus manifest
+        if: env.EVAL_EXECUTE == 'true'
+        shell: pwsh
+        run: |
+          $base = '${{ inputs.base-branch }}'
+          if ([string]::IsNullOrWhiteSpace($base)) { $base = 'origin/main' }
+          pwsh -NoProfile -File scripts/evals/Get-ChangedSpecStimulus.ps1 `
+            -BaseRef $base -HeadRef HEAD -OutFile logs/changed-spec-stimuli.json
+
       - name: Probe Copilot token
         if: env.EVAL_EXECUTE == 'true'
         shell: pwsh
@@ -390,7 +405,7 @@ jobs:
         if: env.EVAL_EXECUTE == 'true'
         shell: pwsh
         run: |
-          npm run eval:execute -- -Kind ${{ matrix.kind }} -Model claude-haiku-4.5 -SkipInputModeration
+          npm run eval:execute -- -Kind ${{ matrix.kind }} -ChangedSpecManifestPath logs/changed-spec-stimuli.json -Model gpt-5.6-luna -SkipInputModeration
           if ($LASTEXITCODE -ne 0) {
             'EVAL_EXECUTE_FAILED=true' >> $env:GITHUB_ENV
           }
@@ -403,6 +418,7 @@ jobs:
           name: eval-execution-results-${{ matrix.kind }}
           path: |
             logs/changed-ai-artifacts.json
+            logs/changed-spec-stimuli.json
             logs/stimulus-presence.json
             logs/eval-summary.json
             logs/eval-results-*.json

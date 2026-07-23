@@ -2,7 +2,7 @@
 title: Shared Library
 description: Shared utility scripts and modules used across hve-core automation
 author: HVE Core Team
-ms.date: 2026-03-17
+ms.date: 2026-07-08
 ms.topic: reference
 keywords:
   - powershell
@@ -70,6 +70,18 @@ the repository.
 | `Write-CIAnnotations`            | Writes multiple CI annotations from a violations array |
 | `Set-CITaskResult`               | Sets the CI task result (succeeded, failed)            |
 | `Publish-CIArtifact`             | Publishes a file as a CI artifact                      |
+
+### `Modules/CopyrightHeader.psm1`
+
+Single source of truth for the canonical copyright and SPDX license header
+lines shared by `scripts/linting/Test-CopyrightHeaders.ps1` and the copyright
+header checks.
+
+| Function                   | Purpose                                                         |
+|----------------------------|-----------------------------------------------------------------|
+| `Get-CopyrightLineRegex`   | Returns the regex matching an acceptable copyright line         |
+| `Get-SpdxLineRegex`        | Returns the regex matching an acceptable SPDX identifier line   |
+| `Get-CanonicalHeaderLines` | Returns the canonical copyright and SPDX header lines to insert |
 
 ## Related Documentation
 

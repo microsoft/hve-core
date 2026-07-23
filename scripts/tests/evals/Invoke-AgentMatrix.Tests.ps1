@@ -71,6 +71,7 @@ Describe 'Invoke-AgentMatrix.ps1 (dry-run)' -Tag 'Unit' {
         It 'Plans a vally command per slug using --eval-spec eval.yaml with an agent tag' {
             $first = $script:Summary.plannedCommands[0]
             $first | Should -Match '^npx vally eval --eval-spec evals/agent-behavior/eval\.yaml --tag agent=[^ ]+ --model \S+$'
+            $first | Should -Match '--model gpt-5\.6-luna$'
         }
     }
 
@@ -98,6 +99,25 @@ Describe 'Invoke-AgentMatrix.ps1 (dry-run)' -Tag 'Unit' {
             $slugs = @($script:Summary.results | ForEach-Object { $_.slug })
             $slugs | Should -Contain 'task-researcher'
             $slugs | Should -Contain 'task-planner'
+        }
+    }
+
+    Context 'Changed mode with a subagent path' {
+        BeforeEach {
+            & $script:ScriptPath `
+                -Changed @('.github/agents/coding-standards/subagents/code-review-standards.agent.md') `
+                -Tier pr `
+                -RepoRoot $script:RepoRoot `
+                -OutputDir $script:OutputDir `
+                -WhatIf *> $null
+            $script:Summary = Get-Content -LiteralPath $script:SummaryPath -Raw | ConvertFrom-Json
+        }
+
+        It 'Plans both the parent and own slugs for a changed subagent' {
+            $script:Summary.agentCount | Should -Be 2
+            $planText = $script:Summary.plannedCommands -join [Environment]::NewLine
+            $planText | Should -Match '--tag agent=code-review(?:\s|$)'
+            $planText | Should -Match '--tag agent=code-review-standards(?:\s|$)'
         }
     }
 

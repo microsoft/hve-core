@@ -94,7 +94,7 @@ Describe 'VallyRunner module' -Tag 'Unit' {
             $result.assertionsFailed | Should -Be 0
         }
 
-        It 'Treats a record without gradeResult as a failed trial' {
+        It 'Treats a record without gradeResult as an errored trial (not failed)' {
             $runDir = Join-Path $script:WorkRoot 'run-missing-grade'
             New-Item -ItemType Directory -Path $runDir -Force | Out-Null
             $record = @{
@@ -105,10 +105,29 @@ Describe 'VallyRunner module' -Tag 'Unit' {
             $result = Read-VallyResultsJsonl -RunDir $runDir
             $result.trials | Should -Be 1
             $result.assertionsPassed | Should -Be 0
-            $result.assertionsFailed | Should -Be 1
+            $result.assertionsFailed | Should -Be 0
+            $result.errored | Should -Be 1
             $result.durationMs | Should -Be 12
             $result.perStimulus['missing-grade'].trials | Should -Be 1
-            $result.perStimulus['missing-grade'].assertionsFailed | Should -Be 1
+            $result.perStimulus['missing-grade'].errored | Should -Be 1
+        }
+
+        It 'Ignores typed non-trial records while accepting typed trial results' {
+            $runDir = Join-Path $script:WorkRoot 'run-typed-summary'
+            New-Item -ItemType Directory -Path $runDir -Force | Out-Null
+            $trial = @{
+                type        = 'trial-result'
+                trajectory  = @{ stimulus = @{ name = 'typed' }; output = 'ok'; metrics = @{ wallTimeMs = 9 } }
+                gradeResult = @{ passed = $true; score = 1.0 }
+            } | ConvertTo-Json -Depth 6 -Compress
+            $summary = @{ type = 'run-summary'; passed = $true } | ConvertTo-Json -Compress
+            Set-Content -LiteralPath (Join-Path $runDir 'results.jsonl') -Value @($trial, $summary) -Encoding utf8
+
+            $result = Read-VallyResultsJsonl -RunDir $runDir -Threshold 0.7
+
+            $result.trials | Should -Be 1
+            $result.errored | Should -Be 0
+            $result.assertionsPassed | Should -Be 1
         }
 
         It 'Skips malformed lines without throwing' {
@@ -163,6 +182,45 @@ Describe 'VallyRunner module' -Tag 'Unit' {
             $result.exitCode | Should -Be 1
             $result.assertionsFailed | Should -Be 2
             $result.assertionsPassed | Should -Be 0
+        }
+
+        It 'Classifies no-verdict trials as errored and reports erroredTrials' {
+            $outDir = Join-Path $script:WorkRoot 'spec-errored'
+            $env:STUB_VALLY_MODE = 'errored'
+            try {
+                $result = Invoke-VallySpec `
+                    -SpecPath (Join-Path $script:WorkRoot 'fake.yaml') `
+                    -OutputDir $outDir `
+                    -Model 'claude-opus-4.7' `
+                    -VallyCommand $script:StubPath `
+                    -MaxErroredRetries 0
+            }
+            finally {
+                Remove-Item Env:\STUB_VALLY_MODE -ErrorAction SilentlyContinue
+            }
+
+            $result.erroredTrials | Should -Be 2
+            $result.assertionsFailed | Should -Be 0
+            $result.assertionsPassed | Should -Be 0
+        }
+
+        It 'Does not retry a typed run-summary as an errored trial' {
+            $outDir = Join-Path $script:WorkRoot 'spec-typed-pass'
+            $env:STUB_VALLY_MODE = 'typed-pass'
+            try {
+                $result = Invoke-VallySpec `
+                    -SpecPath (Join-Path $script:WorkRoot 'fake.yaml') `
+                    -OutputDir $outDir `
+                    -Model 'gpt-5.6-luna' `
+                    -VallyCommand $script:StubPath
+            }
+            finally {
+                Remove-Item Env:\STUB_VALLY_MODE -ErrorAction SilentlyContinue
+            }
+
+            $result.trials | Should -Be 2
+            $result.erroredTrials | Should -Be 0
+            @(Get-ChildItem -LiteralPath $outDir -Directory).Count | Should -Be 1
         }
 
         It 'Tees stdout/stderr to the log file when -LogPath is supplied' {
@@ -251,6 +309,8 @@ Describe 'VallyRunner module' -Tag 'Unit' {
         AfterEach {
             Remove-Item Env:\STUB_MODERATION_EXIT -ErrorAction SilentlyContinue
             Remove-Item Env:\STUB_MODERATION_COUNT -ErrorAction SilentlyContinue
+            Remove-Item Env:\STUB_MODERATION_FLAG_IDS -ErrorAction SilentlyContinue
+            Remove-Item Env:\STUB_MODERATION_CAPTURE -ErrorAction SilentlyContinue
         }
 
         It 'Classifies a clean exit (0) as neither flagged nor error' {
@@ -367,6 +427,7 @@ Describe 'VallyRunner module' -Tag 'Unit' {
             $result.error | Should -BeTrue
             $result.flagged | Should -BeFalse
         }
+
     }
 
     Context 'Test-SpecOutputModeration (exit-code classification)' {
@@ -382,6 +443,8 @@ Describe 'VallyRunner module' -Tag 'Unit' {
         AfterEach {
             Remove-Item Env:\STUB_MODERATION_EXIT -ErrorAction SilentlyContinue
             Remove-Item Env:\STUB_MODERATION_COUNT -ErrorAction SilentlyContinue
+            Remove-Item Env:\STUB_MODERATION_FLAG_IDS -ErrorAction SilentlyContinue
+            Remove-Item Env:\STUB_MODERATION_CAPTURE -ErrorAction SilentlyContinue
         }
 
         It 'Classifies a clean exit (0) as neither flagged nor error' {
@@ -447,6 +510,39 @@ Describe 'VallyRunner module' -Tag 'Unit' {
 
             $result.error | Should -BeTrue
             $result.flagged | Should -BeFalse
+        }
+
+        It 'Moderates multiple runs once and attributes flags by output id' {
+            $secondRunDir = Join-Path $script:WorkRoot 'out-run-second'
+            New-Item -ItemType Directory -Path $secondRunDir -Force | Out-Null
+            $typedTrial = @{
+                type       = 'trial-result'
+                trajectory = @{ stimulus = @{ name = 's3' }; output = 'third output' }
+            } | ConvertTo-Json -Depth 6 -Compress
+            $typedSummary = @{ type = 'run-summary'; passed = $true } | ConvertTo-Json -Compress
+            Set-Content -LiteralPath (Join-Path $secondRunDir 'results.jsonl') -Value @($typedTrial, $typedSummary) -Encoding utf8
+
+            $capturePath = Join-Path $script:WorkRoot 'moderation-input.json'
+            $env:STUB_MODERATION_CAPTURE = $capturePath
+            $env:STUB_MODERATION_FLAG_IDS = 'output-2'
+            $env:STUB_MODERATION_EXIT = '1'
+
+            $result = Test-SpecOutputModerationBatch `
+                -Run @(
+                    @{ runKey = 'first'; runDir = $script:OutRunDir; threshold = 0.3 },
+                    @{ runKey = 'second'; runDir = $secondRunDir; threshold = 0.9 }
+                ) `
+                -BatchId 'unit-batch' `
+                -ModerationScript $script:StubModeration `
+                -RepoRoot $script:WorkRoot
+
+            $captured = @(Get-Content -LiteralPath $capturePath -Raw | ConvertFrom-Json)
+            $captured.Count | Should -Be 3
+            @($captured | Where-Object { $_.threshold -eq 0.3 }).Count | Should -Be 2
+            @($captured | Where-Object { $_.threshold -eq 0.9 }).Count | Should -Be 1
+            $result.byRun['first'].flagged | Should -BeFalse
+            $result.byRun['second'].flagged | Should -BeTrue
+            $result.byRun['second'].flaggedCount | Should -Be 1
         }
     }
 
@@ -1085,13 +1181,31 @@ stimuli:
             $markerLiteral = $markerPath.Replace("'", "''")
 @"
 param([Parameter(ValueFromRemainingArguments=`$true)]`$Args)
-`$rec = @{ args = @(`$Args | ForEach-Object { [string]`$_ }) } | ConvertTo-Json -Compress -Depth 3
+`$inputIndex = [Array]::IndexOf(`$Args, '--input')
+`$records = @()
+if (`$inputIndex -ge 0) {
+    `$records = @(Get-Content -LiteralPath `$Args[`$inputIndex + 1] | ForEach-Object { `$_ | ConvertFrom-Json })
+}
+`$rec = @{ args = @(`$Args | ForEach-Object { [string]`$_ }); records = @(`$records) } | ConvertTo-Json -Compress -Depth 6
 Add-Content -LiteralPath '$markerLiteral' -Value `$rec -Encoding utf8
 `$outIndex = [Array]::IndexOf(`$Args, '--output')
 if (`$outIndex -ge 0) {
     `$outPath = `$Args[`$outIndex + 1]
-    `$payload = '{"records":[],"summary":{"total":0,"flaggedCount":0}}'
+    `$flagOutputs = `$env:HVE_TEST_MODERATION_FLAG -eq '1'
+    `$outputRecords = @(`$records | ForEach-Object {
+        [ordered]@{
+            id = [string]`$_.id
+            flagged = `$flagOutputs
+            flaggedLabels = `$(if (`$flagOutputs) { @('toxicity') } else { @() })
+        }
+    })
+    `$flaggedCount = if (`$flagOutputs) { `$outputRecords.Count } else { 0 }
+    `$payload = @{
+        records = `$outputRecords
+        summary = @{ total = `$outputRecords.Count; flaggedCount = `$flaggedCount }
+    } | ConvertTo-Json -Compress -Depth 6
     Set-Content -LiteralPath `$outPath -Value `$payload -Encoding utf8
+    if (`$flagOutputs) { exit 1 }
 }
 exit 0
 "@ | Set-Content -LiteralPath $stubScript -Encoding utf8
@@ -1108,6 +1222,7 @@ exit 0
         $script:OrigModerationPython = $env:HVE_MODERATION_PYTHON
         Remove-Item Env:\STUB_VALLY_MODE -ErrorAction SilentlyContinue
         Remove-Item Env:\HVE_MODERATION_PYTHON -ErrorAction SilentlyContinue
+        Remove-Item Env:\HVE_TEST_MODERATION_FLAG -ErrorAction SilentlyContinue
     }
 
     AfterEach {
@@ -1119,6 +1234,7 @@ exit 0
             $env:HVE_MODERATION_PYTHON = $script:OrigModerationPython
         }
         Remove-Item Env:\STUB_VALLY_MODE -ErrorAction SilentlyContinue
+        Remove-Item Env:\HVE_TEST_MODERATION_FLAG -ErrorAction SilentlyContinue
     }
 
     It 'Forwards per-spec moderation.threshold to Invoke-ContentModeration.ps1' {
@@ -1145,7 +1261,13 @@ exit 0
             if ($idx -ge 0) { [double]$rec.args[$idx + 1] }
         }
         $thresholdsSeen | Should -Contain 0.9
-        $thresholdsSeen | Should -Not -Contain 0.5
+        $recordThresholds = foreach ($line in $lines) {
+            $rec = $line | ConvertFrom-Json
+            foreach ($record in @($rec.records)) {
+                if ($record.PSObject.Properties.Name -contains 'threshold') { [double]$record.threshold }
+            }
+        }
+        $recordThresholds | Should -Contain 0.9
     }
 
     It 'Falls back to default ModerationThreshold when spec omits override' {
@@ -1189,6 +1311,100 @@ stimuli:
         }
         $thresholdsSeen | Should -Contain 0.42
     }
+
+    It 'Moderates outputs from distinct specs in one threshold-preserving batch' {
+        $fx = New-ModerationFixture -SpecThreshold '0.9'
+        $secondSpec = @'
+name: skill-cover-two
+defaults:
+  executor: copilot-sdk
+moderation:
+  threshold: 0.4
+stimuli:
+  - name: s2
+    prompt: hi
+    tags:
+      skill: hve-builder
+    graders:
+      - type: output-matches
+        name: noop
+        config: {pattern: '.*'}
+'@
+        Set-Content -LiteralPath (Join-Path $fx.EvalRoot 'skill-hve-builder.yaml') -Value $secondSpec -Encoding utf8
+        @{
+            artifacts = @(
+                @{ kind = 'skill'; artifactId = 'pr-reference'; path = '.github/skills/shared/pr-reference/SKILL.md'; status = 'M' },
+                @{ kind = 'skill'; artifactId = 'hve-builder'; path = '.github/skills/hve-core/hve-builder/SKILL.md'; status = 'M' }
+            )
+        } | ConvertTo-Json -Depth 6 | Set-Content -LiteralPath $fx.ManifestPath -Encoding utf8
+
+        $stub = New-PythonThresholdStub
+        $env:PATH = "$($stub.Dir);$($script:OrigPath)"
+        $env:HVE_MODERATION_PYTHON = $stub.ScriptPath
+        $env:STUB_VALLY_MODE = 'pass'
+
+        & pwsh -NoProfile -File $script:ScriptPath `
+            -ManifestPath $fx.ManifestPath `
+            -EvalRoot $fx.EvalRoot `
+            -LogsDir $fx.LogsDir `
+            -RepoRoot $fx.Root `
+            -ModerationThreshold 0.5 `
+            -VallyCommand $script:StubPath `
+            -SkipInputModeration *> $null
+
+        $LASTEXITCODE | Should -Be 0
+        $lines = @(Get-Content -LiteralPath $stub.MarkerPath)
+        $lines.Count | Should -Be 1
+        $invocation = $lines[0] | ConvertFrom-Json
+        $thresholds = @($invocation.records | ForEach-Object { [double]$_.threshold } | Sort-Object -Unique)
+        @($thresholds | Where-Object { $_ -eq 0.4 }).Count | Should -BeGreaterThan 0
+        @($thresholds | Where-Object { $_ -eq 0.9 }).Count | Should -BeGreaterThan 0
+    }
+
+    It 'Reconciles batched output flags into authoritative failure totals' {
+        $fx = New-ModerationFixture -SpecThreshold '0.9'
+        $specPath = Join-Path $fx.EvalRoot 'skill-pr-reference.yaml'
+        $authoritativeSpec = @'
+name: skill-cover
+defaults:
+  executor: copilot-sdk
+moderation:
+  threshold: 0.9
+stimuli:
+  - name: s1
+    prompt: hi
+    tags:
+      skill: pr-reference
+      advisory: false
+    graders:
+      - type: output-matches
+        name: noop
+        config: {pattern: '.*'}
+'@
+        Set-Content -LiteralPath $specPath -Value $authoritativeSpec -Encoding utf8
+
+        $stub = New-PythonThresholdStub
+        $env:PATH = "$($stub.Dir);$($script:OrigPath)"
+        $env:HVE_MODERATION_PYTHON = $stub.ScriptPath
+        $env:HVE_TEST_MODERATION_FLAG = '1'
+        $env:STUB_VALLY_MODE = 'pass'
+
+        & pwsh -NoProfile -File $script:ScriptPath `
+            -ManifestPath $fx.ManifestPath `
+            -EvalRoot $fx.EvalRoot `
+            -LogsDir $fx.LogsDir `
+            -RepoRoot $fx.Root `
+            -VallyCommand $script:StubPath `
+            -SkipInputModeration *> $null
+
+        $LASTEXITCODE | Should -Be 1
+        $summary = Get-Content -LiteralPath $fx.SummaryPath -Raw | ConvertFrom-Json
+        $summary.totals.failedSpecs | Should -Be 1
+        $summary.perSpec[0].status | Should -Be 'content-moderation-output'
+        $summary.perSpec[0].assertionsFailed | Should -Be 2
+        $summary.perSpec[0].authoritativeFailed | Should -Be 2
+        $summary.perSpec[0].advisoryFailed | Should -Be 0
+    }
 }
 
 Describe 'Invoke-VallyEvals.ps1 per-stimulus advisory promotion' -Tag 'Integration' {
@@ -1206,7 +1422,12 @@ Describe 'Invoke-VallyEvals.ps1 per-stimulus advisory promotion' -Tag 'Integrati
             New-Item -ItemType Directory -Path $evalRoot -Force | Out-Null
             New-Item -ItemType Directory -Path $logsDir  -Force | Out-Null
 
-            Set-Content -LiteralPath (Join-Path $evalRoot $SpecName) -Value $SpecYaml -Encoding utf8
+            $specFullPath = Join-Path $evalRoot $SpecName
+            $specDir = Split-Path -Parent $specFullPath
+            if (-not (Test-Path -LiteralPath $specDir)) {
+                New-Item -ItemType Directory -Path $specDir -Force | Out-Null
+            }
+            Set-Content -LiteralPath $specFullPath -Value $SpecYaml -Encoding utf8
 
             $manifestPath = Join-Path $root 'manifest.json'
             @{ artifacts = @($Artifact) } | ConvertTo-Json -Depth 6 |
@@ -1445,6 +1666,83 @@ stimuli:
         $summary.perSpec[0].isAdvisory | Should -BeFalse
         $summary.perSpec[0].PSObject.Properties.Name | Should -Not -Contain 'authoritativeFailed'
         $summary.perSpec[0].PSObject.Properties.Name | Should -Not -Contain 'advisoryFailed'
+    }
+
+    It 'Does not gate a no-advisory spec when vally exits 0 despite a per-trial dip' {
+        # Regression: a spec with no advisory-tagged stimulus (for example
+        # baseline-equivalence/stimuli.yml resolved via an agent tag) must not gate
+        # the build on a sub-threshold per-trial dip when vally reports an aggregate
+        # pass (exit 0). The 'mixed' stub mode emits one passing and one failing
+        # trial and exits 0.
+        $spec = @'
+name: agent-cover
+stimuli:
+  - name: stim-a
+    prompt: hi
+    tags:
+      agent: task-research
+'@
+        $fx = New-PerStimFixture `
+            -SpecName 'no-advisory-aggregate-pass.yaml' `
+            -SpecYaml $spec `
+            -Artifact @{ kind = 'agent'; artifactId = 'task-research'; path = '.github/agents/hve-core/task-research.agent.md'; status = 'M' }
+
+        $env:STUB_VALLY_MODE = 'mixed'
+
+        & pwsh -NoProfile -File $script:ScriptPath `
+            -ManifestPath $fx.ManifestPath `
+            -EvalRoot $fx.EvalRoot `
+            -LogsDir $fx.LogsDir `
+            -RepoRoot $fx.Root `
+            -VallyCommand $script:StubPath `
+            -SkipInputModeration `
+            -SkipOutputModeration *> $null
+        $LASTEXITCODE | Should -Be 0
+
+        $summary = Get-Content -LiteralPath $fx.SummaryPath -Raw | ConvertFrom-Json
+        $summary.totals.failedSpecs | Should -Be 0
+        $summary.totals.assertionsFailed | Should -Be 1
+        $summary.perSpec[0].status | Should -Be 'advisory-fail'
+        $summary.perSpec[0].isAdvisory | Should -BeFalse
+        $summary.perArtifact[0].status | Should -Be 'advisory-fail'
+    }
+
+    It 'Treats a tag-resolved baseline-equivalence spec as advisory even on a hard vally failure' {
+        # Per DD-01 the equivalence corpus is advisory at PR tier. Its stimuli are
+        # tag-resolved into the authoritative path and run at a perfect-score
+        # threshold against a small model, so a hard vally failure (exit 1) on a
+        # single grader must surface as advisory rather than gate the build.
+        $spec = @'
+name: baseline-equivalence-stimuli
+stimuli:
+  - name: tool-trigger-list-scripts
+    prompt: hi
+    tags:
+      agent: task-research
+'@
+        $fx = New-PerStimFixture `
+            -SpecName 'baseline-equivalence/stimuli.yml' `
+            -SpecYaml $spec `
+            -Artifact @{ kind = 'agent'; artifactId = 'task-research'; path = '.github/agents/hve-core/task-research.agent.md'; status = 'M' }
+
+        $env:STUB_VALLY_MODE = 'fail'
+
+        & pwsh -NoProfile -File $script:ScriptPath `
+            -ManifestPath $fx.ManifestPath `
+            -EvalRoot $fx.EvalRoot `
+            -LogsDir $fx.LogsDir `
+            -RepoRoot $fx.Root `
+            -VallyCommand $script:StubPath `
+            -SkipInputModeration `
+            -SkipOutputModeration *> $null
+        $LASTEXITCODE | Should -Be 0
+
+        $summary = Get-Content -LiteralPath $fx.SummaryPath -Raw | ConvertFrom-Json
+        $summary.totals.failedSpecs | Should -Be 0
+        $summary.perSpec[0].status | Should -Be 'advisory-fail'
+        $summary.perSpec[0].isAdvisory | Should -BeTrue
+        $summary.perArtifact[0].status | Should -Be 'advisory-fail'
+        $summary.perArtifact[0].isAdvisory | Should -BeTrue
     }
 }
 

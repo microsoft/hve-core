@@ -2,7 +2,7 @@
 # Copyright (c) 2026 Microsoft Corporation. All rights reserved.
 # SPDX-License-Identifier: MIT
 
-#Requires -Version 7.0
+#Requires -Version 7.4
 
 <#
 .SYNOPSIS
@@ -50,7 +50,7 @@
 
 .PARAMETER Model
     SDK model id passed to `vally eval --model`. Defaults to
-    `claude-haiku-4.5`.
+    `gpt-5.6-luna`.
 
 .EXAMPLE
     ./Invoke-AgentMatrix.ps1 -All -Tier nightly -WhatIf
@@ -91,7 +91,7 @@ param(
     [string]$RepoRoot,
 
     [Parameter(Mandatory = $false)]
-    [string]$Model = 'claude-haiku-4.5'
+    [string]$Model = 'gpt-5.6-luna'
 )
 
 Set-StrictMode -Version Latest

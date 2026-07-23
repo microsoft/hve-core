@@ -2,7 +2,7 @@
 title: "Build Monitoring Workflow"
 description: "How to retrieve Azure DevOps build status, logs, and failure analysis"
 author: Microsoft
-ms.date: 2026-03-07
+ms.date: 2026-06-26
 ms.topic: tutorial
 keywords:
   - ado
@@ -47,7 +47,7 @@ flowchart TD
 ```
 
 > [!NOTE]
-> Build Monitoring performs read-only operations on your pipeline data, with one exception: the `mcp_ado_pipelines_update_build_stage` tool can retry or skip a stage when you explicitly request it.
+> Build Monitoring performs read-only operations on your pipeline data, with one exception: the `mcp_ado_pipelines_update_build_stage` tool can retry, run, or cancel a stage when you explicitly request it.
 
 ### Retrieval Paths
 
@@ -133,7 +133,7 @@ commit.
 * ✅ Request targeted log reads for failed stages instead of full log dumps
 * ✅ Review the tracking file before re-running a failed build to confirm the fix addresses the right issue
 * ✅ Ask the agent to compare two build runs when investigating intermittent failures
-* ❌ Do not request stage updates unless you understand the pipeline's retry behavior
+* ❌ Do not request stage updates unless you understand the pipeline's retry and cancel behavior
 * ❌ Do not assume a passing build means all stages completed (some stages may be skipped by design)
 * ❌ Do not ignore infrastructure errors in log analysis (they may indicate transient issues, not code problems)
 
@@ -144,7 +144,7 @@ commit.
 | Agent cannot find builds for your PR       | Verify the project name and confirm the PR has triggered a pipeline run                    |
 | Build logs are empty or truncated          | Check that the build completed (in-progress builds may not have all logs)                  |
 | Wrong build selected from branch query     | Specify the build ID directly or narrow the time range                                     |
-| Stage update has no effect                 | Verify the pipeline supports the retry or skip action for that stage type                  |
+| Stage update has no effect                 | Verify the pipeline supports the retry, run, or cancel action for that stage type          |
 | Tracking file overwrites previous analysis | Each file uses a date-prefixed name; check for existing files before requesting new output |
 
 ## Next Steps

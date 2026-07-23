@@ -55,7 +55,3 @@ MIT License - see [LICENSE](LICENSE) for details
 ## Support
 
 For issues, questions, or contributions, visit the [GitHub repository](https://github.com/microsoft/hve-core).
-
----
-
-Brought to you by Microsoft ISE HVE Essentials

@@ -3,7 +3,7 @@ title: "Stage 3: Product Definition"
 description: Transform business requirements into product specifications and architecture decisions
 sidebar_position: 3
 author: Microsoft
-ms.date: 2026-06-17
+ms.date: 2026-06-28
 ms.topic: how-to
 keywords:
   - ai-assisted project lifecycle
@@ -23,7 +23,7 @@ Product Definition transforms Discovery outputs into actionable specifications. 
 You enter Product Definition after completing [Stage 2: Discovery](discovery.md) with a finalized BRD.
 
 > [!NOTE]
-> Prerequisites: BRD complete and available at `docs/brds/`. Architecture options explored during Discovery.
+> Prerequisites: BRD complete and available at `docs/project-planning/`. Architecture options explored during Discovery.
 
 ## Available Tools
 
@@ -54,7 +54,7 @@ TPMs own Product Definition, translating BRDs into PRDs with clear acceptance cr
 Select **prd-builder** agent:
 
 ```text
-Create a PRD from the BRD at docs/brds/fleet-management-v1.md. Define
+Create a PRD from the BRD at docs/project-planning/fleet-management-v1.md. Define
 the vehicle tracking dashboard requirements with acceptance criteria for
 real-time GPS updates, geofence alerting, and non-functional requirements
 for sub-500ms map tile rendering at 10,000 concurrent sessions.

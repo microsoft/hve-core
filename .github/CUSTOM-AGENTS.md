@@ -2,7 +2,7 @@
 title: GitHub Copilot Custom Agents
 description: Specialized AI agents for planning, research, prompt engineering, documentation, and code review workflows
 author: HVE Core Team
-ms.date: 2026-06-25
+ms.date: 2026-07-09
 ms.topic: guide
 keywords:
   - copilot
@@ -73,15 +73,11 @@ Each phase has two entry points: the `/task-*` prompt commands (`/task-research`
 
 ### Code and Review Agents
 
-| Agent                      | Purpose                                                               | Key Constraint                                            |
-|----------------------------|-----------------------------------------------------------------------|-----------------------------------------------------------|
-| **pr-review**              | 4-phase PR review with tracking artifacts                             | Review-only; never modifies code                          |
-| **pr-walkthrough**         | Narrative PR orientation that builds a reviewer's mental model        | Orientation-only; never renders judgments; experimental   |
-| **prompt-builder**         | Engineers and validates instruction/prompt files                      | Dual-persona system with auto-testing                     |
-| **security-reviewer**      | OWASP vulnerability assessment with subagent-driven verification      | Delegates all reference reading to subagents              |
-| **code-review-functional** | Pre-PR branch diff reviewer for functional correctness and logic gaps | Review-only; five focus areas; optional artifact save     |
-| **code-review-full**       | Orchestrator running functional + standards reviews via subagents     | Merges both reports; delegates to subagents; experimental |
-| **code-review-standards**  | Skills-based standards reviewer for local changes and PRs             | Findings must trace to a loaded skill; experimental       |
+| Agent                 | Purpose                                                                | Key Constraint                                                |
+|-----------------------|------------------------------------------------------------------------|---------------------------------------------------------------|
+| **prompt-builder**    | Compatibility entry point for HVE Builder artifact lifecycle work      | Routes to one author-review-test-validation implementation    |
+| **security-reviewer** | OWASP vulnerability assessment with subagent-driven verification       | Delegates all reference reading to subagents                  |
+| **code-review**       | Human-gated review orchestrator dispatching five perspective subagents | Operator confirms scope, perspectives, and depth; review-only |
 
 ### Generator Agents
 
@@ -168,24 +164,12 @@ Each phase has two entry points: the `/task-*` prompt commands (`/task-research`
 
 * `.github/instructions/{collection-id}/*.instructions.md` (coding guidelines and conventions, by convention)
 * `.github/prompts/{collection-id}/*.prompt.md` (reusable workflow prompts, by convention)
-* `.copilot-tracking/sandbox/{{YYYY-MM-DD}}-{{prompt-name}}-{{run-number}}/execution-log.md` (test execution trace)
-* `.copilot-tracking/sandbox/{{YYYY-MM-DD}}-{{prompt-name}}-{{run-number}}/evaluation-log.md` (quality validation results)
+* `.copilot-tracking/hve-builder/{{YYYY-MM-DD}}/*-review-*.md` (independent static review evidence)
+* `.copilot-tracking/hve-builder/{{YYYY-MM-DD}}/*-behavior-report-*.md` (fidelity-labeled behavior evidence)
 
-**Workflow:** Research sources → Draft → Auto-validate with Prompt Tester → Iterate (up to 3 cycles)
+**Workflow:** Route mode and write boundary → Author → Fresh-context review → Behavior test → Host validation
 
-**Critical:** Dual-persona system with execution and evaluation subagents. Uses sandbox environment for testing. Links to authoritative sources.
-
-### pr-review
-
-**Creates:** Review tracking files in normalized branch folders:
-
-* `.copilot-tracking/pr/review/{normalized-branch}/in-progress-review.md` (living review document with findings)
-* `.copilot-tracking/pr/review/{normalized-branch}/pr-reference.xml` (PR metadata and diff summary, generated via the `pr-reference` skill)
-* `.copilot-tracking/pr/review/{normalized-branch}/handoff.md` (finalized comments for PR submission)
-
-**Workflow:** 4 phases (Initialize → Analyze → Collaborative Review → Finalize)
-
-**Critical:** Review-only. Never modifies code. Evaluates 8 dimensions: functional correctness, design, idioms, reusability, performance, reliability, security, documentation.
+**Critical:** Compatibility surface only. The `hve-builder` skill owns the lifecycle, stage gates, Terra/Luna worker models, and final outcome.
 
 ### product-manager-advisor
 
@@ -216,7 +200,7 @@ Each phase has two entry points: the `/task-*` prompt commands (`/task-research`
 
 **Creates:** Product requirements documents with session state:
 
-* `docs/prds/<kebab-case-name>.md` (PRD document with requirements)
+* `docs/project-planning/<kebab-case-name>.md` (PRD document with requirements)
 * `.copilot-tracking/prd-sessions/<kebab-case-name>.state.json` (session state for resume capability)
 
 **Workflow:** Assess → Discover → Create → Build → Integrate → Validate → Finalize
@@ -227,7 +211,7 @@ Each phase has two entry points: the `/task-*` prompt commands (`/task-research`
 
 **Creates:** Business requirements documents with session state:
 
-* `docs/brds/<kebab-case-name>-brd.md` (BRD document with business objectives)
+* `docs/project-planning/<kebab-case-name>-brd.md` (BRD document with business objectives)
 * `.copilot-tracking/brd-sessions/<kebab-case-name>.state.json` (session state for resume capability)
 
 **Workflow:** Assess → Discover → Create → Elicit → Integrate → Validate → Finalize
@@ -361,35 +345,17 @@ Users are responsible for verifying their repository's `.gitignore` configuratio
 
 **Critical:** Orchestrator-only pattern. Delegates codebase profiling, skill assessment, adversarial finding verification, and report generation to specialized subagents. Uses OWASP skills (`owasp-agentic`, `owasp-llm`, `owasp-top-10`, `owasp-mcp`, `owasp-infrastructure`, `owasp-cicd`) and the `secure-by-design` skill for vulnerability and design principle references. Supports incremental comparison with prior scan reports.
 
-### code-review-functional
-
-**Creates:** Optional review artifact (user-prompted after report delivery):
-
-* `.copilot-tracking/reviews/<YYYY-MM-DD>-<branch-name>.md` (full report with YAML frontmatter)
-
-**Workflow:** Branch Analysis → Functional Review → Report Generation → Save Review
-
-**Critical:** Review-only. Focuses on five areas: Logic, Edge Cases, Error Handling, Concurrency, and Contract. Accepts a configurable `baseBranch` input (default `origin/main`). Artifact save is optional and user-confirmed after the report is presented. Applies false-positive filters before recording any finding.
-
-### code-review-full
+### code-review
 
 **Creates:** Merged review artifacts in a normalized branch folder:
 
-* `.copilot-tracking/reviews/code-reviews/<sanitized-branch>/` (per the shared persistence protocol in `review-artifacts.instructions.md`)
+* `.copilot-tracking/reviews/code-reviews/<sanitized-branch>/review.md` (merged review document, per the shared persistence protocol in `review-artifacts.instructions.md`)
+* `.copilot-tracking/reviews/code-reviews/<sanitized-branch>/metadata.json` (review metadata record)
 
-**Workflow:** Compute Diff → Delegate to Functional + Standards subagents → Merge Reports → Persist Artifacts
+**Workflow:** Context Bootstrap → Human Scope Confirmation → Perspective + Depth Selection → Prepare Dispatch State → Dispatch Selected Perspectives → Merge and Persist
 
-**Critical:** Orchestrator-only. Delegates functional review to `code-review-functional` and standards review to `code-review-standards`, then merges both reports into a single output. Shares the computed diff with subagents to avoid duplicate git operations. Maturity: experimental.
-
-### code-review-standards
-
-**Creates:** Review artifacts in a normalized branch folder:
-
-* `.copilot-tracking/reviews/code-reviews/<sanitized-branch>/` (per the shared persistence protocol in `review-artifacts.instructions.md`)
-
-**Workflow:** Understand Intent → Lock Scope → Apply Skills → Persist Artifacts
-
-**Critical:** Every finding must trace to a loaded skill; no invented categories. Loads at most 8 skills per review, preferring those whose domain appears most frequently in the diff. Accepts pre-computed diffs from orchestrators such as the `code-review-full` prompt. Skips artifact persistence for selected code and `#file` reviews that lack branch context. Maturity: experimental.
+**Critical:** Human-gated orchestrator invoked from the agent picker. After computing the diff via the `pr-reference` skill, it confirms scope with the operator, then lets the operator choose any combination of five perspectives (`functional`, `standards`, `accessibility`, `security`, `pr`) or `full` to run all five, plus a depth tier (`basic`, `standard`, or `comprehensive`) applied independently of perspective.
+It dispatches thin perspective subagents under `.github/agents/coding-standards/subagents/`, shares the computed diff to avoid duplicate git operations, and merges every report into a single output. Review-only; never modifies code. Maturity: experimental.
 
 ### gen-jupyter-notebook
 
@@ -502,18 +468,18 @@ Users are responsible for verifying their repository's `.gitignore` configuratio
 
 ### Code Review
 
-1. Select **pr-review** from agent picker
-2. Automatically runs 4-phase protocol
-3. Collaborate during Phase 3 (review items)
-4. Receive `handoff.md` with final PR comments
+1. Select **code-review** from agent picker
+2. Confirm the change scope when prompted
+3. Choose perspectives (`functional`, `standards`, `accessibility`, `security`, `pr`, or `full`) and a depth tier
+4. Receive a merged `review.md` under `.copilot-tracking/reviews/code-reviews/<branch>/`
 
 ### Creating Instructions
 
 1. Select **prompt-builder** from agent picker
-2. Draft instruction file with conventions
-3. Auto-validates with Prompt Tester persona
-4. Iterates up to 3 times for quality
-5. Delivered to `.github/instructions/{collection-id}/` by convention
+2. Provide the target path, reference context, and requirements
+3. HVE Builder resolves the create or improve mode and source-write boundary
+4. HVE Builder authors, independently reviews, behavior-tests, and validates the artifact
+5. Review the overall outcome and evidence links before merging
 
 ### Creating Documentation
 

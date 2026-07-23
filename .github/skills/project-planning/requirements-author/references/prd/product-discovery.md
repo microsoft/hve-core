@@ -1,5 +1,5 @@
 ---
-description: 'PRD product-discovery reference - repository-original persona archetype and customer-journey-map templates, plus a cite-only registry of opportunity-solution-tree, jobs-to-be-done, and story-mapping discovery frameworks - Brought to you by microsoft/hve-core'
+description: 'PRD product-discovery reference - repository-original persona archetype and customer-journey-map templates, plus a cite-only registry of opportunity-solution-tree, jobs-to-be-done, and story-mapping discovery frameworks'
 ---
 
 # PRD Product Discovery
@@ -74,4 +74,4 @@ The frameworks below inform PRD discovery framing. They are cited by name only. 
 
 This reference file is original Microsoft content licensed under [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/). The persona and journey-map templates are HVE-Core IP and may be reused under the same license. The discovery frameworks named in the cite-only registry remain the property of their respective authors and publishers; their prose is accessed by the reader through the cited URLs and is never redistributed here.
 
-> Brought to you by microsoft/hve-core
+

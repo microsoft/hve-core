@@ -2,7 +2,7 @@
 title: Linting Scripts
 description: PowerShell scripts for code quality validation and documentation checks
 author: HVE Core Team
-ms.date: 2026-06-16
+ms.date: 2026-07-08
 ms.topic: reference
 keywords:
   - powershell
@@ -19,13 +19,15 @@ This directory contains PowerShell scripts for validating code quality and docum
 
 The linting scripts follow a **modular architecture** with shared helper functions:
 
-| Component                                         | Description                                                                                 |
-|---------------------------------------------------|---------------------------------------------------------------------------------------------|
-| Wrapper Scripts (`Invoke-*.ps1`)                  | Entry points that orchestrate validation logic                                              |
-| Core Scripts                                      | Existing validation logic (e.g., `Link-Lang-Check.ps1`, `Validate-MarkdownFrontmatter.ps1`) |
-| Shared Module (`Modules/LintingHelpers.psm1`)     | Common functions for file discovery and git operations                                      |
-| CI Helpers (`scripts/lib/Modules/CIHelpers.psm1`) | CI annotations, outputs, env flags, and step summaries                                      |
-| Configuration Files                               | Tool-specific settings (e.g., `PSScriptAnalyzer.psd1`, `markdown-link-check.config.json`)   |
+| Component                                         | Description                                                                                                      |
+|---------------------------------------------------|------------------------------------------------------------------------------------------------------------------|
+| Wrapper Scripts (`Invoke-*.ps1`)                  | Entry points that orchestrate validation logic                                                                   |
+| Core Scripts                                      | Existing validation logic (e.g., `Link-Lang-Check.ps1`, `Validate-MarkdownFrontmatter.ps1`)                      |
+| Shared Module (`Modules/LintingHelpers.psm1`)     | Common functions for file discovery and git operations                                                           |
+| Shared Module (`Modules/AdrBodyParser.psm1`)      | Parse ADR body sections, headings, bullets, table rows, and path-shaped tokens for downstream consistency checks |
+| Shared Module (`Modules/AdrConsistency.psm1`)     | Implement the ADR consistency rule registry and validation logic for Govern-phase ADR checks                     |
+| CI Helpers (`scripts/lib/Modules/CIHelpers.psm1`) | CI annotations, outputs, env flags, and step summaries                                                           |
+| Configuration Files                               | Tool-specific settings (e.g., `PSScriptAnalyzer.psd1`, `markdown-link-check.config.json`)                        |
 
 ## Scripts
 
@@ -232,6 +234,7 @@ Purpose: Detect broken links before deployment.
 
 ##### Features
 
+* Discovers tracked and untracked, non-ignored Markdown files so local validation does not require staging
 * Checks internal and external links
 * Configurable via `markdown-link-check.config.json`
 * Retries failed links
@@ -255,6 +258,47 @@ Purpose: Detect broken links before deployment.
 * Annotations: Error for each broken link
 * Exit Code: Non-zero if broken links found
 
+### ADR Consistency Validation
+
+#### `Validate-AdrConsistency.ps1`
+
+Validates ADR markdown files for Govern-phase consistency rules.
+
+Purpose: Enforce ADR structure and content rules for architecture decision records under the ADR planning tree.
+
+##### Features
+
+* Discovers ADR markdown files under the supplied paths
+* Applies the ADR consistency rule registry from `scripts/linting/rules/adr-consistency-rules.json`
+* Emits JSON results, optional SARIF output, and CI annotations
+* Supports changed-files-only mode and warning-as-error behavior
+
+##### Parameters
+
+* `-Paths` (string[]) - Repository-relative or absolute directories to scan recursively for ADR markdown files
+* `-Files` (string[]) - Explicit markdown files to validate
+* `-ExcludePaths` (string[]) - Wildcard patterns to exclude from the scan
+* `-WarningsAsErrors` (switch) - Treat warn-severity violations as failures
+* `-ChangedFilesOnly` (switch) - Validate only ADR files changed relative to `-BaseBranch`
+* `-BaseBranch` (string) - Git reference used by changed-files detection (default: `origin/main`)
+* `-OutputPath` (string) - Path for the JSON report (default: `logs/adr-consistency-results.json`)
+* `-SarifOutputPath` (string) - Optional path for SARIF 2.1.0 output
+
+##### Usage
+
+```powershell
+# Validate the default ADR tree
+./scripts/linting/Validate-AdrConsistency.ps1
+
+# Validate only changed ADR files
+./scripts/linting/Validate-AdrConsistency.ps1 -ChangedFilesOnly -BaseBranch origin/main
+```
+
+##### GitHub Actions Integration
+
+* npm script: `npm run lint:adr-consistency`
+* Default scan path: `docs/planning/adrs`
+
 ### Skill Structure Validation
 
 #### `Validate-SkillStructure.ps1`
@@ -270,6 +314,7 @@ Purpose: Ensure all skill packages comply with the agentskills.io specification 
 * Verifies `name` matches directory name
 * When `scripts/` subdirectory exists, requires both `.ps1` and `.sh` files for cross-platform support
 * Validates Python skills with `tests/` include `tests/fuzz_harness.py` for Scorecard compliance
+* Warns when a Python skill has `pyproject.toml` without a committed `uv.lock` (required for Dependabot uv ecosystem coverage)
 * Warns on unrecognized directories
 * Supports changed-files-only mode via Git
 * Creates CI annotations for violations
@@ -312,7 +357,7 @@ Purpose: Ensure all PowerShell, shell, and Python scripts include the required M
 ##### Features
 
 * Scans `.ps1`, `.psm1`, `.psd1`, `.sh`, and `.py` files recursively
-* Checks for `Copyright (c) Microsoft Corporation` header
+* Checks for `Copyright (c) 2026 Microsoft Corporation. All rights reserved.` header
 * Checks for `SPDX-License-Identifier: MIT` identifier
 * Configurable file extensions and exclude paths
 * Exports JSON results with per-file compliance details
@@ -325,6 +370,7 @@ Purpose: Ensure all PowerShell, shell, and Python scripts include the required M
 * `-OutputPath` (string) - Path for JSON results (default: `logs/copyright-header-results.json`)
 * `-FailOnMissing` (switch) - Exit with code 1 if any files lack required headers
 * `-ExcludePaths` (string[]) - Directories to exclude (default: `@('node_modules', '.git', 'vendor', 'logs')`)
+* `-Fix` (switch) - Rewrite non-canonical headers and insert missing ones in place using the comment prefix appropriate to each file. Idempotent. Default is validation-only.
 
 ##### Usage
 
@@ -337,6 +383,9 @@ Purpose: Ensure all PowerShell, shell, and Python scripts include the required M
 
 # Check specific path with verbose output
 ./scripts/linting/Test-CopyrightHeaders.ps1 -Path ./scripts -FailOnMissing -Verbose
+
+# Normalize headers in place (rewrite non-canonical, insert missing)
+./scripts/linting/Test-CopyrightHeaders.ps1 -Fix
 ```
 
 ##### GitHub Actions Integration
@@ -469,6 +518,26 @@ Purpose: Execute Python test suites for all Python skills that include a `tests/
 * Workflow: `.github/workflows/pytest-tests.yml`
 * npm script: `npm run test:py`
 
+### Additional Validation Scripts
+
+The linting directory also contains these scripts that are not yet covered in the earlier sections:
+
+| Script                             | Purpose                                                                                              |
+|------------------------------------|------------------------------------------------------------------------------------------------------|
+| `Invoke-JsonLint.ps1`              | Validate strict JSON syntax using System.Text.Json                                                   |
+| `Validate-HookManifests.ps1`       | Validate collection-scoped hook manifests under `.github/hooks/`                                     |
+| `Validate-PlannerArtifacts.ps1`    | Validate AI artifact footer and disclaimer presence in instruction templates                         |
+| `Test-ModelReferences.ps1`         | Validate model references in agent and prompt files against the model catalog                        |
+| `Test-ExtensionArtifactNaming.ps1` | Validate extension-vsix artifact producer and consumer naming across the extension release workflows |
+| `Update-ModelCatalog.ps1`          | Refresh the model catalog from GitHub docs data                                                      |
+| `Format-MarkdownTables.ps1`        | Normalize markdown tables to the repository formatting convention                                    |
+
+## npm Scripts
+
+| npm Script                       | Description                                                                                                            |
+|----------------------------------|------------------------------------------------------------------------------------------------------------------------|
+| `lint:extension-artifact-naming` | Run `pwsh -NoProfile -File scripts/linting/Test-ExtensionArtifactNaming.ps1` to validate extension VSIX artifact names |
+
 ## Shared Module
 
 ### `Modules/FrontmatterValidation.psm1`
@@ -501,7 +570,7 @@ Common helper functions for file discovery and git operations.
 
 #### `Get-ChangedFilesFromGit`
 
-Detects files changed in current branch compared to main.
+Detects files changed in the current branch compared to a base branch, and always supplements this list with working-tree (staged/unstaged) and untracked files, regardless of the branch context.
 
 ##### Parameters
 
@@ -514,7 +583,8 @@ Returns: Array of changed file paths
 
 1. `git merge-base` with specified base branch
 2. `git diff HEAD~1` when merge-base fails
-3. `git diff HEAD` for staged/unstaged files
+3. `git diff --name-only HEAD` for working tree staged/unstaged files
+4. `git ls-files --others --exclude-standard` for untracked, non-ignored files
 
 #### `Get-FilesRecursive`
 
@@ -643,7 +713,7 @@ The `schemas/` directory contains JSON schema files used for frontmatter validat
 
 ### Schema Files
 
-The directory includes the following 19 JSON schema files:
+The directory includes the following 20 JSON schema files:
 
 * `accessibility-state.schema.json`
 * `adr-config.schema.json`
@@ -655,6 +725,7 @@ The directory includes the following 19 JSON schema files:
 * `chatmode-frontmatter.schema.json`
 * `collection-manifest.schema.json`
 * `docs-frontmatter.schema.json`
+* `hook-manifest.schema.json`
 * `instruction-frontmatter.schema.json`
 * `marketplace-manifest.schema.json`
 * `model-catalog.schema.json`
@@ -695,18 +766,19 @@ Get-Command -Module LintingHelpers
 
 All linting scripts are integrated into GitHub Actions workflows:
 
-| Script                 | Workflow                                       |
-|------------------------|------------------------------------------------|
-| PSScriptAnalyzer       | `.github/workflows/ps-script-analyzer.yml`     |
-| YAML Lint              | `.github/workflows/yaml-lint.yml`              |
-| Frontmatter Validation | `.github/workflows/frontmatter-validation.yml` |
-| Link Language Check    | `.github/workflows/link-lang-check.yml`        |
-| Markdown Link Check    | `.github/workflows/markdown-link-check.yml`    |
-| ms.date Freshness      | `.github/workflows/msdate-freshness-check.yml` |
-| Python Lint            | `.github/workflows/python-lint.yml`            |
-| Python Tests           | `.github/workflows/pytest-tests.yml`           |
-| Copyright Headers      | `.github/workflows/copyright-headers.yml`      |
-| Skill Validation       | `.github/workflows/skill-validation.yml`       |
+| Script                 | Workflow                                           |
+|------------------------|----------------------------------------------------|
+| PSScriptAnalyzer       | `.github/workflows/ps-script-analyzer.yml`         |
+| YAML Lint              | `.github/workflows/yaml-lint.yml`                  |
+| Frontmatter Validation | `.github/workflows/frontmatter-validation.yml`     |
+| Link Language Check    | `.github/workflows/link-lang-check.yml`            |
+| Markdown Link Check    | `.github/workflows/markdown-link-check.yml`        |
+| ms.date Freshness      | `.github/workflows/msdate-freshness-check.yml`     |
+| Python Lint            | `.github/workflows/python-lint.yml`                |
+| Python Tests           | `.github/workflows/pytest-tests.yml`               |
+| Copyright Headers      | `.github/workflows/copyright-headers.yml`          |
+| Skill Validation       | `.github/workflows/skill-validation.yml`           |
+| ADR Consistency        | `.github/workflows/adr-consistency-validation.yml` |
 
 See [GitHub Workflows Documentation](../../.github/workflows/README.md) for details.
 

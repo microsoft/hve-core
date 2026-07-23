@@ -2,12 +2,12 @@
 # Copyright (c) 2026 Microsoft Corporation. All rights reserved.
 # SPDX-License-Identifier: MIT
 
-#Requires -Version 7.0
+#Requires -Version 7.4
 
 <#
 .SYNOPSIS
     Renders a self-contained HTML matrix dashboard for the per-agent
-    `agent-behavior` eval suite (one row per parent agent).
+    `agent-behavior` eval suite (one row per inventory agent).
 
 .DESCRIPTION
     Consumes `agent-matrix-summary.json` (produced by
@@ -16,7 +16,7 @@
     `evals/results/agent-matrix/<YYYY-MM-DD>/`, the agent inventory
     `evals/agent-behavior/AGENTS.yml`, and (when present) the surface
     signature files under `evals/baseline-equivalence/surface-signatures/`,
-    then writes a single offline HTML file with a 50-row matrix.
+    then writes a single offline HTML file with one row per inventory agent.
 
     Columns:
       * Agent slug
@@ -150,11 +150,11 @@ function Read-AgentSlugInventory {
         if (-not $entry -or -not $entry.ContainsKey('slug')) { continue }
         $list.Add(@{
             slug      = [string]$entry['slug']
-            class     = if ($entry.ContainsKey('class'))     { [string]$entry['class']     } else { '' }
-            cost_tier = if ($entry.ContainsKey('cost_tier')) { [string]$entry['cost_tier'] } else { 'unknown' }
+            class     = if ($entry.ContainsKey('class') -and $entry['class']) { [string]$entry['class'] } else { 'unknown' }
+            cost_tier = if ($entry.ContainsKey('cost_tier') -and $entry['cost_tier']) { [string]$entry['cost_tier'] } else { 'light' }
         })
     }
-    return $list
+    return ,$list
 }
 
 function Get-LastPassDateBySlug {

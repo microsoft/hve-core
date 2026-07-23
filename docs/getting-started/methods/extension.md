@@ -3,7 +3,7 @@ title: VS Code Extension Installation
 description: Install HVE Core as a VS Code extension from the marketplace
 sidebar_position: 1
 author: Microsoft
-ms.date: 2026-03-10
+ms.date: 2026-06-27
 ms.topic: how-to
 keywords:
   - extension
@@ -35,7 +35,7 @@ VS Code Extension installation provides HVE Core directly through the VS Code Ma
 
 ## How It Works
 
-The extension packages all HVE Core components (chat agents, prompts, instructions) as a standard VS Code extension. Once installed, all components are immediately available without any additional configuration.
+The marketplace package currently ships the flagship HVE Core collection and its core RPI workflow assets (agents, prompts, instructions, and selected skills) as a standard VS Code extension. Once installed, those components are immediately available without any additional configuration.
 
 ```text
 VS Code Extension System
@@ -80,7 +80,7 @@ After installation, verify everything works:
    * task-planner
    * task-researcher
    * task-implementor
-   * pr-review
+   * code-review
    * adr-creation
 
 ## Post-Installation (Optional)
@@ -95,7 +95,7 @@ HVE Core agents create ephemeral workflow artifacts in a `.copilot-tracking/` fo
 .copilot-tracking/
 ```
 
-This applies even when using the extension. The folder is created in your project directory when you use agents like `task-researcher` or `pr-review`. See the [installation guide](../install.md#post-installation-update-your-gitignore) for details on what gets stored there.
+This applies even when using the extension. The folder is created in your project directory when you use agents like `task-researcher` or `code-review`. See the [installation guide](../install.md#post-installation-update-your-gitignore) for details on what gets stored there.
 
 ## What's Included
 
@@ -103,7 +103,7 @@ The extension provides all HVE Core components:
 
 | Component    | Examples                                |
 |--------------|-----------------------------------------|
-| Chat Agents  | task-planner, pr-review, adr-creation   |
+| Chat Agents  | task-planner, code-review, adr-creation |
 | Prompts      | git-commit, pull-request, ado-create-pr |
 | Instructions | markdown, python-script, commit-message |
 | Skills       | pr-reference, video-to-gif              |

@@ -1,7 +1,7 @@
 ---
 name: Task Researcher
 description: 'Task research specialist for comprehensive project analysis'
-disable-model-invocation: true
+disable-model-invocation: false
 agents:
   - Researcher Subagent
 handoffs:
@@ -12,6 +12,7 @@ handoffs:
   - label: "🔬 Deeper Research"
     agent: Task Researcher
     prompt: /task-research continue deeper research based on potential next research items
+    send: true
 ---
 
 # Task Researcher

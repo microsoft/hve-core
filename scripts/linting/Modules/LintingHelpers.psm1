@@ -14,13 +14,20 @@ function Get-ChangedFilesFromGit {
     Gets changed files from git with intelligent fallback strategies.
 
     .DESCRIPTION
-    Attempts to detect changed files using merge-base, with fallbacks for different scenarios.
+    Detects committed branch changes using merge-base, with fallbacks for
+    different scenarios, then merges staged, unstaged, and untracked,
+    nonignored working-tree files into the result.
 
     .PARAMETER BaseBranch
     The base branch to compare against (default: origin/main).
 
     .PARAMETER FileExtensions
     Array of file extensions to filter (e.g., @('*.ps1', '*.md')).
+
+    .PARAMETER IncludeDeleted
+    Include deleted paths and disable rename detection so both the source and
+    destination of a rename are returned. By default, only paths that still
+    exist are returned.
 
     .OUTPUTS
     Array of changed file paths.
@@ -31,37 +38,65 @@ function Get-ChangedFilesFromGit {
         [string]$BaseBranch = "origin/main",
 
         [Parameter(Mandatory = $false)]
-        [string[]]$FileExtensions = @('*')
+        [string[]]$FileExtensions = @('*'),
+
+        [Parameter(Mandatory = $false)]
+        [switch]$IncludeDeleted
     )
 
     $changedFiles = @()
+    $diffFilter = if ($IncludeDeleted) { 'ACMRD' } else { 'ACMR' }
 
     try {
         # Try merge-base first (best for PRs)
         $mergeBase = git merge-base HEAD $BaseBranch 2>$null
-        
+
         if ($LASTEXITCODE -eq 0 -and $mergeBase) {
             Write-Verbose "Using merge-base: $mergeBase"
-            $changedFiles = git diff --name-only --diff-filter=ACMR $mergeBase HEAD 2>$null
+            $diffArgs = @('diff', '--name-only', "--diff-filter=$diffFilter")
+            if ($IncludeDeleted) { $diffArgs += '--no-renames' }
+            $diffArgs += @($mergeBase, 'HEAD')
+            $changedFiles = git @diffArgs 2>$null
         }
         elseif ((git rev-parse HEAD~1 2>$null)) {
             Write-Verbose "Merge base failed, using HEAD~1"
-            $changedFiles = git diff --name-only --diff-filter=ACMR HEAD~1 HEAD 2>$null
+            $diffArgs = @('diff', '--name-only', "--diff-filter=$diffFilter")
+            if ($IncludeDeleted) { $diffArgs += '--no-renames' }
+            $diffArgs += @('HEAD~1', 'HEAD')
+            $changedFiles = git @diffArgs 2>$null
         }
         else {
             Write-Verbose "HEAD~1 failed, using staged/unstaged files"
-            $changedFiles = git diff --name-only HEAD 2>$null
+            $diffArgs = @('diff', '--name-only', "--diff-filter=$diffFilter")
+            if ($IncludeDeleted) { $diffArgs += '--no-renames' }
+            $diffArgs += 'HEAD'
+            $changedFiles = git @diffArgs 2>$null
         }
 
         if ($LASTEXITCODE -ne 0) {
-            Write-Warning "Unable to determine changed files from git"
-            return @()
+            throw 'Unable to determine changed files from git'
         }
+
+        $workingTreeArgs = @('diff', '--name-only', "--diff-filter=$diffFilter")
+        if ($IncludeDeleted) { $workingTreeArgs += '--no-renames' }
+        $workingTreeArgs += 'HEAD'
+        $workingTreeFiles = git @workingTreeArgs 2>$null
+        if ($LASTEXITCODE -ne 0) {
+            throw 'Unable to determine staged and unstaged files from git'
+        }
+
+        $untrackedFiles = git ls-files --others --exclude-standard 2>$null
+        if ($LASTEXITCODE -ne 0) {
+            throw 'Unable to determine untracked files from git'
+        }
+
+        $changedFiles = @($changedFiles) + @($workingTreeFiles) + @($untrackedFiles) |
+            Sort-Object -Unique
 
         # Filter by extensions and verify files exist
         $filteredFiles = $changedFiles | Where-Object {
             if ([string]::IsNullOrEmpty($_)) { return $false }
-            
+
             # Check if file matches any of the allowed extensions
             $currentFile = $_
             $matchesExtension = $false
@@ -71,8 +106,8 @@ function Get-ChangedFilesFromGit {
                     break
                 }
             }
-            
-            $matchesExtension -and (Test-Path $currentFile -PathType Leaf)
+
+            $matchesExtension -and ($IncludeDeleted -or (Test-Path $currentFile -PathType Leaf))
         }
 
         Write-Verbose "Found $($filteredFiles.Count) changed files matching extensions: $($FileExtensions -join ', ')"
@@ -80,7 +115,7 @@ function Get-ChangedFilesFromGit {
     }
     catch {
         Write-Warning "Error getting changed files: $($_.Exception.Message)"
-        return @()
+        throw
     }
 }
 
@@ -212,10 +247,10 @@ function Get-GitIgnorePatterns {
         $_ -and -not $_.StartsWith('#') -and $_.Trim() -ne ''
     } | ForEach-Object {
         $pattern = $_.Trim()
-        
+
         # Normalize to platform separator
         $normalizedPattern = $pattern.Replace('/', $sep).Replace('\', $sep)
-        
+
         if ($pattern.EndsWith('/')) {
             "*$sep$($normalizedPattern.TrimEnd($sep))$sep*"
         }

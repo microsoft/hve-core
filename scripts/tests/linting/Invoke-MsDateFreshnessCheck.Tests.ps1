@@ -160,6 +160,11 @@ Describe 'Get-MarkdownFiles' -Tag 'Unit' {
                 $global:LASTEXITCODE = 0
                 return @('changed.md')
             } -ModuleName 'LintingHelpers' -ParameterFilter { $args[0] -eq 'diff' }
+
+            Mock git {
+                $global:LASTEXITCODE = 0
+                return @()
+            } -ModuleName 'LintingHelpers' -ParameterFilter { $args[0] -eq 'ls-files' }
         }
 
         AfterEach {

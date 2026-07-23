@@ -835,6 +835,7 @@ function Test-SingleFileFrontmatter {
     # or Copilot footers (which would leak into rendered output).
     $normalizedForSkillCheck = $relativePath -replace '\\', '/'
     $isSkillTemplate = $normalizedForSkillCheck -like '*.github/skills/*/templates/*'
+    $isSkillTestFixture = $normalizedForSkillCheck -like '*.github/skills/*/tests/*fixtures/*'
 
     # Read file content
     try {
@@ -872,7 +873,8 @@ function Test-SingleFileFrontmatter {
     # Only warn about missing frontmatter for content types that require it
     # AI artifacts (.github prompts, instructions, agents, chatmodes) are exempt
     # Skill template assets are exempt (verbatim content rendered into other documents)
-    if (-not $result.HasFrontmatter -and -not $isAiArtifact -and -not $isSkillTemplate) {
+    # Skill test fixtures are exempt (verbatim test data parsed by skill unit tests)
+    if (-not $result.HasFrontmatter -and -not $isAiArtifact -and -not $isSkillTemplate -and -not $isSkillTestFixture) {
         $result.AddWarning('No frontmatter found', 'frontmatter')
         # Continue to footer validation even without frontmatter
     }
@@ -920,6 +922,10 @@ function Test-SingleFileFrontmatter {
             $skipFooterForFile = $true
             break
         }
+    }
+    # Skill test fixtures are verbatim test data; skip footer validation entirely
+    if ($isSkillTestFixture) {
+        $skipFooterForFile = $true
     }
 
     $isAgenticGhcpAsset = $isAiArtifact -or

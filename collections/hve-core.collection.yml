@@ -1,6 +1,6 @@
 id: hve-core
 name: HVE Core Workflow
-description: HVE Core RPI (Research, Plan, Implement, Review) workflow with Git commit, merge, setup, and pull request prompts
+description: Opinionated, rapidly evolving agentic SDLC patterns for RPI workflows, HVE Builder, and Git operations
 tags:
   - workflow
   - hve-core
@@ -34,9 +34,7 @@ items:
   - path: .github/agents/hve-core/task-challenger.agent.md
     kind: agent
     maturity: experimental
-  - path: .github/agents/hve-core/pr-review.agent.md
-    kind: agent
-  - path: .github/agents/hve-core/pr-walkthrough.agent.md
+  - path: .github/agents/coding-standards/code-review.agent.md
     kind: agent
     maturity: experimental
 
@@ -49,15 +47,47 @@ items:
     kind: agent
   - path: .github/agents/hve-core/subagents/phase-implementor.agent.md
     kind: agent
-  - path: .github/agents/hve-core/subagents/prompt-evaluator.agent.md
-    kind: agent
-  - path: .github/agents/hve-core/subagents/prompt-tester.agent.md
-    kind: agent
-  - path: .github/agents/hve-core/subagents/prompt-updater.agent.md
-    kind: agent
   - path: .github/agents/hve-core/subagents/researcher-subagent.agent.md
     kind: agent
-  - path: .github/agents/hve-core/subagents/vally-test-author.agent.md
+  # HVE Builder subagents
+  - path: .github/agents/hve-core/subagents/hve-artifact-explorer.agent.md
+    kind: agent
+  - path: .github/agents/hve-core/subagents/hve-artifact-author.agent.md
+    kind: agent
+  - path: .github/agents/hve-core/subagents/hve-artifact-reviewer.agent.md
+    kind: agent
+  - path: .github/agents/hve-core/subagents/hve-artifact-validator.agent.md
+    kind: agent
+  - path: .github/agents/hve-core/subagents/hve-artifact-tester.agent.md
+    kind: agent
+  # HVE Builder Tester subagents
+  - path: .github/agents/hve-core/subagents/hve-artifact-test-designer.agent.md
+    kind: agent
+  - path: .github/agents/hve-core/subagents/hve-artifact-test-reviewer.agent.md
+    kind: agent
+  # Code Review subagents
+  - path: .github/agents/coding-standards/subagents/code-review-functional.agent.md
+    kind: agent
+    maturity: experimental
+  - path: .github/agents/coding-standards/subagents/code-review-standards.agent.md
+    kind: agent
+    maturity: experimental
+  - path: .github/agents/coding-standards/subagents/code-review-accessibility.agent.md
+    kind: agent
+    maturity: experimental
+  - path: .github/agents/coding-standards/subagents/code-review-security.agent.md
+    kind: agent
+    maturity: experimental
+  - path: .github/agents/coding-standards/subagents/code-review-pr.agent.md
+    kind: agent
+    maturity: experimental
+  - path: .github/agents/coding-standards/subagents/code-review-readiness.agent.md
+    kind: agent
+    maturity: experimental
+  - path: .github/agents/coding-standards/subagents/code-review-explainer.agent.md
+    kind: agent
+    maturity: experimental
+  - path: .github/agents/coding-standards/subagents/code-review-walkback.agent.md
     kind: agent
     maturity: experimental
   # Prompts
@@ -71,6 +101,9 @@ items:
     kind: prompt
   - path: .github/prompts/hve-core/task-review.prompt.md
     kind: prompt
+  - path: .github/prompts/hve-core/pr-review.prompt.md
+    kind: prompt
+    maturity: experimental
   - path: .github/prompts/hve-core/task-challenge.prompt.md
     kind: prompt
     maturity: experimental
@@ -94,13 +127,6 @@ items:
     kind: prompt
   - path: .github/prompts/hve-core/prompt-refactor.prompt.md
     kind: prompt
-  # Vally / evals prompts
-  - path: .github/prompts/hve-core/vally-test-write.prompt.md
-    kind: prompt
-    maturity: experimental
-  - path: .github/prompts/hve-core/evals-import.prompt.md
-    kind: prompt
-    maturity: experimental
   # Instructions
   - path: .github/instructions/hve-core/writing-style.instructions.md
     kind: instruction
@@ -110,6 +136,8 @@ items:
     kind: instruction
   - path: .github/instructions/hve-core/commit-message.instructions.md
     kind: instruction
+  - path: .github/instructions/hve-core/hve-builder.instructions.md
+    kind: instruction
   - path: .github/instructions/hve-core/prompt-builder.instructions.md
     kind: instruction
   - path: .github/instructions/hve-core/copilot-tracking.instructions.md
@@ -118,6 +146,13 @@ items:
     kind: instruction
   - path: .github/instructions/hve-core/pull-request.instructions.md
     kind: instruction
+  # Code Review instructions
+  - path: .github/instructions/coding-standards/code-review/diff-computation.instructions.md
+    kind: instruction
+    maturity: experimental
+  - path: .github/instructions/coding-standards/code-review/review-artifacts.instructions.md
+    kind: instruction
+    maturity: experimental
   - path: .github/instructions/experimental/mural/mural-bootstrap.instructions.md
     kind: instruction
     maturity: experimental
@@ -146,6 +181,9 @@ items:
   # Skills
   - path: .github/skills/shared/pr-reference
     kind: skill
+  - path: .github/skills/coding-standards/code-review
+    kind: skill
+    maturity: experimental
   - path: .github/skills/hve-core/documentation
     kind: skill
   - path: .github/skills/experimental/mural
@@ -153,13 +191,22 @@ items:
     maturity: experimental
   - path: .github/skills/hve-core/prompt-builder
     kind: skill
-  - path: .github/skills/hve-core/vally-tests
+  - path: .github/skills/hve-core/prompt-analyze
     kind: skill
-    maturity: experimental
+  - path: .github/skills/hve-core/prompt-refactor
+    kind: skill
+  - path: .github/skills/hve-core/hve-builder
+    kind: skill
+  - path: .github/skills/hve-core/hve-builder-tester
+    kind: skill
   - path: .github/skills/shared/telemetry-foundations
     kind: skill
   # Telemetry overlays
   - path: .github/instructions/shared/telemetry-overlay.instructions.md
     kind: instruction
+  # Hooks
+  - path: .github/hooks/shared/telemetry.json
+    kind: hook
+    maturity: experimental
 display:
   ordering: manual

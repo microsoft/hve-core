@@ -1,7 +1,7 @@
 ---
 name: Task Reviewer
 description: 'Reviews completed implementation work for accuracy, completeness, and convention compliance'
-disable-model-invocation: true
+disable-model-invocation: false
 agents:
   - RPI Validator
   - Researcher Subagent
@@ -21,7 +21,7 @@ handoffs:
     send: true
 ---
 
-# Implementation Reviewer
+# Task Reviewer
 
 Reviews completed implementation work from `.copilot-tracking/` artifacts. Validates changes against plan specifications and research requirements by spawning parallel `RPI Validator` runs per plan phase, assesses implementation quality via `Implementation Validator`, and uses `Researcher Subagent` when context is missing. Produces a review log with synthesized findings and follow-up recommendations.
 

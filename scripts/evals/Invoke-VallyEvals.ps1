@@ -1,7 +1,7 @@
 #!/usr/bin/env pwsh
 # Copyright (c) 2026 Microsoft Corporation. All rights reserved.
 # SPDX-License-Identifier: MIT
-#Requires -Version 7.0
+#Requires -Version 7.4
 
 <#
 .SYNOPSIS
@@ -31,6 +31,14 @@
     `logs/changed-ai-artifacts.json`. Resolved relative to the repository root
     when not absolute.
 
+.PARAMETER ChangedSpecManifestPath
+    Optional path to a synthetic-artifact manifest produced by
+    `Get-ChangedSpecStimulus.ps1`. Its entries (one per stimulus added or
+    modified in a changed eval spec) are unioned into the execution set, deduped
+    by `kind:artifactId`, so a changed test runs even when the underlying AI
+    artifact is unchanged (issue #2297). Resolved relative to the repository
+    root when not absolute. Ignored when empty or missing.
+
 .PARAMETER EvalRoot
     Filesystem path to the eval spec root. Defaults to `evals/`. Resolved
     relative to the repository root when not absolute.
@@ -42,7 +50,7 @@
 .PARAMETER Model
     Model passed to `vally eval --model`. Also forwarded to
     `Invoke-BaselineEquivalence.ps1` when baseline equivalence is explicitly
-    enabled. Defaults to `claude-haiku-4.5`.
+    enabled. Defaults to `gpt-5.6-luna`.
 
 .PARAMETER VallyCommand
     Path or name of the vally executable. Defaults to `vally`. Tests pass the
@@ -95,11 +103,12 @@
 [CmdletBinding()]
 param(
     [string]$ManifestPath,
+    [string]$ChangedSpecManifestPath,
     [string]$EvalRoot,
     [string]$LogsDir,
     [ValidateSet('agent','prompt','instruction','skill')]
     [string[]]$Kind = @(),
-    [string]$Model = 'claude-haiku-4.5',
+    [string]$Model = 'gpt-5.6-luna',
     [string]$VallyCommand = 'vally',
     [string]$EquivalenceDriverPath,
     [ValidateSet('pr','nightly')]
@@ -116,6 +125,7 @@ $ErrorActionPreference = 'Stop'
 
 Import-Module (Join-Path $PSScriptRoot 'Modules/StimulusIndex.psm1') -Force
 Import-Module (Join-Path $PSScriptRoot 'Modules/VallyRunner.psm1') -Force
+Import-Module (Join-Path $PSScriptRoot 'Modules/ArtifactDetection.psm1') -Force
 
 if (-not (Get-Module -Name powershell-yaml)) {
     Import-Module powershell-yaml -ErrorAction Stop
@@ -369,6 +379,47 @@ if ($null -ne $manifest -and $null -ne $manifest.artifacts) {
     $artifacts = @($manifest.artifacts | Where-Object { [string]$_.status -ne 'D' })
 }
 
+# Repo-root (repo-specific) artifacts live directly under `.github/<kind>/`
+# without a collection subdirectory. Per `.github/copilot-instructions.md` they
+# are excluded from collection manifests, packaging, and eval coverage, so they
+# carry no eval spec. Drop them here so they do not surface as missing-coverage
+# failures, mirroring the skip in `Test-StimulusPresence.ps1`.
+$artifacts = @($artifacts | Where-Object {
+    -not (Test-RepoRootArtifact -Kind ([string]$_.kind) -Path ([string]$_.path))
+})
+
+# Issue #2297: a stimulus added or modified in an otherwise-unchanged eval spec
+# does not appear in the changed-artifact manifest, so it would never execute.
+# Union in synthetic artifacts derived from changed specs (one per changed
+# stimulus backlink), deduped by `kind:artifactId` so a stimulus whose artifact
+# also changed runs only once. The existing run plan scopes each to its spec via
+# `--tag kind=slug`, keeping execution diff-scoped to the changed stimuli.
+if (-not [string]::IsNullOrWhiteSpace($ChangedSpecManifestPath)) {
+    $resolvedChangedSpec = Resolve-PathFromRoot -Path $ChangedSpecManifestPath -RepoRoot $resolvedRoot
+    if (Test-Path -LiteralPath $resolvedChangedSpec -PathType Leaf) {
+        $changedSpecManifest = Get-Content -LiteralPath $resolvedChangedSpec -Raw | ConvertFrom-Json
+        $synthetic = @()
+        if ($null -ne $changedSpecManifest -and $null -ne $changedSpecManifest.artifacts) {
+            $synthetic = @($changedSpecManifest.artifacts | Where-Object { [string]$_.status -ne 'D' })
+        }
+        if ($synthetic.Count -gt 0) {
+            $existingKeys = @{}
+            foreach ($existing in $artifacts) {
+                $existingKeys["$([string]$existing.kind):$([string]$existing.artifactId)"] = $true
+            }
+            $merged = [System.Collections.Generic.List[object]]::new()
+            foreach ($existing in $artifacts) { $merged.Add($existing) }
+            foreach ($candidate in $synthetic) {
+                $key = "$([string]$candidate.kind):$([string]$candidate.artifactId)"
+                if ($existingKeys.ContainsKey($key)) { continue }
+                $existingKeys[$key] = $true
+                $merged.Add($candidate)
+            }
+            $artifacts = @($merged.ToArray())
+        }
+    }
+}
+
 # Per-kind shard filter. When -Kind is supplied, the stimulus artifacts[] loop
 # is narrowed to the matching kind(s) only. Baseline equivalence is cross-kind
 # (an instruction/skill change can promote a parent agent), so it stays owned by
@@ -473,6 +524,8 @@ $moderationScript = Join-Path -Path $resolvedRoot -ChildPath 'scripts/evals/Invo
 
 $specResults = @{}
 $failedSpecs = 0
+$promotedRunKeys = @{}
+$outputModerationRuns = [System.Collections.Generic.List[hashtable]]::new()
 
 foreach ($runKey in $uniqueSpecRuns.Keys) {
     $run     = $uniqueSpecRuns[$runKey]
@@ -553,25 +606,15 @@ foreach ($runKey in $uniqueSpecRuns.Keys) {
     $result['specRel'] = $specRel
     $result['tag'] = $tag
 
-    # Post-eval content moderation (output)
+    # Output moderation is deferred until all tag-filtered runs finish so the
+    # shard pays the Detoxify model startup cost once.
     $outputModeration = @{ flagged = $false; flaggedCount = 0; outputPath = $null; error = $false }
     if (-not $SkipOutputModeration -and $result.runDir) {
-        Write-Verbose "Post-eval content moderation for spec: $specRel"
-        $outputModeration = Test-SpecOutputModeration `
-            -RunDir $result.runDir `
-            -ArtifactId $specKey `
-            -ModerationScript $moderationScript `
-            -Threshold $effectiveThreshold `
-            -RepoRoot $resolvedRoot
-
-        if ($outputModeration.flagged) {
-            Write-Host "::warning file=$specRel::Content moderation flagged $($outputModeration.flaggedCount) model output(s)"
-            $result.status = 'content-moderation-output'
-            $result.assertionsFailed = [Math]::Max($result.assertionsFailed, $outputModeration.flaggedCount)
-        }
-        elseif ($outputModeration.error) {
-            Write-Host "::error file=$specRel::Output content moderation could not run (infrastructure error)"
-        }
+        $outputModerationRuns.Add(@{
+            runKey    = $runKey
+            runDir    = $result.runDir
+            threshold = $effectiveThreshold
+        })
     }
 
     $result['moderationInput'] = $inputModeration
@@ -632,6 +675,8 @@ foreach ($runKey in $uniqueSpecRuns.Keys) {
         $result['authoritativeFailed'] = $authoritativeFailed
         $result['isAdvisory'] = ($authoritativeFailed -eq 0 -and $advisoryFailed -gt 0)
 
+        $erroredTrials = if ($result.ContainsKey('erroredTrials')) { [int]$result['erroredTrials'] } else { 0 }
+
         if (-not $result.ContainsKey('status')) {
             if ($authoritativeFailed -gt 0 -or $outputModeration.flagged) {
                 $result['status'] = 'fail'
@@ -640,7 +685,10 @@ foreach ($runKey in $uniqueSpecRuns.Keys) {
                 $result['status'] = 'advisory-fail'
             }
             elseif ($result.exitCode -ne 0) {
-                $result['status'] = if ($specAllAdvisory) { 'advisory-fail' } else { 'fail' }
+                # A nonzero vally exit with no attributed grader failures is a transient
+                # error (not a conformance failure) when trials errored after retries;
+                # surface it as advisory rather than gating the build.
+                $result['status'] = if ($specAllAdvisory -or $erroredTrials -gt 0) { 'advisory-fail' } else { 'fail' }
             }
             else {
                 $result['status'] = 'pass'
@@ -653,11 +701,19 @@ foreach ($runKey in $uniqueSpecRuns.Keys) {
         # A nonzero vally exit with no attributed failures gates only when the spec is
         # not wholly advisory; an all-advisory spec surfaces but never blocks merge.
         if (-not $promote -and $result.exitCode -ne 0 -and $advisoryFailed -eq 0 -and $authoritativeFailed -eq 0 -and -not $specAllAdvisory) {
-            $promote = $true
+            if ($erroredTrials -gt 0) {
+                # The nonzero exit is explained solely by transient errored trials that
+                # persisted after retries; surface it but do not gate the build.
+                Write-Host "::warning file=$specRel::$erroredTrials trial(s) errored (transient executor failure) with no grader failures after retries; not promoting to CI failure"
+            }
+            else {
+                $promote = $true
+            }
         }
 
         if ($promote) {
             $failedSpecs++
+            $promotedRunKeys[$runKey] = $true
             if ($outputModeration.error) {
                 Write-Host "::error file=$specRel::Output content moderation could not run (infrastructure error); promoting to CI failure"
             }
@@ -674,25 +730,108 @@ foreach ($runKey in $uniqueSpecRuns.Keys) {
         }
     }
     else {
-        $isAdvisory = Test-SpecIsAdvisory -SpecPath $specAbs
+        # Per DD-01, baseline-equivalence is advisory at PR tier: equivalence
+        # signal surfaces in the run summary but never gates merge. Its stimuli
+        # corpus is tag-resolved into this authoritative path and runs at a
+        # perfect-score threshold (1.0) against a small model, so a single grader
+        # miss on a file-reading prompt would otherwise hard-fail the spec and
+        # block the build. Treat any baseline-equivalence spec as advisory so the
+        # tag-resolved path honors the same advisory posture as the dedicated
+        # equivalence dispatch.
+        $specIsEquivalence = $specRel -match '(^|/)baseline-equivalence/'
+        $isAdvisory = (Test-SpecIsAdvisory -SpecPath $specAbs) -or $specIsEquivalence
         $result['isAdvisory'] = $isAdvisory
+
+        # A zero vally exit means the spec met its aggregate threshold (the author's
+        # runs/threshold contract), so per-trial assertion dips recorded in
+        # assertionsFailed are sub-threshold noise, not merge blockers. Mirror the
+        # advisory-map branch above and gate only on a nonzero vally exit or a
+        # moderation failure. Without this, a spec that carries no advisory-tagged
+        # stimulus would gate the build on a single sub-threshold dip even though
+        # vally reported an aggregate pass.
+        $hardFailure = ($result.exitCode -ne 0) -or $outputModeration.flagged -or $outputModeration.error
+        $subThresholdDip = (-not $hardFailure) -and ($result.assertionsFailed -gt 0)
+
         if (-not $result.ContainsKey('status')) {
-            $result['status'] = if ($result.exitCode -ne 0 -or $result.assertionsFailed -gt 0) { 'fail' } else { 'pass' }
+            $result['status'] = if ($hardFailure) { 'fail' } elseif ($subThresholdDip) { 'advisory-fail' } else { 'pass' }
         }
 
         $specResults[$runKey] = $result
 
-        if ($result.exitCode -ne 0 -or $result.assertionsFailed -gt 0 -or $outputModeration.flagged -or $outputModeration.error) {
+        if ($hardFailure) {
             if ($isAdvisory -and -not $outputModeration.error) {
                 $result['status'] = 'advisory-fail'
                 Write-Host "::warning file=$specRel::Advisory spec failed (exit=$($result.exitCode), assertionsFailed=$($result.assertionsFailed)); not promoting to CI failure"
             }
             else {
                 $failedSpecs++
+                $promotedRunKeys[$runKey] = $true
                 if ($FailFast) {
                     Write-Host "::warning::FailFast set; skipping remaining specs after failure in $specRel"
                     break
                 }
+            }
+        }
+        elseif ($subThresholdDip) {
+            Write-Host "::warning file=$specRel::Sub-threshold per-trial dips (exit=0, assertionsFailed=$($result.assertionsFailed)); aggregate threshold met, not promoting to CI failure"
+        }
+    }
+}
+
+if (-not $SkipOutputModeration -and $outputModerationRuns.Count -gt 0) {
+    $batchId = if ($kindFilter.Count -gt 0) { $kindFilter -join '-' } else { 'all' }
+    Write-Verbose "Post-eval content moderation for $($outputModerationRuns.Count) run(s) in shard: $batchId"
+    $batchModeration = Test-SpecOutputModerationBatch `
+        -Run $outputModerationRuns.ToArray() `
+        -BatchId (ConvertTo-SafeKey -Value $batchId) `
+        -ModerationScript $moderationScript `
+        -Threshold $ModerationThreshold `
+        -RepoRoot $resolvedRoot
+
+    foreach ($runKey in $batchModeration.byRun.Keys) {
+        if (-not $specResults.ContainsKey($runKey)) { continue }
+        $result = $specResults[$runKey]
+        $outputModeration = $batchModeration.byRun[$runKey]
+        $result['moderationOutput'] = $outputModeration
+
+        if ($outputModeration.flagged) {
+            Write-Host "::warning file=$($result.specRel)::Content moderation flagged $($outputModeration.flaggedCount) model output(s)"
+            $previousFailed = [int]$result.assertionsFailed
+            $result.assertionsFailed = [Math]::Max($previousFailed, [int]$outputModeration.flaggedCount)
+            $moderationFailureDelta = [int]$result.assertionsFailed - $previousFailed
+
+            $hasAdvisoryMap = $result.ContainsKey('perStimulusAdvisory') -and $null -ne $result.perStimulusAdvisory
+            if ($hasAdvisoryMap -and $moderationFailureDelta -gt 0) {
+                $specAllAdvisory = ($result.perStimulusAdvisory.Values.Count -gt 0) -and
+                    (@($result.perStimulusAdvisory.Values | Where-Object { -not $_ }).Count -eq 0)
+                if ($specAllAdvisory) {
+                    $result.advisoryFailed = [int]$result.advisoryFailed + $moderationFailureDelta
+                }
+                else {
+                    $result.authoritativeFailed = [int]$result.authoritativeFailed + $moderationFailureDelta
+                }
+                $result.isAdvisory = ([int]$result.authoritativeFailed -eq 0 -and [int]$result.advisoryFailed -gt 0)
+            }
+
+            $isLegacyAdvisory = -not $hasAdvisoryMap -and $result.ContainsKey('isAdvisory') -and [bool]$result.isAdvisory
+            if ($isLegacyAdvisory) {
+                $result.status = 'advisory-fail'
+            }
+            else {
+                $result.status = 'content-moderation-output'
+                if (-not $promotedRunKeys.ContainsKey($runKey)) {
+                    $failedSpecs++
+                    $promotedRunKeys[$runKey] = $true
+                }
+            }
+        }
+
+        if ($outputModeration.error) {
+            Write-Host "::error file=$($result.specRel)::Output content moderation could not run or could not be attributed (infrastructure error)"
+            $result.status = 'content-moderation-error-output'
+            if (-not $promotedRunKeys.ContainsKey($runKey)) {
+                $failedSpecs++
+                $promotedRunKeys[$runKey] = $true
             }
         }
     }
@@ -775,7 +914,13 @@ if ($EnableBaselineEquivalence -and $shardOwnsEquivalence) {
     }
 }
 
-$hardFailStatuses = @('fail', 'content-moderation-input', 'content-moderation-error-input', 'content-moderation-output')
+$hardFailStatuses = @(
+    'fail',
+    'content-moderation-input',
+    'content-moderation-error-input',
+    'content-moderation-output',
+    'content-moderation-error-output'
+)
 $perArtifact = [System.Collections.Generic.List[object]]::new()
 foreach ($plan in $artifactPlan) {
     $artifactPassed    = 0
@@ -806,7 +951,10 @@ foreach ($plan in $artifactPlan) {
             $artifactAuthoritativeFailed += [int]$r['authoritativeFailed']
             $artifactAdvisoryFailed      += [int]$r['advisoryFailed']
         }
-        elseif ($specIsAdvisory) {
+        elseif ($specIsAdvisory -or $specStatus -eq 'advisory-fail') {
+            # A spec the main loop already demoted to 'advisory-fail' (an advisory
+            # spec, or a no-advisory spec whose per-trial dip rode on a zero vally
+            # exit) contributes only advisory failures, so it never gates the roll-up.
             $artifactAdvisoryFailed += [int]$r.assertionsFailed
         }
         else {

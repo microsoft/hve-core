@@ -1,5 +1,5 @@
 ---
-description: 'Payload schemas and data contracts for the BRD Builder orchestrator, BRD Quality Reviewer, and BRD-to-PRD handoff - Brought to you by microsoft/hve-core'
+description: 'Payload schemas and data contracts for the BRD Builder orchestrator, BRD Quality Reviewer, and BRD-to-PRD handoff'
 ---
 
 # BRD Quality Formats — Skill Entry
@@ -49,4 +49,4 @@ When a schema changes in a backward-incompatible way, the new version is publish
 
 This skill and all files under `references/` are original Microsoft content licensed under [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/). The schemas themselves are HVE-Core IP and may be reused under the same license. No third-party standards or templates are redistributed by this skill.
 
-> Brought to you by microsoft/hve-core
+

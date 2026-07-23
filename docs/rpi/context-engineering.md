@@ -3,7 +3,7 @@ title: "Context Engineering: Why AI Context Management Matters"
 description: Understanding LLM recency bias, context windows, and why /clear is an engineering practice, not just a step
 sidebar_position: 3
 author: Microsoft
-ms.date: 2026-02-19
+ms.date: 2026-07-08
 ms.topic: concept
 keywords:
   - context engineering

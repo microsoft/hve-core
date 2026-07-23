@@ -35,7 +35,7 @@ jobs:
           private-key: ${{ secrets.RELEASE_APP_PRIVATE_KEY }}
 
       - name: Checkout code
-        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
 
@@ -142,7 +142,7 @@ jobs:
       contents: write
     steps:
       - name: Checkout dependency manifests
-        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           sparse-checkout: |
             package.json
@@ -190,7 +190,7 @@ jobs:
       artifact-metadata: write
     steps:
       - name: Checkout Syft config
-        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           sparse-checkout: .syft.yaml
           sparse-checkout-cone-mode: false
@@ -246,18 +246,18 @@ jobs:
 
       - name: Attest build provenance
         id: attest
-        uses: actions/attest-build-provenance@a2bbfa25375fe432b6a289bc6b6cd05ecd0c4c32 # v4.1.0
+        uses: actions/attest-build-provenance@0f67c3f4856b2e3261c31976d6725780e5e4c373 # v4.1.1
         with:
           subject-path: ${{ steps.vsix.outputs.file }}
 
       - name: Attest SBOM
-        uses: actions/attest@59d89421af93a897026c735860bf21b6eb4f7b26 # v4.1.0
+        uses: actions/attest@f7c74d28b9d84cb8768d0b8ca14a4bac6ef463e6 # v4.2.0
         with:
           subject-path: ${{ steps.vsix.outputs.file }}
           sbom-path: dist/${{ steps.vsix.outputs.name }}.spdx.json
 
       - name: Attest dependency SBOM
-        uses: actions/attest@59d89421af93a897026c735860bf21b6eb4f7b26 # v4.1.0
+        uses: actions/attest@f7c74d28b9d84cb8768d0b8ca14a4bac6ef463e6 # v4.2.0
         with:
           subject-path: ${{ steps.vsix.outputs.file }}
           sbom-path: sbom/dependencies.spdx.json
@@ -278,9 +278,40 @@ jobs:
             "dist/${{ steps.vsix.outputs.name }}.intoto.jsonl" \
             --clobber -R "${{ github.repository }}"
 
+  verify-provenance:
+    name: Verify Provenance
+    needs: [prerelease-tag, attest-and-upload]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      attestations: read
+    env:
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - name: Download release artifacts
+        run: |
+          mkdir -p ./artifacts
+          gh release download "${{ needs.prerelease-tag.outputs.tag_name }}" \
+            -R "${{ github.repository }}" \
+            -p '*.vsix' \
+            -p '*.zip' \
+            -D ./artifacts
+
+      - name: Verify build provenance
+        run: |
+          shopt -s nullglob
+          files=(./artifacts/*)
+          if [ ${#files[@]} -eq 0 ]; then
+            echo "::error::No release artifacts downloaded for provenance verification"
+            exit 1
+          fi
+          for f in "${files[@]}"; do
+            gh attestation verify "$f" --repo "${{ github.repository }}"
+          done
+
   publish-release:
     name: Publish Pre-Release
-    needs: [prerelease-tag, attest-and-upload]
+    needs: [prerelease-tag, attest-and-upload, verify-provenance]
     runs-on: ubuntu-latest
     permissions:
       contents: write

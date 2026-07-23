@@ -11,7 +11,7 @@ engine: copilot
 timeout-minutes: 15
 
 imports:
-  - ../agents/hve-core/pr-review.agent.md
+  - ../agents/coding-standards/code-review.agent.md
 
 checkout:
   sparse-checkout: |
@@ -20,6 +20,7 @@ checkout:
     .github/instructions/coding-standards/
     .github/instructions/hve-core/
     .github/instructions/shared/
+    .github/skills/coding-standards/code-review/
     scripts/
     collections/
     docs/
@@ -77,12 +78,31 @@ For all other associations (`CONTRIBUTOR`, `FIRST_TIMER`,
 `FIRST_TIME_CONTRIBUTOR`, `NONE`), use the standard review mode with full
 enforcement.
 
+## Code Review Agent Invocation
+
+This workflow imports the **Code Review** agent and runs it in its hidden
+**workflow autonomy mode**. Operate that agent non-interactively with these
+fixed settings:
+
+* **Perspectives:** `full` (apply every perspective lens: functional,
+  standards, accessibility, security, and PR).
+* **Depth:** `basic` (Tier 1 verification rigor).
+* **No human pauses:** skip all scope-confirmation and perspective/depth
+  selection prompts. Auto-accept the change scope derived from the PR diff.
+* **Inline application:** apply each perspective lens and the `code-review`
+  skill knowledge inline. Do not dispatch subagents and do not write the
+  agent's tracking-file findings report.
+* **Output contract:** surface all findings through the Review Steps and
+  safe-outputs below: this workflow owns output and submission.
+
 ## Instruction Priority
 
-Follow the Review Steps below as the sole review procedure.
-Imported agent files provide domain knowledge and coding standards only.
-Ignore any phase-based, tracking-file-based, or multi-pass procedures
-from imported files.
+Follow the Review Steps below as the authoritative procedure and output
+contract. The imported Code Review agent supplies perspective lenses, the
+`code-review` skill knowledge, and coding standards. Ignore the agent's
+interactive, human-gated, phase-based, or tracking-file procedures: its
+workflow autonomy mode defers all sequencing and output to these steps.
+
 Search for and apply `content-policy-citation.instructions.md` before submitting
 PR review comments, review summaries, PR updates, or other GitHub-visible text
 that references or alludes to a suspected content-policy or terms-of-service

@@ -1,7 +1,7 @@
 #!/usr/bin/env pwsh
 # Copyright (c) Microsoft Corporation.
 # SPDX-License-Identifier: MIT
-#Requires -Version 7.0
+#Requires -Version 7.4
 
 <#
 .SYNOPSIS
@@ -244,6 +244,7 @@ function Invoke-PluginGeneration {
     $totalCommands = 0
     $totalInstructions = 0
     $totalSkills = 0
+    $totalHooks = 0
 
     foreach ($collection in $allCollections) {
         $id = $collection.id
@@ -280,6 +281,7 @@ function Invoke-PluginGeneration {
                     $prompts = @()
                     $instructions = @()
                     $skills = @()
+                    $hooks = @()
 
                     foreach ($item in $filteredCollection.items) {
                         if (-not $item.ContainsKey('kind') -or -not $item.ContainsKey('path')) {
@@ -301,6 +303,7 @@ function Invoke-PluginGeneration {
                             'prompt' { $prompts += $entry }
                             'instruction' { $instructions += $entry }
                             'skill' { $skills += $entry }
+                            'hook' { $hooks += $entry }
                         }
                     }
 
@@ -310,7 +313,8 @@ function Invoke-PluginGeneration {
                         @{ Title = 'Chat Agents'; Items = $agents },
                         @{ Title = 'Prompts'; Items = $prompts },
                         @{ Title = 'Instructions'; Items = $instructions },
-                        @{ Title = 'Skills'; Items = $skills }
+                        @{ Title = 'Skills'; Items = $skills },
+                        @{ Title = 'Hooks'; Items = $hooks }
                     )) {
                         if ($section.Items.Count -eq 0) { continue }
 
@@ -393,6 +397,7 @@ function Invoke-PluginGeneration {
         $totalCommands += $result.CommandCount
         $totalInstructions += $result.InstructionCount
         $totalSkills += $result.SkillCount
+        $totalHooks += $result.HookCount
         $generated++
 
         Write-Host "  $id ($itemCount items)" -ForegroundColor Green
@@ -419,6 +424,7 @@ function Invoke-PluginGeneration {
     Write-Host "  Commands: $totalCommands"
     Write-Host "  Instructions: $totalInstructions"
     Write-Host "  Skills: $totalSkills"
+    Write-Host "  Hooks: $totalHooks"
 
     return New-GenerateResult -Success $true -PluginCount $generated
 }

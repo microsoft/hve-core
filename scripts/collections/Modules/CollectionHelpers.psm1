@@ -6,7 +6,7 @@
 # Purpose: Collection helpers - YAML parsing, validation, and shared collection utilities.
 # Author: HVE Core Team
 
-#Requires -Version 7.0
+#Requires -Version 7.4
 #Requires -Modules @{ ModuleName='PowerShell-Yaml'; RequiredVersion='0.4.7' }
 
 Import-Module (Join-Path $PSScriptRoot '../../lib/Modules/CIHelpers.psm1') -Force
@@ -125,7 +125,7 @@ function Test-HveCoreRepoRelativePath {
 
     .DESCRIPTION
     Returns true when the repo-relative path is directly under a .github type
-    directory (agents, instructions, prompts, skills) with no subdirectory,
+    directory (agents, instructions, prompts, hooks, skills) with no subdirectory,
     indicating it is a root-level repo-specific artifact not intended for distribution.
 
     .PARAMETER Path
@@ -142,7 +142,7 @@ function Test-HveCoreRepoRelativePath {
         [string]$Path
     )
 
-    return ($Path -match '^\.github/(agents|instructions|prompts|skills)/[^/]+$')
+    return ($Path -match '^\.github/(agents|instructions|prompts|hooks|skills)/[^/]+$')
 }
 
 function Get-CollectionManifest {
@@ -224,6 +224,9 @@ function Get-CollectionArtifactKey {
         }
         'skill' {
             return [System.IO.Path]::GetFileName($Path.TrimEnd('/'))
+        }
+        'hook' {
+            return [System.IO.Path]::GetFileNameWithoutExtension($Path.TrimEnd('/'))
         }
         default {
             if ($Path -match "\.$([regex]::Escape($Kind))\.md$") {
@@ -466,7 +469,7 @@ function Get-ArtifactFiles {
 
     .DESCRIPTION
     Scans .github/agents/, .github/prompts/, .github/instructions/ (recursively),
-    and .github/skills/ to build a complete list of collection items. Returns
+    .github/skills/, and .github/hooks/ to build a complete list of collection items. Returns
     repo-relative paths with forward slashes.
 
     .PARAMETER RepoRoot
@@ -529,6 +532,31 @@ function Get-ArtifactFiles {
             }
 
             $items += @{ path = $relativePath; kind = 'skill' }
+        }
+    }
+
+    # Hooks (JSON manifests under .github/hooks/<collection>/)
+    $hooksDir = Join-Path -Path $RepoRoot -ChildPath '.github/hooks'
+    if (Test-Path -Path $hooksDir) {
+        # Hook manifests are collection-scoped (.github/hooks/<collection>/<name>.json);
+        # implementation files live one level deeper under
+        # .github/hooks/<collection>/<name>/ and must not be treated as
+        # manifests, so enumerate only the collection level.
+        $hookCollectionDirs = Get-ChildItem -Path $hooksDir -Directory
+        foreach ($collectionDir in $hookCollectionDirs) {
+            $hookFiles = Get-ChildItem -Path $collectionDir.FullName -Filter '*.json' -File
+            foreach ($hookFile in $hookFiles) {
+                $relativePath = [System.IO.Path]::GetRelativePath($RepoRoot, $hookFile.FullName) -replace '\\', '/'
+
+                if (Test-HveCoreRepoRelativePath -Path $relativePath) {
+                    continue
+                }
+                if (Test-DeprecatedPath -Path $relativePath) {
+                    continue
+                }
+
+                $items += @{ path = $relativePath; kind = 'hook' }
+            }
         }
     }
 
@@ -793,7 +821,6 @@ function Get-ArtifactDescription {
         Parses the YAML frontmatter block at the top of a markdown file and
         returns the description field value. Returns an empty string when the
         file is missing, has no frontmatter, or lacks a description field.
-        Strips the common " - Brought to you by microsoft/hve-core" suffix.
     .PARAMETER FilePath
         Absolute path to the artifact markdown file.
     .OUTPUTS
@@ -810,6 +837,22 @@ function Get-ArtifactDescription {
         return ''
     }
 
+    # Hook manifests are JSON with no frontmatter; read their top-level
+    # description field instead of scanning for a YAML block.
+    if ([System.IO.Path]::GetExtension($FilePath) -eq '.json') {
+        try {
+            $json = Get-Content -Path $FilePath -Raw | ConvertFrom-Json
+            $desc = $json.description
+            if ($desc) {
+                return ([string]$desc).Trim()
+            }
+        }
+        catch {
+            Write-Verbose "Failed to parse JSON description from $FilePath`: $_"
+        }
+        return ''
+    }
+
     $content = Get-Content -Path $FilePath -Raw
     if ($content -match '(?s)^---\s*\r?\n(.*?)\r?\n---') {
         $yamlBlock = $Matches[1]
@@ -817,8 +860,6 @@ function Get-ArtifactDescription {
             $frontmatter = ConvertFrom-Yaml -Yaml $yamlBlock
             if ($frontmatter -is [hashtable] -and $frontmatter.ContainsKey('description')) {
                 $desc = [string]$frontmatter.description
-                # Strip the common branding suffix
-                $desc = $desc -replace '\s*-\s*Brought to you by microsoft/hve-core$', ''
                 return $desc.Trim()
             }
         }

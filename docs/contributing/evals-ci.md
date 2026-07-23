@@ -3,7 +3,7 @@ title: Evals in CI
 description: Auth contract, fork-PR policy, and how to add a new eval spec for the hve-core vally pipeline
 sidebar_position: 11
 author: Microsoft
-ms.date: 2026-05-23
+ms.date: 2026-06-29
 ms.topic: how-to
 keywords:
   - evals
@@ -73,8 +73,10 @@ The pipeline clean-skips eval execution for fork PRs rather than failing the che
 ```yaml
 jobs:
   eval-execute:
-    if: github.event.pull_request.head.repo.fork == false
+    if: needs.eval-validation.outputs.eval-relevant == 'true' && github.event.pull_request.head.repo.fork == false
 ```
+
+The `eval-execute` job is also skipped for non-eval-relevant PRs (those that change only documentation or other non-AI-artifact paths) through the `eval-relevant` output gate, independent of the fork policy.
 
 The `eval-presence` and `eval-lint` jobs do run on fork PRs because they require no secrets. Structural problems with eval specs (missing coverage, schema violations, profanity in stimulus text) surface immediately. Eval execution itself runs only after a maintainer merges the fork branch into a trusted topic branch on the upstream repository.
 
@@ -102,6 +104,15 @@ Steps to add coverage:
    ```
 
 Commit the new spec alongside the artifact change. The PR comment summary in `eval-execute` reports per-artifact pass/fail with links to the captured `logs/eval-results-<artifact-id>.json` payloads.
+
+A single spec can be shared by multiple artifacts: add one `stimuli[].tags.<kind>` backlink
+per artifact that the spec covers. When more than one artifact backlinks the same spec,
+[scripts/evals/Invoke-VallyEvals.ps1](../../scripts/evals/Invoke-VallyEvals.ps1) runs the spec
+once per artifact using `vally eval --tag kind=slug`, so each artifact is scored only on its own
+stimuli. A spec backlinked by exactly one artifact runs untagged. The per-spec run key reflects
+this: untagged runs use `specRel`, and tag-scoped runs use `specRel|kind=slug`.
+[scripts/evals/Modules/VallyRunner.psm1](../../scripts/evals/Modules/VallyRunner.psm1) computes
+the backlink count (`Get-VallySpecBacklinkCount`) and run plan (`Get-VallySpecRunPlan`).
 
 ## Stimulus presence linter
 
@@ -154,14 +165,14 @@ Content moderation runs in two complementary CI lanes, each scoped to a differen
 
 The two lanes target different surfaces and do not overlap: the markdown-corpus lane keeps the AI artifacts that ship to contributors free of insensitive or foul language; the eval-spec stimuli lane scores adversarial test inputs against a Detoxify cutoff so a spec that probes a model with toxic content cannot itself ship unredacted.
 
-The `content-moderation` job is the only path that exercises the real Detoxify model in CI. The job installs the Python dependencies (`scripts/evals/moderation/requirements.txt`) via `uv pip install`, caches the Detoxify weights between runs, then invokes `Invoke-CorpusModeration.ps1` per spec.
+The `content-moderation` job is the only path that exercises the real Detoxify model in CI. The job installs the Python dependencies via `uv sync --locked` in `scripts/evals/moderation` (declared in its `pyproject.toml` and `uv.lock`), caches the Detoxify weights between runs, then invokes `Invoke-CorpusModeration.ps1` per spec.
 
 `Invoke-CorpusModeration.ps1` shells out to [scripts/evals/Invoke-ContentModeration.ps1](../../scripts/evals/Invoke-ContentModeration.ps1) for each stimulus. The default Detoxify threshold is `0.5`; per-spec overrides come from the `moderation.threshold` field documented above.
 
 Local opt-in for the Detoxify lane:
 
 ```pwsh
-uv pip install -r scripts/evals/moderation/requirements.txt
+uv sync --locked --project scripts/evals/moderation
 pwsh scripts/evals/Invoke-CorpusModeration.ps1 -SpecGlob 'evals/**/*.yaml'
 ```
 
@@ -238,7 +249,30 @@ When authoring new Pester suites for the evals scripts, three patterns recur oft
 * When the command under test is invoked through `pwsh -File` or `Start-Process` (so the parent runspace cannot install a `Mock`), declare a bare function at file scope in the test (or in a fixture script the child loads). The PATH-shim pattern above is one instance of this; the [scripts/tests/evals/fixtures/stub-vally.ps1](../../scripts/tests/evals/fixtures/stub-vally.ps1) fixture is another.
 * When a stub or script under test needs to signal a non-zero exit while `$ErrorActionPreference = 'Stop'` is in effect, write the diagnostic with `[Console]::Error.WriteLine(...)` and then call `exit <code>` explicitly. `throw` short-circuits the runspace before the intended exit code is set, which causes the parent process to observe exit 1 instead of the contract code.
 
-The stub-vally fixture demonstrates the third pattern in practice. [scripts/tests/evals/Invoke-VallyEvals.Tests.ps1](../../scripts/tests/evals/Invoke-VallyEvals.Tests.ps1) drives [scripts/evals/Invoke-VallyEvals.ps1](../../scripts/evals/Invoke-VallyEvals.ps1) against the fixture by passing `-VallyCommand $script:StubPath` and setting `$env:STUB_VALLY_MODE` to `pass`, `fail`, or `crash` per scenario. Per-spec overrides flow through `$env:STUB_VALLY_MODES_JSON`.
+The stub-vally fixture demonstrates the third pattern in practice.
+[scripts/tests/evals/Invoke-VallyEvals.Tests.ps1](../../scripts/tests/evals/Invoke-VallyEvals.Tests.ps1)
+drives [scripts/evals/Invoke-VallyEvals.ps1](../../scripts/evals/Invoke-VallyEvals.ps1) against the
+fixture by passing `-VallyCommand $script:StubPath` and setting `$env:STUB_VALLY_MODE` per scenario.
+The fixture supports these modes:
+
+* `pass` - two passing trials, exit 0.
+* `fail` - two failing trials, exit 1.
+* `fail-noname` - two failing trials with no `trajectory.stimulus.name`, reproducing an empty per-stimulus map, exit 1.
+* `mixed` - one passing and one failing trial, exit 0; the failed trial drives the outer status.
+* `empty` - no trials, exit 0.
+* `errored` - two trials with no `gradeResult`, exit 1.
+* `crash` - prints an error and exits 99 without writing results.
+* `per-stim` - one trial per `STUB_VALLY_STIM_RESULTS_JSON` entry.
+
+Per-spec overrides flow through `$env:STUB_VALLY_MODES_JSON`.
+
+These modes exercise the driver's advisory demotion logic. When `vally` exits 0, the spec met its
+aggregate runs/threshold contract, so any per-trial assertion dips counted in `assertionsFailed`
+are sub-threshold noise rather than merge blockers; the driver demotes them to advisory, sets
+`status` to `advisory-fail`, and emits a `::warning` annotation instead of gating the build.
+Baseline-equivalence specs resolved via agent tags are likewise advisory (DD-01). A spec gates the
+build (`status` `fail`, promoted to a CI failure) only when it has authoritative grader failures or
+flagged output moderation.
 
 This lets the stub-mode aggregation tests exercise the real driver code paths (the manifest loop, threshold override, and summary writer) without invoking the `vally` CLI or paying Copilot SDK costs.
 

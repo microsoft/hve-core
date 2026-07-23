@@ -1,8 +1,8 @@
 ---
-description: "Planning template and protocol detail for the task-planner RPI skill"
+description: "Planning template and protocol detail for the rpi-plan skill"
 ---
 
-# Task Planner Reference
+# RPI Plan Reference
 
 Use this reference when the skill needs planning detail beyond the main body in SKILL.md.
 
@@ -32,12 +32,13 @@ applyTo: '.copilot-tracking/changes/{{YYYY-MM-DD}}/{{task_slug}}-changes.md'
 Then add `<!-- markdownlint-disable-file -->` before the H1.
 
 * Overview: one-sentence summary of the implementation approach and expected outcome.
-* User requirements: capture the user-stated goals and record the source of each requirement.
-* Derived objectives: add planner-derived objectives and the reasoning behind them.
+* User requirements: capture the user-stated goals and record the source of each requirement, including a source reference for every caller-stated constraint.
+* Derived objectives: add planner-derived objectives and the reasoning behind them, citing the research finding or reasoning that created them.
 * Context summary: reference the research artifact, current code paths, and any subagent findings.
+* Risks and mitigations: capture each material research risk, likelihood, impact or magnitude, priority basis, and whether it was resolved, mitigated, deferred with rationale, or recorded as a blocker.
 * Implementation checklist: break work into phases and steps, annotate parallelizable work with `<!-- parallelizable: true -->`, and point each step to the details file lines.
 * Final validation phase: include full project validation, minor fix iteration, and blocking issue reporting.
-* Planning log reference: link to `.copilot-tracking/plans/logs/{{YYYY-MM-DD}}/{{task_slug}}-log.md` for discrepancy handling, validator findings, and alternatives.
+* Planning log reference: link to `.copilot-tracking/plans/logs/{{YYYY-MM-DD}}/{{task_slug}}-log.md` for discrepancy handling, validator findings, implementation paths considered, deferred work, and validation coverage.
 * Dependencies: list toolchain, build, or environment prerequisites.
 * Success criteria: capture verifiable completion markers that trace back to the research or user requirements.
 
@@ -48,6 +49,7 @@ Use [../templates/implementation-details.md](../templates/implementation-details
 Start the file with `<!-- markdownlint-disable-file -->`.
 
 * Context references: cite the primary research file and any relevant subagent outputs.
+* Requirement evidence: cite the source and reasoning that support each planned step.
 * Phase and step details: describe each implementation phase, file operations, and validation scope.
 * File operations: list the exact files to create or modify and the purpose of each change.
 * Discrepancy references: link steps to DR, DD, or RI items recorded in the planning log.
@@ -63,8 +65,9 @@ Start the file with `<!-- markdownlint-disable-file -->`.
 
 * Discrepancy Log: capture DR/DD/RI items, sources, impact, and resolution status.
 * Validator Findings: record Plan Validator findings, severity, and follow-up actions.
+* Validation Coverage: record coverage, requirement alignment, detail-line verification, and final validation phase checks; if scratch evidence is used, cite its path and summarize the result in the planning log.
 * Implementation Paths Considered: record the selected path and the viable alternatives that were rejected.
-* Suggested Follow-On Work: note any remaining work, research gaps, or validation items outside the current scope.
+* Suggested Follow-On Work: note any remaining work, research gaps, or validation items outside the current scope, including deferred work with source evidence.
 
 ## Planning protocol detail
 
@@ -77,6 +80,7 @@ Start the file with `<!-- markdownlint-disable-file -->`.
 7. Author `implementation-details.md` first, then cite its line ranges from the implementation plan using the `Details: (Lines X-Y)` convention. This keeps the plan traceable to the detailed step file without redesigning the format.
 8. Re-enter dated planning artifacts when material edits are needed, keep completed work, and refresh line references.
 9. Stop only for genuine blockers, such as missing task context, unwritable research paths, or unresolved Critical and High findings that materially affect implementation readiness.
+10. When a plan affects RPI skills, check `rpi-quick` orchestration references, granular phase-skill boundaries, and RPI templates when those surfaces are relevant. Do not copy the full Task Planner agent protocol.
 
 ## Per-step input and output contract
 
@@ -107,9 +111,10 @@ When research is absent, incomplete, or stale:
 
 ## Implementation Handoff
 
-Use `/rpi-implement` as the implementation handoff in planner output.
+Use `/rpi-implement` as the implementation handoff in planner output only when the caller expects normal progression.
 
 * Return the plan file path, details file path, planning log path, validation status, any scope items deferred for future planning, and next implementation steps.
+* For planning-only, comparison, audit, analysis, or explicitly no-handoff invocations, return the validated planning artifacts and next-step guidance without presenting `/rpi-implement` as an immediate handoff.
 * Keep the response concise and evidence-based, with the most actionable artifact paths last.
 * When the user needs a decision, present the option table, recommendation, and impact if deferred before the final handoff.
 

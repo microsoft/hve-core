@@ -1,5 +1,5 @@
 ---
-description: 'Original Microsoft atomicity checklist used by the BRD Builder assessor to validate that an acceptance criterion is testable, atomic, and unambiguous - CC BY 4.0 - Brought to you by microsoft/hve-core'
+description: 'Original Microsoft atomicity checklist used by the BRD Builder assessor to validate that an acceptance criterion is testable, atomic, and unambiguous - CC BY 4.0'
 ---
 
 # Acceptance Criterion Atomicity Checklist
@@ -88,4 +88,4 @@ The plan-mode report format is owned by [`brd-quality-formats`](../brd/brd-quali
 
 This checklist is original Microsoft content licensed under [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/), copyright (C) Microsoft Corporation.
 
-> Brought to you by microsoft/hve-core
+

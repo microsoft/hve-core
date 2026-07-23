@@ -73,7 +73,7 @@ def configure_logging(verbose: bool = False) -> None:
     logging.basicConfig(level=level, format="%(levelname)s: %(message)s")
 
 
-def load_records(input_path: Path | None) -> list[dict[str, str]]:
+def load_records(input_path: Path | None) -> list[dict[str, Any]]:
     """Load JSON-lines records from file or stdin."""
     records = []
     source = sys.stdin if input_path is None else input_path.open(encoding="utf-8")
@@ -104,7 +104,7 @@ def load_records(input_path: Path | None) -> list[dict[str, str]]:
 
 
 def classify_records(
-    records: list[dict[str, str]],
+    records: list[dict[str, Any]],
     model_name: Literal["original", "unbiased", "multilingual"],
     threshold: float,
 ) -> list[dict[str, Any]]:
@@ -121,18 +121,22 @@ def classify_records(
     for record in records:
         record_id = record["id"]
         text = record["text"]
+        record_threshold = float(record.get("threshold", threshold))
+        if record_threshold < 0.0 or record_threshold > 1.0:
+            raise ValueError(f"Record {record_id}: threshold must be between 0.0 and 1.0")
         logger.debug("Classifying record: %s", record_id)
 
         scores = model.predict(text)
         # Convert numpy types to native Python floats
         scores = {k: float(v) for k, v in scores.items()}
 
-        flagged_labels = [label for label, score in scores.items() if score > threshold]
+        flagged_labels = [label for label, score in scores.items() if score > record_threshold]
         flagged = len(flagged_labels) > 0
 
         results.append(
             {
                 "id": record_id,
+                "threshold": record_threshold,
                 "scores": scores,
                 "flagged": flagged,
                 "flaggedLabels": flagged_labels,
@@ -182,7 +186,7 @@ def main() -> int:
 
     try:
         results = classify_records(records, args.model, args.threshold)
-    except ImportError as exc:
+    except (ImportError, ValueError) as exc:
         logger.error("%s", exc)
         return EXIT_ERROR
     write_output(results, args.output)

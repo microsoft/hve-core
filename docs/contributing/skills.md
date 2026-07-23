@@ -3,7 +3,7 @@ title: Contributing Skills to HVE Core
 description: Requirements and standards for contributing skill packages to hve-core
 sidebar_position: 6
 author: Microsoft
-ms.date: 2026-03-16
+ms.date: 2026-06-30
 ms.topic: how-to
 keywords:
   - skills
@@ -42,12 +42,12 @@ Create a skill when you need to:
 
 The following skill types will likely be rejected:
 
-| Reason                     | Details                                                                                                        |
-|----------------------------|----------------------------------------------------------------------------------------------------------------|
-| Duplicate Skills           | Skills that replicate functionality of existing tools or skills                                                |
-| Missing PowerShell Scripts | Skills that include a `scripts/` directory without a `.ps1` file (PowerShell is required; bash is recommended) |
-| Undocumented Utilities     | Scripts without comprehensive SKILL.md documentation                                                           |
-| Untested Skills            | Skills that lack unit tests or fail to achieve 80% code coverage                                               |
+| Reason                     | Details                                                                                                                                                                                                |
+|----------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| Duplicate Skills           | Skills that replicate functionality of existing tools or skills                                                                                                                                        |
+| Missing PowerShell Scripts | Skills that include a `scripts/` directory without a `.ps1` file when the skill targets PowerShell or cross-platform execution (Python skills can instead package executable modules under `scripts/`) |
+| Undocumented Utilities     | Scripts without comprehensive SKILL.md documentation                                                                                                                                                   |
+| Untested Skills            | Skills that lack unit tests or fail to achieve 80% code coverage                                                                                                                                       |
 
 ## File Structure Requirements
 
@@ -58,8 +58,10 @@ Skill files are typically organized in a collection subdirectory by convention:
 ```text
 .github/skills/{collection-id}/<skill-name>/
 ├── SKILL.md                    # Main skill definition (required)
-├── scripts/                    # Executable scripts (optional)
-│   ├── <action>.ps1            # PowerShell script (required)
+├── scripts/                    # Executable scripts or Python package entry points (optional)
+│   ├── <pkg>/                  # Python package directory (optional for Python skills)
+│   │   └── __init__.py
+│   ├── <action>.ps1            # PowerShell script (required for PowerShell/cross-platform skills)
 │   └── <action>.sh             # Bash script (recommended)
 ├── references/                 # Additional documentation (optional)
 │   └── REFERENCE.md            # Detailed technical reference
@@ -76,7 +78,7 @@ Skill files are typically organized in a collection subdirectory by convention:
 > Collections can reference artifacts from any subfolder. The `path:` field in collection YAML files
 > accepts any valid repo-relative path regardless of the artifact's parent directory.
 
-The `scripts/` directory is **optional**. When present, it **MUST** contain at least one `.ps1` file and **SHOULD** contain at least one `.sh` file for cross-platform support. Skills without scripts are valid and function as documentation-driven knowledge packages.
+The `scripts/` directory is **optional**. When present, it **MUST** contain at least one PowerShell script for PowerShell or cross-platform skills, and it **SHOULD** contain at least one `.sh` file when a bash implementation is also provided. Python skills may instead package executable modules under `scripts/<package>/__init__.py` and still satisfy the scripts requirement. Skills without scripts are valid and function as documentation-driven knowledge packages.
 
 ### Naming Convention
 
@@ -99,18 +101,18 @@ The `scripts/` directory is **optional**. When present, it **MUST** contain at l
 
 **`description`** (string, MANDATORY)
 
-| Property | Value                                                                                                      |
-|----------|------------------------------------------------------------------------------------------------------------|
-| Purpose  | Concise explanation of skill functionality                                                                 |
-| Format   | Single sentence ending with attribution                                                                    |
-| Example  | `'Video-to-GIF conversion skill with FFmpeg two-pass optimization - Brought to you by microsoft/hve-core'` |
+| Property | Value                                                                                             |
+|----------|---------------------------------------------------------------------------------------------------|
+| Purpose  | Concise explanation of skill functionality                                                        |
+| Format   | Single sentence describing the skill; no attribution suffix (added automatically at distribution) |
+| Example  | `'Video-to-GIF conversion skill with FFmpeg two-pass optimization'`                               |
 
 ### Frontmatter Example
 
 ```yaml
 ---
 name: video-to-gif
-description: 'Video-to-GIF conversion skill with FFmpeg two-pass optimization - Brought to you by microsoft/hve-core'
+description: 'Video-to-GIF conversion skill with FFmpeg two-pass optimization'
 ---
 ```
 
@@ -194,7 +196,7 @@ Recognized metadata fields:
 ```yaml
 ---
 name: pr-reference
-description: 'Generate PR reference XML files with commit history and diffs for pull request workflows - Brought to you by microsoft/hve-core'
+description: 'Generate PR reference XML files with commit history and diffs for pull request workflows'
 user-invocable: true
 disable-model-invocation: false
 argument-hint: "[--base-branch=origin/main] [--exclude-markdown]"
@@ -208,7 +210,7 @@ This example demonstrates a skill configured for both automatic semantic loading
 ```yaml
 ---
 name: owasp-llm
-description: 'OWASP Top 10 for LLM Applications (2025) vulnerability knowledge base - Brought to you by microsoft/hve-core'
+description: 'OWASP Top 10 for LLM Applications (2025) vulnerability knowledge base'
 license: CC-BY-SA-4.0
 user-invocable: false
 metadata:
@@ -359,11 +361,7 @@ Verify the dependency is in your PATH...
 
 #### 8. Attribution Footer
 
-Include at end of file:
-
-```markdown
-*🤖 Crafted with precision by ✨Copilot following brilliant human instruction, then carefully refined by our team of discerning human reviewers.*
-```
+Do not add the standard Copilot attribution footer to `SKILL.md`. Skill definition files under `.github/skills/*/SKILL.md` must remain free of the attribution footer, and the footer should be omitted from skill documentation entirely.
 
 ## Script Requirements
 
@@ -386,11 +384,14 @@ See [bash.instructions.md](https://github.com/microsoft/hve-core/blob/main/.gith
 
 PowerShell scripts MUST:
 
+* Use `#Requires -Version 7.4` after the copyright header
 * Use `[CmdletBinding()]` attribute
 * Include comment-based help (`.SYNOPSIS`, `.DESCRIPTION`, `.PARAMETER`, `.EXAMPLE`)
 * Validate parameters with `[ValidateScript()]`, `[ValidateRange()]`, or `[ValidateSet()]`
 * Check for required dependencies
 * Use proper error handling
+
+See [powershell.instructions.md](https://github.com/microsoft/hve-core/blob/main/.github/instructions/coding-standards/powershell/powershell.instructions.md) for complete standards.
 
 ## Unit Testing Requirements
 
@@ -431,6 +432,9 @@ Python skill scripts require pytest:
 * Use `test_<script_name>.py` naming convention
 * Place tests in the `tests/` subdirectory alongside PowerShell tests
 * Configure pytest and ruff in a `pyproject.toml` at the skill root
+* When a Python skill has a `tests/` directory, `[tool.ruff.lint].select` in `pyproject.toml` MUST include `"I"` so isort enforcement is active for test files
+* Commit `uv.lock` alongside `pyproject.toml` at the skill root so Dependabot can resolve and patch Python dependencies under `.github/skills/**`
+* `npm run validate:skills` warns when `pyproject.toml` is present without `uv.lock`, and it fails when the validation run is executed with `-WarningsAsErrors`
 
 ### Fuzz Harness (Python Skills)
 
@@ -454,7 +458,7 @@ Skills may include scripts in any of these supported languages. Each language ha
 |------------|------------------|----------------|---------------------------------------------|--------------------|
 | Bash       | `.sh`            | N/A            | shellcheck                                  | Lint only          |
 | PowerShell | `.ps1`           | Pester 5.x     | PSScriptAnalyzer                            | Full (lint + test) |
-| Python     | `.py`            | pytest         | ruff (line-length=88, target-version=py311) | Planned            |
+| Python     | `.py`            | pytest         | ruff (line-length=88, target-version=py311) | Full (lint + test) |
 
 ### Requesting New Language Support
 
@@ -571,7 +575,7 @@ Before submitting your skill, verify:
 * [ ] Prerequisites documented per platform
 * [ ] Parameters fully documented
 * [ ] Troubleshooting section included
-* [ ] Attribution footer present
+* [ ] Attribution footer absent
 
 ## Automated Validation
 

@@ -24,6 +24,7 @@ BeforeAll {
             [switch]$WithEmptyScriptsDir,
             [switch]$WithUnrecognizedDir,
             [switch]$WithPyprojectToml,
+            [switch]$WithoutUvLock,
             [switch]$WithPythonScripts,
             [string]$WithPythonPackageDir,
             [string[]]$OptionalDirs = @()
@@ -73,6 +74,9 @@ target-version = "py311"
 [tool.ruff.lint]
 select = ["E", "F", "I", "W"]
 "@
+            if (-not $WithoutUvLock) {
+                Set-Content -Path (Join-Path $skillDir 'uv.lock') -Value 'version = 1'
+            }
         }
 
         if ($WithPythonScripts) {
@@ -131,7 +135,7 @@ description: A test skill for validation
             $content = @"
 ---
 name: 'my-skill'
-description: 'A skill with single quotes - Brought to you by microsoft/hve-core'
+description: 'A skill with single quotes'
 ---
 
 # Skill
@@ -142,7 +146,7 @@ description: 'A skill with single quotes - Brought to you by microsoft/hve-core'
             $result = Get-SkillFrontmatter -Path $filePath
             $result | Should -Not -BeNullOrEmpty
             $result['name'] | Should -BeExactly 'my-skill'
-            $result['description'] | Should -BeExactly 'A skill with single quotes - Brought to you by microsoft/hve-core'
+            $result['description'] | Should -BeExactly 'A skill with single quotes'
         }
 
         It 'Strips double-quoted values correctly' {
@@ -290,7 +294,7 @@ Describe 'Test-SkillDirectory' -Tag 'Unit' {
             $frontmatter = @"
 ---
 name: test-skill
-description: 'A test skill for validation - Brought to you by microsoft/hve-core'
+description: 'A test skill for validation'
 ---
 
 # Test Skill
@@ -1366,6 +1370,210 @@ description: 'Fallback skill'
     }
 }
 
+Describe 'Node Skill Validation' -Tag 'Unit' {
+    BeforeAll {
+        $script:NodeTestDir = Join-Path $script:TempTestDir 'node-tests'
+        New-Item -ItemType Directory -Path $script:NodeTestDir -Force | Out-Null
+
+        # Override TempTestDir for fixture helper within this Describe
+        $script:TempTestDir = $script:NodeTestDir
+    }
+
+    AfterAll {
+        $script:TempTestDir = (Split-Path $script:NodeTestDir -Parent)
+    }
+
+    Context 'Test-NodeSkillConfig' {
+        It 'Returns no errors when the skill has no scripts directory' {
+            $dir = New-TestSkillDirectory -SkillName 'node-none' -FrontmatterContent @"
+---
+name: node-none
+description: 'no scripts'
+---
+# Test
+"@
+            $result = Test-NodeSkillConfig -SkillPath $dir.FullName -RelativePath 'node-none'
+            $result.Errors | Should -HaveCount 0
+        }
+
+        It 'Ignores a scripts directory without .mjs modules' {
+            $dir = New-TestSkillDirectory -SkillName 'node-py' -OptionalDirs @('scripts') -FrontmatterContent @"
+---
+name: node-py
+description: 'py scripts'
+---
+# Test
+"@
+            Set-Content -Path (Join-Path $dir.FullName 'scripts/main.py') -Value '# py'
+            $result = Test-NodeSkillConfig -SkillPath $dir.FullName -RelativePath 'node-py'
+            $result.Errors | Should -HaveCount 0
+        }
+
+        It 'Errors when .mjs modules ship without any *.test.mjs' {
+            $dir = New-TestSkillDirectory -SkillName 'node-untested' -OptionalDirs @('scripts') -FrontmatterContent @"
+---
+name: node-untested
+description: 'untested node'
+---
+# Test
+"@
+            Set-Content -Path (Join-Path $dir.FullName 'scripts/probe.mjs') -Value 'export const x = 1;'
+            $result = Test-NodeSkillConfig -SkillPath $dir.FullName -RelativePath 'node-untested'
+            $result.Errors | Should -HaveCount 1
+            $result.Errors[0] | Should -BeLike '*unit tests*'
+        }
+
+        It 'Errors when a .js module ships without any test' {
+            $dir = New-TestSkillDirectory -SkillName 'node-js-untested' -OptionalDirs @('scripts') -FrontmatterContent @"
+---
+name: node-js-untested
+description: 'untested js'
+---
+# Test
+"@
+            Set-Content -Path (Join-Path $dir.FullName 'scripts/util.js') -Value 'module.exports = 1;'
+            $result = Test-NodeSkillConfig -SkillPath $dir.FullName -RelativePath 'node-js-untested'
+            $result.Errors | Should -HaveCount 1
+            $result.Errors[0] | Should -BeLike '*unit tests*'
+        }
+
+        It 'Passes a .cjs module with a tests/ .test.cjs' {
+            $dir = New-TestSkillDirectory -SkillName 'node-cjs' -OptionalDirs @('scripts', 'tests') -FrontmatterContent @"
+---
+name: node-cjs
+description: 'cjs'
+---
+# Test
+"@
+            Set-Content -Path (Join-Path $dir.FullName 'scripts/lib.cjs') -Value 'module.exports = 1;'
+            Set-Content -Path (Join-Path $dir.FullName 'tests/lib.test.cjs') -Value 'const assert = require("node:assert");'
+            $result = Test-NodeSkillConfig -SkillPath $dir.FullName -RelativePath 'node-cjs'
+            $result.Errors | Should -HaveCount 0
+            $result.Warnings | Should -HaveCount 0
+        }
+
+        It 'Accepts a .spec.js test as satisfying the requirement' {
+            $dir = New-TestSkillDirectory -SkillName 'node-spec' -OptionalDirs @('scripts', 'tests') -FrontmatterContent @"
+---
+name: node-spec
+description: 'spec'
+---
+# Test
+"@
+            Set-Content -Path (Join-Path $dir.FullName 'scripts/util.js') -Value 'export const x = 1;'
+            Set-Content -Path (Join-Path $dir.FullName 'tests/util.spec.js') -Value 'import assert from "node:assert";'
+            $result = Test-NodeSkillConfig -SkillPath $dir.FullName -RelativePath 'node-spec'
+            $result.Errors | Should -HaveCount 0
+            $result.Warnings | Should -HaveCount 0
+        }
+
+        It 'Warns when a .spec.mjs test is not under tests/' {
+            $dir = New-TestSkillDirectory -SkillName 'node-spec-loose' -OptionalDirs @('scripts') -FrontmatterContent @"
+---
+name: node-spec-loose
+description: 'loose spec'
+---
+# Test
+"@
+            Set-Content -Path (Join-Path $dir.FullName 'scripts/probe.mjs') -Value 'export const x = 1;'
+            Set-Content -Path (Join-Path $dir.FullName 'scripts/probe.spec.mjs') -Value 'import assert from "node:assert";'
+            $result = Test-NodeSkillConfig -SkillPath $dir.FullName -RelativePath 'node-spec-loose'
+            $result.Errors | Should -HaveCount 0
+            $result.Warnings[0] | Should -BeLike '*tests/ directory*'
+        }
+
+        It 'Passes when .mjs modules have a tests/ unit test' {
+            $dir = New-TestSkillDirectory -SkillName 'node-tested' -OptionalDirs @('scripts', 'tests') -FrontmatterContent @"
+---
+name: node-tested
+description: 'tested node'
+---
+# Test
+"@
+            Set-Content -Path (Join-Path $dir.FullName 'scripts/probe.mjs') -Value 'export const x = 1;'
+            Set-Content -Path (Join-Path $dir.FullName 'tests/probe.test.mjs') -Value 'import assert from "node:assert";'
+            $result = Test-NodeSkillConfig -SkillPath $dir.FullName -RelativePath 'node-tested'
+            $result.Errors | Should -HaveCount 0
+            $result.Warnings | Should -HaveCount 0
+        }
+
+        It 'Warns when a *.test.mjs exists outside a tests/ directory' {
+            $dir = New-TestSkillDirectory -SkillName 'node-loose' -OptionalDirs @('scripts') -FrontmatterContent @"
+---
+name: node-loose
+description: 'loose test'
+---
+# Test
+"@
+            Set-Content -Path (Join-Path $dir.FullName 'scripts/probe.mjs') -Value 'export const x = 1;'
+            Set-Content -Path (Join-Path $dir.FullName 'scripts/probe.test.mjs') -Value 'import assert from "node:assert";'
+            $result = Test-NodeSkillConfig -SkillPath $dir.FullName -RelativePath 'node-loose'
+            $result.Errors | Should -HaveCount 0
+            $result.Warnings | Should -Not -BeNullOrEmpty
+            $result.Warnings[0] | Should -BeLike '*tests/ directory*'
+        }
+
+        It 'Ignores a scripts directory containing only test modules' {
+            $dir = New-TestSkillDirectory -SkillName 'node-testonly' -OptionalDirs @('scripts') -FrontmatterContent @"
+---
+name: node-testonly
+description: 'test only'
+---
+# Test
+"@
+            Set-Content -Path (Join-Path $dir.FullName 'scripts/only.test.mjs') -Value 'import assert from "node:assert";'
+            $result = Test-NodeSkillConfig -SkillPath $dir.FullName -RelativePath 'node-testonly'
+            $result.Errors | Should -HaveCount 0
+        }
+    }
+
+    Context 'Test-SkillDirectory integration' {
+        It 'Passes a Node skill with .mjs modules and a matching test' {
+            $dir = New-TestSkillDirectory -SkillName 'node-skill' -OptionalDirs @('scripts', 'tests') -FrontmatterContent @"
+---
+name: node-skill
+description: 'A node skill'
+---
+# Test
+"@
+            Set-Content -Path (Join-Path $dir.FullName 'scripts/probe.mjs') -Value 'export const x = 1;'
+            Set-Content -Path (Join-Path $dir.FullName 'tests/probe.test.mjs') -Value 'import assert from "node:assert";'
+            $result = Test-SkillDirectory -Directory $dir -RepoRoot $script:NodeTestDir
+            $result.IsValid | Should -BeTrue
+            $result.Errors | Should -HaveCount 0
+        }
+
+        It 'Fails a Node skill that ships .mjs modules without tests' {
+            $dir = New-TestSkillDirectory -SkillName 'node-skill-untested' -OptionalDirs @('scripts') -FrontmatterContent @"
+---
+name: node-skill-untested
+description: 'A node skill'
+---
+# Test
+"@
+            Set-Content -Path (Join-Path $dir.FullName 'scripts/probe.mjs') -Value 'export const x = 1;'
+            $result = Test-SkillDirectory -Directory $dir -RepoRoot $script:NodeTestDir
+            $result.IsValid | Should -BeFalse
+            ($result.Errors -join "`n") | Should -BeLike '*unit tests*'
+        }
+
+        It 'Passes a Node skill with a .cjs module and a .test.cjs test' {
+            $dir = New-TestSkillDirectory -SkillName 'node-cjs-skill' -OptionalDirs @('scripts', 'tests') -FrontmatterContent @"
+---
+name: node-cjs-skill
+description: 'A node skill'
+---
+# Test
+"@
+            Set-Content -Path (Join-Path $dir.FullName 'scripts/lib.cjs') -Value 'module.exports = 1;'
+            Set-Content -Path (Join-Path $dir.FullName 'tests/lib.test.cjs') -Value 'const assert = require("node:assert");'
+            $result = Test-SkillDirectory -Directory $dir -RepoRoot $script:NodeTestDir
+            $result.IsValid | Should -BeTrue
+            $result.Errors | Should -HaveCount 0
+        }
+    }
+}
+
 Describe 'Python Skill Validation' -Tag 'Unit' {
     BeforeAll {
         $script:PythonTestDir = Join-Path $script:TempTestDir 'python-tests'
@@ -1735,4 +1943,86 @@ description: 'Skill for default output path test'
     }
 }
 #endregion Default OutputPath Parameter Test
+
+#region SECURITY.md Structure Tests
+
+Describe 'Test-SecurityModelStructure' -Tag 'Unit' {
+    BeforeAll {
+        $script:SecModelDir = Join-Path $script:TempTestDir "secmodel_$([guid]::NewGuid().ToString('N'))"
+        New-Item -ItemType Directory -Path $script:SecModelDir -Force | Out-Null
+
+        # Variant A (canonical): no umbrella, buckets at H2, STRIDE and Risk Rating at H3.
+        $script:VariantA = "# Skill Security Model`n`n## Bucket B1: Example`n`n### Spoofing`n`n* n/a`n`n### Risk Rating`n`n| Threat | Status |`n|--------|--------|`n| x | Mitigated |`n"
+
+        # Variant B (deprecated): umbrella heading, buckets at H3, STRIDE/Risk Rating at H4.
+        $script:VariantB = "# Skill Security Model`n`n## Trust Buckets`n`n### Bucket B1: Example`n`n#### Spoofing`n`n* n/a`n`n#### Risk Rating`n`n| Threat | Status |`n|--------|--------|`n| x | Mitigated |`n"
+
+        function New-SecurityModelFile {
+            param([string]$Name, [string]$Content)
+            $path = Join-Path $script:SecModelDir "$Name.md"
+            Set-Content -Path $path -Value $Content -NoNewline
+            return $path
+        }
+    }
+
+    It 'Returns no errors for a Variant A model' {
+        $path = New-SecurityModelFile -Name 'good' -Content $script:VariantA
+        $errors = Test-SecurityModelStructure -Path $path -RelativePath 'skills/good'
+        $errors | Should -BeNullOrEmpty
+    }
+
+    It 'Flags the deprecated ## Trust Buckets umbrella heading' {
+        $content = "# M`n`n## Trust Buckets`n`n## Bucket B1: x`n`n### Spoofing`n`n* n/a`n"
+        $path = New-SecurityModelFile -Name 'umbrella' -Content $content
+        $errors = Test-SecurityModelStructure -Path $path -RelativePath 'skills/umbrella'
+        ($errors -join "`n") | Should -Match 'Trust Buckets'
+    }
+
+    It 'Flags H3 bucket headings' {
+        $content = "# M`n`n### Bucket B1: x`n`n### Spoofing`n`n* n/a`n"
+        $path = New-SecurityModelFile -Name 'h3bucket' -Content $content
+        $errors = Test-SecurityModelStructure -Path $path -RelativePath 'skills/h3bucket'
+        ($errors -join "`n") | Should -Match 'H3'
+    }
+
+    It 'Flags H4 STRIDE headings' {
+        $content = "# M`n`n## Bucket B1: x`n`n#### Spoofing`n`n* n/a`n"
+        $path = New-SecurityModelFile -Name 'h4stride' -Content $content
+        $errors = Test-SecurityModelStructure -Path $path -RelativePath 'skills/h4stride'
+        ($errors -join "`n") | Should -Match 'H4'
+    }
+
+    It 'Flags H4 Risk Rating headings' {
+        $content = "# M`n`n## Bucket B1: x`n`n### Spoofing`n`n* n/a`n`n#### Risk Rating`n"
+        $path = New-SecurityModelFile -Name 'h4rr' -Content $content
+        $errors = Test-SecurityModelStructure -Path $path -RelativePath 'skills/h4rr'
+        ($errors -join "`n") | Should -Match 'H4'
+    }
+
+    It 'Reports all three violations for a full Variant B model' {
+        $path = New-SecurityModelFile -Name 'variantb' -Content $script:VariantB
+        $errors = Test-SecurityModelStructure -Path $path -RelativePath 'skills/variantb'
+        @($errors).Count | Should -Be 3
+    }
+
+    It 'Fails Test-SkillDirectory when a skill ships a Variant B SECURITY.md' {
+        $skillDir = Join-Path $script:SecModelDir 'wired-bad'
+        New-Item -ItemType Directory -Path $skillDir -Force | Out-Null
+        Set-Content -Path (Join-Path $skillDir 'SKILL.md') -Value "---`nname: wired-bad`ndescription: test`n---`n# S"
+        Set-Content -Path (Join-Path $skillDir 'SECURITY.md') -Value $script:VariantB -NoNewline
+        $result = Test-SkillDirectory -Directory (Get-Item $skillDir) -RepoRoot $script:SecModelDir
+        $result.IsValid | Should -BeFalse
+        ($result.Errors -join "`n") | Should -Match 'Trust Buckets'
+    }
+
+    It 'Passes Test-SkillDirectory when a skill ships a Variant A SECURITY.md' {
+        $skillDir = Join-Path $script:SecModelDir 'wired-good'
+        New-Item -ItemType Directory -Path $skillDir -Force | Out-Null
+        Set-Content -Path (Join-Path $skillDir 'SKILL.md') -Value "---`nname: wired-good`ndescription: test`n---`n# S"
+        Set-Content -Path (Join-Path $skillDir 'SECURITY.md') -Value $script:VariantA -NoNewline
+        $result = Test-SkillDirectory -Directory (Get-Item $skillDir) -RepoRoot $script:SecModelDir
+        ($result.Errors -join "`n") | Should -Not -Match 'SECURITY.md'
+    }
+}
+#endregion SECURITY.md Structure Tests
 

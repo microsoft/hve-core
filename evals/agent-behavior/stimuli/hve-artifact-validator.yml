@@ -1,0 +1,25 @@
+# Copyright (c) 2026 Microsoft Corporation. All rights reserved.
+# SPDX-License-Identifier: MIT
+stimuli:
+  - name: hve-artifact-validator-first-instruction-check
+    prompt: As the HVE Artifact Validator, run one non-mutating YAML-guidance check on the first `copilot-instructions.md` or `AGENTS.md` file you find and return Pass, Fail, or Deferred with the source unchanged.
+    environment:
+      files:
+        - src: fixtures/hve-artifact-copilot-instructions.md
+          dest: .github/copilot-instructions.md
+    tags:
+      category: agent-behavior
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: instruction-target
+        config:
+          pattern: '(?i)(?:copilot-instructions|AGENTS)\.md'
+      - type: output-matches
+        name: validation-status
+        config:
+          pattern: '(?i)\b(?:Pass|Fail|Deferred)\b'
+      - type: output-matches
+        name: source-unchanged
+        config:
+          pattern: '(?is)(?:source|file|artifact).{0,80}(?:unchanged|not\s+(?:modified|mutated)|read[- ]only|no\s+edits)'

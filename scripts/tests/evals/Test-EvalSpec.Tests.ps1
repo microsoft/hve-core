@@ -155,4 +155,116 @@ Describe 'Test-EvalSpec.ps1 (entry script)' -Tag 'Unit' {
         $exit | Should -Be 1
         $report.invalid.Count | Should -BeGreaterOrEqual 4
     }
+
+    It 'Flags an un-inventoried agent tag as orphaned and exits non-zero' {
+        $fixtureRoot = Join-Path $TestDrive 'orphaned-agent-tag'
+        New-Item -ItemType Directory -Path (Join-Path $fixtureRoot 'evals/agent-behavior') -Force | Out-Null
+        New-Item -ItemType Directory -Path (Join-Path $fixtureRoot '.github/agents') -Force | Out-Null
+        Set-Content -LiteralPath (Join-Path $fixtureRoot '.github/agents/known-agent.agent.md') -Value "---\nuser-invocable: true\n---\n"
+        Set-Content -LiteralPath (Join-Path $fixtureRoot 'evals/agent-behavior/AGENTS.yml') -Value @"
+agents:
+  - slug: known-agent
+    path: '.github/agents/known-agent.agent.md'
+    class: unknown
+    cost_tier: light
+"@
+        Set-Content -LiteralPath (Join-Path $fixtureRoot 'evals/agent-behavior/eval.yaml') -Value @"
+name: orphaned-agent-tag
+defaults:
+  executor: copilot-sdk
+stimuli:
+  - name: orphaned-tag
+    prompt: test prompt
+    tags:
+      category: agent-behavior
+      agent: orphaned-agent
+      scenario: startup-disclaimer
+    graders:
+      - type: noop
+"@
+
+        & $script:ScriptPath `
+            -Root 'evals' `
+            -RepoRoot $fixtureRoot `
+            -OutputPath $script:OutputPath `
+            -SkipAgentCoverage *> $null
+        $exit = $LASTEXITCODE
+        $report = Get-Content -LiteralPath $script:OutputPath -Raw | ConvertFrom-Json
+
+        $exit | Should -Be 1
+        $report.orphanedTags.Count | Should -Be 2
+        ($report.orphanedTags | Where-Object { $_.tag -eq 'agent' -and $_.value -eq 'orphaned-agent' }).Count | Should -Be 1
+    }
+
+    It 'Passes when all agent and scenario tags are inventoried' {
+        $fixtureRoot = Join-Path $TestDrive 'inventoried-tags'
+        New-Item -ItemType Directory -Path (Join-Path $fixtureRoot 'evals/agent-behavior') -Force | Out-Null
+        New-Item -ItemType Directory -Path (Join-Path $fixtureRoot '.github/agents') -Force | Out-Null
+        Set-Content -LiteralPath (Join-Path $fixtureRoot '.github/agents/known-agent.agent.md') -Value "---\nuser-invocable: true\n---\n"
+        Set-Content -LiteralPath (Join-Path $fixtureRoot 'evals/agent-behavior/AGENTS.yml') -Value @"
+agents:
+  - slug: known-agent
+    path: '.github/agents/known-agent.agent.md'
+    class: unknown
+    cost_tier: light
+"@
+        Set-Content -LiteralPath (Join-Path $fixtureRoot 'evals/agent-behavior/eval.yaml') -Value @"
+name: inventoried-tags
+defaults:
+  executor: copilot-sdk
+stimuli:
+  - name: covered-tag
+    prompt: test prompt
+    tags:
+      category: agent-behavior
+      agent: known-agent
+      scenario: startup-disclaimer
+    graders:
+      - type: noop
+"@
+
+        & $script:ScriptPath `
+            -Root 'evals' `
+            -RepoRoot $fixtureRoot `
+            -OutputPath $script:OutputPath `
+            -SkipAgentCoverage *> $null
+        $exit = $LASTEXITCODE
+        $report = Get-Content -LiteralPath $script:OutputPath -Raw | ConvertFrom-Json
+
+        $exit | Should -Be 0
+        $report.orphanedTags.Count | Should -Be 0
+    }
+
+    It 'Reports a distinct inventory error (not per-tag orphans) and exits non-zero when the inventory is missing' {
+        $fixtureRoot = Join-Path $TestDrive 'missing-inventory'
+        New-Item -ItemType Directory -Path (Join-Path $fixtureRoot 'evals/agent-behavior') -Force | Out-Null
+        New-Item -ItemType Directory -Path (Join-Path $fixtureRoot '.github/agents') -Force | Out-Null
+        Set-Content -LiteralPath (Join-Path $fixtureRoot 'evals/agent-behavior/eval.yaml') -Value @"
+name: missing-inventory
+defaults:
+  executor: copilot-sdk
+stimuli:
+  - name: some-tag
+    prompt: test prompt
+    tags:
+      category: agent-behavior
+      agent: known-agent
+      scenario: startup-disclaimer
+    graders:
+      - type: noop
+"@
+
+        & $script:ScriptPath `
+            -Root 'evals' `
+            -RepoRoot $fixtureRoot `
+            -OutputPath $script:OutputPath `
+            -SkipAgentCoverage *> $null
+        $exit = $LASTEXITCODE
+        $report = Get-Content -LiteralPath $script:OutputPath -Raw | ConvertFrom-Json
+
+        $exit | Should -Be 1
+        $report.inventoryError | Should -Not -BeNullOrEmpty
+        $report.inventoryError | Should -Match 'Agent inventory not found'
+        $report.orphanedTags.Count | Should -Be 0
+    }
 }

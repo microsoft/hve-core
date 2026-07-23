@@ -3,7 +3,7 @@ title: AI-Assisted Project Lifecycle Overview
 description: Navigate the full AI-assisted engineering lifecycle from setup through operations with HVE Core tooling
 sidebar_position: 1
 author: Microsoft
-ms.date: 2026-06-21
+ms.date: 2026-06-28
 ms.topic: concept
 keywords:
   - ai-assisted project lifecycle
@@ -28,7 +28,7 @@ HVE Core supports a 9-stage project lifecycle, from initial setup through ongoin
 | Stage 4 | Decomposition      | 5           | ado-prd-to-wit, github-backlog-manager                                                          | [Decomposition](decomposition.md)           |
 | Stage 5 | Sprint Planning    | 9           | github-backlog-manager, agile-coach                                                             | [Sprint Planning](sprint-planning.md)       |
 | Stage 6 | Implementation     | 30          | task-researcher, task-planner, task-implementor, task-reviewer, rpi-agent, prompt-builder       | [Implementation](implementation.md)         |
-| Stage 7 | Review             | 11          | task-reviewer, pr-review                                                                        | [Review](review.md)                         |
+| Stage 7 | Review             | 11          | task-reviewer, code-review                                                                      | [Review](review.md)                         |
 | Stage 8 | Delivery           | 9           | git-merge, ado-get-build-info                                                                   | [Delivery](delivery.md)                     |
 | Stage 9 | Operations         | 11          | documentation, prompt-builder, incident-response                                                | [Operations](operations.md)                 |
 
@@ -74,7 +74,7 @@ flowchart LR
 2. Design Thinking Exit 2 to Stage 2: Validated concept (Methods 4-6) feeds Task Researcher in Discovery
 3. Design Thinking Exit 3 to Stage 2: Implementation spec (Methods 7-9) feeds Task Researcher in Discovery
 4. Stage 1 to Stage 2: Installation complete
-5. Stage 2 to Stage 3: BRD complete, handoff at `docs/brds/`
+5. Stage 2 to Stage 3: BRD complete, handoff at `docs/project-planning/`
 6. Stage 2 to Stage 4: TPMs skip PRD when BRD is sufficient
 7. Stage 3 to Stage 4: PRD and ADRs finalized
 8. Stage 4 to Stage 5: Work items created

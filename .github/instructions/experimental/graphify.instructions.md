@@ -1,5 +1,5 @@
 ---
-description: "Conventions for consuming graphify-out/ knowledge-graph evidence inside the RPI workflow - Brought to you by microsoft/hve-core"
+description: "Conventions for consuming graphify-out/ knowledge-graph evidence inside the RPI workflow"
 applyTo: '**/graphify-out/**'
 ---
 

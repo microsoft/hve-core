@@ -48,6 +48,26 @@ Authentication is selected automatically:
 * If `JIRA_PAT` is set, the script uses bearer authentication for Jira Server or Data Center.
 * Otherwise, the script expects `JIRA_USER_EMAIL` and `JIRA_API_TOKEN` for Jira Cloud.
 
+### Operational Variables
+
+| Variable           | When required | Purpose                                                                                 |
+|--------------------|---------------|-----------------------------------------------------------------------------------------|
+| `JIRA_AUDIT_LOG`   | Optional      | Path to a JSON Lines audit log. When set, every request is audited (see Audit Logging). |
+| `JIRA_AUDIT_ACTOR` | Optional      | Overrides the recorded actor identity (for example, a CI service principal).            |
+
+### Audit Logging
+
+When `JIRA_AUDIT_LOG` is set, the script writes a structured JSON Lines audit trail for every API request. Auditing is fail-closed and write-ahead:
+
+* An `attempt` record is written **before** the request is sent. If the audit log cannot be written, the operation is aborted and nothing is sent to Jira.
+* An `outcome` record (`success` or `error`, with HTTP status on failure) is written after the request completes.
+
+Each record includes a UTC timestamp, the `actor` (from `JIRA_AUDIT_ACTOR`, otherwise `JIRA_USER_EMAIL` or `jira-pat`), the operation, HTTP method, and the request path. Credentials, authorization headers, and query strings are never written. Audit failures after the request emit a warning without altering the result.
+
+### Credential Rotation
+
+The script reads credentials from the environment on every invocation, so an external rotator can swap `JIRA_API_TOKEN` or `JIRA_PAT` between calls without code changes. A `401` or `403` response indicates the token may be expired or revoked; rotate the credential through your Atlassian account or instance token settings. Full OAuth-style refresh flows are out of scope for this CLI.
+
 ## Quick Start
 
 Search for your current Jira issues and return a compact table:

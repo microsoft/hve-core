@@ -29,7 +29,7 @@ jobs:
       has-docs-changes: ${{ steps.detect.outputs.has-docs-changes }}
     steps:
       - name: Checkout code
-        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
           fetch-depth: 0
@@ -43,17 +43,18 @@ jobs:
             Write-Output 'Docusaurus tests requested for all files.'
           } else {
             $baseRef = if ($env:GITHUB_BASE_REF) { $env:GITHUB_BASE_REF } else { 'main' }
-            # Trigger on Docusaurus application changes only: the site app, plugins,
-            # configs, and accessibility tests all live under docs/docusaurus/.
-            # Pure markdown content edits elsewhere under docs/ are intentionally
-            # excluded so content-only PRs skip the expensive a11y/build job.
+            # Trigger on any change under docs/: the whole-site build compiles all of
+            # docs/** (docusaurus.config.js sets the docs plugin path to '../', excluding
+            # only docusaurus/** and announcements/**), so watching docs/ matches the
+            # build's real input set. This catches broken links in markdown content
+            # pages on the PR instead of only on the post-merge deploy build.
             # The collections/ tree is included because docusaurus.config.js reads
             # collections/*.collection.yml at build time (collectionCounts) and the
             # tests consume it via COLLECTIONS_DIR, so changes there alter site and
             # test output. The workflow files themselves are included so test/config
             # changes still trigger a run.
             $changed = @(git diff --name-only --diff-filter=ACMR "origin/$baseRef...HEAD" -- `
-              docs/docusaurus `
+              docs `
               collections `
               .github/workflows/docusaurus-tests.yml `
               .github/workflows/deploy-docs.yml)
@@ -78,12 +79,12 @@ jobs:
       id-token: write  # Required for Codecov OIDC
     steps:
       - name: Checkout code
-        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
 
       - name: Setup Node.js
-        uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6.4.0
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
           node-version: '24'
           cache: npm
@@ -92,17 +93,14 @@ jobs:
       - name: Install dependencies
         working-directory: docs/docusaurus
         run: npm ci
-        env:
-          # pa11y uses the runner's system Google Chrome (provisioned by the
-          # "Provision system Chrome" step below), so skip the puppeteer
-          # postinstall download. That self-download failed deterministically
-          # in CI by extracting a partial browser tree while still exiting 0,
-          # poisoning ~/.cache/puppeteer.
-          PUPPETEER_SKIP_DOWNLOAD: 'true'
 
       - name: Lint accessibility
         working-directory: docs/docusaurus
         run: npm run lint:a11y
+
+      - name: Lint label registry (COGA-1)
+        working-directory: docs/docusaurus
+        run: npm run lint:label-registry
 
       - name: Typecheck
         working-directory: docs/docusaurus
@@ -131,37 +129,26 @@ jobs:
         working-directory: docs/docusaurus
         run: npm run build
 
-      # Both accessibility tools reuse the ubuntu-latest runner's maintained
-      # Google Chrome stable build instead of self-downloading a browser:
-      # pa11y drives it over CDP via puppeteer (honouring
-      # PUPPETEER_EXECUTABLE_PATH because `.pa11yci` sets no `executablePath`),
-      # and Playwright drives it via `channel: 'chrome'` in
-      # playwright.config.ts. Self-downloading failed deterministically in CI:
-      # the archive downloaded in full but extraction silently dropped the
-      # main `chrome` binary while the install still exited 0, so no retry or
-      # disk-space change could recover it. This step is the single source of
-      # the shared Chrome dependency; its presence check and `--version` echo
-      # guard both tools by failing the job loudly here -- with a clear
-      # message -- rather than as an opaque browser-launch error downstream.
+      # Playwright drives the runner's maintained Google Chrome stable build
+      # via `channel: 'chrome'` in playwright.config.ts instead of
+      # self-downloading a bundled Chromium. Self-downloading failed
+      # deterministically in CI: the archive downloaded in full but extraction
+      # silently dropped the main `chrome` binary while the install still
+      # exited 0, so no retry or disk-space change could recover it. This step
+      # is the single source of the shared Chrome dependency; its presence
+      # check and `--version` echo guard the e2e suite by failing the job
+      # loudly here -- with a clear message -- rather than as an opaque
+      # browser-launch error downstream.
       - name: Provision system Chrome
         run: |
           set -u
           chrome_bin="$(command -v google-chrome || command -v google-chrome-stable || true)"
           if [ -z "$chrome_bin" ]; then
-            echo "::error::No system Google Chrome found on the runner; pa11y and Playwright both require it"
+            echo "::error::No system Google Chrome found on the runner; Playwright requires it"
             exit 1
           fi
           echo "Using system Chrome at: $chrome_bin"
           "$chrome_bin" --version
-          echo "PUPPETEER_EXECUTABLE_PATH=$chrome_bin" >> "$GITHUB_ENV"
-
-      # `npm run a11y` wraps the scan in start-server-and-test, which starts
-      # `serve:ci`, waits for it, runs pa11y-ci, then tears the server down --
-      # so this step is self-contained and leaves no background process behind.
-      - name: Accessibility scan (pa11y-ci)
-        working-directory: docs/docusaurus
-        run: npm run a11y
-        continue-on-error: ${{ inputs.soft-fail }}
 
       # Playwright drives Google Chrome stable via `channel: 'chrome'` in
       # playwright.config.ts, reusing the runner's maintained Chrome build
@@ -169,7 +156,8 @@ jobs:
       # or cache step is needed. The "Provision system Chrome" step above is
       # the shared dependency and already fails the job loudly when no system
       # Chrome is present. This step owns its own e2e server (Playwright's
-      # webServer config), independent of the pa11y step above.
+      # webServer config). The full-site accessibility crawl runs as the
+      # site-crawl spec within this suite.
       - name: Accessibility journeys (Playwright)
         working-directory: docs/docusaurus
         run: npm run test:e2e

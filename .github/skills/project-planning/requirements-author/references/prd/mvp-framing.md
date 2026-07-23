@@ -1,5 +1,5 @@
 ---
-description: 'PRD MVP-framing reference - repository-original thinnest-viable-slice rubric written from scratch, anchored to a cite-only bibliography of the Lean Startup (Ries) and product-discovery (Cagan/SVPG) sources - Brought to you by microsoft/hve-core'
+description: 'PRD MVP-framing reference - repository-original thinnest-viable-slice rubric written from scratch, anchored to a cite-only bibliography of the Lean Startup (Ries) and product-discovery (Cagan/SVPG) sources'
 ---
 
 # PRD MVP Framing
@@ -47,4 +47,4 @@ The sources below inform the MVP framing. They are cited by name only; the rubri
 
 This reference file is original Microsoft content licensed under [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/). The thinnest-viable-slice rubric is HVE-Core IP and may be reused under the same license. The sources named in the bibliography remain the property of their authors and publishers; their prose is accessed by the reader through the cited URLs and is never redistributed here.
 
-> Brought to you by microsoft/hve-core
+

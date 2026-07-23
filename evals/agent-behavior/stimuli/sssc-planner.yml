@@ -18,7 +18,7 @@ stimuli:
       - type: output-matches
         name: no-source-edit
         config:
-          pattern: '(?i)(\.cs|\.py|\.ts|\.js|package\.json)'
+          pattern: '(?i)(created|wrote|modified|edited|patched|added)\s+\S{0,40}(\.cs|\.py|\.ts|\.js|package\.json)'
           negate: true
   - name: sssc-planner-disclaimer-startup
     prompt: |

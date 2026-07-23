@@ -1,6 +1,6 @@
 ---
 name: backlog-templates
-description: "Shared work-item templates and conventions for ADO and GitHub backlog handoff across the RAI, Security, SSSC, and Accessibility planners"
+description: "Shared work-item templates and conventions for ADO and GitHub backlog handoff across the RAI, Security, SSSC, Accessibility, and Privacy planners"
 license: MIT
 user-invocable: true
 compatibility:
@@ -25,6 +25,7 @@ Callers:
 * Security Planner (`.github/agents/security/security-planner.agent.md`; security-specific handoff details in `.github/skills/project-planning/security-planning/references/backlog-formats.md`)
 * SSSC Planner (`.github/instructions/security/sssc-planner.instructions.md`)
 * Accessibility Planner (`accessibility/accessibility` skill `references/phases/backlog-handoff.md`)
+* Privacy Planner (`.github/instructions/privacy/privacy-identity.instructions.md`)
 
 What stays per-planner (NOT in this skill):
 
@@ -75,7 +76,7 @@ Worked example (Security Planner):
 </div>
 ```
 
-Each planner substitutes its own field block (NIST characteristic + threat + control surface for RAI; framework + criterion + surface + personas + evidence + tradeoff for Accessibility; supply-chain control + Scorecard check + adoption type for SSSC).
+Each planner substitutes its own field block (NIST characteristic + threat + control surface for RAI; framework + criterion + surface + personas + evidence + tradeoff for Accessibility; supply-chain control + Scorecard check + adoption type for SSSC; data category + processing purpose + DPIA reference + lawful basis + risk tier for Privacy).
 
 Planner-specific ADO description field block (the keys substituted into the `<!-- planner-specific field block goes here -->` slot):
 
@@ -83,6 +84,7 @@ Planner-specific ADO description field block (the keys substituted into the `<!-
 * Security — `threat_id`, `stride_category`, `bucket`, `risk_level`.
 * SSSC — Scorecard Check, Risk Level, Effort, Adoption Type, Prerequisite, Adoption Steps, Source References (Workflow, Script, Documentation).
 * Accessibility — `framework`, `criterion`, `surface`, `wcag_level`, `severity`, `category`, `risk_tier`, `tradeoff_ref` (when applicable). Add an assistive-technology validation note when `severity` is `critical` or `major`.
+* Privacy — `data_category`, `processing_purpose`, `dpia_ref`, `lawful_basis`, `risk_tier`.
 
 ## GitHub Issue Template
 
@@ -93,7 +95,7 @@ Canonical YAML metadata header:
 ```yaml
 ---
 id: "{{<PREFIX>-TEMP-N}}"
-planner: {rai|security|sssc|accessibility}
+planner: {rai|security|sssc|accessibility|privacy}
 priority: {Critical|High|Medium|Low}
 standards: ["{standard_id_1}", "{standard_id_2}"]
 evidence_refs: ["{evidence_id_1}"]
@@ -107,6 +109,7 @@ Planner-specific augmentation fields (added to the same YAML block, not replacin
 * Security — `threat_id`, `stride_category`, `risk_level`, `bucket`, `standards`.
 * SSSC — `scorecard_check`, `risk_level`, `adoption_type`, `effort`, `standards`.
 * Accessibility — `framework`, `criterion`, `surface`, `wcag_level`, `severity`, `category`, `risk_tier`, `tradeoff_ref`, `standards`.
+* Privacy — `data_category`, `processing_purpose`, `dpia_ref`, `lawful_basis`, `risk_tier`, `standards`.
 
 Markdown body skeleton:
 
@@ -174,11 +177,11 @@ Three tiers control how rendered work items reach the target backlog system. The
 
 Cross-reference mapping for planners that use divergent vocabularies. Each planner persists the selected value in its session state under `userPreferences.autonomyTier` using its own vocabulary; this table is the single source of truth for cross-planner equivalence.
 
-| Canonical (this skill) | Accessibility (seed schema) | Security | RAI     | SSSC              |
-|------------------------|-----------------------------|----------|---------|-------------------|
-| autonomous             | autonomous                  | Full     | Full    | Full              |
-| supervised (default)   | supervised                  | Partial  | Partial | Partial (default) |
-| manual                 | manual                      | Manual   | Manual  | Guided            |
+| Canonical (this skill) | Accessibility (seed schema) | Security | RAI     | SSSC              | Privacy           |
+|------------------------|-----------------------------|----------|---------|-------------------|-------------------|
+| autonomous             | autonomous                  | Full     | Full    | Full              | Full              |
+| supervised (default)   | supervised                  | Partial  | Partial | Partial (default) | Partial (default) |
+| manual                 | manual                      | Manual   | Manual  | Guided            | Manual            |
 
 Notes:
 
@@ -193,6 +196,7 @@ Every backlog handoff artifact (handoff summary, ADO output file, GitHub output 
 Source-of-truth split for the disclaimer text:
 
 * RAI, Security, SSSC — Read the disclaimer text from `.github/instructions/shared/disclaimer-language.instructions.md` under the corresponding planner section.
+* Privacy — Read the disclaimer text from `.github/instructions/shared/disclaimer-language.instructions.md` under the Privacy Planning section.
 * Accessibility — Read the disclaimer text from `.github/instructions/accessibility/accessibility-identity.instructions.md` under the `Disclaimer Handling` heading. The L7 disclaimer lever pins the accessibility disclaimer to that file. Do not move it to `shared/disclaimer-language.instructions.md`.
 
 Placement rules:
@@ -214,12 +218,13 @@ Work items use the format `WI-{PREFIX}-{NNN}` where the prefix identifies the or
 | Security      | `WI-SEC-`  | `{{SEC-TEMP-N}}`  |
 | SSSC          | `WI-SSSC-` | `{{SSSC-TEMP-N}}` |
 | Accessibility | `WI-A11Y-` | `{{A11Y-TEMP-N}}` |
+| Privacy       | `WI-PRIV-` | `{{PRIV-TEMP-N}}` |
 
 Rules:
 
 * Distinct prefixes prevent ID collision when multiple planners produce a backlog against the same project.
 * Sequence is monotonic per plan slug. Do not reuse identifiers across plans or sessions.
 * GitHub temporary IDs are replaced with real issue numbers at creation time; preserve the temporary ID in `state.noticeLog` for traceability.
-* Cross-planner references use the target planner's full ID, prefixed with the relationship type: `Accessibility-Ref: WI-A11Y-{NNN}`, `Security-Ref: WI-SEC-{NNN}`, `RAI-Ref: WI-RAI-{NNN}`, `SSSC-Ref: WI-SSSC-{NNN}`.
+* Cross-planner references use the target planner's full ID, prefixed with the relationship type: `Accessibility-Ref: WI-A11Y-{NNN}`, `Security-Ref: WI-SEC-{NNN}`, `RAI-Ref: WI-RAI-{NNN}`, `SSSC-Ref: WI-SSSC-{NNN}`, `Privacy-Ref: WI-PRIV-{NNN}`.
 
 Internal reference IDs (`T-{BUCKET}-{NNN}` for threats, `EV-A11Y-{NNN}` for evidence, `SEED-A11Y-{NNN}` for seeds, `TO-A11Y-{NNN}` for tradeoffs) remain scoped to their owning planner and are out of scope for this skill.

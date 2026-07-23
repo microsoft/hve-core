@@ -14,6 +14,7 @@ Items in the Highest Priority Rules section from attached instructions files ove
 * Breaking changes are acceptable.
 * Backward-compatibility layers or legacy support are added only when explicitly requested.
 * Tests, scripts, and one-off markdown docs are created or modified only when explicitly requested.
+* Ensure `npm ci` has ran recently before running any npm scripts in `package.json`.
 
 Rules for comments:
 
@@ -51,6 +52,7 @@ The project is organized into these main areas:
 * Documentation (`docs/`) - Getting started guides, templates, RPI workflow documentation, and contribution guidelines.
 * Scripts (`scripts/`) - Automation for linting, security validation, extension packaging, and development tools.
 * Skills (`.github/skills/{collection-id}/`) - Self-contained skill packages, by convention organized by collection.
+* Hooks (`.github/hooks/{collection-id}/`) - Collection-scoped Copilot hook manifests (JSON) that wire lifecycle event commands.
 * Extension (`extension/`) - VS Code extension source and packaging.
 * GitHub Configuration (`.github/`) - Workflows, instructions, prompts, agents, composite actions, and issue templates, typically organized into `{collection-id}` subdirectories.
 * Collections (`collections/`) - YAML and markdown manifests defining bundled sets of agents, prompts, instructions, and skills.
@@ -71,6 +73,18 @@ Scripts are organized by function:
 ### Skills Organization
 
 By convention, skills are self-contained packages organized under `.github/skills/{collection-id}/{skill-name}/`. Each skill folder contains a `SKILL.md` file with domain-specific instructions, and may include other markdown files that are referenced by `SKILL.md` along with `scripts/`, `references/`, `assets/`, or other subdirectories.
+
+### Cross-Kind Artifact References
+
+Generic authoring guidance uses portable paths such as `.github/skills/<skill>/SKILL.md` and does not assume a collection directory. HVE-Core packaging may add a `{collection-id}` layer as an optional host packaging convention.
+
+When a prompt, agent, or instruction uses `#file:`:
+
+* Resolve the path relative to the containing file, not the workspace root.
+* Preserve the original artifact suffix, such as `.instructions.md`, `.agent.md`, or `.prompt.md`.
+* Use relative paths; do not use absolute paths or a `.github/` prefix. Plugin and extension packaging strip `.github/` while preserving relative depth between artifact-kind directories.
+* For example, from `.github/agents/{collection-id}/`, a same-collection instruction target uses `#file:../../instructions/{collection-id}/name.instructions.md`.
+* Keep a cross-kind target in the same collection manifest as the referencing artifact.
 
 ### Documentation Structure
 
@@ -111,7 +125,7 @@ The `.copilot-tracking/` directory (gitignored) contains AI-assisted workflow ar
 * PRD Sessions (`.copilot-tracking/prd-sessions/`) - Product requirements document session state.
 * GitHub Issues (`.copilot-tracking/github-issues/`) - GitHub issue search, triage, and workflow tracking.
 * Sandbox (`.copilot-tracking/sandbox/`) - Prompt testing sandbox environments.
-* Prompts (`.copilot-tracking/prompts/`) - Prompt updater tracking files.
+* HVE Builder (`.copilot-tracking/hve-builder/`) - Prompt-engineering discovery, authoring, review, behavior-test, and validation evidence.
 * Documentation (`.copilot-tracking/documentation/`) - Documentation workflow session tracking.
 * Memory (`.copilot-tracking/memory/`) - Cross-session memory files.
 * Challenges (`.copilot-tracking/challenges/`) - Challenge session Q&A logs, unresolved items, and scope records from Task Challenger sessions.
@@ -152,6 +166,7 @@ Commit message scopes map to repository directories:
 * `(prompts)` = `.github/prompts/`
 * `(instructions)` = `.github/instructions/`
 * `(skills)` = `.github/skills/`
+* `(hooks)` = `.github/hooks/`
 * `(templates)` = `.github/ISSUE_TEMPLATE/`
 * `(workflows)` = `.github/workflows/`
 * `(extension)` = `extension/`
@@ -272,6 +287,7 @@ Python skills include a `pyproject.toml` validated by `validate:skills` via `Tes
 * `fuzz` dependency group with `atheris>=3.0` - Required alongside `fuzz_harness.py`. Kept separate from `dev` (no macOS wheels).
 * `python_files = ["test_*.py", "fuzz_harness.py"]` in `[tool.pytest.ini_options]` - Required alongside `fuzz_harness.py`. Enables pytest discovery.
 * `ruff` in dev dependencies - Recommended. Ensures the linter is available in the skill's virtual environment.
+* `uv.lock` - Required at the skill root when Python dependencies exist. Skills must commit both `pyproject.toml` and `uv.lock` so Dependabot can resolve and patch vulnerable dependencies via the `.github/skills/**` uv glob.
 
 ### PowerShell Module Installation in Workflows
 
@@ -282,9 +298,11 @@ with exponential backoff on PSGallery failures. The action always installs to
 `CurrentUser` scope because the cache path is hardcoded to the CurrentUser
 module location. Do not use inline `Install-Module` steps in workflows; use
 the composite action instead. The `copilot-setup-steps.yml` workflow calls
-`scripts/security/Install-PSModules.ps1` directly with `-Scope AllUsers`
-because AllUsers requires a different module path that the action does not
-cache.
+`scripts/security/Install-PSModules.ps1` directly with `-Scope CurrentUser`
+because the Copilot coding-agent runner is not elevated; `AllUsers` targets
+`/usr/local/share/powershell/Modules` and fails with admin-rights errors that
+retries cannot recover. `CurrentUser` installs to the same runner user's module
+path the agent reads, so no caching or elevation is required.
 
 ### Environment Synchronization
 

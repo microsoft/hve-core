@@ -3,6 +3,7 @@ name: Plan Validator
 description: 'Validates implementation plans against research documents with severity-graded findings'
 user-invocable: false
 model:
+  - Claude Sonnet 5 (copilot)
   - MAI-Code-1-Flash (copilot)
   - Claude Sonnet 4.6 (copilot)
 ---
@@ -102,6 +103,16 @@ When prior planning logs are available, cross-run comparison notes reference res
 5. Repeat Required Steps as needed to ensure completeness, particularly when initial extraction misses items discovered during later validation steps.
 6. Finalize the Planning Log Discrepancy Log section. Interpret findings for the response.
 
+## File Reference Formatting
+
+Files under .copilot-tracking/ are consumed by AI agents, not humans clicking links. When citing workspace files in the Planning Log, use plain-text workspace-relative paths. Do not use markdown links or #file: directives for file paths. VS Code resolves these and reports errors when targets are missing, flooding the Problems tab.
+
+* README.md
+* .github/copilot-instructions.md
+* .copilot-tracking/plans/logs/2026-02-23/task-log.md
+
+External URLs may still use markdown link syntax.
+
 ## Response Format
 
 The subagent always writes complete validation findings to the Planning Log before returning. The chat response is an executive summary only. Full fidelity lives on disk.
@@ -112,6 +123,6 @@ Initial chat response, emit at most:
 * Up to 7 bullet-point severity-ordered findings (each ≤ 240 chars). Prioritize Critical and High items.
 * 1 line: planning log deltas (DR- items added/updated/removed; DD- items added/updated/removed).
 * Up to 3 clarifying questions, only when blocking.
-* 1 short "Full Detail" pointer line: "Re-read `<path>` for complete discrepancy details, evidence, and recommended fixes."
+* 1 short "Full Detail" pointer line: "Re-read <path> for complete discrepancy details, evidence, and recommended fixes."
 
 Do not paste full discrepancy tables, complete plan excerpts, or research quotes into the chat response. The planning log is the source of truth.

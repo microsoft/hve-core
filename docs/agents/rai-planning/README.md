@@ -12,7 +12,7 @@ tags:
   - agents
   - rai-planning
 author: Microsoft
-ms.date: 2026-03-11
+ms.date: 2026-06-27
 ms.topic: concept
 estimated_reading_time: 8
 ---
@@ -34,7 +34,7 @@ The RAI Planner agent transforms informal AI ethics reviews into repeatable, evi
 
 ## How It Works
 
-The RAI Planner follows six sequential phases, each mapped to NIST AI RMF functions. Every phase produces artifacts, and the agent never advances without your confirmation.
+The RAI Planner follows six sequential phases, each mapped to NIST AI RMF functions. Every phase produces artifacts. Phases 2, 3, and 6 are hard gates that require explicit confirmation before advancing; Phases 1, 4, and 5 are summary-and-advance gates that advance once you have reviewed the summary unless you object.
 
 ```mermaid
 flowchart LR
@@ -70,7 +70,7 @@ Map AI system components and behaviors to the seven NIST AI RMF 1.0 trustworthin
 
 ### Phase 4: RAI Security Model Analysis
 
-Facilitate AI-specific threat analysis per component using AI STRIDE extensions, eight AI element types, and five trust boundaries. Threats follow the `T-RAI-{NNN}` sequential format with optional `T-{BUCKET}-AI-{NNN}` cross-references.
+Facilitate AI-specific threat analysis per component using the AI STRIDE overlay and RAI threat categories. Threats follow the `T-RAI-{NNN}` sequential format with optional `T-{BUCKET}-AI-{NNN}` cross-references, captured in the `rai-threat-addendum.md` artifact.
 
 ### Phase 5: RAI Impact Assessment
 
@@ -90,17 +90,17 @@ Three entry modes determine how Phase 1 begins. All converge at Phase 2 once AI 
 | `from-prd`           | PRD/BRD documents   | Projects with product definition artifacts                    |
 | `from-security-plan` | Security plan state | Projects that completed security planning first (recommended) |
 
-See [entry modes](entry-modes.md) for detailed guidance on when to choose each mode and what each mode pre-populates.
+See [entry modes](entry-modes) for detailed guidance on when to choose each mode and what each mode pre-populates.
 
 ## Related Pages
 
 | Page                                       | Description                                                          |
 |--------------------------------------------|----------------------------------------------------------------------|
-| [Why RAI planning?](why-rai-planning.md)   | The case for structured RAI assessment over ad-hoc reviews           |
-| [Agent overview](agent-overview.md)        | Architecture, state management, and interaction model                |
-| [Entry modes](entry-modes.md)              | Choosing between capture, from-prd, and from-security-plan           |
-| [Phase reference](phase-reference.md)      | Detailed inputs, outputs, and state transitions for all six phases   |
-| [Handoff pipeline](handoff-pipeline.md)    | Backlog generation, review summary, and the Security-to-RAI pipeline |
+| [Why RAI planning?](why-rai-planning)      | The case for structured RAI assessment over ad-hoc reviews           |
+| [Agent overview](agent-overview)           | Architecture, state management, and interaction model                |
+| [Entry modes](entry-modes)                 | Choosing between capture, from-prd, and from-security-plan           |
+| [Phase reference](phase-reference)         | Detailed inputs, outputs, and state transitions for all six phases   |
+| [Handoff pipeline](handoff-pipeline)       | Backlog generation, review summary, and the Security-to-RAI pipeline |
 | [Security planning overview](../security/) | The Security Planner agent that feeds into RAI assessment            |
 
 <!-- markdownlint-disable MD036 -->

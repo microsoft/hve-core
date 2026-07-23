@@ -2,7 +2,7 @@
 # Copyright (c) 2026 Microsoft Corporation. All rights reserved.
 # SPDX-License-Identifier: MIT
 
-#Requires -Version 7.0
+#Requires -Version 7.4
 
 <#
 .SYNOPSIS
@@ -10,9 +10,10 @@
 
 .DESCRIPTION
     Parses results.jsonl from baseline and customized run directories along with the
-    sibling vally compare log, then writes a self-contained HTML file (offline, no CDN)
-    summarizing pass rates, identical-output ratios, pairwise tallies, and per-trial
-    output diffs. The HTML supports search, sort, and click-to-expand drill-down.
+    sibling vally compare `--output` JSONL, then writes a self-contained HTML file
+    (offline, no CDN) summarizing pass rates, identical-output ratios, comparison
+    tallies, and per-trial output diffs. The HTML supports search, sort, and
+    click-to-expand drill-down.
 
     Variant identity (which agent or customization is materialized into each side) is
     read from `variant.yaml` files sitting beside the eval specs under
@@ -115,14 +116,14 @@ foreach ($variantDir in @($baselineDir, $customizedDir)) {
 $baseline = ConvertFrom-EquivalenceResults -RunDir $baselineDir
 $customized = ConvertFrom-EquivalenceResults -RunDir $customizedDir
 
-$compareLog = Join-Path $RepoRoot "logs/vally-compare-$Model-$RunId.log"
-if (Test-Path -LiteralPath $compareLog) {
-    $lines = Get-Content -LiteralPath $compareLog -Encoding utf8
+$compareJsonlPath = Join-Path $RepoRoot "logs/vally-compare-$Model-$RunId.jsonl"
+if (Test-Path -LiteralPath $compareJsonlPath) {
+    $lines = @(Get-Content -LiteralPath $compareJsonlPath -Encoding utf8)
     $compare = Measure-CompareTrials -Lines $lines
 }
 else {
-    Write-Warning "Compare log not found at $compareLog; pairwise tally will be zero."
-    $compare = @{ Total = 0; Ties = 0; AWins = 0; BWins = 0; PerStimulus = @{} }
+    Write-Warning "Compare output not found at $compareJsonlPath; compare tally will be zero."
+    $compare = @{ Total = 0; Ties = 0; AWins = 0; BWins = 0; PerStimulus = @{}; SummaryCount = 0; MeanScore = 0.0; WinRate = 0.0; CiLow = 0.0; CiHigh = 0.0 }
 }
 
 $defaultVariantA = @{ kind = 'baseline'; name = 'baseline';   label = 'Baseline (A)';   description = ''; applied = @() }

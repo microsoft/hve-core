@@ -2,7 +2,7 @@
 title: "Transparency Note: HVE Core (May 2026)"
 description: "Public Transparency Note for HVE Core, a prompt-engineering and agentic-customization framework distributed by microsoft/hve-core."
 author: HVE Core Maintainers
-ms.date: 2026-06-11
+ms.date: 2026-07-09
 ms.topic: overview
 keywords:
   - responsible-ai
@@ -56,7 +56,9 @@ HVE Core ships text files and supporting tools. When you load an HVE Core file i
 2. You work with the host's model, now shaped by the file's instructions.
 3. The model's replies come back through the normal Copilot surface.
 
-HVE Core has no model, no API, no network calls while you author or install it, and no telemetry. Validation tools (linters, frontmatter checks, Pester tests, plugin generation) run in CI on pull requests. Nothing runs on your machine unless you install the VS Code extension or run a packaged script yourself.
+HVE Core has no model, no API, and no network calls while you author or install it. It ships one optional local telemetry hook that is disabled by default and, when you turn it on, records Copilot session lifecycle events to plaintext files on your own disk with no network egress.
+The processed event stream stores derived signals (such as tool-input key names and a truncated prompt preview) rather than full payloads; a separate, explicit opt-in is required before any verbatim prompt or tool input is captured. See the [Local Telemetry guide](docs/customization/local-telemetry.md) for exactly what is captured and how to disable or remove it.
+Validation tools (linters, frontmatter checks, Pester tests, plugin generation) run in CI on pull requests. Nothing runs on your machine unless you install the VS Code extension or run a packaged script yourself.
 
 Most skills are pure authoring or validation helpers with no independent Responsible AI surface and are not called out individually. A few skills warrant specific mention because they assemble media outputs or depend on external services:
 
@@ -157,7 +159,7 @@ Evaluation methods:
 
 * **Automated validation.** Every pull request runs the full CI suite: markdown and frontmatter linting, model-reference checks, link checking, PowerShell and Python linting, YAML validation, collection-metadata and marketplace checks, dependency-pinning and action-version checks, copyright-header checks, and skill-structure validation.
 * **Test suites.** Pester tests cover the PowerShell scripts and pytest covers the Python skill code. Results are written to the repository's logs directory and gate merge.
-* **Prompt evaluation.** The Prompt Evaluator and Prompt Tester agents check prompt and agent files against quality criteria in a sandbox before changes land.
+* **Prompt-engineering evaluation.** HVE Builder uses independent static review, fidelity-labeled behavior testing, and non-mutating host validation. Reports distinguish contained simulation from native behavior and retain human review as the final gate.
 * **Human review.** A maintainer reviews every change. Supply-chain and dependency findings surface to that reviewer.
 
 Evaluation results: the CI suite and human review gate merge, so a file that fails any check does not ship. This verifies file quality (structure, links, conventions, pinned dependencies). It does not verify how a downstream model behaves on the file, which depends on the host platform and sits outside HVE Core's control.
@@ -233,18 +235,22 @@ The five appendices below cover the agents whose output most influences downstre
 * **Specific limitations:** The agent does not run Scorecard live, does not produce signed attestations, and does not generate SBOMs. Capability reads come from operator-supplied evidence; the agent cannot independently verify a claim that, for example, a workflow uses pinned action SHAs. Standards versions are pinned to the embedded mapping; recheck against current OpenSSF and SLSA documentation before publication.
 * **Specific considerations:** Treat the projected Scorecard score as an estimate based on the operator-reported state. Actual scores depend on the live tooling configuration, recent commit history, and Scorecard heuristics that may evolve.
 
-### Appendix 4: Code-review agents (full, functional, standards)
+### Appendix 4: Code Review agent
 
 * **Agent files:**
-  * `.github/agents/coding-standards/code-review-full.agent.md`
-  * `.github/agents/coding-standards/code-review-functional.agent.md`
-  * `.github/agents/coding-standards/code-review-standards.agent.md`
-* **Purpose:** Three sibling agents that read a diff or pull request scope and produce structured review feedback against repository conventions, language-specific instructions, and a configurable verdict rubric. The "full" agent runs both functional and standards passes; "functional" focuses on behavior, correctness, and design; "standards" focuses on style, idiom, and convention.
+  * `.github/agents/coding-standards/code-review.agent.md`
+  * `.github/agents/coding-standards/subagents/code-review-functional.agent.md`
+  * `.github/agents/coding-standards/subagents/code-review-standards.agent.md`
+  * `.github/agents/coding-standards/subagents/code-review-accessibility.agent.md`
+  * `.github/agents/coding-standards/subagents/code-review-security.agent.md`
+  * `.github/agents/coding-standards/subagents/code-review-pr.agent.md`
+* **Purpose:** A single human-gated orchestrator that reads a diff or pull request scope, confirms scope with the operator, lets the operator choose which perspectives run and how deeply, and merges the results into one structured review document.
+  It dispatches up to five thin perspective subagents: functional (behavior, correctness, design), standards (style, idiom, convention), accessibility (UI, markup, and document surfaces), security (auth, crypto, parsing, deserialization, secrets, networking), and pr (pull request readiness). Selecting `full` runs every perspective; the depth tier (`basic`, `standard`, or `comprehensive`) applies the same verification rigor to whichever perspectives were selected.
 * **Inputs:** Diff scope (branch, commit range, or attached file set), language-specific instruction files under `.github/instructions/coding-standards/`, and repository copilot instructions.
-* **Outputs:** A markdown review document under `.copilot-tracking/reviews/code-reviews/{date}/` containing per-finding categorization, severity, verdict normalization, and a summary. Outputs carry the AI-assistance disclosure footer.
-* **Intended uses:** Pre-pull-request self-review, draft review feedback for a human reviewer to vet, and standards-coverage spot checks.
-* **Specific limitations:** The agents do not execute code, do not run tests, do not connect to a debugger, and do not reason about runtime behavior beyond what the diff and the embedded instructions allow. They cannot verify security claims, cannot confirm test coverage figures, and cannot validate that an external dependency behaves as documented. They are pattern-matching reviewers, not human reviewers.
-* **Specific considerations:** Treat verdicts as suggestions. The agents may produce false positives (flagging conformant code as non-conformant) and false negatives (missing real issues). A human code-reviewer remains responsible for the merge decision. Do not configure the agent as a required-status check that blocks merge without a human in the loop.
+* **Outputs:** A markdown review document under `.copilot-tracking/reviews/code-reviews/{branch-slug}/` containing per-finding categorization, severity, verdict normalization, and a summary, alongside a `metadata.json` record. Outputs carry the AI-assistance disclosure footer.
+* **Intended uses:** Pre-pull-request self-review, draft review feedback for a human reviewer to vet, and perspective-specific coverage spot checks.
+* **Specific limitations:** The agent does not execute code, does not run tests, does not connect to a debugger, and does not reason about runtime behavior beyond what the diff and the embedded instructions allow. It cannot verify security claims, cannot confirm test coverage figures, and cannot validate that an external dependency behaves as documented. The perspective subagents are pattern-matching reviewers, not human reviewers.
+* **Specific considerations:** Treat verdicts as suggestions. The agent may produce false positives (flagging conformant code as non-conformant) and false negatives (missing real issues). A human code-reviewer remains responsible for the merge decision. Do not configure the agent as a required-status check that blocks merge without a human in the loop.
 
 ### Appendix 5: Customer Card Render skill
 

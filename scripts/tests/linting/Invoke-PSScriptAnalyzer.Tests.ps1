@@ -23,6 +23,11 @@ BeforeAll {
 
     . $script:ScriptPath
 
+    # Shared "module installed" stub for the PSScriptAnalyzer availability guard.
+    # The version must match the RequiredVersion hardcoded in Invoke-PSScriptAnalyzer.ps1
+    # so the guard's `.Version -eq '1.25.0'` check passes and the install path is skipped.
+    $script:MockInstalledModule = { [PSCustomObject]@{ Name = 'PSScriptAnalyzer'; Version = [version]'1.25.0' } }
+
     # The script resolves each discovered file to an absolute path before handing
     # it to the isolated analyzer, so file-discovery mocks must return a real,
     # resolvable path. Create one sample script for the mocks to return.
@@ -43,7 +48,7 @@ AfterAll {
 Describe 'Invoke-PSScriptAnalyzer Parameter Validation' -Tag 'Unit' {
     Context 'ChangedFilesOnly parameter' {
         BeforeEach {
-            Mock Get-Module { $true } -ParameterFilter { $Name -eq 'PSScriptAnalyzer' }
+            Mock Get-Module $script:MockInstalledModule -ParameterFilter { $Name -eq 'PSScriptAnalyzer' }
             Mock Invoke-ScriptAnalyzerIsolated { @() }
             Mock Get-ChangedFilesFromGit { @($script:SampleScript) }
             Mock Get-FilesRecursive { @() }
@@ -65,7 +70,7 @@ Describe 'Invoke-PSScriptAnalyzer Parameter Validation' -Tag 'Unit' {
 
     Context 'ConfigPath parameter' {
         BeforeEach {
-            Mock Get-Module { $true } -ParameterFilter { $Name -eq 'PSScriptAnalyzer' }
+            Mock Get-Module $script:MockInstalledModule -ParameterFilter { $Name -eq 'PSScriptAnalyzer' }
             Mock Invoke-ScriptAnalyzerIsolated { @() }
             Mock Get-FilesRecursive { @() }
             Mock Set-CIOutput {}
@@ -88,7 +93,7 @@ Describe 'Invoke-PSScriptAnalyzer Parameter Validation' -Tag 'Unit' {
 
     Context 'OutputPath parameter' {
         BeforeEach {
-            Mock Get-Module { $true } -ParameterFilter { $Name -eq 'PSScriptAnalyzer' }
+            Mock Get-Module $script:MockInstalledModule -ParameterFilter { $Name -eq 'PSScriptAnalyzer' }
             Mock Invoke-ScriptAnalyzerIsolated { @() }
             Mock Get-FilesRecursive { @() }
             Mock Set-CIOutput {}
@@ -126,7 +131,7 @@ Describe 'PSScriptAnalyzer Module Availability' -Tag 'Unit' {
 
     Context 'Module installed' {
         BeforeEach {
-            Mock Get-Module { $true } -ParameterFilter { $Name -eq 'PSScriptAnalyzer' }
+            Mock Get-Module $script:MockInstalledModule -ParameterFilter { $Name -eq 'PSScriptAnalyzer' }
             Mock Invoke-ScriptAnalyzerIsolated { @() }
             Mock Get-FilesRecursive { @() }
             Mock Set-CIOutput {}
@@ -149,7 +154,7 @@ Describe 'PSScriptAnalyzer Module Availability' -Tag 'Unit' {
 Describe 'File Discovery' -Tag 'Unit' {
     Context 'All files mode' {
         BeforeEach {
-            Mock Get-Module { $true } -ParameterFilter { $Name -eq 'PSScriptAnalyzer' }
+            Mock Get-Module $script:MockInstalledModule -ParameterFilter { $Name -eq 'PSScriptAnalyzer' }
             Mock Invoke-ScriptAnalyzerIsolated { @() }
             Mock Set-CIOutput {}
             Mock Set-CIEnv {}
@@ -170,7 +175,7 @@ Describe 'File Discovery' -Tag 'Unit' {
 
     Context 'Changed files only mode' {
         BeforeEach {
-            Mock Get-Module { $true } -ParameterFilter { $Name -eq 'PSScriptAnalyzer' }
+            Mock Get-Module $script:MockInstalledModule -ParameterFilter { $Name -eq 'PSScriptAnalyzer' }
             Mock Invoke-ScriptAnalyzerIsolated { @() }
             Mock Get-FilesRecursive { @() }
             Mock Set-CIOutput {}
@@ -209,7 +214,7 @@ Describe 'File Discovery' -Tag 'Unit' {
 Describe 'CI Integration' -Tag 'Unit' {
     Context 'Write-CIAnnotation calls' {
         BeforeEach {
-            Mock Get-Module { $true } -ParameterFilter { $Name -eq 'PSScriptAnalyzer' }
+            Mock Get-Module $script:MockInstalledModule -ParameterFilter { $Name -eq 'PSScriptAnalyzer' }
             Mock Get-FilesRecursive { @($script:SampleScript) }
             Mock Set-CIOutput {}
             Mock Set-CIEnv {}
@@ -262,7 +267,7 @@ Describe 'Output Generation' -Tag 'Unit' {
 
     Context 'JSON output file' {
         BeforeEach {
-            Mock Get-Module { $true } -ParameterFilter { $Name -eq 'PSScriptAnalyzer' }
+            Mock Get-Module $script:MockInstalledModule -ParameterFilter { $Name -eq 'PSScriptAnalyzer' }
             Mock Get-FilesRecursive { @($script:SampleScript) }
             Mock Set-CIOutput {}
             Mock Set-CIEnv {}
@@ -314,7 +319,7 @@ Describe 'Output Generation' -Tag 'Unit' {
 Describe 'Exit Code Handling' -Tag 'Unit' {
     Context 'No issues found' {
         BeforeEach {
-            Mock Get-Module { $true } -ParameterFilter { $Name -eq 'PSScriptAnalyzer' }
+            Mock Get-Module $script:MockInstalledModule -ParameterFilter { $Name -eq 'PSScriptAnalyzer' }
             Mock Get-FilesRecursive { @() }
             Mock Set-CIOutput {}
             Mock Set-CIEnv {}
@@ -331,7 +336,7 @@ Describe 'Exit Code Handling' -Tag 'Unit' {
 
     Context 'Issues found' {
         BeforeEach {
-            Mock Get-Module { $true } -ParameterFilter { $Name -eq 'PSScriptAnalyzer' }
+            Mock Get-Module $script:MockInstalledModule -ParameterFilter { $Name -eq 'PSScriptAnalyzer' }
             Mock Get-FilesRecursive { @($script:SampleScript) }
             Mock Set-CIOutput {}
             Mock Set-CIEnv {}

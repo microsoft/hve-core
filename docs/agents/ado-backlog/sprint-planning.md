@@ -2,7 +2,7 @@
 title: Sprint Planning Workflow
 description: Organize triaged work items into Azure DevOps iterations with coverage analysis, capacity tracking, and gap detection
 author: Microsoft
-ms.date: 2026-02-26
+ms.date: 2026-06-26
 ms.topic: tutorial
 keywords:
   - azure devops backlog manager
@@ -81,9 +81,8 @@ Burndown metrics appear when `CompletedWork` data is available, showing original
 
 ```text
 .copilot-tracking/workitems/sprint/<iteration-kebab>/
-├── planning-log.md     # Progress tracking and analysis results
-├── work-items.md       # Iteration mapping and capacity review
-└── handoff.md          # Execution-ready assignments
+├── planning-log.md   # Progress tracking and analysis results
+└── sprint-plan.md    # Iteration mapping, coverage matrices, and capacity analysis
 ```
 
 ## How to Use

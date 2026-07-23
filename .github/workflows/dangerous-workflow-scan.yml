@@ -1,0 +1,128 @@
+# Copyright (c) 2026 Microsoft Corporation. All rights reserved.
+# SPDX-License-Identifier: MIT
+
+name: Dangerous Workflow Scan
+on:
+  workflow_call:
+    inputs:
+      soft-fail:
+        description: 'Continue on violations instead of failing'
+        required: false
+        type: boolean
+        default: false
+      upload-sarif:
+        description: 'Upload SARIF results to GitHub Security tab'
+        required: false
+        type: boolean
+        default: true
+      upload-artifact:
+        description: 'Upload results as workflow artifact'
+        required: false
+        type: boolean
+        default: true
+      poutine-soft-fail:
+        description: 'Run Poutine as advisory (do not fail the job on Poutine findings)'
+        required: false
+        type: boolean
+        default: true
+    outputs:
+      violation-count:
+        description: 'Number of dangerous workflow findings'
+        value: ${{ jobs.dangerous-workflow-check.outputs.violation-count }}
+      is-compliant:
+        description: 'Whether the workflow scan found no violations'
+        value: ${{ jobs.dangerous-workflow-check.outputs.is-compliant }}
+
+permissions:
+  contents: read
+
+jobs:
+  dangerous-workflow-check:
+    name: Dangerous Workflow Check
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write  # Required for SARIF upload to Security tab
+    outputs:
+      violation-count: ${{ steps.scan.outputs.violation-count }}
+      is-compliant: ${{ steps.scan.outputs.is-compliant }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Run Dangerous Workflow Validation
+        id: scan
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path logs | Out-Null
+          $params = @{
+            Path       = '.github/workflows'
+            Format     = 'sarif'
+            OutputPath = 'logs/dangerous-workflow-results.sarif'
+          }
+          if ('${{ inputs.soft-fail }}' -ne 'true') {
+            $params['FailOnViolation'] = $true
+          }
+          ./scripts/security/Test-DangerousWorkflow.ps1 @params
+
+          if (Test-Path 'logs/dangerous-workflow-results.sarif') {
+            $sarif = Get-Content 'logs/dangerous-workflow-results.sarif' | ConvertFrom-Json
+            $violationCount = @($sarif.runs[0].results).Count
+            $isCompliant = $violationCount -eq 0
+
+            "violation-count=$violationCount" >> $env:GITHUB_OUTPUT
+            "is-compliant=$($isCompliant.ToString().ToLower())" >> $env:GITHUB_OUTPUT
+          }
+
+      - name: Upload SARIF results
+        if: always() && inputs.upload-sarif
+        uses: github/codeql-action/upload-sarif@ce729e4d353d580e6cacd6a8cf2921b72e5e310a # v3.27.0
+        with:
+          sarif_file: logs/dangerous-workflow-results.sarif
+          category: dangerous-workflow
+        continue-on-error: true
+
+      - name: Upload results artifact
+        if: always() && inputs.upload-artifact
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: dangerous-workflow-results
+          path: logs/dangerous-workflow-results.*
+          retention-days: 90
+        continue-on-error: true
+
+  poutine-scan:
+    name: Poutine Supply Chain Scan
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write  # Required for SARIF upload to Security tab
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Run Poutine analysis
+        id: poutine
+        continue-on-error: ${{ inputs.poutine-soft-fail }}
+        uses: boostsecurityio/poutine-action@e240ebd3eff8b2db5a8e5f6b28f58739d7db2247 # v1.1.4
+
+      - name: Upload Poutine SARIF results
+        if: always() && inputs.upload-sarif
+        uses: github/codeql-action/upload-sarif@ce729e4d353d580e6cacd6a8cf2921b72e5e310a # v3.27.0
+        with:
+          sarif_file: results.sarif
+          category: poutine
+        continue-on-error: true
+
+      - name: Upload Poutine results artifact
+        if: always() && inputs.upload-artifact
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: poutine-results
+          path: results.sarif
+          retention-days: 90
+        continue-on-error: true

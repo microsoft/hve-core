@@ -73,10 +73,14 @@ Input modes:
 
 * Treat difficulty as dynamic: Simple, Medium, Medium-hard, or Challenging. Escalate to the heavier document-backed path when later findings show more complexity.
 * Re-enter the earliest affected phase when validation reveals blocking issues or when Discover suggests additional work.
+* During Review, build a changed-artifact validation decision matrix before selecting checks. For each changed artifact category, record the likely affected behavior, the relevant local validation or equivalent inspection, whether the check is required for this task, and the status as considered, run, skipped, unavailable, or out of scope.
+* Use the matrix to choose the narrowest validation that can falsify the change, then broaden only when shared behavior, cross-artifact contracts, generated outputs, configuration, or release readiness is affected.
+* For readiness tasks, review affected-behavior coverage before finalizing. Identify the behaviors or contracts touched by the changes, map each to an existing check or equivalent evidence, add or update coverage when it is in scope, and document any deferred coverage with the reason and risk.
 * Retry failed subagent calls with a more specific prompt before changing approach.
 * Run an additional research subagent when missing context is blocking the next gate.
 * Fall back to direct tool usage only after subagent retries fail, and only for the smallest safe scope that still maintains the required validation gate.
-* Keep the response brief and evidence-first: phase status, iteration count, artifact paths, validation status, review outcome, and Suggested Next Work.
+* Keep the response brief and evidence-first: phase status, iteration count, artifact paths, validation coverage, review outcome, and Suggested Next Work.
+* Report validation coverage with enough detail to audit omissions: checks considered, checks run, pass or fail results, skipped checks with rationale, unavailable checks with the blocking condition, and out-of-scope checks with the boundary that excluded them.
 * If review outcome is Complete, include a commit message in a markdown code block following `.github/instructions/hve-core/commit-message.instructions.md`, excluding `.copilot-tracking` files.
 * If review outcome is Iterate or Escalate, continue from the earliest affected phase and still complete Discover before handing off.
 * Do not end a run without completing Discover, even when the next action is obvious.

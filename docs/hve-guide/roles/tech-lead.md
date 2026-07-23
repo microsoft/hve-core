@@ -3,7 +3,7 @@ title: Tech Lead Guide
 description: HVE Core support for tech leads and architects driving architecture, code quality, and prompt engineering standards
 sidebar_position: 4
 author: Microsoft
-ms.date: 2026-06-17
+ms.date: 2026-06-26
 ms.topic: how-to
 keywords:
   - tech lead
@@ -47,7 +47,7 @@ This guide is for you if you make architecture decisions, set coding standards, 
 1. Stage 2: Discovery. Use the **task-researcher** agent to evaluate design options, research external patterns, and gather architectural evidence.
 2. Stage 3: Product Definition. Create architecture decision records with the **adr-creation** agent and generate diagrams with the **architecture-diagrams** skill.
 3. Stage 6: Implementation. Guide engineers using coding standards (auto-activated by file type) and prompt engineering tools for AI artifact creation.
-4. Stage 7: Review. Run the **pr-review** agent for automated pull request feedback and the **task-reviewer** agent for implementation-against-plan validation.
+4. Stage 7: Review. Run the **code-review** agent for automated pull request feedback and the **task-reviewer** agent for implementation-against-plan validation.
 5. Stage 9: Operations. Use `/prompt-analyze` and `/prompt-refactor` to maintain and evolve prompt engineering artifacts as team practices mature.
 
 ## Starter Prompts
@@ -70,7 +70,7 @@ event bus to worker services, including the dead-letter queue and
 monitoring integration. Use ASCII block diagram syntax.
 ```
 
-Select **pr-review** agent:
+Select **code-review** agent:
 
 ```text
 Review the current pull request focusing on architecture alignment with
@@ -97,7 +97,7 @@ specificity, and alignment with repository conventions.
 |---------------------------|-------------------------------------------------------|-------------------------------------------------|
 | **adr-creation**          | Architecture decision record creation                 | Agent file                                      |
 | **architecture-diagrams** | ASCII architecture diagram generation                 | Skill file                                      |
-| **pr-review**             | Pull request review automation                        | Agent file                                      |
+| **code-review**           | Pull request review automation                        | Agent file                                      |
 | **task-reviewer**         | Implementation review against plan                    | [Task Reviewer](../../rpi/task-reviewer.md)     |
 | **prompt-builder**        | Prompt engineering artifact creation                  | Agent file                                      |
 | **task-researcher**       | Deep codebase and architecture research               | [Task Researcher](../../rpi/task-researcher.md) |
@@ -119,7 +119,7 @@ Auto-activated instructions apply coding standards based on file type: C# (`*.cs
 | Do                                                                      | Don't                                                          |
 |-------------------------------------------------------------------------|----------------------------------------------------------------|
 | Create ADRs for significant design decisions                            | Make architectural choices without documented rationale        |
-| Use the **pr-review** agent to supplement manual code reviews           | Rely solely on automated review without human judgment         |
+| Use the **code-review** agent to supplement manual code reviews         | Rely solely on automated review without human judgment         |
 | Let coding standards auto-activate based on file type                   | Manually apply rules that already have instruction files       |
 | Use `/prompt-analyze` before refactoring AI artifacts                   | Rewrite prompts without understanding their current structure  |
 | Research with the **task-researcher** agent before architecture changes | Design without investigating existing patterns and constraints |

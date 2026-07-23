@@ -1,15 +1,12 @@
 // Copyright (c) 2026 Microsoft Corporation. All rights reserved.
 // SPDX-License-Identifier: MIT
 import { test, expect } from '@playwright/test';
+import { SITE_PAGES, visitInvariantPage } from './_helpers/a11yInvariants';
 
-// Curated key pages mirrored from .pa11yci for page parity (the 404 entry is
-// omitted because reflow/resize assertions target real content pages).
-const PAGES = [
-  { name: 'home', path: '/hve-core/' },
-  { name: 'docs', path: '/hve-core/docs/' },
-  { name: 'getting-started', path: '/hve-core/docs/getting-started/' },
-  { name: 'content (task-researcher)', path: '/hve-core/docs/rpi/task-researcher/' },
-];
+// Curated key pages mirrored from the site-crawl spec for page parity (the
+// 404 entry is omitted because reflow/resize assertions target real content
+// pages).
+const PAGES = SITE_PAGES.filter(({ path }) => path !== '/hve-core/this-page-does-not-exist/');
 
 // Sub-pixel rounding can leave scrollWidth one pixel beyond clientWidth on
 // otherwise-conformant layouts, so a 1px tolerance absorbs that noise.
@@ -25,7 +22,7 @@ test.describe('Reflow at 320 CSS px (WCAG 1.4.10)', () => {
 
   for (const { name, path } of PAGES) {
     test(`${name} has no horizontal scroll`, async ({ page }) => {
-      await page.goto(path);
+      await visitInvariantPage(page, { name, path });
 
       await expect(page.getByRole('main')).toBeVisible();
       expect(await page.evaluate(hasNoHorizontalScroll)).toBeTruthy();
@@ -39,7 +36,7 @@ test.describe('Reflow at 320 CSS px (WCAG 1.4.10)', () => {
 test.describe('Resize text to 200% (WCAG 1.4.4)', () => {
   for (const { name, path } of PAGES) {
     test(`${name} stays usable at 200% text size`, async ({ page }) => {
-      await page.goto(path);
+      await visitInvariantPage(page, { name, path });
 
       await page.evaluate(() => {
         document.documentElement.style.fontSize = '200%';

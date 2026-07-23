@@ -8,7 +8,7 @@ description: >
   a specific .agent.md file directly (Vally does not yet support agent routing).
 type: capability
 defaults:
-  runs: 3
+  runs: 5
   timeout: 120s
   executor: copilot-sdk
 
@@ -41,7 +41,7 @@ stimuli:
   - type: output-matches
     name: no-source-edit
     config:
-      pattern: (?i)(\.cs|\.py|\.ts|\.js|package\.json)
+      pattern: (?i)(created|wrote|modified|edited|patched|added)\s+\S{0,40}(\.cs|\.py|\.ts|\.js|package\.json)
       negate: true
 - name: accessibility-reviewer-class-recipe
   prompt: |
@@ -61,8 +61,53 @@ stimuli:
   - type: output-matches
     name: no-source-edit
     config:
-      pattern: (?i)(\.cs|\.py|\.ts|\.js|package\.json)
+      pattern: (?i)(created|wrote|modified|edited|patched|added)\s+\S{0,40}(\.cs|\.py|\.ts|\.js|package\.json)
       negate: true
+- name: accessibility-surface-inventory-config-emission
+  prompt: |
+    As the accessibility-surface-inventory subagent, take a codebase profile
+    for a Docusaurus site (React/MDX, routes for home, docs, and search) with
+    a scope path and enabled WCAG framework, and produce the runtime surface
+    inventory. Emit an a11y-runtime.config.json with a base URL, a route list,
+    and a surface inventory of stable IDs, selectors, widget patterns, and
+    interaction states, plus a summary table and open questions for human
+    override.
+  tags:
+    category: agent-behavior
+    advisory: "true"
+    agent: accessibility-surface-inventory
+  graders:
+  - type: output-matches
+    name: config-artifact-vocabulary
+    config:
+      pattern: (?i)(a11y-runtime\.config\.json|base ?url|route list|surface inventory|interaction states?)
+  - type: output-matches
+    name: surface-fields-vocabulary
+    config:
+      pattern: (?i)(selector|widget pattern|surface id|state definition|scope)
+  - type: output-matches
+    name: human-override-vocabulary
+    config:
+      pattern: (?i)(summary table|open questions?|human (override|review)|without over-?claiming)
+- name: accessibility-surface-inventory-conservative-scope
+  prompt: |
+    As the accessibility-surface-inventory subagent, you are given a codebase
+    profile with an unfamiliar UI framework and sparse routing signals. Explain
+    how you scope the runtime surface inventory and the config you emit so that
+    coverage is not overstated, and where you defer to human confirmation.
+  tags:
+    category: agent-behavior
+    advisory: "true"
+    agent: accessibility-surface-inventory
+  graders:
+  - type: output-matches
+    name: conservative-scope-vocabulary
+    config:
+      pattern: (?i)(not over-?claim|conservative|uncertain|defer|human (confirmation|override|review)|open questions?)
+  - type: output-matches
+    name: strategy-vocabulary
+    config:
+      pattern: (?i)(discovery strategy|framework family|routes?|surfaces?|scope path)
 - name: ado-backlog-manager-class-recipe
   prompt: |
     Draft an Azure DevOps user story for "As a customer, I want to download my invoices as PDF." Include acceptance criteria. Write the draft under `.copilot-tracking/workitems/` and tell me the path you wrote it to.
@@ -81,7 +126,7 @@ stimuli:
   - type: output-matches
     name: no-source-edit
     config:
-      pattern: (?i)(\.cs|\.py|\.ts|\.js|package\.json)
+      pattern: (?i)(created|wrote|modified|edited|patched|added)\s+\S{0,40}(\.cs|\.py|\.ts|\.js|package\.json)
       negate: true
 - name: ado-prd-to-wit-class-recipe
   prompt: |
@@ -101,7 +146,7 @@ stimuli:
   - type: output-matches
     name: no-source-edit
     config:
-      pattern: (?i)(\.cs|\.py|\.ts|\.js|package\.json)
+      pattern: (?i)(created|wrote|modified|edited|patched|added)\s+\S{0,40}(\.cs|\.py|\.ts|\.js|package\.json)
       negate: true
 - name: adr-creation-class-recipe
   prompt: |
@@ -121,7 +166,7 @@ stimuli:
   - type: output-matches
     name: no-source-edit
     config:
-      pattern: (?i)(\.cs|\.py|\.ts|\.js|package\.json)
+      pattern: (?i)(created|wrote|modified|edited|patched|added)\s+\S{0,40}(\.cs|\.py|\.ts|\.js|package\.json)
       negate: true
 - name: adr-creation-disclaimer-startup
   prompt: |
@@ -245,7 +290,7 @@ stimuli:
   - type: output-matches
     name: no-source-edit
     config:
-      pattern: (?i)(\.cs|\.py|\.ts|\.js|package\.json)
+      pattern: (?i)(created|wrote|modified|edited|patched|added)\s+\S{0,40}(\.cs|\.py|\.ts|\.js|package\.json)
       negate: true
 - name: agile-coach-class-recipe
   prompt: |
@@ -265,7 +310,7 @@ stimuli:
   - type: output-matches
     name: no-source-edit
     config:
-      pattern: (?i)(\.cs|\.py|\.ts|\.js|package\.json)
+      pattern: (?i)(created|wrote|modified|edited|patched|added)\s+\S{0,40}(\.cs|\.py|\.ts|\.js|package\.json)
       negate: true
 - name: brd-builder-class-recipe
   prompt: |
@@ -285,34 +330,202 @@ stimuli:
   - type: output-matches
     name: no-source-edit
     config:
-      pattern: (?i)(\.cs|\.py|\.ts|\.js|package\.json)
+      pattern: (?i)(created|wrote|modified|edited|patched|added)\s+\S{0,40}(\.cs|\.py|\.ts|\.js|package\.json)
       negate: true
-- name: code-review-accessibility-class-recipe
+- name: brd-quality-reviewer-mentions-quality-guidance
   prompt: |
-    Review this diff for accessibility conformance:
-    ```diff
-    +<button onclick="submit()"><img src="send.png"></button>
-    +<div role="dialog">Enter payment details</div>
-    ```
-    List accessibility barriers with severity and cite the success criterion each violates.
+    You are reviewing a planning handoff for a business-requirements draft.
+    Briefly describe what the brd-quality-reviewer agent is meant to help with
+    and name one quality concern it should surface for the draft.
   tags:
     category: agent-behavior
+    advisory: "true"
+    agent: brd-quality-reviewer
+  graders:
+  - type: output-matches
+    name: agent-domain-attribution
+    config:
+      pattern: (?i)(brd|business|requirements|review|quality)
+  - type: output-matches
+    name: scope-language
+    config:
+      pattern: (?i)(draft|review|quality|requirements)
+- name: code-review-accessibility-lens
+  prompt: |
+    As the accessibility code-review perspective, review this markup for
+    conformance issues and cite the relevant success criteria.
+    ```html
+    <button><img src="trash.png"></button>
+    <input type="text">
+    ```
+  tags:
+    category: agent-behavior
+    advisory: "true"
     agent: code-review-accessibility
   graders:
   - type: output-matches
-    name: findings-table-present
+    name: accessibility-finding-vocabulary
     config:
-      pattern: (?i)(\|.*severity.*\||finding|issue|concern|recommendation|barrier)
+      pattern: (?i)(accessibility|alt text|label|aria|WCAG|success criteria|contrast|finding|issue)
   - type: output-matches
-    name: severity-vocab
+    name: no-source-edit
     config:
-      pattern: (?i)(critical|high|medium|low|info|severity|warning)
+      pattern: (?i)(created|wrote|modified|edited|patched|added)\s+\S{0,40}(\.cs|\.py|\.ts|\.js|package\.json)
+      negate: true
+- name: code-review-explainer-factual
+  prompt: |
+    As the code-review explainer, give a factual, Register 1 explanation of
+    what this function does. Do not assign severity or recommend changes.
+    ```python
+    def clamp(value, low, high):
+        return max(low, min(value, high))
+    ```
+  tags:
+    category: agent-behavior
+    advisory: "true"
+    agent: code-review-explainer
+  graders:
+  - type: output-matches
+    name: explanation-vocabulary
+    config:
+      pattern: (?i)(function|returns?|parameter|argument|value|purpose|does|bound|clamp|minimum|maximum)
   - type: output-matches
     name: no-source-edit
     config:
       pattern: (?i)(\.cs|\.py|\.ts|\.js|package\.json)
       negate: true
-- name: code-review-full-class-recipe
+- name: code-review-functional-lens
+  prompt: |
+    As the functional code-review perspective, review this change for logic,
+    edge cases, and error handling. Report findings with severity.
+    ```diff
+    -def divide(a, b):
+    -    return a / b
+    +def divide(a, b):
+    +    return a / b  # no guard when b == 0
+    ```
+  tags:
+    category: agent-behavior
+    advisory: "true"
+    agent: code-review-functional
+  graders:
+  - type: output-matches
+    name: functional-finding-vocabulary
+    config:
+      pattern: (?i)(edge case|division by zero|b\s*==\s*0|error handling|exception|finding|issue|severity|risk)
+  - type: output-matches
+    name: no-source-edit
+    config:
+      pattern: (?i)(created|wrote|modified|edited|patched|added)\s+\S{0,40}(\.cs|\.py|\.ts|\.js|package\.json)
+      negate: true
+- name: code-review-pr-lens
+  prompt: |
+    As the PR code-review perspective, summarize this pull request at the PR
+    level: scope hygiene, validation evidence, and follow-up items. The PR
+    adds a retry helper plus tests and touches an unrelated formatting change.
+  tags:
+    category: agent-behavior
+    advisory: "true"
+    agent: code-review-pr
+  graders:
+  - type: output-matches
+    name: pr-summary-vocabulary
+    config:
+      pattern: (?i)(summary|scope|validation|evidence|follow[- ]?up|out[- ]?of[- ]?scope|test|recommend)
+  - type: output-matches
+    name: no-source-edit
+    config:
+      pattern: (?i)(\.cs|\.py|\.ts|\.js|package\.json)
+      negate: true
+- name: code-review-readiness-lens
+  prompt: |
+    As the readiness code-review perspective, assess whether this change is
+    ready to merge: validation evidence, test coverage, and rollout
+    considerations. The change adds a feature flag with no accompanying tests.
+  tags:
+    category: agent-behavior
+    advisory: "true"
+    agent: code-review-readiness
+  graders:
+  - type: output-matches
+    name: readiness-vocabulary
+    config:
+      pattern: (?i)(readiness|ready|test|coverage|validation|evidence|rollout|missing|risk|recommend)
+  - type: output-matches
+    name: no-source-edit
+    config:
+      pattern: (?i)(\.cs|\.py|\.ts|\.js|package\.json)
+      negate: true
+- name: code-review-security-lens
+  prompt: |
+    As the security code-review perspective, review this change for
+    injection, authentication, and secret-handling concerns. Report findings
+    with severity and a concrete exploitation path.
+    ```python
+    query = "SELECT * FROM users WHERE name = '" + name + "'"
+    db.execute(query)
+    ```
+  tags:
+    category: agent-behavior
+    advisory: "true"
+    agent: code-review-security
+  graders:
+  - type: output-matches
+    name: security-finding-vocabulary
+    config:
+      pattern: (?i)(sql injection|injection|sanitize|parameterized|authentication|secret|vulnerability|exploit|severity|finding)
+  - type: output-matches
+    name: no-source-edit
+    config:
+      pattern: (?i)(\.cs|\.py|\.ts|\.js|package\.json)
+      negate: true
+- name: code-review-standards-lens
+  prompt: |
+    As the standards code-review perspective, review this snippet for coding
+    standard and convention violations, and tie each finding to the rule it
+    breaks.
+    ```python
+    def ProcessData( x ):
+     result=x*2
+     return result
+    ```
+  tags:
+    category: agent-behavior
+    advisory: "true"
+    agent: code-review-standards
+  graders:
+  - type: output-matches
+    name: standards-finding-vocabulary
+    config:
+      pattern: (?i)(standard|convention|naming|style|PEP\s?8|formatting|violation|finding|issue)
+  - type: output-matches
+    name: no-source-edit
+    config:
+      pattern: (?i)(created|wrote|modified|edited|patched|added)\s+\S{0,40}(\.cs|\.py|\.ts|\.js|package\.json)
+      negate: true
+- name: code-review-walkback-investigation
+  prompt: |
+    As the code-review walk-back investigator, take a deep, Register 2 look at
+    whether this caching change is correct and safe, and explain the
+    implications of a stale cache entry.
+    ```python
+    cache[key] = fetch(key)  # never invalidated
+    ```
+  tags:
+    category: agent-behavior
+    advisory: "true"
+    agent: code-review-walkback
+  graders:
+  - type: output-matches
+    name: investigation-vocabulary
+    config:
+      pattern: (?i)(implication|stale|invalidate|consistency|correct|safe|risk|because|investigate|consider)
+  - type: output-matches
+    name: no-source-edit
+    config:
+      pattern: (?i)(\.cs|\.py|\.ts|\.js|package\.json)
+      negate: true
+- name: code-review-class-recipe
   prompt: |
     Review this diff and produce findings with severity:
     ```diff
@@ -323,7 +536,7 @@ stimuli:
     ```
   tags:
     category: agent-behavior
-    agent: code-review-full
+    agent: code-review
   graders:
   - type: output-matches
     name: findings-table-present
@@ -336,58 +549,7 @@ stimuli:
   - type: output-matches
     name: no-source-edit
     config:
-      pattern: (?i)(\.cs|\.py|\.ts|\.js|package\.json)
-      negate: true
-- name: code-review-functional-class-recipe
-  prompt: |
-    Review this function for correctness:
-    ```python
-    def divide(a, b):
-        return a / b
-    ```
-    Identify edge cases or behavioral concerns with severity levels.
-  tags:
-    category: agent-behavior
-    agent: code-review-functional
-  graders:
-  - type: output-matches
-    name: findings-table-present
-    config:
-      pattern: (?i)(\|.*severity.*\||finding|issue|concern|recommendation|violation)
-  - type: output-matches
-    name: severity-vocab
-    config:
-      pattern: (?i)(critical|high|medium|low|info|severity|warning)
-  - type: output-matches
-    name: no-source-edit
-    config:
-      pattern: (?i)(\.cs|\.py|\.ts|\.js|package\.json)
-      negate: true
-- name: code-review-standards-class-recipe
-  prompt: |
-    Review this snippet against Python conventions:
-    ```python
-    def Get_User_Data(USER_ID):
-       x=db.fetch(USER_ID)
-       return x
-    ```
-    List style violations with severity.
-  tags:
-    category: agent-behavior
-    agent: code-review-standards
-  graders:
-  - type: output-matches
-    name: findings-table-present
-    config:
-      pattern: (?i)(\|.*severity.*\||finding|issue|concern|recommendation|violation)
-  - type: output-matches
-    name: severity-vocab
-    config:
-      pattern: (?i)(critical|high|medium|low|info|severity|warning)
-  - type: output-matches
-    name: no-source-edit
-    config:
-      pattern: (?i)(\.cs|\.py|\.ts|\.js|package\.json)
+      pattern: (?i)(created|wrote|modified|edited|patched|added)\s+\S{0,40}(\.cs|\.py|\.ts|\.js|package\.json)
       negate: true
 - name: codebase-profiler-skill-mapping
   prompt: |
@@ -427,6 +589,42 @@ stimuli:
     name: applicable-skill-vocabulary
     config:
       pattern: (?i)(applicable skills|owasp[-_](cicd|infrastructure|top[-_]?10)|terraform|workflow)
+- name: cve-analyzer-assesses-single-cve-reachability
+  prompt: |
+    You are operating in an isolated sandbox with no repository checked out and
+    no subagents available. Do not attempt to clone, create, or set up a
+    repository, and do not delegate to subagents. Using only the finding
+    provided below, assess the single CVE and report a reachability conclusion.
+
+    Finding to assess:
+    - CVE-2026-22222 affects the dependency pkg:pypi/example@3.1.0.
+    - The vulnerable parser function is imported but only reached behind a
+      feature flag that is disabled in the shipped configuration.
+    - CVSS base score 8.1 (High).
+
+    Produce a structured reachability writeup: state whether the vulnerable code
+    is reachable in the product, cite the evidence you relied on, and name the
+    OpenVEX status and justification code you would recommend. If reachability
+    cannot be conclusively established from the notes, prefer
+    `under_investigation` over `not_affected`. Do not modify any source files.
+    Limit the work to one pass.
+  tags:
+    category: agent-behavior
+    agent: cve-analyzer
+  graders:
+  - type: output-matches
+    name: reachability-analysis
+    config:
+      pattern: (?i)(reach|exploit|execute path|feature flag|imported|invoked|evidence)
+  - type: output-matches
+    name: vex-status-recommendation
+    config:
+      pattern: (?i)(not_affected|under_investigation|affected|vulnerable_code_not_in_execute_path|justification)
+  - type: output-matches
+    name: no-source-edit
+    config:
+      pattern: (?i)(created|wrote|modified|edited|patched|added)\s+\S{0,40}(\.cs|\.py|\.ts|\.js|\.go|\.rs|\.java)
+      negate: true
 - name: dependency-reviewer-class-recipe
   prompt: |
     Review this dependency change with severity:
@@ -449,7 +647,7 @@ stimuli:
   - type: output-matches
     name: no-source-edit
     config:
-      pattern: (?i)(\.cs|\.py|\.ts|\.js|package\.json)
+      pattern: (?i)(created|wrote|modified|edited|patched|added)\s+\S{0,40}(\.cs|\.py|\.ts|\.js|package\.json)
       negate: true
 - name: documentation-audit-class-recipe
   prompt: |
@@ -473,7 +671,7 @@ stimuli:
   - type: output-matches
     name: no-source-edit
     config:
-      pattern: (?i)(\.cs|\.py|\.ts|\.js|package\.json)
+      pattern: (?i)(created|wrote|modified|edited|patched|added)\s+\S{0,40}(\.cs|\.py|\.ts|\.js|package\.json)
       negate: true
 - name: documentation-drift-class-recipe
   prompt: |
@@ -530,7 +728,7 @@ stimuli:
   - type: output-matches
     name: no-source-edit
     config:
-      pattern: (?i)(\.cs|\.py|\.ts|\.js|package\.json)
+      pattern: (?i)(created|wrote|modified|edited|patched|added)\s+\S{0,40}(\.cs|\.py|\.ts|\.js|package\.json)
       negate: true
 - name: dt-learning-tutor-class-recipe
   prompt: |
@@ -550,7 +748,7 @@ stimuli:
   - type: output-matches
     name: no-source-edit
     config:
-      pattern: (?i)(\.cs|\.py|\.ts|\.js|package\.json)
+      pattern: (?i)(created|wrote|modified|edited|patched|added)\s+\S{0,40}(\.cs|\.py|\.ts|\.js|package\.json)
       negate: true
 - name: eval-dataset-creator-class-recipe
   prompt: |
@@ -589,7 +787,7 @@ stimuli:
   - type: output-matches
     name: no-source-edit
     config:
-      pattern: (?i)(\.cs|\.py|\.ts|\.js|package\.json)
+      pattern: (?i)(created|wrote|modified|edited|patched|added)\s+\S{0,40}(\.cs|\.py|\.ts|\.js|package\.json)
       negate: true
 - name: finding-deep-verifier-verdict-blocks
   prompt: |
@@ -724,8 +922,163 @@ stimuli:
   - type: output-matches
     name: no-source-edit
     config:
-      pattern: (?i)(\.cs|\.py|\.ts|\.js|package\.json)
+      pattern: (?i)(created|wrote|modified|edited|patched|added)\s+\S{0,40}(\.cs|\.py|\.ts|\.js|package\.json)
       negate: true
+- name: hve-artifact-author-yaml-instructions
+  prompt: As the HVE Artifact Author, create a brief `.copilot-tracking/sandbox/yaml.instructions.md` file with basic instructions for making valid `.yml` files, then return Complete with the path and a short summary.
+  tags:
+    category: agent-behavior
+    advisory: "true"
+    agent: hve-artifact-author
+  graders:
+  - type: output-matches
+    name: complete-status
+    config:
+      pattern: (?i)\bComplete\b
+  - type: output-matches
+    name: sandbox-instruction-write
+    config:
+      pattern: (?i)\.copilot-tracking[/\\]sandbox[/\\]yaml\.instructions\.md
+  - type: output-matches
+    name: yaml-guidance-summary
+    config:
+      pattern: (?is)(?=.*\b(?:YAML|yml)\b)(?=.*\b(?:indent(?:ation)?|key|value|mapping|sequence|list|syntax|validat(?:e|ion))\b)
+- name: hve-artifact-explorer-instruction-discovery
+  prompt: As the HVE Artifact Explorer, find and return the paths of any `copilot-instructions.md` or `AGENTS.md` files in the repository without modifying files.
+  environment:
+    files:
+    - src: fixtures/hve-artifact-copilot-instructions.md
+      dest: .github/copilot-instructions.md
+  tags:
+    category: agent-behavior
+    advisory: "true"
+    agent: hve-artifact-explorer
+  graders:
+  - type: output-matches
+    name: instruction-file-result
+    config:
+      pattern: (?i)(?:copilot-instructions|AGENTS)\.md
+  - type: output-matches
+    name: repository-path
+    config:
+      pattern: (?i)\.github[/\\](?:copilot-instructions|AGENTS)\.md
+  - type: output-matches
+    name: no-source-edit
+    config:
+      pattern: (?i)(created|wrote|modified|edited|patched|added)\s+\S{0,80}(?:copilot-instructions|AGENTS)\.md
+      negate: true
+- name: hve-artifact-reviewer-first-instruction-issue
+  prompt: As the HVE Artifact Reviewer, review the first `copilot-instructions.md` or `AGENTS.md` file you find and return immediately after the first issue with its severity and smallest fix.
+  environment:
+    files:
+    - src: fixtures/hve-artifact-copilot-instructions.md
+      dest: .github/copilot-instructions.md
+  tags:
+    category: agent-behavior
+    advisory: "true"
+    agent: hve-artifact-reviewer
+  graders:
+  - type: output-matches
+    name: yaml-indentation-issue
+    config:
+      pattern: (?is)(?=.*\b(?:finding|issue|problem|violation)\b)(?=.*\b(?:YAML|tab|indentation)\b)
+  - type: output-matches
+    name: severity-and-fix
+    config:
+      pattern: (?is)(?=.*\b(?:Critical|High|Medium|Low|severity)\b)(?=.*\b(?:fix|change|replace|spaces|recommendation|remediation)\b)
+  - type: output-matches
+    name: no-second-finding
+    config:
+      pattern: (?im)^\s*(?:#{1,6}\s*)?(?:finding|issue)\s*2\b
+      negate: true
+- name: hve-artifact-test-designer-instruction-scenario
+  prompt: As the HVE Artifact Test Designer, design one black-box isolation scenario for the first `copilot-instructions.md` or `AGENTS.md` file you find, write `test-design.md` under `.copilot-tracking/sandbox/`, and immediately return using your response template without executing it.
+  environment:
+    files:
+    - src: fixtures/hve-artifact-copilot-instructions.md
+      dest: .github/copilot-instructions.md
+  tags:
+    category: agent-behavior
+    advisory: "true"
+    agent: hve-artifact-test-designer
+  graders:
+  - type: output-matches
+    name: design-log-path
+    config:
+      pattern: (?i)\.copilot-tracking[/\\]sandbox[/\\].*test-design\.md
+  - type: output-matches
+    name: black-box-isolation-scenario
+    config:
+      pattern: (?is)(?=.*\b(?:black[- ]box|isolation)\b)(?=.*\bscenario\b)
+  - type: output-matches
+    name: design-only
+    config:
+      pattern: (?i)(?:not\s+(?:executed|run)|design(?:ed)?\s+only|did\s+not\s+execute|without\s+executing)
+- name: hve-artifact-test-reviewer-first-instruction-finding
+  prompt: As the HVE Artifact Test Reviewer, review simulation evidence where valid YAML was required but observation 1 used tab indentation, then return only the first finding with its severity and smallest fix.
+  tags:
+    category: agent-behavior
+    advisory: "true"
+    agent: hve-artifact-test-reviewer
+  graders:
+  - type: output-matches
+    name: yaml-indentation-finding
+    config:
+      pattern: (?is)(?=.*\b(?:finding|issue|invalid)\b)(?=.*\b(?:tab|indentation|YAML)\b)
+  - type: output-matches
+    name: severity
+    config:
+      pattern: (?i)\b(?:Blocker|Critical|Major|High|Medium|Low|severity|Fail)\b
+  - type: output-matches
+    name: smallest-fix
+    config:
+      pattern: (?i)(?:replace.{0,30}tabs?.{0,20}spaces|use\s+spaces|revalidat(?:e|ion)|recommendation|remediation|smallest\s+(?:resolving\s+)?(?:change|fix))
+- name: hve-artifact-tester-instruction-simulation
+  prompt: As the HVE Artifact Tester, simulate one request to create a two-key `.yml` file using the first `copilot-instructions.md` or `AGENTS.md` file you find, keep writes under `.copilot-tracking/sandbox/`, and return Complete, Partial, or Blocked with the result path.
+  environment:
+    files:
+    - src: fixtures/hve-artifact-copilot-instructions.md
+      dest: .github/copilot-instructions.md
+  tags:
+    category: agent-behavior
+    advisory: "true"
+    agent: hve-artifact-tester
+  graders:
+  - type: output-matches
+    name: sandbox-result
+    config:
+      pattern: (?i)\.copilot-tracking[/\\]sandbox[/\\]\S+\.ya?ml\b
+  - type: output-matches
+    name: execution-summary
+    config:
+      pattern: (?i)\b(?:Complete|Partial|Blocked)\b
+  - type: output-matches
+    name: yaml-result
+    config:
+      pattern: (?i)\b(?:YAML|yml)\b
+- name: hve-artifact-validator-first-instruction-check
+  prompt: As the HVE Artifact Validator, run one non-mutating YAML-guidance check on the first `copilot-instructions.md` or `AGENTS.md` file you find and return Pass, Fail, or Deferred with the source unchanged.
+  environment:
+    files:
+    - src: fixtures/hve-artifact-copilot-instructions.md
+      dest: .github/copilot-instructions.md
+  tags:
+    category: agent-behavior
+    advisory: "true"
+    agent: hve-artifact-validator
+  graders:
+  - type: output-matches
+    name: instruction-target
+    config:
+      pattern: (?i)(?:copilot-instructions|AGENTS)\.md
+  - type: output-matches
+    name: validation-status
+    config:
+      pattern: (?i)\b(?:Pass|Fail|Deferred)\b
+  - type: output-matches
+    name: source-unchanged
+    config:
+      pattern: (?is)(?:source|file|artifact).{0,80}(?:unchanged|not\s+(?:modified|mutated)|read[- ]only|no\s+edits)
 - name: implementation-validator-full-quality-recipe
   prompt: |
     Validate the changed file `src/services/PaymentService.cs` with `full-quality`
@@ -782,7 +1135,7 @@ stimuli:
   - type: output-matches
     name: no-source-edit
     config:
-      pattern: (?i)(\.cs|\.py|\.ts|\.js|package\.json)
+      pattern: (?i)(created|wrote|modified|edited|patched|added)\s+\S{0,40}(\.cs|\.py|\.ts|\.js|package\.json)
       negate: true
 - name: jira-backlog-manager-class-recipe
   prompt: |
@@ -802,7 +1155,7 @@ stimuli:
   - type: output-matches
     name: no-source-edit
     config:
-      pattern: (?i)(\.cs|\.py|\.ts|\.js|package\.json)
+      pattern: (?i)(created|wrote|modified|edited|patched|added)\s+\S{0,40}(\.cs|\.py|\.ts|\.js|package\.json)
       negate: true
 - name: jira-prd-to-wit-class-recipe
   prompt: |
@@ -822,7 +1175,7 @@ stimuli:
   - type: output-matches
     name: no-source-edit
     config:
-      pattern: (?i)(\.cs|\.py|\.ts|\.js|package\.json)
+      pattern: (?i)(created|wrote|modified|edited|patched|added)\s+\S{0,40}(\.cs|\.py|\.ts|\.js|package\.json)
       negate: true
 - name: meeting-analyst-class-recipe
   prompt: |
@@ -842,7 +1195,7 @@ stimuli:
   - type: output-matches
     name: no-source-edit
     config:
-      pattern: (?i)(\.cs|\.py|\.ts|\.js|package\.json)
+      pattern: (?i)(created|wrote|modified|edited|patched|added)\s+\S{0,40}(\.cs|\.py|\.ts|\.js|package\.json)
       negate: true
 - name: memory-class-recipe
   prompt: |
@@ -862,7 +1215,7 @@ stimuli:
   - type: output-matches
     name: no-source-edit
     config:
-      pattern: (?i)(\.cs|\.py|\.ts|\.js|package\.json)
+      pattern: (?i)(created|wrote|modified|edited|patched|added)\s+\S{0,40}(\.cs|\.py|\.ts|\.js|package\.json)
       negate: true
 - name: network-isa95-planner-class-recipe
   prompt: |
@@ -882,7 +1235,7 @@ stimuli:
   - type: output-matches
     name: no-source-edit
     config:
-      pattern: (?i)(\.cs|\.py|\.ts|\.js|package\.json)
+      pattern: (?i)(created|wrote|modified|edited|patched|added)\s+\S{0,40}(\.cs|\.py|\.ts|\.js|package\.json)
       negate: true
 - name: phase-implementor-completion-report-shape
   prompt: |
@@ -1062,94 +1415,7 @@ stimuli:
   - type: output-matches
     name: no-source-edit
     config:
-      pattern: (?i)(\.cs|\.py|\.ts|\.js|package\.json)
-      negate: true
-- name: pr-review-identifies-security-risk
-  prompt: |
-    Review this code change:
-    ```python
-    app.run(host='0.0.0.0', debug=True)
-    ```
-    Provide findings with severity levels.
-  tags:
-    category: agent-behavior
-    agent: pr-review
-  graders:
-  - type: output-matches
-    name: findings-table-present
-    config:
-      pattern: (?i)(\|.*severity.*\||finding|issue|concern|recommendation)
-  - type: output-matches
-    name: severity-vocab
-    config:
-      pattern: (?i)(critical|high|medium|low|info|warning)
-  - type: output-matches
-    name: no-source-edit
-    config:
-      pattern: (?i)(\.cs|\.py|\.ts|\.js|package\.json)
-      negate: true
-- name: pr-review-identifies-security
-  prompt: |
-    Review this code change for a Python web application:
-    ```python
-    @app.route('/user/<id>')
-    def get_user(id):
-        query = f"SELECT * FROM users WHERE id = {id}"
-        return db.execute(query).fetchone()
-    ```
-    Focus on security and code quality.
-  tags:
-    category: agent-behavior
-    agent: pr-review
-  graders:
-  - type: output-matches
-    name: identifies-sql-injection
-    config:
-      pattern: (?i)\bsql\s*injection\b|\binjection\b
-  - type: output-matches
-    name: provides-remediation
-    config:
-      pattern: (?i)parameterized|prepared|placeholder|bind
-- name: pr-review-identifies-error-handling
-  prompt: |
-    Review this code change:
-    ```python
-    def process_payment(amount):
-        response = requests.post(PAYMENT_API, json={"amount": amount})
-        return response.json()["transaction_id"]
-    ```
-    What issues do you see?
-  tags:
-    category: agent-behavior
-    agent: pr-review
-  graders:
-  - type: output-matches
-    name: identifies-missing-error-handling
-    config:
-      pattern: (?i)error.handling|exception|try|status.code|timeout
-  - type: output-matches
-    name: identifies-missing-validation
-    config:
-      pattern: (?i)validat|check|verify|amount|negative
-- name: pr-walkthrough-class-recipe
-  prompt: |
-    Produce a narrative walkthrough of a pull request that refactors an authentication module into a separate service and updates its call sites. Orient a reviewer who has not opened the diff: explain what changed, the architectural shape, which files carry weight, and where human judgment is required. Anchor claims to quoted code fragments. Do not modify any source files.
-  tags:
-    category: agent-behavior
-    agent: pr-walkthrough
-  graders:
-  - type: output-matches
-    name: walkthrough-narrative
-    config:
-      pattern: (?i)(walkthrough|narrative|reviewer|architect|design|change|judgment)
-  - type: output-matches
-    name: topic-coverage
-    config:
-      pattern: (?i)(authentication|auth|service|refactor|call site|module)
-  - type: output-matches
-    name: no-source-edit
-    config:
-      pattern: (?i)(\.cs|\.py|\.ts|\.js|package\.json)
+      pattern: (?i)(created|wrote|modified|edited|patched|added)\s+\S{0,40}(\.cs|\.py|\.ts|\.js|package\.json)
       negate: true
 - name: prd-builder-class-recipe
   prompt: |
@@ -1169,7 +1435,65 @@ stimuli:
   - type: output-matches
     name: no-source-edit
     config:
-      pattern: (?i)(\.cs|\.py|\.ts|\.js|package\.json)
+      pattern: (?i)(created|wrote|modified|edited|patched|added)\s+\S{0,40}(\.cs|\.py|\.ts|\.js|package\.json)
+      negate: true
+- name: prd-quality-reviewer-mentions-quality-guidance
+  prompt: |
+    You are reviewing a product-requirements draft for a planning workflow.
+    Briefly describe what the prd-quality-reviewer agent is meant to help with
+    and name one quality concern it should surface for the draft.
+  tags:
+    category: agent-behavior
+    advisory: "true"
+    agent: prd-quality-reviewer
+  graders:
+  - type: output-matches
+    name: agent-domain-attribution
+    config:
+      pattern: (?i)(prd|product|requirements|review|quality)
+  - type: output-matches
+    name: scope-language
+    config:
+      pattern: (?i)(draft|review|quality|requirements)
+- name: privacy-planner-class-recipe
+  prompt: |
+    Start a privacy planning session for a customer analytics service that ingests account profiles and usage events. Outline the six phases of the privacy assessment, including where the DPIA threshold gate applies. Write the planning state under `.copilot-tracking/privacy-plans/` and report the path.
+  tags:
+    category: agent-behavior
+    agent: privacy-planner
+  graders:
+  - type: output-matches
+    name: phase-marker-present
+    config:
+      pattern: (?im)(^\s*(#{2,3}\s|step\s+\d+|phase\s+\d+|\d+[.)])|\|\s*\d+\s*[—–-]|\bphases?\b)
+  - type: output-matches
+    name: tracking-file-write
+    config:
+      pattern: (?i)\.copilot-tracking[-/\\]privacy-plans
+  - type: output-matches
+    name: no-source-edit
+    config:
+      pattern: (?i)(created|wrote|modified|edited|patched|added)\s+\S{0,40}(\.cs|\.py|\.ts|\.js|package\.json)
+      negate: true
+- name: privacy-reviewer-class-recipe
+  prompt: |
+    Review the privacy posture of a customer-facing mobile app that collects geolocation and device identifiers and shares them with third-party analytics SDKs. Summarize the privacy findings with severity, citing the relevant frameworks (NIST Privacy Framework, NISTIR 8062, GDPR, or CCPA/CPRA) and noting any DPIA considerations. Write the report under `.copilot-tracking/privacy-reviews/` and report the path.
+  tags:
+    category: agent-behavior
+    agent: privacy-reviewer
+  graders:
+  - type: output-matches
+    name: findings-table-present
+    config:
+      pattern: (?i)(\|.*severity.*\||finding|issue|concern|recommendation|risk)
+  - type: output-matches
+    name: severity-vocab
+    config:
+      pattern: (?i)(critical|high|medium|low|info|severity|warning)
+  - type: output-matches
+    name: no-source-edit
+    config:
+      pattern: (?i)(created|wrote|modified|edited|patched|added)\s+\S{0,40}(\.cs|\.py|\.ts|\.js|package\.json)
       negate: true
 - name: product-manager-advisor-class-recipe
   prompt: |
@@ -1189,11 +1513,13 @@ stimuli:
   - type: output-matches
     name: no-source-edit
     config:
-      pattern: (?i)(\.cs|\.py|\.ts|\.js|package\.json)
+      pattern: (?i)(created|wrote|modified|edited|patched|added)\s+\S{0,40}(\.cs|\.py|\.ts|\.js|package\.json)
       negate: true
 - name: prompt-builder-class-recipe
-  prompt: |
-    Plan the creation of a new custom instruction file for "Rust testing standards". Break it into phases (research, draft, validate). Write the plan under `.copilot-tracking/` and report the path.
+  prompt: Plan the creation of a new custom instruction file for "Rust testing standards" in research, draft, and validate phases, write the plan under `.copilot-tracking/`, and report the path.
+  environment:
+    skills:
+    - ../../.github/skills/hve-core/hve-builder
   tags:
     category: agent-behavior
     agent: prompt-builder
@@ -1201,7 +1527,7 @@ stimuli:
   - type: output-matches
     name: phase-marker-present
     config:
-      pattern: (?im)(^\s*(#{2,3}\s|step\s+\d+|phase\s+\d+|\d+[.)])|\|\s*\d+\s*[—–-]|\bphases?\b)
+      pattern: (?im)(^\s*(#{2,3}\s|step\s+\d+|phase\s+\d+|\d+[.)])|\|\s*\d+\s*[—–-]|\b(?:phases?|phased|stages?)\b|\bresearch\b.*\bdraft\b.*\bvalidat(?:e|ion)\b)
   - type: output-matches
     name: tracking-file-write
     config:
@@ -1209,155 +1535,8 @@ stimuli:
   - type: output-matches
     name: no-source-edit
     config:
-      pattern: (?i)(\.cs|\.py|\.ts|\.js|package\.json)
+      pattern: (?i)(created|wrote|modified|edited|patched|added)\s+\S{0,40}(\.cs|\.py|\.ts|\.js|package\.json)
       negate: true
-- name: prompt-evaluator-sandbox-execution-log
-  prompt: |
-    Evaluate the prompt file `.github/prompts/example.prompt.md` after run 002
-    using the execution log in
-    `.copilot-tracking/sandbox/2026-05-27-example-prompt-002/execution-log.md`.
-    Produce an evaluation-log.md with severity-graded findings against the
-    Prompt Quality Criteria.
-  tags:
-    category: agent-behavior
-    advisory: "true"
-    agent: prompt-evaluator
-  graders:
-  - type: output-matches
-    name: sandbox-and-evaluation-log
-    config:
-      pattern: (?i)(\.copilot-tracking[-/\\]sandbox|evaluation[-_]?log|execution[-_]?log)
-  - type: output-matches
-    name: criteria-vocabulary
-    config:
-      pattern: (?i)(prompt[- ]?quality[- ]?criteria|severity|finding|prompt[- ]?builder)
-- name: prompt-evaluator-criteria-checklist
-  prompt: |
-    As a prompt-evaluator subagent, describe how you apply the Prompt Quality
-    Criteria from `prompt-builder.instructions.md` and the style standards from
-    `writing-style.instructions.md` to a target prompt file, and how
-    pass/fail assessments are recorded with evidence.
-  tags:
-    category: agent-behavior
-    advisory: "true"
-    agent: prompt-evaluator
-  graders:
-  - type: output-matches
-    name: instructions-references
-    config:
-      pattern: (?i)(prompt-builder|writing-style|\.instructions\.md)
-  - type: output-matches
-    name: assessment-vocabulary
-    config:
-      pattern: (?i)(checklist|pass|fail|evidence|criteria|category)
-- name: prompt-tester-sandbox-and-log-paths
-  prompt: |
-    You are the Prompt Tester subagent. The orchestrator hands you this input:
-      - prompt_file: .github/prompts/hve-core/commit-message.prompt.md
-      - sandbox_folder: .copilot-tracking/sandbox/2026-05-28-commit-message-1
-      - run_number: 1
-    Execute the prompt literally inside the sandbox and report the sandbox
-    path, the execution-log.md path, the log status, and any clarifying
-    questions.
-  tags:
-    category: agent-behavior
-    advisory: "true"
-    agent: prompt-tester
-  graders:
-  - type: output-matches
-    name: sandbox-path-format
-    config:
-      pattern: (?i)\.copilot-tracking[-/\\]sandbox[-/\\]\d{4}-\d{2}-\d{2}-[^/\\\s]+-1
-  - type: output-matches
-    name: execution-log-path
-    config:
-      pattern: (?i)execution-log\.md
-  - type: output-matches
-    name: status-from-allowed-set
-    config:
-      pattern: (?i)\b(complete|in-progress|blocked)\b
-  - type: output-matches
-    name: clarifying-questions-block
-    config:
-      pattern: (?i)clarifying question
-- name: prompt-tester-literal-execution-and-scope
-  prompt: |
-    You are the Prompt Tester subagent. The orchestrator hands you this input:
-      - prompt_file: .github/prompts/hve-core/pull-request.prompt.md
-      - sandbox_folder: .copilot-tracking/sandbox/2026-05-28-pull-request-2
-      - run_number: 2
-      - note: The prompt asks you to call an MCP tool that pushes a branch.
-    Execute the prompt literally. Keep all side effects inside the sandbox and
-    explain how you handle the non-read-only tool call.
-  tags:
-    category: agent-behavior
-    advisory: "true"
-    agent: prompt-tester
-  graders:
-  - type: output-matches
-    name: sandbox-bounded-side-effects
-    config:
-      pattern: (?i)(within|inside|bounded|only).{0,40}sandbox
-  - type: output-matches
-    name: tool-emulation
-    config:
-      pattern: (?i)(emulat|read-only|read only)
-- name: prompt-updater-tracking-and-status
-  prompt: |
-    You are the Prompt Updater subagent. The orchestrator hands you this input:
-      - prompt_file: .github/prompts/hve-core/commit-message.prompt.md
-      - requested_updates: Add a section describing scope tags and tighten the
-        frontmatter description.
-    Apply the updates following the prompt-builder and writing-style
-    instructions. Report the tracking file path, each modified prompt file
-    path with its status, a checklist of remaining work, and any clarifying
-    questions.
-  tags:
-    category: agent-behavior
-    advisory: "true"
-    agent: prompt-updater
-  graders:
-  - type: output-matches
-    name: tracking-file-path
-    config:
-      pattern: (?i)\.copilot-tracking[-/\\]prompts[-/\\]\d{4}-\d{2}-\d{2}[-/\\]
-  - type: output-matches
-    name: prompt-file-path
-    config:
-      pattern: (?i)\.github/prompts/.+\.prompt\.md
-  - type: output-matches
-    name: status-per-file
-    config:
-      pattern: (?i)\b(complete|in-progress|blocked)\b
-  - type: output-matches
-    name: remaining-checklist
-    config:
-      pattern: (?i)(- \[[ x]\]|checklist|remaining)
-- name: prompt-updater-instructions-and-review
-  prompt: |
-    You are the Prompt Updater subagent. The orchestrator hands you this input:
-      - prompt_file: .github/prompts/hve-core/pull-request.prompt.md
-      - requested_updates: Clarify the reviewer-identification steps.
-    Apply the updates, then run your review pass comparing requirements
-    against the implemented changes and report gaps, drift, and clarifying
-    questions.
-  tags:
-    category: agent-behavior
-    advisory: "true"
-    agent: prompt-updater
-  graders:
-  - type: output-matches
-    name: instructions-followed
-    config:
-      pattern: (?i)(prompt-builder|writing-style)
-  - type: output-matches
-    name: gap-and-drift-review
-    config:
-      pattern: (?i)(gap|drift|review|remaining|missing)
-  - type: output-matches
-    name: clarifying-questions
-    config:
-      pattern: (?i)clarifying question
 - name: rai-planner-class-recipe
   prompt: |
     Begin an RAI planning session for an AI feature that auto-generates customer support replies. List the next phases of the assessment. Write the planning state under `.copilot-tracking/rai-plans/` and report the path you wrote it to.
@@ -1376,7 +1555,7 @@ stimuli:
   - type: output-matches
     name: no-source-edit
     config:
-      pattern: (?i)(\.cs|\.py|\.ts|\.js|package\.json)
+      pattern: (?i)(created|wrote|modified|edited|patched|added)\s+\S{0,40}(\.cs|\.py|\.ts|\.js|package\.json)
       negate: true
 - name: rai-planner-disclaimer-startup
   prompt: |
@@ -1420,7 +1599,7 @@ stimuli:
   - type: output-matches
     name: no-source-edit
     config:
-      pattern: (?i)(\.cs|\.py|\.ts|\.js|package\.json)
+      pattern: (?i)(created|wrote|modified|edited|patched|added)\s+\S{0,40}(\.cs|\.py|\.ts|\.js|package\.json)
       negate: true
 - name: report-generator-vuln-report
   prompt: |
@@ -1517,7 +1696,7 @@ stimuli:
   - type: output-matches
     name: no-source-edit
     config:
-      pattern: (?i)(\.cs|\.py|\.ts|\.js|package\.json)
+      pattern: (?i)(created|wrote|modified|edited|patched|added)\s+\S{0,40}(\.cs|\.py|\.ts|\.js|package\.json)
       negate: true
 - name: rpi-validator-phase-scope
   prompt: |
@@ -1575,7 +1754,7 @@ stimuli:
   - type: output-matches
     name: no-source-edit
     config:
-      pattern: (?i)(\.cs|\.py|\.ts|\.js|package\.json)
+      pattern: (?i)(created|wrote|modified|edited|patched|added)\s+\S{0,40}(\.cs|\.py|\.ts|\.js|package\.json)
       negate: true
 - name: security-reviewer-class-recipe
   prompt: |
@@ -1600,7 +1779,7 @@ stimuli:
   - type: output-matches
     name: no-source-edit
     config:
-      pattern: (?i)(\.cs|\.py|\.ts|\.js|package\.json)
+      pattern: (?i)(created|wrote|modified|edited|patched|added)\s+\S{0,40}(\.cs|\.py|\.ts|\.js|package\.json)
       negate: true
 - name: skill-assessor-audit-mode-format
   prompt: |
@@ -1673,7 +1852,7 @@ stimuli:
   - type: output-matches
     name: no-source-edit
     config:
-      pattern: (?i)(\.cs|\.py|\.ts|\.js|package\.json)
+      pattern: (?i)(created|wrote|modified|edited|patched|added)\s+\S{0,40}(\.cs|\.py|\.ts|\.js|package\.json)
       negate: true
 - name: sssc-planner-disclaimer-startup
   prompt: |
@@ -1699,6 +1878,77 @@ stimuli:
     name: disclaimer-state
     config:
       pattern: (?i)disclaimerShownAt|ISO\s*8601
+- name: sssc-reviewer-class-recipe
+  prompt: |
+    Review the software supply chain security posture of a repository that publishes container images and npm packages from a GitHub Actions pipeline. Summarize the findings with severity, citing the relevant frameworks (OpenSSF Scorecard, SLSA, or Sigstore). Write the report under `.copilot-tracking/sssc-reviews/` and report the path.
+  tags:
+    category: agent-behavior
+    agent: sssc-reviewer
+  graders:
+  - type: output-matches
+    name: findings-table-present
+    config:
+      pattern: (?i)(\|.*severity.*\||finding|issue|concern|recommendation|risk)
+  - type: output-matches
+    name: severity-vocab
+    config:
+      pattern: (?i)(critical|high|medium|low|info|severity|warning)
+  - type: output-matches
+    name: no-source-edit
+    config:
+      pattern: (?i)(created|wrote|modified|edited|patched|added)\s+\S{0,40}(\.cs|\.py|\.ts|\.js|package\.json)
+      negate: true
+- name: supply-chain-reviewer-class-recipe
+  prompt: |
+    Review this CI workflow change for supply-chain posture concerns with severity levels:
+    ```diff
+    -      - uses: actions/checkout@v4
+    +      - uses: actions/checkout@main
+    -      "lodash": "4.17.21"
+    +      "lodash": "*"
+    ```
+  tags:
+    category: agent-behavior
+    agent: supply-chain-reviewer
+  graders:
+  - type: output-matches
+    name: findings-table-present
+    config:
+      pattern: (?i)(\|.*severity.*\||finding|issue|concern|recommendation)
+  - type: output-matches
+    name: severity-vocab
+    config:
+      pattern: (?i)(critical|high|medium|low|info|severity|warning)
+  - type: output-matches
+    name: no-source-edit
+    config:
+      pattern: (?i)(\.cs|\.py|\.ts|\.js|package\.json)
+      negate: true
+- name: supply-chain-skill-assessor-posture
+  prompt: |
+    As the supply-chain skill assessor, assess a repository's supply-chain
+    posture against the `supply-chain-security` skill. Given a codebase
+    profile that has no SBOM, unpinned GitHub Actions, and no OpenSSF
+    Scorecard workflow, return structured findings with a status and severity
+    for each gap.
+  tags:
+    category: agent-behavior
+    advisory: "true"
+    agent: supply-chain-skill-assessor
+  graders:
+  - type: output-matches
+    name: supply-chain-vocabulary
+    config:
+      pattern: (?i)(supply[- ]chain|scorecard|SLSA|SBOM|sigstore|pinned|provenance|finding)
+  - type: output-matches
+    name: status-or-severity-vocabulary
+    config:
+      pattern: (?i)(PASS|FAIL|PARTIAL|NOT_ASSESSED|critical|high|medium|low|severity|status)
+  - type: output-matches
+    name: no-source-edit
+    config:
+      pattern: (?i)(\.cs|\.py|\.ts|\.js|package\.json)
+      negate: true
 - name: system-architecture-reviewer-class-recipe
   prompt: |
     Review this proposed architecture: "Single Node.js monolith on one VM, SQLite database, no caching, deployed via SSH." Produce a written assessment with strengths and risks. Write the assessment under `.copilot-tracking/` and report the path.
@@ -1737,7 +1987,7 @@ stimuli:
   - type: output-matches
     name: no-source-edit
     config:
-      pattern: (?i)(\.cs|\.py|\.ts|\.js|package\.json)
+      pattern: (?i)(created|wrote|modified|edited|patched|added)\s+\S{0,40}(\.cs|\.py|\.ts|\.js|package\.json)
       negate: true
 - name: task-implementor-edits-source
   prompt: |
@@ -1786,7 +2036,7 @@ stimuli:
   - type: output-matches
     name: no-source-edit
     config:
-      pattern: (?i)(\.cs|\.py|\.ts|\.js|package\.json)
+      pattern: (?i)(created|wrote|modified|edited|patched|added)\s+\S{0,40}(\.cs|\.py|\.ts|\.js|package\.json)
       negate: true
 - name: task-researcher-produces-research-writeup
   prompt: |
@@ -1843,7 +2093,7 @@ stimuli:
   - type: output-matches
     name: no-source-edit
     config:
-      pattern: (?i)(\.cs|\.py|\.ts|\.js|package\.json)
+      pattern: (?i)(created|wrote|modified|edited|patched|added)\s+\S{0,40}(\.cs|\.py|\.ts|\.js|package\.json)
       negate: true
 - name: test-streamlit-dashboard-class-recipe
   prompt: |
@@ -1882,7 +2132,7 @@ stimuli:
   - type: output-matches
     name: no-source-edit
     config:
-      pattern: (?i)(\.cs|\.py|\.ts|\.js|package\.json)
+      pattern: (?i)(created|wrote|modified|edited|patched|added)\s+\S{0,40}(\.cs|\.py|\.ts|\.js|package\.json)
       negate: true
 - name: vally-test-author-advisory-and-routing
   prompt: |

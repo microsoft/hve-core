@@ -1,1 +1,0 @@
-../../../../.github/agents/coding-standards/code-review-full.agent.md

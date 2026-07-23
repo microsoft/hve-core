@@ -2,24 +2,28 @@
 # Copyright (c) 2026 Microsoft Corporation. All rights reserved.
 # SPDX-License-Identifier: MIT
 #
-# Stub vally CLI for unit tests covering Invoke-VallyEvals.ps1.
+# Stub vally CLI for unit tests covering Vally eval and compare drivers.
 #
-# Honors the `eval` subcommand and writes a deterministic results.jsonl under
-# a timestamped run directory beneath --output-dir. Behavior is driven by
+# Honors the `eval` and `compare` subcommands. Eval writes deterministic
+# results.jsonl under a timestamped run directory beneath --output-dir. Compare
+# writes deterministic comparison JSONL to --output. Behavior is driven by
 # environment variables so a single fixture script can model pass/fail/mixed
 # scenarios:
 #
 #   STUB_VALLY_MODE            Default mode for any spec ('pass' when unset).
 #   STUB_VALLY_MODES_JSON      Optional JSON object mapping spec basenames to
 #                              modes; overrides STUB_VALLY_MODE per-spec.
+#   STUB_VALLY_COMPARE_MODE    Compare mode: pass or fail-empty.
 #
 # Supported modes:
 #   pass   - two passing trials, exit 0
+#   typed-pass - two typed passing trials plus a typed run-summary, exit 0
 #   fail   - two failing trials, exit 1
 #   fail-noname - two failing trials with no trajectory.stimulus.name, exit 1
 #                 (reproduces an empty perStimulus map)
 #   mixed  - one pass, one fail, exit 0 (failed trial drives outer status)
 #   empty  - no trials emitted, exit 0
+#   errored - two trials with no gradeResult (executor errored before grading), exit 1
 #   crash  - prints an error and exits 99 (does not write results.jsonl)
 #   per-stim - emits one trial per entry of STUB_VALLY_STIM_RESULTS_JSON
 #              (JSON object {stimulusName: passedBool}); exit 1 only when
@@ -27,9 +31,36 @@
 
 # Note: $args is the automatic parameter variable when no param block exists.
 
-if ($args.Count -eq 0 -or $args[0] -ne 'eval') {
-    Write-Error "stub-vally: only the 'eval' subcommand is supported."
+if ($args.Count -eq 0 -or $args[0] -notin @('eval', 'compare')) {
+    Write-Error "stub-vally: only the 'eval' and 'compare' subcommands are supported."
     exit 64
+}
+
+if ($args[0] -eq 'compare') {
+    $outputPath = $null
+    for ($i = 1; $i -lt $args.Count; $i++) {
+        if ($args[$i] -eq '--output') { $outputPath = $args[++$i] }
+    }
+    if (-not $outputPath) {
+        Write-Error "stub-vally: compare requires --output."
+        exit 65
+    }
+
+    if ($env:STUB_VALLY_COMPARE_MODE -eq 'fail-empty') {
+        [System.IO.File]::WriteAllText($outputPath, '')
+        exit 1
+    }
+
+    $comparison = [ordered]@{
+        type    = 'comparison'
+        stimuli = @([ordered]@{
+                stimulusName = 'stim-1'
+                trials       = @([ordered]@{ winner = 'tie'; errored = $false })
+            })
+        summary = [ordered]@{ meanScore = 0.0; ciLow = -0.2; ciHigh = 0.2; winRate = 0.0 }
+    }
+    Set-Content -LiteralPath $outputPath -Value ($comparison | ConvertTo-Json -Depth 10 -Compress) -Encoding utf8NoBOM
+    exit 0
 }
 
 # Optional argv capture: when STUB_VALLY_ARGV_OUT is set, record the full
@@ -91,9 +122,10 @@ function New-StubRecord {
     param(
         [string]$Name,
         [bool]$Passed,
-        [int]$WallMs = 12
+        [int]$WallMs = 12,
+        [switch]$Typed
     )
-    return [ordered]@{
+    $record = [ordered]@{
         trajectory  = [ordered]@{
             stimulus = [ordered]@{ name = $Name }
             output   = "stub output for $Name"
@@ -108,10 +140,18 @@ function New-StubRecord {
             details = @()
         }
     }
+    if ($Typed) { $record['type'] = 'trial-result' }
+    return $record
 }
 
 $records = switch ($mode) {
     'pass'  { @((New-StubRecord -Name 'stim-1' -Passed $true),  (New-StubRecord -Name 'stim-2' -Passed $true)) }
+    'typed-pass' {
+        @(
+            (New-StubRecord -Name 'stim-1' -Passed $true -Typed),
+            (New-StubRecord -Name 'stim-2' -Passed $true -Typed)
+        )
+    }
     'fail'  { @((New-StubRecord -Name 'stim-1' -Passed $false), (New-StubRecord -Name 'stim-2' -Passed $false)) }
     'fail-noname' {
         # Two failing trials whose trajectory carries no resolvable stimulus name,
@@ -129,6 +169,21 @@ $records = switch ($mode) {
     }
     'mixed' { @((New-StubRecord -Name 'stim-1' -Passed $true),  (New-StubRecord -Name 'stim-2' -Passed $false)) }
     'empty' { @() }
+    'errored' {
+        # Trials whose trajectory errored before grading; no gradeResult is emitted,
+        # so the runner classifies them as errored (transient) rather than failed.
+        $mk = {
+            param($n)
+            [ordered]@{
+                trajectory = [ordered]@{
+                    stimulus = [ordered]@{ name = $n }
+                    output   = ''
+                    metrics  = [ordered]@{ wallTimeMs = 5 }
+                }
+            }
+        }
+        @((& $mk 'stim-1'), (& $mk 'stim-2'))
+    }
     'per-stim' {
         if (-not $env:STUB_VALLY_STIM_RESULTS_JSON) {
             Write-Error "stub-vally: per-stim mode requires STUB_VALLY_STIM_RESULTS_JSON."
@@ -154,12 +209,16 @@ $records = switch ($mode) {
 
 $resultsPath = Join-Path -Path $runDir -ChildPath 'results.jsonl'
 $lines = foreach ($r in $records) { $r | ConvertTo-Json -Depth 10 -Compress }
+if ($mode -eq 'typed-pass') {
+    $lines += [ordered]@{ type = 'run-summary'; passed = $true } | ConvertTo-Json -Compress
+}
 Set-Content -LiteralPath $resultsPath -Value $lines -Encoding utf8NoBOM
 
 Set-Content -LiteralPath (Join-Path $runDir 'eval-results.md') -Value "# stub eval ($mode)" -Encoding utf8NoBOM
 
 if ($mode -eq 'fail') { exit 1 }
 if ($mode -eq 'fail-noname') { exit 1 }
+if ($mode -eq 'errored') { exit 1 }
 if ($mode -eq 'per-stim' -and $env:STUB_VALLY_FAIL_ON_ANY -eq '1') {
     foreach ($r in $records) {
         if (-not $r.gradeResult.passed) { exit 1 }
