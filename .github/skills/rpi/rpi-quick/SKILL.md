@@ -67,7 +67,7 @@ When Review finds open work, route it to the appropriate later stage or distinct
 * At closeout, separate lifecycle execution or session status from outcome or decision state. Summarize results, important updates, decisions, blockers or open items, and anything the user might otherwise miss.
 * Advise `/compact` only when stale tool output, superseded reasoning, or completed-stage detail outweighs useful current context and the durable phase artifacts are current. When advising it, name the state and artifact pointers to retain. Otherwise omit compaction guidance.
 * `rpi-quick` is an explicit parent orchestration context. Continue automatically to each eligible stage without waiting for a new user command, while honoring every stage gate, blocker, risky-action confirmation, and user-owned decision. State when a blocker or confirmation returns control to the user.
-* For every relevant existing artifact, use the two-cell row `| [Descriptive label](actual/workspace-relative/path.ext) | Short description |`, replacing `actual/workspace-relative/path.ext` with that artifact's actual workspace-relative path; omit unavailable files and keep the table as the final response element.
+* For every relevant existing artifact, use the two-cell row `| [actual/workspace-relative/path.ext](actual/workspace-relative/path.ext) | Short description |`, using that artifact's actual workspace-relative path as both link text and destination; omit unavailable files and keep the table as the final response element.
 
 ## Stop rules
 

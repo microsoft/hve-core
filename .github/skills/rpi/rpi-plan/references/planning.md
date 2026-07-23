@@ -160,7 +160,7 @@ For a standalone, implementation-ready plan, report planning execution status an
 
 If the plan is not ready, state the stop or no-handoff reason. In `rpi-quick` or confirmed automatic RPI Agent mode, return that same context to the parent and state that it continues automatically when the gate and confirmation conditions are met. Do not give the parent attachment instructions.
 
-For every relevant existing artifact, use the two-cell row `| [Descriptive label](actual/workspace-relative/path.ext) | Short description |`, replacing `actual/workspace-relative/path.ext` with that artifact's actual workspace-relative path; omit unavailable files and keep the table as the final response element.
+For every relevant existing artifact, use the two-cell row `| [actual/workspace-relative/path.ext](actual/workspace-relative/path.ext) | Short description |`, using that artifact's actual workspace-relative path as both link text and destination; omit unavailable files and keep the table as the final response element.
 
 ## Final planning handoff
 

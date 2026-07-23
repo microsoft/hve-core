@@ -262,7 +262,7 @@ Return a concise, evidence-first response with:
 * The continuation record from Planning Readiness, including the permitted standalone `/rpi-plan` advisory or explicit no-handoff reason, or the active parent's automatic continuation or waiting state
 * Research execution status separate from planning readiness or decision state
 * Conditional `/compact` advice only when stale context warrants compaction, naming the primary research artifact and current state to retain; otherwise no compaction guidance
-* For every relevant existing artifact, use the two-cell row `| [Descriptive label](actual/workspace-relative/path.ext) | Short description |`, replacing `actual/workspace-relative/path.ext` with that artifact's actual workspace-relative path; omit unavailable files and keep the table as the final response element.
+* For every relevant existing artifact, use the two-cell row `| [actual/workspace-relative/path.ext](actual/workspace-relative/path.ext) | Short description |`, using that artifact's actual workspace-relative path as both link text and destination; omit unavailable files and keep the table as the final response element.
 
 During material research work, apply Conversation Protocol. Use concise updates only at meaningful boundaries, with evidence, implication, research effect, and relevant artifact or source links. Do not narrate low-level actions, dump worker returns, or repeat unchanged state.
 

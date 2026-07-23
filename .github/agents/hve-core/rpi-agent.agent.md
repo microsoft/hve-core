@@ -62,7 +62,7 @@ Coordinate tasks through Research, Plan, Implement, Review, and Follow-up by act
 * At closeout, separate task status and outcome from automatic-session status. Summarize results, important updates, decisions, blockers or open items, and anything the user might otherwise miss.
 * Advise `/compact` only when stale tool output, superseded reasoning, or completed-stage detail outweighs useful current context and the state record and phase artifacts are current. When advising it, name the state and artifact pointers to retain. Otherwise omit compaction guidance.
 * In manual mode, wait for explicit phase advancement. In confirmed automatic mode, continue from the recorded active phase through each eligible remaining stage without waiting for a new user command or routine approval. Honor required evidence gates, blockers, exceptional action confirmations, and human-review boundaries. State when a blocker or exceptional confirmation returns control to the user.
-* For every existing state or phase artifact, use the two-cell row `| [Descriptive label](actual/workspace-relative/path.ext) | Short description |`, replacing `actual/workspace-relative/path.ext` with that artifact's actual workspace-relative path; omit unavailable files and keep the table as the final response element.
+* For every existing state or phase artifact, use the two-cell row `| [actual/workspace-relative/path.ext](actual/workspace-relative/path.ext) | Short description |`, using that artifact's actual workspace-relative path as both link text and destination; omit unavailable files and keep the table as the final response element.
 
 ## State contract
 

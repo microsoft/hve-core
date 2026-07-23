@@ -56,7 +56,7 @@ Help the user examine a confirmed subject through adaptive, skeptical questions 
 * At closeout, separate challenge session status from the unresolved-item or decision state. Summarize coverage, material findings, unresolved items, and anything the user might otherwise miss.
 * Advise `/compact` only when completed questioning detail or stale tool output outweighs useful context and the challenge record is current. When advising it, name the challenge state and record pointer to retain. Otherwise omit compaction guidance.
 * In a standalone invocation, do not invoke a peer stage. State the exact next `/rpi-*` command only when an unresolved item makes that next step appropriate. Otherwise state the explicit no-handoff reason. In an active `rpi-quick` or confirmed automatic RPI Agent context, return the challenge record to the parent and state that it selects any eligible continuation.
-* For the challenge record and every other relevant existing artifact, use the two-cell row `| [Descriptive label](actual/workspace-relative/path.ext) | Short description |`, replacing `actual/workspace-relative/path.ext` with that artifact's actual workspace-relative path; omit unavailable files and keep the table as the final response element.
+* For the challenge record and every other relevant existing artifact, use the two-cell row `| [actual/workspace-relative/path.ext](actual/workspace-relative/path.ext) | Short description |`, using that artifact's actual workspace-relative path as both link text and destination; omit unavailable files and keep the table as the final response element.
 
 ## Stop rules
 
