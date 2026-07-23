@@ -1,7 +1,7 @@
 ---
 title: vally-tests
 description: "Authors Vally conformance tests for prompts, instructions, agents, and skills, including refusals for jailbreak, prompt-injection, harmful-elicitation, TOS, CoC, and PII-extraction stimuli"
-sidebar_position: 6
+sidebar_position: 8
 ms.date: 2026-07-03
 ---
 

@@ -175,9 +175,10 @@ function Read-VallyResultsJsonl {
             continue
         }
 
-        # Vally 0.6 writes a typed run-summary record after the trial records.
-        # Legacy Vally versions emitted untyped trial records, so accept those
-        # while ignoring every explicitly typed non-trial record.
+        # Vally writes a typed "trial-result" record per trial and a typed
+        # "run-summary" record after them. Older untyped trial records lack a
+        # `type` field, so accept those while ignoring every explicitly typed
+        # non-trial record.
         if ($obj.PSObject.Properties['type'] -and
             -not [string]::IsNullOrWhiteSpace([string]$obj.type) -and
             [string]$obj.type -ne 'trial-result') {

@@ -1,8 +1,8 @@
 ---
 title: Hve Core/Prompt Builder
-description: "Authoring standards for prompts, agents, instructions, and skills"
-sidebar_position: 6
-ms.date: 2026-07-03
+description: Legacy Prompt Builder instruction alias that points matching AI artifacts to the canonical HVE Builder standard
+sidebar_position: 7
+ms.date: 2026-07-13
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->
@@ -17,7 +17,7 @@ ms.date: 2026-07-03
 ## What it does
 
 <!-- BEGIN AUTO-GENERATED: overview -->
-Authoring standards for prompts, agents, instructions, and skills
+Legacy Prompt Builder instruction alias that points matching AI artifacts to the canonical HVE Builder standard
 <!-- END AUTO-GENERATED: overview -->
 
 ## When to use it
