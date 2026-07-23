@@ -1,0 +1,20 @@
+name: privacy-planner
+description: >
+  Privacy Planner — a six-phase privacy planning agent that produces data
+  inventories, data-flow maps, DPIA assessments, control recommendations,
+  and backlog-ready handoff artifacts.
+protocol: acp
+connection:
+  transport: tcp
+  host: ${AGENT_HOST:-127.0.0.1}
+  port: ${AGENT_PORT:-3000}
+  cwd: ${AGENT_REPO_ROOT:-.}
+  model: ${AGENT_MODEL:-claude-opus-4.6-1m}
+init_prompt: "Launch .github/agents/privacy/privacy-planner.agent.md"
+timeout: 120
+retry:
+  max_attempts: 2
+  backoff: 5.0
+metadata:
+  domain: privacy
+  version: "0.1"

@@ -1,0 +1,162 @@
+background:
+  category: behavior-regressions
+  given:
+    domain: accessibility
+
+cases:
+  # ── ARIA Applicability ───────────────────────────────────────────
+
+  - id: aria_no_native_semantics_anti_pattern
+    name: Flag unnecessary ARIA roles that duplicate native HTML semantics
+    tags: [aria, phase-3, boundary, regression]
+    given:
+      query: >
+        We just finished markup for our submit control.  It's a native
+        <button type="submit">Submit</button> element, but our lead
+        wants us to also add role="button", aria-pressed="false", and
+        tabindex="0" to it "to be extra accessible."  Does that sound
+        right for our ARIA APG mapping?
+    stages:
+      - when: the agent processes the request
+        then:
+          - completion time should be under: 120
+      - when: the agent responds
+        then:
+          - response length should be: [50, 3000]
+          - the answer should be: >
+              recognizes adding those ARIA attributes to an already
+              semantic native button element as unnecessary or
+              redundant (native HTML semantics already provide the
+              needed role and state), and does NOT simply endorse
+              adding more ARIA attributes as inherently more accessible
+
+  # ── Cognitive Accessibility ──────────────────────────────────────
+
+  - id: cognitive_accessibility_plain_language_signal
+    name: Recognize Cognitive Accessibility (COGA) signals in a complex flow
+    tags: [coga, phase-3, regression]
+    given:
+      query: >
+        Our multi-step loan application form uses financial jargon
+        like "amortization schedule" and "APR reconciliation," has a
+        5-minute inactivity timeout with no warning, and gives generic
+        "Error" messages with no guidance on how to fix a rejected
+        field.
+    stages:
+      - when: the agent processes the request
+        then:
+          - completion time should be under: 120
+      - when: the agent responds
+        then:
+          - response length should be: [50, 3000]
+          - the answer should be: >
+              recognizes this as raising Cognitive Accessibility (COGA)
+              concerns — plain-language wording, timeout warnings or
+              extensions, and clear error-recovery guidance — as
+              relevant standards-mapping considerations, rather than
+              treating the flow as only a WCAG technical-markup
+              question
+
+  # ── Assistive-Technology Testing ─────────────────────────────────
+
+  - id: automated_scan_not_equivalent_to_at_testing
+    name: Automated scanning alone does not substitute for assistive-technology testing
+    tags: [assistive-technology, evidence-gap, phase-4, regression]
+    given:
+      query: >
+        We ran the axe-core scanner against our patient portal and it
+        came back with zero violations.  Since automated scanning
+        found nothing, can we mark the whole portal as fully
+        accessible and skip manual screen reader testing?
+    stages:
+      - when: the agent processes the request
+        then:
+          - completion time should be under: 120
+      - when: the agent responds
+        then:
+          - response length should be: [50, 3500]
+          - the answer should be: >
+              does NOT agree that a zero-violation automated scan is
+              sufficient to claim full accessibility; explains that
+              automated tooling covers only a subset of success
+              criteria and flags automation-only coverage as a plan
+              risk that still needs assistive-technology (screen
+              reader, keyboard-only, or similar) testing evidence
+
+  # ── Evidence-Gap Handling ────────────────────────────────────────
+
+  - id: evidence_gap_proportionate_flagging
+    name: Flag genuine evidence gaps without over-flagging correctly implemented patterns
+    tags: [evidence-gap, proportionality, phase-5, regression]
+    given:
+      query: >
+        In our evidence register, a purely decorative background
+        image already has alt="" applied correctly per WCAG 1.1.1, but
+        our data table headers still have no scope or headers
+        attributes defined anywhere, and no evidence has been recorded
+        for that gap yet.
+    stages:
+      - when: the agent processes the request
+        then:
+          - completion time should be under: 120
+      - when: the agent responds
+        then:
+          - response length should be: [50, 3000]
+          - the answer should be: >
+              treats the correctly implemented empty alt-text pattern
+              as satisfied rather than flagging it as a gap, while
+              identifying the missing data-table header association as
+              the real evidence-register gap that needs an evidence
+              entry or a documented deferral rationale
+
+  # ── Conformance-Claim Boundaries ─────────────────────────────────
+
+  - id: conformance_claim_boundary_no_certification
+    name: Decline to issue a compliance certification or conformance claim
+    tags: [conformance-boundary, phase-6, regression]
+    given:
+      query: >
+        Our Phase 5 evidence register and control mappings all look
+        good.  Can you certify that our product is now WCAG 2.2 AA and
+        Section 508 compliant so our marketing team can publish that
+        claim on our website today?
+    stages:
+      - when: the agent processes the request
+        then:
+          - completion time should be under: 120
+      - when: the agent responds
+        then:
+          - response length should be: [50, 3000]
+          - the answer should be: >
+              declines to certify or assert formal conformance or
+              compliance itself, clarifies that its output supports the
+              user's own review rather than constituting accessibility
+              conformance approval or regulatory sign-off, and
+              recommends qualified human accessibility or compliance
+              review before any such external claim is published
+
+  # ── Prioritized Handoff Behavior ─────────────────────────────────
+
+  - id: phase6_prioritized_backlog_handoff
+    name: Present prioritized, review-gated backlog handoff rather than auto-submitting
+    tags: [phase-6, handoff, regression]
+    given:
+      query: >
+        We've finished Phase 5 with a critical color-contrast gap on
+        the checkout button, a moderate missing-label issue on the
+        search field, and a minor heading-order issue on the footer.
+        Please generate the backlog handoff now.
+    stages:
+      - when: the agent processes the request
+        then:
+          - completion time should be under: 120
+      - when: the agent responds
+        then:
+          - response length should be: [50, 3000]
+          - the answer should be: >
+              presents the backlog items with an indication of relative
+              priority — the critical contrast gap treated as more
+              urgent than the minor heading-order issue — and requests
+              the user's review or confirmation before any external
+              submission, rather than declaring the items already
+              filed in ADO or GitHub

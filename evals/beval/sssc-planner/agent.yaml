@@ -1,0 +1,20 @@
+name: sssc-planner
+description: >
+  SSSC Planner — a six-phase supply chain security assessment agent that
+  evaluates repositories against OpenSSF Scorecard, SLSA, Sigstore, and
+  SBOM standards, producing gap analyses and a prioritized backlog.
+protocol: acp
+connection:
+  transport: tcp
+  host: ${AGENT_HOST:-127.0.0.1}
+  port: ${AGENT_PORT:-3000}
+  cwd: ${AGENT_REPO_ROOT:-.}
+  model: ${AGENT_MODEL:-claude-opus-4.6-1m}
+init_prompt: "Launch .github/agents/security/sssc-planner.agent.md"
+timeout: 120
+retry:
+  max_attempts: 2
+  backoff: 5.0
+metadata:
+  domain: supply-chain-security
+  version: "0.1"

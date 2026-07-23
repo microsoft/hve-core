@@ -1,0 +1,97 @@
+background:
+  category: session-phases
+  given:
+    domain: responsible-ai
+
+cases:
+  # ── Startup: Disclaimer and Framework Attribution ────────────────
+
+  - id: startup_disclaimer_and_framework_attribution
+    name: Display CAUTION disclaimer and NIST AI RMF attribution before questions
+    tags: [startup, disclaimer, core]
+    given:
+      query: >
+        Hi, I'd like to start a Responsible AI assessment for our new
+        customer support chatbot that uses a fine-tuned LLM.
+    stages:
+      - when: the agent processes the request
+        then:
+          - completion time should be under: 120
+      - when: the agent responds
+        then:
+          - response length should be: [50, 3000]
+          - response should contain: "CAUTION"
+          - the answer should be: >
+              displays a CAUTION-style disclaimer about the assessment
+              before any questions, and announces the NIST AI RMF 1.0
+              framework as the default evaluation framework, rather than
+              immediately diving into scoping questions
+
+  # ── Phase 1: AI System Scoping ────────────────────────────────────
+
+  - id: phase1_ai_system_scoping_questions
+    name: Ask scoping questions about purpose, stack, and stakeholders
+    tags: [phase-1, scoping, core]
+    given:
+      query: >
+        The system is a customer support chatbot built on a fine-tuned
+        LLM, deployed as a web widget, used by our support agents and
+        end customers.
+    stages:
+      - when: the agent processes the request
+        then:
+          - completion time should be under: 120
+      - when: the agent responds
+        then:
+          - response length should be: [50, 3000]
+          - the answer should be: >
+              asks focused follow-up questions (no more than 7) about the
+              AI system's technology stack, deployment model, stakeholder
+              roles, data inputs and outputs, or intended use context,
+              rather than jumping to risk classification or standards
+              mapping
+
+  # ── Phase 2: Risk Classification (Prohibited Uses Gate) ──────────
+
+  - id: phase2_prohibited_uses_gate_first
+    name: Run prohibited uses gate before risk indicators
+    tags: [phase-2, risk-classification, core]
+    given:
+      query: >
+        We've finished describing the system.  It doesn't do biometric
+        categorization, social scoring, or subliminal manipulation.
+        What's next?
+    stages:
+      - when: the agent processes the request
+        then:
+          - completion time should be under: 120
+      - when: the agent responds
+        then:
+          - response length should be: [50, 3000]
+          - the answer should be: >
+              confirms or evaluates the prohibited uses gate before
+              moving on to the three risk indicators (safety/reliability,
+              rights/fairness/privacy, security/explainability), and does
+              not skip straight to a suggested assessment depth tier
+              without addressing prohibited uses
+
+  # ── Phase Boundary: Explicit Confirmation Before Advancing ───────
+
+  - id: phase_advance_requires_explicit_confirmation
+    name: Do not silently advance phases without user confirmation
+    tags: [phase-boundary, gate, core]
+    given:
+      query: >
+        I think we've answered everything for AI system scoping.
+    stages:
+      - when: the agent processes the request
+        then:
+          - completion time should be under: 120
+      - when: the agent responds
+        then:
+          - response length should be: [50, 3000]
+          - the answer should be: >
+              summarizes what has been captured for Phase 1 and asks the
+              user to explicitly confirm before advancing to Phase 2 risk
+              classification, rather than silently moving ahead or
+              declaring the next phase already in progress

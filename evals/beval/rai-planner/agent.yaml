@@ -1,0 +1,20 @@
+name: rai-planner
+description: >
+  RAI Planner — a six-phase responsible AI assessment agent that evaluates
+  AI systems against NIST AI RMF 1.0, producing risk classifications,
+  security model analysis, impact assessments, and backlog handoff.
+protocol: acp
+connection:
+  transport: tcp
+  host: ${AGENT_HOST:-127.0.0.1}
+  port: ${AGENT_PORT:-3000}
+  cwd: ${AGENT_REPO_ROOT:-.}
+  model: ${AGENT_MODEL:-claude-opus-4.6-1m}
+init_prompt: "Launch .github/agents/rai-planning/rai-planner.agent.md"
+timeout: 120
+retry:
+  max_attempts: 2
+  backoff: 5.0
+metadata:
+  domain: responsible-ai
+  version: "0.1"
