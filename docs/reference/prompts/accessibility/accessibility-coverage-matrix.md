@@ -2,7 +2,7 @@
 title: Accessibility Coverage Matrix
 description: "Build, refresh, report, or probe an accessibility coverage matrix across criteria, surfaces, and methods."
 sidebar_position: 1
-ms.date: 2026-07-16
+ms.date: 2026-07-23
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->

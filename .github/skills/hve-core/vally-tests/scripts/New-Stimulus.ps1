@@ -28,7 +28,7 @@
     written to stdout.
 
 .PARAMETER GraderType
-    Optional Vally CLI 0.4.0 grader type to seed the `graders:` array. One of
+    Optional Vally CLI 0.9.0 grader type to seed the `graders:` array. One of
     prompt, output-contains, output-matches. Defaults to output-matches.
 
 .EXAMPLE

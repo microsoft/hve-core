@@ -2,7 +2,7 @@
 title: Skill Hygiene
 description: 'Lint-based skill hygiene suite for .github/skills/ delivered via vally lint'
 author: HVE Core Team
-ms.date: 2026-07-16
+ms.date: 2026-07-23
 ---
 
 This directory documents the **skill hygiene** suite. It is the only suite that ships through `vally lint` rather than `vally eval` and so contains no `eval.yaml`.
@@ -47,7 +47,7 @@ New skills added under `.github/skills/<collection>/<slug>/SKILL.md` are picked 
 
 ## Graders
 
-Tier 1 ships with the two hygiene graders registered by `vally lint` in Vally 0.4.0. `skill-size` is deferred per **PD-01 Option A** in the planning log and tracked under **WI-08**; it activates in **Phase 15** alongside other custom grader plugin work.
+Tier 1 ships with the two hygiene graders registered by `vally lint` in Vally 0.9.0. `skill-size` is deferred per **PD-01 Option A** in the planning log and tracked under **WI-08**; it activates in **Phase 15** alongside other custom grader plugin work.
 
 | Grader         | Status   | Behavior                                                                       |
 |----------------|----------|--------------------------------------------------------------------------------|
@@ -61,7 +61,7 @@ Tier 1 ships with the two hygiene graders registered by `vally lint` in Vally 0.
 
 The other four suites under `evals/` use `vally eval` because they need a model in the loop to grade non-deterministic output. Skill hygiene is purely structural; every check is a fast static read of the file system.
 
-Authoring an `eval.yaml` that references the hygiene grader types (`orphan-files`, `skill-size`, `valid-refs`) would fail at runtime with "Unknown grader type" because Vally 0.4.0's eval grader registry does not expose them (see **DR-05** evidence and **DD-03** in the planning log).
+Authoring an `eval.yaml` that references the hygiene grader types (`orphan-files`, `skill-size`, `valid-refs`) would fail at runtime with "Unknown grader type" because Vally 0.9.0's eval grader registry does not expose them (see **DR-05** evidence and **DD-03** in the planning log).
 
 The `vally lint` subcommand already implements exactly this contract: discover skills, run registered static graders, emit a per-skill pass/fail report. Reusing it preserves the anti-aggregate-grader policy and keeps the inner-loop cost at zero tokens.
 

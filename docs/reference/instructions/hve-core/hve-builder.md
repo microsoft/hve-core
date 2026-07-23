@@ -2,7 +2,7 @@
 title: Hve Core/Hve Builder
 description: "Authoring standards for prompts, agents, subagents, instructions, and skills, grounded in the frontier-LLM instruction-quality research"
 sidebar_position: 4
-ms.date: 2026-07-16
+ms.date: 2026-07-23
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->

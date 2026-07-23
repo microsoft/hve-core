@@ -59,8 +59,8 @@ main() {
   fi
 
   # Delegate all JSON processing to the shared telemetry engine. The engine
-  # records the event and, at Stop and PreCompact, enriches the session with
-  # token/cost data.
+  # records the event and, at Stop, SessionEnd, and PreCompact, enriches the
+  # session with token/cost data.
   export HVE_REPO_ROOT="$repo_root"
   export HVE_TELEMETRY_DIR="$telemetry_dir"
   echo "$input" | python3 "$core_py" collect || true

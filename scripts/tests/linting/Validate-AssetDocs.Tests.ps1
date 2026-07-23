@@ -155,6 +155,54 @@ Describe 'Test-AssetDocOrphan' -Tag 'Unit' {
         $findings[0].Level | Should -Be 'Error'
         $findings[0].Category | Should -Be 'Orphan'
     }
+
+    It 'Ignores an unrelated orphan in changed-file scope' {
+        $ghost = Join-Path $script:repo 'docs/reference/agents/hve-core/ghost.md'
+        Set-Content -LiteralPath $ghost -Value (@('---', 'title: Ghost', 'description: x', '---', '') -join "`n") -Encoding utf8NoBOM
+
+        Test-AssetDocOrphan -Models $script:models -RepoRoot $script:repo -ChangedFiles @('README.md') |
+            Should -BeNullOrEmpty
+    }
+
+    It 'Reports an orphan page when the page changed' {
+        $ghostRel = 'docs/reference/agents/hve-core/ghost.md'
+        Set-Content -LiteralPath (Join-Path $script:repo $ghostRel) -Value (@('---', 'title: Ghost', 'description: x', '---', '') -join "`n") -Encoding utf8NoBOM
+
+        $findings = @(Test-AssetDocOrphan -Models $script:models -RepoRoot $script:repo -ChangedFiles @($ghostRel))
+
+        $findings | Should -HaveCount 1
+        $findings[0].Path | Should -BeExactly $ghostRel
+    }
+
+    It 'Reports an orphan page when its would-be source changed' {
+        $ghostRel = 'docs/reference/agents/hve-core/ghost.md'
+        Set-Content -LiteralPath (Join-Path $script:repo $ghostRel) -Value (@('---', 'title: Ghost', 'description: x', '---', '') -join "`n") -Encoding utf8NoBOM
+
+        $findings = @(Test-AssetDocOrphan -Models $script:models -RepoRoot $script:repo -ChangedFiles @('.github/agents/hve-core/ghost.agent.md'))
+
+        $findings | Should -HaveCount 1
+        $findings[0].Path | Should -BeExactly $ghostRel
+    }
+}
+
+Describe 'Changed asset-doc path mapping' -Tag 'Unit' {
+    It 'Maps page paths to would-be source assets' -ForEach @(
+        @{ Doc = 'docs/reference/agents/hve-core/demo.md'; Source = '.github/agents/hve-core/demo.agent.md' }
+        @{ Doc = 'docs/reference/prompts/hve-core/demo.md'; Source = '.github/prompts/hve-core/demo.prompt.md' }
+        @{ Doc = 'docs/reference/instructions/shared/demo.md'; Source = '.github/instructions/shared/demo.instructions.md' }
+        @{ Doc = 'docs/reference/skills/hve-core/demo.md'; Source = '.github/skills/hve-core/demo' }
+    ) {
+        Get-AssetDocSourcePath -DocPath $Doc | Should -BeExactly $Source
+    }
+
+    It 'Selects a model when its source page or nested skill content changed' {
+        $repo = New-ValidatorFixture
+        $agent = Get-FixtureModel -Repo $repo -Kind 'agent'
+
+        Test-AssetDocModelChanged -Model $agent -ChangedFiles @($agent.SourceRel) | Should -BeTrue
+        Test-AssetDocModelChanged -Model $agent -ChangedFiles @($agent.DocRel) | Should -BeTrue
+        Test-AssetDocModelChanged -Model $agent -ChangedFiles @('README.md') | Should -BeFalse
+    }
 }
 
 Describe 'Test-AssetDocStructure' -Tag 'Unit' {
@@ -248,6 +296,13 @@ Describe 'Test-AssetDocAuthored' -Tag 'Unit' {
 }
 
 Describe 'Invoke-AssetDocsValidation' -Tag 'Unit' {
+    It 'Exposes ChangedFilesOnly and BaseBranch parameters' {
+        $command = Get-Command (Join-Path $PSScriptRoot '../../linting/Validate-AssetDocs.ps1')
+
+        $command.Parameters.Keys | Should -Contain 'ChangedFilesOnly'
+        $command.Parameters.Keys | Should -Contain 'BaseBranch'
+    }
+
     It 'Exits 0 for a freshly generated tree with authored warnings only' {
         $repo = New-ValidatorFixture
         (Invoke-AssetDocsValidation -RepoRoot $repo) | Should -Be 0
@@ -291,5 +346,62 @@ Describe 'Invoke-AssetDocsValidation' -Tag 'Unit' {
     It 'Exits 0 for a freshly generated tree under strict coverage and sync checks' {
         $repo = New-ValidatorFixture
         (Invoke-AssetDocsValidation -RepoRoot $repo -FailOnMissing -CheckSync) | Should -Be 0
+    }
+
+    It 'Does not block unrelated changes on a pre-existing orphan' {
+        $repo = New-ValidatorFixture
+        Set-Content -LiteralPath (Join-Path $repo 'docs/reference/agents/hve-core/ghost.md') -Value (@('---', 'title: Ghost', 'description: x', '---', '') -join "`n") -Encoding utf8NoBOM
+        Mock Get-ChangedFilesFromGit { @('README.md') }
+
+        (Invoke-AssetDocsValidation -RepoRoot $repo -ChangedFilesOnly -FailOnMissing -CheckSync) | Should -Be 0
+    }
+
+    It 'Exits 1 when an orphan page changed' {
+        $repo = New-ValidatorFixture
+        $ghostRel = 'docs/reference/agents/hve-core/ghost.md'
+        Set-Content -LiteralPath (Join-Path $repo $ghostRel) -Value (@('---', 'title: Ghost', 'description: x', '---', '') -join "`n") -Encoding utf8NoBOM
+        Mock Get-ChangedFilesFromGit { @($ghostRel) }
+
+        (Invoke-AssetDocsValidation -RepoRoot $repo -ChangedFilesOnly -FailOnMissing -CheckSync) | Should -Be 1
+    }
+
+    It 'Exits 1 when a deleted source leaves an orphan page' {
+        $repo = New-ValidatorFixture
+        $model = Get-FixtureModel -Repo $repo -Kind 'agent'
+        Remove-Item -LiteralPath (Join-Path $repo $model.SourceRel) -Force
+        Mock Get-ChangedFilesFromGit { @($model.SourceRel) }
+
+        (Invoke-AssetDocsValidation -RepoRoot $repo -ChangedFilesOnly -FailOnMissing -CheckSync) | Should -Be 1
+    }
+
+    It 'Exits 1 when a source rename orphans the old page and misses the new page' {
+        $repo = New-ValidatorFixture
+        $oldModel = Get-FixtureModel -Repo $repo -Kind 'agent'
+        $newSourceRel = '.github/agents/hve-core/renamed-agent.agent.md'
+        $newSource = Join-Path $repo $newSourceRel
+        Move-Item -LiteralPath (Join-Path $repo $oldModel.SourceRel) -Destination $newSource
+        Mock Get-ChangedFilesFromGit { @($oldModel.SourceRel, $newSourceRel) }
+
+        (Invoke-AssetDocsValidation -RepoRoot $repo -ChangedFilesOnly -FailOnMissing -CheckSync) | Should -Be 1
+    }
+
+    It 'Exits 1 when a changed documentation page was deleted' {
+        $repo = New-ValidatorFixture
+        $model = Get-FixtureModel -Repo $repo -Kind 'agent'
+        Remove-Item -LiteralPath (Join-Path $repo $model.DocRel) -Force
+        Mock Get-ChangedFilesFromGit { @($model.DocRel) }
+
+        (Invoke-AssetDocsValidation -RepoRoot $repo -ChangedFilesOnly -FailOnMissing -CheckSync) | Should -Be 1
+    }
+
+    It 'Passes the base branch and deleted-path switch to change discovery' {
+        $repo = New-ValidatorFixture
+        Mock Get-ChangedFilesFromGit { @() }
+
+        Invoke-AssetDocsValidation -RepoRoot $repo -ChangedFilesOnly -BaseBranch 'develop' | Out-Null
+
+        Should -Invoke Get-ChangedFilesFromGit -Times 1 -Exactly -ParameterFilter {
+            $BaseBranch -eq 'develop' -and $IncludeDeleted
+        }
     }
 }

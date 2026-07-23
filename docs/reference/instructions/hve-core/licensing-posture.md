@@ -2,7 +2,7 @@
 title: Hve Core/Licensing Posture
 description: "Repository posture for licensing, reproduction, and attribution of third-party standards in skills and tracking artifacts"
 sidebar_position: 5
-ms.date: 2026-07-16
+ms.date: 2026-07-23
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->

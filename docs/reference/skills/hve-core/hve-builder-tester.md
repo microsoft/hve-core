@@ -2,7 +2,7 @@
 title: hve-builder-tester
 description: "Test HVE artifact behavior with black-box scenarios, contained simulation or approved native execution, independent grading, and evidence reports."
 sidebar_position: 3
-ms.date: 2026-07-16
+ms.date: 2026-07-23
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->

@@ -1,6 +1,6 @@
 name: baseline-equivalence-compare
 description: >
-  Pairwise comparison spec for vally compare. Stimulus names mirror
+  Prompt-judge comparison spec for `vally compare`. Stimulus names mirror
   stimuli.yml so trajectory pairs match across baseline and customized runs.
   Judge model is pinned to claude-sonnet-4.6 for the comparison call only;
   the executor model is unpinned and injected by the driver.
@@ -18,7 +18,7 @@ stimuli:
       category: baseline-equivalence
       subcategory: factual-recall
     graders:
-      - type: pairwise
+      - type: prompt
         name: equivalent-answer
         config:
           prompt: |
@@ -34,7 +34,7 @@ stimuli:
       category: baseline-equivalence
       subcategory: factual-recall
     graders:
-      - type: pairwise
+      - type: prompt
         name: equivalent-answer
         config:
           prompt: |
@@ -50,7 +50,7 @@ stimuli:
       category: baseline-equivalence
       subcategory: code-qa
     graders:
-      - type: pairwise
+      - type: prompt
         name: equivalent-code
         config:
           prompt: |
@@ -66,7 +66,7 @@ stimuli:
       category: baseline-equivalence
       subcategory: code-qa
     graders:
-      - type: pairwise
+      - type: prompt
         name: equivalent-code
         config:
           prompt: |
@@ -83,7 +83,7 @@ stimuli:
       category: baseline-equivalence
       subcategory: tool-trigger
     graders:
-      - type: pairwise
+      - type: prompt
         name: equivalent-tool-trigger
         config:
           prompt: |
@@ -99,7 +99,7 @@ stimuli:
       category: baseline-equivalence
       subcategory: tool-trigger
     graders:
-      - type: pairwise
+      - type: prompt
         name: equivalent-answer
         config:
           prompt: |
@@ -115,7 +115,7 @@ stimuli:
       category: baseline-equivalence
       subcategory: instruction-bleed
     graders:
-      - type: pairwise
+      - type: prompt
         name: equivalent-tone
         config:
           prompt: |
@@ -132,7 +132,7 @@ stimuli:
       category: baseline-equivalence
       subcategory: instruction-bleed
     graders:
-      - type: pairwise
+      - type: prompt
         name: equivalent-tone
         config:
           prompt: |
@@ -148,7 +148,7 @@ stimuli:
       category: baseline-equivalence
       subcategory: customization-boundary
     graders:
-      - type: pairwise
+      - type: prompt
         name: documented-divergence
         config:
           prompt: |
@@ -167,7 +167,7 @@ stimuli:
       category: baseline-equivalence
       subcategory: customization-boundary
     graders:
-      - type: pairwise
+      - type: prompt
         name: documented-divergence
         config:
           prompt: |

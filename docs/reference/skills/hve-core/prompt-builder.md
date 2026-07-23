@@ -2,7 +2,7 @@
 title: prompt-builder
 description: Compatibility alias for legacy prompt-building requests. Routes creation and improvement to the hve-builder skill.
 sidebar_position: 6
-ms.date: 2026-07-16
+ms.date: 2026-07-23
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->

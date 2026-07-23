@@ -2,7 +2,7 @@
 title: hve-builder
 description: "Author, review, or validate Copilot prompt-engineering artifacts through independent review, behavior testing, and host checks."
 sidebar_position: 4
-ms.date: 2026-07-16
+ms.date: 2026-07-23
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->

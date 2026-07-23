@@ -2,7 +2,7 @@
 title: RPI Researcher
 description: "Executes one delegated internal, external, or hybrid RPI research lane and progressively writes owned evidence. Use for independent research threads."
 sidebar_position: 3
-ms.date: 2026-07-16
+ms.date: 2026-07-23
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->

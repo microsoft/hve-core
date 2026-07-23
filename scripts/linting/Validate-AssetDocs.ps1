@@ -41,6 +41,13 @@
     Treat pages whose human-authored sections still contain stub placeholders
     as errors instead of warnings.
 
+.PARAMETER ChangedFilesOnly
+    Validate only assets and documentation pages affected by changed files.
+    Orphans are reported only when the page or its would-be source asset changed.
+
+.PARAMETER BaseBranch
+    Git reference used for changed-file detection. Defaults to origin/main.
+
 .PARAMETER OutputPath
     Path for the JSON results file. Defaults to
     logs/asset-docs-validation-results.json.
@@ -73,6 +80,13 @@ param(
     [switch]$RequireAuthoredContent,
 
     [Parameter(Mandatory = $false)]
+    [switch]$ChangedFilesOnly,
+
+    [Parameter(Mandatory = $false)]
+    [ValidateNotNullOrEmpty()]
+    [string]$BaseBranch = 'origin/main',
+
+    [Parameter(Mandatory = $false)]
     [string]$OutputPath = 'logs/asset-docs-validation-results.json'
 )
 
@@ -86,6 +100,7 @@ $ErrorActionPreference = 'Stop'
 # so the sync check renders exactly what the generator produces.
 Import-Module (Join-Path -Path $PSScriptRoot -ChildPath '../docs/Modules/DocsHelpers.psm1') -Force
 Import-Module (Join-Path -Path $PSScriptRoot -ChildPath '../collections/Modules/CollectionHelpers.psm1') -Force
+Import-Module (Join-Path -Path $PSScriptRoot -ChildPath 'Modules/LintingHelpers.psm1') -Force
 Import-Module (Join-Path -Path $PSScriptRoot -ChildPath '../lib/Modules/CIHelpers.psm1') -Force
 
 #region Findings
@@ -162,6 +177,110 @@ function Get-AssetDocPagePath {
     return @($paths)
 }
 
+function Get-AssetDocSourcePath {
+    <#
+    .SYNOPSIS
+        Maps an asset documentation page to its would-be source asset path.
+    .DESCRIPTION
+        Reverses the deterministic docs/reference path convention for agent,
+        prompt, instruction, and skill pages. Skill results are directory paths;
+        other kinds are file paths. Returns null for non-asset pages.
+    .PARAMETER DocPath
+        Repo-relative asset documentation page path.
+    .OUTPUTS
+        [string] Repo-relative source asset path, or null when not recognized.
+    #>
+    [CmdletBinding()]
+    [OutputType([string])]
+    param(
+        [Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string]$DocPath
+    )
+
+    $normalized = $DocPath -replace '\\', '/'
+    if ($normalized -notmatch '^docs/reference/(?<kind>agents|prompts|instructions|skills)/(?<remainder>.+)\.md$') {
+        return $null
+    }
+
+    $kind = $Matches['kind']
+    $remainder = $Matches['remainder']
+    switch ($kind) {
+        'agents' { return ".github/agents/$remainder.agent.md" }
+        'prompts' { return ".github/prompts/$remainder.prompt.md" }
+        'instructions' { return ".github/instructions/$remainder.instructions.md" }
+        'skills' { return ".github/skills/$remainder" }
+    }
+}
+
+function Test-AssetDocModelChanged {
+    <#
+    .SYNOPSIS
+        Tests whether a page model is affected by changed files.
+    .PARAMETER Model
+        Page model from New-AssetPageModel.
+    .PARAMETER ChangedFiles
+        Repo-relative changed file paths.
+    .OUTPUTS
+        [bool] True when the source asset or documentation page changed.
+    #>
+    [CmdletBinding()]
+    [OutputType([bool])]
+    param(
+        [Parameter(Mandatory = $true)][PSCustomObject]$Model,
+        [Parameter(Mandatory = $true)][AllowEmptyCollection()][string[]]$ChangedFiles
+    )
+
+    foreach ($file in $ChangedFiles) {
+        $normalized = $file -replace '\\', '/'
+        if ([string]::Equals($normalized, $Model.DocRel, [System.StringComparison]::Ordinal)) {
+            return $true
+        }
+        if ([string]::Equals($normalized, $Model.SourceRel, [System.StringComparison]::Ordinal)) {
+            return $true
+        }
+        if ($Model.Kind -eq 'skill' -and $normalized.StartsWith("$($Model.SourceRel)/", [System.StringComparison]::Ordinal)) {
+            return $true
+        }
+    }
+
+    return $false
+}
+
+function Test-AssetDocOrphanChanged {
+    <#
+    .SYNOPSIS
+        Tests whether an orphan page is in changed-file scope.
+    .PARAMETER DocPath
+        Repo-relative orphan documentation path.
+    .PARAMETER ChangedFiles
+        Repo-relative changed file paths.
+    .OUTPUTS
+        [bool] True when the page or its would-be source asset changed.
+    #>
+    [CmdletBinding()]
+    [OutputType([bool])]
+    param(
+        [Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string]$DocPath,
+        [Parameter(Mandatory = $true)][AllowEmptyCollection()][string[]]$ChangedFiles
+    )
+
+    $sourcePath = Get-AssetDocSourcePath -DocPath $DocPath
+    foreach ($file in $ChangedFiles) {
+        $normalized = $file -replace '\\', '/'
+        if ([string]::Equals($normalized, $DocPath, [System.StringComparison]::Ordinal)) {
+            return $true
+        }
+        if ($sourcePath -and [string]::Equals($normalized, $sourcePath, [System.StringComparison]::Ordinal)) {
+            return $true
+        }
+        if ($sourcePath -and $sourcePath.StartsWith('.github/skills/', [System.StringComparison]::Ordinal) -and
+            $normalized.StartsWith("$sourcePath/", [System.StringComparison]::Ordinal)) {
+            return $true
+        }
+    }
+
+    return $false
+}
+
 function Test-AssetDocCoverage {
     <#
     .SYNOPSIS
@@ -214,6 +333,9 @@ function Test-AssetDocOrphan {
         Page models from New-AssetPageModel.
     .PARAMETER RepoRoot
         Repository root directory.
+    .PARAMETER ChangedFiles
+        Optional changed-file scope. When supplied, reports an orphan only when
+        the page or its would-be source asset is present in this list.
     .OUTPUTS
         [PSCustomObject[]] Findings.
     #>
@@ -221,7 +343,8 @@ function Test-AssetDocOrphan {
     [OutputType([PSCustomObject[]])]
     param(
         [Parameter(Mandatory = $true)][AllowEmptyCollection()][object[]]$Models,
-        [Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string]$RepoRoot
+        [Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string]$RepoRoot,
+        [Parameter(Mandatory = $false)][AllowEmptyCollection()][string[]]$ChangedFiles
     )
 
     $findings = @()
@@ -237,6 +360,10 @@ function Test-AssetDocOrphan {
 
     foreach ($rel in (Get-AssetDocPagePath -RepoRoot $RepoRoot)) {
         if (-not $expected.Contains($rel)) {
+            if ($PSBoundParameters.ContainsKey('ChangedFiles') -and
+                -not (Test-AssetDocOrphanChanged -DocPath $rel -ChangedFiles $ChangedFiles)) {
+                continue
+            }
             $findings += New-AssetDocFinding -Level 'Error' -Category 'Orphan' -Path $rel -Message 'Orphaned documentation page has no matching asset.'
         }
     }
@@ -449,6 +576,10 @@ function Invoke-AssetDocsValidation {
         Enable the generated-region sync check.
     .PARAMETER RequireAuthoredContent
         Treat remaining stub sections as errors.
+    .PARAMETER ChangedFilesOnly
+        Validate only assets and pages affected by changed files.
+    .PARAMETER BaseBranch
+        Git reference used for changed-file detection.
     .PARAMETER OutputPath
         Repo-relative JSON output path.
     .OUTPUTS
@@ -461,18 +592,34 @@ function Invoke-AssetDocsValidation {
         [Parameter(Mandatory = $false)][switch]$FailOnMissing,
         [Parameter(Mandatory = $false)][switch]$CheckSync,
         [Parameter(Mandatory = $false)][switch]$RequireAuthoredContent,
+        [Parameter(Mandatory = $false)][switch]$ChangedFilesOnly,
+        [Parameter(Mandatory = $false)][ValidateNotNullOrEmpty()][string]$BaseBranch = 'origin/main',
         [Parameter(Mandatory = $false)][string]$OutputPath = 'logs/asset-docs-validation-results.json'
     )
 
     try {
         $assets = Get-DocumentableAssets -RepoRoot $RepoRoot
         $models = @($assets | ForEach-Object { New-AssetPageModel -Asset $_ -RepoRoot $RepoRoot })
+        $changedFiles = @()
+        $modelsToValidate = $models
+
+        if ($ChangedFilesOnly) {
+            $changedFiles = @(Get-ChangedFilesFromGit -BaseBranch $BaseBranch -FileExtensions @('*') -IncludeDeleted |
+                Where-Object { -not [string]::IsNullOrWhiteSpace($_) } |
+                ForEach-Object { $_ -replace '\\', '/' } |
+                Sort-Object -Unique)
+            $modelsToValidate = @($models | Where-Object { Test-AssetDocModelChanged -Model $_ -ChangedFiles $changedFiles })
+            Write-Host "Changed-file mode selected $($modelsToValidate.Count) asset(s) from $($changedFiles.Count) changed path(s)" -ForegroundColor Cyan
+        }
 
         $findings = [System.Collections.Generic.List[PSCustomObject]]::new()
-        foreach ($f in @(Test-AssetDocCoverage -Models $models -RepoRoot $RepoRoot -FailOnMissing:$FailOnMissing)) { $findings.Add($f) }
-        foreach ($f in @(Test-AssetDocOrphan -Models $models -RepoRoot $RepoRoot)) { $findings.Add($f) }
+        foreach ($f in @(Test-AssetDocCoverage -Models $modelsToValidate -RepoRoot $RepoRoot -FailOnMissing:$FailOnMissing)) { $findings.Add($f) }
 
-        foreach ($model in $models) {
+        $orphanParams = @{ Models = $models; RepoRoot = $RepoRoot }
+        if ($ChangedFilesOnly) { $orphanParams['ChangedFiles'] = $changedFiles }
+        foreach ($f in @(Test-AssetDocOrphan @orphanParams)) { $findings.Add($f) }
+
+        foreach ($model in $modelsToValidate) {
             $full = Join-Path $RepoRoot $model.DocRel
             if (-not (Test-Path -LiteralPath $full)) {
                 continue
@@ -490,8 +637,10 @@ function Invoke-AssetDocsValidation {
             failOnMissing          = [bool]$FailOnMissing
             checkSync              = [bool]$CheckSync
             requireAuthoredContent = [bool]$RequireAuthoredContent
+            changedFilesOnly       = [bool]$ChangedFilesOnly
+            baseBranch             = $BaseBranch
         }
-        Write-AssetDocsValidationResults -Findings $findings.ToArray() -AssetCount $models.Count -RepoRoot $RepoRoot -OutputPath $OutputPath -Options $options
+        Write-AssetDocsValidationResults -Findings $findings.ToArray() -AssetCount $modelsToValidate.Count -RepoRoot $RepoRoot -OutputPath $OutputPath -Options $options
 
         $hasErrors = @($findings | Where-Object { $_.Level -eq 'Error' }).Count -gt 0
         if ($hasErrors) {
@@ -516,6 +665,8 @@ if ($MyInvocation.InvocationName -ne '.') {
         -FailOnMissing:$FailOnMissing `
         -CheckSync:$CheckSync `
         -RequireAuthoredContent:$RequireAuthoredContent `
+        -ChangedFilesOnly:$ChangedFilesOnly `
+        -BaseBranch $BaseBranch `
         -OutputPath $OutputPath
     exit $exitCode
 }

@@ -267,6 +267,43 @@ Describe 'Resolve-AgentSurfaceSignaturePath' -Tag 'Unit' {
     }
 }
 
+Describe 'Invoke-BaselineEquivalence.ps1 (stubbed nightly run)' -Tag 'Unit' {
+    BeforeEach {
+        $script:StubRepoRoot = Join-Path $TestDrive 'repo'
+        $baselineRoot = Join-Path $script:StubRepoRoot 'evals/baseline-equivalence'
+        $signatureRoot = Join-Path $baselineRoot 'surface-signatures'
+        $workspaceRoot = Join-Path $baselineRoot 'customized/workspace'
+        New-Item -ItemType Directory -Path $signatureRoot, $workspaceRoot -Force | Out-Null
+        New-Item -ItemType Directory -Path (Join-Path $script:StubRepoRoot '.github/skills') -Force | Out-Null
+        Copy-Item -LiteralPath (Join-Path $script:RepoRoot 'evals/baseline-equivalence/compare.eval.yml') -Destination $baselineRoot
+        Copy-Item -LiteralPath (Join-Path $script:RepoRoot 'evals/baseline-equivalence/surface-signatures/rpi-agent.yml') -Destination $signatureRoot
+
+        $script:StubOutputPath = Join-Path $script:StubRepoRoot 'logs/summary.json'
+        $stubVally = Join-Path $PSScriptRoot 'fixtures/stub-vally.ps1'
+        Set-Alias -Name vally -Value $stubVally -Scope Global
+        $env:STUB_VALLY_COMPARE_MODE = 'fail-empty'
+    }
+
+    AfterEach {
+        Remove-Item Alias:vally -Force -ErrorAction SilentlyContinue
+        Remove-Item Env:STUB_VALLY_COMPARE_MODE -ErrorAction SilentlyContinue
+    }
+
+    It 'Counts each failed empty compare once across nightly models' {
+        & $script:ScriptPath `
+            -Agent 'rpi-agent' `
+            -Tier 'nightly' `
+            -RepoRoot $script:StubRepoRoot `
+            -OutputPath $script:StubOutputPath *> $null
+
+        $summary = Get-Content -LiteralPath $script:StubOutputPath -Raw | ConvertFrom-Json
+        $summary.divergenceFailures | Should -Be 3
+        $summary.runs | Should -Be 0
+        $summary.verdict | Should -Be 'fail'
+        $LASTEXITCODE | Should -Be 1
+    }
+}
+
 Describe 'Get-InvariantFailureCount' -Tag 'Unit' {
     BeforeAll {
         . $script:ScriptPath

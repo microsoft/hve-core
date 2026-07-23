@@ -2,7 +2,7 @@
 title: HVE Core
 description: Hypervelocity Engineering prompt library for GitHub Copilot with convention-driven AI workflows and validated artifacts
 author: Microsoft
-ms.date: 2026-07-15
+ms.date: 2026-07-23
 ms.topic: overview
 keywords:
   - hypervelocity engineering
@@ -35,6 +35,12 @@ Use HVE Core when you want AI-assisted work to be repeatable, standards-aligned,
 * Instructions that apply coding standards automatically
 * Skills that add reusable tool capabilities
 
+> [!CAUTION]
+> HVE Core is a highly opinionated, rapidly evolving agentic SDLC framework. It is best treated as a source of patterns and learning rather than a stable platform, foundation, or production dependency.
+> Workflows, interfaces, architecture, and recommended practices may change substantially, including in ways that are not backward compatible, as the technology landscape evolves. Evaluate all materials for your own requirements and risk tolerance.
+> The HVE Builder skill (use with `/hve-builder`) and GitHub Copilot can help you adapt or copy relevant patterns into an agentic SDLC that you own and maintain independently.
+> To build an independent implementation, start with [Forking and Extending HVE Core](docs/customization/forking.md) and review the [HVE Core documentation](docs/README.md) before adopting any component.
+
 ## Where to Start
 
 <!-- markdownlint-disable MD013 -->
@@ -47,6 +53,9 @@ Use HVE Core when you want AI-assisted work to be repeatable, standards-aligned,
 
 > [!TIP]
 > Use [HVE Core All Extension](https://marketplace.visualstudio.com/items?itemName=ise-hve-essentials.hve-core-all) when you want the full collection deployment. See [Collections Overview](docs/getting-started/collections.md).
+
+<!-- Keep these tips separate because they describe different installation paths. -->
+
 > [!TIP]
 > Using GitHub Copilot CLI? Install as a plugin instead:
 >

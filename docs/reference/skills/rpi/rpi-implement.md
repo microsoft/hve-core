@@ -1,8 +1,8 @@
 ---
 title: rpi-implement
-description: "Execute an approved RPI plan, preserve amendments, and record evidence-led changes. Use when implementation is ready to begin or resume."
+description: "Execute an approved RPI plan, maintain current planning state, and record implementation evidence. Use when implementation is ready to begin or resume."
 sidebar_position: 2
-ms.date: 2026-07-16
+ms.date: 2026-07-23
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->
@@ -17,7 +17,7 @@ ms.date: 2026-07-16
 ## What it does
 
 <!-- BEGIN AUTO-GENERATED: overview -->
-Execute an approved RPI plan, preserve amendments, and record evidence-led changes. Use when implementation is ready to begin or resume.
+Execute an approved RPI plan, maintain current planning state, and record implementation evidence. Use when implementation is ready to begin or resume.
 <!-- END AUTO-GENERATED: overview -->
 
 ## When to use it

@@ -2,7 +2,7 @@
 title: Hve Core/Copilot Tracking
 description: "Shared .copilot-tracking conventions for RPI, HVE Builder, and compatibility workflow evidence"
 sidebar_position: 2
-ms.date: 2026-07-16
+ms.date: 2026-07-23
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->

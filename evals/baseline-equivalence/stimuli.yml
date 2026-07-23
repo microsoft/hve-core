@@ -5,7 +5,7 @@ description: >
   customization-boundary, multi-turn, ambiguous-spec, and scope-redirect.
   This file is the authoritative human-readable source; baseline/eval.yaml
   and customized/eval.yaml inline equivalent stimulus entries with graders
-  attached per Vally 0.4.0 schema. Contributor workflow: edit this file
+  attached per Vally 0.9.0 schema. Contributor workflow: edit this file
   first, then mirror name/prompt/tags into the two eval.yaml files.
 
   Explicit non-goals: no safety, refusal, or jailbreak prompts. Adversarial
@@ -23,9 +23,9 @@ stimuli:
       - type: output-matches
         name: answers-four
         config: {pattern: '(?i)\b4\b'}
-      - type: pairwise
-        name: pairwise-equivalence
-        config: {prompt: "Are these two responses substantively equivalent in factual correctness?"}
+      - type: prompt
+        name: response-quality
+        config: {prompt: "Is the response factually correct?"}
 
   - name: factual-geo-france-capital
     category: factual-recall
@@ -36,9 +36,9 @@ stimuli:
       - type: output-matches
         name: mentions-paris
         config: {pattern: '(?i)\bparis\b'}
-      - type: pairwise
-        name: pairwise-equivalence
-        config: {prompt: "Are these two responses substantively equivalent in factual correctness?"}
+      - type: prompt
+        name: response-quality
+        config: {prompt: "Is the response factually correct?"}
 
   - name: factual-units-mile-to-km
     category: factual-recall
@@ -49,9 +49,9 @@ stimuli:
       - type: output-matches
         name: mentions-km-conversion
         config: {pattern: '(?i)1\.6'}
-      - type: pairwise
-        name: pairwise-equivalence
-        config: {prompt: "Are these two responses substantively equivalent in factual correctness?"}
+      - type: prompt
+        name: response-quality
+        config: {prompt: "Is the response factually correct?"}
 
   - name: factual-history-moon-landing-year
     category: factual-recall
@@ -62,9 +62,9 @@ stimuli:
       - type: output-matches
         name: mentions-1969
         config: {pattern: '\b1969\b'}
-      - type: pairwise
-        name: pairwise-equivalence
-        config: {prompt: "Are these two responses substantively equivalent in factual correctness?"}
+      - type: prompt
+        name: response-quality
+        config: {prompt: "Is the response factually correct?"}
 
   - name: factual-science-water-formula
     category: factual-recall
@@ -75,9 +75,9 @@ stimuli:
       - type: output-matches
         name: mentions-h2o
         config: {pattern: '(?i)h2o|h\u2082o|h\s*2\s*o'}
-      - type: pairwise
-        name: pairwise-equivalence
-        config: {prompt: "Are these two responses substantively equivalent in factual correctness?"}
+      - type: prompt
+        name: response-quality
+        config: {prompt: "Is the response factually correct?"}
 
   # --- code-qa (5) ---
   - name: code-hello-world-python
@@ -89,9 +89,9 @@ stimuli:
       - type: output-matches
         name: hello-world-syntax
         config: {pattern: "(?is)print\\(\\s*['\"]hello[^'\"]{0,15}world[^'\"]{0,5}['\"]\\s*\\)"}
-      - type: pairwise
-        name: pairwise-equivalence
-        config: {prompt: "Do both responses provide a working Python hello-world program?"}
+      - type: prompt
+        name: response-quality
+        config: {prompt: "Does the response provide a working Python hello-world program?"}
 
   - name: code-reverse-string-rust
     category: code-qa
@@ -102,9 +102,9 @@ stimuli:
       - type: output-matches
         name: rust-fn-syntax
         config: {pattern: "(?i)fn\\s+\\w+\\s*\\([^)]*&?str"}
-      - type: pairwise
-        name: pairwise-equivalence
-        config: {prompt: "Do both responses define a Rust function that reverses a string?"}
+      - type: prompt
+        name: response-quality
+        config: {prompt: "Does the response define a Rust function that reverses a string?"}
 
   - name: code-walkthrough-fizzbuzz
     category: code-qa
@@ -115,9 +115,9 @@ stimuli:
       - type: output-matches
         name: mentions-fizz-buzz
         config: {pattern: '(?i)fizz.*buzz|buzz.*fizz'}
-      - type: pairwise
-        name: pairwise-equivalence
-        config: {prompt: "Do both responses correctly walk through fizzbuzz for 1 through 15?"}
+      - type: prompt
+        name: response-quality
+        config: {prompt: "Does the response correctly walk through fizzbuzz for 1 through 15?"}
 
   - name: code-error-explain-indexerror
     category: code-qa
@@ -128,9 +128,9 @@ stimuli:
       - type: output-matches
         name: mentions-index-or-range
         config: {pattern: '(?i)(index|range|bounds)'}
-      - type: pairwise
-        name: pairwise-equivalence
-        config: {prompt: "Do both responses correctly explain the cause of an IndexError?"}
+      - type: prompt
+        name: response-quality
+        config: {prompt: "Does the response correctly explain the cause of an IndexError?"}
 
   - name: code-idiom-translate-python-to-js
     category: code-qa
@@ -141,9 +141,9 @@ stimuli:
       - type: output-matches
         name: mentions-map-or-array
         config: {pattern: '(?i)(\.map\(|Array\.from|for\s*\()'}
-      - type: pairwise
-        name: pairwise-equivalence
-        config: {prompt: "Do both responses produce idiomatic JavaScript equivalent to the Python list comprehension?"}
+      - type: prompt
+        name: response-quality
+        config: {prompt: "Does the response produce idiomatic JavaScript equivalent to the Python list comprehension?"}
 
   # --- tool-trigger (5) ---
   - name: tool-trigger-package-json
@@ -152,9 +152,9 @@ stimuli:
     invariants: [mentions-scripts-or-deps]
     tags: {category: baseline-equivalence, subcategory: tool-trigger, agent: [rpi-agent]}
     graders:
-      - type: pairwise
-        name: pairwise-equivalence
-        config: {prompt: "Do both responses describe package.json content from this repository?"}
+      - type: prompt
+        name: response-quality
+        config: {prompt: "Does the response describe package.json content from this repository?"}
 
   - name: tool-trigger-memory-only
     category: tool-trigger
@@ -165,9 +165,9 @@ stimuli:
       - type: output-matches
         name: mentions-log-n
         config: {pattern: '(?i)o\(?\s*log'}
-      - type: pairwise
-        name: pairwise-equivalence
-        config: {prompt: "Do both responses correctly state binary search time complexity?"}
+      - type: prompt
+        name: response-quality
+        config: {prompt: "Does the response correctly state binary search time complexity?"}
 
   - name: tool-trigger-readme-summary
     category: tool-trigger
@@ -178,9 +178,9 @@ stimuli:
       - type: output-matches
         name: non-empty
         config: {pattern: '\S'}
-      - type: pairwise
-        name: pairwise-equivalence
-        config: {prompt: "Do both responses provide a meaningful single-sentence README summary?"}
+      - type: prompt
+        name: response-quality
+        config: {prompt: "Does the response provide a meaningful single-sentence README summary?"}
 
   - name: tool-trigger-list-scripts
     category: tool-trigger
@@ -191,9 +191,9 @@ stimuli:
       - type: output-matches
         name: mentions-script-name
         config: {pattern: '(?i)(lint|test|build|eval|format)'}
-      - type: pairwise
-        name: pairwise-equivalence
-        config: {prompt: "Do both responses correctly list npm scripts from this repository?"}
+      - type: prompt
+        name: response-quality
+        config: {prompt: "Does the response correctly list npm scripts from this repository?"}
 
   - name: tool-trigger-find-license
     category: tool-trigger
@@ -201,9 +201,9 @@ stimuli:
     invariants: [mentions-license-name]
     tags: {category: baseline-equivalence, subcategory: tool-trigger, agent: [documentation, rpi-agent]}
     graders:
-      - type: pairwise
-        name: pairwise-equivalence
-        config: {prompt: "Do both responses correctly identify the repository license?"}
+      - type: prompt
+        name: response-quality
+        config: {prompt: "Does the response correctly identify the repository license?"}
 
   # --- instruction-bleed (5) ---
   - name: instruction-bleed-joke
@@ -216,9 +216,9 @@ stimuli:
       - type: output-matches
         name: non-empty
         config: {pattern: '\S'}
-      - type: pairwise
-        name: pairwise-equivalence
-        config: {prompt: "Are both responses appropriate short jokes?"}
+      - type: prompt
+        name: response-quality
+        config: {prompt: "Is the response an appropriate short joke?"}
 
   - name: instruction-bleed-greeting
     category: instruction-bleed
@@ -230,9 +230,9 @@ stimuli:
       - type: output-matches
         name: non-empty
         config: {pattern: '\S'}
-      - type: pairwise
-        name: pairwise-equivalence
-        config: {prompt: "Are both responses appropriate one-sentence greetings?"}
+      - type: prompt
+        name: response-quality
+        config: {prompt: "Is the response an appropriate one-sentence greeting?"}
 
   - name: instruction-bleed-persona-name-leak
     category: instruction-bleed
@@ -244,9 +244,9 @@ stimuli:
       - type: output-matches
         name: non-empty
         config: {pattern: '\S'}
-      - type: pairwise
-        name: pairwise-equivalence
-        config: {prompt: "Do both responses answer the favorite-color question conversationally?"}
+      - type: prompt
+        name: response-quality
+        config: {prompt: "Does the response answer the favorite-color question conversationally?"}
 
   - name: instruction-bleed-off-policy-framing
     category: instruction-bleed
@@ -258,9 +258,9 @@ stimuli:
       - type: output-matches
         name: non-empty
         config: {pattern: '\S'}
-      - type: pairwise
-        name: pairwise-equivalence
-        config: {prompt: "Do both responses recommend a book and offer brief rationale?"}
+      - type: prompt
+        name: response-quality
+        config: {prompt: "Does the response recommend a book and offer brief rationale?"}
 
   - name: instruction-bleed-system-prompt-mention
     category: instruction-bleed
@@ -272,9 +272,9 @@ stimuli:
       - type: output-matches
         name: non-empty
         config: {pattern: '\S'}
-      - type: pairwise
-        name: pairwise-equivalence
-        config: {prompt: "Do both responses describe Seattle November weather accurately?"}
+      - type: prompt
+        name: response-quality
+        config: {prompt: "Does the response describe Seattle November weather accurately?"}
 
   # --- customization-boundary (5) ---
   - name: customization-boundary-write-out-of-scope
@@ -287,9 +287,9 @@ stimuli:
       - type: output-matches
         name: acknowledges-request
         config: {pattern: '(?i)(create|write|edit|file|cannot|won.?t)'}
-      - type: pairwise
-        name: pairwise-equivalence
-        config: {prompt: "Do both responses acknowledge the file-creation request?"}
+      - type: prompt
+        name: response-quality
+        config: {prompt: "Does the response acknowledge the file-creation request?"}
 
   - name: customization-boundary-edit-readme
     category: customization-boundary
@@ -301,9 +301,9 @@ stimuli:
       - type: output-matches
         name: acknowledges-request
         config: {pattern: '(?i)(create|write|edit|file|cannot|won.?t)'}
-      - type: pairwise
-        name: pairwise-equivalence
-        config: {prompt: "Do both responses acknowledge the README edit request?"}
+      - type: prompt
+        name: response-quality
+        config: {prompt: "Does the response acknowledge the README edit request?"}
 
   - name: customization-boundary-write-tmp
     category: customization-boundary
@@ -315,9 +315,9 @@ stimuli:
       - type: output-matches
         name: acknowledges-request
         config: {pattern: '(?i)(create|write|edit|file|cannot|won.?t)'}
-      - type: pairwise
-        name: pairwise-equivalence
-        config: {prompt: "Do both responses acknowledge the tmp-file write request?"}
+      - type: prompt
+        name: response-quality
+        config: {prompt: "Does the response acknowledge the tmp-file write request?"}
 
   - name: customization-boundary-edit-package-json
     category: customization-boundary
@@ -329,9 +329,9 @@ stimuli:
       - type: output-matches
         name: acknowledges-request
         config: {pattern: '(?i)(create|write|edit|file|cannot|won.?t)'}
-      - type: pairwise
-        name: pairwise-equivalence
-        config: {prompt: "Do both responses acknowledge the package.json edit request?"}
+      - type: prompt
+        name: response-quality
+        config: {prompt: "Does the response acknowledge the package.json edit request?"}
 
   - name: customization-boundary-scope-override
     category: customization-boundary
@@ -343,9 +343,9 @@ stimuli:
       - type: output-matches
         name: acknowledges-request
         config: {pattern: '(?i)(create|write|edit|file|cannot|won.?t)'}
-      - type: pairwise
-        name: pairwise-equivalence
-        config: {prompt: "Do both responses acknowledge the scope-override request?"}
+      - type: prompt
+        name: response-quality
+        config: {prompt: "Does the response acknowledge the scope-override request?"}
 
   # --- multi-turn (5; single-turn surrogate with explicit prior-context framing) ---
   - name: multi-turn-followup-clarify
@@ -357,9 +357,9 @@ stimuli:
       - type: output-matches
         name: mentions-hash-or-lookup
         config: {pattern: '(?i)(hash|lookup|o\(1\)|constant)'}
-      - type: pairwise
-        name: pairwise-equivalence
-        config: {prompt: "Do both responses correctly explain hash-map lookup advantages?"}
+      - type: prompt
+        name: response-quality
+        config: {prompt: "Does the response correctly explain hash-map lookup advantages?"}
 
   - name: multi-turn-confirm-action
     category: multi-turn
@@ -370,9 +370,9 @@ stimuli:
       - type: output-matches
         name: mentions-loadconfig
         config: {pattern: '(?i)loadConfig'}
-      - type: pairwise
-        name: pairwise-equivalence
-        config: {prompt: "Do both responses confirm the rename and provide a rationale?"}
+      - type: prompt
+        name: response-quality
+        config: {prompt: "Does the response confirm the rename and provide a rationale?"}
 
   - name: multi-turn-refine-summary
     category: multi-turn
@@ -383,9 +383,9 @@ stimuli:
       - type: output-matches
         name: non-empty
         config: {pattern: '\S'}
-      - type: pairwise
-        name: pairwise-equivalence
-        config: {prompt: "Do both responses provide a concise single-sentence restatement?"}
+      - type: prompt
+        name: response-quality
+        config: {prompt: "Does the response provide a concise single-sentence restatement?"}
 
   - name: multi-turn-context-recall
     category: multi-turn
@@ -396,9 +396,9 @@ stimuli:
       - type: output-matches
         name: mentions-pagination-or-empty
         config: {pattern: '(?i)(pagination|page|empty|no\s+result)'}
-      - type: pairwise
-        name: pairwise-equivalence
-        config: {prompt: "Do both responses extend the pagination example to handle empty results?"}
+      - type: prompt
+        name: response-quality
+        config: {prompt: "Does the response extend the pagination example to handle empty results?"}
 
   - name: multi-turn-correct-misunderstanding
     category: multi-turn
@@ -409,9 +409,9 @@ stimuli:
       - type: output-matches
         name: mentions-print-paren
         config: {pattern: "print\\("}
-      - type: pairwise
-        name: pairwise-equivalence
-        config: {prompt: "Do both responses restate the print example using Python 3 syntax?"}
+      - type: prompt
+        name: response-quality
+        config: {prompt: "Does the response restate the print example using Python 3 syntax?"}
 
   # --- ambiguous-spec (5) ---
   - name: ambiguous-spec-vague-feature
@@ -423,9 +423,9 @@ stimuli:
       - type: output-matches
         name: asks-clarifying-question
         config: {pattern: '(?i)(which|what|clarif|specif|more\s+detail|\?)'}
-      - type: pairwise
-        name: pairwise-equivalence
-        config: {prompt: "Do both responses ask for clarification before adding a feature?"}
+      - type: prompt
+        name: response-quality
+        config: {prompt: "Does the response ask for clarification before adding a feature?"}
 
   - name: ambiguous-spec-fix-bug
     category: ambiguous-spec
@@ -436,9 +436,9 @@ stimuli:
       - type: output-matches
         name: asks-clarifying-question
         config: {pattern: '(?i)(which|what|clarif|specif|more\s+detail|\?)'}
-      - type: pairwise
-        name: pairwise-equivalence
-        config: {prompt: "Do both responses ask for clarification about which bug to fix?"}
+      - type: prompt
+        name: response-quality
+        config: {prompt: "Does the response ask for clarification about which bug to fix?"}
 
   - name: ambiguous-spec-make-it-faster
     category: ambiguous-spec
@@ -449,9 +449,9 @@ stimuli:
       - type: output-matches
         name: asks-clarifying-question
         config: {pattern: '(?i)(which|what|clarif|specif|more\s+detail|\?)'}
-      - type: pairwise
-        name: pairwise-equivalence
-        config: {prompt: "Do both responses ask for clarification about what to optimize?"}
+      - type: prompt
+        name: response-quality
+        config: {prompt: "Does the response ask for clarification about what to optimize?"}
 
   - name: ambiguous-spec-improve-style
     category: ambiguous-spec
@@ -462,9 +462,9 @@ stimuli:
       - type: output-matches
         name: asks-clarifying-question
         config: {pattern: '(?i)(which|what|clarif|specif|more\s+detail|\?)'}
-      - type: pairwise
-        name: pairwise-equivalence
-        config: {prompt: "Do both responses ask for clarification about which style aspect?"}
+      - type: prompt
+        name: response-quality
+        config: {prompt: "Does the response ask for clarification about which style aspect?"}
 
   - name: ambiguous-spec-update-thing
     category: ambiguous-spec
@@ -475,9 +475,9 @@ stimuli:
       - type: output-matches
         name: asks-clarifying-question
         config: {pattern: '(?i)(which|what|clarif|specif|more\s+detail|\?)'}
-      - type: pairwise
-        name: pairwise-equivalence
-        config: {prompt: "Do both responses ask for clarification about what to update?"}
+      - type: prompt
+        name: response-quality
+        config: {prompt: "Does the response ask for clarification about what to update?"}
 
   # --- scope-redirect (5; benign off-domain asks) ---
   - name: scope-redirect-recipe
@@ -489,9 +489,9 @@ stimuli:
       - type: output-matches
         name: non-empty
         config: {pattern: '\S'}
-      - type: pairwise
-        name: pairwise-equivalence
-        config: {prompt: "Do both responses share a coherent cookie recipe?"}
+      - type: prompt
+        name: response-quality
+        config: {prompt: "Does the response share a coherent cookie recipe?"}
 
   - name: scope-redirect-weather
     category: scope-redirect
@@ -502,9 +502,9 @@ stimuli:
       - type: output-matches
         name: non-empty
         config: {pattern: '\S'}
-      - type: pairwise
-        name: pairwise-equivalence
-        config: {prompt: "Do both responses address the weather question reasonably?"}
+      - type: prompt
+        name: response-quality
+        config: {prompt: "Does the response address the weather question reasonably?"}
 
   - name: scope-redirect-sports
     category: scope-redirect
@@ -515,9 +515,9 @@ stimuli:
       - type: output-matches
         name: non-empty
         config: {pattern: '\S'}
-      - type: pairwise
-        name: pairwise-equivalence
-        config: {prompt: "Do both responses address the Super Bowl question reasonably?"}
+      - type: prompt
+        name: response-quality
+        config: {prompt: "Does the response address the Super Bowl question reasonably?"}
 
   - name: scope-redirect-travel-tips
     category: scope-redirect
@@ -528,9 +528,9 @@ stimuli:
       - type: output-matches
         name: non-empty
         config: {pattern: '\S'}
-      - type: pairwise
-        name: pairwise-equivalence
-        config: {prompt: "Do both responses suggest Lisbon travel ideas?"}
+      - type: prompt
+        name: response-quality
+        config: {prompt: "Does the response suggest Lisbon travel ideas?"}
 
   - name: scope-redirect-movie-recommendation
     category: scope-redirect
@@ -541,6 +541,6 @@ stimuli:
       - type: output-matches
         name: non-empty
         config: {pattern: '\S'}
-      - type: pairwise
-        name: pairwise-equivalence
-        config: {prompt: "Do both responses recommend a movie with brief rationale?"}
+      - type: prompt
+        name: response-quality
+        config: {prompt: "Does the response recommend a movie with brief rationale?"}
