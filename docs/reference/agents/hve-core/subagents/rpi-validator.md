@@ -1,7 +1,7 @@
 ---
 title: RPI Validator
 description: "Validates a Changes Log against the Implementation Plan, Planning Log, and Research Documents for a specific plan phase"
-sidebar_position: 8
+sidebar_position: 12
 ms.date: 2026-07-05
 ---
 

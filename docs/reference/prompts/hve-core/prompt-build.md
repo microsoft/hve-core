@@ -1,8 +1,8 @@
 ---
 title: Prompt Build
-description: Build or improve prompt engineering artifacts following quality criteria
+description: Create or improve prompt-engineering artifacts through the HVE Builder lifecycle
 sidebar_position: 9
-ms.date: 2026-07-03
+ms.date: 2026-07-13
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->
@@ -17,7 +17,7 @@ ms.date: 2026-07-03
 ## What it does
 
 <!-- BEGIN AUTO-GENERATED: overview -->
-Build or improve prompt engineering artifacts following quality criteria
+Create or improve prompt-engineering artifacts through the HVE Builder lifecycle
 <!-- END AUTO-GENERATED: overview -->
 
 ## When to use it
