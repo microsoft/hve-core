@@ -18,7 +18,7 @@ The following standards are also delegated for runtime lookup due to version sen
 | Standard                                          | Rationale for Delegation                                   |
 |---------------------------------------------------|------------------------------------------------------------|
 | WAF / CAF                                         | Cloud-specific, frequently updated, extensive content      |
-| MCSB (Microsoft Cloud Security Benchmark)         | Azure-specific, frequently updated control mappings        |
+| MCSB per-service control mappings                 | Azure-specific, frequently updated per-service baselines   |
 | PCI-DSS                                           | Domain-specific, version-dependent compliance requirements |
 | S2C2F (Secure Supply Chain Consumption Framework) | Emerging standard, evolving maturity levels                |
 | SLSA (Supply Chain Levels for Software Artifacts) | Version-dependent build integrity requirements             |
@@ -35,10 +35,11 @@ When buckets or AI components from Phases 1–2 match, prefer the matching speci
 
 * AI/ML components → `owasp-agentic`, and `owasp-mcp` when MCP tooling is used (alongside the always-loaded `owasp-llm`)
 * `infrastructure` bucket → `owasp-infrastructure`
+* Azure cloud resources → `mcsb` (stable MCSB control-domain taxonomy and crosswalk; delegate volatile per-service control lookups)
 * `build` / `devops-platform-ops` buckets → `owasp-cicd`, `supply-chain-security`
 * Cross-cutting GS overlay → `secure-by-design`
 
-These skills are loaded by the Security Planner's Conditional Skill Map. Delegate to the Researcher Subagent only for standards with no matching skill (WAF, CAF, MCSB, PCI-DSS, and the others listed above).
+These skills are loaded by the Security Planner's Conditional Skill Map. Delegate to the Researcher Subagent only for standards with no matching skill (WAF, CAF, PCI-DSS, and the others listed above) and for the volatile per-service layer of MCSB.
 
 ### When to Delegate
 

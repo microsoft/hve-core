@@ -34,7 +34,7 @@ Scan the repository to identify its technology stack and determine which securit
 
 ## Constants
 
-Skill resolution: Read the applicable security skill by name (e.g., `owasp-top-10`, `owasp-llm`, `owasp-agentic`, `owasp-mcp`, `owasp-infrastructure`, `owasp-cicd`, `secure-by-design`). Resolve accessibility guidance through the consolidated Accessibility skill contract and use the matching framework guidance when needed.
+Skill resolution: Read the applicable security skill by name (e.g., `owasp-top-10`, `owasp-llm`, `owasp-agentic`, `owasp-mcp`, `owasp-infrastructure`, `owasp-cicd`, `secure-by-design`, `mcsb`). Resolve accessibility guidance through the consolidated Accessibility skill contract and use the matching framework guidance when needed.
 
 ### Technology Signals
 
@@ -75,6 +75,12 @@ owasp-cicd:
   - "Jenkinsfile"
   - ".gitlab-ci.yml"
   - "azure-pipelines.yml"
+mcsb:
+  - "Azure Bicep files (.bicep)"
+  - "Azure Resource Manager (ARM) templates (azuredeploy.json)"
+  - "Terraform using the azurerm provider (.tf)"
+  - "azure-pipelines.yml targeting Azure resources"
+  - "Azure service references (Storage, Key Vault, AKS, SQL, App Service)"
 secure-by-design:
   - "SECURITY.md or security policy files"
   - "Threat model documents"

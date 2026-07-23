@@ -57,12 +57,13 @@ Each phase entry begins with a mandatory `read_file` of the indicated skill refe
 
 Beyond the always-load references above, load these specialized security skills only when the corresponding surface is present. Read them on entry to the phase noted, after the mandatory references. Skip any whose trigger is absent.
 
-| Trigger (from Phase 1 scoping / Phase 2 buckets) | Load on entry | Skill(s) to `read_file`                               |
-|--------------------------------------------------|---------------|-------------------------------------------------------|
-| AI/ML components detected (`raiEnabled` true)    | Phase 3 & 4   | `owasp-agentic`; `owasp-mcp` when MCP tooling is used |
-| `infrastructure` bucket present                  | Phase 3 & 4   | `owasp-infrastructure`                                |
-| `build` or `devops/platform-ops` bucket present  | Phase 3 & 4   | `owasp-cicd`, `supply-chain-security`                 |
-| Any project (cross-cutting GS overlay)           | Phase 4       | `secure-by-design`                                    |
+| Trigger (from Phase 1 scoping / Phase 2 buckets) | Load on entry | Skill(s) to `read_file`                                |
+|--------------------------------------------------|---------------|--------------------------------------------------------|
+| AI/ML components detected (`raiEnabled` true)    | Phase 3 & 4   | `owasp-agentic`; `owasp-mcp` when MCP tooling is used  |
+| `infrastructure` bucket present                  | Phase 3 & 4   | `owasp-infrastructure`                                 |
+| Azure cloud resources present                    | Phase 3 & 4   | `mcsb` (stable taxonomy; delegate per-service lookups) |
+| `build` or `devops/platform-ops` bucket present  | Phase 3 & 4   | `owasp-cicd`, `supply-chain-security`                  |
+| Any project (cross-cutting GS overlay)           | Phase 4       | `secure-by-design`                                     |
 
 If a conditional skill fails to load, note the gap and continue rather than halting. Delegate to the Researcher Subagent only for standards with no matching skill.
 
@@ -101,7 +102,7 @@ Gate: summary-and-advance — surface a brief phase summary and proceed unless t
 
 ### Phase 3: Standards Mapping
 
-Map controls from OWASP Top 10, NIST 800-53, and CIS Benchmarks to each bucket. Delegate WAF and CAF lookups to Researcher Subagent at runtime rather than embedding those standards directly.
+Map controls from OWASP Top 10, NIST 800-53, and CIS Benchmarks to each bucket. For Azure cloud resources, load the `mcsb` skill for the stable MCSB control-domain taxonomy and crosswalk, and delegate volatile per-service control lookups to the Researcher Subagent. Delegate WAF and CAF lookups to Researcher Subagent at runtime rather than embedding those standards directly.
 
 Human-review exit reminder: a qualified security reviewer confirms the standards-to-bucket mappings and any deferred lookups before advancing to Phase 4.
 

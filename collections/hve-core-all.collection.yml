@@ -652,6 +652,9 @@ items:
   kind: skill
 - path: .github/skills/rpi/rpi-walkthrough
   kind: skill
+- path: .github/skills/security/mcsb
+  kind: skill
+  maturity: experimental
 - path: .github/skills/security/owasp-agentic
   kind: skill
   maturity: experimental
