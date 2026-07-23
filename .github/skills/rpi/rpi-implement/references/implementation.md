@@ -25,7 +25,7 @@ Apply this decision rule when implementation reveals new information:
 1. Use ordinary local implementation judgment without changing the plan when the discovery does not warrant a plan or phase-detail update.
 2. Apply an immediately relevant update when it needs no new user decision or planning reconsideration. The primary implementation agent may update the current plan and matching phase details to clarify factual targets, task wording, sequencing, or directly required in-scope work while preserving approved intent.
 3. Use a follow-up-only update when newly discovered work is outside immediate implementation scope. Add its item to the plan's `## Follow-Up Items` section with the outside-immediate-scope reason, triggering evidence, and owner or next action. Keep it outside active `Pxx` and `Pxx-Txx` implementation, completion, and acceptance claims.
-4. Treat a discovery that may change confirmed user decisions or requirements, goals, scope, acceptance criteria, architecture, dependencies, validation strategy, or implementation approach as material.
+4. Treat a discovery as material only when a new material user decision changes assessed requirements, scope, architecture, acceptance criteria, dependency model, or evidence boundary. Local grader or fixture corrections, generated-output repair, tracking reconciliation, validation-command refinement, and test implementation within an approved owner, behavior list, maximum case count, and evidence boundary remain in Implement.
 
 For every plan or detail update, use a descriptive changes-record subheading and record the affected plan area or `Pxx` or `Pxx-Txx` marker, what changed, why, triggering evidence, user answer or decision when present, reconciliation performed, and planning and critique state when material. The changes record is evidence history, not the authority for active plan state.
 
@@ -33,20 +33,26 @@ For an immediately relevant update, reconcile all affected current-state section
 
 For a follow-up-only update, record the item, why it is outside immediate scope, triggering evidence, and owner or next action in `## Follow-Up Items` and mirror it in the changes record. Exclude it from active implementation, completion, and acceptance claims.
 
-Use the native `vscode_askQuestions` tool only when available evidence cannot support a responsible user-owned decision. This includes unresolved major plan changes, blockers, and proposed workarounds, but not ordinary local implementation judgment. Immediately before the tool call, send a visible conversation message that states the affected user decision or requirement and plan area, evidence or conflict, viable choices, material consequences, an evidence-backed recommendation when available, and Markdown links to relevant artifacts or sources when available. Ask the smallest decision-critical question set. Persist the answer and resulting decision in `## User Decisions and Requirements`, every affected current synthesized section, and the changes record. Stop affected work as Blocked when required feedback is unavailable. A user answer does not bypass a required fresh planning and critique pass.
+Use the native `vscode_askQuestions` tool only when available evidence cannot support a responsible user-owned decision. This includes unresolved significant or divergent plan changes, blockers, and proposed workarounds, but not ordinary local implementation judgment. Immediately before the tool call, send a visible conversation message that states the affected user decision or requirement and plan area, evidence or conflict, viable choices, material consequences, an evidence-backed recommendation when available, and Markdown links to relevant artifacts or sources when available. Ask the smallest decision-critical question set. Persist the answer and resulting decision in `## User Decisions and Requirements`, every affected current synthesized section, and the changes record. Stop affected work as Blocked when required feedback is unavailable. The user's answer resolves the decision; do not run another critique.
 
 When implementation discovers work that is not immediately related to the approved plan, use a follow-up-only update. Do not add it to active `Pxx` or `Pxx-Txx` implementation, completion, or acceptance claims.
 
+## Batching, Review findings, and pre-Review reconciliation
+
+Complete approved source edits in a coherent batch before downstream HVE static, behavior, or validation gates. When a later standalone invocation implements Review findings, treat the applicable `RV-xxx` entries as ordinary inputs. Record changed files, the implemented result, and validation. Do not create correction or amended run types, and do not require another Review.
+
+Before handoff to Review, reconcile current plan markers, phase details, completed-work evidence, handoff prose, blockers, remaining work, follow-up items, and validation state. Do not hand off stale status text or unchecked work as complete.
+
 ## Material discovery and resumption
 
-A material discovery may change confirmed user decisions or requirements, goals, scope, acceptance criteria, architecture, dependencies, validation strategy, or implementation approach. Before affected dependent work can resume:
+A discovery requires planning reconsideration only when a significant or divergent user decision changes assessed requirements, scope, architecture, acceptance criteria, dependency model, or evidence boundary. Before affected dependent work can resume:
 
 1. Record the discovery, affected `Pxx` or `Pxx-Txx`, current plan and detail state, triggering evidence, impact, and paused work in the changes record.
-2. Return the current plan, phase details, and evidence to the planning owner for fresh planning and critique.
+2. Return the current plan, phase details, and evidence to the planning owner when the accepted plan must change.
 3. Reconcile the plan and phase details through the planning owner's current-state process. Preserve unrelated completed work and its evidence.
-4. Resume only affected dependent work after the updated plan is implementation-ready under the planner's current critique contract. Record the resulting planning and critique state, including relevant `PC-xxx` evidence when present, in the changes record.
+4. Resume only affected dependent work after the user decision and updated plan state are current. Preserve the one critique as historical evidence and record the resulting decision state in the changes record.
 
-On resumption, continue from the first unchecked applicable task or phase. Read prior descriptive changes-record sections, current plan markers, phase details, and latest critique disposition. Do not resume a task awaiting a user decision or fresh planning and critique.
+On resumption, continue from the first unchecked applicable task or phase. Read prior descriptive changes-record sections, current plan markers, phase details, and latest critique disposition. Do not resume a task awaiting a user decision.
 
 ## Conversation protocol
 
@@ -92,7 +98,7 @@ Before a user question, state the affected decision, viable choices and conseque
 
 Qualify every Complete, Partial, or Blocked status by the declared invocation scope: full plan, `Pxx`, or `Pxx-Txx`. A Complete bounded scope confirms only its completed scope markers; it does not imply the full plan is complete. Show all remaining active-plan markers, including later work outside the declared scope, so the caller can distinguish bounded completion from task completion.
 
-The closeout also states validation coverage, blockers with their owner and clearing action, current planning and critique state, and review readiness or the explicit no-handoff reason. For a user-owned blocker, state that affected work cannot continue until the required response is recorded and any required fresh planning and critique complete. For a dependency-owned blocker, name the dependency owner and the evidence needed to clear it.
+The closeout also states validation coverage, blockers with their owner and clearing action, current planning state, and review readiness or the explicit no-handoff reason. For a user-owned blocker, state that affected work cannot continue until the required response is recorded. For a dependency-owned blocker, name the dependency owner and the evidence needed to clear it.
 
 In standalone use, do not present unchecked work as a retry or trigger implementation again. Advise `/rpi-review` only when review prerequisites are met; otherwise state the current no-handoff reason. In `rpi-quick` or confirmed automatic RPI Agent mode, return the same scope and readiness facts to the parent, which owns eligible continuation after its gates and required confirmations pass.
 

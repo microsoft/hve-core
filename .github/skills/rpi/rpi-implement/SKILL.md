@@ -22,21 +22,24 @@ Deliver the approved outcome using the current plan and phase details as evidenc
 	* Use a generic bounded subagent only when isolated execution materially improves the outcome.
 	* For a phase implementation subagent, select the Medium reasoning profile at dispatch with this ordered availability fallback: `GPT-5.6 Terra (copilot)`, `Claude Sonnet 5 (copilot)`, `MAI-Code-1-Flash (copilot)`.
 	* Provide the exact phase or task, evidence, allowed write boundary, and expected return.
+	* Apply approved source edits in coherent batches before downstream HVE static, behavior, or validation gates. When a later standalone invocation follows Review, use applicable `RV-xxx` findings as ordinary implementation inputs and record the resulting changes and validation without requiring another Review.
 5. Mark completed tasks and phases in the plan only after completion evidence is available. Record completed work, validation evidence, blockers, and remaining work in the changes record.
 6. Classify new implementation information using [references/implementation.md](references/implementation.md).
 	* Retain ordinary local judgment in execution.
 	* Apply an immediately relevant current-state update only when it needs no new user decision or planning reconsideration.
+	* Keep local test mechanics, grader or fixture corrections, generated-output repair, tracking reconciliation, and validation-command refinement in Implement when they preserve the approved contract.
 	* Place unrelated work in `## Follow-Up Items`.
-	* Pause only affected dependent work for a material discovery.
+	* Pause only affected dependent work when a new material user decision changes assessed requirements, scope, architecture, acceptance criteria, dependency model, or evidence boundary.
 7. Use the native `vscode_askQuestions` tool only when available evidence cannot support a responsible user-owned decision, including a major plan change, blocker, or proposed workaround.
 	* Before the tool call, provide the required decision context in the conversation.
 	* Ask the smallest decision-critical set.
 	* Persist the answer in the current plan and changes record.
 	* Stop affected work as Blocked when feedback is unavailable.
-	* A user answer does not replace a required fresh planning and critique pass.
-8. For a material discovery, record the discovery and current state in the changes record. Return the current plan, phase details, and evidence to the planning owner. Pause only affected dependent work and preserve unrelated completed work and evidence.
-9. Run validation expected by the plan or by completed changed behavior. Record checks, results, and explicit skip reasons without treating validation alone as permission to resume paused dependent work.
-10. Return the current implementation result to the caller using the return contract below.
+	* Apply the answer directly when it resolves the significant or divergent decision. The user's confirmed intent remains authoritative; do not run another critique.
+8. For a significant or divergent discovery, record the discovery and current state in the changes record. Return the current plan, phase details, and evidence to the planning owner only when the implementation cannot responsibly continue without revising the accepted plan. Pause only affected dependent work and preserve unrelated completed work and evidence.
+9. Before Review, reconcile plan markers, phase details, completed-work evidence, handoff prose, blockers, remaining work, follow-up items, and validation state.
+10. Run validation expected by the plan or by completed changed behavior after the approved source or correction batch is complete. Record checks, results, and explicit skip reasons without treating validation alone as permission to resume paused dependent work.
+11. Return the current implementation result to the caller using the return contract below.
 
 ## Inputs
 
@@ -50,9 +53,11 @@ Deliver the approved outcome using the current plan and phase details as evidenc
 * Completed `Pxx-Txx` tasks and `Pxx` phases are checked off only after completion evidence exists.
 * The changes record uses descriptive evidence headings and plan or task markers, with no second per-entry identity scheme.
 * Every implementation-time plan or detail update records its affected area, change, rationale, triggering evidence, user decision when present, reconciliation, and planning or critique state.
-* Affected dependent work resumes only after the updated plan is implementation-ready under the planner's current critique contract. Blocked planning leaves affected work stopped.
+* Affected dependent work resumes after the significant or divergent user decision is reflected in the current plan and details. The task's critique is not repeated.
 * Decision-critical user feedback, when needed, is persisted in `## User Decisions and Requirements`, all affected current synthesized sections, and the changes record. Implementation-discovered unrelated work is recorded as a plan follow-up item.
 * Validation evidence or an explicit skip reason is available for changed behavior.
+* A later invocation may implement applicable Review findings as ordinary work without a correction run type or mandatory second Review.
+* Plan markers, phase details, changes evidence, handoff prose, blockers, remaining work, follow-up items, and validation state are reconciled before Review.
 * The caller receives the current execution status, evidence paths, current plan and detail state, validation coverage, blockers, remaining work, and follow-up items.
 
 ## Constraints
@@ -79,11 +84,11 @@ Deliver the approved outcome using the current plan and phase details as evidenc
 
 * Stop as Blocked when the approved plan, required details, or a dependency prevents credible execution.
 * Stop as Blocked when a decision-critical user answer needed for a major plan change, blocker, or workaround is unavailable.
-* Pause affected dependent work when a material discovery may change confirmed user decisions or requirements, goals, scope, acceptance criteria, architecture, dependencies, validation strategy, or implementation approach. Return current artifacts to planning for a fresh planning and critique pass, and do not resume that work until it is implementation-ready.
+* Pause affected dependent work only when a significant or divergent decision changes assessed requirements, scope, architecture, acceptance criteria, dependency model, or evidence boundary. Return current artifacts to planning when needed, preserve the existing critique as historical evidence, and resume after the user decision and plan state are current.
 * Stop after a caller-bounded phase or task once its plan state and changes evidence are current.
 
 ## Return to Caller
 
-Return the changes-record path, implementation execution status, completed and remaining `Pxx` or `Pxx-Txx` items, validation coverage, blockers, current plan and detail updates with their planning and critique state, follow-up items, and review readiness or the explicit reason affected work awaits a user decision or fresh planning and critique. Follow the Conversation guidance section for standalone or parent-orchestrated continuation, conditional compaction advice, and the final linked artifact table.
+Return the changes-record path, implementation execution status, completed and remaining `Pxx` or `Pxx-Txx` items, validation coverage, blockers, current plan and detail updates, follow-up items, and review readiness or the explicit reason affected work awaits a user decision. Follow the Conversation guidance section for standalone or parent-orchestrated continuation, conditional compaction advice, and the final linked artifact table.
 
 

@@ -37,6 +37,9 @@
 * Concern: {{substantive_gap_or_credibility_issue}}
 * Impact: {{why_the_gap_matters}}
 * Smallest useful change: {{minimal_plan_detail_decision_or_research_action}}
+* Action owner: {{planning_parent_user_or_other_named_owner}}
+* Exact resolving evidence: {{specific_artifact_state_or_validation_that_proves_resolution}}
+* Decision route: {{direct_planner_correction_or_significant_divergent_user_decision}}
 
 ## Strengths and Residual Risk
 
@@ -54,5 +57,5 @@
 
 * Highest-impact finding: {{PC_xxx_or_none}}
 * Action owner: {{planning_parent, user, or none}}
-* Smallest next action: {{direct_revision_one_phase_planner_dispatch_decision_question_critique_rerun_or_finalization}}
+* Smallest next action: {{direct_revision_one_phase_planner_dispatch_decision_question_or_finalization}}
 * User response required: {{yes_only_for_a_decision_critical_unresolved_choice, otherwise_no}}

@@ -20,11 +20,13 @@ Read research when it is relevant to an evidence or decision gap. Use markers an
 
 1. Compare plan requirements and acceptance criteria with completed `Pxx` and `Pxx-Txx` evidence.
 2. Reconcile every descriptive implementation-time plan or phase-detail update with the current plan and details. Verify affected `Pxx`, `Pxx-Txx`, or `Follow-Up Items`; what changed and why; triggering evidence; user decision when present; reconciliation performed; and planning and critique state when material. Confirm immediately relevant updates preserve approved intent and received current-state reconciliation.
-3. Check whether critique findings have a recorded disposition. For each material revision, confirm the changes record captures the discovery and paused dependent work, the plan and details were reconciled, a fresh planning and critique pass completed, relevant `PC-xxx` evidence is available when present, and affected dependent work did not resume early.
+3. Check whether critique findings have a recorded disposition. Confirm the planner applied compatible findings, preserved confirmed user intent, and obtained a user decision for any significant or divergent change before affected work continued.
 4. Assess every plan `## Follow-Up Items` entry. Confirm it states why it is outside immediate scope and an owner or next action, remains outside active `Pxx` and `Pxx-Txx` implementation, completion, and acceptance claims, and is mirrored in the changes record when implementation discovered it.
 5. Evaluate completed-work summaries, validation evidence, blockers, remaining work, and intended behavior for material drift.
 6. Use generic bounded subagents only for independent questions that cannot be answered cleanly in the review context. Give each worker a narrow question and read-only source boundary.
 7. Write all review conclusions into one review record using `RV-xxx` finding IDs.
+
+Before comparison, confirm plan markers, phase details, changes evidence, handoff prose, blockers, remaining work, follow-up items, and validation state are current. Stop as Blocked when stale or missing evidence prevents a credible task boundary.
 
 ## Separate execution from outcome
 
@@ -48,8 +50,8 @@ Do not use one vocabulary as a substitute for the other. A complete execution ma
 
 Each `RV-xxx` finding names severity, evidence, impact, and destination.
 
-* Route implementation defects to `rpi-implement`.
-* Route unresolved decisions or invalid plan assumptions to `rpi-plan`.
+* Route implementation defects that fit the current accepted direction to a later `rpi-implement` invocation.
+* Route significant or divergent decisions or invalid plan assumptions to `rpi-plan`.
 * Route material evidence gaps to `rpi-research`.
 * Route non-blocking residual work to a distinct follow-up item with a clear owner or next action.
 
@@ -103,7 +105,7 @@ Before a user question, persist its decision context and state the decision cont
 
 At closeout, report review execution status separately from outcome. Include results, material findings, decisions, blockers or open items, and anything the user might otherwise miss. Advise `/compact` only when stale output, superseded reasoning, or completed comparison detail outweighs current context and the review record and compared artifacts are current. When advising it, name the state and artifact pointers to retain. Otherwise omit compaction guidance.
 
-For standalone review, remain read-only and advise the exact `/rpi-implement`, `/rpi-plan`, or `/rpi-research` command only when an actionable finding needs that destination. Do not invoke it. Otherwise state the no-handoff reason. In `rpi-quick` or confirmed automatic RPI Agent mode, return the record to the parent for automatic continuation after gates and required confirmations pass. End the closeout with a Markdown table linking every relevant existing artifact and a short description. Every file or artifact entry must use a workspace-relative Markdown link in the form `[descriptive label](path/to/file.md)`, with a line or section fragment when useful; do not substitute a plain file name, artifact type, or inline-code path. Keep the table as the final response element.
+For standalone review, remain read-only and advise the exact `/rpi-implement`, `/rpi-plan`, or `/rpi-research` command only when an actionable finding needs that destination. Do not invoke it and do not require a second Review after later implementation. Otherwise state the no-handoff reason. In `rpi-quick` or confirmed automatic RPI Agent mode, return the record to the parent as the task's one Review result. End the closeout with a Markdown table linking every relevant existing artifact and a short description. Every file or artifact entry must use a workspace-relative Markdown link in the form `[descriptive label](path/to/file.md)`, with a line or section fragment when useful; do not substitute a plain file name, artifact type, or inline-code path. Keep the table as the final response element.
 
 ## Review Closeout Projection
 

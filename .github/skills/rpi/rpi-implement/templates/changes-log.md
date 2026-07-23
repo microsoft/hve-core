@@ -54,9 +54,16 @@ For a follow-up-only update, record why the item is outside immediate scope and 
 |-----------|-----------|------------------------------------------|------------------------|
 | {{check}} | {{scope}} | {{Passed_Failed_Skipped_or_Unavailable}} | {{evidence_or_reason}} |
 
+## Pre-Review Reconciliation
+
+* Plan markers and phase details: {{current_or_gap}}
+* Completed-work evidence and handoff prose: {{current_or_gap}}
+* Validation, blockers, remaining work, and follow-up items: {{current_or_gap}}
+* Review readiness: {{ready_or_not_ready_with_reason}}
+
 ## Blockers
 
-* {{none_or_blocker_with_affected_pxx_or_pxx_txx_owner_clearing_action_and_required_fresh_planning_and_critique_when_applicable}}
+* {{none_or_blocker_with_affected_pxx_or_pxx_txx_owner_and_clearing_action}}
 
 ## Remaining Work
 

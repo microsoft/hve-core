@@ -84,7 +84,7 @@ Use `âœ…` only for an evidence-backed settled decision or achieved readiness, `â
 
 ## Implementation-time updates and follow-up items
 
-When `rpi-implement` updates the plan or phase details during implementation, update the freeform user list and the affected synthesized sections when the change affects a current confirmed decision or requirement. Reconcile the updated facts, markers, details, dependencies, and executive summary. Remove superseded active content rather than retaining plan-state history. A material implementation discovery may require a fresh planning and critique pass before dependent work resumes.
+When `rpi-implement` updates the plan or phase details during implementation, update the freeform user list and the affected synthesized sections when the change affects a current confirmed decision or requirement. Reconcile the updated facts, markers, details, dependencies, and executive summary. Remove superseded active content rather than retaining plan-state history. A significant or divergent discovery may require a user decision and plan update before affected work resumes, but the task's critique is not repeated.
 
 Persist any user answer that informed an implementation-time update in the freeform list and affected synthesized sections.
 
@@ -133,17 +133,18 @@ Independent assignments may run in parallel. Dependent assignments run sequentia
 
 ## Independent critique
 
-Activate `rpi-plan-critique` only when the primary planner judges both the plan and phase details to be implementation-ready candidates. Do not critique an initial draft merely because it exists. Dispatch a fresh generic critique worker with the exact task context, current user list, caller requirements, research, evidence, dependencies, acceptance criteria, plan path, details path, and one critique output path. The critique worker reads plan sources and writes only the critique artifact.
+Activate `rpi-plan-critique` once by default, only when the primary planner judges both the plan and phase details to be implementation-ready candidates. Do not critique an initial draft merely because it exists. Before dispatch, lock applicable test ownership, exact removals or `none`, maximum additions, canonical and generated targets, semantic-versus-regression coverage, and validation evidence. Dispatch a fresh generic critique worker with the exact task context, current user list, caller requirements, research, evidence, dependencies, acceptance criteria, plan path, details path, and one critique output path. The critique worker reads plan sources and writes only the critique artifact and returns one complete actionable finding set.
 
-The critique is an internal readiness gate. Its verdict returns to the planning parent, which owns revision, decision requests, reruns, and finalization. It is not a peer lifecycle transition and does not cause a standalone user to invoke another stage.
+The critique is a one-time internal readiness gate. Its verdict returns to the planning parent, which owns revision, decision requests, and finalization. It is not a peer lifecycle transition and does not cause a standalone user to invoke another stage.
 
 Record the latest critique findings and their dispositions in the plan's standalone top-level `## Critique Disposition` section. Use the critique verdict to select the smallest next action:
 
-* Revise the plan directly for a localized evidence-backed correction.
+* Revise the plan directly for localized evidence-backed corrections, applying all planner-owned findings in one coherent batch.
 * Dispatch `RPI Planner` for a bounded planning assignment when deeper planning work is needed.
-* Ask a small set of decision-critical questions when a missing choice cannot be inferred.
-* Rerun critique after material changes.
-* Finalize only after the latest critique passes, or after blocking findings are resolved and an accepted residual risk is explicitly disposed according to the critique workflow's permitted outcome.
+* Preserve confirmed user requests and answers when critique advice conflicts with them. Reject conflicting advice without re-asking when current user direction already resolves it.
+* Ask a small set of decision-critical questions only when a significant or divergent finding is not resolved by current user direction and affects requirements, scope, architecture, acceptance criteria, dependencies, or evidence boundary.
+* Close every `PC-xxx` with its declared owner, disposition, and exact resolving evidence, then finalize without another critique.
+* Finalize after direct corrections and required user decisions are resolved and any accepted residual risk is explicitly recorded.
 
 ## Detail quality
 

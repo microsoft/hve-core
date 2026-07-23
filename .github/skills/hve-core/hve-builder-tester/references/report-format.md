@@ -36,6 +36,7 @@ Record each finding with a stable shape so the author can act on it directly:
 # HVE Artifact Test Report: {{artifact_or_set}}
 
 - Tested profile(s): {{Medium or Low and model per target}}
+- Run type: full | correction
 - Behavior gate: Executed | Satisfied-and-skipped
 - Fidelity: simulation | native | Not applicable
 - Execution status: Complete | Partial | Deferred | Blocked | Not run
@@ -49,6 +50,14 @@ Record each finding with a stable shape so the author can act on it directly:
 ## Fidelity and limitations
 
 {{State which actions were observed, simulated, or emulated; identify proxy-model use; and list claims this run cannot support.}}
+
+## Reuse eligibility
+
+{{For a correction run, record the prior report status and verdict, open-finding state, design and scenario IDs, requirement mapping, prior and current target revisions, profile, model or proxy status, modality, fidelity, and changed-surface impact. State why each reused scenario is unaffected. For a full run, state Not applicable.}}
+
+| Scenario        | Requirement                   | Impact disposition                     | Evidence source                     | Grade provenance                |
+|-----------------|-------------------------------|----------------------------------------|-------------------------------------|---------------------------------|
+| {{scenario_id}} | {{requirement_id_or_summary}} | {{affected_unaffected_or_untraceable}} | {{fresh_execution_or_prior_report}} | {{fresh_grade_or_reused_grade}} |
 
 ## Findings
 
@@ -81,6 +90,7 @@ Record each finding with a stable shape so the author can act on it directly:
 * Use the action categories above tagged with the mapped standard dimension; do not introduce a retired taxonomy.
 * Use `runtime` or `native` only for behavior observed through native fidelity. Use `simulation` for literal conformance execution and `emulated` for actions that did not run.
 * A proxy-model run cannot claim target-model equivalence. An unexpected out-of-sandbox write prevents Pass.
+* A correction run cannot reuse evidence unless every eligibility dimension is recorded. Untraceable scenarios are affected and require fresh execution and independent grading.
 * Use Not available only when execution is Deferred before independent grading. Pass, Revise, and Blocked require grading evidence.
 * Use `Satisfied-and-skipped` only for a target or change with no runtime behavior. Pair it with fidelity `Not applicable`, execution `Not run`, verdict `Not applicable`, and a reason.
 * Never check the human-review checkbox; only a human converts `[ ]` to `[x]`.

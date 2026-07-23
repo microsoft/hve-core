@@ -73,7 +73,7 @@ Honor project-provided extensions so a host repository can shape hve-builder wit
 * Stop with Revise when actionable quality or validation findings remain and no further approved edit is being made in this run.
 * Stop with Deferred when a required stage cannot run, naming its rerun condition.
 * Stop with Blocked when target identity, scope, safety, or required evidence is too ambiguous to proceed responsibly.
-* Re-enter only the affected downstream gates after an edit; do not repeat unrelated stages.
+* Apply in-scope authoring and review corrections in coherent batches. Run targeted closure for the original static findings, then run behavior testing and validation against the final correction state. Repeat a full downstream gate only when its assessed architecture, capability, safety, acceptance, or evidence boundary changed.
 
 ## Lifecycle-stage dispatch
 
@@ -81,7 +81,7 @@ Use [references/stage-dispatch.md](references/stage-dispatch.md) for the `rpi-re
 
 ## Handoff
 
-The behavior gate is required for mutating and review routes: Major mutations and behavior-bearing review targets execute `hve-builder-tester`; eligible no-runtime review targets and Minor or Medium mutations use the canonical satisfied-and-skipped fields. Beyond that, do not auto-invoke downstream skills. When stable behavior is worth pinning as conformance coverage and `Vally Test Author` is available in the host, name it as an advisory next step; otherwise omit that recommendation.
+The behavior gate is required for mutating and review routes: Major mutations and behavior-bearing review targets execute `hve-builder-tester`; eligible no-runtime review targets and Minor or Medium mutations use the canonical satisfied-and-skipped fields. Beyond that, do not auto-invoke downstream skills.
 
 ## Final response contract
 

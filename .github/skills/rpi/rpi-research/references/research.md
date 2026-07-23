@@ -56,13 +56,13 @@ When a hypothesis, conjecture, claim, idea, or discovery first materially shapes
 
 Use one parent-owned evidence state for each material item:
 
-| Evidence state              | Functional marker | Use when                                                                 |
-|-----------------------------|-------------------|--------------------------------------------------------------------------|
-| Unverified hypothesis/conjecture | 💡                | A working explanation or prediction now affects research routing        |
-| Partially supported claim   | 🔎                | Available evidence is suggestive but does not yet settle the claim       |
-| Evidence-backed finding     | ✅                | Sufficient cited evidence supports the finding for the current purpose   |
-| Weakened/disproved claim    | ⚠️                | Evidence materially challenges or invalidates the earlier claim          |
-| Unresolved possibility      | 🔎                | A material possibility remains open because evidence is missing or mixed |
+| Evidence state                   | Functional marker | Use when                                                                 |
+|----------------------------------|-------------------|--------------------------------------------------------------------------|
+| Unverified hypothesis/conjecture | 💡                | A working explanation or prediction now affects research routing         |
+| Partially supported claim        | 🔎                | Available evidence is suggestive but does not yet settle the claim       |
+| Evidence-backed finding          | ✅                 | Sufficient cited evidence supports the finding for the current purpose   |
+| Weakened/disproved claim         | ⚠️                | Evidence materially challenges or invalidates the earlier claim          |
+| Unresolved possibility           | 🔎                | A material possibility remains open because evidence is missing or mixed |
 
 Use this evidence-first update shape when a message is warranted:
 
@@ -104,13 +104,13 @@ Only `executed` applies to a standalone rpi-research invocation. `reused` and `s
 
 ## Research Posture and Explicit Limits
 
-Select one `research posture` before the first research action. A caller-specified posture or explicit limit overrides the default. Applicable codebase instructions may select a posture or impose limits. Record the selected posture, its provenance, and every explicit limit or deadline in the primary artifact and delegated lane inputs.
+Select one proportionate `research posture` before the first research action. A caller-specified posture or explicit limit controls when present. Otherwise use the brief, named source targets, supplied failure evidence, uncertainty, and decision breadth to select the posture. Record the selected posture, its provenance, and every explicit limit or deadline in the primary artifact and delegated lane inputs.
 
-| Research posture | Selection and completion behavior |
-|------------------|-----------------------------------|
-| `expansive` | Default when no caller or applicable codebase instruction selects another posture. Apply no preset upper limit unless the caller or applicable codebase instructions provide one. Go wide and deep, develop and test new ideas, and evaluate or select alternatives when the output mode permits. Continue complete Wider, Deeper, and Contrarian cycles until each wave yields no substantial new findings and likely next sources are redundant. No preset upper limit does not override platform safety, write boundaries, explicit deadlines, source availability, or caller and codebase constraints. |
-| `balanced` | Investigate adjacent material beyond the immediate task when it could affect the result, including new ideas and alternatives. Complete research when the caller's task and scope are covered, material claims and questions have adequate evidence, and remaining open questions or ideas are not closely related enough to change the result. Preserve related material gaps honestly. |
-| `focused` | Research deeply within the caller's task and scope. Widen only when clear evidence indicates broader research could materially change the result. Before crossing that boundary, use native `vscode_askQuestions`, explain the evidence and proposed widening, and persist the answer. A denied widening remains an explicit scope boundary and gap. |
+| Research posture | Selection and completion behavior                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               |
+|------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `expansive`      | Select when the brief is broad, the decision space is materially unknown, or the caller or applicable codebase instructions request it. Apply no preset upper limit unless the caller or applicable codebase instructions provide one. Go wide and deep, develop and test new ideas, and evaluate or select alternatives when the output mode permits. Continue complete Wider, Deeper, and Contrarian cycles until each wave yields no substantial new findings and likely next sources are redundant. No preset upper limit does not override platform safety, write boundaries, explicit deadlines, source availability, or caller and codebase constraints. |
+| `balanced`       | Prefer for a bounded task whose known targets and supplied evidence leave adjacent uncertainty that could affect the result. Investigate adjacent material beyond the immediate task when it could affect the result, including new ideas and alternatives. Complete research when the caller's task and scope are covered, material claims and questions have adequate evidence, and remaining open questions or ideas are not closely related enough to change the result. Preserve related material gaps honestly.                                                                                                                                           |
+| `focused`        | Prefer for a bounded internal task with named source targets and supplied failure evidence when adjacent discovery is unlikely to change the result. Research deeply within the caller's task and scope. Widen only when clear evidence indicates broader research could materially change the result. Before crossing that boundary, use native `vscode_askQuestions`, explain the evidence and proposed widening, and persist the answer. A denied widening remains an explicit scope boundary and gap.                                                                                                                                                       |
 
 Use the selected posture, evidence sufficiency, substantial novelty, scope coverage, source redundancy, materiality, and explicit limits or deadline to determine completion. Do not invent token, source-count, worker-count, time, or cycle ceilings. When an explicit limit or deadline prevents a needed cycle, record the missing evidence and readiness honestly.
 
@@ -154,16 +154,16 @@ Each executed cycle completes all three waves in order: Wider, Deeper, then Cont
 	* Run the prior-knowledge gate. Treat supplied context, existing artifacts, and memory as claims to verify.
 	* Classify questions, identify independent lanes, and apply the selected research posture, its provenance, and any explicit limits or deadline.
 2. Run Wave 1, Wider research.
-	* Use independent `RPI Researcher` lanes to identify breadth for active ideas, conjectures, hypotheses, claims, and questions.
+	* Investigate inline or dispatch named independent uncertainties to identify breadth for active ideas, conjectures, hypotheses, claims, and questions.
 	* Seek relevant libraries, frameworks, APIs, schemas, contracts, standards, current internal or external resources, current decisions or documentation, and potential evidence.
 	* Record compact evidence relationships, source provenance, gaps, and a reflection after each material result.
 3. Parent-prioritize Wave 1 material for Wave 2. Select questions and evidence needing detail based on the brief and criteria. This prioritization is research routing, not a final recommendation or decision.
 4. Run Wave 2, Deeper research.
-	* Use bounded `RPI Researcher` lanes to investigate the prioritized material.
+	* Investigate the prioritized material inline or dispatch named independent uncertainties.
 	* Seek key details, findings, evidence, examples, schemas, APIs, contracts, standards, patterns, practices, and relevant code style or visual style.
 	* Record compact evidence relationships, source provenance, gaps, and a reflection after each material result.
 5. Run Wave 3, Contrarian research.
-	* Use bounded `RPI Researcher` lanes to seek credible counter-evidence and in-scope alternatives that challenge active ideas, conjectures, hypotheses, claims, and questions.
+	* Investigate inline or dispatch named independent uncertainties to seek credible counter-evidence and in-scope alternatives that challenge active ideas, conjectures, hypotheses, claims, and questions.
 	* Investigate alternative libraries, frameworks, APIs, contracts, and standards only when caller scope permits them. Specific-only requests and exclusions remain boundaries.
 	* Treat the wave as evidence-seeking rather than ceremonial opposition. Record whether the material supports, weakens, disproves, or leaves earlier material unresolved.
 6. Parent-synthesize the cycle.
@@ -177,7 +177,7 @@ Each executed cycle completes all three waves in order: Wider, Deeper, then Cont
 
 ## Delegation Contract
 
-1. Identify independent lanes after question classification. Keep tightly coupled or low-volume investigation inline.
+1. Identify named independent uncertainties after question classification. Delegate only when isolated execution materially improves evidence quality, parallelism, or context control. Keep tightly coupled or low-volume investigation inline.
 2. Select the lane owner.
 	* Use `RPI Researcher` by default for a delegated general lane.
 	* Select a discovered specialist only when its stable name, routing description, host visibility or registration, independent-lane fit, and output-contract fit support the dispatch.
@@ -185,6 +185,8 @@ Each executed cycle completes all three waves in order: Wider, Deeper, then Cont
 3. Dispatch every selected lane with an explicit topic, questions, criteria, scope and non-goals, parent-selected research posture, explicit limits or deadline, exact caller-approved candidate lane path under the parent-approved research/subagents path or a mirrored trusted subagents path, and distinct parent primary artifact path. Use one lane artifact per delegated thread at .copilot-tracking/research/subagents/YYYY-MM-DD/{{subtopic}}-subagent-research.md, or the mirrored path beneath the resolved root.
 4. Keep evidence ownership separate. The worker validates that the exact caller-approved lane path is inside the approved subagents root and distinct from the primary artifact, then creates or resumes that lane artifact and updates it after each material result. The parent persists the primary artifact separately, assigns canonical `C#` and `W#` IDs while synthesizing, and does not copy raw worker payloads into the primary artifact. Workers return compact evidence relationships and synthesis pointers but do not approve, reject, defer, recommend, or set a decision state.
 5. Record the selected specialist's stable name, selection rationale, output-contract fit, and return pointer in the Extension Registry and delegation record.
+
+Every wave may run entirely inline. Record inline evidence, reflection, and the reason delegation was unnecessary in the primary artifact. Do not create a worker artifact or imply delegated execution for inline work.
 
 ## Evidence, Findings, and Decisions
 
@@ -230,7 +232,7 @@ Include the current disposition, readiness or decision state, blockers, material
 * In standalone context, advise exactly `/rpi-plan` only when disposition, output mode, and Planning Readiness permit it; otherwise state the no-handoff reason.
 * In `rpi-quick`, manual RPI Agent, or confirmed automatic RPI Agent context, return the same artifact and readiness facts to the active parent. State whether the parent continues automatically, waits for explicit advancement, or remains stopped by a recorded gate. Do not ask the user to attach the artifact.
 
-The final linked-artifact table follows this projection and remains the final response element.
+The continuation handoff is pointer-first: include current decisions, blockers, canonical evidence IDs, Research disposition, Planning Readiness, and the primary artifact path. Exclude raw worker returns and obsolete artifact bodies. The final linked-artifact table follows this projection and remains the final response element.
 
 ## Artifact Self-Check
 

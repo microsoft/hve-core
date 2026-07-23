@@ -71,6 +71,20 @@ Use the canonical ordered Medium profile (`GPT-5.6 Terra`, `Claude Sonnet 5`, `M
 * The canonical test log distinguishes observed, simulated, and emulated actions and records post-run workspace status. Any unexpected out-of-sandbox change blocks a clean verdict.
 * Clean up after review unless retention was requested. Write the durable report outside the sandbox first.
 
+## Correction-run evidence reuse
+
+Reuse is an auditable correction-run optimization, not a lower evidence standard. Record the following eligibility dimensions before skipping full design or execution:
+
+* Prior report path, execution `Complete`, verdict `Pass`, and no open findings
+* Stable design ID and scenario IDs with the accepted black-box prompts
+* Requirement-to-scenario mapping and coverage disposition
+* Prior and current target revision provenance
+* Purpose, requirements, target contract, profile, model or proxy status, modality, and fidelity
+* Changed-surface-to-scenario impact mapping
+* Reused scenario grades and freshly executed scenario grades
+
+All dimensions must match except target revision and its explicitly mapped changed surface. A scenario without traceable impact evidence is affected. Execute every affected scenario and send its fresh evidence to an independent Medium-profile grader. Reuse only prior grades for traceably unaffected scenarios. A changed equivalence dimension or material coverage gap requires full design, execution, and grading.
+
 ## File reference formatting
 
 Files under .copilot-tracking/ are consumed by AI agents, not humans clicking links. When citing workspace files in sandbox logs, use plain-text workspace-relative paths, not markdown links or #file: directives, because VS Code resolves them and reports missing-target errors that flood the Problems tab. The durable behavior report owns user-facing links to retained evidence.

@@ -8,12 +8,8 @@ description: "Orchestration reference for the Research, Plan, Implement, Review,
 
 1. Assess research readiness from caller-supplied research, task details, decisions, and plan inputs. Activate `rpi-research` only when evidence is missing, stale, contradictory, insufficient for planning, or when complexity, uncertainty, dependencies, risk, or a decision-critical question warrants investigation. When evidence is adequate, record why Research is reused or satisfied-and-skipped.
 2. Run Plan to create or revise marker-addressed plan and phase-detail artifacts. Its independent critique is an internal planning gate and returns to the planning parent.
-3. Run Implement to complete approved `Pxx` and `Pxx-Txx` tasks and record changes, validation, divergences, and amendments. For a material amendment:
-	* Return the changed plan, phase details, and evidence to planning for fresh `rpi-plan-critique`.
-	* Resume affected dependent work after Pass.
-	* Return to planning for correction after Revise.
-	* Stop affected dependent work after Blocked.
-4. Run Review to compare all planning and execution evidence, then separate execution status from outcome.
+3. Run Implement to complete approved `Pxx` and `Pxx-Txx` tasks and record changes, validation, divergences, and amendments. For a significant or divergent amendment, pause affected work, obtain the user decision, and update the current plan without repeating critique.
+4. Run Review once after Implement to compare all planning and execution evidence, then separate execution status from outcome.
 5. Follow-up routes open work to research, planning, implementation, or a distinct future item.
 
 `rpi-quick` is the explicit parent that continues to an eligible next stage without a new user command. It does not bypass a stage gate, blocker, risky-action confirmation, or user-owned decision. A standalone child stage returns its evidence and advice to this parent; it does not self-sequence peer lifecycle stages.
@@ -31,14 +27,14 @@ Reuse the dated task artifacts in place. Use plain-text workspace-relative paths
 
 ## Follow-up routing
 
-* Defect: return to `rpi-implement`.
-* Decision gap or unsupported plan assumption: return to `rpi-plan`.
-* Evidence gap: return to `rpi-research`.
+* Defect: offer later `rpi-implement` work.
+* Decision gap or unsupported plan assumption: offer later `rpi-plan` work.
+* Evidence gap: offer later `rpi-research` work.
 * Residual work outside accepted scope: create a distinct follow-up item.
 
 ## Lifecycle discipline
 
-Do not create a phase for ceremonial completeness. Research may be reused or satisfied-and-skipped when the readiness assessment finds adequate evidence, and must not be reported as executed in that case. A material implementation amendment re-enters Plan and does not resume affected dependent work before Pass. Re-enter only the earliest affected stage, retain durable evidence, and report validation truthfully as passed, failed, skipped, or unavailable.
+Do not create a phase for ceremonial completeness. Research may be reused or satisfied-and-skipped when the readiness assessment finds adequate evidence, and must not be reported as executed in that case. A significant or divergent implementation amendment pauses affected work until its user decision and current plan are reconciled. Preserve durable evidence and report validation truthfully as passed, failed, skipped, or unavailable.
 
 ## Conversation and closeout
 

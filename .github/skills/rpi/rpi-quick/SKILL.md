@@ -20,11 +20,11 @@ Coordinate one task through evidence, planning, execution, review, and explicit 
 	3. Apply the `rpi-research` continuation contract. Continue to Plan without another stage-start command only when either an executed Research primary artifact records Planning Readiness `Ready`, or reused or satisfied-and-skipped evidence is adequate, and all applicable gates pass, blockers clear, and required confirmations are explicit.
 	4. When Research is `Blocked`, `Needs clarification`, or `Not ready`, or another transition requirement is not met, stop in Research and record the blocker or next action.
 2. Run `rpi-plan` to create or revise the ordinary Markdown plan and phase details. Its `rpi-plan-critique` gate is internal to planning and returns its disposition to the planning parent.
-3. Run `rpi-implement` for approved `Pxx` and `Pxx-Txx` work. Consume its return, including completed and remaining markers, validation coverage, blockers, plan and detail updates, follow-up items, and readiness or the reason work is awaiting a decision or fresh planning and critique.
-4. Run `rpi-review` only after Implementation returns and no affected work awaits a user decision or fresh planning and critique. Compare the current plan, details, critique, descriptive changes record, and validation evidence. Record execution status separately from outcome.
+3. Run `rpi-implement` for approved `Pxx` and `Pxx-Txx` work. Consume its return, including completed and remaining markers, validation coverage, blockers, plan and detail updates, follow-up items, and readiness or the reason work is awaiting a significant or divergent user decision.
+4. Run `rpi-review` once after Implementation returns and no affected work awaits a user decision. Compare the current plan, details, critique, descriptive changes record, and validation evidence. Record execution status separately from outcome.
 5. Follow-up: route defects, decision gaps, research gaps, and residual work to their correct next destination.
 
-When Review finds active-task work, return to the earliest affected stage. When Review identifies residual work outside the active task, create a distinct follow-up item rather than reopening the completed scope.
+When Review finds open work, route it to the appropriate later stage or distinct follow-up item. Do not execute it or run Review again inside the current lifecycle.
 
 ## Delegation crosswalk
 
@@ -46,8 +46,8 @@ When Review finds active-task work, return to the earliest affected stage. When 
 * One task identity, date, and task slug link any durable artifacts.
 * Research readiness records the `executed`, `reused`, or `satisfied-and-skipped` disposition, Planning Readiness or adequacy evidence, and the gates or confirmations that permit or stop continuation.
 * Each phase uses the matching RPI skill rather than duplicating its workflow.
-* Planning uses marker-addressed plain Markdown artifacts and independent critique evidence, including a fresh planning and critique pass for a material implementation revision.
-* Implementation returns descriptive evidence, current plan and detail updates, validation coverage, blockers, and follow-up items. Affected dependent work does not resume before the updated plan is implementation-ready under the planner's current critique contract.
+* Planning uses marker-addressed plain Markdown artifacts and exactly one independent critique. Confirmed user requests and answers remain authoritative over critique advice.
+* Implementation returns descriptive evidence, current plan and detail updates, validation coverage, blockers, and follow-up items. A significant or divergent change pauses affected work until the user decision and plan state are current; critique is not repeated.
 * Review separates execution status from outcome and routes every open item.
 * Follow-up identifies whether work returns to research, planning, implementation, or a distinct future item.
 
@@ -71,9 +71,9 @@ When Review finds active-task work, return to the earliest affected stage. When 
 
 ## Stop rules
 
-* Stop the active stage when its needed evidence, decision, or dependency is unavailable. Pause affected dependent implementation when a material revision awaits fresh planning and critique.
+* Stop the active stage when its needed evidence, decision, or dependency is unavailable. Pause affected dependent implementation when a significant or divergent revision awaits a user decision.
 * Do not claim an accepted outcome while critical review findings remain open.
-* Return to the earliest affected stage after review instead of hiding work in a generic follow-up.
+* Route Review findings to the earliest appropriate later stage or a distinct follow-up without executing another stage in the current lifecycle.
 
 ## Handoff
 
