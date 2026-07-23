@@ -379,6 +379,37 @@ class TestResolveBackend:
         backend = mural_module.resolve_backend("default")
         assert isinstance(backend, mural_module.KeyringBackend)
 
+    def test_auto_falls_back_to_file_when_keyring_is_empty(
+        self,
+        mural_module: Any,
+        monkeypatch: pytest.MonkeyPatch,
+        tmp_path: pathlib.Path,
+        caplog: pytest.LogCaptureFixture,
+    ) -> None:
+        _isolate_credential_env(monkeypatch, tmp_path)
+        monkeypatch.setenv(
+            "MURAL_KEYRING_BACKEND", "keyrings.alt.file.PlaintextKeyring"
+        )
+
+        service = mural_module._service_name_for("default")
+        file_path = mural_module._resolve_credential_file("default", os.environ)
+        file_backend = mural_module.FileBackend(file_path)
+        file_backend.set(service, "MURAL_CLIENT_ID", "from-file")
+
+        caplog.set_level(logging.WARNING, logger="mural")
+        for _ in range(3):
+            backend = mural_module.resolve_backend("default")
+            assert isinstance(backend, mural_module.FileBackend)
+
+        warns = [
+            r
+            for r in caplog.records
+            if r.levelno == logging.WARNING
+            and "keyring backend available but empty for profile 'default'" in r.message
+            and "using file backend" in r.message
+        ]
+        assert len(warns) == 1
+
     def test_auto_falls_back_to_file_on_keyring_unavailable(
         self,
         mural_module: Any,
@@ -403,6 +434,43 @@ class TestResolveBackend:
             and "falling back to file backend" in r.message
         ]
         assert len(warns) == 1
+
+    @pytest.mark.skipif(
+        os.name == "nt", reason="POSIX-only credential file permission semantics"
+    )
+    def test_auto_keyring_unavailable_enforces_file_permissions(
+        self,
+        mural_module: Any,
+        monkeypatch: pytest.MonkeyPatch,
+        tmp_path: pathlib.Path,
+    ) -> None:
+        _isolate_credential_env(monkeypatch, tmp_path)
+
+        def _raise_unavailable(self: Any) -> None:
+            raise mural_module._KeyringUnavailable("test-induced")
+
+        monkeypatch.setattr(mural_module.KeyringBackend, "__init__", _raise_unavailable)
+
+        checked_paths: list[pathlib.Path] = []
+
+        def _raise_bad_perms(path: pathlib.Path, environ: dict[str, str]) -> None:
+            checked_paths.append(path)
+            raise mural_module.MuralError("simulated bad permissions")
+
+        monkeypatch.setattr(
+            mural_module,
+            "_check_credential_file_perms",
+            _raise_bad_perms,
+        )
+
+        file_path = mural_module._resolve_credential_file("default", os.environ)
+        file_path.parent.mkdir(parents=True, exist_ok=True)
+        file_path.write_text("MURAL_CLIENT_ID=from-file\n", encoding="utf-8")
+
+        with pytest.raises(mural_module.MuralError, match="simulated bad permissions"):
+            mural_module.resolve_backend("default")
+
+        assert checked_paths == [file_path]
 
     def test_auto_fallback_warn_dedupes_per_profile_per_process(
         self,

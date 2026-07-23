@@ -34,7 +34,11 @@ from . import (  # noqa: E402 - package siblings defined before this import runs
     _state,
 )
 from ._constants import _LINE_RE, ENV_NONINTERACTIVE
-from ._credentials import _resolve_credential_file
+from ._credentials import (
+    _backend_has_credentials,
+    _resolve_credential_file,
+    _service_name_for,
+)
 from ._exceptions import MuralError
 from ._protocols import CredentialBackend
 
@@ -212,7 +216,9 @@ def resolve_backend(profile: str = "default") -> CredentialBackend:
     ``MURAL_CREDENTIAL_BACKEND`` selects the backend (``auto`` default,
     ``keyring``, ``file``, ``env-only``). On ``auto``, KeyringBackend is
     tried first and falls back to FileBackend when ``_KeyringUnavailable``
-    is raised; a one-shot WARN per profile records the fallback. After
+    is raised. Auto mode also falls back when keyring is available but has
+    no usable credentials and the file backend is populated. A one-shot
+    WARN per profile records whichever fallback path is taken. After
     backend selection (skipped for env-only), a probe checks whether the
     other persistent backend also holds non-empty values and emits a
     second one-shot WARN per ``(profile, selected_backend)`` pair when so.
@@ -230,6 +236,26 @@ def resolve_backend(profile: str = "default") -> CredentialBackend:
     elif selector == "auto":
         try:
             selected = KeyringBackend()
+            service = _service_name_for(profile)
+            keyring_populated = _backend_has_credentials(selected, service)
+            if not keyring_populated:
+                file_backend = FileBackend(file_path)
+                file_populated = _backend_has_credentials(
+                    file_backend,
+                    service,
+                    enforce_file_perms=True,
+                    file_env=os.environ,
+                )
+                if file_populated:
+                    if profile not in _state.seen_fallback_warn():
+                        _state.seen_fallback_warn().add(profile)
+                        msg = (
+                            f"keyring backend available but empty for "
+                            f"profile {profile!r}; "
+                            f"using file backend at {file_path}"
+                        )
+                        _emit(msg, level=logging.WARNING)
+                    selected = file_backend
         except _KeyringUnavailable as exc:
             if profile not in _state.seen_fallback_warn():
                 _state.seen_fallback_warn().add(profile)
@@ -239,6 +265,12 @@ def resolve_backend(profile: str = "default") -> CredentialBackend:
                     level=logging.WARNING,
                 )
             selected = FileBackend(file_path)
+            _backend_has_credentials(
+                selected,
+                _service_name_for(profile),
+                enforce_file_perms=True,
+                file_env=os.environ,
+            )
     else:
         raise MuralError(
             f"MURAL_CREDENTIAL_BACKEND={selector!r} is not one of "
