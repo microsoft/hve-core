@@ -1,11 +1,17 @@
 <!-- markdownlint-disable-file -->
 # HVE Core Workflow
 
-HVE Core RPI (Research, Plan, Implement, Review) workflow with Git commit, merge, setup, and pull request prompts
+Opinionated, rapidly evolving agentic SDLC patterns for RPI workflows, HVE Builder, and Git operations
 
 ## Overview
 
 HVE Core provides the flagship RPI (Research, Plan, Implement, Review) workflow for completing complex tasks through a structured four-phase process. The RPI workflow dispatches specialized agents that collaborate autonomously to deliver well-researched, planned, and validated implementations. This collection also includes Git workflow prompts for commit messages, merge operations, repository setup, and pull request management.
+
+> [!CAUTION]
+> HVE Core is a highly opinionated, rapidly evolving agentic SDLC framework. It is best treated as a source of patterns and learning rather than a stable platform, foundation, or production dependency.
+> Workflows, interfaces, architecture, and recommended practices may change substantially, including in ways that are not backward compatible, as the technology landscape evolves. Evaluate all materials for your own requirements and risk tolerance.
+> The HVE Builder skill (use with `/hve-builder`) and GitHub Copilot can help you adapt or copy relevant patterns into an agentic SDLC that you own and maintain independently.
+> To build an independent implementation, start with [Forking and Extending HVE Core](https://microsoft.github.io/hve-core/docs/customization/forking/) and review the [HVE Core documentation](https://microsoft.github.io/hve-core/) before adopting any component.
 
 ## Included Artifacts
 

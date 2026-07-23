@@ -1,15 +1,15 @@
 ---
-title: Prompt Tester
-description: "Tests prompt files by following them literally in a sandbox, without interpreting beyond face value"
-sidebar_position: 5
-ms.date: 2026-07-05
+title: HVE Artifact Explorer
+description: Finds and ranks prompt-engineering artifacts that could be reused or applied as scoped extensions. Dispatched by the hve-builder skill.
+sidebar_position: 2
+ms.date: 2026-07-13
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->
 | Field       | Value                                                                    |
 |-------------|--------------------------------------------------------------------------|
 | Kind        | agent                                                                    |
-| Source      | `.github/agents/hve-core/subagents/prompt-tester.agent.md`               |
+| Source      | `.github/agents/hve-core/subagents/hve-artifact-explorer.agent.md`       |
 | Invocation  | Delegated subagent, dispatched by a parent agent (not selected directly) |
 | Interactive | No                                                                       |
 <!-- END AUTO-GENERATED: metadata -->
@@ -17,7 +17,7 @@ ms.date: 2026-07-05
 ## What it does
 
 <!-- BEGIN AUTO-GENERATED: overview -->
-Tests prompt files by following them literally in a sandbox, without interpreting beyond face value
+Finds and ranks prompt-engineering artifacts that could be reused or applied as scoped extensions. Dispatched by the hve-builder skill.
 <!-- END AUTO-GENERATED: overview -->
 
 ## When to use it
