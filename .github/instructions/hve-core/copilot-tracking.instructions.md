@@ -1,11 +1,11 @@
 ---
-description: "Shared .copilot-tracking conventions for intermediate artifacts, file paths, and subagent handoffs across the RPI and prompt-builder skills"
-applyTo: '.copilot-tracking/research/**, .copilot-tracking/plans/**, .copilot-tracking/details/**, .copilot-tracking/changes/**, .copilot-tracking/reviews/**, .copilot-tracking/sandbox/**, .copilot-tracking/prompts/**'
+description: "Shared .copilot-tracking conventions for RPI, HVE Builder, and compatibility workflow evidence"
+applyTo: '.copilot-tracking/research/**, .copilot-tracking/plans/**, .copilot-tracking/details/**, .copilot-tracking/changes/**, .copilot-tracking/reviews/**, .copilot-tracking/sandbox/**, .copilot-tracking/prompts/**, .copilot-tracking/walkthroughs/**, .copilot-tracking/hve-builder/**'
 ---
 
 # Copilot Tracking Conventions
 
-Apply these conventions whenever an RPI or prompt-builder skill writes intermediate, working, or scratch artifacts under `.copilot-tracking/`.
+Apply these conventions whenever an RPI, HVE Builder, or compatibility workflow writes intermediate, working, or scratch artifacts under `.copilot-tracking/`.
 
 ## Core Rules
 
@@ -27,6 +27,7 @@ Apply these conventions whenever an RPI or prompt-builder skill writes intermedi
 * Details and validation evidence stay under `.copilot-tracking/details/{{YYYY-MM-DD}}/{{task_slug}}-details.md`.
 * Implementation and validation results stay under `.copilot-tracking/changes/{{YYYY-MM-DD}}/{{task_slug}}-changes.md`.
 * Review evidence stays under `.copilot-tracking/reviews/logs/{{YYYY-MM-DD}}/{{task_slug}}-review.md`.
+* HVE Builder stage evidence stays under `.copilot-tracking/hve-builder/{{YYYY-MM-DD}}/{{artifact_slug}}-{{stage}}-{{attempt}}.md`. Scan existing files and increment `{{attempt}}` rather than overwriting another run.
 * Generated `.copilot-tracking/**` markdown artifacts include `<!-- markdownlint-disable-file -->` near the top because tracking files are exempt from repository markdownlint rules.
 * Use plain-text workspace-relative paths in tracking documents for AI consumption.
 * Keep `.copilot-tracking/` paths and other internal planning, research, or implementation artifact references out of production code, code comments, documentation strings, and commit messages. Internal artifacts guide implementation logic; comments stay self-contained and may cite public materials such as RFCs, specifications, or official documentation.

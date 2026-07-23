@@ -3,7 +3,7 @@ title: HVE Core Documentation
 description: Documentation hub for HVE Core, a prompt engineering framework that brings AI-powered agents, prompts, instructions, and skills to your GitHub Copilot workflow
 sidebar_position: 1
 author: Microsoft
-ms.date: 2026-06-30
+ms.date: 2026-07-08
 ms.topic: overview
 keywords:
   - hve core

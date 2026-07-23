@@ -2,7 +2,7 @@
 title: Shared Library
 description: Shared utility scripts and modules used across hve-core automation
 author: HVE Core Team
-ms.date: 2026-06-28
+ms.date: 2026-07-08
 ms.topic: reference
 keywords:
   - powershell

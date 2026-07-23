@@ -12,7 +12,7 @@
     Drives the `evals/baseline-equivalence/` Vally suite end-to-end. Resolves the target
     agent's frontmatter `model:` hint, selects a model tier (PR or nightly), invokes
     `vally eval` once per environment (`baseline` and `task-researcher-context`), invokes
-    `vally compare` to produce a pairwise verdict, and writes a machine-readable summary
+    `vally compare` to produce comparison JSONL, and writes a machine-readable summary
     to `logs/baseline-equivalence-summary.json`.
 
     Exit policy by tier:
@@ -210,7 +210,7 @@ function Resolve-ModelList {
 
     if ($ModelOverride) { return @($ModelOverride) }
     if ($Hint) { return @($Hint) }
-    return @('claude-haiku-4.5')
+    return @('gpt-5.6-luna')
 }
 
 function New-DryRunSummary {
@@ -239,6 +239,10 @@ function New-DryRunSummary {
         ties               = 0
         aWins              = 0
         bWins              = 0
+        meanScore          = 0.0
+        ciLow              = 0.0
+        ciHigh             = 0.0
+        winRate            = 0.0
         invariantFailures  = 0
         divergenceFailures = 0
         verdict            = 'dry-run'
@@ -345,7 +349,7 @@ function Get-PlannedCommands {
         $customizedSkillArg = if ([string]::IsNullOrEmpty($CustomizedSkillDirPath)) { '""' } else { '"' + $CustomizedSkillDirPath + '"' }
         $plan.Add("vally eval --eval-spec evals/baseline-equivalence/baseline/eval.yaml --model $model --output-dir $aDir --workspace $baselineWorkspaceArg --skill-dir $baselineSkillArg$filterTag")
         $plan.Add("vally eval --eval-spec evals/baseline-equivalence/customized/eval.yaml --model $model --output-dir $bDir --workspace $customizedWorkspaceArg --skill-dir $customizedSkillArg$filterTag")
-        $plan.Add("vally compare --eval-spec $CompareSpecPath --run-a <resolved baseline run> --run-b <resolved customized run>")
+        $plan.Add("vally compare --eval-spec $CompareSpecPath --baseline <resolved baseline run> --treatment <resolved customized run> --output <compare jsonl path>")
     }
     return $plan.ToArray()
 }
@@ -449,6 +453,10 @@ if ($MyInvocation.InvocationName -ne '.') {
         $invariantFailures = 0
         $divergenceFailures = 0
         $compareLogs = [System.Collections.Generic.List[string]]::new()
+        $meanScores = [System.Collections.Generic.List[double]]::new()
+        $winRates = [System.Collections.Generic.List[double]]::new()
+        $ciLows = [System.Collections.Generic.List[double]]::new()
+        $ciHighs = [System.Collections.Generic.List[double]]::new()
 
         foreach ($model in $models) {
             $aDir = Join-Path $outputRoot "$model/$runId/baseline"
@@ -508,34 +516,52 @@ if ($MyInvocation.InvocationName -ne '.') {
                 $divergenceFailures++
             }
             else {
+                $compareJsonlPath = Join-Path $resolvedRoot "logs/vally-compare-$model-$runId.jsonl"
                 $compareArgs = @(
                     'compare',
                     '--eval-spec', $renderedSpecRelative,
-                    '--run-a', $aRunDir,
-                    '--run-b', $bRunDir
+                    '--baseline', $aRunDir,
+                    '--treatment', $bRunDir,
+                    '--output', $compareJsonlPath
                 )
                 $compareLog = Join-Path $resolvedRoot "logs/vally-compare-$model-$runId.log"
                 $resultC = Invoke-VallyCommandWithCapture -Arguments $compareArgs -LogPath $compareLog
-                if ($resultC.ExitCode -ne 0) { $divergenceFailures++ }
+                $compareFailed = $resultC.ExitCode -ne 0
+                if ($compareFailed) { $divergenceFailures++ }
                 $compareLogs.Add($compareLog)
 
-                $tally = Measure-CompareTrials -Lines $resultC.Lines
+                $jsonlLines = if (Test-Path -LiteralPath $compareJsonlPath) { @(Get-Content -LiteralPath $compareJsonlPath -Encoding utf8) } else { @() }
+                $tally = Measure-CompareTrials -Lines $jsonlLines
                 if ($tally.Total -le 0) {
-                    Write-Host "   Compare emitted no parseable trial lines: $compareLog" -ForegroundColor Yellow
-                    $divergenceFailures++
+                    Write-Host "   Compare emitted no parseable comparison records: $compareJsonlPath" -ForegroundColor Yellow
+                    if (-not $compareFailed) { $divergenceFailures++ }
+                }
+                elseif ($tally.SummaryCount -le 0) {
+                    Write-Host "   Compare records carried no summary statistics; cannot assess equivalence: $compareJsonlPath" -ForegroundColor Yellow
+                    if (-not $compareFailed) { $divergenceFailures++ }
                 }
                 $totalRuns += $tally.Total
                 $totalTies += $tally.Ties
                 $totalA   += $tally.AWins
                 $totalB   += $tally.BWins
+                if ($tally.SummaryCount -gt 0) {
+                    $meanScores.Add([double]$tally.MeanScore)
+                    $winRates.Add([double]$tally.WinRate)
+                    $ciLows.Add([double]$tally.CiLow)
+                    $ciHighs.Add([double]$tally.CiHigh)
+                }
             }
         }
 
+        $aggregateMeanScore = if ($meanScores.Count -gt 0) { ($meanScores | Measure-Object -Average).Average } else { 0.0 }
+        $aggregateWinRate = if ($winRates.Count -gt 0) { ($winRates | Measure-Object -Average).Average } else { 0.0 }
+        $aggregateCiLow = if ($ciLows.Count -gt 0) { ($ciLows | Measure-Object -Maximum).Maximum } else { 0.0 }
+        $aggregateCiHigh = if ($ciHighs.Count -gt 0) { ($ciHighs | Measure-Object -Minimum).Minimum } else { 0.0 }
+
         $verdict = Get-VerdictFromAggregate `
             -Runs $totalRuns `
-            -Ties $totalTies `
-            -AWins $totalA `
-            -BWins $totalB `
+            -CiLow $aggregateCiLow `
+            -CiHigh $aggregateCiHigh `
             -InvariantFailures $invariantFailures `
             -DivergenceFailures $divergenceFailures `
             -Tier $Tier
@@ -549,6 +575,10 @@ if ($MyInvocation.InvocationName -ne '.') {
             ties               = $totalTies
             aWins              = $totalA
             bWins              = $totalB
+            meanScore          = [math]::Round($aggregateMeanScore, 4)
+            ciLow              = [math]::Round($aggregateCiLow, 4)
+            ciHigh             = [math]::Round($aggregateCiHigh, 4)
+            winRate            = [math]::Round($aggregateWinRate, 4)
             invariantFailures  = $invariantFailures
             divergenceFailures = $divergenceFailures
             verdict            = $verdict

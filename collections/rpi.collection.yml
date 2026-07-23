@@ -19,6 +19,10 @@ items:
     kind: skill
   - path: .github/skills/rpi/rpi-review
     kind: skill
+  - path: .github/skills/rpi/rpi-walkthrough
+    kind: skill
+  - path: .github/agents/hve-core/task-researcher.agent.md
+    kind: agent
   - path: .github/agents/hve-core/subagents/researcher-subagent.agent.md
     kind: agent
   - path: .github/agents/hve-core/subagents/plan-validator.agent.md

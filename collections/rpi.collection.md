@@ -1,10 +1,10 @@
 # RPI Skills
 
-This collection packages the skill-forward RPI entry points for research, planning, implementation, and review. It keeps the current RPI agent-first workflow intact while making the slash-command family /rpi-quick, /rpi-research, /rpi-plan, /rpi-implement, and /rpi-review available as standalone packaged entry points.
+This collection packages the `rpi-research` skill, Task Researcher, and skill-forward RPI entry points for research, planning, implementation, review, and guided walkthroughs.
 
 ## Local enablement
 
-For local testing in VS Code, enable the new skill folder and the existing subagent folder in your workspace settings:
+For local testing in VS Code, enable the RPI skill folder, Task Researcher agent folder, and existing subagent folder in your workspace settings:
 
 ```json
 {
@@ -12,6 +12,7 @@ For local testing in VS Code, enable the new skill folder and the existing subag
     ".github/skills/rpi": true
   },
   "chat.agentFilesLocations": {
+    ".github/agents/hve-core": true,
     ".github/agents/hve-core/subagents": true
   }
 }
@@ -20,6 +21,6 @@ For local testing in VS Code, enable the new skill folder and the existing subag
 Prompt overlap is handled at directory scope. `chat.promptFilesLocations` only supports whole-directory toggles, so disabling only the conflicting RPI prompt files is not supported in the current host. Use one of these options for local testing:
 
 * disable the whole `.github/prompts/hve-core` directory, or
-* rely on host prompt precedence until Phase 6 runtime validation confirms the final slash-command behavior.
+* rely on host prompt precedence while testing skill commands.
 
 The collection intentionally delegates phase work to the existing RPI subagents so the skills stay compact and the packaging model remains additive.

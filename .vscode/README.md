@@ -2,7 +2,7 @@
 title: VS Code MCP Server Configuration
 description: Configuration guide for GitHub MCP server integration with VS Code Copilot
 author: Microsoft
-ms.date: 2026-04-01
+ms.date: 2026-07-08
 ms.topic: reference
 keywords:
   - mcp
