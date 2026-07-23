@@ -67,7 +67,7 @@ When Review finds open work, route it to the appropriate later stage or distinct
 * At closeout, separate lifecycle execution or session status from outcome or decision state. Summarize results, important updates, decisions, blockers or open items, and anything the user might otherwise miss.
 * Advise `/compact` only when stale tool output, superseded reasoning, or completed-stage detail outweighs useful current context and the durable phase artifacts are current. When advising it, name the state and artifact pointers to retain. Otherwise omit compaction guidance.
 * `rpi-quick` is an explicit parent orchestration context. Continue automatically to each eligible stage without waiting for a new user command, while honoring every stage gate, blocker, risky-action confirmation, and user-owned decision. State when a blocker or confirmation returns control to the user.
-* For every relevant existing artifact, use the two-cell row `| [actual/workspace-relative/path.ext](actual/workspace-relative/path.ext) | Short description |`, using that artifact's actual workspace-relative path as both link text and destination; omit unavailable files and keep the table as the final response element.
+* For every relevant existing artifact, use the two-cell row `| [actual/workspace-relative/path.ext](actual/workspace-relative/path.ext) | Short description |`, using that artifact's actual workspace-relative path as both link text and destination; omit unavailable files and render the table immediately before the final `## Next Steps` section. End with `## Next Steps`: state the exact eligible user command, active-parent action, blocker-clearing action, follow-up choice, or that no user action is required. When compaction is warranted, tell the user to run `/compact` before the next RPI command; otherwise omit compaction guidance.
 
 ## Stop rules
 
@@ -81,6 +81,6 @@ As the explicit parent, use the `rpi-research` continuation contract. Activate R
 
 ## Final response contract
 
-Return lifecycle execution or session status separately from the research-readiness and review outcome state. Include phase status, durable artifact paths, validation coverage, blockers, routed follow-up items, conditional compaction advice when warranted, and whether the parent continues automatically or awaits a required confirmation. End with the linked artifact table required by Conversation guidance.
+Return lifecycle execution or session status separately from the research-readiness and review outcome state. Include phase status, durable artifact paths, validation coverage, blockers, routed follow-up items, conditional compaction advice when warranted, and whether the parent continues automatically or awaits a required confirmation. End with the final next steps required by Conversation guidance after the linked artifact table.
 
 

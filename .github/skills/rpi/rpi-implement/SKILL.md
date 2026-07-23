@@ -78,7 +78,7 @@ Deliver the approved outcome using the current plan and phase details as evidenc
 * At closeout, separate implementation execution status from implementation outcome or readiness for review. Summarize results, important updates, decisions, blockers or open items, and anything the user might otherwise miss.
 * Advise `/compact` only when stale tool output, superseded reasoning, or completed task detail outweighs useful current context and the plan, phase details, and changes record are current. When advising it, name the state and artifact pointers to retain. Otherwise omit compaction guidance.
 * In a standalone invocation, do not invoke `rpi-review`. State `/rpi-review` as the exact next command only when review prerequisites are met. When planning or a user decision is still required, state the explicit stop or no-handoff reason. In an active `rpi-quick` or confirmed automatic RPI Agent context, return the current artifacts to the parent so it can continue automatically after gates and required confirmations pass.
-* For every relevant existing artifact, use the two-cell row `| [actual/workspace-relative/path.ext](actual/workspace-relative/path.ext) | Short description |`, using that artifact's actual workspace-relative path as both link text and destination; omit unavailable files and keep the table as the final response element.
+* For every relevant existing artifact, use the two-cell row `| [actual/workspace-relative/path.ext](actual/workspace-relative/path.ext) | Short description |`, using that artifact's actual workspace-relative path as both link text and destination; omit unavailable files and render the table immediately before the final `## Next Steps` section. End with `## Next Steps`: state the exact eligible user command, active-parent action, blocker-clearing action, or that no user action is required. When compaction is warranted, tell the user to run `/compact` before the next RPI command; otherwise omit compaction guidance.
 
 ## Stop rules
 
@@ -89,6 +89,6 @@ Deliver the approved outcome using the current plan and phase details as evidenc
 
 ## Return to Caller
 
-Return the changes-record path, implementation execution status, completed and remaining `Pxx` or `Pxx-Txx` items, validation coverage, blockers, current plan and detail updates, follow-up items, and review readiness or the explicit reason affected work awaits a user decision. Follow the Conversation guidance section for standalone or parent-orchestrated continuation, conditional compaction advice, and the final linked artifact table.
+Return the changes-record path, implementation execution status, completed and remaining `Pxx` or `Pxx-Txx` items, validation coverage, blockers, current plan and detail updates, follow-up items, and review readiness or the explicit reason affected work awaits a user decision. Follow the Conversation guidance section for standalone or parent-orchestrated continuation, conditional compaction advice, the linked artifact table, and final next steps.
 
 

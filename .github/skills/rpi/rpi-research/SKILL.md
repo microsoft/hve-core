@@ -101,7 +101,7 @@ Derive `{{task_slug}}` from the primary target with lower-kebab-case and use the
 * At closeout, separate research execution status from planning readiness or decision state. Summarize results, important updates, decisions, blockers or open items, and anything the user might otherwise miss.
 * Advise `/compact` only when stale tool output, superseded reasoning, or completed-wave detail outweighs useful current context and the primary research artifact is current. When advising it, name the state and artifact pointers to retain. Otherwise omit compaction guidance.
 * Apply the continuation contract in `references/research.md` at closeout. In standalone context, remain research-only and do not invoke a peer phase. Return the primary artifact to an active `rpi-quick` or RPI Agent parent for parent-owned continuation.
-* For every relevant existing artifact, use the two-cell row `| [actual/workspace-relative/path.ext](actual/workspace-relative/path.ext) | Short description |`, using that artifact's actual workspace-relative path as both link text and destination; omit unavailable files and keep the table as the final response element.
+* For every relevant existing artifact, use the two-cell row `| [actual/workspace-relative/path.ext](actual/workspace-relative/path.ext) | Short description |`, using that artifact's actual workspace-relative path as both link text and destination; omit unavailable files and render the table immediately before the final `## Next Steps` section. End with `## Next Steps`: state the exact eligible user command, active-parent action, blocker-clearing action, or that no user action is required. When compaction is warranted, tell the user to run `/compact` before the next RPI command; otherwise omit compaction guidance.
 
 ## Stop Rules
 
@@ -117,6 +117,6 @@ The primary artifact owns synthesized questions, findings, canonical evidence ID
 
 ## Final Response
 
-Return a concise, evidence-first response headed `## rpi-research: [Topic]`. Include research execution status, Research disposition, Planning Readiness or decision state, selected approach only when applicable, key evidence, alternatives, unresolved decisions or risks, research-only constraint status, artifact self-check, and the continuation record required by `references/research.md`. Follow Conversation guidance for conditional compaction advice, standalone or parent-owned continuation, and the final linked artifact table.
+Return a concise, evidence-first response headed `## rpi-research: [Topic]`. Include research execution status, Research disposition, Planning Readiness or decision state, selected approach only when applicable, key evidence, alternatives, unresolved decisions or risks, research-only constraint status, artifact self-check, and the continuation record required by `references/research.md`. Follow Conversation guidance for conditional compaction advice, standalone or parent-owned continuation, the linked artifact table, and final next steps.
 
 

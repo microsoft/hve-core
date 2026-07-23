@@ -71,7 +71,7 @@ Read [references/planning.md](references/planning.md) for readiness, executive-s
 * At closeout, separate planning execution status from planning readiness or decision state. Summarize results, important updates, decisions, blockers or open items, and anything the user might otherwise miss.
 * Advise `/compact` only when stale tool output, superseded reasoning, or completed-stage detail outweighs useful current context and the plan, phase details, and critique artifacts are current. When advising it, name the state and artifact pointers to retain. Otherwise omit compaction guidance.
 * In a standalone invocation, do not invoke `rpi-implement`. State `/rpi-implement` as the exact next command only when the plan is implementation-ready. Otherwise state the explicit stop or no-handoff reason. In an active `rpi-quick` or confirmed automatic RPI Agent context, state that the parent continues to the eligible next stage automatically unless a blocker or required confirmation returns control to the user.
-* For every relevant existing artifact, use the two-cell row `| [actual/workspace-relative/path.ext](actual/workspace-relative/path.ext) | Short description |`, using that artifact's actual workspace-relative path as both link text and destination; omit unavailable files and keep the table as the final response element.
+* For every relevant existing artifact, use the two-cell row `| [actual/workspace-relative/path.ext](actual/workspace-relative/path.ext) | Short description |`, using that artifact's actual workspace-relative path as both link text and destination; omit unavailable files and render the table immediately before the final `## Next Steps` section. End with `## Next Steps`: state the exact eligible user command, active-parent action, blocker-clearing action, or that no user action is required. When compaction is warranted, tell the user to run `/compact` before the next RPI command; otherwise omit compaction guidance.
 
 ## Stop rules
 
@@ -85,6 +85,6 @@ The critique gate returns to this planning parent and is not a peer lifecycle tr
 
 ## Final Response
 
-Return a concise user-facing version of the executive summary, covering planning execution status, planning readiness, important decisions and consequences, information the user may not immediately know, and unresolved decisions or blockers. Follow the Conversation guidance section for conditional compaction advice, standalone or parent-orchestrated continuation, and the final linked artifact table.
+Return a concise user-facing version of the executive summary, covering planning execution status, planning readiness, important decisions and consequences, information the user may not immediately know, and unresolved decisions or blockers. Follow the Conversation guidance section for conditional compaction advice, standalone or parent-orchestrated continuation, the linked artifact table, and final next steps.
 
 

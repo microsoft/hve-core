@@ -82,7 +82,7 @@ Before a user question, persist its decision context and ask only when the answe
 
 ### Closeout Separation
 
-Ongoing updates are not a substitute for the final response. At closeout, use the Final Response Contract, keep research execution status separate from readiness or decision state, and end with its required linked-artifact table.
+Ongoing updates are not a substitute for the final response. At closeout, use the Final Response Contract, keep research execution status separate from readiness or decision state, and put its required linked-artifact table immediately before final next steps.
 
 ## Research Brief, Disposition, and Output Mode
 
@@ -232,7 +232,7 @@ Include the current disposition, readiness or decision state, blockers, material
 * In standalone context, advise exactly `/rpi-plan` only when disposition, output mode, and Planning Readiness permit it; otherwise state the no-handoff reason.
 * In `rpi-quick`, manual RPI Agent, or confirmed automatic RPI Agent context, return the same artifact and readiness facts to the active parent. State whether the parent continues automatically, waits for explicit advancement, or remains stopped by a recorded gate. Do not ask the user to attach the artifact.
 
-The continuation handoff is pointer-first: include current decisions, blockers, canonical evidence IDs, Research disposition, Planning Readiness, and the primary artifact path. Exclude raw worker returns and obsolete artifact bodies. The final linked-artifact table follows this projection and remains the final response element.
+The continuation handoff is pointer-first: include current decisions, blockers, canonical evidence IDs, Research disposition, Planning Readiness, and the primary artifact path. Exclude raw worker returns and obsolete artifact bodies. The linked-artifact table follows this projection, immediately before the final `## Next Steps` section.
 
 ## Artifact Self-Check
 
@@ -262,7 +262,7 @@ Return a concise, evidence-first response with:
 * The continuation record from Planning Readiness, including the permitted standalone `/rpi-plan` advisory or explicit no-handoff reason, or the active parent's automatic continuation or waiting state
 * Research execution status separate from planning readiness or decision state
 * Conditional `/compact` advice only when stale context warrants compaction, naming the primary research artifact and current state to retain; otherwise no compaction guidance
-* For every relevant existing artifact, use the two-cell row `| [actual/workspace-relative/path.ext](actual/workspace-relative/path.ext) | Short description |`, using that artifact's actual workspace-relative path as both link text and destination; omit unavailable files and keep the table as the final response element.
+* For every relevant existing artifact, use the two-cell row `| [actual/workspace-relative/path.ext](actual/workspace-relative/path.ext) | Short description |`, using that artifact's actual workspace-relative path as both link text and destination; omit unavailable files and render the table immediately before the final `## Next Steps` section. End with `## Next Steps`: state the exact eligible user command, active-parent action, blocker-clearing action, or that no user action is required. When compaction is warranted, tell the user to run `/compact` before the next RPI command; otherwise omit compaction guidance.
 
 During material research work, apply Conversation Protocol. Use concise updates only at meaningful boundaries, with evidence, implication, research effect, and relevant artifact or source links. Do not narrate low-level actions, dump worker returns, or repeat unchanged state.
 
