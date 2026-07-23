@@ -626,6 +626,9 @@ items:
 - path: .github/skills/project-planning/adr-author
   kind: skill
   maturity: experimental
+- path: .github/skills/project-planning/performance-slo-planner
+  kind: skill
+  maturity: experimental
 - path: .github/skills/project-planning/privacy-standards
   kind: skill
   maturity: experimental

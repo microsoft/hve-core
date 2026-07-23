@@ -1,6 +1,6 @@
 ---
 description: "Centralized disclaimer language for AI-assisted planning and review agents requiring professional review acknowledgment"
-applyTo: '**/.copilot-tracking/rai-plans/**, **/.copilot-tracking/rai-reviews/**, **/.copilot-tracking/security-plans/**, **/.copilot-tracking/sssc-plans/**, **/.copilot-tracking/sssc-reviews/**, **/.copilot-tracking/adr-plans/**, **/.copilot-tracking/dt/**, **/docs/planning/adrs/**, **/.copilot-tracking/reviews/code-reviews/**, **/.copilot-tracking/security/**, **/.copilot-tracking/accessibility/**, **/.copilot-tracking/privacy-plans/**, **/.copilot-tracking/privacy-reviews/**, **/.copilot-tracking/prd-sessions/**, **/.copilot-tracking/brd-sessions/**, **/.copilot-tracking/documentation/**'
+applyTo: '**/.copilot-tracking/rai-plans/**, **/.copilot-tracking/rai-reviews/**, **/.copilot-tracking/security-plans/**, **/.copilot-tracking/sssc-plans/**, **/.copilot-tracking/sssc-reviews/**, **/.copilot-tracking/performance-plans/**, **/.copilot-tracking/adr-plans/**, **/.copilot-tracking/dt/**, **/docs/planning/adrs/**, **/.copilot-tracking/reviews/code-reviews/**, **/.copilot-tracking/security/**, **/.copilot-tracking/accessibility/**, **/.copilot-tracking/privacy-plans/**, **/.copilot-tracking/privacy-reviews/**, **/.copilot-tracking/prd-sessions/**, **/.copilot-tracking/brd-sessions/**, **/.copilot-tracking/documentation/**'
 ---
 
 # Disclaimer Language
