@@ -567,6 +567,9 @@ items:
 - path: .github/skills/coding-standards/python-foundational
   kind: skill
   maturity: experimental
+- path: .github/skills/design-thinking/demo-setup
+  kind: skill
+  maturity: preview
 - path: .github/skills/design-thinking/dt-coaching-foundation
   kind: skill
   maturity: preview
