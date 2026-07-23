@@ -32,7 +32,9 @@ Import-Module (Join-Path $PSScriptRoot '../lib/Modules/CIHelpers.psm1') -Force
 
 $script:HookAllowedEvents = @(
     'sessionStart',
+    'sessionEnd',
     'userPromptSubmit',
+    'userPromptSubmitted',
     'preToolUse',
     'postToolUse',
     'preCompact',
