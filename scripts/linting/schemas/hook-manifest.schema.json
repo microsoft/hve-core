@@ -27,7 +27,9 @@
       "propertyNames": {
         "enum": [
           "sessionStart",
+          "sessionEnd",
           "userPromptSubmit",
+          "userPromptSubmitted",
           "preToolUse",
           "postToolUse",
           "preCompact",

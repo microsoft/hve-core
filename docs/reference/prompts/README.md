@@ -2,7 +2,7 @@
 title: Prompts
 description: Reference documentation for HVE Core prompts.
 sidebar_position: 0
-ms.date: 2026-07-03
+ms.date: 2026-07-13
 ---
 
 <!-- BEGIN AUTO-GENERATED: index -->
@@ -10,6 +10,7 @@ This page lists the generated reference documentation for HVE Core prompts.
 
 | Asset                                                                                             | Description                                                                                                                                                               |
 |---------------------------------------------------------------------------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| [Accessibility Coverage Matrix](accessibility/accessibility-coverage-matrix.md)                   | Build, refresh, report, or probe an accessibility coverage matrix across criteria, surfaces, and methods.                                                                 |
 | [Ado Add Work Item](ado/ado-add-work-item.md)                                                     | Create a single Azure DevOps work item with conversational field collection and parent validation                                                                         |
 | [Ado Create Pull Request](ado/ado-create-pull-request.md)                                         | Create an Azure DevOps pull request with generated description, linked work items, and reviewers                                                                          |
 | [Ado Discover Work Items](ado/ado-discover-work-items.md)                                         | Discover Azure DevOps work items via user queries, artifact analysis, or search                                                                                           |
@@ -50,9 +51,9 @@ This page lists the generated reference documentation for HVE Core prompts.
 | [Git Merge](hve-core/git-merge.md)                                                                | Coordinate Git merge, rebase, and rebase --onto workflows with conflict handling                                                                                          |
 | [Git Setup](hve-core/git-setup.md)                                                                | Interactive, verification-first Git configuration assistant (non-destructive)                                                                                             |
 | [Pr Review](hve-core/pr-review.md)                                                                | Review a pull request or local change set by routing to the consolidated Code Review agent                                                                                |
-| [Prompt Analyze](hve-core/prompt-analyze.md)                                                      | Evaluate prompt engineering artifacts against quality criteria and report findings                                                                                        |
-| [Prompt Build](hve-core/prompt-build.md)                                                          | Build or improve prompt engineering artifacts following quality criteria                                                                                                  |
-| [Prompt Refactor](hve-core/prompt-refactor.md)                                                    | Refactor and clean up prompt engineering artifacts through iterative improvement                                                                                          |
+| [Prompt Analyze](hve-core/prompt-analyze.md)                                                      | Review prompt-engineering artifacts without source edits through HVE Builder review mode                                                                                  |
+| [Prompt Build](hve-core/prompt-build.md)                                                          | Create or improve prompt-engineering artifacts through the HVE Builder lifecycle                                                                                          |
+| [Prompt Refactor](hve-core/prompt-refactor.md)                                                    | Refactor prompt-engineering artifacts while preserving behavior through HVE Builder refactor mode                                                                         |
 | [Pull Request](hve-core/pull-request.md)                                                          | Generate pull request descriptions from branch diffs                                                                                                                      |
 | [Rpi](hve-core/rpi.md)                                                                            | Autonomous Research-Plan-Implement-Review-Discover workflow for completing tasks                                                                                          |
 | [Task Challenge](hve-core/task-challenge.md)                                                      | Adversarial What/Why/How interrogation of completed implementation artifacts                                                                                              |
