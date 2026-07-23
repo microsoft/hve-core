@@ -10,11 +10,11 @@ BeforeAll {
 
 Describe 'Measure-CompareTrials' -Tag 'Unit' {
     BeforeAll {
-        $script:Lines = Get-Content -LiteralPath (Join-Path $script:FixturesRoot 'vally-compare.log')
+        $script:Lines = Get-Content -LiteralPath (Join-Path $script:FixturesRoot 'vally-compare.jsonl')
         $script:Tally = Measure-CompareTrials -Lines $script:Lines
     }
 
-    It 'Counts the total number of trial rows' {
+    It 'Counts the total number of non-errored trials' {
         $script:Tally.Total | Should -Be 4
     }
 
@@ -22,11 +22,11 @@ Describe 'Measure-CompareTrials' -Tag 'Unit' {
         $script:Tally.Ties | Should -Be 2
     }
 
-    It 'Counts A wins' {
+    It 'Counts baseline wins' {
         $script:Tally.AWins | Should -Be 1
     }
 
-    It 'Counts B wins' {
+    It 'Counts treatment wins' {
         $script:Tally.BWins | Should -Be 1
     }
 
@@ -38,23 +38,107 @@ Describe 'Measure-CompareTrials' -Tag 'Unit' {
         $script:Tally.PerStimulus['test-stim-b'].BWins | Should -Be 1
     }
 
-    It 'Strips ANSI escapes before matching' {
-        $ansiLine = " test-stim-c (trial 0)  $([char]0x1B)[32mtie$([char]0x1B)[0m     (score: 0.0)"
-        $result = Measure-CompareTrials -Lines @($ansiLine)
+    It 'Excludes errored trials from the per-stimulus tally' {
+        $script:Tally.PerStimulus['test-stim-a'].Ties | Should -Be 1
+        $script:Tally.PerStimulus['test-stim-a'].AWins | Should -Be 1
+        $script:Tally.PerStimulus['test-stim-a'].BWins | Should -Be 0
+    }
+
+    It 'Carries the summary mean score and confidence interval' {
+        $script:Tally.MeanScore | Should -Be 0.0
+        $script:Tally.CiLow | Should -Be -0.3
+        $script:Tally.CiHigh | Should -Be 0.3
+    }
+
+    It 'Carries the summary win rate' {
+        $script:Tally.WinRate | Should -Be 0.25
+    }
+
+    It 'Reports a summary count for records carrying confidence-interval statistics' {
+        $script:Tally.SummaryCount | Should -Be 1
+    }
+
+    It 'Reports zero summary count when a comparison record carries trials but no summary' {
+        $record = '{"type":"comparison","stimuli":[{"stimulusName":"test-stim-a","trials":[{"trialIndex":0,"winner":"baseline"},{"trialIndex":1,"winner":"treatment"}]}]}'
+        $result = Measure-CompareTrials -Lines @($record)
+        $result.Total | Should -Be 2
+        $result.SummaryCount | Should -Be 0
+        $result.CiLow | Should -Be 0.0
+        $result.CiHigh | Should -Be 0.0
+    }
+
+    It 'Excludes trials with an unrecognized winner from the total tally' {
+        $record = '{"type":"comparison","stimuli":[{"stimulusName":"test-stim-a","trials":[{"trialIndex":0,"winner":"tie"},{"trialIndex":1,"winner":"unknown"}]}]}'
+        $result = Measure-CompareTrials -Lines @($record)
         $result.Total | Should -Be 1
         $result.Ties | Should -Be 1
+    }
+
+    It 'Ignores non-JSON and non-comparison lines' {
+        $result = Measure-CompareTrials -Lines @('not json', '{"type":"other"}')
+        $result.Total | Should -Be 0
+        $result.MeanScore | Should -Be 0.0
     }
 
     It 'Returns zeros for empty input' {
         $empty = Measure-CompareTrials -Lines @()
         $empty.Total | Should -Be 0
         $empty.Ties | Should -Be 0
+        $empty.MeanScore | Should -Be 0.0
+        $empty.CiLow | Should -Be 0.0
+        $empty.CiHigh | Should -Be 0.0
+        $empty.SummaryCount | Should -Be 0
+    }
+
+    It 'Returns zeros for null input from an empty file read' {
+        $empty = Measure-CompareTrials -Lines $null
+        $empty.Total | Should -Be 0
+        $empty.SummaryCount | Should -Be 0
+    }
+
+    It 'Handles absent optional comparison properties under strict mode' {
+        $record = '{"type":"comparison","stimuli":[{}, {"stimulusName":"test-stim","trials":[{}]}],"summary":{}}'
+        { Measure-CompareTrials -Lines @($record) } | Should -Not -Throw
+        $result = Measure-CompareTrials -Lines @($record)
+        $result.Total | Should -Be 0
+        $result.SummaryCount | Should -Be 0
+    }
+
+    It 'Combines confidence intervals across multiple comparison records' {
+        $records = @(
+            '{"type":"comparison","summary":{"meanScore":-0.1,"ciLow":-0.4,"ciHigh":0.2,"winRate":0.4}}',
+            '{"type":"comparison","summary":{"meanScore":0.1,"ciLow":-0.1,"ciHigh":0.5,"winRate":0.6}}'
+        )
+        $result = Measure-CompareTrials -Lines $records
+        $result.SummaryCount | Should -Be 2
+        $result.MeanScore | Should -Be 0.0
+        $result.WinRate | Should -Be 0.5
+        $result.CiLow | Should -Be -0.1
+        $result.CiHigh | Should -Be 0.2
+    }
+
+    It 'Excludes incomplete confidence intervals from aggregate bounds' {
+        $records = @(
+            '{"type":"comparison","summary":{"ciLow":0.9}}',
+            '{"type":"comparison","summary":{"ciLow":-0.3,"ciHigh":0.4}}'
+        )
+        $result = Measure-CompareTrials -Lines $records
+        $result.SummaryCount | Should -Be 1
+        $result.CiLow | Should -Be -0.3
+        $result.CiHigh | Should -Be 0.4
     }
 }
 
 Describe 'Measure-InvariantFailures' -Tag 'Unit' {
     BeforeAll {
-        $script:Lines = Get-Content -LiteralPath (Join-Path $script:FixturesRoot 'vally-compare.log')
+        $script:Pass = [char]::ConvertFromUtf32(0x2705)
+        $script:Fail = [char]::ConvertFromUtf32(0x274C)
+        $script:Lines = @(
+            '| invariant | detail | verdict |',
+            '| --- | --- | --- |',
+            "| no-secrets-leaked | passed | $script:Pass |",
+            "| no-pii-emitted | failed | $script:Fail |"
+        )
         $script:Inv = Measure-InvariantFailures -Lines $script:Lines
     }
 
@@ -75,27 +159,39 @@ Describe 'Measure-InvariantFailures' -Tag 'Unit' {
 
 Describe 'Get-VerdictFromAggregate' -Tag 'Unit' {
     It 'Returns fail when there are zero runs' {
-        Get-VerdictFromAggregate -Runs 0 -Ties 0 -AWins 0 -BWins 0 -InvariantFailures 0 -DivergenceFailures 0 -Tier 'pr' | Should -Be 'fail'
+        Get-VerdictFromAggregate -Runs 0 -CiLow 0 -CiHigh 0 -InvariantFailures 0 -DivergenceFailures 0 -Tier 'pr' | Should -Be 'fail'
     }
 
-    It 'Returns pass when the tie ratio is at or above 0.80 and wins are symmetric' {
-        Get-VerdictFromAggregate -Runs 10 -Ties 8 -AWins 1 -BWins 1 -InvariantFailures 0 -DivergenceFailures 0 -Tier 'pr' | Should -Be 'pass'
+    It 'Returns fail for a zero-run nightly evaluation' {
+        Get-VerdictFromAggregate -Runs 0 -CiLow 0 -CiHigh 0 -InvariantFailures 0 -DivergenceFailures 0 -Tier 'nightly' | Should -Be 'fail'
+    }
+
+    It 'Returns pass when the 95% confidence interval straddles zero' {
+        Get-VerdictFromAggregate -Runs 10 -CiLow -0.2 -CiHigh 0.2 -InvariantFailures 0 -DivergenceFailures 0 -Tier 'pr' | Should -Be 'pass'
     }
 
     It 'Returns warn on PR when invariants fail' {
-        Get-VerdictFromAggregate -Runs 10 -Ties 8 -AWins 1 -BWins 1 -InvariantFailures 1 -DivergenceFailures 0 -Tier 'pr' | Should -Be 'warn'
+        Get-VerdictFromAggregate -Runs 10 -CiLow -0.2 -CiHigh 0.2 -InvariantFailures 1 -DivergenceFailures 0 -Tier 'pr' | Should -Be 'warn'
     }
 
     It 'Returns fail on nightly when invariants fail' {
-        Get-VerdictFromAggregate -Runs 10 -Ties 8 -AWins 1 -BWins 1 -InvariantFailures 1 -DivergenceFailures 0 -Tier 'nightly' | Should -Be 'fail'
+        Get-VerdictFromAggregate -Runs 10 -CiLow -0.2 -CiHigh 0.2 -InvariantFailures 1 -DivergenceFailures 0 -Tier 'nightly' | Should -Be 'fail'
     }
 
-    It 'Returns warn on PR when tie ratio is below 0.80' {
-        Get-VerdictFromAggregate -Runs 10 -Ties 5 -AWins 3 -BWins 2 -InvariantFailures 0 -DivergenceFailures 0 -Tier 'pr' | Should -Be 'warn'
+    It 'Returns warn on PR when the confidence interval excludes zero on the negative side (regression)' {
+        Get-VerdictFromAggregate -Runs 10 -CiLow -0.6 -CiHigh -0.1 -InvariantFailures 0 -DivergenceFailures 0 -Tier 'pr' | Should -Be 'warn'
     }
 
-    It 'Returns fail on nightly when tie ratio is below 0.80' {
-        Get-VerdictFromAggregate -Runs 10 -Ties 5 -AWins 3 -BWins 2 -InvariantFailures 0 -DivergenceFailures 0 -Tier 'nightly' | Should -Be 'fail'
+    It 'Returns fail on nightly when the confidence interval excludes zero on the negative side (regression)' {
+        Get-VerdictFromAggregate -Runs 10 -CiLow -0.6 -CiHigh -0.1 -InvariantFailures 0 -DivergenceFailures 0 -Tier 'nightly' | Should -Be 'fail'
+    }
+
+    It 'Returns warn on PR when the confidence interval excludes zero on the positive side (unexpected improvement)' {
+        Get-VerdictFromAggregate -Runs 10 -CiLow 0.1 -CiHigh 0.6 -InvariantFailures 0 -DivergenceFailures 0 -Tier 'pr' | Should -Be 'warn'
+    }
+
+    It 'Returns fail on nightly when the confidence interval excludes zero on the positive side (unexpected improvement)' {
+        Get-VerdictFromAggregate -Runs 10 -CiLow 0.1 -CiHigh 0.6 -InvariantFailures 0 -DivergenceFailures 0 -Tier 'nightly' | Should -Be 'fail'
     }
 }
 
@@ -156,7 +252,7 @@ Describe 'Merge-EquivalenceStimuli' -Tag 'Unit' {
     BeforeAll {
         $script:Baseline = ConvertFrom-EquivalenceResults -RunDir (Join-Path $script:FixturesRoot 'baseline') -WarningAction SilentlyContinue
         $script:Customized = ConvertFrom-EquivalenceResults -RunDir (Join-Path $script:FixturesRoot 'customized') -WarningAction SilentlyContinue
-        $script:Compare = Measure-CompareTrials -Lines (Get-Content -LiteralPath (Join-Path $script:FixturesRoot 'vally-compare.log'))
+        $script:Compare = Measure-CompareTrials -Lines (Get-Content -LiteralPath (Join-Path $script:FixturesRoot 'vally-compare.jsonl'))
         $script:Merged = Merge-EquivalenceStimuli -Baseline $script:Baseline -Customized $script:Customized -Compare $script:Compare
     }
 
@@ -255,7 +351,7 @@ Describe 'ConvertTo-EquivalenceHtml' -Tag 'Unit' {
     BeforeAll {
         $script:Baseline = ConvertFrom-EquivalenceResults -RunDir (Join-Path $script:FixturesRoot 'baseline') -WarningAction SilentlyContinue
         $script:Customized = ConvertFrom-EquivalenceResults -RunDir (Join-Path $script:FixturesRoot 'customized') -WarningAction SilentlyContinue
-        $script:Compare = Measure-CompareTrials -Lines (Get-Content -LiteralPath (Join-Path $script:FixturesRoot 'vally-compare.log'))
+        $script:Compare = Measure-CompareTrials -Lines (Get-Content -LiteralPath (Join-Path $script:FixturesRoot 'vally-compare.jsonl'))
         $script:Merged = Merge-EquivalenceStimuli -Baseline $script:Baseline -Customized $script:Customized -Compare $script:Compare
         $script:Html = ConvertTo-EquivalenceHtml -Stimuli $script:Merged -Model 'test-model' -RunId 'test-run-id' -Agent 'task-researcher'
     }
