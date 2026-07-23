@@ -16,7 +16,7 @@ tags:
   - skills
   - coding-standards
 author: Microsoft
-ms.date: 2026-06-19
+ms.date: 2026-07-06
 ms.topic: how-to
 estimated_reading_time: 8
 ---
@@ -30,16 +30,19 @@ The orchestrator dispatches the Standards perspective with a `diff-state.json` c
 ```mermaid
 flowchart LR
   A["Orchestrator:<br/>write diff-state.json"] --> B["Standards perspective:<br/>read extensions"]
-  B --> C["Match skills via catalog<br/>and semantic filtering"]
-  C --> D["Load matched skills"]
+  B --> C["Classify candidates<br/>by origin"]
+  C --> G["De-duplicate by name<br/>with origin precedence"]
+  G --> H["Match name + description<br/>to diff languages"]
+  H --> D["Load matched skills"]
   D --> E["Apply checklists"]
   E --> F["Write JSON findings"]
 ```
 
 1. The orchestrator extracts file extensions from the diff during the context bootstrap step and writes them to the `extensions` array in `diff-state.json`.
-2. The Standards perspective reads `diff-state.json`, extracts the extensions, and evaluates available skills by matching their name and description against the detected languages or file types.
-3. It selects up to 8 relevant skills and applies each skill's checklist to the diff.
-4. It writes structured JSON findings for the orchestrator to merge.
+2. The Standards perspective reads `diff-state.json`, extracts the extensions, and gathers candidate skills, keeping each candidate's origin (Workspace, User, or Bundled) from its source label.
+3. It de-duplicates same-named skills by origin precedence, then evaluates each remaining skill by matching its name and description against the detected languages or file types.
+4. It stacks the matched skills needed to cover every changed language or file type and applies each skill's checklist to the diff.
+5. It writes structured JSON findings for the orchestrator to merge.
 
 Skill discovery is owned entirely by the Standards perspective. The orchestrator supplies the extensions; the Standards perspective decides which skills to load.
 
@@ -51,19 +54,46 @@ The Standards perspective selects skills as follows:
 
 2. It normalizes each extension to language tokens (for example, `.py` to `python`, `.cs` to `csharp`, `.sh` to `bash`).
 
-3. It evaluates built-in skills using a catalog and selects the first skill whose name and description match the detected languages or file types.
+3. It gathers candidate `coding-standards` skills, classifying each by origin (Workspace, User, or Bundled) from its source label or path.
 
-4. If no cataloged skill matches, it evaluates additional available skills whose name or description matches the languages, frameworks, or file types in the diff.
+4. It de-duplicates candidates that share the same frontmatter `name`, preferring Workspace over User over Bundled origin.
 
-5. It selects up to 8 relevant skills total, prioritizing those most closely aligned with the changed files.
+5. It semantically matches each remaining candidate's `name` and `description` against the detected languages, frameworks, or file types.
 
-6. It loads the full `SKILL.md` body for each selected skill and applies its checklist to the diff.
+6. It stacks the matched skills needed to cover every changed language, framework, or file type, prioritizing those most closely aligned with the changed files.
 
-7. Every finding traces back to the skill that surfaced it, cited by the skill's exact `name` from frontmatter.
+7. It loads the full `SKILL.md` body for each selected skill and applies its checklist to the diff.
+
+8. Every finding traces back to the skill that surfaced it, cited by the skill's exact `name` from frontmatter.
 
 > [!NOTE]
 >
-> Skills are selected through semantic matching of their name and description against detected languages, frameworks, or file types. Built-in skills are evaluated first via a catalog, and additional skills are considered only if no catalog match is found. No path-based resolution or directory scanning is required.
+> Candidates are gathered and classified by origin, then selected through semantic matching of their name and description against detected languages, frameworks, or file types. Semantic matching is the selection step, applied after origin-based de-duplication.
+
+### Skill Origins
+
+The Standards perspective keeps each candidate skill's origin with it through selection:
+
+| Origin    | What it represents                                                                    |
+|-----------|---------------------------------------------------------------------------------------|
+| Workspace | Skills authored in the repository or workspace under review                           |
+| User      | Skills from the user's profile, when the platform exposes them as candidates          |
+| Bundled   | Skills packaged with an installed extension, plugin, or the hve-core baseline         |
+| Unknown   | A candidate with no identifiable source label, used only when origin cannot be ranked |
+
+Origin is inferred from each candidate's source label, never from its content. Author repository skills so they present as Workspace origin; that origin takes precedence over User and Bundled copies of the same skill.
+
+### Skill Merge Behavior
+
+The Standards perspective merges discovered candidates before selection:
+
+| Case                                        | Behavior                                                                                                                                                                            |
+|---------------------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| Distinct skill names                        | Skills stack additively when they match the diff. Findings keep the exact originating skill `name`.                                                                                 |
+| Same skill name                             | The higher-origin skill shadows the lower one; precedence is Workspace, then User, then Bundled. When origin cannot be ranked, one copy loads and the ambiguous duplicate is noted. |
+| Contradictory checks across distinct skills | The perspective surfaces findings from each skill and cites both names. It does not silently choose one standard or combine skill bodies.                                           |
+
+Same-named skill bodies are never concatenated. A shadowed skill does not load.
 
 ## Built-in Skills
 
@@ -71,12 +101,12 @@ The `coding-standards` collection ships with one language skill. Additional lang
 
 ### python-foundational
 
-| Field        | Value                                          |
-|--------------|------------------------------------------------|
-| Skill path   | `skills/coding-standards/python-foundational/` |
-| Activates on | `.py` files in the diff                        |
-| Sections     | 9 checklist sections, 30+ individual checks    |
-| Maturity     | Experimental                                   |
+| Field        | Value                                                                                                         |
+|--------------|---------------------------------------------------------------------------------------------------------------|
+| Origin       | Bundled hve-core baseline; a repository copy named `python-foundational` takes precedence as Workspace origin |
+| Activates on | `.py` files in the diff                                                                                       |
+| Sections     | 9 checklist sections, 30+ individual checks                                                                   |
+| Maturity     | Experimental                                                                                                  |
 
 The python-foundational skill covers:
 
@@ -115,7 +145,7 @@ Instructions and skills serve different activation contexts. Instructions guide 
 
 ## Authoring a Custom Skill
 
-You extend the Standards perspective by creating a SKILL.md file under .github/skills/coding-standards/ in your repository. The perspective activates it by matching the skill's name or description against the languages, frameworks, or file types present in the diff.
+You extend the Standards perspective by creating a `SKILL.md` file under `.github/skills/coding-standards/` in your repository. The perspective activates it as a Workspace-origin candidate and matches the skill's name or description against the languages, frameworks, or file types present in the diff.
 
 ### Skill Stacking
 
@@ -200,7 +230,7 @@ Organize checks into numbered sections with bullet points. Each bullet should be
 2. Make a change to a file that matches the skill's target language.
 3. Invoke the **code-review** agent and select the `standards` perspective (or `full`).
 4. Verify that findings cite your skill's `name` in their Skill field.
-5. If the skill does not activate, verify that the `description` clearly mentions the language, framework, or file extension present in the diff. Placement under `.github/skills/coding-standards/` is recommended for organization but does not control activation.
+5. If the skill does not activate, verify that it is authored under `.github/skills/coding-standards/` (Workspace origin) and that the `description` clearly mentions the language, framework, or file extension present in the diff.
 
 ## Enterprise Scenarios
 
@@ -218,15 +248,15 @@ A frontend team authors `.github/skills/coding-standards/northwind/react-standar
 
 ## Reference
 
-| Resource                    | Path                                                     |
-|-----------------------------|----------------------------------------------------------|
-| python-foundational skill   | `skills/coding-standards/python-foundational/SKILL.md`   |
-| Standards output format     | `docs/templates/standards-review-output-format.md`       |
-| Full review output format   | `docs/templates/full-review-output-format.md`            |
-| Engineering fundamentals    | `docs/templates/engineering-fundamentals.md`             |
-| Skill authoring guide       | [Authoring Custom Skills](../../customization/skills.md) |
-| Contributing skills         | [Contributing: Skills](../../contributing/skills.md)     |
-| coding-standards collection | `collections/coding-standards.collection.yml`            |
+| Resource                    | Path                                                           |
+|-----------------------------|----------------------------------------------------------------|
+| python-foundational skill   | `.github/skills/coding-standards/python-foundational/SKILL.md` |
+| Standards output format     | `docs/templates/standards-review-output-format.md`             |
+| Full review output format   | `docs/templates/full-review-output-format.md`                  |
+| Engineering fundamentals    | `docs/templates/engineering-fundamentals.md`                   |
+| Skill authoring guide       | [Authoring Custom Skills](../../customization/skills.md)       |
+| Contributing skills         | [Contributing: Skills](../../contributing/skills.md)           |
+| coding-standards collection | `collections/coding-standards.collection.yml`                  |
 
 <!-- markdownlint-disable MD036 -->
 *🤖 Crafted with precision by ✨Copilot following brilliant human instruction,

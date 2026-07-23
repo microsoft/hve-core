@@ -17,7 +17,7 @@ tags:
   - code-review
   - coding-standards
 author: Microsoft
-ms.date: 2026-06-26
+ms.date: 2026-07-02
 ms.topic: concept
 estimated_reading_time: 10
 ---
@@ -124,7 +124,7 @@ The review workflow lives in the `code-review` skill, not in the agent. The orch
 | Severity Taxonomy | Severity levels, verdict normalization, and risk classification            |
 | Output Formats    | Reporting structure, merged report skeleton, and persisted artifact schema |
 
-The Standards perspective is language-agnostic: it scans the workspace for `**/SKILL.md` files, matches them against the languages in the diff, and loads the relevant `coding-standards` skills. See [Language Skills](language-skills.md) for details on the built-in skills and how to create your own.
+The Standards perspective is language-agnostic: it discovers `coding-standards` skills from the built-in hve-core baseline and supported repository skill roots, de-duplicates same-named skills with repository precedence, matches the remaining candidates against the languages in the diff, and loads the relevant skills. See [Language Skills](language-skills.md) for details on built-in skills, supported discovery roots, skill stacking, and conflict behavior.
 
 ## How the Review Works
 
@@ -281,7 +281,7 @@ The agent works with any programming language. Standards and accessibility enfor
 
 ## Extending with Custom Skills
 
-The Standards and Accessibility perspectives discover skills dynamically at review time. You extend coverage by adding `SKILL.md` files to your repository without modifying the agent itself. See [Language Skills](language-skills.md) for the full guide on built-in skills, skill stacking, and authoring enterprise-specific standards.
+The Standards perspective discovers coding-standards skills dynamically at review time. You extend coverage by adding `SKILL.md` files under a supported repository skill root without modifying the agent itself. See [Language Skills](language-skills.md) for the full guide on built-in skills, skill stacking, same-name precedence, and authoring enterprise-specific standards.
 
 <!-- markdownlint-disable MD036 -->
 *🤖 Crafted with precision by ✨Copilot following brilliant human instruction,
