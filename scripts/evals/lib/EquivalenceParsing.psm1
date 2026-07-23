@@ -8,7 +8,7 @@
     Shared parsing, aggregation, and rendering helpers for baseline-equivalence eval runs.
 
 .DESCRIPTION
-    Consolidates the compare-log and results.jsonl parsers used by
+    Consolidates the `vally compare --output` JSONL and results.jsonl parsers used by
     `Invoke-BaselineEquivalence.ps1` and the dashboard generator
     `New-EquivalenceDashboard.ps1`. All public functions are exported via
     `Export-ModuleMember` at the bottom of the file.
@@ -17,35 +17,94 @@
 Set-StrictMode -Version Latest
 
 function Measure-CompareTrials {
+    <#
+    .SYNOPSIS
+        Aggregates comparison trials and summary statistics from Vally JSONL records.
+    .DESCRIPTION
+        Tallies recognized winners and combines complete confidence-interval pairs
+        conservatively by taking the maximum lower and minimum upper bounds.
+    #>
     [CmdletBinding()]
     [OutputType([hashtable])]
     param(
         [Parameter(Mandatory)]
+        [AllowNull()]
         [AllowEmptyCollection()]
         [AllowEmptyString()]
         [string[]]$Lines
     )
 
-    $pattern = '\s(?<stim>\S[^\n]*?\(trial\s+\d+\))\s{2,}(?<verdict>tie|A wins|B wins)\s{2,}\(score:\s*(?<score>[-+0-9.]+)\)\s*$'
-    $ansi = [regex]'\x1B\[[0-9;]*[A-Za-z]'
-    $ties = 0; $a = 0; $b = 0; $total = 0
+    $ties = 0; $baselineWins = 0; $treatmentWins = 0; $total = 0
+    $summaryCount = 0
     $perStimulus = @{}
+    $meanScores = [System.Collections.Generic.List[double]]::new()
+    $winRates = [System.Collections.Generic.List[double]]::new()
+    $ciLows = [System.Collections.Generic.List[double]]::new()
+    $ciHighs = [System.Collections.Generic.List[double]]::new()
+
     foreach ($line in $Lines) {
-        $clean = $ansi.Replace($line, '')
-        if ($clean -match $pattern) {
-            $total++
-            $stim = ($Matches.stim -replace '\s*\(trial\s+\d+\)\s*$', '').Trim()
-            if (-not $perStimulus.ContainsKey($stim)) {
-                $perStimulus[$stim] = @{ Ties = 0; AWins = 0; BWins = 0 }
+        if ([string]::IsNullOrWhiteSpace($line)) { continue }
+        try {
+            $record = $line | ConvertFrom-Json -Depth 100 -ErrorAction Stop
+        }
+        catch {
+            continue
+        }
+        if (-not $record.PSObject.Properties['type'] -or $record.type -ne 'comparison') { continue }
+
+        $stimuli = if ($record.PSObject.Properties['stimuli'] -and $record.stimuli) { @($record.stimuli) } else { @() }
+        foreach ($stimulus in $stimuli) {
+            if (-not $stimulus) { continue }
+            $name = if ($stimulus.PSObject.Properties['stimulusName']) { [string]$stimulus.stimulusName } else { '<unknown>' }
+            if (-not $perStimulus.ContainsKey($name)) {
+                $perStimulus[$name] = @{ Ties = 0; AWins = 0; BWins = 0 }
             }
-            switch ($Matches.verdict) {
-                'tie'    { $ties++;  $perStimulus[$stim].Ties  += 1 }
-                'A wins' { $a++;     $perStimulus[$stim].AWins += 1 }
-                'B wins' { $b++;     $perStimulus[$stim].BWins += 1 }
+            $trials = if ($stimulus.PSObject.Properties['trials'] -and $stimulus.trials) { @($stimulus.trials) } else { @() }
+            foreach ($trial in $trials) {
+                if (-not $trial) { continue }
+                if ($trial.PSObject.Properties['errored'] -and $trial.errored) { continue }
+                $winner = if ($trial.PSObject.Properties['winner']) { [string]$trial.winner } else { '' }
+                switch ($winner) {
+                    'tie' { $ties++; $total++; $perStimulus[$name].Ties += 1 }
+                    'baseline' { $baselineWins++; $total++; $perStimulus[$name].AWins += 1 }
+                    'treatment' { $treatmentWins++; $total++; $perStimulus[$name].BWins += 1 }
+                    default { Write-Verbose "Unrecognized winner '$winner' for stimulus '$name'; excluded from tally." }
+                }
             }
         }
+
+        if (-not ($record.PSObject.Properties['summary'] -and $record.summary)) { continue }
+        $summary = $record.summary
+        $hasCiPair = $summary.PSObject.Properties['ciLow'] -and
+            $summary.PSObject.Properties['ciHigh'] -and
+            $null -ne $summary.ciLow -and
+            $null -ne $summary.ciHigh
+        if ($hasCiPair) {
+            $summaryCount++
+            $ciLows.Add([double]$summary.ciLow)
+            $ciHighs.Add([double]$summary.ciHigh)
+        }
+        if ($summary.PSObject.Properties['meanScore'] -and $null -ne $summary.meanScore) { $meanScores.Add([double]$summary.meanScore) }
+        if ($summary.PSObject.Properties['winRate'] -and $null -ne $summary.winRate) { $winRates.Add([double]$summary.winRate) }
     }
-    return @{ Total = $total; Ties = $ties; AWins = $a; BWins = $b; PerStimulus = $perStimulus }
+
+    $meanScore = if ($meanScores.Count -gt 0) { ($meanScores | Measure-Object -Average).Average } else { 0.0 }
+    $winRate = if ($winRates.Count -gt 0) { ($winRates | Measure-Object -Average).Average } else { 0.0 }
+    $ciLow = if ($ciLows.Count -gt 0) { ($ciLows | Measure-Object -Maximum).Maximum } else { 0.0 }
+    $ciHigh = if ($ciHighs.Count -gt 0) { ($ciHighs | Measure-Object -Minimum).Minimum } else { 0.0 }
+
+    return @{
+        Total        = $total
+        Ties         = $ties
+        AWins        = $baselineWins
+        BWins        = $treatmentWins
+        PerStimulus  = $perStimulus
+        SummaryCount = $summaryCount
+        MeanScore    = [math]::Round($meanScore, 4)
+        WinRate      = [math]::Round($winRate, 4)
+        CiLow        = [math]::Round($ciLow, 4)
+        CiHigh       = [math]::Round($ciHigh, 4)
+    }
 }
 
 function Measure-InvariantFailures {
@@ -76,13 +135,14 @@ function Measure-InvariantFailures {
 }
 
 function Get-VerdictFromAggregate {
+    # A confidence interval that excludes zero signals a documented-divergence review.
+    # PR runs warn; nightly runs fail. Missing runs always fail.
     [CmdletBinding()]
     [OutputType([string])]
     param(
         [Parameter(Mandatory)][int]$Runs,
-        [Parameter(Mandatory)][int]$Ties,
-        [Parameter(Mandatory)][int]$AWins,
-        [Parameter(Mandatory)][int]$BWins,
+        [Parameter(Mandatory)][double]$CiLow,
+        [Parameter(Mandatory)][double]$CiHigh,
         [Parameter(Mandatory)][int]$InvariantFailures,
         [Parameter(Mandatory)][int]$DivergenceFailures,
         [Parameter(Mandatory)][string]$Tier
@@ -93,11 +153,9 @@ function Get-VerdictFromAggregate {
         if ($Tier -eq 'pr') { return 'warn' } else { return 'fail' }
     }
 
-    $tieRatio = [double]$Ties / [double]$Runs
-    $nonTies = $AWins + $BWins
-    $symmetric = ($nonTies -eq 0) -or ([math]::Abs($AWins - $BWins) -le ($nonTies * 0.5))
+    $significantDifference = ($CiLow -gt 0) -or ($CiHigh -lt 0)
+    if (-not $significantDifference) { return 'pass' }
 
-    if ($tieRatio -ge 0.80 -and $symmetric) { return 'pass' }
     if ($Tier -eq 'pr') { return 'warn' } else { return 'fail' }
 }
 
