@@ -106,7 +106,7 @@ In standalone use, do not present unchecked work as a retry or trigger implement
 
 During material work, apply the Conversation protocol. Before a user decision, state the decision context, viable choices and consequences, evidence-backed recommendation when available, blockers, and relevant Markdown links.
 
-Apply the Implementation Closeout Projection. End the closeout with a Markdown table linking every relevant existing artifact and a short description. Every file or artifact entry must use a workspace-relative Markdown link in the form `[descriptive label](path/to/file.md)`, with a line or section fragment when useful; do not substitute a plain file name, artifact type, or inline-code path. Keep the table as the final response element.
+Apply the Implementation Closeout Projection. For every relevant existing artifact, use the two-cell row `| [Descriptive label](actual/workspace-relative/path.ext) | Short description |`, replacing `actual/workspace-relative/path.ext` with that artifact's actual workspace-relative path; omit unavailable files and keep the table as the final response element.
 
 ## Production-reference hygiene
 

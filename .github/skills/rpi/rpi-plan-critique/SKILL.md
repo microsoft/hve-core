@@ -55,7 +55,7 @@ Return a substantive, evidence-grounded credibility assessment of an RPI plan an
 * At closeout, separate critique execution status, Complete, Partial, or Blocked, from its Pass, Revise, or Blocked verdict. Identify the highest-impact finding, its action owner, the smallest next action, and whether a user response is required. A planner-owned revision does not require user input.
 * Advise `/compact` only when stale tool output or completed assessment detail outweighs useful current context and the plan, phase details, and critique artifact are current. When advising it, name the state and artifact pointers to retain. Otherwise omit compaction guidance.
 * When dispatched by `rpi-plan`, return the verdict to the planning parent and do not ask the user to invoke planning again. In a standalone invocation, do not invoke a peer stage. State `/rpi-plan` only when a revision needs the planning parent. Otherwise state the explicit stop or no-handoff reason. In an active `rpi-quick` or confirmed automatic RPI Agent context, return the verdict to the parent so it can continue after gates and required confirmations pass.
-* End the user-facing closeout with a Markdown table that links every relevant existing artifact and gives each a short description. The table is the final response element.
+* For every relevant existing artifact, use the two-cell row `| [Descriptive label](actual/workspace-relative/path.ext) | Short description |`, replacing `actual/workspace-relative/path.ext` with that artifact's actual workspace-relative path; omit unavailable files and keep the table as the final response element.
 
 ## Stop rules
 

@@ -101,7 +101,7 @@ Derive `{{task_slug}}` from the primary target with lower-kebab-case and use the
 * At closeout, separate research execution status from planning readiness or decision state. Summarize results, important updates, decisions, blockers or open items, and anything the user might otherwise miss.
 * Advise `/compact` only when stale tool output, superseded reasoning, or completed-wave detail outweighs useful current context and the primary research artifact is current. When advising it, name the state and artifact pointers to retain. Otherwise omit compaction guidance.
 * Apply the continuation contract in `references/research.md` at closeout. In standalone context, remain research-only and do not invoke a peer phase. Return the primary artifact to an active `rpi-quick` or RPI Agent parent for parent-owned continuation.
-* End the user-facing closeout with a Markdown table that links every relevant existing artifact and gives each a short description. Every file or artifact entry must use a workspace-relative Markdown link in the form `[descriptive label](path/to/file.md)`, with a line or section fragment when useful; do not substitute a plain file name, artifact type, or inline-code path. The table is the final response element.
+* For every relevant existing artifact, use the two-cell row `| [Descriptive label](actual/workspace-relative/path.ext) | Short description |`, replacing `actual/workspace-relative/path.ext` with that artifact's actual workspace-relative path; omit unavailable files and keep the table as the final response element.
 
 ## Stop Rules
 
