@@ -12,7 +12,7 @@ This reference enumerates the nine conformance checks the `vally-tests` skill kn
 
 The canonical eval target for this kind, per `eval-suite-routing.md`, is `evals/agent-behavior/stimuli/<slug>.yml` where `<slug>` is the agent filename minus the `.agent.md` suffix (for example `task-researcher.agent.md` routes to `evals/agent-behavior/stimuli/task-researcher.yml`). New stimulus blocks are appended to that file's `stimuli:` array (creating the file from the standard preamble if it does not exist) and tagged `tags.advisory: true`. Authors MUST run every candidate stimulus through `refusal-taxonomy.md` before emission and refuse any match.
 
-Grader identifiers below use the Vally CLI 0.4.0 catalog (`semantic_similarity`, `contains`, `regex`, `json_schema`) per `grader-catalog.md`. Where the research phrasing recommended `output-matches`, the equivalent here is `regex`; where it recommended `llm-grader`, the equivalent is `semantic_similarity`.
+Grader identifiers below use the Vally CLI 0.9.0 catalog (`semantic_similarity`, `contains`, `regex`, `json_schema`) per `grader-catalog.md`. Where the research phrasing recommended `output-matches`, the equivalent here is `regex`; where it recommended `llm-grader`, the equivalent is `semantic_similarity`.
 
 ## Contract Summary
 

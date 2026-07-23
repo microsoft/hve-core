@@ -2,12 +2,12 @@
 #
 # One block per supported grader. Copy the block that matches the check from
 # references/grader-catalog.md. The skill vocabulary on the left maps to the
-# literal Vally CLI 0.4.0 `type:` keyword on the right:
+# literal Vally CLI 0.9.0 `type:` keyword on the right:
 #
 #   semantic_similarity  → type: prompt
 #   contains             → type: output-contains   (or output-not-contains)
 #   regex                → type: output-matches    (or output-not-matches)
-#   json_schema          → NOT SHIPPED IN 0.4.0; use regex envelope as workaround.
+#   json_schema          → NOT SHIPPED IN 0.9.0; use regex envelope as workaround.
 
 graders:
   # ── semantic_similarity → type: prompt ────────────────────────────────────
