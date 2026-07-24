@@ -260,6 +260,11 @@ Describe 'Test-AssetDocRegionSync' -Tag 'Unit' {
         Test-AssetDocRegionSync -Model $script:agentModel -Content $crlfContent | Should -BeNullOrEmpty
     }
 
+    It 'Reports no drift when the page uses lone CR line endings' {
+        $crContent = ($script:agentContent -replace '\r\n', "`n") -replace '\r', "`n" -replace '\n', "`r"
+        Test-AssetDocRegionSync -Model $script:agentModel -Content $crContent | Should -BeNullOrEmpty
+    }
+
     It 'Detects a tampered metadata region' {
         $tampered = Set-TamperedMetadataCell -Content $script:agentContent -Field 'Kind' -NewValue 'TAMPERED'
         $findings = @(Test-AssetDocRegionSync -Model $script:agentModel -Content $tampered)
