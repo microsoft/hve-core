@@ -8,15 +8,16 @@ description: "Reference protocol for marker-based RPI implementation, current-st
 
 Read the plan at `.copilot-tracking/plans/{{YYYY-MM-DD}}/{{task_slug}}-plan.md` and phase details at `.copilot-tracking/details/{{YYYY-MM-DD}}/{{task_slug}}-phase-details.md`. Create or update `.copilot-tracking/changes/{{YYYY-MM-DD}}/{{task_slug}}-changes.md` for implementation evidence.
 
-Navigate plan and detail content through `<!-- rpi:phase id=Pxx -->`, `<!-- rpi:task id=Pxx-Txx -->`, and their headings. Do not create or maintain line-number references or separate legacy log artifacts.
+Navigate plan and detail content through `<!-- rpi:phase id=Pxx -->`, `<!-- rpi:task id=Pxx-Txx -->`, and their headings, enable searching through ignored files for plan and details files. Do not create or maintain line-number references or separate legacy log artifacts.
 
 ## Execution and tracking
 
-1. Read the applicable plan phase, matching details, latest critique disposition, prior changes record, and relevant evidence before changing source.
-2. Perform the planned work, using a generic bounded subagent only when its isolated scope, write boundary, and expected result are clear.
-3. Mark a task or phase complete only after its stated completion evidence is available.
-4. Record material work under descriptive changes-record headings. For every completed-work item, include related `Pxx` or `Pxx-Txx`, files, what changed and why, completion evidence, and validation.
-5. Record validation as run, passed, failed, skipped, or unavailable, with the relevant reason or output summary.
+1. Resolve declared invocation scope before changing source. With no exact scope, the full plan is in scope. An exact `Pxx` includes that phase and its tasks; an exact `Pxx-Txx` includes that task only. Keep all other active-plan markers outside implementation and completion claims.
+2. Read the first unchecked applicable plan item, matching details, latest critique disposition, prior changes record, and relevant evidence. Select the first dependency-ready item in plan order. Do not advance a dependent item until its plan prerequisites have completion evidence.
+3. Execute that item. The primary implementation agent executes every individual `Pxx-Txx` task and may delegate only a whole `Pxx` phase that is in declared scope, dependency-ready, independent, parallelizable, and write-disjoint. A delegated phase has a clear phase scope, dependencies, disjoint write boundary, expected evidence return, and consuming parent step. The primary implementation agent retains plan order, consumes phase returns, reconciles plan and changes-record state, applies implementation-time plan updates, and updates completion markers. Do not parallelize overlapping writes or work whose dependencies are unresolved.
+4. Mark each completed `Pxx-Txx` task immediately after its stated completion evidence exists. Mark a `Pxx` phase immediately after all of that phase's plan tasks have completion evidence and the full phase is declared scope. A bounded task does not complete its containing phase. Never mark an item outside declared scope.
+5. Record material work under descriptive changes-record headings. For every completed-work item, include related `Pxx` or `Pxx-Txx`, files, what changed and why, completion evidence, and validation.
+6. Record validation as run, passed, failed, skipped, or unavailable, with the relevant reason or output summary.
 
 ## Implementation-time plan updates
 
@@ -52,7 +53,7 @@ A discovery requires planning reconsideration only when a significant or diverge
 3. Reconcile the plan and phase details through the planning owner's current-state process. Preserve unrelated completed work and its evidence.
 4. Resume only affected dependent work after the user decision and updated plan state are current. Preserve the one critique as historical evidence and record the resulting decision state in the changes record.
 
-On resumption, continue from the first unchecked applicable task or phase. Read prior descriptive changes-record sections, current plan markers, phase details, and latest critique disposition. Do not resume a task awaiting a user decision.
+On resumption, continue from the first unchecked dependency-ready item in declared scope. Read prior descriptive changes-record sections, current plan markers, phase details, and latest critique disposition. Do not resume a task awaiting a user decision or advance a dependent item before its prerequisites have completion evidence.
 
 ## Conversation protocol
 
@@ -96,7 +97,7 @@ Before a user question, state the affected decision, viable choices and conseque
 
 ## Implementation Closeout Projection
 
-Qualify every Complete, Partial, or Blocked status by the declared invocation scope: full plan, `Pxx`, or `Pxx-Txx`. A Complete bounded scope confirms only its completed scope markers; it does not imply the full plan is complete. Show all remaining active-plan markers, including later work outside the declared scope, so the caller can distinguish bounded completion from task completion.
+Qualify every Complete, Partial, or Blocked status by the declared invocation scope: full plan, `Pxx`, or `Pxx-Txx`. A Complete bounded scope confirms only its completed scope markers; it does not imply the full plan is complete. Show all remaining active-plan markers, including later work outside the declared scope, so the caller can distinguish bounded completion from task completion. A bounded task leaves its containing phase unchecked unless all phase tasks have completion evidence within a declared phase or full-plan scope.
 
 The closeout also states validation coverage, blockers with their owner and clearing action, current planning state, and review readiness or the explicit no-handoff reason. For a user-owned blocker, state that affected work cannot continue until the required response is recorded. For a dependency-owned blocker, name the dependency owner and the evidence needed to clear it.
 
