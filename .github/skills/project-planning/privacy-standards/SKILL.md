@@ -31,6 +31,7 @@ This skill is the reusable privacy reference package for the Privacy Planner and
 - [CCPA/CPRA overview](references/ccpa-cpra.md)
 - [OWASP Top 10 Privacy Risks](references/owasp-top-10-privacy-risks.md)
 - [DPIA threshold heuristics](references/dpia-thresholds.md)
+- [Data governance controls for release readiness](references/data-governance-controls.md)
 
 ## Privacy planning heuristics
 
