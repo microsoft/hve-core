@@ -1,0 +1,7 @@
+output: ./examples/output/demo.mp4
+resolution: 1280x720
+fps: 24
+segments:
+  - type: frame
+    visual: ./examples/fixtures/intro.png
+    narration: ./examples/fixtures/intro.wav
