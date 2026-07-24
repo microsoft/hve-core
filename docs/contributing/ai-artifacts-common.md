@@ -3,11 +3,19 @@ title: 'AI Artifacts Common Standards'
 description: 'Common standards and quality gates for all AI artifact contributions to hve-core'
 sidebar_position: 2
 author: Microsoft
-ms.date: 2026-06-28
+ms.date: 2026-07-23
 ms.topic: reference
 ---
 
-This document defines shared standards, conventions, and quality gates that apply to **all** AI artifact contributions to hve-core (agents, prompts, and instructions files).
+This document defines shared standards, conventions, and quality gates that apply to **all** AI artifact contributions to hve-core (agents, prompts, instructions, and skills).
+
+## Asset Reference Documentation
+
+Every documentable agent, prompt, instruction, and skill MUST include its paired
+page under `docs/reference/**`. Follow the
+[asset reference documentation guide](asset-docs.md) to generate the page, preserve
+the generator-owned regions, author the usage sections, and satisfy the local and
+pull request validation gates.
 
 ## Agents Not Accepted
 

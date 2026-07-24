@@ -444,7 +444,13 @@ function Test-AssetDocRegionSync {
             # Missing markers are reported by the structure check.
             continue
         }
-        if (-not [string]::Equals($split.Body, $region.Fresh, [System.StringComparison]::Ordinal)) {
+        # Normalize line endings before comparison. Committed pages check out as
+        # CRLF on Windows (git autocrlf) while the renderer emits LF, so an ordinal
+        # compare would report false drift. Line endings are a platform concern,
+        # not generated-content drift.
+        $actualBody = $split.Body -replace '\r\n', "`n" -replace '\r', "`n"
+        $expectedBody = $region.Fresh -replace '\r\n', "`n" -replace '\r', "`n"
+        if (-not [string]::Equals($actualBody, $expectedBody, [System.StringComparison]::Ordinal)) {
             $findings += New-AssetDocFinding -Level 'Error' -Category 'Sync' -Path $Model.DocRel -Message "Generated '$($region.Name)' region is out of sync; run npm run docs:generate."
         }
     }

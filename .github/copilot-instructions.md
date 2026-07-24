@@ -144,6 +144,7 @@ Collection manifests in `collections/` define bundles of agents, prompts, instru
 * When adding, updating, or removing prompt instructions, custom agents, subagents, or skills, update all affected `collections/*.collection.yml` and `collections/*.collection.md` files.
 * After any change to collection YAML or markdown files, run `npm run plugin:generate` to regenerate plugin outputs under `plugins/`. Do not edit `plugins/` files directly.
 * After any change to collection YAML or markdown files, also run `npm run extension:prepare` and `npm run extension:prepare:prerelease` to regenerate the per-collection extension READMEs and `package.*.json` manifests under `extension/`. Both regenerators are idempotent and exit 0 when inputs are unchanged.
+* After adding, changing, moving, or removing a documentable agent, prompt, instruction, or skill, run `npm run docs:generate` and commit the matching page under `docs/reference/`. The generator owns page frontmatter and the prefix through `<!-- END AUTO-GENERATED: overview -->`; edit only the preserved `When to use it`, applicable `How to use it`, and `Example usage` tail. Do not edit generated regions or catalog indexes by hand.
 * Run `npm run plugin:validate` to confirm collection metadata is correct.
 <!-- </project-structure> -->
 
