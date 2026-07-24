@@ -54,13 +54,13 @@
     {
       "name": "hve-core",
       "source": "hve-core",
-      "description": "HVE Core RPI (Research, Plan, Implement, Review) workflow with Git commit, merge, setup, and pull request prompts",
+      "description": "Opinionated, rapidly evolving agentic SDLC patterns for RPI workflows, HVE Builder, and Git operations",
       "version": "3.3.101"
     },
     {
       "name": "hve-core-all",
       "source": "hve-core-all",
-      "description": "Full bundle of all stable HVE Core agents, prompts, instructions, and skills",
+      "description": "Full bundle of opinionated, rapidly evolving HVE Core agentic SDLC patterns and tools",
       "version": "3.3.101"
     },
     {
