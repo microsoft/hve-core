@@ -10,5 +10,9 @@
   ],
   "skills": [
     "skills/shared/"
+  ],
+  "rules": [
+    "instructions/ado/",
+    "instructions/shared/"
   ]
 }

@@ -2,7 +2,7 @@
 title: Build System and Validation
 description: Understand the plugin generation pipeline, schema validation system, npm scripts, and CI checks for customizing and extending HVE Core
 author: Microsoft
-ms.date: 2026-06-27
+ms.date: 2026-07-10
 ms.topic: how-to
 keywords:
   - build system
@@ -35,6 +35,12 @@ npm run plugin:generate
 > [!IMPORTANT]
 > Files under `plugins/` are generated output. Do not edit them directly.
 > Changes made to plugin files are overwritten on the next generation run.
+
+Because every file under `plugins/` is a copy of an already-validated source under
+`.github/`, the generated tree is excluded from source-level checks that would otherwise
+re-scan the copies (spell check, CodeQL, Python project discovery for tests, fuzzing, and
+pip-audit, and code coverage). Validation of the generated output is handled by
+`plugin:validate` and `lint:marketplace` instead.
 
 ## Schema Validation System
 

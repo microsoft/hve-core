@@ -118,8 +118,13 @@ function Test-PluginSourceDirectory {
     )
 
     $pluginDir = Join-Path -Path $PluginsRoot -ChildPath $Source
-    if (-not (Test-Path -Path $pluginDir -PathType Container)) {
+    $pluginItem = Get-Item -LiteralPath $pluginDir -Force -ErrorAction SilentlyContinue
+    if ($null -eq $pluginItem -or -not $pluginItem.PSIsContainer) {
         return "plugin source directory not found: plugins/$Source"
+    }
+
+    if ($pluginItem.LinkType -or ($pluginItem.Attributes -band [System.IO.FileAttributes]::ReparsePoint)) {
+        return "plugin source directory must be a regular directory: plugins/$Source"
     }
 
     return ''
@@ -147,11 +152,206 @@ function Test-PluginSourceFormat {
         return "plugin source '$Source' must not contain path separators"
     }
 
-    if ($Source -match '^\./') {
-        return "plugin source '$Source' must not contain relative path prefix"
+    if ($Source -in @('.', '..')) {
+        return "plugin source '$Source' must not be a relative path segment"
     }
 
     return ''
+}
+
+function Test-PathContainedByRoot {
+    [CmdletBinding()]
+    [OutputType([bool])]
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$Path,
+
+        [Parameter(Mandatory = $true)]
+        [string]$Root
+    )
+
+    $fullPath = [System.IO.Path]::GetFullPath($Path)
+    $fullRoot = [System.IO.Path]::GetFullPath($Root).TrimEnd(
+        [System.IO.Path]::DirectorySeparatorChar,
+        [System.IO.Path]::AltDirectorySeparatorChar
+    )
+    $comparison = if ($IsWindows) {
+        [System.StringComparison]::OrdinalIgnoreCase
+    }
+    else {
+        [System.StringComparison]::Ordinal
+    }
+
+    return $fullPath.Equals($fullRoot, $comparison) -or
+        $fullPath.StartsWith("$fullRoot$([System.IO.Path]::DirectorySeparatorChar)", $comparison)
+}
+
+function Get-RegularObjectError {
+    [CmdletBinding()]
+    [OutputType([string])]
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$Path,
+
+        [Parameter(Mandatory = $true)]
+        [ValidateSet('File', 'Directory')]
+        [string]$ExpectedType,
+
+        [Parameter(Mandatory = $true)]
+        [string]$DisplayPath
+    )
+
+    $item = Get-Item -LiteralPath $Path -Force -ErrorAction SilentlyContinue
+    if ($null -eq $item) {
+        return "required $($ExpectedType.ToLowerInvariant()) not found: $DisplayPath"
+    }
+    if ($item.LinkType -or ($item.Attributes -band [System.IO.FileAttributes]::ReparsePoint)) {
+        return "linked or reparse-point object is not allowed: $DisplayPath"
+    }
+    if ($ExpectedType -eq 'Directory' -and -not $item.PSIsContainer) {
+        return "expected directory but found file: $DisplayPath"
+    }
+    if ($ExpectedType -eq 'File' -and $item.PSIsContainer) {
+        return "expected file but found directory: $DisplayPath"
+    }
+
+    return ''
+}
+
+function Test-PluginPackageContent {
+    <#
+    .SYNOPSIS
+        Validates that a packaged plugin contains real content expected by the marketplace manifest.
+
+    .PARAMETER PluginRoot
+        Absolute path to the plugin package directory.
+
+    .PARAMETER PluginName
+        Marketplace plugin name for error messages.
+
+    .PARAMETER ExpectedVersion
+        Expected plugin manifest version.
+
+    .OUTPUTS
+        [string[]] Validation errors for missing in-package content.
+    #>
+    [CmdletBinding()]
+    [OutputType([string[]])]
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$PluginRoot,
+
+        [Parameter(Mandatory = $true)]
+        [string]$PluginName,
+
+        [Parameter(Mandatory = $false)]
+        [AllowNull()]
+        [string]$ExpectedVersion
+    )
+
+    $pluginErrors = @()
+    $canonicalRoot = [System.IO.Path]::TrimEndingDirectorySeparator(
+        [System.IO.Path]::GetFullPath($PluginRoot)
+    )
+    $rootPrefix = $canonicalRoot + [System.IO.Path]::DirectorySeparatorChar
+    $rootItem = Get-Item -LiteralPath $canonicalRoot -Force -ErrorAction SilentlyContinue
+    if (-not $rootItem -or -not $rootItem.PSIsContainer) {
+        return @("plugin '$PluginName' package directory not found: $PluginRoot")
+    }
+    if ($rootItem.LinkType -or ($rootItem.Attributes -band [System.IO.FileAttributes]::ReparsePoint)) {
+        $pluginErrors += "plugin '$PluginName' package root is a link or reparse point"
+    }
+
+    foreach ($item in Get-ChildItem -LiteralPath $canonicalRoot -Force -Recurse) {
+        if ($item.LinkType -or ($item.Attributes -band [System.IO.FileAttributes]::ReparsePoint)) {
+            $pluginErrors += "plugin '$PluginName' package contains a link or reparse point: $($item.FullName)"
+        }
+    }
+
+    $readmeError = Get-RegularObjectError -Path (Join-Path $canonicalRoot 'README.md') `
+        -ExpectedType File -DisplayPath 'README.md'
+    if ($readmeError) {
+        $pluginErrors += $readmeError
+    }
+
+    $manifestPath = Join-Path $canonicalRoot '.github/plugin/plugin.json'
+    $manifestError = Get-RegularObjectError -Path $manifestPath -ExpectedType File -DisplayPath '.github/plugin/plugin.json'
+    if ($manifestError) {
+        $pluginErrors += $manifestError
+    }
+    if ($pluginErrors.Count -gt 0) {
+        return @($pluginErrors)
+    }
+
+    try {
+        $manifest = [System.IO.File]::ReadAllText($manifestPath) | ConvertFrom-Json -AsHashtable
+    }
+    catch {
+        $pluginErrors += "plugin '$PluginName' has invalid plugin.json content"
+        return @($pluginErrors)
+    }
+
+    if ($manifest.name -ne $PluginName) {
+        $pluginErrors += "plugin manifest name '$($manifest.name)' does not match marketplace plugin '$PluginName'"
+    }
+    if ($ExpectedVersion -and $manifest.version -ne $ExpectedVersion) {
+        $pluginErrors += "plugin manifest version '$($manifest.version)' does not match package.json version '$ExpectedVersion'"
+    }
+
+    $componentTypes = [ordered]@{
+        agents   = 'Directory'
+        commands = 'Directory'
+        skills   = 'Directory'
+        rules    = 'Directory'
+        hooks    = 'File'
+    }
+    foreach ($field in $componentTypes.Keys) {
+        if (-not $manifest.ContainsKey($field) -or $null -eq $manifest[$field]) {
+            continue
+        }
+
+        $fieldValue = $manifest[$field]
+        $declaredPaths = if ($fieldValue -is [string]) {
+            @($fieldValue)
+        }
+        elseif ($fieldValue -is [System.Collections.IEnumerable]) {
+            @($fieldValue)
+        }
+        else {
+            $pluginErrors += "plugin '$PluginName' manifest field '$field' must contain path strings"
+            continue
+        }
+
+        foreach ($declaredPath in $declaredPaths) {
+            if ($declaredPath -isnot [string] -or [string]::IsNullOrWhiteSpace($declaredPath)) {
+                $pluginErrors += "plugin '$PluginName' manifest field '$field' contains an invalid path"
+                continue
+            }
+            if ([System.IO.Path]::IsPathRooted($declaredPath)) {
+                $pluginErrors += "plugin '$PluginName' manifest field '$field' path escapes plugin root: $declaredPath"
+                continue
+            }
+
+            $resolvedPath = [System.IO.Path]::GetFullPath((Join-Path -Path $canonicalRoot -ChildPath $declaredPath))
+            if (-not $resolvedPath.StartsWith($rootPrefix, [System.StringComparison]::OrdinalIgnoreCase)) {
+                $pluginErrors += "plugin '$PluginName' manifest field '$field' path escapes plugin root: $declaredPath"
+                continue
+            }
+            $targetError = Get-RegularObjectError -Path $resolvedPath -ExpectedType $componentTypes[$field] -DisplayPath $declaredPath
+            if ($targetError) {
+                $pluginErrors += $targetError
+                continue
+            }
+            if ($field -eq 'rules') {
+                $ruleFiles = @(Get-ChildItem -LiteralPath $resolvedPath -Filter '*.instructions.md' -File -Recurse -Force)
+                if ($ruleFiles.Count -eq 0) {
+                    $pluginErrors += "rules path contains no .instructions.md files: $declaredPath"
+                }
+            }
+        }
+    }
+
+    return @($pluginErrors)
 }
 
 #endregion Validation Helpers
@@ -187,7 +387,8 @@ function Invoke-MarketplaceValidation {
 
     $manifestPath = Join-Path -Path $RepoRoot -ChildPath '.github' -AdditionalChildPath 'plugin', 'marketplace.json'
 
-    if (-not (Test-Path -Path $manifestPath)) {
+    $manifestItem = Get-Item -LiteralPath $manifestPath -Force -ErrorAction SilentlyContinue
+    if ($null -eq $manifestItem) {
         Write-Host '  FAIL marketplace.json not found' -ForegroundColor Red
         $results = @(
             @{
@@ -196,6 +397,15 @@ function Invoke-MarketplaceValidation {
                 Errors     = @('marketplace.json not found')
                 Warnings   = @()
             }
+        )
+        Write-MarketplaceValidationReport -RepoRoot $RepoRoot -OutputPath $OutputPath -ErrorCount 1 -Results $results
+        return @{ Success = $false; ErrorCount = 1 }
+    }
+
+    $manifestObjectError = Get-RegularObjectError -Path $manifestPath -ExpectedType File -DisplayPath '.github/plugin/marketplace.json'
+    if ($manifestObjectError) {
+        $results = @(
+            @{ PluginName = 'marketplace'; IsValid = $false; Errors = @($manifestObjectError); Warnings = @() }
         )
         Write-MarketplaceValidationReport -RepoRoot $RepoRoot -OutputPath $OutputPath -ErrorCount 1 -Results $results
         return @{ Success = $false; ErrorCount = 1 }
@@ -277,7 +487,24 @@ function Invoke-MarketplaceValidation {
         $errors += 'plugins array is empty or missing'
     }
     else {
-        $pluginsRoot = Join-Path -Path $RepoRoot -ChildPath 'plugins'
+        $pluginRootValue = [string]$manifest.metadata.pluginRoot
+        $pluginsRoot = if ([string]::IsNullOrWhiteSpace($pluginRootValue) -or
+            [System.IO.Path]::IsPathRooted($pluginRootValue)) {
+            $null
+        }
+        else {
+            [System.IO.Path]::GetFullPath((Join-Path $RepoRoot $pluginRootValue))
+        }
+        $pluginRootIsContained = $pluginsRoot -and (Test-PathContainedByRoot -Path $pluginsRoot -Root $RepoRoot)
+        if (-not $pluginRootIsContained) {
+            $errors += "metadata.pluginRoot escapes repository root: '$pluginRootValue'"
+        }
+        else {
+            $pluginRootError = Get-RegularObjectError -Path $pluginsRoot -ExpectedType Directory -DisplayPath $pluginRootValue
+            if ($pluginRootError) {
+                $errors += $pluginRootError
+            }
+        }
         $seenNames = @{}
 
         foreach ($plugin in $manifest.plugins) {
@@ -302,18 +529,25 @@ function Invoke-MarketplaceValidation {
             }
 
             # Source format (no path separators)
+            $sourceFormatValid = $true
             if (-not [string]::IsNullOrWhiteSpace($plugin.source)) {
                 $formatError = Test-PluginSourceFormat -Source $plugin.source
                 if ($formatError) {
                     $pluginErrors += $formatError
+                    $sourceFormatValid = $false
                 }
             }
 
             # Source directory existence
-            if (-not [string]::IsNullOrWhiteSpace($plugin.source)) {
+            if ($pluginRootIsContained -and $sourceFormatValid -and -not [string]::IsNullOrWhiteSpace($plugin.source)) {
                 $dirError = Test-PluginSourceDirectory -Source $plugin.source -PluginsRoot $pluginsRoot
                 if ($dirError) {
                     $pluginErrors += $dirError
+                }
+                else {
+                    $pluginPackageRoot = Join-Path -Path $pluginsRoot -ChildPath $plugin.source
+                    $pluginErrors += Test-PluginPackageContent -PluginRoot $pluginPackageRoot `
+                        -PluginName $pluginName -ExpectedVersion $expectedVersion
                 }
             }
 

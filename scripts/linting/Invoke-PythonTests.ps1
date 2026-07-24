@@ -42,7 +42,7 @@ function Invoke-PythonTests {
     try {
         # Find all directories with pyproject.toml
         $pythonSkills = Get-ChildItem -Path . -Filter 'pyproject.toml' -Recurse -Force -File |
-            Where-Object { $_.FullName -notmatch 'node_modules' } |
+            Where-Object { $_.FullName -notmatch 'node_modules' -and $_.FullName -notmatch 'plugins' } |
             ForEach-Object { $_.Directory.FullName }
 
         if (-not $pythonSkills) {

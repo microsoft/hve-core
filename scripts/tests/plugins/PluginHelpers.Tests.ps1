@@ -191,10 +191,12 @@ Describe 'New-PluginManifestContent' {
             -CollectionId 'with-paths' -Description 'desc' -Version '1.0.0' `
             -AgentPaths @('agents/core/') `
             -CommandPaths @('commands/core/', 'commands/ado/') `
-            -SkillPaths @('skills/shared/')
+            -SkillPaths @('skills/shared/') `
+            -RulePaths @('instructions/shared/')
         $result.agents | Should -Be @('agents/core/')
         $result.commands | Should -Be @('commands/ado/', 'commands/core/')
         $result.skills | Should -Be @('skills/shared/')
+        $result.rules | Should -Be @('instructions/shared/')
     }
 
     It 'Omits component keys when no paths provided' {
@@ -202,6 +204,7 @@ Describe 'New-PluginManifestContent' {
         $result.Contains('agents') | Should -BeFalse
         $result.Contains('commands') | Should -BeFalse
         $result.Contains('skills') | Should -BeFalse
+        $result.Contains('rules') | Should -BeFalse
     }
 
     It 'Returns ordered hashtable' {
@@ -369,36 +372,38 @@ Describe 'Write-PluginDirectory - DryRun mode' {
     }
 }
 
-Describe 'Test-SymlinkCapability' {
-    It 'Returns a boolean' {
-        $result = Test-SymlinkCapability
-        $result | Should -BeOfType [bool]
-    }
-
-    It 'Cleans up probe directory' {
-        $probeDirPattern = Join-Path ([System.IO.Path]::GetTempPath()) "hve-symlink-probe-$PID"
-        Test-SymlinkCapability | Out-Null
-        Test-Path $probeDirPattern | Should -BeFalse
-    }
-}
-
 Describe 'New-PluginLink' {
     BeforeAll {
         $script:linkRoot = Join-Path $TestDrive 'link-test'
         New-Item -ItemType Directory -Path $script:linkRoot -Force | Out-Null
     }
 
-    It 'Writes text stub when SymlinkCapable is false' {
-        $src = Join-Path $script:linkRoot 'src-stub.txt'
-        Set-Content -Path $src -Value 'content' -NoNewline
-        $dest = Join-Path $script:linkRoot 'dest-stub.txt'
+    It 'Copies file content into destination without creating a stub' {
+        $src = Join-Path $script:linkRoot 'src-file.txt'
+        Set-Content -Path $src -Value 'payload' -NoNewline
+        $dest = Join-Path $script:linkRoot 'dest-file.txt'
 
         New-PluginLink -SourcePath $src -DestinationPath $dest
 
         Test-Path $dest | Should -BeTrue
-        $stubContent = [System.IO.File]::ReadAllText($dest)
-        $expectedPath = [System.IO.Path]::GetRelativePath((Split-Path -Parent $dest), $src) -replace '\\', '/'
-        $stubContent | Should -Be $expectedPath
+        (Get-Item -LiteralPath $dest).Attributes -band [System.IO.FileAttributes]::ReparsePoint | Should -Be 0
+        [System.IO.File]::ReadAllText($dest) | Should -Be 'payload'
+    }
+
+    It 'Copies directory content into destination preserving nested files' {
+        $srcDir = Join-Path $script:linkRoot 'src-dir'
+        $nestedDir = Join-Path $srcDir 'nested'
+        New-Item -ItemType Directory -Path $nestedDir -Force | Out-Null
+        Set-Content -Path (Join-Path $srcDir 'root.txt') -Value 'root'
+        Set-Content -Path (Join-Path $nestedDir 'child.txt') -Value 'child'
+        $destDir = Join-Path $script:linkRoot 'dest-dir'
+
+        New-PluginLink -SourcePath $srcDir -DestinationPath $destDir
+
+        Test-Path (Join-Path $destDir 'root.txt') | Should -BeTrue
+        Test-Path (Join-Path $destDir 'nested/child.txt') | Should -BeTrue
+        [System.IO.File]::ReadAllText((Join-Path $destDir 'root.txt')).Trim() | Should -Be 'root'
+        [System.IO.File]::ReadAllText((Join-Path $destDir 'nested/child.txt')).Trim() | Should -Be 'child'
     }
 
     It 'Creates parent directory when destination parent does not exist' {
@@ -410,116 +415,198 @@ Describe 'New-PluginLink' {
 
         Test-Path $dest | Should -BeTrue
     }
-}
 
-Describe 'Repair-PluginSymlinkIndex' {
-    Context 'When PluginsDir does not exist' {
-        It 'Returns 0' {
-            $result = Repair-PluginSymlinkIndex `
-                -PluginsDir (Join-Path $TestDrive 'nonexistent') `
-                -RepoRoot $TestDrive
-            $result | Should -Be 0
-        }
+    It 'Rejects a destination outside the plugin root' {
+        $src = Join-Path $script:linkRoot 'src-contained.txt'
+        Set-Content -Path $src -Value 'data' -NoNewline
+        $pluginRoot = Join-Path $script:linkRoot 'plugin-root'
+        $dest = Join-Path $script:linkRoot 'outside.txt'
+
+        { New-PluginLink -SourcePath $src -DestinationPath $dest -DestinationRoot $pluginRoot } |
+            Should -Throw '*must be inside the plugin root*'
+
+        Test-Path $dest | Should -BeFalse
     }
 
-    Context 'In a git repository with text stubs' {
-        BeforeAll {
-            $script:repoRoot = Join-Path $TestDrive 'symlink-repo'
-            New-Item -ItemType Directory -Path $script:repoRoot -Force | Out-Null
+    It 'Rejects a linked destination ancestor' {
+        $src = Join-Path $script:linkRoot 'src-linked-ancestor.txt'
+        Set-Content -Path $src -Value 'data' -NoNewline
+        $pluginRoot = Join-Path $script:linkRoot 'linked-ancestor-root'
+        $target = Join-Path $script:linkRoot 'linked-ancestor-target'
+        New-Item -ItemType Directory -Path $pluginRoot -Force | Out-Null
+        New-Item -ItemType Directory -Path $target -Force | Out-Null
+        New-Item -ItemType SymbolicLink -Path (Join-Path $pluginRoot 'linked') -Target $target | Out-Null
+        $dest = Join-Path $pluginRoot 'linked/dest.txt'
 
-            Push-Location $script:repoRoot
-            try {
-                git init --quiet 2>$null
-                git config user.email 'test@test.com'
-                git config user.name 'Test'
+        { New-PluginLink -SourcePath $src -DestinationPath $dest -DestinationRoot $pluginRoot } |
+            Should -Throw '*destination ancestor must be a regular directory*'
 
-                $script:pluginsDir = Join-Path $script:repoRoot 'plugins'
-                New-Item -ItemType Directory -Path $script:pluginsDir -Force | Out-Null
+        Test-Path (Join-Path $target 'dest.txt') | Should -BeFalse
+    }
 
-                # Valid text stub: small, starts with ../, no newlines
-                [System.IO.File]::WriteAllText(
-                    (Join-Path $script:pluginsDir 'valid-stub.md'),
-                    '../some/source.md'
-                )
+    It 'Replaces a destination link without modifying its target' {
+        $src = Join-Path $script:linkRoot 'src-destination-link.txt'
+        Set-Content -Path $src -Value 'replacement' -NoNewline
+        $pluginRoot = Join-Path $script:linkRoot 'destination-link-root'
+        New-Item -ItemType Directory -Path $pluginRoot -Force | Out-Null
+        $target = Join-Path $script:linkRoot 'destination-link-target.txt'
+        Set-Content -Path $target -Value 'target' -NoNewline
+        $dest = Join-Path $pluginRoot 'dest.txt'
+        New-Item -ItemType SymbolicLink -Path $dest -Target $target | Out-Null
 
-                # Large file (>500 bytes) — skipped by size filter
-                [System.IO.File]::WriteAllText(
-                    (Join-Path $script:pluginsDir 'large-file.md'),
-                    ('x' * 501)
-                )
+        New-PluginLink -SourcePath $src -DestinationPath $dest -DestinationRoot $pluginRoot
 
-                # Non-stub content — skipped by pattern filter
-                [System.IO.File]::WriteAllText(
-                    (Join-Path $script:pluginsDir 'non-stub.md'),
-                    '# Regular markdown'
-                )
+        (Get-Item -LiteralPath $dest -Force).LinkType | Should -BeNullOrEmpty
+        [System.IO.File]::ReadAllText($dest) | Should -Be 'replacement'
+        [System.IO.File]::ReadAllText($target) | Should -Be 'target'
+    }
 
-                # Stub with newline — skipped by newline filter
-                [System.IO.File]::WriteAllText(
-                    (Join-Path $script:pluginsDir 'newline-stub.md'),
-                    "../path/file.md`n"
-                )
+    It 'Rejects a nested source link before modifying the destination' {
+        $target = Join-Path $script:linkRoot 'nested-source-target.txt'
+        Set-Content -Path $target -Value 'target' -NoNewline
+        $src = Join-Path $script:linkRoot 'source-with-link'
+        New-Item -ItemType Directory -Path $src -Force | Out-Null
+        $nestedLink = Join-Path $src 'nested-link.txt'
+        New-Item -ItemType SymbolicLink -Path $nestedLink -Target $target | Out-Null
+        $dest = Join-Path $script:linkRoot 'preserved-destination'
+        New-Item -ItemType Directory -Path $dest -Force | Out-Null
+        Set-Content -Path (Join-Path $dest 'existing.txt') -Value 'existing' -NoNewline
 
-                git add -- plugins/ 2>$null
-                git commit -m 'initial' --quiet 2>$null
-            } finally {
-                Pop-Location
-            }
-        }
+        { New-PluginLink -SourcePath $src -DestinationPath $dest } |
+            Should -Throw "*${nestedLink}*"
 
-        It 'Counts only valid stubs in DryRun mode' {
-            Push-Location $script:repoRoot
-            try {
-                $result = Repair-PluginSymlinkIndex `
-                    -PluginsDir $script:pluginsDir `
-                    -RepoRoot $script:repoRoot -DryRun
-                $result | Should -Be 1
-            } finally {
-                Pop-Location
-            }
-        }
+        Test-Path (Join-Path $dest 'existing.txt') | Should -BeTrue
+        [System.IO.File]::ReadAllText($target) | Should -Be 'target'
+    }
+}
 
-        It 'Does not modify index in DryRun mode' {
-            Push-Location $script:repoRoot
-            try {
-                $before = git ls-files --stage -- plugins/valid-stub.md 2>$null
-                Repair-PluginSymlinkIndex `
-                    -PluginsDir $script:pluginsDir `
-                    -RepoRoot $script:repoRoot -DryRun | Out-Null
-                $after = git ls-files --stage -- plugins/valid-stub.md 2>$null
-                $before | Should -Be $after
-            } finally {
-                Pop-Location
-            }
-        }
+Describe 'New-PluginLink - tracked repository sources' {
+    BeforeEach {
+        $script:trackedRepo = Join-Path $TestDrive ([System.Guid]::NewGuid().ToString())
+        New-Item -ItemType Directory -Path $script:trackedRepo -Force | Out-Null
+        Push-Location $script:trackedRepo
+        git init --quiet
+        git config user.email 'test@example.com'
+        git config user.name 'Test User'
+        Set-Content -Path '.gitignore' -Value "ignored.txt`nignored-only/*"
+        git add .gitignore
+        git commit --quiet -m 'initialize'
+        Pop-Location
+    }
 
-        It 'Re-indexes tracked text stub as mode 120000' {
-            Push-Location $script:repoRoot
-            try {
-                $result = Repair-PluginSymlinkIndex `
-                    -PluginsDir $script:pluginsDir `
-                    -RepoRoot $script:repoRoot
-                $result | Should -Be 1
+    It 'Copies tracked files with spaces and tabs while excluding ignored content' {
+        $source = Join-Path $script:trackedRepo 'source dir'
+        New-Item -ItemType Directory -Path $source -Force | Out-Null
+        $spaceFile = Join-Path $source 'space name.txt'
+        $tabFile = Join-Path $source "tab`tname.txt"
+        Set-Content -LiteralPath $spaceFile -Value 'space' -NoNewline
+        Set-Content -LiteralPath $tabFile -Value 'tab' -NoNewline
+        Set-Content -LiteralPath (Join-Path $source 'ignored.txt') -Value 'ignored' -NoNewline
+        Push-Location $script:trackedRepo
+        git add -- 'source dir'
+        Pop-Location
+        $destination = Join-Path $script:trackedRepo 'output'
 
-                $lsOutput = git ls-files --stage -- plugins/valid-stub.md 2>$null
-                $lsOutput | Should -Match '^120000'
-            } finally {
-                Pop-Location
-            }
-        }
+        New-PluginLink -SourcePath $source -DestinationPath $destination -RepoRoot $script:trackedRepo
 
-        It 'Skips entries already at mode 120000' {
-            Push-Location $script:repoRoot
-            try {
-                # Previous test fixed the stub; second run finds nothing new
-                $result = Repair-PluginSymlinkIndex `
-                    -PluginsDir $script:pluginsDir `
-                    -RepoRoot $script:repoRoot
-                $result | Should -Be 0
-            } finally {
-                Pop-Location
-            }
-        }
+        [System.IO.File]::ReadAllText((Join-Path $destination 'space name.txt')) | Should -Be 'space'
+        [System.IO.File]::ReadAllText((Join-Path $destination "tab`tname.txt")) | Should -Be 'tab'
+        Test-Path -LiteralPath (Join-Path $destination 'ignored.txt') | Should -BeFalse
+    }
+
+    It 'Preserves an existing destination when a tracked file is missing' {
+        $source = Join-Path $script:trackedRepo 'missing-source'
+        New-Item -ItemType Directory -Path $source -Force | Out-Null
+        $trackedFile = Join-Path $source 'tracked.txt'
+        Set-Content -LiteralPath $trackedFile -Value 'tracked' -NoNewline
+        Push-Location $script:trackedRepo
+        git add -- 'missing-source/tracked.txt'
+        Pop-Location
+        Remove-Item -LiteralPath $trackedFile -Force
+        $destination = Join-Path $script:trackedRepo 'preserved-missing'
+        New-Item -ItemType Directory -Path $destination -Force | Out-Null
+        Set-Content -LiteralPath (Join-Path $destination 'existing.txt') -Value 'existing' -NoNewline
+
+        { New-PluginLink -SourcePath $source -DestinationPath $destination -RepoRoot $script:trackedRepo } |
+            Should -Throw '*must be a real file*'
+
+        Test-Path -LiteralPath (Join-Path $destination 'existing.txt') | Should -BeTrue
+    }
+
+    It 'Preserves an existing destination when the index contains a symlink' {
+        $source = Join-Path $script:trackedRepo 'linked-source'
+        New-Item -ItemType Directory -Path $source -Force | Out-Null
+        $target = Join-Path $script:trackedRepo 'target.txt'
+        Set-Content -LiteralPath $target -Value 'target' -NoNewline
+        New-Item -ItemType SymbolicLink -Path (Join-Path $source 'link.txt') -Target $target | Out-Null
+        Push-Location $script:trackedRepo
+        git add -- 'linked-source/link.txt'
+        Pop-Location
+        $destination = Join-Path $script:trackedRepo 'preserved-link'
+        New-Item -ItemType Directory -Path $destination -Force | Out-Null
+        Set-Content -LiteralPath (Join-Path $destination 'existing.txt') -Value 'existing' -NoNewline
+
+        { New-PluginLink -SourcePath $source -DestinationPath $destination -RepoRoot $script:trackedRepo } |
+            Should -Throw '*unsupported tracked mode 120000*'
+
+        Test-Path -LiteralPath (Join-Path $destination 'existing.txt') | Should -BeTrue
+        [System.IO.File]::ReadAllText($target) | Should -Be 'target'
+    }
+
+    It 'Preserves an existing destination for an unsupported tracked mode' {
+        $source = Join-Path $script:trackedRepo 'gitlink-source'
+        New-Item -ItemType Directory -Path (Join-Path $source 'nested') -Force | Out-Null
+        Push-Location $script:trackedRepo
+        $commit = git rev-parse HEAD
+        git update-index --add --cacheinfo "160000,$commit,gitlink-source/nested"
+        Pop-Location
+        $destination = Join-Path $script:trackedRepo 'preserved-gitlink'
+        New-Item -ItemType Directory -Path $destination -Force | Out-Null
+        Set-Content -LiteralPath (Join-Path $destination 'existing.txt') -Value 'existing' -NoNewline
+
+        { New-PluginLink -SourcePath $source -DestinationPath $destination -RepoRoot $script:trackedRepo } |
+            Should -Throw '*unsupported tracked mode 160000*'
+
+        Test-Path -LiteralPath (Join-Path $destination 'existing.txt') | Should -BeTrue
+    }
+
+    It 'Does not copy from a case-differing sibling directory on case-sensitive systems' -Skip:$IsWindows {
+        $source = Join-Path $script:trackedRepo 'CaseSource'
+        $sibling = Join-Path $script:trackedRepo 'casesource'
+        New-Item -ItemType Directory -Path $source -Force | Out-Null
+        New-Item -ItemType Directory -Path $sibling -Force | Out-Null
+        Set-Content -LiteralPath (Join-Path $sibling 'sibling.txt') -Value 'sibling' -NoNewline
+        Push-Location $script:trackedRepo
+        git add -- 'casesource/sibling.txt'
+        Pop-Location
+        $destination = Join-Path $script:trackedRepo 'case-output'
+
+        New-PluginLink -SourcePath $source -DestinationPath $destination -RepoRoot $script:trackedRepo
+
+        @(Get-ChildItem -LiteralPath $destination -Force).Count | Should -Be 0
+    }
+
+    It 'Creates only the selected root for an ignored-only directory' {
+        $source = Join-Path $script:trackedRepo 'ignored-only'
+        New-Item -ItemType Directory -Path $source -Force | Out-Null
+        Set-Content -LiteralPath (Join-Path $source 'local.txt') -Value 'local' -NoNewline
+        $destination = Join-Path $script:trackedRepo 'empty-output'
+
+        New-PluginLink -SourcePath $source -DestinationPath $destination -RepoRoot $script:trackedRepo
+
+        Test-Path -LiteralPath $destination -PathType Container | Should -BeTrue
+        @(Get-ChildItem -LiteralPath $destination -Force).Count | Should -Be 0
+    }
+
+    It 'Copies a direct repository file after preflight' {
+        $source = Join-Path $script:trackedRepo 'direct.txt'
+        Set-Content -LiteralPath $source -Value 'direct' -NoNewline
+        $destination = Join-Path $script:trackedRepo 'direct-output.txt'
+
+        New-PluginLink -SourcePath $source -DestinationPath $destination -RepoRoot $script:trackedRepo
+
+        [System.IO.File]::ReadAllText($destination) | Should -Be 'direct'
+        (Get-Item -LiteralPath $destination -Force).LinkType | Should -BeNullOrEmpty
     }
 }
 

@@ -10,5 +10,9 @@
   ],
   "skills": [
     "skills/github/"
+  ],
+  "rules": [
+    "instructions/github/",
+    "instructions/shared/"
   ]
 }

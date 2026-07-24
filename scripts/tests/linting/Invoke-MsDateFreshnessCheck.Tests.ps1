@@ -148,6 +148,8 @@ Describe 'Get-MarkdownFiles' -Tag 'Unit' {
             Push-Location $script:TestDir
             New-Item -ItemType File -Path 'changed.md' -Force | Out-Null
             New-Item -ItemType File -Path 'unchanged.md' -Force | Out-Null
+            New-Item -ItemType Directory -Path 'plugins/hve-core' -Force | Out-Null
+            New-Item -ItemType File -Path 'plugins/hve-core/README.md' -Force | Out-Null
 
             Initialize-MockCIEnvironment -Workspace $script:TestDir | Out-Null
 
@@ -185,6 +187,16 @@ Describe 'Get-MarkdownFiles' -Tag 'Unit' {
 
             $files = @(Get-MarkdownFiles -SearchPaths @('.') -ChangedOnly -Base 'origin/main')
             $files | Should -BeNullOrEmpty
+        }
+
+        It 'Excludes generated plugin files from changed files' {
+            Mock git {
+                $global:LASTEXITCODE = 0
+                return @('changed.md', 'plugins/hve-core/README.md')
+            } -ModuleName 'LintingHelpers' -ParameterFilter { $args[0] -eq 'diff' }
+
+            $files = @(Get-MarkdownFiles -SearchPaths @('.') -ChangedOnly -Base 'origin/main')
+            $files | Should -Be @('changed.md')
         }
     }
 

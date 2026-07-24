@@ -115,14 +115,13 @@ function Get-PluginSubdirectory {
     Returns the plugin subdirectory name for an artifact kind.
 
     .DESCRIPTION
-    Maps a collection item kind to the corresponding subdirectory name
-    within the plugin directory structure.
+    Maps a collection item kind to the canonical plugin subdirectory.
 
     .PARAMETER Kind
     The artifact kind: agent, prompt, instruction, or skill.
 
     .OUTPUTS
-    [string] The subdirectory name (agents, commands, instructions, or skills).
+    [string] The canonical plugin subdirectory.
     #>
     [CmdletBinding()]
     [OutputType([string])]
@@ -171,6 +170,9 @@ function New-PluginManifestContent {
     .PARAMETER SkillPaths
     Optional. Array of relative directory paths containing skill subdirs.
 
+    .PARAMETER RulePaths
+    Optional. Array of relative directory paths containing .instructions.md files.
+
     .PARAMETER HookPaths
     Optional. Array of relative file paths to hook JSON files.
 
@@ -204,6 +206,10 @@ function New-PluginManifestContent {
 
         [Parameter(Mandatory = $false)]
         [AllowEmptyCollection()]
+        [string[]]$RulePaths,
+
+        [Parameter(Mandatory = $false)]
+        [AllowEmptyCollection()]
         [string[]]$HookPaths
     )
 
@@ -225,6 +231,10 @@ function New-PluginManifestContent {
 
     if ($SkillPaths -and $SkillPaths.Count -gt 0) {
         $manifest['skills'] = @($SkillPaths | Sort-Object)
+    }
+
+    if ($RulePaths -and $RulePaths.Count -gt 0) {
+        $manifest['rules'] = @($RulePaths | Sort-Object)
     }
 
     if ($HookPaths -and $HookPaths.Count -gt 0) {
@@ -576,59 +586,56 @@ function New-GenerateResult {
 # I/O Functions (file system operations)
 # ---------------------------------------------------------------------------
 
-function Test-SymlinkCapability {
+function Add-GeneratedFilesForCopiedTree {
     <#
     .SYNOPSIS
-    Probes whether the current process can create symbolic links.
+    Registers copied file paths for orphan cleanup tracking.
 
     .DESCRIPTION
-    Creates a temporary file and attempts to symlink to it. Returns $true
-    when the OS and process privileges allow symlink creation, $false
-    otherwise. The probe directory is cleaned up unconditionally.
+    When a directory tree is materialized into a plugin package, register each
+    copied file path with the generated-files set so orphan cleanup preserves
+    the full tree.
     #>
     [CmdletBinding()]
-    [OutputType([bool])]
-    param()
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$SourcePath,
 
-    $tempDir = Join-Path -Path ([System.IO.Path]::GetTempPath()) -ChildPath "hve-symlink-probe-$PID"
-    $targetFile = Join-Path -Path $tempDir -ChildPath 'target.txt'
-    $linkFile = Join-Path -Path $tempDir -ChildPath 'link.txt'
-    try {
-        New-Item -ItemType Directory -Path $tempDir -Force | Out-Null
-        Set-Content -Path $targetFile -Value 'probe' -NoNewline
-        New-Item -ItemType SymbolicLink -Path $linkFile -Target $targetFile -ErrorAction Stop | Out-Null
-        return $true
+        [Parameter(Mandatory = $true)]
+        [System.Collections.Generic.HashSet[string]]$GeneratedFiles
+    )
+
+    if (-not (Test-Path -LiteralPath $SourcePath)) {
+        return
     }
-    catch {
-        return $false
-    }
-    finally {
-        if (Test-Path -Path $tempDir) {
-            Remove-Item -Path $tempDir -Recurse -Force -ErrorAction SilentlyContinue
-        }
+
+    foreach ($child in Get-ChildItem -LiteralPath $SourcePath -File -Recurse -Force) {
+        [void]$GeneratedFiles.Add($child.FullName)
     }
 }
 
 function New-PluginLink {
     <#
     .SYNOPSIS
-    Links a source path into a plugin destination via symlink or text stub.
+    Copies a source path into a plugin destination.
 
     .DESCRIPTION
-    When SymlinkCapable is set, creates a relative symbolic link from
-    DestinationPath to SourcePath. Otherwise writes a text stub file
-    containing the relative path, matching the format git produces when
-    core.symlinks is false. Text stubs keep git status clean on Windows
-    without Developer Mode or elevated privileges.
+    Replaces the destination with a real file or directory copy. Directory
+    sources are rejected when they contain links or reparse points so plugin
+    packages cannot follow content outside the selected source tree.
 
     .PARAMETER SourcePath
     Absolute path to the real file or directory.
 
     .PARAMETER DestinationPath
-    Absolute path where the link or text stub will be created.
+    Absolute path where the copied content will be created.
 
-    .PARAMETER SymlinkCapable
-    When set, create a symbolic link; otherwise write a text stub.
+    .PARAMETER RepoRoot
+    Optional repository root. When supplied, directory sources copy only
+    Git-tracked regular files.
+
+    .PARAMETER DestinationRoot
+    Optional package root that must contain DestinationPath.
     #>
     [CmdletBinding()]
     param(
@@ -639,21 +646,200 @@ function New-PluginLink {
         [string]$DestinationPath,
 
         [Parameter(Mandatory = $false)]
-        [switch]$SymlinkCapable
+        [string]$RepoRoot,
+
+        [Parameter(Mandatory = $false)]
+        [string]$DestinationRoot
     )
 
+    $sourceItem = Get-Item -LiteralPath $SourcePath -Force -ErrorAction Stop
+    if ($sourceItem.LinkType -or ($sourceItem.Attributes -band [System.IO.FileAttributes]::ReparsePoint)) {
+        throw "Plugin source cannot be a link or reparse point: $($sourceItem.FullName)"
+    }
+
+    $trackedFiles = $null
+    if ($RepoRoot) {
+        $pathComparison = if ($IsWindows) {
+            [System.StringComparison]::OrdinalIgnoreCase
+        }
+        else {
+            [System.StringComparison]::Ordinal
+        }
+        $canonicalRepoRoot = [System.IO.Path]::TrimEndingDirectorySeparator(
+            [System.IO.Path]::GetFullPath($RepoRoot)
+        )
+        $repoPrefix = $canonicalRepoRoot + [System.IO.Path]::DirectorySeparatorChar
+        $canonicalSource = [System.IO.Path]::GetFullPath($sourceItem.FullName)
+        if (-not $canonicalSource.Equals($canonicalRepoRoot, $pathComparison) -and
+            -not $canonicalSource.StartsWith($repoPrefix, $pathComparison)) {
+            throw "Plugin source must be inside the repository root: $canonicalSource"
+        }
+
+        if ($sourceItem.PSIsContainer) {
+            $sourcePrefix = [System.IO.Path]::TrimEndingDirectorySeparator($canonicalSource) +
+                [System.IO.Path]::DirectorySeparatorChar
+            $repoRelativeSource = [System.IO.Path]::GetRelativePath($canonicalRepoRoot, $canonicalSource) -replace '\\', '/'
+            $pathspec = ":(literal)$repoRelativeSource/"
+            $startInfo = [System.Diagnostics.ProcessStartInfo]::new()
+            $startInfo.FileName = 'git'
+            $startInfo.UseShellExecute = $false
+            $startInfo.RedirectStandardOutput = $true
+            $startInfo.RedirectStandardError = $true
+            [void]$startInfo.ArgumentList.Add('-C')
+            [void]$startInfo.ArgumentList.Add($canonicalRepoRoot)
+            [void]$startInfo.ArgumentList.Add('ls-files')
+            [void]$startInfo.ArgumentList.Add('--stage')
+            [void]$startInfo.ArgumentList.Add('-z')
+            [void]$startInfo.ArgumentList.Add('--')
+            [void]$startInfo.ArgumentList.Add($pathspec)
+
+            $process = [System.Diagnostics.Process]::Start($startInfo)
+            $stageOutput = $process.StandardOutput.ReadToEnd()
+            $stageError = $process.StandardError.ReadToEnd()
+            $process.WaitForExit()
+            if ($process.ExitCode -ne 0) {
+                throw "Failed to enumerate tracked plugin source files: $stageError"
+            }
+
+            $trackedFiles = [System.Collections.Generic.List[hashtable]]::new()
+            foreach ($record in $stageOutput.Split([char]0, [System.StringSplitOptions]::RemoveEmptyEntries)) {
+                $tabIndex = $record.IndexOf("`t")
+                if ($tabIndex -lt 0) {
+                    throw "Invalid Git stage record for plugin source: $record"
+                }
+
+                $metadata = $record.Substring(0, $tabIndex)
+                $repoRelativePath = $record.Substring($tabIndex + 1)
+                if ($metadata -notmatch '^(\d{6}) [0-9a-f]+ \d+$') {
+                    throw "Invalid Git stage metadata for plugin source: $metadata"
+                }
+                $mode = $Matches[1]
+                if ($mode -notin @('100644', '100755')) {
+                    throw "Plugin source contains unsupported tracked mode $mode`: $repoRelativePath"
+                }
+
+                $trackedSource = [System.IO.Path]::GetFullPath(
+                    (Join-Path -Path $canonicalRepoRoot -ChildPath $repoRelativePath)
+                )
+                if (-not $trackedSource.StartsWith($sourcePrefix, $pathComparison)) {
+                    throw "Tracked plugin source escapes selected directory: $repoRelativePath"
+                }
+
+                $trackedItem = Get-Item -LiteralPath $trackedSource -Force -ErrorAction SilentlyContinue
+                if (-not $trackedItem -or $trackedItem.PSIsContainer -or $trackedItem.LinkType -or
+                    ($trackedItem.Attributes -band [System.IO.FileAttributes]::ReparsePoint)) {
+                    throw "Tracked plugin source must be a real file: $trackedSource"
+                }
+                try {
+                    $readStream = [System.IO.File]::OpenRead($trackedSource)
+                    $readStream.Dispose()
+                }
+                catch {
+                    throw "Tracked plugin source must be readable: $trackedSource"
+                }
+
+                $trackedFiles.Add(@{
+                    Source       = $trackedSource
+                    RelativePath = [System.IO.Path]::GetRelativePath($canonicalSource, $trackedSource)
+                })
+            }
+        }
+        elseif ($sourceItem.PSIsContainer -or -not $sourceItem.Exists) {
+            throw "Plugin source must be a real file: $canonicalSource"
+        }
+        else {
+            try {
+                $readStream = [System.IO.File]::OpenRead($canonicalSource)
+                $readStream.Dispose()
+            }
+            catch {
+                throw "Plugin source must be readable: $canonicalSource"
+            }
+        }
+    }
+    elseif ($sourceItem.PSIsContainer) {
+        $nestedLink = Get-ChildItem -LiteralPath $SourcePath -Force -Recurse |
+            Where-Object {
+                $_.LinkType -or ($_.Attributes -band [System.IO.FileAttributes]::ReparsePoint)
+            } |
+            Select-Object -First 1
+        if ($nestedLink) {
+            throw "Plugin source cannot contain a link or reparse point: $($nestedLink.FullName)"
+        }
+    }
+
     $destinationDir = Split-Path -Parent $DestinationPath
-    if (-not (Test-Path -Path $destinationDir)) {
+    if ($DestinationRoot) {
+        $pathComparison = if ($IsWindows) {
+            [System.StringComparison]::OrdinalIgnoreCase
+        }
+        else {
+            [System.StringComparison]::Ordinal
+        }
+        $canonicalDestinationRoot = [System.IO.Path]::TrimEndingDirectorySeparator(
+            [System.IO.Path]::GetFullPath($DestinationRoot)
+        )
+        $destinationPrefix = $canonicalDestinationRoot + [System.IO.Path]::DirectorySeparatorChar
+        $canonicalDestination = [System.IO.Path]::GetFullPath($DestinationPath)
+        if (-not $canonicalDestination.StartsWith($destinationPrefix, $pathComparison)) {
+            throw "Plugin destination must be inside the plugin root: $canonicalDestination"
+        }
+
+        $rootItem = Get-Item -LiteralPath $canonicalDestinationRoot -Force -ErrorAction SilentlyContinue
+        if ($rootItem -and ($rootItem.LinkType -or -not $rootItem.PSIsContainer -or
+            ($rootItem.Attributes -band [System.IO.FileAttributes]::ReparsePoint))) {
+            throw "Plugin destination root must be a regular directory: $canonicalDestinationRoot"
+        }
+        if (-not $rootItem) {
+            New-Item -ItemType Directory -Path $canonicalDestinationRoot -Force | Out-Null
+        }
+
+        $relativeParent = [System.IO.Path]::GetRelativePath($canonicalDestinationRoot, $destinationDir)
+        $currentDirectory = $canonicalDestinationRoot
+        if ($relativeParent -ne '.') {
+            foreach ($segment in $relativeParent -split '[/\\]') {
+                $currentDirectory = Join-Path -Path $currentDirectory -ChildPath $segment
+                $currentItem = Get-Item -LiteralPath $currentDirectory -Force -ErrorAction SilentlyContinue
+                if ($currentItem -and ($currentItem.LinkType -or -not $currentItem.PSIsContainer -or
+                    ($currentItem.Attributes -band [System.IO.FileAttributes]::ReparsePoint))) {
+                    throw "Plugin destination ancestor must be a regular directory: $currentDirectory"
+                }
+                if (-not $currentItem) {
+                    New-Item -ItemType Directory -Path $currentDirectory | Out-Null
+                }
+            }
+        }
+    }
+    elseif (-not (Test-Path -Path $destinationDir)) {
         New-Item -ItemType Directory -Path $destinationDir -Force | Out-Null
     }
 
-    $relativePath = [System.IO.Path]::GetRelativePath($destinationDir, $SourcePath) -replace '\\', '/'
+    $destinationItem = Get-Item -LiteralPath $DestinationPath -Force -ErrorAction SilentlyContinue
+    if ($destinationItem) {
+        if ($destinationItem.LinkType -or -not $destinationItem.PSIsContainer) {
+            Remove-Item -LiteralPath $DestinationPath -Force
+        }
+        else {
+            Remove-Item -LiteralPath $DestinationPath -Recurse -Force
+        }
+    }
 
-    if ($SymlinkCapable) {
-        New-Item -ItemType SymbolicLink -Path $DestinationPath -Value $relativePath -Force | Out-Null
+    if ($null -ne $trackedFiles) {
+        New-Item -ItemType Directory -Path $DestinationPath -Force | Out-Null
+        foreach ($trackedFile in $trackedFiles) {
+            $trackedDestination = Join-Path -Path $DestinationPath -ChildPath $trackedFile.RelativePath
+            $trackedDestinationParent = Split-Path -Parent $trackedDestination
+            if (-not (Test-Path -LiteralPath $trackedDestinationParent -PathType Container)) {
+                New-Item -ItemType Directory -Path $trackedDestinationParent -Force | Out-Null
+            }
+            Copy-Item -LiteralPath $trackedFile.Source -Destination $trackedDestination
+        }
+    }
+    elseif (-not $sourceItem.PSIsContainer) {
+        Copy-Item -LiteralPath $SourcePath -Destination $DestinationPath
     }
     else {
-        Set-ContentIfChanged -Path $DestinationPath -Value $relativePath | Out-Null
+        Copy-Item -LiteralPath $SourcePath -Destination $DestinationPath -Recurse
     }
 }
 
@@ -668,7 +854,7 @@ function Write-PluginHookArtifact {
     when the hook is auto-loaded from a checked-out repository. Inside an
     installed plugin the same scripts live under the plugin root, so this
     function writes a transformed copy of the manifest with those paths
-    rewritten to the ${PLUGIN_ROOT} placeholder, then links the sibling script
+    rewritten to the ${PLUGIN_ROOT} placeholder, then copies the sibling script
     directory (the manifest path without its .json extension) alongside it.
 
     .PARAMETER SourceManifest
@@ -678,11 +864,14 @@ function Write-PluginHookArtifact {
     Absolute path where the transformed manifest is written in the plugin.
 
     .PARAMETER GeneratedFiles
-    Set tracking generated paths for orphan cleanup; the linked script
+    Set tracking generated paths for orphan cleanup; the copied script
     directory is added to it.
 
-    .PARAMETER SymlinkCapable
-    When set, links the script directory; otherwise writes a text stub.
+    .PARAMETER GeneratedDirectories
+    Set tracking copied directory roots for subtree-aware orphan cleanup.
+
+    .PARAMETER RepoRoot
+    Absolute path to the repository root.
     #>
     [CmdletBinding()]
     param(
@@ -695,8 +884,11 @@ function Write-PluginHookArtifact {
         [Parameter(Mandatory = $true)]
         [System.Collections.Generic.HashSet[string]]$GeneratedFiles,
 
-        [Parameter(Mandatory = $false)]
-        [switch]$SymlinkCapable
+        [Parameter(Mandatory = $true)]
+        [System.Collections.Generic.HashSet[string]]$GeneratedDirectories,
+
+        [Parameter(Mandatory = $true)]
+        [string]$RepoRoot
     )
 
     # Degrade gracefully when the manifest is missing, matching how other kinds
@@ -713,12 +905,14 @@ function Write-PluginHookArtifact {
     $manifestText = $manifestText.Replace('.github/hooks/', '${PLUGIN_ROOT}/hooks/')
     Set-ContentIfChanged -Path $DestinationManifest -Value $manifestText | Out-Null
 
-    # Link the sibling script directory (manifest path without .json extension).
+    # Copy the sibling script directory (manifest path without .json extension).
     $scriptSrc = $SourceManifest -replace '\.json$', ''
     if (Test-Path -LiteralPath $scriptSrc) {
         $scriptDest = $DestinationManifest -replace '\.json$', ''
         [void]$GeneratedFiles.Add($scriptDest)
-        New-PluginLink -SourcePath $scriptSrc -DestinationPath $scriptDest -SymlinkCapable:$SymlinkCapable
+        [void]$GeneratedDirectories.Add([System.IO.Path]::GetFullPath($scriptDest))
+        New-PluginLink -SourcePath $scriptSrc -DestinationPath $scriptDest -RepoRoot $RepoRoot -DestinationRoot $PluginRoot
+        Add-GeneratedFilesForCopiedTree -SourcePath $scriptDest -GeneratedFiles $GeneratedFiles
     }
 }
 
@@ -730,8 +924,8 @@ function Write-PluginDirectory {
     .DESCRIPTION
     Builds the full plugin layout under the specified plugins directory,
     including subdirectories for agents, commands, instructions, and skills.
-    Each item is linked or copied from the plugin directory back to its
-    source in the repository. Generates plugin.json and README.md.
+    Each item is copied from the repository into the plugin package.
+    Generates plugin.json and README.md.
 
     .PARAMETER Collection
     Parsed collection manifest hashtable with id, name, description, and items.
@@ -751,9 +945,6 @@ function Write-PluginDirectory {
 
     .PARAMETER DryRun
     When specified, logs actions without creating files or directories.
-
-    .PARAMETER SymlinkCapable
-    When specified, creates symbolic links; otherwise copies files.
 
     .OUTPUTS
     [hashtable] Result with Success, AgentCount, CommandCount, InstructionCount,
@@ -780,10 +971,7 @@ function Write-PluginDirectory {
         [string]$Maturity,
 
         [Parameter(Mandatory = $false)]
-        [switch]$DryRun,
-
-        [Parameter(Mandatory = $false)]
-        [switch]$SymlinkCapable
+        [switch]$DryRun
     )
 
     $collectionId = $Collection.id
@@ -807,12 +995,18 @@ function Write-PluginDirectory {
     $skillDirs = [System.Collections.Generic.HashSet[string]]::new(
         [System.StringComparer]::OrdinalIgnoreCase
     )
+    $ruleDirs = [System.Collections.Generic.HashSet[string]]::new(
+        [System.StringComparer]::OrdinalIgnoreCase
+    )
     $hookFiles = [System.Collections.Generic.HashSet[string]]::new(
         [System.StringComparer]::OrdinalIgnoreCase
     )
 
     $readmeItems = @()
     $generatedFiles = [System.Collections.Generic.HashSet[string]]::new(
+        [System.StringComparer]::OrdinalIgnoreCase
+    )
+    $generatedDirectories = [System.Collections.Generic.HashSet[string]]::new(
         [System.StringComparer]::OrdinalIgnoreCase
     )
 
@@ -889,7 +1083,12 @@ function Write-PluginDirectory {
                 $relDir = [System.IO.Path]::GetRelativePath($pluginRoot, $parentDir) -replace '\\', '/'
                 [void]$commandDirs.Add("$relDir/")
             }
-            'instruction' { $counts.InstructionCount++ }
+            'instruction' {
+                $counts.InstructionCount++
+                $parentDir = Split-Path -Parent $destPath
+                $relDir = [System.IO.Path]::GetRelativePath($pluginRoot, $parentDir) -replace '\\', '/'
+                [void]$ruleDirs.Add("$relDir/")
+            }
             'skill' {
                 $counts.SkillCount++
                 # Skills: the CLI scans for <name>/SKILL.md; point at the grandparent
@@ -905,20 +1104,27 @@ function Write-PluginDirectory {
         }
 
         [void]$generatedFiles.Add($destPath)
+        if (Test-Path -LiteralPath $sourcePath -PathType Container) {
+            [void]$generatedDirectories.Add([System.IO.Path]::GetFullPath($destPath))
+        }
 
         if ($DryRun) {
-            Write-Verbose "DryRun: Would create link $destPath -> $sourcePath"
+            Write-Verbose "DryRun: Would copy $destPath <- $sourcePath"
             continue
         }
 
         # Hooks bundle a sibling script directory and need plugin-relative
-        # command paths; other kinds link their single source file directly.
+        # command paths; other kinds copy their single source file directly.
         if ($kind -eq 'hook') {
             Write-PluginHookArtifact -SourceManifest $sourcePath -DestinationManifest $destPath `
-                -GeneratedFiles $generatedFiles -SymlinkCapable:$SymlinkCapable
+                -GeneratedFiles $generatedFiles -GeneratedDirectories $generatedDirectories -RepoRoot $RepoRoot
         }
         else {
-            New-PluginLink -SourcePath $sourcePath -DestinationPath $destPath -SymlinkCapable:$SymlinkCapable
+            New-PluginLink -SourcePath $sourcePath -DestinationPath $destPath -RepoRoot $RepoRoot -DestinationRoot $pluginRoot
+        }
+
+        if ($kind -eq 'skill') {
+            Add-GeneratedFilesForCopiedTree -SourcePath $destPath -GeneratedFiles $generatedFiles
         }
     }
 
@@ -938,13 +1144,15 @@ function Write-PluginDirectory {
         }
 
         [void]$generatedFiles.Add($destPath)
+        [void]$generatedDirectories.Add([System.IO.Path]::GetFullPath($destPath))
 
         if ($DryRun) {
-            Write-Verbose "DryRun: Would create shared directory link $destPath -> $sourcePath"
+            Write-Verbose "DryRun: Would copy shared directory $destPath <- $sourcePath"
             continue
         }
 
-        New-PluginLink -SourcePath $sourcePath -DestinationPath $destPath -SymlinkCapable:$SymlinkCapable
+        New-PluginLink -SourcePath $sourcePath -DestinationPath $destPath -RepoRoot $RepoRoot -DestinationRoot $pluginRoot
+        Add-GeneratedFilesForCopiedTree -SourcePath $destPath -GeneratedFiles $generatedFiles
     }
 
     # Generate plugin.json with explicit path arrays for CLI discovery
@@ -957,6 +1165,7 @@ function Write-PluginDirectory {
         -AgentPaths @($agentDirs) `
         -CommandPaths @($commandDirs) `
         -SkillPaths @($skillDirs) `
+        -RulePaths @($ruleDirs) `
         -HookPaths @($hookFiles)
     [void]$generatedFiles.Add($manifestPath)
 
@@ -995,136 +1204,12 @@ function Write-PluginDirectory {
         SkillCount       = $counts.SkillCount
         HookCount        = $counts.HookCount
         GeneratedFiles   = $generatedFiles
+        GeneratedDirectories = $generatedDirectories
     }
-}
-
-function Repair-PluginSymlinkIndex {
-    <#
-    .SYNOPSIS
-    Fixes git index modes for text stub files so they register as symlinks.
-
-    .DESCRIPTION
-    On systems where symlinks are unavailable (Windows without Developer Mode),
-    New-PluginLink writes text stubs containing relative paths. Git stages
-    these as mode 100644 (regular file). This function re-indexes each text
-    stub as mode 120000 (symlink) so that Linux/macOS checkouts materialize
-    real symbolic links.
-
-    .PARAMETER PluginsDir
-    Absolute path to the plugins output directory.
-
-    .PARAMETER RepoRoot
-    Absolute path to the repository root (git working tree).
-
-    .PARAMETER DryRun
-    When specified, logs what would be fixed without modifying the index.
-
-    .OUTPUTS
-    [int] Number of index entries corrected.
-    #>
-    [CmdletBinding()]
-    [OutputType([int])]
-    param(
-        [Parameter(Mandatory = $true)]
-        [ValidateNotNullOrEmpty()]
-        [string]$PluginsDir,
-
-        [Parameter(Mandatory = $true)]
-        [ValidateNotNullOrEmpty()]
-        [string]$RepoRoot,
-
-        [Parameter(Mandatory = $false)]
-        [switch]$DryRun
-    )
-
-    if (-not (Test-Path -Path $PluginsDir)) {
-        return 0
-    }
-
-    # Build a set of paths already tracked in the git index under plugins/.
-    # --index-info silently ignores untracked paths (PowerShell pipe encoding
-    # issue), so new files must be added individually via --cacheinfo.
-    $trackedPaths = [System.Collections.Generic.HashSet[string]]::new(
-        [System.StringComparer]::OrdinalIgnoreCase
-    )
-    $alreadySymlink = [System.Collections.Generic.HashSet[string]]::new(
-        [System.StringComparer]::OrdinalIgnoreCase
-    )
-    $pluginsRel = [System.IO.Path]::GetRelativePath($RepoRoot, $PluginsDir) -replace '\\', '/'
-    $lsOutput = git ls-files --stage -- $pluginsRel 2>$null
-    if ($lsOutput) {
-        foreach ($line in @($lsOutput)) {
-            if ($line -match '^(\d+)\s+[0-9a-f]+\s+\d+\t(.+)$') {
-                [void]$trackedPaths.Add($Matches[2])
-                if ($Matches[1] -eq '120000') {
-                    [void]$alreadySymlink.Add($Matches[2])
-                }
-            }
-        }
-    }
-
-    $fixedCount = 0
-    $files = Get-ChildItem -Path $PluginsDir -File -Recurse
-
-    foreach ($file in $files) {
-        # Text stubs are small files whose content is a relative path with
-        # forward slashes, no line breaks, starting with ../
-        if ($file.Length -gt 500) {
-            continue
-        }
-
-        $content = [System.IO.File]::ReadAllText($file.FullName)
-
-        if ($content -notmatch '^\.\./') {
-            continue
-        }
-        if ($content.Contains("`n") -or $content.Contains("`r")) {
-            continue
-        }
-
-        $repoRelPath = [System.IO.Path]::GetRelativePath($RepoRoot, $file.FullName) -replace '\\', '/'
-
-        if ($alreadySymlink.Contains($repoRelPath)) {
-            continue
-        }
-
-        if ($DryRun) {
-            Write-Verbose "DryRun: Would fix index mode for $repoRelPath"
-            $fixedCount++
-            continue
-        }
-
-        $hashOutput = git hash-object -w -- $file.FullName 2>&1
-        if ($LASTEXITCODE -ne 0) {
-            Write-Warning "Failed to hash-object for $repoRelPath"
-            continue
-        }
-
-        # Extract clean SHA string, filtering out any ErrorRecord objects
-        $sha = @($hashOutput | Where-Object { $_ -is [string] -and $_ -match '^[0-9a-f]{40}' })[0]
-        if (-not $sha) {
-            Write-Warning "No valid SHA returned for $repoRelPath"
-            continue
-        }
-
-        # Use --add for untracked files; harmless for already-tracked entries.
-        # Avoids --index-info piping which breaks on Windows due to CRLF stdin.
-        $addFlag = if (-not $trackedPaths.Contains($repoRelPath)) { '--add' } else { $null }
-        $cacheArgs = @('update-index') + @($addFlag | Where-Object { $_ }) + @('--cacheinfo', "120000,$sha,$repoRelPath")
-        $cacheResult = & git @cacheArgs 2>&1
-        if ($LASTEXITCODE -ne 0) {
-            $errorMsg = @($cacheResult | ForEach-Object { $_.ToString() }) -join '; '
-            Write-Warning "Failed to update index entry for ${repoRelPath}: $errorMsg"
-            continue
-        }
-        $fixedCount++
-        Write-Verbose "Fixed index mode: $repoRelPath -> 120000"
-    }
-
-    return $fixedCount
 }
 
 Export-ModuleMember -Function @(
+    'Add-GeneratedFilesForCopiedTree',
     'Get-PluginItemName',
     'Get-PluginItemSubpath',
     'Get-PluginSubdirectory',
@@ -1133,8 +1218,6 @@ Export-ModuleMember -Function @(
     'New-PluginLink',
     'New-PluginManifestContent',
     'New-PluginReadmeContent',
-    'Repair-PluginSymlinkIndex',
-    'Test-SymlinkCapability',
     'Write-MarketplaceManifest',
     'Write-PluginDirectory'
 )

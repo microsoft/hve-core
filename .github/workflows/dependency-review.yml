@@ -37,6 +37,7 @@ jobs:
         if: github.event_name == 'push' || github.event.pull_request.head.repo.full_name == github.repository
         uses: advanced-security/component-detection-dependency-submission-action@31f25a8de68ae5ce2ca274bc28546a78683c15ce # v0.1.4
         with:
+          directoryExclusionList: '**/plugins/**'
           detectorArgs: 'UvLock=EnableIfDefaultOff'
 
       - name: Dependency Review

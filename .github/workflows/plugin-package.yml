@@ -77,6 +77,9 @@ jobs:
                   mkdir -p logs
                   npm run plugin:generate
 
+            - name: Validate generated plugins
+              run: npm run plugin:validate
+
             - name: Package plugin directory
               shell: bash
               run: |
@@ -87,7 +90,16 @@ jobs:
                   fi
 
                   mkdir -p dist/plugins
-                  zip -r "dist/plugins/${{ matrix.id }}.zip" "$plugin_dir"
+                  archive_path="dist/plugins/${{ matrix.id }}.zip"
+                  zip -r "$archive_path" "$plugin_dir"
+
+                  if ! zipinfo -l "$archive_path" | awk '
+                    $1 ~ /^[bcdlps-][rwx-]{9}$/ && $1 !~ /^[-d]/ { invalid = 1 }
+                    END { exit invalid }
+                  '; then
+                    echo "::error::Archive contains a non-regular entry: $archive_path"
+                    exit 1
+                  fi
 
             - name: Upload plugin artifact
               uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1

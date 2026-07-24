@@ -9,17 +9,18 @@
 
 .DESCRIPTION
     Reads collection YAML manifests from the collections/ directory and generates
-    plugin directories under plugins/ with symlinks to source artifacts, plugin.json
+    plugin directories under plugins/ with copied source artifacts, plugin.json
     manifests, and auto-generated README files.
 
-    Supports generating all plugins or specific collections. Use -Refresh to
-    regenerate existing plugins (deletes and recreates).
+    Supports generating all plugins or specific collections. Existing plugin
+    directories are replaced with complete generated trees.
 
 .PARAMETER CollectionIds
     Optional. Array of collection IDs to generate. Generates all when omitted.
 
 .PARAMETER Refresh
-    Optional. Deletes and recreates existing plugin directories.
+    Optional compatibility switch. Existing plugin directories are always
+    replaced with complete generated trees.
 
 .PARAMETER DryRun
     Optional. Shows what would be done without making changes.
@@ -147,6 +148,118 @@ function Select-CollectionItemsByChannel {
     return $filteredCollection
 }
 
+function Remove-PluginPathObject {
+    <#
+    .SYNOPSIS
+        Removes a plugin path object without following links.
+
+    .PARAMETER Path
+        Absolute path to remove when present.
+    #>
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory = $true)]
+        [ValidateNotNullOrEmpty()]
+        [string]$Path
+    )
+
+    $entry = Get-Item -LiteralPath $Path -Force -ErrorAction SilentlyContinue
+    if (-not $entry) {
+        return
+    }
+
+    if ($entry.LinkType -or ($entry.Attributes -band [System.IO.FileAttributes]::ReparsePoint)) {
+        Remove-Item -LiteralPath $Path -Force -ErrorAction Stop
+        return
+    }
+
+    Remove-Item -LiteralPath $Path -Recurse -Force -ErrorAction Stop
+}
+
+function Publish-PluginDirectory {
+    <#
+    .SYNOPSIS
+        Replaces a live plugin directory with a complete staged tree.
+
+    .PARAMETER StagedPluginPath
+        Absolute path to the complete staged plugin directory.
+
+    .PARAMETER PluginPath
+        Absolute path of the live plugin directory.
+
+    .PARAMETER BackupPath
+        Absolute path used to hold the prior live object during promotion.
+
+    .PARAMETER MoveStagedTree
+        Optional promotion operation used to inject failures in tests.
+
+    .PARAMETER RemoveBackup
+        Optional backup cleanup operation used to inject failures in tests.
+    #>
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory = $true)]
+        [ValidateNotNullOrEmpty()]
+        [string]$StagedPluginPath,
+
+        [Parameter(Mandatory = $true)]
+        [ValidateNotNullOrEmpty()]
+        [string]$PluginPath,
+
+        [Parameter(Mandatory = $true)]
+        [ValidateNotNullOrEmpty()]
+        [string]$BackupPath,
+
+        [Parameter(Mandatory = $false)]
+        [scriptblock]$MoveStagedTree = {
+            param($SourcePath, $DestinationPath)
+            Move-Item -LiteralPath $SourcePath -Destination $DestinationPath -ErrorAction Stop
+        },
+
+        [Parameter(Mandatory = $false)]
+        [scriptblock]$RemoveBackup = {
+            param($Path)
+            Remove-PluginPathObject -Path $Path
+        }
+    )
+
+    $stagedEntry = Get-Item -LiteralPath $StagedPluginPath -Force -ErrorAction SilentlyContinue
+    if (-not $stagedEntry -or -not $stagedEntry.PSIsContainer -or $stagedEntry.LinkType -or
+        ($stagedEntry.Attributes -band [System.IO.FileAttributes]::ReparsePoint)) {
+        throw "Staged plugin must be a regular directory: $StagedPluginPath"
+    }
+
+    Remove-PluginPathObject -Path $BackupPath
+    $priorEntry = Get-Item -LiteralPath $PluginPath -Force -ErrorAction SilentlyContinue
+    $priorMoved = $false
+
+    try {
+        if ($priorEntry) {
+            Move-Item -LiteralPath $PluginPath -Destination $BackupPath -ErrorAction Stop
+            $priorMoved = $true
+        }
+
+        & $MoveStagedTree $StagedPluginPath $PluginPath
+    }
+    catch {
+        $promotionError = $_
+        Remove-PluginPathObject -Path $PluginPath
+
+        if ($priorMoved) {
+            Move-Item -LiteralPath $BackupPath -Destination $PluginPath -ErrorAction Stop
+        }
+
+        throw "Plugin promotion failed for '$PluginPath': $($promotionError.Exception.Message)"
+    }
+
+    try {
+        & $RemoveBackup $BackupPath
+    }
+    catch {
+        Write-Warning "Published plugin but could not remove backup '$BackupPath': $($_.Exception.Message)"
+    }
+}
+
 function Invoke-PluginGeneration {
     <#
     .SYNOPSIS
@@ -155,7 +268,7 @@ function Invoke-PluginGeneration {
     .DESCRIPTION
         Loads collection manifests from the collections/ directory, optionally
         filters to specified IDs, and generates plugin directory structures
-        under plugins/. Each plugin receives symlinks to source artifacts,
+        under plugins/. Each plugin receives copied source artifacts,
         a plugin.json manifest, and an auto-generated README.
 
     .PARAMETER RepoRoot
@@ -165,7 +278,7 @@ function Invoke-PluginGeneration {
         Optional. Array of collection IDs to generate. Generates all when omitted.
 
     .PARAMETER Refresh
-        When specified, removes existing plugin directories before regenerating.
+        Accepted for compatibility. Complete plugin trees are always replaced.
 
     .PARAMETER DryRun
         When specified, logs actions without creating files or directories.
@@ -208,10 +321,6 @@ function Invoke-PluginGeneration {
     # Auto-update hve-core-all collection with discovered artifacts
     $updateResult = Update-HveCoreAllCollection -RepoRoot $RepoRoot -DryRun:$DryRun
     Write-Verbose "hve-core-all updated: $($updateResult.ItemCount) items ($($updateResult.AddedCount) added, $($updateResult.RemovedCount) removed)"
-
-    # Probe symlink capability once for the entire generation run
-    $symlinkCapable = Test-SymlinkCapability
-    Write-Verbose "Symlink capability: $symlinkCapable ($(if ($symlinkCapable) { 'using symlinks' } else { 'using file copies' }))"
 
     # Load all collection manifests
     $allCollections = Get-AllCollections -CollectionsDir $collectionsDir
@@ -343,52 +452,47 @@ function Invoke-PluginGeneration {
             }
         }
 
-        $result = Write-PluginDirectory -Collection $filteredCollection `
-            -PluginsDir $pluginsDir `
-            -RepoRoot $RepoRoot `
-            -Version $repoVersion `
-            -Maturity $collectionMaturity `
-            -DryRun:$DryRun `
-            -SymlinkCapable:$symlinkCapable
+        if ($DryRun) {
+            $result = Write-PluginDirectory -Collection $filteredCollection `
+                -PluginsDir $pluginsDir `
+                -RepoRoot $RepoRoot `
+                -Version $repoVersion `
+                -Maturity $collectionMaturity `
+                -DryRun
 
-        # Orphan cleanup in Refresh mode
-        if ($Refresh -and (Test-Path -LiteralPath $pluginDir)) {
-            $generatedFiles = $result.GeneratedFiles
-            $existingFiles = [System.Collections.Generic.List[string]]::new()
-            $scanQueue = [System.Collections.Generic.Queue[string]]::new()
-            $scanQueue.Enqueue($pluginDir)
-            while ($scanQueue.Count -gt 0) {
-                $currentDir = $scanQueue.Dequeue()
-                foreach ($entry in Get-ChildItem -LiteralPath $currentDir -Force) {
-                    if ($entry.PSIsContainer -and -not $entry.LinkType) {
-                        $scanQueue.Enqueue($entry.FullName)
+            if (Get-Item -LiteralPath $pluginDir -Force -ErrorAction SilentlyContinue) {
+                Write-Host "  [DRY RUN] Would replace complete plugin tree: $pluginDir" -ForegroundColor Yellow
+            }
+        }
+        else {
+            $operationId = [System.Guid]::NewGuid().ToString('N')
+            $stagingRoot = Join-Path -Path $pluginsDir -ChildPath ".plugin-staging-$id-$operationId"
+            $stagingPluginsDir = Join-Path -Path $stagingRoot -ChildPath 'plugins'
+            $stagedPluginDir = Join-Path -Path $stagingPluginsDir -ChildPath $id
+            $backupPath = Join-Path -Path $pluginsDir -ChildPath ".plugin-backup-$id-$operationId"
+
+            try {
+                New-Item -ItemType Directory -Path $stagingPluginsDir -Force | Out-Null
+                $result = Write-PluginDirectory -Collection $filteredCollection `
+                    -PluginsDir $stagingPluginsDir `
+                    -RepoRoot $RepoRoot `
+                    -Version $repoVersion `
+                    -Maturity $collectionMaturity
+
+                Publish-PluginDirectory `
+                    -StagedPluginPath $stagedPluginDir `
+                    -PluginPath $pluginDir `
+                    -BackupPath $backupPath
+            }
+            finally {
+                foreach ($temporaryPath in @($stagingRoot, $backupPath)) {
+                    try {
+                        Remove-PluginPathObject -Path $temporaryPath
                     }
-                    else {
-                        $existingFiles.Add($entry.FullName)
+                    catch {
+                        Write-Warning "Could not remove temporary plugin path '$temporaryPath': $($_.Exception.Message)"
                     }
                 }
-            }
-            foreach ($existingFile in $existingFiles) {
-                if (-not $generatedFiles.Contains($existingFile)) {
-                    if ($DryRun) {
-                        Write-Host "  [DRY RUN] Would remove orphan: $existingFile" -ForegroundColor Yellow
-                    }
-                    else {
-                        Remove-Item -LiteralPath $existingFile -Force -ErrorAction Stop
-                        Write-Verbose "Removed orphan file: $existingFile"
-                    }
-                }
-            }
-            # Remove empty directories bottom-up
-            if (-not $DryRun) {
-                Get-ChildItem -LiteralPath $pluginDir -Recurse -Directory |
-                    Where-Object { -not $_.LinkType } |
-                    Sort-Object { $_.FullName.Length } -Descending |
-                    Where-Object { @(Get-ChildItem -LiteralPath $_.FullName).Count -eq 0 } |
-                    ForEach-Object {
-                        Remove-Item -LiteralPath $_.FullName -Force -ErrorAction Stop
-                        Write-Verbose "Removed empty directory: $($_.FullName)"
-                    }
             }
         }
 
@@ -408,15 +512,6 @@ function Invoke-PluginGeneration {
         -RepoRoot $RepoRoot `
         -Collections $allCollections `
         -DryRun:$DryRun
-
-    # Fix git index modes for text stubs on non-symlink systems so Linux
-    # checkouts materialize real symbolic links instead of plain files.
-    if (-not $symlinkCapable) {
-        $fixedCount = Repair-PluginSymlinkIndex -PluginsDir $pluginsDir -RepoRoot $RepoRoot -DryRun:$DryRun
-        if ($fixedCount -gt 0) {
-            Write-Host "  Symlink index: $fixedCount entries fixed (100644 -> 120000)" -ForegroundColor Green
-        }
-    }
 
     Write-Host "`n--- Summary ---" -ForegroundColor Cyan
     Write-Host "  Plugins generated: $generated"

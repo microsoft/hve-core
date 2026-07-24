@@ -1,0 +1,55 @@
+[project]
+name = "powerpoint-skill-tests"
+version = "0.0.0"
+requires-python = ">=3.11"
+dependencies = [
+    # Fixture generator assumes python-pptx's bundled default.pptx layout/theme
+    # names; pin a lower bound so out-of-lock contributors don't drift.
+    "python-pptx>=1.0.2",
+    "lxml>=5.0",
+    "pyyaml",
+    "ruamel.yaml",  # required by generate_themes.py for round-trip YAML fidelity
+    "cairosvg",
+    "Pillow",
+    # MuPDF C library — pin to track security fixes; review on every minor bump.
+    # Update policy: re-check NVD + OSV advisories quarterly and on any pip-audit alert.
+    "pymupdf>=1.27.1,<2.0",
+    "github-copilot-sdk",
+]
+
+[dependency-groups]
+dev = [
+    "pytest>=9.0",
+    "pytest-cov>=7.0",
+    "pytest-mock>=3.14",
+    "ruff>=0.15",
+    "hypothesis>=6.100",
+]
+# Atheris ships manylinux-only wheels; keep separate from dev so uv sync works on macOS.
+fuzz = [
+    "atheris>=3.0",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["scripts"]
+python_files = ["test_*.py", "fuzz_harness.py"]
+markers = [
+    "integration: roundtrip integration tests",
+    "slow: tests that create full presentations",
+    "hypothesis: property-based tests using Hypothesis",
+]
+
+[tool.coverage.run]
+source = ["scripts"]
+
+[tool.coverage.report]
+fail_under = 85
+show_missing = true
+
+[tool.ruff]
+line-length = 88
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "W"]

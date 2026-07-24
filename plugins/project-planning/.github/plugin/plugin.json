@@ -26,5 +26,15 @@
     "skills/rai/",
     "skills/security/",
     "skills/shared/"
+  ],
+  "rules": [
+    "instructions/accessibility/",
+    "instructions/experimental/mural/",
+    "instructions/hve-core/",
+    "instructions/privacy/",
+    "instructions/project-planning/",
+    "instructions/rai-planning/",
+    "instructions/security/",
+    "instructions/shared/"
   ]
 }

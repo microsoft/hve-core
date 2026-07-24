@@ -41,18 +41,17 @@ jobs:
       - name: Create logs directory
         run: mkdir -p logs
 
-      - name: Validate collection metadata
-        run: npm run lint:collections-metadata
-
-      - name: Validate marketplace manifest
-        run: npm run lint:marketplace
-
       - name: Validate hook manifests
         run: npm run lint:hooks
 
+      - name: Generate plugins
+        run: npm run plugin:generate
+
+      - name: Validate generated plugins
+        run: npm run plugin:validate
+
       - name: Check plugin freshness
         run: |
-          npm run plugin:generate
           if ! git diff --quiet plugins/; then
             echo "::error::Plugins out of date. Run 'npm run plugin:generate' and commit."
             if [ "${{ inputs.soft-fail }}" != "true" ]; then

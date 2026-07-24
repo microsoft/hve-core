@@ -164,7 +164,7 @@ description: "Test agent"
 ---
 '@ | Set-Content -Path (Join-Path $agentsDir 'test.agent.md')
 
-        # Create shared directories for symlinks
+        # Create shared directories for copied content
         New-Item -ItemType Directory -Path (Join-Path $script:maturityDir 'docs/templates') -Force | Out-Null
         New-Item -ItemType Directory -Path (Join-Path $script:maturityDir 'scripts/lib') -Force | Out-Null
 
@@ -207,6 +207,14 @@ items:
   - path: .github/agents/col/test.agent.md
     kind: agent
 "@ | Set-Content -Path (Join-Path $collectionsDir 'experimental-col.collection.yml')
+
+    Push-Location $script:maturityDir
+    git init --quiet
+    git config user.email 'test@example.com'
+    git config user.name 'Test User'
+    git add --all
+    git commit --quiet -m 'initialize fixture'
+    Pop-Location
     }
 
     AfterAll {
@@ -280,7 +288,7 @@ description: "Test skill"
 ---
 '@ | Set-Content -Path (Join-Path $skillsDir 'SKILL.md')
 
-        # Create docs/templates and scripts directories for shared symlinking
+        # Create docs/templates and scripts directories for shared copied content
         New-Item -ItemType Directory -Path (Join-Path $script:tempDir 'docs/templates') -Force | Out-Null
         New-Item -ItemType Directory -Path (Join-Path $script:tempDir 'scripts/lib') -Force | Out-Null
 
@@ -309,6 +317,14 @@ items:
 display:
   color: blue
 "@ | Set-Content -Path (Join-Path $collectionsDir 'hve-core-all.collection.yml')
+
+    Push-Location $script:tempDir
+    git init --quiet
+    git config user.email 'test@example.com'
+    git config user.name 'Test User'
+    git add --all
+    git commit --quiet -m 'initialize fixture'
+    Pop-Location
     }
 
     AfterAll {
@@ -331,6 +347,13 @@ display:
         Test-Path $manifestPath | Should -BeTrue
         $manifest = Get-Content -Path $manifestPath -Raw | ConvertFrom-Json
         $manifest.name | Should -Be 'hve-core-all'
+    }
+
+    It 'Does not emit source-tree component directories' {
+        $pluginDir = Join-Path $script:tempDir 'plugins/hve-core-all'
+        Test-Path (Join-Path $pluginDir '.github/plugin') -PathType Container | Should -BeTrue
+        Test-Path (Join-Path $pluginDir '.github/agents') | Should -BeFalse
+        Test-Path (Join-Path $pluginDir '.plugin') | Should -BeFalse
     }
 
     It 'Generates README.md' {
@@ -390,6 +413,14 @@ Old content.
 
 <!-- END AUTO-GENERATED ARTIFACTS -->
 "@ | Set-Content -Path $collectionMdPath -Encoding utf8NoBOM
+
+    Push-Location $headingRepo
+    git init --quiet
+    git config user.email 'test@example.com'
+    git config user.name 'Test User'
+    git add --all
+    git commit --quiet -m 'initialize fixture'
+    Pop-Location
 
     $result = Invoke-PluginGeneration -RepoRoot $headingRepo -CollectionIds @('heading-test') -Refresh -Channel 'PreRelease'
 
@@ -489,7 +520,7 @@ items:
             -CollectionIds @('hve-core-all') `
             -Refresh -DryRun -Channel 'PreRelease' 6>&1
 
-        $dryRunMessages = @($output | Where-Object { "$_" -match 'DRY RUN.*Would remove orphan' })
+        $dryRunMessages = @($output | Where-Object { "$_" -match 'DRY RUN.*Would replace complete plugin tree' })
         $dryRunMessages.Count | Should -BeGreaterOrEqual 1
     }
 
@@ -511,17 +542,17 @@ items:
         $warnings[0].Message | Should -Match 'No collection manifests found'
     }
 
-    It 'Outputs verbose symlink capability detection' {
+    It 'Does not emit symlink capability messages during generation' {
         $output = Invoke-PluginGeneration -RepoRoot $script:tempDir `
             -CollectionIds @('hve-core-all') `
             -Channel 'PreRelease' -Verbose 4>&1
 
         $capMsg = @($output | Where-Object { "$_" -match 'Symlink capability' })
-        $capMsg.Count | Should -BeGreaterOrEqual 1
+        $capMsg.Count | Should -Be 0
     }
 
     Context 'Orphan Cleanup' {
-        It 'Removes orphan files after overwrite-in-place' {
+        It 'Removes orphan files through complete-tree replacement' {
             $staleDir = Join-Path $script:tempDir 'plugins/hve-core-all/orphan-test'
             New-Item -ItemType Directory -Path $staleDir -Force | Out-Null
             'stale' | Set-Content -Path (Join-Path $staleDir 'leftover.txt')
@@ -543,6 +574,29 @@ items:
             Test-Path (Join-Path $pluginDir 'scripts/lib') | Should -BeTrue
         }
 
+        It 'Preserves copied descendants while removing stale and prefix-sibling orphans' {
+            $sourceRoot = Join-Path $script:tempDir 'docs/templates'
+            New-Item -ItemType Directory -Path (Join-Path $sourceRoot 'nested') -Force | Out-Null
+            'source' | Set-Content -Path (Join-Path $sourceRoot 'nested/source.txt')
+            Push-Location $script:tempDir
+            git add -- 'docs/templates/nested/source.txt'
+            Pop-Location
+
+            $pluginRoot = Join-Path $script:tempDir 'plugins/hve-core-all'
+            $copiedRoot = Join-Path $pluginRoot 'docs/templates'
+            New-Item -ItemType Directory -Path $copiedRoot -Force | Out-Null
+            'stale' | Set-Content -Path (Join-Path $copiedRoot 'stale.txt')
+            $prefixSibling = Join-Path $pluginRoot 'docs/templates-old'
+            New-Item -ItemType Directory -Path $prefixSibling -Force | Out-Null
+            'orphan' | Set-Content -Path (Join-Path $prefixSibling 'orphan.txt')
+
+            Invoke-PluginGeneration -RepoRoot $script:tempDir -CollectionIds @('hve-core-all') -Refresh -Channel 'PreRelease' | Out-Null
+
+            Test-Path (Join-Path $copiedRoot 'nested/source.txt') | Should -BeTrue
+            Test-Path (Join-Path $copiedRoot 'stale.txt') | Should -BeFalse
+            Test-Path $prefixSibling | Should -BeFalse
+        }
+
         It 'Removes empty directories after orphan cleanup' {
             $nestedOrphan = Join-Path $script:tempDir 'plugins/hve-core-all/stale-dir/nested'
             New-Item -ItemType Directory -Path $nestedOrphan -Force | Out-Null
@@ -562,11 +616,71 @@ items:
                 -CollectionIds @('hve-core-all') `
                 -Refresh -DryRun -Channel 'PreRelease' 6>&1
 
-            $dryRunMessages = @($output | Where-Object { "$_" -match 'DRY RUN.*Would remove orphan' })
+            $dryRunMessages = @($output | Where-Object { "$_" -match 'DRY RUN.*Would replace complete plugin tree' })
             $dryRunMessages.Count | Should -BeGreaterOrEqual 1
             # File still exists after DryRun
             Test-Path (Join-Path $orphanDir 'persist.txt') | Should -BeTrue
         }
+    }
+}
+
+Describe 'Publish-PluginDirectory' {
+    It 'Replaces the prior plugin with the staged tree' {
+        $root = Join-Path $TestDrive ([System.Guid]::NewGuid().ToString())
+        $staged = Join-Path $root 'staged'
+        $live = Join-Path $root 'live'
+        $backup = Join-Path $root 'backup'
+        New-Item -ItemType Directory -Path $staged -Force | Out-Null
+        New-Item -ItemType Directory -Path $live -Force | Out-Null
+        Set-Content -Path (Join-Path $staged 'new.txt') -Value 'new'
+        Set-Content -Path (Join-Path $live 'old.txt') -Value 'old'
+
+        Publish-PluginDirectory -StagedPluginPath $staged -PluginPath $live -BackupPath $backup
+
+        Test-Path (Join-Path $live 'new.txt') | Should -BeTrue
+        Test-Path (Join-Path $live 'old.txt') | Should -BeFalse
+        Test-Path $backup | Should -BeFalse
+    }
+
+    It 'Restores the prior plugin when promotion fails' {
+        $root = Join-Path $TestDrive ([System.Guid]::NewGuid().ToString())
+        $staged = Join-Path $root 'staged'
+        $live = Join-Path $root 'live'
+        $backup = Join-Path $root 'backup'
+        New-Item -ItemType Directory -Path $staged -Force | Out-Null
+        New-Item -ItemType Directory -Path $live -Force | Out-Null
+        Set-Content -Path (Join-Path $staged 'new.txt') -Value 'new'
+        Set-Content -Path (Join-Path $live 'old.txt') -Value 'old'
+
+        {
+            Publish-PluginDirectory -StagedPluginPath $staged -PluginPath $live -BackupPath $backup `
+                -MoveStagedTree { throw 'injected promotion failure' }
+        } | Should -Throw '*injected promotion failure*'
+
+        Test-Path (Join-Path $live 'old.txt') | Should -BeTrue
+        Test-Path (Join-Path $live 'new.txt') | Should -BeFalse
+        Test-Path $backup | Should -BeFalse
+    }
+
+    It 'Preserves the published plugin when backup cleanup fails' {
+        $root = Join-Path $TestDrive ([System.Guid]::NewGuid().ToString())
+        $staged = Join-Path $root 'staged'
+        $live = Join-Path $root 'live'
+        $backup = Join-Path $root 'backup'
+        New-Item -ItemType Directory -Path $staged -Force | Out-Null
+        New-Item -ItemType Directory -Path $live -Force | Out-Null
+        Set-Content -Path (Join-Path $staged 'new.txt') -Value 'new'
+        Set-Content -Path (Join-Path $live 'old.txt') -Value 'old'
+
+        $warnings = $null
+        Publish-PluginDirectory -StagedPluginPath $staged -PluginPath $live -BackupPath $backup `
+            -RemoveBackup { throw 'injected cleanup failure' } `
+            -WarningVariable warnings -WarningAction SilentlyContinue
+
+        Test-Path (Join-Path $live 'new.txt') | Should -BeTrue
+        Test-Path (Join-Path $live 'old.txt') | Should -BeFalse
+        Test-Path (Join-Path $backup 'old.txt') | Should -BeTrue
+        ($warnings -join "`n") | Should -Match 'injected cleanup failure'
     }
 }
 
