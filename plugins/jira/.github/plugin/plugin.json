@@ -10,5 +10,9 @@
   ],
   "skills": [
     "skills/jira/"
+  ],
+  "rules": [
+    "instructions/jira/",
+    "instructions/shared/"
   ]
 }

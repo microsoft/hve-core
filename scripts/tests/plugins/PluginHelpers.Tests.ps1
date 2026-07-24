@@ -191,10 +191,12 @@ Describe 'New-PluginManifestContent' {
             -CollectionId 'with-paths' -Description 'desc' -Version '1.0.0' `
             -AgentPaths @('agents/core/') `
             -CommandPaths @('commands/core/', 'commands/ado/') `
-            -SkillPaths @('skills/shared/')
+            -SkillPaths @('skills/shared/') `
+            -RulePaths @('instructions/shared/')
         $result.agents | Should -Be @('agents/core/')
         $result.commands | Should -Be @('commands/ado/', 'commands/core/')
         $result.skills | Should -Be @('skills/shared/')
+        $result.rules | Should -Be @('instructions/shared/')
     }
 
     It 'Omits component keys when no paths provided' {
@@ -202,6 +204,7 @@ Describe 'New-PluginManifestContent' {
         $result.Contains('agents') | Should -BeFalse
         $result.Contains('commands') | Should -BeFalse
         $result.Contains('skills') | Should -BeFalse
+        $result.Contains('rules') | Should -BeFalse
     }
 
     It 'Returns ordered hashtable' {
@@ -411,6 +414,51 @@ Describe 'New-PluginLink' {
         New-PluginLink -SourcePath $src -DestinationPath $dest
 
         Test-Path $dest | Should -BeTrue
+    }
+
+    It 'Rejects a destination outside the plugin root' {
+        $src = Join-Path $script:linkRoot 'src-contained.txt'
+        Set-Content -Path $src -Value 'data' -NoNewline
+        $pluginRoot = Join-Path $script:linkRoot 'plugin-root'
+        $dest = Join-Path $script:linkRoot 'outside.txt'
+
+        { New-PluginLink -SourcePath $src -DestinationPath $dest -DestinationRoot $pluginRoot } |
+            Should -Throw '*must be inside the plugin root*'
+
+        Test-Path $dest | Should -BeFalse
+    }
+
+    It 'Rejects a linked destination ancestor' {
+        $src = Join-Path $script:linkRoot 'src-linked-ancestor.txt'
+        Set-Content -Path $src -Value 'data' -NoNewline
+        $pluginRoot = Join-Path $script:linkRoot 'linked-ancestor-root'
+        $target = Join-Path $script:linkRoot 'linked-ancestor-target'
+        New-Item -ItemType Directory -Path $pluginRoot -Force | Out-Null
+        New-Item -ItemType Directory -Path $target -Force | Out-Null
+        New-Item -ItemType SymbolicLink -Path (Join-Path $pluginRoot 'linked') -Target $target | Out-Null
+        $dest = Join-Path $pluginRoot 'linked/dest.txt'
+
+        { New-PluginLink -SourcePath $src -DestinationPath $dest -DestinationRoot $pluginRoot } |
+            Should -Throw '*destination ancestor must be a regular directory*'
+
+        Test-Path (Join-Path $target 'dest.txt') | Should -BeFalse
+    }
+
+    It 'Replaces a destination link without modifying its target' {
+        $src = Join-Path $script:linkRoot 'src-destination-link.txt'
+        Set-Content -Path $src -Value 'replacement' -NoNewline
+        $pluginRoot = Join-Path $script:linkRoot 'destination-link-root'
+        New-Item -ItemType Directory -Path $pluginRoot -Force | Out-Null
+        $target = Join-Path $script:linkRoot 'destination-link-target.txt'
+        Set-Content -Path $target -Value 'target' -NoNewline
+        $dest = Join-Path $pluginRoot 'dest.txt'
+        New-Item -ItemType SymbolicLink -Path $dest -Target $target | Out-Null
+
+        New-PluginLink -SourcePath $src -DestinationPath $dest -DestinationRoot $pluginRoot
+
+        (Get-Item -LiteralPath $dest -Force).LinkType | Should -BeNullOrEmpty
+        [System.IO.File]::ReadAllText($dest) | Should -Be 'replacement'
+        [System.IO.File]::ReadAllText($target) | Should -Be 'target'
     }
 
     It 'Rejects a nested source link before modifying the destination' {

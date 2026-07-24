@@ -12,5 +12,16 @@
   "skills": [
     "skills/coding-standards/",
     "skills/shared/"
+  ],
+  "rules": [
+    "instructions/coding-standards/",
+    "instructions/coding-standards/bash/",
+    "instructions/coding-standards/bicep/",
+    "instructions/coding-standards/code-review/",
+    "instructions/coding-standards/csharp/",
+    "instructions/coding-standards/powershell/",
+    "instructions/coding-standards/rust/",
+    "instructions/coding-standards/terraform/",
+    "instructions/shared/"
   ]
 }

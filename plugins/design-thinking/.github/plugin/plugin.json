@@ -11,5 +11,9 @@
   "skills": [
     "skills/design-thinking/",
     "skills/shared/"
+  ],
+  "rules": [
+    "instructions/",
+    "instructions/shared/"
   ]
 }

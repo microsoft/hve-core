@@ -17,5 +17,11 @@
     "skills/hve-core/",
     "skills/shared/"
   ],
+  "rules": [
+    "instructions/coding-standards/code-review/",
+    "instructions/experimental/mural/",
+    "instructions/hve-core/",
+    "instructions/shared/"
+  ],
   "hooks": "hooks/shared/telemetry.json"
 }

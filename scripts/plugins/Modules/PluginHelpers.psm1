@@ -115,14 +115,13 @@ function Get-PluginSubdirectory {
     Returns the plugin subdirectory name for an artifact kind.
 
     .DESCRIPTION
-    Maps a collection item kind to the corresponding subdirectory name
-    within the plugin directory structure.
+    Maps a collection item kind to the canonical plugin subdirectory.
 
     .PARAMETER Kind
     The artifact kind: agent, prompt, instruction, or skill.
 
     .OUTPUTS
-    [string] The subdirectory name (agents, commands, instructions, or skills).
+    [string] The canonical plugin subdirectory.
     #>
     [CmdletBinding()]
     [OutputType([string])]
@@ -171,6 +170,9 @@ function New-PluginManifestContent {
     .PARAMETER SkillPaths
     Optional. Array of relative directory paths containing skill subdirs.
 
+    .PARAMETER RulePaths
+    Optional. Array of relative directory paths containing .instructions.md files.
+
     .PARAMETER HookPaths
     Optional. Array of relative file paths to hook JSON files.
 
@@ -204,6 +206,10 @@ function New-PluginManifestContent {
 
         [Parameter(Mandatory = $false)]
         [AllowEmptyCollection()]
+        [string[]]$RulePaths,
+
+        [Parameter(Mandatory = $false)]
+        [AllowEmptyCollection()]
         [string[]]$HookPaths
     )
 
@@ -225,6 +231,10 @@ function New-PluginManifestContent {
 
     if ($SkillPaths -and $SkillPaths.Count -gt 0) {
         $manifest['skills'] = @($SkillPaths | Sort-Object)
+    }
+
+    if ($RulePaths -and $RulePaths.Count -gt 0) {
+        $manifest['rules'] = @($RulePaths | Sort-Object)
     }
 
     if ($HookPaths -and $HookPaths.Count -gt 0) {
@@ -623,6 +633,9 @@ function New-PluginLink {
     .PARAMETER RepoRoot
     Optional repository root. When supplied, directory sources copy only
     Git-tracked regular files.
+
+    .PARAMETER DestinationRoot
+    Optional package root that must contain DestinationPath.
     #>
     [CmdletBinding()]
     param(
@@ -633,7 +646,10 @@ function New-PluginLink {
         [string]$DestinationPath,
 
         [Parameter(Mandatory = $false)]
-        [string]$RepoRoot
+        [string]$RepoRoot,
+
+        [Parameter(Mandatory = $false)]
+        [string]$DestinationRoot
     )
 
     $sourceItem = Get-Item -LiteralPath $SourcePath -Force -ErrorAction Stop
@@ -753,7 +769,48 @@ function New-PluginLink {
     }
 
     $destinationDir = Split-Path -Parent $DestinationPath
-    if (-not (Test-Path -Path $destinationDir)) {
+    if ($DestinationRoot) {
+        $pathComparison = if ($IsWindows) {
+            [System.StringComparison]::OrdinalIgnoreCase
+        }
+        else {
+            [System.StringComparison]::Ordinal
+        }
+        $canonicalDestinationRoot = [System.IO.Path]::TrimEndingDirectorySeparator(
+            [System.IO.Path]::GetFullPath($DestinationRoot)
+        )
+        $destinationPrefix = $canonicalDestinationRoot + [System.IO.Path]::DirectorySeparatorChar
+        $canonicalDestination = [System.IO.Path]::GetFullPath($DestinationPath)
+        if (-not $canonicalDestination.StartsWith($destinationPrefix, $pathComparison)) {
+            throw "Plugin destination must be inside the plugin root: $canonicalDestination"
+        }
+
+        $rootItem = Get-Item -LiteralPath $canonicalDestinationRoot -Force -ErrorAction SilentlyContinue
+        if ($rootItem -and ($rootItem.LinkType -or -not $rootItem.PSIsContainer -or
+            ($rootItem.Attributes -band [System.IO.FileAttributes]::ReparsePoint))) {
+            throw "Plugin destination root must be a regular directory: $canonicalDestinationRoot"
+        }
+        if (-not $rootItem) {
+            New-Item -ItemType Directory -Path $canonicalDestinationRoot -Force | Out-Null
+        }
+
+        $relativeParent = [System.IO.Path]::GetRelativePath($canonicalDestinationRoot, $destinationDir)
+        $currentDirectory = $canonicalDestinationRoot
+        if ($relativeParent -ne '.') {
+            foreach ($segment in $relativeParent -split '[/\\]') {
+                $currentDirectory = Join-Path -Path $currentDirectory -ChildPath $segment
+                $currentItem = Get-Item -LiteralPath $currentDirectory -Force -ErrorAction SilentlyContinue
+                if ($currentItem -and ($currentItem.LinkType -or -not $currentItem.PSIsContainer -or
+                    ($currentItem.Attributes -band [System.IO.FileAttributes]::ReparsePoint))) {
+                    throw "Plugin destination ancestor must be a regular directory: $currentDirectory"
+                }
+                if (-not $currentItem) {
+                    New-Item -ItemType Directory -Path $currentDirectory | Out-Null
+                }
+            }
+        }
+    }
+    elseif (-not (Test-Path -Path $destinationDir)) {
         New-Item -ItemType Directory -Path $destinationDir -Force | Out-Null
     }
 
@@ -854,7 +911,7 @@ function Write-PluginHookArtifact {
         $scriptDest = $DestinationManifest -replace '\.json$', ''
         [void]$GeneratedFiles.Add($scriptDest)
         [void]$GeneratedDirectories.Add([System.IO.Path]::GetFullPath($scriptDest))
-        New-PluginLink -SourcePath $scriptSrc -DestinationPath $scriptDest -RepoRoot $RepoRoot
+        New-PluginLink -SourcePath $scriptSrc -DestinationPath $scriptDest -RepoRoot $RepoRoot -DestinationRoot $PluginRoot
         Add-GeneratedFilesForCopiedTree -SourcePath $scriptDest -GeneratedFiles $GeneratedFiles
     }
 }
@@ -936,6 +993,9 @@ function Write-PluginDirectory {
         [System.StringComparer]::OrdinalIgnoreCase
     )
     $skillDirs = [System.Collections.Generic.HashSet[string]]::new(
+        [System.StringComparer]::OrdinalIgnoreCase
+    )
+    $ruleDirs = [System.Collections.Generic.HashSet[string]]::new(
         [System.StringComparer]::OrdinalIgnoreCase
     )
     $hookFiles = [System.Collections.Generic.HashSet[string]]::new(
@@ -1023,7 +1083,12 @@ function Write-PluginDirectory {
                 $relDir = [System.IO.Path]::GetRelativePath($pluginRoot, $parentDir) -replace '\\', '/'
                 [void]$commandDirs.Add("$relDir/")
             }
-            'instruction' { $counts.InstructionCount++ }
+            'instruction' {
+                $counts.InstructionCount++
+                $parentDir = Split-Path -Parent $destPath
+                $relDir = [System.IO.Path]::GetRelativePath($pluginRoot, $parentDir) -replace '\\', '/'
+                [void]$ruleDirs.Add("$relDir/")
+            }
             'skill' {
                 $counts.SkillCount++
                 # Skills: the CLI scans for <name>/SKILL.md; point at the grandparent
@@ -1055,7 +1120,7 @@ function Write-PluginDirectory {
                 -GeneratedFiles $generatedFiles -GeneratedDirectories $generatedDirectories -RepoRoot $RepoRoot
         }
         else {
-            New-PluginLink -SourcePath $sourcePath -DestinationPath $destPath -RepoRoot $RepoRoot
+            New-PluginLink -SourcePath $sourcePath -DestinationPath $destPath -RepoRoot $RepoRoot -DestinationRoot $pluginRoot
         }
 
         if ($kind -eq 'skill') {
@@ -1086,7 +1151,7 @@ function Write-PluginDirectory {
             continue
         }
 
-        New-PluginLink -SourcePath $sourcePath -DestinationPath $destPath -RepoRoot $RepoRoot
+        New-PluginLink -SourcePath $sourcePath -DestinationPath $destPath -RepoRoot $RepoRoot -DestinationRoot $pluginRoot
         Add-GeneratedFilesForCopiedTree -SourcePath $destPath -GeneratedFiles $generatedFiles
     }
 
@@ -1100,6 +1165,7 @@ function Write-PluginDirectory {
         -AgentPaths @($agentDirs) `
         -CommandPaths @($commandDirs) `
         -SkillPaths @($skillDirs) `
+        -RulePaths @($ruleDirs) `
         -HookPaths @($hookFiles)
     [void]$generatedFiles.Add($manifestPath)
 

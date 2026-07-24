@@ -11,5 +11,10 @@
   ],
   "skills": [
     "skills/experimental/"
+  ],
+  "rules": [
+    "instructions/experimental/",
+    "instructions/experimental/mural/",
+    "instructions/shared/"
   ]
 }

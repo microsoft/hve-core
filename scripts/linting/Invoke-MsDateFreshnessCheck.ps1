@@ -63,14 +63,20 @@ function Get-MarkdownFiles {
         [string]$Base = 'origin/main'
     )
 
+    $excludeDirNames = @('node_modules', '.git', 'logs', '.copilot-tracking', 'plugins')
+    $excludeFileNames = @('CHANGELOG.md')
+
     if ($ChangedOnly) {
         Write-Verbose "Getting changed markdown files relative to $Base"
         $files = @(Get-ChangedFilesFromGit -BaseBranch $Base -FileExtensions @('*.md'))
-        return @($files | Where-Object { Test-Path $_ -PathType Leaf })
+        return @($files | Where-Object {
+            $pathSegments = $_ -split '[/\\]'
+            (Test-Path $_ -PathType Leaf) -and
+                $excludeFileNames -notcontains $pathSegments[-1] -and
+                @($pathSegments | Where-Object { $excludeDirNames -contains $_ }).Count -eq 0
+        })
     }
 
-    $excludeDirNames = @('node_modules', '.git', 'logs', '.copilot-tracking', 'plugins')
-    $excludeFileNames = @('CHANGELOG.md')
     $allFiles = [System.Collections.Generic.List[System.IO.FileInfo]]::new()
 
     # Bypass exclusions only when the caller passes a single explicit file path.

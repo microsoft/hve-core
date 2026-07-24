@@ -18,5 +18,10 @@
     "skills/rai/",
     "skills/security/",
     "skills/shared/"
+  ],
+  "rules": [
+    "instructions/rai-planning/",
+    "instructions/security/",
+    "instructions/shared/"
   ]
 }

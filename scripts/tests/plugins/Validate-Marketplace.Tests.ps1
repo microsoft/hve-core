@@ -15,9 +15,9 @@ function script:New-TestPluginPackage {
     New-Item -ItemType Directory -Path $pluginDir -Force | Out-Null
     New-Item -ItemType Directory -Path (Join-Path $pluginDir '.github/plugin') -Force | Out-Null
     Set-Content -Path (Join-Path $pluginDir 'README.md') -Value "# $PluginName"
-    @{ name = $PluginName; description = 'A plugin'; version = '1.0.0'; agents = @(); commands = @(); skills = @(); hooks = @() } |
-        ConvertTo-Json -Depth 5 |
-        Set-Content -Path (Join-Path $pluginDir '.github/plugin/plugin.json') -Encoding UTF8
+    $manifestContent = @{ name = $PluginName; description = 'A plugin'; version = '1.0.0' } |
+        ConvertTo-Json -Depth 5
+    Set-Content -Path (Join-Path $pluginDir '.github/plugin/plugin.json') -Value $manifestContent -Encoding UTF8
 
     return $pluginDir
 }
@@ -71,12 +71,13 @@ Describe 'Test-PluginPackageContent' {
         $pluginRoot = New-TestPluginPackage -RepoRoot $repoRoot -PluginName 'valid'
         New-Item -ItemType Directory -Path (Join-Path $pluginRoot 'agents/core') -Force | Out-Null
         New-Item -ItemType Directory -Path (Join-Path $pluginRoot 'instructions/core') -Force | Out-Null
+        Set-Content -Path (Join-Path $pluginRoot 'instructions/core/test.instructions.md') -Value 'test'
         $manifest = @{
             name = 'valid'; description = 'd'; version = '1.0.0'
-            agents = @('agents/core/'); rules = @('instructions/core/'); hooks = @{ hooks = @() }
+            agents = @('agents/core/'); rules = @('instructions/core/')
         }
-        $manifest | ConvertTo-Json -Depth 10 |
-            Set-Content -Path (Join-Path $pluginRoot '.github/plugin/plugin.json')
+        $manifestContent = $manifest | ConvertTo-Json -Depth 10
+        Set-Content -Path (Join-Path $pluginRoot '.github/plugin/plugin.json') -Value $manifestContent
 
         @(Test-PluginPackageContent -PluginRoot $pluginRoot -PluginName 'valid') |
             Should -BeNullOrEmpty
@@ -88,8 +89,8 @@ Describe 'Test-PluginPackageContent' {
         $manifest = @{
             name = 'escape'; description = 'd'; version = '1.0.0'; skills = @('../outside/')
         }
-        $manifest | ConvertTo-Json -Depth 10 |
-            Set-Content -Path (Join-Path $pluginRoot '.github/plugin/plugin.json')
+        $manifestContent = $manifest | ConvertTo-Json -Depth 10
+        Set-Content -Path (Join-Path $pluginRoot '.github/plugin/plugin.json') -Value $manifestContent
 
         (@(Test-PluginPackageContent -PluginRoot $pluginRoot -PluginName 'escape') -join "`n") |
             Should -BeLike '*path escapes plugin root*../outside/*'
@@ -106,6 +107,44 @@ Describe 'Test-PluginPackageContent' {
 
         (@(Test-PluginPackageContent -PluginRoot $pluginRoot -PluginName 'linked') -join "`n") |
             Should -BeLike '*contains a link or reparse point*'
+    }
+
+    It 'Rejects plugin manifest identity mismatch' {
+        $repoRoot = Join-Path $TestDrive 'identity-package'
+        $pluginRoot = New-TestPluginPackage -RepoRoot $repoRoot -PluginName 'identity'
+        $manifestContent = @{ name = 'other'; description = 'd'; version = '1.0.0' } | ConvertTo-Json
+        Set-Content -Path (Join-Path $pluginRoot '.github/plugin/plugin.json') -Value $manifestContent
+
+        (@(Test-PluginPackageContent -PluginRoot $pluginRoot -PluginName 'identity') -join "`n") |
+            Should -BeLike '*does not match marketplace plugin*'
+    }
+
+    It 'Rejects a component target with the wrong type' {
+        $repoRoot = Join-Path $TestDrive 'wrong-type-package'
+        $pluginRoot = New-TestPluginPackage -RepoRoot $repoRoot -PluginName 'wrong-type'
+        $componentPath = Join-Path $pluginRoot 'agents/test'
+        New-Item -ItemType Directory -Path (Split-Path -Parent $componentPath) -Force | Out-Null
+        Set-Content -Path $componentPath -Value 'not a directory'
+        $manifestContent = @{
+            name = 'wrong-type'; description = 'd'; version = '1.0.0'; agents = @('agents/test')
+        } | ConvertTo-Json
+        Set-Content -Path (Join-Path $pluginRoot '.github/plugin/plugin.json') -Value $manifestContent
+
+        (@(Test-PluginPackageContent -PluginRoot $pluginRoot -PluginName 'wrong-type') -join "`n") |
+            Should -BeLike '*expected directory but found file*'
+    }
+
+    It 'Rejects a rules directory without instruction files' {
+        $repoRoot = Join-Path $TestDrive 'empty-rules-package'
+        $pluginRoot = New-TestPluginPackage -RepoRoot $repoRoot -PluginName 'empty-rules'
+        New-Item -ItemType Directory -Path (Join-Path $pluginRoot 'instructions/test') -Force | Out-Null
+        $manifestContent = @{
+            name = 'empty-rules'; description = 'd'; version = '1.0.0'; rules = @('instructions/test')
+        } | ConvertTo-Json
+        Set-Content -Path (Join-Path $pluginRoot '.github/plugin/plugin.json') -Value $manifestContent
+
+        (@(Test-PluginPackageContent -PluginRoot $pluginRoot -PluginName 'empty-rules') -join "`n") |
+            Should -BeLike '*rules path contains no .instructions.md files*'
     }
 }
 

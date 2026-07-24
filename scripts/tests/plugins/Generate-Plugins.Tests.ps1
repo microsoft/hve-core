@@ -349,6 +349,13 @@ display:
         $manifest.name | Should -Be 'hve-core-all'
     }
 
+    It 'Does not emit source-tree component directories' {
+        $pluginDir = Join-Path $script:tempDir 'plugins/hve-core-all'
+        Test-Path (Join-Path $pluginDir '.github/plugin') -PathType Container | Should -BeTrue
+        Test-Path (Join-Path $pluginDir '.github/agents') | Should -BeFalse
+        Test-Path (Join-Path $pluginDir '.plugin') | Should -BeFalse
+    }
+
     It 'Generates README.md' {
         $readmePath = Join-Path $script:tempDir 'plugins/hve-core-all/README.md'
         Test-Path $readmePath | Should -BeTrue
@@ -513,7 +520,7 @@ items:
             -CollectionIds @('hve-core-all') `
             -Refresh -DryRun -Channel 'PreRelease' 6>&1
 
-        $dryRunMessages = @($output | Where-Object { "$_" -match 'DRY RUN.*Would remove orphan' })
+        $dryRunMessages = @($output | Where-Object { "$_" -match 'DRY RUN.*Would replace complete plugin tree' })
         $dryRunMessages.Count | Should -BeGreaterOrEqual 1
     }
 
@@ -545,7 +552,7 @@ items:
     }
 
     Context 'Orphan Cleanup' {
-        It 'Removes orphan files after overwrite-in-place' {
+        It 'Removes orphan files through complete-tree replacement' {
             $staleDir = Join-Path $script:tempDir 'plugins/hve-core-all/orphan-test'
             New-Item -ItemType Directory -Path $staleDir -Force | Out-Null
             'stale' | Set-Content -Path (Join-Path $staleDir 'leftover.txt')
@@ -609,11 +616,71 @@ items:
                 -CollectionIds @('hve-core-all') `
                 -Refresh -DryRun -Channel 'PreRelease' 6>&1
 
-            $dryRunMessages = @($output | Where-Object { "$_" -match 'DRY RUN.*Would remove orphan' })
+            $dryRunMessages = @($output | Where-Object { "$_" -match 'DRY RUN.*Would replace complete plugin tree' })
             $dryRunMessages.Count | Should -BeGreaterOrEqual 1
             # File still exists after DryRun
             Test-Path (Join-Path $orphanDir 'persist.txt') | Should -BeTrue
         }
+    }
+}
+
+Describe 'Publish-PluginDirectory' {
+    It 'Replaces the prior plugin with the staged tree' {
+        $root = Join-Path $TestDrive ([System.Guid]::NewGuid().ToString())
+        $staged = Join-Path $root 'staged'
+        $live = Join-Path $root 'live'
+        $backup = Join-Path $root 'backup'
+        New-Item -ItemType Directory -Path $staged -Force | Out-Null
+        New-Item -ItemType Directory -Path $live -Force | Out-Null
+        Set-Content -Path (Join-Path $staged 'new.txt') -Value 'new'
+        Set-Content -Path (Join-Path $live 'old.txt') -Value 'old'
+
+        Publish-PluginDirectory -StagedPluginPath $staged -PluginPath $live -BackupPath $backup
+
+        Test-Path (Join-Path $live 'new.txt') | Should -BeTrue
+        Test-Path (Join-Path $live 'old.txt') | Should -BeFalse
+        Test-Path $backup | Should -BeFalse
+    }
+
+    It 'Restores the prior plugin when promotion fails' {
+        $root = Join-Path $TestDrive ([System.Guid]::NewGuid().ToString())
+        $staged = Join-Path $root 'staged'
+        $live = Join-Path $root 'live'
+        $backup = Join-Path $root 'backup'
+        New-Item -ItemType Directory -Path $staged -Force | Out-Null
+        New-Item -ItemType Directory -Path $live -Force | Out-Null
+        Set-Content -Path (Join-Path $staged 'new.txt') -Value 'new'
+        Set-Content -Path (Join-Path $live 'old.txt') -Value 'old'
+
+        {
+            Publish-PluginDirectory -StagedPluginPath $staged -PluginPath $live -BackupPath $backup `
+                -MoveStagedTree { throw 'injected promotion failure' }
+        } | Should -Throw '*injected promotion failure*'
+
+        Test-Path (Join-Path $live 'old.txt') | Should -BeTrue
+        Test-Path (Join-Path $live 'new.txt') | Should -BeFalse
+        Test-Path $backup | Should -BeFalse
+    }
+
+    It 'Preserves the published plugin when backup cleanup fails' {
+        $root = Join-Path $TestDrive ([System.Guid]::NewGuid().ToString())
+        $staged = Join-Path $root 'staged'
+        $live = Join-Path $root 'live'
+        $backup = Join-Path $root 'backup'
+        New-Item -ItemType Directory -Path $staged -Force | Out-Null
+        New-Item -ItemType Directory -Path $live -Force | Out-Null
+        Set-Content -Path (Join-Path $staged 'new.txt') -Value 'new'
+        Set-Content -Path (Join-Path $live 'old.txt') -Value 'old'
+
+        $warnings = $null
+        Publish-PluginDirectory -StagedPluginPath $staged -PluginPath $live -BackupPath $backup `
+            -RemoveBackup { throw 'injected cleanup failure' } `
+            -WarningVariable warnings -WarningAction SilentlyContinue
+
+        Test-Path (Join-Path $live 'new.txt') | Should -BeTrue
+        Test-Path (Join-Path $live 'old.txt') | Should -BeFalse
+        Test-Path (Join-Path $backup 'old.txt') | Should -BeTrue
+        ($warnings -join "`n") | Should -Match 'injected cleanup failure'
     }
 }
 

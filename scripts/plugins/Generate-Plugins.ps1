@@ -12,14 +12,15 @@
     plugin directories under plugins/ with copied source artifacts, plugin.json
     manifests, and auto-generated README files.
 
-    Supports generating all plugins or specific collections. Use -Refresh to
-    regenerate existing plugins (deletes and recreates).
+    Supports generating all plugins or specific collections. Existing plugin
+    directories are replaced with complete generated trees.
 
 .PARAMETER CollectionIds
     Optional. Array of collection IDs to generate. Generates all when omitted.
 
 .PARAMETER Refresh
-    Optional. Deletes and recreates existing plugin directories.
+    Optional compatibility switch. Existing plugin directories are always
+    replaced with complete generated trees.
 
 .PARAMETER DryRun
     Optional. Shows what would be done without making changes.
@@ -147,6 +148,118 @@ function Select-CollectionItemsByChannel {
     return $filteredCollection
 }
 
+function Remove-PluginPathObject {
+    <#
+    .SYNOPSIS
+        Removes a plugin path object without following links.
+
+    .PARAMETER Path
+        Absolute path to remove when present.
+    #>
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory = $true)]
+        [ValidateNotNullOrEmpty()]
+        [string]$Path
+    )
+
+    $entry = Get-Item -LiteralPath $Path -Force -ErrorAction SilentlyContinue
+    if (-not $entry) {
+        return
+    }
+
+    if ($entry.LinkType -or ($entry.Attributes -band [System.IO.FileAttributes]::ReparsePoint)) {
+        Remove-Item -LiteralPath $Path -Force -ErrorAction Stop
+        return
+    }
+
+    Remove-Item -LiteralPath $Path -Recurse -Force -ErrorAction Stop
+}
+
+function Publish-PluginDirectory {
+    <#
+    .SYNOPSIS
+        Replaces a live plugin directory with a complete staged tree.
+
+    .PARAMETER StagedPluginPath
+        Absolute path to the complete staged plugin directory.
+
+    .PARAMETER PluginPath
+        Absolute path of the live plugin directory.
+
+    .PARAMETER BackupPath
+        Absolute path used to hold the prior live object during promotion.
+
+    .PARAMETER MoveStagedTree
+        Optional promotion operation used to inject failures in tests.
+
+    .PARAMETER RemoveBackup
+        Optional backup cleanup operation used to inject failures in tests.
+    #>
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory = $true)]
+        [ValidateNotNullOrEmpty()]
+        [string]$StagedPluginPath,
+
+        [Parameter(Mandatory = $true)]
+        [ValidateNotNullOrEmpty()]
+        [string]$PluginPath,
+
+        [Parameter(Mandatory = $true)]
+        [ValidateNotNullOrEmpty()]
+        [string]$BackupPath,
+
+        [Parameter(Mandatory = $false)]
+        [scriptblock]$MoveStagedTree = {
+            param($SourcePath, $DestinationPath)
+            Move-Item -LiteralPath $SourcePath -Destination $DestinationPath -ErrorAction Stop
+        },
+
+        [Parameter(Mandatory = $false)]
+        [scriptblock]$RemoveBackup = {
+            param($Path)
+            Remove-PluginPathObject -Path $Path
+        }
+    )
+
+    $stagedEntry = Get-Item -LiteralPath $StagedPluginPath -Force -ErrorAction SilentlyContinue
+    if (-not $stagedEntry -or -not $stagedEntry.PSIsContainer -or $stagedEntry.LinkType -or
+        ($stagedEntry.Attributes -band [System.IO.FileAttributes]::ReparsePoint)) {
+        throw "Staged plugin must be a regular directory: $StagedPluginPath"
+    }
+
+    Remove-PluginPathObject -Path $BackupPath
+    $priorEntry = Get-Item -LiteralPath $PluginPath -Force -ErrorAction SilentlyContinue
+    $priorMoved = $false
+
+    try {
+        if ($priorEntry) {
+            Move-Item -LiteralPath $PluginPath -Destination $BackupPath -ErrorAction Stop
+            $priorMoved = $true
+        }
+
+        & $MoveStagedTree $StagedPluginPath $PluginPath
+    }
+    catch {
+        $promotionError = $_
+        Remove-PluginPathObject -Path $PluginPath
+
+        if ($priorMoved) {
+            Move-Item -LiteralPath $BackupPath -Destination $PluginPath -ErrorAction Stop
+        }
+
+        throw "Plugin promotion failed for '$PluginPath': $($promotionError.Exception.Message)"
+    }
+
+    try {
+        & $RemoveBackup $BackupPath
+    }
+    catch {
+        Write-Warning "Published plugin but could not remove backup '$BackupPath': $($_.Exception.Message)"
+    }
+}
+
 function Invoke-PluginGeneration {
     <#
     .SYNOPSIS
@@ -165,7 +278,7 @@ function Invoke-PluginGeneration {
         Optional. Array of collection IDs to generate. Generates all when omitted.
 
     .PARAMETER Refresh
-        When specified, removes existing plugin directories before regenerating.
+        Accepted for compatibility. Complete plugin trees are always replaced.
 
     .PARAMETER DryRun
         When specified, logs actions without creating files or directories.
@@ -339,75 +452,47 @@ function Invoke-PluginGeneration {
             }
         }
 
-        $result = Write-PluginDirectory -Collection $filteredCollection `
-            -PluginsDir $pluginsDir `
-            -RepoRoot $RepoRoot `
-            -Version $repoVersion `
-            -Maturity $collectionMaturity `
-            -DryRun:$DryRun
+        if ($DryRun) {
+            $result = Write-PluginDirectory -Collection $filteredCollection `
+                -PluginsDir $pluginsDir `
+                -RepoRoot $RepoRoot `
+                -Version $repoVersion `
+                -Maturity $collectionMaturity `
+                -DryRun
 
-        # Orphan cleanup in Refresh mode
-        if ($Refresh -and (Test-Path -LiteralPath $pluginDir)) {
-            $generatedFiles = $result.GeneratedFiles
-            $generatedDirectories = $result.GeneratedDirectories
-            $isInGeneratedDirectory = {
-                param([string]$Path)
+            if (Get-Item -LiteralPath $pluginDir -Force -ErrorAction SilentlyContinue) {
+                Write-Host "  [DRY RUN] Would replace complete plugin tree: $pluginDir" -ForegroundColor Yellow
+            }
+        }
+        else {
+            $operationId = [System.Guid]::NewGuid().ToString('N')
+            $stagingRoot = Join-Path -Path $pluginsDir -ChildPath ".plugin-staging-$id-$operationId"
+            $stagingPluginsDir = Join-Path -Path $stagingRoot -ChildPath 'plugins'
+            $stagedPluginDir = Join-Path -Path $stagingPluginsDir -ChildPath $id
+            $backupPath = Join-Path -Path $pluginsDir -ChildPath ".plugin-backup-$id-$operationId"
 
-                $canonicalPath = [System.IO.Path]::GetFullPath($Path)
-                foreach ($generatedDirectory in $generatedDirectories) {
-                    $canonicalDirectory = [System.IO.Path]::TrimEndingDirectorySeparator(
-                        [System.IO.Path]::GetFullPath($generatedDirectory)
-                    )
-                    if ($canonicalPath.Equals($canonicalDirectory, [System.StringComparison]::OrdinalIgnoreCase)) {
-                        return $true
+            try {
+                New-Item -ItemType Directory -Path $stagingPluginsDir -Force | Out-Null
+                $result = Write-PluginDirectory -Collection $filteredCollection `
+                    -PluginsDir $stagingPluginsDir `
+                    -RepoRoot $RepoRoot `
+                    -Version $repoVersion `
+                    -Maturity $collectionMaturity
+
+                Publish-PluginDirectory `
+                    -StagedPluginPath $stagedPluginDir `
+                    -PluginPath $pluginDir `
+                    -BackupPath $backupPath
+            }
+            finally {
+                foreach ($temporaryPath in @($stagingRoot, $backupPath)) {
+                    try {
+                        Remove-PluginPathObject -Path $temporaryPath
                     }
-
-                    $directoryPrefix = $canonicalDirectory + [System.IO.Path]::DirectorySeparatorChar
-                    if ($canonicalPath.StartsWith($directoryPrefix, [System.StringComparison]::OrdinalIgnoreCase)) {
-                        return $true
+                    catch {
+                        Write-Warning "Could not remove temporary plugin path '$temporaryPath': $($_.Exception.Message)"
                     }
                 }
-                return $false
-            }
-            $existingFiles = [System.Collections.Generic.List[string]]::new()
-            $scanQueue = [System.Collections.Generic.Queue[string]]::new()
-            $scanQueue.Enqueue($pluginDir)
-            while ($scanQueue.Count -gt 0) {
-                $currentDir = $scanQueue.Dequeue()
-                foreach ($entry in Get-ChildItem -LiteralPath $currentDir -Force) {
-                    if ($entry.PSIsContainer -and -not $entry.LinkType) {
-                        $scanQueue.Enqueue($entry.FullName)
-                    }
-                    else {
-                        $existingFiles.Add($entry.FullName)
-                    }
-                }
-            }
-            foreach ($existingFile in $existingFiles) {
-                $canonicalPath = [System.IO.Path]::GetFullPath($existingFile)
-                if (-not $generatedFiles.Contains($canonicalPath) -and -not (& $isInGeneratedDirectory $canonicalPath)) {
-                    if ($DryRun) {
-                        Write-Host "  [DRY RUN] Would remove orphan: $existingFile" -ForegroundColor Yellow
-                    }
-                    else {
-                        Remove-Item -LiteralPath $existingFile -Force -ErrorAction Stop
-                        Write-Verbose "Removed orphan file: $existingFile"
-                    }
-                }
-            }
-            # Remove empty directories bottom-up.
-            if (-not $DryRun) {
-                Get-ChildItem -LiteralPath $pluginDir -Recurse -Directory |
-                    Where-Object { -not $_.LinkType } |
-                    Sort-Object { $_.FullName.Length } -Descending |
-                    Where-Object {
-                        -not (& $isInGeneratedDirectory $_.FullName) -and
-                        @(Get-ChildItem -LiteralPath $_.FullName).Count -eq 0
-                    } |
-                    ForEach-Object {
-                        Remove-Item -LiteralPath $_.FullName -Force -ErrorAction Stop
-                        Write-Verbose "Removed empty directory: $($_.FullName)"
-                    }
             }
         }
 

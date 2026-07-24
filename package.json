@@ -57,7 +57,7 @@
     "test:node": "node --test",
     "plugin:postprocess": "markdownlint-cli2 \"plugins/**/*.md\" \"collections/*.md\" --fix && markdown-table-formatter \"plugins/**/*.md\" && markdown-table-formatter \"collections/*.md\"",
     "plugin:generate": "pwsh -File scripts/plugins/Generate-Plugins.ps1 && npm run plugin:postprocess",
-    "plugin:validate": "npm run lint:collections-metadata",
+    "plugin:validate": "npm run lint:collections-metadata && npm run lint:marketplace",
     "clean:logs": "pwsh -NoProfile -Command \"Get-ChildItem -Path logs -File -Recurse -Exclude .gitkeep | Remove-Item -Force\"",
     "docs:build": "npm --prefix docs/docusaurus run build",
     "docs:test": "npm --prefix docs/docusaurus test",

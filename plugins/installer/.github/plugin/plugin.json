@@ -4,5 +4,8 @@
   "version": "3.3.101",
   "skills": [
     "skills/installer/"
+  ],
+  "rules": [
+    "instructions/shared/"
   ]
 }

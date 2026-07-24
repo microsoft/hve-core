@@ -8,5 +8,8 @@
   ],
   "skills": [
     "skills/rpi/"
+  ],
+  "rules": [
+    "instructions/hve-core/"
   ]
 }
