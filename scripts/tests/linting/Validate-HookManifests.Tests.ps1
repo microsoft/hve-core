@@ -34,22 +34,27 @@ Describe 'Test-HookManifest - valid manifests' {
         Test-HookManifest -Manifest $manifest | Should -BeNullOrEmpty
     }
 
-    It 'Accepts all eight lifecycle events' {
+    It 'Accepts all allowed lifecycle events' {
+        $hooks = @{}
+        foreach ($eventName in $script:HookAllowedEvents) {
+            $hooks[$eventName] = @(@{ type = 'command'; bash = 'a' })
+        }
         $manifest = @{
             version = 1
-            hooks   = @{
-                sessionStart     = @(@{ type = 'command'; bash = 'a' })
-                userPromptSubmit = @(@{ type = 'command'; bash = 'b' })
-                preToolUse       = @(@{ type = 'command'; bash = 'c' })
-                postToolUse      = @(@{ type = 'command'; bash = 'd' })
-                preCompact       = @(@{ type = 'command'; bash = 'e' })
-                subagentStart    = @(@{ type = 'command'; bash = 'f' })
-                subagentStop     = @(@{ type = 'command'; bash = 'g' })
-                stop             = @(@{ type = 'command'; bash = 'h' })
-            }
+            hooks   = $hooks
         }
 
         Test-HookManifest -Manifest $manifest | Should -BeNullOrEmpty
+    }
+}
+
+Describe 'Hook manifest schema synchronization' {
+    It 'Keeps the schema event enum in sync with $script:HookAllowedEvents' {
+        $schemaPath = Join-Path $PSScriptRoot '../../linting/schemas/hook-manifest.schema.json'
+        $schema = Get-Content -Path $schemaPath -Raw | ConvertFrom-Json -AsHashtable
+        $schemaEvents = @($schema['properties']['hooks']['propertyNames']['enum'])
+
+        $schemaEvents | Should -Be @($script:HookAllowedEvents)
     }
 }
 

@@ -1,8 +1,8 @@
 ---
 title: Prompt Refactor
-description: Refactor and clean up prompt engineering artifacts through iterative improvement
+description: Refactor prompt-engineering artifacts while preserving behavior through HVE Builder refactor mode
 sidebar_position: 10
-ms.date: 2026-07-03
+ms.date: 2026-07-13
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->
@@ -17,7 +17,7 @@ ms.date: 2026-07-03
 ## What it does
 
 <!-- BEGIN AUTO-GENERATED: overview -->
-Refactor and clean up prompt engineering artifacts through iterative improvement
+Refactor prompt-engineering artifacts while preserving behavior through HVE Builder refactor mode
 <!-- END AUTO-GENERATED: overview -->
 
 ## When to use it
