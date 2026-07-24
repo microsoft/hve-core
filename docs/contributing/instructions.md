@@ -3,7 +3,7 @@ title: 'Contributing Instructions to HVE Core'
 description: 'Requirements and standards for contributing GitHub Copilot instruction files to hve-core'
 sidebar_position: 3
 author: Microsoft
-ms.date: 2026-07-08
+ms.date: 2026-07-15
 ms.topic: how-to
 ---
 
@@ -655,7 +655,7 @@ See [AI Artifacts Common Standards - Getting Help](ai-artifacts-common.md#gettin
 
 * Review existing examples in `.github/instructions/{collection-id}/` (the conventional location for instruction files)
 * Test glob patterns using file search commands
-* Use `prompt-builder.agent.md` agent for assistance
+* Use the `hve-builder` skill for authoring, review, refactoring, or validation assistance
 
 ---
 

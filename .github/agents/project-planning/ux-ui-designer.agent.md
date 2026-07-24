@@ -16,8 +16,8 @@ handoffs:
     prompt: "Review this work from a product management perspective and identify any scope, risk, or alignment issues."
     send: true
   - label: "🔍 Research Topic"
-    agent: Task Researcher
-    prompt: /task-research
+    agent: RPI Agent
+    prompt: "Activate `rpi-research` for the current technical-feasibility question before any planning or implementation."
     send: true
 ---
 
@@ -152,7 +152,7 @@ Include the design handoff section in the journey map document.
 Hand off to specialized agents when the work extends beyond UX research.
 
 * Hand off to `product-manager-advisor` when requirements need business value alignment, prioritization, or formal issue creation.
-* Hand off to `task-researcher` when technical feasibility research is needed to inform a design recommendation.
+* Hand off to `RPI Agent` and start with `rpi-research` when technical feasibility research is needed to inform a design recommendation.
 
 When collaborating with the product manager, provide journey maps and JTBD analysis as inputs to requirements discussions. The PM agent uses these artifacts to validate that issues capture the right user context and acceptance criteria.
 

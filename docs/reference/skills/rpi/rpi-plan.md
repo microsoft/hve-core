@@ -1,8 +1,8 @@
 ---
 title: rpi-plan
-description: Create implementation-ready planning artifacts and validation evidence for RPI tasks.
-sidebar_position: 2
-ms.date: 2026-07-03
+description: "Create evidence-based RPI plans and phase details from supplied context, research, drafts, and decisions. Use when implementation planning is needed."
+sidebar_position: 4
+ms.date: 2026-07-16
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->
@@ -17,7 +17,7 @@ ms.date: 2026-07-03
 ## What it does
 
 <!-- BEGIN AUTO-GENERATED: overview -->
-Create implementation-ready planning artifacts and validation evidence for RPI tasks.
+Create evidence-based RPI plans and phase details from supplied context, research, drafts, and decisions. Use when implementation planning is needed.
 <!-- END AUTO-GENERATED: overview -->
 
 ## When to use it

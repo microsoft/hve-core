@@ -627,7 +627,7 @@ Describe 'Test-JsonSchemaValidation' -Tag 'Unit' {
                 required   = @('description')
                 properties = @{
                     description = @{ type = 'string'; minLength = 1 }
-                    tags        = @{ 
+                    tags        = @{
                         type  = 'array'
                         items = @{ type = 'string' }
                         enum  = @('stable', 'preview', 'deprecated')
@@ -805,7 +805,7 @@ Describe 'Test-JsonSchemaValidation' -Tag 'Unit' {
         It 'Accepts agents as array of strings' {
             $frontmatter = @{
                 description = 'test'
-                agents      = @('task-researcher', 'task-planner')
+                agents      = @('sample-agent', 'example-agent')
             }
             $result = Test-JsonSchemaValidation -Frontmatter $frontmatter -SchemaContent $script:NestedSchema
             $result.IsValid | Should -BeTrue
@@ -825,7 +825,7 @@ Describe 'Test-JsonSchemaValidation' -Tag 'Unit' {
             $frontmatter = @{
                 description = 'test'
                 handoffs    = @(
-                    @{ label = 'Next'; agent = 'task-planner' }
+                    @{ label = 'Next'; agent = 'sample-agent' }
                 )
             }
             $result = Test-JsonSchemaValidation -Frontmatter $frontmatter -SchemaContent $script:NestedSchema
@@ -836,7 +836,7 @@ Describe 'Test-JsonSchemaValidation' -Tag 'Unit' {
             $frontmatter = @{
                 description = 'test'
                 handoffs    = @(
-                    [pscustomobject]@{ label = 'Next'; agent = 'task-planner' }
+                    [pscustomobject]@{ label = 'Next'; agent = 'sample-agent' }
                 )
             }
             $result = Test-JsonSchemaValidation -Frontmatter $frontmatter -SchemaContent $script:NestedSchema
@@ -857,7 +857,7 @@ Describe 'Test-JsonSchemaValidation' -Tag 'Unit' {
             $frontmatter = @{
                 description = 'test'
                 handoffs    = @(
-                    @{ label = ''; agent = 'task-planner' }
+                    @{ label = ''; agent = 'sample-agent' }
                 )
             }
             $result = Test-JsonSchemaValidation -Frontmatter $frontmatter -SchemaContent $script:NestedSchema
@@ -964,7 +964,7 @@ Describe 'Test-JsonSchemaValidation' -Tag 'Unit' {
             $frontmatter = @{
                 description = 'test'
                 handoffs    = @(
-                    @{ agent = 'task-planner'; prompt = '/task-plan' }
+                    @{ agent = 'sample-agent'; prompt = '/sample-prompt' }
                 )
             }
             $result = Test-JsonSchemaValidation -Frontmatter $frontmatter -SchemaContent $script:NestedSchema
@@ -975,7 +975,7 @@ Describe 'Test-JsonSchemaValidation' -Tag 'Unit' {
             $frontmatter = @{
                 description = 'test'
                 handoffs    = @(
-                    @{ label = 'Next'; agent = 'task-planner'; send = 'yes' }
+                    @{ label = 'Next'; agent = 'sample-agent'; send = 'yes' }
                 )
             }
             $result = Test-JsonSchemaValidation -Frontmatter $frontmatter -SchemaContent $script:NestedSchema
@@ -1355,6 +1355,24 @@ Content
     }
 
     Context 'Pattern matching behavior' {
+        It 'Defines default exclusions for generated Docusaurus test output' {
+            $tokens = $null
+            $parseErrors = $null
+            $scriptAst = [System.Management.Automation.Language.Parser]::ParseFile(
+                $scriptPath,
+                [ref]$tokens,
+                [ref]$parseErrors
+            )
+            $excludeParameter = $scriptAst.ParamBlock.Parameters | Where-Object {
+                $_.Name.VariablePath.UserPath -eq 'ExcludePaths'
+            }
+            $defaultValue = $excludeParameter.DefaultValue.Extent.Text
+
+            $parseErrors | Should -BeNullOrEmpty
+            $defaultValue | Should -Match ([regex]::Escape("'docs/docusaurus/playwright-report/**'"))
+            $defaultValue | Should -Match ([regex]::Escape("'docs/docusaurus/test-results/**'"))
+        }
+
         It 'Matches glob pattern with double asterisk for relative paths' {
             $relativePath = 'tests/fixtures/exclude.md'
             $pattern = 'tests/**'
@@ -1525,18 +1543,18 @@ Describe 'CI Environment Integration' -Tag 'Unit' {
     Context 'Main execution error handling with GitHub Actions' {
         It 'Outputs GitHub error annotation when validation throws exception in CI' {
             $env:GITHUB_ACTIONS = 'true'
-            
+
             # Create a file that will cause validation to fail
             $errorFile = Join-Path $TestDrive 'error-test.md'
             # Create malformed content
             Set-Content $errorFile "Malformed content"
-            
+
             # Mock a critical function to throw
             Mock Test-SingleFileFrontmatter { throw 'Validation critical error' }
-            
+
             # Act
             $output = Test-FrontmatterValidation -Files @($errorFile) 2>&1 3>&1 6>&1 | ForEach-Object { [string]$_ }
-            
+
             # Assert - Should attempt to output GitHub annotation on error
             # The error annotation is in the catch block
             $hasErrorOutput = $output | Where-Object { $_ -match 'error' }
@@ -1644,7 +1662,7 @@ Describe 'Empty Input Handling' -Tag 'Unit' {
 
             # Act
             $result = Test-FrontmatterValidation -Paths @($excludeDir) -ExcludePaths @('**/node_modules/**')
-            
+
             # Assert
             $result.TotalFiles | Should -Be 0
         }

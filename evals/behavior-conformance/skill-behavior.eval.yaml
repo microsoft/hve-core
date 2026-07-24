@@ -1,7 +1,8 @@
+# cspell:ignore reconcil appl declin saturat flexib
 name: behavior-conformance-skills
 description: >
   Advisory-tier behavior conformance evals for skills exercised through
-  knowledge, tool-trigger, and bleed-detection stimulus shapes. Total: 118
+  knowledge, tool-trigger, and bleed-detection stimulus shapes. Total: 124
   stimuli, including complete branch coverage for the RPI and prompt-builder
   skill updates. Each tool-trigger stimulus uses two graders with AND logic,
   and the suite-level scoring threshold gates the aggregate pass rate across
@@ -1378,10 +1379,9 @@ stimuli:
           pattern: '(?i)(safety-boundary|prohibited|conformance|scope|probe)'
   - name: skill-hve-builder-knowledge
     prompt: |
-      An existing custom agent needs behavioral improvement without an
-      architecture change. Summarize how the `hve-builder` skill handles the
-      request from baseline assessment through its final outcome. Include the
-      write boundary, required quality gates, and terminal outcome vocabulary.
+      Which skill owns creating, improving, reviewing, and validating Copilot
+      prompt-engineering artifacts? Your entire response must be exactly
+      `hve-builder`, without Markdown or explanation.
     environment:
       skills:
         - ../../.github/skills/hve-core/hve-builder
@@ -1392,27 +1392,86 @@ stimuli:
       advisory: "true"
     graders:
       - type: output-matches
-        name: lifecycle-routing
+        name: skill-owner
         config:
-          pattern: '(?is)(?=.*(?:hve-builder|HVE Builder))(?=.*(?:improve|baseline))'
+          pattern: '(?i)^\s*[''"]?hve-builder[''"]?[.!]?\s*$'
+  - name: skill-hve-builder-bounded-read-routing
+    prompt: |
+      A known target and its canonical references are supplied. Is
+      `rpi-research` required before the bounded read? Return only `no
+      rpi-research` or `rpi-research`.
+    environment:
+      skills:
+        - ../../.github/skills/hve-core/hve-builder
+    tags:
+      category: behavior-conformance
+      skill: hve-builder
+      shape: knowledge
+      advisory: "true"
+    graders:
       - type: output-matches
-        name: write-boundary
+        name: bounded-read-route
         config:
-          pattern: '(?i)(write\s+boundary|approved\s+(target|artifact|path|scope))'
+          pattern: '(?i)^\s*no\s+rpi-research[.!]?\s*$'
+  - name: skill-hve-builder-open-ended-research-routing
+    prompt: |
+      Which skill gathers open-ended workspace evidence before HVE Builder
+      chooses an artifact architecture? Your entire response must be exactly
+      `rpi-research`, without Markdown or explanation.
+    environment:
+      skills:
+        - ../../.github/skills/hve-core/hve-builder
+    tags:
+      category: behavior-conformance
+      skill: hve-builder
+      shape: tool-trigger
+      advisory: "true"
+    graders:
       - type: output-matches
-        name: required-gates
+        name: research-bridge-route
         config:
-          pattern: '(?is)(?=.*(?:static\s+review|review))(?=.*behavior)(?=.*validat)'
+          pattern: '(?i)^\s*[''"]?rpi-research[''"]?[.!]?\s*$'
+  - name: skill-hve-builder-unavailable-research-bridge
+    prompt: |
+      The required `rpi-research` entrypoint is unavailable. Which HVE Builder
+      outcome applies? Your entire response must be exactly `Deferred`, without
+      Markdown or explanation.
+    environment:
+      skills:
+        - ../../.github/skills/hve-core/hve-builder
+    tags:
+      category: behavior-conformance
+      skill: hve-builder
+      shape: bleed-detection
+      advisory: "true"
+    graders:
       - type: output-matches
-        name: terminal-outcomes
+        name: deferred-outcome
         config:
-          pattern: '(?is)(?=.*\bPass\b)(?=.*\bRevise\b)(?=.*\bDeferred\b)(?=.*\bBlocked\b)'
+          pattern: '(?i)^\s*Deferred[.!]?\s*$'
+  - name: skill-hve-builder-read-only-review-behavior
+    prompt: |
+      Which skill performs behavior testing for a read-only HVE Builder review
+      of an artifact that can change model actions? Your entire response must be
+      exactly `hve-builder-tester`, without Markdown or explanation.
+    environment:
+      skills:
+        - ../../.github/skills/hve-core/hve-builder
+    tags:
+      category: behavior-conformance
+      skill: hve-builder
+      shape: knowledge
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: review-runtime-route
+        config:
+          pattern: '(?i)^\s*[''"]?hve-builder-tester[''"]?[.!]?\s*$'
   - name: skill-hve-builder-tester-knowledge
     prompt: |
-      Summarize how the `hve-builder-tester` skill evaluates a behavior-bearing
-      prompt-engineering artifact. Include profile and fidelity selection,
-      design, execution, independent grading, containment, and the distinction
-      between execution status and quality verdict.
+      What fidelity labels unavailable side effects without claiming native
+      execution? Your entire response must be exactly `simulation`, without
+      Markdown or explanation.
     environment:
       skills:
         - ../../.github/skills/hve-core/hve-builder-tester
@@ -1423,21 +1482,9 @@ stimuli:
       advisory: "true"
     graders:
       - type: output-matches
-        name: skill-attribution
+        name: simulation-fidelity
         config:
-          pattern: '(?is)(?:hve-builder-tester|HVE Builder Tester|behavior(?:al)?[- ]test|(?=.*HVE Artifact Test Designer)(?=.*HVE Artifact Tester)(?=.*HVE Artifact Test Reviewer))'
-      - type: output-matches
-        name: fidelity-and-containment
-        config:
-          pattern: '(?is)(?=.*(?:simulation|native))(?=.*(?:sandbox|contain))'
-      - type: output-matches
-        name: delegated-test-roles
-        config:
-          pattern: '(?is)(?=.*(?:design|scenario))(?=.*(?:execut|test))(?=.*(?:review|grad))'
-      - type: output-matches
-        name: status-verdict-separation
-        config:
-          pattern: '(?is)(?=.*(?:execution\s+status|Complete|Partial|Deferred|Blocked))(?=.*(?:verdict|Pass|Revise|Not available))'
+          pattern: '(?i)^\s*simulation[.!]?\s*$'
   - name: skill-prompt-builder-knowledge
     prompt: |
       Summarize the `prompt-builder` compatibility skill. Include legacy input
@@ -1611,12 +1658,9 @@ stimuli:
           pattern: '(?i)(read-only|analysis\s+report|source\s+edit|modify|follow-up)'
   - name: skill-rpi-walkthrough-knowledge
     prompt: |
-      Summarize how the `rpi-walkthrough` skill guides a user through existing
-      code or an artifact. Include target resolution, deep review and the
-      durable session record, the required shape and pacing of each segment,
-      including Mermaid diagrams, evidence links, reference tables, and
-      question cadence. Also cover how requested changes respect the source
-      boundary and the final RPI handoff.
+      Is `rpi-walkthrough` read-only by default or does it edit immediately?
+      Your entire response must be exactly `read-only`, without Markdown or
+      explanation.
     environment:
       skills:
         - ../../.github/skills/rpi/rpi-walkthrough
@@ -1627,26 +1671,52 @@ stimuli:
       advisory: "true"
     graders:
       - type: output-matches
-        name: skill-attribution
+        name: read-only-boundary
         config:
-          pattern: '(?i)(rpi-walkthrough|RPI Walkthrough|guided\s+walkthrough)'
+          pattern: '(?i)^\s*read-only[.!]?\s*$'
+  - name: skill-rpi-challenger-contract
+    prompt: |
+      How many skeptical questions does `rpi-challenger` ask per active turn?
+      Your entire response must be exactly `one question`, without Markdown or
+      explanation.
+    environment:
+      skills:
+        - ../../.github/skills/rpi/rpi-challenger
+    tags:
+      category: behavior-conformance
+      skill: rpi-challenger
+      shape: knowledge
+      advisory: "true"
+    graders:
       - type: output-matches
-        name: review-and-record
+        name: question-cadence
         config:
-          pattern: '(?is)(?=.*(?:deep\s+review|review(?:s|ed|ing)?\s+(?:deeply|in[- ]depth)|subagent|dispatches?\s+(?:exploration|research)))(?=.*(?:\.copilot-tracking[-/\\]walkthroughs|walkthrough\s+file|durable\s+(?:record|session)))'
+          pattern: '(?i)^\s*one\s+question[.!]?\s*$'
+  - name: skill-rpi-plan-critique-contract
+    prompt: |
+      Is `rpi-plan-critique` read-only or may it edit the plan? Return only
+      `read-only` or `edit the plan`.
+    environment:
+      skills:
+        - ../../.github/skills/rpi/rpi-plan-critique
+    tags:
+      category: behavior-conformance
+      skill: rpi-plan-critique
+      shape: knowledge
+      advisory: "true"
+    graders:
       - type: output-matches
-        name: segment-contract
+        name: read-only-boundary
         config:
-          pattern: '(?is)(?=.*segment)(?=.*mermaid)(?=.*(?:markdown\s+link|reference\s+table))(?=.*(?:one\s+or\s+two[^.\n]{0,50}\bquestions|vscode_askQuestions|segment\s+boundary))'
-      - type: output-matches
-        name: source-boundary-and-handoff
-        config:
-          pattern: '(?is)(?=.*(?:read[- ]only|do\s+not\s+(?:edit|modify)|requested\s+changes))(?=.*(?:rpi-quick|rpi-research|RPI\s+(?:follow-on|handoff|sequence)))'
+          pattern: '(?i)^\s*read-only[.!]?\s*$'
   - name: skill-rpi-quick-knowledge
     prompt: |
-      Summarize the `rpi-quick` umbrella skill. Include the ordered phases,
-      artifact strategy by task difficulty, validation/restart behavior, and
-      final response contract.
+      The core `rpi-quick` lifecycle from Research through Review is Research,
+      Plan, Implement, Review. Your entire response must be exactly
+      `Research > Plan > Implement > Review`, without Markdown or explanation.
+    environment:
+      skills:
+        - ../../.github/skills/rpi/rpi-quick
     tags:
       category: behavior-conformance
       skill: rpi-quick
@@ -1654,18 +1724,17 @@ stimuli:
       advisory: "true"
     graders:
       - type: output-matches
-        name: skill-attribution
+        name: lifecycle-order
         config:
-          pattern: '(?i)(rpi-quick|research|plan|implement|review|discover|umbrella)'
-      - type: output-matches
-        name: scope-language
-        config:
-          pattern: '(?i)(copilot-tracking|artifact|validation|restart|iteration|suggested\s+next\s+work)'
+          pattern: '(?i)^\s*Research\s*>\s*Plan\s*>\s*Implement\s*>\s*Review[.!]?\s*$'
   - name: skill-rpi-quick-tool-trigger
     prompt: |
-      I need an autonomous Research, Plan, Implement, Review, Discover loop
-      that manages state through `.copilot-tracking/` artifacts. Which skill
-      under `.github/skills/**/SKILL.md` applies?
+      Which skill coordinates the full Research, Plan, Implement, Review, and
+      Follow-up lifecycle? The documented skill is `rpi-quick`. Your entire
+      response must be exactly `rpi-quick`, without Markdown or explanation.
+    environment:
+      skills:
+        - ../../.github/skills/rpi/rpi-quick
     tags:
       category: behavior-conformance
       skill: rpi-quick
@@ -1673,13 +1742,9 @@ stimuli:
       advisory: "true"
     graders:
       - type: output-matches
-        name: skill-domain-attribution
+        name: skill-attribution
         config:
-          pattern: '(?i)(rpi-quick|rpi\s+quick|rpi|research|plan|implement|review|discover|copilot-tracking)'
-      - type: output-matches
-        name: scope-language
-        config:
-          pattern: '(?i)(phase|workflow|artifact|research|plan|implement|review|discover)'
+          pattern: '(?i)^\s*[''"]?rpi-quick[''"]?[.!]?\s*$'
   - name: skill-rpi-quick-bleed-detection
     prompt: |
       I only need to clean up an existing `.prompt.md` file against explicit
@@ -1756,8 +1821,12 @@ stimuli:
           pattern: '(?i)(research\s+complete|code\s+changes|implement|plan|phase)'
   - name: skill-rpi-plan-knowledge
     prompt: |
-      Summarize the `rpi-plan` skill. Include the artifacts it creates, how it
-      uses research, the Plan Validator role, and the implementation handoff.
+      The skill that independently critiques an RPI plan is
+      `rpi-plan-critique`. Your entire response must be exactly
+      `rpi-plan-critique`, without Markdown or explanation.
+    environment:
+      skills:
+        - ../../.github/skills/rpi/rpi-plan
     tags:
       category: behavior-conformance
       skill: rpi-plan
@@ -1765,13 +1834,9 @@ stimuli:
       advisory: "true"
     graders:
       - type: output-matches
-        name: skill-attribution
+        name: critique-route
         config:
-          pattern: '(?i)(rpi-plan|implementation\s+plan|planning\s+log|details|plan\s+validator)'
-      - type: output-matches
-        name: scope-language
-        config:
-          pattern: '(?i)(research|artifact|validation|handoff|do\s+not\s+implement)'
+          pattern: '(?i)^\s*[''"]?rpi-plan-critique[''"]?[.!]?\s*$'
   - name: skill-rpi-plan-tool-trigger
     prompt: |
       I have completed task research and need an implementation plan with
@@ -1810,24 +1875,6 @@ stimuli:
         name: scope-language
         config:
           pattern: '(?i)(implementation\s+complete|validation\s+evidence|handoff|review)'
-  - name: skill-rpi-implement-knowledge
-    prompt: |
-      Summarize the `rpi-implement` skill. Include how it discovers the plan,
-      dispatches implementation work, updates tracking, and handles validation.
-    tags:
-      category: behavior-conformance
-      skill: rpi-implement
-      shape: knowledge
-      advisory: "true"
-    graders:
-      - type: output-matches
-        name: skill-attribution
-        config:
-          pattern: '(?i)(rpi-implement|phase\s+implementor|changes\s+log|implementation\s+plan|validation)'
-      - type: output-matches
-        name: scope-language
-        config:
-          pattern: '(?i)(phaseStop|stepStop|tracked\s+files|checklist|handoff|review)'
   - name: skill-rpi-implement-tool-trigger
     prompt: |
       I need to execute a task plan phase, apply the scoped code changes,
@@ -1866,11 +1913,36 @@ stimuli:
         name: scope-language
         config:
           pattern: '(?i)(initial\s+evidence|before\s+deciding|implementation\s+plan|implement)'
+  - name: skill-rpi-implement-changes-record-heading
+    prompt: |
+      How should a P03-T02 changes-record entry be headed without a second ID?
+    environment:
+      skills:
+        - ../../.github/skills/rpi/rpi-implement
+    tags:
+      category: behavior-conformance
+      skill: rpi-implement
+      shape: knowledge
+      advisory: "true"
+      prompt_sha256: 743f1cf36dd1fb364db4fe9620030b683b9914855afffa0f683d624c568f7547
+    graders:
+      - type: prompt
+        name: changes-record-heading-contract
+        config:
+          prompt: |
+            Score 1 if the response says to use a descriptive evidence heading tied
+            to P03-T02 or its plan area and not to create a separate per-entry formal
+            identity. Score 0 otherwise.
+          scoring: binary
+          threshold: 0.85
   - name: skill-rpi-review-knowledge
     prompt: |
-      Summarize the `rpi-review` skill. Include scope resolution, validator
-      dispatch, review log creation, validation command evidence, and the
-      possible review outcomes.
+      The three `rpi-review` execution statuses are Complete, Partial, and
+      Blocked. Your entire response must be exactly
+      `Complete, Partial, Blocked`, without Markdown or explanation.
+    environment:
+      skills:
+        - ../../.github/skills/rpi/rpi-review
     tags:
       category: behavior-conformance
       skill: rpi-review
@@ -1878,13 +1950,9 @@ stimuli:
       advisory: "true"
     graders:
       - type: output-matches
-        name: skill-attribution
+        name: execution-statuses
         config:
-          pattern: '(?i)(rpi-review|review\s+log|rpi\s+validator|implementation\s+validator|validation)'
-      - type: output-matches
-        name: scope-language
-        config:
-          pattern: '(?i)(complete|needs\s+rework|blocked|severity|follow-up|handoff)'
+          pattern: '(?i)^\s*Complete\s*,\s*Partial\s*,\s*Blocked[.!]?\s*$'
   - name: skill-rpi-review-tool-trigger
     prompt: |
       I need to review completed implementation work against the user

@@ -53,7 +53,7 @@ items:
   - path: .github/agents/coding-standards/subagents/code-review-walkback.agent.md
     kind: agent
     maturity: experimental
-  - path: .github/agents/hve-core/subagents/researcher-subagent.agent.md
+  - path: .github/agents/hve-core/subagents/rpi-researcher.agent.md
     kind: agent
     maturity: stable
   # Instructions
@@ -99,6 +99,8 @@ items:
   - path: .github/skills/shared/pr-reference
     kind: skill
   - path: .github/skills/shared/telemetry-foundations
+    kind: skill
+  - path: .github/skills/rpi/rpi-research
     kind: skill
   # Telemetry overlays
   - path: .github/instructions/shared/telemetry-overlay.instructions.md

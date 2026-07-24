@@ -1,6 +1,5 @@
 ---
 description: "Imports a CSV or XLSX corpus into Vally eval suites with safety lint and dedupe"
-agent: Prompt Builder
 argument-hint: "[path=...] [kind=auto]"
 ---
 

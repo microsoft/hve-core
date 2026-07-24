@@ -6,12 +6,12 @@ on:
   workflow_call:
     inputs:
       soft-fail:
-        description: 'Whether to continue on test failures'
+        description: "Whether to continue on test failures"
         required: false
         type: boolean
         default: false
       changed-files-only:
-        description: 'Only run tests when Docusaurus content or config changed'
+        description: "Only run tests when Docusaurus content or config changed"
         required: false
         type: boolean
         default: false
@@ -76,7 +76,7 @@ jobs:
     if: needs.detect-changes.outputs.has-docs-changes == 'true'
     permissions:
       contents: read
-      id-token: write  # Required for Codecov OIDC
+      id-token: write # Required for Codecov OIDC
     steps:
       - name: Checkout code
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -86,7 +86,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
-          node-version: '24'
+          node-version: "24"
           cache: npm
           cache-dependency-path: docs/docusaurus/package-lock.json
 
@@ -160,7 +160,7 @@ jobs:
       # site-crawl spec within this suite.
       - name: Accessibility journeys (Playwright)
         working-directory: docs/docusaurus
-        run: npm run test:e2e
+        run: npm run ci:test:e2e
         continue-on-error: ${{ inputs.soft-fail }}
 
       - name: Upload test results

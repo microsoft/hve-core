@@ -22,7 +22,6 @@
         'PSUseShouldProcessForStateChangingFunctions',
         # Skip false positive for error redirection operator (2>$null)
         'PSPossibleIncorrectUsageOfRedirectionOperator',
-        'PSReviewUnusedParameter',
         'PSReviewUnusedParameter'
     )
 

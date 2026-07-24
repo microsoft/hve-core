@@ -1,8 +1,8 @@
 ---
 title: rpi-walkthrough
-description: "Guided, conversational walkthrough that explains code, UI, UX, features, or .copilot-tracking artifacts one line or block at a time with navigable evidence links, deep subagent review, and captured change requests for RPI handoff. Use when the user wants to understand how something works or why it was changed."
-sidebar_position: 6
-ms.date: 2026-07-13
+description: "Guided, conversational walkthrough that explains code, UI, UX, features, or .copilot-tracking artifacts with navigable evidence links, deep subagent review, and a reconciled decisions-and-changes ledger. Use when the user wants to understand how something works or why it was changed."
+sidebar_position: 8
+ms.date: 2026-07-23
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->
@@ -17,7 +17,7 @@ ms.date: 2026-07-13
 ## What it does
 
 <!-- BEGIN AUTO-GENERATED: overview -->
-Guided, conversational walkthrough that explains code, UI, UX, features, or .copilot-tracking artifacts one line or block at a time with navigable evidence links, deep subagent review, and captured change requests for RPI handoff. Use when the user wants to understand how something works or why it was changed.
+Guided, conversational walkthrough that explains code, UI, UX, features, or .copilot-tracking artifacts with navigable evidence links, deep subagent review, and a reconciled decisions-and-changes ledger. Use when the user wants to understand how something works or why it was changed.
 <!-- END AUTO-GENERATED: overview -->
 
 ## When to use it

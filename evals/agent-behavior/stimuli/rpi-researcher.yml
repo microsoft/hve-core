@@ -1,0 +1,19 @@
+# Copyright (c) 2026 Microsoft Corporation. All rights reserved.
+# SPDX-License-Identifier: MIT
+stimuli:
+  - name: rpi-researcher-lane-preflight-and-return
+    prompt: |
+      The approved lane path is
+      `.copilot-tracking/research/subagents/2026-07-17/cache-policy-subagent-research.md`
+      and the distinct parent artifact is
+      `.copilot-tracking/research/2026-07-17/cache-policy-research.md`.
+      The required pre-write action is lane-path validation. Do not call tools.
+      Return exactly `Validate the lane path.`
+    tags:
+      category: agent-behavior
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: lane-path-preflight
+        config:
+          pattern: '(?i)^\s*(validate|preflight-check)\s+the\s+lane\s+path[.!]?\s*$'

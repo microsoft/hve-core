@@ -45,14 +45,14 @@ BeforeAll {
         param([Parameter(Mandatory)] [string]$Root)
 
         # 2 parent agents in standard locations
-        New-AgentFile -Root $Root -RelativePath '.github/agents/hve-core/task-planner.agent.md' -Frontmatter @{
+        New-AgentFile -Root $Root -RelativePath '.github/agents/hve-core/sample-agent.agent.md' -Frontmatter @{
             'eval-class' = 'code-author'
             'cost_tier'  = 'medium'
         }
         New-AgentFile -Root $Root -RelativePath '.github/agents/ado/ado-backlog-manager.agent.md'
 
         # Subagents marked with user-invocable: false are included only when a matching stimuli partial exists.
-        New-AgentFile -Root $Root -RelativePath '.github/agents/hve-core/subagents/researcher-subagent.agent.md' -Frontmatter @{
+        New-AgentFile -Root $Root -RelativePath '.github/agents/hve-core/subagents/example-subagent.agent.md' -Frontmatter @{
             'user-invocable' = 'false'
         }
         New-AgentFile -Root $Root -RelativePath '.github/agents/security/subagents/codebase-profiler.agent.md' -Frontmatter @{
@@ -87,7 +87,7 @@ Describe 'Build-AgentInventory.ps1' -Tag 'Unit' {
         }
 
         It 'Includes both standard parent agents' {
-            $script:Yaml | Should -Match '(?m)^\s+- slug: task-planner\s*$'
+            $script:Yaml | Should -Match '(?m)^\s+- slug: sample-agent\s*$'
             $script:Yaml | Should -Match '(?m)^\s+- slug: ado-backlog-manager\s*$'
         }
 
@@ -96,11 +96,11 @@ Describe 'Build-AgentInventory.ps1' -Tag 'Unit' {
         }
 
         It 'Excludes subagents without a matching stimuli partial' {
-            $script:Yaml | Should -Not -Match '(?m)^\s+- slug: researcher-subagent\s*$'
+            $script:Yaml | Should -Not -Match '(?m)^\s+- slug: example-subagent\s*$'
         }
 
         It 'Renders frontmatter eval-class and cost_tier when present' {
-            $script:Yaml | Should -Match "(?ms)^\s+- slug: task-planner\s*\n\s+path: '\.github/agents/hve-core/task-planner\.agent\.md'\s*\n\s+class: code-author\s*\n\s+cost_tier: medium"
+            $script:Yaml | Should -Match "(?ms)^\s+- slug: sample-agent\s*\n\s+path: '\.github/agents/hve-core/sample-agent\.agent\.md'\s*\n\s+class: code-author\s*\n\s+cost_tier: medium"
         }
 
         It 'Defaults class to unknown and cost_tier to light when frontmatter is silent' {

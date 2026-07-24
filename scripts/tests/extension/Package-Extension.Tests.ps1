@@ -1293,13 +1293,13 @@ Describe 'Copy-CollectionArtifacts' {
         # Create source agent
         $agentsSrc = Join-Path $script:repoRoot '.github/agents'
         New-Item -Path $agentsSrc -ItemType Directory -Force | Out-Null
-        Set-Content -Path (Join-Path $agentsSrc 'task-planner.agent.md') -Value '# Agent'
+        Set-Content -Path (Join-Path $agentsSrc 'sample-agent.agent.md') -Value '# Agent'
 
         # Create package.json with contributes referencing agents
         $pkgJson = @{
             contributes = @{
                 chatAgents = @(
-                    @{ path = './.github/agents/task-planner.agent.md' }
+                    @{ path = './.github/agents/sample-agent.agent.md' }
                 )
             }
         }
@@ -1307,7 +1307,7 @@ Describe 'Copy-CollectionArtifacts' {
 
         Copy-CollectionArtifacts -RepoRoot $script:repoRoot -ExtensionDirectory $script:extDir -PrepareResult @{}
 
-        Test-Path (Join-Path $script:extDir '.github/agents/task-planner.agent.md') | Should -BeTrue
+        Test-Path (Join-Path $script:extDir '.github/agents/sample-agent.agent.md') | Should -BeTrue
     }
 
     It 'Copies prompts from repo to extension directory' {

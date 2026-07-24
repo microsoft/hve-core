@@ -1,52 +1,61 @@
 ---
 name: rpi-review
-description: Review-only RPI playbook that validates implementation evidence, checks phase completion, and closes the loop with explicit next steps. Use when the user needs review coverage or acceptance evidence.
-argument-hint: "[task=...] [plan=...] [changes=...]"
+description: "Compare RPI planning and implementation evidence, record review findings, and route follow-up work. Use when an implementation needs acceptance review."
+argument-hint: "[task=...] [plan=...] [details=...] [changes=...]"
 license: MIT
 user-invocable: true
 ---
 
-# Task Reviewer
-
-Use [references/review.md](references/review.md) for the full review protocol, templates, and validator contracts.
-
-Follow the shared conventions in `copilot-tracking.instructions.md`.
+# RPI Review
 
 ## Goal
 
-Produce an evidence-backed review result with validator dispatch, review-log synthesis, and explicit follow-up guidance.
+Write one evidence-based review record after implementation finishes. Assess the supplied task once, keep execution separate from outcome, and route each finding to the stage or later work that can resolve it.
 
-## What to do
+## Flow
 
-1. Resolve the review scope from explicit paths, attached or open files, task slug, time-based scope, then recent matching `.copilot-tracking` artifacts. If no reviewable artifact set can be formed, stop and ask for the task context. If multiple unrelated artifact sets match, stop and ask the user to choose one.
-2. Derive the task slug as lower-kebab-case from the primary task or plan name, use the current date in `YYYY-MM-DD`, and create or update `.copilot-tracking/reviews/logs/{{YYYY-MM-DD}}/<task-slug>-review.md` with `<!-- markdownlint-disable-file -->`.
-3. Prefer `RPI Validator` and `Implementation Validator` with `runSubagent` or `task`; use `Researcher Subagent` only when context is missing or findings remain unclear. If dispatch tooling is unavailable, perform the equivalent review or validation inline, record it, and continue without dead-stopping on the dispatcher alone.
-4. Run one `RPI Validator` pass per plan phase and one implementation-quality pass, then run validation commands for changed files when available, record command, scope, status, and summary, and mark the review `Complete` only when commands pass or the skip reason is explicit.
-5. Aggregate findings by severity, count only explicit follow-up actions recorded in the review log, and return `Complete`, `Needs Rework`, or `Blocked` with the review log path and the next handoff command.
+1. Resolve one task artifact set: current plan, phase details, latest plan critique, changes record, and relevant research. Use the supplied paths or the stable task slug and date. Stop if multiple unrelated sets remain ambiguous.
+2. Create one record at `.copilot-tracking/reviews/logs/{{YYYY-MM-DD}}/{{task_slug}}-review.md` using [templates/review-log.md](templates/review-log.md). Do not create review modes or plan a second review pass.
+3. Confirm plan markers, phase details, changes evidence, handoff prose, blockers, remaining work, follow-up items, and validation state are reconciled. Then compare the complete supplied boundary: requirements, acceptance criteria, phase and task completion evidence, critique dispositions, descriptive implementation-time updates and decisions, validation, blockers, remaining work, and plan `## Follow-Up Items`. Confirm significant or divergent implementation decisions preserve confirmed user intent and are reflected in the current plan. Navigate by markers and headings, not line numbers.
+4. Use generic bounded subagents for independent lenses only when they reduce a specific review uncertainty. Give each a narrow question, exact read boundary, and no source-write authority. Do not use a dedicated RPI review worker or fixed review-worker allowlist.
+5. Record one complete set of substantive, severity-graded `RV-xxx` entries. Keep execution status separate from outcome: execution is Complete, Partial, or Blocked; outcome is Conformant, Conformant with justified divergence, Defects found, Residual work, or Not accepted.
+6. Route each actionable gap once: defects suitable for later implementation to `rpi-implement`, significant or divergent decision gaps to `rpi-plan`, material evidence gaps to `rpi-research`, and residual work to a distinct follow-up item. Route unresolved plan follow-up items distinctly without treating them as defects or adding them to active plan scope. A later `rpi-implement` invocation does not require this Review to run again.
+7. Return the review record, separate execution status and outcome, validation evidence, findings, and recommended destinations.
 
 ## Success criteria
 
-* The review log exists under `.copilot-tracking/reviews/logs/{{YYYY-MM-DD}}/` and starts with `<!-- markdownlint-disable-file -->`.
-* The review covers artifact discovery, task-slug derivation, validator dispatch, one `RPI Validator` pass per phase, validation commands, severity aggregation, plan-to-research alignment, and explicit follow-up counts.
-* The final response starts with a Task Reviewer style status header, includes the validation activities completed, the review log path, overall status, severity counts, follow-up count, and next-step command, and keeps handoff commands as recommendations unless the user asked for them.
-* Name `/rpi-review` in the handoff when another review pass is required.
+* One review record exists at the canonical review path and includes all compared artifacts.
+* One Review records the complete finding set for the supplied task boundary.
+* The record separates execution state from outcome verdict.
+* Findings are substantive, evidence-grounded, severity-graded `RV-xxx` records with an explicit destination.
+* Defects, decision gaps, research gaps, and residual work are routed to distinct destinations.
+* Descriptive implementation-time plan and detail updates, their rationale and evidence, material revision readiness, and plan follow-up items are explicitly assessed.
+* Validation evidence is recorded or explicitly unavailable or skipped with a reason.
+* Findings are routed clearly without creating closure, correction, full, targeted, or amended review modes.
 
 ## Constraints
 
-* Do not re-implement the fix in this phase.
-* Prefer `RPI Validator` and `Implementation Validator` with `runSubagent` or `task`; use `Researcher Subagent` as the fallback when context is missing. If dispatch tooling is unavailable, perform the equivalent review or validation inline and record it instead of dead-stopping on the dispatcher alone.
-* Keep the review summary brief; use [references/review.md](references/review.md) for the detailed protocol, templates, and validator contracts.
-* Stop and ask the user only when required subagent dispatch is unavailable or research cannot resolve a blocking ambiguity.
+* Do not implement fixes or mutate the plan, phase details, critique, research, or changes record in this stage. Review may create or update only its one canonical review record.
+* Do not create per-phase review-worker outputs or depend on retired dedicated RPI review workers.
+* Use plain-text workspace-relative paths in the review record.
+* Use [references/review.md](references/review.md) for the review method, outcome vocabulary, routing detail, and conversation protocol.
+
+## Conversation guidance
+
+Use [references/review.md](references/review.md) as the authority for the state-first opening, materiality gate, continual-update template, marker meanings, pre-question context, and closeout behavior. Persist review-owned state before an opening or potential material update; chat is a concise projection, never a second history or delivery log. Preserve the read-only boundary, separate execution status from outcome, standalone versus parent continuation, conditional compaction, and linked Markdown table. For every relevant existing artifact, use the two-cell row `| [actual/workspace-relative/path.ext](actual/workspace-relative/path.ext) | Short description |`, using that artifact's actual workspace-relative path as both link text and destination; omit unavailable files and render the table immediately before the final `## Next Steps` section. End with `## Next Steps`: state the exact eligible user command, active-parent action, blocker-clearing action, follow-up choice, or that no user action is required. When compaction is warranted, tell the user to run `/compact` before the next RPI command; otherwise omit compaction guidance.
 
 ## Stop rules
 
-* Stop if no reviewable artifact set can be formed.
-* Stop when multiple unrelated artifact sets match and the user has not selected one.
-* Stop if validator dispatch is unavailable and the review would be based on guesswork.
-* Stop when unresolved Critical or High findings block completion and the user needs to fix the implementation before handoff.
+* Stop as Blocked if a reviewable artifact set cannot be formed or evidence is insufficient for a credible verdict.
+* Stop as Not accepted when material defects or unaccepted decision gaps remain.
+* Complete a partial review only when the record names the evidence boundary and routes the missing work.
 
 ## Handoff
 
-After the review completes, offer the next phase command as a recommendation unless the user explicitly requested a handoff.
+Return the review record, execution status, outcome, severity summary, validation coverage, and the next recommended RPI stage or distinct follow-up item. A standalone review advises the exact `/rpi-*` command only when a finding needs that destination and does not invoke it. In `rpi-quick` or confirmed automatic RPI Agent mode, return the review record to the parent for automatic continuation.
+
+## Final response
+
+Return review execution status separately from outcome, findings, validation coverage, blockers or open items, routed follow-up, and conditional compaction advice when warranted. Follow Conversation guidance for standalone or parent-orchestrated continuation, the linked artifact table, and final next steps.
 
 

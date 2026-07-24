@@ -26,7 +26,7 @@ Generate data specifications, Jupyter notebooks, and Streamlit dashboards from n
 | **gen-jupyter-notebook**     | Create exploratory data analysis (EDA) Jupyter notebooks from data sources and data dictionaries                                                                       |
 | **gen-streamlit-dashboard**  | Develop a multi-page Streamlit dashboard                                                                                                                               |
 | **rai-planner**              | Responsible AI assessment planner evaluating against NIST AI RMF 1.0, producing an RAI security model, impact assessment, control surface catalog, and backlog handoff |
-| **researcher-subagent**      | Research subagent using search, read, web-fetch, GitHub repo, and MCP tools                                                                                            |
+| **rpi-researcher**           | Executes one delegated internal, external, or hybrid RPI research lane and progressively writes owned evidence. Use for independent research threads.                  |
 | **test-streamlit-dashboard** | Automated testing for Streamlit dashboards using Playwright with issue tracking and reporting                                                                          |
 
 ### Prompts
@@ -51,10 +51,11 @@ Generate data specifications, Jupyter notebooks, and Streamlit dashboards from n
 
 ### Skills
 
-| Name              | Description                                                                                                                                                                 |
-|-------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| **rai-planner**   | On-demand RAI planner reference pack covering Phase 1 capture, Phase 2 risk classification, Phase 5 impact assessment, and Phase 6 review and backlog handoff.              |
-| **rai-standards** | Consolidated Responsible AI standards reference: NIST AI RMF 1.0, AI STRIDE threat-modeling overlay, EU AI Act risk tiers, and an open-standards catalog with phase mapping |
+| Name              | Description                                                                                                                                                                                                                             |
+|-------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| **rai-planner**   | On-demand RAI planner reference pack covering Phase 1 capture, Phase 2 risk classification, Phase 5 impact assessment, and Phase 6 review and backlog handoff.                                                                          |
+| **rai-standards** | Consolidated Responsible AI standards reference: NIST AI RMF 1.0, AI STRIDE threat-modeling overlay, EU AI Act risk tiers, and an open-standards catalog with phase mapping                                                             |
+| **rpi-research**  | Research-only RPI playbook that gathers task evidence, writes dated research artifacts under .copilot-tracking/research/, and hands off planning-ready findings. Use when the user needs evidence, alternatives, or task framing first. |
 
 <!-- END AUTO-GENERATED ARTIFACTS -->
 

@@ -1,8 +1,8 @@
 ---
 title: Pr Review
 description: Review a pull request or local change set by routing to the consolidated Code Review agent
-sidebar_position: 7
-ms.date: 2026-07-03
+sidebar_position: 6
+ms.date: 2026-07-16
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->

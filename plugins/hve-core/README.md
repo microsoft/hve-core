@@ -5,7 +5,7 @@ Opinionated, rapidly evolving agentic SDLC patterns for RPI workflows, HVE Build
 
 ## Overview
 
-HVE Core provides the flagship RPI (Research, Plan, Implement, Review) workflow for completing complex tasks through a structured four-phase process. The RPI workflow dispatches specialized agents that collaborate autonomously to deliver well-researched, planned, and validated implementations. This collection also includes Git workflow prompts for commit messages, merge operations, repository setup, and pull request management.
+HVE Core provides the flagship RPI (Research, Plan, Implement, Review, Follow-up) workflow for completing complex tasks through an evidence-led lifecycle. The RPI workflow coordinates skills and bounded delegation to deliver researched, planned, implemented, reviewed, and routed outcomes. This collection also includes Git workflow prompts for commit messages, merge operations, repository setup, and pull request management.
 
 > [!CAUTION]
 > HVE Core is a highly opinionated, rapidly evolving agentic SDLC framework. It is best treated as a source of patterns and learning rather than a stable platform, foundation, or production dependency.
@@ -19,59 +19,34 @@ HVE Core provides the flagship RPI (Research, Plan, Implement, Review) workflow 
 
 ### Chat Agents
 
-| Name                           | Description                                                                                                                                                                               |
-|--------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| **code-review**                | Human-gated code review orchestrator that bootstraps change context, scopes hotspots, picks perspectives and depth, and merges skill-backed perspective findings into one report          |
-| **code-review-accessibility**  | Thin skill-backed perspective subagent that reviews a precomputed diff for accessibility conformance and writes structured findings                                                       |
-| **code-review-explainer**      | Thin skill-backed Register 1 explainer subagent that answers factual symbol or function questions and persists an explanation artifact                                                    |
-| **code-review-functional**     | Thin skill-backed perspective subagent that reviews a precomputed diff for functional correctness and writes structured findings                                                          |
-| **code-review-pr**             | Thin skill-backed orientation detailer that turns a precomputed diff into a factual Register 1 walkthrough plus dispatch-board appendices within the orientation-first review workflow    |
-| **code-review-readiness**      | Thin skill-backed perspective subagent that reviews PR deliverable readiness and changed non-code documentation against a precomputed diff and PR context, and writes structured findings |
-| **code-review-security**       | Thin skill-backed perspective subagent that reviews a precomputed diff for security issues and writes structured findings                                                                 |
-| **code-review-standards**      | Thin skill-backed perspective subagent that reviews a precomputed diff against project coding standards and writes structured findings                                                    |
-| **code-review-walkback**       | Thin wrapper subagent that dispatches deep Register 2 questions to the generic Researcher Subagent and anchors the output to a board item                                                 |
-| **documentation**              | Orchestrates documentation audit, drift, authoring, and validation work through the documentation skill                                                                                   |
-| **hve-artifact-author**        | Creates or edits approved prompt-engineering artifacts against the HVE quality catalog and repository conventions. Dispatched by hve-builder.                                             |
-| **hve-artifact-explorer**      | Finds and ranks prompt-engineering artifacts that could be reused or applied as scoped extensions. Dispatched by the hve-builder skill.                                                   |
-| **hve-artifact-reviewer**      | Independently reviews prompt-engineering artifacts against the HVE rubric and returns bounded findings plus a verdict. Dispatched by hve-builder.                                         |
-| **hve-artifact-test-designer** | Designs black-box behavior scenarios and coverage expectations from an HVE artifact contract. Dispatched by hve-builder-tester.                                                           |
-| **hve-artifact-test-reviewer** | Independently grades HVE behavior-test evidence with fidelity-aware, severity-graded findings and a verdict. Dispatched by hve-builder-tester.                                            |
-| **hve-artifact-tester**        | Performs contained literal conformance simulation of an HVE artifact and records simulated, emulated, and observed behavior. Dispatched by hve-builder-tester.                            |
-| **hve-artifact-validator**     | Discovers and runs non-mutating host checks for changed prompt-engineering artifacts, returning Pass, Fail, or Deferred. Dispatched by hve-builder.                                       |
-| **implementation-validator**   | Validates implementation quality against architectural requirements, design principles, and code standards with severity-graded findings                                                  |
-| **memory**                     | Conversation memory persistence for session continuity                                                                                                                                    |
-| **phase-implementor**          | Executes a single implementation phase from a plan with full codebase access and change tracking                                                                                          |
-| **plan-validator**             | Validates implementation plans against research documents with severity-graded findings                                                                                                   |
-| **prompt-builder**             | Compatibility entry point that routes legacy prompt-build, prompt-refactor, and prompt-analyze requests through the hve-builder lifecycle.                                                |
-| **researcher-subagent**        | Research subagent using search, read, web-fetch, GitHub repo, and MCP tools                                                                                                               |
-| **rpi-agent**                  | Autonomous RPI orchestrator running Research → Plan → Implement → Review → Discover phases with specialized subagents                                                                     |
-| **rpi-validator**              | Validates a Changes Log against the Implementation Plan, Planning Log, and Research Documents for a specific plan phase                                                                   |
-| **task-challenger**            | Adversarial questioning agent that interrogates implementations with What/Why/How questions: no suggestions, no hints, no leading                                                         |
-| **task-implementor**           | Executes implementation plans from .copilot-tracking/plans with progressive tracking and change records                                                                                   |
-| **task-planner**               | Implementation planner that creates actionable, step-by-step plans                                                                                                                        |
-| **task-researcher**            | Task research specialist for comprehensive project analysis                                                                                                                               |
-| **task-reviewer**              | Reviews completed implementation work for accuracy, completeness, and convention compliance                                                                                               |
+| Name                          | Description                                                                                                                                                                               |
+|-------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| **code-review**               | Human-gated code review orchestrator that bootstraps change context, scopes hotspots, picks perspectives and depth, and merges skill-backed perspective findings into one report          |
+| **code-review-accessibility** | Thin skill-backed perspective subagent that reviews a precomputed diff for accessibility conformance and writes structured findings                                                       |
+| **code-review-explainer**     | Thin skill-backed Register 1 explainer subagent that answers factual symbol or function questions and persists an explanation artifact                                                    |
+| **code-review-functional**    | Thin skill-backed perspective subagent that reviews a precomputed diff for functional correctness and writes structured findings                                                          |
+| **code-review-pr**            | Thin skill-backed orientation detailer that turns a precomputed diff into a factual Register 1 walkthrough plus dispatch-board appendices within the orientation-first review workflow    |
+| **code-review-readiness**     | Thin skill-backed perspective subagent that reviews PR deliverable readiness and changed non-code documentation against a precomputed diff and PR context, and writes structured findings |
+| **code-review-security**      | Thin skill-backed perspective subagent that reviews a precomputed diff for security issues and writes structured findings                                                                 |
+| **code-review-standards**     | Thin skill-backed perspective subagent that reviews a precomputed diff against project coding standards and writes structured findings                                                    |
+| **code-review-walkback**      | Thin wrapper subagent that activates rpi-research for bounded Register 2 investigations and anchors results to a review board item                                                        |
+| **documentation**             | Orchestrates documentation audit, drift, authoring, and validation work through the documentation skill                                                                                   |
+| **hve-artifact-tester**       | Performs contained literal conformance simulation of an HVE artifact and records simulated, emulated, and observed behavior. Dispatched by hve-builder-tester.                            |
+| **rpi-agent**                 | User-selected RPI workflow wrapper for Research, Plan, Implement, Review, and Follow-up. Use when one task needs lifecycle coordination.                                                  |
+| **rpi-planner**               | Revise one assigned RPI plan phase and matching phase details within a shared planning artifact. Use when a parent needs bounded phase authoring.                                         |
+| **rpi-researcher**            | Executes one delegated internal, external, or hybrid RPI research lane and progressively writes owned evidence. Use for independent research threads.                                     |
 
 ### Prompts
 
-| Name                   | Description                                                                                       |
-|------------------------|---------------------------------------------------------------------------------------------------|
-| **checkpoint**         | Save or restore conversation context using memory files                                           |
-| **git-commit**         | Stage all changes, generate a conventional commit message, and commit                             |
-| **git-commit-message** | Generate a conventional commit message from all branch changes                                    |
-| **git-merge**          | Coordinate Git merge, rebase, and rebase --onto workflows with conflict handling                  |
-| **git-setup**          | Interactive, verification-first Git configuration assistant (non-destructive)                     |
-| **pr-review**          | Review a pull request or local change set by routing to the consolidated Code Review agent        |
-| **prompt-analyze**     | Review prompt-engineering artifacts without source edits through HVE Builder review mode          |
-| **prompt-build**       | Create or improve prompt-engineering artifacts through the HVE Builder lifecycle                  |
-| **prompt-refactor**    | Refactor prompt-engineering artifacts while preserving behavior through HVE Builder refactor mode |
-| **pull-request**       | Generate pull request descriptions from branch diffs                                              |
-| **rpi**                | Autonomous Research-Plan-Implement-Review-Discover workflow for completing tasks                  |
-| **task-challenge**     | Adversarial What/Why/How interrogation of completed implementation artifacts                      |
-| **task-implement**     | Locate and execute implementation plans using Task Implementor                                    |
-| **task-plan**          | Initiate implementation planning from user context or research documents                          |
-| **task-research**      | Initiate research for implementation planning from user requirements                              |
-| **task-review**        | Initiate implementation review from user context or artifact discovery                            |
+| Name                   | Description                                                                                   |
+|------------------------|-----------------------------------------------------------------------------------------------|
+| **git-commit**         | Stage all changes, generate a conventional commit message, and commit                         |
+| **git-commit-message** | Generate a conventional commit message from all branch changes                                |
+| **git-merge**          | Coordinate Git merge, rebase, and rebase --onto workflows with conflict handling              |
+| **git-setup**          | Interactive, verification-first Git configuration assistant (non-destructive)                 |
+| **pr-review**          | Review a pull request or local change set by routing to the consolidated Code Review agent    |
+| **pull-request**       | Generate pull request descriptions from branch diffs                                          |
+| **rpi**                | Coordinate one task through the Research, Plan, Implement, Review, and Follow-up RPI workflow |
 
 ### Instructions
 
@@ -92,7 +67,6 @@ HVE Core provides the flagship RPI (Research, Plan, Implement, Review) workflow 
 | **hve-core/hve-builder**                          | Authoring standards for prompts, agents, subagents, instructions, and skills, grounded in the frontier-LLM instruction-quality research                                                                                                                     |
 | **hve-core/licensing-posture**                    | Repository posture for licensing, reproduction, and attribution of third-party standards in skills and tracking artifacts                                                                                                                                   |
 | **hve-core/markdown**                             | Markdown authoring conventions for all .md files                                                                                                                                                                                                            |
-| **hve-core/prompt-builder**                       | Legacy Prompt Builder instruction alias that points matching AI artifacts to the canonical HVE Builder standard                                                                                                                                             |
 | **hve-core/pull-request**                         | Pull request description generation and creation via diff analysis, subagent review, and MCP tools                                                                                                                                                          |
 | **hve-core/writing-style**                        | Writing style conventions for voice, tone, and language in markdown content                                                                                                                                                                                 |
 | **shared/content-policy-citation**                | Content-policy and terms-of-service guardrails for public output and eval stimuli                                                                                                                                                                           |
@@ -112,6 +86,13 @@ HVE Core provides the flagship RPI (Research, Plan, Implement, Review) workflow 
 | **prompt-analyze**        | Compatibility alias for read-only prompt artifact review. Routes static and behavior analysis to hve-builder review mode.                                                                                                                                                                        |
 | **prompt-builder**        | Compatibility alias for legacy prompt-building requests. Routes creation and improvement to the hve-builder skill.                                                                                                                                                                               |
 | **prompt-refactor**       | Compatibility alias for behavior-preserving prompt artifact cleanup. Routes refactoring to hve-builder refactor mode.                                                                                                                                                                            |
+| **rpi-challenger**        | Challenge a confirmed task, decision, plan, or artifact through adaptive skeptical questions. Use when you need to expose assumptions before acting.                                                                                                                                             |
+| **rpi-implement**         | Execute an approved RPI plan, preserve amendments, and record evidence-led changes. Use when implementation is ready to begin or resume.                                                                                                                                                         |
+| **rpi-plan**              | Create evidence-based RPI plans and phase details from supplied context, research, drafts, and decisions. Use when implementation planning is needed.                                                                                                                                            |
+| **rpi-plan-critique**     | Independently critique an RPI plan and phase details against supplied evidence without editing plan sources. Use when planning credibility needs a read-only assessment.                                                                                                                         |
+| **rpi-quick**             | Sequence Research, Plan, Implement, Review, and Follow-up for an RPI task. Use when one workflow should coordinate the full delivery lifecycle.                                                                                                                                                  |
+| **rpi-research**          | Research-only RPI playbook that gathers task evidence, writes dated research artifacts under .copilot-tracking/research/, and hands off planning-ready findings. Use when the user needs evidence, alternatives, or task framing first.                                                          |
+| **rpi-review**            | Compare RPI planning and implementation evidence, record review findings, and route follow-up work. Use when an implementation needs acceptance review.                                                                                                                                          |
 | **telemetry-foundations** | Declarative OpenTelemetry-aligned telemetry vocabulary and instrumentation conventions for traces, metrics, logs, and PII handling                                                                                                                                                               |
 
 ### Hooks

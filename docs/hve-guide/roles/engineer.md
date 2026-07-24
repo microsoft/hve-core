@@ -3,7 +3,7 @@ title: Engineer Guide
 description: HVE Core support for engineers building features, fixing bugs, and shipping code with AI-assisted workflows
 sidebar_position: 3
 author: Microsoft
-ms.date: 2026-06-30
+ms.date: 2026-07-15
 ms.topic: how-to
 keywords:
   - engineer
@@ -20,7 +20,7 @@ This guide is for you if you write code, implement features, fix bugs, review pu
 > [!TIP]
 > Install the [HVE Core extension](https://marketplace.visualstudio.com/items?itemName=ise-hve-essentials.hve-core) from the VS Code Marketplace for the flagship RPI workflow and core artifacts with zero configuration. For the complete library across all collections, use the `hve-core-all` CLI plugin or installer skill.
 >
-> Your primary collections are `hve-core` (research, planning, implementation, and review agents) and `coding-standards` (language-specific instructions that auto-apply based on file type). For clone-based setups, see the [Installation Guide](../../getting-started/install.md).
+> Your primary collections are `hve-core` (RPI lifecycle coordination and direct phase skills) and `coding-standards` (language-specific instructions that auto-apply based on file type). For clone-based setups, see the [Installation Guide](../../getting-started/install.md).
 
 1. Researches codebase patterns, external APIs, and architecture before you write code
 2. Creates structured implementation plans with step-by-step task breakdowns
@@ -43,10 +43,10 @@ This guide is for you if you write code, implement features, fix bugs, review pu
 
 ## Stage Walkthrough
 
-1. Stage 2: Discovery. Start with the **task-researcher** agent or the `/rpi-research` skill to investigate requirements, explore codebase patterns, and gather evidence for your approach.
-2. Stage 3: Product Definition. Use the **task-planner** agent or the `/rpi-plan` skill to transform research into a structured implementation plan with phases, steps, and success criteria.
-3. Stage 6: Implementation. Execute the plan with the **task-implementor** agent, the `/rpi-implement` skill, or `/rpi-quick` for the full workflow with progress tracking.
-4. Stage 7: Review. Run the **task-reviewer** agent or the `/rpi-review` skill to validate implementation against the plan, check coding standards, and ensure architectural compliance.
+1. Stage 2: Discovery. Use `/rpi-research` to investigate requirements, explore codebase patterns, and gather evidence for your approach.
+2. Stage 3: Product Definition. Use `/rpi-plan` to transform adequate evidence into a structured implementation plan with phases, tasks, and success criteria.
+3. Stage 6: Implementation. Execute the approved plan with `/rpi-implement`, or use `RPI Agent` or `/rpi` when you want full lifecycle coordination.
+4. Stage 7: Review. Run `/rpi-review` to validate implementation against the plan, check coding standards, and ensure architectural compliance.
 5. Stage 8: Delivery. Use `/git-commit` for conventional commit messages, `/pull-request` for PR creation, and `/git-merge` for merge workflows.
 
 ## Starter Prompts
@@ -57,7 +57,7 @@ item #4523. Follow the REST conventions in src/api/handlers/ and add
 integration tests covering email, SMS, and push notification channels.
 ```
 
-Select **task-researcher** agent:
+Use `/rpi-research`:
 
 ```text
 Research the best approach for implementing a rate limiter in the API
@@ -66,7 +66,7 @@ Redis vs in-memory storage for distributed deployments, and review
 existing patterns in src/middleware/.
 ```
 
-Select **task-planner** agent and attach the research document:
+Use `/rpi-plan` and reference the research artifact:
 
 ```text
 Create an implementation plan for the webhook delivery system. Include
@@ -74,7 +74,7 @@ phases for the event dispatcher, retry queue, and dead-letter handling.
 Reference patterns in src/services/.
 ```
 
-Select **task-implementor** agent and attach the plan instructions file:
+Use `/rpi-implement` and reference the approved plan artifacts:
 
 ```text
 Implement the webhook delivery system following the attached plan. Start
@@ -82,7 +82,7 @@ with the event dispatcher phase and execute the retry queue phase
 second.
 ```
 
-Select **task-reviewer** agent and attach the changes log:
+Use `/rpi-review` and reference the changes record:
 
 ```text
 Review my webhook delivery system implementation. Check for error
@@ -100,16 +100,15 @@ with coding standards.
 
 ## Key Agents and Workflows
 
-| Agent                | Purpose                                        | Docs                                              |
-|----------------------|------------------------------------------------|---------------------------------------------------|
-| **task-researcher**  | Deep codebase and API research                 | [Task Researcher](../../rpi/task-researcher.md)   |
-| **task-planner**     | Structured implementation planning             | [Task Planner](../../rpi/task-planner.md)         |
-| **task-implementor** | Phase-based code implementation                | [Task Implementor](../../rpi/task-implementor.md) |
-| **task-reviewer**    | Code review and quality validation             | [Task Reviewer](../../rpi/task-reviewer.md)       |
-| **rpi-agent**        | Full RPI orchestration in one agent            | [RPI Overview](../../rpi/)                        |
-| **code-review**      | Pull request review automation                 | Agent file                                        |
-| **memory**           | Session context and preference persistence     | Agent file                                        |
-| **prompt-builder**   | Create and refine prompt engineering artifacts | Agent file                                        |
+| Agent or skill    | Purpose                                        | Docs                       |
+|-------------------|------------------------------------------------|----------------------------|
+| **rpi-research**  | Deep codebase and API research                 | [RPI Overview](../../rpi/) |
+| **rpi-plan**      | Structured implementation planning             | [RPI Overview](../../rpi/) |
+| **rpi-implement** | Evidence-led implementation of approved plans  | [RPI Overview](../../rpi/) |
+| **rpi-review**    | Implementation review and outcome routing      | [RPI Overview](../../rpi/) |
+| **RPI Agent**     | Full RPI lifecycle coordination                | [RPI Overview](../../rpi/) |
+| **code-review**   | Pull request review automation                 | Agent file                 |
+| **hve-builder**   | Create and refine prompt engineering artifacts | Skill file                 |
 
 Auto-activated instructions apply coding standards based on file type: C# (`*.cs`), Python (`*.py`), Bash (`*.sh`), Bicep (`bicep/**`), Terraform (`*.tf`), and GitHub Actions workflows (`*.yml`).
 
@@ -118,7 +117,7 @@ Auto-activated instructions apply coding standards based on file type: C# (`*.cs
 | Do                                                         | Don't                                                            |
 |------------------------------------------------------------|------------------------------------------------------------------|
 | Research before implementing multi-file changes            | Jump straight to coding complex features                         |
-| Use `/rpi mode=auto` for planned, multi-step work          | Manually coordinate research, planning, and implementation       |
+| Use `/rpi` for planned, multi-step work                    | Manually coordinate research, planning, and implementation       |
 | Let coding standards auto-activate by file type            | Override or skip language-specific instructions                  |
 | Review the research doc before starting the planning phase | Skip research for unfamiliar codebases or APIs                   |
 | Clear context between RPI phases with `/clear`             | Carry stale context across research, plan, implement, and review |

@@ -3,7 +3,7 @@ title: Data Scientist Guide
 description: HVE Core support for data scientists building notebooks, dashboards, data specifications, and analytics workflows
 sidebar_position: 9
 author: Microsoft
-ms.date: 2026-06-26
+ms.date: 2026-07-15
 ms.topic: how-to
 keywords:
   - data science
@@ -44,7 +44,7 @@ This guide is for you if you analyze data, build Jupyter notebooks, create dashb
 
 ## Stage Walkthrough
 
-1. Stage 2: Discovery. Use the **task-researcher** agent to investigate data sources, explore available datasets, and research analytical approaches.
+1. Stage 2: Discovery. Use `/rpi-research` to investigate data sources, explore available datasets, and research analytical approaches.
 2. Stage 3: Product Definition. Run the **gen-data-spec** agent to define data schemas, sources, and transformation requirements as structured specification documents.
 3. Stage 6: Notebook Development. Generate analysis notebooks with the **gen-jupyter-notebook** agent and create dashboards with the **gen-streamlit-dashboard** agent.
 4. Stage 7: Validation. Test generated dashboards with the **test-streamlit-dashboard** agent and review analysis results for accuracy and completeness.
@@ -87,7 +87,7 @@ queries return data for the last 7 days, panels render without errors, and
 the refresh rate does not exceed Prometheus scrape intervals.
 ```
 
-Select **task-researcher** agent:
+Use `/rpi-research`:
 
 ```text
 Research data sources for predicting customer churn in the SaaS platform.
@@ -98,15 +98,14 @@ granularity, and GDPR privacy constraints for EU customer data.
 
 ## Key Agents and Workflows
 
-| Agent                        | Purpose                                    | Docs                                            |
-|------------------------------|--------------------------------------------|-------------------------------------------------|
-| **gen-jupyter-notebook**     | Jupyter notebook generation                | Agent file                                      |
-| **gen-streamlit-dashboard**  | Streamlit dashboard creation               | Agent file                                      |
-| **gen-data-spec**            | Data specification document creation       | Agent file                                      |
-| **test-streamlit-dashboard** | Dashboard functional testing               | Agent file                                      |
-| **task-researcher**          | Data source and pattern research           | [Task Researcher](../../rpi/task-researcher.md) |
-| **task-planner**             | Analytics pipeline planning                | [Task Planner](../../rpi/task-planner.md)       |
-| **memory**                   | Session context and preference persistence | Agent file                                      |
+| Agent or skill               | Purpose                              | Docs                       |
+|------------------------------|--------------------------------------|----------------------------|
+| **gen-jupyter-notebook**     | Jupyter notebook generation          | Agent file                 |
+| **gen-streamlit-dashboard**  | Streamlit dashboard creation         | Agent file                 |
+| **gen-data-spec**            | Data specification document creation | Agent file                 |
+| **test-streamlit-dashboard** | Dashboard functional testing         | Agent file                 |
+| **rpi-research**             | Data source and pattern research     | [RPI workflow](../../rpi/) |
+| **rpi-plan**                 | Analytics pipeline planning          | [RPI workflow](../../rpi/) |
 
 Prompts complement the agents for cross-cutting workflows:
 
@@ -124,7 +123,7 @@ Python environment management follows the `uv` virtual environment instructions 
 | Start with the **gen-data-spec** agent to define schemas before coding      | Jump straight to notebook coding without data specifications |
 | Use the **gen-jupyter-notebook** agent for structured, documented notebooks | Create raw notebooks without documentation cells             |
 | Test dashboards with the **test-streamlit-dashboard** agent                 | Deploy dashboards without functional validation              |
-| Research data sources with the **task-researcher** agent first              | Assume data availability without investigation               |
+| Research data sources with `/rpi-research` first                            | Assume data availability without investigation               |
 | Use `uv` for reproducible Python environments                               | Install packages globally or skip environment isolation      |
 
 ## Related Roles

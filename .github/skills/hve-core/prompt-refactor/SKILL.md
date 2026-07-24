@@ -34,7 +34,7 @@ Preserve legacy `prompt-refactor` activation while simplifying approved prompt-e
 
 ## Constraints
 
-* Do not dispatch legacy Prompt Tester, Prompt Evaluator, or Prompt Updater workers.
+* Do not dispatch retired named lifecycle workers.
 * Do not create a second orchestration loop or sandbox contract.
 * Route a requested type change, artifact split, or new support artifact back through HVE Builder scope approval.
 

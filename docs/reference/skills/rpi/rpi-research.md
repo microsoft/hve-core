@@ -1,8 +1,8 @@
 ---
 title: rpi-research
 description: "Research-only RPI playbook that gathers task evidence, writes dated research artifacts under .copilot-tracking/research/, and hands off planning-ready findings. Use when the user needs evidence, alternatives, or task framing first."
-sidebar_position: 4
-ms.date: 2026-07-03
+sidebar_position: 6
+ms.date: 2026-07-16
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->

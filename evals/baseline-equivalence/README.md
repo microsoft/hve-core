@@ -2,7 +2,7 @@
 title: Baseline Equivalence Suite
 description: 'Pairs identical probes across baseline and customized environments to assert only documented divergences appear'
 author: HVE Core Team
-ms.date: 2026-07-22
+ms.date: 2026-07-23
 ---
 
 ## Purpose
@@ -23,9 +23,13 @@ The suite answers a single question per stimulus: did customization change the m
 evals/baseline-equivalence/
 ├── README.md           # this file
 ├── baseline/
-│   └── eval.yaml       # executable spec for the empty baseline run (invariant graders + response-quality)
+│   ├── eval.yaml       # executable spec for the empty baseline run (invariant graders + response-quality)
+│   └── variant.yaml    # baseline variant metadata
 ├── customized/
-│   └── eval.yaml       # executable spec for the materialized agent run (adds customized_required / customized_disallow)
+│   ├── eval.yaml       # executable spec for the materialized agent run (adds customized_required / customized_disallow)
+│   └── variant.yaml    # RPI Agent variant metadata
+├── surface-signatures/
+│   └── rpi-agent.yml   # authoritative RPI Agent surface signature
 ├── stimuli.yml         # 40 prompts across 8 subcategories at 5 per subcategory
 └── compare.eval.yml    # A/B comparison spec judged by `vally compare`
 ```
@@ -40,16 +44,16 @@ The PowerShell driver at [scripts/evals/Invoke-BaselineEquivalence.ps1](../../sc
 
 ```bash
 # PR tier (default): single primary model, advisory verdict, always exits 0
-npm run eval:equivalence -- -Agent task-researcher -Tier pr
+npm run ci:eval:equivalence -- -Agent rpi-agent -Tier pr
 
 # Nightly tier: three-model sweep, authoritative verdict, exits non-zero on fail
-npm run eval:equivalence -- -Agent task-researcher -Tier nightly
+npm run ci:eval:equivalence -- -Agent rpi-agent -Tier nightly
 
 # Narrow the stimulus set during smoke testing
-npm run eval:equivalence -- -Agent task-researcher -Tier pr -StimulusFilter '^factual-'
+npm run ci:eval:equivalence -- -Agent rpi-agent -Tier pr -StimulusFilter '^factual-'
 
 # Dry run: print planned vally commands and emit a placeholder summary without SDK calls
-npm run eval:equivalence -- -Agent task-researcher -WhatIf
+npm run ci:eval:equivalence -- -Agent rpi-agent -WhatIf
 ```
 
 The driver writes a machine-readable summary to `logs/baseline-equivalence-summary.json` and per-environment trajectories under `evals/results/`. The trajectory directories are gitignored.
@@ -87,20 +91,20 @@ The verdict field is derived from `ciLow`/`ciHigh` and the failure counts by `Ge
 
 ### Lint commands
 
-The baseline-equivalence specs live in two subdirectories (`baseline/eval.yaml` and `customized/eval.yaml`) so the driver can invoke them as a paired set. The repository-wide `npm run eval:lint:vally` task runs `vally lint --eval-spec evals/` and discovers both nested specs. Use the explicit commands below for targeted validation:
+The baseline-equivalence specs live in two subdirectories (`baseline/eval.yaml` and `customized/eval.yaml`) so the driver can invoke them as a paired set. The repository-wide `npm run ci:eval:lint:vally` task runs `vally lint --eval-spec evals/` and discovers both nested specs. Use the explicit commands below for targeted validation:
 
 | Command                                                                  | Purpose                                                                            |
 |--------------------------------------------------------------------------|------------------------------------------------------------------------------------|
 | `vally lint --eval-spec evals/baseline-equivalence/baseline/eval.yaml`   | Schema-validate the empty baseline spec                                            |
 | `vally lint --eval-spec evals/baseline-equivalence/customized/eval.yaml` | Schema-validate the materialized customized spec (includes the divergence graders) |
 | `vally lint --eval-spec evals/baseline-equivalence/compare.eval.yml`     | Validate the A/B compare spec consumed by `vally compare`                          |
-| `npm run eval:run:equivalence`                                           | Run both specs end to end via `vally eval --eval-spec ...` (no driver, no compare) |
+| `npm run ci:eval:run:equivalence`                                        | Run both specs end to end via `vally eval --eval-spec ...` (no driver, no compare) |
 
 Run the three `vally lint` commands before pushing a change to this suite. The presence linter ([scripts/evals/Test-StimulusPresence.ps1](../../scripts/evals/Test-StimulusPresence.ps1)) is wired into the changed-artifact lane and is documented in [docs/contributing/evals-ci.md](../../docs/contributing/evals-ci.md).
 
 ## How to Extend Per-Agent
 
-Onboarding a new agent (for example `task-planner`) does not require harness code changes. Drop a sibling configuration block in three places:
+Onboarding a new agent (for example `security-planner`) does not require harness code changes. Drop a sibling configuration block in three places:
 
 1. Teach the driver how to materialize the target agent's surface (frontmatter, subagents, skills, `copilot-instructions.md`) into the customized workspace. The current driver runs both specs against the repo cwd; materialization is the open follow-up to make the baseline run truly empty.
 2. Add the agent's curated surface signatures to `surface_signatures.<agent>` in [compare.eval.yml](compare.eval.yml). Required signatures express divergences the customization mandates; disallowed signatures express patterns the customization must not produce.
@@ -138,27 +142,18 @@ relies on shared corpus coverage rather than per-agent backlinks. New agents lan
 | jira-backlog-manager         | jira             | [surface-signatures/jira-backlog-manager.yml](surface-signatures/jira-backlog-manager.yml)                 | 0                 | authoritative |
 | jira-prd-to-wit              | jira             | [surface-signatures/jira-prd-to-wit.yml](surface-signatures/jira-prd-to-wit.yml)                           | 0                 | authoritative |
 | meeting-analyst              | project-planning | [surface-signatures/meeting-analyst.yml](surface-signatures/meeting-analyst.yml)                           | 0                 | authoritative |
-| memory                       | hve-core         | [surface-signatures/memory.yml](surface-signatures/memory.yml)                                             | 6                 | authoritative |
 | network-isa95-planner        | project-planning | [surface-signatures/network-isa95-planner.yml](surface-signatures/network-isa95-planner.yml)               | 0                 | authoritative |
 | pptx                         | experimental     | [surface-signatures/pptx.yml](surface-signatures/pptx.yml)                                                 | 0                 | advisory      |
 | prd-builder                  | project-planning | [surface-signatures/prd-builder.yml](surface-signatures/prd-builder.yml)                                   | 2                 | authoritative |
 | product-manager-advisor      | project-planning | [surface-signatures/product-manager-advisor.yml](surface-signatures/product-manager-advisor.yml)           | 2                 | authoritative |
-| prompt-builder               | hve-core         | [surface-signatures/prompt-builder.yml](surface-signatures/prompt-builder.yml)                             | 0                 | authoritative |
 | rai-planner                  | rai-planning     | [surface-signatures/rai-planner.yml](surface-signatures/rai-planner.yml)                                   | 0                 | authoritative |
-| rpi-agent                    | hve-core         | [surface-signatures/rpi-agent.yml](surface-signatures/rpi-agent.yml)                                       | 6                 | authoritative |
+| rpi-agent                    | hve-core         | [surface-signatures/rpi-agent.yml](surface-signatures/rpi-agent.yml)                                       | 23                | authoritative |
 | security-planner             | security         | [surface-signatures/security-planner.yml](surface-signatures/security-planner.yml)                         | 0                 | authoritative |
 | security-reviewer            | security         | [surface-signatures/security-reviewer.yml](surface-signatures/security-reviewer.yml)                       | 0                 | authoritative |
 | sssc-planner                 | security         | [surface-signatures/sssc-planner.yml](surface-signatures/sssc-planner.yml)                                 | 0                 | authoritative |
 | system-architecture-reviewer | project-planning | [surface-signatures/system-architecture-reviewer.yml](surface-signatures/system-architecture-reviewer.yml) | 0                 | authoritative |
-| task-challenger              | hve-core         | [surface-signatures/task-challenger.yml](surface-signatures/task-challenger.yml)                           | 7                 | authoritative |
-| task-implementor             | hve-core         | [surface-signatures/task-implementor.yml](surface-signatures/task-implementor.yml)                         | 9                 | authoritative |
-| task-planner                 | hve-core         | [surface-signatures/task-planner.yml](surface-signatures/task-planner.yml)                                 | 6                 | authoritative |
-| task-researcher              | hve-core         | [surface-signatures/task-researcher.yml](surface-signatures/task-researcher.yml)                           | 0                 | authoritative |
-| task-reviewer                | hve-core         | [surface-signatures/task-reviewer.yml](surface-signatures/task-reviewer.yml)                               | 4                 | authoritative |
 | test-streamlit-dashboard     | data-science     | [surface-signatures/test-streamlit-dashboard.yml](surface-signatures/test-streamlit-dashboard.yml)         | 0                 | authoritative |
 | ux-ui-designer               | project-planning | [surface-signatures/ux-ui-designer.yml](surface-signatures/ux-ui-designer.yml)                             | 0                 | authoritative |
-
-The `prompt-builder` and `task-researcher` rows show stimulus coverage `0` because their domains (prompt authoring and ad-hoc research) do not map to any of the v1 stimulus categories. They are covered indirectly through dependency-map dispatch when other agents invoke them as subagents, and through their own surface-signature regex on every baseline-equivalence run.
 
 The `security-planner`, `security-reviewer`, and `sssc-planner` rows show stimulus coverage `0` for the same reason: their domains (threat modeling and RAI impact, security review and vulnerability assessment, and supply-chain hardening) do not map to any of the v1 stimulus categories. They are covered indirectly through dependency-map dispatch when other agents invoke their subagents, and through their own surface-signature regex on every baseline-equivalence run.
 
@@ -220,7 +215,7 @@ Trajectory invariants live at the spec level (not per stimulus) and apply across
 
 ## Surface-Signature Allow-List
 
-The customization layer is allowed to differ from the baseline only in ways the curated `surface_signatures` block in [compare.eval.yml](compare.eval.yml) declares. For `task-researcher`, the allow-list permits a leading `## 🔬 Task Researcher:` header and language scoping file writes to `.copilot-tracking/research/`. Anything outside the allow-list that diverges from baseline is treated as a regression, not a feature.
+The customization layer is allowed to differ from the baseline only in ways the curated `surface_signatures` block in [compare.eval.yml](compare.eval.yml) declares. For `rpi-agent`, the authoritative signature requires research-scope language and disallows common out-of-scope filesystem prefixes. Anything outside the allow-list that diverges from baseline is treated as a regression, not a feature.
 
 This framing is intentional. The suite is not a free-form quality grader; it asks the narrow question "does customization change anything beyond what we said it would?" Curated allowances keep the question crisp.
 

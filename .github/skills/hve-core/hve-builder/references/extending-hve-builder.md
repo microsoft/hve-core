@@ -8,17 +8,17 @@ hve-builder is built to be extended by the host project it runs in. A downstream
 
 ## How hve-builder discovers extensions
 
-Discovery differs by artifact type. Two of the three mechanisms are automatic; the third requires hve-builder's survey-and-dispatch step.
+Discovery differs by artifact type. Two of the three mechanisms are automatic; when HVE Builder needs an open-ended survey, it activates `rpi-research` to perform the exploration and returns only a bounded result to the lifecycle.
 
-| Extension type                        | How hve-builder finds it                                                                                | Author burden                                                                                                                     |
-|---------------------------------------|---------------------------------------------------------------------------------------------------------|-----------------------------------------------------------------------------------------------------------------------------------|
-| Instruction file (`.instructions.md`) | Auto-applies when its `applyTo` glob matches the files being created or edited.                         | Write an `applyTo` glob that covers the target artifact paths.                                                                    |
-| Skill (`SKILL.md`)                    | Activates on a semantic match between the request and its `description`.                                | Write a `description` whose trigger words match the artifact type and domain.                                                     |
-| Subagent (`.agent.md`)                | Does NOT auto-load. hve-builder surveys the available agents and dispatches the matching one by `name`. | Write a routing-oriented `description` and a stable `name`, and confirm the host registers the subagent so the survey can see it. |
+| Extension type                        | How HVE Builder identifies it                                                                                                                                         | Author burden                                                                                                                     |
+|---------------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------|-----------------------------------------------------------------------------------------------------------------------------------|
+| Instruction file (`.instructions.md`) | Auto-applies when its `applyTo` glob matches the files being created or edited.                                                                                       | Write an `applyTo` glob that covers the target artifact paths.                                                                    |
+| Skill (`SKILL.md`)                    | Activates on a semantic match between the request and its `description`.                                                                                              | Write a `description` whose trigger words match the artifact type and domain.                                                     |
+| Subagent (`.agent.md`)                | Does not auto-load. Supplied metadata may identify it; an open-ended availability survey uses `rpi-research`, and HVE Builder dispatches an approved match by `name`. | Write a routing-oriented `description` and a stable `name`, and confirm the host registers the subagent so the survey can see it. |
 
-The practical consequence: instruction files and skills extend hve-builder with no change to the skill. A subagent extends hve-builder only when its description is written for routing and hve-builder's intake survey can see it, because the orchestrator reaches subagents by name rather than by reading files at a path.
+The practical consequence: instruction files and skills extend hve-builder with no change to the skill. A subagent extends hve-builder only when its description is written for routing and supplied metadata or `rpi-research` findings identify it, because the orchestrator reaches subagents by name rather than by reading files at a path.
 
-Discovery makes an extension eligible, not authoritative by itself. Apply extensions with this precedence: host and platform safety controls; explicit caller scope and acceptance criteria; matching repository instructions and enforced schemas; the HVE Builder base standard; then sibling examples and preferences. An extension can add scoped conventions or review criteria, but it cannot redirect the workflow, widen writes, grant tools, or weaken safety.
+Discovery makes an extension eligible, not authoritative by itself. Apply extensions with this precedence: host and platform safety controls; explicit caller scope and acceptance criteria; matching repository instructions and enforced schemas; the HVE Builder base standard; then sibling examples and preferences. An extension can add scoped conventions or review criteria, but it cannot redirect the workflow, widen writes, or weaken safety.
 
 ## Authoring a discoverable extension instruction file
 
@@ -57,11 +57,11 @@ description: "Author and review Terraform modules against organization conventio
 
 Use a subagent when the host needs a specialized review dimension or a tier-specific execution worker that hve-builder should dispatch during its author, review, or test loop. Because subagents are not auto-loaded, three things must be true for hve-builder to reach it.
 
-* Routing `description`: write it so a parent can decide when to delegate, in the shape "Use when ..." naming the specialization. hve-builder's intake survey reads descriptions to decide which subagents to dispatch, so the description is the discovery surface.
+* Routing `description`: write it so a parent can decide when to delegate, in the shape "Use when ..." naming the specialization. Supplied metadata or `rpi-research` uses the description to identify a relevant subagent, so the description is the discovery surface.
 * Stable `name`: hve-builder dispatches by the `name` from frontmatter, not by file path or glob. Give it a distinct, namespaced name to avoid collisions across installed libraries.
-* Least-privilege `tools` and a structured return: grant only the tools the subagent needs (a reviewer gets read and search, not edit), and return a bounded, structured summary the orchestrator can act on.
-* Model fit: `model:` is optional. An omitted extension subagent model inherits the invoking parent's model; an omitted directly invoked extension agent or prompt model uses the current session selection. When the extension needs a stable profile, select it by responsibility and declare its exact ordered list. Use Medium (`GPT-5.6 Terra`, `Claude Sonnet 5`, `MAI-Code-1-Flash`) for semantic authoring or calibrated review, Low (`GPT-5.6 Luna`, `MAI-Code-1-Flash`, `Claude Haiku 4.5`) for bounded mechanical work with explicit tool order, and High (`GPT-5.6 Sol`, `Claude Opus 4.8`, `GPT-5.5`) only for responsibilities that require the deepest reasoning profile. Each declared name carries the `(copilot)` suffix in frontmatter.
-* Host registration: confirm the host registers the subagent through a fixed parent `agents:` array, an intentionally unrestricted parent that omits `agents:`, or the collection manifest so hve-builder's survey can see it.
+* Structured return: return a bounded, structured summary the orchestrator can act on. Agent and subagent `tools:` configuration is a user-managed opaque boundary. HVE Builder does not inspect, compare, infer from, or use existing configuration to make authoring, review, validation, change-classification, or behavior-testing decisions. When the caller directly supplies an exact configuration, reproduce it verbatim without assessing its appropriateness.
+* Model fit: `model:` is optional. An omitted extension subagent model inherits the invoking parent's model; an omitted directly invoked extension agent or prompt model uses the current session selection. When the extension needs a stable profile, select it by responsibility and declare its exact ordered list. Use Medium (`GPT-5.6 Terra`, `Claude Sonnet 5`, `MAI-Code-1-Flash`) for semantic authoring or calibrated review, Low (`GPT-5.6 Luna`, `MAI-Code-1-Flash`, `Claude Haiku 4.5`) for bounded mechanical work, and High (`GPT-5.6 Sol`, `Claude Opus 4.8`, `GPT-5.5`) only for responsibilities that require the deepest reasoning profile. Each declared name carries the `(copilot)` suffix in frontmatter.
+* Host registration: confirm the host registers the subagent through a fixed parent `agents:` array, an intentionally unrestricted parent that omits `agents:`, or the collection manifest so approved lifecycle dispatch can reach it.
 
 Example frontmatter:
 
@@ -74,24 +74,20 @@ model:
   - GPT-5.6 Terra (copilot)
   - Claude Sonnet 5 (copilot)
   - MAI-Code-1-Flash (copilot)
-tools:
-  - read/readFile
-  - search/codebase
-  - search/textSearch
 ---
 ```
 
-When you author a standalone subagent before its parent or manifest exists, do not invent a parent to register it. Record the deferred registration explicitly: the exact pending target (a fixed parent `agents:` array, a parent whose omission intentionally grants unrestricted access, or the collection manifest), the owner responsible for wiring it, and the validation command that confirms it (for example `npm run plugin:validate` for collection manifests). Leave subagent discoverability marked incomplete until that registration is done, because hve-builder's survey cannot reach an unregistered subagent by name.
+When you author a standalone subagent before its parent or manifest exists, do not invent a parent to register it. Record the deferred registration explicitly: the exact pending target (a fixed parent `agents:` array, a parent whose omission intentionally grants unrestricted access, or the collection manifest), the owner responsible for wiring it, and the validation command that confirms it (for example `npm run plugin:validate` for collection manifests). Leave subagent discoverability marked incomplete until that registration is done, because the lifecycle cannot dispatch an unregistered subagent by name.
 
 ## Worked example
 
 A team installs hve-builder as a library and wants every Terraform module they author with it to follow their conventions and get a domain review.
 
 1. They add `terraform.instructions.md` with `applyTo: "**/*.tf, **/*.tfvars"`. When hve-builder authors or edits a `.tf` file, that instruction auto-applies with no change to hve-builder.
-2. They add a `terraform-module-author` skill whose `description` names Terraform modules. When a request mentions Terraform modules, hve-builder's intake survey matches the description and loads the skill as an overlay.
-3. They add a `Terraform Module Reviewer` subagent with a routing description and a stable name, and register it in their parent agent's `agents:` list. hve-builder does not auto-load it; instead, its intake survey sees the description among the available agents and dispatches it by name during the review stage, alongside `HVE Artifact Reviewer`.
+2. They add a `terraform-module-author` skill whose `description` names Terraform modules. When a request mentions Terraform modules, semantic skill activation loads the skill as an overlay.
+3. They add a `Terraform Module Reviewer` subagent with a routing description and a stable name, and register it in their parent agent's `agents:` list. hve-builder does not auto-load it; supplied metadata or an `rpi-research` extension survey identifies it, and the lifecycle dispatches it by name during the approved review stage alongside its generic static-review dispatch.
 
-The instruction and skill become eligible through normal discovery; the subagent becomes reachable because its routing description and host registration expose it. The caller still decides whether each extension is in scope and what authority it receives.
+The instruction and skill become eligible through normal discovery; the subagent becomes reachable because its routing description and host registration expose it. The caller still decides whether each extension is in scope and what authority it receives. Bounded reads of known target instructions and supplied extension metadata remain lifecycle-stage work; only open-ended extension surveys enter `rpi-research`.
 
 ## Safety boundary
 

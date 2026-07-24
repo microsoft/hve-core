@@ -1,0 +1,16 @@
+# Copyright (c) 2026 Microsoft Corporation. All rights reserved.
+# SPDX-License-Identifier: MIT
+stimuli:
+  - name: rpi-planner-bounded-phase-revision
+    prompt: |
+      You are assigned only P02 in an existing plan. What should happen to P01
+      and P03 while you revise P02? Return exactly `Preserve P01 and P03
+      unchanged.`
+    tags:
+      category: agent-behavior
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: preserves-other-phases
+        config:
+          pattern: '(?i)^\s*(preserve|leave)\s+(P01\s+(and|&)\s+P03|P01/P03)\s+unchanged[.!]?\s*$'

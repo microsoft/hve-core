@@ -3,7 +3,7 @@ title: Evals in CI
 description: Auth contract, fork-PR policy, and how to add a new eval spec for the hve-core vally pipeline
 sidebar_position: 11
 author: Microsoft
-ms.date: 2026-06-29
+ms.date: 2026-07-17
 ms.topic: how-to
 keywords:
   - evals
@@ -87,7 +87,7 @@ When you add or modify an AI artifact under `.github/agents/`, `.github/prompts/
 Steps to add coverage:
 
 1. Create an eval spec under `evals/` that follows the structure documented in `evals/README.md`.
-2. Add a `stimuli[].tags.<kind>` backlink whose value is the artifact slug, where `<kind>` is one of `agent`, `prompt`, `instruction`, or `skill`, and the slug is the artifact basename minus its `.agent.md`, `.prompt.md`, `.instructions.md`, or `SKILL.md` suffix (for example, `tags: {agent: researcher-subagent}` for `.github/agents/coding-standards/researcher-subagent.agent.md`).
+2. Add a `stimuli[].tags.<kind>` backlink whose value is the artifact slug, where `<kind>` is one of `agent`, `prompt`, `instruction`, or `skill`, and the slug is the artifact basename minus its `.agent.md`, `.prompt.md`, `.instructions.md`, or `SKILL.md` suffix (for example, `tags: {agent: code-review-functional}` for `.github/agents/coding-standards/subagents/code-review-functional.agent.md`).
 3. Ensure the spec declares an executor compatible with the `vally` CLI (typically the `CopilotSdkExecutor` with a `model:` hint).
 4. Run the presence check locally to confirm the artifact is covered:
 
@@ -150,7 +150,7 @@ moderation:
   threshold: 0.7
 ```
 
-The validator accepts numeric values in `[0.0, 1.0]`; out-of-range or non-numeric values emit `ModerationThresholdOutOfRange` / `ModerationThresholdType` diagnostics during `eval:lint:schema`. The default is `0.5` when the field is omitted.
+The validator accepts numeric values in `[0.0, 1.0]`; out-of-range or non-numeric values emit `ModerationThresholdOutOfRange` / `ModerationThresholdType` diagnostics during `ci:eval:lint:schema`. The default is `0.5` when the field is omitted.
 
 `Invoke-VallyEvals.ps1 -ModerationThreshold <value>` overrides every spec's threshold for a run. CLI override wins over the per-spec value, which wins over the default.
 
@@ -176,19 +176,22 @@ uv sync --locked --project scripts/evals/moderation
 pwsh scripts/evals/Invoke-CorpusModeration.ps1 -SpecGlob 'evals/**/*.yaml'
 ```
 
-Without the Python dependencies installed, `Invoke-ContentModeration.ps1` exits 2 with a setup error rather than silently passing. The markdown-corpus lane (`Test-EvalSpecText.ps1`) requires only Node and runs in `lint:all` without any opt-in.
+Without the Python dependencies installed, `Invoke-ContentModeration.ps1` exits 2 with a setup error rather than silently passing. The markdown-corpus lane (`Test-EvalSpecText.ps1`) requires only Node and runs as the CI-owned `ci:eval:lint:text` lane without any moderation-environment opt-in.
 
 ## Eval Lint Scripts
 
-Three eval-lint commands run in `lint:all`:
+The CI-owned eval-validation workflow runs the static eval-lint lanes. They are
+not part of `validate:local`; see [Validation Commands and CI-Owned Lanes](validation)
+for local reproduction prerequisites and output handling.
 
-| Script             | Tool                       | Purpose                                                          |
-|--------------------|----------------------------|------------------------------------------------------------------|
-| `eval:lint:vally`  | `vally lint --eval evals/` | Spec validation via the upstream CLI                             |
-| `eval:lint:schema` | `Test-EvalSpec.ps1`        | hve-core schema lint (graders, executor, `moderation.threshold`) |
-| `eval:lint:text`   | `Test-EvalSpecText.ps1`    | retext-profanities + alex.js gate on the AI-artifact corpus      |
+| Script                | Tool                       | Purpose                                                          |
+|-----------------------|----------------------------|------------------------------------------------------------------|
+| `ci:eval:lint:vally`  | `vally lint --eval evals/` | Spec validation via the upstream CLI                             |
+| `ci:eval:lint:schema` | `Test-EvalSpec.ps1`        | hve-core schema lint (graders, executor, `moderation.threshold`) |
+| `ci:eval:lint:text`   | `Test-EvalSpecText.ps1`    | retext-profanities + alex.js gate on the AI-artifact corpus      |
+| `ci:eval:lint:safety` | `Test-VallyTestSafety.ps1` | Safety validation for eval stimuli                               |
 
-`eval:lint:text` scans `.github/{agents,prompts,instructions,skills}/**/*.md` and `docs/**/*.md`. By default `retext-profanities` findings flip the exit code (errors) and `alex` findings emit `::warning` annotations only. Pass `-FailOnAlex` to promote alex findings to errors for local hardening:
+`ci:eval:lint:text` scans `.github/{agents,prompts,instructions,skills}/**/*.md` and `docs/**/*.md`. By default `retext-profanities` findings flip the exit code (errors) and `alex` findings emit `::warning` annotations only. Pass `-FailOnAlex` to promote alex findings to errors for local hardening:
 
 ```pwsh
 pwsh scripts/evals/Test-EvalSpecText.ps1 -FailOnAlex
@@ -206,7 +209,7 @@ False-positive lexical matches (e.g., `penetration test`, `attack surface`, `tok
 
 ### Baseline-equivalence specs
 
-`eval:lint:vally` runs `vally lint --eval evals/`, which validates the eval YAML files immediately under `evals/` but does not recurse into nested subdirectories. The baseline-equivalence suite under [evals/baseline-equivalence/](pathname://../../evals/baseline-equivalence/README.md) ships nested specs (`baseline/eval.yaml`, `customized/eval.yaml`, and `compare.eval.yml`) that need explicit per-file lint invocations:
+`ci:eval:lint:vally` runs `vally lint --eval evals/`, which validates the eval YAML files immediately under `evals/` but does not recurse into nested subdirectories. The baseline-equivalence suite under [evals/baseline-equivalence/](https://github.com/microsoft/hve-core/blob/main/evals/baseline-equivalence/README.md) ships nested specs (`baseline/eval.yaml`, `customized/eval.yaml`, and `compare.eval.yml`) that need explicit per-file lint invocations:
 
 ```pwsh
 vally lint --eval evals/baseline-equivalence/baseline/eval.yaml
@@ -214,7 +217,7 @@ vally lint --eval evals/baseline-equivalence/customized/eval.yaml
 vally lint --eval evals/baseline-equivalence/compare.eval.yml
 ```
 
-[scripts/evals/Invoke-BaselineEquivalence.ps1](../../scripts/evals/Invoke-BaselineEquivalence.ps1) runs all three implicitly during `npm run eval:run:equivalence`. See [evals/baseline-equivalence/README.md](pathname://../../evals/baseline-equivalence/README.md) for the suite operator guide and driver-output contract.
+[scripts/evals/Invoke-BaselineEquivalence.ps1](../../scripts/evals/Invoke-BaselineEquivalence.ps1) runs all three implicitly during `npm run ci:eval:run:equivalence`. See [evals/baseline-equivalence/README.md](https://github.com/microsoft/hve-core/blob/main/evals/baseline-equivalence/README.md) for the suite operator guide and driver-output contract.
 
 ## Running Pester Tests Locally
 

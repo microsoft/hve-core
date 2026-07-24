@@ -40,7 +40,7 @@
     Repository root directory. Defaults to git repo root or script directory.
 
 .NOTES
-    Runs via: npm run eval:moderate:artifacts
+    Runs via: npm run ci:eval:moderate:artifacts
 #>
 [CmdletBinding()]
 param(

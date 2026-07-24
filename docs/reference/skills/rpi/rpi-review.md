@@ -1,8 +1,8 @@
 ---
 title: rpi-review
-description: "Review-only RPI playbook that validates implementation evidence, checks phase completion, and closes the loop with explicit next steps. Use when the user needs review coverage or acceptance evidence."
-sidebar_position: 5
-ms.date: 2026-07-03
+description: "Compare RPI planning and implementation evidence, record review findings, and route follow-up work. Use when an implementation needs acceptance review."
+sidebar_position: 7
+ms.date: 2026-07-16
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->
@@ -17,7 +17,7 @@ ms.date: 2026-07-03
 ## What it does
 
 <!-- BEGIN AUTO-GENERATED: overview -->
-Review-only RPI playbook that validates implementation evidence, checks phase completion, and closes the loop with explicit next steps. Use when the user needs review coverage or acceptance evidence.
+Compare RPI planning and implementation evidence, record review findings, and route follow-up work. Use when an implementation needs acceptance review.
 <!-- END AUTO-GENERATED: overview -->
 
 ## When to use it

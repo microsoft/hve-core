@@ -2,7 +2,7 @@
 title: Team Adoption and Governance
 description: Establish governance practices, naming conventions, onboarding patterns, and change management for team-wide HVE Core adoption
 author: Microsoft
-ms.date: 2026-06-27
+ms.date: 2026-07-16
 ms.topic: how-to
 keywords:
   - governance
@@ -113,7 +113,7 @@ Treat Copilot customization files with the same rigor as production code:
 
 * Require pull request review for changes to instructions, agents, and skills
 * Use CODEOWNERS to route reviews to artifact owners
-* Validate changes with `npm run lint:all` before merging
+* Validate changes with `npm run validate:local` before merging
 * Run `npm run plugin:generate` after modifying collection manifests
 
 ### Handling Conflicting Instructions
@@ -145,17 +145,19 @@ exercise. A simple coding-style instruction works well:
 
 1. Create a file at `.github/instructions/{collection-id}/my-style.instructions.md`
    with minimal frontmatter (`description` and `applyTo` fields)
-2. Run `/prompt-build` and reference an existing instructions file the team
-   uses, so Prompt Builder generates the body following established patterns
-3. Run `/prompt-analyze` against the generated file to check for quality gaps
-4. Iterate with `/prompt-build` to address any issues the analysis found
+2. Run `hve-builder` in create mode and supply an existing team instruction as
+  a known reference
+3. Review HVE Builder's static verdict, behavior-test disposition, and host
+  validation result
+4. Continue the approved improve run if actionable findings require source
+  changes
 5. Test by opening a Copilot chat and verifying the instructions influence
    responses
 6. Submit the file for review following the team's PR process
 
 > [!TIP]
 > Pair the new member with someone experienced during their first
-> customization. Seeing how Prompt Builder generates and refines an artifact
+> customization. Seeing how HVE Builder authors and validates an artifact
 > builds intuition for the full authoring workflow.
 
 ## Change Management
@@ -165,10 +167,9 @@ exercise. A simple coding-style instruction works well:
 Follow a structured process when adding new instructions, agents, or skills:
 
 1. Create the artifact file with minimal frontmatter in a feature branch
-2. Run `/prompt-build` with reference files to generate the body
-3. Run `/prompt-analyze` and iterate with `/prompt-build` until quality checks
-   pass
-4. Run `npm run lint:all` to validate formatting and frontmatter
+2. Run `hve-builder` in create or improve mode with the relevant known references
+3. Resolve its static, behavior, and validation gates until the overall outcome passes
+4. Run `npm run validate:local` to validate local-safe checks, then reproduce any relevant CI-owned lane separately
 5. Update affected collection manifests in `collections/`
 6. Run `npm run plugin:generate` to regenerate plugin outputs
 7. Submit a pull request with clear description of what the artifact does and
@@ -198,7 +199,7 @@ artifacts through these stages:
 To deprecate an artifact:
 
 1. Update the artifact's frontmatter to include `maturity: deprecated`
-2. Run `/prompt-build` to add a deprecation notice pointing to the replacement
+2. Use `hve-builder` improve mode to add a deprecation notice pointing to the replacement
 3. Announce the deprecation and provide a migration timeline
 4. Remove the artifact after the agreed-upon transition period
 

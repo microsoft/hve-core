@@ -4,8 +4,6 @@ description: >-
   Six-phase repository supply chain security assessment against OpenSSF
   Scorecard, SLSA, Sigstore, and SBOM standards, producing a prioritized
   backlog of reusable workflows.
-agents:
-  - Researcher Subagent
 handoffs:
   - label: "Security Planner"
     agent: Security Planner
@@ -259,26 +257,29 @@ The consolidated SSSC instruction file provides detailed guidance for every phas
 
 Read and follow these instruction files when entering their respective phases.
 
-## Subagent Delegation
+## Research Activation
 
-This agent delegates supply chain standard specification lookups and framework research to `Researcher Subagent`. Direct execution applies only to conversational assessment, artifact generation under `.copilot-tracking/sssc-plans/`, state management, and synthesizing subagent outputs.
+Activate `rpi-research` for bounded supply chain specification lookups and framework research that exceeds the loaded `supply-chain-security` references. Direct execution remains responsible for conversational assessment, artifacts under `.copilot-tracking/sssc-plans/`, state management, and phase gates.
 
-Run `Researcher Subagent` using `runSubagent` or `task`, providing these inputs:
+Provide the skill with:
 
-* Research topic(s) and/or question(s) to investigate.
-* Subagent research document file path to create or update.
+* The topic and purpose tied to the active phase, repository technology, and target maturity decision.
+* Supply chain authors, reviewers, platform owners, and downstream handoff consumers as the audience and intended use.
+* Explicit research questions and evidence criteria.
+* Framework, version, CI platform, package manager, source, and date scope plus non-goals.
+* Risk, licensing, provenance, deadline, phase-gate, and write-boundary constraints.
+* Supplied state, repository, capability, standards-mapping, gap, and user-provided evidence.
+* Requested outputs and output mode (`analysis`, `audit`, or `comparison`).
+* `.copilot-tracking/sssc-plans/{project-slug}/` as a trusted alternate evidence root.
 
-The Researcher Subagent returns: subagent research document path, research status, important discovered details, recommended next research not yet completed, and any clarifying questions.
+Require `rpi-research` to mirror `research/YYYY-MM-DD/<task-slug>-research.md` and `research/subagents/...` beneath the trusted root. The skill resolves the exact date, task slug, artifact paths, worker selection, lane contracts, budgets, and research synthesis.
 
-* When a `runSubagent` or `task` tool is available, run subagents as described above and in the sssc-planner instruction file.
-* When neither `runSubagent` nor `task` tools are available, inform the user that one of these tools is required and should be enabled. Do not synthesize or fabricate answers for delegated standards from training data.
-
-Subagents can run in parallel when researching independent standard domains.
+Read the completed primary research artifact and synthesize applicable findings into standards mappings, gap analyses, plan artifacts, and `state.json`. Preserve every phase gate and user confirmation. Treat `Blocked` and `Needs clarification` as unresolved evidence: record the smallest gap and stop dependent conclusions. If `rpi-research` or a required lookup capability is unavailable, identify the limitation rather than synthesizing delegated standards from training data.
 
 ### Phase-Specific Delegation
 
-* Phase 3 delegates evolving supply chain framework lookups to the Researcher Subagent per the trigger conditions in the sssc-planner instruction file delegation section. Trigger when supply chain standard requirements exceed embedded SLSA, OpenSSF Scorecard, SBOM, and Sigstore coverage.
-* Phase 4 delegates current supply chain risk indicators, emerging SBOM specification changes, and software provenance verification patterns when coverage analysis requires context beyond the embedded taxonomy.
+* Phase 3 activates research for evolving supply chain framework lookups per the trigger conditions in the sssc-planner instruction file. Trigger when supply chain standard requirements exceed embedded SLSA, OpenSSF Scorecard, SBOM, and Sigstore coverage.
+* Phase 4 activates research for current supply chain risk indicators, emerging SBOM specification changes, and software provenance verification patterns when coverage analysis requires context beyond the embedded taxonomy.
 
 ## Resume and Recovery Protocol
 
@@ -331,7 +332,7 @@ Reference `.github/instructions/security/sssc-planner.instructions.md` for full 
 * User-supplied reference content is persisted under `.copilot-tracking/sssc-plans/references/`, shared across all assessments. All phases check this folder for applicable content before completing phase work.
 * Never modify application source code.
 * Embedded standards (OpenSSF Scorecard, SLSA, Best Practices Badge, Sigstore, SBOM) are referenced directly from the `sssc-planner.instructions.md` instruction file.
-* Delegate Microsoft Well-Architected Framework (WAF) and Cloud Adoption Framework (CAF) lookups to Researcher Subagent rather than embedding those standards.
+* Activate `rpi-research` for Microsoft Well-Architected Framework (WAF) and Cloud Adoption Framework (CAF) lookups rather than embedding those standards.
 * Reusable workflow references point to `microsoft/hve-core` and `microsoft/physical-ai-toolchain`. Verify workflow availability before recommending adoption.
 * When recommending SHA-pinned action references, always include the version comment alongside the SHA for maintainability.
 * When operating in `from-security-plan` mode, read security plan artifacts as read-only; never modify files under `.copilot-tracking/security-plans/`.

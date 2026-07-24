@@ -701,8 +701,8 @@ function Resolve-HandoffDependencies {
         declarations in YAML frontmatter to compute the transitive closure of
         all agents reachable through handoff chains.
 
-        Handoff targets in frontmatter use display names (e.g., "Task Planner")
-        while agent files use kebab-case stems (e.g., task-planner.agent.md).
+        Handoff targets in frontmatter use display names (e.g., "RPI Agent")
+        while agent files use kebab-case stems (e.g., rpi-agent.agent.md).
         This function builds a name index to resolve both formats.
     .PARAMETER SeedAgents
         Initial agent names (file stems) to start BFS from.

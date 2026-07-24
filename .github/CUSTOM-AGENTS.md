@@ -2,7 +2,7 @@
 title: GitHub Copilot Custom Agents
 description: Specialized AI agents for planning, research, prompt engineering, documentation, and code review workflows
 author: HVE Core Team
-ms.date: 2026-07-09
+ms.date: 2026-07-15
 ms.topic: guide
 keywords:
   - copilot
@@ -24,8 +24,8 @@ Specialized GitHub Copilot behaviors for common development workflows. Each cust
 
 **Example:**
 
-* Select "task-planner" from the dropdown
-* Type: "Create a plan to add Docker SHA validation"
+* Select "RPI Agent" from the dropdown
+* Type: "Research, plan, implement, and review Docker SHA validation"
 * Press Enter
 
 **Requirements:** GitHub Copilot subscription, VS Code with Copilot extension, proper workspace configuration (see [Getting Started](../docs/getting-started/README.md))
@@ -36,18 +36,15 @@ Select from the **agent picker dropdown** in the Chat view:
 
 ### RPI Workflow Agents
 
-The Research-Plan-Implement (RPI) workflow provides a structured approach to complex development tasks.
+The RPI lifecycle keeps Research, Plan, Implement, Review, and Follow-up distinct for complex development tasks. It begins with research readiness: supplied or completed evidence is reused when adequate, and research runs only for a demonstrated requirements, acceptance, dependency, material-risk, complexity, uncertainty, or decision-critical gap.
 
-Each phase has two entry points: the `/task-*` prompt commands (`/task-research`, `/task-plan`, `/task-implement`, `/task-review`) and the `/rpi-*` skill commands (`/rpi-research`, `/rpi-plan`, `/rpi-implement`, `/rpi-review`, plus `/rpi-quick` for the full end-to-end flow). See the [RPI Documentation](../docs/rpi/README.md) for both surfaces.
+`RPI Agent` is a user-selected lifecycle wrapper that activates the matching RPI skills. The `/rpi` prompt provides the same full-lifecycle entry point. Use `/rpi-research`, `/rpi-plan`, `/rpi-implement`, and `/rpi-review` when you need a direct phase entry point.
 
-| Agent                | Purpose                                                                                               | Key Constraint                                            |
-|----------------------|-------------------------------------------------------------------------------------------------------|-----------------------------------------------------------|
-| **rpi-agent**        | Autonomous agent with subagent delegation for complex tasks                                           | Requires a subagent tool enabled                          |
-| **task-researcher**  | Produces research documents with evidence-based recommendations                                       | Research-only; never plans or implements                  |
-| **task-planner**     | Creates 2 planning files (plan, details)                                                              | Requires research first; never implements code            |
-| **task-implementor** | Executes implementation plans with subagent delegation                                                | Requires completed plan files                             |
-| **task-reviewer**    | Validates implementation against research and plan specifications                                     | Requires research/plan artifacts                          |
-| **task-challenger**  | Adversarial questioning agent that interrogates completed implementations with What/Why/How questions | Experimental; no suggestions, hints, or leading questions |
+Use the self-contained `rpi-challenger` skill to interrogate a confirmed subject through adaptive skeptical questions. See the [RPI Documentation](../docs/rpi/README.md) for both surfaces.
+
+| Agent         | Purpose                                                            | Key Constraint                                                          |
+|---------------|--------------------------------------------------------------------|-------------------------------------------------------------------------|
+| **RPI Agent** | User-selected lifecycle wrapper that activates matching RPI skills | Uses research readiness and has no fixed specialized task-worker roster |
 
 ### Documentation and Planning Agents
 
@@ -65,19 +62,20 @@ Each phase has two entry points: the `/task-*` prompt commands (`/task-research`
 | **system-architecture-reviewer** | Reviews system designs for trade-offs and ADR alignment                                                                  | Scoped review; delegates security concerns                                                                                         |
 | **ux-ui-designer**               | JTBD analysis, user journey mapping, and accessibility requirements                                                      | Research artifacts only; visual design in Figma                                                                                    |
 
-### Utility Agents
-
-| Agent      | Purpose                                    | Key Constraint                        |
-|------------|--------------------------------------------|---------------------------------------|
-| **memory** | Persists repository facts for future tasks | Stores only durable, actionable facts |
-
 ### Code and Review Agents
 
 | Agent                 | Purpose                                                                | Key Constraint                                                |
 |-----------------------|------------------------------------------------------------------------|---------------------------------------------------------------|
-| **prompt-builder**    | Compatibility entry point for HVE Builder artifact lifecycle work      | Routes to one author-review-test-validation implementation    |
 | **security-reviewer** | OWASP vulnerability assessment with subagent-driven verification       | Delegates all reference reading to subagents                  |
 | **code-review**       | Human-gated review orchestrator dispatching five perspective subagents | Operator confirms scope, perspectives, and depth; review-only |
+
+### Related Workflow Skills
+
+Use `hve-builder` as the canonical lifecycle for creating, improving,
+refactoring, reviewing, or validating prompts, instructions, agents,
+subagents, and skills. The retained `prompt-builder`, `prompt-analyze`, and
+`prompt-refactor` skills are compatibility aliases that route legacy requests
+to `hve-builder`; they are not independent agents or lifecycle owners.
 
 ### Generator Agents
 
@@ -104,72 +102,27 @@ Each phase has two entry points: the `/task-*` prompt commands (`/task-research`
 
 ## Agent Details
 
-### rpi-agent
+### RPI Agent
 
-**Creates:** Subagent research artifacts when needed:
+**Activates:** The matching RPI skills for the applicable lifecycle concepts:
 
-* `.copilot-tracking/subagent/YYYY-MM-DD/topic-research.md`
+* `rpi-research` only when research readiness identifies a demonstrated gap
+* `rpi-plan` for the parent-owned plan, phase details, and independent critique
+* `rpi-implement` for direct execution and change evidence
+* `rpi-review` for one evidence-reconciliation record and outcome routing
 
-**Workflow:** Understand → Implement → Verify → Continue or Complete
+**Workflow:** Research readiness → Plan → Implement → Review → Follow-up. Research can be reused or satisfied-and-skipped when the evidence set is adequate. Follow-up routes defects to implementation, decisions to planning, evidence gaps to research, and residual work to a distinct next item.
 
-**Critical:** Requires a subagent tool enabled. Delegates MCP tools, heavy terminal commands, and complex research to subagents. Provides autonomous execution with loop guard for detecting stuck states.
+**Artifacts:** When a stage needs a durable record, the lifecycle uses one stable task ID and these marker-addressed paths:
 
-### task-researcher
+* `.copilot-tracking/research/{{YYYY-MM-DD}}/{{task_slug}}-research.md`
+* `.copilot-tracking/plans/{{YYYY-MM-DD}}/{{task_slug}}-plan.md`
+* `.copilot-tracking/details/{{YYYY-MM-DD}}/{{task_slug}}-phase-details.md`
+* `.copilot-tracking/reviews/plans/{{YYYY-MM-DD}}/{{task_slug}}-plan-critique.md`
+* `.copilot-tracking/changes/{{YYYY-MM-DD}}/{{task_slug}}-changes.md`
+* `.copilot-tracking/reviews/logs/{{YYYY-MM-DD}}/{{task_slug}}-review.md`
 
-**Creates:** Single authoritative research document:
-
-* `.copilot-tracking/research/{{YYYY-MM-DD}}-topic-research.md` (primary research with evidence-based recommendations)
-* `.copilot-tracking/subagent/{{YYYY-MM-DD}}/task-research.md` (subagent research outputs when delegating)
-
-**Workflow:** Deep tool-based research → Document findings → Consolidate to one approach → Hand off to planner
-
-**Critical:** Research-only specialist. Uses subagent tools. Continuously refines document. Never plans or implements.
-
-### task-planner
-
-**Creates:** Two interconnected files per task:
-
-* `.copilot-tracking/plans/{{YYYY-MM-DD}}-task-plan.instructions.md` (implementation plan with checklist items)
-* `.copilot-tracking/details/{{YYYY-MM-DD}}-task-details.md` (step-by-step execution details)
-
-**Workflow:** Validates research → Creates plan files → User implements separately
-
-**Critical:** Automatically calls task-researcher if research is missing. Treats all user input as planning requests. Never implements actual code.
-
-### task-implementor
-
-**Creates:** Change tracking logs:
-
-* `.copilot-tracking/changes/{{YYYY-MM-DD}}-task-changes.md` (chronological log with Added/Modified/Removed sections)
-
-**Workflow:** Analyze plan → Run subagents per phase → Track progress → Validate
-
-**Critical:** Requires completed plan files. Uses subagent architecture for parallel phase execution. Updates tracking artifacts after each phase.
-
-### task-reviewer
-
-**Creates:** Review validation logs:
-
-* `.copilot-tracking/reviews/{{YYYY-MM-DD}}-{{topic}}-review.md` (findings with severity levels and follow-up work)
-
-**Workflow:** Locate artifacts → Extract checklist → Validate items → Run commands → Document findings
-
-**Critical:** Review-only specialist. Validates against documentation, not assumptions. Produces findings with severity levels (Critical, Major, Minor).
-
-**Documentation:** See [Task Reviewer Guide](../docs/rpi/task-reviewer.md) for detailed usage.
-
-### prompt-builder
-
-**Creates:** Instruction files and prompt files:
-
-* `.github/instructions/{collection-id}/*.instructions.md` (coding guidelines and conventions, by convention)
-* `.github/prompts/{collection-id}/*.prompt.md` (reusable workflow prompts, by convention)
-* `.copilot-tracking/hve-builder/{{YYYY-MM-DD}}/*-review-*.md` (independent static review evidence)
-* `.copilot-tracking/hve-builder/{{YYYY-MM-DD}}/*-behavior-report-*.md` (fidelity-labeled behavior evidence)
-
-**Workflow:** Route mode and write boundary → Author → Fresh-context review → Behavior test → Host validation
-
-**Critical:** Compatibility surface only. The `hve-builder` skill owns the lifecycle, stage gates, Terra/Luna worker models, and final outcome.
+**Critical:** `RPI Agent` is a user-selected lifecycle wrapper, not an autonomous loop or a dispatcher for named specialized task workers. It may use generic bounded delegation only when it materially improves an isolated activity. Navigate durable artifacts with the task ID, `Pxx`, `Pxx-Txx`, headings, and `<!-- rpi:... -->` markers.
 
 ### product-manager-advisor
 
@@ -177,7 +130,7 @@ Each phase has two entry points: the `/task-*` prompt commands (`/task-research`
 
 **Workflow:** Discovery → Story Quality → Prioritization → Validation → Handoff
 
-**Handoffs:** Delegates to `prd-builder` for full PRDs, `brd-builder` for business requirements, `ux-ui-designer` for journey mapping, and `task-researcher` for deep research.
+**Handoffs:** Delegates to `prd-builder` for full PRDs, `brd-builder` for business requirements, `ux-ui-designer` for journey mapping, and activates `rpi-research` for decision-critical research.
 
 **Critical:** Focuses on quality principles rather than prescribing issue formats. Guides teams to leverage platform-native templates (GitHub issue forms, Azure DevOps work item templates). Differentiates from `prd-builder` by focusing on the requirements discovery gate rather than document authoring.
 
@@ -192,7 +145,7 @@ Each phase has two entry points: the `/task-*` prompt commands (`/task-research`
 * Accessibility requirements integrated into journey stages
 * Design handoff sections with flow descriptions and principles
 
-**Handoffs:** Delegates to `product-manager-advisor` for business alignment and `task-researcher` for technical feasibility.
+**Handoffs:** Delegates to `product-manager-advisor` for business alignment and activates `rpi-research` for technical feasibility research.
 
 **Critical:** Research-only. Does not generate UI designs or visual mockups. Produces artifacts that designers translate into Figma flows. Treats accessibility as a foundational constraint.
 
@@ -266,18 +219,6 @@ Each phase has two entry points: the `/task-*` prompt commands (`/task-research`
 
 **Data Sensitivity Warning:** Meeting transcripts retrieved by this agent may contain PII, customer confidential information, and proprietary business data. Analysis files and state files are written to `.copilot-tracking/prd-sessions/` which is gitignored by default when following HVE Core setup guidance, but the files exist **unencrypted on disk**.
 Users are responsible for verifying their repository's `.gitignore` configuration, complying with their organization's data handling policies, and deleting both the `<name>-transcript-analysis.md` and `<name>-transcript.state.json` files after the PRD handoff is complete. The agent will prompt for deletion at handoff completion, but deletion is the user's responsibility.
-
-### memory
-
-**Creates:** Repository memory records and session context:
-
-* `.copilot-tracking/memory/{{YYYY-MM-DD}}/{{short-description}}-memory.md` (session continuity context)
-* `.copilot-tracking/memory/{{YYYY-MM-DD}}/{{short-description}}-artifacts/` (optional companion files)
-* `/memories/repo/<descriptive-name>.jsonl` (durable repository facts for future tasks)
-
-**Workflow:** Identify actionable repository fact → Validate durability → Store with context → Available for future tasks
-
-**Critical:** Stores only durable, reusable facts. Does not store transient discussion, personal preferences, or speculative information.
 
 ### security-planner
 
@@ -449,22 +390,20 @@ It dispatches thin perspective subagents under `.github/agents/coding-standards/
 
 ## Common Workflows
 
-### Autonomous Task Completion
+### Coordinating an RPI Lifecycle
 
-1. Select **rpi-agent** from agent picker
-2. Provide your request
-3. Agent autonomously researches, implements, and verifies
-4. Review results; agent continues if more work remains
-5. Requires a subagent tool enabled in settings
+1. Select **RPI Agent** from the agent picker, or use `/rpi` for the full-lifecycle prompt entry point.
+2. Provide the task, acceptance criteria, decisions, dependencies, and any completed research.
+3. Assess research readiness before activating `rpi-research`; reuse adequate evidence instead of repeating research.
+4. Continue through the applicable phase skills and resume from the durable artifact set when a long lifecycle needs a fresh context.
 
 ### Planning a Feature
 
-1. Select **task-researcher** from agent picker and create research document
-2. Review research and provide decisions on approach
-3. Clear context or start new chat
-4. Select **task-planner** from agent picker and attach research doc
-5. Generate 3-file plan set
-6. Use `/task-implement` to execute the plan (automatically switches to **task-implementor**)
+1. Gather task context, decisions, acceptance criteria, and any completed research
+2. Use `/rpi-research` when a demonstrated planning-readiness gap remains
+3. Use `/rpi-plan` with the available evidence to create a plan, matching phase details, and independent critique
+4. Use `/rpi-implement` to execute approved work and record change evidence
+5. Use `/rpi-review` to reconcile the implementation against the plan and route follow-up
 
 ### Code Review
 
@@ -475,11 +414,9 @@ It dispatches thin perspective subagents under `.github/agents/coding-standards/
 
 ### Creating Instructions
 
-1. Select **prompt-builder** from agent picker
-2. Provide the target path, reference context, and requirements
-3. HVE Builder resolves the create or improve mode and source-write boundary
-4. HVE Builder authors, independently reviews, behavior-tests, and validates the artifact
-5. Review the overall outcome and evidence links before merging
+1. Invoke `hve-builder` with the target path, reference context, and requirements
+2. Let HVE Builder resolve the create or improve mode and source-write boundary
+3. Review the independent static verdict, behavior evidence when required, validation result, and overall outcome before merging
 
 ### Creating Documentation
 
@@ -493,16 +430,16 @@ It dispatches thin perspective subagents under `.github/agents/coding-standards/
 
 * **Linting Exemption:** Files in `.copilot-tracking/**` are exempt from repository linting rules
 * **Agent Switching:** Clear context or start a new chat when switching between specialized agents
-* **Research First:** Task planner requires completed research; will automatically invoke researcher if missing
-* **No Implementation:** Task planner and researcher never implement actual project code. They create planning artifacts only
-* **Subagent Requirements:** Several agents require a subagent tool enabled in Copilot settings
+* **Evidence Readiness:** `rpi-plan` uses supplied or complete evidence and activates `rpi-research` only for a demonstrated readiness gap
+* **Phase Ownership:** `rpi-research` and `rpi-plan` produce evidence and planning artifacts; `rpi-implement` owns source changes
+* **RPI entry surfaces:** `RPI Agent` and `/rpi` activate the same phase skills; neither requires a fixed specialized task-worker roster
 
 ## Tips
 
 * Be specific in your requests for better results
 * Provide context about what you're working on
 * Review generated outputs before using
-* Chain agents together for complex tasks
-* Use the RPI workflow (Researcher → Planner → Implementor) for substantial features
+* Use the RPI lifecycle when research readiness identifies a gap or the task needs durable planning, implementation evidence, review, or follow-up routing
+* Resume long-lived work from the stable task ID and dated RPI artifacts instead of relying on conversation history
 
 🤖 Crafted with precision by ✨Copilot following brilliant human instruction, then carefully refined by our team of discerning human reviewers.

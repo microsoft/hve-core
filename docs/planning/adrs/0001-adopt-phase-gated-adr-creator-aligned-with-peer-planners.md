@@ -3,7 +3,7 @@ id: "0001"
 title: "Adopt phase-gated ADR Creator aligned with peer planners"
 description: "Adopt a phase-gated ADR Creator agent and supporting skills/instructions that align ADR authoring with peer planners (Security, RAI, SSSC) under MADR v4.0.0 plus hve-core extensions for IDs, lineage, and ASR triggers."
 author: "HVE Core Maintainers"
-ms.date: "2026-05-08"
+ms.date: "2026-07-16"
 ms.topic: "reference"
 status: "accepted"
 proposed_date: "2026-05-01"
@@ -163,7 +163,7 @@ Option D presents false initial consistency that diverges quickly because the AD
 
 Compliance with this decision is confirmed by four mechanisms:
 
-1. Static validation: `npm run lint:all` runs frontmatter, schema, applyTo-glob, and copyright checks across the agent body, four instruction files, the skill, templates, and scripts.
+1. Static validation: at the time of this decision, `npm run lint:all` was the validation aggregate name. Its current replacement is `npm run validate:local`, which runs frontmatter, schema, applyTo-glob, and copyright checks across the agent body, four instruction files, the skill, templates, and scripts.
 2. Skill test suite: `npm run test:py -- adr-author` runs the 40-test pytest suite covering Frame/Decide/Govern phase contracts, lineage allocation, supersession atomicity, and frontmatter validation.
 3. Plugin generation: `npm run plugin:generate` regenerates the `project-planning` plugin from `collections/project-planning.collection.yml`; drift between the agent body and the collection manifest fails this step.
 4. Self-validation: this ADR itself was produced by the ADR Creator under `entryMode: capture`, `outputTemplate: madr-v4`, `diagramFormat: mermaid`, and `autonomyTier: full`, exercising every Frame and Decide gate plus the Govern allocator and frontmatter validator end-to-end.
@@ -248,7 +248,7 @@ flowchart LR
 * Risk: upstream MADR v4 evolves and verbatim blocks fall out of date. Mitigation: pinned CC0 text lives in a single instruction file and is covered by a verbatim-fidelity test that fails on any diff.
 * Risk: closed enums (status, ASR triggers) reject legitimate new values. Mitigation: extension requires a superseding ADR; friction is intentional and the path is documented in `adr-standards.instructions.md`.
 * Risk: `adopt-template` mode imports a malformed template and corrupts a project's ADR space. Mitigation: normalize step rejects templates that fail schema validation before any file is written; `.adr-config.yml` is committed and reviewable.
-* Risk: `lint:adr-consistency` is not yet chained from `npm run lint:all`, so the registry-driven Govern gate runs only when invoked directly. Mitigation: tracked under the adr-creator-quality-guardrails plan, Phase 6 Step 6.1; the Pester suite already covers all nine rules and runs under `npm run test:ps`.
+* Risk: `lint:adr-consistency` was not chained from the historical `npm run lint:all` aggregate, so the registry-driven Govern gate ran only when invoked directly. The current local-safe replacement is `npm run validate:local`. Mitigation: tracked under the adr-creator-quality-guardrails plan, Phase 6 Step 6.1; the Pester suite already covers all nine rules and runs under `npm run test:ps`.
 
 ## Rollback / Exit Strategy
 
@@ -286,7 +286,7 @@ No data migration is required: ADRs are markdown files with stable frontmatter a
 
 ## More Information
 
-* Plan: `.copilot-tracking/plans/2026-05-05/adr-mode-autonomy-alignment-plan.instructions.md`
+* Plan: `.copilot-tracking/plans/2026-05-05/adr-mode-autonomy-alignment-plan.md`
 * Implementation log: `.copilot-tracking/changes/2026-05-05/adr-mode-autonomy-alignment-changes.md`
 * Review log: `.copilot-tracking/reviews/2026-05-06/adr-mode-autonomy-alignment-plan-review.md`
 * Agent body: `.github/agents/project-planning/adr-creation.agent.md`

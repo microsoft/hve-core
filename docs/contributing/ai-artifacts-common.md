@@ -3,7 +3,7 @@ title: 'AI Artifacts Common Standards'
 description: 'Common standards and quality gates for all AI artifact contributions to hve-core'
 sidebar_position: 2
 author: Microsoft
-ms.date: 2026-06-28
+ms.date: 2026-07-15
 ms.topic: reference
 ---
 
@@ -170,8 +170,8 @@ items:
   - path: .github/instructions/coding-standards/python-script.instructions.md
     kind: instruction
     maturity: stable
-  - path: .github/prompts/hve-core/task-plan.prompt.md
-    kind: prompt
+  - path: .github/skills/rpi/rpi-plan/SKILL.md
+    kind: skill
     maturity: preview
 ```
 
@@ -301,7 +301,7 @@ When assigning collections to artifacts:
 
 * Include `hve-core-all` plus any role-specific collections that particularly benefit for universal artifacts
 * Include only the relevant collections for role-specific artifacts (omit `hve-core-all` for highly specialized artifacts)
-* Assign cross-cutting tools like RPI workflow artifacts (`task-researcher`, `task-planner`) to multiple relevant collections
+* Assign cross-cutting tools like RPI Agent and the `rpi-*` phase skills to multiple relevant collections
 
 #### Example Collection Assignments
 
@@ -888,7 +888,7 @@ When contributing AI artifacts:
 
 * Read `.github/copilot-instructions.md` for repository-wide conventions
 * Review existing files in same category for patterns
-* Use `prompt-builder.agent.md` agent for guided assistance
+* Use the `hve-builder` skill for guided artifact authoring, review, and validation
 
 ### Ask Questions
 

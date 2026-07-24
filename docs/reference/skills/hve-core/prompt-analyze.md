@@ -2,7 +2,7 @@
 title: prompt-analyze
 description: Compatibility alias for read-only prompt artifact review. Routes static and behavior analysis to hve-builder review mode.
 sidebar_position: 5
-ms.date: 2026-07-13
+ms.date: 2026-07-23
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->

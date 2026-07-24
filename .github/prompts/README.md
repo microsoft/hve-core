@@ -2,7 +2,7 @@
 title: GitHub Copilot Prompts
 description: Coaching and guidance prompts for specific development tasks that provide step-by-step assistance and context-aware support
 author: Edge AI Team
-ms.date: 2026-07-09
+ms.date: 2026-07-15
 ms.topic: hub-page
 estimated_reading_time: 3
 keywords:
@@ -20,7 +20,7 @@ This directory contains **coaching and guidance prompts** designed to provide st
 
 ## How to Use Prompts
 
-Prompts can be invoked in GitHub Copilot Chat using `/prompt-name` syntax (e.g., `/task-research`, `/git-commit`). They provide:
+Prompts can be invoked in GitHub Copilot Chat using `/prompt-name` syntax (for example, `/rpi` or `/git-commit`). They provide:
 
 * **Educational Guidance**: Step-by-step coaching approach
 * **Context-Aware Assistance**: Project-specific guidance and examples
@@ -31,13 +31,9 @@ Prompts can be invoked in GitHub Copilot Chat using `/prompt-name` syntax (e.g.,
 
 ### Onboarding, Research & Planning
 
-* **[Task Research](./hve-core/task-research.prompt.md)** - Initiates research for task implementation from user requirements (use `/task-research <topic>` to invoke)
-* **[Task Plan](./hve-core/task-plan.prompt.md)** - Creates implementation plans from research documents (use `/task-plan` to invoke)
-* **[Task Implement](./hve-core/task-implement.prompt.md)** - Executes implementation plans with tracking and stop controls (use `/task-implement` to invoke)
-* **[Task Review](./hve-core/task-review.prompt.md)** - Initiates implementation review from context or artifact discovery
-* **[Task Challenge](./hve-core/task-challenge.prompt.md)** - Adversarial What/Why/How interrogation of completed implementation artifacts
-* **[RPI](./hve-core/rpi.prompt.md)** - Autonomous Research-Plan-Implement-Review-Discover workflow for completing tasks
-* **[Checkpoint](./hve-core/checkpoint.prompt.md)** - Save or restore conversation context using memory files
+* **[RPI](./hve-core/rpi.prompt.md)** - Coordinates one task through Research, Plan, Implement, Review, and Follow-up with the RPI Agent and matching `rpi-*` skills
+
+Use `/rpi-research`, `/rpi-plan`, `/rpi-implement`, or `/rpi-review` when you need one bounded RPI phase. Resume longer work from the durable artifacts owned by that workflow rather than from a generic conversation checkpoint.
 
 ### Source Control & Commit Quality
 
@@ -53,11 +49,10 @@ Prompts can be invoked in GitHub Copilot Chat using `/prompt-name` syntax (e.g.,
 
 ### Prompt Engineering & Evaluation
 
-* **[Prompt Build](./hve-core/prompt-build.prompt.md)** - Build or improve prompt engineering artifacts following quality criteria
-* **[Prompt Analyze](./hve-core/prompt-analyze.prompt.md)** - Evaluate prompt engineering artifacts against quality criteria and report findings
-* **[Prompt Refactor](./hve-core/prompt-refactor.prompt.md)** - Refactor and clean up prompt engineering artifacts through iterative improvement
 * **[Vally Test Write](./hve-core/vally-test-write.prompt.md)** - Author Vally conformance test stimuli for an existing prompt, instructions, agent, or skill
 * **[Evals Import](./hve-core/evals-import.prompt.md)** - Import a CSV or XLSX corpus into Vally eval suites with safety lint and dedupe
+
+Use the `hve-builder` skill to create, improve, refactor, review, or validate prompt-engineering artifacts. The retained `prompt-builder`, `prompt-analyze`, and `prompt-refactor` skills are compatibility aliases that route legacy requests to `hve-builder`; they are not prompt files or independent lifecycle owners. Vally conformance authoring remains owned by `Vally Test Author` and the `vally-tests` skill.
 
 ### Azure DevOps Integration
 
@@ -106,9 +101,9 @@ Jira workflow support is available through dedicated prompts in this directory. 
 * **[DT Method Next](./design-thinking/dt-method-next.prompt.md)** - Assess project state and recommend the next method with sequencing validation
 * **[DT Canonical Deck](./design-thinking/dt-canonical-deck.prompt.md)** - Canonical deck workflow with snapshot generation and optional customer-card PowerPoint build
 * **[DT Figma Export](./design-thinking/dt-figma-export.prompt.md)** - Export Design Thinking artifacts to a FigJam board or Figma Design file
-* **[DT Handoff - Problem Space](./design-thinking/dt-handoff-problem-space.prompt.md)** - Compile Methods 1-3 outputs into an RPI-ready artifact targeting Task Researcher
-* **[DT Handoff - Solution Space](./design-thinking/dt-handoff-solution-space.prompt.md)** - Compile Methods 4-6 outputs into an RPI-ready artifact targeting Task Researcher
-* **[DT Handoff - Implementation Space](./design-thinking/dt-handoff-implementation-space.prompt.md)** - Compile Methods 7-9 outputs into an RPI-ready artifact targeting Task Researcher
+* **[DT Handoff - Problem Space](./design-thinking/dt-handoff-problem-space.prompt.md)** - Compile Methods 1-3 outputs into an RPI-ready artifact for `rpi-research`
+* **[DT Handoff - Solution Space](./design-thinking/dt-handoff-solution-space.prompt.md)** - Compile Methods 4-6 outputs into an RPI-ready artifact for `rpi-research`
+* **[DT Handoff - Implementation Space](./design-thinking/dt-handoff-implementation-space.prompt.md)** - Compile Methods 7-9 outputs into an RPI-ready artifact for `rpi-research`
 
 > **Note:** The per-method coaching prompts (`dt-method-04-*`, `dt-method-05-*`, `dt-method-06-*`) are driven by the DT Coach agent mid-session and are not typically invoked directly.
 
@@ -132,7 +127,7 @@ Jira workflow support is available through dedicated prompts in this directory. 
 * **[SSSC from Security Plan](./security/sssc-from-security-plan.prompt.md)** - Extend a Security Planner assessment with supply chain coverage
 * **[VEX Scan](./security/vex-scan.prompt.md)** - Full VEX pipeline: scan dependencies, enrich CVEs, analyze exploitability, and draft an OpenVEX document
 * **[VEX Triage](./security/vex-triage.prompt.md)** - Triage CVEs from an existing scan report or SBOM and draft an OpenVEX document
-* **[VEX Implement](./security/vex-implement.prompt.md)** - Plan the work to stand up VEX in a target project as a backlog for Task-* implementors
+* **[VEX Implement](./security/vex-implement.prompt.md)** - Plan the work to stand up VEX in a target project as a backlog for `rpi-implement`
 * **[Incident Response](./security/incident-response.prompt.md)** - Incident response workflow for Azure operations with triage, diagnostics, mitigation, and RCA phases
 * **[Risk Register](./security/risk-register.prompt.md)** - Generate a qualitative risk assessment with a P×I matrix and mitigation plans
 
@@ -158,9 +153,9 @@ Jira workflow support is available through dedicated prompts in this directory. 
 
 ## Quick Start
 
-1. **Researching a complex task?** Use `/task-research <topic>` to investigate with [Task Research](./hve-core/task-research.prompt.md)
-2. **Planning implementation?** Use `/task-plan` with a research file to create actionable plans with [Task Plan](./hve-core/task-plan.prompt.md)
-3. **Executing a plan?** Use `/task-implement` to execute plans with [Task Implement](./hve-core/task-implement.prompt.md)
+1. **Coordinating a complete task?** Use [RPI](./hve-core/rpi.prompt.md) with `/rpi task="<outcome>"`
+2. **Working on one RPI phase?** Use `/rpi-research`, `/rpi-plan`, `/rpi-implement`, or `/rpi-review`
+3. **Authoring an HVE artifact?** Use `hve-builder`; use the Vally prompts above only for conformance-test authoring or corpus import
 4. **Committing changes?** Use [Git Commit Message Generator](./hve-core/git-commit-message.prompt.md) or [Git Commit](./hve-core/git-commit.prompt.md)
 5. **Handling merge conflicts?** Use [Git Merge](./hve-core/git-merge.prompt.md)
 6. **Setting up Git?** Use [Git Setup](./hve-core/git-setup.prompt.md)

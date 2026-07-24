@@ -1,8 +1,8 @@
 ---
 title: Dt Handoff Solution Space
-description: Solution Space exit handoff - compiles DT Methods 4-6 outputs into an RPI-ready artifact targeting Task Researcher
+description: Compiles DT Methods 4-6 into research-ready input for rpi-research at the Solution Space exit
 sidebar_position: 5
-ms.date: 2026-07-03
+ms.date: 2026-07-16
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->
@@ -17,7 +17,7 @@ ms.date: 2026-07-03
 ## What it does
 
 <!-- BEGIN AUTO-GENERATED: overview -->
-Solution Space exit handoff - compiles DT Methods 4-6 outputs into an RPI-ready artifact targeting Task Researcher
+Compiles DT Methods 4-6 into research-ready input for rpi-research at the Solution Space exit
 <!-- END AUTO-GENERATED: overview -->
 
 ## When to use it

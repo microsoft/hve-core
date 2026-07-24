@@ -3,7 +3,7 @@ title: Multi-Root Workspace Installation
 description: Set up your enterprise fork of HVE Core using VS Code multi-root workspaces
 sidebar_position: 6
 author: Microsoft
-ms.date: 2026-06-30
+ms.date: 2026-07-15
 ms.topic: how-to
 keywords:
   - multi-root workspace
@@ -264,7 +264,7 @@ After setup, verify HVE Core is working:
 1. Check the Explorer sidebar shows both folders
 2. Open Copilot Chat (`Ctrl+Alt+I`)
 3. Click the agent picker dropdown
-4. Verify HVE Core agents appear (task-planner, task-researcher, etc.)
+4. Verify `RPI Agent` and `Documentation` appear, then confirm `/rpi-research` is available
 
 ## Troubleshooting
 

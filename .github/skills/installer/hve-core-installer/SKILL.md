@@ -6,7 +6,7 @@ license: MIT
 metadata:
   authors: "microsoft/hve-core"
   spec_version: "1.0"
-  last_updated: "2026-04-01"
+  last_updated: "2026-07-15"
 ---
 
 # HVE-Core Installer Skill
@@ -55,7 +55,7 @@ Present the following and await explicit consent:
 I'll help you install HVE-Core agents, prompts, instructions and skills.
 
 Available content:
-• 25+ specialized agents (task-researcher, task-planner, etc.)
+• Specialized agents, including RPI Agent, Documentation, and domain planners
 • Reusable prompt templates for common workflows
 • Technology-specific coding instructions (bash, python, markdown, etc.)
 • Domain-specific skills (pr-reference, etc.)
@@ -193,9 +193,8 @@ The HVE Core extension has been installed from the VS Code Marketplace.
 🔗 Marketplace: https://marketplace.visualstudio.com/items?itemName=ise-hve-essentials.hve-core
 
 🧪 Available Agents:
-• task-researcher, task-planner, task-implementor, task-reviewer
-• github-backlog-manager, adr-creation, doc-ops, pr-review
-• prompt-builder, memory, and more!
+• rpi-agent, documentation, github-backlog-manager, and adr-creation
+• code-review, security-planner, ux-ui-designer, and more!
 
 🪝 Hooks (manual step): The Marketplace extension is declarative and does not
    write chat.hookFilesLocations. To enable bundled hooks (e.g. telemetry), add
@@ -643,9 +642,8 @@ Method [N]: [Name] installed successfully.
 📖 Documentation: https://github.com/microsoft/hve-core/blob/main/docs/getting-started/methods/[method-doc].md
 
 🧪 Available Agents:
-• task-researcher, task-planner, task-implementor, task-reviewer
-• github-backlog-manager, adr-creation, doc-ops, pr-review
-• prompt-builder, memory, and more!
+• rpi-agent, documentation, github-backlog-manager, and adr-creation
+• code-review, security-planner, ux-ui-designer, and more!
 
 📋 Configuring optional settings...
 ```
@@ -724,13 +722,13 @@ After the gitignore checkpoint (for **any** installation method), present MCP co
 ```text
 📡 MCP Server Configuration (Optional)
 
-Some HVE-Core agents integrate with external services via MCP (Model Context Protocol):
+Some HVE-Core capabilities integrate with external services via MCP (Model Context Protocol):
 
-| Agent                  | MCP Server               | Purpose                              |
+| Capability             | MCP Server               | Purpose                              |
 |------------------------|--------------------------|--------------------------------------|
 | ado-prd-to-wit         | ado                      | Azure DevOps work items              |
 | github-backlog-manager | github                   | GitHub backlog management            |
-| task-researcher        | context7, microsoft-docs | Documentation lookup                 |
+| rpi-research           | context7, microsoft-docs | Documentation lookup                 |
 | dt-coach               | figma                    | FigJam board export for DT artifacts |
 
 ⚠️ Jira agents (jira-backlog-manager, jira-prd-to-wit) use environment variables
@@ -901,7 +899,7 @@ After gitignore and MCP checkpoints complete, display the final completion messa
 2. Open Copilot Chat (`Ctrl+Alt+I`) and click the agent picker dropdown
 3. Select an agent to start working
 
-💡 Select `task-researcher` from the picker to explore HVE-Core capabilities
+💡 Select `RPI Agent` from the picker to explore HVE-Core capabilities
 ```
 <!-- </final-completion-report> -->
 
@@ -937,12 +935,9 @@ Present the agent selection prompt:
 HVE-Core includes specialized agents for common workflows.
 Copying agents enables local customization and offline use.
 
-🔬 RPI Core (Research-Plan-Implement workflow)
-  • task-researcher - Technical research and evidence gathering
-  • task-planner - Implementation plan creation
-  • task-implementor - Plan execution with tracking
-  • task-reviewer - Implementation review and validation
-  • rpi-agent - RPI workflow coordinator
+🔬 HVE Core Starter Agents
+  • rpi-agent - Research, Plan, Implement, Review, and Follow-up coordinator
+  • documentation - Documentation audit, drift, authoring, and validation
 
 📋 Planning & Documentation
   • adr-creation, agile-coach, brd-builder, doc-ops, prd-builder
@@ -952,17 +947,14 @@ Copying agents enables local customization and offline use.
   • gen-data-spec, gen-jupyter-notebook, gen-streamlit-dashboard
 
 ✅ Review & Testing
-  • pr-review, prompt-builder, test-streamlit-dashboard
-
-🧠 Utilities
-  • memory - Conversation memory and session continuity
+  • code-review, test-streamlit-dashboard
 
 🔗 Platform-Specific
   • ado-prd-to-wit (Azure DevOps)
   • github-backlog-manager (GitHub)
 
 Options:
-  [1] Install RPI Core only (recommended)
+  [1] Install HVE Core starter agents (recommended)
   [2] Install by collection
   [3] Skip agent installation
 
@@ -972,7 +964,7 @@ Your choice? (1/2/3)
 
 User input handling:
 
-* "1", "rpi", "rpi core", "core" → Copy RPI Core bundle only
+* "1", "rpi", "starter", "core" → Copy the HVE Core starter bundle
 * "2", "collection", "by collection" → Proceed to Collection Selection sub-flow
 * "3", "skip", "none", "no" → Skip to success report
 * Unclear response → Ask for clarification
@@ -1045,10 +1037,10 @@ User input handling:
 
 ### Agent Bundle Definitions
 
-| Bundle            | Agents                                                                    |
-|-------------------|---------------------------------------------------------------------------|
-| `hve-core`        | task-researcher, task-planner, task-implementor, task-reviewer, rpi-agent |
-| `collection:<id>` | Stable agents matching the collection                                     |
+| Bundle            | Agents                            |
+|-------------------|-----------------------------------|
+| `hve-core`        | rpi-agent, documentation          |
+| `collection:<id>` | Stable agents matching collection |
 
 ### Collision Detection
 
@@ -1165,11 +1157,11 @@ Present upgrade summary:
 📋 Upgrade Summary
 
 Files to update (managed):
-  ✅ .github/agents/hve-core/task-researcher.agent.md
-  ✅ .github/agents/hve-core/task-planner.agent.md
+  ✅ .github/agents/rpi-agent.agent.md
+  ✅ .github/agents/documentation.agent.md
 
 Files requiring decision (modified):
-  ⚠️ .github/agents/hve-core/task-implementor.agent.md
+  ⚠️ .github/agents/rpi-agent.agent.md
 
 Files skipped (ejected):
   🔒 .github/agents/custom-agent.agent.md
@@ -1180,7 +1172,7 @@ For modified files, choose:
   [E] Eject (never update this file again)
   [D] Show diff
 
-Process file: task-implementor.agent.md?
+Process file: rpi-agent.agent.md?
 ```
 <!-- </upgrade-summary> -->
 
@@ -1191,7 +1183,7 @@ When user requests diff:
 <!-- <diff-display> -->
 ```text
 ─────────────────────────────────────
-File: .github/agents/hve-core/task-implementor.agent.md
+File: .github/agents/rpi-agent.agent.md
 Status: modified
 ─────────────────────────────────────
 

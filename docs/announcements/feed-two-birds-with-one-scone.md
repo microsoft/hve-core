@@ -3,12 +3,12 @@ title: Feed Two Birds With One Scone
 description: Contribute to HVE Core while learning HVE Core, by using HVE Core on HVE Core itself.
 sidebar_position: 2
 author: Microsoft
-ms.date: 2026-06-14
+ms.date: 2026-07-15
 ms.topic: concept
 keywords:
   - contributing
   - sssc-planner
-  - task-researcher
+  - rpi-research
   - dogfooding
   - announcements
 estimated_reading_time: 5
@@ -37,15 +37,15 @@ The Secure Software Supply Chain (SSSC) Planner is a good place to try this. Sup
 
 Here's a short loop you can do in one sitting.
 
-### 1. Start with Task Researcher
+### 1. Start with RPI research
 
-Open the chat agent picker in VS Code and select Task Researcher by name. It's not a slash command and not an @ handle; you switch to it from the picker like you would any other custom agent.
+Invoke the `rpi-research` skill directly, or select RPI Agent and ask it to begin with research readiness. Both routes use the current RPI research workflow rather than a separate researcher agent.
 
 Ask it something like:
 
 > Research the current state of HVE Core's supply chain posture so we can hand off to the SSSC Planner. Look at workflows, signing, dependency pinning, and existing supply chain docs.
 
-Task Researcher does the reading for you and produces a single research document under `.copilot-tracking/research/`. You'll get an evidence-backed picture of what already exists, what looks unfinished, and where the SSSC Planner should focus first.
+The research workflow produces a dated evidence document under `.copilot-tracking/research/`. You'll get an evidence-backed picture of what already exists, what looks unfinished, and where the SSSC Planner should focus first.
 
 ### 2. Hand off to the SSSC Planner
 

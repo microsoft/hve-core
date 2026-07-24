@@ -1,6 +1,5 @@
 ---
 description: "Authors Vally conformance test stimuli for an existing prompt, instructions, agent, or skill artifact"
-agent: Prompt Builder
 argument-hint: "[files=...] [kind=auto] [mode=from-artifact]"
 ---
 

@@ -13,7 +13,7 @@ tags:
   - agents
   - security
 author: Microsoft
-ms.date: 2026-06-27
+ms.date: 2026-07-15
 ms.topic: reference
 estimated_reading_time: 8
 ---
@@ -117,7 +117,7 @@ Map each operational bucket to the relevant controls from OWASP Top 10, NIST 800
 | NIST 800-53    | Comprehensive security controls | Mapped across all buckets          |
 | CIS Benchmarks | Configuration baselines         | Mapped to Infrastructure and Build |
 
-The agent dispatches the Researcher Subagent to perform WAF (Well-Architected Framework) and CAF (Cloud Adoption Framework) runtime lookups when cloud-hosted components are in scope.
+The agent activates `rpi-research` to perform WAF (Well-Architected Framework) and CAF (Cloud Adoption Framework) runtime lookups when cloud-hosted components are in scope.
 
 ### State Transitions
 

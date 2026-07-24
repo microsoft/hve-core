@@ -1,9 +1,9 @@
 ---
 title: "Context Engineering: Why AI Context Management Matters"
-description: Understanding LLM recency bias, context windows, and why /clear is an engineering practice, not just a step
+description: Understand how long RPI lifecycles accumulate context and how durable artifacts support deliberate resumption
 sidebar_position: 3
 author: Microsoft
-ms.date: 2026-07-08
+ms.date: 2026-07-15
 ms.topic: concept
 keywords:
   - context engineering
@@ -16,9 +16,9 @@ keywords:
 estimated_reading_time: 7
 ---
 
-You invoke `/rpi` to add a new feature. The agent researches your codebase, builds a plan, implements methodically, and produces clean, well-structured code. You're impressed. Then, in the same conversation, you ask for a second feature: "Now add input validation to the API endpoint."
+You begin a long RPI lifecycle through `RPI Agent` or `/rpi-quick` to add a feature. The research-readiness assessment reuses adequate evidence or activates research for a demonstrated gap. Planning, implementation, and review then leave durable task evidence. In the same conversation, you ask for a second feature: "Now add input validation to the API endpoint."
 
-The agent skips research entirely, skips planning, and jumps straight to writing code. The output compiles. Tests pass. But the validation logic misses three edge cases that a research phase would have uncovered, ignores the validation patterns already established in your codebase, and introduces a naming convention that contradicts every other validator in the project.
+The conversation jumps straight to writing code without reassessing whether the new task has adequate evidence, an approved plan, or a decision-critical gap. The output compiles. Tests pass. But the validation logic misses three edge cases, ignores the validation patterns already established in your codebase, and introduces a naming convention that contradicts every other validator in the project.
 
 It looks right but produces shallow work. The problem isn't the AI's capability. The problem is what the AI can _see_.
 
@@ -26,18 +26,18 @@ It looks right but produces shallow work. The problem isn't the AI's capability.
 
 Large language models process conversations as sequences of tokens with limited attention. Every message you send and every response you receive becomes part of that sequence, competing for the model's focus.
 
-At the start of a conversation, system prompt instructions occupy roughly 3K tokens. The model follows them closely because they represent most of what it can see. After a full RPI cycle, the conversation has grown to 50K, 100K, or even 200K tokens of implementation output:  code, file contents, tool results, and validation logs.
+At the start of a conversation, system prompt instructions occupy roughly 3K tokens. The model follows them closely because they represent most of what it can see. After a long RPI lifecycle, a conversation can grow to 50K, 100K, or even 200K tokens of implementation output, file contents, tool results, and validation logs.
 
 Those 3K tokens of instructions now compete against 50K+ tokens of recent implementation context. The model doesn't forget the instructions. It deprioritizes them because more recent tokens receive disproportionate attention weight.
 
-The result is predictable. After completing one implementation cycle, the dominant pattern in the conversation is "implement and validate." When you make a new request, the model pattern-matches to that dominant behavior rather than re-reading the phase ordering instructions that tell it to start with research.
+The result is predictable. After completing implementation work, the dominant pattern in the conversation can become "implement and validate." When you make a new request, the model may pattern-match to that behavior rather than reassessing research readiness, planning evidence, and the next responsible lifecycle concept.
 
 > [!WARNING]
 > A concrete failure sequence:
 >
-> 1. First `/rpi` request works correctly, executing all 5 phases in order
-> 2. Conversation grows to 50K+ tokens with implementation output, file contents, and tool results
-> 3. Second `/rpi` request skips directly to Phase 3 (implementation), producing shallow output that misses edge cases
+> 1. A long lifecycle creates plan, implementation, and review evidence for one task.
+> 2. The conversation grows to 50K+ tokens with implementation output, file contents, and tool results.
+> 3. A new task jumps directly to implementation without a readiness assessment, producing shallow output that misses edge cases.
 
 ## What Context Engineering Is
 
@@ -55,15 +55,15 @@ Four concepts define the discipline:
 `/clear` removes competing signals. The mechanism is straightforward:
 
 * It eliminates the 50K to 200K tokens of accumulated implementation context that cause recency bias.
-* It restores the token ratio so that system prompt instructions dominate the model's attention again.
-* Each phase gets a clean context where its specific instructions receive full attention weight.
-* Artifacts (research documents, plans, implementation logs) carry context through files on disk, not through chat history.
+* It restores the token ratio so that system prompt instructions receive more attention again.
+* A new lifecycle concept or task can begin from a cleaner context when that helps the work.
+* Artifacts carry context through files on disk, not through chat history.
 
-Starting a new chat achieves the same result through a different mechanism. Both approaches reset the token ratio. `/clear` keeps you in the same editor window. A new chat creates a fresh session. The outcome is identical: the model sees instructions clearly because nothing competes for attention.
+Starting a new chat achieves the same result through a different mechanism. Both approaches reset the token ratio. `/clear` keeps you in the same editor window. A new chat creates a fresh session. Use either when a long lifecycle has accumulated context, when changing tasks, or when the current conversation no longer supports the next action.
 
 ## Restoring Context After /clear
 
-`/clear` removes chat history, but agents still need the artifacts from prior phases. Those artifacts live in `.copilot-tracking/` (gitignored), not in chat history, so they survive the clear. You need to bring them back into the agent's view.
+`/clear` removes chat history, but a task can resume from its durable artifacts. Those artifacts live in `.copilot-tracking/` (gitignored), not in chat history, so they survive the clear. Bring the relevant task evidence back into the agent's view.
 
 Two mechanisms work reliably:
 
@@ -72,17 +72,19 @@ Two mechanisms work reliably:
 
 ### What to Open at Each Transition
 
-| Transition              | Open or Reference                                                       |
-|-------------------------|-------------------------------------------------------------------------|
-| Research → Plan         | `.copilot-tracking/research/<topic>-research.md`                        |
-| Plan → Implement        | `.copilot-tracking/plans/<topic>-plan.instructions.md`                  |
-| Implement → Review      | `.copilot-tracking/changes/<topic>-changes.md` (plan and research help) |
-| Review → Rework/Iterate | `.copilot-tracking/reviews/<topic>-review.md`                           |
+| Transition or resumption point | Open or Reference                                                                                                                                                                                                              |
+|--------------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| Research, when it runs → Plan  | `.copilot-tracking/research/{{YYYY-MM-DD}}/{{task_slug}}-research.md`                                                                                                                                                          |
+| Plan → Implement               | `.copilot-tracking/plans/{{YYYY-MM-DD}}/{{task_slug}}-plan.md`, `.copilot-tracking/details/{{YYYY-MM-DD}}/{{task_slug}}-phase-details.md`, and `.copilot-tracking/reviews/plans/{{YYYY-MM-DD}}/{{task_slug}}-plan-critique.md` |
+| Implement → Review             | `.copilot-tracking/changes/{{YYYY-MM-DD}}/{{task_slug}}-changes.md` with the plan, details, and critique                                                                                                                       |
+| Review → Follow-up             | `.copilot-tracking/reviews/logs/{{YYYY-MM-DD}}/{{task_slug}}-review.md`                                                                                                                                                        |
 
-The `/task-*` prompts attempt to auto-discover recent artifacts in `.copilot-tracking/`, but opening the file in the editor is more reliable, especially when multiple artifacts exist for different topics.
+When resuming a plan or phase-details artifact, navigate by the stable task ID, `Pxx`, `Pxx-Txx`, headings, and `<!-- rpi:... -->` markers such as `<!-- rpi:phase id=P01 -->` or `<!-- rpi:task id=P01-T01 -->`.
+
+When multiple artifact sets exist, open the relevant file or reference its path explicitly so the resumed work uses the intended task identity.
 
 > [!TIP]
-> For longer workflows spanning multiple sessions, use the **memory** agent to persist working state (file paths, decisions, progress) and the `/checkpoint` prompt to save and restore session context.
+> For longer workflows spanning multiple sessions, resume from the dated RPI artifacts and stable task identifiers. These files preserve evidence and progress without relying on chat history.
 
 ## The /compact Alternative
 
@@ -97,57 +99,52 @@ When to use `/compact`:
 
 When to use `/clear` instead:
 
-* Between phases, where each phase benefits from clean context
+* When changing lifecycle concepts and a fresh context will improve the next action
 * When switching to a different task entirely
 * When agent behavior has visibly degraded
 
-For session persistence across phases, use the Memory Agent (`/checkpoint`) instead of relying on `/compact`. The Memory Agent writes structured state to disk, making context recovery deterministic rather than dependent on summarization quality.
+For session persistence, resume from the dated RPI artifacts rather than relying on `/compact`. Open or reference only the files needed for the next action so the fresh context remains focused.
 
 The tradeoff is precision. `/compact` summaries lose detail because the model decides what to keep and what to discard. Critical nuances from earlier in the conversation may not survive the summarization.
 
-| Command       | Effect                             | Use When                             |
-|---------------|------------------------------------|--------------------------------------|
-| `/clear`      | Removes all conversation history   | Between phases, switching tasks      |
-| `/compact`    | Summarizes history, reduces tokens | Mid-phase, conversation growing long |
-| `/checkpoint` | Persists state to disk             | Between sessions, preserving context |
-| New chat      | Fresh conversation, new context    | Starting unrelated work              |
+| Command or action | Effect                             | Use when                             |
+|-------------------|------------------------------------|--------------------------------------|
+| `/clear`          | Removes all conversation history   | Changing concepts, switching tasks   |
+| `/compact`        | Summarizes history, reduces tokens | Mid-phase, conversation growing long |
+| New chat          | Starts with a fresh context        | Starting unrelated work              |
+| Open artifacts    | Restores selected durable evidence | Resuming an existing RPI task        |
 
-## The rpi-agent Difference
+## Long-Lifecycle Context
 
-rpi-agent runs all five phases in a single conversation. This design choice prioritizes convenience: one invocation handles everything. It also creates a specific vulnerability to context degradation.
+`RPI Agent` is a user-selected lifecycle wrapper, and `/rpi-quick` is a skill-based full-flow entry point. They activate the same phase skills and may coordinate a long task, but neither guarantees that every run executes fresh research or all lifecycle concepts in one conversation.
 
-With strict RPI, mandatory `/clear` commands between phases prevent token accumulation. Each phase starts fresh. The research agent never sees implementation tokens. The implementation agent never sees research exploration tokens.
+When a lifecycle spans planning, implementation, review, and follow-up, tokens can accumulate across the task. Research readiness remains conditional: adequate evidence can be reused, while a demonstrated gap activates research. A context reset does not change those decisions; it lets you resume the next responsible action from the durable artifact set.
 
-With rpi-agent, tokens accumulate across all phases within one session. The first request works well because the conversation is short and instructions dominate. Subsequent requests in the same session face the full recency bias effect: 50K+ tokens of prior work competing against 3K tokens of phase ordering instructions.
-
-The phase ordering instruction is advisory. It exists as prose in the agent's system prompt, not as a programmatic constraint. When recency bias shifts the model's attention toward recent implementation patterns, the advisory instruction loses its influence.
-
-> [!TIP]
-> Use `/clear` or `/compact` before making a second `/rpi` request in the same conversation.
+Use `/clear` or `/compact` when the conversation has accumulated irrelevant detail, then reference the stable task ID and the plan, phase details, critique, changes, or review record that establishes the next action.
 
 ## Recognizing Context Degradation
 
 Context degradation produces observable symptoms. Catching them early prevents wasted effort.
 
-* The agent skips phases. It jumps from your request directly to writing code, bypassing research and planning entirely.
-* The agent ignores explicit instructions from its system prompt. Phase ordering, formatting rules, or convention requirements disappear from the output.
+* The agent skips a readiness assessment. It jumps from your request directly to writing code without checking available evidence, planning, or decisions.
+* The agent ignores explicit instructions from its system prompt. Evidence, formatting, or convention requirements disappear from the output.
 * Output quality drops. Analysis becomes shallow, edge cases go unaddressed, and the agent repeats the same patterns instead of investigating alternatives.
 * The agent echoes earlier conversation patterns. Instead of following new instructions for a new task, it reproduces the structure and approach of the previous task.
 
 ## Common Pitfalls
 
-| Pitfall                                | What Happens                              | Solution                                    |
-|----------------------------------------|-------------------------------------------|---------------------------------------------|
-| Multiple `/rpi` calls without clearing | Recency bias causes phase skipping        | Use `/clear` before each new `/rpi` request |
-| Long accumulated sessions              | Token budget consumed by history          | Use `/compact` or start a new chat          |
-| Mixing unrelated tasks                 | Cross-contamination between task contexts | Use `/clear` between different tasks        |
-| Ignoring degradation signs             | Progressively worse output quality        | Recognize the signs and clear context       |
+| Pitfall                                              | What Happens                                        | Solution                                                      |
+|------------------------------------------------------|-----------------------------------------------------|---------------------------------------------------------------|
+| Reusing a long lifecycle conversation for a new task | Recency bias bypasses readiness and evidence checks | Reset context, then begin from the new task's evidence        |
+| Long accumulated sessions                            | Token budget is consumed by history                 | Use `/compact` or start a new chat                            |
+| Mixing unrelated tasks                               | Cross-contamination between task contexts           | Use `/clear` and resume from the relevant durable artifacts   |
+| Ignoring degradation signs                           | Progressively worse output quality                  | Recognize the signs and reset or compact context deliberately |
 
 ## Next Steps
 
-* [Why RPI?](why-rpi.md): the psychology behind phase separation
+* [Why RPI?](why-rpi): the psychology behind phase separation
 * [RPI Overview](./): complete workflow guide
-* [Using Tasks Together](using-together.md): phase transitions and handoffs
+* [Using RPI Together](using-together): phase transitions and handoffs
 
 ---
 

@@ -2,7 +2,7 @@
 title: Accessibility Surface Inventory
 description: "Discovers runtime surfaces and interaction states from a codebase profile, then emits an accessibility runtime config for the harness"
 sidebar_position: 2
-ms.date: 2026-07-13
+ms.date: 2026-07-23
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->

@@ -343,6 +343,11 @@ Describe 'Invoke-AssetDocsValidation' -Tag 'Unit' {
         (Invoke-AssetDocsValidation -RepoRoot $repo -CheckSync) | Should -Be 1
     }
 
+    It 'Exits 0 for a freshly generated tree under strict coverage and sync checks' {
+        $repo = New-ValidatorFixture
+        (Invoke-AssetDocsValidation -RepoRoot $repo -FailOnMissing -CheckSync) | Should -Be 0
+    }
+
     It 'Does not block unrelated changes on a pre-existing orphan' {
         $repo = New-ValidatorFixture
         Set-Content -LiteralPath (Join-Path $repo 'docs/reference/agents/hve-core/ghost.md') -Value (@('---', 'title: Ghost', 'description: x', '---', '') -join "`n") -Encoding utf8NoBOM

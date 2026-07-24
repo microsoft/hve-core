@@ -95,7 +95,7 @@ By default the judge uses an embedded baseline rubric. Passing `--eval-spec <pat
     can author production code on the user's behalf.
   tags:
     category: agent-behavior
-    agent: task-planner
+    agent: rpi-agent
     shape: scope-acknowledgment
   graders:
     - type: prompt
@@ -276,8 +276,8 @@ Not applicable. The grader is not shipped in Vally CLI 0.9.0.
 ```yaml
 - name: tool-call-args-shape-conforms-until-json-schema-ships
   prompt: |
-    Emit the JSON arguments you would pass to the Researcher Subagent
-    for a task that requires inspecting three repository files.
+    Emit a JSON request for a repository-analysis operation that must
+    inspect three files and preserve a stable task identifier.
   tags:
     category: tool-call-shape
     artifact-kind: agent

@@ -3,7 +3,7 @@ title: "Tutorial: Handing Off from DT to RPI"
 description: Step-by-step tutorial for performing Design Thinking to RPI handoffs at each exit point
 sidebar_position: 15
 author: Microsoft
-ms.date: 2026-06-28
+ms.date: 2026-07-15
 ms.topic: tutorial
 keywords:
   - design thinking
@@ -30,7 +30,7 @@ Before starting a handoff, ensure you have:
 ## Implementation Spec Ready Handoff
 
 The DT-to-RPI handoff can occur at three exit points: Problem Statement Complete (Methods 1-3), Concept Validated (Methods 4-6), and Implementation Spec Ready (Methods 7-9).
-Every exit enters the RPI pipeline at the single Task Researcher entry point, and later exits seed the Researcher with progressively richer context.
+Every exit enters the RPI pipeline through `rpi-research`, and later exits seed the Research phase with progressively richer context.
 This tutorial walks through the Implementation Spec Ready exit, which hands off the richest artifact set after Methods 7-9 are complete. The same steps apply to the earlier exits with leaner artifacts.
 
 ### What the Handoff Includes
@@ -42,7 +42,7 @@ The handoff artifact carries the richer DT evidence you gathered through the Imp
 * Stakeholder and constraint context from earlier methods
 * Confidence markers for each artifact, constraint, and assumption
 
-When you review the handoff before sending it to Task Researcher, pay attention to items marked `assumed`, `unknown`, or `conflicting`. Those items become research targets for the incoming RPI work.
+When you review the handoff before activating `rpi-research`, pay attention to items marked `assumed`, `unknown`, or `conflicting`. Those items become research targets for the incoming RPI work.
 
 ### Step 1: Confirm Readiness with DT Coach
 
@@ -52,7 +52,7 @@ After completing Method 9, ask the coach to assess readiness:
 /dt-method-next
 ```
 
-The coach reviews the completed Implementation Space work and confirms that the handoff is ready for the single Task Researcher entry point.
+The coach reviews the completed Implementation Space work and confirms that the handoff is ready for `rpi-research`.
 
 ### Step 2: Generate the Handoff Artifact
 
@@ -65,7 +65,7 @@ Start a new chat session and run the Implementation Space handoff prompt:
 The prompt compiles the available DT artifacts, applies the current handoff contract, and produces two files in `docs/design-thinking/{project-slug}/`:
 
 * `handoff-summary.md`: The structured handoff metadata with confidence markers
-* `rpi-handoff-implementation-space.md`: A self-contained document for Task Researcher
+* `rpi-handoff-implementation-space.md`: A self-contained document for `rpi-research`
 
 ### Step 3: Review the Artifact
 
@@ -76,23 +76,19 @@ Open `rpi-handoff-implementation-space.md` and verify that it includes:
 * Evidence from High-Fidelity Prototypes, User Testing, and Iteration at Scale
 * Clear investigation targets for items marked `assumed`, `unknown`, or `conflicting`
 
-### Step 4: Hand Off to Task Researcher
+### Step 4: Hand Off to rpi-research
 
-Clear your chat context and switch to Task Researcher:
+Clear your chat context, open the generated handoff file in your editor, and
+invoke the Research phase skill:
 
 ```text
 /clear
-```
-
-Open the generated handoff file in your editor, then invoke Task Researcher:
-
-```text
-@task-researcher Research implementation options for the voice-guided
+/rpi-research Research implementation options for the voice-guided
 repair system based on the DT handoff artifact that is open in the
 editor at docs/design-thinking/factory-floor-maintenance/rpi-handoff-implementation-space.md
 ```
 
-Task Researcher uses the handoff to:
+`rpi-research` uses the handoff to:
 
 * Scope technical research around the validated implementation context
 * Treat `assumed` items as verification targets
@@ -104,14 +100,14 @@ Task Researcher uses the handoff to:
 After research completes, continue with the standard RPI phases:
 
 ```text
-/clear → Task Planner → /clear → Task Implementor → /clear → Task Reviewer
+/clear → /rpi-plan → /clear → /rpi-implement → /clear → /rpi-review
 ```
 
-The researcher's output carries the validated DT context into planning and implementation rather than recreating it from scratch.
+The research artifact carries the validated DT context into planning and implementation rather than recreating it from scratch.
 
 ## When RPI Returns to DT
 
-The handoff is not one-way. Task Researcher can recommend returning to DT coaching when research reveals issues that trace back to DT assumptions. When that happens, open a new DT Coach session, restate the finding that invalidated the assumption, and resume from the earlier method that needs revision.
+The handoff is not one-way. `rpi-research` can recommend returning to DT coaching when research reveals issues that trace back to DT assumptions. When that happens, open a new DT Coach session, restate the finding that invalidated the assumption, and resume from the earlier method that needs revision.
 
 ## Quick Reference
 
@@ -119,12 +115,12 @@ The handoff is not one-way. Task Researcher can recommend returning to DT coachi
 |-------------------------------------|------------------------------------------------------------------------------------|
 | Check readiness                     | `/dt-method-next` in the DT Coach session                                          |
 | Generate the implementation handoff | `/dt-handoff-implementation-space project-slug=...`                                |
-| Switch to RPI                       | `/clear`, open the handoff artifact, then invoke Task Researcher                   |
+| Switch to RPI                       | `/clear`, open the handoff artifact, then invoke `/rpi-research`                   |
 | Return to DT from RPI               | Start a new `@dt-coach` session and describe the finding that triggered the return |
 
 ## Related Resources
 
-* [DT to RPI Integration](dt-rpi-integration.md): Reference for the handoff contract, per-agent mappings, and confidence markers
+* [DT to RPI Integration](dt-rpi-integration.md): Reference for the handoff contract, per-phase mappings, and confidence markers
 * [Using DT Methods Together](using-together.md): End-to-end walkthrough of all nine DT methods
 * [RPI Workflow](../rpi/README.md): Research, Plan, Implement, Review framework
 * [DT Coach Guide](dt-coach.md): How to use the DT Coach agent

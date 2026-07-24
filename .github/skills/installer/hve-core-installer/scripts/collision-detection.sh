@@ -7,7 +7,7 @@
 #   collection_agents: space-separated relative paths (when selection is a collection)
 set -euo pipefail
 
-hve_core_base_path="${1:?Usage: $0 <hve_core_base_path> <selection> [collection_agents...]}"
+: "${1:?Usage: $0 <hve_core_base_path> <selection> [collection_agents...]}"
 selection="${2:?Usage: $0 <hve_core_base_path> <selection> [collection_agents...]}"
 shift 2
 
@@ -17,11 +17,8 @@ target_dir=".github/agents"
 case "$selection" in
     hve-core)
         files_to_copy=(
-            "hve-core/task-researcher.agent.md"
-            "hve-core/task-planner.agent.md"
-            "hve-core/task-implementor.agent.md"
-            "hve-core/task-reviewer.agent.md"
             "hve-core/rpi-agent.agent.md"
+            "hve-core/documentation.agent.md"
         )
         ;;
     *)

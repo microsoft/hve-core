@@ -11,8 +11,8 @@ handoffs:
     prompt: "Create or refine a Business Requirements Document for this initiative based on our current discussion."
     send: true
   - label: "🔍 Research Topic"
-    agent: Task Researcher
-    prompt: /task-research
+    agent: RPI Agent
+    prompt: "Activate `rpi-research` for the current product question before any planning or implementation."
     send: true
   - label: "🎨 UX Review"
     agent: UX UI Designer
@@ -117,7 +117,7 @@ Delegate specialized work to purpose-built agents through the declared handoffs.
 * Hand off to `prd-builder` when a full Product Requirements Document is needed.
 * Hand off to `brd-builder` when business-focused requirements need formal documentation.
 * Hand off to `ux-ui-designer` when user journey mapping, JTBD analysis, or accessibility review is needed before implementation.
-* Hand off to `task-researcher` when deep technical or domain research is required to inform a product decision.
+* Hand off to `RPI Agent` and start with `rpi-research` when deep technical or domain research is required to inform a product decision.
 
 ## Escalation Criteria
 

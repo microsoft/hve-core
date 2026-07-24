@@ -3,7 +3,7 @@ title: Tech Lead Guide
 description: HVE Core support for tech leads and architects driving architecture, code quality, and prompt engineering standards
 sidebar_position: 4
 author: Microsoft
-ms.date: 2026-06-26
+ms.date: 2026-07-15
 ms.topic: how-to
 keywords:
   - tech lead
@@ -44,11 +44,11 @@ This guide is for you if you make architecture decisions, set coding standards, 
 
 ## Stage Walkthrough
 
-1. Stage 2: Discovery. Use the **task-researcher** agent to evaluate design options, research external patterns, and gather architectural evidence.
+1. Stage 2: Discovery. Use `/rpi-research` to evaluate design options, research external patterns, and gather architectural evidence.
 2. Stage 3: Product Definition. Create architecture decision records with the **adr-creation** agent and generate diagrams with the **architecture-diagrams** skill.
 3. Stage 6: Implementation. Guide engineers using coding standards (auto-activated by file type) and prompt engineering tools for AI artifact creation.
-4. Stage 7: Review. Run the **code-review** agent for automated pull request feedback and the **task-reviewer** agent for implementation-against-plan validation.
-5. Stage 9: Operations. Use `/prompt-analyze` and `/prompt-refactor` to maintain and evolve prompt engineering artifacts as team practices mature.
+4. Stage 7: Review. Run the **code-review** agent for automated pull request feedback and `/rpi-review` for implementation-against-plan validation.
+5. Stage 9: Operations. Use `/hve-builder` to review, improve, or refactor prompt engineering artifacts as team practices mature.
 
 ## Starter Prompts
 
@@ -80,30 +80,29 @@ of any new database queries.
 ```
 
 ```text
-/prompt-build Create a new instructions file for Python data pipeline
+/hve-builder mode=create Create a new instructions file for Python data pipeline
 development. Cover pandas conventions, type hinting requirements,
 virtual environment setup with uv, and testing patterns using pytest.
 ```
 
 ```text
-/prompt-analyze Analyze .github/instructions/coding-standards/python-script.instructions.md
+/hve-builder mode=review targets=.github/instructions/coding-standards/python-script.instructions.md
 for quality. Check frontmatter schema, applyTo coverage, instruction
 specificity, and alignment with repository conventions.
 ```
 
 ## Key Agents and Workflows
 
-| Agent                     | Purpose                                               | Docs                                            |
-|---------------------------|-------------------------------------------------------|-------------------------------------------------|
-| **adr-creation**          | Architecture decision record creation                 | Agent file                                      |
-| **architecture-diagrams** | ASCII architecture diagram generation                 | Skill file                                      |
-| **code-review**           | Pull request review automation                        | Agent file                                      |
-| **task-reviewer**         | Implementation review against plan                    | [Task Reviewer](../../rpi/task-reviewer.md)     |
-| **prompt-builder**        | Prompt engineering artifact creation                  | Agent file                                      |
-| **task-researcher**       | Deep codebase and architecture research               | [Task Researcher](../../rpi/task-researcher.md) |
-| **task-planner**          | Structured implementation planning                    | [Task Planner](../../rpi/task-planner.md)       |
-| **documentation**         | Documentation audit, drift, authoring, and validation | Agent file                                      |
-| **memory**                | Session context and preference persistence            | Agent file                                      |
+| Agent or skill            | Purpose                                               | Docs                       |
+|---------------------------|-------------------------------------------------------|----------------------------|
+| **adr-creation**          | Architecture decision record creation                 | Agent file                 |
+| **architecture-diagrams** | ASCII architecture diagram generation                 | Skill file                 |
+| **code-review**           | Pull request review automation                        | Agent file                 |
+| **rpi-review**            | Implementation review against plan                    | [RPI workflow](../../rpi/) |
+| **hve-builder**           | Prompt engineering lifecycle                          | Skill file                 |
+| **rpi-research**          | Deep codebase and architecture research               | [RPI workflow](../../rpi/) |
+| **rpi-plan**              | Structured implementation planning                    | [RPI workflow](../../rpi/) |
+| **documentation**         | Documentation audit, drift, authoring, and validation | Agent file                 |
 
 Prompts complement the agents for cross-cutting workflows:
 
@@ -116,13 +115,13 @@ Auto-activated instructions apply coding standards based on file type: C# (`*.cs
 
 ## Tips
 
-| Do                                                                      | Don't                                                          |
-|-------------------------------------------------------------------------|----------------------------------------------------------------|
-| Create ADRs for significant design decisions                            | Make architectural choices without documented rationale        |
-| Use the **code-review** agent to supplement manual code reviews         | Rely solely on automated review without human judgment         |
-| Let coding standards auto-activate based on file type                   | Manually apply rules that already have instruction files       |
-| Use `/prompt-analyze` before refactoring AI artifacts                   | Rewrite prompts without understanding their current structure  |
-| Research with the **task-researcher** agent before architecture changes | Design without investigating existing patterns and constraints |
+| Do                                                              | Don't                                                          |
+|-----------------------------------------------------------------|----------------------------------------------------------------|
+| Create ADRs for significant design decisions                    | Make architectural choices without documented rationale        |
+| Use the **code-review** agent to supplement manual code reviews | Rely solely on automated review without human judgment         |
+| Let coding standards auto-activate based on file type           | Manually apply rules that already have instruction files       |
+| Use `/hve-builder mode=review` before refactoring AI artifacts  | Rewrite prompts without understanding their current structure  |
+| Research with `/rpi-research` before architecture changes       | Design without investigating existing patterns and constraints |
 
 ## Related Roles
 

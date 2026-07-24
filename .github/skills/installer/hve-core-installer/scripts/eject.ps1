@@ -7,9 +7,9 @@
     Marks a file as 'ejected' in .hve-tracking.json so future upgrades
     skip it. The file remains on disk but is owned by the user.
 .PARAMETER FilePath
-    The relative path to the file to eject (e.g., .github/agents/task-implementor.agent.md).
+    The relative path to the file to eject (e.g., .github/agents/rpi-agent.agent.md).
 .EXAMPLE
-    ./scripts/eject.ps1 -FilePath '.github/agents/task-implementor.agent.md'
+    ./scripts/eject.ps1 -FilePath '.github/agents/rpi-agent.agent.md'
 #>
 [CmdletBinding()]
 param(

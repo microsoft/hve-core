@@ -1,8 +1,8 @@
 ---
 title: Hve Core/Writing Style
 description: "Writing style conventions for voice, tone, and language in markdown content"
-sidebar_position: 9
-ms.date: 2026-07-03
+sidebar_position: 8
+ms.date: 2026-07-23
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->

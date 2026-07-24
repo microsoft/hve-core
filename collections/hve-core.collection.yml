@@ -17,53 +17,19 @@ items:
   # Agents
   - path: .github/agents/hve-core/rpi-agent.agent.md
     kind: agent
-  - path: .github/agents/hve-core/task-planner.agent.md
-    kind: agent
-  - path: .github/agents/hve-core/memory.agent.md
-    kind: agent
   - path: .github/agents/hve-core/documentation.agent.md
     kind: agent
-  - path: .github/agents/hve-core/prompt-builder.agent.md
-    kind: agent
-  - path: .github/agents/hve-core/task-researcher.agent.md
-    kind: agent
-  - path: .github/agents/hve-core/task-implementor.agent.md
-    kind: agent
-  - path: .github/agents/hve-core/task-reviewer.agent.md
-    kind: agent
-  - path: .github/agents/hve-core/task-challenger.agent.md
-    kind: agent
-    maturity: experimental
   - path: .github/agents/coding-standards/code-review.agent.md
     kind: agent
     maturity: experimental
 
-  # Subagents
-  - path: .github/agents/hve-core/subagents/rpi-validator.agent.md
+  # RPI Research subagents
+  - path: .github/agents/hve-core/subagents/rpi-researcher.agent.md
     kind: agent
-  - path: .github/agents/hve-core/subagents/implementation-validator.agent.md
-    kind: agent
-  - path: .github/agents/hve-core/subagents/plan-validator.agent.md
-    kind: agent
-  - path: .github/agents/hve-core/subagents/phase-implementor.agent.md
-    kind: agent
-  - path: .github/agents/hve-core/subagents/researcher-subagent.agent.md
+  - path: .github/agents/hve-core/subagents/rpi-planner.agent.md
     kind: agent
   # HVE Builder subagents
-  - path: .github/agents/hve-core/subagents/hve-artifact-explorer.agent.md
-    kind: agent
-  - path: .github/agents/hve-core/subagents/hve-artifact-author.agent.md
-    kind: agent
-  - path: .github/agents/hve-core/subagents/hve-artifact-reviewer.agent.md
-    kind: agent
-  - path: .github/agents/hve-core/subagents/hve-artifact-validator.agent.md
-    kind: agent
   - path: .github/agents/hve-core/subagents/hve-artifact-tester.agent.md
-    kind: agent
-  # HVE Builder Tester subagents
-  - path: .github/agents/hve-core/subagents/hve-artifact-test-designer.agent.md
-    kind: agent
-  - path: .github/agents/hve-core/subagents/hve-artifact-test-reviewer.agent.md
     kind: agent
   # Code Review subagents
   - path: .github/agents/coding-standards/subagents/code-review-functional.agent.md
@@ -93,22 +59,9 @@ items:
   # Prompts
   - path: .github/prompts/hve-core/rpi.prompt.md
     kind: prompt
-  - path: .github/prompts/hve-core/task-research.prompt.md
-    kind: prompt
-  - path: .github/prompts/hve-core/task-plan.prompt.md
-    kind: prompt
-  - path: .github/prompts/hve-core/task-implement.prompt.md
-    kind: prompt
-  - path: .github/prompts/hve-core/task-review.prompt.md
-    kind: prompt
   - path: .github/prompts/hve-core/pr-review.prompt.md
     kind: prompt
     maturity: experimental
-  - path: .github/prompts/hve-core/task-challenge.prompt.md
-    kind: prompt
-    maturity: experimental
-  - path: .github/prompts/hve-core/checkpoint.prompt.md
-    kind: prompt
   # Git prompts
   - path: .github/prompts/hve-core/git-commit-message.prompt.md
     kind: prompt
@@ -120,13 +73,6 @@ items:
     kind: prompt
   - path: .github/prompts/hve-core/pull-request.prompt.md
     kind: prompt
-  # Prompt Engineering prompts
-  - path: .github/prompts/hve-core/prompt-analyze.prompt.md
-    kind: prompt
-  - path: .github/prompts/hve-core/prompt-build.prompt.md
-    kind: prompt
-  - path: .github/prompts/hve-core/prompt-refactor.prompt.md
-    kind: prompt
   # Instructions
   - path: .github/instructions/hve-core/writing-style.instructions.md
     kind: instruction
@@ -137,8 +83,6 @@ items:
   - path: .github/instructions/hve-core/commit-message.instructions.md
     kind: instruction
   - path: .github/instructions/hve-core/hve-builder.instructions.md
-    kind: instruction
-  - path: .github/instructions/hve-core/prompt-builder.instructions.md
     kind: instruction
   - path: .github/instructions/hve-core/copilot-tracking.instructions.md
     kind: instruction
@@ -196,6 +140,20 @@ items:
   - path: .github/skills/hve-core/prompt-refactor
     kind: skill
   - path: .github/skills/hve-core/hve-builder
+    kind: skill
+  - path: .github/skills/rpi/rpi-challenger
+    kind: skill
+  - path: .github/skills/rpi/rpi-research
+    kind: skill
+  - path: .github/skills/rpi/rpi-plan
+    kind: skill
+  - path: .github/skills/rpi/rpi-plan-critique
+    kind: skill
+  - path: .github/skills/rpi/rpi-implement
+    kind: skill
+  - path: .github/skills/rpi/rpi-review
+    kind: skill
+  - path: .github/skills/rpi/rpi-quick
     kind: skill
   - path: .github/skills/hve-core/hve-builder-tester
     kind: skill
