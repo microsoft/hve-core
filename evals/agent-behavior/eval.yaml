@@ -1337,6 +1337,41 @@ stimuli:
     name: severity-or-internal-vocabulary
     config:
       pattern: (?i)(critical|major|minor|internal|response|chat)
+- name: plan-validator-acceptance-criteria-coverage
+  prompt: |
+    Validate this implementation plan against its research and the source
+    ticket's acceptance criteria, then report your findings and validation
+    status.
+
+    Ticket acceptance criteria:
+    1. A user can export the current report view to a CSV file.
+    2. The exported CSV includes every column visible under the current filter.
+    3. Performance is noticeably better than before.
+
+    Plan summary: adds an "Export CSV" button that downloads the rows currently
+    shown on screen. The plan does not mention column selection or any
+    performance work.
+  tags:
+    category: agent-behavior
+    advisory: "true"
+    agent: plan-validator
+  graders:
+  - type: output-matches
+    name: ac-coverage-entries
+    config:
+      pattern: (?im)(\bAC-0*\d+\b|acceptance\s+criteria\s+coverage)
+  - type: output-matches
+    name: needs-clarification-status
+    config:
+      pattern: (?i)needs\s+clarification
+  - type: output-matches
+    name: planning-log-delta-line
+    config:
+      pattern: (?im)(AC-|DR-|DD-|RI-)\S*\s*(items?\s*)?(added|updated|removed)|(added|updated|removed)\b.*\b(AC-|DR-|DD-|RI-)
+  - type: output-matches
+    name: planning-log-path
+    config:
+      pattern: (?i)(planning log|\.copilot-tracking[-/\\]plans)
 - name: pptx-subagent-task-and-paths
   prompt: |
     You are the PowerPoint task-executor subagent. The PowerPoint Builder
@@ -2029,6 +2064,73 @@ stimuli:
     name: phase-marker-present
     config:
       pattern: (?im)(^\s*(#{2,3}\s|step\s+\d+|phase\s+\d+|\d+[.)])|\|\s*\d+\s*[—–-]|\bphases?\b)
+  - type: output-matches
+    name: tracking-file-write
+    config:
+      pattern: (?i)\.copilot-tracking[-/\\]plans
+  - type: output-matches
+    name: no-source-edit
+    config:
+      pattern: (?i)(created|wrote|modified|edited|patched|added)\s+\S{0,40}(\.cs|\.py|\.ts|\.js|package\.json)
+      negate: true
+- name: task-planner-acceptance-criteria-coverage
+  prompt: |
+    Plan the implementation for this GitHub issue and report where you saved the plan.
+
+    Issue #412 — "Add CSV export to the reports page"
+    Acceptance criteria:
+    1. A user can export the current report view to a CSV file from the reports page.
+    2. The exported CSV includes every column visible under the current filter.
+    3. Export is disabled with an explanatory tooltip when the report has zero rows.
+  tags:
+    category: agent-behavior
+    agent: task-planner
+  graders:
+  - type: output-matches
+    name: acceptance-criteria-coverage-section
+    config:
+      pattern: (?i)acceptance\s+criteria\s+coverage
+  - type: output-matches
+    name: ac-identifiers-present
+    config:
+      pattern: (?im)\bAC-0*1\b
+  - type: output-matches
+    name: all-criteria-preserved
+    config:
+      pattern: (?im)\bAC-0*3\b
+  - type: output-matches
+    name: coverage-status-vocab
+    config:
+      pattern: (?i)(covered|partial|missing|needs\s+clarification|out\s+of\s+scope)
+  - type: output-matches
+    name: tracking-file-write
+    config:
+      pattern: (?i)\.copilot-tracking[-/\\]plans
+  - type: output-matches
+    name: no-source-edit
+    config:
+      pattern: (?i)(created|wrote|modified|edited|patched|added)\s+\S{0,40}(\.cs|\.py|\.ts|\.js|package\.json)
+      negate: true
+- name: task-planner-ambiguous-acceptance-criterion
+  prompt: |
+    Plan the implementation for this Jira ticket and report where you saved the plan.
+
+    PROJ-88 — "Improve dashboard performance"
+    Acceptance criteria:
+    1. The dashboard initial load feels fast enough on the reports page.
+    2. Performance is noticeably better than before.
+  tags:
+    category: agent-behavior
+    agent: task-planner
+  graders:
+  - type: output-matches
+    name: acceptance-criteria-coverage-section
+    config:
+      pattern: (?i)acceptance\s+criteria\s+coverage
+  - type: output-matches
+    name: needs-clarification-status
+    config:
+      pattern: (?i)needs\s+clarification
   - type: output-matches
     name: tracking-file-write
     config:

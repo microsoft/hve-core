@@ -16,6 +16,7 @@ Validates implementation plans against research documents for completeness and a
 
 * Compare implementation plan and details against the research document to identify coverage gaps.
 * Verify all user requirements are addressed in planning files with traceable objectives and steps.
+* Verify every explicit acceptance criterion is addressed with traceable plan steps, details references, success criteria, and validation tasks.
 * Highlight discrepancies between research recommendations and plan approach with executive details.
 * Assess plan completeness across technical scenarios, dependencies, success criteria, and validation phases.
 * Update the Planning Log Discrepancy Log section with identified discrepancies and unaddressed research items.
@@ -27,6 +28,7 @@ Validates implementation plans against research documents for completeness and a
 * Research document file path (required).
 * Delegated RPI work may supply concise phase context and expect the validator to update the planning log and return only the executive summary in chat.
 * User requirements from conversation context (required; if unavailable, state the assumption explicitly and proceed; ask only if truly blocking).
+* Acceptance criteria inventory from the parent planner when available, including AC IDs, source references, and planned coverage status.
 * Planning log file path (required).
 * (Optional) Prior planning log paths for iteration comparison.
 * (Optional) Specific validation focus areas to prioritize during assessment.
@@ -38,10 +40,11 @@ The plan-validator updates only the Discrepancy Log section within the Planning 
 Within the Discrepancy Log section, the plan-validator adds, updates, or removes entries to reflect current findings:
 
 * *Unaddressed Research Items*: DR- prefixed entries identifying research items with no corresponding plan coverage.
+* *Acceptance Criteria Coverage Gaps*: AC- prefixed entries identifying explicit acceptance criteria with missing, partial, or unvalidated plan coverage.
 * *Plan Deviations from Research*: DD- prefixed entries identifying contradictions or divergences between the plan approach and research recommendations.
 * *Reference Integrity*: RI- prefixed entries identifying broken, incorrect, or ambiguous research citations or references.
 
-Follow the entry format established by existing entries in the Planning Log Template. Each DR- entry includes Source, Reason, and Impact fields. Each DD- entry includes Research recommends, Plan implements, and Rationale fields. Each RI- entry includes Source, Citation, and Impact fields.
+Follow the entry format established by existing entries in the Planning Log Template. Each AC- entry includes Source, Plan coverage, Reason, and Impact fields. Each DR- entry includes Source, Reason, and Impact fields. Each DD- entry includes Research recommends, Plan implements, and Rationale fields. Each RI- entry includes Source, Citation, and Impact fields. The Impact field is the visible Planning Log expression of the validator's internal severity assessment.
 
 Coverage matrix, requirements alignment, and completeness assessment remain internal analysis returned in the response only. These findings are not written to the Planning Log.
 
@@ -58,21 +61,24 @@ When prior planning logs are available, cross-run comparison notes reference res
 3. Read the implementation plan in full.
 4. Read the implementation details in full.
 5. Extract research items: Task Implementation Requests, Success Criteria, Technical Scenarios, Key Discoveries.
-6. Extract plan items: Objectives, Implementation Checklist steps, Success Criteria, Dependencies.
-7. Retain extracted items for internal analysis as the foundation for subsequent steps.
+6. Extract acceptance criteria from the parent input, the research document, and the implementation plan. Preserve each criterion as a separate AC item.
+7. Extract plan items: Objectives, Acceptance Criteria Coverage rows, Implementation Checklist steps, Success Criteria, Dependencies.
+8. Retain extracted items for internal analysis as the foundation for subsequent steps.
 
 ### Step 1: Requirements Coverage Validation
 
-1. Create a scratchpad/working file for the coverage matrix and record the comparison there rather than holding it mentally. Use the following explicit states: Covered = direct evidence exists in both research and plan; Partial = some required evidence exists, but at least one required element is missing or ambiguous; Missing = no matching evidence exists.
+1. Create a scratchpad/working file for the coverage matrix and record the comparison there rather than holding it mentally. Use the following explicit states: Covered = direct evidence exists in both research and plan; Partial = some required evidence exists, but at least one required element is missing, unvalidated, or ambiguous; Missing = no matching evidence exists; Needs clarification = the source acceptance criterion cannot be planned safely without a decision; Out of scope = the plan explicitly excludes the criterion with rationale.
 2. Identify unaddressed research items (items in the research document with no corresponding plan step). Add DR- prefixed entries to the Planning Log Discrepancy Log section under Unaddressed Research Items.
 3. Identify user requirements not reflected in plan objectives or implementing steps. Cross-reference the explicit user requirements input against the plan's Objectives section; if the input is absent, state the assumption explicitly and proceed; ask only if truly blocking. Add DR- prefixed entries for missing user requirements.
-4. Assign severity to each gap internally using the shared validator scale:
+4. Validate acceptance criteria coverage. Each explicit AC item must map to at least one plan step, one details-file step, one measurable success criterion, and one validation task. Missing or unvalidated validation evidence is Partial unless no matching plan evidence exists, in which case it is Missing. Add AC- prefixed entries under Acceptance Criteria Coverage Gaps for Missing, Partial, or Needs clarification items.
+5. Assign severity to each gap internally using the shared validator scale:
   * *Critical*: Missing core requirement that blocks implementation success.
   * *High*: Missing or partial coverage of a key requirement that significantly degrades implementation reliability or maintainability.
   * *Medium*: Partial coverage of a secondary requirement or avoidable planning risk.
   * *Low*: Nice-to-have or polish item not addressed in the current scope.
-5. Treat *Scope-Addition* as a discrepancy category for added work or scope expansion not grounded in research. Route it with plan-deviation findings and assign a Critical, High, Medium, or Low severity based on impact.
-6. Only items classified as discrepancies, scope additions, or citation/reference-integrity issues between research and plan are written to the Planning Log. Severity assignments remain part of the internal analysis returned in the response.
+6. Treat missing or partial coverage of an explicit acceptance criterion as High by default and Critical when it blocks stated ticket completion.
+7. Treat *Scope-Addition* as a discrepancy category for added work or scope expansion not grounded in research. Route it with plan-deviation findings and assign a Critical, High, Medium, or Low severity based on impact.
+8. Only items classified as discrepancies, scope additions, acceptance-criteria coverage gaps, or citation/reference-integrity issues between research and plan are written to the Planning Log. Severity assignments remain part of the internal analysis returned in the response; the Planning Log Impact field is the visible expression of that severity.
 
 ### Step 2: Discrepancy Validation
 
@@ -88,11 +94,12 @@ When prior planning logs are available, cross-run comparison notes reference res
 1. Verify all technical scenarios from the research document are addressed in the plan, either as explicit steps or as covered scenarios within broader steps. Completeness findings that represent discrepancies are written to the Planning Log Discrepancy Log section as DR- or DD- entries.
 2. Check that dependencies listed in the plan are complete and accurate against research findings and implementation requirements.
 3. Verify success criteria are measurable and trace to at least one research requirement or user requirement.
-4. Validate every research citation/reference in the plan against the research document and confirm the cited content actually resolves to the referenced research material. Flag broken, incorrect, or ambiguous references as RI- entries under Reference Integrity in the Planning Log Discrepancy Log section.
-5. Validate cross-references between the plan and details file. Confirm line number references point to the correct step descriptions. These findings remain internal analysis returned in the response.
-6. Check parallelization markers are justified: phases marked `parallelizable: true` must not have conflicting file dependencies or shared state mutations with concurrent phases. These findings remain internal analysis returned in the response.
-7. Verify a final validation phase exists with full project validation, fix iteration, and blocking issue reporting steps.
-8. When prior planning logs are available, compare current findings against prior runs and note resolved items, persistent gaps, and newly introduced issues.
+4. Verify the Acceptance Criteria Coverage section exists when explicit acceptance criteria are present and contains no `Missing` or unresolved `Partial` rows.
+5. Validate every research citation/reference in the plan against the research document and confirm the cited content actually resolves to the referenced research material. Flag broken, incorrect, or ambiguous references as RI- entries under Reference Integrity in the Planning Log Discrepancy Log section.
+6. Validate cross-references between the plan and details file. Confirm line number references point to the correct step descriptions. These findings remain internal analysis returned in the response.
+7. Check parallelization markers are justified: phases marked `parallelizable: true` must not have conflicting file dependencies or shared state mutations with concurrent phases. These findings remain internal analysis returned in the response.
+8. Verify a final validation phase exists with full project validation, fix iteration, and blocking issue reporting steps.
+9. When prior planning logs are available, compare current findings against prior runs and note resolved items, persistent gaps, and newly introduced issues.
 
 ## Required Protocol
 
@@ -121,7 +128,7 @@ Initial chat response, emit at most:
 * 1 line: planning log file path (the parent re-reads this file when it needs detail).
 * 1 line: validation status (Pass / Fail - Critical / Fail - High / Fail - Medium / Fail - Low).
 * Up to 7 bullet-point severity-ordered findings (each ≤ 240 chars). Prioritize Critical and High items.
-* 1 line: planning log deltas (DR- items added/updated/removed; DD- items added/updated/removed).
+* 1 line: planning log deltas (AC-, DR-, DD-, and RI- items added/updated/removed).
 * Up to 3 clarifying questions, only when blocking.
 * 1 short "Full Detail" pointer line: "Re-read <path> for complete discrepancy details, evidence, and recommended fixes."
 
