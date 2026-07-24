@@ -10,6 +10,14 @@
         "timeoutSec": 10
       }
     ],
+    "userPromptSubmitted": [
+      {
+        "type": "command",
+        "bash": ".github/hooks/shared/telemetry/telemetry-collector.sh",
+        "powershell": ".github/hooks/shared/telemetry/Invoke-TelemetryCollector.ps1",
+        "timeoutSec": 10
+      }
+    ],
     "userPromptSubmit": [
       {
         "type": "command",
@@ -43,6 +51,14 @@
       }
     ],
     "subagentStop": [
+      {
+        "type": "command",
+        "bash": ".github/hooks/shared/telemetry/telemetry-collector.sh",
+        "powershell": ".github/hooks/shared/telemetry/Invoke-TelemetryCollector.ps1",
+        "timeoutSec": 10
+      }
+    ],
+    "sessionEnd": [
       {
         "type": "command",
         "bash": ".github/hooks/shared/telemetry/telemetry-collector.sh",
