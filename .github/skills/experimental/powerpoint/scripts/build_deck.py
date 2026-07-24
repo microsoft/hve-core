@@ -524,8 +524,14 @@ def add_arrow_flow_element(slide, elem, colors, typography):
         return
 
     total_width = elem["width"]
-    item_width = total_width / len(items) - 0.3
+    gap = elem.get("gap", 0.3)
+    item_width = total_width / len(items) - gap
     x = elem["left"]
+
+    label_margin = elem.get("label_margin")
+    default_font = elem.get("font", "Segoe UI")
+    default_size = elem.get("font_size", 14)
+    default_color = elem.get("font_color", "#F8F8FC")
 
     for item in items:
         shape = slide.shapes.add_shape(
@@ -540,16 +546,22 @@ def add_arrow_flow_element(slide, elem, colors, typography):
 
         tf = shape.text_frame
         tf.word_wrap = True
+        margin = item.get("label_margin", label_margin)
+        if margin is not None:
+            tf.margin_left = Inches(margin)
+            tf.margin_right = Inches(margin)
         p = tf.paragraphs[0]
         p.text = item["label"]
         p.alignment = ALIGNMENT_MAP["center"]
         run = p.runs[0]
-        run.font.name = "Segoe UI"
-        run.font.size = Pt(14)
-        apply_color_to_font(run.font.color, resolve_color("#F8F8FC"))
+        run.font.name = item.get("font", default_font)
+        run.font.size = Pt(item.get("size", default_size))
+        apply_color_to_font(
+            run.font.color, resolve_color(item.get("color_text", default_color))
+        )
         run.font.bold = True
 
-        x += item_width + 0.3
+        x += item_width + gap
 
 
 def add_numbered_step_element(slide, elem, colors, typography):

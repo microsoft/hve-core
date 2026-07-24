@@ -3,11 +3,11 @@ name: vally-tests
 description: 'Authors Vally conformance tests for prompts, instructions, agents, and skills, including refusals for jailbreak, prompt-injection, harmful-elicitation, TOS, CoC, and PII-extraction stimuli'
 license: MIT
 user-invocable: true
-compatibility: 'Requires Vally CLI 0.4.0+, PowerShell 7+, bash, and Python 3.11+ with uv for corpus-import workflows'
+compatibility: 'Requires Vally CLI 0.9.0+, PowerShell 7+, bash, and Python 3.11+ with uv for corpus-import workflows'
 metadata:
   authors: "microsoft/hve-core"
   spec_version: "1.0"
-  last_updated: "2026-05-27"
+  last_updated: "2026-07-22"
 ---
 
 # Vally Tests Skill
@@ -22,7 +22,7 @@ The skill ships:
 
 * A canonical authoring workflow used by both the Vally Test Author prompt and the Prompt Builder subagent.
 * Per-kind reference files that enumerate every conformance check the skill knows how to express.
-* A grader catalog that maps Vally CLI 0.4.0 grader types to the checks they fit.
+* A grader catalog that maps Vally CLI 0.9.0 grader types to the checks they fit.
 * A safety refusal taxonomy with regex patterns the safety lint script consumes.
 * Helper scripts and asset templates for stimulus emission, corpus import, and dedupe.
 
@@ -101,7 +101,7 @@ References capture the conformance taxonomy, grader selection rules, eval-suite 
 | [instructions.md](references/instructions.md)             | The 8 conformance checks emitted for `.instructions.md` artifacts.      |
 | [agents.md](references/agents.md)                         | The 9 conformance checks emitted for `.agent.md` artifacts.             |
 | [skills.md](references/skills.md)                         | The 9 conformance checks emitted for `SKILL.md` artifacts.              |
-| [grader-catalog.md](references/grader-catalog.md)         | Vally CLI 0.4.0 grader types, selection rules, and gotchas.             |
+| [grader-catalog.md](references/grader-catalog.md)         | Vally CLI 0.9.0 grader types, selection rules, and gotchas.             |
 | [refusal-taxonomy.md](references/refusal-taxonomy.md)     | Regex source of truth for the 7 refusal categories and worked examples. |
 | [eval-suite-routing.md](references/eval-suite-routing.md) | Maps artifact kind to the canonical Vally eval file under `evals/`.     |
 
