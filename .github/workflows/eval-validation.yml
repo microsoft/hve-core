@@ -431,6 +431,42 @@ jobs:
           echo "Eval execution failed"
           exit 1
 
+  eval-execute-guard:
+    name: Eval Execute Guard
+    runs-on: ubuntu-latest
+    needs: [eval-validation, eval-execute]
+    # Ensure eval-relevant changes are never a silent no-op. The eval-execute job
+    # is skipped on fork PRs (repository secrets are not exposed to forks), which
+    # would otherwise let a changed stimulus pass green without any eval running.
+    # This guard runs regardless of fork status and fails with an actionable
+    # message when execution did not happen for an eval-relevant change.
+    if: always() && github.event_name == 'pull_request' && needs.eval-validation.outputs.eval-relevant == 'true'
+    permissions:
+      contents: read
+    steps:
+      - name: Require evals to run for eval-relevant changes
+        shell: bash
+        run: |
+          is_fork='${{ github.event.pull_request.head.repo.fork }}'
+          execute_result='${{ needs.eval-execute.result }}'
+          soft_fail='${{ inputs.soft-fail }}'
+
+          if [ "$is_fork" = "true" ]; then
+            msg="Eval-relevant files changed, but evals cannot run on fork pull requests (repository secrets are not exposed to forks). A maintainer must run the evals for this change before merge (re-run from a branch in this repository, or run 'npm run eval:run:agents' locally)."
+          elif [ "$execute_result" = "skipped" ] || [ "$execute_result" = "cancelled" ]; then
+            msg="Eval-relevant files changed, but eval execution did not run (result: ${execute_result}). Evals must execute for eval-relevant changes."
+          else
+            echo "Eval execution ran (result: ${execute_result}); eval-relevant changes are covered."
+            exit 0
+          fi
+
+          echo "::error::${msg}"
+          if [ "$soft_fail" = "true" ]; then
+            echo "soft-fail is enabled; reporting as a warning instead of failing the build."
+            exit 0
+          fi
+          exit 1
+
   eval-report:
     name: Eval Report
     runs-on: ubuntu-latest
