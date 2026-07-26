@@ -43,9 +43,10 @@ Generate data specifications, Jupyter notebooks, and Streamlit dashboards from n
 
 ### Skills
 
-| Name              | Description                                                                                                                                                                 |
-|-------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| **rai-planner**   | On-demand RAI planner reference pack covering Phase 1 capture, Phase 2 risk classification, Phase 5 impact assessment, and Phase 6 review and backlog handoff.              |
-| **rai-standards** | Consolidated Responsible AI standards reference: NIST AI RMF 1.0, AI STRIDE threat-modeling overlay, EU AI Act risk tiers, and an open-standards catalog with phase mapping |
+| Name                  | Description                                                                                                                                                                 |
+|-----------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| **rai-planner**       | On-demand RAI planner reference pack covering Phase 1 capture, Phase 2 risk classification, Phase 5 impact assessment, and Phase 6 review and backlog handoff.              |
+| **rai-standards**     | Consolidated Responsible AI standards reference: NIST AI RMF 1.0, AI STRIDE threat-modeling overlay, EU AI Act risk tiers, and an open-standards catalog with phase mapping |
+| **string-derivation** | Detect derivable data columns via string operations for data reduction - Brought to you by microsoft/hve-core                                                               |
 
 <!-- END AUTO-GENERATED ARTIFACTS -->

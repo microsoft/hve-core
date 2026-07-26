@@ -79,7 +79,12 @@
     ".github/prompts/security": true
   },
   "chat.agentSkillsLocations": {
+    ".agents/skills": true,
     ".github/skills": true,
+    ".claude/skills": true,
+    "~/.agents/skills": true,
+    "~/.copilot/skills": true,
+    "~/.claude/skills": true,
     ".github/skills/accessibility": true,
     ".github/skills/coding-standards": true,
     ".github/skills/design-thinking": true,

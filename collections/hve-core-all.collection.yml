@@ -567,6 +567,8 @@ items:
 - path: .github/skills/coding-standards/python-foundational
   kind: skill
   maturity: experimental
+- path: .github/skills/data-science/data-reduction/string-derivation
+  kind: skill
 - path: .github/skills/design-thinking/dt-coaching-foundation
   kind: skill
   maturity: preview
