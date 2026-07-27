@@ -35,8 +35,8 @@ This reference documents how the `vally-tests` skill routes newly authored stimu
 ### `agent`
 
 * Primary target: [evals/agent-behavior/stimuli/](../../../../../evals/agent-behavior/stimuli/) as `evals/agent-behavior/stimuli/<slug>.yml`.
-* Filesystem state: directory exists today with one YAML file per agent (e.g., `ado-backlog-manager.yml`, `task-researcher.yml`).
-* Slug convention: `<slug>` is the agent filename minus the `.agent.md` suffix. Example: `task-researcher.agent.md` routes to `evals/agent-behavior/stimuli/task-researcher.yml`.
+* Filesystem state: directory exists today with one YAML file per agent (for example, `ado-backlog-manager.yml` and `rpi-agent.yml`).
+* Slug convention: `<slug>` is the agent filename minus the `.agent.md` suffix. Example: `rpi-agent.agent.md` routes to `evals/agent-behavior/stimuli/rpi-agent.yml`.
 * Append-vs-create rule: if `<slug>.yml` exists, append the new stimulus block to its `stimuli:` array; otherwise create the file with the standard preamble and a single `stimuli:` entry. Dedupe within the file is enforced by the Phase 5 dedupe rule (SHA-256 of normalized prompt text); see Phase 5 dedupe rule.
 * Class recipe: a class recipe from `references/class-recipes.md` (future per-this-skill reference, to be authored under a follow-up work item) governs the per-class shape of agent stimuli (for example, `class-recipe`, `field-vocab`, `tracking-file-write`). Until that file exists, follow the shape of an existing stimulus in the same agent's file.
 

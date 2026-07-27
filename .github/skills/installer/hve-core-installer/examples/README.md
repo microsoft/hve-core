@@ -36,13 +36,13 @@ Use a custom collection with explicit agent paths.
 Copy agents from the HVE-Core source into the target project.
 
 ```powershell
-./scripts/agent-copy.ps1 -HveCoreBasePath ./lib/hve-core -CollectionId hve-core -FilesToCopy @('hve-core/task-researcher.agent.md', 'hve-core/task-planner.agent.md')
+./scripts/agent-copy.ps1 -HveCoreBasePath ./lib/hve-core -CollectionId hve-core -FilesToCopy @('hve-core/rpi-agent.agent.md', 'hve-core/documentation.agent.md')
 ```
 
 Preserve existing files during an upgrade.
 
 ```powershell
-./scripts/agent-copy.ps1 -HveCoreBasePath ./lib/hve-core -CollectionId hve-core -FilesToCopy @('hve-core/task-researcher.agent.md') -KeepExisting -Collisions @('.github/agents/task-researcher.agent.md')
+./scripts/agent-copy.ps1 -HveCoreBasePath ./lib/hve-core -CollectionId hve-core -FilesToCopy @('hve-core/rpi-agent.agent.md') -KeepExisting -Collisions @('.github/agents/rpi-agent.agent.md')
 ```
 
 ### Upgrade Detection
@@ -94,7 +94,7 @@ Compare installed file hashes against the tracking manifest.
 Mark a managed file as ejected so upgrades no longer overwrite it.
 
 ```powershell
-./scripts/eject.ps1 -FilePath .github/agents/task-researcher.agent.md
+./scripts/eject.ps1 -FilePath .github/agents/rpi-agent.agent.md
 ```
 
 *🤖 Crafted with precision by ✨Copilot following brilliant human instruction, then carefully refined by our team of discerning human reviewers.*

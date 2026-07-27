@@ -2,7 +2,7 @@
 title: Customizing with Instructions
 description: Configure Copilot behavior using copilot-instructions.md and instruction files with applyTo targeting and stacking patterns
 author: Microsoft
-ms.date: 2026-06-27
+ms.date: 2026-07-15
 ms.topic: how-to
 keywords:
   - instructions
@@ -93,34 +93,44 @@ applyTo: '**/*.py'
 
 The body contains the guidance Copilot follows when working with matched files: coding standards, naming conventions, framework-specific patterns, or operational constraints.
 
-## Accelerating with Prompt Builder
+## Authoring with HVE Builder
 
-The Prompt Builder agent automates instruction file creation and evaluation. Use its commands to generate well-structured instruction files that follow repository conventions.
-
-Create a new instruction file or improve an existing one with `/prompt-build`:
+Use `hve-builder` create or improve mode to author instruction files while
+applying repository conventions and preserving the approved write boundary:
 
 ```text
-/prompt-build files=.github/instructions/coding-standards/typescript.instructions.md promptFiles=.github/instructions/coding-standards/python-script.instructions.md
+Use hve-builder with mode=create,
+targets=.github/instructions/coding-standards/typescript.instructions.md, and
+requirements="Follow the existing Python instruction as a structural reference
+and target TypeScript source files precisely".
 ```
 
-Provide `files` for reference context (existing instruction files to use as style templates, `copilot-instructions.md` for project conventions) and `promptFiles` for the instruction files to create or update.
+Provide known reference files and project requirements during intake. HVE
+Builder keeps bounded reads of known targets local and activates `rpi-research`
+only when open-ended exploration or decision-critical research is needed.
 
-Evaluate an instruction file's quality with `/prompt-analyze`:
+Use review mode for a read-only quality assessment:
 
 ```text
-/prompt-analyze promptFiles=.github/instructions/coding-standards/python-script.instructions.md
+Use hve-builder with mode=review and
+targets=.github/instructions/coding-standards/python-script.instructions.md.
 ```
 
-The report identifies issues with structure, clarity, and consistency. Use it to validate `applyTo` patterns, frontmatter completeness, and instruction coherence before merging.
+The report identifies issues with structure, clarity, load timing, `applyTo`
+scope, frontmatter completeness, and instruction coherence.
 
-Refactor related instruction files with `/prompt-refactor`:
+Use refactor mode for behavior-preserving consolidation:
 
 ```text
-/prompt-refactor promptFiles=.github/instructions/coding-standards/*.instructions.md requirements="eliminate overlapping rules and consolidate shared patterns"
+Use hve-builder with mode=refactor,
+targets=.github/instructions/coding-standards/*.instructions.md, and
+requirements="eliminate overlapping rules and consolidate shared patterns".
 ```
 
 > [!TIP]
-> When creating instruction files, include existing instruction files in the `files` parameter. Prompt Builder uses them as style references and avoids generating rules that conflict with existing guidance.
+> When creating instruction files, supply existing instructions as known
+> references. HVE Builder uses them to preserve local conventions and avoid
+> conflicting rules.
 
 ## Targeting with applyTo
 

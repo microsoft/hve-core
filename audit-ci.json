@@ -3,6 +3,7 @@
   "moderate": true,
   "allowlist": [
     "GHSA-9mqv-5hh9-4cgg",
+    "GHSA-mh99-v99m-4gvg",
     "GHSA-v2hh-gcrm-f6hx"
   ],
   "report-type": "important",

@@ -11,7 +11,7 @@
 .DESCRIPTION
     Drives the `evals/baseline-equivalence/` Vally suite end-to-end. Resolves the target
     agent's frontmatter `model:` hint, selects a model tier (PR or nightly), invokes
-    `vally eval` once per environment (`baseline` and `task-researcher-context`), invokes
+    `vally eval` once per environment (`baseline` and `rpi-agent-context`), invokes
     `vally compare` to produce comparison JSONL, and writes a machine-readable summary
     to `logs/baseline-equivalence-summary.json`.
 
@@ -26,7 +26,7 @@
 
 .PARAMETER Agent
     The target agent slug, matching the basename of an `.agent.md` file under
-    `.github/agents/`. Defaults to `task-researcher`.
+    `.github/agents/`. Defaults to `rpi-agent`.
 
 .PARAMETER Tier
     The model tier to exercise. `pr` runs a single primary model; `nightly` runs a model
@@ -49,24 +49,24 @@
     Path to the summary JSON. Defaults to `<RepoRoot>/logs/baseline-equivalence-summary.json`.
 
 .EXAMPLE
-    ./Invoke-BaselineEquivalence.ps1 -Agent task-researcher -Tier pr -WhatIf
+    ./Invoke-BaselineEquivalence.ps1 -Agent rpi-agent -Tier pr -WhatIf
 
     Prints the planned commands and writes a dry-run summary.
 
 .EXAMPLE
-    npm run eval:equivalence -- -Agent task-researcher -Tier pr
+    npm run ci:eval:equivalence -- -Agent rpi-agent -Tier pr
 
     Runs the PR-tier flow via the npm wrapper.
 
 .NOTES
-    Runs via: npm run eval:equivalence
+    Runs via: npm run ci:eval:equivalence
 #>
 
 [CmdletBinding(SupportsShouldProcess = $true)]
 param(
     [Parameter(Mandatory = $false)]
     [ValidateNotNullOrEmpty()]
-    [string]$Agent = 'task-researcher',
+    [string]$Agent = 'rpi-agent',
 
     [Parameter(Mandatory = $false)]
     [ValidateSet('pr', 'nightly')]

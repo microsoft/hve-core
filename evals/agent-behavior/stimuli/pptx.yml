@@ -3,7 +3,7 @@
 stimuli:
   - name: pptx-class-recipe
     prompt: |
-      Plan a 5-slide PowerPoint deck about "Q1 engineering velocity highlights." List phases (outline, draft, render, review). Write the plan under `.copilot-tracking/ppt/` and report the path.
+      Plan a 5-slide PowerPoint deck about "Q1 engineering velocity highlights." List the three phases of the deck build. Write the plan under `.copilot-tracking/ppt/` and report the path.
     tags:
       category: agent-behavior
     graders:

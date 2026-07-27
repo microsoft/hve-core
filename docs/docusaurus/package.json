@@ -19,9 +19,9 @@
     "lint:label-registry": "node scripts/check-label-registry.mjs",
     "serve:ci": "node e2e/static-server.mjs",
     "serve:preview": "docusaurus build && node e2e/static-server.mjs",
-    "test:e2e": "playwright test",
-    "test:e2e:fast": "playwright test --workers=4",
-    "test:e2e:ui": "playwright test --ui"
+    "ci:test:e2e": "playwright test",
+    "ci:test:e2e:fast": "playwright test --workers=4",
+    "ci:test:e2e:ui": "playwright test --ui"
   },
   "dependencies": {
     "@docusaurus/core": "3.10.1",

@@ -36,6 +36,8 @@ param(
         'extension/templates/README.template.md',
         'scripts/docs/templates/**',
         'docs/reference/**',
+        'docs/docusaurus/playwright-report/**',
+        'docs/docusaurus/test-results/**',
         'collections/*.collection.md',
         'pr.md',
         '.github/PULL_REQUEST_TEMPLATE.md',

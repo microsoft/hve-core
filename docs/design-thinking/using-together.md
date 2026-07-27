@@ -3,7 +3,7 @@ title: Using DT Methods Together
 description: End-to-end walkthrough of a Design Thinking session across all nine methods
 sidebar_position: 16
 author: Microsoft
-ms.date: 2026-06-28
+ms.date: 2026-07-15
 ms.topic: tutorial
 keywords:
   - design thinking
@@ -37,9 +37,9 @@ flowchart LR
     M3 -->|"space transition"| M4
     M6 -->|"space transition"| M7
 
-    M3 -.->|"Exit 1"| TR["Task<br/>Researcher"]
-    M6 -.->|"Exit 2"| TR
-    M9 -.->|"Exit 3"| TR
+    M3 -.->|"Exit 1"| RR["rpi-<br/>research"]
+    M6 -.->|"Exit 2"| RR
+    M9 -.->|"Exit 3"| RR
 ```
 
 ## Problem Space: Methods 1-3
@@ -175,9 +175,9 @@ The coach guides scaling patterns, change management planning, and telemetry-dri
 
 ## DT → RPI Handoff
 
-Design Thinking produces validated understanding; RPI delivers implementation. The handoff can occur at three exit points, each seeding Task Researcher with progressively richer context. Every exit enters the full RPI pipeline at Task Researcher.
+Design Thinking produces validated understanding; RPI delivers implementation. The handoff can occur at three exit points, each seeding `rpi-research` with progressively richer context. Every exit enters the RPI pipeline through that Research phase.
 
-| Exit Point                 | Methods | Artifacts Seeded to Researcher                                                                         | Researcher Scope                                                   |
+| Exit Point                 | Methods | Artifacts Seeded to `rpi-research`                                                                     | Research Scope                                                     |
 |----------------------------|---------|--------------------------------------------------------------------------------------------------------|--------------------------------------------------------------------|
 | Problem Statement Complete | 1-3     | Problem statement, stakeholder map, research themes, affinity clusters, constraints, assumptions log   | Broad: solution approaches, technology options, feasibility        |
 | Concept Validated          | 4-6     | Exit 1 plus tested concepts with D/F/V scores, low-fidelity prototype feedback, constraint discoveries | Moderate: concept feasibility, integration paths, risk areas       |
@@ -219,9 +219,9 @@ Cumulative with Exits 1-2.
 * Refinement log, scaling assessment, and deployment plan
 * Adoption metrics with leading and lagging indicators
 
-Each exit point produces a handoff summary and a self-contained RPI document in the project artifact folder at `docs/design-thinking/{project-slug}/`. The coaching state remains in `.copilot-tracking/design-thinking-sessions/{project-slug}/coaching-state.md`. Earlier exit points transfer leaner artifacts, requiring the Researcher to cast a wider investigation net. Later exit points carry cumulative evidence, narrowing the Researcher's scope to specific verification and refinement targets.
+Each exit point produces a handoff summary and a self-contained RPI document in the project artifact folder at `docs/design-thinking/{project-slug}/`. The coaching state remains in `.copilot-tracking/design-thinking-sessions/{project-slug}/coaching-state.md`. Earlier exit points transfer leaner artifacts, requiring `rpi-research` to cast a wider investigation net. Later exit points carry cumulative evidence, narrowing the Research phase to specific verification and refinement targets.
 
-For a step-by-step walkthrough of each handoff, see [Tutorial: Handing Off from DT to RPI](tutorial-handoff-to-rpi.md). For the handoff contract and per-agent mappings, see [DT-RPI Integration](dt-rpi-integration.md).
+For a step-by-step walkthrough of each handoff, see [Tutorial: Handing Off from DT to RPI](tutorial-handoff-to-rpi.md). For the handoff contract and per-phase mappings, see [DT-RPI Integration](dt-rpi-integration.md).
 
 ## Non-Linear Iteration
 

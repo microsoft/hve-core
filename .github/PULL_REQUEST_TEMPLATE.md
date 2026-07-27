@@ -27,7 +27,7 @@ Select all that apply:
 
 **AI Artifacts:**
 
-* [ ] Reviewed contribution with `prompt-builder` agent and addressed all feedback
+* [ ] Reviewed contribution with `hve-builder` and addressed all actionable findings
 * [ ] Copilot instructions (`.github/instructions/*.instructions.md`)
 * [ ] Copilot prompt (`.github/prompts/*.prompt.md`)
 * [ ] Copilot agent (`.github/agents/*.agent.md`)
@@ -86,23 +86,18 @@ For detailed contribution requirements, see:
 
 ### AI Artifact Contributions
 <!-- If contributing an agent, prompt, instruction, or skill, complete these checks -->
-* [ ] Used `/prompt-analyze` to review contribution
-* [ ] Addressed all feedback from `prompt-builder` review
+* [ ] Used `hve-builder` review mode to review contribution
+* [ ] Addressed all actionable findings from the `hve-builder` review
 * [ ] Verified contribution follows common standards and type-specific requirements
 
-### Required Automated Checks
+### Required Local Checks
 
-The following validation commands must pass before merging:
+The following local-safe validation commands must pass before merging:
 
-* [ ] Markdown linting: `npm run lint:md`
+* [ ] Local validation aggregate: `npm run validate:local`
+* [ ] Documentation validation (if docs changed): `npm run validate:docs`
 * [ ] Spell checking: `npm run spell-check`
-* [ ] Frontmatter validation: `npm run lint:frontmatter`
-* [ ] Skill structure validation: `npm run validate:skills`
 * [ ] Link validation: `npm run lint:md-links`
-* [ ] PowerShell analysis: `npm run lint:ps`
-* [ ] Eval spec schema and coverage (if AI artifacts changed): `npm run eval:lint:schema`
-* [ ] Plugin freshness: `npm run plugin:generate`
-* [ ] Docusaurus tests: `npm run docs:test`
 
 ## Security Considerations
 <!-- ⚠️ WARNING: Do not commit sensitive information such as API keys, passwords, or personal data -->

@@ -5,7 +5,6 @@ user-invocable: true
 disable-model-invocation: true
 agents:
   - Privacy Planner
-  - Researcher Subagent
 tools:
   - agent
   - execute/runInTerminal
@@ -64,7 +63,7 @@ Render the persisted review report and the inline completion summary using these
 
 1. Read the privacy planner identity instructions and the privacy standards skill before beginning review work.
 2. Resolve the review target per Review Target Resolution, then establish the review scope from the user's request, any supplied plan context, or referenced privacy plan artifacts.
-3. Delegate standards and citation lookups to the `Researcher Subagent` to gather supporting evidence (for example, GDPR articles, CCPA/CPRA sections, DPIA thresholds) when the review needs authoritative references the planner skill does not already supply.
+3. Activate `rpi-research` when the review needs authoritative standards or citation evidence that the privacy skill does not supply. Provide the topic and review purpose; the report audience and intended use; explicit questions and evidence criteria; jurisdiction, processing-activity, source, and version scope plus non-goals; legal, licensing, privacy, deadline, and review-boundary constraints; supplied plan, requirements, state, and reference evidence; requested outputs; and output mode (`audit` for review mode or `analysis` for plan mode). Explicitly trust `.copilot-tracking/privacy-reviews/` as the alternate evidence root and require the skill to mirror `research/YYYY-MM-DD/<task-slug>-research.md` and `research/subagents/...` beneath it. Let the skill resolve the exact date, task slug, artifact paths, worker selection, lane contracts, budgets, and research synthesis. Read the completed primary research artifact before drawing evidence-dependent conclusions. Treat `Blocked` and `Needs clarification` as unresolved evidence: record the smallest gap and stop the affected conclusion rather than synthesizing uncertain legal or regulatory content from training data.
 4. Evaluate the plan for completeness across scope, data mapping, DPIA decisions, controls, impacts, and handoff readiness.
 5. Write or update the review report in `.copilot-tracking/privacy-reviews/` using the Review Summary Format, with evidence references, risks, and follow-up actions.
 6. Re-surface the professional-review disclaimer before concluding the review, using the verbatim wording from the Privacy Review section of [.github/instructions/shared/disclaimer-language.instructions.md](../../instructions/shared/disclaimer-language.instructions.md).

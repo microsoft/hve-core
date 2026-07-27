@@ -25,9 +25,9 @@ Describe 'file-status-check' -Tag 'Unit' {
 
     Context 'Managed files (unchanged)' {
         It 'Reports managed status when file hash matches manifest' {
-            $filePath = '.github/agents/task-researcher.agent.md'
+            $filePath = '.github/agents/sample-agent.agent.md'
             New-Item -ItemType Directory -Path '.github/agents' -Force | Out-Null
-            Set-Content -Path $filePath -Value '# Researcher' -NoNewline
+            Set-Content -Path $filePath -Value '# Sample' -NoNewline
             $hash = (Get-FileHash -Path $filePath -Algorithm SHA256).Hash.ToLower()
 
             $manifest = @{
@@ -45,7 +45,7 @@ Describe 'file-status-check' -Tag 'Unit' {
 
     Context 'Modified files' {
         It 'Reports modified status when file hash differs from manifest' {
-            $filePath = '.github/agents/task-researcher.agent.md'
+            $filePath = '.github/agents/sample-agent.agent.md'
             New-Item -ItemType Directory -Path '.github/agents' -Force | Out-Null
             Set-Content -Path $filePath -Value '# Modified Content' -NoNewline
 

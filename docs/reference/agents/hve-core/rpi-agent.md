@@ -1,8 +1,8 @@
 ---
 title: RPI Agent
-description: Autonomous RPI orchestrator running Research → Plan → Implement → Review → Discover phases with specialized subagents
-sidebar_position: 4
-ms.date: 2026-07-03
+description: "User-selected RPI workflow wrapper for Research, Plan, Implement, Review, and Follow-up. Use when one task needs lifecycle coordination."
+sidebar_position: 2
+ms.date: 2026-07-16
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->
@@ -17,7 +17,7 @@ ms.date: 2026-07-03
 ## What it does
 
 <!-- BEGIN AUTO-GENERATED: overview -->
-Autonomous RPI orchestrator running Research → Plan → Implement → Review → Discover phases with specialized subagents
+User-selected RPI workflow wrapper for Research, Plan, Implement, Review, and Follow-up. Use when one task needs lifecycle coordination.
 <!-- END AUTO-GENERATED: overview -->
 
 ## When to use it

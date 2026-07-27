@@ -17,8 +17,8 @@ handoffs:
     prompt: /dt-canonical-deck
     send: false
   - label: "🔬 Hand off to RPI"
-    agent: Task Researcher
-    prompt: /task-research
+    agent: RPI Agent
+    prompt: "Continue this Design Thinking handoff through RPI, starting with `rpi-research` to validate evidence and close implementation unknowns."
     send: true
   - label: "📋 Export to Figma"
     agent: DT Coach

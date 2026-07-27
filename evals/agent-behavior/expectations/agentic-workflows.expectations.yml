@@ -10,8 +10,8 @@
 # `phase-marker-present` and `tracking-file-write` because the output
 # wrote the plan to an arbitrary path
 # (`C:\Users\…\.copilot\session-state\…\plan.md`) instead of the
-# `.copilot-tracking/plans/` subtree, and structured phases inside a table
-# rather than as headed sections matching `^(##|###|Step \d+|Phase \d+|\d+\.)`.
+# `.copilot-tracking/plans/` subtree, and used table-only phase descriptions
+# rather than stable `Pxx` and `Pxx-Txx` headings with RPI markers.
 # Expectations below promote contract-grounded checks targeting both
 # failures plus broader Engineering-Excellence planning conformance.
 slug: agentic-workflows
@@ -22,36 +22,36 @@ latest_result: evals/results/agent-matrix/2026-05-28/agentic-workflows.json
 source_review_date: 2026-05-28
 
 expectations:
-  - expectation_id: phase-headings-present
-    summary: Plan is organized into headed phases or numbered steps.
-    signal: Output contains lines matching `^(##|###|Step \d+|Phase \d+|\d+\.)`.
+  - expectation_id: stable-phase-and-task-markers
+    summary: Plan uses stable phase and task IDs with contextual RPI markers.
+    signal: Output contains `Pxx` and `Pxx-Txx` identifiers and the matching `rpi:phase` and `rpi:task` markers.
     pass_criteria: |
-      Plan body contains multiple top-level markers from
-      `## <heading>`, `### <heading>`, `Step <n>`, `Phase <n>`, or numbered
-      list items (`1.` …). A table row alone does not satisfy this.
+      Plan body identifies phases as `Pxx` and tasks as `Pxx-Txx`, with
+      `<!-- rpi:phase id=P01 -->` immediately before a matching phase heading
+      and `<!-- rpi:task id=P01-T01 -->` immediately before a matching task
+      heading. A table row alone does not satisfy this contract.
     failure_modes:
-      - Phases captured only as rows in a single table.
-      - Single prose block with no headings or step markers
-        (matches current 2026-05-28 matrix failure).
+      - Phases or tasks use only unstructured prose.
+      - IDs are absent, or marker IDs do not match their headings.
     priority: high
-    contract_ref: "current `phase-marker-present` grader (regex /(?m)^(##|###|Step \\d+|Phase \\d+|\\d+\\.)/)"
+    contract_ref: "RPI marker convention (`Pxx`, `Pxx-Txx`, `<!-- rpi:phase id=P01 -->`, and `<!-- rpi:task id=P01-T01 -->`)"
 
   - expectation_id: tracking-plan-path
-    summary: Plan is written under the `.copilot-tracking/plans/` subtree.
-    signal: Output names a path matching `.copilot-tracking/plans/<YYYY-MM-DD>/<slug>-plan.instructions.md`.
+    summary: Plan is written under the canonical dated `.copilot-tracking/plans/` subtree.
+    signal: Output names a path matching `.copilot-tracking/plans/<YYYY-MM-DD>/<slug>-plan.md`.
     pass_criteria: |
       Reported plan path is workspace-relative, starts with
       `.copilot-tracking/plans/`, includes a dated subdirectory, and ends in
-      `-plan.instructions.md`. Absolute paths to `.copilot` session state,
+      `-plan.md`. Absolute paths to `.copilot` session state,
       temp directories, or repo root are not acceptable.
     failure_modes:
       - Plan written to an absolute path under `.copilot/session-state/`
         (current 2026-05-28 matrix failure).
       - Plan written to repo root with no tracking prefix.
       - Path matches `.copilot-tracking/plans/` but is missing the dated
-        subdirectory or `-plan.instructions.md` suffix.
+        subdirectory or `-plan.md` suffix.
     priority: high
-    contract_ref: "agent §Tracking Artifacts (Implementation Plan path under `.copilot-tracking/plans/{{YYYY-MM-DD}}/{{task-description}}-plan.instructions.md`)"
+    contract_ref: "RPI tracking convention (`.copilot-tracking/plans/{{YYYY-MM-DD}}/{{task_slug}}-plan.md`)"
 
   - expectation_id: success-criteria-per-phase
     summary: Each phase names success criteria.
@@ -69,7 +69,7 @@ expectations:
 
   - expectation_id: parallelization-markers
     summary: Plan annotates phases with parallelization markers when appropriate.
-    signal: Output uses `<!-- parallelizable: true -->` or `<!-- parallelizable: false -->` per phase.
+    signal: "Output uses `<!-- parallelizable: true -->` or `<!-- parallelizable: false -->` per phase."
     pass_criteria: |
       Each phase carries a `<!-- parallelizable: true -->` or
       `<!-- parallelizable: false -->` annotation. When all phases must run

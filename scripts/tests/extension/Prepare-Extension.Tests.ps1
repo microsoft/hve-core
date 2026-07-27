@@ -1211,17 +1211,17 @@ Describe 'Test-GlobMatch' {
     }
 
     It 'Returns false for non-matching pattern' {
-        $result = Test-GlobMatch -Name 'memory' -Patterns @('rpi-*')
+        $result = Test-GlobMatch -Name 'sample-agent' -Patterns @('rpi-*')
         $result | Should -BeFalse
     }
 
     It 'Matches against multiple patterns' {
-        $result = Test-GlobMatch -Name 'memory' -Patterns @('rpi-*', 'mem*')
+        $result = Test-GlobMatch -Name 'sample-agent' -Patterns @('rpi-*', 'sample-*')
         $result | Should -BeTrue
     }
 
     It 'Handles exact name match' {
-        $result = Test-GlobMatch -Name 'memory' -Patterns @('memory')
+        $result = Test-GlobMatch -Name 'sample-agent' -Patterns @('sample-agent')
         $result | Should -BeTrue
     }
 }
@@ -2289,26 +2289,26 @@ description: "Child with display name"
 ---
 '@ | Set-Content -Path (Join-Path $script:agentsDir 'child-agent.agent.md')
 
-        # Chain using display names: Planner -> Implementor (mimics real hve-core agents)
-        @'
+    # Circular chain using display names.
+    @'
 ---
-name: Task Planner
-description: "Planner agent"
+name: Sample Agent
+description: "Sample agent"
 handoffs:
-  - label: "Implement"
-    agent: Task Implementor
+  - label: "Continue"
+    agent: Example Agent
 ---
-'@ | Set-Content -Path (Join-Path $script:agentsDir 'task-planner.agent.md')
+'@ | Set-Content -Path (Join-Path $script:agentsDir 'sample-agent.agent.md')
 
-        @'
+    @'
 ---
-name: Task Implementor
-description: "Implementor agent"
+name: Example Agent
+description: "Example agent"
 handoffs:
-  - label: "Review"
-    agent: Task Planner
+  - label: "Return"
+    agent: Sample Agent
 ---
-'@ | Set-Content -Path (Join-Path $script:agentsDir 'task-implementor.agent.md')
+'@ | Set-Content -Path (Join-Path $script:agentsDir 'example-agent.agent.md')
     }
 
     AfterAll {
@@ -2322,9 +2322,9 @@ handoffs:
     }
 
     It 'Resolves circular display-name handoff chains' {
-        $result = Resolve-HandoffDependencies -SeedAgents @('task-planner') -AgentsDir $script:agentsDir
-        $result | Should -Contain 'task-planner'
-        $result | Should -Contain 'task-implementor'
+        $result = Resolve-HandoffDependencies -SeedAgents @('sample-agent') -AgentsDir $script:agentsDir
+        $result | Should -Contain 'sample-agent'
+        $result | Should -Contain 'example-agent'
     }
 }
 

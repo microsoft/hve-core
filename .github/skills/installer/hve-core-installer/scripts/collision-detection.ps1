@@ -33,7 +33,7 @@ $targetDir = ".github/agents"
 
 # Get files to copy based on selection (paths relative to agents/)
 $filesToCopy = switch ($selection) {
-    "hve-core" { @("hve-core/task-researcher.agent.md", "hve-core/task-planner.agent.md", "hve-core/task-implementor.agent.md", "hve-core/task-reviewer.agent.md", "hve-core/rpi-agent.agent.md") }
+    "hve-core" { @("hve-core/rpi-agent.agent.md", "hve-core/documentation.agent.md") }
     default {
         # Collection-based: paths from collection manifest relative to agents/
         $collectionAgents
