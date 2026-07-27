@@ -3,7 +3,7 @@ title: Asset reference documentation
 description: How contributors generate, author, and validate reference pages for agents, prompts, instructions, and skills
 sidebar_position: 12
 author: Microsoft
-ms.date: 2026-07-18
+ms.date: 2026-07-27
 ms.topic: how-to
 keywords:
   - asset documentation
@@ -35,8 +35,8 @@ deprecated directories are excluded.
 | `.github/skills/<path>/<skill>/SKILL.md` and support files | `docs/reference/skills/<path>/<skill>.md`      |
 
 Nested paths are preserved. For example,
-`.github/agents/hve-core/subagents/phase-implementor.agent.md` maps to
-`docs/reference/agents/hve-core/subagents/phase-implementor.md`.
+`.github/agents/hve-core/subagents/rpi-researcher.agent.md` maps to
+`docs/reference/agents/hve-core/subagents/rpi-researcher.md`.
 
 ## Know which regions you own
 
@@ -103,24 +103,26 @@ frontmatter alone:
 Keep examples specific enough to test. Avoid repeating the generated description
 or promising behavior that the source artifact does not define.
 
-### Draft examples with Prompt Builder
+### Draft examples with HVE Builder
 
 For user-invocable agents and skills, use the
-[Prompt Builder](../reference/agents/hve-core/prompt-builder.md) authoring path to
+[hve-builder](../reference/skills/hve-core/hve-builder.md) authoring path to
 develop and review a representative example while creating or improving the source
-artifact. Prompt Builder routes the request through the HVE Builder lifecycle, so
-the example can reflect reviewed behavior rather than an invented happy path.
+artifact. HVE Builder applies an independent static review, a route-specific
+behavior gate, and host validation, so the example can reflect reviewed behavior
+rather than an invented happy path.
 
-Select **Prompt Builder** from the agent picker and provide both the source asset
-and its paired reference page. A focused request can use this shape:
+Invoke `hve-builder` from Copilot Chat with the target path, the paired reference
+page, and your requirements. A focused request can use this shape:
 
 ```text
-Use /prompt-build to improve this asset and draft one representative usage example.
-Include the user request, invocation, expected output, and success indicators so I
-can add the verified example to the authored Example usage section.
+Use hve-builder in improve mode on .github/agents/<collection>/<name>.agent.md and
+draft one representative usage example. Include the user request, invocation,
+expected output, and success indicators so I can add the verified example to the
+authored Example usage section of docs/reference/agents/<collection>/<name>.md.
 ```
 
-Copy only the reviewed example into the authored tail. Do not ask Prompt Builder or
+Copy only the reviewed example into the authored tail. Do not ask HVE Builder or
 another model to rewrite generated regions.
 
 ## Understand the CI gate
