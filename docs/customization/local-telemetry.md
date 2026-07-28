@@ -30,6 +30,10 @@ Events currently captured include:
 
 At stop time, telemetry also appends a session summary with model and token usage when available.
 
+## Prerequisites
+
+Ensure you have Bash 3.5+ (Linux/macOS) or PowerShell 7 (Windows) available, depending on your OS for running the telemetry hooks.
+
 ## Enable Local Telemetry
 
 Telemetry is opt-in. Enable it with either an environment variable or a repository marker file.

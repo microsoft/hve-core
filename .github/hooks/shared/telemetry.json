@@ -6,7 +6,7 @@
       {
         "type": "command",
         "bash": ".github/hooks/shared/telemetry/telemetry-collector.sh",
-        "powershell": "pwsh -NoProfile -File .github/hooks/shared/telemetry/Invoke-TelemetryCollector.ps1",
+        "powershell": ".github/hooks/shared/telemetry/Invoke-TelemetryCollector.ps1",
         "timeoutSec": 10
       }
     ],
@@ -14,7 +14,7 @@
       {
         "type": "command",
         "bash": ".github/hooks/shared/telemetry/telemetry-collector.sh",
-        "powershell": "pwsh -NoProfile -File .github/hooks/shared/telemetry/Invoke-TelemetryCollector.ps1",
+        "powershell": ".github/hooks/shared/telemetry/Invoke-TelemetryCollector.ps1",
         "timeoutSec": 10
       }
     ],
@@ -22,7 +22,7 @@
       {
         "type": "command",
         "bash": ".github/hooks/shared/telemetry/telemetry-collector.sh",
-        "powershell": "pwsh -NoProfile -File .github/hooks/shared/telemetry/Invoke-TelemetryCollector.ps1",
+        "powershell": ".github/hooks/shared/telemetry/Invoke-TelemetryCollector.ps1",
         "timeoutSec": 10
       }
     ],
@@ -30,7 +30,7 @@
       {
         "type": "command",
         "bash": ".github/hooks/shared/telemetry/telemetry-collector.sh",
-        "powershell": "pwsh -NoProfile -File .github/hooks/shared/telemetry/Invoke-TelemetryCollector.ps1",
+        "powershell": ".github/hooks/shared/telemetry/Invoke-TelemetryCollector.ps1",
         "timeoutSec": 10
       }
     ],
@@ -38,7 +38,7 @@
       {
         "type": "command",
         "bash": ".github/hooks/shared/telemetry/telemetry-collector.sh",
-        "powershell": "pwsh -NoProfile -File .github/hooks/shared/telemetry/Invoke-TelemetryCollector.ps1",
+        "powershell": ".github/hooks/shared/telemetry/Invoke-TelemetryCollector.ps1",
         "timeoutSec": 10
       }
     ],
@@ -46,7 +46,7 @@
       {
         "type": "command",
         "bash": ".github/hooks/shared/telemetry/telemetry-collector.sh",
-        "powershell": "pwsh -NoProfile -File .github/hooks/shared/telemetry/Invoke-TelemetryCollector.ps1",
+        "powershell": ".github/hooks/shared/telemetry/Invoke-TelemetryCollector.ps1",
         "timeoutSec": 10
       }
     ],
@@ -54,7 +54,7 @@
       {
         "type": "command",
         "bash": ".github/hooks/shared/telemetry/telemetry-collector.sh",
-        "powershell": "pwsh -NoProfile -File .github/hooks/shared/telemetry/Invoke-TelemetryCollector.ps1",
+        "powershell": ".github/hooks/shared/telemetry/Invoke-TelemetryCollector.ps1",
         "timeoutSec": 10
       }
     ],
@@ -62,7 +62,7 @@
       {
         "type": "command",
         "bash": ".github/hooks/shared/telemetry/telemetry-collector.sh",
-        "powershell": "pwsh -NoProfile -File .github/hooks/shared/telemetry/Invoke-TelemetryCollector.ps1",
+        "powershell": ".github/hooks/shared/telemetry/Invoke-TelemetryCollector.ps1",
         "timeoutSec": 10
       }
     ],
@@ -70,7 +70,7 @@
       {
         "type": "command",
         "bash": ".github/hooks/shared/telemetry/telemetry-collector.sh",
-        "powershell": "pwsh -NoProfile -File .github/hooks/shared/telemetry/Invoke-TelemetryCollector.ps1",
+        "powershell": ".github/hooks/shared/telemetry/Invoke-TelemetryCollector.ps1",
         "timeoutSec": 10
       }
     ],
@@ -78,7 +78,7 @@
       {
         "type": "command",
         "bash": ".github/hooks/shared/telemetry/telemetry-collector.sh",
-        "powershell": "pwsh -NoProfile -File .github/hooks/shared/telemetry/Invoke-TelemetryCollector.ps1",
+        "powershell": ".github/hooks/shared/telemetry/Invoke-TelemetryCollector.ps1",
         "timeoutSec": 10
       }
     ]
