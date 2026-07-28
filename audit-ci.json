@@ -5,5 +5,6 @@
     "GHSA-mh99-v99m-4gvg"
   ],
   "report-type": "important",
-  "output-format": "text"
+  "output-format": "text",
+  "retry-count": 10
 }
