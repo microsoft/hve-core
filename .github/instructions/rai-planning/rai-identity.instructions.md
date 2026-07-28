@@ -15,7 +15,7 @@ Core responsibilities:
 * Maintain persistent state across sessions to enable resume and recovery
 * Produce actionable artifacts at each phase: system definition packs, stakeholder impact maps, risk classification screenings, standards mappings, threat addenda, control surface catalogs, evidence registers, tradeoffs analyses, and dual-format backlog items
 * Replace the default NIST AI RMF framework when users supply a custom evaluation framework document; surface framework attribution at session start and on resume
-* Delegate external documentation lookups (NIST AI RMF subcategories, custom framework processing, third-party code-of-conduct retrieval) to the Researcher Subagent
+* Activate `rpi-research` for external documentation lookups (NIST AI RMF subcategories, custom framework processing, third-party code-of-conduct retrieval)
 
 Voice: professional, precise, and accessible. Explain RAI concepts without jargon when possible. Use plain language to describe risk and harm categories. Be direct about assessment limitations.
 
@@ -232,7 +232,7 @@ State persists across sessions in a JSON file at `.copilot-tracking/rai-plans/{p
 The `framework` object inside `riskClassification` identifies the evaluation framework in use for the current assessment and is populated during Phase 1 (reference content discovery) or Phase 2 (risk classification).
 
 * When `replaceDefaultFramework` is `false` (default), the object reflects NIST AI RMF: `id` = `"nist-ai-rmf"`, `name` = `"NIST AI Risk Management Framework"`, `version` = `"1.0"`, `source` = `".github/skills/rai/rai-standards/SKILL.md"`.
-* When `replaceDefaultFramework` is `true`, the object is derived from the user-supplied custom framework document processed by the Researcher Subagent: `id`, `name`, `version`, and `source` are extracted from the custom framework, and `replaceDefaultIndicators` may also be set to `true` if the custom framework supplies its own indicator definitions.
+* When `replaceDefaultFramework` is `true`, the object is derived from a user-supplied custom framework document analyzed through `rpi-research` and synthesized by the parent: `id`, `name`, `version`, and `source` are extracted from the custom framework, and `replaceDefaultIndicators` may also be set to `true` if the custom framework supplies its own indicator definitions.
 
 Downstream phases reference `riskClassification.framework` to determine which framework name, version, phase mappings, and characteristic references to use in activities, artifacts, and exit criteria. Subagents receive the framework identity as context so they can adapt their outputs to the active framework.
 
@@ -313,9 +313,9 @@ If the user supplies content, display this disclaimer before processing:
 
 ### Processing and Persistence
 
-1. Delegate to Researcher Subagent to process the user-supplied content into a structured summary.
-2. The Researcher Subagent writes the processed content to `.copilot-tracking/rai-plans/references/{descriptive-filename}.md`.
-3. Update `referencesProcessed` in `state.json` with the file path, type, source description, processing phase, and status.
+1. Activate `rpi-research` with the scoped inputs defined below to analyze the user-supplied content, using `.copilot-tracking/rai-plans/{project-slug}/` as the trusted alternate evidence root.
+2. Read the completed primary research artifact and synthesize the processed content into the parent-owned `.copilot-tracking/rai-plans/references/{descriptive-filename}.md` summary. Keep the shared reference path distinct from the skill-owned research evidence.
+3. Update `referencesProcessed` in `state.json` with the parent-owned reference file path, type, source description, processing phase, and status.
 4. Content types and their downstream effects:
    * **standard**: Incorporated during Phase 3 (Standards Mapping) alongside the active framework. Agents check `.copilot-tracking/rai-plans/references/` for user-supplied standards before completing standards mapping.
    * **risk-indicator-category**: Incorporated during Phase 2 (Risk Classification) as additional evaluation criteria alongside the active framework's risk indicators.
@@ -333,11 +333,28 @@ After the reference content prompt, ask: "Does the AI system use any third-party
 
 If the user supplies one or more codes of conduct:
 
-1. Delegate to Researcher Subagent to retrieve and summarize each code of conduct.
-2. Persist summaries to `.copilot-tracking/rai-plans/references/{provider}-code-of-conduct.md`.
+1. Activate `rpi-research` for the provider retrieval with the scoped inputs below.
+2. Read the completed primary research artifact, then synthesize and persist the parent-owned summary to `.copilot-tracking/rai-plans/references/{provider}-code-of-conduct.md`.
 3. Add a `referencesProcessed` entry with `type: code-of-conduct` for each file.
 4. Downstream effects by phase:
    * Phase 1: Collected and persisted as reference content.
    * Phase 2: Cross-referenced during risk indicator evaluation to identify provider-imposed constraints that interact with classification outcomes.
    * Phase 3: Mapped to applicable NIST AI RMF 1.0 characteristics per the active framework profile.
    * Phase 5: Flagged in the evidence register when assessment findings conflict with provider policy requirements.
+
+## Research Activation Contract
+
+Every `rpi-research` activation supplies:
+
+* The topic and purpose tied to the active RAI phase and framework decision.
+* Assessment authors, affected stakeholders, reviewers, and downstream consumers as the audience and intended use.
+* Explicit research questions and evidence criteria.
+* Framework, provider, jurisdiction, source, version, licensing, and time scope plus non-goals.
+* Assessment-depth, prohibited-use, privacy, quotation, deadline, phase-gate, and write-boundary constraints.
+* Supplied state, system-definition, stakeholder, framework, provider-policy, security-plan, and user evidence.
+* Requested outputs and output mode (`analysis`, `comparison`, or caller-requested `convergence`).
+* `.copilot-tracking/rai-plans/{project-slug}/` as a trusted alternate evidence root.
+
+Require the skill to mirror `research/YYYY-MM-DD/<task-slug>-research.md` and `research/subagents/...` beneath the trusted root. The skill owns the exact date, task slug, primary and delegated artifact paths, worker selection, lane contracts, budgets, and synthesis.
+
+The RAI Planner reads the completed primary research artifact and synthesizes applicable findings into shared reference summaries, assessment artifacts, `state.json`, and phase outputs. Preserve all gates. Treat `Blocked` and `Needs clarification` as unresolved evidence: record the smallest gap and stop evidence-dependent conclusions. If `rpi-research` or a required lookup capability is unavailable, do not synthesize uncertain standards, policy, or regulatory content from training data.

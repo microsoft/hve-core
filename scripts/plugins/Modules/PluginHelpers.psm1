@@ -26,7 +26,7 @@ function Get-PluginItemName {
     their suffix because VS Code discovery filters on *.instructions.md.
 
     .PARAMETER FileName
-    The original filename (e.g. task-researcher.agent.md).
+    The original filename (e.g. rpi-agent.agent.md).
 
     .PARAMETER Kind
     The artifact kind: agent, prompt, instruction, or skill.

@@ -39,7 +39,7 @@ Describe 'Get-ArtifactFiles - repo-specific path exclusion' {
         # Create collection-scoped prompt in subdirectory (should be included)
         $hveCorePromptsDir = Join-Path $promptsDir 'hve-core'
         New-Item -ItemType Directory -Path $hveCorePromptsDir -Force | Out-Null
-        Set-Content -Path (Join-Path $hveCorePromptsDir 'task-plan.prompt.md') -Value '---\ndescription: distributable prompt\n---'
+        Set-Content -Path (Join-Path $hveCorePromptsDir 'sample-prompt.prompt.md') -Value '---\ndescription: distributable prompt\n---'
 
         # Create collection-scoped hook manifest in subdirectory (should be included)
         $sharedHooksDir = Join-Path $ghDir 'hooks/shared'
@@ -89,7 +89,7 @@ Describe 'Get-ArtifactFiles - repo-specific path exclusion' {
     It 'Includes collection-scoped prompts in subdirectories' {
         $items = Get-ArtifactFiles -RepoRoot $script:repoRoot
         $paths = $items | ForEach-Object { $_.path }
-        $paths | Should -Contain '.github/prompts/hve-core/task-plan.prompt.md'
+        $paths | Should -Contain '.github/prompts/hve-core/sample-prompt.prompt.md'
     }
 
     It 'Includes collection-scoped hook manifests in subdirectories' {

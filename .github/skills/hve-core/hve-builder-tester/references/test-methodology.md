@@ -15,16 +15,16 @@ A black-box scenario exercises the target through its documented interface, usin
 * the fact that this is a test,
 * its authoring history.
 
-`HVE Artifact Test Designer` may inspect internals to design coverage, but its emitted scenario stays black-box. The lead adds a separate dispatch wrapper containing the artifact pointer, profile, fidelity, and sandbox controls. Do not leak those controls into the scenario.
+The generic test-design subagent may inspect internals to design coverage, but its emitted scenario stays black-box. The lead adds a separate dispatch wrapper containing the artifact pointer, profile, fidelity, and sandbox controls. Do not leak those controls into the scenario.
 
 ## Fidelity modes
 
 Every run records one fidelity:
 
-| Fidelity     | What runs                                                                                                                          | Claims the evidence supports                                                                            |
-|--------------|------------------------------------------------------------------------------------------------------------------------------------|---------------------------------------------------------------------------------------------------------|
-| `simulation` | `HVE Artifact Tester` reads the target and follows it literally in a contained sandbox, emulating unavailable or unsafe dispatches | Contract interpretation, instruction clarity, handoff consistency, and expected tool-selection behavior |
-| `native`     | The registered target agent, subagent, or semantically activated skill receives the black-box scenario directly                    | Observed activation, tool selection, outputs, and stop behavior for that run and model profile          |
+| Fidelity     | What runs                                                                                                                          | Claims the evidence supports                                                                             |
+|--------------|------------------------------------------------------------------------------------------------------------------------------------|----------------------------------------------------------------------------------------------------------|
+| `simulation` | `HVE Artifact Tester` reads the target and follows it literally in a contained sandbox, emulating unavailable or unsafe dispatches | Contract interpretation, instruction clarity, handoff consistency, documented outputs, and stop behavior |
+| `native`     | The registered target agent, subagent, or semantically activated skill receives the black-box scenario directly                    | Observed activation, outputs, and stop behavior for that run and model profile                           |
 
 Simulation is the safe default. Native fidelity is permitted only when all conditions hold:
 
@@ -43,9 +43,11 @@ Test only what has runtime behavior to exercise. The decision rule:
 * By type: prompts, agents, subagents, and skills always carry runtime behavior and are tested. A skill's own references, templates, and assets under its directory are part of the skill's runtime behavior (the skill loads and acts on them), so they are tested with the skill, not skipped. Only standalone documentation that no executable artifact loads (for example top-level docs and READMEs) carries no runtime behavior and is skipped with a reason. An instruction file carries runtime behavior when a change adds or alters a rule or convention that steers model actions, and none when the change is purely editorial.
 * By change: on a behavioral type, a change that provably cannot alter model actions (formatting, link fixes, comment-only edits, or a reference path change with no rule change) has no runtime behavior to exercise for that change; record the reason. Modifications applied by linters or formatters are formatting-only by definition and do not require re-testing.
 
+When `hve-builder` is the caller, its change-classification policy is more specific: all minor and medium changes are satisfied-and-skipped, including every frontmatter-only change and name-reference update. This skill receives Major mutations and behavior-bearing review targets from that route. Direct callers may still request a behavior test under the runtime-behavior decision above.
+
 ## Artifact dispatch
 
-The lead selects profile, fidelity, grouping, and wrapper. The Designer supplies only the black-box scenario.
+The lead selects profile, fidelity, grouping, and wrapper. The Designer supplies only the black-box scenario. Agent and subagent `tools:` configuration is outside test design, execution, and grading: do not inspect, infer, validate, grade, recommend, or judge it.
 
 | Kind         | Simulation dispatch                                               | Native dispatch when eligible                                                                   |
 |--------------|-------------------------------------------------------------------|-------------------------------------------------------------------------------------------------|
@@ -65,12 +67,24 @@ Use the canonical ordered Medium profile (`GPT-5.6 Terra`, `Claude Sonnet 5`, `M
 
 * Resolve the run folder as `.copilot-tracking/sandbox/{{YYYY-MM-DD}}-{{topic}}-{{run-number}}` by scanning existing folders for the date and topic and incrementing the run number.
 * Write `run-state.md` with targets and types, profile and model, fidelity, containment controls, isolation and together sets, purpose, requirements, and pre-run workspace status.
-* The Designer writes `test-design.md`, the executor writes `test-log.md`, and the Reviewer writes `test-review.md`, all in the run folder.
+* The lead writes `run-state.md`, `test-design.md`, `test-log.md`, and `test-review.md` in the run folder from its setup and generic-stage or executor returns. The executor is read-only and returns its trace for the lead to persist.
 * The canonical test log distinguishes observed, simulated, and emulated actions and records post-run workspace status. Any unexpected out-of-sandbox change blocks a clean verdict.
 * Clean up after review unless retention was requested. Write the durable report outside the sandbox first.
 
+## Correction-run evidence reuse
+
+Reuse is an auditable correction-run optimization, not a lower evidence standard. Record the following eligibility dimensions before skipping full design or execution:
+
+* Prior report path, execution `Complete`, verdict `Pass`, and no open findings
+* Stable design ID and scenario IDs with the accepted black-box prompts
+* Requirement-to-scenario mapping and coverage disposition
+* Prior and current target revision provenance
+* Purpose, requirements, target contract, profile, model or proxy status, modality, and fidelity
+* Changed-surface-to-scenario impact mapping
+* Reused scenario grades and freshly executed scenario grades
+
+All dimensions must match except target revision and its explicitly mapped changed surface. A scenario without traceable impact evidence is affected. Execute every affected scenario and send its fresh evidence to an independent Medium-profile grader. Reuse only prior grades for traceably unaffected scenarios. A changed equivalence dimension or material coverage gap requires full design, execution, and grading.
+
 ## File reference formatting
 
-Files under .copilot-tracking/ are consumed by AI agents, not humans clicking links. When citing workspace files in sandbox logs, use plain-text workspace-relative paths, not markdown links or #file: directives, because VS Code resolves them and reports missing-target errors that flood the Problems tab.
-
-> Brought to you by microsoft/hve-core
+Files under .copilot-tracking/ are consumed by AI agents, not humans clicking links. When citing workspace files in sandbox logs, use plain-text workspace-relative paths, not markdown links or #file: directives, because VS Code resolves them and reports missing-target errors that flood the Problems tab. The durable behavior report owns user-facing links to retained evidence.

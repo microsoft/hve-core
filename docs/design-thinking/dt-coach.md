@@ -3,7 +3,7 @@ title: Using the DT Coach
 description: Guide to using the dt-coach agent for AI-assisted Design Thinking sessions
 sidebar_position: 3
 author: Microsoft
-ms.date: 2026-06-28
+ms.date: 2026-07-15
 ms.topic: tutorial
 keywords:
   - dt-coach
@@ -31,7 +31,7 @@ Use the DT Coach when your project involves:
 2. Manages session state so you can pause and resume across conversations
 3. Enforces quality appropriate to each space (rough in Problem, scrappy in Solution, functional in the Implementation Space)
 4. Guides transitions between methods based on exit signals rather than arbitrary timelines
-5. Prepares handoffs to RPI agents when your DT session reaches a natural exit point
+5. Prepares handoffs to the RPI workflow when your DT session reaches a natural exit point
 
 > [!NOTE]
 > The DT Coach never prescribes solutions. It shares observations, asks questions, and offers choices. You drive the thinking; the coach helps you think more clearly.
@@ -58,7 +58,7 @@ docs/design-thinking/{project-slug}/
 This artifacts directory contains:
 
 * `method-{NN}-*/`: Per-method working artifacts (notes, themes, prototypes)
-* Handoff artifacts when transitioning to RPI agents
+* Handoff artifacts when transitioning to RPI
 
 ## How to Use DT Coach
 
@@ -73,7 +73,7 @@ This artifacts directory contains:
 
 Use `/dt-method-next` to have the coach assess where you are and guide you to the next appropriate method.
 Use `/dt-canonical-deck` to generate a canonical deck snapshot, then follow the customer-card workflow when you want a PowerPoint deck derived from the snapshot.
-Use `/task-research` when a DT session has reached a natural exit point and you want to hand off to Task Researcher.
+Use `/rpi-research` when a DT session has reached a natural exit point and you want to begin the RPI Research phase.
 Use `/dt-figma-export` or a Mural board export when you want to turn existing DT artifacts into a collaborative board for review.
 
 ### Starting a Session

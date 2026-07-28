@@ -2,16 +2,18 @@
 # Copyright (c) 2026 Microsoft Corporation. All rights reserved.
 # SPDX-License-Identifier: MIT
 #
-# Stub vally CLI for unit tests covering Invoke-VallyEvals.ps1.
+# Stub vally CLI for unit tests covering Vally eval and compare drivers.
 #
-# Honors the `eval` subcommand and writes a deterministic results.jsonl under
-# a timestamped run directory beneath --output-dir. Behavior is driven by
+# Honors the `eval` and `compare` subcommands. Eval writes deterministic
+# results.jsonl under a timestamped run directory beneath --output-dir. Compare
+# writes deterministic comparison JSONL to --output. Behavior is driven by
 # environment variables so a single fixture script can model pass/fail/mixed
 # scenarios:
 #
 #   STUB_VALLY_MODE            Default mode for any spec ('pass' when unset).
 #   STUB_VALLY_MODES_JSON      Optional JSON object mapping spec basenames to
 #                              modes; overrides STUB_VALLY_MODE per-spec.
+#   STUB_VALLY_COMPARE_MODE    Compare mode: pass or fail-empty.
 #
 # Supported modes:
 #   pass   - two passing trials, exit 0
@@ -29,9 +31,36 @@
 
 # Note: $args is the automatic parameter variable when no param block exists.
 
-if ($args.Count -eq 0 -or $args[0] -ne 'eval') {
-    Write-Error "stub-vally: only the 'eval' subcommand is supported."
+if ($args.Count -eq 0 -or $args[0] -notin @('eval', 'compare')) {
+    Write-Error "stub-vally: only the 'eval' and 'compare' subcommands are supported."
     exit 64
+}
+
+if ($args[0] -eq 'compare') {
+    $outputPath = $null
+    for ($i = 1; $i -lt $args.Count; $i++) {
+        if ($args[$i] -eq '--output') { $outputPath = $args[++$i] }
+    }
+    if (-not $outputPath) {
+        Write-Error "stub-vally: compare requires --output."
+        exit 65
+    }
+
+    if ($env:STUB_VALLY_COMPARE_MODE -eq 'fail-empty') {
+        [System.IO.File]::WriteAllText($outputPath, '')
+        exit 1
+    }
+
+    $comparison = [ordered]@{
+        type    = 'comparison'
+        stimuli = @([ordered]@{
+                stimulusName = 'stim-1'
+                trials       = @([ordered]@{ winner = 'tie'; errored = $false })
+            })
+        summary = [ordered]@{ meanScore = 0.0; ciLow = -0.2; ciHigh = 0.2; winRate = 0.0 }
+    }
+    Set-Content -LiteralPath $outputPath -Value ($comparison | ConvertTo-Json -Depth 10 -Compress) -Encoding utf8NoBOM
+    exit 0
 }
 
 # Optional argv capture: when STUB_VALLY_ARGV_OUT is set, record the full

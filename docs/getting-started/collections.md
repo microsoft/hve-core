@@ -3,7 +3,7 @@ title: Collections Overview
 description: Explore the HVE collection system, compare available collections, and choose the right extension for your workflow
 sidebar_position: 3
 author: Microsoft
-ms.date: 2026-06-26
+ms.date: 2026-07-15
 ms.topic: overview
 ---
 
@@ -101,7 +101,7 @@ Once a collection is installed, its artifacts activate automatically:
 3. Instructions apply automatically to matching files based on their `applyTo` patterns.
 4. Skills extend agent capabilities without additional configuration.
 
-To verify installation, open Copilot Chat and check that collection-specific agents appear in the agent picker. For example, installing the `hve-core` collection adds Task Researcher, Task Planner, Task Implementor, and Memory agents.
+To verify installation, open Copilot Chat and check that collection-specific artifacts appear. For example, installing the `hve-core` collection adds `RPI Agent` and the `/rpi`, `/rpi-research`, `/rpi-plan`, `/rpi-implement`, and `/rpi-review` entry points.
 
 To add more collections later, search "HVE" in the VS Code Extensions marketplace or use the selective install commands from the table above.
 

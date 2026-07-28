@@ -12,7 +12,7 @@ This reference enumerates the nine conformance checks the `vally-tests` skill kn
 
 The canonical eval target for this kind, per `eval-suite-routing.md`, is `evals/behavior-conformance/skill-behavior.eval.yaml`. New stimulus blocks are appended to its `stimuli:` array, tagged `tags.advisory: true`, and labeled with `tags.skill: <skill-slug>` and `tags.shape: knowledge | tool-trigger | bleed-detection`. The DR-03 fallback to `evals/skill-quality/eval.yaml` applies when the primary target is absent at consumption time; a fallback append carries a leading YAML comment `# Deferred cutover per DR-03; see WI-12.` per `eval-suite-routing.md`. Authors MUST run every candidate stimulus through `refusal-taxonomy.md` before emission and refuse any match.
 
-Grader identifiers below use the Vally CLI 0.4.0 catalog (`semantic_similarity`, `contains`, `regex`, `json_schema`) per `grader-catalog.md`. Where the research phrasing recommended `output-matches`, the equivalent here is `regex`; where it recommended `llm-grader`, the equivalent is `semantic_similarity`.
+Grader identifiers below use the Vally CLI 0.9.0 catalog (`semantic_similarity`, `contains`, `regex`, `json_schema`) per `grader-catalog.md`. Where the research phrasing recommended `output-matches`, the equivalent here is `regex`; where it recommended `llm-grader`, the equivalent is `semantic_similarity`.
 
 ## Contract Summary
 

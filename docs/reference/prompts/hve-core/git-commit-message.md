@@ -1,8 +1,8 @@
 ---
 title: Git Commit Message
 description: Generate a conventional commit message from all branch changes
-sidebar_position: 3
-ms.date: 2026-07-03
+sidebar_position: 2
+ms.date: 2026-07-16
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->

@@ -2,7 +2,7 @@
 title: Customizing HVE Core
 description: Overview of customization approaches from lightweight settings to full fork-and-extend, with role-based entry points
 author: Microsoft
-ms.date: 2026-06-27
+ms.date: 2026-07-16
 ms.topic: overview
 keywords:
   - customization
@@ -75,17 +75,23 @@ graph LR
 | Add custom validation or plugin generation | Build System    | `scripts/`, `package.json`                            | High       |
 | Diverge from upstream entirely             | Fork and Extend | Full repository                                       | High       |
 
-## Authoring with Prompt Builder
+## Authoring with HVE Builder
 
-The [Prompt Builder](pathname://../../.github/agents/hve-core/prompt-builder.agent.md) agent streamlines creation, evaluation, and refinement of all artifact types. Three commands cover the full authoring workflow:
+Use the `hve-builder` skill to create, improve, refactor, replace, review, or
+validate prompts, instructions, agents, subagents, and skills. It resolves the
+write boundary, runs independent static review, and applies one behavior gate
+with route-specific execution. Major mutations and behavior-bearing review
+targets execute testing, while eligible no-runtime review targets and Minor or
+Medium mutations are satisfied-and-skipped. Known target files and
+caller-supplied canonical references remain bounded lifecycle reads;
+open-ended exploration and decision-critical research activate `rpi-research`.
 
-| Command            | Purpose                                                         |
-|--------------------|-----------------------------------------------------------------|
-| `/prompt-build`    | Create new artifacts or improve existing ones                   |
-| `/prompt-analyze`  | Evaluate quality and produce a structured assessment report     |
-| `/prompt-refactor` | Consolidate, deduplicate, or restructure related artifact files |
+The retained `prompt-builder`, `prompt-analyze`, and `prompt-refactor` skills
+remain compatibility aliases for legacy requests. They route to `hve-builder`
+and do not own separate authoring workflows.
 
-Each artifact guide below includes an "Accelerating with Prompt Builder" section with type-specific examples and sample invocations.
+Each artifact guide below includes an "Authoring with HVE Builder" section
+with type-specific examples.
 
 ## Role-Based Entry Points
 

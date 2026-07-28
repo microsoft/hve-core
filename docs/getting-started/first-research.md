@@ -1,14 +1,14 @@
 ---
 title: Your First Research
-description: Use the task-researcher agent to investigate your own codebase
+description: Use the rpi-research skill to investigate your own codebase
 sidebar_position: 5
 author: Microsoft
-ms.date: 2026-06-27
+ms.date: 2026-07-15
 ms.topic: tutorial
 keywords:
   - getting started
   - first research
-  - task researcher
+  - rpi research
   - rpi workflow
   - github copilot
 estimated_reading_time: 5
@@ -35,18 +35,18 @@ teach methodology; real questions teach methodology and produce useful output.
 ## Run the Research
 
 1. Open GitHub Copilot Chat (`Ctrl+Alt+I`).
-2. Select the **Task Researcher** agent or invoke **/task-research** from the prompt surface.
+2. Invoke `/rpi-research` from the skill surface.
 3. Type your question as a prompt.
 
-The agent or prompt creates a research document in `.copilot-tracking/research/` with
-findings, file references, and evidence. This takes 2-5 minutes depending on
+The skill creates a research document in `.copilot-tracking/research/` with
+findings, source references, and evidence. This takes 2-5 minutes depending on
 the scope of the question.
 
 ## Read the Output
 
 Open the research document. You'll find:
 
-* The agent cites file references with line numbers for each fact.
+* The skill cites source references for load-bearing facts.
 * Conclusions trace back to actual code through evidence-linked findings.
 * Areas where research was incomplete appear as remaining questions.
 
@@ -61,7 +61,7 @@ generate plausible answers. It searched, read, and cited.
 ## What You Learned
 
 * Researching before implementation reduces guesswork and rework.
-* Agents produce artifacts like research documents, not chat messages alone.
+* RPI skills produce artifacts like research documents, not chat messages alone.
 * Artifacts carry context so the next phase builds on verified facts rather
   than starting from scratch.
 

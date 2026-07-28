@@ -3,7 +3,7 @@ title: Git-Ignored Folder Installation
 description: Install HVE Core in a git-ignored folder for devcontainer environments
 sidebar_position: 3
 author: Microsoft
-ms.date: 2026-06-11
+ms.date: 2026-07-15
 ms.topic: how-to
 keywords:
   - git-ignored
@@ -135,7 +135,7 @@ Add to `.devcontainer/devcontainer.json` so HVE Core is cloned on container crea
 ```jsonc
 {
   // ... existing configuration ...
-  
+
   "postCreateCommand": "[ -d .hve-core ] || git clone --depth 1 https://github.com/microsoft/hve-core.git .hve-core"
 }
 ```
@@ -145,7 +145,7 @@ Add to `.devcontainer/devcontainer.json` so HVE Core is cloned on container crea
 1. Rebuild your devcontainer (`Ctrl+Shift+P` → "Dev Containers: Rebuild Container")
 2. Open GitHub Copilot Chat (`Ctrl+Alt+I`)
 3. Click the agent picker dropdown
-4. Verify HVE Core agents appear (task-planner, task-researcher, prompt-builder)
+4. Verify `RPI Agent` and `Documentation` appear, then confirm `/rpi-research` is available
 
 ## Complete Devcontainer Example
 
@@ -153,9 +153,9 @@ Add to `.devcontainer/devcontainer.json` so HVE Core is cloned on container crea
 {
   "name": "My Project with HVE Core",
   "image": "mcr.microsoft.com/devcontainers/base:ubuntu",
-  
+
   "postCreateCommand": "[ -d .hve-core ] || git clone --depth 1 https://github.com/microsoft/hve-core.git .hve-core",
-  
+
   "customizations": {
     "vscode": {
       "settings": {

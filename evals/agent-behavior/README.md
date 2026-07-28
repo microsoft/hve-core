@@ -2,7 +2,7 @@
 title: Agent Behavior Suite
 description: 'Per-agent behavioral evals assembled from per-agent stimulus partials and graded against five class recipes'
 author: HVE Core Team
-ms.date: 2026-07-09
+ms.date: 2026-07-17
 ---
 
 ## Purpose
@@ -11,7 +11,7 @@ This suite covers every user-invocable hve-core agent with at least one function
 
 The complement to [baseline-equivalence](../baseline-equivalence/README.md) is intentional: baseline-equivalence asserts the customization layer does not alter underlying model behavior beyond documented divergences, while agent-behavior asserts each agent actually performs its declared job.
 
-The suite is organized around five behavioral classes (research-writer, code-reviewer, code-implementor, workitem-manager, planner-coach). Every parent agent belongs to exactly one class, and class membership selects the stimulus shape and grader template used in [stimuli/](stimuli/). The parent-agent table below is the authoritative class assignment; [AGENTS.yml](AGENTS.yml) records all 71 enrolled agents, including 24 subagents.
+The suite is organized around five behavioral classes (research-writer, code-reviewer, code-implementor, workitem-manager, planner-coach). Every parent agent belongs to exactly one class, and class membership selects the stimulus shape and grader template used in [stimuli/](stimuli/). The parent-agent table below is the authoritative class assignment; the maintained stimulus inventory contains 62 enrolled agents, including 22 subagents.
 
 ## Layout
 
@@ -21,7 +21,7 @@ evals/agent-behavior/
 ├── AGENTS.yml          # authoritative inventory (slug, path, class, cost_tier)
 ├── eval.yaml           # generated executable spec - do not edit by hand
 └── stimuli/
-    └── <agent-slug>.yml  # one partial per inventoried agent (71 files)
+  └── <agent-slug>.yml  # one partial per inventoried agent (62 files)
 ```
 
 The partials in [stimuli/](stimuli/) are the source of truth for stimuli. The top-level [eval.yaml](eval.yaml) is regenerated from those partials by [scripts/evals/Build-AgentBehaviorSpec.ps1](../../scripts/evals/Build-AgentBehaviorSpec.ps1). The inventory at [AGENTS.yml](AGENTS.yml) is regenerated from the agent frontmatter on disk by [scripts/evals/Build-AgentInventory.ps1](../../scripts/evals/Build-AgentInventory.ps1) and the agent-behavior generator only reads slugs whose partials exist in [stimuli/](stimuli/).
@@ -40,19 +40,19 @@ pwsh -NoProfile -File scripts/evals/Build-AgentBehaviorSpec.ps1 -WhatIf
 
 When the drift check fails, a unified diff is written to [logs/agent-behavior-spec-drift.diff](../../logs/agent-behavior-spec-drift.diff). Inspect that file, re-run the generator with `-Force`, and commit the regenerated [eval.yaml](eval.yaml) alongside any stimulus partial change in the same commit.
 
-The drift check is wired into the repository's `eval:lint:vally` npm script in [package.json](../../package.json) so vally lint cannot pass while [eval.yaml](eval.yaml) is out of sync with the partials.
+The drift check is wired into the repository's `ci:eval:lint:vally` npm script in [package.json](../../package.json) so vally lint cannot pass while [eval.yaml](eval.yaml) is out of sync with the partials.
 
 ## Class Recipes
 
-Each parent agent belongs to exactly one class. The class selects the stimulus shape (a generic prompt the agent should reasonably respond to) and the functional grader (a regex over the agent's response that captures one declared behavior of the class). Placeholder partials authored in Phase 1 use these templates; Phase 2 replaces each placeholder with a tuned, class-specific stimulus per [the plan](../../.copilot-tracking/plans/2026-05-25/per-agent-vally-eval-coverage-plan.instructions.md).
+Each parent agent belongs to exactly one class. The class selects the stimulus shape (a generic prompt the agent should reasonably respond to) and the functional grader (a regex over the agent's response that captures one declared behavior of the class). Placeholder partials authored in Phase 1 use these templates; Phase 2 replaces each placeholder with a tuned, class-specific stimulus per [the plan](../../.copilot-tracking/plans/2026-05-25/per-agent-vally-eval-coverage-plan.md).
 
 | Class           | Members | Prompt Theme                                                    | Grader Regex (case-insensitive)                           |
 |-----------------|---------|-----------------------------------------------------------------|-----------------------------------------------------------|
-| research-writer | 9       | Investigate or document a topic and return a structured writeup | `(summary\|findings\|recommendation\|outline\|sections?)` |
-| code-reviewer   | 9       | Review a diff or artifact and surface concerns                  | `(issue\|risk\|severity\|finding\|recommend\|line \d+)`   |
-| code-implementor  | 6       | Implement or modify code to satisfy a spec                            | `(```\|patch\|diff\|file:\|edit\|add\|modify)`                                             |
+| research-writer | 7       | Investigate or document a topic and return a structured writeup | `(summary\|findings\|recommendation\|outline\|sections?)` |
+| code-reviewer   | 8       | Review a diff or artifact and surface concerns                  | `(issue\|risk\|severity\|finding\|recommend\|line \d+)`   |
+| code-implementor  | 5       | Implement or modify code to satisfy a spec                            | `(```\|patch\|diff\|file:\|edit\|add\|modify)`                                             |
 | workitem-manager  | 8       | Convert a raw request into a backlog draft                            | `(title\|summary\|description\|acceptance\|priority\|severity\|repro\|steps)`              |
-| planner-coach     | 16      | Plan, sequence, or coach the user through a non-trivial task          | `(plan\|step \d+\|next\|approach\|consider\|recommend\|phase)`                             |
+| planner-coach     | 12      | Plan, sequence, or coach the user through a non-trivial task          | `(plan\|step \d+\|next\|approach\|consider\|recommend\|phase)`                             |
 
 The grader counts a stimulus as passing when the regex matches the agent's response at least once. This is a behavioral smoke gate: the suite asserts the agent produced an output shaped like its job, not that the output is correct. Correctness is the responsibility of the per-agent integration tests and the baseline-equivalence harness, not this suite.
 
@@ -103,7 +103,7 @@ When authoring or updating a planner-coach stimulus, copy the canonical pattern 
 
 Agents that investigate topics, analyze data, or produce structured documents as their primary output.
 
-**Members (8):** task-researcher, adr-creation, brd-builder, meeting-analyst, network-isa95-planner, prd-builder, system-architecture-reviewer, ux-ui-designer
+**Members (7):** adr-creation, brd-builder, meeting-analyst, network-isa95-planner, prd-builder, system-architecture-reviewer, ux-ui-designer
 
 **Required Graders:**
 
@@ -113,45 +113,13 @@ Agents that investigate topics, analyze data, or produce structured documents as
 
 **Optional Graders:**
 
-* `header-present` - When the agent's `.agent.md` includes a `Start responses with:` directive, validates the header appears. Pattern: `^## 🔬 Task Researcher:` (adjusted per agent's declared prefix).
-
-#### Worked Example: task-researcher
-
-```yaml
-# evals/agent-behavior/stimuli/task-researcher.yml
-stimuli:
-  - name: task-researcher-creates-research-doc
-    prompt: |
-      Research the question "What npm scripts validate markdown in this repository?"
-      and produce a research document. Limit the work to one pass and tell me
-      where you wrote the document.
-    tags:
-      category: agent-behavior
-    graders:
-      - type: output-matches
-        name: header-present
-        config:
-          pattern: '^## 🔬 Task Researcher:'
-      - type: output-matches
-        name: tracking-file-write
-        config:
-          pattern: '(?i)\.copilot-tracking/research'
-      - type: output-matches
-        name: topic-coverage
-        config:
-          pattern: '(?i)(npm|script|lint|markdown|validate)'
-      - type: output-matches
-        name: no-source-edit
-        config:
-          pattern: '(?i)(\.cs|\.py|\.ts|\.js|package\.json)'
-          negate: true
-```
+* `header-present` - When an agent's `.agent.md` includes a `Start responses with:` directive, validates the declared header prefix.
 
 ### Class 2: code-reviewer
 
 Agents that analyze code, diffs, or artifacts and surface issues, risks, or recommendations.
 
-**Members (9):** code-review, dependency-reviewer, rai-reviewer, accessibility-reviewer, privacy-reviewer, security-reviewer, supply-chain-reviewer, sssc-reviewer, task-reviewer
+**Members (8):** code-review, dependency-reviewer, rai-reviewer, accessibility-reviewer, privacy-reviewer, security-reviewer, supply-chain-reviewer, sssc-reviewer
 
 **Required Graders:**
 
@@ -197,47 +165,17 @@ stimuli:
 
 Agents that generate, modify, or produce runnable code as their primary output.
 
-**Members (6):** eval-dataset-creator, gen-data-spec, gen-jupyter-notebook, gen-streamlit-dashboard, task-implementor, test-streamlit-dashboard
+**Members (5):** eval-dataset-creator, gen-data-spec, gen-jupyter-notebook, gen-streamlit-dashboard, test-streamlit-dashboard
 
 **Required Graders:**
 
 * `source-edit-present` - Validates the agent writes or edits code files (pattern: `` (?i)(```|created|modified|edited|file:.*\.(py|cs|ts|js)) ``).
 * `lint-invocation` - Validates the agent mentions or runs lint commands before completion (pattern: `(?i)(npm run lint|ruff|pylint|eslint|validation|format)`).
-* `scope-respect` - Validates writes stay within the documented scope. For `task-implementor`, this means no edits outside the files explicitly mentioned in the prompt. For data-science agents, this means outputs stay under the data output folder.
+* `scope-respect` - Validates writes stay within the files or output directories documented by the agent and stimulus.
 
 **Optional Graders:**
 
-* `header-present` - Only `task-implementor` declares a `Start responses with: ## ⚡ Task Implementor:` directive. Other code-implementor agents omit this grader.
-
-#### Worked Example: task-implementor
-
-```yaml
-# evals/agent-behavior/stimuli/task-implementor.yml
-stimuli:
-  - name: task-implementor-edits-source
-    prompt: |
-      Implement a simple "hello world" function in a new file called `hello.py`.
-      Use proper Python conventions and add a docstring.
-    tags:
-      category: agent-behavior
-    graders:
-      - type: output-matches
-        name: header-present
-        config:
-          pattern: '^## ⚡ Task Implementor:'
-      - type: output-matches
-        name: source-edit-present
-        config:
-          pattern: '(?i)(```python|created.*hello\.py|file:.*hello\.py)'
-      - type: output-matches
-        name: lint-invocation
-        config:
-          pattern: '(?i)(ruff|pylint|lint|format|validate)'
-      - type: output-matches
-        name: scope-respect
-        config:
-          pattern: 'hello\.py'
-```
+* `header-present` - When an agent declares a response header, validates that prefix.
 
 ### Class 4: workitem-manager
 
@@ -289,7 +227,7 @@ stimuli:
 
 Agents that sequence work, plan tasks, coach the user through a process, or orchestrate multi-phase workflows.
 
-**Members (16):** accessibility-planner, agentic-workflows, documentation, dt-coach, dt-learning-tutor, experiment-designer, memory, pptx, privacy-planner, prompt-builder, rai-planner, rpi-agent, security-planner, sssc-planner, task-challenger, task-planner
+**Members (12):** accessibility-planner, agentic-workflows, documentation, dt-coach, dt-learning-tutor, experiment-designer, pptx, privacy-planner, rai-planner, rpi-agent, security-planner, sssc-planner
 
 **Required Graders:**
 
@@ -299,38 +237,7 @@ Agents that sequence work, plan tasks, coach the user through a process, or orch
 
 **Optional Graders:**
 
-* `header-present` - Only `task-planner` declares a `Start responses with:` directive. Others omit this grader.
-
-#### Worked Example: task-planner
-
-```yaml
-# evals/agent-behavior/stimuli/task-planner.yml
-stimuli:
-  - name: task-planner-creates-plan
-    prompt: |
-      Plan the implementation of a "forgot password" feature for a web app.
-      Break it into phases with clear success criteria.
-    tags:
-      category: agent-behavior
-    graders:
-      - type: output-matches
-        name: header-present
-        config:
-          pattern: '^## 📋 Task Planner:'
-      - type: output-matches
-        name: phase-marker-present
-        config:
-          pattern: '(?im)(^\s*(#{2,3}\s|step\s+\d+|phase\s+\d+|\d+[.)])|\|\s*\d+\s*[—–-]|\bphases?\b)'
-      - type: output-matches
-        name: tracking-file-write
-        config:
-          pattern: '(?i)\.copilot-tracking/plans'
-      - type: output-matches
-        name: no-source-edit
-        config:
-          pattern: '(?i)(\.cs|\.py|\.ts|\.js|package\.json)'
-          negate: true
-```
+* `header-present` - When an agent declares a response header, validates that prefix.
 
 ## How to Add a Stimulus
 
@@ -338,7 +245,7 @@ The harness does not need code changes to onboard a new agent or add a stimulus 
 
 1. Add or edit the partial at [stimuli/](stimuli/)`<agent-slug>.yml`. A partial is a list of stimulus objects. The shape mirrors a single entry under `tests:` in a vally spec, minus the `agent:` tag (the generator injects that automatically from the filename). Partials must declare `tags.category` and at least one grader.
 2. Run `pwsh -NoProfile -File scripts/evals/Build-AgentBehaviorSpec.ps1 -Force` to regenerate [eval.yaml](eval.yaml).
-3. Commit the partial and the regenerated [eval.yaml](eval.yaml) in the same commit. The drift check in `npm run eval:lint:vally` will reject the change otherwise.
+3. Commit the partial and the regenerated [eval.yaml](eval.yaml) in the same commit. The drift check in `npm run ci:eval:lint:vally` will reject the change otherwise.
 
 For an entirely new agent, also re-run [Build-AgentInventory.ps1](../../scripts/evals/Build-AgentInventory.ps1) so [AGENTS.yml](AGENTS.yml) picks up the new slug, then update the inventory table at the bottom of this README. Agents whose frontmatter declares `user-invocable: false` are excluded from this suite by design.
 
@@ -371,14 +278,12 @@ The inventory lists every user-invocable hve-core parent agent and its class ass
 | jira-backlog-manager         | workitem-manager | light     | [.github/agents/jira/jira-backlog-manager.agent.md](../../.github/agents/jira/jira-backlog-manager.agent.md)                                         |
 | jira-prd-to-wit              | workitem-manager | light     | [.github/agents/jira/jira-prd-to-wit.agent.md](../../.github/agents/jira/jira-prd-to-wit.agent.md)                                                   |
 | meeting-analyst              | research-writer  | light     | [.github/agents/project-planning/meeting-analyst.agent.md](../../.github/agents/project-planning/meeting-analyst.agent.md)                           |
-| memory                       | planner-coach    | light     | [.github/agents/hve-core/memory.agent.md](../../.github/agents/hve-core/memory.agent.md)                                                             |
 | network-isa95-planner        | research-writer  | light     | [.github/agents/project-planning/network-isa95-planner.agent.md](../../.github/agents/project-planning/network-isa95-planner.agent.md)               |
 | pptx                         | planner-coach    | light     | [.github/agents/experimental/pptx.agent.md](../../.github/agents/experimental/pptx.agent.md)                                                         |
 | prd-builder                  | research-writer  | light     | [.github/agents/project-planning/prd-builder.agent.md](../../.github/agents/project-planning/prd-builder.agent.md)                                   |
 | privacy-planner              | planner-coach    | light     | [.github/agents/privacy/privacy-planner.agent.md](../../.github/agents/privacy/privacy-planner.agent.md)                                             |
 | privacy-reviewer             | code-reviewer    | light     | [.github/agents/privacy/privacy-reviewer.agent.md](../../.github/agents/privacy/privacy-reviewer.agent.md)                                           |
 | product-manager-advisor      | workitem-manager | light     | [.github/agents/project-planning/product-manager-advisor.agent.md](../../.github/agents/project-planning/product-manager-advisor.agent.md)           |
-| prompt-builder               | planner-coach    | light     | [.github/agents/hve-core/prompt-builder.agent.md](../../.github/agents/hve-core/prompt-builder.agent.md)                                             |
 | rai-planner                  | planner-coach    | light     | [.github/agents/rai-planning/rai-planner.agent.md](../../.github/agents/rai-planning/rai-planner.agent.md)                                           |
 | rai-reviewer                 | code-reviewer    | light     | [.github/agents/rai-planning/rai-reviewer.agent.md](../../.github/agents/rai-planning/rai-reviewer.agent.md)                                         |
 | rpi-agent                    | planner-coach    | light     | [.github/agents/hve-core/rpi-agent.agent.md](../../.github/agents/hve-core/rpi-agent.agent.md)                                                       |
@@ -388,15 +293,10 @@ The inventory lists every user-invocable hve-core parent agent and its class ass
 | sssc-reviewer                | code-reviewer    | light     | [.github/agents/security/sssc-reviewer.agent.md](../../.github/agents/security/sssc-reviewer.agent.md)                                               |
 | supply-chain-reviewer        | code-reviewer    | light     | [.github/agents/security/supply-chain-reviewer.agent.md](../../.github/agents/security/supply-chain-reviewer.agent.md)                               |
 | system-architecture-reviewer | research-writer  | light     | [.github/agents/project-planning/system-architecture-reviewer.agent.md](../../.github/agents/project-planning/system-architecture-reviewer.agent.md) |
-| task-challenger              | planner-coach    | light     | [.github/agents/hve-core/task-challenger.agent.md](../../.github/agents/hve-core/task-challenger.agent.md)                                           |
-| task-implementor             | code-implementor | light     | [.github/agents/hve-core/task-implementor.agent.md](../../.github/agents/hve-core/task-implementor.agent.md)                                         |
-| task-planner                 | planner-coach    | light     | [.github/agents/hve-core/task-planner.agent.md](../../.github/agents/hve-core/task-planner.agent.md)                                                 |
-| task-researcher              | research-writer  | light     | [.github/agents/hve-core/task-researcher.agent.md](../../.github/agents/hve-core/task-researcher.agent.md)                                           |
-| task-reviewer                | code-reviewer    | light     | [.github/agents/hve-core/task-reviewer.agent.md](../../.github/agents/hve-core/task-reviewer.agent.md)                                               |
 | test-streamlit-dashboard     | code-implementor | light     | [.github/agents/data-science/test-streamlit-dashboard.agent.md](../../.github/agents/data-science/test-streamlit-dashboard.agent.md)                 |
 | ux-ui-designer               | research-writer  | light     | [.github/agents/project-planning/ux-ui-designer.agent.md](../../.github/agents/project-planning/ux-ui-designer.agent.md)                             |
 
-The inventory totals 71 agents: 47 parent agents plus 24 enrolled subagents whose stimulus partials exist in [stimuli/](stimuli/). Subagents without a matching stimulus partial remain excluded from the matrix run set and are documented separately in the inventory generator and related eval research.
+The maintained stimulus inventory totals 62 agents: 40 parent agents plus 22 enrolled subagents whose stimulus partials exist in [stimuli/](stimuli/). Subagents without a matching stimulus partial remain excluded from the matrix run set and are documented separately in the inventory generator and related eval research. [AGENTS.yml](AGENTS.yml) remains generator-owned and is refreshed in the generation phase.
 
 ## Related Suites
 

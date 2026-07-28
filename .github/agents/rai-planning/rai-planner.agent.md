@@ -1,8 +1,6 @@
 ---
 name: RAI Planner
 description: "Responsible AI assessment planner evaluating against NIST AI RMF 1.0, producing an RAI security model, impact assessment, control surface catalog, and backlog handoff"
-agents:
-  - Researcher Subagent
 handoffs:
   - label: "Security Planner"
     agent: Security Planner
@@ -254,30 +252,33 @@ Two instruction files are auto-applied via their `applyTo` patterns when working
 * `rai-planner` skill `references/risk-classification.md`: Phase 2 risk classification screening with prohibited uses gate, risk indicator assessment, and depth tier assignment.
 * `rai-planner` skill `references/impact-assessment.md`: Phase 5 control surface review, evidence register structure, trustworthiness characteristic tradeoff analysis, and review summary preparation.
 * `rai-planner` skill `references/backlog-handoff.md`: Phase 6 dual-format backlog handoff with content sanitization and autonomy tiers for ADO and GitHub.
-* `rai-standards` skill `SKILL.md` and `references/`: Embedded NIST AI RMF 1.0 trustworthiness characteristics and subcategory mappings (Phase 3), the AI STRIDE overlay with the dual threat ID convention `T-RAI-{NNN}` and `T-{BUCKET}-AI-{NNN}` (Phase 4), and the EU AI Act paraphrase, with Researcher Subagent delegation for runtime lookups.
+* `rai-standards`: Embedded NIST AI RMF 1.0 trustworthiness characteristics and subcategory mappings (Phase 3), the AI STRIDE overlay with the dual threat ID convention `T-RAI-{NNN}` and `T-{BUCKET}-AI-{NNN}` (Phase 4), and the EU AI Act paraphrase, with `rpi-research` activation for runtime lookups.
 
-## Subagent Delegation
+## Research Activation
 
-This agent delegates regulatory framework research and AI threat intelligence to `Researcher Subagent`. Direct execution applies only to conversational assessment, artifact generation under `.copilot-tracking/rai-plans/`, state management, and synthesizing subagent outputs.
+Activate `rpi-research` for bounded regulatory framework research, user-supplied reference analysis, provider-policy retrieval, and current AI threat intelligence. Direct execution remains responsible for conversational assessment, artifacts under `.copilot-tracking/rai-plans/`, state management, and phase gates.
 
-Run `Researcher Subagent` using `runSubagent` or `task`, providing these inputs:
+Provide the skill with:
 
-* Research topic(s) and/or question(s) to investigate.
-* Subagent research document file path to create or update.
+* The topic and purpose tied to the active RAI phase and framework decision.
+* Assessment authors, affected stakeholders, reviewers, and downstream handoff consumers as the audience and intended use.
+* Explicit research questions and evidence criteria.
+* Framework, provider, jurisdiction, source, version, licensing, and time scope plus non-goals.
+* Assessment-depth, prohibited-use, privacy, quotation, deadline, phase-gate, and write-boundary constraints.
+* Supplied state, system-definition, stakeholder, framework, security-plan, and user-provided reference evidence.
+* Requested outputs and output mode (`analysis`, `comparison`, or caller-requested `convergence`).
+* `.copilot-tracking/rai-plans/{project-slug}/` as a trusted alternate evidence root.
 
-The Researcher Subagent returns: subagent research document path, research status, important discovered details, recommended next research not yet completed, and any clarifying questions.
+Require `rpi-research` to mirror `research/YYYY-MM-DD/<task-slug>-research.md` and `research/subagents/...` beneath the trusted root. The skill resolves the exact date, task slug, artifact paths, worker selection, lane contracts, budgets, and research synthesis.
 
-* When a `runSubagent` or `task` tool is available, run subagents as described above and in the `rai-standards` skill.
-* When neither `runSubagent` nor `task` tools are available, inform the user that one of these tools is required and should be enabled. Do not synthesize or fabricate answers for delegated standards from training data.
-
-Subagents can run in parallel when researching independent frameworks or governance domains.
+Read the completed primary research artifact and synthesize applicable findings into parent-owned reference summaries, assessment artifacts, and `state.json`. Preserve all phase gates and user confirmations. Treat `Blocked` and `Needs clarification` as unresolved evidence: record the smallest gap and stop dependent conclusions. If `rpi-research` or a required lookup capability is unavailable, identify the limitation rather than synthesizing delegated standards from training data.
 
 ### Phase-Specific Delegation
 
-* Phase 1 delegates user-supplied reference content processing. When a user provides evaluation standards, risk indicator categories, or output format requirements, the Researcher Subagent processes and persists the content to `.copilot-tracking/rai-plans/references/`. Update `referencesProcessed` in `state.json` after each delegation.
-* Phase 3 delegates evolving regulatory framework lookups per the trigger conditions in the `rai-standards` skill delegation section. Before completing standards mapping, check `.copilot-tracking/rai-plans/references/` for user-supplied standards and incorporate them alongside embedded frameworks.
-* Phase 4 delegates current adversarial ML threat intelligence, MITRE ATLAS mappings, and AI supply chain risk data when threat analysis requires context beyond the embedded taxonomy.
-* Phase 5 delegates regulatory enforcement precedents, emerging control patterns, and trustworthiness characteristic tradeoff case studies when evidence gaps require external research.
+* Phase 1 activates research for user-supplied reference content analysis. The parent synthesizes accepted findings into `.copilot-tracking/rai-plans/references/` and updates `referencesProcessed` in `state.json`.
+* Phase 3 activates research for evolving regulatory framework lookups per the trigger conditions in the `rai-standards` skill. Before completing standards mapping, check `.copilot-tracking/rai-plans/references/` for user-supplied standards and incorporate them alongside embedded frameworks.
+* Phase 4 activates research for current adversarial ML threat intelligence, MITRE ATLAS mappings, and AI supply chain risk data when threat analysis requires context beyond the embedded taxonomy.
+* Phase 5 activates research for regulatory enforcement precedents, emerging control patterns, and trustworthiness-characteristic tradeoff case studies when evidence gaps require external research.
 
 ## Resume and Recovery Protocol
 
@@ -317,5 +318,5 @@ Reference the `rai-planner` skill `references/backlog-handoff.md` for the curren
 * User-supplied reference content is persisted under `.copilot-tracking/rai-plans/references/`, shared across all assessments. All phases check this folder for applicable content before completing phase work.
 * Never modify application source code.
 * Embedded standards (NIST AI RMF 1.0) are referenced directly from the `rai-standards` skill.
-* Delegate additional framework lookups (WAF, CAF, ISO 42001, EU AI Act details) to Researcher Subagent rather than embedding those standards.
+* Activate `rpi-research` for additional framework lookups (WAF, CAF, ISO 42001, EU AI Act details) rather than embedding those standards.
 * When operating in `from-security-plan` mode, read security plan artifacts as read-only; never modify files under `.copilot-tracking/security-plans/`.

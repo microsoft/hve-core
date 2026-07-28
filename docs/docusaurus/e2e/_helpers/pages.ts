@@ -19,6 +19,6 @@ export const PAGES: readonly PageSpec[] = [
   { name: 'templates', path: '/hve-core/docs/templates/' },
   { name: 'agents', path: '/hve-core/docs/agents/' },
   { name: 'hve-guide', path: '/hve-core/docs/hve-guide/' },
-  { name: 'content (task-researcher)', path: '/hve-core/docs/rpi/task-researcher/' },
+  { name: 'content (using-rpi-together)', path: '/hve-core/docs/rpi/using-together/' },
   { name: 'not-found (404)', path: '/hve-core/this-page-does-not-exist/' },
 ];

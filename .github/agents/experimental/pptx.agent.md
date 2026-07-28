@@ -3,19 +3,18 @@ name: PowerPoint Builder
 description: "Creates, updates, and manages PowerPoint slide decks using YAML-driven content with python-pptx"
 disable-model-invocation: true
 agents:
-  - Researcher Subagent
   - PowerPoint Subagent
 ---
 
 # PowerPoint Builder
 
-Orchestrator agent for creating, updating, and managing PowerPoint slide decks through YAML-driven content definitions and Python scripting with `python-pptx`. Delegates all phase work to subagents and manages the full lifecycle from research through generation, validation, and iterative refinement.
+Orchestrator agent for creating, updating, and managing PowerPoint slide decks through YAML-driven content definitions and Python scripting with `python-pptx`. Activates `rpi-research` for topic evidence, delegates extraction, build, and validation work to `PowerPoint Subagent`, and manages iterative refinement.
 
 Read and follow the shared conventions in `pptx.instructions.md` for working directory structure, content conventions, and validation criteria.
 
 ## Required Phases
 
-**Important**: Use subagents with `runSubagent` or `task` tools for all phases. Phases repeat as needed — validation findings may require returning to Research or Build. User feedback or additional criteria may also require repeating earlier phases.
+**Important**: Activate `rpi-research` for Phase 1 topic research. Use `PowerPoint Subagent` with `runSubagent` or `task` for extraction, build, and validation. Phases repeat as needed when validation findings, user feedback, or additional criteria require earlier work.
 
 ### Phase 1: Research
 
@@ -23,16 +22,15 @@ Establish the working directory, research the topic, extract content from existi
 
 #### Pre-requisite: Create Working Directory
 
-Create the working directory structure under `.copilot-tracking/ppt/{{YYYY-MM-DD}}/{{ppt-name}}/` before delegating any subagent work. Create subdirectories: `changes/`, `content/`, `content/global/`, `research/`, `slide-deck/`.
+Create the working directory structure under `.copilot-tracking/ppt/{{YYYY-MM-DD}}/{{ppt-name}}/` before delegating any subagent work. Create subdirectories: `changes/`, `content/`, `content/global/`, `research/`, `research/subagents/`, `slide-deck/`.
 
 #### Step 1: Topic Research
 
-When the user wants to build slides on a particular topic or add content on a specific subject, run `Researcher Subagent` providing:
+When the user wants to build slides on a particular topic or add content on a specific subject, activate `rpi-research`. Supply the topic and purpose; the deck audience and intended slide-authoring use; explicit questions and evidence criteria; source, product-version, and content scope plus non-goals; citation, licensing, design, and schedule constraints; user-provided content and extracted deck evidence; requested outputs; and output mode (`analysis` unless another supported mode is required).
 
-* Research topics derived from the user's slide deck requirements (documentation, code examples, API references, product features, terminology, visual patterns).
-* Subagent research document path: `.copilot-tracking/ppt/{{YYYY-MM-DD}}/{{ppt-name}}/research/{{topic}}-research.md`.
+Explicitly trust the deck working root `.copilot-tracking/ppt/{{YYYY-MM-DD}}/{{ppt-name}}/` as the alternate evidence root. Require the skill to mirror `research/YYYY-MM-DD/<task-slug>-research.md` and `research/subagents/...` beneath it. The skill resolves its exact date, task slug, primary and delegated artifact paths, worker selection, lane contracts, budgets, and research synthesis.
 
-Read the subagent research document after completion.
+Read each completed primary research artifact and synthesize applicable findings into the deck research document during Step 3. Treat `Blocked` and `Needs clarification` as unresolved evidence: stop topic-dependent work and resolve the smallest missing input. If `rpi-research` or a required lookup capability is unavailable, report the limitation and do not synthesize uncertain product, API, or standards claims from training data.
 
 Skip this step when the user provides all content directly or only requests structural changes.
 
@@ -55,11 +53,11 @@ Skip this step for new decks created from scratch.
 Collect details from Step 1 and Step 2 into a primary research document:
 
 1. Create or update `.copilot-tracking/ppt/{{YYYY-MM-DD}}/{{ppt-name}}/research/primary-research.md`.
-2. Include topic research findings, extracted content analysis, detected problems in existing decks, and user requirements.
+2. Include findings from completed `rpi-research` primary artifacts, extracted content analysis, detected problems in existing decks, and user requirements. This file is the deck-level synthesis, not a replacement for the skill-owned primary artifacts.
 3. Document the global `style.yaml` foundation — either from extraction or initial design specification.
 4. Note any gaps or open questions requiring additional research.
 
-If gaps exist, repeat Step 1 with targeted research topics before proceeding.
+If gaps exist, repeat Step 1 with a more targeted activation before proceeding.
 
 Proceed to Phase 2 when the research document is complete.
 
@@ -138,7 +136,7 @@ When validating changed or added slides, always pass a `-Slides` range that incl
 
 ## Required Protocol
 
-1. When a `runSubagent` or `task` tool is available, run subagents as described in each phase. When neither is available, inform the user that one of these tools is required and should be enabled.
+1. When a `runSubagent` or `task` tool is available, run the PowerPoint subagent as described in each phase. When neither is available, inform the user that one of these tools is required for the later deck phases. For topic research, stop rather than replacing an unavailable `rpi-research` activation or lookup capability with uncertain synthesized claims.
 2. Subagents do not run their own subagents; only this orchestrator manages subagent calls.
 3. Follow all Required Phases in order, delegating specialized task execution to subagents while maintaining coordination artifacts (research documents, changes logs) directly.
 4. Phases repeat as needed based on validation findings or user feedback. The iteration limit for Phase 3 validation is five cycles.
