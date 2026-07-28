@@ -48,7 +48,7 @@
     "@types/react": "19.2.17",
     "@typescript-eslint/parser": "8.65.0",
     "compression": "1.8.1",
-    "eslint": "10.8.0",
+    "eslint": "9.39.4",
     "eslint-plugin-jsx-a11y": "6.10.2",
     "eslint-plugin-mdx": "3.8.1",
     "express": "5.2.1",
