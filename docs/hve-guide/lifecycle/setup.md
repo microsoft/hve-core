@@ -3,7 +3,7 @@ title: "Stage 1: Setup"
 description: Install and configure HVE Core tooling for your project with guided onboarding
 sidebar_position: 4
 author: Microsoft
-ms.date: 2026-06-26
+ms.date: 2026-07-15
 ms.topic: how-to
 keywords:
   - ai-assisted project lifecycle
@@ -16,7 +16,7 @@ estimated_reading_time: 6
 
 ## Overview
 
-Setup is the entry point for every HVE Core engagement. This stage covers installing HVE Core collections, configuring your development environment, and establishing preferences that persist across sessions. All roles begin here before advancing to Discovery.
+Setup is the entry point for every HVE Core engagement. This stage covers installing HVE Core collections, configuring your development environment, and recording repository conventions in durable project guidance. All roles begin here before advancing to Discovery.
 
 ## When You Enter This Stage
 
@@ -30,12 +30,10 @@ You enter Setup when starting a new project or joining an existing engagement th
 | Tool              | Type        | How to Invoke                                            | Purpose                                         |
 |-------------------|-------------|----------------------------------------------------------|-------------------------------------------------|
 | installer         | Skill       | Ask any agent: "help me customize hve-core installation" | Install and configure HVE Core for your project |
-| memory            | Agent       | Select **memory** agent                                  | Store persistent preferences and conventions    |
-| checkpoint        | Prompt      | `/checkpoint`                                            | Save current environment state                  |
 | git-setup         | Prompt      | `/git-setup`                                             | Configure Git settings for the project          |
 | writing-style     | Instruction | Auto-activated on `**/*.md`                              | Enforces voice and tone conventions             |
 | markdown          | Instruction | Auto-activated on `**/*.md`                              | Enforces Markdown formatting rules              |
-| prompt-builder    | Instruction | Auto-activated on AI artifacts                           | Enforces authoring standards                    |
+| hve-builder       | Instruction | Auto-activated on AI artifacts                           | Enforces authoring standards                    |
 | hve-core-location | Instruction | Auto-activated on `**`                                   | Resolves missing references to hve-core paths   |
 
 ## Role-Specific Guidance
@@ -57,24 +55,21 @@ and verify agents appear in the Copilot Chat picker.
 ```
 
 ```text
-/checkpoint mode=save description=python-microservices-setup
-```
-
-```text
 /git-setup
 ```
 
-Select **memory** agent:
+Record durable repository conventions in `.github/copilot-instructions.md` or
+a scoped instruction file:
 
 ```text
-Store my coding conventions: use 4-space indentation for Python, enforce
-type hints on all public functions, and prefer pytest over unittest for
-test files under tests/.
+Use hve-builder with mode=create to add scoped Python test conventions:
+4-space indentation, type hints on public functions, and pytest for files
+under tests/.
 ```
 
 ## Stage Outputs and Next Stage
 
-Setup produces a configured development environment with HVE Core collections installed and user preferences stored. Transition to [Stage 2: Discovery](discovery.md) when installation is complete.
+Setup produces a configured development environment with HVE Core collections installed and repository conventions recorded in project guidance. Transition to [Stage 2: Discovery](discovery.md) when installation is complete.
 
 <!-- markdownlint-disable MD036 -->
 *🤖 Crafted with precision by ✨Copilot following brilliant human instruction,

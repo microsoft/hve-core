@@ -54,7 +54,7 @@ Describe 'New-EquivalenceDashboard.ps1' -Tag 'Unit' {
             & $script:DashboardScript `
                 -RunId $script:RunId `
                 -Model $script:Model `
-                -Agent 'task-researcher' `
+                -Agent 'rpi-agent' `
                 -RepoRoot $script:RepoRoot `
                 -ResultsRoot $script:ResultsRoot `
                 -OutPath $script:OutPath *> $null
@@ -80,7 +80,7 @@ Describe 'New-EquivalenceDashboard.ps1' -Tag 'Unit' {
             & $script:DashboardScript `
                 -RunId 'unit-run' `
                 -Model 'unit-model' `
-                -Agent 'task-researcher' `
+                -Agent 'rpi-agent' `
                 -RepoRoot $script:RepoRoot2 `
                 -ResultsRoot $script:ResultsRoot2 `
                 -OutPath $script:OutPath2 *> $null
@@ -103,13 +103,13 @@ Describe 'Invoke-BaselineEquivalence.ps1' -Tag 'Unit' {
 
             $signatureDir = Join-Path $script:DriverRepo 'evals/baseline-equivalence/surface-signatures'
             New-Item -ItemType Directory -Path $signatureDir -Force | Out-Null
-            Set-Content -LiteralPath (Join-Path $signatureDir 'task-researcher.yml') -Value "description: stub`n" -Encoding utf8NoBOM
+            Set-Content -LiteralPath (Join-Path $signatureDir 'rpi-agent.yml') -Value "description: stub`n" -Encoding utf8NoBOM
             $compareSpecPath = Join-Path $script:DriverRepo 'evals/baseline-equivalence/compare.eval.yml'
             Set-Content -LiteralPath $compareSpecPath -Value "surface_signatures: {}`n" -Encoding utf8NoBOM
 
             $script:SummaryPath = Join-Path $TestDrive 'driver-summary.json'
             & $script:DriverScript `
-                -Agent 'task-researcher' `
+                -Agent 'rpi-agent' `
                 -Tier 'pr' `
                 -RepoRoot $script:DriverRepo `
                 -OutputPath $script:SummaryPath `
@@ -133,14 +133,14 @@ Describe 'Invoke-BaselineEquivalence.ps1' -Tag 'Unit' {
 
             $signatureDirEmpty = Join-Path $script:DriverRepoEmpty 'evals/baseline-equivalence/surface-signatures'
             New-Item -ItemType Directory -Path $signatureDirEmpty -Force | Out-Null
-            Set-Content -LiteralPath (Join-Path $signatureDirEmpty 'task-researcher.yml') -Value "description: stub`n" -Encoding utf8NoBOM
+            Set-Content -LiteralPath (Join-Path $signatureDirEmpty 'rpi-agent.yml') -Value "description: stub`n" -Encoding utf8NoBOM
             $compareSpecPathEmpty = Join-Path $script:DriverRepoEmpty 'evals/baseline-equivalence/compare.eval.yml'
             New-Item -ItemType Directory -Path (Split-Path -Parent $compareSpecPathEmpty) -Force | Out-Null
             Set-Content -LiteralPath $compareSpecPathEmpty -Value "surface_signatures: {}`n" -Encoding utf8NoBOM
 
             $script:SummaryPathEmpty = Join-Path $TestDrive 'driver-summary-empty.json'
             & $script:DriverScript `
-                -Agent 'task-researcher' `
+                -Agent 'rpi-agent' `
                 -Tier 'pr' `
                 -RepoRoot $script:DriverRepoEmpty `
                 -OutputPath $script:SummaryPathEmpty `

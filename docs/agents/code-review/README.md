@@ -17,7 +17,7 @@ tags:
   - code-review
   - coding-standards
 author: Microsoft
-ms.date: 2026-06-26
+ms.date: 2026-07-15
 ms.topic: concept
 estimated_reading_time: 10
 ---
@@ -57,7 +57,7 @@ flowchart TD
   subgraph "Interactive Subagents"
     EX["Code Review Explainer<br/>(Register 1)"]
     WB["Code Review Walkback<br/>(Register 2)"]
-    RS["Researcher<br/>Subagent"]
+    RR["rpi-research<br/>Skill"]
   end
 
   subgraph "Shared Protocols"
@@ -84,7 +84,7 @@ flowchart TD
   ORCH -->|"Step 1"| D
   ORCH -->|"Step 1"| PR
   ORCH -->|"Step 5 walk-back"| EX & WB
-  WB -->|"delegates"| RS
+  WB -->|"activates"| RR
   ORCH -->|"Step 6 parallel"| AF & AS & AA & ASEC & APR & AR
   AS -->|"loads at runtime"| S1 & S3
   AA -->|"loads at runtime"| S2 & S3
@@ -158,7 +158,7 @@ flowchart TD
 The flow separates two distinct modes of reasoning so factual orientation never gets entangled with severity judgments:
 
 * **Register 1 (factual, orientation):** the Step 2 walkthrough and the Code Review Explainer answer "what does this symbol or function do" without assigning severity, verdicts, or recommendations. This gives you a shared, factual map of the change before any judgment is applied.
-* **Register 2 (investigative, deep research):** the Code Review Walkback answers "is this correct, is this safe, what are the implications" by delegating to the generic Researcher Subagent and repackaging the evidence as a research artifact anchored to its board item.
+* **Register 2 (investigative, deep research):** the Code Review Walkback answers "is this correct, is this safe, what are the implications" by activating `rpi-research` and anchoring the resulting evidence to its board item.
 
 In the Step 5 walk-back loop you steer the review by bookmarking a board item and asking a question.
 The orchestrator routes the question by depth: shallow factual questions dispatch to the **Code Review Explainer** subagent (Register 1), and deep investigative questions dispatch to the **Code Review Walkback** subagent (Register 2).

@@ -1,7 +1,7 @@
 .section {
   max-width: min(100%, 1200px);
   margin: 0 24px;
-  padding: 48px 0;
+  padding: 24px 0;
   box-sizing: border-box;
 }
 
@@ -27,20 +27,33 @@
 .sectionTitle {
   font-size: 34px;
   font-weight: 600;
-  margin-bottom: 0;
+  padding: 30px;
+  margin-top: -50px;
+  margin-bottom: -12px;
 }
 
 .sectionSubtitle {
   color: var(--ms-learn-text-subtle);
   margin-top: 0;
-  margin-bottom: 24px;
+  margin-bottom: 16px;
   font-size: 16px;
+  padding-left: 30px;
 }
 
 .heroPurpose {
   max-width: min(100%, 900px);
-  margin: 0 24px 24px;
+  margin: 24px 24px 24px;
   color: var(--ms-learn-text-subtle);
   font-size: 16px;
   line-height: 1.5;
+  padding-left: 30px;
+}
+
+.sectionDescription {
+  max-width: min(100%, 900px);
+  padding-left: 30px;
+  color: var(--ms-learn-text-subtle);
+  font-size: 16px;
+  line-height: 1.5;
+  margin-bottom: 48px;
 }

@@ -2,9 +2,6 @@
 name: Documentation
 description: "Orchestrates documentation audit, drift, authoring, and validation work through the documentation skill"
 disable-model-invocation: true
-agents:
-  - Researcher Subagent
-  - Phase Implementor
 ---
 
 # Documentation
@@ -57,5 +54,6 @@ Do not author standards logic or assessment content in this agent. Summarize the
 ## Working Notes
 
 * Create or update a session file at `.copilot-tracking/documentation/{{YYYY-MM-DD}}-session.md` for the run.
-* Use `Researcher Subagent` for discovery and `Phase Implementor` for implementation work when those tools are available.
+* Activate `rpi-research` for open-ended documentation discovery, codebase exploration, or decision-critical evidence gathering. Supply the topic and purpose; documentation audience and intended use; explicit questions or evidence criteria; scope and non-goals; repository, source, version, and validation constraints; supplied documentation, code, and session evidence; requested outputs; and the output mode appropriate to the selected documentation mode. Use the default research evidence root unless the caller explicitly supplies another trusted root. Let the skill resolve dates, task slugs, artifact paths, worker selection, lane contracts, budgets, and research synthesis.
+* After activation completes, read the returned primary research artifact and apply relevant findings to the selected documentation mode and session file. Treat `Blocked` and `Needs clarification` as unresolved evidence and stop evidence-dependent conclusions. If `rpi-research` is unavailable, report the blocked discovery instead of improvising a local research route. For authoring, use the `documentation` skill and this agent's declared edit capability.
 * Keep the workflow focused on the selected mode and the supplied context.

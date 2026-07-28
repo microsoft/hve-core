@@ -21,12 +21,12 @@ Describe 'New-AgentMatrixDashboard.ps1' -Tag 'Unit' {
     BeforeEach {
         $script:Fix = New-FixtureRoot -Base $TestDrive
         New-FixtureInventory -Path $script:Fix.InventoryPath -Agents @(
-            @{ slug = 'task-researcher'; class = 'research-writer'; cost_tier = 'light' },
-            @{ slug = 'task-planner';    class = 'research-writer'; cost_tier = 'light' },
-            @{ slug = 'task-reviewer';   class = 'research-writer'; cost_tier = 'standard' }
+            @{ slug = 'sample-agent';  class = 'research-writer'; cost_tier = 'light' },
+            @{ slug = 'example-agent'; class = 'research-writer'; cost_tier = 'light' },
+            @{ slug = 'other-agent';   class = 'research-writer'; cost_tier = 'standard' }
         )
-        # Surface signatures: present for researcher, missing for planner/reviewer.
-        Set-Content -LiteralPath (Join-Path $script:Fix.SurfaceRoot 'task-researcher.yml') `
+        # Surface signatures: present for sample-agent, missing for the other fixtures.
+        Set-Content -LiteralPath (Join-Path $script:Fix.SurfaceRoot 'sample-agent.yml') `
             -Value "required: []`ndisallowed: []`n" -Encoding utf8NoBOM
         $script:OutPath = Join-Path $TestDrive ("dash-" + [Guid]::NewGuid().ToString('N') + '.html')
     }
@@ -34,14 +34,14 @@ Describe 'New-AgentMatrixDashboard.ps1' -Tag 'Unit' {
     Context 'Latest dated folder is auto-selected' {
         BeforeEach {
             New-FixtureDatedRun -MatrixRoot $script:Fix.MatrixRoot -Date '2026-05-24' -Results @(
-                @{ slug = 'task-researcher'; class = 'research-writer'; cost_tier = 'light'; overall = 'pass' }
-                @{ slug = 'task-planner';    class = 'research-writer'; cost_tier = 'light'; overall = 'pass' }
-                @{ slug = 'task-reviewer';   class = 'research-writer'; cost_tier = 'standard'; overall = 'fail'; exitCode = 1 }
+                @{ slug = 'sample-agent';  class = 'research-writer'; cost_tier = 'light'; overall = 'pass' }
+                @{ slug = 'example-agent'; class = 'research-writer'; cost_tier = 'light'; overall = 'pass' }
+                @{ slug = 'other-agent';   class = 'research-writer'; cost_tier = 'standard'; overall = 'fail'; exitCode = 1 }
             ) | Out-Null
             New-FixtureDatedRun -MatrixRoot $script:Fix.MatrixRoot -Date '2026-05-25' -Results @(
-                @{ slug = 'task-researcher'; class = 'research-writer'; cost_tier = 'light'; overall = 'pass' }
-                @{ slug = 'task-planner';    class = 'research-writer'; cost_tier = 'light'; overall = 'fail'; exitCode = 1 }
-                @{ slug = 'task-reviewer';   class = 'research-writer'; cost_tier = 'standard'; overall = 'fail'; exitCode = 1 }
+                @{ slug = 'sample-agent';  class = 'research-writer'; cost_tier = 'light'; overall = 'pass' }
+                @{ slug = 'example-agent'; class = 'research-writer'; cost_tier = 'light'; overall = 'fail'; exitCode = 1 }
+                @{ slug = 'other-agent';   class = 'research-writer'; cost_tier = 'standard'; overall = 'fail'; exitCode = 1 }
             ) -Overall 'fail' | Out-Null
 
             & $script:ScriptPath `
@@ -89,9 +89,9 @@ Describe 'New-AgentMatrixDashboard.ps1' -Tag 'Unit' {
         }
 
         It 'Links each agent slug to its per-agent JSON in the same dated folder' {
-            $script:Html | Should -Match 'href="task-researcher\.json">task-researcher</a>'
-            $script:Html | Should -Match 'href="task-planner\.json">task-planner</a>'
-            $script:Html | Should -Match 'href="task-reviewer\.json">task-reviewer</a>'
+            $script:Html | Should -Match 'href="sample-agent\.json">sample-agent</a>'
+            $script:Html | Should -Match 'href="example-agent\.json">example-agent</a>'
+            $script:Html | Should -Match 'href="other-agent\.json">other-agent</a>'
         }
 
         It 'Uses the most recent dated folder as the run' {
@@ -100,7 +100,7 @@ Describe 'New-AgentMatrixDashboard.ps1' -Tag 'Unit' {
         }
 
         It 'Computes last functional pass from prior dated folders' {
-            # task-planner passed on 2026-05-24 but failed on 2026-05-25.
+            # example-agent passed on 2026-05-24 but failed on 2026-05-25.
             $script:Html | Should -Match '<td>2026-05-24</td>'
         }
 
@@ -113,8 +113,8 @@ Describe 'New-AgentMatrixDashboard.ps1' -Tag 'Unit' {
             $inventoryPath = Join-Path $script:Fix.Root 'evals/agent-behavior/AGENTS.yml'
             Set-Content -LiteralPath $inventoryPath -Value @(
                 'agents:'
-                '  - slug: task-reviewer'
-                '    path: .github/agents/task-reviewer.agent.md'
+                '  - slug: other-agent'
+                '    path: .github/agents/other-agent.agent.md'
             ) -Encoding utf8NoBOM
 
             & $script:ScriptPath `
@@ -137,9 +137,9 @@ Describe 'New-AgentMatrixDashboard.ps1' -Tag 'Unit' {
     Context 'Explicit SummaryPath input' {
         BeforeEach {
             $script:SummaryPath = New-FixtureDatedRun -MatrixRoot $script:Fix.MatrixRoot -Date '2026-05-26' -Results @(
-                @{ slug = 'task-researcher'; class = 'research-writer'; cost_tier = 'light'; overall = 'pass' }
-                @{ slug = 'task-planner';    class = 'research-writer'; cost_tier = 'light'; overall = 'pass' }
-                @{ slug = 'task-reviewer';   class = 'research-writer'; cost_tier = 'standard'; overall = 'pass' }
+                @{ slug = 'sample-agent';  class = 'research-writer'; cost_tier = 'light'; overall = 'pass' }
+                @{ slug = 'example-agent'; class = 'research-writer'; cost_tier = 'light'; overall = 'pass' }
+                @{ slug = 'other-agent';   class = 'research-writer'; cost_tier = 'standard'; overall = 'pass' }
             )
             & $script:ScriptPath `
                 -RepoRoot $script:Fix.Root `
@@ -163,7 +163,7 @@ Describe 'New-AgentMatrixDashboard.ps1' -Tag 'Unit' {
     Context 'Inventory rows missing from summary' {
         BeforeEach {
             New-FixtureDatedRun -MatrixRoot $script:Fix.MatrixRoot -Date '2026-05-27' -Results @(
-                @{ slug = 'task-researcher'; class = 'research-writer'; cost_tier = 'light'; overall = 'pass' }
+                @{ slug = 'sample-agent'; class = 'research-writer'; cost_tier = 'light'; overall = 'pass' }
             ) -Overall 'pass' | Out-Null
 
             & $script:ScriptPath `
@@ -187,7 +187,7 @@ Describe 'New-AgentMatrixDashboard.ps1' -Tag 'Unit' {
 
         It 'Marks unrun agents as unknown without a per-agent link' {
             $script:Html | Should -Match 'class="unknown">unknown</td>'
-            $script:Html | Should -Not -Match 'href="task-planner\.json"'
+            $script:Html | Should -Not -Match 'href="example-agent\.json"'
         }
     }
 
@@ -195,7 +195,7 @@ Describe 'New-AgentMatrixDashboard.ps1' -Tag 'Unit' {
         BeforeEach {
             New-FixtureDatedRun -MatrixRoot $script:Fix.MatrixRoot -Date '2026-05-29' -Results @(
                 @{
-                    slug      = 'task-researcher'
+                    slug      = 'sample-agent'
                     class     = 'research-writer'
                     cost_tier = 'light'
                     overall   = 'pass'
@@ -204,8 +204,8 @@ Describe 'New-AgentMatrixDashboard.ps1' -Tag 'Unit' {
                         @{ name = 'rubric';  status = 'fail'; message = 'missing intro' }
                     )
                 },
-                @{ slug = 'task-planner';  class = 'research-writer'; cost_tier = 'light';    overall = 'pass' },
-                @{ slug = 'task-reviewer'; class = 'research-writer'; cost_tier = 'standard'; overall = 'pass' }
+                @{ slug = 'example-agent'; class = 'research-writer'; cost_tier = 'light';    overall = 'pass' },
+                @{ slug = 'other-agent';   class = 'research-writer'; cost_tier = 'standard'; overall = 'pass' }
             ) -Overall 'pass' | Out-Null
 
             & $script:ScriptPath `
@@ -250,7 +250,7 @@ Describe 'New-AgentMatrixDashboard.ps1' -Tag 'Unit' {
         BeforeEach {
             New-FixtureDatedRun -MatrixRoot $script:Fix.MatrixRoot -Date '2026-05-30' -Results @(
                 @{
-                    slug      = 'task-researcher'
+                    slug      = 'sample-agent'
                     class     = 'research-writer'
                     cost_tier = 'light'
                     overall   = 'pass'
@@ -262,8 +262,8 @@ Describe 'New-AgentMatrixDashboard.ps1' -Tag 'Unit' {
                         }
                     )
                 },
-                @{ slug = 'task-planner';  class = 'research-writer'; cost_tier = 'light';    overall = 'pass' },
-                @{ slug = 'task-reviewer'; class = 'research-writer'; cost_tier = 'standard'; overall = 'pass' }
+                @{ slug = 'example-agent'; class = 'research-writer'; cost_tier = 'light';    overall = 'pass' },
+                @{ slug = 'other-agent';   class = 'research-writer'; cost_tier = 'standard'; overall = 'pass' }
             ) -Overall 'pass' | Out-Null
 
             & $script:ScriptPath `
@@ -292,7 +292,7 @@ Describe 'New-AgentMatrixDashboard.ps1' -Tag 'Unit' {
         BeforeEach {
             New-FixtureDatedRun -MatrixRoot $script:Fix.MatrixRoot -Date '2026-05-31' -Results @(
                 @{
-                    slug      = 'task-researcher'
+                    slug      = 'sample-agent'
                     class     = 'research-writer'
                     cost_tier = 'light'
                     overall   = 'pass'
@@ -300,8 +300,8 @@ Describe 'New-AgentMatrixDashboard.ps1' -Tag 'Unit' {
                         @{ name = 'experimental'; status = 'flaky'; message = 'needs retry' }
                     )
                 },
-                @{ slug = 'task-planner';  class = 'research-writer'; cost_tier = 'light';    overall = 'pass' },
-                @{ slug = 'task-reviewer'; class = 'research-writer'; cost_tier = 'standard'; overall = 'pass' }
+                @{ slug = 'example-agent'; class = 'research-writer'; cost_tier = 'light';    overall = 'pass' },
+                @{ slug = 'other-agent';   class = 'research-writer'; cost_tier = 'standard'; overall = 'pass' }
             ) -Overall 'pass' | Out-Null
 
             & $script:ScriptPath `
@@ -327,9 +327,9 @@ Describe 'New-AgentMatrixDashboard.ps1' -Tag 'Unit' {
     Context 'Drill-meta exit code per agent' {
         BeforeEach {
             New-FixtureDatedRun -MatrixRoot $script:Fix.MatrixRoot -Date '2026-06-03' -Results @(
-                @{ slug = 'task-researcher'; class = 'research-writer'; cost_tier = 'light';    overall = 'pass'; exitCode = 0 }
-                @{ slug = 'task-planner';    class = 'research-writer'; cost_tier = 'light';    overall = 'fail'; exitCode = 1 }
-                @{ slug = 'task-reviewer';   class = 'research-writer'; cost_tier = 'standard'; overall = 'fail'; exitCode = 42 }
+                @{ slug = 'sample-agent';  class = 'research-writer'; cost_tier = 'light';    overall = 'pass'; exitCode = 0 }
+                @{ slug = 'example-agent'; class = 'research-writer'; cost_tier = 'light';    overall = 'fail'; exitCode = 1 }
+                @{ slug = 'other-agent';   class = 'research-writer'; cost_tier = 'standard'; overall = 'fail'; exitCode = 42 }
             ) -Overall 'fail' | Out-Null
 
             & $script:ScriptPath `
@@ -342,9 +342,9 @@ Describe 'New-AgentMatrixDashboard.ps1' -Tag 'Unit' {
         }
 
         It 'Renders the exitCode from the per-agent payload in the drill-meta line for <Slug>' -TestCases @(
-            @{ Slug = 'task-researcher'; Expected = '0' }
-            @{ Slug = 'task-planner';    Expected = '1' }
-            @{ Slug = 'task-reviewer';   Expected = '42' }
+            @{ Slug = 'sample-agent';  Expected = '0' }
+            @{ Slug = 'example-agent'; Expected = '1' }
+            @{ Slug = 'other-agent';   Expected = '42' }
         ) {
             param($Slug, $Expected)
             $pattern = Get-DrillRowRegex `
@@ -358,7 +358,7 @@ Describe 'New-AgentMatrixDashboard.ps1' -Tag 'Unit' {
         BeforeEach {
             New-FixtureDatedRun -MatrixRoot $script:Fix.MatrixRoot -Date '2026-05-31' -Results @(
                 @{
-                    slug      = 'task-researcher'
+                    slug      = 'sample-agent'
                     class     = 'research-writer'
                     cost_tier = 'light'
                     overall   = 'pass'
@@ -367,14 +367,14 @@ Describe 'New-AgentMatrixDashboard.ps1' -Tag 'Unit' {
                     )
                 }
                 @{
-                    slug      = 'task-planner'
+                    slug      = 'example-agent'
                     class     = 'research-writer'
                     cost_tier = 'light'
                     overall   = 'pass'
                     graders   = @()
                 }
                 @{
-                    slug      = 'task-reviewer'
+                    slug      = 'other-agent'
                     class     = 'research-writer'
                     cost_tier = 'standard'
                     overall   = 'fail'
@@ -398,8 +398,8 @@ Describe 'New-AgentMatrixDashboard.ps1' -Tag 'Unit' {
         }
 
         It 'Anchors the placeholder inside the drill row for <Slug>' -TestCases @(
-            @{ Slug = 'task-planner' }
-            @{ Slug = 'task-reviewer' }
+            @{ Slug = 'example-agent' }
+            @{ Slug = 'other-agent' }
         ) {
             param($Slug)
             $pattern = Get-DrillRowRegex `
@@ -409,8 +409,8 @@ Describe 'New-AgentMatrixDashboard.ps1' -Tag 'Unit' {
         }
 
         It 'Does not emit a drill-graders table for agent <Slug>' -TestCases @(
-            @{ Slug = 'task-planner' }
-            @{ Slug = 'task-reviewer' }
+            @{ Slug = 'example-agent' }
+            @{ Slug = 'other-agent' }
         ) {
             param($Slug)
             $pattern = Get-DrillRowRegex -Slug $Slug -Inner 'class="drill-graders"'
@@ -418,7 +418,7 @@ Describe 'New-AgentMatrixDashboard.ps1' -Tag 'Unit' {
         }
 
         It 'Still renders the drill-graders table for the agent that has graders' {
-            $pattern = Get-DrillRowRegex -Slug 'task-researcher' -Inner 'class="drill-graders"'
+            $pattern = Get-DrillRowRegex -Slug 'sample-agent' -Inner 'class="drill-graders"'
             $script:Html | Should -Match $pattern
         }
     }
@@ -430,7 +430,7 @@ Describe 'New-AgentMatrixDashboard.ps1' -Tag 'Unit' {
         ) {
             param($Verdict, $Date)
             New-FixtureDatedRun -MatrixRoot $script:Fix.MatrixRoot -Date $Date -Results @(
-                @{ slug = 'task-researcher'; class = 'research-writer'; cost_tier = 'light'; overall = 'pass' }
+                @{ slug = 'sample-agent'; class = 'research-writer'; cost_tier = 'light'; overall = 'pass' }
             ) -Overall $Verdict | Out-Null
 
             & $script:ScriptPath `
@@ -456,7 +456,7 @@ Describe 'New-AgentMatrixDashboard.ps1' -Tag 'Unit' {
 
         It 'Throws when SummaryPath does not exist' {
             New-FixtureDatedRun -MatrixRoot $script:Fix.MatrixRoot -Date '2026-05-28' -Results @(
-                @{ slug = 'task-researcher'; class = 'research-writer'; cost_tier = 'light'; overall = 'pass' }
+                @{ slug = 'sample-agent'; class = 'research-writer'; cost_tier = 'light'; overall = 'pass' }
             ) | Out-Null
             { & $script:ScriptPath `
                 -RepoRoot $script:Fix.Root `
@@ -608,14 +608,14 @@ Describe 'New-AgentMatrixDashboard helpers' -Tag 'Unit' {
         BeforeEach {
             $script:Fix = New-FixtureRoot -Base $TestDrive
             New-FixtureInventory -Path $script:Fix.InventoryPath -Agents @(
-                @{ slug = 'task-researcher'; class = 'research-writer'; cost_tier = 'light' },
-                @{ slug = 'task-planner';    class = 'research-writer'; cost_tier = 'light' },
-                @{ slug = 'task-reviewer';   class = 'research-writer'; cost_tier = 'standard' }
+                @{ slug = 'sample-agent';  class = 'research-writer'; cost_tier = 'light' },
+                @{ slug = 'example-agent'; class = 'research-writer'; cost_tier = 'light' },
+                @{ slug = 'other-agent';   class = 'research-writer'; cost_tier = 'standard' }
             )
             $script:OutPath = Join-Path $TestDrive ("dash-" + [Guid]::NewGuid().ToString('N') + '.html')
             New-FixtureDatedRun -MatrixRoot $script:Fix.MatrixRoot -Date '2026-05-30' -Results @(
                 @{
-                    slug = 'task-researcher'; class = 'research-writer'; cost_tier = 'light'; overall = 'fail'; exitCode = 1
+                    slug = 'sample-agent'; class = 'research-writer'; cost_tier = 'light'; overall = 'fail'; exitCode = 1
                     graders = @(
                         @{ name = 'grader-a'; status = 'fail'; message = 'a1' },
                         @{ name = 'grader-a'; status = 'fail'; message = 'a2' },
@@ -623,14 +623,14 @@ Describe 'New-AgentMatrixDashboard helpers' -Tag 'Unit' {
                     )
                 },
                 @{
-                    slug = 'task-planner'; class = 'research-writer'; cost_tier = 'light'; overall = 'fail'; exitCode = 1
+                    slug = 'example-agent'; class = 'research-writer'; cost_tier = 'light'; overall = 'fail'; exitCode = 1
                     graders = @(
                         @{ name = 'grader-a'; status = 'fail'; message = 'a3' },
                         @{ name = 'grader-c'; status = 'fail'; message = 'c1' }
                     )
                 },
                 @{
-                    slug = 'task-reviewer'; class = 'research-writer'; cost_tier = 'standard'; overall = 'pass'
+                    slug = 'other-agent'; class = 'research-writer'; cost_tier = 'standard'; overall = 'pass'
                     graders = @(
                         @{ name = 'grader-a'; status = 'fail'; message = 'a4' },
                         @{ name = 'grader-b'; status = 'pass'; message = 'ok' }
@@ -669,18 +669,18 @@ Describe 'New-AgentMatrixDashboard helpers' -Tag 'Unit' {
         }
 
         It 'De-duplicates failing grader names per row when counting frequency' {
-            # task-researcher fails grader-a twice; it must contribute only 1 to grader-a's count.
+            # sample-agent fails grader-a twice; it must contribute only 1 to grader-a's count.
             # Total grader-a fails would be 4 raw, but de-duped per row is 3.
             $script:Html | Should -Match '<option value="grader-a">grader-a \(3\)</option>'
             $script:Html | Should -Not -Match '<option value="grader-a">grader-a \(4\)</option>'
         }
 
         It 'De-duplicates failing grader names per row in the data attribute' {
-            $researcherRow = [regex]::Match(
+            $sampleRow = [regex]::Match(
                 $script:Html,
-                '<tr class="row"[^>]*data-slug="task-researcher"[^>]*data-failing-graders="([^"]*)"'
+                '<tr class="row"[^>]*data-slug="sample-agent"[^>]*data-failing-graders="([^"]*)"'
             ).Groups[1].Value
-            $researcherRow | Should -Be 'grader-a,grader-b'
+            $sampleRow | Should -Be 'grader-a,grader-b'
         }
 
         It 'Renders the failures-only checkbox in the controls' {
@@ -725,12 +725,12 @@ Describe 'Get-DrillRowRegex' -Tag 'Unit' {
     }
 
     It 'Matches the actual dashboard drill-row markup' {
-        $sample = '<tr class="drill" data-drill-for="task-researcher" hidden><td colspan="9"><div class="drill-empty">No grader results recorded.</div></td></tr>'
-        $sample | Should -Match (Get-DrillRowRegex -Slug 'task-researcher' -Inner 'class="drill-empty">No grader results recorded\.')
+        $sample = '<tr class="drill" data-drill-for="sample-agent" hidden><td colspan="9"><div class="drill-empty">No grader results recorded.</div></td></tr>'
+        $sample | Should -Match (Get-DrillRowRegex -Slug 'sample-agent' -Inner 'class="drill-empty">No grader results recorded\.')
     }
 
     It 'Does not match a drill row for a different slug' {
-        $sample = '<tr class="drill" data-drill-for="task-planner" hidden><td colspan="9"><div class="drill-empty">No grader results recorded.</div></td></tr>'
-        $sample | Should -Not -Match (Get-DrillRowRegex -Slug 'task-researcher' -Inner 'class="drill-empty"')
+        $sample = '<tr class="drill" data-drill-for="example-agent" hidden><td colspan="9"><div class="drill-empty">No grader results recorded.</div></td></tr>'
+        $sample | Should -Not -Match (Get-DrillRowRegex -Slug 'sample-agent' -Inner 'class="drill-empty"')
     }
 }

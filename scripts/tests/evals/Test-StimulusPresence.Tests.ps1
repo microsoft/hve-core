@@ -29,16 +29,16 @@ Describe 'StimulusIndex module' -Tag 'Unit' {
                 tags = [ordered]@{
                     category    = 'fixture'
                     skill       = 'pr-reference'
-                    agent       = 'task-research'
-                    prompt      = 'task-plan'
+                    agent       = 'sample-agent'
+                    prompt      = 'sample-prompt'
                     instruction = 'powershell'
                 }
             }
             $links = Get-StimulusBacklink -Stimulus $stim
             $links.Count | Should -Be 4
             ($links | Where-Object { $_.kind -eq 'skill' }).slug | Should -Be 'pr-reference'
-            ($links | Where-Object { $_.kind -eq 'agent' }).slug | Should -Be 'task-research'
-            ($links | Where-Object { $_.kind -eq 'prompt' }).slug | Should -Be 'task-plan'
+            ($links | Where-Object { $_.kind -eq 'agent' }).slug | Should -Be 'sample-agent'
+            ($links | Where-Object { $_.kind -eq 'prompt' }).slug | Should -Be 'sample-prompt'
             ($links | Where-Object { $_.kind -eq 'instruction' }).slug | Should -Be 'powershell'
         }
 
@@ -67,7 +67,7 @@ stimuli:
   - name: s2
     prompt: hi
     tags:
-      agent: task-research
+            agent: sample-agent
 '@
             Set-Content -LiteralPath (Join-Path $script:evalRoot 'spec-one.yaml') -Value $yaml1 -Encoding UTF8
 
@@ -90,7 +90,7 @@ stimuli:
             $index = New-StimulusIndex -EvalRoot $script:evalRoot
             $index.specsScanned | Should -BeGreaterOrEqual 3
             $index.coverage.ContainsKey('skill:pr-reference') | Should -BeTrue
-            $index.coverage.ContainsKey('agent:task-research') | Should -BeTrue
+            $index.coverage.ContainsKey('agent:sample-agent') | Should -BeTrue
         }
 
         It 'Deduplicates spec paths for repeated backlinks' {
@@ -131,7 +131,7 @@ Describe 'ArtifactDetection Test-RepoRootArtifact' -Tag 'Unit' {
     }
 
     It 'Returns false for collection-scoped <Kind> artifacts' -ForEach @(
-        @{ Kind = 'agent'; Path = '.github/agents/hve-core/task-research.agent.md' }
+        @{ Kind = 'agent'; Path = '.github/agents/hve-core/sample-agent.agent.md' }
         @{ Kind = 'prompt'; Path = '.github/prompts/hve-core/example.prompt.md' }
         @{ Kind = 'instruction'; Path = '.github/instructions/coding-standards/powershell/powershell.instructions.md' }
         @{ Kind = 'skill'; Path = '.github/skills/shared/pr-reference/SKILL.md' }
@@ -199,7 +199,7 @@ Describe 'Test-StimulusPresence.ps1 entry script' -Tag 'Integration' {
     It 'Exits 0 when every changed artifact is covered by a stimulus backlink' {
         $artifacts = @(
             @{ kind = 'skill'; artifactId = 'pr-reference'; path = '.github/skills/shared/pr-reference/SKILL.md'; status = 'M' }
-            @{ kind = 'agent'; artifactId = 'task-research'; path = '.github/agents/hve-core/task-research.agent.md'; status = 'A' }
+            @{ kind = 'agent'; artifactId = 'sample-agent'; path = '.github/agents/hve-core/sample-agent.agent.md'; status = 'A' }
         )
         $spec = @'
 name: cover-all
@@ -211,7 +211,7 @@ stimuli:
   - name: s2
     prompt: hi
     tags:
-      agent: task-research
+            agent: sample-agent
 '@
         $fx = New-PresenceFixture -Artifacts $artifacts -SpecYaml @($spec)
 

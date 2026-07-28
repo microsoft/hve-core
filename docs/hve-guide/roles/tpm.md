@@ -3,7 +3,7 @@ title: TPM Guide
 description: HVE Core support for technical program managers driving requirements, backlog management, and delivery coordination
 sidebar_position: 5
 author: Microsoft
-ms.date: 2026-06-28
+ms.date: 2026-07-15
 ms.topic: how-to
 keywords:
   - TPM
@@ -45,7 +45,7 @@ This guide is for you if you drive project planning, manage requirements, coordi
 
 ## Stage Walkthrough
 
-1. Stage 2: Discovery. Run the **task-researcher** agent for technical investigation and `/github-discover-issues` to find and categorize existing issues across repositories.
+1. Stage 2: Discovery. Run `/rpi-research` for technical investigation and `/github-discover-issues` to find and categorize existing issues across repositories.
 2. Stage 3: Product Definition. Use the **brd-builder** agent to create business requirements, then the **prd-builder** agent to generate a product specification from the BRD.
 3. Stage 4: Decomposition. Convert PRD requirements to Azure DevOps work items with the **ado-prd-to-wit** agent, creating proper parent-child hierarchies.
 4. Stage 5: Sprint Planning. Triage discovered issues with `/github-triage-issues` and plan sprints using the **agile-coach** agent for priority-based selection.
@@ -96,19 +96,18 @@ Set iteration path to Sprint 24.
 
 ## Key Agents and Workflows
 
-| Agent                       | Purpose                                                                    | Docs                                            |
-|-----------------------------|----------------------------------------------------------------------------|-------------------------------------------------|
-| **brd-builder**             | Business requirements document creation                                    | Agent file                                      |
-| **prd-builder**             | Product requirements document generation                                   | Agent file                                      |
-| **agile-coach**             | Sprint planning and agile methodology                                      | Agent file                                      |
-| **ado-prd-to-wit**          | PRD to Azure DevOps work item conversion                                   | Agent file                                      |
-| **github-backlog-manager**  | GitHub issue discovery and backlog automation                              | [GitHub Backlog](../../agents/github-backlog/)  |
-| **product-manager-advisor** | Product strategy and prioritization guidance                               | Agent file                                      |
-| **ux-ui-designer**          | UX/UI design guidance and review                                           | Agent file                                      |
-| **task-researcher**         | Deep technical and requirement research                                    | [Task Researcher](../../rpi/task-researcher.md) |
-| **rpi-agent**               | RPI workflow orchestration                                                 | [RPI docs](../../rpi/)                          |
-| **memory**                  | Session context and preference persistence                                 | Agent file                                      |
-| **dt-coach**                | Design Thinking coaching for stakeholder alignment and scope conversations | [Design Thinking](../../design-thinking/)       |
+| Agent or skill              | Purpose                                                                    | Docs                                           |
+|-----------------------------|----------------------------------------------------------------------------|------------------------------------------------|
+| **brd-builder**             | Business requirements document creation                                    | Agent file                                     |
+| **prd-builder**             | Product requirements document generation                                   | Agent file                                     |
+| **agile-coach**             | Sprint planning and agile methodology                                      | Agent file                                     |
+| **ado-prd-to-wit**          | PRD to Azure DevOps work item conversion                                   | Agent file                                     |
+| **github-backlog-manager**  | GitHub issue discovery and backlog automation                              | [GitHub Backlog](../../agents/github-backlog/) |
+| **product-manager-advisor** | Product strategy and prioritization guidance                               | Agent file                                     |
+| **ux-ui-designer**          | UX/UI design guidance and review                                           | Agent file                                     |
+| **rpi-research**            | Deep technical and requirement research                                    | [RPI docs](../../rpi/)                         |
+| **RPI Agent**               | RPI lifecycle coordination                                                 | [RPI docs](../../rpi/)                         |
+| **dt-coach**                | Design Thinking coaching for stakeholder alignment and scope conversations | [Design Thinking](../../design-thinking/)      |
 
 TPMs benefit from **dt-coach** when stakeholder alignment requires structured scope conversations (Method 1) or when requirements gathering needs empathy-driven research techniques. Design Thinking methods produce validated problem statements and stakeholder maps that strengthen BRD creation.
 

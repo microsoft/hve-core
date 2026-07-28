@@ -5,7 +5,8 @@
 
 This module is the single source of truth for telemetry collection. The bash
 collector invokes the ``collect`` mode to record one hook event (and enrich
-the session at ``Stop``), while the report generators invoke the
+the session at ``Stop``, ``SessionEnd``, and ``PreCompact``), while the report
+generators invoke the
 ``aggregate-debug``, ``aggregate-session``, and ``list-dirs`` modes to join
 model/token data and discover per-project telemetry stores for reports.
 Clean scripts invoke the ``clean`` mode to remove telemetry artifacts
@@ -46,9 +47,14 @@ EVENT_ALIASES = {
     "subagentStart": "SubagentStart",
     "subagentStop": "SubagentStop",
     "agentStop": "Stop",
-    "sessionEnd": "Stop",
+    "sessionEnd": "SessionEnd",
     "preCompact": "PreCompact",
 }
+
+# Documented sessionEnd ``reason`` values (GitHub Copilot hooks reference).
+# Shape inference matches only these so an unrelated ``reason`` key on some
+# other or future event is not mistaken for a session end.
+SESSION_END_REASONS = frozenset({"complete", "error", "abort", "timeout", "user_exit"})
 
 
 def iter_jsonl(path: str | os.PathLike[str]) -> Iterator[dict]:
@@ -673,6 +679,46 @@ def build_session_summary(
     return summary
 
 
+def _infer_event_from_shape(data: dict) -> str:
+    """Infer a canonical event name from payload shape.
+
+    The Copilot CLI does not send an event-name field in the hook payload
+    (no ``hook_event_name``/``hookEventName``/``event``), unlike VS Code. It
+    also fires one shared command for every manifest event, so the event must
+    be inferred from which keys are present. Checks are ordered so that events
+    sharing keys are disambiguated by their distinguishing field:
+
+    * ``toolResult`` present -> PostToolUse (also carries ``toolName``)
+    * ``toolName`` present -> PreToolUse
+    * ``prompt`` present -> UserPromptSubmit
+    * ``agentName`` present -> SubagentStop when ``stopReason`` is set (a
+      Subagent stop), otherwise SubagentStart
+    * ``trigger`` present -> PreCompact
+    * ``stopReason`` present without ``agentName`` -> Stop (an agent turn end)
+    * ``source`` present -> SessionStart
+    * ``reason`` holding a documented session-end value (``complete``,
+      ``error``, ``abort``, ``timeout``, ``user_exit``) -> SessionEnd (the
+      session terminates; unlike an agent Stop, no ``stopReason``)
+    """
+    if "toolResult" in data:
+        return "PostToolUse"
+    if "toolName" in data:
+        return "PreToolUse"
+    if "prompt" in data:
+        return "UserPromptSubmit"
+    if "agentName" in data:
+        return "SubagentStop" if "stopReason" in data else "SubagentStart"
+    if "trigger" in data:
+        return "PreCompact"
+    if "stopReason" in data:
+        return "Stop"
+    if "source" in data:
+        return "SessionStart"
+    if data.get("reason") in SESSION_END_REASONS:
+        return "SessionEnd"
+    return "unknown"
+
+
 def _normalize_event(data: dict) -> str:
     """Resolve the canonical PascalCase event name from a hook payload."""
     event = data.get("hook_event_name", "unknown")
@@ -682,6 +728,10 @@ def _normalize_event(data: dict) -> str:
             if value and value != "unknown":
                 event = value
                 break
+    if event == "unknown":
+        # The Copilot CLI omits the event name entirely; recover it from the
+        # payload shape so CLI sessions record telemetry like VS Code sessions.
+        event = _infer_event_from_shape(data)
     return EVENT_ALIASES.get(event, event)
 
 
@@ -771,6 +821,14 @@ def build_entry(data: dict, event: str, stack: _AgentStack) -> dict | None:
     tool_input = data.get("tool_input") or data.get("toolArgs", {})
     tool_result = data.get("tool_result") or data.get("toolResult", "")
 
+    # The Copilot CLI serializes tool arguments as a JSON string rather than an
+    # object; decode it so key extraction and file-path detection below work.
+    if isinstance(tool_input, str):
+        try:
+            tool_input = json.loads(tool_input)
+        except ValueError:
+            tool_input = {}
+
     if event == "unknown":
         return None
 
@@ -786,14 +844,16 @@ def build_entry(data: dict, event: str, stack: _AgentStack) -> dict | None:
         entry["tool_input_keys"] = list(tool_input.keys()) if isinstance(tool_input, dict) else []
         entry["agent"] = stack.current()
         # Detect instructions and skills by file path convention to track
-        # which artifacts the agent loaded during the session.
+        # which artifacts the agent loaded during the session. Normalize
+        # Windows backslash separators so splitting works cross-platform.
         fpath = tool_input.get("filePath") if isinstance(tool_input, dict) else None
         if isinstance(fpath, str):
-            if fpath.endswith(".instructions.md"):
-                entry["instruction"] = fpath.split("/")[-1]
+            norm = fpath.replace("\\", "/")
+            if norm.endswith(".instructions.md"):
+                entry["instruction"] = norm.split("/")[-1]
                 entry["tokens"] = _token_estimate(fpath)
-            elif fpath.endswith("SKILL.md"):
-                parts = fpath.rstrip("/").split("/")
+            elif norm.endswith("SKILL.md"):
+                parts = norm.rstrip("/").split("/")
                 idx = next((i for i, p in enumerate(parts) if p == "skills"), -1)
                 if idx >= 0 and idx + 2 < len(parts):
                     entry["skill"] = parts[idx + 2]
@@ -830,7 +890,14 @@ def build_entry(data: dict, event: str, stack: _AgentStack) -> dict | None:
     elif event == "PreCompact":
         entry["trigger"] = data.get("trigger", "")
     elif event == "Stop":
-        entry["stop_reason"] = data.get("stop_reason") or data.get("stopReason", "")
+        # Fall back to ``reason`` for surfaces that name the event Stop but
+        # supply a session-end style payload without ``stopReason``.
+        entry["stop_reason"] = (
+            data.get("stop_reason") or data.get("stopReason") or data.get("reason", "")
+        )
+        stack.clear()
+    elif event == "SessionEnd":
+        entry["reason"] = data.get("reason", "")
         stack.clear()
 
     return entry
@@ -873,13 +940,15 @@ def _mode_collect() -> int:
         handle.write(json.dumps(entry) + "\n")
 
     # Enrich the log with a SessionSummary of token totals and model usage.
-    # Emitted at Stop (session end) and at PreCompact: process logs rotate
-    # aggressively, so capturing a snapshot before compaction preserves
-    # per-request input data that would otherwise degrade to the
-    # compaction-only state fallback once the log is gone. Multiple summaries
-    # per session are expected; the report replaces by provenance rank and
-    # freshness rather than accumulating, so snapshots never double-count.
-    if event in ("Stop", "PreCompact") and sid:
+    # Emitted at SessionEnd (the authoritative final snapshot), at Stop (each
+    # agent turn end, capturing periodically before process logs rotate), and
+    # at PreCompact: process logs rotate aggressively, so capturing a snapshot
+    # before compaction preserves per-request input data that would otherwise
+    # degrade to the compaction-only state fallback once the log is gone.
+    # Multiple summaries per session are expected; the report replaces by
+    # provenance rank and freshness rather than accumulating, so snapshots
+    # never double-count.
+    if event in ("Stop", "SessionEnd", "PreCompact") and sid:
         home = copilot_home()
         state_dir = home / "session-state" / sid
         state_file = state_dir / "events.jsonl"

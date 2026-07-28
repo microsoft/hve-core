@@ -15,13 +15,17 @@
     template and refreshes only the AUTO-GENERATED regions (metadata and
     "What it does"), preserving human-authored sections verbatim. It also
     generates the reference index pages (docs/reference/README.md and
-    docs/reference/<kind>/README.md) and assigns a stable sidebar_position to
-    every page based on its position among sibling pages.
+    docs/reference/<kind>/README.md), assigns a stable sidebar_position to
+    every page based on its position among sibling pages, and removes an
+    orphaned per-asset page only when its generated markers are intact and its
+    human-section tail still matches a canonical scaffold exactly.
 
     The generator never calls a model. The "Example usage" and other
     human-authored sections are authored separately (human-in-the-loop).
-    Running with -WhatIf reports drift (pages that would be created or updated)
-    without writing any files.
+    Running with -WhatIf reports drift (pages that would be created, updated,
+    or safely removed) without changing documentation pages. The JSON run
+    summary is still written to OutputPath. Orphaned pages with authored or
+    ambiguous content are preserved and reported as needing attention.
 
 .PARAMETER RepoRoot
     Repository root directory. Assets are discovered under <RepoRoot>/.github
@@ -127,6 +131,89 @@ function Remove-HowToUseSection {
     )
 
     return ($Tail -replace '(?ms)\r?\n## How to use it\b.*?(?=\r?\n## |\z)', '')
+}
+
+function Get-AssetDocPageRelPath {
+    <#
+    .SYNOPSIS
+        Enumerates repo-relative per-asset reference page paths.
+    .PARAMETER RepoRoot
+        Repository root directory.
+    .OUTPUTS
+        [string[]] Markdown page paths excluding generated README indexes.
+    #>
+    [CmdletBinding()]
+    [OutputType([string[]])]
+    param(
+        [Parameter(Mandatory = $true)]
+        [ValidateNotNullOrEmpty()]
+        [string]$RepoRoot
+    )
+
+    $docsRoot = Join-Path $RepoRoot 'docs/reference'
+    if (-not (Test-Path -LiteralPath $docsRoot)) {
+        return @()
+    }
+
+    $paths = foreach ($page in (Get-ChildItem -LiteralPath $docsRoot -Recurse -File -Filter '*.md' -ErrorAction SilentlyContinue)) {
+        if ($page.Name -eq 'README.md') {
+            continue
+        }
+        ([System.IO.Path]::GetRelativePath($RepoRoot, $page.FullName)) -replace '\\', '/'
+    }
+    return @($paths)
+}
+
+function Test-AssetDocScaffoldOrphan {
+    <#
+    .SYNOPSIS
+        Determines whether an orphan page is an untouched generated scaffold.
+    .DESCRIPTION
+        Requires exactly one begin and end marker for both generated regions,
+        valid marker ordering, and a post-overview tail that is byte-identical
+        to either canonical interactive or non-interactive scaffold tail.
+    .PARAMETER Content
+        Full orphan page content.
+    .PARAMETER InteractiveTail
+        Canonical interactive template tail.
+    .PARAMETER NonInteractiveTail
+        Canonical non-interactive template tail.
+    .OUTPUTS
+        [bool] True only when automatic removal cannot discard authored prose.
+    #>
+    [CmdletBinding()]
+    [OutputType([bool])]
+    param(
+        [Parameter(Mandatory = $true)][AllowEmptyString()][string]$Content,
+        [Parameter(Mandatory = $true)][AllowEmptyString()][string]$InteractiveTail,
+        [Parameter(Mandatory = $true)][AllowEmptyString()][string]$NonInteractiveTail
+    )
+
+    foreach ($region in @('metadata', 'overview')) {
+        foreach ($boundary in @('Begin', 'End')) {
+            $marker = Get-AssetDocMarker -Region $region -Boundary $boundary
+            if ([regex]::Matches($Content, [regex]::Escape($marker)).Count -ne 1) {
+                return $false
+            }
+        }
+    }
+
+    $metadata = Split-AssetDocByMarkers -Content $Content -Region 'metadata'
+    $overview = Split-AssetDocByMarkers -Content $Content -Region 'overview'
+    if (-not $metadata.HasMarkers -or -not $overview.HasMarkers) {
+        return $false
+    }
+
+    $metadataBegin = $Content.IndexOf((Get-AssetDocMarker -Region 'metadata' -Boundary Begin), [System.StringComparison]::Ordinal)
+    $metadataEnd = $Content.IndexOf((Get-AssetDocMarker -Region 'metadata' -Boundary End), [System.StringComparison]::Ordinal)
+    $overviewBegin = $Content.IndexOf((Get-AssetDocMarker -Region 'overview' -Boundary Begin), [System.StringComparison]::Ordinal)
+    $overviewEnd = $Content.IndexOf((Get-AssetDocMarker -Region 'overview' -Boundary End), [System.StringComparison]::Ordinal)
+    if (-not ($metadataBegin -lt $metadataEnd -and $metadataEnd -lt $overviewBegin -and $overviewBegin -lt $overviewEnd)) {
+        return $false
+    }
+
+    return [string]::Equals($overview.After, $InteractiveTail, [System.StringComparison]::Ordinal) -or
+        [string]::Equals($overview.After, $NonInteractiveTail, [System.StringComparison]::Ordinal)
 }
 
 #endregion Pure Helpers
@@ -451,7 +538,7 @@ function Invoke-AssetDocsGeneration {
     .PARAMETER TemplatePath
         Path to the asset documentation template.
     .OUTPUTS
-        [PSCustomObject] Summary with Created, Updated, Unchanged, and
+        [PSCustomObject] Summary with Created, Updated, Removed, Unchanged, and
         NeedsAttention path lists.
     #>
     [CmdletBinding(SupportsShouldProcess)]
@@ -467,6 +554,7 @@ function Invoke-AssetDocsGeneration {
 
     $created = [System.Collections.Generic.List[string]]::new()
     $updated = [System.Collections.Generic.List[string]]::new()
+    $removed = [System.Collections.Generic.List[string]]::new()
     $unchanged = [System.Collections.Generic.List[string]]::new()
     $needsAttention = [System.Collections.Generic.List[string]]::new()
 
@@ -475,6 +563,7 @@ function Invoke-AssetDocsGeneration {
         switch ($Status) {
             'Created' { $created.Add($RelPath) }
             'Updated' { $updated.Add($RelPath) }
+            'Removed' { $removed.Add($RelPath) }
             'Unchanged' { $unchanged.Add($RelPath) }
         }
     }
@@ -514,6 +603,42 @@ function Invoke-AssetDocsGeneration {
         & $record $status $page.DocRel
     }
 
+    # Remove only source-orphaned pages that remain exact generator scaffolds.
+    # Any authored or structurally ambiguous page is preserved for explicit
+    # human disposition rather than being deleted from a path mismatch alone.
+    $expectedPages = [System.Collections.Generic.HashSet[string]]::new([System.StringComparer]::Ordinal)
+    $expectedPagesIgnoreCase = [System.Collections.Generic.HashSet[string]]::new([System.StringComparer]::OrdinalIgnoreCase)
+    foreach ($page in $pages) {
+        [void]$expectedPages.Add($page.DocRel)
+        [void]$expectedPagesIgnoreCase.Add($page.DocRel)
+    }
+    $interactiveTail = Get-TemplateHumanTail -TemplatePath $TemplatePath -Interactive $true
+    $nonInteractiveTail = Get-TemplateHumanTail -TemplatePath $TemplatePath -Interactive $false
+    foreach ($orphanRel in (Get-AssetDocPageRelPath -RepoRoot $RepoRoot)) {
+        if ($expectedPages.Contains($orphanRel)) {
+            continue
+        }
+
+        if ($expectedPagesIgnoreCase.Contains($orphanRel)) {
+            Write-Warning "Page $orphanRel differs from a current asset page only by path casing; preserving it for manual disposition."
+            $needsAttention.Add($orphanRel)
+            continue
+        }
+
+        $orphanFull = Join-Path $RepoRoot $orphanRel
+        $orphanContent = Get-Content -LiteralPath $orphanFull -Raw
+        if (-not (Test-AssetDocScaffoldOrphan -Content $orphanContent -InteractiveTail $interactiveTail -NonInteractiveTail $nonInteractiveTail)) {
+            Write-Warning "Orphaned page $orphanRel contains authored or ambiguous content; preserving it for manual disposition."
+            $needsAttention.Add($orphanRel)
+            continue
+        }
+
+        if ($PSCmdlet.ShouldProcess($orphanFull, 'Remove orphaned generated asset documentation scaffold')) {
+            Remove-Item -LiteralPath $orphanFull -Force
+        }
+        & $record 'Removed' $orphanRel
+    }
+
     # Per-kind index pages.
     foreach ($group in ($pages | Group-Object KindDir)) {
         $indexRel = "docs/reference/$($group.Name)/README.md"
@@ -533,9 +658,10 @@ function Invoke-AssetDocsGeneration {
     return [PSCustomObject]@{
         Created        = $created
         Updated        = $updated
+        Removed        = $removed
         Unchanged      = $unchanged
         NeedsAttention = $needsAttention
-        DriftCount     = $created.Count + $updated.Count + $needsAttention.Count
+        DriftCount     = $created.Count + $updated.Count + $removed.Count + $needsAttention.Count
         WhatIf         = [bool]$WhatIfPreference
     }
 }
@@ -557,12 +683,14 @@ if ($MyInvocation.InvocationName -ne '.') {
 
         $verb = if ($summary.WhatIf) { 'Would create' } else { 'Created' }
         $verb2 = if ($summary.WhatIf) { 'would update' } else { 'updated' }
+        $verb3 = if ($summary.WhatIf) { 'Would remove' } else { 'Removed' }
         Write-Host "`n--- Asset Docs Generation ---" -ForegroundColor Cyan
         Write-Host "  $verb`: $($summary.Created.Count)"
         Write-Host "  $((Get-Culture).TextInfo.ToTitleCase($verb2))`: $($summary.Updated.Count)"
+        Write-Host "  $verb3`: $($summary.Removed.Count)"
         Write-Host "  Unchanged: $($summary.Unchanged.Count)"
         if ($summary.NeedsAttention.Count -gt 0) {
-            Write-Host "  Needs attention (missing markers, skipped): $($summary.NeedsAttention.Count)" -ForegroundColor Yellow
+            Write-Host "  Needs attention (authored or ambiguous, preserved): $($summary.NeedsAttention.Count)" -ForegroundColor Yellow
         }
         if ($summary.WhatIf -and $summary.DriftCount -gt 0) {
             Write-Host "  Drift detected in $($summary.DriftCount) page(s)." -ForegroundColor Yellow

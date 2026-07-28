@@ -300,7 +300,7 @@ foreach ($file in $agentFiles) {
         foreach ($r in $resolved) { [void]$skills.Add($r) }
     }
     foreach ($ref in (Get-FrontmatterListField -Frontmatter $parsed.Frontmatter -Field 'agents')) {
-        # Frontmatter `agents:` lists by display name (e.g., "Researcher Subagent"); skip path resolution.
+        # Frontmatter `agents:` lists by display name (e.g., "PowerPoint Subagent"); skip path resolution.
         $warnings.Add("agents frontmatter entry recorded by name only: $ref")
     }
 

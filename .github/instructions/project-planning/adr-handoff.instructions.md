@@ -78,13 +78,13 @@ Populate `Follow-up Triggers Detected` directly from the Handoff Peers table eva
 
 ## Handoff Peers
 
-| Peer             | Trigger heuristic                                                                          | Artifact handed over                               |
-|------------------|--------------------------------------------------------------------------------------------|----------------------------------------------------|
-| RPI Task Planner | Decision creates implementable engineering work                                            | ADR ID + compact summary + work item stubs         |
-| Security Planner | Decision affects threat model, attack surface, or trust boundary                           | ADR ID + compact summary + STRIDE-relevant excerpt |
-| RAI Planner      | Decision affects AI/ML behavior, training data, model selection, or user-facing AI surface | ADR ID + compact summary + RAI-relevant excerpt    |
-| ADO backlog      | User opted for ADO work items                                                              | Dual-format `WI-ADR-{NNN}` template (see below)    |
-| GitHub backlog   | User opted for GitHub Issues                                                               | Dual-format `{{ADR-TEMP-N}}` template (see below)  |
+| Peer                      | Trigger heuristic                                                                          | Artifact handed over                               |
+|---------------------------|--------------------------------------------------------------------------------------------|----------------------------------------------------|
+| RPI planning (`rpi-plan`) | Decision creates implementable engineering work                                            | ADR ID + compact summary + work item stubs         |
+| Security Planner          | Decision affects threat model, attack surface, or trust boundary                           | ADR ID + compact summary + STRIDE-relevant excerpt |
+| RAI Planner               | Decision affects AI/ML behavior, training data, model selection, or user-facing AI surface | ADR ID + compact summary + RAI-relevant excerpt    |
+| ADO backlog               | User opted for ADO work items                                                              | Dual-format `WI-ADR-{NNN}` template (see below)    |
+| GitHub backlog            | User opted for GitHub Issues                                                               | Dual-format `{{ADR-TEMP-N}}` template (see below)  |
 
 A single ADR may fire any combination of these peers. Always evaluate all rows; do not stop at the first match.
 
@@ -92,7 +92,7 @@ A single ADR may fire any combination of these peers. Always evaluate all rows; 
 
 Explicit decision rules that determine when each handoff fires. When in doubt, fire the handoff and let the receiving peer triage.
 
-### RPI Task Planner
+### RPI planning
 
 Fire when any of the following is true:
 
@@ -251,7 +251,7 @@ Rules:
 * `id` for `ado` is the `WI-ADR-{NNN}` identifier (or, for batches, the lead identifier with a sibling list captured inside the payload).
 * `id` for `github` is the `{{ADR-TEMP-N}}` placeholder until issue creation, then the real issue number recorded in the payload artifact.
 * `tier` is the active `state.userPreferences.autonomyTier` at the time the handoff fired.
-* Agent-peer handoffs (RPI Task Planner, Security Planner, RAI Planner) are NOT recorded in `state.handoffs[]`. They are inbound to those planners and surface only in the Handoff Summary table and the compact summary file referenced therein. Those receiving planners record the inbound artifact in their own `state.inputs[]`.
+* Planner handoffs (RPI planning through `rpi-plan`, Security Planner, and RAI Planner) are NOT recorded in `state.handoffs[]`. They are inbound to those workflows and surface only in the Handoff Summary table and the compact summary file referenced therein. Those receiving workflows record the inbound artifact in their own input state.
 * If the schema does not yet include `state.handoffs[]`, add it. Do not overload `state.inputs[]`, which records inbound assessment inputs.
 
 ## Handoff Summary Format
@@ -267,13 +267,13 @@ After all handoffs complete, present a summary covering peers fired, work items 
 
 ### Peers Fired
 
-| Peer             | Triggered? | Artifact Reference    |
-|------------------|------------|-----------------------|
-| RPI Task Planner | {Yes/No}   | {path or "n/a"}       |
-| Security Planner | {Yes/No}   | {path or "n/a"}       |
-| RAI Planner      | {Yes/No}   | {path or "n/a"}       |
-| ADO backlog      | {Yes/No}   | {WI IDs or "n/a"}     |
-| GitHub backlog   | {Yes/No}   | {issue refs or "n/a"} |
+| Peer                      | Triggered? | Artifact Reference    |
+|---------------------------|------------|-----------------------|
+| RPI planning (`rpi-plan`) | {Yes/No}   | {path or "n/a"}       |
+| Security Planner          | {Yes/No}   | {path or "n/a"}       |
+| RAI Planner               | {Yes/No}   | {path or "n/a"}       |
+| ADO backlog               | {Yes/No}   | {WI IDs or "n/a"}     |
+| GitHub backlog            | {Yes/No}   | {issue refs or "n/a"} |
 
 ### Work Items Generated
 

@@ -3,7 +3,7 @@ title: New Contributor Guide
 description: Guided onboarding path from first install through autonomous AI-assisted engineering with HVE Core
 sidebar_position: 2
 author: Microsoft
-ms.date: 2026-06-26
+ms.date: 2026-07-15
 ms.topic: tutorial
 keywords:
   - onboarding
@@ -26,14 +26,14 @@ This guide helps you get started with HVE Core from your first install through i
 > help me customize hve-core installation
 > ```
 >
-> The `hve-core` collection is the recommended starting point. It provides the core research, planning, implementation, and review agents that you will use throughout onboarding and beyond.
+> The `hve-core` collection is the recommended starting point. It provides `RPI Agent` and the direct research, planning, implementation, and review skills that you will use throughout onboarding and beyond.
 
 ## What HVE Core Does for You
 
 1. Provides guided workflows that structure your first contributions
 2. Teaches AI-assisted engineering patterns through progressive exposure
-3. Offers research, planning, and implementation agents that work at every skill level
-4. Includes memory persistence so your preferences and context carry across sessions
+3. Offers RPI skills for research, planning, implementation, and review at every experience level
+4. Preserves workflow state in durable artifacts so work can resume across sessions
 5. Activates coding standards automatically so you follow project conventions from the start
 
 ## Your Onboarding Path
@@ -46,10 +46,10 @@ Install HVE Core and run your first agent interaction.
 
 1. Follow the [installation guide](../../getting-started/install.md) to set up your development environment.
 2. Install the [HVE Core extension](https://marketplace.visualstudio.com/items?itemName=ise-hve-essentials.hve-core) from the VS Code Marketplace. This is the recommended method: zero configuration, automatic updates, and works in local, devcontainer, and Codespaces environments.
-3. Open a chat and select the **memory** agent to verify agent responsiveness.
-4. Run the **task-researcher** agent against a file or concept in the codebase to see research output.
+3. Open a chat and select **RPI Agent** to verify agent responsiveness.
+4. Run `/rpi-research` against a file or concept in the codebase to see evidence-focused research output.
 
-Start with `/rpi mode=guided` for step-by-step workflow assistance, then transition to `/rpi` as you gain confidence.
+Start with `RPI Agent` and ask it to explain each lifecycle transition. Use `/rpi` directly as you gain confidence.
 
 Checkpoint: You can invoke agents, see their output, and understand the chat-based interaction model.
 
@@ -58,10 +58,10 @@ Checkpoint: You can invoke agents, see their output, and understand the chat-bas
 Complete a full research-plan-implement cycle with hand-holding.
 
 1. Pick a small, well-defined task (a bug fix or documentation update works well).
-2. Research the task with the **task-researcher** agent to understand the codebase context.
-3. Plan the implementation with the **task-planner** agent to create a structured approach.
-4. Implement the change with the **task-implementor** agent following the plan.
-5. Review your changes with the **task-reviewer** agent before committing.
+2. Research the task with `/rpi-research` when the available evidence has a demonstrated gap.
+3. Plan the implementation with `/rpi-plan` to create a structured approach.
+4. Implement the approved work with `/rpi-implement` following the plan.
+5. Review your changes with `/rpi-review` before committing.
 6. Commit using `/git-commit` for a conventional commit message.
 
 Checkpoint: You have completed one full RPI cycle and understand how phases connect.
@@ -70,10 +70,10 @@ Checkpoint: You have completed one full RPI cycle and understand how phases conn
 
 Use agents selectively and combine workflows for larger tasks.
 
-1. Use `/rpi mode=auto` for end-to-end automation on a multi-file change.
+1. Use `/rpi` for end-to-end coordination on a multi-file change.
 2. Explore additional agents from the [Engineer Guide](engineer.md) or your role guide.
 3. Explore agents from additional collections within the extension, or use the installer skill to select agent bundles in a clone setup (see the [Role Overview](./#role-overview)).
-4. Use the **memory** agent to save preferences and context that persist across sessions.
+4. Resume longer workflows from their dated research, plan, details, changes, and review artifacts.
 
 Checkpoint: You choose which agents to use based on task needs and work with multiple collections.
 
@@ -90,7 +90,7 @@ Checkpoint: You use HVE Core tools naturally, customize workflows, and help othe
 
 ## Starter Prompts
 
-Select **task-researcher** agent:
+Use `/rpi-research`:
 
 ```text
 Research how error handling works in this codebase. Look at exception
@@ -99,7 +99,7 @@ handlers to responses, and logging patterns including structured logging
 and correlation IDs.
 ```
 
-Select **task-planner** agent:
+Use `/rpi-plan`:
 
 ```text
 Plan the implementation for adding CSV export to the reporting API. The
@@ -108,15 +108,15 @@ datasets, and follow existing response format patterns in
 src/api/handlers/reports.py.
 ```
 
-Select **task-implementor** agent:
+Use `/rpi-implement`:
 
 ```text
-Implement the plan from the latest task-planner output in
-.copilot-tracking/plans/. Follow the implementation order specified
-in the plan and run tests after each component.
+Implement the approved plan in .copilot-tracking/plans/ and use the
+matching phase details. Follow the implementation order specified in
+the plan and run tests after each component.
 ```
 
-Select **task-reviewer** agent and attach the changes log:
+Use `/rpi-review` and reference the changes record:
 
 ```text
 Review my implementation. Check for error handling gaps, verify
@@ -125,10 +125,10 @@ standards.
 ```
 
 ```text
-/rpi mode=auto Implement the input validation helpers for the user
+/rpi task="Implement the input validation helpers for the user
 registration form. Add email format checking, password strength rules
 matching the policy in docs/security/password-policy.md, and unit tests
-for each validator.
+for each validator."
 ```
 
 ```text
@@ -141,14 +141,13 @@ for each validator.
 
 ## Key Agents and Workflows
 
-| Agent                | Purpose                                    | When to Use  |
-|----------------------|--------------------------------------------|--------------|
-| **task-researcher**  | Codebase and context research              | Milestone 1+ |
-| **task-planner**     | Structured implementation planning         | Milestone 2+ |
-| **task-implementor** | Phase-based code implementation            | Milestone 2+ |
-| **task-reviewer**    | Code review and quality validation         | Milestone 2+ |
-| **rpi-agent**        | Full RPI orchestration in one agent        | Milestone 3+ |
-| **memory**           | Session context and preference persistence | Milestone 1+ |
+| Agent or skill    | Purpose                                   | When to Use  |
+|-------------------|-------------------------------------------|--------------|
+| **rpi-research**  | Codebase and context research             | Milestone 1+ |
+| **rpi-plan**      | Structured implementation planning        | Milestone 2+ |
+| **rpi-implement** | Evidence-led implementation               | Milestone 2+ |
+| **rpi-review**    | Implementation review and outcome routing | Milestone 2+ |
+| **RPI Agent**     | Full RPI lifecycle coordination           | Milestone 3+ |
 
 ## Tips
 

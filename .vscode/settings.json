@@ -94,6 +94,10 @@
     ".github/skills/security": true,
     ".github/skills/shared": true
   },
+  "chat.hookFilesLocations": {
+    ".github/hooks": true,
+    ".github/hooks/shared": true
+  },
   "github.copilot.chat.commitMessageGeneration.instructions": [
     {
       "file": ".github/instructions/hve-core/commit-message.instructions.md"

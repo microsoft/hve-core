@@ -17,7 +17,7 @@
 .PARAMETER Collisions
     Array of target file paths that already exist and may conflict.
 .EXAMPLE
-    ./scripts/agent-copy.ps1 -HveCoreBasePath ../hve-core -CollectionId hve-core -FilesToCopy @('hve-core/task-researcher.agent.md')
+    ./scripts/agent-copy.ps1 -HveCoreBasePath ../hve-core -CollectionId hve-core -FilesToCopy @('hve-core/rpi-agent.agent.md')
 .OUTPUTS
     Per-file copy status and manifest creation confirmation.
 #>

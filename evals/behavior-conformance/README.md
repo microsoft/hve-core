@@ -2,7 +2,7 @@
 title: Behavior Conformance Suite
 description: 'Tier 3 conformance evaluations for prompts, instructions, and skill behavior'
 author: HVE Core Team
-ms.date: 2026-06-27
+ms.date: 2026-07-17
 ---
 
 This directory hosts the behavior conformance suite. It is the only suite under `evals/` that ships in advisory mode by default: failures are reported in the pull request summary but do not block the build until each spec graduates per the graduation policy below.
@@ -21,21 +21,23 @@ Each tier shares the same advisory contract, the same `output-matches` grader fa
 
 | Spec                       | Tier | Mode     | Stimuli | Category               | Status            |
 |----------------------------|------|----------|---------|------------------------|-------------------|
-| `prompts.eval.yaml`        | 3p   | Advisory | 10      | `behavior-conformance` | Active (Phase 9)  |
-| `instructions.eval.yaml`   | 3i   | Advisory | 44      | `behavior-conformance` | Active (Phase 11) |
-| `skill-behavior.eval.yaml` | 3s   | Advisory | 100     | `behavior-conformance` | Active (Phase 13) |
+| `prompts.eval.yaml`        | 3p   | Advisory | 69      | `behavior-conformance` | Active (Phase 9)  |
+| `instructions.eval.yaml`   | 3i   | Advisory | 74      | `behavior-conformance` | Active (Phase 11) |
+| `skill-behavior.eval.yaml` | 3s   | Advisory | 124     | `behavior-conformance` | Active (Phase 13) |
 
-The Phase 9 cut of `prompts.eval.yaml` covers ten high-traffic prompts: the five RPI prompts (`task-research`, `task-plan`, `task-implement`, `task-review`, `task-challenge`), `security-review`, `ado/ado-create-pull-request`, `github/github-execute-backlog`, `jira/jira-execute-backlog`, and `design-thinking/dt-start-project`. Phase 10 expands the inventory to the full prompt catalog.
+The maintained `prompts.eval.yaml` inventory contains 69 stimuli across 66 prompt subjects. Coverage includes RPI orchestration, security review and planning, ADO, GitHub and Jira backlog workflows, Design Thinking, Git operations, evaluation authoring, and VEX workflows.
 
-The Phase 11 cut of `instructions.eval.yaml` covers 44 high-signal instructions whose `applyTo` matches Markdown files. Coverage spans:
+The maintained `instructions.eval.yaml` inventory contains 74 stimuli across 59 instruction subjects. Coverage spans:
 
 * ADO backlog and PR families: `ado-backlog-sprint`, `ado-backlog-triage`, `ado-create-pull-request`, `ado-get-build-info`, `ado-update-wit-items`, `ado-wit-discovery`, `ado-wit-planning`.
 * GitHub and Jira backlog flows: `github-backlog-discovery`, `github-backlog-planning`, `github-backlog-triage`, `github-backlog-update`, `jira-backlog-planning`, `jira-wit-planning`.
-* HVE-Core authoring: `markdown`, `prompt-builder`, `pull-request`, `writing-style`.
-* RAI and Security planning: `rai-identity`, `rai-risk-classification`, `backlog-handoff`, `sssc-assessment`.
+* HVE-Core authoring: `commit-message`, `copilot-tracking`, `hve-builder`, `markdown`, `pull-request`, and `writing-style`.
+* RAI, Accessibility, and Security planning: `accessibility-identity`, `rai-identity`, `rai-risk-classification`, `backlog-handoff`, `sssc-assessment`, and `standards-mapping`.
 * Additional: `docusaurus-edits`, `experiment-designer`, `story-quality`, `disclaimer-language`.
 
-The Phase 13 cut of `skill-behavior.eval.yaml` covers the RPI and prompt-engineering skill workflows in advisory mode. The current branch-specific calibration status is not yet established for gating: pass-rate and false-positive measurements are collected from advisory CI runs before graduation, and regex-only `output-matches` graders check contract vocabulary and routing signals rather than full semantic correctness.
+The maintained `skill-behavior.eval.yaml` inventory contains 124 stimuli across 50 skill subjects. It covers RPI and HVE Builder workflows, including the HVE Builder bounded-read, research-bridge, unavailable-bridge, and read-only-review decisions plus direct `rpi-challenger` and `rpi-plan-critique` contracts. The retained `prompt-analyze`, `prompt-builder`, and `prompt-refactor` compatibility routes and other installed skill domains remain in advisory mode.
+
+The current branch-specific calibration status is not yet established for gating. Pass-rate and false-positive measurements are collected from advisory CI runs before graduation, and regex-only `output-matches` graders check contract vocabulary and routing signals rather than full semantic correctness.
 
 ## Pipeline integration
 
@@ -43,7 +45,7 @@ This suite follows the manifest-driven gating model established by DD-01:
 
 * Stimulus resolution is performed by `scripts/evals/Modules/StimulusIndex.psm1`, which already recognizes `kind: prompt` backlinks (added in Phase 9) alongside the existing `skill`, `agent`, and `instruction` kinds.
 * When the PR validation workflow's changed-artifact manifest contains at least one prompt, instruction, or skill, the existing `eval-execute` job in [`.github/workflows/pr-validation.yml`](../../.github/workflows/pr-validation.yml) dispatches the matching spec. No new workflow or per-suite job is introduced.
-* Local invocation: `npm run eval:behavior-prompts` for the prompt suite, `npm run eval:behavior-instructions` for the instruction suite, and `npm run eval:behavior-skills` for the skill behavior suite.
+* Named local reproduction: `npm run ci:eval:behavior-prompts` for the prompt suite, `npm run ci:eval:behavior-instructions` for the instruction suite, and `npm run ci:eval:behavior-skills` for the skill behavior suite.
 
 ## Advisory mode
 
@@ -64,12 +66,13 @@ Driver and workflow changes are not required to graduate a stimulus: the per-sti
 
 ## Graders
 
-Per **DD-23** and **DD-24**, each stimulus declares exactly two `output-matches` graders:
+Per **DD-23** and **DD-24**, each stimulus declares one or more `output-matches` graders. Simple routing cases commonly use two graders, while richer contract cases use additional graders when distinct requirements need independent signals:
 
-| Grader              | Pattern source   | Intent                                                                              |
-|---------------------|------------------|-------------------------------------------------------------------------------------|
-| `agent-attribution` | Per-prompt regex | Asserts the response identifies itself with the prompt's documented agent identity. |
-| `scope-language`    | Per-prompt regex | Asserts the response stays in scope and uses the prompt's canonical vocabulary.     |
+| Grader role                  | Pattern source     | Intent                                                                    |
+|------------------------------|--------------------|---------------------------------------------------------------------------|
+| Routing or attribution       | Per-stimulus regex | Asserts the response selects or identifies the documented capability.     |
+| Scope or contract vocabulary | Per-stimulus regex | Asserts the response stays in scope and carries required contract terms.  |
+| Additional contract signal   | Per-stimulus regex | Separately checks a material boundary, status, artifact, or handoff rule. |
 
 The repository's grader registry exposes `output-matches` (regex), `exact-match`, `contains`, and the hygiene-only `orphan-files`/`valid-refs` graders. No `type: prompt` (model judge) grader is registered, so this suite does not add LLM-judge grading; deeper semantic coverage is intentionally deferred to Phase 15 custom-grader work tracked under WI-16.
 

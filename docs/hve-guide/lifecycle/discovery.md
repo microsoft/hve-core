@@ -3,7 +3,7 @@ title: "Stage 2: Discovery"
 description: Research requirements, gather context, and build foundational documents with AI-assisted exploration
 sidebar_position: 2
 author: Microsoft
-ms.date: 2026-06-28
+ms.date: 2026-07-15
 ms.topic: how-to
 keywords:
   - ai-assisted project lifecycle
@@ -16,7 +16,7 @@ estimated_reading_time: 6
 
 ## Overview
 
-Discovery is where engagements take shape. This stage supports requirement gathering, technical research, business requirements documentation, security planning, and architectural exploration. With 14 assets available, Discovery provides the broadest research toolset in the lifecycle.
+Discovery is where engagements take shape. This stage supports requirement gathering, technical research, business requirements documentation, security planning, and architectural exploration.
 
 ## When You Enter This Stage
 
@@ -29,7 +29,7 @@ You enter Discovery after completing [Stage 1: Setup](setup.md) with a configure
 
 | Tool                   | Type   | How to Invoke                           | Purpose                                                                                    |
 |------------------------|--------|-----------------------------------------|--------------------------------------------------------------------------------------------|
-| task-researcher        | Agent  | Select **task-researcher** agent        | Research best practices and technical topics                                               |
+| rpi-research           | Skill  | Use `/rpi-research`                     | Research best practices and technical topics                                               |
 | brd-builder            | Agent  | Select **brd-builder** agent            | Create business requirements documents                                                     |
 | security-planner       | Agent  | Select **security-planner** agent       | Generate security plans and security models                                                |
 | sssc-planner           | Agent  | Select **sssc-planner** agent           | Assess supply chain security posture against OpenSSF standards                             |
@@ -39,16 +39,17 @@ You enter Discovery after completing [Stage 1: Setup](setup.md) with a configure
 | architecture-diagrams  | Skill  | Use the **architecture-diagrams** skill | Generate architecture diagrams                                                             |
 | ux-ui-designer         | Agent  | Select **ux-ui-designer** agent         | Design user experience and interface concepts                                              |
 | github-backlog-manager | Agent  | Select **github-backlog-manager** agent | Discover and triage existing GitHub issues                                                 |
-| memory                 | Agent  | Select **memory** agent                 | Store research findings for later reference                                                |
 | risk-register          | Prompt | `/risk-register`                        | Identify and track project risks                                                           |
-| task-research          | Prompt | `/task-research`                        | Quick research queries without full agent context                                          |
 | dt-coach               | Agent  | Select **dt-coach** agent               | Guide teams through Design Thinking methods for user-centered requirements discovery       |
 | experiment-designer    | Agent  | Select **experiment-designer** agent    | Design Minimum Viable Experiments to validate unknowns before committing to implementation |
 
 ## Design Thinking as Pre-Research Methodology
 
 > [!NOTE]
-> Teams can invoke **dt-coach** during Discovery to run scope conversations (Method 1) and design research (Method 2) before engaging the task-researcher agent. Design Thinking provides structured, empathy-driven research techniques that produce validated problem statements and stakeholder maps, strengthening the foundation for subsequent technical research.
+> Teams can invoke **dt-coach** during Discovery to run scope conversations
+> (Method 1) and design research (Method 2) before activating `rpi-research`.
+> Design Thinking produces validated problem statements and stakeholder maps
+> that strengthen subsequent technical research.
 
 ## Validating Unknowns with Minimum Viable Experiments
 
@@ -66,14 +67,14 @@ TPMs lead Discovery, producing BRDs and coordinating research across disciplines
 * [Data Scientist Guide](../roles/data-scientist.md)
 * [UX Designer Guide](../roles/ux-designer.md)
 
-UX and UI designers use Discovery-stage tools alongside **dt-coach** for structured user research. The dt-coach agent provides nine Design Thinking methods, including interview planning, environmental observation, and input synthesis, that complement task-researcher workflows with empathy-driven requirements gathering. See the [Design Thinking documentation](../../design-thinking/) for method details.
+UX and UI designers use Discovery-stage tools alongside **dt-coach** for structured user research. The dt-coach agent provides nine Design Thinking methods, including interview planning, environmental observation, and input synthesis, that complement `rpi-research` with empathy-driven requirements gathering. See the [Design Thinking documentation](../../design-thinking/) for method details.
 
 ## Starter Prompts
 
-Select **task-researcher** agent:
+Use `/rpi-research`:
 
 ```text
-Research best practices for container orchestration with Kubernetes,
+/rpi-research Research best practices for container orchestration with Kubernetes,
 focusing on namespace isolation for multi-tenant environments, resource
 quota configuration, and secret management approaches like external
 secrets operator vs sealed secrets.

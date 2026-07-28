@@ -17,9 +17,11 @@ Choose every type whose responsibility is independently necessary. Prefer skills
 | Convention that applies whenever matching paths are edited                         | Instruction file (`.instructions.md`)     | Automatic `applyTo` match                   |
 | User-selected multi-turn role or bounded autonomous workflow                       | Agent (`.agent.md`)                       | Agent picker or explicit handoff            |
 | Repeatable, parameterized user entry point                                         | Prompt (`.prompt.md`)                     | Slash invocation                            |
-| Concrete action capability                                                         | Tool                                      | Native registration in agent frontmatter    |
+| Concrete action capability                                                         | Tool interface                            | Native registration                         |
 
 When a request spans responsibilities, split it deliberately: a skill may own the workflow, subagents may isolate execution and review, an instruction file may govern matching paths, and a prompt may provide a user entry point. Confirm only splits that widen the caller's write boundary or product surface.
+
+Agent and subagent `tools:` configuration is a user-managed opaque boundary. HVE Builder does not inspect, compare, infer from, or use existing configuration to make authoring, review, validation, change-classification, or behavior-testing decisions. When the caller directly supplies an exact configuration, reproduce it verbatim without assessing its appropriateness.
 
 ## Guiding questions
 
@@ -57,11 +59,11 @@ Treat delegation as a first-class architecture decision, not an afterthought. Du
 * Weigh delegating against inlining. Delegating buys context isolation, parallelism, and a right-sized model per responsibility; inlining is simpler for tightly coupled, low-volume, or latency-sensitive steps. Prefer making, updating, or reusing a subagent over inlining coordination, orchestration, or workflow logic.
 * Design the loop explicitly: define dispatch inputs, owned evidence, return schema, stage gate, and which later step consumes the result. Parallelize only independent work.
 * Favor reuse. Check whether an existing subagent already covers the responsibility before creating a new one, and prefer extending or adjusting an existing subagent over duplicating it.
-* Make the contract executable. A create-only worker writes its owned log once; progressive logs require edit capability. A parent that dispatches subagents declares the `agent` tool and its allowed agent set.
+* Make the contract executable. A create-only worker writes its owned log once; progressive logs require edit capability. A parent that dispatches subagents declares its allowed agent set.
 
 ## Choose the model profile
 
-The `model:` field is optional. An omitted subagent model inherits the invoking parent's model; an omitted directly invoked agent or prompt model uses the current session or model-picker selection. When a stable profile is needed, select High, Medium, or Low from the responsibility before authoring `model:`. Use Low for bounded, literal, mechanical execution with explicit tool order, Medium for semantic discovery, architecture, authoring, research, and calibrated review, and High only when the responsibility requires the deepest reasoning profile. Declare the selected profile's exact ordered list:
+The `model:` field is optional. An omitted subagent model inherits the invoking parent's model; an omitted directly invoked agent or prompt model uses the current session or model-picker selection. When a stable profile is needed, select High, Medium, or Low from the responsibility before authoring `model:`. Use Low for bounded, literal, mechanical execution, Medium for semantic discovery, architecture, authoring, research, and calibrated review, and High only when the responsibility requires the deepest reasoning profile. Declare the selected profile's exact ordered list:
 
 * High: `GPT-5.6 Sol (copilot)`, `Claude Opus 4.8 (copilot)`, `GPT-5.5 (copilot)`
 * Medium: `GPT-5.6 Terra (copilot)`, `Claude Sonnet 5 (copilot)`, `MAI-Code-1-Flash (copilot)`
@@ -96,16 +98,12 @@ model:
   - GPT-5.6 Luna (copilot)
   - MAI-Code-1-Flash (copilot)
   - Claude Haiku 4.5 (copilot)
-tools:
-  - search/fileSearch
-  - read/readFile
-  - edit/createFile
 ---
 ```
 
-Because the worker targets Luna, its body names the tool order: use `search/fileSearch` to locate the CSV, `read/readFile` to confirm the header, then run the bundled profiling script and write the summary with `edit/createFile`.
+The worker body defines its bounded input and structured summary without selecting a tool configuration or order.
 
-Parent-owned test step: the skill tests the workflow through the `hve-builder-tester` skill at the Low profile. Select simulation or native fidelity explicitly and report the evidence limitation. Do not dispatch `HVE Artifact Tester` directly; the tester skill owns design, fidelity, evidence integrity, grading, and cleanup.
+Parent-owned test step: classify the change first. The `hve-builder` skill records a satisfied-and-skipped behavior gate for minor and medium changes, including frontmatter-only and name-reference changes. For a major change, test the workflow through the `hve-builder-tester` skill at the Low profile. Select simulation or native fidelity explicitly and report the evidence limitation. Do not dispatch `HVE Artifact Tester` directly; the tester skill owns design, fidelity, evidence integrity, grading, and cleanup.
 
 ## Placement heuristics
 
@@ -117,4 +115,4 @@ Parent-owned test step: the skill tests the workflow through the `hve-builder-te
 
 ## Reuse before authoring
 
-Before creating any new artifact, check whether an existing one already covers the need. Survey the available subagents, skills, and instruction files, not only the obvious match. Prefer reusing an existing artifact as it stands; when it almost fits, prefer adjusting or extending it over duplicating it; create a new artifact only when no existing one can be reasonably adapted. Weigh a small change to a shared artifact against a new one that repeats most of it. For external research during authoring, reuse the existing `Researcher Subagent` rather than creating a new research worker.
+Before creating any new artifact, first classify caller-provided facts, known targets, and already-supplied extension metadata. When non-obvious reuse discovery, an extension survey, or another open-ended workspace exploration is needed, activate `rpi-research` through the HVE Builder stage-dispatch bridge rather than scanning directly. Prefer reusing an existing artifact as it stands; when it almost fits, prefer adjusting or extending it over duplicating it; create a new artifact only when no existing one can be reasonably adapted. Weigh a small change to a shared artifact against a new one that repeats most of it. Keep bounded reads of already-known targets and supplied references in their lifecycle stage. Use `rpi-research` for every decision-critical internal, external, or hybrid research activity rather than creating a local research worker.

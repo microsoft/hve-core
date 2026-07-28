@@ -15,6 +15,7 @@
     "skills/coding-standards/",
     "skills/experimental/",
     "skills/hve-core/",
+    "skills/rpi/",
     "skills/shared/"
   ],
   "hooks": "hooks/shared/telemetry.json"

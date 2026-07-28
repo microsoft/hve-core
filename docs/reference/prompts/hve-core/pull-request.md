@@ -1,8 +1,8 @@
 ---
 title: Pull Request
 description: Generate pull request descriptions from branch diffs
-sidebar_position: 11
-ms.date: 2026-07-03
+sidebar_position: 7
+ms.date: 2026-07-16
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->

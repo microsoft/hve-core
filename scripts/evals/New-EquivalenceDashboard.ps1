@@ -29,7 +29,7 @@
     the results root.
 
 .PARAMETER Agent
-    Agent identity rendered in the dashboard meta line, e.g. `task-researcher`.
+    Agent identity rendered in the dashboard meta line, e.g. `rpi-agent`.
     Required; replaces the previous derived-from-variant `Subject:` field.
 
 .PARAMETER RepoRoot

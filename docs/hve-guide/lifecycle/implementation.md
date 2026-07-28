@@ -3,7 +3,7 @@ title: "Stage 6: Implementation"
 description: Build features, write code, and create content with the full suite of AI-assisted development tools
 sidebar_position: 7
 author: Microsoft
-ms.date: 2026-06-30
+ms.date: 2026-07-15
 ms.topic: how-to
 keywords:
   - ai-assisted project lifecycle
@@ -16,54 +16,32 @@ estimated_reading_time: 8
 
 ## Overview
 
-Implementation is the highest-density stage in the project lifecycle, with 30 assets spanning agents, prompts, instructions, and skills. This stage covers coding, content creation, prompt engineering, data analysis, and infrastructure work. The RPI (Research, Plan, Implement, Review) methodology provides structured execution guidance for complex tasks.
+Implementation has the broadest tooling surface in the project lifecycle. This stage covers coding, content creation, prompt engineering, data analysis, and infrastructure work. The RPI lifecycle keeps Research, Plan, Implement, Review, and Follow-up distinct while providing structured execution guidance for complex tasks.
 
 ## When You Enter This Stage
 
-You enter Implementation after completing [Stage 5: Sprint Planning](sprint-planning.md) with assigned work items. You also re-enter this stage from [Stage 7: Review](review.md) when rework is needed, from [Stage 8: Delivery](delivery.md) at the start of each new sprint, or from [Stage 9: Operations](operations.md) for hotfixes.
+You enter Implementation after completing [Stage 5: Sprint Planning](sprint-planning) with assigned work items. You also re-enter this stage from [Stage 7: Review](review) when rework is needed, from [Stage 8: Delivery](delivery) at the start of each new sprint, or from [Stage 9: Operations](operations) for hotfixes.
 
 > [!NOTE]
-> Prerequisites: Sprint planned with assigned work items. Development environment configured from [Stage 1: Setup](setup.md).
+> Prerequisites: Sprint planned with assigned work items. Development environment configured from [Stage 1: Setup](setup).
 
 ## Available Tools
 
 ### Primary Agents
 
-| Tool                    | Type  | How to Invoke                            | Purpose                                               |
-|-------------------------|-------|------------------------------------------|-------------------------------------------------------|
-| rpi-agent               | Agent | Select **rpi-agent** agent               | Orchestrate the full research-plan-implement workflow |
-| task-researcher         | Agent | Select **task-researcher** agent         | Research requirements and gather codebase evidence    |
-| task-planner            | Agent | Select **task-planner** agent            | Create implementation plans from research findings    |
-| task-implementor        | Agent | Select **task-implementor** agent        | Build components following plans                      |
-| task-reviewer           | Agent | Select **task-reviewer** agent           | Validate implementation against plan and research     |
-| gen-jupyter-notebook    | Agent | Select **gen-jupyter-notebook** agent    | Create data analysis notebooks                        |
-| gen-streamlit-dashboard | Agent | Select **gen-streamlit-dashboard** agent | Generate Streamlit dashboards                         |
-| prompt-builder          | Agent | Select **prompt-builder** agent          | Create and refine prompt engineering artifacts        |
-
-### Supporting Agents
-
-| Tool                | Type  | How to Invoke                        | Purpose                                  |
-|---------------------|-------|--------------------------------------|------------------------------------------|
-| phase-implementor   | Agent | Select **phase-implementor** agent   | Execute individual implementation phases |
-| prompt-updater      | Agent | Select **prompt-updater** agent      | Update existing prompts and instructions |
-| researcher-subagent | Agent | Select **researcher-subagent** agent | Conduct focused research within tasks    |
+| Tool                    | Type  | How to Invoke                            | Purpose                                    |
+|-------------------------|-------|------------------------------------------|--------------------------------------------|
+| RPI Agent               | Agent | Select **RPI Agent**                     | Coordinate the applicable RPI phase skills |
+| gen-jupyter-notebook    | Agent | Select **gen-jupyter-notebook** agent    | Create data analysis notebooks             |
+| gen-streamlit-dashboard | Agent | Select **gen-streamlit-dashboard** agent | Generate Streamlit dashboards              |
 
 ### Prompts
 
 | Tool               | Type   | How to Invoke         | Purpose                                      |
 |--------------------|--------|-----------------------|----------------------------------------------|
-| rpi                | Prompt | `/rpi`                | Start the full RPI workflow                  |
-| task-research      | Prompt | `/task-research`      | Research requirements for a task             |
-| task-plan          | Prompt | `/task-plan`          | Create an implementation plan from research  |
-| task-implement     | Prompt | `/task-implement`     | Begin implementation of a specific task      |
-| task-review        | Prompt | `/task-review`        | Review implementation against the plan       |
-| prompt-build       | Prompt | `/prompt-build`       | Create a new prompt engineering artifact     |
-| prompt-analyze     | Prompt | `/prompt-analyze`     | Analyze prompt quality and effectiveness     |
-| prompt-refactor    | Prompt | `/prompt-refactor`    | Refactor and improve existing prompts        |
+| rpi                | Prompt | `/rpi`                | Coordinate the full RPI lifecycle            |
 | git-commit         | Prompt | `/git-commit`         | Stage and commit changes                     |
 | git-commit-message | Prompt | `/git-commit-message` | Generate a commit message for staged changes |
-
-If you want skill-based entry points instead of the prompt shortcuts, use `/rpi-quick`, `/rpi-research`, `/rpi-plan`, `/rpi-implement`, and `/rpi-review`.
 
 ### Auto-Activated Instructions
 
@@ -79,42 +57,47 @@ All coding standard instructions activate automatically based on file type:
 | workflows         | `.github/workflows/*.yml` | GitHub Actions workflow standards      |
 | markdown          | `**/*.md`                 | Markdown formatting rules              |
 | writing-style     | `**/*.md`                 | Voice and tone conventions             |
-| prompt-builder    | AI artifacts              | Prompt engineering authoring standards |
+| hve-builder       | AI artifacts              | Prompt engineering authoring standards |
 | hve-core-location | `**`                      | Reference resolution for hve-core      |
 
 ### Skills
 
-| Tool         | Type  | How to Invoke      | Purpose                         |
-|--------------|-------|--------------------|---------------------------------|
-| video-to-gif | Skill | Referenced in chat | Convert video to optimized GIFs |
+| Tool          | How to Invoke      | Purpose                                                    |
+|---------------|--------------------|------------------------------------------------------------|
+| rpi-research  | `/rpi-research`    | Close a demonstrated evidence gap                          |
+| rpi-plan      | `/rpi-plan`        | Create a plan, phase details, and independent critique     |
+| rpi-implement | `/rpi-implement`   | Execute approved work and record change evidence           |
+| rpi-review    | `/rpi-review`      | Reconcile implementation evidence and route follow-up      |
+| hve-builder   | Use `hve-builder`  | Author or review prompts, instructions, agents, and skills |
+| video-to-gif  | Use `video-to-gif` | Convert video to optimized GIFs                            |
 
 ## Role-Specific Guidance
 
 Engineers are the primary users of Implementation, spending the majority of their engagement time here. Tech Leads contribute architecture-sensitive implementations. Data Scientists use notebook and dashboard generators. SREs handle infrastructure code. New Contributors start with guided tasks.
 
-* [Engineer Guide](../roles/engineer.md)
-* [Tech Lead Guide](../roles/tech-lead.md)
-* [Data Scientist Guide](../roles/data-scientist.md)
-* [SRE/Operations Guide](../roles/sre-operations.md)
-* [New Contributor Guide](../roles/new-contributor.md)
+* [Engineer Guide](../roles/engineer)
+* [Tech Lead Guide](../roles/tech-lead)
+* [Data Scientist Guide](../roles/data-scientist)
+* [SRE/Operations Guide](../roles/sre-operations)
+* [New Contributor Guide](../roles/new-contributor)
 
 ## Starter Prompts
 
 ### Full RPI Workflow
 
 ```text
-/rpi Implement the pagination logic for the /api/v2/search endpoint.
+/rpi task="Implement the pagination logic for the /api/v2/search endpoint.
 Add cursor-based pagination with a default page size of 50 and a maximum
 of 200 results per request. Follow the existing pagination pattern in
-src/api/handlers/list-resources.py.
+src/api/handlers/list-resources.py."
 ```
 
-### Step-by-Step RPI Agents
+### Step-by-Step RPI Skills
 
-Use individual task agents when you want more control over each phase.
+Use the matching phase skills when you want more control over each phase.
 
 ```text
-/task-research Investigate how the existing list-resources handler in
+/rpi-research Investigate how the existing list-resources handler in
 src/api/handlers/list-resources.py implements pagination. Identify the
 cursor encoding strategy, default and maximum page sizes, and response
 envelope structure.
@@ -123,19 +106,18 @@ envelope structure.
 After research completes, plan the implementation:
 
 ```text
-/task-plan Create an implementation plan for adding cursor-based pagination
+/rpi-plan Create an implementation plan for adding cursor-based pagination
 to the /api/v2/search endpoint following the patterns documented in the
 research output.
 ```
 
 Execute the plan:
 
-Select **task-implementor** agent:
-
 ```text
-Build the webhook delivery system following the plan in
-.copilot-tracking/plans/webhook-delivery-plan.md. Start with the event
-dispatcher component and implement the retry queue second.
+/rpi-implement Build the webhook delivery system following the plan in
+.copilot-tracking/plans/2026-07-13/webhook-delivery-plan.md and phase details in
+.copilot-tracking/details/2026-07-13/webhook-delivery-phase-details.md. Start
+with the event dispatcher component and implement the retry queue second.
 ```
 
 Select **gen-jupyter-notebook** agent:
@@ -150,14 +132,14 @@ using RFM scoring with matplotlib visualizations.
 After implementation, validate the changes:
 
 ```text
-/task-review Validate the pagination implementation against the plan.
+/rpi-review Validate the pagination implementation against the plan.
 Check cursor encoding, page size limits, response envelope consistency,
 and error handling for invalid cursor values.
 ```
 
 ## Stage Outputs and Next Stage
 
-Implementation produces source code, documentation, notebooks, dashboards, prompt artifacts, and infrastructure definitions. Transition to [Stage 7: Review](review.md) when implementation is complete. Use `/clear` to reset context before starting the review cycle.
+Implementation produces source code, documentation, notebooks, dashboards, prompt artifacts, and infrastructure definitions. Transition to [Stage 7: Review](review) when implementation is complete. Use `/clear` to reset context before starting the review cycle.
 
 <!-- markdownlint-disable MD036 -->
 *🤖 Crafted with precision by ✨Copilot following brilliant human instruction,

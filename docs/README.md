@@ -3,7 +3,7 @@ title: HVE Core Documentation
 description: Documentation hub for HVE Core, a prompt engineering framework that brings AI-powered agents, prompts, instructions, and skills to your GitHub Copilot workflow
 sidebar_position: 1
 author: Microsoft
-ms.date: 2026-07-08
+ms.date: 2026-07-15
 ms.topic: overview
 keywords:
   - hve core
@@ -59,7 +59,7 @@ Explore advanced capabilities including Design Thinking coaching, security plann
 * [Design Thinking](design-thinking/README.md) guides teams through nine methods across three spaces
 * [Project Planning](agents/project-planning/) covers ADR creation, BRD/PRD building, architecture diagrams, and security plan generation
 * [Security documentation](security/README.md) covers threat modeling and security planning
-* [RPI methodology](rpi/) explains the Research, Plan, Implement, Review agent coordination pattern
+* [RPI methodology](rpi/) explains the Research, Plan, Implement, Review, and Follow-up workflow
 
 ## Roles
 
@@ -88,11 +88,11 @@ Specialized agents are organized into functional groups that combine agents, pro
 
 ## RPI Methodology
 
-Research, Plan, Implement, Review (RPI) decomposes complex engineering tasks into four specialized agents that collaborate through structured handoffs.
+Research, Plan, Implement, Review (RPI) decomposes complex engineering tasks into phase skills coordinated by RPI Agent or invoked directly.
 
 * [Why RPI?](rpi/why-rpi.md) explains the problem statement and design rationale
-* [Task Researcher](rpi/task-researcher.md), [Task Planner](rpi/task-planner.md), [Task Implementor](rpi/task-implementor.md), and [Task Reviewer](rpi/task-reviewer.md) cover each agent
-* [Using Together](rpi/using-together.md) describes agent coordination patterns
+* [RPI overview](rpi/) introduces RPI Agent, `/rpi`, and the direct `rpi-*` phase skills
+* [Using Together](rpi/using-together.md) describes phase coordination and durable handoffs
 
 **[RPI Documentation →](rpi/)**
 
@@ -108,9 +108,9 @@ The dt-coach agent guides teams through nine Design Thinking methods across prob
 
 ## Prompt Engineering
 
-HVE Core structures AI artifacts with protocol patterns, input variables, and a four-stage maturity lifecycle.
+HVE Core structures AI artifacts with protocol patterns, input variables, and evidence-backed quality gates.
 
-* [Prompt Builder Agent](https://github.com/microsoft/hve-core/blob/main/.github/agents/hve-core/prompt-builder.agent.md) provides interactive artifact creation with sandbox testing
+* The `hve-builder` skill creates, improves, refactors, replaces, reviews, and validates AI artifacts through one lifecycle
 * [AI Artifacts Overview](contributing/ai-artifacts-common.md) covers common patterns across artifact types
 * [Activation Context](architecture/ai-artifacts.md#activation-context) explains when artifacts activate within workflows
 

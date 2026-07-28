@@ -3,7 +3,7 @@ title: Dangerous Workflow Detection
 description: How the hybrid dangerous-workflow control combines a homegrown template-injection gate with the Poutine supply-chain scanner for GitHub Actions workflows
 sidebar_position: 6
 author: Microsoft
-ms.date: 2026-07-01
+ms.date: 2026-07-16
 ms.topic: reference
 keywords:
   - security
@@ -44,7 +44,7 @@ The homegrown check enforces a single, high-signal rule:
     to keep the rule deterministic and low-noise.
 
 This gate is PowerShell-native, has no runtime dependencies, and runs offline as part of
-`npm run lint:all`.
+`npm run validate:local`.
 
 ## Broad coverage via Poutine (advisory)
 

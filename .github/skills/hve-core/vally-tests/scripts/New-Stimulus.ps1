@@ -32,8 +32,8 @@
     prompt, output-contains, output-matches. Defaults to output-matches.
 
 .EXAMPLE
-    ./New-Stimulus.ps1 -ArtifactPath .github/prompts/hve-core/task-research.prompt.md `
-        -Kind prompt -PromptText 'Invoke task-research with topic=X.'
+    ./New-Stimulus.ps1 -ArtifactPath .github/prompts/hve-core/rpi.prompt.md `
+        -Kind prompt -PromptText 'Invoke /rpi with task=X.'
 #>
 
 [CmdletBinding()]

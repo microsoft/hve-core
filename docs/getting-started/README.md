@@ -3,7 +3,7 @@ title: Getting Started with HVE Core
 description: Quick setup guide for using HVE Core Copilot customizations in your projects
 sidebar_position: 1
 author: Microsoft
-ms.date: 2026-06-30
+ms.date: 2026-07-15
 ms.topic: tutorial
 keywords:
   - github copilot
@@ -24,25 +24,27 @@ changes everything.
 
 This guide walks you through four steps, each building on the last:
 
-| Step                                                      | What You Do                                              | Time    |
-|-----------------------------------------------------------|----------------------------------------------------------|---------|
-| [First Interaction](first-interaction.md)                 | Talk to an agent, see it respond                         | 1 min   |
-| [First Research](first-research.md)                       | Use /task-research or /rpi-research on your own codebase | 5 min   |
-| [First Full Workflow](first-workflow.md)                  | Run a complete Research, Plan, Implement cycle           | 15 min  |
-| [Growing with HVE](../hve-guide/roles/new-contributor.md) | Progress through four milestones toward independent use  | Ongoing |
+| Step                                                      | What You Do                                             | Time    |
+|-----------------------------------------------------------|---------------------------------------------------------|---------|
+| [First Interaction](first-interaction.md)                 | Talk to an agent, see it respond                        | 1 min   |
+| [First Research](first-research.md)                       | Use /rpi-research on your own codebase                  | 5 min   |
+| [First Full Workflow](first-workflow.md)                  | Run a complete Research, Plan, Implement cycle          | 15 min  |
+| [Growing with HVE](../hve-guide/roles/new-contributor.md) | Progress through four milestones toward independent use | Ongoing |
 
 > [!TIP]
 > Already comfortable with AI-assisted development? Skip to
-> [First Full Workflow](first-workflow.md) or try the
-> [rpi-agent](https://github.com/microsoft/hve-core/blob/main/.github/CUSTOM-AGENTS.md#rpi-agent) for autonomous
-> single-session workflows. If you want explicit skill entry points, use `/rpi-quick`, `/rpi-research`, `/rpi-plan`, `/rpi-implement`, and `/rpi-review`.
+> [First Full Workflow](first-workflow.md) or select
+> [RPI Agent](https://github.com/microsoft/hve-core/blob/main/.github/CUSTOM-AGENTS.md#rpi-agent)
+> for a coordinated lifecycle. Use `/rpi` for the same full lifecycle from a
+> prompt, or `/rpi-research`, `/rpi-plan`, `/rpi-implement`, and `/rpi-review`
+> for direct phase work.
 
 Need installation help? See the [Installation Guide](install.md) for all
 methods, or install the
 [VS Code extension](https://marketplace.visualstudio.com/items?itemName=ise-hve-essentials.hve-core)
 for the quickest path.
 
-Not sure which bundle of agents you need?  
+Not sure which bundle of agents you need?
 Browse the available [Extension Collections](collections.md) to see curated sets of HVE capabilities.
 
 ## Troubleshooting
