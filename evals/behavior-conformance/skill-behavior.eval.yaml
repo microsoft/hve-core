@@ -2,7 +2,7 @@
 name: behavior-conformance-skills
 description: >
   Advisory-tier behavior conformance evals for skills exercised through
-  knowledge, tool-trigger, and bleed-detection stimulus shapes. Total: 124
+  knowledge, tool-trigger, and bleed-detection stimulus shapes. Total: 125
   stimuli, including complete branch coverage for the RPI and prompt-builder
   skill updates. Each tool-trigger stimulus uses two graders with AND logic,
   and the suite-level scoring threshold gates the aggregate pass rate across
@@ -2296,3 +2296,22 @@ stimuli:
         name: scope-language
         config:
           pattern: '(?i)(vex|openvex|status|justification|not_affected|under_investigation)'
+
+  - name: skill-mcsb-knowledge
+    prompt: |
+      Summarize what the `mcsb` skill encodes and name one control domain or
+      crosswalk framework it references.
+    tags:
+      category: behavior-conformance
+      skill: mcsb
+      shape: knowledge
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: skill-attribution
+        config:
+          pattern: '(?i)(mcsb|cloud\s+security\s+benchmark|control\s+domain|nist|cis\s+controls)'
+      - type: output-matches
+        name: scope-language
+        config:
+          pattern: '(?i)(mcsb|benchmark|azure|control|nist|cis)'

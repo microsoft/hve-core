@@ -46,4 +46,4 @@ For the specific BR control identifiers that apply to a given Azure service, ret
 
 ---
 
-Original prose paraphrasing the MCSB v2 Backup and Recovery control domain, accessed 2026-07-21: <https://learn.microsoft.com/en-us/security/benchmark/azure/mcsb-v2-backup-recovery>.
+Original prose paraphrasing the MCSB v2 Backup and Recovery control domain, accessed 2026-07-21: <https://learn.microsoft.com/security/benchmark/azure/mcsb-v2-backup-recovery>.

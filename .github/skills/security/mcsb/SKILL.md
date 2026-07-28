@@ -8,7 +8,7 @@ metadata:
   spec_version: "1.0"
   framework_revision: "MCSB v2 (preview)"
   last_updated: "2026-07-21"
-  content_based_on: "https://learn.microsoft.com/en-us/security/benchmark/azure/overview"
+  content_based_on: "https://learn.microsoft.com/security/benchmark/azure/overview"
 ---
 
 # Microsoft Cloud Security Benchmark — Skill Entry

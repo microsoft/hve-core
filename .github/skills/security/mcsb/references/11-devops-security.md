@@ -47,4 +47,4 @@ For the specific DS control identifiers that apply to a given Azure service, ret
 
 ---
 
-Original prose paraphrasing the MCSB v2 DevOps Security control domain, accessed 2026-07-21: <https://learn.microsoft.com/en-us/security/benchmark/azure/mcsb-v2-devops-security>.
+Original prose paraphrasing the MCSB v2 DevOps Security control domain, accessed 2026-07-21: <https://learn.microsoft.com/security/benchmark/azure/mcsb-v2-devops-security>.

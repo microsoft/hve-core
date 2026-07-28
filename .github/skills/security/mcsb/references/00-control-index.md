@@ -13,20 +13,20 @@ This skill targets **MCSB v2** (preview), retrieval-dated 2026-07-21. MCSB v2 re
 
 ## Control domain catalog
 
-| ID | Domain                               | Category                    | Reference                                                           |
-|----|--------------------------------------|-----------------------------|--------------------------------------------------------------------|
-| NS | Network Security                     | Network                     | [01-network-security.md](01-network-security.md)                   |
-| IM | Identity Management                  | Identity                    | [02-identity-management.md](02-identity-management.md)             |
-| PA | Privileged Access                    | Access Control              | [03-privileged-access.md](03-privileged-access.md)                 |
-| DP | Data Protection                      | Data                        | [04-data-protection.md](04-data-protection.md)                     |
-| AM | Asset Management                     | Governance                  | [05-asset-management.md](05-asset-management.md)                   |
-| LT | Logging and Threat Detection         | Detection and Response      | [06-logging-threat-detection.md](06-logging-threat-detection.md)   |
-| IR | Incident Response                    | Detection and Response      | [07-incident-response.md](07-incident-response.md)                 |
-| PV | Posture and Vulnerability Management | Posture                     | [08-posture-vulnerability-management.md](08-posture-vulnerability-management.md) |
-| ES | Endpoint Security                    | Endpoint                    | [09-endpoint-security.md](09-endpoint-security.md)                 |
-| BR | Backup and Recovery                  | Resilience                  | [10-backup-recovery.md](10-backup-recovery.md)                     |
-| DS | DevOps Security                      | DevOps                      | [11-devops-security.md](11-devops-security.md)                     |
-| AI | Artificial Intelligence Security     | AI                          | [12-ai-security.md](12-ai-security.md)                             |
+| ID | Domain                               | Category               | Reference                                                                        |
+|----|--------------------------------------|------------------------|----------------------------------------------------------------------------------|
+| NS | Network Security                     | Network                | [01-network-security.md](01-network-security.md)                                 |
+| IM | Identity Management                  | Identity               | [02-identity-management.md](02-identity-management.md)                           |
+| PA | Privileged Access                    | Access Control         | [03-privileged-access.md](03-privileged-access.md)                               |
+| DP | Data Protection                      | Data                   | [04-data-protection.md](04-data-protection.md)                                   |
+| AM | Asset Management                     | Governance             | [05-asset-management.md](05-asset-management.md)                                 |
+| LT | Logging and Threat Detection         | Detection and Response | [06-logging-threat-detection.md](06-logging-threat-detection.md)                 |
+| IR | Incident Response                    | Detection and Response | [07-incident-response.md](07-incident-response.md)                               |
+| PV | Posture and Vulnerability Management | Posture                | [08-posture-vulnerability-management.md](08-posture-vulnerability-management.md) |
+| ES | Endpoint Security                    | Endpoint               | [09-endpoint-security.md](09-endpoint-security.md)                               |
+| BR | Backup and Recovery                  | Resilience             | [10-backup-recovery.md](10-backup-recovery.md)                                   |
+| DS | DevOps Security                      | DevOps                 | [11-devops-security.md](11-devops-security.md)                                   |
+| AI | Artificial Intelligence Security     | AI                     | [12-ai-security.md](12-ai-security.md)                                           |
 
 ## Cross-reference matrix
 
@@ -63,4 +63,4 @@ Representative domain-grain alignment (authored aggregation; Microsoft publishes
 
 The reference files in this skill are original prose authored for this repository that paraphrase the publicly documented structure of the Microsoft Cloud Security Benchmark. The MCSB v2 (preview) documentation cited here is published on Microsoft Learn from a non-public source repository and is governed by the Microsoft Learn Terms of Use, not a public Creative Commons license. The older MicrosoftDocs/SecurityBenchmarks repository is CC BY 4.0, but its benchmark spreadsheets stop at Azure Security Benchmark v3 (the pre-rename lineage) and Microsoft Cloud Security Benchmark v1; it does not contain the MCSB v2 (preview) content cited here. This skill paraphrases the taxonomy and authors its own representative checklists and crosswalk; it does not reproduce Microsoft prose, tables, or the benchmark dataset verbatim, and the citation below is a provenance reference rather than a license grant.
 
-> Microsoft, "Overview of the Microsoft cloud security benchmark," Microsoft Learn, accessed 2026-07-21, <https://learn.microsoft.com/en-us/security/benchmark/azure/overview>.
+> Microsoft, "Overview of the Microsoft cloud security benchmark," Microsoft Learn, accessed 2026-07-21, <https://learn.microsoft.com/security/benchmark/azure/overview>.

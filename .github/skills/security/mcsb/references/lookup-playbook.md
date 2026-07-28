@@ -38,4 +38,4 @@ Execution constraints: complete research within a single invocation and do not d
 
 ## Source
 
-Guidance derived from the Microsoft Cloud Security Benchmark controls-to-Azure-Policy mapping and per-service baseline documentation on Microsoft Learn, accessed 2026-07-21: <https://learn.microsoft.com/en-us/security/benchmark/azure/overview>.
+Guidance derived from the Microsoft Cloud Security Benchmark controls-to-Azure-Policy mapping and per-service baseline documentation on Microsoft Learn, accessed 2026-07-21: <https://learn.microsoft.com/security/benchmark/azure/overview>.

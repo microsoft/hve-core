@@ -47,4 +47,4 @@ For the specific DP control identifiers that apply to a given Azure service, ret
 
 ---
 
-Original prose paraphrasing the MCSB v2 Data Protection control domain, accessed 2026-07-21: <https://learn.microsoft.com/en-us/security/benchmark/azure/mcsb-v2-data-protection>.
+Original prose paraphrasing the MCSB v2 Data Protection control domain, accessed 2026-07-21: <https://learn.microsoft.com/security/benchmark/azure/mcsb-v2-data-protection>.
