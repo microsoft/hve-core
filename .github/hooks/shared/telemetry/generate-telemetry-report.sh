@@ -119,11 +119,11 @@ main() {
   local pattern="sessions-${target_date}.jsonl"
   [[ "${target_date}" == "all" ]] && pattern="sessions-*.jsonl"
   declare -a files=()
-  declare -A seen_dirs=()
+  local seen_dirs=""
   local dir
   for dir in "${search_dirs[@]}"; do
-    [[ -n "$dir" && -z "${seen_dirs[$dir]:-}" ]] || continue
-    seen_dirs["$dir"]=1
+    [[ -n "$dir" && "$seen_dirs" != *"|${dir}|"* ]] || continue
+    seen_dirs+="|${dir}|"
     [[ -d "$dir" ]] || continue
     while IFS= read -r -d '' f; do
       files+=("$f")

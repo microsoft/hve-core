@@ -15,7 +15,11 @@
     Runs via: Copilot agent hook (stdin JSON, stdout JSON)
 #>
 [CmdletBinding()]
-param()
+param(
+    [Parameter(Mandatory = $false, ValueFromPipeline = $true)]
+    [AllowEmptyString()]
+    [string]$HookInput
+)
 
 $ErrorActionPreference = 'Stop'
 
@@ -67,7 +71,7 @@ if (-not (Test-Path $TelemetryDir)) {
 }
 
 # Delegate all JSON processing to the shared Python telemetry engine
-$RawInput = $input | Out-String
+$RawInput = if ($PSBoundParameters.ContainsKey('HookInput')) { $HookInput } else { $input | Out-String }
 
 # Dump raw input for diagnostics (first 5 events only). This records hook
 # payloads verbatim, including the full prompt text and tool inputs such as
