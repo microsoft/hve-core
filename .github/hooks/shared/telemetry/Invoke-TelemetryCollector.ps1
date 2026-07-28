@@ -1,7 +1,6 @@
 ﻿#!/usr/bin/env pwsh
 # Copyright (c) 2026 Microsoft Corporation. All rights reserved.
 # SPDX-License-Identifier: MIT
-#Requires -Version 7.4
 
 <#
 .SYNOPSIS
@@ -15,11 +14,7 @@
     Runs via: Copilot agent hook (stdin JSON, stdout JSON)
 #>
 [CmdletBinding()]
-param(
-    [Parameter(Mandatory = $false, ValueFromPipeline = $true)]
-    [AllowEmptyString()]
-    [string]$HookInput
-)
+param()
 
 $ErrorActionPreference = 'Stop'
 
@@ -51,7 +46,7 @@ if (-not $Python) {
     $Python = Get-Command python -ErrorAction SilentlyContinue
 }
 if (-not $Python) {
-    Write-Warning 'HVE telemetry enabled but python3 not found — events will not be recorded'
+    Write-Warning 'HVE telemetry enabled but python3 not found; events will not be recorded'
     '{"continue":true}'
     return
 }
@@ -60,18 +55,23 @@ if (-not $Python) {
 $CorePy = Join-Path $PSScriptRoot '_telemetry_core.py'
 
 if (-not (Test-Path $CorePy)) {
-    Write-Warning "Telemetry engine not found at $CorePy — events will not be recorded"
+    Write-Warning "Telemetry engine not found at $CorePy; events will not be recorded"
     '{"continue":true}'
     return
 }
 
-$TelemetryDir = if ($env:HVE_TELEMETRY_DIR) { $env:HVE_TELEMETRY_DIR } else { Join-Path $RepoRoot '.copilot-tracking/telemetry' }
+# Nested 2-arg Join-Path: the 3-arg form needs PS 6+, and this hook can be
+# launched by a host that picks Windows PowerShell 5.1.
+$TelemetryDir = if ($env:HVE_TELEMETRY_DIR) { $env:HVE_TELEMETRY_DIR } else { Join-Path (Join-Path $RepoRoot '.copilot-tracking') 'telemetry' }
 if (-not (Test-Path $TelemetryDir)) {
     New-Item -ItemType Directory -Path $TelemetryDir -Force | Out-Null
 }
 
-# Delegate all JSON processing to the shared Python telemetry engine
-$RawInput = if ($PSBoundParameters.ContainsKey('HookInput')) { $HookInput } else { $input | Out-String }
+# Delegate all JSON processing to the shared Python telemetry engine.
+# The hook contract is raw process stdin, not a PowerShell object pipeline:
+# [CmdletBinding()] makes this an advanced script, which rejects pipeline input
+# it cannot bind to a parameter, leaving $input empty.
+$RawInput = if ([Console]::IsInputRedirected) { [Console]::In.ReadToEnd() } else { '' }
 
 # Dump raw input for diagnostics (first 5 events only). This records hook
 # payloads verbatim, including the full prompt text and tool inputs such as

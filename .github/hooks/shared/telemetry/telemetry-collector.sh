@@ -18,7 +18,7 @@ main() {
   repo_root="$(git rev-parse --show-toplevel 2>/dev/null || true)"
   [[ -z "$repo_root" ]] && repo_root="${HVE_REPO_ROOT:-.}"
 
-  # Opt-in gate — exit immediately if telemetry is not enabled
+  # Opt-in gate: exit immediately if telemetry is not enabled
   if [[ "${HVE_TELEMETRY:-}" != "1" ]]; then
     if [[ ! -f "$repo_root/.hve-telemetry" ]]; then
       echo '{"continue":true}'
@@ -28,7 +28,7 @@ main() {
 
   # Require Python3 for JSON processing
   if ! command -v python3 &>/dev/null; then
-    echo "WARNING: HVE telemetry enabled but python3 not found — events will not be recorded" >&2
+    echo "WARNING: HVE telemetry enabled but python3 not found, events will not be recorded" >&2
     echo '{"continue":true}'
     return 0
   fi

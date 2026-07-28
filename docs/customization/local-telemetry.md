@@ -32,7 +32,7 @@ At stop time, telemetry also appends a session summary with model and token usag
 
 ## Prerequisites
 
-Ensure you have Bash 3.5+ (Linux/macOS) or PowerShell 7 (Windows) available, depending on your OS for running the telemetry hooks.
+Ensure you have Bash 3.5+ (Linux/macOS) or PowerShell (Windows) and python available, depending on your OS for running the telemetry hooks. To utilize cleanup or report generation on Windows, ensure you have PowerShell 7.4+ installed.
 
 ## Enable Local Telemetry
 
@@ -248,6 +248,18 @@ The registry self-populates as you work across repositories, so no manual setup
 is required. Stale directories (deleted or moved repositories) are pruned
 automatically when the report runs. Each session is labeled with its originating
 project in the report, so combined output still reads per project.
+
+To report on a single store, pass `--path` (`-Path`). An explicit path overrides
+`--all-dirs`, so the generated cross-project launcher can also be scoped down:
+
+```bash
+bash ~/.hve/generate-report.sh --path /path/to/repo/.copilot-tracking/telemetry --date all
+```
+
+Cleanup follows the same precedence: `clean-telemetry.sh --path DIR` restricts
+removal to that one store and leaves the registry, launchers, and every other
+project untouched, even when `--all-dirs` is also present. Both entry points
+report the override on stderr, so a narrowed destructive scope is never silent.
 
 > [!NOTE]
 > **Registry-driven cleanup is name-constrained.** `clean-telemetry.sh

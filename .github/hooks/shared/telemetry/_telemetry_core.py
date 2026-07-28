@@ -28,6 +28,7 @@ import shutil
 import sys
 from collections.abc import Iterable, Iterator
 from pathlib import Path
+from typing import Any
 
 
 def _detect_client() -> str:
@@ -55,6 +56,48 @@ EVENT_ALIASES = {
 # Shape inference matches only these so an unrelated ``reason`` key on some
 # other or future event is not mistaken for a session end.
 SESSION_END_REASONS = frozenset({"complete", "error", "abort", "timeout", "user_exit"})
+
+# Canonical field -> the payload keys that carry it, in priority order. Three
+# documented payload formats reach this collector: VS Code (snake_case), the
+# Copilot CLI camelCase format, and the CLI "VS Code compatible" format it sends
+# when events are configured in PascalCase. They disagree on both casing and
+# naming (tool output is ``tool_response`` in VS Code, ``tool_result`` in the
+# CLI compatible format, ``toolResult`` in CLI camelCase). This table is the
+# only place surface-specific key names appear, so shape inference and entry
+# building cannot drift apart when a surface adds or renames a key. Add keys
+# only when a surface documents them.
+PAYLOAD_ALIASES: dict[str, tuple[str, ...]] = {
+    "event_name": ("hook_event_name", "hookEventName", "event"),
+    "session_id": ("session_id", "sessionId"),
+    "cwd": ("cwd",),
+    "timestamp": ("timestamp",),
+    "tool_name": ("tool_name", "toolName"),
+    "tool_input": ("tool_input", "toolArgs"),
+    "tool_result": ("tool_response", "tool_result", "toolResult"),
+    "tool_result_text": ("text_result_for_llm", "textResultForLlm"),
+    # VS Code names the subagent only as ``agent_type``; the CLI sends a name.
+    "agent_name": ("agent_name", "agentName", "agent_type", "agentType"),
+    "agent_display_name": ("agent_display_name", "agentDisplayName"),
+    "prompt": ("prompt",),
+    "source": ("source",),
+    "trigger": ("trigger",),
+    "stop_reason": ("stop_reason", "stopReason"),
+    "reason": ("reason",),
+}
+
+
+def _payload_get(data: dict, field: str, default: Any = "") -> Any:
+    """Return the first non-empty alias value for a canonical payload field."""
+    for key in PAYLOAD_ALIASES[field]:
+        value = data.get(key)
+        if value:
+            return value
+    return default
+
+
+def _payload_has(data: dict, field: str) -> bool:
+    """Return True when a payload carries any alias of a canonical field."""
+    return any(key in data for key in PAYLOAD_ALIASES[field])
 
 
 def iter_jsonl(path: str | os.PathLike[str]) -> Iterator[dict]:
@@ -685,49 +728,50 @@ def _infer_event_from_shape(data: dict) -> str:
     The Copilot CLI does not send an event-name field in the hook payload
     (no ``hook_event_name``/``hookEventName``/``event``), unlike VS Code. It
     also fires one shared command for every manifest event, so the event must
-    be inferred from which keys are present. Checks are ordered so that events
-    sharing keys are disambiguated by their distinguishing field:
+    be inferred from which fields are present. Fields are resolved through
+    ``PAYLOAD_ALIASES``, so inference is surface-agnostic. Checks are ordered
+    so that events sharing fields are disambiguated by their distinguishing
+    field:
 
-    * ``toolResult`` present -> PostToolUse (also carries ``toolName``)
-    * ``toolName`` present -> PreToolUse
-    * ``prompt`` present -> UserPromptSubmit
-    * ``agentName`` present -> SubagentStop when ``stopReason`` is set (a
+    * tool result present -> PostToolUse (also carries a tool name)
+    * tool name present -> PreToolUse
+    * prompt present -> UserPromptSubmit
+    * agent name present -> SubagentStop when a stop reason is set (a
       Subagent stop), otherwise SubagentStart
-    * ``trigger`` present -> PreCompact
-    * ``stopReason`` present without ``agentName`` -> Stop (an agent turn end)
-    * ``source`` present -> SessionStart
+    * trigger present -> PreCompact
+    * stop reason present without an agent name -> Stop (an agent turn end)
+    * source present -> SessionStart
     * ``reason`` holding a documented session-end value (``complete``,
       ``error``, ``abort``, ``timeout``, ``user_exit``) -> SessionEnd (the
-      session terminates; unlike an agent Stop, no ``stopReason``)
+      session terminates; unlike an agent Stop, no stop reason)
     """
-    if "toolResult" in data:
+    if _payload_has(data, "tool_result"):
         return "PostToolUse"
-    if "toolName" in data:
+    if _payload_has(data, "tool_name"):
         return "PreToolUse"
-    if "prompt" in data:
+    if _payload_has(data, "prompt"):
         return "UserPromptSubmit"
-    if "agentName" in data:
-        return "SubagentStop" if "stopReason" in data else "SubagentStart"
-    if "trigger" in data:
+    if _payload_has(data, "agent_name"):
+        return "SubagentStop" if _payload_has(data, "stop_reason") else "SubagentStart"
+    if _payload_has(data, "trigger"):
         return "PreCompact"
-    if "stopReason" in data:
+    if _payload_has(data, "stop_reason"):
         return "Stop"
-    if "source" in data:
+    if _payload_has(data, "source"):
         return "SessionStart"
-    if data.get("reason") in SESSION_END_REASONS:
+    if _payload_get(data, "reason") in SESSION_END_REASONS:
         return "SessionEnd"
     return "unknown"
 
 
 def _normalize_event(data: dict) -> str:
     """Resolve the canonical PascalCase event name from a hook payload."""
-    event = data.get("hook_event_name", "unknown")
-    if event == "unknown":
-        for key in ("hookEventName", "event"):
-            value = data.get(key)
-            if value and value != "unknown":
-                event = value
-                break
+    event = "unknown"
+    for key in PAYLOAD_ALIASES["event_name"]:
+        value = data.get(key)
+        if value and value != "unknown":
+            event = value
+            break
     if event == "unknown":
         # The Copilot CLI omits the event name entirely; recover it from the
         # payload shape so CLI sessions record telemetry like VS Code sessions.
@@ -814,12 +858,12 @@ def build_entry(data: dict, event: str, stack: _AgentStack) -> dict | None:
 
     Returns ``None`` for unrecognized events, which the caller drops.
     """
-    sid = data.get("session_id") or data.get("sessionId", "")
-    cwd = data.get("cwd", os.getcwd())
-    ts = _normalize_timestamp(data.get("timestamp", ""))
-    tool_name = data.get("tool_name") or data.get("toolName", "")
-    tool_input = data.get("tool_input") or data.get("toolArgs", {})
-    tool_result = data.get("tool_result") or data.get("toolResult", "")
+    sid = _payload_get(data, "session_id")
+    cwd = _payload_get(data, "cwd", os.getcwd())
+    ts = _normalize_timestamp(_payload_get(data, "timestamp"))
+    tool_name = _payload_get(data, "tool_name")
+    tool_input = _payload_get(data, "tool_input", {})
+    tool_result = _payload_get(data, "tool_result")
 
     # The Copilot CLI serializes tool arguments as a JSON string rather than an
     # object; decode it so key extraction and file-path detection below work.
@@ -835,10 +879,10 @@ def build_entry(data: dict, event: str, stack: _AgentStack) -> dict | None:
     entry: dict = {"ts": ts, "sid": sid, "event": event, "cwd": cwd}
 
     if event == "SessionStart":
-        entry["source"] = data.get("source", "")
+        entry["source"] = _payload_get(data, "source")
         entry["client"] = _detect_client()
     elif event == "UserPromptSubmit":
-        entry["prompt"] = (data.get("prompt", "") or "")[:200]
+        entry["prompt"] = _payload_get(data, "prompt")[:200]
     elif event == "PreToolUse":
         entry["tool"] = tool_name
         entry["tool_input_keys"] = list(tool_input.keys()) if isinstance(tool_input, dict) else []
@@ -869,7 +913,7 @@ def build_entry(data: dict, event: str, stack: _AgentStack) -> dict | None:
     elif event == "PostToolUse":
         entry["tool"] = tool_name
         if isinstance(tool_result, dict):
-            text = tool_result.get("text_result_for_llm") or tool_result.get("textResultForLlm", "")
+            text = _payload_get(tool_result, "tool_result_text")
             entry["tool_response_len"] = len(text if isinstance(text, str) else str(text))
         elif isinstance(tool_result, str):
             entry["tool_response_len"] = len(tool_result)
@@ -877,27 +921,23 @@ def build_entry(data: dict, event: str, stack: _AgentStack) -> dict | None:
             entry["tool_response_len"] = len(json.dumps(tool_result))
         entry["agent"] = stack.current()
     elif event == "SubagentStart":
-        agent_name = data.get("agent_name") or data.get("agentName", "")
+        agent_name = _payload_get(data, "agent_name")
         entry["agent_name"] = agent_name
-        entry["agent_display_name"] = data.get("agent_display_name") or data.get(
-            "agentDisplayName", ""
-        )
+        entry["agent_display_name"] = _payload_get(data, "agent_display_name")
         stack.push(agent_name)
     elif event == "SubagentStop":
-        agent_name = data.get("agent_name") or data.get("agentName", "")
+        agent_name = _payload_get(data, "agent_name")
         entry["agent_name"] = agent_name
         stack.pop()
     elif event == "PreCompact":
-        entry["trigger"] = data.get("trigger", "")
+        entry["trigger"] = _payload_get(data, "trigger")
     elif event == "Stop":
         # Fall back to ``reason`` for surfaces that name the event Stop but
-        # supply a session-end style payload without ``stopReason``.
-        entry["stop_reason"] = (
-            data.get("stop_reason") or data.get("stopReason") or data.get("reason", "")
-        )
+        # supply a session-end style payload without a stop reason.
+        entry["stop_reason"] = _payload_get(data, "stop_reason") or _payload_get(data, "reason")
         stack.clear()
     elif event == "SessionEnd":
-        entry["reason"] = data.get("reason", "")
+        entry["reason"] = _payload_get(data, "reason")
         stack.clear()
 
     return entry
@@ -912,7 +952,7 @@ def _mode_collect() -> int:
     if not isinstance(data, dict):
         return 0
 
-    sid = data.get("session_id") or data.get("sessionId", "")
+    sid = _payload_get(data, "session_id")
     # Reject session IDs containing path separators or traversal sequences
     # to prevent writes outside the telemetry directory.
     if sid and not _is_safe_sid(sid):
@@ -929,11 +969,13 @@ def _mode_collect() -> int:
     if entry is None:
         return 0
 
+    # Register before the first write of the day so a store whose SessionStart
+    # was never delivered (telemetry enabled mid-session, or a surface that
+    # omits the event) still reaches cross-project reports. Bounded to one
+    # registry read per store per day plus each session start.
+    first_write = not log_file.exists()
     tel_dir.mkdir(parents=True, exist_ok=True)
-    # Record this project's telemetry dir once per session so cross-project
-    # reports can discover every store, and refresh the user-level launcher.
-    # SessionStart keeps these writes infrequent.
-    if event == "SessionStart":
+    if event == "SessionStart" or first_write:
         register_telemetry_dir(tel_dir)
         write_report_launchers()
     with open(log_file, "a", encoding="utf-8") as handle:
@@ -966,6 +1008,27 @@ def _mode_collect() -> int:
                     handle.write(json.dumps(summary) + "\n")
     return 0
 
+def _workspace_storage_dirs() -> list[Path]:
+    """Return candidate VS Code workspaceStorage roots for this host.
+
+    Covers remote/server installs (``~/.vscode-server*/data``) and local
+    installs, whose user-data dir is platform specific.
+    """
+    home = Path.home()
+    roots = [home / d / "data" for d in (".vscode-server-insiders", ".vscode-server", ".vscode")]
+
+    if _is_windows():
+        appdata = os.environ.get("APPDATA")
+        local_base = Path(appdata) if appdata else home / "AppData/Roaming"
+    elif sys.platform == "darwin":
+        local_base = home / "Library/Application Support"
+    else:
+        xdg = os.environ.get("XDG_CONFIG_HOME")
+        local_base = Path(xdg) if xdg else home / ".config"
+
+    roots += [local_base / d for d in ("Code - Insiders", "Code", "VSCodium")]
+    return [r / "User/workspaceStorage" for r in roots]
+
 
 def _mode_aggregate_debug(out: str, hook_files: list[str]) -> int:
     """Emit llm_request events from VS Code debug logs for collected sids."""
@@ -973,10 +1036,8 @@ def _mode_aggregate_debug(out: str, hook_files: list[str]) -> int:
     if not sids:
         return 1
 
-    home = Path.home()
     patterns = [
-        str(home / d / "data/User/workspaceStorage/**/debug-logs/**/*.jsonl")
-        for d in (".vscode-server-insiders", ".vscode-server", ".vscode")
+        str(base / "**/debug-logs/**/*.jsonl") for base in _workspace_storage_dirs()
     ]
     count = 0
     with open(out, "w", encoding="utf-8") as writer:

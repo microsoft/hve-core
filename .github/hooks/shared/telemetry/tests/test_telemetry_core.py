@@ -17,6 +17,12 @@ def _write_jsonl(path, rows):
     path.write_text("".join(json.dumps(r) + "\n" for r in rows))
 
 
+@pytest.fixture(autouse=True)
+def _isolate_hve_home(tmp_path, monkeypatch):
+    """Keep registry and launcher writes out of the real user home."""
+    monkeypatch.setenv("HVE_HOME", str(tmp_path / "hve-home"))
+
+
 def test_given_blank_and_malformed_lines_when_iter_jsonl_then_skips_them(tmp_path):
     f = tmp_path / "events.jsonl"
     f.write_text('{"a": 1}\n\n  \nnot-json\n{"b": 2}\n')
@@ -399,6 +405,38 @@ def test_given_cli_posttooluse_payload_when_normalize_event_then_infers_posttool
     assert core._normalize_event(data) == "PostToolUse"
 
 
+def test_given_snake_case_tool_response_when_normalize_event_then_infers_posttooluse():
+    # VS Code names the tool output tool_response; without alias-aware
+    # inference this payload is mistaken for a PreToolUse.
+    data = {"session_id": "s", "tool_name": "read", "tool_response": {}}
+    assert core._normalize_event(data) == "PostToolUse"
+
+
+def test_given_snake_case_stop_reason_when_normalize_event_then_infers_subagent_stop():
+    data = {"session_id": "s", "agent_name": "explore", "stop_reason": "end_turn"}
+    assert core._normalize_event(data) == "SubagentStop"
+
+
+def test_given_tool_response_payload_when_build_entry_then_measures_length(tmp_path):
+    stack = core._AgentStack(tmp_path / ".stacks", "sid1")
+    data = {
+        "session_id": "sid1",
+        "tool_name": "read",
+        "tool_response": {"text_result_for_llm": "abcde"},
+    }
+    entry = core.build_entry(data, "PostToolUse", stack)
+    assert entry["tool_response_len"] == 5
+
+
+def test_given_vscode_subagent_payload_when_build_entry_then_names_agent(tmp_path):
+    # VS Code identifies the subagent only by agent_type.
+    stack = core._AgentStack(tmp_path / ".stacks", "sid1")
+    data = {"session_id": "sid1", "agent_id": "sub-1", "agent_type": "Plan"}
+    entry = core.build_entry(data, "SubagentStart", stack)
+    assert entry["agent_name"] == "Plan"
+    assert stack.current() == "Plan"
+
+
 def test_given_cli_prompt_payload_when_normalize_event_then_infers_userpromptsubmit():
     assert core._normalize_event({"sessionId": "s", "prompt": "hi"}) == "UserPromptSubmit"
 
@@ -632,6 +670,18 @@ def test_given_session_start_when_mode_collect_then_registers_dir(tmp_path, monk
     else:
         assert (hve / "generate-report.sh").is_file()
         assert (hve / "clean-telemetry.sh").is_file()
+
+
+def test_given_no_session_start_when_mode_collect_then_still_registers_dir(tmp_path, monkeypatch):
+    tel_dir = tmp_path / "tel"
+    hve = tmp_path / "hve"
+    monkeypatch.setenv("HVE_TELEMETRY_DIR", str(tel_dir))
+    monkeypatch.setenv("COPILOT_HOME", str(tmp_path / "home"))
+    monkeypatch.setenv("HVE_HOME", str(hve))
+    payload = {"hook_event_name": "UserPromptSubmit", "session_id": "sid1", "prompt": "hi"}
+    monkeypatch.setattr("sys.stdin", io.StringIO(json.dumps(payload)))
+    assert core._mode_collect() == 0
+    assert core.read_registry_dirs(hve / "telemetry-dirs.txt") == [str(tel_dir.resolve())]
 
 
 def test_given_stale_entries_when_mode_list_dirs_then_prunes_and_prints(

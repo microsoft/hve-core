@@ -13,9 +13,10 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 readonly SCRIPT_DIR
 readonly TEMPLATE_PATH="${SCRIPT_DIR}/report.html"
 
-# Repo root anchors the default telemetry path so the script works from any cwd.
-REPO_ROOT="$(git -C "${SCRIPT_DIR}" rev-parse --show-toplevel 2>/dev/null || true)"
-[[ -n "${REPO_ROOT}" ]] || REPO_ROOT="$(cd "${SCRIPT_DIR}/../.." && pwd)"
+# Match the collector and anchor on the caller's workspace: the script itself
+# may live outside the repo it reports on, so its location says nothing.
+REPO_ROOT="${HVE_REPO_ROOT:-$(git rev-parse --show-toplevel 2>/dev/null || true)}"
+[[ -n "${REPO_ROOT}" ]] || REPO_ROOT="${PWD}"
 readonly REPO_ROOT
 
 usage() {
@@ -26,9 +27,12 @@ Options:
   -d, --date DATE       Target date (yyyy-MM-dd). Default: today (UTC).
                         Use 'all' to include every sessions-*.jsonl file.
   -a, --all-dirs        Scan every per-project telemetry directory recorded in
-                        the user-level registry (~/.copilot/telemetry-dirs.txt)
-                        for a combined cross-project report.
-  -p, --path DIR        Telemetry directory. Default: <repo>/.copilot-tracking/telemetry
+                        the user-level registry (~/.hve/telemetry-dirs.txt) for
+                        a combined cross-project report. Ignored when --path is
+                        given.
+  -p, --path DIR        Telemetry directory. Scopes the report to this directory
+                        alone, overriding --all-dirs.
+                        Default: <repo>/.copilot-tracking/telemetry
   -l, --debug-log FILE  Optional debug log JSONL (e.g. main.jsonl) for tokens.
                         When omitted, VS Code debug logs are auto-discovered and
                         the precise model version (e.g. claude-opus-4.6) plus
@@ -79,6 +83,7 @@ main() {
   local output_path=""
   local open_report=0
   local all_dirs=0
+  local path_explicit=0
 
   # Temp files/dirs cleaned up on return (single trap to avoid overrides).
   local -a tmp_files=()
@@ -89,7 +94,7 @@ main() {
     case "$1" in
       -d|--date) target_date="$2"; shift 2 ;;
       -a|--all-dirs) all_dirs=1; shift ;;
-      -p|--path) telemetry_path="$2"; shift 2 ;;
+      -p|--path) telemetry_path="$2"; path_explicit=1; shift 2 ;;
       -l|--debug-log) debug_log="$2"; shift 2 ;;
       -o|--output) output_path="$2"; shift 2 ;;
       --open) open_report=1; shift ;;
@@ -106,8 +111,14 @@ main() {
 
   # Determine which telemetry directories to scan. With --all-dirs, prepend
   # every directory recorded in the user-level registry (cross-project view).
+  # An explicit --path wins so the generated cross-project launcher, which
+  # always passes --all-dirs, can still be scoped to one store.
+  if (( all_dirs && path_explicit )); then
+    printf "Ignoring --all-dirs because --path was given; scanning '%s' only.\n" \
+      "${telemetry_path}" >&2
+  fi
   declare -a search_dirs=()
-  if (( all_dirs )); then
+  if (( all_dirs && ! path_explicit )); then
     while IFS= read -r d; do
       [[ -n "$d" ]] && search_dirs+=("$d")
     done < <(registry_dirs)

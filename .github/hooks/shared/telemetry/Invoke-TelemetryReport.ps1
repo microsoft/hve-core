@@ -23,9 +23,11 @@
     sessions-*.jsonl file.
 .PARAMETER AllDirs
     Scan every per-project telemetry directory recorded in the user-level
-    registry (~/.copilot/telemetry-dirs.txt) for a combined cross-project report.
+    registry (~/.hve/telemetry-dirs.txt) for a combined cross-project report.
+    Ignored when -Path is given.
 .PARAMETER Path
-    Telemetry directory. Default: <repo>/.copilot-tracking/telemetry
+    Telemetry directory. Scopes the report to this directory alone, overriding
+    -AllDirs. Default: <repo>/.copilot-tracking/telemetry
 .PARAMETER DebugLog
     Optional debug log JSONL (e.g. main.jsonl) for token data. When omitted, VS
     Code debug logs are auto-discovered and the precise model version plus token
@@ -58,12 +60,14 @@ $TemplatePath = Join-Path $PSScriptRoot 'report.html'
 $CorePy = Join-Path $PSScriptRoot '_telemetry_core.py'
 
 #region Resolve repo root
+# Match the collector and anchor on the caller's workspace: the script itself
+# may live outside the repo it reports on, so its location says nothing.
 $RepoRoot = $env:HVE_REPO_ROOT
 if (-not $RepoRoot -and (Get-Command git -ErrorAction SilentlyContinue)) {
-    try { $RepoRoot = & git -C $PSScriptRoot rev-parse --show-toplevel 2>$null } catch { $RepoRoot = $null }
+    try { $RepoRoot = & git rev-parse --show-toplevel 2>$null } catch { $RepoRoot = $null }
 }
 if (-not $RepoRoot) {
-    $RepoRoot = (Resolve-Path (Join-Path $PSScriptRoot '../..')).Path
+    $RepoRoot = (Get-Location).Path
 }
 #endregion Resolve repo root
 
@@ -113,13 +117,18 @@ if (-not (Test-Path -LiteralPath $TemplatePath)) {
 }
 
 $TargetDate = if ($Date) { $Date } else { (Get-Date).ToUniversalTime().ToString('yyyy-MM-dd') }
-$TelemetryPath = if ($Path) { $Path } else { Join-Path $RepoRoot '.copilot-tracking/telemetry' }
+$TelemetryPath = if ($Path) { $Path } else { Join-Path $RepoRoot '.copilot-tracking' 'telemetry' }
 $OutputPath = if ($Output) { $Output } else { Join-Path $TelemetryPath 'report.generated.html' }
 
 # Determine which telemetry directories to scan. With -AllDirs, prepend every
-# directory recorded in the user-level registry (cross-project view).
+# directory recorded in the user-level registry (cross-project view). An
+# explicit -Path wins so the generated cross-project launcher, which always
+# passes -AllDirs, can still be scoped to one store.
+if ($AllDirs -and $Path) {
+    Write-Warning "Ignoring -AllDirs because -Path was given; scanning '$TelemetryPath' only."
+}
 $SearchDirs = [System.Collections.Generic.List[string]]::new()
-if ($AllDirs) {
+if ($AllDirs -and -not $Path) {
     foreach ($d in (Get-RegistryDir)) { $SearchDirs.Add($d) }
 }
 $SearchDirs.Add($TelemetryPath)
@@ -130,7 +139,12 @@ $Pattern = if ($TargetDate -eq 'all') { 'sessions-*.jsonl' } else { "sessions-$T
 $Files = [System.Collections.Generic.List[string]]::new()
 $SeenDirs = [System.Collections.Generic.HashSet[string]]::new()
 foreach ($dir in $SearchDirs) {
-    if (-not $dir -or -not $SeenDirs.Add($dir)) { continue }
+    if (-not $dir) { continue }
+    # Registry entries and the default path can spell one directory differently
+    # (separator style on Windows), so key de-duplication on the canonical form.
+    $DirKey = $dir
+    try { $DirKey = [System.IO.Path]::GetFullPath($dir) } catch { Write-Verbose "Unnormalizable telemetry dir '$dir': $_" }
+    if (-not $SeenDirs.Add($DirKey)) { continue }
     if (-not (Test-Path -LiteralPath $dir -PathType Container)) { continue }
     Get-ChildItem -LiteralPath $dir -Filter $Pattern -File -ErrorAction SilentlyContinue |
         Sort-Object Name |
