@@ -255,6 +255,16 @@ Describe 'Test-AssetDocRegionSync' -Tag 'Unit' {
         Test-AssetDocRegionSync -Model $script:agentModel -Content $script:agentContent | Should -BeNullOrEmpty
     }
 
+    It 'Reports no drift when the page uses CRLF line endings' {
+        $crlfContent = ($script:agentContent -replace '\r\n', "`n") -replace '\r', "`n" -replace '\n', "`r`n"
+        Test-AssetDocRegionSync -Model $script:agentModel -Content $crlfContent | Should -BeNullOrEmpty
+    }
+
+    It 'Reports no drift when the page uses lone CR line endings' {
+        $crContent = ($script:agentContent -replace '\r\n', "`n") -replace '\r', "`n" -replace '\n', "`r"
+        Test-AssetDocRegionSync -Model $script:agentModel -Content $crContent | Should -BeNullOrEmpty
+    }
+
     It 'Detects a tampered metadata region' {
         $tampered = Set-TamperedMetadataCell -Content $script:agentContent -Field 'Kind' -NewValue 'TAMPERED'
         $findings = @(Test-AssetDocRegionSync -Model $script:agentModel -Content $tampered)
@@ -341,6 +351,11 @@ Describe 'Invoke-AssetDocsValidation' -Tag 'Unit' {
         $tampered = Set-TamperedMetadataCell -Content (Get-Content -LiteralPath $page -Raw) -Field 'Kind' -NewValue 'TAMPERED'
         Set-Content -LiteralPath $page -Value $tampered -Encoding utf8NoBOM -NoNewline
         (Invoke-AssetDocsValidation -RepoRoot $repo -CheckSync) | Should -Be 1
+    }
+
+    It 'Exits 0 for a freshly generated tree under strict coverage and sync checks' {
+        $repo = New-ValidatorFixture
+        (Invoke-AssetDocsValidation -RepoRoot $repo -FailOnMissing -CheckSync) | Should -Be 0
     }
 
     It 'Does not block unrelated changes on a pre-existing orphan' {

@@ -116,8 +116,8 @@ Describe 'New-PluginReadmeContent - CollectionContent H1 stripping' {
 
 Describe 'Get-PluginItemName' {
     It 'Strips .agent.md to .md for agents' {
-        $result = Get-PluginItemName -FileName 'task-researcher.agent.md' -Kind 'agent'
-        $result | Should -Be 'task-researcher.md'
+        $result = Get-PluginItemName -FileName 'sample-agent.agent.md' -Kind 'agent'
+        $result | Should -Be 'sample-agent.md'
     }
 
     It 'Strips .prompt.md to .md for prompts' {
@@ -143,7 +143,7 @@ Describe 'Get-PluginItemSubpath' {
     }
 
     It 'Extracts nested subdirectory path for agent subagents' {
-        $result = Get-PluginItemSubpath -Path '.github/agents/hve-core/subagents/researcher-subagent.agent.md' -Kind 'agent'
+        $result = Get-PluginItemSubpath -Path '.github/agents/hve-core/subagents/sample-subagent.agent.md' -Kind 'agent'
         $result | Should -Be 'hve-core/subagents'
     }
 

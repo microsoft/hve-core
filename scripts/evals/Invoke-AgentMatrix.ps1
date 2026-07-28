@@ -59,12 +59,12 @@
     tiers, writes a dry-run summary, and exits 0.
 
 .EXAMPLE
-    npm run eval:agent:changed -- -WhatIf
+    npm run ci:eval:agent:changed -- -WhatIf
 
     PR-tier advisory run filtered by git-changed agents.
 
 .NOTES
-    Runs via: npm run eval:agent / npm run eval:agent:matrix / npm run eval:agent:changed
+    Runs via: npm run ci:eval:agent / npm run ci:eval:agent:matrix / npm run ci:eval:agent:changed
 #>
 
 [CmdletBinding(SupportsShouldProcess = $true, DefaultParameterSetName = 'All')]

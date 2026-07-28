@@ -5,6 +5,7 @@
 Describe 'collision-detection' -Tag 'Unit' {
     BeforeAll {
         $script:scriptPath = Join-Path $PSScriptRoot '../scripts/collision-detection.ps1'
+        $script:bashScriptPath = Join-Path $PSScriptRoot '../scripts/collision-detection.sh'
         $script:testRoot = Join-Path ([System.IO.Path]::GetTempPath()) "hve-test-collision-$([guid]::NewGuid().ToString('N'))"
         $script:sourceRoot = Join-Path $script:testRoot 'source'
     }
@@ -16,8 +17,8 @@ Describe 'collision-detection' -Tag 'Unit' {
         # Create source agents
         $agentsDir = Join-Path $script:sourceRoot '.github/agents/hve-core'
         New-Item -ItemType Directory -Path $agentsDir -Force | Out-Null
-        Set-Content -Path (Join-Path $agentsDir 'task-researcher.agent.md') -Value '# Researcher'
-        Set-Content -Path (Join-Path $agentsDir 'task-planner.agent.md') -Value '# Planner'
+        Set-Content -Path (Join-Path $agentsDir 'rpi-agent.agent.md') -Value '# RPI Agent'
+        Set-Content -Path (Join-Path $agentsDir 'documentation.agent.md') -Value '# Documentation'
 
         Push-Location $script:testRoot
     }
@@ -52,7 +53,7 @@ Describe 'collision-detection' -Tag 'Unit' {
     Context 'Collisions detected' {
         It 'Reports COLLISIONS_DETECTED=true when target files exist' {
             New-Item -ItemType Directory -Path '.github/agents' -Force | Out-Null
-            Set-Content -Path '.github/agents/task-researcher.agent.md' -Value '# Existing'
+            Set-Content -Path '.github/agents/rpi-agent.agent.md' -Value '# Existing'
 
             $output = & $script:scriptPath -Selection 'hve-core' 6>&1 | Out-String
 
@@ -61,14 +62,44 @@ Describe 'collision-detection' -Tag 'Unit' {
 
         It 'Lists collision file paths' {
             New-Item -ItemType Directory -Path '.github/agents' -Force | Out-Null
-            Set-Content -Path '.github/agents/task-researcher.agent.md' -Value '# Existing'
-            Set-Content -Path '.github/agents/task-planner.agent.md' -Value '# Existing'
+            Set-Content -Path '.github/agents/rpi-agent.agent.md' -Value '# Existing'
+            Set-Content -Path '.github/agents/documentation.agent.md' -Value '# Existing'
 
             $output = & $script:scriptPath -Selection 'hve-core' 6>&1 | Out-String
 
             $output | Should -Match 'COLLISION_FILES='
-            $output | Should -Match 'task-researcher\.agent\.md'
-            $output | Should -Match 'task-planner\.agent\.md'
+            $output | Should -Match 'rpi-agent\.agent\.md'
+            $output | Should -Match 'documentation\.agent\.md'
+        }
+
+        It 'Keeps Bash and PowerShell hve-core defaults in parity' {
+            New-Item -ItemType Directory -Path '.github/agents' -Force | Out-Null
+            Set-Content -Path '.github/agents/rpi-agent.agent.md' -Value '# Existing'
+            Set-Content -Path '.github/agents/documentation.agent.md' -Value '# Existing'
+
+            $powerShellOutput = & $script:scriptPath -Selection 'hve-core' 6>&1 | Out-String
+            $bashOutput = & bash $script:bashScriptPath $script:sourceRoot 'hve-core' 2>&1 | Out-String
+
+            $bashOutput.Trim() | Should -Be $powerShellOutput.Trim()
+        }
+
+        It 'Defines exactly the retained hve-core default files in both implementations' {
+            $expectedDefaults = @(
+                'hve-core/rpi-agent.agent.md'
+                'hve-core/documentation.agent.md'
+            )
+            $agentPathPattern = '["''](hve-core/[^"'']+\.agent\.md)["'']'
+            $powerShellDefaults = [regex]::Matches(
+                (Get-Content -LiteralPath $script:scriptPath -Raw),
+                $agentPathPattern
+            ) | ForEach-Object { $_.Groups[1].Value }
+            $bashDefaults = [regex]::Matches(
+                (Get-Content -LiteralPath $script:bashScriptPath -Raw),
+                $agentPathPattern
+            ) | ForEach-Object { $_.Groups[1].Value }
+
+            $powerShellDefaults | Should -Be $expectedDefaults
+            $bashDefaults | Should -Be $expectedDefaults
         }
     }
 

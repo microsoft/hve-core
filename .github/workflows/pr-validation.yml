@@ -427,12 +427,15 @@ jobs:
           node-version: "24"
           cache: "npm"
 
+      - name: Validate public dependency feeds
+        run: npm run lint:public-dependency-feeds
+
       - name: Install dependencies
         run: npm ci
 
-      # Uses audit-ci with an allowlist for advisories that have no upstream
-      # fix available. See audit-ci.json for the current allowlist and rationale.
-      - name: Run security audit
+      # Uses audit-ci with an allowlist for advisories that have no installable
+      # upstream fix. See audit-ci.json for the current allowlist.
+      - name: Audit all npm projects
         run: npm run audit:npm
 
   codeql:

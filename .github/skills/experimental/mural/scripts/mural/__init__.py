@@ -241,6 +241,7 @@ from ._output import (  # noqa: E402,F401
     _color_mode,
     _emit,
     _emit_debug_traceback,
+    _emit_json,
 )
 
 # isort: split

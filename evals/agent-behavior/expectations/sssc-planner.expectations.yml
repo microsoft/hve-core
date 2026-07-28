@@ -65,17 +65,17 @@ expectations:
     contract_ref: "agent §SSSC CAUTION (verbatim disclaimer block)"
 
   - expectation_id: standards-research-delegation
-    summary: Standards lookups are delegated to a researcher subagent.
-    signal: Output references Researcher Subagent delegation for standards mapping.
+    summary: Standards lookups activate the canonical RPI research skill.
+    signal: Output references `rpi-research` activation for standards mapping.
     pass_criteria: |
       During standards mapping the response delegates runtime standards
-      lookups to the Researcher Subagent rather than fabricating standards
+      lookups through `rpi-research` rather than fabricating standards
       details inline.
     failure_modes:
       - Standards details asserted with no delegation and no sourcing.
     priority: medium
     applies_when: "the standards-mapping phase is reached"
-    contract_ref: "agent §Standards Mapping (Researcher Subagent delegation)"
+    contract_ref: "agent §Standards Mapping (`rpi-research` activation)"
 
   - expectation_id: bounded-questions-per-turn
     summary: Each turn asks within the documented question range with checklist markers.

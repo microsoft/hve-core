@@ -1,56 +1,47 @@
 ---
 title: Utility Reference
-description: Cross-cutting HVE Core utilities for memory, documentation, media, Git workflows, and diagnostic operations
+description: Cross-cutting HVE Core utilities for documentation, media, Git workflows, durable workflow state, and diagnostics
 sidebar_position: 10
 author: Microsoft
-ms.date: 2026-06-26
+ms.date: 2026-07-15
 ms.topic: reference
 keywords:
   - utility
-  - memory
+  - workflow state
   - documentation
   - Git workflows
   - cross-cutting
 estimated_reading_time: 8
 ---
 
-Use these cross-cutting utilities when your workflow spans multiple roles or lifecycle stages. HVE Core provides 13 addressable assets for cross-cutting utility workflows. These tools handle memory persistence, documentation maintenance, media processing, Git workflows, and installation management. Use them alongside your role-specific agents and prompts.
+Use these cross-cutting utilities when your workflow spans multiple roles or lifecycle stages. These tools handle documentation maintenance, media processing, Git workflows, installation management, and diagnostics. Each stateful workflow resumes from its own durable artifacts rather than a general memory or checkpoint capability.
 
 ## Utility Categories
 
-| Category      | Assets | Purpose                                                  |
-|---------------|--------|----------------------------------------------------------|
-| Memory        | 1      | Session context and preference persistence               |
-| Documentation | 2      | Documentation operations and session context persistence |
-| Media         | 1      | Video-to-GIF conversion with FFmpeg optimization         |
-| Git           | 3      | Commit messages, merge workflows, PR creation            |
-| Installation  | 1      | Collection installation and environment setup            |
-| Diagnostics   | 1      | Build information retrieval and CI/CD status checks      |
+| Category      | Purpose                                               |
+|---------------|-------------------------------------------------------|
+| Continuity    | Resume from each workflow's durable artifacts         |
+| Documentation | Documentation audit, drift, authoring, and validation |
+| Media         | Video-to-GIF conversion with FFmpeg optimization      |
+| Git           | Commit messages, merge workflows, PR creation         |
+| Installation  | Collection installation and environment setup         |
+| Diagnostics   | Build information retrieval and CI/CD status checks   |
 
 ## Usage Patterns
 
-### Memory Persistence
+### Workflow Continuity
 
-The **memory** agent stores preferences, context, and notes that persist across sessions. Use it to save coding preferences, project-specific conventions, or working state that should carry forward.
-
-Select **memory** agent:
+Resume a workflow from the state and evidence files it owns. For RPI, reference the dated research, plan, phase details, changes, and review artifacts with the same stable task ID. Backlog managers and planning agents use their domain-specific state files and handoff records.
 
 ```text
-Save my preference for commit messages: always use conventional commits
-format with scope (e.g., feat(api): add pagination endpoint). Enforce
-lowercase type and scope. Include the work item ID in the footer.
-```
-
-```text
-What do you know about our authentication middleware? Summarize which
-files implement auth logic, what token formats are supported, how
-role-based access control is enforced, and any known limitations
-documented in code comments.
+/rpi Continue task authentication-refactor from the latest dated plan,
+phase details, changes record, and review evidence. Resume the next
+incomplete task without repeating completed research.
 ```
 
 ### Documentation Operations
 
-The **documentation** agent handles documentation audit, drift, authoring, and validation through its four modes. The `/checkpoint` prompt saves and restores conversation context across sessions using memory files.
+The **documentation** agent handles documentation audit, drift, authoring, and validation through its four modes. Resume a documentation session from its durable session artifacts when available.
 
 Select **documentation** agent:
 
@@ -65,19 +56,9 @@ getting started guide.
 Select documentation agent in drift mode. Sync docs with recent changes.
 ```
 
-```text
-/checkpoint Save my current session working on the authentication
-refactor. I've identified the token validation files and mapped the
-middleware chain but haven't started implementation yet.
-```
-
-```text
-/checkpoint continue authentication refactor
-```
-
 ### Media Processing
 
-The video-to-gif skill converts video files to optimized GIF format using FFmpeg two-pass encoding. This skill activates through the **memory** agent or general chat context.
+The video-to-gif skill converts video files to optimized GIF format using FFmpeg two-pass encoding. Invoke the skill directly when you need this conversion.
 
 Refer to the [video-to-gif skill](https://github.com/microsoft/hve-core/blob/main/.github/skills/experimental/video-to-gif/SKILL.md) for detailed usage, parameters, and optimization options.
 
@@ -105,20 +86,18 @@ This fallback activates automatically. No manual configuration is needed.
 
 | Agent             | Category      | Description                                           |
 |-------------------|---------------|-------------------------------------------------------|
-| **memory**        | Memory        | Session context and preference persistence            |
 | **documentation** | Documentation | Documentation audit, drift, authoring, and validation |
 
 ### Prompts
 
-| Prompt             | Category      | Invoke                | Description                                           |
-|--------------------|---------------|-----------------------|-------------------------------------------------------|
-| git-commit         | Git           | `/git-commit`         | Conventional commit message generation                |
-| git-commit-message | Git           | `/git-commit-message` | Commit message from staged changes                    |
-| git-merge          | Git           | `/git-merge`          | Merge, rebase, and conflict resolution workflows      |
-| pull-request       | Git           | `/pull-request`       | Pull request creation with template support           |
-| git-setup          | Git           | `/git-setup`          | Git configuration and environment setup               |
-| checkpoint         | Documentation | `/checkpoint`         | Save and restore conversation context across sessions |
-| ado-get-build-info | Diagnostics   | `/ado-get-build-info` | Azure DevOps build status and log retrieval           |
+| Prompt             | Category    | Invoke                | Description                                      |
+|--------------------|-------------|-----------------------|--------------------------------------------------|
+| git-commit         | Git         | `/git-commit`         | Conventional commit message generation           |
+| git-commit-message | Git         | `/git-commit-message` | Commit message from staged changes               |
+| git-merge          | Git         | `/git-merge`          | Merge, rebase, and conflict resolution workflows |
+| pull-request       | Git         | `/pull-request`       | Pull request creation with template support      |
+| git-setup          | Git         | `/git-setup`          | Git configuration and environment setup          |
+| ado-get-build-info | Diagnostics | `/ado-get-build-info` | Azure DevOps build status and log retrieval      |
 
 ### Skills
 
@@ -131,8 +110,7 @@ This fallback activates automatically. No manual configuration is needed.
 
 | Do                                                                         | Don't                                                      |
 |----------------------------------------------------------------------------|------------------------------------------------------------|
-| Use the **memory** agent to save preferences early in a session            | Repeat the same context setup in every conversation        |
-| Use `/checkpoint` during long, multi-step workflows                        | Lose progress context in extended sessions                 |
+| Resume from the durable artifacts owned by each workflow                   | Rely on a conversation transcript as authoritative state   |
 | Use `/git-commit` for all commits to maintain conventions                  | Write ad-hoc commit messages that skip conventional format |
 | Ask any agent "help me customize hve-core installation" to configure setup | Install `hve-core-all` when you only need one collection   |
 | Refer to the skill docs for media processing parameters                    | Guess at FFmpeg options without consulting the skill file  |

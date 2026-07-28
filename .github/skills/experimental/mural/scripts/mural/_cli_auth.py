@@ -39,6 +39,7 @@ from typing import Any
 from . import (  # noqa: E402 - package siblings defined before this import runs
     _acquire_cache_lock,
     _emit,
+    _emit_json,
     _KeyringUnavailable,
     _migrate_v1_to_v2,
     _NullBackend,
@@ -891,17 +892,14 @@ def _cmd_auth_logout(args: argparse.Namespace) -> int:
                     _logout_remove_credentials(name, require_force_for_file=not force)
                 )
         if json_mode:
-            print(
-                json.dumps(
-                    {
-                        "token_store": str(path),
-                        "status": "cleared",
-                        "scope": "all",
-                        "credentials_removed": credentials_results,
-                        "keep_credentials": keep_credentials,
-                    },
-                    indent=2,
-                )
+            _emit_json(
+                {
+                    "token_store": str(path),
+                    "status": "cleared",
+                    "scope": "all",
+                    "credentials_removed": credentials_results,
+                    "keep_credentials": keep_credentials,
+                }
             )
         else:
             _emit(f"cleared all profiles in {path}", level=logging.INFO)
@@ -927,16 +925,13 @@ def _cmd_auth_logout(args: argparse.Namespace) -> int:
                     )
                 )
             if json_mode:
-                print(
-                    json.dumps(
-                        {
-                            "token_store": str(path),
-                            "status": "absent",
-                            "credentials_removed": credentials_results,
-                            "keep_credentials": keep_credentials,
-                        },
-                        indent=2,
-                    )
+                _emit_json(
+                    {
+                        "token_store": str(path),
+                        "status": "absent",
+                        "credentials_removed": credentials_results,
+                        "keep_credentials": keep_credentials,
+                    }
                 )
             else:
                 _emit(f"no token store at {path}", level=logging.INFO)
@@ -974,17 +969,14 @@ def _cmd_auth_logout(args: argparse.Namespace) -> int:
             _logout_remove_credentials(target, require_force_for_file=not force)
         )
     if json_mode:
-        print(
-            json.dumps(
-                {
-                    "profile": target,
-                    "token_store": str(path),
-                    "status": token_status,
-                    "credentials_removed": credentials_results,
-                    "keep_credentials": keep_credentials,
-                },
-                indent=2,
-            )
+        _emit_json(
+            {
+                "profile": target,
+                "token_store": str(path),
+                "status": token_status,
+                "credentials_removed": credentials_results,
+                "keep_credentials": keep_credentials,
+            }
         )
     else:
         if token_status == "removed":

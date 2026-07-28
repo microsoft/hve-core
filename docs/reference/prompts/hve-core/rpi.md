@@ -1,8 +1,8 @@
 ---
 title: Rpi
-description: Autonomous Research-Plan-Implement-Review-Discover workflow for completing tasks
-sidebar_position: 12
-ms.date: 2026-07-03
+description: "Coordinate one task through the Research, Plan, Implement, Review, and Follow-up RPI workflow"
+sidebar_position: 8
+ms.date: 2026-07-16
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->
@@ -17,7 +17,7 @@ ms.date: 2026-07-03
 ## What it does
 
 <!-- BEGIN AUTO-GENERATED: overview -->
-Autonomous Research-Plan-Implement-Review-Discover workflow for completing tasks
+Coordinate one task through the Research, Plan, Implement, Review, and Follow-up RPI workflow
 <!-- END AUTO-GENERATED: overview -->
 
 ## When to use it

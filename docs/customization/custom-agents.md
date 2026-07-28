@@ -2,7 +2,7 @@
 title: Creating Custom Agents
 description: Build specialized agents with tool restrictions, subagent delegation, and mode-based workflows for your team
 author: Microsoft
-ms.date: 2026-06-30
+ms.date: 2026-07-15
 ms.topic: how-to
 keywords:
   - agents
@@ -44,54 +44,48 @@ Agent files live in `.github/agents/{collection-id}/`. Subagents go in a `subage
 │       └── security-checker.agent.md
 ```
 
-## Creating Your First Agent
+## Improving an Existing Agent
 
-Walk through creating a code review agent for Contoso's engineering team using Prompt Builder.
+Walk through improving the current RPI Planner subagent using `hve-builder`.
 
-**Step 1:** Create the agent file at `.github/agents/contoso/code-reviewer.agent.md` with minimal frontmatter:
-
-```yaml
----
-name: Contoso Code Reviewer
-description: "Reviews code changes for Contoso's TypeScript API standards - Brought to you by contoso/engineering"
----
-```
-
-**Step 2:** Use `/prompt-build` to generate the agent body. Provide existing agents as reference context with `files` and specify the target file with `promptFiles`:
+### Step 1: Identify the target and requirements
 
 ```text
-/prompt-build files=.github/agents/hve-core/implementation-validator.agent.md promptFiles=.github/agents/contoso/code-reviewer.agent.md
+RPI Planner target: .github/agents/hve-core/subagents/rpi-planner.agent.md
+Requirements: Preserve bounded phase ownership, marker-based addressing, and
+the structured response contract.
 ```
 
-Prompt Builder analyzes the reference agents, generates the protocol body with purpose, steps, and response format, and validates the result against repository conventions.
-
-**Step 3:** Evaluate the generated agent with `/prompt-analyze`:
+### Step 2: Run HVE Builder in improve mode
 
 ```text
-/prompt-analyze promptFiles=.github/agents/contoso/code-reviewer.agent.md
+Use hve-builder with mode=improve and
+targets=.github/agents/hve-core/subagents/rpi-planner.agent.md. Preserve its
+existing capability-bearing frontmatter and the rpi-plan phase contract.
 ```
 
-This produces a structured report covering purpose, capabilities, issues organized by severity, and an overall quality assessment. Address any critical or major findings before committing.
+HVE Builder reads the known target and applicable conventions, confirms the
+write boundary, then authors within the current `rpi-plan` architecture.
 
-**Step 4:** Iterate with `/prompt-build` to apply fixes identified by the analysis:
+### Step 3: Review the evidence
 
-```text
-/prompt-build files=.github/agents/contoso/code-reviewer.agent.md promptFiles=.github/agents/contoso/code-reviewer.agent.md
-```
-
-When `promptFiles` points to an existing file, Prompt Builder refines it rather than starting from scratch.
+Review HVE Builder's independent static verdict, behavior-test disposition,
+host validation result, and overall outcome. Address actionable findings before
+committing.
 
 > [!TIP]
-> Run `/prompt-analyze` first to identify quality issues, then use `/prompt-build` to apply fixes. This two-step pattern produces consistent, well-structured agents.
-
-**Step 5:** Invoke the agent in Copilot Chat by selecting it from the agent picker or referencing it by name.
+> Use `hve-builder` review mode for read-only assessment. Use improve mode only
+> when source changes are approved.
 
 ### Consolidating Agents
 
-Use `/prompt-refactor` to merge overlapping agents or clean up related agent files:
+Use `hve-builder` refactor mode to merge overlapping agents or clean up related
+agent files without intentionally changing behavior:
 
 ```text
-/prompt-refactor promptFiles=.github/agents/contoso/*.agent.md requirements="merge overlapping review agents into a single orchestrator"
+Use hve-builder with mode=refactor,
+targets=.github/agents/contoso/*.agent.md, and requirements="merge overlapping
+review agents into a single orchestrator without changing supported behavior".
 ```
 
 ## Subagent Patterns
@@ -212,7 +206,7 @@ Create the requested artifacts based on analysis.
 Run validation commands and report results.
 ```
 
-HVE Core includes several mode-based agents you can study as patterns: task planners for research-plan-implement workflows, PR analyzers for autonomous review, and design thinking coaches for facilitated multi-turn sessions.
+HVE Core includes several mode-based agents you can study as patterns: RPI Agent for lifecycle coordination, PR analyzers for autonomous review, and Design Thinking coaches for facilitated multi-turn sessions.
 
 ## Role Scenarios
 
@@ -222,7 +216,7 @@ HVE Core includes several mode-based agents you can study as patterns: task plan
 
 **Tailspin Toys' engineering manager** authors a PR triage agent that categorizes incoming pull requests by area (frontend, backend, infrastructure), estimates review complexity, and suggests appropriate reviewers based on file ownership patterns.
 
-For full frontmatter schema, naming conventions, and contribution requirements, see [Contributing: Custom Agents](../contributing/custom-agents.md).
+For full frontmatter schema, naming conventions, and contribution requirements, see [Contributing: Custom Agents](../contributing/custom-agents).
 
 ## Frontmatter Reference
 
@@ -276,7 +270,7 @@ Tool values support four naming patterns:
 | Category-specific | `edit/createFile`, `execute/runInTerminal`    |
 | Wildcard          | `github/*`, `ado/*`                           |
 
-The set of available tools evolves with GitHub Copilot and VS Code. For the authoritative, current list, see the official [VS Code custom agents documentation](https://code.visualstudio.com/docs/copilot/customization/custom-agents). To invoke a granted tool from the agent body, use the `#tool:` reference syntax (for example, `#tool:codebase`); see [Contributing: Custom Agents](../contributing/custom-agents.md) for details.
+The set of available tools evolves with GitHub Copilot and VS Code. For the authoritative, current list, see the official [VS Code custom agents documentation](https://code.visualstudio.com/docs/copilot/customization/custom-agents). To invoke a granted tool from the agent body, use the `#tool:` reference syntax (for example, `#tool:codebase`); see [Contributing: Custom Agents](../contributing/custom-agents) for details.
 
 ### agents
 
@@ -284,13 +278,14 @@ Declares subagent dependencies using their human-readable `name` values. Referen
 
 ```yaml
 agents:
-  - Researcher Subagent
-  - Phase Implementor
+  - Contoso Research Analyst
+  - RPI Planner
 ```
 
 ```markdown
-Delegate research to the researcher subagent
-at `.github/agents/**/researcher-subagent.agent.md`.
+Activate `rpi-research` for open-ended or decision-critical research. Dispatch
+the RPI Planner only from the canonical `rpi-plan` workflow when bounded phase
+authoring is required.
 ```
 
 ### handoffs
@@ -299,13 +294,9 @@ Defines structured transitions between agents. Each entry specifies a label (sho
 
 ```yaml
 handoffs:
-  - label: "Research Topic"
-    agent: "Researcher Subagent"
-    prompt: "Research the following topic"
-    send: true
-  - label: "Review Changes"
-    agent: "Implementation Validator"
-    prompt: "Validate the implementation against the plan"
+  - label: "Coordinate RPI Work"
+    agent: "RPI Agent"
+    prompt: "Coordinate this task through the applicable RPI phases"
     send: true
 ```
 
@@ -316,8 +307,8 @@ Set to `true` for orchestrator agents that coordinate subagents without performi
 ```yaml
 disable-model-invocation: true
 agents:
-  - Researcher Subagent
-  - Phase Implementor
+  - Contoso Security Checker
+  - Contoso Style Validator
 ```
 
 ### user-invocable

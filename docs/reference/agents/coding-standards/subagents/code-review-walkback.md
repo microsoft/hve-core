@@ -1,8 +1,8 @@
 ---
 title: Code Review Walkback
-description: Thin wrapper subagent that dispatches deep Register 2 questions to the generic Researcher Subagent and anchors the output to a board item
+description: Thin wrapper subagent that activates rpi-research for bounded Register 2 investigations and anchors results to a review board item
 sidebar_position: 8
-ms.date: 2026-07-05
+ms.date: 2026-07-16
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->
@@ -17,7 +17,7 @@ ms.date: 2026-07-05
 ## What it does
 
 <!-- BEGIN AUTO-GENERATED: overview -->
-Thin wrapper subagent that dispatches deep Register 2 questions to the generic Researcher Subagent and anchors the output to a board item
+Thin wrapper subagent that activates rpi-research for bounded Register 2 investigations and anchors results to a review board item
 <!-- END AUTO-GENERATED: overview -->
 
 ## When to use it

@@ -99,8 +99,8 @@ Describe 'Get-DocumentableAssets' -Tag 'Unit' {
 
         # Documentable, collection-scoped
         New-Fixture 'agents/hve-core/rpi-agent.agent.md'
-        New-Fixture 'agents/hve-core/subagents/researcher.agent.md'
-        New-Fixture 'prompts/hve-core/task.prompt.md'
+        New-Fixture 'agents/hve-core/subagents/sample-subagent.agent.md'
+        New-Fixture 'prompts/hve-core/sample-prompt.prompt.md'
         New-Fixture 'instructions/shared/loc.instructions.md'
         New-Fixture 'skills/hve-core/documentation/SKILL.md'
 
@@ -120,13 +120,13 @@ Describe 'Get-DocumentableAssets' -Tag 'Unit' {
 
     It 'Includes collection-scoped agents, prompts, instructions, and skills' {
         $script:paths | Should -Contain '.github/agents/hve-core/rpi-agent.agent.md'
-        $script:paths | Should -Contain '.github/prompts/hve-core/task.prompt.md'
+        $script:paths | Should -Contain '.github/prompts/hve-core/sample-prompt.prompt.md'
         $script:paths | Should -Contain '.github/instructions/shared/loc.instructions.md'
         $script:paths | Should -Contain '.github/skills/hve-core/documentation'
     }
 
     It 'Includes nested subagents' {
-        $script:paths | Should -Contain '.github/agents/hve-core/subagents/researcher.agent.md'
+        $script:paths | Should -Contain '.github/agents/hve-core/subagents/sample-subagent.agent.md'
     }
 
     It 'Excludes root-level repo-specific assets' {
@@ -160,8 +160,8 @@ Describe 'Get-AssetDocsPath' -Tag 'Unit' {
     }
 
     It 'Preserves hierarchy for nested subagents' {
-        Get-AssetDocsPath -Path '.github/agents/hve-core/subagents/researcher-subagent.agent.md' -Kind 'agent' |
-            Should -Be 'docs/reference/agents/hve-core/subagents/researcher-subagent.md'
+        Get-AssetDocsPath -Path '.github/agents/hve-core/subagents/sample-subagent.agent.md' -Kind 'agent' |
+            Should -Be 'docs/reference/agents/hve-core/subagents/sample-subagent.md'
     }
 
     It 'Derives the docs path for a prompt' {

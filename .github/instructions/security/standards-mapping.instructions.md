@@ -1,17 +1,17 @@
 ---
-description: "OWASP and NIST security standards references with researcher subagent delegation for CIS, WAF, CAF, and other runtime lookups"
+description: "OWASP and NIST security standards references with rpi-research activation for CIS, WAF, CAF, and other runtime lookups"
 applyTo: '**/.copilot-tracking/security-plans/**'
 ---
 
 # Standards Mapping
 
-Frequently-used security standards are referenced from the durable skill material during Phase 3 of the security planning workflow. Specialized cloud frameworks (WAF and CAF) are delegated to the Researcher Subagent at runtime instead of duplicating large, version-sensitive content.
+Frequently-used security standards are referenced from the durable skill material during Phase 3 of the security planning workflow. Specialized cloud frameworks (WAF and CAF) activate `rpi-research` at runtime instead of duplicating large, version-sensitive content.
 
 At least one standard from each applicable framework should map to every component in the security plan. The Security Planner's Skill Reference Contract loads the durable standards references (`standards-cross-reference.md` and `nist-control-families.md` from the `security-planning` skill) via a mandatory `read_file` on Phase 3 entry, so the OWASP, NIST, and AI RMF mapping tables are not restated here. This instruction file stays orchestration-focused and defers the versioned standard tables to the skill loaded by that contract.
 
-## Researcher Subagent Delegation
+## Research Activation
 
-Microsoft Well-Architected Framework (WAF) and Cloud Adoption Framework (CAF) lookups are delegated to the Researcher Subagent at runtime. These frameworks evolve frequently and contain extensive cloud-specific guidance best retrieved on demand.
+Microsoft Well-Architected Framework (WAF) and Cloud Adoption Framework (CAF) lookups activate `rpi-research` at runtime. These frameworks evolve frequently and contain extensive cloud-specific guidance best retrieved on demand.
 
 The following standards are also delegated for runtime lookup due to version sensitivity, domain specificity, or rapid evolution:
 
@@ -38,9 +38,9 @@ When buckets or AI components from Phases 1–2 match, prefer the matching speci
 * `build` / `devops-platform-ops` buckets → `owasp-cicd`, `supply-chain-security`
 * Cross-cutting GS overlay → `secure-by-design`
 
-These skills are loaded by the Security Planner's Conditional Skill Map. Delegate to the Researcher Subagent only for standards with no matching skill (WAF, CAF, MCSB, PCI-DSS, and the others listed above).
+These skills are loaded by the Security Planner's Conditional Skill Map. Activate `rpi-research` only for standards with no matching skill (WAF, CAF, MCSB, PCI-DSS, and the others listed above).
 
-### When to Delegate
+### When to Activate Research
 
 * User requests WAF or CAF alignment for a component.
 * Phase 3 identifies cloud-specific controls that require runtime research beyond the baseline standards references.
@@ -48,30 +48,17 @@ These skills are loaded by the Security Planner's Conditional Skill Map. Delegat
 * Supply chain security analysis requires S2C2F or SLSA level mapping.
 * Regulatory context requires PCI-DSS, HIPAA, SOC 2, or FedRAMP mapping.
 
-### Invocation Pattern
+### Activation Inputs
 
-Use `runSubagent` with the Researcher Subagent:
+Provide `rpi-research` with the specific framework topic and mapping purpose; security authors, reviewers, control owners, and downstream consumers as the audience and intended use; explicit mapping questions and evidence criteria; component, bucket, technology, cloud, source, version, jurisdiction, and date scope plus non-goals; risk, licensing, privacy, deadline, phase-gate, and write-boundary constraints; supplied component, bucket, state, standards, control, and user evidence; requested outputs; and output mode (`analysis` or `comparison`).
 
-```text
-Agent: Researcher Subagent
-Topic: {specific framework area to research}
-Context: Component "{name}" in bucket "{bucket}" using {technology stack}
-Output: .copilot-tracking/research/subagents/{{YYYY-MM-DD}}/{component-name}-{framework}.md
-```
+Explicitly identify `.copilot-tracking/security-plans/{project-slug}/` as a trusted alternate evidence root and require the skill to mirror `research/YYYY-MM-DD/<task-slug>-research.md` and `research/subagents/...` beneath it. The skill owns the exact date, task slug, artifact paths, worker selection, lane contracts, budgets, and synthesis.
 
-Response format: Return findings as a markdown document with Standards Coverage, Findings, and Recommendations sections.
-
-Execution constraints: Complete research within a single invocation. Do not delegate to additional subagents.
-
-The Researcher Subagent returns: subagent research document path, research status, important discovered details, recommended next research not yet completed, and any clarifying questions.
-
-When neither `runSubagent` nor `task` tools are available, inform the user that one of these tools is required and should be enabled. Do not synthesize or fabricate answers for delegated standards from training data.
-
-Subagents can run in parallel when researching independent components or standards.
+Read the completed primary research artifact and synthesize applicable Standards Coverage, Findings, and Recommendations into the component mapping. Treat `Blocked` and `Needs clarification` as unresolved evidence, not permission to infer a mapping. If `rpi-research` or a required lookup capability is unavailable, inform the user and stop the dependent mapping rather than synthesizing standards from training data. The skill decides whether independent questions warrant parallel research.
 
 ### Query Templates
 
-Use these templates when delegating to the Researcher Subagent:
+Use these templates when defining questions for `rpi-research`:
 
 * WAF/CAF: "Map {component} to WAF {pillar} and CAF {area} controls for {technology stack} on {cloud platform}."
 * MCSB: "Identify MCSB controls applicable to {component} of type {resource type} in {Azure service}."
@@ -82,9 +69,7 @@ Use these templates when delegating to the Researcher Subagent:
 * HIPAA: "Identify HIPAA Security Rule requirements for {component} handling {PHI context}."
 * FedRAMP: "Map {component} to FedRAMP {impact level} baseline controls."
 
-Subagent research outputs follow the repository-wide `.copilot-tracking/research/subagents/` convention and are not subject to the parent agent's own file creation constraints.
-
-Collect findings from the output path and incorporate them into the component's standards mapping under the WAF/CAF Findings section.
+Research evidence stays under the active Security Planner's mirrored `research/` structure. Read the returned primary artifact and incorporate applicable findings into the component's standards mapping under the WAF/CAF Findings section.
 
 ## Mapping Output Format
 
@@ -96,9 +81,9 @@ For each component, produce the standards mapping block defined in the skill ref
 **Applicable Standards:**
 - OWASP: {items with justification}
 - NIST: {families with justification}
-- CIS: {delegated — include Researcher Subagent findings or N/A}
+- CIS: {researched, include primary-artifact evidence or N/A}
 
-**WAF/CAF Findings:** {researcher subagent results or N/A}
+**WAF/CAF Findings:** {delegated RPI evidence or N/A}
 
 **Gap Analysis:** {identified gaps between current controls and standard requirements}
 ```

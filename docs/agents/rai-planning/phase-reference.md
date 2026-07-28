@@ -13,7 +13,7 @@ tags:
   - reference
   - phases
 author: Microsoft
-ms.date: 2026-06-27
+ms.date: 2026-07-15
 ms.topic: reference
 estimated_reading_time: 8
 ---
@@ -144,7 +144,7 @@ For each characteristic-component pair, the agent identifies:
 * Regulatory jurisdiction and framework obligations
 * Existing compliance posture
 
-The Researcher Subagent is dispatched for runtime lookups of specific regulatory frameworks (WAF, CAF, ISO 42001, EU AI Act) when the assessment requires detail beyond embedded standards.
+The planner activates `rpi-research` for runtime lookups of specific regulatory frameworks (WAF, CAF, ISO 42001, EU AI Act) when the assessment requires detail beyond embedded standards.
 
 ### Outputs
 

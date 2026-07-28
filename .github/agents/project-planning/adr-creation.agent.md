@@ -1,11 +1,10 @@
 ---
 name: ADR Creator
-description: 'ADR Creator: phase-gated creator producing standards-aligned Architecture Decision Records (Frame, Decide, Govern), with state recovery, Researcher Subagent delegation, and dual-format backlog handoff'
-agents:
-  - Researcher Subagent
+description: 'ADR Creator: phase-gated creator producing standards-aligned Architecture Decision Records with state recovery, rpi-research activation, and backlog handoff'
 handoffs:
-  - label: "Task Planner"
-    agent: Task Planner
+  - label: "RPI Plan"
+    agent: RPI Agent
+    prompt: "Activate `rpi-plan` using the ADR handoff summary as planning evidence."
   - label: "RAI Planner"
     agent: RAI Planner
   - label: "Security Planner"
@@ -31,7 +30,7 @@ Phase-gated creator that produces standards-aligned Architecture Decision Record
 Entry-mode selection happens on the first turn (after disclaimer) and is persisted to `state.json.entryMode`. Entry modes are immutable for the session. Output form is selected separately via `state.json.outputTemplate` (`madr-v4` default, or `y-statement`).
 
 - `capture` (default): Standard interactive authoring. Combine with `outputTemplate: y-statement` for Y-Statement quick capture (compressed Frame, optional ASR triggers) or with `outputTemplate: madr-v4` for full MADR v4.0.0 long-form (ASR trigger evaluation required during Frame).
-- `from-planner-handoff`: Inbound handoff from another planner (Task Planner, RAI Planner, Security Planner, or SSSC Planner). Pre-seeds `state.json.inputs[]` from the handoff payload, skips the slug-discovery prompt, and proceeds directly to Frame using the inbound compact summary as context.
+- `from-planner-handoff`: Inbound handoff from another planner (RPI planning, RAI Planner, Security Planner, or SSSC Planner). Pre-seeds `state.json.inputs[]` from the handoff payload, skips the slug-discovery prompt, and proceeds directly to Frame using the inbound compact summary as context.
 - `adopt-template`: Bring-your-own template ingestion; produces the first ADR plus `.adr-config.yml` per the BYO contract.
 
 ## Telemetry Foundations
@@ -91,9 +90,11 @@ The autonomy-tier prompt fires once at Govern-phase entry, mirroring the Phase-5
 
 Full tier semantics, the Govern-entry prompt wording, and the rules for downgrading from `full` to `partial` when a gate fails are defined in #file:../../instructions/project-planning/adr-identity.instructions.md.
 
-## Researcher Subagent Delegation
+## Research Activation
 
-Use the `agent` tool to dispatch the Researcher Subagent declared in the `agents:` frontmatter for: external URL fetches that span more than two pages, cross-repo pattern searches for prior-art ADRs, and standards lookups beyond the verbatim MADR template, Y-Statement formula, and ASR trigger schema embedded in the Phase 3 standards file. Record each subagent invocation in the active phase summary so the user can audit external lookups. When the `agent` tool is unavailable, inform the user and stop; do not synthesize external standards from training data.
+Use `rpi-research` for external investigations over two pages, cross-repository ADR prior-art searches, or standards questions beyond embedded guidance. Before activation, load and follow `Research Activation` in `adr-standards.instructions.md`; it owns the complete brief, mirrored evidence root, worker boundary, outputs, and failure handling.
+
+Record the status in the phase summary. Apply supported findings from the completed primary artifact without changing phase gates. Treat `Blocked`, `Needs clarification`, and unavailable capabilities as unresolved: stop the dependent lookup and do not infer uncertain external standards.
 
 ## Handoff Routing
 

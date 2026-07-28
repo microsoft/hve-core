@@ -2,7 +2,7 @@
 title: Contributing
 description: Guidelines for contributing code, documentation, and improvements to the HVE Core project
 author: HVE Core Team
-ms.date: 2026-06-04
+ms.date: 2026-07-16
 ms.topic: guide
 keywords:
   - contributing
@@ -85,10 +85,13 @@ This project uses several tools to maintain code quality and consistency:
 
 ### Validation Commands
 
-Run these npm scripts to validate your changes before submitting:
+Start with the local-safe command that matches your change. See the
+[Validation Commands and CI-Owned Lanes](./docs/contributing/validation.md)
+guide for package-root setup, targeted checks, explicit fixers, and named CI
+lanes with browser, model, moderation, or credential prerequisites.
 
 ```bash
-npm run lint:all                  # Run all linters
+npm run validate:local             # Run the local-safe validation aggregate
 npm run lint:md                   # Run markdownlint
 npm run lint:ps                   # Run PowerShell analyzer
 npm run lint:yaml                 # Run YAML linter
@@ -104,6 +107,10 @@ npm run spell-check               # Run cspell
 npm run format:tables             # Format markdown tables
 npm run test:ps                   # Run PowerShell tests
 ```
+
+`ci:*` names CI-owned lanes but does not prevent ordinary local npm execution.
+Generic validation does not select browser, model, moderation, service, or
+credential-dependent lanes automatically.
 
 For additional validation commands specific to AI artifacts (agents, prompts, instructions, skills), see [Common Standards](./docs/contributing/ai-artifacts-common.md).
 

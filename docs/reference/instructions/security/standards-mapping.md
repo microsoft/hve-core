@@ -1,8 +1,8 @@
 ---
 title: Security/Standards Mapping
-description: "OWASP and NIST security standards references with researcher subagent delegation for CIS, WAF, CAF, and other runtime lookups"
+description: "OWASP and NIST security standards references with rpi-research activation for CIS, WAF, CAF, and other runtime lookups"
 sidebar_position: 3
-ms.date: 2026-07-03
+ms.date: 2026-07-16
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->
@@ -17,7 +17,7 @@ ms.date: 2026-07-03
 ## What it does
 
 <!-- BEGIN AUTO-GENERATED: overview -->
-OWASP and NIST security standards references with researcher subagent delegation for CIS, WAF, CAF, and other runtime lookups
+OWASP and NIST security standards references with rpi-research activation for CIS, WAF, CAF, and other runtime lookups
 <!-- END AUTO-GENERATED: overview -->
 
 ## When to use it

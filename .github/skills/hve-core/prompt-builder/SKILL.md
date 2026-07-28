@@ -34,7 +34,7 @@ Preserve legacy `prompt-builder` activation while routing all source changes, re
 
 ## Constraints
 
-* Do not dispatch `Prompt Tester`, `Prompt Evaluator`, or `Prompt Updater`.
+* Do not dispatch retired named lifecycle workers.
 * Do not maintain a second sandbox, status vocabulary, or quality rubric.
 * Do not treat reference files as write targets without explicit approval.
 

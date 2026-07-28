@@ -29,7 +29,7 @@ Describe 'eject' -Tag 'Unit' {
                 source = 'microsoft/hve-core'
                 version = '1.0.0'
                 files = @{
-                    '.github/agents/task-implementor.agent.md' = @{
+                    '.github/agents/sample-agent.agent.md' = @{
                         version = '1.0.0'
                         sha256 = 'abc123'
                         status = 'managed'
@@ -38,10 +38,10 @@ Describe 'eject' -Tag 'Unit' {
             }
             $manifest | ConvertTo-Json -Depth 10 | Set-Content '.hve-tracking.json'
 
-            & $script:scriptPath -FilePath '.github/agents/task-implementor.agent.md'
+            & $script:scriptPath -FilePath '.github/agents/sample-agent.agent.md'
 
             $updated = Get-Content '.hve-tracking.json' | ConvertFrom-Json -AsHashtable
-            $updated.files['.github/agents/task-implementor.agent.md'].status | Should -Be 'ejected'
+            $updated.files['.github/agents/sample-agent.agent.md'].status | Should -Be 'ejected'
         }
 
         It 'Adds ejectedAt timestamp to the file entry' {
@@ -49,7 +49,7 @@ Describe 'eject' -Tag 'Unit' {
                 source = 'microsoft/hve-core'
                 version = '1.0.0'
                 files = @{
-                    '.github/agents/task-implementor.agent.md' = @{
+                    '.github/agents/sample-agent.agent.md' = @{
                         version = '1.0.0'
                         sha256 = 'abc123'
                         status = 'managed'
@@ -58,10 +58,10 @@ Describe 'eject' -Tag 'Unit' {
             }
             $manifest | ConvertTo-Json -Depth 10 | Set-Content '.hve-tracking.json'
 
-            & $script:scriptPath -FilePath '.github/agents/task-implementor.agent.md'
+            & $script:scriptPath -FilePath '.github/agents/sample-agent.agent.md'
 
             $updated = Get-Content '.hve-tracking.json' | ConvertFrom-Json -AsHashtable
-            $updated.files['.github/agents/task-implementor.agent.md'].ejectedAt | Should -Not -BeNullOrEmpty
+            $updated.files['.github/agents/sample-agent.agent.md'].ejectedAt | Should -Not -BeNullOrEmpty
         }
 
         It 'Preserves other files in the manifest' {
@@ -69,12 +69,12 @@ Describe 'eject' -Tag 'Unit' {
                 source = 'microsoft/hve-core'
                 version = '1.0.0'
                 files = @{
-                    '.github/agents/task-implementor.agent.md' = @{
+                    '.github/agents/sample-agent.agent.md' = @{
                         version = '1.0.0'
                         sha256 = 'abc123'
                         status = 'managed'
                     }
-                    '.github/agents/task-researcher.agent.md' = @{
+                    '.github/agents/example-agent.agent.md' = @{
                         version = '1.0.0'
                         sha256 = 'def456'
                         status = 'managed'
@@ -83,10 +83,10 @@ Describe 'eject' -Tag 'Unit' {
             }
             $manifest | ConvertTo-Json -Depth 10 | Set-Content '.hve-tracking.json'
 
-            & $script:scriptPath -FilePath '.github/agents/task-implementor.agent.md'
+            & $script:scriptPath -FilePath '.github/agents/sample-agent.agent.md'
 
             $updated = Get-Content '.hve-tracking.json' | ConvertFrom-Json -AsHashtable
-            $updated.files['.github/agents/task-researcher.agent.md'].status | Should -Be 'managed'
+            $updated.files['.github/agents/example-agent.agent.md'].status | Should -Be 'managed'
         }
     }
 
@@ -109,7 +109,7 @@ Describe 'eject' -Tag 'Unit' {
                 source = 'microsoft/hve-core'
                 version = '1.0.0'
                 files = @{
-                    '.github/agents/task-implementor.agent.md' = @{
+                    '.github/agents/sample-agent.agent.md' = @{
                         version = '1.0.0'
                         sha256 = 'abc123'
                         status = 'managed'
@@ -121,7 +121,7 @@ Describe 'eject' -Tag 'Unit' {
             & $script:scriptPath -FilePath '.github/agents/nonexistent.md'
 
             $updated = Get-Content '.hve-tracking.json' | ConvertFrom-Json -AsHashtable
-            $updated.files['.github/agents/task-implementor.agent.md'].status | Should -Be 'managed'
+            $updated.files['.github/agents/sample-agent.agent.md'].status | Should -Be 'managed'
         }
     }
 

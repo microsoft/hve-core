@@ -1,9 +1,9 @@
 ---
 title: 'DT Planning Context'
-description: Adjustments augmenting Task Planner behavior when planning artifacts that originated from a Design Thinking process.
+description: Adjustments augmenting rpi-plan when planning artifacts that originated from a Design Thinking process.
 ---
 
-When Task Planner operates on artifacts that originated from a Design Thinking process, these adjustments augment standard planning behavior. The Planner does not receive direct DT handoffs; DT context arrives through the Researcher's output. The plan originates from a Design Thinking process, so fidelity constraints, stakeholder coverage, and iteration support shape planning decisions.
+When `rpi-plan` operates on artifacts that originated from a Design Thinking process, these adjustments augment the standard planning workflow. The planning phase does not receive direct DT handoffs; DT context arrives through the `rpi-research` output. Fidelity constraints, stakeholder coverage, and iteration support shape planning decisions.
 
 ## Planning Adjustments
 
@@ -17,27 +17,27 @@ When Task Planner operates on artifacts that originated from a Design Thinking p
 
 ## DT-Specific Planning Patterns
 
-* Use confidence markers (`validated`, `assumed`, `unknown`, `conflicting`) from the handoff artifact to weight task priority and risk. Items marked `unknown` or `conflicting` require resolution steps before downstream implementation. Items marked `assumed` carry elevated risk; include verification steps or note them as research dependencies for the researcher to resolve.
+* Use confidence markers (`validated`, `assumed`, `unknown`, `conflicting`) from the handoff artifact to weight task priority and risk. Items marked `unknown` or `conflicting` require resolution steps before downstream implementation. Items marked `assumed` carry elevated risk; include verification steps or note them as research dependencies for `rpi-research` to resolve.
 * Verify stakeholder coverage in each plan phase. All stakeholder groups from the handoff's stakeholder map (an artifact entry of type `stakeholder-map` in the handoff `artifacts` array) appear in at least one validation step. When the handoff contains no stakeholder map artifact, flag this gap and recommend updating the handoff before planning proceeds.
 * Plan phases may include iteration loops that direct work back to an earlier DT method rather than only forward through implementation. Represent return paths as conditional outcomes within a phase's completion criteria (for example, "If core assumptions remain unresolved, return to DT Method 2 for targeted research").
 * Success criteria match the space in which the planned deliverables will be produced: rough acceptance in Problem Space, scrappy acceptance in Solution Space, functional acceptance in Implementation Space.
-* Reference DT artifact paths from the handoff in the plan's context section so implementers can trace decisions back to research and synthesis outputs.
+* Reference DT artifact paths from the handoff in the plan's context section so `rpi-implement` can trace decisions back to research and synthesis outputs.
 * For Solution Space plans, enforce anti-polish: scope deliverables to scrappy fidelity and flag production-quality requests as out-of-scope for the current space.
 
 ## Phase Architecture for DT-Origin Plans
 
-Plans originating from DT handoffs follow this content architecture. This describes the phases of the resulting plan, not a replacement for the planner's own workflow phases.
+Plans originating from DT handoffs follow this content architecture. This describes the phases of the resulting plan, not a replacement for the `rpi-plan` workflow.
 
 | Phase                  | Purpose                                                                                                                                                                                                                                               |
 |------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | Context Integration    | Consume the DT handoff artifact, verify confidence markers, identify constraints inherited from the originating space, and establish plan-level success criteria aligned with DT exit signals                                                         |
 | Implementation         | Execute implementation tasks with DT constraints applied. Fidelity tier limits scope, stakeholder map informs acceptance criteria, and `assumed` items carry explicit verification steps                                                              |
 | Stakeholder Validation | Validate deliverables against each stakeholder group from the handoff's stakeholder map, using space-appropriate evaluation (rough sketches for Problem Space, scrappy prototypes for Solution Space, functional prototypes for Implementation Space) |
-| DT Reconnection        | Assess whether findings warrant returning to DT coaching, document outcomes for potential DT method re-entry, and produce a handoff artifact for downstream agents or DT coach return                                                                 |
+| DT Reconnection        | Assess whether findings warrant returning to DT coaching, document outcomes for potential DT method re-entry, and produce context for the next RPI phase or DT coach return                                                                           |
 
 ## Return Path Triggers
 
-Recommend returning to DT coaching rather than proceeding to implementation when any of these conditions emerge:
+Recommend returning to DT coaching rather than proceeding to `rpi-implement` when any of these conditions emerge:
 
 * Plan decomposition reveals that core assumptions from the DT synthesis remain `unknown` or `conflicting` after research.
 * Stakeholder validation during planning surfaces groups absent from the original stakeholder map.

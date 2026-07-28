@@ -13,7 +13,7 @@ tags:
   - architecture
   - reference
 author: Microsoft
-ms.date: 2026-06-27
+ms.date: 2026-07-15
 ms.topic: reference
 estimated_reading_time: 7
 ---
@@ -24,8 +24,8 @@ estimated_reading_time: 7
 flowchart TD
   subgraph Agent ["RAI Planner Agent"]
     RP["rai-planner.agent.md"]
-    RS["Researcher Subagent"]
-    RP -->|"delegates framework lookups"| RS
+    RR["rpi-research"]
+    RP -->|"activates framework research"| RR
   end
 
   subgraph State ["Assessment State"]
@@ -152,7 +152,7 @@ When conversation context is compacted, a six-step recovery process reconstructs
 * All files are created under `.copilot-tracking/rai-plans/{project-slug}/`
 * The agent never modifies application source code
 * Embedded standards (NIST AI RMF 1.0) are referenced from the rai-standards instruction file
-* Additional framework lookups (WAF, CAF, ISO 42001, EU AI Act details) are delegated to the Researcher Subagent
+* Additional framework lookups (WAF, CAF, ISO 42001, EU AI Act details) activate `rpi-research`
 * In `from-security-plan` mode, security plan artifacts are read-only
 
 ## Related Files

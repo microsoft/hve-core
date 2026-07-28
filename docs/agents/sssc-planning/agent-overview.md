@@ -11,7 +11,7 @@ tags:
   - agents
   - security
 author: Microsoft
-ms.date: 2026-06-27
+ms.date: 2026-07-15
 ms.topic: reference
 estimated_reading_time: 7
 ---
@@ -24,7 +24,7 @@ The SSSC Planner is a phase-based conversational agent that produces supply chai
 flowchart TD
   subgraph Agent
     SP["SSSC Planner"]
-    RS["Researcher Subagent"]
+    RR["rpi-research"]
   end
 
   subgraph State
@@ -37,7 +37,7 @@ flowchart TD
     I2["planner base (shared)"]
   end
 
-  SP -->|"delegates"| RS
+  SP -->|"activates standards research"| RR
   SP -->|"reads/writes"| SJ
   SP -->|"generates"| PF
   SP -->|"follows"| I1 & I2
@@ -117,7 +117,7 @@ When conversation context was compacted by the chat system, the agent also reads
 
 * All generated files are placed under `.copilot-tracking/sssc-plans/{project-slug}/`.
 * The agent never modifies source code or files outside its tracking directory.
-* The Researcher Subagent is dispatched for WAF/CAF runtime lookups when cloud-hosted components are in scope.
+* The planner activates `rpi-research` for WAF/CAF runtime lookups when cloud-hosted components are in scope.
 * Cross-agent links (`securityPlannerLink`, `raiPlannerLink`) are populated but the agent does not force handoff to other agents.
 
 ## Related Files

@@ -64,21 +64,17 @@ items:
     kind: agent
     maturity: experimental
   # Subagents
-  - path: .github/agents/hve-core/subagents/researcher-subagent.agent.md
+  - path: .github/agents/hve-core/subagents/rpi-planner.agent.md
     kind: agent
-  - path: .github/agents/hve-core/subagents/plan-validator.agent.md
-    kind: agent
-  - path: .github/agents/hve-core/subagents/phase-implementor.agent.md
-    kind: agent
-  - path: .github/agents/hve-core/subagents/rpi-validator.agent.md
-    kind: agent
-  - path: .github/agents/hve-core/subagents/implementation-validator.agent.md
+  - path: .github/agents/hve-core/subagents/rpi-researcher.agent.md
     kind: agent
   - path: .github/agents/project-planning/subagents/brd-quality-reviewer.agent.md
     kind: agent
   - path: .github/agents/project-planning/subagents/prd-quality-reviewer.agent.md
     kind: agent
   # Prompts
+  - path: .github/prompts/hve-core/rpi.prompt.md
+    kind: prompt
   - path: .github/prompts/accessibility/accessibility-coverage-matrix.prompt.md
     kind: prompt
     maturity: experimental
@@ -125,6 +121,18 @@ items:
   - path: .github/skills/project-planning/rai-planner
     kind: skill
     maturity: experimental
+  - path: .github/skills/rpi/rpi-research
+    kind: skill
+  - path: .github/skills/rpi/rpi-plan
+    kind: skill
+  - path: .github/skills/rpi/rpi-plan-critique
+    kind: skill
+  - path: .github/skills/rpi/rpi-implement
+    kind: skill
+  - path: .github/skills/rpi/rpi-review
+    kind: skill
+  - path: .github/skills/rpi/rpi-quick
+    kind: skill
   - path: .github/skills/rai/rai-standards
     kind: skill
     maturity: experimental
