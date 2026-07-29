@@ -557,6 +557,23 @@ Describe 'New-AssetOverviewBody' -Tag 'Unit' {
         New-AssetOverviewBody -Model $model | Should -Be 'First line Second line'
     }
 
+    It 'Preserves a description at the line length limit' {
+        $description = 'x' * 500
+        $model = [PSCustomObject]@{ Description = $description }
+        New-AssetOverviewBody -Model $model | Should -Be $description
+    }
+
+    It 'Wraps long prose on word boundaries within the line length limit' {
+        $description = (@('word') * 101) -join ' '
+        $model = [PSCustomObject]@{ Description = $description }
+
+        $lines = (New-AssetOverviewBody -Model $model) -split "`n"
+
+        $lines | Should -HaveCount 2
+        $lines | Where-Object { $_.Length -gt 500 } | Should -BeNullOrEmpty
+        $lines -join ' ' | Should -Be $description
+    }
+
     It 'Trims surrounding whitespace' {
         $model = [PSCustomObject]@{ Description = '  padded description  ' }
         New-AssetOverviewBody -Model $model | Should -Be 'padded description'

@@ -1,8 +1,8 @@
 ---
 title: privacy-standards
 description: "Privacy planning reference for data-flow reasoning, standards mapping, and DPIA thresholds"
-sidebar_position: 2
-ms.date: 2026-07-03
+sidebar_position: 3
+ms.date: 2026-07-28
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->

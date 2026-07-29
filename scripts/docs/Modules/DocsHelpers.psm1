@@ -839,9 +839,10 @@ function New-AssetOverviewBody {
         Renders the overview ("What it does") region body for an asset.
 
     .DESCRIPTION
-        Returns the asset description collapsed to a single line, or a stable
-        fallback sentence when the asset declares no description. Shared by the
-        generator and the validator so the sync check renders identically.
+        Returns the normalized asset description wrapped at 500 characters on
+        word boundaries, or a stable fallback sentence when the asset declares
+        no description. Shared by the generator and the validator so the sync
+        check renders identically.
 
     .PARAMETER Model
         Page model from New-AssetPageModel.
@@ -858,7 +859,33 @@ function New-AssetOverviewBody {
     if ([string]::IsNullOrWhiteSpace($Model.Description)) {
         return 'This asset does not declare a description.'
     }
-    return ($Model.Description -replace '\r?\n', ' ').Trim()
+
+    $description = ($Model.Description -replace '\r?\n', ' ').Trim()
+    if ($description.Length -le 500) {
+        return $description
+    }
+
+    $lines = [System.Collections.Generic.List[string]]::new()
+    $remaining = $description
+    while ($remaining.Length -gt 500) {
+        $breakIndex = -1
+        for ($index = 500; $index -ge 0; $index--) {
+            if ([char]::IsWhiteSpace($remaining[$index])) {
+                $breakIndex = $index
+                break
+            }
+        }
+
+        if ($breakIndex -lt 1) {
+            break
+        }
+
+        $lines.Add($remaining.Substring(0, $breakIndex).TrimEnd())
+        $remaining = $remaining.Substring($breakIndex).TrimStart()
+    }
+
+    $lines.Add($remaining)
+    return $lines -join "`n"
 }
 
 Export-ModuleMember -Function @(
