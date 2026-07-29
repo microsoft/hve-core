@@ -78,18 +78,18 @@ Separation buys three things:
 
 Each top-level directory holds one kind of durable context:
 
-| Directory        | Holds                                                                      |
-|------------------|----------------------------------------------------------------------------|
-| `project/`       | Scope, timeline, workstreams, goals, success criteria, open questions      |
-| `people/`        | Stakeholders, roles, responsibilities, preferences, availability           |
-| `organizations/` | Customers, partners, vendors, internal teams                               |
-| `systems/`       | Applications, platforms, data stores, integrations, technical constraints  |
-| `concepts/`      | Domain language, business concepts, policies, processes, patterns          |
-| `events/`        | Meetings, emails, chats, workshops, research captures, agent sessions      |
-| `decisions/`     | Architectural, delivery, product, or process decisions                     |
-| `risks/`         | Known risks, assumptions, mitigations, unresolved uncertainty              |
-| `deliverables/`  | Proposals, readouts, decks, summaries, designs, plans                      |
-| `assets/`        | Source files, diagrams, media, templates, supporting material              |
+| Directory        | Holds                                                                     |
+|------------------|---------------------------------------------------------------------------|
+| `project/`       | Scope, timeline, workstreams, goals, success criteria, open questions     |
+| `people/`        | Stakeholders, roles, responsibilities, preferences, availability          |
+| `organizations/` | Customers, partners, vendors, internal teams                              |
+| `systems/`       | Applications, platforms, data stores, integrations, technical constraints |
+| `concepts/`      | Domain language, business concepts, policies, processes, patterns         |
+| `events/`        | Meetings, emails, chats, workshops, research captures, agent sessions     |
+| `decisions/`     | Architectural, delivery, product, or process decisions                    |
+| `risks/`         | Known risks, assumptions, mitigations, unresolved uncertainty             |
+| `deliverables/`  | Proposals, readouts, decks, summaries, designs, plans                     |
+| `assets/`        | Source files, diagrams, media, templates, supporting material             |
 
 Treat the taxonomy as a starting point. Add directories only when content
 demands them, and keep one clear admission rule per directory so contributors
@@ -170,3 +170,8 @@ useful, natural extensions include a scaffold generator or bootstrap skill for
 the starter taxonomy, schema validation for entity frontmatter, and a curator
 agent that automates the maintenance pass. Each of those should be its own
 proposal.
+
+<!-- markdownlint-disable MD036 -->
+*🤖 Crafted with precision by ✨Copilot following brilliant human instruction,
+then carefully refined by our team of discerning human reviewers.*
+<!-- markdownlint-enable MD036 -->
