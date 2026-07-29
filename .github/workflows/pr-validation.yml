@@ -27,6 +27,10 @@ jobs:
     with:
       soft-fail: false
 
+  pip-install-lint:
+    name: Pip Install Lint
+    uses: ./.github/workflows/pip-install-lint.yml
+
   markdown-lint:
     name: Markdown Lint
     uses: ./.github/workflows/markdown-lint.yml

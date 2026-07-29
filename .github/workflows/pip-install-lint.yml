@@ -1,0 +1,20 @@
+name: Pip Install Lint
+
+on:
+  workflow_call:
+
+jobs:
+  check-bare-pip-install:
+    name: Check for bare pip install
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+
+      - name: Set up Python
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
+        with:
+          python-version: '3.x'
+
+      - name: Run bare pip install lint check
+        run: python scripts/lint_pip_install.py

@@ -161,7 +161,7 @@ def filter_pdf_pages(pdf_path: Path, pages: list[int], output_path: Path) -> Pat
         import fitz  # noqa: PLC0415 — PyMuPDF
     except ImportError:
         logger.error(
-            "PyMuPDF is required for slide filtering. Install via: pip install pymupdf"
+            "PyMuPDF is required for slide filtering. Install via: uv pip install pymupdf"
         )
         sys.exit(EXIT_FAILURE)
 
