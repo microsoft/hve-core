@@ -550,13 +550,13 @@ preferred for new entries.
 
 Security scripts integrate with these workflows:
 
-| Workflow                        | Script(s)                      | Trigger                    |
-|---------------------------------|--------------------------------|----------------------------|
-| `dependency-pinning-scan.yml`   | `Test-DependencyPinning.ps1`   | PR, schedule               |
-| `sha-staleness-check.yml`       | `Test-SHAStaleness.ps1`        | Schedule                   |
-| `pr-validation.yml`             | `Test-DependencyPinning.ps1`   | Pull request               |
-| `pip-audit.yml`                 | `Invoke-PipAudit.ps1`          | PR, schedule               |
-| `workflow-permissions-scan.yml` | `Test-WorkflowPermissions.ps1` | PR, schedule               |
+| Workflow                        | Script(s)                      | Trigger                       |
+|---------------------------------|--------------------------------|-------------------------------|
+| `dependency-pinning-scan.yml`   | `Test-DependencyPinning.ps1`   | PR, schedule                  |
+| `sha-staleness-check.yml`       | `Test-SHAStaleness.ps1`        | Schedule                      |
+| `pr-validation.yml`             | `Test-DependencyPinning.ps1`   | Pull request                  |
+| `pip-audit.yml`                 | `Invoke-PipAudit.ps1`          | PR, schedule                  |
+| `workflow-permissions-scan.yml` | `Test-WorkflowPermissions.ps1` | PR, schedule                  |
 | `dangerous-workflow-scan.yml`   | `Test-DangerousWorkflow.ps1`   | Called by `pr-validation.yml` |
 
 `dangerous-workflow-scan.yml` is a reusable `workflow_call` workflow rather than a
