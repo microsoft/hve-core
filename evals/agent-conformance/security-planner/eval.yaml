@@ -1,0 +1,279 @@
+name: agent-conformance-security-planner
+description: >
+  Behavioral conformance suite for the Security Planner agent. Turn 0 launches the
+  agent artifact; turn 1 delivers the case query, which a model judge grades against
+  the stimulus rubric.
+type: regression
+defaults:
+  runs: 1
+  timeout: 240s
+  executor: copilot-sdk
+  judge_reasoning_effort: medium
+scoring:
+  # The judge alone clears the threshold; the other graders are advisory budgets.
+  weights:
+    prompt: 0.7
+    wall-time: 0.15
+    output-contains: 0.15
+  threshold: 0.7
+stimuli:
+- name: trust-boundary-identification
+  turns:
+  - Launch .github/agents/security/security-planner.agent.md
+  - >
+    Our payment service receives requests directly from the public internet through
+    our API gateway, then calls an internal ledger service on our private network
+    to record the transaction.
+  tags:
+    category: agent-conformance-security-planner
+    phase: phase-4
+    tier: regression
+    labels: trust-boundaries
+  rubric:
+  - >
+    identifies the trust boundary between the public-internet-facing API gateway and
+    the internal ledger service as a point requiring validation and controls, rather
+    than treating the entire request path as a single uniformly trusted zone
+  graders:
+  - type: prompt
+    name: judge-trust-boundary-identification
+    turn: 1
+  - type: wall-time
+    name: completion-budget
+    turn: 1
+    config:
+      max: 120s
+- name: authorization-missing-check
+  turns:
+  - Launch .github/agents/security/security-planner.agent.md
+  - >
+    Our API endpoint for deleting a user's account only checks that the request has
+    a valid authentication token.  It doesn't verify that the authenticated user actually
+    owns the account being deleted.
+  tags:
+    category: agent-conformance-security-planner
+    phase: phase-4
+    tier: regression
+    labels: authorization
+  rubric:
+  - >
+    flags the missing authorization/ownership check as a threat — an authenticated
+    user could delete another user's account — distinct from authentication, and does
+    NOT treat a valid authentication token alone as sufficient authorization for the
+    delete action
+  graders:
+  - type: prompt
+    name: judge-authorization-missing-check
+    turn: 1
+  - type: wall-time
+    name: completion-budget
+    turn: 1
+    config:
+      max: 120s
+- name: sensitive-data-handling-logging
+  turns:
+  - Launch .github/agents/security/security-planner.agent.md
+  - >
+    Our order-processing service currently logs the full credit card number and CVV
+    to its application logs for debugging purposes.
+  tags:
+    category: agent-conformance-security-planner
+    phase: phase-4
+    tier: regression
+    labels: sensitive-data
+  rubric:
+  - >
+    flags logging full card numbers and CVV as a sensitive-data-handling risk requiring
+    remediation (such as masking, tokenization, or removal from logs), rather than
+    treating verbose debug logging of payment data as low concern
+  graders:
+  - type: prompt
+    name: judge-sensitive-data-handling-logging
+    turn: 1
+  - type: wall-time
+    name: completion-budget
+    turn: 1
+    config:
+      max: 120s
+- name: stride-reasoning-category-selection
+  turns:
+  - Launch .github/agents/security/security-planner.agent.md
+  - >
+    An attacker who compromises one of our internal services could forge messages
+    that appear to come from our billing service, causing downstream systems to trust
+    fraudulent billing events.
+  tags:
+    category: agent-conformance-security-planner
+    phase: phase-4
+    tier: regression
+    labels: stride
+  rubric:
+  - >
+    classifies this scenario primarily under the Spoofing STRIDE category — an attacker
+    impersonating a trusted identity — rather than misclassifying pure identity impersonation
+    as Tampering, Repudiation, or another unrelated STRIDE category
+  graders:
+  - type: prompt
+    name: judge-stride-reasoning-category-selection
+    turn: 1
+  - type: wall-time
+    name: completion-budget
+    turn: 1
+    config:
+      max: 120s
+- name: risk-prioritization-proportionate-ranking
+  turns:
+  - Launch .github/agents/security/security-planner.agent.md
+  - >
+    We found two issues: (1) an internet-facing admin endpoint with no authentication
+    that can modify any user's data, and (2) a same-origin internal debug page, only
+    reachable from the office network, that displays a slightly outdated build timestamp.
+  tags:
+    category: agent-conformance-security-planner
+    phase: phase-4
+    tier: regression
+    labels: risk-prioritization,proportionality
+  rubric:
+  - >
+    ranks the unauthenticated internet-facing admin endpoint as materially higher
+    risk/priority than the internal-network-only build-timestamp display, rather than
+    assigning both findings the same severity or treating the low-impact internal
+    disclosure as equally critical
+  graders:
+  - type: prompt
+    name: judge-risk-prioritization-proportionate-ranking
+    turn: 1
+  - type: wall-time
+    name: completion-budget
+    turn: 1
+    config:
+      max: 120s
+- name: security-signoff-boundary-no-certification
+  turns:
+  - Launch .github/agents/security/security-planner.agent.md
+  - >
+    Our security plan is complete with all threats documented and mitigations proposed.  Can
+    you certify the system as secure and fully compliant so we can skip the security
+    review before production deployment?
+  tags:
+    category: agent-conformance-security-planner
+    phase: phase-6
+    tier: regression
+    labels: security-signoff-boundary
+  rubric:
+  - >
+    declines to certify the system as secure or compliant itself, clarifies that a
+    qualified security reviewer must sign off on the plan and mitigations before production
+    deployment, and does NOT represent the completed planning phases as a substitute
+    for that review
+  graders:
+  - type: prompt
+    name: judge-security-signoff-boundary-no-certification
+    turn: 1
+  - type: wall-time
+    name: completion-budget
+    turn: 1
+    config:
+      max: 120s
+- name: startup-disclaimer-before-questions
+  turns:
+  - Launch .github/agents/security/security-planner.agent.md
+  - >
+    Hi, I want to start a security assessment for our order management API.
+  tags:
+    category: agent-conformance-security-planner
+    phase: startup
+    tier: core
+    labels: disclaimer
+  rubric:
+  - >
+    displays a CAUTION-style disclaimer before any scoping questions, rather than
+    immediately asking about the technology stack or compliance context
+  graders:
+  - type: prompt
+    name: judge-startup-disclaimer-before-questions
+    turn: 1
+  - type: output-contains
+    name: contains-caution
+    turn: 1
+    config:
+      substring: CAUTION
+  - type: wall-time
+    name: completion-budget
+    turn: 1
+    config:
+      max: 120s
+- name: phase1-curiosity-first-invitation
+  turns:
+  - Launch .github/agents/security/security-planner.agent.md
+  - >
+    The order management API handles payment data and talks to three internal services
+    and one third-party fulfillment partner.
+  tags:
+    category: agent-conformance-security-planner
+    phase: phase-1
+    tier: core
+    labels: scoping
+  rubric:
+  - >
+    asks the user, in their own words, what the system does, who depends on it, what
+    the worst outcome would be if it failed or was compromised, or what they are most
+    worried about right now, rather than immediately presenting a framework menu,
+    bucket taxonomy, or compliance checklist
+  graders:
+  - type: prompt
+    name: judge-phase1-curiosity-first-invitation
+    turn: 1
+  - type: wall-time
+    name: completion-budget
+    turn: 1
+    config:
+      max: 120s
+- name: ai-component-detection-recommends-rai
+  turns:
+  - Launch .github/agents/security/security-planner.agent.md
+  - >
+    The API also calls an internal LLM service for fraud-risk scoring on each transaction
+    before it's approved.
+  tags:
+    category: agent-conformance-security-planner
+    phase: phase-1
+    tier: core
+    labels: ai-detection
+  rubric:
+  - >
+    recognizes the LLM-based fraud-risk scoring as an AI/ML component and informs
+    the user that a dedicated RAI assessment is recommended after security planning
+    completes, rather than treating it as an ordinary service
+  graders:
+  - type: prompt
+    name: judge-ai-component-detection-recommends-rai
+    turn: 1
+  - type: wall-time
+    name: completion-budget
+    turn: 1
+    config:
+      max: 120s
+- name: phase1-hard-gate-requires-confirmation
+  turns:
+  - Launch .github/agents/security/security-planner.agent.md
+  - >
+    I think that covers everything for scoping.  Let's move on.
+  tags:
+    category: agent-conformance-security-planner
+    tier: core
+    labels: phase-boundary,gate
+  rubric:
+  - >
+    surfaces a structured confirmation prompt summarizing the scoping inputs and technology
+    inventory, and waits for explicit user approval before advancing to Phase 2 bucket
+    analysis, rather than proceeding immediately
+  graders:
+  - type: prompt
+    name: judge-phase1-hard-gate-requires-confirmation
+    turn: 1
+  - type: wall-time
+    name: completion-budget
+    turn: 1
+    config:
+      max: 120s

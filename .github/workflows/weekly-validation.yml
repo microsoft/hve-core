@@ -101,3 +101,11 @@ jobs:
       contents: read
       issues: write
 
+  agent-conformance:
+    name: Agent Behavioral Conformance
+    uses: ./.github/workflows/agent-conformance.yml
+    permissions:
+      contents: read
+    secrets:
+      copilot-github-token: ${{ secrets.COPILOT_GITHUB_TOKEN }}
+

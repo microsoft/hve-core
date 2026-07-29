@@ -69,7 +69,8 @@ jobs:
           # @github/copilot-linuxmusl-arm64 and @github/copilot-linuxmusl-x64
           # added in v1.0.63) use a non-SPDX proprietary license
           # (LicenseRef-bad-see-license-in-license.md); it is GitHub's own
-          # CLI toolchain, deliberately used in beval.yml.
+          # CLI toolchain, pulled transitively via @github/copilot-sdk by the
+          # vally copilot-sdk executor used to run the eval suites.
           # pkg:npm/hve-core is the private root package (never published to npm).
           # pkg:pypi/certifi uses MPL-2.0 (Mozilla CA bundle).
           # pkg:pypi/charset-normalizer is MIT licensed but some older wheel

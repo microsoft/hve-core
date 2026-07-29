@@ -29,7 +29,6 @@
     "docs/docusaurus/coverage/**",
     "dependency-pinning-artifacts/**",
     "evals/results/**",
-    "evals/beval/**/results/**",
     "vally-results/**",
     "evals/agent-behavior/eval.yaml"
   ],
@@ -141,6 +140,7 @@
     "octocat",
     "onclick",
     "optimi",
+    "overbroad",
     "packageable",
     "parseable",
     "pascalcase",
@@ -165,6 +165,7 @@
     "stimul",
     "subcat",
     "subdirs",
+    "tabindex",
     "terroris",
     "thiserror",
     "trustworthi",
