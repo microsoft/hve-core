@@ -1008,6 +1008,7 @@ def _mode_collect() -> int:
                     handle.write(json.dumps(summary) + "\n")
     return 0
 
+
 def _workspace_storage_dirs() -> list[Path]:
     """Return candidate VS Code workspaceStorage roots for this host.
 
@@ -1036,9 +1037,7 @@ def _mode_aggregate_debug(out: str, hook_files: list[str]) -> int:
     if not sids:
         return 1
 
-    patterns = [
-        str(base / "**/debug-logs/**/*.jsonl") for base in _workspace_storage_dirs()
-    ]
+    patterns = [str(base / "**/debug-logs/**/*.jsonl") for base in _workspace_storage_dirs()]
     count = 0
     with open(out, "w", encoding="utf-8") as writer:
         for pattern in patterns:
