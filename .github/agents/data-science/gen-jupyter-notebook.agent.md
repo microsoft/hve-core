@@ -15,7 +15,7 @@ Collect information about available data before generating notebook cells.
 
 Actions:
 
-1. Inspect data dictionary outputs in `outputs/` (for example, `data-dictionary-*.md`, `data-summary-*.md`).
+1. Inspect data dictionary outputs in `outputs/` (for example, `data-dictionary-*.md`).
 2. Identify dataset locations in `data/` and determine relative paths from `notebooks/`.
 3. Catalog primary entities, variable types (numeric, categorical, datetime, boolean), and potential join keys or time indices.
 
