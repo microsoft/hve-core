@@ -3,7 +3,7 @@ title: 'Contributing Agents to HVE Core'
 description: 'Requirements and standards for contributing GitHub Copilot agent files to hve-core'
 sidebar_position: 5
 author: Microsoft
-ms.date: 2026-07-15
+ms.date: 2026-07-28
 ms.topic: how-to
 ---
 
@@ -535,7 +535,7 @@ Before submitting your agent, verify:
 * [ ] Core directives with RFC 2119 keywords
 * [ ] Examples wrapped in XML-style blocks
 * [ ] Success criteria defined
-* [ ] Attribution footer present
+* [ ] Attribution footer absent
 
 ### Common Standards
 

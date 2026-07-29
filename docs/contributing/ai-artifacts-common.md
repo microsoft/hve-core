@@ -3,7 +3,7 @@ title: 'AI Artifacts Common Standards'
 description: 'Common standards and quality gates for all AI artifact contributions to hve-core'
 sidebar_position: 2
 author: Microsoft
-ms.date: 2026-07-15
+ms.date: 2026-07-28
 ms.topic: reference
 ---
 
@@ -657,7 +657,7 @@ See [official documentation](https://example.com) for details.
 
 * Starts with frontmatter (YAML between `---` delimiters)
 * Followed by markdown content
-* Omits attribution suffix from the `description` field (added automatically at distribution)
+* Omits any attribution suffix from the `description` field
 * Single newline at EOF
 
 ## RFC 2119 Directive Language

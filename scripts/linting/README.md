@@ -2,7 +2,7 @@
 title: Linting Scripts
 description: PowerShell scripts for code quality validation and documentation checks
 author: HVE Core Team
-ms.date: 2026-07-08
+ms.date: 2026-07-28
 ms.topic: reference
 keywords:
   - powershell
@@ -531,11 +531,57 @@ The linting directory also contains these scripts that are not yet covered in th
 | `Test-ExtensionArtifactNaming.ps1` | Validate extension-vsix artifact producer and consumer naming across the extension release workflows |
 | `Update-ModelCatalog.ps1`          | Refresh the model catalog from GitHub docs data                                                      |
 | `Format-MarkdownTables.ps1`        | Normalize markdown tables to the repository formatting convention                                    |
+| `Validate-AssetDocs.ps1`           | Validate asset documentation coverage, orphans, sync, structure, and authored completeness           |
+
+#### `Validate-AssetDocs.ps1`
+
+Enforces the documentation-as-a-required-artifact contract for every documentable
+GenAI asset (agent, prompt, instruction, skill) against the `docs/reference` tree.
+It runs five checks and writes a JSON summary, exiting non-zero when any
+error-level finding is present:
+
+| Check     | Behavior                                                                                        |
+|-----------|-------------------------------------------------------------------------------------------------|
+| Coverage  | Every asset has a docs page; an error under `-FailOnMissing`, otherwise a warning               |
+| Orphans   | Every `docs/reference` page maps to an existing asset                                           |
+| Sync      | Generated regions match a fresh render; reported under `-CheckSync`                             |
+| Structure | Required H2 sections and generated-region markers are present                                   |
+| Authored  | Human sections differ from stubs; an error under `-RequireAuthoredContent`, otherwise a warning |
+
+Reference index pages (`README.md`) are excluded from the coverage, sync,
+structure, and authored checks and are never treated as orphans. The
+`How to use it` section is required only for interactive assets.
+
+##### Parameters
+
+* `-RepoRoot` - Repository root (default: the git top level)
+* `-FailOnMissing` (switch) - Treat missing documentation pages as errors
+* `-CheckSync` (switch) - Compare generated regions against a fresh render and report drift as errors
+* `-RequireAuthoredContent` (switch) - Treat remaining stub placeholders as errors
+* `-ChangedFilesOnly` (switch) - Validate only assets and pages affected by changed files
+* `-BaseBranch` - Git reference for changed-file detection (default: `origin/main`)
+* `-OutputPath` - JSON results path (default: `logs/asset-docs-validation-results.json`)
+
+##### Usage
+
+```powershell
+# Warning-level report
+./scripts/linting/Validate-AssetDocs.ps1
+
+# Enforce coverage and generated-region sync
+./scripts/linting/Validate-AssetDocs.ps1 -FailOnMissing -CheckSync
+```
+
+##### GitHub Actions Integration
+
+* npm script: `npm run lint:asset-docs`
+* Regenerate pages first with `npm run docs:generate`; preview drift with `npm run docs:generate:check`
 
 ## npm Scripts
 
 | npm Script                       | Description                                                                                                            |
 |----------------------------------|------------------------------------------------------------------------------------------------------------------------|
+| `lint:asset-docs`                | Run `pwsh -NoProfile -File scripts/linting/Validate-AssetDocs.ps1 -FailOnMissing -CheckSync` to enforce asset docs     |
 | `lint:extension-artifact-naming` | Run `pwsh -NoProfile -File scripts/linting/Test-ExtensionArtifactNaming.ps1` to validate extension VSIX artifact names |
 
 ## Shared Module

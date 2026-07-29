@@ -2,7 +2,7 @@
 title: Build System and Validation
 description: Understand the plugin generation pipeline, schema validation system, npm scripts, and CI checks for customizing and extending HVE Core
 author: Microsoft
-ms.date: 2026-07-16
+ms.date: 2026-07-28
 ms.topic: how-to
 keywords:
   - build system
@@ -61,6 +61,33 @@ determine which schema applies to each file.
 The `scripts/linting/schemas/schema-mapping.json` file defines the glob-to-schema mapping.
 Patterns are evaluated from most specific to least specific, and the first match determines
 the schema. When no pattern matches, `base-frontmatter.schema.json` applies as the default.
+
+### Planner State Schemas
+
+The same `scripts/linting/schemas/` directory also holds JSON Schemas for planner session
+state. These validate the `state.json` files that phase-based planning agents persist under
+`.copilot-tracking/`. They are not frontmatter schemas, so they are not listed in
+`schema-mapping.json` and are not exercised by `npm run lint:frontmatter`.
+
+| Schema                            | Validates                                                    |
+|-----------------------------------|--------------------------------------------------------------|
+| `accessibility-state.schema.json` | `.copilot-tracking/accessibility/{project-slug}/state.json`  |
+| `rai-state.schema.json`           | `.copilot-tracking/rai-plans/{project-slug}/state.json`      |
+| `security-state.schema.json`      | `.copilot-tracking/security-plans/{project-slug}/state.json` |
+| `sssc-state.schema.json`          | `.copilot-tracking/sssc-plans/{project-slug}/state.json`     |
+
+Each schema is the source of truth for its planner's required keys, field types, enum
+values, and defaults. Agent and instruction files show illustrative state snippets with
+JSON-literal defaults; when a snippet and its schema disagree, the schema wins.
+
+Two enforcement paths cover these schemas:
+
+* Editor validation through the `json.schemas` entries in `.vscode/settings.json`, which
+  bind the RAI and accessibility state paths to their schemas as you edit.
+* Pester coverage in `scripts/tests/linting/Test-PlannerStateSchemas.Tests.ps1` and
+  `scripts/tests/linting/Test-AccessibilityStateSchema.Tests.ps1`, which validate schema
+  fixtures and guard the inline state examples in agent and instruction files against
+  drift. Run them with `npm run test:ps -- -TestPath "scripts/tests/linting/"`.
 
 ### Adding Custom Schemas
 

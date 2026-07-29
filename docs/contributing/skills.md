@@ -3,7 +3,7 @@ title: Contributing Skills to HVE Core
 description: Requirements and standards for contributing skill packages to hve-core
 sidebar_position: 6
 author: Microsoft
-ms.date: 2026-06-30
+ms.date: 2026-07-28
 ms.topic: how-to
 keywords:
   - skills
@@ -101,11 +101,11 @@ The `scripts/` directory is **optional**. When present, it **MUST** contain at l
 
 **`description`** (string, MANDATORY)
 
-| Property | Value                                                                                             |
-|----------|---------------------------------------------------------------------------------------------------|
-| Purpose  | Concise explanation of skill functionality                                                        |
-| Format   | Single sentence describing the skill; no attribution suffix (added automatically at distribution) |
-| Example  | `'Video-to-GIF conversion skill with FFmpeg two-pass optimization'`                               |
+| Property | Value                                                               |
+|----------|---------------------------------------------------------------------|
+| Purpose  | Concise explanation of skill functionality                          |
+| Format   | Single sentence describing the skill; no attribution suffix         |
+| Example  | `'Video-to-GIF conversion skill with FFmpeg two-pass optimization'` |
 
 ### Frontmatter Example
 

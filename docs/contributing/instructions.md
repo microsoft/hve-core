@@ -3,7 +3,7 @@ title: 'Contributing Instructions to HVE Core'
 description: 'Requirements and standards for contributing GitHub Copilot instruction files to hve-core'
 sidebar_position: 3
 author: Microsoft
-ms.date: 2026-07-15
+ms.date: 2026-07-28
 ms.topic: how-to
 ---
 
@@ -575,7 +575,7 @@ Before submitting your instructions file, verify:
 * [ ] Code examples wrapped in XML-style blocks
 * [ ] Anti-patterns section with alternatives
 * [ ] Validation/testing requirements
-* [ ] Attribution footer present
+* [ ] Attribution footer absent
 
 ### Code Examples
 
