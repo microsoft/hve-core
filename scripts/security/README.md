@@ -238,7 +238,7 @@ reach production.
 Validates that committed dependency metadata uses canonical public feeds.
 
 Purpose: Prevent dependency-confusion and credential-leak vectors by rejecting
-non-public hosts, plain HTTP, embedded credentials, and nonliteral npm registry
+non-public hosts, plain HTTP, embedded credentials, and non-literal npm registry
 values in committed manifests and lockfiles.
 
 #### Features
@@ -447,7 +447,7 @@ Purpose: Keep every module pin in the repository aligned with
 
 #### Features
 
-* Scans tracked and untracked, nonignored files for pins expressed as
+* Scans tracked and untracked, non-ignored files for pins expressed as
   `Install-Module -RequiredVersion`, `Import-Module -RequiredVersion`, and
   `#Requires -Modules @{ ... RequiredVersion='...' }`
 * Compares every pin for a managed module against the canonical version
