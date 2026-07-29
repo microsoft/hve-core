@@ -29,6 +29,8 @@ Assign file-level risk using the component context:
 * `Medium` for core business logic, API boundaries, and shared utilities with broad impact.
 * `Low` for configuration, documentation, cosmetic changes, and isolated helper code.
 
+> **Note:** The path-based classification above serves as the **Severity** factor input for the broader quantitative **Change-Risk Model** (see [Change-Risk Model](change-risk-model.md)). Path criticality is one of four factors — alongside Likelihood, Detectability, and Recoverability — used to build the evidence-based Change-Risk Profile. It is no longer the sole determinant of a change's overall risk.
+
 ## Severity count convention
 
 Aggregate findings into `severity_counts` with the counts for `critical`, `high`, `medium`, and `low`. When a finding is not applicable to the chosen perspective, omit it from that perspective-specific report but preserve it in the merged report if it was surfaced by another lane.
