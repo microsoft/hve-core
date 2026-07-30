@@ -2,7 +2,7 @@
 title: Copilot OTel Metrics Skill Security Model
 description: STRIDE threat model for the copilot-otel-metrics skill organized by assets, adversaries, and trust buckets (editor OTLP ingest, telemetry at rest, reference helper scripts, container image supply chain, editor-global configuration mutation, host process control, cloud control-plane artifact generation) with in-design mitigations and acknowledged enterprise readiness gaps
 author: microsoft/hve-core
-ms.date: 2026-07-27
+ms.date: 2026-07-30
 ms.topic: reference
 estimated_reading_time: 18
 keywords:
@@ -135,52 +135,52 @@ flowchart TD
 ### Boundary Diagram
 
 ```text
-┌──────────────────────────────────────────────────────────────┐
-│ TRUST BOUNDARY: Copilot agent running this skill              │
-│   writes settings (diff-approved) · writes generated files    │
-│   NEVER starts a service · NEVER provisions infrastructure    │
-└───────────┬──────────────────────────────┬────────────────────┘
-            │ per-key upsert                │ file writes only
-┌───────────▼──────────────────────────────▼────────────────────┐
-│ TRUST BOUNDARY: Operator workstation                          │
-│                                                               │
-│  ┌──────────────────┐        ┌────────────────────────────┐  │
-│  │ VS Code +        │        │ Reference helper scripts   │  │
-│  │ Copilot Chat     │        │ (stdlib only, loopback)    │  │
-│  │ global settings  │        │                            │  │
-│  └────────┬─────────┘        └─────────────┬──────────────┘  │
-│           │ OTLP/HTTP                       │ HTTP           │
-│           │ prompt-bearing spans            │ queries        │
-│  ─────────┼─────────────────────────────────┼─────────────   │
-│           │   127.0.0.1 ONLY (no off-host listener)          │
-│  ┌────────▼─────────────────────────────────▼──────────────┐ │
-│  │ TRUST BOUNDARY: otel-lgtm container                      │ │
-│  │  ┌──────────┐ ┌──────────┐ ┌────────┐ ┌───────────────┐ │ │
-│  │  │ OTLP recv│ │Prometheus│ │ Tempo  │ │ Grafana       │ │ │
-│  │  │ :4317/18 │ │  :9090   │ │ :3200  │ │ :3000 admin   │ │ │
-│  │  └────┬─────┘ └────┬─────┘ └───┬────┘ └───────────────┘ │ │
-│  │       └────────────┴───────────┘                        │ │
-│  │                    │ persists                            │ │
-│  │        ┌───────────▼────────────┐                        │ │
-│  │        │ copilot-otel-data vol  │  prompt content at rest│ │
-│  │        │ (unencrypted, 120d)    │  no expiry on traces   │ │
-│  │        └────────────────────────┘                        │ │
-│  └──────────────────────────────────────────────────────────┘ │
-└───────────────────────────┬───────────────────────────────────┘
+┌────────────────────────────────────────────────────────────────┐
+│ TRUST BOUNDARY: Copilot agent running this skill               │
+│   writes settings (diff-approved) · writes generated files     │
+│   NEVER starts a service · NEVER provisions infrastructure     │
+└───────────┬──────────────────────────────┬─────────────────────┘
+            │ per-key upsert               │ file writes only
+┌───────────▼──────────────────────────────▼─────────────────────┐
+│ TRUST BOUNDARY: Operator workstation                           │
+│                                                                │
+│  ┌──────────────────┐         ┌────────────────────────────┐   │
+│  │ VS Code +        │         │ Reference helper scripts   │   │
+│  │ Copilot Chat     │         │ (stdlib only, loopback)    │   │
+│  │ global settings  │         │                            │   │
+│  └────────┬─────────┘         └─────────────┬──────────────┘   │
+│           │ OTLP/HTTP                       │ HTTP             │
+│           │ prompt-bearing spans            │ queries          │
+│  ─────────┼─────────────────────────────────┼───────────────   │
+│           │   127.0.0.1 ONLY (no off-host listener)            │
+│  ┌────────▼─────────────────────────────────▼───────────────┐  │
+│  │ TRUST BOUNDARY: otel-lgtm container                      │  │
+│  │  ┌──────────┐ ┌──────────┐ ┌────────┐ ┌───────────────┐  │  │
+│  │  │ OTLP recv│ │Prometheus│ │ Tempo  │ │ Grafana       │  │  │
+│  │  │ :4317/18 │ │  :9090   │ │ :3200  │ │ :3000 admin   │  │  │
+│  │  └────┬─────┘ └────┬─────┘ └───┬────┘ └───────────────┘  │  │
+│  │       └────────────┴───────────┘                         │  │
+│  │                    │ persists                            │  │
+│  │        ┌───────────▼────────────┐                        │  │
+│  │        │ copilot-otel-data vol  │ prompt content at rest │  │
+│  │        │ (unencrypted, 120d)    │ no expiry on traces    │  │
+│  │        └────────────────────────┘                        │  │
+│  └──────────────────────────────────────────────────────────┘  │
+└───────────────────────────┬────────────────────────────────────┘
                             │ image pull (tag-pinned, not digest-pinned)
-             ┌──────────────▼───────────────┐
-             │ TRUST BOUNDARY: public       │
-             │ container registry           │
-             └──────────────────────────────┘
+              ┌─────────────▼───────────────┐
+              │ TRUST BOUNDARY: public      │
+              │ container registry          │
+              └─────────────────────────────┘
 
   Organization path only, operator-deployed:
-             ┌──────────────────────────────────────────────┐
-             │ TRUST BOUNDARY: Azure subscription           │
-             │  Collector (holds fleet write credential)    │
-             │       │                                      │
-             │  App Insights ──▶ Log Analytics ──▶ Grafana  │
-             │  content attributes stripped at the collector│
-             └──────────────────────────────────────────────┘
+              ┌──────────────────────────────────────────────┐
+              │ TRUST BOUNDARY: Azure subscription           │
+              │  Collector (holds fleet write credential)    │
+              │       │                                      │
+              │  App Insights ──▶ Log Analytics ──▶ Grafana  │
+              │  content attributes stripped at the collector│
+              └──────────────────────────────────────────────┘
 ```
 
 ### Boundary Descriptions
