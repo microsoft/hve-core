@@ -111,10 +111,10 @@ expectations:
   - expectation_id: data-dictionary-referenced
     summary: Notebook references existing data dictionaries instead of inlining them.
     signal: Markdown cells link to or summarize `outputs/data-dictionary-*.md`
-      and `outputs/data-summary-*.md` artifacts rather than copying their text.
+      artifacts rather than copying their text.
     pass_criteria: |
-      Data Assets Summary section links to or briefly summarizes existing
-      dictionary/summary files under `outputs/`. Notebook does not paste
+      Data Assets Summary section links to or briefly summarizes the existing
+      data dictionary files under `outputs/`. Notebook does not paste
       multi-paragraph dictionary content inline.
     failure_modes:
       - Copies full dictionary markdown into a notebook cell.
