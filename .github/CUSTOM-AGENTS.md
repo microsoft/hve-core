@@ -325,10 +325,9 @@ It dispatches thin perspective subagents under `.github/agents/coding-standards/
 
 **Creates:** Data documentation artifacts:
 
-* `outputs/data-dictionary-{{dataset}}-{{YYYY-MM-DD}}.md` (column definitions and semantics)
+* `outputs/data-dictionary-{{dataset}}-{{YYYY-MM-DD}}.md` (column definitions and semantics, with a human-readable summary section)
 * `outputs/data-profile-{{dataset}}-{{YYYY-MM-DD}}.json` (statistical profile for downstream tools)
 * `outputs/data-objectives-{{dataset}}-{{YYYY-MM-DD}}.json` (analysis goals and constraints)
-* `outputs/data-summary-{{dataset}}-{{YYYY-MM-DD}}.md` (human-readable overview)
 
 **Workflow:** Confirm Scope → Discover Data → Sample & Infer Schema → Profile → Clarify → Emit Artifacts
 

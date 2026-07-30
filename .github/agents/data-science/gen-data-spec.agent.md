@@ -128,8 +128,9 @@ All outputs go in `outputs/` (create if missing). Use kebab-case dataset name.
 1. Data Dictionary (Markdown): `outputs/data-dictionary-{{dataset}}-{{YYYY-MM-DD}}.md`
 2. Data Profile (JSON): `outputs/data-profile-{{dataset}}-{{YYYY-MM-DD}}.json`
 3. Objectives (JSON): `outputs/data-objectives-{{dataset}}-{{YYYY-MM-DD}}.json`
-4. Summary Index (Markdown): `outputs/data-summary-{{dataset}}-{{YYYY-MM-DD}}.md`
-5. (Optional Multi) If multiple datasets: `outputs/data-multi-summary-{{YYYY-MM-DD}}.md`
+4. (Optional Multi) If multiple datasets: `outputs/data-multi-summary-{{YYYY-MM-DD}}.md`
+
+The Data Dictionary is the single Markdown deliverable. It opens with a required summary section (see Data Dictionary Summary Section Must Contain) and is followed by the full column-level dictionary.
 
 ### Data Profile JSON Schema (Must Follow)
 
@@ -194,7 +195,9 @@ All outputs go in `outputs/` (create if missing). Use kebab-case dataset name.
 }
 ```
 
-### Summary Markdown Must Contain
+### Data Dictionary Summary Section Must Contain
+
+The Data Dictionary opens with a required summary section (before the column-level dictionary) containing:
 
 * Dataset name & date generated
 * Primary key candidates
@@ -202,7 +205,7 @@ All outputs go in `outputs/` (create if missing). Use kebab-case dataset name.
 * Column counts by semantic role
 * Objectives bullet list
 * Quick quality highlights (top 3)
-* Paths to artifacts
+* Paths to artifacts (Data Profile JSON and Objectives JSON)
 
 ## Minimal Clarifying Question Strategy
 
@@ -214,7 +217,7 @@ Other agents will:
 
 * Parse Data Profile JSON to auto-build EDA notebooks (type-based plots)
 * Parse Objectives JSON to prioritize visualizations
-* Read Summary Markdown for human context panel
+* Read the Data Dictionary summary section for human context panel
 
 Therefore consistency & schema adherence is mandatory.
 
@@ -232,7 +235,6 @@ Therefore consistency & schema adherence is mandatory.
 outputs/data-dictionary-home-assistant-2025-09-03.md
 outputs/data-profile-home-assistant-2025-09-03.json
 outputs/data-objectives-home-assistant-2025-09-03.json
-outputs/data-summary-home-assistant-2025-09-03.md
 ```
 
 Proceed efficiently: extract, profile, clarify minimally, emit artifacts.
