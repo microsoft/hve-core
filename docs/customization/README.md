@@ -2,7 +2,7 @@
 title: Customizing HVE Core
 description: Overview of customization approaches from lightweight settings to full fork-and-extend, with role-based entry points
 author: Microsoft
-ms.date: 2026-07-16
+ms.date: 2026-07-29
 ms.topic: overview
 keywords:
   - customization
@@ -121,6 +121,7 @@ Each HVE role benefits from different customization techniques. The table below 
 8. [Environment Customization](environment.md): DevContainers, VS Code settings, MCP servers
 9. [Team Adoption and Governance](team-adoption.md): Governance, naming, onboarding, change management
 10. [Local Telemetry](local-telemetry.md): Enable local telemetry, review capture and storage schema mechanics, and generate reports
+11. [Bootstrapping a Project Knowledge Base](project-knowledge-base.md): Source-backed project memory that grounds humans and agents in a shared current understanding
 
 ## Related Resources
 
