@@ -145,6 +145,12 @@ def _fallback_stem() -> str:
 # O_BINARY keeps Windows from expanding "\n" and desynchronizing the byte count.
 _APPEND_FLAGS = os.O_WRONLY | os.O_CREAT | os.O_APPEND | getattr(os, "O_BINARY", 0)
 
+# Telemetry records carry prompt previews and working-directory paths, and the
+# registry carries every store location, so nothing here is readable by group or
+# other. umask can only clear further bits, never restore them.
+_OWNER_ONLY_FILE = 0o600
+_OWNER_ONLY_EXEC = 0o700
+
 
 def _write_all(fd: int, payload: bytes) -> None:
     """Write every byte; a signal or a full disk can cut one write short."""
@@ -195,6 +201,9 @@ if os.name == "nt":
         try:
             msvcrt.locking(fd, msvcrt.LK_UNLCK, 1)
         except OSError:
+            # The lock is released by the close in _append_shared's finally, and
+            # by the OS if this process dies, so a failed explicit unlock leaves
+            # nothing to repair and must not mask the record that was written.
             pass
 
 else:
@@ -241,7 +250,7 @@ def append_line(target: Path, line: str) -> None:
 
 def _append_shared(target: Path, payload: bytes) -> bool:
     """Append under the platform's append guarantee. False if unavailable."""
-    fd = os.open(target, _APPEND_FLAGS, 0o644)
+    fd = os.open(target, _APPEND_FLAGS, _OWNER_ONLY_FILE)
     try:
         if not _lock_append(fd):
             return False
@@ -256,7 +265,7 @@ def _append_shared(target: Path, payload: bytes) -> bool:
 
 def _append_private(target: Path, payload: bytes) -> None:
     """Append to a file only this process writes, so no lock is required."""
-    fd = os.open(target, _APPEND_FLAGS, 0o644)
+    fd = os.open(target, _APPEND_FLAGS, _OWNER_ONLY_FILE)
     try:
         _write_all(fd, payload)
     finally:
@@ -273,7 +282,7 @@ def append_jsonl(target: Path, entry: dict) -> None:
     append_line(target, json.dumps(entry) + "\n")
 
 
-def _write_text_atomic(path: Path, text: str, mode: int = 0o644) -> None:
+def _write_text_atomic(path: Path, text: str, mode: int = _OWNER_ONLY_FILE) -> None:
     """Replace ``path`` in one step so a reader never observes a partial file.
 
     Plain truncate-then-write leaves a window in which the file is empty or
@@ -556,8 +565,8 @@ def write_report_launchers(script_dir: Path | None = None) -> None:
             bash_clean_text = _BASH_CLEAN_LAUNCHER.replace(
                 "__CLEAN_SCRIPT__", shlex.quote(clean_script)
             )
-            _write_text_atomic(home / "generate-report.sh", bash_text, mode=0o755)
-            _write_text_atomic(home / "clean-telemetry.sh", bash_clean_text, mode=0o755)
+            _write_text_atomic(home / "generate-report.sh", bash_text, mode=_OWNER_ONLY_EXEC)
+            _write_text_atomic(home / "clean-telemetry.sh", bash_clean_text, mode=_OWNER_ONLY_EXEC)
     except OSError:
         # Cannot write launchers (e.g., permission denied); skip generation.
         return
