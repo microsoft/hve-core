@@ -2,16 +2,16 @@
 title: pr-reference
 description: "Generates PR reference XML with commit history and unified diffs between branches, with extension and path filtering. Use when creating pull request descriptions, preparing code reviews, analyzing branch changes, discovering work items from diffs, or generating structured diff summaries."
 sidebar_position: 2
-ms.date: 2026-07-03
+ms.date: 2026-07-27
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->
-| Field       | Value                                  |
-|-------------|----------------------------------------|
-| Kind        | skill                                  |
-| Source      | `.github/skills/shared/pr-reference`   |
-| Invocation  | Loaded on demand by referencing agents |
-| Interactive | No                                     |
+| Field       | Value                                                                          |
+|-------------|--------------------------------------------------------------------------------|
+| Kind        | skill                                                                          |
+| Source      | `.github/skills/shared/pr-reference`                                           |
+| Invocation  | Invoked directly as `/pr-reference`, or loaded on demand by referencing agents |
+| Interactive | No                                                                             |
 <!-- END AUTO-GENERATED: metadata -->
 
 ## What it does

@@ -3,7 +3,7 @@ title: 'AI Artifacts Common Standards'
 description: 'Common standards and quality gates for all AI artifact contributions to hve-core'
 sidebar_position: 2
 author: Microsoft
-ms.date: 2026-07-15
+ms.date: 2026-07-30
 ms.topic: reference
 ---
 
@@ -747,6 +747,12 @@ npm run lint:ps
 
 # Validate skill structure (if applicable)
 npm run validate:skills
+
+# Scaffold reference pages for new documentable assets
+npm run docs:generate
+
+# Validate asset reference pages and AUTO-GENERATED regions
+npm run lint:asset-docs
 ```
 
 ### Quality Gates

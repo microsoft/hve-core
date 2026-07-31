@@ -2,7 +2,7 @@
 title: Extension Packaging Guide
 description: Developer guide for packaging and publishing the HVE Core VS Code extension
 author: Microsoft
-ms.date: 2026-05-20
+ms.date: 2026-07-30
 ms.topic: reference
 ---
 
@@ -144,6 +144,13 @@ The preparation script automatically:
 * Discovers and registers all instruction files from `.github/instructions/`
 * Updates `package.json` with discovered components
 * Uses existing version from `package.json` (does not modify it)
+
+When invoked via the npm scripts (`extension:prepare` and `extension:prepare:prerelease`), a postprocess step also runs after preparation, auto-fixing markdown formatting in `extension/**/*.md` and `collections/*.md`:
+
+* `markdownlint-cli2 --fix`
+* `markdown-table-formatter`
+
+Running `pwsh ./scripts/extension/Prepare-Extension.ps1` directly skips this postprocess step.
 
 #### Step 2: Package the Extension
 

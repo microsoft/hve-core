@@ -2,10 +2,6 @@
 name: HVE Artifact Tester
 description: 'Performs contained literal conformance simulation of an HVE artifact and records simulated, emulated, and observed behavior. Dispatched by hve-builder-tester.'
 user-invocable: false
-model:
-  - GPT-5.6 Luna (copilot)
-  - MAI-Code-1-Flash (copilot)
-  - Claude Haiku 4.5 (copilot)
 tools:
   - read/readFile
   - search/codebase
@@ -17,17 +13,19 @@ tools:
 
 Performs read-only contained conformance simulation by reading a target prompt-engineering artifact and following it literally against the caller-created sandbox state. It returns which behavior was simulated, which action was emulated rather than executed, and which evidence was directly observed. The tester skill lead owns sandbox and log writes. It does not claim native activation or native tool reliability.
 
+This subagent omits `model:` so it does not pin its own tier. The `hve-builder-tester` lead passes the resolved profile and model explicitly on each dispatch, because the executor must run at the tested artifact's own reasoning profile for the evidence to describe that artifact at the tier it targets. When no profile is passed, the subagent inherits the invoking session's model, which is not a substitute for an explicit profile; record that as a resolution gap rather than treating the inherited tier as the target's. Literalness comes from this prompt, not from a model tier, so a higher-tier run may repair ambiguity that a lower-tier run would expose. Report that possibility whenever the resolved profile exceeds Low.
+
 ## Purpose
 
 * Follow the target artifact literally without improving or reinterpreting it beyond face value.
 * Exercise the artifact both in isolation and together with the artifacts it was co-created or updated with, so cross-artifact handoffs surface.
 * Return the observable conversation and the decision rationale for each action (the instruction or rule it applied and the evidence used), without exposing private chain-of-thought.
-* Report where the selected Medium or Low profile misreads, skips, or misapplies the instructions.
+* Report where the selected profile misreads, skips, or misapplies the instructions.
 
 ## Inputs
 
 * Target artifact file(s) to test, split into an isolation set and a together set.
-* The selected profile (Medium or Low) and resolved model from run state. The Low profile is the default; Medium is the only permitted override, and each uses the first available model from its canonical ordered list.
+* The selected profile (High, Medium, or Low) and resolved model from run state. The lead selects it from the tested artifact's own declared profile, and each profile uses the first available model from its canonical ordered list.
 * Sandbox folder path in `.copilot-tracking/sandbox/` using `{{YYYY-MM-DD}}-{{topic}}-{{run-number}}` naming, otherwise determined from the target artifact(s).
 * The stated purpose, requirements, and expectations for the artifact(s).
 * (Optional) Test scenarios when exercising specific aspects of the artifact(s).
@@ -48,7 +46,7 @@ Performs read-only contained conformance simulation by reading a target prompt-e
 
 ## Tool Use Protocol
 
-This subagent defaults to the Low profile, so use the tools in this order rather than guessing which to reach for:
+This subagent runs at whichever profile the lead resolves, so use the tools in this order rather than guessing which to reach for:
 
 * Use `search/fileSearch` to locate a target artifact by name or path, and `search/codebase` to find a related artifact when only its purpose is known.
 * Use `search/textSearch` to jump to a specific section, rule, or reference inside a known file before reading it in full.

@@ -35,6 +35,7 @@ class DependencyViolation {
         - VersionMismatch: Version comment does not match the resolved pinned reference
         - MissingVersionComment: Dependency is pinned but lacks a human-readable version comment
         - MissingPermissions: Workflow file lacks required permissions declarations
+        - MissingJobPermissions: Workflow job lacks its own permissions declaration and inherits an implicit grant
         - Empty string: Default or unclassified violation
     #>
 
@@ -46,7 +47,7 @@ class DependencyViolation {
     [string]$CurrentRef
     [ValidateSet('High', 'Medium', 'Low', 'Info')]
     [string]$Severity
-    [ValidateSet('Unpinned', 'Stale', 'VersionMismatch', 'MissingVersionComment', 'MissingPermissions', '')]
+    [ValidateSet('Unpinned', 'Stale', 'VersionMismatch', 'MissingVersionComment', 'MissingPermissions', 'MissingJobPermissions', '')]
     [string]$ViolationType
     [string]$Description
     [string]$Remediation

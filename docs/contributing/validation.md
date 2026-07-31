@@ -3,7 +3,7 @@ title: Validation Commands and CI-Owned Lanes
 description: Choose local-safe validation defaults and reproduce CI-owned documentation and evaluation lanes when their prerequisites are available
 sidebar_position: 12
 author: Microsoft
-ms.date: 2026-07-17
+ms.date: 2026-07-28
 ms.topic: how-to
 keywords:
   - validation
@@ -13,7 +13,8 @@ keywords:
   - playwright
   - vally
   - evaluations
-estimated_reading_time: 9
+  - package feeds
+estimated_reading_time: 10
 ---
 
 Validation command names distinguish the checks that are safe defaults for a
@@ -61,6 +62,80 @@ the reproducible bootstrap path.
 Installing dependencies for one root does not provision the other roots. The
 root commands that delegate to Docusaurus still need the Docusaurus package
 dependencies available.
+
+## Install behind a restricted network
+
+Some organizations block direct access to public package registries and require
+installs to route through an approved feed proxy. `npm ci` then fails to reach
+`registry.npmjs.org`, commonly with `ENOTCONN` or a connection timeout.
+
+This repository commits a project-level `.npmrc` that pins the canonical public
+registry, and npm resolves configuration in the order `cli > env > project
+.npmrc > user .npmrc > global`. A user-level `~/.npmrc` is therefore outranked
+and silently ignored. Set an environment variable or pass a CLI flag instead.
+
+Keep the proxy address out of the repository. It belongs in your own
+environment, never in a tracked file.
+
+| Environment                | Where the override belongs                                                            |
+|----------------------------|---------------------------------------------------------------------------------------|
+| macOS or Linux             | A file in your home directory sourced from `~/.zshrc` or `~/.bashrc`                  |
+| Windows                    | A PowerShell profile (`$PROFILE`) or a user environment variable                      |
+| Dev container or Codespace | The user-level `dev.containers.containerEnv` VS Code setting, not `devcontainer.json` |
+
+macOS and Linux:
+
+```bash
+export npm_config_registry="https://proxy.example.com/npm/"
+npm ci
+```
+
+Windows PowerShell:
+
+```powershell
+$env:npm_config_registry = 'https://proxy.example.com/npm/'
+npm ci
+```
+
+Dev container, in VS Code user settings so no repository file changes:
+
+```json
+{
+  "dev.containers.containerEnv": {
+    "npm_config_registry": "https://proxy.example.com/npm/"
+  }
+}
+```
+
+The committed `.npmrc` sets `replace-registry-host=always`, so npm rewrites each
+lockfile tarball host to the configured registry at fetch time only. `npm ci`
+never writes `package-lock.json`, and it still verifies every download against
+the committed `sha512` integrity value.
+
+Restrict proxied installs to restore commands. `npm ci`, `uv sync --frozen`, and
+`pip install -r` read committed lockfiles and verify committed hashes. Commands
+that resolve dependencies, such as `npm install`, `npm update`, `npm audit fix`,
+`uv lock`, and `uv add`, write the proxy's own URLs into the lockfile and can
+downgrade npm integrity from `sha512` to `sha1`. Run
+`npm run lint:public-dependency-feeds` if you suspect a lockfile picked up a
+non-public source.
+
+### Add or update a dependency from a restricted network
+
+Generate the lockfile where the public registry is reachable, then commit the
+result. Dependabot covers version bumps of dependencies that already exist, but
+it does not add new ones.
+
+| Situation                       | How to produce the lockfile                                                        |
+|---------------------------------|------------------------------------------------------------------------------------|
+| Bump an existing dependency     | Let Dependabot open the pull request                                               |
+| Add a new dependency            | Edit `package.json`, push the branch, and let an agent or CI job run `npm install` |
+| Need an interactive environment | Use a codespace or any workstation with direct public registry access              |
+
+Do not repair a proxy-generated lockfile by hand. Rewriting `resolved` back to
+the public registry leaves the weakened `integrity` value in place, and
+recomputing the hash from the proxy-served bytes only attests to what the proxy
+returned rather than to what the registry published.
 
 ## Documentation checks and browser lane
 

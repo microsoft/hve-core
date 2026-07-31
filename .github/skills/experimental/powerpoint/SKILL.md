@@ -185,7 +185,11 @@ python scripts/build_deck.py \
   --output slide-deck/presentation.pptx
 ```
 
-Reads all `content/slide-*/content.yaml` files in numeric order and generates the complete deck. Executes `content-extra.py` files when present.
+Reads all `content/slide-*/content.yaml` files in numeric order and generates the complete deck. Executes `content-extra.py` files when present. Exit codes:
+
+* code 0: deck built successfully (`EXIT_SUCCESS`)
+* code 1: one or more slide-level build errors (`EXIT_FAILURE`)
+* code 2: configuration error (e.g., no slide content found in the content directory) (`EXIT_ERROR`)
 
 ### Build from a Template
 
@@ -233,7 +237,11 @@ python scripts/build_deck.py \
   --slides 3,7,15
 ```
 
-Opens the existing deck, clears shapes on the specified slides, rebuilds them in-place from their `content.yaml`, and saves. All other slides remain untouched. After building, verify the output slide count matches the original deck.
+Opens the existing deck, clears shapes on the specified slides, rebuilds them in-place from their `content.yaml`, and saves. All other slides remain untouched. After building, verify the output slide count matches the original deck. Exit codes:
+
+* code 0: selected slides rebuilt successfully (`EXIT_SUCCESS`)
+* code 1: one or more slide-level build errors (`EXIT_FAILURE`)
+* code 2: configuration error (e.g., no slide content found in the content directory) (`EXIT_ERROR`)
 
 ### Extract Content from Existing PPTX
 
