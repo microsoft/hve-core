@@ -40,7 +40,7 @@ The table lists the supported enterprise variables and their defaults.
 | `HVE_DEVCONTAINER_IMAGE`   | `mcr.microsoft.com/devcontainers/base:2-jammy` | Base image used to build the DevContainer                |
 | `NPM_CONFIG_REGISTRY`      | `https://registry.npmjs.org/`                  | Registry used by npm commands                            |
 | `PIP_INDEX_URL`            | `https://pypi.org/simple/`                     | Index used by pip-compatible commands                    |
-| `UV_DEFAULT_INDEX`             | `https://pypi.org/simple/`                     | Index used by uv project commands such as `uv sync`      |
+| `UV_DEFAULT_INDEX`         | `https://pypi.org/simple/`                     | Index used by uv project commands such as `uv sync`      |
 
 The three package index variables are standard tool settings rather than
 HVE-specific settings. The DevContainer reads them from the host, passes them as
