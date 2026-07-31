@@ -79,7 +79,6 @@ mcsb:
   - "Azure Bicep files (.bicep)"
   - "Azure Resource Manager (ARM) templates (azuredeploy.json)"
   - "Terraform using the azurerm provider (.tf)"
-  - "azure-pipelines.yml targeting Azure resources"
   - "Azure service references (Storage, Key Vault, AKS, SQL, App Service)"
 secure-by-design:
   - "SECURITY.md or security policy files"
