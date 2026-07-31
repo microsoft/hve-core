@@ -3,7 +3,7 @@ title: Contributing Skills to HVE Core
 description: Requirements and standards for contributing skill packages to hve-core
 sidebar_position: 6
 author: Microsoft
-ms.date: 2026-06-30
+ms.date: 2026-07-30
 ms.topic: how-to
 keywords:
   - skills
@@ -588,6 +588,8 @@ npm run lint:md               # Validate markdown formatting
 npm run validate:skills       # Validate skill directory structure
 npm run test:ps               # Run PowerShell unit tests
 npm run docs:test             # Validate Docusaurus artifact counts
+npm run docs:generate         # Scaffold reference page under docs/reference/skills/ (new skills)
+npm run lint:asset-docs       # Validate asset reference pages and AUTO-GENERATED regions
 ```
 
 All checks **MUST** pass before merge.

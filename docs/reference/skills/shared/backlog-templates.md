@@ -2,16 +2,16 @@
 title: backlog-templates
 description: "Shared work-item templates and conventions for ADO and GitHub backlog handoff across the RAI, Security, SSSC, Accessibility, and Privacy planners"
 sidebar_position: 1
-ms.date: 2026-07-03
+ms.date: 2026-07-27
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->
-| Field       | Value                                     |
-|-------------|-------------------------------------------|
-| Kind        | skill                                     |
-| Source      | `.github/skills/shared/backlog-templates` |
-| Invocation  | Loaded on demand by referencing agents    |
-| Interactive | No                                        |
+| Field       | Value                                                                               |
+|-------------|-------------------------------------------------------------------------------------|
+| Kind        | skill                                                                               |
+| Source      | `.github/skills/shared/backlog-templates`                                           |
+| Invocation  | Invoked directly as `/backlog-templates`, or loaded on demand by referencing agents |
+| Interactive | No                                                                                  |
 <!-- END AUTO-GENERATED: metadata -->
 
 ## What it does

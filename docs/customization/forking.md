@@ -2,7 +2,7 @@
 title: Forking and Extending HVE Core
 description: Fork HVE Core to create a fully customized prompt engineering framework with upstream sync and Copilot-assisted adaptation
 author: Microsoft
-ms.date: 2026-07-16
+ms.date: 2026-07-28
 ms.topic: tutorial
 keywords:
   - forking
@@ -62,6 +62,11 @@ git fetch upstream
 ```bash
 npm ci
 ```
+
+If your network blocks public package registries, see
+[Install behind a restricted network](../contributing/validation#install-behind-a-restricted-network).
+Set the registry override in your environment rather than in a fork file, so the
+fork stays restorable for everyone who clones it.
 
 ### Step 4: Make initial configuration changes
 

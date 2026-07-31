@@ -91,7 +91,7 @@ If a layout primitive cannot express the intended arrangement, escalate to a new
 
 ## 404 Recovery
 
-Treat HTTP 404 from any `mural` CLI verb as a re-read-SKILL.md trigger, not a drop-down-a-layer trigger. The verb name, argument shape, or required scope is wrong, and the fix lives in [SKILL.md](../../skills/experimental/mural/SKILL.md).
+Treat HTTP 404 from any `mural` CLI verb as a re-read-SKILL.md trigger, not a drop-down-a-layer trigger. The verb name, argument shape, or required scope is wrong, and the fix lives in [SKILL.md](../../../skills/experimental/mural/SKILL.md).
 
 Do not import private skill helpers (`_authenticated_request`, `_merge_tags`, `_resolve_area_id`, etc.) into operator code. Private helpers are not a stable surface and any reach-around is treated as a regression in the consuming agent.
 

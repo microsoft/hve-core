@@ -7,7 +7,7 @@ ms.date: 2026-06-29
 ms.topic: concept
 ---
 
-Four agents and one portable skill support structured project planning across requirements, architecture, and security. Each agent follows a guided workflow to produce specific deliverables, from business requirements documents to security assessment plans.
+Four agents and **three** portable skills support structured project planning across requirements, architecture, security, **and performance**. Each agent follows a guided workflow to produce specific deliverables, from business requirements documents to security assessment plans and reliability targets.
 
 ## Why Use Project Planning Agents
 
@@ -31,6 +31,14 @@ These agents bring structure and consistency to activities that teams often hand
 | [ADR Creator](adr-creation)               | Architecture | 3-phase Frame/Decide/Govern | JSON state  | Architecture decision record   |
 | [Security Planner](../security/README.md) | Security     | 6-phase STRIDE              | JSON state  | Security model and backlog     |
 
+## Skills Overview
+
+| Skill                                                                                                   | Sub-Category              | Key Output                                                       |
+|---------------------------------------------------------------------------------------------------------|---------------------------|------------------------------------------------------------------|
+| [requirements-author](pathname://../../../.github/skills/project-planning/requirements-author/SKILL.md) | Requirements              | Drives the BRD/PRD Builder Q&A workflows                         |
+| [architecture-diagrams](pathname://../../../.github/skills/hve-core/architecture-diagrams/SKILL.md)     | Architecture              | ASCII/Mermaid diagrams from IaC analysis                         |
+| [performance-slo-planner](../../reference/skills/project-planning/performance-slo-planner.md)           | Performance & Reliability | SLIs, SLOs, load models, test matrices, and reliability backlogs |
+
 ## Requirements
 
 The BRD Builder follows a three-phase lifecycle (Discover, Define, Govern) and the PRD Builder follows a seven-phase lifecycle (Assess, Discover, Create, Build, Integrate, Validate, Finalize), both driven by the `requirements-author` skill. Both agents persist session state as JSON files, supporting pause-and-resume workflows across conversations. Their twin architecture means most concepts transfer between them. Learn one, and the other follows naturally.
@@ -49,6 +57,15 @@ Two agents address architecture documentation from different angles. The ADR Cre
 
 * [ADR Creator](adr-creation): Guided decision reasoning and documentation
 * [architecture-diagrams skill](pathname://../../../.github/skills/hve-core/architecture-diagrams/SKILL.md): Code-to-diagram generation from IaC analysis
+
+## Performance & Reliability
+
+The [performance-slo-planner](../../reference/skills/project-planning/performance-slo-planner.md) skill turns vague "fast and reliable" expectations into measurable SLIs, SLOs, a load model, a test matrix, and a reliability backlog for production readiness.
+
+> [!TIP]
+> **When to use:** Run this skill after defining requirements (e.g., after BRD/PRD builders) and **before** security planning. This ensures production-readiness targets and reliability constraints are baked into the system architecture early.
+>
+> **Note:** This skill *plans* the performance strategy; it does not execute load tests. Hand the generated test matrix to Azure Load Testing tooling for execution.
 
 ## Security
 
@@ -71,11 +88,12 @@ See the [Security Planning](../security/README.md) guide for the workflow, opera
 
 Select any agent using the agent picker in the Copilot Chat pane. Each agent starts its guided workflow automatically.
 
-| Scenario               | Agent                       | Purpose                                                                    |
+| Scenario               | Agent / Skill               | Purpose                                                                    |
 |------------------------|-----------------------------|----------------------------------------------------------------------------|
 | New project kickoff    | BRD Builder or PRD Builder  | Capture requirements before making architecture decisions                  |
 | Architecture decisions | ADR Creator                 | Evaluate technology choices, design patterns, or infrastructure approaches |
 | Visual documentation   | architecture-diagrams skill | Generate ASCII or Mermaid architecture diagrams for onboarding or reviews  |
+| Performance targets    | performance-slo-planner     | Define SLIs, SLOs, load models, and reliability backlogs before launch     |
 | Security review        | Security Planner            | Assess threats and plan mitigations after architecture decisions stabilize |
 
 ### Recommended Sequencing
@@ -84,7 +102,8 @@ For greenfield projects, follow this order to build artifacts that feed into eac
 
 1. Start with the BRD Builder to capture business context, then the PRD Builder for product-level details.
 2. Use the ADR Creator to document key design decisions, then the architecture-diagrams skill to visualize the resulting architecture.
-3. Run the Security Planner once the architecture is stable to identify threats and plan mitigations.
+3. **Run the Performance & SLO Planner** to set measurable SLI/SLO targets, define load models, and generate a reliability backlog.
+4. Run the Security Planner once the architecture and performance targets are stable to identify threats and plan mitigations.
 
 ## Related Documentation
 
