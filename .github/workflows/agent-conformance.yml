@@ -6,6 +6,7 @@ on:
   workflow_call:
     secrets:
       copilot-github-token:
+        description: "GitHub credential exported as COPILOT_GITHUB_TOKEN for the Copilot CLI used by vally eval"
         required: true
   workflow_dispatch:
 
