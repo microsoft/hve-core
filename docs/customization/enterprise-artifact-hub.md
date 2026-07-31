@@ -40,7 +40,7 @@ The table lists the supported enterprise variables and their defaults.
 | `HVE_DEVCONTAINER_IMAGE`   | `mcr.microsoft.com/devcontainers/base:2-jammy` | Base image used to build the DevContainer                |
 | `NPM_CONFIG_REGISTRY`      | `https://registry.npmjs.org/`                  | Registry used by npm commands                            |
 | `PIP_INDEX_URL`            | `https://pypi.org/simple/`                     | Index used by pip-compatible commands                    |
-| `UV_INDEX_URL`             | `https://pypi.org/simple/`                     | Index used by uv project commands such as `uv sync`      |
+| `UV_DEFAULT_INDEX`             | `https://pypi.org/simple/`                     | Index used by uv project commands such as `uv sync`      |
 
 The three package index variables are standard tool settings rather than
 HVE-specific settings. The DevContainer reads them from the host, passes them as
@@ -60,7 +60,7 @@ Affected files per variable:
 * `HVE_DEVCONTAINER_IMAGE` :
   `.devcontainer/devcontainer.json`,
   `.devcontainer/Dockerfile`
-* `NPM_CONFIG_REGISTRY`, `PIP_INDEX_URL`, and `UV_INDEX_URL` :
+* `NPM_CONFIG_REGISTRY`, `PIP_INDEX_URL`, and `UV_DEFAULT_INDEX` :
   `.devcontainer/devcontainer.json`,
   `.devcontainer/Dockerfile`
 
@@ -85,7 +85,7 @@ export HVE_PSGALLERY_SOURCE_URL="https://nuget.corp.example.com/v2"
 export HVE_DEVCONTAINER_IMAGE="registry.corp.example.com/devcontainers/base:2-jammy"
 export NPM_CONFIG_REGISTRY="https://npm.corp.example.com/"
 export PIP_INDEX_URL="https://pypi.corp.example.com/simple/"
-export UV_INDEX_URL="https://pypi.corp.example.com/simple/"
+export UV_DEFAULT_INDEX="https://pypi.corp.example.com/simple/"
 ```
 
 Add these lines to `~/.bashrc`, `~/.zshrc`, or a `.env` file sourced by your
@@ -148,7 +148,7 @@ DevContainer and for Codespaces, follow
 ### pip and uv
 
 HVE Core installs Python project dependencies with `uv sync`. Set
-`UV_INDEX_URL` to redirect those installs. `PIP_INDEX_URL` controls pip and uv's
+`UV_DEFAULT_INDEX` to redirect those installs. `PIP_INDEX_URL` controls pip and uv's
 pip-compatible interface; it does not redirect `uv sync`. Set both variables
 when your workflows use both command families.
 
