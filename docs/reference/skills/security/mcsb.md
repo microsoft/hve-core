@@ -1,7 +1,7 @@
 ---
-title: owasp-cicd
-description: "OWASP CI/CD Top 10 knowledge base for identifying, assessing, and remediating CI/CD pipeline security risks."
-sidebar_position: 3
+title: mcsb
+description: Microsoft Cloud Security Benchmark (MCSB v2) control-domain taxonomy and NIST 800-53 / CIS Controls crosswalk for planning and reviewing Azure cloud resources.
+sidebar_position: 1
 ms.date: 2026-07-28
 ---
 
@@ -9,7 +9,7 @@ ms.date: 2026-07-28
 | Field       | Value                                  |
 |-------------|----------------------------------------|
 | Kind        | skill                                  |
-| Source      | `.github/skills/security/owasp-cicd`   |
+| Source      | `.github/skills/security/mcsb`         |
 | Invocation  | Loaded on demand by referencing agents |
 | Interactive | No                                     |
 <!-- END AUTO-GENERATED: metadata -->
@@ -17,7 +17,7 @@ ms.date: 2026-07-28
 ## What it does
 
 <!-- BEGIN AUTO-GENERATED: overview -->
-OWASP CI/CD Top 10 knowledge base for identifying, assessing, and remediating CI/CD pipeline security risks.
+Microsoft Cloud Security Benchmark (MCSB v2) control-domain taxonomy and NIST 800-53 / CIS Controls crosswalk for planning and reviewing Azure cloud resources.
 <!-- END AUTO-GENERATED: overview -->
 
 ## When to use it

@@ -2,7 +2,7 @@
 name: behavior-conformance-skills
 description: >
   Advisory-tier behavior conformance evals for skills exercised through
-  knowledge, tool-trigger, and bleed-detection stimulus shapes. Total: 127
+  knowledge, tool-trigger, and bleed-detection stimulus shapes. Total: 130
   stimuli, including complete branch coverage for the RPI and prompt-builder
   skill updates. Each tool-trigger stimulus uses two graders with AND logic,
   and the suite-level scoring threshold gates the aggregate pass rate across
@@ -2355,3 +2355,62 @@ stimuli:
         name: scope-language
         config:
           pattern: '(?i)(node|service|instrument|copilot|telemetry)'
+
+  - name: skill-mcsb-knowledge
+    prompt: |
+      Summarize what the `mcsb` skill encodes and name one control domain or
+      crosswalk framework it references.
+    tags:
+      category: behavior-conformance
+      skill: mcsb
+      shape: knowledge
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: skill-attribution
+        config:
+          pattern: '(?i)(mcsb|cloud\s+security\s+benchmark|control\s+domain|nist|cis\s+controls)'
+      - type: output-matches
+        name: scope-language
+        config:
+          pattern: '(?i)(mcsb|benchmark|azure|control|nist|cis)'
+
+  - name: skill-mcsb-tool-trigger
+    prompt: |
+      I need to map and assess our Azure cloud resources against a consistent
+      control-domain vocabulary, with a crosswalk to NIST 800-53 and CIS
+      Controls. Which skill applies and what does it provide?
+    tags:
+      category: behavior-conformance
+      skill: mcsb
+      shape: tool-trigger
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: skill-domain-attribution
+        config:
+          pattern: '(?i)(mcsb|cloud\s+security\s+benchmark|control\s+domain|crosswalk|nist|cis)'
+      - type: output-matches
+        name: scope-language
+        config:
+          pattern: '(?i)(mcsb|benchmark|azure|control|nist|cis)'
+
+  - name: skill-mcsb-bleed-detection
+    prompt: |
+      I need to assess an AWS-only environment against the AWS Foundational
+      Security Best Practices (no Azure resources involved). Does the `mcsb`
+      skill apply?
+    tags:
+      category: behavior-conformance
+      skill: mcsb
+      shape: bleed-detection
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: skill-attribution
+        config:
+          pattern: '(?i)(not\s+apply|does\s+not|inapplicable|different\s+skill|azure[-\s]specific)'
+      - type: output-matches
+        name: scope-language
+        config:
+          pattern: '(?i)(aws|azure|mcsb|benchmark)'

@@ -87,6 +87,9 @@ items:
   - path: .github/skills/security/secure-by-design
     kind: skill
     maturity: experimental
+  - path: .github/skills/security/mcsb
+    kind: skill
+    maturity: experimental
   - path: .github/skills/project-planning/security-planning
     kind: skill
     maturity: experimental
