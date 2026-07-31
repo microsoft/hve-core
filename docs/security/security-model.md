@@ -3,7 +3,7 @@ title: Security Assurance Case and Security Model
 description: Comprehensive security model and security assurance documentation demonstrating enterprise security practices
 sidebar_position: 2
 author: Microsoft
-ms.date: 2026-07-03
+ms.date: 2026-07-28
 ms.topic: reference
 keywords:
   - security
@@ -338,7 +338,7 @@ Affected workflow jobs:
 
 Defense-in-depth controls:
 
-* All workflows declare job-level permissions, not workflow-level
+* Workflows declare a top-level `permissions:` block, and every job under a populated block declares its own permissions rather than inheriting implicitly; `Test-WorkflowPermissions.ps1` enforces both
 * `persist-credentials: false` set on all checkout steps
 * Inline YAML comments document each `security-events: write` declaration
 * SARIF upload is the only write operation performed under this permission
