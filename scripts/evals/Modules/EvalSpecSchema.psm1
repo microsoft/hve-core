@@ -92,7 +92,7 @@ function Test-EvalSpecCompliance {
 
     .DESCRIPTION
     Checks required top-level keys, executor whitelist, per-stimulus required keys
-    (name, prompt, graders), and per-stimulus backlink tags (skill/agent/prompt/instruction)
+    (name, prompt or turns, graders), and per-stimulus backlink tags (skill/agent/prompt/instruction)
     when present. Returns a list of errors with `path` and `message` for each violation.
 
     .PARAMETER Spec
@@ -231,7 +231,18 @@ function Test-EvalSpecCompliance {
         }
 
         if (-not $stimulus.ContainsKey('prompt') -or [string]::IsNullOrWhiteSpace([string]$stimulus['prompt'])) {
-            $errors.Add(@{ path = $SpecPath; field = "$stimulusLabel.prompt"; message = 'Stimulus missing required key: prompt' })
+            $hasTurns = $false
+            if ($stimulus.ContainsKey('turns')) {
+                $turnsValue = $stimulus['turns']
+                if ($turnsValue -is [System.Collections.IEnumerable] -and -not ($turnsValue -is [string])) {
+                    foreach ($turn in $turnsValue) {
+                        if (-not [string]::IsNullOrWhiteSpace([string]$turn)) { $hasTurns = $true; break }
+                    }
+                }
+            }
+            if (-not $hasTurns) {
+                $errors.Add(@{ path = $SpecPath; field = "$stimulusLabel.prompt"; message = 'Stimulus missing required key: prompt or turns' })
+            }
         }
 
         $graders = if ($stimulus.ContainsKey('graders')) { $stimulus['graders'] } else { $null }
