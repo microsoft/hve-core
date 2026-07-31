@@ -34,13 +34,13 @@ At stop time, telemetry also appends a session summary with model and token usag
 
 All telemetry processing runs in Python. The shell entry points are thin wrappers that gate on opt-in and hand stdin to `_telemetry_core.py`.
 
-| Requirement     | Needed for                                                | Notes                                                      |
-|-----------------|-----------------------------------------------------------|------------------------------------------------------------|
+| Requirement     | Needed for                                                | Notes                                                                                    |
+|-----------------|-----------------------------------------------------------|------------------------------------------------------------------------------------------|
 | Python 3.11+    | Event collection, reports, cleanup                        | Collectors try `python3` then `python`; the report and cleanup scripts require `python3` |
-| Bash 3.2+       | Bash entry points                                         | macOS system Bash works; no Bash 4 features used           |
-| PowerShell 5.1+ | `Invoke-TelemetryCollector.ps1`                           | Written for Windows PowerShell; no `#Requires` floor       |
-| PowerShell 7.4+ | `Invoke-TelemetryReport.ps1`, `Invoke-TelemetryClean.ps1` | Enforced by `#Requires -Version 7.4`                       |
-| `jq`            | `generate-telemetry-report.sh`                            | Not needed by `Invoke-TelemetryReport.ps1`                 |
+| Bash 3.2+       | Bash entry points                                         | macOS system Bash works; no Bash 4 features used                                         |
+| PowerShell 5.1+ | `Invoke-TelemetryCollector.ps1`                           | Written for Windows PowerShell; no `#Requires` floor                                     |
+| PowerShell 7.4+ | `Invoke-TelemetryReport.ps1`, `Invoke-TelemetryClean.ps1` | Enforced by `#Requires -Version 7.4`                                                     |
+| `jq`            | `generate-telemetry-report.sh`                            | Not needed by `Invoke-TelemetryReport.ps1`                                               |
 
 You only need one shell family. Copilot selects the Bash or PowerShell entry point based on the host.
 
@@ -128,6 +128,7 @@ Key files and folders:
 | `raw-input.jsonl`                               | First few hook payloads stored verbatim; written only when `HVE_TELEMETRY_RAW=1` is set                   |
 | `.stacks/<session-id>/ops.log`                  | Append-only agent push and pop records for one session, replayed to attribute events to the calling agent |
 | `report.generated.html`                         | Optional self-contained report output                                                                     |
+
 ## Data Captured and Storage Schema
 
 This section describes the mechanics of what local telemetry collects and where each class of data comes from.
