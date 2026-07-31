@@ -489,6 +489,7 @@ jobs:
       - node-tests
       - fuzz-tests
       - pip-audit
+      - pip-install-lint
       - docusaurus-tests
       - frontmatter-validation
       - adr-consistency-validation
