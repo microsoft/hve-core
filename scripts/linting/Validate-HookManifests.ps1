@@ -40,7 +40,8 @@ $script:HookAllowedEvents = @(
     'preCompact',
     'subagentStart',
     'subagentStop',
-    'stop'
+    'stop',
+    'agentStop'
 )
 
 $script:HookAllowedTopLevel = @('version', 'description', 'hooks')

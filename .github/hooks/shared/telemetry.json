@@ -74,6 +74,14 @@
         "timeoutSec": 10
       }
     ],
+    "agentStop": [
+      {
+        "type": "command",
+        "bash": ".github/hooks/shared/telemetry/telemetry-collector.sh",
+        "powershell": ".github/hooks/shared/telemetry/Invoke-TelemetryCollector.ps1",
+        "timeoutSec": 10
+      }
+    ],
     "preCompact": [
       {
         "type": "command",

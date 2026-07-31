@@ -1,8 +1,8 @@
 ---
 title: owasp-agentic
 description: "OWASP Agentic Security Top 10 knowledge base for identifying, assessing, and remediating AI agent system security risks."
-sidebar_position: 1
-ms.date: 2026-07-03
+sidebar_position: 2
+ms.date: 2026-07-28
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->

@@ -2,16 +2,16 @@
 title: rpi-implement
 description: "Execute an approved RPI plan, maintain current planning state, and record implementation evidence. Use when implementation is ready to begin or resume."
 sidebar_position: 2
-ms.date: 2026-07-23
+ms.date: 2026-07-27
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->
-| Field       | Value                                  |
-|-------------|----------------------------------------|
-| Kind        | skill                                  |
-| Source      | `.github/skills/rpi/rpi-implement`     |
-| Invocation  | Loaded on demand by referencing agents |
-| Interactive | No                                     |
+| Field       | Value                                                                           |
+|-------------|---------------------------------------------------------------------------------|
+| Kind        | skill                                                                           |
+| Source      | `.github/skills/rpi/rpi-implement`                                              |
+| Invocation  | Invoked directly as `/rpi-implement`, or loaded on demand by referencing agents |
+| Interactive | No                                                                              |
 <!-- END AUTO-GENERATED: metadata -->
 
 ## What it does

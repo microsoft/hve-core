@@ -1314,7 +1314,7 @@ stimuli:
   - type: output-matches
     name: findings-table-present
     config:
-      pattern: (?i)(\|.*severity.*\||finding|issue|concern|recommendation)
+      pattern: (?i)(\|.*severity.*\||finding|issue|concern|recommendation|vulnerab|remediation|mitigation|\brisk\b|report\s+saved|skills?\s+assessed|\bsummary\b|\*{2}\s*(?:critical|high|medium|low)\b|\b(?:exposure|disclosure|compromise)\b)
   - type: output-matches
     name: severity-vocab
     config:

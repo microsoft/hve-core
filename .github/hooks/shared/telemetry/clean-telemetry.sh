@@ -13,9 +13,10 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 readonly SCRIPT_DIR
 readonly CORE_PY="${SCRIPT_DIR}/_telemetry_core.py"
 
-# Repo root anchors the default telemetry path so the script works from any cwd.
-REPO_ROOT="$(git -C "${SCRIPT_DIR}" rev-parse --show-toplevel 2>/dev/null || true)"
-[[ -n "${REPO_ROOT}" ]] || REPO_ROOT="$(cd "${SCRIPT_DIR}/../.." && pwd)"
+# Match the collector and anchor on the caller's workspace: the script itself
+# may live outside the repo it cleans, so its location says nothing.
+REPO_ROOT="${HVE_REPO_ROOT:-$(git rev-parse --show-toplevel 2>/dev/null || true)}"
+[[ -n "${REPO_ROOT}" ]] || REPO_ROOT="${PWD}"
 readonly REPO_ROOT
 
 usage() {
@@ -28,8 +29,11 @@ report.generated.html) from a telemetry store. Unrelated files are preserved.
 Options:
   -a, --all-dirs    Also clean every per-project telemetry directory recorded
                     in the user-level registry, plus the generated launchers,
-                    report, and registry in the HVE home directory.
-  -p, --path DIR    Telemetry directory. Default: <repo>/.copilot-tracking/telemetry
+                    report, and registry in the HVE home directory. Ignored
+                    when --path is given.
+  -p, --path DIR    Telemetry directory. Scopes the cleanup to this directory
+                    alone, overriding --all-dirs.
+                    Default: <repo>/.copilot-tracking/telemetry
   -n, --dry-run     List what would be removed without deleting anything.
   -y, --yes         Skip the confirmation prompt (required for non-interactive
                     use).
@@ -62,11 +66,12 @@ main() {
   local all_dirs=0
   local dry_run=0
   local assume_yes=0
+  local path_explicit=0
 
   while [[ $# -gt 0 ]]; do
     case "$1" in
       -a|--all-dirs) all_dirs=1; shift ;;
-      -p|--path) telemetry_path="$2"; shift 2 ;;
+      -p|--path) telemetry_path="$2"; path_explicit=1; shift 2 ;;
       -n|--dry-run) dry_run=1; shift ;;
       -y|--yes) assume_yes=1; shift ;;
       -h|--help) usage; exit 0 ;;
@@ -76,6 +81,15 @@ main() {
 
   command -v python3 &>/dev/null || err "'python3' is required but not installed"
   [[ -f "${CORE_PY}" ]] || err "Telemetry engine not found: ${CORE_PY}"
+
+  # An explicit --path narrows the scope. The generated launcher always passes
+  # --all-dirs, so announce the override rather than silently widening or
+  # dropping a destructive scope flag.
+  if (( all_dirs && path_explicit )); then
+    all_dirs=0
+    printf "Ignoring --all-dirs because --path was given; scope is '%s'.\n" \
+      "${telemetry_path}" >&2
+  fi
 
   if (( ! dry_run && ! assume_yes )); then
     local scope_desc="${telemetry_path}"

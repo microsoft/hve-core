@@ -1,8 +1,8 @@
 ---
 title: security-reviewer-formats
 description: Format specifications and data contracts for the security reviewer orchestrator and its subagents.
-sidebar_position: 9
-ms.date: 2026-07-03
+sidebar_position: 10
+ms.date: 2026-07-28
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->

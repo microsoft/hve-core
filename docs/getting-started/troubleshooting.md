@@ -3,10 +3,10 @@ title: Troubleshooting
 description: Solutions for common installation problems and answers to frequently asked questions about HVE Core collections.
 sidebar_position: 8
 author: Microsoft
-ms.date: 2026-06-27
+ms.date: 2026-07-28
 ms.topic: troubleshooting
-keywords: [troubleshooting, FAQ, installation, collections, hve-core, hve-installer]
-estimated_reading_time: 5
+keywords: [troubleshooting, FAQ, installation, collections, hve-core, hve-installer, registry, proxy]
+estimated_reading_time: 6
 ---
 
 This page covers common installation problems and answers frequently asked questions about HVE Core extensions and collections.
@@ -54,6 +54,18 @@ Errors appear after updating VS Code or one of the HVE extensions, or agents ref
 1. When updating VS Code, also update GitHub Copilot, GitHub Copilot Chat, and the HVE extension to their latest versions.
 2. Review the [CHANGELOG](https://github.com/microsoft/hve-core/blob/main/CHANGELOG.md) for breaking changes between versions.
 3. If artifacts are out of sync, remove the existing `.github/` HVE Core artifacts and reinstall using your preferred method.
+
+### npm ci Cannot Reach the Package Registry
+
+`npm ci` fails with `ENOTCONN`, a connection timeout, or a request error against `registry.npmjs.org`. This affects clone-based contributor setups only, not the marketplace extensions.
+
+#### Solutions
+
+1. Some networks block public package registries and require installs to route through an approved feed proxy. Set the registry override in your environment, then rerun `npm ci`.
+2. A user-level `~/.npmrc` has no effect here. This repository commits a project-level `.npmrc`, and npm resolves configuration in the order `cli > env > project .npmrc > user .npmrc > global`, so only an environment variable or a CLI flag takes precedence.
+3. Keep the proxy address out of every tracked file, and use restore commands only. Commands that resolve dependencies write the proxy's own URLs into the lockfile.
+
+See [Install behind a restricted network](../contributing/validation#install-behind-a-restricted-network) for per-platform setup and the rules for adding a dependency.
 
 ## Collection FAQ
 

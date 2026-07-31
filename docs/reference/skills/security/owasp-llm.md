@@ -1,8 +1,8 @@
 ---
 title: owasp-llm
 description: "OWASP Top 10 for LLM Applications (2025) knowledge base for identifying, assessing, and remediating large language model security risks."
-sidebar_position: 5
-ms.date: 2026-07-03
+sidebar_position: 6
+ms.date: 2026-07-28
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->

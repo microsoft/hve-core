@@ -3,7 +3,7 @@ title: Validation Commands and CI-Owned Lanes
 description: Choose local-safe validation defaults and reproduce CI-owned documentation and evaluation lanes when their prerequisites are available
 sidebar_position: 12
 author: Microsoft
-ms.date: 2026-07-17
+ms.date: 2026-07-28
 ms.topic: how-to
 keywords:
   - validation
@@ -13,7 +13,8 @@ keywords:
   - playwright
   - vally
   - evaluations
-estimated_reading_time: 9
+  - package feeds
+estimated_reading_time: 10
 ---
 
 Validation command names distinguish the checks that are safe defaults for a
@@ -56,11 +57,84 @@ the reproducible bootstrap path.
 |-------------------|-----------------------------------------------------------------|
 | Repository root   | Root validation, scripts, and `ci:eval:*` commands              |
 | `docs/docusaurus` | Docusaurus lint, component test, build, and Playwright commands |
-| `evals/beval`     | The Beval workflow and its package-specific dependencies        |
 
 Installing dependencies for one root does not provision the other roots. The
 root commands that delegate to Docusaurus still need the Docusaurus package
 dependencies available.
+
+## Install behind a restricted network
+
+Some organizations block direct access to public package registries and require
+installs to route through an approved feed proxy. `npm ci` then fails to reach
+`registry.npmjs.org`, commonly with `ENOTCONN` or a connection timeout.
+
+This repository commits a project-level `.npmrc` that pins the canonical public
+registry, and npm resolves configuration in the order `cli > env > project
+.npmrc > user .npmrc > global`. A user-level `~/.npmrc` is therefore outranked
+and silently ignored. Set an environment variable or pass a CLI flag instead.
+
+Keep the proxy address out of the repository. It belongs in your own
+environment, never in a tracked file.
+
+| Environment                | Where the override belongs                                                            |
+|----------------------------|---------------------------------------------------------------------------------------|
+| macOS or Linux             | A file in your home directory sourced from `~/.zshrc` or `~/.bashrc`                  |
+| Windows                    | A PowerShell profile (`$PROFILE`) or a user environment variable                      |
+| Dev container or Codespace | The user-level `dev.containers.containerEnv` VS Code setting, not `devcontainer.json` |
+
+macOS and Linux:
+
+```bash
+export npm_config_registry="https://proxy.example.com/npm/"
+npm ci
+```
+
+Windows PowerShell:
+
+```powershell
+$env:npm_config_registry = 'https://proxy.example.com/npm/'
+npm ci
+```
+
+Dev container, in VS Code user settings so no repository file changes:
+
+```json
+{
+  "dev.containers.containerEnv": {
+    "npm_config_registry": "https://proxy.example.com/npm/"
+  }
+}
+```
+
+The committed `.npmrc` sets `replace-registry-host=always`, so npm rewrites each
+lockfile tarball host to the configured registry at fetch time only. `npm ci`
+never writes `package-lock.json`, and it still verifies every download against
+the committed `sha512` integrity value.
+
+Restrict proxied installs to restore commands. `npm ci`, `uv sync --frozen`, and
+`pip install -r` read committed lockfiles and verify committed hashes. Commands
+that resolve dependencies, such as `npm install`, `npm update`, `npm audit fix`,
+`uv lock`, and `uv add`, write the proxy's own URLs into the lockfile and can
+downgrade npm integrity from `sha512` to `sha1`. Run
+`npm run lint:public-dependency-feeds` if you suspect a lockfile picked up a
+non-public source.
+
+### Add or update a dependency from a restricted network
+
+Generate the lockfile where the public registry is reachable, then commit the
+result. Dependabot covers version bumps of dependencies that already exist, but
+it does not add new ones.
+
+| Situation                       | How to produce the lockfile                                                        |
+|---------------------------------|------------------------------------------------------------------------------------|
+| Bump an existing dependency     | Let Dependabot open the pull request                                               |
+| Add a new dependency            | Edit `package.json`, push the branch, and let an agent or CI job run `npm install` |
+| Need an interactive environment | Use a codespace or any workstation with direct public registry access              |
+
+Do not repair a proxy-generated lockfile by hand. Rewriting `resolved` back to
+the public registry leaves the weakened `integrity` value in place, and
+recomputing the hash from the proxy-served bytes only attests to what the proxy
+returned rather than to what the registry published.
 
 ## Documentation checks and browser lane
 
@@ -113,6 +187,7 @@ output in `logs/` while diagnosing a failure.
 | Eval execution       | `npm run ci:eval:execute`                                                                    | Manifest, Vally, Copilot credential, and a noninteractive service-capable environment; model-backed and potentially costly; writes `logs/eval-summary.json` and per-spec results |
 | General eval suites  | `npm run ci:eval:run`                                                                        | Vally and model access; model-backed and potentially costly                                                                                                                      |
 | One suite            | `npm run ci:eval:run:skills`, `npm run ci:eval:run:agents`, or `npm run ci:eval:run:scripts` | Same model and service prerequisites as the selected suite                                                                                                                       |
+| Agent conformance    | `npm run ci:eval:run:conformance`                                                            | Vally and model access; runs the six planner-agent conformance suites in sequence and stops at the first failing suite                                                           |
 | Result comparison    | `npm run ci:eval:compare`                                                                    | Existing Vally result sets; compares prior outputs without selecting another suite                                                                                               |
 | Prompt behavior      | `npm run ci:eval:behavior-prompts`                                                           | Vally and model access; runs the prompt conformance spec                                                                                                                         |
 | Instruction behavior | `npm run ci:eval:behavior-instructions`                                                      | Vally and model access; runs the instruction conformance spec                                                                                                                    |
@@ -172,24 +247,26 @@ Only `npm run ci:eval:agent:dashboard:open` is interactive and opens the
 generated dashboard. Keep it separate from unattended validation or report
 generation.
 
-## Beval workflow
+## Agent conformance workflow
 
-Beval is a CI-owned workflow with its own package root at `evals/beval`. The
-workflow has a 30-minute timeout and requires `COPILOT_TOKEN`. It installs that
-package root, starts Copilot ACP agent and judge services on TCP ports 3000 and
-3001, verifies both ports, then runs this existing invocation:
+Agent conformance is a CI-owned workflow that runs the six planner-agent
+suites under `evals/agent-conformance/`. It is invoked from
+`weekly-validation.yml` through `workflow_call`, has a 30-minute timeout, and
+requires the `copilot-github-token` secret exported as `COPILOT_GITHUB_TOKEN`.
+The workflow runs one matrix leg per suite with `fail-fast: false`, so a single
+failing agent does not mask the others:
 
 ```bash
-beval -c evals/beval/dt-coach/eval.config.yaml run --cases evals/beval/dt-coach/cases/ --agent evals/beval/dt-coach/agent.yaml -m validation -o evals/beval/dt-coach/results/results.json
+npx vally eval --suite agent-conformance-dt-coach
 ```
 
-Results remain under `evals/beval/dt-coach/results/` and the workflow uploads
-them as the `beval-results-${{ github.run_id }}` artifact. Run `npm ci` in
-`evals/beval` before a deliberate local reproduction, and establish the two
-services and credential through an operator-managed environment. Do not ask for
-or transmit the credential through chat. Do not treat Beval as part of
-`validate:local`, infer its prerequisites from generic validation, or add a root
-package wrapper solely for naming consistency.
+Results are written under `evals/results/` and uploaded as a per-suite
+artifact. Each stimulus launches the agent artifact in turn 0 and delivers the
+case query in turn 1, then grades the response with a model judge plus advisory
+wall-time and content budgets. Establish the credential through an
+operator-managed environment before a deliberate local reproduction. Do not ask
+for or transmit the credential through chat, do not treat this lane as part of
+`validate:local`, and do not infer its prerequisites from generic validation.
 
 ## Review and cleanup
 

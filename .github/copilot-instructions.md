@@ -14,7 +14,7 @@ Items in the Highest Priority Rules section from attached instructions files ove
 * Breaking changes are acceptable.
 * Backward-compatibility layers or legacy support are added only when explicitly requested.
 * Tests, scripts, and one-off markdown docs are created or modified only when the requested change or its directly required support work needs them.
-* Before a dependency-backed npm command, establish the relevant package root with `npm ci` when no successful installation for its current lockfile is known. Treat the repository root, `docs/docusaurus`, and `evals/beval` independently; do not substitute `npm install` or reinstall a known-current root.
+* Before a dependency-backed npm command, establish the relevant package root with `npm ci` when no successful installation for its current lockfile is known. Treat the repository root and `docs/docusaurus` independently; do not substitute `npm install` or reinstall a known-current root.
 * Generic validation uses local-safe commands and does not select `ci:*` commands. A command in a plan, README, template, prior log, catalog, or error is a reference, not an execution request. A task that specifically asks to run or reproduce a named CI lane may use its ordinary `ci:*` command.
 * Browser installation, model or moderation environments, service startup, credentials, execution outside the sandbox, interactive UI, and adjacent CI lanes are separate actions. Do not infer them from generic validation or a failed command.
 

@@ -62,6 +62,7 @@
   .tag-tool { background: rgba(206,145,120,0.15); color: var(--orange); }
   .tag-client { background: rgba(86,156,214,0.15); color: var(--accent); font-weight: 600; }
   .tag-approx { background: rgba(255,255,255,0.06); color: var(--text-dim); font-style: italic; cursor: help; }
+  .tag-share { background: rgba(255,255,255,0.08); color: var(--text-dim); cursor: help; }
 
   .agent-usage-breakdown { margin-top: 4px; border-top: 1px solid var(--border); padding-top: 4px; }
   .agent-usage-row { display: flex; align-items: center; gap: 6px; margin: 2px 0; }
@@ -217,11 +218,15 @@
 
   /** Build per-session profile from hook events */
   function buildSessions() {
+    // Records arrive per file: a day's log, any shard a collector wrote when it
+    // could not lock that log, and whatever a user drags in. Latency pairs
+    // Pre/Post by position, so order by ts before reading them.
+    hookEvents.sort((a, b) => (a.ts || '') < (b.ts || '') ? -1 : (a.ts || '') > (b.ts || '') ? 1 : 0);
     const sessions = {};
     for (const e of hookEvents) {
       if (!sessions[e.sid]) {
         sessions[e.sid] = {
-          sid: e.sid, cwd: '', model: new Set(), modelHint: new Set(), agents: new Set(),
+          sid: e.sid, cwd: '', model: new Set(), modelHint: new Set(),
           instructions: new Set(), skills: new Set(), subagents: new Set(),
           instrTokens: {}, skillTokens: {},
           tools: {}, toolCount: 0, firstTs: e.ts, lastTs: e.ts,
@@ -295,6 +300,7 @@
         // Per-subagent token attribution from process log partitioning
         if (e.agent_usage) {
           s.agentUsage = e.agent_usage;
+          s.agentUsageExact = true;
         }
       }
 
@@ -320,9 +326,6 @@
       // Subagent invocations
       if (e.event === 'SubagentStart') s.subagents.add(e.agent_name || e.agent_display_name || '');
       if (e.subagent) s.subagents.add(e.subagent);
-
-      // Agent context (who called the tool)
-      if (e.agent && e.agent !== 'root') s.agents.add(e.agent);
 
       // Tool usage and latency (sequential correlation by tool name)
       if (e.event === 'PreToolUse' && e.tool) {
@@ -422,19 +425,43 @@
       }
       // Synthesize per-agent usage from child session data when the backend
       // did not emit agent_usage (e.g. process log was unavailable).
-      if (!parent.agentUsage && cu.requests) {
-        if (!parent.agentUsage) parent.agentUsage = {};
-        parent.agentUsage[agentLabel] = {
-          output_tokens: cu.output, input_tokens: cu.input,
-          cache_read_tokens: cu.cached, total_nano_aiu: cu.aiu,
-          requests: cu.requests,
-        };
+      if (!parent.agentUsageExact && cu.requests) {
+        if (!parent.agentUsageSynth) parent.agentUsageSynth = {};
+        const b = parent.agentUsageSynth[agentLabel] || (parent.agentUsageSynth[agentLabel] = {
+          output_tokens: 0, input_tokens: 0, cache_read_tokens: 0, total_nano_aiu: 0, requests: 0,
+        });
+        b.output_tokens += cu.output; b.input_tokens += cu.input;
+        b.cache_read_tokens += cu.cached; b.total_nano_aiu += cu.aiu;
+        b.requests += cu.requests;
       }
       // Extend parent time range
       if (child.firstTs < parent.firstTs) parent.firstTs = child.firstTs;
       if (child.lastTs > parent.lastTs) parent.lastTs = child.lastTs;
       // Remove the child session
       delete sessions[childSid];
+    }
+
+    // Close a synthesized split with the root remainder, so its lines reconcile
+    // with the session total the way an exact process-log split does.
+    for (const s of Object.values(sessions)) {
+      if (s.agentUsageExact || !s.agentUsageSynth) continue;
+      const subs = Object.values(s.agentUsageSynth);
+      const sum = (k) => subs.reduce((t, b) => t + (b[k] || 0), 0);
+      s.agentUsage = Object.assign({}, s.agentUsageSynth);
+      const rem = {
+        output_tokens: s.usage.output - sum('output_tokens'),
+        input_tokens: s.usage.input - sum('input_tokens'),
+        cache_read_tokens: s.usage.cached - sum('cache_read_tokens'),
+        total_nano_aiu: s.usage.aiu - sum('total_nano_aiu'),
+        requests: s.usage.requests - sum('requests'),
+      };
+      // Only claim a root line when the parent's own usage was measured. Where
+      // it was not, a clamped remainder would render as a measured zero.
+      if (rem.requests > 0 || rem.output_tokens > 0 || rem.total_nano_aiu > 0) {
+        for (const k of Object.keys(rem)) rem[k] = Math.max(0, rem[k]);
+        s.agentUsage.root = rem;
+      }
+      s.agentUsageApprox = true;
     }
 
     return Object.values(sessions);
@@ -512,6 +539,27 @@
         { label: 'Output Tokens', value: fmtTokens(totalOut) }
       );
     }
+    // How much of the spend happened inside subagents rather than the root agent.
+    // The basis must be common to every session: preferring AIU while some
+    // sessions report none would drop their subagent spend from the total.
+    const withUsage = sessions.filter(s => Object.keys(s.agentUsage || {}).length);
+    const useAiu = withUsage.length > 0 && withUsage.every(s =>
+      Object.values(s.agentUsage).some(au => (au.total_nano_aiu || 0) > 0));
+    const weigh = au => useAiu ? (au.total_nano_aiu || 0) : (au.output_tokens || 0);
+    let shareNum = 0, shareDen = 0;
+    withUsage.forEach(s => {
+      for (const [n, au] of Object.entries(s.agentUsage)) {
+        shareDen += weigh(au);
+        if (n !== 'root') shareNum += weigh(au);
+      }
+    });
+    if (shareNum > 0 && shareDen > 0) {
+      cards.push({
+        label: 'Subagent Share',
+        value: Math.round(shareNum / shareDen * 100) + '%',
+        title: `Portion of ${useAiu ? 'AIU' : 'output tokens'} spent inside subagents rather than the root agent`
+      });
+    }
     grid.innerHTML = cards.map(c => `<div class="card"${c.title ? ` title="${esc(c.title)}"` : ''}><div class="label">${esc(c.label)}</div><div class="value">${esc(c.value)}</div></div>`).join('');
   }
 
@@ -540,20 +588,37 @@
           (u.aiu ? `<span class="tag tag-model">${fmtAiu(u.aiu)} AIU</span>` : '') +
           `<span class="meta">${u.requests} request${u.requests === 1 ? '' : 's'}</span>`
         : dim('no debug-log usage');
-      // Per-subagent token breakdown
+      // Per-agent token split. A process-log split is exact: each request
+      // carries its own agent_id. A synthesized split is reconstructed from
+      // merged child sessions and is marked approximate.
       if (s.agentUsage) {
-        const agentLines = Object.entries(s.agentUsage)
-          .filter(([name]) => name !== 'root')
-          .sort((a, b) => (b[1].output_tokens || 0) - (a[1].output_tokens || 0))
+        const entries = Object.entries(s.agentUsage);
+        const aiuTotal = entries.reduce((t, [, au]) => t + (au.total_nano_aiu || 0), 0);
+        const outTotal = entries.reduce((t, [, au]) => t + (au.output_tokens || 0), 0);
+        // Share is measured in AIU where the host reports it, since that is the
+        // billed unit; output tokens are the fallback basis.
+        const basis = aiuTotal > 0 ? 'AIU' : 'output tokens';
+        const denom = aiuTotal > 0 ? aiuTotal : outTotal;
+        const weight = au => aiuTotal > 0 ? (au.total_nano_aiu || 0) : (au.output_tokens || 0);
+        const agentLines = entries
+          .sort((a, b) => weight(b[1]) - weight(a[1]))
           .map(([name, au]) => {
-            const freshIn = Math.max(0, (au.input_tokens || 0) - (au.cache_read_tokens || 0));
+            const freshIn = typeof au.input_tokens_uncached === 'number'
+              ? Math.max(0, au.input_tokens_uncached)
+              : Math.max(0, (au.input_tokens || 0) - (au.cache_read_tokens || 0));
+            const pct = denom > 0 ? Math.round(weight(au) / denom * 100) : 0;
             return `<div class="agent-usage-row"><span class="tag tag-agent">${esc(name)}</span>` +
+              `<span class="tag tag-share" title="Share of session ${basis}">${pct}%</span>` +
               `<span class="meta">${fmtTokens(freshIn)} in · ${fmtTokens(au.output_tokens || 0)} out` +
               (au.total_nano_aiu ? ` · ${fmtAiu(au.total_nano_aiu)} AIU` : '') +
               ` · ${au.requests || 0} req</span></div>`;
           });
-        if (agentLines.length) {
-          tokens += `<div class="agent-usage-breakdown">${agentLines.join('')}</div>`;
+        // A lone root line just restates the totals; only a real split is useful.
+        if (agentLines.length > 1) {
+          const approx = s.agentUsageApprox
+            ? `<span class="tag tag-approx" title="Reconstructed from merged subagent sessions rather than a per-request process log">approx</span>`
+            : '';
+          tokens += `<div class="agent-usage-breakdown">${approx}${agentLines.join('')}</div>`;
         }
       }
 
@@ -655,7 +720,7 @@
 
   function fmtDuration(ms) {
     const s = ms / 1000;
-    if (s < 1) return ms + 'ms';
+    if (s < 1) return Math.round(ms) + 'ms';
     if (s < 60) return s.toFixed(1) + 's';
     if (s < 3600) return Math.floor(s / 60) + 'm ' + Math.floor(s % 60) + 's';
     return Math.floor(s / 3600) + 'h ' + Math.floor((s % 3600) / 60) + 'm';
