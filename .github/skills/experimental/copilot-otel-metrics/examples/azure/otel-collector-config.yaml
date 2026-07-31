@@ -1,0 +1,93 @@
+# OpenTelemetry Collector configuration for GitHub Copilot fleet telemetry.
+#
+# Copilot's exporter sends static headers; Azure Monitor requires rotating Entra
+# credentials. This collector is what bridges the two, and it is not optional.
+#
+# Supply the connection string through the environment, never in this file:
+#   export APPLICATIONINSIGHTS_CONNECTION_STRING="InstrumentationKey=...;IngestionEndpoint=..."
+#
+# Requires the OpenTelemetry Collector Contrib distribution; the azuremonitor
+# exporter is not in the core distribution.
+
+receivers:
+  otlp:
+    protocols:
+      http:
+        endpoint: 0.0.0.0:4318
+      grpc:
+        endpoint: 0.0.0.0:4317
+
+processors:
+  # Bounds collector memory so a traffic spike degrades rather than crashes it.
+  memory_limiter:
+    check_interval: 1s
+    limit_percentage: 80
+    spike_limit_percentage: 20
+
+  # Six of these attributes were observed carrying plaintext content on spans
+  # with github.copilot.chat.otel.captureContent set to false. The seventh,
+  # copilot_chat.reasoning_content, was observed marked [encrypted] and is
+  # stripped defensively. This is the only place to remove any of it before it
+  # reaches billable, queryable storage. Remove an action here only as a
+  # deliberate decision.
+  attributes/strip-content:
+    actions:
+      - key: copilot_chat.user_request
+        action: delete
+      - key: copilot_chat.reasoning_content
+        action: delete
+      - key: gen_ai.input.messages
+        action: delete
+      - key: gen_ai.output.messages
+        action: delete
+      - key: gen_ai.system_instructions
+        action: delete
+      - key: gen_ai.tool.call.arguments
+        action: delete
+      - key: gen_ai.tool.call.result
+        action: delete
+
+  # Fleet dimensions for grouping. Keep these to org structure; anything that
+  # identifies an individual lands on every span they produce.
+  resource/fleet:
+    attributes:
+      - key: service.namespace
+        value: github-copilot
+        action: upsert
+
+  batch:
+    timeout: 10s
+    send_batch_size: 1024
+
+exporters:
+  azuremonitor:
+    connection_string: ${env:APPLICATIONINSIGHTS_CONNECTION_STRING}
+
+extensions:
+  health_check:
+    endpoint: 0.0.0.0:13133
+
+  # Copilot can only send a fixed header set, so a static bearer token is the
+  # available fleet authentication mechanism. Every workstation holds the same
+  # value: it is write-side only, but it cannot be rotated per user. Uncomment
+  # and add `auth: { authenticator: bearertokenauth }` to the otlp receiver
+  # after deciding that trade-off deliberately.
+  #
+  # bearertokenauth:
+  #   token: ${env:COPILOT_OTEL_INGEST_TOKEN}
+
+service:
+  extensions: [health_check]
+  pipelines:
+    traces:
+      receivers: [otlp]
+      processors: [memory_limiter, attributes/strip-content, resource/fleet, batch]
+      exporters: [azuremonitor]
+    metrics:
+      receivers: [otlp]
+      processors: [memory_limiter, resource/fleet, batch]
+      exporters: [azuremonitor]
+    logs:
+      receivers: [otlp]
+      processors: [memory_limiter, attributes/strip-content, resource/fleet, batch]
+      exporters: [azuremonitor]

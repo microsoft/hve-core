@@ -2,16 +2,16 @@
 title: architecture-diagrams
 description: "Architecture diagram authoring for cloud infrastructure: parse Azure IaC, map relationships, and render either ASCII block diagrams or Mermaid flowcharts based on the caller's chosen output format"
 sidebar_position: 1
-ms.date: 2026-07-03
+ms.date: 2026-07-27
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->
-| Field       | Value                                           |
-|-------------|-------------------------------------------------|
-| Kind        | skill                                           |
-| Source      | `.github/skills/hve-core/architecture-diagrams` |
-| Invocation  | Loaded on demand by referencing agents          |
-| Interactive | No                                              |
+| Field       | Value                                                                                   |
+|-------------|-----------------------------------------------------------------------------------------|
+| Kind        | skill                                                                                   |
+| Source      | `.github/skills/hve-core/architecture-diagrams`                                         |
+| Invocation  | Invoked directly as `/architecture-diagrams`, or loaded on demand by referencing agents |
+| Interactive | No                                                                                      |
 <!-- END AUTO-GENERATED: metadata -->
 
 ## What it does

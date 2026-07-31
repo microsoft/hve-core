@@ -2,16 +2,16 @@
 title: rpi-walkthrough
 description: "Guided, conversational walkthrough that explains code, UI, UX, features, or .copilot-tracking artifacts with navigable evidence links, deep subagent review, and a reconciled decisions-and-changes ledger. Use when the user wants to understand how something works or why it was changed."
 sidebar_position: 8
-ms.date: 2026-07-23
+ms.date: 2026-07-27
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->
-| Field       | Value                                  |
-|-------------|----------------------------------------|
-| Kind        | skill                                  |
-| Source      | `.github/skills/rpi/rpi-walkthrough`   |
-| Invocation  | Loaded on demand by referencing agents |
-| Interactive | No                                     |
+| Field       | Value                                                                             |
+|-------------|-----------------------------------------------------------------------------------|
+| Kind        | skill                                                                             |
+| Source      | `.github/skills/rpi/rpi-walkthrough`                                              |
+| Invocation  | Invoked directly as `/rpi-walkthrough`, or loaded on demand by referencing agents |
+| Interactive | No                                                                                |
 <!-- END AUTO-GENERATED: metadata -->
 
 ## What it does

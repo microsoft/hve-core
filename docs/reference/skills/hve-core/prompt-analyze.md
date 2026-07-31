@@ -2,16 +2,16 @@
 title: prompt-analyze
 description: Compatibility alias for read-only prompt artifact review. Routes static and behavior analysis to hve-builder review mode.
 sidebar_position: 5
-ms.date: 2026-07-23
+ms.date: 2026-07-27
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->
-| Field       | Value                                    |
-|-------------|------------------------------------------|
-| Kind        | skill                                    |
-| Source      | `.github/skills/hve-core/prompt-analyze` |
-| Invocation  | Loaded on demand by referencing agents   |
-| Interactive | No                                       |
+| Field       | Value                                                                            |
+|-------------|----------------------------------------------------------------------------------|
+| Kind        | skill                                                                            |
+| Source      | `.github/skills/hve-core/prompt-analyze`                                         |
+| Invocation  | Invoked directly as `/prompt-analyze`, or loaded on demand by referencing agents |
+| Interactive | No                                                                               |
 <!-- END AUTO-GENERATED: metadata -->
 
 ## What it does

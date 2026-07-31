@@ -59,7 +59,7 @@ Use a subagent when the host needs a specialized review dimension or a tier-spec
 
 * Routing `description`: write it so a parent can decide when to delegate, in the shape "Use when ..." naming the specialization. Supplied metadata or `rpi-research` uses the description to identify a relevant subagent, so the description is the discovery surface.
 * Stable `name`: hve-builder dispatches by the `name` from frontmatter, not by file path or glob. Give it a distinct, namespaced name to avoid collisions across installed libraries.
-* Structured return: return a bounded, structured summary the orchestrator can act on. Agent and subagent `tools:` configuration is a user-managed opaque boundary. HVE Builder does not inspect, compare, infer from, or use existing configuration to make authoring, review, validation, change-classification, or behavior-testing decisions. When the caller directly supplies an exact configuration, reproduce it verbatim without assessing its appropriateness.
+* Structured return: return a bounded, structured summary the orchestrator can act on. Selecting the extension's tool set stays with its author under the Tool-configuration boundary in [requirements-catalog.md](requirements-catalog.md).
 * Model fit: `model:` is optional. An omitted extension subagent model inherits the invoking parent's model; an omitted directly invoked extension agent or prompt model uses the current session selection. When the extension needs a stable profile, select it by responsibility and declare its exact ordered list. Use Medium (`GPT-5.6 Terra`, `Claude Sonnet 5`, `MAI-Code-1-Flash`) for semantic authoring or calibrated review, Low (`GPT-5.6 Luna`, `MAI-Code-1-Flash`, `Claude Haiku 4.5`) for bounded mechanical work, and High (`GPT-5.6 Sol`, `Claude Opus 4.8`, `GPT-5.5`) only for responsibilities that require the deepest reasoning profile. Each declared name carries the `(copilot)` suffix in frontmatter.
 * Host registration: confirm the host registers the subagent through a fixed parent `agents:` array, an intentionally unrestricted parent that omits `agents:`, or the collection manifest so approved lifecycle dispatch can reach it.
 
@@ -88,6 +88,46 @@ A team installs hve-builder as a library and wants every Terraform module they a
 3. They add a `Terraform Module Reviewer` subagent with a routing description and a stable name, and register it in their parent agent's `agents:` list. hve-builder does not auto-load it; supplied metadata or an `rpi-research` extension survey identifies it, and the lifecycle dispatches it by name during the approved review stage alongside its generic static-review dispatch.
 
 The instruction and skill become eligible through normal discovery; the subagent becomes reachable because its routing description and host registration expose it. The caller still decides whether each extension is in scope and what authority it receives. Bounded reads of known target instructions and supplied extension metadata remain lifecycle-stage work; only open-ended extension surveys enter `rpi-research`.
+
+## Extending a skill that publishes an extension registry
+
+The subagent guidance above is enough to build a worker that hve-builder itself dispatches. Extending another skill needs more, because that skill owns its own discovery rules, dispatch inputs, evidence layout, and return contract. A subagent that satisfies the generic pattern but not the host skill's contract will never be selected, or will be selected and then return material the parent cannot use.
+
+Before authoring, read the target skill and extract six things. Author the extension against all six, not against the generic pattern alone.
+
+| Contract element      | What to extract from the target skill                                                                                                                                    |
+|-----------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| Discovery eligibility | What the skill requires before it will select a specialist: the frontmatter fields it matches on, and whether host visibility or explicit registration is also required. |
+| Registry record       | Whether the skill records selected and skipped extensions, and which fields that record demands.                                                                         |
+| Dispatch inputs       | The exact fields the parent passes on dispatch. A worker that expects different inputs will misinterpret its assignment.                                                 |
+| Owned output path     | Where the worker writes, how that path is constructed, and how it is kept distinct from the parent's own artifact.                                                       |
+| Evidence ownership    | Which decisions belong to the worker and which the parent reserves. This is where most extensions overreach.                                                             |
+| Return contract       | The shape and bounds of what the worker hands back.                                                                                                                      |
+
+### Worked example: a codebase-specific `rpi-research` specialist
+
+A team wants `rpi-research` to investigate their codebase with domain knowledge a general worker lacks, for example their service topology or their migration history. They author a research specialist rather than forking the skill.
+
+* Discovery eligibility. `rpi-research` selects a specialist by stable frontmatter `name`, a routing `description` that matches the uncertainty, and host visibility or registration. It additionally weighs independent-lane fit and output-contract fit, so the description states the kind of *lane* the specialist owns, not just its subject.
+* Registry record. `rpi-research` records every candidate as selected or skipped in its Extension Registry, with the stable name, the match and provenance, the scoped authority or output contract, the reason, and the return pointer once the lane completes. Give the specialist a description precise enough that a skip reason would be obviously wrong.
+* Dispatch inputs. The parent passes the cycle number, wave type, topic, one bounded lane, questions, criteria, scope and non-goals, research posture, explicit limits or deadline, the exact approved lane path, and the parent's own primary artifact path. Write the specialist to consume all of these, and to honor the wave type: a contrarian wave asks for counter-evidence, not confirmation.
+* Owned output path. The specialist writes its full lane evidence to one lane artifact at `.copilot-tracking/research/subagents/YYYY-MM-DD/{{subtopic}}-subagent-research.md`, as defined in `rpi-research/references/research.md`, or the mirrored path beneath a caller-resolved trusted root, and nowhere else. It never writes to the parent primary artifact, and it validates that the two paths differ before writing.
+* Evidence ownership. This is the constraint most extensions get wrong. The specialist supplies evidence, relationships, and synthesis pointers. The parent alone classifies evidence state and records accepted, rejected, and deferred material. A specialist that returns a recommendation or a decision has exceeded its authority even when its analysis is correct.
+* Return contract. The specialist returns a compact execution status, evidence relationships and provenance, confidence, gaps, and a stop decision. Full fidelity lives in the lane artifact; the return is a pointer, not a copy.
+
+Example frontmatter:
+
+```yaml
+---
+name: Acme Platform Research Specialist
+description: "Investigates one bounded research lane inside the Acme service platform using its topology and migration history. Use when an rpi-research lane concerns Acme platform internals."
+user-invocable: false
+---
+```
+
+The `model:` field is omitted so the specialist inherits the invoking parent's model, which keeps a research lane consistent with the cycle that dispatched it. Declare a profile only when the specialist's responsibility genuinely differs from its parent's.
+
+Register the specialist the same way as any other extension subagent: through a fixed parent `agents:` array, an intentionally unrestricted parent that omits `agents:`, or the host's collection manifest. Until that registration exists, the lifecycle cannot dispatch it by name, so record the deferred registration explicitly using the rule in Authoring a discoverable extension subagent.
 
 ## Safety boundary
 

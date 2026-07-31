@@ -2,16 +2,16 @@
 title: hve-builder
 description: "Author, review, or validate Copilot prompt-engineering artifacts through independent review, behavior testing, and host checks."
 sidebar_position: 4
-ms.date: 2026-07-23
+ms.date: 2026-07-27
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->
-| Field       | Value                                  |
-|-------------|----------------------------------------|
-| Kind        | skill                                  |
-| Source      | `.github/skills/hve-core/hve-builder`  |
-| Invocation  | Loaded on demand by referencing agents |
-| Interactive | No                                     |
+| Field       | Value                                                                         |
+|-------------|-------------------------------------------------------------------------------|
+| Kind        | skill                                                                         |
+| Source      | `.github/skills/hve-core/hve-builder`                                         |
+| Invocation  | Invoked directly as `/hve-builder`, or loaded on demand by referencing agents |
+| Interactive | No                                                                            |
 <!-- END AUTO-GENERATED: metadata -->
 
 ## What it does

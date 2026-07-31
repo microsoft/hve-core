@@ -314,6 +314,64 @@ function Get-AssetDocsPath {
 # Invocation and Interactivity Classification
 # ---------------------------------------------------------------------------
 
+function Resolve-FrontmatterFlag {
+    <#
+    .SYNOPSIS
+        Reads a boolean frontmatter field with an explicit default.
+
+    .DESCRIPTION
+        Frontmatter is author-written, so a flag arrives as a real boolean from the
+        YAML parser, as a quoted string, or not at all. Naive truthiness reads the
+        quoted string "false" as true, failing in the permissive direction, and
+        treats an absent key as false even where the schema declares a default of
+        true. This resolver handles each case explicitly rather than guessing.
+
+    .PARAMETER Frontmatter
+        Parsed frontmatter hashtable from Get-AssetFrontmatter.
+
+    .PARAMETER Key
+        Frontmatter field name to read.
+
+    .PARAMETER Default
+        Value returned when the key is absent or null, matching the field's
+        declared schema default.
+
+    .OUTPUTS
+        [bool] The resolved flag value.
+    #>
+    [CmdletBinding()]
+    [OutputType([bool])]
+    param(
+        [Parameter(Mandatory = $true)]
+        [AllowNull()]
+        [hashtable]$Frontmatter,
+
+        [Parameter(Mandatory = $true)]
+        [ValidateNotNullOrEmpty()]
+        [string]$Key,
+
+        [Parameter(Mandatory = $true)]
+        [bool]$Default
+    )
+
+    if ($null -eq $Frontmatter -or -not $Frontmatter.ContainsKey($Key)) {
+        return $Default
+    }
+
+    $value = $Frontmatter[$Key]
+    if ($null -eq $value) {
+        return $Default
+    }
+    if ($value -is [bool]) {
+        return $value
+    }
+    if ($value -is [string]) {
+        return [string]::Equals($value.Trim(), 'true', [System.StringComparison]::OrdinalIgnoreCase)
+    }
+
+    return $false
+}
+
 function Get-AssetInvocation {
     <#
     .SYNOPSIS
@@ -324,7 +382,9 @@ function Get-AssetInvocation {
         documentation generation can render consistent "how to invoke" guidance.
         Agents surface in the chat agent picker under their display name; prompts run
         as slash commands; instructions apply automatically to files matching their
-        applyTo glob; skills load on demand when a referencing agent needs them.
+        applyTo glob. Skills are classified from their own frontmatter: a skill that
+        is user-invocable is reachable as a slash command, and one that also sets
+        disable-model-invocation is reachable that way only.
 
     .PARAMETER Kind
         The artifact kind (agent, prompt, instruction, skill).
@@ -388,7 +448,15 @@ function Get-AssetInvocation {
             return @{ Mechanism = 'auto-applied'; Token = $applyTo }
         }
         'skill' {
-            return @{ Mechanism = 'skill-load'; Token = $Name }
+            # user-invocable declares a default of true in skill-frontmatter.schema.json.
+            $userInvocable = Resolve-FrontmatterFlag -Frontmatter $Frontmatter -Key 'user-invocable' -Default $true
+            if (-not $userInvocable) {
+                return @{ Mechanism = 'skill-load'; Token = $Name }
+            }
+
+            $modelDisabled = Resolve-FrontmatterFlag -Frontmatter $Frontmatter -Key 'disable-model-invocation' -Default $false
+            $mechanism = if ($modelDisabled) { 'skill-user-only' } else { 'skill-user-and-load' }
+            return @{ Mechanism = $mechanism; Token = "/$Name" }
         }
         default {
             throw "Get-AssetInvocation: unrecognized kind '$Kind'."
@@ -482,6 +550,8 @@ function Format-AssetInvocation {
             if ([string]::IsNullOrWhiteSpace($token)) { return 'Applied automatically' }
             return "Applied automatically to $tick$token$tick"
         }
+        'skill-user-only' { return "Invoked directly as $tick$token$tick; model invocation is disabled, so agents do not load it" }
+        'skill-user-and-load' { return "Invoked directly as $tick$token$tick, or loaded on demand by referencing agents" }
         'skill-load' { return 'Loaded on demand by referencing agents' }
         'subagent-delegated' { return 'Delegated subagent, dispatched by a parent agent (not selected directly)' }
         default {

@@ -25,19 +25,20 @@ The behavior gate has separate route-specific decisions. For mutating modes, it 
 
 Treat existing `agents`, `hooks`, `handoffs`, `model`, and other non-tool capability-bearing frontmatter as baseline behavior. In improve and refactor work, preserve that surface unless the caller explicitly requests a change or verified evidence shows a host incompatibility, native failure, security defect, or required capability gap within approved scope. In replace work, change it only as part of the approved replacement architecture.
 
-Agent and subagent `tools:` configuration is a user-managed opaque boundary. HVE Builder does not inspect, compare, infer from, or use existing configuration to make authoring, review, validation, change-classification, or behavior-testing decisions. When the caller directly supplies an exact configuration, reproduce it verbatim without assessing its appropriateness. This boundary does not apply to generic tool API, schema, structured-output, native-registration, untrusted-output, secret-handling, risky-action confirmation, or independently enforced action-level safety guidance that does not select an agent tool set.
+Agent and subagent `tools:` configuration sits outside this control entirely, under the Tool-configuration boundary in `requirements-catalog.md`.
 
 When evidence supports a non-tool capability-surface change, return to scope and route before editing, classify the change as Major, and run behavior testing. Without that evidence, a reviewer records an uncertainty or limitation rather than an actionable finding or exact replacement surface.
 
 ## Stage order and gates
 
-1. Scope and route. Resolve targets, mode, requirements, write boundary, evidence root, artifact architecture, applicable repository conventions, and directly required support artifacts. Intake may classify caller-provided facts, known targets, and already-supplied extension metadata without research. Do not run an open-ended codebase scan at intake; route a need for one through step 3.
+1. Scope and route. Resolve targets, mode, requirements, write boundary, evidence root, artifact architecture, applicable repository conventions, and directly required support artifacts. Determine distribution scope: an artifact the host distributes through a collection, plugin, or extension carries required wiring as support work, while an artifact deliberately kept repository-specific does not. Intake may classify caller-provided facts, known targets, and already-supplied extension metadata without research. Do not run an open-ended codebase scan at intake; route a need for one through step 3.
 2. Establish the baseline. For `improve`, `refactor`, and `replace`, capture the current contract, non-tool capability-bearing frontmatter, and static findings before edits. Do not inspect agent or subagent `tools:` configuration. Read only already-known target files, supplied criteria, and required canonical references. These bounded lifecycle-stage reads are not codebase exploration. Skip the baseline for a target that does not yet exist; `review` performs its single static assessment in step 5.
 3. Research and explore only when needed. When non-obvious reuse discovery, an extension survey that requires a codebase scan, another open-ended workspace exploration, or an unresolved decision-critical internal, external, or hybrid question could change architecture or acceptance criteria, route it through the sole `rpi-research` bridge in `stage-dispatch.md`. Apply that bridge's return and unavailable-entrypoint rules. On `Needs clarification`, use approved evidence or ask the caller; when the missing answer is decision-critical and cannot be inferred, stop Blocked rather than guessing. Do not substitute a direct worker route or local research contract.
 4. Author. For mutating modes, dispatch a generic Medium-profile authoring subagent using `stage-dispatch.md` inside the approved write boundary. Give it the complete known in-scope source and finding set so it can apply one coherent authoring batch. It performs bounded reads of approved target files and supplied canonical references. A proposed type change, artifact split, non-tool capability-surface change, new support artifact outside that boundary, or newly required exploration returns to scope and route before edits continue.
 5. Review and close static findings. For mutating modes and `review`, dispatch a generic Medium-profile static-review subagent in fresh context against the complete candidate. Do not provide author reasoning or the author log; provide known target files, purpose, requirements, and canonical criteria. Its bounded reads are lifecycle-stage work, not exploration. When the verdict is Revise and all findings remain inside the assessed boundary, apply the complete finding set in one correction batch, then run one targeted closure check limited to the original finding IDs and their acceptance evidence. Do not turn targeted closure into another full static review. Return to scope and route when architecture, capability, safety, acceptance, or the evidence boundary changed. Skip this stage for `validate`.
 6. Test behavior on the final correction state. Continue only after static findings are closed. For mutating modes, classify every changed target before testing. For minor and medium changes, record a satisfied-and-skipped behavior gate. For major changes only, dispatch the `hve-builder-tester` skill with the intended reasoning profile, fidelity, isolation set, together set, requirements, and any eligible prior behavior report for a correction run. In review mode, do not require a source delta. Ask whether the existing target can affect model action or output. Dispatch `hve-builder-tester` for a behavior-bearing review target. For a no-runtime review target, record a satisfied-and-skipped behavior gate with execution `Not run`, verdict `Not applicable`, fidelity `Not applicable`, and an evidence-backed reason. When required review behavior cannot execute, record behavior verdict `Not available` and overall `Deferred` with the exact rerun condition. Skip this stage for `validate`.
 7. Validate the final correction state. For mutating modes and `validate`, dispatch a generic Low-profile validation subagent using `stage-dispatch.md` after source artifacts are at their real paths and the approved correction batch is complete. Classify caller-named or already-known applicable non-mutating checks as `local` or `CI`; generic validation executes local checks only. A specifically requested named CI lane may run directly, while its specialized setup remains separate. Record CI evidence that did not run truthfully and resolve required missing CI evidence as `Deferred`. In `review`, run validation only when requested.
+   * When distribution scope applies, a new or removed distributable artifact requires its wiring to be complete before validation passes: collection manifest membership including every subagent a parent declares, regenerated plugin and extension outputs, and the host's collection validation. Generated outputs are never edited directly. Record wiring that is not applicable, with the reason, rather than omitting it silently.
 8. Resolve. Apply the outcome resolver below. Re-enter authoring for an open original finding or failed final-state gate inside scope; return to routing for a changed assessed boundary; stop on Pass, Revise, Deferred, or Blocked.
 
 Stages may run in parallel only when neither consumes the other's output. An independent `rpi-research` handoff can run beside baseline review only when it cannot change the baseline target set. Authoring, candidate static review, correction-batch closure, final-state behavior testing, and final-state validation remain ordered because each consumes the preceding source state.
@@ -46,20 +47,14 @@ Stages may run in parallel only when neither consumes the other's output. An ind
 
 The lifecycle uses generic subagent dispatches with a model selected at invocation time rather than named worker frontmatter. `stage-dispatch.md` defines the prompt and evidence contract. This keeps the stage isolated while allowing the parent to select a responsibility-appropriate profile.
 
-| Stage                   | Profile | Why                                                                          |
-|-------------------------|---------|------------------------------------------------------------------------------|
-| Authoring, review       | Medium  | Architecture, authoring, and calibrated review require judgment              |
-| Validation              | Low     | Known-check execution follows a bounded mechanical protocol                  |
-| Test design and grading | Medium  | Coverage and evidence grading require semantic judgment                      |
-| `HVE Artifact Tester`   | Low     | Literal conformance simulation is bounded and intentionally non-interpretive |
+| Stage                   | Profile          | Why                                                                                         |
+|-------------------------|------------------|---------------------------------------------------------------------------------------------|
+| Authoring, review       | Medium           | Architecture, authoring, and calibrated review require judgment                             |
+| Validation              | Low              | Known-check execution follows a bounded mechanical protocol                                 |
+| Test design and grading | Medium or higher | Coverage and evidence grading require semantic judgment and must not sit below the executor |
+| `HVE Artifact Tester`   | Target profile   | Literal conformance simulation runs at the tier the tested artifact targets                 |
 
-Canonical profile lists:
-
-* High: `GPT-5.6 Sol (copilot)`, `Claude Opus 4.8 (copilot)`, `GPT-5.5 (copilot)`
-* Medium: `GPT-5.6 Terra (copilot)`, `Claude Sonnet 5 (copilot)`, `MAI-Code-1-Flash (copilot)`
-* Low: `GPT-5.6 Luna (copilot)`, `MAI-Code-1-Flash (copilot)`, `Claude Haiku 4.5 (copilot)`
-
-After selecting the responsibility-appropriate profile, choose the first model from its canonical ordered list that appears in the user's available model list. The `hve-builder-tester` lead may select the Medium profile for `HVE Artifact Tester` only when the target contract explicitly expects Medium. Record the profile override in run state and the report; do not raise or lower a profile merely for convenience.
+Select the responsibility-appropriate profile, then choose the first model from that profile's canonical ordered list in `artifact-types.md` that appears in the user's available model list. The `hve-builder-tester` lead selects the executor profile from the tested artifact's own declared profile and raises design and grading to the higher of Medium and that profile. Record any profile that could not be selected because it was unavailable, and do not raise or lower a profile merely for convenience.
 
 ## Stage result vocabulary
 
@@ -73,7 +68,7 @@ Workers report execution separately from judgment:
 * Mechanical validation result: `Pass`, `Fail`, or `Deferred`
 * Validation display in `review` mode: `Not requested` when the caller did not request mechanical validation; this is not a validator result and does not affect the overall outcome
 * Per-check validation owner and status: owner is `local` or `CI`; status may be `Passed`, `Failed`, `Pending CI`, `Skipped`, `Deferred`, or `Unavailable`. These fields do not replace the mechanical stage result.
-* Behavior gate disposition: `Executed` or `Satisfied-and-skipped`. For `Satisfied-and-skipped`, display execution status `Not run`, verdict `Not applicable`, fidelity `Not applicable`, and an evidence-backed no-behavior reason. These display values are not execution or review results.
+* Behavior gate disposition: `Executed` or `Satisfied-and-skipped`. This is the single definition of the satisfied-and-skipped display fields: execution status `Not run`, verdict `Not applicable`, fidelity `Not applicable`, and an evidence-backed no-behavior reason. These display values are not execution or review results, and other sections reference this definition rather than restating it.
 
 `Partial` means a worker produced usable evidence but did not complete its contract. `Deferred` means a required action could not run in the current environment and names the exact rerun condition. Neither is a pass.
 
@@ -87,7 +82,9 @@ Classify the requested source delta before the behavior gate. When mixed changes
 | Medium | Clarifies, reorganizes, or adjusts existing workflow text without adding, removing, or materially changing a model action or output                                  | Satisfied-and-skipped         |
 | Major  | Adds, removes, or materially changes a model action, output, non-tool capability-bearing frontmatter, write authority, decision rule, stage gate, or safety behavior | Dispatch `hve-builder-tester` |
 
-For a satisfied-and-skipped gate, record the classification, the specific non-behavior reason, execution `Not run`, verdict `Not applicable`, and fidelity `Not applicable`. Static review and validation remain required for their applicable routes.
+For a satisfied-and-skipped gate, record the classification, the specific non-behavior reason, and the display fields defined in Stage result vocabulary. Static review and validation remain required for their applicable routes.
+
+When a Major change targets an artifact that declares the High profile, the behavior gate runs at that profile. `hve-builder-tester` executes the artifact at High and raises design and grading to match. It falls back to a disclosed proxy run only when the High profile is unavailable in the user's model list, and a proxy run states that its evidence does not establish behavior at the declared profile. Do not report a proxy run as intended-profile evidence, and do not lower the artifact's declared profile to match an executed one.
 
 ## Overall outcome resolver
 

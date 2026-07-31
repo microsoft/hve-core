@@ -10,27 +10,11 @@ Use this reference during intake to decompose the request by responsibility, cho
 
 Choose every type whose responsibility is independently necessary. Prefer skills for reusable on-demand capability and subagents for isolated work, but do not force a path-scoped convention into a skill or a user entry point into a subagent merely because of ranking.
 
-| Responsibility                                                                     | Choose                                    | Activation                                  |
-|------------------------------------------------------------------------------------|-------------------------------------------|---------------------------------------------|
-| Reusable workflow, domain knowledge, bundled references, templates, or scripts     | Skill (`SKILL.md`)                        | Semantic description match or `/skill-name` |
-| Isolated, high-volume, parallel, fresh-context, mechanical, or model-specific work | Subagent (`.agent.md` under `subagents/`) | Parent dispatch by stable `name`            |
-| Convention that applies whenever matching paths are edited                         | Instruction file (`.instructions.md`)     | Automatic `applyTo` match                   |
-| User-selected multi-turn role or bounded autonomous workflow                       | Agent (`.agent.md`)                       | Agent picker or explicit handoff            |
-| Repeatable, parameterized user entry point                                         | Prompt (`.prompt.md`)                     | Slash invocation                            |
-| Concrete action capability                                                         | Tool interface                            | Native registration                         |
+The Choosing the Artifact Type by Responsibility section of `hve-builder.instructions.md` holds the canonical responsibility, form, and activation table. That surface is always loaded whenever a target artifact is edited, so it is the copy that has to exist; restating it here would only create drift. This reference therefore depends on that instruction file, and both ship in the same collection. Keep them together when redistributing the skill.
 
 When a request spans responsibilities, split it deliberately: a skill may own the workflow, subagents may isolate execution and review, an instruction file may govern matching paths, and a prompt may provide a user entry point. Confirm only splits that widen the caller's write boundary or product surface.
 
-Agent and subagent `tools:` configuration is a user-managed opaque boundary. HVE Builder does not inspect, compare, infer from, or use existing configuration to make authoring, review, validation, change-classification, or behavior-testing decisions. When the caller directly supplies an exact configuration, reproduce it verbatim without assessing its appropriateness.
-
-## Guiding questions
-
-* Does it carry reusable capability, domain knowledge, references, templates, or scripts that should load on demand? That points to a skill.
-* Does it need context isolation, high-volume or parallel work, or a specific reasoning-level model? That points to a subagent.
-* Is it a convention that applies whenever matching paths are edited? That points to an instruction file.
-* Was a multi-turn role or bounded autonomous workflow specifically requested? That points to an agent.
-* Is a parameterized slash entry point needed for users? That points to a prompt.
-* Does it need a capability rather than guidance? That points to a tool.
+Selecting an agent tool set is outside this routing. Apply the Tool-configuration boundary in [requirements-catalog.md](requirements-catalog.md).
 
 ## Route each fact by load timing and authority
 
@@ -42,14 +26,14 @@ For every rule or fact the artifact would carry, place it where it loads at the 
 | Scoped by path  | Path-scoped instruction file with an `applyTo` glob   | Conventions that apply only to some files or languages                                        |
 | On demand       | Skill body and its references                         | Recurring workflows and domain knowledge needed only sometimes                                |
 | Deferred detail | Skill references, templates, and assets               | Full schemas, long examples, and reusable skeletons                                           |
-| Delegated       | Subagent                                              | Isolated, high-volume, or verification work returning a summary                               |
+| Delegated       | Subagent                                              | Isolated, high-volume, tier-specific, or verification work returning a summary                |
 
 | Authority | Home                                                     | Use for                                                          |
 |-----------|----------------------------------------------------------|------------------------------------------------------------------|
 | Advisory  | Instruction and skill prose                              | Guidance the model should follow and can override with judgment  |
 | Enforced  | Hooks, permission modes, pipeline checks, strict schemas | Non-negotiable rules that must hold regardless of model judgment |
 
-A single requirement often splits across both axes. For example, "do not write to protected paths" belongs in advisory prose for context and in an enforced hook for the guarantee.
+A single requirement often splits across both axes. For example, "do not write to protected paths" belongs in advisory prose for context and in an enforced control for the guarantee. Choose that enforced home from the Authority table rather than defaulting to a hook.
 
 ## Delegation analysis
 
@@ -103,7 +87,7 @@ model:
 
 The worker body defines its bounded input and structured summary without selecting a tool configuration or order.
 
-Parent-owned test step: classify the change first. The `hve-builder` skill records a satisfied-and-skipped behavior gate for minor and medium changes, including frontmatter-only and name-reference changes. For a major change, test the workflow through the `hve-builder-tester` skill at the Low profile. Select simulation or native fidelity explicitly and report the evidence limitation. Do not dispatch `HVE Artifact Tester` directly; the tester skill owns design, fidelity, evidence integrity, grading, and cleanup.
+Parent-owned test step: classify the change first. The `hve-builder` skill records a satisfied-and-skipped behavior gate for minor and medium changes, including frontmatter-only and name-reference changes. For a major change, test the workflow through the `hve-builder-tester` skill, which executes at the worker's own declared profile. Select simulation or native fidelity explicitly and report the evidence limitation. Do not dispatch `HVE Artifact Tester` directly; the tester skill owns design, fidelity, evidence integrity, grading, and cleanup.
 
 ## Placement heuristics
 

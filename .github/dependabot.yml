@@ -10,6 +10,13 @@ updates:
     npm-dependencies:
       patterns:
       - "*"
+  ignore:
+  # eslint-plugin-jsx-a11y declares a peer range that stops at eslint ^9, so an
+  # eslint 10 bump breaks `npm ci` in docs/docusaurus with ERESOLVE. Remove this
+  # entry once a jsx-a11y release supports eslint 10.
+  - dependency-name: "eslint"
+    versions:
+    - ">=10"
   labels:
   - dependencies
   - npm
