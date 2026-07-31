@@ -1,17 +1,17 @@
 ---
 title: customer-card-render
 description: Generate customer-card PowerPoint content YAML from Design Thinking canonical artifacts and build using the shared PowerPoint skill pipeline
-sidebar_position: 2
-ms.date: 2026-07-03
+sidebar_position: 3
+ms.date: 2026-07-27
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->
-| Field       | Value                                              |
-|-------------|----------------------------------------------------|
-| Kind        | skill                                              |
-| Source      | `.github/skills/experimental/customer-card-render` |
-| Invocation  | Loaded on demand by referencing agents             |
-| Interactive | No                                                 |
+| Field       | Value                                                                                  |
+|-------------|----------------------------------------------------------------------------------------|
+| Kind        | skill                                                                                  |
+| Source      | `.github/skills/experimental/customer-card-render`                                     |
+| Invocation  | Invoked directly as `/customer-card-render`, or loaded on demand by referencing agents |
+| Interactive | No                                                                                     |
 <!-- END AUTO-GENERATED: metadata -->
 
 ## What it does

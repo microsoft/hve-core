@@ -20,6 +20,9 @@ items:
   - path: .github/skills/experimental/caveman
     kind: skill
     maturity: experimental
+  - path: .github/skills/experimental/copilot-otel-metrics
+    kind: skill
+    maturity: experimental
   - path: .github/skills/experimental/customer-card-render
     kind: skill
   - path: .github/skills/experimental/powerpoint

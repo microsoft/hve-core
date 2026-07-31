@@ -105,6 +105,7 @@ Each HVE role benefits from different customization techniques. The table below 
 | Security Architect       | [Skills](skills.md), [Instructions](instructions.md)                                                  | Compliance knowledge packages and security-focused coding conventions           |
 | Data Scientist           | [Skills](skills.md), [Prompts](prompts.md)                                                            | Analytical domain bundles and repeatable notebook workflows                     |
 | SRE / Operations         | [Instructions](instructions.md), [Environment](environment.md), [Local Telemetry](local-telemetry.md) | Infrastructure conventions, DevContainer tuning, and local telemetry workflows  |
+| Platform / Observability | [Copilot OTel Metrics](copilot-otel-metrics.md), [Local Telemetry](local-telemetry.md)                | Agent usage, token cost, and latency measurement through OpenTelemetry          |
 | Business Program Manager | [Prompts](prompts.md), [Team Adoption](team-adoption.md)                                              | Sprint-planning prompts and governance patterns for stakeholder alignment       |
 | New Contributor          | [Instructions](instructions.md), [Environment](environment.md)                                        | Quick onboarding through conventions and a ready-to-use development environment |
 | Utility                  | [Collections](collections.md), [Build System](build-system.md)                                        | Cross-cutting tooling assembly and validation pipeline customization            |
@@ -121,6 +122,7 @@ Each HVE role benefits from different customization techniques. The table below 
 8. [Environment Customization](environment.md): DevContainers, VS Code settings, MCP servers
 9. [Team Adoption and Governance](team-adoption.md): Governance, naming, onboarding, change management
 10. [Local Telemetry](local-telemetry.md): Enable local telemetry, review capture and storage schema mechanics, and generate reports
+11. [Copilot OpenTelemetry Metrics](copilot-otel-metrics.md): Export Copilot OTel signals to a local Grafana stack, or to a fleet-wide Azure pipeline, and query agent, token, and latency data
 
 ## Related Resources
 

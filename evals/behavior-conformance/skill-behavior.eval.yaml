@@ -2,7 +2,7 @@
 name: behavior-conformance-skills
 description: >
   Advisory-tier behavior conformance evals for skills exercised through
-  knowledge, tool-trigger, and bleed-detection stimulus shapes. Total: 124
+  knowledge, tool-trigger, and bleed-detection stimulus shapes. Total: 127
   stimuli, including complete branch coverage for the RPI and prompt-builder
   skill updates. Each tool-trigger stimulus uses two graders with AND logic,
   and the suite-level scoring threshold gates the aggregate pass rate across
@@ -2296,3 +2296,62 @@ stimuli:
         name: scope-language
         config:
           pattern: '(?i)(vex|openvex|status|justification|not_affected|under_investigation)'
+
+  - name: skill-copilot-otel-metrics-knowledge
+    prompt: |
+      Summarize what the `copilot-otel-metrics` skill sets up and name the
+      VS Code settings namespace it turns on for Copilot telemetry export.
+    tags:
+      category: behavior-conformance
+      skill: copilot-otel-metrics
+      shape: knowledge
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: skill-attribution
+        config:
+          pattern: '(?i)(github\.copilot\.chat\.otel|opentelemetry|otel|grafana|collector)'
+      - type: output-matches
+        name: scope-language
+        config:
+          pattern: '(?i)(telemetry|export|setting|dashboard|copilot)'
+
+  - name: skill-copilot-otel-metrics-tool-trigger
+    prompt: |
+      I want GitHub Copilot Chat telemetry exported from my workstation into a
+      local backend I can query, with a dashboard over it. Which skill applies
+      and what does it generate?
+    tags:
+      category: behavior-conformance
+      skill: copilot-otel-metrics
+      shape: tool-trigger
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: skill-domain-attribution
+        config:
+          pattern: '(?i)(copilot[-\s]otel|otel|opentelemetry|telemetry|grafana|prometheus)'
+      - type: output-matches
+        name: scope-language
+        config:
+          pattern: '(?i)(telemetry|otel|grafana|dashboard|export)'
+
+  - name: skill-copilot-otel-metrics-bleed-detection
+    prompt: |
+      I need to add OpenTelemetry tracing to my own Node.js web service, with
+      no GitHub Copilot telemetry involved. Does the `copilot-otel-metrics`
+      skill apply?
+    tags:
+      category: behavior-conformance
+      skill: copilot-otel-metrics
+      shape: bleed-detection
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: skill-attribution
+        config:
+          pattern: '(?i)(not\s+apply|does\s+not|inapplicable|different\s+skill|application\s+instrumentation)'
+      - type: output-matches
+        name: scope-language
+        config:
+          pattern: '(?i)(node|service|instrument|copilot|telemetry)'

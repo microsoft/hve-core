@@ -61,7 +61,7 @@ For simulation, the wrapper says which target to read, where side effects may oc
 
 ## Profile selection
 
-Use the canonical ordered Medium profile (`GPT-5.6 Terra`, `Claude Sonnet 5`, `MAI-Code-1-Flash`) or Low profile (`GPT-5.6 Luna`, `MAI-Code-1-Flash`, `Claude Haiku 4.5`), with the `(copilot)` suffix in frontmatter. Prefer explicit target metadata. Otherwise choose Low for literal, bounded, mechanical responsibilities and Medium for semantic synthesis, architecture, authoring, or calibrated review. Use the first available model in the selected profile's order. When the target declares another profile, label the selected profile as a proxy and avoid equivalence claims.
+Use the canonical ordered High profile (`GPT-5.6 Sol`, `Claude Opus 4.8`, `GPT-5.5`), Medium profile (`GPT-5.6 Terra`, `Claude Sonnet 5`, `MAI-Code-1-Flash`), or Low profile (`GPT-5.6 Luna`, `MAI-Code-1-Flash`, `Claude Haiku 4.5`), with the `(copilot)` suffix in frontmatter. Prefer explicit target metadata. Otherwise choose Low for literal, bounded, mechanical responsibilities, Medium for semantic synthesis, architecture, authoring, or calibrated review, and High for responsibilities that require the deepest reasoning profile. Use the first available model in the selected profile's order. Run the executor at the target's profile and run design and grading at the higher of Medium and that profile. Label a run a proxy only when the selected profile is unavailable or the target declares a list that maps to no canonical profile, and avoid equivalence claims in that case.
 
 ## Sandbox and run-state conventions
 
@@ -83,7 +83,7 @@ Reuse is an auditable correction-run optimization, not a lower evidence standard
 * Changed-surface-to-scenario impact mapping
 * Reused scenario grades and freshly executed scenario grades
 
-All dimensions must match except target revision and its explicitly mapped changed surface. A scenario without traceable impact evidence is affected. Execute every affected scenario and send its fresh evidence to an independent Medium-profile grader. Reuse only prior grades for traceably unaffected scenarios. A changed equivalence dimension or material coverage gap requires full design, execution, and grading.
+All dimensions must match except target revision and its explicitly mapped changed surface. A scenario without traceable impact evidence is affected. Execute every affected scenario and send its fresh evidence to an independent grader running at the higher of Medium and the target profile. Reuse only prior grades for traceably unaffected scenarios. A changed equivalence dimension or material coverage gap requires full design, execution, and grading.
 
 ## File reference formatting
 
