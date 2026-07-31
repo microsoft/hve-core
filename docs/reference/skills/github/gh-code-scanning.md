@@ -2,16 +2,16 @@
 title: gh-code-scanning
 description: Retrieves and groups GitHub code scanning alerts by rule and severity using the gh CLI
 sidebar_position: 1
-ms.date: 2026-07-03
+ms.date: 2026-07-27
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->
-| Field       | Value                                    |
-|-------------|------------------------------------------|
-| Kind        | skill                                    |
-| Source      | `.github/skills/github/gh-code-scanning` |
-| Invocation  | Loaded on demand by referencing agents   |
-| Interactive | No                                       |
+| Field       | Value                                                                              |
+|-------------|------------------------------------------------------------------------------------|
+| Kind        | skill                                                                              |
+| Source      | `.github/skills/github/gh-code-scanning`                                           |
+| Invocation  | Invoked directly as `/gh-code-scanning`, or loaded on demand by referencing agents |
+| Interactive | No                                                                                 |
 <!-- END AUTO-GENERATED: metadata -->
 
 ## What it does

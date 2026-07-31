@@ -174,9 +174,11 @@
     display: none;
   }
 
+  /* minmax(0, 1fr) rather than 1fr: the auto minimum lets a card's min-content
+     widen the track past the container, breaking reflow at 320px (WCAG 1.4.10). */
   .cardGrid,
   .cardGridTwo,
   .cardGridFour {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
   }
 }

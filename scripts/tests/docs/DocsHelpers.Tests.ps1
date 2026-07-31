@@ -218,10 +218,49 @@ Describe 'Get-AssetInvocation' -Tag 'Unit' {
         $result.Token | Should -Be ''
     }
 
-    It 'Renders a skill as skill-load' {
-        $result = Get-AssetInvocation -Kind 'skill' -Name 'documentation'
+    It 'Renders a skill that opts out of user invocation as skill-load' {
+        $result = Get-AssetInvocation -Kind 'skill' -Name 'documentation' -Frontmatter @{ 'user-invocable' = $false }
         $result.Mechanism | Should -Be 'skill-load'
         $result.Token | Should -Be 'documentation'
+    }
+
+    It 'Treats an absent user-invocable as true, matching the schema default' {
+        $result = Get-AssetInvocation -Kind 'skill' -Name 'documentation'
+        $result.Mechanism | Should -Be 'skill-user-and-load'
+        $result.Token | Should -Be '/documentation'
+    }
+
+    It 'Renders a user-invocable skill as reachable both ways' {
+        $result = Get-AssetInvocation -Kind 'skill' -Name 'rpi-research' -Frontmatter @{ 'user-invocable' = $true }
+        $result.Mechanism | Should -Be 'skill-user-and-load'
+        $result.Token | Should -Be '/rpi-research'
+    }
+
+    It 'Renders a skill that disables model invocation as user-only' {
+        $result = Get-AssetInvocation -Kind 'skill' -Name 'copilot-otel-metrics' -Frontmatter @{ 'user-invocable' = $true; 'disable-model-invocation' = $true }
+        $result.Mechanism | Should -Be 'skill-user-only'
+        $result.Token | Should -Be '/copilot-otel-metrics'
+    }
+
+    It 'Renders a skill that disables model invocation without declaring user-invocable as user-only' {
+        $result = Get-AssetInvocation -Kind 'skill' -Name 'caveman' -Frontmatter @{ 'disable-model-invocation' = $true }
+        $result.Mechanism | Should -Be 'skill-user-only'
+        $result.Token | Should -Be '/caveman'
+    }
+
+    It 'Coerces a quoted true to a set flag' {
+        $result = Get-AssetInvocation -Kind 'skill' -Name 'demo' -Frontmatter @{ 'user-invocable' = 'true' }
+        $result.Mechanism | Should -Be 'skill-user-and-load'
+    }
+
+    It 'Coerces a quoted false to a clear flag rather than reading it as truthy' {
+        $result = Get-AssetInvocation -Kind 'skill' -Name 'demo' -Frontmatter @{ 'user-invocable' = 'false' }
+        $result.Mechanism | Should -Be 'skill-load'
+    }
+
+    It 'Treats an unrecognized flag value as false' {
+        $result = Get-AssetInvocation -Kind 'skill' -Name 'demo' -Frontmatter @{ 'user-invocable' = 42 }
+        $result.Mechanism | Should -Be 'skill-load'
     }
 
     It 'Classifies an agent under a subagents directory as a delegated subagent' {
@@ -472,6 +511,25 @@ Describe 'Format-AssetInvocation' -Tag 'Unit' {
     It 'Describes a skill load' {
         Format-AssetInvocation -Invocation @{ Mechanism = 'skill-load'; Token = 'documentation' } |
             Should -Match 'Loaded on demand'
+    }
+
+    It 'Describes a user-only skill without claiming agent loading' {
+        $text = Format-AssetInvocation -Invocation @{ Mechanism = 'skill-user-only'; Token = '/copilot-otel-metrics' }
+        $text | Should -Match 'Invoked directly'
+        $text | Should -Match '/copilot-otel-metrics'
+        $text | Should -Not -Match 'Loaded on demand'
+    }
+
+    It 'Describes a dual-path skill as reachable both ways' {
+        $text = Format-AssetInvocation -Invocation @{ Mechanism = 'skill-user-and-load'; Token = '/rpi-research' }
+        $text | Should -Match 'Invoked directly'
+        $text | Should -Match '/rpi-research'
+        $text | Should -Match 'loaded on demand'
+    }
+
+    It 'Emits a drift marker for a mechanism with no renderer' {
+        Format-AssetInvocation -Invocation @{ Mechanism = 'not-a-mechanism'; Token = 'x' } -WarningAction SilentlyContinue |
+            Should -Match 'unknown invocation'
     }
 
     It 'Describes a delegated subagent' {

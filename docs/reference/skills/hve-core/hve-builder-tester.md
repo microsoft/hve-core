@@ -2,16 +2,16 @@
 title: hve-builder-tester
 description: "Test HVE artifact behavior with black-box scenarios, contained simulation or approved native execution, independent grading, and evidence reports."
 sidebar_position: 3
-ms.date: 2026-07-23
+ms.date: 2026-07-27
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->
-| Field       | Value                                        |
-|-------------|----------------------------------------------|
-| Kind        | skill                                        |
-| Source      | `.github/skills/hve-core/hve-builder-tester` |
-| Invocation  | Loaded on demand by referencing agents       |
-| Interactive | No                                           |
+| Field       | Value                                                                                |
+|-------------|--------------------------------------------------------------------------------------|
+| Kind        | skill                                                                                |
+| Source      | `.github/skills/hve-core/hve-builder-tester`                                         |
+| Invocation  | Invoked directly as `/hve-builder-tester`, or loaded on demand by referencing agents |
+| Interactive | No                                                                                   |
 <!-- END AUTO-GENERATED: metadata -->
 
 ## What it does

@@ -2,16 +2,16 @@
 title: vally-tests
 description: "Authors Vally conformance tests for prompts, instructions, agents, and skills, including refusals for jailbreak, prompt-injection, harmful-elicitation, TOS, CoC, and PII-extraction stimuli"
 sidebar_position: 8
-ms.date: 2026-07-23
+ms.date: 2026-07-27
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->
-| Field       | Value                                  |
-|-------------|----------------------------------------|
-| Kind        | skill                                  |
-| Source      | `.github/skills/hve-core/vally-tests`  |
-| Invocation  | Loaded on demand by referencing agents |
-| Interactive | No                                     |
+| Field       | Value                                                                         |
+|-------------|-------------------------------------------------------------------------------|
+| Kind        | skill                                                                         |
+| Source      | `.github/skills/hve-core/vally-tests`                                         |
+| Invocation  | Invoked directly as `/vally-tests`, or loaded on demand by referencing agents |
+| Interactive | No                                                                            |
 <!-- END AUTO-GENERATED: metadata -->
 
 ## What it does

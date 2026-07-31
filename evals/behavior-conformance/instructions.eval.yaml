@@ -1546,3 +1546,26 @@ stimuli:
         name: runtime-research-boundary
         config:
           pattern: '(?i)(rpi-research|WAF|CAF|MCSB|version[-\s]sensitive|runtime lookup)'
+
+  - name: instruction-mural-seeding-patterns-conformance
+    prompt: |
+      You are extending `.github/agents/rai-planning/rai-planner.agent.md`
+      to seed a Mural board from a completed RAI Phase 2 source artifact.
+      Which `.github/instructions/**/*.instructions.md` file applies (cite
+      its path) and what does it require for duplicating the source board
+      instead of fabricating coordinates, inheriting placeholder anchor
+      geometry, probing an area before bulk population, and responding when
+      a probe reports a widget hidden behind a sibling panel?
+    tags:
+      category: behavior-conformance
+      instruction: mural-seeding-patterns
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: applyTo-evidence
+        config:
+          pattern: "(?i)dt-coach\\.agent\\.md|rai-planner\\.agent\\.md|ux-ui-designer\\.agent\\.md"
+      - type: output-matches
+        name: scope-language
+        config:
+          pattern: "(?i)duplicate-then-populate|anchor\\s+inheritance|probe-before-bulk|z-order"
