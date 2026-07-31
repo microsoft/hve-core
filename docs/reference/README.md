@@ -2,7 +2,7 @@
 title: Reference
 description: Generated reference documentation for HVE Core GenAI assets.
 sidebar_position: 0
-ms.date: 2026-07-28
+ms.date: 2026-07-29
 ---
 
 <!-- BEGIN AUTO-GENERATED: index -->
