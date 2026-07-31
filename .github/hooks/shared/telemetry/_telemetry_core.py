@@ -21,14 +21,20 @@ from __future__ import annotations
 
 import datetime
 import glob
+import hashlib
 import json
 import os
+import secrets
 import shlex
 import shutil
 import sys
+import time
 from collections.abc import Iterable, Iterator
-from pathlib import Path
+from pathlib import Path, PureWindowsPath
 from typing import Any
+
+if os.name == "nt":
+    import msvcrt
 
 
 def _detect_client() -> str:
@@ -73,10 +79,14 @@ PAYLOAD_ALIASES: dict[str, tuple[str, ...]] = {
     "timestamp": ("timestamp",),
     "tool_name": ("tool_name", "toolName"),
     "tool_input": ("tool_input", "toolArgs"),
+    "tool_use_id": ("tool_use_id", "toolUseId"),
     "tool_result": ("tool_response", "tool_result", "toolResult"),
     "tool_result_text": ("text_result_for_llm", "textResultForLlm"),
     # VS Code names the subagent only as ``agent_type``; the CLI sends a name.
     "agent_name": ("agent_name", "agentName", "agent_type", "agentType"),
+    # Unique per subagent invocation on VS Code; absent on surfaces that send
+    # only a name, which then has to serve as the identity.
+    "agent_id": ("agent_id", "agentId"),
     "agent_display_name": ("agent_display_name", "agentDisplayName"),
     "prompt": ("prompt",),
     "source": ("source",),
@@ -119,13 +129,202 @@ def iter_jsonl(path: str | os.PathLike[str]) -> Iterator[dict]:
         return
 
 
+def _fallback_stem() -> str:
+    """Return a filename stem no other live collector process will produce.
+
+    The UTC time orders fallback files beside their day log, the pid separates
+    concurrent writers, and the random suffix keeps a recycled pid from
+    reopening a departed process's file. The suffix carries the uniqueness on
+    Windows, whose clock resolution is coarse enough to collapse the timestamp
+    for writers started in the same tick.
+    """
+    stamp = datetime.datetime.now(datetime.UTC).strftime("%H%M%S%f")
+    return f"{stamp}-{os.getpid()}-{secrets.token_hex(8)}"
+
+
+# O_BINARY keeps Windows from expanding "\n" and desynchronizing the byte count.
+_APPEND_FLAGS = os.O_WRONLY | os.O_CREAT | os.O_APPEND | getattr(os, "O_BINARY", 0)
+
+
+def _write_all(fd: int, payload: bytes) -> None:
+    """Write every byte; a signal or a full disk can cut one write short."""
+    view = memoryview(payload)
+    while view:
+        written = os.write(fd, view)
+        if not written:
+            # Retrying a write that consumed nothing spins forever inside a
+            # synchronous hook, so surface it to the caller's fallback instead.
+            raise OSError("write made no progress")
+        view = view[written:]
+
+
+# Copilot runs hooks concurrently: parallel tool calls and subagents each spawn
+# their own collector process, and they share one log per day. POSIX resolves
+# O_APPEND under the inode lock, so nothing further is needed there. The Windows
+# CRT emulates O_APPEND as seek-to-end plus write in user space, so racing
+# collectors resolve the same offset and the second overwrites the first; a
+# byte-range lock closes that window. A writer that cannot take the lock falls
+# back to a private shard, which readers merge alongside the log.
+if os.name == "nt":
+    # A record is a few hundred bytes, so a collision clears in microseconds.
+    # LK_LOCK would sleep a full second per retry for up to ten seconds, which
+    # is charged to the agent turn; poll instead, at the timescale of the write.
+    _LOCK_ATTEMPTS = 2000
+    _LOCK_BACKOFF_SECONDS = 0.001
+
+    def _lock_append(fd: int) -> bool:
+        """Take the byte-0 mutex and seek to end. False if the lock is refused.
+
+        Byte 0 is never read as data; it is only somewhere to anchor the lock.
+        Windows drops the lock when the handle closes, including on a crash, so
+        a dead collector cannot wedge the log.
+        """
+        os.lseek(fd, 0, os.SEEK_SET)
+        for _ in range(_LOCK_ATTEMPTS):
+            try:
+                msvcrt.locking(fd, msvcrt.LK_NBLCK, 1)
+            except OSError:
+                time.sleep(_LOCK_BACKOFF_SECONDS)
+                continue
+            os.lseek(fd, 0, os.SEEK_END)
+            return True
+        return False
+
+    def _unlock_append(fd: int) -> None:
+        os.lseek(fd, 0, os.SEEK_SET)
+        try:
+            msvcrt.locking(fd, msvcrt.LK_UNLCK, 1)
+        except OSError:
+            pass
+
+else:
+
+    def _lock_append(fd: int) -> bool:
+        """POSIX appends atomically under O_APPEND; there is no lock to take."""
+        return True
+
+    def _unlock_append(fd: int) -> None:
+        return
+
+
+def append_line(target: Path, line: str) -> None:
+    """Append one newline-terminated line to the shared log for its day.
+
+    Best-effort: a store that cannot be written is a telemetry failure, not a
+    turn failure, so every path returns rather than raising into the hook.
+
+    Args:
+        target: The shared log path. Its parent is created when missing, and a
+            sibling shard is used when the log cannot be locked or written.
+        line: The record text, already newline-terminated by the caller.
+    """
+    payload = line.encode("utf-8")
+    try:
+        target.parent.mkdir(parents=True, exist_ok=True)
+        if _append_shared(target, payload):
+            return
+    except OSError:
+        # A refused lock returns False; an unwritable or torn log raises. Both
+        # reach the shard below, which is the only way the record still lands.
+        pass
+    # A filesystem that refuses locks would let writers interleave, so this
+    # process takes a file of its own. Readers match the shard alongside the
+    # log, so the record still lands.
+    try:
+        _append_private(
+            target.with_name(f"{target.stem}.{_fallback_stem()}{target.suffix}"), payload
+        )
+    except OSError:
+        # Nothing in this store is writable; drop the record.
+        return
+
+
+def _append_shared(target: Path, payload: bytes) -> bool:
+    """Append under the platform's append guarantee. False if unavailable."""
+    fd = os.open(target, _APPEND_FLAGS, 0o644)
+    try:
+        if not _lock_append(fd):
+            return False
+        try:
+            _write_all(fd, payload)
+        finally:
+            _unlock_append(fd)
+    finally:
+        os.close(fd)
+    return True
+
+
+def _append_private(target: Path, payload: bytes) -> None:
+    """Append to a file only this process writes, so no lock is required."""
+    fd = os.open(target, _APPEND_FLAGS, 0o644)
+    try:
+        _write_all(fd, payload)
+    finally:
+        os.close(fd)
+
+
+def append_jsonl(target: Path, entry: dict) -> None:
+    """Append one JSON object as a JSONL record.
+
+    Args:
+        target: The shared log path, as for :func:`append_line`.
+        entry: The record, serialized on one line.
+    """
+    append_line(target, json.dumps(entry) + "\n")
+
+
+def _write_text_atomic(path: Path, text: str, mode: int = 0o644) -> None:
+    """Replace ``path`` in one step so a reader never observes a partial file.
+
+    Plain truncate-then-write leaves a window in which the file is empty or
+    half written, and every collector racing on ``first_write`` rewrites these
+    files at once. The temp name carries the pid so concurrent writers do not
+    collide on the staging file itself.
+
+    Args:
+        path: The destination, replaced by an atomic rename.
+        text: The full file contents, written as UTF-8.
+        mode: Permission bits the staging file is created with, so the content
+            is never briefly readable more widely than the destination.
+    """
+    tmp = path.with_name(f"{path.name}.{os.getpid()}.tmp")
+    try:
+        fd = os.open(tmp, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, mode)
+        try:
+            _write_all(fd, text.encode("utf-8"))
+        finally:
+            os.close(fd)
+        os.replace(tmp, path)
+    except OSError:
+        tmp.unlink(missing_ok=True)
+        raise
+
+
 def _is_safe_sid(sid: str) -> bool:
     """Return True when a session id is safe to embed in a filesystem path.
 
     Rejects empty ids and any value containing a path separator or ``..``
-    traversal sequence so callers never build paths outside their store.
+    traversal sequence so callers never build paths outside their store. A bare
+    drive or UNC specifier such as ``C:`` holds no separator yet still re-anchors
+    the path when joined, discarding the store prefix, so reject anchors too.
     """
-    return bool(sid) and not (os.sep in sid or "/" in sid or "\\" in sid or ".." in sid)
+    if not sid or ".." in sid:
+        return False
+    if os.sep in sid or "/" in sid or "\\" in sid:
+        return False
+    return not PureWindowsPath(sid).anchor
+
+
+def _is_contained(child: Path, parent: Path) -> bool:
+    """Return True when ``child`` resolves inside ``parent``.
+
+    Checked immediately before a destructive operation so a path that escaped
+    its store cannot be removed, whatever produced it.
+    """
+    try:
+        return child.resolve().is_relative_to(parent.resolve())
+    except OSError:
+        return False
 
 
 def collect_sids(hook_files: Iterable[str]) -> set[str]:
@@ -152,48 +351,91 @@ def hve_home() -> Path:
 
 
 def telemetry_registry() -> Path:
-    """Return the user-level registry that lists per-project telemetry dirs."""
-    return hve_home() / "telemetry-dirs.txt"
+    """Return the user-level registry of per-project telemetry dirs.
+
+    A directory holding one marker per store rather than a shared list file:
+    every writer targets a distinct path and rewriting it is a no-op, so
+    collectors racing on the first write of the day need no coordination.
+    """
+    return hve_home() / "telemetry-dirs"
+
+
+def _registry_marker(registry: Path, resolved: str) -> Path:
+    """Return the marker path for one store, named by a digest of its path."""
+    return registry / f"{hashlib.sha256(resolved.encode('utf-8')).hexdigest()[:32]}.path"
+
+
+# Registry file used before the marker directory: one absolute path per line.
+_LEGACY_REGISTRY_NAME = "telemetry-dirs.txt"
+
+
+def _migrate_legacy_registry(registry: Path) -> None:
+    """Import the pre-directory registry file once, then retire it.
+
+    Without this an upgraded install silently drops every store it had already
+    registered. Active projects re-register on their next event, but a retired
+    one never does, and that is exactly the set ``clean --all-dirs`` exists to
+    reclaim. Renaming rather than deleting keeps the original recoverable.
+    """
+    legacy = registry.parent / _LEGACY_REGISTRY_NAME
+    try:
+        if not legacy.is_file():
+            return
+        lines = legacy.read_text(encoding="utf-8").splitlines()
+    except OSError:
+        return
+    for line in lines:
+        entry = line.strip()
+        if entry:
+            register_telemetry_dir(Path(entry), registry)
+    try:
+        legacy.rename(legacy.with_name(_LEGACY_REGISTRY_NAME + ".migrated"))
+    except OSError:
+        # Left in place; re-importing is idempotent, so the next call retries.
+        return
 
 
 def read_registry_dirs(registry: Path | None = None) -> list[str]:
-    """Return registered telemetry directories in order, de-duplicated."""
+    """Return registered telemetry directories, sorted and de-duplicated."""
     registry = registry if registry is not None else telemetry_registry()
+    _migrate_legacy_registry(registry)
     try:
-        text = registry.read_text(encoding="utf-8")
+        markers = sorted(registry.glob("*.path"))
     except OSError:
-        # Registry file is missing or unreadable; treat as no registered dirs.
+        # Registry dir is missing or unreadable; treat as no registered dirs.
         return []
-    dirs: list[str] = []
-    seen: set[str] = set()
-    for line in text.splitlines():
-        entry = line.strip()
-        if entry and entry not in seen:
-            seen.add(entry)
-            dirs.append(entry)
-    return dirs
+    dirs: set[str] = set()
+    for marker in markers:
+        try:
+            entry = marker.read_text(encoding="utf-8").strip()
+        except OSError:
+            continue
+        if entry:
+            dirs.add(entry)
+    return sorted(dirs)
 
 
 def register_telemetry_dir(tel_dir: Path, registry: Path | None = None) -> None:
     """Record an absolute telemetry directory in the user-level registry.
 
     Lets the report tooling discover every per-project telemetry store without
-    relying on environment propagation. Resolves to an absolute path and skips
-    the append when already present so the registry stays de-duplicated.
+    relying on environment propagation. Resolves to an absolute path and writes
+    the marker whole, so repeated and concurrent registrations converge on the
+    same content instead of appending duplicates.
     """
     registry = registry if registry is not None else telemetry_registry()
     try:
         resolved = str(tel_dir.resolve())
     except OSError:
         resolved = os.path.abspath(str(tel_dir))
-    if resolved in read_registry_dirs(registry):
+    marker = _registry_marker(registry, resolved)
+    if marker.exists():
         return
     try:
-        registry.parent.mkdir(parents=True, exist_ok=True)
-        with open(registry, "a", encoding="utf-8") as handle:
-            handle.write(resolved + "\n")
+        registry.mkdir(parents=True, exist_ok=True)
+        _write_text_atomic(marker, resolved + "\n")
     except OSError:
-        # Cannot create or append to the registry; skip recording this dir.
+        # Cannot create the registry entry; skip recording this dir.
         return
 
 
@@ -303,8 +545,8 @@ def write_report_launchers(script_dir: Path | None = None) -> None:
             pwsh_clean_text = _PWSH_CLEAN_LAUNCHER.replace(
                 "__CLEAN_PS1__", clean_ps1.replace("'", "''")
             )
-            (home / "generate-report.ps1").write_text(pwsh_text, encoding="utf-8")
-            (home / "clean-telemetry.ps1").write_text(pwsh_clean_text, encoding="utf-8")
+            _write_text_atomic(home / "generate-report.ps1", pwsh_text)
+            _write_text_atomic(home / "clean-telemetry.ps1", pwsh_clean_text)
         else:
             # Shell-quote so unusual install paths (spaces, quotes, ``$``)
             # cannot break or inject into the generated launchers.
@@ -314,12 +556,8 @@ def write_report_launchers(script_dir: Path | None = None) -> None:
             bash_clean_text = _BASH_CLEAN_LAUNCHER.replace(
                 "__CLEAN_SCRIPT__", shlex.quote(clean_script)
             )
-            sh_path = home / "generate-report.sh"
-            sh_path.write_text(bash_text, encoding="utf-8")
-            sh_path.chmod(0o755)
-            clean_sh_path = home / "clean-telemetry.sh"
-            clean_sh_path.write_text(bash_clean_text, encoding="utf-8")
-            clean_sh_path.chmod(0o755)
+            _write_text_atomic(home / "generate-report.sh", bash_text, mode=0o755)
+            _write_text_atomic(home / "clean-telemetry.sh", bash_clean_text, mode=0o755)
     except OSError:
         # Cannot write launchers (e.g., permission denied); skip generation.
         return
@@ -802,55 +1040,125 @@ def _token_estimate(path: str) -> int:
 
 
 class _AgentStack:
-    """Per-session agent stack persisted as a JSON array on disk.
+    """Per-session record of active agents, kept as an append-only op log.
 
-    Tracks the active agent (root vs subagent) so telemetry entries can
-    attribute tool calls to the correct agent context.
+    Tracks which subagents have started but not stopped so telemetry entries can
+    attribute tool calls to the correct agent context. Subagents start and stop
+    in their own collector processes, so the state is appended and replayed on
+    read rather than read-modify-written, which would lose all but one of a
+    simultaneous batch. Appends go through :func:`append_line`, so the replay
+    also picks up any shard a writer left behind when it could not take the lock.
+
+    Records are keyed by the surface's unique invocation id rather than the
+    agent's name: concurrent subagents of the same type share a name, so
+    name-keyed removal evicts an arbitrary one.
     """
 
     def __init__(self, stack_dir: Path, sid: str) -> None:
         self.stack_dir = stack_dir
-        self.stack_file = stack_dir / f"{sid}.json" if _is_safe_sid(sid) else None
+        self.session_dir = stack_dir / sid if _is_safe_sid(sid) else None
+        self.stack_file = self.session_dir / "ops.log" if self.session_dir else None
 
-    def _read(self) -> list[str]:
-        if self.stack_file and self.stack_file.exists():
-            try:
-                with open(self.stack_file, encoding="utf-8") as handle:
-                    data = json.load(handle)
-                if isinstance(data, list):
-                    return data
-            except (OSError, ValueError):
-                # Stack file is unreadable or malformed; treat as empty stack.
-                return []
-        return []
+    def _replay(self) -> list[tuple[str, str]]:
+        """Rebuild the (key, name) pairs of started-but-not-stopped agents."""
+        active: list[tuple[str, str]] = []
+        if not self.session_dir:
+            return active
+        ops: list[dict] = []
+        for shard in self.session_dir.glob("*.log"):
+            ops.extend(iter_jsonl(shard))
+        # Shards interleave, so recover a single order from the recorded time.
+        # A push must settle before a pop stamped in the same tick, or the pop
+        # matches nothing and its agent stays active forever.
+        ops.sort(key=lambda op: (str(op.get("ts", "")), 0 if op.get("op") == "push" else 1))
+        for op in ops:
+            name = op.get("agent", "")
+            key = op.get("id") or name
+            if op.get("op") == "push":
+                active.append((key, name))
+                continue
+            for i in reversed(range(len(active))):
+                if active[i][0] == key:
+                    del active[i]
+                    break
+            # An unmatched pop means its push was lost; keeping the other
+            # records reports the caller as unknown instead of evicting a
+            # live agent and misattributing every tool call after it.
+        return active
 
-    def current(self) -> str:
-        stack = self._read()
-        return stack[-1] if stack else "root"
+    def active(self) -> list[str]:
+        """Return the names of every started-but-not-stopped agent."""
+        return [name for _, name in self._replay()]
 
-    def push(self, name: str) -> None:
+    def push(self, agent_id: str, name: str = "") -> None:
+        """Record that an agent started.
+
+        Args:
+            agent_id: The surface's unique invocation id, used as the record
+                key. Falls back to ``name`` when the payload omits it, which
+                makes concurrent same-named agents indistinguishable.
+            name: The agent's display name, reported by :meth:`active`.
+        """
         if not self.stack_file:
             return
-        self.stack_dir.mkdir(parents=True, exist_ok=True)
-        stack = self._read()
-        stack.append(name)
-        with open(self.stack_file, "w", encoding="utf-8") as handle:
-            json.dump(stack, handle)
+        append_jsonl(
+            self.stack_file,
+            {
+                "ts": datetime.datetime.now(datetime.UTC).isoformat(),
+                "op": "push",
+                "id": agent_id or name,
+                "agent": name,
+            },
+        )
 
-    def pop(self) -> None:
-        """Remove the topmost agent. Deletes the file when the stack empties."""
-        if not self.stack_file or not self.stack_file.exists():
+    def pop(self, agent_id: str, name: str = "") -> None:
+        """Record that an agent stopped. The log is discarded by :meth:`clear`.
+
+        Args:
+            agent_id: The invocation id passed to :meth:`push`; ``name`` is the
+                fallback key, matching push so the pair cancels.
+            name: The agent's display name, used only as that fallback.
+        """
+        if not self.session_dir or not self.session_dir.exists():
             return
-        stack = self._read()
-        if len(stack) > 1:
-            with open(self.stack_file, "w", encoding="utf-8") as handle:
-                json.dump(stack[:-1], handle)
-        else:
-            self.stack_file.unlink(missing_ok=True)
+        append_jsonl(
+            self.stack_file,
+            {
+                "ts": datetime.datetime.now(datetime.UTC).isoformat(),
+                "op": "pop",
+                "id": agent_id or name,
+            },
+        )
 
     def clear(self) -> None:
-        if self.stack_file and self.stack_file.exists():
-            self.stack_file.unlink(missing_ok=True)
+        """Discard this session's op log directory."""
+        if not self.session_dir or not self.session_dir.is_dir():
+            return
+        # Re-check containment at the point of deletion: _is_safe_sid gates the
+        # id, but a recursive remove should not rest on that alone.
+        if not _is_contained(self.session_dir, self.stack_dir):
+            return
+        shutil.rmtree(self.session_dir, ignore_errors=True)
+
+
+def _attribute_agent(entry: dict, active: list[str]) -> None:
+    """Credit a tool call to the agent that made it, when that is knowable.
+
+    A tool payload names no caller and a turn's tool calls run in parallel, so
+    an active subagent is not evidence that it issued this one. Only an empty
+    active set is conclusive; otherwise every candidate is recorded and the
+    choice is left to offline analysis.
+
+    Args:
+        entry: The telemetry record, mutated in place. Gains ``agents`` (a
+            candidate list) when subagents are active, or ``agent`` (a single
+            name) when none are. The two shapes are mutually exclusive.
+        active: Names of every started-but-not-stopped agent.
+    """
+    if active:
+        entry["agents"] = ["root", *active]
+    else:
+        entry["agent"] = "root"
 
 
 def build_entry(data: dict, event: str, stack: _AgentStack) -> dict | None:
@@ -878,6 +1186,12 @@ def build_entry(data: dict, event: str, stack: _AgentStack) -> dict | None:
 
     entry: dict = {"ts": ts, "sid": sid, "event": event, "cwd": cwd}
 
+    # Pairs a Pre with its Post, which is the only handle offline analysis has
+    # on when a call was in flight.
+    tool_use_id = _payload_get(data, "tool_use_id")
+    if tool_use_id and event in ("PreToolUse", "PostToolUse"):
+        entry["tool_use_id"] = tool_use_id
+
     if event == "SessionStart":
         entry["source"] = _payload_get(data, "source")
         entry["client"] = _detect_client()
@@ -886,7 +1200,7 @@ def build_entry(data: dict, event: str, stack: _AgentStack) -> dict | None:
     elif event == "PreToolUse":
         entry["tool"] = tool_name
         entry["tool_input_keys"] = list(tool_input.keys()) if isinstance(tool_input, dict) else []
-        entry["agent"] = stack.current()
+        _attribute_agent(entry, stack.active())
         # Detect instructions and skills by file path convention to track
         # which artifacts the agent loaded during the session. Normalize
         # Windows backslash separators so splitting works cross-platform.
@@ -897,11 +1211,9 @@ def build_entry(data: dict, event: str, stack: _AgentStack) -> dict | None:
                 entry["instruction"] = norm.split("/")[-1]
                 entry["tokens"] = _token_estimate(fpath)
             elif norm.endswith("SKILL.md"):
+                # SKILL.md sits at the skill root in every layout, collection or flat.
                 parts = norm.rstrip("/").split("/")
-                idx = next((i for i, p in enumerate(parts) if p == "skills"), -1)
-                if idx >= 0 and idx + 2 < len(parts):
-                    entry["skill"] = parts[idx + 2]
-                elif len(parts) >= 2:
+                if len(parts) >= 2:
                     entry["skill"] = parts[-2]
                 entry["tokens"] = _token_estimate(fpath)
         if isinstance(tool_input, dict) and tool_name in ("runSubagent", "task"):
@@ -919,16 +1231,22 @@ def build_entry(data: dict, event: str, stack: _AgentStack) -> dict | None:
             entry["tool_response_len"] = len(tool_result)
         else:
             entry["tool_response_len"] = len(json.dumps(tool_result))
-        entry["agent"] = stack.current()
+        _attribute_agent(entry, stack.active())
     elif event == "SubagentStart":
         agent_name = _payload_get(data, "agent_name")
+        agent_id = _payload_get(data, "agent_id")
         entry["agent_name"] = agent_name
         entry["agent_display_name"] = _payload_get(data, "agent_display_name")
-        stack.push(agent_name)
+        if agent_id:
+            entry["agent_id"] = agent_id
+        stack.push(agent_id, agent_name)
     elif event == "SubagentStop":
         agent_name = _payload_get(data, "agent_name")
+        agent_id = _payload_get(data, "agent_id")
         entry["agent_name"] = agent_name
-        stack.pop()
+        if agent_id:
+            entry["agent_id"] = agent_id
+        stack.pop(agent_id, agent_name)
     elif event == "PreCompact":
         entry["trigger"] = _payload_get(data, "trigger")
     elif event == "Stop":
@@ -943,10 +1261,24 @@ def build_entry(data: dict, event: str, stack: _AgentStack) -> dict | None:
     return entry
 
 
+def _read_stdin_text() -> str:
+    """Read the hook payload as UTF-8 regardless of the host locale.
+
+    Windows decodes ``sys.stdin`` with the ANSI codepage and a POSIX/C locale
+    decodes it as ASCII, either of which mangles or rejects UTF-8 payload
+    bytes. ``UnicodeDecodeError`` subclasses ``ValueError``, so a rejected
+    payload would otherwise be dropped as if it were malformed JSON.
+    """
+    buffer = getattr(sys.stdin, "buffer", None)
+    if buffer is None:
+        return sys.stdin.read()
+    return buffer.read().decode("utf-8", errors="replace")
+
+
 def _mode_collect() -> int:
     """Process a single hook event from stdin; returns a process exit code."""
     try:
-        data = json.load(sys.stdin)
+        data = json.loads(_read_stdin_text())
     except ValueError:
         return 0
     if not isinstance(data, dict):
@@ -974,12 +1306,16 @@ def _mode_collect() -> int:
     # omits the event) still reaches cross-project reports. Bounded to one
     # registry read per store per day plus each session start.
     first_write = not log_file.exists()
-    tel_dir.mkdir(parents=True, exist_ok=True)
+    try:
+        tel_dir.mkdir(parents=True, exist_ok=True)
+    except OSError:
+        # An unwritable store is a telemetry failure, not a turn failure. The
+        # writes below are best-effort and skip themselves for the same reason.
+        return 0
     if event == "SessionStart" or first_write:
         register_telemetry_dir(tel_dir)
         write_report_launchers()
-    with open(log_file, "a", encoding="utf-8") as handle:
-        handle.write(json.dumps(entry) + "\n")
+    append_jsonl(log_file, entry)
 
     # Enrich the log with a SessionSummary of token totals and model usage.
     # Emitted at SessionEnd (the authoritative final snapshot), at Stop (each
@@ -1004,8 +1340,7 @@ def _mode_collect() -> int:
                 client=_detect_client(),
             )
             if summary is not None:
-                with open(log_file, "a", encoding="utf-8") as handle:
-                    handle.write(json.dumps(summary) + "\n")
+                append_jsonl(log_file, summary)
     return 0
 
 
@@ -1075,13 +1410,19 @@ def _mode_aggregate_session(out: str, hook_files: list[str]) -> int:
 # these known names so a directory a user pointed ``HVE_TELEMETRY_DIR`` at is
 # never removed wholesale.
 _TELEMETRY_FILE_ARTIFACTS = ("raw-input.jsonl", "report.generated.html")
-_TELEMETRY_GLOB_ARTIFACTS = ("sessions-*.jsonl",)
+# One session log per UTC day, plus any fallback shard a collector wrote when it
+# could not lock that log (sessions-<date>.<HHMMSSffffff>-<pid>-<hex>.jsonl).
+_TELEMETRY_GLOB_ARTIFACTS = ("sessions-[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]*.jsonl",)
 _TELEMETRY_DIR_ARTIFACTS = (".stacks",)
 
 # Artifacts written into the HVE home directory (registry plus generated
-# cross-project launchers and report).
+# cross-project launchers and report). ``telemetry-dirs.txt`` and its lock are
+# the pre-directory registry, listed so an upgraded install is tidied up too.
 _HVE_HOME_ARTIFACTS = (
+    "telemetry-dirs",
     "telemetry-dirs.txt",
+    "telemetry-dirs.txt.lock",
+    "telemetry-dirs.txt.migrated",
     "report.generated.html",
     "generate-report.sh",
     "generate-report.ps1",
@@ -1166,22 +1507,19 @@ def _mode_clean(all_dirs: bool, dry_run: bool) -> int:
 def _mode_list_dirs() -> int:
     """Print registered telemetry dirs that still exist; prune dead entries.
 
-    Pruning rewrites the registry only when stale paths are dropped, keeping
-    the cross-project report scan fast as repositories come and go.
+    Pruning unlinks the marker for a store that has been deleted, keeping the
+    cross-project report scan fast as repositories come and go.
     """
     registry = telemetry_registry()
-    dirs = read_registry_dirs(registry)
-    live = [d for d in dirs if Path(d).is_dir()]
-    if live != dirs:
+    for directory in read_registry_dirs(registry):
+        if Path(directory).is_dir():
+            sys.stdout.write(directory + "\n")
+            continue
         try:
-            registry.parent.mkdir(parents=True, exist_ok=True)
-            with open(registry, "w", encoding="utf-8") as handle:
-                handle.write("".join(d + "\n" for d in live))
+            _registry_marker(registry, directory).unlink(missing_ok=True)
         except OSError:
-            # Cannot rewrite the registry; keep stale entries rather than fail.
-            pass
-    for directory in live:
-        sys.stdout.write(directory + "\n")
+            # Cannot prune this marker; leave it rather than fail the listing.
+            continue
     return 0
 
 

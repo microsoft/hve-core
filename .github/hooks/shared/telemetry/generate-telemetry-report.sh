@@ -27,7 +27,7 @@ Options:
   -d, --date DATE       Target date (yyyy-MM-dd). Default: today (UTC).
                         Use 'all' to include every sessions-*.jsonl file.
   -a, --all-dirs        Scan every per-project telemetry directory recorded in
-                        the user-level registry (~/.hve/telemetry-dirs.txt) for
+                        the user-level registry (~/.hve/telemetry-dirs) for
                         a combined cross-project report. Ignored when --path is
                         given.
   -p, --path DIR        Telemetry directory. Scopes the report to this directory
@@ -86,9 +86,11 @@ main() {
   local path_explicit=0
 
   # Temp files/dirs cleaned up on return (single trap to avoid overrides).
+  # EXIT is listed too: several paths below exit outright, and RETURN alone
+  # would leave the enrichment temp directory behind in /tmp on each of them.
   local -a tmp_files=()
   # shellcheck disable=SC2154  # 't' is the loop variable, assigned within the trap body.
-  trap 'for t in "${tmp_files[@]:-}"; do [[ -n "$t" ]] && rm -rf "$t"; done' RETURN
+  trap 'for t in "${tmp_files[@]:-}"; do [[ -n "$t" ]] && rm -rf "$t"; done' RETURN EXIT
 
   while [[ $# -gt 0 ]]; do
     case "$1" in
@@ -126,19 +128,25 @@ main() {
   search_dirs+=("${telemetry_path}")
 
   # Collect session files for the target date across the chosen directories,
-  # de-duplicating directories that appear more than once.
-  local pattern="sessions-${target_date}.jsonl"
-  [[ "${target_date}" == "all" ]] && pattern="sessions-*.jsonl"
+  # de-duplicating directories that appear more than once. The trailing '*'
+  # also picks up any shard a collector wrote when it could not lock the shared
+  # log; report.html orders every record it loads by ts.
+  local prefix="sessions-${target_date}"
+  [[ "${target_date}" == "all" ]] && prefix="sessions-"
   declare -a files=()
   local seen_dirs=""
-  local dir
+  local dir f
   for dir in "${search_dirs[@]}"; do
     [[ -n "$dir" && "$seen_dirs" != *"|${dir}|"* ]] || continue
     seen_dirs+="|${dir}|"
     [[ -d "$dir" ]] || continue
-    while IFS= read -r -d '' f; do
-      files+=("$f")
-    done < <(find "$dir" -maxdepth 1 -name "${pattern}" -print0 | sort -z)
+    # A glob rather than find | sort -z: pathname expansion is already sorted
+    # and needs no GNU-only flags, so this runs on macOS's BSD userland. Only
+    # the '*' is unquoted, so a date holding a space cannot split into two
+    # patterns; an unmatched glob expands to itself and the -f test discards it.
+    for f in "$dir"/"$prefix"*.jsonl; do
+      [[ -f "$f" ]] && files+=("$f")
+    done
   done
 
   if [[ -n "${debug_log}" ]]; then
@@ -168,9 +176,12 @@ main() {
     exit 0
   fi
 
-  # Build a compact JSON array of {name, content} objects with jq, then
-  # neutralize any literal </script> so the embedded JSON cannot break out
-  # of its host <script> element. The HTML loader decodes the <\/ escape.
+  # Build a compact JSON array of {name, content} objects with jq, then escape
+  # every '<' as \u003c. Session content routinely quotes markup, and inside a
+  # <script> element the HTML tokenizer treats not only </script> but also an
+  # unbalanced <!-- followed by <script as a state change, which swallows the
+  # closing tag and corrupts the payload. Escaping '<' removes all three cases;
+  # JSON.parse decodes \u003c back to '<'.
   declare -a obj_json=()
   local f
   for f in "${files[@]}"; do
@@ -181,7 +192,7 @@ main() {
   done
 
   local data
-  data="$(printf '%s\n' "${obj_json[@]}" | jq -s -c '.' | sed 's#</#<\\/#g')"
+  data="$(printf '%s\n' "${obj_json[@]}" | jq -s -c '.' | sed 's#<#\\u003c#g')"
 
   # Inject the data into the embeddedData script element. The payload is
   # streamed from a temp file via getline rather than passed through argv or
