@@ -6,12 +6,12 @@ ms.date: 2026-07-28
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->
-| Field       | Value                                           |
-|-------------|-------------------------------------------------|
-| Kind        | skill                                           |
-| Source      | `.github/skills/security/supply-chain-security` |
-| Invocation  | Loaded on demand by referencing agents          |
-| Interactive | No                                              |
+| Field       | Value                                                                                   |
+|-------------|-----------------------------------------------------------------------------------------|
+| Kind        | skill                                                                                   |
+| Source      | `.github/skills/security/supply-chain-security`                                         |
+| Invocation  | Invoked directly as `/supply-chain-security`, or loaded on demand by referencing agents |
+| Interactive | No                                                                                      |
 <!-- END AUTO-GENERATED: metadata -->
 
 ## What it does

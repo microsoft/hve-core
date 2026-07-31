@@ -83,7 +83,7 @@ Telemetry follows this model with a no-op gate and structured JSONL append behav
 
 ## Manifest Schema and Validation
 
-Manifests are validated against `scripts/linting/schemas/hook-manifest.schema.json`, the authoritative contract. The schema enforces the allowed top-level keys (`version`, `description`, `hooks`), the eight CLI-lowercase event names (`sessionStart`, `userPromptSubmit`, `preToolUse`, `postToolUse`, `preCompact`, `subagentStart`, `subagentStop`, `stop`), and the permitted command properties.
+Manifests are validated against `scripts/linting/schemas/hook-manifest.schema.json`, the authoritative contract. The schema enforces the allowed top-level keys (`version`, `description`, `hooks`), the ten CLI-lowercase event names (`sessionStart`, `sessionEnd`, `userPromptSubmit`, `userPromptSubmitted`, `preToolUse`, `postToolUse`, `preCompact`, `subagentStart`, `subagentStop`, `stop`), and the permitted command properties.
 
 Run `npm run lint:hooks` to validate every collection-scoped manifest. On failure, the validator prints each error and the schema path so you can reconcile the manifest against the contract.
 

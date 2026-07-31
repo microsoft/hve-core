@@ -51,6 +51,9 @@ jobs:
         with:
           persist-credentials: false
 
+      - name: Setup PowerShell modules
+        uses: ./.github/actions/setup-ps-modules
+
       - name: Run Workflow Permissions Validation
         id: permissions
         shell: pwsh

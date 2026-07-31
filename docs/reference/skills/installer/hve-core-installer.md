@@ -2,16 +2,16 @@
 title: hve-core-installer
 description: "Decision-driven HVE-Core installer with multiple clone-based and extension install methods, environment detection, and agent customization"
 sidebar_position: 1
-ms.date: 2026-07-03
+ms.date: 2026-07-27
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->
-| Field       | Value                                         |
-|-------------|-----------------------------------------------|
-| Kind        | skill                                         |
-| Source      | `.github/skills/installer/hve-core-installer` |
-| Invocation  | Loaded on demand by referencing agents        |
-| Interactive | No                                            |
+| Field       | Value                                                                                |
+|-------------|--------------------------------------------------------------------------------------|
+| Kind        | skill                                                                                |
+| Source      | `.github/skills/installer/hve-core-installer`                                        |
+| Invocation  | Invoked directly as `/hve-core-installer`, or loaded on demand by referencing agents |
+| Interactive | No                                                                                   |
 <!-- END AUTO-GENERATED: metadata -->
 
 ## What it does

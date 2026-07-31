@@ -3,7 +3,7 @@ title: 'Contributing Instructions to HVE Core'
 description: 'Requirements and standards for contributing GitHub Copilot instruction files to hve-core'
 sidebar_position: 3
 author: Microsoft
-ms.date: 2026-07-15
+ms.date: 2026-07-30
 ms.topic: how-to
 ---
 
@@ -639,6 +639,8 @@ Run these commands before submission (see [Common Standards - Common Validation]
 * `npm run lint:md`
 * `npm run spell-check`
 * `npm run lint:md-links`
+* `npm run docs:generate` (required when adding a new instruction; scaffolds the reference page under `docs/reference/instructions/`)
+* `npm run lint:asset-docs`
 
 All checks **MUST** pass before merge.
 

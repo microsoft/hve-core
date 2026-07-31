@@ -1,17 +1,17 @@
 ---
 title: tts-voiceover
 description: Text-to-speech voice-over generation from YAML speaker notes using Azure Speech SDK with SSML pronunciation control
-sidebar_position: 5
-ms.date: 2026-07-03
+sidebar_position: 6
+ms.date: 2026-07-27
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->
-| Field       | Value                                       |
-|-------------|---------------------------------------------|
-| Kind        | skill                                       |
-| Source      | `.github/skills/experimental/tts-voiceover` |
-| Invocation  | Loaded on demand by referencing agents      |
-| Interactive | No                                          |
+| Field       | Value                                                                           |
+|-------------|---------------------------------------------------------------------------------|
+| Kind        | skill                                                                           |
+| Source      | `.github/skills/experimental/tts-voiceover`                                     |
+| Invocation  | Invoked directly as `/tts-voiceover`, or loaded on demand by referencing agents |
+| Interactive | No                                                                              |
 <!-- END AUTO-GENERATED: metadata -->
 
 ## What it does

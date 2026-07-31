@@ -131,21 +131,29 @@ function Get-MarkdownTarget {
             # Directory - get all tracked and untracked, nonignored markdown files.
             $absolutePath = (Resolve-Path $item).Path
             $relativePath = [System.IO.Path]::GetRelativePath($repoRoot, $absolutePath) -replace '\\', '/'
-            $searchPath = if ($relativePath -eq '.') { '*.md' } else { "$relativePath/**/*.md" }
+            $prefix = if ($relativePath -eq '.') { '' } else { "$relativePath/" }
 
-            Write-Verbose "Searching in: $searchPath"
-            $listedFiles = @(git ls-files --cached --others --exclude-standard -- $searchPath 2>$null)
+            Write-Verbose "Searching under: $(if ($prefix) { $prefix } else { '<repository root>' })"
+
+            # Enumerate without a pathspec, then filter in PowerShell. Git pathspec
+            # wildcards match a single path component here, so '<dir>/**/*.md' silently
+            # skipped both nested files and files sitting directly in <dir>.
+            $listedFiles = @(git ls-files --cached --others --exclude-standard 2>$null)
             if ($LASTEXITCODE -ne 0) {
                 throw "git ls-files failed while searching '$item'."
             }
 
             $trackedFiles = $listedFiles |
-                Where-Object { $_ -notlike 'scripts/tests/fixtures/*' }
+                Where-Object { $_ -like '*.md' } |
+                Where-Object { $prefix -eq '' -or $_.StartsWith($prefix, [System.StringComparison]::OrdinalIgnoreCase) } |
+                Where-Object { $_ -notlike 'scripts/tests/*fixtures/*' } |
+                # Generated output; 490 of its 504 markdown files symlink to sources already checked.
+                Where-Object { $_ -notlike 'plugins/*' }
 
             if ($trackedFiles) {
                 foreach ($file in $trackedFiles) {
                     $fullPath = Join-Path $repoRoot $file
-                    if (Test-Path $fullPath) {
+                    if (Test-Path -LiteralPath $fullPath) {
                         $targets += $fullPath
                     }
                 }

@@ -41,6 +41,12 @@ A pre-configured development environment that includes all tools, extensions, an
    * Select **Dev Containers: Reopen in Container**
    * Wait for the container to build (first time takes 5-10 minutes)
 
+If your network blocks public package registries, the container build fails to
+install dependencies. Add the registry override to the user-level
+`dev.containers.containerEnv` VS Code setting rather than to `devcontainer.json`,
+so the repository stays unchanged. See
+[Install behind a restricted network](../docs/contributing/validation.md#install-behind-a-restricted-network).
+
 ## Included Tools
 
 ### Languages & Runtimes

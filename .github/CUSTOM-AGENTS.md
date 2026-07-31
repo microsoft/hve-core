@@ -236,15 +236,17 @@ Users are responsible for verifying their repository's `.gitignore` configuratio
 
 ### rai-planner
 
-**Creates:** Nine artifacts across 6 phases under `.copilot-tracking/rai-plans/{project-slug}/`:
+**Creates:** One consolidated `rai-plan.md` plus session state under `.copilot-tracking/rai-plans/{project-slug}/`:
 
 * `state.json` (session state for resume capability)
-* `system-definition-pack.md`, `stakeholder-impact-map.md` (Phase 1: AI System Scoping)
-* Risk classification screening output (Phase 2: Risk Classification)
-* `rai-standards-mapping.md` (Phase 3: RAI Standards Mapping)
-* `rai-threat-addendum.md` (Phase 4: RAI Security Model Analysis)
-* `control-surface-catalog.md`, `evidence-register.md`, `rai-tradeoffs.md` (Phase 5: RAI Impact Assessment)
-* `rai-review-summary.md` and backlog items (Phase 6: Review and Handoff)
+* `rai-plan.md` with eight sections in phase order:
+  * `## System Definition` (with an `### AI Component Inventory` table subsection) and `## Stakeholder Impact` (Phase 1: AI System Scoping)
+  * `### Risk Classification Screening` under `## System Definition` (Phase 2: Risk Classification)
+  * `## Standards Mapping` (Phase 3: RAI Standards Mapping)
+  * `## Threat Addendum` (Phase 4: RAI Security Model Analysis)
+  * `## Control Surface Catalog`, `## Evidence Register`, `## Tradeoffs` (Phase 5: RAI Impact Assessment)
+  * `## Review Summary` (Phase 6: Review and Handoff)
+* Backlog items and `artifact-manifest.json` when signing is accepted (Phase 6: Review and Handoff)
 
 **Workflow:** Six sequential phases mapped to NIST AI RMF functions: AI System Scoping (Govern + Map) → Risk Classification (Govern) → RAI Standards Mapping (Govern + Measure) → RAI Security Model Analysis (Measure) → RAI Impact Assessment (Manage) → Review and Handoff (Manage)
 

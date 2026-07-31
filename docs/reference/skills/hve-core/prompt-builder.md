@@ -2,16 +2,16 @@
 title: prompt-builder
 description: Compatibility alias for legacy prompt-building requests. Routes creation and improvement to the hve-builder skill.
 sidebar_position: 6
-ms.date: 2026-07-23
+ms.date: 2026-07-27
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->
-| Field       | Value                                    |
-|-------------|------------------------------------------|
-| Kind        | skill                                    |
-| Source      | `.github/skills/hve-core/prompt-builder` |
-| Invocation  | Loaded on demand by referencing agents   |
-| Interactive | No                                       |
+| Field       | Value                                                                            |
+|-------------|----------------------------------------------------------------------------------|
+| Kind        | skill                                                                            |
+| Source      | `.github/skills/hve-core/prompt-builder`                                         |
+| Invocation  | Invoked directly as `/prompt-builder`, or loaded on demand by referencing agents |
+| Interactive | No                                                                               |
 <!-- END AUTO-GENERATED: metadata -->
 
 ## What it does
