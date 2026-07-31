@@ -2,16 +2,16 @@
 title: adr-author
 description: "Authoring skill for Architecture Decision Records (ADRs) supporting capture, from-planner-handoff, and adopt-template entry modes with selectable Y-Statement or MADR v4.0.0 output templates, supersession lineage, and ASR trigger evaluation."
 sidebar_position: 1
-ms.date: 2026-07-03
+ms.date: 2026-07-27
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->
-| Field       | Value                                        |
-|-------------|----------------------------------------------|
-| Kind        | skill                                        |
-| Source      | `.github/skills/project-planning/adr-author` |
-| Invocation  | Loaded on demand by referencing agents       |
-| Interactive | No                                           |
+| Field       | Value                                                                        |
+|-------------|------------------------------------------------------------------------------|
+| Kind        | skill                                                                        |
+| Source      | `.github/skills/project-planning/adr-author`                                 |
+| Invocation  | Invoked directly as `/adr-author`, or loaded on demand by referencing agents |
+| Interactive | No                                                                           |
 <!-- END AUTO-GENERATED: metadata -->
 
 ## What it does

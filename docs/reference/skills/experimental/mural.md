@@ -1,17 +1,17 @@
 ---
 title: mural
 description: "Mural workspace, room, mural, and widget workflows via the Mural REST API exposed through a Python CLI. Use when you need to read or write Mural content or automate widget creation."
-sidebar_position: 3
-ms.date: 2026-07-03
+sidebar_position: 4
+ms.date: 2026-07-27
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->
-| Field       | Value                                  |
-|-------------|----------------------------------------|
-| Kind        | skill                                  |
-| Source      | `.github/skills/experimental/mural`    |
-| Invocation  | Loaded on demand by referencing agents |
-| Interactive | No                                     |
+| Field       | Value                                                                   |
+|-------------|-------------------------------------------------------------------------|
+| Kind        | skill                                                                   |
+| Source      | `.github/skills/experimental/mural`                                     |
+| Invocation  | Invoked directly as `/mural`, or loaded on demand by referencing agents |
+| Interactive | No                                                                      |
 <!-- END AUTO-GENERATED: metadata -->
 
 ## What it does

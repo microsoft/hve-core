@@ -2,16 +2,16 @@
 title: rpi-quick
 description: "Sequence Research, Plan, Implement, Review, and Follow-up for an RPI task. Use when one workflow should coordinate the full delivery lifecycle."
 sidebar_position: 5
-ms.date: 2026-07-16
+ms.date: 2026-07-27
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->
-| Field       | Value                                  |
-|-------------|----------------------------------------|
-| Kind        | skill                                  |
-| Source      | `.github/skills/rpi/rpi-quick`         |
-| Invocation  | Loaded on demand by referencing agents |
-| Interactive | No                                     |
+| Field       | Value                                                                       |
+|-------------|-----------------------------------------------------------------------------|
+| Kind        | skill                                                                       |
+| Source      | `.github/skills/rpi/rpi-quick`                                              |
+| Invocation  | Invoked directly as `/rpi-quick`, or loaded on demand by referencing agents |
+| Interactive | No                                                                          |
 <!-- END AUTO-GENERATED: metadata -->
 
 ## What it does

@@ -4,7 +4,7 @@ description: 'Generic test-design and evidence-grading dispatch templates for th
 <!-- markdownlint-disable-file -->
 # HVE Builder Tester Stage Dispatch
 
-Use these templates for fresh-context test design and evidence grading. Dispatch a generic subagent with no selected `agent` and include the complete relevant template in its prompt. Both stages use the Medium profile. Generic subagents return structured content to the HVE Builder Tester lead and do not write sandbox logs, target artifacts, or other evidence. The lead validates and persists each return.
+Use these templates for fresh-context test design and evidence grading. Dispatch a generic subagent with no selected `agent` and include the complete relevant template in its prompt. Both stages run at the higher of Medium and the target profile, so the grader is never weaker than the executor it assesses. Generic subagents return structured content to the HVE Builder Tester lead and do not write sandbox logs, target artifacts, or other evidence. The lead validates and persists each return.
 
 ## Test-design template
 

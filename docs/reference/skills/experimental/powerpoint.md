@@ -1,17 +1,17 @@
 ---
 title: powerpoint
 description: PowerPoint slide deck generation and management using python-pptx with YAML-driven content and styling
-sidebar_position: 4
-ms.date: 2026-07-03
+sidebar_position: 5
+ms.date: 2026-07-27
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->
-| Field       | Value                                    |
-|-------------|------------------------------------------|
-| Kind        | skill                                    |
-| Source      | `.github/skills/experimental/powerpoint` |
-| Invocation  | Loaded on demand by referencing agents   |
-| Interactive | No                                       |
+| Field       | Value                                                                        |
+|-------------|------------------------------------------------------------------------------|
+| Kind        | skill                                                                        |
+| Source      | `.github/skills/experimental/powerpoint`                                     |
+| Invocation  | Invoked directly as `/powerpoint`, or loaded on demand by referencing agents |
+| Interactive | No                                                                           |
 <!-- END AUTO-GENERATED: metadata -->
 
 ## What it does

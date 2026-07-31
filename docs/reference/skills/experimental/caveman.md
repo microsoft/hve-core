@@ -2,16 +2,16 @@
 title: caveman
 description: "Ultra-compressed response style that reduces output token count while preserving technical accuracy, with intensity levels and auto-clarity safety rules"
 sidebar_position: 1
-ms.date: 2026-07-03
+ms.date: 2026-07-27
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->
-| Field       | Value                                  |
-|-------------|----------------------------------------|
-| Kind        | skill                                  |
-| Source      | `.github/skills/experimental/caveman`  |
-| Invocation  | Loaded on demand by referencing agents |
-| Interactive | No                                     |
+| Field       | Value                                                                                  |
+|-------------|----------------------------------------------------------------------------------------|
+| Kind        | skill                                                                                  |
+| Source      | `.github/skills/experimental/caveman`                                                  |
+| Invocation  | Invoked directly as `/caveman`; model invocation is disabled, so agents do not load it |
+| Interactive | No                                                                                     |
 <!-- END AUTO-GENERATED: metadata -->
 
 ## What it does
