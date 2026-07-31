@@ -2,7 +2,7 @@
 title: Scripts
 description: PowerShell scripts for linting, validation, and security automation
 author: HVE Core Team
-ms.date: 2026-07-28
+ms.date: 2026-07-31
 ms.topic: reference
 keywords:
   - powershell
@@ -195,6 +195,12 @@ npm run lint:ps-module-pins
 npm run lint:public-dependency-feeds
 npm run security:sign
 ```
+
+`Install-PSModules.ps1`, `Test-SHAStaleness.ps1`, and `Update-ActionSHAPinning.ps1` have no
+package-script wrapper and are invoked directly by CI: `Install-PSModules.ps1` by the
+`setup-ps-modules` composite action and `copilot-setup-steps.yml`, `Test-SHAStaleness.ps1`
+by `sha-staleness-check.yml`, and `Update-ActionSHAPinning.ps1` by
+`weekly-security-maintenance.yml`. Run them ad hoc with `pwsh -NoProfile -File`.
 
 See [security/README.md](security/README.md) for detailed documentation.
 
