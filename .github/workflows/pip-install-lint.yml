@@ -1,0 +1,18 @@
+name: Pip Install Lint
+
+on:
+  workflow_call:
+
+permissions:
+  contents: read
+
+jobs:
+  check-bare-pip-install:
+    name: Check for bare pip install
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Run bare pip install lint check
+        run: pwsh -File scripts/linting/Invoke-PipInstallLint.ps1

@@ -27,6 +27,10 @@ jobs:
     with:
       soft-fail: false
 
+  pip-install-lint:
+    name: Pip Install Lint
+    uses: ./.github/workflows/pip-install-lint.yml
+
   markdown-lint:
     name: Markdown Lint
     uses: ./.github/workflows/markdown-lint.yml
@@ -485,6 +489,7 @@ jobs:
       - node-tests
       - fuzz-tests
       - pip-audit
+      - pip-install-lint
       - docusaurus-tests
       - frontmatter-validation
       - adr-consistency-validation

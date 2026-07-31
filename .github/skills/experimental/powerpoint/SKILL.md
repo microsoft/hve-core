@@ -6,7 +6,7 @@ compatibility: 'Requires uv, Python 3.11+, PowerShell 7+, and LibreOffice'
 metadata:
   authors: "microsoft/hve-core"
   spec_version: "1.0"
-  last_updated: "2026-03-18"
+  last_updated: "2026-07-31"
 ---
 
 # PowerPoint Skill
@@ -460,7 +460,7 @@ python scripts/embed_audio.py \
 
 Embeds WAV audio files into PPTX slides. Audio files are matched to slides by naming convention (`slide-001.wav`, `slide-002.wav`, etc.). The audio icon is placed off-screen (below the slide boundary) to keep it hidden during presentation. Pass `--slides` to embed audio on specific slides only.
 
-**Dependencies**: Requires `pillow` (`pip install pillow`) for poster frame generation.
+**Dependencies**: Requires `pillow` (`uv pip install pillow`) for poster frame generation.
 
 > [!NOTE]
 > WAV files are embedded uncompressed. For large narrated decks, consider pre-compressing audio before embedding to manage PPTX file size.
