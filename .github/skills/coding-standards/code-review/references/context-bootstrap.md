@@ -1,7 +1,7 @@
 ---
 title: Code Review Context Bootstrap
 description: Tier 0 workflow for establishing the change surface, drafting a change brief, and scoping review hotspots.
-ms.date: 2026-06-26
+ms.date: 2026-07-31
 ---
 
 ## Objective

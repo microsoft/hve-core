@@ -6,7 +6,7 @@ user-invocable: true
 metadata:
   authors: "microsoft/hve-core"
   spec_version: "1.0"
-  last_updated: "2026-06-18"
+  last_updated: "2026-07-31"
 ---
 
 # Code Review — Skill Entry
@@ -30,6 +30,7 @@ Review work should stay anchored in evidence and should avoid premature conclusi
 7. [Dispatch Loop](references/dispatch-loop.md) — human-steered dispatch board, manifest schema, and walk-back loop contract.
 8. [Emission Modes](references/emission-modes.md) — capability-gated dual-mode emission and persisted emission record.
 9. [Cross-Skill Forks](references/cross-skill-forks.md) — specialist review registry and collection-aware gating for follow-up reviews.
+10. [Change-Risk Model](references/change-risk-model.md) — deterministic signal taxonomy and scoring rubric for evidence-based change-risk profiling.
 
 ## Skill layout
 
@@ -44,3 +45,4 @@ Review work should stay anchored in evidence and should avoid premature conclusi
   * `dispatch-loop.md` — dispatch board, manifest schema, and walk-back loop.
   * `emission-modes.md` — native and canonical emission strategies.
   * `cross-skill-forks.md` — specialist review registry and gating rules.
+  * `change-risk-model.md` — deterministic signal taxonomy and scoring rubric for evidence-based change-risk profiling.

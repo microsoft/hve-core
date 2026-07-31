@@ -1,7 +1,7 @@
 ---
 title: Code Review Depth Tiers
 description: Basic, standard, and comprehensive review rigor dials for code review perspectives.
-ms.date: 2026-06-18
+ms.date: 2026-07-31
 ---
 
 ## Tier model
