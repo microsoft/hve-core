@@ -6,6 +6,7 @@ model:
   - GPT-5.6 Terra (copilot)
   - Claude Sonnet 5 (copilot)
   - MAI-Code-1-Flash (copilot)
+  - Claude Opus 5 (copilot)
 tools: [execute/killTerminal, execute/sendToTerminal, execute/runInTerminal, read, agent, edit, search, web, 'microsoft-docs/*']
 agents: []
 ---
