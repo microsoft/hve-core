@@ -15,7 +15,7 @@ Start with the orientation floor from [Walkthrough Protocol](walkthrough-protoco
 ## Tier 0 procedure
 
 1. Compute the diff once from the selected base branch and capture the changed-file surface.
-2. Draft a **Change-Risk Profile** alongside the change brief using the deterministic signals defined in [Change-Risk Model](change-risk-model.md). Evaluate Likelihood (size, diffusion, entropy), Severity (path criticality), Detectability (test presence), and Recoverability (rollback markers) using `git log` and `git diff` heuristics.
+2. Draft a **Change-Risk Profile** alongside the change brief using the deterministic signals defined in [Change-Risk Model](change-risk-model.md). Evaluate Likelihood (size, diffusion, entropy), Severity (path criticality), Detectability (test presence), and Recoverability (rollback markers) using `git log` and `git diff` signals.
 3. Summarize the change in a concise change brief that explains what changed and why it matters.
 4. Auto-detect hotspot candidates and specialist concern signals from the diff and file paths in the same pass. Tag the specialist concern classes for security, supply-chain, RAI or AI, accessibility, sustainability or efficiency, and privacy or PII using the signal-to-concern mapping in [Cross-Skill Forks](cross-skill-forks.md). Rank hotspot candidates using the risk profile's evidence (e.g., trailing churn, missed co-changes).
 5. Present the emerging brief, the Change-Risk Profile evidence, and hotspot candidates to the human for confirmation and correction.
