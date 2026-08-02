@@ -30,6 +30,10 @@ jobs:
   pip-install-lint:
     name: Pip Install Lint
     uses: ./.github/workflows/pip-install-lint.yml
+    permissions:
+      contents: read
+    with:
+      soft-fail: false
 
   markdown-lint:
     name: Markdown Lint

@@ -17,7 +17,7 @@ Confirm prerequisites and prepare the test environment.
 2. Verify Playwright and pytest-playwright are installed. Install if missing:
 
    ```bash
-   pip install playwright pytest-playwright pytest-asyncio
+   uv pip install playwright pytest-playwright pytest-asyncio
    playwright install chromium
    ```
 
@@ -107,9 +107,13 @@ async def test_page_navigation(page):
     """Test sidebar navigation functionality"""
     await page.goto("http://localhost:8501")
 
-    pages = ["📊 Summary Statistics", "📈 Univariate Analysis",
-             "🔗 Multivariate Analysis", "⏰ Time Series Analysis",
-             "💬 Chat Interface"]
+    pages = [
+        "📊 Summary Statistics",
+        "📈 Univariate Analysis",
+        "🔗 Multivariate Analysis",
+        "⏰ Time Series Analysis",
+        "💬 Chat Interface",
+    ]
 
     for page_name in pages:
         await page.select_option("select", page_name)

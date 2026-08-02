@@ -108,7 +108,7 @@ Use the bash script instead. Verify the bash script flags by sending `invoke-ppt
 
 - Use `send_to_terminal` to send commands to the active terminal
 - Use `get_terminal_output` to poll for completion
-- Do not run `pip install` or manual dependency installation
+- Do not run `pip install` or manual dependency installation <!-- pip-install-ok -->
 - Rely on PowerPoint skill environment setup (`uv sync`) and documented prerequisites
 - Keep output under the project slug render directory
 

@@ -37,7 +37,7 @@ curl -LsSf https://astral.sh/uv/install.sh | sh
 powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | iex"
 
 # Via pip (fallback)
-pip install uv
+pip install uv <!-- pip-install-ok -->
 ```
 
 ### System Dependencies (Export and Validation)
@@ -452,7 +452,7 @@ python scripts/embed_audio.py \
 
 Embeds WAV audio files into PPTX slides. Audio files are matched to slides by naming convention (`slide-001.wav`, `slide-002.wav`, etc.). The audio icon is placed off-screen (below the slide boundary) to keep it hidden during presentation. Pass `--slides` to embed audio on specific slides only.
 
-**Dependencies**: Requires `pillow` (`uv pip install pillow`) for poster frame generation.
+**Dependencies**: Requires `pillow` (`uv pip install pillow`) for poster frame generation. <!-- pip-install-ok -->
 
 > [!NOTE]
 > WAV files are embedded uncompressed. For large narrated decks, consider pre-compressing audio before embedding to manage PPTX file size.
@@ -529,19 +529,19 @@ Re-check [NVD](https://nvd.nist.gov) and [OSV](https://osv.dev) advisories for M
 
 ## Troubleshooting
 
-| Issue                                  | Cause                                              | Solution                                                                                         |
-|----------------------------------------|----------------------------------------------------|--------------------------------------------------------------------------------------------------|
-| SVG runtime error                      | python-pptx cannot embed SVG                       | Convert to PNG via `cairosvg` before adding                                                      |
-| Text overlay between elements          | Insufficient vertical spacing                      | Follow element positioning conventions in `pptx.instructions.md`                                 |
-| Width overflow off-slide               | Element extends beyond slide boundary              | Follow element positioning conventions in `pptx.instructions.md`                                 |
-| Bright accent color unreadable as fill | White text on bright background                    | Darken accent to ~60% saturation for box fills                                                   |
-| Background fill replaced with NoFill   | Accessed `background.fill` on inherited background | Check `slide.follow_master_background` before accessing                                          |
-| Missing speaker notes                  | Notes not specified in `content.yaml`              | Add `speaker_notes` field to every content slide                                                 |
-| LibreOffice not found during Validate  | Validate exports slides to images first            | Install LibreOffice: `brew install --cask libreoffice` (macOS)                                   |
-| `uv` not found                         | uv package manager not installed                   | Install uv: `curl -LsSf https://astral.sh/uv/install.sh \| sh` (macOS/Linux) or `pip install uv` |
-| Python not found by uv                 | No Python 3.11+ on PATH                            | Install via `uv python install 3.11` or `pyenv install 3.11`                                     |
-| `uv sync` fails                        | Missing or corrupt `.venv`                         | Delete `.venv/` at the skill root and re-run `uv sync`                                           |
-| Import errors in scripts               | Dependencies not installed or stale venv           | Run `uv sync` from the skill root to recreate the environment                                    |
+| Issue                                  | Cause                                              | Solution                                                                                         |                         |
+|----------------------------------------|----------------------------------------------------|--------------------------------------------------------------------------------------------------|-------------------------|
+| SVG runtime error                      | python-pptx cannot embed SVG                       | Convert to PNG via `cairosvg` before adding                                                      |                         |
+| Text overlay between elements          | Insufficient vertical spacing                      | Follow element positioning conventions in `pptx.instructions.md`                                 |                         |
+| Width overflow off-slide               | Element extends beyond slide boundary              | Follow element positioning conventions in `pptx.instructions.md`                                 |                         |
+| Bright accent color unreadable as fill | White text on bright background                    | Darken accent to ~60% saturation for box fills                                                   |                         |
+| Background fill replaced with NoFill   | Accessed `background.fill` on inherited background | Check `slide.follow_master_background` before accessing                                          |                         |
+| Missing speaker notes                  | Notes not specified in `content.yaml`              | Add `speaker_notes` field to every content slide                                                 |                         |
+| LibreOffice not found during Validate  | Validate exports slides to images first            | Install LibreOffice: `brew install --cask libreoffice` (macOS)                                   |                         |
+| `uv` not found                         | uv package manager not installed                   | Install uv: `curl -LsSf https://astral.sh/uv/install.sh \| sh` (macOS/Linux) or `pip install uv` | <!-- pip-install-ok --> |
+| Python not found by uv                 | No Python 3.11+ on PATH                            | Install via `uv python install 3.11` or `pyenv install 3.11`                                     |                         |
+| `uv sync` fails                        | Missing or corrupt `.venv`                         | Delete `.venv/` at the skill root and re-run `uv sync`                                           |                         |
+| Import errors in scripts               | Dependencies not installed or stale venv           | Run `uv sync` from the skill root to recreate the environment                                    |                         |
 
 ## Environment Recovery
 

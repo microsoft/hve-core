@@ -8,7 +8,7 @@ The repository follows a 'uv-first' Python convention.
 #>
 
 param(
-    [string]$TestDirectory = ""
+    [string]$TestDirectory = "."
 )
 
 $ErrorActionPreference = "Stop"
@@ -18,27 +18,27 @@ $script:ExcludeFiles = @("THIRD-PARTY-NOTICES", "Invoke-PipInstallLint.ps1", "In
 $script:Violations = @()
 $script:ScannedFiles = @{}
 
-function script:Should-Exclude {
+function script:Test-ExcludedPath {
     param([string]$Path)
     $normalizedPath = $Path.Replace("\", "/").ToLowerInvariant()
-    
+
     foreach ($dir in $script:ExcludeDirs) {
-        if ($normalizedPath -match "(^|/)$dir(/|$)") { return $true }
+        if ($normalizedPath -match "(^|/)$([regex]::Escape($dir))(/|$)") { return $true }
     }
     foreach ($file in $script:ExcludeFiles) {
-        if ($normalizedPath -match "(^|/)$file(/|$)") { return $true }
+        if ($normalizedPath -match "(^|/)$([regex]::Escape($file))(/|$)") { return $true }
     }
     return $false
 }
 
-function script:Scan-File {
+function script:Invoke-FileScan {
     param([string]$FilePath)
     
     $normalizedPath = $FilePath.Replace("\", "/")
     if ($script:ScannedFiles.ContainsKey($normalizedPath)) { return }
     $script:ScannedFiles[$normalizedPath] = $true
 
-    if (script:Should-Exclude -Path $FilePath) { return }
+    if (script:Test-ExcludedPath -Path $FilePath) { return }
 
     $ext = [System.IO.Path]::GetExtension($FilePath).ToLowerInvariant()
     if ($ext -notin @(".py", ".ps1", ".yml", ".yaml", ".md", "")) { return }
@@ -83,15 +83,15 @@ function script:Invoke-Lint {
     if ($TargetDir -eq ".") {
         foreach ($dir in @(".github/workflows", "scripts")) {
             if (Test-Path $dir) {
-                Get-ChildItem -Path $dir -Recurse -File -ErrorAction SilentlyContinue | ForEach-Object { script:Scan-File -FilePath $_.FullName }
+                Get-ChildItem -Path $dir -Recurse -File -ErrorAction SilentlyContinue | ForEach-Object { script:Invoke-FileScan -FilePath $_.FullName }
             }
         }
         Get-ChildItem -Path "." -Recurse -Include *.py, *.ps1, *.yml, *.yaml, *.md -File -ErrorAction SilentlyContinue | ForEach-Object {
-            script:Scan-File -FilePath $_.FullName
+            script:Invoke-FileScan -FilePath $_.FullName
         }
     } else {
         Get-ChildItem -Path $TargetDir -Recurse -Include *.py, *.ps1, *.yml, *.yaml, *.md -File -ErrorAction SilentlyContinue | ForEach-Object {
-            script:Scan-File -FilePath $_.FullName
+            script:Invoke-FileScan -FilePath $_.FullName
         }
     }
 

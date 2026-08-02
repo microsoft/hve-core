@@ -100,7 +100,7 @@ All files for the synthetic data project should be organized in a dedicated fold
 Create a well-structured notebook with the following cells:
 
 1. Title Cell (Markdown): Clear title with the subject
-2. Package Installation Cell (Python): Install required packages using `%pip install pandas numpy matplotlib seaborn scipy`
+2. Package Installation Cell (Python): Install required packages using `%pip install pandas numpy matplotlib seaborn scipy` <!-- pip-install-ok -->
 3. Library Import Cell (Python): Import all required libraries
 4. Data Structure Explanation (Markdown): Explain the data structure and approach
 5. Backup Creation (Python): If updating existing data source, create backup in notebook directory with `.bak` extension
@@ -138,7 +138,9 @@ day = np.random.choice(pd.date_range(start=start_date, end=end_date))
 day = pd.Timestamp(day).date()  # Ensures Python datetime.date
 hour = int(np.random.choice(range(8, 19)))
 minute = int(np.random.randint(0, 60))
-start_time = datetime.combine(day, datetime.min.time()) + timedelta(hours=hour, minutes=minute)
+start_time = datetime.combine(day, datetime.min.time()) + timedelta(
+    hours=hour, minutes=minute
+)
 ```
 
 ### Data Types & Ranges
@@ -237,7 +239,7 @@ start_time = datetime.combine(day, datetime.min.time()) + timedelta(hours=hour, 
 
 ```python
 # Cell 1: Package Installation (Python)
-%pip install pandas numpy matplotlib seaborn scipy
+%pip install pandas numpy matplotlib seaborn scipy <!-- pip-install-ok -->
 
 # Cell 2: Library Imports (Python)
 import pandas as pd

@@ -2,6 +2,12 @@ name: Pip Install Lint
 
 on:
   workflow_call:
+    inputs:
+      soft-fail:
+        description: 'Whether to continue on bare pip install violations'  # pip-install-ok
+        required: false
+        type: boolean
+        default: false
 
 permissions:
   contents: read
@@ -10,9 +16,11 @@ jobs:
   check-bare-pip-install:
     name: Check for bare pip install
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    continue-on-error: ${{ inputs.soft-fail }}
     steps:
       - name: Checkout code
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
       - name: Run bare pip install lint check
         run: pwsh -File scripts/linting/Invoke-PipInstallLint.ps1

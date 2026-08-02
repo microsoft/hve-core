@@ -74,8 +74,8 @@ Principles:
 Standard pattern:
 
 ```python
-fig = px.bar(df_grouped, x='room', y='count', color='room', title='Records by Room')
-fig.update_layout(xaxis_title='Room', yaxis_title='Count')
+fig = px.bar(df_grouped, x="room", y="count", color="room", title="Records by Room")
+fig.update_layout(xaxis_title="Room", yaxis_title="Count")
 fig.show()
 ```
 
@@ -148,11 +148,13 @@ Path resolution (include in Configuration & Imports):
 ```python
 from pathlib import Path
 
-NOTEBOOK_DIR = Path(__file__).resolve().parent if '__file__' in globals() else Path.cwd()
+NOTEBOOK_DIR = (
+    Path(__file__).resolve().parent if "__file__" in globals() else Path.cwd()
+)
 PROJECT_ROOT = NOTEBOOK_DIR.parent
-DATA_DIR = PROJECT_ROOT / 'data'
-OUTPUTS_DIR = PROJECT_ROOT / 'outputs'
-PROCESSED_DIR = DATA_DIR / 'processed'
+DATA_DIR = PROJECT_ROOT / "data"
+OUTPUTS_DIR = PROJECT_ROOT / "outputs"
+PROCESSED_DIR = DATA_DIR / "processed"
 PROCESSED_DIR.mkdir(parents=True, exist_ok=True)
 ```
 

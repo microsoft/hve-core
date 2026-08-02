@@ -24,17 +24,21 @@ Python naming conventions remove ambiguity.
 class ModelTrainer:
     pass
 
+
 # Functions and variables: snake_case
 def train_model():
     training_data = []
+
 
 # Constants: UPPER_SNAKE_CASE
 MAX_SEQUENCE_LENGTH = 2048
 DEFAULT_LEARNING_RATE = 1e-4
 
+
 # Private members: leading underscore
 def _internal_helper():
     pass
+
 
 _internal_cache = {}
 ```
@@ -68,6 +72,7 @@ The `*` separator forces callers to name optional parameters, preventing silent 
 def train(data: list, learning_rate: float = 1e-4, batch_size: int = 32):
     pass
 
+
 # Caller can silently swap learning_rate and batch_size
 train(data, 32, 1e-4)
 ```
@@ -82,6 +87,7 @@ def train(
     batch_size: int = 32,
 ) -> None:
     pass
+
 
 # Caller must name each optional parameter
 train(data, learning_rate=1e-3, batch_size=64)
@@ -209,10 +215,7 @@ def load_config(path: Path) -> dict:
         with open(path) as f:
             return yaml.safe_load(f)
     except yaml.YAMLError as e:
-        raise ValueError(
-            f"Invalid YAML in config file: {path}\n"
-            f"Error: {e}"
-        ) from e
+        raise ValueError(f"Invalid YAML in config file: {path}\nError: {e}") from e
 ```
 
 ## Custom Exception Hierarchies
@@ -223,11 +226,14 @@ In applications with multiple error categories, a base application exception ena
 class AppError(Exception):
     """Base exception for the application."""
 
+
 class ConfigError(AppError):
     """Configuration error."""
 
+
 class ValidationError(AppError):
     """Validation error."""
+
 
 def validate_config(config: dict) -> None:
     """Validate configuration."""
@@ -235,8 +241,7 @@ def validate_config(config: dict) -> None:
     missing = [k for k in required if k not in config]
     if missing:
         raise ConfigError(
-            f"Missing required config keys: {missing}\n"
-            f"Required: {required}"
+            f"Missing required config keys: {missing}\nRequired: {required}"
         )
 ```
 

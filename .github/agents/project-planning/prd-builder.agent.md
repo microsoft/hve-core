@@ -240,12 +240,12 @@ When conversation context has been summarized, implement robust recovery:
 5. State reconstruction algorithm:
    ```python
    if state_file_missing or state_file_corrupted:
-     analyze_prd_content()
-     extract_completed_sections()
-     infer_answered_questions()
-     identify_next_logical_steps()
-     create_new_state_file()
-     confirm_assumptions_with_user()
+       analyze_prd_content()
+       extract_completed_sections()
+       infer_answered_questions()
+       identify_next_logical_steps()
+       create_new_state_file()
+       confirm_assumptions_with_user()
    ```
 
 ## Questioning Strategy
@@ -453,12 +453,12 @@ Before asking any question, check state file:
 1. Question history check:
    ```python
    if question_key in state.questionsAsked:
-     if question_key in state.answeredQuestions:
-       # Use existing answer, don't re-ask
-       use_existing_answer(state.answeredQuestions[question_key])
-     else:
-       # Question was asked but not answered, ask again with context
-       ask_with_context("Previously asked but not answered...")
+       if question_key in state.answeredQuestions:
+           # Use existing answer, don't re-ask
+           use_existing_answer(state.answeredQuestions[question_key])
+       else:
+           # Question was asked but not answered, ask again with context
+           ask_with_context("Previously asked but not answered...")
    ```
 
 2. Dynamic question generation:

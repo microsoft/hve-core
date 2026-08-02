@@ -196,13 +196,17 @@ from myapp.service import DataService
 class TestDataProcessor:
     @pytest.fixture()
     def mock_service(self, mocker):
-        return mocker.patch.object(DataService, "fetch", return_value={"status": "ok", "value": 42})
+        return mocker.patch.object(
+            DataService, "fetch", return_value={"status": "ok", "value": 42}
+        )
 
     @pytest.fixture()
     def processor(self):
         return DataProcessor(service=DataService())
 
-    def test_given_valid_response_when_process_then_returns_value(self, processor, mock_service):
+    def test_given_valid_response_when_process_then_returns_value(
+        self, processor, mock_service
+    ):
         # Act
         result = processor.process()
 
@@ -212,7 +216,9 @@ class TestDataProcessor:
 
     def test_given_error_response_when_process_then_raises(self, processor, mocker):
         # Arrange
-        mocker.patch.object(DataService, "fetch", side_effect=ConnectionError("timeout"))
+        mocker.patch.object(
+            DataService, "fetch", side_effect=ConnectionError("timeout")
+        )
 
         # Act & Assert
         with pytest.raises(ConnectionError, match="timeout"):
@@ -225,9 +231,13 @@ class TestDataProcessor:
             ("pending", 0),
         ],
     )
-    def test_given_status_when_process_then_returns_expected(self, mocker, status, expected):
+    def test_given_status_when_process_then_returns_expected(
+        self, mocker, status, expected
+    ):
         # Arrange
-        mocker.patch.object(DataService, "fetch", return_value={"status": status, "value": expected})
+        mocker.patch.object(
+            DataService, "fetch", return_value={"status": status, "value": expected}
+        )
         processor = DataProcessor(service=DataService())
 
         # Act

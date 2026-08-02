@@ -19,6 +19,7 @@ Use this template when a slide requires complex drawings that cannot be expresse
 
 ```python
 """Custom drawing for slide NNN — description of what this draws."""
+
 from pptx.util import Inches, Pt
 from pptx.dml.color import RGBColor
 
@@ -41,7 +42,10 @@ def render(slide, style, content_dir):
     for label, color, top in layers:
         shape = slide.shapes.add_shape(
             1,  # MSO_SHAPE.RECTANGLE
-            Inches(2.0), Inches(top), Inches(9.0), Inches(1.2)
+            Inches(2.0),
+            Inches(top),
+            Inches(9.0),
+            Inches(1.2),
         )
         shape.fill.solid()
         shape.fill.fore_color.rgb = RGBColor.from_string(color.lstrip("#"))
