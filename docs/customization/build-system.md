@@ -2,7 +2,7 @@
 title: Build System and Validation
 description: Understand the plugin generation pipeline, schema validation system, npm scripts, and CI checks for customizing and extending HVE Core
 author: Microsoft
-ms.date: 2026-08-01
+ms.date: 2026-08-02
 ms.topic: how-to
 keywords:
   - build system
@@ -81,23 +81,23 @@ for the complete set.
 
 ### Linting
 
-| Script                      | Command                             | Description                                |
-|-----------------------------|-------------------------------------|--------------------------------------------|
-| `validate:local`            | `npm run validate:local`            | Runs the local-safe validation aggregate   |
-| `lint:md`                   | `npm run lint:md`                   | Markdown linting via markdownlint-cli2     |
-| `lint:md:fix`               | `npm run lint:md:fix`               | Markdown linting with auto-fix             |
-| `lint:ps`                   | `npm run lint:ps`                   | PowerShell analysis via PSScriptAnalyzer   |
-| `lint:yaml`                 | `npm run lint:yaml`                 | YAML syntax and structure validation       |
-| `lint:links`                | `npm run lint:links`                | Link language checking                     |
-| `lint:md-links`             | `npm run lint:md-links`             | Markdown link target validation            |
-| `lint:frontmatter`          | `npm run lint:frontmatter`          | Frontmatter schema validation              |
-| `lint:json`                 | `npm run lint:json`                 | JSON syntax validation                     |
-| `lint:adr-consistency`      | `npm run lint:adr-consistency`      | ADR structure and consistency checks       |
-| `lint:marketplace`          | `npm run lint:marketplace`          | Marketplace manifest validation            |
-| `lint:hooks`                | `npm run lint:hooks`                | Hook manifest validation                   |
-| `lint:version-consistency`  | `npm run lint:version-consistency`  | GitHub Action version consistency          |
-| `lint:permissions`          | `npm run lint:permissions`          | Workflow permissions validation            |
-| `lint:models`               | `npm run lint:models`               | Model reference validation against catalog |
+| Script                     | Command                            | Description                                |
+|----------------------------|------------------------------------|--------------------------------------------|
+| `validate:local`           | `npm run validate:local`           | Runs the local-safe validation aggregate   |
+| `lint:md`                  | `npm run lint:md`                  | Markdown linting via markdownlint-cli2     |
+| `lint:md:fix`              | `npm run lint:md:fix`              | Markdown linting with auto-fix             |
+| `lint:ps`                  | `npm run lint:ps`                  | PowerShell analysis via PSScriptAnalyzer   |
+| `lint:yaml`                | `npm run lint:yaml`                | YAML syntax and structure validation       |
+| `lint:links`               | `npm run lint:links`               | Link language checking                     |
+| `lint:md-links`            | `npm run lint:md-links`            | Markdown link target validation            |
+| `lint:frontmatter`         | `npm run lint:frontmatter`         | Frontmatter schema validation              |
+| `lint:json`                | `npm run lint:json`                | JSON syntax validation                     |
+| `lint:adr-consistency`     | `npm run lint:adr-consistency`     | ADR structure and consistency checks       |
+| `lint:marketplace`         | `npm run lint:marketplace`         | Marketplace manifest validation            |
+| `lint:hooks`               | `npm run lint:hooks`               | Hook manifest validation                   |
+| `lint:version-consistency` | `npm run lint:version-consistency` | GitHub Action version consistency          |
+| `lint:permissions`         | `npm run lint:permissions`         | Workflow permissions validation            |
+| `lint:models`              | `npm run lint:models`              | Model reference validation against catalog |
 
 ### Validation
 

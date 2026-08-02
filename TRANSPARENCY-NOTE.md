@@ -2,7 +2,7 @@
 title: "Transparency Note: HVE Core (May 2026)"
 description: "Public Transparency Note for HVE Core, a prompt-engineering and agentic-customization framework distributed by microsoft/hve-core."
 author: HVE Core Maintainers
-ms.date: 2026-08-01
+ms.date: 2026-08-02
 ms.topic: overview
 keywords:
   - responsible-ai
@@ -39,7 +39,7 @@ The appendices at the end add detail for the agents that most influence downstre
 | Prompt               | A reusable user-message template (`*.prompt.md`) you load into a Copilot Chat or CLI session.                                                                            |
 | Instructions         | Guidance (`*.instructions.md`) that shapes how the model responds for a given file type, language, or workflow.                                                          |
 | Skill                | A self-contained capability package (`SKILL.md` plus optional scripts and references) that documents a reusable task.                                                    |
-| Marketplace package  | A self-contained bundle declared in `.github/plugin/marketplace.json` that you can install as one unit.                                                                              |
+| Marketplace package  | A self-contained bundle declared in `.github/plugin/marketplace.json` that you can install as one unit.                                                                  |
 | Subagent             | An agent that another agent calls for a focused task, such as a read-only researcher or a single implementation step.                                                    |
 | Distribution channel | One of the ways HVE Core files reach you: the VS Code extension, the GitHub plugin marketplace, a direct git clone, or a copy placed in a customer repository.           |
 | Host platform        | The Copilot surface that runs the model: GitHub Copilot Chat in Visual Studio Code, or the GitHub Copilot CLI. HVE Core does not include or replace it.                  |

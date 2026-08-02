@@ -2,7 +2,7 @@
 title: Customizing HVE Core
 description: Overview of customization approaches from lightweight settings to full fork-and-extend, with role-based entry points
 author: Microsoft
-ms.date: 2026-08-01
+ms.date: 2026-08-02
 ms.topic: overview
 keywords:
   - customization
@@ -53,27 +53,27 @@ graph LR
     style G fill:#388e3c
 ```
 
-| Approach           | Description                                                                                                                                                 |
-|--------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| VS Code Settings   | Individual preferences like font size, theme, and editor behavior. No files to create or share.                                                             |
-| Instructions       | Configure Copilot behavior through `.github/copilot-instructions.md` and `.instructions.md` files. Lowest effort with highest return for shaping AI output. |
-| Agents and Prompts | Specialized workflows: agents for multi-turn interactions, prompts for single-shot tasks. Both accept tool restrictions and delegation rules.               |
-| Skills             | Domain knowledge in self-contained bundles with optional scripts. Use when instruction files alone cannot capture the depth of a domain.                    |
-| Marketplace Packages | Bundle agents, prompts, instructions, skills, and hooks into self-contained plugin and VSIX packages.                                                     |
-| Build System       | Validation scripts, schema checks, and plugin generation pipelines.                                                                                         |
-| Fork and Extend    | Full control over every artifact. Fork the repository when your changes diverge significantly from upstream.                                                |
+| Approach             | Description                                                                                                                                                 |
+|----------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| VS Code Settings     | Individual preferences like font size, theme, and editor behavior. No files to create or share.                                                             |
+| Instructions         | Configure Copilot behavior through `.github/copilot-instructions.md` and `.instructions.md` files. Lowest effort with highest return for shaping AI output. |
+| Agents and Prompts   | Specialized workflows: agents for multi-turn interactions, prompts for single-shot tasks. Both accept tool restrictions and delegation rules.               |
+| Skills               | Domain knowledge in self-contained bundles with optional scripts. Use when instruction files alone cannot capture the depth of a domain.                    |
+| Marketplace Packages | Bundle agents, prompts, instructions, skills, and hooks into self-contained plugin and VSIX packages.                                                       |
+| Build System         | Validation scripts, schema checks, and plugin generation pipelines.                                                                                         |
+| Fork and Extend      | Full control over every artifact. Fork the repository when your changes diverge significantly from upstream.                                                |
 
 ## Choose Your Approach
 
-| Goal                                       | Approach        | Files Involved                                        | Difficulty |
-|--------------------------------------------|-----------------|-------------------------------------------------------|------------|
-| Set coding standards for Copilot           | Instructions    | `.github/copilot-instructions.md`, `.instructions.md` | Low        |
-| Create a reusable workflow                 | Prompt          | `.github/prompts/{collection}/name.prompt.md`         | Low        |
-| Build a specialized Copilot assistant      | Agent           | `.github/agents/{collection}/name.agent.md`           | Medium     |
-| Package domain expertise                   | Skill           | `.github/skills/{collection}/{skill}/SKILL.md`        | Medium     |
-| Share curated bundles across teams         | Marketplace Package | `.github/plugin/marketplace.json`, `docs/plugins/` | Medium     |
-| Add custom validation or plugin generation | Build System    | `scripts/`, `package.json`                            | High       |
-| Diverge from upstream entirely             | Fork and Extend | Full repository                                       | High       |
+| Goal                                       | Approach            | Files Involved                                        | Difficulty |
+|--------------------------------------------|---------------------|-------------------------------------------------------|------------|
+| Set coding standards for Copilot           | Instructions        | `.github/copilot-instructions.md`, `.instructions.md` | Low        |
+| Create a reusable workflow                 | Prompt              | `.github/prompts/{collection}/name.prompt.md`         | Low        |
+| Build a specialized Copilot assistant      | Agent               | `.github/agents/{collection}/name.agent.md`           | Medium     |
+| Package domain expertise                   | Skill               | `.github/skills/{collection}/{skill}/SKILL.md`        | Medium     |
+| Share curated bundles across teams         | Marketplace Package | `.github/plugin/marketplace.json`, `docs/plugins/`    | Medium     |
+| Add custom validation or plugin generation | Build System        | `scripts/`, `package.json`                            | High       |
+| Diverge from upstream entirely             | Fork and Extend     | Full repository                                       | High       |
 
 ## Authoring with HVE Builder
 
@@ -100,7 +100,7 @@ Each HVE role benefits from different customization techniques. The table below 
 | Role                     | Recommended Guides                                                                                    | Rationale                                                                       |
 |--------------------------|-------------------------------------------------------------------------------------------------------|---------------------------------------------------------------------------------|
 | Engineer                 | [Instructions](instructions.md), [Agents](custom-agents.md)                                           | Coding standards and specialized review agents accelerate daily development     |
-| TPM                      | [Prompts](prompts.md), [Marketplace Packages](packages.md)                                           | Reusable planning prompts and curated bundles standardize project workflows     |
+| TPM                      | [Prompts](prompts.md), [Marketplace Packages](packages.md)                                            | Reusable planning prompts and curated bundles standardize project workflows     |
 | Tech Lead / Architect    | [Instructions](instructions.md), [Agents](custom-agents.md), [Skills](skills.md)                      | Standards enforcement, architecture review agents, and deep domain knowledge    |
 | Security Architect       | [Skills](skills.md), [Instructions](instructions.md)                                                  | Compliance knowledge packages and security-focused coding conventions           |
 | Data Scientist           | [Skills](skills.md), [Prompts](prompts.md)                                                            | Analytical domain bundles and repeatable notebook workflows                     |

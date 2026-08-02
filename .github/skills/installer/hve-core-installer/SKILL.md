@@ -1038,9 +1038,9 @@ User input handling:
 
 ### Agent Bundle Definitions
 
-| Bundle            | Agents                            |
-|-------------------|-----------------------------------|
-| `hve-core`        | rpi-agent, documentation          |
+| Bundle         | Agents                                              |
+|----------------|-----------------------------------------------------|
+| `hve-core`     | rpi-agent, documentation                            |
 | `package:<id>` | Stable agents from the resolved marketplace package |
 
 ### Collision Detection

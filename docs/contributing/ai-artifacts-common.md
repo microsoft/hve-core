@@ -3,7 +3,7 @@ title: 'AI Artifacts Common Standards'
 description: 'Common standards and quality gates for all AI artifact contributions to hve-core'
 sidebar_position: 2
 author: Microsoft
-ms.date: 2026-08-01
+ms.date: 2026-08-02
 ms.topic: reference
 ---
 
@@ -602,8 +602,8 @@ When contributing AI artifacts:
 
 ### Review Examples
 
-| Artifact Type | Location                                                                     |
-|---------------|------------------------------------------------------------------------------|
+| Artifact Type | Location                                                                  |
+|---------------|---------------------------------------------------------------------------|
 | Agents        | Files in `.github/agents/{package-id}/` (the conventional location)       |
 | Prompts       | Files in `.github/prompts/{package-id}/` (the conventional location)      |
 | Instructions  | Files in `.github/instructions/{package-id}/` (the conventional location) |

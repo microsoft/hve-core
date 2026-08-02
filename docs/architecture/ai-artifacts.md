@@ -3,7 +3,7 @@ title: AI Artifacts Architecture
 description: Prompt, agent, and instruction delegation model for Copilot customizations
 sidebar_position: 2
 author: Microsoft
-ms.date: 2026-08-01
+ms.date: 2026-08-02
 ms.topic: concept
 ---
 
@@ -261,22 +261,22 @@ The maturity table above applies to component metadata; package-level maturity i
 
 Each package produces two distributable outputs from the same codebase: a VS Code extension (`.vsix`) and a Copilot plugin published through the repository marketplace.
 
-| Package          | Extension ID                              | Contents                                       |
-|------------------|-------------------------------------------|------------------------------------------------|
-| Core (flagship)  | `ise-hve-essentials.hve-core`             | RPI workflow and core artifacts                |
+| Package          | Extension ID                              | Contents                                        |
+|------------------|-------------------------------------------|-------------------------------------------------|
+| Core (flagship)  | `ise-hve-essentials.hve-core`             | RPI workflow and core artifacts                 |
 | Full             | `ise-hve-essentials.hve-core-all`         | All artifacts eligible for the selected channel |
-| ADO              | `ise-hve-essentials.hve-ado`              | Azure DevOps integration                       |
-| GitHub           | `ise-hve-essentials.hve-github`           | GitHub backlog and issue management            |
-| GitLab           | `ise-hve-essentials.hve-gitlab`           | GitLab merge request and pipeline management   |
-| Jira             | `ise-hve-essentials.hve-jira`             | Jira backlog and requirements management       |
-| Project Planning | `ise-hve-essentials.hve-project-planning` | Architecture, requirements, agile coaching     |
-| RPI              | `ise-hve-essentials.hve-rpi`              | Research, Plan, Implement, and Review workflow |
-| Coding Standards | `ise-hve-essentials.hve-coding-standards` | Language-specific coding conventions           |
-| Data Science     | `ise-hve-essentials.hve-data-science`     | Notebooks, dashboards, data analysis           |
-| Security         | `ise-hve-essentials.hve-security`         | Security review, planning, and threat modeling |
-| Design Thinking  | `ise-hve-essentials.hve-design-thinking`  | 9-method DT coaching and learning              |
-| Installer        | `ise-hve-essentials.hve-installer`        | HVE Core installation and setup                |
-| Experimental     | `ise-hve-essentials.hve-experimental`     | Early-stage artifacts under active iteration   |
+| ADO              | `ise-hve-essentials.hve-ado`              | Azure DevOps integration                        |
+| GitHub           | `ise-hve-essentials.hve-github`           | GitHub backlog and issue management             |
+| GitLab           | `ise-hve-essentials.hve-gitlab`           | GitLab merge request and pipeline management    |
+| Jira             | `ise-hve-essentials.hve-jira`             | Jira backlog and requirements management        |
+| Project Planning | `ise-hve-essentials.hve-project-planning` | Architecture, requirements, agile coaching      |
+| RPI              | `ise-hve-essentials.hve-rpi`              | Research, Plan, Implement, and Review workflow  |
+| Coding Standards | `ise-hve-essentials.hve-coding-standards` | Language-specific coding conventions            |
+| Data Science     | `ise-hve-essentials.hve-data-science`     | Notebooks, dashboards, data analysis            |
+| Security         | `ise-hve-essentials.hve-security`         | Security review, planning, and threat modeling  |
+| Design Thinking  | `ise-hve-essentials.hve-design-thinking`  | 9-method DT coaching and learning               |
+| Installer        | `ise-hve-essentials.hve-installer`        | HVE Core installation and setup                 |
+| Experimental     | `ise-hve-essentials.hve-experimental`     | Early-stage artifacts under active iteration    |
 
 The VS Code extension is built with `Prepare-Extension.ps1` and `Package-Extension.ps1`. Copilot packages are generated with `npm run plugin:generate` from the standard component fields in `.github/plugin/marketplace.json`.
 
@@ -314,7 +314,7 @@ The build system excludes `.github/deprecated/` contents from all downstream sur
 
 | Surface              | Exclusion Mechanism                         |
 |----------------------|---------------------------------------------|
-| Marketplace packages | Catalog membership and source containment |
+| Marketplace packages | Catalog membership and source containment   |
 | Plugin generation    | `Get-ArtifactFiles` path filter             |
 | Extension packaging  | Discovery function `deprecated` path filter |
 | VS Code activation   | Not discovered at runtime                   |
@@ -339,11 +339,11 @@ The `removed` maturity is an `x-hve.componentMaturity` tombstone keyed by packag
 
 To reactivate an artifact, restore its standard membership path, remove or change the tombstone, regenerate plugin and extension outputs, and run marketplace validation. The validator requires non-vacuous tombstone coverage and the aggregate package must continue to cover every active eligible component.
 
-| Mechanism | Signal | Distribution behavior |
-| ----------- | -------- | ----------------------- |
-| `deprecated` maturity | Sunset in progress | Excluded from both channels |
-| `removed` tombstone | Withdrawn from distribution | Excluded while policy history remains |
-| `.github/deprecated/` path | Archived source | Excluded by source containment rules |
+| Mechanism                  | Signal                      | Distribution behavior                 |
+|----------------------------|-----------------------------|---------------------------------------|
+| `deprecated` maturity      | Sunset in progress          | Excluded from both channels           |
+| `removed` tombstone        | Withdrawn from distribution | Excluded while policy history remains |
+| `.github/deprecated/` path | Archived source             | Excluded by source containment rules  |
 
 ## Related Documentation
 

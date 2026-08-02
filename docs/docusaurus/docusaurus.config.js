@@ -5,7 +5,7 @@ import { themes as prismThemes } from 'prism-react-renderer';
 import remarkGithubAlert from 'remark-github-blockquote-alert';
 import * as path from 'path';
 import { labelRegistry } from './src/data/labelRegistry';
-import { loadMarketplaceCounts } from './src/data/marketplaceCounts.mjs';
+import { loadMarketplaceCounts } from './src/data/marketplaceCounts';
 
 const packageNames = [
   'ado', 'coding-standards', 'data-science', 'design-thinking',

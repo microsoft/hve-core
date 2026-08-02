@@ -5,10 +5,9 @@ import * as fs from 'fs';
 
 const componentFields = ['agents', 'commands', 'rules', 'skills', 'hooks'];
 
-/**
- * @param {Record<string, unknown>} entry
- */
-export function countMarketplaceComponents(entry) {
+export function countMarketplaceComponents(
+  entry: Record<string, unknown>,
+): number {
   return componentFields.reduce((count, field) => {
     const value = entry[field];
     if (typeof value === 'string') {
@@ -21,12 +20,13 @@ export function countMarketplaceComponents(entry) {
   }, 0);
 }
 
-/**
- * @param {string} marketplacePath
- * @param {string[]} packageNames
- */
-export function loadMarketplaceCounts(marketplacePath, packageNames) {
-  const marketplace = JSON.parse(fs.readFileSync(marketplacePath, 'utf-8'));
+export function loadMarketplaceCounts(
+  marketplacePath: string,
+  packageNames: string[],
+): Record<string, number> {
+  const marketplace = JSON.parse(fs.readFileSync(marketplacePath, 'utf-8')) as {
+    plugins: Array<Record<string, unknown> & { name: string }>;
+  };
   const entries = new Map(
     marketplace.plugins.map((entry) => [entry.name, entry]),
   );

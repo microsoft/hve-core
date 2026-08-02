@@ -2,7 +2,7 @@
 title: Team Adoption and Governance
 description: Establish governance practices, naming conventions, onboarding patterns, and change management for team-wide HVE Core adoption
 author: Microsoft
-ms.date: 2026-08-01
+ms.date: 2026-08-02
 ms.topic: how-to
 keywords:
   - governance
@@ -59,13 +59,13 @@ glance. Follow kebab-case patterns throughout.
 
 ### File Naming Patterns
 
-| Artifact Type | Pattern                                               | Example                         |
-|---------------|-------------------------------------------------------|---------------------------------|
-| Instructions  | `{topic}.instructions.md`                             | `python-script.instructions.md` |
-| Agents        | `{workflow}.agent.md`                                 | `code-review.agent.md`          |
-| Prompts       | `{action}.prompt.md`                                  | `generate-tests.prompt.md`      |
-| Skills        | `{skill-name}/SKILL.md`                               | `pr-reference/SKILL.md`         |
-| Packages      | Marketplace entry and `docs/plugins/{id}.md`          | `ado` and `docs/plugins/ado.md` |
+| Artifact Type | Pattern                                      | Example                         |
+|---------------|----------------------------------------------|---------------------------------|
+| Instructions  | `{topic}.instructions.md`                    | `python-script.instructions.md` |
+| Agents        | `{workflow}.agent.md`                        | `code-review.agent.md`          |
+| Prompts       | `{action}.prompt.md`                         | `generate-tests.prompt.md`      |
+| Skills        | `{skill-name}/SKILL.md`                      | `pr-reference/SKILL.md`         |
+| Packages      | Marketplace entry and `docs/plugins/{id}.md` | `ado` and `docs/plugins/ado.md` |
 
 ### Package IDs
 

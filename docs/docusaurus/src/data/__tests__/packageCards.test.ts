@@ -11,7 +11,7 @@ import type { PackageCardData } from '../packageCards';
 import {
   countMarketplaceComponents,
   loadMarketplaceCounts,
-} from '../marketplaceCounts.mjs';
+} from '../marketplaceCounts';
 
 const marketplacePath = path.resolve(
   __dirname,

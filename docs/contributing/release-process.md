@@ -2,7 +2,7 @@
 title: Release Process
 description: Trunk-based release workflow using release-please automation and automated VS Code extension publishing
 sidebar_position: 9
-ms.date: 2026-08-01
+ms.date: 2026-08-02
 ms.topic: how-to
 author: WilliamBerryiii
 ---
@@ -180,14 +180,14 @@ for the architectural contract.
 
 ### Contributor Guidelines
 
-| Guideline          | Action                                                                                                                                                                                                                                                                                                                                                                                                                           |
-|--------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| New contributions  | Omit component maturity for the default `stable` value unless targeting early adopters                                                                                                                                                                                                                                                                                                                                           |
-| Experimental work  | Set `experimental` on the package-relative component path                                                                                                                                                                                                                                                                                                                                                                         |
-| Preview promotions | Set `preview` when core functionality is complete                                                                                                                                                                                                                                                                                                                                                                                  |
-| Stable promotions  | Remove the component-maturity override after production validation                                                                                                                                                                                                                                                                                                                                                                |
-| Deprecation        | Set `deprecated` before removal to provide transition time. Move the artifact file to `.github/deprecated/{type}/` when archival placement is intended. See [AI Artifacts Architecture](../architecture/ai-artifacts.md#deprecated-artifacts) for the full policy.                                                                                                                         |
-| Removal            | Remove active standard membership and retain a `removed` tombstone in `x-hve.componentMaturity` when source should remain for history, references, or possible reinstatement. See [Removed Artifacts](../architecture/ai-artifacts.md#removed-artifacts).                                                                                                                                    |
+| Guideline          | Action                                                                                                                                                                                                                                                             |
+|--------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| New contributions  | Omit component maturity for the default `stable` value unless targeting early adopters                                                                                                                                                                             |
+| Experimental work  | Set `experimental` on the package-relative component path                                                                                                                                                                                                          |
+| Preview promotions | Set `preview` when core functionality is complete                                                                                                                                                                                                                  |
+| Stable promotions  | Remove the component-maturity override after production validation                                                                                                                                                                                                 |
+| Deprecation        | Set `deprecated` before removal to provide transition time. Move the artifact file to `.github/deprecated/{type}/` when archival placement is intended. See [AI Artifacts Architecture](../architecture/ai-artifacts.md#deprecated-artifacts) for the full policy. |
+| Removal            | Remove active standard membership and retain a `removed` tombstone in `x-hve.componentMaturity` when source should remain for history, references, or possible reinstatement. See [Removed Artifacts](../architecture/ai-artifacts.md#removed-artifacts).          |
 
 ---
 

@@ -3,7 +3,7 @@ title: Build Workflows
 description: GitHub Actions CI/CD pipeline architecture for validation, security, and release automation
 sidebar_position: 3
 author: WilliamBerryiii
-ms.date: 2026-08-01
+ms.date: 2026-08-02
 ms.topic: overview
 ---
 
@@ -98,7 +98,7 @@ Individual validation workflows called by orchestration workflows:
 | `copyright-headers.yml`               | Copyright header validation                    | `npm run validate:copyright`             |
 | `gitleaks-scan.yml`                   | Secret detection scanning                      | N/A (gitleaks direct)                    |
 | `plugin-package.yml`                  | Plugin collection packaging                    | N/A                                      |
-| `plugin-validation.yml`               | Marketplace package metadata and closure | `npm run lint:marketplace`                 |
+| `plugin-validation.yml`               | Marketplace package metadata and closure       | `npm run lint:marketplace`               |
 | `extension-marketplace-publish.yml`   | Extension marketplace publishing               | N/A                                      |
 | `python-lint.yml`                     | Python linting (ruff)                          | `npm run lint:py`                        |
 | `pytest-tests.yml`                    | Python unit tests                              | `npm run test:py`                        |
@@ -295,12 +295,12 @@ flowchart TD
 
 ### Publishing Jobs
 
-| Job               | Purpose                                                     | Workflow                             |
-|-------------------|-------------------------------------------------------------|--------------------------------------|
-| normalize-version | Ensure version consistency                                  | `release-marketplace-stable.yml`     |
-| validate-version  | Enforce odd minor version for pre-release channel           | `release-marketplace-prerelease.yml` |
+| Job               | Purpose                                                              | Workflow                             |
+|-------------------|----------------------------------------------------------------------|--------------------------------------|
+| normalize-version | Ensure version consistency                                           | `release-marketplace-stable.yml`     |
+| validate-version  | Enforce odd minor version for pre-release channel                    | `release-marketplace-prerelease.yml` |
 | package (matrix)  | Build one VSIX per marketplace package using `extension-package.yml` | Both                                 |
-| publish (matrix)  | Upload each VSIX to VS Code Marketplace via OIDC + vsce     | Both                                 |
+| publish (matrix)  | Upload each VSIX to VS Code Marketplace via OIDC + vsce              | Both                                 |
 
 ### Marketplace Package Builds
 
