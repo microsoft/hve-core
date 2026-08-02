@@ -39,7 +39,7 @@ Select all that apply:
 >
 > * Agents: Research, indexing/referencing other project (using standard VS Code GitHub Copilot/MCP tools), planning, and general implementation agents likely already exist. Review `.github/agents/` before creating new ones.
 > * Skills: Must include both bash and PowerShell scripts. See [Skills](../docs/contributing/skills.md).
-> * Model Versions: Only contributions targeting the **latest Anthropic and OpenAI models** will be accepted. Older model versions (e.g., GPT-3.5, Claude 3) will be rejected.
+> * Model Versions: Contributions **MUST** target models listed in the model catalog (`scripts/linting/model-catalog.json`) whose provider appears in `providerAllowlist` and whose status is `ga` or `preview`. Run `npm run lint:models` to validate references.
 > * See [Agents Not Accepted](../docs/contributing/custom-agents.md#agents-not-accepted) and [Model Version Requirements](../docs/contributing/ai-artifacts-common.md#model-version-requirements).
 
 **Other:**

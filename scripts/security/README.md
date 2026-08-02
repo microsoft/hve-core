@@ -2,7 +2,7 @@
 title: Security Scripts
 description: PowerShell scripts for dependency pinning validation, SHA staleness monitoring, supply chain security, and centralized PS module installation
 author: HVE Core Team
-ms.date: 2026-06-26
+ms.date: 2026-07-28
 ms.topic: reference
 keywords:
   - powershell
@@ -230,15 +230,34 @@ reach production.
 
 ### `Test-WorkflowPermissions.ps1`
 
-Validates that GitHub Actions workflow files include a top-level `permissions` block.
+Validates that GitHub Actions workflow files declare permissions at the workflow
+and job level.
 
 Purpose: Ensure workflows explicitly declare token permissions to prevent
-OpenSSF Scorecard Token-Permissions failures.
+OpenSSF Scorecard Token-Permissions failures, and ensure each job declares the
+scope it holds rather than inheriting the workflow grant implicitly.
+
+#### Classification
+
+| Workflow-level block | Job-level block | Effective scopes                   | Verdict   |
+|----------------------|-----------------|------------------------------------|-----------|
+| absent               | absent          | repository or organization default | violation |
+| `permissions: {}`    | absent          | none                               | pass      |
+| populated            | absent          | inherits the workflow grant        | violation |
+| any                  | present         | job-declared                       | pass      |
+
+A job beneath an empty workflow-level block that declares no block of its own
+inherits an empty set and therefore holds no scope, so that case passes. An empty
+workflow-level block is a default, not a ceiling: a job that does declare its own
+block still receives what it declares, because job-level permissions replace the
+workflow-level set rather than being capped by it.
 
 #### Features
 
 * Scans `.github/workflows/*.yml` and `.yaml` files
-* Uses regex-based detection (`^permissions:`) with zero false positives
+* Parses each workflow with `ConvertFrom-Yaml`, so job indentation and the
+  `permissions` value shape do not affect detection
+* Reports workflow-level and job-level compliance as separate metrics
 * Outputs results in JSON, SARIF, or console format
 * Configurable workflow exclusions
 * Integrates with `npm run lint:permissions`
@@ -248,7 +267,7 @@ OpenSSF Scorecard Token-Permissions failures.
 * `-Path` - Directory containing workflow YAML files (default: `.github/workflows`)
 * `-Format` - Output format: `json`, `sarif`, or `console` (default: `json`)
 * `-OutputPath` - Path for result output file (default: `logs/workflow-permissions-results.json`)
-* `-FailOnViolation` (switch) - Exit with non-zero code if any workflow is missing permissions
+* `-FailOnViolation` (switch) - Exit with non-zero code if any workflow or job is missing permissions
 * `-ExcludePaths` - Workflow filenames to exclude (default: `copilot-setup-steps.yml`)
 
 #### Usage

@@ -2,16 +2,16 @@
 title: rpi-plan
 description: "Create evidence-based RPI plans and phase details from supplied context, research, drafts, and decisions. Use when implementation planning is needed."
 sidebar_position: 4
-ms.date: 2026-07-16
+ms.date: 2026-07-27
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->
-| Field       | Value                                  |
-|-------------|----------------------------------------|
-| Kind        | skill                                  |
-| Source      | `.github/skills/rpi/rpi-plan`          |
-| Invocation  | Loaded on demand by referencing agents |
-| Interactive | No                                     |
+| Field       | Value                                                                      |
+|-------------|----------------------------------------------------------------------------|
+| Kind        | skill                                                                      |
+| Source      | `.github/skills/rpi/rpi-plan`                                              |
+| Invocation  | Invoked directly as `/rpi-plan`, or loaded on demand by referencing agents |
+| Interactive | No                                                                         |
 <!-- END AUTO-GENERATED: metadata -->
 
 ## What it does

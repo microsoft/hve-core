@@ -1,0 +1,52 @@
+# Local Copilot OTel stack: Grafana, Prometheus, Tempo, Loki, Pyroscope in one container.
+#
+# The data volume is declared external so this file binds the existing
+# copilot-otel-data volume rather than creating a project-prefixed duplicate,
+# which would silently orphan the accumulated history.
+#
+# Create it once before the first up:
+#   docker volume create copilot-otel-data
+
+services:
+  lgtm:
+    image: grafana/otel-lgtm:0.29.2
+    container_name: copilot-otel-lgtm
+    restart: unless-stopped
+    ports:
+      # Loopback only. Grafana ships with default admin credentials and this
+      # stack is single-machine, so nothing needs to be reachable off-host.
+      - "127.0.0.1:3000:3000" # Grafana UI
+      - "127.0.0.1:4317:4317" # OTLP gRPC
+      - "127.0.0.1:4318:4318" # OTLP HTTP  <- Copilot exports here
+      - "127.0.0.1:9090:9090" # Prometheus
+      - "127.0.0.1:3200:3200" # Tempo
+    environment:
+      # Two flags, space separated, appended to the Prometheus command line.
+      #
+      # otlp-deltatocumulative is applied defensively. Prometheus drops
+      # delta-temporality metrics by default, and a dropped delta metric was
+      # observed to fail the whole batched write, taking co-batched cumulative
+      # metrics with it. This converts instead of dropping, and is inert for
+      # cumulative-only traffic. Its per-series state resets on restart.
+      #
+      # Retention is raised from the 15d default so per-month token totals are
+      # real rather than silently truncated at 15 days.
+      PROMETHEUS_EXTRA_ARGS: "--enable-feature=otlp-deltatocumulative --storage.tsdb.retention.time=120d"
+    volumes:
+      # Everything persistent lives under /data: grafana, prometheus, tempo,
+      # loki, pyroscope. One mount covers all five.
+      - copilot-otel-data:/data
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "curl -sf http://localhost:3000/api/health && curl -sf http://localhost:9090/-/ready",
+        ]
+      interval: 15s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+
+volumes:
+  copilot-otel-data:
+    external: true

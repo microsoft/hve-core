@@ -35,7 +35,7 @@ Record each finding with a stable shape so the author can act on it directly:
 ```markdown
 # HVE Artifact Test Report: {{artifact_or_set}}
 
-- Tested profile(s): {{Medium or Low and model per target}}
+- Tested profile(s): {{High, Medium, or Low and model per target}}
 - Run type: full | correction
 - Behavior gate: Executed | Satisfied-and-skipped
 - Fidelity: simulation | native | Not applicable
@@ -50,6 +50,8 @@ Record each finding with a stable shape so the author can act on it directly:
 ## Fidelity and limitations
 
 {{State which actions were observed, simulated, or emulated; identify proxy-model use; and list claims this run cannot support.}}
+
+{{When the executor ran above the Low profile, state that a higher-tier simulator may repair ambiguity a lower-tier run would expose, so conformance evidence from this run does not establish that the artifact reads unambiguously at lower tiers. This belongs in the durable report, not only in the sandbox log, because the log is removed at cleanup.}}
 
 ## Reuse eligibility
 

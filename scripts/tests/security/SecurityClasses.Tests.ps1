@@ -67,6 +67,7 @@ Describe 'DependencyViolation' -Tag 'Unit' {
             @{ Value = 'VersionMismatch' }
             @{ Value = 'MissingVersionComment' }
             @{ Value = 'MissingPermissions' }
+            @{ Value = 'MissingJobPermissions' }
             @{ Value = '' }
         ) {
             $v = [DependencyViolation]::new()

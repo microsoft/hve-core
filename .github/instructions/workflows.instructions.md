@@ -33,6 +33,10 @@ Local reusable workflows referenced via relative paths are excluded from SHA pin
 
 Workflows MUST declare explicit permissions following the principle of least privilege. The default permission set is `contents: read`. Additional permissions MUST be granted at the job level and only when required for a specific capability.
 
+Every job MUST declare its own `permissions:` block whenever the workflow-level block grants any scope. A job with no block silently inherits the workflow grant, which is neither explicit nor auditable. The one exception is a workflow-level `permissions: {}`, which grants nothing, so a job beneath it that declares no block inherits an empty set and holds no scope.
+
+An empty workflow-level block is a default, not a ceiling. A job that does declare its own block still receives what it declares, because job-level permissions replace the workflow-level set rather than being capped by it.
+
 **Required pattern:**
 
 ```yaml
@@ -58,7 +62,16 @@ jobs:
           echo "Running validation steps"
 ```
 
-**Enforcement:** Violations are detected by `scripts/security/Test-WorkflowPermissions.ps1`. CI will fail on workflows missing a top-level `permissions:` block. The `copilot-setup-steps.yml` workflow is excluded by default.
+**Enforcement:** Violations are detected by `scripts/security/Test-WorkflowPermissions.ps1`, which classifies each workflow and then each of its jobs:
+
+| Workflow-level block | Job-level block | Effective scopes                   | Verdict   |
+|----------------------|-----------------|------------------------------------|-----------|
+| absent               | absent          | repository or organization default | violation |
+| `permissions: {}`    | absent          | none                               | pass      |
+| populated            | absent          | inherits the workflow grant        | violation |
+| any                  | present         | job-declared                       | pass      |
+
+CI will fail on either a missing top-level block or a job that omits its own block under a populated workflow-level block. The `copilot-setup-steps.yml` workflow is excluded by default.
 
 ## Credentials and Secrets
 
@@ -252,7 +265,7 @@ All workflows MUST pass the following validation checks:
 ### Workflow Permissions Validation
 
 * **Script:** `scripts/security/Test-WorkflowPermissions.ps1`
-* **What it enforces:** All workflows declare a top-level `permissions:` block
+* **What it enforces:** Every workflow declares a top-level `permissions:` block, and every job declares its own block unless the workflow-level block is empty
 * **CI blocking:** Failures block CI when configured to enforce compliance
 
 ## Security Requirements

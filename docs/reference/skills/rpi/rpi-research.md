@@ -2,16 +2,16 @@
 title: rpi-research
 description: "Research-only RPI playbook that gathers task evidence, writes dated research artifacts under .copilot-tracking/research/, and hands off planning-ready findings. Use when the user needs evidence, alternatives, or task framing first."
 sidebar_position: 6
-ms.date: 2026-07-16
+ms.date: 2026-07-27
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->
-| Field       | Value                                  |
-|-------------|----------------------------------------|
-| Kind        | skill                                  |
-| Source      | `.github/skills/rpi/rpi-research`      |
-| Invocation  | Loaded on demand by referencing agents |
-| Interactive | No                                     |
+| Field       | Value                                                                          |
+|-------------|--------------------------------------------------------------------------------|
+| Kind        | skill                                                                          |
+| Source      | `.github/skills/rpi/rpi-research`                                              |
+| Invocation  | Invoked directly as `/rpi-research`, or loaded on demand by referencing agents |
+| Interactive | No                                                                             |
 <!-- END AUTO-GENERATED: metadata -->
 
 ## What it does

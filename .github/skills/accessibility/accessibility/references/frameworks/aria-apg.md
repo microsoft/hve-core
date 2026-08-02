@@ -319,7 +319,7 @@ Source: W3C WAI-ARIA Authoring Practices Guide, Dialog and supporting patterns, 
 * `aria-atomic="true"` requests that the entire region be reannounced on every change; `aria-atomic="false"` (the default for log) announces only the additions.
 * `aria-relevant` (optional) tunes which mutations trigger announcement (`additions`, `removals`, `text`, `all`).
 
-**Source:** <https://www.w3.org/WAI/ARIA/apg/practices/live-regions/>
+**Source:** <https://www.w3.org/WAI/ARIA/apg/practices/>
 
 ### pattern-switch
 
