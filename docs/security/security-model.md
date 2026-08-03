@@ -3,7 +3,7 @@ title: Security Assurance Case and Security Model
 description: Comprehensive security model and security assurance documentation demonstrating enterprise security practices
 sidebar_position: 2
 author: Microsoft
-ms.date: 2026-07-28
+ms.date: 2026-07-31
 ms.topic: reference
 keywords:
   - security
@@ -1393,21 +1393,21 @@ Its headline residual is speaker-notes content egress to the Azure region; input
 
 ### Supply Chain Security Controls
 
-| ID   | Control                                  | Implementation                                                            | Validates Against |
-|------|------------------------------------------|---------------------------------------------------------------------------|-------------------|
-| SC-1 | Dependency Pinning Validation            | Test-DependencyPinning.ps1                                                | S-1, S-2          |
-| SC-2 | SHA Staleness Monitoring                 | Test-SHAStaleness.ps1                                                     | S-1               |
-| SC-3 | Dependency Review                        | dependency-review.yml                                                     | S-2, AI-5         |
-| SC-4 | npm Security Audit                       | npm audit in pr-validation.yml                                            | S-2               |
-| SC-5 | Dependabot Updates                       | dependabot.yml                                                            | S-1, S-2          |
-| SC-6 | Tool Checksum Verification               | scripts/security/tool-checksums.json                                      | S-1               |
-| SC-7 | SBOM Generation and Attestation          | anchore/sbom-action, actions/attest in main.yml                           | S-1, S-2          |
-| SC-8 | SBOM Dependency Diff                     | sbom-diff job in main.yml                                                 | S-1, S-2          |
-| SC-9 | VEX Vulnerability Triage and Attestation | vex-detect.yml, vex-draft.md, attest-and-upload-vex in release-stable.yml | S-1, S-2          |
+| ID   | Control                                  | Implementation                                                     | Validates Against |
+|------|------------------------------------------|--------------------------------------------------------------------|-------------------|
+| SC-1 | Dependency Pinning Validation            | Test-DependencyPinning.ps1                                         | S-1, S-2          |
+| SC-2 | SHA Staleness Monitoring                 | Test-SHAStaleness.ps1                                              | S-1               |
+| SC-3 | Dependency Review                        | dependency-review.yml                                              | S-2, AI-5         |
+| SC-4 | npm Security Audit                       | npm audit in pr-validation.yml                                     | S-2               |
+| SC-5 | Dependabot Updates                       | dependabot.yml                                                     | S-1, S-2          |
+| SC-6 | Tool Checksum Verification               | scripts/security/tool-checksums.json                               | S-1               |
+| SC-7 | SBOM Generation and Attestation          | anchore/sbom-action, actions/attest in release-stable.yml          | S-1, S-2          |
+| SC-8 | SBOM Dependency Diff                     | sbom-diff job in release-stable.yml                                | S-1, S-2          |
+| SC-9 | VEX Vulnerability Triage and Attestation | vex-detect.yml, vex-draft.md, vex-attest job in release-stable.yml | S-1, S-2          |
 
 #### SC-8: SBOM Dependency Diff Implementation
 
-The `sbom-diff` job in `main.yml` runs during each release to surface supply chain changes between consecutive versions. It compares the current dependency SBOM against the previous release, generating a structured `dependency-diff.md` report that is uploaded to the GitHub Release.
+The `sbom-diff` job in `release-stable.yml` runs during each release to surface supply chain changes between consecutive versions. It compares the current dependency SBOM against the previous release, generating a structured `dependency-diff.md` report that is uploaded to the GitHub Release.
 
 | Field            | Value                                                                      |
 |------------------|----------------------------------------------------------------------------|
@@ -1424,6 +1424,30 @@ The diff script parses SPDX JSON packages, excludes root document entries, and c
 * Version changes where the same package appears in both releases at different versions
 
 When no previous release exists or the prior release lacks a dependency SBOM, the job exits cleanly without producing a diff. This graceful degradation ensures the first release in a repository proceeds without error.
+
+#### SC-9: VEX Vulnerability Triage and Attestation Implementation
+
+SC-9 spans three workflows: detection finds untriaged vulnerabilities, drafting proposes OpenVEX status updates for human review, and the release pipeline attests the resulting document. The canonical VEX document is `security/vex/hve-core.openvex.json`.
+
+| Field                     | Value                                                                                  |
+|---------------------------|----------------------------------------------------------------------------------------|
+| **Detection Trigger**     | Tuesdays 08:00 UTC, after a successful Stable Release Pipeline run, or manual dispatch |
+| **Detection Workflow**    | `vex-detect.yml` runs OSV-Scanner and files or updates a single triage issue           |
+| **Detection Permissions** | `contents: read`, `issues: write`                                                      |
+| **Drafting Trigger**      | `workflow_run` from VEX Detection, plus manual dispatch                                |
+| **Drafting Workflow**     | `vex-draft.md` invokes the SSSC Reviewer agent and opens one pull request              |
+| **Drafting Permissions**  | `contents: read`, `issues: read`                                                       |
+| **Release Attestation**   | `vex-attest` job in `release-stable.yml`, via the reusable `vex-attest.yml`            |
+| **Attestations**          | Build provenance over the VEX document, plus VEX as predicate over the SBOM subject    |
+| **Human Review Gate**     | AI drafts; a CODEOWNERS-required human reviews and merges the pull request             |
+
+Detection performs no AI drafting. It compares OSV-Scanner findings against the VEX document and reports divergence as a triage issue.
+
+Drafting is gated twice so it consumes no model budget when there is nothing to do. The first gate skips while a VEX draft pull request is already open. The second gate skips when every finding already carries a terminal VEX status. The resulting pull request is restricted to the VEX document and is labeled `security`, `automated`, and `needs-triage`.
+
+The release attestation produces two artifacts: a build-provenance attestation whose subject is the VEX document, and an in-toto attestation that binds the VEX document as an OpenVEX predicate over the dependency SBOM subject. The VEX document is also uploaded to the GitHub Release.
+
+The merge commit author is the accountable author of record, never the agent.
 
 ### Code Quality Controls
 

@@ -70,17 +70,15 @@ def fuzz_build_entry(data: bytes) -> None:
         "tool_name": provider.ConsumeUnicodeNoSurrogates(15),
         "prompt": provider.ConsumeUnicodeNoSurrogates(50),
     }
+    import shutil
     import tempfile
-    from pathlib import Path
 
     stack_dir = Path(tempfile.mkdtemp())
     stack = core._AgentStack(stack_dir, payload["session_id"])
     with suppress(Exception):
         core.build_entry(payload, event, stack)
-    # Cleanup
-    for f in stack_dir.iterdir():
-        f.unlink(missing_ok=True)
-    stack_dir.rmdir()
+    # rmtree, not unlink: a session's op log lives in a subdirectory.
+    shutil.rmtree(stack_dir, ignore_errors=True)
 
 
 FUZZ_TARGETS = [

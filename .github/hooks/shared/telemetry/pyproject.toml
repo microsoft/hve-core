@@ -19,6 +19,9 @@ fuzz = [
 testpaths = ["tests"]
 pythonpath = ["."]
 python_files = ["test_*.py", "fuzz_harness.py"]
+markers = [
+    "slow: spawns collector subprocesses; deselect with -m 'not slow'",
+]
 
 [tool.ruff]
 line-length = 100

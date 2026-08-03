@@ -57,7 +57,6 @@ the reproducible bootstrap path.
 |-------------------|-----------------------------------------------------------------|
 | Repository root   | Root validation, scripts, and `ci:eval:*` commands              |
 | `docs/docusaurus` | Docusaurus lint, component test, build, and Playwright commands |
-| `evals/beval`     | The Beval workflow and its package-specific dependencies        |
 
 Installing dependencies for one root does not provision the other roots. The
 root commands that delegate to Docusaurus still need the Docusaurus package
@@ -188,6 +187,7 @@ output in `logs/` while diagnosing a failure.
 | Eval execution       | `npm run ci:eval:execute`                                                                    | Manifest, Vally, Copilot credential, and a noninteractive service-capable environment; model-backed and potentially costly; writes `logs/eval-summary.json` and per-spec results |
 | General eval suites  | `npm run ci:eval:run`                                                                        | Vally and model access; model-backed and potentially costly                                                                                                                      |
 | One suite            | `npm run ci:eval:run:skills`, `npm run ci:eval:run:agents`, or `npm run ci:eval:run:scripts` | Same model and service prerequisites as the selected suite                                                                                                                       |
+| Agent conformance    | `npm run ci:eval:run:conformance`                                                            | Vally and model access; runs the six planner-agent conformance suites in sequence and stops at the first failing suite                                                           |
 | Result comparison    | `npm run ci:eval:compare`                                                                    | Existing Vally result sets; compares prior outputs without selecting another suite                                                                                               |
 | Prompt behavior      | `npm run ci:eval:behavior-prompts`                                                           | Vally and model access; runs the prompt conformance spec                                                                                                                         |
 | Instruction behavior | `npm run ci:eval:behavior-instructions`                                                      | Vally and model access; runs the instruction conformance spec                                                                                                                    |
@@ -247,24 +247,26 @@ Only `npm run ci:eval:agent:dashboard:open` is interactive and opens the
 generated dashboard. Keep it separate from unattended validation or report
 generation.
 
-## Beval workflow
+## Agent conformance workflow
 
-Beval is a CI-owned workflow with its own package root at `evals/beval`. The
-workflow has a 30-minute timeout and requires `COPILOT_TOKEN`. It installs that
-package root, starts Copilot ACP agent and judge services on TCP ports 3000 and
-3001, verifies both ports, then runs this existing invocation:
+Agent conformance is a CI-owned workflow that runs the six planner-agent
+suites under `evals/agent-conformance/`. It is invoked from
+`weekly-validation.yml` through `workflow_call`, has a 30-minute timeout, and
+requires the `copilot-github-token` secret exported as `COPILOT_GITHUB_TOKEN`.
+The workflow runs one matrix leg per suite with `fail-fast: false`, so a single
+failing agent does not mask the others:
 
 ```bash
-beval -c evals/beval/dt-coach/eval.config.yaml run --cases evals/beval/dt-coach/cases/ --agent evals/beval/dt-coach/agent.yaml -m validation -o evals/beval/dt-coach/results/results.json
+npx vally eval --suite agent-conformance-dt-coach
 ```
 
-Results remain under `evals/beval/dt-coach/results/` and the workflow uploads
-them as the `beval-results-${{ github.run_id }}` artifact. Run `npm ci` in
-`evals/beval` before a deliberate local reproduction, and establish the two
-services and credential through an operator-managed environment. Do not ask for
-or transmit the credential through chat. Do not treat Beval as part of
-`validate:local`, infer its prerequisites from generic validation, or add a root
-package wrapper solely for naming consistency.
+Results are written under `evals/results/` and uploaded as a per-suite
+artifact. Each stimulus launches the agent artifact in turn 0 and delivers the
+case query in turn 1, then grades the response with a model judge plus advisory
+wall-time and content budgets. Establish the credential through an
+operator-managed environment before a deliberate local reproduction. Do not ask
+for or transmit the credential through chat, do not treat this lane as part of
+`validate:local`, and do not infer its prerequisites from generic validation.
 
 ## Review and cleanup
 

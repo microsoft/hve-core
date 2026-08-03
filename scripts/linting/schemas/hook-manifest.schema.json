@@ -35,7 +35,8 @@
           "preCompact",
           "subagentStart",
           "subagentStop",
-          "stop"
+          "stop",
+          "agentStop"
         ]
       },
       "additionalProperties": {

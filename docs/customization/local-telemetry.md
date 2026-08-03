@@ -3,7 +3,7 @@ title: Local Telemetry
 description: Enable local Copilot session telemetry, understand capture mechanics, and generate local reports
 sidebar_position: 10
 author: Microsoft
-ms.date: 2026-06-18
+ms.date: 2026-07-29
 ms.topic: how-to
 keywords:
   - telemetry
@@ -28,7 +28,23 @@ Events currently captured include:
 * agent stop and session end
 * pre-compact events
 
-At stop time, telemetry also appends a session summary with model and token usage when available.
+At stop time, telemetry also appends a session summary with model and token usage, but only when the surface you are running on writes a usage log it can read. See [Enrichment Coverage by Surface](#enrichment-coverage-by-surface) for what each surface provides.
+
+## Prerequisites
+
+All telemetry processing runs in Python. The shell entry points are thin wrappers that gate on opt-in and hand stdin to `_telemetry_core.py`.
+
+| Requirement     | Needed for                                                | Notes                                                                                    |
+|-----------------|-----------------------------------------------------------|------------------------------------------------------------------------------------------|
+| Python 3.11+    | Event collection, reports, cleanup                        | Collectors try `python3` then `python`; the report and cleanup scripts require `python3` |
+| Bash 3.2+       | Bash entry points                                         | macOS system Bash works; no Bash 4 features used                                         |
+| PowerShell 5.1+ | `Invoke-TelemetryCollector.ps1`                           | Written for Windows PowerShell; no `#Requires` floor                                     |
+| PowerShell 7.4+ | `Invoke-TelemetryReport.ps1`, `Invoke-TelemetryClean.ps1` | Enforced by `#Requires -Version 7.4`                                                     |
+| `jq`            | `generate-telemetry-report.sh`                            | Not needed by `Invoke-TelemetryReport.ps1`                                               |
+
+You only need one shell family. Copilot selects the Bash or PowerShell entry point based on the host.
+
+Only `telemetry-collector.sh` checks the interpreter version, skipping a `python3` older than 3.11 and falling back to `python`. Where Python is missing or too old, the collector warns and continues without recording events, so collection never blocks a session. The report and cleanup scripts are run by hand and fail loudly instead.
 
 ## Enable Local Telemetry
 
@@ -60,7 +76,7 @@ Processed telemetry never stores full prompt text or full tool inputs (see
 [Sensitive Data and Privacy](#sensitive-data-and-privacy)). A separate,
 explicit opt-in records the first few hook payloads **verbatim** to
 `raw-input.jsonl` for deep diagnostics. It is off by default, even when
-telemetry is enabled, and is honored only by the Bash collector:
+telemetry is enabled, and both the Bash and PowerShell collectors honor it:
 
 ```bash
 export HVE_TELEMETRY_RAW=1
@@ -105,12 +121,13 @@ Override with `HVE_TELEMETRY_DIR` when needed.
 
 Key files and folders:
 
-| Path                        | Purpose                                                                                                  |
-|-----------------------------|----------------------------------------------------------------------------------------------------------|
-| `sessions-YYYY-MM-DD.jsonl` | Daily event stream with hook events and session summaries                                                |
-| `raw-input.jsonl`           | First few hook payloads stored verbatim; written only when `HVE_TELEMETRY_RAW=1` is set (Bash collector) |
-| `.stacks/`                  | Per-session agent stack tracking used for attribution                                                    |
-| `report.generated.html`     | Optional self-contained report output                                                                    |
+| Path                                            | Purpose                                                                                                   |
+|-------------------------------------------------|-----------------------------------------------------------------------------------------------------------|
+| `sessions-YYYY-MM-DD.jsonl`                     | Daily event stream with hook events and session summaries                                                 |
+| `sessions-YYYY-MM-DD.<stamp>-<pid>-<hex>.jsonl` | Fallback shard written when a collector could not take the day log's lock; read alongside it              |
+| `raw-input.jsonl`                               | First few hook payloads stored verbatim; written only when `HVE_TELEMETRY_RAW=1` is set                   |
+| `.stacks/<session-id>/ops.log`                  | Append-only agent push and pop records for one session, replayed to attribute events to the calling agent |
+| `report.generated.html`                         | Optional self-contained report output                                                                     |
 
 ## Data Captured and Storage Schema
 
@@ -148,6 +165,23 @@ Additional fields are event-specific. Examples:
 * Subagent events: agent name and display name
 * Stop events: stop reason
 
+Tool events also carry two fields the bundled report does not render, kept for
+offline analysis of a full session timeline. A tool payload names no agent, and a
+turn's tool calls run in parallel, so an active subagent is not evidence that it
+issued any particular call:
+
+* `agent`: Present only when no subagent was in flight, holding `root`. This is
+  the one case where the caller is certain.
+* `agents`: The candidate list (`root` plus every started-but-not-stopped
+  subagent) when one or more subagents were running. The two fields are mutually
+  exclusive; neither resolves the caller once work overlaps.
+* `tool_use_id`: The client's identifier for one tool invocation, pairing a
+  `PreToolUse` record with its `PostToolUse` record exactly, where the report's
+  by-name correlation can only approximate the pairing under concurrency.
+
+Token attribution does not have this problem and the report does render it; see
+[Session Summary Fields](#session-summary-fields).
+
 ### Session Summary Fields
 
 When available at stop time, `SessionSummary` includes:
@@ -158,15 +192,59 @@ When available at stop time, `SessionSummary` includes:
 * `cache_read_tokens`, `cache_write_tokens`
 * `total_nano_aiu`
 * `turns`, `messages`
+* `token_source`: provenance of the token numbers (`process_log` or `state_fallback`)
 * Optional `reasoning_effort`, `subagent_map`, and `client`
+* `agent_usage`: Per-agent token counters, present only under `process_log`
+
+Unlike tool attribution, the token split is exact. Every process-log request
+records the agent that issued it, so the collector partitions requests by agent
+and resolves each id to a display name through `subagent_map`. The report shows
+the split under Token Usage, as a share of AIU (or of output tokens where the
+host reports no AIU), and rolls it up to a Subagent Share card.
+
+Where a host emits no process log, the report reconstructs the same split by
+crediting each merged subagent session its own totals and treating the balance
+as the root agent's.
 
 ### Data Sources by Layer
 
-| Data Category                                 | Source                                                                    |
-|-----------------------------------------------|---------------------------------------------------------------------------|
-| Hook lifecycle events                         | Copilot hook payloads routed through collector scripts                    |
-| Session summaries                             | `.copilot/session-state/<sid>/events.jsonl` (CLI session state)           |
-| Additional model/token enrichment for reports | VS Code debug logs and session-state aggregation during report generation |
+| Data Category             | Source                                          | Availability                   |
+|---------------------------|-------------------------------------------------|--------------------------------|
+| Hook lifecycle events     | Copilot hook payloads via the collector scripts | Any surface that runs hooks    |
+| Session summaries         | `~/.copilot/session-state/<sid>/events.jsonl`   | Copilot CLI only               |
+| Precise per-request usage | `~/.copilot/logs/process-*.log`                 | Copilot CLI only               |
+| Report-time enrichment    | VS Code `debug-logs/**/*.jsonl` (`llm_request`) | VS Code builds that write them |
+
+### Enrichment Coverage by Surface
+
+Event capture and usage enrichment are separate concerns. Hook events are recorded on any surface that runs hooks. Model and token data comes from surface-specific logs that telemetry reads but does not create, and the two sources are not interchangeable.
+
+#### Copilot CLI
+
+The CLI maintains its own session state under `~/.copilot/session-state/<sid>/` (honoring `COPILOT_HOME`).
+When that directory contains an `events.jsonl`, the collector appends a `SessionSummary` inline at `Stop`, `SessionEnd`, and `PreCompact`, and the report re-derives summaries through the `aggregate-session` pass.
+Precise per-request usage comes from `~/.copilot/logs/process-*.log`, located through the session lock PID and, once the lock is gone, by scanning for logs that reference the session's interaction ids.
+Not every state directory has an `events.jsonl`; sessions that never reached a recorded turn produce no summary.
+
+#### VS Code
+
+VS Code sessions do not appear under `~/.copilot/session-state`, so the CLI path contributes nothing for them. Their only enrichment source is the Copilot Chat debug log, discovered by globbing `debug-logs/**/*.jsonl` beneath the workspace storage roots for `.vscode-server-insiders`, `.vscode-server`, `.vscode`, and the platform user-data directories for Code - Insiders, Code, and VSCodium.
+
+> [!IMPORTANT]
+> Debug logs are not written by every VS Code build. Public (stable) VS Code on macOS has been confirmed to produce none. On such a host, telemetry still records the full event timeline, but the report shows no model, token, or cost data for those sessions, and no `SessionSummary` record is written. This is a source-availability gap, not a telemetry failure.
+
+Missing enrichment is never fatal. Both aggregation passes return a non-zero status when they find nothing, the generator silently skips the corresponding layer, and the report renders from the hook event stream alone.
+
+### Summary Provenance
+
+Each `SessionSummary` carries a `token_source` field recording where its numbers came from:
+
+| `token_source`   | Meaning                                                        |
+|------------------|----------------------------------------------------------------|
+| `process_log`    | Per-request `assistant_usage` metrics from the CLI process log |
+| `state_fallback` | Summed `session.shutdown` model metrics from `events.jsonl`    |
+
+Under `state_fallback`, shutdown metrics are summed across every run segment because a resumed session resets its counters on each resume. A live session that has not yet ended a segment knows only per-message output tokens, so input, cache, and AIU totals are reported as unknown rather than zero, keeping an in-progress session distinguishable from a free one.
 
 ### Event Naming Normalization
 
@@ -176,8 +254,10 @@ The pipeline normalizes different casing variants of event names to canonical na
 
 * Data is stored locally under `.copilot-tracking/telemetry` by default.
 * Records append to date-partitioned files (`sessions-YYYY-MM-DD.jsonl`).
+  Concurrent hook events append to that one file: POSIX resolves `O_APPEND` in the kernel, and on Windows the collector takes a byte-range lock first, because the C runtime emulates append as seek-then-write and would otherwise let one writer overwrite another.
+  A collector that cannot take the lock writes a sibling shard named `sessions-YYYY-MM-DD.<stamp>-<pid>-<hex>.jsonl`, which the report generators pick up alongside the day log.
 * A small verbatim raw payload sample is stored in `raw-input.jsonl` only when `HVE_TELEMETRY_RAW=1` is explicitly set; see [Sensitive Data and Privacy](#sensitive-data-and-privacy).
-* Per-session agent stack files are maintained under `.stacks/` for attribution and cleaned up on session stop.
+* Per-session agent stacks are maintained under `.stacks/<session-id>/ops.log`, an append-only record of agent pushes and pops that is replayed to attribute each event, and removed on session stop.
 
 ### Sensitive Data and Privacy
 
@@ -226,7 +306,7 @@ pwsh .github/hooks/shared/telemetry/Invoke-TelemetryReport.ps1 -Open
 Telemetry is captured per project, so each repository keeps its own store under
 `<repo>/.copilot-tracking/telemetry`. To view sessions across every project in a
 single report, each store is recorded once per session in a user-level registry
-at `~/.hve/telemetry-dirs.txt` (honoring `HVE_HOME`).
+at `~/.hve/telemetry-dirs` (honoring `HVE_HOME`).
 
 Generate a combined, cross-project report with `--all-dirs`:
 
@@ -245,15 +325,28 @@ is required. Stale directories (deleted or moved repositories) are pruned
 automatically when the report runs. Each session is labeled with its originating
 project in the report, so combined output still reads per project.
 
+To report on a single store, pass `--path` (`-Path`). An explicit path overrides
+`--all-dirs`, so the generated cross-project launcher can also be scoped down:
+
+```bash
+bash ~/.hve/generate-report.sh --path /path/to/repo/.copilot-tracking/telemetry --date all
+```
+
+Cleanup follows the same precedence: `clean-telemetry.sh --path DIR` restricts
+removal to that one store and leaves the registry, launchers, and every other
+project untouched, even when `--all-dirs` is also present. Both entry points
+report the override on stderr, so a narrowed destructive scope is never silent.
+
 > [!NOTE]
 > **Registry-driven cleanup is name-constrained.** `clean-telemetry.sh
-> --all-dirs` iterates every path in `~/.hve/telemetry-dirs.txt` and, in each
-> directory, removes only a fixed allow-list of artifact names
-> (`raw-input.jsonl`, `report.generated.html`, `sessions-*.jsonl`, and the
-> `.stacks/` directory). It never deletes a directory wholesale. A tampered
-> registry can therefore, at most, delete those specific names in an
-> attacker-chosen directory, not arbitrary files. The `.stacks/` entry is
-> removed recursively, but symlinked artifacts are unlinked rather than
+> --all-dirs` iterates every path in `~/.hve/telemetry-dirs` and, in each
+> directory, removes only a fixed allow-list of artifact names:
+> `raw-input.jsonl`, `report.generated.html`, date-shaped
+> `sessions-YYYY-MM-DD*.jsonl` logs and their fallback shards, and the
+> `.stacks/` directory. It never deletes a directory
+> wholesale. A tampered registry can therefore, at most, delete those specific
+> names in an attacker-chosen directory, not arbitrary files. The `.stacks/`
+> entry is removed recursively, but symlinked artifacts are unlinked rather than
 > followed, so the target of a symlink is never deleted. The registry lives in
 > the user-owned HVE home (`~/.hve`, honoring `HVE_HOME`), so an attacker able
 > to tamper with it already holds the user's filesystem privileges; the risk is
@@ -294,7 +387,8 @@ extension upgrade. They forward any extra arguments to the report generator.
 Common issues:
 
 * No events captured: verify one enablement gate is set and your hook manifest is active.
-* No enrichment data: model and token enrichment depends on available debug logs and session-state data.
+* Events captured but no model, token, or cost data: the surface produced no usable usage log. On the CLI, confirm `~/.copilot/session-state/<sid>/events.jsonl` exists for the session. In VS Code, confirm a `debug-logs` directory exists under your workspace storage; stable builds may not write one. See [Enrichment Coverage by Surface](#enrichment-coverage-by-surface).
+* Token totals look approximate: check `token_source` on the `SessionSummary` record. `state_fallback` means the CLI process log was unavailable and totals were summed from shutdown metrics.
 * Report generation fails: ensure `python3` is available for enrichment. The bash generator also needs `jq`; the PowerShell generator (`Invoke-TelemetryReport.ps1`) does not.
 
 ## Related Guides

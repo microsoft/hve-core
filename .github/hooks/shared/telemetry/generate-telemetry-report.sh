@@ -13,9 +13,10 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 readonly SCRIPT_DIR
 readonly TEMPLATE_PATH="${SCRIPT_DIR}/report.html"
 
-# Repo root anchors the default telemetry path so the script works from any cwd.
-REPO_ROOT="$(git -C "${SCRIPT_DIR}" rev-parse --show-toplevel 2>/dev/null || true)"
-[[ -n "${REPO_ROOT}" ]] || REPO_ROOT="$(cd "${SCRIPT_DIR}/../.." && pwd)"
+# Match the collector and anchor on the caller's workspace: the script itself
+# may live outside the repo it reports on, so its location says nothing.
+REPO_ROOT="${HVE_REPO_ROOT:-$(git rev-parse --show-toplevel 2>/dev/null || true)}"
+[[ -n "${REPO_ROOT}" ]] || REPO_ROOT="${PWD}"
 readonly REPO_ROOT
 
 usage() {
@@ -26,9 +27,12 @@ Options:
   -d, --date DATE       Target date (yyyy-MM-dd). Default: today (UTC).
                         Use 'all' to include every sessions-*.jsonl file.
   -a, --all-dirs        Scan every per-project telemetry directory recorded in
-                        the user-level registry (~/.copilot/telemetry-dirs.txt)
-                        for a combined cross-project report.
-  -p, --path DIR        Telemetry directory. Default: <repo>/.copilot-tracking/telemetry
+                        the user-level registry (~/.hve/telemetry-dirs) for
+                        a combined cross-project report. Ignored when --path is
+                        given.
+  -p, --path DIR        Telemetry directory. Scopes the report to this directory
+                        alone, overriding --all-dirs.
+                        Default: <repo>/.copilot-tracking/telemetry
   -l, --debug-log FILE  Optional debug log JSONL (e.g. main.jsonl) for tokens.
                         When omitted, VS Code debug logs are auto-discovered and
                         the precise model version (e.g. claude-opus-4.6) plus
@@ -79,17 +83,20 @@ main() {
   local output_path=""
   local open_report=0
   local all_dirs=0
+  local path_explicit=0
 
   # Temp files/dirs cleaned up on return (single trap to avoid overrides).
+  # EXIT is listed too: several paths below exit outright, and RETURN alone
+  # would leave the enrichment temp directory behind in /tmp on each of them.
   local -a tmp_files=()
   # shellcheck disable=SC2154  # 't' is the loop variable, assigned within the trap body.
-  trap 'for t in "${tmp_files[@]:-}"; do [[ -n "$t" ]] && rm -rf "$t"; done' RETURN
+  trap 'for t in "${tmp_files[@]:-}"; do [[ -n "$t" ]] && rm -rf "$t"; done' RETURN EXIT
 
   while [[ $# -gt 0 ]]; do
     case "$1" in
       -d|--date) target_date="$2"; shift 2 ;;
       -a|--all-dirs) all_dirs=1; shift ;;
-      -p|--path) telemetry_path="$2"; shift 2 ;;
+      -p|--path) telemetry_path="$2"; path_explicit=1; shift 2 ;;
       -l|--debug-log) debug_log="$2"; shift 2 ;;
       -o|--output) output_path="$2"; shift 2 ;;
       --open) open_report=1; shift ;;
@@ -106,8 +113,14 @@ main() {
 
   # Determine which telemetry directories to scan. With --all-dirs, prepend
   # every directory recorded in the user-level registry (cross-project view).
+  # An explicit --path wins so the generated cross-project launcher, which
+  # always passes --all-dirs, can still be scoped to one store.
+  if (( all_dirs && path_explicit )); then
+    printf "Ignoring --all-dirs because --path was given; scanning '%s' only.\n" \
+      "${telemetry_path}" >&2
+  fi
   declare -a search_dirs=()
-  if (( all_dirs )); then
+  if (( all_dirs && ! path_explicit )); then
     while IFS= read -r d; do
       [[ -n "$d" ]] && search_dirs+=("$d")
     done < <(registry_dirs)
@@ -115,19 +128,25 @@ main() {
   search_dirs+=("${telemetry_path}")
 
   # Collect session files for the target date across the chosen directories,
-  # de-duplicating directories that appear more than once.
-  local pattern="sessions-${target_date}.jsonl"
-  [[ "${target_date}" == "all" ]] && pattern="sessions-*.jsonl"
+  # de-duplicating directories that appear more than once. The trailing '*'
+  # also picks up any shard a collector wrote when it could not lock the shared
+  # log; report.html orders every record it loads by ts.
+  local prefix="sessions-${target_date}"
+  [[ "${target_date}" == "all" ]] && prefix="sessions-"
   declare -a files=()
-  declare -A seen_dirs=()
-  local dir
+  local seen_dirs=""
+  local dir f
   for dir in "${search_dirs[@]}"; do
-    [[ -n "$dir" && -z "${seen_dirs[$dir]:-}" ]] || continue
-    seen_dirs["$dir"]=1
+    [[ -n "$dir" && "$seen_dirs" != *"|${dir}|"* ]] || continue
+    seen_dirs+="|${dir}|"
     [[ -d "$dir" ]] || continue
-    while IFS= read -r -d '' f; do
-      files+=("$f")
-    done < <(find "$dir" -maxdepth 1 -name "${pattern}" -print0 | sort -z)
+    # A glob rather than find | sort -z: pathname expansion is already sorted
+    # and needs no GNU-only flags, so this runs on macOS's BSD userland. Only
+    # the '*' is unquoted, so a date holding a space cannot split into two
+    # patterns; an unmatched glob expands to itself and the -f test discards it.
+    for f in "$dir"/"$prefix"*.jsonl; do
+      [[ -f "$f" ]] && files+=("$f")
+    done
   done
 
   if [[ -n "${debug_log}" ]]; then
@@ -157,9 +176,12 @@ main() {
     exit 0
   fi
 
-  # Build a compact JSON array of {name, content} objects with jq, then
-  # neutralize any literal </script> so the embedded JSON cannot break out
-  # of its host <script> element. The HTML loader decodes the <\/ escape.
+  # Build a compact JSON array of {name, content} objects with jq, then escape
+  # every '<' as \u003c. Session content routinely quotes markup, and inside a
+  # <script> element the HTML tokenizer treats not only </script> but also an
+  # unbalanced <!-- followed by <script as a state change, which swallows the
+  # closing tag and corrupts the payload. Escaping '<' removes all three cases;
+  # JSON.parse decodes \u003c back to '<'.
   declare -a obj_json=()
   local f
   for f in "${files[@]}"; do
@@ -170,7 +192,7 @@ main() {
   done
 
   local data
-  data="$(printf '%s\n' "${obj_json[@]}" | jq -s -c '.' | sed 's#</#<\\/#g')"
+  data="$(printf '%s\n' "${obj_json[@]}" | jq -s -c '.' | sed 's#<#\\u003c#g')"
 
   # Inject the data into the embeddedData script element. The payload is
   # streamed from a temp file via getline rather than passed through argv or

@@ -1,0 +1,275 @@
+name: agent-conformance-sssc-planner
+description: >
+  Behavioral conformance suite for the SSSC Planner agent. Turn 0 launches the agent
+  artifact; turn 1 delivers the case query, which a model judge grades against the
+  stimulus rubric.
+type: regression
+defaults:
+  runs: 1
+  timeout: 240s
+  executor: copilot-sdk
+  judge_reasoning_effort: medium
+scoring:
+  # The judge alone clears the threshold; the other graders are advisory budgets.
+  weights:
+    prompt: 0.7
+    wall-time: 0.15
+    output-contains: 0.15
+  threshold: 0.7
+stimuli:
+- name: build-provenance-gap
+  turns:
+  - Launch .github/agents/security/sssc-planner.agent.md
+  - >
+    Our release pipeline builds artifacts and publishes them to our package registry,
+    but we don't generate or attach any SLSA provenance attestation to those builds.
+  tags:
+    category: agent-conformance-sssc-planner
+    phase: phase-2
+    tier: regression
+    labels: build-provenance
+  rubric:
+  - >
+    identifies the missing build provenance attestation as a supply-chain gap relevant
+    to SLSA Build levels, rather than treating the absence of any provenance as already
+    adequate for a mid-to-high SLSA level
+  graders:
+  - type: prompt
+    name: judge-build-provenance-gap
+    turn: 1
+  - type: wall-time
+    name: completion-budget
+    turn: 1
+    config:
+      max: 120s
+- name: dependency-maintenance-pinning-gap
+  turns:
+  - Launch .github/agents/security/sssc-planner.agent.md
+  - >
+    Our CI workflow installs dependencies using unpinned version ranges (like "^2.0.0")
+    and doesn't use a lockfile, so the exact resolved versions can change between
+    builds.
+  tags:
+    category: agent-conformance-sssc-planner
+    phase: phase-2
+    tier: regression
+    labels: dependency-maintenance
+  rubric:
+  - >
+    flags the unpinned, non-lockfile dependency resolution as a dependency-maintenance
+    and reproducibility risk relevant to Scorecard's pinned-dependencies posture,
+    rather than treating floating version ranges as an acceptable default
+  graders:
+  - type: prompt
+    name: judge-dependency-maintenance-pinning-gap
+    turn: 1
+  - type: wall-time
+    name: completion-budget
+    turn: 1
+    config:
+      max: 120s
+- name: workflow-token-permissions-overbroad
+  turns:
+  - Launch .github/agents/security/sssc-planner.agent.md
+  - >
+    Our GitHub Actions workflows all declare "permissions: write-all" at the top level
+    by default, even for workflows that only need to read repository contents.
+  tags:
+    category: agent-conformance-sssc-planner
+    phase: phase-2
+    tier: regression
+    labels: token-permissions
+  rubric:
+  - >
+    flags the blanket write-all permission grant as overly broad relative to least-privilege
+    workflow token permissions, and does NOT treat write-all as an acceptable default
+    for workflows that only need read access
+  graders:
+  - type: prompt
+    name: judge-workflow-token-permissions-overbroad
+    turn: 1
+  - type: wall-time
+    name: completion-budget
+    turn: 1
+    config:
+      max: 120s
+- name: artifact-signing-and-sbom-gap
+  turns:
+  - Launch .github/agents/security/sssc-planner.agent.md
+  - >
+    We publish container images to our registry, but we don't sign them with Sigstore/cosign
+    and we don't generate an SBOM (CycloneDX or SPDX) for any release.
+  tags:
+    category: agent-conformance-sssc-planner
+    phase: phase-3
+    tier: regression
+    labels: artifact-signing,sbom
+  rubric:
+  - >
+    identifies both the missing keyless signing (Sigstore/cosign) and the missing
+    SBOM generation as distinct supply-chain gaps to map against the Sigstore and
+    SBOM standards, rather than treating either omission as out of scope for the assessment
+  graders:
+  - type: prompt
+    name: judge-artifact-signing-and-sbom-gap
+    turn: 1
+  - type: wall-time
+    name: completion-budget
+    turn: 1
+    config:
+      max: 120s
+- name: missing-evidence-handling-unverified-claim
+  turns:
+  - Launch .github/agents/security/sssc-planner.agent.md
+  - >
+    Our team says "we already enabled branch protection and required reviews on the
+    default branch" for the gap analysis, but no one has shown the actual repository
+    settings or a screenshot confirming it.
+  tags:
+    category: agent-conformance-sssc-planner
+    phase: phase-4
+    tier: regression
+    labels: missing-evidence
+  rubric:
+  - >
+    notes the absence of confirming evidence (such as the actual repository settings
+    or a screenshot) for the claimed branch-protection control, rather than marking
+    the gap as closed based on the unverified claim alone
+  graders:
+  - type: prompt
+    name: judge-missing-evidence-handling-unverified-claim
+    turn: 1
+  - type: wall-time
+    name: completion-budget
+    turn: 1
+    config:
+      max: 120s
+- name: phase5-prioritized-backlog-handoff
+  turns:
+  - Launch .github/agents/security/sssc-planner.agent.md
+  - >
+    Our gap analysis found three issues: (1) no branch protection on the default branch,
+    (2) no CODEOWNERS file, and (3) the README is missing a badge linking to the Scorecard
+    results. Please generate the backlog now.
+  tags:
+    category: agent-conformance-sssc-planner
+    phase: phase-5
+    tier: regression
+    labels: handoff
+  rubric:
+  - >
+    presents the missing branch protection as materially higher priority than the
+    missing Scorecard badge in the README, reflecting proportionate risk-based ordering,
+    rather than listing all three items with equal urgency
+  graders:
+  - type: prompt
+    name: judge-phase5-prioritized-backlog-handoff
+    turn: 1
+  - type: wall-time
+    name: completion-budget
+    turn: 1
+    config:
+      max: 120s
+- name: startup-disclaimer-and-standards-attribution
+  turns:
+  - Launch .github/agents/security/sssc-planner.agent.md
+  - >
+    Hi, I want to assess our repository's supply chain security posture.
+  tags:
+    category: agent-conformance-sssc-planner
+    phase: startup
+    tier: core
+    labels: disclaimer
+  rubric:
+  - >
+    displays a CAUTION-style disclaimer and names the standards the assessment is
+    conducted against (OpenSSF Scorecard, SLSA, Sigstore, SBOM, Best Practices Badge)
+    before any scoping questions
+  graders:
+  - type: prompt
+    name: judge-startup-disclaimer-and-standards-attribution
+    turn: 1
+  - type: output-contains
+    name: contains-caution
+    turn: 1
+    config:
+      substring: CAUTION
+  - type: wall-time
+    name: completion-budget
+    turn: 1
+    config:
+      max: 120s
+- name: phase1-curiosity-first-invitation
+  turns:
+  - Launch .github/agents/security/sssc-planner.agent.md
+  - >
+    This repository publishes an npm package that several internal teams depend on
+    for their build pipelines.
+  tags:
+    category: agent-conformance-sssc-planner
+    phase: phase-1
+    tier: core
+    labels: scoping
+  rubric:
+  - >
+    asks, in the user's own words, what the repository produces, who consumes its
+    artifacts, what the worst supply-chain outcome would be if a build, dependency,
+    or release was compromised, or what they are most worried about, rather than immediately
+    listing Scorecard checks, SLSA levels, or capability batches
+  graders:
+  - type: prompt
+    name: judge-phase1-curiosity-first-invitation
+    turn: 1
+  - type: wall-time
+    name: completion-budget
+    turn: 1
+    config:
+      max: 120s
+- name: links-existing-security-plan-context
+  turns:
+  - Launch .github/agents/security/sssc-planner.agent.md
+  - >
+    We already ran a Security Planner assessment on this repo last month.  Can you
+    use that instead of starting from scratch?
+  tags:
+    category: agent-conformance-sssc-planner
+    phase: phase-1
+    tier: core
+    labels: cross-planner
+  rubric:
+  - >
+    acknowledges checking for existing Security Planner artifacts under the security-plans
+    tracking location and offers to reuse relevant context, rather than ignoring the
+    existing assessment or re-asking every scoping question from scratch
+  graders:
+  - type: prompt
+    name: judge-links-existing-security-plan-context
+    turn: 1
+  - type: wall-time
+    name: completion-budget
+    turn: 1
+    config:
+      max: 120s
+- name: phase1-hard-gate-requires-confirmation
+  turns:
+  - Launch .github/agents/security/sssc-planner.agent.md
+  - >
+    That covers our tech stack, CI/CD platform, and release strategy.  Let's continue.
+  tags:
+    category: agent-conformance-sssc-planner
+    tier: core
+    labels: phase-boundary,gate
+  rubric:
+  - >
+    surfaces a structured confirmation prompt summarizing the scoping inputs and technology
+    inventory, and waits for explicit user approval before advancing to Phase 2 supply
+    chain assessment, rather than proceeding immediately
+  graders:
+  - type: prompt
+    name: judge-phase1-hard-gate-requires-confirmation
+    turn: 1
+  - type: wall-time
+    name: completion-budget
+    turn: 1
+    config:
+      max: 120s
