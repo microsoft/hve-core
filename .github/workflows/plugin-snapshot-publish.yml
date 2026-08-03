@@ -243,6 +243,7 @@ jobs:
         env:
           SOURCE_COMMIT: ${{ steps.source.outputs.commit }}
           RELEASE_TAG: ${{ steps.source.outputs.locator }}
+          EFFECTIVE_VERSION: ${{ steps.source.outputs.version }}
         run: |
           set -euo pipefail
           snapshot_dir="${RUNNER_TEMP}/plugin-snapshot"

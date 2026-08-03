@@ -688,9 +688,16 @@ Describe 'Reusable packaging source contracts' -Tag 'Unit' {
     }
 
     It 'Binds snapshot evidence to the resolved effective version' {
-        $text = Get-WorkflowText -Name 'plugin-snapshot-publish.yml'
-        @([regex]::Matches($text, '-Version "\$\{EFFECTIVE_VERSION\}"')) | Should -HaveCount 2
-        @([regex]::Matches($text, 'EFFECTIVE_VERSION: \$\{\{ steps\.source\.outputs\.version \}\}')) | Should -HaveCount 2
+        $document = Get-WorkflowDocument -Name 'plugin-snapshot-publish.yml'
+        $evidenceSteps = @($document['jobs']['publish-snapshot']['steps'] | Where-Object {
+                $_.Contains('run') -and [string]$_['run'] -match 'Assert-PluginReleaseEvidence\.ps1'
+            })
+        $evidenceSteps | Should -HaveCount 2
+        foreach ($step in $evidenceSteps) {
+            [string]$step['run'] | Should -Match '-Version "\$\{EFFECTIVE_VERSION\}"'
+            [string]$step['env']['EFFECTIVE_VERSION'] |
+                Should -BeExactly '${{ steps.source.outputs.version }}'
+        }
     }
 
     It 'Accepts an explicit expected version for snapshot generation' {

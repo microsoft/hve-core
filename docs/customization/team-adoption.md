@@ -2,7 +2,7 @@
 title: Team Adoption and Governance
 description: Establish governance practices, naming conventions, onboarding patterns, and change management for team-wide HVE Core adoption
 author: Microsoft
-ms.date: 2026-08-02
+ms.date: 2026-08-03
 ms.topic: how-to
 keywords:
   - governance
@@ -69,7 +69,6 @@ glance. Follow kebab-case patterns throughout.
 
 ### Namespace IDs
 
-the package serves:
 Namespace IDs serve as conventional directory names throughout `.github/` and must be unique, lowercase, and kebab-cased. They organize source and do not create independently installable marketplace products. Choose IDs that reflect the domain or team the namespace serves:
 
 * `ado` for Azure DevOps integration
