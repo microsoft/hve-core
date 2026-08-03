@@ -3,7 +3,7 @@ title: Validation Commands and CI-Owned Lanes
 description: Choose local-safe validation defaults and reproduce CI-owned documentation and evaluation lanes when their prerequisites are available
 sidebar_position: 12
 author: Microsoft
-ms.date: 2026-07-28
+ms.date: 2026-08-03
 ms.topic: how-to
 keywords:
   - validation
@@ -38,6 +38,7 @@ plan, a log, or an error message is not an agent execution request.
 | Repository-wide local-safe validation     | `npm run validate:local` | Non-mutating default validation aggregate   |
 | Documentation static and component checks | `npm run validate:docs`  | Does not run the browser E2E lane           |
 | Markdown tables check                     | `npm run lint:tables`    | Non-mutating table alignment check          |
+| Markdown link check                       | `npm run lint:md-links`  | Non-mutating Markdown link resolution check |
 | Markdown tables fix                       | `npm run format:tables`  | Explicitly mutates table formatting         |
 | Markdown lint fix                         | `npm run lint:md:fix`    | Explicitly mutates Markdown where possible  |
 | Targeted check                            | `npm run <local-check>`  | Choose the check that owns the changed file |
@@ -65,8 +66,9 @@ dependencies available.
 ## Install behind a restricted network
 
 Some organizations block direct access to public package registries and require
-installs to route through an approved feed proxy. `npm ci` then fails to reach
-`registry.npmjs.org`, commonly with `ENOTCONN` or a connection timeout.
+installs to route through an approved feed proxy. `npm ci`, `pip install`, and
+`uv sync` then fail to reach `registry.npmjs.org` or `pypi.org`, commonly with
+`ENOTCONN` or a connection timeout.
 
 This repository commits a project-level `.npmrc` that pins the canonical public
 registry, and npm resolves configuration in the order `cli > env > project
@@ -75,6 +77,14 @@ and silently ignored. Set an environment variable or pass a CLI flag instead.
 
 Keep the proxy address out of the repository. It belongs in your own
 environment, never in a tracked file.
+
+Each tool reads its own environment variable:
+
+| Tool | Environment variable  | Public default                |
+|------|-----------------------|-------------------------------|
+| npm  | `npm_config_registry` | `https://registry.npmjs.org/` |
+| pip  | `PIP_INDEX_URL`       | `https://pypi.org/simple/`    |
+| uv   | `UV_DEFAULT_INDEX`    | `https://pypi.org/simple/`    |
 
 | Environment                | Where the override belongs                                                            |
 |----------------------------|---------------------------------------------------------------------------------------|
@@ -86,6 +96,8 @@ macOS and Linux:
 
 ```bash
 export npm_config_registry="https://proxy.example.com/npm/"
+export PIP_INDEX_URL="https://proxy.example.com/pypi/simple/"
+export UV_DEFAULT_INDEX="https://proxy.example.com/pypi/simple/"
 npm ci
 ```
 
@@ -93,6 +105,8 @@ Windows PowerShell:
 
 ```powershell
 $env:npm_config_registry = 'https://proxy.example.com/npm/'
+$env:PIP_INDEX_URL = 'https://proxy.example.com/pypi/simple/'
+$env:UV_DEFAULT_INDEX = 'https://proxy.example.com/pypi/simple/'
 npm ci
 ```
 
@@ -101,10 +115,26 @@ Dev container, in VS Code user settings so no repository file changes:
 ```json
 {
   "dev.containers.containerEnv": {
-    "npm_config_registry": "https://proxy.example.com/npm/"
+    "npm_config_registry": "https://proxy.example.com/npm/",
+    "PIP_INDEX_URL": "https://proxy.example.com/pypi/simple/",
+    "UV_DEFAULT_INDEX": "https://proxy.example.com/pypi/simple/"
   }
 }
 ```
+
+### Dev container Dockerfile build args
+
+The dev container needs the proxy at image-build time as well as at runtime so
+that any `apt`, `pip`, `uv`, or `npm` step baked into the image resolves through
+the proxy. `.devcontainer/devcontainer.json` reads `NPM_CONFIG_REGISTRY`,
+`PIP_INDEX_URL`, and `UV_DEFAULT_INDEX` from the host with
+`${localEnv:VAR:default}` and passes them as `build.args` to
+`.devcontainer/Dockerfile`, which declares matching `ARG` and `ENV` entries.
+When the host variables are unset, each default falls back to the public
+registry.
+
+Set the same three variables on the host before rebuilding the container. VS
+Code substitutes them at build time; there is no repository file to edit.
 
 The committed `.npmrc` sets `replace-registry-host=always`, so npm rewrites each
 lockfile tarball host to the configured registry at fetch time only. `npm ci`
