@@ -1,75 +1,74 @@
 ---
-title: Marketplace Packages
-description: Compare HVE Core marketplace packages and choose the right extension or plugin for your workflow
+title: HVE Core Identity and Channels
+description: Understand the complete hve-core plugin and extension identity, lifecycle labels, and release channels
 sidebar_position: 3
 author: Microsoft
-ms.date: 2026-08-01
+ms.date: 2026-08-02
 ms.topic: overview
 ---
 
-## How HVE Artifacts Are Organized
+## One Complete Identity
 
-HVE Core distributes agents, prompts, instructions, skills, and hooks through
-marketplace packages. `.github/plugin/marketplace.json` is the package catalog:
-its standard component fields declare membership, while `x-hve` records display,
-maturity, documentation, and aggregate metadata.
+HVE Core distributes all active agents, prompts, instructions, skills, and hooks through the `hve-core` plugin and extension identity. `.github/plugin/marketplace.json` is the catalog authority: standard component fields declare membership, while `x-hve` records display, lifecycle maturity, and documentation metadata.
 
-Each package can produce two self-contained outputs from the same resolved
-source set:
+The catalog produces two self-contained formats from the same resolved source set:
 
 * A Copilot plugin published under an immutable `plugins-v<version>` tag
-* A VS Code extension packaged as a `.vsix`
+* A VS Code extension with the ID `ise-hve-essentials.hve-core`
 
-## Choosing a Package
+The former domain-specific and all-content package identities are no longer catalog entries. See [Migrate to the HVE Core Identity](package-migration) when moving an existing installation.
 
-Use `hve-core` for the flagship RPI workflow. Use `hve-core-all` when you want
-the aggregate package. Domain packages provide narrower capabilities, and the
-installer package supports selective workspace deployment.
+## Stable and PreRelease
 
-| Package            | Display name                         | Maturity     | Purpose                                                        |
-|--------------------|--------------------------------------|--------------|----------------------------------------------------------------|
-| `ado`              | HVE Core - Azure DevOps Integration  | Stable       | Azure DevOps work items, builds, and pull requests             |
-| `coding-standards` | HVE Core - Coding Standards          | Stable       | Language standards and pre-PR review                           |
-| `data-science`     | HVE Core - Data Science              | Stable       | Data specifications, notebooks, dashboards, and evaluations    |
-| `design-thinking`  | HVE Core - Design Thinking           | Preview      | Design Thinking coaching across nine methods                   |
-| `experimental`     | HVE Core - Experimental              | Experimental | Early package content under active iteration                   |
-| `github`           | HVE Core - GitHub Backlog Management | Stable       | GitHub issue discovery, triage, planning, and execution        |
-| `gitlab`           | HVE Core - GitLab Integration        | Stable       | GitLab merge request and pipeline workflows                    |
-| `hve-core`         | HVE Core                             | Stable       | RPI, HVE Builder, and Git workflows                            |
-| `hve-core-all`     | HVE Core - All                       | Stable       | Aggregate package across all eligible domains                  |
-| `installer`        | HVE Core - HVE Core Installer        | Stable       | Selective deployment across workspace configurations           |
-| `jira`             | HVE Core - Jira Integration          | Stable       | Jira backlog, PRD planning, and issue operations               |
-| `project-planning` | HVE Core - Project Planning          | Stable       | PRDs, BRDs, ADRs, and architecture diagrams                    |
-| `rpi`              | HVE Core - RPI Skills                | Stable       | Skill-forward Research, Plan, Implement, Review, and Follow-up |
-| `security`         | HVE Core - Security                  | Stable       | Security review, planning, response, and vulnerability work    |
+Stable and PreRelease contain the same active components and lifecycle map.
 
-## Package Relationships
+| Channel    | Source ownership                                                  | Version and cadence                              |
+|------------|-------------------------------------------------------------------|--------------------------------------------------|
+| PreRelease | Packages directly from an explicit commit on `main`               | Odd minor runtime version; publishes more often  |
+| Stable     | Packages a reviewed `main` promotion merged into `release/stable` | Even minor release version; may lag newer `main` |
 
-Packages are self-contained. HVE Core does not use plugin dependencies,
-`extensionPack`, or `extensionDependencies` to compose advertised content.
-Shared marketplace projection resolves transitive agent handoffs before either
-plugin or VSIX destination mapping.
+PreRelease packages directly from `main` and maintains no companion source branch. Stable promotion requires the promoted `main` tree and the merged `release/stable` tree to match before packaging.
 
-`hve-core-all` is the validated aggregate package and must cover every eligible
-PreRelease component. Individual domain packages remain independently
-installable.
+The VS Code channels share one extension identity. Users switch channels on the HVE Core extension rather than installing separate extension IDs.
 
-## Channels
+## Lifecycle Disclosure
 
-Stable includes stable components only. PreRelease includes stable, preview,
-and experimental components. Deprecated and removed components are excluded
-from both channels; removed tombstones can remain in metadata for policy checks.
+| Lifecycle label | Stable | PreRelease | Meaning                                             |
+|-----------------|--------|------------|-----------------------------------------------------|
+| `stable`        | Yes    | Yes        | Established component                               |
+| `preview`       | Yes    | Yes        | Usable component still receiving compatibility work |
+| `experimental`  | Yes    | Yes        | Early component that can change significantly       |
+| `deprecated`    | No     | No         | Scheduled for or undergoing retirement              |
+| `removed`       | No     | No         | Excluded while its policy tombstone may remain      |
+
+Lifecycle labels are disclosure and governance metadata, not channel filters. They are also separate from maturity classifications used in Responsible AI assessments.
+
+## Copilot Marketplace Registration
+
+Register one approved catalog ref at a time:
+
+```bash
+copilot plugin marketplace add microsoft/hve-core#<ref>
+```
+
+The Git ref after `#` selects the catalog. The catalog entry's `source.ref` selects matching immutable `plugins-v<version>` plugin bytes. Because Stable and PreRelease catalogs both have the marketplace name `hve-core`, do not register them side by side as same-name channels. Replace the active registration when switching catalog refs.
+
+## Selective Clone Adoption
+
+The complete plugin and extension are the distribution boundary. For a smaller repository-owned footprint, use the included installer skill with either its starter profile or a custom component selection.
+
+Selective cloning supports agents, prompts, instructions, and complete skill directories. It preserves repository-relative paths, records lifecycle maturity in `.hve-tracking.json` schema version 2, and does not copy hooks. See the [installation guide](install#selective-clone-adoption) for the workflow.
 
 ## After Installation
 
-Once a package is installed:
+Once HVE Core is installed:
 
 1. Agents appear in the Copilot Chat agent picker.
 2. Prompts are available as slash commands.
 3. Instructions apply to matching files through their `applyTo` patterns.
 4. Skills become available for semantic or explicit invocation.
 
-The `hve-core` package includes `RPI Agent` and the `/rpi`, `/rpi-research`,
+The `hve-core` identity includes `RPI Agent` and the `/rpi`, `/rpi-research`,
 `/rpi-plan`, `/rpi-implement`, and `/rpi-review` entry points.
 
 ---

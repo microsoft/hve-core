@@ -2,7 +2,7 @@
 title: GitHub Actions Workflows
 description: Modular CI/CD workflow architecture for validation, security scanning, and automated maintenance
 author: HVE Core Team
-ms.date: 2026-07-08
+ms.date: 2026-08-02
 ms.topic: reference
 keywords:
   - github actions
@@ -47,16 +47,21 @@ Modular reusable workflows following Single Responsibility Principle. Each workf
 
 Compose multiple reusable workflows for comprehensive validation and security scanning.
 
-| Workflow                          | Triggers                                | Jobs                                                                                                                                 | Mode                       | Purpose                              |
-|-----------------------------------|-----------------------------------------|--------------------------------------------------------------------------------------------------------------------------------------|----------------------------|--------------------------------------|
-| `pr-validation.yml`               | PR to main/develop (open, push, reopen) | 31 jobs (29 validation jobs + `pr-validation-success` gate + `gate-completeness-check`); `pr-validation-success` is the merge signal | Strict validation          | Pre-merge quality gate with security |
-| `release-stable.yml`              | Push to main                            | 23 jobs                                                                                                                              | Strict mode, SARIF uploads | Post-merge validation                |
-| `weekly-security-maintenance.yml` | Schedule (Sun 2AM UTC)                  | 4 (validate-pinning, check-staleness, codeql-analysis, summary)                                                                      | Soft-fail warnings         | Weekly security posture              |
-| `scorecard.yml`                   | Push to main, Schedule (Sun 3AM UTC)    | 1 (scorecard)                                                                                                                        | SARIF upload               | OpenSSF Scorecard security posture   |
+| Workflow                          | Triggers                                | Jobs                                                                                                                                 | Mode                       | Purpose                                |
+|-----------------------------------|-----------------------------------------|--------------------------------------------------------------------------------------------------------------------------------------|----------------------------|----------------------------------------|
+| `pr-validation.yml`               | PR to main/develop (open, push, reopen) | 31 jobs (29 validation jobs + `pr-validation-success` gate + `gate-completeness-check`); `pr-validation-success` is the merge signal | Strict validation          | Pre-merge quality gate with security   |
+| `release-stable.yml`              | Push to main                            | 16 jobs                                                                                                                              | Strict mode, SARIF uploads | Validate and prepare Stable promotion  |
+| `release-stable-publish.yml`      | Merged promotion to release/stable      | 12 jobs                                                                                                                              | Verified release           | Create Stable tag, assets, and release |
+| `weekly-security-maintenance.yml` | Schedule (Sun 2AM UTC)                  | 4 (validate-pinning, check-staleness, codeql-analysis, summary)                                                                      | Soft-fail warnings         | Weekly security posture                |
+| `scorecard.yml`                   | Push to main, Schedule (Sun 3AM UTC)    | 1 (scorecard)                                                                                                                        | SARIF upload               | OpenSSF Scorecard security posture     |
 
 pr-validation.yml jobs: 29 validation jobs feed a single `pr-validation-success` aggregator gate, which is the only required status check that gates merge; a `gate-completeness-check` job verifies every validation job is wired into that gate's `needs:` list.
 
-release-stable.yml jobs: spell-check, markdown-lint, table-format, dependency-pinning-scan, action-version-consistency-scan, gitleaks-scan, pester-tests, docusaurus-tests, discover-python-projects, python-lint, pytest, release-please, close-milestone, reset-prerelease, generate-dependency-sbom, plugin-package-release, extension-provenance, upload-plugin-packages, vex-attest, sbom-diff, verify-provenance, append-verification-notes, publish-release
+release-stable.yml jobs: spell-check, markdown-lint, table-format, dependency-pinning-scan, action-version-consistency-scan, gitleaks-scan, pester-tests, docusaurus-tests, discover-python-projects, python-lint, pytest, release-please, sync-release-pr, prepare-promotion, open-promotion-pr
+
+release-stable-publish.yml is the sole Stable tag and GitHub release creator. It runs only after a reviewed `main` to `release/stable` promotion is merged, verifies tree equality and one-package consistency, and then builds and publishes immutable release evidence.
+
+release-prerelease.yml packages an explicit commit on `main` with an ephemeral odd-minor version. It does not create or reset a prerelease source branch.
 
 ## Reusable Workflows
 

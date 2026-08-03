@@ -10,15 +10,9 @@ BeforeAll {
     Import-Module (Join-Path $PSScriptRoot 'ExtensionTestFixtures.psm1') -Force
 
     $script:RepositoryRoot = (Resolve-Path (Join-Path $PSScriptRoot '../../..')).Path
-    $script:StableFiles = @(
-        'README.hve-core-all.md'
-        'README.md'
-        'README.sample.md'
-        'package.hve-core-all.json'
-        'package.json'
-        'package.sample.json'
-    )
-    $script:PreReleaseFiles = @(
+    # Both channels distribute the same active packages, so one expected set
+    # covers Stable, PreRelease, and every transition between them.
+    $script:ChannelFiles = @(
         'README.hve-core-all.md'
         'README.labs.md'
         'README.md'
@@ -96,18 +90,17 @@ Describe 'Prepare-Extension channel generation' -Tag 'Unit' {
 
         It 'Generates a manifest and README for every Stable-eligible package' {
             $script:Result.Success | Should -BeTrue
-            Get-GeneratedFileName -ExtensionDirectory $script:Fixture.ExtensionDirectory | Should -Be $script:StableFiles
+            Get-GeneratedFileName -ExtensionDirectory $script:Fixture.ExtensionDirectory | Should -Be $script:ChannelFiles
         }
 
-        It 'Excludes experimental and removed packages from the Stable channel' {
-            Test-Path -LiteralPath (Join-Path $script:Fixture.ExtensionDirectory 'package.labs.json') | Should -BeFalse
+        It 'Excludes removed packages from the Stable channel' {
             Test-Path -LiteralPath (Join-Path $script:Fixture.ExtensionDirectory 'package.retired.json') | Should -BeFalse
         }
 
         It 'Reports the Stable contribution counts for the selected package' {
             $script:Result.Version | Should -BeExactly '9.9.9'
             $script:Result.AgentCount | Should -Be 1
-            $script:Result.PromptCount | Should -Be 0
+            $script:Result.PromptCount | Should -Be 1
             $script:Result.InstructionCount | Should -Be 1
             $script:Result.SkillCount | Should -Be 1
         }
@@ -116,7 +109,7 @@ Describe 'Prepare-Extension channel generation' -Tag 'Unit' {
             $manifest = Get-Content -LiteralPath (Join-Path $script:Fixture.ExtensionDirectory 'package.json') -Raw -Encoding utf8 | ConvertFrom-Json
             $manifest.name | Should -BeExactly 'hve-core'
             @($manifest.contributes.chatAgents.path) | Should -Be @('./.github/agents/core/alpha.agent.md')
-            @($manifest.contributes.chatPromptFiles) | Should -HaveCount 0
+            @($manifest.contributes.chatPromptFiles.path) | Should -Be @('./.github/prompts/core/build.prompt.md')
         }
 
         It 'Removes stale generated files while preserving the base manifest and README' {
@@ -135,7 +128,7 @@ Describe 'Prepare-Extension channel generation' -Tag 'Unit' {
 
         It 'Adds experimental packages to the generated set' {
             $script:Result.Success | Should -BeTrue
-            Get-GeneratedFileName -ExtensionDirectory $script:Fixture.ExtensionDirectory | Should -Be $script:PreReleaseFiles
+            Get-GeneratedFileName -ExtensionDirectory $script:Fixture.ExtensionDirectory | Should -Be $script:ChannelFiles
         }
 
         It 'Includes preview components in the selected package contributions' {
@@ -150,31 +143,48 @@ Describe 'Prepare-Extension channel generation' -Tag 'Unit' {
                 $identities[$name] = [string]((Get-Content -LiteralPath (Join-Path $script:Fixture.ExtensionDirectory $name) -Raw -Encoding utf8 | ConvertFrom-Json).name)
             }
             $identities['package.json'] | Should -BeExactly 'hve-core'
-            $identities['package.hve-core-all.json'] | Should -BeExactly 'hve-core-all'
+            $identities['package.hve-core-all.json'] | Should -BeExactly 'hve-hve-core-all'
             $identities['package.sample.json'] | Should -BeExactly 'hve-sample'
             $identities['package.labs.json'] | Should -BeExactly 'hve-labs'
         }
     }
 
     Context 'when transitioning between channels' {
-        It 'Prunes experimental output when moving from PreRelease to Stable' {
+        It 'Keeps the generated set identical from PreRelease to Stable' {
             Invoke-PrepareExtension -ExtensionDirectory $script:Fixture.ExtensionDirectory `
                 -RepoRoot $script:Fixture.RepoRoot -Channel PreRelease -PackageId 'hve-core' | Out-Null
-            Get-GeneratedFileName -ExtensionDirectory $script:Fixture.ExtensionDirectory | Should -Be $script:PreReleaseFiles
+            Get-GeneratedFileName -ExtensionDirectory $script:Fixture.ExtensionDirectory | Should -Be $script:ChannelFiles
 
             Invoke-PrepareExtension -ExtensionDirectory $script:Fixture.ExtensionDirectory `
                 -RepoRoot $script:Fixture.RepoRoot -Channel Stable -PackageId 'hve-core' | Out-Null
-            Get-GeneratedFileName -ExtensionDirectory $script:Fixture.ExtensionDirectory | Should -Be $script:StableFiles
+            Get-GeneratedFileName -ExtensionDirectory $script:Fixture.ExtensionDirectory | Should -Be $script:ChannelFiles
         }
 
-        It 'Restores experimental output when moving from Stable to PreRelease' {
+        It 'Produces byte-identical content on both channels' {
             Invoke-PrepareExtension -ExtensionDirectory $script:Fixture.ExtensionDirectory `
                 -RepoRoot $script:Fixture.RepoRoot -Channel Stable -PackageId 'hve-core' | Out-Null
-            Get-GeneratedFileName -ExtensionDirectory $script:Fixture.ExtensionDirectory | Should -Be $script:StableFiles
+            $stable = Get-DirectorySnapshot -Path $script:Fixture.ExtensionDirectory
 
             Invoke-PrepareExtension -ExtensionDirectory $script:Fixture.ExtensionDirectory `
                 -RepoRoot $script:Fixture.RepoRoot -Channel PreRelease -PackageId 'hve-core' | Out-Null
-            Get-GeneratedFileName -ExtensionDirectory $script:Fixture.ExtensionDirectory | Should -Be $script:PreReleaseFiles
+            $preRelease = Get-DirectorySnapshot -Path $script:Fixture.ExtensionDirectory
+
+            @($preRelease.Keys | Sort-Object) | Should -Be @($stable.Keys | Sort-Object)
+            foreach ($key in $stable.Keys) {
+                $preRelease[$key].Hash | Should -BeExactly $stable[$key].Hash -Because "$key must not differ by channel"
+            }
+        }
+    }
+
+    Context 'when a retired identity remains in the extension directory' {
+        It 'Removes the stale suffixed and unsuffixed generated output' {
+            Set-FixtureFile -Path (Join-Path $script:Fixture.ExtensionDirectory 'package.security.json') -Value "{}`n"
+            Set-FixtureFile -Path (Join-Path $script:Fixture.ExtensionDirectory 'README.security.md') -Value "# Security`n"
+            Remove-StaleGeneratedFiles -RepoRoot $script:Fixture.RepoRoot -ExpectedFiles @()
+
+            foreach ($name in @('package.security.json', 'README.security.md', 'package.json', 'README.md')) {
+                Test-Path -LiteralPath (Join-Path $script:Fixture.ExtensionDirectory $name) | Should -BeFalse -Because "$name is generated output"
+            }
         }
     }
 
@@ -204,7 +214,7 @@ Describe 'Prepare-Extension README generation' -Tag 'Unit' {
         $script:SampleReadme = Get-Content -LiteralPath (Join-Path $script:ReadmeFixture.ExtensionDirectory 'README.sample.md') -Raw -Encoding utf8
     }
 
-    It 'Renders the durable document intro, artifact table, and full-edition footer' {
+    It 'Renders the durable document intro and the disclosed artifact table' {
         $expected = @(
             '# Fixture Sample'
             ''
@@ -216,14 +226,10 @@ Describe 'Prepare-Extension README generation' -Tag 'Unit' {
             ''
             '### Chat Agents'
             ''
-            '| Name | Description |'
-            '|------|-------------|'
-            '| **alpha** | Alpha fixture agent |'
-            '| **beta** | Beta fixture agent |'
-            ''
-            '## Full Edition'
-            ''
-            'Looking for more domains? Install the full [HVE Core](https://marketplace.visualstudio.com/items?itemName=ise-hve-essentials.hve-core) extension.'
+            '| Name | Maturity | Description |'
+            '|------|----------|-------------|'
+            '| **alpha** | stable | Alpha fixture agent |'
+            '| **beta** | stable | Beta fixture agent |'
             ''
         ) -join "`n"
         $script:SampleReadme | Should -BeExactly $expected
@@ -233,16 +239,25 @@ Describe 'Prepare-Extension README generation' -Tag 'Unit' {
         $script:SampleReadme | Should -Not -Match 'Durable table that must never reach the extension README'
     }
 
-    It 'Omits the full-edition footer for the core packages' {
+    It 'Omits the retired full-edition upsell from every generated README' {
+        foreach ($name in @('README.md', 'README.hve-core-all.md', 'README.sample.md', 'README.labs.md')) {
+            $readme = Get-Content -LiteralPath (Join-Path $script:ReadmeFixture.ExtensionDirectory $name) -Raw -Encoding utf8
+            $readme | Should -Not -Match '## Full Edition'
+            $readme | Should -Not -Match 'FULL_EDITION'
+        }
+    }
+
+    It 'Discloses the canonical maturity of each component' {
         $coreReadme = Get-Content -LiteralPath (Join-Path $script:ReadmeFixture.ExtensionDirectory 'README.md') -Raw -Encoding utf8
+        $coreReadme | Should -Match '(?m)^\| \*\*build\*\* \| preview \|'
+        $coreReadme | Should -Match '(?m)^\| \*\*alpha\*\* \| stable \|'
         $allReadme = Get-Content -LiteralPath (Join-Path $script:ReadmeFixture.ExtensionDirectory 'README.hve-core-all.md') -Raw -Encoding utf8
-        $coreReadme | Should -Not -Match '## Full Edition'
-        $allReadme | Should -Not -Match '## Full Edition'
+        $allReadme | Should -Match '(?m)^\| \*\*probe\*\* \| experimental \|'
     }
 
     It 'Adds the experimental notice only for experimental packages' {
         $labsReadme = Get-Content -LiteralPath (Join-Path $script:ReadmeFixture.ExtensionDirectory 'README.labs.md') -Raw -Encoding utf8
-        $labsReadme | Should -Match '> \*\*Experimental\*\*: This package is available only in the pre-release channel and may change without notice\.'
+        $labsReadme | Should -Match '> \*\*Experimental\*\*: This package is experimental\. Contents and behavior may change or be removed without notice\.'
         $script:SampleReadme | Should -Not -Match '\*\*Experimental\*\*'
     }
 
@@ -325,7 +340,7 @@ Describe 'Prepare-Extension dry run and changelog' -Tag 'Unit' {
 
         It 'Still generates every eligible package manifest and README' {
             $script:DryRunResult.Success | Should -BeTrue
-            Get-GeneratedFileName -ExtensionDirectory $script:DryRunFixture.ExtensionDirectory | Should -Be $script:PreReleaseFiles
+            Get-GeneratedFileName -ExtensionDirectory $script:DryRunFixture.ExtensionDirectory | Should -Be $script:ChannelFiles
         }
 
         It 'Reports the selected package contribution counts without writing them' {

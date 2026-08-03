@@ -250,11 +250,12 @@ Describe 'Marketplace agent index and handoff closure' -Tag 'Unit' {
             foreach ($item in $added) {
                 $item.Kind | Should -BeExactly 'agent'
                 $item.Field | Should -BeExactly 'agents'
+                $item.Maturity | Should -BeExactly 'stable'
                 $item.SourcePath | Should -BeLike '.github/agents/demo/*.agent.md'
             }
         }
 
-        It 'Stamps closure-added agents as stable regardless of componentMaturity metadata' {
+        It 'Preserves the declared maturity of a closure-added agent' {
             $entry = @{
                 name    = 'consumer'
                 agents  = @('agents/demo/alpha.md')
@@ -265,10 +266,23 @@ Describe 'Marketplace agent index and handoff closure' -Tag 'Unit' {
 
             $bravo = @($recipe | Where-Object { $_.PackagePath -eq 'agents/demo/bravo.md' })
             $bravo.Count | Should -Be 1
-            $bravo[0].Maturity | Should -BeExactly 'stable'
+            $bravo[0].Maturity | Should -BeExactly 'experimental'
         }
 
-        It 'Filters seeds by channel before closing dependencies' {
+        It 'Excludes a closure-added agent that is <Maturity>' -ForEach @(
+            @{ Maturity = 'deprecated' }
+            @{ Maturity = 'removed' }
+        ) {
+            $entry = @{
+                name    = 'consumer'
+                agents  = @('agents/demo/alpha.md')
+                'x-hve' = @{ componentMaturity = @{ 'agents/demo/bravo.md' = $Maturity } }
+            }
+            $recipe = @(Get-MarketplaceResolvedPackageRecipe -Entry $entry -Channel 'PreRelease' -AgentIndex $script:ClosureIndex)
+            $recipe.PackagePath | Should -Not -Contain 'agents/demo/bravo.md'
+        }
+
+        It 'Resolves the same seeds and closure on both channels' {
             $entry = @{
                 name    = 'consumer'
                 agents  = @('agents/demo/alpha.md', 'agents/demo/echo.md')
@@ -276,12 +290,12 @@ Describe 'Marketplace agent index and handoff closure' -Tag 'Unit' {
             }
 
             $stableRecipe = @(Get-MarketplaceResolvedPackageRecipe -Entry $entry -Channel 'Stable' -AgentIndex $script:ClosureIndex)
-            $stableRecipe.Count | Should -Be 4
-            $stableRecipe.PackagePath | Should -Not -Contain 'agents/demo/echo.md'
-
             $preReleaseRecipe = @(Get-MarketplaceResolvedPackageRecipe -Entry $entry -Channel 'PreRelease' -AgentIndex $script:ClosureIndex)
-            $preReleaseRecipe.Count | Should -Be 5
-            $preReleaseRecipe.PackagePath | Should -Contain 'agents/demo/echo.md'
+
+            $stableRecipe.Count | Should -Be 5
+            $stableRecipe.PackagePath | Should -Contain 'agents/demo/echo.md'
+            @($stableRecipe | ForEach-Object { "$($_.PackagePath)=$($_.Maturity)" }) -join '|' |
+                Should -BeExactly (@($preReleaseRecipe | ForEach-Object { "$($_.PackagePath)=$($_.Maturity)" }) -join '|')
         }
 
         It 'Preserves the declared maturity of seed agents' {
@@ -307,6 +321,233 @@ Describe 'Marketplace agent index and handoff closure' -Tag 'Unit' {
             @(Get-MarketplaceResolvedPackageRecipe -Entry @{ name = 'consumer' } -Channel 'PreRelease' -AgentIndex $script:ClosureIndex).Count |
                 Should -Be 0
         }
+    }
+}
+
+Describe 'Get-MarketplaceLiteralReference' -Tag 'Unit' {
+    It 'Captures a relative and a repository-root reference' {
+        $references = @(Get-MarketplaceLiteralReference -Body @'
+Follow #file:../../instructions/demo/shared.instructions.md while planning.
+Cross-cutting rules live in `#file:.github/instructions/demo/other.instructions.md`.
+'@)
+        $references | Should -Be @('../../instructions/demo/shared.instructions.md', '.github/instructions/demo/other.instructions.md')
+    }
+
+    It 'Ignores a bare directive mentioned in prose' {
+        Get-MarketplaceLiteralReference -Body 'Do not use markdown links or `#file:` directives.' | Should -BeNullOrEmpty
+        Get-MarketplaceLiteralReference -Body 'Do not use #file: directives here.' | Should -BeNullOrEmpty
+    }
+
+    It 'Strips trailing sentence punctuation' {
+        Get-MarketplaceLiteralReference -Body 'See #file:./demo.instructions.md.' | Should -Be @('./demo.instructions.md')
+    }
+
+    It 'Returns each distinct reference once in first-seen order' {
+        $references = @(Get-MarketplaceLiteralReference -Body '#file:./b.instructions.md #file:./a.instructions.md #file:./b.instructions.md')
+        $references | Should -Be @('./b.instructions.md', './a.instructions.md')
+    }
+}
+
+Describe 'Resolve-MarketplaceComponentSelection' -Tag 'Unit' {
+    BeforeAll {
+        $script:SelectionRoot = Join-Path $TestDrive 'selection-repo'
+
+        function script:New-SelectionFile {
+            param([string]$SourcePath, [string]$Content)
+            $absolute = Join-Path $script:SelectionRoot $SourcePath
+            New-Item -ItemType Directory -Path (Split-Path -Path $absolute -Parent) -Force | Out-Null
+            Set-Content -LiteralPath $absolute -Value $Content -NoNewline
+        }
+
+        New-TestAgentFile -RepoRoot $script:SelectionRoot -SourcePath '.github/agents/select/helper.agent.md' -DisplayName 'Helper Agent'
+        New-SelectionFile -SourcePath '.github/agents/select/root.agent.md' -Content @'
+---
+name: Root Agent
+handoffs:
+  - Helper Agent
+---
+
+Follow #file:../../instructions/select/shared.instructions.md while planning.
+Read #file:.github/skills/select/toolkit/references/notes.md for the method notes.
+Users may reference `#file:path/to/file.ext` in chat, and prose may mention `#file:` directly.
+'@
+        New-SelectionFile -SourcePath '.github/agents/select/dangling.agent.md' -Content @'
+---
+name: Dangling Agent
+---
+
+Follow #file:../../instructions/select/absent.instructions.md before acting.
+'@
+        New-SelectionFile -SourcePath '.github/agents/select/outsider.agent.md' -Content @'
+---
+name: Outsider Agent
+---
+
+Follow #file:../../instructions/select/unlisted.instructions.md before acting.
+'@
+        New-SelectionFile -SourcePath '.github/prompts/select/run.prompt.md' -Content '# Run'
+        New-SelectionFile -SourcePath '.github/instructions/select/shared.instructions.md' -Content '# Shared'
+        New-SelectionFile -SourcePath '.github/instructions/select/unlisted.instructions.md' -Content '# Unlisted'
+        New-SelectionFile -SourcePath '.github/skills/select/toolkit/SKILL.md' -Content '# Toolkit'
+        New-SelectionFile -SourcePath '.github/skills/select/toolkit/references/notes.md' -Content '# Notes'
+
+        $script:SelectionEntry = @{
+            name     = 'hve-core'
+            agents   = @('agents/select/root.md', 'agents/select/helper.md', 'agents/select/dangling.md', 'agents/select/outsider.md')
+            commands = @('commands/select/run.md')
+            rules    = @('rules/select/shared.instructions.md')
+            skills   = @('skills/select/toolkit')
+            hooks    = 'hooks/select/telemetry.json'
+            'x-hve'  = @{
+                componentMaturity = @{ 'agents/select/helper.md' = 'experimental'; 'skills/select/toolkit' = 'preview' }
+                profiles          = @{ starter = @('agents/select/root.md', 'commands/select/run.md') }
+            }
+        }
+        $script:SelectionCatalog = @{ plugins = @($script:SelectionEntry) }
+        $script:SelectionIndex = Get-MarketplaceAgentIndex -Catalog $script:SelectionCatalog -RepoRoot $script:SelectionRoot
+    }
+
+    Context 'Component index' {
+        It 'Indexes the four installable kinds and excludes hooks' {
+            $index = Get-MarketplaceComponentIndex -Entry $script:SelectionEntry
+
+            @($index.Keys | Sort-Object) | Should -Be @(
+                'agents/select/dangling.md'
+                'agents/select/helper.md'
+                'agents/select/outsider.md'
+                'agents/select/root.md'
+                'commands/select/run.md'
+                'rules/select/shared.instructions.md'
+                'skills/select/toolkit'
+            )
+            $index['commands/select/run.md'].SourcePath | Should -BeExactly '.github/prompts/select/run.prompt.md'
+            $index['rules/select/shared.instructions.md'].SourcePath | Should -BeExactly '.github/instructions/select/shared.instructions.md'
+            $index['skills/select/toolkit'].Kind | Should -BeExactly 'skill'
+        }
+    }
+
+    Context 'Profile selection' {
+        BeforeAll {
+            $script:StarterSelection = @(Resolve-MarketplaceComponentSelection -Entry $script:SelectionEntry `
+                    -RepoRoot $script:SelectionRoot -AgentIndex $script:SelectionIndex -ProfileName 'starter')
+        }
+
+        It 'Resolves declared members and their visible dependencies' {
+            @($script:StarterSelection | ForEach-Object { $_.PackagePath }) | Should -Be @(
+                'agents/select/helper.md'
+                'agents/select/root.md'
+                'commands/select/run.md'
+                'rules/select/shared.instructions.md'
+                'skills/select/toolkit'
+            )
+        }
+
+        It 'Distinguishes selected members from dependency additions' {
+            @($script:StarterSelection | Where-Object { $_.Origin -eq 'selected' } | ForEach-Object { $_.PackagePath }) |
+                Should -Be @('agents/select/root.md', 'commands/select/run.md')
+            @($script:StarterSelection | Where-Object { $_.Origin -eq 'dependency' } | ForEach-Object { $_.PackagePath }) |
+                Should -Be @('agents/select/helper.md', 'rules/select/shared.instructions.md', 'skills/select/toolkit')
+        }
+
+        It 'Carries canonical maturity for selected and dependency components' {
+            @($script:StarterSelection | Where-Object { $_.PackagePath -eq 'agents/select/helper.md' })[0].Maturity | Should -BeExactly 'experimental'
+            @($script:StarterSelection | Where-Object { $_.PackagePath -eq 'skills/select/toolkit' })[0].Maturity | Should -BeExactly 'preview'
+            @($script:StarterSelection | Where-Object { $_.PackagePath -eq 'agents/select/root.md' })[0].Maturity | Should -BeExactly 'stable'
+        }
+
+        It 'Resolves a reference inside a skill to the owning skill component' {
+            @($script:StarterSelection | Where-Object { $_.PackagePath -eq 'skills/select/toolkit' })[0].SourcePath |
+                Should -BeExactly '.github/skills/select/toolkit'
+        }
+
+        It 'Rejects an undeclared profile' {
+            { Resolve-MarketplaceComponentSelection -Entry $script:SelectionEntry -RepoRoot $script:SelectionRoot `
+                    -AgentIndex $script:SelectionIndex -ProfileName 'absent' } |
+                Should -Throw -ExpectedMessage "*declares no 'absent' selection profile*"
+        }
+    }
+
+    Context 'Custom selection' {
+        It 'Resolves a single component with no dependencies' {
+            $selection = @(Resolve-MarketplaceComponentSelection -Entry $script:SelectionEntry -RepoRoot $script:SelectionRoot `
+                    -AgentIndex $script:SelectionIndex -Component @('commands/select/run.md'))
+
+            @($selection | ForEach-Object { $_.PackagePath }) | Should -Be @('commands/select/run.md')
+        }
+
+        It 'Deduplicates a repeated component' {
+            $selection = @(Resolve-MarketplaceComponentSelection -Entry $script:SelectionEntry -RepoRoot $script:SelectionRoot `
+                    -AgentIndex $script:SelectionIndex -Component @('skills/select/toolkit', 'skills/select/toolkit/'))
+
+            $selection.Count | Should -Be 1
+        }
+
+        It 'Rejects a component outside recipe membership' {
+            { Resolve-MarketplaceComponentSelection -Entry $script:SelectionEntry -RepoRoot $script:SelectionRoot `
+                    -AgentIndex $script:SelectionIndex -Component @('agents/select/absent.md') } |
+                Should -Throw -ExpectedMessage '*is not declared membership*'
+        }
+
+        It 'Rejects a hook component' {
+            { Resolve-MarketplaceComponentSelection -Entry $script:SelectionEntry -RepoRoot $script:SelectionRoot `
+                    -AgentIndex $script:SelectionIndex -Component @('hooks/select/telemetry.json') } |
+                Should -Throw -ExpectedMessage '*is not declared membership*'
+        }
+
+        It 'Rejects a traversal component path' {
+            { Resolve-MarketplaceComponentSelection -Entry $script:SelectionEntry -RepoRoot $script:SelectionRoot `
+                    -AgentIndex $script:SelectionIndex -Component @('agents/../../etc/passwd') } |
+                Should -Throw -ExpectedMessage '*must not escape the package root*'
+        }
+
+        It 'Rejects an unresolved literal dependency' {
+            { Resolve-MarketplaceComponentSelection -Entry $script:SelectionEntry -RepoRoot $script:SelectionRoot `
+                    -AgentIndex $script:SelectionIndex -Component @('agents/select/dangling.md') } |
+                Should -Throw -ExpectedMessage '*does not resolve to a file*'
+        }
+
+        It 'Rejects a literal dependency outside recipe membership' {
+            { Resolve-MarketplaceComponentSelection -Entry $script:SelectionEntry -RepoRoot $script:SelectionRoot `
+                    -AgentIndex $script:SelectionIndex -Component @('agents/select/outsider.md') } |
+                Should -Throw -ExpectedMessage '*is not declared marketplace membership*'
+        }
+    }
+}
+
+Describe 'Production starter profile selection' -Tag 'Unit' {
+    BeforeAll {
+        $script:ProductionRoot = (Resolve-Path (Join-Path $PSScriptRoot '../../..')).Path
+        $catalog = Get-MarketplaceCatalog -Path (Join-Path $script:ProductionRoot '.github/plugin/marketplace.json')
+        $script:ProductionEntry = @($catalog['plugins']) | Where-Object { $_['name'] -eq 'hve-core' }
+        $agentIndex = Get-MarketplaceAgentIndex -Catalog $catalog -RepoRoot $script:ProductionRoot
+        $script:ProductionStarter = @(Resolve-MarketplaceComponentSelection -Entry $script:ProductionEntry `
+                -RepoRoot $script:ProductionRoot -AgentIndex $agentIndex -ProfileName 'starter')
+    }
+
+    It 'Resolves 24 direct components with no dependency additions' {
+        $script:ProductionStarter.Count | Should -Be 24
+        @($script:ProductionStarter | Where-Object { $_.Origin -ne 'selected' }) | Should -BeNullOrEmpty
+    }
+
+    It 'Resolves 6 agents, 15 skills, 1 prompt, and 2 instructions' {
+        @($script:ProductionStarter | Where-Object { $_.Kind -eq 'agent' }).Count | Should -Be 6
+        @($script:ProductionStarter | Where-Object { $_.Kind -eq 'skill' }).Count | Should -Be 15
+        @($script:ProductionStarter | Where-Object { $_.Kind -eq 'prompt' }).Count | Should -Be 1
+        @($script:ProductionStarter | Where-Object { $_.Kind -eq 'instruction' }).Count | Should -Be 2
+    }
+
+    It 'Discloses experimental starter content' {
+        @($script:ProductionStarter | Where-Object { $_.Maturity -eq 'experimental' } | ForEach-Object { $_.PackagePath }) |
+            Should -Contain 'skills/hve-core/vally-tests'
+    }
+
+    It 'Closes the full recipe without additions or unresolved references' {
+        $index = Get-MarketplaceComponentIndex -Entry $script:ProductionEntry
+        $agentIndex = Get-MarketplaceAgentIndex -Catalog @{ plugins = @($script:ProductionEntry) } -RepoRoot $script:ProductionRoot
+        $selection = @(Resolve-MarketplaceComponentSelection -Entry $script:ProductionEntry -RepoRoot $script:ProductionRoot `
+                -AgentIndex $agentIndex -Component @($index.Keys))
+
+        $selection.Count | Should -Be $index.Count
     }
 }
 

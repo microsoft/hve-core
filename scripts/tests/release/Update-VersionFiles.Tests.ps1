@@ -312,3 +312,93 @@ Describe 'Update-VersionFiles script execution' -Tag 'Unit' {
             Should -Throw
     }
 }
+
+Describe 'Release preparation repair' -Tag 'Unit' {
+    BeforeAll {
+        $script:RepositoryRoot = (Resolve-Path (Join-Path $PSScriptRoot '../../..')).Path
+
+        function New-PreparedRoot {
+            <#
+            .SYNOPSIS
+            Builds a root in release-please's prepared state.
+            .DESCRIPTION
+            release-please's json extra-files updater writes bare version values,
+            so every version field already carries the new version while the
+            catalog still pins the previous plugins-v<version> locator.
+            .OUTPUTS
+            [string] Prepared root path.
+            #>
+            [CmdletBinding()]
+            [OutputType([string])]
+            param()
+
+            $root = Join-Path ([System.IO.Path]::GetTempPath()) "uvf-prepared-$([guid]::NewGuid())"
+            New-Item -ItemType Directory -Path (Join-Path $root '.git') -Force | Out-Null
+            New-Item -ItemType Directory -Path (Join-Path $root '.github/plugin') -Force | Out-Null
+
+            @{ version = '3.4.0'; name = 'hve-core' } |
+                ConvertTo-Json | Set-Content (Join-Path $root 'package.json')
+            @{ '.' = '3.4.0' } |
+                ConvertTo-Json | Set-Content (Join-Path $root '.release-please-manifest.json')
+            @{
+                metadata = @{ version = '3.4.0' }
+                plugins  = @(@{ version = '3.4.0'; id = 'hve-core'; source = @{ ref = 'plugins-v3.2.2' } })
+            } | ConvertTo-Json -Depth 10 | Set-Content (Join-Path $root '.github/plugin/marketplace.json')
+
+            return $root
+        }
+    }
+
+    It 'Rewrites a stale plugin locator when every bare version is already current' {
+        $root = New-PreparedRoot
+        try {
+            & $script:ScriptPath -Version '3.4.0' -RepoRoot $root -SkipPluginGenerate
+
+            $catalog = Get-Content -Raw (Join-Path $root '.github/plugin/marketplace.json') | ConvertFrom-Json -Depth 10
+            $catalog.plugins[0].source.ref | Should -Be 'plugins-v3.4.0'
+            $catalog.metadata.version | Should -Be '3.4.0'
+            $catalog.plugins[0].version | Should -Be '3.4.0'
+        }
+        finally {
+            Remove-Item -Recurse -Force $root
+        }
+    }
+
+    It 'Leaves an already-consistent preparation byte-identical' {
+        $root = New-PreparedRoot
+        try {
+            & $script:ScriptPath -Version '3.4.0' -RepoRoot $root -SkipPluginGenerate
+            $catalogPath = Join-Path $root '.github/plugin/marketplace.json'
+            $first = Get-Content -Raw $catalogPath
+
+            & $script:ScriptPath -Version '3.4.0' -RepoRoot $root -SkipPluginGenerate
+
+            Get-Content -Raw $catalogPath | Should -BeExactly $first
+        }
+        finally {
+            Remove-Item -Recurse -Force $root
+        }
+    }
+
+    # A lint gate that only fails on a stale locator would block every release.
+    # The preparation workflow must call this updater on the release-please
+    # branch so the promoted commit is already consistent.
+    It 'Is invoked on the release preparation branch by the stable workflow' {
+        $workflowPath = Join-Path $script:RepositoryRoot '.github/workflows/release-stable.yml'
+        $workflow = Get-Content -LiteralPath $workflowPath -Raw -Encoding utf8
+        $document = $workflow | ConvertFrom-Yaml
+
+        $sync = $document['jobs']['sync-release-pr']
+        $sync | Should -Not -BeNullOrEmpty
+
+        $checkout = @($sync['steps'] | Where-Object { $_.Contains('uses') -and [string]$_['uses'] -match '^actions/checkout@' })
+        [string]$checkout[0]['with']['ref'] | Should -BeExactly '${{ needs.release-please.outputs.release-pr-branch }}'
+
+        $runs = [string[]]@($sync['steps'] | Where-Object { $_.Contains('run') } | ForEach-Object { [string]$_['run'] })
+        $invocation = @($runs | Where-Object { $_ -match 'scripts/release/Update-VersionFiles\.ps1' })
+        $invocation | Should -HaveCount 1
+        $invocation[0] | Should -Match '-SkipPluginGenerate'
+        $invocation[0] | Should -Match 'git push origin "HEAD:refs/heads/\$RELEASE_BRANCH"'
+        $invocation[0] | Should -Not -Match 'push --force'
+    }
+}

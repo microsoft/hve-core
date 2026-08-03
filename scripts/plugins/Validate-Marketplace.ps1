@@ -249,8 +249,15 @@ function Test-MarketplaceRepositoryContract {
     }
 
     $entries = @($Manifest['plugins'])
-    if ($entries.Count -eq 0) {
-        $contractErrors += 'repository marketplace must declare at least one package'
+    if ($entries.Count -ne 1) {
+        $contractErrors += "repository marketplace must declare exactly one content package, found $($entries.Count)"
+    }
+
+    # The CLI consumes a single hooks configuration, so a second declaration is
+    # an error rather than a silently truncated merge.
+    $hookEntries = @($entries | Where-Object { -not [string]::IsNullOrWhiteSpace([string]$_['hooks']) })
+    if ($hookEntries.Count -gt 1) {
+        $contractErrors += "repository marketplace must declare at most one hook manifest, found $($hookEntries.Count)"
     }
 
     # The active package set is derived from the package documents on disk, so
@@ -311,6 +318,17 @@ function Test-MarketplaceRepositoryContract {
             }
         }
 
+        # Both release lanes ship the same components with the same labels, so a
+        # channel-dependent projection is a policy regression rather than a variant.
+        $channelProjections = @{}
+        foreach ($channel in @('Stable', 'PreRelease')) {
+            $channelProjections[$channel] = @(Get-MarketplaceResolvedPackageRecipe -Entry $entry -Channel $channel -AgentIndex $agentIndex |
+                    ForEach-Object { "$($_.PackagePath)=$($_.Maturity)" }) -join '|'
+        }
+        if ($channelProjections['Stable'] -ne $channelProjections['PreRelease']) {
+            $contractErrors += "package '$name' must resolve identical components and maturity on Stable and PreRelease"
+        }
+
         $pluginRoot = Join-Path $RepoRoot "plugins/$name/plugin.json"
         if (Test-Path -LiteralPath $pluginRoot -PathType Leaf) {
             $pluginManifest = Get-Content -LiteralPath $pluginRoot -Raw -Encoding utf8 | ConvertFrom-Json -AsHashtable
@@ -324,23 +342,6 @@ function Test-MarketplaceRepositoryContract {
     }
     if ($tombstoneCount -eq 0) {
         $contractErrors += 'repository marketplace must declare at least one removed component tombstone'
-    }
-
-    $aggregates = @($entries | Where-Object { (Get-MarketplaceEntryOverlayValue -Entry $_ -Key 'aggregate') -eq $true })
-    if ($aggregates.Count -ne 1) {
-        $contractErrors += "repository marketplace must declare exactly one aggregate package, found $($aggregates.Count)"
-    }
-    else {
-        $aggregatePaths = @(Get-MarketplaceResolvedPackageRecipe -Entry $aggregates[0] -Channel PreRelease -AgentIndex $agentIndex |
-                ForEach-Object PackagePath | Sort-Object -Unique)
-        $unionPaths = @($entries | Where-Object {
-                $_['name'] -ne $aggregates[0]['name'] -and (Test-MarketplaceEntryEligible -Entry $_ -Channel PreRelease)
-            } | ForEach-Object {
-                Get-MarketplaceResolvedPackageRecipe -Entry $_ -Channel PreRelease -AgentIndex $agentIndex
-            } | ForEach-Object PackagePath | Sort-Object -Unique)
-        foreach ($missingPath in @($unionPaths | Where-Object { $_ -notin $aggregatePaths })) {
-            $contractErrors += "aggregate package is missing component '$missingPath'"
-        }
     }
 
     return [string[]]$contractErrors

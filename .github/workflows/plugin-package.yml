@@ -5,11 +5,14 @@ name: Package Plugins
 on:
   workflow_call:
     inputs:
-      version:
-        description: "Release version (for artifact metadata)"
-        required: false
+      source-ref:
+        description: "Immutable source to package from (full commit SHA or tag)"
+        required: true
         type: string
-        default: ""
+      version:
+        description: "Release version the packaged plugin must carry"
+        required: true
+        type: string
     outputs:
       packages-matrix:
         description: "JSON matrix of plugin packages that were packaged"
@@ -31,10 +34,38 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
+          ref: ${{ inputs.source-ref }}
           persist-credentials: false
 
       - name: Setup PowerShell modules
         uses: ./.github/actions/setup-ps-modules
+
+      - name: Verify explicit source and version
+        shell: pwsh
+        env:
+          INPUT_SOURCE_REF: ${{ inputs.source-ref }}
+          INPUT_VERSION: ${{ inputs.version }}
+        run: |
+          $ErrorActionPreference = 'Stop'
+          if ([string]::IsNullOrWhiteSpace($env:INPUT_SOURCE_REF)) {
+            throw 'source-ref is required and must not be blank'
+          }
+          if ([string]::IsNullOrWhiteSpace($env:INPUT_VERSION)) {
+            throw 'version is required and must not be blank'
+          }
+          # The catalog at the packaged source must already carry the release
+          # version and its matching immutable plugins-v<version> locator.
+          $catalog = Get-Content -LiteralPath '.github/plugin/marketplace.json' -Raw -Encoding utf8 | ConvertFrom-Json -AsHashtable
+          $catalogVersion = [string]$catalog['metadata']['version']
+          if ($catalogVersion -cne $env:INPUT_VERSION) {
+            throw "Catalog version $catalogVersion does not match requested version $env:INPUT_VERSION"
+          }
+          foreach ($entry in @($catalog['plugins'])) {
+            $expectedRef = "plugins-v$env:INPUT_VERSION"
+            if ([string]$entry['source']['ref'] -cne $expectedRef) {
+              throw "Catalog plugin '$($entry['name'])' pins source ref '$($entry['source']['ref'])' but the release requires '$expectedRef'"
+            }
+          }
 
       # Plugin packages ship every non-deprecated, non-removed catalog
       # entry, which is the PreRelease eligibility policy. Discovery runs
@@ -59,6 +90,7 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
+          ref: ${{ inputs.source-ref }}
           persist-credentials: false
 
       - name: Setup Node.js
@@ -77,6 +109,17 @@ jobs:
         run: |
           mkdir -p logs
           npm run plugin:generate
+
+      - name: Record one-package release evidence
+        shell: pwsh
+        env:
+          INPUT_VERSION: ${{ inputs.version }}
+        run: |
+          $ErrorActionPreference = 'Stop'
+          & ./scripts/plugins/Assert-PluginReleaseEvidence.ps1 `
+            -Version $env:INPUT_VERSION `
+            -ExpectedPackageCount 1 `
+            -OutputPath logs/plugin-release-evidence.json
 
       - name: Verify generated roots match discovered packages
         shell: bash

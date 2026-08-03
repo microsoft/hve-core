@@ -3,7 +3,7 @@ title: Git-Ignored Folder Installation
 description: Install HVE Core in a git-ignored folder for devcontainer environments
 sidebar_position: 3
 author: Microsoft
-ms.date: 2026-07-15
+ms.date: 2026-08-02
 ms.topic: how-to
 keywords:
   - git-ignored
@@ -52,7 +52,7 @@ my-project/
 
 ## Quick Start
 
-Install the [VS Code extension](https://marketplace.visualstudio.com/items?itemName=ise-hve-essentials.hve-core) for the fastest setup. For guided setup with installation method selection and MCP configuration, install the [HVE Core Installer](https://marketplace.visualstudio.com/items?itemName=ise-hve-essentials.hve-installer) extension and ask any agent "help me customize hve-core installation". Use the manual steps below for direct configuration.
+Install the [VS Code extension](https://marketplace.visualstudio.com/items?itemName=ise-hve-essentials.hve-core) for the fastest setup. For guided installation-method selection, MCP configuration, or selective clone adoption, ask an agent to use the included `hve-core-installer` skill. Use the manual steps below for direct configuration.
 
 ## Manual Setup
 

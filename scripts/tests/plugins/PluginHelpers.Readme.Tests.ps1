@@ -7,10 +7,10 @@ BeforeAll {
 
     $script:PackageMetadata = @{ id = 'rpi'; name = 'rpi'; description = 'RPI workflow package' }
     $script:ReadmeItems = @(
-        @{ Name = 'rpi'; Description = 'Plans work.'; Kind = 'agent' }
-        @{ Name = 'plan'; Description = 'Creates a plan.'; Kind = 'prompt' }
-        @{ Name = 'location'; Description = 'Finds artifacts.'; Kind = 'instruction' }
-        @{ Name = 'rpi-plan'; Description = 'Builds plans.'; Kind = 'skill' }
+        @{ Name = 'rpi'; Description = 'Plans work.'; Kind = 'agent'; Maturity = 'stable' }
+        @{ Name = 'plan'; Description = 'Creates a plan.'; Kind = 'prompt'; Maturity = 'preview' }
+        @{ Name = 'location'; Description = 'Finds artifacts.'; Kind = 'instruction'; Maturity = 'experimental' }
+        @{ Name = 'rpi-plan'; Description = 'Builds plans.'; Kind = 'skill'; Maturity = 'stable' }
         @{ Name = 'telemetry'; Description = 'Records events.'; Kind = 'hook' }
     )
 
@@ -147,33 +147,33 @@ Describe 'New-PluginReadmeContent' -Tag 'Unit' {
                     ''
                     '## Agents'
                     ''
-                    '| Agent | Description |'
-                    '|-------|-------------|'
-                    '| rpi   | Plans work. |'
+                    '| Agent | Maturity | Description |'
+                    '|-------|----------|-------------|'
+                    '| rpi   | stable   | Plans work. |'
                     ''
                     '## Commands'
                     ''
-                    '| Command | Description     |'
-                    '|---------|-----------------|'
-                    '| plan    | Creates a plan. |'
+                    '| Command | Maturity | Description     |'
+                    '|---------|----------|-----------------|'
+                    '| plan    | preview  | Creates a plan. |'
                     ''
                     '## Instructions'
                     ''
-                    '| Instruction | Description      |'
-                    '|-------------|------------------|'
-                    '| location    | Finds artifacts. |'
+                    '| Instruction | Maturity     | Description      |'
+                    '|-------------|--------------|------------------|'
+                    '| location    | experimental | Finds artifacts. |'
                     ''
                     '## Skills'
                     ''
-                    '| Skill    | Description   |'
-                    '|----------|---------------|'
-                    '| rpi-plan | Builds plans. |'
+                    '| Skill    | Maturity | Description   |'
+                    '|----------|----------|---------------|'
+                    '| rpi-plan | stable   | Builds plans. |'
                     ''
                     '## Hooks'
                     ''
-                    '| Hook      | Description     |'
-                    '|-----------|-----------------|'
-                    '| telemetry | Records events. |'
+                    '| Hook      | Maturity | Description     |'
+                    '|-----------|----------|-----------------|'
+                    '| telemetry | stable   | Records events. |'
                     ''
                     '---'
                     ''
@@ -190,6 +190,16 @@ Describe 'New-PluginReadmeContent' -Tag 'Unit' {
             $headingOrder = @([regex]::Matches($script:fullReadme, '(?m)^## (Agents|Commands|Instructions|Skills|Hooks)$') |
                     ForEach-Object { $_.Groups[1].Value })
             $headingOrder | Should -Be @('Agents', 'Commands', 'Instructions', 'Skills', 'Hooks')
+        }
+
+        It 'Discloses every canonical lifecycle label present in the recipe' {
+            foreach ($label in @('stable', 'preview', 'experimental')) {
+                $script:fullReadme | Should -Match "(?m)^\|[^|]+\| $label\s*\|"
+            }
+        }
+
+        It 'Discloses the canonical stable default for an unlabeled item' {
+            $script:fullReadme | Should -Match '(?m)^\| telemetry \| stable   \|'
         }
     }
 

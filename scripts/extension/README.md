@@ -2,7 +2,7 @@
 title: Extension Scripts
 description: PowerShell scripts for marketplace-driven VS Code extension preparation and packaging
 author: HVE Core Team
-ms.date: 2026-08-01
+ms.date: 2026-08-02
 ms.topic: reference
 keywords:
   - powershell
@@ -20,9 +20,9 @@ publishing the HVE Core VS Code extension.
 
 The extension packaging pipeline follows one marketplace projection:
 
-1. `Get-MarketplacePackageMatrix.ps1` selects channel-eligible package IDs
-2. `Modules/ExtensionIdentity.psm1` maps package IDs to extension identities
-3. `Prepare-Extension.ps1` resolves one package through shared handoff closure
+1. `Get-MarketplacePackageMatrix.ps1` emits the one `hve-core` package ID
+2. `Modules/ExtensionIdentity.psm1` maps it to the HVE Core extension identity
+3. `Prepare-Extension.ps1` resolves the complete recipe through shared handoff closure
 4. `Package-Extension.ps1` stages tracked projection files and creates a `.vsix`
 
 Marketplace metadata, membership, maturity, and display names come from
@@ -40,8 +40,8 @@ Purpose: Gather and filter artifacts for inclusion in the extension package.
 #### Features
 
 * Resolves agents, prompts, instructions, and skills from marketplace membership
-* Applies shared maturity filtering and transitive agent handoff closure
-* Supports package-ID-scoped preparation
+* Applies shared lifecycle policy and transitive agent handoff closure
+* Supports explicit `hve-core` package-ID preparation
 * Dry-run mode for previewing changes
 
 #### Parameters
@@ -74,7 +74,7 @@ Purpose: Produce a distributable extension package from prepared contents.
 
 * Sets version from parameters or changelog
 * Supports pre-release and dev patch builds
-* Marketplace-package-scoped packaging
+* One-identity marketplace packaging
 * Git-tracked path staging with explicit shared resources
 * Repository-pinned `vsce` only, with no installer fallback
 * Dry-run mode for validation
@@ -105,12 +105,12 @@ Purpose: Produce a distributable extension package from prepared contents.
 
 Builds a package matrix and package-name output from the marketplace catalog.
 
-Purpose: Select package IDs by channel and package maturity.
+Purpose: Emit the one HVE Core package for either release channel.
 
 #### Features
 
 * Reads `.github/plugin/marketplace.json`
-* Filters package entries by maturity and channel
+* Verifies the `hve-core` entry is eligible for the selected channel
 * Outputs sorted matrix rows containing only `id`
 * Outputs a sorted JSON `names` array for packaging workflows
 
@@ -120,7 +120,7 @@ Maps marketplace package IDs to VS Code extension identities and exact VSIX
 asset patterns.
 
 Purpose: Keep package matrix, release download, and VSIX selection behavior on
-one identity contract so `hve-core` never collides with `hve-core-all`.
+one `hve-core` identity contract.
 
 #### Parameters
 
@@ -212,9 +212,9 @@ for verification and release upload.
 The extension packaging workflow (`extension-package.yml`) orchestrates all
 three scripts:
 
-1. `Get-MarketplacePackageMatrix.ps1` produces the package-ID matrix
-2. `Prepare-Extension.ps1` runs per package to project contributions
-3. `Package-Extension.ps1` runs per package to produce `.vsix` files
+1. `Get-MarketplacePackageMatrix.ps1` produces a one-row package-ID matrix
+2. `Prepare-Extension.ps1` projects the complete HVE Core contributions
+3. `Package-Extension.ps1` produces the one `.vsix` file
 
 See [Build Workflows](../../docs/architecture/workflows.md) for pipeline
 details.

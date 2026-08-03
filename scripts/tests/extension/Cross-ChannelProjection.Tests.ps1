@@ -137,33 +137,10 @@ Describe 'Cross-channel hook exclusion' -Tag 'Unit' {
 }
 
 Describe 'Cross-channel handoff closure' -Tag 'Unit' {
-    BeforeAll {
-        $script:ClosureProjections = @($script:Projections | Where-Object { @($_.ClosureAdded).Count -gt 0 })
-    }
-
-    It 'Produces a non-empty closure delta set before asserting its content' {
-        @($script:ClosureProjections).Count | Should -BeGreaterThan 0
-    }
-
-    It 'Adds only catalog-declared agents through the closure' {
-        $catalogAgents = @($script:Catalog['plugins'] | ForEach-Object { @($_['agents']) } | Where-Object { $_ } | Sort-Object -Unique)
-        @($catalogAgents).Count | Should -BeGreaterThan 0
-        foreach ($projection in $script:ClosureProjections) {
-            foreach ($added in $projection.ClosureAdded) {
-                $catalogAgents | Should -Contain $added -Because "$($projection.PackageName) closure added $added"
-            }
-        }
-    }
-
-    It 'Includes every closure addition in the resolved recipe and its VS Code contributions' {
-        foreach ($projection in $script:ClosureProjections) {
-            $contributions = Get-ExtensionContributions -Items $projection.Recipe
-            foreach ($added in $projection.ClosureAdded) {
-                $component = Resolve-MarketplaceComponentSource -PackagePath $added -Field 'agents'
-                @($projection.Recipe | ForEach-Object { $_.SourcePath }) | Should -Contain $component.SourcePath
-                @($contributions.Agents.path) | Should -Contain "./$($component.SourcePath)"
-                Test-Path -LiteralPath (Join-Path $script:RepositoryRoot $component.SourcePath) -PathType Leaf | Should -BeTrue
-            }
+    It 'Resolves every declared agent without a closure addition' {
+        foreach ($projection in $script:Projections) {
+            @($projection.ClosureAdded) |
+                Should -BeNullOrEmpty -Because "$($projection.PackageName) declares every reachable agent directly"
         }
     }
 
@@ -174,5 +151,105 @@ Describe 'Cross-channel handoff closure' -Tag 'Unit' {
             $resolved = @($projection.Recipe | Where-Object { $_.Kind -eq 'agent' } | ForEach-Object { $_.PackagePath })
             foreach ($agent in $declared) { $resolved | Should -Contain $agent }
         }
+    }
+}
+
+Describe 'Cross-channel extension identity' -Tag 'Unit' {
+    BeforeAll {
+        $script:TemplateName = Get-ExtensionTemplateName -TemplatePath (
+            Join-Path $script:RepositoryRoot 'extension/templates/package.template.json'
+        )
+    }
+
+    It 'Projects exactly one hve-core identity on <Channel>' -ForEach @(
+        @{ Channel = 'Stable' }
+        @{ Channel = 'PreRelease' }
+    ) {
+        $eligible = @($script:Projections | Where-Object { $_.Channel -eq $Channel })
+        @($eligible).Count | Should -Be 1
+        $eligible[0].PackageName | Should -BeExactly 'hve-core'
+        Get-ExtensionIdentity -PackageId $eligible[0].PackageName -TemplateName $script:TemplateName |
+            Should -BeExactly $script:TemplateName
+    }
+
+    It 'Generates the unsuffixed manifest and README for the surviving identity' {
+        Get-ExtensionPackageFileName -PackageName 'hve-core' | Should -BeExactly 'package.json'
+        Get-ExtensionReadmeFileName -PackageName 'hve-core' | Should -BeExactly 'README.md'
+    }
+
+    It 'Projects equal canonical contribution paths on both channels' {
+        $projected = @{}
+        foreach ($channel in $script:Channels) {
+            $projection = @($script:Projections | Where-Object { $_.Channel -eq $channel })[0]
+            $contributions = Get-ExtensionContributions -Items $projection.Recipe
+            $projected[$channel] = (Get-ExtensionCanonicalSource -Contribution $contributions) -join "`n"
+        }
+        $projected['Stable'] | Should -BeExactly $projected['PreRelease']
+        @($projected['Stable'] -split "`n") | Should -Not -BeNullOrEmpty
+    }
+}
+
+Describe 'Production one-recipe catalog' -Tag 'Unit' {
+    BeforeAll {
+        $script:Entry = @($script:Catalog['plugins'])[0]
+        $script:MembershipPaths = [string[]]@(
+            @('agents', 'commands', 'rules', 'skills', 'hooks') |
+                ForEach-Object { @($script:Entry[$_]) } | Where-Object { $_ }
+        )
+        $script:StarterProfile = [string[]]@((Get-MarketplaceEntryOverlayValue -Entry $script:Entry -Key 'profiles')['starter'])
+    }
+
+    It 'Declares exactly one content package' {
+        @($script:Catalog['plugins']).Count | Should -Be 1
+        [string]$script:Entry['name'] | Should -BeExactly 'hve-core'
+    }
+
+    It 'Declares 257 unique active component paths' {
+        $script:MembershipPaths.Count | Should -Be 257
+        @($script:MembershipPaths | Sort-Object -Unique).Count | Should -Be 257
+    }
+
+    It 'Declares exactly one removed component tombstone' {
+        $componentMaturity = Get-MarketplaceComponentMaturityMap -Entry $script:Entry
+        $tombstones = @($componentMaturity.Keys | Where-Object { $componentMaturity[$_] -eq 'removed' })
+        $tombstones.Count | Should -Be 1
+        $script:MembershipPaths | Should -Not -Contain $tombstones[0]
+    }
+
+    It 'Declares no aggregate metadata' {
+        Get-MarketplaceEntryOverlayValue -Entry $script:Entry -Key 'aggregate' | Should -BeNullOrEmpty
+        Get-MarketplaceMetadataKey | Should -Not -Contain 'aggregate'
+    }
+
+    It 'Declares a starter profile of 24 recipe members' {
+        $script:StarterProfile.Count | Should -Be 24
+        foreach ($member in $script:StarterProfile) { $script:MembershipPaths | Should -Contain $member }
+    }
+
+    It 'Selects <Count> starter components under <Field>' -ForEach @(
+        @{ Field = 'agents'; Count = 6 }
+        @{ Field = 'commands'; Count = 1 }
+        @{ Field = 'rules'; Count = 2 }
+        @{ Field = 'skills'; Count = 15 }
+    ) {
+        @($script:StarterProfile | Where-Object { $_.StartsWith("$Field/", [System.StringComparison]::Ordinal) }).Count |
+            Should -Be $Count
+    }
+
+    It 'Resolves identical component sets and maturity on both channels' {
+        $projected = @{}
+        foreach ($channel in $script:Channels) {
+            Test-MarketplaceEntryEligible -Entry $script:Entry -Channel $channel | Should -BeTrue
+            $projected[$channel] = @(Get-MarketplaceResolvedPackageRecipe -Entry $script:Entry -Channel $channel -AgentIndex $script:AgentIndex |
+                    ForEach-Object { "$($_.PackagePath)=$($_.Maturity)" }) -join "`n"
+        }
+        $projected['Stable'] | Should -BeExactly $projected['PreRelease']
+        @($projected['Stable'] -split "`n").Count | Should -Be 257
+    }
+
+    It 'Carries every declared lifecycle label into the resolved recipe' {
+        $labels = @(Get-MarketplaceResolvedPackageRecipe -Entry $script:Entry -Channel 'Stable' -AgentIndex $script:AgentIndex |
+                ForEach-Object { $_.Maturity } | Sort-Object -Unique)
+        $labels -join '|' | Should -BeExactly 'experimental|preview|stable'
     }
 }

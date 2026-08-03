@@ -3,7 +3,7 @@ title: Business Program Manager Guide
 description: HVE Core support for business program managers driving stakeholder alignment, business outcomes, and program coordination
 sidebar_position: 6
 author: Microsoft
-ms.date: 2026-08-01
+ms.date: 2026-08-02
 ms.topic: how-to
 keywords:
   - BPM
@@ -21,7 +21,7 @@ This guide is for you if you define business outcomes, manage stakeholder alignm
 ## Recommended Collections
 
 > [!TIP]
-> Install the [HVE Core extension](https://marketplace.visualstudio.com/items?itemName=ise-hve-essentials.hve-core) from the VS Code Marketplace for the flagship RPI workflow and core artifacts with zero configuration.
+> Install the [HVE Core extension](https://marketplace.visualstudio.com/items?itemName=ise-hve-essentials.hve-core) from the VS Code Marketplace for the complete active component set with zero configuration.
 >
 > Your primary collection is `project-planning` (BRD creation, product management guidance, and agile coaching for business requirement gathering and stakeholder alignment). For clone-based setups, see the [Installation Guide](../../getting-started/install.md).
 
@@ -186,7 +186,7 @@ Prompts complement the agents for cross-cutting workflows:
 ## Next Steps
 
 > [!TIP]
-> Explore project planning tools: [Project Planning Package](https://github.com/microsoft/hve-core/blob/main/docs/plugins/project-planning.md)
+> Browse the complete HVE Core inventory: [HVE Core](../../plugins/hve-core)
 > Understand the TPM workflow for technical handoff: [TPM Guide](tpm.md)
 > See how program management fits the project lifecycle: [AI-Assisted Project Lifecycle](../lifecycle/)
 

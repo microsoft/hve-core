@@ -1,6 +1,6 @@
 {
   "name": "hve-core",
-  "version": "3.3.106",
+  "version": "3.2.2",
   "description": "HVE Core",
   "private": true,
   "scripts": {

@@ -5,7 +5,6 @@ import * as path from 'path';
 import {
   packageCardDefinitions,
   resolvePackageCards,
-  resolveMetaPackages,
 } from '../packageCards';
 import type { PackageCardData } from '../packageCards';
 import {
@@ -41,12 +40,18 @@ function expectedComponentCount(entry: MarketplaceEntry): number {
 
 const catalogEntries = new Map(catalog.plugins.map((entry) => [entry.name, entry]));
 const cardNames = packageCardDefinitions.map((definition) => definition.name);
-const metaPackageName = 'hve-core-all';
-const counts = loadMarketplaceCounts(marketplacePath, [...cardNames, metaPackageName]);
+const counts = loadMarketplaceCounts(marketplacePath, cardNames);
 const packageCards = resolvePackageCards(counts);
-const metaPackages = resolveMetaPackages(counts);
 
 describe('packageCardDefinitions', () => {
+  it('declares hve-core as the only card', () => {
+    expect(cardNames).toEqual(['hve-core']);
+  });
+
+  it('mirrors the sole marketplace catalog entry', () => {
+    expect(catalog.plugins.map((entry) => entry.name)).toEqual(cardNames);
+  });
+
   it('declares a unique id for every package card', () => {
     expect(new Set(cardNames).size).toBe(cardNames.length);
   });
@@ -132,14 +137,14 @@ describe('loadMarketplaceCounts', () => {
     expect(counts[name]).toBe(expectedComponentCount(catalogEntries.get(name)!));
   });
 
-  it('resolves the meta package count from the catalog', () => {
-    expect(metaPackages[metaPackageName]).toBe(
-      expectedComponentCount(catalogEntries.get(metaPackageName)!),
-    );
+  it('resolves a count for every requested package and nothing more', () => {
+    expect(Object.keys(counts).sort()).toEqual([...cardNames].sort());
   });
 
-  it('returns a count for every requested package and nothing more', () => {
-    expect(Object.keys(counts).sort()).toEqual([...cardNames, metaPackageName].sort());
+  it('fails loudly for a retired package id', () => {
+    expect(() => loadMarketplaceCounts(marketplacePath, ['hve-core-all'])).toThrow(
+      'Unknown marketplace package: hve-core-all',
+    );
   });
 
   it('fails loudly for an unknown package id', () => {

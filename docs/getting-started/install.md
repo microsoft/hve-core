@@ -1,16 +1,16 @@
 ---
 title: Installing HVE Core
-description: Three ways to install HVE Core with marketplace extensions, selective packages, or a developer clone
+description: Install the complete HVE Core extension or plugin, or adopt selected components from a clone
 sidebar_position: 2
 author: Microsoft
-ms.date: 2026-08-01
+ms.date: 2026-08-02
 ms.topic: how-to
 keywords:
   - installation
   - setup
   - github copilot
   - marketplace
-   - packages
+   - selective clone
 estimated_reading_time: 4
 ---
 
@@ -27,41 +27,41 @@ Install the **HVE Core** extension for a zero-configuration experience that work
 
 **Or visit:** [HVE Core on VS Code Marketplace](https://marketplace.visualstudio.com/items?itemName=ise-hve-essentials.hve-core)
 
-The extension installs the `hve-core` flagship package containing the RPI workflow. Updates arrive automatically through VS Code.
+The extension installs the complete `hve-core` component set. Updates arrive automatically through VS Code.
 
 After installation, select `RPI Agent` or use `/rpi` for the full lifecycle. Use `/rpi-research`, `/rpi-plan`, `/rpi-implement`, and `/rpi-review` for individual phases.
 
 See [Extension Installation Guide](methods/extension.md) for complete documentation.
 
 > [!TIP]
-> The marketplace extension is the fastest way to start. You can switch to a clone-based method later without losing any configuration.
+> The marketplace extension is the fastest way to start. Read the [migration guide](package-migration) before replacing an existing clone or retired extension identity.
 
-## Selective Install
+## Selective Clone Adoption
 
-Teams that only need specific domains can use the **HVE Installer** extension to deploy individual [packages](packages.md) into a workspace.
+Teams that need a smaller repository-owned footprint can use the `hve-core-installer` skill included with HVE Core.
 
-1. Install the [HVE Installer extension](https://marketplace.visualstudio.com/items?itemName=ise-hve-essentials.hve-installer) from the VS Code Marketplace.
-2. Open Copilot Chat and ask any agent: *"help me customize hve-core installation"*.
-3. Choose the packages that match your team's workflow.
+1. Clone or pin the HVE Core version you want to adopt.
+2. Open Copilot Chat and ask an agent to use `hve-core-installer` for selective clone adoption.
+3. Choose the 24-component starter profile or a custom selection.
+4. Review component kinds, lifecycle labels, and dependency closure before writes.
+5. Choose automatic source updates or a controlled pinned version.
 
-4. Update preference?
-   * Auto: Always get latest HVE Core
-   * Controlled: Pin to specific version, update explicitly
+The installer can copy agents, prompts, instructions, and complete skill directories. It preserves repository-relative paths and records the result in `.hve-tracking.json` schema version 2. Hooks are not copied.
 
 ### Decision Matrix
 
-| Environment               | Team | Updates    | Recommended Method                            |
-|---------------------------|------|------------|-----------------------------------------------|
-| **Any** (simplest)        | Any  | Auto       | [VS Code Extension](methods/extension.md) ⭐   |
-| Local (no container)      | Solo | Manual     | [Peer Directory Clone](methods/peer-clone.md) |
-| Local (no container)      | Team | Controlled | [Submodule](methods/submodule.md)             |
-| Local devcontainer        | Solo | Auto       | [Git-Ignored Folder](methods/git-ignored.md)  |
-| Local devcontainer        | Team | Controlled | [Submodule](methods/submodule.md)             |
-| Codespaces only           | Solo | Auto       | [GitHub Codespaces](methods/codespaces.md)    |
-| Codespaces only           | Team | Controlled | [Submodule](methods/submodule.md)             |
-| Both local + Codespaces   | Any  | Any        | [Multi-Root Workspace](methods/multi-root.md) |
-| Advanced (shared install) | Solo | Auto       | [Mounted Directory](methods/mounted.md)       |
-| Any (CLI preferred)       | Any  | Manual     | [CLI Plugins](methods/cli-plugins.md)         |
+| Environment               | Team | Updates    | Recommended Method                         |
+|---------------------------|------|------------|--------------------------------------------|
+| **Any** (simplest)        | Any  | Auto       | [VS Code Extension](methods/extension) ⭐   |
+| Local (no container)      | Solo | Manual     | [Peer Directory Clone](methods/peer-clone) |
+| Local (no container)      | Team | Controlled | [Submodule](methods/submodule)             |
+| Local devcontainer        | Solo | Auto       | [Git-Ignored Folder](methods/git-ignored)  |
+| Local devcontainer        | Team | Controlled | [Submodule](methods/submodule)             |
+| Codespaces only           | Solo | Auto       | [GitHub Codespaces](methods/codespaces)    |
+| Codespaces only           | Team | Controlled | [Submodule](methods/submodule)             |
+| Both local + Codespaces   | Any  | Any        | [Multi-Root Workspace](methods/multi-root) |
+| Advanced (shared install) | Solo | Auto       | [Mounted Directory](methods/mounted)       |
+| Any (CLI preferred)       | Any  | Manual     | [CLI Plugins](methods/cli-plugins)         |
 
 ⭐ **VS Code Extension** is the recommended method for most users who don't need customization.
 
@@ -69,65 +69,50 @@ Teams that only need specific domains can use the **HVE Installer** extension to
 > The term "HVE Core" refers to different things depending on context:
 >
 > * **Repository** (`microsoft/hve-core`) - canonical source for all artifacts
-> * **Extension** (`HVE Core`) - installs the flagship package
-> * **Extension** (`HVE Core All`) - installs the aggregate package
-> * **CLI plugin** (`hve-core`) - installable via `copilot plugin install hve-core@hve-core`
+> * **Extension** (`ise-hve-essentials.hve-core`) - one identity with Stable and PreRelease channels
+> * **CLI plugin** (`hve-core`) - installed from one ref-qualified `hve-core` marketplace registration
 >
-> Most users who only need Research, Plan, Implement, and Review workflows should start with the **HVE Core** extension. To explore all domains, install **HVE Core All** instead.
+> The extension and plugin contain the same complete active component set.
 
 ### How the Pieces Fit Together
 
 ```mermaid
 graph LR
     REPO["microsoft/hve-core<br/>(source repository)"]
-   REPO --> C1["hve-core<br/>(flagship package)"]
-   REPO --> C2["ado, github, security...<br/>(domain packages)"]
-    C1 --> EXT1["HVE Core Extension<br/>(68 artifacts)"]
-    C1 --> EXT2["HVE Core All Extension<br/>(260 artifacts)"]
-    C2 --> EXT2
+   REPO --> CAT["hve-core<br/>(complete catalog identity)"]
+   CAT --> EXT["HVE Core VS Code Extension"]
+   CAT --> PLUGIN["HVE Core Copilot Plugin"]
+   REPO --> CLONE["Starter or custom clone selection"]
 ```
 
 ### Which Extension Should I Install?
 
-* **I want to try it out quickly** → Install **HVE Core All** (everything included, explore at your pace)
-* **I only need Research, Plan, Implement, Review workflows** → Install **HVE Core** (flagship, 68 artifacts)
-* **My team needs specific domains only** → Install **HVE Installer** (pick packages individually)
+* **I want the managed complete experience** → Install **HVE Core**
+* **I want newer approved main content** → Switch HVE Core to **PreRelease**
+* **My repository needs selected components only** → Use selective clone adoption
 * **I want to contribute or modify source** → Clone the repository (see [Developer Setup](#developer-setup))
 
-## Marketplace Packages
+## Distribution Identity and Channels
 
-HVE Core organizes artifacts into role-based marketplace packages. The VS Code extension installs the **HVE Core Workflow** package (flagship RPI workflow and core artifacts). For the aggregate set, use the `hve-core-all` CLI plugin or extension. Clone-based methods support filtering agents by selected package.
+HVE Core has one complete plugin and extension identity. Stable and PreRelease contain active `stable`, `preview`, and `experimental` components; `deprecated` and `removed` components are excluded. Lifecycle labels disclose support posture and do not filter channels.
 
-| Package           | Package ID         | Maturity     | Description                                                       |
-|-------------------|--------------------|--------------|-------------------------------------------------------------------|
-| **Full** ⭐        | `hve-core-all`     | Stable       | All stable artifacts (recommended for most)                       |
-| HVE Core Workflow | `hve-core`         | Stable       | RPI workflow with Git commit, merge, and pull request prompts     |
-| Azure DevOps      | `ado`              | Stable       | Work item management, build monitoring, and PR creation           |
-| Coding Standards  | `coding-standards` | Stable       | Language-specific instructions for bash, Bicep, C#, Python, etc.  |
-| Data Science      | `data-science`     | Stable       | Data specs, Jupyter notebooks, and Streamlit dashboards           |
-| Design Thinking   | `design-thinking`  | Preview      | AI-enhanced Design Thinking coaching across nine methods          |
-| GitHub Backlog    | `github`           | Stable       | Issue discovery, triage, sprint planning, and backlog execution   |
-| Installer         | `installer`        | Stable       | Interactive installer skill for workspace configuration           |
-| Project Planning  | `project-planning` | Stable       | PRDs, BRDs, ADRs, and architecture diagrams                       |
-| Security          | `security`         | Experimental | Security review, planning, incident response, and risk assessment |
-| Experimental      | `experimental`     | Experimental | Artifacts not yet promoted to stable packages                     |
+PreRelease packages directly from `main`. Stable packages after reviewed `main` content is promoted into `release/stable`, so Stable may lag newer `main` commits. Both VS Code channels use `ise-hve-essentials.hve-core` and differ by cadence and version, not component content.
 
-### Extension Installation (Flagship Package)
+See [HVE Core Identity and Channels](packages) for the lifecycle and source contract.
 
-The VS Code Marketplace extension installs the **HVE Core Workflow** package: the flagship set of RPI agents, prompts, and instructions. This is the recommended starting point for most users. For the aggregate package, use the `hve-core-all` extension or plugin.
+### Copilot Plugin Registration
 
-### Clone Methods (Agent Bundle Selection)
+Register an approved catalog ref, then install `hve-core` through `/plugin`:
 
-Clone-based installation methods support agent bundle selection through the HVE Core installer skill:
+```bash
+copilot plugin marketplace add microsoft/hve-core#<ref>
+```
 
-1. Install the [HVE Core Installer](https://marketplace.visualstudio.com/items?itemName=ise-hve-essentials.hve-installer) extension to get the installer skill
-2. Ask any agent: "help me customize hve-core installation"
-3. Choose an agent bundle by package or copy all agents
+The marketplace ref selects the catalog, while its `source.ref` pins matching immutable `plugins-v<version>` bytes. Stable and PreRelease catalogs share the marketplace name `hve-core`, so keep one active registration at a time.
 
-The installer skill reads Stable package recipes from `.github/plugin/marketplace.json` and copies only the projected agents from your selected packages to `.github/agents/`.
+### Clone Methods
 
-> [!IMPORTANT]
-> Agent bundle selection currently applies to agents only. Support for prompts, instructions, and skills is planned for a future release.
+The included installer resolves the starter profile or a custom selection from the `hve-core` recipe. It copies selected agents, prompts, instructions, and complete skill directories while preserving source-relative paths. Dependency-added components remain explicit in the confirmation, and hooks remain plugin-only.
 
 ## Developer Setup
 

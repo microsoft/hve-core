@@ -10,287 +10,297 @@ name: Plugin Snapshot Publish
 # marketplace catalog, and tracked plugins/ state are never mutated here.
 
 on:
-    push:
-        branches:
-            - "plugins-snapshot/validate/**"
-    workflow_dispatch:
-        inputs:
-            source-ref:
-                description: "Immutable source to generate from (full commit SHA or tag)"
-                required: true
-                type: string
-            snapshot-branch:
-                description: "Disposable branch to publish (must start with plugins-snapshot/)"
-                required: true
-                type: string
-            snapshot-tag:
-                description: "Disposable tag to publish (must start with plugins-snapshot/)"
-                required: true
-                type: string
-            dry-run:
-                description: "Stage and verify only; do not push any reference"
-                required: false
-                type: boolean
-                default: true
+  push:
+    branches:
+      - "plugins-snapshot/validate/**"
+  workflow_dispatch:
+    inputs:
+      source-ref:
+        description: "Immutable source to generate from (full commit SHA or tag)"
+        required: true
+        type: string
+      expected-version:
+        description: "Version the source must carry (leave empty to accept the source version)"
+        required: false
+        type: string
+        default: ""
+      snapshot-branch:
+        description: "Disposable branch to publish (must start with plugins-snapshot/)"
+        required: true
+        type: string
+      snapshot-tag:
+        description: "Disposable tag to publish (must start with plugins-snapshot/)"
+        required: true
+        type: string
+      dry-run:
+        description: "Stage and verify only; do not push any reference"
+        required: false
+        type: boolean
+        default: true
 
 concurrency:
-    group: ${{ github.workflow }}-${{ inputs.snapshot-tag || github.ref_name }}
-    cancel-in-progress: false
+  group: ${{ github.workflow }}-${{ inputs.snapshot-tag || github.ref_name }}
+  cancel-in-progress: false
 
 permissions:
-    contents: read
+  contents: read
 
 env:
-    DISPOSABLE_PREFIX: plugins-snapshot/
+  DISPOSABLE_PREFIX: plugins-snapshot/
 
 jobs:
-    publish-snapshot:
-        name: Publish Plugin Snapshot
-        runs-on: ubuntu-latest
-        permissions:
-            contents: write
-        steps:
-            - name: Checkout immutable source
-              uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-              with:
-                  ref: ${{ inputs.source-ref || github.sha }}
-                  persist-credentials: false
+  publish-snapshot:
+    name: Publish Plugin Snapshot
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout immutable source
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ inputs.source-ref || github.sha }}
+          persist-credentials: false
 
-            - name: Resolve source commit and version
-              id: source
-              shell: bash
-              env:
-                  SOURCE_REF: ${{ inputs.source-ref || github.sha }}
-                  SNAPSHOT_BRANCH: ${{ inputs.snapshot-branch || format('plugins-snapshot/dryrun-{0}', github.run_id) }}
-                  SNAPSHOT_TAG: ${{ inputs.snapshot-tag || format('plugins-snapshot/dryrun-{0}-tag', github.run_id) }}
-                  DRY_RUN: ${{ github.event_name == 'push' || inputs.dry-run }}
-              run: |
-                  set -euo pipefail
-                  source_commit=$(git rev-parse HEAD)
-                  version=$(jq -r .version package.json)
-                  {
-                    echo "commit=${source_commit}"
-                    echo "version=${version}"
-                    echo "locator=plugins-v${version}"
-                    echo "source-ref=${SOURCE_REF}"
-                    echo "snapshot-branch=${SNAPSHOT_BRANCH}"
-                    echo "snapshot-tag=${SNAPSHOT_TAG}"
-                    echo "dry-run=${DRY_RUN}"
-                  } >> "$GITHUB_OUTPUT"
-                  echo "Source ref:    ${SOURCE_REF}"
-                  echo "Source commit: ${source_commit}"
-                  echo "Version:       ${version}"
+      - name: Resolve source commit and version
+        id: source
+        shell: bash
+        env:
+          SOURCE_REF: ${{ inputs.source-ref || github.sha }}
+          EXPECTED_VERSION: ${{ inputs.expected-version }}
+          SNAPSHOT_BRANCH: ${{ inputs.snapshot-branch || format('plugins-snapshot/dryrun-{0}', github.run_id) }}
+          SNAPSHOT_TAG: ${{ inputs.snapshot-tag || format('plugins-snapshot/dryrun-{0}-tag', github.run_id) }}
+          DRY_RUN: ${{ github.event_name == 'push' || inputs.dry-run }}
+        run: |
+          set -euo pipefail
+          source_commit=$(git rev-parse HEAD)
+          version=$(jq -r .version package.json)
+          if [ -n "${EXPECTED_VERSION}" ] && [ "${EXPECTED_VERSION}" != "${version}" ]; then
+            echo "::error::Source ${SOURCE_REF} carries version ${version} but the caller requires ${EXPECTED_VERSION}"
+            exit 1
+          fi
+          {
+            echo "commit=${source_commit}"
+            echo "version=${version}"
+            echo "locator=plugins-v${version}"
+            echo "source-ref=${SOURCE_REF}"
+            echo "snapshot-branch=${SNAPSHOT_BRANCH}"
+            echo "snapshot-tag=${SNAPSHOT_TAG}"
+            echo "dry-run=${DRY_RUN}"
+          } >> "$GITHUB_OUTPUT"
+          echo "Source ref:    ${SOURCE_REF}"
+          echo "Source commit: ${source_commit}"
+          echo "Version:       ${version}"
 
-            - name: Setup PowerShell modules
-              uses: ./.github/actions/setup-ps-modules
+      - name: Setup PowerShell modules
+        uses: ./.github/actions/setup-ps-modules
 
-            - name: Validate disposable publication target
-              shell: bash
-              env:
-                  SNAPSHOT_BRANCH: ${{ steps.source.outputs.snapshot-branch }}
-                  SNAPSHOT_TAG: ${{ steps.source.outputs.snapshot-tag }}
-              run: |
-                  set -euo pipefail
-                  export EXISTING_REFS_FILE="${RUNNER_TEMP}/existing-refs.txt"
-                  git ls-remote --heads --tags "https://github.com/${GITHUB_REPOSITORY}.git" \
-                    | awk '{print $2}' > "${EXISTING_REFS_FILE}"
+      - name: Validate disposable publication target
+        shell: bash
+        env:
+          SNAPSHOT_BRANCH: ${{ steps.source.outputs.snapshot-branch }}
+          SNAPSHOT_TAG: ${{ steps.source.outputs.snapshot-tag }}
+        run: |
+          set -euo pipefail
+          export EXISTING_REFS_FILE="${RUNNER_TEMP}/existing-refs.txt"
+          git ls-remote --heads --tags "https://github.com/${GITHUB_REPOSITORY}.git" \
+            | awk '{print $2}' > "${EXISTING_REFS_FILE}"
 
-                  # Written to a file rather than piped: pwsh reading a script from
-                  # stdin stops silently at a line continuation and still exits 0.
-                  cat > "${RUNNER_TEMP}/validate-snapshot-target.ps1" <<'PWSH'
-                  $ErrorActionPreference = 'Stop'
-                  Import-Module ./scripts/plugins/Modules/PluginHelpers.psm1 -Force
-                  $existing = @(Get-Content -LiteralPath $env:EXISTING_REFS_FILE | Where-Object { $_ })
-                  $target = Assert-PluginSnapshotTarget `
-                    -Branch $env:SNAPSHOT_BRANCH `
-                    -Tag $env:SNAPSHOT_TAG `
-                    -ExistingRefs $existing `
-                    -DisposablePrefix $env:DISPOSABLE_PREFIX
-                  Write-Host "Approved snapshot refspecs: $($target.RefSpecs -join ' ')"
-                  PWSH
+          # Written to a file rather than piped: pwsh reading a script from
+          # stdin stops silently at a line continuation and still exits 0.
+          cat > "${RUNNER_TEMP}/validate-snapshot-target.ps1" <<'PWSH'
+          $ErrorActionPreference = 'Stop'
+          Import-Module ./scripts/plugins/Modules/PluginHelpers.psm1 -Force
+          $existing = @(Get-Content -LiteralPath $env:EXISTING_REFS_FILE | Where-Object { $_ })
+          $target = Assert-PluginSnapshotTarget `
+            -Branch $env:SNAPSHOT_BRANCH `
+            -Tag $env:SNAPSHOT_TAG `
+            -ExistingRefs $existing `
+            -DisposablePrefix $env:DISPOSABLE_PREFIX
+          Write-Host "Approved snapshot refspecs: $($target.RefSpecs -join ' ')"
+          PWSH
 
-                  pwsh -NoProfile -File "${RUNNER_TEMP}/validate-snapshot-target.ps1"
+          pwsh -NoProfile -File "${RUNNER_TEMP}/validate-snapshot-target.ps1"
 
-            - name: Setup Node.js
-              uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
-              with:
-                  node-version: "24"
-                  cache: "npm"
+      - name: Setup Node.js
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: "24"
+          cache: "npm"
 
-            - name: Install dependencies
-              run: npm ci
+      - name: Install dependencies
+        run: npm ci
 
-            - name: Generate snapshot and tag-pinned catalog
-              shell: bash
-              env:
-                  RELEASE_TAG: ${{ steps.source.outputs.locator }}
-              run: |
-                  set -euo pipefail
-                  mkdir -p logs
-                  # Locator mode refuses to write the production catalog, so the
-                  # tag-pinned catalog is emitted to a separate snapshot path.
-                  pwsh -NoProfile -File scripts/plugins/Generate-Plugins.ps1 \
-                    -Refresh \
-                    -ReleaseTag "${RELEASE_TAG}" \
-                    -MarketplaceOutputPath logs/marketplace-snapshot.json
-                  npm run plugin:postprocess
+      - name: Generate snapshot and tag-pinned catalog
+        shell: bash
+        env:
+          RELEASE_TAG: ${{ steps.source.outputs.locator }}
+        run: |
+          set -euo pipefail
+          mkdir -p logs
+          # Locator mode refuses to write the production catalog, so the
+          # tag-pinned catalog is emitted to a separate snapshot path.
+          pwsh -NoProfile -File scripts/plugins/Generate-Plugins.ps1 \
+            -Refresh \
+            -ReleaseTag "${RELEASE_TAG}" \
+            -MarketplaceOutputPath logs/marketplace-snapshot.json
+          npm run plugin:postprocess
 
-            - name: Record deterministic evidence
-              shell: bash
-              env:
-                  SOURCE_COMMIT: ${{ steps.source.outputs.commit }}
-                  RELEASE_TAG: ${{ steps.source.outputs.locator }}
-              run: |
-                  set -euo pipefail
-                  pwsh -NoProfile -File scripts/plugins/Assert-PluginReleaseEvidence.ps1 \
-                    -SourceCommit "${SOURCE_COMMIT}" \
-                    -ReleaseTag "${RELEASE_TAG}" \
-                    -ExpectedPackageCount 14 \
-                    -OutputPath logs/plugin-release-evidence.json
+      - name: Record deterministic evidence
+        shell: bash
+        env:
+          SOURCE_COMMIT: ${{ steps.source.outputs.commit }}
+          RELEASE_TAG: ${{ steps.source.outputs.locator }}
+        run: |
+          set -euo pipefail
+          pwsh -NoProfile -File scripts/plugins/Assert-PluginReleaseEvidence.ps1 \
+            -SourceCommit "${SOURCE_COMMIT}" \
+            -ReleaseTag "${RELEASE_TAG}" \
+            -ExpectedPackageCount 1 \
+            -OutputPath logs/plugin-release-evidence.json
 
-            - name: Assert snapshot contains no symbolic links
-              shell: bash
-              run: |
-                  set -euo pipefail
-                  links=$(find plugins -type l | head -20)
-                  if [ -n "${links}" ]; then
-                    echo "::error::Generated snapshot contains symbolic links"
-                    echo "${links}"
-                    exit 1
-                  fi
+      - name: Assert snapshot contains no symbolic links
+        shell: bash
+        run: |
+          set -euo pipefail
+          links=$(find plugins -type l | head -20)
+          if [ -n "${links}" ]; then
+            echo "::error::Generated snapshot contains symbolic links"
+            echo "${links}"
+            exit 1
+          fi
 
-            - name: Stage orphan snapshot commit
-              shell: bash
-              env:
-                  SOURCE_COMMIT: ${{ steps.source.outputs.commit }}
-                  RELEASE_TAG: ${{ steps.source.outputs.locator }}
-                  SNAPSHOT_TAG: ${{ steps.source.outputs.snapshot-tag }}
-                  GIT_AUTHOR_NAME: github-actions[bot]
-                  GIT_AUTHOR_EMAIL: 41898282+github-actions[bot]@users.noreply.github.com
-                  GIT_COMMITTER_NAME: github-actions[bot]
-                  GIT_COMMITTER_EMAIL: 41898282+github-actions[bot]@users.noreply.github.com
-              run: |
-                  set -euo pipefail
-                  snapshot_dir="${RUNNER_TEMP}/plugin-snapshot"
-                  rm -rf "${snapshot_dir}"
-                  mkdir -p "${snapshot_dir}"
+      - name: Stage orphan snapshot commit
+        shell: bash
+        env:
+          SOURCE_COMMIT: ${{ steps.source.outputs.commit }}
+          RELEASE_TAG: ${{ steps.source.outputs.locator }}
+          SNAPSHOT_TAG: ${{ steps.source.outputs.snapshot-tag }}
+          GIT_AUTHOR_NAME: github-actions[bot]
+          GIT_AUTHOR_EMAIL: 41898282+github-actions[bot]@users.noreply.github.com
+          GIT_COMMITTER_NAME: github-actions[bot]
+          GIT_COMMITTER_EMAIL: 41898282+github-actions[bot]@users.noreply.github.com
+        run: |
+          set -euo pipefail
+          snapshot_dir="${RUNNER_TEMP}/plugin-snapshot"
+          rm -rf "${snapshot_dir}"
+          mkdir -p "${snapshot_dir}"
 
-                  # Packages keep their plugins/<name> layout so the staged tree matches
-                  # the catalog locator path exactly.
-                  cp -R plugins "${snapshot_dir}/plugins"
-                  cp logs/plugin-release-evidence.json "${snapshot_dir}/plugin-release-evidence.json"
-                  cp logs/marketplace-snapshot.json "${snapshot_dir}/marketplace.json"
+          # Packages keep their plugins/<name> layout so the staged tree matches
+          # the catalog locator path exactly.
+          cp -R plugins "${snapshot_dir}/plugins"
+          cp logs/plugin-release-evidence.json "${snapshot_dir}/plugin-release-evidence.json"
+          cp logs/marketplace-snapshot.json "${snapshot_dir}/marketplace.json"
 
-                  # Orphan history: the snapshot repository shares no ancestry with the
-                  # source, so publishing can never rewrite or advance a source branch.
-                  git -C "${snapshot_dir}" init --initial-branch=snapshot --quiet
-                  git -C "${snapshot_dir}" add -A
-                  git -C "${snapshot_dir}" commit --quiet -m "chore(plugins): snapshot ${RELEASE_TAG} from ${SOURCE_COMMIT}"
-                  git -C "${snapshot_dir}" tag "${SNAPSHOT_TAG}"
+          # Orphan history: the snapshot repository shares no ancestry with the
+          # source, so publishing can never rewrite or advance a source branch.
+          git -C "${snapshot_dir}" init --initial-branch=snapshot --quiet
+          git -C "${snapshot_dir}" add -A
+          git -C "${snapshot_dir}" commit --quiet -m "chore(plugins): snapshot ${RELEASE_TAG} from ${SOURCE_COMMIT}"
+          git -C "${snapshot_dir}" tag "${SNAPSHOT_TAG}"
 
-                  echo "Staged snapshot commit: $(git -C "${snapshot_dir}" rev-parse HEAD)"
+          echo "Staged snapshot commit: $(git -C "${snapshot_dir}" rev-parse HEAD)"
 
-            - name: Verify staged snapshot from a fresh clone
-              shell: bash
-              env:
-                  SOURCE_COMMIT: ${{ steps.source.outputs.commit }}
-                  RELEASE_TAG: ${{ steps.source.outputs.locator }}
-              run: |
-                  set -euo pipefail
-                  snapshot_dir="${RUNNER_TEMP}/plugin-snapshot"
-                  verify_dir="${RUNNER_TEMP}/snapshot-verify"
-                  rm -rf "${verify_dir}"
-                  git clone --quiet --no-local "${snapshot_dir}" "${verify_dir}"
+      - name: Verify staged snapshot from a fresh clone
+        shell: bash
+        env:
+          SOURCE_COMMIT: ${{ steps.source.outputs.commit }}
+          RELEASE_TAG: ${{ steps.source.outputs.locator }}
+        run: |
+          set -euo pipefail
+          snapshot_dir="${RUNNER_TEMP}/plugin-snapshot"
+          verify_dir="${RUNNER_TEMP}/snapshot-verify"
+          rm -rf "${verify_dir}"
+          git clone --quiet --no-local "${snapshot_dir}" "${verify_dir}"
 
-                  links=$(find "${verify_dir}/plugins" -type l | head -20)
-                  if [ -n "${links}" ]; then
-                    echo "::error::Cloned snapshot contains symbolic links"
-                    echo "${links}"
-                    exit 1
-                  fi
+          links=$(find "${verify_dir}/plugins" -type l | head -20)
+          if [ -n "${links}" ]; then
+            echo "::error::Cloned snapshot contains symbolic links"
+            echo "${links}"
+            exit 1
+          fi
 
-                  pwsh -NoProfile -File scripts/plugins/Assert-PluginReleaseEvidence.ps1 \
-                    -PluginsDir "${verify_dir}/plugins" \
-                    -SourceCommit "${SOURCE_COMMIT}" \
-                    -ReleaseTag "${RELEASE_TAG}" \
-                    -ExpectedPackageCount 14 \
-                    -ExpectedEvidencePath logs/plugin-release-evidence.json \
-                    -OutputPath logs/plugin-snapshot-verification.json
+          pwsh -NoProfile -File scripts/plugins/Assert-PluginReleaseEvidence.ps1 \
+            -PluginsDir "${verify_dir}/plugins" \
+            -SourceCommit "${SOURCE_COMMIT}" \
+            -ReleaseTag "${RELEASE_TAG}" \
+            -ExpectedPackageCount 1 \
+            -ExpectedEvidencePath logs/plugin-release-evidence.json \
+            -OutputPath logs/plugin-snapshot-verification.json
 
-            - name: Archive verified snapshot
-              shell: bash
-              run: |
-                  set -euo pipefail
-                  snapshot_dir="${RUNNER_TEMP}/plugin-snapshot"
-                  tar --sort=name \
-                    --mtime='UTC 1970-01-01' \
-                    --owner=0 \
-                    --group=0 \
-                    --numeric-owner \
-                    -czf logs/plugin-snapshot.tar.gz \
-                    -C "${snapshot_dir}" .
+      - name: Archive verified snapshot
+        shell: bash
+        run: |
+          set -euo pipefail
+          snapshot_dir="${RUNNER_TEMP}/plugin-snapshot"
+          tar --sort=name \
+            --mtime='UTC 1970-01-01' \
+            --owner=0 \
+            --group=0 \
+            --numeric-owner \
+            -czf logs/plugin-snapshot.tar.gz \
+            -C "${snapshot_dir}" .
 
-            - name: Assert production catalog is unchanged
-              shell: bash
-              run: |
-                  set -euo pipefail
-                  if ! git diff --quiet -- .github/plugin/marketplace.json; then
-                    echo "::error::Production marketplace catalog was modified; publication is refused"
-                    git --no-pager diff --stat -- .github/plugin/marketplace.json
-                    exit 1
-                  fi
+      - name: Assert production catalog is unchanged
+        shell: bash
+        run: |
+          set -euo pipefail
+          if ! git diff --quiet -- .github/plugin/marketplace.json; then
+            echo "::error::Production marketplace catalog was modified; publication is refused"
+            git --no-pager diff --stat -- .github/plugin/marketplace.json
+            exit 1
+          fi
 
-            - name: Publish disposable references
-              if: ${{ github.event_name == 'workflow_dispatch' && !inputs.dry-run }}
-              shell: bash
-              env:
-                  SNAPSHOT_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-                  SNAPSHOT_BRANCH: ${{ steps.source.outputs.snapshot-branch }}
-                  SNAPSHOT_TAG: ${{ steps.source.outputs.snapshot-tag }}
-              run: |
-                  set -euo pipefail
-                  snapshot_dir="${RUNNER_TEMP}/plugin-snapshot"
-                  auth_header=$(printf 'x-access-token:%s' "${SNAPSHOT_TOKEN}" | base64 -w0)
-                  git -C "${snapshot_dir}" remote add origin "https://github.com/${GITHUB_REPOSITORY}.git"
-                  git -C "${snapshot_dir}" config --local "http.https://github.com/.extraheader" "AUTHORIZATION: basic ${auth_header}"
-                  # Atomic and unforced: an existing tag rejects both reference updates.
-                  git -C "${snapshot_dir}" push --atomic --quiet origin \
-                    "HEAD:refs/heads/${SNAPSHOT_BRANCH}" \
-                    "refs/tags/${SNAPSHOT_TAG}"
-                  echo "Published disposable branch ${SNAPSHOT_BRANCH} and tag ${SNAPSHOT_TAG}"
+      - name: Publish disposable references
+        if: ${{ github.event_name == 'workflow_dispatch' && !inputs.dry-run }}
+        shell: bash
+        env:
+          SNAPSHOT_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SNAPSHOT_BRANCH: ${{ steps.source.outputs.snapshot-branch }}
+          SNAPSHOT_TAG: ${{ steps.source.outputs.snapshot-tag }}
+        run: |
+          set -euo pipefail
+          snapshot_dir="${RUNNER_TEMP}/plugin-snapshot"
+          auth_header=$(printf 'x-access-token:%s' "${SNAPSHOT_TOKEN}" | base64 -w0)
+          git -C "${snapshot_dir}" remote add origin "https://github.com/${GITHUB_REPOSITORY}.git"
+          git -C "${snapshot_dir}" config --local "http.https://github.com/.extraheader" "AUTHORIZATION: basic ${auth_header}"
+          # Atomic and unforced: an existing tag rejects both reference updates.
+          git -C "${snapshot_dir}" push --atomic --quiet origin \
+            "HEAD:refs/heads/${SNAPSHOT_BRANCH}" \
+            "refs/tags/${SNAPSHOT_TAG}"
+          echo "Published disposable branch ${SNAPSHOT_BRANCH} and tag ${SNAPSHOT_TAG}"
 
-            - name: Summarize snapshot
-              if: always()
-              shell: bash
-              env:
-                  SOURCE_REF: ${{ steps.source.outputs.source-ref }}
-                  SOURCE_COMMIT: ${{ steps.source.outputs.commit }}
-                  RELEASE_TAG: ${{ steps.source.outputs.locator }}
-                  SNAPSHOT_BRANCH: ${{ steps.source.outputs.snapshot-branch }}
-                  SNAPSHOT_TAG: ${{ steps.source.outputs.snapshot-tag }}
-                  DRY_RUN: ${{ steps.source.outputs.dry-run }}
-              run: |
-                  {
-                    echo "## Plugin Snapshot"
-                    echo ""
-                    echo "| Field | Value |"
-                    echo "|-------|-------|"
-                    echo "| Source ref | \`${SOURCE_REF}\` |"
-                    echo "| Source commit | \`${SOURCE_COMMIT}\` |"
-                    echo "| Catalog locator | \`${RELEASE_TAG}\` |"
-                    echo "| Disposable branch | \`${SNAPSHOT_BRANCH}\` |"
-                    echo "| Disposable tag | \`${SNAPSHOT_TAG}\` |"
-                    echo "| Dry run | \`${DRY_RUN}\` |"
-                  } >> "$GITHUB_STEP_SUMMARY"
+      - name: Summarize snapshot
+        if: always()
+        shell: bash
+        env:
+          SOURCE_REF: ${{ steps.source.outputs.source-ref }}
+          SOURCE_COMMIT: ${{ steps.source.outputs.commit }}
+          RELEASE_TAG: ${{ steps.source.outputs.locator }}
+          SNAPSHOT_BRANCH: ${{ steps.source.outputs.snapshot-branch }}
+          SNAPSHOT_TAG: ${{ steps.source.outputs.snapshot-tag }}
+          DRY_RUN: ${{ steps.source.outputs.dry-run }}
+        run: |
+          {
+            echo "## Plugin Snapshot"
+            echo ""
+            echo "| Field | Value |"
+            echo "|-------|-------|"
+            echo "| Source ref | \`${SOURCE_REF}\` |"
+            echo "| Source commit | \`${SOURCE_COMMIT}\` |"
+            echo "| Catalog locator | \`${RELEASE_TAG}\` |"
+            echo "| Disposable branch | \`${SNAPSHOT_BRANCH}\` |"
+            echo "| Disposable tag | \`${SNAPSHOT_TAG}\` |"
+            echo "| Dry run | \`${DRY_RUN}\` |"
+          } >> "$GITHUB_STEP_SUMMARY"
 
-            - name: Upload snapshot evidence
-              if: always()
-              uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-              with:
-                  name: plugin-snapshot-evidence
-                  path: |
-                      logs/plugin-release-evidence.json
-                      logs/plugin-snapshot-verification.json
-                      logs/marketplace-snapshot.json
-                      logs/plugin-snapshot.tar.gz
-                  if-no-files-found: warn
+      - name: Upload snapshot evidence
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: plugin-snapshot-evidence
+          path: |
+            logs/plugin-release-evidence.json
+            logs/plugin-snapshot-verification.json
+            logs/marketplace-snapshot.json
+            logs/plugin-snapshot.tar.gz
+          if-no-files-found: warn

@@ -3,7 +3,7 @@ title: New Contributor Guide
 description: Guided onboarding path from first install through autonomous AI-assisted engineering with HVE Core
 sidebar_position: 2
 author: Microsoft
-ms.date: 2026-07-15
+ms.date: 2026-08-02
 ms.topic: tutorial
 keywords:
   - onboarding
@@ -15,18 +15,18 @@ estimated_reading_time: 12
 
 This guide helps you get started with HVE Core from your first install through independent, AI-assisted engineering. HVE Core provides 10 addressable assets tailored for new contributors. Follow the four milestones below to progressively build fluency with agents, prompts, and workflows.
 
-## Recommended Collections
+## Recommended Installation
 
 > [!TIP]
-> Install the [HVE Core extension](https://marketplace.visualstudio.com/items?itemName=ise-hve-essentials.hve-core) from the VS Code Marketplace for the flagship RPI workflow and core artifacts with zero configuration.
+> Install the [HVE Core extension](https://marketplace.visualstudio.com/items?itemName=ise-hve-essentials.hve-core) from the VS Code Marketplace for the complete component set with zero configuration.
 >
-> For custom installations, install the [HVE Core Installer extension](https://marketplace.visualstudio.com/items?itemName=ise-hve-essentials.hve-installer) and ask any agent:
+> For selected repository-owned components, ask an agent to use the included `hve-core-installer` skill:
 >
 > ```text
 > help me customize hve-core installation
 > ```
 >
-> The `hve-core` collection is the recommended starting point. It provides `RPI Agent` and the direct research, planning, implementation, and review skills that you will use throughout onboarding and beyond.
+> Choose the starter profile unless you already know which agents, prompts, instructions, and complete skills your repository needs.
 
 ## What HVE Core Does for You
 
@@ -72,16 +72,16 @@ Use agents selectively and combine workflows for larger tasks.
 
 1. Use `/rpi` for end-to-end coordination on a multi-file change.
 2. Explore additional agents from the [Engineer Guide](engineer.md) or your role guide.
-3. Explore agents from additional collections within the extension, or use the installer skill to select agent bundles in a clone setup (see the [Role Overview](./#role-overview)).
+3. Explore the complete extension inventory, or use the installer skill to make a custom multi-kind selection in a clone setup (see the [Role Overview](./#role-overview)).
 4. Resume longer workflows from their dated research, plan, details, changes, and review artifacts.
 
-Checkpoint: You choose which agents to use based on task needs and work with multiple collections.
+Checkpoint: You choose which agents and skills to use based on task needs.
 
 ### Milestone 4: Autonomous Engineering
 
 Work fluently with HVE Core as an integrated part of your engineering practice.
 
-1. Combine agents across collections for complex, multi-stage workflows.
+1. Combine agents and skills for complex, multi-stage workflows.
 2. Create custom prompts or instructions tailored to your team's patterns.
 3. Contribute improvements back to HVE Core through pull requests.
 4. Mentor other contributors on AI-assisted engineering practices.

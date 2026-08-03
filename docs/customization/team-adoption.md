@@ -15,8 +15,8 @@ estimated_reading_time: 7
 
 ## Recommended Starting Point
 
-Start team adoption with the [HVE Core extension](https://marketplace.visualstudio.com/items?itemName=ise-hve-essentials.hve-core) for the flagship RPI workflow across all team members.
-When the team is ready for clone-based methods, the [HVE Core Installer](https://marketplace.visualstudio.com/items?itemName=ise-hve-essentials.hve-installer) skill is the best way to choose the right one. It evaluates your environment, recommends peer clone, submodule, git-ignored, or another method, then configures MCP servers and agent bundles. Install the extension and ask any agent "help me customize hve-core installation".
+Start team adoption with the [HVE Core extension](https://marketplace.visualstudio.com/items?itemName=ise-hve-essentials.hve-core) for the complete managed component set across all team members.
+When the team is ready for clone-based methods, ask an agent to use the included `hve-core-installer` skill. It evaluates the environment, recommends peer clone, submodule, git-ignored, or another method, guides MCP configuration, and supports a starter or custom selection across agents, prompts, instructions, and complete skill directories.
 Move to direct clone setup only when artifact modification is required beyond what the installer provides.
 
 ## Adoption Strategy
@@ -38,10 +38,10 @@ repeatable workflows (code reviews, research tasks, implementation patterns)
 and prompts for one-shot operations (generating boilerplate, formatting
 outputs).
 
-### Phase 3: Skills and Packages
+### Phase 3: Skills and Shared Distribution
 
 Package domain knowledge into skills for complex, multi-step workflows. Declare
-related artifacts in marketplace packages for distribution and reuse across teams.
+related artifacts in the `hve-core` marketplace recipe for managed distribution, or use selective cloning for a repository-owned subset.
 
 ### Measuring Adoption Progress
 
@@ -59,19 +59,18 @@ glance. Follow kebab-case patterns throughout.
 
 ### File Naming Patterns
 
-| Artifact Type | Pattern                                      | Example                         |
-|---------------|----------------------------------------------|---------------------------------|
-| Instructions  | `{topic}.instructions.md`                    | `python-script.instructions.md` |
-| Agents        | `{workflow}.agent.md`                        | `code-review.agent.md`          |
-| Prompts       | `{action}.prompt.md`                         | `generate-tests.prompt.md`      |
-| Skills        | `{skill-name}/SKILL.md`                      | `pr-reference/SKILL.md`         |
-| Packages      | Marketplace entry and `docs/plugins/{id}.md` | `ado` and `docs/plugins/ado.md` |
+| Artifact Type | Pattern                                          | Example                             |
+|---------------|--------------------------------------------------|-------------------------------------|
+| Instructions  | `{topic}.instructions.md`                        | `python-script.instructions.md`     |
+| Agents        | `{workflow}.agent.md`                            | `code-review.agent.md`              |
+| Prompts       | `{action}.prompt.md`                             | `generate-tests.prompt.md`          |
+| Skills        | `{skill-name}/SKILL.md`                          | `pr-reference/SKILL.md`             |
+| Recipe paths  | Marketplace entry and `docs/plugins/hve-core.md` | `agents/ado/ado-backlog-manager.md` |
 
-### Package IDs
+### Namespace IDs
 
-Package IDs serve as conventional directory names throughout `.github/` and must be
-unique, lowercase, and kebab-cased. Choose IDs that reflect the domain or team
 the package serves:
+Namespace IDs serve as conventional directory names throughout `.github/` and must be unique, lowercase, and kebab-cased. They organize source and do not create independently installable marketplace products. Choose IDs that reflect the domain or team the namespace serves:
 
 * `ado` for Azure DevOps integration
 * `coding-standards` for language-specific conventions
@@ -79,7 +78,7 @@ the package serves:
 
 ### Directory Organization
 
-Place artifacts under their package ID in the appropriate `.github/`
+Place artifacts under their namespace ID in the appropriate `.github/`
 subdirectory:
 
 ```text
@@ -101,7 +100,7 @@ extension packaging.
 
 Assign clear ownership for each artifact category:
 
-* A designated maintainer or team owns each marketplace package
+* A designated maintainer or team owns each component namespace within the `hve-core` recipe
 * Individual instructions files can have separate owners when they span
   multiple domains
 * The `copilot-instructions.md` file at the repository root reflects
@@ -170,7 +169,7 @@ Follow a structured process when adding new instructions, agents, or skills:
 2. Run `hve-builder` in create or improve mode with the relevant known references
 3. Resolve its static, behavior, and validation gates until the overall outcome passes
 4. Run `npm run validate:local` to validate local-safe checks, then reproduce any relevant CI-owned lane separately
-5. Update affected marketplace package recipes and `docs/plugins/` pages
+5. Update the `hve-core` marketplace recipe and `docs/plugins/hve-core.md`
 6. Run `npm run plugin:generate` to regenerate plugin outputs
 7. Submit a pull request with clear description of what the artifact does and
    why
@@ -198,7 +197,7 @@ artifacts through these stages:
 
 To deprecate an artifact:
 
-1. Update the artifact's frontmatter to include `maturity: deprecated`
+1. Set the artifact path to `deprecated` in `x-hve.componentMaturity`
 2. Use `hve-builder` improve mode to add a deprecation notice pointing to the replacement
 3. Announce the deprecation and provide a migration timeline
 4. Remove the artifact after the agreed-upon transition period
@@ -224,7 +223,7 @@ starting points and progression for each of the nine roles.
 
 1. Write instructions for architecture decision conventions
 2. Create a code review agent that enforces team standards
-3. Establish a marketplace package that bundles your team's full workflow
+3. Establish a reviewed custom selection that captures your team's workflow
 
 ### Security Architect
 
@@ -266,15 +265,14 @@ starting points and progression for each of the nine roles.
 
 1. Use existing prompts and agents without modification
 2. Customize instructions for your specific workflow context
-3. Contribute improvements to shared packages based on
+3. Contribute improvements to shared components based on
   usage patterns
 
 ## Measuring Success
 
 ### Quantitative Indicators
 
-* Artifact count: track the number of instructions, agents, skills, and
-  packages over time
+* Artifact count: track the number of instructions, agents, and skills over time
 * Invocation frequency: monitor how often team members activate custom agents
   and prompts
 * Error reduction: measure before-and-after rates for common mistakes the

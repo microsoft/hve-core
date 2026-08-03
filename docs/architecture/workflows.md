@@ -25,8 +25,14 @@ flowchart TD
         direction TB
         MERGE[Merge to Main] --> MN[release-stable.yml]
         MN --> VAL[Validation]
-        VAL --> PKG[Extension Package]
-        PKG --> REL[Release Please]
+        VAL --> REL[Release Please Preparation]
+        REL --> PROMO[Review main to release/stable Promotion]
+        PROMO --> STABLE[release-stable-publish.yml]
+    end
+
+    subgraph PRE["PreRelease"]
+        direction TB
+        SHA[Explicit main SHA] --> PRE_RELEASE[release-prerelease.yml]
     end
 
     subgraph SCHED["Scheduled"]
@@ -47,7 +53,8 @@ flowchart TD
 | Workflow                             | Trigger                   | Purpose                                                           |
 |--------------------------------------|---------------------------|-------------------------------------------------------------------|
 | `pr-validation.yml`                  | Pull request, manual      | Pre-merge quality gate with parallel validation                   |
-| `release-stable.yml`                 | Push to main, manual      | Post-merge validation and release automation                      |
+| `release-stable.yml`                 | Push to main, manual      | Validate main, prepare stable metadata, and open promotion PR     |
+| `release-stable-publish.yml`         | Promotion PR closed       | Verify merged promotion and create the Stable tag and release     |
 | `weekly-security-maintenance.yml`    | Sunday 2 AM UTC, manual   | Scheduled security posture review                                 |
 | `weekly-validation.yml`              | Schedule, manual          | Weekly full validation sweep                                      |
 | `security-scan.yml`                  | Push to main/develop      | CodeQL security validation                                        |
@@ -56,8 +63,7 @@ flowchart TD
 | `copilot-setup-steps.yml`            | Manual                    | Coding agent environment setup                                    |
 | `devcontainer-change-log.yml`        | Push to main/develop      | Logs devcontainer infrastructure file changes to the step summary |
 | `devcontainer-lockfile-check.yml`    | Reusable                  | Validates devcontainer lockfile integrity and SHA-256 pinning     |
-| `release-prerelease.yml`             | PR closed                 | Pre-release tag and publish on merge to main                      |
-| `release-prerelease-pr.yml`          | Push to main              | Pre-release companion PR management                               |
+| `release-prerelease.yml`             | Manual                    | Package an explicit main SHA as an immutable PreRelease           |
 | `scorecard.yml`                      | Schedule, push            | OpenSSF Scorecard security analysis                               |
 | `codeql-analysis.yml`                | Schedule                  | Weekly CodeQL security scan (also reusable)                       |
 | `dependency-review.yml`              | Pull request              | Dependency vulnerability review (also reusable)                   |
@@ -181,7 +187,7 @@ All jobs run in parallel with no dependencies, enabling fast feedback (typically
 
 ## Main Branch Pipeline
 
-The `release-stable.yml` workflow runs after merges to main, performing validation and release automation.
+The `release-stable.yml` workflow runs after merges to `main`. It validates the source, lets release-please maintain an even-minor version and changelog preparation PR, synchronizes committed version fields and the immutable plugin locator, and opens a non-auto-merged promotion PR from `main` to `release/stable` when needed.
 
 ```mermaid
 flowchart LR
@@ -195,27 +201,9 @@ flowchart LR
     V8[docusaurus-tests] --> RP
     V9[python-lint] --> RP
     V10[pytest] --> RP
-    RP --> CM[close-milestone]
-    RP --> RST[reset-prerelease]
-    RP -->|release_created| SBOM[generate-dependency-sbom]
-    RP -->|release_created| PPR[plugin-package-release]
-    SBOM --> EP[extension-provenance]
-    SBOM --> VX[vex-attest]
-    SBOM --> SD[sbom-diff]
-    PPR --> UPP[upload-plugin-packages]
-    SBOM --> UPP
-    EP --> VP[verify-provenance]
-    UPP --> VP
-    VX --> VP
-    VP --> AVN[append-verification-notes]
-    EP --> AVN
-    UPP --> AVN
-    EP --> PUB[publish-release]
-    UPP --> PUB
-    VX --> PUB
-    VP --> PUB
-    SD --> PUB
-    AVN --> PUB
+    RP --> SYNC[sync-release-pr]
+    SYNC --> PREP[prepare-promotion]
+    PREP --> PR[open-promotion-pr]
     style RP fill:#f9f,stroke:#333
 ```
 
@@ -223,35 +211,25 @@ Release-please v4 handles `chore`-type commits natively. They are not releasable
 
 ### Main Branch Jobs
 
-| Job                             | Purpose                                        | Dependencies                                                                                                                      |
-|---------------------------------|------------------------------------------------|-----------------------------------------------------------------------------------------------------------------------------------|
-| spell-check                     | Post-merge spelling validation                 | None                                                                                                                              |
-| markdown-lint                   | Post-merge markdown validation                 | None                                                                                                                              |
-| table-format                    | Post-merge table validation                    | None                                                                                                                              |
-| dependency-pinning-scan         | Dependency pinning security check              | None                                                                                                                              |
-| action-version-consistency-scan | Action version consistency check               | None                                                                                                                              |
-| gitleaks-scan                   | Secret detection scanning                      | None                                                                                                                              |
-| pester-tests                    | PowerShell unit tests                          | None                                                                                                                              |
-| docusaurus-tests                | Docs site build and tests                      | None                                                                                                                              |
-| discover-python-projects        | Enumerate Python projects                      | None                                                                                                                              |
-| python-lint                     | Python lint (ruff)                             | discover-python-projects                                                                                                          |
-| pytest                          | Python unit tests                              | discover-python-projects                                                                                                          |
-| release-please                  | Automated release management                   | All validation jobs                                                                                                               |
-| close-milestone                 | Close the released milestone                   | release-please                                                                                                                    |
-| reset-prerelease                | Reset pre-release tracking                     | release-please                                                                                                                    |
-| generate-dependency-sbom        | Generate dependency SBOM                       | release-please                                                                                                                    |
-| plugin-package-release          | Build release plugin packages                  | release-please                                                                                                                    |
-| extension-provenance            | Build, sign, and attest release VSIX (SLSA L3) | release-please, generate-dependency-sbom                                                                                          |
-| upload-plugin-packages          | Upload plugin packages                         | release-please, plugin-package-release, generate-dependency-sbom                                                                  |
-| vex-attest                      | Attest and upload VEX document                 | release-please, generate-dependency-sbom                                                                                          |
-| sbom-diff                       | Compare SBOM changes                           | release-please, generate-dependency-sbom                                                                                          |
-| verify-provenance               | Verify extension, plugin, and VEX attestations | release-please, extension-provenance, upload-plugin-packages, vex-attest                                                          |
-| append-verification-notes       | Append artifact verification instructions      | release-please, extension-provenance, upload-plugin-packages, verify-provenance                                                   |
-| publish-release                 | Finalize GitHub Release                        | release-please, extension-provenance, upload-plugin-packages, vex-attest, verify-provenance, sbom-diff, append-verification-notes |
+| Job                             | Purpose                                                | Dependencies                    |
+|---------------------------------|--------------------------------------------------------|---------------------------------|
+| spell-check                     | Post-merge spelling validation                         | None                            |
+| markdown-lint                   | Post-merge markdown validation                         | None                            |
+| table-format                    | Post-merge table validation                            | None                            |
+| dependency-pinning-scan         | Dependency pinning security check                      | None                            |
+| action-version-consistency-scan | Action version consistency check                       | None                            |
+| gitleaks-scan                   | Secret detection scanning                              | None                            |
+| pester-tests                    | PowerShell unit tests                                  | None                            |
+| docusaurus-tests                | Docs site build and tests                              | None                            |
+| discover-python-projects        | Enumerate Python projects                              | None                            |
+| python-lint                     | Python lint (ruff)                                     | discover-python-projects        |
+| pytest                          | Python unit tests                                      | discover-python-projects        |
+| release-please                  | Maintain the version and changelog preparation PR      | All validation jobs             |
+| sync-release-pr                 | Synchronize every committed version and plugin locator | release-please                  |
+| prepare-promotion               | Verify even version and determine promotion need       | release-please, sync-release-pr |
+| open-promotion-pr               | Open or update the reviewed `main` promotion           | prepare-promotion               |
 
-When release-please creates a release, parallel jobs generate an SBOM (`generate-dependency-sbom`) and package plugin collections (`plugin-package-release`). The `extension-provenance` reusable workflow then builds, signs, and attests the extension VSIX for SLSA Build Level 3, `upload-plugin-packages` uploads collection artifacts, and `sbom-diff` compares dependency changes. The `verify-provenance` job verifies the extension, plugin, and VEX attestations before the release is finalized.
-
-The `vex-attest` job attests the VEX document (`security/vex/hve-core.openvex.json`) twice: a build-provenance attestation of the document, plus an in-toto attestation that binds the VEX statements as a predicate over the dependency SBOM. The `append-verification-notes` job adds artifact verification instructions to the release notes before `publish-release` finalizes the release.
+This workflow never creates a tag or GitHub release. After a human reviews and merges the `main` to `release/stable` promotion, `release-stable-publish.yml` verifies event identity, tree equality, even versioning, tag absence, and one-package consistency before creating immutable Stable evidence and release assets.
 
 ## Security Workflows
 
@@ -279,7 +257,7 @@ The `weekly-security-maintenance.yml` workflow runs every Sunday at 2AM UTC, pro
 
 ## Extension Publishing
 
-The `release-marketplace-stable.yml` and `release-marketplace-prerelease.yml` workflows handle VS Code extension marketplace publishing through manual dispatch. Both workflows use collection-based packaging to produce and publish a separate VSIX per collection.
+The `release-marketplace-stable.yml` and `release-marketplace-prerelease.yml` workflows publish the same HVE Core extension identity. They consume a Stable or PreRelease release tag, package one source-explicit VSIX, and publish it through the corresponding VS Code channel.
 
 ```mermaid
 flowchart TD
@@ -295,39 +273,32 @@ flowchart TD
 
 ### Publishing Jobs
 
-| Job               | Purpose                                                              | Workflow                             |
-|-------------------|----------------------------------------------------------------------|--------------------------------------|
-| normalize-version | Ensure version consistency                                           | `release-marketplace-stable.yml`     |
-| validate-version  | Enforce odd minor version for pre-release channel                    | `release-marketplace-prerelease.yml` |
-| package (matrix)  | Build one VSIX per marketplace package using `extension-package.yml` | Both                                 |
-| publish (matrix)  | Upload each VSIX to VS Code Marketplace via OIDC + vsce              | Both                                 |
+| Job               | Purpose                                                    | Workflow                             |
+|-------------------|------------------------------------------------------------|--------------------------------------|
+| normalize-version | Ensure version consistency                                 | `release-marketplace-stable.yml`     |
+| validate-version  | Enforce odd minor version for pre-release channel          | `release-marketplace-prerelease.yml` |
+| package           | Build the one HVE Core VSIX using `extension-package.yml`  | Both                                 |
+| publish           | Upload the VSIX to VS Code Marketplace via OIDC and `vsce` | Both                                 |
 
-### Marketplace Package Builds
+### Marketplace Build
 
-Marketplace entries define self-contained package subsets. `Get-MarketplacePackageMatrix.ps1` emits sorted package IDs by channel, and `extension-package.yml` prepares and packages each ID as an independent VSIX from the shared resolved projection.
+The one marketplace entry defines the complete active component set. `Get-MarketplacePackageMatrix.ps1` emits exactly one `hve-core` package for either channel, and `extension-package.yml` prepares it from the explicit release source ref and version.
 
-| Collection         | Maturity     | Included In        |
-|--------------------|--------------|--------------------|
-| `hve-core-all`     | Stable       | Stable, PreRelease |
-| `hve-core`         | Stable       | Stable, PreRelease |
-| `ado`              | Stable       | Stable, PreRelease |
-| `github`           | Stable       | Stable, PreRelease |
-| `project-planning` | Stable       | Stable, PreRelease |
-| `coding-standards` | Stable       | Stable, PreRelease |
-| `data-science`     | Stable       | Stable, PreRelease |
-| `security`         | Experimental | Stable, PreRelease |
-| `design-thinking`  | Preview      | Stable, PreRelease |
-| `installer`        | Stable       | Stable, PreRelease |
-| `experimental`     | Experimental | PreRelease only    |
+| Identity   | Stable | PreRelease |
+|------------|--------|------------|
+| `hve-core` | Yes    | Yes        |
 
-Maturity filtering rules:
+Lifecycle inclusion rules:
 
-| Maturity Level | Build Inclusion                                 |
-|----------------|-------------------------------------------------|
-| Deprecated     | Always excluded                                 |
-| Experimental   | Excluded from Stable channel builds             |
-| Preview        | Included in both Stable and PreRelease channels |
-| Stable         | Included in all channel builds                  |
+| Lifecycle Level | Build Inclusion                                 |
+|-----------------|-------------------------------------------------|
+| Deprecated      | Excluded from both channels                     |
+| Removed         | Excluded from both channels                     |
+| Experimental    | Included in both Stable and PreRelease channels |
+| Preview         | Included in both Stable and PreRelease channels |
+| Stable          | Included in both Stable and PreRelease channels |
+
+Lifecycle labels are disclosure and governance metadata. Channel selection does not filter active components.
 
 ### Version Channels
 

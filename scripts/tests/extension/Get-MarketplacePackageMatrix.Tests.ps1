@@ -40,7 +40,6 @@ BeforeAll {
         $names = foreach ($entry in $document.plugins) {
             $maturity = if ($entry.'x-hve'.maturity) { [string]$entry.'x-hve'.maturity } else { 'stable' }
             if ($maturity -in @('deprecated', 'removed')) { continue }
-            if ($Channel -eq 'Stable' -and $maturity -eq 'experimental') { continue }
             [string]$entry.name
         }
         $sorted = [string[]]@($names)
@@ -98,12 +97,12 @@ Describe 'Get-MarketplacePackageMatrixCore' -Tag 'Unit' {
     }
 
     Context 'when selecting eligible packages' {
-        It 'Emits Stable rows without experimental or removed packages' {
-            @($script:FixtureStable.Names) | Should -Be @('hve-core', 'hve-core-all', 'sample')
+        It 'Emits Stable rows that include experimental packages' {
+            @($script:FixtureStable.Names) | Should -Be @('hve-core', 'hve-core-all', 'labs', 'sample')
         }
 
-        It 'Emits PreRelease rows that add experimental packages' {
-            @($script:FixturePreRelease.Names) | Should -Be @('hve-core', 'hve-core-all', 'labs', 'sample')
+        It 'Emits the same rows on both channels' {
+            @($script:FixturePreRelease.Names) | Should -Be @($script:FixtureStable.Names)
         }
 
         It 'Emits a non-empty matrix for both channels' {
@@ -113,7 +112,7 @@ Describe 'Get-MarketplacePackageMatrixCore' -Tag 'Unit' {
 
         It 'Reports every skipped package with its maturity reason' {
             @($script:FixtureStable.Skipped | ForEach-Object { "$($_.Id)=$($_.Reason)" }) |
-                Should -Be @('labs=maturity: experimental', 'retired=maturity: removed')
+                Should -Be @('retired=maturity: removed')
             @($script:FixturePreRelease.Skipped | ForEach-Object { "$($_.Id)=$($_.Reason)" }) |
                 Should -Be @('retired=maturity: removed')
         }
@@ -128,11 +127,11 @@ Describe 'Get-MarketplacePackageMatrixCore' -Tag 'Unit' {
 
         It 'Serializes a compact include array in sorted order' {
             $script:FixtureStable.MatrixJson |
-                Should -BeExactly '{"include":[{"id":"hve-core"},{"id":"hve-core-all"},{"id":"sample"}]}'
+                Should -BeExactly '{"include":[{"id":"hve-core"},{"id":"hve-core-all"},{"id":"labs"},{"id":"sample"}]}'
         }
 
         It 'Serializes names as a JSON array' {
-            $script:FixtureStable.NamesJson | Should -BeExactly '["hve-core","hve-core-all","sample"]'
+            $script:FixtureStable.NamesJson | Should -BeExactly '["hve-core","hve-core-all","labs","sample"]'
         }
     }
 
@@ -176,11 +175,20 @@ Describe 'Get-MarketplacePackageMatrix repository catalog' -Tag 'Unit' {
         @($actual.Names) | Should -Be @($expected)
     }
 
-    It 'Selects a strict Stable subset of the PreRelease packages' {
+    It 'Selects the same packages on both channels' {
         $stable = @((Get-MarketplacePackageMatrixCore -Channel Stable -CatalogPath $script:RepositoryCatalogPath).Names)
         $preRelease = @((Get-MarketplacePackageMatrixCore -Channel PreRelease -CatalogPath $script:RepositoryCatalogPath).Names)
-        foreach ($name in $stable) { $preRelease | Should -Contain $name }
-        @($preRelease | Where-Object { $_ -notin $stable }).Count | Should -BeGreaterThan 0
+        $stable | Should -Be $preRelease
+    }
+
+    It 'Discovers exactly the one hve-core package on <Channel>' -ForEach @(
+        @{ Channel = 'Stable' }
+        @{ Channel = 'PreRelease' }
+    ) {
+        $result = Get-MarketplacePackageMatrixCore -Channel $Channel -CatalogPath $script:RepositoryCatalogPath
+        @($result.Names) | Should -Be @('hve-core')
+        @($result.MatrixItems) | Should -HaveCount 1
+        $result.MatrixJson | Should -BeExactly '{"include":[{"id":"hve-core"}]}'
     }
 }
 
@@ -205,20 +213,20 @@ Describe 'Get-MarketplacePackageMatrix command line' -Tag 'Unit' {
     }
 
     It 'Writes a notice annotation for every skipped package' {
-        $script:CliMessages | Should -Contain '::notice::Skipping labs: maturity: experimental'
         $script:CliMessages | Should -Contain '::notice::Skipping retired: maturity: removed'
     }
 
     It 'Writes no notice annotation for eligible packages' {
         @($script:CliMessages | Where-Object { $_ -like '::notice::Skipping hve-core*' }) | Should -HaveCount 0
+        @($script:CliMessages | Where-Object { $_ -like '::notice::Skipping labs*' }) | Should -HaveCount 0
     }
 
     It 'Publishes the matrix output' {
-        $script:CliOutputLines | Should -Contain 'matrix={"include":[{"id":"hve-core"},{"id":"hve-core-all"},{"id":"sample"}]}'
+        $script:CliOutputLines | Should -Contain 'matrix={"include":[{"id":"hve-core"},{"id":"hve-core-all"},{"id":"labs"},{"id":"sample"}]}'
     }
 
     It 'Publishes the names output for plugin discovery parity' {
-        $script:CliOutputLines | Should -Contain 'names=["hve-core","hve-core-all","sample"]'
+        $script:CliOutputLines | Should -Contain 'names=["hve-core","hve-core-all","labs","sample"]'
     }
 }
 
@@ -236,7 +244,8 @@ Describe 'Package matrix workflow consumers' -Tag 'Unit' {
             'extension-provenance.yml/build-attest'
             'plugin-package.yml/package'
             'release-prerelease.yml/attest-and-upload'
-            'release-stable.yml/upload-plugin-packages'
+            'release-prerelease.yml/upload-plugin-packages'
+            'release-stable-publish.yml/upload-plugin-packages'
         )
     }
 
@@ -250,7 +259,8 @@ Describe 'Package matrix workflow consumers' -Tag 'Unit' {
         @{ Workflow = 'extension-provenance.yml'; Job = 'build-attest' }
         @{ Workflow = 'plugin-package.yml'; Job = 'package' }
         @{ Workflow = 'release-prerelease.yml'; Job = 'attest-and-upload' }
-        @{ Workflow = 'release-stable.yml'; Job = 'upload-plugin-packages' }
+        @{ Workflow = 'release-prerelease.yml'; Job = 'upload-plugin-packages' }
+        @{ Workflow = 'release-stable-publish.yml'; Job = 'upload-plugin-packages' }
     ) {
         $consumer = @($script:Consumers | Where-Object { $_.Workflow -eq $Workflow -and $_.Job -eq $Job })
         $consumer | Should -HaveCount 1

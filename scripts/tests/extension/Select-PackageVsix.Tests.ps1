@@ -50,7 +50,6 @@ Describe 'Select-PackageVsix identity matching' -Tag 'Unit' {
 
     It 'Selects <Expected> for package <PackageId>' -ForEach @(
         @{ PackageId = 'hve-core'; Expected = 'hve-core-3.3.106.vsix' }
-        @{ PackageId = 'hve-core-all'; Expected = 'hve-core-all-3.3.106.vsix' }
         @{ PackageId = 'coding-standards'; Expected = 'hve-coding-standards-3.3.106.vsix' }
         @{ PackageId = 'security'; Expected = 'hve-security-3.3.106.vsix' }
     ) {
@@ -58,12 +57,10 @@ Describe 'Select-PackageVsix identity matching' -Tag 'Unit' {
             Should -BeExactly $Expected
     }
 
-    It 'Keeps hve-core and hve-core-all mutually exclusive' {
-        $core = Select-PackageVsix -AssetDirectory $script:ReleaseDirectory -PackageId 'hve-core'
-        $all = Select-PackageVsix -AssetDirectory $script:ReleaseDirectory -PackageId 'hve-core-all'
-        $core | Should -Not -BeExactly $all
-        Split-Path -Leaf $core | Should -BeExactly 'hve-core-3.3.106.vsix'
-        Split-Path -Leaf $all | Should -BeExactly 'hve-core-all-3.3.106.vsix'
+    It 'Selects one asset when a longer identity shares the hve-core prefix' {
+        $script:ReleaseAssets | Should -Contain 'hve-core-all-3.3.106.vsix'
+        Split-Path -Leaf (Select-PackageVsix -AssetDirectory $script:ReleaseDirectory -PackageId 'hve-core') |
+            Should -BeExactly 'hve-core-3.3.106.vsix'
     }
 
     It 'Returns an absolute path' {

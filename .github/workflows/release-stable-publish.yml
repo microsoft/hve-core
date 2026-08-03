@@ -1,0 +1,652 @@
+# Copyright (c) 2026 Microsoft Corporation. All rights reserved.
+# SPDX-License-Identifier: MIT
+name: Stable Release Publish
+
+# Sole creator of the Stable git tag and GitHub release.
+#
+# It runs only when a reviewed main -> release/stable promotion pull request is
+# merged, and it refuses to write anything until event identity, promoted-head
+# and merge-tree equality, the even minor version, tag absence, and one-package
+# consistency are all proven. Nothing here force-pushes, deletes, or otherwise
+# mutates a source branch.
+
+on:
+    pull_request:
+        types: [closed]
+        branches:
+            - release/stable
+
+concurrency:
+    group: ${{ github.workflow }}-${{ github.event.pull_request.number }}
+    cancel-in-progress: false
+
+permissions:
+    contents: read
+
+jobs:
+    verify-promotion:
+        name: Verify Stable Promotion
+        # Event identity: only a merged, same-repository main -> release/stable
+        # promotion is eligible. head.ref and base.ref are read in conditions only,
+        # never interpolated into a shell body.
+        if: >
+            github.event.pull_request.merged == true
+            && github.event.pull_request.head.ref == 'main'
+            && github.event.pull_request.base.ref == 'release/stable'
+            && github.event.pull_request.head.repo.full_name == github.repository
+        runs-on: ubuntu-latest
+        permissions:
+            contents: read
+        outputs:
+            version: ${{ steps.verify.outputs.version }}
+            tag_name: ${{ steps.verify.outputs.tag_name }}
+            merge_sha: ${{ steps.verify.outputs.merge_sha }}
+            promoted_sha: ${{ steps.verify.outputs.promoted_sha }}
+        steps:
+            - name: Checkout merged promotion
+              uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+              with:
+                  ref: ${{ github.event.pull_request.merge_commit_sha }}
+                  persist-credentials: false
+
+            - name: Verify promotion, tree equality, version, and tag absence
+              id: verify
+              env:
+                  GH_TOKEN: ${{ github.token }}
+                  REPOSITORY: ${{ github.repository }}
+                  MERGE_SHA: ${{ github.event.pull_request.merge_commit_sha }}
+                  PROMOTED_SHA: ${{ github.event.pull_request.head.sha }}
+              run: |
+                  set -euo pipefail
+
+                  if [ -z "$MERGE_SHA" ] || [ -z "$PROMOTED_SHA" ]; then
+                    echo "::error::Promotion event is missing a merge commit or promoted head SHA"
+                    exit 1
+                  fi
+
+                  checked_out=$(git rev-parse HEAD)
+                  if [ "$checked_out" != "$MERGE_SHA" ]; then
+                    echo "::error::Checked-out commit $checked_out is not the merge commit $MERGE_SHA"
+                    exit 1
+                  fi
+
+                  # Tree equality proves the packaged tree is exactly the reviewed main
+                  # head. Ancestry alone would still allow a merge to introduce changes.
+                  merge_tree=$(gh api "/repos/$REPOSITORY/git/commits/$MERGE_SHA" --jq '.tree.sha')
+                  promoted_tree=$(gh api "/repos/$REPOSITORY/git/commits/$PROMOTED_SHA" --jq '.tree.sha')
+                  if [ "$merge_tree" != "$promoted_tree" ]; then
+                    echo "::error::Merge commit tree $merge_tree does not equal promoted main head tree $promoted_tree"
+                    exit 1
+                  fi
+
+                  VERSION=$(jq -r '.version // ""' package.json)
+                  if ! [[ "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+                    echo "::error::Promoted version '$VERSION' is not MAJOR.MINOR.PATCH"
+                    exit 1
+                  fi
+
+                  MINOR=$(echo "$VERSION" | cut -d. -f2)
+                  if (( MINOR % 2 != 0 )); then
+                    echo "::error::Promoted version $VERSION has odd minor ($MINOR); stable releases require an even minor"
+                    exit 1
+                  fi
+
+                  for entry in ".release-please-manifest.json:.\".\"" "extension/templates/package.template.json:.version" ".github/plugin/marketplace.json:.metadata.version"; do
+                    file="${entry%%:*}"
+                    path="${entry#*:}"
+                    actual=$(jq -r "$path" "$file")
+                    if [ "$actual" != "$VERSION" ]; then
+                      echo "::error::$file $path is $actual but the promoted version is $VERSION"
+                      exit 1
+                    fi
+                  done
+
+                  TAG="hve-core-v${VERSION}"
+                  if gh api "/repos/$REPOSITORY/git/refs/tags/$TAG" --silent 2>/dev/null; then
+                    echo "::error::Tag $TAG already exists; stable tags are immutable and are never overwritten"
+                    exit 1
+                  fi
+
+                  {
+                    echo "version=$VERSION"
+                    echo "tag_name=$TAG"
+                    echo "merge_sha=$MERGE_SHA"
+                    echo "promoted_sha=$PROMOTED_SHA"
+                  } >> "$GITHUB_OUTPUT"
+
+                  echo "Verified promotion of $VERSION from $PROMOTED_SHA via $MERGE_SHA"
+
+            - name: Setup PowerShell modules
+              uses: ./.github/actions/setup-ps-modules
+
+            # One-package consistency runs through the shared discovery script so the
+            # publish gate cannot drift from the extension and plugin lanes.
+            - name: Verify one-package consistency
+              shell: pwsh
+              env:
+                  EXPECTED_VERSION: ${{ steps.verify.outputs.version }}
+              run: |
+                  $ErrorActionPreference = 'Stop'
+                  . ./scripts/extension/Get-MarketplacePackageMatrix.ps1
+                  $catalogPath = './.github/plugin/marketplace.json'
+                  foreach ($channel in @('Stable', 'PreRelease')) {
+                    $names = @((Get-MarketplacePackageMatrixCore -Channel $channel -CatalogPath $catalogPath).Names)
+                    if ($names.Count -ne 1) {
+                      throw "Expected exactly one $channel package but found $($names.Count): $($names -join ', ')"
+                    }
+                  }
+                  $catalog = Get-Content -LiteralPath $catalogPath -Raw -Encoding utf8 | ConvertFrom-Json -AsHashtable
+                  foreach ($entry in @($catalog['plugins'])) {
+                    $expectedRef = "plugins-v$env:EXPECTED_VERSION"
+                    if ([string]$entry['source']['ref'] -cne $expectedRef) {
+                      throw "Catalog plugin '$($entry['name'])' pins source ref '$($entry['source']['ref'])' but the release requires '$expectedRef'"
+                    }
+                  }
+                  Write-Host "Verified one package and matching immutable plugin locator plugins-v$env:EXPECTED_VERSION"
+
+    create-release:
+        name: Create Stable Tag and Release
+        needs: [verify-promotion]
+        runs-on: ubuntu-latest
+        permissions:
+            contents: write
+        steps:
+            - name: Checkout merged promotion
+              uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+              with:
+                  ref: ${{ needs.verify-promotion.outputs.merge_sha }}
+                  persist-credentials: false
+
+            - name: Create immutable stable tag
+              env:
+                  GH_TOKEN: ${{ github.token }}
+                  REPOSITORY: ${{ github.repository }}
+                  TAG: ${{ needs.verify-promotion.outputs.tag_name }}
+                  MERGE_SHA: ${{ needs.verify-promotion.outputs.merge_sha }}
+              run: |
+                  set -euo pipefail
+                  # Reference creation is atomic and fails when the tag already exists,
+                  # so this can never overwrite a published stable tag.
+                  gh api "/repos/$REPOSITORY/git/refs" \
+                    -f "ref=refs/tags/$TAG" \
+                    -f "sha=$MERGE_SHA"
+                  echo "Created $TAG -> $MERGE_SHA"
+
+            - name: Create draft GitHub release
+              env:
+                  GH_TOKEN: ${{ github.token }}
+                  REPOSITORY: ${{ github.repository }}
+                  TAG: ${{ needs.verify-promotion.outputs.tag_name }}
+                  VERSION: ${{ needs.verify-promotion.outputs.version }}
+              run: |
+                  set -euo pipefail
+                  awk -v ver="$VERSION" '
+                    index($0, "## [" ver "]") == 1 { flag = 1; next }
+                    flag && index($0, "## [") == 1 { exit }
+                    flag { print }
+                  ' CHANGELOG.md > release-notes.md
+
+                  if [ -s release-notes.md ]; then
+                    gh release create "$TAG" \
+                      --title "hve-core $VERSION" \
+                      --draft \
+                      --notes-file release-notes.md \
+                      -R "$REPOSITORY"
+                  else
+                    gh release create "$TAG" \
+                      --title "hve-core $VERSION" \
+                      --draft \
+                      --generate-notes \
+                      -R "$REPOSITORY"
+                  fi
+
+    close-milestone:
+        name: Close Release Milestone
+        needs: [verify-promotion, create-release]
+        runs-on: ubuntu-latest
+        permissions:
+            issues: write
+        steps:
+            - name: Close milestone for released version
+              env:
+                  GH_TOKEN: ${{ github.token }}
+                  REPOSITORY: ${{ github.repository }}
+                  VERSION: ${{ needs.verify-promotion.outputs.version }}
+              run: |
+                  set -euo pipefail
+                  MAJOR=$(echo "$VERSION" | cut -d. -f1)
+                  MINOR=$(echo "$VERSION" | cut -d. -f2)
+                  TITLE="v${MAJOR}.${MINOR}.0"
+                  NUMBER=$(gh api "/repos/$REPOSITORY/milestones?state=open&per_page=100" \
+                    --jq ".[] | select(.title == \"$TITLE\") | .number")
+                  if [ -n "$NUMBER" ]; then
+                    gh api "/repos/$REPOSITORY/milestones/$NUMBER" \
+                      -X PATCH -f state=closed
+                    echo "✅ Closed milestone $TITLE (#$NUMBER)"
+                  else
+                    echo "ℹ️ No open milestone found matching '$TITLE' — skipping"
+                  fi
+
+    extension-provenance:
+        name: Package and Attest VS Code Extensions (Release)
+        needs: [verify-promotion, create-release, generate-dependency-sbom]
+        uses: ./.github/workflows/extension-provenance.yml
+        with:
+            source-ref: ${{ needs.verify-promotion.outputs.merge_sha }}
+            version: ${{ needs.verify-promotion.outputs.version }}
+            channel: Stable
+            release-tag: ${{ needs.verify-promotion.outputs.tag_name }}
+        permissions:
+            contents: write
+            id-token: write
+            attestations: write
+            artifact-metadata: write
+
+    plugin-package-release:
+        name: Package Plugins (Release)
+        needs: [verify-promotion, create-release]
+        uses: ./.github/workflows/plugin-package.yml
+        with:
+            source-ref: ${{ needs.verify-promotion.outputs.merge_sha }}
+            version: ${{ needs.verify-promotion.outputs.version }}
+        permissions:
+            contents: read
+
+    generate-dependency-sbom:
+        name: Generate Dependency SBOM
+        needs: [verify-promotion, create-release]
+        runs-on: ubuntu-latest
+        permissions:
+            # write required for gh release upload to attach SBOM to the release
+            contents: write
+        steps:
+            - name: Checkout dependency manifests
+              uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+              with:
+                  ref: ${{ needs.verify-promotion.outputs.merge_sha }}
+                  sparse-checkout: |
+                      package.json
+                      package-lock.json
+                      .syft.yaml
+                  sparse-checkout-cone-mode: false
+                  persist-credentials: false
+
+            - name: Generate dependency SBOM
+              uses: anchore/sbom-action@e22c389904149dbc22b58101806040fa8d37a610 # v0.24.0
+              with:
+                  path: .
+                  format: spdx-json
+                  output-file: dependencies.spdx.json
+                  upload-release-assets: false
+                  upload-artifact: false
+                  config: .syft.yaml
+                  dependency-snapshot: true
+
+            - name: Upload dependency SBOM artifact
+              uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+              with:
+                  name: sbom-dependencies
+                  path: dependencies.spdx.json
+
+            - name: Upload dependency SBOM to release
+              env:
+                  GH_TOKEN: ${{ github.token }}
+                  REPOSITORY: ${{ github.repository }}
+                  TAG: ${{ needs.verify-promotion.outputs.tag_name }}
+              run: |
+                  set -euo pipefail
+                  gh release upload "$TAG" \
+                    "dependencies.spdx.json" \
+                    --clobber -R "$REPOSITORY"
+
+    upload-plugin-packages:
+        name: Attest and Upload Plugin (${{ matrix.id }})
+        needs:
+            [verify-promotion, plugin-package-release, generate-dependency-sbom]
+        runs-on: ubuntu-latest
+        strategy:
+            fail-fast: false
+            matrix: ${{ fromJson(needs.plugin-package-release.outputs.packages-matrix) }}
+        permissions:
+            contents: write
+            id-token: write
+            attestations: write
+            artifact-metadata: write
+        steps:
+            - name: Checkout Syft config
+              uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+              with:
+                  ref: ${{ needs.verify-promotion.outputs.merge_sha }}
+                  sparse-checkout: .syft.yaml
+                  sparse-checkout-cone-mode: false
+                  persist-credentials: false
+
+            - name: Download dependency SBOM
+              uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+              with:
+                  name: sbom-dependencies
+                  path: ./sbom
+
+            - name: Download plugin artifact
+              uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+              with:
+                  name: plugin-package-${{ matrix.id }}
+                  path: ./dist/plugins
+
+            - name: Verify plugin archive exists
+              run: |
+                  PLUGIN_ARCHIVE="dist/plugins/${{ matrix.id }}.zip"
+                  if [ ! -f "$PLUGIN_ARCHIVE" ]; then
+                    echo "::error::Plugin archive not found for package ${{ matrix.id }}"
+                    exit 1
+                  fi
+
+            - name: Generate SBOM
+              uses: anchore/sbom-action@e22c389904149dbc22b58101806040fa8d37a610 # v0.24.0
+              with:
+                  file: dist/plugins/${{ matrix.id }}.zip
+                  format: spdx-json
+                  output-file: dist/plugins/${{ matrix.id }}.zip.spdx.json
+                  artifact-name: sbom-plugin-${{ matrix.id }}
+                  upload-release-assets: false
+                  upload-artifact: true
+                  config: .syft.yaml
+
+            - name: Verify SBOM files exist
+              run: |
+                  test -f "dist/plugins/${{ matrix.id }}.zip.spdx.json" \
+                    || { echo "::error::Per-plugin SBOM not found: dist/plugins/${{ matrix.id }}.zip.spdx.json"; exit 1; }
+                  test -f "sbom/dependencies.spdx.json" \
+                    || { echo "::error::Dependency SBOM not found: sbom/dependencies.spdx.json"; exit 1; }
+
+            - name: Attest build provenance
+              id: attest
+              uses: actions/attest-build-provenance@0f67c3f4856b2e3261c31976d6725780e5e4c373 # v4.1.1
+              with:
+                  subject-path: dist/plugins/${{ matrix.id }}.zip
+
+            - name: Attest SBOM
+              uses: actions/attest@f7c74d28b9d84cb8768d0b8ca14a4bac6ef463e6 # v4.2.0
+              with:
+                  subject-path: dist/plugins/${{ matrix.id }}.zip
+                  sbom-path: dist/plugins/${{ matrix.id }}.zip.spdx.json
+
+            - name: Attest dependency SBOM
+              uses: actions/attest@f7c74d28b9d84cb8768d0b8ca14a4bac6ef463e6 # v4.2.0
+              with:
+                  subject-path: dist/plugins/${{ matrix.id }}.zip
+                  sbom-path: sbom/dependencies.spdx.json
+
+            - name: Upload assets to GitHub Release
+              env:
+                  GH_TOKEN: ${{ github.token }}
+                  REPOSITORY: ${{ github.repository }}
+                  TAG: ${{ needs.verify-promotion.outputs.tag_name }}
+                  BUNDLE_PATH: ${{ steps.attest.outputs.bundle-path }}
+              run: |
+                  set -euo pipefail
+                  cp "$BUNDLE_PATH" \
+                    "dist/plugins/${{ matrix.id }}.zip.sigstore.json"
+                  jq -c '.dsseEnvelope' "$BUNDLE_PATH" > \
+                    "dist/plugins/${{ matrix.id }}.zip.intoto.jsonl"
+                  gh release upload "$TAG" \
+                    "dist/plugins/${{ matrix.id }}.zip" \
+                    "dist/plugins/${{ matrix.id }}.zip.spdx.json" \
+                    "dist/plugins/${{ matrix.id }}.zip.sigstore.json" \
+                    "dist/plugins/${{ matrix.id }}.zip.intoto.jsonl" \
+                    --clobber -R "$REPOSITORY"
+
+    vex-attest:
+        name: Attest and Upload VEX
+        needs: [verify-promotion, create-release, generate-dependency-sbom]
+        uses: ./.github/workflows/vex-attest.yml
+        with:
+            version: ${{ needs.verify-promotion.outputs.tag_name }}
+            sbom-artifact: sbom-dependencies
+        permissions:
+            contents: write
+            id-token: write
+            attestations: write
+            artifact-metadata: write
+
+    verify-provenance:
+        name: Verify Provenance
+        needs:
+            [
+                verify-promotion,
+                extension-provenance,
+                upload-plugin-packages,
+                vex-attest,
+            ]
+        runs-on: ubuntu-latest
+        permissions:
+            contents: read
+            attestations: read
+        steps:
+            - name: Checkout verification script
+              uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+              with:
+                  ref: ${{ needs.verify-promotion.outputs.merge_sha }}
+                  persist-credentials: false
+
+            - name: Download release artifacts
+              env:
+                  GH_TOKEN: ${{ github.token }}
+                  RELEASE_TAG: ${{ needs.verify-promotion.outputs.tag_name }}
+                  REPOSITORY: ${{ github.repository }}
+              run: |
+                  set -euo pipefail
+                  mkdir -p ./artifacts
+                  gh release download "$RELEASE_TAG" \
+                    -R "$REPOSITORY" \
+                    -p '*.vsix' \
+                    -p '*.zip' \
+                    -p 'hve-core.openvex.json' \
+                    -D ./artifacts
+
+            - name: Verify build provenance
+              shell: pwsh
+              env:
+                  GH_TOKEN: ${{ github.token }}
+                  ARTIFACT_DIRECTORY: ./artifacts
+                  REPOSITORY: ${{ github.repository }}
+              run: |
+                  & ./scripts/release/Invoke-ProvenanceVerification.ps1 -ArtifactDirectory $env:ARTIFACT_DIRECTORY -Repository $env:REPOSITORY
+
+    sbom-diff:
+        name: SBOM Dependency Diff
+        needs: [verify-promotion, create-release, generate-dependency-sbom]
+        runs-on: ubuntu-latest
+        continue-on-error: true
+        permissions:
+            contents: write
+        steps:
+            - name: Download current dependency SBOM
+              uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+              with:
+                  name: sbom-dependencies
+                  path: ./current
+
+            - name: Verify current dependency SBOM
+              run: |
+                  test -f "current/dependencies.spdx.json" \
+                    || { echo "::error::Current dependency SBOM not found in artifact"; exit 1; }
+
+            - name: Download previous release dependency SBOM
+              id: previous
+              env:
+                  GH_TOKEN: ${{ github.token }}
+                  REPOSITORY: ${{ github.repository }}
+              run: |
+                  set -euo pipefail
+                  PREV_TAG=$(gh api "/repos/$REPOSITORY/releases/latest" --jq '.tag_name' 2>/dev/null || echo "")
+                  if [ -z "$PREV_TAG" ]; then
+                    echo "No previous release found"
+                    echo "found=false" >> "$GITHUB_OUTPUT"
+                    exit 0
+                  fi
+                  echo "Previous release: $PREV_TAG"
+                  echo "tag=$PREV_TAG" >> "$GITHUB_OUTPUT"
+                  mkdir -p previous
+                  if gh release download "$PREV_TAG" -R "$REPOSITORY" -p "dependencies.spdx.json" -D previous 2>/dev/null; then
+                    echo "found=true" >> "$GITHUB_OUTPUT"
+                  else
+                    echo "Previous release has no dependency SBOM"
+                    echo "found=false" >> "$GITHUB_OUTPUT"
+                  fi
+
+            - name: Generate dependency diff
+              if: ${{ steps.previous.outputs.found == 'true' }}
+              run: |
+                  python3 <<'PYTHON'
+                  import json
+                  import pathlib
+
+                  def load_packages(path):
+                      with open(path) as f:
+                          data = json.load(f)
+                      root_ids = set(data.get('documentDescribes', []))
+                      pkgs = {}
+                      for p in data.get('packages', []):
+                          if p.get('SPDXID', '') in root_ids:
+                              continue
+                          name = p.get('name', 'unknown')
+                          version = p.get('versionInfo', 'unknown')
+                          pkgs[name] = version
+                      return pkgs
+
+                  current = load_packages('current/dependencies.spdx.json')
+                  previous = load_packages('previous/dependencies.spdx.json')
+
+                  added = {k: v for k, v in current.items() if k not in previous}
+                  removed = {k: v for k, v in previous.items() if k not in current}
+                  changed = {
+                      k: (previous[k], current[k])
+                      for k in current
+                      if k in previous and current[k] != previous[k]
+                  }
+
+                  lines = ['# Dependency SBOM Diff', '']
+                  if not added and not removed and not changed:
+                      lines.append('No dependency changes detected.')
+                  else:
+                      if added:
+                          lines.extend(['## Added', '', '| Package | Version |', '|---------|---------|'])
+                          for name in sorted(added):
+                              lines.append(f'| {name} | {added[name]} |')
+                          lines.append('')
+                      if removed:
+                          lines.extend(['## Removed', '', '| Package | Version |', '|---------|---------|'])
+                          for name in sorted(removed):
+                              lines.append(f'| {name} | {removed[name]} |')
+                          lines.append('')
+                      if changed:
+                          lines.extend([
+                              '## Version Changes', '',
+                              '| Package | Previous | Current |',
+                              '|---------|----------|---------|',
+                          ])
+                          for name in sorted(changed):
+                              old, new = changed[name]
+                              lines.append(f'| {name} | {old} | {new} |')
+                          lines.append('')
+
+                  lines.extend(['', '_Generated from SPDX JSON dependency SBOMs._', ''])
+                  pathlib.Path('dependency-diff.md').write_text('\n'.join(lines))
+                  count = len(added) + len(removed) + len(changed)
+                  print(f'Diff: {len(added)} added, {len(removed)} removed, {len(changed)} changed')
+                  PYTHON
+
+            - name: Upload diff to GitHub Release
+              if: ${{ steps.previous.outputs.found == 'true' }}
+              env:
+                  GH_TOKEN: ${{ github.token }}
+                  REPOSITORY: ${{ github.repository }}
+                  TAG: ${{ needs.verify-promotion.outputs.tag_name }}
+              run: |
+                  set -euo pipefail
+                  gh release upload "$TAG" \
+                    "dependency-diff.md" \
+                    --clobber -R "$REPOSITORY"
+
+    append-verification-notes:
+        name: Append Verification Instructions
+        needs:
+            [
+                verify-promotion,
+                extension-provenance,
+                upload-plugin-packages,
+                verify-provenance,
+            ]
+        runs-on: ubuntu-latest
+        permissions:
+            contents: write
+        steps:
+            - name: Append verification section to release notes
+              env:
+                  GH_TOKEN: ${{ github.token }}
+                  REPOSITORY: ${{ github.repository }}
+                  TAG: ${{ needs.verify-promotion.outputs.tag_name }}
+              run: |
+                  set -euo pipefail
+                  gh release view "$TAG" --json body --jq '.body' -R "$REPOSITORY" > notes.md
+                  cat >> notes.md <<'EOF'
+
+                  ## Verifying Downloads
+
+                  All release assets include [Sigstore](https://www.sigstore.dev/) build-provenance
+                  attestations generated by GitHub Actions. Verify any downloaded asset with the
+                  GitHub CLI:
+
+                  ```bash
+                  # Verify a VSIX extension package
+                  gh attestation verify <file>.vsix --repo microsoft/hve-core
+
+                  # Verify a plugin ZIP package
+                  gh attestation verify <file>.zip --repo microsoft/hve-core
+                  ```
+
+                  ## VEX (Vulnerability Exploitability eXchange)
+
+                  This release includes a foundational [OpenVEX](https://openvex.dev/) document
+                  (`hve-core.openvex.json`). It establishes the signed, attested VEX artifact that future
+                  releases populate with per-CVE exploitability statements. Until statements are added, the
+                  document carries no vulnerability assessments and is not authoritative triage. Once
+                  populated, use it alongside the SBOM to filter false positives in vulnerability scanners:
+
+                  ```bash
+                  # Verify VEX attestation
+                  gh attestation verify hve-core.openvex.json --repo microsoft/hve-core
+                  ```
+
+                  See [SECURITY.md](https://github.com/microsoft/hve-core/blob/main/SECURITY.md)
+                  for full supply-chain verification details including SBOM and VEX validation.
+                  EOF
+                  gh release edit "$TAG" --notes-file notes.md -R "$REPOSITORY"
+
+    publish-release:
+        name: Publish GitHub Release
+        needs:
+            [
+                verify-promotion,
+                extension-provenance,
+                upload-plugin-packages,
+                vex-attest,
+                verify-provenance,
+                sbom-diff,
+                append-verification-notes,
+            ]
+        runs-on: ubuntu-latest
+        permissions:
+            contents: write
+        steps:
+            - name: Publish GitHub Release
+              env:
+                  GH_TOKEN: ${{ github.token }}
+                  REPOSITORY: ${{ github.repository }}
+                  TAG: ${{ needs.verify-promotion.outputs.tag_name }}
+              run: |
+                  set -euo pipefail
+                  # Promote draft to published. The release becomes immutable
+                  # after publish with all assets already attached.
+                  gh release edit "$TAG" --draft=false -R "$REPOSITORY"

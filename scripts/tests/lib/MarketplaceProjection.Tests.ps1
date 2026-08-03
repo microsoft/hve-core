@@ -25,10 +25,11 @@ Describe 'Get-MarketplaceEntryOverlayValue' -Tag 'Unit' {
             Should -BeExactly 'preview'
     }
 
-    It 'Distinguishes a declared false value from an absent key' {
-        $value = Get-MarketplaceEntryOverlayValue -Entry @{ name = 'demo'; 'x-hve' = @{ aggregate = $false } } -Key 'aggregate'
-        $value -is [bool] | Should -BeTrue
-        $value | Should -BeFalse
+    It 'Distinguishes a declared empty value from an absent key' {
+        $value = Get-MarketplaceEntryOverlayValue -Entry @{ name = 'demo'; 'x-hve' = @{ displayName = '' } } -Key 'displayName'
+        $value -is [string] | Should -BeTrue
+        $value | Should -BeExactly ''
+        Get-MarketplaceEntryOverlayValue -Entry @{ name = 'demo'; 'x-hve' = @{} } -Key 'displayName' | Should -BeNullOrEmpty
     }
 
     It 'Returns the componentMaturity dictionary intact' {
@@ -71,7 +72,7 @@ Describe 'Test-MarketplaceEntryEligible' -Tag 'Unit' {
         @{ Maturity = 'stable'; Channel = 'PreRelease'; Expected = $true }
         @{ Maturity = 'preview'; Channel = 'Stable'; Expected = $true }
         @{ Maturity = 'preview'; Channel = 'PreRelease'; Expected = $true }
-        @{ Maturity = 'experimental'; Channel = 'Stable'; Expected = $false }
+        @{ Maturity = 'experimental'; Channel = 'Stable'; Expected = $true }
         @{ Maturity = 'experimental'; Channel = 'PreRelease'; Expected = $true }
         @{ Maturity = 'deprecated'; Channel = 'Stable'; Expected = $false }
         @{ Maturity = 'deprecated'; Channel = 'PreRelease'; Expected = $false }
@@ -80,6 +81,18 @@ Describe 'Test-MarketplaceEntryEligible' -Tag 'Unit' {
     ) {
         $entry = @{ name = 'demo'; 'x-hve' = @{ maturity = $Maturity } }
         Test-MarketplaceEntryEligible -Entry $entry -Channel $Channel | Should -Be $Expected
+    }
+
+    It 'Resolves <Maturity> identically on both channels' -ForEach @(
+        @{ Maturity = 'stable' }
+        @{ Maturity = 'preview' }
+        @{ Maturity = 'experimental' }
+        @{ Maturity = 'deprecated' }
+        @{ Maturity = 'removed' }
+    ) {
+        $entry = @{ name = 'demo'; 'x-hve' = @{ maturity = $Maturity } }
+        Test-MarketplaceEntryEligible -Entry $entry -Channel 'Stable' |
+            Should -Be (Test-MarketplaceEntryEligible -Entry $entry -Channel 'PreRelease')
     }
 
     It 'Treats an undeclared package maturity as stable on <Channel>' -ForEach @(
@@ -125,16 +138,22 @@ Describe 'Get-MarketplacePackageRecipe component maturity filtering' -Tag 'Unit'
         $script:MatrixEntry.agents.Count | Should -Be 6
     }
 
-    It 'Keeps only stable components on the Stable channel' {
-        $script:StableRecipe.Count | Should -Be 2
+    It 'Keeps stable, preview, and experimental components on the Stable channel' {
+        $script:StableRecipe.Count | Should -Be 4
         ($script:StableRecipe.PackagePath | Sort-Object) -join '|' |
-            Should -BeExactly 'agents/demo/declared-stable.md|agents/demo/undeclared.md'
+            Should -BeExactly 'agents/demo/declared-experimental.md|agents/demo/declared-preview.md|agents/demo/declared-stable.md|agents/demo/undeclared.md'
     }
 
     It 'Keeps stable, preview, and experimental components on the PreRelease channel' {
         $script:PreReleaseRecipe.Count | Should -Be 4
         ($script:PreReleaseRecipe.PackagePath | Sort-Object) -join '|' |
             Should -BeExactly 'agents/demo/declared-experimental.md|agents/demo/declared-preview.md|agents/demo/declared-stable.md|agents/demo/undeclared.md'
+    }
+
+    It 'Resolves the same components and maturity on both channels' {
+        $stable = @($script:StableRecipe | Sort-Object PackagePath | ForEach-Object { "$($_.PackagePath)=$($_.Maturity)" })
+        $preRelease = @($script:PreReleaseRecipe | Sort-Object PackagePath | ForEach-Object { "$($_.PackagePath)=$($_.Maturity)" })
+        ($stable -join '|') | Should -BeExactly ($preRelease -join '|')
     }
 
     It 'Excludes deprecated and removed components from both channels' {
@@ -161,7 +180,7 @@ Describe 'Get-MarketplacePackageRecipe component maturity filtering' -Tag 'Unit'
 
     It 'Resolves every surviving component to its canonical source' {
         $sources = @($script:StableRecipe | ForEach-Object { $_.SourcePath } | Sort-Object)
-        $sources -join '|' | Should -BeExactly '.github/agents/demo/declared-stable.agent.md|.github/agents/demo/undeclared.agent.md'
+        $sources -join '|' | Should -BeExactly '.github/agents/demo/declared-experimental.agent.md|.github/agents/demo/declared-preview.agent.md|.github/agents/demo/declared-stable.agent.md|.github/agents/demo/undeclared.agent.md'
     }
 }
 

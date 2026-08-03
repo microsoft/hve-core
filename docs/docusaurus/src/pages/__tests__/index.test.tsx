@@ -53,17 +53,17 @@ describe('Home page', () => {
     expect(cta).toHaveAttribute('href', '/docs/getting-started/packages');
   });
 
-  it('renders one package card per declared package', () => {
+  it('renders exactly one package card for the hve-core identity', () => {
     const { container } = render(<Home />);
 
     const section = container.querySelector('[aria-labelledby="packages-title"]');
     const cards = section?.querySelectorAll('article[data-name]') ?? [];
-    expect(Array.from(cards).map((card) => card.getAttribute('data-name'))).toEqual(
-      packageCardDefinitions.map((definition) => definition.name),
-    );
+    const names = Array.from(cards).map((card) => card.getAttribute('data-name'));
+    expect(names).toEqual(packageCardDefinitions.map((definition) => definition.name));
+    expect(names).toEqual(['hve-core']);
   });
 
-  it('points every package card at the packages route', () => {
+  it('points the package card at the packages route', () => {
     const { container } = render(<Home />);
 
     const section = container.querySelector('[aria-labelledby="packages-title"]');

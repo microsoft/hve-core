@@ -60,10 +60,10 @@ Describe 'New-PluginDocumentationBlock' -Tag 'Unit' {
 
         $script:blockItems = @(
             @{ Kind = 'hook'; SourcePath = '.github/hooks/rpi/telemetry.json' }
-            @{ Kind = 'skill'; SourcePath = '.github/skills/rpi/rpi-plan' }
-            @{ Kind = 'instruction'; SourcePath = '.github/instructions/shared/hve-core-location.instructions.md' }
-            @{ Kind = 'prompt'; SourcePath = '.github/prompts/rpi/rpi-plan.prompt.md' }
-            @{ Kind = 'agent'; SourcePath = '.github/agents/rpi/rpi-planner.agent.md' }
+            @{ Kind = 'skill'; SourcePath = '.github/skills/rpi/rpi-plan'; Maturity = 'stable' }
+            @{ Kind = 'instruction'; SourcePath = '.github/instructions/shared/hve-core-location.instructions.md'; Maturity = 'preview' }
+            @{ Kind = 'prompt'; SourcePath = '.github/prompts/rpi/rpi-plan.prompt.md'; Maturity = 'experimental' }
+            @{ Kind = 'agent'; SourcePath = '.github/agents/rpi/rpi-planner.agent.md'; Maturity = 'stable' }
         )
         $script:documentationBlock = New-PluginDocumentationBlock -Items $script:blockItems -RepoRoot $script:blockRepo
     }
@@ -73,33 +73,33 @@ Describe 'New-PluginDocumentationBlock' -Tag 'Unit' {
             $script:documentationBlock | Should -BeExactly (@(
                     '### Chat Agents'
                     ''
-                    '| Name | Description |'
-                    '|------|-------------|'
-                    '| **rpi-planner** | Plans RPI work |'
+                    '| Name | Maturity | Description |'
+                    '|------|----------|-------------|'
+                    '| **rpi-planner** | stable | Plans RPI work |'
                     ''
                     '### Prompts'
                     ''
-                    '| Name | Description |'
-                    '|------|-------------|'
-                    '| **rpi-plan** | Creates an RPI plan |'
+                    '| Name | Maturity | Description |'
+                    '|------|----------|-------------|'
+                    '| **rpi-plan** | experimental | Creates an RPI plan |'
                     ''
                     '### Instructions'
                     ''
-                    '| Name | Description |'
-                    '|------|-------------|'
-                    '| **shared/hve-core-location** | Locates hve-core artifacts |'
+                    '| Name | Maturity | Description |'
+                    '|------|----------|-------------|'
+                    '| **shared/hve-core-location** | preview | Locates hve-core artifacts |'
                     ''
                     '### Skills'
                     ''
-                    '| Name | Description |'
-                    '|------|-------------|'
-                    '| **rpi-plan** | Builds evidence-based plans |'
+                    '| Name | Maturity | Description |'
+                    '|------|----------|-------------|'
+                    '| **rpi-plan** | stable | Builds evidence-based plans |'
                     ''
                     '### Hooks'
                     ''
-                    '| Name | Description |'
-                    '|------|-------------|'
-                    '| **telemetry** | Records RPI telemetry |'
+                    '| Name | Maturity | Description |'
+                    '|------|----------|-------------|'
+                    '| **telemetry** | stable | Records RPI telemetry |'
                 ) -join "`n")
         }
 
@@ -109,7 +109,13 @@ Describe 'New-PluginDocumentationBlock' -Tag 'Unit' {
         }
 
         It 'Reads a skill description from its SKILL.md rather than its directory' {
-            $script:documentationBlock | Should -Match '\| \*\*rpi-plan\*\* \| Builds evidence-based plans \|'
+            $script:documentationBlock | Should -Match '\| \*\*rpi-plan\*\* \| stable \| Builds evidence-based plans \|'
+        }
+
+        It 'Discloses every canonical lifecycle label present in the recipe' {
+            foreach ($label in @('stable', 'preview', 'experimental')) {
+                $script:documentationBlock | Should -Match "(?m)^\| \*\*[^|]+\*\* \| $label \|"
+            }
         }
     }
 
@@ -131,15 +137,15 @@ Describe 'Update-PluginDocumentationSource' -Tag 'Unit' {
         New-PluginFixtureRepository -Path $script:documentRepo -Version '9.9.9' | Out-Null
         Add-PluginFixtureArtifactSet -RepoRoot $script:documentRepo | Out-Null
         $script:documentItems = @(
-            @{ Kind = 'agent'; SourcePath = '.github/agents/rpi/rpi-planner.agent.md' }
+            @{ Kind = 'agent'; SourcePath = '.github/agents/rpi/rpi-planner.agent.md'; Maturity = 'stable' }
         )
         $script:documentPath = Join-Path $script:documentRepo 'docs/plugins/rpi.md'
         $script:expectedBlock = @(
             '### Chat Agents'
             ''
-            '| Name | Description |'
-            '|------|-------------|'
-            '| **rpi-planner** | Plans RPI work |'
+            '| Name | Maturity | Description |'
+            '|------|----------|-------------|'
+            '| **rpi-planner** | stable | Plans RPI work |'
         ) -join "`n"
     }
 
@@ -502,7 +508,7 @@ Describe 'Invoke-PluginGeneration' -Tag 'Unit' {
         }
     }
 
-    Context 'when a component maturity restricts a release channel' {
+    Context 'when a component declares a non-stable maturity' {
         BeforeEach {
             New-PluginFixtureRepository -Path $script:generatorRepo -Version '9.9.9' | Out-Null
             Add-PluginFixtureArtifactSet -RepoRoot $script:generatorRepo | Out-Null
@@ -515,14 +521,12 @@ Describe 'Invoke-PluginGeneration' -Tag 'Unit' {
             ) | Out-Null
         }
 
-        It 'Excludes the experimental component on the Stable channel' {
-            Invoke-PluginGeneration -RepoRoot $script:generatorRepo -Refresh -Channel Stable | Out-Null
+        It 'Includes the experimental component on the <Channel> channel' -ForEach @(
+            @{ Channel = 'Stable' }
+            @{ Channel = 'PreRelease' }
+        ) {
+            Invoke-PluginGeneration -RepoRoot $script:generatorRepo -Refresh -Channel $Channel | Out-Null
             Test-Path -LiteralPath (Join-Path $script:generatorRepo 'plugins/rpi/skills/rpi/rpi-plan/SKILL.md') -PathType Leaf | Should -BeTrue
-            Test-Path -LiteralPath (Join-Path $script:generatorRepo 'plugins/rpi/skills/rpi/rpi-lab') | Should -BeFalse
-        }
-
-        It 'Includes the experimental component on the PreRelease channel' {
-            Invoke-PluginGeneration -RepoRoot $script:generatorRepo -Refresh -Channel PreRelease | Out-Null
             Test-Path -LiteralPath (Join-Path $script:generatorRepo 'plugins/rpi/skills/rpi/rpi-lab/SKILL.md') -PathType Leaf | Should -BeTrue
         }
     }
@@ -542,6 +546,55 @@ Describe 'Invoke-PluginGeneration' -Tag 'Unit' {
 
         It 'Removes the directory the orphan left empty' {
             Test-Path -LiteralPath (Join-Path $script:generatorRepo 'plugins/rpi/stale') | Should -BeFalse
+        }
+    }
+
+    Context 'when a package is dropped from the catalog' {
+        BeforeEach {
+            New-GeneratorFixture -Root $script:generatorRepo -Entries @(
+                New-RpiEntry -Name 'hve-core'
+                New-RpiEntry -Name 'ado'
+                New-RpiEntry -Name 'security'
+            ) | Out-Null
+            Invoke-PluginGeneration -RepoRoot $script:generatorRepo -Refresh | Out-Null
+
+            Add-PluginFixtureCatalog -RepoRoot $script:generatorRepo -Version '9.9.9' -Entries @(
+                New-RpiEntry -Name 'hve-core'
+            ) | Out-Null
+        }
+
+        It 'Leaves only the declared package root' {
+            Invoke-PluginGeneration -RepoRoot $script:generatorRepo -Refresh | Out-Null
+            @(Get-ChildItem -LiteralPath (Join-Path $script:generatorRepo 'plugins') -Directory | ForEach-Object { $_.Name } | Sort-Object) |
+                Should -Be @('hve-core')
+        }
+
+        It 'Converges on repeated generation' {
+            Invoke-PluginGeneration -RepoRoot $script:generatorRepo -Refresh | Out-Null
+            Invoke-PluginGeneration -RepoRoot $script:generatorRepo -Refresh | Out-Null
+            @(Get-ChildItem -LiteralPath (Join-Path $script:generatorRepo 'plugins') -Directory | ForEach-Object { $_.Name }) |
+                Should -Be @('hve-core')
+        }
+
+        It 'Removes a stale root that was never declared' {
+            $undeclared = Join-Path $script:generatorRepo 'plugins/hve-core-all/plugin.json'
+            New-Item -ItemType Directory -Path (Split-Path -Parent $undeclared) -Force | Out-Null
+            Set-Content -LiteralPath $undeclared -Value "{}`n" -Encoding utf8NoBOM -NoNewline
+            Invoke-PluginGeneration -RepoRoot $script:generatorRepo -Refresh | Out-Null
+            Test-Path -LiteralPath (Join-Path $script:generatorRepo 'plugins/hve-core-all') | Should -BeFalse
+        }
+
+        It 'Preserves a stale root when generating a named subset' {
+            Invoke-PluginGeneration -RepoRoot $script:generatorRepo -Refresh -PackageNames 'hve-core' | Out-Null
+            @(Get-ChildItem -LiteralPath (Join-Path $script:generatorRepo 'plugins') -Directory | ForEach-Object { $_.Name } | Sort-Object) |
+                Should -Be @('ado', 'hve-core', 'security')
+        }
+
+        It 'Reports the stale roots without deleting them on a dry run' {
+            Invoke-PluginGeneration -RepoRoot $script:generatorRepo -Refresh -DryRun | Out-Null
+            $script:GeneratorHostLog | Should -Contain '  [DRY RUN] Would remove stale plugin root: ado'
+            @(Get-ChildItem -LiteralPath (Join-Path $script:generatorRepo 'plugins') -Directory | ForEach-Object { $_.Name } | Sort-Object) |
+                Should -Be @('ado', 'hve-core', 'security')
         }
     }
 

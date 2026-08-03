@@ -248,6 +248,34 @@ function Split-PluginDocumentationSource {
     return $result
 }
 
+function Get-PluginItemMaturityLabel {
+    <#
+    .SYNOPSIS
+    Returns the canonical maturity label rendered for one README row.
+
+    .DESCRIPTION
+    The catalog labels only non-default components, so an item without a
+    declared maturity discloses the canonical 'stable' default rather than a
+    blank cell.
+
+    .PARAMETER Item
+    README item carrying an optional Maturity value.
+
+    .OUTPUTS
+    [string] Canonical maturity label.
+    #>
+    [CmdletBinding()]
+    [OutputType([string])]
+    param(
+        [Parameter(Mandatory = $true)]
+        [object]$Item
+    )
+
+    $value = [string]$Item.Maturity
+    if ([string]::IsNullOrWhiteSpace($value)) { return 'stable' }
+    return $value
+}
+
 function New-PluginReadmeContent {
     <#
     .SYNOPSIS
@@ -264,7 +292,7 @@ function New-PluginReadmeContent {
 
     .PARAMETER Items
     Array of processed item objects. Each object must have Name, Description,
-    and Kind properties.
+    and Kind properties, and may carry a canonical Maturity label.
 
     .PARAMETER Maturity
         Optional package maturity string. When 'experimental', an
@@ -386,16 +414,20 @@ function New-PluginReadmeContent {
 
             # Calculate column widths for aligned table output
             $col1Width = $meta.Header.Length
-            $col2Width = 'Description'.Length
+            $col2Width = 'Maturity'.Length
+            $col3Width = 'Description'.Length
             foreach ($item in $kindItems) {
+                $label = Get-PluginItemMaturityLabel -Item $item
                 if ($item.Name.Length -gt $col1Width) { $col1Width = $item.Name.Length }
-                if ($item.Description.Length -gt $col2Width) { $col2Width = $item.Description.Length }
+                if ($label.Length -gt $col2Width) { $col2Width = $label.Length }
+                if ($item.Description.Length -gt $col3Width) { $col3Width = $item.Description.Length }
             }
 
-            [void]$sb.AppendLine("| $($meta.Header.PadRight($col1Width)) | $('Description'.PadRight($col2Width)) |")
-            [void]$sb.AppendLine('|' + ('-' * ($col1Width + 2)) + '|' + ('-' * ($col2Width + 2)) + '|')
+            [void]$sb.AppendLine("| $($meta.Header.PadRight($col1Width)) | $('Maturity'.PadRight($col2Width)) | $('Description'.PadRight($col3Width)) |")
+            [void]$sb.AppendLine('|' + ('-' * ($col1Width + 2)) + '|' + ('-' * ($col2Width + 2)) + '|' + ('-' * ($col3Width + 2)) + '|')
             foreach ($item in $kindItems) {
-                [void]$sb.AppendLine("| $($item.Name.PadRight($col1Width)) | $($item.Description.PadRight($col2Width)) |")
+                $label = (Get-PluginItemMaturityLabel -Item $item).PadRight($col2Width)
+                [void]$sb.AppendLine("| $($item.Name.PadRight($col1Width)) | $label | $($item.Description.PadRight($col3Width)) |")
             }
         }
     }
@@ -1150,7 +1182,8 @@ function Write-PluginDirectory {
     Marketplace catalog entry describing package identity and provenance.
 
     .PARAMETER Items
-    Resolved recipe items with Kind, Field, PackagePath, and SourcePath keys.
+    Resolved recipe items with Kind, Field, PackagePath, SourcePath, and
+    Maturity keys.
 
     .PARAMETER PluginsDir
     Absolute path to the root plugins output directory.
@@ -1285,6 +1318,7 @@ function Write-PluginDirectory {
             Name        = ($itemName -replace '\.md$', '') -replace '\.json$', ''
             Description = $description
             Kind        = $kind
+            Maturity    = [string]$item.Maturity
         }
 
         $relativeParent = (Split-Path -Parent $item.PackagePath) -replace '\\', '/'
@@ -1436,6 +1470,7 @@ function Write-PluginDirectory {
 Export-ModuleMember -Function @(
     'Assert-PluginSnapshotTarget',
     'Copy-PluginSource',
+    'Get-PluginItemMaturityLabel',
     'Get-PluginTrackedPathIndex',
     'New-GenerateResult',
     'New-MarketplaceManifestContent',

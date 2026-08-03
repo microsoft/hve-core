@@ -93,7 +93,7 @@ export default function Home(): React.ReactElement {
             {labelRegistry.packages}
           </h2>
           <p className={styles.sectionDescription}>
-            Browse domain-specific artifact bundles.
+            Browse the complete HVE Core plugin and extension identity.
           </p>
           <CardGrid>
             {packageCards.map((card) => (

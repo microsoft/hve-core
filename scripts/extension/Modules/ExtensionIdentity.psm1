@@ -56,7 +56,6 @@ function Get-ExtensionIdentity {
         [string]$TemplateName = ''
     )
 
-    if ($PackageId -eq 'hve-core-all') { return 'hve-core-all' }
     if ($PackageId -ne 'hve-core') { return "hve-$PackageId" }
 
     if (-not [string]::IsNullOrWhiteSpace($TemplateName)) { return $TemplateName }
@@ -68,8 +67,8 @@ function Get-ExtensionVsixPattern {
     .SYNOPSIS
     Returns the anchored VSIX filename pattern for one extension identifier.
     .DESCRIPTION
-    Anchoring on the version segment keeps sibling identifiers that share a
-    prefix, such as hve-core and hve-core-all, mutually exclusive.
+    Anchoring on the version segment keeps one identifier from matching a
+    longer identifier that shares its prefix.
     .PARAMETER ExtensionIdentity
     Extension identifier.
     .OUTPUTS

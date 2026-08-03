@@ -3,7 +3,7 @@ title: Security Architect Guide
 description: HVE Core support for security architects building security models, security plans, and compliance verification
 sidebar_position: 7
 author: Microsoft
-ms.date: 2026-08-01
+ms.date: 2026-08-02
 ms.topic: how-to
 keywords:
   - security
@@ -25,7 +25,7 @@ This guide is for you if you perform security model analysis, build security pla
 ## Recommended Collections
 
 > [!TIP]
-> Install the [HVE Core extension](https://marketplace.visualstudio.com/items?itemName=ise-hve-essentials.hve-core) from the VS Code Marketplace for the flagship RPI workflow and core artifacts with zero configuration.
+> Install the [HVE Core extension](https://marketplace.visualstudio.com/items?itemName=ise-hve-essentials.hve-core) from the VS Code Marketplace for the complete active component set with zero configuration.
 >
 > Your primary collections are `security` (security plan creation, risk registers, and incident response tools) and `project-planning` (broader project context). For clone-based setups, see the [Installation Guide](../../getting-started/install.md).
 
@@ -140,8 +140,8 @@ Prompts complement the agents for targeted security workflows:
 ## Next Steps
 
 > [!TIP]
-> Explore security tools: [Security Package](https://github.com/microsoft/hve-core/blob/main/docs/plugins/security.md)
-> Plan responsible AI assessments: [Project Planning Package](https://github.com/microsoft/hve-core/blob/main/docs/plugins/project-planning.md)
+> Browse the complete HVE Core inventory: [HVE Core](../../plugins/hve-core)
+> Plan responsible AI assessments: [Responsible AI Planning](../../planning/rai/)
 > Review the security model documentation: [Security Model](../../security/security-model.md)
 > See how security fits the project lifecycle: [AI-Assisted Project Lifecycle](../lifecycle/)
 

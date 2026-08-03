@@ -3,7 +3,7 @@ title: Utility Reference
 description: Cross-cutting HVE Core utilities for documentation, media, Git workflows, durable workflow state, and diagnostics
 sidebar_position: 10
 author: Microsoft
-ms.date: 2026-07-15
+ms.date: 2026-08-02
 ms.topic: reference
 keywords:
   - utility
@@ -108,18 +108,18 @@ This fallback activates automatically. No manual configuration is needed.
 
 ## Tips
 
-| Do                                                                         | Don't                                                      |
-|----------------------------------------------------------------------------|------------------------------------------------------------|
-| Resume from the durable artifacts owned by each workflow                   | Rely on a conversation transcript as authoritative state   |
-| Use `/git-commit` for all commits to maintain conventions                  | Write ad-hoc commit messages that skip conventional format |
-| Ask any agent "help me customize hve-core installation" to configure setup | Install `hve-core-all` when you only need one collection   |
-| Refer to the skill docs for media processing parameters                    | Guess at FFmpeg options without consulting the skill file  |
+| Do                                                                 | Don't                                                      |
+|--------------------------------------------------------------------|------------------------------------------------------------|
+| Resume from the durable artifacts owned by each workflow           | Rely on a conversation transcript as authoritative state   |
+| Use `/git-commit` for all commits to maintain conventions          | Write ad-hoc commit messages that skip conventional format |
+| Ask an agent to use `hve-core-installer` for selective clone setup | Copy components without reviewing paths and maturity       |
+| Refer to the skill docs for media processing parameters            | Guess at FFmpeg options without consulting the skill file  |
 
 ## Next Steps
 
 > [!TIP]
 > Find your role-specific guide: [Role Guides Overview](./)
-> Explore collection options: [Role Overview](./#role-overview)
+> Explore role-specific tools: [Role Overview](./#role-overview)
 > Get started with installation: [Install Guide](../../getting-started/install.md)
 
 ---

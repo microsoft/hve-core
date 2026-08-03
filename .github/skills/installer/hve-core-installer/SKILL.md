@@ -1,17 +1,17 @@
 ---
 name: hve-core-installer
-description: 'Decision-driven HVE-Core installer with multiple clone-based and extension install methods, environment detection, and agent customization'
-compatibility: 'Requires VS Code or VS Code Insiders. Clone-based methods require git on PATH and network access.'
+description: 'Decision-driven HVE-Core installer with multiple clone-based and extension install methods, environment detection, and selective component installation'
+compatibility: 'Requires VS Code or VS Code Insiders. Clone-based methods require git on PATH and network access. The Bash component scripts require jq.'
 license: MIT
 metadata:
   authors: "microsoft/hve-core"
   spec_version: "1.0"
-  last_updated: "2026-08-01"
+  last_updated: "2026-08-02"
 ---
 
 # HVE-Core Installer Skill
 
-Decision-driven installer for HVE-Core with environment detection, 6 clone-based installation methods, extension quick-install, validation, MCP configuration, and agent customization workflows.
+Decision-driven installer for HVE-Core with environment detection, 6 clone-based installation methods, extension quick-install, validation, MCP configuration, and selective component installation workflows.
 
 ## Role Definition
 
@@ -26,15 +26,15 @@ The Installer persona handles all detection and execution. After installation co
 
 ## Required Phases
 
-| Phase | Name                                    | Purpose                                                          |
-|-------|-----------------------------------------|------------------------------------------------------------------|
-| 1     | Environment Detection                   | Obtain consent and detect user's environment                     |
-| 2     | Installation Path Selection             | Choose between Extension (quick) or Clone-based installation     |
-| 3     | Environment Detection & Decision Matrix | For clone path: detect environment and recommend method          |
-| 4     | Installation Methods                    | Execute the selected installation method                         |
-| 5     | Validation                              | Verify installation success and configure settings               |
-| 6     | Post-Installation Setup                 | Configure gitignore and present MCP guidance                     |
-| 7     | Agent Customization                     | Optional: copy agents for local customization (clone-based only) |
+| Phase | Name                                    | Purpose                                                             |
+|-------|-----------------------------------------|---------------------------------------------------------------------|
+| 1     | Environment Detection                   | Obtain consent and detect user's environment                        |
+| 2     | Installation Path Selection             | Choose between Extension (quick) or Clone-based installation        |
+| 3     | Environment Detection & Decision Matrix | For clone path: detect environment and recommend method             |
+| 4     | Installation Methods                    | Execute the selected installation method                            |
+| 5     | Validation                              | Verify installation success and configure settings                  |
+| 6     | Post-Installation Setup                 | Configure gitignore and present MCP guidance                        |
+| 7     | Component Installation                  | Optional: copy selected components for local use (clone-based only) |
 
 **Flow paths:**
 
@@ -130,6 +130,11 @@ Before clone-based installation, verify git is available:
 
 * Run: `git --version`
 * If fails: "Git is required for clone-based installation. Install git or choose Extension Quick Install."
+
+When the user selects Bash, also verify `jq` is available:
+
+* Run: `jq --version`
+* If fails: "jq is required by the Bash component scripts. Install jq or choose PowerShell."
 
 ### Extension Installation Execution
 
@@ -592,7 +597,7 @@ Optional devcontainer.json for auto-initialization:
 After installation completes, switch to the **Validator** persona and verify the installation.
 
 > [!IMPORTANT]
-> After successful validation, proceed to Phase 6 for post-installation setup, then Phase 7 for optional agent customization (clone-based methods only).
+> After successful validation, proceed to Phase 6 for post-installation setup, then Phase 7 for optional component installation (clone-based methods only).
 
 ### Checkpoint 3: Settings Authorization
 
@@ -911,145 +916,136 @@ For **Extension** installations, also include:
 Run this skill again and choose "Clone-Based Installation" for full customization options.
 ```
 
-For **Clone-based** installations, proceed to Phase 7 for optional agent customization.
+For **Clone-based** installations, proceed to Phase 7 for optional component installation.
 
-## Phase 7: Agent Customization (Optional)
+## Phase 7: Component Installation (Optional)
 
 > [!IMPORTANT]
-> Generated scripts in this phase require PowerShell 7+ (`pwsh`). Windows PowerShell 5.1 is not supported.
+> Generated scripts in this phase require PowerShell 7+ (`pwsh`). Windows PowerShell 5.1 is not supported. The Bash scripts require `jq`.
 
-After Phase 6 completes, offer users the option to copy agent files into their target repository. This phase ONLY applies to clone-based installation methods (1-6), NOT to extension installation.
+After Phase 6 completes, offer users the option to copy HVE-Core components into their target repository. This phase ONLY applies to clone-based installation methods (1-6), NOT to extension installation.
+
+A component is one agent, prompt, instruction, or complete skill declared by the single `hve-core` recipe in `.github/plugin/marketplace.json`. Component paths use marketplace form and map to canonical target paths without flattening:
+
+<!-- <component-kind-map> -->
+| Component path                           | Target path                                                          |
+|------------------------------------------|----------------------------------------------------------------------|
+| `agents/<subpath>/<name>.md`             | `<TargetRoot>/.github/agents/<subpath>/<name>.agent.md`              |
+| `commands/<subpath>/<name>.md`           | `<TargetRoot>/.github/prompts/<subpath>/<name>.prompt.md`            |
+| `rules/<subpath>/<name>.instructions.md` | `<TargetRoot>/.github/instructions/<subpath>/<name>.instructions.md` |
+| `skills/<subpath>/<name>`                | `<TargetRoot>/.github/skills/<subpath>/<name>` (whole directory)     |
+<!-- </component-kind-map> -->
+
+Hooks are never copied by this phase. Skills copy as complete directories, minus local environment and cache directories (`tests`, `.venv`, `.hypothesis`, `node_modules`, `__pycache__`, `.ruff_cache`, `.pytest_cache`).
 
 ### Skip Condition
 
-If user selected **Extension Quick Install** (Option 1) in Phase 2, skip Phase 7 entirely. Extension installation bundles agents automatically.
+If user selected **Extension Quick Install** (Option 1) in Phase 2, skip Phase 7 entirely. Extension installation bundles all components automatically.
 
-### Checkpoint 6: Agent Copy Decision
+### Checkpoint 6: Component Selection
 
-Present the agent selection prompt:
+Present the component selection prompt:
 
-<!-- <agent-copy-prompt> -->
+<!-- <component-selection-prompt> -->
 ```text
-📂 Agent Customization (Optional)
+📂 Component Installation (Optional)
 
-HVE-Core includes specialized agents for common workflows.
-Copying agents enables local customization and offline use.
+HVE-Core publishes agents, prompts, instructions, and skills.
+Copying them into your repository enables local customization and offline use.
 
-🔬 HVE Core Starter Agents
-  • rpi-agent - Research, Plan, Implement, Review, and Follow-up coordinator
-  • documentation - Documentation audit, drift, authoring, and validation
-
-📋 Planning & Documentation
-  • adr-creation, agile-coach, brd-builder, doc-ops, prd-builder
-  • product-manager-advisor, security-planner, ux-ui-designer
-
-⚙️ Generators
-  • gen-data-spec, gen-jupyter-notebook, gen-streamlit-dashboard
-
-✅ Review & Testing
-  • code-review, test-streamlit-dashboard
-
-🔗 Platform-Specific
-  • ado-prd-to-wit (Azure DevOps)
-  • github-backlog-manager (GitHub)
+🔬 Starter profile (24 components)
+  • RPI Agent, Documentation, and the RPI and HVE Builder subagents
+  • RPI skills: research, plan, plan-critique, implement, review, walkthrough, quick, challenger
+  • HVE Builder skills: builder, builder-tester, prompt-analyze, prompt-builder, prompt-refactor, vally-tests
+  • Documentation skill, the /rpi prompt, and the tracking and builder instructions
 
 Options:
-  [1] Install HVE Core starter agents (recommended)
-  [2] Install by marketplace package
-  [3] Skip agent installation
+  [1] Install the starter profile (recommended)
+  [2] Choose components
+  [3] Skip component installation
 
 Your choice? (1/2/3)
 ```
-<!-- </agent-copy-prompt> -->
+<!-- </component-selection-prompt> -->
 
 User input handling:
 
-* "1", "rpi", "starter", "core" → Copy the HVE Core starter bundle
-* "2", "package", "by package" → Proceed to Package Selection sub-flow
-* "3", "skip", "none", "no" → Skip to success report
+* "1", "starter", "core", "recommended" → Resolve the `starter` profile
+* "2", "choose", "custom", "components" → Proceed to the Custom Selection sub-flow
+* "3", "skip", "none", "no" → Skip to the final success report
 * Unclear response → Ask for clarification
 
-### Package Selection Sub-Flow
+### Custom Selection Sub-Flow
 
-When the user selects option 2, read the marketplace catalog and present eligible packages.
+When the user selects option 2, read `.github/plugin/marketplace.json` from the HVE-Core source at `$hveCoreBasePath` and present the recipe's components grouped by kind. Show each component's `x-hve.componentMaturity` label, defaulting to `stable` when the catalog declares none. Collect the user's component paths in marketplace form.
 
-#### Step 1: Read packages and build stable agent counts
+### Selection Resolution
 
-Read `.github/plugin/marketplace.json` from the HVE-Core source at `$hveCoreBasePath`. Import `scripts/lib/Modules/MarketplaceHelpers.psm1`, build the catalog agent index, and derive each Stable package through `Get-MarketplaceResolvedPackageRecipe`. Present the package `name`, `x-hve.displayName`, and resolved stable-agent count. Exclude packages that `Test-MarketplaceEntryEligible` rejects for Stable.
+Resolve the chosen profile or component list before any confirmation or write. Run the resolver from the HVE-Core clone:
 
-#### Step 2: Present package options
+<!-- <selection-resolution> -->
+```powershell
+Import-Module "$hveCoreBasePath/scripts/lib/Modules/MarketplaceHelpers.psm1" -Force
+$catalog = Get-MarketplaceCatalog -Path "$hveCoreBasePath/.github/plugin/marketplace.json"
+$entry = @($catalog['plugins']) | Where-Object { $_['name'] -eq 'hve-core' }
+$agentIndex = Get-MarketplaceAgentIndex -Catalog $catalog -RepoRoot $hveCoreBasePath
 
-<!-- <package-selection-prompt> -->
-```text
-🎭 Package Selection
+# Starter profile
+$selection = Resolve-MarketplaceComponentSelection -Entry $entry -RepoRoot $hveCoreBasePath -AgentIndex $agentIndex -ProfileName 'starter'
 
-Choose one or more packages to install agents tailored to your role.
-
-| # | Package          | Agents | Description                     |
-|---|------------------|--------|---------------------------------|
-| 1 | Project Planning | [N]    | Planning and architecture tools |
-
-Enter package number(s) separated by commas (e.g., "1"):
+# Or an explicit selection
+$selection = Resolve-MarketplaceComponentSelection -Entry $entry -RepoRoot $hveCoreBasePath -AgentIndex $agentIndex -Component $chosenComponents
 ```
-<!-- </package-selection-prompt> -->
+<!-- </selection-resolution> -->
 
-Agent counts `[N]` come from the Stable handoff-resolved marketplace recipe.
+The resolver requires the `PowerShell-Yaml` module. If the import fails, tell the user to run `Install-Module PowerShell-Yaml -Scope CurrentUser` and retry.
 
-User input handling:
-
-* Single number (e.g., "1") → Select that package
-* Multiple numbers (e.g., "1, 3") → Combine agent sets from selected packages
-* Package name (for example, `project-planning`) → Match by package ID
-* Unclear response → Ask for clarification
-
-#### Step 3: Build filtered agent list
-
-For each selected package ID:
-
-1. Resolve the entry through `Get-MarketplaceResolvedPackageRecipe -Channel Stable`
-2. Include recipe items where `Kind` is `agent`
-3. Remove the `.github/agents/` prefix from each `SourcePath`
-4. Deduplicate paths across selected packages
-
-#### Step 4: Present filtered agents for confirmation
-
-<!-- <package-confirmation-prompt> -->
-```text
-📋 Agents for [Package Name(s)]
-
-The following [N] agents will be copied:
-
-  • [agent-name-1] - tags: [tag-1, tag-2]
-  • [agent-name-2] - tags: [tag-1, tag-2]
-  ...
-
-Proceed with installation? (yes/no)
-```
-<!-- </package-confirmation-prompt> -->
-
-User input handling:
-
-* "yes", "y" → Proceed with copy using filtered agent list
-* "no", "n" → Return to Checkpoint 6 for re-selection
-* Unclear response → Ask for clarification
-
-> [!NOTE]
-> Package selection installs projected agents only. Prompts, instructions, and skills remain available through the plugin and VSIX package channels.
-
-### Agent Bundle Definitions
-
-| Bundle         | Agents                                              |
-|----------------|-----------------------------------------------------|
-| `hve-core`     | rpi-agent, documentation                            |
-| `package:<id>` | Stable agents from the resolved marketplace package |
+Each resolved record carries `PackagePath`, `Kind`, `SourcePath`, `Maturity`, and `Origin`. `Origin` is `selected` for a chosen component and `dependency` for a component added by agent handoff closure or a literal `#file:` reference. The resolver fails when a selection is not recipe membership, when a profile is undeclared, or when a visible dependency does not resolve inside the recipe.
 
 ### Collision Detection
 
-Before copying, check for existing agent files with matching names.
+Run the pre-write check with the resolved component list. It validates every path, reports canonical maturity, and reports component-level collisions. A file component collides on its full target path; a skill component collides on its target directory. Nothing is written.
 
-**PowerShell:** Run [scripts/collision-detection.ps1](scripts/collision-detection.ps1) with the `selection` and optional `PackageAgents` values set to the projected agent paths.
+**PowerShell:** Run [scripts/collision-detection.ps1](scripts/collision-detection.ps1) with `-HveCoreBasePath`, `-TargetRoot`, and `-Component`.
 
-**Bash:** Run [scripts/collision-detection.sh](scripts/collision-detection.sh) with the HVE-Core base path and file list as arguments.
+**Bash:** Run [scripts/collision-detection.sh](scripts/collision-detection.sh) with the HVE-Core base path, target root, and component paths as arguments.
+
+Output lines:
+
+<!-- <collision-detection-output> -->
+```text
+COMPONENT=<path>|KIND=<kind>|MATURITY=<maturity>|TARGET=<target-relative path>|EXISTS=<true|false>
+COLLISIONS_DETECTED=<true|false>
+COLLISION_COMPONENTS=<comma-separated component paths>
+COLLISION_TARGETS=<comma-separated target-relative paths>
+```
+<!-- </collision-detection-output> -->
+
+### Confirmation Prompt
+
+Present every selected and dependency-added component with its maturity before any write. Call out non-stable components explicitly.
+
+<!-- <component-confirmation-prompt> -->
+```text
+📋 Components to install
+
+| Component        | Kind   | Maturity   | Added by   |
+|------------------|--------|------------|------------|
+| [component path] | [kind] | [maturity] | selected   |
+| [component path] | [kind] | [maturity] | dependency |
+
+⚠️ [N] component(s) are labeled preview or experimental. They may change or be
+   removed without notice.
+
+Proceed with installation? (yes/no)
+```
+<!-- </component-confirmation-prompt> -->
+
+User input handling:
+
+* "yes", "y" → Continue to collision resolution when collisions exist, otherwise run the copy
+* "no", "n" → Return to Checkpoint 6 without writing anything
+* Unclear response → Ask for clarification
 
 ### Collision Resolution Prompt
 
@@ -1057,15 +1053,15 @@ If collisions are detected, present:
 
 <!-- <collision-prompt> -->
 ```text
-⚠️ Existing Agents Detected
+⚠️ Existing Components Detected
 
-The following agents already exist in your project:
-  • [list collision files]
+The following components already exist in your project:
+  • [list COLLISION_COMPONENTS with their COLLISION_TARGETS]
 
 Options:
-  [O] Overwrite with HVE-Core version
-  [K] Keep existing (skip these files)
-  [C] Compare (show diff for first file)
+  [O] Overwrite with the HVE-Core version
+  [K] Keep existing (skip these components)
+  [C] Compare (show diff for the first file)
 
 Or for all conflicts:
   [OA] Overwrite all
@@ -1077,42 +1073,77 @@ Your choice?
 
 User input handling:
 
-* "o", "overwrite" → Overwrite current file, ask about next
-* "k", "keep" → Keep current file, ask about next
+* "o", "overwrite" → Overwrite the current component, ask about the next
+* "k", "keep" → Keep the current component, ask about the next
 * "c", "compare" → Show diff, then re-prompt
-* "oa", "overwrite all" → Overwrite all collisions
-* "ka", "keep all" → Keep all existing files
+* "oa", "overwrite all" → Overwrite every collision
+* "ka", "keep all" → Keep every existing component
 
-### Agent Copy Execution
+Keeping a skill keeps its whole target directory.
 
-After selection and collision resolution, execute the copy operation.
+### Component Copy Execution
 
-**PowerShell:** Run [scripts/agent-copy.ps1](scripts/agent-copy.ps1) with the required variables set.
+After confirmation and collision resolution, execute the copy.
 
-**Bash:** Run [scripts/agent-copy.sh](scripts/agent-copy.sh) with the HVE-Core base path, marketplace package ID, and file list as arguments.
+**PowerShell:** Run [scripts/component-copy.ps1](scripts/component-copy.ps1) with `-HveCoreBasePath`, `-TargetRoot`, `-SelectionName` (`starter` or `custom`), and `-Component`. Add `-KeepExisting -Collisions <component paths>` for kept components.
 
-### Agent Copy Success Report
+**Bash:** Run [scripts/component-copy.sh](scripts/component-copy.sh) with the HVE-Core base path, target root, selection name, and component paths as arguments. Set `KEEP_EXISTING=true` and `COLLISIONS_FILE=<newline-delimited component paths>` for kept components.
+
+Both implementations validate membership, path safety, and the existing manifest schema before the first write, and produce equivalent paths, hashes, manifests, and output.
+
+### Tracking Manifest
+
+The copy writes `.hve-tracking.json` at the target root using schema version 2:
+
+<!-- <tracking-manifest> -->
+```json
+{
+  "schemaVersion": 2,
+  "source": "microsoft/hve-core",
+  "version": "3.3.106",
+  "installed": "2026-08-02T00:00:00Z",
+  "selection": {
+    "profile": "starter",
+    "components": ["agents/hve-core/rpi-agent.md", "skills/rpi/rpi-plan"]
+  },
+  "files": {
+    ".github/agents/hve-core/rpi-agent.agent.md": {
+      "component": "agents/hve-core/rpi-agent.md",
+      "kind": "agent",
+      "maturity": "stable",
+      "version": "3.3.106",
+      "sha256": "<hash>",
+      "status": "managed"
+    }
+  }
+}
+```
+<!-- </tracking-manifest> -->
+
+Files are keyed by target-relative path. The manifest records no package identity and no absolute target root. There is no version 1 compatibility layer: a missing or unsupported `schemaVersion` fails before any target change with clean-reinstall guidance.
+
+### Component Copy Success Report
 
 Upon successful copy, display:
 
-<!-- <agent-copy-success> -->
+<!-- <component-copy-success> -->
 ```text
-✅ Agent Installation Complete!
+✅ Component Installation Complete!
 
-Copied [N] agents to .github/agents/
+Copied [N] components into .github/
 Created .hve-tracking.json for upgrade tracking
 
-📄 Installed Agents:
-  • [list of copied agent names]
+📄 Installed components:
+  • [component path] ([kind], [maturity])
 
 🔄 Upgrade Workflow:
-  Run this installer again to check for agent updates.
+  Run this installer again to check for component updates.
   Modified files will prompt before overwriting.
-  Use 'eject' to take ownership of any file.
+  Use 'eject' to take ownership of any component.
 
 Proceeding to final success report...
 ```
-<!-- </agent-copy-success> -->
+<!-- </component-copy-success> -->
 
 ## Phase 7 Upgrade Mode
 
@@ -1120,11 +1151,15 @@ When `.hve-tracking.json` already exists, Phase 7 operates in upgrade mode.
 
 ### Upgrade Detection
 
-At Phase 7 start, check for existing manifest.
+At Phase 7 start, check for an existing manifest.
 
-**PowerShell:** Run [scripts/upgrade-detection.ps1](scripts/upgrade-detection.ps1) with the `hveCoreBasePath` variable set.
+**PowerShell:** Run [scripts/upgrade-detection.ps1](scripts/upgrade-detection.ps1) with `-HveCoreBasePath` and optional `-TargetRoot`.
 
-**Bash:** Run [scripts/upgrade-detection.sh](scripts/upgrade-detection.sh) with the HVE-Core base path as an argument.
+**Bash:** Run [scripts/upgrade-detection.sh](scripts/upgrade-detection.sh) with the HVE-Core base path and optional target root as arguments.
+
+Output keys: `UPGRADE_MODE`, and when a manifest exists, `INSTALLED_VERSION`, `SOURCE_VERSION`, `VERSION_CHANGED`, `INSTALLED_PROFILE`, and `INSTALLED_COMPONENTS`. An unsupported `schemaVersion` fails with clean-reinstall guidance.
+
+Re-resolve `INSTALLED_COMPONENTS` through the resolver so the upgrade reflects current dependency closure and maturity.
 
 ### Upgrade Prompt
 
@@ -1132,10 +1167,11 @@ If upgrade mode with version change:
 
 <!-- <upgrade-prompt> -->
 ```text
-🔄 HVE-Core Agent Upgrade
+🔄 HVE-Core Component Upgrade
 
 Source: microsoft/hve-core v[SOURCE_VERSION]
 Installed: v[INSTALLED_VERSION]
+Selection: [INSTALLED_PROFILE]
 
 Checking file status...
 ```
@@ -1143,11 +1179,21 @@ Checking file status...
 
 ### File Status Check
 
-Compare current files against manifest.
+Compare current files against the manifest.
 
-**PowerShell:** Run [scripts/file-status-check.ps1](scripts/file-status-check.ps1).
+**PowerShell:** Run [scripts/file-status-check.ps1](scripts/file-status-check.ps1) with optional `-TargetRoot`.
 
-**Bash:** Run [scripts/file-status-check.sh](scripts/file-status-check.sh) to compare files against the manifest.
+**Bash:** Run [scripts/file-status-check.sh](scripts/file-status-check.sh) with an optional target root argument.
+
+Each line reports one tracked file:
+
+<!-- <file-status-output> -->
+```text
+FILE=<path>|COMPONENT=<component path>|KIND=<kind>|MATURITY=<maturity>|STATUS=<status>|ACTION=<action>
+```
+<!-- </file-status-output> -->
+
+Statuses are `managed`, `modified`, `missing`, and `ejected`. Group the lines by `COMPONENT` when presenting them.
 
 ### Upgrade Summary Display
 
@@ -1157,23 +1203,23 @@ Present upgrade summary:
 ```text
 📋 Upgrade Summary
 
-Files to update (managed):
-  ✅ .github/agents/rpi-agent.agent.md
-  ✅ .github/agents/documentation.agent.md
+Components to update (managed):
+  ✅ agents/hve-core/rpi-agent.md
+  ✅ skills/rpi/rpi-plan
 
 Files requiring decision (modified):
-  ⚠️ .github/agents/rpi-agent.agent.md
+  ⚠️ .github/agents/hve-core/rpi-agent.agent.md
 
-Files skipped (ejected):
-  🔒 .github/agents/custom-agent.agent.md
+Components skipped (ejected):
+  🔒 agents/hve-core/documentation.md
 
 For modified files, choose:
   [A] Accept upstream (overwrite your changes)
   [K] Keep local (skip this update)
-  [E] Eject (never update this file again)
+  [E] Eject (never update this component again)
   [D] Show diff
 
-Process file: rpi-agent.agent.md?
+Process file: .github/agents/hve-core/rpi-agent.agent.md?
 ```
 <!-- </upgrade-summary> -->
 
@@ -1184,7 +1230,8 @@ When user requests diff:
 <!-- <diff-display> -->
 ```text
 ─────────────────────────────────────
-File: .github/agents/rpi-agent.agent.md
+File: .github/agents/hve-core/rpi-agent.agent.md
+Component: agents/hve-core/rpi-agent.md
 Status: modified
 ─────────────────────────────────────
 
@@ -1206,21 +1253,21 @@ Status: modified
 
 ### Status Transitions
 
-After user decision, update manifest:
+After user decision, update the manifest:
 
-| Decision | Status Change           | Manifest Update           |
-|----------|-------------------------|---------------------------|
-| Accept   | `modified` → `managed`  | Update hash, version      |
-| Keep     | `modified` → `modified` | No change (skip file)     |
-| Eject    | `*` → `ejected`         | Add `ejectedAt` timestamp |
+| Decision | Status Change           | Manifest Update                         |
+|----------|-------------------------|-----------------------------------------|
+| Accept   | `modified` → `managed`  | Re-copy the component, update hash      |
+| Keep     | `modified` → `modified` | No change (pass the component to keep)  |
+| Eject    | `*` → `ejected`         | Add `ejectedAt` to every component file |
 
 ### Eject Implementation
 
-When user ejects a file:
+Eject operates on a component. Every file of that component is marked `ejected`, stays on disk, and becomes owned by the user. Later copies skip ejected files and preserve their manifest entries.
 
-**PowerShell:** Run [scripts/eject.ps1](scripts/eject.ps1) with the `FilePath` parameter.
+**PowerShell:** Run [scripts/eject.ps1](scripts/eject.ps1) with `-Component` and optional `-TargetRoot`.
 
-**Bash:** Run [scripts/eject.sh](scripts/eject.sh) with the file path as an argument.
+**Bash:** Run [scripts/eject.sh](scripts/eject.sh) with the component path and optional target root as arguments.
 
 ### Upgrade Completion
 
@@ -1266,7 +1313,7 @@ To remove a failed or unwanted installation:
 
 Then remove HVE-Core paths from `.vscode/settings.json`.
 
-If you used Phase 7 agent copy, also delete `.hve-tracking.json` and optionally `.github/agents/` if you no longer need copied agents.
+If you used Phase 7 component installation, also delete `.hve-tracking.json` and any copied `.github/agents/`, `.github/prompts/`, `.github/instructions/`, or `.github/skills/` content you no longer need.
 
 ## Authorization Guardrails
 

@@ -33,6 +33,7 @@ jobs:
     permissions: {}
     outputs:
       version: ${{ steps.validate.outputs.version }}
+      tag: ${{ steps.validate.outputs.tag }}
     steps:
       - name: Resolve version from event
         id: resolve
@@ -88,12 +89,14 @@ jobs:
 
           echo "✅ Valid pre-release version: $VERSION"
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "tag=hve-core-v$VERSION" >> "$GITHUB_OUTPUT"
 
   package:
     name: Package Pre-Release Extensions
     needs: validate-version
     uses: ./.github/workflows/extension-package.yml
     with:
+      source-ref: ${{ needs.validate-version.outputs.tag }}
       version: ${{ needs.validate-version.outputs.version }}
       channel: PreRelease
     permissions:

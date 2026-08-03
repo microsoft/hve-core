@@ -2,7 +2,7 @@
 title: Forking and Extending HVE Core
 description: Fork HVE Core to create a fully customized prompt engineering framework with upstream sync and Copilot-assisted adaptation
 author: Microsoft
-ms.date: 2026-08-01
+ms.date: 2026-08-02
 ms.topic: tutorial
 keywords:
   - forking
@@ -99,13 +99,13 @@ README, and marketplace presentation. See the
 
 Agent and prompt files live under `.github/agents/` and `.github/prompts/`. Restructure
 these directories to match your organization's team topology or domain boundaries. Update
-marketplace package recipes to reflect new paths.
+the `hve-core` marketplace recipe to reflect new paths.
 
 ### 3. MCP Servers
 
 If your workflows depend on MCP (Model Context Protocol) servers, configure server
 definitions in `.vscode/mcp.json` or workspace settings. Fork-level changes let you
-add organization-specific MCP servers that all collections can reference.
+add organization-specific MCP servers that all relevant agents and skills can reference.
 
 ### 4. npm Scripts
 

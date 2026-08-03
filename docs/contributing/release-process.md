@@ -1,6 +1,6 @@
 ---
 title: Release Process
-description: Trunk-based release workflow using release-please automation and automated VS Code extension publishing
+description: Release HVE Core through direct main PreRelease builds and reviewed release/stable promotions
 sidebar_position: 9
 ms.date: 2026-08-02
 ms.topic: how-to
@@ -9,7 +9,7 @@ author: WilliamBerryiii
 
 ## Overview
 
-This project uses trunk-based development with automated release management. All changes go directly to `main` via pull requests, and [release-please](https://github.com/googleapis/release-please) handles version bumping, changelog generation, and GitHub releases automatically.
+This project uses trunk-based development with explicit channel ownership. Changes reach `main` through pull requests. PreRelease packages an approved `main` commit directly. Stable is created only after release-please prepares an even version and changelog on `main`, followed by a reviewed promotion into `release/stable`.
 
 ## How Releases Work
 
@@ -17,32 +17,32 @@ This project uses trunk-based development with automated release management. All
 flowchart LR
     A[Feature PR] -->|merge| B[main branch]
     B --> C[release-please updates Release PR]
-    C -->|you merge| D[Draft release + tag created]
-    D --> E[CI attaches assets and attestations]
-    E --> F[publish-release promotes to published]
-    F -->|automatically| G[Extension published to marketplace]
+    C -->|you merge| D[Prepared main commit]
+    D --> E[Review main to release/stable promotion]
+    E -->|merge| F[Verify matching trees]
+    F --> G[Create Stable tag and release]
+    G --> H[Publish Stable extension]
 ```
 
 When you merge a PR to `main`:
 
-1. **release-please analyzes commits** using conventional commit messages
-2. **Updates the Release PR** with version bumps and changelog entries
-3. **You decide** when to merge the Release PR
-4. **Merging creates** a draft GitHub Release with the changelog
-5. **CI attaches assets**, then the `publish-release` job promotes the draft to published
-6. **Extension publishing** triggers automatically when the release is published
+1. **release-please analyzes commits** using conventional commit messages.
+2. **The Release PR updates** even-minor version fields, the immutable plugin locator, and changelog entries.
+3. **You decide** when to merge the Release PR into `main`.
+4. **Stable preparation opens** a non-auto-merged promotion PR from `main` to `release/stable`.
+5. **A reviewer merges** the promotion after confirming the release boundary.
+6. **Stable publication verifies** matching trees, creates immutable tags and assets, then publishes the extension.
 
 ## The Release PR
 
-The Release PR is not a branch cut or deployment. It is a staging mechanism containing only version metadata changes:
+The Release PR is not a deployment. It prepares version metadata and changelog changes on `main`:
 
 * Updated `package.json` version
 * Updated `extension/templates/package.template.json` version
-* Updated `.github/plugin/marketplace.json` (version and plugins[*].version)
-* Updated `plugins/*/.github/plugin/plugin.json` (glob across all plugin directories)
+* Updated `.github/plugin/marketplace.json` version and immutable `plugins-v<version>` locator
 * Updated `CHANGELOG.md`
 
-Your actual code changes are already on `main` from your feature PRs. The Release PR accumulates version and changelog updates until you are ready to release.
+Your code changes are already on `main` from feature pull requests. The Release PR accumulates version and changelog updates until you are ready to promote that exact tree to Stable.
 
 ### Version Calculation
 
@@ -86,10 +86,11 @@ The Release PR titled "chore(main): release X.Y.Z" updates automatically as PRs 
 
 1. Review the accumulated changelog in the PR
 2. Verify version bump is appropriate for the changes
-3. Merge the Release PR (this creates a draft GitHub Release)
-4. CI attaches VSIX packages, plugin ZIPs, SBOMs, and attestations to the draft release
-5. The `publish-release` job promotes the draft to a published release
-6. The `release: published` event triggers the marketplace publish workflow automatically
+3. Merge the Release PR into `main`.
+4. Review the generated `main` to `release/stable` promotion PR. Auto-merge is intentionally disabled.
+5. Merge the promotion only when its tree is the reviewed `main` tree.
+6. Verify the Stable publish workflow creates the tag, release assets, attestations, and published release.
+7. Verify the published release triggers the Stable marketplace workflow.
 
 ### Release Cadence
 
@@ -103,7 +104,7 @@ There is no requirement to release after every PR merge.
 
 ## Extension Publishing
 
-VS Code extension publishing is automated. When the `publish-release` job promotes a draft release to published, the `release: published` event triggers [`release-marketplace-stable.yml`](https://github.com/microsoft/hve-core/blob/main/.github/workflows/release-marketplace-stable.yml), which packages and publishes the extension to the VS Code Marketplace using Azure OIDC authentication.
+VS Code extension publishing is automated. When `release-stable-publish.yml` publishes a verified Stable release, the `release: published` event triggers [`release-marketplace-stable.yml`](https://github.com/microsoft/hve-core/blob/main/.github/workflows/release-marketplace-stable.yml), which packages and publishes the one HVE Core extension through Azure OIDC authentication.
 
 ### Manual Fallback
 
@@ -111,7 +112,7 @@ If the automated publish did not trigger or you need to republish, use the workf
 
 1. Navigate to **Actions → Stable Marketplace Publish** in the repository
 2. Select **Run workflow**
-3. Choose the `main` branch
+3. Choose the workflow from its default branch
 4. Optionally specify a version (defaults to `package.json` version)
 5. Optionally enable dry-run mode to package without publishing
 6. Click **Run workflow**
@@ -128,35 +129,39 @@ Documentation-only releases may not require an extension publish.
 
 ## Version Quick Reference
 
-| Action                   | Result                                                        |
-|--------------------------|---------------------------------------------------------------|
-| Merge feature PR to main | Release PR updates with new changelog entry                   |
-| Merge Release PR         | Draft GitHub Release created, then auto-promoted to published |
-| Release published        | Extension automatically published to marketplace              |
-| Merge docs-only PR       | Changelog updated, no version bump                            |
+| Action                        | Result                                               |
+|-------------------------------|------------------------------------------------------|
+| Merge feature PR to main      | Release PR updates with a changelog entry            |
+| Merge Release PR              | Prepared version reaches `main`                      |
+| Merge promotion PR            | Verified Stable tag and release pipeline starts      |
+| Stable release published      | Stable extension marketplace workflow starts         |
+| Run PreRelease for a main SHA | Odd-minor PreRelease tag and release pipeline starts |
+| Merge docs-only PR            | Changelog updates without a version bump             |
 
 ## Extension Channels and Maturity
 
-The VS Code extension is published to two channels with different stability expectations.
+The VS Code extension is published to two same-content channels with different cadence, versioning, and source ownership.
 
 ### Extension Channels
 
-| Channel     | Stability        | Included Maturity Levels            | Audience       |
-|-------------|------------------|-------------------------------------|----------------|
-| Stable      | Production-ready | `stable` only                       | All users      |
-| Pre-release | Early access     | `stable`, `preview`, `experimental` | Early adopters |
+| Channel    | Source                                        | Included Active Labels                  | Audience       |
+|------------|-----------------------------------------------|-----------------------------------------|----------------|
+| Stable     | Reviewed `main` promotion in `release/stable` | `stable`, `preview`, and `experimental` | All users      |
+| PreRelease | Explicit commit on `main`                     | `stable`, `preview`, and `experimental` | Early adopters |
 
 ### Maturity Levels
 
-Each package declares non-stable component maturity in `x-hve.componentMaturity` under `.github/plugin/marketplace.json`:
+The `hve-core` recipe declares non-stable component lifecycle labels in `x-hve.componentMaturity` under `.github/plugin/marketplace.json`:
 
-| Level          | Description                                                                                       | Included In         |
-|----------------|---------------------------------------------------------------------------------------------------|---------------------|
-| `stable`       | Production-ready, fully tested                                                                    | Stable, Pre-release |
-| `preview`      | Feature-complete but may have rough edges                                                         | Pre-release only    |
-| `experimental` | Early development, may change significantly                                                       | Pre-release only    |
-| `deprecated`   | Scheduled for removal, excluded from all builds                                                   | Neither             |
-| `removed`      | Source retained for traceability; excluded from all generated plugins and extension distributions | Neither             |
+| Level          | Description                                                                 | Included In     |
+|----------------|-----------------------------------------------------------------------------|-----------------|
+| `stable`       | Established component                                                       | Both channels   |
+| `preview`      | Functional component still receiving compatibility work                     | Both channels   |
+| `experimental` | Early development that may change significantly                             | Both channels   |
+| `deprecated`   | Scheduled for removal                                                       | Neither channel |
+| `removed`      | Source retained for traceability but withdrawn from generated distributions | Neither channel |
+
+Lifecycle labels disclose support posture and inform governance. They are not channel filters and are separate from maturity classifications used in Responsible AI assessments.
 
 ### Maturity Lifecycle
 

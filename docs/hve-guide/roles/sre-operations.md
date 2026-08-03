@@ -3,7 +3,7 @@ title: SRE / Operations Guide
 description: HVE Core support for SRE and operations engineers managing infrastructure, incidents, and deployment workflows
 sidebar_position: 8
 author: Microsoft
-ms.date: 2026-08-01
+ms.date: 2026-08-02
 ms.topic: how-to
 keywords:
   - SRE
@@ -25,7 +25,7 @@ This guide is for you if you manage infrastructure, handle incidents, deploy sys
 ## Recommended Collections
 
 > [!TIP]
-> Install the [HVE Core extension](https://marketplace.visualstudio.com/items?itemName=ise-hve-essentials.hve-core) from the VS Code Marketplace for the flagship RPI workflow and core artifacts with zero configuration.
+> Install the [HVE Core extension](https://marketplace.visualstudio.com/items?itemName=ise-hve-essentials.hve-core) from the VS Code Marketplace for the complete active component set with zero configuration.
 >
 > Your primary collections are `coding-standards` (IaC-specific instructions for Terraform, Bicep, Bash, and GitHub Actions), `security` (incident response tooling), and `hve-core` (structured investigation and remediation workflows). For clone-based setups, see the [Installation Guide](../../getting-started/install.md).
 
@@ -145,8 +145,8 @@ Auto-activated instructions apply IaC standards based on file type: Terraform (`
 ## Next Steps
 
 > [!TIP]
-> Explore IaC coding standards: [Coding Standards Package](https://github.com/microsoft/hve-core/blob/main/docs/plugins/coding-standards.md)
-> Set up incident response tools: [Security Package](https://github.com/microsoft/hve-core/blob/main/docs/plugins/security.md)
+> Browse the complete HVE Core inventory: [HVE Core](../../plugins/hve-core)
+> Review security guidance: [Security Documentation](../../security/)
 > See how operations fits the project lifecycle: [AI-Assisted Project Lifecycle](../lifecycle/)
 
 ---

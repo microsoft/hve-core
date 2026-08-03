@@ -6,17 +6,11 @@ import remarkGithubAlert from 'remark-github-blockquote-alert';
 import * as path from 'path';
 import { labelRegistry } from './src/data/labelRegistry';
 import { loadMarketplaceCounts } from './src/data/marketplaceCounts';
+import { packageCardDefinitions } from './src/data/packageCards';
 
-const packageNames = [
-  'ado', 'coding-standards', 'data-science', 'design-thinking',
-  'experimental', 'github', 'gitlab', 'hve-core', 'jira',
-  'project-planning', 'security', 'hve-core-all',
-];
-const packageCounts = Object.fromEntries(
-  Object.entries(loadMarketplaceCounts(
-    path.resolve(__dirname, '../../.github/plugin/marketplace.json'),
-    packageNames,
-  )),
+const packageCounts = loadMarketplaceCounts(
+  path.resolve(__dirname, '../../.github/plugin/marketplace.json'),
+  packageCardDefinitions.map((definition) => definition.name),
 );
 
 const accessibleGithubPrismTheme = {

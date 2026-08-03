@@ -154,6 +154,8 @@
     "plugins": {
       "type": "array",
       "minItems": 1,
+      "maxItems": 1,
+      "description": "The single content recipe that owns every distributable component.",
       "items": {
         "type": "object",
         "required": [
@@ -252,8 +254,20 @@
               "documentation": {
                 "$ref": "#/definitions/componentPath"
               },
-              "aggregate": {
-                "type": "boolean"
+              "profiles": {
+                "type": "object",
+                "propertyNames": {
+                  "pattern": "^[a-z0-9-]+$"
+                },
+                "additionalProperties": {
+                  "type": "array",
+                  "minItems": 1,
+                  "uniqueItems": true,
+                  "items": {
+                    "$ref": "#/definitions/componentPath"
+                  }
+                },
+                "description": "Named selection profiles. Every profile path must also appear in entry membership; profiles never define distribution membership."
               }
             },
             "additionalProperties": false

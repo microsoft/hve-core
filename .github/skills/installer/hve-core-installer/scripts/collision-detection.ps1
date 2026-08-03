@@ -2,59 +2,40 @@
 # SPDX-License-Identifier: MIT
 <#
 .SYNOPSIS
-    Detects file collisions before copying HVE-Core agents.
+    Reports component maturity and target collisions before copying HVE-Core components.
 .DESCRIPTION
-    Checks the target directory for existing agent files that would conflict
-    with the selected agent bundle or marketplace package.
-.PARAMETER Selection
-    Agent bundle to check. Use 'hve-core' for the default set or a package identifier.
-.PARAMETER PackageAgents
-    Projected agent file paths relative to the agents directory for non-default packages.
+    Delegates to component-copy.ps1 in report-only mode so the pre-write check
+    resolves components exactly as the copy does. Emits one line per selected
+    component, then the collision summary. Collisions are component-level: a
+    file component collides on its full target path and a skill component
+    collides on its target directory.
+.PARAMETER HveCoreBasePath
+    Root path of the local HVE-Core clone used as the copy source.
+.PARAMETER TargetRoot
+    Root of the repository that would receive the copied components.
+.PARAMETER Component
+    Marketplace component paths such as agents/hve-core/rpi-agent.md or skills/rpi/rpi-plan.
 .EXAMPLE
-    ./scripts/collision-detection.ps1 -Selection hve-core
-.EXAMPLE
-    ./scripts/collision-detection.ps1 -Selection my-package -PackageAgents @('my-package/custom.agent.md')
+    ./scripts/collision-detection.ps1 -HveCoreBasePath ../hve-core -TargetRoot . -Component @('agents/hve-core/rpi-agent.md')
 .OUTPUTS
-    COLLISIONS_DETECTED=true/false and COLLISION_FILES list.
+    COMPONENT lines plus COLLISIONS_DETECTED, COLLISION_COMPONENTS, and COLLISION_TARGETS.
 #>
 [CmdletBinding()]
 param(
     [Parameter(Mandatory)]
-    [ValidateNotNullOrEmpty()]
-    [string]$Selection,
+    [ValidateScript({ Test-Path -LiteralPath $_ -PathType Container })]
+    [string]$HveCoreBasePath,
 
-    [Parameter()]
-    [string[]]$PackageAgents = @()
+    [Parameter(Mandatory)]
+    [ValidateScript({ Test-Path -LiteralPath $_ -PathType Container })]
+    [string]$TargetRoot,
+
+    [Parameter(Mandatory)]
+    [ValidateNotNullOrEmpty()]
+    [string[]]$Component
 )
 
 $ErrorActionPreference = 'Stop'
 
-$targetDir = ".github/agents"
-
-# Get files to copy based on selection (paths relative to agents/)
-$filesToCopy = switch ($selection) {
-    "hve-core" { @("hve-core/rpi-agent.agent.md", "hve-core/documentation.agent.md") }
-    default {
-        $PackageAgents
-    }
-}
-
-# Check for collisions. The target is flat, so only the file name matters and
-# two package agents sharing a name resolve to one target. Paths stay
-# forward-slashed and de-duplicated so this script and its Bash counterpart
-# emit byte-identical COLLISION_FILES values on every platform.
-$collisions = [System.Collections.Generic.List[string]]::new()
-$seenTargets = [System.Collections.Generic.HashSet[string]]::new([System.StringComparer]::Ordinal)
-foreach ($file in $filesToCopy) {
-    $fileName = Split-Path $file -Leaf
-    $targetPath = "$targetDir/$fileName"
-    if (-not $seenTargets.Add($targetPath)) { continue }
-    if (Test-Path -LiteralPath $targetPath) { $collisions.Add($targetPath) }
-}
-
-if ($collisions.Count -gt 0) {
-    Write-Host "COLLISIONS_DETECTED=true"
-    Write-Host "COLLISION_FILES=$($collisions -join ',')"
-} else {
-    Write-Host "COLLISIONS_DETECTED=false"
-}
+& (Join-Path $PSScriptRoot 'component-copy.ps1') -HveCoreBasePath $HveCoreBasePath -TargetRoot $TargetRoot `
+    -SelectionName 'custom' -Component $Component -ReportOnly

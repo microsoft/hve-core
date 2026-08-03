@@ -3,8 +3,15 @@
 import {
   packageCardDefinitions,
   resolvePackageCards,
-  resolveMetaPackages,
 } from '../packageCards';
+
+describe('packageCardDefinitions', () => {
+  it('declares hve-core as the only package identity', () => {
+    expect(packageCardDefinitions.map((definition) => definition.name)).toEqual([
+      'hve-core',
+    ]);
+  });
+});
 
 describe('resolvePackageCards', () => {
   it('maps a declared count onto the matching package', () => {
@@ -37,25 +44,9 @@ describe('resolvePackageCards', () => {
     });
   });
 
-  it('ignores counts for packages that declare no card', () => {
-    const cards = resolvePackageCards({ 'not-a-card': 99 });
+  it('ignores counts for retired identities that declare no card', () => {
+    const cards = resolvePackageCards({ 'hve-core-all': 99, ado: 12 });
 
-    expect(cards.map((card) => card.name)).not.toContain('not-a-card');
-  });
-});
-
-describe('resolveMetaPackages', () => {
-  it('reads the hve-core-all count when present', () => {
-    expect(resolveMetaPackages({ 'hve-core-all': 42 })).toEqual({ 'hve-core-all': 42 });
-  });
-
-  it('falls back to 0 when the hve-core-all count is missing', () => {
-    expect(resolveMetaPackages({})).toEqual({ 'hve-core-all': 0 });
-  });
-
-  it('exposes only the meta package entry', () => {
-    expect(Object.keys(resolveMetaPackages({ 'hve-core-all': 1, ado: 2 }))).toEqual([
-      'hve-core-all',
-    ]);
+    expect(cards.map((card) => card.name)).toEqual(['hve-core']);
   });
 });
