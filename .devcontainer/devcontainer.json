@@ -3,10 +3,10 @@
   "build": {
     "dockerfile": "Dockerfile",
     "args": {
-      "BASE_IMAGE": "${localEnv:HVE_DEVCONTAINER_IMAGE:mcr.microsoft.com/devcontainers/base:2-jammy}",
-      "NPM_CONFIG_REGISTRY": "${localEnv:NPM_CONFIG_REGISTRY:https://registry.npmjs.org/}",
-      "PIP_INDEX_URL": "${localEnv:PIP_INDEX_URL:https://pypi.org/simple/}",
-      "UV_DEFAULT_INDEX": "${localEnv:UV_DEFAULT_INDEX:https://pypi.org/simple/}"
+      "BASE_IMAGE": "${localEnv:HVE_DEVCONTAINER_IMAGE}",
+      "NPM_CONFIG_REGISTRY": "${localEnv:NPM_CONFIG_REGISTRY}",
+      "PIP_INDEX_URL": "${localEnv:PIP_INDEX_URL}",
+      "UV_DEFAULT_INDEX": "${localEnv:UV_DEFAULT_INDEX}"
     }
   },
   "features": {
