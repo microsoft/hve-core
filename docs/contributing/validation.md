@@ -33,15 +33,15 @@ Use the smallest local-safe command that covers the change. Generic validation
 does not select a `ci:*` lane, and a command mentioned in documentation, a
 plan, a log, or an error message is not an agent execution request.
 
-| Need                                      | Command                  | Notes                                       |
-|-------------------------------------------|--------------------------|---------------------------------------------|
-| Repository-wide local-safe validation     | `npm run validate:local` | Non-mutating default validation aggregate   |
-| Documentation static and component checks | `npm run validate:docs`  | Does not run the browser E2E lane           |
-| Markdown tables check                     | `npm run lint:tables`    | Non-mutating table alignment check          |
-| Markdown link check                       | `npm run lint:md-links`  | Non-mutating Markdown link resolution check |
-| Markdown tables fix                       | `npm run format:tables`  | Explicitly mutates table formatting         |
-| Markdown lint fix                         | `npm run lint:md:fix`    | Explicitly mutates Markdown where possible  |
-| Targeted check                            | `npm run <local-check>`  | Choose the check that owns the changed file |
+| Need                                      | Command                  | Notes                                                |
+|-------------------------------------------|--------------------------|------------------------------------------------------|
+| Repository-wide local-safe validation     | `npm run validate:local` | Non-mutating default validation aggregate            |
+| Documentation static and component checks | `npm run validate:docs`  | Does not run the browser E2E lane                    |
+| Markdown tables check                     | `npm run lint:tables`    | Non-mutating table alignment check                   |
+| Markdown link check                       | `npm run lint:md-links`  | Non-mutating link check included in `validate:local` |
+| Markdown tables fix                       | `npm run format:tables`  | Explicitly mutates table formatting                  |
+| Markdown lint fix                         | `npm run lint:md:fix`    | Explicitly mutates Markdown where possible           |
+| Targeted check                            | `npm run <local-check>`  | Choose the check that owns the changed file          |
 
 For example, use `npm run lint:md -- docs/contributing/validation.md` for a
 targeted Markdown check, or invoke `npm run lint:frontmatter` after changing
@@ -125,16 +125,26 @@ Dev container, in VS Code user settings so no repository file changes:
 ### Dev container Dockerfile build args
 
 The dev container needs the proxy at image-build time as well as at runtime so
-that any `apt`, `pip`, `uv`, or `npm` step baked into the image resolves through
-the proxy. `.devcontainer/devcontainer.json` reads `NPM_CONFIG_REGISTRY`,
+that any `pip`, `uv`, or `npm` step baked into the image resolves through the
+proxy. `.devcontainer/devcontainer.json` reads `NPM_CONFIG_REGISTRY`,
 `PIP_INDEX_URL`, and `UV_DEFAULT_INDEX` from the host with
 `${localEnv:VAR:default}` and passes them as `build.args` to
 `.devcontainer/Dockerfile`, which declares matching `ARG` and `ENV` entries.
 When the host variables are unset, each default falls back to the public
 registry.
 
-Set the same three variables on the host before rebuilding the container. VS
-Code substitutes them at build time; there is no repository file to edit.
+Set the build-time variables on the host before rebuilding the container. The
+npm build argument uses uppercase `NPM_CONFIG_REGISTRY`, while npm commands
+outside the container use lowercase `npm_config_registry` as shown above.
+
+```bash
+export NPM_CONFIG_REGISTRY="https://proxy.example.com/npm/"
+export PIP_INDEX_URL="https://proxy.example.com/pypi/simple/"
+export UV_DEFAULT_INDEX="https://proxy.example.com/pypi/simple/"
+```
+
+VS Code substitutes these values at build time; there is no repository file to
+edit.
 
 The committed `.npmrc` sets `replace-registry-host=always`, so npm rewrites each
 lockfile tarball host to the configured registry at fetch time only. `npm ci`
