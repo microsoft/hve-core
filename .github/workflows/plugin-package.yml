@@ -13,6 +13,11 @@ on:
         description: "Release version the packaged plugin must carry"
         required: true
         type: string
+      project-release-catalog:
+        description: "Project the requested version and immutable locator without changing the committed catalog"
+        required: false
+        default: false
+        type: boolean
     outputs:
       packages-matrix:
         description: "JSON matrix of plugin packages that were packaged"
@@ -45,6 +50,7 @@ jobs:
         env:
           INPUT_SOURCE_REF: ${{ inputs.source-ref }}
           INPUT_VERSION: ${{ inputs.version }}
+          PROJECT_RELEASE_CATALOG: ${{ inputs.project-release-catalog }}
         run: |
           $ErrorActionPreference = 'Stop'
           if ([string]::IsNullOrWhiteSpace($env:INPUT_SOURCE_REF)) {
@@ -53,17 +59,22 @@ jobs:
           if ([string]::IsNullOrWhiteSpace($env:INPUT_VERSION)) {
             throw 'version is required and must not be blank'
           }
-          # The catalog at the packaged source must already carry the release
-          # version and its matching immutable plugins-v<version> locator.
-          $catalog = Get-Content -LiteralPath '.github/plugin/marketplace.json' -Raw -Encoding utf8 | ConvertFrom-Json -AsHashtable
-          $catalogVersion = [string]$catalog['metadata']['version']
-          if ($catalogVersion -cne $env:INPUT_VERSION) {
-            throw "Catalog version $catalogVersion does not match requested version $env:INPUT_VERSION"
+          if ($env:INPUT_VERSION -cnotmatch '^\d+\.\d+\.\d+$') {
+            throw "version '$env:INPUT_VERSION' must use MAJOR.MINOR.PATCH form"
           }
-          foreach ($entry in @($catalog['plugins'])) {
-            $expectedRef = "plugins-v$env:INPUT_VERSION"
-            if ([string]$entry['source']['ref'] -cne $expectedRef) {
-              throw "Catalog plugin '$($entry['name'])' pins source ref '$($entry['source']['ref'])' but the release requires '$expectedRef'"
+          if ($env:PROJECT_RELEASE_CATALOG -ne 'true') {
+            # Stable packaging requires committed release state. PreRelease uses
+            # the explicit projection step below because its odd version is ephemeral.
+            $catalog = Get-Content -LiteralPath '.github/plugin/marketplace.json' -Raw -Encoding utf8 | ConvertFrom-Json -AsHashtable
+            $catalogVersion = [string]$catalog['metadata']['version']
+            if ($catalogVersion -cne $env:INPUT_VERSION) {
+              throw "Catalog version $catalogVersion does not match requested version $env:INPUT_VERSION"
+            }
+            foreach ($entry in @($catalog['plugins'])) {
+              $expectedRef = "plugins-v$env:INPUT_VERSION"
+              if ([string]$entry['source']['ref'] -cne $expectedRef) {
+                throw "Catalog plugin '$($entry['name'])' pins source ref '$($entry['source']['ref'])' but the release requires '$expectedRef'"
+              }
             }
           }
 
@@ -74,8 +85,23 @@ jobs:
       - name: Discover marketplace packages
         id: discover
         shell: pwsh
+        env:
+          INPUT_VERSION: ${{ inputs.version }}
+          PROJECT_RELEASE_CATALOG: ${{ inputs.project-release-catalog }}
         run: |
-          & ./scripts/extension/Get-MarketplacePackageMatrix.ps1 -Channel 'PreRelease'
+          $ErrorActionPreference = 'Stop'
+          $catalogPath = '.github/plugin/marketplace.json'
+          if ($env:PROJECT_RELEASE_CATALOG -eq 'true') {
+            $catalogPath = 'logs/projected-marketplace.json'
+            & ./scripts/plugins/Generate-Plugins.ps1 `
+              -Channel PreRelease `
+              -ReleaseTag "plugins-v$env:INPUT_VERSION" `
+              -MarketplaceOutputPath $catalogPath
+            if ($LASTEXITCODE -ne 0) {
+              throw "Generate-Plugins.ps1 failed with exit code $LASTEXITCODE"
+            }
+          }
+          & ./scripts/extension/Get-MarketplacePackageMatrix.ps1 -Channel 'PreRelease' -CatalogPath $catalogPath
 
   package:
     name: Package Plugin ${{ matrix.id }}
@@ -105,10 +131,24 @@ jobs:
       - name: Setup PowerShell modules
         uses: ./.github/actions/setup-ps-modules
 
-      - name: Generate plugins
+      - name: Generate committed plugins
+        if: ${{ !inputs.project-release-catalog }}
+        run: npm run plugin:generate
+
+      - name: Generate plugins and projected release catalog
+        if: ${{ inputs.project-release-catalog }}
+        shell: pwsh
+        env:
+          INPUT_VERSION: ${{ inputs.version }}
         run: |
-          mkdir -p logs
-          npm run plugin:generate
+          $ErrorActionPreference = 'Stop'
+          & ./scripts/plugins/Generate-Plugins.ps1 `
+            -Channel PreRelease `
+            -ReleaseTag "plugins-v$env:INPUT_VERSION" `
+            -MarketplaceOutputPath 'logs/projected-marketplace.json'
+          if ($LASTEXITCODE -ne 0) {
+            throw "Generate-Plugins.ps1 failed with exit code $LASTEXITCODE"
+          }
 
       - name: Record one-package release evidence
         shell: pwsh

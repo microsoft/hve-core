@@ -2,7 +2,7 @@
 title: Extension Packaging Guide
 description: Developer guide for packaging and publishing the HVE Core VS Code extension
 author: Microsoft
-ms.date: 2026-08-02
+ms.date: 2026-08-03
 ms.topic: reference
 ---
 
@@ -57,11 +57,17 @@ Install-Module -Name PowerShell-Yaml -RequiredVersion 0.4.7 -Scope CurrentUser
 
 The extension is automatically packaged and published through GitHub Actions:
 
-| Workflow                                           | Trigger           | Purpose                                     |
-|----------------------------------------------------|-------------------|---------------------------------------------|
-| `.github/workflows/extension-package.yml`          | Reusable workflow | Packages extension with flexible versioning |
-| `.github/workflows/release-marketplace-stable.yml` | Release/manual    | Publishes to VS Code Marketplace            |
-| `.github/workflows/release-stable.yml`             | Push to main      | Includes extension packaging in CI          |
+| Workflow                                           | Trigger                          | Purpose                                                    |
+|----------------------------------------------------|----------------------------------|------------------------------------------------------------|
+| `.github/workflows/extension-package.yml`          | Reusable workflow                | Packages a source-explicit extension                       |
+| `.github/workflows/release-prerelease.yml`         | Manual with an explicit main SHA | Builds and publishes the immutable PreRelease              |
+| `.github/workflows/release-stable.yml`             | Push to main                     | Validates `main` and opens the reviewed Stable promotion   |
+| `.github/workflows/release-stable-publish.yml`     | Merged PR to `release/stable`    | Runs release-please and publishes verified Stable evidence |
+| `.github/workflows/release-marketplace-stable.yml` | Published Stable release         | Publishes the Stable VSIX to VS Code Marketplace           |
+
+`release-stable.yml` opens the reviewed `main` to `release/stable` promotion after validation. After the promotion merges, `release-stable-publish.yml` runs release-please on `release/stable`. Release-please owns the managed Stable release PR and draft Stable release.
+
+When that managed PR merges, the workflow packages and attests the VSIX and plugin, publishes the immutable `plugins-v<version>` snapshot, finalizes the draft, and opens the reviewed `release/stable` to `main` metadata synchronization PR.
 
 ## Packaging Pipeline Overview
 
@@ -210,9 +216,11 @@ flowchart TB
 
 ## Publishing the Extension
 
-**Important:** Versions are managed by `release-please` via
-`extension/templates/package.template.json`. `Prepare-Extension.ps1` generates
-the extension manifest with the correct version before packaging.
+**Important:** Stable versions are managed by release-please on `release/stable`
+through `extension/templates/package.template.json`. `Prepare-Extension.ps1`
+generates the extension manifest with the released version before packaging.
+PreRelease supplies an ephemeral odd-minor version without changing tracked
+version files.
 
 ### Setup Personal Access Token (one-time)
 
@@ -266,7 +274,7 @@ code --install-extension hve-core-*.vsix
 
 ### How Versions Are Managed
 
-The committed version source is `extension/templates/package.template.json`. Release preparation updates this file's `version` field before Stable promotion. PreRelease supplies an ephemeral odd-minor version at package time. `Prepare-Extension.ps1` generates `extension/package.json` from the template before artifact discovery.
+The committed extension version source is `extension/templates/package.template.json`. Release-please updates this file in its managed Stable release PR on `release/stable`, and the release postprocessor synchronizes the other committed version fields and `plugins-v<version>` locator on the same branch. PreRelease supplies an ephemeral odd-minor version at package time. `Prepare-Extension.ps1` generates `extension/package.json` from the template before artifact discovery.
 
 Generated package files are ephemeral build artifacts (gitignored). They are created and consumed by `Prepare-Extension.ps1` and `Package-Extension.ps1` at build time.
 
@@ -325,12 +333,11 @@ The `-PreRelease` switch adds `--pre-release` to the vsce command, marking the p
 
 Use the manual workflow for publishing pre-releases:
 
-1. Go to **Actions** > **Publish Pre-Release Extension**
-2. Enter an ODD minor version (e.g., `1.1.0`, `1.3.0`)
-3. Optionally enable dry-run to test packaging without publishing
-4. Run the workflow
+1. Go to **Actions** > **Pre-Release Pipeline**
+2. Enter the full 40-character SHA of the approved commit on `main`
+3. Run the workflow
 
-The workflow validates the version is ODD before proceeding.
+The workflow verifies that the SHA belongs to `main`, computes an ephemeral odd-minor version, stages a resumable draft, packages the VSIX and plugin from that source, publishes the matching immutable plugin snapshot, and finalizes the PreRelease. The published release then triggers the PreRelease marketplace workflow.
 
 ### Lifecycle Disclosure
 

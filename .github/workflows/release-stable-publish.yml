@@ -2,13 +2,10 @@
 # SPDX-License-Identifier: MIT
 name: Stable Release Publish
 
-# Sole creator of the Stable git tag and GitHub release.
-#
-# It runs only when a reviewed main -> release/stable promotion pull request is
-# merged, and it refuses to write anything until event identity, promoted-head
-# and merge-tree equality, the even minor version, tag absence, and one-package
-# consistency are all proven. Nothing here force-pushes, deletes, or otherwise
-# mutates a source branch.
+# Runs release-please on release/stable after a reviewed pull request merges.
+# A main promotion creates the managed release PR. Merging that managed PR lets
+# release-please create the draft Stable release and emit the immutable release
+# identity consumed by the artifact and publication gates below.
 
 on:
     pull_request:
@@ -24,185 +21,213 @@ permissions:
     contents: read
 
 jobs:
-    verify-promotion:
-        name: Verify Stable Promotion
-        # Event identity: only a merged, same-repository main -> release/stable
-        # promotion is eligible. head.ref and base.ref are read in conditions only,
-        # never interpolated into a shell body.
+    release-please:
+        name: Release Please on release/stable
         if: >
             github.event.pull_request.merged == true
-            && github.event.pull_request.head.ref == 'main'
             && github.event.pull_request.base.ref == 'release/stable'
             && github.event.pull_request.head.repo.full_name == github.repository
         runs-on: ubuntu-latest
         permissions:
-            contents: read
+            contents: write
+            pull-requests: write
         outputs:
-            version: ${{ steps.verify.outputs.version }}
-            tag_name: ${{ steps.verify.outputs.tag_name }}
-            merge_sha: ${{ steps.verify.outputs.merge_sha }}
-            promoted_sha: ${{ steps.verify.outputs.promoted_sha }}
+            release-pr-branch: ${{ steps.release-pr.outputs.branch }}
+            release_created: ${{ steps.release-pr.outputs.release_created }}
+            tag_name: ${{ steps.release-pr.outputs.tag_name }}
+            version: ${{ steps.release-pr.outputs.version }}
+            sha: ${{ steps.release-pr.outputs.sha }}
+            body: ${{ steps.release.outputs.body }}
         steps:
-            - name: Checkout merged promotion
-              uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+            - name: Generate GitHub App Token
+              id: app-token
+              uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v2.0.0
               with:
-                  ref: ${{ github.event.pull_request.merge_commit_sha }}
-                  persist-credentials: false
+                  app-id: ${{ vars.RELEASE_APP_ID }}
+                  private-key: ${{ secrets.RELEASE_APP_PRIVATE_KEY }}
 
-            - name: Verify promotion, tree equality, version, and tag absence
-              id: verify
+            - name: Run release-please
+              id: release
+              uses: googleapis/release-please-action@45996ed1f6d02564a971a2fa1b5860e934307cf7 # v5.0.0
+              with:
+                  token: ${{ steps.app-token.outputs.token }}
+                  config-file: release-please-config.json
+                  manifest-file: .release-please-manifest.json
+                  target-branch: release/stable
+
+            - name: Validate release-please outputs
+              id: release-pr
               env:
-                  GH_TOKEN: ${{ github.token }}
-                  REPOSITORY: ${{ github.repository }}
-                  MERGE_SHA: ${{ github.event.pull_request.merge_commit_sha }}
-                  PROMOTED_SHA: ${{ github.event.pull_request.head.sha }}
+                  PRS_CREATED: ${{ steps.release.outputs.prs_created }}
+                  RELEASE_PR: ${{ steps.release.outputs.pr }}
+                  RELEASE_CREATED: ${{ steps.release.outputs.release_created }}
+                  RELEASE_TAG: ${{ steps.release.outputs.tag_name }}
+                  RELEASE_VERSION: ${{ steps.release.outputs.version }}
+                  RELEASE_SHA: ${{ steps.release.outputs.sha }}
+                  RELEASE_BODY: ${{ steps.release.outputs.body }}
               run: |
                   set -euo pipefail
 
-                  if [ -z "$MERGE_SHA" ] || [ -z "$PROMOTED_SHA" ]; then
-                    echo "::error::Promotion event is missing a merge commit or promoted head SHA"
+                  branch=''
+                  if [ "$PRS_CREATED" = 'true' ]; then
+                    branch=$(printf '%s' "$RELEASE_PR" | jq -r '.headBranchName // ""')
+                    if ! printf '%s' "$branch" | grep -Eq '^release-please--[A-Za-z0-9._/-]+$'; then
+                      echo "::error::release-please reported an unexpected preparation branch"
+                      exit 1
+                    fi
+                  fi
+
+                  if [ "$RELEASE_CREATED" = 'true' ]; then
+                    if ! printf '%s' "$RELEASE_VERSION" | grep -Eq '^[0-9]+\.[0-9]+\.[0-9]+$'; then
+                      echo "::error::release-please reported an invalid version"
+                      exit 1
+                    fi
+                    if [ "$RELEASE_TAG" != "hve-core-v$RELEASE_VERSION" ]; then
+                      echo "::error::release-please tag $RELEASE_TAG does not match version $RELEASE_VERSION"
+                      exit 1
+                    fi
+                    if ! printf '%s' "$RELEASE_SHA" | grep -Eq '^[0-9a-f]{40}$'; then
+                      echo "::error::release-please reported an invalid release SHA"
+                      exit 1
+                    fi
+                    if [ -z "$RELEASE_BODY" ]; then
+                      echo "::error::release-please reported an empty release body"
+                      exit 1
+                    fi
+                  fi
+
+                  {
+                    echo "branch=$branch"
+                    echo "release_created=$RELEASE_CREATED"
+                    echo "tag_name=$RELEASE_TAG"
+                    echo "version=$RELEASE_VERSION"
+                    echo "sha=$RELEASE_SHA"
+                  } >> "$GITHUB_OUTPUT"
+
+    sync-release-pr:
+        name: Sync Release Preparation Versions
+        needs: [release-please]
+        if: ${{ !cancelled() && !failure() && needs.release-please.outputs.release-pr-branch != '' }}
+        runs-on: ubuntu-latest
+        permissions:
+            contents: read
+        steps:
+            - name: Generate GitHub App Token
+              id: app-token
+              uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v2.0.0
+              with:
+                  app-id: ${{ vars.RELEASE_APP_ID }}
+                  private-key: ${{ secrets.RELEASE_APP_PRIVATE_KEY }}
+
+            - name: Checkout the release preparation branch
+              uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+              with:
+                  ref: ${{ needs.release-please.outputs.release-pr-branch }}
+                  token: ${{ steps.app-token.outputs.token }}
+                  persist-credentials: true
+
+            - name: Update committed version fields and the plugin locator
+              env:
+                  RELEASE_BRANCH: ${{ needs.release-please.outputs.release-pr-branch }}
+              run: |
+                  set -euo pipefail
+                  VERSION=$(jq -r '.["."] // ""' .release-please-manifest.json)
+                  if ! printf '%s' "$VERSION" | grep -Eq '^[0-9]+\.[0-9]+\.[0-9]+$'; then
+                    echo "::error::.release-please-manifest.json has no MAJOR.MINOR.PATCH root version"
                     exit 1
                   fi
 
-                  checked_out=$(git rev-parse HEAD)
-                  if [ "$checked_out" != "$MERGE_SHA" ]; then
-                    echo "::error::Checked-out commit $checked_out is not the merge commit $MERGE_SHA"
+                  pwsh -NoProfile -File scripts/release/Update-VersionFiles.ps1 \
+                    -Version "$VERSION" \
+                    -SkipPluginGenerate
+
+                  if git diff --quiet; then
+                    echo "Preparation already carries $VERSION and locator plugins-v$VERSION"
+                    exit 0
+                  fi
+
+                  git config user.name 'github-actions[bot]'
+                  git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+                  git add --update
+                  git commit -m "chore(release): sync committed versions and plugin locator to $VERSION"
+                  git push origin "HEAD:refs/heads/$RELEASE_BRANCH"
+
+    validate-release:
+        name: Validate release-please Stable output
+        needs: [release-please]
+        if: ${{ needs.release-please.outputs.release_created == 'true' }}
+        runs-on: ubuntu-latest
+        permissions:
+            contents: read
+        outputs:
+            version: ${{ needs.release-please.outputs.version }}
+            tag_name: ${{ needs.release-please.outputs.tag_name }}
+            sha: ${{ needs.release-please.outputs.sha }}
+        steps:
+            - name: Checkout released commit
+              uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+              with:
+                  ref: ${{ needs.release-please.outputs.sha }}
+                  persist-credentials: false
+
+            - name: Verify release version and committed state
+              env:
+                  RELEASE_SHA: ${{ needs.release-please.outputs.sha }}
+                  RELEASE_TAG: ${{ needs.release-please.outputs.tag_name }}
+                  RELEASE_VERSION: ${{ needs.release-please.outputs.version }}
+              run: |
+                  set -euo pipefail
+                  if [ "$(git rev-parse HEAD)" != "$RELEASE_SHA" ]; then
+                    echo "::error::Checked-out commit does not match the release-please SHA"
                     exit 1
                   fi
 
-                  # Tree equality proves the packaged tree is exactly the reviewed main
-                  # head. Ancestry alone would still allow a merge to introduce changes.
-                  merge_tree=$(gh api "/repos/$REPOSITORY/git/commits/$MERGE_SHA" --jq '.tree.sha')
-                  promoted_tree=$(gh api "/repos/$REPOSITORY/git/commits/$PROMOTED_SHA" --jq '.tree.sha')
-                  if [ "$merge_tree" != "$promoted_tree" ]; then
-                    echo "::error::Merge commit tree $merge_tree does not equal promoted main head tree $promoted_tree"
-                    exit 1
-                  fi
-
-                  VERSION=$(jq -r '.version // ""' package.json)
-                  if ! [[ "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
-                    echo "::error::Promoted version '$VERSION' is not MAJOR.MINOR.PATCH"
-                    exit 1
-                  fi
-
-                  MINOR=$(echo "$VERSION" | cut -d. -f2)
+                  MINOR=$(printf '%s' "$RELEASE_VERSION" | cut -d. -f2)
                   if (( MINOR % 2 != 0 )); then
-                    echo "::error::Promoted version $VERSION has odd minor ($MINOR); stable releases require an even minor"
+                    echo "::error::Stable version $RELEASE_VERSION has an odd minor"
                     exit 1
                   fi
 
-                  for entry in ".release-please-manifest.json:.\".\"" "extension/templates/package.template.json:.version" ".github/plugin/marketplace.json:.metadata.version"; do
+                  for entry in "package.json:.version" "package-lock.json:.version" ".release-please-manifest.json:.\".\"" "extension/templates/package.template.json:.version" ".github/plugin/marketplace.json:.metadata.version"; do
                     file="${entry%%:*}"
                     path="${entry#*:}"
                     actual=$(jq -r "$path" "$file")
-                    if [ "$actual" != "$VERSION" ]; then
-                      echo "::error::$file $path is $actual but the promoted version is $VERSION"
+                    if [ "$actual" != "$RELEASE_VERSION" ]; then
+                      echo "::error::$file $path is $actual but release-please reported $RELEASE_VERSION"
                       exit 1
                     fi
                   done
 
-                  TAG="hve-core-v${VERSION}"
-                  if gh api "/repos/$REPOSITORY/git/refs/tags/$TAG" --silent 2>/dev/null; then
-                    echo "::error::Tag $TAG already exists; stable tags are immutable and are never overwritten"
+                  if ! jq -e --arg version "$RELEASE_VERSION" '
+                    all(.plugins[]; .version == $version and .source.ref == ("plugins-v" + $version))
+                  ' .github/plugin/marketplace.json >/dev/null; then
+                    echo "::error::Catalog versions or immutable plugin locators are inconsistent"
                     exit 1
                   fi
 
-                  {
-                    echo "version=$VERSION"
-                    echo "tag_name=$TAG"
-                    echo "merge_sha=$MERGE_SHA"
-                    echo "promoted_sha=$PROMOTED_SHA"
-                  } >> "$GITHUB_OUTPUT"
-
-                  echo "Verified promotion of $VERSION from $PROMOTED_SHA via $MERGE_SHA"
+                  if ! grep -Eq "^## \[${RELEASE_VERSION}\]" CHANGELOG.md; then
+                    echo "::error::CHANGELOG.md has no release entry for $RELEASE_VERSION"
+                    exit 1
+                  fi
 
             - name: Setup PowerShell modules
               uses: ./.github/actions/setup-ps-modules
 
-            # One-package consistency runs through the shared discovery script so the
-            # publish gate cannot drift from the extension and plugin lanes.
             - name: Verify one-package consistency
               shell: pwsh
-              env:
-                  EXPECTED_VERSION: ${{ steps.verify.outputs.version }}
               run: |
                   $ErrorActionPreference = 'Stop'
                   . ./scripts/extension/Get-MarketplacePackageMatrix.ps1
-                  $catalogPath = './.github/plugin/marketplace.json'
                   foreach ($channel in @('Stable', 'PreRelease')) {
-                    $names = @((Get-MarketplacePackageMatrixCore -Channel $channel -CatalogPath $catalogPath).Names)
+                    $names = @((Get-MarketplacePackageMatrixCore -Channel $channel -CatalogPath './.github/plugin/marketplace.json').Names)
                     if ($names.Count -ne 1) {
                       throw "Expected exactly one $channel package but found $($names.Count): $($names -join ', ')"
                     }
                   }
-                  $catalog = Get-Content -LiteralPath $catalogPath -Raw -Encoding utf8 | ConvertFrom-Json -AsHashtable
-                  foreach ($entry in @($catalog['plugins'])) {
-                    $expectedRef = "plugins-v$env:EXPECTED_VERSION"
-                    if ([string]$entry['source']['ref'] -cne $expectedRef) {
-                      throw "Catalog plugin '$($entry['name'])' pins source ref '$($entry['source']['ref'])' but the release requires '$expectedRef'"
-                    }
-                  }
-                  Write-Host "Verified one package and matching immutable plugin locator plugins-v$env:EXPECTED_VERSION"
-
-    create-release:
-        name: Create Stable Tag and Release
-        needs: [verify-promotion]
-        runs-on: ubuntu-latest
-        permissions:
-            contents: write
-        steps:
-            - name: Checkout merged promotion
-              uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-              with:
-                  ref: ${{ needs.verify-promotion.outputs.merge_sha }}
-                  persist-credentials: false
-
-            - name: Create immutable stable tag
-              env:
-                  GH_TOKEN: ${{ github.token }}
-                  REPOSITORY: ${{ github.repository }}
-                  TAG: ${{ needs.verify-promotion.outputs.tag_name }}
-                  MERGE_SHA: ${{ needs.verify-promotion.outputs.merge_sha }}
-              run: |
-                  set -euo pipefail
-                  # Reference creation is atomic and fails when the tag already exists,
-                  # so this can never overwrite a published stable tag.
-                  gh api "/repos/$REPOSITORY/git/refs" \
-                    -f "ref=refs/tags/$TAG" \
-                    -f "sha=$MERGE_SHA"
-                  echo "Created $TAG -> $MERGE_SHA"
-
-            - name: Create draft GitHub release
-              env:
-                  GH_TOKEN: ${{ github.token }}
-                  REPOSITORY: ${{ github.repository }}
-                  TAG: ${{ needs.verify-promotion.outputs.tag_name }}
-                  VERSION: ${{ needs.verify-promotion.outputs.version }}
-              run: |
-                  set -euo pipefail
-                  awk -v ver="$VERSION" '
-                    index($0, "## [" ver "]") == 1 { flag = 1; next }
-                    flag && index($0, "## [") == 1 { exit }
-                    flag { print }
-                  ' CHANGELOG.md > release-notes.md
-
-                  if [ -s release-notes.md ]; then
-                    gh release create "$TAG" \
-                      --title "hve-core $VERSION" \
-                      --draft \
-                      --notes-file release-notes.md \
-                      -R "$REPOSITORY"
-                  else
-                    gh release create "$TAG" \
-                      --title "hve-core $VERSION" \
-                      --draft \
-                      --generate-notes \
-                      -R "$REPOSITORY"
-                  fi
 
     close-milestone:
         name: Close Release Milestone
-        needs: [verify-promotion, create-release]
+        needs: [validate-release, publish-release]
         runs-on: ubuntu-latest
         permissions:
             issues: write
@@ -211,7 +236,7 @@ jobs:
               env:
                   GH_TOKEN: ${{ github.token }}
                   REPOSITORY: ${{ github.repository }}
-                  VERSION: ${{ needs.verify-promotion.outputs.version }}
+                  VERSION: ${{ needs.validate-release.outputs.version }}
               run: |
                   set -euo pipefail
                   MAJOR=$(echo "$VERSION" | cut -d. -f1)
@@ -229,13 +254,13 @@ jobs:
 
     extension-provenance:
         name: Package and Attest VS Code Extensions (Release)
-        needs: [verify-promotion, create-release, generate-dependency-sbom]
+        needs: [validate-release, generate-dependency-sbom]
         uses: ./.github/workflows/extension-provenance.yml
         with:
-            source-ref: ${{ needs.verify-promotion.outputs.merge_sha }}
-            version: ${{ needs.verify-promotion.outputs.version }}
+            source-ref: ${{ needs.validate-release.outputs.sha }}
+            version: ${{ needs.validate-release.outputs.version }}
             channel: Stable
-            release-tag: ${{ needs.verify-promotion.outputs.tag_name }}
+            release-tag: ${{ needs.validate-release.outputs.tag_name }}
         permissions:
             contents: write
             id-token: write
@@ -244,17 +269,28 @@ jobs:
 
     plugin-package-release:
         name: Package Plugins (Release)
-        needs: [verify-promotion, create-release]
+        needs: [validate-release]
         uses: ./.github/workflows/plugin-package.yml
         with:
-            source-ref: ${{ needs.verify-promotion.outputs.merge_sha }}
-            version: ${{ needs.verify-promotion.outputs.version }}
+            source-ref: ${{ needs.validate-release.outputs.sha }}
+            version: ${{ needs.validate-release.outputs.version }}
         permissions:
             contents: read
 
+    plugin-snapshot-production:
+        name: Publish Immutable Plugin Snapshot (Stable)
+        needs: [validate-release, plugin-package-release]
+        uses: ./.github/workflows/plugin-snapshot-publish.yml
+        with:
+            source-ref: ${{ needs.validate-release.outputs.sha }}
+            expected-version: ${{ needs.validate-release.outputs.version }}
+            production: true
+        permissions:
+            contents: write
+
     generate-dependency-sbom:
         name: Generate Dependency SBOM
-        needs: [verify-promotion, create-release]
+        needs: [validate-release]
         runs-on: ubuntu-latest
         permissions:
             # write required for gh release upload to attach SBOM to the release
@@ -263,7 +299,7 @@ jobs:
             - name: Checkout dependency manifests
               uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
               with:
-                  ref: ${{ needs.verify-promotion.outputs.merge_sha }}
+                  ref: ${{ needs.validate-release.outputs.sha }}
                   sparse-checkout: |
                       package.json
                       package-lock.json
@@ -292,7 +328,7 @@ jobs:
               env:
                   GH_TOKEN: ${{ github.token }}
                   REPOSITORY: ${{ github.repository }}
-                  TAG: ${{ needs.verify-promotion.outputs.tag_name }}
+                  TAG: ${{ needs.validate-release.outputs.tag_name }}
               run: |
                   set -euo pipefail
                   gh release upload "$TAG" \
@@ -302,7 +338,7 @@ jobs:
     upload-plugin-packages:
         name: Attest and Upload Plugin (${{ matrix.id }})
         needs:
-            [verify-promotion, plugin-package-release, generate-dependency-sbom]
+            [validate-release, plugin-package-release, generate-dependency-sbom]
         runs-on: ubuntu-latest
         strategy:
             fail-fast: false
@@ -316,7 +352,7 @@ jobs:
             - name: Checkout Syft config
               uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
               with:
-                  ref: ${{ needs.verify-promotion.outputs.merge_sha }}
+                  ref: ${{ needs.validate-release.outputs.sha }}
                   sparse-checkout: .syft.yaml
                   sparse-checkout-cone-mode: false
                   persist-credentials: false
@@ -381,7 +417,7 @@ jobs:
               env:
                   GH_TOKEN: ${{ github.token }}
                   REPOSITORY: ${{ github.repository }}
-                  TAG: ${{ needs.verify-promotion.outputs.tag_name }}
+                  TAG: ${{ needs.validate-release.outputs.tag_name }}
                   BUNDLE_PATH: ${{ steps.attest.outputs.bundle-path }}
               run: |
                   set -euo pipefail
@@ -398,10 +434,10 @@ jobs:
 
     vex-attest:
         name: Attest and Upload VEX
-        needs: [verify-promotion, create-release, generate-dependency-sbom]
+        needs: [validate-release, generate-dependency-sbom]
         uses: ./.github/workflows/vex-attest.yml
         with:
-            version: ${{ needs.verify-promotion.outputs.tag_name }}
+            version: ${{ needs.validate-release.outputs.tag_name }}
             sbom-artifact: sbom-dependencies
         permissions:
             contents: write
@@ -413,9 +449,10 @@ jobs:
         name: Verify Provenance
         needs:
             [
-                verify-promotion,
+                validate-release,
                 extension-provenance,
                 upload-plugin-packages,
+                plugin-snapshot-production,
                 vex-attest,
             ]
         runs-on: ubuntu-latest
@@ -426,13 +463,13 @@ jobs:
             - name: Checkout verification script
               uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
               with:
-                  ref: ${{ needs.verify-promotion.outputs.merge_sha }}
+                  ref: ${{ needs.validate-release.outputs.sha }}
                   persist-credentials: false
 
             - name: Download release artifacts
               env:
                   GH_TOKEN: ${{ github.token }}
-                  RELEASE_TAG: ${{ needs.verify-promotion.outputs.tag_name }}
+                  RELEASE_TAG: ${{ needs.validate-release.outputs.tag_name }}
                   REPOSITORY: ${{ github.repository }}
               run: |
                   set -euo pipefail
@@ -455,7 +492,7 @@ jobs:
 
     sbom-diff:
         name: SBOM Dependency Diff
-        needs: [verify-promotion, create-release, generate-dependency-sbom]
+        needs: [validate-release, generate-dependency-sbom]
         runs-on: ubuntu-latest
         continue-on-error: true
         permissions:
@@ -562,7 +599,7 @@ jobs:
               env:
                   GH_TOKEN: ${{ github.token }}
                   REPOSITORY: ${{ github.repository }}
-                  TAG: ${{ needs.verify-promotion.outputs.tag_name }}
+                  TAG: ${{ needs.validate-release.outputs.tag_name }}
               run: |
                   set -euo pipefail
                   gh release upload "$TAG" \
@@ -573,7 +610,7 @@ jobs:
         name: Append Verification Instructions
         needs:
             [
-                verify-promotion,
+                validate-release,
                 extension-provenance,
                 upload-plugin-packages,
                 verify-provenance,
@@ -586,7 +623,7 @@ jobs:
               env:
                   GH_TOKEN: ${{ github.token }}
                   REPOSITORY: ${{ github.repository }}
-                  TAG: ${{ needs.verify-promotion.outputs.tag_name }}
+                  TAG: ${{ needs.validate-release.outputs.tag_name }}
               run: |
                   set -euo pipefail
                   gh release view "$TAG" --json body --jq '.body' -R "$REPOSITORY" > notes.md
@@ -628,9 +665,10 @@ jobs:
         name: Publish GitHub Release
         needs:
             [
-                verify-promotion,
+                validate-release,
                 extension-provenance,
                 upload-plugin-packages,
+                plugin-snapshot-production,
                 vex-attest,
                 verify-provenance,
                 sbom-diff,
@@ -644,9 +682,56 @@ jobs:
               env:
                   GH_TOKEN: ${{ github.token }}
                   REPOSITORY: ${{ github.repository }}
-                  TAG: ${{ needs.verify-promotion.outputs.tag_name }}
+                  TAG: ${{ needs.validate-release.outputs.tag_name }}
               run: |
                   set -euo pipefail
                   # Promote draft to published. The release becomes immutable
                   # after publish with all assets already attached.
                   gh release edit "$TAG" --draft=false -R "$REPOSITORY"
+
+    open-main-sync-pr:
+        name: Open Stable Metadata Sync PR
+        needs: [validate-release, publish-release]
+        runs-on: ubuntu-latest
+        permissions:
+            contents: read
+            pull-requests: write
+        steps:
+            - name: Generate GitHub App Token
+              id: app-token
+              uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v2.0.0
+              with:
+                  app-id: ${{ vars.RELEASE_APP_ID }}
+                  private-key: ${{ secrets.RELEASE_APP_PRIVATE_KEY }}
+
+            - name: Open or update the Stable metadata synchronization pull request
+              env:
+                  GH_TOKEN: ${{ steps.app-token.outputs.token }}
+                  REPOSITORY: ${{ github.repository }}
+                  VERSION: ${{ needs.validate-release.outputs.version }}
+                  HEAD_BRANCH: release/stable
+                  BASE_BRANCH: main
+              run: |
+                  set -euo pipefail
+                  TITLE="chore(release): sync ${VERSION} metadata to main"
+                  BODY="## Stable release metadata synchronization
+
+                  Synchronizes release-please version, changelog, manifest, and immutable
+                  plugin locator state from \`${HEAD_BRANCH}\` to \`${BASE_BRANCH}\` after
+                  Stable publication.
+
+                  ---
+                  *Managed automatically by the Stable release workflow. Auto-merge is not enabled.*"
+
+                  PR_NUMBER=$(gh pr list --head "$HEAD_BRANCH" --base "$BASE_BRANCH" --state open \
+                    --json number --jq '.[0].number // empty' -R "$REPOSITORY")
+                  if [ -n "$PR_NUMBER" ]; then
+                    gh pr edit "$PR_NUMBER" --title "$TITLE" --body "$BODY" -R "$REPOSITORY"
+                  else
+                    gh pr create \
+                      --head "$HEAD_BRANCH" \
+                      --base "$BASE_BRANCH" \
+                      --title "$TITLE" \
+                      --body "$BODY" \
+                      -R "$REPOSITORY"
+                  fi

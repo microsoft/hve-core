@@ -180,7 +180,7 @@ main() {
 
     if [[ "$kind" == "skill" ]]; then
       [[ -d "$source_root/$source_rel" ]] || fail "Skill component '$candidate' has no source directory at '$source_rel'."
-      files=$(cd "$source_root" && find "$source_rel" -type f | grep -Ev "$EXCLUDED_SKILL_PATH" | LC_ALL=C sort || true)
+      files=$(cd "$source_root" && find "$source_rel" -type f | grep -Eiv "$EXCLUDED_SKILL_PATH" | LC_ALL=C sort || true)
       [[ -n "$files" ]] || fail "Skill component '$candidate' has no files at '$source_rel'."
     else
       [[ -f "$source_root/$source_rel" ]] || fail "Component '$candidate' has no source file at '$source_rel'."
@@ -199,6 +199,13 @@ main() {
   installed=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
 
   entries_file=$(mktemp)
+
+  local existing_path
+  while IFS= read -r existing_path; do
+    [[ -n "$existing_path" ]] || continue
+    jq -nc --arg path "$existing_path" --argjson value "${existing_entry[$existing_path]}" \
+      '{($path): $value}' >>"$entries_file"
+  done < <(printf '%s\n' "${!existing_entry[@]}" | LC_ALL=C sort)
 
   local -a sorted_components=()
   mapfile -t sorted_components < <(printf '%s\n' "${plan_components[@]}" | LC_ALL=C sort)
@@ -263,9 +270,15 @@ main() {
     echo "✅ Copied $component → $target"
   done
 
-  local files_json components_json
-  files_json=$(jq -s 'add // {}' "$entries_file")
-  components_json=$(printf '%s\n' "${sorted_components[@]}" | jq -R -s -c 'split("\n") | map(select(length > 0))')
+  local files_json components_json recipe_components_json
+  files_json=$(jq -s 'reduce .[] as $entry ({}; . * $entry) | to_entries | sort_by(.key) | from_entries' "$entries_file")
+  recipe_components_json=$(jq -c '.plugins[] | select(.name == "hve-core")
+    | [(.agents // [])[], (.commands // [])[], (.rules // [])[], (.skills // [])[]]' "$catalog_path")
+  components_json=$(jq -c --argjson recipe "$recipe_components_json" '
+    [to_entries[].value.component as $component
+      | select($component | type == "string" and length > 0)
+      | select($recipe | index($component))
+      | $component] | unique | sort' <<<"$files_json")
 
   jq -n --argjson schema "$SCHEMA_VERSION" --arg src "microsoft/hve-core" --arg ver "$version" \
     --arg inst "$installed" --arg profile "$selection_name" \

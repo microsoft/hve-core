@@ -6,7 +6,8 @@
     ".": {
       "release-type": "node",
       "package-name": "hve-core",
-      "skip-github-release": true,
+      "draft": true,
+      "force-tag-creation": false,
       "include-component-in-tag": true,
       "changelog-path": "CHANGELOG.md",
       "changelog-sections": [

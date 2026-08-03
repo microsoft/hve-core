@@ -261,6 +261,26 @@ Describe 'Assert-PluginSnapshotTarget' -Tag 'Unit' {
         }
     }
 
+    Context 'when the target is a production snapshot tag' {
+        It 'Returns exactly one immutable tag refspec' {
+            $target = Assert-PluginSnapshotTarget -Mode Production -Branch '' -Tag 'plugins-v4.5.6'
+            $target.Branch | Should -BeNullOrEmpty
+            $target.Tag | Should -BeExactly 'plugins-v4.5.6'
+            @($target.RefSpecs) | Should -Be @('refs/tags/plugins-v4.5.6')
+        }
+
+        It 'Refuses an existing production tag' {
+            { Assert-PluginSnapshotTarget -Mode Production -Branch '' -Tag 'plugins-v4.5.6' `
+                    -ExistingRefs @('refs/tags/plugins-v4.5.6') } |
+                Should -Throw -ExpectedMessage '*Tags are immutable and are never overwritten*'
+        }
+
+        It 'Refuses a non-production tag' {
+            { Assert-PluginSnapshotTarget -Mode Production -Branch '' -Tag 'plugins-snapshot/run-1-tag' } |
+                Should -Throw -ExpectedMessage "*must use 'plugins-v<version>' form*"
+        }
+    }
+
     Context 'when the target names a protected or invalid reference' {
         It 'Refuses <Label>' -ForEach @(
             @{ Label = 'the default branch'; Branch = 'main'; Tag = 'plugins-snapshot/run-1-tag'; Pattern = 'targets a protected production reference' }

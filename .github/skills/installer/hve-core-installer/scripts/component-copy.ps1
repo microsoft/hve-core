@@ -194,7 +194,9 @@ foreach ($raw in $Component) {
         if (-not (Test-Path -LiteralPath $sourceFull -PathType Container)) {
             throw "Skill component '$normalized' has no source directory at '$sourceRelative'."
         }
-        $skillFiles = ConvertTo-OrdinalOrder -Value @(Get-ChildItem -LiteralPath $sourceFull -Recurse -File -Force | ForEach-Object {
+        $skillFiles = ConvertTo-OrdinalOrder -Value @(Get-ChildItem -LiteralPath $sourceFull -Recurse -File -Force |
+            Where-Object { -not ($_.Attributes -band [System.IO.FileAttributes]::ReparsePoint) } |
+            ForEach-Object {
                 $withinSkill = ($_.FullName.Substring($sourceFull.Length) -replace '\\', '/').TrimStart('/')
                 "$sourceRelative/$withinSkill"
             } | Where-Object { $_ -notmatch $excludedSkillPath })
@@ -249,6 +251,9 @@ if ($ReportOnly) {
 }
 
 $files = [ordered]@{}
+foreach ($existingPath in (ConvertTo-OrdinalOrder -Value @($existingFiles.Keys))) {
+    $files[$existingPath] = $existingFiles[$existingPath]
+}
 foreach ($componentPath in $componentOrder) {
     $item = $planByComponent[$componentPath]
     if ($keptComponents.Contains($item.Component)) {
@@ -284,6 +289,15 @@ foreach ($componentPath in $componentOrder) {
     Write-Host "✅ Copied $($item.Component) → $($item.Target)"
 }
 
+$installedComponents = [System.Collections.Generic.HashSet[string]]::new([System.StringComparer]::Ordinal)
+foreach ($fileEntry in $files.Values) {
+    $ownedComponent = [string]$fileEntry['component']
+    if ($membership.Contains($ownedComponent)) {
+        [void]$installedComponents.Add($ownedComponent)
+    }
+}
+$installedComponentOrder = ConvertTo-OrdinalOrder -Value @($installedComponents)
+
 $manifest = [ordered]@{
     schemaVersion = $schemaVersion
     source        = 'microsoft/hve-core'
@@ -291,7 +305,7 @@ $manifest = [ordered]@{
     installed     = (Get-Date).ToUniversalTime().ToString('yyyy-MM-ddTHH:mm:ssZ')
     selection     = [ordered]@{
         profile    = $SelectionName
-        components = $componentOrder
+        components = $installedComponentOrder
     }
     files         = $files
 }

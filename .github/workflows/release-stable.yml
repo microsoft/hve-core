@@ -2,10 +2,9 @@
 # SPDX-License-Identifier: MIT
 name: Stable Release Preparation
 
-# Validates main, prepares the even-minor stable version and changelog, and
-# opens a reviewable main -> release/stable promotion pull request. This
-# workflow never creates a git tag or GitHub release; release-stable-publish.yml
-# is the sole Stable tag and release creator.
+# Validates main and opens a reviewable main -> release/stable promotion pull
+# request. Release preparation and creation begin only after that promotion
+# merges, when release-stable-publish.yml runs release-please on release/stable.
 
 on:
     push:
@@ -167,139 +166,37 @@ jobs:
             matrix:
                 directory: ${{ fromJson(needs.discover-python-projects.outputs.directories) }}
 
-    release-please:
-        name: Release Please
+    prepare-promotion:
+        name: Prepare Stable Promotion
         needs:
             - spell-check
             - markdown-lint
             - table-format
             - dependency-pinning-scan
+            - action-version-consistency-scan
             - gitleaks-scan
             - pester-tests
             - docusaurus-tests
+            - discover-python-projects
             - python-lint
             - pytest
-        # Allow release-please to run when conditional CI jobs (python-lint,
-        # pytest) are skipped. Block only on actual failures or cancellations.
-        if: ${{ !cancelled() && !failure() }}
-        runs-on: ubuntu-latest
-        # release-please-config.json sets skip-github-release, so this job only
-        # maintains the version and changelog pull request on main. Tag and
-        # release creation belong to release-stable-publish.yml.
-        permissions:
-            contents: read
-        outputs:
-            release-pr-branch: ${{ steps.release-pr.outputs.branch }}
-        steps:
-            - name: Generate GitHub App Token
-              id: app-token
-              uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v2.0.0
-              with:
-                  app-id: ${{ vars.RELEASE_APP_ID }}
-                  private-key: ${{ secrets.RELEASE_APP_PRIVATE_KEY }}
-
-            - name: Run release-please
-              id: release
-              uses: googleapis/release-please-action@45996ed1f6d02564a971a2fa1b5860e934307cf7 # v5.0.0
-              with:
-                  token: ${{ steps.app-token.outputs.token }}
-                  config-file: release-please-config.json
-                  manifest-file: .release-please-manifest.json
-
-            # The pull request payload is read through an environment variable and the
-            # branch name is re-validated, so no release-please output reaches a shell
-            # body by interpolation.
-            - name: Resolve the release preparation branch
-              id: release-pr
-              if: ${{ steps.release.outputs.prs_created == 'true' }}
-              env:
-                  RELEASE_PR: ${{ steps.release.outputs.pr }}
-              run: |
-                  set -euo pipefail
-                  branch=$(printf '%s' "$RELEASE_PR" | jq -r '.headBranchName // ""')
-                  if ! printf '%s' "$branch" | grep -Eq '^release-please--[A-Za-z0-9._/-]+$'; then
-                    echo "::error::release-please reported an unexpected preparation branch"
-                    exit 1
-                  fi
-                  echo "branch=$branch" >> "$GITHUB_OUTPUT"
-                  echo "Release preparation branch: $branch"
-
-    sync-release-pr:
-        name: Sync Release Preparation Versions
-        needs: [release-please]
-        if: ${{ !cancelled() && !failure() && needs.release-please.outputs.release-pr-branch != '' }}
-        runs-on: ubuntu-latest
-        # The head is release-please's own generated branch rather than a
-        # contributor pull request head, so it carries main's trust level.
-        permissions:
-            contents: read
-        steps:
-            - name: Generate GitHub App Token
-              id: app-token
-              uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v2.0.0
-              with:
-                  app-id: ${{ vars.RELEASE_APP_ID }}
-                  private-key: ${{ secrets.RELEASE_APP_PRIVATE_KEY }}
-
-            # Credentials persist only so this job can push the locator fix back onto
-            # the same preparation branch; that push is its one required capability.
-            - name: Checkout the release preparation branch
-              uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-              with:
-                  ref: ${{ needs.release-please.outputs.release-pr-branch }}
-                  token: ${{ steps.app-token.outputs.token }}
-                  persist-credentials: true
-
-            # release-please's json extra-files updater writes bare version values and
-            # cannot express the catalog's plugins-v<version> locator. Update-VersionFiles.ps1
-            # owns every committed version field and that locator together, so the
-            # preparation commit that promotion later reads is already consistent.
-            - name: Update committed version fields and the plugin locator
-              env:
-                  RELEASE_BRANCH: ${{ needs.release-please.outputs.release-pr-branch }}
-              run: |
-                  set -euo pipefail
-                  VERSION=$(jq -r '.["."] // ""' .release-please-manifest.json)
-                  if ! printf '%s' "$VERSION" | grep -Eq '^[0-9]+\.[0-9]+\.[0-9]+$'; then
-                    echo "::error::.release-please-manifest.json has no MAJOR.MINOR.PATCH root version"
-                    exit 1
-                  fi
-
-                  pwsh -NoProfile -File scripts/release/Update-VersionFiles.ps1 \
-                    -Version "$VERSION" \
-                    -SkipPluginGenerate
-
-                  if git diff --quiet; then
-                    echo "Preparation already carries $VERSION and locator plugins-v$VERSION"
-                    exit 0
-                  fi
-
-                  git config user.name 'github-actions[bot]'
-                  git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-                  git add --update
-                  git commit -m "chore(release): sync committed versions and plugin locator to $VERSION"
-                  git push origin "HEAD:refs/heads/$RELEASE_BRANCH"
-                  echo "Synced $VERSION and locator plugins-v$VERSION onto $RELEASE_BRANCH"
-
-    prepare-promotion:
-        name: Prepare Stable Promotion
-        needs: [release-please, sync-release-pr]
         if: ${{ !cancelled() && !failure() && github.ref == 'refs/heads/main' }}
         runs-on: ubuntu-latest
         permissions:
             contents: read
+            pull-requests: read
         outputs:
             version: ${{ steps.prepared.outputs.version }}
             promote: ${{ steps.promotion.outputs.promote }}
         steps:
-            - name: Checkout prepared main commit
+            - name: Checkout validated main commit
               uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
               with:
                   ref: ${{ github.sha }}
                   fetch-depth: 0
                   persist-credentials: false
 
-            - name: Verify even-minor stable preparation
+            - name: Verify committed baseline consistency
               id: prepared
               run: |
                   set -euo pipefail
@@ -337,7 +234,7 @@ jobs:
                   fi
 
                   echo "version=$VERSION" >> "$GITHUB_OUTPUT"
-                  echo "Prepared stable version: $VERSION"
+                  echo "Committed stable baseline: $VERSION"
 
             - name: Setup Node.js
               uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
@@ -363,6 +260,9 @@ jobs:
               id: promotion
               env:
                   BASE_BRANCH: release/stable
+                  GH_TOKEN: ${{ github.token }}
+                  REPOSITORY: ${{ github.repository }}
+                  STABLE_VERSION: ${{ steps.prepared.outputs.version }}
               run: |
                   set -euo pipefail
                   if ! git ls-remote --exit-code --heads origin "$BASE_BRANCH" >/dev/null 2>&1; then
@@ -372,6 +272,39 @@ jobs:
                   fi
 
                   git fetch --no-tags --depth=1 origin "$BASE_BRANCH"
+                  if ! git merge-base --is-ancestor FETCH_HEAD HEAD; then
+                    echo "::notice::$BASE_BRANCH contains release state not yet synchronized to main"
+                    echo "promote=false" >> "$GITHUB_OUTPUT"
+                    exit 0
+                  fi
+
+                  ahead_count=$(git rev-list --count FETCH_HEAD..HEAD)
+                  if [ "$ahead_count" -eq 0 ]; then
+                    echo "::notice::main has no commits ahead of $BASE_BRANCH"
+                    echo "promote=false" >> "$GITHUB_OUTPUT"
+                    exit 0
+                  fi
+
+                  STABLE_TAG="hve-core-v${STABLE_VERSION}"
+                  release_state=$(gh api "/repos/$REPOSITORY/releases/tags/$STABLE_TAG" \
+                    --jq '[.draft, .prerelease] | @tsv' 2>/dev/null || true)
+                  if [ "$release_state" != $'false\tfalse' ]; then
+                    echo "::notice::Current baseline $STABLE_TAG is not a published Stable release"
+                    echo "promote=false" >> "$GITHUB_OUTPUT"
+                    exit 0
+                  fi
+
+                  release_pr_count=$(gh pr list --base "$BASE_BRANCH" --state open \
+                    --json headRefName --jq '[.[] | select(.headRefName | startswith("release-please--"))] | length' \
+                    -R "$REPOSITORY")
+                  sync_pr_count=$(gh pr list --head "$BASE_BRANCH" --base main --state open \
+                    --json number --jq 'length' -R "$REPOSITORY")
+                  if [ "$release_pr_count" -ne 0 ] || [ "$sync_pr_count" -ne 0 ]; then
+                    echo "::notice::Release preparation or release/stable to main synchronization is still in flight"
+                    echo "promote=false" >> "$GITHUB_OUTPUT"
+                    exit 0
+                  fi
+
                   main_tree=$(git rev-parse "HEAD^{tree}")
                   base_tree=$(git rev-parse "FETCH_HEAD^{tree}")
                   if [ "$main_tree" = "$base_tree" ]; then
@@ -399,7 +332,7 @@ jobs:
                   private-key: ${{ secrets.RELEASE_APP_PRIVATE_KEY }}
 
             # Auto-merge is deliberately never enabled. A human must review and merge
-            # this promotion before release-stable-publish.yml may create a tag.
+            # this promotion before release-please prepares the Stable release PR.
             - name: Open or update the promotion pull request
               env:
                   GH_TOKEN: ${{ steps.app-token.outputs.token }}
@@ -414,10 +347,10 @@ jobs:
 
                   Promotes \`${HEAD_BRANCH}\` into \`${BASE_BRANCH}\`.
 
-                  Merging this pull request is the only trigger for the Stable tag and
-                  GitHub release, which \`release-stable-publish.yml\` creates after it
-                  re-verifies event identity, promoted-head and merge-tree equality, the
-                  even minor version, tag absence, and one-package consistency.
+                  After this pull request merges, \`release-stable-publish.yml\` runs
+                  release-please on \`release/stable\`. Release-please then opens its
+                  separately reviewed release PR containing version, changelog, manifest,
+                  and immutable plugin locator updates.
 
                   ---
                   *Managed automatically by the stable release preparation workflow. Auto-merge is not enabled.*"

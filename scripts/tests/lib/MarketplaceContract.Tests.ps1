@@ -582,6 +582,16 @@ Describe 'Test-MarketplaceEntryContract x-hve overlay' -Tag 'Unit' {
         $errors | Should -Contain "x-hve.profiles['starter'] references 'agents/demo/absent.md', which is not declared component membership"
     }
 
+    It 'Rejects a profile member from a non-installable field' {
+        $errors = @(Test-MarketplaceEntryContract -Entry @{
+                name    = 'demo'
+                agents  = @('agents/demo/first.md')
+                hooks   = 'hooks/demo/hooks.json'
+                'x-hve' = @{ profiles = @{ starter = @('agents/demo/first.md', 'hooks/demo/hooks.json') } }
+            })
+        $errors | Should -Contain "x-hve.profiles['starter'] references 'hooks/demo/hooks.json' from non-installable field 'hooks'; profiles support only: agents, commands, rules, skills"
+    }
+
     It 'Accepts a profile that selects a subset of declared membership' {
         $errors = @(Test-MarketplaceEntryContract -Entry @{
                 name    = 'demo'

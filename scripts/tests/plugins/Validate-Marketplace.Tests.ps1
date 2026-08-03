@@ -534,6 +534,18 @@ Describe 'Test-MarketplaceRepositoryContract' -Tag 'Unit' {
             (Get-ReportError -Report $run.Report) -join ' ' |
                 Should -Match "x-hve\.profiles\['starter'\] references 'agents/rpi/absent\.md', which is not declared component membership"
         }
+
+        It 'Reports a hook declared in an installer profile' {
+            New-ValidatorFixture -Root $script:contractRepo | Out-Null
+            Set-CatalogEntry -Root $script:contractRepo -Mutation {
+                param($catalog)
+                $catalog['plugins'][0]['x-hve']['profiles'] = @{ starter = @('agents/rpi/rpi-planner.md', 'hooks/rpi/telemetry.json') }
+            }
+
+            $run = Get-ValidationReport -Root $script:contractRepo
+            (Get-ReportError -Report $run.Report) -join ' ' |
+                Should -Match "x-hve\.profiles\['starter'\] references 'hooks/rpi/telemetry\.json' from non-installable field 'hooks'"
+        }
     }
 }
 

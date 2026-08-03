@@ -3,7 +3,7 @@ title: Utility Reference
 description: Cross-cutting HVE Core utilities for documentation, media, Git workflows, durable workflow state, and diagnostics
 sidebar_position: 10
 author: Microsoft
-ms.date: 2026-08-02
+ms.date: 2026-08-03
 ms.topic: reference
 keywords:
   - utility
@@ -24,7 +24,7 @@ Use these cross-cutting utilities when your workflow spans multiple roles or lif
 | Documentation | Documentation audit, drift, authoring, and validation |
 | Media         | Video-to-GIF conversion with FFmpeg optimization      |
 | Git           | Commit messages, merge workflows, PR creation         |
-| Installation  | Collection installation and environment setup         |
+| Installation  | Selective component adoption and environment setup    |
 | Diagnostics   | Build information retrieval and CI/CD status checks   |
 
 ## Usage Patterns

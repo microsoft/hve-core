@@ -381,15 +381,20 @@ Describe 'Release preparation repair' -Tag 'Unit' {
     }
 
     # A lint gate that only fails on a stale locator would block every release.
-    # The preparation workflow must call this updater on the release-please
-    # branch so the promoted commit is already consistent.
-    It 'Is invoked on the release preparation branch by the stable workflow' {
-        $workflowPath = Join-Path $script:RepositoryRoot '.github/workflows/release-stable.yml'
+    # The release workflow must call this updater on the release-please branch
+    # so the managed PR owns the complete committed release state.
+    It 'Is invoked on the managed release preparation branch' {
+        $workflowPath = Join-Path $script:RepositoryRoot '.github/workflows/release-stable-publish.yml'
         $workflow = Get-Content -LiteralPath $workflowPath -Raw -Encoding utf8
         $document = $workflow | ConvertFrom-Yaml
 
+        $release = $document['jobs']['release-please']
+        [string]$release['steps'][1]['with']['target-branch'] | Should -BeExactly 'release/stable'
+
         $sync = $document['jobs']['sync-release-pr']
         $sync | Should -Not -BeNullOrEmpty
+        @($sync['needs']) | Should -Be @('release-please')
+        [string]$sync['if'] | Should -Match "needs\.release-please\.outputs\.release-pr-branch != ''"
 
         $checkout = @($sync['steps'] | Where-Object { $_.Contains('uses') -and [string]$_['uses'] -match '^actions/checkout@' })
         [string]$checkout[0]['with']['ref'] | Should -BeExactly '${{ needs.release-please.outputs.release-pr-branch }}'
@@ -400,5 +405,32 @@ Describe 'Release preparation repair' -Tag 'Unit' {
         $invocation[0] | Should -Match '-SkipPluginGenerate'
         $invocation[0] | Should -Match 'git push origin "HEAD:refs/heads/\$RELEASE_BRANCH"'
         $invocation[0] | Should -Not -Match 'push --force'
+    }
+
+    It 'Validates every committed release field after the managed PR merges' {
+        $workflowPath = Join-Path $script:RepositoryRoot '.github/workflows/release-stable-publish.yml'
+        $workflow = Get-Content -LiteralPath $workflowPath -Raw -Encoding utf8
+        $document = $workflow | ConvertFrom-Yaml
+        $validate = $document['jobs']['validate-release']
+
+        @($validate['needs']) | Should -Be @('release-please')
+        [string]$validate['if'] | Should -Match "release_created == 'true'"
+        $runs = [string[]]@($validate['steps'] | Where-Object { $_.Contains('run') } | ForEach-Object { [string]$_['run'] })
+        $consistency = @($runs | Where-Object { $_ -match 'package-lock\.json:\.version' })
+        $consistency | Should -HaveCount 1
+        foreach ($required in @(
+                'package.json:.version',
+                'package-lock.json:.version',
+                '.release-please-manifest.json',
+                'extension/templates/package.template.json:.version',
+                '.github/plugin/marketplace.json:.metadata.version',
+                'plugins-v'
+            )) {
+            $consistency[0] | Should -Match ([regex]::Escape($required))
+        }
+
+        $config = Get-Content -LiteralPath (Join-Path $script:RepositoryRoot 'release-please-config.json') -Raw -Encoding utf8 | ConvertFrom-Json
+        $jsonPaths = [string[]]@($config.packages.'.'.'extra-files' | ForEach-Object { [string]$_.jsonpath })
+        @($jsonPaths | Where-Object { $_ -match 'source|ref' }) | Should -HaveCount 0
     }
 }

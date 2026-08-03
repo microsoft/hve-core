@@ -482,9 +482,16 @@ function Invoke-PluginGeneration {
         Join-Path -Path $RepoRoot -ChildPath $CatalogPath
     }
 
-    # Read repo version from package.json for plugin manifests
+    # Read the committed version for ordinary generation. Release projections
+    # derive their effective version from the immutable plugins-v tag.
     $packageJsonPath = Join-Path -Path $RepoRoot -ChildPath 'package.json'
     $repoVersion = (Get-Content -Path $packageJsonPath -Raw | ConvertFrom-Json).version
+    $effectiveVersion = if ($releaseLocator) {
+        $releaseLocator.Ref.Substring('plugins-v'.Length)
+    }
+    else {
+        $repoVersion
+    }
 
     $catalog = Get-MarketplaceCatalog -Path $resolvedCatalogPath
     $allEntries = @($catalog['plugins'])
@@ -509,6 +516,7 @@ function Invoke-PluginGeneration {
     Write-Host "`n=== Plugin Generation ===" -ForegroundColor Cyan
     Write-Host "Packages: $($allEntries.Count)"
     Write-Host "Channel: $Channel"
+    Write-Host "Version: $effectiveVersion"
     Write-Host "Catalog: $resolvedCatalogPath"
     Write-Host "Plugins dir: $pluginsDir"
     if ($DryRun) {
@@ -556,7 +564,7 @@ function Invoke-PluginGeneration {
             -Items $items `
             -PluginsDir $pluginsDir `
             -RepoRoot $RepoRoot `
-            -Version $repoVersion `
+            -Version $effectiveVersion `
             -Maturity $packageMaturity `
             -DocumentPath $documentPath `
             -DryRun:$DryRun
@@ -636,6 +644,7 @@ function Invoke-PluginGeneration {
         }
         if ($releaseLocator) {
             $marketplaceArgs['ReleaseLocator'] = $releaseLocator
+            $marketplaceArgs['Version'] = $effectiveVersion
         }
         if (-not [string]::IsNullOrWhiteSpace($MarketplaceOutputPath)) {
             $marketplaceArgs['OutputPath'] = $MarketplaceOutputPath

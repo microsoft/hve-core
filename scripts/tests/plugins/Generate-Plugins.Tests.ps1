@@ -643,6 +643,18 @@ Describe 'Invoke-PluginGeneration' -Tag 'Unit' {
             @($snapshot['plugins'] | ForEach-Object { $_['source']['ref'] }) | Should -Be @('plugins-v4.5.6')
         }
 
+        It 'Projects the release version into the catalog and plugin manifest' {
+            Invoke-PluginGeneration -RepoRoot $script:generatorRepo -Refresh -ReleaseTag 'plugins-v4.5.6' `
+                -MarketplaceOutputPath 'out/marketplace.json' | Out-Null
+            $snapshot = Get-Content -LiteralPath (Join-Path $script:generatorRepo 'out/marketplace.json') -Raw | ConvertFrom-Json -AsHashtable
+            $pluginManifest = Get-Content -LiteralPath (Join-Path $script:generatorRepo 'plugins/rpi/plugin.json') -Raw | ConvertFrom-Json -AsHashtable
+
+            [string]$snapshot['metadata']['version'] | Should -BeExactly '4.5.6'
+            @($snapshot['plugins'] | ForEach-Object { [string]$_['version'] }) | Should -Be @('4.5.6')
+            [string]$pluginManifest['version'] | Should -BeExactly '4.5.6'
+            [System.IO.File]::ReadAllBytes($script:catalogPath) | Should -Be $script:catalogBytesBefore
+        }
+
         It 'Leaves the production catalog byte-identical' {
             Invoke-PluginGeneration -RepoRoot $script:generatorRepo -Refresh -ReleaseTag 'plugins-v4.5.6' `
                 -MarketplaceOutputPath 'out/marketplace.json' | Out-Null

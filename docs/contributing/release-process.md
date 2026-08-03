@@ -2,47 +2,52 @@
 title: Release Process
 description: Release HVE Core through direct main PreRelease builds and reviewed release/stable promotions
 sidebar_position: 9
-ms.date: 2026-08-02
+ms.date: 2026-08-03
 ms.topic: how-to
 author: WilliamBerryiii
 ---
 
 ## Overview
 
-This project uses trunk-based development with explicit channel ownership. Changes reach `main` through pull requests. PreRelease packages an approved `main` commit directly. Stable is created only after release-please prepares an even version and changelog on `main`, followed by a reviewed promotion into `release/stable`.
+This project uses trunk-based development with explicit channel ownership. Changes reach `main` through pull requests, and PreRelease packages an approved `main` commit directly. `release-stable.yml` opens the reviewed `main` to `release/stable` promotion after validation. After that promotion merges, `release-stable-publish.yml` runs release-please on `release/stable`. Release-please owns the managed Stable release PR and draft Stable release.
 
 ## How Releases Work
 
 ```mermaid
 flowchart LR
     A[Feature PR] -->|merge| B[main branch]
-    B --> C[release-please updates Release PR]
-    C -->|you merge| D[Prepared main commit]
-    D --> E[Review main to release/stable promotion]
-    E -->|merge| F[Verify matching trees]
-    F --> G[Create Stable tag and release]
-    G --> H[Publish Stable extension]
+    B --> C[Validate main]
+    C --> D[Review main to release/stable promotion]
+    D -->|merge| E[release-please updates Stable Release PR]
+    E --> F[Review Stable Release PR]
+    F -->|merge| G[Draft release and verified artifacts]
+    G --> H[Immutable plugin snapshot]
+    H --> I[Publish Stable release]
+    I --> J[Review release/stable to main metadata sync]
 ```
 
 When you merge a PR to `main`:
 
-1. **release-please analyzes commits** using conventional commit messages.
-2. **The Release PR updates** even-minor version fields, the immutable plugin locator, and changelog entries.
-3. **You decide** when to merge the Release PR into `main`.
-4. **Stable preparation opens** a non-auto-merged promotion PR from `main` to `release/stable`.
-5. **A reviewer merges** the promotion after confirming the release boundary.
-6. **Stable publication verifies** matching trees, creates immutable tags and assets, then publishes the extension.
+1. `release-stable.yml` validates the source and checks that the prior Stable metadata sync is complete.
+2. The workflow opens or updates a non-auto-merged promotion PR from `main` to `release/stable`.
+3. A reviewer merges the promotion after confirming the release boundary.
+4. `release-stable-publish.yml` runs release-please against `release/stable`.
+5. Release-please opens or updates its managed Stable release PR with version and changelog changes; the workflow postprocessor synchronizes every committed version field and the `plugins-v<version>` locator.
+6. A reviewer merges the managed Stable release PR when the release is ready.
+7. Release-please creates the draft Stable release, then the workflow builds, attests, and uploads artifacts from the released commit.
+8. The workflow publishes the immutable `plugins-v<version>` snapshot, verifies provenance, and finalizes the draft release.
+9. The workflow opens a non-auto-merged `release/stable` to `main` metadata synchronization PR for review.
 
 ## The Release PR
 
-The Release PR is not a deployment. It prepares version metadata and changelog changes on `main`:
+The release-please managed PR is not a deployment. It prepares version metadata and changelog changes on `release/stable`:
 
 * Updated `package.json` version
 * Updated `extension/templates/package.template.json` version
 * Updated `.github/plugin/marketplace.json` version and immutable `plugins-v<version>` locator
 * Updated `CHANGELOG.md`
 
-Your code changes are already on `main` from feature pull requests. The Release PR accumulates version and changelog updates until you are ready to promote that exact tree to Stable.
+The promoted code is already on `release/stable`. The managed PR accumulates version and changelog updates until you are ready to publish that exact Stable release. After publication, the reviewed metadata sync returns those changes to `main` before another promotion can open.
 
 ### Version Calculation
 
@@ -56,7 +61,7 @@ Release-please determines the version bump from commit prefixes:
 | `docs:`, `chore:`, `refactor:` | No bump      | Grouped in changelog |
 
 > [!NOTE]
-> Stable releases must have an even minor version number (e.g., `1.0`, `1.2`). Odd minor versions (e.g., `1.1`, `1.3`) are reserved for pre-release or unstable versions. This convention is enforced by CI (`release-stable.yml`).
+> Stable releases must have an even minor version number (e.g., `1.0`, `1.2`). Odd minor versions (e.g., `1.1`, `1.3`) are reserved for PreRelease. The promotion and publication workflows enforce this convention.
 
 ## For Contributors
 
@@ -80,21 +85,22 @@ For more details, see the [commit message instructions](https://github.com/micro
 
 ## For Maintainers
 
-### Reviewing the Release PR
+### Reviewing the Stable Release
 
-The Release PR titled "chore(main): release X.Y.Z" updates automatically as PRs merge. When ready to release:
+The promotion and managed release PR are separate review boundaries. When ready to release:
 
-1. Review the accumulated changelog in the PR
-2. Verify version bump is appropriate for the changes
-3. Merge the Release PR into `main`.
-4. Review the generated `main` to `release/stable` promotion PR. Auto-merge is intentionally disabled.
-5. Merge the promotion only when its tree is the reviewed `main` tree.
-6. Verify the Stable publish workflow creates the tag, release assets, attestations, and published release.
+1. Review the `main` to `release/stable` promotion PR. Auto-merge is intentionally disabled.
+2. Merge the promotion only when it represents the intended reviewed `main` state.
+3. Review the release-please managed PR on `release/stable`, including its changelog, version fields, and immutable plugin locator.
+4. Merge the managed PR when the release contents are correct.
+5. Verify `release-stable-publish.yml` attaches the VSIX, plugin, SBOM, VEX, and provenance evidence before publication.
+6. Verify the workflow publishes the immutable plugin snapshot and final Stable release.
 7. Verify the published release triggers the Stable marketplace workflow.
+8. Review and merge the generated `release/stable` to `main` metadata synchronization PR.
 
 ### Release Cadence
 
-Releases are on-demand. Merge the Release PR when:
+Releases are on-demand. Merge the managed Stable release PR when:
 
 * A meaningful set of changes has accumulated
 * A critical fix needs immediate release
@@ -129,14 +135,14 @@ Documentation-only releases may not require an extension publish.
 
 ## Version Quick Reference
 
-| Action                        | Result                                               |
-|-------------------------------|------------------------------------------------------|
-| Merge feature PR to main      | Release PR updates with a changelog entry            |
-| Merge Release PR              | Prepared version reaches `main`                      |
-| Merge promotion PR            | Verified Stable tag and release pipeline starts      |
-| Stable release published      | Stable extension marketplace workflow starts         |
-| Run PreRelease for a main SHA | Odd-minor PreRelease tag and release pipeline starts |
-| Merge docs-only PR            | Changelog updates without a version bump             |
+| Action                             | Result                                                            |
+|------------------------------------|-------------------------------------------------------------------|
+| Merge feature PR to main           | Validated source becomes eligible for promotion                   |
+| Merge promotion PR                 | release-please prepares the Stable release PR on `release/stable` |
+| Merge managed Stable release PR    | Draft release and verified artifact pipeline start                |
+| Stable release published           | Stable extension marketplace workflow starts                      |
+| Merge Stable metadata sync PR      | Release metadata returns to `main`                                |
+| Run PreRelease for an approved SHA | Odd-minor PreRelease pipeline starts                              |
 
 ## Extension Channels and Maturity
 

@@ -3,14 +3,9 @@ title: Installing HVE Core
 description: Install the complete HVE Core extension or plugin, or adopt selected components from a clone
 sidebar_position: 2
 author: Microsoft
-ms.date: 2026-08-02
+ms.date: 2026-08-03
 ms.topic: how-to
-keywords:
-  - installation
-  - setup
-  - github copilot
-  - marketplace
-   - selective clone
+keywords: [installation, setup, github copilot, marketplace, selective clone]
 estimated_reading_time: 4
 ---
 

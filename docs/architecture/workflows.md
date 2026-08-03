@@ -3,7 +3,7 @@ title: Build Workflows
 description: GitHub Actions CI/CD pipeline architecture for validation, security, and release automation
 sidebar_position: 3
 author: WilliamBerryiii
-ms.date: 2026-08-02
+ms.date: 2026-08-03
 ms.topic: overview
 ---
 
@@ -25,9 +25,13 @@ flowchart TD
         direction TB
         MERGE[Merge to Main] --> MN[release-stable.yml]
         MN --> VAL[Validation]
-        VAL --> REL[Release Please Preparation]
-        REL --> PROMO[Review main to release/stable Promotion]
+        VAL --> PROMO[Review main to release/stable Promotion]
         PROMO --> STABLE[release-stable-publish.yml]
+        STABLE --> REL[release-please Stable PR]
+        REL --> REVIEW[Review Stable Release PR]
+        REVIEW --> EVIDENCE[Artifacts and Immutable Plugin Snapshot]
+        EVIDENCE --> PUBLISH[Publish Stable Release]
+        PUBLISH --> SYNC[Review release/stable to main Metadata Sync]
     end
 
     subgraph PRE["PreRelease"]
@@ -50,31 +54,31 @@ flowchart TD
 
 ## Workflow Inventory
 
-| Workflow                             | Trigger                   | Purpose                                                           |
-|--------------------------------------|---------------------------|-------------------------------------------------------------------|
-| `pr-validation.yml`                  | Pull request, manual      | Pre-merge quality gate with parallel validation                   |
-| `release-stable.yml`                 | Push to main, manual      | Validate main, prepare stable metadata, and open promotion PR     |
-| `release-stable-publish.yml`         | Promotion PR closed       | Verify merged promotion and create the Stable tag and release     |
-| `weekly-security-maintenance.yml`    | Sunday 2 AM UTC, manual   | Scheduled security posture review                                 |
-| `weekly-validation.yml`              | Schedule, manual          | Weekly full validation sweep                                      |
-| `security-scan.yml`                  | Push to main/develop      | CodeQL security validation                                        |
-| `release-marketplace-stable.yml`     | Manual                    | VS Code extension marketplace publishing                          |
-| `release-marketplace-prerelease.yml` | Manual                    | VS Code extension pre-release publishing                          |
-| `copilot-setup-steps.yml`            | Manual                    | Coding agent environment setup                                    |
-| `devcontainer-change-log.yml`        | Push to main/develop      | Logs devcontainer infrastructure file changes to the step summary |
-| `devcontainer-lockfile-check.yml`    | Reusable                  | Validates devcontainer lockfile integrity and SHA-256 pinning     |
-| `release-prerelease.yml`             | Manual                    | Package an explicit main SHA as an immutable PreRelease           |
-| `scorecard.yml`                      | Schedule, push            | OpenSSF Scorecard security analysis                               |
-| `codeql-analysis.yml`                | Schedule                  | Weekly CodeQL security scan (also reusable)                       |
-| `dependency-review.yml`              | Pull request              | Dependency vulnerability review (also reusable)                   |
-| `sha-staleness-check.yml`            | Manual                    | SHA reference freshness check (also reusable)                     |
-| `deploy-docs.yml`                    | Push to main, manual      | Docusaurus documentation site deployment                          |
-| `create-stale-docs-issues.yml`       | Schedule                  | Automated stale docs issue creation from ms.date freshness        |
-| `msdate-freshness-check.yml`         | Schedule, manual          | ms.date freshness validation across documentation                 |
-| `label-sync.yml`                     | Push to main, manual      | Repository label synchronization                                  |
-| `workflow-permissions-scan.yml`      | Schedule, manual          | GitHub Actions permissions audit                                  |
-| `weekly-gh-code-scanning.yml`        | Monday 3 AM UTC, manual   | Weekly GitHub code scanning alert retrieval and issue creation    |
-| `vex-detect.yml`                     | Schedule, release, manual | Dependency vulnerability scan and VEX triage issue creation       |
+| Workflow                             | Trigger                   | Purpose                                                                |
+|--------------------------------------|---------------------------|------------------------------------------------------------------------|
+| `pr-validation.yml`                  | Pull request, manual      | Pre-merge quality gate with parallel validation                        |
+| `release-stable.yml`                 | Push to main, manual      | Validate `main` and open the reviewed Stable promotion PR              |
+| `release-stable-publish.yml`         | PR merged to Stable       | Run release-please, build release evidence, publish, and sync metadata |
+| `weekly-security-maintenance.yml`    | Sunday 2 AM UTC, manual   | Scheduled security posture review                                      |
+| `weekly-validation.yml`              | Schedule, manual          | Weekly full validation sweep                                           |
+| `security-scan.yml`                  | Push to main/develop      | CodeQL security validation                                             |
+| `release-marketplace-stable.yml`     | Manual                    | VS Code extension marketplace publishing                               |
+| `release-marketplace-prerelease.yml` | Manual                    | VS Code extension pre-release publishing                               |
+| `copilot-setup-steps.yml`            | Manual                    | Coding agent environment setup                                         |
+| `devcontainer-change-log.yml`        | Push to main/develop      | Logs devcontainer infrastructure file changes to the step summary      |
+| `devcontainer-lockfile-check.yml`    | Reusable                  | Validates devcontainer lockfile integrity and SHA-256 pinning          |
+| `release-prerelease.yml`             | Manual                    | Package an explicit main SHA as an immutable PreRelease                |
+| `scorecard.yml`                      | Schedule, push            | OpenSSF Scorecard security analysis                                    |
+| `codeql-analysis.yml`                | Schedule                  | Weekly CodeQL security scan (also reusable)                            |
+| `dependency-review.yml`              | Pull request              | Dependency vulnerability review (also reusable)                        |
+| `sha-staleness-check.yml`            | Manual                    | SHA reference freshness check (also reusable)                          |
+| `deploy-docs.yml`                    | Push to main, manual      | Docusaurus documentation site deployment                               |
+| `create-stale-docs-issues.yml`       | Schedule                  | Automated stale docs issue creation from ms.date freshness             |
+| `msdate-freshness-check.yml`         | Schedule, manual          | ms.date freshness validation across documentation                      |
+| `label-sync.yml`                     | Push to main, manual      | Repository label synchronization                                       |
+| `workflow-permissions-scan.yml`      | Schedule, manual          | GitHub Actions permissions audit                                       |
+| `weekly-gh-code-scanning.yml`        | Monday 3 AM UTC, manual   | Weekly GitHub code scanning alert retrieval and issue creation         |
+| `vex-detect.yml`                     | Schedule, release, manual | Dependency vulnerability scan and VEX triage issue creation            |
 
 GitHub Agentic Workflow markdown files (`issue-triage.md`, `issue-implement.md`, `pr-review.md`, `dependency-pr-review.md`, `doc-update-check.md`, and `vex-draft.md`) compile to `*.lock.yml` workflows and are documented in [Agentic Workflows](agentic-workflows).
 
@@ -103,7 +107,7 @@ Individual validation workflows called by orchestration workflows:
 | `extension-package.yml`               | VS Code extension packaging                    | `npm run extension:package`              |
 | `copyright-headers.yml`               | Copyright header validation                    | `npm run validate:copyright`             |
 | `gitleaks-scan.yml`                   | Secret detection scanning                      | N/A (gitleaks direct)                    |
-| `plugin-package.yml`                  | Plugin collection packaging                    | N/A                                      |
+| `plugin-package.yml`                  | Plugin packaging                               | N/A                                      |
 | `plugin-validation.yml`               | Marketplace package metadata and closure       | `npm run lint:marketplace`               |
 | `extension-marketplace-publish.yml`   | Extension marketplace publishing               | N/A                                      |
 | `python-lint.yml`                     | Python linting (ruff)                          | `npm run lint:py`                        |
@@ -130,7 +134,7 @@ The `setup-ps-modules` action caches modules keyed on `scripts/security/ps-modul
 
 ## PR Validation Pipeline
 
-The `pr-validation.yml` workflow serves as the primary quality gate for all pull requests. It runs 16 parallel jobs covering linting, security, and testing.
+The `pr-validation.yml` workflow serves as the primary quality gate for all pull requests. It runs parallel linting, security, and testing jobs.
 
 ```mermaid
 flowchart LR
@@ -187,49 +191,47 @@ All jobs run in parallel with no dependencies, enabling fast feedback (typically
 
 ## Main Branch Pipeline
 
-The `release-stable.yml` workflow runs after merges to `main`. It validates the source, lets release-please maintain an even-minor version and changelog preparation PR, synchronizes committed version fields and the immutable plugin locator, and opens a non-auto-merged promotion PR from `main` to `release/stable` when needed.
+`release-stable.yml` opens the reviewed `main` to `release/stable` promotion after validating `main` and confirming that the prior Stable metadata has returned to `main`. It does not run release-please, package artifacts, create a tag, or publish a release.
 
 ```mermaid
 flowchart LR
-    V1[spell-check] --> RP[release-please]
-    V2[markdown-lint] --> RP
-    V3[table-format] --> RP
-    V4[dependency-pinning-scan] --> RP
-    V5[action-version-consistency-scan] --> RP
-    V6[gitleaks-scan] --> RP
-    V7[pester-tests] --> RP
-    V8[docusaurus-tests] --> RP
-    V9[python-lint] --> RP
-    V10[pytest] --> RP
-    RP --> SYNC[sync-release-pr]
-    SYNC --> PREP[prepare-promotion]
+    V1[spell-check] --> PREP[prepare-promotion]
+    V2[markdown-lint] --> PREP
+    V3[table-format] --> PREP
+    V4[dependency-pinning-scan] --> PREP
+    V5[action-version-consistency-scan] --> PREP
+    V6[gitleaks-scan] --> PREP
+    V7[pester-tests] --> PREP
+    V8[docusaurus-tests] --> PREP
+    V9[discover-python-projects] --> PREP
+    V9 --> V10[python-lint]
+    V9 --> V11[pytest]
+    V10 --> PREP
+    V11 --> PREP
     PREP --> PR[open-promotion-pr]
-    style RP fill:#f9f,stroke:#333
 ```
-
-Release-please v4 handles `chore`-type commits natively. They are not releasable and do not produce spurious release PRs, so no commit-message guard is needed.
 
 ### Main Branch Jobs
 
-| Job                             | Purpose                                                | Dependencies                    |
-|---------------------------------|--------------------------------------------------------|---------------------------------|
-| spell-check                     | Post-merge spelling validation                         | None                            |
-| markdown-lint                   | Post-merge markdown validation                         | None                            |
-| table-format                    | Post-merge table validation                            | None                            |
-| dependency-pinning-scan         | Dependency pinning security check                      | None                            |
-| action-version-consistency-scan | Action version consistency check                       | None                            |
-| gitleaks-scan                   | Secret detection scanning                              | None                            |
-| pester-tests                    | PowerShell unit tests                                  | None                            |
-| docusaurus-tests                | Docs site build and tests                              | None                            |
-| discover-python-projects        | Enumerate Python projects                              | None                            |
-| python-lint                     | Python lint (ruff)                                     | discover-python-projects        |
-| pytest                          | Python unit tests                                      | discover-python-projects        |
-| release-please                  | Maintain the version and changelog preparation PR      | All validation jobs             |
-| sync-release-pr                 | Synchronize every committed version and plugin locator | release-please                  |
-| prepare-promotion               | Verify even version and determine promotion need       | release-please, sync-release-pr |
-| open-promotion-pr               | Open or update the reviewed `main` promotion           | prepare-promotion               |
+| Job                             | Purpose                                          | Dependencies             |
+|---------------------------------|--------------------------------------------------|--------------------------|
+| spell-check                     | Post-merge spelling validation                   | None                     |
+| markdown-lint                   | Post-merge Markdown validation                   | None                     |
+| table-format                    | Post-merge table validation                      | None                     |
+| dependency-pinning-scan         | Dependency pinning security check                | None                     |
+| action-version-consistency-scan | Action version consistency check                 | None                     |
+| gitleaks-scan                   | Secret detection scanning                        | None                     |
+| pester-tests                    | PowerShell unit tests                            | None                     |
+| docusaurus-tests                | Documentation site build and tests               | None                     |
+| discover-python-projects        | Enumerate Python projects                        | None                     |
+| python-lint                     | Python lint (ruff)                               | discover-python-projects |
+| pytest                          | Python unit tests                                | discover-python-projects |
+| prepare-promotion               | Verify source state and determine promotion need | All validation jobs      |
+| open-promotion-pr               | Open or update the reviewed `main` promotion     | prepare-promotion        |
 
-This workflow never creates a tag or GitHub release. After a human reviews and merges the `main` to `release/stable` promotion, `release-stable-publish.yml` verifies event identity, tree equality, even versioning, tag absence, and one-package consistency before creating immutable Stable evidence and release assets.
+After the promotion merges, `release-stable-publish.yml` runs release-please on `release/stable`. Release-please owns the managed Stable release PR and draft Stable release. The workflow synchronizes version fields and the immutable plugin locator on the managed PR.
+
+After review and merge, it validates the released commit, packages and attests release assets, publishes the immutable `plugins-v<version>` snapshot, finalizes the draft, and opens a non-auto-merged `release/stable` to `main` metadata synchronization PR.
 
 ## Security Workflows
 

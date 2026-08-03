@@ -658,6 +658,7 @@ function Test-MarketplaceEntryContract {
     }
     if ($overlay.Contains('profiles')) {
         $profiles = $overlay['profiles']
+        $installableFields = Get-MarketplaceInstallableField
         if ($profiles -isnot [System.Collections.IDictionary]) {
             $errors += 'x-hve.profiles must be an object keyed by profile name'
         }
@@ -694,6 +695,9 @@ function Test-MarketplaceEntryContract {
                     $seenMembers[$resolvedMember.Path] = $true
                     if (-not $declared.ContainsKey($resolvedMember.Path)) {
                         $errors += "x-hve.profiles['$profileName'] references '$($resolvedMember.Path)', which is not declared component membership"
+                    }
+                    elseif ($installableFields -notcontains [string]$declared[$resolvedMember.Path]) {
+                        $errors += "x-hve.profiles['$profileName'] references '$($resolvedMember.Path)' from non-installable field '$($declared[$resolvedMember.Path])'; profiles support only: $($installableFields -join ', ')"
                     }
                 }
             }

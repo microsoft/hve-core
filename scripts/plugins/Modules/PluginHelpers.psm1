@@ -588,6 +588,8 @@ function New-MarketplaceManifestContent {
             $projected[$key] = $plugin[$key]
         }
 
+        $projected['version'] = $Version
+
         if ($useLocator) {
             $projected['source'] = [ordered]@{
                 source = 'github'
@@ -643,6 +645,9 @@ function Write-MarketplaceManifest {
     Destination path, absolute or relative to RepoRoot. The production catalog
     is rejected as a destination.
 
+    .PARAMETER Version
+    Optional semantic version for the projection. Defaults to package.json.
+
     .PARAMETER DryRun
     When specified, logs the action without writing to disk.
     #>
@@ -661,6 +666,10 @@ function Write-MarketplaceManifest {
         [Parameter(Mandatory = $true)]
         [ValidateNotNullOrEmpty()]
         [string]$OutputPath,
+
+        [Parameter(Mandatory = $false)]
+        [ValidatePattern('^\d+\.\d+\.\d+$')]
+        [string]$Version,
 
         [Parameter(Mandatory = $false)]
         [switch]$DryRun
@@ -682,11 +691,12 @@ function Write-MarketplaceManifest {
 
     $packageJsonPath = Join-Path -Path $RepoRoot -ChildPath 'package.json'
     $packageJson = Get-Content -Path $packageJsonPath -Raw | ConvertFrom-Json
+    $manifestVersion = if ([string]::IsNullOrWhiteSpace($Version)) { [string]$packageJson.version } else { $Version }
 
     $manifestArgs = @{
         RepoName    = $packageJson.name
         Description = $packageJson.description
-        Version     = $packageJson.version
+        Version     = $manifestVersion
         OwnerName   = $packageJson.author
         Plugins     = @($Catalog['plugins'])
     }
@@ -755,13 +765,15 @@ function Test-PluginGitRefName {
 function Assert-PluginSnapshotTarget {
     <#
     .SYNOPSIS
-    Validates the disposable branch and tag a snapshot publish may write.
+    Validates the branch and tag a snapshot publish may write.
 
     .DESCRIPTION
-    Snapshot publication is only permitted against disposable references. The
-    moving release branch, immutable 'plugins-v<version>' tags, and the default
-    branch are protected and can never be named as targets. Tags are immutable,
-    so an existing tag is refused rather than overwritten.
+    Disposable mode requires a namespaced branch and tag pair. Production mode
+    permits exactly one immutable plugins-v<version> tag and no branch. Both
+    modes refuse an existing tag rather than overwriting it.
+
+    .PARAMETER Mode
+    Disposable or Production publication mode.
 
     .PARAMETER Branch
     Target branch for the snapshot commit.
@@ -784,6 +796,10 @@ function Assert-PluginSnapshotTarget {
     [CmdletBinding()]
     [OutputType([hashtable])]
     param(
+        [Parameter(Mandatory = $false)]
+        [ValidateSet('Disposable', 'Production')]
+        [string]$Mode = 'Disposable',
+
         [Parameter(Mandatory = $true)]
         [AllowEmptyString()]
         [string]$Branch,
@@ -799,6 +815,29 @@ function Assert-PluginSnapshotTarget {
         [Parameter(Mandatory = $false)]
         [string]$DisposablePrefix = 'plugins-snapshot/'
     )
+
+    $normalizedExisting = @($ExistingRefs | ForEach-Object { ($_ -replace '^refs/(heads|tags)/', '').Trim() })
+
+    if ($Mode -eq 'Production') {
+        if (-not [string]::IsNullOrEmpty($Branch)) {
+            throw "Production snapshot mode does not publish a branch; received '$Branch'."
+        }
+        if (-not (Test-PluginGitRefName -Name $Tag)) {
+            throw "Snapshot tag '$Tag' is not a valid git reference name."
+        }
+        if ($Tag -cnotmatch '^plugins-v\d+\.\d+\.\d+$') {
+            throw "Production snapshot tag '$Tag' must use 'plugins-v<version>' form."
+        }
+        if ($normalizedExisting -contains $Tag) {
+            throw "Snapshot tag '$Tag' already exists. Tags are immutable and are never overwritten."
+        }
+
+        return @{
+            Branch   = ''
+            Tag      = $Tag
+            RefSpecs = @("refs/tags/$Tag")
+        }
+    }
 
     $protectedBranches = @('main', 'release/plugins')
     $productionTagPattern = '^plugins-v\d+\.\d+\.\d+'
@@ -821,7 +860,6 @@ function Assert-PluginSnapshotTarget {
         throw "Snapshot branch and tag must differ; both are '$Branch'."
     }
 
-    $normalizedExisting = @($ExistingRefs | ForEach-Object { ($_ -replace '^refs/(heads|tags)/', '').Trim() })
     if ($normalizedExisting -contains $Tag) {
         throw "Snapshot tag '$Tag' already exists. Tags are immutable and are never overwritten."
     }

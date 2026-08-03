@@ -4,12 +4,26 @@ name: Plugin Snapshot Publish
 
 # Publishes one generated plugin snapshot from an explicit immutable source.
 #
-# This workflow is preparation for the eventual production release channel and
-# is deliberately constrained: it can only write disposable references. The
-# moving release branch, immutable plugins-v<version> tags, the production
-# marketplace catalog, and tracked plugins/ state are never mutated here.
+# Disposable mode writes only namespaced validation refs. Reusable production
+# mode writes exactly one immutable plugins-v<version> tag and no branch. Both
+# modes stage and verify the same orphan snapshot before any unforced push.
 
 on:
+  workflow_call:
+    inputs:
+      source-ref:
+        description: "Immutable source to generate from"
+        required: true
+        type: string
+      expected-version:
+        description: "Version and plugins-v locator to project"
+        required: true
+        type: string
+      production:
+        description: "Publish the immutable plugins-v tag instead of disposable refs"
+        required: false
+        type: boolean
+        default: false
   push:
     branches:
       - "plugins-snapshot/validate/**"
@@ -67,25 +81,44 @@ jobs:
         env:
           SOURCE_REF: ${{ inputs.source-ref || github.sha }}
           EXPECTED_VERSION: ${{ inputs.expected-version }}
-          SNAPSHOT_BRANCH: ${{ inputs.snapshot-branch || format('plugins-snapshot/dryrun-{0}', github.run_id) }}
-          SNAPSHOT_TAG: ${{ inputs.snapshot-tag || format('plugins-snapshot/dryrun-{0}-tag', github.run_id) }}
-          DRY_RUN: ${{ github.event_name == 'push' || inputs.dry-run }}
+          REQUESTED_BRANCH: ${{ inputs.snapshot-branch || format('plugins-snapshot/dryrun-{0}', github.run_id) }}
+          REQUESTED_TAG: ${{ inputs.snapshot-tag || format('plugins-snapshot/dryrun-{0}-tag', github.run_id) }}
+          REQUESTED_DRY_RUN: ${{ github.event_name == 'push' || inputs.dry-run }}
+          PRODUCTION: ${{ inputs.production }}
         run: |
           set -euo pipefail
           source_commit=$(git rev-parse HEAD)
-          version=$(jq -r .version package.json)
-          if [ -n "${EXPECTED_VERSION}" ] && [ "${EXPECTED_VERSION}" != "${version}" ]; then
-            echo "::error::Source ${SOURCE_REF} carries version ${version} but the caller requires ${EXPECTED_VERSION}"
-            exit 1
+          committed_version=$(jq -r .version package.json)
+          if [ "${PRODUCTION}" = 'true' ]; then
+            if ! printf '%s' "${EXPECTED_VERSION}" | grep -Eq '^[0-9]+\.[0-9]+\.[0-9]+$'; then
+              echo "::error::Production snapshot requires an expected MAJOR.MINOR.PATCH version"
+              exit 1
+            fi
+            version=${EXPECTED_VERSION}
+            snapshot_mode=Production
+            snapshot_branch=''
+            snapshot_tag="plugins-v${version}"
+            dry_run=false
+          else
+            version=${committed_version}
+            snapshot_mode=Disposable
+            snapshot_branch=${REQUESTED_BRANCH}
+            snapshot_tag=${REQUESTED_TAG}
+            dry_run=${REQUESTED_DRY_RUN}
+            if [ -n "${EXPECTED_VERSION}" ] && [ "${EXPECTED_VERSION}" != "${version}" ]; then
+              echo "::error::Source ${SOURCE_REF} carries version ${version} but the caller requires ${EXPECTED_VERSION}"
+              exit 1
+            fi
           fi
           {
             echo "commit=${source_commit}"
             echo "version=${version}"
             echo "locator=plugins-v${version}"
             echo "source-ref=${SOURCE_REF}"
-            echo "snapshot-branch=${SNAPSHOT_BRANCH}"
-            echo "snapshot-tag=${SNAPSHOT_TAG}"
-            echo "dry-run=${DRY_RUN}"
+            echo "snapshot-mode=${snapshot_mode}"
+            echo "snapshot-branch=${snapshot_branch}"
+            echo "snapshot-tag=${snapshot_tag}"
+            echo "dry-run=${dry_run}"
           } >> "$GITHUB_OUTPUT"
           echo "Source ref:    ${SOURCE_REF}"
           echo "Source commit: ${source_commit}"
@@ -94,11 +127,12 @@ jobs:
       - name: Setup PowerShell modules
         uses: ./.github/actions/setup-ps-modules
 
-      - name: Validate disposable publication target
+      - name: Validate publication target
         shell: bash
         env:
           SNAPSHOT_BRANCH: ${{ steps.source.outputs.snapshot-branch }}
           SNAPSHOT_TAG: ${{ steps.source.outputs.snapshot-tag }}
+          SNAPSHOT_MODE: ${{ steps.source.outputs.snapshot-mode }}
         run: |
           set -euo pipefail
           export EXISTING_REFS_FILE="${RUNNER_TEMP}/existing-refs.txt"
@@ -112,6 +146,7 @@ jobs:
           Import-Module ./scripts/plugins/Modules/PluginHelpers.psm1 -Force
           $existing = @(Get-Content -LiteralPath $env:EXISTING_REFS_FILE | Where-Object { $_ })
           $target = Assert-PluginSnapshotTarget `
+            -Mode $env:SNAPSHOT_MODE `
             -Branch $env:SNAPSHOT_BRANCH `
             -Tag $env:SNAPSHOT_TAG `
             -ExistingRefs $existing `
@@ -150,10 +185,12 @@ jobs:
         env:
           SOURCE_COMMIT: ${{ steps.source.outputs.commit }}
           RELEASE_TAG: ${{ steps.source.outputs.locator }}
+          EFFECTIVE_VERSION: ${{ steps.source.outputs.version }}
         run: |
           set -euo pipefail
           pwsh -NoProfile -File scripts/plugins/Assert-PluginReleaseEvidence.ps1 \
             -SourceCommit "${SOURCE_COMMIT}" \
+            -Version "${EFFECTIVE_VERSION}" \
             -ReleaseTag "${RELEASE_TAG}" \
             -ExpectedPackageCount 1 \
             -OutputPath logs/plugin-release-evidence.json
@@ -174,6 +211,7 @@ jobs:
         env:
           SOURCE_COMMIT: ${{ steps.source.outputs.commit }}
           RELEASE_TAG: ${{ steps.source.outputs.locator }}
+          EFFECTIVE_VERSION: ${{ steps.source.outputs.version }}
           SNAPSHOT_TAG: ${{ steps.source.outputs.snapshot-tag }}
           GIT_AUTHOR_NAME: github-actions[bot]
           GIT_AUTHOR_EMAIL: 41898282+github-actions[bot]@users.noreply.github.com
@@ -222,6 +260,7 @@ jobs:
           pwsh -NoProfile -File scripts/plugins/Assert-PluginReleaseEvidence.ps1 \
             -PluginsDir "${verify_dir}/plugins" \
             -SourceCommit "${SOURCE_COMMIT}" \
+            -Version "${EFFECTIVE_VERSION}" \
             -ReleaseTag "${RELEASE_TAG}" \
             -ExpectedPackageCount 1 \
             -ExpectedEvidencePath logs/plugin-release-evidence.json \
@@ -251,7 +290,7 @@ jobs:
           fi
 
       - name: Publish disposable references
-        if: ${{ github.event_name == 'workflow_dispatch' && !inputs.dry-run }}
+        if: ${{ github.event_name == 'workflow_dispatch' && !inputs.production && !inputs.dry-run }}
         shell: bash
         env:
           SNAPSHOT_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -269,6 +308,21 @@ jobs:
             "refs/tags/${SNAPSHOT_TAG}"
           echo "Published disposable branch ${SNAPSHOT_BRANCH} and tag ${SNAPSHOT_TAG}"
 
+      - name: Publish immutable production snapshot
+        if: ${{ inputs.production }}
+        shell: bash
+        env:
+          SNAPSHOT_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          RELEASE_TAG: ${{ steps.source.outputs.locator }}
+        run: |
+          set -euo pipefail
+          snapshot_dir="${RUNNER_TEMP}/plugin-snapshot"
+          auth_header=$(printf 'x-access-token:%s' "${SNAPSHOT_TOKEN}" | base64 -w0)
+          git -C "${snapshot_dir}" remote add origin "https://github.com/${GITHUB_REPOSITORY}.git"
+          git -C "${snapshot_dir}" config --local "http.https://github.com/.extraheader" "AUTHORIZATION: basic ${auth_header}"
+          git -C "${snapshot_dir}" push --quiet origin "refs/tags/${RELEASE_TAG}"
+          echo "Published immutable production snapshot ${RELEASE_TAG}"
+
       - name: Summarize snapshot
         if: always()
         shell: bash
@@ -279,6 +333,7 @@ jobs:
           SNAPSHOT_BRANCH: ${{ steps.source.outputs.snapshot-branch }}
           SNAPSHOT_TAG: ${{ steps.source.outputs.snapshot-tag }}
           DRY_RUN: ${{ steps.source.outputs.dry-run }}
+          SNAPSHOT_MODE: ${{ steps.source.outputs.snapshot-mode }}
         run: |
           {
             echo "## Plugin Snapshot"
@@ -288,8 +343,9 @@ jobs:
             echo "| Source ref | \`${SOURCE_REF}\` |"
             echo "| Source commit | \`${SOURCE_COMMIT}\` |"
             echo "| Catalog locator | \`${RELEASE_TAG}\` |"
-            echo "| Disposable branch | \`${SNAPSHOT_BRANCH}\` |"
-            echo "| Disposable tag | \`${SNAPSHOT_TAG}\` |"
+            echo "| Mode | \`${SNAPSHOT_MODE}\` |"
+            echo "| Snapshot branch | \`${SNAPSHOT_BRANCH}\` |"
+            echo "| Snapshot tag | \`${SNAPSHOT_TAG}\` |"
             echo "| Dry run | \`${DRY_RUN}\` |"
           } >> "$GITHUB_STEP_SUMMARY"
 

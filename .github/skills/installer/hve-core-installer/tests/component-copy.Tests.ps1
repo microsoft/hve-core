@@ -29,13 +29,30 @@ BeforeAll {
             '.github/skills/rpi/rpi-plan/SKILL.md'                        = '# RPI Plan Skill'
             '.github/skills/rpi/rpi-plan/references/notes.md'             = '# Notes'
             '.github/skills/rpi/rpi-plan/.venv/lib/site.py'               = 'sentinel_venv'
+            '.github/skills/rpi/rpi-plan/.VENV/lib/upper.py'              = 'sentinel_upper_venv'
             '.github/skills/rpi/rpi-plan/tests/test_plan.py'              = 'sentinel_tests'
+            '.github/skills/rpi/rpi-plan/.PyTest_Cache/result.txt'        = 'sentinel_upper_cache'
             '.github/hooks/shared/telemetry.json'                         = '{}'
         }
         foreach ($relative in $sourceFiles.Keys) {
             $full = Join-Path $source $relative
             New-Item -ItemType Directory -Path (Split-Path $full -Parent) -Force | Out-Null
             Set-Content -LiteralPath $full -Value $sourceFiles[$relative] -NoNewline
+        }
+
+        $symlinkAvailable = $true
+        try {
+            New-Item -ItemType SymbolicLink `
+                -Path (Join-Path $source '.github/skills/rpi/rpi-plan/linked-notes.md') `
+                -Target (Join-Path $source '.github/skills/rpi/rpi-plan/references/notes.md') `
+                -ErrorAction Stop | Out-Null
+            New-Item -ItemType SymbolicLink `
+                -Path (Join-Path $source '.github/skills/rpi/rpi-plan/linked-references') `
+                -Target (Join-Path $source '.github/skills/rpi/rpi-plan/references') `
+                -ErrorAction Stop | Out-Null
+        }
+        catch {
+            $symlinkAvailable = $false
         }
 
         $catalog = [ordered]@{
@@ -68,7 +85,7 @@ BeforeAll {
         Set-Content -LiteralPath (Join-Path $source 'package.json') -Value "{ `"version`": `"$Version`" }" -NoNewline
         New-Item -ItemType Directory -Path $target -Force | Out-Null
 
-        return [pscustomobject]@{ Root = $root; Source = $source; Target = $target }
+        return [pscustomobject]@{ Root = $root; Source = $source; Target = $target; SymlinkAvailable = $symlinkAvailable }
     }
 
     function script:Invoke-ComponentCopy {
@@ -198,7 +215,19 @@ Describe 'component-copy path mapping' -Tag 'Unit' {
         Invoke-ComponentCopy -Fixture $script:fixture -Component @('skills/rpi/rpi-plan') | Out-Null
 
         Test-Path -LiteralPath (Join-Path $script:fixture.Target '.github/skills/rpi/rpi-plan/.venv') | Should -BeFalse
+        Test-Path -LiteralPath (Join-Path $script:fixture.Target '.github/skills/rpi/rpi-plan/.VENV') | Should -BeFalse
         Test-Path -LiteralPath (Join-Path $script:fixture.Target '.github/skills/rpi/rpi-plan/tests') | Should -BeFalse
+        Test-Path -LiteralPath (Join-Path $script:fixture.Target '.github/skills/rpi/rpi-plan/.PyTest_Cache') | Should -BeFalse
+    }
+
+    It 'Omits file symlinks and does not traverse directory symlinks' {
+        if (-not $script:fixture.SymlinkAvailable) { Set-ItResult -Skipped -Because 'symbolic links are unavailable'; return }
+
+        Invoke-ComponentCopy -Fixture $script:fixture -Component @('skills/rpi/rpi-plan') | Out-Null
+
+        Test-Path -LiteralPath (Join-Path $script:fixture.Target '.github/skills/rpi/rpi-plan/linked-notes.md') | Should -BeFalse
+        Test-Path -LiteralPath (Join-Path $script:fixture.Target '.github/skills/rpi/rpi-plan/linked-references') | Should -BeFalse
+        @((Get-TrackingManifest -Fixture $script:fixture).files.Keys | Where-Object { $_ -match 'linked-' }) | Should -BeNullOrEmpty
     }
 
     It 'Copies a repeated component once' {
@@ -404,6 +433,38 @@ Describe 'component-copy collision retention and eject' -Tag 'Unit' {
         $entry.status | Should -Be 'ejected'
         Get-Content -LiteralPath $manifestPath -Raw | Should -Match '"ejectedAt": "2026-08-02T00:00:00Z"'
     }
+
+    It 'Preserves omitted managed records across a narrower selection' {
+        Invoke-ComponentCopy -Fixture $script:fixture -Component @('agents/hve-core/rpi-agent.md', 'skills/rpi/rpi-plan') | Out-Null
+        $before = Get-TrackingManifest -Fixture $script:fixture
+
+        Invoke-ComponentCopy -Fixture $script:fixture -Component @('agents/hve-core/rpi-agent.md') | Out-Null
+        $after = Get-TrackingManifest -Fixture $script:fixture
+
+        @($after.files.Keys | Sort-Object) | Should -Be @($before.files.Keys | Sort-Object)
+        @($after.selection.components) | Should -Be @('agents/hve-core/rpi-agent.md', 'skills/rpi/rpi-plan')
+        $after.files['.github/skills/rpi/rpi-plan/SKILL.md'].status | Should -Be 'managed'
+    }
+
+    It 'Preserves an omitted ejected record and never overwrites it after re-inclusion' {
+        Invoke-ComponentCopy -Fixture $script:fixture -Component @('agents/hve-core/rpi-agent.md', 'skills/rpi/rpi-plan') | Out-Null
+        $manifestPath = Join-Path $script:fixture.Target '.hve-tracking.json'
+        $manifest = Get-TrackingManifest -Fixture $script:fixture
+        $agentPath = '.github/agents/hve-core/rpi-agent.agent.md'
+        $manifest.files[$agentPath].status = 'ejected'
+        $manifest.files[$agentPath].ejectedAt = '2026-08-03T00:00:00Z'
+        $manifest | ConvertTo-Json -Depth 10 | Set-Content -LiteralPath $manifestPath
+        Set-Content -LiteralPath (Join-Path $script:fixture.Target $agentPath) -Value '# User owned' -NoNewline
+
+        Invoke-ComponentCopy -Fixture $script:fixture -Component @('skills/rpi/rpi-plan') | Out-Null
+        Invoke-ComponentCopy -Fixture $script:fixture -Component @('agents/hve-core/rpi-agent.md') | Out-Null
+
+        $after = Get-TrackingManifest -Fixture $script:fixture
+        $after.files[$agentPath].status | Should -Be 'ejected'
+        Get-Content -LiteralPath $manifestPath -Raw | Should -Match '"ejectedAt": "2026-08-03T00:00:00Z"'
+        Get-Content -LiteralPath (Join-Path $script:fixture.Target $agentPath) -Raw | Should -Be '# User owned'
+        @($after.selection.components) | Should -Be @('agents/hve-core/rpi-agent.md', 'skills/rpi/rpi-plan')
+    }
 }
 
 Describe 'component-copy report-only preflight' -Tag 'Unit' {
@@ -560,6 +621,25 @@ Describe 'component-copy PowerShell and Bash parity' -Tag 'Unit' -Skip:(-not $sc
             Get-Content -LiteralPath (Join-Path $fixture.Target '.github/skills/rpi/rpi-plan/SKILL.md') -Raw | Should -Be '# Local skill'
             @((Get-TrackingManifest -Fixture $fixture).files.Keys) | Should -Not -Contain '.github/skills/rpi/rpi-plan/SKILL.md'
         }
+    }
+
+    It 'Preserves identical tracking across broad and narrow reruns' {
+        foreach ($fixture in @($script:powerShellFixture, $script:bashFixture)) {
+            if ($fixture -eq $script:powerShellFixture) {
+                Invoke-ComponentCopy -Fixture $fixture -Component $script:AllComponents | Out-Null
+                Invoke-ComponentCopy -Fixture $fixture -Component @('agents/hve-core/subagents/rpi-planner.md') | Out-Null
+            }
+            else {
+                Invoke-BashComponentCopy -Fixture $fixture -Component $script:AllComponents | Out-Null
+                Invoke-BashComponentCopy -Fixture $fixture -Component @('agents/hve-core/subagents/rpi-planner.md') | Out-Null
+            }
+        }
+
+        $powerShellManifest = Get-TrackingManifest -Fixture $script:powerShellFixture
+        $bashManifest = Get-TrackingManifest -Fixture $script:bashFixture
+        @($powerShellManifest.files.Keys | Sort-Object) | Should -Be @($bashManifest.files.Keys | Sort-Object)
+        @($powerShellManifest.selection.components) | Should -Be @($bashManifest.selection.components)
+        @($powerShellManifest.selection.components) | Should -Be $script:AllComponents
     }
 
     It 'Exits non-zero and writes nothing for a component outside recipe membership' {

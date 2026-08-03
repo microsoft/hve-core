@@ -3,7 +3,7 @@ title: SRE / Operations Guide
 description: HVE Core support for SRE and operations engineers managing infrastructure, incidents, and deployment workflows
 sidebar_position: 8
 author: Microsoft
-ms.date: 2026-08-02
+ms.date: 2026-08-03
 ms.topic: how-to
 keywords:
   - SRE
@@ -22,12 +22,12 @@ This guide is for you if you manage infrastructure, handle incidents, deploy sys
 > AI outputs may contain inaccuracies, miss critical threats, or produce recommendations that are incomplete or inappropriate for your environment.
 > Never treat AI-generated security artifacts as authoritative without independent verification.
 
-## Recommended Collections
+## Capability Groups
 
 > [!TIP]
 > Install the [HVE Core extension](https://marketplace.visualstudio.com/items?itemName=ise-hve-essentials.hve-core) from the VS Code Marketplace for the complete active component set with zero configuration.
 >
-> Your primary collections are `coding-standards` (IaC-specific instructions for Terraform, Bicep, Bash, and GitHub Actions), `security` (incident response tooling), and `hve-core` (structured investigation and remediation workflows). For clone-based setups, see the [Installation Guide](../../getting-started/install.md).
+> For selective clone adoption, choose infrastructure-as-code standards, incident response, supply chain security, and investigation components that match your operational responsibilities. Capability groups help you discover related components; they are not independently installable products. See the [Installation Guide](../../getting-started/install.md).
 
 ## What HVE Core Does for You
 
