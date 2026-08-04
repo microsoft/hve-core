@@ -479,7 +479,7 @@ Before submitting your agent, verify:
 * [ ] Core directives with RFC 2119 keywords
 * [ ] Examples wrapped in XML-style blocks
 * [ ] Success criteria defined
-* [ ] Attribution footer present
+* [ ] Attribution footer absent
 
 ### Common Standards
 

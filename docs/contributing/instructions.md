@@ -538,7 +538,7 @@ Before submitting your instructions file, verify:
 * [ ] Code examples wrapped in XML-style blocks
 * [ ] Anti-patterns section with alternatives
 * [ ] Validation/testing requirements
-* [ ] Attribution footer present
+* [ ] Attribution footer absent
 
 ### Code Examples
 

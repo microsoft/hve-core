@@ -49,6 +49,25 @@ Treat delegation as a first-class architecture decision, not an afterthought. Be
 * Design the loop explicitly: define dispatch inputs, owned evidence, return schema, stage gate, and which later step consumes the result. Parallelize only independent work.
 * Reuse before authoring. Prefer reusing an existing subagent, skill, or instruction file as it stands; when it almost fits, prefer adjusting or extending it; create a new artifact only when no existing one can be reasonably adapted.
 
+## Skill-Forward Orchestrator Architecture
+
+Reusable behavior that must work both directly and under a parent belongs in a user-invocable skill by default. Author the skill first, then add a wrapper only when a user needs an entry point the skill alone does not provide. Do not build one large agent that carries the workflow and then expose a second path into the same logic.
+
+| Responsibility                                                           | Artifact                     | Control                                                       |
+|--------------------------------------------------------------------------|------------------------------|---------------------------------------------------------------|
+| Reusable workflow and domain capability, invoked directly or by a parent | Skill                        | `user-invocable: true`                                        |
+| Thin user-facing coordination over one or more skills                    | Agent or prompt wrapper      | `disable-model-invocation: true` when it must not be a worker |
+| Convention that applies whenever matching paths are edited               | Path-scoped instruction file | `applyTo` glob                                                |
+| Isolated, parallel, fresh-context, tool-specific, or model-specific work | Subagent                     | `user-invocable: false` when background-only                  |
+
+Keep the wrapper thin: it sequences skills, holds user-facing state, and reports. It does not restate the phase protocols, gates, or evidence rules the skill already owns.
+
+Standalone-versus-parent differences belong in the shared skill contract, not in a duplicate workflow. A standalone run advises the next action; a parent consumes the same skill return and owns continuation. Optional orchestrator inputs may narrow delegated work, but they must not turn one artifact into two materially different workflows.
+
+Treat an agent that is both user-invocable and dispatchable as a subagent as an exception. It qualifies only when both contexts share all six of purpose, inputs, outputs, interaction model, write authority, and safety contract. When any one diverges, split the artifact: put the shared behavior in a skill and give each context its own thin entry point.
+
+The current RPI structure is the reference example. RPI Agent coordinates the lifecycle without duplicating phase protocols. The `rpi-research`, `rpi-plan`, `rpi-implement`, and `rpi-review` skills carry behavior that works the same way directly and under that parent. RPI Researcher and RPI Planner stay bounded background-only workers.
+
 ## Load-Timing and Authority Routing
 
 For every rule or fact an artifact would carry, place it where it loads at the right time and binds with the right force. This keeps always-loaded surfaces short and moves enforcement off advisory prose.
@@ -227,6 +246,7 @@ Every item applies to the whole file. Mark an item not applicable when it does n
 * [ ] File structure and frontmatter follow the File Types and Frontmatter Requirements for the artifact type.
 * [ ] Each fact sits at the right load timing and authority; always-loaded surfaces stay short and non-inferable.
 * [ ] Delegation is used where it isolates or right-sizes work, and existing subagents, skills, and instructions are reused before new ones are created.
+* [ ] Behavior needed both directly and under a parent lives in one user-invocable skill; wrappers stay thin and no workflow logic is duplicated across a standalone and an orchestrated path.
 * [ ] Connected artifacts agree on modes, stage gates, result vocabulary, and terminal outcomes.
 * [ ] Existing non-tool capability-bearing frontmatter is preserved unless approved, verified evidence supports a Major, behavior-tested change.
 * [ ] Each model declaration uses the exact ordered list for its responsibility-selected profile; any override or proxy run is narrow and disclosed.
@@ -252,6 +272,7 @@ Remove these on sight when improving or replacing an artifact. The `hve-builder`
 * Hand-injecting tool descriptions into prompt text and parsing the output; use the native tools field.
 * Response prefilling on model families that no longer support it, and JSON mode where schema-constrained structured outputs exist.
 * Kitchen-sink instruction files, copied style guides, copied templates, and exhaustive edge-case lists. Prefer scoped, referenced, evaluation-informed artifacts.
+* Workflow logic duplicated between a standalone path and an orchestrated path, or a single agent carrying two materially different contracts for direct and parent-dispatched use. Move the shared behavior into one user-invocable skill and keep each entry point thin.
 * Singular AGENT.md where AGENTS.md is the current format; keep a compatibility link where needed.
 * Unsourced length ceilings, fixed iteration counts used as quality theater, and model fallback lists chosen without first selecting a responsibility-based profile.
 * Calling simulation or emulation native runtime validation.

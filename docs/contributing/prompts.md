@@ -512,7 +512,7 @@ Before submitting your prompt, verify:
 * [ ] Workflow steps with clear sequence
 * [ ] Success criteria defined
 * [ ] Error handling documented
-* [ ] Attribution footer present
+* [ ] Attribution footer absent
 
 ### Workflow Definition
 
@@ -542,6 +542,61 @@ Before submitting your prompt, verify:
 * [ ] Follows repository conventions
 * [ ] Compatible with existing prompts/workflows
 * [ ] Does not duplicate existing prompt functionality
+
+## Authoring with the HVE Builder Skill
+
+The `hve-builder` skill is the lifecycle entrypoint for prompts, instruction files,
+agents, subagents, and skills. It applies the standards on this page, dispatches
+independent review, runs behavior testing when a change warrants it, and resolves a
+single overall outcome. Prefer it over hand-editing when you are creating a new prompt
+or making a behavior-bearing change to an existing one.
+
+Activate it by asking for the work in natural language, optionally naming the mode.
+There is no slash command; `hve-builder` is a skill, not a prompt.
+
+### Modes
+
+| Mode       | Write authority              | Use when                                                     |
+|------------|------------------------------|--------------------------------------------------------------|
+| `create`   | Creates new source artifacts | The target prompt does not exist yet                         |
+| `improve`  | Edits existing source        | An existing prompt needs new or corrected behavior           |
+| `refactor` | Edits existing source        | Cleanup must preserve current behavior                       |
+| `replace`  | Rewrites existing source     | The artifact needs wholesale replacement                     |
+| `review`   | Read-only; writes evidence   | You want static and behavior findings without source changes |
+| `validate` | Read-only; writes evidence   | You want host validation results only                        |
+
+The skill infers the narrowest safe mode when you do not name one, and asks only when
+plausible modes would grant materially different write authority.
+
+### Compatibility aliases
+
+Three alias skills preserve legacy activation phrasing and route straight to
+`hve-builder`. They add no second author, test, or evaluation loop.
+
+| Alias skill       | Routes to                              |
+|-------------------|----------------------------------------|
+| `prompt-builder`  | `hve-builder` in `create` or `improve` |
+| `prompt-analyze`  | `hve-builder` in read-only `review`    |
+| `prompt-refactor` | `hve-builder` in `refactor`            |
+
+Each alias translates its legacy `promptFiles` input to the `hve-builder` `targets`
+input. New work should name `hve-builder` and its mode directly.
+
+### Behavior testing
+
+`hve-builder` delegates behavior testing to `hve-builder-tester`, which is the sole
+behavior-testing entrypoint. Behavior testing runs for major mutations and for
+behavior-bearing review targets, and is legitimately skipped for eligible minor and
+medium changes.
+
+### Evidence
+
+Runs write author, review, behavior-test, and validation evidence under
+`.copilot-tracking/hve-builder/{{YYYY-MM-DD}}/` unless you supply a different evidence
+root. Read-only modes change nothing else.
+
+Authoring standards for all artifact kinds live in
+`.github/instructions/hve-core/hve-builder.instructions.md`.
 
 ## Testing Your Prompt
 
