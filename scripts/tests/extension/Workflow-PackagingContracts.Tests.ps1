@@ -739,7 +739,7 @@ Describe 'Reusable packaging source contracts' -Tag 'Unit' {
 
         $verifyIndexes = @($indexes | Where-Object {
                 $texts[$_] -match 'logs/marketplace-snapshot\.json' -and
-                $texts[$_] -match 'find plugins -mindepth 1 -maxdepth 1 -type d'
+            $texts[$_] -match 'Get-ChildItem -LiteralPath plugins -Directory'
             })
         $verifyIndexes | Should -HaveCount 1
         $verifyIndex = $verifyIndexes[0]
@@ -752,13 +752,13 @@ Describe 'Reusable packaging source contracts' -Tag 'Unit' {
         $verifyIndex | Should -BeLessThan $stageIndex
 
         $run = $texts[$verifyIndex]
-        $run | Should -Match '-z "\$\{expected\}"'
-        $run | Should -Match '"\$expected" != "\$actual"'
+        $run | Should -Match '\. ./scripts/extension/Get-MarketplacePackageMatrix\.ps1'
+        $run | Should -Match "Get-MarketplacePackageMatrixCore -Channel PreRelease -CatalogPath 'logs/marketplace-snapshot\.json'"
+        $run | Should -Match '\[array\]::Sort\(\$expected, \[System\.StringComparer\]::Ordinal\)'
+        $run | Should -Match '\[array\]::Sort\(\$actual, \[System\.StringComparer\]::Ordinal\)'
+        $run | Should -Match '\[string\]::Join\('','', \$expected\) -cne \[string\]::Join\('','', \$actual\)'
         $run | Should -Not -Match '-eq 1\b|== 1\b|HaveCount 1'
-        foreach ($maturity in @('stable', 'preview', 'experimental')) {
-            $run | Should -Match ([regex]::Escape($maturity))
-        }
-        $run | Should -Not -Match 'deprecated|removed'
+        $run | Should -Not -Match 'stable|preview|experimental|deprecated|removed'
     }
 
     It 'Retains snapshot integrity protections around publication' {

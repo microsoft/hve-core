@@ -681,7 +681,9 @@ Describe 'component-copy PowerShell and Bash parity' -Tag 'Unit' -Skip:(-not $sc
             }
             else {
                 Invoke-BashComponentCopy -Fixture $fixture -Component $script:AllComponents | Out-Null
+                $LASTEXITCODE | Should -Be 0
                 Invoke-BashComponentCopy -Fixture $fixture -Component @('agents/hve-core/subagents/rpi-planner.md') | Out-Null
+                $LASTEXITCODE | Should -Be 0
             }
         }
 

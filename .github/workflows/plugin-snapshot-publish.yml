@@ -181,25 +181,18 @@ jobs:
           npm run plugin:postprocess
 
       - name: Verify generated roots match the projected catalog
-        shell: bash
+        shell: pwsh
         run: |
-          set -euo pipefail
-          expected=$(jq -r '
-            .plugins[]
-            | select((.["x-hve"].maturity // "stable") | IN("stable", "preview", "experimental"))
-            | .name
-          ' logs/marketplace-snapshot.json | sort)
-          if [ -z "${expected}" ]; then
-            echo "::error::Projected catalog declares no active packages"
-            exit 1
-          fi
-          actual=$(find plugins -mindepth 1 -maxdepth 1 -type d -printf '%f\n' | sort)
-          if [ "$expected" != "$actual" ]; then
-            echo "::error::Generated package roots do not match the projected catalog package set"
-            diff <(printf '%s\n' "$expected") <(printf '%s\n' "$actual") || true
-            exit 1
-          fi
-          echo "Verified $(printf '%s\n' "$actual" | grep -c .) generated package roots"
+          $ErrorActionPreference = 'Stop'
+          . ./scripts/extension/Get-MarketplacePackageMatrix.ps1
+          $expected = [string[]]@((Get-MarketplacePackageMatrixCore -Channel PreRelease -CatalogPath 'logs/marketplace-snapshot.json').Names)
+          $actual = [string[]]@(Get-ChildItem -LiteralPath plugins -Directory | ForEach-Object { $_.Name })
+          [array]::Sort($expected, [System.StringComparer]::Ordinal)
+          [array]::Sort($actual, [System.StringComparer]::Ordinal)
+          if ([string]::Join(',', $expected) -cne [string]::Join(',', $actual)) {
+            throw "Generated package roots do not match the projected catalog package set: expected [$($expected -join ', ')], actual [$($actual -join ', ')]"
+          }
+          Write-Host "Verified $($actual.Count) generated package roots"
 
       - name: Record deterministic evidence
         shell: bash

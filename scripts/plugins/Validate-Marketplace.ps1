@@ -334,6 +334,17 @@ function Test-MarketplaceRepositoryContract {
         $contractErrors += 'repository marketplace must declare at least one removed component tombstone'
     }
 
+    $sourcePolicyIndex = Get-MarketplaceSourcePolicyIndex -Catalog $Manifest
+    foreach ($sourcePath in @($sourcePolicyIndex.Keys | Sort-Object)) {
+        $records = @($sourcePolicyIndex[$sourcePath])
+        $maturityValues = @($records | ForEach-Object { [string]$_.Maturity } | Sort-Object -Unique)
+        if ($maturityValues.Count -gt 1) {
+            $declarations = @($records | Sort-Object PackageName |
+                    ForEach-Object { "$($_.PackageName)=$($_.Maturity)" }) -join ', '
+            $contractErrors += "source '$sourcePath' must declare identical maturity across packages: $declarations"
+        }
+    }
+
     return [string[]]$contractErrors
 }
 

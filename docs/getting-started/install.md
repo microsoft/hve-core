@@ -69,7 +69,9 @@ graph LR
    CATALOG --> FULL["hve-core-all<br/>(full bundle)"]
    CATALOG --> DOMAIN["domain and utility packages"]
    FOCUSED --> EXT["package-specific VSIX"]
-   FULL --> PLUGIN["package-specific plugin root"]
+   FOCUSED --> PLUGIN["package-specific plugin root"]
+   FULL --> EXT
+   FULL --> PLUGIN
    DOMAIN --> EXT
    DOMAIN --> PLUGIN
 ```
@@ -133,13 +135,13 @@ The three paths above cover the vast majority of scenarios. If your environment 
 
 ## Validation
 
-After installing, verify that HVE Core is active:
+After installing, verify the artifacts declared by the selected package:
 
-1. Open Copilot Chat in VS Code.
-2. Type `@` to see available agents.
-3. Look for `RPI Agent`, then type `/` and verify that RPI entry points such as `/rpi`, `/rpi-research`, and `/rpi-plan` are available.
+1. Open the selected package document under `docs/plugins/<name>.md` and choose a declared agent, prompt, instruction, or skill to verify.
+2. Confirm that component is available through the installed extension or plugin client.
+3. If the selected package declares `RPI Agent` and RPI prompts, open Copilot Chat, type `@` to find the agent, then type `/` and verify its RPI entry points.
 
-If you don't see the agents, check the [Troubleshooting](troubleshooting.md) page for common solutions.
+If a declared component is unavailable, check the [Troubleshooting](troubleshooting.md) page for common solutions.
 
 ## Post-Installation: Update Your .gitignore
 

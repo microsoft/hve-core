@@ -210,7 +210,11 @@ Describe 'Cross-channel extension identity' -Tag 'Unit' {
 Describe 'Production multi-package catalog' -Tag 'Unit' {
     BeforeAll {
         $script:Entries = @($script:Catalog['plugins'])
-        $script:Entry = @($script:Entries | Where-Object { $_['name'] -eq 'hve-core-all' })[0]
+        $script:ProfileOwners = @($script:Entries | Where-Object {
+                $profiles = Get-MarketplaceEntryOverlayValue -Entry $_ -Key 'profiles'
+                $profiles -is [System.Collections.IDictionary] -and $profiles.Contains('starter')
+            })
+        $script:Entry = $script:ProfileOwners[0]
         $script:MembershipPaths = [string[]]@(
             @('agents', 'commands', 'rules', 'skills', 'hooks') |
                 ForEach-Object { @($script:Entry[$_]) } | Where-Object { $_ }
@@ -226,16 +230,17 @@ Describe 'Production multi-package catalog' -Tag 'Unit' {
         }
     }
 
-    It 'Keeps the full bundle membership nonempty and unique' {
+    It 'Keeps the starter profile owner membership nonempty and unique' {
         $script:MembershipPaths.Count | Should -BeGreaterThan 0
         @($script:MembershipPaths | Sort-Object -Unique).Count | Should -Be $script:MembershipPaths.Count
     }
 
-    It 'Declares exactly one removed component tombstone' {
+    It 'Declares a nonempty unique removed component tombstone set outside membership' {
         $componentMaturity = Get-MarketplaceComponentMaturityMap -Entry $script:Entry
         $tombstones = @($componentMaturity.Keys | Where-Object { $componentMaturity[$_] -eq 'removed' })
-        $tombstones.Count | Should -Be 1
-        $script:MembershipPaths | Should -Not -Contain $tombstones[0]
+        $tombstones.Count | Should -BeGreaterThan 0
+        @($tombstones | Sort-Object -Unique).Count | Should -Be $tombstones.Count
+        foreach ($tombstone in $tombstones) { $script:MembershipPaths | Should -Not -Contain $tombstone }
     }
 
     It 'Declares no aggregate metadata' {
@@ -245,25 +250,14 @@ Describe 'Production multi-package catalog' -Tag 'Unit' {
         Get-MarketplaceMetadataKey | Should -Not -Contain 'aggregate'
     }
 
-    It 'Declares the starter profile only on hve-core-all' {
-        $profileOwners = @($script:Entries | Where-Object {
-                $profiles = Get-MarketplaceEntryOverlayValue -Entry $_ -Key 'profiles'
-                $profiles -is [System.Collections.IDictionary] -and $profiles.Count -gt 0
-            })
-        $profileOwners | Should -HaveCount 1
-        [string]$profileOwners[0]['name'] | Should -BeExactly 'hve-core-all'
-        $script:StarterProfile.Count | Should -Be 24
+    It 'Declares one nonempty unique starter profile within installable membership' {
+        $script:ProfileOwners | Should -HaveCount 1
+        $script:StarterProfile.Count | Should -BeGreaterThan 0
+        @($script:StarterProfile | Sort-Object -Unique).Count | Should -Be $script:StarterProfile.Count
         foreach ($member in $script:StarterProfile) { $script:MembershipPaths | Should -Contain $member }
-    }
-
-    It 'Selects <Count> starter components under <Field>' -ForEach @(
-        @{ Field = 'agents'; Count = 6 }
-        @{ Field = 'commands'; Count = 1 }
-        @{ Field = 'rules'; Count = 2 }
-        @{ Field = 'skills'; Count = 15 }
-    ) {
-        @($script:StarterProfile | Where-Object { $_.StartsWith("$Field/", [System.StringComparison]::Ordinal) }).Count |
-            Should -Be $Count
+        foreach ($member in $script:StarterProfile) {
+            $member | Should -Match '^(agents|commands|rules|skills)/'
+        }
     }
 
     It 'Resolves identical component sets and maturity on both channels for every package' {

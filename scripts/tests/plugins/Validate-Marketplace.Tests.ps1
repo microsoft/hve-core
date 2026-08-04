@@ -501,6 +501,21 @@ Describe 'Test-MarketplaceRepositoryContract' -Tag 'Unit' {
             @($run.Report['Results'] | ForEach-Object { $_['PluginName'] } | Sort-Object) | Should -Be @('ops', 'rpi')
         }
 
+        It 'Reports conflicting maturity for a source shared by two packages' {
+            New-ValidatorFixture -Root $script:contractRepo -AddSecondPackage | Out-Null
+            Set-CatalogEntry -Root $script:contractRepo -Mutation {
+                param($catalog)
+                $sharedComponent = 'agents/rpi/rpi-planner.md'
+                $catalog['plugins'][1]['agents'] += $sharedComponent
+                $catalog['plugins'][1]['x-hve']['componentMaturity'] = @{ $sharedComponent = 'preview' }
+            }
+
+            $run = Get-ValidationReport -Root $script:contractRepo
+            $run.Outcome.Success | Should -BeFalse
+            (Get-ReportError -Report $run.Report) -join ' ' |
+                Should -Match "repository contract: source '\.github/agents/rpi/rpi-planner\.agent\.md' must declare identical maturity across packages: ops=preview, rpi=stable"
+        }
+
         It 'Keeps documentation, source identity, unique membership, and tombstones valid across both recipes' {
             New-ValidatorFixture -Root $script:contractRepo -AddSecondPackage | Out-Null
             $catalog = Get-Content -LiteralPath (Join-Path $script:contractRepo '.github/plugin/marketplace.json') -Raw |

@@ -147,11 +147,11 @@ main() {
     if [[ "$existing_schema" != "$SCHEMA_VERSION" ]]; then
       fail "Unsupported .hve-tracking.json schemaVersion '$existing_schema' (expected $SCHEMA_VERSION). Delete .hve-tracking.json and re-run the installer for a clean reinstall."
     fi
-    local entry_key entry_json entry_status
-    while IFS=$'\t' read -r entry_key entry_status entry_json; do
+    local entry_key existing_entry_json entry_status
+    while IFS=$'\t' read -r entry_key entry_status existing_entry_json; do
       [[ -n "$entry_key" ]] || continue
       existing_status["$entry_key"]="$entry_status"
-      existing_entry["$entry_key"]="$entry_json"
+      existing_entry["$entry_key"]="$existing_entry_json"
     done < <(jq -rc '.files // {} | to_entries[] | "\(.key)\t\(.value.status)\t\(.value | tostring)"' "$manifest_path")
   fi
 

@@ -209,12 +209,12 @@ Each generated plugin directory contains:
 
 Run `npm run plugin:generate` whenever you:
 
-* Add a new artifact to the `hve-core` recipe
-* Remove an artifact from the `hve-core` recipe
+* Add a new artifact to any package recipe
+* Remove an artifact from any package recipe
 * Modify artifact frontmatter (description, dependencies, handoffs)
 * Update artifact file content that affects generated README documentation
 * Change marketplace identity metadata or component lifecycle maturity
-* Update `docs/plugins/hve-core.md`
+* Update the matching `docs/plugins/<name>.md` document for any package
 
 ### Validating the Marketplace Recipe
 
