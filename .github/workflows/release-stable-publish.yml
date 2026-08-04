@@ -119,10 +119,20 @@ jobs:
                   app-id: ${{ vars.RELEASE_APP_ID }}
                   private-key: ${{ secrets.RELEASE_APP_PRIVATE_KEY }}
 
-            - name: Checkout the release preparation branch
+            - name: Checkout trusted release updater
+              uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+              with:
+                  ref: ${{ github.sha }}
+                  sparse-checkout: scripts/release/Update-VersionFiles.ps1
+                  sparse-checkout-cone-mode: false
+                  persist-credentials: false
+
+            # Data-only checkout: executable tooling comes from the trusted github.sha checkout.
+            - name: Checkout release preparation data
               uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
               with:
                   ref: ${{ needs.release-please.outputs.release-pr-branch }}
+                  path: release-preparation
                   token: ${{ steps.app-token.outputs.token }}
                   persist-credentials: true
 
@@ -131,16 +141,19 @@ jobs:
                   RELEASE_BRANCH: ${{ needs.release-please.outputs.release-pr-branch }}
               run: |
                   set -euo pipefail
-                  VERSION=$(jq -r '.["."] // ""' .release-please-manifest.json)
+                  RELEASE_REPO="$GITHUB_WORKSPACE/release-preparation"
+                  VERSION=$(jq -r '.["."] // ""' "$RELEASE_REPO/.release-please-manifest.json")
                   if ! printf '%s' "$VERSION" | grep -Eq '^[0-9]+\.[0-9]+\.[0-9]+$'; then
                     echo "::error::.release-please-manifest.json has no MAJOR.MINOR.PATCH root version"
                     exit 1
                   fi
 
-                  pwsh -NoProfile -File scripts/release/Update-VersionFiles.ps1 \
-                    -Version "$VERSION" \
-                    -SkipPluginGenerate
+                  pwsh -NoProfile -File "$GITHUB_WORKSPACE/scripts/release/Update-VersionFiles.ps1" \
+                      -Version "$VERSION" \
+                      -RepoRoot "$RELEASE_REPO" \
+                      -SkipPluginGenerate
 
+                  cd "$RELEASE_REPO"
                   if git diff --quiet; then
                     echo "Preparation already carries $VERSION and locator plugins-v$VERSION"
                     exit 0
@@ -162,17 +175,28 @@ jobs:
         outputs:
             version: ${{ needs.release-please.outputs.version }}
             tag_name: ${{ needs.release-please.outputs.tag_name }}
-            sha: ${{ needs.release-please.outputs.sha }}
+            sha: ${{ github.sha }}
         steps:
+            - name: Verify trusted release identity
+              env:
+                  EVENT_SHA: ${{ github.sha }}
+                  RELEASE_SHA: ${{ needs.release-please.outputs.sha }}
+              run: |
+                  set -euo pipefail
+                  if [ "$RELEASE_SHA" != "$EVENT_SHA" ]; then
+                    echo "::error::release-please SHA does not match the merged release/stable commit"
+                    exit 1
+                  fi
+
             - name: Checkout released commit
               uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
               with:
-                  ref: ${{ needs.release-please.outputs.sha }}
+                  ref: ${{ github.sha }}
                   persist-credentials: false
 
             - name: Verify release version and committed state
               env:
-                  RELEASE_SHA: ${{ needs.release-please.outputs.sha }}
+                  RELEASE_SHA: ${{ github.sha }}
                   RELEASE_TAG: ${{ needs.release-please.outputs.tag_name }}
                   RELEASE_VERSION: ${{ needs.release-please.outputs.version }}
               run: |

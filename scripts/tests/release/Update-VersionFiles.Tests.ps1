@@ -396,15 +396,52 @@ Describe 'Release preparation repair' -Tag 'Unit' {
         @($sync['needs']) | Should -Be @('release-please')
         [string]$sync['if'] | Should -Match "needs\.release-please\.outputs\.release-pr-branch != ''"
 
-        $checkout = @($sync['steps'] | Where-Object { $_.Contains('uses') -and [string]$_['uses'] -match '^actions/checkout@' })
-        [string]$checkout[0]['with']['ref'] | Should -BeExactly '${{ needs.release-please.outputs.release-pr-branch }}'
+        $checkouts = @($sync['steps'] | Where-Object { $_.Contains('uses') -and [string]$_['uses'] -match '^actions/checkout@' })
+        $checkouts | Should -HaveCount 2
+
+        $trusted = @($checkouts | Where-Object { [string]$_['name'] -eq 'Checkout trusted release updater' })
+        $trusted | Should -HaveCount 1
+        [string]$trusted[0]['with']['ref'] | Should -BeExactly '${{ github.sha }}'
+        [string]$trusted[0]['with']['sparse-checkout'] | Should -BeExactly 'scripts/release/Update-VersionFiles.ps1'
+        [bool]$trusted[0]['with']['persist-credentials'] | Should -BeFalse
+
+        $preparation = @($checkouts | Where-Object { [string]$_['name'] -eq 'Checkout release preparation data' })
+        $preparation | Should -HaveCount 1
+        [string]$preparation[0]['with']['ref'] | Should -BeExactly '${{ needs.release-please.outputs.release-pr-branch }}'
+        [string]$preparation[0]['with']['path'] | Should -BeExactly 'release-preparation'
+        [bool]$preparation[0]['with']['persist-credentials'] | Should -BeTrue
+        $workflow | Should -Match 'Data-only checkout: executable tooling comes from the trusted github\.sha checkout\.'
 
         $runs = [string[]]@($sync['steps'] | Where-Object { $_.Contains('run') } | ForEach-Object { [string]$_['run'] })
         $invocation = @($runs | Where-Object { $_ -match 'scripts/release/Update-VersionFiles\.ps1' })
         $invocation | Should -HaveCount 1
+        $invocation[0] | Should -Match '\$GITHUB_WORKSPACE/scripts/release/Update-VersionFiles\.ps1'
+        $invocation[0] | Should -Match 'RELEASE_REPO="\$GITHUB_WORKSPACE/release-preparation"'
+        $invocation[0] | Should -Match '-RepoRoot "\$RELEASE_REPO"'
         $invocation[0] | Should -Match '-SkipPluginGenerate'
+        $invocation[0] | Should -Match 'cd "\$RELEASE_REPO"'
         $invocation[0] | Should -Match 'git push origin "HEAD:refs/heads/\$RELEASE_BRANCH"'
         $invocation[0] | Should -Not -Match 'push --force'
+
+        $runScript = $invocation[0]
+        $updaterIndex = $runScript.IndexOf(
+            'pwsh -NoProfile -File "$GITHUB_WORKSPACE/scripts/release/Update-VersionFiles.ps1"',
+            [System.StringComparison]::Ordinal
+        )
+        $cdIndex = $runScript.IndexOf('cd "$RELEASE_REPO"', [System.StringComparison]::Ordinal)
+        $updaterIndex | Should -BeGreaterThan -1
+        $updaterIndex | Should -BeLessThan $cdIndex
+        foreach ($gitCommand in @(
+                'git diff --quiet',
+                'git config user.name',
+                'git config user.email',
+                'git add --update',
+                'git commit -m',
+                'git push origin'
+            )) {
+            $commandIndex = $runScript.IndexOf($gitCommand, [System.StringComparison]::Ordinal)
+            $commandIndex | Should -BeGreaterThan $cdIndex -Because "$gitCommand must target release-preparation"
+        }
     }
 
     It 'Validates every committed release field after the managed PR merges' {
@@ -415,6 +452,36 @@ Describe 'Release preparation repair' -Tag 'Unit' {
 
         @($validate['needs']) | Should -Be @('release-please')
         [string]$validate['if'] | Should -Match "release_created == 'true'"
+        [string]$validate['outputs']['sha'] | Should -BeExactly '${{ github.sha }}'
+
+        $steps = @($validate['steps'])
+        $identity = @($steps | Where-Object { [string]$_['name'] -eq 'Verify trusted release identity' })
+        $identity | Should -HaveCount 1
+        [string]$identity[0]['env']['EVENT_SHA'] | Should -BeExactly '${{ github.sha }}'
+        [string]$identity[0]['env']['RELEASE_SHA'] | Should -BeExactly '${{ needs.release-please.outputs.sha }}'
+        [string]$identity[0]['run'] | Should -Match '(?s)if \[ "\$RELEASE_SHA" != "\$EVENT_SHA" \]; then\s+echo "::error::release-please SHA does not match the merged release/stable commit"\s+exit 1\s+fi'
+
+        $checkout = @($steps | Where-Object { $_.Contains('uses') -and [string]$_['uses'] -match '^actions/checkout@' })
+        $checkout | Should -HaveCount 1
+        [string]$checkout[0]['with']['ref'] | Should -BeExactly '${{ github.sha }}'
+        $steps.IndexOf($identity[0]) | Should -BeLessThan $steps.IndexOf($checkout[0])
+        $workflow | Should -Not -Match 'ref:\s*\$\{\{\s*needs\.release-please\.outputs\.sha'
+
+        foreach ($jobName in @('extension-provenance', 'plugin-package-release', 'plugin-snapshot-production')) {
+            [string]$document['jobs'][$jobName]['with']['source-ref'] |
+                Should -BeExactly '${{ needs.validate-release.outputs.sha }}'
+        }
+
+        foreach ($jobName in @('generate-dependency-sbom', 'upload-plugin-packages', 'verify-provenance')) {
+            $sourceCheckout = @(
+                $document['jobs'][$jobName]['steps'] |
+                    Where-Object { $_.Contains('uses') -and [string]$_['uses'] -match '^actions/checkout@' }
+            )
+            $sourceCheckout | Should -HaveCount 1
+            [string]$sourceCheckout[0]['with']['ref'] |
+                Should -BeExactly '${{ needs.validate-release.outputs.sha }}'
+        }
+
         $runs = [string[]]@($validate['steps'] | Where-Object { $_.Contains('run') } | ForEach-Object { [string]$_['run'] })
         $consistency = @($runs | Where-Object { $_ -match 'package-lock\.json:\.version' })
         $consistency | Should -HaveCount 1
