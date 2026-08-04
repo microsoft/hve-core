@@ -2,7 +2,7 @@
 title: Scripts
 description: PowerShell scripts for linting, validation, and security automation
 author: HVE Core Team
-ms.date: 2026-07-31
+ms.date: 2026-08-03
 ms.topic: reference
 keywords:
   - powershell
@@ -89,6 +89,8 @@ The `linting/` directory contains scripts for validating code quality and docume
 | `Invoke-PythonTests.ps1`           | Python tests via pytest                                   |
 | `Validate-AdrConsistency.ps1`      | Validate ADR structure and Govern-phase consistency rules |
 | `Validate-AssetDocs.ps1`           | Validate asset documentation coverage and sync            |
+| `Validate-HookManifests.ps1`       | Validate collection-scoped hook manifests                 |
+| `Validate-PlannerArtifacts.ps1`    | Validate AI artifact footers and planner disclaimers      |
 
 See [linting/README.md](linting/README.md) for detailed documentation.
 
