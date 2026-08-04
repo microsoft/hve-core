@@ -3,7 +3,7 @@ title: Build Workflows
 description: GitHub Actions CI/CD pipeline architecture for validation, security, and release automation
 sidebar_position: 3
 author: WilliamBerryiii
-ms.date: 2026-08-03
+ms.date: 2026-08-04
 ms.topic: overview
 ---
 
@@ -184,7 +184,7 @@ flowchart LR
 | npm-audit                   | Inline                            | npm dependency vulnerabilities  |
 | codeql                      | `codeql-analysis.yml`             | Code security patterns          |
 | copyright-headers           | `copyright-headers.yml`           | Copyright header compliance     |
-| plugin-validation           | `plugin-validation.yml`           | Plugin and collection metadata  |
+| plugin-validation           | `plugin-validation.yml`           | Plugin and package metadata     |
 | gitleaks-scan               | `gitleaks-scan.yml`               | Secret detection                |
 
 All jobs run in parallel with no dependencies, enabling fast feedback (typically under 3 minutes).

@@ -2,7 +2,7 @@
 title: Customizing HVE Core
 description: Overview of customization approaches from lightweight settings to full fork-and-extend, with role-based entry points
 author: Microsoft
-ms.date: 2026-08-02
+ms.date: 2026-08-04
 ms.topic: overview
 keywords:
   - customization
@@ -68,9 +68,9 @@ graph LR
 | Goal                                       | Approach            | Files Involved                                        | Difficulty |
 |--------------------------------------------|---------------------|-------------------------------------------------------|------------|
 | Set coding standards for Copilot           | Instructions        | `.github/copilot-instructions.md`, `.instructions.md` | Low        |
-| Create a reusable workflow                 | Prompt              | `.github/prompts/{collection}/name.prompt.md`         | Low        |
-| Build a specialized Copilot assistant      | Agent               | `.github/agents/{collection}/name.agent.md`           | Medium     |
-| Package domain expertise                   | Skill               | `.github/skills/{collection}/{skill}/SKILL.md`        | Medium     |
+| Create a reusable workflow                 | Prompt              | `.github/prompts/{package-id}/name.prompt.md`         | Low        |
+| Build a specialized Copilot assistant      | Agent               | `.github/agents/{package-id}/name.agent.md`           | Medium     |
+| Package domain expertise                   | Skill               | `.github/skills/{package-id}/{skill}/SKILL.md`        | Medium     |
 | Share curated bundles across teams         | Marketplace Package | `.github/plugin/marketplace.json`, `docs/plugins/`    | Medium     |
 | Add custom validation or plugin generation | Build System        | `scripts/`, `package.json`                            | High       |
 | Diverge from upstream entirely             | Fork and Extend     | Full repository                                       | High       |

@@ -64,10 +64,16 @@ env:
 
 jobs:
   publish-snapshot:
-    name: Publish Plugin Snapshot
+    name: Stage and Verify Plugin Snapshot
     runs-on: ubuntu-latest
     permissions:
-      contents: write
+      contents: read
+    outputs:
+      locator: ${{ steps.source.outputs.locator }}
+      should-publish: ${{ steps.source.outputs.should-publish }}
+      snapshot-branch: ${{ steps.source.outputs.snapshot-branch }}
+      snapshot-mode: ${{ steps.source.outputs.snapshot-mode }}
+      snapshot-tag: ${{ steps.source.outputs.snapshot-tag }}
     steps:
       - name: Checkout immutable source
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -87,6 +93,17 @@ jobs:
           PRODUCTION: ${{ inputs.production }}
         run: |
           set -euo pipefail
+
+          validate_ref_value() {
+            local name=$1
+            local value=$2
+            if [[ -n "${value}" && ! "${value}" =~ ^[A-Za-z0-9._/-]+$ ]]; then
+              echo "::error::${name} contains unsupported characters"
+              exit 1
+            fi
+          }
+          validate_ref_value 'source-ref' "${SOURCE_REF}"
+
           source_commit=$(git rev-parse HEAD)
           committed_version=$(jq -r .version package.json)
           if [ "${PRODUCTION}" = 'true' ]; then
@@ -110,6 +127,15 @@ jobs:
               exit 1
             fi
           fi
+
+          validate_ref_value 'snapshot-branch' "${snapshot_branch}"
+          validate_ref_value 'snapshot-tag' "${snapshot_tag}"
+
+          should_publish=false
+          if [ "${snapshot_mode}" = 'Production' ] ||
+            { [ "${GITHUB_EVENT_NAME}" = 'workflow_dispatch' ] && [ "${dry_run}" != 'true' ]; }; then
+            should_publish=true
+          fi
           {
             echo "commit=${source_commit}"
             echo "version=${version}"
@@ -119,6 +145,7 @@ jobs:
             echo "snapshot-branch=${snapshot_branch}"
             echo "snapshot-tag=${snapshot_tag}"
             echo "dry-run=${dry_run}"
+            echo "should-publish=${should_publish}"
           } >> "$GITHUB_OUTPUT"
           echo "Source ref:    ${SOURCE_REF}"
           echo "Source commit: ${source_commit}"
@@ -302,40 +329,6 @@ jobs:
             exit 1
           fi
 
-      - name: Publish disposable references
-        if: ${{ github.event_name == 'workflow_dispatch' && !inputs.production && !inputs.dry-run }}
-        shell: bash
-        env:
-          SNAPSHOT_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          SNAPSHOT_BRANCH: ${{ steps.source.outputs.snapshot-branch }}
-          SNAPSHOT_TAG: ${{ steps.source.outputs.snapshot-tag }}
-        run: |
-          set -euo pipefail
-          snapshot_dir="${RUNNER_TEMP}/plugin-snapshot"
-          auth_header=$(printf 'x-access-token:%s' "${SNAPSHOT_TOKEN}" | base64 -w0)
-          git -C "${snapshot_dir}" remote add origin "https://github.com/${GITHUB_REPOSITORY}.git"
-          git -C "${snapshot_dir}" config --local "http.https://github.com/.extraheader" "AUTHORIZATION: basic ${auth_header}"
-          # Atomic and unforced: an existing tag rejects both reference updates.
-          git -C "${snapshot_dir}" push --atomic --quiet origin \
-            "HEAD:refs/heads/${SNAPSHOT_BRANCH}" \
-            "refs/tags/${SNAPSHOT_TAG}"
-          echo "Published disposable branch ${SNAPSHOT_BRANCH} and tag ${SNAPSHOT_TAG}"
-
-      - name: Publish immutable production snapshot
-        if: ${{ inputs.production }}
-        shell: bash
-        env:
-          SNAPSHOT_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          RELEASE_TAG: ${{ steps.source.outputs.locator }}
-        run: |
-          set -euo pipefail
-          snapshot_dir="${RUNNER_TEMP}/plugin-snapshot"
-          auth_header=$(printf 'x-access-token:%s' "${SNAPSHOT_TOKEN}" | base64 -w0)
-          git -C "${snapshot_dir}" remote add origin "https://github.com/${GITHUB_REPOSITORY}.git"
-          git -C "${snapshot_dir}" config --local "http.https://github.com/.extraheader" "AUTHORIZATION: basic ${auth_header}"
-          git -C "${snapshot_dir}" push --quiet origin "refs/tags/${RELEASE_TAG}"
-          echo "Published immutable production snapshot ${RELEASE_TAG}"
-
       - name: Summarize snapshot
         if: always()
         shell: bash
@@ -373,3 +366,55 @@ jobs:
             logs/marketplace-snapshot.json
             logs/plugin-snapshot.tar.gz
           if-no-files-found: warn
+
+  push-snapshot:
+    name: Publish Verified Plugin Snapshot
+    needs: publish-snapshot
+    if: ${{ needs.publish-snapshot.outputs.should-publish == 'true' }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Download verified snapshot
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: plugin-snapshot-evidence
+          path: ${{ runner.temp }}/snapshot-evidence
+
+      - name: Publish verified snapshot
+        shell: bash
+        env:
+          RELEASE_TAG: ${{ needs.publish-snapshot.outputs.locator }}
+          SNAPSHOT_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SNAPSHOT_BRANCH: ${{ needs.publish-snapshot.outputs.snapshot-branch }}
+          SNAPSHOT_MODE: ${{ needs.publish-snapshot.outputs.snapshot-mode }}
+          SNAPSHOT_TAG: ${{ needs.publish-snapshot.outputs.snapshot-tag }}
+        run: |
+          set -euo pipefail
+          archive="${RUNNER_TEMP}/snapshot-evidence/plugin-snapshot.tar.gz"
+          snapshot_dir="${RUNNER_TEMP}/plugin-snapshot"
+          if [ ! -f "${archive}" ]; then
+            echo "::error::Verified snapshot archive is missing"
+            exit 1
+          fi
+          rm -rf "${snapshot_dir}"
+          mkdir -p "${snapshot_dir}"
+          tar -xzf "${archive}" -C "${snapshot_dir}"
+
+          auth_header=$(printf 'x-access-token:%s' "${SNAPSHOT_TOKEN}" | base64 -w0)
+          git -C "${snapshot_dir}" remote add origin "https://github.com/${GITHUB_REPOSITORY}.git"
+          git -C "${snapshot_dir}" config --local "http.https://github.com/.extraheader" "AUTHORIZATION: basic ${auth_header}"
+
+          if [ "${SNAPSHOT_MODE}" = 'Production' ]; then
+            git -C "${snapshot_dir}" push --quiet origin "refs/tags/${RELEASE_TAG}"
+            echo "Published immutable production snapshot ${RELEASE_TAG}"
+          elif [ "${SNAPSHOT_MODE}" = 'Disposable' ]; then
+            # Atomic and unforced: an existing tag rejects both reference updates.
+            git -C "${snapshot_dir}" push --atomic --quiet origin \
+              "HEAD:refs/heads/${SNAPSHOT_BRANCH}" \
+              "refs/tags/${SNAPSHOT_TAG}"
+            echo "Published disposable branch ${SNAPSHOT_BRANCH} and tag ${SNAPSHOT_TAG}"
+          else
+            echo "::error::Unsupported snapshot mode ${SNAPSHOT_MODE}"
+            exit 1
+          fi

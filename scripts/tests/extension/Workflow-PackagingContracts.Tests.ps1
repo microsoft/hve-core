@@ -770,6 +770,47 @@ Describe 'Reusable packaging source contracts' -Tag 'Unit' {
         $text | Should -Not -Match 'push --force'
     }
 
+    It 'Validates caller-controlled refs before writing snapshot outputs' {
+        $document = Get-WorkflowDocument -Name 'plugin-snapshot-publish.yml'
+        $source = @($document['jobs']['publish-snapshot']['steps'] | Where-Object {
+                [string]$_['id'] -eq 'source'
+            })[0]
+        $run = [string]$source['run']
+
+        $run | Should -Match "validate_ref_value 'source-ref'"
+        $run | Should -Match "validate_ref_value 'snapshot-branch'"
+        $run | Should -Match "validate_ref_value 'snapshot-tag'"
+        $run | Should -Match '\^\[A-Za-z0-9\._/-\]\+\$'
+        $run | Should -Match '\[\[ -n "\$\{value\}" && ! "\$\{value\}" =~'
+        $run | Should -Not -Match '\$\{value\}.*\|\s*grep'
+        $run.IndexOf("validate_ref_value 'source-ref'", [System.StringComparison]::Ordinal) |
+            Should -BeLessThan $run.IndexOf('source_commit=$(git rev-parse HEAD)', [System.StringComparison]::Ordinal)
+        $run.IndexOf("validate_ref_value 'source-ref'", [System.StringComparison]::Ordinal) |
+            Should -BeLessThan $run.IndexOf('} >> "$GITHUB_OUTPUT"', [System.StringComparison]::Ordinal)
+    }
+
+    It 'Grants write permission only to the gated snapshot publication job' {
+        $document = Get-WorkflowDocument -Name 'plugin-snapshot-publish.yml'
+        $stage = $document['jobs']['publish-snapshot']
+        $publish = $document['jobs']['push-snapshot']
+
+        [string]$stage['permissions']['contents'] | Should -BeExactly 'read'
+        [string]$publish['permissions']['contents'] | Should -BeExactly 'write'
+        [string]$publish['needs'] | Should -BeExactly 'publish-snapshot'
+        [string]$publish['if'] | Should -Match "needs\.publish-snapshot\.outputs\.should-publish == 'true'"
+
+        $source = @($stage['steps'] | Where-Object { [string]$_['id'] -eq 'source' })[0]
+        [string]$source['run'] | Should -Match "GITHUB_EVENT_NAME.*workflow_dispatch"
+
+        $stageText = [string]::Join("`n", (Get-JobStepText -Document $document -JobName 'publish-snapshot'))
+        $publishText = [string]::Join("`n", (Get-JobStepText -Document $document -JobName 'push-snapshot'))
+        $stageText | Should -Not -Match 'secrets\.GITHUB_TOKEN|git -C [^\n]+ push'
+        $publishText | Should -Match '^actions/download-artifact@' -Because 'the verified archive crosses the job boundary'
+        $publishText | Should -Match 'tar -xzf'
+        $publishText | Should -Match 'push --atomic'
+        $publishText | Should -Match 'refs/tags/\$\{RELEASE_TAG\}'
+    }
+
     It 'Binds snapshot evidence to the resolved effective version' {
         $document = Get-WorkflowDocument -Name 'plugin-snapshot-publish.yml'
         $evidenceSteps = @($document['jobs']['publish-snapshot']['steps'] | Where-Object {
