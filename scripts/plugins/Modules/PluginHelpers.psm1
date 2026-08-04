@@ -1140,8 +1140,8 @@ function Write-PluginHookArtifact {
     when the hook is auto-loaded from a checked-out repository. Inside an
     installed plugin the same scripts live under the plugin root, so this
     function writes a transformed copy of the manifest with those paths
-    rewritten to the ${PLUGIN_ROOT} placeholder, then materializes the sibling
-    script directory (the manifest path without its .json extension).
+    rewritten to the ${CLAUDE_PLUGIN_ROOT} placeholder, then materializes the
+    sibling script directory (the manifest path without its .json extension).
 
     .PARAMETER SourceManifest
     Absolute path to the source hook .json manifest in the repository.
@@ -1186,10 +1186,13 @@ function Write-PluginHookArtifact {
     }
 
     # Rewrite repo-root-relative hook script paths to plugin-relative paths so
-    # commands resolve from the installed plugin directory. Literal string
-    # replacement avoids regex interpretation of the path and the $ placeholder.
+    # commands resolve from the installed plugin directory. CLAUDE_PLUGIN_ROOT
+    # is the placeholder every Copilot host substitutes; an unsubstituted bare
+    # ${PLUGIN_ROOT} reaches the shell and expands to an empty string. Literal
+    # string replacement avoids regex interpretation of the path and the $
+    # placeholder.
     $manifestText = Get-Content -LiteralPath $SourceManifest -Raw -Encoding utf8
-    $manifestText = $manifestText.Replace('.github/hooks/', '${PLUGIN_ROOT}/hooks/')
+    $manifestText = $manifestText.Replace('.github/hooks/', '${CLAUDE_PLUGIN_ROOT}/hooks/')
     Set-ContentIfChanged -Path $DestinationManifest -Value $manifestText | Out-Null
 
     # Materialize the sibling script directory (manifest path without .json).
