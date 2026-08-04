@@ -2,7 +2,7 @@
 title: Scripts
 description: PowerShell scripts for linting, validation, and security automation
 author: HVE Core Team
-ms.date: 2026-07-16
+ms.date: 2026-08-03
 ms.topic: reference
 keywords:
   - powershell
@@ -19,7 +19,7 @@ This directory contains PowerShell scripts for automating linting, validation, a
 
 ```text
 scripts/
-├── collections/     Collection validation and shared helpers
+├── lib/             Shared artifact, marketplace, and CI helpers
 ├── agents/          Agent activation harness and baseline snapshots
 ├── evals/           Eval runner and moderation automation
 ├── release/         Release version-file update helper
@@ -88,6 +88,9 @@ The `linting/` directory contains scripts for validating code quality and docume
 | `Invoke-PythonLint.ps1`            | Python linting via ruff                                   |
 | `Invoke-PythonTests.ps1`           | Python tests via pytest                                   |
 | `Validate-AdrConsistency.ps1`      | Validate ADR structure and Govern-phase consistency rules |
+| `Validate-AssetDocs.ps1`           | Validate asset documentation coverage and sync            |
+| `Validate-HookManifests.ps1`       | Validate collection-scoped hook manifests                 |
+| `Validate-PlannerArtifacts.ps1`    | Validate AI artifact footers and planner disclaimers      |
 
 See [linting/README.md](linting/README.md) for detailed documentation.
 
@@ -95,17 +98,38 @@ See [linting/README.md](linting/README.md) for detailed documentation.
 
 The `evals/` directory contains PowerShell entry points for agent-behavior, baseline-equivalence, moderation, and other eval automation.
 
-| Script                           | Purpose                                                                  |
-|----------------------------------|--------------------------------------------------------------------------|
-| `Build-AgentBehaviorSpec.ps1`    | Regenerate the agent-behavior eval spec from per-agent stimulus partials |
-| `Build-AgentInventory.ps1`       | Generate the authoritative agent inventory used by eval suites           |
-| `Invoke-AgentMatrix.ps1`         | Run the agent-behavior matrix and aggregate per-agent summaries          |
-| `Invoke-BaselineEquivalence.ps1` | Run baseline-vs-customized equivalence evals for a target agent          |
-| `Invoke-ContentModeration.ps1`   | Invoke the content moderation CLI over prompt or output content          |
-| `Invoke-CorpusModeration.ps1`    | Moderate changed AI corpus content from the changed-artifact manifest    |
-| `Invoke-VallyEvals.ps1`          | Execute vally evals for changed AI artifacts                             |
+| Script                                    | Purpose                                                                             |
+|-------------------------------------------|-------------------------------------------------------------------------------------|
+| `Build-AgentBehaviorSpec.ps1`             | Regenerate the agent-behavior eval spec from per-agent stimulus partials            |
+| `Build-AgentInventory.ps1`                | Generate the authoritative agent inventory used by eval suites                      |
+| `Get-AgentDependencyMap.ps1`              | Build a JSON map of agent dependencies for the baseline-equivalence dispatcher      |
+| `Get-ChangedAIArtifact.ps1`               | Emit a JSON manifest of AI customization artifacts changed between two git refs     |
+| `Get-ChangedSpecStimulus.ps1`             | Emit a JSON manifest of synthetic artifacts derived from changed eval specs         |
+| `Invoke-AgentMatrix.ps1`                  | Run the agent-behavior matrix and aggregate per-agent summaries                     |
+| `Invoke-ArtifactModeration.ps1`           | Moderate all eval specs plus changed AI artifacts as a pre-job gate                 |
+| `Invoke-BaselineEquivalence.ps1`          | Run baseline-vs-customized equivalence evals for a target agent                     |
+| `Invoke-ContentModeration.ps1`            | Invoke the content moderation CLI over prompt or output content                     |
+| `Invoke-CorpusModeration.ps1`             | Moderate changed AI corpus content from the changed-artifact manifest               |
+| `Invoke-VallyEvals.ps1`                   | Execute vally evals for changed AI artifacts                                        |
+| `New-AgentMatrixDashboard.ps1`            | Render a self-contained HTML dashboard for the per-agent behavior matrix            |
+| `New-AgentSurfaceSignatures.ps1`          | Generate a per-agent surface signature YAML for baseline equivalence runs           |
+| `New-EquivalenceDashboard.ps1`            | Render a self-contained HTML dashboard for a local baseline-equivalence run         |
+| `Test-CopilotToken.ps1`                   | Pre-flight probe for the `COPILOT_GITHUB_TOKEN` secret used by vally evals          |
+| `Test-EvalSpec.ps1`                       | Validate vally eval spec files against the embedded schema                          |
+| `Test-EvalSpecText.ps1`                   | Run alex.js and retext-profanities against the AI-artifact markdown corpus          |
+| `Test-StimulusPresence.ps1`               | Verify every changed AI artifact has a matching eval-spec stimulus backlink         |
+| `Test-VallyTestSafety.ps1`                | Repo-wide safety lint flagging eval stimuli and corpora that need refusal coverage  |
+| `Update-AgentMatrixSummariesFromLogs.ps1` | Rebuild per-agent matrix JSON summaries from existing vally logs without re-running |
 
-See [../evals/README.md](../evals/README.md) for the broader eval framework documentation.
+Most of these run through CI-owned `ci:eval:*` package scripts. See
+[../docs/contributing/evals-ci.md](../docs/contributing/evals-ci.md) for the command
+taxonomy and prerequisites, and [../evals/README.md](../evals/README.md) for the broader
+eval framework documentation.
+
+`Get-AgentDependencyMap.ps1`, `Get-ChangedAIArtifact.ps1`, `Get-ChangedSpecStimulus.ps1`,
+`New-AgentSurfaceSignatures.ps1`, `Test-CopilotToken.ps1`, and
+`Update-AgentMatrixSummariesFromLogs.ps1` have no package-script wrapper and are invoked
+directly by workflows or run ad hoc with `pwsh -NoProfile -File`.
 
 ## Devcontainer Scripts
 
@@ -149,29 +173,47 @@ fails on orphan pages, missing current pages, and generated-region drift.
 
 The `security/` directory contains scripts for security scanning and dependency management:
 
-| Script                              | Purpose                                   |
-|-------------------------------------|-------------------------------------------|
-| `Test-DependencyPinning.ps1`        | Validate dependency pinning compliance    |
-| `Test-SHAStaleness.ps1`             | Check for outdated SHA pins               |
-| `Update-ActionSHAPinning.ps1`       | Automate updating GitHub Actions SHA pins |
-| `Test-ActionVersionConsistency.ps1` | Validate action version consistency       |
+| Script                              | Purpose                                                              |
+|-------------------------------------|----------------------------------------------------------------------|
+| `Install-PSModules.ps1`             | Install pinned PowerShell modules for local and CI environments      |
+| `Invoke-PipAudit.ps1`               | Audit Python dependencies for known vulnerabilities                  |
+| `Sign-PlannerArtifacts.ps1`         | Generate a SHA-256 manifest for planner artifacts and sign it        |
+| `Test-ActionVersionConsistency.ps1` | Validate action version consistency                                  |
+| `Test-DangerousWorkflow.ps1`        | Detect template-injection patterns in GitHub Actions workflows       |
+| `Test-DependencyPinning.ps1`        | Validate dependency pinning compliance                               |
+| `Test-PrValidationGate.ps1`         | Validate that the PR-validation gate job depends on every other job  |
+| `Test-PSModulePins.ps1`             | Validate PowerShell module version pins against the canonical config |
+| `Test-PublicDependencyFeeds.ps1`    | Validate that committed dependency metadata uses public feeds        |
+| `Test-SHAStaleness.ps1`             | Check for outdated SHA pins                                          |
+| `Test-WorkflowPermissions.ps1`      | Validate least-privilege permissions in workflows                    |
+| `Update-ActionSHAPinning.ps1`       | Automate updating GitHub Actions SHA pins                            |
+
+Run locally:
+
+```bash
+npm run lint:dangerous-workflow
+npm run lint:pr-gate
+npm run lint:ps-module-pins
+npm run lint:public-dependency-feeds
+npm run security:sign
+```
+
+`Install-PSModules.ps1`, `Test-SHAStaleness.ps1`, and `Update-ActionSHAPinning.ps1` have no
+package-script wrapper and are invoked directly by CI: `Install-PSModules.ps1` by the
+`setup-ps-modules` composite action and `copilot-setup-steps.yml`, `Test-SHAStaleness.ps1`
+by `sha-staleness-check.yml`, and `Update-ActionSHAPinning.ps1` by
+`weekly-security-maintenance.yml`. Run them ad hoc with `pwsh -NoProfile -File`.
+
+See [security/README.md](security/README.md) for detailed documentation.
 
 ## Plugins
 
 Copilot CLI plugin generation and validation.
 
-| Script                     | Purpose                                   |
-|----------------------------|-------------------------------------------|
-| `Generate-Plugins.ps1`     | Generate plugin packages from collections |
-| `Validate-Marketplace.ps1` | Validate marketplace metadata             |
-
-## Collections
-
-Collection validation and shared helpers.
-
-| Script                     | Purpose                                    |
-|----------------------------|--------------------------------------------|
-| `Validate-Collections.ps1` | Validate collection metadata and structure |
+| Script                     | Purpose                                               |
+|----------------------------|-------------------------------------------------------|
+| `Generate-Plugins.ps1`     | Generate plugin packages from the marketplace catalog |
+| `Validate-Marketplace.ps1` | Validate marketplace metadata                         |
 
 ## Tests
 
@@ -179,13 +221,12 @@ Pester test organization matching the scripts structure.
 
 | Directory       | Tests For                     |
 |-----------------|-------------------------------|
-| `collections/`  | Collection helpers tests      |
+| `lib/`          | Shared helper tests           |
 | `devcontainer/` | Devcontainer validation tests |
 | `extension/`    | Extension packaging tests     |
-| `lib/`          | Library utility tests         |
+| `plugins/`      | Plugin generation tests       |
 | `linting/`      | Linting script tests          |
 | `security/`     | Security validation tests     |
-| `plugins/`      | Plugin generation tests       |
 | `Fixtures/`     | Shared test fixtures          |
 | `Mocks/`        | Shared mock data              |
 
@@ -267,7 +308,7 @@ Key rules:
 
 ## Related Documentation
 
-* [Collection Scripts Documentation](collections/README.md)
+* [Plugin Scripts Documentation](plugins/README.md)
 * [Extension Packaging Documentation](extension/README.md)
 * [Library Utilities Documentation](lib/README.md)
 * [Linting Scripts Documentation](linting/README.md)

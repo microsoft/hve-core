@@ -380,8 +380,8 @@ if ($null -ne $manifest -and $null -ne $manifest.artifacts) {
 }
 
 # Repo-root (repo-specific) artifacts live directly under `.github/<kind>/`
-# without a collection subdirectory. Per `.github/copilot-instructions.md` they
-# are excluded from collection manifests, packaging, and eval coverage, so they
+# without a package subdirectory. Per `.github/copilot-instructions.md` they
+# are excluded from marketplace packages and eval coverage, so they
 # carry no eval spec. Drop them here so they do not surface as missing-coverage
 # failures, mirroring the skip in `Test-StimulusPresence.ps1`.
 $artifacts = @($artifacts | Where-Object {

@@ -24,7 +24,7 @@ const root = path.resolve(currentDir, '..');
 
 // Files that must source their user-facing labels from the label registry.
 const consumers = [
-  'src/data/collectionCards.ts',
+  'src/data/packageCards.ts',
   'src/data/hubCards.tsx',
   'src/pages/index.tsx',
 ];

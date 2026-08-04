@@ -10,7 +10,6 @@ on:
       - '.github/skills/**'
       - '.github/prompts/**'
       - 'extension/**'
-      - 'collections/**'
       - '.devcontainer/**'
       - '.github/workflows/**'
       - '!.github/workflows/*.lock.yml'
@@ -32,7 +31,6 @@ checkout:
     .github/workflows/
     docs/
     scripts/
-    collections/
     extension/
     .devcontainer/
 

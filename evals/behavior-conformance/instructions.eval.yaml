@@ -178,6 +178,26 @@ stimuli:
         config:
           pattern: "(?i)docusaurus|frontmatter|admonition|internal\\s+link|mermaid"
 
+  - name: instruction-dt-coach-telemetry-conformance
+    prompt: |
+      You are revising an observable production behavior in a Design Thinking
+      session artifact under `.copilot-tracking/dt/payments-service/`. Which
+      `.github/instructions/**/*.instructions.md` file applies (cite its path),
+      and what telemetry decisions does it require before implementation?
+    tags:
+      category: behavior-conformance
+      instruction: dt-coach-telemetry
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: applyTo-evidence
+        config:
+          pattern: "(?i)dt-coach-telemetry\\.instructions\\.md|\\.copilot-tracking/dt/"
+      - type: output-matches
+        name: scope-language
+        config:
+          pattern: "(?i)telemetry-foundations|trace|span|metric|UCUM|PII|cardinality"
+
   - name: instruction-experiment-designer-conformance
     prompt: |
       You are working on a Minimum Viable Experimentation session under

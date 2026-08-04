@@ -77,7 +77,7 @@ Organization follows a collection subdirectory convention:
 │   ├── markdown.instructions.md
 │   └── writing-style.instructions.md
 └── shared/
-    └── cross-collection.instructions.md
+    └── cross-package.instructions.md
 ```
 
 Every instruction file requires YAML frontmatter with at least a `description` field. The

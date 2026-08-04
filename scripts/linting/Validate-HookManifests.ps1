@@ -5,10 +5,10 @@
 
 <#
 .SYNOPSIS
-    Validates collection-scoped hook manifests under .github/hooks/.
+    Validates package-scoped hook manifests under .github/hooks/.
 
 .DESCRIPTION
-    Discovers hook manifests at .github/hooks/<collection>/<name>.json and
+    Discovers hook manifests at .github/hooks/<package>/<name>.json and
     validates them against the hook manifest contract: required fields,
     permitted top-level keys, lifecycle event names (Copilot CLI lowercase
     form only), and per-command properties. Declaring an event in both the
@@ -260,7 +260,7 @@ function Write-HookValidationReport {
 function Invoke-HookManifestValidation {
     <#
     .SYNOPSIS
-        Validates all collection-scoped hook manifests in the repository.
+        Validates all package-scoped hook manifests in the repository.
 
     .PARAMETER RepoRoot
         Absolute path to the repository root directory.
@@ -290,7 +290,7 @@ function Invoke-HookManifestValidation {
         return @{ Success = $true; ErrorCount = 0 }
     }
 
-    # Collection-scoped manifests live at .github/hooks/<collection>/<name>.json.
+    # Package-scoped manifests live at .github/hooks/<package>/<name>.json.
     $manifestFiles = @(Get-ChildItem -Path $hooksRoot -Filter '*.json' -File -Recurse |
             Where-Object { $_.Directory.Parent.FullName -eq (Get-Item $hooksRoot).FullName })
 

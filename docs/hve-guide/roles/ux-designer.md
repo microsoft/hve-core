@@ -2,7 +2,7 @@
 title: UX Designer
 description: Design Thinking coaching, user research, and prototyping workflows for UX Designers
 author: Microsoft
-ms.date: 2026-07-15
+ms.date: 2026-08-03
 ms.topic: tutorial
 keywords:
   - ux designer
@@ -14,12 +14,12 @@ estimated_reading_time: 10
 
 HVE Core provides addressable assets tailored to UX design workflows, with Design Thinking coaching, structured user research, and prototyping support powered by AI-assisted agents. Whether you are running scope conversations with stakeholders, synthesizing research data, or testing lo-fi prototypes, the tooling guides you through a proven nine-method sequence.
 
-## Recommended Collections
+## Capability Groups
 
 > [!TIP]
-> Install the [HVE Core extension](https://marketplace.visualstudio.com/items?itemName=ise-hve-essentials.hve-core) from the VS Code Marketplace for the flagship RPI workflow and core artifacts with zero configuration.
+> Install the [HVE Core extension](https://marketplace.visualstudio.com/items?itemName=ise-hve-essentials.hve-core) from the VS Code Marketplace for the complete active component set with zero configuration.
 >
-> Your primary collections are `design-thinking` (full Design Thinking coaching, method guides, learning tutor, and space transition support) and `project-planning` (BRD creation, stakeholder alignment support, and delivery-planning artifacts that operationalize validated UX outcomes). For clone-based setups, see the [Installation Guide](../../getting-started/install.md).
+> For selective clone adoption, choose Design Thinking coaching, method guidance, learning, business requirements, and delivery-planning components that match your UX practice. Capability groups help you discover related components; they are not independently installable products. See the [Installation Guide](../../getting-started/install.md).
 
 ## What HVE Core Does for You
 

@@ -192,7 +192,7 @@ start_time = datetime.combine(day, datetime.min.time()) + timedelta(hours=hour, 
 1. Use `edit_notebook_file` to create structured cells as outlined above
 2. Mandatory Cell Type Specification: When creating code cells, always specify `language="python"` in the `edit_notebook_file` tool call to ensure proper cell typing
 3. Mandatory Autonomous Execution: Use `run_notebook_cell` immediately after creating each cell - Never ask user to run code manually
-4. No Code Blocks in Chat: Do not provide code in markdown format or chat messages - always create executable notebook cells through tools only. 
+4. No Code Blocks in Chat: Do not provide code in markdown format or chat messages - always create executable notebook cells through tools only.
 5. Never provide code blocks for the user to copy/paste - always create and execute cells directly in the notebook
 6. No Terminal Commands in Chat: Do not display terminal commands in chat - always execute them directly using `run_in_terminal` tool
 7. Work Through Tools Silently: Create and execute all code through notebook tools without displaying code content in chat

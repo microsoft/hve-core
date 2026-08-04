@@ -118,11 +118,13 @@ Priority rules:
 
 Skip this section when no GHCP artifact files (`.instructions.md`, `.prompt.md`, `.agent.md`, `SKILL.md`) are included in the changes.
 
-After detecting GHCP files from change type detection, look up maturity levels from collection manifest item metadata:
+After detecting GHCP files from change type detection, look up maturity through the marketplace source policy index:
 
-1. For each file matching `.instructions.md`, `.prompt.md`, `.agent.md`, or `SKILL.md` patterns, find matching entries in `collections/*.collection.yml`.
-2. Read each item's optional `maturity` field; use `stable` when omitted.
-3. When the same file appears in multiple collections, use the highest-risk effective value in this order: `deprecated`, `experimental`, `preview`, `stable`.
+1. Import `scripts/lib/Modules/MarketplaceHelpers.psm1` and load `.github/plugin/marketplace.json` with `Get-MarketplaceCatalog`.
+2. Build `Get-MarketplaceSourcePolicyIndex`, which includes active membership and `componentMaturity` tombstones.
+3. Normalize `SKILL.md` paths to their skill directory before lookup; use the canonical repository path for every other artifact.
+4. Call `Get-MarketplaceSourceMaturity` for each path. Omit undeclared paths from package maturity claims.
+5. When one source appears in multiple packages, the helper returns the most restrictive value in this order: `removed`, `deprecated`, `experimental`, `preview`, `stable`.
 
 Categorize files by maturity:
 
@@ -132,6 +134,7 @@ Categorize files by maturity:
 | preview        | 🔶 Medium   | Pre-release feature       | Flag in dedicated section       |
 | experimental   | ⚠️ High     | May have breaking changes | Add warning banner              |
 | deprecated     | 🚫 Critical | Scheduled for removal     | Add deprecation notice          |
+| removed        | 🚫 Critical | Removed tombstone         | Add removal notice              |
 
 ## GHCP Maturity Output
 

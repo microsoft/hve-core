@@ -62,7 +62,7 @@
 
 .NOTES
     Runs via: npm run lint:asset-docs
-    Dependencies: DocsHelpers, CollectionHelpers, and CIHelpers modules.
+    Dependencies: DocsHelpers, and CIHelpers modules.
 #>
 
 [CmdletBinding()]
@@ -94,12 +94,11 @@ $ErrorActionPreference = 'Stop'
 
 # Import the modules this script calls directly, highest-level first and
 # lowest-level last, so each -Force re-import re-scopes shared dependencies in
-# dependency order and every command used here (DocsHelpers, CollectionHelpers,
-# CIHelpers) resolves in this script's scope. DocsHelpers exposes the shared
+# dependency order and every command used here resolves in this script's scope.
+# DocsHelpers exposes the shared
 # render helpers (New-AssetPageModel, New-AssetMetadataBlock, New-AssetOverviewBody)
 # so the sync check renders exactly what the generator produces.
 Import-Module (Join-Path -Path $PSScriptRoot -ChildPath '../docs/Modules/DocsHelpers.psm1') -Force
-Import-Module (Join-Path -Path $PSScriptRoot -ChildPath '../collections/Modules/CollectionHelpers.psm1') -Force
 Import-Module (Join-Path -Path $PSScriptRoot -ChildPath 'Modules/LintingHelpers.psm1') -Force
 Import-Module (Join-Path -Path $PSScriptRoot -ChildPath '../lib/Modules/CIHelpers.psm1') -Force
 

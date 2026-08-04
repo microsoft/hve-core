@@ -31,9 +31,9 @@ $script:ArtifactPatterns = @(
 )
 
 # Repo-root-only artifact patterns: files placed directly under `.github/<kind>/`
-# (skills: `.github/skills/<name>/SKILL.md`) without a collection subdirectory.
+# (skills: `.github/skills/<name>/SKILL.md`) without a package subdirectory.
 # Per `.github/copilot-instructions.md`, these are repo-specific and excluded from
-# collection manifests, packaging, and eval coverage enforcement.
+# marketplace packages and eval coverage enforcement.
 $script:RepoRootArtifactPatterns = @{
     agent       = '^\.github/agents/[^/]+\.agent\.md$'
     prompt      = '^\.github/prompts/[^/]+\.prompt\.md$'
@@ -215,10 +215,10 @@ function Test-RepoRootArtifact {
     Determines whether an artifact path is a repo-root (repo-specific) artifact.
 
     .DESCRIPTION
-    Repo-root artifacts live directly under `.github/<kind>/` without a collection
+    Repo-root artifacts live directly under `.github/<kind>/` without a package
     subdirectory (skills: `.github/skills/<name>/SKILL.md`). Per
     `.github/copilot-instructions.md`, these are repo-specific and excluded from
-    collection manifests, packaging, and eval coverage enforcement.
+    marketplace packages and eval coverage enforcement.
 
     .PARAMETER Kind
     Artifact kind: agent, prompt, instruction, or skill.

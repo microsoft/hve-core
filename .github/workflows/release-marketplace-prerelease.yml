@@ -30,28 +30,45 @@ jobs:
     name: Validate Pre-Release Version
     if: ${{ github.event_name == 'workflow_dispatch' || (github.event_name == 'release' && github.event.release.prerelease == true) }}
     runs-on: ubuntu-latest
-    permissions: {}
+    permissions:
+      contents: read
     outputs:
       version: ${{ steps.validate.outputs.version }}
+      tag: ${{ steps.validate.outputs.tag }}
     steps:
       - name: Resolve version from event
         id: resolve
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          EVENT_TAG: ${{ github.event.release.tag_name }}
+          MANUAL_VERSION: ${{ inputs.version }}
+          REPOSITORY: ${{ github.repository }}
         run: |
-          if [[ "${{ github.event_name }}" == "release" ]]; then
-            TAG="${{ github.event.release.tag_name }}"
+          set -euo pipefail
+          if [[ "$EVENT_NAME" == "release" ]]; then
+            TAG="$EVENT_TAG"
+            if ! [[ "$TAG" =~ ^hve-core-v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+              echo "::error::Release tag has an invalid pre-release version form"
+              exit 1
+            fi
             VERSION="${TAG#hve-core-v}"
-            VERSION="${VERSION#v}"
-            echo "version=$VERSION" >> "$GITHUB_OUTPUT"
             echo "Resolved version from release tag: $VERSION"
           else
-            echo "version=${{ inputs.version }}" >> "$GITHUB_OUTPUT"
+            VERSION="${MANUAL_VERSION#hve-core-v}"
+            VERSION="${VERSION#v}"
+            if [ -n "$VERSION" ] && ! [[ "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+              echo "::error::Manual version has an invalid MAJOR.MINOR.PATCH form"
+              exit 1
+            fi
           fi
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
 
       - name: Validate pre-release version
         id: validate
         env:
           GH_TOKEN: ${{ github.token }}
           INPUT_VERSION: ${{ steps.resolve.outputs.version }}
+          REPOSITORY: ${{ github.repository }}
         run: |
           VERSION="$INPUT_VERSION"
           # Strip leading 'v' or 'hve-core-v' prefix if present
@@ -62,7 +79,7 @@ jobs:
           if [ -z "$VERSION" ]; then
             TAG=$(gh release list --exclude-drafts --limit 10 --json tagName,isPrerelease \
               -q '[.[] | select(.isPrerelease)] | .[0].tagName // empty' \
-              -R "${{ github.repository }}")
+              -R "$REPOSITORY")
             if [ -n "$TAG" ]; then
               VERSION="${TAG#hve-core-v}"
               echo "📦 Auto-detected pre-release version: $VERSION"
@@ -88,12 +105,14 @@ jobs:
 
           echo "✅ Valid pre-release version: $VERSION"
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "tag=hve-core-v$VERSION" >> "$GITHUB_OUTPUT"
 
   package:
     name: Package Pre-Release Extensions
     needs: validate-version
     uses: ./.github/workflows/extension-package.yml
     with:
+      source-ref: ${{ needs.validate-version.outputs.tag }}
       version: ${{ needs.validate-version.outputs.version }}
       channel: PreRelease
     permissions:
@@ -105,7 +124,7 @@ jobs:
     if: ${{ !inputs.dry-run }}
     uses: ./.github/workflows/extension-marketplace-publish.yml
     with:
-      collections-matrix: ${{ needs.package.outputs.collections-matrix }}
+      packages-matrix: ${{ needs.package.outputs.packages-matrix }}
       pre-release: true
     permissions:
       contents: read

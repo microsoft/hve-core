@@ -1,1 +1,0 @@
-../../../../.github/instructions/shared/untrusted-content-boundary.instructions.md

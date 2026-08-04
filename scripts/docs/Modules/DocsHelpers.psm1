@@ -12,7 +12,7 @@
 #Requires -Version 7.4
 
 Import-Module PowerShell-Yaml -ErrorAction Stop
-Import-Module (Join-Path $PSScriptRoot '../../collections/Modules/CollectionHelpers.psm1') -Force
+Import-Module (Join-Path $PSScriptRoot '../../lib/Modules/ArtifactHelpers.psm1') -Force
 
 # ---------------------------------------------------------------------------
 # Constants
@@ -262,7 +262,7 @@ function Get-AssetDocsPath {
         Maps a repo-relative .github/<kind>/... asset path to its deterministic
         docs/reference/<kind>/... documentation page path. The intermediate
         directory structure is preserved so nested assets such as agent subagents
-        (.github/agents/<collection>/subagents/<name>.agent.md) and nested
+        (.github/agents/<package>/subagents/<name>.agent.md) and nested
         instructions retain their hierarchy under docs/reference/. File-based kinds
         (agent, prompt, instruction) have their suffix replaced with .md; skills are
         directory-based, so .md is appended to the skill directory name.
@@ -832,7 +832,7 @@ function New-AssetPageModel {
     }
 
     $frontmatter = Get-AssetFrontmatter -FilePath $sourceFile
-    $key = Get-CollectionArtifactKey -Kind $kind -Path $relPath
+    $key = Get-ArtifactKey -Kind $kind -Path $relPath
     $description = Get-ArtifactDescription -FilePath $sourceFile
 
     $title = if ($frontmatter.ContainsKey('name') -and $frontmatter['name']) {

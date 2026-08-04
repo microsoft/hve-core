@@ -29,7 +29,7 @@ Skills are referenced using the `copilot-skill:` URI scheme. When Copilot encoun
 
 ## Directory Structure
 
-Skills live under `.github/skills/{collection-id}/{skill-name}/`:
+Skills live under `.github/skills/{package-id}/{skill-name}/`:
 
 ```text
 .github/skills/

@@ -23,7 +23,7 @@ sync, while contributors own the usage guidance that requires human judgment.
 
 ## Which assets require a page
 
-The generator discovers collection-scoped assets under `.github/` and creates one
+The generator discovers package-scoped assets under `.github/` and creates one
 reference page for each asset. Root-level repo-specific artifacts and files under
 deprecated directories are excluded.
 
@@ -116,10 +116,10 @@ Invoke `hve-builder` from Copilot Chat with the target path, the paired referenc
 page, and your requirements. A focused request can use this shape:
 
 ```text
-Use hve-builder in improve mode on .github/agents/<collection>/<name>.agent.md and
+Use hve-builder in improve mode on .github/agents/<package>/<name>.agent.md and
 draft one representative usage example. Include the user request, invocation,
 expected output, and success indicators so I can add the verified example to the
-authored Example usage section of docs/reference/agents/<collection>/<name>.md.
+authored Example usage section of docs/reference/agents/<package>/<name>.md.
 ```
 
 Copy only the reviewed example into the authored tail. Do not ask HVE Builder or

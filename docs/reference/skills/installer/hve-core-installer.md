@@ -1,8 +1,8 @@
 ---
 title: hve-core-installer
-description: "Decision-driven HVE-Core installer with multiple clone-based and extension install methods, environment detection, and agent customization"
+description: "Decision-driven HVE-Core installer with multiple clone-based and extension install methods, environment detection, and selective component installation"
 sidebar_position: 1
-ms.date: 2026-07-27
+ms.date: 2026-08-02
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->
@@ -17,7 +17,7 @@ ms.date: 2026-07-27
 ## What it does
 
 <!-- BEGIN AUTO-GENERATED: overview -->
-Decision-driven HVE-Core installer with multiple clone-based and extension install methods, environment detection, and agent customization
+Decision-driven HVE-Core installer with multiple clone-based and extension install methods, environment detection, and selective component installation
 <!-- END AUTO-GENERATED: overview -->
 
 ## When to use it

@@ -1,1 +1,0 @@
-../../../../../.github/instructions/experimental/mural/mural-log-hygiene.instructions.md

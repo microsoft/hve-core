@@ -60,8 +60,8 @@ Use a subagent when the host needs a specialized review dimension or a tier-spec
 * Routing `description`: write it so a parent can decide when to delegate, in the shape "Use when ..." naming the specialization. Supplied metadata or `rpi-research` uses the description to identify a relevant subagent, so the description is the discovery surface.
 * Stable `name`: hve-builder dispatches by the `name` from frontmatter, not by file path or glob. Give it a distinct, namespaced name to avoid collisions across installed libraries.
 * Structured return: return a bounded, structured summary the orchestrator can act on. Selecting the extension's tool set stays with its author under the Tool-configuration boundary in [requirements-catalog.md](requirements-catalog.md).
-* Model fit: `model:` is optional. An omitted extension subagent model inherits the invoking parent's model; an omitted directly invoked extension agent or prompt model uses the current session selection. When the extension needs a stable profile, select it by responsibility and declare its exact ordered list. Use Medium (`GPT-5.6 Terra`, `Claude Sonnet 5`, `MAI-Code-1-Flash`) for semantic authoring or calibrated review, Low (`GPT-5.6 Luna`, `MAI-Code-1-Flash`, `Claude Haiku 4.5`) for bounded mechanical work, and High (`GPT-5.6 Sol`, `Claude Opus 4.8`, `GPT-5.5`) only for responsibilities that require the deepest reasoning profile. Each declared name carries the `(copilot)` suffix in frontmatter.
-* Host registration: confirm the host registers the subagent through a fixed parent `agents:` array, an intentionally unrestricted parent that omits `agents:`, or the collection manifest so approved lifecycle dispatch can reach it.
+* Model fit: `model:` is optional. An omitted extension subagent model inherits the invoking parent's model; an omitted directly invoked extension agent or prompt model uses the current session selection. When the extension needs a stable profile, select it by responsibility and declare its exact ordered list. Use Medium (`GPT-5.6 Terra`, `Claude Sonnet 5`, `MAI-Code-1-Flash`) for semantic authoring or calibrated review, Low (`GPT-5.6 Luna`, `MAI-Code-1-Flash`, `Claude Haiku 4.5`) for bounded mechanical work, and High (`Claude Opus 5`, `GPT-5.6 Sol`, `GPT-5.5`) only for responsibilities that require the deepest reasoning profile. Each declared name carries the `(copilot)` suffix in frontmatter.
+* Host registration: confirm the host registers the subagent through a fixed parent `agents:` array, an intentionally unrestricted parent that omits `agents:`, or standard `agents` membership in its marketplace package entry so approved lifecycle dispatch can reach it.
 
 Example frontmatter:
 
@@ -77,7 +77,7 @@ model:
 ---
 ```
 
-When you author a standalone subagent before its parent or manifest exists, do not invent a parent to register it. Record the deferred registration explicitly: the exact pending target (a fixed parent `agents:` array, a parent whose omission intentionally grants unrestricted access, or the collection manifest), the owner responsible for wiring it, and the validation command that confirms it (for example `npm run plugin:validate` for collection manifests). Leave subagent discoverability marked incomplete until that registration is done, because the lifecycle cannot dispatch an unregistered subagent by name.
+When you author a standalone subagent before its parent or package entry exists, do not invent a parent to register it. Record the deferred registration explicitly: the exact pending target (a fixed parent `agents:` array, a parent whose omission intentionally grants unrestricted access, or standard `agents` membership in `.github/plugin/marketplace.json`), the owner responsible for wiring it, and the validation command that confirms it (for example `npm run plugin:validate` for marketplace packages). Leave subagent discoverability marked incomplete until that registration is done, because the lifecycle cannot dispatch an unregistered subagent by name.
 
 ## Worked example
 
@@ -127,7 +127,7 @@ user-invocable: false
 
 The `model:` field is omitted so the specialist inherits the invoking parent's model, which keeps a research lane consistent with the cycle that dispatched it. Declare a profile only when the specialist's responsibility genuinely differs from its parent's.
 
-Register the specialist the same way as any other extension subagent: through a fixed parent `agents:` array, an intentionally unrestricted parent that omits `agents:`, or the host's collection manifest. Until that registration exists, the lifecycle cannot dispatch it by name, so record the deferred registration explicitly using the rule in Authoring a discoverable extension subagent.
+Register the specialist the same way as any other extension subagent: through a fixed parent `agents:` array, an intentionally unrestricted parent that omits `agents:`, or standard `agents` membership in the host's marketplace package entry. Until that registration exists, the lifecycle cannot dispatch it by name, so record the deferred registration explicitly using the rule in Authoring a discoverable extension subagent.
 
 ## Safety boundary
 

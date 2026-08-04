@@ -3,7 +3,7 @@ title: Business Program Manager Guide
 description: HVE Core support for business program managers driving stakeholder alignment, business outcomes, and program coordination
 sidebar_position: 6
 author: Microsoft
-ms.date: 2026-07-15
+ms.date: 2026-08-03
 ms.topic: how-to
 keywords:
   - BPM
@@ -18,12 +18,12 @@ estimated_reading_time: 10
 
 This guide is for you if you define business outcomes, manage stakeholder alignment, coordinate cross-team programs, or bridge business strategy to technical delivery. Business program managers share many tools with TPMs but focus on business-level requirements, stakeholder communication, and outcome tracking rather than technical implementation detail.
 
-## Recommended Collections
+## Capability Groups
 
 > [!TIP]
-> Install the [HVE Core extension](https://marketplace.visualstudio.com/items?itemName=ise-hve-essentials.hve-core) from the VS Code Marketplace for the flagship RPI workflow and core artifacts with zero configuration.
+> Install the [HVE Core extension](https://marketplace.visualstudio.com/items?itemName=ise-hve-essentials.hve-core) from the VS Code Marketplace for the complete active component set with zero configuration.
 >
-> Your primary collection is `project-planning` (BRD creation, product management guidance, and agile coaching for business requirement gathering and stakeholder alignment). For clone-based setups, see the [Installation Guide](../../getting-started/install.md).
+> For selective clone adoption, choose the business requirements, product advisory, agile coaching, and research components that match your program. Capability groups help you discover related components; they are not independently installable products. See the [Installation Guide](../../getting-started/install.md).
 
 ## What HVE Core Does for You
 
@@ -186,7 +186,7 @@ Prompts complement the agents for cross-cutting workflows:
 ## Next Steps
 
 > [!TIP]
-> Explore project planning tools: [Project Planning Collection](https://github.com/microsoft/hve-core/blob/main/collections/project-planning.collection.md)
+> Browse the complete HVE Core inventory: [HVE Core](../../plugins/hve-core)
 > Understand the TPM workflow for technical handoff: [TPM Guide](tpm.md)
 > See how program management fits the project lifecycle: [AI-Assisted Project Lifecycle](../lifecycle/)
 
