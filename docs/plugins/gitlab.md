@@ -1,13 +1,17 @@
 ---
-title: GitLab Integration
+title: GitLab
 description: GitLab merge request and pipeline workflows through a Python skill
 sidebar_position: 7
 author: Microsoft
-ms.date: 2026-07-31
+ms.date: 2026-08-03
 ms.topic: reference
 ---
 
-Use GitLab merge request and pipeline workflows from VS Code through a focused Python skill for inspecting merge requests, posting notes, triggering pipelines, and reading job logs.
+Choose this package for GitLab teams that manage merge requests and pipelines.
+
+Its focused membership provides a Python skill for GitLab workflows and shared repository-location guidance.
+
+Lifecycle labels are disclosure metadata. In the channel model, Stable and PreRelease have equal active content, including components labeled stable, preview, and experimental; publication cadence and source ownership can differ.
 
 ## Included Artifacts
 
@@ -15,15 +19,15 @@ Use GitLab merge request and pipeline workflows from VS Code through a focused P
 
 ### Instructions
 
-| Name                         | Description                                                                                                                                                                                                                                                 |
-|------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| **shared/hve-core-location** | Important: hve-core is the repository containing this instruction file; Guidance: if a referenced prompt, instructions, agent, or script is missing in the current directory, fall back to this hve-core location by walking up this file's directory tree. |
+| Name                         | Maturity | Description                                                                                                                                                                                                                                                 |
+|------------------------------|----------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| **shared/hve-core-location** | stable   | Important: hve-core is the repository containing this instruction file; Guidance: if a referenced prompt, instructions, agent, or script is missing in the current directory, fall back to this hve-core location by walking up this file's directory tree. |
 
 ### Skills
 
-| Name       | Description                                                  |
-|------------|--------------------------------------------------------------|
-| **gitlab** | Manage GitLab merge requests and pipelines with a Python CLI |
+| Name       | Maturity | Description                                                  |
+|------------|----------|--------------------------------------------------------------|
+| **gitlab** | stable   | Manage GitLab merge requests and pipelines with a Python CLI |
 
 <!-- END AUTO-GENERATED ARTIFACTS -->
 

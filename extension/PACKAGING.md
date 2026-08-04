@@ -2,7 +2,7 @@
 title: Extension Packaging Guide
 description: Developer guide for packaging and publishing the HVE Core VS Code extension
 author: Microsoft
-ms.date: 2026-08-01
+ms.date: 2026-08-03
 ms.topic: reference
 ---
 
@@ -14,8 +14,7 @@ This folder contains the VS Code extension configuration for HVE Core.
 extension/
 ├── .github/              # Tracked package sources staged temporarily
 ├── docs/templates/       # Explicit shared resources staged temporarily
-├── package.json          # Generated extension manifest
-├── package.<id>.json     # Generated manifests for feature packages
+├── package.json          # Generated hve-core extension manifest
 ├── templates/            # Source templates for package generation
 ├── .vscodeignore         # Controls what gets packaged into the .vsix
 ├── README.md             # Extension marketplace description
@@ -58,23 +57,29 @@ Install-Module -Name PowerShell-Yaml -RequiredVersion 0.4.7 -Scope CurrentUser
 
 The extension is automatically packaged and published through GitHub Actions:
 
-| Workflow                                           | Trigger           | Purpose                                     |
-|----------------------------------------------------|-------------------|---------------------------------------------|
-| `.github/workflows/extension-package.yml`          | Reusable workflow | Packages extension with flexible versioning |
-| `.github/workflows/release-marketplace-stable.yml` | Release/manual    | Publishes to VS Code Marketplace            |
-| `.github/workflows/release-stable.yml`             | Push to main      | Includes extension packaging in CI          |
+| Workflow                                           | Trigger                          | Purpose                                                    |
+|----------------------------------------------------|----------------------------------|------------------------------------------------------------|
+| `.github/workflows/extension-package.yml`          | Reusable workflow                | Packages a source-explicit extension                       |
+| `.github/workflows/release-prerelease.yml`         | Manual with an explicit main SHA | Builds and publishes the immutable PreRelease              |
+| `.github/workflows/release-stable.yml`             | Push to main                     | Validates `main` and opens the reviewed Stable promotion   |
+| `.github/workflows/release-stable-publish.yml`     | Merged PR to `release/stable`    | Runs release-please and publishes verified Stable evidence |
+| `.github/workflows/release-marketplace-stable.yml` | Published Stable release         | Publishes the Stable VSIX to VS Code Marketplace           |
+
+`release-stable.yml` opens the reviewed `main` to `release/stable` promotion after validation. After the promotion merges, `release-stable-publish.yml` runs release-please on `release/stable`. Release-please owns the managed Stable release PR and draft Stable release.
+
+When that managed PR merges, the workflow packages and attests the VSIX and plugin, publishes the immutable `plugins-v<version>` snapshot, finalizes the draft, and opens the reviewed `release/stable` to `main` metadata synchronization PR.
 
 ## Packaging Pipeline Overview
 
-Extension packaging is a two-step process: **Prepare** resolves one marketplace
-package into VS Code contributions, then **Package** stages its tracked files,
+Extension packaging is a two-step process: **Prepare** resolves the `hve-core`
+recipe into VS Code contributions, then **Package** stages its tracked files,
 runs the pinned `vsce`, and cleans up.
 
 ```mermaid
 flowchart LR
     subgraph Prepare["Step 1 · Prepare-Extension.ps1"]
-        P1[Load marketplace.json] --> P2[Select Package ID]
-        P2 --> P3[Filter by Channel Maturity]
+        P1[Load marketplace.json] --> P2[Select hve-core]
+        P2 --> P3[Apply Lifecycle Policy]
         P3 --> P4[Resolve Agent Handoff Closure]
         P4 --> P5[Write package.json]
     end
@@ -90,14 +95,14 @@ flowchart LR
 
 ### Package Projection and Resolution
 
-The prepare step reads `.github/plugin/marketplace.json`, selects a package ID,
-maps its standard component paths to canonical `.github` sources, filters those
-components by channel maturity, and resolves transitive agent handoffs through
+The prepare step reads `.github/plugin/marketplace.json`, selects `hve-core`,
+maps its standard component paths to canonical `.github` sources, applies
+lifecycle policy, and resolves transitive agent handoffs through
 the shared marketplace projection.
 
 ```mermaid
 flowchart TB
-    CAT["Marketplace Catalog<br/>.github/plugin/marketplace.json"] --> PKG[Select Package ID]
+    CAT["Marketplace Catalog<br/>.github/plugin/marketplace.json"] --> PKG[Select hve-core]
     CH[Channel: Stable / PreRelease] --> PKG
     PKG --> RECIPE[Resolve Standard Membership]
     RECIPE --> AG[Agents]
@@ -118,7 +123,7 @@ flowchart TB
 
 #### Step 1: Prepare the Extension
 
-First, generate extension manifests from the marketplace packages:
+First, generate the extension manifest from the marketplace recipe:
 
 ```bash
 # Discover components and update package.json (Stable channel)
@@ -127,7 +132,7 @@ pwsh ./scripts/extension/Prepare-Extension.ps1
 # Or use npm script
 npm run extension:prepare
 
-# For PreRelease channel (includes preview and experimental artifacts)
+# For PreRelease channel
 pwsh ./scripts/extension/Prepare-Extension.ps1 -Channel PreRelease
 
 # Or use npm script
@@ -136,12 +141,12 @@ npm run extension:prepare:prerelease
 
 The preparation script automatically:
 
-* Reads package identity, display name, membership, maturity, and documentation
+* Reads identity, display name, membership, lifecycle maturity, and documentation
     from `.github/plugin/marketplace.json`
 * Resolves canonical source paths and transitive agent handoffs through the
     shared marketplace helper
-* Generates one extension manifest per eligible package
-* Writes the selected package's VS Code contribution paths
+* Generates the one HVE Core extension manifest
+* Writes HVE Core's VS Code contribution paths
 * Uses the existing template version without modifying its source
 
 When invoked via the npm scripts (`extension:prepare` and `extension:prepare:prerelease`), a postprocess step also runs after preparation, auto-fixing markdown formatting in `extension/**/*.md`:
@@ -211,9 +216,11 @@ flowchart TB
 
 ## Publishing the Extension
 
-**Important:** Versions are managed by `release-please` via
-`extension/templates/package.template.json`. `Prepare-Extension.ps1` generates
-all package manifests with the correct version before packaging.
+**Important:** Stable versions are managed by release-please on `release/stable`
+through `extension/templates/package.template.json`. `Prepare-Extension.ps1`
+generates the extension manifest with the released version before packaging.
+PreRelease supplies an ephemeral odd-minor version without changing tracked
+version files.
 
 ### Setup Personal Access Token (one-time)
 
@@ -223,12 +230,11 @@ Set your Azure DevOps PAT as an environment variable:
 export VSCE_PAT=your-token-here
 ```
 
-To get a PAT:
+To get a PAT from your Azure DevOps organization:
 
-1. Go to <https://dev.azure.com>
-2. User settings → Personal access tokens → New Token
-3. Set scope to **Marketplace (Manage)**
-4. Copy the token
+1. Open **User settings → Personal access tokens → New Token**
+2. Set scope to **Marketplace (Manage)**
+3. Copy the token
 
 ### Publish command
 
@@ -244,7 +250,7 @@ vsce publish --packagePath "$VSIX_FILE"
 ## What Gets Included
 
 The generated manifest and tracked staging allowlist control what gets packaged.
-Depending on the selected package, the archive can include:
+The archive can include:
 
 * Declared `.github/agents/**` agent definitions
 * Declared `.github/prompts/**` prompt templates
@@ -268,7 +274,7 @@ code --install-extension hve-core-*.vsix
 
 ### How Versions Are Managed
 
-The version source of truth is `extension/templates/package.template.json`. The `release-please` automation updates this file's `version` field on releases. `Prepare-Extension.ps1` generates all `extension/package.json` and `extension/package.*.json` files from the template before performing artifact discovery.
+The committed extension version source is `extension/templates/package.template.json`. Release-please updates this file in its managed Stable release PR on `release/stable`, and the release postprocessor synchronizes the other committed version fields and `plugins-v<version>` locator on the same branch. PreRelease supplies an ephemeral odd-minor version at package time. `Prepare-Extension.ps1` generates `extension/package.json` from the template before artifact discovery.
 
 Generated package files are ephemeral build artifacts (gitignored). They are created and consumed by `Prepare-Extension.ps1` and `Package-Extension.ps1` at build time.
 
@@ -298,10 +304,10 @@ The extension supports dual-channel publishing to VS Code Marketplace with separ
 
 ### EVEN/ODD Versioning Strategy
 
-| Minor Version     | Channel     | Example      | Agent Maturity Included             |
-|-------------------|-------------|--------------|-------------------------------------|
-| EVEN (0, 2, 4...) | Stable      | 1.0.0, 1.2.0 | `stable` only                       |
-| ODD (1, 3, 5...)  | Pre-Release | 1.1.0, 1.3.0 | `stable`, `preview`, `experimental` |
+| Minor Version     | Channel    | Example      | Active Lifecycle Labels             |
+|-------------------|------------|--------------|-------------------------------------|
+| EVEN (0, 2, 4...) | Stable     | 1.0.0, 1.2.0 | `stable`, `preview`, `experimental` |
+| ODD (1, 3, 5...)  | PreRelease | 1.1.0, 1.3.0 | `stable`, `preview`, `experimental` |
 
 Users can switch between channels in VS Code via the "Switch to Pre-Release Version" button on the extension page.
 
@@ -310,12 +316,12 @@ Users can switch between channels in VS Code via the "Switch to Pre-Release Vers
 Package for the pre-release channel with the `-PreRelease` switch:
 
 ```bash
-# Prepare with PreRelease channel filtering
+# Prepare the PreRelease channel
 pwsh ./scripts/extension/Prepare-Extension.ps1 -Channel PreRelease
 # Or use npm script
 npm run extension:prepare:prerelease
 
-# Package for pre-release channel (includes experimental agents)
+# Package for the PreRelease channel
 pwsh ./scripts/extension/Package-Extension.ps1 -Version "1.1.0" -PreRelease
 # Or use npm script for default version
 npm run extension:package:prerelease
@@ -327,27 +333,29 @@ The `-PreRelease` switch adds `--pre-release` to the vsce command, marking the p
 
 Use the manual workflow for publishing pre-releases:
 
-1. Go to **Actions** > **Publish Pre-Release Extension**
-2. Enter an ODD minor version (e.g., `1.1.0`, `1.3.0`)
-3. Optionally enable dry-run to test packaging without publishing
-4. Run the workflow
+1. Go to **Actions** > **Pre-Release Pipeline**
+2. Enter the full 40-character SHA of the approved commit on `main`
+3. Run the workflow
 
-The workflow validates the version is ODD before proceeding.
+The workflow verifies that the SHA belongs to `main`, computes an ephemeral odd-minor version, stages a resumable draft, packages the VSIX and plugin from that source, publishes the matching immutable plugin snapshot, and finalizes the PreRelease. The published release then triggers the PreRelease marketplace workflow.
 
-### Agent Maturity Filtering
+### Lifecycle Disclosure
 
-When packaging, artifacts are filtered by their `maturity` field in `.github/plugin/marketplace.json` item entries:
+Stable and PreRelease package the same active component set. Lifecycle labels disclose support posture and are not channel filters:
 
-| Channel    | Included Maturity Levels            |
-|------------|-------------------------------------|
-| Stable     | `stable`                            |
-| PreRelease | `stable`, `preview`, `experimental` |
+| Lifecycle Label | Stable | PreRelease |
+|-----------------|--------|------------|
+| `stable`        | Yes    | Yes        |
+| `preview`       | Yes    | Yes        |
+| `experimental`  | Yes    | Yes        |
+| `deprecated`    | No     | No         |
+| `removed`       | No     | No         |
 
-See [Agent Maturity Levels](../docs/contributing/ai-artifacts-common.md#maturity-field-requirements) for contributor guidance on setting maturity levels.
+See [Marketplace Packages](../docs/contributing/ai-artifacts-common.md#marketplace-packages) for contributor guidance.
 
-## Marketplace Package Builds
+## Marketplace Build
 
-`.github/plugin/marketplace.json` defines all extension package IDs, display names, membership, maturity, documentation, and aggregate status. `Get-MarketplacePackageMatrix.ps1` selects channel-eligible IDs.
+`.github/plugin/marketplace.json` defines the `hve-core` identity, display name, membership, lifecycle labels, and documentation. `Get-MarketplacePackageMatrix.ps1` emits exactly that identity for either channel.
 
 Prepare and package one ID directly:
 
@@ -361,7 +369,7 @@ only git-tracked contribution paths plus explicit shared resources and invokes
 the repository-pinned `vsce`. No retired manifest reader, full-tree copy, or
 installer fallback is used.
 
-To add a package, update the marketplace entry and `docs/plugins/<id>.md`, then run marketplace validation and both extension preparation channels.
+To add a distributable component, update the `hve-core` recipe and [HVE Core](../docs/plugins/hve-core.md), then run marketplace validation and both extension preparation channels.
 
 ## Notes
 

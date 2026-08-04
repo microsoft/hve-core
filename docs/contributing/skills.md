@@ -3,7 +3,7 @@ title: Contributing Skills to HVE Core
 description: Requirements and standards for contributing skill packages to hve-core
 sidebar_position: 6
 author: Microsoft
-ms.date: 2026-08-01
+ms.date: 2026-08-02
 ms.topic: how-to
 keywords:
   - skills
@@ -224,11 +224,11 @@ metadata:
 
 This example demonstrates a skill incorporating third-party content with provenance tracking. Skills referencing external frameworks should include `license` to identify the content license and `metadata` to track source attribution.
 
-## Marketplace Package Registration
+## Marketplace Recipe Registration
 
-Distributable skills must be declared under the `skills` field of one or more entries in `.github/plugin/marketplace.json`. Declare the package-relative skill directory, not its `SKILL.md` file, and keep the directory name equal to the skill `name`.
+Distributable skills must be declared under the `skills` field of the `hve-core` entry in `.github/plugin/marketplace.json`. Declare the recipe-relative skill directory, not its `SKILL.md` file, and keep the directory name equal to the skill `name`.
 
-Add non-stable policy only through `x-hve.componentMaturity`, update the matching page under `docs/plugins/`, then run `npm run lint:marketplace`, `npm run validate:skills`, and `npm run plugin:generate`.
+Add non-stable lifecycle disclosure only through `x-hve.componentMaturity`, update `docs/plugins/hve-core.md`, then run `npm run lint:marketplace`, `npm run validate:skills`, and `npm run plugin:generate`.
 
 ## SKILL.md Content Structure
 

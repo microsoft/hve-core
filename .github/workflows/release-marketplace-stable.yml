@@ -119,6 +119,7 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
+          ref: ${{ needs.normalize-version.outputs.tag }}
           persist-credentials: false
 
       - name: Setup PowerShell modules
@@ -130,7 +131,15 @@ jobs:
         env:
           INPUT_VERSION: ${{ needs.normalize-version.outputs.version }}
         run: |
+          set -euo pipefail
           version="$INPUT_VERSION"
+          # The released tag is the discovery source, so its catalog version and
+          # immutable plugin locator are what the marketplace publish resolves.
+          catalog_version=$(jq -r '.metadata.version' .github/plugin/marketplace.json)
+          if [ "$catalog_version" != "$version" ]; then
+            echo "::error::Catalog version $catalog_version at the release ref does not match $version"
+            exit 1
+          fi
           echo "version=$version" >> "$GITHUB_OUTPUT"
 
       - name: Discover marketplace packages

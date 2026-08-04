@@ -249,9 +249,6 @@ function Test-MarketplaceRepositoryContract {
     }
 
     $entries = @($Manifest['plugins'])
-    if ($entries.Count -eq 0) {
-        $contractErrors += 'repository marketplace must declare at least one package'
-    }
 
     # The active package set is derived from the package documents on disk, so
     # adding or retiring a package never requires editing a hard-coded count.
@@ -311,6 +308,17 @@ function Test-MarketplaceRepositoryContract {
             }
         }
 
+        # Both release lanes ship the same components with the same labels, so a
+        # channel-dependent projection is a policy regression rather than a variant.
+        $channelProjections = @{}
+        foreach ($channel in @('Stable', 'PreRelease')) {
+            $channelProjections[$channel] = @(Get-MarketplaceResolvedPackageRecipe -Entry $entry -Channel $channel -AgentIndex $agentIndex |
+                    ForEach-Object { "$($_.PackagePath)=$($_.Maturity)" }) -join '|'
+        }
+        if ($channelProjections['Stable'] -ne $channelProjections['PreRelease']) {
+            $contractErrors += "package '$name' must resolve identical components and maturity on Stable and PreRelease"
+        }
+
         $pluginRoot = Join-Path $RepoRoot "plugins/$name/plugin.json"
         if (Test-Path -LiteralPath $pluginRoot -PathType Leaf) {
             $pluginManifest = Get-Content -LiteralPath $pluginRoot -Raw -Encoding utf8 | ConvertFrom-Json -AsHashtable
@@ -326,20 +334,14 @@ function Test-MarketplaceRepositoryContract {
         $contractErrors += 'repository marketplace must declare at least one removed component tombstone'
     }
 
-    $aggregates = @($entries | Where-Object { (Get-MarketplaceEntryOverlayValue -Entry $_ -Key 'aggregate') -eq $true })
-    if ($aggregates.Count -ne 1) {
-        $contractErrors += "repository marketplace must declare exactly one aggregate package, found $($aggregates.Count)"
-    }
-    else {
-        $aggregatePaths = @(Get-MarketplaceResolvedPackageRecipe -Entry $aggregates[0] -Channel PreRelease -AgentIndex $agentIndex |
-                ForEach-Object PackagePath | Sort-Object -Unique)
-        $unionPaths = @($entries | Where-Object {
-                $_['name'] -ne $aggregates[0]['name'] -and (Test-MarketplaceEntryEligible -Entry $_ -Channel PreRelease)
-            } | ForEach-Object {
-                Get-MarketplaceResolvedPackageRecipe -Entry $_ -Channel PreRelease -AgentIndex $agentIndex
-            } | ForEach-Object PackagePath | Sort-Object -Unique)
-        foreach ($missingPath in @($unionPaths | Where-Object { $_ -notin $aggregatePaths })) {
-            $contractErrors += "aggregate package is missing component '$missingPath'"
+    $sourcePolicyIndex = Get-MarketplaceSourcePolicyIndex -Catalog $Manifest
+    foreach ($sourcePath in @($sourcePolicyIndex.Keys | Sort-Object)) {
+        $records = @($sourcePolicyIndex[$sourcePath])
+        $maturityValues = @($records | ForEach-Object { [string]$_.Maturity } | Sort-Object -Unique)
+        if ($maturityValues.Count -gt 1) {
+            $declarations = @($records | Sort-Object PackageName |
+                    ForEach-Object { "$($_.PackageName)=$($_.Maturity)" }) -join ', '
+            $contractErrors += "source '$sourcePath' must declare identical maturity across packages: $declarations"
         }
     }
 

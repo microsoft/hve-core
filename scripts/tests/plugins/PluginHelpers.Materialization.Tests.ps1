@@ -281,7 +281,7 @@ Describe 'Write-PluginDirectory' -Tag 'Unit' {
 
         It 'Rewrites hook command paths to the plugin root placeholder' {
             $hookText = Get-Content -LiteralPath (Join-Path $script:packageRoot 'hooks/rpi/telemetry.json') -Raw
-            $hookText | Should -Match '\$\{PLUGIN_ROOT\}/hooks/rpi/telemetry/collect\.sh'
+            $hookText | Should -Match '\$\{CLAUDE_PLUGIN_ROOT\}/hooks/rpi/telemetry/collect\.sh'
             $hookText | Should -Not -Match '\.github/hooks/'
         }
 

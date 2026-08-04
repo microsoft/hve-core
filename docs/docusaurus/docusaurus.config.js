@@ -5,18 +5,10 @@ import { themes as prismThemes } from 'prism-react-renderer';
 import remarkGithubAlert from 'remark-github-blockquote-alert';
 import * as path from 'path';
 import { labelRegistry } from './src/data/labelRegistry';
-import { loadMarketplaceCounts } from './src/data/marketplaceCounts';
+import { loadPackageCards } from './src/data/marketplaceCounts';
 
-const packageNames = [
-  'ado', 'coding-standards', 'data-science', 'design-thinking',
-  'experimental', 'github', 'gitlab', 'hve-core', 'jira',
-  'project-planning', 'security', 'hve-core-all',
-];
-const packageCounts = Object.fromEntries(
-  Object.entries(loadMarketplaceCounts(
-    path.resolve(__dirname, '../../.github/plugin/marketplace.json'),
-    packageNames,
-  )),
+const packageCards = loadPackageCards(
+  path.resolve(__dirname, '../../.github/plugin/marketplace.json'),
 );
 
 const accessibleGithubPrismTheme = {
@@ -53,7 +45,7 @@ const config = {
   onBrokenLinks: 'throw',
 
   customFields: {
-    packageCounts,
+    packageCards,
   },
 
   markdown: {

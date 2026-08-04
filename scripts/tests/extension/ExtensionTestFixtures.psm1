@@ -251,8 +251,6 @@ function New-ExtensionFixtureRepo {
         ''
         '{{ARTIFACTS}}'
         ''
-        '{{FULL_EDITION}}'
-        ''
     ) -join "`n"
     Set-FixtureFile -Path (Join-Path $repoRoot 'extension/templates/README.template.md') -Value $readmeTemplate
 

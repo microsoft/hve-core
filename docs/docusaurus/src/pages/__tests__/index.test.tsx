@@ -1,11 +1,43 @@
 // Copyright (c) 2026 Microsoft Corporation. All rights reserved.
 // SPDX-License-Identifier: MIT
 import React from 'react';
+import * as path from 'path';
 import { render, screen } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import Home from '../index';
-import { packageCardDefinitions } from '../../data/packageCards';
+import type { PackageCardData } from '../../data/packageCards';
+import { loadPackageCards } from '../../data/marketplaceCounts';
 import { labelRegistry } from '../../data/labelRegistry';
+import {
+  __resetPackageCards,
+  __setPackageCards,
+} from '../../__mocks__/@docusaurus/useDocusaurusContext';
+
+const marketplacePath = path.resolve(
+  __dirname,
+  '../../../../../.github/plugin/marketplace.json',
+);
+
+function card(name: string, overrides: Partial<PackageCardData> = {}): PackageCardData {
+  return {
+    name,
+    title: `HVE Core - ${name}`,
+    description: `${name} description`,
+    artifacts: 3,
+    maturity: 'Stable',
+    href: `/docs/plugins/${name}`,
+    ...overrides,
+  };
+}
+
+function renderedCards(container: HTMLElement) {
+  const section = container.querySelector('[aria-labelledby="packages-title"]');
+  return Array.from(section?.querySelectorAll('article[data-name]') ?? []);
+}
+
+afterEach(() => {
+  __resetPackageCards();
+});
 
 describe('Home page', () => {
   it('renders a single level-1 hero heading', () => {
@@ -53,24 +85,53 @@ describe('Home page', () => {
     expect(cta).toHaveAttribute('href', '/docs/getting-started/packages');
   });
 
-  it('renders one package card per declared package', () => {
+  it('describes the package section as multiple choices', () => {
     const { container } = render(<Home />);
-
-    const section = container.querySelector('[aria-labelledby="packages-title"]');
-    const cards = section?.querySelectorAll('article[data-name]') ?? [];
-    expect(Array.from(cards).map((card) => card.getAttribute('data-name'))).toEqual(
-      packageCardDefinitions.map((definition) => definition.name),
+    expect(container.querySelector('[aria-labelledby="packages-title"]')).toHaveTextContent(
+      'packages',
     );
   });
+});
 
-  it('points every package card at the packages route', () => {
+describe('Home page package cards from customFields', () => {
+  it('renders no cards when the custom field is empty', () => {
     const { container } = render(<Home />);
+    expect(renderedCards(container)).toHaveLength(0);
+  });
 
-    const section = container.querySelector('[aria-labelledby="packages-title"]');
-    const links = section?.querySelectorAll('article[data-name] a') ?? [];
-    expect(links.length).toBe(packageCardDefinitions.length);
-    for (const link of Array.from(links)) {
-      expect(link).toHaveAttribute('href', '/docs/getting-started/packages');
-    }
+  it('renders every supplied card in order and removes absent cards', () => {
+    __setPackageCards([card('alpha'), card('beta')]);
+    const first = render(<Home />);
+    expect(renderedCards(first.container).map((node) => node.getAttribute('data-name'))).toEqual([
+      'alpha', 'beta',
+    ]);
+    first.unmount();
+
+    __setPackageCards([card('alpha')]);
+    const second = render(<Home />);
+    expect(renderedCards(second.container).map((node) => node.getAttribute('data-name'))).toEqual([
+      'alpha',
+    ]);
+  });
+
+  it('renders card title, maturity, count, and documentation link', () => {
+    __setPackageCards([card('preview-one', {
+      title: 'Preview Package', artifacts: 12, maturity: 'Preview',
+    })]);
+    const { container } = render(<Home />);
+    const [node] = renderedCards(container);
+    expect(node).toHaveTextContent('Preview Package');
+    expect(node).toHaveTextContent('Preview');
+    expect(node).toHaveTextContent('12');
+    expect(node.querySelector('a')).toHaveAttribute('href', '/docs/plugins/preview-one');
+  });
+
+  it('renders the current canonical catalog cards', () => {
+    const cards = loadPackageCards(marketplacePath);
+    __setPackageCards(cards);
+    const { container } = render(<Home />);
+    expect(renderedCards(container).map((node) => node.getAttribute('data-name'))).toEqual(
+      cards.map((entry) => entry.name),
+    );
   });
 });

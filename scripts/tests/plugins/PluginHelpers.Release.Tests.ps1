@@ -74,7 +74,12 @@ Describe 'New-MarketplaceManifestContent' -Tag 'Unit' {
                 source  = [ordered]@{ source = 'github'; repo = 'contoso/contoso-hve'; path = 'plugins/rpi'; ref = 'plugins-v9.9.9' }
                 version = '9.9.9'
                 agents  = @('agents/rpi/rpi-planner.md')
-                'x-hve' = [ordered]@{ displayName = 'Contoso - rpi'; documentation = 'docs/plugins/rpi.md' }
+                'x-hve' = [ordered]@{
+                    displayName       = 'Contoso - rpi'
+                    documentation     = 'docs/plugins/rpi.md'
+                    componentMaturity = [ordered]@{ 'agents/rpi/rpi-planner.md' = 'preview' }
+                    profiles          = [ordered]@{ starter = @('agents/rpi/rpi-planner.md') }
+                }
             }
             [ordered]@{
                 name    = 'ado'
@@ -109,6 +114,12 @@ Describe 'New-MarketplaceManifestContent' -Tag 'Unit' {
             $rpiEntry['x-hve']['documentation'] | Should -BeExactly 'docs/plugins/rpi.md'
         }
 
+        It 'Retains the lifecycle and profile policy in the snapshot' {
+            $rpiEntry = @($script:projected['plugins'] | Where-Object { $_['name'] -eq 'rpi' })[0]
+            $rpiEntry['x-hve']['componentMaturity']['agents/rpi/rpi-planner.md'] | Should -BeExactly 'preview'
+            @($rpiEntry['x-hve']['profiles']['starter']) | Should -Be @('agents/rpi/rpi-planner.md')
+        }
+
         It 'Keeps the declared object source unchanged' {
             $adoEntry = @($script:projected['plugins'] | Where-Object { $_['name'] -eq 'ado' })[0]
             $adoEntry['source']['ref'] | Should -BeExactly 'plugins-v9.9.9'
@@ -136,6 +147,12 @@ Describe 'New-MarketplaceManifestContent' -Tag 'Unit' {
 
         It 'Serializes without a sha locator field' {
             $script:pinnedJson | Should -Not -Match '"sha"'
+        }
+
+        It 'Retains the lifecycle and profile policy through the pinned projection' {
+            $rpiEntry = @($script:pinned['plugins'] | Where-Object { $_['name'] -eq 'rpi' })[0]
+            $rpiEntry['x-hve']['componentMaturity']['agents/rpi/rpi-planner.md'] | Should -BeExactly 'preview'
+            @($rpiEntry['x-hve']['profiles']['starter']) | Should -Be @('agents/rpi/rpi-planner.md')
         }
     }
 
@@ -241,6 +258,26 @@ Describe 'Assert-PluginSnapshotTarget' -Tag 'Unit' {
             $target = Assert-PluginSnapshotTarget -Branch 'plugins-snapshot/run-43' -Tag 'plugins-snapshot/run-43-tag' `
                 -ExistingRefs @('refs/heads/main', 'refs/tags/plugins-v1.0.0', 'plugins-snapshot/run-42-tag')
             $target.Tag | Should -BeExactly 'plugins-snapshot/run-43-tag'
+        }
+    }
+
+    Context 'when the target is a production snapshot tag' {
+        It 'Returns exactly one immutable tag refspec' {
+            $target = Assert-PluginSnapshotTarget -Mode Production -Branch '' -Tag 'plugins-v4.5.6'
+            $target.Branch | Should -BeNullOrEmpty
+            $target.Tag | Should -BeExactly 'plugins-v4.5.6'
+            @($target.RefSpecs) | Should -Be @('refs/tags/plugins-v4.5.6')
+        }
+
+        It 'Refuses an existing production tag' {
+            { Assert-PluginSnapshotTarget -Mode Production -Branch '' -Tag 'plugins-v4.5.6' `
+                    -ExistingRefs @('refs/tags/plugins-v4.5.6') } |
+                Should -Throw -ExpectedMessage '*Tags are immutable and are never overwritten*'
+        }
+
+        It 'Refuses a non-production tag' {
+            { Assert-PluginSnapshotTarget -Mode Production -Branch '' -Tag 'plugins-snapshot/run-1-tag' } |
+                Should -Throw -ExpectedMessage "*must use 'plugins-v<version>' form*"
         }
     }
 

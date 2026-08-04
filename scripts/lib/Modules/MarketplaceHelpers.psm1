@@ -138,7 +138,7 @@ function Get-MarketplaceMetadataKey {
     [OutputType([string[]])]
     param()
 
-    return , @('displayName', 'maturity', 'componentMaturity', 'documentation', 'aggregate')
+    return , @('displayName', 'maturity', 'componentMaturity', 'documentation', 'profiles')
 }
 
 function Get-MarketplaceComponentSourceRoot {
@@ -394,10 +394,53 @@ function Get-MarketplaceEntryOverlayValue {
     return $null
 }
 
+function Get-MarketplaceActiveMaturity {
+    <#
+    .SYNOPSIS
+    Returns the maturity values that both release channels distribute.
+    .OUTPUTS
+    [string[]] Active maturity values.
+    #>
+    [CmdletBinding()]
+    [OutputType([string[]])]
+    param()
+
+    return , @('stable', 'preview', 'experimental')
+}
+
+function Get-MarketplaceComponentMaturityMap {
+    <#
+    .SYNOPSIS
+    Returns declared per-component maturity keyed by package component path.
+    .PARAMETER Entry
+    Marketplace entry.
+    .OUTPUTS
+    [hashtable] Component path to declared maturity string.
+    #>
+    [CmdletBinding()]
+    [OutputType([hashtable])]
+    param(
+        [Parameter(Mandatory = $true)]
+        [System.Collections.IDictionary]$Entry
+    )
+
+    $map = @{}
+    $overlayValue = Get-MarketplaceEntryOverlayValue -Entry $Entry -Key 'componentMaturity'
+    if ($overlayValue -is [System.Collections.IDictionary]) {
+        foreach ($key in $overlayValue.Keys) {
+            $map[[string]$key] = [string]$overlayValue[$key]
+        }
+    }
+    return $map
+}
+
 function Test-MarketplaceEntryEligible {
     <#
     .SYNOPSIS
     Checks package eligibility for a release channel.
+    .DESCRIPTION
+    Stable and PreRelease distribute the same active content, so only
+    deprecated and removed packages are excluded.
     .PARAMETER Entry
     Marketplace entry.
     .PARAMETER Channel
@@ -416,11 +459,7 @@ function Test-MarketplaceEntryEligible {
         [string]$Channel
     )
 
-    $maturity = Get-MarketplaceEntryMaturity -Entry $Entry
-    if ($maturity -in @('deprecated', 'removed')) {
-        return $false
-    }
-    return ($Channel -eq 'PreRelease' -or $maturity -ne 'experimental')
+    return ((Get-MarketplaceEntryMaturity -Entry $Entry) -in (Get-MarketplaceActiveMaturity))
 }
 
 function Get-MarketplacePackageRecipe {
@@ -445,14 +484,8 @@ function Get-MarketplacePackageRecipe {
         [string]$Channel
     )
 
-    $allowed = if ($Channel -eq 'Stable') { @('stable') } else { @('stable', 'preview', 'experimental') }
-    $componentMaturity = @{}
-    $overlayValue = Get-MarketplaceEntryOverlayValue -Entry $Entry -Key 'componentMaturity'
-    if ($overlayValue -is [System.Collections.IDictionary]) {
-        foreach ($key in $overlayValue.Keys) {
-            $componentMaturity[[string]$key] = [string]$overlayValue[$key]
-        }
-    }
+    $allowed = Get-MarketplaceActiveMaturity
+    $componentMaturity = Get-MarketplaceComponentMaturityMap -Entry $Entry
 
     $items = [System.Collections.Generic.List[hashtable]]::new()
     foreach ($field in (Get-MarketplaceComponentFieldMap).Keys) {
@@ -531,12 +564,30 @@ function Test-MarketplaceEntryContract {
                 continue
             }
             $seen[$resolved.Path] = $true
+            $fieldPrefix = "$field/"
+            if ($resolved.Path.StartsWith($fieldPrefix, [System.StringComparison]::Ordinal) -and
+                (Test-HveCoreRepoSpecificPath -RelativePath $resolved.Path.Substring($fieldPrefix.Length))) {
+                $errors += "component path '$($resolved.Path)' is a root-level repository artifact and must not be declared"
+            }
             if ($declared.ContainsKey($resolved.Path)) {
                 $errors += "component path '$($resolved.Path)' is declared in both '$($declared[$resolved.Path])' and '$field'"
             }
             else {
                 $declared[$resolved.Path] = $field
             }
+        }
+    }
+
+    # Experimental namespaces never inherit the stable default, so disclosure
+    # stays truthful for any component added under an experimental root.
+    $componentMaturity = Get-MarketplaceComponentMaturityMap -Entry $Entry
+    foreach ($path in @($declared.Keys | Sort-Object)) {
+        $segments = $path -split '/'
+        if ($segments.Count -lt 2 -or $segments[1] -ne 'experimental') {
+            continue
+        }
+        if (-not $componentMaturity.ContainsKey($path) -or $componentMaturity[$path] -eq 'stable') {
+            $errors += "component path '$path' is under an experimental namespace and must declare a non-stable x-hve.componentMaturity"
         }
     }
 
@@ -605,8 +656,52 @@ function Test-MarketplaceEntryContract {
             }
         }
     }
-    if ($overlay.Contains('aggregate') -and $overlay['aggregate'] -isnot [bool]) {
-        $errors += 'x-hve.aggregate must be a boolean'
+    if ($overlay.Contains('profiles')) {
+        $profiles = $overlay['profiles']
+        $installableFields = Get-MarketplaceInstallableField
+        if ($profiles -isnot [System.Collections.IDictionary]) {
+            $errors += 'x-hve.profiles must be an object keyed by profile name'
+        }
+        else {
+            foreach ($profileName in $profiles.Keys) {
+                if ([string]$profileName -notmatch '^[a-z0-9-]+$') {
+                    $errors += "x-hve.profiles name '$profileName' must contain only lowercase letters, digits, and hyphens"
+                }
+                $members = $profiles[$profileName]
+                if ($members -is [string] -or $members -isnot [System.Collections.IEnumerable]) {
+                    $errors += "x-hve.profiles['$profileName'] must be an array of component paths"
+                    continue
+                }
+                $memberValues = @($members)
+                if ($memberValues.Count -eq 0) {
+                    $errors += "x-hve.profiles['$profileName'] must declare at least one component path"
+                    continue
+                }
+                $seenMembers = @{}
+                foreach ($member in $memberValues) {
+                    if ($member -isnot [string]) {
+                        $errors += "x-hve.profiles['$profileName'] must contain only path strings"
+                        continue
+                    }
+                    $resolvedMember = Resolve-MarketplaceComponentPath -Path $member
+                    if ($resolvedMember.Error) {
+                        $errors += "x-hve.profiles['$profileName']: $($resolvedMember.Error)"
+                        continue
+                    }
+                    if ($seenMembers.ContainsKey($resolvedMember.Path)) {
+                        $errors += "x-hve.profiles['$profileName'] declares duplicate path '$($resolvedMember.Path)'"
+                        continue
+                    }
+                    $seenMembers[$resolvedMember.Path] = $true
+                    if (-not $declared.ContainsKey($resolvedMember.Path)) {
+                        $errors += "x-hve.profiles['$profileName'] references '$($resolvedMember.Path)', which is not declared component membership"
+                    }
+                    elseif ($installableFields -notcontains [string]$declared[$resolvedMember.Path]) {
+                        $errors += "x-hve.profiles['$profileName'] references '$($resolvedMember.Path)' from non-installable field '$($declared[$resolvedMember.Path])'; profiles support only: $($installableFields -join ', ')"
+                    }
+                }
+            }
+        }
     }
     return [string[]]$errors
 }
@@ -791,13 +886,328 @@ function Get-MarketplaceResolvedPackageRecipe {
     )
 
     $items = @(Get-MarketplacePackageRecipe -Entry $Entry -Channel $Channel)
+    $allowed = Get-MarketplaceActiveMaturity
+    $componentMaturity = Get-MarketplaceComponentMaturityMap -Entry $Entry
     $seedAgents = @($items | Where-Object { $_.Kind -eq 'agent' } | ForEach-Object { $_.PackagePath })
     foreach ($agentPath in Expand-MarketplaceAgentDependency -Index $AgentIndex -SeedPackagePaths $seedAgents -PackageName ([string]$Entry['name'])) {
         if ($seedAgents -contains $agentPath) { continue }
         $component = Resolve-MarketplaceComponentSource -PackagePath $agentPath -Field 'agents'
-        $items += @{ Kind = $component.Kind; Field = 'agents'; PackagePath = $component.PackagePath; SourcePath = $component.SourcePath; Maturity = 'stable' }
+        # Closure additions keep their canonical label instead of being stamped stable.
+        $maturity = if ($componentMaturity.ContainsKey($component.PackagePath)) {
+            Resolve-StrictSafeMaturity -Maturity $componentMaturity[$component.PackagePath] -Source "marketplace entry '$($Entry['name'])' component '$($component.PackagePath)'"
+        }
+        else {
+            'stable'
+        }
+        if ($allowed -notcontains $maturity) { continue }
+        $items += @{ Kind = $component.Kind; Field = 'agents'; PackagePath = $component.PackagePath; SourcePath = $component.SourcePath; Maturity = $maturity }
     }
     return [hashtable[]]@($items | Sort-Object { $_.Field }, { $_.PackagePath })
+}
+
+function Get-MarketplaceComponentIndex {
+    <#
+    .SYNOPSIS
+    Indexes clone-installable entry components by package path.
+    .DESCRIPTION
+    Covers agents, commands, rules, and skills. Hooks are excluded because the
+    clone installer never copies them.
+    .PARAMETER Entry
+    Marketplace entry.
+    .OUTPUTS
+    [hashtable] Package path to PackagePath, Kind, Field, SourcePath, and Maturity.
+    #>
+    [CmdletBinding()]
+    [OutputType([hashtable])]
+    param(
+        [Parameter(Mandatory = $true)]
+        [System.Collections.IDictionary]$Entry
+    )
+
+    $componentMaturity = Get-MarketplaceComponentMaturityMap -Entry $Entry
+    $installableFields = Get-MarketplaceInstallableField
+    $index = @{}
+    foreach ($field in $installableFields) {
+        foreach ($packagePath in @($Entry[$field])) {
+            if ([string]::IsNullOrWhiteSpace([string]$packagePath)) { continue }
+            $component = Resolve-MarketplaceComponentSource -PackagePath ([string]$packagePath) -Field $field
+            $maturity = if ($componentMaturity.ContainsKey($component.PackagePath)) {
+                Resolve-StrictSafeMaturity -Maturity $componentMaturity[$component.PackagePath] -Source "marketplace entry '$($Entry['name'])' component '$($component.PackagePath)'"
+            }
+            else {
+                'stable'
+            }
+            $index[$component.PackagePath] = @{
+                PackagePath = $component.PackagePath
+                Kind        = $component.Kind
+                Field       = $field
+                SourcePath  = $component.SourcePath
+                Maturity    = $maturity
+            }
+        }
+    }
+    return $index
+}
+
+function Get-MarketplaceInstallableField {
+    <#
+    .SYNOPSIS
+    Returns the marketplace fields the clone installer can copy.
+    .OUTPUTS
+    [string[]] Installable component fields.
+    #>
+    [CmdletBinding()]
+    [OutputType([string[]])]
+    param()
+
+    return , @('agents', 'commands', 'rules', 'skills')
+}
+
+function Get-MarketplaceLiteralReference {
+    <#
+    .SYNOPSIS
+    Extracts #file: directive targets from artifact text.
+    .DESCRIPTION
+    A payload ends at whitespace, a backtick, a quote, or a closing bracket, so
+    prose that mentions the bare `#file:` token yields no reference.
+    .PARAMETER Body
+    Artifact text to scan.
+    .OUTPUTS
+    [string[]] Distinct reference paths in first-seen order.
+    #>
+    [CmdletBinding()]
+    [OutputType([string[]])]
+    param(
+        [Parameter(Mandatory = $true)]
+        [AllowEmptyString()]
+        [string]$Body
+    )
+
+    $references = [System.Collections.Generic.List[string]]::new()
+    $seen = [System.Collections.Generic.HashSet[string]]::new([System.StringComparer]::Ordinal)
+    foreach ($match in [regex]::Matches($Body, '#file:([^\s`''")\]>,]+)')) {
+        $reference = $match.Groups[1].Value.TrimEnd('.', ';', ':')
+        if ($reference -and $seen.Add($reference)) {
+            [void]$references.Add($reference)
+        }
+    }
+    return [string[]]$references.ToArray()
+}
+
+function Resolve-MarketplaceReferenceComponent {
+    <#
+    .SYNOPSIS
+    Maps one #file: reference to the component that owns its target.
+    .DESCRIPTION
+    Only component-shaped references are closed: a payload that ends with a
+    canonical artifact suffix or names a skills path. Every other payload, such
+    as a documentation placeholder, is not a component and is ignored. A
+    component-shaped reference resolves against the citing file's directory
+    first, then the repository root, and its target must belong to recipe
+    membership.
+    .PARAMETER Reference
+    Reference payload without the #file: prefix.
+    .PARAMETER SourcePath
+    Repository-relative path of the citing component source.
+    .PARAMETER RepoRoot
+    Resolved absolute repository root.
+    .PARAMETER SourceLookup
+    Canonical source path to package path map.
+    .PARAMETER Origin
+    Citing component package path used in error text.
+    .OUTPUTS
+    [string] Owning package path, or an empty string when the target is not a component.
+    #>
+    [CmdletBinding()]
+    [OutputType([string])]
+    param(
+        [Parameter(Mandatory = $true)]
+        [ValidateNotNullOrEmpty()]
+        [string]$Reference,
+
+        [Parameter(Mandatory = $true)]
+        [ValidateNotNullOrEmpty()]
+        [string]$SourcePath,
+
+        [Parameter(Mandatory = $true)]
+        [ValidateNotNullOrEmpty()]
+        [string]$RepoRoot,
+
+        [Parameter(Mandatory = $true)]
+        [hashtable]$SourceLookup,
+
+        [Parameter(Mandatory = $true)]
+        [ValidateNotNullOrEmpty()]
+        [string]$Origin
+    )
+
+    $normalized = $Reference -replace '\\', '/'
+    if ($normalized -notmatch '(\.agent\.md|\.prompt\.md|\.instructions\.md)$' -and $normalized -notmatch '(^|/)skills/') {
+        return ''
+    }
+
+    $citingDirectory = Split-Path -Parent (Join-Path -Path $RepoRoot -ChildPath $SourcePath)
+    $target = ''
+    foreach ($candidate in @((Join-Path -Path $citingDirectory -ChildPath $Reference), (Join-Path -Path $RepoRoot -ChildPath $Reference))) {
+        if (Test-Path -LiteralPath $candidate -PathType Leaf) {
+            $target = (Resolve-Path -LiteralPath $candidate).Path
+            break
+        }
+    }
+    if (-not $target) {
+        throw "Component '$Origin' references '#file:$Reference', which does not resolve to a file under '$RepoRoot'."
+    }
+
+    $relative = ($target.Substring($RepoRoot.Length).TrimStart([char]'/', [char]'\')) -replace '\\', '/'
+    if ($SourceLookup.ContainsKey($relative)) {
+        return $SourceLookup[$relative]
+    }
+
+    # A skill is a directory component, so a file inside it resolves to its root.
+    if ($relative.StartsWith('.github/skills/', [System.StringComparison]::Ordinal)) {
+        $parent = $relative
+        while ($parent.Contains('/')) {
+            $parent = $parent.Substring(0, $parent.LastIndexOf('/'))
+            if ($SourceLookup.ContainsKey($parent)) {
+                return $SourceLookup[$parent]
+            }
+        }
+    }
+
+    $sourceRoots = Get-MarketplaceComponentSourceRoot
+    $installableFields = Get-MarketplaceInstallableField
+    foreach ($field in $installableFields) {
+        $root = "$($sourceRoots[$field].SourceRoot)/"
+        if ($relative.StartsWith($root, [System.StringComparison]::Ordinal)) {
+            throw "Component '$Origin' references '$relative', which is not declared marketplace membership."
+        }
+    }
+    return ''
+}
+
+function Resolve-MarketplaceComponentSelection {
+    <#
+    .SYNOPSIS
+    Resolves a starter profile or custom component selection with its dependency closure.
+    .DESCRIPTION
+    Validates that every seed is recipe membership, closes visible agent
+    handoff and literal #file: dependencies, and returns canonical maturity for
+    each selected and dependency-added component so callers can display it
+    before any write.
+    .PARAMETER Entry
+    Marketplace entry.
+    .PARAMETER RepoRoot
+    Repository root holding the canonical sources.
+    .PARAMETER AgentIndex
+    Catalog agent index from Get-MarketplaceAgentIndex.
+    .PARAMETER ProfileName
+    Declared x-hve profile name to select.
+    .PARAMETER Component
+    Explicit component package paths to select.
+    .OUTPUTS
+    [hashtable[]] Sorted descriptors with PackagePath, Kind, Field, SourcePath, Maturity, and Origin.
+    #>
+    [CmdletBinding(DefaultParameterSetName = 'Custom')]
+    [OutputType([hashtable[]])]
+    param(
+        [Parameter(Mandatory = $true)]
+        [System.Collections.IDictionary]$Entry,
+
+        [Parameter(Mandatory = $true)]
+        [ValidateNotNullOrEmpty()]
+        [string]$RepoRoot,
+
+        [Parameter(Mandatory = $true)]
+        [hashtable]$AgentIndex,
+
+        [Parameter(Mandatory = $true, ParameterSetName = 'Profile')]
+        [ValidateNotNullOrEmpty()]
+        [string]$ProfileName,
+
+        [Parameter(Mandatory = $true, ParameterSetName = 'Custom')]
+        [ValidateNotNullOrEmpty()]
+        [string[]]$Component
+    )
+
+    $entryName = [string]$Entry['name']
+    $index = Get-MarketplaceComponentIndex -Entry $Entry
+    $sourceLookup = @{}
+    foreach ($descriptor in $index.Values) {
+        $sourceLookup[$descriptor.SourcePath] = $descriptor.PackagePath
+    }
+
+    if ($PSCmdlet.ParameterSetName -eq 'Profile') {
+        $profiles = Get-MarketplaceEntryOverlayValue -Entry $Entry -Key 'profiles'
+        if ($profiles -isnot [System.Collections.IDictionary] -or -not $profiles.Contains($ProfileName)) {
+            throw "Marketplace entry '$entryName' declares no '$ProfileName' selection profile."
+        }
+        $seeds = @($profiles[$ProfileName])
+    }
+    else {
+        $seeds = @($Component)
+    }
+
+    $origin = [ordered]@{}
+    foreach ($seed in $seeds) {
+        $resolved = Resolve-MarketplaceComponentPath -Path ([string]$seed)
+        if ($resolved.Error) {
+            throw "Component selection: $($resolved.Error)"
+        }
+        if (-not $index.ContainsKey($resolved.Path)) {
+            throw "Component '$($resolved.Path)' is not declared membership of marketplace entry '$entryName'."
+        }
+        if (-not $origin.Contains($resolved.Path)) {
+            $origin[$resolved.Path] = 'selected'
+        }
+    }
+
+    $agentSeeds = @($origin.Keys | Where-Object { $index[$_].Kind -eq 'agent' })
+    if ($agentSeeds.Count -gt 0) {
+        foreach ($agentPath in Expand-MarketplaceAgentDependency -Index $AgentIndex -SeedPackagePaths $agentSeeds -PackageName $entryName) {
+            if ($origin.Contains($agentPath)) { continue }
+            if (-not $index.ContainsKey($agentPath)) {
+                throw "Handoff dependency '$agentPath' is not declared membership of marketplace entry '$entryName'."
+            }
+            $origin[$agentPath] = 'dependency'
+        }
+    }
+
+    $repoRootFull = (Resolve-Path -LiteralPath $RepoRoot).Path
+    $queue = [System.Collections.Generic.Queue[string]]::new()
+    foreach ($packagePath in @($origin.Keys)) { $queue.Enqueue($packagePath) }
+    while ($queue.Count -gt 0) {
+        $packagePath = $queue.Dequeue()
+        $descriptor = $index[$packagePath]
+        # Skills are copied as complete directories, so their internal references stay intact.
+        if ($descriptor.Kind -eq 'skill') { continue }
+
+        $absolute = Join-Path -Path $repoRootFull -ChildPath $descriptor.SourcePath
+        if (-not (Test-Path -LiteralPath $absolute -PathType Leaf)) {
+            throw "Component '$packagePath' source '$($descriptor.SourcePath)' is missing from '$RepoRoot'."
+        }
+        $body = Get-Content -LiteralPath $absolute -Raw -Encoding utf8
+        foreach ($reference in Get-MarketplaceLiteralReference -Body $body) {
+            $dependency = Resolve-MarketplaceReferenceComponent -Reference $reference -SourcePath $descriptor.SourcePath `
+                -RepoRoot $repoRootFull -SourceLookup $sourceLookup -Origin $packagePath
+            if (-not $dependency -or $origin.Contains($dependency)) { continue }
+            $origin[$dependency] = 'dependency'
+            $queue.Enqueue($dependency)
+        }
+    }
+
+    $selection = [System.Collections.Generic.List[hashtable]]::new()
+    foreach ($packagePath in (@($origin.Keys) | Sort-Object)) {
+        $descriptor = $index[$packagePath]
+        $selection.Add(@{
+                PackagePath = $descriptor.PackagePath
+                Kind        = $descriptor.Kind
+                Field       = $descriptor.Field
+                SourcePath  = $descriptor.SourcePath
+                Maturity    = $descriptor.Maturity
+                Origin      = $origin[$packagePath]
+            })
+    }
+    return [hashtable[]]$selection.ToArray()
 }
 
 function Get-MarketplaceSourceIndex {
@@ -940,13 +1350,18 @@ function Get-MarketplaceSourceMaturity {
 Export-ModuleMember -Function @(
     'ConvertTo-MarketplaceAgentKey',
     'Expand-MarketplaceAgentDependency',
+    'Get-MarketplaceActiveMaturity',
     'Get-MarketplaceAgentIndex',
     'Get-MarketplaceCatalog',
     'Get-MarketplaceComponentField',
     'Get-MarketplaceComponentFieldMap',
+    'Get-MarketplaceComponentIndex',
+    'Get-MarketplaceComponentMaturityMap',
     'Get-MarketplaceComponentSourceRoot',
     'Get-MarketplaceEntryMaturity',
     'Get-MarketplaceEntryOverlayValue',
+    'Get-MarketplaceInstallableField',
+    'Get-MarketplaceLiteralReference',
     'Get-MarketplaceMetadataKey',
     'Get-MarketplacePackagePath',
     'Get-MarketplacePackageRecipe',
@@ -958,6 +1373,7 @@ Export-ModuleMember -Function @(
     'Get-PluginItemSubpath',
     'Get-PluginSubdirectory',
     'Resolve-MarketplaceComponentPath',
+    'Resolve-MarketplaceComponentSelection',
     'Resolve-MarketplaceComponentSource',
     'Test-MarketplaceEntryContract',
     'Test-MarketplaceEntryEligible'

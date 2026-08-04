@@ -3,7 +3,11 @@
 
 import * as fs from 'fs';
 
+import type { PackageCardData } from './packageCards';
+import { resolvePackageMaturity } from './packageCards';
+
 const componentFields = ['agents', 'commands', 'rules', 'skills', 'hooks'];
+const errorPrefix = '[marketplacePackages]';
 
 export function countMarketplaceComponents(
   entry: Record<string, unknown>,
@@ -20,24 +24,92 @@ export function countMarketplaceComponents(
   }, 0);
 }
 
-export function loadMarketplaceCounts(
-  marketplacePath: string,
-  packageNames: string[],
-): Record<string, number> {
-  const marketplace = JSON.parse(fs.readFileSync(marketplacePath, 'utf-8')) as {
-    plugins: Array<Record<string, unknown> & { name: string }>;
-  };
-  const entries = new Map(
-    marketplace.plugins.map((entry) => [entry.name, entry]),
-  );
+function requireText(value: unknown, field: string, context: string): string {
+  if (typeof value !== 'string' || value.trim().length === 0) {
+    throw new Error(
+      `${errorPrefix} ${context}: ${field} must be a non-empty string`,
+    );
+  }
+  return value;
+}
 
-  return Object.fromEntries(packageNames.map((name) => {
-    const entry = entries.get(name);
-    if (!entry) {
+export function loadPackageCards(marketplacePath: string): PackageCardData[] {
+  const catalog = JSON.parse(
+    fs.readFileSync(marketplacePath, 'utf-8'),
+  ) as Record<string, unknown>;
+  const plugins = catalog.plugins;
+
+  if (!Array.isArray(plugins)) {
+    throw new Error(`${errorPrefix} ${marketplacePath}: plugins must be an array`);
+  }
+
+  const seen = new Set<string>();
+  const cards: PackageCardData[] = [];
+
+  plugins.forEach((candidate, index) => {
+    const position = `plugins[${index}]`;
+    if (
+      typeof candidate !== 'object'
+      || candidate === null
+      || Array.isArray(candidate)
+    ) {
+      throw new Error(`${errorPrefix} ${position}: entry must be an object`);
+    }
+
+    const entry = candidate as Record<string, unknown>;
+    const name = requireText(entry.name, 'name', position);
+    if (seen.has(name)) {
+      throw new Error(`${errorPrefix} duplicate package name: ${name}`);
+    }
+    seen.add(name);
+
+    const overlay = entry['x-hve'];
+    if (
+      typeof overlay !== 'object'
+      || overlay === null
+      || Array.isArray(overlay)
+    ) {
+      throw new Error(`${errorPrefix} ${name}: x-hve must be an object`);
+    }
+    const hve = overlay as Record<string, unknown>;
+
+    const resolution = resolvePackageMaturity(hve.maturity);
+    if (resolution.kind === 'retired') {
+      return;
+    }
+    if (resolution.kind === 'unsupported') {
       throw new Error(
-        `[marketplaceCounts] Unknown marketplace package: ${name}`,
+        `${errorPrefix} ${name}: unsupported package maturity: ${String(hve.maturity)}`,
       );
     }
-    return [name, countMarketplaceComponents(entry)];
-  }));
+
+    const description = requireText(entry.description, 'description', name);
+    const title = requireText(hve.displayName, 'x-hve.displayName', name);
+    const documentation = requireText(
+      hve.documentation,
+      'x-hve.documentation',
+      name,
+    );
+    const expectedDocumentation = `docs/plugins/${name}.md`;
+    if (documentation !== expectedDocumentation) {
+      throw new Error(
+        `${errorPrefix} ${name}: x-hve.documentation must be ${expectedDocumentation} but was ${documentation}`,
+      );
+    }
+
+    cards.push({
+      name,
+      title,
+      description,
+      artifacts: countMarketplaceComponents(entry),
+      maturity: resolution.maturity,
+      href: `/docs/plugins/${name}`,
+    });
+  });
+
+  return cards.sort((left, right) => {
+    if (left.name < right.name) return -1;
+    if (left.name > right.name) return 1;
+    return 0;
+  });
 }

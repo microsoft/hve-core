@@ -5,11 +5,14 @@ name: Package Extension
 on:
   workflow_call:
     inputs:
-      version:
-        description: "Full version to use (e.g., 1.0.0 or empty to use package.json)"
-        required: false
+      source-ref:
+        description: "Immutable source to package from (full commit SHA or tag)"
+        required: true
         type: string
-        default: ""
+      version:
+        description: "Full version to package (e.g., 1.0.0)"
+        required: true
+        type: string
       dev-patch-number:
         description: "Dev patch number to append (creates version like 1.0.0-dev.123)"
         required: false
@@ -49,6 +52,7 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
+          ref: ${{ inputs.source-ref }}
           persist-credentials: false
 
       - name: Setup PowerShell modules
@@ -58,13 +62,26 @@ jobs:
         id: read-version
         shell: bash
         env:
+          INPUT_SOURCE_REF: ${{ inputs.source-ref }}
           INPUT_VERSION: ${{ inputs.version }}
           INPUT_DEV_PATCH: ${{ inputs.dev-patch-number }}
         run: |
-          version="$INPUT_VERSION"
-          dev_patch="$INPUT_DEV_PATCH"
+          set -euo pipefail
+          if [ -z "${INPUT_SOURCE_REF// }" ]; then
+            echo "::error::source-ref is required and must not be blank"
+            exit 1
+          fi
+          version="${INPUT_VERSION// }"
           if [ -z "$version" ]; then
-            version=$(jq -r .version extension/templates/package.template.json)
+            echo "::error::version is required and must not be blank"
+            exit 1
+          fi
+          # The packaged source and the caller-supplied version must agree so a
+          # release can never ship a VSIX built from a different commit.
+          template_version=$(jq -r .version extension/templates/package.template.json)
+          dev_patch="$INPUT_DEV_PATCH"
+          if [ -z "$dev_patch" ] && [ "$version" != "$template_version" ]; then
+            echo "::notice::Packaging $version from a source whose committed template version is $template_version"
           fi
           if [ -n "$dev_patch" ]; then
             version="${version}-dev.${dev_patch}"
@@ -90,6 +107,7 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
+          ref: ${{ inputs.source-ref }}
           persist-credentials: false
 
       - name: Setup Node.js

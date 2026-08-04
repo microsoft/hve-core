@@ -5,11 +5,14 @@ name: Extension Provenance
 on:
   workflow_call:
     inputs:
-      version:
-        description: "Full version to use (e.g., 1.0.0 or empty to use package.json)"
-        required: false
+      source-ref:
+        description: "Immutable source to package from (full commit SHA or tag)"
+        required: true
         type: string
-        default: ""
+      version:
+        description: "Full version to package (e.g., 1.0.0)"
+        required: true
+        type: string
       channel:
         description: "Release channel (Stable or PreRelease) controlling agent maturity filtering"
         required: false
@@ -41,6 +44,7 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
+          ref: ${{ inputs.source-ref }}
           persist-credentials: false
 
       - name: Setup PowerShell modules
@@ -50,11 +54,18 @@ jobs:
         id: read-version
         shell: bash
         env:
+          INPUT_SOURCE_REF: ${{ inputs.source-ref }}
           INPUT_VERSION: ${{ inputs.version }}
         run: |
-          version="$INPUT_VERSION"
+          set -euo pipefail
+          if [ -z "${INPUT_SOURCE_REF// }" ]; then
+            echo "::error::source-ref is required and must not be blank"
+            exit 1
+          fi
+          version="${INPUT_VERSION// }"
           if [ -z "$version" ]; then
-            version=$(jq -r .version extension/templates/package.template.json)
+            echo "::error::version is required and must not be blank"
+            exit 1
           fi
           echo "version=$version" >> "$GITHUB_OUTPUT"
 
@@ -80,11 +91,13 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
+          ref: ${{ inputs.source-ref }}
           persist-credentials: false
 
       - name: Checkout Syft config
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
+          ref: ${{ inputs.source-ref }}
           sparse-checkout: .syft.yaml
           sparse-checkout-cone-mode: false
           persist-credentials: false

@@ -39,16 +39,18 @@ Describe 'Prepare-Extension package identity' -Tag 'Unit' {
     Context 'when mapping package IDs to extension identities' {
         It 'Maps <PackageId> to <Expected>' -ForEach @(
             @{ PackageId = 'hve-core'; Expected = 'hve-core' }
-            @{ PackageId = 'hve-core-all'; Expected = 'hve-core-all' }
             @{ PackageId = 'security'; Expected = 'hve-security' }
             @{ PackageId = 'coding-standards'; Expected = 'hve-coding-standards' }
         ) {
             Get-ExtensionIdentity -PackageId $PackageId -TemplateName 'hve-core' | Should -BeExactly $Expected
         }
 
+        It 'Prefixes the retired hve-core-all package ID instead of special-casing it' {
+            Get-ExtensionIdentity -PackageId 'hve-core-all' -TemplateName 'hve-core' | Should -BeExactly 'hve-hve-core-all'
+        }
+
         It 'Uses the template name only for the hve-core package' {
             Get-ExtensionIdentity -PackageId 'hve-core' -TemplateName 'renamed-core' | Should -BeExactly 'renamed-core'
-            Get-ExtensionIdentity -PackageId 'hve-core-all' -TemplateName 'renamed-core' | Should -BeExactly 'hve-core-all'
             Get-ExtensionIdentity -PackageId 'jira' -TemplateName 'renamed-core' | Should -BeExactly 'hve-jira'
         }
 
@@ -107,13 +109,20 @@ Describe 'Prepare-Extension contributions' -Tag 'Unit' {
             @($script:PreReleaseContributions.Skills.path) | Should -Be @('./.github/skills/core/toolkit/SKILL.md')
         }
 
-        It 'Filters preview components out of the Stable channel' {
+        It 'Resolves the same components on the Stable channel' {
             $stableItems = @(Get-MarketplaceResolvedPackageRecipe -Entry $script:Entries['hve-core'] -Channel Stable -AgentIndex $script:AgentIndex)
             $stableContributions = Get-ExtensionContributions -Items $stableItems
-            @($stableContributions.Prompts) | Should -HaveCount 0
+            @($stableContributions.Prompts.name) | Should -Be @('build')
             @($stableContributions.Agents.name) | Should -Be @('alpha')
             @($stableContributions.Instructions.name) | Should -Be @('style-instructions')
             @($stableContributions.Skills.name) | Should -Be @('toolkit')
+        }
+
+        It 'Carries the declared preview label into the resolved recipe' {
+            $previewItems = @(Get-MarketplaceResolvedPackageRecipe -Entry $script:Entries['hve-core'] -Channel Stable -AgentIndex $script:AgentIndex |
+                    Where-Object { $_.PackagePath -eq 'commands/core/build.md' })
+            @($previewItems).Count | Should -Be 1
+            $previewItems[0].Maturity | Should -BeExactly 'preview'
         }
     }
 
@@ -216,7 +225,7 @@ Describe 'Prepare-Extension package selection' -Tag 'Unit' {
     Context 'when the requested package is ineligible for the channel' {
         BeforeEach {
             $script:IneligibleResult = Invoke-PrepareExtension -ExtensionDirectory $script:SelectionFixture.ExtensionDirectory `
-                -RepoRoot $script:SelectionFixture.RepoRoot -Channel Stable -PackageId 'labs'
+                -RepoRoot $script:SelectionFixture.RepoRoot -Channel Stable -PackageId 'retired'
         }
 
         It 'Reports success with the catalog version and zero contribution counts' {

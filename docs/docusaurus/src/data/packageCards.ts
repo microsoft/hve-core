@@ -2,120 +2,43 @@
 // SPDX-License-Identifier: MIT
 import { labelRegistry } from './labelRegistry';
 
+export type PackageMaturity =
+  | typeof labelRegistry.stable
+  | typeof labelRegistry.preview
+  | typeof labelRegistry.experimental;
+
 export interface PackageCardData {
   name: string;
   title: string;
   description: string;
   artifacts: number;
-  maturity: 'Stable' | 'Preview' | 'Experimental';
+  maturity: PackageMaturity;
   href: string;
 }
 
-export interface PackageCardDefinition {
-  name: string;
-  title: string;
-  description: string;
-  maturity: PackageCardData['maturity'];
-  href: string;
-}
+export type PackageMaturityResolution =
+  | { kind: 'active'; maturity: PackageMaturity }
+  | { kind: 'retired' }
+  | { kind: 'unsupported' };
 
-export const packageCardDefinitions: PackageCardDefinition[] = [
-  {
-    name: 'ado',
-    title: labelRegistry.azureDevOps,
-    description: 'Azure DevOps work items, builds, and pull requests',
-    maturity: 'Stable',
-    href: '/docs/getting-started/packages',
-  },
-  {
-    name: 'coding-standards',
-    title: labelRegistry.codingStandards,
-    description: 'Language-specific coding conventions',
-    maturity: 'Stable',
-    href: '/docs/getting-started/packages',
-  },
-  {
-    name: 'data-science',
-    title: labelRegistry.dataScience,
-    description: 'Data specs, notebooks, and dashboards',
-    maturity: 'Stable',
-    href: '/docs/getting-started/packages',
-  },
-  {
-    name: 'design-thinking',
-    title: labelRegistry.designThinking,
-    description: 'AI-enhanced Design Thinking coaching',
-    maturity: 'Preview',
-    href: '/docs/getting-started/packages',
-  },
-  {
-    name: 'experimental',
-    title: labelRegistry.experimentalPackage,
-    description: 'Preview artifacts under active development',
-    maturity: 'Experimental',
-    href: '/docs/getting-started/packages',
-  },
-  {
-    name: 'github',
-    title: labelRegistry.github,
-    description: 'GitHub issue backlogs and triage workflows',
-    maturity: 'Stable',
-    href: '/docs/getting-started/packages',
-  },
-  {
-    name: 'gitlab',
-    title: labelRegistry.gitlab,
-    description: 'GitLab merge requests and pipeline workflows',
-    maturity: 'Experimental',
-    href: '/docs/getting-started/packages',
-  },
-  {
-    name: 'hve-core',
-    title: labelRegistry.hveCore,
-    description: 'RPI workflow, planning, and implementation',
-    maturity: 'Stable',
-    href: '/docs/getting-started/packages',
-  },
-  {
-    name: 'jira',
-    title: labelRegistry.jira,
-    description: 'Jira backlogs, triage, and PRD-driven planning',
-    maturity: 'Experimental',
-    href: '/docs/getting-started/packages',
-  },
-  {
-    name: 'project-planning',
-    title: labelRegistry.projectPlanning,
-    description: 'ADRs, requirements, and architecture diagrams',
-    maturity: 'Stable',
-    href: '/docs/getting-started/packages',
-  },
-  {
-    name: 'security',
-    title: labelRegistry.security,
-    description: 'Security review, planning, incident response, and risk assessment',
-    maturity: 'Experimental',
-    href: '/docs/getting-started/packages',
-  },
-];
+const activeMaturityLabels = new Map<string, PackageMaturity>([
+  ['stable', labelRegistry.stable],
+  ['preview', labelRegistry.preview],
+  ['experimental', labelRegistry.experimental],
+]);
 
-export interface MetaPackages {
-  'hve-core-all': number;
-}
+const retiredMaturities = new Set(['deprecated', 'removed']);
 
-export function resolvePackageCards(
-  counts: Record<string, number>,
-): PackageCardData[] {
-  return packageCardDefinitions.map((def) => ({
-    ...def,
-    artifacts: counts[def.name] ?? 0,
-  }));
-}
-
-export function resolveMetaPackages(
-  counts: Record<string, number>,
-): MetaPackages {
-  return {
-    'hve-core-all': counts['hve-core-all'] ?? 0,
-  };
+export function resolvePackageMaturity(
+  value: unknown,
+): PackageMaturityResolution {
+  const raw = value === undefined ? 'stable' : value;
+  if (typeof raw !== 'string') {
+    return { kind: 'unsupported' };
+  }
+  if (retiredMaturities.has(raw)) {
+    return { kind: 'retired' };
+  }
+  const maturity = activeMaturityLabels.get(raw);
+  return maturity ? { kind: 'active', maturity } : { kind: 'unsupported' };
 }

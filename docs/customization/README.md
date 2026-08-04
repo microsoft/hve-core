@@ -2,7 +2,7 @@
 title: Customizing HVE Core
 description: Overview of customization approaches from lightweight settings to full fork-and-extend, with role-based entry points
 author: Microsoft
-ms.date: 2026-08-02
+ms.date: 2026-08-04
 ms.topic: overview
 keywords:
   - customization
@@ -16,19 +16,19 @@ estimated_reading_time: 5
 
 Your installation method determines which customization options are available.
 
-| Customization Level       | Extension Only | Installer Skill (Clone) | Direct Clone |
-|---------------------------|:--------------:|:-----------------------:|:------------:|
-| VS Code Settings          |       ✅        |            ✅            |      ✅       |
-| copilot-instructions.md   |       ✅        |            ✅            |      ✅       |
-| .instructions.md files    | ✅ (your repo)  |            ✅            |      ✅       |
-| Agent bundle selection    |       ❌        |            ✅            |      ✅       |
-| Modify agents             |       ❌        |            ❌            |      ✅       |
-| Modify prompts and skills |       ❌        |            ❌            |      ✅       |
-| Build system changes      |       ❌        |            ❌            |      ✅       |
-| Fork and extend           |       ❌        |            ❌            |      ✅       |
+| Customization Level       | Extension Only  | Installer Skill (Clone) | Direct Clone |
+|---------------------------|:---------------:|:-----------------------:|:------------:|
+| VS Code Settings          |       Yes       |           Yes           |     Yes      |
+| copilot-instructions.md   |       Yes       |           Yes           |     Yes      |
+| .instructions.md files    | Yes (your repo) |           Yes           |     Yes      |
+| Multi-kind selection      |       No        |           Yes           |     Yes      |
+| Modify agents             |       No        |           No            |     Yes      |
+| Modify prompts and skills |       No        |           No            |     Yes      |
+| Build system changes      |       No        |           No            |     Yes      |
+| Fork and extend           |       No        |           No            |     Yes      |
 
-The [HVE Core extension](https://marketplace.visualstudio.com/items?itemName=ise-hve-essentials.hve-core) installs the flagship RPI workflow and core artifacts. For the complete library across all collections, use the [HVE Core - All extension](https://marketplace.visualstudio.com/items?itemName=ise-hve-essentials.hve-core-all).
-For MCP auto-configuration, installation method guidance, or agent bundle selection, install the [HVE Core Installer](https://marketplace.visualstudio.com/items?itemName=ise-hve-essentials.hve-installer) extension and ask any agent \"help me customize hve-core installation\".
+The [HVE Core extension](https://marketplace.visualstudio.com/items?itemName=ise-hve-essentials.hve-core) installs the complete active component set.
+For MCP guidance, installation-method selection, or selective cloning, ask an agent to use the included `hve-core-installer` skill. Its starter and custom flows select agents, prompts, instructions, and complete skill directories while preserving repository-relative paths. Hooks are not copied.
 For full artifact modification, use a [clone-based installation method](../getting-started/methods/).
 
 ## Customization Spectrum
@@ -40,7 +40,7 @@ graph LR
     A["VS Code Settings"] --> B["Instructions"]
     B --> C["Agents & Prompts"]
     C --> D["Skills"]
-    D --> E["Marketplace Packages"]
+    D --> E["Marketplace Recipe"]
     E --> F["Build System"]
     F --> G["Fork & Extend"]
 
@@ -53,24 +53,24 @@ graph LR
     style G fill:#388e3c
 ```
 
-| Approach             | Description                                                                                                                                                 |
-|----------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| VS Code Settings     | Individual preferences like font size, theme, and editor behavior. No files to create or share.                                                             |
-| Instructions         | Configure Copilot behavior through `.github/copilot-instructions.md` and `.instructions.md` files. Lowest effort with highest return for shaping AI output. |
-| Agents and Prompts   | Specialized workflows: agents for multi-turn interactions, prompts for single-shot tasks. Both accept tool restrictions and delegation rules.               |
-| Skills               | Domain knowledge in self-contained bundles with optional scripts. Use when instruction files alone cannot capture the depth of a domain.                    |
-| Marketplace Packages | Bundle agents, prompts, instructions, skills, and hooks into self-contained plugin and VSIX packages.                                                       |
-| Build System         | Validation scripts, schema checks, and plugin generation pipelines.                                                                                         |
-| Fork and Extend      | Full control over every artifact. Fork the repository when your changes diverge significantly from upstream.                                                |
+| Approach           | Description                                                                                                                                                 |
+|--------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| VS Code Settings   | Individual preferences like font size, theme, and editor behavior. No files to create or share.                                                             |
+| Instructions       | Configure Copilot behavior through `.github/copilot-instructions.md` and `.instructions.md` files. Lowest effort with highest return for shaping AI output. |
+| Agents and Prompts | Specialized workflows: agents for multi-turn interactions, prompts for single-shot tasks. Both accept tool restrictions and delegation rules.               |
+| Skills             | Domain knowledge in self-contained bundles with optional scripts. Use when instruction files alone cannot capture the depth of a domain.                    |
+| Marketplace Recipe | Declare the complete plugin and VSIX component set with lifecycle disclosure.                                                                               |
+| Build System       | Validation scripts, schema checks, and plugin generation pipelines.                                                                                         |
+| Fork and Extend    | Full control over every artifact. Fork the repository when your changes diverge significantly from upstream.                                                |
 
 ## Choose Your Approach
 
 | Goal                                       | Approach            | Files Involved                                        | Difficulty |
 |--------------------------------------------|---------------------|-------------------------------------------------------|------------|
 | Set coding standards for Copilot           | Instructions        | `.github/copilot-instructions.md`, `.instructions.md` | Low        |
-| Create a reusable workflow                 | Prompt              | `.github/prompts/{collection}/name.prompt.md`         | Low        |
-| Build a specialized Copilot assistant      | Agent               | `.github/agents/{collection}/name.agent.md`           | Medium     |
-| Package domain expertise                   | Skill               | `.github/skills/{collection}/{skill}/SKILL.md`        | Medium     |
+| Create a reusable workflow                 | Prompt              | `.github/prompts/{package-id}/name.prompt.md`         | Low        |
+| Build a specialized Copilot assistant      | Agent               | `.github/agents/{package-id}/name.agent.md`           | Medium     |
+| Package domain expertise                   | Skill               | `.github/skills/{package-id}/{skill}/SKILL.md`        | Medium     |
 | Share curated bundles across teams         | Marketplace Package | `.github/plugin/marketplace.json`, `docs/plugins/`    | Medium     |
 | Add custom validation or plugin generation | Build System        | `scripts/`, `package.json`                            | High       |
 | Diverge from upstream entirely             | Fork and Extend     | Full repository                                       | High       |

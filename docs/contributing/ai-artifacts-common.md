@@ -3,7 +3,7 @@ title: 'AI Artifacts Common Standards'
 description: 'Common standards and quality gates for all AI artifact contributions to hve-core'
 sidebar_position: 2
 author: Microsoft
-ms.date: 2026-08-02
+ms.date: 2026-08-03
 ms.topic: reference
 ---
 
@@ -152,17 +152,17 @@ npm run lint:models:refresh
 
 ## Marketplace Packages
 
-`.github/plugin/marketplace.json` owns package identity, metadata, membership, maturity, documentation pointers, and aggregate status. Add an artifact by declaring its package-relative path in the matching standard field: `agents`, `commands`, `rules`, `skills`, or `hooks`.
+`.github/plugin/marketplace.json` is the sole distribution authority. Its active entries are ordinary, self-contained package recipes. Standard `agents`, `commands`, `rules`, `skills`, and optional `hooks` fields declare recipe membership.
 
-Package keywords provide discoverability. `x-hve.displayName` supplies the final VSIX name, `componentMaturity` records non-stable policy and tombstones, and `documentation` points to durable prose under `docs/plugins/`. Root-level repository-only artifacts are not declared.
+An artifact may belong to one or more package recipes when its component maturity is aligned for each membership. `x-hve.displayName` supplies display metadata, `componentMaturity` records lifecycle disclosure and tombstones, and `documentation` points to `docs/plugins/<name>.md`. The starter profile belongs only to `hve-core-all`. Root-level repository-only artifacts are not declared.
 
-When an agent handoff targets another catalog-declared agent, shared marketplace closure adds the dependency to every affected package. Unresolved or ambiguous targets fail. Run `npm run lint:marketplace`, `npm run plugin:generate`, and both extension preparation commands after package changes.
+When an agent handoff targets another catalog-declared agent, shared marketplace closure adds the dependency to the resolved projection. Unresolved or ambiguous targets fail. Run `npm run lint:marketplace`, `npm run plugin:generate`, and both extension preparation commands after recipe changes.
 
 ## Extension Packaging
 
-Plugin and VSIX packaging consume one handoff-resolved marketplace projection. `Prepare-Extension.ps1` accepts a package ID and maps canonical sources to VS Code contributions. `Package-Extension.ps1` stages only git-tracked files from those contribution roots plus explicit shared resources. Hooks remain plugin-only because VS Code has no hook contribution point.
+Plugin and VSIX packaging consume one handoff-resolved projection per catalog entry. `Prepare-Extension.ps1` maps canonical sources to VS Code contributions and derives deterministic extension identities. `Package-Extension.ps1` stages only git-tracked files from those contribution roots plus explicit shared resources. Hooks remain plugin-only because VS Code has no declarative hook contribution point.
 
-Maturity belongs in marketplace metadata, not artifact frontmatter. Stable builds include stable and preview packages but stable components only. PreRelease builds include stable, preview, and experimental components. Deprecated and removed values are excluded from both channels.
+Lifecycle maturity belongs in marketplace metadata, not artifact frontmatter. Stable and PreRelease both include active `stable`, `preview`, and `experimental` components. `deprecated` and `removed` values are excluded from both channels. Labels are disclosure and governance metadata, not channel filters or Responsible AI assessment maturity ratings.
 
 ## Plugin Generation
 
@@ -170,13 +170,16 @@ The `plugins/` directory contains **auto-generated plugin bundles** created from
 
 ### Generation Workflow
 
-When you add an artifact to a Copilot package:
+When you add or change an artifact:
 
-1. Author artifact: Create your agent, prompt, instruction, or skill in `.github/`
-2. Update marketplace: Add its package-relative path to the appropriate standard component field in `.github/plugin/marketplace.json`
-3. Validate marketplace: Run `npm run lint:marketplace` to check manifest and immutable source correctness
-4. Generate plugins: Run `npm run plugin:generate` to regenerate all plugin directories
-5. Commit source only: Commit the source artifact, marketplace entry, and durable documentation; leave `plugins/` ignored and unstaged
+1. Author the artifact under `.github/`.
+2. Add its recipe-relative path to every applicable catalog entry.
+3. Align component maturity for each declared membership.
+4. Update the durable package document at `docs/plugins/<name>.md`.
+5. Run `npm run lint:marketplace`.
+6. Run `npm run plugin:generate` and both extension preparation commands.
+
+Generators derive outputs from active catalog entries and clean stale plugin roots, extension manifests, and generated READMEs. Commit canonical sources and durable package documentation only; leave `plugins/` ignored and unstaged.
 
 ### Plugin Directory Structure
 
@@ -194,28 +197,28 @@ Each generated plugin directory contains:
 > [!WARNING]
 > Files under `plugins/` are generated outputs and MUST NOT be edited directly.
 
-| Rule                     | Description                                                                                  |
-|--------------------------|----------------------------------------------------------------------------------------------|
-| Regenerate after changes | Run `npm run plugin:generate` after modifying marketplace recipes or packaged artifacts      |
-| Generated files          | Materialized artifacts, README files, and manifests are generated fresh on each run          |
-| Durable edits            | Direct edits to plugin files are discarded during regeneration                               |
-| Source of truth          | Edit `.github/` sources, `.github/plugin/marketplace.json`, or durable package documentation |
-| Git hygiene              | Never add or commit a path under the root `plugins/` directory                               |
+| Rule                     | Description                                                                                          |
+|--------------------------|------------------------------------------------------------------------------------------------------|
+| Regenerate after changes | Run `npm run plugin:generate` after modifying marketplace recipes or packaged artifacts              |
+| Generated files          | Materialized artifacts, README files, and manifests are generated fresh on each run                  |
+| Durable edits            | Direct edits to plugin files are discarded during regeneration                                       |
+| Source of truth          | Edit `.github/` sources, `.github/plugin/marketplace.json`, or the matching `docs/plugins/<name>.md` |
+| Git hygiene              | Never add or commit a path under the root `plugins/` directory                                       |
 
 ### When to Regenerate Plugins
 
 Run `npm run plugin:generate` whenever you:
 
-* Add a new artifact to a marketplace package
-* Remove an artifact from a marketplace package
+* Add a new artifact to any package recipe
+* Remove an artifact from any package recipe
 * Modify artifact frontmatter (description, dependencies, handoffs)
 * Update artifact file content that affects generated README documentation
-* Change marketplace package metadata (keywords, description, or component maturity)
-* Update package documentation under `docs/plugins/`
+* Change marketplace identity metadata or component lifecycle maturity
+* Update the matching `docs/plugins/<name>.md` document for any package
 
-### Validating Marketplace Packages
+### Validating the Marketplace Recipe
 
-Run `npm run plugin:validate` before generation. It validates immutable sources, standard membership, display names, source containment, package-document agreement, maturity and tombstones, aggregate coverage, root manifest mirrors, and handoff closure.
+Run `npm run plugin:validate` before generation. It validates immutable sources, standard membership, the display name, source containment, the documentation pointer, lifecycle maturity and tombstones, complete active coverage, the starter profile, root manifest mirrors, and handoff closure.
 
 ### Plugin Generation Reference
 

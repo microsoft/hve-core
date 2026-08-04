@@ -5,11 +5,19 @@ name: Package Plugins
 on:
   workflow_call:
     inputs:
-      version:
-        description: "Release version (for artifact metadata)"
-        required: false
+      source-ref:
+        description: "Immutable source to package from (full commit SHA or tag)"
+        required: true
         type: string
-        default: ""
+      version:
+        description: "Release version the packaged plugin must carry"
+        required: true
+        type: string
+      project-release-catalog:
+        description: "Project the requested version and immutable locator without changing the committed catalog"
+        required: false
+        default: false
+        type: boolean
     outputs:
       packages-matrix:
         description: "JSON matrix of plugin packages that were packaged"
@@ -31,10 +39,44 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
+          ref: ${{ inputs.source-ref }}
           persist-credentials: false
 
       - name: Setup PowerShell modules
         uses: ./.github/actions/setup-ps-modules
+
+      - name: Verify explicit source and version
+        shell: pwsh
+        env:
+          INPUT_SOURCE_REF: ${{ inputs.source-ref }}
+          INPUT_VERSION: ${{ inputs.version }}
+          PROJECT_RELEASE_CATALOG: ${{ inputs.project-release-catalog }}
+        run: |
+          $ErrorActionPreference = 'Stop'
+          if ([string]::IsNullOrWhiteSpace($env:INPUT_SOURCE_REF)) {
+            throw 'source-ref is required and must not be blank'
+          }
+          if ([string]::IsNullOrWhiteSpace($env:INPUT_VERSION)) {
+            throw 'version is required and must not be blank'
+          }
+          if ($env:INPUT_VERSION -cnotmatch '^\d+\.\d+\.\d+$') {
+            throw "version '$env:INPUT_VERSION' must use MAJOR.MINOR.PATCH form"
+          }
+          if ($env:PROJECT_RELEASE_CATALOG -ne 'true') {
+            # Stable packaging requires committed release state. PreRelease uses
+            # the explicit projection step below because its odd version is ephemeral.
+            $catalog = Get-Content -LiteralPath '.github/plugin/marketplace.json' -Raw -Encoding utf8 | ConvertFrom-Json -AsHashtable
+            $catalogVersion = [string]$catalog['metadata']['version']
+            if ($catalogVersion -cne $env:INPUT_VERSION) {
+              throw "Catalog version $catalogVersion does not match requested version $env:INPUT_VERSION"
+            }
+            foreach ($entry in @($catalog['plugins'])) {
+              $expectedRef = "plugins-v$env:INPUT_VERSION"
+              if ([string]$entry['source']['ref'] -cne $expectedRef) {
+                throw "Catalog plugin '$($entry['name'])' pins source ref '$($entry['source']['ref'])' but the release requires '$expectedRef'"
+              }
+            }
+          }
 
       # Plugin packages ship every non-deprecated, non-removed catalog
       # entry, which is the PreRelease eligibility policy. Discovery runs
@@ -43,8 +85,23 @@ jobs:
       - name: Discover marketplace packages
         id: discover
         shell: pwsh
+        env:
+          INPUT_VERSION: ${{ inputs.version }}
+          PROJECT_RELEASE_CATALOG: ${{ inputs.project-release-catalog }}
         run: |
-          & ./scripts/extension/Get-MarketplacePackageMatrix.ps1 -Channel 'PreRelease'
+          $ErrorActionPreference = 'Stop'
+          $catalogPath = '.github/plugin/marketplace.json'
+          if ($env:PROJECT_RELEASE_CATALOG -eq 'true') {
+            $catalogPath = 'logs/projected-marketplace.json'
+            & ./scripts/plugins/Generate-Plugins.ps1 `
+              -Channel PreRelease `
+              -ReleaseTag "plugins-v$env:INPUT_VERSION" `
+              -MarketplaceOutputPath $catalogPath
+            if ($LASTEXITCODE -ne 0) {
+              throw "Generate-Plugins.ps1 failed with exit code $LASTEXITCODE"
+            }
+          }
+          & ./scripts/extension/Get-MarketplacePackageMatrix.ps1 -Channel 'PreRelease' -CatalogPath $catalogPath
 
   package:
     name: Package Plugin ${{ matrix.id }}
@@ -59,6 +116,7 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
+          ref: ${{ inputs.source-ref }}
           persist-credentials: false
 
       - name: Setup Node.js
@@ -73,10 +131,34 @@ jobs:
       - name: Setup PowerShell modules
         uses: ./.github/actions/setup-ps-modules
 
-      - name: Generate plugins
+      - name: Generate committed plugins
+        if: ${{ !inputs.project-release-catalog }}
+        run: npm run plugin:generate
+
+      - name: Generate plugins and projected release catalog
+        if: ${{ inputs.project-release-catalog }}
+        shell: pwsh
+        env:
+          INPUT_VERSION: ${{ inputs.version }}
         run: |
-          mkdir -p logs
-          npm run plugin:generate
+          $ErrorActionPreference = 'Stop'
+          & ./scripts/plugins/Generate-Plugins.ps1 `
+            -Channel PreRelease `
+            -ReleaseTag "plugins-v$env:INPUT_VERSION" `
+            -MarketplaceOutputPath 'logs/projected-marketplace.json'
+          if ($LASTEXITCODE -ne 0) {
+            throw "Generate-Plugins.ps1 failed with exit code $LASTEXITCODE"
+          }
+
+      - name: Record plugin release evidence
+        shell: pwsh
+        env:
+          INPUT_VERSION: ${{ inputs.version }}
+        run: |
+          $ErrorActionPreference = 'Stop'
+          & ./scripts/plugins/Assert-PluginReleaseEvidence.ps1 `
+            -Version $env:INPUT_VERSION `
+            -OutputPath logs/plugin-release-evidence.json
 
       - name: Verify generated roots match discovered packages
         shell: bash

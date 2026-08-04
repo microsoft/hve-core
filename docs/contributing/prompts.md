@@ -3,7 +3,7 @@ title: 'Contributing Prompts to HVE Core'
 description: 'Requirements and standards for contributing GitHub Copilot prompt files to hve-core'
 sidebar_position: 4
 author: Microsoft
-ms.date: 2026-08-01
+ms.date: 2026-08-02
 ms.topic: how-to
 ---
 
@@ -203,11 +203,11 @@ Begin by reading the current branch state and identifying open work items.
 
 Prompts that delegate to a custom agent via `agent:` typically omit the activation line because the agent's phases define execution order.
 
-## Marketplace Package Registration
+## Marketplace Recipe Registration
 
-Distributable prompts must be declared under the `commands` field of one or more entries in `.github/plugin/marketplace.json`. Use the package-relative `commands/<subpath>/<name>.md` path and keep the canonical source under `.github/prompts/`.
+Distributable prompts must be declared under the `commands` field of the `hve-core` entry in `.github/plugin/marketplace.json`. Use the recipe-relative `commands/<subpath>/<name>.md` path and keep the canonical source under `.github/prompts/`.
 
-Add non-stable policy only through `x-hve.componentMaturity`, update the matching page under `docs/plugins/`, then run `npm run lint:marketplace` and `npm run plugin:generate`.
+Add non-stable lifecycle disclosure only through `x-hve.componentMaturity`, update `docs/plugins/hve-core.md`, then run `npm run lint:marketplace` and `npm run plugin:generate`.
 
 ## Prompt Content Structure Standards
 
@@ -507,7 +507,7 @@ Before submitting your prompt, verify:
 
 * [ ] Clear H1 title describing workflow
 * [ ] Overview/purpose section
-* [ ] Maturity set in marketplace package metadata (see [Common Standards - Maturity](ai-artifacts-common.md#maturity-field-requirements))
+* [ ] Maturity set in marketplace package metadata (see [Common Standards - Maturity](ai-artifacts-common.md#marketplace-packages))
 * [ ] Prerequisites or context section
 * [ ] Workflow steps with clear sequence
 * [ ] Success criteria defined

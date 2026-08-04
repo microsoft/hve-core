@@ -8,8 +8,8 @@
     Updates version strings across all version-tracked files in the repository.
 
 .DESCRIPTION
-    Central version bump script called by both release-prerelease-pr.yml and
-    release-stable.yml workflows. Updates:
+    Central version bump script for the version-tracked files that must agree
+    with the release-please baseline. Updates:
 
     - package.json
     - package-lock.json (version and packages[""].version)
@@ -36,8 +36,9 @@
     ./Update-VersionFiles.ps1 -Version '3.3.0' -RepoRoot '/path/to/repo'
 
 .NOTES
-    Called by CI workflows. Requires Node.js and npm dependencies installed
-    when SkipPluginGenerate is not set.
+    Requires Node.js and npm dependencies installed when SkipPluginGenerate is
+    not set. It also rewrites the catalog's immutable plugins-v<version> source
+    ref, which release-please's extra-files updaters cannot express.
 #>
 
 [CmdletBinding()]

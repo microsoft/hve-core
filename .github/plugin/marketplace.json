@@ -2,7 +2,7 @@
   "name": "hve-core",
   "metadata": {
     "description": "HVE Core",
-    "version": "3.3.106",
+    "version": "3.2.2",
     "pluginRoot": "./plugins"
   },
   "owner": {
@@ -15,10 +15,10 @@
         "source": "github",
         "repo": "microsoft/hve-core",
         "path": "plugins/ado",
-        "ref": "plugins-v3.3.106"
+        "ref": "plugins-v3.2.2"
       },
       "description": "Azure DevOps work item management, build monitoring, and pull request creation",
-      "version": "3.3.106",
+      "version": "3.2.2",
       "author": {
         "name": "Microsoft",
         "url": "https://www.microsoft.com"
@@ -78,10 +78,10 @@
         "source": "github",
         "repo": "microsoft/hve-core",
         "path": "plugins/coding-standards",
-        "ref": "plugins-v3.3.106"
+        "ref": "plugins-v3.2.2"
       },
       "description": "Language-specific coding instructions and pre-PR code review agents for bash, Bicep, C#, PowerShell, Python, Rust, and Terraform projects",
-      "version": "3.3.106",
+      "version": "3.2.2",
       "author": {
         "name": "Microsoft",
         "url": "https://www.microsoft.com"
@@ -172,10 +172,10 @@
         "source": "github",
         "repo": "microsoft/hve-core",
         "path": "plugins/data-science",
-        "ref": "plugins-v3.3.106"
+        "ref": "plugins-v3.2.2"
       },
       "description": "Evaluation dataset creation, data specification generation, Jupyter notebooks, and Streamlit dashboards",
-      "version": "3.3.106",
+      "version": "3.2.2",
       "author": {
         "name": "Microsoft",
         "url": "https://www.microsoft.com"
@@ -200,7 +200,9 @@
         "agents/data-science/gen-streamlit-dashboard.md",
         "agents/data-science/test-streamlit-dashboard.md",
         "agents/hve-core/subagents/rpi-researcher.md",
-        "agents/rai-planning/rai-planner.md"
+        "agents/rai-planning/rai-planner.md",
+        "agents/security/security-planner.md",
+        "agents/security/sssc-planner.md"
       ],
       "commands": [
         "commands/data-science/synth-data-generate.md",
@@ -224,6 +226,8 @@
       "x-hve": {
         "componentMaturity": {
           "agents/rai-planning/rai-planner.md": "experimental",
+          "agents/security/security-planner.md": "experimental",
+          "agents/security/sssc-planner.md": "experimental",
           "commands/data-science/synth-data-generate.md": "experimental",
           "commands/rai-planning/rai-capture.md": "experimental",
           "commands/rai-planning/rai-plan-from-prd.md": "experimental",
@@ -243,10 +247,10 @@
         "source": "github",
         "repo": "microsoft/hve-core",
         "path": "plugins/design-thinking",
-        "ref": "plugins-v3.3.106"
+        "ref": "plugins-v3.2.2"
       },
       "description": "Design Thinking coaching identity, quality constraints, and methodology skills for AI-enhanced design thinking across nine methods",
-      "version": "3.3.106",
+      "version": "3.2.2",
       "author": {
         "name": "Microsoft",
         "url": "https://www.microsoft.com"
@@ -336,10 +340,10 @@
         "source": "github",
         "repo": "microsoft/hve-core",
         "path": "plugins/experimental",
-        "ref": "plugins-v3.3.106"
+        "ref": "plugins-v3.2.2"
       },
       "description": "Experimental and preview artifacts not yet promoted to stable packages",
-      "version": "3.3.106",
+      "version": "3.2.2",
       "author": {
         "name": "Microsoft",
         "url": "https://www.microsoft.com"
@@ -388,8 +392,12 @@
       "x-hve": {
         "maturity": "experimental",
         "componentMaturity": {
+          "agents/experimental/experiment-designer.md": "experimental",
+          "agents/experimental/pptx.md": "experimental",
+          "agents/experimental/subagents/pptx-subagent.md": "experimental",
           "commands/experimental/cspell-config.md": "experimental",
           "commands/experimental/graph-research.md": "experimental",
+          "rules/experimental/experiment-designer.instructions.md": "experimental",
           "rules/experimental/graphify.instructions.md": "experimental",
           "rules/experimental/mural/mural-bootstrap.instructions.md": "experimental",
           "rules/experimental/mural/mural-destinations.instructions.md": "experimental",
@@ -398,10 +406,15 @@
           "rules/experimental/mural/mural-seeding-patterns.instructions.md": "experimental",
           "rules/experimental/mural/mural-writeback-hygiene.instructions.md": "experimental",
           "rules/experimental/mural/mural-writing-style.instructions.md": "experimental",
+          "rules/experimental/pptx.instructions.md": "experimental",
           "skills/experimental/caveman": "experimental",
           "skills/experimental/copilot-otel-metrics": "experimental",
+          "skills/experimental/customer-card-render": "experimental",
           "skills/experimental/mural": "experimental",
-          "skills/experimental/tts-voiceover": "experimental"
+          "skills/experimental/powerpoint": "experimental",
+          "skills/experimental/tts-voiceover": "experimental",
+          "skills/experimental/video-to-gif": "experimental",
+          "skills/experimental/vscode-playwright": "experimental"
         },
         "displayName": "HVE Core - Experimental",
         "documentation": "docs/plugins/experimental.md"
@@ -413,10 +426,10 @@
         "source": "github",
         "repo": "microsoft/hve-core",
         "path": "plugins/github",
-        "ref": "plugins-v3.3.106"
+        "ref": "plugins-v3.2.2"
       },
       "description": "GitHub issue discovery, triage, sprint planning, and backlog execution agents and prompts",
-      "version": "3.3.106",
+      "version": "3.2.2",
       "author": {
         "name": "Microsoft",
         "url": "https://www.microsoft.com"
@@ -468,10 +481,10 @@
         "source": "github",
         "repo": "microsoft/hve-core",
         "path": "plugins/gitlab",
-        "ref": "plugins-v3.3.106"
+        "ref": "plugins-v3.2.2"
       },
       "description": "GitLab merge request and pipeline workflows through a Python skill",
-      "version": "3.3.106",
+      "version": "3.2.2",
       "author": {
         "name": "Microsoft",
         "url": "https://www.microsoft.com"
@@ -502,10 +515,10 @@
         "source": "github",
         "repo": "microsoft/hve-core",
         "path": "plugins/hve-core",
-        "ref": "plugins-v3.3.106"
+        "ref": "plugins-v3.2.2"
       },
       "description": "Opinionated, rapidly evolving agentic SDLC patterns for RPI workflows, HVE Builder, and Git operations",
-      "version": "3.3.106",
+      "version": "3.2.2",
       "author": {
         "name": "Microsoft",
         "url": "https://www.microsoft.com"
@@ -540,16 +553,19 @@
         "agents/hve-core/rpi-agent.md",
         "agents/hve-core/subagents/hve-artifact-tester.md",
         "agents/hve-core/subagents/rpi-planner.md",
-        "agents/hve-core/subagents/rpi-researcher.md"
+        "agents/hve-core/subagents/rpi-researcher.md",
+        "agents/hve-core/subagents/vally-test-author.md"
       ],
       "commands": [
+        "commands/hve-core/evals-import.md",
         "commands/hve-core/git-commit-message.md",
         "commands/hve-core/git-commit.md",
         "commands/hve-core/git-merge.md",
         "commands/hve-core/git-setup.md",
         "commands/hve-core/pr-review.md",
         "commands/hve-core/pull-request.md",
-        "commands/hve-core/rpi.md"
+        "commands/hve-core/rpi.md",
+        "commands/hve-core/vally-test-write.md"
       ],
       "rules": [
         "rules/coding-standards/code-review/diff-computation.instructions.md",
@@ -582,6 +598,7 @@
         "skills/hve-core/prompt-analyze",
         "skills/hve-core/prompt-builder",
         "skills/hve-core/prompt-refactor",
+        "skills/hve-core/vally-tests",
         "skills/rpi/rpi-challenger",
         "skills/rpi/rpi-implement",
         "skills/rpi/rpi-plan",
@@ -589,6 +606,7 @@
         "skills/rpi/rpi-quick",
         "skills/rpi/rpi-research",
         "skills/rpi/rpi-review",
+        "skills/rpi/rpi-walkthrough",
         "skills/shared/pr-reference",
         "skills/shared/telemetry-foundations"
       ],
@@ -604,7 +622,10 @@
           "agents/coding-standards/subagents/code-review-security.md": "experimental",
           "agents/coding-standards/subagents/code-review-standards.md": "experimental",
           "agents/coding-standards/subagents/code-review-walkback.md": "experimental",
+          "agents/hve-core/subagents/vally-test-author.md": "experimental",
+          "commands/hve-core/evals-import.md": "experimental",
           "commands/hve-core/pr-review.md": "experimental",
+          "commands/hve-core/vally-test-write.md": "experimental",
           "hooks/shared/telemetry.json": "experimental",
           "rules/coding-standards/code-review/diff-computation.instructions.md": "experimental",
           "rules/coding-standards/code-review/review-artifacts.instructions.md": "experimental",
@@ -616,7 +637,8 @@
           "rules/experimental/mural/mural-writeback-hygiene.instructions.md": "experimental",
           "rules/experimental/mural/mural-writing-style.instructions.md": "experimental",
           "skills/coding-standards/code-review": "experimental",
-          "skills/experimental/mural": "experimental"
+          "skills/experimental/mural": "experimental",
+          "skills/hve-core/vally-tests": "experimental"
         },
         "displayName": "HVE Core",
         "documentation": "docs/plugins/hve-core.md"
@@ -628,10 +650,10 @@
         "source": "github",
         "repo": "microsoft/hve-core",
         "path": "plugins/hve-core-all",
-        "ref": "plugins-v3.3.106"
+        "ref": "plugins-v3.2.2"
       },
       "description": "Full bundle of opinionated, rapidly evolving HVE Core agentic SDLC patterns and tools",
-      "version": "3.3.106",
+      "version": "3.2.2",
       "author": {
         "name": "Microsoft",
         "url": "https://www.microsoft.com"
@@ -926,6 +948,9 @@
           "agents/coding-standards/subagents/code-review-walkback.md": "experimental",
           "agents/design-thinking/dt-coach.md": "preview",
           "agents/design-thinking/dt-learning-tutor.md": "preview",
+          "agents/experimental/experiment-designer.md": "experimental",
+          "agents/experimental/pptx.md": "experimental",
+          "agents/experimental/subagents/pptx-subagent.md": "experimental",
           "agents/hve-core/subagents/vally-test-author.md": "experimental",
           "agents/privacy/privacy-planner.md": "experimental",
           "agents/privacy/privacy-reviewer.md": "experimental",
@@ -989,6 +1014,7 @@
           "rules/accessibility/accessibility-license-posture.instructions.md": "experimental",
           "rules/coding-standards/code-review/diff-computation.instructions.md": "experimental",
           "rules/coding-standards/code-review/review-artifacts.instructions.md": "experimental",
+          "rules/experimental/experiment-designer.instructions.md": "experimental",
           "rules/experimental/graphify.instructions.md": "experimental",
           "rules/experimental/mural/mural-bootstrap.instructions.md": "experimental",
           "rules/experimental/mural/mural-destinations.instructions.md": "experimental",
@@ -997,6 +1023,7 @@
           "rules/experimental/mural/mural-seeding-patterns.instructions.md": "experimental",
           "rules/experimental/mural/mural-writeback-hygiene.instructions.md": "experimental",
           "rules/experimental/mural/mural-writing-style.instructions.md": "experimental",
+          "rules/experimental/pptx.instructions.md": "experimental",
           "rules/privacy/privacy-identity.instructions.md": "experimental",
           "rules/project-planning/adr-byo-template.instructions.md": "experimental",
           "rules/project-planning/adr-handoff.instructions.md": "experimental",
@@ -1019,8 +1046,12 @@
           "skills/design-thinking/dt-rpi-integration": "preview",
           "skills/experimental/caveman": "experimental",
           "skills/experimental/copilot-otel-metrics": "experimental",
+          "skills/experimental/customer-card-render": "experimental",
           "skills/experimental/mural": "experimental",
+          "skills/experimental/powerpoint": "experimental",
           "skills/experimental/tts-voiceover": "experimental",
+          "skills/experimental/video-to-gif": "experimental",
+          "skills/experimental/vscode-playwright": "experimental",
           "skills/github/gh-code-scanning": "experimental",
           "skills/hve-core/architecture-diagrams": "experimental",
           "skills/hve-core/vally-tests": "experimental",
@@ -1033,6 +1064,7 @@
           "skills/security/mcsb": "experimental",
           "skills/security/owasp-agentic": "experimental",
           "skills/security/owasp-cicd": "experimental",
+          "skills/security/owasp-docker": "removed",
           "skills/security/owasp-infrastructure": "experimental",
           "skills/security/owasp-llm": "experimental",
           "skills/security/owasp-mcp": "experimental",
@@ -1045,7 +1077,34 @@
         },
         "displayName": "HVE Core - All",
         "documentation": "docs/plugins/hve-core-all.md",
-        "aggregate": true
+        "profiles": {
+          "starter": [
+            "agents/hve-core/documentation.md",
+            "agents/hve-core/rpi-agent.md",
+            "agents/hve-core/subagents/hve-artifact-tester.md",
+            "agents/hve-core/subagents/rpi-planner.md",
+            "agents/hve-core/subagents/rpi-researcher.md",
+            "agents/hve-core/subagents/vally-test-author.md",
+            "commands/hve-core/rpi.md",
+            "rules/hve-core/copilot-tracking.instructions.md",
+            "rules/hve-core/hve-builder.instructions.md",
+            "skills/hve-core/documentation",
+            "skills/hve-core/hve-builder",
+            "skills/hve-core/hve-builder-tester",
+            "skills/hve-core/prompt-analyze",
+            "skills/hve-core/prompt-builder",
+            "skills/hve-core/prompt-refactor",
+            "skills/hve-core/vally-tests",
+            "skills/rpi/rpi-challenger",
+            "skills/rpi/rpi-implement",
+            "skills/rpi/rpi-plan",
+            "skills/rpi/rpi-plan-critique",
+            "skills/rpi/rpi-quick",
+            "skills/rpi/rpi-research",
+            "skills/rpi/rpi-review",
+            "skills/rpi/rpi-walkthrough"
+          ]
+        }
       }
     },
     {
@@ -1054,10 +1113,10 @@
         "source": "github",
         "repo": "microsoft/hve-core",
         "path": "plugins/installer",
-        "ref": "plugins-v3.3.106"
+        "ref": "plugins-v3.2.2"
       },
       "description": "Decision-driven installer skill for deploying HVE Core artifacts across workspace configurations",
-      "version": "3.3.106",
+      "version": "3.2.2",
       "author": {
         "name": "Microsoft",
         "url": "https://www.microsoft.com"
@@ -1087,10 +1146,10 @@
         "source": "github",
         "repo": "microsoft/hve-core",
         "path": "plugins/jira",
-        "ref": "plugins-v3.3.106"
+        "ref": "plugins-v3.2.2"
       },
       "description": "Jira backlog management, PRD issue planning, and issue operations through agents, prompts, instructions, and a Python skill",
-      "version": "3.3.106",
+      "version": "3.2.2",
       "author": {
         "name": "Microsoft",
         "url": "https://www.microsoft.com"
@@ -1137,10 +1196,10 @@
         "source": "github",
         "repo": "microsoft/hve-core",
         "path": "plugins/project-planning",
-        "ref": "plugins-v3.3.106"
+        "ref": "plugins-v3.2.2"
       },
       "description": "PRDs, BRDs, ADRs, and architecture diagrams",
-      "version": "3.3.106",
+      "version": "3.2.2",
       "author": {
         "name": "Microsoft",
         "url": "https://www.microsoft.com"
@@ -1317,10 +1376,10 @@
         "source": "github",
         "repo": "microsoft/hve-core",
         "path": "plugins/rpi",
-        "ref": "plugins-v3.3.106"
+        "ref": "plugins-v3.2.2"
       },
       "description": "Skill-forward Research, Plan, Implement, Review, and Follow-up entry points with bounded planning and critique support.",
-      "version": "3.3.106",
+      "version": "3.2.2",
       "author": {
         "name": "Microsoft",
         "url": "https://www.microsoft.com"
@@ -1364,10 +1423,10 @@
         "source": "github",
         "repo": "microsoft/hve-core",
         "path": "plugins/security",
-        "ref": "plugins-v3.3.106"
+        "ref": "plugins-v3.2.2"
       },
       "description": "Security review, planning, incident response, risk assessment, and vulnerability analysis",
-      "version": "3.3.106",
+      "version": "3.2.2",
       "author": {
         "name": "Microsoft",
         "url": "https://www.microsoft.com"

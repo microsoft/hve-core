@@ -3,7 +3,7 @@ title: AI Artifacts Architecture
 description: Prompt, agent, and instruction delegation model for Copilot customizations
 sidebar_position: 2
 author: Microsoft
-ms.date: 2026-08-02
+ms.date: 2026-08-03
 ms.topic: concept
 ---
 
@@ -128,7 +128,7 @@ description: 'Video-to-GIF conversion with FFmpeg optimization'
 | `name`        | Lowercase kebab-case identifier matching directory name |
 | `description` | Brief capability description                            |
 
-Maturity is package metadata in `.github/plugin/marketplace.json`, not skill frontmatter. See [Marketplace Packages](#marketplace-packages).
+Maturity is component metadata in `.github/plugin/marketplace.json`, not skill frontmatter. See [Marketplace Identity](#marketplace-identity).
 
 Skills answer the question "what specialized utility does this task require?" and provide executable capabilities beyond conversational guidance.
 
@@ -208,29 +208,31 @@ The `{package-id}` path segment reflects the conventional organization; artifact
 
 Copilot discovers skills automatically when their description matches the current task context. Skills can also be referenced explicitly by name. The skill's `SKILL.md` documents prerequisites, parameters, and usage patterns. Cross-platform scripts ensure consistent behavior across operating systems.
 
-## Marketplace Packages
+## Marketplace Identity
 
-`.github/plugin/marketplace.json` is the sole package-definition authority. Standard `agents`, `commands`, `rules`, `skills`, and `hooks` fields declare membership. The `x-hve` overlay contains only display name, package and component maturity, documentation, and aggregate status.
+`.github/plugin/marketplace.json` is the sole distribution authority. Every active `plugins[]` entry is an ordinary, self-contained recipe whose standard `agents`, `commands`, `rules`, `skills`, and optional `hooks` fields declare membership. The `x-hve` overlay carries display metadata, component lifecycle maturity, a documentation path, and optional profiles.
+
+`hve-core` is the focused package for RPI workflows, HVE Builder, Git operations, and code review. `hve-core-all` is the full bundle of active content and the only package that declares the starter profile. Domain and utility packages provide narrower capability sets. The catalog remains authoritative for active package names, memberships, maturity, and documentation.
 
 ### Shared Projection
 
-`MarketplaceHelpers.psm1` maps package paths to canonical `.github` sources, applies channel maturity, and closes transitive agent handoffs. Plugin generation and VSIX preparation consume the same resolved source sets before destination mapping. Unresolved or ambiguous handoffs fail validation.
+`MarketplaceHelpers.psm1` maps each recipe path to a canonical `.github` source, applies lifecycle policy, and closes transitive agent handoffs. An artifact can belong to more than one package recipe when its maturity is aligned for those memberships. Plugin generation and VSIX preparation consume the same resolved source set for each entry before destination mapping. Unresolved or ambiguous handoffs fail validation.
 
-### Package Channels
+### Lifecycle Labels and Channels
 
-| Maturity       | Stable Channel | Pre-release Channel |
-|----------------|----------------|---------------------|
-| `stable`       | Included       | Included            |
-| `preview`      | Excluded       | Included            |
-| `experimental` | Excluded       | Included            |
-| `deprecated`   | Excluded       | Excluded            |
-| `removed`      | Excluded       | Excluded            |
+| Lifecycle label | Stable Channel | PreRelease Channel |
+|-----------------|----------------|--------------------|
+| `stable`        | Included       | Included           |
+| `preview`       | Included       | Included           |
+| `experimental`  | Included       | Included           |
+| `deprecated`    | Excluded       | Excluded           |
+| `removed`       | Excluded       | Excluded           |
 
-Component maturity defaults to `stable`. Removed component tombstones may remain in `x-hve.componentMaturity` after active membership is removed so policy checks retain the retirement record.
+Component maturity defaults to `stable`. The label discloses lifecycle posture and informs governance; it does not select a release channel. Stable and PreRelease contain the same active package-name set and the same active component and maturity projection for each package. Removed component tombstones may remain in `x-hve.componentMaturity` after active membership is removed so policy checks retain the retirement record.
 
 ### Self-Contained Outputs
 
-Every plugin and VSIX package contains its complete resolved projection. The architecture does not use plugin dependencies, `extensionPack`, or `extensionDependencies` to compose advertised content. `hve-core-all` is the validated aggregate and must cover every eligible PreRelease component.
+Every plugin and VSIX contains the complete resolved projection for its catalog entry. The architecture does not use package dependencies, aggregate metadata, `extensionPack`, or `extensionDependencies` to compose advertised content.
 
 ## Extension Integration
 
@@ -247,42 +249,17 @@ The extension scans these directories at startup:
 
 These paths reflect the conventional directory structure. Artifact inclusion is controlled by standard component paths in `.github/plugin/marketplace.json`. Root-level artifacts (files directly under `.github/{type}/` with no subdirectory) are repo-specific, excluded from discovery, and never packaged into extension builds.
 
-| Maturity       | Stable Channel | Pre-release Channel |
-|----------------|----------------|---------------------|
-| `stable`       | Included       | Included            |
-| `preview`      | Excluded       | Included            |
-| `experimental` | Excluded       | Included            |
-| `deprecated`   | Excluded       | Excluded            |
-| `removed`      | Excluded       | Excluded            |
+The lifecycle table above applies equally to extension contributions. Stable and PreRelease differ in source ownership, cadence, and version, not component membership.
 
-The maturity table above applies to component metadata; package-level maturity is also read from the marketplace overlay.
+### Extension Identities
 
-### Extension Package Identities
+Each active catalog entry projects to one Copilot plugin root and one VSIX identity. The focused `hve-core` entry retains the unsuffixed HVE Core extension identity, `ise-hve-essentials.hve-core`. Other entries use deterministic package-specific identities in the same publisher namespace, `ise-hve-essentials.hve-<package-name>`. These identities are generated from catalog package names and do not indicate that publication has occurred.
 
-Each package produces two distributable outputs from the same codebase: a VS Code extension (`.vsix`) and a Copilot plugin published through the repository marketplace.
+The VS Code extension is prepared with `Prepare-Extension.ps1` and packaged with `Package-Extension.ps1`. Copilot packages are generated with `npm run plugin:generate`. Generation creates ignored, materialized regular-file packages under `plugins/<package-name>/`; those local files are validation and distribution output, not reviewed source.
 
-| Package          | Extension ID                              | Contents                                        |
-|------------------|-------------------------------------------|-------------------------------------------------|
-| Core (flagship)  | `ise-hve-essentials.hve-core`             | RPI workflow and core artifacts                 |
-| Full             | `ise-hve-essentials.hve-core-all`         | All artifacts eligible for the selected channel |
-| ADO              | `ise-hve-essentials.hve-ado`              | Azure DevOps integration                        |
-| GitHub           | `ise-hve-essentials.hve-github`           | GitHub backlog and issue management             |
-| GitLab           | `ise-hve-essentials.hve-gitlab`           | GitLab merge request and pipeline management    |
-| Jira             | `ise-hve-essentials.hve-jira`             | Jira backlog and requirements management        |
-| Project Planning | `ise-hve-essentials.hve-project-planning` | Architecture, requirements, agile coaching      |
-| RPI              | `ise-hve-essentials.hve-rpi`              | Research, Plan, Implement, and Review workflow  |
-| Coding Standards | `ise-hve-essentials.hve-coding-standards` | Language-specific coding conventions            |
-| Data Science     | `ise-hve-essentials.hve-data-science`     | Notebooks, dashboards, data analysis            |
-| Security         | `ise-hve-essentials.hve-security`         | Security review, planning, and threat modeling  |
-| Design Thinking  | `ise-hve-essentials.hve-design-thinking`  | 9-method DT coaching and learning               |
-| Installer        | `ise-hve-essentials.hve-installer`        | HVE Core installation and setup                 |
-| Experimental     | `ise-hve-essentials.hve-experimental`     | Early-stage artifacts under active iteration    |
+Choose the catalog entry that matches the required scope. Do not install `hve-core` and `hve-core-all` together because their content overlaps. Both plugin entries include the telemetry hook. VS Code has no declarative hook contribution point, so extension users configure hook locations manually.
 
-The VS Code extension is built with `Prepare-Extension.ps1` and `Package-Extension.ps1`. Copilot packages are generated with `npm run plugin:generate` from the standard component fields in `.github/plugin/marketplace.json`.
-
-Generation creates ignored, materialized regular-file packages under `plugins/<package-name>/`; those local files are validation and distribution output, not reviewed source. VSIX preparation consumes the same marketplace projection as plugin generation.
-
-Users install the package matching their role for a curated experience. The **Core** extension provides the RPI workflow essentials, while the **Full** extension aggregates artifacts from all eligible marketplace packages.
+For a repository-owned selection, the installer requires an exact `PackageName` before it resolves a profile or component. The starter profile belongs only to `hve-core-all`. It copies agents, prompts, instructions, and complete skill directories while preserving repository-relative paths; hooks are not copied.
 
 ### Activation Context
 
@@ -337,7 +314,7 @@ Move an artifact to `.github/deprecated/{type}/` when:
 
 The `removed` maturity is an `x-hve.componentMaturity` tombstone keyed by package-relative component path. It removes an artifact from every generated distribution while retaining policy history without adding maturity to artifact frontmatter.
 
-To reactivate an artifact, restore its standard membership path, remove or change the tombstone, regenerate plugin and extension outputs, and run marketplace validation. The validator requires non-vacuous tombstone coverage and the aggregate package must continue to cover every active eligible component.
+To reactivate an artifact, restore its standard membership path, remove or change the tombstone, regenerate plugin and extension outputs, and run marketplace validation. The validator requires non-vacuous tombstone coverage and complete active-membership coverage for each applicable package recipe.
 
 | Mechanism                  | Signal                      | Distribution behavior                 |
 |----------------------------|-----------------------------|---------------------------------------|

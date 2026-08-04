@@ -25,22 +25,21 @@ BeforeAll {
         param(
             [Parameter(Mandatory)][string]$Root,
             [Parameter()][hashtable]$PackageOverlay,
-            [Parameter()][hashtable]$AggregateOverlay,
             [Parameter()][switch]$SkipAgentRoot,
-            [Parameter()][switch]$SkipDocumentationRoot
+            [Parameter()][switch]$SkipDocumentationRoot,
+            [Parameter()][switch]$AddSecondPackage
         )
 
         New-PluginFixtureRepository -Path $Root -Version '9.9.9' `
             -SkipAgentRoot:$SkipAgentRoot -SkipDocumentationRoot:$SkipDocumentationRoot | Out-Null
         Add-PluginFixtureArtifactSet -RepoRoot $Root | Out-Null
 
-        $packageOverlayValues = @{ componentMaturity = @{ 'skills/rpi/rpi-retired' = 'removed' } }
+        $packageOverlayValues = @{
+            componentMaturity = @{ 'skills/rpi/rpi-retired' = 'removed' }
+            profiles          = @{ starter = @($script:ComponentPaths.Agents[0], $script:ComponentPaths.Skills[0]) }
+        }
         if ($PackageOverlay) {
             foreach ($key in @($PackageOverlay.Keys)) { $packageOverlayValues[$key] = $PackageOverlay[$key] }
-        }
-        $aggregateOverlayValues = @{ aggregate = $true }
-        if ($AggregateOverlay) {
-            foreach ($key in @($AggregateOverlay.Keys)) { $aggregateOverlayValues[$key] = $AggregateOverlay[$key] }
         }
 
         $entries = @(
@@ -48,11 +47,26 @@ BeforeAll {
                 -Agents $script:ComponentPaths.Agents -Commands $script:ComponentPaths.Commands `
                 -Rules $script:ComponentPaths.Rules -Skills $script:ComponentPaths.Skills `
                 -Hook $script:ComponentPaths.Hook -Overlay $packageOverlayValues
-            New-PluginFixtureEntry -Name 'contoso-all' -Description 'Every Contoso package' -Version '9.9.9' `
-                -Agents $script:ComponentPaths.Agents -Commands $script:ComponentPaths.Commands `
-                -Rules $script:ComponentPaths.Rules -Skills $script:ComponentPaths.Skills `
-                -Hook $script:ComponentPaths.Hook -Overlay $aggregateOverlayValues
         )
+        if ($AddSecondPackage) {
+            Add-PluginFixtureFile -RepoRoot $Root -RelativePath '.github/agents/ops/ops-auditor.agent.md' `
+                -Content "---`nname: Ops Auditor`ndescription: Audits operations`n---`n`n# Ops Auditor`n" | Out-Null
+            Add-PluginFixtureFile -RepoRoot $Root -RelativePath '.github/prompts/ops/ops-audit.prompt.md' `
+                -Content "---`ndescription: Runs an ops audit`n---`n`n# Ops Audit`n" | Out-Null
+            Add-PluginFixtureFile -RepoRoot $Root -RelativePath '.github/instructions/ops/ops-baseline.instructions.md' `
+                -Content "---`ndescription: Ops baseline rules`n---`n`n# Ops Baseline`n" | Out-Null
+            Add-PluginFixtureFile -RepoRoot $Root -RelativePath '.github/skills/ops/ops-toolkit/SKILL.md' `
+                -Content "---`nname: ops-toolkit`ndescription: Ops toolkit`n---`n`n# Ops Toolkit`n" | Out-Null
+            Add-PluginFixtureFile -RepoRoot $Root -RelativePath '.github/hooks/ops/audit.json' `
+                -Content '{"description":"Records ops audits","hooks":{"SessionStart":[{"command":".github/hooks/ops/audit/collect.sh"}]}}' | Out-Null
+            Add-PluginFixtureFile -RepoRoot $Root -RelativePath '.github/hooks/ops/audit/collect.sh' `
+                -Content "#!/usr/bin/env bash`necho audit`n" | Out-Null
+
+            $entries += New-PluginFixtureEntry -Name 'ops' -Description 'Ops audit package' -Version '9.9.9' `
+                -Agents @('agents/ops/ops-auditor.md') -Commands @('commands/ops/ops-audit.md') `
+                -Rules @('rules/ops/ops-baseline.instructions.md') -Skills @('skills/ops/ops-toolkit') `
+                -Hook 'hooks/ops/audit.json'
+        }
         Add-PluginFixtureCatalog -RepoRoot $Root -Entries $entries -Version '9.9.9' `
             -SkipDocuments:$SkipDocumentationRoot | Out-Null
         return $Root
@@ -173,7 +187,7 @@ Describe 'Invoke-MarketplaceValidation' -Tag 'Unit' {
         It 'Writes a structured report with one result per package' {
             @($script:cleanRun.Report.Keys | Sort-Object) | Should -Be @('ErrorCount', 'Results', 'Timestamp')
             @($script:cleanRun.Report['Results'] | ForEach-Object { $_['PluginName'] } | Sort-Object) |
-                Should -Be @('contoso-all', 'rpi')
+                Should -Be @('rpi')
             foreach ($result in $script:cleanRun.Report['Results']) {
                 $result['IsValid'] | Should -BeTrue
                 @($result['Errors']) | Should -HaveCount 0
@@ -284,7 +298,7 @@ Describe 'Invoke-MarketplaceValidation' -Tag 'Unit' {
             New-ValidatorFixture -Root $script:validatorRepo | Out-Null
             Set-CatalogEntry -Root $script:validatorRepo -Mutation {
                 param($catalog)
-                $catalog['plugins'][1]['name'] = 'rpi'
+                $catalog['plugins'] = @($catalog['plugins'][0], $catalog['plugins'][0])
             }
 
             $run = Get-ValidationReport -Root $script:validatorRepo
@@ -464,41 +478,121 @@ Describe 'Test-MarketplaceRepositoryContract' -Tag 'Unit' {
         }
     }
 
-    Context 'when the aggregate package is misdeclared' {
-        It 'Reports <Label>' -ForEach @(
-            @{ Label = 'no aggregate'; AggregateFlags = @($false, $false); ExpectedCount = 0 }
-            @{ Label = 'two aggregates'; AggregateFlags = @($true, $true); ExpectedCount = 2 }
-        ) {
+    Context 'when the catalog declares one or many ordinary recipes' {
+        It 'Accepts a single-recipe catalog' {
             New-ValidatorFixture -Root $script:contractRepo | Out-Null
-            $flags = $AggregateFlags
-            Set-CatalogEntry -Root $script:contractRepo -Mutation {
-                param($catalog)
-                for ($index = 0; $index -lt $catalog['plugins'].Count; $index++) {
-                    if ($flags[$index]) {
-                        $catalog['plugins'][$index]['x-hve']['aggregate'] = $true
-                    }
-                    else {
-                        $catalog['plugins'][$index]['x-hve'].Remove('aggregate')
-                    }
-                }
-            }
 
             $run = Get-ValidationReport -Root $script:contractRepo
-            (Get-ReportError -Report $run.Report) -join ' ' |
-                Should -Match "repository contract: repository marketplace must declare exactly one aggregate package, found $ExpectedCount"
+            $run.Outcome.Success | Should -BeTrue
+            $run.Outcome.ErrorCount | Should -Be 0
+            @($run.Report['Results'] | ForEach-Object { $_['PluginName'] }) | Should -Be @('rpi')
         }
 
-        It 'Reports a component the aggregate does not carry' {
+        It 'Accepts two recipes that each declare their own hook manifest' {
+            New-ValidatorFixture -Root $script:contractRepo -AddSecondPackage | Out-Null
+            $catalog = Get-Content -LiteralPath (Join-Path $script:contractRepo '.github/plugin/marketplace.json') -Raw |
+                ConvertFrom-Json -AsHashtable
+            @($catalog['plugins'] | Where-Object { -not [string]::IsNullOrWhiteSpace([string]$_['hooks']) }).Count |
+                Should -Be 2
+
+            $run = Get-ValidationReport -Root $script:contractRepo
+            $run.Outcome.Success | Should -BeTrue
+            $run.Outcome.ErrorCount | Should -Be 0
+            @($run.Report['Results'] | ForEach-Object { $_['PluginName'] } | Sort-Object) | Should -Be @('ops', 'rpi')
+        }
+
+        It 'Reports conflicting maturity for a source shared by two packages' {
+            New-ValidatorFixture -Root $script:contractRepo -AddSecondPackage | Out-Null
+            Set-CatalogEntry -Root $script:contractRepo -Mutation {
+                param($catalog)
+                $sharedComponent = 'agents/rpi/rpi-planner.md'
+                $catalog['plugins'][1]['agents'] += $sharedComponent
+                $catalog['plugins'][1]['x-hve']['componentMaturity'] = @{ $sharedComponent = 'preview' }
+            }
+
+            $run = Get-ValidationReport -Root $script:contractRepo
+            $run.Outcome.Success | Should -BeFalse
+            (Get-ReportError -Report $run.Report) -join ' ' |
+                Should -Match "repository contract: source '\.github/agents/rpi/rpi-planner\.agent\.md' must declare identical maturity across packages: ops=preview, rpi=stable"
+        }
+
+        It 'Keeps documentation, source identity, unique membership, and tombstones valid across both recipes' {
+            New-ValidatorFixture -Root $script:contractRepo -AddSecondPackage | Out-Null
+            $catalog = Get-Content -LiteralPath (Join-Path $script:contractRepo '.github/plugin/marketplace.json') -Raw |
+                ConvertFrom-Json -AsHashtable
+
+            $declared = @()
+            foreach ($entry in @($catalog['plugins'])) {
+                Join-Path $script:contractRepo ([string]$entry['x-hve']['documentation']) | Should -Exist
+                [string]$entry['source']['path'] | Should -BeExactly "plugins/$([string]$entry['name'])"
+                [string]$entry['source']['ref'] | Should -BeExactly "plugins-v$([string]$entry['version'])"
+                $declared += @('agents', 'commands', 'rules', 'skills', 'hooks') |
+                    ForEach-Object { @($entry[$_]) } | Where-Object { $_ }
+            }
+            @($declared | Sort-Object -Unique).Count | Should -Be $declared.Count
+            @($catalog['plugins'] | Where-Object {
+                    $_['x-hve'].Contains('componentMaturity') -and
+                    @($_['x-hve']['componentMaturity'].Values) -contains 'removed'
+                }).Count | Should -Be 1
+        }
+
+        It 'Still rejects an empty catalog' {
+            New-ValidatorFixture -Root $script:contractRepo | Out-Null
+            Set-CatalogEntry -Root $script:contractRepo -Mutation { param($catalog) $catalog['plugins'] = @() }
+
+            $run = Get-ValidationReport -Root $script:contractRepo
+            $run.Outcome.Success | Should -BeFalse
+            (Get-ReportError -Report $run.Report) -join ' ' | Should -Match 'plugins array is empty or missing'
+        }
+    }
+
+    Context 'when membership breaks one-recipe hygiene' {
+        It 'Reports a root-level repository artifact' {
             New-ValidatorFixture -Root $script:contractRepo | Out-Null
             Set-CatalogEntry -Root $script:contractRepo -Mutation {
                 param($catalog)
-                $aggregate = @($catalog['plugins'] | Where-Object { $_['name'] -eq 'contoso-all' })[0]
-                $aggregate.Remove('skills')
+                $catalog['plugins'][0]['agents'] = @('agents/rpi/rpi-planner.md', 'agents/root-only.md')
             }
 
             $run = Get-ValidationReport -Root $script:contractRepo
             (Get-ReportError -Report $run.Report) -join ' ' |
-                Should -Match "repository contract: aggregate package is missing component 'skills/rpi/rpi-plan'"
+                Should -Match "component path 'agents/root-only\.md' is a root-level repository artifact and must not be declared"
+        }
+
+        It 'Reports an unlabeled experimental-namespace component' {
+            New-ValidatorFixture -Root $script:contractRepo | Out-Null
+            Set-CatalogEntry -Root $script:contractRepo -Mutation {
+                param($catalog)
+                $catalog['plugins'][0]['agents'] = @('agents/rpi/rpi-planner.md', 'agents/experimental/preview-only.md')
+            }
+
+            $run = Get-ValidationReport -Root $script:contractRepo
+            (Get-ReportError -Report $run.Report) -join ' ' |
+                Should -Match "component path 'agents/experimental/preview-only\.md' is under an experimental namespace and must declare a non-stable x-hve\.componentMaturity"
+        }
+
+        It 'Reports a profile reference outside declared membership' {
+            New-ValidatorFixture -Root $script:contractRepo | Out-Null
+            Set-CatalogEntry -Root $script:contractRepo -Mutation {
+                param($catalog)
+                $catalog['plugins'][0]['x-hve']['profiles'] = @{ starter = @('agents/rpi/absent.md') }
+            }
+
+            $run = Get-ValidationReport -Root $script:contractRepo
+            (Get-ReportError -Report $run.Report) -join ' ' |
+                Should -Match "x-hve\.profiles\['starter'\] references 'agents/rpi/absent\.md', which is not declared component membership"
+        }
+
+        It 'Reports a hook declared in an installer profile' {
+            New-ValidatorFixture -Root $script:contractRepo | Out-Null
+            Set-CatalogEntry -Root $script:contractRepo -Mutation {
+                param($catalog)
+                $catalog['plugins'][0]['x-hve']['profiles'] = @{ starter = @('agents/rpi/rpi-planner.md', 'hooks/rpi/telemetry.json') }
+            }
+
+            $run = Get-ValidationReport -Root $script:contractRepo
+            (Get-ReportError -Report $run.Report) -join ' ' |
+                Should -Match "x-hve\.profiles\['starter'\] references 'hooks/rpi/telemetry\.json' from non-installable field 'hooks'"
         }
     }
 }

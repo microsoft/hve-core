@@ -81,8 +81,11 @@ Describe 'Get-MarketplaceSourceIndex' -Tag 'Unit' {
         $records[0].Kind | Should -BeExactly 'skill'
     }
 
-    It 'Excludes an experimental component from the Stable index' {
-        $script:StableIndex.ContainsKey('.github/prompts/demo/run.prompt.md') | Should -BeFalse
+    It 'Includes an experimental component in the Stable index' {
+        $records = @($script:StableIndex['.github/prompts/demo/run.prompt.md'])
+        $records.Count | Should -Be 1
+        $records[0].Maturity | Should -BeExactly 'experimental'
+        $records[0].PackageName | Should -BeExactly 'beta-pack'
     }
 
     It 'Includes an experimental component in the PreRelease index' {
@@ -97,8 +100,14 @@ Describe 'Get-MarketplaceSourceIndex' -Tag 'Unit' {
                 '.github/agents/demo/shared.agent.md'
                 '.github/agents/demo/solo.agent.md'
                 '.github/hooks/demo/hooks.json'
+                '.github/prompts/demo/run.prompt.md'
                 '.github/skills/demo/toolkit'
             ) -join "`n")
+    }
+
+    It 'Indexes the same sources on both channels' {
+        ($script:StableIndex.Keys | Sort-Object) -join "`n" |
+            Should -BeExactly (($script:PreReleaseIndex.Keys | Sort-Object) -join "`n")
     }
 }
 

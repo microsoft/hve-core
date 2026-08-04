@@ -395,6 +395,30 @@ Describe 'Invoke-PluginReleaseEvidence' -Tag 'Unit' {
         }
     }
 
+    Context 'when exactly one package is required' {
+        It 'Accepts a snapshot holding only the surviving package' {
+            Remove-Item -LiteralPath (Join-Path $script:snapshotRoot 'bravo') -Recurse -Force
+            $run = Invoke-PluginReleaseEvidence -RepoRoot $script:evidenceRepo -SourceCommit $script:SourceCommit `
+                -OutputPath '' -ExpectedPackageCount 1
+            $run.Success | Should -BeTrue
+            $run.Evidence['packageCount'] | Should -Be 1
+        }
+
+        It 'Refuses a snapshot with <Count> package roots' -ForEach @(
+            @{ Count = 0; Removed = @('alpha', 'bravo') }
+            @{ Count = 2; Removed = @() }
+        ) {
+            foreach ($name in $Removed) {
+                Remove-Item -LiteralPath (Join-Path $script:snapshotRoot $name) -Recurse -Force
+            }
+            $run = Invoke-PluginReleaseEvidence -RepoRoot $script:evidenceRepo -SourceCommit $script:SourceCommit `
+                -OutputPath '' -ExpectedPackageCount 1
+            $run.Success | Should -BeFalse
+            ($run.Errors -join ' ') |
+                Should -Match "package count precondition failed: expected 1, snapshot has $Count"
+        }
+    }
+
     Context 'when the snapshot tree is absent' {
         It 'Refuses to record evidence' {
             { Invoke-PluginReleaseEvidence -RepoRoot $script:evidenceRepo -SourceCommit $script:SourceCommit `

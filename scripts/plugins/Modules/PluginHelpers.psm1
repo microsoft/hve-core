@@ -248,6 +248,34 @@ function Split-PluginDocumentationSource {
     return $result
 }
 
+function Get-PluginItemMaturityLabel {
+    <#
+    .SYNOPSIS
+    Returns the canonical maturity label rendered for one README row.
+
+    .DESCRIPTION
+    The catalog labels only non-default components, so an item without a
+    declared maturity discloses the canonical 'stable' default rather than a
+    blank cell.
+
+    .PARAMETER Item
+    README item carrying an optional Maturity value.
+
+    .OUTPUTS
+    [string] Canonical maturity label.
+    #>
+    [CmdletBinding()]
+    [OutputType([string])]
+    param(
+        [Parameter(Mandatory = $true)]
+        [object]$Item
+    )
+
+    $value = [string]$Item.Maturity
+    if ([string]::IsNullOrWhiteSpace($value)) { return 'stable' }
+    return $value
+}
+
 function New-PluginReadmeContent {
     <#
     .SYNOPSIS
@@ -264,7 +292,7 @@ function New-PluginReadmeContent {
 
     .PARAMETER Items
     Array of processed item objects. Each object must have Name, Description,
-    and Kind properties.
+    and Kind properties, and may carry a canonical Maturity label.
 
     .PARAMETER Maturity
         Optional package maturity string. When 'experimental', an
@@ -386,16 +414,20 @@ function New-PluginReadmeContent {
 
             # Calculate column widths for aligned table output
             $col1Width = $meta.Header.Length
-            $col2Width = 'Description'.Length
+            $col2Width = 'Maturity'.Length
+            $col3Width = 'Description'.Length
             foreach ($item in $kindItems) {
+                $label = Get-PluginItemMaturityLabel -Item $item
                 if ($item.Name.Length -gt $col1Width) { $col1Width = $item.Name.Length }
-                if ($item.Description.Length -gt $col2Width) { $col2Width = $item.Description.Length }
+                if ($label.Length -gt $col2Width) { $col2Width = $label.Length }
+                if ($item.Description.Length -gt $col3Width) { $col3Width = $item.Description.Length }
             }
 
-            [void]$sb.AppendLine("| $($meta.Header.PadRight($col1Width)) | $('Description'.PadRight($col2Width)) |")
-            [void]$sb.AppendLine('|' + ('-' * ($col1Width + 2)) + '|' + ('-' * ($col2Width + 2)) + '|')
+            [void]$sb.AppendLine("| $($meta.Header.PadRight($col1Width)) | $('Maturity'.PadRight($col2Width)) | $('Description'.PadRight($col3Width)) |")
+            [void]$sb.AppendLine('|' + ('-' * ($col1Width + 2)) + '|' + ('-' * ($col2Width + 2)) + '|' + ('-' * ($col3Width + 2)) + '|')
             foreach ($item in $kindItems) {
-                [void]$sb.AppendLine("| $($item.Name.PadRight($col1Width)) | $($item.Description.PadRight($col2Width)) |")
+                $label = (Get-PluginItemMaturityLabel -Item $item).PadRight($col2Width)
+                [void]$sb.AppendLine("| $($item.Name.PadRight($col1Width)) | $label | $($item.Description.PadRight($col3Width)) |")
             }
         }
     }
@@ -556,6 +588,8 @@ function New-MarketplaceManifestContent {
             $projected[$key] = $plugin[$key]
         }
 
+        $projected['version'] = $Version
+
         if ($useLocator) {
             $projected['source'] = [ordered]@{
                 source = 'github'
@@ -611,6 +645,9 @@ function Write-MarketplaceManifest {
     Destination path, absolute or relative to RepoRoot. The production catalog
     is rejected as a destination.
 
+    .PARAMETER Version
+    Optional semantic version for the projection. Defaults to package.json.
+
     .PARAMETER DryRun
     When specified, logs the action without writing to disk.
     #>
@@ -629,6 +666,10 @@ function Write-MarketplaceManifest {
         [Parameter(Mandatory = $true)]
         [ValidateNotNullOrEmpty()]
         [string]$OutputPath,
+
+        [Parameter(Mandatory = $false)]
+        [ValidatePattern('^\d+\.\d+\.\d+$')]
+        [string]$Version,
 
         [Parameter(Mandatory = $false)]
         [switch]$DryRun
@@ -650,11 +691,12 @@ function Write-MarketplaceManifest {
 
     $packageJsonPath = Join-Path -Path $RepoRoot -ChildPath 'package.json'
     $packageJson = Get-Content -Path $packageJsonPath -Raw | ConvertFrom-Json
+    $manifestVersion = if ([string]::IsNullOrWhiteSpace($Version)) { [string]$packageJson.version } else { $Version }
 
     $manifestArgs = @{
         RepoName    = $packageJson.name
         Description = $packageJson.description
-        Version     = $packageJson.version
+        Version     = $manifestVersion
         OwnerName   = $packageJson.author
         Plugins     = @($Catalog['plugins'])
     }
@@ -723,13 +765,15 @@ function Test-PluginGitRefName {
 function Assert-PluginSnapshotTarget {
     <#
     .SYNOPSIS
-    Validates the disposable branch and tag a snapshot publish may write.
+    Validates the branch and tag a snapshot publish may write.
 
     .DESCRIPTION
-    Snapshot publication is only permitted against disposable references. The
-    moving release branch, immutable 'plugins-v<version>' tags, and the default
-    branch are protected and can never be named as targets. Tags are immutable,
-    so an existing tag is refused rather than overwritten.
+    Disposable mode requires a namespaced branch and tag pair. Production mode
+    permits exactly one immutable plugins-v<version> tag and no branch. Both
+    modes refuse an existing tag rather than overwriting it.
+
+    .PARAMETER Mode
+    Disposable or Production publication mode.
 
     .PARAMETER Branch
     Target branch for the snapshot commit.
@@ -752,6 +796,10 @@ function Assert-PluginSnapshotTarget {
     [CmdletBinding()]
     [OutputType([hashtable])]
     param(
+        [Parameter(Mandatory = $false)]
+        [ValidateSet('Disposable', 'Production')]
+        [string]$Mode = 'Disposable',
+
         [Parameter(Mandatory = $true)]
         [AllowEmptyString()]
         [string]$Branch,
@@ -767,6 +815,29 @@ function Assert-PluginSnapshotTarget {
         [Parameter(Mandatory = $false)]
         [string]$DisposablePrefix = 'plugins-snapshot/'
     )
+
+    $normalizedExisting = @($ExistingRefs | ForEach-Object { ($_ -replace '^refs/(heads|tags)/', '').Trim() })
+
+    if ($Mode -eq 'Production') {
+        if (-not [string]::IsNullOrEmpty($Branch)) {
+            throw "Production snapshot mode does not publish a branch; received '$Branch'."
+        }
+        if (-not (Test-PluginGitRefName -Name $Tag)) {
+            throw "Snapshot tag '$Tag' is not a valid git reference name."
+        }
+        if ($Tag -cnotmatch '^plugins-v\d+\.\d+\.\d+$') {
+            throw "Production snapshot tag '$Tag' must use 'plugins-v<version>' form."
+        }
+        if ($normalizedExisting -contains $Tag) {
+            throw "Snapshot tag '$Tag' already exists. Tags are immutable and are never overwritten."
+        }
+
+        return @{
+            Branch   = ''
+            Tag      = $Tag
+            RefSpecs = @("refs/tags/$Tag")
+        }
+    }
 
     $protectedBranches = @('main', 'release/plugins')
     $productionTagPattern = '^plugins-v\d+\.\d+\.\d+'
@@ -789,7 +860,6 @@ function Assert-PluginSnapshotTarget {
         throw "Snapshot branch and tag must differ; both are '$Branch'."
     }
 
-    $normalizedExisting = @($ExistingRefs | ForEach-Object { ($_ -replace '^refs/(heads|tags)/', '').Trim() })
     if ($normalizedExisting -contains $Tag) {
         throw "Snapshot tag '$Tag' already exists. Tags are immutable and are never overwritten."
     }
@@ -1070,8 +1140,8 @@ function Write-PluginHookArtifact {
     when the hook is auto-loaded from a checked-out repository. Inside an
     installed plugin the same scripts live under the plugin root, so this
     function writes a transformed copy of the manifest with those paths
-    rewritten to the ${PLUGIN_ROOT} placeholder, then materializes the sibling
-    script directory (the manifest path without its .json extension).
+    rewritten to the ${CLAUDE_PLUGIN_ROOT} placeholder, then materializes the
+    sibling script directory (the manifest path without its .json extension).
 
     .PARAMETER SourceManifest
     Absolute path to the source hook .json manifest in the repository.
@@ -1116,10 +1186,13 @@ function Write-PluginHookArtifact {
     }
 
     # Rewrite repo-root-relative hook script paths to plugin-relative paths so
-    # commands resolve from the installed plugin directory. Literal string
-    # replacement avoids regex interpretation of the path and the $ placeholder.
+    # commands resolve from the installed plugin directory. CLAUDE_PLUGIN_ROOT
+    # is the placeholder every Copilot host substitutes; an unsubstituted bare
+    # ${PLUGIN_ROOT} reaches the shell and expands to an empty string. Literal
+    # string replacement avoids regex interpretation of the path and the $
+    # placeholder.
     $manifestText = Get-Content -LiteralPath $SourceManifest -Raw -Encoding utf8
-    $manifestText = $manifestText.Replace('.github/hooks/', '${PLUGIN_ROOT}/hooks/')
+    $manifestText = $manifestText.Replace('.github/hooks/', '${CLAUDE_PLUGIN_ROOT}/hooks/')
     Set-ContentIfChanged -Path $DestinationManifest -Value $manifestText | Out-Null
 
     # Materialize the sibling script directory (manifest path without .json).
@@ -1150,7 +1223,8 @@ function Write-PluginDirectory {
     Marketplace catalog entry describing package identity and provenance.
 
     .PARAMETER Items
-    Resolved recipe items with Kind, Field, PackagePath, and SourcePath keys.
+    Resolved recipe items with Kind, Field, PackagePath, SourcePath, and
+    Maturity keys.
 
     .PARAMETER PluginsDir
     Absolute path to the root plugins output directory.
@@ -1285,6 +1359,7 @@ function Write-PluginDirectory {
             Name        = ($itemName -replace '\.md$', '') -replace '\.json$', ''
             Description = $description
             Kind        = $kind
+            Maturity    = [string]$item.Maturity
         }
 
         $relativeParent = (Split-Path -Parent $item.PackagePath) -replace '\\', '/'
@@ -1436,6 +1511,7 @@ function Write-PluginDirectory {
 Export-ModuleMember -Function @(
     'Assert-PluginSnapshotTarget',
     'Copy-PluginSource',
+    'Get-PluginItemMaturityLabel',
     'Get-PluginTrackedPathIndex',
     'New-GenerateResult',
     'New-MarketplaceManifestContent',

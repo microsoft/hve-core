@@ -214,8 +214,10 @@ function New-ExtensionArtifactSection {
         if (-not $groups.Contains($item.Kind)) { continue }
         $source = Join-Path -Path $RepoRoot -ChildPath $item.SourcePath
         $descriptionPath = if ($item.Kind -eq 'skill') { Join-Path $source 'SKILL.md' } else { $source }
+        $maturity = if ([string]::IsNullOrWhiteSpace([string]$item.Maturity)) { 'stable' } else { [string]$item.Maturity }
         $groups[$item.Kind].Items += @{
             Name        = Get-ArtifactKey -Kind $item.Kind -Path $item.SourcePath
+            Maturity    = $maturity
             Description = Get-ArtifactDescription -FilePath $descriptionPath
         }
     }
@@ -225,10 +227,10 @@ function New-ExtensionArtifactSection {
         if ($group.Items.Count -eq 0) { continue }
         [void]$output.AppendLine("### $($group.Title)")
         [void]$output.AppendLine()
-        [void]$output.AppendLine('| Name | Description |')
-        [void]$output.AppendLine('|------|-------------|')
+        [void]$output.AppendLine('| Name | Maturity | Description |')
+        [void]$output.AppendLine('|------|----------|-------------|')
         foreach ($item in $group.Items | Sort-Object Name) {
-            [void]$output.AppendLine("| **$($item.Name)** | $($item.Description) |")
+            [void]$output.AppendLine("| **$($item.Name)** | $($item.Maturity) | $($item.Description) |")
         }
         [void]$output.AppendLine()
     }
@@ -277,11 +279,10 @@ function New-ExtensionReadme {
     $body = if ($documentation) { Get-PluginDocumentBody -Path (Join-Path $RepoRoot $documentation) } else { '' }
     $maturity = Get-MarketplaceEntryMaturity -Entry $Entry
     $maturityNotice = if ($maturity -eq 'experimental') {
-        '> **Experimental**: This package is available only in the pre-release channel and may change without notice.'
+        '> **Experimental**: This package is experimental. Contents and behavior may change or be removed without notice.'
     }
-    else { '' }
-    $fullEdition = if ([string]$Entry['name'] -notin @('hve-core', 'hve-core-all')) {
-        "## Full Edition`n`nLooking for more domains? Install the full [HVE Core](https://marketplace.visualstudio.com/items?itemName=ise-hve-essentials.hve-core) extension."
+    elseif ($maturity -eq 'preview') {
+        '> **Preview**: This package is in preview. Core features are complete and functional but refinements may follow.'
     }
     else { '' }
 
@@ -290,8 +291,7 @@ function New-ExtensionReadme {
         -replace '\{\{DESCRIPTION\}\}', [string]$Entry['description'] `
         -replace '\{\{MATURITY_NOTICE\}\}', $maturityNotice `
         -replace '\{\{BODY\}\}', $body `
-        -replace '\{\{ARTIFACTS\}\}', (New-ExtensionArtifactSection -Items $Items -RepoRoot $RepoRoot) `
-        -replace '\{\{FULL_EDITION\}\}', $fullEdition
+        -replace '\{\{ARTIFACTS\}\}', (New-ExtensionArtifactSection -Items $Items -RepoRoot $RepoRoot)
     $content = ($content -replace '(\r?\n){3,}', "`n`n").TrimEnd() + "`n"
     Set-ContentIfChanged -Path $OutputPath -Value $content | Out-Null
 }
@@ -300,6 +300,11 @@ function Remove-StaleGeneratedFiles {
     <#
     .SYNOPSIS
     Removes stale generated extension package and README files.
+    .DESCRIPTION
+    The generated set includes the unsuffixed package.json and README.md that
+    the surviving identity owns, so cleanup sweeps both the suffixed and the
+    unsuffixed names. A retired identity therefore cannot leave either form
+    behind on repeated preparation.
     .PARAMETER RepoRoot
     Repository root.
     .PARAMETER ExpectedFiles
@@ -321,7 +326,7 @@ function Remove-StaleGeneratedFiles {
     $expected = [System.Collections.Generic.HashSet[string]]::new([System.StringComparer]::OrdinalIgnoreCase)
     foreach ($file in $ExpectedFiles) { [void]$expected.Add([System.IO.Path]::GetFullPath($file)) }
     $extensionDir = Join-Path $RepoRoot 'extension'
-    foreach ($file in Get-ChildItem -LiteralPath $extensionDir -File | Where-Object { $_.Name -like 'package.*.json' -or $_.Name -like 'README.*.md' }) {
+    foreach ($file in Get-ChildItem -LiteralPath $extensionDir -File | Where-Object { $_.Name -like 'package*.json' -or $_.Name -like 'README*.md' }) {
         if (-not $expected.Contains([System.IO.Path]::GetFullPath($file.FullName))) {
             Remove-Item -LiteralPath $file.FullName -Force
         }

@@ -8,7 +8,7 @@ BeforeAll {
     # Expected values are authored here independently of the module under test.
     $script:ExpectedFields = @('agents', 'commands', 'rules', 'skills', 'hooks')
     $script:ExpectedKinds = @('agent', 'prompt', 'instruction', 'skill', 'hook')
-    $script:ExpectedMetadataKeys = @('displayName', 'maturity', 'componentMaturity', 'documentation', 'aggregate')
+    $script:ExpectedMetadataKeys = @('displayName', 'maturity', 'componentMaturity', 'documentation', 'profiles')
 }
 
 Describe 'Get-MarketplaceComponentFieldMap' -Tag 'Unit' {
@@ -54,7 +54,7 @@ Describe 'Get-MarketplaceMetadataKey' -Tag 'Unit' {
     }
 
     It 'Returns the closed metadata key set in declaration order' {
-        ($script:MetadataKeys -join '|') | Should -BeExactly 'displayName|maturity|componentMaturity|documentation|aggregate'
+        ($script:MetadataKeys -join '|') | Should -BeExactly 'displayName|maturity|componentMaturity|documentation|profiles'
     }
 
     It 'Includes metadata key <Key>' -ForEach @(
@@ -62,7 +62,7 @@ Describe 'Get-MarketplaceMetadataKey' -Tag 'Unit' {
         @{ Key = 'maturity' }
         @{ Key = 'componentMaturity' }
         @{ Key = 'documentation' }
-        @{ Key = 'aggregate' }
+        @{ Key = 'profiles' }
     ) {
         $script:MetadataKeys | Should -Contain $Key
     }
@@ -287,7 +287,7 @@ Describe 'Test-MarketplaceEntryContract component membership' -Tag 'Unit' {
                     maturity          = 'preview'
                     componentMaturity = @{ 'agents/demo/second.md' = 'experimental' }
                     documentation     = 'docs/plugins/demo.md'
-                    aggregate         = $false
+                    profiles          = @{ starter = @('agents/demo/first.md', 'skills/demo/toolkit') }
                 }
             }
             $script:ValidErrors = @(Test-MarketplaceEntryContract -Entry $script:ValidEntry)
@@ -360,6 +360,70 @@ Describe 'Test-MarketplaceEntryContract component membership' -Tag 'Unit' {
     }
 }
 
+Describe 'Test-MarketplaceEntryContract membership hygiene' -Tag 'Unit' {
+    Context 'when a root-level repository artifact is declared' {
+        It 'Rejects root-level <PackagePath> in field <Field>' -ForEach @(
+            @{ Field = 'agents'; PackagePath = 'agents/first.md' }
+            @{ Field = 'commands'; PackagePath = 'commands/run.md' }
+            @{ Field = 'rules'; PackagePath = 'rules/style.instructions.md' }
+            @{ Field = 'skills'; PackagePath = 'skills/toolkit' }
+        ) {
+            $errors = @(Test-MarketplaceEntryContract -Entry @{ name = 'demo'; $Field = @($PackagePath) })
+            $errors | Should -Contain "component path '$PackagePath' is a root-level repository artifact and must not be declared"
+        }
+
+        It 'Rejects a root-level hooks manifest' {
+            $errors = @(Test-MarketplaceEntryContract -Entry @{ name = 'demo'; hooks = 'hooks/hooks.json' })
+            $errors | Should -Contain "component path 'hooks/hooks.json' is a root-level repository artifact and must not be declared"
+        }
+
+        It 'Accepts a namespaced artifact' {
+            $errors = @(Test-MarketplaceEntryContract -Entry @{ name = 'demo'; agents = @('agents/demo/first.md') })
+            $errors.Count | Should -Be 0
+        }
+    }
+
+    Context 'when an experimental namespace is declared' {
+        It 'Rejects <PackagePath> when no componentMaturity is declared' -ForEach @(
+            @{ Field = 'agents'; PackagePath = 'agents/experimental/first.md' }
+            @{ Field = 'commands'; PackagePath = 'commands/experimental/run.md' }
+            @{ Field = 'rules'; PackagePath = 'rules/experimental/style.instructions.md' }
+            @{ Field = 'skills'; PackagePath = 'skills/experimental/toolkit' }
+        ) {
+            $errors = @(Test-MarketplaceEntryContract -Entry @{ name = 'demo'; $Field = @($PackagePath) })
+            $errors | Should -Contain "component path '$PackagePath' is under an experimental namespace and must declare a non-stable x-hve.componentMaturity"
+        }
+
+        It 'Rejects an explicit stable label under an experimental namespace' {
+            $errors = @(Test-MarketplaceEntryContract -Entry @{
+                    name    = 'demo'
+                    agents  = @('agents/experimental/first.md')
+                    'x-hve' = @{ componentMaturity = @{ 'agents/experimental/first.md' = 'stable' } }
+                })
+            $errors | Should -Contain "component path 'agents/experimental/first.md' is under an experimental namespace and must declare a non-stable x-hve.componentMaturity"
+        }
+
+        It 'Accepts non-stable label <Maturity> under an experimental namespace' -ForEach @(
+            @{ Maturity = 'preview' }
+            @{ Maturity = 'experimental' }
+            @{ Maturity = 'deprecated' }
+            @{ Maturity = 'removed' }
+        ) {
+            $errors = @(Test-MarketplaceEntryContract -Entry @{
+                    name    = 'demo'
+                    agents  = @('agents/experimental/first.md')
+                    'x-hve' = @{ componentMaturity = @{ 'agents/experimental/first.md' = $Maturity } }
+                })
+            $errors.Count | Should -Be 0
+        }
+
+        It 'Leaves components outside an experimental namespace on the stable default' {
+            $errors = @(Test-MarketplaceEntryContract -Entry @{ name = 'demo'; agents = @('agents/demo/experimental.md') })
+            $errors.Count | Should -Be 0
+        }
+    }
+}
+
 Describe 'Test-MarketplaceEntryContract x-hve overlay' -Tag 'Unit' {
     It 'Rejects a non-object overlay' {
         $errors = @(Test-MarketplaceEntryContract -Entry @{ name = 'demo'; 'x-hve' = 'preview' })
@@ -374,12 +438,13 @@ Describe 'Test-MarketplaceEntryContract x-hve overlay' -Tag 'Unit' {
     It 'Accepts every key in the closed metadata set' {
         $errors = @(Test-MarketplaceEntryContract -Entry @{
                 name    = 'demo'
+                agents  = @('agents/demo/first.md')
                 'x-hve' = @{
                     displayName       = 'Demo'
                     maturity          = 'stable'
                     componentMaturity = @{ 'agents/demo/first.md' = 'preview' }
                     documentation     = 'docs/plugins/demo.md'
-                    aggregate         = $true
+                    profiles          = @{ starter = @('agents/demo/first.md') }
                 }
             })
         $errors.Count | Should -Be 0
@@ -458,16 +523,82 @@ Describe 'Test-MarketplaceEntryContract x-hve overlay' -Tag 'Unit' {
         $errors | Should -Contain "x-hve.documentation: component path '../secrets.md' must not escape the package root"
     }
 
-    It 'Rejects a non-boolean aggregate flag' {
-        $errors = @(Test-MarketplaceEntryContract -Entry @{ name = 'demo'; 'x-hve' = @{ aggregate = 'true' } })
-        $errors | Should -Contain 'x-hve.aggregate must be a boolean'
+    It 'Rejects a non-object profiles overlay' {
+        $errors = @(Test-MarketplaceEntryContract -Entry @{ name = 'demo'; 'x-hve' = @{ profiles = 'starter' } })
+        $errors | Should -Contain 'x-hve.profiles must be an object keyed by profile name'
     }
 
-    It 'Accepts aggregate flag <Value>' -ForEach @(
-        @{ Value = $true }
-        @{ Value = $false }
-    ) {
-        $errors = @(Test-MarketplaceEntryContract -Entry @{ name = 'demo'; 'x-hve' = @{ aggregate = $Value } })
+    It 'Rejects a profile name outside the identifier vocabulary' {
+        $errors = @(Test-MarketplaceEntryContract -Entry @{
+                name    = 'demo'
+                agents  = @('agents/demo/first.md')
+                'x-hve' = @{ profiles = @{ 'Starter Profile' = @('agents/demo/first.md') } }
+            })
+        $errors | Should -Contain "x-hve.profiles name 'Starter Profile' must contain only lowercase letters, digits, and hyphens"
+    }
+
+    It 'Rejects a profile that is not an array of paths' {
+        $errors = @(Test-MarketplaceEntryContract -Entry @{
+                name    = 'demo'
+                agents  = @('agents/demo/first.md')
+                'x-hve' = @{ profiles = @{ starter = 'agents/demo/first.md' } }
+            })
+        $errors | Should -Contain "x-hve.profiles['starter'] must be an array of component paths"
+    }
+
+    It 'Rejects an empty profile' {
+        $errors = @(Test-MarketplaceEntryContract -Entry @{
+                name    = 'demo'
+                agents  = @('agents/demo/first.md')
+                'x-hve' = @{ profiles = @{ starter = @() } }
+            })
+        $errors | Should -Contain "x-hve.profiles['starter'] must declare at least one component path"
+    }
+
+    It 'Rejects a duplicate profile member' {
+        $errors = @(Test-MarketplaceEntryContract -Entry @{
+                name    = 'demo'
+                agents  = @('agents/demo/first.md')
+                'x-hve' = @{ profiles = @{ starter = @('agents/demo/first.md', 'agents/demo/first.md') } }
+            })
+        $errors | Should -Contain "x-hve.profiles['starter'] declares duplicate path 'agents/demo/first.md'"
+    }
+
+    It 'Rejects a profile member that fails path validation' {
+        $errors = @(Test-MarketplaceEntryContract -Entry @{
+                name    = 'demo'
+                agents  = @('agents/demo/first.md')
+                'x-hve' = @{ profiles = @{ starter = @('agents/../escape.md') } }
+            })
+        $errors | Should -Contain "x-hve.profiles['starter']: component path 'agents/../escape.md' must not escape the package root"
+    }
+
+    It 'Rejects a profile member that is not declared component membership' {
+        $errors = @(Test-MarketplaceEntryContract -Entry @{
+                name    = 'demo'
+                agents  = @('agents/demo/first.md')
+                'x-hve' = @{ profiles = @{ starter = @('agents/demo/absent.md') } }
+            })
+        $errors | Should -Contain "x-hve.profiles['starter'] references 'agents/demo/absent.md', which is not declared component membership"
+    }
+
+    It 'Rejects a profile member from a non-installable field' {
+        $errors = @(Test-MarketplaceEntryContract -Entry @{
+                name    = 'demo'
+                agents  = @('agents/demo/first.md')
+                hooks   = 'hooks/demo/hooks.json'
+                'x-hve' = @{ profiles = @{ starter = @('agents/demo/first.md', 'hooks/demo/hooks.json') } }
+            })
+        $errors | Should -Contain "x-hve.profiles['starter'] references 'hooks/demo/hooks.json' from non-installable field 'hooks'; profiles support only: agents, commands, rules, skills"
+    }
+
+    It 'Accepts a profile that selects a subset of declared membership' {
+        $errors = @(Test-MarketplaceEntryContract -Entry @{
+                name    = 'demo'
+                agents  = @('agents/demo/first.md', 'agents/demo/second.md')
+                skills  = @('skills/demo/toolkit')
+                'x-hve' = @{ profiles = @{ starter = @('agents/demo/first.md', 'skills/demo/toolkit') } }
+            })
         $errors.Count | Should -Be 0
     }
 

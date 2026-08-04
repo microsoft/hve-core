@@ -13,10 +13,11 @@
     a root plugin.json manifest, and an auto-generated README file.
 
     Standard component fields (agents, commands, rules, skills, hooks) are the
-    sole package-definition input; the x-hve overlay contributes maturity,
-    documentation, and aggregate metadata only. Every declared
-    package-relative path maps deterministically back to one canonical
-    repository source, so nothing undeclared is discovered by scanning.
+    sole package-definition input; the x-hve overlay contributes display name,
+    package and per-component maturity, documentation, and installer profile
+    metadata only. Every declared package-relative path maps deterministically
+    back to one canonical repository source, so nothing undeclared is
+    discovered by scanning.
 
     Supports generating all packages or specific names. Use -Refresh to
     regenerate existing plugins (deletes and recreates).
@@ -123,12 +124,12 @@ function New-PluginDocumentationBlock {
 
     .DESCRIPTION
         Renders one table per artifact kind from the resolved package recipe.
-        Names and descriptions come from the declared canonical sources, so the
-        document stays a projection of catalog membership rather than an
-        independent inventory.
+        Names, canonical maturity, and descriptions come from the declared
+        canonical sources, so the document stays a projection of catalog
+        membership rather than an independent inventory.
 
     .PARAMETER Items
-        Resolved recipe items with Kind and SourcePath keys.
+        Resolved recipe items with Kind, SourcePath, and Maturity keys.
 
     .PARAMETER RepoRoot
         Absolute path to the repository root.
@@ -160,6 +161,7 @@ function New-PluginDocumentationBlock {
         }
         $byKind[$item.Kind].Add(@{
                 Name        = Get-ArtifactKey -Kind $item.Kind -Path $item.SourcePath
+                Maturity    = Get-PluginItemMaturityLabel -Item $item
                 Description = Get-ArtifactDescription -FilePath $resolvedPath
             })
     }
@@ -176,10 +178,10 @@ function New-PluginDocumentationBlock {
 
         $null = $sections.AppendLine("### $($section.Title)")
         $null = $sections.AppendLine()
-        $null = $sections.AppendLine('| Name | Description |')
-        $null = $sections.AppendLine('|------|-------------|')
+        $null = $sections.AppendLine('| Name | Maturity | Description |')
+        $null = $sections.AppendLine('|------|----------|-------------|')
         foreach ($entry in ($byKind[$section.Kind] | Sort-Object { $_.Name })) {
-            $null = $sections.AppendLine("| **$($entry.Name)** | $($entry.Description) |")
+            $null = $sections.AppendLine("| **$($entry.Name)** | $($entry.Maturity) | $($entry.Description) |")
         }
         $null = $sections.AppendLine()
     }
@@ -320,6 +322,69 @@ function Assert-PluginOutputSize {
     return $report
 }
 
+function Remove-StalePluginRoot {
+    <#
+    .SYNOPSIS
+        Removes generated plugin roots the catalog no longer declares.
+
+    .DESCRIPTION
+        Per-package orphan cleanup only descends into roots the current run
+        regenerates, so a package deleted from the catalog leaves its whole
+        tree behind. This deletes every directory under the plugins output that
+        the current generation did not produce, making repeated generation from
+        a pre-collapse tree converge on the declared package set.
+
+    .PARAMETER PluginsDir
+        Absolute path to the generated plugins output directory.
+
+    .PARAMETER GeneratedNames
+        Package directory names produced by the current run.
+
+    .PARAMETER DryRun
+        When specified, logs removals without deleting.
+
+    .OUTPUTS
+        [string[]] Removed directory names.
+    #>
+    [CmdletBinding()]
+    [OutputType([string[]])]
+    param(
+        [Parameter(Mandatory = $true)]
+        [ValidateNotNullOrEmpty()]
+        [string]$PluginsDir,
+
+        [Parameter(Mandatory = $true)]
+        [AllowEmptyCollection()]
+        [string[]]$GeneratedNames,
+
+        [Parameter(Mandatory = $false)]
+        [switch]$DryRun
+    )
+
+    if (-not (Test-Path -LiteralPath $PluginsDir -PathType Container)) {
+        return [string[]]@()
+    }
+
+    $keep = [System.Collections.Generic.HashSet[string]]::new(
+        [string[]]$GeneratedNames, [System.StringComparer]::OrdinalIgnoreCase
+    )
+
+    $removed = [System.Collections.Generic.List[string]]::new()
+    foreach ($dir in Get-ChildItem -LiteralPath $PluginsDir -Directory -Force | Sort-Object Name) {
+        if ($keep.Contains($dir.Name)) { continue }
+        $removed.Add($dir.Name)
+        if ($DryRun) {
+            Write-Host "  [DRY RUN] Would remove stale plugin root: $($dir.Name)" -ForegroundColor Yellow
+        }
+        else {
+            Remove-Item -LiteralPath $dir.FullName -Recurse -Force -ErrorAction Stop
+            Write-Host "  Removed stale plugin root: $($dir.Name)" -ForegroundColor Yellow
+        }
+    }
+
+    return [string[]]$removed.ToArray()
+}
+
 function Invoke-PluginGeneration {
     <#
     .SYNOPSIS
@@ -417,9 +482,16 @@ function Invoke-PluginGeneration {
         Join-Path -Path $RepoRoot -ChildPath $CatalogPath
     }
 
-    # Read repo version from package.json for plugin manifests
+    # Read the committed version for ordinary generation. Release projections
+    # derive their effective version from the immutable plugins-v tag.
     $packageJsonPath = Join-Path -Path $RepoRoot -ChildPath 'package.json'
     $repoVersion = (Get-Content -Path $packageJsonPath -Raw | ConvertFrom-Json).version
+    $effectiveVersion = if ($releaseLocator) {
+        $releaseLocator.Ref.Substring('plugins-v'.Length)
+    }
+    else {
+        $repoVersion
+    }
 
     $catalog = Get-MarketplaceCatalog -Path $resolvedCatalogPath
     $allEntries = @($catalog['plugins'])
@@ -444,6 +516,7 @@ function Invoke-PluginGeneration {
     Write-Host "`n=== Plugin Generation ===" -ForegroundColor Cyan
     Write-Host "Packages: $($allEntries.Count)"
     Write-Host "Channel: $Channel"
+    Write-Host "Version: $effectiveVersion"
     Write-Host "Catalog: $resolvedCatalogPath"
     Write-Host "Plugins dir: $pluginsDir"
     if ($DryRun) {
@@ -456,6 +529,7 @@ function Invoke-PluginGeneration {
     $totalInstructions = 0
     $totalSkills = 0
     $totalHooks = 0
+    $generatedNames = [System.Collections.Generic.List[string]]::new()
 
     foreach ($entry in ($allEntries | Sort-Object { $_['name'] })) {
         $id = [string]$entry['name']
@@ -490,7 +564,7 @@ function Invoke-PluginGeneration {
             -Items $items `
             -PluginsDir $pluginsDir `
             -RepoRoot $RepoRoot `
-            -Version $repoVersion `
+            -Version $effectiveVersion `
             -Maturity $packageMaturity `
             -DocumentPath $documentPath `
             -DryRun:$DryRun
@@ -544,8 +618,20 @@ function Invoke-PluginGeneration {
         $totalSkills += $result.SkillCount
         $totalHooks += $result.HookCount
         $generated++
+        $generatedNames.Add($id)
 
         Write-Host "  $id ($itemCount items)" -ForegroundColor Green
+    }
+
+    # Whole-root cleanup complements per-package orphan removal. A package the
+    # catalog no longer declares is never visited above, so only a sweep across
+    # the output root retires its tree.
+    $isFullRun = -not ($PackageNames -and $PackageNames.Count -gt 0)
+    if ($Refresh -and $isFullRun) {
+        $staleRoots = @(Remove-StalePluginRoot -PluginsDir $pluginsDir -GeneratedNames ([string[]]$generatedNames) -DryRun:$DryRun)
+        if ($staleRoots.Count -gt 0) {
+            Write-Host "  Stale plugin roots removed: $($staleRoots -join ', ')"
+        }
     }
 
     # The catalog is the package-definition input, so generation only projects
@@ -558,6 +644,7 @@ function Invoke-PluginGeneration {
         }
         if ($releaseLocator) {
             $marketplaceArgs['ReleaseLocator'] = $releaseLocator
+            $marketplaceArgs['Version'] = $effectiveVersion
         }
         if (-not [string]::IsNullOrWhiteSpace($MarketplaceOutputPath)) {
             $marketplaceArgs['OutputPath'] = $MarketplaceOutputPath
