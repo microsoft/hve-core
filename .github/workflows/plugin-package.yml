@@ -6,7 +6,11 @@ on:
   workflow_call:
     inputs:
       source-ref:
-        description: "Immutable source to package from (full commit SHA or tag)"
+        description: "Immutable source to package from (full commit SHA)"
+        required: true
+        type: string
+      source-policy:
+        description: "Trusted provenance policy for the immutable source"
         required: true
         type: string
       version:
@@ -39,13 +43,73 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          ref: ${{ inputs.source-ref }}
           persist-credentials: false
+
+      - name: Verify and checkout plugin source
+        shell: bash
+        env:
+          SOURCE_REF: ${{ inputs.source-ref }}
+          SOURCE_POLICY: ${{ inputs.source-policy }}
+          INPUT_VERSION: ${{ inputs.version }}
+        run: |
+          set -euo pipefail
+          if [ -z "${SOURCE_REF}" ]; then
+            echo "::error::source-ref is required and must not be blank"
+            exit 1
+          fi
+          if [[ ! "${SOURCE_REF}" =~ ^[0-9a-f]{40}$ ]]; then
+            echo "::error::source-ref must be a full 40-character lowercase commit SHA"
+            exit 1
+          fi
+          if [ -z "${INPUT_VERSION}" ]; then
+            echo "::error::version is required and must not be blank"
+            exit 1
+          fi
+          if [[ ! "${INPUT_VERSION}" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "::error::version must use MAJOR.MINOR.PATCH form"
+            exit 1
+          fi
+
+          case "${SOURCE_POLICY}" in
+            'main-ancestor')
+              if [ "$(git rev-parse --is-shallow-repository)" = 'true' ]; then
+                git fetch --quiet --unshallow --no-tags origin \
+                  '+refs/heads/main:refs/remotes/origin/main'
+              else
+                git fetch --quiet --no-tags origin \
+                  '+refs/heads/main:refs/remotes/origin/main'
+              fi
+              if ! git merge-base --is-ancestor "${SOURCE_REF}" refs/remotes/origin/main; then
+                echo "::error::source-ref is not contained in main"
+                exit 1
+              fi
+              ;;
+            'release-tag')
+              git fetch --quiet --no-tags origin \
+                "refs/tags/hve-core-v${INPUT_VERSION}:refs/tags/hve-core-v${INPUT_VERSION}"
+              tag_commit=$(git rev-parse --verify --end-of-options \
+                "refs/tags/hve-core-v${INPUT_VERSION}^{commit}")
+              if [ "${tag_commit}" != "${SOURCE_REF}" ]; then
+                echo "::error::release tag does not resolve to source-ref"
+                exit 1
+              fi
+              ;;
+            *)
+              echo "::error::Unsupported source policy '${SOURCE_POLICY}'"
+              exit 1
+              ;;
+          esac
+
+          git checkout --quiet --detach "${SOURCE_REF}"
+          if [ "$(git rev-parse HEAD)" != "${SOURCE_REF}" ]; then
+            echo "::error::Verified source checkout does not match source-ref"
+            exit 1
+          fi
 
       - name: Setup PowerShell modules
         uses: ./.github/actions/setup-ps-modules
 
-      - name: Verify explicit source and version
+      - name: Verify version and committed catalog
         shell: pwsh
         env:
           INPUT_SOURCE_REF: ${{ inputs.source-ref }}
@@ -53,15 +117,6 @@ jobs:
           PROJECT_RELEASE_CATALOG: ${{ inputs.project-release-catalog }}
         run: |
           $ErrorActionPreference = 'Stop'
-          if ([string]::IsNullOrWhiteSpace($env:INPUT_SOURCE_REF)) {
-            throw 'source-ref is required and must not be blank'
-          }
-          if ([string]::IsNullOrWhiteSpace($env:INPUT_VERSION)) {
-            throw 'version is required and must not be blank'
-          }
-          if ($env:INPUT_VERSION -cnotmatch '^\d+\.\d+\.\d+$') {
-            throw "version '$env:INPUT_VERSION' must use MAJOR.MINOR.PATCH form"
-          }
           if ($env:PROJECT_RELEASE_CATALOG -ne 'true') {
             # Stable packaging requires committed release state. PreRelease uses
             # the explicit projection step below because its odd version is ephemeral.
@@ -116,8 +171,68 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          ref: ${{ inputs.source-ref }}
           persist-credentials: false
+
+      - name: Verify and checkout plugin source
+        shell: bash
+        env:
+          SOURCE_REF: ${{ inputs.source-ref }}
+          SOURCE_POLICY: ${{ inputs.source-policy }}
+          INPUT_VERSION: ${{ inputs.version }}
+        run: |
+          set -euo pipefail
+          if [ -z "${SOURCE_REF}" ]; then
+            echo "::error::source-ref is required and must not be blank"
+            exit 1
+          fi
+          if [[ ! "${SOURCE_REF}" =~ ^[0-9a-f]{40}$ ]]; then
+            echo "::error::source-ref must be a full 40-character lowercase commit SHA"
+            exit 1
+          fi
+          if [ -z "${INPUT_VERSION}" ]; then
+            echo "::error::version is required and must not be blank"
+            exit 1
+          fi
+          if [[ ! "${INPUT_VERSION}" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "::error::version must use MAJOR.MINOR.PATCH form"
+            exit 1
+          fi
+
+          case "${SOURCE_POLICY}" in
+            'main-ancestor')
+              if [ "$(git rev-parse --is-shallow-repository)" = 'true' ]; then
+                git fetch --quiet --unshallow --no-tags origin \
+                  '+refs/heads/main:refs/remotes/origin/main'
+              else
+                git fetch --quiet --no-tags origin \
+                  '+refs/heads/main:refs/remotes/origin/main'
+              fi
+              if ! git merge-base --is-ancestor "${SOURCE_REF}" refs/remotes/origin/main; then
+                echo "::error::source-ref is not contained in main"
+                exit 1
+              fi
+              ;;
+            'release-tag')
+              git fetch --quiet --no-tags origin \
+                "refs/tags/hve-core-v${INPUT_VERSION}:refs/tags/hve-core-v${INPUT_VERSION}"
+              tag_commit=$(git rev-parse --verify --end-of-options \
+                "refs/tags/hve-core-v${INPUT_VERSION}^{commit}")
+              if [ "${tag_commit}" != "${SOURCE_REF}" ]; then
+                echo "::error::release tag does not resolve to source-ref"
+                exit 1
+              fi
+              ;;
+            *)
+              echo "::error::Unsupported source policy '${SOURCE_POLICY}'"
+              exit 1
+              ;;
+          esac
+
+          git checkout --quiet --detach "${SOURCE_REF}"
+          if [ "$(git rev-parse HEAD)" != "${SOURCE_REF}" ]; then
+            echo "::error::Verified source checkout does not match source-ref"
+            exit 1
+          fi
 
       - name: Setup Node.js
         uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0

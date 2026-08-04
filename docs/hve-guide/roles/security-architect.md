@@ -3,7 +3,7 @@ title: Security Architect Guide
 description: HVE Core support for security architects building security models, security plans, and compliance verification
 sidebar_position: 7
 author: Microsoft
-ms.date: 2026-08-03
+ms.date: 2026-08-04
 ms.topic: how-to
 keywords:
   - security
@@ -141,7 +141,7 @@ Prompts complement the agents for targeted security workflows:
 
 > [!TIP]
 > Browse the complete HVE Core inventory: [HVE Core](../../plugins/hve-core)
-> Plan responsible AI assessments: [Responsible AI Planning](../../planning/rai/)
+> Plan responsible AI assessments: [Responsible AI Planning](../../agents/rai-planning/)
 > Review the security model documentation: [Security Model](../../security/security-model.md)
 > See how security fits the project lifecycle: [AI-Assisted Project Lifecycle](../lifecycle/)
 

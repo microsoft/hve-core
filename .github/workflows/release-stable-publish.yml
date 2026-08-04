@@ -281,6 +281,7 @@ jobs:
         uses: ./.github/workflows/plugin-package.yml
         with:
             source-ref: ${{ needs.validate-release.outputs.sha }}
+            source-policy: release-tag
             version: ${{ needs.validate-release.outputs.version }}
         permissions:
             contents: read
@@ -291,6 +292,7 @@ jobs:
         uses: ./.github/workflows/plugin-snapshot-publish.yml
         with:
             source-ref: ${{ needs.validate-release.outputs.sha }}
+            source-policy: release-tag
             expected-version: ${{ needs.validate-release.outputs.version }}
             production: true
         permissions:

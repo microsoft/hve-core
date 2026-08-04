@@ -654,10 +654,9 @@ Describe 'Reusable packaging source contracts' -Tag 'Unit' {
         }
     }
 
-    It 'Checks out the explicit source in every job of <Workflow>' -ForEach @(
+    It 'Checks out the explicit source in every extension job of <Workflow>' -ForEach @(
         @{ Workflow = 'extension-package.yml' }
         @{ Workflow = 'extension-provenance.yml' }
-        @{ Workflow = 'plugin-package.yml' }
     ) {
         $document = Get-WorkflowDocument -Name $Workflow
         $checkouts = 0
@@ -671,6 +670,66 @@ Describe 'Reusable packaging source contracts' -Tag 'Unit' {
             }
         }
         $checkouts | Should -BeGreaterThan 0
+    }
+
+    It 'Requires an explicit provenance policy for plugin packaging' {
+        $inputs = (Get-WorkflowDocument -Name 'plugin-package.yml')['on']['workflow_call']['inputs']
+        $inputs.Contains('source-policy') | Should -BeTrue
+        $inputs['source-policy']['required'] | Should -BeTrue
+        [string]$inputs['source-policy']['type'] | Should -BeExactly 'string'
+        $inputs['source-policy'].Contains('default') | Should -BeFalse
+    }
+
+    It 'Verifies source provenance before target-tree execution in plugin job <Job>' -ForEach @(
+        @{ Job = 'discover-packages' }
+        @{ Job = 'package' }
+    ) {
+        $document = Get-WorkflowDocument -Name 'plugin-package.yml'
+        $steps = @($document['jobs'][$Job]['steps'])
+        $checkout = @($steps | Where-Object { $_.Contains('uses') -and [string]$_['uses'] -match '^actions/checkout@' })
+        $checkout | Should -HaveCount 1
+        $checkout[0]['with'].Contains('ref') | Should -BeFalse
+        $checkout[0]['with']['persist-credentials'] | Should -BeFalse
+
+        $proof = @($steps | Where-Object { $_.Contains('run') -and [string]$_['run'] -match 'SOURCE_POLICY' })
+        $proof | Should -HaveCount 1
+        $run = [string]$proof[0]['run']
+        foreach ($pattern in @(
+                '\^\[0-9a-f\]\{40\}\$',
+                "'main-ancestor'",
+                "'release-tag'",
+                'refs/heads/main:refs/remotes/origin/main',
+                'git merge-base --is-ancestor',
+                'refs/tags/hve-core-v\$\{INPUT_VERSION\}',
+                'rev-parse --verify --end-of-options',
+                'git checkout --quiet --detach',
+                'git rev-parse HEAD',
+                'Unsupported source policy'
+            )) {
+            $run | Should -Match $pattern
+        }
+
+        $proofIndex = [array]::IndexOf($steps, $proof[0])
+        $executionIndexes = @(0..($steps.Count - 1) | Where-Object {
+                ([string]$steps[$_]['uses'] -match '^\./|^actions/setup-node@') -or
+                ([string]$steps[$_]['run'] -match 'npm (ci|run)|\.ps1\b')
+            })
+        $executionIndexes.Count | Should -BeGreaterThan 0
+        $proofIndex | Should -BeLessThan $executionIndexes[0]
+    }
+
+    It 'Wires each release lane to its matching plugin source policy' {
+        $preRelease = Get-WorkflowDocument -Name 'release-prerelease.yml'
+        [string]$preRelease['jobs']['plugin-package-prerelease']['with']['source-policy'] |
+            Should -BeExactly 'main-ancestor'
+        [string]$preRelease['jobs']['plugin-snapshot-production']['with']['source-policy'] |
+            Should -BeExactly 'main-ancestor'
+
+        $stable = Get-WorkflowDocument -Name 'release-stable-publish.yml'
+        [string]$stable['jobs']['plugin-package-release']['with']['source-policy'] |
+            Should -BeExactly 'release-tag'
+        [string]$stable['jobs']['plugin-snapshot-production']['with']['source-policy'] |
+            Should -BeExactly 'release-tag'
     }
 
     It 'Fails a blank source ref or version in <Workflow>' -ForEach @(
@@ -772,6 +831,13 @@ Describe 'Reusable packaging source contracts' -Tag 'Unit' {
 
     It 'Validates caller-controlled refs before writing snapshot outputs' {
         $document = Get-WorkflowDocument -Name 'plugin-snapshot-publish.yml'
+        $checkout = @($document['jobs']['publish-snapshot']['steps'] | Where-Object {
+                $_.Contains('uses') -and [string]$_['uses'] -match '^actions/checkout@'
+            })
+        $checkout | Should -HaveCount 1
+        $checkout[0]['with'].Contains('ref') | Should -BeFalse
+        $checkout[0]['with']['persist-credentials'] | Should -BeFalse
+
         $source = @($document['jobs']['publish-snapshot']['steps'] | Where-Object {
                 [string]$_['id'] -eq 'source'
             })[0]
@@ -783,6 +849,21 @@ Describe 'Reusable packaging source contracts' -Tag 'Unit' {
         $run | Should -Match '\^\[A-Za-z0-9\._/-\]\+\$'
         $run | Should -Match '\[\[ -n "\$\{value\}" && ! "\$\{value\}" =~'
         $run | Should -Not -Match '\$\{value\}.*\|\s*grep'
+        foreach ($pattern in @(
+                "'main-ancestor'",
+                "'release-tag'",
+                "'direct-event'",
+                "'manual-authorized'",
+                'refs/heads/main:refs/remotes/origin/main',
+                'refs/tags/hve-core-v\$\{EXPECTED_VERSION\}',
+                'git merge-base --is-ancestor',
+                'git check-ref-format',
+                'FETCH_HEAD\^\{commit\}',
+                'git checkout --quiet --detach',
+                'Unsupported source policy'
+            )) {
+            $run | Should -Match $pattern
+        }
         $run.IndexOf("validate_ref_value 'source-ref'", [System.StringComparison]::Ordinal) |
             Should -BeLessThan $run.IndexOf('source_commit=$(git rev-parse HEAD)', [System.StringComparison]::Ordinal)
         $run.IndexOf("validate_ref_value 'source-ref'", [System.StringComparison]::Ordinal) |
@@ -833,7 +914,7 @@ Describe 'Reusable packaging source contracts' -Tag 'Unit' {
     It 'Publishes immutable production snapshots for both release lanes before publication' {
         $snapshot = Get-WorkflowDocument -Name 'plugin-snapshot-publish.yml'
         $callInputs = $snapshot['on']['workflow_call']['inputs']
-        foreach ($name in @('source-ref', 'expected-version', 'production')) {
+        foreach ($name in @('source-ref', 'source-policy', 'expected-version', 'production')) {
             $callInputs.Contains($name) | Should -BeTrue
         }
         [string]$callInputs['production']['type'] | Should -BeExactly 'boolean'

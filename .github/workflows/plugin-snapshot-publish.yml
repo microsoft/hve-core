@@ -15,6 +15,10 @@ on:
         description: "Immutable source to generate from"
         required: true
         type: string
+      source-policy:
+        description: "Trusted provenance policy for the immutable source"
+        required: true
+        type: string
       expected-version:
         description: "Version and plugins-v locator to project"
         required: true
@@ -78,14 +82,15 @@ jobs:
       - name: Checkout immutable source
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          ref: ${{ inputs.source-ref || github.sha }}
           persist-credentials: false
 
       - name: Resolve source commit and version
         id: source
         shell: bash
         env:
-          SOURCE_REF: ${{ inputs.source-ref || github.sha }}
+          SOURCE_REF: ${{ inputs.source-ref }}
+          SOURCE_POLICY: ${{ inputs.source-policy }}
+          EVENT_SHA: ${{ github.sha }}
           EXPECTED_VERSION: ${{ inputs.expected-version }}
           REQUESTED_BRANCH: ${{ inputs.snapshot-branch || format('plugins-snapshot/dryrun-{0}', github.run_id) }}
           REQUESTED_TAG: ${{ inputs.snapshot-tag || format('plugins-snapshot/dryrun-{0}-tag', github.run_id) }}
@@ -102,9 +107,114 @@ jobs:
               exit 1
             fi
           }
-          validate_ref_value 'source-ref' "${SOURCE_REF}"
+          source_policy=${SOURCE_POLICY:-}
+          if [ -z "${source_policy}" ]; then
+            case "${GITHUB_EVENT_NAME}" in
+              push)
+                source_policy='direct-event'
+                SOURCE_REF=${EVENT_SHA}
+                ;;
+              workflow_dispatch)
+                source_policy='manual-authorized'
+                ;;
+              *)
+                echo "::error::Unsupported direct event '${GITHUB_EVENT_NAME}'"
+                exit 1
+                ;;
+            esac
+          fi
 
-          source_commit=$(git rev-parse HEAD)
+          if [ -z "${SOURCE_REF}" ]; then
+            echo "::error::source-ref is required and must not be blank"
+            exit 1
+          fi
+          validate_ref_value 'source-ref' "${SOURCE_REF}"
+          if [ -n "${EXPECTED_VERSION}" ] &&
+            [[ ! "${EXPECTED_VERSION}" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "::error::expected-version must use MAJOR.MINOR.PATCH form"
+            exit 1
+          fi
+
+          case "${source_policy}" in
+            'main-ancestor')
+              if [[ ! "${SOURCE_REF}" =~ ^[0-9a-f]{40}$ ]]; then
+                echo "::error::main-ancestor requires a full 40-character lowercase commit SHA"
+                exit 1
+              fi
+              if [ "$(git rev-parse --is-shallow-repository)" = 'true' ]; then
+                git fetch --quiet --unshallow --no-tags origin \
+                  '+refs/heads/main:refs/remotes/origin/main'
+              else
+                git fetch --quiet --no-tags origin \
+                  '+refs/heads/main:refs/remotes/origin/main'
+              fi
+              if ! git merge-base --is-ancestor "${SOURCE_REF}" refs/remotes/origin/main; then
+                echo "::error::source-ref is not contained in main"
+                exit 1
+              fi
+              source_commit=${SOURCE_REF}
+              ;;
+            'release-tag')
+              if [[ ! "${SOURCE_REF}" =~ ^[0-9a-f]{40}$ ]]; then
+                echo "::error::release-tag requires a full 40-character lowercase commit SHA"
+                exit 1
+              fi
+              if [ -z "${EXPECTED_VERSION}" ]; then
+                echo "::error::release-tag requires expected-version"
+                exit 1
+              fi
+              git fetch --quiet --no-tags origin \
+                "refs/tags/hve-core-v${EXPECTED_VERSION}:refs/tags/hve-core-v${EXPECTED_VERSION}"
+              source_commit=$(git rev-parse --verify --end-of-options \
+                "refs/tags/hve-core-v${EXPECTED_VERSION}^{commit}")
+              if [ "${source_commit}" != "${SOURCE_REF}" ]; then
+                echo "::error::release tag does not resolve to source-ref"
+                exit 1
+              fi
+              ;;
+            'direct-event')
+              if [[ ! "${EVENT_SHA}" =~ ^[0-9a-f]{40}$ ]]; then
+                echo "::error::direct-event requires a full event SHA"
+                exit 1
+              fi
+              source_commit=$(git rev-parse HEAD)
+              if [ "${source_commit}" != "${EVENT_SHA}" ] || [ "${SOURCE_REF}" != "${EVENT_SHA}" ]; then
+                echo "::error::Direct event checkout does not match github.sha"
+                exit 1
+              fi
+              ;;
+            'manual-authorized')
+              if [[ "${SOURCE_REF}" =~ ^[0-9a-f]{40}$ ]]; then
+                git fetch --quiet --no-tags origin "${SOURCE_REF}"
+                source_commit=$(git rev-parse --verify --end-of-options 'FETCH_HEAD^{commit}')
+                if [ "${source_commit}" != "${SOURCE_REF}" ]; then
+                  echo "::error::Manual SHA did not resolve to the requested commit"
+                  exit 1
+                fi
+              else
+                if [[ "${SOURCE_REF}" == refs/* ]] ||
+                  ! git check-ref-format "refs/tags/${SOURCE_REF}"; then
+                  echo "::error::Manual tag is invalid or ambiguous"
+                  exit 1
+                fi
+                git fetch --quiet --no-tags origin \
+                  "refs/tags/${SOURCE_REF}:refs/tags/${SOURCE_REF}"
+                source_commit=$(git rev-parse --verify --end-of-options \
+                  "refs/tags/${SOURCE_REF}^{commit}")
+              fi
+              ;;
+            *)
+              echo "::error::Unsupported source policy '${source_policy}'"
+              exit 1
+              ;;
+          esac
+
+          git checkout --quiet --detach "${source_commit}"
+          if [ "$(git rev-parse HEAD)" != "${source_commit}" ]; then
+            echo "::error::Verified source checkout does not match resolved commit"
+            exit 1
+          fi
+
           committed_version=$(jq -r .version package.json)
           if [ "${PRODUCTION}" = 'true' ]; then
             if ! printf '%s' "${EXPECTED_VERSION}" | grep -Eq '^[0-9]+\.[0-9]+\.[0-9]+$'; then
