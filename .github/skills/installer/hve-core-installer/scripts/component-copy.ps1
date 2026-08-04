@@ -13,6 +13,8 @@
     Root path of the local HVE-Core clone used as the copy source.
 .PARAMETER TargetRoot
     Root of the repository that receives the copied components.
+.PARAMETER PackageName
+    Marketplace package name whose recipe declares the installable components.
 .PARAMETER SelectionName
     Marketplace profile name that produced the selection, or 'custom'.
 .PARAMETER Component
@@ -24,7 +26,7 @@
 .PARAMETER Collisions
     Component paths that already exist in the target and may conflict.
 .EXAMPLE
-    ./scripts/component-copy.ps1 -HveCoreBasePath ../hve-core -TargetRoot . -SelectionName starter -Component @('agents/hve-core/rpi-agent.md', 'skills/rpi/rpi-plan')
+    ./scripts/component-copy.ps1 -HveCoreBasePath ../hve-core -TargetRoot . -PackageName hve-core-all -SelectionName starter -Component @('agents/hve-core/rpi-agent.md', 'skills/rpi/rpi-plan')
 .OUTPUTS
     Per-component copy status and manifest creation confirmation.
 #>
@@ -37,6 +39,10 @@ param(
     [Parameter(Mandatory)]
     [ValidateScript({ Test-Path -LiteralPath $_ -PathType Container })]
     [string]$TargetRoot,
+
+    [Parameter(Mandatory)]
+    [ValidateNotNullOrEmpty()]
+    [string]$PackageName,
 
     [Parameter(Mandatory)]
     [ValidateNotNullOrEmpty()]
@@ -96,10 +102,16 @@ if (-not (Test-Path -LiteralPath $catalogPath -PathType Leaf)) {
     throw "Marketplace catalog not found: $catalogPath"
 }
 $catalog = Get-Content -LiteralPath $catalogPath -Raw -Encoding utf8 | ConvertFrom-Json -AsHashtable
-$entry = @($catalog['plugins']) | Where-Object { $_['name'] -eq 'hve-core' } | Select-Object -First 1
-if (-not $entry) {
-    throw "Marketplace catalog '$catalogPath' declares no hve-core recipe."
+$packageEntries = @(@($catalog['plugins']) | Where-Object {
+        [string]::Equals([string]$_['name'], $PackageName, [System.StringComparison]::Ordinal)
+    })
+if ($packageEntries.Count -eq 0) {
+    throw "Marketplace catalog '$catalogPath' declares no package named '$PackageName'."
 }
+if ($packageEntries.Count -gt 1) {
+    throw "Marketplace catalog '$catalogPath' declares $($packageEntries.Count) packages named '$PackageName'."
+}
+$entry = $packageEntries[0]
 $componentMaturity = @{}
 if ($entry['x-hve'] -is [System.Collections.IDictionary] -and $entry['x-hve']['componentMaturity'] -is [System.Collections.IDictionary]) {
     foreach ($key in $entry['x-hve']['componentMaturity'].Keys) {
@@ -111,6 +123,9 @@ foreach ($field in $fieldMap.Keys) {
     foreach ($packagePath in @($entry[$field])) {
         if (-not [string]::IsNullOrWhiteSpace([string]$packagePath)) { [void]$membership.Add([string]$packagePath) }
     }
+}
+if ($membership.Count -eq 0) {
+    throw "Marketplace package '$PackageName' in '$catalogPath' declares no installable components."
 }
 
 # An unsupported manifest must fail before the target is touched. Version 1 has
@@ -167,7 +182,7 @@ foreach ($raw in $Component) {
         throw "Component path '$normalized' must start with one of: $($fieldMap.Keys -join ', ')."
     }
     if (-not $membership.Contains($normalized)) {
-        throw "Component '$normalized' is not declared membership of the hve-core marketplace recipe."
+        throw "Component '$normalized' is not declared membership of the '$PackageName' marketplace recipe."
     }
     if (-not $seenComponents.Add($normalized)) { continue }
 
@@ -304,6 +319,7 @@ $manifest = [ordered]@{
     version       = $version
     installed     = (Get-Date).ToUniversalTime().ToString('yyyy-MM-ddTHH:mm:ssZ')
     selection     = [ordered]@{
+        package    = $PackageName
         profile    = $SelectionName
         components = $installedComponentOrder
     }

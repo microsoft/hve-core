@@ -9,13 +9,13 @@
 # component-level: a file component collides on its full target path and a
 # skill component collides on its target directory.
 #
-# Usage: collision-detection.sh <hve_core_base_path> <target_root> <component...>
+# Usage: collision-detection.sh <hve_core_base_path> <target_root> <package_name> <component...>
 
 set -euo pipefail
 
 main() {
-  if [[ $# -lt 3 ]]; then
-    echo "Usage: $0 <hve_core_base_path> <target_root> <component...>" >&2
+  if [[ $# -lt 4 ]]; then
+    echo "Usage: $0 <hve_core_base_path> <target_root> <package_name> <component...>" >&2
     exit 1
   fi
 
@@ -24,10 +24,11 @@ main() {
 
   local hve_core_base_path="$1"
   local target_root="$2"
-  shift 2
+  local package_name="$3"
+  shift 3
 
   export REPORT_ONLY=true
-  exec bash "$script_dir/component-copy.sh" "$hve_core_base_path" "$target_root" custom "$@"
+  exec bash "$script_dir/component-copy.sh" "$hve_core_base_path" "$target_root" "$package_name" custom "$@"
 }
 
 main "$@"

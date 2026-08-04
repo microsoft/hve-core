@@ -26,7 +26,8 @@ BeforeAll {
             [Parameter(Mandatory)][string]$Root,
             [Parameter()][hashtable]$PackageOverlay,
             [Parameter()][switch]$SkipAgentRoot,
-            [Parameter()][switch]$SkipDocumentationRoot
+            [Parameter()][switch]$SkipDocumentationRoot,
+            [Parameter()][switch]$AddSecondPackage
         )
 
         New-PluginFixtureRepository -Path $Root -Version '9.9.9' `
@@ -47,6 +48,25 @@ BeforeAll {
                 -Rules $script:ComponentPaths.Rules -Skills $script:ComponentPaths.Skills `
                 -Hook $script:ComponentPaths.Hook -Overlay $packageOverlayValues
         )
+        if ($AddSecondPackage) {
+            Add-PluginFixtureFile -RepoRoot $Root -RelativePath '.github/agents/ops/ops-auditor.agent.md' `
+                -Content "---`nname: Ops Auditor`ndescription: Audits operations`n---`n`n# Ops Auditor`n" | Out-Null
+            Add-PluginFixtureFile -RepoRoot $Root -RelativePath '.github/prompts/ops/ops-audit.prompt.md' `
+                -Content "---`ndescription: Runs an ops audit`n---`n`n# Ops Audit`n" | Out-Null
+            Add-PluginFixtureFile -RepoRoot $Root -RelativePath '.github/instructions/ops/ops-baseline.instructions.md' `
+                -Content "---`ndescription: Ops baseline rules`n---`n`n# Ops Baseline`n" | Out-Null
+            Add-PluginFixtureFile -RepoRoot $Root -RelativePath '.github/skills/ops/ops-toolkit/SKILL.md' `
+                -Content "---`nname: ops-toolkit`ndescription: Ops toolkit`n---`n`n# Ops Toolkit`n" | Out-Null
+            Add-PluginFixtureFile -RepoRoot $Root -RelativePath '.github/hooks/ops/audit.json' `
+                -Content '{"description":"Records ops audits","hooks":{"SessionStart":[{"command":".github/hooks/ops/audit/collect.sh"}]}}' | Out-Null
+            Add-PluginFixtureFile -RepoRoot $Root -RelativePath '.github/hooks/ops/audit/collect.sh' `
+                -Content "#!/usr/bin/env bash`necho audit`n" | Out-Null
+
+            $entries += New-PluginFixtureEntry -Name 'ops' -Description 'Ops audit package' -Version '9.9.9' `
+                -Agents @('agents/ops/ops-auditor.md') -Commands @('commands/ops/ops-audit.md') `
+                -Rules @('rules/ops/ops-baseline.instructions.md') -Skills @('skills/ops/ops-toolkit') `
+                -Hook 'hooks/ops/audit.json'
+        }
         Add-PluginFixtureCatalog -RepoRoot $Root -Entries $entries -Version '9.9.9' `
             -SkipDocuments:$SkipDocumentationRoot | Out-Null
         return $Root
@@ -458,43 +478,56 @@ Describe 'Test-MarketplaceRepositoryContract' -Tag 'Unit' {
         }
     }
 
-    Context 'when the catalog is not a single recipe' {
-        It 'Reports <Label>' -ForEach @(
-            @{ Label = 'an empty catalog'; Count = 0 }
-            @{ Label = 'a second recipe'; Count = 2 }
-        ) {
+    Context 'when the catalog declares one or many ordinary recipes' {
+        It 'Accepts a single-recipe catalog' {
             New-ValidatorFixture -Root $script:contractRepo | Out-Null
-            $entryCount = $Count
-            Set-CatalogEntry -Root $script:contractRepo -Mutation {
-                param($catalog)
-                if ($entryCount -eq 0) {
-                    $catalog['plugins'] = @()
-                }
-                else {
-                    $second = $catalog['plugins'][0].Clone()
-                    $second['name'] = 'rpi-extra'
-                    $catalog['plugins'] = @($catalog['plugins'][0], $second)
-                }
+
+            $run = Get-ValidationReport -Root $script:contractRepo
+            $run.Outcome.Success | Should -BeTrue
+            $run.Outcome.ErrorCount | Should -Be 0
+            @($run.Report['Results'] | ForEach-Object { $_['PluginName'] }) | Should -Be @('rpi')
+        }
+
+        It 'Accepts two recipes that each declare their own hook manifest' {
+            New-ValidatorFixture -Root $script:contractRepo -AddSecondPackage | Out-Null
+            $catalog = Get-Content -LiteralPath (Join-Path $script:contractRepo '.github/plugin/marketplace.json') -Raw |
+                ConvertFrom-Json -AsHashtable
+            @($catalog['plugins'] | Where-Object { -not [string]::IsNullOrWhiteSpace([string]$_['hooks']) }).Count |
+                Should -Be 2
+
+            $run = Get-ValidationReport -Root $script:contractRepo
+            $run.Outcome.Success | Should -BeTrue
+            $run.Outcome.ErrorCount | Should -Be 0
+            @($run.Report['Results'] | ForEach-Object { $_['PluginName'] } | Sort-Object) | Should -Be @('ops', 'rpi')
+        }
+
+        It 'Keeps documentation, source identity, unique membership, and tombstones valid across both recipes' {
+            New-ValidatorFixture -Root $script:contractRepo -AddSecondPackage | Out-Null
+            $catalog = Get-Content -LiteralPath (Join-Path $script:contractRepo '.github/plugin/marketplace.json') -Raw |
+                ConvertFrom-Json -AsHashtable
+
+            $declared = @()
+            foreach ($entry in @($catalog['plugins'])) {
+                Join-Path $script:contractRepo ([string]$entry['x-hve']['documentation']) | Should -Exist
+                [string]$entry['source']['path'] | Should -BeExactly "plugins/$([string]$entry['name'])"
+                [string]$entry['source']['ref'] | Should -BeExactly "plugins-v$([string]$entry['version'])"
+                $declared += @('agents', 'commands', 'rules', 'skills', 'hooks') |
+                    ForEach-Object { @($entry[$_]) } | Where-Object { $_ }
             }
+            @($declared | Sort-Object -Unique).Count | Should -Be $declared.Count
+            @($catalog['plugins'] | Where-Object {
+                    $_['x-hve'].Contains('componentMaturity') -and
+                    @($_['x-hve']['componentMaturity'].Values) -contains 'removed'
+                }).Count | Should -Be 1
+        }
+
+        It 'Still rejects an empty catalog' {
+            New-ValidatorFixture -Root $script:contractRepo | Out-Null
+            Set-CatalogEntry -Root $script:contractRepo -Mutation { param($catalog) $catalog['plugins'] = @() }
 
             $run = Get-ValidationReport -Root $script:contractRepo
             $run.Outcome.Success | Should -BeFalse
-            (Get-ReportError -Report $run.Report) -join ' ' |
-                Should -Match "repository marketplace must declare exactly one content package, found $Count"
-        }
-
-        It 'Reports a second declared hook manifest' {
-            New-ValidatorFixture -Root $script:contractRepo | Out-Null
-            Set-CatalogEntry -Root $script:contractRepo -Mutation {
-                param($catalog)
-                $second = $catalog['plugins'][0].Clone()
-                $second['name'] = 'rpi-extra'
-                $catalog['plugins'] = @($catalog['plugins'][0], $second)
-            }
-
-            $run = Get-ValidationReport -Root $script:contractRepo
-            (Get-ReportError -Report $run.Report) -join ' ' |
-                Should -Match 'repository marketplace must declare at most one hook manifest, found 2'
+            (Get-ReportError -Report $run.Report) -join ' ' | Should -Match 'plugins array is empty or missing'
         }
     }
 

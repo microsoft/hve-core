@@ -1,27 +1,20 @@
 // Copyright (c) 2026 Microsoft Corporation. All rights reserved.
 // SPDX-License-Identifier: MIT
-import React, { useMemo } from 'react';
+import React from 'react';
 import Layout from '@theme/Layout';
 import useDocusaurusContext from '@docusaurus/useDocusaurusContext';
 import HeroSection from '../components/HeroSection';
 import { IconCard, BoxCard, CardGrid } from '../components/Cards';
 import PackageCard from '../components/PackageCards';
 import { iconCards, boxCards } from '../data/hubCards';
-import { resolvePackageCards } from '../data/packageCards';
+import type { PackageCardData } from '../data/packageCards';
 import { labelRegistry } from '../data/labelRegistry';
 import styles from './styles.module.css';
 
 export default function Home(): React.ReactElement {
   const { siteConfig } = useDocusaurusContext();
-  const counts = (siteConfig.customFields?.packageCounts ?? {}) as Record<
-    string,
-    number
-  >;
-
-  const packageCards = useMemo(
-    () => resolvePackageCards(counts),
-    [counts],
-  );
+  const packageCards = (siteConfig.customFields?.packageCards
+    ?? []) as PackageCardData[];
 
   return (
     <Layout
@@ -93,7 +86,8 @@ export default function Home(): React.ReactElement {
             {labelRegistry.packages}
           </h2>
           <p className={styles.sectionDescription}>
-            Browse the complete HVE Core plugin and extension identity.
+            Browse the HVE Core plugin and extension packages and pick the
+            focused or full choice that fits your team.
           </p>
           <CardGrid>
             {packageCards.map((card) => (

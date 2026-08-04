@@ -61,6 +61,20 @@ BeforeAll {
                 [ordered]@{
                     name     = 'hve-core'
                     version  = $Version
+                    agents   = @('agents/hve-core/rpi-agent.md', 'agents/hve-core/subagents/rpi-planner.md')
+                    commands = @('commands/hve-core/rpi.md')
+                    rules    = @('rules/hve-core/copilot-tracking.instructions.md')
+                    skills   = @('skills/rpi/rpi-plan')
+                    hooks    = 'hooks/shared/telemetry.json'
+                    'x-hve'  = [ordered]@{
+                        componentMaturity = [ordered]@{
+                            'hooks/shared/telemetry.json' = 'experimental'
+                        }
+                    }
+                }
+                [ordered]@{
+                    name     = 'hve-core-all'
+                    version  = $Version
                     agents   = @('agents/experimental/pptx.md', 'agents/hve-core/rpi-agent.md', 'agents/hve-core/subagents/rpi-planner.md')
                     commands = @('commands/hve-core/rpi.md')
                     rules    = @('rules/hve-core/copilot-tracking.instructions.md')
@@ -92,6 +106,7 @@ BeforeAll {
         param(
             [pscustomobject]$Fixture,
             [string[]]$Component,
+            [string]$PackageName = 'hve-core-all',
             [string]$SelectionName = 'custom',
             [switch]$ReportOnly,
             [switch]$KeepExisting,
@@ -101,6 +116,7 @@ BeforeAll {
         $arguments = @{
             HveCoreBasePath = $Fixture.Source
             TargetRoot      = $Fixture.Target
+            PackageName     = $PackageName
             SelectionName   = $SelectionName
             Component       = $Component
         }
@@ -115,6 +131,7 @@ BeforeAll {
         param(
             [pscustomobject]$Fixture,
             [string[]]$Component,
+            [string]$PackageName = 'hve-core-all',
             [string]$SelectionName = 'custom',
             [hashtable]$Environment = @{}
         )
@@ -125,7 +142,7 @@ BeforeAll {
             [System.Environment]::SetEnvironmentVariable($key, $Environment[$key])
         }
         try {
-            $output = & bash $script:BashScript $Fixture.Source $Fixture.Target $SelectionName @Component 2>&1 | Out-String
+            $output = & bash $script:BashScript $Fixture.Source $Fixture.Target $PackageName $SelectionName @Component 2>&1 | Out-String
         }
         finally {
             foreach ($key in $Environment.Keys) { [System.Environment]::SetEnvironmentVariable($key, $saved[$key]) }
@@ -155,24 +172,30 @@ Describe 'component-copy parameter contract' -Tag 'Unit' {
     }
 
     It 'Declares the mandatory selection and target parameters' {
-        foreach ($name in @('HveCoreBasePath', 'TargetRoot', 'SelectionName', 'Component')) {
+        foreach ($name in @('HveCoreBasePath', 'TargetRoot', 'PackageName', 'SelectionName', 'Component')) {
             $script:command.Parameters.Keys | Should -Contain $name
             $attributes = @($script:command.Parameters[$name].Attributes | Where-Object { $_ -is [System.Management.Automation.ParameterAttribute] })
             @($attributes | Where-Object { $_.Mandatory }).Count | Should -Be 1 -Because "$name identifies what is copied and where"
         }
     }
 
-    It 'Declares no package-named parameter' {
-        @($script:command.Parameters.Keys | Where-Object { $_ -match '(?i)package|collection' }) | Should -BeNullOrEmpty
+    It 'Requires an explicit package with no production default' {
+        $script:command.Parameters['PackageName'].ParameterType | Should -Be ([string])
+        $script:command.Parameters['PackageName'].Attributes.Where({ $_ -is [System.Management.Automation.ParameterAttribute] }).Mandatory |
+            Should -Contain $true
+        $script:powerShellSource | Should -Not -Match '\[string\]\$PackageName\s*='
+        $script:bashSource | Should -Match '<package_name>'
     }
 
-    It 'Writes no package identity from the PowerShell implementation' {
+    It 'Writes package identity from the PowerShell implementation' {
+        $script:powerShellSource | Should -Match '\$PackageName'
         $script:powerShellSource | Should -Match '\$SelectionName'
         $script:powerShellSource | Should -Match "schemaVersion = \`$schemaVersion"
         $script:powerShellSource | Should -Not -Match '(?i)PackageId'
     }
 
-    It 'Writes no package identity from the Bash implementation' {
+    It 'Writes package identity from the Bash implementation' {
+        $script:bashSource | Should -Match 'package_name'
         $script:bashSource | Should -Match 'selection_name'
         $script:bashSource | Should -Match 'schemaVersion: \$schema'
         $script:bashSource | Should -Not -Match '(?i)package_id'
@@ -272,6 +295,8 @@ Describe 'component-copy tracking manifest' -Tag 'Unit' {
         Invoke-ComponentCopy -Fixture $script:fixture -SelectionName 'starter' -Component @('skills/rpi/rpi-plan', 'agents/hve-core/rpi-agent.md') | Out-Null
 
         $selection = (Get-TrackingManifest -Fixture $script:fixture).selection
+        @($selection.Keys) | Should -Be @('package', 'profile', 'components')
+        $selection.package | Should -Be 'hve-core-all'
         $selection.profile | Should -Be 'starter'
         @($selection.components) | Should -Be @('agents/hve-core/rpi-agent.md', 'skills/rpi/rpi-plan')
     }
@@ -356,6 +381,28 @@ Describe 'component-copy preflight rejection' -Tag 'Unit' {
             Should -Throw -ExpectedMessage '*not declared membership*'
     }
 
+    It 'Rejects an unknown package before any write' {
+        { Invoke-ComponentCopy -Fixture $script:fixture -PackageName 'not-a-package' -Component @('agents/hve-core/rpi-agent.md') } |
+            Should -Throw -ExpectedMessage "*declares no package named 'not-a-package'*"
+
+        Get-TargetFile -Fixture $script:fixture | Should -BeNullOrEmpty
+    }
+
+    It 'Rejects a component outside the selected focused package before any write' {
+        { Invoke-ComponentCopy -Fixture $script:fixture -PackageName 'hve-core' -Component @('agents/experimental/pptx.md') } |
+            Should -Throw -ExpectedMessage "*not declared membership of the 'hve-core' marketplace recipe*"
+
+        Get-TargetFile -Fixture $script:fixture | Should -BeNullOrEmpty
+    }
+
+    It 'Accepts shared components from focused and full packages' {
+        Invoke-ComponentCopy -Fixture $script:fixture -PackageName 'hve-core' -Component @('agents/hve-core/rpi-agent.md') | Out-Null
+        (Get-TrackingManifest -Fixture $script:fixture).selection.package | Should -Be 'hve-core'
+
+        Invoke-ComponentCopy -Fixture $script:fixture -PackageName 'hve-core-all' -Component @('agents/hve-core/rpi-agent.md') | Out-Null
+        (Get-TrackingManifest -Fixture $script:fixture).selection.package | Should -Be 'hve-core-all'
+    }
+
     It 'Rejects a declared component whose source is missing' {
         Remove-Item -LiteralPath (Join-Path $script:fixture.Source '.github/agents/hve-core/rpi-agent.agent.md') -Force
 
@@ -367,7 +414,7 @@ Describe 'component-copy preflight rejection' -Tag 'Unit' {
 
     It 'Rejects a target root that does not exist' {
         { & $script:PowerShellScript -HveCoreBasePath $script:fixture.Source -TargetRoot (Join-Path $script:fixture.Root 'absent') `
-                -SelectionName 'custom' -Component @('agents/hve-core/rpi-agent.md') } | Should -Throw -ExpectedMessage '*TargetRoot*'
+            -PackageName 'hve-core-all' -SelectionName 'custom' -Component @('agents/hve-core/rpi-agent.md') } | Should -Throw -ExpectedMessage '*TargetRoot*'
     }
 
     It 'Rejects a source without a marketplace catalog' {
@@ -506,7 +553,7 @@ Describe 'component-copy production starter selection' -Tag 'Unit' {
         Import-Module (Join-Path $script:RepoRoot 'scripts/lib/Modules/MarketplaceHelpers.psm1') -Force
 
         $catalog = Get-MarketplaceCatalog -Path (Join-Path $script:RepoRoot '.github/plugin/marketplace.json')
-        $entry = @($catalog['plugins']) | Where-Object { $_['name'] -eq 'hve-core' }
+        $entry = @($catalog['plugins']) | Where-Object { $_['name'] -eq 'hve-core-all' }
         $agentIndex = Get-MarketplaceAgentIndex -Catalog $catalog -RepoRoot $script:RepoRoot
         $script:StarterSelection = @(Resolve-MarketplaceComponentSelection -Entry $entry -RepoRoot $script:RepoRoot -AgentIndex $agentIndex -ProfileName 'starter')
         $script:ProductionTarget = Join-Path $TestDrive 'production-starter'
@@ -519,7 +566,8 @@ Describe 'component-copy production starter selection' -Tag 'Unit' {
 
     It 'Copies the resolved starter profile into the canonical target layout' {
         & $script:PowerShellScript -HveCoreBasePath $script:RepoRoot -TargetRoot $script:ProductionTarget `
-            -SelectionName 'starter' -Component @($script:StarterSelection | ForEach-Object { $_.PackagePath }) 6>&1 | Out-Null
+            -PackageName 'hve-core-all' -SelectionName 'starter' `
+            -Component @($script:StarterSelection | ForEach-Object { $_.PackagePath }) 6>&1 | Out-Null
 
         Test-Path -LiteralPath (Join-Path $script:ProductionTarget '.github/agents/hve-core/rpi-agent.agent.md') | Should -BeTrue
         Test-Path -LiteralPath (Join-Path $script:ProductionTarget '.github/prompts/hve-core/rpi.prompt.md') | Should -BeTrue
@@ -531,8 +579,9 @@ Describe 'component-copy production starter selection' -Tag 'Unit' {
         $manifest = Get-Content -LiteralPath (Join-Path $script:ProductionTarget '.hve-tracking.json') -Raw | ConvertFrom-Json -AsHashtable
 
         $manifest.schemaVersion | Should -Be 2
+        $manifest.selection.package | Should -Be 'hve-core-all'
         $manifest.selection.profile | Should -Be 'starter'
-        @($manifest.selection.components).Count | Should -Be 24
+        @($manifest.selection.components).Count | Should -Be @($script:StarterSelection).Count
         $tracked = @($manifest.files.Values | ForEach-Object { $_.maturity } | Sort-Object -Unique)
         $tracked | Should -Contain 'experimental' -Because 'the starter includes experimental Vally content and must disclose it'
     }
@@ -575,6 +624,7 @@ Describe 'component-copy PowerShell and Bash parity' -Tag 'Unit' -Skip:(-not $sc
         $bashManifest.schemaVersion | Should -Be $powerShellManifest.schemaVersion
         $bashManifest.source | Should -Be $powerShellManifest.source
         $bashManifest.version | Should -Be $powerShellManifest.version
+        $bashManifest.selection.package | Should -Be $powerShellManifest.selection.package
         $bashManifest.selection.profile | Should -Be $powerShellManifest.selection.profile
         @($bashManifest.selection.components) | Should -Be @($powerShellManifest.selection.components)
         @($bashManifest.files.Keys | Sort-Object) | Should -Be @($powerShellManifest.files.Keys | Sort-Object)

@@ -150,7 +150,7 @@ jobs:
             throw "Generate-Plugins.ps1 failed with exit code $LASTEXITCODE"
           }
 
-      - name: Record one-package release evidence
+      - name: Record plugin release evidence
         shell: pwsh
         env:
           INPUT_VERSION: ${{ inputs.version }}
@@ -158,7 +158,6 @@ jobs:
           $ErrorActionPreference = 'Stop'
           & ./scripts/plugins/Assert-PluginReleaseEvidence.ps1 `
             -Version $env:INPUT_VERSION `
-            -ExpectedPackageCount 1 `
             -OutputPath logs/plugin-release-evidence.json
 
       - name: Verify generated roots match discovered packages

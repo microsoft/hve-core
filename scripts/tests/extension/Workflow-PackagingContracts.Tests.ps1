@@ -147,7 +147,16 @@ Describe 'Package discovery parity' -Tag 'Unit' {
     It 'Consumes the shared names output for generated root verification' {
         $document = Get-WorkflowDocument -Name 'plugin-package.yml'
         [string]$document['jobs']['discover-packages']['outputs']['names'] | Should -BeExactly '${{ steps.discover.outputs.names }}'
-        (Get-WorkflowText -Name 'plugin-package.yml') | Should -Match 'needs\.discover-packages\.outputs\.names'
+        $verification = @($document['jobs']['package']['steps'] | Where-Object {
+                $_.Contains('run') -and [string]$_['run'] -match 'Generated package roots do not match'
+            })
+        $verification | Should -HaveCount 1
+        [string]$verification[0]['env']['DISCOVERED_NAMES'] | Should -BeExactly '${{ needs.discover-packages.outputs.names }}'
+        $run = [string]$verification[0]['run']
+        $run | Should -Match "jq -r '\.\[\]' \| sort"
+        $run | Should -Match 'find plugins -mindepth 1 -maxdepth 1 -type d'
+        $run | Should -Match '\[ "\$expected" != "\$actual" \]'
+        $run | Should -Not -Match '-eq 1\b|== 1\b'
     }
 
     It 'Produces the same PreRelease package set the plugin policy requires' {
@@ -605,6 +614,30 @@ Describe 'Stable promotion and publication gate' -Tag 'Unit' {
             [string]$jobs[$job]['with']['version'] | Should -BeExactly '${{ needs.validate-release.outputs.version }}'
         }
     }
+
+    It 'Validates a nonempty identical package set across both release channels' {
+        $steps = @($script:PublishDocument['jobs']['validate-release']['steps'] | Where-Object {
+                $_.Contains('run') -and [string]$_['run'] -match 'Get-MarketplacePackageMatrixCore'
+            })
+        $steps | Should -HaveCount 1
+        $gate = [string]$steps[0]['run']
+        $gate | Should -Match "@\('Stable', 'PreRelease'\)"
+        $gate | Should -Match '\$names\.Count -eq 0'
+        $gate | Should -Match '\[System\.StringComparer\]::Ordinal'
+        $gate | Should -Match '-cne'
+        $gate | Should -Match 'package sets differ'
+        $gate | Should -Not -Match '-ne 1\b|exactly one'
+        $script:PublishText | Should -Not -Match '(?i)one-package'
+    }
+
+    It 'Holds the cross-channel package-set invariant the Stable gate enforces' {
+        $stable = [string[]]@((Get-MarketplacePackageMatrixCore -Channel Stable -CatalogPath $script:CatalogPath).Names)
+        $preRelease = [string[]]@((Get-MarketplacePackageMatrixCore -Channel PreRelease -CatalogPath $script:CatalogPath).Names)
+        @($stable).Count | Should -BeGreaterThan 0
+        [array]::Sort($stable, [System.StringComparer]::Ordinal)
+        [array]::Sort($preRelease, [System.StringComparer]::Ordinal)
+        $stable | Should -Be $preRelease
+    }
 }
 
 Describe 'Reusable packaging source contracts' -Tag 'Unit' {
@@ -655,7 +688,8 @@ Describe 'Reusable packaging source contracts' -Tag 'Unit' {
         $evidence = @($steps | Where-Object { $_ -match 'Assert-PluginReleaseEvidence\.ps1' })
         $evidence | Should -HaveCount 1
         $evidence[0] | Should -Match '-Version \$env:INPUT_VERSION'
-        $evidence[0] | Should -Match '-ExpectedPackageCount 1'
+        $evidence[0] | Should -Match '-OutputPath logs/plugin-release-evidence\.json'
+        $evidence[0] | Should -Not -Match '-ExpectedPackageCount'
     }
 
     It 'Projects only PreRelease packaging into a separate release catalog' {
@@ -681,10 +715,59 @@ Describe 'Reusable packaging source contracts' -Tag 'Unit' {
             Should -HaveCount 1
     }
 
-    It 'Asserts one package in every snapshot evidence call' {
+    It 'Pins no package count in either snapshot evidence call' {
+        $document = Get-WorkflowDocument -Name 'plugin-snapshot-publish.yml'
+        $evidenceSteps = @($document['jobs']['publish-snapshot']['steps'] | Where-Object {
+                $_.Contains('run') -and [string]$_['run'] -match 'Assert-PluginReleaseEvidence\.ps1'
+            })
+        $evidenceSteps | Should -HaveCount 2
+        foreach ($step in $evidenceSteps) {
+            [string]$step['run'] | Should -Not -Match '-ExpectedPackageCount'
+            [string]$step['run'] | Should -Match '-SourceCommit "\$\{SOURCE_COMMIT\}"'
+            [string]$step['run'] | Should -Match '-Version "\$\{EFFECTIVE_VERSION\}"'
+            [string]$step['run'] | Should -Match '-ReleaseTag "\$\{RELEASE_TAG\}"'
+        }
+        [string]$evidenceSteps[0]['run'] | Should -Match '-OutputPath logs/plugin-release-evidence\.json'
+        [string]$evidenceSteps[1]['run'] | Should -Match '-ExpectedEvidencePath logs/plugin-release-evidence\.json'
+        [string]$evidenceSteps[1]['run'] | Should -Match '-OutputPath logs/plugin-snapshot-verification\.json'
+    }
+
+    It 'Verifies generated roots against the projected catalog before evidence and staging' {
+        $document = Get-WorkflowDocument -Name 'plugin-snapshot-publish.yml'
+        $texts = [string[]]@(Get-JobStepText -Document $document -JobName 'publish-snapshot')
+        $indexes = @(0..($texts.Count - 1))
+
+        $verifyIndexes = @($indexes | Where-Object {
+                $texts[$_] -match 'logs/marketplace-snapshot\.json' -and
+                $texts[$_] -match 'find plugins -mindepth 1 -maxdepth 1 -type d'
+            })
+        $verifyIndexes | Should -HaveCount 1
+        $verifyIndex = $verifyIndexes[0]
+
+        $generateIndex = @($indexes | Where-Object { $texts[$_] -match 'Generate-Plugins\.ps1' })[0]
+        $evidenceIndex = @($indexes | Where-Object { $texts[$_] -match 'Assert-PluginReleaseEvidence\.ps1' })[0]
+        $stageIndex = @($indexes | Where-Object { $texts[$_] -match 'git -C "\$\{snapshot_dir\}" init' })[0]
+        $verifyIndex | Should -BeGreaterThan $generateIndex
+        $verifyIndex | Should -BeLessThan $evidenceIndex
+        $verifyIndex | Should -BeLessThan $stageIndex
+
+        $run = $texts[$verifyIndex]
+        $run | Should -Match '-z "\$\{expected\}"'
+        $run | Should -Match '"\$expected" != "\$actual"'
+        $run | Should -Not -Match '-eq 1\b|== 1\b|HaveCount 1'
+        foreach ($maturity in @('stable', 'preview', 'experimental')) {
+            $run | Should -Match ([regex]::Escape($maturity))
+        }
+        $run | Should -Not -Match 'deprecated|removed'
+    }
+
+    It 'Retains snapshot integrity protections around publication' {
         $text = Get-WorkflowText -Name 'plugin-snapshot-publish.yml'
-        @([regex]::Matches($text, '-ExpectedPackageCount 1\b')) | Should -HaveCount 2
-        $text | Should -Not -Match '-ExpectedPackageCount (?!1\b)\d+'
+        @([regex]::Matches($text, 'find [^\n]*-type l')) | Should -HaveCount 2
+        $text | Should -Match 'git clone --quiet --no-local'
+        $text | Should -Match 'git diff --quiet -- \.github/plugin/marketplace\.json'
+        $text | Should -Match 'push --atomic'
+        $text | Should -Not -Match 'push --force'
     }
 
     It 'Binds snapshot evidence to the resolved effective version' {
@@ -898,9 +981,10 @@ Describe 'Catalog release ref and plugin locator consistency' -Tag 'Unit' {
     # changes the installed plugin bytes.
     It 'Resolves a matching immutable plugins-v<version> source ref' {
         $version = [string]$script:RootManifest.version
-        @($script:Catalog['plugins']).Count | Should -Be 1
+        @($script:Catalog['plugins']).Count | Should -BeGreaterThan 0
         foreach ($entry in @($script:Catalog['plugins'])) {
             [string]$entry['version'] | Should -BeExactly $version
+            [string]$entry['source']['path'] | Should -BeExactly "plugins/$([string]$entry['name'])"
             [string]$entry['source']['ref'] | Should -BeExactly "plugins-v$version"
             $entry['source'].Contains('sha') | Should -BeFalse
         }

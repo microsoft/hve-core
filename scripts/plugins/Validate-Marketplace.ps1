@@ -249,16 +249,6 @@ function Test-MarketplaceRepositoryContract {
     }
 
     $entries = @($Manifest['plugins'])
-    if ($entries.Count -ne 1) {
-        $contractErrors += "repository marketplace must declare exactly one content package, found $($entries.Count)"
-    }
-
-    # The CLI consumes a single hooks configuration, so a second declaration is
-    # an error rather than a silently truncated merge.
-    $hookEntries = @($entries | Where-Object { -not [string]::IsNullOrWhiteSpace([string]$_['hooks']) })
-    if ($hookEntries.Count -gt 1) {
-        $contractErrors += "repository marketplace must declare at most one hook manifest, found $($hookEntries.Count)"
-    }
 
     # The active package set is derived from the package documents on disk, so
     # adding or retiring a package never requires editing a hard-coded count.

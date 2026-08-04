@@ -181,14 +181,17 @@ Describe 'Get-MarketplacePackageMatrix repository catalog' -Tag 'Unit' {
         $stable | Should -Be $preRelease
     }
 
-    It 'Discovers exactly the one hve-core package on <Channel>' -ForEach @(
+    It 'Emits one matrix row per active catalog entry on <Channel>' -ForEach @(
         @{ Channel = 'Stable' }
         @{ Channel = 'PreRelease' }
     ) {
+        $expected = @(Get-CatalogEligibleName -CatalogPath $script:RepositoryCatalogPath -Channel $Channel)
         $result = Get-MarketplacePackageMatrixCore -Channel $Channel -CatalogPath $script:RepositoryCatalogPath
-        @($result.Names) | Should -Be @('hve-core')
-        @($result.MatrixItems) | Should -HaveCount 1
-        $result.MatrixJson | Should -BeExactly '{"include":[{"id":"hve-core"}]}'
+        @($result.Names) | Should -Be $expected
+        @($result.MatrixItems | ForEach-Object { $_.id }) | Should -Be $expected
+        $result.NamesJson | Should -BeExactly (ConvertTo-Json -InputObject $expected -Compress)
+        $expectedMatrix = [ordered]@{ include = @($expected | ForEach-Object { [ordered]@{ id = $_ } }) }
+        $result.MatrixJson | Should -BeExactly (ConvertTo-Json -InputObject $expectedMatrix -Depth 4 -Compress)
     }
 }
 

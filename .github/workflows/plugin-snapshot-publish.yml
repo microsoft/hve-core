@@ -180,6 +180,27 @@ jobs:
             -MarketplaceOutputPath logs/marketplace-snapshot.json
           npm run plugin:postprocess
 
+      - name: Verify generated roots match the projected catalog
+        shell: bash
+        run: |
+          set -euo pipefail
+          expected=$(jq -r '
+            .plugins[]
+            | select((.["x-hve"].maturity // "stable") | IN("stable", "preview", "experimental"))
+            | .name
+          ' logs/marketplace-snapshot.json | sort)
+          if [ -z "${expected}" ]; then
+            echo "::error::Projected catalog declares no active packages"
+            exit 1
+          fi
+          actual=$(find plugins -mindepth 1 -maxdepth 1 -type d -printf '%f\n' | sort)
+          if [ "$expected" != "$actual" ]; then
+            echo "::error::Generated package roots do not match the projected catalog package set"
+            diff <(printf '%s\n' "$expected") <(printf '%s\n' "$actual") || true
+            exit 1
+          fi
+          echo "Verified $(printf '%s\n' "$actual" | grep -c .) generated package roots"
+
       - name: Record deterministic evidence
         shell: bash
         env:
@@ -192,7 +213,6 @@ jobs:
             -SourceCommit "${SOURCE_COMMIT}" \
             -Version "${EFFECTIVE_VERSION}" \
             -ReleaseTag "${RELEASE_TAG}" \
-            -ExpectedPackageCount 1 \
             -OutputPath logs/plugin-release-evidence.json
 
       - name: Assert snapshot contains no symbolic links
@@ -263,7 +283,6 @@ jobs:
             -SourceCommit "${SOURCE_COMMIT}" \
             -Version "${EFFECTIVE_VERSION}" \
             -ReleaseTag "${RELEASE_TAG}" \
-            -ExpectedPackageCount 1 \
             -ExpectedEvidencePath logs/plugin-release-evidence.json \
             -OutputPath logs/plugin-snapshot-verification.json
 

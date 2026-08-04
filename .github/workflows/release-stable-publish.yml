@@ -213,17 +213,25 @@ jobs:
             - name: Setup PowerShell modules
               uses: ./.github/actions/setup-ps-modules
 
-            - name: Verify one-package consistency
+            - name: Verify cross-channel package-set consistency
               shell: pwsh
               run: |
                   $ErrorActionPreference = 'Stop'
                   . ./scripts/extension/Get-MarketplacePackageMatrix.ps1
+                  $catalogPath = './.github/plugin/marketplace.json'
+                  $sets = @{}
                   foreach ($channel in @('Stable', 'PreRelease')) {
-                    $names = @((Get-MarketplacePackageMatrixCore -Channel $channel -CatalogPath './.github/plugin/marketplace.json').Names)
-                    if ($names.Count -ne 1) {
-                      throw "Expected exactly one $channel package but found $($names.Count): $($names -join ', ')"
+                    $names = [string[]]@((Get-MarketplacePackageMatrixCore -Channel $channel -CatalogPath $catalogPath).Names)
+                    if ($names.Count -eq 0) {
+                      throw "No $channel packages are eligible in $catalogPath"
                     }
+                    [array]::Sort($names, [System.StringComparer]::Ordinal)
+                    $sets[$channel] = $names
                   }
+                  if ([string]::Join(',', $sets['Stable']) -cne [string]::Join(',', $sets['PreRelease'])) {
+                    throw "Stable and PreRelease package sets differ: Stable [$($sets['Stable'] -join ', ')] versus PreRelease [$($sets['PreRelease'] -join ', ')]"
+                  }
+                  Write-Host "Verified $($sets['Stable'].Count) packages in both channels: $($sets['Stable'] -join ', ')"
 
     close-milestone:
         name: Close Release Milestone

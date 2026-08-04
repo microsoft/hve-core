@@ -2,40 +2,43 @@
 // SPDX-License-Identifier: MIT
 import { labelRegistry } from './labelRegistry';
 
+export type PackageMaturity =
+  | typeof labelRegistry.stable
+  | typeof labelRegistry.preview
+  | typeof labelRegistry.experimental;
+
 export interface PackageCardData {
   name: string;
   title: string;
   description: string;
   artifacts: number;
-  maturity: 'Stable' | 'Preview' | 'Experimental';
+  maturity: PackageMaturity;
   href: string;
 }
 
-export interface PackageCardDefinition {
-  name: string;
-  title: string;
-  description: string;
-  maturity: PackageCardData['maturity'];
-  href: string;
-}
+export type PackageMaturityResolution =
+  | { kind: 'active'; maturity: PackageMaturity }
+  | { kind: 'retired' }
+  | { kind: 'unsupported' };
 
-// hve-core is the only marketplace identity. Per-component lifecycle labels are
-// disclosed on the identity page, so the card carries the identity's own maturity.
-export const packageCardDefinitions: PackageCardDefinition[] = [
-  {
-    name: 'hve-core',
-    title: labelRegistry.hveCore,
-    description: 'All active agents, prompts, instructions, skills, and hooks in one identity',
-    maturity: 'Stable',
-    href: '/docs/getting-started/packages',
-  },
-];
+const activeMaturityLabels = new Map<string, PackageMaturity>([
+  ['stable', labelRegistry.stable],
+  ['preview', labelRegistry.preview],
+  ['experimental', labelRegistry.experimental],
+]);
 
-export function resolvePackageCards(
-  counts: Record<string, number>,
-): PackageCardData[] {
-  return packageCardDefinitions.map((def) => ({
-    ...def,
-    artifacts: counts[def.name] ?? 0,
-  }));
+const retiredMaturities = new Set(['deprecated', 'removed']);
+
+export function resolvePackageMaturity(
+  value: unknown,
+): PackageMaturityResolution {
+  const raw = value === undefined ? 'stable' : value;
+  if (typeof raw !== 'string') {
+    return { kind: 'unsupported' };
+  }
+  if (retiredMaturities.has(raw)) {
+    return { kind: 'retired' };
+  }
+  const maturity = activeMaturityLabels.get(raw);
+  return maturity ? { kind: 'active', maturity } : { kind: 'unsupported' };
 }

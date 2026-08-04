@@ -22,11 +22,11 @@ Detect whether the current environment is local, devcontainer, or Codespaces.
 Report component maturity and target collisions before copying.
 
 ```powershell
-./scripts/collision-detection.ps1 -HveCoreBasePath ./lib/hve-core -TargetRoot . -Component @('agents/hve-core/rpi-agent.md', 'skills/rpi/rpi-plan')
+./scripts/collision-detection.ps1 -HveCoreBasePath ./lib/hve-core -TargetRoot . -PackageName hve-core-all -Component @('agents/hve-core/rpi-agent.md', 'skills/rpi/rpi-plan')
 ```
 
 ```bash
-./scripts/collision-detection.sh ./lib/hve-core . agents/hve-core/rpi-agent.md skills/rpi/rpi-plan
+./scripts/collision-detection.sh ./lib/hve-core . hve-core-all agents/hve-core/rpi-agent.md skills/rpi/rpi-plan
 ```
 
 ### Component Copy
@@ -34,28 +34,30 @@ Report component maturity and target collisions before copying.
 Copy the resolved starter profile from the HVE-Core source into the target project.
 
 ```powershell
-./scripts/component-copy.ps1 -HveCoreBasePath ./lib/hve-core -TargetRoot . -SelectionName starter -Component @('agents/hve-core/rpi-agent.md', 'commands/hve-core/rpi.md', 'rules/hve-core/copilot-tracking.instructions.md', 'skills/rpi/rpi-plan')
+./scripts/component-copy.ps1 -HveCoreBasePath ./lib/hve-core -TargetRoot . -PackageName hve-core-all -SelectionName starter -Component @('agents/hve-core/rpi-agent.md', 'commands/hve-core/rpi.md', 'rules/hve-core/copilot-tracking.instructions.md', 'skills/rpi/rpi-plan')
 ```
 
 ```bash
-./scripts/component-copy.sh ./lib/hve-core . starter agents/hve-core/rpi-agent.md commands/hve-core/rpi.md rules/hve-core/copilot-tracking.instructions.md skills/rpi/rpi-plan
+./scripts/component-copy.sh ./lib/hve-core . hve-core-all starter agents/hve-core/rpi-agent.md commands/hve-core/rpi.md rules/hve-core/copilot-tracking.instructions.md skills/rpi/rpi-plan
 ```
 
 Preserve components the user chose to keep during collision resolution.
 
 ```powershell
-./scripts/component-copy.ps1 -HveCoreBasePath ./lib/hve-core -TargetRoot . -SelectionName custom -Component @('agents/hve-core/rpi-agent.md', 'skills/rpi/rpi-plan') -KeepExisting -Collisions @('skills/rpi/rpi-plan')
+./scripts/component-copy.ps1 -HveCoreBasePath ./lib/hve-core -TargetRoot . -PackageName hve-core-all -SelectionName custom -Component @('agents/hve-core/rpi-agent.md', 'skills/rpi/rpi-plan') -KeepExisting -Collisions @('skills/rpi/rpi-plan')
 ```
 
 ```bash
 printf 'skills/rpi/rpi-plan\n' > /tmp/collisions.txt
 KEEP_EXISTING=true COLLISIONS_FILE=/tmp/collisions.txt \
-  ./scripts/component-copy.sh ./lib/hve-core . custom agents/hve-core/rpi-agent.md skills/rpi/rpi-plan
+  ./scripts/component-copy.sh ./lib/hve-core . hve-core-all custom agents/hve-core/rpi-agent.md skills/rpi/rpi-plan
 ```
 
 ### Upgrade Detection
 
 Check whether an existing installation needs upgrading.
+
+Output includes `INSTALLED_PACKAGE`, which replays the recorded package into collision detection and copy. It is empty when the manifest records no package; select a package explicitly before replaying.
 
 ```powershell
 ./scripts/upgrade-detection.ps1 -HveCoreBasePath ./lib/hve-core

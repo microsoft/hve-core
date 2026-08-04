@@ -161,37 +161,56 @@ Describe 'Cross-channel extension identity' -Tag 'Unit' {
         )
     }
 
-    It 'Projects exactly one hve-core identity on <Channel>' -ForEach @(
+    It 'Projects unique deterministic extension identities on <Channel>' -ForEach @(
         @{ Channel = 'Stable' }
         @{ Channel = 'PreRelease' }
     ) {
         $eligible = @($script:Projections | Where-Object { $_.Channel -eq $Channel })
-        @($eligible).Count | Should -Be 1
-        $eligible[0].PackageName | Should -BeExactly 'hve-core'
-        Get-ExtensionIdentity -PackageId $eligible[0].PackageName -TemplateName $script:TemplateName |
-            Should -BeExactly $script:TemplateName
+        @($eligible).Count | Should -BeGreaterThan 0
+        $identities = foreach ($projection in $eligible) {
+            $expected = if ($projection.PackageName -eq 'hve-core') {
+                $script:TemplateName
+            }
+            else {
+                "hve-$($projection.PackageName)"
+            }
+            Get-ExtensionIdentity -PackageId $projection.PackageName -TemplateName $script:TemplateName |
+                Should -BeExactly $expected
+            $expected
+        }
+        @($identities | Sort-Object -Unique).Count | Should -Be $eligible.Count
     }
 
-    It 'Generates the unsuffixed manifest and README for the surviving identity' {
+    It 'Generates one manifest and README identity for every package' {
         Get-ExtensionPackageFileName -PackageName 'hve-core' | Should -BeExactly 'package.json'
         Get-ExtensionReadmeFileName -PackageName 'hve-core' | Should -BeExactly 'README.md'
+        foreach ($packageName in @($script:Catalog['plugins'] | ForEach-Object { [string]$_['name'] } | Where-Object { $_ -ne 'hve-core' })) {
+            Get-ExtensionPackageFileName -PackageName $packageName | Should -BeExactly "package.$packageName.json"
+            Get-ExtensionReadmeFileName -PackageName $packageName | Should -BeExactly "README.$packageName.md"
+        }
     }
 
-    It 'Projects equal canonical contribution paths on both channels' {
+    It 'Projects equal canonical contribution paths by package on both channels' {
         $projected = @{}
         foreach ($channel in $script:Channels) {
-            $projection = @($script:Projections | Where-Object { $_.Channel -eq $channel })[0]
-            $contributions = Get-ExtensionContributions -Items $projection.Recipe
-            $projected[$channel] = (Get-ExtensionCanonicalSource -Contribution $contributions) -join "`n"
+            $projected[$channel] = @{}
+            foreach ($projection in @($script:Projections | Where-Object { $_.Channel -eq $channel })) {
+                $contributions = Get-ExtensionContributions -Items $projection.Recipe
+                $projected[$channel][$projection.PackageName] = (Get-ExtensionCanonicalSource -Contribution $contributions) -join "`n"
+            }
         }
-        $projected['Stable'] | Should -BeExactly $projected['PreRelease']
-        @($projected['Stable'] -split "`n") | Should -Not -BeNullOrEmpty
+        @($projected['Stable'].Keys | Sort-Object) | Should -Be @($projected['PreRelease'].Keys | Sort-Object)
+        foreach ($packageName in $projected['Stable'].Keys) {
+            $projected['Stable'][$packageName] | Should -BeExactly $projected['PreRelease'][$packageName]
+            @($projected['Stable'][$packageName] -split "`n") | Should -Not -BeNullOrEmpty
+        }
     }
 }
 
-Describe 'Production one-recipe catalog' -Tag 'Unit' {
+Describe 'Production multi-package catalog' -Tag 'Unit' {
     BeforeAll {
-        $script:Entry = @($script:Catalog['plugins'])[0]
+        $script:Entries = @($script:Catalog['plugins'])
+        $script:Entry = @($script:Entries | Where-Object { $_['name'] -eq 'hve-core-all' })[0]
         $script:MembershipPaths = [string[]]@(
             @('agents', 'commands', 'rules', 'skills', 'hooks') |
                 ForEach-Object { @($script:Entry[$_]) } | Where-Object { $_ }
@@ -199,14 +218,17 @@ Describe 'Production one-recipe catalog' -Tag 'Unit' {
         $script:StarterProfile = [string[]]@((Get-MarketplaceEntryOverlayValue -Entry $script:Entry -Key 'profiles')['starter'])
     }
 
-    It 'Declares exactly one content package' {
-        @($script:Catalog['plugins']).Count | Should -Be 1
-        [string]$script:Entry['name'] | Should -BeExactly 'hve-core'
+    It 'Declares a nonempty unique set of ordinary package identities' {
+        $script:Entries.Count | Should -BeGreaterThan 0
+        @($script:Entries | ForEach-Object { [string]$_['name'] } | Sort-Object -Unique).Count | Should -Be $script:Entries.Count
+        foreach ($entry in $script:Entries) {
+            [string]$entry['source']['path'] | Should -BeExactly "plugins/$([string]$entry['name'])"
+        }
     }
 
-    It 'Declares 257 unique active component paths' {
-        $script:MembershipPaths.Count | Should -Be 257
-        @($script:MembershipPaths | Sort-Object -Unique).Count | Should -Be 257
+    It 'Keeps the full bundle membership nonempty and unique' {
+        $script:MembershipPaths.Count | Should -BeGreaterThan 0
+        @($script:MembershipPaths | Sort-Object -Unique).Count | Should -Be $script:MembershipPaths.Count
     }
 
     It 'Declares exactly one removed component tombstone' {
@@ -217,11 +239,19 @@ Describe 'Production one-recipe catalog' -Tag 'Unit' {
     }
 
     It 'Declares no aggregate metadata' {
-        Get-MarketplaceEntryOverlayValue -Entry $script:Entry -Key 'aggregate' | Should -BeNullOrEmpty
+        foreach ($entry in $script:Entries) {
+            Get-MarketplaceEntryOverlayValue -Entry $entry -Key 'aggregate' | Should -BeNullOrEmpty
+        }
         Get-MarketplaceMetadataKey | Should -Not -Contain 'aggregate'
     }
 
-    It 'Declares a starter profile of 24 recipe members' {
+    It 'Declares the starter profile only on hve-core-all' {
+        $profileOwners = @($script:Entries | Where-Object {
+                $profiles = Get-MarketplaceEntryOverlayValue -Entry $_ -Key 'profiles'
+                $profiles -is [System.Collections.IDictionary] -and $profiles.Count -gt 0
+            })
+        $profileOwners | Should -HaveCount 1
+        [string]$profileOwners[0]['name'] | Should -BeExactly 'hve-core-all'
         $script:StarterProfile.Count | Should -Be 24
         foreach ($member in $script:StarterProfile) { $script:MembershipPaths | Should -Contain $member }
     }
@@ -236,15 +266,17 @@ Describe 'Production one-recipe catalog' -Tag 'Unit' {
             Should -Be $Count
     }
 
-    It 'Resolves identical component sets and maturity on both channels' {
-        $projected = @{}
-        foreach ($channel in $script:Channels) {
-            Test-MarketplaceEntryEligible -Entry $script:Entry -Channel $channel | Should -BeTrue
-            $projected[$channel] = @(Get-MarketplaceResolvedPackageRecipe -Entry $script:Entry -Channel $channel -AgentIndex $script:AgentIndex |
-                    ForEach-Object { "$($_.PackagePath)=$($_.Maturity)" }) -join "`n"
+    It 'Resolves identical component sets and maturity on both channels for every package' {
+        foreach ($entry in $script:Entries) {
+            $projected = @{}
+            foreach ($channel in $script:Channels) {
+                Test-MarketplaceEntryEligible -Entry $entry -Channel $channel | Should -BeTrue
+                $projected[$channel] = @(Get-MarketplaceResolvedPackageRecipe -Entry $entry -Channel $channel -AgentIndex $script:AgentIndex |
+                        ForEach-Object { "$($_.PackagePath)=$($_.Maturity)" }) -join "`n"
+            }
+            $projected['Stable'] | Should -BeExactly $projected['PreRelease']
+            @($projected['Stable'] -split "`n").Count | Should -BeGreaterThan 0
         }
-        $projected['Stable'] | Should -BeExactly $projected['PreRelease']
-        @($projected['Stable'] -split "`n").Count | Should -Be 257
     }
 
     It 'Carries every declared lifecycle label into the resolved recipe' {

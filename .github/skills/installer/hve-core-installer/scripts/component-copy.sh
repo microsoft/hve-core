@@ -8,7 +8,7 @@
 # manifest. Membership, path-safety, and manifest-schema checks all run before
 # the first write.
 #
-# Usage: component-copy.sh <hve_core_base_path> <target_root> <selection_name> <component...>
+# Usage: component-copy.sh <hve_core_base_path> <target_root> <package_name> <selection_name> <component...>
 #   component: marketplace path such as agents/hve-core/rpi-agent.md or skills/rpi/rpi-plan
 # Environment:
 #   REPORT_ONLY=true      run preflight and report maturity and collisions without writing
@@ -31,7 +31,7 @@ cleanup() {
 trap cleanup EXIT
 
 usage() {
-  echo "Usage: $0 <hve_core_base_path> <target_root> <selection_name> <component...>" >&2
+  echo "Usage: $0 <hve_core_base_path> <target_root> <package_name> <selection_name> <component...>" >&2
   exit 1
 }
 
@@ -91,16 +91,18 @@ normalize_component_path() {
 }
 
 main() {
-  [[ $# -ge 4 ]] || usage
+  [[ $# -ge 5 ]] || usage
   command -v jq >/dev/null 2>&1 || fail "jq is required by the Bash installer scripts. Install jq or use the PowerShell scripts."
 
   local hve_core_base_path="$1"
   local target_root_arg="$2"
-  local selection_name="$3"
-  shift 3
+  local package_name="$3"
+  local selection_name="$4"
+  shift 4
 
   [[ -d "$hve_core_base_path" ]] || fail "HVE-Core base path not found: $hve_core_base_path"
   [[ -d "$target_root_arg" ]] || fail "Target root not found: $target_root_arg"
+  [[ -n "$package_name" ]] || fail "Package name must be a non-empty string."
   [[ -n "$selection_name" ]] || fail "Selection name must be a non-empty string."
 
   local source_root target_base
@@ -111,20 +113,29 @@ main() {
   local catalog_path="$source_root/.github/plugin/marketplace.json"
   [[ -f "$catalog_path" ]] || fail "Marketplace catalog not found: $catalog_path"
 
+  local entry_bundle entry_count entry_json
+  entry_bundle=$(jq -c --arg pkg "$package_name" '[.plugins[]? | select(.name == $pkg)]' "$catalog_path")
+  entry_count=$(jq -r 'length' <<<"$entry_bundle")
+  if [[ "$entry_count" == "0" ]]; then
+    fail "Marketplace catalog '$catalog_path' declares no package named '$package_name'."
+  fi
+  if [[ "$entry_count" != "1" ]]; then
+    fail "Marketplace catalog '$catalog_path' declares $entry_count packages named '$package_name'."
+  fi
+  entry_json=$(jq -c '.[0]' <<<"$entry_bundle")
+
   local -A membership=()
   local package_path
   while IFS= read -r package_path; do
     [[ -n "$package_path" ]] && membership["$package_path"]=1
-  done < <(jq -r '.plugins[] | select(.name == "hve-core")
-    | [(.agents // [])[], (.commands // [])[], (.rules // [])[], (.skills // [])[]] | .[]' "$catalog_path")
-  [[ ${#membership[@]} -gt 0 ]] || fail "Marketplace catalog '$catalog_path' declares no hve-core recipe."
+  done < <(jq -r '[(.agents // [])[], (.commands // [])[], (.rules // [])[], (.skills // [])[]] | .[]' <<<"$entry_json")
+  [[ ${#membership[@]} -gt 0 ]] || fail "Marketplace package '$package_name' in '$catalog_path' declares no installable components."
 
   local -A component_maturity=()
   local maturity_key maturity_value
   while IFS=$'\t' read -r maturity_key maturity_value; do
     [[ -n "$maturity_key" ]] && component_maturity["$maturity_key"]="$maturity_value"
-  done < <(jq -r '.plugins[] | select(.name == "hve-core") | ."x-hve".componentMaturity // {}
-    | to_entries[] | "\(.key)\t\(.value)"' "$catalog_path")
+  done < <(jq -r '."x-hve".componentMaturity // {} | to_entries[] | "\(.key)\t\(.value)"' <<<"$entry_json")
 
   # An unsupported manifest must fail before the target is touched. Version 1 has
   # no upgrade path because it records flattened agent paths and package identity.
@@ -165,7 +176,7 @@ main() {
     field="${candidate%%/*}"
     descriptor=$(field_descriptor "$field")
     [[ -n "$descriptor" ]] || fail "Component path '$candidate' must start with one of: agents, commands, rules, skills."
-    [[ -n "${membership[$candidate]+x}" ]] || fail "Component '$candidate' is not declared membership of the hve-core marketplace recipe."
+    [[ -n "${membership[$candidate]+x}" ]] || fail "Component '$candidate' is not declared membership of the '$package_name' marketplace recipe."
     [[ -z "${plan_targets[$candidate]+x}" ]] || continue
 
     IFS='|' read -r kind root package_suffix source_suffix <<<"$descriptor"
@@ -272,8 +283,7 @@ main() {
 
   local files_json components_json recipe_components_json
   files_json=$(jq -s 'reduce .[] as $entry ({}; . * $entry) | to_entries | sort_by(.key) | from_entries' "$entries_file")
-  recipe_components_json=$(jq -c '.plugins[] | select(.name == "hve-core")
-    | [(.agents // [])[], (.commands // [])[], (.rules // [])[], (.skills // [])[]]' "$catalog_path")
+  recipe_components_json=$(jq -c '[(.agents // [])[], (.commands // [])[], (.rules // [])[], (.skills // [])[]]' <<<"$entry_json")
   components_json=$(jq -c --argjson recipe "$recipe_components_json" '
     [to_entries[].value.component as $component
       | select($component | type == "string" and length > 0)
@@ -281,10 +291,10 @@ main() {
       | $component] | unique | sort' <<<"$files_json")
 
   jq -n --argjson schema "$SCHEMA_VERSION" --arg src "microsoft/hve-core" --arg ver "$version" \
-    --arg inst "$installed" --arg profile "$selection_name" \
+    --arg inst "$installed" --arg package "$package_name" --arg profile "$selection_name" \
     --argjson components "$components_json" --argjson files "$files_json" \
     '{schemaVersion: $schema, source: $src, version: $ver, installed: $inst,
-      selection: {profile: $profile, components: $components}, files: $files}' >"$manifest_path"
+      selection: {package: $package, profile: $profile, components: $components}, files: $files}' >"$manifest_path"
   echo "✅ Created .hve-tracking.json"
 }
 

@@ -259,7 +259,7 @@ The `weekly-security-maintenance.yml` workflow runs every Sunday at 2AM UTC, pro
 
 ## Extension Publishing
 
-The `release-marketplace-stable.yml` and `release-marketplace-prerelease.yml` workflows publish the same HVE Core extension identity. They consume a Stable or PreRelease release tag, package one source-explicit VSIX, and publish it through the corresponding VS Code channel.
+The `release-marketplace-stable.yml` and `release-marketplace-prerelease.yml` workflows discover active package IDs from the catalog and process one VSIX per matrix entry. Stable uses the reviewed `release/stable` release source, while PreRelease uses an explicit `main` source commit. The channels differ in source ownership, cadence, and version policy, not in active package membership or component maturity.
 
 ```mermaid
 flowchart TD
@@ -275,20 +275,20 @@ flowchart TD
 
 ### Publishing Jobs
 
-| Job               | Purpose                                                    | Workflow                             |
-|-------------------|------------------------------------------------------------|--------------------------------------|
-| normalize-version | Ensure version consistency                                 | `release-marketplace-stable.yml`     |
-| validate-version  | Enforce odd minor version for pre-release channel          | `release-marketplace-prerelease.yml` |
-| package           | Build the one HVE Core VSIX using `extension-package.yml`  | Both                                 |
-| publish           | Upload the VSIX to VS Code Marketplace via OIDC and `vsce` | Both                                 |
+| Job               | Purpose                                                               | Workflow                             |
+|-------------------|-----------------------------------------------------------------------|--------------------------------------|
+| normalize-version | Ensure Stable version consistency                                     | `release-marketplace-stable.yml`     |
+| validate-version  | Enforce the PreRelease odd-minor version convention                   | `release-marketplace-prerelease.yml` |
+| discover/package  | Resolve the catalog matrix and build one source-explicit VSIX per row | Both                                 |
+| publish           | Upload each selected VSIX through OIDC and `vsce`                     | Both                                 |
 
 ### Marketplace Build
 
-The one marketplace entry defines the complete active component set. `Get-MarketplacePackageMatrix.ps1` emits exactly one `hve-core` package for either channel, and `extension-package.yml` prepares it from the explicit release source ref and version.
+`Get-MarketplacePackageMatrix.ps1` emits a sorted, nonempty matrix from active catalog entries. Stable and PreRelease must resolve the same package-name set and the same active component and maturity projection for every package. The matrix, not a literal package count or a package-specific workflow branch, controls packaging and publication.
 
-| Identity   | Stable | PreRelease |
-|------------|--------|------------|
-| `hve-core` | Yes    | Yes        |
+`hve-core` retains the unsuffixed HVE Core extension identity. Every other active catalog entry receives a deterministic package-specific extension identity and plugin root.
+
+A single immutable `plugins-v<version>` snapshot contains every active package root and the projected catalog that references them. Each package remains self-contained; the release model does not use package dependencies or aggregate metadata.
 
 Lifecycle inclusion rules:
 

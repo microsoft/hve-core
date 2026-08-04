@@ -154,8 +154,7 @@
     "plugins": {
       "type": "array",
       "minItems": 1,
-      "maxItems": 1,
-      "description": "The single content recipe that owns every distributable component.",
+      "description": "Content recipes that own the distributable components. One or many ordinary entries are supported.",
       "items": {
         "type": "object",
         "required": [

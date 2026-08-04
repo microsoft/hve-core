@@ -1,125 +1,118 @@
 // Copyright (c) 2026 Microsoft Corporation. All rights reserved.
 // SPDX-License-Identifier: MIT
-import * as fs from 'fs';
-import * as path from 'path';
-import {
-  packageCardDefinitions,
-  resolvePackageCards,
-} from '../packageCards';
-import type { PackageCardData } from '../packageCards';
+import * as fs from "fs";
+import * as path from "path";
+import type { PackageCardData } from "../packageCards";
 import {
   countMarketplaceComponents,
-  loadMarketplaceCounts,
-} from '../marketplaceCounts';
+  loadPackageCards,
+} from "../marketplaceCounts";
 
 const marketplacePath = path.resolve(
   __dirname,
-  '../../../../../.github/plugin/marketplace.json',
+  "../../../../../.github/plugin/marketplace.json",
 );
 
 interface MarketplaceEntry {
   name: string;
+  description: string;
+  "x-hve": { displayName: string; documentation: string; maturity?: string };
   [field: string]: unknown;
 }
 
-const catalog = JSON.parse(
-  fs.readFileSync(marketplacePath, 'utf-8'),
-) as { plugins: MarketplaceEntry[] };
+const catalog = JSON.parse(fs.readFileSync(marketplacePath, "utf-8")) as {
+  plugins: MarketplaceEntry[];
+};
 
 // Independent re-derivation of the component tally so expected values come from
 // the catalog itself rather than from the function under test or a magic number.
-const componentFields = ['agents', 'commands', 'rules', 'skills', 'hooks'];
+const componentFields = ["agents", "commands", "rules", "skills", "hooks"];
 function expectedComponentCount(entry: MarketplaceEntry): number {
   return componentFields.reduce((total, field) => {
     const value = entry[field];
-    if (typeof value === 'string') return total + 1;
+    if (typeof value === "string") return total + 1;
     if (Array.isArray(value)) return total + value.length;
     return total;
   }, 0);
 }
 
-const catalogEntries = new Map(catalog.plugins.map((entry) => [entry.name, entry]));
-const cardNames = packageCardDefinitions.map((definition) => definition.name);
-const counts = loadMarketplaceCounts(marketplacePath, cardNames);
-const packageCards = resolvePackageCards(counts);
+const retired = new Set(["deprecated", "removed"]);
+const expectedLabels: Record<string, PackageCardData["maturity"]> = {
+  stable: "Stable",
+  preview: "Preview",
+  experimental: "Experimental",
+};
+const activeEntries = catalog.plugins.filter(
+  (entry) => !retired.has(entry["x-hve"]?.maturity ?? "stable"),
+);
+const packageCards = loadPackageCards(marketplacePath);
+const cardsByName = new Map(packageCards.map((card) => [card.name, card]));
 
-describe('packageCardDefinitions', () => {
-  it('declares hve-core as the only card', () => {
-    expect(cardNames).toEqual(['hve-core']);
-  });
-
-  it('mirrors the sole marketplace catalog entry', () => {
-    expect(catalog.plugins.map((entry) => entry.name)).toEqual(cardNames);
-  });
-
-  it('declares a unique id for every package card', () => {
-    expect(new Set(cardNames).size).toBe(cardNames.length);
-  });
-
-  it('declares unique ids in the marketplace catalog it draws from', () => {
-    const catalogNames = catalog.plugins.map((entry) => entry.name);
-    expect(new Set(catalogNames).size).toBe(catalogNames.length);
-  });
-
-  it.each(cardNames)('%s resolves to a marketplace catalog package', (name) => {
-    expect(catalogEntries.has(name)).toBe(true);
+describe("loadPackageCards against the canonical catalog", () => {
+  it("produces one sorted unique card for every active entry", () => {
+    const expected = activeEntries.map((entry) => entry.name).sort();
+    expect(packageCards.map((card) => card.name)).toEqual(expected);
+    expect(new Set(packageCards.map((card) => card.name)).size).toBe(
+      packageCards.length,
+    );
   });
 
   it.each(
-    packageCardDefinitions.map((definition): [string, string] => [
-      definition.name,
-      definition.href,
+    activeEntries.map((entry): [string, MarketplaceEntry] => [
+      entry.name,
+      entry,
     ]),
-  )('%s links to the packages route', (_name, href) => {
-    expect(href).toBe('/docs/getting-started/packages');
-  });
-
-  it.each(
-    packageCards.map((card): [string, PackageCardData] => [card.name, card]),
-  )('%s declares a description and a supported maturity', (_name, card) => {
-    expect(card.description.length).toBeGreaterThan(0);
-    expect(['Stable', 'Preview', 'Experimental']).toContain(card.maturity);
-  });
-
-  it.each(
-    packageCards.map((card): [string, PackageCardData] => [card.name, card]),
-  )('%s declares a non-empty title', (_name, card) => {
-    expect(card.title.length).toBeGreaterThan(0);
+  )("%s derives all card fields from its catalog entry", (name, entry) => {
+    const card = cardsByName.get(name)!;
+    expect(card.title).toBe(entry["x-hve"].displayName);
+    expect(card.description).toBe(entry.description);
+    expect(card.href).toBe(`/docs/plugins/${name}`);
+    expect(card.maturity).toBe(
+      expectedLabels[entry["x-hve"].maturity ?? "stable"],
+    );
+    expect(card.artifacts).toBe(expectedComponentCount(entry));
+    expect(card.artifacts).toBeGreaterThan(0);
   });
 });
 
-describe('countMarketplaceComponents', () => {
-  it('counts a string component field as one component', () => {
-    expect(countMarketplaceComponents({ hooks: 'hooks/shared/telemetry.json' })).toBe(1);
+describe("countMarketplaceComponents", () => {
+  it("counts a string component field as one component", () => {
+    expect(
+      countMarketplaceComponents({ hooks: "hooks/shared/telemetry.json" }),
+    ).toBe(1);
   });
 
-  it('counts an array component field by its length', () => {
-    expect(countMarketplaceComponents({ agents: ['a.md', 'b.md', 'c.md'] })).toBe(3);
+  it("counts an array component field by its length", () => {
+    expect(
+      countMarketplaceComponents({ agents: ["a.md", "b.md", "c.md"] }),
+    ).toBe(3);
   });
 
-  it('sums every declared component field', () => {
+  it("sums every declared component field", () => {
     expect(
       countMarketplaceComponents({
-        agents: ['a.md', 'b.md'],
-        commands: ['c.md'],
+        agents: ["a.md", "b.md"],
+        commands: ["c.md"],
         rules: [],
-        skills: ['s'],
-        hooks: 'hooks/shared/telemetry.json',
+        skills: ["s"],
+        hooks: "hooks/shared/telemetry.json",
       }),
     ).toBe(5);
   });
 
-  it('ignores fields that are neither a string nor an array', () => {
-    expect(countMarketplaceComponents({ agents: ['a.md'], version: 3, author: {} })).toBe(1);
+  it("ignores fields that are neither a string nor an array", () => {
+    expect(
+      countMarketplaceComponents({ agents: ["a.md"], version: 3, author: {} }),
+    ).toBe(1);
   });
 
-  it('returns zero for an entry with no component fields', () => {
-    expect(countMarketplaceComponents({ name: 'empty' })).toBe(0);
+  it("returns zero for an entry with no component fields", () => {
+    expect(countMarketplaceComponents({ name: "empty" })).toBe(0);
   });
 
-  it('counts a catalog package that declares hooks as a single string', () => {
+  it("counts a catalog package that declares hooks as a single string", () => {
     const withStringHooks = catalog.plugins.filter(
-      (entry) => typeof entry.hooks === 'string',
+      (entry) => typeof entry.hooks === "string",
     );
     expect(withStringHooks.length).toBeGreaterThan(0);
 
@@ -129,42 +122,5 @@ describe('countMarketplaceComponents', () => {
         countMarketplaceComponents(withoutHooks) + 1,
       );
     }
-  });
-});
-
-describe('loadMarketplaceCounts', () => {
-  it.each(cardNames)('%s count matches its catalog membership', (name) => {
-    expect(counts[name]).toBe(expectedComponentCount(catalogEntries.get(name)!));
-  });
-
-  it('resolves a count for every requested package and nothing more', () => {
-    expect(Object.keys(counts).sort()).toEqual([...cardNames].sort());
-  });
-
-  it('fails loudly for a retired package id', () => {
-    expect(() => loadMarketplaceCounts(marketplacePath, ['hve-core-all'])).toThrow(
-      'Unknown marketplace package: hve-core-all',
-    );
-  });
-
-  it('fails loudly for an unknown package id', () => {
-    expect(() => loadMarketplaceCounts(marketplacePath, ['not-a-package'])).toThrow(
-      'Unknown marketplace package: not-a-package',
-    );
-  });
-});
-
-describe('resolvePackageCards against the catalog', () => {
-  it.each(
-    packageCards.map((card): [string, PackageCardData] => [card.name, card]),
-  )('%s reports a positive integer artifact count', (_name, card) => {
-    expect(Number.isInteger(card.artifacts)).toBe(true);
-    expect(card.artifacts).toBeGreaterThan(0);
-  });
-
-  it.each(
-    packageCards.map((card): [string, PackageCardData] => [card.name, card]),
-  )('%s artifact count matches the catalog tally', (name, card) => {
-    expect(card.artifacts).toBe(expectedComponentCount(catalogEntries.get(name)!));
   });
 });

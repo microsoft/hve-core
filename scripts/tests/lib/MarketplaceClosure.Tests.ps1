@@ -518,7 +518,7 @@ Describe 'Production starter profile selection' -Tag 'Unit' {
     BeforeAll {
         $script:ProductionRoot = (Resolve-Path (Join-Path $PSScriptRoot '../../..')).Path
         $catalog = Get-MarketplaceCatalog -Path (Join-Path $script:ProductionRoot '.github/plugin/marketplace.json')
-        $script:ProductionEntry = @($catalog['plugins']) | Where-Object { $_['name'] -eq 'hve-core' }
+        $script:ProductionEntry = @($catalog['plugins']) | Where-Object { $_['name'] -eq 'hve-core-all' }
         $agentIndex = Get-MarketplaceAgentIndex -Catalog $catalog -RepoRoot $script:ProductionRoot
         $script:ProductionStarter = @(Resolve-MarketplaceComponentSelection -Entry $script:ProductionEntry `
                 -RepoRoot $script:ProductionRoot -AgentIndex $agentIndex -ProfileName 'starter')
@@ -548,6 +548,50 @@ Describe 'Production starter profile selection' -Tag 'Unit' {
                 -AgentIndex $agentIndex -Component @($index.Keys))
 
         $selection.Count | Should -Be $index.Count
+    }
+}
+
+Describe 'Production focused package closure' -Tag 'Unit' {
+    BeforeAll {
+        $script:FocusedRoot = (Resolve-Path (Join-Path $PSScriptRoot '../../..')).Path
+        $script:FocusedCatalog = Get-MarketplaceCatalog -Path (Join-Path $script:FocusedRoot '.github/plugin/marketplace.json')
+        $script:FocusedAgentIndex = Get-MarketplaceAgentIndex -Catalog $script:FocusedCatalog -RepoRoot $script:FocusedRoot
+    }
+
+    It 'Closes every package agent set entirely from declared membership' {
+        foreach ($entry in @($script:FocusedCatalog['plugins'])) {
+            $declared = @($entry['agents'] | Where-Object { $_ } | Sort-Object)
+            if ($declared.Count -eq 0) {
+                continue
+            }
+
+            $closed = @(Expand-MarketplaceAgentDependency -Index $script:FocusedAgentIndex `
+                    -SeedPackagePaths $declared -PackageName ([string]$entry['name']))
+            $closed | Should -Be $declared -Because "package '$([string]$entry['name'])' must declare its complete handoff closure"
+        }
+    }
+
+    It 'Declares the data-science security handoff cycle explicitly' {
+        $entry = @($script:FocusedCatalog['plugins'] | Where-Object { $_['name'] -eq 'data-science' })[0]
+        @($entry['agents']) | Should -Contain 'agents/security/security-planner.md'
+        @($entry['agents']) | Should -Contain 'agents/security/sssc-planner.md'
+        @($script:FocusedAgentIndex.Lookup['rai-planner'].Handoffs) | Should -Contain 'Security Planner'
+        @($script:FocusedAgentIndex.Lookup['security-planner'].Handoffs) | Should -Contain 'SSSC Planner'
+        @($script:FocusedAgentIndex.Lookup['sssc-planner'].Handoffs) | Should -Contain 'Security Planner'
+    }
+
+    It 'Resolves data-science <PackagePath> as experimental on <Channel>' -ForEach @(
+        @{ PackagePath = 'agents/security/security-planner.md'; Channel = 'Stable' }
+        @{ PackagePath = 'agents/security/security-planner.md'; Channel = 'PreRelease' }
+        @{ PackagePath = 'agents/security/sssc-planner.md'; Channel = 'Stable' }
+        @{ PackagePath = 'agents/security/sssc-planner.md'; Channel = 'PreRelease' }
+    ) {
+        $entry = @($script:FocusedCatalog['plugins'] | Where-Object { $_['name'] -eq 'data-science' })[0]
+        $recipe = @(Get-MarketplaceResolvedPackageRecipe -Entry $entry -Channel $Channel -AgentIndex $script:FocusedAgentIndex)
+        $item = @($recipe | Where-Object { $_.PackagePath -eq $PackagePath })
+        $item.Count | Should -Be 1
+        $item[0].Kind | Should -BeExactly 'agent'
+        $item[0].Maturity | Should -BeExactly 'experimental'
     }
 }
 
