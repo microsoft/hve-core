@@ -1,7 +1,7 @@
 {
   "name": "hve-core-all",
   "description": "Full bundle of opinionated, rapidly evolving HVE Core agentic SDLC patterns and tools",
-  "version": "3.3.101",
+  "version": "4.0.0",
   "agents": [
     "agents/accessibility/",
     "agents/accessibility/subagents/",
