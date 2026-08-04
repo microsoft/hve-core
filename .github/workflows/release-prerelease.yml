@@ -1,325 +1,507 @@
 # Copyright (c) 2026 Microsoft Corporation. All rights reserved.
 # SPDX-License-Identifier: MIT
 name: Pre-Release Pipeline
-
+# Packages a pre-release directly from an explicit main commit.
+#
+# The odd-minor version is computed at runtime and never committed, so there is
+# no pre-release branch to create, force-push, or merge back. Both the plugin
+# and the VSIX are built from the same source commit and version. A resumable
+# draft stages uploads; final publication is the immutable tag boundary.
 on:
-  pull_request:
-    types: [closed]
-    branches: [main]
-
+    workflow_dispatch:
+        inputs:
+            source-sha:
+                description: Full 40-character commit SHA on main to package
+                required: true
+                type: string
 concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: false
-
+    group: ${{ github.workflow }}-${{ inputs.source-sha }}
+    cancel-in-progress: false
 permissions:
-  contents: read
-
+    contents: read
 jobs:
-  prerelease-tag:
-    name: Tag and Create Pre-Release
-    if: >
-      github.event.pull_request.merged == true
-      && github.event.pull_request.head.ref == 'prerelease/next'
-    runs-on: ubuntu-latest
-    permissions:
-      contents: write
-    outputs:
-      tag_name: ${{ steps.tag.outputs.tag_name }}
-      version: ${{ steps.tag.outputs.version }}
-    steps:
-      - name: Generate GitHub App Token
-        id: app-token
-        uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v2.0.0
-        with:
-          app-id: ${{ vars.RELEASE_APP_ID }}
-          private-key: ${{ secrets.RELEASE_APP_PRIVATE_KEY }}
+    resolve-source:
+        name: Resolve Pre-Release Source
+        runs-on: ubuntu-latest
+        permissions:
+            contents: read
+        outputs:
+            source_sha: ${{ steps.source.outputs.source_sha }}
+            version: ${{ steps.source.outputs.version }}
+            tag_name: ${{ steps.source.outputs.tag_name }}
+        steps:
+            - name: Checkout main history
+              uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+              with:
+                ref: main
+                fetch-depth: 0
+                persist-credentials: false
+            - name: Resolve source commit and ephemeral version
+              id: source
+              env:
+                GH_TOKEN: ${{ github.token }}
+                REPOSITORY: ${{ github.repository }}
+                SOURCE_SHA: ${{ inputs.source-sha }}
+              run: |
+                set -euo pipefail
 
-      - name: Checkout code
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          persist-credentials: false
+                if ! [[ "$SOURCE_SHA" =~ ^[0-9a-f]{40}$ ]]; then
+                  echo "::error::source-sha must be a full 40-character lowercase commit SHA"
+                  exit 1
+                fi
+                if ! git merge-base --is-ancestor "$SOURCE_SHA" HEAD; then
+                  echo "::error::source-sha $SOURCE_SHA is not contained in main"
+                  exit 1
+                fi
 
-      - name: Extract version and create tag
-        id: tag
+                # The committed baseline stays even-minor. The odd-minor pre-release
+                # version is derived here and written to no tracked file.
+                CURRENT=$(git show "${SOURCE_SHA}:.release-please-manifest.json" | jq -r '.["."] // "0.0.0"')
+                MAJOR=$(echo "$CURRENT" | cut -d. -f1)
+                MINOR=$(echo "$CURRENT" | cut -d. -f2)
+
+                # Only even-minor stable tags anchor the commit range, so an existing
+                # pre-release tag cannot cause a version regression.
+                LAST_TAG=$(git tag -l 'hve-core-v*' | awk -F'[v.]' '{if ($(NF-1) % 2 == 0) print}' | sort -V | tail -1)
+
+                # Only commit subjects are scanned so Dependabot bodies that embed
+                # upstream changelogs cannot fake a breaking change.
+                HAS_BREAKING=0
+                if [ -n "$LAST_TAG" ]; then
+                  HAS_BREAKING=$(git log "$LAST_TAG".."$SOURCE_SHA" --format='%s' | \
+                    grep -cE '^[a-z]+(\(.+\))?!:|^BREAKING[ -]CHANGE:' || true)
+                fi
+
+                if [ "$HAS_BREAKING" -gt 0 ]; then
+                  PRE_MAJOR=$((MAJOR + 1))
+                  PRE_MINOR=1
+                else
+                  PRE_MAJOR=$MAJOR
+                  if (( MINOR % 2 == 0 )); then
+                    PRE_MINOR=$((MINOR + 1))
+                  else
+                    PRE_MINOR=$MINOR
+                  fi
+                fi
+
+                COMMIT_COUNT=$(git rev-list --count "${LAST_TAG}..${SOURCE_SHA}" 2>/dev/null || echo "0")
+                VERSION="${PRE_MAJOR}.${PRE_MINOR}.${COMMIT_COUNT}"
+
+                if (( PRE_MINOR % 2 == 0 )); then
+                  echo "::error::Computed pre-release version $VERSION must have an odd minor"
+                  exit 1
+                fi
+
+                TAG="hve-core-v${VERSION}"
+                if gh api "/repos/$REPOSITORY/git/refs/tags/$TAG" --silent 2>/dev/null; then
+                  is_draft=$(gh api "/repos/$REPOSITORY/releases/tags/$TAG" --jq '.draft' 2>/dev/null || echo 'false')
+                  if [ "$is_draft" != 'true' ]; then
+                    echo "::error::Tag $TAG already exists outside a resumable draft; pre-release tags are immutable"
+                    exit 1
+                  fi
+                fi
+
+                {
+                  echo "source_sha=$SOURCE_SHA"
+                  echo "version=$VERSION"
+                  echo "tag_name=$TAG"
+                } >> "$GITHUB_OUTPUT"
+
+                echo "Pre-release $VERSION from $SOURCE_SHA (last stable tag: ${LAST_TAG:-none})"
+    create-prerelease:
+        name: Ensure Draft Pre-Release
+        needs:
+            - resolve-source
+        runs-on: ubuntu-latest
+        permissions:
+            contents: write
+        steps:
+            - name: Create or resume draft pre-release
+              env:
+                GH_TOKEN: ${{ github.token }}
+                REPOSITORY: ${{ github.repository }}
+                TAG: ${{ needs.resolve-source.outputs.tag_name }}
+                VERSION: ${{ needs.resolve-source.outputs.version }}
+                SOURCE_SHA: ${{ needs.resolve-source.outputs.source_sha }}
+              run: |
+                set -euo pipefail
+                existing=$(gh release view "$TAG" \
+                  --json isDraft,isPrerelease,tagName,targetCommitish \
+                  -R "$REPOSITORY" 2>/dev/null || true)
+                if [ -n "$existing" ]; then
+                  is_draft=$(printf '%s' "$existing" | jq -r '.isDraft')
+                  is_prerelease=$(printf '%s' "$existing" | jq -r '.isPrerelease')
+                  target=$(printf '%s' "$existing" | jq -r '.targetCommitish')
+                  if [ "$is_draft" != 'true' ] || [ "$is_prerelease" != 'true' ] || [ "$target" != "$SOURCE_SHA" ]; then
+                    echo "::error::Existing release $TAG is not the matching resumable draft"
+                    exit 1
+                  fi
+                  echo "Resuming existing draft pre-release $TAG"
+                  exit 0
+                fi
+
+                gh release create "$TAG" \
+                  --title "hve-core $VERSION (pre-release)" \
+                  --prerelease \
+                  --draft \
+                  --target "$SOURCE_SHA" \
+                  --generate-notes \
+                  -R "$REPOSITORY"
+    close-milestone:
+        name: Close Pre-Release Milestone
+        needs:
+            - resolve-source
+            - publish-release
+        runs-on: ubuntu-latest
+        permissions:
+            issues: write
+        steps:
+            - name: Close milestone for pre-release version
+              env:
+                GH_TOKEN: ${{ github.token }}
+                REPOSITORY: ${{ github.repository }}
+                VERSION: ${{ needs.resolve-source.outputs.version }}
+              run: |
+                set -euo pipefail
+                MAJOR=$(echo "$VERSION" | cut -d. -f1)
+                MINOR=$(echo "$VERSION" | cut -d. -f2)
+                TITLE="v${MAJOR}.${MINOR}.0"
+                NUMBER=$(gh api "/repos/$REPOSITORY/milestones?state=open&per_page=100" \
+                  --jq ".[] | select(.title == \"$TITLE\") | .number")
+                if [ -n "$NUMBER" ]; then
+                  gh api "/repos/$REPOSITORY/milestones/$NUMBER" \
+                    -X PATCH -f state=closed
+                  echo "✅ Closed milestone $TITLE (#$NUMBER)"
+                else
+                  echo "ℹ️ No open milestone found matching '$TITLE' — skipping"
+                fi
+    extension-package-prerelease:
+        name: Package VS Code Extensions (Pre-Release)
+        needs:
+            - resolve-source
+            - create-prerelease
+        uses: ./.github/workflows/extension-package.yml
+        with:
+            source-ref: ${{ needs.resolve-source.outputs.source_sha }}
+            version: ${{ needs.resolve-source.outputs.version }}
+            channel: PreRelease
+        permissions:
+            contents: read
+    plugin-package-prerelease:
+        name: Package Plugins (Pre-Release)
+        needs:
+            - resolve-source
+            - create-prerelease
+        uses: ./.github/workflows/plugin-package.yml
+        with:
+            source-ref: ${{ needs.resolve-source.outputs.source_sha }}
+            source-policy: main-ancestor
+            version: ${{ needs.resolve-source.outputs.version }}
+            project-release-catalog: true
+        permissions:
+            contents: read
+    plugin-snapshot-production:
+        name: Publish Immutable Plugin Snapshot (Pre-Release)
+        needs:
+            - resolve-source
+            - plugin-package-prerelease
+        uses: ./.github/workflows/plugin-snapshot-publish.yml
+        with:
+            source-ref: ${{ needs.resolve-source.outputs.source_sha }}
+            source-policy: main-ancestor
+            expected-version: ${{ needs.resolve-source.outputs.version }}
+            production: true
+        permissions:
+            contents: write
+    generate-dependency-sbom:
+        name: Generate Dependency SBOM
+        needs:
+            - resolve-source
+            - create-prerelease
+        runs-on: ubuntu-latest
+        permissions:
+            # write required for gh release upload to attach SBOM to the release
+            contents: write
+        steps:
+            - name: Checkout dependency manifests
+              uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+              with:
+                ref: ${{ needs.resolve-source.outputs.source_sha }}
+                sparse-checkout: |
+                    package.json
+                    package-lock.json
+                    .syft.yaml
+                sparse-checkout-cone-mode: false
+                persist-credentials: false
+            - name: Generate dependency SBOM
+              uses: anchore/sbom-action@e22c389904149dbc22b58101806040fa8d37a610 # v0.24.0
+              with:
+                path: .
+                format: spdx-json
+                output-file: dependencies.spdx.json
+                upload-release-assets: false
+                upload-artifact: false
+                config: .syft.yaml
+                dependency-snapshot: true
+            - name: Upload dependency SBOM artifact
+              uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+              with:
+                name: sbom-dependencies
+                path: dependencies.spdx.json
+            - name: Upload dependency SBOM to release
+              env:
+                GH_TOKEN: ${{ github.token }}
+                REPOSITORY: ${{ github.repository }}
+                TAG: ${{ needs.resolve-source.outputs.tag_name }}
+              run: |
+                set -euo pipefail
+                gh release upload "$TAG" \
+                  "dependencies.spdx.json" \
+                  --clobber -R "$REPOSITORY"
+    attest-and-upload:
+        name: Attest and Upload (${{ matrix.id }})
+        needs:
+            - resolve-source
+            - extension-package-prerelease
+            - generate-dependency-sbom
+        runs-on: ubuntu-latest
+        strategy:
+            fail-fast: false
+            matrix: ${{ fromJson(needs.extension-package-prerelease.outputs.packages-matrix) }}
+        permissions:
+            contents: write
+            id-token: write
+            attestations: write
+            artifact-metadata: write
+        steps:
+            - name: Checkout Syft config
+              uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+              with:
+                ref: ${{ needs.resolve-source.outputs.source_sha }}
+                sparse-checkout: .syft.yaml
+                sparse-checkout-cone-mode: false
+                persist-credentials: false
+            - name: Download dependency SBOM
+              uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+              with:
+                name: sbom-dependencies
+                path: ./sbom
+            - name: Download VSIX artifact
+              uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+              with:
+                name: extension-vsix-${{ matrix.id }}
+                path: ./dist
+            - name: Resolve VSIX filename
+              id: vsix
+              run: |
+                shopt -s nullglob
+                files=(dist/*.vsix)
+                if [[ ${#files[@]} -eq 0 ]]; then
+                  echo "::error::No VSIX file found in dist/"
+                  exit 1
+                fi
+                if [[ ${#files[@]} -gt 1 ]]; then
+                  echo "::error::Expected exactly one VSIX file but found ${#files[@]}: ${files[*]}"
+                  exit 1
+                fi
+                VSIX_FILE="${files[0]}"
+                VSIX_NAME=$(basename "$VSIX_FILE")
+                echo "file=$VSIX_FILE" >> "$GITHUB_OUTPUT"
+                echo "name=$VSIX_NAME" >> "$GITHUB_OUTPUT"
+            - name: Generate SBOM
+              uses: anchore/sbom-action@e22c389904149dbc22b58101806040fa8d37a610 # v0.24.0
+              with:
+                file: ${{ steps.vsix.outputs.file }}
+                format: spdx-json
+                output-file: dist/${{ steps.vsix.outputs.name }}.spdx.json
+                artifact-name: sbom-${{ matrix.id }}
+                upload-release-assets: false
+                upload-artifact: true
+                config: .syft.yaml
+            - name: Verify SBOM files exist
+              run: |
+                test -f "dist/${{ steps.vsix.outputs.name }}.spdx.json" \
+                  || { echo "::error::Per-VSIX SBOM not found: dist/${{ steps.vsix.outputs.name }}.spdx.json"; exit 1; }
+                test -f "sbom/dependencies.spdx.json" \
+                  || { echo "::error::Dependency SBOM not found: sbom/dependencies.spdx.json"; exit 1; }
+            - name: Attest build provenance
+              id: attest
+              uses: actions/attest-build-provenance@0f67c3f4856b2e3261c31976d6725780e5e4c373 # v4.1.1
+              with:
+                subject-path: ${{ steps.vsix.outputs.file }}
+            - name: Attest SBOM
+              uses: actions/attest@f7c74d28b9d84cb8768d0b8ca14a4bac6ef463e6 # v4.2.0
+              with:
+                subject-path: ${{ steps.vsix.outputs.file }}
+                sbom-path: dist/${{ steps.vsix.outputs.name }}.spdx.json
+            - name: Attest dependency SBOM
+              uses: actions/attest@f7c74d28b9d84cb8768d0b8ca14a4bac6ef463e6 # v4.2.0
+              with:
+                subject-path: ${{ steps.vsix.outputs.file }}
+                sbom-path: sbom/dependencies.spdx.json
+            - name: Upload assets to GitHub Release
+              env:
+                GH_TOKEN: ${{ github.token }}
+                REPOSITORY: ${{ github.repository }}
+                TAG: ${{ needs.resolve-source.outputs.tag_name }}
+                BUNDLE_PATH: ${{ steps.attest.outputs.bundle-path }}
+              run: |
+                set -euo pipefail
+                cp "$BUNDLE_PATH" \
+                  "dist/${{ steps.vsix.outputs.name }}.sigstore.json"
+                jq -c '.dsseEnvelope' "$BUNDLE_PATH" > \
+                  "dist/${{ steps.vsix.outputs.name }}.intoto.jsonl"
+                gh release upload "$TAG" \
+                  "${{ steps.vsix.outputs.file }}" \
+                  "dist/${{ steps.vsix.outputs.name }}.spdx.json" \
+                  "dist/${{ steps.vsix.outputs.name }}.sigstore.json" \
+                  "dist/${{ steps.vsix.outputs.name }}.intoto.jsonl" \
+                  --clobber -R "$REPOSITORY"
+    upload-plugin-packages:
+        name: Attest and Upload Plugin (${{ matrix.id }})
+        needs:
+            - resolve-source
+            - plugin-package-prerelease
+            - generate-dependency-sbom
+        runs-on: ubuntu-latest
+        strategy:
+            fail-fast: false
+            matrix: ${{ fromJson(needs.plugin-package-prerelease.outputs.packages-matrix) }}
+        permissions:
+            contents: write
+            id-token: write
+            attestations: write
+            artifact-metadata: write
+        steps:
+            - name: Checkout Syft config
+              uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+              with:
+                ref: ${{ needs.resolve-source.outputs.source_sha }}
+                sparse-checkout: .syft.yaml
+                sparse-checkout-cone-mode: false
+                persist-credentials: false
+            - name: Download dependency SBOM
+              uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+              with:
+                name: sbom-dependencies
+                path: ./sbom
+            - name: Download plugin artifact
+              uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+              with:
+                name: plugin-package-${{ matrix.id }}
+                path: ./dist/plugins
+            - name: Verify plugin archive exists
+              run: |
+                PLUGIN_ARCHIVE="dist/plugins/${{ matrix.id }}.zip"
+                if [ ! -f "$PLUGIN_ARCHIVE" ]; then
+                  echo "::error::Plugin archive not found for package ${{ matrix.id }}"
+                  exit 1
+                fi
+            - name: Generate SBOM
+              uses: anchore/sbom-action@e22c389904149dbc22b58101806040fa8d37a610 # v0.24.0
+              with:
+                file: dist/plugins/${{ matrix.id }}.zip
+                format: spdx-json
+                output-file: dist/plugins/${{ matrix.id }}.zip.spdx.json
+                artifact-name: sbom-plugin-${{ matrix.id }}
+                upload-release-assets: false
+                upload-artifact: true
+                config: .syft.yaml
+            - name: Verify SBOM files exist
+              run: |
+                test -f "dist/plugins/${{ matrix.id }}.zip.spdx.json" \
+                  || { echo "::error::Per-plugin SBOM not found: dist/plugins/${{ matrix.id }}.zip.spdx.json"; exit 1; }
+                test -f "sbom/dependencies.spdx.json" \
+                  || { echo "::error::Dependency SBOM not found: sbom/dependencies.spdx.json"; exit 1; }
+            - name: Attest build provenance
+              id: attest
+              uses: actions/attest-build-provenance@0f67c3f4856b2e3261c31976d6725780e5e4c373 # v4.1.1
+              with:
+                subject-path: dist/plugins/${{ matrix.id }}.zip
+            - name: Attest SBOM
+              uses: actions/attest@f7c74d28b9d84cb8768d0b8ca14a4bac6ef463e6 # v4.2.0
+              with:
+                subject-path: dist/plugins/${{ matrix.id }}.zip
+                sbom-path: dist/plugins/${{ matrix.id }}.zip.spdx.json
+            - name: Attest dependency SBOM
+              uses: actions/attest@f7c74d28b9d84cb8768d0b8ca14a4bac6ef463e6 # v4.2.0
+              with:
+                subject-path: dist/plugins/${{ matrix.id }}.zip
+                sbom-path: sbom/dependencies.spdx.json
+            - name: Upload assets to GitHub Release
+              env:
+                GH_TOKEN: ${{ github.token }}
+                REPOSITORY: ${{ github.repository }}
+                TAG: ${{ needs.resolve-source.outputs.tag_name }}
+                BUNDLE_PATH: ${{ steps.attest.outputs.bundle-path }}
+              run: |
+                set -euo pipefail
+                cp "$BUNDLE_PATH" \
+                  "dist/plugins/${{ matrix.id }}.zip.sigstore.json"
+                jq -c '.dsseEnvelope' "$BUNDLE_PATH" > \
+                  "dist/plugins/${{ matrix.id }}.zip.intoto.jsonl"
+                gh release upload "$TAG" \
+                  "dist/plugins/${{ matrix.id }}.zip" \
+                  "dist/plugins/${{ matrix.id }}.zip.spdx.json" \
+                  "dist/plugins/${{ matrix.id }}.zip.sigstore.json" \
+                  "dist/plugins/${{ matrix.id }}.zip.intoto.jsonl" \
+                  --clobber -R "$REPOSITORY"
+    verify-provenance:
+        name: Verify Provenance
+        needs:
+            - resolve-source
+            - attest-and-upload
+            - upload-plugin-packages
+        runs-on: ubuntu-latest
+        permissions:
+            contents: read
+            attestations: read
         env:
-          GH_TOKEN: ${{ steps.app-token.outputs.token }}
-          PR_TITLE: ${{ github.event.pull_request.title }}
-          REPO: ${{ github.repository }}
-          MERGE_SHA: ${{ github.event.pull_request.merge_commit_sha }}
-        run: |
-          VERSION=$(echo "$PR_TITLE" | grep -oE 'pre-release [0-9]+\.[0-9]+\.[0-9]+' | grep -oE '[0-9]+\.[0-9]+\.[0-9]+')
-          if [ -z "$VERSION" ]; then
-            echo "⚠️ Could not extract version from PR title, falling back to manifest"
-            VERSION=$(jq -r '.["."] // "0.0.0"' .release-please-manifest.json 2>/dev/null || echo "")
-          fi
-          if [ -z "$VERSION" ]; then
-            echo "::error::Could not extract version from PR title or manifest: $PR_TITLE"
-            exit 1
-          fi
-
-          # Even/odd convention: pre-release versions must have odd minor
-          PRE_MINOR=$(echo "$VERSION" | cut -d. -f2)
-          if (( PRE_MINOR % 2 == 0 )); then
-            echo "::error::Pre-release version $VERSION must have an odd minor (even/odd convention)"
-            exit 1
-          fi
-
-          TAG="hve-core-v${VERSION}"
-
-          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
-          echo "tag_name=$TAG" >> "$GITHUB_OUTPUT"
-
-          if ! gh api "/repos/$REPO/git/refs/tags/$TAG" --silent 2>/dev/null; then
-            gh api "/repos/$REPO/git/refs" \
-              -f "ref=refs/tags/$TAG" \
-              -f "sha=$MERGE_SHA"
-            echo "Created tag $TAG"
-          else
-            echo "Tag $TAG already exists"
-          fi
-
-      - name: Create draft pre-release GitHub Release
-        env:
-          GH_TOKEN: ${{ steps.app-token.outputs.token }}
-          TAG: ${{ steps.tag.outputs.tag_name }}
-          VERSION: ${{ steps.tag.outputs.version }}
-          PR_NUMBER: ${{ github.event.pull_request.number }}
-          REPO: ${{ github.repository }}
-        run: |
-          BODY=$(gh pr view "$PR_NUMBER" \
-            --json body --jq '.body' \
-            -R "$REPO")
-
-          gh release create "$TAG" \
-            --title "hve-core $VERSION (pre-release)" \
-            --prerelease \
-            --draft \
-            --notes "$BODY" \
-            -R "$REPO"
-
-  close-milestone:
-    name: Close Pre-Release Milestone
-    needs: [prerelease-tag]
-    runs-on: ubuntu-latest
-    permissions:
-      issues: write
-    steps:
-      - name: Close milestone for pre-release version
-        env:
-          GH_TOKEN: ${{ github.token }}
-          VERSION: ${{ needs.prerelease-tag.outputs.version }}
-        run: |
-          REPO="${{ github.repository }}"
-          MAJOR=$(echo "$VERSION" | cut -d. -f1)
-          MINOR=$(echo "$VERSION" | cut -d. -f2)
-          TITLE="v${MAJOR}.${MINOR}.0"
-          NUMBER=$(gh api "/repos/$REPO/milestones?state=open&per_page=100" \
-            --jq ".[] | select(.title == \"$TITLE\") | .number")
-          if [ -n "$NUMBER" ]; then
-            gh api "/repos/$REPO/milestones/$NUMBER" \
-              -X PATCH -f state=closed
-            echo "✅ Closed milestone $TITLE (#$NUMBER)"
-          else
-            echo "ℹ️ No open milestone found matching '$TITLE' — skipping"
-          fi
-
-  extension-package-prerelease:
-    name: Package VS Code Extensions (Pre-Release)
-    needs: [prerelease-tag]
-    uses: ./.github/workflows/extension-package.yml
-    with:
-      version: ${{ needs.prerelease-tag.outputs.version }}
-      channel: PreRelease
-    permissions:
-      contents: read
-
-  generate-dependency-sbom:
-    name: Generate Dependency SBOM
-    needs: [prerelease-tag]
-    runs-on: ubuntu-latest
-    permissions:
-      # write required for gh release upload to attach SBOM to the release
-      contents: write
-    steps:
-      - name: Checkout dependency manifests
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          sparse-checkout: |
-            package.json
-            package-lock.json
-            .syft.yaml
-          sparse-checkout-cone-mode: false
-          persist-credentials: false
-
-      - name: Generate dependency SBOM
-        uses: anchore/sbom-action@e22c389904149dbc22b58101806040fa8d37a610 # v0.24.0
-        with:
-          path: .
-          format: spdx-json
-          output-file: dependencies.spdx.json
-          upload-release-assets: false
-          upload-artifact: false
-          config: .syft.yaml
-          dependency-snapshot: true
-
-      - name: Upload dependency SBOM artifact
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-        with:
-          name: sbom-dependencies
-          path: dependencies.spdx.json
-
-      - name: Upload dependency SBOM to release
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          gh release upload "${{ needs.prerelease-tag.outputs.tag_name }}" \
-            "dependencies.spdx.json" \
-            --clobber -R "${{ github.repository }}"
-
-  attest-and-upload:
-    name: Attest and Upload (${{ matrix.id }})
-    needs: [prerelease-tag, extension-package-prerelease, generate-dependency-sbom]
-    runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix: ${{ fromJson(needs.extension-package-prerelease.outputs.collections-matrix) }}
-    permissions:
-      contents: write
-      id-token: write
-      attestations: write
-      artifact-metadata: write
-    steps:
-      - name: Checkout Syft config
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          sparse-checkout: .syft.yaml
-          sparse-checkout-cone-mode: false
-          persist-credentials: false
-
-      - name: Download dependency SBOM
-        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
-        with:
-          name: sbom-dependencies
-          path: ./sbom
-
-      - name: Download VSIX artifact
-        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
-        with:
-          name: extension-vsix-${{ matrix.id }}
-          path: ./dist
-
-      - name: Resolve VSIX filename
-        id: vsix
-        run: |
-          shopt -s nullglob
-          files=(dist/*.vsix)
-          if [[ ${#files[@]} -eq 0 ]]; then
-            echo "::error::No VSIX file found in dist/"
-            exit 1
-          fi
-          if [[ ${#files[@]} -gt 1 ]]; then
-            echo "::error::Expected exactly one VSIX file but found ${#files[@]}: ${files[*]}"
-            exit 1
-          fi
-          VSIX_FILE="${files[0]}"
-          VSIX_NAME=$(basename "$VSIX_FILE")
-          echo "file=$VSIX_FILE" >> "$GITHUB_OUTPUT"
-          echo "name=$VSIX_NAME" >> "$GITHUB_OUTPUT"
-
-      - name: Generate SBOM
-        uses: anchore/sbom-action@e22c389904149dbc22b58101806040fa8d37a610 # v0.24.0
-        with:
-          file: ${{ steps.vsix.outputs.file }}
-          format: spdx-json
-          output-file: dist/${{ steps.vsix.outputs.name }}.spdx.json
-          artifact-name: sbom-${{ matrix.id }}
-          upload-release-assets: false
-          upload-artifact: true
-          config: .syft.yaml
-
-      - name: Verify SBOM files exist
-        run: |
-          test -f "dist/${{ steps.vsix.outputs.name }}.spdx.json" \
-            || { echo "::error::Per-VSIX SBOM not found: dist/${{ steps.vsix.outputs.name }}.spdx.json"; exit 1; }
-          test -f "sbom/dependencies.spdx.json" \
-            || { echo "::error::Dependency SBOM not found: sbom/dependencies.spdx.json"; exit 1; }
-
-      - name: Attest build provenance
-        id: attest
-        uses: actions/attest-build-provenance@0f67c3f4856b2e3261c31976d6725780e5e4c373 # v4.1.1
-        with:
-          subject-path: ${{ steps.vsix.outputs.file }}
-
-      - name: Attest SBOM
-        uses: actions/attest@f7c74d28b9d84cb8768d0b8ca14a4bac6ef463e6 # v4.2.0
-        with:
-          subject-path: ${{ steps.vsix.outputs.file }}
-          sbom-path: dist/${{ steps.vsix.outputs.name }}.spdx.json
-
-      - name: Attest dependency SBOM
-        uses: actions/attest@f7c74d28b9d84cb8768d0b8ca14a4bac6ef463e6 # v4.2.0
-        with:
-          subject-path: ${{ steps.vsix.outputs.file }}
-          sbom-path: sbom/dependencies.spdx.json
-
-      - name: Upload assets to GitHub Release
-        env:
-          GH_TOKEN: ${{ github.token }}
-          BUNDLE_PATH: ${{ steps.attest.outputs.bundle-path }}
-        run: |
-          cp "$BUNDLE_PATH" \
-            "dist/${{ steps.vsix.outputs.name }}.sigstore.json"
-          jq -c '.dsseEnvelope' "$BUNDLE_PATH" > \
-            "dist/${{ steps.vsix.outputs.name }}.intoto.jsonl"
-          gh release upload "${{ needs.prerelease-tag.outputs.tag_name }}" \
-            "${{ steps.vsix.outputs.file }}" \
-            "dist/${{ steps.vsix.outputs.name }}.spdx.json" \
-            "dist/${{ steps.vsix.outputs.name }}.sigstore.json" \
-            "dist/${{ steps.vsix.outputs.name }}.intoto.jsonl" \
-            --clobber -R "${{ github.repository }}"
-
-  verify-provenance:
-    name: Verify Provenance
-    needs: [prerelease-tag, attest-and-upload]
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      attestations: read
-    env:
-      GH_TOKEN: ${{ github.token }}
-    steps:
-      - name: Download release artifacts
-        run: |
-          mkdir -p ./artifacts
-          gh release download "${{ needs.prerelease-tag.outputs.tag_name }}" \
-            -R "${{ github.repository }}" \
-            -p '*.vsix' \
-            -p '*.zip' \
-            -D ./artifacts
-
-      - name: Verify build provenance
-        run: |
-          shopt -s nullglob
-          files=(./artifacts/*)
-          if [ ${#files[@]} -eq 0 ]; then
-            echo "::error::No release artifacts downloaded for provenance verification"
-            exit 1
-          fi
-          for f in "${files[@]}"; do
-            gh attestation verify "$f" --repo "${{ github.repository }}"
-          done
-
-  publish-release:
-    name: Publish Pre-Release
-    needs: [prerelease-tag, attest-and-upload, verify-provenance]
-    runs-on: ubuntu-latest
-    permissions:
-      contents: write
-    steps:
-      - name: Publish GitHub Release
-        env:
-          GH_TOKEN: ${{ github.token }}
-          TAG: ${{ needs.prerelease-tag.outputs.tag_name }}
-          REPO: ${{ github.repository }}
-        run: |
-          gh release edit "$TAG" --draft=false -R "$REPO"
+            GH_TOKEN: ${{ github.token }}
+        steps:
+            - name: Download release artifacts
+              env:
+                RELEASE_TAG: ${{ needs.resolve-source.outputs.tag_name }}
+                REPOSITORY: ${{ github.repository }}
+              run: |
+                set -euo pipefail
+                mkdir -p ./artifacts
+                gh release download "$RELEASE_TAG" \
+                  -R "$REPOSITORY" \
+                  -p '*.vsix' \
+                  -p '*.zip' \
+                  -D ./artifacts
+            - name: Verify build provenance
+              env:
+                REPOSITORY: ${{ github.repository }}
+              run: |
+                set -euo pipefail
+                shopt -s nullglob
+                files=(./artifacts/*)
+                if [ ${#files[@]} -eq 0 ]; then
+                  echo "::error::No release artifacts downloaded for provenance verification"
+                  exit 1
+                fi
+                for f in "${files[@]}"; do
+                  gh attestation verify "$f" --repo "$REPOSITORY"
+                done
+    publish-release:
+        name: Publish Pre-Release
+        needs:
+            - resolve-source
+            - attest-and-upload
+            - upload-plugin-packages
+            - plugin-snapshot-production
+            - verify-provenance
+        runs-on: ubuntu-latest
+        permissions:
+            contents: write
+        steps:
+            - name: Publish GitHub Release
+              env:
+                GH_TOKEN: ${{ github.token }}
+                TAG: ${{ needs.resolve-source.outputs.tag_name }}
+                REPOSITORY: ${{ github.repository }}
+              run: |
+                set -euo pipefail
+                gh release edit "$TAG" --draft=false -R "$REPOSITORY"

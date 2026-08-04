@@ -4,7 +4,7 @@
 
 BeforeAll {
     # Dot-source the generator first so its -Force module re-imports (DocsHelpers
-    # -> CollectionHelpers -> CIHelpers) settle before the validator runs its own
+    # -> -> CIHelpers) settle before the validator runs its own
     # imports. The validator's explicit imports then land last, keeping every
     # command it uses (including Write-CIAnnotation) in this script's scope. The
     # generator also provides Invoke-AssetDocsGeneration for scaffolding fixtures.
@@ -59,7 +59,7 @@ BeforeAll {
 }
 
 AfterAll {
-    Remove-Module DocsHelpers, CollectionHelpers, CIHelpers -Force -ErrorAction SilentlyContinue
+    Remove-Module DocsHelpers, CIHelpers -Force -ErrorAction SilentlyContinue
 }
 
 Describe 'Test-AssetDocCoverage' -Tag 'Unit' {

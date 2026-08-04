@@ -10,7 +10,7 @@ Use this reference during intake to decompose the request by responsibility, cho
 
 Choose every type whose responsibility is independently necessary. Prefer skills for reusable on-demand capability and subagents for isolated work, but do not force a path-scoped convention into a skill or a user entry point into a subagent merely because of ranking.
 
-The Choosing the Artifact Type by Responsibility section of `hve-builder.instructions.md` holds the canonical responsibility, form, and activation table. That surface is always loaded whenever a target artifact is edited, so it is the copy that has to exist; restating it here would only create drift. This reference therefore depends on that instruction file, and both ship in the same collection. Keep them together when redistributing the skill.
+The Choosing the Artifact Type by Responsibility section of `hve-builder.instructions.md` holds the canonical responsibility, form, and activation table. That surface is always loaded whenever a target artifact is edited, so it is the copy that has to exist; restating it here would only create drift. This reference therefore depends on that instruction file, and both ship in the same package. Keep them together when redistributing the skill.
 
 When a request spans responsibilities, split it deliberately: a skill may own the workflow, subagents may isolate execution and review, an instruction file may govern matching paths, and a prompt may provide a user entry point. Confirm only splits that widen the caller's write boundary or product surface.
 
@@ -49,7 +49,7 @@ Treat delegation as a first-class architecture decision, not an afterthought. Du
 
 The `model:` field is optional. An omitted subagent model inherits the invoking parent's model; an omitted directly invoked agent or prompt model uses the current session or model-picker selection. When a stable profile is needed, select High, Medium, or Low from the responsibility before authoring `model:`. Use Low for bounded, literal, mechanical execution, Medium for semantic discovery, architecture, authoring, research, and calibrated review, and High only when the responsibility requires the deepest reasoning profile. Declare the selected profile's exact ordered list:
 
-* High: `GPT-5.6 Sol (copilot)`, `Claude Opus 4.8 (copilot)`, `GPT-5.5 (copilot)`
+* High: `Claude Opus 5 (copilot)`, `GPT-5.6 Sol (copilot)`, `GPT-5.5 (copilot)`
 * Medium: `GPT-5.6 Terra (copilot)`, `Claude Sonnet 5 (copilot)`, `MAI-Code-1-Flash (copilot)`
 * Low: `GPT-5.6 Luna (copilot)`, `MAI-Code-1-Flash (copilot)`, `Claude Haiku 4.5 (copilot)`
 

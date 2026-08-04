@@ -7,6 +7,9 @@
 evals/results/
 vally-results/
 
+# Generated Copilot plugin packages
+/plugins/
+
 # macOS
 .DS_Store
 

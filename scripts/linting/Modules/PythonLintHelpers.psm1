@@ -17,7 +17,8 @@ function Get-PythonSkill {
 
     .DESCRIPTION
     Recursively scans the repository for pyproject.toml files, excluding
-    node_modules, and returns the parent directory of each match.
+    node_modules and the repository-root plugins/ generated-output tree, and
+    returns the parent directory of each match.
 
     .PARAMETER RepoRoot
     Repository root to scan.
@@ -34,8 +35,15 @@ function Get-PythonSkill {
 
     Push-Location $RepoRoot
     try {
+        $scanRoot = (Get-Location).ProviderPath
+
         $skills = Get-ChildItem -Path . -Filter 'pyproject.toml' -Recurse -Force -File |
             Where-Object { $_.FullName -notmatch 'node_modules' } |
+            Where-Object {
+                # plugins/ at the repository root is generated output copied from canonical sources.
+                $relativePath = [System.IO.Path]::GetRelativePath($scanRoot, $_.FullName)
+                ($relativePath -split '[\\/]')[0] -ne 'plugins'
+            } |
             ForEach-Object { $_.Directory.FullName }
         return @($skills)
     } finally {

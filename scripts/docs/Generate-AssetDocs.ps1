@@ -9,7 +9,7 @@
     GenAI asset (agent, prompt, instruction, skill).
 
 .DESCRIPTION
-    Deterministic, idempotent generator modeled on the collection README
+    Deterministic, idempotent generator modeled on the package README
     refresh in scripts/extension/Prepare-Extension.ps1. For each documentable
     asset it scaffolds a docs/reference/<kind>/... page from the shared
     template and refreshes only the AUTO-GENERATED regions (metadata and
@@ -49,7 +49,7 @@
 
 .NOTES
     Runs via: npm run docs:generate
-    Dependencies: PowerShell-Yaml module (via DocsHelpers/CollectionHelpers).
+    Dependencies: PowerShell-Yaml module (via DocsHelpers).
 #>
 
 [CmdletBinding(SupportsShouldProcess)]
@@ -67,7 +67,6 @@ param(
 $ErrorActionPreference = 'Stop'
 
 Import-Module (Join-Path $PSScriptRoot 'Modules/DocsHelpers.psm1') -Force
-Import-Module (Join-Path $PSScriptRoot '../collections/Modules/CollectionHelpers.psm1') -Force
 
 #region Pure Helpers
 

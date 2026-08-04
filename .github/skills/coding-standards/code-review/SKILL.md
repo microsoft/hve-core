@@ -29,7 +29,7 @@ Review work should stay anchored in evidence and should avoid premature conclusi
 6. [Walkthrough Protocol](references/walkthrough-protocol.md) — firm orientation floor, full-diff reading contract, and Register 1 narrative guidance.
 7. [Dispatch Loop](references/dispatch-loop.md) — human-steered dispatch board, manifest schema, and walk-back loop contract.
 8. [Emission Modes](references/emission-modes.md) — capability-gated dual-mode emission and persisted emission record.
-9. [Cross-Skill Forks](references/cross-skill-forks.md) — specialist review registry and collection-aware gating for follow-up reviews.
+9. [Cross-Skill Forks](references/cross-skill-forks.md) — specialist review registry and package-aware gating for follow-up reviews.
 
 ## Skill layout
 

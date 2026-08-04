@@ -17,7 +17,7 @@ estimated_reading_time: 6
 Prompts are single-session workflow definitions. You invoke a prompt, Copilot executes it, and the task completes in one shot. This distinguishes prompts from agents (multi-turn conversations) and instructions (passive guidance applied to file edits).
 
 Prompt files live under `.github/prompts/`. They are commonly organized into
-collection-scoped subdirectories such as `.github/prompts/hve-core/` or
+package-scoped subdirectories such as `.github/prompts/hve-core/` or
 `.github/prompts/security/`, though the repository also contains top-level prompt files:
 
 ```text

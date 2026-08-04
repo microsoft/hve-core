@@ -1,414 +1,604 @@
 #Requires -Modules Pester
-# Copyright (c) Microsoft Corporation.
+# Copyright (c) 2026 Microsoft Corporation. All rights reserved.
 # SPDX-License-Identifier: MIT
 
 BeforeAll {
-    . $PSScriptRoot/../../plugins/Validate-Marketplace.ps1
-}
+    . (Join-Path $PSScriptRoot '../../plugins/Validate-Marketplace.ps1')
+    Import-Module (Join-Path $PSScriptRoot 'PluginTestFixtures.psm1') -Force
+    Mock Write-Host {}
+    Mock Write-Warning {}
+    Mock Write-Warning {} -ModuleName MarketplaceHelpers
 
-Describe 'Test-PluginSourceFormat' {
-    It 'Returns empty string for valid source' {
-        $result = Test-PluginSourceFormat -Source 'hve-core'
-        $result | Should -BeNullOrEmpty
+    $script:ComponentPaths = @{
+        Agents   = @('agents/rpi/rpi-planner.md')
+        Commands = @('commands/rpi/rpi-plan.md')
+        Rules    = @('rules/shared/hve-core-location.instructions.md')
+        Skills   = @('skills/rpi/rpi-plan')
+        Hook     = 'hooks/rpi/telemetry.json'
     }
 
-    It 'Returns error for source with forward slash' {
-        $result = Test-PluginSourceFormat -Source 'path/to/plugin'
-        $result | Should -BeLike '*must not contain path separators*'
+    function New-ValidatorFixture {
+        <#
+        .SYNOPSIS
+        Builds a repository fixture whose catalog satisfies every contract rule.
+        #>
+        param(
+            [Parameter(Mandatory)][string]$Root,
+            [Parameter()][hashtable]$PackageOverlay,
+            [Parameter()][switch]$SkipAgentRoot,
+            [Parameter()][switch]$SkipDocumentationRoot,
+            [Parameter()][switch]$AddSecondPackage
+        )
+
+        New-PluginFixtureRepository -Path $Root -Version '9.9.9' `
+            -SkipAgentRoot:$SkipAgentRoot -SkipDocumentationRoot:$SkipDocumentationRoot | Out-Null
+        Add-PluginFixtureArtifactSet -RepoRoot $Root | Out-Null
+
+        $packageOverlayValues = @{
+            componentMaturity = @{ 'skills/rpi/rpi-retired' = 'removed' }
+            profiles          = @{ starter = @($script:ComponentPaths.Agents[0], $script:ComponentPaths.Skills[0]) }
+        }
+        if ($PackageOverlay) {
+            foreach ($key in @($PackageOverlay.Keys)) { $packageOverlayValues[$key] = $PackageOverlay[$key] }
+        }
+
+        $entries = @(
+            New-PluginFixtureEntry -Name 'rpi' -Description 'RPI workflow package' -Version '9.9.9' `
+                -Agents $script:ComponentPaths.Agents -Commands $script:ComponentPaths.Commands `
+                -Rules $script:ComponentPaths.Rules -Skills $script:ComponentPaths.Skills `
+                -Hook $script:ComponentPaths.Hook -Overlay $packageOverlayValues
+        )
+        if ($AddSecondPackage) {
+            Add-PluginFixtureFile -RepoRoot $Root -RelativePath '.github/agents/ops/ops-auditor.agent.md' `
+                -Content "---`nname: Ops Auditor`ndescription: Audits operations`n---`n`n# Ops Auditor`n" | Out-Null
+            Add-PluginFixtureFile -RepoRoot $Root -RelativePath '.github/prompts/ops/ops-audit.prompt.md' `
+                -Content "---`ndescription: Runs an ops audit`n---`n`n# Ops Audit`n" | Out-Null
+            Add-PluginFixtureFile -RepoRoot $Root -RelativePath '.github/instructions/ops/ops-baseline.instructions.md' `
+                -Content "---`ndescription: Ops baseline rules`n---`n`n# Ops Baseline`n" | Out-Null
+            Add-PluginFixtureFile -RepoRoot $Root -RelativePath '.github/skills/ops/ops-toolkit/SKILL.md' `
+                -Content "---`nname: ops-toolkit`ndescription: Ops toolkit`n---`n`n# Ops Toolkit`n" | Out-Null
+            Add-PluginFixtureFile -RepoRoot $Root -RelativePath '.github/hooks/ops/audit.json' `
+                -Content '{"description":"Records ops audits","hooks":{"SessionStart":[{"command":".github/hooks/ops/audit/collect.sh"}]}}' | Out-Null
+            Add-PluginFixtureFile -RepoRoot $Root -RelativePath '.github/hooks/ops/audit/collect.sh' `
+                -Content "#!/usr/bin/env bash`necho audit`n" | Out-Null
+
+            $entries += New-PluginFixtureEntry -Name 'ops' -Description 'Ops audit package' -Version '9.9.9' `
+                -Agents @('agents/ops/ops-auditor.md') -Commands @('commands/ops/ops-audit.md') `
+                -Rules @('rules/ops/ops-baseline.instructions.md') -Skills @('skills/ops/ops-toolkit') `
+                -Hook 'hooks/ops/audit.json'
+        }
+        Add-PluginFixtureCatalog -RepoRoot $Root -Entries $entries -Version '9.9.9' `
+            -SkipDocuments:$SkipDocumentationRoot | Out-Null
+        return $Root
     }
 
-    It 'Returns error for source with backslash' {
-        $result = Test-PluginSourceFormat -Source 'path\to\plugin'
-        $result | Should -BeLike '*must not contain path separators*'
+    function Get-ValidationReport {
+        <#
+        .SYNOPSIS
+        Runs validation and returns the parsed structured report.
+        #>
+        param([Parameter(Mandatory)][string]$Root)
+
+        $reportPath = Join-Path $Root 'logs/marketplace-validation-results.json'
+        $outcome = Invoke-MarketplaceValidation -RepoRoot $Root -OutputPath 'logs/marketplace-validation-results.json'
+        return @{
+            Outcome = $outcome
+            Report  = (Get-Content -LiteralPath $reportPath -Raw | ConvertFrom-Json -AsHashtable)
+        }
     }
 
-    It 'Returns error for source with relative path prefix' {
-        $result = Test-PluginSourceFormat -Source './my-plugin'
-        $result | Should -BeLike '*must not contain*'
-    }
-}
+    function Get-ReportError {
+        <#
+        .SYNOPSIS
+        Flattens every error message recorded in a structured report.
+        #>
+        param([Parameter(Mandatory)][hashtable]$Report)
 
-Describe 'Test-PluginSourceDirectory' {
-    BeforeAll {
-        $script:pluginsRoot = Join-Path $TestDrive 'plugins'
-        New-Item -ItemType Directory -Path (Join-Path $script:pluginsRoot 'existing-plugin') -Force | Out-Null
+        return [string[]]@($Report['Results'] | ForEach-Object { $_['Errors'] })
     }
 
-    It 'Returns empty string when directory exists' {
-        $result = Test-PluginSourceDirectory -Source 'existing-plugin' -PluginsRoot $script:pluginsRoot
-        $result | Should -BeNullOrEmpty
-    }
+    function Set-CatalogEntry {
+        <#
+        .SYNOPSIS
+        Rewrites the fixture catalog after applying a mutation to its entries.
+        #>
+        param(
+            [Parameter(Mandatory)][string]$Root,
+            [Parameter(Mandatory)][scriptblock]$Mutation
+        )
 
-    It 'Returns error when directory does not exist' {
-        $result = Test-PluginSourceDirectory -Source 'missing-plugin' -PluginsRoot $script:pluginsRoot
-        $result | Should -BeLike '*plugin source directory not found*'
-    }
-}
-
-Describe 'Invoke-MarketplaceValidation - missing manifest' {
-    BeforeAll {
-        $script:repoRoot = Join-Path $TestDrive 'repo-no-manifest'
-        New-Item -ItemType Directory -Path $script:repoRoot -Force | Out-Null
-    }
-
-    It 'Returns failure when marketplace.json does not exist' {
-        $result = Invoke-MarketplaceValidation -RepoRoot $script:repoRoot
-        $result.Success | Should -BeFalse
-        $result.ErrorCount | Should -Be 1
-    }
-}
-
-Describe 'Invoke-MarketplaceValidation - invalid JSON' {
-    BeforeAll {
-        $script:repoRoot = Join-Path $TestDrive 'repo-bad-json'
-        $manifestDir = Join-Path $script:repoRoot '.github/plugin'
-        New-Item -ItemType Directory -Path $manifestDir -Force | Out-Null
-        Set-Content -Path (Join-Path $manifestDir 'marketplace.json') -Value '{ invalid json }'
-    }
-
-    It 'Returns failure for malformed JSON' {
-        $result = Invoke-MarketplaceValidation -RepoRoot $script:repoRoot
-        $result.Success | Should -BeFalse
-        $result.ErrorCount | Should -Be 1
-    }
-}
-
-Describe 'Invoke-MarketplaceValidation - missing required fields' {
-    BeforeAll {
-        $script:repoRoot = Join-Path $TestDrive 'repo-missing-fields'
-        $manifestDir = Join-Path $script:repoRoot '.github/plugin'
-        New-Item -ItemType Directory -Path $manifestDir -Force | Out-Null
-        # Missing 'owner' and 'plugins'
-        $json = @{ name = 'test'; metadata = @{ description = 'd'; version = '1.0.0'; pluginRoot = 'plugins' } } | ConvertTo-Json -Depth 5
-        Set-Content -Path (Join-Path $manifestDir 'marketplace.json') -Value $json
-    }
-
-    It 'Returns errors for missing top-level fields' {
-        $result = Invoke-MarketplaceValidation -RepoRoot $script:repoRoot
-        $result.Success | Should -BeFalse
-        $result.ErrorCount | Should -BeGreaterOrEqual 2
-    }
-}
-
-Describe 'Invoke-MarketplaceValidation - missing metadata fields' {
-    BeforeAll {
-        $script:repoRoot = Join-Path $TestDrive 'repo-missing-metadata'
-        $manifestDir = Join-Path $script:repoRoot '.github/plugin'
-        New-Item -ItemType Directory -Path $manifestDir -Force | Out-Null
-        $pluginsDir = Join-Path $script:repoRoot 'plugins/my-plugin'
-        New-Item -ItemType Directory -Path $pluginsDir -Force | Out-Null
-        # metadata missing 'version' and 'pluginRoot'
-        $json = @{
-            name     = 'test'
-            metadata = @{ description = 'd' }
-            owner    = @{ name = 'owner' }
-            plugins  = @(@{ name = 'my-plugin'; source = 'my-plugin'; description = 'd'; version = '1.0.0' })
-        } | ConvertTo-Json -Depth 5
-        Set-Content -Path (Join-Path $manifestDir 'marketplace.json') -Value $json
-    }
-
-    It 'Returns errors for missing metadata fields' {
-        $result = Invoke-MarketplaceValidation -RepoRoot $script:repoRoot
-        $result.Success | Should -BeFalse
-        $result.ErrorCount | Should -BeGreaterOrEqual 2
-    }
-}
-
-Describe 'Invoke-MarketplaceValidation - missing owner name' {
-    BeforeAll {
-        $script:repoRoot = Join-Path $TestDrive 'repo-missing-owner'
-        $manifestDir = Join-Path $script:repoRoot '.github/plugin'
-        New-Item -ItemType Directory -Path $manifestDir -Force | Out-Null
-        $pluginsDir = Join-Path $script:repoRoot 'plugins/my-plugin'
-        New-Item -ItemType Directory -Path $pluginsDir -Force | Out-Null
-        Set-Content -Path (Join-Path $script:repoRoot 'package.json') -Value '{"version":"1.0.0"}'
-        $json = @{
-            name     = 'test'
-            metadata = @{ description = 'd'; version = '1.0.0'; pluginRoot = 'plugins' }
-            owner    = @{}
-            plugins  = @(@{ name = 'my-plugin'; source = 'my-plugin'; description = 'd'; version = '1.0.0' })
-        } | ConvertTo-Json -Depth 5
-        Set-Content -Path (Join-Path $manifestDir 'marketplace.json') -Value $json
-    }
-
-    It 'Returns error for missing owner name' {
-        $result = Invoke-MarketplaceValidation -RepoRoot $script:repoRoot
-        $result.Success | Should -BeFalse
-        $result.ErrorCount | Should -BeGreaterOrEqual 1
+        $catalogPath = Join-Path $Root '.github/plugin/marketplace.json'
+        $catalog = Get-Content -LiteralPath $catalogPath -Raw | ConvertFrom-Json -AsHashtable
+        & $Mutation $catalog
+        Set-Content -LiteralPath $catalogPath -Value (($catalog | ConvertTo-Json -Depth 12) + "`n") -Encoding utf8NoBOM -NoNewline
     }
 }
 
-Describe 'Invoke-MarketplaceValidation - version mismatch' {
-    BeforeAll {
-        $script:repoRoot = Join-Path $TestDrive 'repo-version-mismatch'
-        $manifestDir = Join-Path $script:repoRoot '.github/plugin'
-        New-Item -ItemType Directory -Path $manifestDir -Force | Out-Null
-        $pluginsDir = Join-Path $script:repoRoot 'plugins/my-plugin'
-        New-Item -ItemType Directory -Path $pluginsDir -Force | Out-Null
-        Set-Content -Path (Join-Path $script:repoRoot 'package.json') -Value '{"version":"2.0.0"}'
-        $json = @{
-            name     = 'test'
-            metadata = @{ description = 'd'; version = '1.0.0'; pluginRoot = 'plugins' }
-            owner    = @{ name = 'owner' }
-            plugins  = @(@{ name = 'my-plugin'; source = 'my-plugin'; description = 'd'; version = '1.0.0' })
-        } | ConvertTo-Json -Depth 5
-        Set-Content -Path (Join-Path $manifestDir 'marketplace.json') -Value $json
+Describe 'Test-PluginSourcePath' -Tag 'Unit' {
+    Context 'when the package path is well formed' {
+        It 'Accepts <Path>' -ForEach @(
+            @{ Path = 'plugins/rpi' }
+            @{ Path = 'plugins/nested/rpi' }
+        ) {
+            Test-PluginSourcePath -Path $Path | Should -BeExactly ''
+        }
     }
 
-    It 'Returns error when metadata version does not match package.json' {
-        $result = Invoke-MarketplaceValidation -RepoRoot $script:repoRoot
-        $result.Success | Should -BeFalse
-        $result.ErrorCount | Should -BeGreaterOrEqual 1
-    }
-}
-
-Describe 'Invoke-MarketplaceValidation - empty plugins array' {
-    BeforeAll {
-        $script:repoRoot = Join-Path $TestDrive 'repo-empty-plugins'
-        $manifestDir = Join-Path $script:repoRoot '.github/plugin'
-        New-Item -ItemType Directory -Path $manifestDir -Force | Out-Null
-        Set-Content -Path (Join-Path $script:repoRoot 'package.json') -Value '{"version":"1.0.0"}'
-        $json = @{
-            name     = 'test'
-            metadata = @{ description = 'd'; version = '1.0.0'; pluginRoot = 'plugins' }
-            owner    = @{ name = 'owner' }
-            plugins  = @()
-        } | ConvertTo-Json -Depth 5
-        Set-Content -Path (Join-Path $manifestDir 'marketplace.json') -Value $json
-    }
-
-    It 'Returns error for empty plugins array' {
-        $result = Invoke-MarketplaceValidation -RepoRoot $script:repoRoot
-        $result.Success | Should -BeFalse
-        $result.ErrorCount | Should -BeGreaterOrEqual 1
+    Context 'when the package path is malformed' {
+        It 'Rejects <Label>' -ForEach @(
+            @{ Label = 'a backslash separator'; Path = 'plugins\rpi'; Pattern = 'must use forward slashes' }
+            @{ Label = 'a rooted path'; Path = '/plugins/rpi'; Pattern = 'must be relative to the repository root' }
+            @{ Label = 'a drive-qualified path'; Path = 'C:/plugins/rpi'; Pattern = 'must be relative to the repository root' }
+            @{ Label = 'an empty segment'; Path = 'plugins//rpi'; Pattern = 'must not contain empty path segments' }
+            @{ Label = 'an escaping segment'; Path = 'plugins/../etc'; Pattern = 'must not escape the source repository' }
+            @{ Label = 'a relative segment'; Path = 'plugins/./rpi'; Pattern = 'must not contain relative path segments' }
+        ) {
+            Test-PluginSourcePath -Path $Path | Should -Match $Pattern
+        }
     }
 }
 
-Describe 'Invoke-MarketplaceValidation - duplicate plugin names' {
-    BeforeAll {
-        $script:repoRoot = Join-Path $TestDrive 'repo-dupes'
-        $manifestDir = Join-Path $script:repoRoot '.github/plugin'
-        New-Item -ItemType Directory -Path $manifestDir -Force | Out-Null
-        New-Item -ItemType Directory -Path (Join-Path $script:repoRoot 'plugins/my-plugin') -Force | Out-Null
-        Set-Content -Path (Join-Path $script:repoRoot 'package.json') -Value '{"version":"1.0.0"}'
-        $json = @{
-            name     = 'test'
-            metadata = @{ description = 'd'; version = '1.0.0'; pluginRoot = 'plugins' }
-            owner    = @{ name = 'owner' }
-            plugins  = @(
-                @{ name = 'my-plugin'; source = 'my-plugin'; description = 'd1'; version = '1.0.0' }
-                @{ name = 'my-plugin'; source = 'my-plugin'; description = 'd2'; version = '1.0.0' }
-            )
-        } | ConvertTo-Json -Depth 5
-        Set-Content -Path (Join-Path $manifestDir 'marketplace.json') -Value $json
+Describe 'Test-PluginObjectSource' -Tag 'Unit' {
+    Context 'when the locator is immutable and complete' {
+        It 'Reports no error' {
+            $sourceErrors = @(Test-PluginObjectSource -Source ([ordered]@{
+                        source = 'github'; repo = 'contoso/contoso-hve'; path = 'plugins/rpi'; ref = 'plugins-v9.9.9'
+                    }))
+            $sourceErrors | Should -HaveCount 0
+        }
     }
 
-    It 'Returns error for duplicate plugin names' {
-        $result = Invoke-MarketplaceValidation -RepoRoot $script:repoRoot
-        $result.Success | Should -BeFalse
-        $result.ErrorCount | Should -BeGreaterOrEqual 1
-    }
-}
-
-Describe 'Invoke-MarketplaceValidation - plugin source errors' {
-    BeforeAll {
-        $script:repoRoot = Join-Path $TestDrive 'repo-source-errors'
-        $manifestDir = Join-Path $script:repoRoot '.github/plugin'
-        New-Item -ItemType Directory -Path $manifestDir -Force | Out-Null
-        Set-Content -Path (Join-Path $script:repoRoot 'package.json') -Value '{"version":"1.0.0"}'
-        $json = @{
-            name     = 'test'
-            metadata = @{ description = 'd'; version = '1.0.0'; pluginRoot = 'plugins' }
-            owner    = @{ name = 'owner' }
-            plugins  = @(
-                @{ name = 'bad/source'; source = 'bad/source'; description = 'd'; version = '1.0.0' }
-            )
-        } | ConvertTo-Json -Depth 5
-        Set-Content -Path (Join-Path $manifestDir 'marketplace.json') -Value $json
-    }
-
-    It 'Returns error for plugin with path separator in source' {
-        $result = Invoke-MarketplaceValidation -RepoRoot $script:repoRoot
-        $result.Success | Should -BeFalse
-        $result.ErrorCount | Should -BeGreaterOrEqual 1
+    Context 'when the locator is incomplete or mutable' {
+        It 'Rejects <Label>' -ForEach @(
+            @{ Label = 'a missing source type'; Source = @{ repo = 'contoso/contoso-hve'; path = 'plugins/rpi'; ref = 'plugins-v9.9.9' }; Pattern = "missing required field 'source'" }
+            @{ Label = 'an unsupported source type'; Source = @{ source = 'gitlab'; repo = 'contoso/contoso-hve'; path = 'plugins/rpi'; ref = 'plugins-v9.9.9' }; Pattern = 'is not supported \(expected: github\)' }
+            @{ Label = 'a missing repository'; Source = @{ source = 'github'; path = 'plugins/rpi'; ref = 'plugins-v9.9.9' }; Pattern = "missing required field 'repo'" }
+            @{ Label = 'a malformed repository'; Source = @{ source = 'github'; repo = 'contoso'; path = 'plugins/rpi'; ref = 'plugins-v9.9.9' }; Pattern = "must use 'owner/name' form" }
+            @{ Label = 'a missing package path'; Source = @{ source = 'github'; repo = 'contoso/contoso-hve'; ref = 'plugins-v9.9.9' }; Pattern = "missing required field 'path'" }
+            @{ Label = 'an escaping package path'; Source = @{ source = 'github'; repo = 'contoso/contoso-hve'; path = 'plugins/../etc'; ref = 'plugins-v9.9.9' }; Pattern = 'must not escape the source repository' }
+            @{ Label = 'a missing ref'; Source = @{ source = 'github'; repo = 'contoso/contoso-hve'; path = 'plugins/rpi' }; Pattern = "'ref' must be a non-empty string" }
+            @{ Label = 'a branch ref'; Source = @{ source = 'github'; repo = 'contoso/contoso-hve'; path = 'plugins/rpi'; ref = 'main' }; Pattern = "must use the immutable 'plugins-v<version>' tag form" }
+            @{ Label = 'a sha ref'; Source = @{ source = 'github'; repo = 'contoso/contoso-hve'; path = 'plugins/rpi'; ref = '0123456789abcdef0123456789abcdef01234567' }; Pattern = "must use the immutable 'plugins-v<version>' tag form" }
+            @{ Label = 'a sha field'; Source = @{ source = 'github'; repo = 'contoso/contoso-hve'; path = 'plugins/rpi'; ref = 'plugins-v9.9.9'; sha = '0123456789abcdef0123456789abcdef01234567' }; Pattern = "'sha' is not supported" }
+        ) {
+            $sourceErrors = @(Test-PluginObjectSource -Source $Source)
+            $sourceErrors | Should -Not -BeNullOrEmpty
+            ($sourceErrors -join ' ') | Should -Match $Pattern
+        }
     }
 }
 
-Describe 'Invoke-MarketplaceValidation - name-source mismatch' {
-    BeforeAll {
-        $script:repoRoot = Join-Path $TestDrive 'repo-name-mismatch'
-        $manifestDir = Join-Path $script:repoRoot '.github/plugin'
-        New-Item -ItemType Directory -Path $manifestDir -Force | Out-Null
-        New-Item -ItemType Directory -Path (Join-Path $script:repoRoot 'plugins/actual-source') -Force | Out-Null
-        Set-Content -Path (Join-Path $script:repoRoot 'package.json') -Value '{"version":"1.0.0"}'
-        $json = @{
-            name     = 'test'
-            metadata = @{ description = 'd'; version = '1.0.0'; pluginRoot = 'plugins' }
-            owner    = @{ name = 'owner' }
-            plugins  = @(
-                @{ name = 'display-name'; source = 'actual-source'; description = 'd'; version = '1.0.0' }
-            )
-        } | ConvertTo-Json -Depth 5
-        Set-Content -Path (Join-Path $manifestDir 'marketplace.json') -Value $json
-    }
-
-    It 'Returns error when plugin name does not match source' {
-        $result = Invoke-MarketplaceValidation -RepoRoot $script:repoRoot
-        $result.Success | Should -BeFalse
-        $result.ErrorCount | Should -BeGreaterOrEqual 1
-    }
-}
-
-Describe 'Invoke-MarketplaceValidation - plugin version mismatch' {
-    BeforeAll {
-        $script:repoRoot = Join-Path $TestDrive 'repo-plugin-version'
-        $manifestDir = Join-Path $script:repoRoot '.github/plugin'
-        New-Item -ItemType Directory -Path $manifestDir -Force | Out-Null
-        New-Item -ItemType Directory -Path (Join-Path $script:repoRoot 'plugins/my-plugin') -Force | Out-Null
-        Set-Content -Path (Join-Path $script:repoRoot 'package.json') -Value '{"version":"2.0.0"}'
-        $json = @{
-            name     = 'test'
-            metadata = @{ description = 'd'; version = '2.0.0'; pluginRoot = 'plugins' }
-            owner    = @{ name = 'owner' }
-            plugins  = @(
-                @{ name = 'my-plugin'; source = 'my-plugin'; description = 'd'; version = '1.0.0' }
-            )
-        } | ConvertTo-Json -Depth 5
-        Set-Content -Path (Join-Path $manifestDir 'marketplace.json') -Value $json
-    }
-
-    It 'Returns error when plugin version does not match package.json' {
-        $result = Invoke-MarketplaceValidation -RepoRoot $script:repoRoot
-        $result.Success | Should -BeFalse
-        $result.ErrorCount | Should -BeGreaterOrEqual 1
-    }
-}
-
-Describe 'Invoke-MarketplaceValidation - missing plugin fields' {
-    BeforeAll {
-        $script:repoRoot = Join-Path $TestDrive 'repo-missing-plugin-fields'
-        $manifestDir = Join-Path $script:repoRoot '.github/plugin'
-        New-Item -ItemType Directory -Path $manifestDir -Force | Out-Null
-        Set-Content -Path (Join-Path $script:repoRoot 'package.json') -Value '{"version":"1.0.0"}'
-        # Plugin missing 'description' and 'version'
-        $json = @{
-            name     = 'test'
-            metadata = @{ description = 'd'; version = '1.0.0'; pluginRoot = 'plugins' }
-            owner    = @{ name = 'owner' }
-            plugins  = @(
-                @{ name = 'my-plugin'; source = 'my-plugin' }
-            )
-        } | ConvertTo-Json -Depth 5
-        Set-Content -Path (Join-Path $manifestDir 'marketplace.json') -Value $json
-    }
-
-    It 'Returns errors for missing plugin-level fields' {
-        $result = Invoke-MarketplaceValidation -RepoRoot $script:repoRoot
-        $result.Success | Should -BeFalse
-        $result.ErrorCount | Should -BeGreaterOrEqual 2
-    }
-}
-
-Describe 'Invoke-MarketplaceValidation - valid manifest' {
-    BeforeAll {
-        $script:repoRoot = Join-Path $TestDrive 'repo-valid'
-        $manifestDir = Join-Path $script:repoRoot '.github/plugin'
-        New-Item -ItemType Directory -Path $manifestDir -Force | Out-Null
-        New-Item -ItemType Directory -Path (Join-Path $script:repoRoot 'plugins/my-plugin') -Force | Out-Null
-        Set-Content -Path (Join-Path $script:repoRoot 'package.json') -Value '{"version":"1.0.0"}'
-        $json = @{
-            name     = 'test'
-            metadata = @{ description = 'd'; version = '1.0.0'; pluginRoot = 'plugins' }
-            owner    = @{ name = 'owner' }
-            plugins  = @(
-                @{ name = 'my-plugin'; source = 'my-plugin'; description = 'A plugin'; version = '1.0.0' }
-            )
-        } | ConvertTo-Json -Depth 5
-        Set-Content -Path (Join-Path $manifestDir 'marketplace.json') -Value $json
-    }
-
-    It 'Returns success for a valid manifest' {
-        $result = Invoke-MarketplaceValidation -RepoRoot $script:repoRoot
-        $result.Success | Should -BeTrue
-        $result.ErrorCount | Should -Be 0
-    }
-
-    It 'Returns success with multiple valid plugins' {
-        New-Item -ItemType Directory -Path (Join-Path $script:repoRoot 'plugins/other-plugin') -Force | Out-Null
-        $json = @{
-            name     = 'test'
-            metadata = @{ description = 'd'; version = '1.0.0'; pluginRoot = 'plugins' }
-            owner    = @{ name = 'owner' }
-            plugins  = @(
-                @{ name = 'my-plugin'; source = 'my-plugin'; description = 'A plugin'; version = '1.0.0' }
-                @{ name = 'other-plugin'; source = 'other-plugin'; description = 'Another'; version = '1.0.0' }
-            )
-        } | ConvertTo-Json -Depth 5
-        $manifestDir = Join-Path $script:repoRoot '.github/plugin'
-        Set-Content -Path (Join-Path $manifestDir 'marketplace.json') -Value $json
-
-        $result = Invoke-MarketplaceValidation -RepoRoot $script:repoRoot
-        $result.Success | Should -BeTrue
-        $result.ErrorCount | Should -Be 0
-    }
-}
-
-Describe 'Invoke-MarketplaceValidation - JSON output' {
+Describe 'Invoke-MarketplaceValidation' -Tag 'Unit' {
     BeforeEach {
-        $script:repoRoot = Join-Path $TestDrive 'repo-json-output'
-        $script:manifestDir = Join-Path $script:repoRoot '.github/plugin'
-        New-Item -ItemType Directory -Path $script:manifestDir -Force | Out-Null
-        New-Item -ItemType Directory -Path (Join-Path $script:repoRoot 'plugins/my-plugin') -Force | Out-Null
-        Set-Content -Path (Join-Path $script:repoRoot 'package.json') -Value '{"version":"1.0.0"}'
+        $script:validatorRepo = Join-Path $TestDrive ([System.Guid]::NewGuid().ToString())
     }
 
-    It 'Writes report with expected schema for valid plugin validation' {
-        $outputPath = Join-Path $TestDrive 'logs/marketplace-validation-results.json'
-        $json = @{
-            name     = 'test'
-            metadata = @{ description = 'd'; version = '1.0.0'; pluginRoot = 'plugins' }
-            owner    = @{ name = 'owner' }
-            plugins  = @(
-                @{ name = 'my-plugin'; source = 'my-plugin'; description = 'A plugin'; version = '1.0.0' }
-            )
-        } | ConvertTo-Json -Depth 5
-        Set-Content -Path (Join-Path $script:manifestDir 'marketplace.json') -Value $json
+    Context 'when the catalog satisfies every contract rule' {
+        BeforeEach {
+            New-ValidatorFixture -Root $script:validatorRepo | Out-Null
+            $script:cleanRun = Get-ValidationReport -Root $script:validatorRepo
+        }
 
-        $result = Invoke-MarketplaceValidation -RepoRoot $script:repoRoot -OutputPath $outputPath
-        $report = Get-Content -Path $outputPath -Raw | ConvertFrom-Json
+        It 'Reports success with no error' {
+            $script:cleanRun.Outcome.Success | Should -BeTrue
+            $script:cleanRun.Outcome.ErrorCount | Should -Be 0
+        }
 
-        $result.Success | Should -BeTrue
-        $report.Timestamp | Should -Not -BeNullOrEmpty
-        { [DateTimeOffset]::Parse($report.Timestamp) } | Should -Not -Throw
-        $report.ErrorCount | Should -Be 0
-        $report.Results.Count | Should -Be 1
-        $report.Results[0].PluginName | Should -Be 'my-plugin'
-        $report.Results[0].IsValid | Should -BeTrue
-        $report.Results[0].Errors | Should -BeNullOrEmpty
-        $report.Results[0].Warnings | Should -BeNullOrEmpty
+        It 'Writes a structured report with one result per package' {
+            @($script:cleanRun.Report.Keys | Sort-Object) | Should -Be @('ErrorCount', 'Results', 'Timestamp')
+            @($script:cleanRun.Report['Results'] | ForEach-Object { $_['PluginName'] } | Sort-Object) |
+                Should -Be @('rpi')
+            foreach ($result in $script:cleanRun.Report['Results']) {
+                $result['IsValid'] | Should -BeTrue
+                @($result['Errors']) | Should -HaveCount 0
+                @($result.Keys | Sort-Object) | Should -Be @('Errors', 'IsValid', 'PluginName', 'Warnings')
+            }
+        }
+
+        It 'Records a parsable ISO 8601 timestamp' {
+            { [datetime]::Parse($script:cleanRun.Report['Timestamp']) } | Should -Not -Throw
+        }
     }
 
-    It 'Writes per-plugin errors into JSON results' {
-        $outputPath = Join-Path $TestDrive 'logs/marketplace-validation-results.json'
-        New-Item -ItemType Directory -Path (Join-Path $script:repoRoot 'plugins/actual-source') -Force | Out-Null
-        $json = @{
-            name     = 'test'
-            metadata = @{ description = 'd'; version = '1.0.0'; pluginRoot = 'plugins' }
-            owner    = @{ name = 'owner' }
-            plugins  = @(
-                @{ name = 'display-name'; source = 'actual-source'; description = 'A plugin'; version = '1.0.0' }
-            )
-        } | ConvertTo-Json -Depth 5
-        Set-Content -Path (Join-Path $script:manifestDir 'marketplace.json') -Value $json
+    Context 'when the catalog file is absent' {
+        BeforeEach {
+            New-PluginFixtureRepository -Path $script:validatorRepo -Version '9.9.9' | Out-Null
+            $script:missingRun = Get-ValidationReport -Root $script:validatorRepo
+        }
 
-        $result = Invoke-MarketplaceValidation -RepoRoot $script:repoRoot -OutputPath $outputPath
-        $report = Get-Content -Path $outputPath -Raw | ConvertFrom-Json
-        $pluginResult = @($report.Results | Where-Object { $_.PluginName -eq 'display-name' })[0]
+        It 'Fails with a single finding' {
+            $script:missingRun.Outcome.Success | Should -BeFalse
+            $script:missingRun.Outcome.ErrorCount | Should -Be 1
+        }
 
-        $result.Success | Should -BeFalse
-        $report.ErrorCount | Should -BeGreaterThan 0
-        $pluginResult.IsValid | Should -BeFalse
-        $pluginResult.Errors | Should -Contain "name does not match source 'actual-source'"
-        $pluginResult.Warnings | Should -BeNullOrEmpty
+        It 'Short-circuits with a marketplace-scoped result' {
+            @($script:missingRun.Report['Results']) | Should -HaveCount 1
+            $script:missingRun.Report['Results'][0]['PluginName'] | Should -BeExactly 'marketplace'
+            @($script:missingRun.Report['Results'][0]['Errors']) | Should -Be @('marketplace.json not found')
+        }
     }
+
+    Context 'when the catalog is not valid JSON' {
+        BeforeEach {
+            New-PluginFixtureRepository -Path $script:validatorRepo -Version '9.9.9' | Out-Null
+            Add-PluginFixtureFile -RepoRoot $script:validatorRepo -RelativePath '.github/plugin/marketplace.json' -Content '{ "plugins": [ ' | Out-Null
+            $script:invalidJsonRun = Get-ValidationReport -Root $script:validatorRepo
+        }
+
+        It 'Fails with a single parse finding' {
+            $script:invalidJsonRun.Outcome.Success | Should -BeFalse
+            $script:invalidJsonRun.Outcome.ErrorCount | Should -Be 1
+        }
+
+        It 'Reports the parse failure without evaluating later rules' {
+            @($script:invalidJsonRun.Report['Results']) | Should -HaveCount 1
+            (Get-ReportError -Report $script:invalidJsonRun.Report) -join ' ' | Should -Match 'invalid JSON'
+        }
+    }
+
+    Context 'when a required top-level field is absent' {
+        It 'Reports the missing field <Field> and short-circuits' -ForEach @(
+            @{ Field = 'owner' }
+            @{ Field = 'metadata' }
+            @{ Field = 'plugins' }
+            @{ Field = 'name' }
+        ) {
+            New-ValidatorFixture -Root $script:validatorRepo | Out-Null
+            Set-CatalogEntry -Root $script:validatorRepo -Mutation { param($catalog) $catalog.Remove($Field) }
+
+            $run = Get-ValidationReport -Root $script:validatorRepo
+            $run.Outcome.Success | Should -BeFalse
+            (Get-ReportError -Report $run.Report) -join ' ' | Should -Match "missing required field '$Field'"
+        }
+    }
+
+    Context 'when catalog metadata or owner is incomplete' {
+        It 'Reports the missing metadata field <Field>' -ForEach @(
+            @{ Field = 'description' }
+            @{ Field = 'version' }
+            @{ Field = 'pluginRoot' }
+        ) {
+            New-ValidatorFixture -Root $script:validatorRepo | Out-Null
+            Set-CatalogEntry -Root $script:validatorRepo -Mutation { param($catalog) $catalog['metadata'].Remove($Field) }
+
+            $run = Get-ValidationReport -Root $script:validatorRepo
+            $run.Outcome.Success | Should -BeFalse
+            (Get-ReportError -Report $run.Report) -join ' ' | Should -Match "missing required metadata field '$Field'"
+        }
+
+        It 'Reports a blank owner name' {
+            New-ValidatorFixture -Root $script:validatorRepo | Out-Null
+            Set-CatalogEntry -Root $script:validatorRepo -Mutation { param($catalog) $catalog['owner']['name'] = '  ' }
+
+            $run = Get-ValidationReport -Root $script:validatorRepo
+            (Get-ReportError -Report $run.Report) -join ' ' | Should -Match "missing required owner field 'name'"
+        }
+    }
+
+    Context 'when versions disagree with package.json' {
+        It 'Reports a catalog metadata version mismatch' {
+            New-ValidatorFixture -Root $script:validatorRepo | Out-Null
+            Set-CatalogEntry -Root $script:validatorRepo -Mutation { param($catalog) $catalog['metadata']['version'] = '1.0.0' }
+
+            $run = Get-ValidationReport -Root $script:validatorRepo
+            (Get-ReportError -Report $run.Report) -join ' ' | Should -Match "metadata.version '1.0.0' does not match package.json version '9.9.9'"
+        }
+
+        It 'Reports a package version mismatch' {
+            New-ValidatorFixture -Root $script:validatorRepo | Out-Null
+            Set-CatalogEntry -Root $script:validatorRepo -Mutation { param($catalog) $catalog['plugins'][0]['version'] = '1.0.0' }
+
+            $run = Get-ValidationReport -Root $script:validatorRepo
+            (Get-ReportError -Report $run.Report) -join ' ' | Should -Match "version '1\.0\.0' does not match package.json version '9\.9\.9'"
+        }
+    }
+
+    Context 'when two packages share a name' {
+        It 'Reports the duplicate' {
+            New-ValidatorFixture -Root $script:validatorRepo | Out-Null
+            Set-CatalogEntry -Root $script:validatorRepo -Mutation {
+                param($catalog)
+                $catalog['plugins'] = @($catalog['plugins'][0], $catalog['plugins'][0])
+            }
+
+            $run = Get-ValidationReport -Root $script:validatorRepo
+            (Get-ReportError -Report $run.Report) -join ' ' | Should -Match "duplicate plugin name 'rpi'"
+        }
+    }
+
+    Context 'when a package source is not an immutable object locator' {
+        It 'Reports <Label>' -ForEach @(
+            @{ Label = 'a bare package name'; Value = 'rpi'; Pattern = 'source must be an immutable github locator object' }
+            @{ Label = 'a blank source'; Value = ''; Pattern = "missing required field 'source'" }
+        ) {
+            New-ValidatorFixture -Root $script:validatorRepo | Out-Null
+            $sourceValue = $Value
+            Set-CatalogEntry -Root $script:validatorRepo -Mutation {
+                param($catalog)
+                $catalog['plugins'][0]['source'] = $sourceValue
+            }
+
+            $run = Get-ValidationReport -Root $script:validatorRepo
+            (Get-ReportError -Report $run.Report) -join ' ' | Should -Match $Pattern
+        }
+    }
+
+    Context 'when the object locator disagrees with package identity by case' {
+        It 'Reports a case-mismatched package path' {
+            New-ValidatorFixture -Root $script:validatorRepo | Out-Null
+            Set-CatalogEntry -Root $script:validatorRepo -Mutation { param($catalog) $catalog['plugins'][0]['source']['path'] = 'plugins/RPI' }
+
+            $run = Get-ValidationReport -Root $script:validatorRepo
+            (Get-ReportError -Report $run.Report) -join ' ' | Should -Match "object source path must match package name 'plugins/rpi'"
+        }
+
+        It 'Reports a case-mismatched release ref' {
+            New-ValidatorFixture -Root $script:validatorRepo | Out-Null
+            Set-CatalogEntry -Root $script:validatorRepo -Mutation { param($catalog) $catalog['plugins'][0]['source']['ref'] = 'Plugins-v9.9.9' }
+
+            $run = Get-ValidationReport -Root $script:validatorRepo
+            (Get-ReportError -Report $run.Report) -join ' ' | Should -Match "object source ref must match package version 'plugins-v9\.9\.9'"
+        }
+
+        It 'Reports a sha locator field' {
+            New-ValidatorFixture -Root $script:validatorRepo | Out-Null
+            Set-CatalogEntry -Root $script:validatorRepo -Mutation {
+                param($catalog)
+                $catalog['plugins'][0]['source']['sha'] = '0123456789abcdef0123456789abcdef01234567'
+            }
+
+            $run = Get-ValidationReport -Root $script:validatorRepo
+            (Get-ReportError -Report $run.Report) -join ' ' | Should -Match "'sha' is not supported"
+        }
+    }
+}
+
+Describe 'Test-MarketplaceRepositoryContract' -Tag 'Unit' {
+    BeforeEach {
+        $script:contractRepo = Join-Path $TestDrive ([System.Guid]::NewGuid().ToString())
+    }
+
+    Context 'when a canonical root is absent' {
+        It 'Fails instead of returning no finding for <Label>' -ForEach @(
+            @{ Label = 'a missing agent root'; SkipAgents = $true; SkipDocumentation = $false; Pattern = "canonical artifact root '\.github/agents' is missing" }
+            @{ Label = 'a missing documentation root'; SkipAgents = $false; SkipDocumentation = $true; Pattern = "package documentation root 'docs/plugins' is missing" }
+        ) {
+            New-ValidatorFixture -Root $script:contractRepo -SkipAgentRoot:$SkipAgents -SkipDocumentationRoot:$SkipDocumentation | Out-Null
+            if ($SkipAgents) {
+                Remove-Item -LiteralPath (Join-Path $script:contractRepo '.github/agents') -Recurse -Force
+            }
+
+            $run = Get-ValidationReport -Root $script:contractRepo
+            $run.Outcome.Success | Should -BeFalse
+            (Get-ReportError -Report $run.Report) -join ' ' | Should -Match $Pattern
+        }
+    }
+
+    Context 'when the documented package set and the catalog disagree' {
+        It 'Reports a package document with no catalog package' {
+            New-ValidatorFixture -Root $script:contractRepo | Out-Null
+            Add-PluginFixtureFile -RepoRoot $script:contractRepo -RelativePath 'docs/plugins/ghost.md' `
+                -Content "---`ntitle: Ghost`ndescription: Ghost`n---`n`nProse.`n" | Out-Null
+
+            $run = Get-ValidationReport -Root $script:contractRepo
+            (Get-ReportError -Report $run.Report) -join ' ' |
+                Should -Match "repository contract: package document 'docs/plugins/ghost\.md' does not match any marketplace package"
+        }
+
+        It 'Reports a catalog package with no package document' {
+            New-ValidatorFixture -Root $script:contractRepo | Out-Null
+            Remove-Item -LiteralPath (Join-Path $script:contractRepo 'docs/plugins/rpi.md') -Force
+
+            $run = Get-ValidationReport -Root $script:contractRepo
+            (Get-ReportError -Report $run.Report) -join ' ' |
+                Should -Match "repository contract: package 'rpi' has no package document under docs/plugins"
+        }
+    }
+
+    Context 'when package metadata is incomplete' {
+        It 'Reports a blank display name' {
+            New-ValidatorFixture -Root $script:contractRepo | Out-Null
+            Set-CatalogEntry -Root $script:contractRepo -Mutation { param($catalog) $catalog['plugins'][0]['x-hve']['displayName'] = '  ' }
+
+            $run = Get-ValidationReport -Root $script:contractRepo
+            (Get-ReportError -Report $run.Report) -join ' ' |
+                Should -Match "repository contract: package 'rpi' must declare non-empty x-hve\.displayName"
+        }
+
+        It 'Reports an undeclared documentation path' {
+            New-ValidatorFixture -Root $script:contractRepo | Out-Null
+            Set-CatalogEntry -Root $script:contractRepo -Mutation { param($catalog) $catalog['plugins'][0]['x-hve'].Remove('documentation') }
+
+            $run = Get-ValidationReport -Root $script:contractRepo
+            (Get-ReportError -Report $run.Report) -join ' ' |
+                Should -Match "repository contract: package 'rpi' must declare x-hve\.documentation"
+        }
+
+        It 'Reports a documentation description that disagrees with the catalog' {
+            New-ValidatorFixture -Root $script:contractRepo | Out-Null
+            Add-PluginFixtureFile -RepoRoot $script:contractRepo -RelativePath 'docs/plugins/rpi.md' `
+                -Content "---`ntitle: Contoso rpi`ndescription: Something else`n---`n`nProse.`n" | Out-Null
+
+            $run = Get-ValidationReport -Root $script:contractRepo
+            (Get-ReportError -Report $run.Report) -join ' ' |
+                Should -Match "repository contract: package 'rpi' description does not match docs/plugins/rpi\.md"
+        }
+
+        It 'Reports a documentation file with no frontmatter' {
+            New-ValidatorFixture -Root $script:contractRepo | Out-Null
+            Add-PluginFixtureFile -RepoRoot $script:contractRepo -RelativePath 'docs/plugins/rpi.md' -Content "# Contoso rpi`n`nProse.`n" | Out-Null
+
+            $run = Get-ValidationReport -Root $script:contractRepo
+            (Get-ReportError -Report $run.Report) -join ' ' |
+                Should -Match "repository contract: package 'rpi' documentation has no frontmatter"
+        }
+    }
+
+    Context 'when a declared component source is absent' {
+        It 'Reports the missing canonical source' {
+            New-ValidatorFixture -Root $script:contractRepo | Out-Null
+            Remove-Item -LiteralPath (Join-Path $script:contractRepo '.github/prompts/rpi/rpi-plan.prompt.md') -Force
+
+            $run = Get-ValidationReport -Root $script:contractRepo
+            (Get-ReportError -Report $run.Report) -join ' ' |
+                Should -Match "repository contract: package 'rpi' source is missing: \.github/prompts/rpi/rpi-plan\.prompt\.md"
+        }
+    }
+
+    Context 'when a generated plugin manifest is present' {
+        It 'Reports a manifest that does not mirror catalog identity' {
+            New-ValidatorFixture -Root $script:contractRepo | Out-Null
+            Add-PluginFixtureFile -RepoRoot $script:contractRepo -RelativePath 'plugins/rpi/plugin.json' `
+                -Content '{"name":"rpi","version":"1.0.0"}' -Untracked | Out-Null
+
+            $run = Get-ValidationReport -Root $script:contractRepo
+            (Get-ReportError -Report $run.Report) -join ' ' |
+                Should -Match "repository contract: package 'rpi' root plugin\.json identity does not mirror the catalog"
+        }
+
+        It 'Reports a manifest that carries the catalog overlay' {
+            New-ValidatorFixture -Root $script:contractRepo | Out-Null
+            Add-PluginFixtureFile -RepoRoot $script:contractRepo -RelativePath 'plugins/rpi/plugin.json' `
+                -Content '{"name":"rpi","version":"9.9.9","x-hve":{"displayName":"Contoso - rpi"}}' -Untracked | Out-Null
+
+            $run = Get-ValidationReport -Root $script:contractRepo
+            (Get-ReportError -Report $run.Report) -join ' ' |
+                Should -Match "repository contract: package 'rpi' root plugin\.json must not contain x-hve"
+        }
+    }
+
+    Context 'when no removed component tombstone is declared' {
+        It 'Reports the empty tombstone set' {
+            New-ValidatorFixture -Root $script:contractRepo | Out-Null
+            Set-CatalogEntry -Root $script:contractRepo -Mutation { param($catalog) $catalog['plugins'][0]['x-hve'].Remove('componentMaturity') }
+
+            $run = Get-ValidationReport -Root $script:contractRepo
+            (Get-ReportError -Report $run.Report) -join ' ' |
+                Should -Match 'repository contract: repository marketplace must declare at least one removed component tombstone'
+        }
+    }
+
+    Context 'when the catalog declares one or many ordinary recipes' {
+        It 'Accepts a single-recipe catalog' {
+            New-ValidatorFixture -Root $script:contractRepo | Out-Null
+
+            $run = Get-ValidationReport -Root $script:contractRepo
+            $run.Outcome.Success | Should -BeTrue
+            $run.Outcome.ErrorCount | Should -Be 0
+            @($run.Report['Results'] | ForEach-Object { $_['PluginName'] }) | Should -Be @('rpi')
+        }
+
+        It 'Accepts two recipes that each declare their own hook manifest' {
+            New-ValidatorFixture -Root $script:contractRepo -AddSecondPackage | Out-Null
+            $catalog = Get-Content -LiteralPath (Join-Path $script:contractRepo '.github/plugin/marketplace.json') -Raw |
+                ConvertFrom-Json -AsHashtable
+            @($catalog['plugins'] | Where-Object { -not [string]::IsNullOrWhiteSpace([string]$_['hooks']) }).Count |
+                Should -Be 2
+
+            $run = Get-ValidationReport -Root $script:contractRepo
+            $run.Outcome.Success | Should -BeTrue
+            $run.Outcome.ErrorCount | Should -Be 0
+            @($run.Report['Results'] | ForEach-Object { $_['PluginName'] } | Sort-Object) | Should -Be @('ops', 'rpi')
+        }
+
+        It 'Reports conflicting maturity for a source shared by two packages' {
+            New-ValidatorFixture -Root $script:contractRepo -AddSecondPackage | Out-Null
+            Set-CatalogEntry -Root $script:contractRepo -Mutation {
+                param($catalog)
+                $sharedComponent = 'agents/rpi/rpi-planner.md'
+                $catalog['plugins'][1]['agents'] += $sharedComponent
+                $catalog['plugins'][1]['x-hve']['componentMaturity'] = @{ $sharedComponent = 'preview' }
+            }
+
+            $run = Get-ValidationReport -Root $script:contractRepo
+            $run.Outcome.Success | Should -BeFalse
+            (Get-ReportError -Report $run.Report) -join ' ' |
+                Should -Match "repository contract: source '\.github/agents/rpi/rpi-planner\.agent\.md' must declare identical maturity across packages: ops=preview, rpi=stable"
+        }
+
+        It 'Keeps documentation, source identity, unique membership, and tombstones valid across both recipes' {
+            New-ValidatorFixture -Root $script:contractRepo -AddSecondPackage | Out-Null
+            $catalog = Get-Content -LiteralPath (Join-Path $script:contractRepo '.github/plugin/marketplace.json') -Raw |
+                ConvertFrom-Json -AsHashtable
+
+            $declared = @()
+            foreach ($entry in @($catalog['plugins'])) {
+                Join-Path $script:contractRepo ([string]$entry['x-hve']['documentation']) | Should -Exist
+                [string]$entry['source']['path'] | Should -BeExactly "plugins/$([string]$entry['name'])"
+                [string]$entry['source']['ref'] | Should -BeExactly "plugins-v$([string]$entry['version'])"
+                $declared += @('agents', 'commands', 'rules', 'skills', 'hooks') |
+                    ForEach-Object { @($entry[$_]) } | Where-Object { $_ }
+            }
+            @($declared | Sort-Object -Unique).Count | Should -Be $declared.Count
+            @($catalog['plugins'] | Where-Object {
+                    $_['x-hve'].Contains('componentMaturity') -and
+                    @($_['x-hve']['componentMaturity'].Values) -contains 'removed'
+                }).Count | Should -Be 1
+        }
+
+        It 'Still rejects an empty catalog' {
+            New-ValidatorFixture -Root $script:contractRepo | Out-Null
+            Set-CatalogEntry -Root $script:contractRepo -Mutation { param($catalog) $catalog['plugins'] = @() }
+
+            $run = Get-ValidationReport -Root $script:contractRepo
+            $run.Outcome.Success | Should -BeFalse
+            (Get-ReportError -Report $run.Report) -join ' ' | Should -Match 'plugins array is empty or missing'
+        }
+    }
+
+    Context 'when membership breaks one-recipe hygiene' {
+        It 'Reports a root-level repository artifact' {
+            New-ValidatorFixture -Root $script:contractRepo | Out-Null
+            Set-CatalogEntry -Root $script:contractRepo -Mutation {
+                param($catalog)
+                $catalog['plugins'][0]['agents'] = @('agents/rpi/rpi-planner.md', 'agents/root-only.md')
+            }
+
+            $run = Get-ValidationReport -Root $script:contractRepo
+            (Get-ReportError -Report $run.Report) -join ' ' |
+                Should -Match "component path 'agents/root-only\.md' is a root-level repository artifact and must not be declared"
+        }
+
+        It 'Reports an unlabeled experimental-namespace component' {
+            New-ValidatorFixture -Root $script:contractRepo | Out-Null
+            Set-CatalogEntry -Root $script:contractRepo -Mutation {
+                param($catalog)
+                $catalog['plugins'][0]['agents'] = @('agents/rpi/rpi-planner.md', 'agents/experimental/preview-only.md')
+            }
+
+            $run = Get-ValidationReport -Root $script:contractRepo
+            (Get-ReportError -Report $run.Report) -join ' ' |
+                Should -Match "component path 'agents/experimental/preview-only\.md' is under an experimental namespace and must declare a non-stable x-hve\.componentMaturity"
+        }
+
+        It 'Reports a profile reference outside declared membership' {
+            New-ValidatorFixture -Root $script:contractRepo | Out-Null
+            Set-CatalogEntry -Root $script:contractRepo -Mutation {
+                param($catalog)
+                $catalog['plugins'][0]['x-hve']['profiles'] = @{ starter = @('agents/rpi/absent.md') }
+            }
+
+            $run = Get-ValidationReport -Root $script:contractRepo
+            (Get-ReportError -Report $run.Report) -join ' ' |
+                Should -Match "x-hve\.profiles\['starter'\] references 'agents/rpi/absent\.md', which is not declared component membership"
+        }
+
+        It 'Reports a hook declared in an installer profile' {
+            New-ValidatorFixture -Root $script:contractRepo | Out-Null
+            Set-CatalogEntry -Root $script:contractRepo -Mutation {
+                param($catalog)
+                $catalog['plugins'][0]['x-hve']['profiles'] = @{ starter = @('agents/rpi/rpi-planner.md', 'hooks/rpi/telemetry.json') }
+            }
+
+            $run = Get-ValidationReport -Root $script:contractRepo
+            (Get-ReportError -Report $run.Report) -join ' ' |
+                Should -Match "x-hve\.profiles\['starter'\] references 'hooks/rpi/telemetry\.json' from non-installable field 'hooks'"
+        }
+    }
+}
+
+AfterAll {
+    Remove-Module PluginTestFixtures -Force -ErrorAction SilentlyContinue
+    Remove-Module MarketplaceHelpers -Force -ErrorAction SilentlyContinue
+    Remove-Module CIHelpers -Force -ErrorAction SilentlyContinue
 }

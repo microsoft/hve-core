@@ -34,7 +34,7 @@ description: "Reviews pull request changes for style, correctness, and security 
 
 More complex agents add `tools`, `agents`, `handoffs`, and `disable-model-invocation` fields. See the [Frontmatter Reference](#frontmatter-reference) section for the complete field set.
 
-Agent files live in `.github/agents/{collection-id}/`. Subagents go in a `subagents/` subdirectory within their collection folder:
+Agent files live in `.github/agents/{package-id}/`. Subagents go in a `subagents/` subdirectory within their package folder:
 
 ```text
 .github/agents/

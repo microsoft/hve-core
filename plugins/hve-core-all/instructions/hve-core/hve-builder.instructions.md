@@ -1,1 +1,0 @@
-../../../../.github/instructions/hve-core/hve-builder.instructions.md
