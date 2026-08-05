@@ -88,6 +88,9 @@ items:
   - path: .github/skills/design-thinking/dt-curriculum
     kind: skill
     maturity: preview
+  - path: .github/skills/design-thinking/ai-discovery-cards
+    kind: skill
+    maturity: preview
   - path: .github/skills/rpi/rpi-research
     kind: skill
     maturity: stable
