@@ -86,12 +86,12 @@ Each tool reads its own environment variable:
 | pip  | `PIP_INDEX_URL`       | `https://pypi.org/simple/`    |
 | uv   | `UV_DEFAULT_INDEX`    | `https://pypi.org/simple/`    |
 
-| Environment    | Where the override belongs                                                    |
-|----------------|-------------------------------------------------------------------------------|
-| macOS or Linux | A file in your home directory sourced from `~/.zshrc` or `~/.bashrc`          |
-| Windows        | A PowerShell profile (`$PROFILE`) or a user environment variable              |
-| Dev container  | The host environment available to VS Code when it builds the image            |
-| Codespaces     | Development environment secrets for post-build setup and runtime commands     |
+| Environment    | Where the override belongs                                                |
+|----------------|---------------------------------------------------------------------------|
+| macOS or Linux | A file in your home directory sourced from `~/.zshrc` or `~/.bashrc`      |
+| Windows        | A PowerShell profile (`$PROFILE`) or a user environment variable          |
+| Dev container  | The host environment available to VS Code when it builds the image        |
+| Codespaces     | Development environment secrets for post-build setup and runtime commands |
 
 macOS and Linux:
 
