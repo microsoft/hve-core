@@ -1,1 +1,0 @@
-../../../../.github/instructions/project-planning/adr-standards.instructions.md

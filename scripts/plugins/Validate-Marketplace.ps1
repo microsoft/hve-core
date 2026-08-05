@@ -9,9 +9,12 @@
 
 .DESCRIPTION
     Reads .github/plugin/marketplace.json and validates JSON schema compliance,
-    plugin source directory existence, name-source consistency, version
-    consistency with the root package.json, and absence of path separators
-    in source values.
+    version consistency with the root package.json, and the plugin source
+    locator of every entry.
+
+    Every source is an immutable GitHub object locator containing a repository,
+    package path, and plugins-v<version> tag. Bare package names and commit SHA
+    locators are rejected.
 
 .EXAMPLE
     ./Validate-Marketplace.ps1 -OutputPath 'logs/marketplace-validation-results.json'
@@ -25,7 +28,11 @@ param(
 
 $ErrorActionPreference = 'Stop'
 
+# ConvertFrom-Yaml is called directly below, so the parser is imported here
+# rather than inherited from whichever helper module happens to load it first.
+Import-Module -Name PowerShell-Yaml -RequiredVersion '0.4.7' -ErrorAction Stop
 Import-Module (Join-Path $PSScriptRoot '../lib/Modules/CIHelpers.psm1') -Force
+Import-Module (Join-Path $PSScriptRoot '../lib/Modules/MarketplaceHelpers.psm1') -Force
 
 #region Validation Helpers
 
@@ -93,65 +100,252 @@ function Write-MarketplaceValidationReport {
     $report | ConvertTo-Json -Depth 10 | Set-Content -Path $resolvedOutputPath -Encoding UTF8
 }
 
-function Test-PluginSourceDirectory {
+function Test-PluginSourcePath {
     <#
     .SYNOPSIS
-        Validates that a plugin source directory exists under the plugins root.
+        Validates the package path of an object-form plugin source.
 
-    .PARAMETER Source
-        Plugin source value from marketplace.json.
+    .DESCRIPTION
+        Requires a forward-slash relative path that stays inside the source
+        repository. Absolute paths, backslashes, relative segments, and empty
+        segments are rejected.
 
-    .PARAMETER PluginsRoot
-        Absolute path to the plugins directory.
+    .PARAMETER Path
+        Repository-relative package path from an object source.
 
     .OUTPUTS
-        [string] Error message if directory not found, empty string if valid.
+        [string] Error message if the path is malformed, empty string if valid.
     #>
     [CmdletBinding()]
     [OutputType([string])]
     param(
         [Parameter(Mandatory = $true)]
-        [string]$Source,
-
-        [Parameter(Mandatory = $true)]
-        [string]$PluginsRoot
+        [string]$Path
     )
 
-    $pluginDir = Join-Path -Path $PluginsRoot -ChildPath $Source
-    if (-not (Test-Path -Path $pluginDir -PathType Container)) {
-        return "plugin source directory not found: plugins/$Source"
+    if ($Path -match '\\') {
+        return "object source path '$Path' must use forward slashes"
+    }
+
+    if ($Path -match '^/' -or $Path -match '^[A-Za-z]:') {
+        return "object source path '$Path' must be relative to the repository root"
+    }
+
+    foreach ($segment in ($Path -split '/')) {
+        if ([string]::IsNullOrEmpty($segment)) {
+            return "object source path '$Path' must not contain empty path segments"
+        }
+
+        if ($segment -eq '..') {
+            return "object source path '$Path' must not escape the source repository"
+        }
+
+        if ($segment -eq '.') {
+            return "object source path '$Path' must not contain relative path segments"
+        }
     }
 
     return ''
 }
 
-function Test-PluginSourceFormat {
+function Test-PluginObjectSource {
     <#
     .SYNOPSIS
-        Validates that a plugin source contains no path separators.
+        Validates an object-form plugin source locator.
+
+    .DESCRIPTION
+        Checks the GitHub source type, repository locator, package path, and
+        required immutable plugins-v<version> tag. Commit SHA locators are
+        rejected.
 
     .PARAMETER Source
-        Plugin source value from marketplace.json.
+        Object-form source value from marketplace.json.
 
     .OUTPUTS
-        [string] Error message if source contains path separators, empty string if valid.
+        [string[]] Error messages, empty when the locator is valid.
     #>
     [CmdletBinding()]
-    [OutputType([string])]
+    [OutputType([string[]])]
     param(
         [Parameter(Mandatory = $true)]
-        [string]$Source
+        [System.Collections.IDictionary]$Source
     )
 
-    if ($Source -match '[/\\]') {
-        return "plugin source '$Source' must not contain path separators"
+    $sourceErrors = @()
+    $sourceType = [string]$Source['source']
+
+    if ([string]::IsNullOrWhiteSpace($sourceType)) {
+        $sourceErrors += "object source is missing required field 'source'"
+    }
+    elseif ($sourceType -ne 'github') {
+        $sourceErrors += "object source type '$sourceType' is not supported (expected: github)"
+    }
+    else {
+        $repo = [string]$Source['repo']
+        if ([string]::IsNullOrWhiteSpace($repo)) {
+            $sourceErrors += "object source of type 'github' is missing required field 'repo'"
+        }
+        elseif ($repo -notmatch '^[A-Za-z0-9._-]+/[A-Za-z0-9._-]+$') {
+            $sourceErrors += "object source repo '$repo' must use 'owner/name' form"
+        }
+    }
+    $path = [string]$Source['path']
+    if ([string]::IsNullOrWhiteSpace($path)) {
+        $sourceErrors += "object source is missing required field 'path'"
+    }
+    else {
+        $pathError = Test-PluginSourcePath -Path $path
+        if ($pathError) {
+            $sourceErrors += $pathError
+        }
     }
 
-    if ($Source -match '^\./') {
-        return "plugin source '$Source' must not contain relative path prefix"
+    $ref = $Source['ref']
+    if ($ref -isnot [string] -or [string]::IsNullOrWhiteSpace($ref)) {
+        $sourceErrors += "object source 'ref' must be a non-empty string"
+    }
+    elseif ($ref -notmatch '^plugins-v\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?$') {
+        $sourceErrors += "object source 'ref' must use the immutable 'plugins-v<version>' tag form"
     }
 
-    return ''
+    if ($Source.Contains('sha')) {
+        $sourceErrors += "object source 'sha' is not supported; use an immutable 'plugins-v<version>' ref"
+    }
+
+    return [string[]]$sourceErrors
+}
+
+function Test-MarketplaceRepositoryContract {
+    <#
+    .SYNOPSIS
+    Validates the repository-specific marketplace completeness contract.
+    .PARAMETER Manifest
+    Parsed marketplace catalog.
+    .PARAMETER RepoRoot
+    Repository root containing canonical artifacts and package docs.
+    .OUTPUTS
+    [string[]] Repository contract errors.
+    #>
+    [CmdletBinding()]
+    [OutputType([string[]])]
+    param(
+        [Parameter(Mandatory = $true)]
+        [System.Collections.IDictionary]$Manifest,
+
+        [Parameter(Mandatory = $true)]
+        [string]$RepoRoot
+    )
+
+    # A missing canonical root is reported rather than skipped: silently
+    # returning no errors would make every rule below vacuously satisfied.
+    $contractErrors = @()
+    $artifactRoot = Join-Path $RepoRoot '.github/agents'
+    $documentationRoot = Join-Path $RepoRoot 'docs/plugins'
+    if (-not (Test-Path -LiteralPath $artifactRoot -PathType Container)) {
+        $contractErrors += "canonical artifact root '.github/agents' is missing under $RepoRoot"
+    }
+    if (-not (Test-Path -LiteralPath $documentationRoot -PathType Container)) {
+        $contractErrors += "package documentation root 'docs/plugins' is missing under $RepoRoot"
+    }
+
+    $entries = @($Manifest['plugins'])
+
+    # The active package set is derived from the package documents on disk, so
+    # adding or retiring a package never requires editing a hard-coded count.
+    if (Test-Path -LiteralPath $documentationRoot -PathType Container) {
+        $documentedNames = @(Get-ChildItem -LiteralPath $documentationRoot -File -Filter '*.md' |
+                ForEach-Object { $_.BaseName } | Sort-Object)
+        $declaredNames = @($entries | ForEach-Object { [string]$_['name'] })
+        foreach ($undocumented in @($declaredNames | Where-Object { $documentedNames -notcontains $_ } | Sort-Object)) {
+            $contractErrors += "package '$undocumented' has no package document under docs/plugins"
+        }
+        foreach ($orphan in @($documentedNames | Where-Object { $declaredNames -notcontains $_ })) {
+            $contractErrors += "package document 'docs/plugins/$orphan.md' does not match any marketplace package"
+        }
+    }
+
+    $agentIndex = Get-MarketplaceAgentIndex -Catalog $Manifest -RepoRoot $RepoRoot
+    $tombstoneCount = 0
+    foreach ($entry in $entries) {
+        $name = [string]$entry['name']
+        $displayName = Get-MarketplaceEntryOverlayValue -Entry $entry -Key 'displayName'
+        if ([string]::IsNullOrWhiteSpace([string]$displayName)) {
+            $contractErrors += "package '$name' must declare non-empty x-hve.displayName"
+        }
+
+        $documentation = Get-MarketplaceEntryOverlayValue -Entry $entry -Key 'documentation'
+        if ([string]::IsNullOrWhiteSpace([string]$documentation)) {
+            $contractErrors += "package '$name' must declare x-hve.documentation"
+        }
+        else {
+            $documentPath = Join-Path $RepoRoot ([string]$documentation)
+            if (-not (Test-Path -LiteralPath $documentPath -PathType Leaf)) {
+                $contractErrors += "package '$name' documentation is missing: $documentation"
+            }
+            else {
+                $content = Get-Content -LiteralPath $documentPath -Raw -Encoding utf8
+                if ($content -match '(?s)^---\s*\r?\n(.*?)\r?\n---') {
+                    $frontmatter = ConvertFrom-Yaml -Yaml $Matches[1]
+                    if ([string]$frontmatter.description -ne [string]$entry['description']) {
+                        $contractErrors += "package '$name' description does not match $documentation"
+                    }
+                }
+                else {
+                    $contractErrors += "package '$name' documentation has no frontmatter: $documentation"
+                }
+            }
+        }
+
+        $componentMaturity = Get-MarketplaceEntryOverlayValue -Entry $entry -Key 'componentMaturity'
+        if ($componentMaturity -is [System.Collections.IDictionary]) {
+            $tombstoneCount += @($componentMaturity.Values | Where-Object { $_ -eq 'removed' }).Count
+        }
+
+        foreach ($item in Get-MarketplaceResolvedPackageRecipe -Entry $entry -Channel PreRelease -AgentIndex $agentIndex) {
+            $sourcePath = Join-Path $RepoRoot $item.SourcePath
+            if (-not (Test-Path -LiteralPath $sourcePath)) {
+                $contractErrors += "package '$name' source is missing: $($item.SourcePath)"
+            }
+        }
+
+        # Both release lanes ship the same components with the same labels, so a
+        # channel-dependent projection is a policy regression rather than a variant.
+        $channelProjections = @{}
+        foreach ($channel in @('Stable', 'PreRelease')) {
+            $channelProjections[$channel] = @(Get-MarketplaceResolvedPackageRecipe -Entry $entry -Channel $channel -AgentIndex $agentIndex |
+                    ForEach-Object { "$($_.PackagePath)=$($_.Maturity)" }) -join '|'
+        }
+        if ($channelProjections['Stable'] -ne $channelProjections['PreRelease']) {
+            $contractErrors += "package '$name' must resolve identical components and maturity on Stable and PreRelease"
+        }
+
+        $pluginRoot = Join-Path $RepoRoot "plugins/$name/plugin.json"
+        if (Test-Path -LiteralPath $pluginRoot -PathType Leaf) {
+            $pluginManifest = Get-Content -LiteralPath $pluginRoot -Raw -Encoding utf8 | ConvertFrom-Json -AsHashtable
+            if ([string]$pluginManifest['name'] -ne $name -or [string]$pluginManifest['version'] -ne [string]$entry['version']) {
+                $contractErrors += "package '$name' root plugin.json identity does not mirror the catalog"
+            }
+            if ($pluginManifest.Contains('x-hve')) {
+                $contractErrors += "package '$name' root plugin.json must not contain x-hve"
+            }
+        }
+    }
+    if ($tombstoneCount -eq 0) {
+        $contractErrors += 'repository marketplace must declare at least one removed component tombstone'
+    }
+
+    $sourcePolicyIndex = Get-MarketplaceSourcePolicyIndex -Catalog $Manifest
+    foreach ($sourcePath in @($sourcePolicyIndex.Keys | Sort-Object)) {
+        $records = @($sourcePolicyIndex[$sourcePath])
+        $maturityValues = @($records | ForEach-Object { [string]$_.Maturity } | Sort-Object -Unique)
+        if ($maturityValues.Count -gt 1) {
+            $declarations = @($records | Sort-Object PackageName |
+                    ForEach-Object { "$($_.PackageName)=$($_.Maturity)" }) -join ', '
+            $contractErrors += "source '$sourcePath' must declare identical maturity across packages: $declarations"
+        }
+    }
+
+    return [string[]]$contractErrors
 }
 
 #endregion Validation Helpers
@@ -248,17 +442,21 @@ function Invoke-MarketplaceValidation {
         return @{ Success = $false; ErrorCount = $errors.Count }
     }
 
+    # Catalog-scope findings are collected separately so the report names them
+    # under a marketplace scope instead of only raising the error count.
+    $catalogErrors = @()
+
     # Metadata validation
     $metadataRequired = @('description', 'version', 'pluginRoot')
     foreach ($field in $metadataRequired) {
         if (-not $manifest.metadata.ContainsKey($field) -or [string]::IsNullOrWhiteSpace([string]$manifest.metadata[$field])) {
-            $errors += "missing required metadata field '$field'"
+            $catalogErrors += "missing required metadata field '$field'"
         }
     }
 
     # Owner validation
     if (-not $manifest.owner.ContainsKey('name') -or [string]::IsNullOrWhiteSpace([string]$manifest.owner.name)) {
-        $errors += "missing required owner field 'name'"
+        $catalogErrors += "missing required owner field 'name'"
     }
 
     # Version consistency with package.json
@@ -268,16 +466,15 @@ function Invoke-MarketplaceValidation {
         $packageJson = Get-Content -Path $packageJsonPath -Raw | ConvertFrom-Json
         $expectedVersion = $packageJson.version
         if ($manifest.metadata.version -ne $expectedVersion) {
-            $errors += "metadata.version '$($manifest.metadata.version)' does not match package.json version '$expectedVersion'"
+            $catalogErrors += "metadata.version '$($manifest.metadata.version)' does not match package.json version '$expectedVersion'"
         }
     }
 
     # Plugins validation
     if ($manifest.plugins -isnot [array] -or $manifest.plugins.Count -eq 0) {
-        $errors += 'plugins array is empty or missing'
+        $catalogErrors += 'plugins array is empty or missing'
     }
     else {
-        $pluginsRoot = Join-Path -Path $RepoRoot -ChildPath 'plugins'
         $seenNames = @{}
 
         foreach ($plugin in $manifest.plugins) {
@@ -286,7 +483,7 @@ function Invoke-MarketplaceValidation {
             $pluginWarnings = @()
 
             # Required plugin fields
-            $pluginRequired = @('name', 'source', 'description', 'version')
+            $pluginRequired = @('name', 'description', 'version')
             foreach ($field in $pluginRequired) {
                 if (-not $plugin.ContainsKey($field) -or [string]::IsNullOrWhiteSpace([string]$plugin[$field])) {
                     $pluginErrors += "missing required field '$field'"
@@ -301,30 +498,38 @@ function Invoke-MarketplaceValidation {
                 $seenNames[$pluginName] = $true
             }
 
-            # Source format (no path separators)
-            if (-not [string]::IsNullOrWhiteSpace($plugin.source)) {
-                $formatError = Test-PluginSourceFormat -Source $plugin.source
-                if ($formatError) {
-                    $pluginErrors += $formatError
+            # Source validation, dispatched on the source form
+            $sourceValue = $plugin['source']
+            if ($sourceValue -is [System.Collections.IDictionary]) {
+                foreach ($sourceError in @(Test-PluginObjectSource -Source $sourceValue)) {
+                    $pluginErrors += $sourceError
+                }
+                $expectedPath = "plugins/$pluginName"
+                if ([string]$sourceValue['path'] -cne $expectedPath) {
+                    $pluginErrors += "object source path must match package name '$expectedPath'"
+                }
+                if (-not [string]::IsNullOrWhiteSpace([string]$plugin['version'])) {
+                    $expectedRef = "plugins-v$($plugin['version'])"
+                    if ([string]$sourceValue['ref'] -cne $expectedRef) {
+                        $pluginErrors += "object source ref must match package version '$expectedRef'"
+                    }
                 }
             }
-
-            # Source directory existence
-            if (-not [string]::IsNullOrWhiteSpace($plugin.source)) {
-                $dirError = Test-PluginSourceDirectory -Source $plugin.source -PluginsRoot $pluginsRoot
-                if ($dirError) {
-                    $pluginErrors += $dirError
-                }
+            elseif ($null -eq $sourceValue -or ($sourceValue -is [string] -and [string]::IsNullOrWhiteSpace($sourceValue))) {
+                $pluginErrors += "missing required field 'source'"
             }
-
-            # Name-source consistency
-            if ($pluginName -ne $plugin.source) {
-                $pluginErrors += "name does not match source '$($plugin.source)'"
+            else {
+                $pluginErrors += 'source must be an immutable github locator object; bare package names are not supported'
             }
 
             # Plugin version consistency
             if ($expectedVersion -and $plugin.version -ne $expectedVersion) {
                 $pluginErrors += "version '$($plugin.version)' does not match package.json version '$expectedVersion'"
+            }
+
+            # Standard component membership and metadata-only x-hve overlay
+            foreach ($contractError in @(Test-MarketplaceEntryContract -Entry $plugin)) {
+                $pluginErrors += $contractError
             }
 
             $results += @{
@@ -338,6 +543,32 @@ function Invoke-MarketplaceValidation {
                 $errors += "plugin '$pluginName': $pluginError"
             }
         }
+    }
+
+    if ($catalogErrors.Count -gt 0) {
+        $results += @{
+            PluginName = 'marketplace'
+            IsValid    = $false
+            Errors     = @($catalogErrors)
+            Warnings   = @()
+        }
+        $errors += $catalogErrors
+    }
+
+    # Repository-contract findings get their own report scope; without it the
+    # report would raise ErrorCount without naming a single failing rule.
+    $repositoryErrors = @(
+        Test-MarketplaceRepositoryContract -Manifest $manifest -RepoRoot $RepoRoot |
+            ForEach-Object { "repository contract: $_" }
+    )
+    if ($repositoryErrors.Count -gt 0) {
+        $results += @{
+            PluginName = 'repository'
+            IsValid    = $false
+            Errors     = @($repositoryErrors)
+            Warnings   = @()
+        }
+        $errors += $repositoryErrors
     }
 
     if ($errors.Count -gt 0 -and $results.Count -eq 0) {

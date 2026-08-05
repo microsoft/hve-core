@@ -1,15 +1,15 @@
 ---
 title: Troubleshooting
-description: Solutions for common installation problems and answers to frequently asked questions about HVE Core collections.
+description: Solutions for common HVE Core extension, plugin, and selective clone installation problems
 sidebar_position: 8
 author: Microsoft
-ms.date: 2026-07-28
+ms.date: 2026-08-02
 ms.topic: troubleshooting
-keywords: [troubleshooting, FAQ, installation, collections, hve-core, hve-installer, registry, proxy]
+keywords: [troubleshooting, FAQ, installation, hve-core, selective clone, registry, proxy]
 estimated_reading_time: 6
 ---
 
-This page covers common installation problems and answers frequently asked questions about HVE Core extensions and collections.
+This page covers common installation problems and answers frequently asked questions about the HVE Core extension, Copilot plugin, and selective clone adoption.
 
 ## Common Installation Problems
 
@@ -32,18 +32,18 @@ Some agents or prompts are missing from the `@` mention list or `/` command list
 
 1. Agents and prompts load from `.github/` directories in the open workspace. Verify that `.github/agents/` and `.github/prompts/` folders exist and contain `.agent.md` or `.prompt.md` files.
 2. Copilot Chat loads workspace-scoped agents only when a folder or workspace is open. Opening a single file does not activate workspace agents.
-3. If you used the HVE Installer, confirm that the selected collections were deployed. Run the installer agent again to verify the installed artifact list.
+3. If you used selective clone adoption, inspect `.hve-tracking.json` schema version 2 and confirm that the selected agents, prompts, instructions, and complete skills were copied.
 4. Ensure your `.gitignore` does not exclude `.github/agents/` or `.github/prompts/` directories.
 
-### Collection Conflicts Between HVE Core All and HVE Installer
+### Duplicate Components from Managed and Copied Installations
 
 Duplicate agents appear in Copilot Chat, or agents behave unexpectedly after installing both extensions.
 
 #### Solutions
 
-1. The HVE Core All extension installs the full `hve-core-all` collection bundle from the marketplace. The HVE Installer deploys selected collection artifacts into `.github/`. Using both can produce duplicate artifacts. Choose one extension.
-2. If you want all artifacts, keep HVE Core All and uninstall HVE Installer. If you want selective collections, keep HVE Installer and uninstall HVE Core All.
-3. After uninstalling, delete any leftover `.github/agents/`, `.github/prompts/`, `.github/instructions/`, and `.github/skills/` directories that were deployed by the removed extension. Then reinstall with your preferred method.
+1. The HVE Core extension contributes the complete managed component set. Selective clone adoption copies chosen components into your repository. Using both can expose duplicate agents, prompts, or instructions.
+2. Keep the extension when you want managed complete content. Keep the copied selection when you want repository-owned files and version control.
+3. Before deleting copied `.github/` files, compare them with `.hve-tracking.json` and preserve local modifications. Uninstalling the extension does not remove repository files.
 
 ### Version Compatibility Issues
 
@@ -67,29 +67,25 @@ Errors appear after updating VS Code or one of the HVE extensions, or agents ref
 
 See [Install behind a restricted network](../contributing/validation#install-behind-a-restricted-network) for per-platform setup and the rules for adding a dependency.
 
-## Collection FAQ
+## Installation FAQ
 
 ### Which Extension Should I Install?
 
-| Scenario                                                    | Recommended Extension                                                                                             |
-|-------------------------------------------------------------|-------------------------------------------------------------------------------------------------------------------|
-| You want everything HVE Core offers                         | [HVE Core All](https://marketplace.visualstudio.com/items?itemName=ise-hve-essentials.hve-core-all) (Full)        |
-| You want only specific domains (ADO, Design Thinking, etc.) | [HVE Installer](https://marketplace.visualstudio.com/items?itemName=ise-hve-essentials.hve-installer) (Selective) |
-| You plan to contribute to HVE Core                          | Clone the repository directly, see [Developer Setup](install.md#developer-setup)                                  |
+| Scenario                                 | Recommended Installation                                                                    |
+|------------------------------------------|---------------------------------------------------------------------------------------------|
+| You want everything HVE Core offers      | [HVE Core](https://marketplace.visualstudio.com/items?itemName=ise-hve-essentials.hve-core) |
+| You want selected repository-owned files | Clone or pin HVE Core, then use `hve-core-installer`                                        |
+| You plan to contribute to HVE Core       | Clone the repository directly, see [Developer Setup](install#developer-setup)               |
 
-### How Do I Switch from HVE Core All to HVE Installer?
+### How Do I Migrate from a Retired Identity?
 
-1. Uninstall the HVE Core All extension from the VS Code Extensions sidebar.
-2. Delete the `.github/` HVE Core artifacts that the extension deployed to your workspace.
-3. Install the [HVE Installer](https://marketplace.visualstudio.com/items?itemName=ise-hve-essentials.hve-installer) extension.
-4. Open Copilot Chat and ask any agent: *"help me customize hve-core installation"*.
-5. Select the collections you need.
+Follow [Migrate to the HVE Core Identity](package-migration). Copilot marketplace registration changes are non-destructive configuration operations. VS Code cannot universally transfer settings or installation state between different extension IDs, so install and verify `ise-hve-essentials.hve-core` before uninstalling a retired identity.
 
 ### Can I Use Both Extensions Simultaneously?
 
-Using both extensions in the same workspace is not recommended. Both deploy artifacts to `.github/` directories, which can result in duplicate agents and prompts. Choose one extension based on whether you need the full collection or selective deployment. See [Collection Conflicts](#collection-conflicts-between-hve-core-all-and-hve-installer) above for details.
+Using the managed extension and copied HVE Core components in the same workspace can result in duplicate agents and prompts. Choose one source of components for each workspace. See [Duplicate Components](#duplicate-components-from-managed-and-copied-installations) above.
 
-### How Do I Update to the Latest Collection Version?
+### How Do I Update to the Latest Version?
 
 Marketplace extensions update automatically. When a new version is published, VS Code downloads and installs it. You can also manually check for updates in the Extensions sidebar.
 

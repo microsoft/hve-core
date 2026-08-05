@@ -2,7 +2,7 @@
 title: HVE Core
 description: Hypervelocity Engineering prompt library for GitHub Copilot with convention-driven AI workflows and validated artifacts
 author: Microsoft
-ms.date: 2026-07-23
+ms.date: 2026-08-02
 ms.topic: overview
 keywords:
   - hypervelocity engineering
@@ -44,7 +44,7 @@ Use HVE Core when you want AI-assisted work to be repeatable, standards-aligned,
 ## Where to Start
 
 <!-- markdownlint-disable MD013 -->
-[![Install HVE Core - Essentials Collection](https://img.shields.io/badge/VS%20Code-Install%20Core%20Collection-007ACC?logo=visualstudiocode&logoColor=white)](https://marketplace.visualstudio.com/items?itemName=ise-hve-essentials.hve-core)
+[![Install HVE Core](https://img.shields.io/badge/VS%20Code-Install%20HVE%20Core-007ACC?logo=visualstudiocode&logoColor=white)](https://marketplace.visualstudio.com/items?itemName=ise-hve-essentials.hve-core)
 <!-- markdownlint-enable MD013 -->
 
 1. Install the [HVE Core extension](https://marketplace.visualstudio.com/items?itemName=ise-hve-essentials.hve-core) from the VS Code Marketplace.
@@ -52,19 +52,14 @@ Use HVE Core when you want AI-assisted work to be repeatable, standards-aligned,
 3. Select **RPI Agent** from the agent picker or run `/rpi`, then describe the task you want to complete.
 
 > [!TIP]
-> Use [HVE Core All Extension](https://marketplace.visualstudio.com/items?itemName=ise-hve-essentials.hve-core-all) when you want the full collection deployment. See [Collections Overview](docs/getting-started/collections.md).
-
-<!-- Keep these tips separate because they describe different installation paths. -->
-
-> [!TIP]
 > Using GitHub Copilot CLI? Install as a plugin instead:
 >
 > ```bash
-> copilot plugin marketplace add microsoft/hve-core
+> copilot plugin marketplace add microsoft/hve-core#<ref>
 > copilot plugin install hve-core@hve-core
 > ```
 >
-> See [CLI Plugins](docs/getting-started/methods/cli-plugins.md) for usage details.
+> The marketplace ref selects the catalog, which pins matching immutable plugin bytes. Keep one Stable or PreRelease registration active at a time. See [CLI Plugins](docs/getting-started/methods/cli-plugins.md) for details.
 
 ## Choose Your Path
 
@@ -92,7 +87,8 @@ Full documentation is available at **<https://microsoft.github.io/hve-core/>**.
 | Guide                                                            | Description                                      |
 |------------------------------------------------------------------|--------------------------------------------------|
 | [Getting Started](docs/getting-started/README.md)                | Setup and first workflow tutorial                |
-| [Collections](docs/getting-started/collections.md)               | Available bundles and selection guide            |
+| [HVE Core Identity](docs/getting-started/packages.md)            | Distribution channels and lifecycle disclosure   |
+| [Package Migration](docs/getting-started/package-migration.md)   | Move from retired distribution identities        |
 | [RPI Workflow](docs/rpi/README.md)                               | Deep dive into Research, Plan, Implement, Review |
 | [Contributing](docs/contributing/README.md)                      | Create custom agents, instructions, and prompts  |
 | [Agents Reference](.github/CUSTOM-AGENTS.md)                     | All available agents                             |

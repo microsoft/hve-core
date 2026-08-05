@@ -3,7 +3,7 @@ title: 'Contributing Instructions to HVE Core'
 description: 'Requirements and standards for contributing GitHub Copilot instruction files to hve-core'
 sidebar_position: 3
 author: Microsoft
-ms.date: 2026-07-30
+ms.date: 2026-08-02
 ms.topic: how-to
 ---
 
@@ -30,30 +30,30 @@ Create an instructions file when you need to:
 
 ### Location
 
-Instruction files are typically organized in a collection subdirectory by convention:
+Instruction files are typically organized in a package subdirectory by convention:
 
 ```text
 .github/instructions/
-├── {collection-id}/
-│   └── your-instructions.instructions.md   # Collection-scoped
+├── {package-id}/
+│   └── your-instructions.instructions.md   # Package-scoped
 ├── coding-standards/
 │   ├── language.instructions.md             # Language-specific
 │   └── {language}/
 │       └── language.instructions.md         # Language with subdirectory
 ├── shared/
-│   └── cross-collection.instructions.md     # Shared across collections
+│   └── cross-package.instructions.md        # Shared across packages
 └── hve-core/
-    └── markdown.instructions.md               # Collection-scoped (distributed)
+    └── markdown.instructions.md               # Package-scoped (distributed)
 ```
 
 > [!IMPORTANT]
-> Files placed directly at the root of `.github/instructions/` (without a subdirectory) are repo-specific and never distributed through extension packages or collections. Only use root-level placement for internal repository concerns such as CI/CD workflows or conventions that do not generalize to consumers. Files in subdirectories like `hve-core/`, `ado/`, and `shared/` are collection-scoped and distributable.
+> Files placed directly at the root of `.github/instructions/` (without a subdirectory) are repo-specific and never distributed through marketplace packages or extensions. Only use root-level placement for internal repository concerns such as CI/CD workflows or conventions that do not generalize to consumers. Files in subdirectories like `hve-core/`, `ado/`, and `shared/` are package-scoped and distributable.
 
 <!-- markdownlint-disable-next-line MD028 -->
 
 > [!NOTE]
-> Collections can reference artifacts from any subfolder. The `path:` field in collection YAML files
-> accepts any valid repo-relative path regardless of the artifact's parent directory.
+> Marketplace package recipes can reference artifacts from any canonical subfolder. Standard component paths
+> are declared in `.github/plugin/marketplace.json` and resolve to canonical source files.
 
 #### Examples
 
@@ -135,48 +135,11 @@ lastUpdated: '2025-11-19'
 ---
 ```
 
-## Collection Entry Requirements
+## Marketplace Recipe Registration
 
-All instructions must have matching entries in one or more `collections/*.collection.yml` manifests, except for repo-specific instructions placed at the root of `.github/instructions/` (without a subdirectory). Collection entries control distribution and maturity.
+Distributable instructions must be declared under the `rules` field of the `hve-core` entry in `.github/plugin/marketplace.json`. Root-level instructions are repository-specific and remain outside recipe membership.
 
-> [!NOTE]
-> Root-level instructions (directly under `.github/instructions/` with no subdirectory) are repo-specific and MUST NOT be added to collection manifests. See [Repo-Specific Artifact Exclusion](ai-artifacts-common.md#repo-specific-artifact-exclusion) for details.
-
-### Adding Your Instructions to a Collection
-
-After creating your instructions file, add an `items[]` entry in each target collection manifest:
-
-```yaml
-items:
-    # path can reference artifacts from any subfolder
-    - path: .github/instructions/{collection-id}/my-language.instructions.md
-        kind: instruction
-        maturity: stable
-```
-
-For instructions in language subdirectories, use the full path:
-
-```yaml
-items:
-    - path: .github/instructions/coding-standards/csharp/csharp.instructions.md
-        kind: instruction
-        maturity: stable
-```
-
-### Selecting Collections for Instructions
-
-Choose collections based on who uses the technology or pattern:
-
-| Instruction Type        | Recommended Collections                           |
-|-------------------------|---------------------------------------------------|
-| Language standards      | `hve-core-all`, `coding-standards`                |
-| Infrastructure (IaC)    | `hve-core-all`, `coding-standards`                |
-| Documentation standards | `hve-core-all`, `hve-core`                        |
-| Workflow instructions   | `hve-core-all` plus relevant workflow collections |
-| Test standards          | `hve-core-all`, `coding-standards`                |
-| ADO integration         | `hve-core-all`, `ado`, `project-planning`         |
-
-For complete collection documentation, see [AI Artifacts Common Standards - Collection Manifests](ai-artifacts-common.md#collection-manifests-and-dependencies).
+Use the recipe-relative `rules/<subpath>/<name>.instructions.md` path, add non-stable lifecycle disclosure only through `x-hve.componentMaturity`, and update `docs/plugins/hve-core.md`. Run `npm run lint:marketplace` and `npm run plugin:generate` after registration.
 
 ## Content Structure Standards
 
@@ -575,7 +538,7 @@ Before submitting your instructions file, verify:
 * [ ] Code examples wrapped in XML-style blocks
 * [ ] Anti-patterns section with alternatives
 * [ ] Validation/testing requirements
-* [ ] Attribution footer present
+* [ ] Attribution footer absent
 
 ### Code Examples
 
@@ -655,7 +618,7 @@ All checks **MUST** pass before merge.
 
 See [AI Artifacts Common Standards - Getting Help](ai-artifacts-common.md#getting-help) for support resources. For instructions-specific assistance:
 
-* Review existing examples in `.github/instructions/{collection-id}/` (the conventional location for instruction files)
+* Review existing examples in `.github/instructions/{package-id}/` (the conventional location for instruction files)
 * Test glob patterns using file search commands
 * Use the `hve-builder` skill for authoring, review, refactoring, or validation assistance
 

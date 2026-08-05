@@ -187,7 +187,7 @@ The `hve-builder` skill uses one lifecycle for agents, prompts, instructions, su
 4. Keep known target files and caller-supplied canonical references as bounded lifecycle reads; activate `rpi-research` for open-ended exploration and decision-critical research
 5. Run non-mutating host validation and resolve one overall outcome
 
-HVE Builder selects a reasoning profile from each worker's responsibility. High uses GPT-5.6 Sol, Claude Opus 4.8, then GPT-5.5 for architecture and consequential decisions. Medium uses GPT-5.6 Terra, Claude Sonnet 5, then MAI-Code-1-Flash for semantic discovery, authoring, research, implementation, and review. Low uses GPT-5.6 Luna, MAI-Code-1-Flash, then Claude Haiku 4.5 for literal simulation and mechanical validation.
+HVE Builder selects a reasoning profile from each worker's responsibility. High uses Claude Opus 5, GPT-5.6 Sol, then GPT-5.5 for architecture and consequential decisions. Medium uses GPT-5.6 Terra, Claude Sonnet 5, then MAI-Code-1-Flash for semantic discovery, authoring, research, implementation, and review. Low uses GPT-5.6 Luna, MAI-Code-1-Flash, then Claude Haiku 4.5 for literal simulation and mechanical validation.
 
 Each ordered list is an availability fallback within its selected profile. The retained `prompt-builder`, `prompt-analyze`, and `prompt-refactor` skills remain compatibility aliases that route legacy requests to this lifecycle.
 

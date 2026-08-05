@@ -1,8 +1,8 @@
 ---
-title: "Transparency Note: HVE Core (May 2026)"
+title: "Transparency Note: HVE Core"
 description: "Public Transparency Note for HVE Core, a prompt-engineering and agentic-customization framework distributed by microsoft/hve-core."
 author: HVE Core Maintainers
-ms.date: 2026-07-24
+ms.date: 2026-08-02
 ms.topic: overview
 keywords:
   - responsible-ai
@@ -20,7 +20,7 @@ This note covers HVE Core: the files in the `microsoft/hve-core` repository. It 
 
 ## The basics of HVE Core
 
-HVE Core is a collection of text files and supporting tools that shape how GitHub Copilot behaves. It ships custom agents, prompts, instructions, skills, collections, PowerShell scripts, GitHub Actions workflows, and a Visual Studio Code extension. The point is to give engineering teams a ready-made, review-friendly starting point for AI-assisted software work.
+HVE Core is a collection of text files and supporting tools that shape how GitHub Copilot behaves. It ships custom agents, prompts, instructions, skills, hooks, PowerShell scripts, GitHub Actions workflows, and one complete Visual Studio Code extension and Copilot plugin identity. The point is to give engineering teams a ready-made, review-friendly starting point for AI-assisted software work.
 
 HVE Core does not run any AI model itself. It does not train models, host inference, call external services while you use it, or process personal data on its own. All of the AI work happens on the host platform (Copilot Chat or the Copilot CLI). That leaves three areas where HVE Core still carries Responsible AI weight:
 
@@ -34,12 +34,12 @@ The appendices at the end add detail for the agents that most influence downstre
 
 | Term                 | Meaning in HVE Core                                                                                                                                                      |
 |----------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| Artifact             | A file HVE Core ships: an agent, prompt, instruction, skill, collection, script, or workflow. Other tools read these files; the files do not run on their own.           |
+| Artifact             | A file HVE Core ships: an agent, prompt, instruction, skill, hook, script, or workflow. Other tools read these files; the files do not run on their own.                 |
 | Custom agent         | A persona (`*.agent.md`) that Copilot Chat can take on to run a specialized workflow. An agent can call subagents and use instructions, prompts, and skills.             |
 | Prompt               | A reusable user-message template (`*.prompt.md`) you load into a Copilot Chat or CLI session.                                                                            |
 | Instructions         | Guidance (`*.instructions.md`) that shapes how the model responds for a given file type, language, or workflow.                                                          |
 | Skill                | A self-contained capability package (`SKILL.md` plus optional scripts and references) that documents a reusable task.                                                    |
-| Collection           | A bundle of files (`*.collection.yml` plus a description) that you can install as one unit.                                                                              |
+| Marketplace identity | The complete `hve-core` bundle declared in `.github/plugin/marketplace.json` and distributed as one plugin or extension identity.                                        |
 | Subagent             | An agent that another agent calls for a focused task, such as a read-only researcher or a single implementation step.                                                    |
 | Distribution channel | One of the ways HVE Core files reach you: the VS Code extension, the GitHub plugin marketplace, a direct git clone, or a copy placed in a customer repository.           |
 | Host platform        | The Copilot surface that runs the model: GitHub Copilot Chat in Visual Studio Code, or the GitHub Copilot CLI. HVE Core does not include or replace it.                  |
@@ -63,7 +63,8 @@ Validation tools (linters, frontmatter checks, Pester tests, plugin generation) 
 Most skills are pure authoring or validation helpers with no independent Responsible AI surface and are not called out individually. A few skills warrant specific mention because they assemble media outputs or depend on external services:
 
 * The **Customer Card Render** skill assembles synthetic-persona slides from authored Design Thinking content through a template-driven PowerPoint pipeline; HVE Core has no image-generation model. When concept imagery is needed, the workflow emits prompts the operator runs on an external platform such as M365 Copilot, where the host's Responsible AI layers apply. The cards stay low-fidelity and carry disclosure, redaction, and stereotyping-review controls. See Appendix 5.
-* The **PowerPoint Builder** and **TTS Voice-over** experimental skills turn authored YAML into slides and audio. They do not create likenesses of people or claim to be a real speaker; they assemble content that was written elsewhere. The TTS Voice-over skill depends on an external speech service (such as Azure Speech) that you provision and govern under its own subscription and terms.
+* The **PowerPoint**, **TTS Voice-over**, **Video to GIF**, and **VS Code Playwright** skills are labeled `experimental` in the catalog. These media and rendering tools are included in both Stable and PreRelease because lifecycle labels disclose support posture rather than filter channel content.
+  PowerPoint and TTS Voice-over turn authored YAML into slides and audio. They do not create likenesses of people or claim to be a real speaker; they assemble content that was written elsewhere. TTS Voice-over depends on an external speech service (such as Azure Speech) that you provision and govern under its own subscription and terms.
 
 #### Responsibility boundary
 
@@ -134,9 +135,9 @@ For a set of files, "performance" is not a model-accuracy score. It is how well 
 Quality rests on a few things:
 
 * **CI checks on every pull request.** Markdown linting, frontmatter validation, model-reference checks, link checking, PowerShell and Python linting, YAML validation, collection-metadata and marketplace validation, dependency-pinning and action-version checks, copyright-header checks, and skill-structure validation all run on each pull request and block merge on failure.
-* **Plugin-generation gate.** Collection manifests are regenerated from source on every change; a mismatch with the generated `plugins/` outputs blocks merge.
+* **Plugin-generation gate.** The complete marketplace recipe is regenerated from source on every change; a mismatch with generated plugin output blocks merge.
 * **Human review.** Every file change needs human review. Supply-chain and dependency checks surface to reviewers.
-* **Phase-gated releases.** Artifacts move through experimental, prerelease, and stable maturity stages, giving natural points for deeper human review before broad adoption. Releases follow `release-please` conventional-commit rules with a CHANGELOG, and the VS Code extension carries version metadata you can pin against.
+* **Lifecycle disclosure and release review.** Components carry `stable`, `preview`, or `experimental` lifecycle labels for disclosure and governance. Both release channels include all three active labels; deprecated and removed components are excluded. Stable release review happens through promotion of an exact `main` tree into `release/stable`, independently of component labels. The labels are also separate from maturity classifications used in Responsible AI assessments.
 * **Feedback channel.** GitHub issues on `microsoft/hve-core` are the main place for bugs, requests, and concerns.
 
 HVE Core does not measure performance against a specific model. If you need reproducible behavior, pin both the file version and the host configuration.
@@ -144,7 +145,7 @@ HVE Core does not measure performance against a specific model. If you need repr
 ### Getting the best results
 
 * **Pin to a release tag.** Treat the main branch as a moving target. For anything production-relevant, pin to a release tag and review changes before upgrading.
-* **Adopt one collection at a time.** HVE Core ships several collections (see the `collections/` manifests for the current set), and most teams do not need all of them. Start with the one closest to your work and grow from there.
+* **Choose a managed or selective footprint.** The extension and plugin contain every active component. Teams that need fewer repository-owned files can use the included installer skill's starter profile or custom selection across agents, prompts, instructions, and complete skill directories. The installer preserves repository-relative paths, records schema version 2, and does not copy hooks.
 * **Read an agent's description before loading it.** Each agent file documents its purpose, inputs, outputs, and limits. Skipping this is the most common cause of surprises.
 * **Treat decision-shaping output as a draft.** Planning agents, code-review agents that gate pull requests, and customer-handoff agents produce drafts. Do not turn a draft into a binding decision without qualified human review.
 * **Check saved memory before sharing a workspace.** Agents that write to the memory layer carry context across sessions. Inspect and clear it through the host's controls before sharing a workspace, screenshot, or recording.
@@ -173,7 +174,7 @@ Fairness and representational considerations:
 
 HVE Core is engineering tooling, not a managed service. At integration time, three things are still the responsibility of the HVE Core user:
 
-* **Pick the right scope.** Coding-standards collections suit day-to-day engineering work. Planning collections (RAI, Security, SSSC) support governance work but still need qualified human reviewers. The experimental collection ships features that are deliberately less mature.
+* **Pick the right capabilities.** Coding instructions support day-to-day engineering work. RAI, Security, and SSSC planning tools support governance work but still need qualified human reviewers. Components labeled `experimental` are included for transparent evaluation and may change significantly; their presence in Stable is not a claim of fitness for a specific use.
 * **Check the host platform.** Current GitHub Copilot Chat in VS Code or the GitHub Copilot CLI are the supported hosts. Other clients are not characterized.
 * **Set up your own oversight.** Agents do not commit code, file work items, or send messages on their own without operator confirmation. Keep that confirmation step, and keep code-review gates on any agent-authored change to source, configuration, infrastructure, or workflows.
 
@@ -286,9 +287,9 @@ Outputs from HVE Core agents and skills are advisory. They do not constitute leg
 |---------------|-------------------------------|
 | System        | HVE Core (microsoft/hve-core) |
 | Document type | Transparency Note             |
-| Cycle         | May 2026                      |
+| Cycle         | August 2026                   |
 | Published     | 2026-06-11                    |
-| Last updated  | 2026-06-11                    |
+| Last updated  | 2026-08-02                    |
 
 © 2026 Microsoft Corporation. All rights reserved. This document is provided "as-is" and for informational purposes only. Information and views expressed in this document, including URL and other Internet Web site references, may change without notice. You bear the risk of using it. Some examples are for illustration only and are fictitious. No real association is intended or inferred.
 
@@ -296,7 +297,7 @@ This document is not intended to be, and should not be construed as providing, l
 
 Consult a legal specialist if you are uncertain about laws or regulations that might apply to your system, especially if you think those might impact these recommendations. Be aware that not all of these recommendations and resources will be appropriate for every scenario, and conversely, these recommendations and resources may be insufficient for some scenarios.
 
-Published: 2026-06-11
+Published: 2026-06-11; last updated: 2026-08-02
 
 Last updated: 2026-06-11
 

@@ -3,7 +3,7 @@ title: Security Architect Guide
 description: HVE Core support for security architects building security models, security plans, and compliance verification
 sidebar_position: 7
 author: Microsoft
-ms.date: 2026-07-15
+ms.date: 2026-08-04
 ms.topic: how-to
 keywords:
   - security
@@ -22,12 +22,12 @@ This guide is for you if you perform security model analysis, build security pla
 > AI outputs may contain inaccuracies, miss critical threats, or produce recommendations that are incomplete or inappropriate for your environment.
 > Never treat AI-generated security artifacts as authoritative without independent verification.
 
-## Recommended Collections
+## Capability Groups
 
 > [!TIP]
-> Install the [HVE Core extension](https://marketplace.visualstudio.com/items?itemName=ise-hve-essentials.hve-core) from the VS Code Marketplace for the flagship RPI workflow and core artifacts with zero configuration.
+> Install the [HVE Core extension](https://marketplace.visualstudio.com/items?itemName=ise-hve-essentials.hve-core) from the VS Code Marketplace for the complete active component set with zero configuration.
 >
-> Your primary collections are `security` (security plan creation, risk registers, and incident response tools) and `project-planning` (broader project context). For clone-based setups, see the [Installation Guide](../../getting-started/install.md).
+> For selective clone adoption, choose security planning, supply chain assessment, Responsible AI, risk, and research components that match your review scope. Capability groups help you discover related components; they are not independently installable products. See the [Installation Guide](../../getting-started/install.md).
 
 ## What HVE Core Does for You
 
@@ -140,8 +140,8 @@ Prompts complement the agents for targeted security workflows:
 ## Next Steps
 
 > [!TIP]
-> Explore security tools: [Security Collection](https://github.com/microsoft/hve-core/blob/main/collections/security.collection.md)
-> Plan responsible AI assessments: [Project Planning Collection](https://github.com/microsoft/hve-core/blob/main/collections/project-planning.collection.md)
+> Browse the complete HVE Core inventory: [HVE Core](../../plugins/hve-core)
+> Plan responsible AI assessments: [Responsible AI Planning](../../agents/rai-planning/)
 > Review the security model documentation: [Security Model](../../security/security-model.md)
 > See how security fits the project lifecycle: [AI-Assisted Project Lifecycle](../lifecycle/)
 

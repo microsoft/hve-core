@@ -101,7 +101,7 @@ a:focus-visible,
 button:focus-visible,
 [tabindex]:focus-visible,
 .cardTitle:focus-visible,
-.collectionName:focus-visible,
+.packageName:focus-visible,
 .boxCardLinks a:focus-visible {
   outline: 2px solid var(--hve-focus-ring-inner);
   outline-offset: 2px;
@@ -114,7 +114,7 @@ button:focus-visible,
 .table-of-contents__link,
 .navbar__link,
 .cardTitle,
-.collectionName,
+.packageName,
 .boxCardLinks a {
   text-decoration: underline;
   text-underline-offset: 2px;
@@ -427,7 +427,7 @@ html {
 }
 
 .cardTitle,
-.collectionName {
+.packageName {
   display: flex;
   align-items: center;
   min-height: 24px;

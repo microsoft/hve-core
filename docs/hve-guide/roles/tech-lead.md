@@ -3,7 +3,7 @@ title: Tech Lead Guide
 description: HVE Core support for tech leads and architects driving architecture, code quality, and prompt engineering standards
 sidebar_position: 4
 author: Microsoft
-ms.date: 2026-07-15
+ms.date: 2026-08-03
 ms.topic: how-to
 keywords:
   - tech lead
@@ -15,12 +15,12 @@ estimated_reading_time: 10
 
 This guide is for you if you make architecture decisions, set coding standards, review designs and code, or curate AI prompt engineering practices. Tech leads span both engineering and planning, with 23+ addressable assets across design, standards, review, and prompt management.
 
-## Recommended Collections
+## Capability Groups
 
 > [!TIP]
-> Install the [HVE Core extension](https://marketplace.visualstudio.com/items?itemName=ise-hve-essentials.hve-core) from the VS Code Marketplace for the flagship RPI workflow and core artifacts with zero configuration.
+> Install the [HVE Core extension](https://marketplace.visualstudio.com/items?itemName=ise-hve-essentials.hve-core) from the VS Code Marketplace for the complete active component set with zero configuration.
 >
-> Your primary collections are `hve-core` (research and review workflows), `coding-standards` (language-specific rules), and `project-planning` (architecture decision records and planning). For clone-based setups, see the [Installation Guide](../../getting-started/install.md).
+> For selective clone adoption, choose research and review workflows, language standards, architecture decision records, and prompt engineering components that match your engineering surface. Capability groups help you discover related components; they are not independently installable products. See the [Installation Guide](../../getting-started/install.md).
 
 ## What HVE Core Does for You
 
@@ -134,7 +134,7 @@ Auto-activated instructions apply coding standards based on file type: C# (`*.cs
 > [!TIP]
 > See the full project lifecycle: [AI-Assisted Project Lifecycle](../lifecycle/)
 > Explore prompt engineering practices: [Prompt Engineering Contribution Guide](../../contributing/prompts.md)
-> Review coding standards: [Coding Standards Collection](https://github.com/microsoft/hve-core/blob/main/collections/coding-standards.collection.md)
+> Browse coding guidance in the complete inventory: [HVE Core](../../plugins/hve-core)
 
 ---
 

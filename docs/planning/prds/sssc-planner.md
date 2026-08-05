@@ -2,7 +2,7 @@
 title: SSSC Planner - Product Requirements Document
 description: Product requirements for an SSSC Planner that helps HVE-Core and downstream projects keep supply chain security planning consistent, auditable, and actionable.
 author: GitHub Copilot
-ms.date: 2026-07-15
+ms.date: 2026-08-02
 ms.topic: concept
 sidebar_position: 1
 keywords: [prd, sssc, supply chain security, planner, governance]
@@ -43,7 +43,7 @@ The opportunity is to turn supply chain security planning from scattered guidanc
 
 | Goal ID | Statement | Type | Baseline | Target | Timeframe | Priority |
 |---------|-----------|------|----------|--------|-----------|----------|
-| G-001 | Make the generalized SSSC Planner discoverable and usable from security and project-planning workflows. | Adoption | Planner artifacts exist but need product-level PRD alignment | Target collections expose agent, prompts, instructions, and skill references consistently | Target release v4.1 prerelease | Must have |
+| G-001 | Make the generalized SSSC Planner discoverable and usable from security and project-planning workflows. | Adoption | Planner artifacts exist but need product-level PRD alignment | The `hve-core` recipe exposes agent, prompts, instructions, and skill references consistently | Target release v4.1 prerelease | Must have |
 | G-002 | Preserve SSSC planning state across sessions without losing gates, notices, references, or handoff decisions. | Quality | State schema and tests exist | 100% SSSC state schema and context preservation tests pass | Target release v4.1 prerelease | Must have |
 | G-003 | Produce evidence-backed assessments against recognized supply chain security references. | Security | Supply chain skill packages durable references | Every assessment maps findings to the skill reference set or explicitly delegates research | Target release v4.1 prerelease | Must have |
 | G-004 | Convert prioritized gaps into the existing shared HVE-Core backlog handoff contract for backlog managers. | Delivery | Shared backlog handoff conventions exist | Every generated item includes acceptance criteria, adoption steps, priority, evidence, standards traceability, downstream applicability context, and review boundaries | Target release v4.1 prerelease | Must have |
@@ -54,7 +54,7 @@ The opportunity is to turn supply chain security planning from scattered guidanc
 
 ### Current Situation
 
-Supply chain security planning guidance exists across the SSSC Planner agent, consolidated instructions, entry prompts, state schema, tests, collection metadata, and the `supply-chain-security` skill. The current foundation is strong, but the product intent needs a complete PRD that aligns the agent, prompts, instructions, skill, validation, diagrams, and handoff expectations around a single user experience.
+Supply chain security planning guidance exists across the SSSC Planner agent, consolidated instructions, entry prompts, state schema, tests, marketplace metadata, and the `supply-chain-security` skill. The current foundation is strong, but the product intent needs a complete PRD that aligns the agent, prompts, instructions, skill, validation, diagrams, and handoff expectations around a single user experience.
 
 ### Problem Statement
 
@@ -75,11 +75,11 @@ If the SSSC Planner remains underspecified as a product, users may receive incon
 
 | Persona | Goals | Pain Points | Impact |
 |---------|-------|-------------|--------|
-| HVE-Core maintainer | Ship reliable planner artifacts across collections and extension packaging | Needs confidence that agent, prompts, instructions, skill, tests, and generated outputs stay aligned | Fewer regressions and clearer release readiness |
+| HVE-Core maintainer | Ship reliable planner artifacts through the marketplace recipe and extension packaging | Needs confidence that agent, prompts, instructions, skill, tests, and generated outputs stay aligned | Fewer regressions and clearer release readiness |
 | Security reviewer | Validate assessment evidence, standards mappings, and backlog items | Needs traceable findings and explicit review boundaries | Higher confidence in remediation priorities |
 | Agent and instruction author | Improve planner behavior without duplicating standards content | Needs a clear source of truth for orchestration versus domain references | Easier maintenance and lower drift risk |
 | Downstream project owner | Apply HVE-Core supply chain planning to a local repository | Needs practical recommendations that fit the local stack | Safer adoption and better backlog quality |
-| Release manager | Package and publish SSSC assets | Needs collection, plugin, and extension outputs to stay consistent | Cleaner releases and fewer packaging surprises |
+| Release manager | Package and publish SSSC assets | Needs recipe, plugin, and extension outputs to stay consistent | Cleaner releases and fewer packaging surprises |
 | Governance stakeholder | Audit planning controls and evidence | Needs durable state, notices, and artifact integrity options | Better evidence posture |
 
 ### Journeys
@@ -262,13 +262,13 @@ graph TD
     Source --> PromptFiles[".github/prompts/security/sssc-*.prompt.md"]
     Source --> InstructionFile[".github/instructions/security/sssc-planner.instructions.md"]
     Source --> SkillFiles[".github/skills/security/supply-chain-security/"]
-    AgentFile --> Collections["collections/*.collection.yml"]
-    PromptFiles --> Collections
-    InstructionFile --> Collections
-    SkillFiles --> Collections
-    Collections --> Plugins["plugins/* generated outputs"]
-    Collections --> Extension["extension package manifests and READMEs"]
-    Tests["schema, context, skill, collection tests"] --> Collections
+    AgentFile --> Recipe[".github/plugin/marketplace.json<br/>hve-core recipe"]
+    PromptFiles --> Recipe
+    InstructionFile --> Recipe
+    SkillFiles --> Recipe
+    Recipe --> Plugins["plugins/hve-core generated output"]
+    Recipe --> Extension["HVE Core extension manifest and README"]
+    Tests["schema, context, skill, marketplace tests"] --> Recipe
     Tests --> Plugins
     Tests --> Extension
 ```
@@ -285,7 +285,7 @@ graph TD
   * `.github/skills/shared/telemetry-foundations/SKILL.md` owns telemetry vocabulary, while `.github/instructions/shared/telemetry-overlay.instructions.md` applies telemetry acceptance-criteria expectations to PRD sessions and SSSC planning artifacts.
   * `docs/templates/sssc-plan-template.md` owns the final SSSC plan output structure. Product requirements may reference the template but should not fork its section contract.
   * `scripts/linting/schemas/sssc-state.schema.json` owns persisted SSSC state validity. Pester tests validate schema fixtures and protect inline state-context copies from drifting across agent and instruction files.
-  * `collections/security.collection.yml` and `collections/hve-core-all.collection.yml` own packaged discoverability for the SSSC prompt, instruction, agent, skill, and shared dependency surfaces.
+  * The `hve-core` entry in `.github/plugin/marketplace.json` owns packaged discoverability for the SSSC prompt, instruction, agent, skill, and shared dependency surfaces.
   * Source artifacts shall be updated first. Generated plugin and extension outputs shall be regenerated through repository scripts and shall not be edited directly.
   * PRD and documentation edits shall follow the repository Markdown, Docusaurus, writing-style, and telemetry overlay instructions that apply to `docs/**` and `.copilot-tracking/prd-sessions/**`.
 
@@ -307,7 +307,7 @@ graph TD
 | FR-012 | Downstream applicability capture | The planner shall capture downstream context before generating project-specific recommendations outside HVE-Core. | G-005 | Downstream project owner, security reviewer | Must | Handoff includes the current required SSSC state context fields: tech stack, package managers, CI platform, release strategy, and compliance targets. Local security ownership is captured when provided and remains advisory for v4.1 prerelease. | Prevents unsafe copy-paste adoption |
 | FR-013 | Resume and recovery | The planner shall resume from existing state and recover after context summarization. | G-002, G-006 | User, maintainer | Must | Resume flow reads state, validates required fields, summarizes progress, and continues from next incomplete action. | Missing state is reconstructed when feasible |
 | FR-014 | Cross-agent integration | The planner shall cross-link relevant Security Planner and RAI Planner artifacts without duplicating their analysis. | G-001, G-005 | Security reviewer, maintainer | Should | State records `securityPlannerLink` and `raiPlannerLink` when artifacts exist. | Security Planner can dispatch to SSSC |
-| FR-015 | Collection and packaging alignment | The product shall keep agent, prompt, instruction, and skill artifacts registered in the intended collections and generated outputs. | G-001 | Maintainer, release manager | Must | Collection validation passes and generated plugin or extension outputs reflect the same planner surface. | Generated files are not edited directly |
+| FR-015 | Recipe and packaging alignment | The product shall keep agent, prompt, instruction, and skill artifacts registered in the `hve-core` recipe and generated outputs. | G-001 | Maintainer, release manager | Must | Marketplace validation passes and generated plugin or extension outputs reflect the same planner surface. | Generated files are not edited directly |
 
 ### Feature Hierarchy
 
@@ -340,7 +340,7 @@ SSSC Planner Product
   Quality System
     schema validation
     context preservation tests
-    collection validation
+    marketplace validation
     skill validation
     markdown and frontmatter validation where applicable
 ```
@@ -358,7 +358,7 @@ SSSC Planner Product
 | NFR-007 | Accessibility | Diagrams and tables shall have surrounding prose that explains their meaning. | Every major concept has diagram, table, or concrete example | Should | Documentation review | Supports Docusaurus readability |
 | NFR-008 | Compatibility | Documentation diagrams shall render in Docusaurus using Mermaid. | No Mermaid syntax errors in PRD diagrams | Should | Docusaurus build or markdown preview | Avoid hardcoded theme colors |
 | NFR-009 | Auditability | Notices, references, gates, and handoff decisions shall be recorded in state or final artifacts. | Required audit fields present for completed sessions | Must | State schema and fixture review | Supports governance stakeholders |
-| NFR-010 | Packaging Quality | Collection and generated output validation shall pass before release. | `npm run plugin:validate` returns 0 errors | Must | Release validation | Generated plugin and extension outputs stay in sync |
+| NFR-010 | Packaging Quality | Marketplace recipe and generated output validation shall pass before release. | `npm run plugin:validate` returns 0 errors | Must | Release validation | Generated plugin and extension outputs stay in sync |
 
 ## 8. Data & Analytics
 
@@ -400,7 +400,7 @@ SSSC Planner Product
 |--------|------|----------|--------|--------|--------|
 | State schema pass rate | Quality | Tests exist | 100% pass | Per PR and release | Pester summary |
 | Context preservation pass rate | Quality | Tests exist | 100% pass | Per PR and release | Pester summary |
-| Collection validation errors | Packaging | TBD | 0 errors | Per release | `plugin:validate` output |
+| Marketplace validation errors | Packaging | TBD | 0 errors | Per release | `plugin:validate` output |
 | Handoff completeness | Product quality | TBD | 100% of generated items include acceptance criteria, priority, standards trace, and review note | Per SSSC session | Handoff review |
 | Advisory threshold behavior | Product quality | Open threshold posture | Planner reports posture and creates handoff items without blocking Phase 6 on minimum Scorecard, SLSA, SBOM, dependency pinning, or signing posture | Per SSSC session | Session state and handoff review |
 | Downstream applicability coverage | Governance | TBD | 100% of downstream handoffs include local context assumptions and local reviewer owner | Per downstream session | Handoff review |
@@ -414,7 +414,7 @@ SSSC Planner Product
 | SSSC planner instructions | Orchestration | High | Agent authors | Phase behavior drifts from product requirements | Review against PRD and schema tests |
 | SSSC prompts | Entry surface | Medium | Agent authors | Seeded modes miss required context | Prompt tests and manual walkthroughs |
 | State schema | Validation | High | Maintainers | Resume breaks or audit fields disappear | Schema tests and fixtures |
-| Collection manifests | Packaging | High | Release managers | Users cannot discover planner assets | Collection validation and generated output checks |
+| Marketplace recipe | Packaging | High | Release managers | Users cannot discover planner assets | Marketplace validation and generated output checks |
 | Backlog manager conventions | Handoff | Medium | Backlog workflow owners | Generated work items are rejected or ambiguous | Shared templates and target-system validation |
 | `rpi-research` | External research capability | Medium | RPI maintainers | Emerging standards needs exceed embedded references | Activate bounded external research with documented evidence paths |
 
@@ -427,7 +427,7 @@ SSSC Planner Product
 | R-003 | Downstream users apply HVE-Core recommendations without local adaptation. | High | Medium | Require downstream context capture and local reviewer ownership before handoff. | Downstream security reviewers | Open |
 | R-004 | State schema and fixtures drift from actual planner behavior. | High | Medium | Keep schema tests, context preservation tests, and state fixtures in release validation. | Maintainers | Open |
 | R-005 | Backlog items are technically correct but too generic to execute. | Medium | Medium | Require adoption steps, acceptance criteria, affected files, dependencies, evidence, shared handoff fields, and review boundaries. | Agent authors | Open |
-| R-006 | Collection or generated package outputs omit one of the planner surfaces. | Medium | Medium | Validate collections and regenerate plugin and extension outputs after manifest changes. | Release managers | Open |
+| R-006 | Marketplace or generated package outputs omit one of the planner surfaces. | Medium | Medium | Validate the recipe and regenerate plugin and extension outputs after manifest changes. | Release managers | Open |
 | R-007 | Artifact integrity preference is not recorded for high-governance handoffs. | Medium | Medium | Offer signing during Phase 6 and record accepted or skipped decisions in state. | Release managers | Open |
 | R-008 | Mermaid diagrams or PRD content fail documentation validation. | Medium | Low | Use Docusaurus Mermaid syntax and run markdown validation. | Maintainers | Open |
 
@@ -465,10 +465,10 @@ The planner should avoid collecting PII. If telemetry or audit events need user 
 
 | Aspect | Requirement | Notes |
 |--------|-------------|-------|
-| Deployment | Planner artifacts ship through HVE-Core collections, plugins, and VS Code extension packages. | Generated outputs must be regenerated through npm scripts, not edited directly. |
-| Rollback | Revert collection and source artifact changes together if release validation fails. | Avoid partial rollback that leaves plugin or extension outputs stale. |
+| Deployment | Planner artifacts ship through the HVE Core plugin and VS Code extension identity. | Generated outputs must be regenerated through npm scripts, not edited directly. |
+| Rollback | Revert marketplace and source artifact changes together if release validation fails. | Avoid partial rollback that leaves plugin or extension outputs stale. |
 | Monitoring | Track validation command outcomes and state-session quality using bounded telemetry vocabulary. | Use OpenTelemetry-aligned resource attributes where telemetry is emitted. |
-| Alerting | Release validation failures should block or flag packaging workflows. | Focus on schema, collection, skill, markdown, and generated output validation. |
+| Alerting | Release validation failures should block or flag packaging workflows. | Focus on schema, marketplace, skill, markdown, and generated output validation. |
 | Support | Maintainers triage user reports about missing assets, state resume failures, and handoff formatting issues. | Link issues to affected artifact surface. |
 | Capacity Planning | The planner runs locally in VS Code chat; no dedicated service capacity is expected. | Large repository scans may require scoped searches and staged analysis. |
 | Data Retention | `.copilot-tracking/` artifacts are local planning outputs and should be reviewed before sharing. | Avoid storing secrets or raw PII. |
@@ -483,7 +483,7 @@ The planner should avoid collecting PII. If telemetry or audit events need user 
 | Maintainer review | v4.1 prerelease | Shared handoff contract confirmed and advisory launch thresholds recorded | HVE-Core maintainer |
 | Requirements hardening | TBD | FRs and NFRs updated from maintainer feedback | Agent author |
 | Validation pass | TBD | Relevant tests and validation commands pass or unrelated failures are documented | Release manager |
-| Release readiness | TBD | Collections, generated outputs, documentation, and handoff samples are aligned | Maintainers |
+| Release readiness | TBD | Marketplace recipe, generated outputs, documentation, and handoff samples are aligned | Maintainers |
 
 ### Feature Flags
 
@@ -534,8 +534,7 @@ The planner should avoid collecting PII. If telemetry or audit events need user 
 | REF-008 | Schema | `scripts/linting/schemas/sssc-state.schema.json` | Persisted state schema for SSSC planning sessions | Used for state validation requirements |
 | REF-009 | Test | `scripts/tests/linting/Test-SsscStateSchema.Tests.ps1` | Pester tests for valid and invalid SSSC state fixtures | Used for validation requirements |
 | REF-010 | Test | `scripts/tests/linting/Test-SsscContextPreservation.Tests.ps1` | Pester tests protecting inline SSSC context and phase-gate drift | Used for maintainability requirements |
-| REF-011 | Collection | `collections/security.collection.yml` | Security collection packaging surface for SSSC artifacts and shared dependencies | Used for discoverability requirements |
-| REF-012 | Collection | `collections/hve-core-all.collection.yml` | Aggregate collection packaging surface for HVE-Core artifacts | Used for release alignment requirements |
+| REF-011 | Marketplace | `.github/plugin/marketplace.json` | Complete HVE Core recipe for SSSC artifacts and shared dependencies | Used for discoverability and release alignment requirements |
 | REF-013 | Instructions | `.github/instructions/docusaurus-edits.instructions.md` | Documentation authoring conventions for `docs/**` | Used for PRD editing constraints |
 | REF-014 | Instructions | `.github/instructions/hve-core/markdown.instructions.md` | Markdown authoring conventions | Used for PRD editing constraints |
 | REF-015 | Instructions | `.github/instructions/hve-core/writing-style.instructions.md` | HVE-Core writing style conventions | Used for PRD editing constraints |

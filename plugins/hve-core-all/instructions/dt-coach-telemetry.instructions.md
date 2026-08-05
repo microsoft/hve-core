@@ -1,1 +1,0 @@
-../../../.github/skills/design-thinking/dt-methods/references/dt-coach-telemetry.instructions.md

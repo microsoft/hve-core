@@ -3,7 +3,7 @@ title: TPM Guide
 description: HVE Core support for technical program managers driving requirements, backlog management, and delivery coordination
 sidebar_position: 5
 author: Microsoft
-ms.date: 2026-07-15
+ms.date: 2026-08-03
 ms.topic: how-to
 keywords:
   - TPM
@@ -15,12 +15,12 @@ estimated_reading_time: 10
 
 This guide is for you if you drive project planning, manage requirements, coordinate sprints, triage backlogs, or bridge business needs to technical delivery. TPMs have the widest tooling surface in HVE Core, with 32+ addressable assets spanning discovery, product definition, decomposition, sprint planning, and delivery.
 
-## Recommended Collections
+## Capability Groups
 
 > [!TIP]
-> Install the [HVE Core extension](https://marketplace.visualstudio.com/items?itemName=ise-hve-essentials.hve-core) from the VS Code Marketplace for the flagship RPI workflow and core artifacts with zero configuration.
+> Install the [HVE Core extension](https://marketplace.visualstudio.com/items?itemName=ise-hve-essentials.hve-core) from the VS Code Marketplace for the complete active component set with zero configuration.
 >
-> Your primary collections are `project-planning` (BRD/PRD builders, agile coaching, and work item management), `ado` (Azure DevOps integration), and `github` (issue discovery and backlog automation). For clone-based setups, see the [Installation Guide](../../getting-started/install.md).
+> For selective clone adoption, choose requirements, agile coaching, Azure DevOps, GitHub backlog, and delivery-planning components that match your program. Capability groups help you discover related components; they are not independently installable products. See the [Installation Guide](../../getting-started/install.md).
 
 ## What HVE Core Does for You
 

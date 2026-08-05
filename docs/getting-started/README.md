@@ -45,7 +45,7 @@ methods, or install the
 for the quickest path.
 
 Not sure which bundle of agents you need?
-Browse the available [Extension Collections](collections.md) to see curated sets of HVE capabilities.
+Browse the available [Marketplace Packages](packages.md) to compare curated HVE capabilities.
 
 ## Troubleshooting
 

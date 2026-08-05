@@ -3,7 +3,7 @@ title: 'Contributing Agents to HVE Core'
 description: 'Requirements and standards for contributing GitHub Copilot agent files to hve-core'
 sidebar_position: 5
 author: Microsoft
-ms.date: 2026-07-30
+ms.date: 2026-08-02
 ms.topic: how-to
 ---
 
@@ -123,18 +123,18 @@ Run `npm run lint:models` to validate model references against the catalog.
 
 ### Location
 
-Agent files are typically organized in a collection subdirectory by convention:
+Agent files are typically organized in a package subdirectory by convention:
 
 ```text
-.github/agents/{collection-id}/
+.github/agents/{package-id}/
 ├── your-agent-name.agent.md
 └── subagents/
     └── your-subagent-name.agent.md
 ```
 
 > [!NOTE]
-> Collections can reference artifacts from any subfolder. The `path:` field in collection YAML files
-> accepts any valid repo-relative path regardless of the artifact's parent directory.
+> Marketplace package recipes can reference artifacts from any canonical subfolder. Standard component paths
+> are declared in `.github/plugin/marketplace.json` and resolve to canonical source files.
 
 ### Naming Convention
 
@@ -317,67 +317,11 @@ Use generic dispatch prompts when a lifecycle stage needs isolated work and no
 stable specialized worker is required. Reserve an `agents:` allowlist for
 named dependencies that the agent must dispatch by name.
 
-## Collection Entry Requirements
+## Marketplace Recipe Registration
 
-All agents must have matching entries in one or more `collections/*.collection.yml` manifests. Collection entries control selection and maturity.
+Distributable agents must be declared under the `agents` field of the `hve-core` entry in `.github/plugin/marketplace.json`. Use the recipe-relative `agents/<subpath>/<name>.md` path and keep the canonical source under `.github/agents/`.
 
-### Adding Your Agent to a Collection
-
-After creating your agent file, add an `items[]` entry to each target collection:
-
-```yaml
-items:
-  # path can reference artifacts from any subfolder
-  - path: .github/agents/{collection-id}/my-new-agent.agent.md
-  kind: agent
-  maturity: stable
-```
-
-### Selecting Collections for Agents
-
-Choose collections based on who benefits most from your agent:
-
-| Agent Type             | Recommended Collections                   |
-|------------------------|-------------------------------------------|
-| Task workflow agents   | `hve-core-all`, `hve-core`                |
-| Architecture agents    | `hve-core-all`, `project-planning`        |
-| Documentation agents   | `hve-core-all`, `hve-core`                |
-| Data science agents    | `hve-core-all`, `data-science`            |
-| Design thinking agents | `hve-core-all`, `design-thinking`         |
-| ADO/work item agents   | `hve-core-all`, `ado`, `project-planning` |
-| Code review agents     | `hve-core-all`, `hve-core`                |
-
-### Declaring Agent Dependencies
-
-If your agent dispatches other agents at runtime via `runSubagent`, invokes prompts, or depends on skills, document those relationships in the agent content and validate packaging behavior in affected collections.
-
-For complete collection documentation, see [AI Artifacts Common Standards - Collection Manifests](ai-artifacts-common#collection-manifests-and-dependencies).
-
-### MCP Tool Dependencies
-
-When agents reference MCP tools in their `tools:` frontmatter or body content, document the dependencies clearly.
-
-#### Frontmatter Declaration
-
-```yaml
-tools: ['github/*', 'ado/*', 'context7/*', 'microsoft-docs/*']
-```
-
-#### Curated MCP Servers Referenced by HVE Core Agents
-
-| Server         | Tool Pattern       | Purpose                                   |
-|----------------|--------------------|-------------------------------------------|
-| github         | `github/*`         | GitHub repository and issue management    |
-| ado            | `ado/*`            | Azure DevOps work items, pipelines, repos |
-| context7       | `context7/*`       | Library and SDK documentation lookup      |
-| microsoft-docs | `microsoft-docs/*` | Microsoft Learn documentation             |
-
-#### Guidelines for MCP Tool References
-
-* Document MCP dependencies in agent body text when using `mcp_*` tool patterns
-* Agents should gracefully handle missing MCP servers (tools unavailable)
-* Reference the [MCP Server Configuration](../getting-started/mcp-configuration) guide when agents require MCP tools
-* Prefer built-in VS Code Copilot tools when equivalent functionality exists
+Agent handoffs are closed transitively over catalog-declared agents. Unresolved or ambiguous targets fail marketplace validation, so every handoff target must belong to the recipe. Add non-stable lifecycle disclosure through `x-hve.componentMaturity`, update `docs/plugins/hve-core.md`, then run `npm run lint:marketplace` and `npm run plugin:generate`.
 
 ## Agent Content Structure Standards
 
@@ -535,7 +479,7 @@ Before submitting your agent, verify:
 * [ ] Core directives with RFC 2119 keywords
 * [ ] Examples wrapped in XML-style blocks
 * [ ] Success criteria defined
-* [ ] Attribution footer present
+* [ ] Attribution footer absent
 
 ### Common Standards
 
@@ -598,7 +542,7 @@ All checks **MUST** pass before merge.
 
 ## Getting Help
 
-See [AI Artifacts Common Standards - Getting Help](ai-artifacts-common#getting-help) for support resources. For agent-specific assistance, review existing examples in `.github/agents/{collection-id}/` (the conventional location for agent files).
+See [AI Artifacts Common Standards - Getting Help](ai-artifacts-common#getting-help) for support resources. For agent-specific assistance, review existing examples in `.github/agents/{package-id}/` (the conventional location for agent files).
 
 ---
 

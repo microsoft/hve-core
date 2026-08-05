@@ -22,7 +22,6 @@ checkout:
     .github/instructions/hve-core/
     .github/instructions/shared/
     scripts/
-    collections/
     package.json
     justfile
 

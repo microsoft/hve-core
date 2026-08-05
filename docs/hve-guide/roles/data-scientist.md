@@ -3,7 +3,7 @@ title: Data Scientist Guide
 description: HVE Core support for data scientists building notebooks, dashboards, data specifications, and analytics workflows
 sidebar_position: 9
 author: Microsoft
-ms.date: 2026-07-15
+ms.date: 2026-08-03
 ms.topic: how-to
 keywords:
   - data science
@@ -15,12 +15,12 @@ estimated_reading_time: 10
 
 This guide is for you if you analyze data, build Jupyter notebooks, create dashboards, define data specifications, or develop analytics pipelines. Data scientists have focused tooling with 13 addressable assets spanning data exploration, visualization, and pipeline development.
 
-## Recommended Collections
+## Capability Groups
 
 > [!TIP]
-> Install the [HVE Core extension](https://marketplace.visualstudio.com/items?itemName=ise-hve-essentials.hve-core) from the VS Code Marketplace for the flagship RPI workflow and core artifacts with zero configuration.
+> Install the [HVE Core extension](https://marketplace.visualstudio.com/items?itemName=ise-hve-essentials.hve-core) from the VS Code Marketplace for the complete active component set with zero configuration.
 >
-> Your primary collections are `data-science` (notebook generation, dashboard creation, and data specification tools) and `hve-core` (research and planning workflows for larger analytics projects). For clone-based setups, see the [Installation Guide](../../getting-started/install.md).
+> For selective clone adoption, choose notebook generation, dashboard, data specification, Python environment, and research components that match your analytics workflow. Capability groups help you discover related components; they are not independently installable products. See the [Installation Guide](../../getting-started/install.md).
 
 ## What HVE Core Does for You
 
@@ -134,7 +134,7 @@ Python environment management follows the `uv` virtual environment instructions 
 ## Next Steps
 
 > [!TIP]
-> Explore the data science collection: [Data Science Collection](https://github.com/microsoft/hve-core/blob/main/collections/data-science.collection.md)
+> Browse the complete HVE Core inventory: [HVE Core](../../plugins/hve-core)
 > Set up your Python environment: [uv Projects](https://github.com/microsoft/hve-core/blob/main/.github/instructions/coding-standards/uv-projects.instructions.md)
 > See how analytics fits the project lifecycle: [AI-Assisted Project Lifecycle](../lifecycle/)
 

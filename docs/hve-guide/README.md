@@ -3,7 +3,7 @@ title: HVE Guide
 description: Role-specific guides and the AI-assisted project lifecycle for engineering teams using HVE Core
 sidebar_position: 1
 author: Microsoft
-ms.date: 2026-07-15
+ms.date: 2026-08-02
 ms.topic: overview
 keywords:
   - hve guide
@@ -61,7 +61,7 @@ flowchart LR
 
 ### Role Guides
 
-Nine role-specific guides covering recommended collections, stage walkthroughs, starter prompts, and collaboration patterns tailored to how you work.
+Nine role-specific guides covering recommended capabilities, stage walkthroughs, starter prompts, and collaboration patterns tailored to how you work.
 
 | Role                     | Primary Stages                              | Guide                                                         |
 |--------------------------|---------------------------------------------|---------------------------------------------------------------|
@@ -85,15 +85,15 @@ flowchart TD
     START{Where to Start?} -->|Understand the workflow| LC[Lifecycle Overview]
     START -->|Find tools for my phase| SN[Stage Navigator]
     START -->|Get my role guide| RF[Role Finder]
-    START -->|Install collections| CQ[Collection Quick Reference]
+    START -->|Find tools for my role| CQ[Role Capability Reference]
 ```
 
-| I want to...                            | Go Here                                            |
-|-----------------------------------------|----------------------------------------------------|
-| Understand the full project workflow    | [Lifecycle Overview](lifecycle/)                   |
-| Find tools for my current project phase | [Stage Navigator](lifecycle/#where-are-you)        |
-| Get my role-specific guide              | [Role Finder](roles/#find-your-role)               |
-| Install collections for my role         | [Collection Quick Reference](roles/#role-overview) |
+| I want to...                            | Go Here                                           |
+|-----------------------------------------|---------------------------------------------------|
+| Understand the full project workflow    | [Lifecycle Overview](lifecycle/)                  |
+| Find tools for my current project phase | [Stage Navigator](lifecycle/#where-are-you)       |
+| Get my role-specific guide              | [Role Finder](roles/#find-your-role)              |
+| Find HVE Core tools for my role         | [Role Capability Reference](roles/#role-overview) |
 
 <!-- markdownlint-disable MD036 -->
 *🤖 Crafted with precision by ✨Copilot following brilliant human instruction,

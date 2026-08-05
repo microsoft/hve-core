@@ -17,7 +17,7 @@ tags:
   - code-review
   - coding-standards
 author: Microsoft
-ms.date: 2026-07-15
+ms.date: 2026-08-02
 ms.topic: concept
 estimated_reading_time: 10
 ---
@@ -270,12 +270,12 @@ fi
 
 ## What You Need
 
-| Requirement         | Details                                                               |
-|---------------------|-----------------------------------------------------------------------|
-| VS Code + Copilot   | GitHub Copilot Chat with agent mode enabled                           |
-| Git branch          | A local branch with commits ahead of the base branch                  |
-| hve-core collection | The `coding-standards` or `hve-core-all` collection installed         |
-| pr-reference skill  | Included in the `coding-standards` collection; generates the XML diff |
+| Requirement        | Details                                               |
+|--------------------|-------------------------------------------------------|
+| VS Code + Copilot  | GitHub Copilot Chat with agent mode enabled           |
+| Git branch         | A local branch with commits ahead of the base branch  |
+| HVE Core           | The complete `hve-core` extension or plugin installed |
+| pr-reference skill | Included with HVE Core; generates the XML diff        |
 
 The agent works with any programming language. Standards and accessibility enforcement require skills that match the languages and surfaces in your diff. If no matching skills are found, the relevant perspective notes the gap and restricts its verdict.
 

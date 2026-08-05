@@ -22,7 +22,7 @@ This quickstart walks you through a first Accessibility Planner session: startin
 
 ## Prerequisites
 
-* The Accessibility collection installed (see [Collections](collections.md)).
+* A package containing the Accessibility Planner installed (see [Marketplace Packages](packages.md)).
 * A workspace with the product surfaces you intend to assess, or a PRD, BRD, RAI plan, or security plan to seed Phase 1.
 
 ## Step 1: Start the planner

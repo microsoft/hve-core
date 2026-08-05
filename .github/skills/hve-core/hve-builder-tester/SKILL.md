@@ -81,7 +81,7 @@ Select one responsibility-based profile and use its exact ordered availability-f
 
 | Reasoning profile | Ordered model list                                                             | Use for                                                                      |
 |-------------------|--------------------------------------------------------------------------------|------------------------------------------------------------------------------|
-| High              | GPT-5.6 Sol (copilot), Claude Opus 4.8 (copilot), GPT-5.5 (copilot)            | Deepest reasoning responsibilities and targets that declare the High profile |
+| High              | Claude Opus 5 (copilot), GPT-5.6 Sol (copilot), GPT-5.5 (copilot)              | Deepest reasoning responsibilities and targets that declare the High profile |
 | Medium            | GPT-5.6 Terra (copilot), Claude Sonnet 5 (copilot), MAI-Code-1-Flash (copilot) | Semantic design, review, and behavior requiring trade-off judgment           |
 | Low               | GPT-5.6 Luna (copilot), MAI-Code-1-Flash (copilot), Claude Haiku 4.5 (copilot) | Literal, bounded, mechanical behavior                                        |
 

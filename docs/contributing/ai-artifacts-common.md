@@ -3,7 +3,7 @@ title: 'AI Artifacts Common Standards'
 description: 'Common standards and quality gates for all AI artifact contributions to hve-core'
 sidebar_position: 2
 author: Microsoft
-ms.date: 2026-07-30
+ms.date: 2026-08-03
 ms.topic: reference
 ---
 
@@ -150,369 +150,82 @@ npm run lint:models:refresh
 4. Future-proofing: older models will be deprecated and removed from service
 5. Cost optimization: fast-tier models reduce consumption for tasks that do not require premium reasoning
 
-## Collections
+## Marketplace Packages
 
-Collection manifests in `collections/*.collection.yml` are the source of truth for artifact selection and distribution.
+`.github/plugin/marketplace.json` is the sole distribution authority. Its active entries are ordinary, self-contained package recipes. Standard `agents`, `commands`, `rules`, `skills`, and optional `hooks` fields declare recipe membership.
 
-### Collection Purpose
+An artifact may belong to one or more package recipes when its component maturity is aligned for each membership. `x-hve.displayName` supplies display metadata, `componentMaturity` records lifecycle disclosure and tombstones, and `documentation` points to `docs/plugins/<name>.md`. The starter profile belongs only to `hve-core-all`. Root-level repository-only artifacts are not declared.
 
-Collection manifests serve three primary functions:
-
-1. Selection \u2014 determine which artifacts are included in each collection via `items[]`
-2. Maturity filtering \u2014 control channel inclusion with `items[].maturity` (defaults to `stable`)
-3. Packaging inputs \u2014 provide canonical manifest data used by build and distribution flows
-
-### Collection Structure
-
-Each manifest contains top-level collection metadata and an `items` array:
-
-```yaml
-id: coding-standards
-name: Coding Standards
-description: Language-specific coding instructions
-tags:
-  - coding-standards
-  - bash
-  - python
-items:
-  - path: .github/instructions/coding-standards/python-script.instructions.md
-    kind: instruction
-    maturity: stable
-  - path: .github/skills/rpi/rpi-plan/SKILL.md
-    kind: skill
-    maturity: preview
-```
-
-### Collection Tags
-
-Each collection manifest declares a top-level `tags` array for categorization and discoverability. Tags exist **only at the collection level**, not on individual items.
-
-| Collection         | Tags                                                                                                                                       |
-|--------------------|--------------------------------------------------------------------------------------------------------------------------------------------|
-| `hve-core-all`     | `hve`, `complete`, `bundle`                                                                                                                |
-| `ado`              | `azure-devops`, `ado`, `work-items`, `builds`, `pull-requests`                                                                             |
-| `coding-standards` | `coding-standards`, `code-review`, `pull-request`, `quality`, `bash`, `bicep`, `csharp`, `powershell`, `python`, `rust`, `terraform`, `uv` |
-| `data-science`     | `data`, `jupyter`, `streamlit`, `dashboards`, `visualization`, `data-science`                                                              |
-| `design-thinking`  | `design-thinking`, `coaching`, `methodology`, `ux`                                                                                         |
-| `experimental`     | `experimental`, `media`, `utilities`                                                                                                       |
-| `github`           | `github`, `issues`, `backlog`, `triage`, `sprint`                                                                                          |
-| `installer`        | `installer`, `setup`, `onboarding`                                                                                                         |
-| `project-planning` | `documentation`, `architecture`, `adr`, `brd`, `prd`, `diagrams`, `planning`                                                               |
-| `hve-core`         | `workflow`, `rpi`, `planning`, `research`, `implementation`, `review`                                                                      |
-| `security`         | `security`, `incident-response`, `risk`, `planning`, `review`, `vulnerability`, `threat-modeling`                                          |
-
-When creating a new collection, choose tags that describe the domain, technologies, and workflows covered. Use lowercase kebab-case and prefer existing tags before introducing new ones.
-
-### Collection Item Format
-
-Each `items[]` entry follows this structure:
-
-```yaml
-- path: .github/agents/hve-core/rpi-agent.agent.md
-  kind: agent
-  maturity: stable
-```
-
-| Field      | Required | Description                                                                    |
-|------------|----------|--------------------------------------------------------------------------------|
-| `path`     | Yes      | Repository-relative path to the artifact source                                |
-| `kind`     | Yes      | Artifact type (`agent`, `prompt`, `instruction`, `skill`, or `hook`)           |
-| `maturity` | No       | Release readiness level; when omitted, effective maturity defaults to `stable` |
-
-### Adding Artifacts to a Collection
-
-When contributing a new artifact:
-
-1. Create the artifact file in the appropriate directory
-2. Add a matching `items[]` entry in one or more `collections/*.collection.yml` files
-3. Set `maturity` when the artifact should be `preview`, `experimental`, `deprecated`, or `removed`. Use `removed` to exclude an artifact from all generated plugins and extension distributions while leaving the source file in place; this is the preferred way to retire a single artifact when the file should remain in the repository (see [AI Artifacts Architecture - Removed Artifacts](../architecture/ai-artifacts.md#removed-artifacts))
-4. Update the collection's `tags` array if your artifact introduces a new technology or domain not yet represented
-5. Run `npm run lint:yaml` to validate manifest syntax and schema compliance
-6. Run `npm run plugin:validate` to validate collection manifests
-7. Run `npm run plugin:generate` to regenerate plugin directories
-8. Run `npm run docs:test` to verify the Docusaurus site reflects the updated collection counts
-
-### Repo-Specific Artifact Exclusion
-
-Artifacts placed at the root of `.github/agents/`, `.github/instructions/`, `.github/prompts/`, or `.github/skills/` (without a subdirectory) are repo-specific and MUST NOT be added to collection manifests. These files govern internal repository concerns (CI/CD workflows, repo-specific conventions) that do not apply outside this repository.
-
-### Deprecated Artifact Placement
-
-Artifacts that have been superseded or are scheduled for removal MUST be moved to `.github/deprecated/{type}/` (e.g., `.github/deprecated/agents/`, `.github/deprecated/prompts/`). The build system automatically excludes this subtree from collection manifests, plugin generation, and extension packaging.
-
-#### When to Move an Artifact to Deprecated
-
-* A newer artifact fully replaces the existing one
-* The artifact is no longer maintained or tested
-* The artifact targets a retired platform or workflow
-
-#### How to Deprecate an Artifact
-
-1. Move the file with `git mv` to preserve history: `git mv .github/agents/{collection}/old.agent.md .github/deprecated/agents/old.agent.md`
-2. Add a note in the deprecated file's frontmatter or body identifying its replacement
-3. Remove the artifact's entry from all `collections/*.collection.yml` files
-4. Run `npm run plugin:generate` to regenerate plugin outputs
-5. Update any documentation that references the old artifact path
-
-#### Exclusion Scope
-
-Artifacts at the root of `.github/agents/`, `.github/instructions/`, `.github/prompts/`, or `.github/skills/` are excluded from:
-
-* Collection manifests (`collections/*.collection.yml` items)
-* Plugin generation (`plugins/` directory contents)
-* Extension packaging and distribution
-* Collection builds and bundles
-* Artifact selection for published releases
-
-#### Validation Enforcement
-
-The plugin generation and validation tooling actively enforces this exclusion:
-
-* Collection validation fails if root-level repo-specific paths appear in `items[]`
-* Plugin generation skips root-level artifacts
-* Extension packaging filters out these files during build
-
-#### Placement Guidelines
-
-| Scope                       | Location                                                | Included in Plugins |
-|-----------------------------|---------------------------------------------------------|---------------------|
-| **Repository-specific**     | `.github/instructions/` (root, no subdirectory)         | ❌ No                |
-| **Collection-scoped**       | `.github/instructions/{collection-id}/` (by convention) | ✅ Yes               |
-| **Language/tech-specific**  | `.github/instructions/coding-standards/{language}/`     | ✅ Yes               |
-| **Shared cross-collection** | `.github/instructions/shared/`                          | ✅ Yes               |
-
-If your instructions apply only to this repository and are not intended for distribution to consumers, place them at the root of `.github/instructions/`. Otherwise, by convention, place them in `.github/instructions/{collection-id}/` or a language-specific subdirectory under `coding-standards/` (e.g., `coding-standards/csharp/`, `coding-standards/bash/`). Shared cross-collection artifacts go in `.github/instructions/shared/`.
-
-## Collection Taxonomy
-
-Collections represent role-targeted artifact packages for HVE Core artifacts. The collection system enables role-specific artifact distribution without fragmenting the codebase.
-
-### Defined Collections
-
-| Collection            | Identifier         | Description                                                                                                                        |
-|-----------------------|--------------------|------------------------------------------------------------------------------------------------------------------------------------|
-| **All**               | `hve-core-all`     | Full bundle of all stable HVE Core agents, prompts, instructions, and skills                                                       |
-| **Azure DevOps**      | `ado`              | Azure DevOps work item management, build monitoring, and pull request creation                                                     |
-| **Coding Standards**  | `coding-standards` | Language-specific coding instructions for bash, Bicep, C#, Python, and Terraform                                                   |
-| **Data Science**      | `data-science`     | Data specification generation, Jupyter notebooks, and Streamlit dashboards                                                         |
-| **Design Thinking**   | `design-thinking`  | Design Thinking coaching identity, quality constraints, and methodology skills for AI-enhanced design thinking across nine methods |
-| **Experimental**      | `experimental`     | Experimental skills and utilities in early development                                                                             |
-| **GitHub Backlog**    | `github`           | GitHub issue discovery, triage, sprint planning, and backlog execution                                                             |
-| **Installer**         | `installer`        | HVE Core installation skill (installer) and environment setup                                                                      |
-| **Project Planning**  | `project-planning` | PRDs, BRDs, ADRs, architecture diagrams, and documentation operations                                                              |
-| **HVE Core Workflow** | `hve-core`         | Research, Plan, Implement, Review workflow agents and prompts                                                                      |
-| **Security**          | `security`         | Security review, planning, incident response, and risk assessment                                                                  |
-
-### Collection Assignment Guidelines
-
-When assigning collections to artifacts:
-
-* Include `hve-core-all` plus any role-specific collections that particularly benefit for universal artifacts
-* Include only the relevant collections for role-specific artifacts (omit `hve-core-all` for highly specialized artifacts)
-* Assign cross-cutting tools like RPI Agent and the `rpi-*` phase skills to multiple relevant collections
-
-#### Example Collection Assignments
-
-Adding an artifact to multiple collections means adding its `items[]` entry in each relevant `collections/*.collection.yml`:
-
-```yaml
-# In collections/hve-core-all.collection.yml - Universal
-- path: .github/instructions/hve-core/markdown.instructions.md
-  kind: instruction
-
-# In collections/coding-standards.collection.yml - Coding standards
-- path: .github/instructions/hve-core/markdown.instructions.md
-  kind: instruction
-
-# In collections/hve-core.collection.yml - Core workflow
-- path: .github/agents/hve-core/rpi-agent.agent.md
-  kind: agent
-```
-
-### Selecting Collections for New Artifacts
-
-Answer these questions when determining collection assignments:
-
-1. **Who is the primary user?** Identify the main role that benefits from this artifact
-2. **Who else benefits?** Consider secondary roles that may find value
-3. **Is it foundational?** Core workflow artifacts should include multiple collections
-4. **Is it specialized?** Domain-specific artifacts may target fewer collections
-
-When in doubt, include `hve-core-all` to ensure the artifact appears in the full collection while still enabling targeted distribution.
+When an agent handoff targets another catalog-declared agent, shared marketplace closure adds the dependency to the resolved projection. Unresolved or ambiguous targets fail. Run `npm run lint:marketplace`, `npm run plugin:generate`, and both extension preparation commands after recipe changes.
 
 ## Extension Packaging
 
-Collections are consumed during VS Code Extension packaging to determine which artifacts are included in stable and pre-release extension channels.
+Plugin and VSIX packaging consume one handoff-resolved projection per catalog entry. `Prepare-Extension.ps1` maps canonical sources to VS Code contributions and derives deterministic extension identities. `Package-Extension.ps1` stages only git-tracked files from those contribution roots plus explicit shared resources. Hooks remain plugin-only because VS Code has no declarative hook contribution point.
 
-### Agent Handoff Dependencies
-
-During VS Code Extension packaging, agent handoff dependencies are automatically resolved to ensure UI navigation buttons work correctly.
-
-#### How Handoff Resolution Works
-
-The extension packaging process (`scripts/extension/Prepare-Extension.ps1`) includes the `Resolve-HandoffDependencies` function:
-
-1. Seed agents: Starts with agents listed in the collection manifest
-2. Parse frontmatter: Reads the `handoffs` field from each agent's frontmatter
-3. BFS traversal: Performs breadth-first search to find all reachable agents through handoff chains
-4. Include all: Adds all discovered agents to the extension package
-
-#### Collection Manifests and Dependencies
-
-**Collection manifests do NOT declare dependencies.** They only specify:
-
-* `path`: Repository-relative path to the artifact
-* `kind`: Artifact type (agent, prompt, instruction, skill, hook)
-* `maturity`: Release readiness level (optional, defaults to stable)
-
-Dependencies are resolved through agent frontmatter `handoffs` declarations during extension packaging, not through collection manifest fields.
-
-#### Creating Artifacts with Dependencies
-
-When creating artifacts that reference other artifacts:
-
-| Guideline              | Description                                                                     |
-|------------------------|---------------------------------------------------------------------------------|
-| Agent handoffs         | Use the `handoffs` frontmatter field in agents to declare UI navigation buttons |
-| Document relationships | Clearly describe dependencies in artifact documentation                         |
-| Test in isolation      | Verify your artifact works when only its collection is installed                |
-| Keep coupling minimal  | Avoid unnecessary dependencies between artifacts                                |
-
-For agent handoff configuration details, see [Contributing Custom Agents - Frontmatter Requirements](custom-agents.md#frontmatter-requirements).
-
-### Maturity Field Requirements
-
-Maturity is defined in `collections/*.collection.yml` under `items[].maturity` and MUST NOT appear in artifact frontmatter.
-
-#### Purpose
-
-The maturity field controls which extension channel includes the artifact:
-
-| Channel             | Description                                                    |
-|---------------------|----------------------------------------------------------------|
-| Stable channel      | Only artifacts with `maturity: stable`                         |
-| Pre-release channel | Artifacts with `stable`, `preview`, or `experimental` maturity |
-
-#### Valid Values
-
-| Value          | Description                                 | Stable Channel | Pre-release Channel |
-|----------------|---------------------------------------------|----------------|---------------------|
-| `stable`       | Production-ready, fully tested              | ✅ Included     | ✅ Included          |
-| `preview`      | Feature-complete, may have rough edges      | ❌ Excluded     | ✅ Included          |
-| `experimental` | Early development, may change significantly | ❌ Excluded     | ✅ Included          |
-| `deprecated`   | Scheduled for removal                       | ❌ Excluded     | ❌ Excluded          |
-
-When `items[].maturity` is omitted, the effective maturity defaults to `stable`.
-
-#### Default for New Contributions
-
-New collection items **SHOULD** use `maturity: stable` unless:
-
-* The artifact is a proof-of-concept or experimental feature
-* The artifact requires additional testing or feedback before wide release
-* The contributor explicitly intends to target early adopters
-
-#### Setting Maturity
-
-Add or update the maturity value on each collection item in `collections/*.collection.yml`:
-
-```yaml
-items:
-  # path can reference artifacts from any subfolder
-  - path: .github/agents/{collection-id}/example.agent.md
-    kind: agent
-    maturity: stable
-```
-
-For detailed channel and lifecycle information, see [Release Process - Extension Channels](release-process.md#extension-channels-and-maturity).
-
-Before submitting: Verify your artifact targets the current latest model versions from Anthropic or OpenAI. Contributions targeting older or alternative models will be automatically rejected.
+Lifecycle maturity belongs in marketplace metadata, not artifact frontmatter. Stable and PreRelease both include active `stable`, `preview`, and `experimental` components. `deprecated` and `removed` values are excluded from both channels. Labels are disclosure and governance metadata, not channel filters or Responsible AI assessment maturity ratings.
 
 ## Plugin Generation
 
-The `plugins/` directory contains **auto-generated plugin bundles** created from collection manifests for use with GitHub Copilot CLI. These plugin directories are outputs of the build process and **MUST NOT be edited directly**.
+The `plugins/` directory contains **auto-generated plugin bundles** created from `.github/plugin/marketplace.json` for Copilot clients. This ignored directory is build output and **MUST NOT be edited or committed**.
 
 ### Generation Workflow
 
-When you add an artifact to a collection manifest:
+When you add or change an artifact:
 
-1. Author artifact: Create your agent, prompt, instruction, or skill in `.github/`
-2. Update collection: Add an `items[]` entry to one or more `collections/*.collection.yml` files
-3. Validate collections: Run `npm run plugin:validate` to check manifest correctness
-4. Generate plugins: Run `npm run plugin:generate` to regenerate all plugin directories
-5. Commit both: Commit the source artifact, collection manifest updates, AND generated plugin outputs together
+1. Author the artifact under `.github/`.
+2. Add its recipe-relative path to every applicable catalog entry.
+3. Align component maturity for each declared membership.
+4. Update the durable package document at `docs/plugins/<name>.md`.
+5. Run `npm run lint:marketplace`.
+6. Run `npm run plugin:generate` and both extension preparation commands.
+
+Generators derive outputs from active catalog entries and clean stale plugin roots, extension manifests, and generated READMEs. Commit canonical sources and durable package documentation only; leave `plugins/` ignored and unstaged.
 
 ### Plugin Directory Structure
 
 Each generated plugin directory contains:
 
-| Content              | Description                                                                      |
-|----------------------|----------------------------------------------------------------------------------|
-| Symlinked artifacts  | Direct symlinks to source files in `.github/` (preserves single source of truth) |
-| Generated README     | Auto-generated documentation listing all included artifacts                      |
-| Plugin manifest      | `plugin.json` file for GitHub Copilot CLI plugin system                          |
-| Marketplace metadata | Aggregated data for extension distribution                                       |
+| Content                | Description                                                        |
+|------------------------|--------------------------------------------------------------------|
+| Materialized artifacts | Regular-file copies of declared, Git-tracked `.github/` sources    |
+| Generated README       | Auto-generated documentation listing all included artifacts        |
+| Root plugin manifest   | Generated `plugin.json` for Copilot clients                        |
+| Shared resources       | Declared templates and scripts required by packaged customizations |
 
 ### Critical Rules for Plugin Files
 
 > [!WARNING]
 > Files under `plugins/` are generated outputs and MUST NOT be edited directly.
 
-| Rule                     | Description                                                                            |
-|--------------------------|----------------------------------------------------------------------------------------|
-| Regenerate after changes | Always run `npm run plugin:generate` after modifying collection manifests or artifacts |
-| Symlinked files          | Markdown artifacts are symlinked, so edits to plugin files modify source artifacts     |
-| Generated files          | README and JSON files are generated fresh on each run                                  |
-| Durable edits            | Direct edits to plugin files will be overwritten or cause conflicts                    |
-| Source of truth          | Always edit the source artifact in `.github/`, not the plugin copy                     |
+| Rule                     | Description                                                                                          |
+|--------------------------|------------------------------------------------------------------------------------------------------|
+| Regenerate after changes | Run `npm run plugin:generate` after modifying marketplace recipes or packaged artifacts              |
+| Generated files          | Materialized artifacts, README files, and manifests are generated fresh on each run                  |
+| Durable edits            | Direct edits to plugin files are discarded during regeneration                                       |
+| Source of truth          | Edit `.github/` sources, `.github/plugin/marketplace.json`, or the matching `docs/plugins/<name>.md` |
+| Git hygiene              | Never add or commit a path under the root `plugins/` directory                                       |
 
 ### When to Regenerate Plugins
 
 Run `npm run plugin:generate` whenever you:
 
-* Add a new artifact to a collection manifest
-* Remove an artifact from a collection manifest
+* Add a new artifact to any package recipe
+* Remove an artifact from any package recipe
 * Modify artifact frontmatter (description, dependencies, handoffs)
 * Update artifact file content that affects generated README documentation
-* Change collection manifest metadata (tags, description, name)
-* Update the `hve-core-all` collection (auto-updated during generation)
+* Change marketplace identity metadata or component lifecycle maturity
+* Update the matching `docs/plugins/<name>.md` document for any package
 
-### Validating Collection Manifests
+### Validating the Marketplace Recipe
 
-Before generating plugins, validate collection YAML files to catch errors early:
-
-```bash
-npm run plugin:validate
-```
-
-This command checks:
-
-| Check                 | Description                                                       |
-|-----------------------|-------------------------------------------------------------------|
-| YAML syntax           | Valid YAML structure and formatting                               |
-| Required fields       | Presence of `id`, `name`, `description`, `items`                  |
-| Path references       | All artifact paths exist and are accessible                       |
-| Kind values           | Valid artifact kinds (agent, prompt, instruction, skill, hook)    |
-| Maturity values       | Valid maturity levels (stable, preview, experimental, deprecated) |
-| Duplicate paths       | No duplicate artifact entries within a collection                 |
-| Root-level exclusions | No repo-specific artifacts from `.github/{type}/` root            |
-
-Always validate before generating plugins:
-
-```bash
-# Recommended workflow
-npm run plugin:validate  # Validate collections first
-npm run plugin:generate  # Then regenerate plugins
-```
-
-Validation errors will prevent successful plugin generation, so fixing validation issues first saves time and prevents incomplete plugin outputs.
+Run `npm run plugin:validate` before generation. It validates immutable sources, standard membership, the display name, source containment, the documentation pointer, lifecycle maturity and tombstones, complete active coverage, the starter profile, root manifest mirrors, and handoff closure.
 
 ### Plugin Generation Reference
 
 For detailed documentation on the plugin generation system, including:
 
 * Generation script implementation details
-* Collection validation rules
+* Marketplace package validation rules
 * Plugin directory structure specifications
 * Troubleshooting generation errors
 
@@ -657,7 +370,7 @@ See [official documentation](https://example.com) for details.
 
 * Starts with frontmatter (YAML between `---` delimiters)
 * Followed by markdown content
-* Omits attribution suffix from the `description` field (added automatically at distribution)
+* Omits any attribution suffix from the `description` field
 * Single newline at EOF
 
 ## RFC 2119 Directive Language
@@ -892,11 +605,11 @@ When contributing AI artifacts:
 
 ### Review Examples
 
-| Artifact Type | Location                                                                     |
-|---------------|------------------------------------------------------------------------------|
-| Agents        | Files in `.github/agents/{collection-id}/` (the conventional location)       |
-| Prompts       | Files in `.github/prompts/{collection-id}/` (the conventional location)      |
-| Instructions  | Files in `.github/instructions/{collection-id}/` (the conventional location) |
+| Artifact Type | Location                                                                  |
+|---------------|---------------------------------------------------------------------------|
+| Agents        | Files in `.github/agents/{package-id}/` (the conventional location)       |
+| Prompts       | Files in `.github/prompts/{package-id}/` (the conventional location)      |
+| Instructions  | Files in `.github/instructions/{package-id}/` (the conventional location) |
 
 ### Check Repository Standards
 

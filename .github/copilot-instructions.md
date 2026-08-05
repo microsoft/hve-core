@@ -53,18 +53,18 @@ The project is organized into these main areas:
 
 * Documentation (`docs/`) - Getting started guides, templates, RPI workflow documentation, and contribution guidelines.
 * Scripts (`scripts/`) - Automation for linting, security validation, extension packaging, and development tools.
-* Skills (`.github/skills/{collection-id}/`) - Self-contained skill packages, by convention organized by collection.
-* Hooks (`.github/hooks/{collection-id}/`) - Collection-scoped Copilot hook manifests (JSON) that wire lifecycle event commands.
+* Skills (`.github/skills/{package-id}/`) - Self-contained skill packages, by convention organized by package.
+* Hooks (`.github/hooks/{package-id}/`) - Package-scoped Copilot hook manifests (JSON) that wire lifecycle event commands.
 * Extension (`extension/`) - VS Code extension source and packaging.
-* GitHub Configuration (`.github/`) - Workflows, instructions, prompts, agents, composite actions, and issue templates, typically organized into `{collection-id}` subdirectories.
-* Collections (`collections/`) - YAML and markdown manifests defining bundled sets of agents, prompts, instructions, and skills.
+* GitHub Configuration (`.github/`) - Workflows, instructions, prompts, agents, composite actions, and issue templates, typically organized into `{package-id}` subdirectories.
+* Plugin catalog (`.github/plugin/marketplace.json`) - Sole package identity, metadata, membership, maturity, and aggregate recipe.
 * Logs (`logs/`) - Output from validation and analysis scripts.
 
 ### Scripts Organization
 
 Scripts are organized by function:
 
-* Collections (`scripts/collections/`) - Collection validation and shared helper modules.
+* Shared artifact libraries (`scripts/lib/Modules/`) - Artifact and marketplace projection helpers.
 * Extension (`scripts/extension/`) - Extension packaging and preparation.
 * Linting (`scripts/linting/`) - Markdown validation, link checking, frontmatter validation, model reference validation, and PowerShell analysis.
 * Devcontainer (`scripts/devcontainer/`) - Lockfile integrity validation and infrastructure change log generation.
@@ -74,19 +74,19 @@ Scripts are organized by function:
 
 ### Skills Organization
 
-By convention, skills are self-contained packages organized under `.github/skills/{collection-id}/{skill-name}/`. Each skill folder contains a `SKILL.md` file with domain-specific instructions, and may include other markdown files that are referenced by `SKILL.md` along with `scripts/`, `references/`, `assets/`, or other subdirectories.
+By convention, skills are self-contained packages organized under `.github/skills/{package-id}/{skill-name}/`. Each skill folder contains a `SKILL.md` file with domain-specific instructions, and may include other markdown files that are referenced by `SKILL.md` along with `scripts/`, `references/`, `assets/`, or other subdirectories.
 
 ### Cross-Kind Artifact References
 
-Generic authoring guidance uses portable paths such as `.github/skills/<skill>/SKILL.md` and does not assume a collection directory. HVE-Core packaging may add a `{collection-id}` layer as an optional host packaging convention.
+Generic authoring guidance uses portable paths such as `.github/skills/<skill>/SKILL.md` and does not assume a package directory. HVE-Core packaging may add a `{package-id}` layer as an optional host packaging convention.
 
 When a prompt, agent, or instruction uses `#file:`:
 
 * Resolve the path relative to the containing file, not the workspace root.
 * Preserve the original artifact suffix, such as `.instructions.md`, `.agent.md`, or `.prompt.md`.
 * Use relative paths; do not use absolute paths or a `.github/` prefix. Plugin and extension packaging strip `.github/` while preserving relative depth between artifact-kind directories.
-* For example, from `.github/agents/{collection-id}/`, a same-collection instruction target uses `#file:../../instructions/{collection-id}/name.instructions.md`.
-* Keep a cross-kind target in the same collection manifest as the referencing artifact.
+* For example, from `.github/agents/{package-id}/`, a same-package instruction target uses `#file:../../instructions/{package-id}/name.instructions.md`.
+* Keep a cross-kind target in the same marketplace package recipe as the referencing artifact.
 
 ### Documentation Structure
 
@@ -135,18 +135,16 @@ RPI and HVE Builder tracking records follow `.github/instructions/hve-core/copil
 
 ### Agents and Subagents
 
-By convention, custom agents are organized under `.github/agents/{collection-id}/`. Each collection typically places its agents in a dedicated subdirectory (e.g., `.github/agents/hve-core/`, `.github/agents/ado/`). Subagents are typically organized under `.github/agents/{collection-id}/subagents/`.
+By convention, custom agents are organized under `.github/agents/{package-id}/`. Each package typically places its agents in a dedicated subdirectory (e.g., `.github/agents/hve-core/`, `.github/agents/ado/`). Subagents are typically organized under `.github/agents/{package-id}/subagents/`.
 Parent agents reference subagents using glob paths like `.github/agents/**/code-review-functional.agent.md` so resolution works regardless of nesting depth.
 
-Collection manifests in `collections/` define bundles of agents, prompts, instructions, and skills:
+The marketplace catalog owns plugin and VSIX package composition:
 
-* Each collection has a YAML file (`*.collection.yml`) listing items with `path` and `kind` fields, and a markdown file (`*.collection.md`) describing the collection.
-* Collections must include all subagent dependencies used by their referenced custom agents. When a parent agent declares subagents in its `agents:` frontmatter, those subagent files must appear in the collection YAML.
-* When adding, updating, or removing prompt instructions, custom agents, subagents, or skills, update all affected `collections/*.collection.yml` and `collections/*.collection.md` files.
-* After any change to collection YAML or markdown files, run `npm run plugin:generate` to regenerate plugin outputs under `plugins/`. Do not edit `plugins/` files directly.
-* After any change to collection YAML or markdown files, also run `npm run extension:prepare` and `npm run extension:prepare:prerelease` to regenerate the per-collection extension READMEs and `package.*.json` manifests under `extension/`. Both regenerators are idempotent and exit 0 when inputs are unchanged.
+* `.github/plugin/marketplace.json` owns package identity, standard component membership, display names, maturity, documentation pointers, and aggregate status. Package prose lives under `docs/plugins/`.
+* After changing marketplace recipes or canonical artifacts, run `npm run plugin:generate` and `npm run plugin:evidence` for validation. Do not edit or stage generated `plugins/` files.
+* Run `npm run extension:prepare` and `npm run extension:prepare:prerelease` to regenerate package READMEs and `package.*.json` manifests under `extension/`.
 * After adding, changing, moving, or removing a documentable agent, prompt, instruction, or skill, run `npm run docs:generate` and commit the matching page under `docs/reference/`. The generator owns page frontmatter and the prefix through `<!-- END AUTO-GENERATED: overview -->`; edit only the preserved `When to use it`, applicable `How to use it`, and `Example usage` tail. Do not edit generated regions or catalog indexes by hand.
-* Run `npm run plugin:validate` to confirm collection metadata is correct.
+* Run `npm run plugin:validate` to confirm marketplace metadata and package closure are correct.
 <!-- </project-structure> -->
 
 <!-- <script-operations> -->
@@ -155,8 +153,8 @@ Collection manifests in `collections/` define bundles of agents, prompts, instru
 * Scripts follow instructions provided by the codebase for convention and standards.
 * Scripts used by the codebase have an `npm run` script for ease of use.
 * Files under the root `plugins/` directory are generated outputs and are not edited directly.
-* Regenerate plugin outputs using `npm run plugin:generate`; this also runs `lint:md:fix` and `format:tables` as post-processing. Markdown files under `plugins/` can be symlinked or generated, so direct edits can cause conflicts and non-durable changes.
-* Artifacts at the root of `.github/agents/`, `.github/instructions/`, `.github/prompts/`, or `.github/skills/` (without a subdirectory) are repo-specific and excluded from collection manifests, plugin generation, and extension packaging. Validation enforces this rule.
+* Regenerate plugin outputs using `npm run plugin:generate`; postprocessing is limited to generator-authored package READMEs and package documentation. Treat all files under `plugins/` as generated validation and distribution output, and do not edit or stage them.
+* Artifacts at the root of `.github/agents/`, `.github/instructions/`, `.github/prompts/`, or `.github/skills/` (without a subdirectory) are repo-specific and excluded from marketplace membership, plugin generation, and extension packaging. Validation enforces this rule.
 
 PowerShell scripts follow PSScriptAnalyzer rules from `scripts/linting/PSScriptAnalyzer.psd1` and include proper comment-based help. Validation runs via `npm run lint:ps` with results output to `logs/`.
 
@@ -174,7 +172,6 @@ Commit message scopes map to repository directories:
 * `(extension)` = `extension/`
 * `(scripts)` = `scripts/`
 * `(docs)` = `docs/`
-* `(collections)` = `collections/`
 * `(adrs)` = Architecture Decision Records
 * `(settings)` = Configuration files (`.vscode/`, linter configs)
 * `(build)` = Build system and dependencies

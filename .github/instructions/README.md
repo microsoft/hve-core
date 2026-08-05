@@ -305,7 +305,7 @@ For manual creation, see [Contributing Instructions](../../docs/contributing/ins
 │   ├── standards-mapping.instructions.md
 │   ├── vex-generation.instructions.md
 │   └── vex-standards.instructions.md
-├── shared/                           # Cross-collection
+├── shared/                           # Shared across packages
 │   ├── coaching-patterns.instructions.md
 │   ├── content-policy-citation.instructions.md
 │   ├── disclaimer-language.instructions.md

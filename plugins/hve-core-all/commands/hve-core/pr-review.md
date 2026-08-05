@@ -1,1 +1,0 @@
-../../../../.github/prompts/hve-core/pr-review.prompt.md

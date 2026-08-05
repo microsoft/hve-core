@@ -39,4 +39,4 @@ The `ci:*` prefix communicates ownership and default agent behavior. It does not
 * Record CI-owned checks that did not run as `Pending CI`, `Skipped`, `Deferred`, or `Unavailable`, as applicable. Do not report them as passed.
 * Use the canonical validation guide at `docs/contributing/validation.md` for operator commands, prerequisites, outputs, and local reproduction guidance.
 
-This root-level instruction is repository-specific. Do not add it to collection manifests or generated plugin and extension outputs.
+This root-level instruction is repository-specific. Do not add it to marketplace package membership or generated plugin and extension outputs.

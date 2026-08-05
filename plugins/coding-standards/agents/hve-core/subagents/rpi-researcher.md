@@ -1,1 +1,0 @@
-../../../../../.github/agents/hve-core/subagents/rpi-researcher.agent.md

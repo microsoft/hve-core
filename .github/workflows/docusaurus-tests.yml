@@ -48,14 +48,11 @@ jobs:
             # only docusaurus/** and announcements/**), so watching docs/ matches the
             # build's real input set. This catches broken links in markdown content
             # pages on the PR instead of only on the post-merge deploy build.
-            # The collections/ tree is included because docusaurus.config.js reads
-            # collections/*.collection.yml at build time (collectionCounts) and the
-            # tests consume it via COLLECTIONS_DIR, so changes there alter site and
-            # test output. The workflow files themselves are included so test/config
-            # changes still trigger a run.
+            # Marketplace package metadata is under .github/, which is already
+            # checked by the repository validation lanes. The workflow files are
+            # included so test/config changes still trigger a run.
             $changed = @(git diff --name-only --diff-filter=ACMR "origin/$baseRef...HEAD" -- `
               docs `
-              collections `
               .github/workflows/docusaurus-tests.yml `
               .github/workflows/deploy-docs.yml)
 
@@ -109,8 +106,6 @@ jobs:
       - name: Run tests
         working-directory: docs/docusaurus
         run: npm run test:coverage
-        env:
-          COLLECTIONS_DIR: ${{ github.workspace }}/collections
         continue-on-error: ${{ inputs.soft-fail }}
 
       - name: Upload to Codecov

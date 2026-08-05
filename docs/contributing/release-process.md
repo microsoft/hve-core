@@ -1,48 +1,53 @@
 ---
 title: Release Process
-description: Trunk-based release workflow using release-please automation and automated VS Code extension publishing
+description: Release HVE Core through direct main PreRelease builds and reviewed release/stable promotions
 sidebar_position: 9
-ms.date: 2026-04-17
+ms.date: 2026-08-03
 ms.topic: how-to
 author: WilliamBerryiii
 ---
 
 ## Overview
 
-This project uses trunk-based development with automated release management. All changes go directly to `main` via pull requests, and [release-please](https://github.com/googleapis/release-please) handles version bumping, changelog generation, and GitHub releases automatically.
+This project uses trunk-based development with explicit channel ownership. Changes reach `main` through pull requests, and PreRelease packages an approved `main` commit directly. `release-stable.yml` opens the reviewed `main` to `release/stable` promotion after validation. After that promotion merges, `release-stable-publish.yml` runs release-please on `release/stable`. Release-please owns the managed Stable release PR and draft Stable release.
 
 ## How Releases Work
 
 ```mermaid
 flowchart LR
     A[Feature PR] -->|merge| B[main branch]
-    B --> C[release-please updates Release PR]
-    C -->|you merge| D[Draft release + tag created]
-    D --> E[CI attaches assets and attestations]
-    E --> F[publish-release promotes to published]
-    F -->|automatically| G[Extension published to marketplace]
+    B --> C[Validate main]
+    C --> D[Review main to release/stable promotion]
+    D -->|merge| E[release-please updates Stable Release PR]
+    E --> F[Review Stable Release PR]
+    F -->|merge| G[Draft release and verified artifacts]
+    G --> H[Immutable plugin snapshot]
+    H --> I[Publish Stable release]
+    I --> J[Review release/stable to main metadata sync]
 ```
 
 When you merge a PR to `main`:
 
-1. **release-please analyzes commits** using conventional commit messages
-2. **Updates the Release PR** with version bumps and changelog entries
-3. **You decide** when to merge the Release PR
-4. **Merging creates** a draft GitHub Release with the changelog
-5. **CI attaches assets**, then the `publish-release` job promotes the draft to published
-6. **Extension publishing** triggers automatically when the release is published
+1. `release-stable.yml` validates the source and checks that the prior Stable metadata sync is complete.
+2. The workflow opens or updates a non-auto-merged promotion PR from `main` to `release/stable`.
+3. A reviewer merges the promotion after confirming the release boundary.
+4. `release-stable-publish.yml` runs release-please against `release/stable`.
+5. Release-please opens or updates its managed Stable release PR with version and changelog changes; the workflow postprocessor synchronizes every committed version field and the `plugins-v<version>` locator.
+6. A reviewer merges the managed Stable release PR when the release is ready.
+7. Release-please creates the draft Stable release, then the workflow builds, attests, and uploads artifacts from the released commit.
+8. The workflow publishes the immutable `plugins-v<version>` snapshot, verifies provenance, and finalizes the draft release.
+9. The workflow opens a non-auto-merged `release/stable` to `main` metadata synchronization PR for review.
 
 ## The Release PR
 
-The Release PR is not a branch cut or deployment. It is a staging mechanism containing only version metadata changes:
+The release-please managed PR is not a deployment. It prepares version metadata and changelog changes on `release/stable`:
 
 * Updated `package.json` version
 * Updated `extension/templates/package.template.json` version
-* Updated `.github/plugin/marketplace.json` (version and plugins[*].version)
-* Updated `plugins/*/.github/plugin/plugin.json` (glob across all plugin directories)
+* Updated `.github/plugin/marketplace.json` version and immutable `plugins-v<version>` locator
 * Updated `CHANGELOG.md`
 
-Your actual code changes are already on `main` from your feature PRs. The Release PR accumulates version and changelog updates until you are ready to release.
+The promoted code is already on `release/stable`. The managed PR accumulates version and changelog updates until you are ready to publish that exact Stable release. After publication, the reviewed metadata sync returns those changes to `main` before another promotion can open.
 
 ### Version Calculation
 
@@ -56,7 +61,7 @@ Release-please determines the version bump from commit prefixes:
 | `docs:`, `chore:`, `refactor:` | No bump      | Grouped in changelog |
 
 > [!NOTE]
-> Stable releases must have an even minor version number (e.g., `1.0`, `1.2`). Odd minor versions (e.g., `1.1`, `1.3`) are reserved for pre-release or unstable versions. This convention is enforced by CI (`release-stable.yml`).
+> Stable releases must have an even minor version number (e.g., `1.0`, `1.2`). Odd minor versions (e.g., `1.1`, `1.3`) are reserved for PreRelease. The promotion and publication workflows enforce this convention.
 
 ## For Contributors
 
@@ -80,20 +85,22 @@ For more details, see the [commit message instructions](https://github.com/micro
 
 ## For Maintainers
 
-### Reviewing the Release PR
+### Reviewing the Stable Release
 
-The Release PR titled "chore(main): release X.Y.Z" updates automatically as PRs merge. When ready to release:
+The promotion and managed release PR are separate review boundaries. When ready to release:
 
-1. Review the accumulated changelog in the PR
-2. Verify version bump is appropriate for the changes
-3. Merge the Release PR (this creates a draft GitHub Release)
-4. CI attaches VSIX packages, plugin ZIPs, SBOMs, and attestations to the draft release
-5. The `publish-release` job promotes the draft to a published release
-6. The `release: published` event triggers the marketplace publish workflow automatically
+1. Review the `main` to `release/stable` promotion PR. Auto-merge is intentionally disabled.
+2. Merge the promotion only when it represents the intended reviewed `main` state.
+3. Review the release-please managed PR on `release/stable`, including its changelog, version fields, and immutable plugin locator.
+4. Merge the managed PR when the release contents are correct.
+5. Verify `release-stable-publish.yml` attaches the VSIX, plugin, SBOM, VEX, and provenance evidence before publication.
+6. Verify the workflow publishes the immutable plugin snapshot and final Stable release.
+7. Verify the published release triggers the Stable marketplace workflow.
+8. Review and merge the generated `release/stable` to `main` metadata synchronization PR.
 
 ### Release Cadence
 
-Releases are on-demand. Merge the Release PR when:
+Releases are on-demand. Merge the managed Stable release PR when:
 
 * A meaningful set of changes has accumulated
 * A critical fix needs immediate release
@@ -103,7 +110,7 @@ There is no requirement to release after every PR merge.
 
 ## Extension Publishing
 
-VS Code extension publishing is automated. When the `publish-release` job promotes a draft release to published, the `release: published` event triggers [`release-marketplace-stable.yml`](https://github.com/microsoft/hve-core/blob/main/.github/workflows/release-marketplace-stable.yml), which packages and publishes the extension to the VS Code Marketplace using Azure OIDC authentication.
+VS Code extension publishing is automated. When `release-stable-publish.yml` publishes a verified Stable release, the `release: published` event triggers [`release-marketplace-stable.yml`](https://github.com/microsoft/hve-core/blob/main/.github/workflows/release-marketplace-stable.yml), which packages and publishes the one HVE Core extension through Azure OIDC authentication.
 
 ### Manual Fallback
 
@@ -111,7 +118,7 @@ If the automated publish did not trigger or you need to republish, use the workf
 
 1. Navigate to **Actions → Stable Marketplace Publish** in the repository
 2. Select **Run workflow**
-3. Choose the `main` branch
+3. Choose the workflow from its default branch
 4. Optionally specify a version (defaults to `package.json` version)
 5. Optionally enable dry-run mode to package without publishing
 6. Click **Run workflow**
@@ -128,35 +135,39 @@ Documentation-only releases may not require an extension publish.
 
 ## Version Quick Reference
 
-| Action                   | Result                                                        |
-|--------------------------|---------------------------------------------------------------|
-| Merge feature PR to main | Release PR updates with new changelog entry                   |
-| Merge Release PR         | Draft GitHub Release created, then auto-promoted to published |
-| Release published        | Extension automatically published to marketplace              |
-| Merge docs-only PR       | Changelog updated, no version bump                            |
+| Action                             | Result                                                            |
+|------------------------------------|-------------------------------------------------------------------|
+| Merge feature PR to main           | Validated source becomes eligible for promotion                   |
+| Merge promotion PR                 | release-please prepares the Stable release PR on `release/stable` |
+| Merge managed Stable release PR    | Draft release and verified artifact pipeline start                |
+| Stable release published           | Stable extension marketplace workflow starts                      |
+| Merge Stable metadata sync PR      | Release metadata returns to `main`                                |
+| Run PreRelease for an approved SHA | Odd-minor PreRelease pipeline starts                              |
 
 ## Extension Channels and Maturity
 
-The VS Code extension is published to two channels with different stability expectations.
+The VS Code extension is published to two same-content channels with different cadence, versioning, and source ownership.
 
 ### Extension Channels
 
-| Channel     | Stability        | Included Maturity Levels            | Audience       |
-|-------------|------------------|-------------------------------------|----------------|
-| Stable      | Production-ready | `stable` only                       | All users      |
-| Pre-release | Early access     | `stable`, `preview`, `experimental` | Early adopters |
+| Channel    | Source                                        | Included Active Labels                  | Audience       |
+|------------|-----------------------------------------------|-----------------------------------------|----------------|
+| Stable     | Reviewed `main` promotion in `release/stable` | `stable`, `preview`, and `experimental` | All users      |
+| PreRelease | Explicit commit on `main`                     | `stable`, `preview`, and `experimental` | Early adopters |
 
 ### Maturity Levels
 
-Each prompt, instruction, agent, and skill can set `maturity` in `collections/*.collection.yml` under `items[]`:
+The `hve-core` recipe declares non-stable component lifecycle labels in `x-hve.componentMaturity` under `.github/plugin/marketplace.json`:
 
-| Level          | Description                                                                                       | Included In         |
-|----------------|---------------------------------------------------------------------------------------------------|---------------------|
-| `stable`       | Production-ready, fully tested                                                                    | Stable, Pre-release |
-| `preview`      | Feature-complete but may have rough edges                                                         | Pre-release only    |
-| `experimental` | Early development, may change significantly                                                       | Pre-release only    |
-| `deprecated`   | Scheduled for removal, excluded from all builds                                                   | Neither             |
-| `removed`      | Source retained for traceability; excluded from all generated plugins and extension distributions | Neither             |
+| Level          | Description                                                                 | Included In     |
+|----------------|-----------------------------------------------------------------------------|-----------------|
+| `stable`       | Established component                                                       | Both channels   |
+| `preview`      | Functional component still receiving compatibility work                     | Both channels   |
+| `experimental` | Early development that may change significantly                             | Both channels   |
+| `deprecated`   | Scheduled for removal                                                       | Neither channel |
+| `removed`      | Source retained for traceability but withdrawn from generated distributions | Neither channel |
+
+Lifecycle labels disclose support posture and inform governance. They are not channel filters and are separate from maturity classifications used in Responsible AI assessments.
 
 ### Maturity Lifecycle
 
@@ -170,9 +181,9 @@ stateDiagram-v2
     removed --> [*] : Source eventually deleted
 ```
 
-The `removed` level is a collection-YAML-only marker. The artifact file remains in its
-source location (for example, under `.github/skills/{collection-id}/`) so history and
-references stay intact, but every downstream surface (collection validation, plugin
+The `removed` level is a marketplace tombstone. The artifact file remains in its
+source location (for example, under `.github/skills/{package-id}/`) so history and
+references stay intact, but every downstream surface (marketplace validation, plugin
 generation, and extension packaging) excludes it. Use `removed` when you want to retire
 an artifact from distribution without moving it to `.github/deprecated/` or deleting it
 outright. See [AI Artifacts Architecture - Removed Artifacts](../architecture/ai-artifacts.md#removed-artifacts)
@@ -180,14 +191,14 @@ for the architectural contract.
 
 ### Contributor Guidelines
 
-| Guideline          | Action                                                                                                                                                                                                                                                                                                                                                                                                                           |
-|--------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| New contributions  | Set `stable` on collection items unless explicitly targeting early adopters                                                                                                                                                                                                                                                                                                                                                      |
-| Experimental work  | Set `experimental` on collection items for proof-of-concept or rapidly evolving artifacts                                                                                                                                                                                                                                                                                                                                        |
-| Preview promotions | Set `preview` on collection items when core functionality is complete                                                                                                                                                                                                                                                                                                                                                            |
-| Stable promotions  | Set `stable` on collection items after production validation                                                                                                                                                                                                                                                                                                                                                                     |
-| Deprecation        | Set `deprecated` on collection items before removal to provide transition time. Move the artifact file to `.github/deprecated/{type}/` so the build system excludes it from all downstream surfaces automatically. See [AI Artifacts Architecture](../architecture/ai-artifacts.md#deprecated-artifacts) for the full deprecation policy.                                                                                        |
-| Removal            | Set `removed` on collection items when the artifact should no longer ship in any plugin or extension build but its source should remain in place for history, references, or future reinstatement. The collection YAML is the single source of truth - no per-artifact frontmatter or file move is required. See [AI Artifacts Architecture - Removed Artifacts](../architecture/ai-artifacts.md#removed-artifacts) for details. |
+| Guideline          | Action                                                                                                                                                                                                                                                             |
+|--------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| New contributions  | Omit component maturity for the default `stable` value unless targeting early adopters                                                                                                                                                                             |
+| Experimental work  | Set `experimental` on the package-relative component path                                                                                                                                                                                                          |
+| Preview promotions | Set `preview` when core functionality is complete                                                                                                                                                                                                                  |
+| Stable promotions  | Remove the component-maturity override after production validation                                                                                                                                                                                                 |
+| Deprecation        | Set `deprecated` before removal to provide transition time. Move the artifact file to `.github/deprecated/{type}/` when archival placement is intended. See [AI Artifacts Architecture](../architecture/ai-artifacts.md#deprecated-artifacts) for the full policy. |
+| Removal            | Remove active standard membership and retain a `removed` tombstone in `x-hve.componentMaturity` when source should remain for history, references, or possible reinstatement. See [Removed Artifacts](../architecture/ai-artifacts.md#removed-artifacts).          |
 
 ---
 
