@@ -1,8 +1,8 @@
 ---
 title: Extension Scripts
-description: PowerShell scripts for VS Code extension preparation, packaging, and collection discovery
+description: PowerShell scripts for marketplace-driven VS Code extension preparation and packaging
 author: HVE Core Team
-ms.date: 2026-07-09
+ms.date: 2026-08-02
 ms.topic: reference
 keywords:
   - powershell
@@ -18,34 +18,30 @@ publishing the HVE Core VS Code extension.
 
 ## Architecture
 
-The extension packaging pipeline follows a three-stage process:
+The extension packaging pipeline follows one marketplace projection:
 
-1. `Find-CollectionManifests.ps1` discovers collection manifests and builds a
-   packaging matrix
-2. `Prepare-Extension.ps1` gathers agents, prompts, instructions, and skills,
-   filtering by maturity and channel
-3. `Package-Extension.ps1` produces one `.vsix` per collection using `vsce`
+1. `Get-MarketplacePackageMatrix.ps1` emits the one `hve-core` package ID
+2. `Modules/ExtensionIdentity.psm1` maps it to the HVE Core extension identity
+3. `Prepare-Extension.ps1` resolves the complete recipe through shared handoff closure
+4. `Package-Extension.ps1` stages tracked projection files and creates a `.vsix`
 
-All three scripts import `CIHelpers.psm1` for CI platform detection.
-`Prepare-Extension.ps1` and `Package-Extension.ps1` additionally import
-`CollectionHelpers.psm1` for YAML manifest parsing; `Find-CollectionManifests.ps1`
-does not.
+Marketplace metadata, membership, maturity, and display names come from
+`.github/plugin/marketplace.json`. No extension script reads a secondary package
+definition.
 
 ## Scripts
 
 ### `Prepare-Extension.ps1`
 
-Prepares extension contents by auto-discovering agents, prompts, instructions,
-and skills from the repository.
+Prepares extension contents from one resolved marketplace package recipe.
 
 Purpose: Gather and filter artifacts for inclusion in the extension package.
 
 #### Features
 
-* Auto-discovers `.agent.md`, `.prompt.md`, `.instructions.md`, and `SKILL.md`
-  files
-* Filters artifacts by maturity level and release channel
-* Supports collection-scoped preparation
+* Resolves agents, prompts, instructions, and skills from marketplace membership
+* Applies shared lifecycle policy and transitive agent handoff closure
+* Supports explicit `hve-core` package-ID preparation
 * Dry-run mode for previewing changes
 
 #### Parameters
@@ -53,7 +49,7 @@ Purpose: Gather and filter artifacts for inclusion in the extension package.
 * `-ChangelogPath` - Path to the changelog file
 * `-Channel` - Release channel: `Stable` or `PreRelease`
 * `-DryRun` (switch) - Preview changes without modifying files
-* `-Collection` - Collection name for scoped preparation
+* `-PackageId` - Marketplace package ID for scoped preparation
 
 #### Usage
 
@@ -78,7 +74,9 @@ Purpose: Produce a distributable extension package from prepared contents.
 
 * Sets version from parameters or changelog
 * Supports pre-release and dev patch builds
-* Collection-scoped packaging
+* One-identity marketplace packaging
+* Git-tracked path staging with explicit shared resources
+* Repository-pinned `vsce` only, with no installer fallback
 * Dry-run mode for validation
 
 #### Parameters
@@ -87,7 +85,7 @@ Purpose: Produce a distributable extension package from prepared contents.
 * `-DevPatchNumber` - Development patch number for dev builds
 * `-ChangelogPath` - Path to the changelog file
 * `-PreRelease` (switch) - Mark as pre-release build
-* `-Collection` - Collection name for scoped packaging
+* `-PackageId` - Marketplace package ID for scoped packaging
 * `-DryRun` (switch) - Preview changes without producing a package
 
 #### Usage
@@ -99,36 +97,44 @@ Purpose: Produce a distributable extension package from prepared contents.
 # Package a pre-release build
 ./scripts/extension/Package-Extension.ps1 -PreRelease
 
-# Package a specific collection
-./scripts/extension/Package-Extension.ps1 -Collection hve-core
+# Package a specific marketplace package
+./scripts/extension/Package-Extension.ps1 -PackageId hve-core
 ```
 
-### `Find-CollectionManifests.ps1`
+### `Get-MarketplacePackageMatrix.ps1`
 
-Discovers collection manifests for the packaging matrix.
+Builds a package matrix and package-name output from the marketplace catalog.
 
-Purpose: Build a list of collections to package based on channel and
-maturity rules.
+Purpose: Emit the one HVE Core package for either release channel.
 
 #### Features
 
-* Scans `collections/` for `.collection.yml` files
-* Filters collections by maturity and channel
-* Outputs a matrix for CI workflow consumption
+* Reads `.github/plugin/marketplace.json`
+* Verifies the `hve-core` entry is eligible for the selected channel
+* Outputs sorted matrix rows containing only `id`
+* Outputs a sorted JSON `names` array for packaging workflows
+
+### `Modules/ExtensionIdentity.psm1`
+
+Maps marketplace package IDs to VS Code extension identities and exact VSIX
+asset patterns.
+
+Purpose: Keep package matrix, release download, and VSIX selection behavior on
+one `hve-core` identity contract.
 
 #### Parameters
 
 * `-Channel` - Release channel filter: `Stable` or `PreRelease`
-* `-CollectionsDir` - Path to the collections directory
+* `-CatalogPath` - Path to the marketplace catalog
 
 #### Usage
 
 ```powershell
-# Discover stable collections
-./scripts/extension/Find-CollectionManifests.ps1 -Channel Stable
+# Discover stable packages
+./scripts/extension/Get-MarketplacePackageMatrix.ps1 -Channel Stable
 
-# Discover all collections for pre-release
-./scripts/extension/Find-CollectionManifests.ps1 -Channel PreRelease
+# Discover pre-release packages
+./scripts/extension/Get-MarketplacePackageMatrix.ps1 -Channel PreRelease
 ```
 
 ### `Resolve-VsixFile.ps1`
@@ -150,24 +156,24 @@ workflow to locate the built VSIX before signing and attestation.
 ./scripts/extension/Resolve-VsixFile.ps1 -DirectoryPath ./extension
 ```
 
-### `Select-CollectionVsix.ps1`
+### `Select-PackageVsix.ps1`
 
-Selects the collection-specific VSIX from a set of candidate assets.
+Selects the package-specific VSIX from a set of candidate assets.
 
-Purpose: Pick the `.vsix` matching a collection ID from a directory of release
+Purpose: Pick the `.vsix` matching a package ID from a directory of release
 assets. Used by the `extension-marketplace-publish.yml` reusable workflow to
-choose the correct collection artifact before publishing.
+choose the correct package artifact before publishing.
 
 #### Parameters
 
 * `-AssetDirectory` - Directory containing candidate assets (defaults to `$env:ASSET_DIRECTORY`)
-* `-CollectionId` - Collection ID to match (defaults to `$env:COLLECTION_ID`)
+* `-PackageId` - Package ID to match (defaults to `$env:PACKAGE_ID`)
 
 #### Usage
 
 ```powershell
-# Select the VSIX for a collection
-./scripts/extension/Select-CollectionVsix.ps1 -AssetDirectory ./dist -CollectionId hve-core
+# Select the VSIX for a package
+./scripts/extension/Select-PackageVsix.ps1 -AssetDirectory ./dist -PackageId hve-core
 ```
 
 ### `Export-AttestationBundle.ps1`
@@ -206,9 +212,9 @@ for verification and release upload.
 The extension packaging workflow (`extension-package.yml`) orchestrates all
 three scripts:
 
-1. `Find-CollectionManifests.ps1` produces the collection matrix
-2. `Prepare-Extension.ps1` runs per collection to gather artifacts
-3. `Package-Extension.ps1` runs per collection to produce `.vsix` files
+1. `Get-MarketplacePackageMatrix.ps1` produces a one-row package-ID matrix
+2. `Prepare-Extension.ps1` projects the complete HVE Core contributions
+3. `Package-Extension.ps1` produces the one `.vsix` file
 
 See [Build Workflows](../../docs/architecture/workflows.md) for pipeline
 details.

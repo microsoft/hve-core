@@ -14,7 +14,7 @@ tags:
   - agents
   - security
 author: Microsoft
-ms.date: 2026-06-26
+ms.date: 2026-08-02
 ms.topic: concept
 estimated_reading_time: 7
 ---
@@ -25,7 +25,7 @@ The Supply Chain Reviewer is a user-invocable agent that assesses your repositor
 
 ## When to Use
 
-The security collection ships three complementary agents. Pick the one matched to your goal.
+HVE Core includes three complementary security agents. Pick the one matched to your goal.
 
 | Use this                 | When you want to…                                                                                                           |
 |--------------------------|-----------------------------------------------------------------------------------------------------------------------------|
@@ -126,7 +126,7 @@ The `{{NNN}}` sequence number increments per day, starting at `001`. After the r
 
 ## Prerequisites
 
-* The Supply Chain Reviewer agent installed and enabled. It ships in the **security** collection and the bundled **hve-core-all** collection.
+* The Supply Chain Reviewer agent installed and enabled through the complete `hve-core` identity.
 * The four pipeline subagents available: Codebase Profiler, Supply Chain Skill Assessor, Finding Deep Verifier, and Report Generator.
 * The `supply-chain-security` skill and the `security-reviewer-formats` skill for the assessment references and report templates.
 * For `diff` mode: the `pr-reference` skill to resolve the changed files for a pull request.

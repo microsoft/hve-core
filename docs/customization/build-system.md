@@ -2,7 +2,7 @@
 title: Build System and Validation
 description: Understand the plugin generation pipeline, schema validation system, npm scripts, and CI checks for customizing and extending HVE Core
 author: Microsoft
-ms.date: 2026-07-28
+ms.date: 2026-08-02
 ms.topic: how-to
 keywords:
   - build system
@@ -15,16 +15,17 @@ estimated_reading_time: 8
 
 ## Plugin Generation Pipeline
 
-The plugin generation pipeline transforms collection manifests into distributable plugin
-output. The `plugin:generate` script runs two stages:
+The plugin generation pipeline transforms marketplace package recipes into distributable
+plugin output. The `plugin:generate` script runs two stages:
 
-1. `Generate-Plugins.ps1` reads each `collections/*.collection.yml` manifest and produces
-   output files under `plugins/`. Each collection gets its own subdirectory
-   (e.g., `plugins/hve-core/`, `plugins/ado/`).
+1. `Generate-Plugins.ps1` reads `.github/plugin/marketplace.json` and produces output files
+   under `plugins/`. Each package gets its own subdirectory, such as
+   `plugins/hve-core/` or `plugins/ado/`.
 
 2. `plugin:postprocess` applies markdownlint auto-fixes (`markdownlint-cli2 --fix`) and
-   aligns markdown table columns (`markdown-table-formatter`) across the generated
-   `plugins/**` and `collections/*.md` output.
+   aligns Markdown table columns (`markdown-table-formatter`) for generated package
+   READMEs and `docs/plugins/*.md`. Materialized component files remain byte-identical to
+   their canonical sources and are validated there rather than as generated duplicates.
 
 Run the full pipeline with a single command:
 
@@ -52,7 +53,7 @@ determine which schema applies to each file.
 | `prompt-frontmatter.schema.json`         | `.github/**/*.prompt.md`          |
 | `skill-frontmatter.schema.json`          | `.github/skills/**/SKILL.md`      |
 | `chatmode-frontmatter.schema.json`       | `.github/**/*.chatmode.md`        |
-| `collection-manifest.schema.json`        | Collection YAML manifests         |
+| `marketplace-manifest.schema.json`       | `.github/plugin/marketplace.json` |
 | `root-community-frontmatter.schema.json` | Root files (README, CONTRIBUTING) |
 | `base-frontmatter.schema.json`           | Default fallback                  |
 
@@ -61,6 +62,33 @@ determine which schema applies to each file.
 The `scripts/linting/schemas/schema-mapping.json` file defines the glob-to-schema mapping.
 Patterns are evaluated from most specific to least specific, and the first match determines
 the schema. When no pattern matches, `base-frontmatter.schema.json` applies as the default.
+
+### Planner State Schemas
+
+The same `scripts/linting/schemas/` directory also holds JSON Schemas for planner session
+state. These validate the `state.json` files that phase-based planning agents persist under
+`.copilot-tracking/`. They are not frontmatter schemas, so they are not listed in
+`schema-mapping.json` and are not exercised by `npm run lint:frontmatter`.
+
+| Schema                            | Validates                                                    |
+|-----------------------------------|--------------------------------------------------------------|
+| `accessibility-state.schema.json` | `.copilot-tracking/accessibility/{project-slug}/state.json`  |
+| `rai-state.schema.json`           | `.copilot-tracking/rai-plans/{project-slug}/state.json`      |
+| `security-state.schema.json`      | `.copilot-tracking/security-plans/{project-slug}/state.json` |
+| `sssc-state.schema.json`          | `.copilot-tracking/sssc-plans/{project-slug}/state.json`     |
+
+Each schema is the source of truth for its planner's required keys, field types, enum
+values, and defaults. Agent and instruction files show illustrative state snippets with
+JSON-literal defaults; when a snippet and its schema disagree, the schema wins.
+
+Two enforcement paths cover these schemas:
+
+* Editor validation through the `json.schemas` entries in `.vscode/settings.json`, which
+  bind the RAI and accessibility state paths to their schemas as you edit.
+* Pester coverage in `scripts/tests/linting/Test-PlannerStateSchemas.Tests.ps1` and
+  `scripts/tests/linting/Test-AccessibilityStateSchema.Tests.ps1`, which validate schema
+  fixtures and guard the inline state examples in agent and instruction files against
+  drift. Run them with `npm run test:ps -- -TestPath "scripts/tests/linting/"`.
 
 ### Adding Custom Schemas
 
@@ -80,24 +108,23 @@ for the complete set.
 
 ### Linting
 
-| Script                      | Command                             | Description                                |
-|-----------------------------|-------------------------------------|--------------------------------------------|
-| `validate:local`            | `npm run validate:local`            | Runs the local-safe validation aggregate   |
-| `lint:md`                   | `npm run lint:md`                   | Markdown linting via markdownlint-cli2     |
-| `lint:md:fix`               | `npm run lint:md:fix`               | Markdown linting with auto-fix             |
-| `lint:ps`                   | `npm run lint:ps`                   | PowerShell analysis via PSScriptAnalyzer   |
-| `lint:yaml`                 | `npm run lint:yaml`                 | YAML syntax and structure validation       |
-| `lint:links`                | `npm run lint:links`                | Link language checking                     |
-| `lint:md-links`             | `npm run lint:md-links`             | Markdown link target validation            |
-| `lint:frontmatter`          | `npm run lint:frontmatter`          | Frontmatter schema validation              |
-| `lint:json`                 | `npm run lint:json`                 | JSON syntax validation                     |
-| `lint:adr-consistency`      | `npm run lint:adr-consistency`      | ADR structure and consistency checks       |
-| `lint:collections-metadata` | `npm run lint:collections-metadata` | Collection manifest validation             |
-| `lint:marketplace`          | `npm run lint:marketplace`          | Marketplace manifest validation            |
-| `lint:hooks`                | `npm run lint:hooks`                | Hook manifest validation                   |
-| `lint:version-consistency`  | `npm run lint:version-consistency`  | GitHub Action version consistency          |
-| `lint:permissions`          | `npm run lint:permissions`          | Workflow permissions validation            |
-| `lint:models`               | `npm run lint:models`               | Model reference validation against catalog |
+| Script                     | Command                            | Description                                |
+|----------------------------|------------------------------------|--------------------------------------------|
+| `validate:local`           | `npm run validate:local`           | Runs the local-safe validation aggregate   |
+| `lint:md`                  | `npm run lint:md`                  | Markdown linting via markdownlint-cli2     |
+| `lint:md:fix`              | `npm run lint:md:fix`              | Markdown linting with auto-fix             |
+| `lint:ps`                  | `npm run lint:ps`                  | PowerShell analysis via PSScriptAnalyzer   |
+| `lint:yaml`                | `npm run lint:yaml`                | YAML syntax and structure validation       |
+| `lint:links`               | `npm run lint:links`               | Link language checking                     |
+| `lint:md-links`            | `npm run lint:md-links`            | Markdown link target validation            |
+| `lint:frontmatter`         | `npm run lint:frontmatter`         | Frontmatter schema validation              |
+| `lint:json`                | `npm run lint:json`                | JSON syntax validation                     |
+| `lint:adr-consistency`     | `npm run lint:adr-consistency`     | ADR structure and consistency checks       |
+| `lint:marketplace`         | `npm run lint:marketplace`         | Marketplace manifest validation            |
+| `lint:hooks`               | `npm run lint:hooks`               | Hook manifest validation                   |
+| `lint:version-consistency` | `npm run lint:version-consistency` | GitHub Action version consistency          |
+| `lint:permissions`         | `npm run lint:permissions`         | Workflow permissions validation            |
+| `lint:models`              | `npm run lint:models`              | Model reference validation against catalog |
 
 ### Validation
 
@@ -123,7 +150,7 @@ for the complete set.
 | Script                         | Command                                | Description                                        |
 |--------------------------------|----------------------------------------|----------------------------------------------------|
 | `plugin:generate`              | `npm run plugin:generate`              | Generate plugins, auto-fix markdown, format tables |
-| `plugin:validate`              | `npm run plugin:validate`              | Validate collection metadata (alias)               |
+| `plugin:validate`              | `npm run plugin:validate`              | Validate marketplace package metadata and closure  |
 | `extension:prepare`            | `npm run extension:prepare`            | Prepare VS Code extension for packaging            |
 | `extension:prepare:prerelease` | `npm run extension:prepare:prerelease` | Prepare extension for pre-release                  |
 | `extension:package`            | `npm run extension:package`            | Package VS Code extension                          |
@@ -145,28 +172,27 @@ The `validate:local` script chains local-safe checks in a fixed sequence:
 7. `lint:md-links` resolves markdown link targets
 8. `lint:frontmatter` validates YAML frontmatter against schemas
 9. `lint:adr-consistency` checks ADR structure and consistency rules
-10. `lint:collections-metadata` confirms collection manifest integrity
-11. `lint:marketplace` validates marketplace manifest
-12. `lint:hooks` validates hook manifests
-13. `lint:version-consistency` checks GitHub Action version alignment
-14. `lint:permissions` validates workflow permissions
-15. `lint:dangerous-workflow` checks workflows for dangerous patterns
-16. `lint:dependency-pinning` checks dependencies are pinned to fixed versions
-17. `lint:public-dependency-feeds` confirms dependency sources use canonical public feeds
-18. `lint:pr-gate` validates the pull request validation gate
-19. `lint:ps-module-pins` checks PowerShell module versions are pinned
-20. `lint:py` lints Python scripts via `Invoke-PythonLint.ps1`
-21. `validate:skills` verifies skill directory structure
-22. `lint:ai-artifacts` validates planner AI artifacts
-23. `lint:asset-docs` confirms assets have documentation pages
-24. `lint:models` validates model references against the catalog
-25. `validate:devcontainer-lockfile` checks devcontainer lockfile integrity
+10. `lint:marketplace` validates marketplace package metadata and closure
+11. `lint:hooks` validates hook manifests
+12. `lint:version-consistency` checks GitHub Action version alignment
+13. `lint:permissions` validates workflow permissions
+14. `lint:dangerous-workflow` checks workflows for dangerous patterns
+15. `lint:dependency-pinning` checks dependencies are pinned to fixed versions
+16. `lint:public-dependency-feeds` confirms dependency sources use canonical public feeds
+17. `lint:pr-gate` validates the pull request validation gate
+18. `lint:ps-module-pins` checks PowerShell module versions are pinned
+19. `lint:py` lints Python scripts via `Invoke-PythonLint.ps1`
+20. `validate:skills` verifies skill directory structure
+21. `lint:ai-artifacts` validates planner AI artifacts
+22. `lint:asset-docs` confirms assets have documentation pages
+23. `lint:models` validates model references against the catalog
+24. `validate:devcontainer-lockfile` checks devcontainer lockfile integrity
 
 Each linter outputs results to `logs/` for inspection. Run individual linters for faster
 feedback during development:
 
 ```bash
-npm run lint:md -- docs/customization/collections.md
+npm run lint:md -- docs/customization/packages.md
 ```
 
 ## CI Validation

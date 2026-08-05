@@ -3,7 +3,7 @@ title: Local Telemetry
 description: Enable local Copilot session telemetry, understand capture mechanics, and generate local reports
 sidebar_position: 10
 author: Microsoft
-ms.date: 2026-07-29
+ms.date: 2026-08-02
 ms.topic: how-to
 keywords:
   - telemetry
@@ -395,7 +395,7 @@ Common issues:
 
 * [Contributing Hooks](../contributing/hooks)
 * [Environment Customization](environment)
-* [Managing Collections](collections)
+* [Managing Packages](packages)
 
 ---
 

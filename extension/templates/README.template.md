@@ -22,26 +22,26 @@ After installing this extension, the chat agents are available in GitHub Copilot
 
 Some chat agents create workflow artifacts in your project directory. See the [installation guide](https://github.com/microsoft/hve-core/blob/main/docs/getting-started/install.md#post-installation-update-your-gitignore) for recommended `.gitignore` configuration and other setup details.
 
-## Browse All Collections
+## HVE Core Identity and Channels
 
-This extension is part of the HVE ecosystem.
+This extension contains the complete active HVE Core component set.
 
-See the full list of available collections and capabilities:
+Review channel ownership, lifecycle disclosure, and selective clone adoption:
 
-[Browse Extension Collections](https://microsoft.github.io/hve-core/docs/getting-started/collections)
+[HVE Core Identity and Channels](https://github.com/microsoft/hve-core/blob/main/docs/getting-started/packages.md)
 
 ## Pre-release Channel
 
-HVE Core offers two installation channels:
+HVE Core publishes the same artifacts on two release channels:
 
-| Channel     | Description                                             | Maturity Levels                     |
-|-------------|---------------------------------------------------------|-------------------------------------|
-| Stable      | Production-ready artifacts only                         | `stable`                            |
-| Pre-release | Early access to new features and experimental artifacts | `stable`, `preview`, `experimental` |
+| Channel     | Description                                         | Maturity Levels                     |
+|-------------|-----------------------------------------------------|-------------------------------------|
+| Stable      | Promoted release cadence                            | `stable`, `preview`, `experimental` |
+| Pre-release | Early access to changes ahead of the next promotion | `stable`, `preview`, `experimental` |
+
+Both channels ship identical content. The Included Artifacts tables above label each artifact's maturity so you can judge its stability before use.
 
 To install the pre-release version, select **Install Pre-Release Version** from the extension page in VS Code.
-
-{{FULL_EDITION}}
 
 ## Requirements
 

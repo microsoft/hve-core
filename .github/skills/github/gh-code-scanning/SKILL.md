@@ -110,7 +110,7 @@ Use `-Branch {branch}` to scope to a branch other than `main`.
     "Severity": "warning",
     "Count": 23,
     "AffectedPaths": [
-      "scripts/collections/Get-CollectionItems.py",
+      "scripts/plugins/Generate-Plugins.ps1",
       "scripts/linting/Validate-MarkdownFrontmatter.py"
     ],
     "HasFilePaths": true,

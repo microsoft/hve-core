@@ -2,7 +2,7 @@
 title: Instructions
 description: Reference documentation for HVE Core instructions.
 sidebar_position: 0
-ms.date: 2026-07-23
+ms.date: 2026-07-30
 ---
 
 <!-- BEGIN AUTO-GENERATED: index -->
@@ -34,6 +34,7 @@ This page lists the generated reference documentation for HVE Core instructions.
 | [Coding Standards/Rust/Rust](coding-standards/rust/rust.md)                                       | Rust code authoring conventions                                                                                                                                                                                                                                                       |
 | [Coding Standards/Terraform/Terraform](coding-standards/terraform/terraform.md)                   | Terraform infrastructure-as-code authoring conventions                                                                                                                                                                                                                                |
 | [Coding Standards/Uv Projects](coding-standards/uv-projects.md)                                   | Create and manage Python virtual environments using uv commands                                                                                                                                                                                                                       |
+| [Design Thinking/Dt Coach Telemetry](design-thinking/dt-coach-telemetry.md)                       | Applies Design Thinking telemetry expectations to DT session artifacts                                                                                                                                                                                                                |
 | [Experimental/Experiment Designer](experimental/experiment-designer.md)                           | MVE domain knowledge and coaching conventions for the Experiment Designer agent                                                                                                                                                                                                       |
 | [Experimental/Graphify](experimental/graphify.md)                                                 | Conventions for consuming graphify-out/ knowledge-graph evidence inside the RPI workflow                                                                                                                                                                                              |
 | [Experimental/Mural/Mural Bootstrap](experimental/mural/mural-bootstrap.md)                       | Fresh-session Mural bootstrap requirements for doctor checks, credential backend selection, and safe escalation before Mural tool use.                                                                                                                                                |

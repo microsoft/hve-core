@@ -130,7 +130,7 @@ Describe 'ArtifactDetection Test-RepoRootArtifact' -Tag 'Unit' {
         Test-RepoRootArtifact -Kind $Kind -Path $Path | Should -BeTrue
     }
 
-    It 'Returns false for collection-scoped <Kind> artifacts' -ForEach @(
+    It 'Returns false for package-eligible nested <Kind> artifacts' -ForEach @(
         @{ Kind = 'agent'; Path = '.github/agents/hve-core/sample-agent.agent.md' }
         @{ Kind = 'prompt'; Path = '.github/prompts/hve-core/example.prompt.md' }
         @{ Kind = 'instruction'; Path = '.github/instructions/coding-standards/powershell/powershell.instructions.md' }
@@ -288,7 +288,7 @@ stimuli:
         $report.skipped[0].artifactId | Should -Be 'workflows'
     }
 
-    It 'Still requires coverage for collection-scoped artifacts' {
+    It 'Still requires coverage for package-eligible nested artifacts' {
         $artifacts = @(
             @{ kind = 'instruction'; artifactId = 'powershell'; path = '.github/instructions/coding-standards/powershell/powershell.instructions.md'; status = 'M' }
         )

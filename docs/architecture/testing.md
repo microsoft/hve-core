@@ -3,7 +3,7 @@ title: Testing Architecture
 description: PowerShell Pester test infrastructure and conventions
 sidebar_position: 4
 author: Microsoft
-ms.date: 2026-06-25
+ms.date: 2026-08-01
 ms.topic: concept
 ---
 
@@ -17,8 +17,6 @@ Test files follow a mirror pattern where each script directory has a correspondi
 
 ```text
 scripts/
-├── collections/
-│   └── *.ps1
 ├── evals/
 │   └── *.ps1
 ├── extension/
@@ -33,7 +31,6 @@ scripts/
 ├── security/
 │   └── *.ps1
 └── tests/
-    ├── collections/
     ├── evals/
     ├── extension/
     ├── lib/
@@ -70,7 +67,7 @@ Code coverage analyzes scripts in production directories while excluding test fi
 | Output path       | `logs/coverage.xml` |
 | Excluded patterns | `*.Tests.ps1`       |
 
-Coverage directories include `linting/`, `security/`, `lib/`, `extension/`, `collections/`, and `tests/`, plus skill scripts under `.github/skills/` (resolved separately further down in the config).
+Coverage directories include `linting/`, `security/`, `lib/`, `extension/`, `plugins/`, and `tests/`, plus skill scripts under `.github/skills/` (resolved separately further down in the config).
 
 When code coverage is enabled, the [pester-tests.yml](https://github.com/microsoft/hve-core/blob/main/.github/workflows/pester-tests.yml)
 workflow enforces the coverage target through its **Coverage Threshold Check** step. The step sources both the measured

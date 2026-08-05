@@ -107,7 +107,7 @@ jobs:
           echo "tag=$TAG" >> "$GITHUB_OUTPUT"
 
   discover:
-    name: Discover Collections
+    name: Discover Marketplace Packages
     needs: [normalize-version]
     runs-on: ubuntu-latest
     permissions:
@@ -119,6 +119,7 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
+          ref: ${{ needs.normalize-version.outputs.tag }}
           persist-credentials: false
 
       - name: Setup PowerShell modules
@@ -130,14 +131,22 @@ jobs:
         env:
           INPUT_VERSION: ${{ needs.normalize-version.outputs.version }}
         run: |
+          set -euo pipefail
           version="$INPUT_VERSION"
+          # The released tag is the discovery source, so its catalog version and
+          # immutable plugin locator are what the marketplace publish resolves.
+          catalog_version=$(jq -r '.metadata.version' .github/plugin/marketplace.json)
+          if [ "$catalog_version" != "$version" ]; then
+            echo "::error::Catalog version $catalog_version at the release ref does not match $version"
+            exit 1
+          fi
           echo "version=$version" >> "$GITHUB_OUTPUT"
 
-      - name: Discover collection manifests
+      - name: Discover marketplace packages
         id: discover
         shell: pwsh
         run: |
-          & ./scripts/extension/Find-CollectionManifests.ps1 -Channel 'Stable'
+          & ./scripts/extension/Get-MarketplacePackageMatrix.ps1 -Channel 'Stable'
 
   publish:
     name: Publish Extensions
@@ -145,7 +154,7 @@ jobs:
     if: ${{ !inputs.dry-run }}
     uses: ./.github/workflows/extension-marketplace-publish.yml
     with:
-      collections-matrix: ${{ needs.discover.outputs.matrix }}
+      packages-matrix: ${{ needs.discover.outputs.matrix }}
       tag: ${{ needs.normalize-version.outputs.tag }}
       pre-release: false
       verify-attestation: true

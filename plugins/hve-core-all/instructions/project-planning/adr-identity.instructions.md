@@ -1,1 +1,0 @@
-../../../../.github/instructions/project-planning/adr-identity.instructions.md

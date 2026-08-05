@@ -3,7 +3,7 @@ title: Contributing Skills to HVE Core
 description: Requirements and standards for contributing skill packages to hve-core
 sidebar_position: 6
 author: Microsoft
-ms.date: 2026-07-30
+ms.date: 2026-08-02
 ms.topic: how-to
 keywords:
   - skills
@@ -53,10 +53,10 @@ The following skill types will likely be rejected:
 
 ### Location
 
-Skill files are typically organized in a collection subdirectory by convention:
+Skill files are typically organized in a package subdirectory by convention:
 
 ```text
-.github/skills/{collection-id}/<skill-name>/
+.github/skills/{package-id}/<skill-name>/
 ├── SKILL.md                    # Main skill definition (required)
 ├── scripts/                    # Executable scripts or Python package entry points (optional)
 │   ├── <pkg>/                  # Python package directory (optional for Python skills)
@@ -75,8 +75,8 @@ Skill files are typically organized in a collection subdirectory by convention:
 ```
 
 > [!NOTE]
-> Collections can reference artifacts from any subfolder. The `path:` field in collection YAML files
-> accepts any valid repo-relative path regardless of the artifact's parent directory.
+> Marketplace package recipes can reference artifacts from any canonical subfolder. Standard component paths
+> are declared in `.github/plugin/marketplace.json` and resolve to canonical source files.
 
 The `scripts/` directory is **optional**. When present, it **MUST** contain at least one PowerShell script for PowerShell or cross-platform skills, and it **SHOULD** contain at least one `.sh` file when a bash implementation is also provided. Python skills may instead package executable modules under `scripts/<package>/__init__.py` and still satisfy the scripts requirement. Skills without scripts are valid and function as documentation-driven knowledge packages.
 
@@ -101,11 +101,11 @@ The `scripts/` directory is **optional**. When present, it **MUST** contain at l
 
 **`description`** (string, MANDATORY)
 
-| Property | Value                                                                                             |
-|----------|---------------------------------------------------------------------------------------------------|
-| Purpose  | Concise explanation of skill functionality                                                        |
-| Format   | Single sentence describing the skill; no attribution suffix (added automatically at distribution) |
-| Example  | `'Video-to-GIF conversion skill with FFmpeg two-pass optimization'`                               |
+| Property | Value                                                               |
+|----------|---------------------------------------------------------------------|
+| Purpose  | Concise explanation of skill functionality                          |
+| Format   | Single sentence describing the skill; no attribution suffix         |
+| Example  | `'Video-to-GIF conversion skill with FFmpeg two-pass optimization'` |
 
 ### Frontmatter Example
 
@@ -224,35 +224,11 @@ metadata:
 
 This example demonstrates a skill incorporating third-party content with provenance tracking. Skills referencing external frameworks should include `license` to identify the content license and `metadata` to track source attribution.
 
-## Collection Entry Requirements
+## Marketplace Recipe Registration
 
-All skills must have matching entries in one or more `collections/*.collection.yml` manifests. Collection entries control distribution and maturity.
+Distributable skills must be declared under the `skills` field of the `hve-core` entry in `.github/plugin/marketplace.json`. Declare the recipe-relative skill directory, not its `SKILL.md` file, and keep the directory name equal to the skill `name`.
 
-### Adding Your Skill to a Collection
-
-After creating your skill package, add an `items[]` entry in each target collection manifest:
-
-```yaml
-items:
-  # path can reference artifacts from any subfolder
-  - path: .github/skills/{collection-id}/my-skill
-    kind: skill
-    maturity: stable
-```
-
-### Selecting Collections for Skills
-
-Choose collections based on who uses the skill's utilities:
-
-| Skill Type           | Recommended Collections            |
-|----------------------|------------------------------------|
-| Media processing     | `hve-core-all`                     |
-| Documentation tools  | `hve-core-all`, `hve-core`         |
-| Data processing      | `hve-core-all`, `data-science`     |
-| Infrastructure tools | `hve-core-all`, `coding-standards` |
-| Code generation      | `hve-core-all`, `coding-standards` |
-
-For complete collection documentation, see [AI Artifacts Common Standards - Collection Manifests](ai-artifacts-common.md#collection-manifests-and-dependencies).
+Add non-stable lifecycle disclosure only through `x-hve.componentMaturity`, update `docs/plugins/hve-core.md`, then run `npm run lint:marketplace`, `npm run validate:skills`, and `npm run plugin:generate`.
 
 ## SKILL.md Content Structure
 
@@ -484,15 +460,15 @@ Skill packages are self-contained and relocatable. The skill root directory vari
 
 | Context            | Skill Root Example                                                 |
 |--------------------|--------------------------------------------------------------------|
-| In-repo            | `.github/skills/<collection>/<skill>/`                             |
+| In-repo            | `.github/skills/<package>/<skill>/`                                |
 | Copilot CLI plugin | `~/.copilot/installed-plugins/_direct/<plugin>/skills/<skill>/`    |
 | VS Code extension  | `~/.vscode/extensions/<publisher>.<ext>-<version>/skills/<skill>/` |
-| Plugin output      | `plugins/<collection>/skills/<skill>/`                             |
+| Plugin output      | `plugins/<package>/skills/<skill>/`                                |
 
 The `.github/` directory does not exist in any distributed context. All file references and script paths within a skill must be relative to the skill root, never repo-root-relative.
 
-* Use `./scripts/<script-name>.sh` instead of `./.github/skills/<collection>/<skill>/scripts/<script-name>.sh`
-* Use `references/<reference-name>.md` instead of `.github/skills/<collection>/<skill>/references/<reference-name>.md`
+* Use `./scripts/<script-name>.sh` instead of `./.github/skills/<package>/<skill>/scripts/<script-name>.sh`
+* Use `references/<reference-name>.md` instead of `.github/skills/<package>/<skill>/references/<reference-name>.md`
 * From files in subdirectories (such as `references/`), use `../scripts/` to reach sibling directories
 
 This rule applies to all files in the skill: SKILL.md, reference documents, assets, and code examples in documentation. Repo-root-relative paths break portability and will fail validation.

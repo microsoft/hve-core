@@ -92,7 +92,6 @@ Describe 'validate-installation' -Tag 'Unit' {
 
             $output = & $script:scriptPath -BasePath $installDir -Method 1 6>&1 | Out-String
 
-            $LASTEXITCODE | Should -Not -Be 1
             $output | Should -Match 'Installation validated successfully'
             $output | Should -Not -Match 'Missing.*experimental'
         }

@@ -7,6 +7,7 @@
       "release-type": "node",
       "package-name": "hve-core",
       "draft": true,
+      "force-tag-creation": false,
       "include-component-in-tag": true,
       "changelog-path": "CHANGELOG.md",
       "changelog-sections": [
@@ -33,12 +34,6 @@
           "type": "json",
           "path": ".github/plugin/marketplace.json",
           "jsonpath": "$.plugins[*].version"
-        },
-        {
-          "type": "json",
-          "path": "plugins/*/.github/plugin/plugin.json",
-          "jsonpath": "$.version",
-          "glob": true
         }
       ]
     }

@@ -5,8 +5,8 @@ name: Extension Marketplace Publish
 on:
   workflow_call:
     inputs:
-      collections-matrix:
-        description: "JSON matrix of collections to publish"
+      packages-matrix:
+        description: "JSON matrix of packages to publish"
         required: true
         type: string
       tag:
@@ -35,7 +35,7 @@ jobs:
     environment: marketplace
     strategy:
       fail-fast: false
-      matrix: ${{ fromJson(inputs.collections-matrix) }}
+      matrix: ${{ fromJson(inputs.packages-matrix) }}
     permissions:
       contents: read
       attestations: read
@@ -64,19 +64,31 @@ jobs:
       - name: Install dependencies
         run: npm ci --ignore-scripts=false
 
+      # The packages matrix is ID-only, so the VS Code extension identity is
+      # derived here from the same mapping the packaging lane uses.
+      - name: Resolve extension identity
+        shell: pwsh
+        env:
+          PACKAGE_ID: ${{ matrix.id }}
+        run: |
+          Import-Module ./scripts/extension/Modules/ExtensionIdentity.psm1 -Force
+          $identity = Get-ExtensionIdentity -PackageId $env:PACKAGE_ID
+          "EXTENSION_NAME=$identity" >> $env:GITHUB_ENV
+          "VSIX_ASSET_GLOB=$(Get-ExtensionVsixGlob -ExtensionIdentity $identity)" >> $env:GITHUB_ENV
+
       - name: Download attested VSIX from GitHub Release
         if: ${{ inputs.tag != '' }}
         shell: pwsh
         env:
           GH_TOKEN: ${{ github.token }}
           RELEASE_TAG: ${{ inputs.tag }}
-          COLLECTION_ID: ${{ matrix.id }}
+          PACKAGE_ID: ${{ matrix.id }}
           ASSET_DIRECTORY: ./dist
           REPOSITORY: ${{ github.repository }}
         run: |
           New-Item -ItemType Directory -Path $env:ASSET_DIRECTORY -Force | Out-Null
-          gh release download "$env:RELEASE_TAG" --repo "$env:REPOSITORY" --pattern "*$env:COLLECTION_ID*.vsix" --dir $env:ASSET_DIRECTORY
-          $selected = & ./scripts/extension/Select-CollectionVsix.ps1 -AssetDirectory $env:ASSET_DIRECTORY -CollectionId $env:COLLECTION_ID
+          gh release download "$env:RELEASE_TAG" --repo "$env:REPOSITORY" --pattern "$env:VSIX_ASSET_GLOB" --dir $env:ASSET_DIRECTORY
+          $selected = & ./scripts/extension/Select-PackageVsix.ps1 -AssetDirectory $env:ASSET_DIRECTORY -PackageId $env:PACKAGE_ID
           "VSIX_FILE=$selected" >> $env:GITHUB_ENV
 
       - name: Download intra-run VSIX artifact
@@ -90,7 +102,7 @@ jobs:
         if: ${{ inputs.tag == '' }}
         shell: pwsh
         env:
-          COLLECTION_ID: ${{ matrix.id }}
+          PACKAGE_ID: ${{ matrix.id }}
           VSIX_DIRECTORY: ./dist
         run: |
           $resolved = & ./scripts/extension/Resolve-VsixFile.ps1 -DirectoryPath $env:VSIX_DIRECTORY
@@ -110,10 +122,10 @@ jobs:
         id: publish
         env:
           PRE_RELEASE: ${{ inputs.pre-release }}
-          COLLECTION_ID: ${{ matrix.id }}
+          PACKAGE_ID: ${{ matrix.id }}
         run: |
           if [ -z "$VSIX_FILE" ]; then
-            echo "::error::No VSIX file found for collection $COLLECTION_ID"
+            echo "::error::No VSIX file found for package $PACKAGE_ID"
             exit 1
           fi
           VSIX_VERSION=$(basename "$VSIX_FILE" .vsix | grep -oE '[0-9]+\.[0-9]+\.[0-9]+(-[a-zA-Z0-9.]+)?$')
@@ -126,14 +138,13 @@ jobs:
             PRE_RELEASE_FLAG="--pre-release"
           fi
 
-          echo "📦 Publishing $COLLECTION_ID: $VSIX_FILE (v$VSIX_VERSION) [$CHANNEL_LABEL]"
+          echo "📦 Publishing $PACKAGE_ID: $VSIX_FILE (v$VSIX_VERSION) [$CHANNEL_LABEL]"
           npx vsce publish --packagePath "$VSIX_FILE" $PRE_RELEASE_FLAG --azure-credential
 
       - name: Summary
         env:
           PRE_RELEASE: ${{ inputs.pre-release }}
-          COLLECTION_ID: ${{ matrix.id }}
-          COLLECTION_NAME: ${{ matrix.name }}
+          PACKAGE_ID: ${{ matrix.id }}
           PUBLISH_VERSION: ${{ steps.publish.outputs.version }}
         run: |
           CHANNEL_LABEL="Stable"
@@ -146,15 +157,14 @@ jobs:
           fi
 
           {
-            echo "## ${EMOJI} Extension Published: $COLLECTION_NAME"
+            echo "## ${EMOJI} Extension Published: $EXTENSION_NAME"
             echo ""
-            echo "**Collection:** $COLLECTION_ID"
+            echo "**Package:** $PACKAGE_ID"
             echo "**Version:** $PUBLISH_VERSION"
             echo "**Channel:** $CHANNEL_LABEL"
             echo ""
             if [ -n "$EXTRA" ]; then
               echo "$EXTRA"
             fi
-            echo "View on [VS Code Marketplace](https://marketplace.visualstudio.com/items?itemName=ise-hve-essentials.${COLLECTION_NAME})"
+            echo "View on [VS Code Marketplace](https://marketplace.visualstudio.com/items?itemName=ise-hve-essentials.${EXTENSION_NAME})"
           } >> "$GITHUB_STEP_SUMMARY"
-

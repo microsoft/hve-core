@@ -1,1 +1,0 @@
-../../../../.github/prompts/accessibility/accessibility-coverage-matrix.prompt.md

@@ -2,7 +2,7 @@
 title: GitHub Actions Workflows
 description: Modular CI/CD workflow architecture for validation, security scanning, and automated maintenance
 author: HVE Core Team
-ms.date: 2026-07-08
+ms.date: 2026-08-03
 ms.topic: reference
 keywords:
   - github actions
@@ -47,16 +47,25 @@ Modular reusable workflows following Single Responsibility Principle. Each workf
 
 Compose multiple reusable workflows for comprehensive validation and security scanning.
 
-| Workflow                          | Triggers                                | Jobs                                                                                                                                 | Mode                       | Purpose                              |
-|-----------------------------------|-----------------------------------------|--------------------------------------------------------------------------------------------------------------------------------------|----------------------------|--------------------------------------|
-| `pr-validation.yml`               | PR to main/develop (open, push, reopen) | 31 jobs (29 validation jobs + `pr-validation-success` gate + `gate-completeness-check`); `pr-validation-success` is the merge signal | Strict validation          | Pre-merge quality gate with security |
-| `release-stable.yml`              | Push to main                            | 23 jobs                                                                                                                              | Strict mode, SARIF uploads | Post-merge validation                |
-| `weekly-security-maintenance.yml` | Schedule (Sun 2AM UTC)                  | 4 (validate-pinning, check-staleness, codeql-analysis, summary)                                                                      | Soft-fail warnings         | Weekly security posture              |
-| `scorecard.yml`                   | Push to main, Schedule (Sun 3AM UTC)    | 1 (scorecard)                                                                                                                        | SARIF upload               | OpenSSF Scorecard security posture   |
+| Workflow                          | Triggers                                | Mode                       | Purpose                                                                              |
+|-----------------------------------|-----------------------------------------|----------------------------|--------------------------------------------------------------------------------------|
+| `pr-validation.yml`               | PR to main/develop (open, push, reopen) | Strict validation          | Pre-merge quality gate with security                                                 |
+| `release-stable.yml`              | Push to main                            | Strict mode, SARIF uploads | Validate `main` and open the reviewed Stable promotion                               |
+| `release-stable-publish.yml`      | Merged PR to `release/stable`           | Managed Stable release     | Run release-please, build immutable evidence, publish, and open the metadata sync PR |
+| `weekly-security-maintenance.yml` | Schedule (Sun 2AM UTC)                  | Soft-fail warnings         | Weekly security posture                                                              |
+| `scorecard.yml`                   | Push to main, Schedule (Sun 3AM UTC)    | SARIF upload               | OpenSSF Scorecard security posture                                                   |
 
-pr-validation.yml jobs: 29 validation jobs feed a single `pr-validation-success` aggregator gate, which is the only required status check that gates merge; a `gate-completeness-check` job verifies every validation job is wired into that gate's `needs:` list.
+The validation jobs in `pr-validation.yml` feed the `pr-validation-success` aggregator, which is the required merge signal. The `gate-completeness-check` job verifies that every validation job appears in that gate's `needs:` list.
 
-release-stable.yml jobs: spell-check, markdown-lint, table-format, dependency-pinning-scan, action-version-consistency-scan, gitleaks-scan, pester-tests, docusaurus-tests, discover-python-projects, python-lint, pytest, release-please, close-milestone, reset-prerelease, generate-dependency-sbom, plugin-package-release, extension-provenance, upload-plugin-packages, vex-attest, sbom-diff, verify-provenance, append-verification-notes, publish-release
+release-stable.yml jobs: spell-check, markdown-lint, table-format, dependency-pinning-scan, action-version-consistency-scan, gitleaks-scan, pester-tests, docusaurus-tests, discover-python-projects, python-lint, pytest, prepare-promotion, open-promotion-pr
+
+release-stable-publish.yml jobs: release-please, sync-release-pr, validate-release, close-milestone, extension-provenance, plugin-package-release, plugin-snapshot-production, generate-dependency-sbom, upload-plugin-packages, vex-attest, verify-provenance, sbom-diff, append-verification-notes, publish-release, open-main-sync-pr
+
+`release-stable.yml` opens the reviewed `main` to `release/stable` promotion after validating `main`; it does not run release-please or package release assets. After any reviewed pull request merges into `release/stable`, `release-stable-publish.yml` runs release-please on `release/stable`. Release-please owns the managed Stable release PR and draft Stable release.
+
+When the managed PR merges, the workflow validates the released commit, builds and attests artifacts, publishes the immutable `plugins-v<version>` snapshot, finalizes the draft, and opens a non-auto-merged `release/stable` to `main` metadata synchronization PR.
+
+release-prerelease.yml packages an explicit commit on `main` with an ephemeral odd-minor version. It does not create or reset a prerelease source branch.
 
 ## Reusable Workflows
 
@@ -249,13 +258,13 @@ This architecture ensures:
 
 Workflow Execution Matrix:
 
-| Event                                | Workflows That Run                                          | CodeQL Included                                          |
-|--------------------------------------|-------------------------------------------------------------|----------------------------------------------------------|
-| Open PR to main/develop              | `pr-validation.yml` (31 jobs)                               | ✅ Yes                                                    |
-| Push to PR branch                    | `pr-validation.yml` (31 jobs)                               | ✅ Yes                                                    |
-| Merge to main                        | `release-stable.yml` (23 jobs), `security-scan.yml` (1 job) | ✅ Yes (via `security-scan.yml` -> `codeql-analysis.yml`) |
-| Sunday 4AM UTC                       | `codeql-analysis.yml`, `weekly-security-maintenance.yml`    | ✅ Yes (standalone)                                       |
-| Feature branch push (no open PR)[^1] | None                                                        | ❌ No                                                     |
+| Event                                | Workflows That Run                                       | CodeQL Included                                          |
+|--------------------------------------|----------------------------------------------------------|----------------------------------------------------------|
+| Open PR to main/develop              | `pr-validation.yml`                                      | ✅ Yes                                                    |
+| Push to PR branch                    | `pr-validation.yml`                                      | ✅ Yes                                                    |
+| Merge to main                        | `release-stable.yml`, `security-scan.yml`                | ✅ Yes (via `security-scan.yml` -> `codeql-analysis.yml`) |
+| Sunday 4AM UTC                       | `codeql-analysis.yml`, `weekly-security-maintenance.yml` | ✅ Yes (standalone)                                       |
+| Feature branch push (no open PR)[^1] | None                                                     | ❌ No                                                     |
 
 [^1]: Feature branches without an open PR are not validated. Open a PR to main or develop to trigger validation workflows.
 

@@ -2,7 +2,7 @@
 title: Contributing
 description: Guidelines for contributing code, documentation, and improvements to the HVE Core project
 author: HVE Core Team
-ms.date: 2026-07-16
+ms.date: 2026-08-01
 ms.topic: guide
 keywords:
   - contributing
@@ -98,8 +98,7 @@ npm run lint:yaml                 # Run YAML linter
 npm run lint:frontmatter          # Validate markdown frontmatter
 npm run lint:links                # Check link language paths
 npm run lint:md-links             # Check markdown links
-npm run lint:collections-metadata # Validate collection metadata
-npm run lint:marketplace          # Validate marketplace metadata
+npm run lint:marketplace          # Validate marketplace metadata and closure
 npm run lint:version-consistency  # Check action version consistency
 npm run validate:copyright        # Validate copyright headers
 npm run validate:skills           # Validate skill directory structure

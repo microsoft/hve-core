@@ -3,11 +3,67 @@
 # SPDX-License-Identifier: MIT
 
 BeforeAll {
-    Import-Module $PSScriptRoot/../../docs/Modules/DocsHelpers.psm1 -Force
+    $script:ModulePath = (Resolve-Path (Join-Path $PSScriptRoot '../../docs/Modules/DocsHelpers.psm1')).Path
+    Import-Module $script:ModulePath -Force
+
+    function script:New-AssetFile {
+        param(
+            [string]$RepoRoot,
+            [string]$RelativePath,
+            [string[]]$Lines,
+            [string]$Newline = "`n"
+        )
+
+        $full = Join-Path $RepoRoot $RelativePath
+        New-Item -ItemType Directory -Path (Split-Path $full -Parent) -Force | Out-Null
+        Set-Content -LiteralPath $full -Value ($Lines -join $Newline) -Encoding utf8NoBOM -NoNewline
+        return $full
+    }
 }
 
 AfterAll {
-    Remove-Module DocsHelpers, CollectionHelpers -Force -ErrorAction SilentlyContinue
+    Remove-Module DocsHelpers -Force -ErrorAction SilentlyContinue
+}
+
+Describe 'DocsHelpers module contract' -Tag 'Unit' {
+    BeforeAll {
+        $script:moduleSource = Get-Content -LiteralPath $script:ModulePath -Raw
+        $script:module = Get-Module DocsHelpers
+    }
+
+    It 'Imports only ArtifactHelpers and PowerShell-Yaml' {
+        $imports = @([regex]::Matches($script:moduleSource, '(?m)^Import-Module\s+(.+)$') | ForEach-Object { $_.Groups[1].Value.Trim() })
+        $imports | Should -Be @(
+            'PowerShell-Yaml -ErrorAction Stop'
+            "(Join-Path `$PSScriptRoot '../../lib/Modules/ArtifactHelpers.psm1') -Force"
+        )
+    }
+
+    It 'Declares no dependency on a collection helper module' {
+        $script:moduleSource | Should -Not -Match 'CollectionHelpers'
+    }
+
+    It 'Exports the documented asset documentation surface' {
+        @($script:module.ExportedFunctions.Keys | Sort-Object) | Should -Be @(
+            'ConvertTo-TableCell'
+            'Format-AssetInvocation'
+            'Format-MarkdownTable'
+            'Format-YamlScalar'
+            'Get-AssetDocMarker'
+            'Get-AssetDocsPath'
+            'Get-AssetFrontmatter'
+            'Get-AssetInvocation'
+            'Get-DocumentableAssets'
+            'Merge-AssetDocRegion'
+            'New-AssetGeneratedRegion'
+            'New-AssetMetadataBlock'
+            'New-AssetOverviewBody'
+            'New-AssetPageModel'
+            'Split-AssetDocByMarkers'
+            'Test-AssetDocStub'
+            'Test-AssetInteractive'
+        )
+    }
 }
 
 Describe 'Get-AssetFrontmatter' -Tag 'Unit' {
@@ -15,166 +71,140 @@ Describe 'Get-AssetFrontmatter' -Tag 'Unit' {
         $script:root = Join-Path $TestDrive 'frontmatter'
         New-Item -ItemType Directory -Path $script:root -Force | Out-Null
 
-        $script:validPath = Join-Path $script:root 'valid.md'
-        Set-Content -LiteralPath $script:validPath -Value (@(
-                '---'
-                'name: RPI Agent'
-                'description: An orchestrator'
-                'applyTo: "**/*.ps1"'
-                '---'
-                ''
-                '# Body'
-            ) -join "`n")
-
-        $script:noFrontmatterPath = Join-Path $script:root 'plain.md'
-        Set-Content -LiteralPath $script:noFrontmatterPath -Value "# Just a heading`n`nSome text."
-
-        $script:malformedPath = Join-Path $script:root 'malformed.md'
-        Set-Content -LiteralPath $script:malformedPath -Value (@(
-                '---'
-                'name: [unclosed'
-                ': : :'
-                '---'
-                ''
-                'Body'
-            ) -join "`n")
-    }
-
-    It 'Returns all frontmatter fields as a hashtable' {
-        $fm = Get-AssetFrontmatter -FilePath $script:validPath
-        $fm | Should -BeOfType [hashtable]
-        $fm['name'] | Should -Be 'RPI Agent'
-        $fm['description'] | Should -Be 'An orchestrator'
-        $fm['applyTo'] | Should -Be '**/*.ps1'
-    }
-
-    It 'Returns an empty hashtable when the file is missing' {
-        $fm = Get-AssetFrontmatter -FilePath (Join-Path $script:root 'does-not-exist.md')
-        $fm | Should -BeOfType [hashtable]
-        $fm.Count | Should -Be 0
-    }
-
-    It 'Returns an empty hashtable when there is no frontmatter' {
-        $fm = Get-AssetFrontmatter -FilePath $script:noFrontmatterPath
-        $fm.Count | Should -Be 0
-    }
-
-    It 'Returns an empty hashtable when frontmatter is malformed' {
-        $fm = Get-AssetFrontmatter -FilePath $script:malformedPath
-        $fm | Should -BeOfType [hashtable]
-    }
-
-    It 'Parses frontmatter identically when the file uses CRLF line endings' {
-        $lf = @(
+        $script:validPath = New-AssetFile -RepoRoot $script:root -RelativePath 'valid.md' -Lines @(
             '---'
             'name: RPI Agent'
-            'description: An orchestrator'
+            'description: Coordinates the RPI lifecycle.'
             'applyTo: "**/*.ps1"'
             '---'
             ''
             '# Body'
-        ) -join "`n"
-        $crlfPath = Join-Path $script:root 'crlf.md'
-        Set-Content -LiteralPath $crlfPath -Value ($lf -replace "`n", "`r`n") -Encoding utf8NoBOM -NoNewline
+        )
+        $script:crlfPath = New-AssetFile -RepoRoot $script:root -RelativePath 'crlf.md' -Newline "`r`n" -Lines @(
+            '---'
+            'name: RPI Agent'
+            'description: Coordinates the RPI lifecycle.'
+            'applyTo: "**/*.ps1"'
+            '---'
+            ''
+            '# Body'
+        )
+        $script:plainPath = New-AssetFile -RepoRoot $script:root -RelativePath 'plain.md' -Lines @('# Just a heading', '', 'Some text.')
+        $script:malformedPath = New-AssetFile -RepoRoot $script:root -RelativePath 'malformed.md' -Lines @('---', 'name: [unclosed', ': : :', '---', '', 'Body')
+    }
 
-        $fm = Get-AssetFrontmatter -FilePath $crlfPath
-        $fm['name'] | Should -Be 'RPI Agent'
-        $fm['description'] | Should -Be 'An orchestrator'
-        $fm['applyTo'] | Should -Be '**/*.ps1'
+    It 'Returns every declared frontmatter field' {
+        $frontmatter = Get-AssetFrontmatter -FilePath $script:validPath
+
+        $frontmatter | Should -BeOfType [hashtable]
+        $frontmatter['name'] | Should -Be 'RPI Agent'
+        $frontmatter['description'] | Should -Be 'Coordinates the RPI lifecycle.'
+        $frontmatter['applyTo'] | Should -Be '**/*.ps1'
+    }
+
+    It 'Parses CRLF frontmatter identically to LF frontmatter' {
+        $crlf = Get-AssetFrontmatter -FilePath $script:crlfPath
+
+        $crlf['name'] | Should -Be 'RPI Agent'
+        $crlf['description'] | Should -Be 'Coordinates the RPI lifecycle.'
+        $crlf['applyTo'] | Should -Be '**/*.ps1'
+    }
+
+    It 'Returns an empty hashtable when the file does not exist' {
+        $frontmatter = Get-AssetFrontmatter -FilePath (Join-Path $script:root 'absent.md')
+
+        $frontmatter | Should -BeOfType [hashtable]
+        $frontmatter.Count | Should -Be 0
+    }
+
+    It 'Returns an empty hashtable when the file declares no frontmatter' {
+        (Get-AssetFrontmatter -FilePath $script:plainPath).Count | Should -Be 0
+    }
+
+    It 'Returns a hashtable rather than throwing on malformed frontmatter' {
+        Get-AssetFrontmatter -FilePath $script:malformedPath | Should -BeOfType [hashtable]
     }
 }
 
 Describe 'Get-DocumentableAssets' -Tag 'Unit' {
     BeforeAll {
-        $script:repoRoot = Join-Path $TestDrive 'repo'
-        $ghDir = Join-Path $script:repoRoot '.github'
+        $script:repoRoot = Join-Path $TestDrive 'discovery-repo'
 
-        function New-Fixture {
-            param([string]$RelativePath, [string]$Content = '---')
-            $full = Join-Path $ghDir $RelativePath
-            $dir = Split-Path -Parent $full
-            New-Item -ItemType Directory -Path $dir -Force | Out-Null
-            Set-Content -LiteralPath $full -Value $Content
-        }
+        # Documentable assets live under a package directory within each kind.
+        New-AssetFile -RepoRoot $script:repoRoot -RelativePath '.github/agents/hve-core/rpi-agent.agent.md' -Lines @('---', 'description: Agent.', '---') | Out-Null
+        New-AssetFile -RepoRoot $script:repoRoot -RelativePath '.github/agents/hve-core/subagents/rpi-planner.agent.md' -Lines @('---', 'description: Subagent.', '---') | Out-Null
+        New-AssetFile -RepoRoot $script:repoRoot -RelativePath '.github/prompts/hve-core/rpi.prompt.md' -Lines @('---', 'description: Prompt.', '---') | Out-Null
+        New-AssetFile -RepoRoot $script:repoRoot -RelativePath '.github/instructions/shared/telemetry-overlay.instructions.md' -Lines @('---', 'description: Instructions.', '---') | Out-Null
+        New-AssetFile -RepoRoot $script:repoRoot -RelativePath '.github/skills/hve-core/documentation/SKILL.md' -Lines @('---', 'description: Skill.', '---') | Out-Null
 
-        # Documentable, collection-scoped
-        New-Fixture 'agents/hve-core/rpi-agent.agent.md'
-        New-Fixture 'agents/hve-core/subagents/sample-subagent.agent.md'
-        New-Fixture 'prompts/hve-core/sample-prompt.prompt.md'
-        New-Fixture 'instructions/shared/loc.instructions.md'
-        New-Fixture 'skills/hve-core/documentation/SKILL.md'
+        # Root-level repo-specific assets are excluded from the package surface.
+        New-AssetFile -RepoRoot $script:repoRoot -RelativePath '.github/agents/issue-triage.agent.md' -Lines @('---', 'description: Repo agent.', '---') | Out-Null
+        New-AssetFile -RepoRoot $script:repoRoot -RelativePath '.github/instructions/workflows.instructions.md' -Lines @('---', 'description: Repo instructions.', '---') | Out-Null
 
-        # Excluded: root-level repo-specific
-        New-Fixture 'agents/internal.agent.md'
-        New-Fixture 'instructions/workflows.instructions.md'
-
-        # Excluded: deprecated tree
-        New-Fixture 'agents/deprecated/old.agent.md'
-
-        # Excluded: hooks are not a documentable kind
-        New-Fixture 'hooks/shared/telemetry.json' '{ "version": 1 }'
+        # Deprecated trees and non-documentable kinds are excluded.
+        New-AssetFile -RepoRoot $script:repoRoot -RelativePath '.github/agents/deprecated/retired.agent.md' -Lines @('---', 'description: Retired.', '---') | Out-Null
+        New-AssetFile -RepoRoot $script:repoRoot -RelativePath '.github/hooks/shared/telemetry.json' -Lines @('{ "version": 1 }') | Out-Null
 
         $script:assets = @(Get-DocumentableAssets -RepoRoot $script:repoRoot)
-        $script:paths = $script:assets | ForEach-Object { $_.path }
+        $script:paths = @($script:assets | ForEach-Object { $_.path })
     }
 
-    It 'Includes collection-scoped agents, prompts, instructions, and skills' {
-        $script:paths | Should -Contain '.github/agents/hve-core/rpi-agent.agent.md'
-        $script:paths | Should -Contain '.github/prompts/hve-core/sample-prompt.prompt.md'
-        $script:paths | Should -Contain '.github/instructions/shared/loc.instructions.md'
-        $script:paths | Should -Contain '.github/skills/hve-core/documentation'
-    }
-
-    It 'Includes nested subagents' {
-        $script:paths | Should -Contain '.github/agents/hve-core/subagents/sample-subagent.agent.md'
+    It 'Discovers exactly the package-scoped documentable assets' {
+        @($script:paths | Sort-Object) | Should -Be @(
+            '.github/agents/hve-core/rpi-agent.agent.md'
+            '.github/agents/hve-core/subagents/rpi-planner.agent.md'
+            '.github/instructions/shared/telemetry-overlay.instructions.md'
+            '.github/prompts/hve-core/rpi.prompt.md'
+            '.github/skills/hve-core/documentation'
+        )
     }
 
     It 'Excludes root-level repo-specific assets' {
-        $script:paths | Should -Not -Contain '.github/agents/internal.agent.md'
+        $script:paths | Should -Not -Contain '.github/agents/issue-triage.agent.md'
         $script:paths | Should -Not -Contain '.github/instructions/workflows.instructions.md'
     }
 
     It 'Excludes deprecated assets' {
-        $script:paths | Should -Not -Contain '.github/agents/deprecated/old.agent.md'
+        $script:paths | Should -Not -Contain '.github/agents/deprecated/retired.agent.md'
     }
 
-    It 'Excludes hooks (not a documentable kind)' {
-        $script:assets.kind | Should -Not -Contain 'hook'
+    It 'Excludes hooks because they are not a documentable kind' {
+        @($script:assets | Where-Object { $_.kind -eq 'hook' }) | Should -BeNullOrEmpty
     }
 
-    It 'Returns only documentable kinds' {
-        $script:assets.kind | Sort-Object -Unique | Should -Be @('agent', 'instruction', 'prompt', 'skill')
-    }
-
-    It 'Sorts results by kind then path' {
-        $ordered = $script:assets | Sort-Object -Property @{ Expression = 'kind' }, @{ Expression = 'path' }
-        ($script:assets | ForEach-Object { "$($_.kind)|$($_.path)" }) |
-            Should -Be ($ordered | ForEach-Object { "$($_.kind)|$($_.path)" })
+    It 'Returns assets sorted by kind then path' {
+        @($script:assets | ForEach-Object { "$($_.kind)|$($_.path)" }) | Should -Be @(
+            'agent|.github/agents/hve-core/rpi-agent.agent.md'
+            'agent|.github/agents/hve-core/subagents/rpi-planner.agent.md'
+            'instruction|.github/instructions/shared/telemetry-overlay.instructions.md'
+            'prompt|.github/prompts/hve-core/rpi.prompt.md'
+            'skill|.github/skills/hve-core/documentation'
+        )
     }
 }
 
 Describe 'Get-AssetDocsPath' -Tag 'Unit' {
-    It 'Derives the docs path for an agent' {
+    It 'Maps an agent to its reference page' {
         Get-AssetDocsPath -Path '.github/agents/hve-core/rpi-agent.agent.md' -Kind 'agent' |
             Should -Be 'docs/reference/agents/hve-core/rpi-agent.md'
     }
 
-    It 'Preserves hierarchy for nested subagents' {
-        Get-AssetDocsPath -Path '.github/agents/hve-core/subagents/sample-subagent.agent.md' -Kind 'agent' |
-            Should -Be 'docs/reference/agents/hve-core/subagents/sample-subagent.md'
+    It 'Preserves the subagent directory level' {
+        Get-AssetDocsPath -Path '.github/agents/hve-core/subagents/rpi-planner.agent.md' -Kind 'agent' |
+            Should -Be 'docs/reference/agents/hve-core/subagents/rpi-planner.md'
     }
 
-    It 'Derives the docs path for a prompt' {
-        Get-AssetDocsPath -Path '.github/prompts/security/vex-triage.prompt.md' -Kind 'prompt' |
-            Should -Be 'docs/reference/prompts/security/vex-triage.md'
+    It 'Maps a prompt to its reference page' {
+        Get-AssetDocsPath -Path '.github/prompts/hve-core/rpi.prompt.md' -Kind 'prompt' |
+            Should -Be 'docs/reference/prompts/hve-core/rpi.md'
     }
 
-    It 'Derives the docs path for a nested instruction' {
-        Get-AssetDocsPath -Path '.github/instructions/coding-standards/powershell/powershell.instructions.md' -Kind 'instruction' |
-            Should -Be 'docs/reference/instructions/coding-standards/powershell/powershell.md'
+    It 'Maps an instruction to its reference page' {
+        Get-AssetDocsPath -Path '.github/instructions/shared/telemetry-overlay.instructions.md' -Kind 'instruction' |
+            Should -Be 'docs/reference/instructions/shared/telemetry-overlay.md'
     }
 
-    It 'Appends .md to the skill directory name' {
+    It 'Maps a skill directory to its reference page' {
         Get-AssetDocsPath -Path '.github/skills/hve-core/documentation' -Kind 'skill' |
             Should -Be 'docs/reference/skills/hve-core/documentation.md'
     }
@@ -184,466 +214,338 @@ Describe 'Get-AssetDocsPath' -Tag 'Unit' {
             Should -Be 'docs/reference/agents/hve-core/rpi-agent.md'
     }
 
-    It 'Throws for a path outside the documentable .github tree' {
-        { Get-AssetDocsPath -Path 'docs/reference/agents/foo.md' -Kind 'agent' } | Should -Throw
+    It 'Throws for a path outside the documentable kind directories' {
+        { Get-AssetDocsPath -Path '.github/workflows/pr-validation.yml' -Kind 'agent' } |
+            Should -Throw -ExpectedMessage 'Path is not a documentable .github asset: .github/workflows/pr-validation.yml'
     }
 }
 
 Describe 'Get-AssetInvocation' -Tag 'Unit' {
-    It 'Uses the agent display name from frontmatter' {
-        $result = Get-AssetInvocation -Kind 'agent' -Name 'rpi-agent' -Frontmatter @{ name = 'RPI Agent' }
-        $result.Mechanism | Should -Be 'agent-picker'
-        $result.Token | Should -Be 'RPI Agent'
+    It 'Reports an agent as selectable in the chat agent picker under its display name' {
+        $invocation = Get-AssetInvocation -Kind 'agent' -Name 'rpi-agent' -Frontmatter @{ name = 'RPI Agent' } -Path '.github/agents/hve-core/rpi-agent.agent.md'
+
+        $invocation.Mechanism | Should -Be 'agent-picker'
+        $invocation.Token | Should -Be 'RPI Agent'
     }
 
-    It 'Falls back to the name when the agent has no display name' {
-        $result = Get-AssetInvocation -Kind 'agent' -Name 'rpi-agent'
-        $result.Token | Should -Be 'rpi-agent'
+    It 'Falls back to the artifact key when an agent declares no display name' {
+        (Get-AssetInvocation -Kind 'agent' -Name 'rpi-agent' -Path '.github/agents/hve-core/rpi-agent.agent.md').Token | Should -Be 'rpi-agent'
     }
 
-    It 'Renders a prompt as a slash command' {
-        $result = Get-AssetInvocation -Kind 'prompt' -Name 'vex-triage'
-        $result.Mechanism | Should -Be 'slash-command'
-        $result.Token | Should -Be '/vex-triage'
+    It 'Reports an agent under a subagents directory as delegated' {
+        (Get-AssetInvocation -Kind 'agent' -Name 'rpi-planner' -Path '.github/agents/hve-core/subagents/rpi-planner.agent.md').Mechanism |
+            Should -Be 'subagent-delegated'
     }
 
-    It 'Renders an instruction as auto-applied with its applyTo glob' {
-        $result = Get-AssetInvocation -Kind 'instruction' -Name 'powershell' -Frontmatter @{ applyTo = '**/*.ps1' }
-        $result.Mechanism | Should -Be 'auto-applied'
-        $result.Token | Should -Be '**/*.ps1'
+    It 'Reports a prompt as a slash command' {
+        $invocation = Get-AssetInvocation -Kind 'prompt' -Name 'rpi'
+
+        $invocation.Mechanism | Should -Be 'slash-command'
+        $invocation.Token | Should -Be '/rpi'
     }
 
-    It 'Returns an empty token when an instruction has no applyTo' {
-        $result = Get-AssetInvocation -Kind 'instruction' -Name 'powershell'
-        $result.Token | Should -Be ''
+    It 'Reports an instruction as auto-applied to its applyTo glob' {
+        $invocation = Get-AssetInvocation -Kind 'instruction' -Name 'markdown' -Frontmatter @{ applyTo = '**/*.md' }
+
+        $invocation.Mechanism | Should -Be 'auto-applied'
+        $invocation.Token | Should -Be '**/*.md'
     }
 
-    It 'Renders a skill that opts out of user invocation as skill-load' {
-        $result = Get-AssetInvocation -Kind 'skill' -Name 'documentation' -Frontmatter @{ 'user-invocable' = $false }
-        $result.Mechanism | Should -Be 'skill-load'
-        $result.Token | Should -Be 'documentation'
+    It 'Reports an instruction with no applyTo as auto-applied with an empty token' {
+        (Get-AssetInvocation -Kind 'instruction' -Name 'markdown').Token | Should -Be ''
     }
 
-    It 'Treats an absent user-invocable as true, matching the schema default' {
-        $result = Get-AssetInvocation -Kind 'skill' -Name 'documentation'
-        $result.Mechanism | Should -Be 'skill-user-and-load'
-        $result.Token | Should -Be '/documentation'
+    It 'Reports a skill as user-invocable and model-loadable by default' {
+        $invocation = Get-AssetInvocation -Kind 'skill' -Name 'documentation'
+
+        $invocation.Mechanism | Should -Be 'skill-user-and-load'
+        $invocation.Token | Should -Be '/documentation'
     }
 
-    It 'Renders a user-invocable skill as reachable both ways' {
-        $result = Get-AssetInvocation -Kind 'skill' -Name 'rpi-research' -Frontmatter @{ 'user-invocable' = $true }
-        $result.Mechanism | Should -Be 'skill-user-and-load'
-        $result.Token | Should -Be '/rpi-research'
+    It 'Reports a skill with model invocation disabled as user-only' {
+        (Get-AssetInvocation -Kind 'skill' -Name 'documentation' -Frontmatter @{ 'disable-model-invocation' = $true }).Mechanism |
+            Should -Be 'skill-user-only'
     }
 
-    It 'Renders a skill that disables model invocation as user-only' {
-        $result = Get-AssetInvocation -Kind 'skill' -Name 'copilot-otel-metrics' -Frontmatter @{ 'user-invocable' = $true; 'disable-model-invocation' = $true }
-        $result.Mechanism | Should -Be 'skill-user-only'
-        $result.Token | Should -Be '/copilot-otel-metrics'
+    It 'Reports a skill that is not user-invocable as load-only' {
+        $invocation = Get-AssetInvocation -Kind 'skill' -Name 'documentation' -Frontmatter @{ 'user-invocable' = $false }
+
+        $invocation.Mechanism | Should -Be 'skill-load'
+        $invocation.Token | Should -Be 'documentation'
     }
 
-    It 'Renders a skill that disables model invocation without declaring user-invocable as user-only' {
-        $result = Get-AssetInvocation -Kind 'skill' -Name 'caveman' -Frontmatter @{ 'disable-model-invocation' = $true }
-        $result.Mechanism | Should -Be 'skill-user-only'
-        $result.Token | Should -Be '/caveman'
-    }
-
-    It 'Coerces a quoted true to a set flag' {
-        $result = Get-AssetInvocation -Kind 'skill' -Name 'demo' -Frontmatter @{ 'user-invocable' = 'true' }
-        $result.Mechanism | Should -Be 'skill-user-and-load'
-    }
-
-    It 'Coerces a quoted false to a clear flag rather than reading it as truthy' {
-        $result = Get-AssetInvocation -Kind 'skill' -Name 'demo' -Frontmatter @{ 'user-invocable' = 'false' }
-        $result.Mechanism | Should -Be 'skill-load'
-    }
-
-    It 'Treats an unrecognized flag value as false' {
-        $result = Get-AssetInvocation -Kind 'skill' -Name 'demo' -Frontmatter @{ 'user-invocable' = 42 }
-        $result.Mechanism | Should -Be 'skill-load'
-    }
-
-    It 'Classifies an agent under a subagents directory as a delegated subagent' {
-        $result = Get-AssetInvocation -Kind 'agent' -Name 'researcher-subagent' -Frontmatter @{ name = 'Researcher Subagent' } -Path '.github/agents/hve-core/subagents/researcher-subagent.agent.md'
-        $result.Mechanism | Should -Be 'subagent-delegated'
-        $result.Token | Should -Be 'Researcher Subagent'
-    }
-
-    It 'Keeps a top-level agent as agent-picker even when a path is provided' {
-        $result = Get-AssetInvocation -Kind 'agent' -Name 'rpi-agent' -Frontmatter @{ name = 'RPI Agent' } -Path '.github/agents/hve-core/rpi-agent.agent.md'
-        $result.Mechanism | Should -Be 'agent-picker'
+    It 'Treats the quoted string false as false rather than truthy' {
+        (Get-AssetInvocation -Kind 'skill' -Name 'documentation' -Frontmatter @{ 'user-invocable' = 'false' }).Mechanism |
+            Should -Be 'skill-load'
     }
 }
 
 Describe 'Test-AssetInteractive' -Tag 'Unit' {
-    It 'Treats agents as interactive' {
-        Test-AssetInteractive -Kind 'agent' | Should -BeTrue
+    It 'Treats a chat-picker agent as interactive' {
+        Test-AssetInteractive -Kind 'agent' -Path '.github/agents/hve-core/rpi-agent.agent.md' | Should -BeTrue
     }
 
     It 'Treats a delegated subagent as non-interactive' {
-        Test-AssetInteractive -Kind 'agent' -Path '.github/agents/hve-core/subagents/researcher-subagent.agent.md' | Should -BeFalse
+        Test-AssetInteractive -Kind 'agent' -Path '.github/agents/hve-core/subagents/rpi-planner.agent.md' | Should -BeFalse
     }
 
-    It 'Treats a prompt with argument-hint as interactive' {
-        Test-AssetInteractive -Kind 'prompt' -Frontmatter @{ 'argument-hint' = 'report=path' } | Should -BeTrue
+    It 'Treats a prompt declaring an argument hint as interactive' {
+        Test-AssetInteractive -Kind 'prompt' -Frontmatter @{ 'argument-hint' = 'task description' } | Should -BeTrue
     }
 
-    It 'Treats a prompt that binds an agent as interactive' {
-        Test-AssetInteractive -Kind 'prompt' -Frontmatter @{ agent = 'VEX Generator' } | Should -BeTrue
+    It 'Treats a prompt binding an agent as interactive' {
+        Test-AssetInteractive -Kind 'prompt' -Frontmatter @{ agent = 'RPI Agent' } | Should -BeTrue
     }
 
-    It 'Treats a bare prompt as non-interactive' {
-        Test-AssetInteractive -Kind 'prompt' | Should -BeFalse
+    It 'Treats a prompt with neither inputs nor an agent as non-interactive' {
+        Test-AssetInteractive -Kind 'prompt' -Frontmatter @{ description = 'A prompt.' } | Should -BeFalse
     }
 
-    It 'Treats instructions as non-interactive' {
+    It 'Treats instructions and skills as non-interactive' {
         Test-AssetInteractive -Kind 'instruction' | Should -BeFalse
-    }
-
-    It 'Treats skills as non-interactive' {
         Test-AssetInteractive -Kind 'skill' | Should -BeFalse
     }
 }
 
-Describe 'Get-AssetDocMarker' -Tag 'Unit' {
-    It 'Builds the BEGIN marker for a region' {
-        Get-AssetDocMarker -Region 'metadata' -Boundary Begin |
-            Should -Be '<!-- BEGIN AUTO-GENERATED: metadata -->'
-    }
-
-    It 'Builds the END marker for a region' {
-        Get-AssetDocMarker -Region 'metadata' -Boundary End |
-            Should -Be '<!-- END AUTO-GENERATED: metadata -->'
-    }
-}
-
-Describe 'New-AssetGeneratedRegion' -Tag 'Unit' {
-    It 'Wraps the body between the region markers' {
-        $region = New-AssetGeneratedRegion -Region 'overview' -Body 'Hello'
-        $region | Should -Be "<!-- BEGIN AUTO-GENERATED: overview -->`nHello`n<!-- END AUTO-GENERATED: overview -->"
-    }
-
-    It 'Trims surrounding blank lines from the body' {
-        $region = New-AssetGeneratedRegion -Region 'overview' -Body "`n`nHello`n`n"
-        $region | Should -Be "<!-- BEGIN AUTO-GENERATED: overview -->`nHello`n<!-- END AUTO-GENERATED: overview -->"
-    }
-}
-
-Describe 'Split-AssetDocByMarkers' -Tag 'Unit' {
-    It 'Extracts the body and surrounding content when markers are present' {
-        $content = @(
-            'before'
-            '<!-- BEGIN AUTO-GENERATED: metadata -->'
-            'BODY'
-            '<!-- END AUTO-GENERATED: metadata -->'
-            'after'
-        ) -join "`n"
-        $split = Split-AssetDocByMarkers -Content $content -Region 'metadata'
-        $split.HasMarkers | Should -BeTrue
-        $split.Body | Should -Be 'BODY'
-        $split.Before | Should -Be ('before' + "`n")
-        $split.After | Should -Be ("`n" + 'after')
-    }
-
-    It 'Reports no markers when the region is absent' {
-        $split = Split-AssetDocByMarkers -Content 'plain content' -Region 'metadata'
-        $split.HasMarkers | Should -BeFalse
-        $split.Before | Should -Be 'plain content'
-    }
-
-    It 'Reports no markers when begin and end are mis-ordered' {
-        $content = "<!-- END AUTO-GENERATED: metadata -->x<!-- BEGIN AUTO-GENERATED: metadata -->"
-        $split = Split-AssetDocByMarkers -Content $content -Region 'metadata'
-        $split.HasMarkers | Should -BeFalse
-    }
-
-    It 'Reports no markers when a begin marker is duplicated before the end' {
-        $content = @(
-            'before'
-            '<!-- BEGIN AUTO-GENERATED: metadata -->'
-            'first'
-            '<!-- BEGIN AUTO-GENERATED: metadata -->'
-            'second'
-            '<!-- END AUTO-GENERATED: metadata -->'
-            'after'
-        ) -join "`n"
-        $split = Split-AssetDocByMarkers -Content $content -Region 'metadata'
-        $split.HasMarkers | Should -BeFalse
-        $split.Before | Should -Be $content
-    }
-
-    It 'Extracts identical segments when content uses CRLF line endings' {
-        $lf = @(
-            'before'
-            '<!-- BEGIN AUTO-GENERATED: metadata -->'
-            'BODY'
-            '<!-- END AUTO-GENERATED: metadata -->'
-            'after'
-        ) -join "`n"
-        $crlf = $lf -replace "`n", "`r`n"
-
-        $lfSplit = Split-AssetDocByMarkers -Content $lf -Region 'metadata'
-        $crlfSplit = Split-AssetDocByMarkers -Content $crlf -Region 'metadata'
-
-        $crlfSplit.HasMarkers | Should -Be $lfSplit.HasMarkers
-        $crlfSplit.Body | Should -Be $lfSplit.Body
-        # Before/After retain their native line endings; the IndexOf offsets must
-        # still land on the marker boundaries so the segments match after
-        # normalizing CRLF back to LF.
-        ($crlfSplit.Before -replace "`r`n", "`n") | Should -Be $lfSplit.Before
-        ($crlfSplit.After -replace "`r`n", "`n") | Should -Be $lfSplit.After
-    }
-}
-
-Describe 'Merge-AssetDocRegion' -Tag 'Unit' {
-    BeforeAll {
-        $script:doc = @(
-            '<!-- BEGIN AUTO-GENERATED: metadata -->'
-            'old metadata'
-            '<!-- END AUTO-GENERATED: metadata -->'
-            ''
-            '## When to use it'
-            ''
-            'Human authored guidance.'
-            ''
-            '<!-- BEGIN AUTO-GENERATED: overview -->'
-            'old overview'
-            '<!-- END AUTO-GENERATED: overview -->'
-        ) -join "`n"
-    }
-
-    It 'Replaces only the target region body' {
-        $merged = Merge-AssetDocRegion -Content $script:doc -Region 'metadata' -Body 'new metadata'
-        $merged | Should -Match 'new metadata'
-        $merged | Should -Not -Match 'old metadata'
-    }
-
-    It 'Preserves human-authored sections and other regions' {
-        $merged = Merge-AssetDocRegion -Content $script:doc -Region 'metadata' -Body 'new metadata'
-        $merged | Should -Match 'Human authored guidance\.'
-        $merged | Should -Match 'old overview'
-    }
-
-    It 'Is idempotent when merging the same body twice' {
-        $once = Merge-AssetDocRegion -Content $script:doc -Region 'metadata' -Body 'new metadata'
-        $twice = Merge-AssetDocRegion -Content $once -Region 'metadata' -Body 'new metadata'
-        $twice | Should -Be $once
-    }
-
-    It 'Throws when the region markers are absent' {
-        { Merge-AssetDocRegion -Content 'no markers here' -Region 'metadata' -Body 'x' } | Should -Throw
-    }
-
-    It 'Merges identically apart from line endings when the page uses CRLF' {
-        $crlf = $script:doc -replace "`n", "`r`n"
-        $lfMerged = Merge-AssetDocRegion -Content $script:doc -Region 'metadata' -Body 'new metadata'
-        $crlfMerged = Merge-AssetDocRegion -Content $crlf -Region 'metadata' -Body 'new metadata'
-        ($crlfMerged -replace "`r`n", "`n") | Should -Be $lfMerged
-    }
-}
-
-Describe 'Test-AssetDocStub' -Tag 'Unit' {
-    It 'Detects the stub sentinel' {
-        Test-AssetDocStub -Content "## When to use it`n`n<!-- asset-docs:stub -->`nTODO" | Should -BeTrue
-    }
-
-    It 'Returns false when no stub sentinel is present' {
-        Test-AssetDocStub -Content "## When to use it`n`nFully authored." | Should -BeFalse
-    }
-}
-
-Describe 'Format-YamlScalar' -Tag 'Unit' {
-    It 'Leaves a safe scalar unquoted' {
-        Format-YamlScalar -Value 'Alpha Agent' | Should -Be 'Alpha Agent'
-    }
-
-    It 'Quotes values containing a colon' {
-        Format-YamlScalar -Value 'Triage: draft VEX' | Should -Be '"Triage: draft VEX"'
-    }
-
-    It 'Escapes embedded double quotes' {
-        Format-YamlScalar -Value 'say "hi"' | Should -Be '"say \"hi\""'
-    }
-
-    It 'Quotes an empty string' {
-        Format-YamlScalar -Value '' | Should -Be '""'
-    }
-}
-
-Describe 'ConvertTo-TableCell' -Tag 'Unit' {
-    It 'Collapses line breaks to spaces' {
-        ConvertTo-TableCell -Value ('line one' + "`n" + 'line two') | Should -Be 'line one line two'
-    }
-
-    It 'Escapes pipe characters' {
-        ConvertTo-TableCell -Value 'a | b' | Should -Be 'a \| b'
-    }
-
-    It 'Collapses CRLF line breaks identically to LF' {
-        $lf = 'line one' + "`n" + 'line two'
-        $crlf = $lf -replace "`n", "`r`n"
-        ConvertTo-TableCell -Value $crlf | Should -Be (ConvertTo-TableCell -Value $lf)
-    }
-}
-
 Describe 'Format-AssetInvocation' -Tag 'Unit' {
-    It 'Describes an agent picker invocation' {
-        $text = Format-AssetInvocation -Invocation @{ Mechanism = 'agent-picker'; Token = 'RPI Agent' }
-        $text | Should -Match 'chat agent picker'
-        $text | Should -Match 'RPI Agent'
+    It 'Renders the chat agent picker mechanism' {
+        Format-AssetInvocation -Invocation @{ Mechanism = 'agent-picker'; Token = 'RPI Agent' } |
+            Should -Be 'Selected from the chat agent picker as `RPI Agent`'
     }
 
-    It 'Describes a slash command invocation' {
-        Format-AssetInvocation -Invocation @{ Mechanism = 'slash-command'; Token = '/demo' } |
-            Should -Match 'Slash command'
+    It 'Renders the slash command mechanism' {
+        Format-AssetInvocation -Invocation @{ Mechanism = 'slash-command'; Token = '/rpi' } |
+            Should -Be 'Slash command `/rpi`'
     }
 
-    It 'Describes an auto-applied instruction with a glob' {
-        Format-AssetInvocation -Invocation @{ Mechanism = 'auto-applied'; Token = '**/*.ps1' } |
-            Should -Match 'Applied automatically to'
+    It 'Renders the auto-applied mechanism with its glob' {
+        Format-AssetInvocation -Invocation @{ Mechanism = 'auto-applied'; Token = '**/*.md' } |
+            Should -Be 'Applied automatically to `**/*.md`'
     }
 
-    It 'Describes an auto-applied instruction without a glob' {
+    It 'Renders the auto-applied mechanism without a glob' {
         Format-AssetInvocation -Invocation @{ Mechanism = 'auto-applied'; Token = '' } |
             Should -Be 'Applied automatically'
     }
 
-    It 'Describes a skill load' {
-        Format-AssetInvocation -Invocation @{ Mechanism = 'skill-load'; Token = 'documentation' } |
-            Should -Match 'Loaded on demand'
+    It 'Renders the delegated subagent mechanism' {
+        Format-AssetInvocation -Invocation @{ Mechanism = 'subagent-delegated'; Token = 'RPI Planner' } |
+            Should -Be 'Delegated subagent, dispatched by a parent agent (not selected directly)'
     }
 
-    It 'Describes a user-only skill without claiming agent loading' {
-        $text = Format-AssetInvocation -Invocation @{ Mechanism = 'skill-user-only'; Token = '/copilot-otel-metrics' }
-        $text | Should -Match 'Invoked directly'
-        $text | Should -Match '/copilot-otel-metrics'
-        $text | Should -Not -Match 'Loaded on demand'
+    It 'Renders a drift marker and warns for an unrecognized mechanism' {
+        $warnings = @()
+        $rendered = Format-AssetInvocation -Invocation @{ Mechanism = 'not-a-mechanism'; Token = 'x' } -WarningVariable warnings -WarningAction SilentlyContinue
+
+        $rendered | Should -Be '(unknown invocation: not-a-mechanism)'
+        @($warnings).Count | Should -Be 1
+    }
+}
+
+Describe 'Generated region markers' -Tag 'Unit' {
+    It 'Builds the named begin and end markers' {
+        Get-AssetDocMarker -Region 'metadata' -Boundary Begin | Should -Be '<!-- BEGIN AUTO-GENERATED: metadata -->'
+        Get-AssetDocMarker -Region 'metadata' -Boundary End | Should -Be '<!-- END AUTO-GENERATED: metadata -->'
     }
 
-    It 'Describes a dual-path skill as reachable both ways' {
-        $text = Format-AssetInvocation -Invocation @{ Mechanism = 'skill-user-and-load'; Token = '/rpi-research' }
-        $text | Should -Match 'Invoked directly'
-        $text | Should -Match '/rpi-research'
-        $text | Should -Match 'loaded on demand'
+    It 'Wraps a body between the markers and trims surrounding blank lines' {
+        New-AssetGeneratedRegion -Region 'overview' -Body "`n`nBody text`n`n" |
+            Should -Be "<!-- BEGIN AUTO-GENERATED: overview -->`nBody text`n<!-- END AUTO-GENERATED: overview -->"
     }
 
-    It 'Emits a drift marker for a mechanism with no renderer' {
-        Format-AssetInvocation -Invocation @{ Mechanism = 'not-a-mechanism'; Token = 'x' } -WarningAction SilentlyContinue |
-            Should -Match 'unknown invocation'
+    It 'Splits a page into the human sections around the generated body' {
+        $content = "Header`n`n<!-- BEGIN AUTO-GENERATED: overview -->`nGenerated`n<!-- END AUTO-GENERATED: overview -->`n`n## When to use it`n"
+
+        $split = Split-AssetDocByMarkers -Content $content -Region 'overview'
+
+        $split.HasMarkers | Should -BeTrue
+        $split.Before | Should -Be "Header`n`n"
+        $split.Body | Should -Be 'Generated'
+        $split.After | Should -Be "`n`n## When to use it`n"
     }
 
-    It 'Describes a delegated subagent' {
-        Format-AssetInvocation -Invocation @{ Mechanism = 'subagent-delegated'; Token = 'Researcher Subagent' } |
-            Should -Match 'Delegated subagent'
+    It 'Reports no markers and returns the whole page when the region is absent' {
+        $split = Split-AssetDocByMarkers -Content "Header only`n" -Region 'overview'
+
+        $split.HasMarkers | Should -BeFalse
+        $split.Before | Should -Be "Header only`n"
+        $split.Body | Should -Be ''
+        $split.After | Should -Be ''
+    }
+
+    It 'Reports no markers when the end marker precedes the begin marker' {
+        $content = "<!-- END AUTO-GENERATED: overview -->`nbody`n<!-- BEGIN AUTO-GENERATED: overview -->"
+
+        (Split-AssetDocByMarkers -Content $content -Region 'overview').HasMarkers | Should -BeFalse
+    }
+
+    It 'Reports no markers when a second begin marker is nested in the region' {
+        $content = "<!-- BEGIN AUTO-GENERATED: overview -->`n<!-- BEGIN AUTO-GENERATED: overview -->`nbody`n<!-- END AUTO-GENERATED: overview -->"
+
+        (Split-AssetDocByMarkers -Content $content -Region 'overview').HasMarkers | Should -BeFalse
+    }
+}
+
+Describe 'Merge-AssetDocRegion' -Tag 'Unit' {
+    It 'Replaces only the generated body and preserves both human sections' {
+        $content = "## Head`n`n<!-- BEGIN AUTO-GENERATED: overview -->`nOld`n<!-- END AUTO-GENERATED: overview -->`n`n## Example usage`n`nAuthored prose.`n"
+
+        Merge-AssetDocRegion -Content $content -Region 'overview' -Body 'New' |
+            Should -Be "## Head`n`n<!-- BEGIN AUTO-GENERATED: overview -->`nNew`n<!-- END AUTO-GENERATED: overview -->`n`n## Example usage`n`nAuthored prose.`n"
+    }
+
+    It 'Throws rather than discarding human sections when the region is absent' {
+        { Merge-AssetDocRegion -Content "## Head`n`nAuthored prose.`n" -Region 'overview' -Body 'New' } |
+            Should -Throw -ExpectedMessage "Region markers for 'overview' not found; cannot merge without corrupting human-authored sections."
+    }
+}
+
+Describe 'Test-AssetDocStub' -Tag 'Unit' {
+    It 'Detects an unwritten human section' {
+        Test-AssetDocStub -Content "## When to use it`n`n<!-- asset-docs:stub -->`nPlaceholder." | Should -BeTrue
+    }
+
+    It 'Returns false for a fully authored page' {
+        Test-AssetDocStub -Content "## When to use it`n`nAuthored guidance." | Should -BeFalse
     }
 }
 
 Describe 'New-AssetPageModel' -Tag 'Unit' {
     BeforeAll {
-        $script:modelRepo = Join-Path $TestDrive 'page-model'
-        $modelGh = Join-Path $script:modelRepo '.github'
+        $script:modelRepo = Join-Path $TestDrive 'model-repo'
 
-        function script:New-ModelFixture {
-            param([string]$RelativePath, [string[]]$Lines)
-            $full = Join-Path $modelGh $RelativePath
-            New-Item -ItemType Directory -Path (Split-Path $full -Parent) -Force | Out-Null
-            Set-Content -LiteralPath $full -Value ($Lines -join "`n") -Encoding utf8NoBOM
-        }
-
-        New-ModelFixture -RelativePath 'agents/hve-core/demo.agent.md' -Lines @(
-            '---', 'name: Demo Agent', 'description: A demo agent for tests.', '---', '', '# Body')
-        New-ModelFixture -RelativePath 'prompts/hve-core/demo-prompt.prompt.md' -Lines @(
-            '---', 'description: A demo prompt for tests.', '---', '', '# Body')
-        New-ModelFixture -RelativePath 'skills/hve-core/demo-skill/SKILL.md' -Lines @(
-            '---', 'name: demo-skill', 'description: A demo skill for tests.', '---', '', '# Body')
-        New-ModelFixture -RelativePath 'agents/hve-core/subagents/demo-sub.agent.md' -Lines @(
-            '---', 'name: Demo Subagent', 'description: A demo subagent for tests.', '---', '', '# Body')
+        New-AssetFile -RepoRoot $script:modelRepo -RelativePath '.github/agents/hve-core/rpi-agent.agent.md' -Lines @(
+            '---'
+            'name: RPI Agent'
+            'description: Coordinates Research, Plan, and Implement.'
+            '---'
+            ''
+            '# Body'
+        ) | Out-Null
+        New-AssetFile -RepoRoot $script:modelRepo -RelativePath '.github/prompts/hve-core/git-commit.prompt.md' -Lines @(
+            '---'
+            'description: Writes a commit message.'
+            'argument-hint: "scope"'
+            '---'
+            ''
+            '# Body'
+        ) | Out-Null
+        New-AssetFile -RepoRoot $script:modelRepo -RelativePath '.github/skills/hve-core/documentation/SKILL.md' -Lines @(
+            '---'
+            'name: documentation'
+            'description: Documentation audit and authoring.'
+            '---'
+            ''
+            '# Body'
+        ) | Out-Null
     }
 
-    It 'Resolves the full page model for an agent' {
-        $model = New-AssetPageModel -Asset @{ path = '.github/agents/hve-core/demo.agent.md'; kind = 'agent' } -RepoRoot $script:modelRepo
+    It 'Resolves the agent model from its frontmatter and path' {
+        $model = New-AssetPageModel -Asset @{ path = '.github/agents/hve-core/rpi-agent.agent.md'; kind = 'agent' } -RepoRoot $script:modelRepo
+
         $model.Kind | Should -Be 'agent'
-        $model.Key | Should -Be 'demo'
-        $model.Title | Should -Be 'Demo Agent'
-        $model.Description | Should -Be 'A demo agent for tests.'
-        $model.SourceRel | Should -Be '.github/agents/hve-core/demo.agent.md'
-        $model.DocRel | Should -Be 'docs/reference/agents/hve-core/demo.md'
+        $model.Key | Should -Be 'rpi-agent'
+        $model.Title | Should -Be 'RPI Agent'
+        $model.Description | Should -Be 'Coordinates Research, Plan, and Implement.'
+        $model.SourceRel | Should -Be '.github/agents/hve-core/rpi-agent.agent.md'
+        $model.DocRel | Should -Be 'docs/reference/agents/hve-core/rpi-agent.md'
         $model.Folder | Should -Be 'docs/reference/agents/hve-core'
         $model.KindDir | Should -Be 'agents'
-        $model.Invocation.Mechanism | Should -Be 'agent-picker'
-        $model.Invocation.Token | Should -Be 'Demo Agent'
         $model.Interactive | Should -BeTrue
     }
 
-    It 'Classifies a nested subagent as delegated and non-interactive' {
-        $model = New-AssetPageModel -Asset @{ path = '.github/agents/hve-core/subagents/demo-sub.agent.md'; kind = 'agent' } -RepoRoot $script:modelRepo
-        $model.Invocation.Mechanism | Should -Be 'subagent-delegated'
-        $model.Invocation.Token | Should -Be 'Demo Subagent'
-        $model.Interactive | Should -BeFalse
-        $model.DocRel | Should -Be 'docs/reference/agents/hve-core/subagents/demo-sub.md'
+    It 'Title-cases the artifact key when no name or title is declared' {
+        $model = New-AssetPageModel -Asset @{ path = '.github/prompts/hve-core/git-commit.prompt.md'; kind = 'prompt' } -RepoRoot $script:modelRepo
+
+        $model.Title | Should -Be 'Git Commit'
+        $model.Invocation.Token | Should -Be '/git-commit'
+        $model.Interactive | Should -BeTrue
     }
 
-    It 'Falls back to a titlecased key when frontmatter has no name or title' {
-        $model = New-AssetPageModel -Asset @{ path = '.github/prompts/hve-core/demo-prompt.prompt.md'; kind = 'prompt' } -RepoRoot $script:modelRepo
-        $model.Key | Should -Be 'demo-prompt'
-        $model.Title | Should -Be 'Demo Prompt'
-        $model.Interactive | Should -BeFalse
-    }
+    It 'Reads a skill model from its SKILL.md' {
+        $model = New-AssetPageModel -Asset @{ path = '.github/skills/hve-core/documentation'; kind = 'skill' } -RepoRoot $script:modelRepo
 
-    It 'Reads SKILL.md and derives the skill page model' {
-        $model = New-AssetPageModel -Asset @{ path = '.github/skills/hve-core/demo-skill'; kind = 'skill' } -RepoRoot $script:modelRepo
-        $model.Key | Should -Be 'demo-skill'
-        $model.Title | Should -Be 'demo-skill'
-        $model.Description | Should -Be 'A demo skill for tests.'
-        $model.DocRel | Should -Be 'docs/reference/skills/hve-core/demo-skill.md'
-        $model.KindDir | Should -Be 'skills'
+        $model.Key | Should -Be 'documentation'
+        $model.Description | Should -Be 'Documentation audit and authoring.'
+        $model.DocRel | Should -Be 'docs/reference/skills/hve-core/documentation.md'
+        $model.Interactive | Should -BeFalse
     }
 }
 
 Describe 'New-AssetMetadataBlock' -Tag 'Unit' {
-    It 'Builds a metadata table with all rows' {
-        $block = New-AssetMetadataBlock -Kind 'agent' -SourcePath '.github/agents/hve-core/demo.agent.md' -Invocation @{ Mechanism = 'agent-picker'; Token = 'Demo' } -Interactive $true
-        $block | Should -Match '(?m)^\| Kind\s+\| agent\s+\|$'
-        $block | Should -Match 'agents/hve-core/demo\.agent\.md'
-        $block | Should -Match '(?m)^\| Interactive\s+\| Yes\s+\|$'
+    It 'Renders an aligned metadata table for an interactive asset' {
+        $block = New-AssetMetadataBlock -Kind 'agent' -SourcePath '.github/agents/hve-core/rpi-agent.agent.md' `
+            -Invocation @{ Mechanism = 'agent-picker'; Token = 'RPI Agent' } -Interactive $true
+
+        $lines = @($block -split "`n")
+        $cells = @($lines | ForEach-Object { , @(($_ -replace '^\|', '' -replace '\|$', '') -split '\|' | ForEach-Object { $_.Trim() }) })
+
+        $cells[0] | Should -Be @('Field', 'Value')
+        $lines[1] | Should -Match '^\|-+\|-+\|$'
+        $cells[2] | Should -Be @('Kind', 'agent')
+        $cells[3] | Should -Be @('Source', '`.github/agents/hve-core/rpi-agent.agent.md`')
+        $cells[4] | Should -Be @('Invocation', 'Selected from the chat agent picker as `RPI Agent`')
+        $cells[5] | Should -Be @('Interactive', 'Yes')
+        @($lines | ForEach-Object { $_.Length } | Sort-Object -Unique).Count | Should -Be 1 -Because 'every row is padded to the widest cell'
+    }
+
+    It 'Renders Interactive as No for a passive asset' {
+        $block = New-AssetMetadataBlock -Kind 'instruction' -SourcePath '.github/instructions/hve-core/markdown.instructions.md' `
+            -Invocation @{ Mechanism = 'auto-applied'; Token = '**/*.md' } -Interactive $false
+
+        $block | Should -Match '(?m)^\| Interactive \| No\s+\|$'
     }
 }
 
 Describe 'New-AssetOverviewBody' -Tag 'Unit' {
-    It 'Collapses a multi-line description to a single trimmed line' {
-        $model = [PSCustomObject]@{ Description = "First line`nSecond line" }
-        New-AssetOverviewBody -Model $model | Should -Be 'First line Second line'
+    It 'Returns the description collapsed onto one line' {
+        $body = New-AssetOverviewBody -Model ([PSCustomObject]@{ Description = "First line`nsecond line" })
+
+        $body | Should -Be 'First line second line'
     }
 
-    It 'Preserves a description at the line length limit' {
-        $description = 'x' * 500
-        $model = [PSCustomObject]@{ Description = $description }
-        New-AssetOverviewBody -Model $model | Should -Be $description
+    It 'Returns a stable sentence when the asset declares no description' {
+        New-AssetOverviewBody -Model ([PSCustomObject]@{ Description = '' }) |
+            Should -Be 'This asset does not declare a description.'
     }
 
-    It 'Wraps long prose on word boundaries within the line length limit' {
-        $description = (@('word') * 101) -join ' '
-        $model = [PSCustomObject]@{ Description = $description }
+    It 'Wraps a long description at 500 characters on word boundaries' {
+        $word = 'alpha'
+        $description = (1..200 | ForEach-Object { $word }) -join ' '
 
-        $lines = (New-AssetOverviewBody -Model $model) -split "`n"
+        $lines = @((New-AssetOverviewBody -Model ([PSCustomObject]@{ Description = $description })) -split "`n")
 
-        $lines | Should -HaveCount 2
-        $lines | Where-Object { $_.Length -gt 500 } | Should -BeNullOrEmpty
-        $lines -join ' ' | Should -Be $description
+        $lines.Count | Should -BeGreaterThan 1
+        foreach ($line in $lines[0..($lines.Count - 2)]) {
+            $line.Length | Should -BeLessOrEqual 500
+        }
+        ($lines -join ' ') | Should -Be $description
+    }
+}
+
+Describe 'Text formatting helpers' -Tag 'Unit' {
+    It 'Leaves a safe YAML scalar unquoted' {
+        Format-YamlScalar -Value 'RPI Agent' | Should -Be 'RPI Agent'
     }
 
-    It 'Trims surrounding whitespace' {
-        $model = [PSCustomObject]@{ Description = '  padded description  ' }
-        New-AssetOverviewBody -Model $model | Should -Be 'padded description'
+    It 'Quotes and escapes a YAML scalar containing a colon' {
+        Format-YamlScalar -Value 'Agent: the sequel' | Should -Be '"Agent: the sequel"'
     }
 
-    It 'Returns a fallback sentence when the description is empty' {
-        $model = [PSCustomObject]@{ Description = '' }
-        New-AssetOverviewBody -Model $model | Should -Be 'This asset does not declare a description.'
+    It 'Quotes an empty YAML scalar' {
+        Format-YamlScalar -Value '' | Should -Be '""'
     }
 
-    It 'Returns a fallback sentence when the description is whitespace only' {
-        $model = [PSCustomObject]@{ Description = "   `n  " }
-        New-AssetOverviewBody -Model $model | Should -Be 'This asset does not declare a description.'
+    It 'Collapses newlines and escapes pipes in a table cell' {
+        ConvertTo-TableCell -Value "one|two`nthree" | Should -Be 'one\|two three'
+    }
+
+    It 'Pads every column of a Markdown table to its widest cell' {
+        Format-MarkdownTable -Header @('Asset', 'Description') -Rows @(, @('rpi-agent', 'Coordinates RPI')) |
+            Should -Be (@(
+                    '| Asset     | Description     |'
+                    '|-----------|-----------------|'
+                    '| rpi-agent | Coordinates RPI |'
+                ) -join "`n")
     }
 }

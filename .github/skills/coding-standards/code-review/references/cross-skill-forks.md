@@ -1,6 +1,6 @@
 ---
 title: Code Review Cross-Skill Forks
-description: Specialist review registry and collection-aware gating for follow-up reviews.
+description: Specialist review registry and package-aware gating for follow-up reviews.
 ms.date: 2026-06-26
 ---
 

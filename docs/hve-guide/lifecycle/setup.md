@@ -3,7 +3,7 @@ title: "Stage 1: Setup"
 description: Install and configure HVE Core tooling for your project with guided onboarding
 sidebar_position: 4
 author: Microsoft
-ms.date: 2026-07-15
+ms.date: 2026-08-02
 ms.topic: how-to
 keywords:
   - ai-assisted project lifecycle
@@ -16,7 +16,7 @@ estimated_reading_time: 6
 
 ## Overview
 
-Setup is the entry point for every HVE Core engagement. This stage covers installing HVE Core collections, configuring your development environment, and recording repository conventions in durable project guidance. All roles begin here before advancing to Discovery.
+Setup is the entry point for every HVE Core engagement. This stage covers installing HVE Core, configuring your development environment, and recording repository conventions in durable project guidance. All roles begin here before advancing to Discovery.
 
 ## When You Enter This Stage
 
@@ -46,12 +46,12 @@ For role-specific onboarding paths, see the [Role Guides](../roles/).
 
 Install the [HVE Core extension](https://marketplace.visualstudio.com/items?itemName=ise-hve-essentials.hve-core), or use a [clone-based method](../../getting-started/install.md):
 
-For customization, install the [HVE Core Installer extension](https://marketplace.visualstudio.com/items?itemName=ise-hve-essentials.hve-installer) and ask any agent "help me customize hve-core installation".
+For selective clone adoption or MCP guidance, ask an agent to use the included `hve-core-installer` skill.
 
 ```text
-Set up HVE Core for my Python microservices project. Install the rpi and
-coding-standards collections. Configure .copilot-tracking/ in .gitignore
-and verify agents appear in the Copilot Chat picker.
+Set up HVE Core for my Python microservices project. Use a custom clone
+selection for the RPI and Python coding components. Configure
+.copilot-tracking/ in .gitignore and verify agents appear in Copilot Chat.
 ```
 
 ```text

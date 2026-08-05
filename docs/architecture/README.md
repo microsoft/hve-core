@@ -3,7 +3,7 @@ title: Architecture Overview
 description: HVE Core system design and component relationships
 sidebar_position: 1
 author: Microsoft
-ms.date: 2026-07-08
+ms.date: 2026-08-01
 ms.topic: concept
 ---
 
@@ -39,7 +39,7 @@ graph TD
 | GitHub Workflows    | `.github/workflows/`       | CI/CD pipelines for validation, security, and release automation              |
 | Access Control      | `.github/CODEOWNERS`       | Path-based review requirements and ownership                                  |
 | MCP Configuration   | `.vscode/mcp.json`         | Model Context Protocol server definitions                                     |
-| Plugins             | `plugins/`                 | Generated Copilot CLI plugin output from collection manifests                 |
+| Plugins             | `plugins/`                 | Generated Copilot plugin output from marketplace recipes                      |
 | Test Infrastructure | `scripts/tests/`           | Pester test suites with fixtures and mocks                                    |
 
 ## Core Subsystems
@@ -54,12 +54,12 @@ Automation scripts handle quality assurance and development workflows. The scrip
 
 * Linting scripts validate markdown formatting, link integrity, YAML structure, and PowerShell code quality
 * Security scripts verify dependency pinning and SHA staleness for workflow actions
-* Plugin scripts generate Copilot CLI plugins from collection manifests
+* Plugin scripts generate Copilot packages from marketplace recipes
 * Library modules provide shared utilities like verified downloads
 
 ### Plugins
 
-Collection manifests in `collections/` define bundles of agents, prompts, instructions, and skills. Running `npm run plugin:generate` produces the `plugins/` directory, which contains generated output organized by collection ID. Files under `plugins/` are not edited directly. See [scripts/plugins/README.md](https://github.com/microsoft/hve-core/blob/main/scripts/plugins/README.md) for the generation pipeline.
+Marketplace entries in `.github/plugin/marketplace.json` define self-contained packages of agents, prompts, instructions, skills, and hooks. Running `npm run plugin:generate` produces ignored output under `plugins/`, organized by package ID. Files under `plugins/` are not edited directly. See [scripts/plugins/README.md](https://github.com/microsoft/hve-core/blob/main/scripts/plugins/README.md) for the generation pipeline.
 
 ### Documentation
 
@@ -67,13 +67,13 @@ User-facing documentation guides teams through installation, configuration, and 
 
 ### GitHub Assets
 
-The `.github/` directory contains workflow definitions, issue templates, and the AI artifacts that define Copilot behavior. Instructions files provide context-specific guidance that Copilot applies when working with certain file types or directories. Agents define specialized personas for different tasks. Prompts offer reusable starting points for common operations. All artifact types are organized into `{collection-id}` subdirectories by convention (e.g., `.github/agents/hve-core/`, `.github/instructions/coding-standards/`).
+The `.github/` directory contains workflow definitions, issue templates, and the AI artifacts that define Copilot behavior. Instructions files provide context-specific guidance that Copilot applies when working with certain file types or directories. Agents define specialized personas for different tasks. Prompts offer reusable starting points for common operations. All artifact types are organized into `{package-id}` subdirectories by convention (e.g., `.github/agents/hve-core/`, `.github/instructions/coding-standards/`).
 
-Skills package executable utilities with cross-platform scripts and domain-specific guidance; each skill is self-contained with a SKILL.md file describing capabilities and usage patterns. By convention, skills are organized under `.github/skills/{collection-id}/{skill-name}/`.
+Skills package executable utilities with cross-platform scripts and domain-specific guidance; each skill is self-contained with a SKILL.md file describing capabilities and usage patterns. By convention, skills are organized under `.github/skills/{package-id}/{skill-name}/`.
 
 ## Package Relationships
 
-Components interact through well-defined boundaries. The extension registers contribution points for agents, prompts, and instructions, making them available to Copilot Chat. Skills use a separate discovery mechanism: Copilot scans `.github/skills/{collection-id}/` subdirectories by convention for `SKILL.md` files that describe executable capabilities. Scripts operate independently of the extension but share configuration files like `PSScriptAnalyzer.psd1` and schema definitions in `scripts/linting/schemas/`.
+Components interact through well-defined boundaries. The extension registers contribution points for agents, prompts, and instructions, making them available to Copilot Chat. Skills use a separate discovery mechanism: Copilot scans `.github/skills/{package-id}/` subdirectories by convention for `SKILL.md` files that describe executable capabilities. Scripts operate independently of the extension but share configuration files like `PSScriptAnalyzer.psd1` and schema definitions in `scripts/linting/schemas/`.
 
 Documentation references both the extension capabilities and script utilities, providing guidance on how to use each component effectively. The tracking directory (`.copilot-tracking/`) serves as a workspace for AI-assisted workflows, storing work item discoveries, plan artifacts, and change records that bridge human and AI collaboration.
 

@@ -4,31 +4,59 @@
 
 BeforeAll {
     . (Join-Path $PSScriptRoot '../../extension/Resolve-VsixFile.ps1')
+    Import-Module (Join-Path $PSScriptRoot 'ExtensionTestFixtures.psm1') -Force
 }
 
 Describe 'Resolve-VsixFile' -Tag 'Unit' {
-    It 'Returns the single matching VSIX file' {
-        $tempDir = Join-Path $TestDrive 'vsix-dir'
-        New-Item -ItemType Directory -Path $tempDir -Force | Out-Null
-        Set-Content -Path (Join-Path $tempDir 'sample.vsix') -Value 'x'
+    Context 'when the directory holds exactly one VSIX' {
+        BeforeAll {
+            $script:SingleDirectory = (New-Item -Path (Join-Path $TestDrive 'single-vsix') -ItemType Directory -Force).FullName
+            Set-FixtureFile -Path (Join-Path $script:SingleDirectory 'hve-core-3.3.106.vsix') -Value 'fixture asset'
+            Set-FixtureFile -Path (Join-Path $script:SingleDirectory 'hve-core-3.3.106.vsix.spdx.json') -Value '{}'
+            Set-FixtureFile -Path (Join-Path $script:SingleDirectory 'notes.txt') -Value 'unrelated'
+        }
 
-        $result = Resolve-VsixFile -DirectoryPath $tempDir
-        $result | Should -Be (Join-Path $tempDir 'sample.vsix')
+        It 'Returns the absolute VSIX path' {
+            $resolved = Resolve-VsixFile -DirectoryPath $script:SingleDirectory
+            $resolved | Should -BeExactly (Join-Path $script:SingleDirectory 'hve-core-3.3.106.vsix')
+            [System.IO.Path]::IsPathRooted($resolved) | Should -BeTrue
+        }
+
+        It 'Ignores sibling assets that are not VSIX files' {
+            Split-Path -Leaf (Resolve-VsixFile -DirectoryPath $script:SingleDirectory) | Should -BeExactly 'hve-core-3.3.106.vsix'
+        }
+
+        It 'Accepts the Path alias' {
+            Resolve-VsixFile -Path $script:SingleDirectory | Should -BeExactly (Join-Path $script:SingleDirectory 'hve-core-3.3.106.vsix')
+        }
     }
 
-    It 'Throws when no VSIX files are present' {
-        $tempDir = Join-Path $TestDrive 'vsix-empty'
-        New-Item -ItemType Directory -Path $tempDir -Force | Out-Null
-
-        { Resolve-VsixFile -DirectoryPath $tempDir } | Should -Throw '*No VSIX file found*'
+    Context 'when the directory is missing' {
+        It 'Throws the missing directory message' {
+            $missing = Join-Path $TestDrive 'absent-vsix'
+            { Resolve-VsixFile -DirectoryPath $missing } | Should -Throw "Directory not found: $missing"
+        }
     }
 
-    It 'Throws when more than one VSIX file is present' {
-        $tempDir = Join-Path $TestDrive 'vsix-multi'
-        New-Item -ItemType Directory -Path $tempDir -Force | Out-Null
-        Set-Content -Path (Join-Path $tempDir 'first.vsix') -Value 'x'
-        Set-Content -Path (Join-Path $tempDir 'second.vsix') -Value 'x'
-
-        { Resolve-VsixFile -DirectoryPath $tempDir } | Should -Throw '*Expected exactly one VSIX file*'
+    Context 'when the directory holds no VSIX' {
+        It 'Throws the empty directory message' {
+            $directory = (New-Item -Path (Join-Path $TestDrive 'empty-vsix') -ItemType Directory -Force).FullName
+            Set-FixtureFile -Path (Join-Path $directory 'dependencies.spdx.json') -Value '{}'
+            { Resolve-VsixFile -DirectoryPath $directory } | Should -Throw "No VSIX file found in directory: $directory"
+        }
     }
+
+    Context 'when the directory holds more than one VSIX' {
+        It 'Throws the ambiguity message listing every match' {
+            $directory = (New-Item -Path (Join-Path $TestDrive 'many-vsix') -ItemType Directory -Force).FullName
+            Set-FixtureFile -Path (Join-Path $directory 'hve-core-3.3.106.vsix') -Value 'fixture asset'
+            Set-FixtureFile -Path (Join-Path $directory 'hve-core-all-3.3.106.vsix') -Value 'fixture asset'
+            { Resolve-VsixFile -DirectoryPath $directory } |
+                Should -Throw 'Expected exactly one VSIX file but found 2: hve-core-3.3.106.vsix, hve-core-all-3.3.106.vsix'
+        }
+    }
+}
+
+AfterAll {
+    Remove-Module ExtensionTestFixtures -Force -ErrorAction SilentlyContinue
 }

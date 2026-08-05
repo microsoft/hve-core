@@ -22,7 +22,6 @@ checkout:
     .github/instructions/shared/
     .github/skills/coding-standards/code-review/
     scripts/
-    collections/
     docs/
     package.json
 
