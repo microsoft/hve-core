@@ -3,7 +3,7 @@ title: Validation Commands and CI-Owned Lanes
 description: Choose local-safe validation defaults and reproduce CI-owned documentation and evaluation lanes when their prerequisites are available
 sidebar_position: 12
 author: Microsoft
-ms.date: 2026-08-03
+ms.date: 2026-08-05
 ms.topic: how-to
 keywords:
   - validation
@@ -86,11 +86,12 @@ Each tool reads its own environment variable:
 | pip  | `PIP_INDEX_URL`       | `https://pypi.org/simple/`    |
 | uv   | `UV_DEFAULT_INDEX`    | `https://pypi.org/simple/`    |
 
-| Environment                | Where the override belongs                                                            |
-|----------------------------|---------------------------------------------------------------------------------------|
-| macOS or Linux             | A file in your home directory sourced from `~/.zshrc` or `~/.bashrc`                  |
-| Windows                    | A PowerShell profile (`$PROFILE`) or a user environment variable                      |
-| Dev container or Codespace | The user-level `dev.containers.containerEnv` VS Code setting, not `devcontainer.json` |
+| Environment    | Where the override belongs                                                    |
+|----------------|-------------------------------------------------------------------------------|
+| macOS or Linux | A file in your home directory sourced from `~/.zshrc` or `~/.bashrc`          |
+| Windows        | A PowerShell profile (`$PROFILE`) or a user environment variable              |
+| Dev container  | The host environment available to VS Code when it builds the image            |
+| Codespaces     | Development environment secrets for post-build setup and runtime commands     |
 
 macOS and Linux:
 
@@ -110,41 +111,56 @@ $env:UV_DEFAULT_INDEX = 'https://proxy.example.com/pypi/simple/'
 npm ci
 ```
 
-Dev container, in VS Code user settings so no repository file changes:
-
-```json
-{
-  "dev.containers.containerEnv": {
-    "npm_config_registry": "https://proxy.example.com/npm/",
-    "PIP_INDEX_URL": "https://proxy.example.com/pypi/simple/",
-    "UV_DEFAULT_INDEX": "https://proxy.example.com/pypi/simple/"
-  }
-}
-```
-
-### Dev container Dockerfile build args
+### Dev container build and runtime variables
 
 The dev container needs the proxy at image-build time as well as at runtime so
 that any `pip`, `uv`, or `npm` step baked into the image resolves through the
 proxy. `.devcontainer/devcontainer.json` reads `NPM_CONFIG_REGISTRY`,
 `PIP_INDEX_URL`, and `UV_DEFAULT_INDEX` from the host with
-`${localEnv:VAR:default}` and passes them as `build.args` to
-`.devcontainer/Dockerfile`, which declares matching `ARG` and `ENV` entries.
-When the host variables are unset, each default falls back to the public
-registry.
+`${localEnv:VAR}` and passes them as `build.args` to
+`.devcontainer/Dockerfile`. The Dockerfile declares matching `ARG` and `ENV`
+entries, persists the selected values in the image for runtime commands, and
+falls back to each public registry when the build argument is empty.
 
-Set the build-time variables on the host before rebuilding the container. The
-npm build argument uses uppercase `NPM_CONFIG_REGISTRY`, while npm commands
-outside the container use lowercase `npm_config_registry` as shown above.
+Set the variables in the host environment before launching VS Code and
+rebuilding the container. The npm build argument uses uppercase
+`NPM_CONFIG_REGISTRY`, while npm commands outside the container use lowercase
+`npm_config_registry` as shown above.
 
 ```bash
 export NPM_CONFIG_REGISTRY="https://proxy.example.com/npm/"
 export PIP_INDEX_URL="https://proxy.example.com/pypi/simple/"
 export UV_DEFAULT_INDEX="https://proxy.example.com/pypi/simple/"
+code .
 ```
 
-VS Code substitutes these values at build time; there is no repository file to
-edit.
+On Windows, set the same variables in a PowerShell session before launching
+VS Code:
+
+```powershell
+$env:NPM_CONFIG_REGISTRY = 'https://proxy.example.com/npm/'
+$env:PIP_INDEX_URL = 'https://proxy.example.com/pypi/simple/'
+$env:UV_DEFAULT_INDEX = 'https://proxy.example.com/pypi/simple/'
+code .
+```
+
+VS Code substitutes the host values at build time. If VS Code is already open,
+restart it from the configured environment before rebuilding the container.
+There is no repository file to edit.
+
+### Codespaces
+
+For Codespaces, create
+[development environment secrets](https://docs.github.com/en/codespaces/managing-your-codespaces/managing-your-account-specific-secrets-for-github-codespaces)
+named `NPM_CONFIG_REGISTRY`, `PIP_INDEX_URL`, and `UV_DEFAULT_INDEX`. These
+values are available to `updateContentCommand`, including its `npm ci`, and to
+later commands inside the running codespace.
+
+Codespaces secrets are not available while the image is built. They cannot
+redirect a package download performed by a Dockerfile `RUN` instruction or
+another image-build step. Use an organization-approved prebuilt image or other
+build infrastructure when the image build itself requires authenticated
+package access.
 
 The committed `.npmrc` sets `replace-registry-host=always`, so npm rewrites each
 lockfile tarball host to the configured registry at fetch time only. `npm ci`
