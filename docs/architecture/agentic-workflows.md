@@ -51,9 +51,10 @@ flowchart TD
         R["Authorized user posts<br/>/review in a PR comment"]
         S["Analyze diff against<br/>coding standards"]
         T["Check conventions,<br/>security, quality"]
-        U{"Review passed?"}
+        U{"Review outcome?"}
         V["Add review-passed label"]
-        W["Add needs-revision label<br/>with inline comments"]
+        W["Request changes and add<br/>needs-revision label"]
+        Y["Submit COMMENT<br/>without an outcome label"]
     end
 
     subgraph HUMAN["Human Review"]
@@ -79,22 +80,24 @@ flowchart TD
     R --> S
     S --> T
     T --> U
-    U -- Yes --> V
+    U -- Clean --> V
     V --> X
-    U -- No --> W
+    U -- "Blocking non-maintainer findings" --> W
+    U -- "Advisory or non-blocking findings" --> Y
+    Y --> X
     W -.-> O
 ```
 
 ## Workflow Details
 
-| Workflow             | Trigger                                                             | Execution Owner                                                                                                                    | Key Actions                                                                                                                                             |
-|----------------------|---------------------------------------------------------------------|------------------------------------------------------------------------------------------------------------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------|
-| Issue Triage         | Issue opened or labeled `needs-triage`                              | [Issue Triage Agent](https://github.com/microsoft/hve-core/blob/main/.github/agents/issue-triage.agent.md)                         | Classify, detect duplicates, assess quality, label, evaluate readiness                                                                                  |
-| Issue Implementation | Issue labeled `agent-ready`                                         | Workflow-owned procedure in `.github/workflows/issue-implement.md`                                                                 | Research codebase, plan changes, implement, open PR                                                                                                     |
-| PR Review            | `/review` in a PR conversation or inline review comment             | [Code Review Agent](https://github.com/microsoft/hve-core/blob/main/.github/agents/coding-standards/code-review.agent.md)          | Review correctness, conventions, security; label `review-passed` or `needs-revision` for non-maintainer PRs, advisory `COMMENT` only for maintainer PRs |
-| Dependabot PR Review | Dependabot PR opened or updated                                     | [Dependency Reviewer Agent](https://github.com/microsoft/hve-core/blob/main/.github/agents/dependency-reviewer.agent.md)           | Validate licensing, SHA pinning, environment sync; approve safe bumps                                                                                   |
-| Documentation Drift  | Push to main                                                        | [Documentation Agent](https://github.com/microsoft/hve-core/blob/main/.github/agents/hve-core/documentation.agent.md) (drift mode) | Map code changes to docs, flag stale documentation for follow-up                                                                                        |
-| VEX Draft            | `workflow_run` after VEX Detection succeeds, or `workflow_dispatch` | [SSSC Reviewer](https://github.com/microsoft/hve-core/blob/main/.github/agents/security/sssc-reviewer.agent.md)                    | Enrich CVEs, analyze reachability, open one PR with OpenVEX draft statements for human review                                                           |
+| Workflow             | Trigger                                                                       | Execution Owner                                                                                                                    | Key Actions                                                                                                                                                                                               |
+|----------------------|-------------------------------------------------------------------------------|------------------------------------------------------------------------------------------------------------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| Issue Triage         | Issue opened or labeled `needs-triage`                                        | [Issue Triage Agent](https://github.com/microsoft/hve-core/blob/main/.github/agents/issue-triage.agent.md)                         | Classify, detect duplicates, assess quality, label, evaluate readiness                                                                                                                                    |
+| Issue Implementation | Issue labeled `agent-ready`                                                   | Workflow-owned procedure in `.github/workflows/issue-implement.md`                                                                 | Research codebase, plan changes, implement, open PR                                                                                                                                                       |
+| PR Review            | Authorized user posts `/review` in a PR conversation or inline review comment | [Code Review Agent](https://github.com/microsoft/hve-core/blob/main/.github/agents/coding-standards/code-review.agent.md)          | Add `review-passed` for clean reviews, request changes and add `needs-revision` for blocking non-maintainer findings, or submit `COMMENT` without an outcome label for advisory and non-blocking findings |
+| Dependabot PR Review | Dependabot PR opened or updated                                               | [Dependency Reviewer Agent](https://github.com/microsoft/hve-core/blob/main/.github/agents/dependency-reviewer.agent.md)           | Validate licensing, SHA pinning, environment sync; approve safe bumps                                                                                                                                     |
+| Documentation Drift  | Push to main                                                                  | [Documentation Agent](https://github.com/microsoft/hve-core/blob/main/.github/agents/hve-core/documentation.agent.md) (drift mode) | Map code changes to docs, flag stale documentation for follow-up                                                                                                                                          |
+| VEX Draft            | `workflow_run` after VEX Detection succeeds, or `workflow_dispatch`           | [SSSC Reviewer](https://github.com/microsoft/hve-core/blob/main/.github/agents/security/sssc-reviewer.agent.md)                    | Enrich CVEs, analyze reachability, open one PR with OpenVEX draft statements for human review                                                                                                             |
 
 > [!TIP]
 > The triage agent classifies issues, applies type, area, and priority labels, detects duplicates, assesses quality, and marks qualifying issues `agent-ready`. It does not create sub-issues, close issues, assign users, or modify issue titles.
@@ -113,14 +116,14 @@ flowchart TD
 
 All six workflows are defined as GitHub Agentic Workflow markdown files under `.github/workflows/` and compiled to lock files using `gh aw compile`:
 
-| Workflow File             | Lock File                       | Trigger                                 | Execution Owner          |
-|---------------------------|---------------------------------|-----------------------------------------|--------------------------|
-| `issue-triage.md`         | `issue-triage.lock.yml`         | Issue opened or labeled `needs-triage`  | Issue Triage Agent       |
-| `issue-implement.md`      | `issue-implement.lock.yml`      | Issue labeled `agent-ready`             | Workflow-owned procedure |
-| `pr-review.md`            | `pr-review.lock.yml`            | `/review` in a PR comment               | Code Review Agent        |
-| `dependency-pr-review.md` | `dependency-pr-review.lock.yml` | Dependabot PR opened or updated         | Dependency Reviewer      |
-| `doc-update-check.md`     | `doc-update-check.lock.yml`     | Push to main                            | Documentation Checker    |
-| `vex-draft.md`            | `vex-draft.lock.yml`            | VEX Detection `workflow_run` + dispatch | SSSC Reviewer            |
+| Workflow File             | Lock File                       | Trigger                                         | Execution Owner          |
+|---------------------------|---------------------------------|-------------------------------------------------|--------------------------|
+| `issue-triage.md`         | `issue-triage.lock.yml`         | Issue opened or labeled `needs-triage`          | Issue Triage Agent       |
+| `issue-implement.md`      | `issue-implement.lock.yml`      | Issue labeled `agent-ready`                     | Workflow-owned procedure |
+| `pr-review.md`            | `pr-review.lock.yml`            | Authorized user posts `/review` in a PR comment | Code Review Agent        |
+| `dependency-pr-review.md` | `dependency-pr-review.lock.yml` | Dependabot PR opened or updated                 | Dependency Reviewer      |
+| `doc-update-check.md`     | `doc-update-check.lock.yml`     | Push to main                                    | Documentation Checker    |
+| `vex-draft.md`            | `vex-draft.lock.yml`            | VEX Detection `workflow_run` + dispatch         | SSSC Reviewer            |
 
 Each workflow file declares permissions, safe output limits, and activation guards that prevent unintended execution.
 
@@ -142,7 +145,9 @@ The pinned version is version-locked to the `gh aw` compiler that produces the l
 
 ## Label-Driven Handoffs
 
-Labels serve as the event bus connecting workflows. Each label transition triggers the next stage:
+Labels coordinate automated issue stages and review outcomes. An authorized
+user's `/review` comment starts the PR Review workflow after a pull request
+opens:
 
 ```mermaid
 stateDiagram-v2
@@ -151,8 +156,11 @@ stateDiagram-v2
     classified --> agent_ready: Triage adds agent-ready<br/>(if criteria met)
     classified --> human_review: Criteria not met,<br/>awaits human labeling
     agent_ready --> pr_opened: Implementation agent<br/>opens PR
-    pr_opened --> review_passed: Review agent approves
-    pr_opened --> needs_revision: Review agent requests changes
+    pr_opened --> review_requested: Authorized user<br/>invokes /review
+    review_requested --> review_passed: Checks pass;<br/>review-passed added
+    review_requested --> needs_revision: Blocking non-maintainer findings;<br/>needs-revision added
+    review_requested --> comment_only: Advisory or non-blocking findings;<br/>COMMENT only
+    comment_only --> pr_opened: PR remains open
     needs_revision --> pr_opened: Author pushes fixes
     review_passed --> merged: Maintainer merges
     merged --> [*]
@@ -233,7 +241,7 @@ flowchart LR
         VEX_DETECT["VEX Detection<br/><i>scheduled scan</i>"]
         VEX_DRAFT["VEX Draft<br/><i>event-driven</i>"]
         TRIAGE -- "agent-ready label" --> IMPL
-        IMPL -- "opens PR; user invokes /review" --> REVIEW
+        IMPL -- "opens PR; authorized user invokes /review" --> REVIEW
         VEX_DETECT -- "untriaged CVEs" --> VEX_DRAFT
     end
 
@@ -262,7 +270,7 @@ flowchart LR
     TRIAGE --> LABELS
 ```
 
-The automated pipeline and interactive agents share instruction files for consistent coding standards. Interactive agents produce tracking artifacts that inform implementation. The automated pipeline uses GitHub labels as its coordination mechanism, while interactive agents coordinate through `.copilot-tracking/` files.
+The repository-hosted workflows and interactive agents share instruction files for consistent coding standards. Interactive agents produce tracking artifacts that inform implementation. Repository-hosted workflows coordinate through labels, pull requests, comments, GitHub events, and manual slash commands, while interactive agents coordinate through `.copilot-tracking/` files.
 
 ---
 
