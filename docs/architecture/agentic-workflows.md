@@ -14,7 +14,7 @@ keywords:
   - process flow
 ---
 
-hve-core uses GitHub Agentic Workflows to support the journey from issue creation through implementation, code review, and dependency management. Six event-driven workflows connect specialized agents through labels, pull requests, comments, and GitHub events.
+hve-core uses GitHub Agentic Workflows to support the journey from issue creation through implementation, code review, and dependency management. Six workflows connect specialized agents through labels, pull requests, comments, GitHub events, and manual slash commands.
 
 > [!NOTE]
 > GitHub Agentic Workflows is an experimental/beta feature. The workflows described here represent hve-core's early experiments with the technology and may evolve as the platform matures.
@@ -160,7 +160,9 @@ stateDiagram-v2
 
 ## Interactive Agent Workflows
 
-Beyond the automated GitHub event-driven pipeline, hve-core provides interactive agents invoked through VS Code Copilot Chat. These agents support the manual side of the development lifecycle.
+Beyond the repository-hosted GitHub workflows, hve-core provides interactive
+agents invoked through VS Code Copilot Chat. These agents support the manual
+side of the development lifecycle.
 
 ### RPI Orchestration
 
@@ -221,17 +223,17 @@ Five agents support upstream planning activities:
 
 ```mermaid
 flowchart LR
-    subgraph AUTOMATED["Automated Pipeline"]
+    subgraph AUTOMATED["GitHub Agentic Workflows"]
         direction TB
         TRIAGE["Issue Triage<br/><i>event-driven</i>"]
         IMPL["Issue Implementation<br/><i>event-driven</i>"]
-        REVIEW["PR Review<br/><i>event-driven</i>"]
+        REVIEW["PR Review<br/><i>manual /review</i>"]
         DEPEND["Dependabot PR Review<br/><i>event-driven</i>"]
         DOCS["Doc Update Check<br/><i>event-driven</i>"]
         VEX_DETECT["VEX Detection<br/><i>scheduled scan</i>"]
         VEX_DRAFT["VEX Draft<br/><i>event-driven</i>"]
         TRIAGE -- "agent-ready label" --> IMPL
-        IMPL -- "opens PR" --> REVIEW
+        IMPL -- "opens PR; user invokes /review" --> REVIEW
         VEX_DETECT -- "untriaged CVEs" --> VEX_DRAFT
     end
 
