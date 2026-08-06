@@ -1,8 +1,8 @@
 ---
 title: video-to-gif
 description: Video-to-GIF conversion with FFmpeg two-pass optimization
-sidebar_position: 7
-ms.date: 2026-07-27
+sidebar_position: 8
+ms.date: 2026-08-06
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->
