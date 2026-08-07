@@ -3,7 +3,7 @@ title: Evals in CI
 description: Auth contract, fork-PR policy, and how to add a new eval spec for the hve-core vally pipeline
 sidebar_position: 11
 author: Microsoft
-ms.date: 2026-07-31
+ms.date: 2026-08-06
 ms.topic: how-to
 keywords:
   - evals
@@ -99,11 +99,23 @@ Steps to add coverage:
 5. Run the eval locally (requires `COPILOT_GITHUB_TOKEN` in your shell environment):
 
    ```pwsh
+   pwsh scripts/evals/Get-ChangedSpecStimulus.ps1 `
+     -BaseRef origin/main `
+     -HeadRef HEAD `
+     -OutFile logs/changed-spec-stimuli.json
    pwsh scripts/evals/Test-CopilotToken.ps1 -SmokeTest
-   pwsh scripts/evals/Invoke-VallyEvals.ps1 -ManifestPath logs/changed-ai-artifacts.json
+   pwsh scripts/evals/Invoke-VallyEvals.ps1 `
+     -ManifestPath logs/changed-ai-artifacts.json `
+     -ChangedSpecManifestPath logs/changed-spec-stimuli.json
    ```
 
 Commit the new spec alongside the artifact change. The PR comment summary in `eval-execute` reports per-artifact pass/fail with links to the captured `logs/eval-results-<artifact-id>.json` payloads.
+
+`Get-ChangedSpecStimulus.ps1` emits a synthetic artifact for every added or modified
+stimulus in a changed eval spec. `Invoke-VallyEvals.ps1` unions those entries with the
+changed AI artifact manifest and deduplicates them by `kind:artifactId`. This ensures a
+changed stimulus runs even when its referenced agent, prompt, instruction, or skill did
+not change in the same diff.
 
 A single spec can be shared by multiple artifacts: add one `stimuli[].tags.<kind>` backlink
 per artifact that the spec covers. When more than one artifact backlinks the same spec,
@@ -296,11 +308,28 @@ This is the only viable mock boundary for cross-process invocation. Apply the sa
 
 ### Test authoring patterns
 
-When authoring new Pester suites for the evals scripts, three patterns recur often enough to call out:
+When authoring new Pester suites for the evals scripts, four patterns recur often enough to call out:
 
 * Define helper functions inside `BeforeAll { function ... }` so Pester promotes them to the containing `Describe` scope for all `It` blocks. Functions defined directly inside `Describe` (outside `BeforeAll`) do not survive the fresh runspaces Pester uses for each `It`.
+* When a production script exposes an `Invoke-*Core` function behind an `$MyInvocation.InvocationName -ne '.'` guard, dot-source the script in `BeforeAll` and call the core function directly. This avoids a fresh `pwsh` startup for every case and lets Pester mocks intercept calls made inside the function.
 * When the command under test is invoked through `pwsh -File` or `Start-Process` (so the parent runspace cannot install a `Mock`), declare a bare function at file scope in the test (or in a fixture script the child loads). The PATH-shim pattern above is one instance of this; the [scripts/tests/evals/fixtures/stub-vally.ps1](../../scripts/tests/evals/fixtures/stub-vally.ps1) fixture is another.
 * When a stub or script under test needs to signal a non-zero exit while `$ErrorActionPreference = 'Stop'` is in effect, write the diagnostic with `[Console]::Error.WriteLine(...)` and then call `exit <code>` explicitly. `throw` short-circuits the runspace before the intended exit code is set, which causes the parent process to observe exit 1 instead of the contract code.
+
+```powershell
+BeforeAll {
+  $script:ScriptPath = Join-Path $PSScriptRoot '../../evals/Build-AgentBehaviorSpec.ps1'
+  . $script:ScriptPath
+}
+
+It 'reports drift without starting a child pwsh process' {
+  $result = Invoke-AgentBehaviorSpecCore -Check
+  $result.Outcome | Should -Be 'Drift'
+}
+```
+
+The core function returns a `PSCustomObject` with an `Outcome` field. Test that result
+directly; leave exit-code mapping to the guarded main block. Use a child process only
+when the process boundary itself is part of the behavior under test.
 
 The stub-vally fixture demonstrates the third pattern in practice.
 [scripts/tests/evals/Invoke-VallyEvals.Tests.ps1](../../scripts/tests/evals/Invoke-VallyEvals.Tests.ps1)

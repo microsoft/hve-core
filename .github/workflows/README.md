@@ -2,7 +2,7 @@
 title: GitHub Actions Workflows
 description: Modular CI/CD workflow architecture for validation, security scanning, and automated maintenance
 author: HVE Core Team
-ms.date: 2026-08-03
+ms.date: 2026-08-06
 ms.topic: reference
 keywords:
   - github actions
@@ -159,13 +159,39 @@ Triggers: `schedule` (Sundays at 4 AM UTC), `workflow_call`
 
 Features:
 
-* Languages: JavaScript/TypeScript analysis
+* Languages: `actions` (GitHub Actions workflows), `python` (Python scripts), and `javascript-typescript` (VS Code extension source)
 * Queries: security-extended and security-and-quality query suites
 * Coverage: Detects SQL injection, XSS, command injection, path traversal, and 200+ other vulnerabilities
 * Integration: Results appear in Security > Code Scanning tab
-* Auto-build: Automatically detects and builds JavaScript/TypeScript projects
+* Auto-build: Prepares compiled code where required for each language target; Actions analysis needs no compilation
 
 Outputs: SARIF results uploaded to GitHub Security tab, job summary with analysis details
+
+#### `dangerous-workflow-scan.yml`
+
+Purpose: Combines a blocking template-injection gate with an advisory Poutine
+supply-chain scan for GitHub Actions workflows.
+
+Jobs:
+
+* `dangerous-workflow-check`: Runs `Test-DangerousWorkflow.ps1` as the blocking homegrown gate and uploads SARIF under the `dangerous-workflow` category
+* `poutine-scan`: Runs Poutine as an advisory scan by default and uploads SARIF under the `poutine` category
+
+Inputs:
+
+* `soft-fail` (boolean, default: false): Continue when the homegrown gate finds violations
+* `poutine-soft-fail` (boolean, default: true): Keep Poutine findings advisory
+* `upload-sarif` (boolean, default: true): Upload both scanners' SARIF results to the Security tab
+* `upload-artifact` (boolean, default: true): Retain both scanners' result artifacts
+
+Outputs:
+
+* `violation-count`: Number of findings from the homegrown gate
+* `is-compliant`: Whether the homegrown gate found no violations
+
+`pr-validation.yml` calls this workflow as the blocking `dangerous-workflow-check`
+required-check dependency. That call keeps the homegrown gate strict while explicitly
+setting Poutine to advisory mode.
 
 #### `dependency-review.yml`
 
