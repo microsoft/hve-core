@@ -150,11 +150,11 @@ defined in #file:.github/instructions/coding-standards/typescript.instructions.m
 The `agent:` frontmatter field selects how Copilot runs a prompt. Use a built-in mode
 when the prompt needs general conversation, autonomous tool use, or planning behavior:
 
-| Value   | Use when the prompt should                                    |
-|---------|---------------------------------------------------------------|
-| `ask`   | Answer questions without planning source edits                |
-| `agent` | Choose tools and carry out a multi-step task                  |
-| `plan`  | Create an implementation plan before source changes are made  |
+| Value   | Use when the prompt should                                   |
+|---------|--------------------------------------------------------------|
+| `ask`   | Answer questions without planning source edits               |
+| `agent` | Choose tools and carry out a multi-step task                 |
+| `plan`  | Create an implementation plan before source changes are made |
 
 When `agent` is omitted, VS Code uses the current agent. If the prompt declares
 `tools`, VS Code defaults to `agent` instead.
