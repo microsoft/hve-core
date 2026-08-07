@@ -61,7 +61,7 @@ Frontmatter fields:
 * `description` (required): A one-line summary displayed in the prompt picker
 * `name` (optional): A human-readable identifier for the prompt
 * `argument-hint` (optional): Hint text shown in the prompt picker for expected inputs
-* `agent` (optional): Selects the `ask`, `edit`, or `agent` built-in mode, or delegates to a named custom agent; defaults to `agent` when omitted
+* `agent` (optional): Selects the `ask`, `agent`, or `plan` built-in mode, or delegates to a named custom agent; defaults to the current agent when omitted, or to `agent` when `tools` is specified
 * `model` (optional): Pins the prompt to a specific model or prioritized model list
 * `tools` (optional): Restricts available tools for the prompt
 
@@ -148,13 +148,16 @@ defined in #file:.github/instructions/coding-standards/typescript.instructions.m
 ## Agent Delegation from Prompts
 
 The `agent:` frontmatter field selects how Copilot runs a prompt. Use a built-in mode
-when the prompt needs general conversation or editing behavior:
+when the prompt needs general conversation, autonomous tool use, or planning behavior:
 
-| Value   | Use when the prompt should                                        |
-|---------|-------------------------------------------------------------------|
-| `ask`   | Answer questions without planning source edits                    |
-| `edit`  | Apply focused edits to files already identified by the prompt     |
-| `agent` | Choose tools and carry out a multi-step task; this is the default |
+| Value   | Use when the prompt should                                    |
+|---------|---------------------------------------------------------------|
+| `ask`   | Answer questions without planning source edits                |
+| `agent` | Choose tools and carry out a multi-step task                  |
+| `plan`  | Create an implementation plan before source changes are made  |
+
+When `agent` is omitted, VS Code uses the current agent. If the prompt declares
+`tools`, VS Code defaults to `agent` instead.
 
 Use a custom agent's human-readable `name:` when the prompt should delegate to that
 agent's specialized protocol instead of a built-in mode.
