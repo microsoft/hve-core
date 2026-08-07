@@ -1,9 +1,9 @@
 ---
 prd_id: "PRD-2026-Q2-PRD-BUILDER"
 title: "PRD Builder Agent Product Requirements"
-description: "Product Requirements Document for the PRD Builder agent, defining product goals, functional requirements, and acceptance criteria for the guided Product Requirements Document authoring workflow in the project-planning collection."
+description: "Product Requirements Document for the PRD Builder agent, defining product goals, functional requirements, and acceptance criteria for the guided Product Requirements Document authoring workflow in the project-planning package."
 author: "HVE Core Maintainers"
-ms.date: "2026-06-29"
+ms.date: "2026-08-05"
 ms.topic: "reference"
 status: "approved"
 version: "1.0.0"
@@ -45,13 +45,13 @@ Scope is limited to the PRD Builder agent, its template-migration strategy, and 
 
 ## Product Context
 
-HVE-Core ships AI agent customizations (agents, prompts, instructions, and skills) bundled into collections and distributed through plugins and a VS Code extension. The `project-planning` collection includes twin requirements agents (the BRD Builder and the PRD Builder) that share a Q&A authoring architecture.
+HVE-Core ships AI agent customizations (agents, prompts, instructions, and skills) defined through marketplace package recipes and distributed through plugins and a VS Code extension. The `project-planning` package includes twin requirements agents (the BRD Builder and the PRD Builder) that share a Q&A authoring architecture.
 
 The user problem is divergence and duplication: the PRD Builder's inline template and lifecycle drift away from the BRD Builder's shared-skill foundation over time, producing inconsistent taxonomies and quality gates between the two document types. The `feat/brd-skills` changeset renames `brd-author` to `requirements-author`, adds `templates/prd/` assets and PRD lifecycle sections, and restructures references into `_shared/`, `brd/`, and `prd/` groupings so both agents draw from one canonical source.
 
 The product vision for this release is to move the PRD Builder onto that shared foundation without disturbing what users already rely on: the seven-phase flow, the emoji refinement-question checklist, the output modes (Full, Section, Status, Delta), and robust pause/resume including post-summarization recovery. The PRD Builder must also be able to start from an approved BRD by consuming the BRD handoff, closing the loop between the two agents.
 
-External constraints include the repository's authoring conventions (markdownlint, frontmatter schemas, collection/plugin/extension regeneration) and the CC BY 4.0 licensing posture for skill content.
+External constraints include the repository's authoring conventions (markdownlint, frontmatter schemas, marketplace recipe, plugin, and extension regeneration) and the CC BY 4.0 licensing posture for skill content.
 
 ---
 
@@ -195,7 +195,7 @@ NFR-008: The PRD Builder operates across HVE-Core distribution contexts (reposit
 ## Constraints
 
 * `CON-001`: The PRD Builder MUST preserve its existing seven-phase workflow and naming; phase structure changes are out of scope for this PRD. Imposing source: product continuity / DD-003. Affected boundary: scope. Non-negotiability: avoids breaking existing user workflows and documentation. Category: organizational. Impact: design.
-* `CON-002`: Changes MUST keep `collections/*.collection.yml`/`.md`, `plugins/`, and `extension/` outputs consistent via the repository's regeneration scripts. Imposing source: repository distribution pipeline. Affected boundary: operations. Non-negotiability: generated outputs must not be hand-edited. Category: technical. Impact: delivery.
+* `CON-002`: Changes MUST keep the `.github/plugin/marketplace.json` recipe, `plugins/`, and `extension/` outputs consistent via the repository's regeneration scripts (`plugin:generate`, `extension:prepare`) validated by `plugin:validate`. Imposing source: repository distribution pipeline. Affected boundary: operations. Non-negotiability: generated outputs must not be hand-edited. Category: technical. Impact: delivery.
 * `CON-003`: Shared skill content MUST follow the CC BY 4.0 cite-only standards posture. Imposing source: repository licensing. Affected boundary: compliance. Non-negotiability: licensing obligation. Category: contractual. Impact: acceptance.
 * `CON-004`: Specification and migration work MUST land by the 2026-06-30 milestone to align with the `feat/brd-skills` initiative. Imposing source: initiative schedule / DD-003 continuity window. Affected boundary: schedule. Non-negotiability: calendar-driven target. Category: organizational. Impact: delivery.
 
@@ -291,7 +291,7 @@ Deferred: any expansion of the phase model or new document types beyond the PRD.
 ### Risk Register
 
 * Risk: Migrating the inline template to the shared skill regresses the PRD UX. Probability: Medium. Impact: High. Mitigation: treat the seven-phase UX as a continuity constraint (CON-001) and verify with NFR-006.
-* Risk: Generated collection/plugin/extension outputs drift after agent or skill edits. Probability: Medium. Impact: Medium. Mitigation: run regeneration and validation scripts as part of acceptance (CON-002).
+* Risk: Generated marketplace recipe, plugin, and extension outputs drift after agent or skill edits. Probability: Medium. Impact: Medium. Mitigation: run regeneration and validation scripts as part of acceptance (CON-002).
 
 ---
 
