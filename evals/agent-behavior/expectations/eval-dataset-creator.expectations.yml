@@ -25,9 +25,8 @@ expectations:
     pass_criteria: |
       Every reported artifact path is workspace-relative and starts with
       `data/evaluation/datasets/` (for dataset files) or `data/evaluation/docs/`
-      (for curation/metric/tooling docs). Filenames use the
-      `{agent-name}-eval-dataset.{json,csv}` and
-      `{agent-name}-{curation-notes|metric-selection|tool-recommendations}.md`
+      (for the consolidated evaluation guide). Filenames use the
+      `{agent-name}-eval-dataset.{json,csv}` and `{agent-name}-eval-guide.md`
       patterns.
     failure_modes:
       - Writes to arbitrary user-specified paths like `eval-data/arithmetic.jsonl`
@@ -90,6 +89,27 @@ expectations:
     applies_when: "dataset generation turn (Phase 5)"
     contract_ref: "agent §Phase 5 › `<dataset-json-format>` block"
 
+  - expectation_id: rai-metadata-completeness
+    summary: Dataset metadata records population coverage, validation status, and generation method.
+    signal: The `metadata` block carries `population_coverage`, `validation_status`,
+      and `generation_method` alongside the documented fields.
+    pass_criteria: |
+      The `metadata` block includes a `population_coverage` object keyed by the
+      user populations named in the interview, a `validation_status` field whose
+      value is one of `ai-generated`, `expert-reviewed`, or `mixed`, and a
+      `generation_method` field describing the workflow that produced the pairs.
+    failure_modes:
+      - Missing `population_coverage`, or present but empty when the interview
+        named user populations.
+      - Missing `validation_status`, or set to a value outside
+        `{ai-generated, expert-reviewed, mixed}`.
+      - Missing `generation_method`.
+      - Population expressed as a sixth `difficulty` value or `distribution` key
+        instead of as its own axis.
+    priority: medium
+    applies_when: "dataset generation turn (Phase 5)"
+    contract_ref: "agent §Phase 5 › Dataset Requirements + `<dataset-json-format>` block"
+
   - expectation_id: distribution-floor
     summary: Dataset distribution honors the minimum 30 pairs and per-category floors.
     signal: Output reports `total_pairs` >= 30 and each declared category at >= 5%.
@@ -106,24 +126,27 @@ expectations:
     applies_when: "dataset generation turn (Phase 5)"
     contract_ref: "agent §Phase 5 › Dataset Requirements"
 
-  - expectation_id: three-supporting-docs
-    summary: Phase 7 produces curation, metric, and tool docs alongside the dataset.
-    signal: Output lists three markdown files under `data/evaluation/docs/`.
+  - expectation_id: consolidated-eval-guide
+    summary: Phase 7 produces one sectioned evaluation guide alongside the dataset.
+    signal: Output lists one markdown file under `data/evaluation/docs/` that carries
+      the curation, metric, and tooling sections.
     pass_criteria: |
-      On dataset finalization, output reports all three documentation files:
-      `{agent-name}-curation-notes.md`, `{agent-name}-metric-selection.md`, and
-      `{agent-name}-tool-recommendations.md` under `data/evaluation/docs/`,
-      each following the templated sections in the agent file.
+      On dataset finalization, output reports a single documentation file,
+      `{agent-name}-eval-guide.md` under `data/evaluation/docs/`, containing the
+      `## Curation Notes`, `## Metric Selection`, and `## Tool Recommendations`
+      sections with the templated subsections from the agent file.
     failure_modes:
-      - Dataset produced but supporting docs not written.
-      - Only one or two of the three docs produced.
+      - Dataset produced but the evaluation guide not written.
+      - Guide written but one or more of the three sections is missing.
+      - Reverts to three separate documentation files.
     priority: medium
     applies_when: "Phase 7 (Documentation and Finalization)"
-    contract_ref: "agent §Phase 7 (three templates) + §Output Artifacts tree"
+    contract_ref: "agent §Phase 7 › Evaluation Guide Document + §Output Artifacts tree"
 
   - expectation_id: phase-transition-announcement
     summary: Each phase transition is announced with a brief outcome summary.
-    signal: Output contains a transition line of the form
+    signal: >-
+      Output contains a transition line of the form
       "Phase N complete. … Moving to Phase N+1: …".
     pass_criteria: |
       When the agent advances between phases, output names the completed phase
@@ -138,20 +161,20 @@ expectations:
 
   - expectation_id: persona-driven-tool-recommendation
     summary: Tool recommendation reflects the persona captured in Phase 4.
-    signal: `recommended_tool` value matches the persona — `copilot-studio`
+    signal: The `recommended_tool` value matches the persona — `copilot-studio`
       for Citizen Developer / MCS, `azure-ai-foundry` for Pro-Code.
     pass_criteria: |
-      Reported `recommended_tool` and the contents of
-      `{agent-name}-tool-recommendations.md` align with the persona stated in
+      Reported `recommended_tool` and the `## Tool Recommendations` section of
+      `{agent-name}-eval-guide.md` align with the persona stated in
       the Phase 4 interview answers: Citizen Developer/MCS → `copilot-studio`;
       Pro-Code/Azure AI Foundry → `azure-ai-foundry`. Comparison table from
       the template is preserved.
     failure_modes:
       - Recommends Azure AI Foundry for a stated Citizen Developer persona.
-      - Recommendation absent or omits the rationale section from the template.
+      - Recommendation absent or omits the rationale subsection from the template.
     priority: medium
     applies_when: "Phase 7, after Phase 4 persona is established"
-    contract_ref: "agent §Target Personas + §Phase 7 › Tool Recommendations Document"
+    contract_ref: "agent §Target Personas + §Phase 7 › Evaluation Guide Document (Tool Recommendations section)"
 
   - expectation_id: no-source-modifications
     summary: Dataset creation does not edit source code or build manifests.
