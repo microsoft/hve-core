@@ -221,10 +221,10 @@ flowchart TD
 
 The following are known limitations recorded so operators can make informed deployment decisions. Severity ratings are the project's own assessment and are not equivalent to a CVSS score.
 
-| Id      | Gap                                                                                                                                                                                                                                                                                                                     | Severity        | Status                                                                                                                   |
-|---------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|-----------------|--------------------------------------------------------------------------------------------------------------------------|
-| G-SUP-1 | The deck build is delegated out-of-process to the experimental powerpoint skill (`Invoke-PptxPipeline.ps1`) and inherits that skill's residual risk (sandboxed `content-extra.py` execution, LibreOffice/MuPDF document parsing). The documented `uv` toolchain bootstrap uses a `curl \| sh` / `irm \| iex` installer. | SupplyChain-Med | Accepted; see the [powerpoint security model](../powerpoint/SECURITY.md) and pin the `uv` installer to a vetted release. |
-| G-INF-1 | Canonical DT artifacts may contain confidential product or customer prose; that content flows verbatim (escaped) into the emitted `content.yaml` and any downstream deck. There is no data-classification gate.                                                                                                         | InfoDisc-Low    | By design; operators must avoid rendering regulated content and control the output directory.                            |
+| Id      | Gap                                                                                                                                                                                                                                                                                                                     | Severity        | Status                                                                                                              |
+|---------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|-----------------|---------------------------------------------------------------------------------------------------------------------|
+| G-SUP-1 | The deck build is delegated out-of-process to the experimental powerpoint skill (`Invoke-PptxPipeline.ps1`) and inherits that skill's residual risk (sandboxed `content-extra.py` execution, LibreOffice/MuPDF document parsing). The documented `uv` toolchain bootstrap uses a `curl \| sh` / `irm \| iex` installer. | SupplyChain-Med | Accepted; see the `SECURITY.md` bundled with the `powerpoint` skill and pin the `uv` installer to a vetted release. |
+| G-INF-1 | Canonical DT artifacts may contain confidential product or customer prose; that content flows verbatim (escaped) into the emitted `content.yaml` and any downstream deck. There is no data-classification gate.                                                                                                         | InfoDisc-Low    | By design; operators must avoid rendering regulated content and control the output directory.                       |
 
 For an active issue tracker entry covering these gaps, see the [hve-core issues list](https://github.com/microsoft/hve-core/issues).
 
@@ -232,7 +232,7 @@ For an active issue tracker entry covering these gaps, see the [hve-core issues 
 
 * [STRIDE Threat Model](https://learn.microsoft.com/azure/security/develop/threat-modeling-tool-threats)
 * [OWASP Top 10](https://owasp.org/www-project-top-ten/)
-* [PowerPoint skill security model](../powerpoint/SECURITY.md)
+* PowerPoint skill security model: the `SECURITY.md` bundled with the `powerpoint` skill
 * [Repository security model](../../../../docs/security/security-model.md)
 
 🤖 Crafted with precision by ✨Copilot following brilliant human instruction, then carefully refined by our team of discerning human reviewers.

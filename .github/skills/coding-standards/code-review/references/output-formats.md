@@ -107,7 +107,7 @@ Authoring rules:
 
 ## Disclaimer and human-review sign-off
 
-Every `review.md` ends with a Disclaimer and Human Review section, always rendered last and never omitted. It contains the verbatim `## Code-Review` `> [!CAUTION]` block from [Disclaimer Language](../../../../instructions/shared/disclaimer-language.instructions.md), followed by an unchecked `- [ ] Reviewed and validated by a qualified human reviewer` checkbox. The agent never checks this box; only a human may convert `[ ]` to `[x]`. This section restores the human-review gate as a codified part of the output contract rather than an emergent behavior of path-attached instructions.
+Every `review.md` ends with a Disclaimer and Human Review section, always rendered last and never omitted. It contains the verbatim `## Code-Review` `> [!CAUTION]` block from `disclaimer-language.instructions.md`, followed by an unchecked `- [ ] Reviewed and validated by a qualified human reviewer` checkbox. The agent never checks this box; only a human may convert `[ ]` to `[x]`. This section restores the human-review gate as a codified part of the output contract rather than an emergent behavior of path-attached instructions.
 
 ## Narrative and board shapes
 

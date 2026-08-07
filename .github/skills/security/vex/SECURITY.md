@@ -232,7 +232,7 @@ For an active issue tracker entry covering these gaps, see the [hve-core issues 
 ## References
 
 * [Repository-wide security model](../../../../docs/security/security-model.md)
-* [Skill security model conventions](../../../../.github/instructions/skill-security-model.instructions.md)
+* Skill security model conventions: `skill-security-model.instructions.md`
 * [OpenVEX v0.2.0 specification](https://github.com/openvex/spec/blob/main/OPENVEX-SPEC.md)
 * [STRIDE Threat Model](https://learn.microsoft.com/azure/security/develop/threat-modeling-tool-threats)
 

@@ -100,7 +100,7 @@ Devcontainer decision tree:
 * **Remote-SSH**: set `MURAL_CREDENTIAL_BACKEND=file` unless a SecretService daemon is configured on the remote host.
 * **WSL2**: leave `MURAL_CREDENTIAL_BACKEND=auto` when WSLg + SecretService is installed; otherwise set `MURAL_CREDENTIAL_BACKEND=file`.
 
-See [Mural Credentials guide](../../../../docs/agents/mural/credentials.md) for backend selection rules, the bootstrap walkthrough, devcontainer recipes, troubleshooting, migration, and the security model.
+See the Mural Credentials guide under the repository documentation tree (`docs/agents/mural/credentials.md`) for backend selection rules, the bootstrap walkthrough, devcontainer recipes, troubleshooting, migration, and the security model.
 
 ## Authentication
 
@@ -409,4 +409,4 @@ The following items were intentionally deferred from the v1 full-scope delivery 
 | Lineage prefix field placement (`title` vs `text`) | Stakeholder confirmation that `[dt:method=N section=NAME run=ID]` belongs on widget `title` (current v1 spec literal) versus the primary `text` field rendered by most widget types | Planning log PD-6.1 / ID-01  || DT section-map geometry refinement                 | Refine the default section geometry and add canonical sub-sections per method in `assets/dt-sections.default.yml`                                                                  | Mural skill code review      |
 ## License
 
-This skill is distributed under the MIT License. See the repository [LICENSE](../../../../LICENSE) file for the full text.
+This skill is distributed under the MIT License. See the `LICENSE` file at the repository root for the full text.
