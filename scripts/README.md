@@ -2,7 +2,7 @@
 title: Scripts
 description: PowerShell scripts for linting, validation, and security automation
 author: HVE Core Team
-ms.date: 2026-08-03
+ms.date: 2026-08-06
 ms.topic: reference
 keywords:
   - powershell
@@ -271,7 +271,12 @@ When adding new scripts:
 
 ### Entry Point Guard Pattern
 
-All production scripts use a dot-source guard that enables Pester tests to import functions without executing main logic. Extract main logic into an `Invoke-*` orchestrator function and wrap direct execution in a guard block:
+All production scripts use a dot-source guard that enables Pester tests to import
+functions without executing main logic. Extract main logic into an `Invoke-*`
+orchestrator function and wrap direct execution in a guard block.
+
+Use the simple variant when the orchestrator has no meaningful result beyond success or
+failure:
 
 ```powershell
 #region Functions
@@ -299,12 +304,42 @@ if ($MyInvocation.InvocationName -ne '.') {
 #endregion Main Execution
 ```
 
+Use an `Invoke-*Core` name when the function is a stable in-process test surface. When
+the core returns a result object, keep exit codes and command-line output in the guarded
+main block:
+
+```powershell
+function Invoke-ScriptCore {
+    [CmdletBinding()]
+    param( <# script params #> )
+
+    return [PSCustomObject]@{
+        Outcome = 'Wrote'
+        OutputPath = 'output/example.yml'
+    }
+}
+
+if ($MyInvocation.InvocationName -ne '.') {
+    try {
+        $result = Invoke-ScriptCore @PSBoundParameters
+        if ($result.Outcome -eq 'Drift') { exit 1 }
+        if ($result.Outcome -in 'Wrote', 'Skipped') { $result.OutputPath }
+        exit 0
+    }
+    catch {
+        Write-Error -ErrorAction Continue "ScriptName failed: $($_.Exception.Message)"
+        exit 1
+    }
+}
+```
+
 Key rules:
 
 * The `if` guard wraps `try`/`catch` (not the reverse)
-* Name the orchestrator `Invoke-*` matching the script noun
+* Name the orchestrator `Invoke-*` matching the script noun; use the `Core` suffix for a function designed for direct dot-sourced tests
+* Keep `exit` calls in the guarded main block so a dot-sourced core can return structured results to Pester
 * Use `#region Functions` and `#region Main Execution` markers
-* See [Package-Extension.ps1](extension/Package-Extension.ps1) for a canonical example
+* See [Package-Extension.ps1](extension/Package-Extension.ps1) for the established result-object pattern and [Build-AgentBehaviorSpec.ps1](evals/Build-AgentBehaviorSpec.ps1) for an `Invoke-*Core` example
 
 ## Related Documentation
 

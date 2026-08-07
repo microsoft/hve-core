@@ -91,8 +91,10 @@ jobs:
       - name: Discover marketplace packages
         id: discover
         shell: pwsh
+        env:
+          INPUT_CHANNEL: ${{ inputs.channel }}
         run: |
-          & ./scripts/extension/Get-MarketplacePackageMatrix.ps1 -Channel '${{ inputs.channel }}'
+          & ./scripts/extension/Get-MarketplacePackageMatrix.ps1 -Channel $env:INPUT_CHANNEL
 
   package:
     name: Package ${{ matrix.id }}
