@@ -3,7 +3,7 @@ title: Validation Commands and CI-Owned Lanes
 description: Choose local-safe validation defaults and reproduce CI-owned documentation and evaluation lanes when their prerequisites are available
 sidebar_position: 12
 author: Microsoft
-ms.date: 2026-07-28
+ms.date: 2026-08-05
 ms.topic: how-to
 keywords:
   - validation
@@ -33,14 +33,15 @@ Use the smallest local-safe command that covers the change. Generic validation
 does not select a `ci:*` lane, and a command mentioned in documentation, a
 plan, a log, or an error message is not an agent execution request.
 
-| Need                                      | Command                  | Notes                                       |
-|-------------------------------------------|--------------------------|---------------------------------------------|
-| Repository-wide local-safe validation     | `npm run validate:local` | Non-mutating default validation aggregate   |
-| Documentation static and component checks | `npm run validate:docs`  | Does not run the browser E2E lane           |
-| Markdown tables check                     | `npm run lint:tables`    | Non-mutating table alignment check          |
-| Markdown tables fix                       | `npm run format:tables`  | Explicitly mutates table formatting         |
-| Markdown lint fix                         | `npm run lint:md:fix`    | Explicitly mutates Markdown where possible  |
-| Targeted check                            | `npm run <local-check>`  | Choose the check that owns the changed file |
+| Need                                      | Command                  | Notes                                                |
+|-------------------------------------------|--------------------------|------------------------------------------------------|
+| Repository-wide local-safe validation     | `npm run validate:local` | Non-mutating default validation aggregate            |
+| Documentation static and component checks | `npm run validate:docs`  | Does not run the browser E2E lane                    |
+| Markdown tables check                     | `npm run lint:tables`    | Non-mutating table alignment check                   |
+| Markdown link check                       | `npm run lint:md-links`  | Non-mutating link check included in `validate:local` |
+| Markdown tables fix                       | `npm run format:tables`  | Explicitly mutates table formatting                  |
+| Markdown lint fix                         | `npm run lint:md:fix`    | Explicitly mutates Markdown where possible           |
+| Targeted check                            | `npm run <local-check>`  | Choose the check that owns the changed file          |
 
 For example, use `npm run lint:md -- docs/contributing/validation.md` for a
 targeted Markdown check, or invoke `npm run lint:frontmatter` after changing
@@ -65,8 +66,9 @@ dependencies available.
 ## Install behind a restricted network
 
 Some organizations block direct access to public package registries and require
-installs to route through an approved feed proxy. `npm ci` then fails to reach
-`registry.npmjs.org`, commonly with `ENOTCONN` or a connection timeout.
+installs to route through an approved feed proxy. `npm ci`, `pip install`, and
+`uv sync` then fail to reach `registry.npmjs.org` or `pypi.org`, commonly with
+`ENOTCONN` or a connection timeout.
 
 This repository commits a project-level `.npmrc` that pins the canonical public
 registry, and npm resolves configuration in the order `cli > env > project
@@ -76,16 +78,27 @@ and silently ignored. Set an environment variable or pass a CLI flag instead.
 Keep the proxy address out of the repository. It belongs in your own
 environment, never in a tracked file.
 
-| Environment                | Where the override belongs                                                            |
-|----------------------------|---------------------------------------------------------------------------------------|
-| macOS or Linux             | A file in your home directory sourced from `~/.zshrc` or `~/.bashrc`                  |
-| Windows                    | A PowerShell profile (`$PROFILE`) or a user environment variable                      |
-| Dev container or Codespace | The user-level `dev.containers.containerEnv` VS Code setting, not `devcontainer.json` |
+Each tool reads its own environment variable:
+
+| Tool | Environment variable  | Public default                |
+|------|-----------------------|-------------------------------|
+| npm  | `npm_config_registry` | `https://registry.npmjs.org/` |
+| pip  | `PIP_INDEX_URL`       | `https://pypi.org/simple/`    |
+| uv   | `UV_DEFAULT_INDEX`    | `https://pypi.org/simple/`    |
+
+| Environment    | Where the override belongs                                                |
+|----------------|---------------------------------------------------------------------------|
+| macOS or Linux | A file in your home directory sourced from `~/.zshrc` or `~/.bashrc`      |
+| Windows        | A PowerShell profile (`$PROFILE`) or a user environment variable          |
+| Dev container  | The host environment available to VS Code when it builds the image        |
+| Codespaces     | Development environment secrets for post-build setup and runtime commands |
 
 macOS and Linux:
 
 ```bash
 export npm_config_registry="https://proxy.example.com/npm/"
+export PIP_INDEX_URL="https://proxy.example.com/pypi/simple/"
+export UV_DEFAULT_INDEX="https://proxy.example.com/pypi/simple/"
 npm ci
 ```
 
@@ -93,18 +106,61 @@ Windows PowerShell:
 
 ```powershell
 $env:npm_config_registry = 'https://proxy.example.com/npm/'
+$env:PIP_INDEX_URL = 'https://proxy.example.com/pypi/simple/'
+$env:UV_DEFAULT_INDEX = 'https://proxy.example.com/pypi/simple/'
 npm ci
 ```
 
-Dev container, in VS Code user settings so no repository file changes:
+### Dev container build and runtime variables
 
-```json
-{
-  "dev.containers.containerEnv": {
-    "npm_config_registry": "https://proxy.example.com/npm/"
-  }
-}
+The dev container needs the proxy at image-build time as well as at runtime so
+that any `pip`, `uv`, or `npm` step baked into the image resolves through the
+proxy. `.devcontainer/devcontainer.json` reads `NPM_CONFIG_REGISTRY`,
+`PIP_INDEX_URL`, and `UV_DEFAULT_INDEX` from the host with
+`${localEnv:VAR}` and passes them as `build.args` to
+`.devcontainer/Dockerfile`. The Dockerfile declares matching `ARG` and `ENV`
+entries, persists the selected values in the image for runtime commands, and
+falls back to each public registry when the build argument is empty.
+
+Set the variables in the host environment before launching VS Code and
+rebuilding the container. The npm build argument uses uppercase
+`NPM_CONFIG_REGISTRY`, while npm commands outside the container use lowercase
+`npm_config_registry` as shown above.
+
+```bash
+export NPM_CONFIG_REGISTRY="https://proxy.example.com/npm/"
+export PIP_INDEX_URL="https://proxy.example.com/pypi/simple/"
+export UV_DEFAULT_INDEX="https://proxy.example.com/pypi/simple/"
+code .
 ```
+
+On Windows, set the same variables in a PowerShell session before launching
+VS Code:
+
+```powershell
+$env:NPM_CONFIG_REGISTRY = 'https://proxy.example.com/npm/'
+$env:PIP_INDEX_URL = 'https://proxy.example.com/pypi/simple/'
+$env:UV_DEFAULT_INDEX = 'https://proxy.example.com/pypi/simple/'
+code .
+```
+
+VS Code substitutes the host values at build time. If VS Code is already open,
+restart it from the configured environment before rebuilding the container.
+There is no repository file to edit.
+
+### Codespaces
+
+For Codespaces, create
+[development environment secrets](https://docs.github.com/en/codespaces/managing-your-codespaces/managing-your-account-specific-secrets-for-github-codespaces)
+named `NPM_CONFIG_REGISTRY`, `PIP_INDEX_URL`, and `UV_DEFAULT_INDEX`. These
+values are available to `updateContentCommand`, including its `npm ci`, and to
+later commands inside the running codespace.
+
+Codespaces secrets are not available while the image is built. They cannot
+redirect a package download performed by a Dockerfile `RUN` instruction or
+another image-build step. Use an organization-approved prebuilt image or other
+build infrastructure when the image build itself requires authenticated
+package access.
 
 The committed `.npmrc` sets `replace-registry-host=always`, so npm rewrites each
 lockfile tarball host to the configured registry at fetch time only. `npm ci`
