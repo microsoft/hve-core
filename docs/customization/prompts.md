@@ -2,7 +2,7 @@
 title: Creating Custom Prompts
 description: Author reusable prompt templates with variables, agent delegation, and tool restrictions for team workflows
 author: Microsoft
-ms.date: 2026-07-15
+ms.date: 2026-08-06
 ms.topic: how-to
 keywords:
   - prompts
@@ -61,7 +61,7 @@ Frontmatter fields:
 * `description` (required): A one-line summary displayed in the prompt picker
 * `name` (optional): A human-readable identifier for the prompt
 * `argument-hint` (optional): Hint text shown in the prompt picker for expected inputs
-* `agent` (optional): Delegates execution to a specific custom agent
+* `agent` (optional): Selects the `ask`, `agent`, or `plan` built-in mode, or delegates to a named custom agent; defaults to the current agent when omitted, or to `agent` when `tools` is specified
 * `model` (optional): Pins the prompt to a specific model or prioritized model list
 * `tools` (optional): Restricts available tools for the prompt
 
@@ -147,7 +147,20 @@ defined in #file:.github/instructions/coding-standards/typescript.instructions.m
 
 ## Agent Delegation from Prompts
 
-The `agent:` frontmatter field delegates prompt execution to a custom agent. The value uses the agent's human-readable `name:` from its frontmatter.
+The `agent:` frontmatter field selects how Copilot runs a prompt. Use a built-in mode
+when the prompt needs general conversation, autonomous tool use, or planning behavior:
+
+| Value   | Use when the prompt should                                   |
+|---------|--------------------------------------------------------------|
+| `ask`   | Answer questions without planning source edits               |
+| `agent` | Choose tools and carry out a multi-step task                 |
+| `plan`  | Create an implementation plan before source changes are made |
+
+When `agent` is omitted, VS Code uses the current agent. If the prompt declares
+`tools`, VS Code defaults to `agent` instead.
+
+Use a custom agent's human-readable `name:` when the prompt should delegate to that
+agent's specialized protocol instead of a built-in mode.
 
 ```yaml
 ---
@@ -156,7 +169,10 @@ agent: RPI Agent
 ---
 ```
 
-When a prompt delegates to an agent, the agent's full protocol (phases, steps, tool restrictions) governs execution. The prompt body provides additional context or scoping without duplicating the agent's workflow.
+When a prompt delegates to a named agent, the agent's full protocol (phases, steps,
+tool restrictions) governs execution. The prompt body provides additional context or
+scoping without duplicating the agent's workflow. Use `agent: agent` instead when the
+prompt needs autonomous tool use but no specialized custom-agent protocol.
 
 ```markdown
 ---
