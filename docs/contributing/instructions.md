@@ -3,7 +3,7 @@ title: 'Contributing Instructions to HVE Core'
 description: 'Requirements and standards for contributing GitHub Copilot instruction files to hve-core'
 sidebar_position: 3
 author: Microsoft
-ms.date: 2026-08-02
+ms.date: 2026-08-06
 ms.topic: how-to
 ---
 
@@ -139,7 +139,11 @@ lastUpdated: '2025-11-19'
 
 Distributable instructions must be declared under the `rules` field of the `hve-core` entry in `.github/plugin/marketplace.json`. Root-level instructions are repository-specific and remain outside recipe membership.
 
-Use the recipe-relative `rules/<subpath>/<name>.instructions.md` path, add non-stable lifecycle disclosure only through `x-hve.componentMaturity`, and update `docs/plugins/hve-core.md`. Run `npm run lint:marketplace` and `npm run plugin:generate` after registration.
+Under the `rules` field, use the `.github`-root-relative canonical path
+`instructions/<subpath>/<name>.instructions.md`. Add non-stable lifecycle
+disclosure only through `x-hve.componentMaturity`, update
+`docs/plugins/hve-core.md`, then run `npm run lint:marketplace` and
+`npm run docs:generate:check`.
 
 ## Content Structure Standards
 

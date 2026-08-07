@@ -47,6 +47,35 @@ Describe 'New-PluginReleaseLocator' -Tag 'Unit' {
         }
     }
 
+    Context 'when a canonical release locator is requested' {
+        BeforeAll {
+            $script:canonicalLocator = New-PluginReleaseLocator -Version '1.2.3' -TagPrefix 'hve-core-v' -PathPrefix ''
+        }
+
+        It 'Derives the ordinary release tag' {
+            $script:canonicalLocator.Ref | Should -BeExactly 'hve-core-v1.2.3'
+        }
+
+        It 'Produces a pathless locator' {
+            $script:canonicalLocator.PathPrefix | Should -BeExactly ''
+        }
+
+        It 'Accepts an explicit ordinary release tag' {
+            (New-PluginReleaseLocator -Tag 'hve-core-v4.5.6' -TagPrefix 'hve-core-v' -PathPrefix '').Ref |
+                Should -BeExactly 'hve-core-v4.5.6'
+        }
+
+        It 'Rejects a projected snapshot tag in the canonical namespace' {
+            { New-PluginReleaseLocator -Tag 'plugins-v1.2.3' -TagPrefix 'hve-core-v' -PathPrefix '' } |
+                Should -Throw -ExpectedMessage "*must use the immutable 'hve-core-v<version>' tag form*"
+        }
+
+        It 'Rejects an ordinary release tag in the projected namespace' {
+            { New-PluginReleaseLocator -Tag 'hve-core-v1.2.3' } |
+                Should -Throw -ExpectedMessage "*must use the immutable 'plugins-v<version>' tag form*"
+        }
+    }
+
     Context 'when the locator is not immutable or is malformed' {
         It 'Rejects <Label>' -ForEach @(
             @{ Label = 'a commit sha'; Parameters = @{ Tag = '0123456789abcdef0123456789abcdef01234567' }; Pattern = 'is a commit sha' }

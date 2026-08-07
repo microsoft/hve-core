@@ -6,7 +6,7 @@ BeforeAll {
     $script:ScriptPath = Join-Path $PSScriptRoot '../../release/Update-VersionFiles.ps1'
     # Pass a dummy version to satisfy the mandatory parameter during dot-source.
     # The main execution guard prevents any file changes.
-    . $script:ScriptPath -Version '0.0.0'
+    . $script:ScriptPath -Version '0.0.0' -CatalogRefMode Remove
     Mock Write-Host {}
 }
 
@@ -209,6 +209,63 @@ Describe 'Update-JsonVersion' -Tag 'Unit' {
     }
 }
 
+Describe 'Update-MarketplaceCatalogVersion' -Tag 'Unit' {
+    BeforeAll {
+        function New-TestCatalog {
+            param([string]$Ref)
+
+            $source = [ordered]@{ source = 'github'; repo = 'contoso/hve'; path = '.github' }
+            if (-not [string]::IsNullOrWhiteSpace($Ref)) {
+                $source['ref'] = $Ref
+            }
+            return ([ordered]@{
+                    metadata = [ordered]@{ version = '1.0.0' }
+                    plugins  = @(
+                        [ordered]@{ name = 'alpha'; version = '1.0.0'; source = [PSCustomObject]$source }
+                        [ordered]@{ name = 'bravo'; version = '1.0.0'; source = [PSCustomObject]$source }
+                    )
+                } | ConvertTo-Json -Depth 10 | ConvertFrom-Json)
+        }
+    }
+
+    It 'Adds an exact release ref when entries omit it' {
+        $catalog = Update-MarketplaceCatalogVersion -Catalog (New-TestCatalog) -Version '2.3.4' -RefMode Exact
+        @($catalog.plugins | ForEach-Object { $_.source.ref }) | Should -Be @('hve-core-v2.3.4', 'hve-core-v2.3.4')
+    }
+
+    It 'Updates an existing exact release ref' {
+        $catalog = Update-MarketplaceCatalogVersion -Catalog (New-TestCatalog -Ref 'hve-core-v1.0.0') -Version '2.3.4' -RefMode Exact
+        @($catalog.plugins | ForEach-Object { $_.source.ref }) | Should -Be @('hve-core-v2.3.4', 'hve-core-v2.3.4')
+    }
+
+    It 'Removes an existing release ref from every entry' {
+        $catalog = Update-MarketplaceCatalogVersion -Catalog (New-TestCatalog -Ref 'hve-core-v1.0.0') -Version '2.3.4' -RefMode Remove
+        foreach ($plugin in $catalog.plugins) {
+            $plugin.source.PSObject.Properties.Name | Should -Not -Contain 'ref'
+        }
+    }
+
+    It 'Advances catalog and package versions with the ref change' -ForEach @(
+        @{ RefMode = 'Exact' }
+        @{ RefMode = 'Remove' }
+    ) {
+        $catalog = Update-MarketplaceCatalogVersion -Catalog (New-TestCatalog -Ref 'hve-core-v1.0.0') -Version '2.3.4' -RefMode $RefMode
+        $catalog.metadata.version | Should -BeExactly '2.3.4'
+        @($catalog.plugins | ForEach-Object { $_.version }) | Should -Be @('2.3.4', '2.3.4')
+    }
+
+    It 'Is byte-stable when applied twice with the same inputs' -ForEach @(
+        @{ RefMode = 'Exact' }
+        @{ RefMode = 'Remove' }
+    ) {
+        $catalog = New-TestCatalog -Ref 'hve-core-v1.0.0'
+        $first = Update-MarketplaceCatalogVersion -Catalog $catalog -Version '2.3.4' -RefMode $RefMode
+        $firstJson = $first | ConvertTo-Json -Depth 10
+        $second = Update-MarketplaceCatalogVersion -Catalog $first -Version '2.3.4' -RefMode $RefMode
+        ($second | ConvertTo-Json -Depth 10) | Should -BeExactly $firstJson
+    }
+}
+
 Describe 'Update-VersionFiles script execution' -Tag 'Unit' {
     BeforeAll {
         $script:FakeRoot = Join-Path ([System.IO.Path]::GetTempPath()) "uvf-$([guid]::NewGuid())"
@@ -225,12 +282,14 @@ Describe 'Update-VersionFiles script execution' -Tag 'Unit' {
         @{
             metadata = @{ version = '1.0.0' }
             plugins  = @(
-                @{ version = '1.0.0'; id = 'hve-core'; source = @{ ref = 'plugins-v1.0.0' } }
-                @{ version = '1.0.0'; id = 'ado'; source = @{ ref = 'plugins-v1.0.0' } }
+                @{ version = '1.0.0'; id = 'hve-core'; source = @{ ref = 'hve-core-v1.0.0' } }
+                @{ version = '1.0.0'; id = 'ado'; source = @{ ref = 'hve-core-v1.0.0' } }
             )
         } | ConvertTo-Json -Depth 10 | Set-Content (Join-Path $script:FakeRoot '.github/plugin/marketplace.json')
         @{ '.' = '1.0.0' } |
             ConvertTo-Json | Set-Content (Join-Path $script:FakeRoot '.release-please-manifest.json')
+        @{ '.' = '1.0.0' } |
+            ConvertTo-Json | Set-Content (Join-Path $script:FakeRoot '.release-please-prerelease-manifest.json')
         @{
             name            = 'hve-core'
             version         = '1.0.0'
@@ -246,7 +305,7 @@ Describe 'Update-VersionFiles script execution' -Tag 'Unit' {
     }
 
     It 'Updates all version files to the target version' {
-        & $script:ScriptPath -Version '2.5.0' -RepoRoot $script:FakeRoot -SkipPluginGenerate
+        & $script:ScriptPath -Version '2.5.0' -CatalogRefMode Exact -RepoRoot $script:FakeRoot -SkipPluginGenerate
 
         $pkg = Get-Content -Raw (Join-Path $script:FakeRoot 'package.json') | ConvertFrom-Json
         $pkg.version | Should -Be '2.5.0'
@@ -259,11 +318,13 @@ Describe 'Update-VersionFiles script execution' -Tag 'Unit' {
         $mkt.metadata.version | Should -Be '2.5.0'
         $mkt.plugins[0].version | Should -Be '2.5.0'
         $mkt.plugins[1].version | Should -Be '2.5.0'
-        $mkt.plugins[0].source.ref | Should -Be 'plugins-v2.5.0'
-        $mkt.plugins[1].source.ref | Should -Be 'plugins-v2.5.0'
+        $mkt.plugins[0].source.ref | Should -Be 'hve-core-v2.5.0'
+        $mkt.plugins[1].source.ref | Should -Be 'hve-core-v2.5.0'
 
         $manifest = Get-Content -Raw (Join-Path $script:FakeRoot '.release-please-manifest.json') | ConvertFrom-Json
         $manifest.'.' | Should -Be '2.5.0'
+        $preReleaseManifest = Get-Content -Raw (Join-Path $script:FakeRoot '.release-please-prerelease-manifest.json') | ConvertFrom-Json
+        $preReleaseManifest.'.' | Should -Be '1.0.0'
 
         $lock = Get-Content -Raw (Join-Path $script:FakeRoot 'package-lock.json') | ConvertFrom-Json -Depth 10 -AsHashtable
         $lock['version'] | Should -Be '2.5.0'
@@ -292,7 +353,7 @@ Describe 'Update-VersionFiles script execution' -Tag 'Unit' {
         @{ version = '1.0.0' } | ConvertTo-Json | Set-Content (Join-Path $sparseRoot 'package.json')
 
         try {
-            { & $script:ScriptPath -Version '3.0.0' -RepoRoot $sparseRoot -SkipPluginGenerate } |
+            { & $script:ScriptPath -Version '3.0.0' -CatalogRefMode Exact -RepoRoot $sparseRoot -SkipPluginGenerate } |
                 Should -Not -Throw
 
             $pkg = Get-Content -Raw (Join-Path $sparseRoot 'package.json') | ConvertFrom-Json
@@ -303,13 +364,74 @@ Describe 'Update-VersionFiles script execution' -Tag 'Unit' {
         }
     }
 
+    It 'Updates an explicitly selected manifest without changing the Stable manifest' {
+        & $script:ScriptPath `
+            -Version '2.6.0' `
+            -CatalogRefMode Exact `
+            -RepoRoot $script:FakeRoot `
+            -ManifestPath '.release-please-prerelease-manifest.json' `
+            -SkipPluginGenerate
+
+        $stable = Get-Content -Raw (Join-Path $script:FakeRoot '.release-please-manifest.json') | ConvertFrom-Json
+        $preRelease = Get-Content -Raw (Join-Path $script:FakeRoot '.release-please-prerelease-manifest.json') | ConvertFrom-Json
+        $stable.'.' | Should -Be '2.5.0'
+        $preRelease.'.' | Should -Be '2.6.0'
+    }
+
+    It 'Skips both manifests while updating shared version metadata' {
+        & $script:ScriptPath `
+            -Version '2.7.0' `
+            -CatalogRefMode Exact `
+            -RepoRoot $script:FakeRoot `
+            -SkipManifest `
+            -SkipPluginGenerate
+
+        $stable = Get-Content -Raw (Join-Path $script:FakeRoot '.release-please-manifest.json') | ConvertFrom-Json
+        $preRelease = Get-Content -Raw (Join-Path $script:FakeRoot '.release-please-prerelease-manifest.json') | ConvertFrom-Json
+        $package = Get-Content -Raw (Join-Path $script:FakeRoot 'package.json') | ConvertFrom-Json
+        $stable.'.' | Should -Be '2.5.0'
+        $preRelease.'.' | Should -Be '2.6.0'
+        $package.version | Should -Be '2.7.0'
+    }
+
+    It 'Rejects a manifest path when manifest updates are skipped' {
+        {
+            & $script:ScriptPath `
+                -Version '2.8.0' `
+                -CatalogRefMode Exact `
+                -RepoRoot $script:FakeRoot `
+                -ManifestPath '.release-please-prerelease-manifest.json' `
+                -SkipManifest `
+                -SkipPluginGenerate
+        } | Should -Throw
+    }
+
+    It 'Rejects an explicitly selected missing manifest' {
+        {
+            & $script:ScriptPath `
+                -Version '2.8.0' `
+                -CatalogRefMode Exact `
+                -RepoRoot $script:FakeRoot `
+                -ManifestPath '.missing-release-manifest.json' `
+                -SkipPluginGenerate
+        } | Should -Throw '*Manifest file not found*'
+    }
+
     It 'Rejects invalid version "<Version>"' -ForEach @(
         @{ Version = 'abc' }
         @{ Version = '1.2' }
         @{ Version = 'v1.2.3' }
+        @{ Version = '1.2.3-suffix' }
+        @{ Version = "1.2.3`n" }
     ) {
-        { & $script:ScriptPath -Version $Version -RepoRoot $script:FakeRoot -SkipPluginGenerate } |
+        { & $script:ScriptPath -Version $Version -CatalogRefMode Exact -RepoRoot $script:FakeRoot -SkipPluginGenerate } |
             Should -Throw
+    }
+
+    It 'Rejects invocation without an explicit catalog ref mode' {
+        & pwsh -NoProfile -NonInteractive -File $script:ScriptPath `
+            -Version '2.8.0' -RepoRoot $script:FakeRoot -SkipPluginGenerate 2>$null
+        $LASTEXITCODE | Should -Not -Be 0
     }
 }
 
@@ -342,7 +464,7 @@ Describe 'Release preparation repair' -Tag 'Unit' {
                 ConvertTo-Json | Set-Content (Join-Path $root '.release-please-manifest.json')
             @{
                 metadata = @{ version = '3.4.0' }
-                plugins  = @(@{ version = '3.4.0'; id = 'hve-core'; source = @{ ref = 'plugins-v3.2.2' } })
+                plugins  = @(@{ version = '3.4.0'; id = 'hve-core'; source = @{ ref = 'hve-core-v3.2.2' } })
             } | ConvertTo-Json -Depth 10 | Set-Content (Join-Path $root '.github/plugin/marketplace.json')
 
             return $root
@@ -352,10 +474,10 @@ Describe 'Release preparation repair' -Tag 'Unit' {
     It 'Rewrites a stale plugin locator when every bare version is already current' {
         $root = New-PreparedRoot
         try {
-            & $script:ScriptPath -Version '3.4.0' -RepoRoot $root -SkipPluginGenerate
+            & $script:ScriptPath -Version '3.4.0' -CatalogRefMode Exact -RepoRoot $root -SkipPluginGenerate
 
             $catalog = Get-Content -Raw (Join-Path $root '.github/plugin/marketplace.json') | ConvertFrom-Json -Depth 10
-            $catalog.plugins[0].source.ref | Should -Be 'plugins-v3.4.0'
+            $catalog.plugins[0].source.ref | Should -Be 'hve-core-v3.4.0'
             $catalog.metadata.version | Should -Be '3.4.0'
             $catalog.plugins[0].version | Should -Be '3.4.0'
         }
@@ -367,11 +489,11 @@ Describe 'Release preparation repair' -Tag 'Unit' {
     It 'Leaves an already-consistent preparation byte-identical' {
         $root = New-PreparedRoot
         try {
-            & $script:ScriptPath -Version '3.4.0' -RepoRoot $root -SkipPluginGenerate
+            & $script:ScriptPath -Version '3.4.0' -CatalogRefMode Exact -RepoRoot $root -SkipPluginGenerate
             $catalogPath = Join-Path $root '.github/plugin/marketplace.json'
             $first = Get-Content -Raw $catalogPath
 
-            & $script:ScriptPath -Version '3.4.0' -RepoRoot $root -SkipPluginGenerate
+            & $script:ScriptPath -Version '3.4.0' -CatalogRefMode Exact -RepoRoot $root -SkipPluginGenerate
 
             Get-Content -Raw $catalogPath | Should -BeExactly $first
         }
@@ -383,13 +505,26 @@ Describe 'Release preparation repair' -Tag 'Unit' {
     # A lint gate that only fails on a stale locator would block every release.
     # The release workflow must call this updater on the release-please branch
     # so the managed PR owns the complete committed release state.
-    It 'Is invoked on the managed release preparation branch' {
-        $workflowPath = Join-Path $script:RepositoryRoot '.github/workflows/release-stable-publish.yml'
+    It 'Is invoked on each managed release preparation branch' -ForEach @(
+        @{
+            Workflow = 'release-prerelease.yml'
+            TargetBranch = 'release/prerelease'
+            ManifestPath = '.release-please-prerelease-manifest.json'
+            ConfigPath = 'release-please-prerelease-config.json'
+        }
+        @{
+            Workflow = 'release-stable-publish.yml'
+            TargetBranch = 'release/stable'
+            ManifestPath = ''
+            ConfigPath = 'release-please-config.json'
+        }
+    ) {
+        $workflowPath = Join-Path $script:RepositoryRoot ".github/workflows/$Workflow"
         $workflow = Get-Content -LiteralPath $workflowPath -Raw -Encoding utf8
         $document = $workflow | ConvertFrom-Yaml
 
         $release = $document['jobs']['release-please']
-        [string]$release['steps'][1]['with']['target-branch'] | Should -BeExactly 'release/stable'
+        [string]$release['steps'][1]['with']['target-branch'] | Should -BeExactly $TargetBranch
 
         $sync = $document['jobs']['sync-release-pr']
         $sync | Should -Not -BeNullOrEmpty
@@ -418,7 +553,17 @@ Describe 'Release preparation repair' -Tag 'Unit' {
         $invocation[0] | Should -Match '\$GITHUB_WORKSPACE/scripts/release/Update-VersionFiles\.ps1'
         $invocation[0] | Should -Match 'RELEASE_REPO="\$GITHUB_WORKSPACE/release-preparation"'
         $invocation[0] | Should -Match '-RepoRoot "\$RELEASE_REPO"'
+        $invocation[0] | Should -Match '-CatalogRefMode Exact'
         $invocation[0] | Should -Match '-SkipPluginGenerate'
+        if ($ManifestPath) {
+            $invocation[0] | Should -Match "-ManifestPath $([regex]::Escape($ManifestPath))"
+        }
+        else {
+            $invocation[0] | Should -Not -Match '-ManifestPath'
+        }
+        $invocation[0] | Should -Match ([regex]::Escape($ConfigPath))
+        $invocation[0] | Should -Match 'release-as'
+        $invocation[0] | Should -Match 'del\(\.packages\["\."\]\["release-as"\]\)'
         $invocation[0] | Should -Match 'cd "\$RELEASE_REPO"'
         $invocation[0] | Should -Match 'git push origin "HEAD:refs/heads/\$RELEASE_BRANCH"'
         $invocation[0] | Should -Not -Match 'push --force'
@@ -463,11 +608,12 @@ Describe 'Release preparation repair' -Tag 'Unit' {
 
         $checkout = @($steps | Where-Object { $_.Contains('uses') -and [string]$_['uses'] -match '^actions/checkout@' })
         $checkout | Should -HaveCount 1
-        [string]$checkout[0]['with']['ref'] | Should -BeExactly '${{ github.sha }}'
+        [string]$checkout[0]['with']['ref'] | Should -BeExactly 'release/stable'
+        [string]$checkout[0]['with']['fetch-depth'] | Should -BeExactly '0'
         $steps.IndexOf($identity[0]) | Should -BeLessThan $steps.IndexOf($checkout[0])
         $workflow | Should -Not -Match 'ref:\s*\$\{\{\s*needs\.release-please\.outputs\.sha'
 
-        foreach ($jobName in @('extension-provenance', 'plugin-package-release', 'plugin-snapshot-production')) {
+        foreach ($jobName in @('extension-provenance', 'plugin-package-release')) {
             [string]$document['jobs'][$jobName]['with']['source-ref'] |
                 Should -BeExactly '${{ needs.validate-release.outputs.sha }}'
         }
@@ -491,7 +637,7 @@ Describe 'Release preparation repair' -Tag 'Unit' {
                 '.release-please-manifest.json',
                 'extension/templates/package.template.json:.version',
                 '.github/plugin/marketplace.json:.metadata.version',
-                'plugins-v'
+                'hve-core-v'
             )) {
             $consistency[0] | Should -Match ([regex]::Escape($required))
         }

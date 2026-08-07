@@ -2,7 +2,7 @@
 title: Build System and Validation
 description: Understand the plugin generation pipeline, schema validation system, npm scripts, and CI checks for customizing and extending HVE Core
 author: Microsoft
-ms.date: 2026-08-02
+ms.date: 2026-08-06
 ms.topic: how-to
 keywords:
   - build system
@@ -18,9 +18,9 @@ estimated_reading_time: 8
 The plugin generation pipeline transforms marketplace package recipes into distributable
 plugin output. The `plugin:generate` script runs two stages:
 
-1. `Generate-Plugins.ps1` reads `.github/plugin/marketplace.json` and produces output files
-   under `plugins/`. Each package gets its own subdirectory, such as
-   `plugins/hve-core/` or `plugins/ado/`.
+1. `Generate-Plugins.ps1` reads `.github/plugin/marketplace.json` and produces
+  output under an explicit absolute staging root outside the repository. Each
+  package gets its own subdirectory within that temporary root.
 
 2. `plugin:postprocess` applies markdownlint auto-fixes (`markdownlint-cli2 --fix`) and
    aligns Markdown table columns (`markdown-table-formatter`) for generated package
@@ -30,12 +30,13 @@ plugin output. The `plugin:generate` script runs two stages:
 Run the full pipeline with a single command:
 
 ```bash
-npm run plugin:generate
+HVE_PLUGIN_STAGING_ROOT=/absolute/path/outside/hve-core npm run plugin:generate
 ```
 
 > [!IMPORTANT]
-> Files under `plugins/` are generated output. Do not edit them directly.
-> Changes made to plugin files are overwritten on the next generation run.
+> Package staging requires `HVE_PLUGIN_STAGING_ROOT` or the generator's
+> `-StagingRoot` parameter to name an absolute path outside the repository.
+> Ordinary validation must not create a repository-root `plugins/` directory.
 
 ## Schema Validation System
 
@@ -147,14 +148,14 @@ for the complete set.
 
 ### Plugin and Extension
 
-| Script                         | Command                                | Description                                        |
-|--------------------------------|----------------------------------------|----------------------------------------------------|
-| `plugin:generate`              | `npm run plugin:generate`              | Generate plugins, auto-fix markdown, format tables |
-| `plugin:validate`              | `npm run plugin:validate`              | Validate marketplace package metadata and closure  |
-| `extension:prepare`            | `npm run extension:prepare`            | Prepare VS Code extension for packaging            |
-| `extension:prepare:prerelease` | `npm run extension:prepare:prerelease` | Prepare extension for pre-release                  |
-| `extension:package`            | `npm run extension:package`            | Package VS Code extension                          |
-| `extension:package:prerelease` | `npm run extension:package:prerelease` | Package extension as pre-release                   |
+| Script                         | Command                                | Description                                       |
+|--------------------------------|----------------------------------------|---------------------------------------------------|
+| `plugin:generate`              | `npm run plugin:generate`              | Generate plugins in explicit external staging     |
+| `plugin:validate`              | `npm run plugin:validate`              | Validate marketplace package metadata and closure |
+| `extension:prepare`            | `npm run extension:prepare`            | Prepare VS Code extension for packaging           |
+| `extension:prepare:prerelease` | `npm run extension:prepare:prerelease` | Prepare extension for pre-release                 |
+| `extension:package`            | `npm run extension:package`            | Package VS Code extension                         |
+| `extension:package:prerelease` | `npm run extension:package:prerelease` | Package extension as pre-release                  |
 
 For local-safe defaults, CI-owned lanes, and package-root-specific setup, see
 [Validation Commands and CI-Owned Lanes](../contributing/validation).

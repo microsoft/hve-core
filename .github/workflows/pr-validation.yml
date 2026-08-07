@@ -8,6 +8,8 @@ on:
     branches:
       - main
       - develop
+      - release/prerelease
+      - release/stable
   workflow_dispatch:
 
 concurrency:
@@ -263,7 +265,7 @@ jobs:
     uses: ./.github/workflows/adr-consistency-validation.yml
     permissions:
       contents: read
-      security-events: write  # Required for SARIF upload to Security tab
+      security-events: write # Required for SARIF upload to Security tab
     with:
       soft-fail: false
       changed-files-only: true
@@ -350,7 +352,7 @@ jobs:
     uses: ./.github/workflows/dependency-pinning-scan.yml
     permissions:
       contents: read
-      security-events: write  # Required for SARIF upload to Security tab
+      security-events: write # Required for SARIF upload to Security tab
     with:
       soft-fail: false
       upload-sarif: true
@@ -369,7 +371,7 @@ jobs:
     uses: ./.github/workflows/workflow-permissions-scan.yml
     permissions:
       contents: read
-      security-events: write  # Required for SARIF upload to Security tab
+      security-events: write # Required for SARIF upload to Security tab
     with:
       soft-fail: false
       upload-sarif: true
@@ -380,19 +382,19 @@ jobs:
     uses: ./.github/workflows/dangerous-workflow-scan.yml
     permissions:
       contents: read
-      security-events: write  # Required for SARIF upload to Security tab
+      security-events: write # Required for SARIF upload to Security tab
     with:
       soft-fail: false
       upload-sarif: true
       upload-artifact: false
-      poutine-soft-fail: true  # Poutine runs advisory; homegrown template-injection check is the hard gate
+      poutine-soft-fail: true # Poutine runs advisory; homegrown template-injection check is the hard gate
 
   action-version-consistency-scan:
     name: Action Version Consistency Scan
     uses: ./.github/workflows/action-version-consistency-scan.yml
     permissions:
       contents: read
-      security-events: write  # Required for SARIF upload to Security tab
+      security-events: write # Required for SARIF upload to Security tab
     with:
       soft-fail: false
       upload-sarif: true
@@ -403,12 +405,12 @@ jobs:
     uses: ./.github/workflows/gitleaks-scan.yml
     permissions:
       contents: read
-      security-events: write  # Required for SARIF upload to Security tab
+      security-events: write # Required for SARIF upload to Security tab
     with:
       soft-fail: false
       upload-sarif: true
       upload-artifact: false
-      log-opts: '${{ github.event.pull_request.base.sha }}..${{ github.event.pull_request.head.sha }}'
+      log-opts: "${{ github.event.pull_request.base.sha }}..${{ github.event.pull_request.head.sha }}"
 
   npm-audit:
     name: npm Security Audit
@@ -443,7 +445,7 @@ jobs:
     uses: ./.github/workflows/codeql-analysis.yml
     permissions:
       contents: read
-      security-events: write  # Required for SARIF upload to Security tab
+      security-events: write # Required for SARIF upload to Security tab
       actions: read
 
   gate-completeness-check:
@@ -463,6 +465,99 @@ jobs:
       - name: Validate PR gate completeness
         shell: pwsh
         run: ./scripts/security/Test-PrValidationGate.ps1 -FailOnViolation
+
+      # Main catalog synchronization heads are version scoped, so an older
+      # candidate can still be merged after a newer one and would move the
+      # moving development catalog backwards.
+      - name: Validate main catalog synchronization advances main
+        if: >
+          github.event_name == 'pull_request'
+          && github.event.pull_request.base.ref == 'main'
+          && startsWith(github.head_ref, 'release-main-catalog-sync--v')
+        env:
+          HEAD_BRANCH: ${{ github.head_ref }}
+        run: |
+          set -euo pipefail
+          git fetch --no-tags --depth=1 origin '+refs/heads/main:refs/remotes/origin/main'
+
+          CANDIDATE=$(jq -r '.version // ""' package.json)
+          BASE=$(git show refs/remotes/origin/main:package.json | jq -r '.version // ""')
+          for entry in "candidate:$CANDIDATE" "main:$BASE"; do
+            if ! printf '%s' "${entry#*:}" | grep -Eq '^[0-9]+\.[0-9]+\.[0-9]+$'; then
+              echo "::error::${entry%%:*} package.json has no MAJOR.MINOR.PATCH version"
+              exit 1
+            fi
+          done
+
+          if [ "$CANDIDATE" = "$BASE" ] || [ "$(printf '%s\n%s\n' "$CANDIDATE" "$BASE" | sort -V | tail -1)" = "$BASE" ]; then
+            echo "::error::$HEAD_BRANCH proposes $CANDIDATE but main already carries $BASE; this synchronization is superseded"
+            exit 1
+          fi
+          echo "$HEAD_BRANCH advances main from $BASE to $CANDIDATE"
+
+      - name: Validate Stable promotion intent advances release/stable
+        if: >
+          github.event_name == 'pull_request'
+          && github.event.pull_request.base.ref == 'release/stable'
+          && startsWith(github.head_ref, 'release-promotion--release-prerelease--to--release-stable--hve-core-v')
+        env:
+          HEAD_BRANCH: ${{ github.head_ref }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: |
+          set -euo pipefail
+          if [[ ! "$HEAD_BRANCH" =~ ^release-promotion--release-prerelease--to--release-stable--(hve-core-v[0-9]+\.[0-9]+\.[0-9]+)$ ]]; then
+            echo "::error::Stable promotion head $HEAD_BRANCH does not match the canonical selected-tag grammar"
+            exit 1
+          fi
+          SOURCE_TAG=${BASH_REMATCH[1]}
+          SOURCE_VERSION=${SOURCE_TAG#hve-core-v}
+          SOURCE_MINOR=${SOURCE_VERSION#*.}
+          SOURCE_MINOR=${SOURCE_MINOR%%.*}
+          if (( 10#$SOURCE_MINOR % 2 == 0 )); then
+            echo "::error::Stable promotion source $SOURCE_TAG has an even minor"
+            exit 1
+          fi
+          if [[ ! "$HEAD_SHA" =~ ^[0-9a-f]{40}$ ]]; then
+            echo "::error::Stable promotion event carries an invalid head SHA"
+            exit 1
+          fi
+
+          git fetch --no-tags origin \
+            "+refs/pull/$PR_NUMBER/head:refs/remotes/pull/$PR_NUMBER/head" \
+            "+refs/heads/release/stable:refs/remotes/origin/release/stable" \
+            "+refs/tags/$SOURCE_TAG:refs/tags/$SOURCE_TAG"
+          if [ "$(git rev-parse "refs/remotes/pull/$PR_NUMBER/head")" != "$HEAD_SHA" ]; then
+            echo "::error::Fetched Stable promotion head does not match event head $HEAD_SHA"
+            exit 1
+          fi
+
+          CANDIDATE=$(git show "refs/remotes/pull/$PR_NUMBER/head:release-please-config.json" | jq -r '.packages["."]["release-as"] // ""')
+          BASELINE=$(git show 'refs/remotes/origin/release/stable:.release-please-manifest.json' | jq -r '.["."] // ""')
+          for entry in "candidate:$CANDIDATE" "baseline:$BASELINE"; do
+            value=${entry#*:}
+            if [[ "$value" == *$'\n'* || "$value" == *$'\r'* || ! "$value" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+              echo "::error::${entry%%:*} Stable version is not canonical MAJOR.MINOR.PATCH"
+              exit 1
+            fi
+          done
+          CANDIDATE_MINOR=${CANDIDATE#*.}
+          CANDIDATE_MINOR=${CANDIDATE_MINOR%%.*}
+          if (( 10#$CANDIDATE_MINOR % 2 != 0 )); then
+            echo "::error::Stable candidate $CANDIDATE has an odd minor"
+            exit 1
+          fi
+          if [ "$CANDIDATE" = "$BASELINE" ] || [ "$(printf '%s\n%s\n' "$CANDIDATE" "$BASELINE" | sort -V | tail -1)" = "$BASELINE" ]; then
+            echo "::error::$HEAD_BRANCH proposes $CANDIDATE but release/stable already carries $BASELINE"
+            exit 1
+          fi
+
+          SOURCE_SHA=$(git rev-parse --verify --end-of-options "refs/tags/$SOURCE_TAG^{commit}")
+          if git merge-base --is-ancestor "$SOURCE_SHA" refs/remotes/origin/release/stable; then
+            echo "::error::$SOURCE_TAG at $SOURCE_SHA is already contained in release/stable"
+            exit 1
+          fi
+          echo "$HEAD_BRANCH advances release/stable from $BASELINE to $CANDIDATE using $SOURCE_TAG"
 
   pr-validation-success:
     name: PR Validation Success
@@ -519,4 +614,3 @@ jobs:
             exit 1
           fi
           echo "All PR validation jobs passed."
-

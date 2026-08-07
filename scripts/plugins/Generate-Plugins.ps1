@@ -9,8 +9,9 @@
 
 .DESCRIPTION
     Reads .github/plugin/marketplace.json and generates plugin directories under
-    plugins/ containing materialized copies of the git-tracked source artifacts,
-    a root plugin.json manifest, and an auto-generated README file.
+    an explicit staging root outside the repository. Each package contains
+    materialized copies of the git-tracked source artifacts, a root plugin.json
+    manifest, and an auto-generated README file.
 
     Standard component fields (agents, commands, rules, skills, hooks) are the
     sole package-definition input; the x-hve overlay contributes display name,
@@ -25,6 +26,10 @@
 .PARAMETER PackageNames
     Optional. Array of package names to generate. Generates all when omitted.
 
+.PARAMETER StagingRoot
+    Optional CLI value for the required package staging root. When omitted,
+    HVE_PLUGIN_STAGING_ROOT must supply an absolute path outside the repository.
+
 .PARAMETER Refresh
     Optional. Deletes and recreates existing plugin directories.
 
@@ -37,7 +42,7 @@
     and experimental. Deprecated and removed are excluded from both channels.
 
 .PARAMETER MaxTotalSizeMB
-    Optional. Ceiling in megabytes for the total generated plugins/ tree.
+    Optional. Ceiling in megabytes for the total generated staging tree.
     Generation fails and names the largest plugins when the ceiling is
     exceeded, catching accidental ingestion of large or undeclared trees.
 
@@ -56,8 +61,8 @@
     repository root. Defaults to .github/plugin/marketplace.json.
 
 .EXAMPLE
-    ./Generate-Plugins.ps1
-    # Generates all plugins (default: all + refresh)
+    ./Generate-Plugins.ps1 -StagingRoot /tmp/hve-core-plugins
+    # Generates all packages under an explicit staging root
 
 .EXAMPLE
     ./Generate-Plugins.ps1 -PackageNames rpi,github
@@ -83,6 +88,9 @@
 param(
     [Parameter(Mandatory = $false)]
     [string[]]$PackageNames,
+
+    [Parameter(Mandatory = $false)]
+    [string]$StagingRoot,
 
     [Parameter(Mandatory = $false)]
     [switch]$Refresh,
@@ -392,15 +400,20 @@ function Invoke-PluginGeneration {
 
     .DESCRIPTION
         Loads the marketplace catalog, optionally filters to specified package
-        names, and generates plugin directory structures under plugins/. Each
-        package receives materialized copies of the declared git-tracked source
-        artifacts, a root plugin.json manifest, and an auto-generated README.
+        names, and generates plugin directory structures under an explicit
+        outside-repository staging root. Each package receives materialized
+        copies of the declared git-tracked source artifacts, a root plugin.json
+        manifest, and an auto-generated README.
 
     .PARAMETER RepoRoot
         Absolute path to the repository root directory.
 
     .PARAMETER PackageNames
         Optional. Array of package names to generate. Generates all when omitted.
+
+    .PARAMETER StagingRoot
+        Optional explicit package staging root. HVE_PLUGIN_STAGING_ROOT is used
+        when omitted. The resolved path must be outside the repository.
 
     .PARAMETER Refresh
         When specified, removes existing plugin directories before regenerating.
@@ -434,6 +447,9 @@ function Invoke-PluginGeneration {
         [Parameter(Mandatory = $true)]
         [ValidateNotNullOrEmpty()]
         [string]$RepoRoot,
+
+        [Parameter(Mandatory = $false)]
+        [string]$StagingRoot,
 
         [Parameter(Mandatory = $false)]
         [string[]]$PackageNames,
@@ -470,7 +486,13 @@ function Invoke-PluginGeneration {
         }
     }
 
-    $pluginsDir = Join-Path -Path $RepoRoot -ChildPath 'plugins'
+    $requestedStagingRoot = if (-not [string]::IsNullOrWhiteSpace($StagingRoot)) {
+        $StagingRoot
+    }
+    else {
+        $env:HVE_PLUGIN_STAGING_ROOT
+    }
+    $pluginsDir = Assert-PluginStagingRoot -Path $requestedStagingRoot -RepoRoot $RepoRoot
 
     $resolvedCatalogPath = if ([string]::IsNullOrWhiteSpace($CatalogPath)) {
         Join-Path -Path $RepoRoot -ChildPath '.github' -AdditionalChildPath 'plugin', 'marketplace.json'
@@ -684,6 +706,9 @@ function Start-PluginGeneration {
     .PARAMETER PackageNames
         Optional package names forwarded to Invoke-PluginGeneration.
 
+    .PARAMETER StagingRoot
+        Explicit staging root forwarded to Invoke-PluginGeneration.
+
     .PARAMETER Refresh
         Forwarded refresh switch.
 
@@ -716,6 +741,9 @@ function Start-PluginGeneration {
 
         [Parameter(Mandatory = $false)]
         [string[]]$PackageNames,
+
+        [Parameter(Mandatory = $false)]
+        [string]$StagingRoot,
 
         [Parameter(Mandatory = $false)]
         [switch]$Refresh,
@@ -763,6 +791,7 @@ function Start-PluginGeneration {
 
         $result = Invoke-PluginGeneration `
             -RepoRoot $RepoRoot `
+            -StagingRoot $StagingRoot `
             -PackageNames $PackageNames `
             -Refresh:$effectiveRefresh `
             -DryRun:$DryRun `
@@ -797,6 +826,7 @@ function Start-PluginGeneration {
 if ($MyInvocation.InvocationName -ne '.') {
     exit (Start-PluginGeneration `
         -ScriptPath $MyInvocation.MyCommand.Path `
+        -StagingRoot $StagingRoot `
         -PackageNames $PackageNames `
         -Refresh:$Refresh `
         -DryRun:$DryRun `

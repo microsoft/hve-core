@@ -1,0 +1,291 @@
+# Copyright (c) 2026 Microsoft Corporation. All rights reserved.
+# SPDX-License-Identifier: MIT
+name: Main Catalog Sync
+
+# Advances the moving main development catalog to a pre-release version whose
+# canonical release evidence is already published on its hve-core-v<version>
+# release. Main is not a
+# release-please target, so this workflow writes shared package, extension
+# template, and catalog state plus the released changelog, and never a release
+# manifest, a channel config, or a generated plugin payload. The resulting pull
+# request is reviewed; auto-merge is never enabled.
+on:
+  workflow_call:
+    inputs:
+      version:
+        description: "Released pre-release version the main catalog must advertise"
+        required: true
+        type: string
+      release-sha:
+        description: "Release commit the evidence was computed from; provenance and changelog source only, never a working-tree checkout"
+        required: true
+        type: string
+    secrets:
+      release-app-private-key:
+        description: "Release GitHub App private key used to push the sync branch and open the pull request"
+        required: true
+
+# One catalog move at a time. A cancelled run could leave a version-scoped head
+# pushed without its pull request.
+concurrency:
+  group: ${{ github.workflow }}-main
+  cancel-in-progress: false
+
+# Minimal permissions for security
+permissions:
+  contents: read
+
+env:
+  BASE_BRANCH: main
+  SOURCE_BRANCH: release/prerelease
+
+jobs:
+  sync-catalog:
+    name: Sync Main Catalog
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+    steps:
+      - name: Generate GitHub App Token
+        id: app-token
+        uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v2.0.0
+        with:
+          app-id: ${{ vars.RELEASE_APP_ID }}
+          private-key: ${{ secrets.release-app-private-key }}
+
+      # Executable release tooling always comes from main, never from the
+      # release branch whose release is being advertised.
+      - name: Checkout trusted release updater
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: main
+          sparse-checkout: scripts/release/Update-VersionFiles.ps1
+          sparse-checkout-cone-mode: false
+          persist-credentials: false
+
+      # Full history: the candidate comparison and the changelog read span main
+      # and the release branch.
+      - name: Checkout main working tree
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: main
+          fetch-depth: 0
+          path: main-sync
+          token: ${{ steps.app-token.outputs.token }}
+          persist-credentials: true
+
+      - name: Validate release evidence and candidate version
+        id: validate
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+          REPOSITORY: ${{ github.repository }}
+          VERSION: ${{ inputs.version }}
+          RELEASE_SHA: ${{ inputs.release-sha }}
+        run: |
+          set -euo pipefail
+          cd "$GITHUB_WORKSPACE/main-sync"
+
+          if ! printf '%s' "$VERSION" | grep -Eq '^[0-9]+\.[0-9]+\.[0-9]+$'; then
+            echo "::error::version must use MAJOR.MINOR.PATCH form"
+            exit 1
+          fi
+          if ! printf '%s' "$RELEASE_SHA" | grep -Eq '^[0-9a-f]{40}$'; then
+            echo "::error::release-sha must be a full 40-character lowercase commit SHA"
+            exit 1
+          fi
+
+          # Main may only advertise a version whose canonical release
+          # evidence is already published on its release.
+          RELEASE_TAG="hve-core-v$VERSION"
+          EVIDENCE_DIR="$RUNNER_TEMP/main-sync-evidence"
+          rm -rf "$EVIDENCE_DIR"
+          mkdir -p "$EVIDENCE_DIR"
+          if ! gh release download "$RELEASE_TAG" -R "$REPOSITORY" \
+            -p 'plugin-release-evidence.json' -D "$EVIDENCE_DIR"; then
+            echo "::error::Release $RELEASE_TAG carries no readable plugin-release-evidence.json"
+            exit 1
+          fi
+          EVIDENCE=$(cat "$EVIDENCE_DIR/plugin-release-evidence.json")
+
+          # The evidence records the commit it was computed from, so a
+          # mismatch means this catalog move is not the one it covers.
+          if ! printf '%s' "$EVIDENCE" | jq -e \
+            --arg version "$VERSION" \
+            --arg source_commit "$RELEASE_SHA" \
+            --arg repository "$REPOSITORY" '
+              .schema == "hve-core/plugin-release-evidence/v2" and
+              .sourceCommit == $source_commit and
+              .version == $version and
+              .locator.source == "github" and
+              .locator.repo == $repository and
+              .locator.ref == ("hve-core-v" + $version) and
+              (.packageCount | type == "number" and . > 0) and
+              (.packages | type == "array") and
+              ((.packages | length) == .packageCount) and
+              all(.packages[];
+                (.name | type == "string" and length > 0) and
+                (.fileCount | type == "number" and . > 0) and
+                (.digest | type == "string" and test("^[0-9a-f]{64}$"))) and
+              (.fileCount | type == "number" and . > 0) and
+              (.totalBytes | type == "number" and . > 0) and
+              (.digest | type == "string" and test("^[0-9a-f]{64}$"))
+            ' >/dev/null; then
+            echo "::error::$RELEASE_TAG evidence does not satisfy the canonical release contract"
+            exit 1
+          fi
+          echo "Release $RELEASE_TAG evidence confirms $VERSION at $RELEASE_SHA"
+
+          git fetch --no-tags origin \
+            "+refs/heads/$BASE_BRANCH:refs/remotes/origin/$BASE_BRANCH" \
+            "+refs/heads/$SOURCE_BRANCH:refs/remotes/origin/$SOURCE_BRANCH"
+          if ! git merge-base --is-ancestor "$RELEASE_SHA" "refs/remotes/origin/$SOURCE_BRANCH"; then
+            echo "::error::Release commit $RELEASE_SHA is not contained in $SOURCE_BRANCH"
+            exit 1
+          fi
+
+          CURRENT=$(git show "refs/remotes/origin/$BASE_BRANCH:package.json" | jq -r '.version // ""')
+          if ! printf '%s' "$CURRENT" | grep -Eq '^[0-9]+\.[0-9]+\.[0-9]+$'; then
+            echo "::error::$BASE_BRANCH package.json has no MAJOR.MINOR.PATCH version"
+            exit 1
+          fi
+          if [ "$CURRENT" = "$VERSION" ] || [ "$(printf '%s\n%s\n' "$CURRENT" "$VERSION" | sort -V | tail -1)" = "$CURRENT" ]; then
+            echo "::notice::$BASE_BRANCH already carries $CURRENT; $VERSION does not advance the catalog"
+            echo "continue=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          echo "continue=true" >> "$GITHUB_OUTPUT"
+
+      - name: Update the main catalog
+        id: sync
+        if: ${{ steps.validate.outputs.continue == 'true' }}
+        env:
+          VERSION: ${{ inputs.version }}
+          RELEASE_SHA: ${{ inputs.release-sha }}
+        run: |
+          set -euo pipefail
+          cd "$GITHUB_WORKSPACE/main-sync"
+
+          SYNC_HEAD="release-main-catalog-sync--v$VERSION"
+
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+
+          # Version-scoped head: a newer released version opens its own pull
+          # request instead of rewriting an older one, so nothing is ever force
+          # updated.
+          if git ls-remote --exit-code --heads origin "$SYNC_HEAD" >/dev/null 2>&1; then
+            git fetch --no-tags origin "+refs/heads/$SYNC_HEAD:refs/remotes/origin/$SYNC_HEAD"
+            git checkout -B "$SYNC_HEAD" "refs/remotes/origin/$SYNC_HEAD"
+            # Concurrent main changes win conflicts; the released version and
+            # changelog are re-applied below before this branch is pushed.
+            git merge --no-edit -X theirs "refs/remotes/origin/$BASE_BRANCH"
+          else
+            git checkout -B "$SYNC_HEAD" "refs/remotes/origin/$BASE_BRANCH"
+          fi
+
+          # Main carries no release manifest state and no generated payload, so
+          # the structured updater writes only shared version fields and the
+          # immutable plugin locator.
+          pwsh -NoProfile -File "$GITHUB_WORKSPACE/scripts/release/Update-VersionFiles.ps1" \
+              -Version "$VERSION" \
+              -CatalogRefMode Remove \
+              -RepoRoot "$PWD" \
+              -SkipManifest \
+              -SkipPluginGenerate
+
+          if ! jq -e '
+            (.plugins | type == "array") and
+            ((.plugins | length) > 0) and
+            all(.plugins[];
+              has("source") and
+              (.source | has("ref") | not) and
+              (.source | has("sha") | not))
+          ' .github/plugin/marketplace.json >/dev/null 2>&1; then
+            echo "::error::main catalog entries must omit source.ref and source.sha"
+            exit 1
+          fi
+
+          # Main keeps a readable release history even though release-please
+          # never targets it.
+          git show "$RELEASE_SHA:CHANGELOG.md" > CHANGELOG.md
+
+          git add --update
+          if git diff --cached --quiet; then
+            git reset --quiet
+            echo "::notice::$BASE_BRANCH already matches the $VERSION catalog"
+            echo "opened=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          git commit -m "chore(main): advance development catalog to $VERSION"
+          git push origin "HEAD:refs/heads/$SYNC_HEAD"
+          {
+            echo "opened=true"
+            echo "head=$SYNC_HEAD"
+          } >> "$GITHUB_OUTPUT"
+
+      # Auto-merge is deliberately never enabled. Branch validation rejects a
+      # candidate that does not advance main, so a superseded pull request can
+      # only fail at merge time; closing it here keeps the queue unambiguous.
+      - name: Open the main catalog pull request
+        if: ${{ steps.sync.outputs.opened == 'true' }}
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+          REPOSITORY: ${{ github.repository }}
+          VERSION: ${{ inputs.version }}
+          RELEASE_SHA: ${{ inputs.release-sha }}
+          HEAD_BRANCH: ${{ steps.sync.outputs.head }}
+        run: |
+          set -euo pipefail
+          TITLE="chore(main): advance development catalog to ${VERSION}"
+          BODY="## Main development catalog ${VERSION}
+
+          Advances the moving \`${BASE_BRANCH}\` catalog to the published pre-release
+          \`${VERSION}\` after its canonical release evidence succeeded.
+
+          | Input | Value |
+          |-------|-------|
+          | Released version | \`${VERSION}\` |
+          | Release evidence | \`hve-core-v${VERSION}\` |
+          | Release commit (provenance) | \`${RELEASE_SHA}\` |
+
+          Package, lockfile, extension template, catalog metadata, and catalog plugin
+          versions move together while every main entry omits its source ref, and
+          \`CHANGELOG.md\` is copied from the released commit. No release manifest, no
+          channel config, and no generated plugin payload is written, so
+          \`${BASE_BRANCH}\` remains outside release-please ownership.
+
+          Installing \`microsoft/hve-core#${BASE_BRANCH}\` selects this catalog, and a
+          marketplace refresh resolves every entry from the current \`${BASE_BRANCH}\` tip.
+
+          ---
+          *Managed automatically by the pre-release pipeline. Auto-merge is not enabled.*"
+
+          PR_NUMBER=$(gh pr list --head "$HEAD_BRANCH" --base "$BASE_BRANCH" --state open \
+            --json number --jq '.[0].number // empty' -R "$REPOSITORY")
+          if [ -n "$PR_NUMBER" ]; then
+            gh pr edit "$PR_NUMBER" --title "$TITLE" --body "$BODY" -R "$REPOSITORY"
+            echo "Updated main catalog PR #$PR_NUMBER for $VERSION"
+          else
+            gh pr create \
+              --head "$HEAD_BRANCH" \
+              --base "$BASE_BRANCH" \
+              --title "$TITLE" \
+              --body "$BODY" \
+              -R "$REPOSITORY"
+            echo "Created main catalog PR for $VERSION"
+          fi
+
+          # An older candidate can only regress main once this one merges.
+          superseded=$(gh pr list --base "$BASE_BRANCH" --state open \
+            --json number,headRefName \
+            --jq '.[] | select(.headRefName | startswith("release-main-catalog-sync--v")) | select(.headRefName != env.HEAD_BRANCH) | .number' \
+            -R "$REPOSITORY")
+          for number in $superseded; do
+            gh pr close "$number" \
+              --comment "Superseded by the ${VERSION} main development catalog synchronization." \
+              -R "$REPOSITORY"
+            echo "Closed superseded main catalog PR #$number"
+          done

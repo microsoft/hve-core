@@ -12,6 +12,7 @@ BeforeAll {
     Mock Write-Host {} -ModuleName PluginHelpers
     Mock Write-Warning {}
     Mock Write-Warning {} -ModuleName PluginHelpers
+    $script:OriginalPluginStagingRoot = $env:HVE_PLUGIN_STAGING_ROOT
 
     function New-GeneratorFixture {
         <#
@@ -43,9 +44,9 @@ BeforeAll {
         )
 
         return New-PluginFixtureEntry -Name $Name -Description 'RPI workflow package' -Version '9.9.9' `
-            -Agents @('agents/rpi/rpi-planner.md') `
-            -Commands @('commands/rpi/rpi-plan.md') `
-            -Rules @('rules/shared/hve-core-location.instructions.md') `
+            -Agents @('agents/rpi/rpi-planner.agent.md') `
+            -Commands @('prompts/rpi/rpi-plan.prompt.md') `
+            -Rules @('instructions/shared/hve-core-location.instructions.md') `
             -Skills @('skills/rpi/rpi-plan') `
             -Hook 'hooks/rpi/telemetry.json' `
             -Overlay $Overlay
@@ -334,6 +335,32 @@ Describe 'Invoke-PluginGeneration' -Tag 'Unit' {
     BeforeEach {
         $script:GeneratorHostLog.Clear()
         $script:generatorRepo = Join-Path $TestDrive ([System.Guid]::NewGuid().ToString())
+        $script:generatorStagingRoot = Join-Path $TestDrive "$([System.Guid]::NewGuid())-staging"
+        $env:HVE_PLUGIN_STAGING_ROOT = $script:generatorStagingRoot
+    }
+
+    Context 'when the staging root is unavailable or unsafe' {
+        BeforeEach {
+            New-GeneratorFixture -Root $script:generatorRepo -Entries @(New-RpiEntry) | Out-Null
+        }
+
+        It 'Rejects a missing staging root' {
+            $env:HVE_PLUGIN_STAGING_ROOT = ''
+            { Invoke-PluginGeneration -RepoRoot $script:generatorRepo } |
+                Should -Throw -ExpectedMessage '*A staging root is required*'
+        }
+
+        It 'Rejects a staging root inside the fixture repository' {
+            { Invoke-PluginGeneration -RepoRoot $script:generatorRepo `
+                    -StagingRoot (Join-Path $script:generatorRepo 'plugins') } |
+                Should -Throw -ExpectedMessage '*resolves inside the repository root*'
+        }
+
+        It 'Accepts an explicit sibling path and creates no repository output' {
+            Invoke-PluginGeneration -RepoRoot $script:generatorRepo -StagingRoot $script:generatorStagingRoot | Out-Null
+            Test-Path -LiteralPath (Join-Path $script:generatorStagingRoot 'rpi/plugin.json') -PathType Leaf | Should -BeTrue
+            Test-Path -LiteralPath (Join-Path $script:generatorRepo 'plugins') | Should -BeFalse
+        }
     }
 
     Context 'when generating a package that declares every artifact kind' {
@@ -343,7 +370,7 @@ Describe 'Invoke-PluginGeneration' -Tag 'Unit' {
             Add-PluginFixtureFile -RepoRoot $script:generatorRepo -RelativePath '.github/skills/rpi/rpi-plan/__pycache__/cache.pyc' -Content "sentinel_pycache`n" -Untracked | Out-Null
 
             $script:generationResult = Invoke-PluginGeneration -RepoRoot $script:generatorRepo -Refresh
-            $script:generatedRoot = Join-Path $script:generatorRepo 'plugins/rpi'
+            $script:generatedRoot = Join-Path $script:generatorStagingRoot 'rpi'
             $script:generatedInventory = @(Get-PluginFixtureInventory -Path $script:generatedRoot)
         }
 
@@ -391,7 +418,7 @@ Describe 'Invoke-PluginGeneration' -Tag 'Unit' {
         }
 
         It 'Emits no symbolic link' {
-            @(Get-PluginFixtureReparsePoint -Path (Join-Path $script:generatorRepo 'plugins')) | Should -HaveCount 0
+            @(Get-PluginFixtureReparsePoint -Path $script:generatorStagingRoot) | Should -HaveCount 0
         }
 
         It 'Emits no catalog overlay anywhere in the output' {
@@ -401,9 +428,9 @@ Describe 'Invoke-PluginGeneration' -Tag 'Unit' {
         }
 
         It 'Produces byte-identical output on a second refresh' {
-            $firstDigest = Get-PluginFixtureTreeDigest -Path (Join-Path $script:generatorRepo 'plugins')
+            $firstDigest = Get-PluginFixtureTreeDigest -Path $script:generatorStagingRoot
             Invoke-PluginGeneration -RepoRoot $script:generatorRepo -Refresh | Out-Null
-            Get-PluginFixtureTreeDigest -Path (Join-Path $script:generatorRepo 'plugins') | Should -BeExactly $firstDigest
+            Get-PluginFixtureTreeDigest -Path $script:generatorStagingRoot | Should -BeExactly $firstDigest
         }
     }
 
@@ -416,19 +443,19 @@ Describe 'Invoke-PluginGeneration' -Tag 'Unit' {
 
         It 'Defaults to the repository catalog' {
             Invoke-PluginGeneration -RepoRoot $script:generatorRepo -Refresh | Out-Null
-            Test-Path -LiteralPath (Join-Path $script:generatorRepo 'plugins/rpi/plugin.json') -PathType Leaf | Should -BeTrue
+            Test-Path -LiteralPath (Join-Path $script:generatorStagingRoot 'rpi/plugin.json') -PathType Leaf | Should -BeTrue
         }
 
         It 'Accepts a repository-relative catalog path' {
             Invoke-PluginGeneration -RepoRoot $script:generatorRepo -Refresh -CatalogPath 'alt/marketplace.json' | Out-Null
-            Test-Path -LiteralPath (Join-Path $script:generatorRepo 'plugins/alt/plugin.json') -PathType Leaf | Should -BeTrue
-            Test-Path -LiteralPath (Join-Path $script:generatorRepo 'plugins/rpi') | Should -BeFalse
+            Test-Path -LiteralPath (Join-Path $script:generatorStagingRoot 'alt/plugin.json') -PathType Leaf | Should -BeTrue
+            Test-Path -LiteralPath (Join-Path $script:generatorStagingRoot 'rpi') | Should -BeFalse
         }
 
         It 'Accepts an absolute catalog path' {
             Invoke-PluginGeneration -RepoRoot $script:generatorRepo -Refresh `
                 -CatalogPath (Join-Path $script:generatorRepo 'alt/marketplace.json') | Out-Null
-            Test-Path -LiteralPath (Join-Path $script:generatorRepo 'plugins/alt/plugin.json') -PathType Leaf | Should -BeTrue
+            Test-Path -LiteralPath (Join-Path $script:generatorStagingRoot 'alt/plugin.json') -PathType Leaf | Should -BeTrue
         }
     }
 
@@ -445,7 +472,7 @@ Describe 'Invoke-PluginGeneration' -Tag 'Unit' {
         }
 
         It 'Creates no output directory' {
-            Test-Path -LiteralPath (Join-Path $script:generatorRepo 'plugins') | Should -BeFalse
+            Test-Path -LiteralPath $script:generatorStagingRoot | Should -BeFalse
         }
 
         It 'Warns that the catalog declares no package' {
@@ -465,7 +492,7 @@ Describe 'Invoke-PluginGeneration' -Tag 'Unit' {
 
         It 'Generates only the packages that exist' {
             $script:filteredResult.PluginCount | Should -Be 1
-            @(Get-ChildItem -LiteralPath (Join-Path $script:generatorRepo 'plugins') -Directory | ForEach-Object { $_.Name }) |
+            @(Get-ChildItem -LiteralPath $script:generatorStagingRoot -Directory | ForEach-Object { $_.Name }) |
                 Should -Be @('rpi')
         }
     }
@@ -486,7 +513,7 @@ Describe 'Invoke-PluginGeneration' -Tag 'Unit' {
         }
 
         It 'Creates one directory per package' {
-            @(Get-ChildItem -LiteralPath (Join-Path $script:generatorRepo 'plugins') -Directory | ForEach-Object { $_.Name } | Sort-Object) |
+            @(Get-ChildItem -LiteralPath $script:generatorStagingRoot -Directory | ForEach-Object { $_.Name } | Sort-Object) |
                 Should -Be @('alpha', 'mike', 'zulu')
         }
     }
@@ -502,7 +529,7 @@ Describe 'Invoke-PluginGeneration' -Tag 'Unit' {
         }
 
         It 'Generates only the active package' {
-            @(Get-ChildItem -LiteralPath (Join-Path $script:generatorRepo 'plugins') -Directory | ForEach-Object { $_.Name }) |
+            @(Get-ChildItem -LiteralPath $script:generatorStagingRoot -Directory | ForEach-Object { $_.Name }) |
                 Should -Be @('active')
             $script:maturityResult.PluginCount | Should -Be 1
         }
@@ -526,15 +553,15 @@ Describe 'Invoke-PluginGeneration' -Tag 'Unit' {
             @{ Channel = 'PreRelease' }
         ) {
             Invoke-PluginGeneration -RepoRoot $script:generatorRepo -Refresh -Channel $Channel | Out-Null
-            Test-Path -LiteralPath (Join-Path $script:generatorRepo 'plugins/rpi/skills/rpi/rpi-plan/SKILL.md') -PathType Leaf | Should -BeTrue
-            Test-Path -LiteralPath (Join-Path $script:generatorRepo 'plugins/rpi/skills/rpi/rpi-lab/SKILL.md') -PathType Leaf | Should -BeTrue
+            Test-Path -LiteralPath (Join-Path $script:generatorStagingRoot 'rpi/skills/rpi/rpi-plan/SKILL.md') -PathType Leaf | Should -BeTrue
+            Test-Path -LiteralPath (Join-Path $script:generatorStagingRoot 'rpi/skills/rpi/rpi-lab/SKILL.md') -PathType Leaf | Should -BeTrue
         }
     }
 
     Context 'when refreshing over stale output' {
         BeforeEach {
             New-GeneratorFixture -Root $script:generatorRepo -Entries @(New-RpiEntry) | Out-Null
-            $script:staleFile = Join-Path $script:generatorRepo 'plugins/rpi/stale/orphan.md'
+            $script:staleFile = Join-Path $script:generatorStagingRoot 'rpi/stale/orphan.md'
             New-Item -ItemType Directory -Path (Split-Path -Parent $script:staleFile) -Force | Out-Null
             Set-Content -LiteralPath $script:staleFile -Value "sentinel_orphan`n" -Encoding utf8NoBOM -NoNewline
             Invoke-PluginGeneration -RepoRoot $script:generatorRepo -Refresh | Out-Null
@@ -545,7 +572,7 @@ Describe 'Invoke-PluginGeneration' -Tag 'Unit' {
         }
 
         It 'Removes the directory the orphan left empty' {
-            Test-Path -LiteralPath (Join-Path $script:generatorRepo 'plugins/rpi/stale') | Should -BeFalse
+            Test-Path -LiteralPath (Join-Path $script:generatorStagingRoot 'rpi/stale') | Should -BeFalse
         }
     }
 
@@ -565,35 +592,35 @@ Describe 'Invoke-PluginGeneration' -Tag 'Unit' {
 
         It 'Leaves only the declared package root' {
             Invoke-PluginGeneration -RepoRoot $script:generatorRepo -Refresh | Out-Null
-            @(Get-ChildItem -LiteralPath (Join-Path $script:generatorRepo 'plugins') -Directory | ForEach-Object { $_.Name } | Sort-Object) |
+            @(Get-ChildItem -LiteralPath $script:generatorStagingRoot -Directory | ForEach-Object { $_.Name } | Sort-Object) |
                 Should -Be @('hve-core')
         }
 
         It 'Converges on repeated generation' {
             Invoke-PluginGeneration -RepoRoot $script:generatorRepo -Refresh | Out-Null
             Invoke-PluginGeneration -RepoRoot $script:generatorRepo -Refresh | Out-Null
-            @(Get-ChildItem -LiteralPath (Join-Path $script:generatorRepo 'plugins') -Directory | ForEach-Object { $_.Name }) |
+            @(Get-ChildItem -LiteralPath $script:generatorStagingRoot -Directory | ForEach-Object { $_.Name }) |
                 Should -Be @('hve-core')
         }
 
         It 'Removes a stale root that was never declared' {
-            $undeclared = Join-Path $script:generatorRepo 'plugins/hve-core-all/plugin.json'
+            $undeclared = Join-Path $script:generatorStagingRoot 'hve-core-all/plugin.json'
             New-Item -ItemType Directory -Path (Split-Path -Parent $undeclared) -Force | Out-Null
             Set-Content -LiteralPath $undeclared -Value "{}`n" -Encoding utf8NoBOM -NoNewline
             Invoke-PluginGeneration -RepoRoot $script:generatorRepo -Refresh | Out-Null
-            Test-Path -LiteralPath (Join-Path $script:generatorRepo 'plugins/hve-core-all') | Should -BeFalse
+            Test-Path -LiteralPath (Join-Path $script:generatorStagingRoot 'hve-core-all') | Should -BeFalse
         }
 
         It 'Preserves a stale root when generating a named subset' {
             Invoke-PluginGeneration -RepoRoot $script:generatorRepo -Refresh -PackageNames 'hve-core' | Out-Null
-            @(Get-ChildItem -LiteralPath (Join-Path $script:generatorRepo 'plugins') -Directory | ForEach-Object { $_.Name } | Sort-Object) |
+            @(Get-ChildItem -LiteralPath $script:generatorStagingRoot -Directory | ForEach-Object { $_.Name } | Sort-Object) |
                 Should -Be @('ado', 'hve-core', 'security')
         }
 
         It 'Reports the stale roots without deleting them on a dry run' {
             Invoke-PluginGeneration -RepoRoot $script:generatorRepo -Refresh -DryRun | Out-Null
             $script:GeneratorHostLog | Should -Contain '  [DRY RUN] Would remove stale plugin root: ado'
-            @(Get-ChildItem -LiteralPath (Join-Path $script:generatorRepo 'plugins') -Directory | ForEach-Object { $_.Name } | Sort-Object) |
+            @(Get-ChildItem -LiteralPath $script:generatorStagingRoot -Directory | ForEach-Object { $_.Name } | Sort-Object) |
                 Should -Be @('ado', 'hve-core', 'security')
         }
     }
@@ -605,13 +632,13 @@ Describe 'Invoke-PluginGeneration' -Tag 'Unit' {
 
             Add-PluginFixtureCatalog -RepoRoot $script:generatorRepo -Version '9.9.9' -Entries @(
                 New-PluginFixtureEntry -Name 'rpi' -Description 'RPI workflow package' -Version '9.9.9' `
-                    -Agents @('agents/rpi/rpi-planner.md')
+                    -Agents @('agents/rpi/rpi-planner.agent.md')
             ) | Out-Null
             Invoke-PluginGeneration -RepoRoot $script:generatorRepo -Refresh | Out-Null
         }
 
         It 'Removes the dropped component from the package tree' {
-            @(Get-PluginFixtureInventory -Path (Join-Path $script:generatorRepo 'plugins/rpi')) | Should -Be @(
+            @(Get-PluginFixtureInventory -Path (Join-Path $script:generatorStagingRoot 'rpi')) | Should -Be @(
                 @(
                     'README.md',
                     'agents/rpi/rpi-planner.md',
@@ -647,7 +674,7 @@ Describe 'Invoke-PluginGeneration' -Tag 'Unit' {
             Invoke-PluginGeneration -RepoRoot $script:generatorRepo -Refresh -ReleaseTag 'plugins-v4.5.6' `
                 -MarketplaceOutputPath 'out/marketplace.json' | Out-Null
             $snapshot = Get-Content -LiteralPath (Join-Path $script:generatorRepo 'out/marketplace.json') -Raw | ConvertFrom-Json -AsHashtable
-            $pluginManifest = Get-Content -LiteralPath (Join-Path $script:generatorRepo 'plugins/rpi/plugin.json') -Raw | ConvertFrom-Json -AsHashtable
+            $pluginManifest = Get-Content -LiteralPath (Join-Path $script:generatorStagingRoot 'rpi/plugin.json') -Raw | ConvertFrom-Json -AsHashtable
 
             [string]$snapshot['metadata']['version'] | Should -BeExactly '4.5.6'
             @($snapshot['plugins'] | ForEach-Object { [string]$_['version'] }) | Should -Be @('4.5.6')
@@ -674,7 +701,7 @@ Describe 'Invoke-PluginGeneration' -Tag 'Unit' {
         }
 
         It 'Writes nothing to disk' {
-            Test-Path -LiteralPath (Join-Path $script:generatorRepo 'plugins') | Should -BeFalse
+            Test-Path -LiteralPath $script:generatorStagingRoot | Should -BeFalse
             Test-Path -LiteralPath (Join-Path $script:generatorRepo 'out') | Should -BeFalse
         }
     }
@@ -700,32 +727,33 @@ Describe 'Start-PluginGeneration' -Tag 'Unit' {
         New-GeneratorFixture -Root $script:entryRepo -Entries @(New-RpiEntry) | Out-Null
         $script:entryScriptPath = Add-PluginFixtureFile -RepoRoot $script:entryRepo `
             -RelativePath 'scripts/plugins/Generate-Plugins.ps1' -Content "# fixture entry point`n"
+        $script:entryStagingRoot = Join-Path $TestDrive "$([System.Guid]::NewGuid())-staging"
         Mock Write-CIAnnotation {}
     }
 
     Context 'when generation succeeds' {
         It 'Returns the success exit code' {
-            Start-PluginGeneration -ScriptPath $script:entryScriptPath | Should -Be 0
+            Start-PluginGeneration -ScriptPath $script:entryScriptPath -StagingRoot $script:entryStagingRoot | Should -Be 0
         }
 
         It 'Defaults to refreshing every package' {
-            $orphanFile = Join-Path $script:entryRepo 'plugins/rpi/stale/orphan.md'
+            $orphanFile = Join-Path $script:entryStagingRoot 'rpi/stale/orphan.md'
             New-Item -ItemType Directory -Path (Split-Path -Parent $orphanFile) -Force | Out-Null
             Set-Content -LiteralPath $orphanFile -Value "orphan`n" -Encoding utf8NoBOM -NoNewline
 
-            Start-PluginGeneration -ScriptPath $script:entryScriptPath | Should -Be 0
+            Start-PluginGeneration -ScriptPath $script:entryScriptPath -StagingRoot $script:entryStagingRoot | Should -Be 0
             Test-Path -LiteralPath $orphanFile | Should -BeFalse
         }
     }
 
     Context 'when generation fails' {
         It 'Returns the failure exit code' {
-            Start-PluginGeneration -ScriptPath $script:entryScriptPath -CatalogPath 'absent/marketplace.json' -ErrorAction SilentlyContinue |
+            Start-PluginGeneration -ScriptPath $script:entryScriptPath -StagingRoot $script:entryStagingRoot -CatalogPath 'absent/marketplace.json' -ErrorAction SilentlyContinue |
                 Should -Be 1
         }
 
         It 'Emits a CI annotation for the failure' {
-            Start-PluginGeneration -ScriptPath $script:entryScriptPath -CatalogPath 'absent/marketplace.json' -ErrorAction SilentlyContinue | Out-Null
+            Start-PluginGeneration -ScriptPath $script:entryScriptPath -StagingRoot $script:entryStagingRoot -CatalogPath 'absent/marketplace.json' -ErrorAction SilentlyContinue | Out-Null
             Should -Invoke Write-CIAnnotation -Times 1 -Exactly -ParameterFilter { $Level -eq 'Error' }
         }
     }
@@ -734,7 +762,7 @@ Describe 'Start-PluginGeneration' -Tag 'Unit' {
         It 'Fails before generating anything' {
             Mock Get-Module { } -ParameterFilter { $ListAvailable.IsPresent -and $Name -contains 'PowerShell-Yaml' }
 
-            Start-PluginGeneration -ScriptPath $script:entryScriptPath -ErrorAction SilentlyContinue | Should -Be 1
+            Start-PluginGeneration -ScriptPath $script:entryScriptPath -StagingRoot $script:entryStagingRoot -ErrorAction SilentlyContinue | Should -Be 1
             Test-Path -LiteralPath (Join-Path $script:entryRepo 'plugins') | Should -BeFalse
             Should -Invoke Write-CIAnnotation -Times 1 -Exactly -ParameterFilter { $Message -match "PowerShell-Yaml' is not installed" }
         }
@@ -742,6 +770,7 @@ Describe 'Start-PluginGeneration' -Tag 'Unit' {
 }
 
 AfterAll {
+    $env:HVE_PLUGIN_STAGING_ROOT = $script:OriginalPluginStagingRoot
     Remove-Module PluginTestFixtures -Force -ErrorAction SilentlyContinue
     Remove-Module PluginHelpers -Force -ErrorAction SilentlyContinue
     Remove-Module CIHelpers -Force -ErrorAction SilentlyContinue

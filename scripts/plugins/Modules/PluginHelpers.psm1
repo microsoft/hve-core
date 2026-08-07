@@ -21,6 +21,63 @@ $script:PluginNoticeEndMarker = '<!-- END PACKAGE NOTICE -->'
 # Pure Functions (no file system side effects)
 # ---------------------------------------------------------------------------
 
+function Assert-PluginStagingRoot {
+    <#
+    .SYNOPSIS
+    Validates an explicit package staging root outside the repository.
+
+    .PARAMETER Path
+    Absolute package staging root supplied by a caller.
+
+    .PARAMETER RepoRoot
+    Absolute repository root that staging must neither contain nor descend from.
+
+    .OUTPUTS
+    [string] Normalized absolute staging root.
+    #>
+    [CmdletBinding()]
+    [OutputType([string])]
+    param(
+        [Parameter(Mandatory = $true)]
+        [AllowEmptyString()]
+        [string]$Path,
+
+        [Parameter(Mandatory = $true)]
+        [ValidateNotNullOrEmpty()]
+        [string]$RepoRoot
+    )
+
+    if ([string]::IsNullOrWhiteSpace($Path)) {
+        throw 'A staging root is required. Supply -StagingRoot or set HVE_PLUGIN_STAGING_ROOT; generation resolves no default inside the repository.'
+    }
+    if (-not [System.IO.Path]::IsPathRooted($Path)) {
+        throw "Staging root '$Path' must be an absolute path."
+    }
+
+    $normalizedStagingRoot = [System.IO.Path]::GetFullPath($Path).TrimEnd(
+        [System.IO.Path]::DirectorySeparatorChar,
+        [System.IO.Path]::AltDirectorySeparatorChar
+    )
+    $normalizedRepoRoot = [System.IO.Path]::GetFullPath($RepoRoot).TrimEnd(
+        [System.IO.Path]::DirectorySeparatorChar,
+        [System.IO.Path]::AltDirectorySeparatorChar
+    )
+    $comparison = [System.StringComparison]::OrdinalIgnoreCase
+    $separator = [System.IO.Path]::DirectorySeparatorChar
+
+    if (
+        $normalizedStagingRoot.Equals($normalizedRepoRoot, $comparison) -or
+        $normalizedStagingRoot.StartsWith("$normalizedRepoRoot$separator", $comparison)
+    ) {
+        throw "Staging root '$normalizedStagingRoot' resolves inside the repository root '$normalizedRepoRoot'. Materialization stages outside the workspace."
+    }
+    if ($normalizedRepoRoot.StartsWith("$normalizedStagingRoot$separator", $comparison)) {
+        throw "Staging root '$normalizedStagingRoot' contains the repository root '$normalizedRepoRoot'."
+    }
+
+    return $normalizedStagingRoot
+}
+
 function New-PluginManifestContent {
     <#
     .SYNOPSIS
@@ -447,29 +504,41 @@ function New-PluginReleaseLocator {
     Builds a validated immutable release locator for marketplace object sources.
 
     .DESCRIPTION
-    Produces the repository, immutable ref, and package path prefix used to emit
-    object-form marketplace sources. Accepts an explicit 'plugins-v<version>' tag
-    or derives one from a package version.
+    Produces the repository, immutable ref, and optional package path prefix used
+    to emit object-form marketplace sources and release evidence locators.
+    Accepts an explicit tag in the selected namespace or derives one from a
+    package version.
+
+    Two tag namespaces are selectable. 'hve-core-v' addresses an ordinary release
+    tag on the source repository. 'plugins-v' addresses a projected package tree
+    and remains available for generated-tree projections.
 
     Commit-SHA catalog locators are not part of the production contract.
 
     .PARAMETER Tag
-    Explicit immutable release tag in 'plugins-v<version>' form.
+    Explicit immutable release tag in '<TagPrefix><version>' form.
 
     .PARAMETER Version
-    Semantic version from which the 'plugins-v<version>' tag is derived.
+    Semantic version from which the '<TagPrefix><version>' tag is derived.
 
     .PARAMETER Repo
     Source repository in 'owner/name' form.
 
+    .PARAMETER TagPrefix
+    Immutable tag namespace the locator addresses.
+
     .PARAMETER PathPrefix
-    Repository-relative directory holding generated packages.
+    Repository-relative directory holding generated packages. An empty string
+    produces a pathless locator that addresses the repository at the ref itself.
 
     .OUTPUTS
     [hashtable] Locator with Repo, Ref, and PathPrefix keys.
 
     .EXAMPLE
     New-PluginReleaseLocator -Version '1.2.3'
+
+    .EXAMPLE
+    New-PluginReleaseLocator -Version '1.2.3' -TagPrefix 'hve-core-v' -PathPrefix ''
     #>
     [CmdletBinding(DefaultParameterSetName = 'Tag')]
     [OutputType([hashtable])]
@@ -486,6 +555,11 @@ function New-PluginReleaseLocator {
         [string]$Repo = 'microsoft/hve-core',
 
         [Parameter(Mandatory = $false)]
+        [ValidateSet('plugins-v', 'hve-core-v')]
+        [string]$TagPrefix = 'plugins-v',
+
+        [Parameter(Mandatory = $false)]
+        [AllowEmptyString()]
         [string]$PathPrefix = 'plugins'
     )
 
@@ -495,24 +569,29 @@ function New-PluginReleaseLocator {
         if ($Version -notmatch $semVerPattern) {
             throw "Release version '$Version' is not a semantic version."
         }
-        $Tag = "plugins-v$Version"
+        $Tag = "$TagPrefix$Version"
     }
 
     if ($Tag -match '^[0-9a-fA-F]{40}$') {
-        throw "Release locator '$Tag' is a commit sha. Sha-pinned catalog sources are not supported; use the immutable 'plugins-v<version>' tag."
+        throw "Release locator '$Tag' is a commit sha. Sha-pinned catalog sources are not supported; use the immutable '$TagPrefix<version>' tag."
     }
 
-    if ($Tag -notmatch "^plugins-v$($semVerPattern.TrimStart('^'))") {
-        throw "Release locator '$Tag' must use the immutable 'plugins-v<version>' tag form."
+    if ($Tag -notmatch "^$TagPrefix$($semVerPattern.TrimStart('^'))") {
+        throw "Release locator '$Tag' must use the immutable '$TagPrefix<version>' tag form."
     }
 
     if ($Repo -notmatch '^[A-Za-z0-9._-]+/[A-Za-z0-9._-]+$') {
         throw "Release repository '$Repo' must use 'owner/name' form."
     }
 
-    $normalizedPrefix = $PathPrefix.Trim('/')
-    if ([string]::IsNullOrWhiteSpace($normalizedPrefix) -or $normalizedPrefix -match '\\' -or $normalizedPrefix -match '(^|/)\.\.?(/|$)') {
-        throw "Release path prefix '$PathPrefix' must be a relative forward-slash path inside the repository."
+    # An explicitly empty prefix is a pathless locator. Any other value must
+    # still normalize to a relative forward-slash path inside the repository.
+    $normalizedPrefix = ''
+    if (-not [string]::IsNullOrEmpty($PathPrefix)) {
+        $normalizedPrefix = $PathPrefix.Trim('/')
+        if ([string]::IsNullOrWhiteSpace($normalizedPrefix) -or $normalizedPrefix -match '\\' -or $normalizedPrefix -match '(^|/)\.\.?(/|$)') {
+            throw "Release path prefix '$PathPrefix' must be a relative forward-slash path inside the repository."
+        }
     }
 
     return @{
@@ -1135,13 +1214,11 @@ function Write-PluginHookArtifact {
     Materializes a hook manifest and its sibling script directory into a plugin.
 
     .DESCRIPTION
-    Hook command paths in the source manifest are repository-root relative
-    (for example .github/hooks/shared/telemetry/telemetry-collector.sh) so they resolve
-    when the hook is auto-loaded from a checked-out repository. Inside an
-    installed plugin the same scripts live under the plugin root, so this
-    function writes a transformed copy of the manifest with those paths
-    rewritten to the ${CLAUDE_PLUGIN_ROOT} placeholder, then materializes the
-    sibling script directory (the manifest path without its .json extension).
+    Hook commands in the source manifest default to the repository .github root
+    when no plugin root is set. Inside an installed plugin the same scripts live
+    under the plugin root, so this function writes a transformed copy using the
+    ${CLAUDE_PLUGIN_ROOT} placeholder, then materializes the sibling script
+    directory (the manifest path without its .json extension).
 
     .PARAMETER SourceManifest
     Absolute path to the source hook .json manifest in the repository.
@@ -1185,13 +1262,11 @@ function Write-PluginHookArtifact {
         return
     }
 
-    # Rewrite repo-root-relative hook script paths to plugin-relative paths so
-    # commands resolve from the installed plugin directory. CLAUDE_PLUGIN_ROOT
-    # is the placeholder every Copilot host substitutes; an unsubstituted bare
-    # ${PLUGIN_ROOT} reaches the shell and expands to an empty string. Literal
-    # string replacement avoids regex interpretation of the path and the $
-    # placeholder.
+    # The source form serves repository and installed-plugin consumers. The
+    # materialized copy keeps the established plain plugin-root placeholder.
     $manifestText = Get-Content -LiteralPath $SourceManifest -Raw -Encoding utf8
+    $manifestText = $manifestText.Replace('${CLAUDE_PLUGIN_ROOT:-.github}/hooks/', '${CLAUDE_PLUGIN_ROOT}/hooks/')
+    $manifestText = $manifestText.Replace('& (Join-Path ($env:CLAUDE_PLUGIN_ROOT ?? ''.github'') ''hooks/', '& (Join-Path $env:CLAUDE_PLUGIN_ROOT ''hooks/')
     $manifestText = $manifestText.Replace('.github/hooks/', '${CLAUDE_PLUGIN_ROOT}/hooks/')
     Set-ContentIfChanged -Path $DestinationManifest -Value $manifestText | Out-Null
 
@@ -1509,6 +1584,7 @@ function Write-PluginDirectory {
 }
 
 Export-ModuleMember -Function @(
+    'Assert-PluginStagingRoot',
     'Assert-PluginSnapshotTarget',
     'Copy-PluginSource',
     'Get-PluginItemMaturityLabel',

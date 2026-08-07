@@ -3,7 +3,7 @@ title: 'Contributing Prompts to HVE Core'
 description: 'Requirements and standards for contributing GitHub Copilot prompt files to hve-core'
 sidebar_position: 4
 author: Microsoft
-ms.date: 2026-08-02
+ms.date: 2026-08-06
 ms.topic: how-to
 ---
 
@@ -205,9 +205,14 @@ Prompts that delegate to a custom agent via `agent:` typically omit the activati
 
 ## Marketplace Recipe Registration
 
-Distributable prompts must be declared under the `commands` field of the `hve-core` entry in `.github/plugin/marketplace.json`. Use the recipe-relative `commands/<subpath>/<name>.md` path and keep the canonical source under `.github/prompts/`.
+Distributable prompts must be declared under the `commands` field of the
+`hve-core` entry in `.github/plugin/marketplace.json`. Use the
+`.github`-root-relative canonical path
+`prompts/<subpath>/<name>.prompt.md`.
 
-Add non-stable lifecycle disclosure only through `x-hve.componentMaturity`, update `docs/plugins/hve-core.md`, then run `npm run lint:marketplace` and `npm run plugin:generate`.
+Add non-stable lifecycle disclosure only through `x-hve.componentMaturity`,
+update `docs/plugins/hve-core.md`, then run `npm run lint:marketplace` and
+`npm run docs:generate:check`.
 
 ## Prompt Content Structure Standards
 

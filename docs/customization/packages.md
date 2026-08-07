@@ -2,7 +2,7 @@
 title: Managing the Marketplace Recipe
 description: Maintain ordinary Copilot plugin and VSIX recipes through the marketplace catalog
 author: Microsoft
-ms.date: 2026-08-03
+ms.date: 2026-08-06
 ms.topic: how-to
 keywords:
   - marketplace
@@ -27,7 +27,10 @@ Do not install `hve-core` and `hve-core-all` together. Both include overlapping 
 ## Add Or Change A Component
 
 1. Add canonical artifacts under `.github/<kind>/<package>/`.
-2. Add recipe-relative paths to one or more applicable catalog entries.
+2. Add `.github`-root-relative canonical paths to applicable catalog entries:
+  `agents/*.agent.md`, `prompts/*.prompt.md`,
+  `instructions/*.instructions.md`, `skills/*` directories, or
+  `hooks/*.json`.
 3. Align lifecycle maturity for every declared membership.
 4. Update `docs/plugins/<name>.md` for each affected package.
 5. Run marketplace validation, plugin generation, extension preparation, and focused tests.
@@ -44,20 +47,27 @@ Stable and PreRelease have the same active package names and the same active com
 
 Hooks are per-plugin declarations. `hve-core` and `hve-core-all` each include the telemetry hook. VS Code has no declarative hook contribution point, so extension users configure hook locations manually. Hooks are not copied during selective installation.
 
-## Generated Outputs
+## Validation and Package Staging
 
-Plugin generation writes ignored materialized packages under `plugins/`. Extension preparation writes `extension/package*.json` and `extension/README*.md`. Generators remove stale outputs when entries leave the active catalog. Generated outputs are never package-definition authority and are not edited by hand.
+Ordinary validation reads canonical `.github` sources and never creates a
+repository-root `plugins/` tree. Extension preparation writes
+`extension/package*.json` and `extension/README*.md`. Generated ZIP and VSIX
+paths are host-specific package layouts, not catalog membership vocabulary.
 
 Use these checks for package changes:
 
 ```bash
 npm run lint:marketplace
-npm run plugin:generate
 npm run plugin:evidence
-npm run extension:prepare
-npm run extension:prepare:prerelease
+npm run docs:generate:check
 npm run test:ps -- -TestPath scripts/tests/plugins/
 npm run test:ps -- -TestPath scripts/tests/extension/
+```
+
+When explicit plugin assembly is required, supply external staging:
+
+```bash
+HVE_PLUGIN_STAGING_ROOT=/absolute/path/outside/hve-core npm run plugin:generate
 ```
 
 ## Selective Adoption

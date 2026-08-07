@@ -50,9 +50,11 @@ jobs:
         run: npm run lint:hooks
 
       - name: Regenerate plugins from source
+        env:
+          HVE_PLUGIN_STAGING_ROOT: ${{ runner.temp }}/plugins
         run: npm run plugin:generate
 
-      - name: Record deterministic generation evidence
+      - name: Record canonical release evidence
         run: npm run plugin:evidence
 
       - name: Upload plugin release evidence

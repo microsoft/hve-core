@@ -3,7 +3,7 @@ title: Adapt HVE Core Package Selections
 description: Choose or switch HVE Core catalog packages while preserving the release architecture
 sidebar_position: 4
 author: Microsoft
-ms.date: 2026-08-03
+ms.date: 2026-08-06
 ms.topic: how-to
 keywords:
   - migration
@@ -14,7 +14,7 @@ keywords:
 estimated_reading_time: 6
 ---
 
-HVE Core package selection is a forward adaptation of the catalog-defined distribution model. `.github/plugin/marketplace.json` remains the sole authority for active entries, package membership, maturity, documentation, and immutable sources.
+HVE Core package selection is a forward adaptation of the catalog-defined distribution model. `.github/plugin/marketplace.json` remains the sole authority for active entries, package membership, maturity, documentation, and sources.
 
 Choose the migration path for your host. Neither GitHub Copilot nor VS Code provides a universal automatic migration between different published identities.
 
@@ -40,7 +40,26 @@ copilot plugin marketplace add microsoft/hve-core#<ref>
 
 Then select the required package through the Copilot client.
 
-The Git ref after `#` selects the marketplace catalog. Inside that catalog, the selected entry uses `source.ref` to pin the matching immutable `plugins-v<version>` plugin bytes. Treat those two refs as one release unit: the selected catalog must point to its matching plugin snapshot.
+The Git ref after `#` selects the marketplace catalog. A `#main` registration
+uses entries whose `source.path` is `.github` and whose `source.ref` is omitted.
+After marketplace refresh and plugin update, those entries resolve current
+main content. A release registration uses `#hve-core-v<version>`, and each
+entry pins that same exact `hve-core-v<version>` ref.
+
+Ref omission does not update an installed plugin by itself. Either opt the
+self-added marketplace into session-start updates by setting
+`autoUpdate: true` on its `extraKnownMarketplaces` entry in your personal
+Copilot CLI settings, or run the explicit update sequence:
+
+```bash
+copilot plugin marketplace update hve-core
+copilot plugin update hve-core@hve-core
+```
+
+Use the release registration when you require reviewed, release-gated,
+SBOM-covered, attested, and immutable bytes. The `#main` channel intentionally
+delivers current main bytes after refresh without a release gate, SBOM, or
+attestation covering those bytes.
 
 ## VS Code Extension Selection
 
@@ -62,9 +81,12 @@ The installer preserves repository-relative paths for every copied component. A 
 
 Schema version 2 stores `selection.package`. File records identify components without per-file package ownership, and hooks are not copied. When a schema version 2 manifest has no package, upgrade detection emits `INSTALLED_PACKAGE=` and requires explicit package reselection before replay.
 
-## Future Catalog Convergence
+## Historical Catalog Support
 
-A future reduction in package count is catalog cleanup plus generated stale-output cleanup. It does not require a framework rewrite, compatibility shells, aggregate metadata, aliases, or package-specific workflow branches. Dynamic package matrices, equal-channel parity checks, and immutable snapshots continue to derive from the active catalog.
+New `plugins-v` snapshot publication has stopped. Existing `plugins-v` tags
+and catalogs remain immutable and supported for historical installations; they
+were not deleted or migrated. Current release catalogs and signed package
+assets use the `hve-core-v<version>` release identity.
 
 ## Verify the Result
 

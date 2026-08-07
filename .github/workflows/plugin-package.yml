@@ -126,7 +126,7 @@ jobs:
               throw "Catalog version $catalogVersion does not match requested version $env:INPUT_VERSION"
             }
             foreach ($entry in @($catalog['plugins'])) {
-              $expectedRef = "plugins-v$env:INPUT_VERSION"
+              $expectedRef = "hve-core-v$env:INPUT_VERSION"
               if ([string]$entry['source']['ref'] -cne $expectedRef) {
                 throw "Catalog plugin '$($entry['name'])' pins source ref '$($entry['source']['ref'])' but the release requires '$expectedRef'"
               }
@@ -141,6 +141,7 @@ jobs:
         id: discover
         shell: pwsh
         env:
+          HVE_PLUGIN_STAGING_ROOT: ${{ runner.temp }}/plugins
           INPUT_VERSION: ${{ inputs.version }}
           PROJECT_RELEASE_CATALOG: ${{ inputs.project-release-catalog }}
         run: |
@@ -248,12 +249,15 @@ jobs:
 
       - name: Generate committed plugins
         if: ${{ !inputs.project-release-catalog }}
+        env:
+          HVE_PLUGIN_STAGING_ROOT: ${{ runner.temp }}/plugins
         run: npm run plugin:generate
 
       - name: Generate plugins and projected release catalog
         if: ${{ inputs.project-release-catalog }}
         shell: pwsh
         env:
+          HVE_PLUGIN_STAGING_ROOT: ${{ runner.temp }}/plugins
           INPUT_VERSION: ${{ inputs.version }}
         run: |
           $ErrorActionPreference = 'Stop'
@@ -265,24 +269,15 @@ jobs:
             throw "Generate-Plugins.ps1 failed with exit code $LASTEXITCODE"
           }
 
-      - name: Record plugin release evidence
-        shell: pwsh
-        env:
-          INPUT_VERSION: ${{ inputs.version }}
-        run: |
-          $ErrorActionPreference = 'Stop'
-          & ./scripts/plugins/Assert-PluginReleaseEvidence.ps1 `
-            -Version $env:INPUT_VERSION `
-            -OutputPath logs/plugin-release-evidence.json
-
       - name: Verify generated roots match discovered packages
         shell: bash
         env:
           DISCOVERED_NAMES: ${{ needs.discover-packages.outputs.names }}
+          HVE_PLUGIN_STAGING_ROOT: ${{ runner.temp }}/plugins
         run: |
           set -euo pipefail
           expected=$(printf '%s' "$DISCOVERED_NAMES" | jq -r '.[]' | sort)
-          actual=$(find plugins -mindepth 1 -maxdepth 1 -type d -printf '%f\n' | sort)
+          actual=$(find "${HVE_PLUGIN_STAGING_ROOT}" -mindepth 1 -maxdepth 1 -type d -printf '%f\n' | sort)
           if [ "$expected" != "$actual" ]; then
             echo "::error::Generated package roots do not match the discovered package set"
             diff <(printf '%s\n' "$expected") <(printf '%s\n' "$actual") || true
@@ -293,17 +288,18 @@ jobs:
       - name: Package plugin directory
         shell: bash
         env:
+          HVE_PLUGIN_STAGING_ROOT: ${{ runner.temp }}/plugins
           PACKAGE_ID: ${{ matrix.id }}
         run: |
           set -euo pipefail
-          plugin_dir="plugins/${PACKAGE_ID}"
+          plugin_dir="${HVE_PLUGIN_STAGING_ROOT}/${PACKAGE_ID}"
           if [ ! -d "$plugin_dir" ]; then
             echo "::error::Expected plugin directory not found: $plugin_dir"
             exit 1
           fi
 
           mkdir -p dist/plugins
-          zip -r "dist/plugins/${PACKAGE_ID}.zip" "$plugin_dir"
+          (cd "${RUNNER_TEMP}" && zip -r "${GITHUB_WORKSPACE}/dist/plugins/${PACKAGE_ID}.zip" "plugins/${PACKAGE_ID}")
 
       - name: Upload plugin artifact
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
@@ -311,3 +307,146 @@ jobs:
           name: plugin-package-${{ matrix.id }}
           path: dist/plugins/${{ matrix.id }}.zip
           retention-days: 30
+
+  # Canonical release evidence is repository-wide rather than per package, so a
+  # single non-matrix writer records it and attaches it to the release. Every
+  # catalog consumer reads this asset from the hve-core-v<version> release.
+  publish-evidence:
+    name: Publish Canonical Release Evidence
+    needs: discover-packages
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      id-token: write
+      attestations: write
+      artifact-metadata: write
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Verify and checkout plugin source
+        shell: bash
+        env:
+          SOURCE_REF: ${{ inputs.source-ref }}
+          SOURCE_POLICY: ${{ inputs.source-policy }}
+          INPUT_VERSION: ${{ inputs.version }}
+        run: |
+          set -euo pipefail
+          if [ -z "${SOURCE_REF}" ]; then
+            echo "::error::source-ref is required and must not be blank"
+            exit 1
+          fi
+          if [[ ! "${SOURCE_REF}" =~ ^[0-9a-f]{40}$ ]]; then
+            echo "::error::source-ref must be a full 40-character lowercase commit SHA"
+            exit 1
+          fi
+          if [ -z "${INPUT_VERSION}" ]; then
+            echo "::error::version is required and must not be blank"
+            exit 1
+          fi
+          if [[ ! "${INPUT_VERSION}" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "::error::version must use MAJOR.MINOR.PATCH form"
+            exit 1
+          fi
+
+          case "${SOURCE_POLICY}" in
+            'main-ancestor')
+              if [ "$(git rev-parse --is-shallow-repository)" = 'true' ]; then
+                git fetch --quiet --unshallow --no-tags origin \
+                  '+refs/heads/main:refs/remotes/origin/main'
+              else
+                git fetch --quiet --no-tags origin \
+                  '+refs/heads/main:refs/remotes/origin/main'
+              fi
+              if ! git merge-base --is-ancestor "${SOURCE_REF}" refs/remotes/origin/main; then
+                echo "::error::source-ref is not contained in main"
+                exit 1
+              fi
+              ;;
+            'release-tag')
+              git fetch --quiet --no-tags origin \
+                "refs/tags/hve-core-v${INPUT_VERSION}:refs/tags/hve-core-v${INPUT_VERSION}"
+              tag_commit=$(git rev-parse --verify --end-of-options \
+                "refs/tags/hve-core-v${INPUT_VERSION}^{commit}")
+              if [ "${tag_commit}" != "${SOURCE_REF}" ]; then
+                echo "::error::release tag does not resolve to source-ref"
+                exit 1
+              fi
+              ;;
+            *)
+              echo "::error::Unsupported source policy '${SOURCE_POLICY}'"
+              exit 1
+              ;;
+          esac
+
+          git checkout --quiet --detach "${SOURCE_REF}"
+          if [ "$(git rev-parse HEAD)" != "${SOURCE_REF}" ]; then
+            echo "::error::Verified source checkout does not match source-ref"
+            exit 1
+          fi
+
+      - name: Setup PowerShell modules
+        uses: ./.github/actions/setup-ps-modules
+
+      # Evidence is derived from each package's declared canonical git-tracked
+      # source set, so it needs no generated tree and no staging root and
+      # reproduces from a clean checkout of the tagged commit.
+      - name: Record canonical release evidence
+        shell: pwsh
+        env:
+          DISCOVERED_NAMES: ${{ needs.discover-packages.outputs.names }}
+          INPUT_SOURCE_REF: ${{ inputs.source-ref }}
+          INPUT_VERSION: ${{ inputs.version }}
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $expectedCount = @($env:DISCOVERED_NAMES | ConvertFrom-Json).Count
+          if ($expectedCount -le 0) {
+            throw 'Package discovery produced no package names'
+          }
+          & ./scripts/plugins/Assert-PluginReleaseEvidence.ps1 `
+            -EvidenceVersion v2 `
+            -SourceCommit $env:INPUT_SOURCE_REF `
+            -Version $env:INPUT_VERSION `
+            -ReleaseTag "hve-core-v$env:INPUT_VERSION" `
+            -ExpectedPackageCount $expectedCount `
+            -OutputPath logs/plugin-release-evidence.json
+
+      - name: Verify recorded evidence reproduces
+        shell: pwsh
+        env:
+          INPUT_SOURCE_REF: ${{ inputs.source-ref }}
+          INPUT_VERSION: ${{ inputs.version }}
+        run: |
+          $ErrorActionPreference = 'Stop'
+          & ./scripts/plugins/Assert-PluginReleaseEvidence.ps1 `
+            -EvidenceVersion v2 `
+            -SourceCommit $env:INPUT_SOURCE_REF `
+            -Version $env:INPUT_VERSION `
+            -ReleaseTag "hve-core-v$env:INPUT_VERSION" `
+            -ExpectedEvidencePath logs/plugin-release-evidence.json `
+            -OutputPath logs/plugin-release-evidence-verification.json
+
+      - name: Upload plugin release evidence artifact
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: plugin-release-evidence
+          path: logs/plugin-release-evidence.json
+          retention-days: 30
+
+      - name: Attest build provenance
+        uses: actions/attest-build-provenance@0f67c3f4856b2e3261c31976d6725780e5e4c373 # v4.1.1
+        with:
+          subject-path: logs/plugin-release-evidence.json
+
+      - name: Upload evidence to GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPOSITORY: ${{ github.repository }}
+          TAG: hve-core-v${{ inputs.version }}
+        run: |
+          set -euo pipefail
+          gh release upload "$TAG" \
+            "logs/plugin-release-evidence.json" \
+            --clobber -R "$REPOSITORY"

@@ -2,7 +2,7 @@
 title: Team Adoption and Governance
 description: Establish governance practices, naming conventions, onboarding patterns, and change management for team-wide HVE Core adoption
 author: Microsoft
-ms.date: 2026-08-03
+ms.date: 2026-08-06
 ms.topic: how-to
 keywords:
   - governance
@@ -59,13 +59,13 @@ glance. Follow kebab-case patterns throughout.
 
 ### File Naming Patterns
 
-| Artifact Type | Pattern                                          | Example                             |
-|---------------|--------------------------------------------------|-------------------------------------|
-| Instructions  | `{topic}.instructions.md`                        | `python-script.instructions.md`     |
-| Agents        | `{workflow}.agent.md`                            | `code-review.agent.md`              |
-| Prompts       | `{action}.prompt.md`                             | `generate-tests.prompt.md`          |
-| Skills        | `{skill-name}/SKILL.md`                          | `pr-reference/SKILL.md`             |
-| Recipe paths  | Marketplace entry and `docs/plugins/hve-core.md` | `agents/ado/ado-backlog-manager.md` |
+| Artifact Type | Pattern                                          | Example                         |
+|---------------|--------------------------------------------------|---------------------------------|
+| Instructions  | `{topic}.instructions.md`                        | `python-script.instructions.md` |
+| Agents        | `{workflow}.agent.md`                            | `code-review.agent.md`          |
+| Prompts       | `{action}.prompt.md`                             | `generate-tests.prompt.md`      |
+| Skills        | `{skill-name}/SKILL.md`                          | `pr-reference/SKILL.md`         |
+| Recipe paths  | Marketplace entry and `docs/plugins/hve-core.md` | `agents/ado/example.agent.md`   |
 
 ### Namespace IDs
 
@@ -112,7 +112,7 @@ Treat Copilot customization files with the same rigor as production code:
 * Require pull request review for changes to instructions, agents, and skills
 * Use CODEOWNERS to route reviews to artifact owners
 * Validate changes with `npm run validate:local` before merging
-* Run `npm run plugin:generate` after modifying marketplace recipes
+* Run `npm run lint:marketplace` after modifying marketplace recipes
 
 ### Handling Conflicting Instructions
 
@@ -169,7 +169,7 @@ Follow a structured process when adding new instructions, agents, or skills:
 3. Resolve its static, behavior, and validation gates until the overall outcome passes
 4. Run `npm run validate:local` to validate local-safe checks, then reproduce any relevant CI-owned lane separately
 5. Update the `hve-core` marketplace recipe and `docs/plugins/hve-core.md`
-6. Run `npm run plugin:generate` to regenerate plugin outputs
+6. Run `npm run lint:marketplace` and `npm run docs:generate:check`
 7. Submit a pull request with clear description of what the artifact does and
    why
 

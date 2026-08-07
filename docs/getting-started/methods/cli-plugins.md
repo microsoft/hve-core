@@ -3,7 +3,7 @@ title: Copilot CLI Plugin
 description: Register an HVE Core catalog ref and install the complete hve-core plugin
 sidebar_position: 2
 author: Microsoft
-ms.date: 2026-08-02
+ms.date: 2026-08-06
 ms.topic: how-to
 ---
 
@@ -15,11 +15,30 @@ Install the complete HVE Core component set as a Copilot CLI plugin for terminal
 
 ## Register hve-core as a Plugin Marketplace
 
+Register the moving development catalog from `main`:
+
 ```bash
-copilot plugin marketplace add microsoft/hve-core#<ref>
+copilot plugin marketplace add microsoft/hve-core#main
 ```
 
-The Git ref after `#` selects the marketplace catalog. The catalog entry's `source.ref` pins the matching immutable `plugins-v<version>` plugin snapshot. Stable and PreRelease catalogs both use the marketplace name `hve-core`, so keep one active registration at a time and replace it when changing catalog refs.
+The `main` catalog sources canonical content from `.github` and omits
+`source.ref`. After a marketplace refresh and plugin update, it resolves the
+current `main` content. Ref omission alone does not update an installed plugin.
+
+For a fixed release, register its exact immutable tag instead:
+
+```bash
+copilot plugin marketplace add microsoft/hve-core#hve-core-v<version>
+```
+
+Release catalogs set every entry to that same exact `hve-core-v<version>` ref.
+They remain reviewed, release-gated, SBOM-covered, attested, and immutable.
+The moving `#main` channel intentionally provides current main bytes after
+refresh without a release gate, SBOM, or attestation covering those bytes.
+
+Both registrations use the marketplace name `hve-core`. Keep one active
+registration at a time; do not rely on simultaneous same-name registrations
+when changing between the moving catalog and a fixed release.
 
 ## Browse Available Plugins
 
@@ -32,6 +51,22 @@ Install `hve-core` from the registered marketplace through `/plugin`. The plugin
 ```bash
 copilot plugin install hve-core@hve-core
 ```
+
+## Update an Installed Plugin
+
+Ref omission does not enable automatic refresh. For a self-added marketplace,
+you can set `autoUpdate: true` on its `extraKnownMarketplaces` entry in your
+personal Copilot CLI settings to opt into session-start updates. Otherwise,
+refresh the registered marketplace, then update the installed plugin
+explicitly:
+
+```bash
+copilot plugin marketplace update hve-core
+copilot plugin update hve-core@hve-core
+```
+
+Run both commands in this order. Updating the marketplace catalog and updating
+the installed plugin are separate client operations.
 
 Use the [migration guide](../package-migration) if you previously registered or installed a retired package identity.
 

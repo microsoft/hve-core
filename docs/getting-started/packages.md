@@ -3,13 +3,13 @@ title: HVE Core Identity and Channels
 description: Choose HVE Core package identities and understand their lifecycle and release channels
 sidebar_position: 3
 author: Microsoft
-ms.date: 2026-08-03
+ms.date: 2026-08-06
 ms.topic: overview
 ---
 
 ## Package Choices
 
-`.github/plugin/marketplace.json` is the sole catalog authority. It defines ordinary active package entries, their memberships, maturity, documentation, and immutable plugin sources.
+`.github/plugin/marketplace.json` is the sole catalog authority. It defines ordinary active package entries, their memberships, maturity, documentation, and plugin sources.
 
 | Package choice             | Scope                                                    |
 |----------------------------|----------------------------------------------------------|
@@ -23,14 +23,30 @@ Do not install `hve-core` and `hve-core-all` together because their content over
 
 Stable and PreRelease contain the same active package-name set and the same active components and maturity for every package.
 
-| Channel    | Source ownership                                                  | Version and cadence                              |
-|------------|-------------------------------------------------------------------|--------------------------------------------------|
-| PreRelease | Packages directly from an explicit commit on `main`               | Odd minor runtime version; publishes more often  |
-| Stable     | Packages a reviewed `main` promotion merged into `release/stable` | Even minor release version; may lag newer `main` |
+| Channel    | Source ownership                                                          | Version and cadence                             |
+|------------|---------------------------------------------------------------------------|-------------------------------------------------|
+| PreRelease | Managed release PR merge on `release/prerelease`, packaged by release tag | Odd minor runtime version; publishes more often |
+| Stable     | Managed release PR merge on `release/stable`, packaged by release tag     | Even minor release version; may lag PreRelease  |
 
-PreRelease packages directly from `main` and maintains no companion source branch. Stable promotion requires the promoted `main` tree and the merged `release/stable` tree to match before packaging.
+Source moves in one direction through reviewed target-based promotion PRs:
+`main` to `release/prerelease` to `release/stable`. A promotion merge creates
+no tag. Release-please opens a separate managed PR on the target branch, and
+merging that PR creates the channel's `hve-core-v<version>` tag and draft
+release. Both channels package from that immutable release tag.
 
-Each catalog entry has a deterministic plugin root and extension identity. `hve-core` remains the unsuffixed HVE Core extension, `ise-hve-essentials.hve-core`. Other active entries use package-specific generated identities. A single immutable `plugins-v<version>` snapshot contains every active package root and its projected catalog.
+`main` is not a release-please target. After successful PreRelease publication,
+a reviewed PR advances package metadata and `CHANGELOG.md` on `main`. Every
+main entry sources canonical content from `.github` and omits `source.ref`, so
+a marketplace refresh followed by a plugin update resolves current `main`
+content. Stable never synchronizes metadata back to `main`.
+
+Each catalog entry has a deterministic plugin root and extension identity. `hve-core` remains the unsuffixed HVE Core extension, `ise-hve-essentials.hve-core`. Other active entries use package-specific generated identities.
+
+PreRelease and Stable catalogs instead set every entry to the exact
+`hve-core-v<version>` release ref. These channels remain reviewed,
+release-gated, SBOM-covered, attested, and immutable. The moving `#main`
+channel intentionally provides current main bytes after refresh without a
+release gate, SBOM, or attestation covering those bytes.
 
 ## Lifecycle Disclosure
 
@@ -46,13 +62,30 @@ Lifecycle labels are disclosure and governance metadata, not channel filters. Th
 
 ## Copilot Marketplace Registration
 
-Register the catalog ref selected by your organization or release instructions:
+Register the moving development catalog:
 
 ```bash
-copilot plugin marketplace add microsoft/hve-core#<ref>
+copilot plugin marketplace add microsoft/hve-core#main
 ```
 
-The Git ref selects the catalog. Each selected entry's `source.ref` selects matching immutable `plugins-v<version>` bytes. Use the client to select the desired catalog package after registration.
+Register a fixed release instead when you need immutable catalog selection:
+
+```bash
+copilot plugin marketplace add microsoft/hve-core#hve-core-v<version>
+```
+
+Both refs use the marketplace name `hve-core`; keep one active registration at
+a time rather than depending on simultaneous same-name registrations. Ref
+omission does not update an installed plugin by itself. You can opt a
+self-added marketplace into session-start updates by setting `autoUpdate: true`
+on its `extraKnownMarketplaces` entry in your personal Copilot CLI settings.
+Otherwise, after `main` advances, refresh the marketplace and then update the
+installed plugin explicitly:
+
+```bash
+copilot plugin marketplace update hve-core
+copilot plugin update hve-core@hve-core
+```
 
 ## Selective Clone Adoption
 
