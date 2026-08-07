@@ -3,7 +3,7 @@ title: Contributing Skills to HVE Core
 description: Requirements and standards for contributing skill packages to hve-core
 sidebar_position: 6
 author: Microsoft
-ms.date: 2026-08-02
+ms.date: 2026-08-06
 ms.topic: how-to
 keywords:
   - skills
@@ -58,6 +58,7 @@ Skill files are typically organized in a package subdirectory by convention:
 ```text
 .github/skills/{package-id}/<skill-name>/
 ├── SKILL.md                    # Main skill definition (required)
+├── SECURITY.md                 # STRIDE model (required for executable runtimes)
 ├── scripts/                    # Executable scripts or Python package entry points (optional)
 │   ├── <pkg>/                  # Python package directory (optional for Python skills)
 │   │   └── __init__.py
@@ -79,6 +80,18 @@ Skill files are typically organized in a package subdirectory by convention:
 > are declared in `.github/plugin/marketplace.json` and resolve to canonical source files.
 
 The `scripts/` directory is **optional**. When present, it **MUST** contain at least one PowerShell script for PowerShell or cross-platform skills, and it **SHOULD** contain at least one `.sh` file when a bash implementation is also provided. Python skills may instead package executable modules under `scripts/<package>/__init__.py` and still satisfy the scripts requirement. Skills without scripts are valid and function as documentation-driven knowledge packages.
+
+### Skill Security Model
+
+A skill that ships an executable runtime **MUST** include `SECURITY.md` next to
+`SKILL.md` when it performs network egress, handles credentials, starts subprocesses,
+or parses untrusted documents or content. Purely instructional skills and local
+validation scripts without an external runtime surface do not require a dedicated model.
+
+Follow the [skill security model guidance](https://github.com/microsoft/hve-core/blob/main/.github/instructions/skill-security-model.instructions.md)
+and start from the [skill security model template](../templates/skill-security-model-template).
+The repository security model lists existing examples and the complete inclusion rule
+under [Skill Security Models](../security/security-model#skill-security-models).
 
 ### Naming Convention
 
@@ -412,6 +425,32 @@ Python skill scripts require pytest:
 * Commit `uv.lock` alongside `pyproject.toml` at the skill root so Dependabot can resolve and patch Python dependencies under `.github/skills/**`
 * `npm run validate:skills` warns when `pyproject.toml` is present without `uv.lock`, and it fails when the validation run is executed with `-WarningsAsErrors`
 
+<!-- cspell:ignore conftest mktemp -->
+Do not commit opaque binary test fixtures such as `.pptx` or `.xlsx` files. Binary
+fixtures can conceal macros, OLE objects, or other content that is difficult to audit. Generate them
+from reviewable Python code in `conftest.py` and write them to pytest's temporary
+directory at test time:
+
+```python
+from pathlib import Path
+
+import pytest
+
+from tests.fixture_factory import generate_minimal_fixture
+
+
+@pytest.fixture(scope="session")
+def minimal_fixture(tmp_path_factory: pytest.TempPathFactory) -> Path:
+  fixture_path = tmp_path_factory.mktemp("fixtures") / "minimal.pptx"
+  generate_minimal_fixture(fixture_path)
+  return fixture_path
+```
+
+Keep the generator deterministic and minimal so reviewers can audit every element it
+creates. If generation depends on library internals, such as bundled layout names,
+declare a compatible lower-bound dependency version and explain that fixture dependency
+in the dependency manifest.
+
 ### Fuzz Harness (Python Skills)
 
 Python skills with a `tests/` directory **MUST** include a fuzz harness for OSSF Scorecard Fuzzing compliance:
@@ -567,6 +606,10 @@ npm run docs:test             # Validate Docusaurus artifact counts
 npm run docs:generate         # Scaffold reference page under docs/reference/skills/ (new skills)
 npm run lint:asset-docs       # Validate asset reference pages and AUTO-GENERATED regions
 ```
+
+When a skill contains `SECURITY.md`, `npm run validate:skills` also enforces its
+canonical heading structure: trust buckets use `## Bucket Bn` headings, and STRIDE
+categories plus Risk Rating use H3 headings.
 
 All checks **MUST** pass before merge.
 
