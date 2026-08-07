@@ -3,7 +3,7 @@ title: Security Assurance Case and Security Model
 description: Comprehensive security model and security assurance documentation demonstrating enterprise security practices
 sidebar_position: 2
 author: Microsoft
-ms.date: 2026-07-31
+ms.date: 2026-08-06
 ms.topic: reference
 keywords:
   - security
@@ -27,17 +27,17 @@ HVE Core is an enterprise prompt engineering framework for GitHub Copilot consis
 Most of the repository contains no runtime services, databases, or user data storage and is targeted primarily by supply chain and developer workflow threats.
 The Mural skill is the exception: it executes locally, holds OAuth tokens in the OS keyring (or an encrypted file fallback), and makes authenticated requests to a third-party SaaS.
 Threats specific to that runtime are analyzed in the [OAuth Authentication Threats](#oauth-authentication-threats) and [MCP Server Trust Analysis](#mcp-server-trust-analysis) sections.
-Security relies on defense-in-depth with 20+ automated controls validated through CI/CD pipelines.
+Security relies on defense-in-depth with 21+ automated controls validated through CI/CD pipelines.
 
 ### Security Posture Overview
 
 | Category                 | Status  | Control Count | Automated |
 |--------------------------|---------|---------------|-----------|
 | Supply Chain Security    | Strong  | 8 controls    | 100%      |
-| Code Quality             | Strong  | 5 controls    | 100%      |
+| Code Quality             | Strong  | 6 controls    | 100%      |
 | Access Control           | Strong  | 4 controls    | 100%      |
 | Vulnerability Management | Strong  | 3 controls    | 100%      |
-| Total                    | **20+** | **20**        | **100%**  |
+| Total                    | **21+** | **21**        | **100%**  |
 
 ## Contents
 
@@ -237,6 +237,19 @@ This section documents threats using [STRIDE](https://learn.microsoft.com/azure/
 | **Mitigations**   | PR review, CODEOWNERS, frontmatter validation                 |
 | **Residual Risk** | Medium (semantic analysis not automated)                      |
 | **Status**        | Partially Mitigated                                           |
+
+#### T-3: Script Injection via Workflow Inputs
+
+| Field             | Value                                                                                                                                                                       |
+|-------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| **Category**      | Tampering / Elevation of Privilege                                                                                                                                          |
+| **Asset**         | GitHub Actions `run:` steps                                                                                                                                                 |
+| **Threat**        | A caller-controlled `workflow_call` input interpolated directly into a shell command can alter command structure and execute unintended instructions on the workflow runner |
+| **Likelihood**    | Low (requires a caller able to invoke the reusable workflow with crafted input)                                                                                             |
+| **Impact**        | Medium (command execution is limited by the runner and job permissions but can affect build integrity)                                                                      |
+| **Mitigations**   | Route user-controlled expressions through step-level `env:` variables and reference native shell variables inside `run:` blocks; CodeQL `actions/code-injection` scanning   |
+| **Residual Risk** | Low to Medium while any legacy inline input interpolation remains                                                                                                           |
+| **Status**        | Partially Mitigated                                                                                                                                                         |
 
 #### R-1: Untraceable Configuration Changes
 
@@ -1451,13 +1464,25 @@ The merge commit author is the accountable author of record, never the agent.
 
 ### Code Quality Controls
 
-| ID   | Control                | Implementation                   | Validates Against |
-|------|------------------------|----------------------------------|-------------------|
-| CQ-1 | CodeQL Analysis        | codeql-analysis.yml              | T-1, E-1          |
-| CQ-2 | Markdown Linting       | lint:md npm script               | T-2, RAI-4        |
-| CQ-3 | Frontmatter Validation | Validate-MarkdownFrontmatter.ps1 | T-2               |
-| CQ-4 | PowerShell Analysis    | Invoke-PSScriptAnalyzer.ps1      | T-1               |
-| CQ-5 | YAML Linting           | Invoke-YamlLint.ps1              | T-1               |
+| ID   | Control                  | Implementation                                          | Validates Against |
+|------|--------------------------|---------------------------------------------------------|-------------------|
+| CQ-1 | CodeQL Analysis          | codeql-analysis.yml                                     | T-1, T-3, E-1     |
+| CQ-2 | Markdown Linting         | lint:md npm script                                      | T-2, RAI-4        |
+| CQ-3 | Frontmatter Validation   | Validate-MarkdownFrontmatter.ps1                        | T-2               |
+| CQ-4 | PowerShell Analysis      | Invoke-PSScriptAnalyzer.ps1                             | T-1               |
+| CQ-5 | YAML Linting             | Invoke-YamlLint.ps1                                     | T-1               |
+| CQ-6 | Workflow Input Isolation | Step-level `env:` mappings for caller-controlled inputs | T-3               |
+
+CQ-6 keeps GitHub expression evaluation out of shell command text. A workflow maps an
+input such as `${{ inputs.version }}` to an environment variable, then reads the shell's
+native variable (`$INPUT_VERSION` or `$env:INPUT_VERSION`) inside the `run:` block.
+Matrix values generated from repository-controlled configuration do not cross the same
+caller-controlled boundary. The extension packaging workflow applies this pattern to
+version, development-patch, and channel inputs. Other reusable workflows still
+interpolate workflow-call inputs directly inside `run:` blocks, so T-3 remains Partially
+Mitigated. CodeQL provides `actions/code-injection` detection for supported patterns;
+the homegrown dangerous-workflow gate currently covers selected event and workflow-output
+expressions rather than enforcing CQ-6 for workflow-call inputs across the fleet.
 
 ### Access Controls
 
@@ -1515,7 +1540,7 @@ G0: HVE Core is acceptably secure for its intended use as an enterprise prompt e
 
 HVE Core achieves acceptable security through:
 
-1. Automated Controls: 20+ security controls execute automatically via CI/CD
+1. Automated Controls: 21+ security controls execute automatically via CI/CD
 2. Defense-in-Depth: Multiple overlapping controls for critical threats
 3. Transparent Risk Acceptance: AI-inherent risks documented with clear boundaries
 4. Inherited Security: Uses GitHub and Copilot platform security
