@@ -2,7 +2,13 @@
 title: Git Merge
 description: "Coordinate Git merge, rebase, and rebase --onto workflows with conflict handling"
 sidebar_position: 4
-ms.date: 2026-07-16
+author: Microsoft
+ms.date: 2026-08-01
+ms.topic: reference
+keywords:
+  - prompt
+  - hve-core
+  - git-merge
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->

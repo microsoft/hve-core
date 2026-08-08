@@ -3,8 +3,12 @@ title: Project Planning Agents
 description: Agents for requirements gathering, architecture decisions, and security planning
 sidebar_position: 1
 author: Microsoft
-ms.date: 2026-06-29
+ms.date: 2026-08-01
 ms.topic: concept
+keywords:
+  - project planning
+  - agents
+  - requirements
 ---
 
 Four agents and **three** portable skills support structured project planning across requirements, architecture, security, **and performance**. Each agent follows a guided workflow to produce specific deliverables, from business requirements documents to security assessment plans and reliability targets.

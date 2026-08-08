@@ -2,7 +2,13 @@
 title: Github Suggest
 description: Resume GitHub backlog management from its durable planning artifacts
 sidebar_position: 5
-ms.date: 2026-07-16
+author: Microsoft
+ms.date: 2026-08-01
+ms.topic: reference
+keywords:
+  - prompt
+  - github
+  - github-suggest
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->

@@ -2,7 +2,13 @@
 title: architecture-diagrams
 description: "Architecture diagram authoring for cloud infrastructure: parse Azure IaC, map relationships, and render either ASCII block diagrams or Mermaid flowcharts based on the caller's chosen output format"
 sidebar_position: 1
-ms.date: 2026-07-27
+author: Microsoft
+ms.date: 2026-08-01
+ms.topic: reference
+keywords:
+  - skill
+  - hve-core
+  - architecture-diagrams
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->

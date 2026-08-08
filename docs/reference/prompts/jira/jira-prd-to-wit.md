@@ -2,7 +2,13 @@
 title: Jira Prd To Wit
 description: Analyze PRD artifacts and plan Jira issue hierarchies without mutating Jira
 sidebar_position: 3
-ms.date: 2026-07-03
+author: Microsoft
+ms.date: 2026-08-01
+ms.topic: reference
+keywords:
+  - prompt
+  - jira
+  - jira-prd-to-wit
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->

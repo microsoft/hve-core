@@ -2,7 +2,13 @@
 title: Rpi
 description: "Coordinate one task through the Research, Plan, Implement, Review, and Follow-up RPI workflow"
 sidebar_position: 8
-ms.date: 2026-07-16
+author: Microsoft
+ms.date: 2026-08-01
+ms.topic: reference
+keywords:
+  - prompt
+  - hve-core
+  - rpi
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->

@@ -2,7 +2,13 @@
 title: UX UI Designer
 description: "UX research specialist for Jobs-to-be-Done analysis, user journey mapping, and accessibility requirements"
 sidebar_position: 9
-ms.date: 2026-07-03
+author: Microsoft
+ms.date: 2026-08-01
+ms.topic: reference
+keywords:
+  - agent
+  - project-planning
+  - ux-ui-designer
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->

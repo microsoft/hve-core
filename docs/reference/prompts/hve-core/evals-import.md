@@ -2,7 +2,13 @@
 title: Evals Import
 description: Imports a CSV or XLSX corpus into Vally eval suites with safety lint and dedupe
 sidebar_position: 1
-ms.date: 2026-07-16
+author: Microsoft
+ms.date: 2026-08-01
+ms.topic: reference
+keywords:
+  - prompt
+  - hve-core
+  - evals-import
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->

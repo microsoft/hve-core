@@ -2,7 +2,13 @@
 title: Ado Sprint Plan
 description: "Plan an Azure DevOps sprint by analyzing iteration coverage, capacity, dependencies, and backlog gaps"
 sidebar_position: 7
-ms.date: 2026-07-03
+author: Microsoft
+ms.date: 2026-08-01
+ms.topic: reference
+keywords:
+  - prompt
+  - ado
+  - ado-sprint-plan
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->

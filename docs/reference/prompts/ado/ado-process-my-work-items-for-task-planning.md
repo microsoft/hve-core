@@ -2,7 +2,13 @@
 title: Ado Process My Work Items For Task Planning
 description: Process retrieved work items for task planning and generate task-planning-logs.md handoff file
 sidebar_position: 6
-ms.date: 2026-07-03
+author: Microsoft
+ms.date: 2026-08-01
+ms.topic: reference
+keywords:
+  - prompt
+  - ado
+  - ado-process-my-work-items-for-task-planning
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->

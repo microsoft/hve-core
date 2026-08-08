@@ -5,6 +5,10 @@ sidebar_position: 2
 author: Microsoft
 ms.date: 2026-08-02
 ms.topic: how-to
+keywords:
+  - copilot cli
+  - plugins
+  - installation
 ---
 
 Install the complete HVE Core component set as a Copilot CLI plugin for terminal-based AI-assisted development workflows.

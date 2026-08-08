@@ -2,7 +2,13 @@
 title: Github/Github Backlog Planning
 description: "GitHub backlog management: planning files, search protocols, similarity assessment, and state persistence"
 sidebar_position: 3
-ms.date: 2026-07-03
+author: Microsoft
+ms.date: 2026-08-01
+ms.topic: reference
+keywords:
+  - instruction
+  - github
+  - github/github-backlog-planning
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->

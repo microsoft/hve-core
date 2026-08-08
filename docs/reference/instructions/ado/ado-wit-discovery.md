@@ -2,7 +2,13 @@
 title: Ado/Ado Wit Discovery
 description: Azure DevOps work item discovery via user assignment or artifact analysis with planning file output
 sidebar_position: 7
-ms.date: 2026-07-03
+author: Microsoft
+ms.date: 2026-08-01
+ms.topic: reference
+keywords:
+  - instruction
+  - ado
+  - ado/ado-wit-discovery
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->

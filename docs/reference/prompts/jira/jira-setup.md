@@ -2,7 +2,13 @@
 title: Jira Setup
 description: "Interactive, verification-first Jira credential configuration assistant (non-destructive)"
 sidebar_position: 4
-ms.date: 2026-07-03
+author: Microsoft
+ms.date: 2026-08-01
+ms.topic: reference
+keywords:
+  - prompt
+  - jira
+  - jira-setup
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->

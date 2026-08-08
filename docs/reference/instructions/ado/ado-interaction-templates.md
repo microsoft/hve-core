@@ -2,7 +2,13 @@
 title: Ado/Ado Interaction Templates
 description: Work item description and comment templates for consistent Azure DevOps content formatting
 sidebar_position: 5
-ms.date: 2026-07-03
+author: Microsoft
+ms.date: 2026-08-01
+ms.topic: reference
+keywords:
+  - instruction
+  - ado
+  - ado/ado-interaction-templates
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->

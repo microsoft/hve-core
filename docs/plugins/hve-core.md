@@ -5,6 +5,10 @@ sidebar_position: 8
 author: Microsoft
 ms.date: 2026-08-03
 ms.topic: reference
+keywords:
+  - package
+  - hve core
+  - foundation
 ---
 
 Choose HVE Core when you want an opinionated working set focused on RPI, HVE Builder, Git, and code review.

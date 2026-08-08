@@ -5,6 +5,10 @@ sidebar_position: 13
 author: Microsoft
 ms.date: 2026-08-03
 ms.topic: reference
+keywords:
+  - package
+  - rpi
+  - workflow
 ---
 
 Choose this package when your primary need is the Research, Plan, Implement, Review, and Follow-up workflow.

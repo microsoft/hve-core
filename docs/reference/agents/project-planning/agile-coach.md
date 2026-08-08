@@ -2,7 +2,13 @@
 title: Agile Coach
 description: Creates and refines goal-oriented user stories with clear acceptance criteria for any tracking tool
 sidebar_position: 2
-ms.date: 2026-07-03
+author: Microsoft
+ms.date: 2026-08-01
+ms.topic: reference
+keywords:
+  - agent
+  - project-planning
+  - agile-coach
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->

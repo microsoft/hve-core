@@ -2,7 +2,13 @@
 title: Github/Github Backlog Discovery
 description: "GitHub issue backlog discovery: artifact-driven, user-centric, search-based"
 sidebar_position: 2
-ms.date: 2026-07-03
+author: Microsoft
+ms.date: 2026-08-01
+ms.topic: reference
+keywords:
+  - instruction
+  - github
+  - github/github-backlog-discovery
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->

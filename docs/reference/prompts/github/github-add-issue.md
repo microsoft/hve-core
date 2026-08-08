@@ -2,7 +2,13 @@
 title: Github Add Issue
 description: Create a GitHub issue using discovered repository templates and conversational field collection
 sidebar_position: 1
-ms.date: 2026-07-03
+author: Microsoft
+ms.date: 2026-08-01
+ms.topic: reference
+keywords:
+  - prompt
+  - github
+  - github-add-issue
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->

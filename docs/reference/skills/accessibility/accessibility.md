@@ -2,7 +2,12 @@
 title: accessibility
 description: "Consolidated accessibility skill entrypoint for WCAG 2.2, ARIA Authoring Practices, cognitive accessibility, Section 508, EN 301 549, and the Accessibility Planner workflow."
 sidebar_position: 1
-ms.date: 2026-07-03
+author: Microsoft
+ms.date: 2026-08-01
+ms.topic: reference
+keywords:
+  - skill
+  - accessibility
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->

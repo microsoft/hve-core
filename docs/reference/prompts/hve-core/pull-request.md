@@ -2,7 +2,13 @@
 title: Pull Request
 description: Generate pull request descriptions from branch diffs
 sidebar_position: 7
-ms.date: 2026-07-16
+author: Microsoft
+ms.date: 2026-08-01
+ms.topic: reference
+keywords:
+  - prompt
+  - hve-core
+  - pull-request
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->

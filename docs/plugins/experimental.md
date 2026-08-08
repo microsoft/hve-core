@@ -5,6 +5,10 @@ sidebar_position: 5
 author: Microsoft
 ms.date: 2026-08-03
 ms.topic: reference
+keywords:
+  - package
+  - experimental
+  - preview
 ---
 
 Choose this package when you are deliberately evaluating capabilities that have not been promoted to stable packages.

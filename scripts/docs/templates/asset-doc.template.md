@@ -2,7 +2,13 @@
 title: Asset name
 description: Reference documentation for this asset.
 sidebar_position: 1
+author: Microsoft
 ms.date: 2026-07-02
+ms.topic: reference
+keywords:
+  - kind
+  - collection
+  - asset name
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->

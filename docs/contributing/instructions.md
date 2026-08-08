@@ -5,6 +5,10 @@ sidebar_position: 3
 author: Microsoft
 ms.date: 2026-08-02
 ms.topic: how-to
+keywords:
+  - contributing
+  - instructions
+  - standards
 ---
 
 This guide defines the requirements, standards, and best practices for contributing GitHub Copilot instruction files (`.instructions.md`) to the hve-core library.

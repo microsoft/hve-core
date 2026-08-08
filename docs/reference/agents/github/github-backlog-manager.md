@@ -2,7 +2,13 @@
 title: GitHub Backlog Manager
 description: "GitHub backlog orchestrator for triage, discovery, sprint planning, and execution"
 sidebar_position: 1
-ms.date: 2026-07-03
+author: Microsoft
+ms.date: 2026-08-01
+ms.topic: reference
+keywords:
+  - agent
+  - github
+  - github-backlog-manager
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->

@@ -5,6 +5,10 @@ sidebar_position: 3
 author: Microsoft
 ms.date: 2026-08-03
 ms.topic: reference
+keywords:
+  - package
+  - data science
+  - notebooks
 ---
 
 Choose this package for data practitioners creating evaluation datasets, data specifications, exploratory notebooks, or Streamlit dashboards.

@@ -2,7 +2,13 @@
 title: hve-builder
 description: "Author, review, or validate Copilot prompt-engineering artifacts through independent review, behavior testing, and host checks."
 sidebar_position: 4
-ms.date: 2026-07-27
+author: Microsoft
+ms.date: 2026-08-01
+ms.topic: reference
+keywords:
+  - skill
+  - hve-core
+  - hve-builder
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->

@@ -2,7 +2,13 @@
 title: Jira/Jira Backlog Triage
 description: "Jira issue backlog triage: field recommendations, duplicate detection, and controlled execution"
 sidebar_position: 3
-ms.date: 2026-07-03
+author: Microsoft
+ms.date: 2026-08-01
+ms.topic: reference
+keywords:
+  - instruction
+  - jira
+  - jira/jira-backlog-triage
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->

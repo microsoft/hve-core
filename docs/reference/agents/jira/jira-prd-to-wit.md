@@ -2,7 +2,13 @@
 title: Jira PRD to WIT
 description: Product Manager expert for analyzing PRDs and planning Jira issue hierarchies without mutating Jira
 sidebar_position: 2
-ms.date: 2026-07-03
+author: Microsoft
+ms.date: 2026-08-01
+ms.topic: reference
+keywords:
+  - agent
+  - jira
+  - jira-prd-to-wit
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->

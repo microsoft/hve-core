@@ -3,8 +3,12 @@ prd_id: "PRD-2026-Q2-BRD-BUILDER"
 title: "BRD Builder Agent Product Requirements"
 description: "Product Requirements Document for the BRD Builder agent, defining product goals, functional requirements, and acceptance criteria for the guided Business Requirements Document authoring workflow in the project-planning collection."
 author: "HVE Core Maintainers"
-ms.date: "2026-06-29"
+ms.date: "2026-08-01"
 ms.topic: "reference"
+keywords:
+  - brd builder
+  - product requirements
+  - project planning
 status: "approved"
 version: "1.0.0"
 owners: ["microsoft/hve-core"]

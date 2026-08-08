@@ -5,6 +5,10 @@ sidebar_position: 3
 author: Microsoft
 ms.date: 2026-08-03
 ms.topic: overview
+keywords:
+  - packages
+  - channels
+  - identity
 ---
 
 ## Package Choices

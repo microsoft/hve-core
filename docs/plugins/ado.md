@@ -5,6 +5,10 @@ sidebar_position: 1
 author: Microsoft
 ms.date: 2026-08-03
 ms.topic: reference
+keywords:
+  - package
+  - azure devops
+  - work items
 ---
 
 Choose this package for teams that manage work items, builds, and pull requests in Azure DevOps.

@@ -2,7 +2,13 @@
 title: Jira Triage Issues
 description: "Triage Jira issues with field recommendations, duplicate detection, and optional updates"
 sidebar_position: 5
-ms.date: 2026-07-03
+author: Microsoft
+ms.date: 2026-08-01
+ms.topic: reference
+keywords:
+  - prompt
+  - jira
+  - jira-triage-issues
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->

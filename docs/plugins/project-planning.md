@@ -5,6 +5,10 @@ sidebar_position: 12
 author: Microsoft
 ms.date: 2026-08-03
 ms.topic: reference
+keywords:
+  - package
+  - project planning
+  - requirements
 ---
 
 Choose this package for product, architecture, and delivery teams creating PRDs, BRDs, ADRs, and architecture diagrams.

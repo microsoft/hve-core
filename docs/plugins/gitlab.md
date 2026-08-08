@@ -5,6 +5,10 @@ sidebar_position: 7
 author: Microsoft
 ms.date: 2026-08-03
 ms.topic: reference
+keywords:
+  - package
+  - gitlab
+  - merge requests
 ---
 
 Choose this package for GitLab teams that manage merge requests and pipelines.

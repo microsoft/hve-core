@@ -2,7 +2,13 @@
 title: ADO Work Item Planning
 description: "Azure DevOps work item planning files, templates, field definitions, and search protocols"
 sidebar_position: 8
-ms.date: 2026-07-03
+author: Microsoft
+ms.date: 2026-08-01
+ms.topic: reference
+keywords:
+  - instruction
+  - ado
+  - ado/ado-wit-planning
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->

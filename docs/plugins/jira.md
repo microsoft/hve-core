@@ -5,6 +5,10 @@ sidebar_position: 11
 author: Microsoft
 ms.date: 2026-08-03
 ms.topic: reference
+keywords:
+  - package
+  - jira
+  - issues
 ---
 
 Choose this package for teams that manage backlogs, PRD-derived issue planning, and issue operations in Jira.

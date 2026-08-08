@@ -5,6 +5,10 @@ sidebar_position: 9
 author: Microsoft
 ms.date: 2026-08-03
 ms.topic: reference
+keywords:
+  - package
+  - hve core
+  - aggregate
 ---
 
 HVE Core All is the ordinary full bundle for teams that need the repository's broad cross-discipline capability. It owns the starter profile.

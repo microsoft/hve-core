@@ -5,6 +5,10 @@ sidebar_position: 10
 author: Microsoft
 ms.date: 2026-08-03
 ms.topic: reference
+keywords:
+  - package
+  - installer
+  - setup
 ---
 
 Choose this package for workspace maintainers who need to deploy HVE Core artifacts across differing workspace configurations.

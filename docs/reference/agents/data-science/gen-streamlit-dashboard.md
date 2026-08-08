@@ -2,7 +2,13 @@
 title: DS Gen Streamlit Dashboard
 description: Develop a multi-page Streamlit dashboard
 sidebar_position: 4
-ms.date: 2026-07-03
+author: Microsoft
+ms.date: 2026-08-01
+ms.topic: reference
+keywords:
+  - agent
+  - data-science
+  - gen-streamlit-dashboard
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->

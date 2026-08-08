@@ -5,6 +5,11 @@ sidebar_position: 2
 author: Microsoft
 ms.date: 2026-08-03
 ms.topic: concept
+keywords:
+  - ai artifacts
+  - agents
+  - prompts
+  - instructions
 ---
 
 HVE Core provides a four-tier artifact system for customizing GitHub Copilot behavior. Each tier serves a distinct purpose in the delegation chain, enabling structured, reusable AI guidance that flows from user intent to technology-specific standards and executable utilities.

@@ -2,7 +2,13 @@
 title: Product Manager Advisor
 description: "Product management advisor for requirements discovery, validation, and issue creation"
 sidebar_position: 7
-ms.date: 2026-07-03
+author: Microsoft
+ms.date: 2026-08-01
+ms.topic: reference
+keywords:
+  - agent
+  - project-planning
+  - product-manager-advisor
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->

@@ -2,7 +2,13 @@
 title: Shared/Disclaimer Language
 description: Centralized disclaimer language for AI-assisted planning and review agents requiring professional review acknowledgment
 sidebar_position: 3
-ms.date: 2026-07-28
+author: Microsoft
+ms.date: 2026-08-01
+ms.topic: reference
+keywords:
+  - instruction
+  - shared
+  - shared/disclaimer-language
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->

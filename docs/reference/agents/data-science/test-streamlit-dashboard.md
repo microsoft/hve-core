@@ -2,7 +2,13 @@
 title: DS Test Streamlit Dashboard
 description: Automated testing for Streamlit dashboards using Playwright with issue tracking and reporting
 sidebar_position: 5
-ms.date: 2026-07-03
+author: Microsoft
+ms.date: 2026-08-01
+ms.topic: reference
+keywords:
+  - agent
+  - data-science
+  - test-streamlit-dashboard
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->

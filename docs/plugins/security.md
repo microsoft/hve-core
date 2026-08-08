@@ -5,6 +5,10 @@ sidebar_position: 14
 author: Microsoft
 ms.date: 2026-08-03
 ms.topic: reference
+keywords:
+  - package
+  - security
+  - threat modeling
 ---
 
 Choose this package for security teams assessing application, AI, supply-chain, and cloud security risks.

@@ -5,6 +5,10 @@ sidebar_position: 2
 author: Microsoft
 ms.date: 2026-08-03
 ms.topic: reference
+keywords:
+  - package
+  - coding standards
+  - code review
 ---
 
 Choose this package for teams that want language-specific engineering guidance and pre-PR review support.

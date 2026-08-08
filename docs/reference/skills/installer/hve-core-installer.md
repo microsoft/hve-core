@@ -2,7 +2,13 @@
 title: hve-core-installer
 description: "Decision-driven HVE-Core installer with multiple clone-based and extension install methods, environment detection, and selective component installation"
 sidebar_position: 1
+author: Microsoft
 ms.date: 2026-08-02
+ms.topic: reference
+keywords:
+  - skill
+  - installer
+  - hve-core-installer
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->

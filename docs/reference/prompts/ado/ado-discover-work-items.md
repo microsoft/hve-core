@@ -2,7 +2,13 @@
 title: Ado Discover Work Items
 description: "Discover Azure DevOps work items via user queries, artifact analysis, or search"
 sidebar_position: 3
-ms.date: 2026-07-03
+author: Microsoft
+ms.date: 2026-08-01
+ms.topic: reference
+keywords:
+  - prompt
+  - ado
+  - ado-discover-work-items
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->

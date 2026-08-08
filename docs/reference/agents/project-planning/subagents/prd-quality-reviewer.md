@@ -2,7 +2,13 @@
 title: PRD Quality Reviewer
 description: Read-only PRD quality reviewer that emits both PRD_STANDARD_FINDINGS_V1 and PRD_QUALITY_REPORT_V1 payloads
 sidebar_position: 2
-ms.date: 2026-07-05
+author: Microsoft
+ms.date: 2026-08-01
+ms.topic: reference
+keywords:
+  - agent
+  - project-planning
+  - prd-quality-reviewer
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->

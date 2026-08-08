@@ -2,7 +2,13 @@
 title: Jira Discover Issues
 description: "Discover Jira issues via user queries, artifact analysis, or JQL search and produce planning files"
 sidebar_position: 1
-ms.date: 2026-07-03
+author: Microsoft
+ms.date: 2026-08-01
+ms.topic: reference
+keywords:
+  - prompt
+  - jira
+  - jira-discover-issues
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->

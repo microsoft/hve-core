@@ -2,7 +2,13 @@
 title: Ado/Ado Update Wit Items
 description: Work item creation and update protocol using MCP ADO tools with handoff tracking
 sidebar_position: 6
-ms.date: 2026-07-03
+author: Microsoft
+ms.date: 2026-08-01
+ms.topic: reference
+keywords:
+  - instruction
+  - ado
+  - ado/ado-update-wit-items
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->

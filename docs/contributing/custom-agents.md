@@ -5,6 +5,10 @@ sidebar_position: 5
 author: Microsoft
 ms.date: 2026-08-02
 ms.topic: how-to
+keywords:
+  - contributing
+  - custom agents
+  - standards
 ---
 
 This guide defines the requirements, standards, and best practices for contributing GitHub Copilot agent files (`.agent.md`) to the hve-core library.

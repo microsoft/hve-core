@@ -5,6 +5,10 @@ sidebar_position: 4
 author: Microsoft
 ms.date: 2026-08-03
 ms.topic: reference
+keywords:
+  - package
+  - design thinking
+  - coaching
 ---
 
 Choose this package for teams using AI-enhanced Design Thinking across the nine methods and their Problem, Solution, and Implementation spaces.

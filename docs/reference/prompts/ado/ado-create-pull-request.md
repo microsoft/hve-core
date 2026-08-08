@@ -2,7 +2,13 @@
 title: Ado Create Pull Request
 description: "Create an Azure DevOps pull request with generated description, linked work items, and reviewers"
 sidebar_position: 2
-ms.date: 2026-07-03
+author: Microsoft
+ms.date: 2026-08-01
+ms.topic: reference
+keywords:
+  - prompt
+  - ado
+  - ado-create-pull-request
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->

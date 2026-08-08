@@ -2,7 +2,13 @@
 title: Jira/Jira Backlog Planning
 description: "Jira backlog management: planning files, search conventions, similarity assessment, and state persistence"
 sidebar_position: 2
-ms.date: 2026-07-03
+author: Microsoft
+ms.date: 2026-08-01
+ms.topic: reference
+keywords:
+  - instruction
+  - jira
+  - jira/jira-backlog-planning
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->

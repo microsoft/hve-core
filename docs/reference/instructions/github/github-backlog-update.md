@@ -2,7 +2,13 @@
 title: Github/Github Backlog Update
 description: "GitHub issue backlog execution: consumes planning handoffs and runs issue operations"
 sidebar_position: 5
-ms.date: 2026-07-03
+author: Microsoft
+ms.date: 2026-08-01
+ms.topic: reference
+keywords:
+  - instruction
+  - github
+  - github/github-backlog-update
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->

@@ -2,7 +2,13 @@
 title: Ado/Ado Get Build Info
 description: "Azure DevOps build information: status, logs, and details from a PR, build ID, or branch name"
 sidebar_position: 4
-ms.date: 2026-07-03
+author: Microsoft
+ms.date: 2026-08-01
+ms.topic: reference
+keywords:
+  - instruction
+  - ado
+  - ado/ado-get-build-info
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->

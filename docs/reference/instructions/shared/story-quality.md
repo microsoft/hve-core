@@ -2,7 +2,13 @@
 title: Shared/Story Quality
 description: Shared story quality conventions for work item creation and evaluation across agents and workflows
 sidebar_position: 6
-ms.date: 2026-07-03
+author: Microsoft
+ms.date: 2026-08-01
+ms.topic: reference
+keywords:
+  - instruction
+  - shared
+  - shared/story-quality
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->

@@ -2,7 +2,13 @@
 title: Jira Backlog Manager
 description: "Jira backlog orchestrator for discovery, triage, execution, and single-issue actions"
 sidebar_position: 1
-ms.date: 2026-07-03
+author: Microsoft
+ms.date: 2026-08-01
+ms.topic: reference
+keywords:
+  - agent
+  - jira
+  - jira-backlog-manager
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->

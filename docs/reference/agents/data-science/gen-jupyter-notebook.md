@@ -2,7 +2,13 @@
 title: DS Gen Jupyter Notebook
 description: Create exploratory data analysis (EDA) Jupyter notebooks from data sources and data dictionaries
 sidebar_position: 3
-ms.date: 2026-07-03
+author: Microsoft
+ms.date: 2026-08-01
+ms.topic: reference
+keywords:
+  - agent
+  - data-science
+  - gen-jupyter-notebook
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->

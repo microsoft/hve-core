@@ -5,6 +5,10 @@ sidebar_position: 6
 author: Microsoft
 ms.date: 2026-08-03
 ms.topic: reference
+keywords:
+  - package
+  - github
+  - issues
 ---
 
 Choose this package for teams that manage issue backlogs, sprint planning, and issue operations in GitHub.

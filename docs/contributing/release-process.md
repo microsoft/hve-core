@@ -5,6 +5,10 @@ sidebar_position: 9
 ms.date: 2026-08-03
 ms.topic: how-to
 author: WilliamBerryiii
+keywords:
+  - release process
+  - release-please
+  - publishing
 ---
 
 ## Overview

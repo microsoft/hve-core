@@ -2,7 +2,13 @@
 title: DS Gen Data Spec
 description: "Generate data dictionaries, machine-readable data profiles, and summaries for downstream EDA notebooks and dashboards"
 sidebar_position: 2
-ms.date: 2026-07-03
+author: Microsoft
+ms.date: 2026-08-01
+ms.topic: reference
+keywords:
+  - agent
+  - data-science
+  - gen-data-spec
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->

@@ -2,7 +2,12 @@
 title: Prompts
 description: Reference documentation for HVE Core prompts.
 sidebar_position: 0
-ms.date: 2026-07-23
+author: Microsoft
+ms.date: 2026-08-01
+ms.topic: overview
+keywords:
+  - reference
+  - prompts
 ---
 
 <!-- BEGIN AUTO-GENERATED: index -->

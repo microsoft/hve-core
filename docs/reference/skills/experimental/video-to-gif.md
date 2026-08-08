@@ -1,8 +1,14 @@
 ---
 title: video-to-gif
 description: Video-to-GIF conversion with FFmpeg two-pass optimization
-sidebar_position: 8
-ms.date: 2026-08-06
+sidebar_position: 7
+author: Microsoft
+ms.date: 2026-08-01
+ms.topic: reference
+keywords:
+  - skill
+  - experimental
+  - video-to-gif
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->

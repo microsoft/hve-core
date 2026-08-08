@@ -2,7 +2,13 @@
 title: Ado/Ado Backlog Sprint
 description: "Sprint planning workflow for Azure DevOps iterations with coverage analysis, capacity tracking, and gap detection"
 sidebar_position: 1
-ms.date: 2026-07-03
+author: Microsoft
+ms.date: 2026-08-01
+ms.topic: reference
+keywords:
+  - instruction
+  - ado
+  - ado/ado-backlog-sprint
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->
