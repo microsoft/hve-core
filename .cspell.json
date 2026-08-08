@@ -157,6 +157,7 @@
     "prval",
     "pubspec",
     "pylint",
+    "pyroscope",
     "reakit",
     "refus",
     "revalidat",

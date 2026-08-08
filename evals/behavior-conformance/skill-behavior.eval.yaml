@@ -2469,3 +2469,44 @@ stimuli:
         name: scope-language
         config:
           pattern: '(?i)(aws|azure|mcsb|benchmark)'
+
+  - name: skill-security-planning-tm7-generation
+    prompt: |
+      I have a threat-model spec in YAML and I need a `.tm7` file that opens
+      in the Microsoft Threat Modeling Tool, plus a markdown report from the
+      same spec. Which skill covers this, and which entry point produces the
+      `.tm7`?
+    tags:
+      category: behavior-conformance
+      skill: security-planning
+      shape: tool-trigger
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: skill-attribution
+        config:
+          pattern: '(?i)security-planning'
+      - type: output-matches
+        name: scope-language
+        config:
+          pattern: '(?i)(generate_tm7|generate_markdown|\.tm7|threat model)'
+
+  - name: skill-security-planning-native-loop-bleed
+    prompt: |
+      I am on macOS and want to run the native Threat Modeling Tool feedback
+      loop against my generated model. Does the `security-planning` skill's
+      native feedback loop apply here?
+    tags:
+      category: behavior-conformance
+      skill: security-planning
+      shape: bleed-detection
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: skill-attribution
+        config:
+          pattern: '(?i)(not\s+apply|does\s+not|windows[-\s]only|unavailable|cannot|skipped)'
+      - type: output-matches
+        name: scope-language
+        config:
+          pattern: '(?i)(windows|macos|native|portable|generation)'

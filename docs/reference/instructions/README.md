@@ -2,7 +2,7 @@
 title: Instructions
 description: Reference documentation for HVE Core instructions.
 sidebar_position: 0
-ms.date: 2026-07-30
+ms.date: 2026-08-06
 ---
 
 <!-- BEGIN AUTO-GENERATED: index -->
@@ -73,6 +73,7 @@ This page lists the generated reference documentation for HVE Core instructions.
 | [Security/Identity](security/identity.md)                                                         | Security Planner identity, six-phase orchestration, state management, and session recovery protocols                                                                                                                                                                                  |
 | [Security/Sssc Planner](security/sssc-planner.md)                                                 | SSSC Planner identity, six-phase orchestration, state schema, session recovery, and Phase 2-6 assessment protocols                                                                                                                                                                    |
 | [Security/Standards Mapping](security/standards-mapping.md)                                       | OWASP and NIST security standards references with rpi-research activation for CIS, WAF, CAF, and other runtime lookups                                                                                                                                                                |
+| [Security/Tm7 Generation Workflow](security/tm7-generation-workflow.md)                           | Human-in-the-loop contract for TM7 threat-model generation and the native Windows TMT feedback loop                                                                                                                                                                                   |
 | [Security/Vex Generation](security/vex-generation.md)                                             | VEX generation rules: evidence requirements, confidence routing, forbidden transitions, report templates, and licensing posture for AI-assisted vulnerability triage - Brought to you by microsoft/hve-core                                                                           |
 | [Security/Vex Standards](security/vex-standards.md)                                               | VEX document standards: canonical rule reference, licensing posture, author-of-record contract, and document mutation contract for OpenVEX management - Brought to you by microsoft/hve-core                                                                                          |
 | [Shared/Coaching Patterns](shared/coaching-patterns.md)                                           | Shared exploration-first coaching patterns for planning agents (RAI, security, SSSC, Privacy) adapted from Design Thinking research methods                                                                                                                                           |

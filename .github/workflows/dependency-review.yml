@@ -107,6 +107,24 @@ jobs:
           # transformers; CNRI-Python is a permissive PSF-style license. The
           # moderation eval is an internal test harness, not a distributed
           # product.
+          # The security-planning TM7 harness adds a Windows-only UI
+          # Automation group. Every package below ships a permissive license
+          # that already appears in allow-licenses; the action cannot match
+          # them because the dependency graph reports a compound expression or
+          # "unknown". Verified against the installed wheels:
+          # pkg:pypi/pywinauto declares a compound SPDX expression
+          # (BSD-3-Clause AND LGPL-2.1-only AND LGPL-2.1-or-later). The
+          # distributed wheel is BSD-3-Clause only: its METADATA declares
+          # "License: BSD 3-clause" with the OSI BSD classifier, its bundled
+          # LICENSE is the BSD 3-clause text, and the package contains no LGPL
+          # reference. The LGPL components are detected in the upstream source
+          # repository and are not redistributed in the wheel. This is the
+          # same situation as shapely above.
+          # pkg:pypi/comtypes is MIT (License-Expression: MIT).
+          # pkg:pypi/pillow is MIT-CMU (License-Expression: MIT-CMU).
+          # pkg:pypi/pywin32 is PSF (OSI Python Software Foundation License).
+          # The harness is Windows-only, opt-in, and not distributed as a
+          # product; portable TM7 generation requires none of these.
           allow-dependencies-licenses: >-
             pkg:pypi/lxml,
             pkg:pypi/typing-extensions,
@@ -126,6 +144,10 @@ jobs:
             pkg:pypi/safetensors,
             pkg:pypi/regex,
             pkg:pypi/tqdm,
+            pkg:pypi/pywinauto,
+            pkg:pypi/comtypes,
+            pkg:pypi/pillow,
+            pkg:pypi/pywin32,
             pkg:npm/dompurify,
             pkg:npm/lunr-languages,
             pkg:npm/%40github/copilot,

@@ -9,10 +9,10 @@ individual files.
 OWASP Top 10 (2025), OWASP Top 10 for LLM Applications (2025), and OWASP Top 10 for Agentic Applications (2026)
 Copyright: © OWASP Foundation
 License: Creative Commons Attribution-ShareAlike 4.0 International (CC BY-SA 4.0)
-License URI: https://creativecommons.org/licenses/by-sa/4.0/
-Source: https://owasp.org/Top10/2025/
-Source: https://genai.owasp.org/resource/owasp-top-10-for-llm-applications-2025/
-Source: https://genai.owasp.org/resource/owasp-top-10-for-agentic-applications-for-2026/
+License URI: <https://creativecommons.org/licenses/by-sa/4.0/>
+Source: <https://owasp.org/Top10/2025/>
+Source: <https://genai.owasp.org/resource/owasp-top-10-for-llm-applications-2025/>
+Source: <https://genai.owasp.org/resource/owasp-top-10-for-agentic-applications-for-2026/>
 Usage: Category names, IDs, and condensed descriptions in security instruction files.
 Vulnerability reference documents in skill files restructured into agent-consumable
 format with added detection and remediation guidance.
@@ -22,8 +22,8 @@ OWASP® is a registered trademark of the OWASP Foundation.
 
 NIST SP 800-53 Rev. 5 and NIST AI RMF 1.0
 License: Public Domain (17 U.S.C. § 105 — U.S. Government Work)
-Source: https://csrc.nist.gov/publications/detail/sp/800-53/rev-5/final
-Source: https://www.nist.gov/artificial-intelligence/ai-risk-management-framework
+Source: <https://csrc.nist.gov/publications/detail/sp/800-53/rev-5/final>
+Source: <https://www.nist.gov/artificial-intelligence/ai-risk-management-framework>
 Usage: Control family names, IDs, and condensed descriptions embedded in security
 instruction files.
 
@@ -31,7 +31,7 @@ instruction files.
 
 OpenSSF Scorecard
 License: Apache License 2.0
-Source: https://github.com/ossf/scorecard
+Source: <https://github.com/ossf/scorecard>
 Usage: Check names, risk levels, and score ranges embedded in supply chain security
 instruction files.
 
@@ -39,14 +39,14 @@ instruction files.
 
 SLSA (Supply-chain Levels for Software Artifacts)
 License: Community Specification License 1.0
-Source: https://slsa.dev/spec/
+Source: <https://slsa.dev/spec/>
 Usage: Build track level definitions embedded in supply chain security instruction files.
 
 ---
 
 OpenSSF Best Practices Badge (CII Best Practices)
 License: MIT License (criteria), Creative Commons Attribution 3.0+ (documentation)
-Source: https://www.bestpractices.dev/
+Source: <https://www.bestpractices.dev/>
 Usage: Badge tier names and requirement summaries embedded in supply chain security
 instruction files.
 
@@ -54,29 +54,61 @@ instruction files.
 
 Sigstore
 License: Apache License 2.0
-Source: https://www.sigstore.dev/
+Source: <https://www.sigstore.dev/>
 Usage: Component maturity levels embedded in supply chain security instruction files.
 
 ---
 
 SPDX (Software Package Data Exchange)
 License: Community Specification License 1.0
-Source: https://spdx.dev/
+Source: <https://spdx.dev/>
 Usage: Format comparison data embedded in supply chain security instruction files.
 
 ---
 
 CycloneDX
 License: Apache License 2.0
-Source: https://cyclonedx.org/
+Source: <https://cyclonedx.org/>
 Usage: Format comparison data embedded in supply chain security instruction files.
 
 ---
 
 NTIA Minimum Elements for Software Bill of Materials
 License: Public Domain (17 U.S.C. § 105 — U.S. Government Work)
-Source: https://www.ntia.gov/page/software-bill-materials
+Source: <https://www.ntia.gov/page/software-bill-materials>
 Usage: Minimum element names referenced in supply chain security instruction files.
+
+---
+
+Microsoft threat-modeling templates (default.tb7 and default-kb.xml)
+License: MIT License
+Source: <https://github.com/microsoft/threat-modeling-templates>
+Usage: Redistributed in this repository as template and knowledge-base assets for
+the TM7 generation extension. The knowledge base is additionally embedded into
+each generated .tm7 model, so generated output carries this content.
+Redistributed files and SHA-256 digests:
+  .github/skills/project-planning/security-planning/assets/templates/default.tb7
+    5c5c2fa8b0146f6bb192600d6bc93b828d13181d330e4e88b2cc9a788155c307
+  .github/skills/project-planning/security-planning/assets/templates/default-kb.xml
+    edb39f181f042460484b4512f3dcb73b8f1507c9fcd5012efed66dde6d94bf02
+The MIT license text is retained at
+.github/skills/project-planning/security-planning/assets/templates/LICENSE.
+
+---
+
+tm7-cli sample threat model (test fixture)
+License: MIT License
+Source: <https://github.com/gholliday/tm7-cli>
+Upstream file: samples/demo.tm7
+Upstream revision: 715954acc5b0a42386d3c0a3a42cdf35c5f41cfc
+Usage: Read-only reference fixture for TM7 serializer-order and structure tests.
+It is never modified by, or shipped as output of, the generation runtime.
+Local file: .github/skills/project-planning/security-planning/tests/fixtures/tmt-reference.tm7
+  SHA-256: a53a1510859b7f5f1958c5c1d665fdb8107fa9cf62a39050ce1baad6418a8b6f
+The local copy is not byte-identical to upstream. Three LF line breaks inside
+<b:string> elements are stored as CRLF, which is the only difference and accounts
+for the 3-byte size delta (upstream 1212739 bytes, local 1212742 bytes). With
+whitespace normalized, the two files are byte-identical at 1190991 bytes.
 
 ---
 

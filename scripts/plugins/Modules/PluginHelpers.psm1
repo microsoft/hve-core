@@ -1016,6 +1016,35 @@ function Copy-PluginFileIfChanged {
     return $true
 }
 
+function Test-PluginDistributablePath {
+    <#
+    .SYNOPSIS
+    Checks whether a tracked path belongs in generated plugin output.
+
+    .DESCRIPTION
+    Test suites, virtual environments, and tool caches are development inputs
+    rather than distributable content. A directory source such as a skill root
+    otherwise copies its whole tracked subtree, which ships test fixtures to
+    consumers and inflates every package that includes the skill. This mirrors
+    Test-DistributionPath in scripts/extension/Package-Extension.ps1 so both
+    packaging paths exclude the same trees.
+
+    .PARAMETER Path
+    Repository-relative path in forward-slash form.
+
+    .OUTPUTS
+    [bool] True when the path is distributable.
+    #>
+    [CmdletBinding()]
+    [OutputType([bool])]
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$Path
+    )
+
+    return ($Path -notmatch '(^|/)(tests|\.venv|node_modules|__pycache__|\.ruff_cache|\.pytest_cache)(/|$)')
+}
+
 function Copy-PluginSource {
     <#
     .SYNOPSIS
@@ -1084,9 +1113,13 @@ function Copy-PluginSource {
     else {
         $prefix = "$relativeSource/"
         foreach ($tracked in $TrackedIndex.Paths) {
-            if ($tracked.StartsWith($prefix, [System.StringComparison]::Ordinal)) {
-                $matched.Add($tracked)
+            if (-not $tracked.StartsWith($prefix, [System.StringComparison]::Ordinal)) {
+                continue
             }
+            if (-not (Test-PluginDistributablePath -Path $tracked)) {
+                continue
+            }
+            $matched.Add($tracked)
         }
     }
 
@@ -1519,6 +1552,7 @@ Export-ModuleMember -Function @(
     'New-PluginReadmeContent',
     'New-PluginReleaseLocator',
     'Split-PluginDocumentationSource',
+    'Test-PluginDistributablePath',
     'Write-MarketplaceManifest',
     'Write-PluginDirectory'
 )

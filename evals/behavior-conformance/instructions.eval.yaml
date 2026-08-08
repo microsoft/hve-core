@@ -1589,3 +1589,25 @@ stimuli:
         name: scope-language
         config:
           pattern: "(?i)duplicate-then-populate|anchor\\s+inheritance|probe-before-bulk|z-order"
+
+  - name: instruction-tm7-generation-workflow-conformance
+    prompt: |
+      You are about to run the native Windows Threat Modeling Tool feedback
+      loop from a security planning session. Which
+      `.github/instructions/**/*.instructions.md` file applies (cite its
+      path) and what does it require of you before the harness takes over
+      the mouse and keyboard, before treating a generated model as
+      authored, and when asked to promote a layout overlay?
+    tags:
+      category: behavior-conformance
+      instruction: tm7-generation-workflow
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: applyTo-evidence
+        config:
+          pattern: "(?i)security-planner\\.agent\\.md|security-reviewer\\.agent\\.md|tm7-generation-workflow"
+      - type: output-matches
+        name: scope-language
+        config:
+          pattern: "(?i)confirm|wait|operator|pending|not\\s+an?\\s+approval|promote"
