@@ -77,14 +77,6 @@ subagents, and skills. The retained `prompt-builder`, `prompt-analyze`, and
 `prompt-refactor` skills are compatibility aliases that route legacy requests
 to `hve-builder`; they are not independent agents or lifecycle owners.
 
-### Generator Agents
-
-| Agent                       | Purpose                                            | Key Constraint                       |
-|-----------------------------|----------------------------------------------------|--------------------------------------|
-| **gen-jupyter-notebook**    | Creates structured EDA notebooks from data sources | Requires data dictionaries           |
-| **gen-streamlit-dashboard** | Develops multi-page Streamlit dashboards           | Uses Context7 for documentation      |
-| **gen-data-spec**           | Generates data dictionaries and profiles           | Produces JSON and markdown artifacts |
-
 ### Platform Integration Agents
 
 | Agent                      | Purpose                                                                          | Key Constraint                            |
@@ -93,12 +85,6 @@ to `hve-builder`; they are not independent agents or lifecycle owners.
 | **jira-backlog-manager**   | Consolidated Jira backlog management with workflow dispatch and handoff tracking | Uses Jira skill planning workflows        |
 | **ado-prd-to-wit**         | Analyzes PRDs and plans Azure DevOps work item hierarchies                       | Planning-only; does not create work items |
 | **jira-prd-to-wit**        | Analyzes PRDs and plans Jira issue hierarchies                                   | Planning-only; does not mutate Jira       |
-
-### Testing Agents
-
-| Agent                        | Purpose                                     | Key Constraint                         |
-|------------------------------|---------------------------------------------|----------------------------------------|
-| **test-streamlit-dashboard** | Automated Streamlit testing with Playwright | Requires running Streamlit application |
 
 ## Agent Details
 
@@ -300,41 +286,6 @@ Users are responsible for verifying their repository's `.gitignore` configuratio
 **Critical:** Human-gated orchestrator invoked from the agent picker. After computing the diff via the `pr-reference` skill, it confirms scope with the operator, then lets the operator choose any combination of five perspectives (`functional`, `standards`, `accessibility`, `security`, `pr`) or `full` to run all five, plus a depth tier (`basic`, `standard`, or `comprehensive`) applied independently of perspective.
 It dispatches thin perspective subagents under `.github/agents/coding-standards/subagents/`, shares the computed diff to avoid duplicate git operations, and merges every report into a single output. Review-only; never modifies code. Maturity: experimental.
 
-### gen-jupyter-notebook
-
-**Creates:** Exploratory data analysis notebooks:
-
-* `notebooks/*.ipynb` (EDA notebooks with parameterized data loading)
-* `data/processed/*.parquet` (derived datasets with semantic naming)
-
-**Workflow:** Context Gathering → Notebook Generation → Validation
-
-**Critical:** Follows standard section layout with 13 required sections. Uses Plotly Express for interactive visualizations. References existing data dictionaries.
-
-### gen-streamlit-dashboard
-
-**Creates:** Multi-page Streamlit applications:
-
-* `app.py` (main entry point with page navigation)
-* `pages/*.py` (summary statistics, univariate/multivariate analysis, time series)
-* `requirements.txt` (pinned dependencies)
-
-**Workflow:** Project Setup → Core Dashboard Development → Advanced Features → Refinement
-
-**Critical:** Uses Context7 for current Streamlit documentation. Supports AutoGen chat integration when reference scripts exist.
-
-### gen-data-spec
-
-**Creates:** Data documentation artifacts:
-
-* `outputs/data-dictionary-{{dataset}}-{{YYYY-MM-DD}}.md` (column definitions and semantics, with a human-readable summary section)
-* `outputs/data-profile-{{dataset}}-{{YYYY-MM-DD}}.json` (statistical profile for downstream tools)
-* `outputs/data-objectives-{{dataset}}-{{YYYY-MM-DD}}.json` (analysis goals and constraints)
-
-**Workflow:** Confirm Scope → Discover Data → Sample & Infer Schema → Profile → Clarify → Emit Artifacts
-
-**Critical:** Produces machine-readable profiles for downstream consumption. Follows strict JSON schemas. Minimal clarifying questions.
-
 ### github-backlog-manager
 
 **Creates:** Backlog management artifacts under `.copilot-tracking/github-issues/`
@@ -376,18 +327,6 @@ It dispatches thin perspective subagents under `.github/agents/coding-standards/
 **Workflow:** Analyze PRD → Discover Codebase → Discover Related Jira Issues → Refine → Finalize Handoff
 
 **Critical:** Planning-only. Validates Jira issue types and required fields before finalizing plans. Does not call Jira mutation commands.
-
-### test-streamlit-dashboard
-
-**Creates:** Test reports and issue documentation:
-
-* Test results summary (pass/fail counts by category)
-* Issue registry with reproduction steps (severity-categorized findings)
-* Performance metrics (page load times, render benchmarks)
-
-**Workflow:** Environment Setup → Functional Testing → Data Validation → Performance Assessment → Issue Reporting
-
-**Critical:** Uses Playwright for browser automation. Requires running Streamlit application. Categorizes issues by severity.
 
 ## Common Workflows
 

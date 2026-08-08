@@ -53,8 +53,8 @@ artifacts: []
   #   type: "stakeholder-map"
 
 canonical_deck:
-  opted_in: false        # boolean; set during Phase 1 initialization
-  opted_in_at: null      # ISO 8601 timestamp; when user answered the opt-in checkpoint
+  opted_in: false        # boolean; set when the user requests the workflow or accepts an offer
+  opted_in_at: null      # ISO 8601 timestamp; when the workflow was activated
   snapshots: []
     # - method: 1
     #   date: "YYYY-MM-DD"
@@ -135,8 +135,8 @@ Specialized DT workflows may extend the base state schema with additional top-le
 
 #### Canonical Deck Block
 
-* `opted_in`: boolean indicating whether the user accepted the canonical deck workflow during Phase 1 initialization. Set to `false` by default; set to `true` when the user accepts the opt-in checkpoint.
-* `opted_in_at`: ISO 8601 timestamp recording when the user answered the opt-in checkpoint. `null` until answered.
+* `opted_in`: boolean indicating whether the canonical deck workflow is active. Set to `false` by default; set to `true` when the user requests canonical deck or customer cards directly, or accepts an offer at a defined offer point. Not asked during initialization.
+* `opted_in_at`: ISO 8601 timestamp recording when the workflow was activated. `null` until activated.
 * `snapshots`: list of snapshot records, one per canonical deck generation. Each entry records the method number, date, entry count, candidate count, and content fingerprint for staleness detection.
 * `last_offered_at`: ISO 8601 timestamp of the most recent canonical deck offer, whether accepted or declined.
 * `last_offered_response`: user's response to the most recent canonical deck offer: `"accepted"`, `"declined"`, or `null` if never offered.

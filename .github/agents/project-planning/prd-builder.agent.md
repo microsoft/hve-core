@@ -47,6 +47,8 @@ Load `prd-author#assess` first. Determine whether sufficient context exists to c
 * Create files immediately when the user provides an explicit product name ("PRD for ExpenseTracker Pro"), a clear solution description ("mobile app for expense tracking"), or a specific project reference ("PRD for the Q4 platform upgrade").
 * Gather context first when the user provides only vague requests ("help with a PRD"), problem-only statements ("users are frustrated with current process"), or multiple potential solutions ("improve our workflow somehow").
 * Check for an upstream `BRD_TO_PRD_HANDOFF_V1` payload and ingest its coverage and waiver context when present.
+* Check for an upstream feasibility-to-PRD handoff and apply the consumer rules in `requirements-author#prd-assess`: recognize it by `kind`, verify required metadata, verdict field presence, and a readable workspace-relative study path. Preserve BRD authority and treat feasibility as supplementary evidence.
+* For a new session, carry the handoff kind, path, ingest timestamp, verdict, and study revision identifier in the Assess output until Create writes state. For an existing session, update `feasibilityHandoff` directly. Do not store raw candidate content in state.
 * Context sufficiency test: can you create a meaningful kebab-case filename that accurately represents the initiative? If yes, proceed to Create. If no, stay in Discover and ask clarifying questions first.
 
 ### Discover
@@ -55,11 +57,11 @@ Load `prd-author#discover` first. Ask focused questions to establish the title, 
 
 ### Create
 
-Load `prd-author#create` first. Generate the PRD file and its state file together once the title and context are clear, following the File Management protocol below.
+Load `prd-author#create` first. Generate the PRD file and its state file together once the title and context are clear, following the File Management protocol below. When Assess carried normalized feasibility metadata, write its fields atomically as `feasibilityHandoff` in the new state file.
 
 ### Build
 
-Load `prd-author#build` first. Gather detailed functional and non-functional requirements iteratively, building understanding through structured questioning.
+Load `prd-author#build` first. Gather detailed functional and non-functional requirements iteratively, building understanding through structured questioning. When `feasibilityHandoff` is present, read candidates from its recorded path and give every forward-verdict candidate one PRD-owned disposition before Finalize. Allocate final `FR-###`, `NFR-###`, or `CON-###` IDs only after authoring and acceptance. Preserve source candidate evidence in the PRD disposition register; never route feasibility candidates directly to downstream planners.
 
 ### Integrate
 
@@ -137,6 +139,13 @@ Maintain state in `.copilot-tracking/prd-sessions/<prd-name>.state.json`:
   ],
   "nextActions": ["Define functional requirements", "Gather performance requirements"],
   "qualityChecks": ["goals-defined", "scope-clarified"],
+  "feasibilityHandoff": {
+    "kind": "feasibility-to-prd-handoff",
+    "path": "docs/data/example-feasibility-to-prd-handoff.yml",
+    "ingestedAt": "2026-08-03T12:00:00Z",
+    "verdict": "proceed",
+    "studyRevisionId": "urn:uuid:1d9b7f42-05c8-4a6e-9b31-7c2e8a5f0d64"
+  },
   "userPreferences": {
     "detail-level": "comprehensive",
     "question-style": "structured"
@@ -152,6 +161,8 @@ Maintain state in `.copilot-tracking/prd-sessions/<prd-name>.state.json`:
 4. When processing references, update `referencesProcessed` status.
 5. At natural breakpoints, save current progress and next actions.
 6. Before quality checks, record validation status.
+7. When Assess validates a feasibility handoff before state exists, Create writes the normalized metadata atomically with the state skeleton. On resume, update the same feasibility-specific object directly. State written before this contract may carry `schemaVersion` instead of `kind`; read it without error and rewrite it to the current shape on the next feasibility metadata update.
+8. Build stops when feasibility ingestion was reported but `feasibilityHandoff` is absent or its path cannot be read. Candidate content remains in the handoff artifact, not state.
 
 #### Resume Workflow
 

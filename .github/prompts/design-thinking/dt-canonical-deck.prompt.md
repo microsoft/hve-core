@@ -16,7 +16,7 @@ Single prompt that handles both canonical deck and customer-card build flows.
   - `build`: build customer-card PPTX from canonical artifacts.
   - `run`: execute offer flow, and if accepted, execute optional build flow.
 - `${input:method-context}`: Optional method number.
-- `${input:trigger-context:explicit-request}`: Optional offer context (`explicit-request`, `method-exit`, `session-start-check`).
+- `${input:trigger-context:explicit-request}`: Optional offer context (`explicit-request`, `method-exit`).
 
 ## Workflow Rules
 
@@ -48,7 +48,7 @@ If canonical workflow is not active for this session, ask:
 
 If declined, stop and continue normal coaching.
 
-When active, offer snapshot creation or refresh at natural checkpoints (especially Method 1, 2, 3, and 5 exits):
+When active, offer snapshot creation or refresh at the Method 3 and Method 5 exits defined in `canonical-deck.md`:
 
 > We can snapshot the canonical deck now so your current artifacts stay traceable. Generate or refresh now?
 

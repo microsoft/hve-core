@@ -20,3 +20,25 @@ stimuli:
         config:
           pattern: '(?i)(created|wrote|modified|edited|patched|added)\s+\S{0,40}(\.cs|\.py|\.ts|\.js|package\.json)'
           negate: true
+
+  - name: experiment-designer-conditional-ml-route
+    prompt: |
+      My persisted MVE context records `experiment type: machine learning`.
+      We completed general hypothesis framing and are entering experiment
+      design. State which reusable skills you load, what each owns, and what
+      you would do if the conditional ML skill were unavailable.
+    tags:
+      category: agent-behavior
+    graders:
+      - type: output-matches
+        name: always-loaded-general-skill
+        config:
+          pattern: '(?is)(experiment-design).*(hypothes|vetting|scope|general)'
+      - type: output-matches
+        name: conditional-ml-skill
+        config:
+          pattern: '(?is)(machine learning|recorded experiment type).*(ml-experimentation).*(reproducib|tracking|evaluation|readiness)'
+      - type: output-matches
+        name: conditional-failure-degrades-depth
+        config:
+          pattern: '(?is)(unavailable|fails? to load|missing).*(note|record|state).*(continue|general coaching|degrades? depth)'

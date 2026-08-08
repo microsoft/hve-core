@@ -200,10 +200,11 @@ stimuli:
 
   - name: instruction-experiment-designer-conformance
     prompt: |
-      You are working on a Minimum Viable Experimentation session under
-      `.copilot-tracking/mve/payments-latency/`. Which
+      You are writing session artifacts for a Minimum Viable Experimentation
+      session under `.copilot-tracking/mve/payments-latency/`. Which
       `.github/instructions/**/*.instructions.md` file applies (cite its
-      path) and what MVE coaching conventions does it require?
+      path), what tracking-artifact conventions does it require, and where
+      does it say the MVE methodology itself lives?
     tags:
       category: behavior-conformance
       instruction: experiment-designer
@@ -216,7 +217,7 @@ stimuli:
       - type: output-matches
         name: scope-language
         config:
-          pattern: "(?i)\\bmve\\b|experiment|hypothes|assumption|validate"
+          pattern: "(?is)(artifact|directory|file\\s+name).*(experiment-design).*(methodology|MVE|hypothes|vetting)"
 
   - name: instruction-github-backlog-discovery-conformance
     prompt: |

@@ -352,3 +352,22 @@ Describe 'Invoke-AssetDocsGeneration input validation' -Tag 'Unit' {
         $result.DriftCount | Should -Be 0
     }
 }
+
+Describe 'Test-DocContentEqual' -Tag 'Unit' {
+    It 'Treats CRLF and LF forms of the same content as equal' {
+        Test-DocContentEqual -Left "a`nb`nc`n" -Right "a`r`nb`r`nc`r`n" | Should -BeTrue
+    }
+
+    It 'Reports genuinely different content as unequal' {
+        Test-DocContentEqual -Left "a`nb`n" -Right "a`r`nB`r`n" | Should -BeFalse
+    }
+
+    It 'Reports differing trailing whitespace as unequal' {
+        Test-DocContentEqual -Left "a`nb" -Right "a`r`nb`r`n" | Should -BeFalse
+    }
+
+    It 'Treats empty strings as equal' {
+        Test-DocContentEqual -Left '' -Right '' | Should -BeTrue
+    }
+}
+

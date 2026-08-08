@@ -26,34 +26,29 @@ Do not duplicate transition gates or non-waivable checks in:
 
 ## Activation Rule
 
-The coach must explicitly ask the user once per DT project whether to enable canonical deck and customer-card workflow.
+Do not ask about canonical deck or customer-card workflow during Session Initialization. Canonical entries draw on problem definition, How Might We framing, research-grounded narrative, and user evidence that do not exist before Method 3. Asking earlier forces a decision the team cannot yet answer and produces snapshots dominated by `<insufficient knowledge>` placeholders.
 
-Use a direct yes-or-no checkpoint prompt during Session Initialization, before any method-specific coaching begins:
+The canonical-deck workflow becomes active only when either condition is true:
 
-> Would you like to enable the canonical deck and customer-card workflow for this DT project?
+1. The user asks for canonical deck or customer cards at any point.
+2. The user accepts a canonical deck offer at one of the offer points below.
 
-This checkpoint is required once per DT project and is not skippable by the coach. The user can still decline the workflow.
+Until one of those happens, continue normal DT coaching with no canonical-deck prompts and no canonical-deck enforcement.
 
-After that prompt, the canonical-deck workflow is active only when either condition is true:
-
-1. The user asks for canonical deck or customer cards.
-2. The user accepts a canonical deck offer in the active DT session.
-
-If neither condition is true, continue normal DT coaching with no canonical-deck enforcement.
+A user request activates the workflow immediately regardless of current method. When the user asks before Method 3, generate what available evidence supports and name the sections that remain `<insufficient knowledge>`.
 
 ## Offer Points (Optional)
 
-When workflow is active, offer canonical deck snapshot creation or refresh at these method exits:
+Offer canonical deck snapshot creation or refresh at these method exits only:
 
-1. End of Method 1
-2. End of Method 2
-3. End of Method 3
-4. End of Method 5
+1. End of Method 3
+2. End of Method 5
+
+Method 3 is the first offer point because Input Synthesis produces the problem definition, insight statements, and How Might We questions that canonical problem statements, scenarios, and personas depend on. Method 5 is the final offer point because User Concepts supply the alternative paths and extensions that complete use-case entries.
 
 Checkpoint phrasing expectation:
 
-- Between Method 1 and Method 2, ask whether to create or update the canonical deck and customer card artifacts.
-- Between Method 2 and Method 3, ask whether to create or update the canonical deck and customer card artifacts.
+- At the end of Method 3, ask whether to create or update the canonical deck and customer card artifacts.
 - At the end of Method 5, ask whether to create or update the canonical deck and customer card artifacts.
 
 Each offer must be optional and skippable. Declining an offer must not block method transition.
@@ -64,7 +59,7 @@ After any canonical deck create or refresh, the coach must ask this yes-or-no qu
 
 > Would you like to generate the customer-card PowerPoint now?
 
-This checkpoint is required whenever canonical artifacts were created or updated at Method 1, Method 2, Method 3, or Method 5 offer points.
+This checkpoint is required whenever canonical artifacts were created or updated, whether through a Method 3 or Method 5 offer point or through a direct user request.
 
 Do not end canonical snapshot workflow without asking this question.
 
@@ -74,9 +69,11 @@ Record the offer timestamp and user response in coaching state.
 
 If the user declines the customer-card PowerPoint offer:
 
-- **Do not re-offer at Method 2, 3, or 4 snapshots** — The user's decline is final until the end of Method 5.
+- **Do not re-offer between Method 3 and Method 5** — The user's decline is final until the end of Method 5.
 - **Re-offer at the end of Method 5** — Before transitioning from Method 5 to Method 6, ask the customer-card question one final time: *"We're finishing up Method 5. Before we move to prototyping, would you like to generate the customer-card PowerPoint now?"*
 - **If declined again at Method 5, do not re-offer** — Respect the user's decision and continue to implementation methods without further customer-card prompts.
+
+A direct user request always overrides a prior decline. Declining an offer suppresses proactive prompts, never the user's own request.
 
 Record all offers and responses in coaching state for audit and session recovery.
 

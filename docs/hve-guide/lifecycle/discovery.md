@@ -34,7 +34,7 @@ You enter Discovery after completing [Stage 1: Setup](setup.md) with a configure
 | security-planner       | Agent  | Select **security-planner** agent       | Generate security plans and security models                                                |
 | sssc-planner           | Agent  | Select **sssc-planner** agent           | Assess supply chain security posture against OpenSSF standards                             |
 | rai-planner            | Agent  | Select **rai-planner** agent            | Assess responsible AI risks and generate RAI plans                                         |
-| gen-data-spec          | Agent  | Select **gen-data-spec** agent          | Generate data specifications and schemas                                                   |
+| Data Workstream Coach  | Agent  | Select **Data Workstream Coach**        | Catalog data entities, relationships, and dataset profiles                                 |
 | adr-creation           | Agent  | Select **adr-creation** agent           | Document architecture decisions                                                            |
 | architecture-diagrams  | Skill  | Use the **architecture-diagrams** skill | Generate architecture diagrams                                                             |
 | ux-ui-designer         | Agent  | Select **ux-ui-designer** agent         | Design user experience and interface concepts                                              |

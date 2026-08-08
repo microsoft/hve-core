@@ -132,11 +132,7 @@ relies on shared corpus coverage rather than per-agent backlinks. New agents lan
 | documentation                | hve-core         | [surface-signatures/documentation.yml](surface-signatures/documentation.yml)                               | 4                 | authoritative |
 | dt-coach                     | design-thinking  | [surface-signatures/dt-coach.yml](surface-signatures/dt-coach.yml)                                         | 0                 | authoritative |
 | dt-learning-tutor            | design-thinking  | [surface-signatures/dt-learning-tutor.yml](surface-signatures/dt-learning-tutor.yml)                       | 0                 | authoritative |
-| eval-dataset-creator         | data-science     | [surface-signatures/eval-dataset-creator.yml](surface-signatures/eval-dataset-creator.yml)                 | 0                 | authoritative |
 | experiment-designer          | experimental     | [surface-signatures/experiment-designer.yml](surface-signatures/experiment-designer.yml)                   | 0                 | advisory      |
-| gen-data-spec                | data-science     | [surface-signatures/gen-data-spec.yml](surface-signatures/gen-data-spec.yml)                               | 0                 | authoritative |
-| gen-jupyter-notebook         | data-science     | [surface-signatures/gen-jupyter-notebook.yml](surface-signatures/gen-jupyter-notebook.yml)                 | 0                 | authoritative |
-| gen-streamlit-dashboard      | data-science     | [surface-signatures/gen-streamlit-dashboard.yml](surface-signatures/gen-streamlit-dashboard.yml)           | 0                 | authoritative |
 | github-backlog-manager       | github           | [surface-signatures/github-backlog-manager.yml](surface-signatures/github-backlog-manager.yml)             | 2                 | authoritative |
 | issue-triage                 | root             | [surface-signatures/issue-triage.yml](surface-signatures/issue-triage.yml)                                 | 3                 | authoritative |
 | jira-backlog-manager         | jira             | [surface-signatures/jira-backlog-manager.yml](surface-signatures/jira-backlog-manager.yml)                 | 0                 | authoritative |
@@ -152,7 +148,6 @@ relies on shared corpus coverage rather than per-agent backlinks. New agents lan
 | security-reviewer            | security         | [surface-signatures/security-reviewer.yml](surface-signatures/security-reviewer.yml)                       | 0                 | authoritative |
 | sssc-planner                 | security         | [surface-signatures/sssc-planner.yml](surface-signatures/sssc-planner.yml)                                 | 0                 | authoritative |
 | system-architecture-reviewer | project-planning | [surface-signatures/system-architecture-reviewer.yml](surface-signatures/system-architecture-reviewer.yml) | 0                 | authoritative |
-| test-streamlit-dashboard     | data-science     | [surface-signatures/test-streamlit-dashboard.yml](surface-signatures/test-streamlit-dashboard.yml)         | 0                 | authoritative |
 | ux-ui-designer               | project-planning | [surface-signatures/ux-ui-designer.yml](surface-signatures/ux-ui-designer.yml)                             | 0                 | authoritative |
 
 The `security-planner`, `security-reviewer`, and `sssc-planner` rows show stimulus coverage `0` for the same reason: their domains (threat modeling and RAI impact, security review and vulnerability assessment, and supply-chain hardening) do not map to any of the v1 stimulus categories. They are covered indirectly through dependency-map dispatch when other agents invoke their subagents, and through their own surface-signature regex on every baseline-equivalence run.
@@ -164,8 +159,6 @@ or via their declared instruction and skill chains, and through their own surfac
 The `ado-backlog-manager`, `ado-prd-to-wit`, `jira-backlog-manager`, and `jira-prd-to-wit` rows show stimulus coverage `0` because their domains (Azure DevOps and Jira work-item lifecycle, PRD-to-work-item planning) do not map to any of the v1 stimulus categories. They are covered indirectly through dependency-map dispatch when other agents invoke them as subagents, and through their own surface-signature regex on every baseline-equivalence run.
 
 The `dt-coach` and `dt-learning-tutor` rows show stimulus coverage `0` because their Design Thinking coaching and curriculum domains do not map to any of the v1 stimulus categories. They are covered indirectly through dependency-map dispatch when other agents invoke them as subagents, and through their own surface-signature regex on every baseline-equivalence run.
-
-The `eval-dataset-creator`, `gen-data-spec`, `gen-jupyter-notebook`, `gen-streamlit-dashboard`, and `test-streamlit-dashboard` rows show stimulus coverage `0` because their data-science and dashboard-generation domains do not map to any of the v1 stimulus categories. They are covered indirectly through dependency-map dispatch when other agents invoke them as subagents, and through their own surface-signature regex on every baseline-equivalence run.
 
 The `code-review` agent is backlinked onto the two existing `code-qa` walkthrough prompts (`code-walkthrough-fizzbuzz` and `code-error-explain-indexerror`) because step-by-step code explanation is a natural fit for a review-focused agent, and onto `multi-turn-correct-misunderstanding` because standards-driven correction of a prior mistake is a natural fit for that agent's domain.
 
