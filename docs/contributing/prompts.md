@@ -3,7 +3,7 @@ title: 'Contributing Prompts to HVE Core'
 description: 'Requirements and standards for contributing GitHub Copilot prompt files to hve-core'
 sidebar_position: 4
 author: Microsoft
-ms.date: 2026-08-02
+ms.date: 2026-08-06
 ms.topic: how-to
 ---
 
@@ -45,7 +45,7 @@ Prompt files are typically organized in a package subdirectory by convention:
 * Use lowercase kebab-case: `pull-request.prompt.md`
 * Be specific about workflow/task: `ado-create-pull-request.prompt.md`
 * Include domain prefix when relevant: `ado-`, `git-`, `github-`
-* Avoid generic names: `workflow.prompt.md` ❌ → `ado-process-my-work-items-for-task-planning.prompt.md` ✅
+* Avoid generic names: `workflow.prompt.md` ❌ → `security-plan-from-prd.prompt.md` ✅
 
 ### File Format
 

@@ -1,8 +1,8 @@
 ---
 title: Evals Import
 description: Imports a CSV or XLSX corpus into Vally eval suites with safety lint and dedupe
-sidebar_position: 1
-ms.date: 2026-07-16
+sidebar_position: 3
+ms.date: 2026-08-04
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->

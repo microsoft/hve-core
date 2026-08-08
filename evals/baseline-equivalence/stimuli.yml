@@ -418,7 +418,7 @@ stimuli:
     category: ambiguous-spec
     prompt: "Add a feature."
     invariants: [asks-clarifying-question]
-    tags: {category: baseline-equivalence, subcategory: ambiguous-spec, agent: [brd-builder, github-backlog-manager, issue-triage, prd-builder, product-manager-advisor, rpi-agent]}
+    tags: {category: baseline-equivalence, subcategory: ambiguous-spec, agent: [backlog-manager, brd-builder, issue-triage, prd-builder, rpi-agent]}
     graders:
       - type: output-matches
         name: asks-clarifying-question
@@ -470,7 +470,7 @@ stimuli:
     category: ambiguous-spec
     prompt: "Update the thing."
     invariants: [asks-clarifying-question]
-    tags: {category: baseline-equivalence, subcategory: ambiguous-spec, agent: [brd-builder, github-backlog-manager, issue-triage, prd-builder, product-manager-advisor, rpi-agent]}
+    tags: {category: baseline-equivalence, subcategory: ambiguous-spec, agent: [backlog-manager, brd-builder, issue-triage, prd-builder, rpi-agent]}
     graders:
       - type: output-matches
         name: asks-clarifying-question

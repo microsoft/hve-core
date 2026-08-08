@@ -3,7 +3,7 @@ title: Project Planning Agents
 description: Agents for requirements gathering, architecture decisions, and security planning
 sidebar_position: 1
 author: Microsoft
-ms.date: 2026-06-29
+ms.date: 2026-08-06
 ms.topic: concept
 ---
 
@@ -108,8 +108,7 @@ For greenfield projects, follow this order to build artifacts that feed into eac
 ## Related Documentation
 
 * [RPI Documentation](../../rpi/README.md): Task research, planning, and implementation workflows
-* [GitHub Backlog Manager](../github-backlog/README.md): Issue lifecycle management for GitHub repositories
-* [ADO Backlog Manager](../ado-backlog/README.md): Work item management for Azure DevOps projects
+* [Backlog Management](../backlog/README.md): Work and issue lifecycle management across Azure DevOps, GitHub, and Jira
 
 ---
 

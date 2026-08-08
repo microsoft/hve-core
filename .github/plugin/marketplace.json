@@ -10,69 +10,6 @@
   },
   "plugins": [
     {
-      "name": "ado",
-      "source": {
-        "source": "github",
-        "repo": "microsoft/hve-core",
-        "path": "plugins/ado",
-        "ref": "plugins-v3.2.2"
-      },
-      "description": "Azure DevOps work item management, build monitoring, and pull request creation",
-      "version": "3.2.2",
-      "author": {
-        "name": "Microsoft",
-        "url": "https://www.microsoft.com"
-      },
-      "homepage": "https://github.com/microsoft/hve-core",
-      "repository": "https://github.com/microsoft/hve-core",
-      "license": "MIT",
-      "keywords": [
-        "azure-devops",
-        "ado",
-        "work-items",
-        "builds",
-        "pull-requests"
-      ],
-      "agents": [
-        "agents/ado/ado-backlog-manager.md",
-        "agents/ado/ado-prd-to-wit.md",
-        "agents/hve-core/subagents/rpi-planner.md",
-        "agents/hve-core/subagents/rpi-researcher.md"
-      ],
-      "commands": [
-        "commands/ado/ado-add-work-item.md",
-        "commands/ado/ado-create-pull-request.md",
-        "commands/ado/ado-discover-work-items.md",
-        "commands/ado/ado-get-build-info.md",
-        "commands/ado/ado-get-my-work-items.md",
-        "commands/ado/ado-process-my-work-items-for-task-planning.md",
-        "commands/ado/ado-sprint-plan.md",
-        "commands/ado/ado-triage-work-items.md",
-        "commands/ado/ado-update-wit-items.md"
-      ],
-      "rules": [
-        "rules/ado/ado-backlog-sprint.instructions.md",
-        "rules/ado/ado-backlog-triage.instructions.md",
-        "rules/ado/ado-create-pull-request.instructions.md",
-        "rules/ado/ado-get-build-info.instructions.md",
-        "rules/ado/ado-interaction-templates.instructions.md",
-        "rules/ado/ado-update-wit-items.instructions.md",
-        "rules/ado/ado-wit-discovery.instructions.md",
-        "rules/ado/ado-wit-planning.instructions.md",
-        "rules/shared/hve-core-location.instructions.md"
-      ],
-      "skills": [
-        "skills/rpi/rpi-plan",
-        "skills/rpi/rpi-plan-critique",
-        "skills/rpi/rpi-research",
-        "skills/shared/pr-reference"
-      ],
-      "x-hve": {
-        "displayName": "HVE Core - Azure DevOps Integration",
-        "documentation": "docs/plugins/ado.md"
-      }
-    },
-    {
       "name": "coding-standards",
       "source": {
         "source": "github",
@@ -423,95 +360,6 @@
       }
     },
     {
-      "name": "github",
-      "source": {
-        "source": "github",
-        "repo": "microsoft/hve-core",
-        "path": "plugins/github",
-        "ref": "plugins-v3.2.2"
-      },
-      "description": "GitHub issue discovery, triage, sprint planning, and backlog execution agents and prompts",
-      "version": "3.2.2",
-      "author": {
-        "name": "Microsoft",
-        "url": "https://www.microsoft.com"
-      },
-      "homepage": "https://github.com/microsoft/hve-core",
-      "repository": "https://github.com/microsoft/hve-core",
-      "license": "MIT",
-      "keywords": [
-        "github",
-        "issues",
-        "backlog",
-        "triage",
-        "sprint"
-      ],
-      "agents": [
-        "agents/github/github-backlog-manager.md"
-      ],
-      "commands": [
-        "commands/github/github-add-issue.md",
-        "commands/github/github-discover-issues.md",
-        "commands/github/github-execute-backlog.md",
-        "commands/github/github-sprint-plan.md",
-        "commands/github/github-suggest.md",
-        "commands/github/github-triage-issues.md"
-      ],
-      "rules": [
-        "rules/github/community-interaction.instructions.md",
-        "rules/github/github-backlog-discovery.instructions.md",
-        "rules/github/github-backlog-planning.instructions.md",
-        "rules/github/github-backlog-triage.instructions.md",
-        "rules/github/github-backlog-update.instructions.md",
-        "rules/shared/content-policy-citation.instructions.md",
-        "rules/shared/hve-core-location.instructions.md"
-      ],
-      "skills": [
-        "skills/github/gh-code-scanning"
-      ],
-      "x-hve": {
-        "componentMaturity": {
-          "skills/github/gh-code-scanning": "experimental"
-        },
-        "displayName": "HVE Core - GitHub Backlog Management",
-        "documentation": "docs/plugins/github.md"
-      }
-    },
-    {
-      "name": "gitlab",
-      "source": {
-        "source": "github",
-        "repo": "microsoft/hve-core",
-        "path": "plugins/gitlab",
-        "ref": "plugins-v3.2.2"
-      },
-      "description": "GitLab merge request and pipeline workflows through a Python skill",
-      "version": "3.2.2",
-      "author": {
-        "name": "Microsoft",
-        "url": "https://www.microsoft.com"
-      },
-      "homepage": "https://github.com/microsoft/hve-core",
-      "repository": "https://github.com/microsoft/hve-core",
-      "license": "MIT",
-      "keywords": [
-        "gitlab",
-        "merge-requests",
-        "pipelines",
-        "ci"
-      ],
-      "rules": [
-        "rules/shared/hve-core-location.instructions.md"
-      ],
-      "skills": [
-        "skills/gitlab/gitlab"
-      ],
-      "x-hve": {
-        "displayName": "HVE Core - GitLab Integration",
-        "documentation": "docs/plugins/gitlab.md"
-      }
-    },
-    {
       "name": "hve-core",
       "source": {
         "source": "github",
@@ -559,6 +407,8 @@
         "agents/hve-core/subagents/vally-test-author.md"
       ],
       "commands": [
+        "commands/hve-core/ado-create-pull-request.md",
+        "commands/hve-core/ado-get-build-info.md",
         "commands/hve-core/evals-import.md",
         "commands/hve-core/git-commit-message.md",
         "commands/hve-core/git-commit.md",
@@ -673,8 +523,6 @@
         "agents/accessibility/accessibility-reviewer.md",
         "agents/accessibility/subagents/accessibility-framework-assessor.md",
         "agents/accessibility/subagents/accessibility-surface-inventory.md",
-        "agents/ado/ado-backlog-manager.md",
-        "agents/ado/ado-prd-to-wit.md",
         "agents/coding-standards/code-review.md",
         "agents/coding-standards/subagents/code-review-accessibility.md",
         "agents/coding-standards/subagents/code-review-explainer.md",
@@ -694,25 +542,25 @@
         "agents/experimental/experiment-designer.md",
         "agents/experimental/pptx.md",
         "agents/experimental/subagents/pptx-subagent.md",
-        "agents/github/github-backlog-manager.md",
         "agents/hve-core/documentation.md",
         "agents/hve-core/rpi-agent.md",
         "agents/hve-core/subagents/hve-artifact-tester.md",
         "agents/hve-core/subagents/rpi-planner.md",
         "agents/hve-core/subagents/rpi-researcher.md",
         "agents/hve-core/subagents/vally-test-author.md",
-        "agents/jira/jira-backlog-manager.md",
-        "agents/jira/jira-prd-to-wit.md",
         "agents/privacy/privacy-planner.md",
         "agents/privacy/privacy-reviewer.md",
         "agents/project-planning/adr-creation.md",
-        "agents/project-planning/agile-coach.md",
+        "agents/project-planning/backlog-manager.md",
         "agents/project-planning/brd-builder.md",
+        "agents/project-planning/functional-planner.md",
         "agents/project-planning/meeting-analyst.md",
         "agents/project-planning/network-isa95-planner.md",
         "agents/project-planning/prd-builder.md",
-        "agents/project-planning/product-manager-advisor.md",
+        "agents/project-planning/subagents/ado-backlog-executor.md",
         "agents/project-planning/subagents/brd-quality-reviewer.md",
+        "agents/project-planning/subagents/github-backlog-executor.md",
+        "agents/project-planning/subagents/jira-backlog-executor.md",
         "agents/project-planning/subagents/prd-quality-reviewer.md",
         "agents/project-planning/system-architecture-reviewer.md",
         "agents/project-planning/ux-ui-designer.md",
@@ -733,15 +581,6 @@
       ],
       "commands": [
         "commands/accessibility/accessibility-coverage-matrix.md",
-        "commands/ado/ado-add-work-item.md",
-        "commands/ado/ado-create-pull-request.md",
-        "commands/ado/ado-discover-work-items.md",
-        "commands/ado/ado-get-build-info.md",
-        "commands/ado/ado-get-my-work-items.md",
-        "commands/ado/ado-process-my-work-items-for-task-planning.md",
-        "commands/ado/ado-sprint-plan.md",
-        "commands/ado/ado-triage-work-items.md",
-        "commands/ado/ado-update-wit-items.md",
         "commands/data-science/synth-data-generate.md",
         "commands/design-thinking/dt-canonical-deck.md",
         "commands/design-thinking/dt-figma-export.md",
@@ -760,12 +599,8 @@
         "commands/design-thinking/dt-start-project.md",
         "commands/experimental/cspell-config.md",
         "commands/experimental/graph-research.md",
-        "commands/github/github-add-issue.md",
-        "commands/github/github-discover-issues.md",
-        "commands/github/github-execute-backlog.md",
-        "commands/github/github-sprint-plan.md",
-        "commands/github/github-suggest.md",
-        "commands/github/github-triage-issues.md",
+        "commands/hve-core/ado-create-pull-request.md",
+        "commands/hve-core/ado-get-build-info.md",
         "commands/hve-core/evals-import.md",
         "commands/hve-core/git-commit-message.md",
         "commands/hve-core/git-commit.md",
@@ -775,11 +610,6 @@
         "commands/hve-core/pull-request.md",
         "commands/hve-core/rpi.md",
         "commands/hve-core/vally-test-write.md",
-        "commands/jira/jira-discover-issues.md",
-        "commands/jira/jira-execute-backlog.md",
-        "commands/jira/jira-prd-to-wit.md",
-        "commands/jira/jira-setup.md",
-        "commands/jira/jira-triage-issues.md",
         "commands/rai-planning/rai-capture.md",
         "commands/rai-planning/rai-plan-from-prd.md",
         "commands/rai-planning/rai-plan-from-security-plan.md",
@@ -802,14 +632,6 @@
       "rules": [
         "rules/accessibility/accessibility-identity.instructions.md",
         "rules/accessibility/accessibility-license-posture.instructions.md",
-        "rules/ado/ado-backlog-sprint.instructions.md",
-        "rules/ado/ado-backlog-triage.instructions.md",
-        "rules/ado/ado-create-pull-request.instructions.md",
-        "rules/ado/ado-get-build-info.instructions.md",
-        "rules/ado/ado-interaction-templates.instructions.md",
-        "rules/ado/ado-update-wit-items.instructions.md",
-        "rules/ado/ado-wit-discovery.instructions.md",
-        "rules/ado/ado-wit-planning.instructions.md",
         "rules/coding-standards/bash/bash.instructions.md",
         "rules/coding-standards/bicep/bicep.instructions.md",
         "rules/coding-standards/code-review/diff-computation.instructions.md",
@@ -835,11 +657,6 @@
         "rules/experimental/mural/mural-writeback-hygiene.instructions.md",
         "rules/experimental/mural/mural-writing-style.instructions.md",
         "rules/experimental/pptx.instructions.md",
-        "rules/github/community-interaction.instructions.md",
-        "rules/github/github-backlog-discovery.instructions.md",
-        "rules/github/github-backlog-planning.instructions.md",
-        "rules/github/github-backlog-triage.instructions.md",
-        "rules/github/github-backlog-update.instructions.md",
         "rules/hve-core/commit-message.instructions.md",
         "rules/hve-core/copilot-tracking.instructions.md",
         "rules/hve-core/git-merge.instructions.md",
@@ -848,16 +665,13 @@
         "rules/hve-core/markdown.instructions.md",
         "rules/hve-core/pull-request.instructions.md",
         "rules/hve-core/writing-style.instructions.md",
-        "rules/jira/jira-backlog-discovery.instructions.md",
-        "rules/jira/jira-backlog-planning.instructions.md",
-        "rules/jira/jira-backlog-triage.instructions.md",
-        "rules/jira/jira-backlog-update.instructions.md",
-        "rules/jira/jira-wit-planning.instructions.md",
         "rules/privacy/privacy-identity.instructions.md",
         "rules/project-planning/adr-byo-template.instructions.md",
         "rules/project-planning/adr-handoff.instructions.md",
         "rules/project-planning/adr-identity.instructions.md",
         "rules/project-planning/adr-standards.instructions.md",
+        "rules/project-planning/backlog-guardrails.instructions.md",
+        "rules/project-planning/community-interaction.instructions.md",
         "rules/rai-planning/rai-identity.instructions.md",
         "rules/rai-planning/rai-license-posture.instructions.md",
         "rules/security/identity.instructions.md",
@@ -870,7 +684,6 @@
         "rules/shared/disclaimer-language.instructions.md",
         "rules/shared/hve-core-location.instructions.md",
         "rules/shared/planner-identity-base.instructions.md",
-        "rules/shared/story-quality.instructions.md",
         "rules/shared/telemetry-overlay.instructions.md",
         "rules/shared/untrusted-content-boundary.instructions.md"
       ],
@@ -891,8 +704,6 @@
         "skills/experimental/tts-voiceover",
         "skills/experimental/video-to-gif",
         "skills/experimental/vscode-playwright",
-        "skills/github/gh-code-scanning",
-        "skills/gitlab/gitlab",
         "skills/hve-core/architecture-diagrams",
         "skills/hve-core/documentation",
         "skills/hve-core/hve-builder",
@@ -902,8 +713,13 @@
         "skills/hve-core/prompt-refactor",
         "skills/hve-core/vally-tests",
         "skills/installer/hve-core-installer",
-        "skills/jira/jira",
         "skills/project-planning/adr-author",
+        "skills/project-planning/backlog-execute",
+        "skills/project-planning/backlog-management",
+        "skills/project-planning/backlog-plan",
+        "skills/project-planning/functional-planner",
+        "skills/project-planning/gitlab",
+        "skills/project-planning/jira",
         "skills/project-planning/performance-slo-planner",
         "skills/project-planning/privacy-standards",
         "skills/project-planning/rai-planner",
@@ -918,6 +734,7 @@
         "skills/rpi/rpi-research",
         "skills/rpi/rpi-review",
         "skills/rpi/rpi-walkthrough",
+        "skills/security/gh-code-scanning",
         "skills/security/mcsb",
         "skills/security/owasp-agentic",
         "skills/security/owasp-cicd",
@@ -1056,7 +873,6 @@
           "skills/experimental/tts-voiceover": "experimental",
           "skills/experimental/video-to-gif": "experimental",
           "skills/experimental/vscode-playwright": "experimental",
-          "skills/github/gh-code-scanning": "experimental",
           "skills/hve-core/architecture-diagrams": "experimental",
           "skills/hve-core/vally-tests": "experimental",
           "skills/project-planning/adr-author": "experimental",
@@ -1065,6 +881,7 @@
           "skills/project-planning/rai-planner": "experimental",
           "skills/project-planning/security-planning": "experimental",
           "skills/rai/rai-standards": "experimental",
+          "skills/security/gh-code-scanning": "experimental",
           "skills/security/mcsb": "experimental",
           "skills/security/owasp-agentic": "experimental",
           "skills/security/owasp-cicd": "experimental",
@@ -1145,56 +962,6 @@
       }
     },
     {
-      "name": "jira",
-      "source": {
-        "source": "github",
-        "repo": "microsoft/hve-core",
-        "path": "plugins/jira",
-        "ref": "plugins-v3.2.2"
-      },
-      "description": "Jira backlog management, PRD issue planning, and issue operations through agents, prompts, instructions, and a Python skill",
-      "version": "3.2.2",
-      "author": {
-        "name": "Microsoft",
-        "url": "https://www.microsoft.com"
-      },
-      "homepage": "https://github.com/microsoft/hve-core",
-      "repository": "https://github.com/microsoft/hve-core",
-      "license": "MIT",
-      "keywords": [
-        "jira",
-        "issue-tracking",
-        "workflow",
-        "rest-api"
-      ],
-      "agents": [
-        "agents/jira/jira-backlog-manager.md",
-        "agents/jira/jira-prd-to-wit.md"
-      ],
-      "commands": [
-        "commands/jira/jira-discover-issues.md",
-        "commands/jira/jira-execute-backlog.md",
-        "commands/jira/jira-prd-to-wit.md",
-        "commands/jira/jira-setup.md",
-        "commands/jira/jira-triage-issues.md"
-      ],
-      "rules": [
-        "rules/jira/jira-backlog-discovery.instructions.md",
-        "rules/jira/jira-backlog-planning.instructions.md",
-        "rules/jira/jira-backlog-triage.instructions.md",
-        "rules/jira/jira-backlog-update.instructions.md",
-        "rules/jira/jira-wit-planning.instructions.md",
-        "rules/shared/hve-core-location.instructions.md"
-      ],
-      "skills": [
-        "skills/jira/jira"
-      ],
-      "x-hve": {
-        "displayName": "HVE Core - Jira Integration",
-        "documentation": "docs/plugins/jira.md"
-      }
-    },
-    {
       "name": "project-planning",
       "source": {
         "source": "github",
@@ -1202,7 +969,7 @@
         "path": "plugins/project-planning",
         "ref": "plugins-v3.2.2"
       },
-      "description": "PRDs, BRDs, ADRs, and architecture diagrams",
+      "description": "PRDs, BRDs, ADRs, architecture diagrams, and cross-tracker backlog management for Azure DevOps, GitHub, and Jira",
       "version": "3.2.2",
       "author": {
         "name": "Microsoft",
@@ -1232,13 +999,16 @@
         "agents/privacy/privacy-planner.md",
         "agents/privacy/privacy-reviewer.md",
         "agents/project-planning/adr-creation.md",
-        "agents/project-planning/agile-coach.md",
+        "agents/project-planning/backlog-manager.md",
         "agents/project-planning/brd-builder.md",
+        "agents/project-planning/functional-planner.md",
         "agents/project-planning/meeting-analyst.md",
         "agents/project-planning/network-isa95-planner.md",
         "agents/project-planning/prd-builder.md",
-        "agents/project-planning/product-manager-advisor.md",
+        "agents/project-planning/subagents/ado-backlog-executor.md",
         "agents/project-planning/subagents/brd-quality-reviewer.md",
+        "agents/project-planning/subagents/github-backlog-executor.md",
+        "agents/project-planning/subagents/jira-backlog-executor.md",
         "agents/project-planning/subagents/prd-quality-reviewer.md",
         "agents/project-planning/system-architecture-reviewer.md",
         "agents/project-planning/ux-ui-designer.md",
@@ -1280,6 +1050,8 @@
         "rules/project-planning/adr-handoff.instructions.md",
         "rules/project-planning/adr-identity.instructions.md",
         "rules/project-planning/adr-standards.instructions.md",
+        "rules/project-planning/backlog-guardrails.instructions.md",
+        "rules/project-planning/community-interaction.instructions.md",
         "rules/rai-planning/rai-identity.instructions.md",
         "rules/rai-planning/rai-license-posture.instructions.md",
         "rules/security/identity.instructions.md",
@@ -1289,7 +1061,6 @@
         "rules/shared/disclaimer-language.instructions.md",
         "rules/shared/hve-core-location.instructions.md",
         "rules/shared/planner-identity-base.instructions.md",
-        "rules/shared/story-quality.instructions.md",
         "rules/shared/telemetry-overlay.instructions.md",
         "rules/shared/untrusted-content-boundary.instructions.md"
       ],
@@ -1298,6 +1069,12 @@
         "skills/experimental/mural",
         "skills/hve-core/architecture-diagrams",
         "skills/project-planning/adr-author",
+        "skills/project-planning/backlog-execute",
+        "skills/project-planning/backlog-management",
+        "skills/project-planning/backlog-plan",
+        "skills/project-planning/functional-planner",
+        "skills/project-planning/gitlab",
+        "skills/project-planning/jira",
         "skills/project-planning/performance-slo-planner",
         "skills/project-planning/privacy-standards",
         "skills/project-planning/rai-planner",
@@ -1507,6 +1284,7 @@
         "skills/project-planning/security-planning",
         "skills/rai/rai-standards",
         "skills/rpi/rpi-research",
+        "skills/security/gh-code-scanning",
         "skills/security/mcsb",
         "skills/security/owasp-agentic",
         "skills/security/owasp-cicd",
@@ -1567,6 +1345,7 @@
           "skills/project-planning/rai-planner": "experimental",
           "skills/project-planning/security-planning": "experimental",
           "skills/rai/rai-standards": "experimental",
+          "skills/security/gh-code-scanning": "experimental",
           "skills/security/mcsb": "experimental",
           "skills/security/owasp-agentic": "experimental",
           "skills/security/owasp-cicd": "experimental",

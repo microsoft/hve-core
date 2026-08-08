@@ -50,17 +50,19 @@ The channels differ in cadence, version, and source ownership. PreRelease packag
 
 ### Prompts
 
-| Name                   | Maturity     | Description                                                                                           |
-|------------------------|--------------|-------------------------------------------------------------------------------------------------------|
-| **evals-import**       | experimental | Imports a CSV or XLSX corpus into Vally eval suites with safety lint and dedupe                       |
-| **git-commit**         | stable       | Stage all changes, generate a conventional commit message, and commit                                 |
-| **git-commit-message** | stable       | Generate a conventional commit message from all branch changes                                        |
-| **git-merge**          | stable       | Coordinate Git merge, rebase, and rebase --onto workflows with conflict handling                      |
-| **git-setup**          | stable       | Interactive, verification-first Git configuration assistant (non-destructive)                         |
-| **pr-review**          | experimental | Review a pull request or local change set by routing to the consolidated Code Review agent            |
-| **pull-request**       | stable       | Generate pull request descriptions from branch diffs                                                  |
-| **rpi**                | stable       | Coordinate one task through the Research, Plan, Implement, Review, and Follow-up RPI workflow         |
-| **vally-test-write**   | experimental | Authors Vally conformance test stimuli for an existing prompt, instructions, agent, or skill artifact |
+| Name                        | Maturity     | Description                                                                                           |
+|-----------------------------|--------------|-------------------------------------------------------------------------------------------------------|
+| **ado-create-pull-request** | stable       | Create an Azure DevOps pull request with generated description, linked work items, and reviewers      |
+| **ado-get-build-info**      | stable       | Retrieve Azure DevOps build status and logs for a pull request or build number                        |
+| **evals-import**            | experimental | Imports a CSV or XLSX corpus into Vally eval suites with safety lint and dedupe                       |
+| **git-commit**              | stable       | Stage all changes, generate a conventional commit message, and commit                                 |
+| **git-commit-message**      | stable       | Generate a conventional commit message from all branch changes                                        |
+| **git-merge**               | stable       | Coordinate Git merge, rebase, and rebase --onto workflows with conflict handling                      |
+| **git-setup**               | stable       | Interactive, verification-first Git configuration assistant (non-destructive)                         |
+| **pr-review**               | experimental | Review a pull request or local change set by routing to the consolidated Code Review agent            |
+| **pull-request**            | stable       | Generate pull request descriptions from branch diffs                                                  |
+| **rpi**                     | stable       | Coordinate one task through the Research, Plan, Implement, Review, and Follow-up RPI workflow         |
+| **vally-test-write**        | experimental | Authors Vally conformance test stimuli for an existing prompt, instructions, agent, or skill artifact |
 
 ### Instructions
 

@@ -5,7 +5,7 @@ applyTo: '**/.github/skills/**/SECURITY.md'
 
 # Skill Security Model Conventions
 
-Every skill that ships an executable runtime (network egress, credential handling, subprocess execution, or untrusted document/content parsing) carries a `SECURITY.md` STRIDE threat model next to its `SKILL.md`. These models mirror the repo-wide model at `docs/security/security-model.md` and are registered in its Skill Security Models section. The canonical exemplars are `.github/skills/experimental/mural/SECURITY.md`, `.github/skills/jira/jira/SECURITY.md`, and `.github/skills/gitlab/gitlab/SECURITY.md`. The fill-in template is `docs/templates/skill-security-model-template.md`.
+Every skill that ships an executable runtime (network egress, credential handling, subprocess execution, or untrusted document/content parsing) carries a `SECURITY.md` STRIDE threat model next to its `SKILL.md`. These models mirror the repo-wide model at `docs/security/security-model.md` and are registered in its Skill Security Models section, which is the authoritative discovery index. The canonical exemplars are the `SECURITY.md` files bundled with the `mural`, `jira`, and `gitlab` skills; resolve them by skill name rather than by a package path, which is not stable across repository, plugin, and extension layouts. The fill-in template is `docs/templates/skill-security-model-template.md`.
 
 ## Required Structure
 

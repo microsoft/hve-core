@@ -186,7 +186,7 @@ The plan is complete when the user confirms it accurately captures the experimen
 
 ### Phase 6: Backlog Bridge (Optional)
 
-When the user wants to transition the experiment into backlog work items, generate a `backlog-brief.md` document that reformats experiment outputs into requirements language consumable by ADO or GitHub backlog manager agents via their Discovery Path B.
+When the user wants to transition the experiment into backlog work items, generate a `backlog-brief.md` document that reformats experiment outputs into requirements language consumable by the Backlog Manager agent via its Discovery workflow.
 
 Phase 6 triggers only when the user expresses intent to create backlog items from the experiment. Do not offer or begin this phase unless the user asks.
 
@@ -206,8 +206,8 @@ Phase 6 triggers only when the user expresses intent to create backlog items fro
 
 Present the `backlog-brief.md` to the user for review. After confirmation, provide the following guidance:
 
-* To create ADO work items: invoke the ADO Backlog Manager agent and provide `backlog-brief.md` as the input document.
-* To create GitHub issues: invoke the GitHub Backlog Manager agent and provide `backlog-brief.md` as the input document.
+* To create ADO work items: invoke the Backlog Manager agent targeting Azure DevOps and provide `backlog-brief.md` as the input document.
+* To create GitHub issues: invoke the Backlog Manager agent targeting GitHub and provide `backlog-brief.md` as the input document.
 
 The backlog brief is a bridge document: it does not replace the `mve-plan.md` or any other session artifact.
 
