@@ -28,3 +28,20 @@ stimuli:
         name: terminal-state-link-row
         config:
           pattern: '(?ms)\|\s*\[[^\]\r\n]+\]\(\.copilot-tracking/rpi-sessions/2026-07-22/demo-state\.json\)\s*\|\s*[^|\r\n]{1,80}\s*\|\s*$'
+  - name: rpi-agent-explicit-task-recovery
+    prompt: |
+      Run `/rpi-implement https://github.com/microsoft/hve-core/issues/2607`.
+      The workspace also contains the unrelated state
+      `.copilot-tracking/rpi-sessions/2026-08-08/npm-deprecation-warnings-state.json`,
+      whose recorded evidence is for issue 2628. Do not call tools. Identify only
+      the requested task and do not resume the unrelated task.
+    tags:
+      category: agent-behavior
+      kind: agent
+      target_artifact: ".github/agents/hve-core/rpi-agent.agent.md"
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: explicit-issue-identity-without-unrelated-resume
+        config:
+          pattern: '(?is)^(?=.*\b(?:issue\s*#?\s*2607|#2607)\b)(?!.*\bnpm-deprecation-warnings\b)(?!.*\b(?:issue\s*#?\s*2628|#2628)\b).+$'

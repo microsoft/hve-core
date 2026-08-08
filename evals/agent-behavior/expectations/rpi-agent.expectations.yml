@@ -74,6 +74,27 @@ expectations:
     priority: medium
     contract_ref: "RPI Agent identity-and-marker contract"
 
+  - expectation_id: explicit-task-identity-recovery
+    summary: Explicit task anchors select recovery state before ambient workspace state.
+    signal: Output identifies the task named by an issue or pull request anchor,
+      task ID or slug, artifact or state path, or clear task description.
+    pass_criteria: |
+      The agent derives candidate task identity before loading persisted state. It
+      resumes only a state whose task ID, slug, or recorded evidence matches that
+      candidate. A new conversation alone does not permit recovery of the only or
+      most recent state. When an explicit task has no matching state, the agent
+      starts that task at the requested eligible phase or Research without mutating
+      an unrelated state. An explicit but ambiguous resume request stops before
+      state creation or mutation, reports a pre-intake identity blocker, and asks
+      for the smallest identity clarification.
+    failure_modes:
+      - Resumes an unrelated state because it is the only available state.
+      - Lets ambient terminal history or state-file recency override an explicit task anchor.
+      - Reconciles or mutates a state whose identity conflicts with the requested task.
+      - Guesses among multiple unmatched states or mutates one before identity resolves.
+    priority: high
+    contract_ref: "RPI Agent explicit task-identity recovery contract"
+
   - expectation_id: implementation-amendments-and-divergences
     summary: Implementation differences are recorded as amendments and divergences.
     signal: Output distinguishes an `AM-xxx` plan amendment from a `DIV-xxx` changes
