@@ -1,0 +1,59 @@
+{
+  "schemaVersion": "1.1",
+  "surfaceId": "valid-surface",
+  "intentDigest": "sha256:bf341bec83bde1e7d8a10d69c44675f46081d08675ce3336723b50d6613d540a",
+  "assertedBy": "hve-core synthetic contract fixture",
+  "timestamp": "2026-07-21T09:15:00Z",
+  "assertions": [
+    {
+      "intentId": "INT-001",
+      "expectationId": "EXP-001",
+      "outcome": "passed",
+      "effectiveOutcome": "passed",
+      "overrideConflict": false,
+      "mode": "automatic",
+      "pointer": "form[name='Checkout']",
+      "info": null
+    },
+    {
+      "intentId": "INT-001",
+      "expectationId": "EXP-002",
+      "outcome": "cantTell",
+      "effectiveOutcome": "cantTell",
+      "overrideConflict": false,
+      "mode": "automatic",
+      "pointer": "form[name='Checkout'] button",
+      "info": "Indicator contrast could not be sampled against the gradient background."
+    },
+    {
+      "intentId": "INT-002",
+      "expectationId": "EXP-003",
+      "outcome": "passed",
+      "effectiveOutcome": "passed",
+      "overrideConflict": false,
+      "mode": "automatic",
+      "pointer": null,
+      "info": null
+    },
+    {
+      "intentId": "INT-002",
+      "expectationId": "EXP-004",
+      "outcome": "untested",
+      "effectiveOutcome": "untested",
+      "overrideConflict": false,
+      "mode": "undisclosed",
+      "pointer": null,
+      "info": null
+    },
+    {
+      "intentId": "INT-003",
+      "expectationId": "EXP-005",
+      "outcome": "inapplicable",
+      "effectiveOutcome": "passed",
+      "overrideConflict": false,
+      "mode": "automatic",
+      "pointer": null,
+      "info": "The runner could not reach the error state on this platform, so the authored override governs the effective outcome."
+    }
+  ]
+}

@@ -145,6 +145,14 @@ Structure the document with these sections:
 * Investigation Priorities: items tagged `assumed`, `unknown`, or `conflicting` requiring investigation during `rpi-research`. Prioritize blockers and high-impact unknowns.
 * DT Artifact Paths: list all `.copilot-tracking/dt/{project-slug}/` artifact paths so `rpi-research` can read original DT evidence directly.
 
+## Optional UX Structure Route
+
+The handoff above is the Solution Space exit. This route is separate, optional, and never automatic.
+
+When the practitioner separately asks to wireframe a validated concept, they may pass the completed handoff document as an explicit `source` to the `ux-artifacts` `sketch-structure` mode. That mode records what a surface contains and how it behaves; a picture is a later destination step it does not perform.
+
+Do not start this route as part of the exit, and do not treat it as a prerequisite for `rpi-research`. Methods 5 and 6 keep their existing low-fidelity constraints: concept sketches stay scrappy, prototypes stay deliberately rough, and neither becomes an interface specification here.
+
 ---
 
 Execute the Solution Space exit handoff for project "${input:project-slug}" by following the Required Steps.

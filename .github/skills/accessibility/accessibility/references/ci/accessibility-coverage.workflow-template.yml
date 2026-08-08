@@ -29,6 +29,7 @@ jobs:
       TARGET_SERVE_COMMAND: python -m http.server 3000 --directory dist
       TARGET_CONFIG: a11y-runtime.config.json
       TARGET_RESULTS: results.json
+      TARGET_INTENT_DIR: design-intent
     steps:
       - name: Checkout repository
         uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
@@ -87,11 +88,31 @@ jobs:
       - name: Run runtime accessibility harness
         working-directory: ${{ env.TARGET_WORKDIR }}
         run: |
+          set -euo pipefail
+          shopt -s nullglob
+          intent_records=("${{ env.TARGET_INTENT_DIR }}"/*.intent.yaml)
+          intent_active=false
+          if [ "${#intent_records[@]}" -gt 0 ]; then
+            intent_active=true
+          fi
+
           if [ ! -f "${{ env.TARGET_CONFIG }}" ]; then
+            if [ "$intent_active" = true ]; then
+              echo "::error::Design intent records exist, but ${{ env.TARGET_CONFIG }} is missing."
+              exit 1
+            fi
             echo "::warning::No a11y-runtime.config.json is committed yet; the gate activates once the target adopts it."
             exit 0
           fi
+
+          # A pre-existing results file must never satisfy the current run.
+          rm -f -- "${{ env.TARGET_RESULTS }}"
           uv run python -m runtime_a11y run-all --config "${{ env.TARGET_CONFIG }}" --out "${{ env.TARGET_RESULTS }}" --base-url "${{ env.TARGET_BASE_URL }}"
+
+          if [ "$intent_active" = true ] && [ ! -f "${{ env.TARGET_RESULTS }}" ]; then
+            echo "::error::Runtime harness completed without producing current results for authored design intent."
+            exit 1
+          fi
 
       - name: Enforce high-confidence probe failures
         if: always()
@@ -119,15 +140,12 @@ jobs:
           }
           failures = []
           for item in payload.get("results", []):
-              evidence = str(item.get("evidence", ""))
               if item.get("status") != "fail":
                   continue
-              for probe_id in high_confidence:
-                  if evidence.startswith(f"{probe_id} evaluated"):
-                      failures.append(
-                          f"{probe_id}: {item.get('criterionId')} ({item.get('surfaceId')}/{item.get('state')})"
-                      )
-                      break
+              if item.get("probeId") in high_confidence:
+                  failures.append(
+                      f"{item.get('probeId')}: {item.get('criterionId')} ({item.get('surfaceId')}/{item.get('state')})"
+                  )
 
           if failures:
               print("High-confidence probes reported fail cells:")
@@ -137,3 +155,48 @@ jobs:
 
           print("No high-confidence fail cells detected.")
           PY
+
+      - name: Verify declared design intent
+        if: always()
+        working-directory: ${{ env.TARGET_WORKDIR }}
+        run: |
+          set -euo pipefail
+          shopt -s nullglob
+          intent_records=("${{ env.TARGET_INTENT_DIR }}"/*.intent.yaml)
+          if [ "${#intent_records[@]}" -eq 0 ]; then
+            echo "::notice::No authored design-intent records are committed; intent verification is inactive."
+            exit 0
+          fi
+          if [ ! -f "${{ env.TARGET_CONFIG }}" ]; then
+            echo "::error::Design intent records exist, but ${{ env.TARGET_CONFIG }} is missing."
+            exit 1
+          fi
+          if [ ! -f "${{ env.TARGET_RESULTS }}" ]; then
+            echo "::error::Design intent records exist, but no current runtime results file was produced."
+            exit 1
+          fi
+          status=0
+          for record in "${intent_records[@]}"; do
+            echo "Verifying $record"
+            # Exit 3 means a blocking expectation failed: real intent drift.
+            # Exit 4 means a blocking expectation was never evaluated: missing
+            # coverage, which would otherwise pass silently. Both fail the job
+            # and are reported distinctly. Any other non-zero exit is an
+            # adapter error and stops the job.
+            uv run python -m runtime_a11y verify-intent \
+              --record "$record" \
+              --config "${{ env.TARGET_CONFIG }}" \
+              --results "${{ env.TARGET_RESULTS }}" || {
+              code=$?
+              if [ "$code" -eq 3 ]; then
+                echo "::error::Design intent drift in $record"
+                status=1
+              elif [ "$code" -eq 4 ]; then
+                echo "::error::Blocking design intent expectation never evaluated in $record"
+                status=1
+              else
+                exit "$code"
+              fi
+            }
+          done
+          exit "$status"
