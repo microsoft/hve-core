@@ -69,6 +69,26 @@ BeforeAll {
         }
         Add-PluginFixtureCatalog -RepoRoot $Root -Entries $entries -Version '9.9.9' `
             -SkipDocuments:$SkipDocumentationRoot | Out-Null
+
+        # The shared catalog fixture writes a minimal package document because the
+        # generators under test treat the artifact heading as a signal. Only the
+        # repository contract requires it, so conforming documents are completed
+        # here instead of in the fixture every other plugin suite shares.
+        if (-not $SkipDocumentationRoot) {
+            foreach ($entry in $entries) {
+                Add-PluginFixtureFile -RepoRoot $Root -RelativePath "docs/plugins/$($entry['name']).md" -Content (@(
+                        '---'
+                        "title: Contoso $($entry['name'])"
+                        "description: $($entry['description'])"
+                        '---'
+                        ''
+                        "Durable prose for $($entry['name'])."
+                        ''
+                        '## Included Artifacts'
+                        ''
+                    ) -join "`n") | Out-Null
+            }
+        }
         return $Root
     }
 
@@ -431,6 +451,41 @@ Describe 'Test-MarketplaceRepositoryContract' -Tag 'Unit' {
             $run = Get-ValidationReport -Root $script:contractRepo
             (Get-ReportError -Report $run.Report) -join ' ' |
                 Should -Match "repository contract: package 'rpi' documentation has no frontmatter"
+        }
+    }
+
+    Context 'when the package document artifact heading is not exactly one' {
+        BeforeEach {
+            New-ValidatorFixture -Root $script:contractRepo | Out-Null
+        }
+
+        It 'Reports <Label>' -ForEach @(
+            @{ Label = 'a document carrying no heading'; Body = 'Durable prose.'; Found = 0 }
+            @{ Label = 'a document carrying two headings'; Body = "## Included Artifacts`n`n## Included Artifacts"; Found = 2 }
+            @{ Label = 'a third-level heading'; Body = '### Included Artifacts'; Found = 0 }
+            @{ Label = 'a heading with trailing punctuation'; Body = '## Included Artifacts:'; Found = 0 }
+        ) {
+            # The last two are the cases this rule exists for: they read as a
+            # heading to an author but match no consumer, so before this rule they
+            # degraded silently rather than failing validation.
+            Add-PluginFixtureFile -RepoRoot $script:contractRepo -RelativePath 'docs/plugins/rpi.md' `
+                -Content "---`ntitle: Contoso rpi`ndescription: RPI workflow package`n---`n`n$Body`n" | Out-Null
+
+            $run = Get-ValidationReport -Root $script:contractRepo
+            $run.Outcome.Success | Should -BeFalse
+            (Get-ReportError -Report $run.Report) -join ' ' |
+                Should -Match "package 'rpi' documentation must carry exactly one '## Included Artifacts' heading, found $Found"
+        }
+
+        It 'Accepts a heading form the shared pattern already allows' {
+            # A validator stricter than the generators consuming the heading would
+            # reject documents those generators handle correctly, so this pins the
+            # rule to the shared pattern rather than to a literal string.
+            Add-PluginFixtureFile -RepoRoot $script:contractRepo -RelativePath 'docs/plugins/rpi.md' `
+                -Content "---`ntitle: Contoso rpi`ndescription: RPI workflow package`n---`n`nDurable prose.`n`n##  Included artifacts`n" | Out-Null
+
+            $run = Get-ValidationReport -Root $script:contractRepo
+            $run.Outcome.Success | Should -BeTrue
         }
     }
 

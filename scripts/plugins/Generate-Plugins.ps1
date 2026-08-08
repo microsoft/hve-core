@@ -245,7 +245,7 @@ function Update-PluginDocumentationSource {
     }
 
     $intro = $parsed.Intro.TrimEnd()
-    if ($intro -notmatch '(?m)^## Included Artifacts\s*$') {
+    if ($intro -notmatch (Get-PackageDocArtifactHeadingPattern)) {
         $intro = "$intro`n`n## Included Artifacts"
     }
 

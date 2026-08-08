@@ -147,6 +147,20 @@ Describe 'Prepare-Extension channel generation' -Tag 'Unit' {
             $identities['package.sample.json'] | Should -BeExactly 'hve-sample'
             $identities['package.labs.json'] | Should -BeExactly 'hve-labs'
         }
+
+        It 'Applies the catalog description to each generated manifest' {
+            # The catalog is the sole description authority, so the package template
+            # placeholder must never survive generation and descriptions must not be
+            # crossed between packages. Each fixture entry carries a distinct value.
+            $descriptions = @{}
+            foreach ($name in @('package.json', 'package.hve-core-all.json', 'package.sample.json', 'package.labs.json')) {
+                $descriptions[$name] = [string]((Get-Content -LiteralPath (Join-Path $script:Fixture.ExtensionDirectory $name) -Raw -Encoding utf8 | ConvertFrom-Json).description)
+            }
+            $descriptions['package.json'] | Should -BeExactly 'Core fixture package'
+            $descriptions['package.hve-core-all.json'] | Should -BeExactly 'Full fixture bundle'
+            $descriptions['package.sample.json'] | Should -BeExactly 'Sample fixture package'
+            $descriptions['package.labs.json'] | Should -BeExactly 'Labs fixture package'
+        }
     }
 
     Context 'when transitioning between channels' {
@@ -265,6 +279,43 @@ Describe 'Prepare-Extension README generation' -Tag 'Unit' {
         $coreReadme = Get-Content -LiteralPath (Join-Path $script:ReadmeFixture.ExtensionDirectory 'README.md') -Raw -Encoding utf8
         $headings = @([regex]::Matches($coreReadme, '(?m)^### (.+)$') | ForEach-Object { $_.Groups[1].Value })
         $headings | Should -Be @('Chat Agents', 'Prompts', 'Instructions', 'Skills')
+    }
+}
+
+Describe 'Prepare-Extension durable document body' -Tag 'Unit' {
+    BeforeAll {
+        # The heading placeholder is substituted per case so every supported
+        # heading form is exercised against the same surrounding document.
+        $script:BodyTemplate = @(
+            '---'
+            'title: Probe'
+            'description: Probe'
+            '---'
+            ''
+            'Durable intro prose.'
+            ''
+            '{0}'
+            ''
+            '| Name | Description |'
+            '|------|-------------|'
+            '| **stale** | Durable table that must never reach the extension README |'
+        ) -join "`n"
+    }
+
+    It 'Truncates the body at <Label>' -ForEach @(
+        @{ Label = 'the canonical heading'; Heading = '## Included Artifacts' }
+        @{ Label = 'a lowercase heading'; Heading = '## Included artifacts' }
+        @{ Label = 'a multi-space heading'; Heading = '##  Included Artifacts' }
+    ) {
+        $documentPath = Join-Path $TestDrive "body-$([guid]::NewGuid().ToString('N')).md"
+        Set-Content -LiteralPath $documentPath -Value ($script:BodyTemplate -f $Heading) -Encoding utf8
+        Get-PluginDocumentBody -Path $documentPath | Should -BeExactly 'Durable intro prose.'
+    }
+
+    It 'Returns the whole body when the document carries no heading' {
+        $documentPath = Join-Path $TestDrive "body-none-$([guid]::NewGuid().ToString('N')).md"
+        Set-Content -LiteralPath $documentPath -Value "---`ntitle: Probe`n---`n`nOnly prose." -Encoding utf8
+        Get-PluginDocumentBody -Path $documentPath | Should -BeExactly 'Only prose.'
     }
 }
 

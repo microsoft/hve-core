@@ -237,6 +237,25 @@ Describe 'Update-PluginDocumentationSource' -Tag 'Unit' {
         }
     }
 
+    Context 'when the intro carries a case-variant heading' {
+        It 'Recognizes the existing heading instead of adding a second one' {
+            Add-PluginFixtureFile -RepoRoot $script:documentRepo -RelativePath 'docs/plugins/rpi.md' -Content (@(
+                    'Durable prose.'
+                    ''
+                    '## Included artifacts'
+                    ''
+                    '<!-- BEGIN AUTO-GENERATED ARTIFACTS -->'
+                    '<!-- END AUTO-GENERATED ARTIFACTS -->'
+                    ''
+                ) -join "`n") | Out-Null
+
+            Update-PluginDocumentationSource -DocumentPath $script:documentPath -Items $script:documentItems -RepoRoot $script:documentRepo |
+                Should -BeTrue
+            $updated = Get-Content -LiteralPath $script:documentPath -Raw -Encoding utf8
+            @([regex]::Matches($updated, (Get-PackageDocArtifactHeadingPattern))).Count | Should -Be 1
+        }
+    }
+
     Context 'when the document cannot supply a generated block' {
         It 'Returns false for a missing document' {
             Update-PluginDocumentationSource -DocumentPath (Join-Path $script:documentRepo 'docs/plugins/absent.md') `

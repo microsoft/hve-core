@@ -33,6 +33,7 @@ $ErrorActionPreference = 'Stop'
 Import-Module -Name PowerShell-Yaml -RequiredVersion '0.4.7' -ErrorAction Stop
 Import-Module (Join-Path $PSScriptRoot '../lib/Modules/CIHelpers.psm1') -Force
 Import-Module (Join-Path $PSScriptRoot '../lib/Modules/MarketplaceHelpers.psm1') -Force
+Import-Module (Join-Path $PSScriptRoot '../lib/Modules/ArtifactHelpers.psm1') -Force
 
 #region Validation Helpers
 
@@ -292,6 +293,17 @@ function Test-MarketplaceRepositoryContract {
                 }
                 else {
                     $contractErrors += "package '$name' documentation has no frontmatter: $documentation"
+                }
+
+                # The heading is the anchor every generator agrees on: it bounds the
+                # durable prose the extension README reuses and marks where the
+                # generated artifact table begins. A heading form outside the shared
+                # pattern matches nowhere, so without this rule it fails silently -
+                # the durable table leaks into the extension README and the plugin
+                # generator appends a second heading beneath the first.
+                $headingCount = @([regex]::Matches($content, (Get-PackageDocArtifactHeadingPattern))).Count
+                if ($headingCount -ne 1) {
+                    $contractErrors += "package '$name' documentation must carry exactly one '## Included Artifacts' heading, found ${headingCount}: $documentation"
                 }
             }
         }

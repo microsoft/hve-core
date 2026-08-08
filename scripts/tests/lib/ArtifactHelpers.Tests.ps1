@@ -262,6 +262,43 @@ Describe 'Set-ContentIfChanged' -Tag 'Unit' {
     }
 }
 
+Describe 'Get-PackageDocArtifactHeadingPattern' -Tag 'Unit' {
+    BeforeAll {
+        $script:HeadingPattern = Get-PackageDocArtifactHeadingPattern
+    }
+
+    It 'Carries its own case-insensitivity flag' {
+        # Consumers evaluate this pattern through both the match operator and
+        # [regex]::Match. The operator ignores case by default and the API does
+        # not, so the flag must travel with the pattern rather than the caller.
+        $script:HeadingPattern | Should -Match '\(\?[a-z]*i[a-z]*\)'
+    }
+
+    It 'Matches <Label> through the case-sensitive regex API' -ForEach @(
+        @{ Label = 'the canonical heading'; Line = '## Included Artifacts' }
+        @{ Label = 'a lowercase variant'; Line = '## Included artifacts' }
+        @{ Label = 'an uppercase variant'; Line = '## INCLUDED ARTIFACTS' }
+        @{ Label = 'a multi-space variant'; Line = '##  Included Artifacts' }
+    ) {
+        [regex]::Match("Intro`n$Line`nRest", $script:HeadingPattern).Success | Should -BeTrue
+    }
+
+    It 'Rejects <Label> through the case-sensitive regex API' -ForEach @(
+        @{ Label = 'an inline mention'; Line = 'see ## Included Artifacts below' }
+        @{ Label = 'a third-level heading'; Line = '### Included Artifacts' }
+        @{ Label = 'a heading with trailing punctuation'; Line = '## Included Artifacts:' }
+    ) {
+        [regex]::Match("Intro`n$Line`nRest", $script:HeadingPattern).Success | Should -BeFalse
+    }
+
+    It 'Reports an offset a caller can truncate at' {
+        $document = "Intro prose.`n`n## Included artifacts`n`nstale table"
+        $headingMatch = [regex]::Match($document, $script:HeadingPattern)
+        $headingMatch.Success | Should -BeTrue
+        $document.Substring(0, $headingMatch.Index).Trim() | Should -BeExactly 'Intro prose.'
+    }
+}
+
 Describe 'Split-PackageDocByMarkers' -Tag 'Unit' {
     Context 'when the module exports its markers' {
         BeforeAll {

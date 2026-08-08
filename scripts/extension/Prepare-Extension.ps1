@@ -175,9 +175,9 @@ function Get-PluginDocumentBody {
     if (-not (Test-Path -LiteralPath $Path -PathType Leaf)) { return '' }
     $content = Get-Content -LiteralPath $Path -Raw -Encoding utf8
     $content = $content -replace '(?s)^---\s*\r?\n.*?\r?\n---\s*\r?\n', ''
-    $includedIndex = $content.IndexOf('## Included Artifacts', [System.StringComparison]::Ordinal)
-    if ($includedIndex -ge 0) {
-        $content = $content.Substring(0, $includedIndex)
+    $headingMatch = [regex]::Match($content, (Get-PackageDocArtifactHeadingPattern))
+    if ($headingMatch.Success) {
+        $content = $content.Substring(0, $headingMatch.Index)
     }
     return $content.Trim()
 }

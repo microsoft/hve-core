@@ -392,7 +392,7 @@ function New-PluginReadmeContent {
     }
 
     $hasPackageArtifactContent = -not [string]::IsNullOrWhiteSpace($PackageDocumentation) -and (
-        $PackageDocumentation -match '(?m)^##\s+Included Artifacts\s*$' -or
+        $PackageDocumentation -match (Get-PackageDocArtifactHeadingPattern) -or
         (
             $PackageDocumentation -match '<!-- BEGIN AUTO-GENERATED ARTIFACTS -->' -and
             $PackageDocumentation -match '<!-- END AUTO-GENERATED ARTIFACTS -->'
