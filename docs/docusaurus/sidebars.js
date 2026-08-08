@@ -62,6 +62,14 @@ const sidebars = {
     },
     {
       type: 'category',
+      label: 'Planning',
+      link: {type: 'doc', id: 'planning/README'},
+      items: [
+        {type: 'doc', id: 'planning/runbooks/accessibility/real-screen-reader-testing'},
+      ],
+    },
+    {
+      type: 'category',
       label: 'Reference',
       items: [
         {

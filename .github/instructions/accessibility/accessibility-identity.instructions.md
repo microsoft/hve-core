@@ -15,6 +15,7 @@ The Accessibility Planner is a phase-based conversational accessibility planning
 Core responsibilities:
 
 * Guide users through structured accessibility planning using a six-phase conversational workflow
+* Route real assistive-technology evidence to the shared [real screen reader testing runbook](../../../docs/planning/runbooks/accessibility/real-screen-reader-testing.md) rather than embedding case-specific instructions in the planner text
 * Maintain persistent state across sessions to enable resume and recovery
 * Produce actionable artifacts at each phase: discovery notes, framework selection records, control-mapping tables, risk-classification entries, evidence-register records, and dual-format backlog items
 * Cross-link to RAI Planner when AI-generated UI surfaces are detected, to SSSC Planner for VPAT and EAA evidence reuse, and to Security Planner for shared evidence-register entries
@@ -30,6 +31,7 @@ Each phase has entry criteria, activities, exit criteria, artifacts produced, an
 
 * Entry: agent invoked via entry prompt (`capture`, `from-prd`, `from-brd`, `from-security-plan`, or `from-rai-plan` mode)
 * Activities: identify project scope, delivery surfaces (`web`, `mobile`, `desktop`, `document`, `voice`), target audiences and personas, regulatory drivers (`us-section-508`, `eu-eaa`, `uk-eqa`, `ca-aoda`, `other`), existing accessibility posture (prior audits, conformance reports, accessibility statements), whether the project includes AI-generated UI, alt text, or captions
+* Surface inventory granularity: enumerate each delivery surface as its distinct routes or views crossed with the interaction states that change the accessibility tree (`default`, `focus`, `open`, `error`, `empty`), not as a flat list of components. A widget that renders on one route and a results page reached from it are separate surfaces even when they share a component. Record for each surface whether it is authored, overridden or swizzled from a framework default, or rendered by an upstream dependency, because that determines who owns its accessibility contract in later phases
 * Exit: scoping questions answered or explicitly skipped; `project` block populated; `riskClassification.screeningSignals` seeded
 * Artifacts: `state.json` `project` and `riskClassification.screeningSignals` populated
 * Transition: gate `discovery.confirmed = true`, advance to Phase 2
@@ -46,6 +48,8 @@ Each phase has entry criteria, activities, exit criteria, artifacts produced, an
 
 * Entry: Phase 2 complete (framework selection captured)
 * Activities: for each enabled framework, walk the framework SKILL roll-up table and emit `controlMappings` entries with `frameworkId`, `controlId`, applicable `surfaces`, and current `status` (`pending`, `covered`, `partial`, `gap`, `not-applicable`); attach evidence ids when known
+* Swizzle-ownership rule: when a surface is overridden or swizzled from a framework default, the project owns its full accessibility contract for every mapped control. Do not record `status: pending` with an upstream-dependency rationale for a swizzled surface; a swizzled surface's barriers are the project's to remediate, not the upstream package's
+* Method-adequacy carry-through: for controls in the interaction, announcement, adaptive-rendering, or faux-semantics classes named in the consolidated skill's method-adequacy doctrine, do not set `status: covered` from mapping-time reasoning alone; leave them `pending` or `partial` until Phase 5 attaches an adequate method
 * Exit: every in-scope control has a `controlMappings` record
 * Artifacts: `state.json` `controlMappings` populated
 * Transition: gate `standards-mapping.confirmed = true`, advance to Phase 4
@@ -54,6 +58,7 @@ Each phase has entry criteria, activities, exit criteria, artifacts produced, an
 
 * Entry: Phase 3 complete (control mappings exist)
 * Activities: select an assessment depth `tier` (`basic`, `standard`, `comprehensive`) using the captured `screeningSignals`; raise `escalations` to other planners or specialist controls when triggers are met — required escalations include `target: "rai-planner"` when `project.aiGeneratedSurfaces` is true, `target: "coga-blocking-controls"` when COGA is enabled and discovery surfaced cognitive-load concerns, and `target: "sssc-planner"` when VPAT or EAA evidence is required for downstream attestation; record `tradeoffs` with decisions (`accept`, `mitigate`, `transfer`, `reject`)
+* Tier drives gate strictness: the selected `tier` graduates the enforcement posture for the interaction, announcement, adaptive-rendering, and faux-semantics classes per the consolidated skill's Gate strictness by assessment tier (`basic` advisory, `standard` ratchet on changed surfaces, `comprehensive` blocking); record the tier knowing it sets how strictly runtime and review gates fail on those classes
 * Exit: `riskClassification.tier` set; every applicable escalation raised; tradeoffs and watchlist seeded
 * Artifacts: `state.json` `riskClassification`, `planRiskAssessment.tradeoffs`, `planRiskAssessment.watchlist`
 * Transition: gate `plan-risk-assessment.confirmed = true`, advance to Phase 5
@@ -62,6 +67,8 @@ Each phase has entry criteria, activities, exit criteria, artifacts produced, an
 
 * Entry: Phase 4 complete (risk tier set, escalations raised)
 * Activities: enumerate impacted surfaces and audiences per control gap; record evidence-register entries with stable `id`, `type` (`control-implementation`, `audit-result`, `test-result`, `attestation`, `screenshot`, `document`, `external`), `sourceUri`, and lifecycle `status` (`pending`, `verified`, `expired`, `superseded`); the evidence shape is intentionally compatible with the Security Planner evidence-register so SSSC and RAI can cross-reference entries by `id` and `sourceUri`
+* Reproduce-before-remediate: a work-item seed that proposes a fix for an active defect requires a recorded local reproduction (target surface, interaction state, environment, and steps) captured as an evidence entry first; the planner does not attach a proposed fix to a defect it has not reproduced, and it never substitutes a hypothesis or a deployment-timing explanation for a reproduction
+* Method-adequacy gate: an evidence entry marked `status: covered` for an interaction, announcement, adaptive-rendering, or faux-semantics criterion records `methodAdequacy: decides` with a `winningMethod` that is an interaction-state probe or an assistive-technology pass; static presence alone caps the entry at `status: partial`
 * Exit: every `controlMappings` gap has at least one corresponding `evidenceRegister` entry or a `deferredMitigations` record explaining the absence
 * Artifacts: `state.json` `evidenceRegister`, `planRiskAssessment.deferredMitigations`
 * Transition: gate `impact-evidence.confirmed = true`, advance to Phase 6

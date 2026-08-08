@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: MIT
 import { test, expect } from '@playwright/test';
 import AxeBuilder from '@axe-core/playwright';
+import { waitForHydration } from './_helpers/a11yInvariants';
 
 const WCAG_TAGS = ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'];
 
@@ -14,6 +15,7 @@ test.describe('Color mode toggle', () => {
     // Exercise the toggle on a doc page: keyboard activation reliably flips the
     // theme here, whereas the homepage navbar instance does not respond to it.
     await page.goto('/hve-core/docs/getting-started/');
+    await waitForHydration(page);
 
     const toggle = page.getByRole('button', {
       name: /switch between dark and light mode/i,
@@ -38,6 +40,7 @@ test.describe('Color mode toggle', () => {
     await page.goto('/hve-core/docs/getting-started/', {
       waitUntil: 'domcontentloaded',
     });
+    await waitForHydration(page);
     await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark');
 
     const results = await new AxeBuilder({ page }).withTags(WCAG_TAGS).analyze();

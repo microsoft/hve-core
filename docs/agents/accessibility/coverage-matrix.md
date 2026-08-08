@@ -53,7 +53,7 @@ Each cell moves through a lifecycle of not-started, blocked, partial, fail, pass
 
 ## Method Adequacy Semantics
 
-A cell is counted as covered only when the winning evidence method is allowed by the criterion's `adequateMethods` list or by the probe-criteria-map for that criterion. A pass from an inadequate method does not count as covered.
+A cell is counted as covered only when the winning evidence method is allowed by the criterion's `adequateMethods` list in the reviewed criteria catalog. A pass from an inadequate method does not count as covered. The probe-criteria-map records which criteria a probe reports on; it does not authorize coverage.
 
 The engine computes adequate coverage by taking the number of applicable cells that are covered through an adequate method and dividing that total by the number of applicable cells in the scope, then expressing the result as a percentage. This is reported for each framework and for the overall matrix.
 

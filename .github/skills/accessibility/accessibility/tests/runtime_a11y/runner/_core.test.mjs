@@ -12,9 +12,12 @@ import {
   buildProbeResults,
   buildResultsFromEntry,
   computeTrapFromSequence,
+  findNamelessControls,
+  liveRegionStatus,
   loadProbeCriteriaMap,
   redactUrl,
   tagToCriterion,
+  virtualSrNameRoleStatus,
 } from '../../../scripts/runtime_a11y/runner/_core.mjs';
 
 test('tagToCriterion maps wcag tags to dotted criteria', () => {
@@ -31,6 +34,51 @@ test('redactUrl removes query strings and secret params', () => {
   assert.equal(redactUrl('https://x.test/a?token=abc'), 'https://x.test/a?[redacted]');
   assert.equal(redactUrl(''), '');
   assert.match(redactUrl('not-a-url?token=secret'), /\[redacted\]/);
+});
+
+test('findNamelessControls flags interactive roles with no accessible name', () => {
+  const phrases = [
+    'document',
+    'heading, Title, level 1',
+    'button, Clear search',
+    'button',
+    'link, Docs',
+    'link',
+    'end of button, Clear search',
+    'end of button',
+    'table',
+    'combobox',
+    'columnheader, Name',
+  ];
+
+  const nameless = findNamelessControls(phrases);
+
+  assert.deepEqual(nameless, ['button', 'link', 'combobox']);
+});
+
+test('findNamelessControls returns empty for named controls and non-lists', () => {
+  assert.deepEqual(findNamelessControls(['button, Save', 'heading, X, level 2']), []);
+  assert.deepEqual(findNamelessControls([]), []);
+  assert.deepEqual(findNamelessControls(null), []);
+  assert.deepEqual(findNamelessControls([42, 'button']), ['button']);
+});
+
+test('virtualSrNameRoleStatus maps snapshots to verdicts', () => {
+  assert.equal(virtualSrNameRoleStatus({ ran: true, namelessCount: 0 }), 'pass');
+  assert.equal(virtualSrNameRoleStatus({ ran: true, namelessCount: 2 }), 'fail');
+  assert.equal(virtualSrNameRoleStatus({ ran: false }), 'candidate');
+  assert.equal(virtualSrNameRoleStatus(null), 'candidate');
+  assert.equal(virtualSrNameRoleStatus({ ran: true }), 'pass');
+});
+
+test('liveRegionStatus applies the method-adequacy rule per state', () => {
+  // Non-expecting states never fail on a missing status message.
+  assert.equal(liveRegionStatus({ regionsNow: 0, fired: false }, 'default'), 'pass');
+  // Expecting states: fired -> pass, silent -> partial, absent -> fail.
+  assert.equal(liveRegionStatus({ regionsNow: 1, fired: true }, 'open'), 'pass');
+  assert.equal(liveRegionStatus({ regionsNow: 1, fired: false }, 'open'), 'partial');
+  assert.equal(liveRegionStatus({ regionsNow: 0, fired: false }, 'error'), 'fail');
+  assert.equal(liveRegionStatus(null, 'open'), 'fail');
 });
 
 const entry = {
