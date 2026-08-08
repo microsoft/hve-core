@@ -2,18 +2,17 @@
 title: Baseline Equivalence Suite
 description: 'Pairs identical probes across baseline and customized environments to assert only documented divergences appear'
 author: HVE Core Team
-ms.date: 2026-07-23
+ms.date: 2026-08-07
 ---
 
 ## Purpose
 
-This suite proves that the hve-core customization layer does not alter underlying GitHub Copilot
-model behavior beyond documented divergences. The agent layer is the independent variable:
-identical stimuli run twice against the same GHCP model, once against an empty baseline environment
-and once against an environment that materializes a target agent (frontmatter, subagents, skills,
-and `copilot-instructions.md`) into a fresh temp workdir. The `vally compare` comparison-mode
-judge then asks whether the customized response differs from the baseline only in ways the
-curated allow-list permits.
+This suite measures whether invoking an hve-core agent changes underlying GitHub Copilot model
+behavior beyond documented divergences. The agent layer is the independent variable: identical
+questions run against the same model, once as a plain baseline prompt and once after a turn-0
+`Launch .github/agents/hve-core/rpi-agent.agent.md` directive. This is the established invocation
+pattern used by the repository's agent-conformance suites. The agent file remains staged in the
+trial workspace so the launch turn can read it.
 
 The suite answers a single question per stimulus: did customization change the model's answer, or did it change only the framing the customization explicitly requires?
 
@@ -28,64 +27,88 @@ evals/baseline-equivalence/
 ├── customized/
 │   ├── eval.yaml       # executable spec for the materialized agent run (adds customized_required / customized_disallow)
 │   └── variant.yaml    # RPI Agent variant metadata
-├── surface-signatures/
-│   └── rpi-agent.yml   # authoritative RPI Agent surface signature
+├── compare.eval.yml    # comparison-judging contract: one rubric per canonical stimulus
 ├── stimuli.yml         # 40 prompts across 8 subcategories at 5 per subcategory
-└── compare.eval.yml    # A/B comparison spec judged by `vally compare`
 ```
 
-The baseline and customized specs are self-contained vally `eval` documents. The PowerShell driver invokes each spec in turn with `vally eval --eval-spec` and then joins the two run directories with `vally compare --eval-spec compare.eval.yml --baseline <baseline-run-dir> --treatment <customized-run-dir> --output <path>.jsonl`.
+The baseline and customized specs are self-contained vally `eval` documents. The PowerShell driver invokes each spec in turn with `vally eval --eval-spec` and then joins the two run directories with `vally compare --eval-spec evals/baseline-equivalence/compare.eval.yml --judge-model <model> --baseline <baseline-run-dir> --treatment <customized-run-dir> --output <path>.jsonl`.
 
-Comparison stimuli with no explicit rubric override use Vally's embedded default comparison rubric. Add an override in [compare.eval.yml](compare.eval.yml) only when the stimulus needs narrower evaluation criteria.
+Comparison judging reads `compare.eval.yml`, supplied explicitly through `--eval-spec`. Without it, `vally compare` falls back to the rubric
+embedded in the baseline trajectory and then to a general-purpose preference rubric that asks which response is better. Preference judging cannot
+measure equivalence: two runs of one configuration still differ in wording, so the judge keeps picking winners and the tie ratio reports judge
+tie-breaking rather than behavioral sameness. Each entry in the contract states the behavioral contract instead: `equivalent` stimuli instruct a tie
+when both variants satisfy it, and `documented-divergence` stimuli state the expected direction and an explicit tie condition. The judge model is
+pinned separately through the driver's `-ComparisonJudgeModel` parameter, so both the rubric and the judge are visible in the command.
+
+The contract is validated deterministically before any model-backed run. A missing, duplicated, unknown, or policy-mismatched entry fails `npm run ci:eval:lint:schema` and the Pester sync suite rather than silently changing what the tie ratio measures.
 
 ## How to Run
 
 The PowerShell driver at [scripts/evals/Invoke-BaselineEquivalence.ps1](../../scripts/evals/Invoke-BaselineEquivalence.ps1) is the single entry point. Invoke it through the npm wrapper:
 
 ```bash
-# PR tier (default): single primary model, advisory verdict, always exits 0
-npm run ci:eval:equivalence -- -Agent rpi-agent -Tier pr
+# devloop (default): single primary model, advisory verdict, always exits 0
+npm run ci:eval:equivalence -- -Agent rpi-agent -Tier devloop
 
-# Nightly tier: three-model sweep, authoritative verdict, exits non-zero on fail
-npm run ci:eval:equivalence -- -Agent rpi-agent -Tier nightly
+# calibration: two-model sweep, report-only comparison, authoritative deterministic and structural evidence
+npm run ci:eval:equivalence -- -Agent rpi-agent -Tier calibration
 
-# Narrow the stimulus set during smoke testing
-npm run ci:eval:equivalence -- -Agent rpi-agent -Tier pr -StimulusFilter '^factual-'
+# ci: two-model sweep with the same current evidence posture; reserved for a later calibrated policy
+npm run ci:eval:equivalence -- -Agent rpi-agent -Tier ci
 
 # Dry run: print planned vally commands and emit a placeholder summary without SDK calls
 npm run ci:eval:equivalence -- -Agent rpi-agent -WhatIf
 ```
 
-The driver writes a machine-readable summary to `logs/baseline-equivalence-summary.json` and per-environment trajectories under `evals/results/`. The trajectory directories are gitignored.
+The former `pr` and `nightly` tier names are rejected with a migration message rather than aliased, because they carried different exit policies and a silent alias would let a stale caller select the wrong one.
+
+`rpi-agent` is the only equivalence subject. The corpus backlinks nine agents, but its customization-boundary stimuli and guards encode the RPI
+agent's contract, so another agent would fail them for reasons unrelated to equivalence. Those backlinks identify related artifacts for indexing;
+they do not select subjects. The corpus is also excluded from generic tag-filtered dispatch, which previously produced partial and zero-stimulus
+runs that reported success without measuring anything. Extending coverage to the remaining agents requires per-subject conditional guards and is
+deferred until one clean run under the restored comparison contract exists.
+
+The driver writes a machine-readable summary to `logs/baseline-equivalence-summary.json` and per-environment trajectories under `evals/results/`. The trajectory directories are gitignored. Both executable specs run three trials per stimulus. Three is a provisional inner-loop budget, not a calibrated power claim; the first valid post-launch run records dispersion and interval width before any future authoritative comparative policy is considered.
 
 ### Driver output contract
 
-Each `vally compare --eval-spec compare.eval.yml --baseline <baseline-run-dir> --treatment <customized-run-dir> --output <path>.jsonl` invocation writes one or more typed `type: "comparison"` records to `logs/vally-compare-<model>-<runId>.jsonl` (a console `.log` capture of the same invocation is kept alongside for troubleshooting, at the paths listed in `compareLogs`).
+Each `vally compare --eval-spec evals/baseline-equivalence/compare.eval.yml --judge-model <model> --baseline <baseline-run-dir> --treatment <customized-run-dir> --output <path>.jsonl` invocation writes one or more typed `type: "comparison"` records to `logs/vally-compare-<model>-<runId>.jsonl` (a console `.log` capture of the same invocation is kept alongside for troubleshooting, at the paths listed in `compareLogs`).
 `Measure-CompareTrials` in [scripts/evals/lib/EquivalenceParsing.psm1](../../scripts/evals/lib/EquivalenceParsing.psm1) reads that JSONL, tallies each non-errored trial's `winner` (`baseline` / `treatment` / `tie`), and carries forward the record's `summary` statistics (signed mean score, 95% confidence interval, win rate).
-The driver aggregates one JSONL per model into a single JSON summary; the summary is the contract every downstream consumer (PR bot, nightly dashboard, future change-detection workflow) reads.
-The compare invocation deliberately omits `--fail-on-regression` so `Get-VerdictFromAggregate` remains the single equivalence authority instead of double-counting the same regression signal.
+The driver aggregates one JSONL per model into a single JSON summary; the summary is the contract every downstream consumer reads. It carries `schemaVersion: "2.1.0"`, and consumers reject an unsupported major version rather than reading absent fields as zeros.
+The compare invocation deliberately omits `--fail-on-regression`. Comparison is report-only calibration evidence until a later decision defines a degradation margin, confidence level, inequality, and missing-bound behavior from valid post-launch data.
 
-| Field                | Type   | Meaning                                                                                                                                                                      |
-|----------------------|--------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `agent`              | string | Agent slug under test (matches `-Agent`)                                                                                                                                     |
-| `tier`               | string | `pr` (advisory, exit 0) or `nightly` (authoritative, exit 1 on fail)                                                                                                         |
-| `model`              | string | Primary model for the run: PR tier resolves `-Model` override, then frontmatter `model:` hint, then the cheap default (`gpt-5.6-luna`); nightly runs its fixed model array   |
-| `stimulusFilter`     | string | Regex applied to stimulus names; empty when the full corpus ran                                                                                                              |
-| `runs`               | int    | Total non-errored comparison trials parsed across all `--output` JSONL files                                                                                                 |
-| `ties`               | int    | Trials with `winner: "tie"`; neither environment showed a clear preference                                                                                                   |
-| `aWins`              | int    | Trials with `winner: "baseline"`; the customization underperformed                                                                                                           |
-| `bWins`              | int    | Trials with `winner: "treatment"`; the customization outperformed                                                                                                            |
-| `meanScore`          | number | Unweighted average, across records and models, of signed treatment-relative `summary.meanScore` values (positive favors the customization); reporting only                   |
-| `ciLow`              | number | Conservative maximum lower bound of `summary.ciLow` across records and models                                                                                                |
-| `ciHigh`             | number | Conservative minimum upper bound of `summary.ciHigh` across records and models                                                                                               |
-| `winRate`            | number | Unweighted average, across records and models, of `summary.winRate` values; reporting only                                                                                   |
-| `invariantFailures`  | int    | Spec-level invariant violations plus a baseline `vally eval` nonzero-exit fallback when no invariant count can be read                                                       |
-| `divergenceFailures` | int    | Customized `vally eval` nonzero exits and one signal per compare run that exits nonzero, emits no parseable comparison records, or carries trials without summary statistics |
-| `verdict`            | string | Aggregated verdict; see [Pass and Fail Interpretation](#pass-and-fail-interpretation)                                                                                        |
-| `variants`           | list   | Per-model variant metadata (model id, baseline run directory, customized run directory)                                                                                      |
-| `compareLogs`        | list   | Absolute paths to every captured `vally compare` console log; the sibling `--output` JSONL lives at `logs/vally-compare-<model>-<runId>.jsonl`                               |
+| Field                                                                | Type         | Meaning                                                                                                                                                                                         |
+|----------------------------------------------------------------------|--------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `schemaVersion`                                                      | string       | Reporting contract version. `2.1.0` is the current contract; consumers fail loudly on an unsupported major                                                                                      |
+| `agent`                                                              | string       | Agent slug under test (matches `-Agent`)                                                                                                                                                        |
+| `tier`                                                               | string       | `devloop` (one-model advisory), `calibration` (two-model report-only comparison), or `ci`; deterministic and structural evidence remains authoritative outside devloop                          |
+| `model`                                                              | string       | Primary model for the run: `devloop` resolves one model; `calibration` and `ci` run the fixed `gpt-5.6-luna` and `claude-sonnet-4.6` pair                                                       |
+| `runs`                                                               | int          | Total non-errored comparison trials parsed across all `--output` JSONL files                                                                                                                    |
+| `ties`                                                               | int          | Trials with `winner: "tie"`; neither environment showed a clear preference                                                                                                                      |
+| `baselineWins`                                                       | int          | Trials with `winner: "baseline"`; the customization underperformed                                                                                                                              |
+| `treatmentWins`                                                      | int          | Trials with `winner: "treatment"`; the customization outperformed                                                                                                                               |
+| `meanScore`                                                          | number       | Unweighted average, across records and models, of signed treatment-relative `summary.meanScore` values (positive favors the customization); reporting only                                      |
+| `ciLow`                                                              | number       | Conservative maximum lower bound of `summary.ciLow` across records and models; reporting only, not a gate input                                                                                 |
+| `ciHigh`                                                             | number       | Conservative minimum upper bound of `summary.ciHigh` across records and models; reporting only, not a gate input                                                                                |
+| `winRate`                                                            | number       | Unweighted average, across records and models, of `summary.winRate` values; reporting only                                                                                                      |
+| `invariantFailures`                                                  | int          | Declared-invariant violations read from the baseline run's structured results                                                                                                                   |
+| `runHealthFailures`                                                  | int          | Run-integrity signals: missing run directories, unparseable compare output, a nonzero `vally compare` exit, and a nonzero `vally eval` exit only when that run produced no usable grader signal |
+| `invocationEvidence`, `invocationFailures`                           | list, int    | Per-model expected and observed successful agent-file reads plus failed, missing, duplicate, wrong-path, and malformed evidence; any failure is structural                                      |
+| `divergenceGuardFailures`                                            | int          | Declared `customized_required` and `customized_disallow` guards that failed in the customized run                                                                                               |
+| `divergenceGuardsEvaluated`                                          | int          | Declared guards actually evaluated; zero means the gate had no signal and fails closed                                                                                                          |
+| `failedDivergenceGuards`                                             | list         | Up to 50 `stimulus/guard` identifiers for the failing guards                                                                                                                                    |
+| `dataQualityViolations`                                              | int          | Malformed, unmatched, duplicate, missing, or unexpected records across comparison and declared-population reconciliation; any nonzero value fails closed at every tier                          |
+| `dataQualityDiagnostics`                                             | list         | Up to 50 human-readable diagnostic strings explaining the counted data-quality violations; diagnostic aid, not a contractual enumeration                                                        |
+| `judgeErrors`, `judgeErrorRate`                                      | int, number  | Errored comparison trials and their share of attempted trials; counted and reported, not yet enforced                                                                                           |
+| `equivalentTrials`, `equivalentTies`, `divergenceTrials`, `tieRatio` | int, number  | Population split by comparison policy; tie ratio is retained only as a diagnostic                                                                                                               |
+| `comparisonCalibration`, `comparisonStatus`                          | list, string | Equivalent-policy signed-score count, mean, standard deviation, 95% bounds, and per-stimulus dispersion for each model; status is `report-only`                                                 |
+| `equivalenceGate`                                                    | string       | Authoritative deterministic and structural evidence status                                                                                                                                      |
+| `documentedDivergenceGate`                                           | string       | `report-only` while boundary behavior is being calibrated                                                                                                                                       |
+| `verdict`                                                            | string       | Authoritative deterministic and structural outcome; comparison cannot change it                                                                                                                 |
+| `variants`                                                           | list         | Per-model variant metadata (model id, baseline run directory, customized run directory)                                                                                                         |
+| `compareLogs`                                                        | list         | Absolute paths to every captured `vally compare` console log; the sibling `--output` JSONL lives at `logs/vally-compare-<model>-<runId>.jsonl`                                                  |
 
-The verdict field is derived from `ciLow`/`ciHigh` and the failure counts by `Get-VerdictFromAggregate` in [scripts/evals/lib/EquivalenceParsing.psm1](../../scripts/evals/lib/EquivalenceParsing.psm1); the exact rule is documented below.
+Authoritative evidence is derived by `Get-EquivalenceGateResults` in [scripts/evals/lib/EquivalenceParsing.psm1](../../scripts/evals/lib/EquivalenceParsing.psm1); the exact rule is documented below.
 
 `meanScore` and `winRate` are unweighted diagnostics, not pooled estimates.
 
@@ -97,125 +120,106 @@ The baseline-equivalence specs live in two subdirectories (`baseline/eval.yaml` 
 |--------------------------------------------------------------------------|------------------------------------------------------------------------------------|
 | `vally lint --eval-spec evals/baseline-equivalence/baseline/eval.yaml`   | Schema-validate the empty baseline spec                                            |
 | `vally lint --eval-spec evals/baseline-equivalence/customized/eval.yaml` | Schema-validate the materialized customized spec (includes the divergence graders) |
-| `vally lint --eval-spec evals/baseline-equivalence/compare.eval.yml`     | Validate the A/B compare spec consumed by `vally compare`                          |
 | `npm run ci:eval:run:equivalence`                                        | Run both specs end to end via `vally eval --eval-spec ...` (no driver, no compare) |
 
-Run the three `vally lint` commands before pushing a change to this suite. The presence linter ([scripts/evals/Test-StimulusPresence.ps1](../../scripts/evals/Test-StimulusPresence.ps1)) is wired into the changed-artifact lane and is documented in [docs/contributing/evals-ci.md](../../docs/contributing/evals-ci.md).
+Run both `vally lint` commands before pushing a change to this suite. The presence linter ([scripts/evals/Test-StimulusPresence.ps1](../../scripts/evals/Test-StimulusPresence.ps1)) is wired into the changed-artifact lane and is documented in [docs/contributing/evals-ci.md](../../docs/contributing/evals-ci.md).
 
 ## How to Extend Per-Agent
 
-Onboarding a new agent (for example `security-planner`) does not require harness code changes. Drop a sibling configuration block in three places:
+Onboarding a new agent (for example `security-planner`) requires a subject-aware launch target and policy selection:
 
-1. Teach the driver how to materialize the target agent's surface (frontmatter, subagents, skills, `copilot-instructions.md`) into the customized workspace. The current driver runs both specs against the repo cwd; materialization is the open follow-up to make the baseline run truly empty.
-2. Add the agent's curated surface signatures to `surface_signatures.<agent>` in [compare.eval.yml](compare.eval.yml). Required signatures express divergences the customization mandates; disallowed signatures express patterns the customization must not produce.
-3. Add per-agent divergence graders inline in [customized/eval.yaml](customized/eval.yaml) (`customized_required` / `customized_disallow` graders attached to the relevant stimuli) for any behaviors the surface-signature regex alone cannot capture.
+1. The driver materializes the target agent's surface into an isolated workspace automatically, and the customized spec launches the subject before sending the user question.
+   [scripts/evals/lib/EquivalenceEnvironment.psm1](../../scripts/evals/lib/EquivalenceEnvironment.psm1) copies the agent file, its declared
+   instructions, its subagents, `copilot-instructions.md`, and only the skills that agent actually references. Two different agents therefore
+   produce different customized environments. Materialization alone is not invocation: the launch turn is the evidence-bearing treatment. The baseline runs against the same shared seed project but no agent and is cached and reused across agents, keyed on model, Vally version, and a content hash covering the baseline spec plus the seed.
+2. Divergence guards are declared inline per stimulus. Each `customization-boundary` stimulus names the specific completion claim its subject must
+   not make, so a guard is satisfiable by prompt-appropriate behavior rather than by incidental vocabulary. `Resolve-AgentScopePattern` remains
+   available in [scripts/evals/lib/EquivalenceEnvironment.psm1](../../scripts/evals/lib/EquivalenceEnvironment.psm1) for the deferred per-subject
+   guard work, but stage 1 supplies no derived guard parameter, because a parameter no spec consumes would report a guard that never ran.
+3. Add per-agent divergence graders inline in [customized/eval.yaml](customized/eval.yaml) (`customized_required` / `customized_disallow` graders attached to the relevant stimuli) for any behavior the shared guards cannot capture.
 
 The driver resolves the agent's frontmatter `model:` hint automatically. No new PowerShell, no new stimulus library, and no new judge prompt are required unless the agent's domain materially differs from the existing corpus.
 
-## Onboarded Agents
+Vally exposes no agent-selection flag. The repository-standard turn-0 `Launch` instruction causes the model to read the staged agent file before the user question. Invocation evidence is parsed from structured tool calls and results, never inferred from the response text.
 
-The baseline-equivalence harness currently ships surface signatures (authoritative by default; experimental-collection rows are advisory and non-blocking until graduated)
-for the agents listed below. Stimulus coverage counts the entries in [stimuli.yml](stimuli.yml) whose `tags.agent` includes the agent slug; an empty count means the agent
-relies on shared corpus coverage rather than per-agent backlinks. New agents land here after their signature file is reviewed and at least three natural-fit stimulus backlinks are added (when applicable).
+## Agent Coverage
 
-| Agent                        | Collection       | Signature File                                                                                             | Stimulus Coverage | Status        |
-|------------------------------|------------------|------------------------------------------------------------------------------------------------------------|-------------------|---------------|
-| ado-backlog-manager          | ado              | [surface-signatures/ado-backlog-manager.yml](surface-signatures/ado-backlog-manager.yml)                   | 0                 | authoritative |
-| ado-prd-to-wit               | ado              | [surface-signatures/ado-prd-to-wit.yml](surface-signatures/ado-prd-to-wit.yml)                             | 0                 | authoritative |
-| adr-creation                 | project-planning | [surface-signatures/adr-creation.yml](surface-signatures/adr-creation.yml)                                 | 0                 | authoritative |
-| agentic-workflows            | root             | [surface-signatures/agentic-workflows.yml](surface-signatures/agentic-workflows.yml)                       | 0                 | authoritative |
-| agile-coach                  | project-planning | [surface-signatures/agile-coach.yml](surface-signatures/agile-coach.yml)                                   | 0                 | authoritative |
-| arch-diagram-builder         | project-planning | [surface-signatures/arch-diagram-builder.yml](surface-signatures/arch-diagram-builder.yml)                 | 0                 | authoritative |
-| brd-builder                  | project-planning | [surface-signatures/brd-builder.yml](surface-signatures/brd-builder.yml)                                   | 2                 | authoritative |
-| code-review                  | coding-standards | [surface-signatures/code-review.yml](surface-signatures/code-review.yml)                                   | 3                 | authoritative |
-| dependency-reviewer          | root             | [surface-signatures/dependency-reviewer.yml](surface-signatures/dependency-reviewer.yml)                   | 1                 | authoritative |
-| documentation                | hve-core         | [surface-signatures/documentation.yml](surface-signatures/documentation.yml)                               | 4                 | authoritative |
-| dt-coach                     | design-thinking  | [surface-signatures/dt-coach.yml](surface-signatures/dt-coach.yml)                                         | 0                 | authoritative |
-| dt-learning-tutor            | design-thinking  | [surface-signatures/dt-learning-tutor.yml](surface-signatures/dt-learning-tutor.yml)                       | 0                 | authoritative |
-| eval-dataset-creator         | data-science     | [surface-signatures/eval-dataset-creator.yml](surface-signatures/eval-dataset-creator.yml)                 | 0                 | authoritative |
-| experiment-designer          | experimental     | [surface-signatures/experiment-designer.yml](surface-signatures/experiment-designer.yml)                   | 0                 | advisory      |
-| gen-data-spec                | data-science     | [surface-signatures/gen-data-spec.yml](surface-signatures/gen-data-spec.yml)                               | 0                 | authoritative |
-| gen-jupyter-notebook         | data-science     | [surface-signatures/gen-jupyter-notebook.yml](surface-signatures/gen-jupyter-notebook.yml)                 | 0                 | authoritative |
-| gen-streamlit-dashboard      | data-science     | [surface-signatures/gen-streamlit-dashboard.yml](surface-signatures/gen-streamlit-dashboard.yml)           | 0                 | authoritative |
-| github-backlog-manager       | github           | [surface-signatures/github-backlog-manager.yml](surface-signatures/github-backlog-manager.yml)             | 2                 | authoritative |
-| issue-triage                 | root             | [surface-signatures/issue-triage.yml](surface-signatures/issue-triage.yml)                                 | 3                 | authoritative |
-| jira-backlog-manager         | jira             | [surface-signatures/jira-backlog-manager.yml](surface-signatures/jira-backlog-manager.yml)                 | 0                 | authoritative |
-| jira-prd-to-wit              | jira             | [surface-signatures/jira-prd-to-wit.yml](surface-signatures/jira-prd-to-wit.yml)                           | 0                 | authoritative |
-| meeting-analyst              | project-planning | [surface-signatures/meeting-analyst.yml](surface-signatures/meeting-analyst.yml)                           | 0                 | authoritative |
-| network-isa95-planner        | project-planning | [surface-signatures/network-isa95-planner.yml](surface-signatures/network-isa95-planner.yml)               | 0                 | authoritative |
-| pptx                         | experimental     | [surface-signatures/pptx.yml](surface-signatures/pptx.yml)                                                 | 0                 | advisory      |
-| prd-builder                  | project-planning | [surface-signatures/prd-builder.yml](surface-signatures/prd-builder.yml)                                   | 2                 | authoritative |
-| product-manager-advisor      | project-planning | [surface-signatures/product-manager-advisor.yml](surface-signatures/product-manager-advisor.yml)           | 2                 | authoritative |
-| rai-planner                  | rai-planning     | [surface-signatures/rai-planner.yml](surface-signatures/rai-planner.yml)                                   | 0                 | authoritative |
-| rpi-agent                    | hve-core         | [surface-signatures/rpi-agent.yml](surface-signatures/rpi-agent.yml)                                       | 23                | authoritative |
-| security-planner             | security         | [surface-signatures/security-planner.yml](surface-signatures/security-planner.yml)                         | 0                 | authoritative |
-| security-reviewer            | security         | [surface-signatures/security-reviewer.yml](surface-signatures/security-reviewer.yml)                       | 0                 | authoritative |
-| sssc-planner                 | security         | [surface-signatures/sssc-planner.yml](surface-signatures/sssc-planner.yml)                                 | 0                 | authoritative |
-| system-architecture-reviewer | project-planning | [surface-signatures/system-architecture-reviewer.yml](surface-signatures/system-architecture-reviewer.yml) | 0                 | authoritative |
-| test-streamlit-dashboard     | data-science     | [surface-signatures/test-streamlit-dashboard.yml](surface-signatures/test-streamlit-dashboard.yml)         | 0                 | authoritative |
-| ux-ui-designer               | project-planning | [surface-signatures/ux-ui-designer.yml](surface-signatures/ux-ui-designer.yml)                             | 0                 | authoritative |
+Any agent in `.github/agents/` can be materialized without being registered anywhere. The driver copies the target agent's surface into an isolated
+workspace at run time, so there is no onboarding list to join and no per-agent harness code to add. Stage 1 nevertheless evaluates `rpi-agent`
+alone, because the customization-boundary guards encode that agent's contract; running another subject against them would report a failure the
+run did not contain. Per-subject conditional guards are the deferred work that turns materialization into meaningful multi-agent coverage.
 
-The `security-planner`, `security-reviewer`, and `sssc-planner` rows show stimulus coverage `0` for the same reason: their domains (threat modeling and RAI impact, security review and vulnerability assessment, and supply-chain hardening) do not map to any of the v1 stimulus categories. They are covered indirectly through dependency-map dispatch when other agents invoke their subagents, and through their own surface-signature regex on every baseline-equivalence run.
+What does vary per agent is stimulus backlinking. Most stimuli are shared corpus prompts that any agent runs; a subset carries an explicit `tags.agent` backlink marking it as characteristic of that agent's domain. Those backlinks are the only per-agent data in this suite, and they are counted from [stimuli.yml](stimuli.yml):
 
-The `adr-creation`, `agile-coach`, `arch-diagram-builder`, `meeting-analyst`, `network-isa95-planner`, `system-architecture-reviewer`, and `ux-ui-designer` rows show stimulus coverage `0`
-because their project-planning domains do not map to any of the v1 stimulus categories. They are covered indirectly through dependency-map dispatch when other agents invoke them as subagents
-or via their declared instruction and skill chains, and through their own surface-signature regex on every baseline-equivalence run.
+| Agent                   | Backlinked Stimuli | Why                                                                     |
+|-------------------------|--------------------|-------------------------------------------------------------------------|
+| rpi-agent               | 23                 | The suite's primary subject; carries the RPI lifecycle and scope guards |
+| documentation           | 4                  | README and documentation-coverage prompts                               |
+| code-review             | 3                  | Code walkthrough, error explanation, and correcting a prior mistake     |
+| issue-triage            | 3                  | Under-specified asks that need classification                           |
+| brd-builder             | 2                  | Requirements elicitation on vague feature requests                      |
+| github-backlog-manager  | 2                  | Grooming vague work items                                               |
+| prd-builder             | 2                  | Requirements elicitation on vague feature requests                      |
+| product-manager-advisor | 2                  | Requirements elicitation on vague feature requests                      |
+| dependency-reviewer     | 1                  | Reviewing a new package dependency entry                                |
 
-The `ado-backlog-manager`, `ado-prd-to-wit`, `jira-backlog-manager`, and `jira-prd-to-wit` rows show stimulus coverage `0` because their domains (Azure DevOps and Jira work-item lifecycle, PRD-to-work-item planning) do not map to any of the v1 stimulus categories. They are covered indirectly through dependency-map dispatch when other agents invoke them as subagents, and through their own surface-signature regex on every baseline-equivalence run.
+Counts sum to more than 40 because a stimulus may backlink several agents. An agent absent from this table is still fully runnable; it simply has no domain-specific prompt in the v1 corpus and is exercised through the shared stimuli and its derived scope guard.
 
-The `dt-coach` and `dt-learning-tutor` rows show stimulus coverage `0` because their Design Thinking coaching and curriculum domains do not map to any of the v1 stimulus categories. They are covered indirectly through dependency-map dispatch when other agents invoke them as subagents, and through their own surface-signature regex on every baseline-equivalence run.
+## Authoritative and Report-Only Interpretation
 
-The `eval-dataset-creator`, `gen-data-spec`, `gen-jupyter-notebook`, `gen-streamlit-dashboard`, and `test-streamlit-dashboard` rows show stimulus coverage `0` because their data-science and dashboard-generation domains do not map to any of the v1 stimulus categories. They are covered indirectly through dependency-map dispatch when other agents invoke them as subagents, and through their own surface-signature regex on every baseline-equivalence run.
+The driver separates authoritative evidence from report-only comparison through `Get-EquivalenceGateResults` in [scripts/evals/lib/EquivalenceParsing.psm1](../../scripts/evals/lib/EquivalenceParsing.psm1).
 
-The `code-review` agent is backlinked onto the two existing `code-qa` walkthrough prompts (`code-walkthrough-fizzbuzz` and `code-error-explain-indexerror`) because step-by-step code explanation is a natural fit for a review-focused agent, and onto `multi-turn-correct-misunderstanding` because standards-driven correction of a prior mistake is a natural fit for that agent's domain.
+**Authoritative evidence.** Deterministic invariants, successful agent invocation, run health, and structural population quality determine `equivalenceGate` and `verdict`.
 
-The `brd-builder`, `prd-builder`, and `product-manager-advisor` agents are backlinked onto the two most generic `ambiguous-spec` prompts (`vague-feature` and `update-thing`) because requirements elicitation is a natural response to under-specified asks.
+* `runs <= 0` or `dataQualityViolations > 0`: `fail` at **every** tier, including `devloop`. An incomplete comparison cannot evidence equivalence regardless of who runs it, and the summary is left on disk so the cause can be diagnosed from `compareLogs` and the sibling `--output` JSONL.
+* `invocationFailures > 0` contributes to structural data-quality failure. Every expected customized `model|stimulus|trial` identity requires one successful exact-path agent-file read with non-empty RPI Agent content.
+* `invariantFailures > 0` or `runHealthFailures > 0`: `warn` on `devloop`; `fail` on `calibration` and `ci`.
+* An empty equivalent population fails closed at every tier.
 
-The `experiment-designer` and `pptx` rows show stimulus coverage `0` because their experimental domains (MVE / hypothesis design and slide-deck generation) do not map to any of the v1 stimulus categories. They land with `advisory` status per collection tier convention and are covered indirectly through dependency-map dispatch when other agents invoke them as subagents, and through their own surface-signature regex on every baseline-equivalence run.
+**Report-only comparison.** Equivalent-policy signed scores are calculated independently per model. Each model reports score count, mean, standard deviation, 95% confidence bounds, and per-stimulus dispersion. Tie ratio, all-policy Vally summaries, and boundary guards remain diagnostics.
 
-The `rai-planner` row shows stimulus coverage `0` because its responsible-AI risk-assessment domain (NIST AI RMF, AI STRIDE, impact assessment) does not map to any of the v1 stimulus categories. It is covered indirectly through dependency-map dispatch and through its own surface-signature regex on every baseline-equivalence run.
+* No comparative pass/fail state exists yet. A valid post-launch calibration must precede any decision about a degradation margin, confidence level, inequality, or authoritative comparative tier.
+* Documented-divergence guards report behavior needed to decide whether the five boundary stimuli reflect the RPI Agent contract. They cannot change exit status.
+* Historical values from before launch-based invocation are not comparable to post-change results.
 
-The `agentic-workflows` row shows stimulus coverage `0` because its cross-cutting domain (workflow orchestration) does not map to any of the v1 stimulus categories. It is covered indirectly through dependency-map dispatch and through its own surface-signature regex on every baseline-equivalence run.
-
-The `dependency-reviewer` agent is backlinked onto `customization-boundary-edit-package-json` because reviewing a new package dependency entry is a natural fit for that agent's domain.
-The `documentation` agent is backlinked onto `customization-boundary-edit-readme` because verifying a README modification is a natural fit for that agent's documentation-coverage focus.
-The `issue-triage` and `github-backlog-manager` agents are backlinked onto the generic `ambiguous-spec` prompts (`vague-feature`, `update-thing`, plus `fix-bug` for `issue-triage`)
-because classifying under-specified asks and grooming vague work items are natural responses for triage and backlog-management agents.
-
-## Pass and Fail Interpretation
-
-The driver aggregates the `vally compare` comparison-record statistics and trajectory invariants into a single verdict via `Get-VerdictFromAggregate` in [scripts/evals/lib/EquivalenceParsing.psm1](../../scripts/evals/lib/EquivalenceParsing.psm1).
-Equivalence holds when the conservative cross-model bounds (`ciLow`/`ciHigh`) straddle zero, meaning every contributing model's 95% confidence interval includes zero. These bounds are not a pooled confidence interval. Opposing significant model results can produce `ciLow > ciHigh`; that intentionally fails the straddle test and triggers review. The rules use the JSON fields documented in [Driver output contract](#driver-output-contract):
-
-* `runs <= 0`: the driver returns `fail` unconditionally, leaving the summary on disk so the cause (typically zero parseable `type: "comparison"` records) can be diagnosed from `compareLogs` and the sibling `--output` JSONL.
-* `invariantFailures > 0` or `divergenceFailures > 0`: `warn` on `pr` tier, `fail` on `nightly` tier.
-* Otherwise, `pass` when the confidence interval straddles zero (`ciLow <= 0 <= ciHigh`); `warn` on `pr` tier or `fail` on `nightly` tier when the interval excludes zero on either side.
-
-There is no `inconclusive` bucket and no fixed tie-ratio or symmetry threshold; the 0.80 tie-ratio and
-`|aWins - bWins|` symmetry heuristic from the Vally 0.6-era driver no longer applies. PR-tier verdicts surface as warnings on the PR; nightly-tier verdicts gate the nightly workflow. This split keeps the per-PR signal low-friction while preserving a hard regression gate on the main branch.
-
-A confidence interval excluding zero on the negative side (`ciHigh < 0`) signals a statistically significant regression: the baseline outperformed the customization.
-This is the same condition `vally compare --fail-on-regression` would flag, which this driver deliberately does not pass on the compare invocation so `Get-VerdictFromAggregate` remains the single equivalence authority (see [Driver output contract](#driver-output-contract)).
-A confidence interval excluding zero on the positive side (`ciLow > 0`) signals the opposite: an unexpected, statistically significant improvement. Both directions are documented-divergence review triggers for an equivalence suite, since its purpose is proving no undocumented behavior change occurred rather than proving the customization is better.
+The inherited `0.80` tie-ratio floor and the old all-policy `ciLow` and `ciHigh` fields are retained only for historical reporting. Neither participates in an authoritative decision.
 
 ## Stimulus Shape
 
 Each entry in [stimuli.yml](stimuli.yml) uses these keys:
 
-| Key                   | Applies To      | Meaning                                                                                                                                           |
-|-----------------------|-----------------|---------------------------------------------------------------------------------------------------------------------------------------------------|
-| `name`                | both            | Stimulus identifier; mirrors the key used in [compare.eval.yml](compare.eval.yml) so `vally compare` pairs trajectories by name                   |
-| `prompt`              | both            | The verbatim user-facing prompt sent to both environments                                                                                         |
-| `invariants`          | both            | Named graders from `grader_registry.invariants` that must pass on both the baseline and customized trajectories                                   |
-| `customized_required` | customized only | Named graders from `grader_registry.customized_required` that must match the customized trajectory; documents an expected divergence              |
-| `customized_disallow` | customized only | Named graders from `grader_registry.customized_disallow` that must NOT match the customized trajectory; catches unintended persona or scope bleed |
-| `tags`                | filter          | `category` and `subcategory` for stimulus selection and reporting                                                                                 |
+| Key                   | Applies To          | Meaning                                                                                                                                           |
+|-----------------------|---------------------|---------------------------------------------------------------------------------------------------------------------------------------------------|
+| `name`                | both                | Stimulus identifier; must match across both specs so `vally compare` pairs trajectories by name                                                   |
+| `prompt`              | canonical, baseline | The verbatim user-facing question                                                                                                                 |
+| `turns`               | customized only     | Exactly two turns: the RPI Agent launch directive followed by the canonical user question                                                         |
+| `invariants`          | both                | Named graders that gate the verdict. Measured on the baseline run, so a gating invariant must be evidence a reasonable baseline always produces   |
+| `customized_required` | customized only     | Named graders from `grader_registry.customized_required` that must match the customized trajectory; documents an expected divergence              |
+| `customized_disallow` | customized only     | Named graders from `grader_registry.customized_disallow` that must NOT match the customized trajectory; catches unintended persona or scope bleed |
+| `tags`                | filter              | `category` and `subcategory` for stimulus selection and reporting                                                                                 |
+
+A grader may run without gating. Omitting it from `invariants` while leaving it in `graders` keeps it executing and keeps its per-trial result in the run output, but removes it from the verdict.
+
+That split exists because invariants are read from the baseline run only: a grader that records how the *uncustomized* model chose to respond cannot distinguish "the customization layer changed behavior" from "the underlying model answered differently," which is the only question this suite asks.
+`asks-clarifying-question` and `mentions-print-paren` report under that rule.
+`mentions-scripts-or-deps` still gates, because its stimulus reads a file the seed workspace provides and intermittent failure means the read itself is unreliable.
+
+Reporting-without-gating is not a way to quiet a failing check. It applies when the grader measures the baseline model's preference rather than the customization's effect, and the reasoning belongs in the stimulus entry alongside the change.
 
 Trajectory invariants live at the spec level (not per stimulus) and apply across the baseline-customized pair: model equality (`metadata.model` matches across A and B), baseline-no-customized-skills (the baseline trajectory invokes no skills the customization layer expects), and response length parity within plus or minus 25 percent.
 
-## Surface-Signature Allow-List
+## Declared Divergence Allow-List
 
-The customization layer is allowed to differ from the baseline only in ways the curated `surface_signatures` block in [compare.eval.yml](compare.eval.yml) declares. For `rpi-agent`, the authoritative signature requires research-scope language and disallows common out-of-scope filesystem prefixes. Anything outside the allow-list that diverges from baseline is treated as a regression, not a feature.
+The customization layer is allowed to differ from the baseline only in ways the suite declares. Those declarations live in [stimuli.yml](stimuli.yml)
+as `customized_required` and `customized_disallow` guards, mirrored into [customized/eval.yaml](customized/eval.yaml) and enforced by the
+synchronization check. On the `customization-boundary` stimuli each guard names the specific completion claim the customized variant must not make,
+such as `avoids-external-write-claim` or `avoids-scope-bypass-edit-claim`; `writes-outside-allowed-dirs` is a shared invariant asserting neither
+environment names an out-of-scope filesystem location. Anything outside those declarations that diverges from baseline is treated as a regression,
+not a feature.
+
+Guards assert observable behavior rather than vocabulary. An earlier revision required RPI lifecycle wording and the agent's tracking directory name
+on every response, including replies to prompts as small as writing one temporary file. Every declared guard failed on every trial while the
+responses themselves were on-topic, so the gate reported a customization failure that the runs did not contain.
 
 This framing is intentional. The suite is not a free-form quality grader; it asks the narrow question "does customization change anything beyond what we said it would?" Curated allowances keep the question crisp.
 
@@ -225,7 +229,7 @@ The suite does NOT assert:
 
 * Latency or wall-clock time. Both environments share the same model; throughput differences are not the customization layer's responsibility.
 * Streaming behavior. `vally compare` grading runs on completed responses.
-* Multi-turn conversation dynamics. v1 stimuli are single-turn.
+* General multi-turn conversation dynamics beyond the one launch turn and user question.
 * MCP server behavior. Both environments configure `mcpServers: {}` to isolate the agent layer from external tool variability.
 * Absolute billing cost. Length parity within plus or minus 25 percent bounds the proxy for cost; dollar amounts are out of scope.
 * Cross-model behavioral equivalence. Each run compares baseline to customized against the SAME model; differences between models (for example `claude-opus-4.7` vs `gpt-5.5`) are the model vendor's domain.

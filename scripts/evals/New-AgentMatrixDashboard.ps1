@@ -13,15 +13,13 @@
     Consumes `agent-matrix-summary.json` (produced by
     `scripts/evals/Invoke-AgentMatrix.ps1`) along with the per-slug
     `<slug>.json` files in the same dated folder under
-    `evals/results/agent-matrix/<YYYY-MM-DD>/`, the agent inventory
-    `evals/agent-behavior/AGENTS.yml`, and (when present) the surface
-    signature files under `evals/baseline-equivalence/surface-signatures/`,
-    then writes a single offline HTML file with one row per inventory agent.
+    `evals/results/agent-matrix/<YYYY-MM-DD>/` and the agent inventory
+    `evals/agent-behavior/AGENTS.yml`, then writes a single offline HTML
+    file with one row per inventory agent.
 
     Columns:
       * Agent slug
       * Functional verdict (pass | fail | dry-run | unknown)
-      * Surface signature (present | missing)
       * Equivalence (placeholder; n/a until per-agent equivalence is wired)
       * Last functional pass date (scanned across prior dated folders)
 
@@ -39,10 +37,6 @@
 .PARAMETER AgentMatrixRoot
     Optional override for the dated-folder root. Defaults to
     `<RepoRoot>/evals/results/agent-matrix`.
-
-.PARAMETER SurfaceSignaturesRoot
-    Optional override for the surface signatures root. Defaults to
-    `<RepoRoot>/evals/baseline-equivalence/surface-signatures`.
 
 .PARAMETER InventoryPath
     Optional override for the agent inventory. Defaults to
@@ -73,7 +67,6 @@ param(
     [string]$RepoRoot,
     [string]$SummaryPath,
     [string]$AgentMatrixRoot,
-    [string]$SurfaceSignaturesRoot,
     [string]$InventoryPath,
     [string]$OutPath,
     [switch]$Open
@@ -198,7 +191,6 @@ function ConvertTo-AgentMatrixRows {
         [Parameter(Mandatory)] [System.Collections.Generic.List[hashtable]]$Inventory,
         [Parameter(Mandatory)] $Summary,
         [Parameter(Mandatory)] [string]$SummaryDir,
-        [Parameter(Mandatory)] [string]$SurfaceSignaturesRoot,
         [Parameter(Mandatory)] [hashtable]$LastPassBySlug
     )
 
@@ -250,9 +242,6 @@ function ConvertTo-AgentMatrixRows {
         $perAgentRel = "$slug.json"
         $perAgentExists = Test-Path -LiteralPath (Join-Path $SummaryDir $perAgentRel) -PathType Leaf
 
-        $surfacePath = Join-Path $SurfaceSignaturesRoot "$slug.yml"
-        $surface = if (Test-Path -LiteralPath $surfacePath -PathType Leaf) { 'present' } else { 'missing' }
-
         $lastPass = if ($LastPassBySlug.ContainsKey($slug)) { $LastPassBySlug[$slug] } else { '' }
 
         $rows.Add([ordered]@{
@@ -261,7 +250,6 @@ function ConvertTo-AgentMatrixRows {
             cost_tier      = [string]$entry['cost_tier']
             functional     = $functional
             exitCode       = $exitCode
-            surface        = $surface
             equivalence    = 'n/a'
             lastPass       = $lastPass
             perAgentHref   = if ($perAgentExists) { $perAgentRel } else { '' }
@@ -290,7 +278,6 @@ function ConvertTo-AgentMatrixHtml {
     $failCount = @($Rows | Where-Object { $_.functional -eq 'fail' }).Count
     $unknownCount = @($Rows | Where-Object { $_.functional -eq 'unknown' }).Count
     $dryRunCount = @($Rows | Where-Object { $_.functional -eq 'dry-run' }).Count
-    $surfacePresent = @($Rows | Where-Object { $_.surface -eq 'present' }).Count
 
     $tier = if ($Summary -and $Summary.PSObject.Properties['tier']) { [string]$Summary.tier } else { 'unknown' }
     $mode = if ($Summary -and $Summary.PSObject.Properties['mode']) { [string]$Summary.mode } else { 'unknown' }
@@ -403,7 +390,6 @@ tr.drill > td { background: #fafafa; padding: 0.5rem 1rem; }
     [void]$sb.AppendLine("<div>Functional fail: <strong class=`"fail`">$failCount</strong></div>")
     [void]$sb.AppendLine("<div>Dry-run: <strong class=`"dry-run`">$dryRunCount</strong></div>")
     [void]$sb.AppendLine("<div>Unknown: <strong class=`"unknown`">$unknownCount</strong></div>")
-    [void]$sb.AppendLine("<div>Surface signatures present: <strong>$surfacePresent / $totalAgents</strong></div>")
     [void]$sb.AppendLine('</div>')
     [void]$sb.AppendLine('</header>')
 
@@ -470,7 +456,6 @@ tr.drill > td { background: #fafafa; padding: 0.5rem 1rem; }
     [void]$sb.AppendLine('<th data-sort-key="class">Class</th>')
     [void]$sb.AppendLine('<th data-sort-key="cost">Cost tier</th>')
     [void]$sb.AppendLine('<th data-sort-key="functional">Functional</th>')
-    [void]$sb.AppendLine('<th data-sort-key="surface">Surface</th>')
     [void]$sb.AppendLine('<th data-sort-key="equivalence">Equivalence</th>')
     [void]$sb.AppendLine('<th data-sort-key="lastPass">Last pass</th>')
     [void]$sb.AppendLine('</tr></thead>')
@@ -482,7 +467,6 @@ tr.drill > td { background: #fafafa; padding: 0.5rem 1rem; }
         $classEsc = Edit-HtmlEscape $row.class
         $costEsc  = Edit-HtmlEscape $row.cost_tier
         $funcEsc  = Edit-HtmlEscape $row.functional
-        $surfEsc  = Edit-HtmlEscape $row.surface
         $eqEsc    = Edit-HtmlEscape $row.equivalence
         $lastEsc  = if ($row.lastPass) { Edit-HtmlEscape $row.lastPass } else { '&mdash;' }
         $lastSortVal = if ($row.lastPass) { Edit-HtmlEscape $row.lastPass } else { '' }
@@ -503,7 +487,6 @@ tr.drill > td { background: #fafafa; padding: 0.5rem 1rem; }
             'dry-run' { 'dry-run' }
             default   { 'unknown' }
         }
-        $surfClass = if ($row.surface -eq 'present') { 'present' } else { 'missing' }
         $eqClass = 'na'
 
         $rowFailingNames = @(
@@ -514,17 +497,16 @@ tr.drill > td { background: #fafafa; padding: 0.5rem 1rem; }
         )
         $failingNamesAttr = Edit-HtmlEscape ($rowFailingNames -join ',')
 
-        [void]$sb.AppendLine("<tr class=`"row`" data-slug=`"$slugEsc`" data-class=`"$classEsc`" data-cost=`"$costEsc`" data-functional=`"$funcEsc`" data-surface=`"$surfEsc`" data-equivalence=`"$eqEsc`" data-lastpass=`"$lastSortVal`" data-failing-graders=`"$failingNamesAttr`">")
+        [void]$sb.AppendLine("<tr class=`"row`" data-slug=`"$slugEsc`" data-class=`"$classEsc`" data-cost=`"$costEsc`" data-functional=`"$funcEsc`" data-equivalence=`"$eqEsc`" data-lastpass=`"$lastSortVal`" data-failing-graders=`"$failingNamesAttr`">")
         [void]$sb.AppendLine("<td class=`"slug`">$slugCell</td>")
         [void]$sb.AppendLine("<td>$classEsc</td>")
         [void]$sb.AppendLine("<td>$costEsc</td>")
         [void]$sb.AppendLine("<td class=`"$funcClass`">$funcEsc</td>")
-        [void]$sb.AppendLine("<td class=`"$surfClass`">$surfEsc</td>")
         [void]$sb.AppendLine("<td class=`"$eqClass`">$eqEsc</td>")
         [void]$sb.AppendLine("<td>$lastEsc</td>")
         [void]$sb.AppendLine('</tr>')
 
-        [void]$sb.AppendLine("<tr class=`"drill`" id=`"$drillId`" data-drill-for=`"$slugEsc`"><td colspan=`"7`">")
+        [void]$sb.AppendLine("<tr class=`"drill`" id=`"$drillId`" data-drill-for=`"$slugEsc`"><td colspan=`"6`">")
         $exitText = if ($row.exitCode -ge 0) { [string]$row.exitCode } else { 'n/a' }
         $logCell = if ($row.logPath) {
             $logEsc = Edit-HtmlEscape $row.logPath
@@ -660,7 +642,6 @@ tr.drill > td { background: #fafafa; padding: 0.5rem 1rem; }
       class: 'data-class',
       cost: 'data-cost',
       functional: 'data-functional',
-      surface: 'data-surface',
       equivalence: 'data-equivalence',
       lastPass: 'data-lastpass'
     };
@@ -712,9 +693,6 @@ if ($MyInvocation.InvocationName -ne '.') {
     if (-not $AgentMatrixRoot) {
         $AgentMatrixRoot = Join-Path $resolvedRoot 'evals/results/agent-matrix'
     }
-    if (-not $SurfaceSignaturesRoot) {
-        $SurfaceSignaturesRoot = Join-Path $resolvedRoot 'evals/baseline-equivalence/surface-signatures'
-    }
     if (-not $InventoryPath) {
         $InventoryPath = Join-Path $resolvedRoot 'evals/agent-behavior/AGENTS.yml'
     }
@@ -734,7 +712,7 @@ if ($MyInvocation.InvocationName -ne '.') {
     $summary    = Get-Content -LiteralPath $SummaryPath -Raw | ConvertFrom-Json
     $inventory  = Read-AgentSlugInventory -Path $InventoryPath
     $lastPass   = Get-LastPassDateBySlug -AgentMatrixRoot $AgentMatrixRoot
-    $rows       = ConvertTo-AgentMatrixRows -Inventory $inventory -Summary $summary -SummaryDir $summaryDir -SurfaceSignaturesRoot $SurfaceSignaturesRoot -LastPassBySlug $lastPass
+    $rows       = ConvertTo-AgentMatrixRows -Inventory $inventory -Summary $summary -SummaryDir $summaryDir -LastPassBySlug $lastPass
     $html       = ConvertTo-AgentMatrixHtml -Rows $rows -Summary $summary -DateLabel $dateLabel
 
     $outDir = Split-Path -Parent $OutPath

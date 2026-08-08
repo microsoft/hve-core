@@ -2,7 +2,7 @@
 title: Skill Hygiene
 description: 'Lint-based skill hygiene suite for .github/skills/ delivered via vally lint'
 author: HVE Core Team
-ms.date: 2026-07-23
+ms.date: 2026-08-03
 ---
 
 This directory documents the **skill hygiene** suite. It is the only suite that ships through `vally lint` rather than `vally eval` and so contains no `eval.yaml`.
@@ -47,7 +47,7 @@ New skills added under `.github/skills/<collection>/<slug>/SKILL.md` are picked 
 
 ## Graders
 
-Tier 1 ships with the two hygiene graders registered by `vally lint` in Vally 0.9.0. `skill-size` is deferred per **PD-01 Option A** in the planning log and tracked under **WI-08**; it activates in **Phase 15** alongside other custom grader plugin work.
+Tier 1 ships with the two hygiene graders `vally lint` registers. `skill-size` is deferred per **PD-01 Option A** in the planning log and tracked under **WI-08**; it activates in **Phase 15** alongside other custom grader plugin work. Verified against Vally CLI 0.11.0: `skill-size` is still exported by `@microsoft/vally` but is not referenced by the CLI's lint command.
 
 | Grader         | Status   | Behavior                                                                       |
 |----------------|----------|--------------------------------------------------------------------------------|

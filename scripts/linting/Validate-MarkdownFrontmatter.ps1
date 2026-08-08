@@ -31,6 +31,7 @@ param(
     [string[]]$ExcludePaths = @(
         'scripts/tests/fixtures/**',
         'scripts/tests/linting/fixtures/**',
+        'evals/baseline-equivalence/seed-workspace/**',
         'extension/README.md',
         'extension/README.*.md',
         'extension/templates/README.template.md',

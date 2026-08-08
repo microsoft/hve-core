@@ -55,8 +55,8 @@ npm run ci:eval:run:skills
 npm run ci:eval:run:scripts
 npm run ci:eval:run:conformance
 
-# Compare results against baseline
-npm run ci:eval:compare
+# Compare a customized agent against the empty baseline
+npm run ci:eval:equivalence -- -Agent rpi-agent -Tier devloop
 ```
 
 ## Adding New Evals

@@ -405,7 +405,7 @@ jobs:
         if: env.EVAL_EXECUTE == 'true'
         shell: pwsh
         run: |
-          npm run ci:eval:execute -- -Kind ${{ matrix.kind }} -ChangedSpecManifestPath logs/changed-spec-stimuli.json -Model gpt-5.6-luna -SkipInputModeration
+          npm run ci:eval:execute -- -Kind ${{ matrix.kind }} -ChangedSpecManifestPath logs/changed-spec-stimuli.json -Model gpt-5.6-luna -SkipInputModeration -EnableBaselineEquivalence -EquivalenceTier calibration
           if ($LASTEXITCODE -ne 0) {
             'EVAL_EXECUTE_FAILED=true' >> $env:GITHUB_ENV
           }
@@ -422,6 +422,9 @@ jobs:
             logs/stimulus-presence.json
             logs/eval-summary.json
             logs/eval-results-*.json
+            logs/baseline-equivalence-*.json
+            logs/vally-compare-*.log
+            evals/results/baseline-equivalence/**/results.jsonl
           retention-days: 30
           if-no-files-found: ignore
 
