@@ -81,6 +81,7 @@ Do not use for:
 
 - [Data Retention and Disposal](references/data-retention-and-disposal.md) — Principle 05 deep-dive: retention schedules, disposal methods, legal holds
 - [Cross-Jurisdictional Mapping](references/cross-jurisdictional-mapping.md) — regulatory equivalence matrix across GDPR, CCPA/CPRA, and APP
+- [Industry Privacy Profiles](references/industry-privacy-profiles.md) — sector-specific principle priorities, checks, and `.pbd-config.yml` customization
 
 ## Skill layout
 
@@ -93,6 +94,7 @@ Do not use for:
   - `implementation-patterns.md` — code-level and configuration-level patterns agents can verify.
   - `data-retention-and-disposal.md` — Principle 05 deep-dive: retention schedules, disposal methods, legal holds.
   - `cross-jurisdictional-mapping.md` — regulatory equivalence matrix across GDPR, CCPA/CPRA, and APP.
+  - `industry-privacy-profiles.md` — telco, healthcare, financial sector profiles with `.pbd-config.yml` customization schema.
 
 ## Citation-field vocabulary
 
