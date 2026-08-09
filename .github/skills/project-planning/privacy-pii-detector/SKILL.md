@@ -63,6 +63,7 @@ Do not use for:
 2. [01 Detection Patterns](references/01-detection-patterns.md) — code-level patterns agents use to find PII processing
 3. [02 Control Expectations](references/02-control-expectations.md) — required controls per PII tier with verification methods
 4. [03 Finding Schema](references/03-finding-schema.md) — structured output format for detection results and backlog handoff
+5. [04 Custom Classification](references/04-custom-classification.md) — project-level `.pii-config.yml` for custom types, tier overrides, suppressions, and catalog import
 
 ## Industry overlays
 
@@ -78,6 +79,7 @@ Do not use for:
   - `01-detection-patterns.md` — language-agnostic and language-specific code patterns for PII detection.
   - `02-control-expectations.md` — required controls per tier with verification methods.
   - `03-finding-schema.md` — YAML-based structured output for findings and backlog items.
+  - `04-custom-classification.md` — `.pii-config.yml` schema for project-level customization.
   - `10-industry-telco.md` — telecommunications industry overlay.
   - `11-industry-healthcare.md` — healthcare industry overlay.
   - `12-industry-financial.md` — financial services industry overlay.
@@ -86,7 +88,8 @@ Do not use for:
 
 ### Phase 1: Industry context
 
-Determine which industry overlay applies. If the user specifies an industry, load that overlay. If not, infer from:
+1. Look for `.pii-config.yml` at the repository root. If present, load custom types, tier overrides, suppressions, and retention overrides.
+2. Determine which industry overlay applies. If the config specifies `industry:`, load that overlay. If not specified, infer from:
 - Package dependencies (e.g., `hl7`, `fhir` → healthcare; `stripe`, `plaid` → financial)
 - Domain terminology in code comments and documentation
 - API endpoint naming patterns
