@@ -15,10 +15,23 @@ metadata:
 
 This `SKILL.md` is the **entrypoint** for the Privacy by Design skill.
 
-The skill encodes the **7 Foundation Principles of Privacy by Design** (Cavoukian, 2009) as structured, machine-readable references that the Privacy Planner and Privacy Reviewer agents can query to identify, assess, and improve adherence to proactive privacy practices across the software lifecycle. It extends the existing `privacy-standards` skill with principle-level assessment criteria, data retention and disposal checklists, and cross-jurisdictional regulatory mappings.
+The skill encodes the **7 Foundation Principles of Privacy by Design** (Cavoukian, 2009) as structured, machine-readable references that the Privacy Planner and Privacy Reviewer agents can query to identify, assess, and improve adherence to proactive privacy practices across the software lifecycle. It extends the existing `privacy-standards` skill with principle-level assessment criteria, data retention and disposal checklists, cross-jurisdictional regulatory mappings, a structured finding schema, and pragmatic implementation patterns for code-level verification.
 
 > [!NOTE]
 > This skill is a planning aid, not legal advice. Its standards summaries support privacy reasoning and review preparation; they do not substitute for qualified legal counsel or a formal regulatory interpretation.
+
+## Goal
+
+Produce a structured, evidence-based assessment of a system, feature, or data flow against the 7 PbD Foundation Principles, yielding per-principle PASS/FAIL/PARTIAL verdicts, severity-rated findings, actionable remediation guidance, and a backlog-ready handoff.
+
+## Success criteria
+
+- All 7 principles are assessed with a recorded verdict and severity.
+- Each FAIL or PARTIAL finding includes a specific, actionable remediation.
+- Findings use the structured schema defined in `finding-schema.md`.
+- Cross-jurisdictional obligations are identified for the applicable regulatory scope.
+- Retention and disposal are assessed for any system that stores personal data.
+- An overall compliance verdict (COMPLIANT / PARTIALLY_COMPLIANT / NON_COMPLIANT) is determined.
 
 ## When to use this skill
 
@@ -29,12 +42,23 @@ Use when you need to:
 - Check data retention schedules, disposal methods, and legal hold procedures
 - Map privacy requirements across GDPR Art. 25, CCPA/CPRA, and Australian Privacy Principles
 - Generate per-principle PASS/FAIL/PARTIAL findings with severity ratings
+- Identify code-level and configuration-level privacy patterns or anti-patterns
+- Produce backlog items from privacy assessment findings
 
 Do not use for:
 
 - General privacy standards mapping without principle assessment (use `privacy-standards`)
 - Security threat modeling (use `security-planning` or OWASP skills)
 - RAI assessment (use `rai-planner`)
+- Legal advice or regulatory compliance certification
+
+## Stop rules
+
+- Stop the assessment if the system boundary cannot be established.
+- Stop and escalate if processing occurs in a jurisdiction not covered by this skill's mappings.
+- Do not fabricate evidence; record INSUFFICIENT EVIDENCE and note what is needed.
+- Do not provide legal opinions; frame all findings as planning guidance requiring qualified review.
+- Do not duplicate security findings that the `security-planning` skill already covers; cross-reference them.
 
 ## Normative references (PbD 7 Foundation Principles)
 
@@ -47,17 +71,26 @@ Do not use for:
 7. [06 Visibility and Transparency](references/06-visibility-and-transparency.md)
 8. [07 Respect for User Privacy](references/07-respect-for-user-privacy.md)
 
+## Operational references
+
+- [Assessment Protocol](references/assessment-protocol.md) — step-by-step protocol for conducting a PbD assessment
+- [Finding Schema](references/finding-schema.md) — structured output format for findings and backlog handoff
+- [Implementation Patterns](references/implementation-patterns.md) — pragmatic code-level and architecture-level verification patterns
+
 ## Supplementary references
 
-- [Data Retention and Disposal](references/data-retention-and-disposal.md)
-- [Cross-Jurisdictional Mapping](references/cross-jurisdictional-mapping.md)
+- [Data Retention and Disposal](references/data-retention-and-disposal.md) — Principle 05 deep-dive: retention schedules, disposal methods, legal holds
+- [Cross-Jurisdictional Mapping](references/cross-jurisdictional-mapping.md) — regulatory equivalence matrix across GDPR, CCPA/CPRA, and APP
 
 ## Skill layout
 
 - `SKILL.md` — this file (skill entrypoint).
-- `references/` — the PbD normative documents and supplementary material.
+- `references/` — the PbD normative documents, operational guides, and supplementary material.
   - `00-principle-index.md` — index of all principle identifiers, categories, source mappings, and cross-references.
-  - `01` through `07` — one document per PbD Foundation Principle.
+  - `01` through `07` — one document per PbD Foundation Principle with checklist, controls, anti-patterns, and regulatory mappings.
+  - `assessment-protocol.md` — phased assessment protocol for agents conducting PbD reviews.
+  - `finding-schema.md` — YAML-based finding and summary schema for structured output.
+  - `implementation-patterns.md` — code-level and configuration-level patterns agents can verify.
   - `data-retention-and-disposal.md` — Principle 05 deep-dive: retention schedules, disposal methods, legal holds.
   - `cross-jurisdictional-mapping.md` — regulatory equivalence matrix across GDPR, CCPA/CPRA, and APP.
 
@@ -86,14 +119,31 @@ Use these fields when capturing a finding so the reviewer can assert a stable so
 | PARTIAL | Some indicators met but gaps remain |
 | FAIL | Principle is not satisfied; corrective action required |
 
+## Overall assessment verdicts
+
+| Verdict | Condition |
+|---------|-----------|
+| COMPLIANT | All 7 principles are PASS |
+| PARTIALLY_COMPLIANT | No principles are FAIL but one or more are PARTIAL |
+| NON_COMPLIANT | One or more principles are FAIL |
+
 ## Integration with Privacy Planner and Reviewer
 
 This skill complements `privacy-standards` (which provides NIST PF, GDPR, CCPA, OWASP backbone). The Privacy Reviewer agent loads both skills:
 
 - `privacy-standards` — standards mapping, data-flow reasoning, DPIA thresholds
-- `privacy-by-design` — principle-level assessment, retention/disposal checks, cross-jurisdictional equivalence
+- `privacy-by-design` — principle-level assessment, retention/disposal checks, cross-jurisdictional equivalence, implementation pattern verification
 
 No agent modification is required; the agent loads this skill on demand when PbD assessment is invoked.
+
+## Interaction with other skills
+
+| Skill | Relationship |
+|-------|--------------|
+| `privacy-standards` | Provides data inventory, DPIA thresholds, and standards backbone; PbD builds on top |
+| `security-planning` | Security controls overlap with PbD-05; reference rather than duplicate |
+| `rai-planner` | RAI data-use concerns feed into PbD-04 (full functionality) and PbD-07 (user respect) |
+| `secure-by-design` | SBD-11 (Secure Deprecation) aligns with PbD-05 lifecycle; cross-reference for decommissioning |
 
 ## Attribution and licensing posture
 
