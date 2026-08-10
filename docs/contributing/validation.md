@@ -154,24 +154,15 @@ There is no repository file to edit.
 
 ### Codespaces
 
-For a codespace created directly for your account, create
+For GitHub Codespaces, create account-specific
 [development environment secrets](https://docs.github.com/en/codespaces/managing-your-codespaces/managing-your-account-specific-secrets-for-github-codespaces)
 named `NPM_CONFIG_REGISTRY`, `PIP_INDEX_URL`, and `UV_DEFAULT_INDEX`. These
-values become environment variables when the codespace is created or restarted.
+values become environment variables when the codespace is created or restarted;
+they do not configure the Docker image build.
 
-Do not rely on account-specific secrets in `onCreateCommand` or
-`updateContentCommand` when the repository uses Codespaces prebuilds. Those
-commands can run while the shared prebuild is created, before an individual
-user's secrets are available. Repository or organization administrators must
-configure any secrets required by the prebuild, or secret-dependent setup must
-run after the user creates the codespace. Account-specific secrets are
-available to `postCreateCommand` and later commands in the user's codespace.
-
-Account-specific Codespaces secrets are not available while the image is
-built. They cannot redirect a package download performed by a Dockerfile `RUN`
-instruction or another image-build step. Use an organization-approved prebuilt
-image or other build infrastructure when the image build itself requires
-authenticated package access.
+`onCreateCommand` and `updateContentCommand` can run while a Codespaces
+prebuild is created, before account-specific secrets are available. Run setup
+that requires those secrets from `postCreateCommand` or later.
 
 The committed `.npmrc` sets `replace-registry-host=always`, so npm rewrites each
 lockfile tarball host to the configured registry at fetch time only. `npm ci`
@@ -200,10 +191,8 @@ it does not add new ones.
 | Add a new dependency            | Edit `package.json`, push the branch, and let an agent or CI job run `npm install` |
 | Need an interactive environment | Use a codespace or any workstation with direct public registry access              |
 
-Do not repair a proxy-generated lockfile by hand. Rewriting `resolved` back to
-the public registry leaves the weakened `integrity` value in place, and
-recomputing the hash from the proxy-served bytes only attests to what the proxy
-returned rather than to what the registry published.
+If a proxy-generated lockfile changes source or integrity metadata, regenerate
+it where the public registry is reachable instead of editing it by hand.
 
 ## Documentation checks and browser lane
 
