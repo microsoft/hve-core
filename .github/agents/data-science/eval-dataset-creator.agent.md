@@ -27,9 +27,7 @@ data/evaluation/
 │   ├── {agent-name}-eval-dataset.json
 │   └── {agent-name}-eval-dataset.csv
 └── docs/
-    ├── {agent-name}-curation-notes.md
-    ├── {agent-name}-metric-selection.md
-    └── {agent-name}-tool-recommendations.md
+    └── {agent-name}-eval-guide.md
 ```
 
 Derive `{agent-name}` from the agent name provided in Q1: lowercase, replace spaces with hyphens, remove special characters (for example, "IT HelpDesk Bot" becomes `it-helpdesk-bot`).
@@ -44,8 +42,8 @@ Conduct the structured interview before generating any artifacts. Ask questions 
 2. What specific business problem or scenario does this agent address?
 3. What are the business KPIs associated with this agent (for example, increase revenue, decrease costs, transform business process)?
 4. What tasks is this agent designed to perform? What is explicitly out of scope?
-5. What are key risks (Responsible AI Framework) in implementing this agent (for example, PII vulnerabilities, negative impact from model inaccuracy)?
-6. Who are the primary users of this agent?
+5. What are key risks (Responsible AI Framework) in implementing this agent (for example, PII vulnerabilities, negative impact from model inaccuracy)? Each risk named here drives metric selection and appears in the evaluation guide's Responsible AI Risks mapping.
+6. Who are the primary users of this agent? Name each distinct user population, not only job titles. These populations key `metadata.population_coverage` and define the groups the Fairness metric compares.
 7. How likely is this agent to be adopted by primary users? What are barriers to adoption?
 
 
@@ -93,6 +91,9 @@ Generate evaluation datasets following these specifications.
 * Minimum 30 Q&A pairs total, distributed across scenarios and agent user personas, for meaningful evaluation.
 * Balanced distribution: easy (20%), grounding_source_checks (10%), hard (40%), negative/error conditions (20%), safety (10%). Adjust these percentages when the interview reveals agent-specific needs: increase safety for agents handling PII or medical data, increase grounding_source_checks for agents with many knowledge bases, or increase negative for agents with strict refusal requirements. Keep each category at 5% or above. Round fractional pair counts to the nearest integer, preserving the total count.
 * Include metadata: category, difficulty, expected tools (if applicable), source references.
+* Cover every user population named in the interview. Record the pair count per population in `metadata.population_coverage`. Population is an axis of its own: never express it as a `difficulty` value or as a `distribution` key.
+* Record provenance in `metadata`. Set `validation_status` to `ai-generated`, `expert-reviewed`, or `mixed`, defaulting to `ai-generated`, and set `generation_method` to the workflow that produced the pairs.
+* Synthesize every pair. Never reproduce a real customer record or personal data from an interview answer or a grounding source. For safety and negative pairs, record the disallowed request category and the expected refusal or redirect, never the prohibited content itself.
 
 #### JSON Format
 
@@ -111,9 +112,14 @@ Generate evaluation datasets following these specifications.
       "negative": 0,
       "safety": 0
     },
+    "population_coverage": {
+      "{user-population}": 0
+    },
     "persona": "citizen-developer|pro-code",
     "evaluation_mode": ["manual|batch"],
-    "recommended_tool": "copilot-studio|azure-ai-foundry"
+    "recommended_tool": "copilot-studio|azure-ai-foundry",
+    "validation_status": "ai-generated|expert-reviewed|mixed",
+    "generation_method": "interview-driven-ai-generation"
   },
   "evaluation_pairs": [
     {
@@ -178,41 +184,47 @@ After incorporating feedback, ask:
 
 ### Phase 7: Documentation and Finalization
 
-Generate the three supporting documents in `data/evaluation/docs/`, then present a summary of all generated artifacts for user validation.
+Generate the consolidated evaluation guide in `data/evaluation/docs/`, then present a summary of all generated artifacts for user validation.
 
-#### Curation Notes Document
+#### Evaluation Guide Document
 
-<!-- <curation-notes-template> -->
+Write one `{agent-name}-eval-guide.md` containing the `## Curation Notes`, `## Metric Selection`, and `## Tool Recommendations` sections.
+
+<!-- <eval-guide-template> -->
 ```markdown
-# Curation Notes: {Agent Name}
+# Evaluation Guide: {Agent Name}
 
-## Business Context
+## Curation Notes
+
+### Business Context
 
 {Business problem and scenario description from interview}
 
-## Agent Scope
+### Agent Scope
 
-### In Scope
+#### In Scope
 
 {Tasks the agent handles}
 
-### Out of Scope
+#### Out of Scope
 
 {Explicit exclusions}
 
-## Data Sources
+### Data Sources
 
 {Grounding sources, knowledge bases, APIs used}
 
-## Curation Process
+### Curation Process
 
-### Domain Expert Review
+#### Domain Expert Review
 
 - [ ] Q&A pairs reviewed for accuracy
 - [ ] Answers aligned with official sources
 - [ ] Edge cases validated
 
-### Dataset Balance
+A domain expert who checks these boxes updates `metadata.validation_status` to `expert-reviewed`, or to `mixed` when only part of the dataset was reviewed.
+
+#### Dataset Balance
 
 - Easy scenarios: {count}
 - Grounding source checks: {count}
@@ -220,22 +232,15 @@ Generate the three supporting documents in `data/evaluation/docs/`, then present
 - Negative/error conditions: {count}
 - Safety scenarios: {count}
 
-## Maintenance Schedule
+### Maintenance Schedule
 
 - [ ] Review and update dataset after major agent changes
 - [ ] Re-evaluate Q&A pairs quarterly
 - [ ] Version dataset on significant updates
 
-```
-<!-- </curation-notes-template> -->
+## Metric Selection
 
-#### Metric Selection Document
-
-<!-- <metric-selection-template> -->
-```markdown
-# Metric Selection: {Agent Name}
-
-## Agent Characteristics
+### Agent Characteristics
 
 | Characteristic         | Value  | Metrics Implications                           |
 |------------------------|--------|------------------------------------------------|
@@ -244,9 +249,17 @@ Generate the three supporting documents in `data/evaluation/docs/`, then present
 
 Infer metric priority and rationale from interview context: the agent's business KPIs, risk profile, grounding sources, tool usage, and evaluation scenarios.
 
-## Selected Metrics
+### Responsible AI Risks
 
-### Core Metrics (All Agents)
+Map every risk named in the interview to the metric selected to detect it. A risk with no detecting metric is an unmeasured risk; state that explicitly rather than omitting the row.
+
+| Risk   | Source               | Detecting Metric |
+|--------|----------------------|------------------|
+| {risk} | Interview Question 5 | {metric}         |
+
+### Selected Metrics
+
+#### Core Metrics (All Agents)
 
 | Metric            | Priority | Rationale   |
 |-------------------|----------|-------------|
@@ -255,7 +268,7 @@ Infer metric priority and rationale from interview context: the agent's business
 | Latency           | Medium   | {rationale} |
 | Token Cost        | Medium   | {rationale} |
 
-### Source-Based Metrics
+#### Source-Based Metrics
 
 | Metric                | Priority   | Rationale   |
 |-----------------------|------------|-------------|
@@ -263,13 +276,21 @@ Infer metric priority and rationale from interview context: the agent's business
 | Relevance             | {priority} | {rationale} |
 | Response Completeness | {priority} | {rationale} |
 
-### Tool-Based Metrics
+#### Tool-Based Metrics
 
 | Metric             | Priority   | Rationale   |
 |--------------------|------------|-------------|
 | Tool Call Accuracy | {priority} | {rationale} |
 
-## Metric Definitions Reference
+#### Responsibility and Safety Metrics
+
+| Metric                     | Priority   | Rationale   |
+|----------------------------|------------|-------------|
+| Fairness                   | {priority} | {rationale} |
+| Harmful Content            | {priority} | {rationale} |
+| Groundedness (Adversarial) | {priority} | {rationale} |
+
+### Metric Definitions Reference
 
 * Intent Resolution: Measures how well the system identifies and understands user requests.
 * Task Adherence: Measures alignment with assigned tasks and available tools.
@@ -279,58 +300,55 @@ Infer metric priority and rationale from interview context: the agent's business
 * Response Completeness: Captures recall aspect of response alignment.
 * Latency: Time to complete task.
 * Token Cost: Cost for task completion.
-```
-<!-- </metric-selection-template> -->
+* Fairness: Measures whether response quality holds across the user populations the agent serves, rather than degrading for a subset.
+* Harmful Content: Measures whether responses avoid generating content in the categories the agent must never produce.
+* Groundedness (Adversarial): Measures whether grounding holds when a query is framed to induce fabrication or to bypass a refusal.
 
-#### Tool Recommendations Document
+## Tool Recommendations
 
-<!-- <tool-recommendations-template> -->
-```markdown
-# Tool Recommendations: {Agent Name}
-
-## Persona Profile
+### Persona Profile
 
 * Skill Level: Citizen Developer / Pro-Code Developer
 * Evaluation Mode: Manual / Batch / Both
 
-## Recommended Tool
+### Recommended Tool
 
-### {Recommended Tool Name}
+#### {Recommended Tool Name}
 
 Selection Rationale: {Why this tool fits the persona and requirements}
 
-## Tool Comparison
+### Tool Comparison
 
 | Tool                 | Evaluation Modes | Supported Metrics                                                                                                                         | Recommendation                                    |
 |----------------------|------------------|-------------------------------------------------------------------------------------------------------------------------------------------|---------------------------------------------------|
 | MCS Agent Evaluation | Manual, Batch    | Relevance, Response Completeness, Groundedness                                                                                            | Best for: POC, manual testing, Citizen Developers |
 | Azure AI Foundry     | Manual, Batch    | Intent Resolution, Task Adherence, Tool Call Accuracy, Groundedness, Relevance, Response Completeness, Latency, Cost, Risk/Safety, Custom | Best for: Enterprise, Pro-Code Developers         |
 
-## Getting Started
+### Getting Started
 
-### For Citizen Developers (MCS)
+#### For Citizen Developers (MCS)
 
 1. Access Microsoft Copilot Studio evaluation features
 2. Import the generated CSV dataset
 3. Run manual evaluation on sample queries
 4. Review general quality metrics
 
-### For Pro-Code Developers (Azure AI Foundry)
+#### For Pro-Code Developers (Azure AI Foundry)
 
 1. Configure Azure AI Foundry project
 2. Upload JSON dataset to evaluation pipeline
-3. Configure metric evaluators based on selection document
+3. Configure metric evaluators based on the Metric Selection section
 4. Run batch evaluation
 5. Analyze comprehensive metric results
 
-## Next Steps
+### Next Steps
 
 - [ ] Import dataset to selected tool
 - [ ] Run initial evaluation batch
 - [ ] Review results with domain expert
 - [ ] Iterate on dataset based on findings
 ```
-<!-- </tool-recommendations-template> -->
+<!-- </eval-guide-template> -->
 
 ## Required Protocol
 
@@ -345,3 +363,4 @@ Selection Rationale: {Why this tool fits the persona and requirements}
 9. Tailor metric selection based on agent characteristics discovered during the interview, and recommend tooling based on the stated persona.
 10. After generating all documentation, present a summary listing every artifact created with its path.
 11. Ensure all outputs are saved to the correct locations in the `data/evaluation/` directory.
+12. State that the dataset is provisional while `validation_status` is `ai-generated`: its expected responses are AI-authored and are not verified ground truth until a domain expert reviews them and the status is updated.

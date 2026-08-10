@@ -1,7 +1,7 @@
 ---
-title: powerpoint
-description: PowerPoint slide deck generation and management using python-pptx with YAML-driven content and styling
-sidebar_position: 6
+title: demo-video
+description: Assemble ordered frames or clips with narration into a narrated MP4 via FFmpeg
+sidebar_position: 4
 ms.date: 2026-08-06
 ---
 
@@ -9,15 +9,15 @@ ms.date: 2026-08-06
 | Field       | Value                                                                        |
 |-------------|------------------------------------------------------------------------------|
 | Kind        | skill                                                                        |
-| Source      | `.github/skills/experimental/powerpoint`                                     |
-| Invocation  | Invoked directly as `/powerpoint`, or loaded on demand by referencing agents |
+| Source      | `.github/skills/experimental/demo-video`                                     |
+| Invocation  | Invoked directly as `/demo-video`, or loaded on demand by referencing agents |
 | Interactive | No                                                                           |
 <!-- END AUTO-GENERATED: metadata -->
 
 ## What it does
 
 <!-- BEGIN AUTO-GENERATED: overview -->
-PowerPoint slide deck generation and management using python-pptx with YAML-driven content and styling
+Assemble ordered frames or clips with narration into a narrated MP4 via FFmpeg
 <!-- END AUTO-GENERATED: overview -->
 
 ## When to use it
