@@ -2,7 +2,7 @@
 title: Dev Container
 description: Pre-configured development environment for HVE Core with all required tools and extensions
 author: HVE Core Team
-ms.date: 2026-08-05
+ms.date: 2026-08-10
 ms.topic: guide
 keywords:
   - devcontainer
@@ -41,11 +41,12 @@ A pre-configured development environment that includes all tools, extensions, an
    * Select **Dev Containers: Reopen in Container**
    * Wait for the container to build (first time takes 5-10 minutes)
 
-If your network blocks public package registries, the container build fails to
-install dependencies. Set the package registry variables in the host
-environment before launching VS Code and rebuilding the container. The
-DevContainer passes them to the Dockerfile as build arguments and persists
-them for commands inside the container. See
+If your network blocks public package registries, the lifecycle commands that
+run after container creation can fail to install dependencies. Set the package
+registry variables in the host environment before launching VS Code and
+rebuilding the container. The dev container passes them to the Dockerfile as
+build arguments, and the Dockerfile persists them for lifecycle and interactive
+commands inside the container. See
 [Install behind a restricted network](../docs/contributing/validation.md#install-behind-a-restricted-network).
 
 ## Included Tools

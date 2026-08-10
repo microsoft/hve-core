@@ -3,7 +3,7 @@ title: Validation Commands and CI-Owned Lanes
 description: Choose local-safe validation defaults and reproduce CI-owned documentation and evaluation lanes when their prerequisites are available
 sidebar_position: 12
 author: Microsoft
-ms.date: 2026-08-05
+ms.date: 2026-08-10
 ms.topic: how-to
 keywords:
   - validation
@@ -113,14 +113,18 @@ npm ci
 
 ### Dev container build and runtime variables
 
-The dev container needs the proxy at image-build time as well as at runtime so
-that any `pip`, `uv`, or `npm` step baked into the image resolves through the
-proxy. `.devcontainer/devcontainer.json` reads `NPM_CONFIG_REGISTRY`,
+`.devcontainer/devcontainer.json` reads `NPM_CONFIG_REGISTRY`,
 `PIP_INDEX_URL`, and `UV_DEFAULT_INDEX` from the host with
 `${localEnv:VAR}` and passes them as `build.args` to
 `.devcontainer/Dockerfile`. The Dockerfile declares matching `ARG` and `ENV`
-entries, persists the selected values in the image for runtime commands, and
+entries, persists the selected values for commands inside the container, and
 falls back to each public registry when the build argument is empty.
+
+The current Dockerfile does not install project packages. Dependency
+installation occurs after the container is created: `onCreateCommand` runs
+`.devcontainer/scripts/on-create.sh`, and `updateContentCommand` runs `npm ci`.
+The persisted registry values configure those lifecycle commands as well as
+later interactive commands.
 
 Set the variables in the host environment before launching VS Code and
 rebuilding the container. The npm build argument uses uppercase
@@ -150,28 +154,42 @@ There is no repository file to edit.
 
 ### Codespaces
 
-For Codespaces, create
+For a codespace created directly for your account, create
 [development environment secrets](https://docs.github.com/en/codespaces/managing-your-codespaces/managing-your-account-specific-secrets-for-github-codespaces)
 named `NPM_CONFIG_REGISTRY`, `PIP_INDEX_URL`, and `UV_DEFAULT_INDEX`. These
-values are available to `updateContentCommand`, including its `npm ci`, and to
-later commands inside the running codespace.
+values become environment variables when the codespace is created or restarted.
 
-Codespaces secrets are not available while the image is built. They cannot
-redirect a package download performed by a Dockerfile `RUN` instruction or
-another image-build step. Use an organization-approved prebuilt image or other
-build infrastructure when the image build itself requires authenticated
-package access.
+Do not rely on account-specific secrets in `onCreateCommand` or
+`updateContentCommand` when the repository uses Codespaces prebuilds. Those
+commands can run while the shared prebuild is created, before an individual
+user's secrets are available. Repository or organization administrators must
+configure any secrets required by the prebuild, or secret-dependent setup must
+run after the user creates the codespace. Account-specific secrets are
+available to `postCreateCommand` and later commands in the user's codespace.
+
+Account-specific Codespaces secrets are not available while the image is
+built. They cannot redirect a package download performed by a Dockerfile `RUN`
+instruction or another image-build step. Use an organization-approved prebuilt
+image or other build infrastructure when the image build itself requires
+authenticated package access.
 
 The committed `.npmrc` sets `replace-registry-host=always`, so npm rewrites each
 lockfile tarball host to the configured registry at fetch time only. `npm ci`
 never writes `package-lock.json`, and it still verifies every download against
 the committed `sha512` integrity value.
 
-Restrict proxied installs to restore commands. `npm ci`, `uv sync --frozen`, and
-`pip install -r` read committed lockfiles and verify committed hashes. Commands
-that resolve dependencies, such as `npm install`, `npm update`, `npm audit fix`,
-`uv lock`, and `uv add`, write the proxy's own URLs into the lockfile and can
-downgrade npm integrity from `sha512` to `sha1`. Run
+Restrict proxied installs to restore commands. `npm ci` verifies downloads
+against the committed integrity values, and `uv sync --frozen` installs without
+updating the lockfile. A plain `pip install -r` verifies committed hashes only
+when the requirements file contains hashes and hash-checking mode is enabled,
+for example with `--require-hashes`. Commands that resolve dependencies, such
+as `npm install`, `npm update`, `npm audit fix`, `uv lock`, and `uv add`, write
+the proxy's own URLs into the lockfile and can downgrade npm integrity from
+`sha512` to `sha1`.
+
+The dev container's skill setup currently runs plain `uv sync`, which may
+update a lockfile; the moderation environment uses `uv sync --locked`. Inspect
+lockfile changes after container setup and run
 `npm run lint:public-dependency-feeds` if you suspect a lockfile picked up a
 non-public source.
 
