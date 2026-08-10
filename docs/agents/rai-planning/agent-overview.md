@@ -52,7 +52,7 @@ flowchart TD
   RP -->|"uses"| S2
 ```
 
-The RAI Planner agent definition lives at `.github/agents/rai-planning/rai-planner.agent.md`. Two instruction files under `.github/instructions/rai-planning/` provide domain-specific guidance, auto-applied via `applyTo` patterns when working within `.copilot-tracking/rai-plans/`. Phase-specific assessment guidance lives in the shared `backlog-templates` skill and the `rai-standards` skill.
+The RAI Planner agent definition lives at `.github/agents/rai-planning/rai-planner.agent.md`. Two instruction files under `.github/instructions/rai-planning/` provide domain-specific guidance, auto-applied via `applyTo` patterns when working within `.copilot-tracking/rai-plans/`. Phase-specific assessment guidance lives in the `rai-planner` skill and the `rai-standards` skill.
 
 | Instruction file                      | Domain                                                                    |
 |---------------------------------------|---------------------------------------------------------------------------|
