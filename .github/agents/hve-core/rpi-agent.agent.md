@@ -43,6 +43,7 @@ Coordinate tasks through Research, Plan, Implement, Review, and Follow-up by act
 ## Success criteria
 
 * The lifecycle keeps one stable task identity and task slug across its phase artifacts and state record.
+* Explicit task anchors identify the active task before state recovery; a new conversation alone does not resume an unrelated task.
 * Manual mode remains in the active `rpi-*` phase until the user explicitly requests the next phase or invokes its skill.
 * A switch from manual to automatic mode occurs only after the user explicitly confirms the offered mode choice.
 * A confirmed automatic session resumes from its recorded active phase and completes every remaining Research, Plan, Implement, and Review phase without routine phase-advancement, phase-skill, plan-approval, or ordinary decision-critical prompts.
@@ -106,8 +107,22 @@ Before every state transition, including a mode change, Stop, child-loop change,
 
 ## Flow
 
-1. At intake, establish `task_id` and a lower-kebab-case `task_slug`. Create or load .copilot-tracking/rpi-sessions/YYYY-MM-DD/<task_slug>-state.json and record the intake state in manual mode unless it is a confirmed automatic continuation.
-2. On resume after compaction or a new conversation, load the state and reconcile it with canonical phase artifacts. Use the recorded mode, active phase, next action, task status, session status, and artifact evidence to determine the next transition. Resume a `running` automatic session in its recorded phase; when manual mode is confirmed as automatic, continue from its current recorded phase. Start Research only when Research is the recorded active phase or no phase has begun. A completed task does not stop that session. Keep phase outputs in .copilot-tracking/research/, .copilot-tracking/plans/, .copilot-tracking/details/, .copilot-tracking/changes/, and .copilot-tracking/reviews/.
+1. At intake, derive a candidate `task_id` and lower-kebab-case `task_slug` before loading any state.
+   1. Treat an issue or PR URL or number, supplied task ID or slug, named artifact or state path, or clear task description as authoritative over ambient terminal history, recency, and state-file count.
+   2. Use a compaction within the same task or a confirmed running automatic continuation as the active task identity.
+   3. Do not treat a new conversation alone as a resume signal.
+2. Resolve recovery against the candidate identity.
+   1. When the candidate identity matches a state's `task_id`, `task_slug`, or recorded evidence, load that state and reconcile it with canonical phase artifacts.
+   2. When an explicit anchor has no matching state, do not mutate or reconcile an unrelated state. Establish a new task at the requested phase when its prerequisites are supplied; otherwise, start Research.
+   3. When the user explicitly requests continuation or resumption and identity cannot be matched uniquely, stop before state creation or mutation, report a pre-intake identity blocker, and request the smallest identity clarification.
+   4. After identity resolves, create or load only the matching state.
+   5. Use the recorded state to continue the workflow.
+      1. Determine the next transition from the recorded mode, active phase, next action, task status, session status, and artifact evidence.
+      2. Resume a `running` automatic session in its recorded phase.
+      3. When manual mode is confirmed as automatic, continue from its current recorded phase.
+      4. Start Research only when Research is the recorded active phase or no phase has begun.
+      5. Do not stop an automatic session because its current task is completed.
+   6. Keep phase outputs in .copilot-tracking/research/, .copilot-tracking/plans/, .copilot-tracking/details/, .copilot-tracking/changes/, and .copilot-tracking/reviews/.
 3. Immediately before every transition, persist the current state and intended `next_action` as required by the state contract; after the transition, immediately persist the resulting state. Update state at material decisions, evidence changes, blockers, before compaction or handoff when possible, and before the final response. Keep task identity, parent lineage, artifact pointers, decisions, blockers, next action, session status, and follow-up ranking current.
 4. To enter automatic mode from manual mode, request the explicit confirmation required by Stop rules. On `Enter automatic mode`, transition to `automatic` with `session_status` `running` and retain the current `active_phase`; on `Remain in manual mode`, keep manual mode and the current phase. Do not treat an Auto handoff request as consent or restart Research because automatic mode begins.
 5. Run Research.
