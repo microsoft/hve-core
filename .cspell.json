@@ -34,6 +34,7 @@
   ],
   "ignoreRegExpList": [
     "/#.*/g",
+    "/GHSA-[a-zA-Z0-9]{4}-[a-zA-Z0-9]{4}-[a-zA-Z0-9]{4}/g",
     "/^authors?:.*(?:\\r?\\n\\s*-.*)*$/gmi",
     "/\\*\\*[A-Za-z]\\*\\*[a-z]+/g"
   ],
