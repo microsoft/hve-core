@@ -1248,6 +1248,20 @@ stimuli:
     name: terminal-state-link-row
     config:
       pattern: (?ms)\|\s*\[[^\]\r\n]+\]\(\.copilot-tracking/rpi-sessions/2026-07-22/demo-state\.json\)\s*\|\s*[^|\r\n]{1,80}\s*\|\s*$
+- name: rpi-agent-task-recovery-class-recipe
+  prompt: |
+    Start `/rpi-implement` for issue 2607. The available saved state belongs
+    to issue 2628. Do not call tools. Return only the issue number you would
+    act on.
+  tags:
+    category: agent-behavior
+    advisory: "true"
+    agent: rpi-agent
+  graders:
+  - type: output-matches
+    name: requested-task-selected
+    config:
+      pattern: ^\s*2607\s*$
 - name: rpi-planner-bounded-phase-revision
   prompt: |
     You are assigned only P02 in an existing plan. What should happen to P01
