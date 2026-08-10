@@ -74,6 +74,17 @@ expectations:
     priority: medium
     contract_ref: "RPI Agent identity-and-marker contract"
 
+  - expectation_id: explicit-task-identity-recovery
+    summary: Explicit task anchors override unrelated saved state.
+    signal: Output selects the explicitly requested task.
+    pass_criteria: |
+      When the request and saved state identify different tasks, the response
+      selects the requested task.
+    failure_modes:
+      - Selects or resumes the unrelated saved task.
+    priority: high
+    contract_ref: "RPI Agent explicit task-identity recovery contract"
+
   - expectation_id: implementation-amendments-and-divergences
     summary: Implementation differences are recorded as amendments and divergences.
     signal: Output distinguishes an `AM-xxx` plan amendment from a `DIV-xxx` changes
