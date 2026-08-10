@@ -326,16 +326,16 @@ jobs:
                   || { echo "::error::Dependency SBOM not found: sbom/dependencies.spdx.json"; exit 1; }
             - name: Attest build provenance
               id: attest
-              uses: actions/attest-build-provenance@0f67c3f4856b2e3261c31976d6725780e5e4c373 # v4.1.1
+              uses: actions/attest-build-provenance@4d101475d8b20a2381f78447822ac1eab6504dd8 # v4.2.2
               with:
                 subject-path: ${{ steps.vsix.outputs.file }}
             - name: Attest SBOM
-              uses: actions/attest@508db95dd578ae2727ebd6217d5ba78e4fbda05d # v4.2.1
+              uses: actions/attest@1e69f48acb82d1966a394da916b4c1698aa569d6 # v4.2.2
               with:
                 subject-path: ${{ steps.vsix.outputs.file }}
                 sbom-path: dist/${{ steps.vsix.outputs.name }}.spdx.json
             - name: Attest dependency SBOM
-              uses: actions/attest@508db95dd578ae2727ebd6217d5ba78e4fbda05d # v4.2.1
+              uses: actions/attest@1e69f48acb82d1966a394da916b4c1698aa569d6 # v4.2.2
               with:
                 subject-path: ${{ steps.vsix.outputs.file }}
                 sbom-path: sbom/dependencies.spdx.json
@@ -415,16 +415,16 @@ jobs:
                   || { echo "::error::Dependency SBOM not found: sbom/dependencies.spdx.json"; exit 1; }
             - name: Attest build provenance
               id: attest
-              uses: actions/attest-build-provenance@0f67c3f4856b2e3261c31976d6725780e5e4c373 # v4.1.1
+              uses: actions/attest-build-provenance@4d101475d8b20a2381f78447822ac1eab6504dd8 # v4.2.2
               with:
                 subject-path: dist/plugins/${{ matrix.id }}.zip
             - name: Attest SBOM
-              uses: actions/attest@508db95dd578ae2727ebd6217d5ba78e4fbda05d # v4.2.1
+              uses: actions/attest@1e69f48acb82d1966a394da916b4c1698aa569d6 # v4.2.2
               with:
                 subject-path: dist/plugins/${{ matrix.id }}.zip
                 sbom-path: dist/plugins/${{ matrix.id }}.zip.spdx.json
             - name: Attest dependency SBOM
-              uses: actions/attest@508db95dd578ae2727ebd6217d5ba78e4fbda05d # v4.2.1
+              uses: actions/attest@1e69f48acb82d1966a394da916b4c1698aa569d6 # v4.2.2
               with:
                 subject-path: dist/plugins/${{ matrix.id }}.zip
                 sbom-path: sbom/dependencies.spdx.json
