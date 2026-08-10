@@ -46,7 +46,7 @@
     "@types/jest": "30.0.0",
     "@types/jest-axe": "3.5.9",
     "@types/react": "19.2.18",
-    "@typescript-eslint/parser": "8.65.0",
+    "@typescript-eslint/parser": "8.66.0",
     "compression": "1.8.1",
     "eslint": "9.39.5",
     "eslint-plugin-jsx-a11y": "6.10.2",
