@@ -711,3 +711,134 @@ Describe 'component-copy PowerShell and Bash parity' -Tag 'Unit' -Skip:(-not $sc
         Test-Path -LiteralPath (Join-Path $script:bashFixture.Target '.github/agents') | Should -BeFalse
     }
 }
+
+Describe 'component-copy destination containment' -Tag 'Unit' {
+    BeforeEach {
+        $script:containmentFixture = New-ComponentCopyFixture
+        $script:outsideRoot = Join-Path $script:containmentFixture.Root 'outside'
+        New-Item -ItemType Directory -Path $script:outsideRoot -Force | Out-Null
+        Set-Content -LiteralPath (Join-Path $script:outsideRoot 'bystander.txt') -Value 'original' -NoNewline
+    }
+
+    It 'Refuses a component whose destination parent is a symbolic link' {
+        if (-not $script:containmentFixture.SymlinkAvailable) {
+            Set-ItResult -Skipped -Because 'symbolic links are unavailable'
+            return
+        }
+
+        $linkPath = Join-Path $script:containmentFixture.Target '.github/skills'
+        New-Item -ItemType Directory -Path (Split-Path $linkPath -Parent) -Force | Out-Null
+        New-Item -ItemType SymbolicLink -Path $linkPath -Target $script:outsideRoot -ErrorAction Stop | Out-Null
+
+        { Invoke-ComponentCopy -Fixture $script:containmentFixture -Component @('skills/rpi/rpi-plan') } |
+            Should -Throw -ExpectedMessage '*resolves through a link*'
+
+        # The escape is what matters, not only the exception: nothing may land
+        # outside the target root.
+        @(Get-ChildItem -LiteralPath $script:outsideRoot -File).Name | Should -Be @('bystander.txt')
+    }
+
+    It 'Refuses a component whose destination parent is a directory junction' {
+        $junctionPath = Join-Path $script:containmentFixture.Target '.github/skills'
+        New-Item -ItemType Directory -Path (Split-Path $junctionPath -Parent) -Force | Out-Null
+
+        # New-Item -ItemType Junction reports success on non-Windows hosts while
+        # creating nothing, so the junction is confirmed to exist and to carry
+        # the ReparsePoint attribute before the case is treated as applicable.
+        $junctionCreated = $false
+        try {
+            New-Item -ItemType Junction -Path $junctionPath -Target $script:outsideRoot -ErrorAction Stop | Out-Null
+            if (Test-Path -LiteralPath $junctionPath) {
+                $entry = Get-Item -LiteralPath $junctionPath -Force
+                $junctionCreated = [bool]($entry.Attributes -band [System.IO.FileAttributes]::ReparsePoint)
+            }
+        }
+        catch {
+            $junctionCreated = $false
+        }
+
+        if (-not $junctionCreated) {
+            Set-ItResult -Skipped -Because 'directory junctions are unavailable on this platform'
+            return
+        }
+
+        { Invoke-ComponentCopy -Fixture $script:containmentFixture -Component @('skills/rpi/rpi-plan') } |
+            Should -Throw -ExpectedMessage '*resolves through a link*'
+
+        @(Get-ChildItem -LiteralPath $script:outsideRoot -File).Name | Should -Be @('bystander.txt')
+    }
+
+    It 'Installs normally when no destination ancestor is a link' {
+        Invoke-ComponentCopy -Fixture $script:containmentFixture -Component @('skills/rpi/rpi-plan') | Out-Null
+
+        Test-Path -LiteralPath (Join-Path $script:containmentFixture.Target '.github/skills/rpi/rpi-plan/SKILL.md') |
+            Should -BeTrue
+    }
+
+    It 'Refuses a link planted between the preflight check and the write' {
+        if (-not $script:containmentFixture.SymlinkAvailable) {
+            Set-ItResult -Skipped -Because 'symbolic links are unavailable'
+            return
+        }
+
+        # Preflight passes because the path is clean, then the parent is
+        # replaced by a link before the copy. The write-site re-verification is
+        # the only thing standing between that race and an escaped write.
+        $agentsDir = Join-Path $script:containmentFixture.Target '.github/agents'
+        New-Item -ItemType Directory -Path $agentsDir -Force | Out-Null
+        Invoke-ComponentCopy -Fixture $script:containmentFixture -Component @('agents/hve-core/rpi-agent.md') | Out-Null
+
+        Remove-Item -LiteralPath $agentsDir -Recurse -Force
+        New-Item -ItemType SymbolicLink -Path $agentsDir -Target $script:outsideRoot -ErrorAction Stop | Out-Null
+
+        { Invoke-ComponentCopy -Fixture $script:containmentFixture -Component @('agents/hve-core/rpi-agent.md') } |
+            Should -Throw -ExpectedMessage '*resolves through a link*'
+
+        @(Get-ChildItem -LiteralPath $script:outsideRoot -File).Name | Should -Be @('bystander.txt')
+    }
+}
+
+Describe 'component-copy containment parity' -Tag 'Unit' -Skip:(-not $script:BashAvailable) {
+    BeforeEach {
+        $script:parityFixture = New-ComponentCopyFixture
+        $script:parityOutside = Join-Path $script:parityFixture.Root 'outside'
+        New-Item -ItemType Directory -Path $script:parityOutside -Force | Out-Null
+        Set-Content -LiteralPath (Join-Path $script:parityOutside 'bystander.txt') -Value 'original' -NoNewline
+    }
+
+    It 'Reaches the same refusal verdict in both shells for a symlinked destination parent' {
+        if (-not $script:parityFixture.SymlinkAvailable) {
+            Set-ItResult -Skipped -Because 'symbolic links are unavailable'
+            return
+        }
+
+        $linkPath = Join-Path $script:parityFixture.Target '.github/skills'
+        New-Item -ItemType Directory -Path (Split-Path $linkPath -Parent) -Force | Out-Null
+        New-Item -ItemType SymbolicLink -Path $linkPath -Target $script:parityOutside -ErrorAction Stop | Out-Null
+
+        $powerShellRefused = $false
+        try { Invoke-ComponentCopy -Fixture $script:parityFixture -Component @('skills/rpi/rpi-plan') | Out-Null }
+        catch { $powerShellRefused = $true }
+
+        $bashOutput = Invoke-BashComponentCopy -Fixture $script:parityFixture -Component @('skills/rpi/rpi-plan')
+        $bashRefused = $LASTEXITCODE -ne 0
+
+        # Behavioural equivalence is the contract; message text is not required
+        # to match between the two implementations.
+        $bashRefused | Should -Be $powerShellRefused
+        $bashOutput | Should -Match 'resolves through a link'
+        @(Get-ChildItem -LiteralPath $script:parityOutside -File).Name | Should -Be @('bystander.txt')
+    }
+
+    It 'Reaches the same accept verdict in both shells for a clean destination' {
+        Invoke-ComponentCopy -Fixture $script:parityFixture -Component @('agents/hve-core/rpi-agent.md') | Out-Null
+        $powerShellInstalled = Test-Path -LiteralPath (Join-Path $script:parityFixture.Target '.github/agents/hve-core/rpi-agent.agent.md')
+
+        $bashFixture = New-ComponentCopyFixture
+        Invoke-BashComponentCopy -Fixture $bashFixture -Component @('agents/hve-core/rpi-agent.md') | Out-Null
+        $bashInstalled = Test-Path -LiteralPath (Join-Path $bashFixture.Target '.github/agents/hve-core/rpi-agent.agent.md')
+
+        $bashInstalled | Should -Be $powerShellInstalled
+        $powerShellInstalled | Should -BeTrue
+    }
+}

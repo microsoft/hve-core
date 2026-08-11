@@ -3,7 +3,7 @@ title: Validation Commands and CI-Owned Lanes
 description: Choose local-safe validation defaults and reproduce CI-owned documentation and evaluation lanes when their prerequisites are available
 sidebar_position: 12
 author: Microsoft
-ms.date: 2026-07-28
+ms.date: 2026-08-10
 ms.topic: how-to
 keywords:
   - validation
@@ -64,9 +64,10 @@ dependencies available.
 
 ## Install behind a restricted network
 
-Some organizations block direct access to public package registries and require
-installs to route through an approved feed proxy. `npm ci` then fails to reach
-`registry.npmjs.org`, commonly with `ENOTCONN` or a connection timeout.
+Some organizations block direct access to public package registries, release
+downloads, or gallery endpoints and require installs to route through approved
+proxies. Restore commands can then fail to reach npm or Python package indexes,
+and DevContainer setup can fail while downloading tools or PowerShell modules.
 
 This repository commits a project-level `.npmrc` that pins the canonical public
 registry, and npm resolves configuration in the order `cli > env > project
@@ -76,11 +77,11 @@ and silently ignored. Set an environment variable or pass a CLI flag instead.
 Keep the proxy address out of the repository. It belongs in your own
 environment, never in a tracked file.
 
-| Environment                | Where the override belongs                                                            |
-|----------------------------|---------------------------------------------------------------------------------------|
-| macOS or Linux             | A file in your home directory sourced from `~/.zshrc` or `~/.bashrc`                  |
-| Windows                    | A PowerShell profile (`$PROFILE`) or a user environment variable                      |
-| Dev container or Codespace | The user-level `dev.containers.containerEnv` VS Code setting, not `devcontainer.json` |
+| Environment                | Where the override belongs                                                                  |
+|----------------------------|---------------------------------------------------------------------------------------------|
+| macOS or Linux             | A file in your home directory sourced from `~/.zshrc` or `~/.bashrc`                        |
+| Windows                    | A PowerShell profile (`$PROFILE`) or a user environment variable                            |
+| Dev container or Codespace | Host environment before container creation; `containerEnv` for runtime package indexes only |
 
 macOS and Linux:
 
@@ -96,15 +97,68 @@ $env:npm_config_registry = 'https://proxy.example.com/npm/'
 npm ci
 ```
 
-Dev container, in VS Code user settings so no repository file changes:
+Dev container runtime package indexes, in VS Code user settings so no
+repository file changes:
 
 ```json
 {
   "dev.containers.containerEnv": {
-    "npm_config_registry": "https://proxy.example.com/npm/"
+    "NPM_CONFIG_REGISTRY": "https://proxy.example.com/npm/",
+    "PIP_INDEX_URL": "https://proxy.example.com/pypi/simple/",
+    "UV_DEFAULT_INDEX": "https://proxy.example.com/pypi/simple/"
   }
 }
 ```
+
+### DevContainer build and setup overrides
+
+The repository DevContainer supports additional host-side overrides for
+container creation and setup. `.devcontainer/devcontainer.json` reads these
+values through `${localEnv:...}`, so define them before opening VS Code or
+rebuilding the container.
+
+| Variable                   | Purpose                                                    |
+|----------------------------|------------------------------------------------------------|
+| `HVE_DEVCONTAINER_IMAGE`   | Selects the base image used by the Dockerfile              |
+| `NPM_CONFIG_REGISTRY`      | Sets the npm registry in the built container               |
+| `PIP_INDEX_URL`            | Sets the pip-compatible Python package index               |
+| `UV_DEFAULT_INDEX`         | Sets the Python package index used by `uv`                 |
+| `HVE_GITHUB_RELEASES_URL`  | Redirects release binary downloads used by setup scripts   |
+| `HVE_GITHUB_API_URL`       | Redirects GitHub API requests made by security scripts     |
+| `HVE_PSGALLERY_REPOSITORY` | Selects the PowerShell repository used for module installs |
+| `HVE_PSGALLERY_SOURCE_URL` | Registers a custom PowerShell repository source URL        |
+
+macOS and Linux:
+
+```bash
+export HVE_DEVCONTAINER_IMAGE="registry.corp.example.com/devcontainers/base:2-jammy"
+export NPM_CONFIG_REGISTRY="https://proxy.example.com/npm/"
+export PIP_INDEX_URL="https://proxy.example.com/pypi/simple/"
+export UV_DEFAULT_INDEX="https://proxy.example.com/pypi/simple/"
+export HVE_GITHUB_RELEASES_URL="https://artifacts.corp.example.com/github-releases"
+export HVE_GITHUB_API_URL="https://github.corp.example.com/api/v3"
+export HVE_PSGALLERY_REPOSITORY="InternalGallery"
+export HVE_PSGALLERY_SOURCE_URL="https://packages.corp.example.com/powershell/"
+```
+
+Windows PowerShell:
+
+```powershell
+$env:HVE_DEVCONTAINER_IMAGE = 'registry.corp.example.com/devcontainers/base:2-jammy'
+$env:NPM_CONFIG_REGISTRY = 'https://proxy.example.com/npm/'
+$env:PIP_INDEX_URL = 'https://proxy.example.com/pypi/simple/'
+$env:UV_DEFAULT_INDEX = 'https://proxy.example.com/pypi/simple/'
+$env:HVE_GITHUB_RELEASES_URL = 'https://artifacts.corp.example.com/github-releases'
+$env:HVE_GITHUB_API_URL = 'https://github.corp.example.com/api/v3'
+$env:HVE_PSGALLERY_REPOSITORY = 'InternalGallery'
+$env:HVE_PSGALLERY_SOURCE_URL = 'https://packages.corp.example.com/powershell/'
+```
+
+Restart VS Code from the configured shell and run **Dev Containers: Rebuild
+Container**. Runtime `containerEnv` settings cannot change the base image
+because Docker resolves it before the container starts. See
+[Enterprise artifact hub](../customization/enterprise-artifact-hub) for the
+complete defaults, affected files, and security considerations.
 
 The committed `.npmrc` sets `replace-registry-host=always`, so npm rewrites each
 lockfile tarball host to the configured registry at fetch time only. `npm ci`

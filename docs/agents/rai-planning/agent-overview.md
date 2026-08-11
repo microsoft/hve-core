@@ -13,7 +13,7 @@ tags:
   - architecture
   - reference
 author: Microsoft
-ms.date: 2026-07-15
+ms.date: 2026-08-03
 ms.topic: reference
 estimated_reading_time: 7
 ---
@@ -52,7 +52,7 @@ flowchart TD
   RP -->|"uses"| S2
 ```
 
-The RAI Planner agent definition lives at `.github/agents/rai-planning/rai-planner.agent.md`. Two instruction files under `.github/instructions/rai-planning/` provide domain-specific guidance, auto-applied via `applyTo` patterns when working within `.copilot-tracking/rai-plans/`. Phase-specific assessment guidance lives in the shared `backlog-templates` skill and the `rai-standards` skill.
+The RAI Planner agent definition lives at `.github/agents/rai-planning/rai-planner.agent.md`. Two instruction files under `.github/instructions/rai-planning/` provide domain-specific guidance, auto-applied via `applyTo` patterns when working within `.copilot-tracking/rai-plans/`. Phase-specific assessment guidance lives in the `rai-planner` skill and the `rai-standards` skill.
 
 | Instruction file                      | Domain                                                                    |
 |---------------------------------------|---------------------------------------------------------------------------|
@@ -151,20 +151,22 @@ When conversation context is compacted, a six-step recovery process reconstructs
 
 * All files are created under `.copilot-tracking/rai-plans/{project-slug}/`
 * The agent never modifies application source code
-* Embedded standards (NIST AI RMF 1.0) are referenced from the rai-standards instruction file
+* Embedded standards (NIST AI RMF 1.0) are referenced from the `rai-standards` skill
 * Additional framework lookups (WAF, CAF, ISO 42001, EU AI Act details) activate `rpi-research`
 * In `from-security-plan` mode, security plan artifacts are read-only
 
 ## Related Files
 
-| File                                                                 | Purpose                           |
-|----------------------------------------------------------------------|-----------------------------------|
-| `.github/agents/rai-planning/rai-planner.agent.md`                   | Agent definition                  |
-| `.github/instructions/rai-planning/*.instructions.md`                | Phase-specific instruction files  |
-| `.github/prompts/rai-planning/rai-capture.prompt.md`                 | Capture mode entry prompt         |
-| `.github/prompts/rai-planning/rai-plan-from-prd.prompt.md`           | PRD-seeded entry prompt           |
-| `.github/prompts/rai-planning/rai-plan-from-security-plan.prompt.md` | Security plan-seeded entry prompt |
-| `.copilot-tracking/rai-plans/{project-slug}/state.json`              | Assessment state                  |
+| File                                                                 | Purpose                             |
+|----------------------------------------------------------------------|-------------------------------------|
+| `.github/agents/rai-planning/rai-planner.agent.md`                   | Agent definition                    |
+| `.github/agents/rai-planning/rai-reviewer.agent.md`                  | Reviewer agent orchestrator         |
+| `.github/agents/rai-planning/subagents/rai-skill-assessor.agent.md`  | Skill assessor subagent             |
+| `.github/instructions/rai-planning/*.instructions.md`                | Identity and licensing instructions |
+| `.github/prompts/rai-planning/rai-capture.prompt.md`                 | Capture mode entry prompt           |
+| `.github/prompts/rai-planning/rai-plan-from-prd.prompt.md`           | PRD-seeded entry prompt             |
+| `.github/prompts/rai-planning/rai-plan-from-security-plan.prompt.md` | Security plan-seeded entry prompt   |
+| `.copilot-tracking/rai-plans/{project-slug}/state.json`              | Assessment state                    |
 
 <!-- markdownlint-disable MD036 -->
 *🤖 Crafted with precision by ✨Copilot following brilliant human instruction,

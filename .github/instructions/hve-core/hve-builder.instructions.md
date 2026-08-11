@@ -194,9 +194,20 @@ The Agent Skills specification defines the portable skill fields; hosts add thei
 ## Referencing Other Artifacts
 
 * Refer to a skill, agent, subagent, or prompt by the `name:` value from its frontmatter wrapped in backticks (for example, run `HVE Builder` or route to the `hve-builder` skill), not by a hard-coded path.
-* Instruction files have no `name:`, so refer to them by their full `<name>.instructions.md` filename, naming the specific section when only part applies.
+* Refer to an instruction file by its full `<name>.instructions.md` filename, naming the specific section when only part applies. Instruction files carry an optional `name:`, but hosts attach them by `applyTo` glob or description match rather than by that value, so the filename is the stable reference.
+* Refer to a prompt whose frontmatter omits `name:` by its `<name>.prompt.md` filename, because the host derives the slash command from the filename stem in that case.
 * Reserve file paths for a skill's own bundled resources (relative to its root), for caller-defined tracking or evidence output locations, and for frontmatter wiring such as `agents:`, `agent:`, and `applyTo`.
 * Never hard-code a skill's `SKILL.md` path to load it; the skill root differs across distributions. Name the skill and let progressive disclosure load it.
+* Never hard-code a path into another skill's directory. Cross-skill references name the target skill and the section or reference wanted, so resolution stays correct across repository, extension, and plugin distributions.
+
+### Handling an Unavailable Reference
+
+Hosts attach artifacts; an agent cannot query the host for what is installed. Treat a named artifact as available only when its content is actually present in the current turn, and handle absence explicitly rather than silently.
+
+* Do not claim to have searched for or verified an artifact. Depend on content that arrived, not on a reference alone.
+* When the content is not present, say which artifact was expected, which capability is unavailable, and the concrete effect on the current request.
+* Stop a step that depends on a required artifact rather than substituting a different one, reimplementing its behavior inline, or falling back to a hard-coded path. Continue and state the degradation when the artifact is optional.
+* Never report a clean or passing result for work that depended on an artifact whose content never arrived. Record the expected name and the condition under which the step can be rerun.
 
 ## Tool Schemas and Structured Outputs
 

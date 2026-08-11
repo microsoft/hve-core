@@ -82,6 +82,43 @@ function ConvertTo-InstallerTimestamp {
     return [string]$Value
 }
 
+# Containment is decided by resolved path and real filesystem state, never by the
+# shape of a joined string. A prefix test alone is close to a tautology because
+# the candidate was built by joining onto the base, and it also admits a sibling
+# directory whose name merely starts with the base name.
+#
+# ReparsePoint is the portable primitive here: on Windows it covers both symbolic
+# links and directory junctions, and on other platforms PowerShell reports POSIX
+# symlinks with the same attribute. Resolve-Path is deliberately not used, because
+# it resolves links rather than reporting them and cannot inspect a path whose
+# leaf does not exist yet.
+function Assert-WithinTargetRoot {
+    param(
+        [Parameter(Mandatory)][string]$Base,
+        [Parameter(Mandatory)][string]$RelativePath,
+        [Parameter(Mandatory)][string]$Component
+    )
+
+    $separator = [System.IO.Path]::DirectorySeparatorChar
+    $full = [System.IO.Path]::GetFullPath((Join-Path $Base $RelativePath))
+    if (-not ($full + $separator).StartsWith(($Base.TrimEnd($separator) + $separator), [System.StringComparison]::Ordinal)) {
+        throw "Component '$Component' resolves outside the target root."
+    }
+
+    $current = $Base
+    foreach ($segment in ($RelativePath -split '[\\/]')) {
+        if ([string]::IsNullOrEmpty($segment)) { continue }
+        $current = Join-Path $current $segment
+        if (-not (Test-Path -LiteralPath $current)) { break }
+        $entry = Get-Item -LiteralPath $current -Force
+        if ($entry.Attributes -band [System.IO.FileAttributes]::ReparsePoint) {
+            throw "Component '$Component' resolves through a link at '$current', which may write outside the target root."
+        }
+    }
+
+    return $full
+}
+
 $schemaVersion = 2
 # Local environment, cache, and test directories are never distributed, matching
 # the extension skill-materialization exclusions.
@@ -196,10 +233,9 @@ foreach ($raw in $Component) {
     }
     $sourceRelative = "$($descriptor.Root)/$relative"
     $sourceFull = Join-Path $sourceRoot $sourceRelative
-    $targetFull = Join-Path $targetBase $sourceRelative
-    if (-not $targetFull.StartsWith($targetBase, [System.StringComparison]::Ordinal)) {
-        throw "Component '$normalized' resolves outside the target root."
-    }
+    # Preflight bounds the component; the resolved path is recomputed at the
+    # write site, so only the assertion's failure behaviour is needed here.
+    Assert-WithinTargetRoot -Base $targetBase -RelativePath $sourceRelative -Component $normalized | Out-Null
     if (-not $seenTargets.Add($sourceRelative)) {
         throw "Component '$normalized' resolves to duplicate target '$sourceRelative'."
     }
@@ -286,7 +322,10 @@ foreach ($componentPath in $componentOrder) {
             continue
         }
         $sourceFile = Join-Path $sourceRoot $file
-        $targetFile = Join-Path $targetBase $file
+        # Re-verified immediately before the write. Preflight ran earlier, so a
+        # link planted in between would otherwise be honoured by Copy-Item. This
+        # narrows that window; it does not make the check and the write atomic.
+        $targetFile = Assert-WithinTargetRoot -Base $targetBase -RelativePath $file -Component $item.Component
         $targetParent = Split-Path -Parent $targetFile
         if (-not (Test-Path -LiteralPath $targetParent -PathType Container)) {
             New-Item -ItemType Directory -Path $targetParent -Force | Out-Null
