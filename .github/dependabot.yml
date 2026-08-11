@@ -73,12 +73,3 @@ updates:
     day: monday
     interval: weekly
 version: 2
-  - package-ecosystem: "github-actions"
-    directory: "/"
-    groups:
-      github-actions:
-        patterns: ["*"]
-    schedule:
-      interval: "weekly"
-    cooldown:
-      default-days: 7
