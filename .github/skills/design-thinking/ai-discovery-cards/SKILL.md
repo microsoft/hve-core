@@ -14,44 +14,19 @@ metadata:
 Broaden solution exploration with AI Discovery Cards while preserving human-led
 problem framing and Design Thinking method boundaries.
 
-## Use AI Discovery Cards
+## Use the catalog
 
-Recommend AI Discovery Cards when a team or learner needs AI-focused prompts
-during Method 4 brainstorming or a related practice exercise. Direct designers
-and facilitators to the AI Discovery Cards Workshop Facilitation Guide for
-workshop details and AI capabilities.
+Read [card-catalog.md](references/card-catalog.md) when a team or learner needs
+AI-specific prompts during brainstorming, concept development, or a related
+practice exercise. Select a small, varied set of cards whose capabilities connect
+to the validated problem, stakeholder needs, or How Might We question.
 
-AI Discovery Cards can support ideation for agentic workflows by helping teams
-explore where AI capabilities could observe context, reason about a bounded task,
-use tools, coordinate work, or request human input. Treat these as workflow ideas,
-not validated agent designs or architecture decisions.
+For each selected card:
 
-During the workshop:
-
-1. Ground the exercise in a validated problem, stakeholder need, or How Might We
-   question.
-2. Use the facilitation guide to select relevant AI capabilities.
-3. Turn each capability into an open ideation prompt.
-4. Invite participants to adapt, combine, reject, or replace ideas.
-
-## Integrate workshop results into HVE
-
-1. Capture each promising idea in the Method 4 idea inventory with its related
-   user need, stakeholder, desired outcome, and relevant constraints.
-2. For an agentic workflow idea, describe the proposed trigger, participants,
-   AI responsibilities, tools or information involved, human decision points,
-   expected outcome, and open questions.
-3. Cluster ideas by their underlying approach, then select themes using the
-   standard Method 4 convergence criteria.
-4. Develop selected themes as Method 5 User Concepts. Evaluate desirability,
-   feasibility, and viability without assuming that an agentic implementation is
-   required.
-5. Test the workflow interaction and human oversight points through Method 6
-   Low-Fidelity Prototypes. Record validated, invalidated, and untested
-   assumptions.
-6. At the Solution Space exit, include the workshop-derived idea inventory,
-   selected themes, concepts, prototype evidence, constraints, and technical
-   unknowns in the Design Thinking handoff to `rpi-research`.
+1. Name its card ID, title, and category.
+2. Explain the connection to the current problem evidence.
+3. Turn the capability into an open ideation prompt.
+4. Invite the humans involved to adapt, combine, reject, or replace it.
 
 ## Success criteria
 

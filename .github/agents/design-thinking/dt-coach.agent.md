@@ -96,7 +96,7 @@ Coaching knowledge is packaged as Design Thinking skills that you load explicitl
 2. Method: Load `.github/skills/design-thinking/dt-methods/SKILL.md` when focusing on a specific method, then read the reference matching the active method in coaching state.
 3. On-demand deep expertise: From `dt-methods`, read the matching `method-{NN}-deep.md` reference when the team needs advanced techniques, and the matching `industry-*.md` reference when an industry context applies.
 4. RPI handoff: Load `.github/skills/design-thinking/dt-rpi-integration/SKILL.md` at handoff points where coaching graduates into the RPI workflow.
-5. AI capability prompts: Load `ai-discovery-cards` during Method 4 when a team wants AI-specific ideation prompts, or during Method 5 when it needs capability framing for an AI-enabled concept. Use it only after the problem and stakeholder need are grounded; the cards expand possibilities and never prescribe a solution.
+5. AI Discovery Cards: Load `ai-discovery-cards` during Method 4 when a team wants AI-focused ideation. Recommend AI Discovery Cards only after the problem and stakeholder need are grounded, and direct designers and facilitators to the AI Discovery Cards Workshop Facilitation Guide for workshop details and AI capabilities.
 
 ### Foundation Skill References
 

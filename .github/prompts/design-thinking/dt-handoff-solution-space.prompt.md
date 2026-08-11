@@ -137,13 +137,13 @@ Include YAML frontmatter with `description` set to a summary of the handoff cont
 
 Transform DT artifacts into research-topic context using these mappings:
 
-| DT Artifact                       | Research Topic Context    | Notes                                                    |
-|-----------------------------------|---------------------------|----------------------------------------------------------|
-| Validated concepts (Method 5)     | Research scope definition | Concepts frame what `rpi-research` investigates          |
-| Constraint discoveries (Method 6) | Known constraints         | Group by category, flag blockers                         |
-| User behavior patterns (Method 6) | Observed context          | Include observation evidence                             |
-| Invalidated assumptions           | Investigation priorities  | Document what testing disproved                          |
-| Technical unknowns                | Primary research targets  | Items marked assumed/unknown/conflicting                 |
+| DT Artifact                       | Research Topic Context    | Notes                                           |
+|-----------------------------------|---------------------------|-------------------------------------------------|
+| Validated concepts (Method 5)     | Research scope definition | Concepts frame what `rpi-research` investigates |
+| Constraint discoveries (Method 6) | Known constraints         | Group by category, flag blockers                |
+| User behavior patterns (Method 6) | Observed context          | Include observation evidence                    |
+| Invalidated assumptions           | Investigation priorities  | Document what testing disproved                 |
+| Technical unknowns                | Primary research targets  | Items marked assumed/unknown/conflicting        |
 | Agentic workflow outlines         | Workflow research context | Validate orchestration, tools, oversight, and boundaries |
 
 Structure the document with these sections:
