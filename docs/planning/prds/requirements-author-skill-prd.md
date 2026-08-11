@@ -1,9 +1,9 @@
 ---
 prd_id: "PRD-2026-Q2-REQUIREMENTS-AUTHOR"
 title: "Requirements-Author Shared Skill Product Requirements"
-description: "Product Requirements Document for the requirements-author shared skill, defining product goals, functional requirements, and acceptance criteria for the unified BRD and PRD authoring capability consumed by the project-planning collection agents."
+description: "Product Requirements Document for the requirements-author shared skill, defining product goals, functional requirements, and acceptance criteria for the unified BRD and PRD authoring capability consumed by the project-planning package agents."
 author: "HVE Core Maintainers"
-ms.date: 2026-06-28
+ms.date: 2026-08-10
 ms.topic: "reference"
 status: "approved"
 version: "1.0.0"
@@ -45,13 +45,13 @@ Scope is limited to the shared skill: its templates, references, taxonomy, trace
 
 ## Product Context
 
-HVE-Core distributes AI agent customizations through collections, plugins, and a VS Code extension. Within the `project-planning` collection, two requirements agents (the BRD Builder and the PRD Builder) share a question-and-answer authoring architecture. Historically the BRD Builder drew from the `brd-author` skill while the PRD Builder embedded its own template and lifecycle, allowing the two to diverge.
+HVE-Core defines AI agent customizations through marketplace package recipes and distributes them through plugins and a VS Code extension. Within the `project-planning` package, two requirements agents (the BRD Builder and the PRD Builder) share a question-and-answer authoring architecture. Historically the BRD Builder drew from the `brd-author` skill while the PRD Builder embedded its own template and lifecycle, allowing the two to diverge.
 
 The user problem is duplication and drift across document types: without a shared foundation, BRD and PRD authoring evolve independently, yielding inconsistent taxonomies, traceability rules, and quality gates. The `feat/brd-skills` changeset addresses this by renaming `brd-author` to `requirements-author` and restructuring it to serve both document types: references grouped into `_shared/`, `brd/`, and `prd/`, and template assets added under `templates/prd/` alongside the existing BRD templates.
 
 The product vision for this release is a single canonical skill that both agents consume: shared references (taxonomy, traceability, quality, lifecycle scaffolding) plus per-document template and lifecycle scopes. The skill becomes the authority for what a well-formed BRD or PRD looks like, how requirements are identified and traced, and how quality gates are evaluated, so each agent only orchestrates the conversation.
 
-External constraints include repository authoring conventions (markdownlint, frontmatter schemas, skill-structure validation, collection/plugin/extension regeneration) and the CC BY 4.0 cite-only licensing posture for standards content.
+External constraints include repository authoring conventions (markdownlint, frontmatter schemas, skill-structure validation, marketplace recipe, plugin, and extension regeneration) and the CC BY 4.0 cite-only licensing posture for standards content.
 
 ---
 
@@ -190,14 +190,14 @@ NFR-007: Skill asset paths resolve from repository, extension, and plugin contex
 
 ### Build and Release Consistency
 
-NFR-008: Changes to the skill keep `collections/*`, `plugins/`, and `extension/` generated outputs consistent via the repository regeneration scripts. Verification: edit a skill asset, run the regeneration and validation scripts, and confirm generated outputs reflect the change with no manual edits.
+NFR-008: Changes to the skill keep `.github/plugin/marketplace.json` recipe membership, `plugins/`, and `extension/` generated outputs consistent through `plugin:generate` and `extension:prepare`, validated by `plugin:validate`. Verification: edit a skill asset, run the regeneration and validation scripts, and confirm generated outputs reflect the change with no manual edits.
 
 ---
 
 ## Constraints
 
 * `CON-001`: The skill MUST serve both BRD and PRD authoring from one source; splitting into separate per-document skills is out of scope. Imposing source: consolidation objective / DD-002. Affected boundary: scope. Non-negotiability: avoids reintroducing drift. Category: organizational. Impact: design.
-* `CON-002`: Changes MUST keep `collections/*.collection.yml`/`.md`, `plugins/`, and `extension/` outputs consistent via the repository's regeneration scripts. Imposing source: repository distribution pipeline. Affected boundary: operations. Non-negotiability: generated outputs must not be hand-edited. Category: technical. Impact: delivery.
+* `CON-002`: Changes MUST keep the `.github/plugin/marketplace.json` recipe, `plugins/`, and `extension/` outputs consistent through the repository's regeneration scripts (`plugin:generate`, `extension:prepare`) validated by `plugin:validate`. Imposing source: repository distribution pipeline. Affected boundary: operations. Non-negotiability: generated outputs must not be hand-edited. Category: technical. Impact: delivery.
 * `CON-003`: Skill content MUST follow the CC BY 4.0 cite-only standards posture. Imposing source: repository licensing. Affected boundary: compliance. Non-negotiability: licensing obligation. Category: contractual. Impact: acceptance.
 * `CON-004`: Specification and consolidation work MUST land by the 2026-06-30 milestone to align with the `feat/brd-skills` initiative. Imposing source: initiative schedule. Affected boundary: schedule. Non-negotiability: calendar-driven target. Category: organizational. Impact: delivery.
 
@@ -298,7 +298,7 @@ Deferred: additional document types beyond BRD and PRD. The cut line delivers a 
 ### Risk Register
 
 * Risk: Generalizing the skill regresses BRD authoring while enabling PRD authoring. Probability: Medium. Impact: High. Mitigation: keep BRD assets stable under `brd/` and validate both document types against their quality gates.
-* Risk: Generated collection/plugin/extension outputs drift after skill edits. Probability: Medium. Impact: Medium. Mitigation: run regeneration and validation scripts as acceptance (CON-002, NFR-008).
+* Risk: Generated marketplace recipe, plugin, and extension outputs drift after skill edits. Probability: Medium. Impact: Medium. Mitigation: run regeneration and validation scripts as acceptance (CON-002, NFR-008).
 
 ---
 

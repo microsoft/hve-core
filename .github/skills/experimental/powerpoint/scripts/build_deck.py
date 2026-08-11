@@ -18,7 +18,6 @@ from __future__ import annotations
 
 import argparse
 import ast
-import builtins
 import importlib.util
 import logging
 import re
@@ -126,6 +125,20 @@ _INDIRECT_BYPASS_BUILTINS = frozenset(
     }
 )
 
+# Module names whose attribute-form calls are rejected, so the obvious
+# `builtins.eval(...)` shape does not read as permitted.  Only direct name
+# bindings are matched; an aliased binding is not detected, which is why this
+# is a lint rather than the control that keeps a hostile script from running.
+_ATTRIBUTE_CALL_ROOTS = frozenset(
+    {
+        "builtins",
+        "importlib",
+        "os",
+        "subprocess",
+        "sys",
+    }
+)
+
 
 class ContentExtraError(Exception):
     """A content-extra.py script failed security validation."""
@@ -153,11 +166,18 @@ def _check_module_allowed(
 
 
 def _validate_content_extra(script_path: Path) -> None:
-    """Validate a content-extra.py script's AST before execution.
+    """Lint a content-extra.py script's AST before execution.
 
     Parses the script and rejects imports outside of pptx and safe stdlib
     modules, as well as calls to dangerous builtins (exec, eval, __import__,
     compile, breakpoint).  Raises ContentExtraError on any violation.
+
+    This is a lint, not a security boundary.  AST denylisting of Python cannot
+    be made sound: a blocked module reached through a local alias
+    (``b = builtins``), an ``import as`` binding, or tuple unpacking is not
+    detected, and the legitimate drawing API is itself composed of attribute
+    calls so they cannot be banned wholesale.  Execution is gated by explicit
+    operator opt-in; this check only catches obvious mistakes earlier.
     """
     source = script_path.read_text(encoding="utf-8")
     try:
@@ -184,6 +204,13 @@ def _validate_content_extra(script_path: Path) -> None:
                 if func.id in _INDIRECT_BYPASS_BUILTINS:
                     raise ContentExtraError(
                         f"Indirect bypass builtin '{func.id}' in {script_path}"
+                    )
+            elif isinstance(func, ast.Attribute):
+                value = func.value
+                if isinstance(value, ast.Name) and value.id in _ATTRIBUTE_CALL_ROOTS:
+                    raise ContentExtraError(
+                        f"Blocked attribute call '{value.id}.{func.attr}' "
+                        f"in {script_path}"
                     )
 
 
@@ -977,8 +1004,9 @@ def build_slide(
     """Build a single slide from content.yaml data and style context.
 
     When existing_slide is provided, clears its shapes and rebuilds in place
-    instead of appending a new slide.  Set *allow_scripts* to skip AST
-    validation of content-extra.py (use only with trusted content).
+    instead of appending a new slide.  Set *allow_scripts* to authorize
+    execution of a content-extra.py script in *content_dir*; without it, a
+    present script raises ContentExtraError instead of running.
     """
     colors = {}
     typography = {}
@@ -1067,25 +1095,20 @@ def build_slide(
     for elem in elements:
         _build_element(slide, elem, colors, typography, content_dir)
 
-    # Execute content-extra.py if present (validated before loading)
+    # Execute content-extra.py only when the operator explicitly authorized it.
     extra_script = content_dir / "content-extra.py"
     if extra_script.exists():
         if not allow_scripts:
-            _validate_content_extra(extra_script)
+            raise ContentExtraError(
+                f"Refusing to execute '{extra_script}': content-extra.py "
+                "execution is disabled by default. Review the script, then pass "
+                "--allow-scripts to authorize it."
+            )
+        _validate_content_extra(extra_script)
         spec = importlib.util.spec_from_file_location(
             "content_extra", str(extra_script)
         )
         mod = importlib.util.module_from_spec(spec)
-        if not allow_scripts:
-            # __import__ is kept because the import machinery needs it;
-            # the AST checker already blocks direct __import__() calls.
-            stripped = (_DANGEROUS_BUILTINS | _INDIRECT_BYPASS_BUILTINS) - {
-                "__import__"
-            }
-            safe_builtins = {
-                k: v for k, v in builtins.__dict__.items() if k not in stripped
-            }
-            mod.__builtins__ = safe_builtins
         spec.loader.exec_module(mod)
         if hasattr(mod, "render"):
             mod.render(slide, style, content_dir)
@@ -1137,7 +1160,11 @@ def main():
     parser.add_argument(
         "--allow-scripts",
         action="store_true",
-        help="Skip AST validation of content-extra.py (trusted content only)",
+        help=(
+            "Authorize execution of content-extra.py scripts found in slide"
+            " folders (trusted content only). Without this flag a present"
+            " script is refused and the build fails."
+        ),
     )
     parser.add_argument(
         "--dry-run",
@@ -1176,19 +1203,22 @@ def main():
                 # Check for speaker notes
                 notes = slide_content.get("speaker_notes")
                 notes_status = "✅" if notes else "⚠️ no notes"
-                # Validate content-extra.py if present
+                # Report content-extra.py the same way a real build treats it
                 extra = slide_dir / "content-extra.py"
                 extra_status = ""
                 if extra.exists():
                     if not args.allow_scripts:
+                        extra_status = (
+                            " | extra: ❌ refused, execution requires --allow-scripts"
+                        )
+                        errors += 1
+                    else:
                         try:
                             _validate_content_extra(extra)
                             extra_status = " | extra: ✅"
                         except ContentExtraError as exc:
                             extra_status = f" | extra: ❌ {exc}"
                             errors += 1
-                    else:
-                        extra_status = " | extra: skipped"
                 # Check image references
                 images = slide_dir / "images"
                 img_count = (
