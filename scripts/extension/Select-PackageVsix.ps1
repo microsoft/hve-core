@@ -48,7 +48,6 @@ function Select-PackageVsix {
     param(
         [Parameter(Mandatory = $true)]
         [ValidateNotNullOrEmpty()]
-        [Alias('DirectoryPath')]
         [string]$AssetDirectory,
 
         [Parameter(Mandatory = $true)]

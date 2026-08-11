@@ -95,14 +95,15 @@ Describe 'Get-MarketplaceComponentSourceRoot' -Tag 'Unit' {
     }
 
     It 'Describes <Field> as <Kind> rooted at <SourceRoot>' -ForEach @(
-        @{ Field = 'agents'; Kind = 'agent'; SourceRoot = '.github/agents'; SourceSuffix = '.agent.md'; PackageSuffix = '.md' }
-        @{ Field = 'commands'; Kind = 'prompt'; SourceRoot = '.github/prompts'; SourceSuffix = '.prompt.md'; PackageSuffix = '.md' }
-        @{ Field = 'rules'; Kind = 'instruction'; SourceRoot = '.github/instructions'; SourceSuffix = '.instructions.md'; PackageSuffix = '.instructions.md' }
-        @{ Field = 'skills'; Kind = 'skill'; SourceRoot = '.github/skills'; SourceSuffix = ''; PackageSuffix = '' }
-        @{ Field = 'hooks'; Kind = 'hook'; SourceRoot = '.github/hooks'; SourceSuffix = '.json'; PackageSuffix = '.json' }
+        @{ Field = 'agents'; Kind = 'agent'; CatalogRoot = 'agents'; SourceRoot = '.github/agents'; SourceSuffix = '.agent.md'; PackageSuffix = '.md' }
+        @{ Field = 'commands'; Kind = 'prompt'; CatalogRoot = 'prompts'; SourceRoot = '.github/prompts'; SourceSuffix = '.prompt.md'; PackageSuffix = '.md' }
+        @{ Field = 'rules'; Kind = 'instruction'; CatalogRoot = 'instructions'; SourceRoot = '.github/instructions'; SourceSuffix = '.instructions.md'; PackageSuffix = '.instructions.md' }
+        @{ Field = 'skills'; Kind = 'skill'; CatalogRoot = 'skills'; SourceRoot = '.github/skills'; SourceSuffix = ''; PackageSuffix = '' }
+        @{ Field = 'hooks'; Kind = 'hook'; CatalogRoot = 'hooks'; SourceRoot = '.github/hooks'; SourceSuffix = '.json'; PackageSuffix = '.json' }
     ) {
         $descriptor = $script:SourceRoots[$Field]
         $descriptor.Kind | Should -BeExactly $Kind
+        $descriptor.CatalogRoot | Should -BeExactly $CatalogRoot
         $descriptor.SourceRoot | Should -BeExactly $SourceRoot
         $descriptor.SourceSuffix | Should -BeExactly $SourceSuffix
         $descriptor.PackageSuffix | Should -BeExactly $PackageSuffix
@@ -220,12 +221,12 @@ Describe 'Resolve-MarketplaceComponentPath' -Tag 'Unit' {
 }
 
 Describe 'Marketplace source and package path round-trip' -Tag 'Unit' {
-    It 'Projects <SourcePath> to <PackagePath> and back' -ForEach @(
-        @{ Kind = 'agent'; Field = 'agents'; SourcePath = '.github/agents/rpi/rpi-agent.agent.md'; PackagePath = 'agents/rpi/rpi-agent.md' }
-        @{ Kind = 'prompt'; Field = 'commands'; SourcePath = '.github/prompts/ado/create-pull-request.prompt.md'; PackagePath = 'commands/ado/create-pull-request.md' }
-        @{ Kind = 'instruction'; Field = 'rules'; SourcePath = '.github/instructions/hve-core/markdown.instructions.md'; PackagePath = 'rules/hve-core/markdown.instructions.md' }
-        @{ Kind = 'skill'; Field = 'skills'; SourcePath = '.github/skills/rpi/rpi-plan'; PackagePath = 'skills/rpi/rpi-plan' }
-        @{ Kind = 'hook'; Field = 'hooks'; SourcePath = '.github/hooks/hve-core/hooks.json'; PackagePath = 'hooks/hve-core/hooks.json' }
+    It 'Projects <SourcePath> to <PackagePath> and resolves <CatalogPath>' -ForEach @(
+        @{ Kind = 'agent'; Field = 'agents'; CatalogPath = 'agents/rpi/rpi-agent.agent.md'; SourcePath = '.github/agents/rpi/rpi-agent.agent.md'; PackagePath = 'agents/rpi/rpi-agent.md' }
+        @{ Kind = 'prompt'; Field = 'commands'; CatalogPath = 'prompts/ado/create-pull-request.prompt.md'; SourcePath = '.github/prompts/ado/create-pull-request.prompt.md'; PackagePath = 'commands/ado/create-pull-request.md' }
+        @{ Kind = 'instruction'; Field = 'rules'; CatalogPath = 'instructions/hve-core/markdown.instructions.md'; SourcePath = '.github/instructions/hve-core/markdown.instructions.md'; PackagePath = 'rules/hve-core/markdown.instructions.md' }
+        @{ Kind = 'skill'; Field = 'skills'; CatalogPath = 'skills/rpi/rpi-plan'; SourcePath = '.github/skills/rpi/rpi-plan'; PackagePath = 'skills/rpi/rpi-plan' }
+        @{ Kind = 'hook'; Field = 'hooks'; CatalogPath = 'hooks/hve-core/hooks.json'; SourcePath = '.github/hooks/hve-core/hooks.json'; PackagePath = 'hooks/hve-core/hooks.json' }
     ) {
         Get-MarketplacePackagePath -SourcePath $SourcePath -Kind $Kind | Should -BeExactly $PackagePath
 
@@ -233,6 +234,12 @@ Describe 'Marketplace source and package path round-trip' -Tag 'Unit' {
         $component.SourcePath | Should -BeExactly $SourcePath
         $component.PackagePath | Should -BeExactly $PackagePath
         $component.Kind | Should -BeExactly $Kind
+
+        $catalogComponent = Resolve-MarketplaceComponentSource -PackagePath $CatalogPath -Field $Field
+        $catalogComponent.CatalogPath | Should -BeExactly $CatalogPath
+        $catalogComponent.SourcePath | Should -BeExactly $SourcePath
+        $catalogComponent.PackagePath | Should -BeExactly $PackagePath
+        $catalogComponent.Kind | Should -BeExactly $Kind
     }
 
     It 'Projects a root-level source without inventing a subdirectory' {
@@ -252,17 +259,17 @@ Describe 'Marketplace source and package path round-trip' -Tag 'Unit' {
 
     It 'Rejects a package path that does not start with its field directory' {
         { Resolve-MarketplaceComponentSource -PackagePath 'commands/demo/first.md' -Field 'agents' } |
-            Should -Throw -ExpectedMessage "Component path 'commands/demo/first.md' must start with the 'agents/' package directory."
+            Should -Throw -ExpectedMessage "Component path 'commands/demo/first.md' must start with the 'agents/' canonical directory or 'agents/' package directory."
     }
 
     It 'Rejects a package path with the wrong extension' {
         { Resolve-MarketplaceComponentSource -PackagePath 'agents/demo/first.txt' -Field 'agents' } |
-            Should -Throw -ExpectedMessage "Component path 'agents/demo/first.txt' must end with '.md'."
+            Should -Throw -ExpectedMessage "Package component path 'agents/demo/first.txt' must end with '.md'."
     }
 
     It 'Rejects a rules path that does not carry the instruction suffix' {
         { Resolve-MarketplaceComponentSource -PackagePath 'rules/demo/style.md' -Field 'rules' } |
-            Should -Throw -ExpectedMessage "Component path 'rules/demo/style.md' must end with '.instructions.md'."
+            Should -Throw -ExpectedMessage "Package component path 'rules/demo/style.md' must end with '.instructions.md'."
     }
 
     It 'Surfaces path validation failures with the field name' {
@@ -295,6 +302,46 @@ Describe 'Test-MarketplaceEntryContract component membership' -Tag 'Unit' {
 
         It 'Reports no contract errors' {
             $script:ValidErrors.Count | Should -Be 0
+        }
+    }
+
+    Context 'when the catalog uses canonical component paths' {
+        BeforeAll {
+            $script:CanonicalEntry = @{
+                name     = 'demo'
+                agents   = @('agents/demo/first.agent.md')
+                commands = @('prompts/demo/run.prompt.md')
+                rules    = @('instructions/demo/style.instructions.md')
+                skills   = @('skills/demo/toolkit')
+                hooks    = 'hooks/demo/hooks.json'
+                'x-hve'  = @{
+                    componentMaturity = @{ 'agents/demo/first.agent.md' = 'preview' }
+                    profiles          = @{ starter = @('agents/demo/first.agent.md', 'skills/demo/toolkit') }
+                }
+            }
+        }
+
+        It 'Accepts canonical membership, maturity, and profile paths' {
+            @(Test-MarketplaceEntryContract -Entry $script:CanonicalEntry -CanonicalMembership).Count | Should -Be 0
+        }
+
+        It 'Preserves projected package paths and declared maturity' {
+            $recipe = @(Get-MarketplacePackageRecipe -Entry $script:CanonicalEntry -Channel PreRelease)
+            ($recipe.PackagePath | Sort-Object) -join '|' | Should -BeExactly (@(
+                    'agents/demo/first.md'
+                    'commands/demo/run.md'
+                    'hooks/demo/hooks.json'
+                    'rules/demo/style.instructions.md'
+                    'skills/demo/toolkit'
+                ) -join '|')
+            @($recipe | Where-Object PackagePath -eq 'agents/demo/first.md')[0].Maturity | Should -BeExactly 'preview'
+        }
+
+        It 'Rejects projected membership in strict catalog mode' {
+            $entry = $script:CanonicalEntry.Clone()
+            $entry['commands'] = @('commands/demo/run.md')
+            @(Test-MarketplaceEntryContract -Entry $entry -CanonicalMembership) -join ' ' |
+                Should -Match "component field 'commands' path 'commands/demo/run.md' must use canonical path 'prompts/demo/run.prompt.md'"
         }
     }
 

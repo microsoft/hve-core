@@ -3,7 +3,7 @@ title: VS Code Extension Installation
 description: Install HVE Core as a VS Code extension from the marketplace
 sidebar_position: 1
 author: Microsoft
-ms.date: 2026-08-02
+ms.date: 2026-08-08
 ms.topic: how-to
 keywords:
   - extension
@@ -110,9 +110,24 @@ The extension updates automatically through VS Code's extension system:
 
 * Extensions update automatically when new versions are released (default)
 * Open Extensions view → find "HVE Core" → click **Update** for manual updates
-* Right-click the extension → "Switch to Pre-Release Version" for newer content packaged from `main`
+* Right-click the extension → "Switch to Pre-Release Version" to select the PreRelease channel
 
-Stable is packaged only after reviewed `main` content is promoted into `release/stable`, so it may lag newer commits on `main`. Both channels include active components labeled `stable`, `preview`, and `experimental`.
+Source moves through reviewed promotions from `main` to `release/prerelease`
+to `release/stable`. PreRelease is packaged from `release/prerelease`; Stable
+is packaged from `release/stable` and may lag newer `main` content. Both
+channels include active components labeled `stable`, `preview`, and
+`experimental`.
+
+The corresponding Copilot CLI sources are ref-less `microsoft/hve-core` for
+current `main`, moving `microsoft/hve-core#release/prerelease` and
+`microsoft/hve-core#release/stable` registrations, and immutable
+`microsoft/hve-core#prerelease-v<version>` and
+`microsoft/hve-core#v<version>` registrations.
+
+Behavior when switching VS Code Marketplace channels or switching among
+same-name CLI marketplace registrations has not been observed in this
+documentation work. This guidance does not assert installed-client or
+duplicate-registration behavior.
 
 ## Comparison with Other Methods
 

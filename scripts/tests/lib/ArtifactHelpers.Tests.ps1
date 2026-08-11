@@ -164,25 +164,6 @@ Describe 'Resolve-StrictSafeMaturity' -Tag 'Unit' {
     }
 }
 
-Describe 'Test-ArtifactDeprecated' -Tag 'Unit' {
-    It 'Reports deprecated maturity as deprecated' {
-        Test-ArtifactDeprecated -Maturity 'deprecated' | Should -BeTrue
-    }
-
-    It 'Reports <Value> as not deprecated' -ForEach @(
-        @{ Value = 'stable' }
-        @{ Value = 'preview' }
-        @{ Value = 'experimental' }
-        @{ Value = 'removed' }
-    ) {
-        Test-ArtifactDeprecated -Maturity $Value | Should -BeFalse
-    }
-
-    It 'Treats omitted maturity as not deprecated' {
-        Test-ArtifactDeprecated -Maturity $null | Should -BeFalse
-    }
-}
-
 Describe 'Set-ContentIfChanged' -Tag 'Unit' {
     Context 'when the target file does not exist' {
         BeforeAll {

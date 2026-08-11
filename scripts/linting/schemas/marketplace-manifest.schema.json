@@ -11,7 +11,7 @@
       "not": {
         "pattern": "(^|/)\\.\\.?(/|$)"
       },
-      "description": "Package-relative forward-slash path. Absolute paths, backslashes, empty segments, and relative or escaping segments are rejected."
+      "description": "Canonical .github-root-relative forward-slash path. Absolute paths, backslashes, empty segments, and relative or escaping segments are rejected."
     },
     "componentMembership": {
       "oneOf": [
@@ -27,7 +27,7 @@
           }
         }
       ],
-      "description": "Standard component membership: one package-relative path or an array of them."
+      "description": "Standard component membership: one canonical .github-root-relative path or an array of them."
     },
     "maturity": {
       "type": "string",
@@ -65,8 +65,7 @@
       "required": [
         "source",
         "repo",
-        "path",
-        "ref"
+        "path"
       ],
       "properties": {
         "source": {
@@ -92,8 +91,8 @@
         },
         "ref": {
           "type": "string",
-          "pattern": "^plugins-v\\d+\\.\\d+\\.\\d+(?:-[0-9A-Za-z.-]+)?$",
-          "description": "Immutable plugins-v<version> tag."
+          "pattern": "^(?:prerelease-)?v\\d+\\.\\d+\\.\\d+(?:-[0-9A-Za-z.-]+)?$",
+          "description": "Optional immutable channel release tag: prerelease-v<version> for PreRelease and v<version> for Stable. Omitted entries resolve the repository default branch."
         }
       },
       "additionalProperties": false
@@ -115,8 +114,7 @@
       "type": "object",
       "required": [
         "description",
-        "version",
-        "pluginRoot"
+        "version"
       ],
       "properties": {
         "description": {

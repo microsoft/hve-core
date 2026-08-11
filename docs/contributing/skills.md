@@ -239,9 +239,14 @@ This example demonstrates a skill incorporating third-party content with provena
 
 ## Marketplace Recipe Registration
 
-Distributable skills must be declared under the `skills` field of the `hve-core` entry in `.github/plugin/marketplace.json`. Declare the recipe-relative skill directory, not its `SKILL.md` file, and keep the directory name equal to the skill `name`.
+Distributable skills must be declared under the `skills` field of the
+`hve-core` entry in `.github/plugin/marketplace.json`. Declare the
+`.github`-root-relative canonical `skills/<package>/<skill>` directory, not its
+`SKILL.md` file, and keep the directory name equal to the skill `name`.
 
-Add non-stable lifecycle disclosure only through `x-hve.componentMaturity`, update `docs/plugins/hve-core.md`, then run `npm run lint:marketplace`, `npm run validate:skills`, and `npm run plugin:generate`.
+Add non-stable lifecycle disclosure only through `x-hve.componentMaturity`,
+update `docs/plugins/hve-core.md`, then run `npm run lint:marketplace`,
+`npm run validate:skills`, and `npm run docs:generate:check`.
 
 ## SKILL.md Content Structure
 

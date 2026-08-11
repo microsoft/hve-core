@@ -10,6 +10,7 @@
     "**/vendor/**",
     "dist/**",
     "build/**",
+    "plugins/**",
     ".git/**",
     "**/.terraform/**",
     "**/.terraform.lock.hcl",

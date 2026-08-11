@@ -8,6 +8,8 @@ on:
     branches:
       - main
       - develop
+      - release/prerelease
+      - release/stable
   workflow_dispatch:
 
 concurrency:
@@ -263,7 +265,7 @@ jobs:
     uses: ./.github/workflows/adr-consistency-validation.yml
     permissions:
       contents: read
-      security-events: write  # Required for SARIF upload to Security tab
+      security-events: write # Required for SARIF upload to Security tab
     with:
       soft-fail: false
       changed-files-only: true
@@ -350,7 +352,7 @@ jobs:
     uses: ./.github/workflows/dependency-pinning-scan.yml
     permissions:
       contents: read
-      security-events: write  # Required for SARIF upload to Security tab
+      security-events: write # Required for SARIF upload to Security tab
     with:
       soft-fail: false
       upload-sarif: true
@@ -369,7 +371,7 @@ jobs:
     uses: ./.github/workflows/workflow-permissions-scan.yml
     permissions:
       contents: read
-      security-events: write  # Required for SARIF upload to Security tab
+      security-events: write # Required for SARIF upload to Security tab
     with:
       soft-fail: false
       upload-sarif: true
@@ -380,19 +382,19 @@ jobs:
     uses: ./.github/workflows/dangerous-workflow-scan.yml
     permissions:
       contents: read
-      security-events: write  # Required for SARIF upload to Security tab
+      security-events: write # Required for SARIF upload to Security tab
     with:
       soft-fail: false
       upload-sarif: true
       upload-artifact: false
-      poutine-soft-fail: true  # Poutine runs advisory; homegrown template-injection check is the hard gate
+      poutine-soft-fail: true # Poutine runs advisory; homegrown template-injection check is the hard gate
 
   action-version-consistency-scan:
     name: Action Version Consistency Scan
     uses: ./.github/workflows/action-version-consistency-scan.yml
     permissions:
       contents: read
-      security-events: write  # Required for SARIF upload to Security tab
+      security-events: write # Required for SARIF upload to Security tab
     with:
       soft-fail: false
       upload-sarif: true
@@ -403,12 +405,12 @@ jobs:
     uses: ./.github/workflows/gitleaks-scan.yml
     permissions:
       contents: read
-      security-events: write  # Required for SARIF upload to Security tab
+      security-events: write # Required for SARIF upload to Security tab
     with:
       soft-fail: false
       upload-sarif: true
       upload-artifact: false
-      log-opts: '${{ github.event.pull_request.base.sha }}..${{ github.event.pull_request.head.sha }}'
+      log-opts: "${{ github.event.pull_request.base.sha }}..${{ github.event.pull_request.head.sha }}"
 
   npm-audit:
     name: npm Security Audit
@@ -443,7 +445,7 @@ jobs:
     uses: ./.github/workflows/codeql-analysis.yml
     permissions:
       contents: read
-      security-events: write  # Required for SARIF upload to Security tab
+      security-events: write # Required for SARIF upload to Security tab
       actions: read
 
   gate-completeness-check:
@@ -463,6 +465,281 @@ jobs:
       - name: Validate PR gate completeness
         shell: pwsh
         run: ./scripts/security/Test-PrValidationGate.ps1 -FailOnViolation
+
+      # The promotion head is the last reviewable state before release-please
+      # can consume its exact release intent, so grammar, parity, advancement,
+      # and the retained candidate record are proved while the pull request is
+      # still open. Branch rulesets decide whether this failing check blocks the
+      # merge; release-prerelease.yml independently revalidates the same intent
+      # before any tag can be created.
+      - name: Validate PreRelease promotion intent advances release/prerelease
+        if: >
+          github.event_name == 'pull_request'
+          && github.event.pull_request.head.repo.full_name == github.repository
+          && github.event.pull_request.base.ref == 'release/prerelease'
+          && github.event.pull_request.head.ref == 'release-promotion--main--to--release-prerelease'
+        env:
+          HEAD_BRANCH: ${{ github.event.pull_request.head.ref }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          PROMOTION_HEAD: release-promotion--main--to--release-prerelease
+        run: |
+          set -euo pipefail
+          if [ "$HEAD_BRANCH" != "$PROMOTION_HEAD" ]; then
+            echo "::error::PreRelease promotion head $HEAD_BRANCH is not the canonical promotion head"
+            exit 1
+          fi
+          if [[ ! "$PR_NUMBER" =~ ^[0-9]+$ ]]; then
+            echo "::error::PreRelease promotion event carries an invalid pull request number"
+            exit 1
+          fi
+          if [[ ! "$HEAD_SHA" =~ ^[0-9a-f]{40}$ ]]; then
+            echo "::error::PreRelease promotion event carries an invalid head SHA"
+            exit 1
+          fi
+
+          # hve-core is public, so this origin access is intentionally
+          # credential free; the fetch and ls-remote below stop working if the
+          # repository ever becomes private.
+
+          # The verified commit is the exact event head, so a head that moved
+          # after the event fails rather than being proved at a later tip.
+          git fetch --no-tags origin \
+            "+refs/pull/$PR_NUMBER/head:refs/remotes/pull/$PR_NUMBER/head" \
+            "+refs/heads/release/prerelease:refs/remotes/origin/release/prerelease"
+          if [ "$(git rev-parse "refs/remotes/pull/$PR_NUMBER/head")" != "$HEAD_SHA" ]; then
+            echo "::error::Fetched PreRelease promotion head does not match event head $HEAD_SHA"
+            exit 1
+          fi
+
+          CANDIDATE=$(git show "refs/remotes/pull/$PR_NUMBER/head:release-please-prerelease-config.json" | jq -r '.packages["."]["release-as"] // ""')
+          BASELINE=$(git show 'refs/remotes/origin/release/prerelease:.release-please-prerelease-manifest.json' | jq -r '.["."] // ""')
+          for entry in "candidate:$CANDIDATE" "baseline:$BASELINE"; do
+            value=${entry#*:}
+            if [[ "$value" == *$'\n'* || "$value" == *$'\r'* || ! "$value" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+              echo "::error::${entry%%:*} PreRelease version is not canonical MAJOR.MINOR.PATCH"
+              exit 1
+            fi
+          done
+          CANDIDATE_MINOR=${CANDIDATE#*.}
+          CANDIDATE_MINOR=${CANDIDATE_MINOR%%.*}
+          if (( 10#$CANDIDATE_MINOR % 2 == 0 )); then
+            echo "::error::PreRelease candidate $CANDIDATE has an even minor"
+            exit 1
+          fi
+          if [ "$CANDIDATE" = "$BASELINE" ] || [ "$(printf '%s\n%s\n' "$CANDIDATE" "$BASELINE" | sort -V | tail -1)" = "$BASELINE" ]; then
+            echo "::error::$HEAD_BRANCH proposes $CANDIDATE but release/prerelease already carries $BASELINE"
+            exit 1
+          fi
+
+          # The retained record, not the pull request body or the moving head,
+          # is what the managed release pull request later replays, so a head
+          # whose record does not name this exact intent is stale.
+          if ! git show "refs/remotes/pull/$PR_NUMBER/head:.github/plugin/release-candidate.json" | jq -e \
+            --arg version "$CANDIDATE" '
+              .version == $version and
+              (.sourceCommit | type == "string" and test("^[0-9a-f]{40}$"))
+            ' >/dev/null; then
+            echo "::error::release-candidate.json at $HEAD_SHA does not record $CANDIDATE with a full immutable source commit"
+            exit 1
+          fi
+
+          # A tag is immutable, so a transport failure aborts under set -e
+          # instead of reporting the identity as available.
+          CANDIDATE_REF="refs/tags/prerelease-v$CANDIDATE"
+          OCCUPIED=$(git ls-remote origin "$CANDIDATE_REF")
+          if [ -n "$OCCUPIED" ]; then
+            echo "::error::$CANDIDATE_REF already exists; the PreRelease release identity is occupied"
+            exit 1
+          fi
+
+          echo "$HEAD_BRANCH advances release/prerelease from $BASELINE to $CANDIDATE"
+
+      - name: Validate Stable promotion intent advances release/stable
+        if: >
+          github.event_name == 'pull_request'
+          && github.event.pull_request.base.ref == 'release/stable'
+          && startsWith(github.head_ref, 'release-promotion--release-prerelease--to--release-stable--prerelease-v')
+        env:
+          HEAD_BRANCH: ${{ github.head_ref }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: |
+          set -euo pipefail
+          if [[ ! "$HEAD_BRANCH" =~ ^release-promotion--release-prerelease--to--release-stable--(prerelease-v[0-9]+\.[0-9]+\.[0-9]+)$ ]]; then
+            echo "::error::Stable promotion head $HEAD_BRANCH does not match the canonical selected-tag grammar"
+            exit 1
+          fi
+          SOURCE_TAG=${BASH_REMATCH[1]}
+          SOURCE_VERSION=${SOURCE_TAG#prerelease-v}
+          SOURCE_MINOR=${SOURCE_VERSION#*.}
+          SOURCE_MINOR=${SOURCE_MINOR%%.*}
+          if (( 10#$SOURCE_MINOR % 2 == 0 )); then
+            echo "::error::Stable promotion source $SOURCE_TAG has an even minor"
+            exit 1
+          fi
+          if [[ ! "$HEAD_SHA" =~ ^[0-9a-f]{40}$ ]]; then
+            echo "::error::Stable promotion event carries an invalid head SHA"
+            exit 1
+          fi
+
+          git fetch --no-tags origin \
+            "+refs/pull/$PR_NUMBER/head:refs/remotes/pull/$PR_NUMBER/head" \
+            "+refs/heads/release/stable:refs/remotes/origin/release/stable" \
+            "+refs/tags/$SOURCE_TAG:refs/tags/$SOURCE_TAG"
+          if [ "$(git rev-parse "refs/remotes/pull/$PR_NUMBER/head")" != "$HEAD_SHA" ]; then
+            echo "::error::Fetched Stable promotion head does not match event head $HEAD_SHA"
+            exit 1
+          fi
+
+          CANDIDATE=$(git show "refs/remotes/pull/$PR_NUMBER/head:release-please-config.json" | jq -r '.packages["."]["release-as"] // ""')
+          BASELINE=$(git show 'refs/remotes/origin/release/stable:.release-please-manifest.json' | jq -r '.["."] // ""')
+          for entry in "candidate:$CANDIDATE" "baseline:$BASELINE"; do
+            value=${entry#*:}
+            if [[ "$value" == *$'\n'* || "$value" == *$'\r'* || ! "$value" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+              echo "::error::${entry%%:*} Stable version is not canonical MAJOR.MINOR.PATCH"
+              exit 1
+            fi
+          done
+          CANDIDATE_MINOR=${CANDIDATE#*.}
+          CANDIDATE_MINOR=${CANDIDATE_MINOR%%.*}
+          if (( 10#$CANDIDATE_MINOR % 2 != 0 )); then
+            echo "::error::Stable candidate $CANDIDATE has an odd minor"
+            exit 1
+          fi
+          if [ "$CANDIDATE" = "$BASELINE" ] || [ "$(printf '%s\n%s\n' "$CANDIDATE" "$BASELINE" | sort -V | tail -1)" = "$BASELINE" ]; then
+            echo "::error::$HEAD_BRANCH proposes $CANDIDATE but release/stable already carries $BASELINE"
+            exit 1
+          fi
+
+          SOURCE_SHA=$(git rev-parse --verify --end-of-options "refs/tags/$SOURCE_TAG^{commit}")
+          if git merge-base --is-ancestor "$SOURCE_SHA" refs/remotes/origin/release/stable; then
+            echo "::error::$SOURCE_TAG at $SOURCE_SHA is already contained in release/stable"
+            exit 1
+          fi
+          echo "$HEAD_BRANCH advances release/stable from $BASELINE to $CANDIDATE using $SOURCE_TAG"
+
+      # The managed release head is the last mutable state before the release
+      # tag, so the required aggregate proves that exact commit reproduces the
+      # retained candidate from the immutable source the record names. It reads
+      # only: a drifted, partial, or malformed head fails instead of being
+      # repaired.
+      - name: Verify managed release head reproduces its retained candidate
+        if: >
+          github.event_name == 'pull_request'
+          && github.event.pull_request.head.repo.full_name == github.repository
+          && ((github.event.pull_request.base.ref == 'release/prerelease'
+          && github.event.pull_request.head.ref == 'release-please--branches--release/prerelease')
+          || (github.event.pull_request.base.ref == 'release/stable'
+          && github.event.pull_request.head.ref == 'release-please--branches--release/stable'))
+        env:
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          BASE_REF: ${{ github.event.pull_request.base.ref }}
+          HEAD_REF: ${{ github.event.pull_request.head.ref }}
+        run: |
+          set -euo pipefail
+          if [[ ! "$PR_NUMBER" =~ ^[0-9]+$ ]]; then
+            echo "::error::Managed release event carries an invalid pull request number"
+            exit 1
+          fi
+          if [[ ! "$HEAD_SHA" =~ ^[0-9a-f]{40}$ ]]; then
+            echo "::error::Managed release event carries an invalid head SHA"
+            exit 1
+          fi
+
+          # Channel identity comes from the exact base and head pair, never from
+          # a prefix match or a branch name this run could have widened.
+          case "$BASE_REF|$HEAD_REF" in
+            'release/prerelease|release-please--branches--release/prerelease')
+              CHANNEL=PreRelease
+              MANIFEST=.release-please-prerelease-manifest.json
+              ;;
+            'release/stable|release-please--branches--release/stable')
+              CHANNEL=Stable
+              MANIFEST=.release-please-manifest.json
+              ;;
+            *)
+              echo "::error::$HEAD_REF into $BASE_REF is not a managed release pull request"
+              exit 1
+              ;;
+          esac
+
+          # The verified commit is the exact event head, so a head that moved
+          # after the event fails rather than being proved at a later tip.
+          git fetch --no-tags origin \
+            "+refs/pull/$PR_NUMBER/head:refs/remotes/pull/$PR_NUMBER/head" \
+            "+refs/heads/$BASE_REF:refs/remotes/origin/$BASE_REF"
+          FETCHED_HEAD=$(git rev-parse "refs/remotes/pull/$PR_NUMBER/head")
+          if [ "$FETCHED_HEAD" != "$HEAD_SHA" ]; then
+            echo "::error::Fetched managed release head $FETCHED_HEAD does not match event head $HEAD_SHA"
+            exit 1
+          fi
+          git checkout --detach --force "$HEAD_SHA"
+
+          VERSION=$(jq -r '.["."] // ""' "$MANIFEST")
+          if ! printf '%s' "$VERSION" | grep -Eq '^[0-9]+\.[0-9]+\.[0-9]+$'; then
+            echo "::error::$MANIFEST at $HEAD_SHA has no MAJOR.MINOR.PATCH root version"
+            exit 1
+          fi
+
+          # Candidate membership is replayed from the retained record and the
+          # immutable source it names, never from the moving head.
+          SOURCE_COMMIT=$(jq -r '.sourceCommit // ""' .github/plugin/release-candidate.json)
+          if ! printf '%s' "$SOURCE_COMMIT" | grep -Eq '^[0-9a-f]{40}$'; then
+            echo "::error::release-candidate.json at $HEAD_SHA carries no full immutable source commit"
+            exit 1
+          fi
+          git fetch --no-tags --depth 1 origin "$SOURCE_COMMIT"
+          CANDIDATE_SOURCE_CATALOG="$RUNNER_TEMP/managed-head-candidate-source-marketplace.json"
+          git show "$SOURCE_COMMIT:.github/plugin/marketplace.json" > "$CANDIDATE_SOURCE_CATALOG"
+
+          BASELINE=$(git show "refs/remotes/origin/$BASE_REF:$MANIFEST" | jq -r '.["."] // ""')
+          if ! printf '%s' "$BASELINE" | grep -Eq '^[0-9]+\.[0-9]+\.[0-9]+$'; then
+            echo "::error::$BASE_REF carries no MAJOR.MINOR.PATCH baseline version"
+            exit 1
+          fi
+
+          # The baseline locator is the one uniform locator the target branch
+          # catalog already publishes across a complete catalog at its own
+          # metadata version: the reserved OMITTED locator when no entry names
+          # a ref, otherwise the one non-empty ref they all share. Historical
+          # entries carry a string-form source, which names no ref and therefore
+          # reads as omitted. A drifted target therefore fails the record
+          # instead of being compared against a locator rebuilt from a version.
+          BASELINE_TAG=$(git show "refs/remotes/origin/$BASE_REF:.github/plugin/marketplace.json" |
+            jq -r '
+              (.metadata.version // "") as $version
+              | [.plugins[] | (.version // "")] as $versions
+              | [.plugins[]
+                 | if (.source | type) == "object" then (.source.ref // null) else null end] as $refs
+              | if ($version | test("^[0-9]+\\.[0-9]+\\.[0-9]+$"))
+                   and ($versions | length) > 0
+                   and ($versions | all(. == $version))
+                then
+                  if ($refs | all(. == null))
+                  then "OMITTED"
+                  elif ($refs | all(type == "string" and length > 0))
+                       and (($refs | unique) | length) == 1
+                  then $refs[0]
+                  else ""
+                  end
+                else ""
+                end
+            ')
+          if [ -z "$BASELINE_TAG" ] || [[ "$BASELINE_TAG" == *$'\n'* || "$BASELINE_TAG" == *$'\r'* ]]; then
+            echo "::error::$BASE_REF .github/plugin/marketplace.json does not carry one uniform baseline locator across a complete catalog at its own metadata version"
+            exit 1
+          fi
+
+          pwsh -NoProfile -File ./scripts/release/Update-VersionFiles.ps1 \
+              -Version "$VERSION" \
+              -Channel "$CHANNEL" \
+              -RepoRoot "$PWD" \
+              -CandidateAction Verify \
+              -CandidateSourceCommit "$SOURCE_COMMIT" \
+              -CandidateSourceCatalog "$CANDIDATE_SOURCE_CATALOG" \
+              -BaselineTag "$BASELINE_TAG"
 
   pr-validation-success:
     name: PR Validation Success
@@ -519,4 +796,3 @@ jobs:
             exit 1
           fi
           echo "All PR validation jobs passed."
-

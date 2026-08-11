@@ -3,7 +3,7 @@ title: HVE Core
 description: Opinionated, rapidly evolving agentic SDLC patterns for RPI workflows, HVE Builder, and Git operations
 sidebar_position: 8
 author: Microsoft
-ms.date: 2026-08-03
+ms.date: 2026-08-08
 ms.topic: reference
 ---
 
@@ -16,7 +16,21 @@ It combines lifecycle coordination, prompt-engineering authoring and validation,
 
 Stable and PreRelease contain the same active components. Both include components labeled `stable`, `preview`, and `experimental`; components labeled `deprecated` or `removed` are excluded. These lifecycle labels disclose support posture and inform governance. They do not filter channel content, and they are separate from maturity classifications used in Responsible AI assessments.
 
-The channels differ in cadence, version, and source ownership. PreRelease packages directly from `main`. Stable may lag newer commits on `main` and packages only after a reviewed `main` promotion is merged into `release/stable` with a matching repository tree.
+The channels differ in cadence, version, and source ownership. `main` provides
+ref-less development-tip delivery and is not a release registration.
+PreRelease follows a reviewed promotion from `main` to `release/prerelease`.
+Stable follows a reviewed promotion from `release/prerelease` to
+`release/stable`.
+
+The moving consumer registrations are
+`microsoft/hve-core#release/prerelease` and
+`microsoft/hve-core#release/stable`. For reproducible source selection, use
+the immutable exact tags `prerelease-v<version>` and `v<version>`. Release
+workflows package the selected exact tag and bind the result to its source SHA,
+with SBOM, provenance, and attestation produced where applicable.
+
+These repository release checks do not verify hosted Marketplace behavior or
+installed-client behavior.
 
 > [!CAUTION]
 > HVE Core is a highly opinionated, rapidly evolving agentic SDLC framework. It is best treated as a source of patterns and learning rather than a stable platform, foundation, or production dependency.

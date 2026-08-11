@@ -61,9 +61,9 @@ BeforeAll {
                 [ordered]@{
                     name     = 'hve-core'
                     version  = $Version
-                    agents   = @('agents/hve-core/rpi-agent.md', 'agents/hve-core/subagents/rpi-planner.md')
-                    commands = @('commands/hve-core/rpi.md')
-                    rules    = @('rules/hve-core/copilot-tracking.instructions.md')
+                    agents   = @('agents/hve-core/rpi-agent.agent.md', 'agents/hve-core/subagents/rpi-planner.agent.md')
+                    commands = @('prompts/hve-core/rpi.prompt.md')
+                    rules    = @('instructions/hve-core/copilot-tracking.instructions.md')
                     skills   = @('skills/rpi/rpi-plan')
                     hooks    = 'hooks/shared/telemetry.json'
                     'x-hve'  = [ordered]@{
@@ -75,18 +75,18 @@ BeforeAll {
                 [ordered]@{
                     name     = 'hve-core-all'
                     version  = $Version
-                    agents   = @('agents/experimental/pptx.md', 'agents/hve-core/rpi-agent.md', 'agents/hve-core/subagents/rpi-planner.md')
-                    commands = @('commands/hve-core/rpi.md')
-                    rules    = @('rules/hve-core/copilot-tracking.instructions.md')
+                    agents   = @('agents/experimental/pptx.agent.md', 'agents/hve-core/rpi-agent.agent.md', 'agents/hve-core/subagents/rpi-planner.agent.md')
+                    commands = @('prompts/hve-core/rpi.prompt.md')
+                    rules    = @('instructions/hve-core/copilot-tracking.instructions.md')
                     skills   = @('skills/rpi/rpi-plan')
                     hooks    = 'hooks/shared/telemetry.json'
                     'x-hve'  = [ordered]@{
                         componentMaturity = [ordered]@{
-                            'agents/experimental/pptx.md' = 'experimental'
-                            'hooks/shared/telemetry.json' = 'experimental'
+                            'agents/experimental/pptx.agent.md' = 'experimental'
+                            'hooks/shared/telemetry.json'       = 'experimental'
                         }
                         profiles          = [ordered]@{
-                            starter = @('agents/hve-core/rpi-agent.md', 'skills/rpi/rpi-plan')
+                            starter = @('agents/hve-core/rpi-agent.agent.md', 'skills/rpi/rpi-plan')
                         }
                     }
                 }
@@ -584,6 +584,24 @@ Describe 'component-copy production starter selection' -Tag 'Unit' {
         @($manifest.selection.components).Count | Should -Be @($script:StarterSelection).Count
         $tracked = @($manifest.files.Values | ForEach-Object { $_.maturity } | Sort-Object -Unique)
         $tracked | Should -Contain 'experimental' -Because 'the starter includes experimental Vally content and must disclose it'
+    }
+
+    It 'Copies the resolved starter profile with Bash against the live catalog' -Skip:(-not $script:BashAvailable) {
+        $bashTarget = Join-Path $TestDrive 'production-starter-bash'
+        New-Item -ItemType Directory -Path $bashTarget -Force | Out-Null
+
+        Invoke-BashComponentCopy -Fixture ([pscustomobject]@{ Source = $script:RepoRoot; Target = $bashTarget }) `
+            -PackageName 'hve-core-all' -SelectionName 'starter' `
+            -Component @($script:StarterSelection | ForEach-Object { $_.PackagePath }) | Out-Null
+        $LASTEXITCODE | Should -Be 0
+
+        Test-Path -LiteralPath (Join-Path $bashTarget '.github/prompts/hve-core/rpi.prompt.md') | Should -BeTrue
+        Test-Path -LiteralPath (Join-Path $bashTarget '.github/instructions/hve-core/hve-builder.instructions.md') | Should -BeTrue
+
+        $manifest = Get-Content -LiteralPath (Join-Path $bashTarget '.hve-tracking.json') -Raw | ConvertFrom-Json -AsHashtable
+        $manifest.schemaVersion | Should -Be 2
+        @($manifest.selection.components | Sort-Object) |
+            Should -Be @($script:StarterSelection | ForEach-Object { $_.PackagePath } | Sort-Object) -Because 'Bash must install exactly the resolved starter closure regardless of emitted order'
     }
 }
 

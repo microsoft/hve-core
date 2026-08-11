@@ -3,7 +3,7 @@ title: Installing HVE Core
 description: Install a catalog-selected HVE Core extension or plugin, or adopt selected components from a clone
 sidebar_position: 2
 author: Microsoft
-ms.date: 2026-08-03
+ms.date: 2026-08-09
 ms.topic: how-to
 keywords: [installation, setup, github copilot, marketplace, selective clone]
 estimated_reading_time: 4
@@ -85,7 +85,29 @@ graph LR
 
 ## Distribution Identity and Channels
 
-Release workflows discover active entries from the catalog. Stable and PreRelease use the same active package set and component maturity per package. Stable packages reviewed content from `release/stable`; PreRelease packages an explicit `main` commit.
+`main` is the ref-less development tip. PreRelease and Stable are reviewed
+release branches that advance through `main` to `release/prerelease` to
+`release/stable`. An exact channel tag freezes one release catalog and its
+source payloads.
+
+| Use case             | Marketplace registration                   | Catalog resolution                                          |
+|----------------------|--------------------------------------------|-------------------------------------------------------------|
+| Development tip      | `microsoft/hve-core`                       | Current `main` catalog; entries omit `source.ref`           |
+| Moving PreRelease    | `microsoft/hve-core#release/prerelease`    | Current branch catalog; entries pin `prerelease-v<version>` |
+| Moving Stable        | `microsoft/hve-core#release/stable`        | Current branch catalog; entries pin `v<version>`            |
+| Immutable PreRelease | `microsoft/hve-core#prerelease-v<version>` | One exact PreRelease catalog and tag                        |
+| Immutable Stable     | `microsoft/hve-core#v<version>`            | One exact Stable catalog and tag                            |
+
+A moving release registration selects the catalog currently committed to its
+reviewed branch. Every entry in that catalog points to the corresponding exact
+channel tag. The branch can advance to a newer catalog, while an exact-tag
+registration remains fixed.
+
+A published channel release is the assurance boundary for its immutable tag.
+The release workflow applies review and release gates, produces package assets
+and SBOMs, attaches attestations, verifies provenance, and publishes through
+the configured release path. The ref-less development tip intentionally does
+not carry that published-release assurance.
 
 `hve-core` and `hve-core-all` each include the telemetry hook. VS Code does not expose a declarative hook contribution point, so configure hook locations manually for extension installations.
 
@@ -93,13 +115,46 @@ See [HVE Core Identity and Channels](packages) for the lifecycle and source cont
 
 ### Copilot Plugin Registration
 
-Register an approved catalog ref, then select the required package through the client:
+Register the development tip without a ref:
 
 ```bash
-copilot plugin marketplace add microsoft/hve-core#<ref>
+copilot plugin marketplace add microsoft/hve-core
 ```
 
-The marketplace ref selects the catalog, and each selected entry's `source.ref` pins matching immutable `plugins-v<version>` bytes. Select the required catalog package through the client after registration.
+Register a moving reviewed channel:
+
+```bash
+copilot plugin marketplace add microsoft/hve-core#release/prerelease
+copilot plugin marketplace add microsoft/hve-core#release/stable
+```
+
+Register an immutable channel tag:
+
+```bash
+copilot plugin marketplace add microsoft/hve-core#prerelease-v<version>
+copilot plugin marketplace add microsoft/hve-core#v<version>
+```
+
+Install the selected package:
+
+```bash
+copilot plugin install hve-core@hve-core
+```
+
+### Refresh, Update, and Switching
+
+Marketplace refresh and installed-plugin update are separate client actions.
+When following a moving registration, refresh the catalog before requesting a
+plugin update:
+
+```bash
+copilot plugin marketplace update hve-core
+copilot plugin update hve-core@hve-core
+```
+
+Changing registrations can require removing and re-adding the marketplace in
+the client. Do not rely on a particular result for duplicate same-name
+registrations; confirm the behavior supported by your Copilot CLI version.
 
 ### Clone Methods
 

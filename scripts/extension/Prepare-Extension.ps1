@@ -10,8 +10,6 @@
     Generates extension metadata from marketplace.json, resolves the selected
     package through the shared handoff-closed projection, and writes VS Code
     contributions without scanning legacy package manifests.
-.PARAMETER ChangelogPath
-    Optional changelog copied into the extension package.
 .PARAMETER Channel
     Stable or PreRelease package channel.
 .PARAMETER DryRun
@@ -26,9 +24,6 @@
 
 [CmdletBinding()]
 param(
-    [Parameter(Mandatory = $false)]
-    [string]$ChangelogPath = '',
-
     [Parameter(Mandatory = $false)]
     [ValidateSet('Stable', 'PreRelease')]
     [string]$Channel = 'Stable',
@@ -528,10 +523,8 @@ function Invoke-PrepareExtension {
     Repository root.
     .PARAMETER Channel
     Stable or PreRelease channel.
-    .PARAMETER ChangelogPath
-    Optional changelog.
     .PARAMETER DryRun
-    Prevents selected package and changelog writes.
+    Prevents selected package writes.
     .PARAMETER PackageId
     Marketplace package ID.
     .OUTPUTS
@@ -543,7 +536,6 @@ function Invoke-PrepareExtension {
         [Parameter(Mandatory = $true)] [ValidateNotNullOrEmpty()] [string]$ExtensionDirectory,
         [Parameter(Mandatory = $true)] [ValidateNotNullOrEmpty()] [string]$RepoRoot,
         [Parameter(Mandatory = $false)] [ValidateSet('Stable', 'PreRelease')] [string]$Channel = 'Stable',
-        [Parameter(Mandatory = $false)] [string]$ChangelogPath = '',
         [Parameter(Mandatory = $false)] [switch]$DryRun,
         [Parameter(Mandatory = $false)] [ValidateNotNullOrEmpty()] [string]$PackageId = 'hve-core'
     )
@@ -579,14 +571,6 @@ function Invoke-PrepareExtension {
 
         if (-not $DryRun) {
             Set-JsonFile -Path (Join-Path $ExtensionDirectory 'package.json') -Content $packageJson
-            if ($ChangelogPath) {
-                if (-not (Test-Path -LiteralPath $ChangelogPath -PathType Leaf)) {
-                    Write-Warning "Changelog path specified but file not found: $ChangelogPath"
-                }
-                else {
-                    Copy-Item -LiteralPath $ChangelogPath -Destination (Join-Path $ExtensionDirectory 'CHANGELOG.md') -Force
-                }
-            }
         }
 
         return New-PrepareResult -Success $true -Version ([string]$packageJson.version) `
@@ -606,18 +590,9 @@ if ($MyInvocation.InvocationName -ne '.') {
     try {
         $repoRoot = (Get-Item (Join-Path $PSScriptRoot '../..')).FullName
         $extensionDirectory = Join-Path $repoRoot 'extension'
-        $resolvedChangelogPath = if ([string]::IsNullOrWhiteSpace($ChangelogPath)) {
-            ''
-        }
-        elseif ([System.IO.Path]::IsPathRooted($ChangelogPath)) {
-            $ChangelogPath
-        }
-        else {
-            Join-Path $repoRoot $ChangelogPath
-        }
 
         $result = Invoke-PrepareExtension -ExtensionDirectory $extensionDirectory -RepoRoot $repoRoot `
-            -Channel $Channel -ChangelogPath $resolvedChangelogPath -DryRun:$DryRun -PackageId $PackageId
+            -Channel $Channel -DryRun:$DryRun -PackageId $PackageId
         if (-not $result.Success) { throw $result.ErrorMessage }
 
         Write-Host 'HVE Core extension prepared' -ForegroundColor Green

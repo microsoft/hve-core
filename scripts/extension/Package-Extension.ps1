@@ -33,7 +33,7 @@ param(
     [Parameter(Mandatory = $false)] [string]$ChangelogPath = '',
     [Parameter(Mandatory = $false)] [switch]$PreRelease,
     [Parameter(Mandatory = $false)] [ValidateNotNullOrEmpty()] [string]$PackageId = 'hve-core',
-    [Parameter(Mandatory = $false)] [Alias('dry-run')] [switch]$DryRun
+    [Parameter(Mandatory = $false)] [switch]$DryRun
 )
 
 $ErrorActionPreference = 'Stop'

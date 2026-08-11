@@ -3,7 +3,7 @@ title: Contributing Hooks
 description: How to implement, register, and validate hook artifacts in hve-core
 sidebar_position: 7
 author: Microsoft
-ms.date: 2026-08-01
+ms.date: 2026-08-06
 ms.topic: how-to
 keywords:
   - hooks
@@ -122,7 +122,8 @@ Choose CLI event names that convert to valid VS Code events:
 
 ## Registering a Hook in A Package
 
-Set the package's standard `hooks` field to the package-relative manifest path:
+Set the package's standard `hooks` field to the `.github`-root-relative
+canonical manifest path:
 
 ```json
 {
@@ -138,7 +139,7 @@ Before opening a PR:
 
 1. Run `npm run lint:hooks`
 2. Run `npm run plugin:validate`
-3. Run `npm run plugin:generate`
+3. Run `npm run docs:generate:check`
 4. Run `npm run lint:md`
 
 When your hook includes scripts, also run the relevant script linters and tests for those languages.
