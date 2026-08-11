@@ -3,7 +3,7 @@ title: DT to RPI Integration
 description: How Design Thinking outputs feed into the RPI workflow
 sidebar_position: 14
 author: Microsoft
-ms.date: 2026-07-15
+ms.date: 2026-08-11
 ms.topic: how-to
 keywords:
   - design thinking
@@ -91,6 +91,33 @@ After Brainstorming, User Concepts, and Low-Fidelity Prototypes, the team has a 
 * Resolve constraints marked `assumed` or `unknown` from low-fidelity prototype testing
 * Assess feasibility of tested concepts across stakeholder perspectives
 * Investigate integration and scaling concerns before planning begins
+
+#### Integrate AI Discovery Cards workshop results
+
+AI Discovery Cards workshop results enter HVE as Design Thinking evidence, not as
+implementation requirements. Add promising workshop ideas to the Method 4 idea
+inventory and trace each one to a validated need, stakeholder, outcome, and
+constraint. For agentic workflow ideas, capture the trigger, participants, bounded
+AI responsibilities, potential tools and information, human decision points,
+expected outcome, and unresolved assumptions.
+
+Carry selected themes through the remaining Solution Space methods:
+
+1. Use Method 5 to turn a selected theme into a User Concept and evaluate its
+  desirability, feasibility, and viability.
+2. Use Method 6 to prototype the workflow, including handoffs, exception paths,
+  and human oversight points.
+3. Mark claims as `validated`, `assumed`, `unknown`, or `conflicting` based on the
+  resulting evidence.
+4. At the Solution Space exit, include the Method 4 workshop notes and idea
+  inventory, Method 5 concepts, Method 6 prototype findings, constraints, and
+  technical unknowns in the handoff artifact.
+5. Route the handoff to `rpi-research`. Research determines whether the proposed
+  capabilities and agentic workflow are technically appropriate before
+  `rpi-plan` defines implementation work.
+
+This sequence keeps workshop inspiration connected to HVE while preventing an AI
+capability prompt from becoming an untested architecture decision.
 
 ### Implementation Spec Ready (Methods 7-9 to rpi-research)
 

@@ -1,9 +1,9 @@
 ---
-title: Getting Started with HVE Core
-description: Quick setup guide for using HVE Core Copilot customizations in your projects
+title: Get Started with the HVE Partner Workshop
+description: Start with the two-hour HVE partner workshop, then use the supporting setup, workflow, and role references
 sidebar_position: 1
 author: Microsoft
-ms.date: 2026-07-15
+ms.date: 2026-08-11
 ms.topic: tutorial
 keywords:
   - github copilot
@@ -13,39 +13,53 @@ keywords:
 estimated_reading_time: 5
 ---
 
-You've installed HVE Core. What now?
+Start with the [two-hour HVE partner workshop](partner-workshop). It gives
+partners new to HVE a shared setup path, role-based exercises, an integrated
+capstone, and publication follow-up.
 
-The honest answer: you can start using agents immediately, and some of them
-will produce good results right away. But the real power of HVE Core is a
-methodology called RPI (Research, Plan, Implement, Review) that changes how you
-collaborate with AI. Instead of asking AI to "write the code," you ask it to
-research first, plan second, implement third, and review last. The constraint
-changes everything.
+During the workshop, product managers, subject matter experts, designers, and
+technical participants work from one scenario to produce:
 
-This guide walks you through four steps, each building on the last:
+* grounded business, user, domain, design, and technical context
+* user and solution requirements with testable acceptance criteria
+* a prioritized GitHub or Azure DevOps backlog draft
+* a reviewed Azure architecture diagram
+* follow-up plans for an Azure Managed Application offer and Microsoft 365
+  Copilot Agent Store publication
 
-| Step                                                      | What You Do                                             | Time    |
-|-----------------------------------------------------------|---------------------------------------------------------|---------|
-| [First Interaction](first-interaction.md)                 | Talk to an agent, see it respond                        | 1 min   |
-| [First Research](first-research.md)                       | Use /rpi-research on your own codebase                  | 5 min   |
-| [First Full Workflow](first-workflow.md)                  | Run a complete Research, Plan, Implement cycle          | 15 min  |
-| [Growing with HVE](../hve-guide/roles/new-contributor.md) | Progress through four milestones toward independent use | Ongoing |
+## Start The Workshop
 
-> [!TIP]
-> Already comfortable with AI-assisted development? Skip to
-> [First Full Workflow](first-workflow.md) or select
-> [RPI Agent](https://github.com/microsoft/hve-core/blob/main/.github/CUSTOM-AGENTS.md#rpi-agent)
-> for a coordinated lifecycle. Use `/rpi` for the same full lifecycle from a
-> prompt, or `/rpi-research`, `/rpi-plan`, `/rpi-implement`, and `/rpi-review`
-> for direct phase work.
+| Step | Activity                                                                         | Time   |
+|------|----------------------------------------------------------------------------------|--------|
+| 1    | [Review the workshop overview and agenda](partner-workshop)                      | 10 min |
+| 2    | [Set up Codespaces or local VS Code](partner-workshop-setup)                     | 15 min |
+| 3    | [Complete the PM, SME, design, or technical track](partner-workshop-role-tracks) | 45 min |
+| 4    | [Integrate requirements, backlog, and architecture](partner-workshop-capstone)   | 35 min |
+| 5    | [Assess Marketplace and Agent Store readiness](partner-workshop-publishing)      | 15 min |
 
-Need installation help? See the [Installation Guide](install.md) for all
-methods, or install the
-[VS Code extension](https://marketplace.visualstudio.com/items?itemName=ise-hve-essentials.hve-core)
-for the quickest path.
+> [!NOTE]
+> The workshop creates reviewed drafts and publication plans. Azure deployment,
+> certification, tenant approval, and production publication continue after
+> the two-hour session.
 
-Not sure which bundle of agents you need?
+## Not sure which bundle of agents you need?
+
 Browse the available [Marketplace Packages](packages.md) to compare curated HVE capabilities.
+
+## Supporting References
+
+Use the remaining Getting Started material as reference before, during, or
+after the workshop.
+
+| Reference                                              | Use It To                                             |
+|--------------------------------------------------------|-------------------------------------------------------|
+| [Installation Guide](install)                          | Compare installation methods and resolve setup issues |
+| [First Interaction](first-interaction)                 | Practice a one-minute agent interaction               |
+| [First Research](first-research)                       | Learn the research phase on an existing codebase      |
+| [First Full Workflow](first-workflow)                  | Run Research, Plan, Implement, and Review             |
+| [Growing with HVE](../hve-guide/roles/new-contributor) | Progress toward independent HVE use                   |
+| [Role Guides](../hve-guide/roles/)                     | Continue with role-specific workflows                 |
+| [RPI Workflow](../rpi/)                                | Understand HVE's core delivery methodology            |
 
 ## Troubleshooting
 
@@ -67,7 +81,7 @@ Browse the available [Marketplace Packages](packages.md) to compare curated HVE 
 
 * Verify Git is installed: run `git --version` in terminal
 * Check network connectivity to github.com
-* See the [installation guide](install.md) for method-specific troubleshooting
+* See the [installation guide](install) for method-specific troubleshooting
 
 ## Optional Scripts
 
@@ -81,25 +95,18 @@ HVE Core includes utility scripts you may want to copy into your project:
 
 Copy the scripts you need to your project's `scripts/` directory and adjust paths as needed.
 
-## Next Steps
-
-* Start the journey: [Your First Interaction](first-interaction.md)
-* Learn the [RPI Workflow](../rpi/) for complex tasks
-* Browse [available agents](https://github.com/microsoft/hve-core/blob/main/.github/CUSTOM-AGENTS.md) for the full catalog
-
-## Design Thinking Path
+## Design Thinking References
 
 For projects requiring user-centered requirements discovery before implementation:
 
-* [Design Thinking Guide](../design-thinking/README.md): Start here for DT overview
-* [Using the DT Coach](../design-thinking/dt-coach.md): Learn to use the dt-coach agent
-* [DT to RPI Integration](../design-thinking/dt-rpi-integration.md): Transition from DT to implementation
+* [Design Thinking Guide](../design-thinking/): Start with the DT overview
+* [Using the DT Coach](../design-thinking/dt-coach): Learn to use the DT Coach agent
+* [DT to RPI Integration](../design-thinking/dt-rpi-integration): Transition from DT to implementation
 
 ## See Also
 
-* [Installation Guide](install.md) - Full decision matrix for all installation methods
-* [MCP Configuration](mcp-configuration.md) - Configure Model Context Protocol servers
-* [Role Guides](../hve-guide/roles/) - Find your role-specific guide
+* [Available agents](https://github.com/microsoft/hve-core/blob/main/.github/CUSTOM-AGENTS.md)
+* [MCP Configuration](mcp-configuration)
 
 ---
 

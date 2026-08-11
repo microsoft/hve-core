@@ -3,9 +3,9 @@ title: "Method 4: Brainstorming"
 description: "Generate diverse solution ideas through structured divergent thinking and converge on promising directions through evidence-informed clustering."
 sidebar_position: 8
 author: Microsoft
-ms.date: 2026-06-28
+ms.date: 2026-08-11
 ms.topic: tutorial
-keywords: [design thinking, method-04, brainstorming]
+keywords: [design thinking, method-04, brainstorming, AI Discovery Cards, Agentic workflows]
 estimated_reading_time: 5
 ---
 
@@ -34,6 +34,7 @@ Method 4 is the **entry point to the Solution Space**. The Solution Space spans 
 * Divergent ideation: Generate a high volume of ideas without evaluation. Target 15 or more ideas across 4 to 6 categories. Quantity and variety matter more than polish at this stage.
 * Constraint-informed generation: Use frozen constraints from Method 1 as creative boundaries that shape ideas rather than block them. Fluid constraints can be challenged or redesigned as part of the solution.
 * AI collaboration: Use AI as a brainstorming partner through three patterns: Prep and Synthesis (AI prepares stimulus material and organizes outputs), Backup Generator (AI generates additional ideas when team momentum stalls), and Silent Observer (AI captures and categorizes ideas during team sessions).
+* AI Discovery Cards: For AI-focused ideation, including ideas for Agentic workflows, use AI Discovery Cards after validating the problem and stakeholder needs. Designers and facilitators should use the AI Discovery Cards Workshop Facilitation Guide for workshop details and AI capabilities.
 * Philosophy-based clustering: Group ideas not by surface similarity but by their underlying approach or philosophy. Ideas that look different but share the same theory of change belong together.
 * Convergent evaluation: Assess clusters against the problem statement, validated constraints, and stakeholder needs. Identify 3 to 5 themes that represent distinct solution directions worth developing further.
 
@@ -56,6 +57,28 @@ During brainstorming:
 * Use constraints as creative prompts, not filters
 * Document every idea, even ones that seem impractical
 
+### Capture AI Discovery Cards results
+
+Record workshop results in the Method 4 idea inventory. For every promising idea,
+capture the validated user need, affected stakeholders, desired outcome,
+constraints, and the AI capabilities that inspired the idea. Record the source as
+the AI Discovery Cards workshop without reproducing workshop materials.
+
+For an agentic workflow idea, also capture:
+
+* The event or user action that starts the workflow
+* The people, systems, and agents that participate
+* The bounded responsibilities proposed for AI
+* The tools and information the workflow may require
+* The decisions or exceptions that require human involvement
+* The expected outcome and evidence that would show it helps users
+* Assumptions, risks, and technical questions that remain unresolved
+
+Cluster these ideas with the rest of the Method 4 inventory. Advance selected
+themes to Method 5 as User Concepts, then test the workflow and human oversight
+points with Method 6 Low-Fidelity Prototypes. Do not treat the workshop output as
+a validated workflow or technical architecture.
+
 ## Expected Outputs
 
 * Idea inventory with 15 or more ideas across 4 to 6 categories
@@ -63,6 +86,8 @@ During brainstorming:
 * 3 to 5 converged themes representing distinct solution directions
 * Constraint analysis showing which ideas work within frozen constraints and which challenge fluid constraints
 * Evaluation notes connecting promising clusters to validated user needs from Method 3
+* For agentic workflow themes, a workflow outline covering triggers,
+  participants, AI responsibilities, tools, human decision points, and unknowns
 
 ## Quality Checks
 

@@ -46,6 +46,10 @@ Read all Method 4-6 artifacts listed in the coaching state `artifacts` section a
 * Theme clusters (divergent ideas grouped by affinity).
 * Selected themes for concept development.
 * Session plan and brainstorming notes.
+* AI Discovery Cards workshop notes and idea inventory, when used.
+* Agentic workflow outlines, including triggers, participants, bounded AI
+  responsibilities, potential tools and information, human decision points,
+  expected outcomes, and unresolved assumptions.
 
 #### Method 5: User Concepts
 
@@ -108,6 +112,10 @@ Include these sections:
 * Assumptions: each assumption with description, confidence, validation status (validated/invalidated/untested), and impact rating (high/medium/low).
 * Validated Patterns: user behavior patterns observed during testing with supporting evidence.
 * Technical Unknowns: items tagged `assumed`, `unknown`, or `conflicting` requiring further investigation.
+* Agentic Workflow Context: for each advanced agentic workflow concept, summarize
+  its trigger, participants, bounded AI responsibilities, potential tools and
+  information, human decision points, expected outcome, and unresolved
+  assumptions. Omit this section when no agentic workflow concept advanced.
 
 Inline all content directly rather than referencing artifact paths. The document stands alone as complete context for handoff and audit trail.
 
@@ -129,13 +137,14 @@ Include YAML frontmatter with `description` set to a summary of the handoff cont
 
 Transform DT artifacts into research-topic context using these mappings:
 
-| DT Artifact                       | Research Topic Context    | Notes                                           |
-|-----------------------------------|---------------------------|-------------------------------------------------|
-| Validated concepts (Method 5)     | Research scope definition | Concepts frame what `rpi-research` investigates |
-| Constraint discoveries (Method 6) | Known constraints         | Group by category, flag blockers                |
-| User behavior patterns (Method 6) | Observed context          | Include observation evidence                    |
-| Invalidated assumptions           | Investigation priorities  | Document what testing disproved                 |
-| Technical unknowns                | Primary research targets  | Items marked assumed/unknown/conflicting        |
+| DT Artifact                       | Research Topic Context    | Notes                                                    |
+|-----------------------------------|---------------------------|----------------------------------------------------------|
+| Validated concepts (Method 5)     | Research scope definition | Concepts frame what `rpi-research` investigates          |
+| Constraint discoveries (Method 6) | Known constraints         | Group by category, flag blockers                         |
+| User behavior patterns (Method 6) | Observed context          | Include observation evidence                             |
+| Invalidated assumptions           | Investigation priorities  | Document what testing disproved                          |
+| Technical unknowns                | Primary research targets  | Items marked assumed/unknown/conflicting                 |
+| Agentic workflow outlines         | Workflow research context | Validate orchestration, tools, oversight, and boundaries |
 
 Structure the document with these sections:
 
@@ -143,6 +152,9 @@ Structure the document with these sections:
 * Known Constraints: constraints organized by category (Physical/Environmental/Workflow) with severity markers. The RPI research phase treats these as established boundaries.
 * Observed Context: user behavior patterns and environmental observations from prototype testing that provide context for research.
 * Investigation Priorities: items tagged `assumed`, `unknown`, or `conflicting` requiring investigation during `rpi-research`. Prioritize blockers and high-impact unknowns.
+* Agentic Workflow Context: when applicable, describe the proposed workflow and
+  frame orchestration, tool access, human oversight, and responsibility boundaries
+  as research questions rather than implementation requirements.
 * DT Artifact Paths: list all `.copilot-tracking/dt/{project-slug}/` artifact paths so `rpi-research` can read original DT evidence directly.
 
 ---

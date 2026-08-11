@@ -3,7 +3,7 @@ title: Using the DT Coach
 description: Guide to using the dt-coach agent for AI-assisted Design Thinking sessions
 sidebar_position: 3
 author: Microsoft
-ms.date: 2026-07-15
+ms.date: 2026-08-11
 ms.topic: tutorial
 keywords:
   - dt-coach
@@ -123,6 +123,7 @@ Session state persists in `.copilot-tracking/design-thinking-sessions/{project-s
 * Start broad, narrow later. Resist the urge to jump to solutions in early methods. The Problem Space exists to ensure you solve the right problem.
 * Trust the exit signals. Each method has specific criteria that indicate when you have enough evidence to advance. The coach tracks these for you.
 * Keep artifacts rough. In the Problem and Solution spaces, polished output actually hurts. Scrappy artifacts invite honest feedback from stakeholders.
+* Use AI Discovery Cards for AI-focused ideation during Method 4 after the problem and stakeholder needs are validated. Refer to the AI Discovery Cards Workshop Facilitation Guide for workshop details and AI capabilities.
 * Use industry context. If your domain is manufacturing, healthcare, or energy, mention it early. The coach adjusts vocabulary and stakeholder archetypes accordingly.
 
 ## Common Pitfalls
