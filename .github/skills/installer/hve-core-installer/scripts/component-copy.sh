@@ -48,6 +48,40 @@ sha256_of() {
   fi
 }
 
+# Containment is decided by resolved path and real filesystem state, never by the
+# shape of a joined string. Mirrors Assert-WithinTargetRoot in component-copy.ps1
+# and must stay behaviourally identical to it.
+#
+# Ancestors are walked with -L rather than resolving the whole path with
+# `realpath -m`, because -m is a GNU coreutils extension that is not dependable on
+# macOS, and because the leaf does not exist yet on a first install.
+assert_within_target_root() {
+  local base="$1" relative="$2" component="$3"
+  local current="$base" segment remainder="$relative"
+
+  case "$relative" in
+    /*) fail "Component '$component' resolves outside the target root." ;;
+    *..*) fail "Component '$component' resolves outside the target root." ;;
+  esac
+
+  while [[ -n "$remainder" ]]; do
+    segment="${remainder%%/*}"
+    if [[ "$remainder" == */* ]]; then
+      remainder="${remainder#*/}"
+    else
+      remainder=""
+    fi
+    [[ -n "$segment" ]] || continue
+    current="$current/$segment"
+    [[ -e "$current" || -L "$current" ]] || break
+    if [[ -L "$current" ]]; then
+      fail "Component '$component' resolves through a link at '$current', which may write outside the target root."
+    fi
+  done
+
+  echo "$base/$relative"
+}
+
 # Maps a marketplace field to "<kind>|<source root>|<package suffix>|<source suffix>".
 field_descriptor() {
   case "$1" in
@@ -203,6 +237,7 @@ main() {
     plan_maturities["$candidate"]="${component_maturity[$candidate]:-stable}"
     plan_targets["$candidate"]="$source_rel"
     plan_files["$candidate"]="$files"
+    assert_within_target_root "$target_base" "$source_rel" "$candidate" >/dev/null
   done
 
   local version installed
@@ -250,7 +285,7 @@ main() {
     return 0
   fi
 
-  local component target file hash
+  local component target file hash target_file
   for component in "${sorted_components[@]}"; do
     target="${plan_targets[$component]}"
 
@@ -270,8 +305,12 @@ main() {
         echo "🔒 Skipped ejected: $file"
         continue
       fi
-      mkdir -p "$(dirname "$target_base/$file")"
-      cp "$source_root/$file" "$target_base/$file"
+      # Re-verified immediately before the write. Preflight ran earlier, so a link
+      # planted in between would otherwise be followed by mkdir and cp. This
+      # narrows that window; it does not make the check and the write atomic.
+      target_file=$(assert_within_target_root "$target_base" "$file" "$component")
+      mkdir -p "$(dirname "$target_file")"
+      cp "$source_root/$file" "$target_file"
       hash=$(sha256_of "$target_base/$file")
       jq -nc --arg path "$file" --arg component "$component" --arg kind "${plan_kinds[$component]}" \
         --arg maturity "${plan_maturities[$component]}" --arg ver "$version" --arg sha "$hash" \

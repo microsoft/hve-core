@@ -9,7 +9,7 @@ This skill packages the W3C WAI-ARIA Authoring Practices Guide (APG) as an acces
 
 APG is non-normative implementation guidance that operationalises the normative WAI-ARIA specification, so APG patterns sit alongside the [`wcag-22`](wcag-22.md) skill: APG describes how to build the widget, WCAG 2.2 describes which behaviours the finished widget must satisfy. Assessor subagents typically cite both — the APG pattern for the widget contract and the relevant WCAG 2.2 success criterion for the user-facing requirement.
 
-Source: W3C WAI-ARIA Authoring Practices Guide, <https://www.w3.org/WAI/ARIA/apg/>. APG content is published under the W3C Document License. Per the repository licensing posture in `.github/instructions/accessibility/accessibility-license-posture.instructions.md`, pattern summaries in this skill are paraphrased in the authors' own words and every reference file links to the canonical W3C pattern URL for verification.
+Source: W3C WAI-ARIA Authoring Practices Guide, <https://www.w3.org/WAI/ARIA/apg/>. APG content is published under the W3C Document License. Per the repository licensing posture in `accessibility-license-posture.instructions.md`, pattern summaries in this skill are paraphrased in the authors' own words and every reference file links to the canonical W3C pattern URL for verification. When that instruction content is unavailable, apply the paraphrase-only posture stated here and do not quote APG content verbatim.
 
 ## Pattern roll-up
 
