@@ -18,13 +18,13 @@ Publication starts during the workshop as a readiness assessment and continues
 afterward with authorized environments and human approvals. Certification and
 tenant approval timelines are outside the two-hour agenda.
 
-| Milestone                          | Workshop Expectation   | Completion Owner           |
-|------------------------------------|------------------------|----------------------------|
-| Product and integration contract   | Draft                  | Cross-role team            |
-| Managed Application package        | Plan only              | Technical team             |
-| Azure Application offer            | Readiness checklist    | Marketplace owner          |
-| Microsoft 365 agent package        | Route and requirements | Agent engineering team     |
-| Agent Store or Marketplace release | Approval plan          | Tenant admin and publisher |
+| Milestone | Workshop Expectation | Completion Owner |
+|-----------|----------------------|------------------|
+| Product and integration contract | Draft | Cross-role team |
+| Managed Application package | Plan only | Technical team |
+| Azure Application offer | Readiness checklist | Marketplace owner |
+| Microsoft 365 agent package | Route and requirements | Agent engineering team |
+| Agent Store or Marketplace release | Approval plan | Tenant admin and publisher |
 
 ## Choose The Two Products
 
@@ -148,7 +148,7 @@ as the source of truth because Partner Center fields can change.
 7. Prepare the Microsoft 365 app package, manifest, icons, and required agent
    files when using Agents Toolkit.
 8. Run manifest and Responsible AI validation.
-9. Side load into a test tenant with administrator approval.
+9. Sideload into a test tenant with administrator approval.
 10. Test expected prompts, prohibited prompts, unauthorized access, missing
     content, dependency failures, prompt injection, and harmful output handling.
 11. Complete security, privacy, accessibility, Responsible AI, and support

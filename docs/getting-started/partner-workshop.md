@@ -47,13 +47,13 @@ workshop-output/
 `-- 06-publication-readiness.md
 ```
 
-| Outcome                       | Complete In Two Hours                 | Continue After Workshop                 |
-|-------------------------------|---------------------------------------|-----------------------------------------|
-| Context and user requirements | Reviewed draft                        | Customer validation and approval        |
-| Backlog                       | Prioritized draft or planning handoff | Create approved external work items     |
-| Azure architecture            | Reviewed conceptual Mermaid diagram   | Implement and validate infrastructure   |
-| Azure Managed Application     | Package and offer readiness plan      | Build, test, certify, and publish offer |
-| Microsoft 365 Copilot agent   | Experience and distribution plan      | Build, test, approve, and publish agent |
+| Outcome | Complete In Two Hours | Continue After Workshop |
+|---------|-----------------------|-------------------------|
+| Context and user requirements | Reviewed draft | Customer validation and approval |
+| Backlog | Prioritized draft or planning handoff | Create approved external work items |
+| Azure architecture | Reviewed conceptual Mermaid diagram | Implement and validate infrastructure |
+| Azure Managed Application | Package and offer readiness plan | Build, test, certify, and publish offer |
+| Microsoft 365 Copilot agent | Experience and distribution plan | Build, test, approve, and publish agent |
 
 > [!IMPORTANT]
 > HVE Core custom agents run in GitHub Copilot and VS Code. They are not
@@ -66,27 +66,27 @@ workshop-output/
 
 Form teams of four to six people. One person can cover more than one role.
 
-| Track                 | Suggested Participants                            | Primary Workshop Output                                |
-|-----------------------|---------------------------------------------------|--------------------------------------------------------|
-| Product management    | PM, program manager, product owner                | Outcomes, requirements, priorities, backlog structure  |
-| Subject matter expert | Industry SME, compliance lead, operations lead    | Domain context, terminology, constraints, evidence     |
-| Design                | UX designer, service designer, researcher         | Personas, journey, accessibility, agent experience     |
-| Technical             | Architect, engineer, security lead, platform lead | Azure design, diagram, deployment and publication plan |
+| Track | Suggested Participants | Primary Workshop Output |
+|-------|------------------------|-------------------------|
+| Product management | PM, program manager, product owner | Outcomes, requirements, priorities, backlog structure |
+| Subject matter expert | Industry SME, compliance lead, operations lead | Domain context, terminology, constraints, evidence |
+| Design | UX designer, service designer, researcher | Personas, journey, accessibility, agent experience |
+| Technical | Architect, engineer, security lead, platform lead | Azure design, diagram, deployment and publication plan |
 
 Review the broader [HVE role guides](../hve-guide/roles/) after the workshop for
 ongoing role-specific workflows.
 
 ## Two-Hour Agenda
 
-| Time      | Activity                           | Mode     | Output                                                 |
-|-----------|------------------------------------|----------|--------------------------------------------------------|
-| 0:00-0:10 | HVE and RPI overview               | Shared   | Common vocabulary and scenario                         |
-| 0:10-0:25 | Environment setup and verification | Shared   | Working HVE Core All installation                      |
-| 0:25-0:35 | Scenario framing                   | Shared   | Initial problem statement                              |
-| 0:35-1:10 | Role exercises                     | Breakout | Context, requirements, experience, architecture inputs |
-| 1:10-1:35 | Artifact integration               | Shared   | Requirements, backlog, and Azure diagram               |
-| 1:35-1:50 | Publication readiness              | Shared   | Managed App and Agent Store checklists                 |
-| 1:50-2:00 | Playback and next actions          | Shared   | Owners, gaps, and follow-up plan                       |
+| Time | Activity | Mode | Output |
+|------|----------|------|--------|
+| 0:00-0:10 | HVE and RPI overview | Shared | Common vocabulary and scenario |
+| 0:10-0:25 | Environment setup and verification | Shared | Working HVE Core All installation |
+| 0:25-0:35 | Scenario framing | Shared | Initial problem statement |
+| 0:35-1:10 | Role exercises | Breakout | Context, requirements, experience, architecture inputs |
+| 1:10-1:35 | Artifact integration | Shared | Requirements, backlog, and Azure diagram |
+| 1:35-1:50 | Publication readiness | Shared | Managed App and Agent Store checklists |
+| 1:50-2:00 | Playback and next actions | Shared | Owners, gaps, and follow-up plan |
 
 ## Facilitator Preparation
 
