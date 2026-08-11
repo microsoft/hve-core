@@ -3,7 +3,7 @@ prd_id: "PRD-2026-Q2-PRIVACY-PLANNER"
 title: "Privacy Planner PRD"
 description: "Product requirements for adding a first-class Privacy Planner, privacy-standards skill, and Privacy Reviewer to the hve-core planner family."
 author: "GitHub Copilot"
-ms.date: 2026-06-30
+ms.date: 2026-08-10
 ms.topic: concept
 sidebar_position: 2
 keywords: [prd, privacy, planner, privacy standards, data protection]
@@ -40,7 +40,7 @@ Version 0.1 approved | Status Approved for downstream handoff | Owner HVE-Core m
 
 | Phase                         | Done                                                                         | Gaps                                                       | Updated    |
 |-------------------------------|------------------------------------------------------------------------------|------------------------------------------------------------|------------|
-| Context                       | Seeded from approved Privacy Planner BRD                                     | Confirm target release vehicle and collection milestone    | 2026-06-21 |
+| Context                       | Seeded from approved Privacy Planner BRD                                     | Confirm target release vehicle and packaging milestone     | 2026-06-21 |
 | Problem & Users               | Seeded from stakeholder model and planner-family gap                         | Validate compliance/legal reviewer workflow expectations   | 2026-06-21 |
 | Scope                         | Drafted for planner, privacy-standards skill, reviewer, and handoff surfaces | Confirm first-release backlog manager integration tests    | 2026-06-21 |
 | Requirements                  | Functional and non-functional requirements drafted from approved BRD         | Validate quality review complete; human approvals recorded | 2026-06-22 |
@@ -103,15 +103,15 @@ Out of scope:
 
 ## 3. Users and Personas
 
-| Persona                     | Goals                                                                       | Pain Points                                                              | Product Impact                                                                        |
-|-----------------------------|-----------------------------------------------------------------------------|--------------------------------------------------------------------------|---------------------------------------------------------------------------------------|
-| Data-handling practitioner  | Assess privacy risk for processing activities                               | Needs practical guidance without legal overclaiming                      | Primary planner interaction must be clear, gated, and traceable                       |
-| Compliance / legal reviewer | Validate privacy finding fidelity                                           | Needs verbatim source-control citations and review boundaries            | Findings must expose source controls and avoid acting as approval                     |
-| HVE-Core maintainer         | Ship planner assets consistently across collections and extension packaging | Needs privacy to fit the family pattern without bespoke drift            | Artifacts must follow existing planner structure and validation paths                 |
-| Security Planner owner      | Understand overlap between privacy and security findings                    | Needs machine-detectable handoff without duplicated reconciliation logic | `cross_planner_refs` must flag overlap but stop at the seam                           |
-| RAI Planner owner           | Coordinate AI personal-data overlap                                         | Needs compatible classification and impact-assessment shape              | DPIA gate mirrors the P2 classification to P5 impact pattern                          |
-| Backlog manager             | Convert privacy findings into actionable work items                         | Needs stable augmentation fields and severity-to-priority mapping        | Handoff fields must be structured and parser-friendly                                 |
-| End user / data subject     | Benefit from reduced privacy harm                                           | Needs privacy risks to be surfaced before implementation                 | Data-subject harms inform risk framing, with direct evidence tracked as an assumption |
+| Persona                     | Goals                                                                               | Pain Points                                                              | Product Impact                                                                        |
+|-----------------------------|-------------------------------------------------------------------------------------|--------------------------------------------------------------------------|---------------------------------------------------------------------------------------|
+| Data-handling practitioner  | Assess privacy risk for processing activities                                       | Needs practical guidance without legal overclaiming                      | Primary planner interaction must be clear, gated, and traceable                       |
+| Compliance / legal reviewer | Validate privacy finding fidelity                                                   | Needs verbatim source-control citations and review boundaries            | Findings must expose source controls and avoid acting as approval                     |
+| HVE-Core maintainer         | Ship planner assets consistently across marketplace recipes and extension packaging | Needs privacy to fit the family pattern without bespoke drift            | Artifacts must follow existing planner structure and validation paths                 |
+| Security Planner owner      | Understand overlap between privacy and security findings                            | Needs machine-detectable handoff without duplicated reconciliation logic | `cross_planner_refs` must flag overlap but stop at the seam                           |
+| RAI Planner owner           | Coordinate AI personal-data overlap                                                 | Needs compatible classification and impact-assessment shape              | DPIA gate mirrors the P2 classification to P5 impact pattern                          |
+| Backlog manager             | Convert privacy findings into actionable work items                                 | Needs stable augmentation fields and severity-to-priority mapping        | Handoff fields must be structured and parser-friendly                                 |
+| End user / data subject     | Benefit from reduced privacy harm                                                   | Needs privacy risks to be surfaced before implementation                 | Data-subject harms inform risk framing, with direct evidence tracked as an assumption |
 
 ### Primary Journey
 
@@ -144,11 +144,11 @@ journey
 
 ## 5. Product Goals
 
-| Goal ID | Requirement                                                                    | Measurement                                                                                   | Acceptance Signal                                                                                                        |
-|---------|--------------------------------------------------------------------------------|-----------------------------------------------------------------------------------------------|--------------------------------------------------------------------------------------------------------------------------|
-| PG-001  | Privacy Planner conforms to the shared planner family architecture.            | Structural validation passes for the agent, skill, reviewer, state, and collection artifacts. | One planner, one skill, and one reviewer are packaged and validated by 2026-09-30.                                       |
-| PG-002  | Every privacy finding is traceable to an authoritative privacy source control. | Citation coverage across emitted findings.                                                    | 100% of emitted findings carry `gdpr_article`, `ccpa_section`, NIST PF function/category, or OWASP entry ID.             |
-| PG-003  | Cross-planner overlap is machine-detectable downstream.                        | Handoff schema coverage and caller registration.                                              | Privacy is registered as the 5th `backlog-templates` caller and emits `cross_planner_refs` whenever overlap is detected. |
+| Goal ID | Requirement                                                                    | Measurement                                                                                            | Acceptance Signal                                                                                                        |
+|---------|--------------------------------------------------------------------------------|--------------------------------------------------------------------------------------------------------|--------------------------------------------------------------------------------------------------------------------------|
+| PG-001  | Privacy Planner conforms to the shared planner family architecture.            | Structural validation passes for the agent, skill, reviewer, state, and marketplace recipe membership. | One planner, one skill, and one reviewer are packaged and validated by 2026-09-30.                                       |
+| PG-002  | Every privacy finding is traceable to an authoritative privacy source control. | Citation coverage across emitted findings.                                                             | 100% of emitted findings carry `gdpr_article`, `ccpa_section`, NIST PF function/category, or OWASP entry ID.             |
+| PG-003  | Cross-planner overlap is machine-detectable downstream.                        | Handoff schema coverage and caller registration.                                                       | Privacy is registered as the 5th `backlog-templates` caller and emits `cross_planner_refs` whenever overlap is detected. |
 
 ## 6. Business Rules
 
@@ -202,7 +202,7 @@ NFR-007: The Privacy Planner and Privacy Reviewer remain thin orchestration over
 
 ### Portability
 
-NFR-008: The components install and run through the same collection and extension packaging path as sibling planners with no privacy-specific runtime dependency.
+NFR-008: The components install and run through the same marketplace recipe, plugin, and extension packaging path as sibling planners with no privacy-specific runtime dependency.
 
 ### Scalability and Elasticity
 
@@ -351,7 +351,7 @@ Metrics must avoid unbounded dimensions such as raw user prompts, file paths con
 
 ### Packaging and Release
 
-Privacy Planner artifacts must follow the same collection, plugin, and extension packaging path as sibling planners. The first release includes planner agent assets, `privacy-standards` skill assets, Privacy Reviewer assets, collection metadata, and validation coverage for the shared handoff contract.
+Privacy Planner artifacts must follow the same marketplace recipe, plugin, and extension packaging path as sibling planners. The first release includes planner agent assets, `privacy-standards` skill assets, Privacy Reviewer assets, marketplace recipe membership, and validation coverage for the shared handoff contract.
 
 ### Support and Review
 
