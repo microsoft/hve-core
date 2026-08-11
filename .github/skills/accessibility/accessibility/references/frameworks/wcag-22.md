@@ -13,7 +13,7 @@ Source: W3C Web Content Accessibility Guidelines (WCAG) 2.2, <https://www.w3.org
 
 ## Licensing posture
 
-WCAG 2.2 is published under the W3C Document License. This skill paraphrases success-criterion intent rather than reproducing normative text verbatim, in line with the paraphrase-preferred posture defined in [accessibility-license-posture.instructions.md](../../../../../instructions/accessibility/accessibility-license-posture.instructions.md). Every per-guideline reference file cites the canonical W3C URL for each success criterion, and any future verbatim quotation must carry the W3C copyright attribution line specified in that instruction file.
+WCAG 2.2 is published under the W3C Document License. This skill paraphrases success-criterion intent rather than reproducing normative text verbatim, in line with the paraphrase-preferred posture defined in `accessibility-license-posture.instructions.md`. Every per-guideline reference file cites the canonical W3C URL for each success criterion, and any future verbatim quotation must carry the W3C copyright attribution line specified in that instruction file. When that instruction content is unavailable, apply the paraphrase-only posture stated here and do not quote normative text verbatim, because the required attribution line cannot be confirmed.
 
 ## Success-criterion roll-up
 

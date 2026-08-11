@@ -239,8 +239,10 @@ Any deviation from the defined paths is non-compliant with this workflow.
 
 Do not restate pipeline internals here. Use these sources:
 
-- `.github/skills/experimental/customer-card-render/README.md`
-- `.github/skills/experimental/powerpoint/SKILL.md`
+- The `customer-card-render` skill, for the customer-card mapping and build contract
+- The `powerpoint` skill, for the deck build pipeline and its Script Reference
+
+Both ship in the experimental package. When either is unavailable, say which pipeline capability is missing and stop before generating deck or customer-card artifacts rather than reimplementing the pipeline here.
 
 ## Method 5 Auto-Generate
 

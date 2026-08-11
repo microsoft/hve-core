@@ -1,9 +1,9 @@
 ---
 prd_id: "PRD-2026-Q2-BRD-BUILDER"
 title: "BRD Builder Agent Product Requirements"
-description: "Product Requirements Document for the BRD Builder agent, defining product goals, functional requirements, and acceptance criteria for the guided Business Requirements Document authoring workflow in the project-planning collection."
+description: "Product Requirements Document for the BRD Builder agent, defining product goals, functional requirements, and acceptance criteria for the guided Business Requirements Document authoring workflow in the project-planning package."
 author: "HVE Core Maintainers"
-ms.date: "2026-06-29"
+ms.date: "2026-08-05"
 ms.topic: "reference"
 status: "approved"
 version: "1.0.0"
@@ -45,24 +45,24 @@ Scope is limited to the BRD Builder agent, its external-template strategy, and i
 
 ## Product Context
 
-HVE-Core ships AI agent customizations (agents, prompts, instructions, and skills) bundled into collections and distributed through plugins and a VS Code extension. The `project-planning` collection includes twin requirements agents (the BRD Builder and the PRD Builder) that share a Q&A authoring architecture.
+HVE-Core ships AI agent customizations (agents, prompts, instructions, and skills) defined through marketplace package recipes and distributed through plugins and a VS Code extension. The `project-planning` package includes twin requirements agents (the BRD Builder and the PRD Builder) that share a Q&A authoring architecture.
 
 The user problem is requirement drift and duplication: when authoring logic lives inline in each agent, the BRD and PRD flows diverge over time, producing inconsistent taxonomies, quality gates, and handoffs. The `feat/brd-skills` changeset renames `brd-author` to `requirements-author` and restructures its references into `_shared/`, `brd/`, and `prd/` groupings so both document types draw from one canonical source.
 
 The BRD Builder is the more consolidated of the two agents: it already sources its template and lifecycle from the shared skill. The product vision for this release is to harden that consumption (keeping the three-phase user experience, the quality contracts, and the PRD handoff stable as the shared skill changes) so the BRD Builder remains a dependable front door for business-requirements capture.
 
-External constraints include the repository's authoring conventions (markdownlint, frontmatter schemas, and collection/plugin/extension regeneration) and the CC BY 4.0 licensing posture for skill content.
+External constraints include the repository's authoring conventions (markdownlint, frontmatter schemas, and marketplace recipe, plugin, and extension regeneration) and the CC BY 4.0 licensing posture for skill content.
 
 ---
 
 ## Users and Personas
 
-| Persona                            | Role                                           | Primary jobs-to-be-done                                   | Key pain points                                                       | Success outcome                                           |
-|------------------------------------|------------------------------------------------|-----------------------------------------------------------|-----------------------------------------------------------------------|-----------------------------------------------------------|
-| Business Analyst / Product Manager | End user authoring a BRD                       | Convert a business need into a structured, reviewable BRD | Manual templating; inconsistent quality; lost context across sessions | A complete, quality-gated BRD produced through guided Q&A |
-| project-planning maintainer        | Owns the BRD/PRD agents and shared skill       | Keep authoring logic consistent and low-drift             | Divergence between BRD and PRD flows                                  | Single shared skill drives both agents                    |
-| Downstream PRD author              | Consumes the BRD handoff                       | Seed a PRD from an approved BRD                           | Re-keying goals and requirements by hand                              | Valid `BRD_TO_PRD_HANDOFF_V1` seeds the PRD               |
-| HVE-Core platform maintainer       | Owns collections, plugins, extension packaging | Keep distribution outputs green                           | Manual edits to generated outputs                                     | Regeneration stays consistent after changes               |
+| Persona                            | Role                                                   | Primary jobs-to-be-done                                   | Key pain points                                                       | Success outcome                                           |
+|------------------------------------|--------------------------------------------------------|-----------------------------------------------------------|-----------------------------------------------------------------------|-----------------------------------------------------------|
+| Business Analyst / Product Manager | End user authoring a BRD                               | Convert a business need into a structured, reviewable BRD | Manual templating; inconsistent quality; lost context across sessions | A complete, quality-gated BRD produced through guided Q&A |
+| project-planning maintainer        | Owns the BRD/PRD agents and shared skill               | Keep authoring logic consistent and low-drift             | Divergence between BRD and PRD flows                                  | Single shared skill drives both agents                    |
+| Downstream PRD author              | Consumes the BRD handoff                               | Seed a PRD from an approved BRD                           | Re-keying goals and requirements by hand                              | Valid `BRD_TO_PRD_HANDOFF_V1` seeds the PRD               |
+| HVE-Core platform maintainer       | Owns marketplace recipes, plugins, extension packaging | Keep distribution outputs green                           | Manual edits to generated outputs                                     | Regeneration stays consistent after changes               |
 
 ---
 
@@ -195,7 +195,7 @@ NFR-008: The BRD Builder operates across HVE-Core distribution contexts (reposit
 ## Constraints
 
 * `CON-001`: The BRD Builder MUST preserve its existing three-phase workflow and naming; phase structure changes are out of scope for this PRD. Imposing source: product continuity / DD-003. Affected boundary: scope. Non-negotiability: avoids breaking existing user workflows and documentation. Category: organizational. Impact: design.
-* `CON-002`: Changes MUST keep `collections/*.collection.yml`/`.md`, `plugins/`, and `extension/` outputs consistent via the repository's regeneration scripts. Imposing source: repository distribution pipeline. Affected boundary: operations. Non-negotiability: generated outputs must not be hand-edited. Category: technical. Impact: delivery.
+* `CON-002`: Changes MUST keep the `.github/plugin/marketplace.json` recipe, `plugins/`, and `extension/` outputs consistent via the repository's regeneration scripts (`plugin:generate`, `extension:prepare`) validated by `plugin:validate`. Imposing source: repository distribution pipeline. Affected boundary: operations. Non-negotiability: generated outputs must not be hand-edited. Category: technical. Impact: delivery.
 * `CON-003`: Shared skill content MUST follow the CC BY 4.0 cite-only standards posture. Imposing source: repository licensing. Affected boundary: compliance. Non-negotiability: licensing obligation. Category: contractual. Impact: acceptance.
 * `CON-004`: Specification and migration work MUST land by the 2026-06-30 milestone to align with the `feat/brd-skills` initiative. Imposing source: initiative schedule / DD-003 continuity window. Affected boundary: schedule. Non-negotiability: calendar-driven target. Category: organizational. Impact: delivery.
 
@@ -287,7 +287,7 @@ Deferred: any expansion of the phase model or new document types beyond the BRD.
 ### Risk Register
 
 * Risk: Shared-skill edits regress the BRD UX. Probability: Medium. Impact: High. Mitigation: treat the three-phase UX as a continuity constraint (CON-001) and verify with NFR-006.
-* Risk: Generated collection/plugin/extension outputs drift after agent or skill edits. Probability: Medium. Impact: Medium. Mitigation: run regeneration and validation scripts as part of acceptance (CON-002).
+* Risk: Generated marketplace recipe, plugin, and extension outputs drift after agent or skill edits. Probability: Medium. Impact: Medium. Mitigation: run regeneration and validation scripts as part of acceptance (CON-002).
 
 ---
 

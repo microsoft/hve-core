@@ -3,12 +3,11 @@ name: backlog-templates
 description: "Shared work-item templates and conventions for ADO and GitHub backlog handoff across the RAI, Security, SSSC, Accessibility, and Privacy planners"
 license: MIT
 user-invocable: true
-compatibility:
-  hosts: ["vscode", "github-coding-agent"]
+compatibility: "Hosts: vscode, github-coding-agent. Reference-only templates; the consuming planner supplies tracker access."
 metadata:
-  authors: ["microsoft/hve-core"]
+  authors: "microsoft/hve-core"
   spec_version: "1.0.0"
-  last_updated: "2026-05-09"
+  last_updated: "2026-08-09"
 ---
 
 # Backlog Templates
