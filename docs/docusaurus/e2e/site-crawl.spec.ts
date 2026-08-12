@@ -3,6 +3,7 @@
 import { test, expect } from '@playwright/test';
 import AxeBuilder from '@axe-core/playwright';
 import { PAGES } from './_helpers/pages';
+import { waitForHydration } from './_helpers/a11yInvariants';
 
 const WCAG_TAGS = ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa', 'best-practice'];
 
@@ -18,6 +19,7 @@ test.describe('Full-site accessibility crawl', () => {
     test(`${name} passes an axe scan`, async ({ page }, testInfo) => {
       test.setTimeout(60000);
       await page.goto(path, { waitUntil: 'domcontentloaded' });
+      await waitForHydration(page);
 
       const results = await new AxeBuilder({ page }).withTags(WCAG_TAGS).analyze();
       await testInfo.attach(`${name}-incomplete`, {

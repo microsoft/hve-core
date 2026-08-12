@@ -107,6 +107,20 @@ jobs:
           # transformers; CNRI-Python is a permissive PSF-style license. The
           # moderation eval is an internal test harness, not a distributed
           # product.
+          #
+          # axe-core and @axe-core/playwright are MPL-2.0, which is file-level
+          # copyleft rather than project-level. Both are already vendored at the
+          # same version by the Docusaurus site; the accessibility skill's
+          # runtime harness pins the same pair so probes resolve without a
+          # network fetch. They are development-time test tooling that is never
+          # linked into or redistributed with a shipped artifact, and no
+          # MPL-covered file is modified.
+          #
+          # pkg:npm/through2 resolves as the compound expression
+          # "MIT AND MITNFA", which the action cannot match against
+          # allow-licenses even though both halves are permissive; the package
+          # lockfile records plain MIT. It arrives transitively through regedit,
+          # which the accessibility harness uses to detect a local NVDA install.
           # The nested scripts/extension/marketplace-publisher graph below is
           # a manifest-scoped duplicate of the root @vscode/vsce 3.9.2
           # build-time toolchain; every package resolves at the identical
@@ -172,6 +186,9 @@ jobs:
             pkg:npm/lightningcss-win32-arm64-msvc,
             pkg:npm/lightningcss-win32-x64-msvc,
             pkg:npm/uri-js,
+            pkg:npm/axe-core,
+            pkg:npm/%40axe-core/playwright,
+            pkg:npm/through2,
             pkg:npm/hve-core,
             pkg:npm/hve-core-marketplace-publisher,
             pkg:npm/%40vscode/vsce-sign,

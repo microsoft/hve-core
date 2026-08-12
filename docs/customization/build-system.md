@@ -46,6 +46,8 @@ determine which schema applies to each file.
 
 ### Schema Files
 
+:::table{caption="Frontmatter schemas and the files they validate"}
+
 | Schema                                   | Applies To                        |
 |------------------------------------------|-----------------------------------|
 | `docs-frontmatter.schema.json`           | `docs/**/*.md`                    |
@@ -57,6 +59,8 @@ determine which schema applies to each file.
 | `marketplace-manifest.schema.json`       | `.github/plugin/marketplace.json` |
 | `root-community-frontmatter.schema.json` | Root files (README, CONTRIBUTING) |
 | `base-frontmatter.schema.json`           | Default fallback                  |
+
+:::
 
 ### Pattern Mapping
 

@@ -1,3 +1,5 @@
+// Copyright (c) 2026 Microsoft Corporation. All rights reserved.
+// SPDX-License-Identifier: MIT
 import jsxA11y from 'eslint-plugin-jsx-a11y';
 import tsParser from '@typescript-eslint/parser';
 

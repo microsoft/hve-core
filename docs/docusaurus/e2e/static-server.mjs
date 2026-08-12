@@ -28,9 +28,13 @@ if (!fs.existsSync(path.join(buildDir, 'index.html'))) {
   process.exit(1);
 }
 
-// Read the 404 page once at startup so the not-found handler serves an
-// in-memory buffer instead of touching the file system on every request.
-const notFoundHtml = fs.readFileSync(path.join(buildDir, '404.html'));
+// Resolve the 404 page per request rather than caching it at startup.
+// Docusaurus emits content-hashed asset filenames, so a server that outlives a
+// rebuild would keep serving HTML that references bundles the rebuild deleted.
+// Measured on this suite: the route then loaded no JS, never set
+// data-has-hydrated, and all nine e2e tests on it timed out in
+// waitForHydration before reaching their own assertions.
+const notFoundPage = path.join(buildDir, '404.html');
 
 const app = express();
 app.use(compression());
@@ -51,8 +55,12 @@ app.get('/', (_req, res) => res.redirect(BASE));
 
 // Unknown routes render the Docusaurus 404 template with a 404 status,
 // mirroring production behavior for the not-found page.
-app.use((_req, res) => {
-  res.status(404).type('html').send(notFoundHtml);
+app.use((_req, res, next) => {
+  res.status(404).sendFile(notFoundPage, (error) => {
+    if (error) {
+      next(error);
+    }
+  });
 });
 
 const server = app.listen(PORT, HOST, () => {

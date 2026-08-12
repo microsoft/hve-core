@@ -3,6 +3,7 @@
 
 from __future__ import annotations
 
+import json
 from pathlib import Path
 
 import pytest
@@ -42,6 +43,19 @@ def test_given_invalid_config_when_validate_then_raises_script_error(
         validate_config(config)
 
 
+def test_given_invalid_calibration_profile_version_when_validate_then_raises_script_error(  # noqa: E501
+    config_path: Path,
+) -> None:
+    config = load_config(config_path)
+    config["calibration"] = {
+        "profileVersion": 7,
+        "manualBoundary": [{"bugId": "14402", "reason": "manual-only"}],
+    }
+
+    with pytest.raises(ScriptError, match="Invalid a11y-runtime config"):
+        validate_config(config)
+
+
 @pytest.mark.parametrize(
     ("base_url", "allow_external", "allowlist", "expected"),
     [
@@ -75,3 +89,91 @@ def test_given_path_when_load_validated_config_then_returns_config(
     config = load_validated_config(config_path)
 
     assert config["baseUrl"] == "http://127.0.0.1:3000"
+
+
+def test_given_calibration_trigger_sequence_when_validate_then_succeeds(
+    tmp_path: Path,
+) -> None:
+    config_path = tmp_path / "a11y-runtime.config.json"
+    config_path.write_text(
+        '{"baseUrl": "http://127.0.0.1:3000", '
+        '"calibration": {"journeys": [{"id": "14399", '
+        '"triggerAfterDriverStart": true, '
+        '"triggerSequence": [{"action": "focus", "target": "input"}], '
+        '"commands": [{"kind": "keyboard", "value": "ArrowDown"}], '
+        '"assertions": [{"id": "speech", "type": "contains", "value": "result"}]}]}}',
+        encoding="utf-8",
+    )
+
+    config = load_validated_config(config_path)
+
+    assert (
+        config["calibration"]["journeys"][0]["triggerSequence"][0]["action"] == "focus"
+    )
+
+
+def test_given_type_command_when_validate_then_succeeds(tmp_path: Path) -> None:
+    config_path = tmp_path / "a11y-runtime.config.json"
+    config_path.write_text(
+        '{"baseUrl": "http://127.0.0.1:3000", '
+        '"calibration": {"journeys": [{"id": "14399", '
+        '"commands": [{"kind": "type", "value": "agent"}], '
+        '"assertions": [{"id": "speech", "type": "contains", "value": "result"}]}]}}',
+        encoding="utf-8",
+    )
+
+    config = load_validated_config(config_path)
+
+    assert config["calibration"]["journeys"][0]["commands"][0]["kind"] == "type"
+
+
+def test_validate_controlled_calibration_journeys_reach_targets_by_keyboard() -> None:
+    config_path = (
+        Path(__file__).resolve().parents[6]
+        / "docs"
+        / "docusaurus"
+        / "a11y-runtime.config.json"
+    )
+    config = json.loads(config_path.read_text(encoding="utf-8"))
+
+    journeys = {journey["id"]: journey for journey in config["calibration"]["journeys"]}
+
+    # Programmatic focus does not move NVDA's browse-mode review caret, so the
+    # combobox must be reached with the documented Control+K shortcut. Preparation
+    # only parks the caret in the document body.
+    search_journey = journeys["search-keyboard-reachability"]
+    assert search_journey["triggerSequence"][0]["action"] == "focus"
+    assert search_journey["triggerSequence"][0]["target"] == "body"
+    search_commands = search_journey["commands"]
+    search_kinds = [command["kind"] for command in search_commands]
+    reach_index = next(
+        index
+        for index, command in enumerate(search_commands)
+        if command["kind"] == "key" and command["value"] == "Control+K"
+    )
+    assert reach_index < search_kinds.index("type")
+    assert search_kinds.index("waitFor") > search_kinds.index("type")
+    assert search_kinds[-1] == "pause"
+
+    # NVDA leaves focus mode after the first typed character, so both journeys
+    # send exactly one character and then hold idle. The resulting polite
+    # live-region update supplies the announcement under test.
+    for journey_id in ("search-keyboard-reachability", "search-status-announcement"):
+        typed = [
+            command
+            for command in journeys[journey_id]["commands"]
+            if command["kind"] == "type"
+        ]
+        assert len(typed) == 1
+        assert len(typed[0]["value"]) == 1
+
+    # The polite status region settles after the first character, so a single
+    # keystroke followed by an idle hold keeps the announcement from being
+    # superseded by further character echo.
+    status_journey = journeys["search-status-announcement"]
+    assert status_journey["triggerSequence"][0]["action"] == "click"
+    assert status_journey["triggerSequence"][0]["target"] == 'input[name="q"]'
+    status_commands = status_journey["commands"]
+    status_kinds = [command["kind"] for command in status_commands]
+    assert status_kinds.index("waitFor") > status_kinds.index("type")
+    assert status_kinds[-1] == "pause"

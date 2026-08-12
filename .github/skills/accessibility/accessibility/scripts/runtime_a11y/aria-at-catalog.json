@@ -1,0 +1,397 @@
+{
+  "catalogVersion": "2026-07-15",
+  "mappings": [
+    {
+      "id": "aria-at-modal-dialog",
+      "pattern": "dialog-modal",
+      "state": "open",
+      "upstreamTestId": "openModalDialog",
+      "functionalExpectations": [
+        "The dialog should be announced as a dialog and focus should move into the dialog so keyboard interaction occurs inside it."
+      ],
+      "adaptationNotes": [
+        "The catalog preserves the APG pattern and upstream repository provenance without reproducing upstream assertion tables or prose."
+      ],
+      "source": {
+        "canonicalUrl": "https://www.w3.org/WAI/ARIA/apg/patterns/dialog-modal/",
+        "immutableUrl": "https://raw.githubusercontent.com/w3c-cg/aria-at/01923da5f533dda74c9f33a68ee20e112069c6de/tests/apg/modal-dialog/data/references.csv",
+        "patternUrl": "https://www.w3.org/WAI/ARIA/apg/patterns/dialog-modal/",
+        "exampleUrl": "https://www.w3.org/WAI/ARIA/apg/patterns/dialog-modal/examples/dialog/",
+        "ariaAtReportsUrl": null,
+        "upstreamRepositoryPath": "tests/apg/modal-dialog",
+        "upstreamRepositoryUrl": "https://github.com/w3c-cg/aria-at/tree/01923da5f533dda74c9f33a68ee20e112069c6de/tests/apg/modal-dialog",
+        "upstreamRepositoryFileUrl": "https://raw.githubusercontent.com/w3c-cg/aria-at/01923da5f533dda74c9f33a68ee20e112069c6de/tests/apg/modal-dialog/data/references.csv",
+        "upstreamSha": "01923da5f533dda74c9f33a68ee20e112069c6de",
+        "catalogVersion": "2026-07-15"
+      },
+      "commands": [],
+      "assertions": [],
+      "variants": [
+        {
+          "id": "nvda-open",
+          "at": "nvda",
+          "platform": "windows",
+          "automationEligible": false,
+          "automationExclusionReason": "The current Guidepup adapter cannot faithfully represent the upstream modal-dialog open, close, and focus-mode semantics.",
+          "commands": [],
+          "assertions": []
+        },
+        {
+          "id": "jaws-human-only",
+          "at": "jaws",
+          "platform": "windows",
+          "automationEligible": false,
+          "automationExclusionReason": "JAWS remains human-only for this catalog proof.",
+          "manualEvidenceRequired": true,
+          "manualCommandGuidance": [
+            "Open the dialog with JAWS active and confirm focus moves into the dialog.",
+            "Navigate the dialog controls with the JAWS reading and forms commands and confirm focus stays inside the dialog."
+          ],
+          "functionalExpectation": "JAWS should announce the dialog and keep focus within it so the user interacts only with dialog content until it closes.",
+          "runbookReference": "https://github.com/microsoft/hve-core/blob/main/docs/planning/runbooks/accessibility/real-screen-reader-testing.md",
+          "manualEvidence": {
+            "jawsVersion": "Record the JAWS version used during the manual test.",
+            "browserVersion": "Record the browser name and version used during the manual test.",
+            "windowsVersion": "Record the Windows version used during the manual test.",
+            "interactionMode": "Record the JAWS interaction mode (for example virtual cursor or forms mode) used during the manual test.",
+            "commandsPerformed": [
+              "Record each JAWS command performed during the manual test."
+            ],
+            "observedOutput": "Record the exact JAWS speech or braille output observed during the manual test.",
+            "tester": "Record the name of the qualified human tester.",
+            "date": "Record the ISO 8601 date the manual test was performed.",
+            "evidenceUri": "Record a link to the stored manual test evidence."
+          },
+          "commands": [],
+          "assertions": []
+        }
+      ],
+      "automationEligible": false,
+      "automationExclusionReason": "The current Guidepup adapter cannot faithfully represent the upstream modal-dialog interaction semantics."
+    },
+    {
+      "id": "aria-at-checkbox",
+      "pattern": "checkbox",
+      "state": "default",
+      "upstreamTestId": "operateNotCheckedCheckbox",
+      "functionalExpectations": [
+        "The checkbox should be announced with its role, name, and checked state so a screen-reader user can understand its current state."
+      ],
+      "adaptationNotes": [
+        "The catalog records the upstream checkbox provenance and keeps the NVDA variant as a proposed candidate sequence pending prepared-host calibration and human review."
+      ],
+      "source": {
+        "canonicalUrl": "https://www.w3.org/WAI/ARIA/apg/patterns/checkbox/",
+        "immutableUrl": "https://raw.githubusercontent.com/w3c-cg/aria-at/46ef988700398d189de78072dd1b5883f41ffbcf/tests/apg/checkbox/data/references.csv",
+        "patternUrl": "https://www.w3.org/WAI/ARIA/apg/patterns/checkbox/",
+        "exampleUrl": "https://www.w3.org/WAI/ARIA/apg/patterns/checkbox/examples/checkbox/",
+        "ariaAtReportsUrl": null,
+        "upstreamRepositoryPath": "tests/apg/checkbox",
+        "upstreamRepositoryUrl": "https://github.com/w3c-cg/aria-at/tree/46ef988700398d189de78072dd1b5883f41ffbcf/tests/apg/checkbox",
+        "upstreamRepositoryFileUrl": "https://raw.githubusercontent.com/w3c-cg/aria-at/46ef988700398d189de78072dd1b5883f41ffbcf/tests/apg/checkbox/data/references.csv",
+        "upstreamSha": "46ef988700398d189de78072dd1b5883f41ffbcf",
+        "catalogVersion": "2026-07-15"
+      },
+      "commands": [],
+      "assertions": [],
+      "variants": [
+        {
+          "id": "nvda-checkbox",
+          "at": "nvda",
+          "platform": "windows",
+          "automationEligible": false,
+          "automationExclusionReason": "The proposed checkbox NVDA variant is a candidate-only executable sequence pending prepared-host calibration and human review.",
+          "commands": [
+            {
+              "kind": "key",
+              "value": "Space"
+            }
+          ],
+          "assertions": [
+            {
+              "type": "contains",
+              "value": "checkbox"
+            },
+            {
+              "type": "contains",
+              "value": "accept terms"
+            },
+            {
+              "type": "matches",
+              "value": "checked|not checked"
+            }
+          ]
+        },
+        {
+          "id": "jaws-checkbox",
+          "at": "jaws",
+          "platform": "windows",
+          "automationEligible": false,
+          "automationExclusionReason": "JAWS remains human-only for this starter mapping.",
+          "manualEvidenceRequired": true,
+          "manualCommandGuidance": [
+            "Move JAWS focus to the checkbox and read its role, name, and state.",
+            "Toggle the checkbox with Space and confirm JAWS announces the updated checked state."
+          ],
+          "functionalExpectation": "JAWS should announce the checkbox role, name, and current checked state before and after it is toggled.",
+          "runbookReference": "https://github.com/microsoft/hve-core/blob/main/docs/planning/runbooks/accessibility/real-screen-reader-testing.md",
+          "manualEvidence": {
+            "jawsVersion": "Record the JAWS version used during the manual test.",
+            "browserVersion": "Record the browser name and version used during the manual test.",
+            "windowsVersion": "Record the Windows version used during the manual test.",
+            "interactionMode": "Record the JAWS interaction mode (for example virtual cursor or forms mode) used during the manual test.",
+            "commandsPerformed": [
+              "Record each JAWS command performed during the manual test."
+            ],
+            "observedOutput": "Record the exact JAWS speech or braille output observed during the manual test.",
+            "tester": "Record the name of the qualified human tester.",
+            "date": "Record the ISO 8601 date the manual test was performed.",
+            "evidenceUri": "Record a link to the stored manual test evidence."
+          },
+          "commands": [],
+          "assertions": []
+        }
+      ],
+      "automationEligible": false,
+      "automationExclusionReason": "The current adapter does not yet model the richer checkbox navigation semantics needed for automation."
+    },
+    {
+      "id": "aria-at-combobox-select-only",
+      "pattern": "combobox",
+      "state": "default",
+      "upstreamTestId": "1",
+      "functionalExpectations": [
+        "The combobox should be announced as a combobox with its current selection and expanded or collapsed state so a screen-reader user can understand its state."
+      ],
+      "adaptationNotes": [
+        "The catalog preserves the upstream combobox provenance while leaving the mapping manual-only because the current adapter cannot represent the upstream AT-mode and quick-key semantics."
+      ],
+      "source": {
+        "canonicalUrl": "https://www.w3.org/WAI/ARIA/apg/patterns/combobox/",
+        "immutableUrl": "https://raw.githubusercontent.com/w3c-cg/aria-at/01923da5f533dda74c9f33a68ee20e112069c6de/tests/apg/combobox-select-only/data/references.csv",
+        "patternUrl": "https://www.w3.org/WAI/ARIA/apg/patterns/combobox/",
+        "exampleUrl": "https://www.w3.org/WAI/ARIA/apg/patterns/combobox/examples/combobox-select-only/",
+        "ariaAtReportsUrl": null,
+        "upstreamRepositoryPath": "tests/apg/combobox-select-only",
+        "upstreamRepositoryUrl": "https://github.com/w3c-cg/aria-at/tree/01923da5f533dda74c9f33a68ee20e112069c6de/tests/apg/combobox-select-only",
+        "upstreamRepositoryFileUrl": "https://raw.githubusercontent.com/w3c-cg/aria-at/01923da5f533dda74c9f33a68ee20e112069c6de/tests/apg/combobox-select-only/data/references.csv",
+        "upstreamSha": "01923da5f533dda74c9f33a68ee20e112069c6de",
+        "catalogVersion": "2026-07-15"
+      },
+      "commands": [],
+      "assertions": [],
+      "variants": [
+        {
+          "id": "nvda-combobox-select-only",
+          "at": "nvda",
+          "platform": "windows",
+          "automationEligible": false,
+          "automationExclusionReason": "The upstream combobox-select-only pattern requires richer AT-mode and quick-key semantics than the local Guidepup contract can faithfully model.",
+          "commands": [],
+          "assertions": []
+        },
+        {
+          "id": "jaws-combobox-select-only",
+          "at": "jaws",
+          "platform": "windows",
+          "automationEligible": false,
+          "automationExclusionReason": "JAWS remains human-only for this starter mapping.",
+          "manualEvidenceRequired": true,
+          "manualCommandGuidance": [
+            "Move JAWS focus to the combobox and read its role, current value, and expanded state.",
+            "Open the list, move through the options, and confirm JAWS announces the focused option and the committed selection."
+          ],
+          "functionalExpectation": "JAWS should announce the combobox role, its current selection, and whether the list is expanded or collapsed as the user browses and commits an option.",
+          "runbookReference": "https://github.com/microsoft/hve-core/blob/main/docs/planning/runbooks/accessibility/real-screen-reader-testing.md",
+          "manualEvidence": {
+            "jawsVersion": "Record the JAWS version used during the manual test.",
+            "browserVersion": "Record the browser name and version used during the manual test.",
+            "windowsVersion": "Record the Windows version used during the manual test.",
+            "interactionMode": "Record the JAWS interaction mode (for example virtual cursor or forms mode) used during the manual test.",
+            "commandsPerformed": [
+              "Record each JAWS command performed during the manual test."
+            ],
+            "observedOutput": "Record the exact JAWS speech or braille output observed during the manual test.",
+            "tester": "Record the name of the qualified human tester.",
+            "date": "Record the ISO 8601 date the manual test was performed.",
+            "evidenceUri": "Record a link to the stored manual test evidence."
+          },
+          "commands": [],
+          "assertions": []
+        }
+      ],
+      "automationEligible": false,
+      "automationExclusionReason": "The current adapter cannot faithfully represent the upstream combobox popup and quick-key semantics."
+    },
+    {
+      "id": "aria-at-menu-button-actions",
+      "pattern": "menu-button",
+      "state": "default",
+      "upstreamTestId": "openMenu",
+      "functionalExpectations": [
+        "The menu button should be announced as a menu button and the opened menu should expose its item names and current focus position."
+      ],
+      "adaptationNotes": [
+        "The catalog preserves the upstream menu-button provenance while keeping the starter mapping manual-only until the adapter models menu-open and quick-navigation semantics."
+      ],
+      "source": {
+        "canonicalUrl": "https://www.w3.org/WAI/ARIA/apg/patterns/menu-button/",
+        "immutableUrl": "https://raw.githubusercontent.com/w3c-cg/aria-at/01923da5f533dda74c9f33a68ee20e112069c6de/tests/apg/menu-button-actions/data/references.csv",
+        "patternUrl": "https://www.w3.org/WAI/ARIA/apg/patterns/menu-button/",
+        "exampleUrl": "https://www.w3.org/WAI/ARIA/apg/patterns/menu-button/examples/menu-button-actions-active-descendant/",
+        "ariaAtReportsUrl": null,
+        "upstreamRepositoryPath": "tests/apg/menu-button-actions",
+        "upstreamRepositoryUrl": "https://github.com/w3c-cg/aria-at/tree/01923da5f533dda74c9f33a68ee20e112069c6de/tests/apg/menu-button-actions",
+        "upstreamRepositoryFileUrl": "https://raw.githubusercontent.com/w3c-cg/aria-at/01923da5f533dda74c9f33a68ee20e112069c6de/tests/apg/menu-button-actions/data/references.csv",
+        "upstreamSha": "01923da5f533dda74c9f33a68ee20e112069c6de",
+        "catalogVersion": "2026-07-15"
+      },
+      "commands": [],
+      "assertions": [],
+      "variants": [
+        {
+          "id": "nvda-menu-button-actions",
+          "at": "nvda",
+          "platform": "windows",
+          "automationEligible": false,
+          "automationExclusionReason": "The upstream menu-button-actions pattern requires richer menu-open and quick-nav semantics than the local Guidepup contract can faithfully model.",
+          "commands": [],
+          "assertions": []
+        },
+        {
+          "id": "jaws-menu-button-actions",
+          "at": "jaws",
+          "platform": "windows",
+          "automationEligible": false,
+          "automationExclusionReason": "JAWS remains human-only for this starter mapping.",
+          "manualEvidenceRequired": true,
+          "manualCommandGuidance": [
+            "Move JAWS focus to the menu button and read its role and collapsed state.",
+            "Open the menu, move through the items, and confirm JAWS announces each item name and the current position."
+          ],
+          "functionalExpectation": "JAWS should announce the menu button role, the opened menu, and each item name with the current focus position.",
+          "runbookReference": "https://github.com/microsoft/hve-core/blob/main/docs/planning/runbooks/accessibility/real-screen-reader-testing.md",
+          "manualEvidence": {
+            "jawsVersion": "Record the JAWS version used during the manual test.",
+            "browserVersion": "Record the browser name and version used during the manual test.",
+            "windowsVersion": "Record the Windows version used during the manual test.",
+            "interactionMode": "Record the JAWS interaction mode (for example virtual cursor or forms mode) used during the manual test.",
+            "commandsPerformed": [
+              "Record each JAWS command performed during the manual test."
+            ],
+            "observedOutput": "Record the exact JAWS speech or braille output observed during the manual test.",
+            "tester": "Record the name of the qualified human tester.",
+            "date": "Record the ISO 8601 date the manual test was performed.",
+            "evidenceUri": "Record a link to the stored manual test evidence."
+          },
+          "commands": [],
+          "assertions": []
+        }
+      ],
+      "automationEligible": false,
+      "automationExclusionReason": "The current adapter cannot faithfully represent the upstream menu-button open and navigation semantics."
+    },
+    {
+      "id": "aria-at-tabs-manual-activation",
+      "pattern": "tabs",
+      "state": "default",
+      "upstreamTestId": "navForwardsToTabListWhereATabIsNotSelected",
+      "functionalExpectations": [
+        "The tab list should announce its tabs and the selected tab state so a screen-reader user can move through the list and identify the active tab."
+      ],
+      "adaptationNotes": [
+        "The catalog preserves the upstream tabs provenance while leaving the starter mapping manual-only until the adapter models tab-list navigation and manual activation semantics."
+      ],
+      "source": {
+        "canonicalUrl": "https://www.w3.org/WAI/ARIA/apg/patterns/tabs/",
+        "immutableUrl": "https://raw.githubusercontent.com/w3c-cg/aria-at/01923da5f533dda74c9f33a68ee20e112069c6de/tests/apg/tabs-manual-activation/data/references.csv",
+        "patternUrl": "https://www.w3.org/WAI/ARIA/apg/patterns/tabs/",
+        "exampleUrl": "https://www.w3.org/WAI/ARIA/apg/patterns/tabs/examples/tabs-manual/",
+        "ariaAtReportsUrl": null,
+        "upstreamRepositoryPath": "tests/apg/tabs-manual-activation",
+        "upstreamRepositoryUrl": "https://github.com/w3c-cg/aria-at/tree/01923da5f533dda74c9f33a68ee20e112069c6de/tests/apg/tabs-manual-activation",
+        "upstreamRepositoryFileUrl": "https://raw.githubusercontent.com/w3c-cg/aria-at/01923da5f533dda74c9f33a68ee20e112069c6de/tests/apg/tabs-manual-activation/data/references.csv",
+        "upstreamSha": "01923da5f533dda74c9f33a68ee20e112069c6de",
+        "catalogVersion": "2026-07-15"
+      },
+      "commands": [],
+      "assertions": [],
+      "variants": [
+        {
+          "id": "nvda-tabs-manual-activation",
+          "at": "nvda",
+          "platform": "windows",
+          "automationEligible": false,
+          "automationExclusionReason": "The proposed tabs NVDA variant remains a candidate-only executable sequence pending prepared-host calibration and human review.",
+          "commands": [
+            {
+              "kind": "key",
+              "value": "ArrowRight"
+            },
+            {
+              "kind": "key",
+              "value": "ArrowLeft"
+            },
+            {
+              "kind": "key",
+              "value": "Home"
+            },
+            {
+              "kind": "key",
+              "value": "End"
+            },
+            {
+              "kind": "key",
+              "value": "Space"
+            },
+            {
+              "kind": "key",
+              "value": "Enter"
+            }
+          ],
+          "assertions": [
+            {
+              "type": "contains",
+              "value": "active tab"
+            },
+            {
+              "type": "contains",
+              "value": "selected"
+            }
+          ]
+        },
+        {
+          "id": "jaws-tabs-manual-activation",
+          "at": "jaws",
+          "platform": "windows",
+          "automationEligible": false,
+          "automationExclusionReason": "JAWS remains human-only for this starter mapping.",
+          "manualEvidenceRequired": true,
+          "manualCommandGuidance": [
+            "Move JAWS focus into the tab list and read the focused tab name and selected state.",
+            "Move through the tabs with the arrow keys and activate a tab, confirming JAWS announces the newly selected tab."
+          ],
+          "functionalExpectation": "JAWS should announce each tab name and its selected state as the user moves through the tab list and activates a tab.",
+          "runbookReference": "https://github.com/microsoft/hve-core/blob/main/docs/planning/runbooks/accessibility/real-screen-reader-testing.md",
+          "manualEvidence": {
+            "jawsVersion": "Record the JAWS version used during the manual test.",
+            "browserVersion": "Record the browser name and version used during the manual test.",
+            "windowsVersion": "Record the Windows version used during the manual test.",
+            "interactionMode": "Record the JAWS interaction mode (for example virtual cursor or forms mode) used during the manual test.",
+            "commandsPerformed": [
+              "Record each JAWS command performed during the manual test."
+            ],
+            "observedOutput": "Record the exact JAWS speech or braille output observed during the manual test.",
+            "tester": "Record the name of the qualified human tester.",
+            "date": "Record the ISO 8601 date the manual test was performed.",
+            "evidenceUri": "Record a link to the stored manual test evidence."
+          },
+          "commands": [],
+          "assertions": []
+        }
+      ],
+      "automationEligible": false,
+      "automationExclusionReason": "The current adapter cannot faithfully represent the upstream tab-list navigation and manual-activation semantics."
+    }
+  ]
+}
