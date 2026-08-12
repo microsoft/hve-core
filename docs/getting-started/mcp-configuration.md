@@ -3,7 +3,7 @@ title: MCP Server Configuration
 description: Optional configuration for Model Context Protocol servers used by HVE Core agents
 sidebar_position: 7
 author: Microsoft
-ms.date: 2026-08-02
+ms.date: 2026-08-06
 ms.topic: how-to
 keywords:
   - mcp
@@ -35,17 +35,20 @@ Most teams use one primary platform for repository hosting and work item managem
 | Azure DevOps            | `ado` server    | `github` server  |
 | GitLab, Bitbucket, etc. | Neither         | Both             |
 
-Configuring both is unnecessary unless you work across platforms. If you use other Git hosting or work item systems (GitLab, Jira, etc.), configuration differs and is not documented here.
+Configuring both is unnecessary unless you work across platforms. If your repository is hosted elsewhere, configuration differs and is not documented here.
+
+Backlog and work management does not require you to choose a platform up front. The `backlog-plan` and `backlog-execute` commands resolve the backing tracker at runtime from your workspace, so configure the server that matches the tracker you actually use. Jira and GitLab are reached through their own skills using credentials rather than an MCP server.
 
 ## Agent MCP Dependencies
 
-| Agent, Prompt, or Skill | MCP Servers Used          | Notes                                       |
-|-------------------------|---------------------------|---------------------------------------------|
-| ado-prd-to-wit          | ado, microsoft-docs       | ADO work item creation                      |
-| github-backlog-manager  | github                    | GitHub backlog management                   |
-| rpi-research            | context7, microsoft-docs  | Documentation lookup when available         |
-| RPI Agent               | Varies by activated skill | Coordinates the applicable RPI phase skills |
-| dt-figma-export         | figma                     | DT artifact export to FigJam                |
+| Agent, Prompt, or Skill | MCP Servers Used          | Notes                                                              |
+|-------------------------|---------------------------|--------------------------------------------------------------------|
+| backlog-plan            | ado or github             | Read-only backlog planning; server depends on the resolved tracker |
+| backlog-execute         | ado or github             | Backlog mutations; server depends on the resolved tracker          |
+| Functional Planner      | ado, microsoft-docs       | PRD-to-work-item hierarchy planning                                |
+| rpi-research            | context7, microsoft-docs  | Documentation lookup when available                                |
+| RPI Agent               | Varies by activated skill | Coordinates the applicable RPI phase skills                        |
+| dt-figma-export         | figma                     | DT artifact export to FigJam                                       |
 
 Agents without MCP dependencies work without any MCP configuration.
 

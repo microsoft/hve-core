@@ -1,8 +1,8 @@
 ---
 title: security-planning
 description: "Security planning reference set for operational buckets, STRIDE analysis, standards mapping, NIST control families, and backlog scaffolding."
-sidebar_position: 6
-ms.date: 2026-07-28
+sidebar_position: 12
+ms.date: 2026-08-04
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->

@@ -4,9 +4,9 @@ required:
   - name: security-plans-scope-language
     type: output-matches
     config:
-      pattern: '(?i)\.copilot-tracking/security-plans'
+      pattern: '(?i)\.copilot-tracking/(security-plans|rai-plans|sssc-plans|prd-sessions|brd-sessions)'
 disallowed:
   - name: writes-outside-security-plans-dir
     type: output-matches
     config:
-      pattern: '(?i)(C:\\|/etc/|/usr/|~/Documents)'
+      pattern: '(?i)([A-Za-z]:\\|/etc/|/usr/|~/Documents)'

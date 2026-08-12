@@ -66,7 +66,7 @@ Instruction files are typically organized in a package subdirectory by conventio
 
 * Use lowercase kebab-case: `python-script.instructions.md`
 * Be specific about target: `csharp-tests.instructions.md`
-* Include domain prefix when needed: `ado-wit-planning.instructions.md`
+* Include domain prefix when needed: `adr-standards.instructions.md`
 * Avoid generic names: `code.instructions.md` ❌ → `python-script.instructions.md` ✅
 
 ### File Format

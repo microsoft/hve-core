@@ -45,7 +45,7 @@ Prompt files are typically organized in a package subdirectory by convention:
 * Use lowercase kebab-case: `pull-request.prompt.md`
 * Be specific about workflow/task: `ado-create-pull-request.prompt.md`
 * Include domain prefix when relevant: `ado-`, `git-`, `github-`
-* Avoid generic names: `workflow.prompt.md` ❌ → `ado-process-my-work-items-for-task-planning.prompt.md` ✅
+* Avoid generic names: `workflow.prompt.md` ❌ → `security-plan-from-prd.prompt.md` ✅
 
 ### File Format
 

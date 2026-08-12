@@ -43,7 +43,7 @@ Grader identifiers below use the Vally CLI 0.9.0 catalog (`semantic_similarity`,
 * Testable behavior: conversational agents MUST present their workflow as `## Required Phases` (multi-turn, user-guided); autonomous agents MUST present their workflow as `## Required Steps` (task execution, minimal user interaction). The protocol type chosen MUST match the agent's purpose as stated in its description.
 * Suggested stimulus: ask the assistant whether a named agent runs conversationally or autonomously and to name the section heading that carries its protocol.
 * Grader recommendation: `semantic_similarity` with rubric "Does the agent's protocol type (Phases vs Steps) match the conversational vs autonomous purpose stated in its description?".
-* Evidence: `.github/agents/github/github-backlog-manager.agent.md` uses Required Phases consistent with its conversational purpose.
+* Evidence: `.github/agents/project-planning/backlog-manager.agent.md` uses Required Phases consistent with its conversational purpose.
 
 ### Check 3: Subagent Dependencies Declared in Frontmatter
 
@@ -82,7 +82,7 @@ Grader identifiers below use the Vally CLI 0.9.0 catalog (`semantic_similarity`,
 * Testable behavior: when an agent declares `handoffs:`, each entry MUST include `label:` (display text, MAY contain emoji) and `agent:` (human-readable agent name from the target agent's `name:` field). Each entry MAY include `prompt:` (slash command) and `send:` (boolean for auto-send).
 * Suggested stimulus: ask the assistant which other agents a named agent can hand off to and what label each handoff carries.
 * Grader recommendation: `regex` with pattern `(?ms)^handoffs:\s*\n(?:\s*-\s+label:\s+\S.+\n\s+agent:\s+["']?[A-Z][A-Za-z0-9 ]+["']?\s*\n(?:\s+(?:prompt|send):.+\n)*)+`.
-* Evidence: `.github/agents/project-planning/product-manager-advisor.agent.md` demonstrates label, agent, prompt, and send fields together.
+* Evidence: `.github/agents/project-planning/ux-ui-designer.agent.md` demonstrates label, agent, prompt, and send fields together.
 
 ### Check 7: Tool Restrictions Format
 
@@ -106,7 +106,7 @@ Grader identifiers below use the Vally CLI 0.9.0 catalog (`semantic_similarity`,
 * Testable behavior: phases MUST take the form `### Phase N: Short Summary` and steps MUST take the form `### Step N: Short Summary`, each with a descriptive summary after the colon.
 * Suggested stimulus: ask the assistant to list the phase or step headings of a named agent in order.
 * Grader recommendation: `regex` with pattern `(?m)^###\s+(?:Phase|Step)\s+\d+:\s+\S.+`.
-* Evidence: `.github/agents/github/github-backlog-manager.agent.md` demonstrates the heading shape across phases.
+* Evidence: `.github/agents/project-planning/backlog-manager.agent.md` demonstrates the heading shape across phases.
 
 ## Cross-References
 
