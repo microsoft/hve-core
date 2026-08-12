@@ -21,7 +21,7 @@ Describe 'Assert-NoTrackedPluginOutput' -Tag 'Unit' {
         }
 
         It 'Inspects every staged entry' {
-            $script:cleanResult.EntryCount | Should -Be 3
+            $script:cleanResult.EntryCount | Should -Be 4
         }
 
         It 'Reports no violation' {
