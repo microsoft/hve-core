@@ -9,19 +9,14 @@ on:
         description: "Immutable source to package from (full commit SHA)"
         required: true
         type: string
-      source-policy:
-        description: "Trusted provenance policy for the immutable source"
+      release-tag:
+        description: "Exact channel release tag the packaged plugin is bound to"
         required: true
         type: string
       version:
         description: "Release version the packaged plugin must carry"
         required: true
         type: string
-      project-release-catalog:
-        description: "Project the requested version and immutable locator without changing the committed catalog"
-        required: false
-        default: false
-        type: boolean
     outputs:
       packages-matrix:
         description: "JSON matrix of plugin packages that were packaged"
@@ -49,8 +44,8 @@ jobs:
         shell: bash
         env:
           SOURCE_REF: ${{ inputs.source-ref }}
-          SOURCE_POLICY: ${{ inputs.source-policy }}
           INPUT_VERSION: ${{ inputs.version }}
+          RELEASE_TAG: ${{ inputs.release-tag }}
         run: |
           set -euo pipefail
           if [ -z "${SOURCE_REF}" ]; then
@@ -69,36 +64,19 @@ jobs:
             echo "::error::version must use MAJOR.MINOR.PATCH form"
             exit 1
           fi
+          if [ "${RELEASE_TAG}" != "v${INPUT_VERSION}" ] && [ "${RELEASE_TAG}" != "prerelease-v${INPUT_VERSION}" ]; then
+            echo "::error::release-tag must be prerelease-v${INPUT_VERSION} or v${INPUT_VERSION}"
+            exit 1
+          fi
 
-          case "${SOURCE_POLICY}" in
-            'main-ancestor')
-              if [ "$(git rev-parse --is-shallow-repository)" = 'true' ]; then
-                git fetch --quiet --unshallow --no-tags origin \
-                  '+refs/heads/main:refs/remotes/origin/main'
-              else
-                git fetch --quiet --no-tags origin \
-                  '+refs/heads/main:refs/remotes/origin/main'
-              fi
-              if ! git merge-base --is-ancestor "${SOURCE_REF}" refs/remotes/origin/main; then
-                echo "::error::source-ref is not contained in main"
-                exit 1
-              fi
-              ;;
-            'release-tag')
-              git fetch --quiet --no-tags origin \
-                "refs/tags/hve-core-v${INPUT_VERSION}:refs/tags/hve-core-v${INPUT_VERSION}"
-              tag_commit=$(git rev-parse --verify --end-of-options \
-                "refs/tags/hve-core-v${INPUT_VERSION}^{commit}")
-              if [ "${tag_commit}" != "${SOURCE_REF}" ]; then
-                echo "::error::release tag does not resolve to source-ref"
-                exit 1
-              fi
-              ;;
-            *)
-              echo "::error::Unsupported source policy '${SOURCE_POLICY}'"
-              exit 1
-              ;;
-          esac
+          git fetch --quiet --no-tags origin \
+            "refs/tags/${RELEASE_TAG}:refs/tags/${RELEASE_TAG}"
+          tag_commit=$(git rev-parse --verify --end-of-options \
+            "refs/tags/${RELEASE_TAG}^{commit}")
+          if [ "${tag_commit}" != "${SOURCE_REF}" ]; then
+            echo "::error::release tag does not resolve to source-ref"
+            exit 1
+          fi
 
           git checkout --quiet --detach "${SOURCE_REF}"
           if [ "$(git rev-parse HEAD)" != "${SOURCE_REF}" ]; then
@@ -114,22 +92,17 @@ jobs:
         env:
           INPUT_SOURCE_REF: ${{ inputs.source-ref }}
           INPUT_VERSION: ${{ inputs.version }}
-          PROJECT_RELEASE_CATALOG: ${{ inputs.project-release-catalog }}
+          RELEASE_TAG: ${{ inputs.release-tag }}
         run: |
           $ErrorActionPreference = 'Stop'
-          if ($env:PROJECT_RELEASE_CATALOG -ne 'true') {
-            # Stable packaging requires committed release state. PreRelease uses
-            # the explicit projection step below because its odd version is ephemeral.
-            $catalog = Get-Content -LiteralPath '.github/plugin/marketplace.json' -Raw -Encoding utf8 | ConvertFrom-Json -AsHashtable
-            $catalogVersion = [string]$catalog['metadata']['version']
-            if ($catalogVersion -cne $env:INPUT_VERSION) {
-              throw "Catalog version $catalogVersion does not match requested version $env:INPUT_VERSION"
-            }
-            foreach ($entry in @($catalog['plugins'])) {
-              $expectedRef = "plugins-v$env:INPUT_VERSION"
-              if ([string]$entry['source']['ref'] -cne $expectedRef) {
-                throw "Catalog plugin '$($entry['name'])' pins source ref '$($entry['source']['ref'])' but the release requires '$expectedRef'"
-              }
+          $catalog = Get-Content -LiteralPath '.github/plugin/marketplace.json' -Raw -Encoding utf8 | ConvertFrom-Json -AsHashtable
+          $catalogVersion = [string]$catalog['metadata']['version']
+          if ($catalogVersion -cne $env:INPUT_VERSION) {
+            throw "Catalog version $catalogVersion does not match requested version $env:INPUT_VERSION"
+          }
+          foreach ($entry in @($catalog['plugins'])) {
+            if ([string]$entry['source']['ref'] -cne $env:RELEASE_TAG) {
+              throw "Catalog plugin '$($entry['name'])' pins source ref '$($entry['source']['ref'])' but the release requires '$env:RELEASE_TAG'"
             }
           }
 
@@ -140,23 +113,9 @@ jobs:
       - name: Discover marketplace packages
         id: discover
         shell: pwsh
-        env:
-          INPUT_VERSION: ${{ inputs.version }}
-          PROJECT_RELEASE_CATALOG: ${{ inputs.project-release-catalog }}
         run: |
           $ErrorActionPreference = 'Stop'
-          $catalogPath = '.github/plugin/marketplace.json'
-          if ($env:PROJECT_RELEASE_CATALOG -eq 'true') {
-            $catalogPath = 'logs/projected-marketplace.json'
-            & ./scripts/plugins/Generate-Plugins.ps1 `
-              -Channel PreRelease `
-              -ReleaseTag "plugins-v$env:INPUT_VERSION" `
-              -MarketplaceOutputPath $catalogPath
-            if ($LASTEXITCODE -ne 0) {
-              throw "Generate-Plugins.ps1 failed with exit code $LASTEXITCODE"
-            }
-          }
-          & ./scripts/extension/Get-MarketplacePackageMatrix.ps1 -Channel 'PreRelease' -CatalogPath $catalogPath
+          & ./scripts/extension/Get-MarketplacePackageMatrix.ps1 -Channel 'PreRelease' -CatalogPath '.github/plugin/marketplace.json'
 
   package:
     name: Package Plugin ${{ matrix.id }}
@@ -177,8 +136,8 @@ jobs:
         shell: bash
         env:
           SOURCE_REF: ${{ inputs.source-ref }}
-          SOURCE_POLICY: ${{ inputs.source-policy }}
           INPUT_VERSION: ${{ inputs.version }}
+          RELEASE_TAG: ${{ inputs.release-tag }}
         run: |
           set -euo pipefail
           if [ -z "${SOURCE_REF}" ]; then
@@ -197,36 +156,19 @@ jobs:
             echo "::error::version must use MAJOR.MINOR.PATCH form"
             exit 1
           fi
+          if [ "${RELEASE_TAG}" != "v${INPUT_VERSION}" ] && [ "${RELEASE_TAG}" != "prerelease-v${INPUT_VERSION}" ]; then
+            echo "::error::release-tag must be prerelease-v${INPUT_VERSION} or v${INPUT_VERSION}"
+            exit 1
+          fi
 
-          case "${SOURCE_POLICY}" in
-            'main-ancestor')
-              if [ "$(git rev-parse --is-shallow-repository)" = 'true' ]; then
-                git fetch --quiet --unshallow --no-tags origin \
-                  '+refs/heads/main:refs/remotes/origin/main'
-              else
-                git fetch --quiet --no-tags origin \
-                  '+refs/heads/main:refs/remotes/origin/main'
-              fi
-              if ! git merge-base --is-ancestor "${SOURCE_REF}" refs/remotes/origin/main; then
-                echo "::error::source-ref is not contained in main"
-                exit 1
-              fi
-              ;;
-            'release-tag')
-              git fetch --quiet --no-tags origin \
-                "refs/tags/hve-core-v${INPUT_VERSION}:refs/tags/hve-core-v${INPUT_VERSION}"
-              tag_commit=$(git rev-parse --verify --end-of-options \
-                "refs/tags/hve-core-v${INPUT_VERSION}^{commit}")
-              if [ "${tag_commit}" != "${SOURCE_REF}" ]; then
-                echo "::error::release tag does not resolve to source-ref"
-                exit 1
-              fi
-              ;;
-            *)
-              echo "::error::Unsupported source policy '${SOURCE_POLICY}'"
-              exit 1
-              ;;
-          esac
+          git fetch --quiet --no-tags origin \
+            "refs/tags/${RELEASE_TAG}:refs/tags/${RELEASE_TAG}"
+          tag_commit=$(git rev-parse --verify --end-of-options \
+            "refs/tags/${RELEASE_TAG}^{commit}")
+          if [ "${tag_commit}" != "${SOURCE_REF}" ]; then
+            echo "::error::release tag does not resolve to source-ref"
+            exit 1
+          fi
 
           git checkout --quiet --detach "${SOURCE_REF}"
           if [ "$(git rev-parse HEAD)" != "${SOURCE_REF}" ]; then
@@ -247,42 +189,19 @@ jobs:
         uses: ./.github/actions/setup-ps-modules
 
       - name: Generate committed plugins
-        if: ${{ !inputs.project-release-catalog }}
+        env:
+          HVE_PLUGIN_STAGING_ROOT: ${{ runner.temp }}/plugins
         run: npm run plugin:generate
-
-      - name: Generate plugins and projected release catalog
-        if: ${{ inputs.project-release-catalog }}
-        shell: pwsh
-        env:
-          INPUT_VERSION: ${{ inputs.version }}
-        run: |
-          $ErrorActionPreference = 'Stop'
-          & ./scripts/plugins/Generate-Plugins.ps1 `
-            -Channel PreRelease `
-            -ReleaseTag "plugins-v$env:INPUT_VERSION" `
-            -MarketplaceOutputPath 'logs/projected-marketplace.json'
-          if ($LASTEXITCODE -ne 0) {
-            throw "Generate-Plugins.ps1 failed with exit code $LASTEXITCODE"
-          }
-
-      - name: Record plugin release evidence
-        shell: pwsh
-        env:
-          INPUT_VERSION: ${{ inputs.version }}
-        run: |
-          $ErrorActionPreference = 'Stop'
-          & ./scripts/plugins/Assert-PluginReleaseEvidence.ps1 `
-            -Version $env:INPUT_VERSION `
-            -OutputPath logs/plugin-release-evidence.json
 
       - name: Verify generated roots match discovered packages
         shell: bash
         env:
           DISCOVERED_NAMES: ${{ needs.discover-packages.outputs.names }}
+          HVE_PLUGIN_STAGING_ROOT: ${{ runner.temp }}/plugins
         run: |
           set -euo pipefail
           expected=$(printf '%s' "$DISCOVERED_NAMES" | jq -r '.[]' | sort)
-          actual=$(find plugins -mindepth 1 -maxdepth 1 -type d -printf '%f\n' | sort)
+          actual=$(find "${HVE_PLUGIN_STAGING_ROOT}" -mindepth 1 -maxdepth 1 -type d -printf '%f\n' | sort)
           if [ "$expected" != "$actual" ]; then
             echo "::error::Generated package roots do not match the discovered package set"
             diff <(printf '%s\n' "$expected") <(printf '%s\n' "$actual") || true
@@ -293,17 +212,18 @@ jobs:
       - name: Package plugin directory
         shell: bash
         env:
+          HVE_PLUGIN_STAGING_ROOT: ${{ runner.temp }}/plugins
           PACKAGE_ID: ${{ matrix.id }}
         run: |
           set -euo pipefail
-          plugin_dir="plugins/${PACKAGE_ID}"
+          plugin_dir="${HVE_PLUGIN_STAGING_ROOT}/${PACKAGE_ID}"
           if [ ! -d "$plugin_dir" ]; then
             echo "::error::Expected plugin directory not found: $plugin_dir"
             exit 1
           fi
 
           mkdir -p dist/plugins
-          zip -r "dist/plugins/${PACKAGE_ID}.zip" "$plugin_dir"
+          (cd "${RUNNER_TEMP}" && zip -r "${GITHUB_WORKSPACE}/dist/plugins/${PACKAGE_ID}.zip" "plugins/${PACKAGE_ID}")
 
       - name: Upload plugin artifact
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
@@ -311,3 +231,153 @@ jobs:
           name: plugin-package-${{ matrix.id }}
           path: dist/plugins/${{ matrix.id }}.zip
           retention-days: 30
+
+  # Canonical release evidence is repository-wide rather than per package, so a
+  # single non-matrix writer records it and attaches it to the release. Every
+  # catalog consumer reads this asset from the exact channel release tag.
+  publish-evidence:
+    name: Publish Canonical Release Evidence
+    needs: discover-packages
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      id-token: write
+      attestations: write
+      artifact-metadata: write
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Verify and checkout plugin source
+        shell: bash
+        env:
+          SOURCE_REF: ${{ inputs.source-ref }}
+          INPUT_VERSION: ${{ inputs.version }}
+          RELEASE_TAG: ${{ inputs.release-tag }}
+        run: |
+          set -euo pipefail
+          if [ -z "${SOURCE_REF}" ]; then
+            echo "::error::source-ref is required and must not be blank"
+            exit 1
+          fi
+          if [[ ! "${SOURCE_REF}" =~ ^[0-9a-f]{40}$ ]]; then
+            echo "::error::source-ref must be a full 40-character lowercase commit SHA"
+            exit 1
+          fi
+          if [ -z "${INPUT_VERSION}" ]; then
+            echo "::error::version is required and must not be blank"
+            exit 1
+          fi
+          if [[ ! "${INPUT_VERSION}" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "::error::version must use MAJOR.MINOR.PATCH form"
+            exit 1
+          fi
+          if [ "${RELEASE_TAG}" != "v${INPUT_VERSION}" ] && [ "${RELEASE_TAG}" != "prerelease-v${INPUT_VERSION}" ]; then
+            echo "::error::release-tag must be prerelease-v${INPUT_VERSION} or v${INPUT_VERSION}"
+            exit 1
+          fi
+
+          git fetch --quiet --no-tags origin \
+            "refs/tags/${RELEASE_TAG}:refs/tags/${RELEASE_TAG}"
+          tag_commit=$(git rev-parse --verify --end-of-options \
+            "refs/tags/${RELEASE_TAG}^{commit}")
+          if [ "${tag_commit}" != "${SOURCE_REF}" ]; then
+            echo "::error::release tag does not resolve to source-ref"
+            exit 1
+          fi
+
+          git checkout --quiet --detach "${SOURCE_REF}"
+          if [ "$(git rev-parse HEAD)" != "${SOURCE_REF}" ]; then
+            echo "::error::Verified source checkout does not match source-ref"
+            exit 1
+          fi
+
+      - name: Setup PowerShell modules
+        uses: ./.github/actions/setup-ps-modules
+
+      # Evidence is derived from each package's declared canonical git-tracked
+      # source set, so it needs no generated tree and no staging root and
+      # reproduces from a clean checkout of the tagged commit.
+      - name: Record canonical release evidence
+        shell: pwsh
+        env:
+          DISCOVERED_NAMES: ${{ needs.discover-packages.outputs.names }}
+          INPUT_SOURCE_REF: ${{ inputs.source-ref }}
+          INPUT_VERSION: ${{ inputs.version }}
+          RELEASE_TAG: ${{ inputs.release-tag }}
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $expectedCount = @($env:DISCOVERED_NAMES | ConvertFrom-Json).Count
+          if ($expectedCount -le 0) {
+            throw 'Package discovery produced no package names'
+          }
+          # Upstream checkout already validated the tag against the version, so
+          # the prefix alone determines the channel.
+          $channel = if ($env:RELEASE_TAG.StartsWith('prerelease-v', [System.StringComparison]::Ordinal)) {
+            'PreRelease'
+          }
+          elseif ($env:RELEASE_TAG.StartsWith('v', [System.StringComparison]::Ordinal)) {
+            'Stable'
+          }
+          else {
+            throw "Release tag '$env:RELEASE_TAG' does not match a known channel grammar"
+          }
+          & ./scripts/plugins/Assert-PluginReleaseEvidence.ps1 `
+            -SourceCommit $env:INPUT_SOURCE_REF `
+            -Version $env:INPUT_VERSION `
+            -Channel $channel `
+            -ReleaseTag $env:RELEASE_TAG `
+            -ExpectedPackageCount $expectedCount `
+            -OutputPath logs/plugin-release-evidence.json
+
+      - name: Verify recorded evidence reproduces
+        shell: pwsh
+        env:
+          INPUT_SOURCE_REF: ${{ inputs.source-ref }}
+          INPUT_VERSION: ${{ inputs.version }}
+          RELEASE_TAG: ${{ inputs.release-tag }}
+        run: |
+          $ErrorActionPreference = 'Stop'
+          # Upstream checkout already validated the tag against the version, so
+          # the prefix alone determines the channel.
+          $channel = if ($env:RELEASE_TAG.StartsWith('prerelease-v', [System.StringComparison]::Ordinal)) {
+            'PreRelease'
+          }
+          elseif ($env:RELEASE_TAG.StartsWith('v', [System.StringComparison]::Ordinal)) {
+            'Stable'
+          }
+          else {
+            throw "Release tag '$env:RELEASE_TAG' does not match a known channel grammar"
+          }
+          & ./scripts/plugins/Assert-PluginReleaseEvidence.ps1 `
+            -SourceCommit $env:INPUT_SOURCE_REF `
+            -Version $env:INPUT_VERSION `
+            -Channel $channel `
+            -ReleaseTag $env:RELEASE_TAG `
+            -ExpectedEvidencePath logs/plugin-release-evidence.json `
+            -OutputPath logs/plugin-release-evidence-verification.json
+
+      - name: Upload plugin release evidence artifact
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: plugin-release-evidence
+          path: logs/plugin-release-evidence.json
+          retention-days: 30
+
+      - name: Attest build provenance
+        uses: actions/attest-build-provenance@4d101475d8b20a2381f78447822ac1eab6504dd8 # v4.2.2
+        with:
+          subject-path: logs/plugin-release-evidence.json
+
+      - name: Upload evidence to GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPOSITORY: ${{ github.repository }}
+          TAG: ${{ inputs.release-tag }}
+        run: |
+          set -euo pipefail
+          gh release upload "$TAG" \
+            "logs/plugin-release-evidence.json" \
+            --clobber -R "$REPOSITORY"

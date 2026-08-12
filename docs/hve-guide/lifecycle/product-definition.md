@@ -3,7 +3,7 @@ title: "Stage 3: Product Definition"
 description: Transform business requirements into product specifications and architecture decisions
 sidebar_position: 3
 author: Microsoft
-ms.date: 2026-06-28
+ms.date: 2026-08-06
 ms.topic: how-to
 keywords:
   - ai-assisted project lifecycle
@@ -27,15 +27,15 @@ You enter Product Definition after completing [Stage 2: Discovery](discovery.md)
 
 ## Available Tools
 
-| Tool                    | Type  | How to Invoke                            | Purpose                                         |
-|-------------------------|-------|------------------------------------------|-------------------------------------------------|
-| prd-builder             | Agent | Select **prd-builder** agent             | Create product requirements documents from BRDs |
-| product-manager-advisor | Agent | Select **product-manager-advisor** agent | Get product management guidance and feedback    |
-| adr-creation            | Agent | Select **adr-creation** agent            | Document architecture decisions formally        |
-| architecture-diagrams   | Skill | Use the **architecture-diagrams** skill  | Generate ASCII architecture diagrams for PRDs   |
-| security-planner        | Agent | Select **security-planner** agent        | Validate security requirements in product specs |
-| sssc-planner            | Agent | Select **sssc-planner** agent            | Validate supply chain security in product specs |
-| rai-planner             | Agent | Select **rai-planner** agent             | Validate RAI requirements in product specs      |
+| Tool                  | Type  | How to Invoke                           | Purpose                                         |
+|-----------------------|-------|-----------------------------------------|-------------------------------------------------|
+| prd-builder           | Agent | Select **prd-builder** agent            | Create product requirements documents from BRDs |
+| requirements-author   | Skill | Use the **requirements-author** skill   | Author BRD and PRD requirements documents       |
+| adr-creation          | Agent | Select **adr-creation** agent           | Document architecture decisions formally        |
+| architecture-diagrams | Skill | Use the **architecture-diagrams** skill | Generate ASCII architecture diagrams for PRDs   |
+| security-planner      | Agent | Select **security-planner** agent       | Validate security requirements in product specs |
+| sssc-planner          | Agent | Select **sssc-planner** agent           | Validate supply chain security in product specs |
+| rai-planner           | Agent | Select **rai-planner** agent            | Validate RAI requirements in product specs      |
 
 ## Design Thinking for Product Concepts
 

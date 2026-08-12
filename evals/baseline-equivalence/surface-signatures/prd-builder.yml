@@ -4,9 +4,9 @@ required:
   - name: prd-sessions-scope-language
     type: output-matches
     config:
-      pattern: '(?i)\.copilot-tracking/prd-sessions'
+      pattern: '(?i)\.copilot-tracking/(prd-sessions|workitems|jira-issues)'
 disallowed:
   - name: writes-outside-prd-sessions-dir
     type: output-matches
     config:
-      pattern: '(?i)(C:\\|/etc/|/usr/|~/Documents)'
+      pattern: '(?i)([A-Za-z]:\\|/etc/|/usr/|~/Documents)'

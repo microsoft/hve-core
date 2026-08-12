@@ -3,7 +3,7 @@ title: Architecture Overview
 description: HVE Core system design and component relationships
 sidebar_position: 1
 author: Microsoft
-ms.date: 2026-08-01
+ms.date: 2026-08-06
 ms.topic: concept
 ---
 
@@ -39,7 +39,7 @@ graph TD
 | GitHub Workflows    | `.github/workflows/`       | CI/CD pipelines for validation, security, and release automation              |
 | Access Control      | `.github/CODEOWNERS`       | Path-based review requirements and ownership                                  |
 | MCP Configuration   | `.vscode/mcp.json`         | Model Context Protocol server definitions                                     |
-| Plugins             | `plugins/`                 | Generated Copilot plugin output from marketplace recipes                      |
+| Plugin staging      | External absolute path     | Temporary Copilot package output for explicit assembly                        |
 | Test Infrastructure | `scripts/tests/`           | Pester test suites with fixtures and mocks                                    |
 
 ## Core Subsystems
@@ -59,7 +59,13 @@ Automation scripts handle quality assurance and development workflows. The scrip
 
 ### Plugins
 
-Marketplace entries in `.github/plugin/marketplace.json` define self-contained packages of agents, prompts, instructions, skills, and hooks. Running `npm run plugin:generate` produces ignored output under `plugins/`, organized by package ID. Files under `plugins/` are not edited directly. See [scripts/plugins/README.md](https://github.com/microsoft/hve-core/blob/main/scripts/plugins/README.md) for the generation pipeline.
+Marketplace entries in `.github/plugin/marketplace.json` define self-contained
+packages from `.github`-root-relative canonical paths: `agents/*.agent.md`,
+`prompts/*.prompt.md`, `instructions/*.instructions.md`, `skills/*`
+directories, and `hooks/*.json`. Explicit package assembly requires
+`HVE_PLUGIN_STAGING_ROOT` or `-StagingRoot` to name an absolute path outside the
+repository. Ordinary validation never creates a repository-root `plugins/`
+tree. See [scripts/plugins/README.md](https://github.com/microsoft/hve-core/blob/main/scripts/plugins/README.md) for the generation pipeline.
 
 ### Documentation
 

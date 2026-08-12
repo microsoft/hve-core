@@ -100,8 +100,8 @@ Display the PRD Requirements Planning CAUTION block from #file:../../instruction
 ### Backlog Refinement Handoff
 
 * Treat the PRD as the source artifact for downstream backlog planning after Validate or Finalize, depending on the user's readiness for implementation planning.
-* When the target tracker is Azure DevOps, hand off to `AzDO PRD to WIT` to refine `.copilot-tracking/workitems/prds/<artifact-normalized-name>/planning-log.md`, `artifact-analysis.md`, `work-items.md`, and `handoff.md`.
-* When the target tracker is Jira, hand off to `Jira PRD to WIT` to refine `.copilot-tracking/jira-issues/prds/<artifact-normalized-name>/planning-log.md`, `artifact-analysis.md`, `issues-plan.md`, and `handoff.md`.
+* When the target tracker is Azure DevOps, hand off to the `Functional Planner` (targeting Azure DevOps) to refine `.copilot-tracking/workitems/prds/<artifact-normalized-name>/planning-log.md`, `artifact-analysis.md`, `work-items.md`, and `handoff.md`.
+* When the target tracker is Jira, hand off to the `Functional Planner` (targeting Jira) to refine `.copilot-tracking/jira-issues/prds/<artifact-normalized-name>/planning-log.md`, `artifact-analysis.md`, `issues-plan.md`, and `handoff.md`.
 * Ensure downstream planning files translate PRD goals, functional requirements, non-functional requirements, acceptance criteria, dependencies, risks, and priority cues into tracker-ready work item summaries, descriptions, acceptance criteria, hierarchy, labels, and field mappings.
 * Keep backlog refinement planning-only inside PRD Builder. Actual Azure DevOps or Jira mutations happen through the relevant backlog execution workflow after the user reviews the finalized handoff.
 

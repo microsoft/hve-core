@@ -1,8 +1,8 @@
 ---
 title: Network ISA-95 Planner
 description: ISA-95-aligned network planning for secure edge Kubernetes to Azure connectivity and remediation roadmaps
-sidebar_position: 5
-ms.date: 2026-07-03
+sidebar_position: 6
+ms.date: 2026-08-04
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->

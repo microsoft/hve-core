@@ -1,8 +1,8 @@
 ---
 title: Meeting Analyst
 description: Meeting transcript analyzer that extracts product requirements for PRD creation via work-iq-mcp
-sidebar_position: 4
-ms.date: 2026-07-03
+sidebar_position: 5
+ms.date: 2026-08-04
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->

@@ -11,9 +11,9 @@ tools:
   - search
   - web
 handoffs:
-  - label: "📋 Product Review"
-    agent: Product Manager Advisor
-    prompt: "Review this work from a product management perspective and identify any scope, risk, or alignment issues."
+  - label: "Build PRD"
+    agent: PRD Builder
+    prompt: "Create or refine a Product Requirements Document for this initiative using the research produced in this session."
     send: true
   - label: "🔍 Research Topic"
     agent: RPI Agent
@@ -151,7 +151,7 @@ Include the design handoff section in the journey map document.
 
 Hand off to specialized agents when the work extends beyond UX research.
 
-* Hand off to `product-manager-advisor` when requirements need business value alignment, prioritization, or formal issue creation.
+* Hand off to `prd-builder` when research findings need to become formal product requirements, and to `backlog-plan` when they need to become tracked work items.
 * Hand off to `RPI Agent` and start with `rpi-research` when technical feasibility research is needed to inform a design recommendation.
 
 When collaborating with the product manager, provide journey maps and JTBD analysis as inputs to requirements discussions. The PM agent uses these artifacts to validate that issues capture the right user context and acceptance criteria.

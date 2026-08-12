@@ -324,18 +324,15 @@ Describe 'Prepare-Extension canonical inputs' -Tag 'Unit' {
     }
 }
 
-Describe 'Prepare-Extension dry run and changelog' -Tag 'Unit' {
+Describe 'Prepare-Extension dry run' -Tag 'Unit' {
     BeforeEach {
         $script:DryRunFixture = New-ExtensionFixtureRepo -Path (Join-Path $TestDrive "dryrun-$([guid]::NewGuid().ToString('N'))")
-        $script:ChangelogPath = Join-Path $script:DryRunFixture.RepoRoot 'CHANGELOG.md'
-        Set-FixtureFile -Path $script:ChangelogPath -Value "# Fixture changelog`n"
     }
 
     Context 'when running with DryRun' {
         BeforeEach {
             $script:DryRunResult = Invoke-PrepareExtension -ExtensionDirectory $script:DryRunFixture.ExtensionDirectory `
-                -RepoRoot $script:DryRunFixture.RepoRoot -Channel PreRelease -PackageId 'sample' `
-                -ChangelogPath $script:ChangelogPath -DryRun
+                -RepoRoot $script:DryRunFixture.RepoRoot -Channel PreRelease -PackageId 'sample' -DryRun
         }
 
         It 'Still generates every eligible package manifest and README' {
@@ -349,21 +346,9 @@ Describe 'Prepare-Extension dry run and changelog' -Tag 'Unit' {
             $manifest.name | Should -BeExactly 'hve-core'
             @($manifest.contributes.PSObject.Properties) | Should -HaveCount 0
         }
-
-        It 'Copies no changelog into the extension directory' {
-            Test-Path -LiteralPath (Join-Path $script:DryRunFixture.ExtensionDirectory 'CHANGELOG.md') | Should -BeFalse
-        }
     }
 
     Context 'when running without DryRun' {
-        It 'Copies the changelog into the extension directory' {
-            Invoke-PrepareExtension -ExtensionDirectory $script:DryRunFixture.ExtensionDirectory `
-                -RepoRoot $script:DryRunFixture.RepoRoot -Channel PreRelease -PackageId 'sample' `
-                -ChangelogPath $script:ChangelogPath | Out-Null
-            Get-Content -LiteralPath (Join-Path $script:DryRunFixture.ExtensionDirectory 'CHANGELOG.md') -Raw |
-                Should -BeExactly "# Fixture changelog`n"
-        }
-
         It 'Writes the selected package identity and contributions into the active manifest' {
             Invoke-PrepareExtension -ExtensionDirectory $script:DryRunFixture.ExtensionDirectory `
                 -RepoRoot $script:DryRunFixture.RepoRoot -Channel PreRelease -PackageId 'sample' | Out-Null
@@ -372,15 +357,12 @@ Describe 'Prepare-Extension dry run and changelog' -Tag 'Unit' {
             @($manifest.contributes.chatAgents.name) | Should -Be @('alpha', 'beta')
         }
 
-        It 'Warns when the requested changelog is missing' {
-            Mock Write-Warning {}
-            $missing = Join-Path $script:DryRunFixture.RepoRoot 'ABSENT-CHANGELOG.md'
+        # Changelog staging belongs to Package-Extension.ps1, which owns the one live path.
+        It 'Stages no changelog into the extension directory' {
+            Set-FixtureFile -Path (Join-Path $script:DryRunFixture.RepoRoot 'CHANGELOG.md') -Value "# Fixture changelog`n"
             Invoke-PrepareExtension -ExtensionDirectory $script:DryRunFixture.ExtensionDirectory `
-                -RepoRoot $script:DryRunFixture.RepoRoot -Channel PreRelease -PackageId 'sample' `
-                -ChangelogPath $missing | Out-Null
-            Should -Invoke Write-Warning -Times 1 -Exactly -ParameterFilter {
-                $Message -eq "Changelog path specified but file not found: $missing"
-            }
+                -RepoRoot $script:DryRunFixture.RepoRoot -Channel PreRelease -PackageId 'sample' | Out-Null
+            Test-Path -LiteralPath (Join-Path $script:DryRunFixture.ExtensionDirectory 'CHANGELOG.md') | Should -BeFalse
         }
     }
 }

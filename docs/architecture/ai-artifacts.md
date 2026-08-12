@@ -3,7 +3,7 @@ title: AI Artifacts Architecture
 description: Prompt, agent, and instruction delegation model for Copilot customizations
 sidebar_position: 2
 author: Microsoft
-ms.date: 2026-08-03
+ms.date: 2026-08-06
 ms.topic: concept
 ---
 
@@ -216,7 +216,13 @@ Copilot discovers skills automatically when their description matches the curren
 
 ### Shared Projection
 
-`MarketplaceHelpers.psm1` maps each recipe path to a canonical `.github` source, applies lifecycle policy, and closes transitive agent handoffs. An artifact can belong to more than one package recipe when its maturity is aligned for those memberships. Plugin generation and VSIX preparation consume the same resolved source set for each entry before destination mapping. Unresolved or ambiguous handoffs fail validation.
+Catalog membership is relative to the canonical `.github` source root:
+`agents/*.agent.md`, `prompts/*.prompt.md`,
+`instructions/*.instructions.md`, `skills/*` directories, and
+`hooks/*.json`. `MarketplaceHelpers.psm1` applies lifecycle policy and closes
+transitive agent handoffs over those paths. Plugin generation and VSIX
+preparation consume the same resolved source set before mapping it to a
+host-specific package layout. Unresolved or ambiguous handoffs fail validation.
 
 ### Lifecycle Labels and Channels
 
@@ -255,7 +261,13 @@ The lifecycle table above applies equally to extension contributions. Stable and
 
 Each active catalog entry projects to one Copilot plugin root and one VSIX identity. The focused `hve-core` entry retains the unsuffixed HVE Core extension identity, `ise-hve-essentials.hve-core`. Other entries use deterministic package-specific identities in the same publisher namespace, `ise-hve-essentials.hve-<package-name>`. These identities are generated from catalog package names and do not indicate that publication has occurred.
 
-The VS Code extension is prepared with `Prepare-Extension.ps1` and packaged with `Package-Extension.ps1`. Copilot packages are generated with `npm run plugin:generate`. Generation creates ignored, materialized regular-file packages under `plugins/<package-name>/`; those local files are validation and distribution output, not reviewed source.
+The VS Code extension is prepared with `Prepare-Extension.ps1` and packaged
+with `Package-Extension.ps1`. Copilot package assembly materializes regular-file
+packages only under a caller-supplied absolute staging root outside the
+repository. Set `HVE_PLUGIN_STAGING_ROOT` before running
+`npm run plugin:generate`, or pass `-StagingRoot` directly to
+`Generate-Plugins.ps1`. Ordinary validation does not generate a repository-root
+`plugins/` tree.
 
 Choose the catalog entry that matches the required scope. Do not install `hve-core` and `hve-core-all` together because their content overlaps. Both plugin entries include the telemetry hook. VS Code has no declarative hook contribution point, so extension users configure hook locations manually.
 
@@ -312,7 +324,10 @@ Move an artifact to `.github/deprecated/{type}/` when:
 
 ## Removed Artifacts
 
-The `removed` maturity is an `x-hve.componentMaturity` tombstone keyed by package-relative component path. It removes an artifact from every generated distribution while retaining policy history without adding maturity to artifact frontmatter.
+The `removed` maturity is an `x-hve.componentMaturity` tombstone keyed by a
+`.github`-root-relative canonical component path. It removes an artifact from
+every generated distribution while retaining policy history without adding
+maturity to artifact frontmatter.
 
 To reactivate an artifact, restore its standard membership path, remove or change the tombstone, regenerate plugin and extension outputs, and run marketplace validation. The validator requires non-vacuous tombstone coverage and complete active-membership coverage for each applicable package recipe.
 

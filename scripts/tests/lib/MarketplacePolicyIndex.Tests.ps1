@@ -199,6 +199,30 @@ Describe 'Get-MarketplaceSourcePolicyIndex' -Tag 'Unit' {
                 '.github/skills/demo/retired'
             ) -join "`n")
     }
+
+    It 'Normalizes canonical catalog paths without changing policy projections' {
+        $catalog = @{
+            plugins = @(
+                @{
+                    name     = 'canonical-pack'
+                    agents   = @('agents/demo/shared.agent.md')
+                    commands = @('prompts/demo/run.prompt.md')
+                    'x-hve'  = @{
+                        componentMaturity = @{
+                            'agents/demo/shared.agent.md' = 'preview'
+                            'prompts/demo/gone.prompt.md'  = 'removed'
+                        }
+                    }
+                }
+            )
+        }
+        $index = Get-MarketplaceSourcePolicyIndex -Catalog $catalog
+
+        @($index['.github/agents/demo/shared.agent.md'])[0].PackagePath | Should -BeExactly 'agents/demo/shared.md'
+        @($index['.github/agents/demo/shared.agent.md'])[0].Maturity | Should -BeExactly 'preview'
+        @($index['.github/prompts/demo/run.prompt.md'])[0].PackagePath | Should -BeExactly 'commands/demo/run.md'
+        @($index['.github/prompts/demo/gone.prompt.md'])[0].Maturity | Should -BeExactly 'removed'
+    }
 }
 
 Describe 'Get-MarketplaceSourceMaturity' -Tag 'Unit' {

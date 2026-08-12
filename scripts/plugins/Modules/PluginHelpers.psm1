@@ -21,6 +21,63 @@ $script:PluginNoticeEndMarker = '<!-- END PACKAGE NOTICE -->'
 # Pure Functions (no file system side effects)
 # ---------------------------------------------------------------------------
 
+function Assert-PluginStagingRoot {
+    <#
+    .SYNOPSIS
+    Validates an explicit package staging root outside the repository.
+
+    .PARAMETER Path
+    Absolute package staging root supplied by a caller.
+
+    .PARAMETER RepoRoot
+    Absolute repository root that staging must neither contain nor descend from.
+
+    .OUTPUTS
+    [string] Normalized absolute staging root.
+    #>
+    [CmdletBinding()]
+    [OutputType([string])]
+    param(
+        [Parameter(Mandatory = $true)]
+        [AllowEmptyString()]
+        [string]$Path,
+
+        [Parameter(Mandatory = $true)]
+        [ValidateNotNullOrEmpty()]
+        [string]$RepoRoot
+    )
+
+    if ([string]::IsNullOrWhiteSpace($Path)) {
+        throw 'A staging root is required. Supply -StagingRoot or set HVE_PLUGIN_STAGING_ROOT; generation resolves no default inside the repository.'
+    }
+    if (-not [System.IO.Path]::IsPathRooted($Path)) {
+        throw "Staging root '$Path' must be an absolute path."
+    }
+
+    $normalizedStagingRoot = [System.IO.Path]::GetFullPath($Path).TrimEnd(
+        [System.IO.Path]::DirectorySeparatorChar,
+        [System.IO.Path]::AltDirectorySeparatorChar
+    )
+    $normalizedRepoRoot = [System.IO.Path]::GetFullPath($RepoRoot).TrimEnd(
+        [System.IO.Path]::DirectorySeparatorChar,
+        [System.IO.Path]::AltDirectorySeparatorChar
+    )
+    $comparison = [System.StringComparison]::OrdinalIgnoreCase
+    $separator = [System.IO.Path]::DirectorySeparatorChar
+
+    if (
+        $normalizedStagingRoot.Equals($normalizedRepoRoot, $comparison) -or
+        $normalizedStagingRoot.StartsWith("$normalizedRepoRoot$separator", $comparison)
+    ) {
+        throw "Staging root '$normalizedStagingRoot' resolves inside the repository root '$normalizedRepoRoot'. Materialization stages outside the workspace."
+    }
+    if ($normalizedRepoRoot.StartsWith("$normalizedStagingRoot$separator", $comparison)) {
+        throw "Staging root '$normalizedStagingRoot' contains the repository root '$normalizedRepoRoot'."
+    }
+
+    return $normalizedStagingRoot
+}
+
 function New-PluginManifestContent {
     <#
     .SYNOPSIS
@@ -444,32 +501,38 @@ function New-PluginReadmeContent {
 function New-PluginReleaseLocator {
     <#
     .SYNOPSIS
-    Builds a validated immutable release locator for marketplace object sources.
+    Builds a validated immutable release locator for an active channel tag.
 
     .DESCRIPTION
-    Produces the repository, immutable ref, and package path prefix used to emit
-    object-form marketplace sources. Accepts an explicit 'plugins-v<version>' tag
-    or derives one from a package version.
+    Produces the repository and immutable ref addressing the active release tag
+    for a channel. Stable addresses 'v<version>' and PreRelease addresses
+    'prerelease-v<version>'. Accepts an explicit tag in the requested channel's
+    namespace or derives one from a package version.
 
-    Commit-SHA catalog locators are not part of the production contract.
+    The locator is pathless: it addresses the repository at the release tag
+    rather than a projected package tree. Legacy tag namespaces, cross-channel
+    tags, branch names, and commit-SHA locators are refused.
 
     .PARAMETER Tag
-    Explicit immutable release tag in 'plugins-v<version>' form.
+    Explicit immutable release tag in the requested channel's namespace.
 
     .PARAMETER Version
-    Semantic version from which the 'plugins-v<version>' tag is derived.
+    Semantic version from which the channel release tag is derived.
+
+    .PARAMETER Channel
+    Release channel whose tag namespace the locator addresses.
 
     .PARAMETER Repo
     Source repository in 'owner/name' form.
 
-    .PARAMETER PathPrefix
-    Repository-relative directory holding generated packages.
-
     .OUTPUTS
-    [hashtable] Locator with Repo, Ref, and PathPrefix keys.
+    [hashtable] Locator with Repo and Ref keys.
 
     .EXAMPLE
-    New-PluginReleaseLocator -Version '1.2.3'
+    New-PluginReleaseLocator -Version '1.2.3' -Channel Stable
+
+    .EXAMPLE
+    New-PluginReleaseLocator -Tag 'prerelease-v1.2.3' -Channel PreRelease
     #>
     [CmdletBinding(DefaultParameterSetName = 'Tag')]
     [OutputType([hashtable])]
@@ -482,392 +545,39 @@ function New-PluginReleaseLocator {
         [AllowEmptyString()]
         [string]$Version,
 
-        [Parameter(Mandatory = $false)]
-        [string]$Repo = 'microsoft/hve-core',
+        [Parameter(Mandatory = $true)]
+        [ValidateSet('Stable', 'PreRelease')]
+        [string]$Channel,
 
         [Parameter(Mandatory = $false)]
-        [string]$PathPrefix = 'plugins'
+        [string]$Repo = 'microsoft/hve-core'
     )
 
-    $semVerPattern = '^\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?$'
+    $semVerPattern = '\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?'
+    $tagPrefix = if ($Channel -eq 'PreRelease') { 'prerelease-v' } else { 'v' }
 
     if ($PSCmdlet.ParameterSetName -eq 'Version') {
-        if ($Version -notmatch $semVerPattern) {
+        if ($Version -cnotmatch "^$semVerPattern$") {
             throw "Release version '$Version' is not a semantic version."
         }
-        $Tag = "plugins-v$Version"
+        $Tag = "$tagPrefix$Version"
     }
 
     if ($Tag -match '^[0-9a-fA-F]{40}$') {
-        throw "Release locator '$Tag' is a commit sha. Sha-pinned catalog sources are not supported; use the immutable 'plugins-v<version>' tag."
+        throw "Release locator '$Tag' is a commit sha. Sha-pinned release locators are not supported; use the immutable '$tagPrefix<version>' tag."
     }
 
-    if ($Tag -notmatch "^plugins-v$($semVerPattern.TrimStart('^'))") {
-        throw "Release locator '$Tag' must use the immutable 'plugins-v<version>' tag form."
+    if ($Tag -cnotmatch "^$tagPrefix$semVerPattern$") {
+        throw "Release locator '$Tag' must use the immutable $Channel '$tagPrefix<version>' tag form."
     }
 
     if ($Repo -notmatch '^[A-Za-z0-9._-]+/[A-Za-z0-9._-]+$') {
         throw "Release repository '$Repo' must use 'owner/name' form."
     }
 
-    $normalizedPrefix = $PathPrefix.Trim('/')
-    if ([string]::IsNullOrWhiteSpace($normalizedPrefix) -or $normalizedPrefix -match '\\' -or $normalizedPrefix -match '(^|/)\.\.?(/|$)') {
-        throw "Release path prefix '$PathPrefix' must be a relative forward-slash path inside the repository."
-    }
-
     return @{
-        Repo       = $Repo
-        Ref        = $Tag
-        PathPrefix = $normalizedPrefix
-    }
-}
-
-function New-MarketplaceManifestContent {
-    <#
-    .SYNOPSIS
-    Projects a marketplace catalog, optionally rewriting entry sources.
-
-    .DESCRIPTION
-    Produces a marketplace manifest from the catalog metadata and entries.
-    Standard entry fields and the x-hve overlay are preserved verbatim, because
-    the catalog is the package-definition authority. Supplying a release locator
-    replaces each object source with a package locator at the selected immutable
-    ref in the source repository.
-
-    .PARAMETER RepoName
-    Repository name used as the marketplace name.
-
-    .PARAMETER Description
-    Short description of the repository.
-
-    .PARAMETER Version
-    Semantic version string from package.json.
-
-    .PARAMETER OwnerName
-    Organization or individual owning the repository.
-
-    .PARAMETER Plugins
-    Catalog entries to project.
-
-    .PARAMETER ReleaseLocator
-    Optional. Locator from New-PluginReleaseLocator. When supplied, entry object
-    sources are rewritten to the selected immutable package reference.
-
-    .OUTPUTS
-    [hashtable] Marketplace manifest with name, metadata, owner, and plugins keys.
-    #>
-    [CmdletBinding()]
-    [OutputType([hashtable])]
-    param(
-        [Parameter(Mandatory = $true)]
-        [string]$RepoName,
-
-        [Parameter(Mandatory = $true)]
-        [string]$Description,
-
-        [Parameter(Mandatory = $true)]
-        [string]$Version,
-
-        [Parameter(Mandatory = $true)]
-        [string]$OwnerName,
-
-        [Parameter(Mandatory = $true)]
-        [AllowEmptyCollection()]
-        [array]$Plugins,
-
-        [Parameter(Mandatory = $false)]
-        [hashtable]$ReleaseLocator
-    )
-
-    $useLocator = $null -ne $ReleaseLocator -and $ReleaseLocator.Count -gt 0
-
-    $pluginEntries = @()
-    foreach ($plugin in ($Plugins | Sort-Object { $_['name'] })) {
-        $projected = [ordered]@{}
-        foreach ($key in $plugin.Keys) {
-            $projected[$key] = $plugin[$key]
-        }
-
-        $projected['version'] = $Version
-
-        if ($useLocator) {
-            $projected['source'] = [ordered]@{
-                source = 'github'
-                repo   = $ReleaseLocator.Repo
-                path   = "$($ReleaseLocator.PathPrefix)/$($plugin['name'])"
-                ref    = $ReleaseLocator.Ref
-            }
-        }
-        elseif ($plugin['source'] -isnot [System.Collections.IDictionary]) {
-            throw "Plugin '$($plugin['name'])' source must be an immutable object locator. Bare package sources are not supported."
-        }
-
-        $pluginEntries += $projected
-    }
-
-    return [ordered]@{
-        name     = $RepoName
-        metadata = [ordered]@{
-            description = $Description
-            version     = $Version
-            pluginRoot  = './plugins'
-        }
-        owner    = [ordered]@{
-            name = $OwnerName
-        }
-        plugins  = $pluginEntries
-    }
-}
-
-function Write-MarketplaceManifest {
-    <#
-    .SYNOPSIS
-    Writes a projected marketplace snapshot to an explicit destination.
-
-    .DESCRIPTION
-    The production catalog at .github/plugin/marketplace.json is the
-    package-definition input, so generation never rewrites it. This projects
-    that catalog to a separate destination, optionally pinning every entry
-    source to an immutable release locator for snapshot publication.
-
-    .PARAMETER RepoRoot
-    Absolute path to the repository root directory.
-
-    .PARAMETER Catalog
-    Parsed marketplace catalog to project.
-
-    .PARAMETER ReleaseLocator
-    Optional. Locator from New-PluginReleaseLocator. Emits object sources and
-    requires an explicit OutputPath so the production catalog is never rewritten
-    by generation; catalog cutover is a separate reviewed change.
-
-    .PARAMETER OutputPath
-    Destination path, absolute or relative to RepoRoot. The production catalog
-    is rejected as a destination.
-
-    .PARAMETER Version
-    Optional semantic version for the projection. Defaults to package.json.
-
-    .PARAMETER DryRun
-    When specified, logs the action without writing to disk.
-    #>
-    [CmdletBinding()]
-    param(
-        [Parameter(Mandatory = $true)]
-        [ValidateNotNullOrEmpty()]
-        [string]$RepoRoot,
-
-        [Parameter(Mandatory = $true)]
-        [System.Collections.IDictionary]$Catalog,
-
-        [Parameter(Mandatory = $false)]
-        [hashtable]$ReleaseLocator,
-
-        [Parameter(Mandatory = $true)]
-        [ValidateNotNullOrEmpty()]
-        [string]$OutputPath,
-
-        [Parameter(Mandatory = $false)]
-        [ValidatePattern('^\d+\.\d+\.\d+$')]
-        [string]$Version,
-
-        [Parameter(Mandatory = $false)]
-        [switch]$DryRun
-    )
-
-    $useLocator = $null -ne $ReleaseLocator -and $ReleaseLocator.Count -gt 0
-
-    $productionPath = Join-Path -Path $RepoRoot -ChildPath '.github' -AdditionalChildPath 'plugin', 'marketplace.json'
-    $resolvedOutputPath = if ([System.IO.Path]::IsPathRooted($OutputPath)) {
-        $OutputPath
-    }
-    else {
-        Join-Path -Path $RepoRoot -ChildPath $OutputPath
-    }
-
-    if ([System.IO.Path]::GetFullPath($resolvedOutputPath) -eq [System.IO.Path]::GetFullPath($productionPath)) {
-        throw "Marketplace projection must not write the production catalog at $productionPath. The catalog is the package-definition input."
-    }
-
-    $packageJsonPath = Join-Path -Path $RepoRoot -ChildPath 'package.json'
-    $packageJson = Get-Content -Path $packageJsonPath -Raw | ConvertFrom-Json
-    $manifestVersion = if ([string]::IsNullOrWhiteSpace($Version)) { [string]$packageJson.version } else { $Version }
-
-    $manifestArgs = @{
-        RepoName    = $packageJson.name
-        Description = $packageJson.description
-        Version     = $manifestVersion
-        OwnerName   = $packageJson.author
-        Plugins     = @($Catalog['plugins'])
-    }
-    if ($useLocator) {
-        $manifestArgs['ReleaseLocator'] = $ReleaseLocator
-    }
-
-    $manifest = New-MarketplaceManifestContent @manifestArgs
-
-    $outputDir = Split-Path -Path $resolvedOutputPath -Parent
-
-    if ($DryRun) {
-        Write-Host "  [DRY RUN] Would write marketplace snapshot at $resolvedOutputPath" -ForegroundColor Yellow
-        return
-    }
-
-    if (-not [string]::IsNullOrWhiteSpace($outputDir) -and -not (Test-Path -Path $outputDir)) {
-        New-Item -ItemType Directory -Path $outputDir -Force | Out-Null
-    }
-
-    $manifestJson = ($manifest | ConvertTo-Json -Depth 12) + "`n"
-    Set-ContentIfChanged -Path $resolvedOutputPath -Value $manifestJson | Out-Null
-    Write-Host "  Marketplace snapshot: $resolvedOutputPath" -ForegroundColor Green
-}
-
-function Test-PluginGitRefName {
-    <#
-    .SYNOPSIS
-    Tests whether a string is a usable git reference name.
-
-    .PARAMETER Name
-    Candidate branch or tag name.
-
-    .OUTPUTS
-    [bool] True when the name is a valid git reference.
-    #>
-    [CmdletBinding()]
-    [OutputType([bool])]
-    param(
-        [Parameter(Mandatory = $true)]
-        [AllowEmptyString()]
-        [string]$Name
-    )
-
-    if ([string]::IsNullOrWhiteSpace($Name)) {
-        return $false
-    }
-
-    if ($Name -match '[\s~^:?*\[\\]' -or $Name -match '\.\.' -or $Name -match '@\{') {
-        return $false
-    }
-
-    if ($Name.StartsWith('-') -or $Name.StartsWith('/') -or $Name.EndsWith('/') -or $Name.EndsWith('.')) {
-        return $false
-    }
-
-    foreach ($segment in ($Name -split '/')) {
-        if ([string]::IsNullOrEmpty($segment) -or $segment.StartsWith('.') -or $segment.EndsWith('.lock')) {
-            return $false
-        }
-    }
-
-    return $true
-}
-
-function Assert-PluginSnapshotTarget {
-    <#
-    .SYNOPSIS
-    Validates the branch and tag a snapshot publish may write.
-
-    .DESCRIPTION
-    Disposable mode requires a namespaced branch and tag pair. Production mode
-    permits exactly one immutable plugins-v<version> tag and no branch. Both
-    modes refuse an existing tag rather than overwriting it.
-
-    .PARAMETER Mode
-    Disposable or Production publication mode.
-
-    .PARAMETER Branch
-    Target branch for the snapshot commit.
-
-    .PARAMETER Tag
-    Target tag for the snapshot commit.
-
-    .PARAMETER ExistingRefs
-    Reference names that already exist on the remote, short or fully qualified.
-
-    .PARAMETER DisposablePrefix
-    Required prefix identifying a disposable reference.
-
-    .OUTPUTS
-    [hashtable] Validated target with Branch, Tag, and RefSpecs keys.
-
-    .EXAMPLE
-    Assert-PluginSnapshotTarget -Branch 'plugins-snapshot/run-42' -Tag 'plugins-snapshot/run-42-tag'
-    #>
-    [CmdletBinding()]
-    [OutputType([hashtable])]
-    param(
-        [Parameter(Mandatory = $false)]
-        [ValidateSet('Disposable', 'Production')]
-        [string]$Mode = 'Disposable',
-
-        [Parameter(Mandatory = $true)]
-        [AllowEmptyString()]
-        [string]$Branch,
-
-        [Parameter(Mandatory = $true)]
-        [AllowEmptyString()]
-        [string]$Tag,
-
-        [Parameter(Mandatory = $false)]
-        [AllowEmptyCollection()]
-        [string[]]$ExistingRefs = @(),
-
-        [Parameter(Mandatory = $false)]
-        [string]$DisposablePrefix = 'plugins-snapshot/'
-    )
-
-    $normalizedExisting = @($ExistingRefs | ForEach-Object { ($_ -replace '^refs/(heads|tags)/', '').Trim() })
-
-    if ($Mode -eq 'Production') {
-        if (-not [string]::IsNullOrEmpty($Branch)) {
-            throw "Production snapshot mode does not publish a branch; received '$Branch'."
-        }
-        if (-not (Test-PluginGitRefName -Name $Tag)) {
-            throw "Snapshot tag '$Tag' is not a valid git reference name."
-        }
-        if ($Tag -cnotmatch '^plugins-v\d+\.\d+\.\d+$') {
-            throw "Production snapshot tag '$Tag' must use 'plugins-v<version>' form."
-        }
-        if ($normalizedExisting -contains $Tag) {
-            throw "Snapshot tag '$Tag' already exists. Tags are immutable and are never overwritten."
-        }
-
-        return @{
-            Branch   = ''
-            Tag      = $Tag
-            RefSpecs = @("refs/tags/$Tag")
-        }
-    }
-
-    $protectedBranches = @('main', 'release/plugins')
-    $productionTagPattern = '^plugins-v\d+\.\d+\.\d+'
-
-    foreach ($target in @(@{ Kind = 'branch'; Value = $Branch }, @{ Kind = 'tag'; Value = $Tag })) {
-        if (-not (Test-PluginGitRefName -Name $target.Value)) {
-            throw "Snapshot $($target.Kind) '$($target.Value)' is not a valid git reference name."
-        }
-
-        if ($protectedBranches -contains $target.Value -or $target.Value -match $productionTagPattern) {
-            throw "Snapshot $($target.Kind) '$($target.Value)' targets a protected production reference and is refused."
-        }
-
-        if (-not $target.Value.StartsWith($DisposablePrefix)) {
-            throw "Snapshot $($target.Kind) '$($target.Value)' must start with the disposable prefix '$DisposablePrefix'."
-        }
-    }
-
-    if ($Branch -eq $Tag) {
-        throw "Snapshot branch and tag must differ; both are '$Branch'."
-    }
-
-    if ($normalizedExisting -contains $Tag) {
-        throw "Snapshot tag '$Tag' already exists. Tags are immutable and are never overwritten."
-    }
-
-    return @{
-        Branch   = $Branch
-        Tag      = $Tag
-        RefSpecs = @("HEAD:refs/heads/$Branch", "refs/tags/$Tag")
+        Repo = $Repo
+        Ref  = $Tag
     }
 }
 
@@ -1135,13 +845,11 @@ function Write-PluginHookArtifact {
     Materializes a hook manifest and its sibling script directory into a plugin.
 
     .DESCRIPTION
-    Hook command paths in the source manifest are repository-root relative
-    (for example .github/hooks/shared/telemetry/telemetry-collector.sh) so they resolve
-    when the hook is auto-loaded from a checked-out repository. Inside an
-    installed plugin the same scripts live under the plugin root, so this
-    function writes a transformed copy of the manifest with those paths
-    rewritten to the ${CLAUDE_PLUGIN_ROOT} placeholder, then materializes the
-    sibling script directory (the manifest path without its .json extension).
+    Hook commands in the source manifest default to the repository .github root
+    when no plugin root is set. Inside an installed plugin the same scripts live
+    under the plugin root, so this function writes a transformed copy using the
+    ${CLAUDE_PLUGIN_ROOT} placeholder, then materializes the sibling script
+    directory (the manifest path without its .json extension).
 
     .PARAMETER SourceManifest
     Absolute path to the source hook .json manifest in the repository.
@@ -1185,13 +893,11 @@ function Write-PluginHookArtifact {
         return
     }
 
-    # Rewrite repo-root-relative hook script paths to plugin-relative paths so
-    # commands resolve from the installed plugin directory. CLAUDE_PLUGIN_ROOT
-    # is the placeholder every Copilot host substitutes; an unsubstituted bare
-    # ${PLUGIN_ROOT} reaches the shell and expands to an empty string. Literal
-    # string replacement avoids regex interpretation of the path and the $
-    # placeholder.
+    # The source form serves repository and installed-plugin consumers. The
+    # materialized copy keeps the established plain plugin-root placeholder.
     $manifestText = Get-Content -LiteralPath $SourceManifest -Raw -Encoding utf8
+    $manifestText = $manifestText.Replace('${CLAUDE_PLUGIN_ROOT:-.github}/hooks/', '${CLAUDE_PLUGIN_ROOT}/hooks/')
+    $manifestText = $manifestText.Replace('& (Join-Path ([string]::IsNullOrWhiteSpace($env:CLAUDE_PLUGIN_ROOT) ? ''.github'' : $env:CLAUDE_PLUGIN_ROOT) ''hooks/', '& (Join-Path $env:CLAUDE_PLUGIN_ROOT ''hooks/')
     $manifestText = $manifestText.Replace('.github/hooks/', '${CLAUDE_PLUGIN_ROOT}/hooks/')
     Set-ContentIfChanged -Path $DestinationManifest -Value $manifestText | Out-Null
 
@@ -1509,16 +1215,14 @@ function Write-PluginDirectory {
 }
 
 Export-ModuleMember -Function @(
-    'Assert-PluginSnapshotTarget',
+    'Assert-PluginStagingRoot',
     'Copy-PluginSource',
     'Get-PluginItemMaturityLabel',
     'Get-PluginTrackedPathIndex',
     'New-GenerateResult',
-    'New-MarketplaceManifestContent',
     'New-PluginManifestContent',
     'New-PluginReadmeContent',
     'New-PluginReleaseLocator',
     'Split-PluginDocumentationSource',
-    'Write-MarketplaceManifest',
     'Write-PluginDirectory'
 )
