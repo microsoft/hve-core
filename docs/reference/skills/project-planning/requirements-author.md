@@ -1,8 +1,8 @@
 ---
 title: requirements-author
 description: "Requirements authoring guide for BRD and PRD across Discover, Define, and Govern with canonical templates and handoff contracts"
-sidebar_position: 5
-ms.date: 2026-07-28
+sidebar_position: 6
+ms.date: 2026-08-11
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->

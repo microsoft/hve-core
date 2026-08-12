@@ -1,8 +1,8 @@
 ---
 title: rai-planner
 description: "On-demand RAI planner reference pack covering Phase 1 capture, Phase 2 risk classification, Phase 5 impact assessment, and Phase 6 review and backlog handoff."
-sidebar_position: 4
-ms.date: 2026-07-28
+sidebar_position: 5
+ms.date: 2026-08-11
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->
