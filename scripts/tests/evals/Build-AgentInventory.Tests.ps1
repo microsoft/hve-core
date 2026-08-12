@@ -49,7 +49,7 @@ BeforeAll {
             'eval-class' = 'code-author'
             'cost_tier'  = 'medium'
         }
-        New-AgentFile -Root $Root -RelativePath '.github/agents/ado/ado-backlog-manager.agent.md'
+        New-AgentFile -Root $Root -RelativePath '.github/agents/project-planning/backlog-manager.agent.md'
 
         # Subagents marked with user-invocable: false are included only when a matching stimuli partial exists.
         New-AgentFile -Root $Root -RelativePath '.github/agents/hve-core/subagents/example-subagent.agent.md' -Frontmatter @{
@@ -88,7 +88,7 @@ Describe 'Build-AgentInventory.ps1' -Tag 'Unit' {
 
         It 'Includes both standard parent agents' {
             $script:Yaml | Should -Match '(?m)^\s+- slug: sample-agent\s*$'
-            $script:Yaml | Should -Match '(?m)^\s+- slug: ado-backlog-manager\s*$'
+            $script:Yaml | Should -Match '(?m)^\s+- slug: backlog-manager\s*$'
         }
 
         It 'Includes subagents that own a matching stimuli partial' {
@@ -104,7 +104,7 @@ Describe 'Build-AgentInventory.ps1' -Tag 'Unit' {
         }
 
         It 'Defaults class to unknown and cost_tier to light when frontmatter is silent' {
-            $script:Yaml | Should -Match "(?ms)^\s+- slug: ado-backlog-manager\s*\n\s+path: '\.github/agents/ado/ado-backlog-manager\.agent\.md'\s*\n\s+class: unknown\s*\n\s+cost_tier: light"
+            $script:Yaml | Should -Match "(?ms)^\s+- slug: backlog-manager\s*\n\s+path: '\.github/agents/project-planning/backlog-manager\.agent\.md'\s*\n\s+class: unknown\s*\n\s+cost_tier: light"
         }
 
         It 'Sorts entries by slug for deterministic diffs' {
@@ -138,7 +138,7 @@ Describe 'Build-AgentInventory.ps1' -Tag 'Unit' {
         It 'Rewrites when frontmatter content changes' {
             & $script:ScriptPath -RepoRoot $script:TestRoot -OutputPath $script:OutputPath -GeneratedAt '2026-05-25T00:00:00Z' 6>$null | Out-Null
             $before = [System.IO.File]::ReadAllText($script:OutputPath)
-            New-AgentFile -Root $script:TestRoot -RelativePath '.github/agents/ado/ado-backlog-manager.agent.md' -Frontmatter @{
+            New-AgentFile -Root $script:TestRoot -RelativePath '.github/agents/project-planning/backlog-manager.agent.md' -Frontmatter @{
                 'eval-class' = 'workflow-router'
                 'cost_tier'  = 'heavy'
             }

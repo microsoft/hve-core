@@ -226,7 +226,7 @@ Describe 'Production multi-package catalog' -Tag 'Unit' {
         $script:Entries.Count | Should -BeGreaterThan 0
         @($script:Entries | ForEach-Object { [string]$_['name'] } | Sort-Object -Unique).Count | Should -Be $script:Entries.Count
         foreach ($entry in $script:Entries) {
-            [string]$entry['source']['path'] | Should -BeExactly "plugins/$([string]$entry['name'])"
+            [string]$entry['source']['path'] | Should -BeExactly '.github'
         }
     }
 
@@ -256,7 +256,7 @@ Describe 'Production multi-package catalog' -Tag 'Unit' {
         @($script:StarterProfile | Sort-Object -Unique).Count | Should -Be $script:StarterProfile.Count
         foreach ($member in $script:StarterProfile) { $script:MembershipPaths | Should -Contain $member }
         foreach ($member in $script:StarterProfile) {
-            $member | Should -Match '^(agents|commands|rules|skills)/'
+            $member | Should -Match '^(agents|prompts|instructions|skills)/'
         }
     }
 

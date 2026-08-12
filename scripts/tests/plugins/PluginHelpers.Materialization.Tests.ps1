@@ -9,6 +9,44 @@ BeforeAll {
     Mock Write-Warning {} -ModuleName PluginHelpers
 }
 
+Describe 'Assert-PluginStagingRoot' -Tag 'Unit' {
+    BeforeAll {
+        $script:stagingWorkspace = Join-Path $TestDrive 'staging-workspace'
+        $script:stagingRepo = Join-Path $script:stagingWorkspace 'repo'
+        New-Item -ItemType Directory -Path $script:stagingRepo -Force | Out-Null
+    }
+
+    It 'Accepts and normalizes an absolute sibling path' {
+        $candidate = "$($script:stagingRepo)-packages"
+        Assert-PluginStagingRoot -Path $candidate -RepoRoot $script:stagingRepo |
+            Should -BeExactly ([System.IO.Path]::GetFullPath($candidate))
+    }
+
+    It 'Rejects a missing staging root' {
+        { Assert-PluginStagingRoot -Path '' -RepoRoot $script:stagingRepo } |
+            Should -Throw -ExpectedMessage '*A staging root is required*'
+    }
+
+    It 'Rejects a relative staging root' {
+        { Assert-PluginStagingRoot -Path 'plugins' -RepoRoot $script:stagingRepo } |
+            Should -Throw -ExpectedMessage "*must be an absolute path*"
+    }
+
+    It 'Rejects the repository root and a path below it' -ForEach @(
+        @{ Candidate = { $script:stagingRepo } }
+        @{ Candidate = { Join-Path $script:stagingRepo 'plugins' } }
+    ) {
+        $path = & $Candidate
+        { Assert-PluginStagingRoot -Path $path -RepoRoot $script:stagingRepo } |
+            Should -Throw -ExpectedMessage '*resolves inside the repository root*'
+    }
+
+    It 'Rejects a staging root that contains the repository' {
+        { Assert-PluginStagingRoot -Path $script:stagingWorkspace -RepoRoot $script:stagingRepo } |
+            Should -Throw -ExpectedMessage '*contains the repository root*'
+    }
+}
+
 Describe 'Get-PluginTrackedPathIndex' -Tag 'Unit' {
     Context 'when the working tree mixes tracked and untracked content' {
         BeforeAll {
@@ -282,6 +320,7 @@ Describe 'Write-PluginDirectory' -Tag 'Unit' {
         It 'Rewrites hook command paths to the plugin root placeholder' {
             $hookText = Get-Content -LiteralPath (Join-Path $script:packageRoot 'hooks/rpi/telemetry.json') -Raw
             $hookText | Should -Match '\$\{CLAUDE_PLUGIN_ROOT\}/hooks/rpi/telemetry/collect\.sh'
+            $hookText | Should -Not -Match 'CLAUDE_PLUGIN_ROOT:-\.github'
             $hookText | Should -Not -Match '\.github/hooks/'
         }
 
@@ -355,6 +394,120 @@ Describe 'Write-PluginDirectory' -Tag 'Unit' {
             $script:dryRunResult.AgentCount | Should -Be 1
             $script:dryRunResult.SkillCount | Should -Be 1
             $script:dryRunResult.HookCount | Should -Be 1
+        }
+    }
+}
+
+Describe 'Hook plugin root fallback' -Tag 'Unit' {
+    BeforeAll {
+        $script:hookRepoRoot = (Resolve-Path (Join-Path $PSScriptRoot '../../..')).Path
+        $script:hookSourceText = Get-Content -LiteralPath (Join-Path $script:hookRepoRoot '.github/hooks/shared/telemetry.json') -Raw -Encoding utf8
+
+        $script:hookRootExpression = '[string]::IsNullOrWhiteSpace($env:CLAUDE_PLUGIN_ROOT) ? ''.github'' : $env:CLAUDE_PLUGIN_ROOT'
+        $script:hookRepositoryBash = '${CLAUDE_PLUGIN_ROOT:-.github}/hooks/shared/telemetry/telemetry-collector.sh'
+        $script:hookRepositoryPwsh = "& (Join-Path ($script:hookRootExpression) 'hooks/shared/telemetry/Invoke-TelemetryCollector.ps1')"
+        $script:hookInstalledBash = '${CLAUDE_PLUGIN_ROOT}/hooks/shared/telemetry/telemetry-collector.sh'
+        $script:hookInstalledPwsh = '& (Join-Path $env:CLAUDE_PLUGIN_ROOT ''hooks/shared/telemetry/Invoke-TelemetryCollector.ps1'')'
+        $script:hookEventNames = @(
+            'sessionStart', 'userPromptSubmitted', 'userPromptSubmit', 'preToolUse', 'postToolUse',
+            'subagentStart', 'subagentStop', 'sessionEnd', 'stop', 'agentStop', 'preCompact'
+        )
+
+        # Produce the installed form through the production writer so the
+        # transform under test is exercised rather than a hand-written copy.
+        $hookRepo = Join-Path $TestDrive 'hook-fallback'
+        New-PluginFixtureRepository -Path $hookRepo -Version '9.9.9' | Out-Null
+        Add-PluginFixtureFile -RepoRoot $hookRepo -RelativePath '.github/hooks/shared/telemetry.json' -Content $script:hookSourceText | Out-Null
+        Add-PluginFixtureFile -RepoRoot $hookRepo -RelativePath '.github/hooks/shared/telemetry/telemetry-collector.sh' -Content "#!/usr/bin/env bash`nexit 0`n" | Out-Null
+        Add-PluginFixtureFile -RepoRoot $hookRepo -RelativePath '.github/hooks/shared/telemetry/Invoke-TelemetryCollector.ps1' -Content "exit 0`n" | Out-Null
+
+        Write-PluginDirectory -Entry ([ordered]@{ name = 'shared'; description = 'Shared telemetry package'; version = '9.9.9'; license = 'MIT' }) `
+            -Items @(@{ Kind = 'hook'; Field = 'hooks'; PackagePath = 'hooks/shared/telemetry.json'; SourcePath = '.github/hooks/shared/telemetry.json' }) `
+            -PluginsDir (Join-Path $hookRepo 'plugins') -RepoRoot $hookRepo -Version '9.9.9' | Out-Null
+
+        $script:hookInstalledText = Get-Content -LiteralPath (Join-Path $hookRepo 'plugins/shared/hooks/shared/telemetry.json') -Raw -Encoding utf8
+        $script:hookRepositoryEvents = (ConvertFrom-Json $script:hookSourceText -AsHashtable)['hooks']
+        $script:hookInstalledEvents = (ConvertFrom-Json $script:hookInstalledText -AsHashtable)['hooks']
+    }
+
+    Context 'when the manifest runs from the repository' {
+        It 'Declares every lifecycle event' {
+            @($script:hookRepositoryEvents.Keys | Sort-Object) | Should -Be @($script:hookEventNames | Sort-Object)
+        }
+
+        It 'Gives every event the same bash and PowerShell fallback command' {
+            foreach ($eventName in $script:hookRepositoryEvents.Keys) {
+                foreach ($entry in $script:hookRepositoryEvents[$eventName]) {
+                    $entry['bash'] | Should -BeExactly $script:hookRepositoryBash -Because "event '$eventName' must keep the bash fallback"
+                    $entry['powershell'] | Should -BeExactly $script:hookRepositoryPwsh -Because "event '$eventName' must keep the PowerShell fallback"
+                    $entry['type'] | Should -BeExactly 'command'
+                    $entry['timeoutSec'] | Should -Be 10
+                }
+            }
+        }
+
+        It 'Resolves the fallback root to tracked collector scripts' {
+            Test-Path -LiteralPath (Join-Path $script:hookRepoRoot '.github/hooks/shared/telemetry/telemetry-collector.sh') -PathType Leaf | Should -BeTrue
+            Test-Path -LiteralPath (Join-Path $script:hookRepoRoot '.github/hooks/shared/telemetry/Invoke-TelemetryCollector.ps1') -PathType Leaf | Should -BeTrue
+        }
+
+        It 'Resolves the same root as bash for <Case>' -ForEach @(
+            @{ Case = 'an unset root'; Value = $null; Expected = '.github' }
+            @{ Case = 'an empty root'; Value = ''; Expected = '.github' }
+            @{ Case = 'an explicit root'; Value = '/opt/hve/plugins/shared'; Expected = '/opt/hve/plugins/shared' }
+        ) {
+            $previousRoot = $env:CLAUDE_PLUGIN_ROOT
+            try {
+                $env:CLAUDE_PLUGIN_ROOT = $Value
+                $powershellRoot = & ([scriptblock]::Create($script:hookRootExpression))
+                # Mirrors ${CLAUDE_PLUGIN_ROOT:-.github}, which substitutes when unset or empty.
+                $bashRoot = if ([string]::IsNullOrEmpty($env:CLAUDE_PLUGIN_ROOT)) { '.github' } else { $env:CLAUDE_PLUGIN_ROOT }
+
+                $powershellRoot | Should -BeExactly $Expected
+                $bashRoot | Should -BeExactly $Expected
+            }
+            finally {
+                $env:CLAUDE_PLUGIN_ROOT = $previousRoot
+            }
+        }
+
+        It 'Falls back on a whitespace-only root that bash would pass through' {
+            $previousRoot = $env:CLAUDE_PLUGIN_ROOT
+            try {
+                $env:CLAUDE_PLUGIN_ROOT = '   '
+                & ([scriptblock]::Create($script:hookRootExpression)) | Should -BeExactly '.github'
+            }
+            finally {
+                $env:CLAUDE_PLUGIN_ROOT = $previousRoot
+            }
+        }
+    }
+
+    Context 'when the manifest is materialized into a plugin' {
+        It 'Preserves every lifecycle event and its telemetry contract' {
+            @($script:hookInstalledEvents.Keys | Sort-Object) | Should -Be @($script:hookEventNames | Sort-Object)
+            foreach ($eventName in $script:hookInstalledEvents.Keys) {
+                @($script:hookInstalledEvents[$eventName]) | Should -HaveCount @($script:hookRepositoryEvents[$eventName]).Count
+                foreach ($entry in $script:hookInstalledEvents[$eventName]) {
+                    $entry['type'] | Should -BeExactly 'command'
+                    $entry['timeoutSec'] | Should -Be 10
+                }
+            }
+        }
+
+        It 'Resolves both host commands from the plugin root' {
+            foreach ($eventName in $script:hookInstalledEvents.Keys) {
+                foreach ($entry in $script:hookInstalledEvents[$eventName]) {
+                    $entry['bash'] | Should -BeExactly $script:hookInstalledBash -Because "event '$eventName' must resolve from the plugin root"
+                    $entry['powershell'] | Should -BeExactly $script:hookInstalledPwsh -Because "event '$eventName' must resolve from the plugin root"
+                }
+            }
+        }
+
+        It 'Removes every repository fallback' {
+            $script:hookInstalledText | Should -Not -Match 'CLAUDE_PLUGIN_ROOT:-'
+            $script:hookInstalledText | Should -Not -Match 'IsNullOrWhiteSpace'
+            $script:hookInstalledText | Should -Not -Match '\.github'
         }
     }
 }

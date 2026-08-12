@@ -560,7 +560,12 @@ Describe 'Production focused package closure' -Tag 'Unit' {
 
     It 'Closes every package agent set entirely from declared membership' {
         foreach ($entry in @($script:FocusedCatalog['plugins'])) {
-            $declared = @($entry['agents'] | Where-Object { $_ } | Sort-Object)
+            $declared = @(
+                $entry['agents'] |
+                    Where-Object { $_ } |
+                    ForEach-Object { (Resolve-MarketplaceComponentSource -PackagePath $_ -Field agents).PackagePath } |
+                    Sort-Object
+            )
             if ($declared.Count -eq 0) {
                 continue
             }
@@ -573,8 +578,9 @@ Describe 'Production focused package closure' -Tag 'Unit' {
 
     It 'Declares the data-science security handoff cycle explicitly' {
         $entry = @($script:FocusedCatalog['plugins'] | Where-Object { $_['name'] -eq 'data-science' })[0]
-        @($entry['agents']) | Should -Contain 'agents/security/security-planner.md'
-        @($entry['agents']) | Should -Contain 'agents/security/sssc-planner.md'
+        $declared = @(Get-MarketplacePackageRecipe -Entry $entry -Channel PreRelease | ForEach-Object { $_.PackagePath })
+        $declared | Should -Contain 'agents/security/security-planner.md'
+        $declared | Should -Contain 'agents/security/sssc-planner.md'
         @($script:FocusedAgentIndex.Lookup['rai-planner'].Handoffs) | Should -Contain 'Security Planner'
         @($script:FocusedAgentIndex.Lookup['security-planner'].Handoffs) | Should -Contain 'SSSC Planner'
         @($script:FocusedAgentIndex.Lookup['sssc-planner'].Handoffs) | Should -Contain 'Security Planner'

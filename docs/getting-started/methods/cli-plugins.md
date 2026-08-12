@@ -3,7 +3,7 @@ title: Copilot CLI Plugin
 description: Register an HVE Core catalog ref and install the complete hve-core plugin
 sidebar_position: 2
 author: Microsoft
-ms.date: 2026-08-02
+ms.date: 2026-08-08
 ms.topic: how-to
 ---
 
@@ -15,11 +15,38 @@ Install the complete HVE Core component set as a Copilot CLI plugin for terminal
 
 ## Register hve-core as a Plugin Marketplace
 
+Choose a registration that matches the content you need.
+
+Register the ref-less development tip:
+
 ```bash
-copilot plugin marketplace add microsoft/hve-core#<ref>
+copilot plugin marketplace add microsoft/hve-core
 ```
 
-The Git ref after `#` selects the marketplace catalog. The catalog entry's `source.ref` pins the matching immutable `plugins-v<version>` plugin snapshot. Stable and PreRelease catalogs both use the marketplace name `hve-core`, so keep one active registration at a time and replace it when changing catalog refs.
+Register a moving reviewed release channel:
+
+```bash
+copilot plugin marketplace add microsoft/hve-core#release/prerelease
+copilot plugin marketplace add microsoft/hve-core#release/stable
+```
+
+Register an immutable channel tag:
+
+```bash
+copilot plugin marketplace add microsoft/hve-core#prerelease-v<version>
+copilot plugin marketplace add microsoft/hve-core#v<version>
+```
+
+`main` is the development tip and its catalog entries omit `source.ref`.
+`release/prerelease` and `release/stable` are moving registrations that resolve
+their current reviewed branch catalog. Each branch catalog pins every entry to
+its corresponding exact channel tag. Exact-tag registrations freeze both the
+catalog selection and plugin source tag.
+
+A published channel release provides release assurance for its exact tag,
+including release gates, SBOMs, attestations, provenance verification, and the
+configured publication path. The development tip does not provide that
+published-release assurance.
 
 ## Browse Available Plugins
 
@@ -32,6 +59,20 @@ Install `hve-core` from the registered marketplace through `/plugin`. The plugin
 ```bash
 copilot plugin install hve-core@hve-core
 ```
+
+## Update an Installed Plugin
+
+Marketplace refresh and installed-plugin update are distinct actions. For a
+moving registration, refresh the catalog before requesting a plugin update:
+
+```bash
+copilot plugin marketplace update hve-core
+copilot plugin update hve-core@hve-core
+```
+
+Switching registrations can require removing and re-adding the marketplace.
+Do not assume how the client handles duplicate same-name registrations; use
+the behavior supported by your Copilot CLI version.
 
 Use the [migration guide](../package-migration) if you previously registered or installed a retired package identity.
 

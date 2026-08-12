@@ -8,21 +8,23 @@ Use this reference during readiness scoring and draft validation. Apply readines
 
 ## D1-D7 Scorecard
 
-| Pillar                   | Evaluate                                                      |
-|--------------------------|---------------------------------------------------------------|
-| D1 Strategic context     | Priority, business direction, and why the outcome matters now |
-| D2 Problem definition    | Specific pain or opportunity and its business impact          |
-| D3 Beneficiary clarity   | Affected role or segment and the before/after workflow        |
-| D4 Measurement baseline  | Current metrics and source credibility                        |
-| D5 Intervention clarity  | Candidate capability or workflow changes in scope             |
-| D6 Targets and timeframe | Numeric targets and timing expectations                       |
-| D7 Measurement ownership | Owners, cadence, and attribution approach                     |
+| Pillar                   | Evaluate                                                                                                                            |
+|--------------------------|-------------------------------------------------------------------------------------------------------------------------------------|
+| D1 Strategic context     | Priority, business direction, and why the outcome matters now                                                                       |
+| D2 Problem definition    | Specific pain or opportunity and its business impact                                                                                |
+| D3 Beneficiary clarity   | Affected role or segment and the before/after workflow                                                                              |
+| D4 Measurement baseline  | Numeric current-state baselines and measurement periods for at least one leading and one lagging indicator, plus source credibility |
+| D5 Intervention clarity  | Candidate capability or workflow changes in scope                                                                                   |
+| D6 Targets and timeframe | Numeric targets with units for at least one leading and one lagging indicator, plus a timeframe anchored to an event or date        |
+| D7 Measurement ownership | Owners, methods, cadence, attribution, and the end-to-end intervention-to-outcome chain                                             |
 
 Assign one status to each pillar:
 
 * Green: fact-based and sourced.
 * Amber: plausible but unconfirmed.
 * Red: missing, conflicting, or speculative.
+
+When a pillar evaluates multiple required facts, assign the least-ready status among them. A missing required fact makes that pillar Red even when another fact in the same pillar is evidenced.
 
 Show the scorecard before drafting:
 
@@ -65,9 +67,11 @@ Do not invent an owner or date. Every Amber and Red pillar must appear in Open Q
 
 ## Validation Procedure
 
-Apply OH.0-OH.12 in order. For every failure, add a warning immediately after the affected section and repeat it in chat:
+Apply OH.0-OH.12 in order. OH.0 is a precondition: when it fails, emit its warning in chat and stop without a draft. For every OH.1-OH.12 failure, add a warning immediately after the affected section and repeat it in chat:
 
 > **VALIDATION WARNING: Rule OH.X**: `<description>`
+
+Use the failed rule's Requirement text as the warning description. When multiple rules fail in one section, emit one warning per rule in numeric order.
 
 | Rule  | Section                          | Requirement                                                                                                                                                                                                                                                                                                                   |
 |-------|----------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|

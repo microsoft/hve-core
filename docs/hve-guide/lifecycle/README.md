@@ -3,7 +3,7 @@ title: AI-Assisted Project Lifecycle Overview
 description: Navigate the full AI-assisted engineering lifecycle from setup through operations with HVE Core tooling
 sidebar_position: 1
 author: Microsoft
-ms.date: 2026-07-15
+ms.date: 2026-08-06
 ms.topic: concept
 keywords:
   - ai-assisted project lifecycle
@@ -20,17 +20,17 @@ HVE Core supports a 9-stage project lifecycle, from initial setup through ongoin
 
 ## Stage Overview
 
-| Stage   | Name               | Key Tools                                                                                       | Guide                                       |
-|---------|--------------------|-------------------------------------------------------------------------------------------------|---------------------------------------------|
-| Stage 1 | Setup              | hve-core-installer (skill), git-setup                                                           | [Setup](setup.md)                           |
-| Stage 2 | Discovery          | rpi-research, brd-builder, security-planner, sssc-planner, rai-planner                          | [Discovery](discovery.md)                   |
-| Stage 3 | Product Definition | prd-builder, product-manager-advisor, adr-creation, security-planner, sssc-planner, rai-planner | [Product Definition](product-definition.md) |
-| Stage 4 | Decomposition      | ado-prd-to-wit, github-backlog-manager                                                          | [Decomposition](decomposition.md)           |
-| Stage 5 | Sprint Planning    | github-backlog-manager, agile-coach                                                             | [Sprint Planning](sprint-planning.md)       |
-| Stage 6 | Implementation     | RPI Agent, rpi-plan, rpi-implement, hve-builder                                                 | [Implementation](implementation.md)         |
-| Stage 7 | Review             | rpi-review, code-review, hve-builder                                                            | [Review](review.md)                         |
-| Stage 8 | Delivery           | git-merge, ado-get-build-info                                                                   | [Delivery](delivery.md)                     |
-| Stage 9 | Operations         | documentation, hve-builder, incident-response                                                   | [Operations](operations.md)                 |
+| Stage   | Name               | Key Tools                                                                                         | Guide                                       |
+|---------|--------------------|---------------------------------------------------------------------------------------------------|---------------------------------------------|
+| Stage 1 | Setup              | hve-core-installer (skill), git-setup                                                             | [Setup](setup.md)                           |
+| Stage 2 | Discovery          | rpi-research, brd-builder, security-planner, sssc-planner, rai-planner                            | [Discovery](discovery.md)                   |
+| Stage 3 | Product Definition | prd-builder, requirements-author skill, adr-creation, security-planner, sssc-planner, rai-planner | [Product Definition](product-definition.md) |
+| Stage 4 | Decomposition      | functional-planner, backlog-manager                                                               | [Decomposition](decomposition.md)           |
+| Stage 5 | Sprint Planning    | backlog-manager, backlog-management                                                               | [Sprint Planning](sprint-planning.md)       |
+| Stage 6 | Implementation     | RPI Agent, rpi-plan, rpi-implement, hve-builder                                                   | [Implementation](implementation.md)         |
+| Stage 7 | Review             | rpi-review, code-review, hve-builder                                                              | [Review](review.md)                         |
+| Stage 8 | Delivery           | git-merge, ado-get-build-info                                                                     | [Delivery](delivery.md)                     |
+| Stage 9 | Operations         | documentation, hve-builder, incident-response                                                     | [Operations](operations.md)                 |
 
 ## Where Are You?
 

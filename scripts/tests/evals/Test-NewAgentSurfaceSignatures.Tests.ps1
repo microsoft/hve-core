@@ -87,7 +87,7 @@ Describe 'New-AgentSurfaceSignatures.ps1' -Tag 'Unit' {
             # minimal-agent-a body declares ".copilot-tracking/minfix/" so scope == 'minfix'
             $yaml | Should -Match '(?m)^\s+-\s+name:\s+minfix-scope-language\s*$'
             $yaml | Should -Match '(?m)^\s+-\s+name:\s+writes-outside-minfix-dir\s*$'
-            $yaml | Should -Match "(?i)\(C:\\\\\|/etc/\|/usr/\|~/Documents\)"
+            $yaml | Should -Match "(?i)\(\[A-Za-z\]:\\\\\|/etc/\|/usr/\|~/Documents\)"
         }
 
         It 'Falls back to writes-outside-allowed-dirs and warns when no scope directive is present' {
@@ -105,7 +105,89 @@ Describe 'New-AgentSurfaceSignatures.ps1' -Tag 'Unit' {
             $yaml = [System.IO.File]::ReadAllText($outputPath)
 
             $yaml | Should -Match '(?m)^\s+-\s+name:\s+writes-outside-allowed-dirs\s*$'
+            $yaml | Should -Match "(?i)\(\[A-Za-z\]:\\\\\|/etc/\|/usr/\|~/Documents\)"
             ($warnings -join "`n") | Should -Match 'emitting generic writes-outside-allowed-dirs'
+        }
+    }
+
+    Context 'Scope cardinality' {
+        BeforeEach {
+            $script:AgentAPath = Join-Path $script:TestRoot '.github/agents/minimal-coll/minimal-agent-a.agent.md'
+            $script:AgentABody = [System.IO.File]::ReadAllText($script:AgentAPath)
+        }
+
+        It 'Handles a single scope without unrolling it to its first character' {
+            # A one-element result unrolls to a bare string, whose [0] indexer returns
+            # a character. The rule name would become "m-scope-language" instead of
+            # "minfix-scope-language" if the call site did not wrap in @().
+            $outputPath = & $script:ScriptPath `
+                -Agent 'minimal-agent-a' `
+                -RepoRoot $script:TestRoot `
+                -OutputDir $script:OutputDir 6>$null
+            $yaml = [System.IO.File]::ReadAllText($outputPath)
+
+            $yaml | Should -Match '(?m)^\s+-\s+name:\s+minfix-scope-language\s*$'
+            $yaml | Should -Not -Match '(?m)^\s+-\s+name:\s+m-scope-language\s*$'
+            $yaml | Should -Match "pattern:\s+'\(\?i\)\\\.copilot-tracking/minfix'"
+        }
+
+        It 'Accepts every declared scope in the alternation and names the rule for the first' {
+            [System.IO.File]::WriteAllText(
+                $script:AgentAPath,
+                ($script:AgentABody -replace '\.copilot-tracking/minfix/', '.copilot-tracking/minfix/ and `.copilot-tracking/secondfix/` and `.copilot-tracking/thirdfix/`'))
+
+            $outputPath = & $script:ScriptPath `
+                -Agent 'minimal-agent-a' `
+                -RepoRoot $script:TestRoot `
+                -OutputDir $script:OutputDir 6>$null
+            $yaml = [System.IO.File]::ReadAllText($outputPath)
+
+            $yaml | Should -Match '(?m)^\s+-\s+name:\s+minfix-scope-language\s*$'
+            $yaml | Should -Match 'minfix\|secondfix\|thirdfix'
+            $yaml | Should -Match '(?m)^\s+-\s+name:\s+writes-outside-minfix-dir\s*$'
+        }
+
+        It 'Emits the zero-scope branch without a StrictMode count failure' {
+            [System.IO.File]::WriteAllText(
+                $script:AgentAPath,
+                ($script:AgentABody -replace '\.copilot-tracking/[A-Za-z0-9_/-]+', ''))
+
+            $outputPath = & $script:ScriptPath `
+                -Agent 'minimal-agent-a' `
+                -RepoRoot $script:TestRoot `
+                -OutputDir $script:OutputDir 3>$null 6>$null
+            $yaml = [System.IO.File]::ReadAllText($outputPath)
+
+            $yaml | Should -Match '(?m)^\s+-\s+name:\s+writes-outside-allowed-dirs\s*$'
+            $yaml | Should -Not -Match 'scope-language'
+        }
+    }
+
+    Context 'Windows leakage disallow' {
+        It 'Rejects any drive-letter path regardless of same-line tracking-root text' {
+            $outputPath = & $script:ScriptPath `
+                -Agent 'minimal-agent-a' `
+                -RepoRoot $script:TestRoot `
+                -OutputDir $script:OutputDir 6>$null
+            $yaml = [System.IO.File]::ReadAllText($outputPath)
+
+            $pattern = [regex]::Match($yaml, "(?m)^\s+-\s+name:\s+writes-outside-minfix-dir\s*$\s+type:.*$\s+config:\s*$\s+pattern:\s+'(?<p>.*)'\s*$").Groups['p'].Value
+            $pattern | Should -Not -BeNullOrEmpty
+
+            # A bare drive-letter path is leakage, on any drive rather than only C.
+            'wrote C:\Users\me\notes.md' | Should -Match $pattern
+            'wrote D:\Users\someone\notes.md' | Should -Match $pattern
+            'wrote z:\temp\out.txt' | Should -Match $pattern
+
+            # The relaxed lookahead let an allowed tracking root appearing anywhere on
+            # the same line launder an unrelated drive-letter write. It must not, and the
+            # corrected pattern carries no lookahead that could reintroduce the bypass.
+            $pattern | Should -Not -Match '\(\?[=!]'
+            'wrote C:\Users\me\notes.md while reading .copilot-tracking/minfix/plan.md' | Should -Match $pattern
+            'wrote E:\scratch\leak.md while reading .copilot-tracking/minfix/plan.md' | Should -Match $pattern
+
+            # Non-Windows leakage prefixes still match.
+            'read /etc/passwd' | Should -Match $pattern
         }
     }
 

@@ -81,7 +81,7 @@ Specialized agents are organized into functional groups that combine agents, pro
 
 * [RPI Orchestration](rpi/) separates complex tasks into research, planning, implementation, and review phases
 * [Project Planning](agents/project-planning/) creates ADRs, BRDs, PRDs, architecture diagrams, and security plans through guided AI workflows
-* [GitHub Backlog Manager](agents/github-backlog/) automates issue discovery, triage, sprint planning, and execution
+* [Backlog Management](agents/backlog/) automates work discovery, triage, sprint planning, and execution across Azure DevOps, GitHub, and Jira
 * Additional systems are documented in the [Agent Catalog](agents/)
 
 **[Browse the Agent Catalog →](agents/)**

@@ -2,7 +2,7 @@
 title: Extension Packaging Guide
 description: Developer guide for packaging and publishing the HVE Core VS Code extension
 author: Microsoft
-ms.date: 2026-08-03
+ms.date: 2026-08-10
 ms.topic: reference
 ---
 
@@ -57,17 +57,55 @@ Install-Module -Name PowerShell-Yaml -RequiredVersion 0.4.7 -Scope CurrentUser
 
 The extension is automatically packaged and published through GitHub Actions:
 
-| Workflow                                           | Trigger                          | Purpose                                                    |
-|----------------------------------------------------|----------------------------------|------------------------------------------------------------|
-| `.github/workflows/extension-package.yml`          | Reusable workflow                | Packages a source-explicit extension                       |
-| `.github/workflows/release-prerelease.yml`         | Manual with an explicit main SHA | Builds and publishes the immutable PreRelease              |
-| `.github/workflows/release-stable.yml`             | Push to main                     | Validates `main` and opens the reviewed Stable promotion   |
-| `.github/workflows/release-stable-publish.yml`     | Merged PR to `release/stable`    | Runs release-please and publishes verified Stable evidence |
-| `.github/workflows/release-marketplace-stable.yml` | Published Stable release         | Publishes the Stable VSIX to VS Code Marketplace           |
+| Workflow                                               | Trigger                            | Purpose                                                     |
+|--------------------------------------------------------|------------------------------------|-------------------------------------------------------------|
+| `.github/workflows/extension-package.yml`              | Reusable workflow                  | Packages a source-explicit extension                        |
+| `.github/workflows/release-prerelease-prepare.yml`     | Merged PR to `main`; dispatch      | Opens the reviewed `main` to PreRelease promotion           |
+| `.github/workflows/release-prerelease.yml`             | Merged PR to `release/prerelease`  | Prepares or publishes the managed odd-minor PreRelease      |
+| `.github/workflows/release-stable.yml`                 | Published PreRelease; dispatch     | Opens the reviewed PreRelease to Stable promotion           |
+| `.github/workflows/release-stable-publish.yml`         | Merged PR to `release/stable`      | Prepares or publishes the managed even-minor Stable release |
+| `.github/workflows/release-marketplace-stable.yml`     | Published Stable release; dispatch | Publishes the Stable VSIX to VS Code Marketplace            |
+| `.github/workflows/release-marketplace-prerelease.yml` | Published PreRelease; dispatch     | Publishes the PreRelease VSIX to VS Code Marketplace        |
 
-`release-stable.yml` opens the reviewed `main` to `release/stable` promotion after validation. After the promotion merges, `release-stable-publish.yml` runs release-please on `release/stable`. Release-please owns the managed Stable release PR and draft Stable release.
+`release-prerelease-prepare.yml` opens the reviewed, target-based `main` to
+`release/prerelease` promotion. Its merge creates no tag and runs
+`release-prerelease.yml` in PR-only mode. Release-please owns the later managed
+PR. Merging that exact managed head selects tag-only mode and creates the draft
+odd-minor release at its merge commit.
 
-When that managed PR merges, the workflow packages and attests the VSIX and plugin, publishes the immutable `plugins-v<version>` snapshot, finalizes the draft, and opens the reviewed `release/stable` to `main` metadata synchronization PR.
+The PreRelease workflow verifies event, merge, release-please, and tag SHA
+equality plus `release/prerelease` ancestry. It packages from the immutable
+release tag, attaches and attests `plugin-release-evidence.json` plus signed
+plugin ZIP, SBOM, Sigstore, and in-toto assets, and publishes the prerelease
+with a release GitHub App token. That event triggers PreRelease Marketplace
+publication. Release branches, tags, and published GitHub releases retain
+release state and history; publication does not update `main`.
+
+`release-stable.yml` starts from the published PreRelease event or a recovery
+dispatch and opens the reviewed `release/prerelease` to `release/stable`
+promotion. Its merge creates no tag and runs `release-stable-publish.yml` in
+PR-only mode. Merging the later managed Stable PR creates the draft even-minor
+release at its merge commit.
+
+Stable performs the same identity and ancestry checks on `release/stable`,
+packages from the release tag, attaches and attests the same canonical evidence
+and signed package assets, and publishes the release with an App token. The
+resulting event triggers Stable Marketplace publication.
+
+Release catalogs set every plugin entry to `prerelease-v<version>` or `v<version>` for its channel. Their reviewed, immutable assets remain release-gated, SBOM-covered, and attested. The ref-less main catalog represents `main`, omits `source.ref`, receives no post-release synchronization, and requires an explicit marketplace refresh and plugin update; its bytes have no release gate, SBOM, or attestation.
+
+The moving registrations are `microsoft/hve-core#release/prerelease` and
+`microsoft/hve-core#release/stable`; immutable registrations use
+`#prerelease-v<version>` and `#v<version>`. Because snapshot publication has stopped, tags and catalogs remain immutable and supported only as historical records. They are not current release or registration namespaces.
+
+For ordinary promotions, PreRelease reads `release/prerelease` and returns the
+same major, minor plus two, and patch zero. Stable reads the promoted
+PreRelease version and returns its major, its minor plus one, and patch zero.
+The ordinary sequence is `3.3.101` to `3.5.0` to `3.6.0`. Current Stable state
+only rejects a non-advancing candidate. Neither channel classifies commits or
+automatically selects a patch, minor, or major release class. Matching plugin
+packages use the identical channel version. A major-line transition or Stable
+patch or hotfix needs a separate explicit manifest and release-state decision.
 
 ## Packaging Pipeline Overview
 
@@ -216,36 +254,19 @@ flowchart TB
 
 ## Publishing the Extension
 
-**Important:** Stable versions are managed by release-please on `release/stable`
-through `extension/templates/package.template.json`. `Prepare-Extension.ps1`
-generates the extension manifest with the released version before packaging.
-PreRelease supplies an ephemeral odd-minor version without changing tracked
-version files.
+Production channel publication is workflow-owned. Do not bypass the release
+asset, attestation verification, or Azure OIDC path with a PAT-based direct
+publish.
 
-### Setup Personal Access Token (one-time)
+| Channel    | Release asset selector  | Attestation signer         | Marketplace mode                  |
+|------------|-------------------------|----------------------------|-----------------------------------|
+| PreRelease | `prerelease-v<version>` | `extension-provenance.yml` | `vsce --pre-release` through OIDC |
+| Stable     | `v<version>`            | `extension-provenance.yml` | Stable publication through OIDC   |
 
-Set your Azure DevOps PAT as an environment variable:
-
-```bash
-export VSCE_PAT=your-token-here
-```
-
-To get a PAT from your Azure DevOps organization:
-
-1. Open **User settings → Personal access tokens → New Token**
-2. Set scope to **Marketplace (Manage)**
-3. Copy the token
-
-### Publish command
-
-```bash
-# Publish the packaged extension (replace X.Y.Z with actual version)
-vsce publish --packagePath "extension/hve-core-X.Y.Z.vsix"
-
-# Or use the latest .vsix file
-VSIX_FILE=$(ls -t extension/hve-core-*.vsix | head -1)
-vsce publish --packagePath "$VSIX_FILE"
-```
+The generic publisher receives the channel package matrix and the exact release
+tag, and resolves the signer to the one workflow both channels attest from. It
+downloads the matching VSIX release asset, verifies its provenance attestation,
+and publishes it with `--azure-credential`.
 
 ## What Gets Included
 
@@ -274,7 +295,27 @@ code --install-extension hve-core-*.vsix
 
 ### How Versions Are Managed
 
-The committed extension version source is `extension/templates/package.template.json`. Release-please updates this file in its managed Stable release PR on `release/stable`, and the release postprocessor synchronizes the other committed version fields and `plugins-v<version>` locator on the same branch. PreRelease supplies an ephemeral odd-minor version at package time. `Prepare-Extension.ps1` generates `extension/package.json` from the template before artifact discovery.
+The Stable channel manifest is `.release-please-manifest.json` on
+`release/stable`. The PreRelease channel manifest is
+`.release-please-prerelease-manifest.json` on `release/prerelease`.
+Promotion preparation writes an exact `release-as` for the intended even-minor
+or odd-minor version. Release-please consumes that intent in its managed PR,
+and postprocessing removes it before merge.
+
+Ordinary release allocation uses the channel formulas rather than commit
+classification. PreRelease advances from its current branch version by two
+minor values and resets patch to zero. Stable advances from the promoted
+PreRelease version by one minor value and resets patch to zero; current Stable
+state only guards against non-advancement. A major-line transition or Stable
+patch or hotfix remains a separate explicit manifest and release-state
+decision.
+
+Each managed PR synchronizes `package.json`, `package-lock.json`,
+`extension/templates/package.template.json`, `.github/plugin/marketplace.json`,
+the channel manifest, and `CHANGELOG.md` on its release branch.
+`Prepare-Extension.ps1` generates `extension/package.json` from the template
+before artifact discovery, and release packaging supplies the verified release
+version and release tag explicitly.
 
 Generated package files are ephemeral build artifacts (gitignored). They are created and consumed by `Prepare-Extension.ps1` and `Package-Extension.ps1` at build time.
 
@@ -302,14 +343,17 @@ pwsh ./scripts/extension/Package-Extension.ps1 -Version "1.1.0"
 
 The extension supports dual-channel publishing to VS Code Marketplace with separate stable and pre-release tracks.
 
-### EVEN/ODD Versioning Strategy
+### Even/Odd Versioning Policy
 
 | Minor Version     | Channel    | Example      | Active Lifecycle Labels             |
 |-------------------|------------|--------------|-------------------------------------|
 | EVEN (0, 2, 4...) | Stable     | 1.0.0, 1.2.0 | `stable`, `preview`, `experimental` |
 | ODD (1, 3, 5...)  | PreRelease | 1.1.0, 1.3.0 | `stable`, `preview`, `experimental` |
 
-Users can switch between channels in VS Code via the "Switch to Pre-Release Version" button on the extension page.
+Odd/even minor parity is repository policy aligned with VS Code Marketplace
+guidance and behavior, not a requirement of `MAJOR.MINOR.PATCH` syntax. Hosted
+Marketplace selection and installed-client switching remain operator
+observations, not results of local packaging or documentation validation.
 
 ### Pre-Release Packaging
 
@@ -331,13 +375,26 @@ The `-PreRelease` switch adds `--pre-release` to the vsce command, marking the p
 
 ### Pre-Release Workflow
 
-Use the manual workflow for publishing pre-releases:
+Use the reviewed two-PR workflow for publishing pre-releases:
 
-1. Go to **Actions** > **Pre-Release Pipeline**
-2. Enter the full 40-character SHA of the approved commit on `main`
-3. Run the workflow
-
-The workflow verifies that the SHA belongs to `main`, computes an ephemeral odd-minor version, stages a resumable draft, packages the VSIX and plugin from that source, publishes the matching immutable plugin snapshot, and finalizes the PreRelease. The published release then triggers the PreRelease marketplace workflow.
+1. Review the target-based `main` to `release/prerelease` promotion PR from
+    `release-promotion--main--to--release-prerelease`.
+2. Confirm `PR Validation Success` passes and the exact intent is odd-minor.
+3. Merge the promotion. It creates no tag and runs release-please in PR-only
+    mode.
+4. Review the managed PR from
+    `release-please--branches--release/prerelease`, including synchronized
+    version fields, changelog, manifest, and exact `prerelease-v<version>`
+    plugin ref.
+5. Merge the managed PR. Verify the draft `prerelease-v<version>` release
+    targets that merge commit and the workflow proves target-branch ancestry.
+6. Verify extension and plugin packaging use the release tag and attach signed
+    plugin ZIPs, `plugin-release-evidence.json`, SBOM, Sigstore, and in-toto
+    assets for the same release SHA.
+7. Verify the release GitHub App token publishes the prerelease. The
+    Marketplace workflow passes the validated tag and
+    `.github/workflows/extension-provenance.yml` signer to the generic
+    publisher for release-asset verification and OIDC publication.
 
 ### Lifecycle Disclosure
 
@@ -368,6 +425,10 @@ Preparation consumes the shared handoff-resolved projection. Packaging stages
 only git-tracked contribution paths plus explicit shared resources and invokes
 the repository-pinned `vsce`. No retired manifest reader, full-tree copy, or
 installer fallback is used.
+
+Remote release, asset, workflow, and installed-client checks in this guide are
+authorized manual actions. Local packaging and documentation checks do not
+execute or verify them.
 
 To add a distributable component, update the `hve-core` recipe and [HVE Core](../docs/plugins/hve-core.md), then run marketplace validation and both extension preparation channels.
 

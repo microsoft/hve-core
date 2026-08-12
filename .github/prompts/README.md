@@ -2,7 +2,7 @@
 title: GitHub Copilot Prompts
 description: Coaching and guidance prompts for specific development tasks that provide step-by-step assistance and context-aware support
 author: Edge AI Team
-ms.date: 2026-07-15
+ms.date: 2026-08-01
 ms.topic: hub-page
 estimated_reading_time: 3
 keywords:
@@ -16,7 +16,9 @@ keywords:
 
 ## GitHub Copilot Prompts
 
-This directory contains **coaching and guidance prompts** designed to provide step-by-step assistance for specific development tasks. Unlike instructions that focus on systematic implementation, prompts offer educational guidance and context-aware coaching to help you learn and apply best practices. Prompts are organized by workflow focus area: planning and RPI, source control, pull requests and review, prompt engineering, Azure DevOps, GitHub, Jira, Design Thinking, Responsible AI, security, accessibility, data science, and experimental tools.
+This directory contains **coaching and guidance prompts** designed to provide step-by-step assistance for specific development tasks. Unlike instructions that focus on systematic implementation, prompts offer educational guidance and context-aware coaching to help you learn and apply best practices. Prompts are organized by workflow focus area: planning and RPI, source control, pull requests and review, prompt engineering, Design Thinking, Responsible AI, security, accessibility, data science, and experimental tools.
+
+Backlog and work item workflows are not prompts. They are user-invocable skills that discover the active tracker at runtime and work the same way against Azure DevOps, GitHub, and Jira. See [Backlog & Work Item Management](#backlog--work-item-management).
 
 ## How to Use Prompts
 
@@ -54,45 +56,24 @@ Use `/rpi-research`, `/rpi-plan`, `/rpi-implement`, or `/rpi-review` when you ne
 
 Use the `hve-builder` skill to create, improve, refactor, review, or validate prompt-engineering artifacts. The retained `prompt-builder`, `prompt-analyze`, and `prompt-refactor` skills are compatibility aliases that route legacy requests to `hve-builder`; they are not prompt files or independent lifecycle owners. Vally conformance authoring remains owned by `Vally Test Author` and the `vally-tests` skill.
 
-### Azure DevOps Integration
+### Backlog & Work Item Management
 
-#### Work Item Management
+These workflows are skills rather than prompts. Each resolves the active tracker at runtime, so the same command serves Azure DevOps, GitHub, and Jira instead of requiring a per-platform variant.
 
-* **[ADO Get My Work Items](./ado/ado-get-my-work-items.prompt.md)** - Retrieve your assigned work items into a planning file
-* **[ADO Process My Work Items for Task Planning](./ado/ado-process-my-work-items-for-task-planning.prompt.md)** - Process retrieved work items and generate a task-planning handoff
-* **[ADO Discover Work Items](./ado/ado-discover-work-items.prompt.md)** - Discover work items via user queries, artifact analysis, or search
-* **[ADO Add Work Item](./ado/ado-add-work-item.prompt.md)** - Create a single work item with conversational field collection and parent validation
-* **[ADO Update Work Items](./ado/ado-update-wit-items.prompt.md)** - Update work items from planning files
-* **[ADO Triage Work Items](./ado/ado-triage-work-items.prompt.md)** - Triage untriaged work items with field classification, iteration assignment, and duplicate detection
-* **[ADO Sprint Plan](./ado/ado-sprint-plan.prompt.md)** - Plan a sprint by analyzing iteration coverage, capacity, dependencies, and backlog gaps
+* **[Backlog Plan](../skills/project-planning/backlog-plan/SKILL.md)** - Read-only discovery, assigned work, task planning, triage assessment, sprint planning, and session resume
+* **[Backlog Execute](../skills/project-planning/backlog-execute/SKILL.md)** - Create and update tracker items, either one at a time or from a reviewed handoff file
+* **[Functional Planner](../../.github/agents/project-planning/functional-planner.agent.md)** - Turn PRD and BRD artifacts into a planned item hierarchy before anything is written to a tracker
+* **[Backlog Manager](../../.github/agents/project-planning/backlog-manager.agent.md)** - Orchestrate the above across a longer multi-step backlog session
 
-> **Note:** For comprehensive work item task planning, use the two-step workflow: first run `ado-get-my-work-items`, then `ado-process-my-work-items-for-task-planning`.
+### Platform Setup & Delivery Context
 
-#### Pull Requests & Builds
+* **[Jira Skill](../skills/project-planning/jira/SKILL.md)** - Configure local Jira access and use the CLI directly
+* **[GitLab Skill](../skills/project-planning/gitlab/SKILL.md)** - Inspect merge requests, comments, pipelines, jobs, and logs for GitLab-hosted delivery workflows
 
-* **[ADO Create Pull Request](./ado/ado-create-pull-request.prompt.md)** - Create Azure DevOps PRs with generated description, linked work items, and reviewers
-* **[ADO Get Build Info](./ado/ado-get-build-info.prompt.md)** - Retrieve build status and logs for a PR or build number
+### Azure DevOps Pull Requests & Builds
 
-### GitHub Integration
-
-* **[GitHub Add Issue](./github/github-add-issue.prompt.md)** - Create a GitHub issue using discovered repository templates and conversational field collection
-* **[GitHub Discover Issues](./github/github-discover-issues.prompt.md)** - Discover issues via user queries, artifact analysis, or search and produce planning files
-* **[GitHub Triage Issues](./github/github-triage-issues.prompt.md)** - Triage untriaged issues with label suggestions, milestone assignment, and duplicate detection
-* **[GitHub Sprint Plan](./github/github-sprint-plan.prompt.md)** - Plan a milestone sprint by analyzing issue coverage, gaps, and prioritized backlog
-* **[GitHub Execute Backlog](./github/github-execute-backlog.prompt.md)** - Execute a GitHub backlog plan from a handoff file
-* **[GitHub Suggest](./github/github-suggest.prompt.md)** - Resume GitHub backlog management workflow after session restore
-
-### Jira and GitLab Support
-
-Jira workflow support is available through dedicated prompts in this directory. GitLab support is currently exposed through the local GitLab skill for merge request and pipeline workflows.
-
-* **[Jira Discover Issues](./jira/jira-discover-issues.prompt.md)** - Discover Jira issues from documents, assigned work, or JQL searches and create planning files
-* **[Jira Triage Issues](./jira/jira-triage-issues.prompt.md)** - Triage Jira issues with field recommendations, duplicate detection, and optional updates
-* **[Jira Execute Backlog](./jira/jira-execute-backlog.prompt.md)** - Execute a reviewed Jira handoff by creating, updating, transitioning, and commenting on issues
-* **[Jira PRD to WIT](./jira/jira-prd-to-wit.prompt.md)** - Analyze PRD artifacts and plan Jira issue hierarchies without mutating Jira
-* **[Jira Setup](./jira/jira-setup.prompt.md)** - Interactive, verification-first Jira credential configuration assistant
-* **[Jira Skill](../skills/jira/jira/SKILL.md)** - Configure local Jira access and use the CLI directly when prompt orchestration is not needed
-* **[GitLab Skill](../skills/gitlab/gitlab/SKILL.md)** - Inspect merge requests, comments, pipelines, jobs, and logs for GitLab-hosted delivery workflows
+* **[ADO Create Pull Request](./hve-core/ado-create-pull-request.prompt.md)** - Create Azure DevOps PRs with generated description, linked work items, and reviewers
+* **[ADO Get Build Info](./hve-core/ado-get-build-info.prompt.md)** - Retrieve build status and logs for a PR or build number
 
 ### Design Thinking
 
@@ -159,14 +140,14 @@ Jira workflow support is available through dedicated prompts in this directory. 
 4. **Committing changes?** Use [Git Commit Message Generator](./hve-core/git-commit-message.prompt.md) or [Git Commit](./hve-core/git-commit.prompt.md)
 5. **Handling merge conflicts?** Use [Git Merge](./hve-core/git-merge.prompt.md)
 6. **Setting up Git?** Use [Git Setup](./hve-core/git-setup.prompt.md)
-7. **Tracking your work?** Run [ADO Get My Work Items](./ado/ado-get-my-work-items.prompt.md) then [ADO Process My Work Items for Task Planning](./ado/ado-process-my-work-items-for-task-planning.prompt.md)
-8. **Creating Azure DevOps PRs?** Use [ADO Create Pull Request](./ado/ado-create-pull-request.prompt.md)
-9. **Checking build status?** Use [ADO Get Build Info](./ado/ado-get-build-info.prompt.md)
-10. **Creating GitHub issues?** Use [GitHub Add Issue](./github/github-add-issue.prompt.md)
+7. **Tracking your work?** Use the [Backlog Plan](../skills/project-planning/backlog-plan/SKILL.md) skill in `my-work` mode, then `task-plan` mode
+8. **Creating Azure DevOps PRs?** Use [ADO Create Pull Request](./hve-core/ado-create-pull-request.prompt.md)
+9. **Checking build status?** Use [ADO Get Build Info](./hve-core/ado-get-build-info.prompt.md)
+10. **Creating or updating tracker items?** Use the [Backlog Execute](../skills/project-planning/backlog-execute/SKILL.md) skill
 11. **Working on PRs?** Use [Pull Request](./hve-core/pull-request.prompt.md)
 12. **Responding to Azure incidents?** Use [Incident Response](./security/incident-response.prompt.md)
-13. **Managing Jira work?** Use [Jira Discover Issues](./jira/jira-discover-issues.prompt.md), [Jira Triage Issues](./jira/jira-triage-issues.prompt.md), or [Jira Execute Backlog](./jira/jira-execute-backlog.prompt.md)
-14. **Need GitLab delivery context?** Review the [GitLab Skill](../skills/gitlab/gitlab/SKILL.md) for setup and command guidance
+13. **Discovering or triaging a backlog?** Use the [Backlog Plan](../skills/project-planning/backlog-plan/SKILL.md) skill in `discover` or `triage` mode
+14. **Need GitLab delivery context?** Review the [GitLab Skill](../skills/project-planning/gitlab/SKILL.md) for setup and command guidance
 15. **Running a security review?** Use [Security Review](./security/security-review.prompt.md) for full OWASP assessment
 
 ## Related Resources

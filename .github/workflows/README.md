@@ -2,7 +2,7 @@
 title: GitHub Actions Workflows
 description: Modular CI/CD workflow architecture for validation, security scanning, and automated maintenance
 author: HVE Core Team
-ms.date: 2026-08-06
+ms.date: 2026-08-10
 ms.topic: reference
 keywords:
   - github actions
@@ -47,25 +47,125 @@ Modular reusable workflows following Single Responsibility Principle. Each workf
 
 Compose multiple reusable workflows for comprehensive validation and security scanning.
 
-| Workflow                          | Triggers                                | Mode                       | Purpose                                                                              |
-|-----------------------------------|-----------------------------------------|----------------------------|--------------------------------------------------------------------------------------|
-| `pr-validation.yml`               | PR to main/develop (open, push, reopen) | Strict validation          | Pre-merge quality gate with security                                                 |
-| `release-stable.yml`              | Push to main                            | Strict mode, SARIF uploads | Validate `main` and open the reviewed Stable promotion                               |
-| `release-stable-publish.yml`      | Merged PR to `release/stable`           | Managed Stable release     | Run release-please, build immutable evidence, publish, and open the metadata sync PR |
-| `weekly-security-maintenance.yml` | Schedule (Sun 2AM UTC)                  | Soft-fail warnings         | Weekly security posture                                                              |
-| `scorecard.yml`                   | Push to main, Schedule (Sun 3AM UTC)    | SARIF upload               | OpenSSF Scorecard security posture                                                   |
+| Workflow                          | Triggers                                                | Mode                          | Purpose                                                                                          |
+|-----------------------------------|---------------------------------------------------------|-------------------------------|--------------------------------------------------------------------------------------------------|
+| `pr-validation.yml`               | PR to main, develop, or either release branch; dispatch | Strict validation             | Pre-merge quality gate with the `PR Validation Success` required-check aggregator                |
+| `release-prerelease-prepare.yml`  | Merged PR to `main`; dispatch                           | Reviewed PreRelease promotion | Open the target-based `main` to `release/prerelease` promotion PR                                |
+| `release-prerelease.yml`          | Merged PR to `release/prerelease`                       | Managed PreRelease release    | Prepare the managed release PR or publish the verified odd-minor release and immutable packages  |
+| `release-stable.yml`              | Published PreRelease; dispatch                          | Reviewed Stable promotion     | Open the target-based `release/prerelease` to `release/stable` promotion PR                      |
+| `release-stable-publish.yml`      | Merged PR to `release/stable`                           | Managed Stable release        | Prepare the managed release PR or publish the verified even-minor release and immutable packages |
+| `weekly-security-maintenance.yml` | Schedule (Sun 2AM UTC)                                  | Soft-fail warnings            | Weekly security posture                                                                          |
+| `scorecard.yml`                   | Push to main, Schedule (Sun 3AM UTC)                    | SARIF upload                  | OpenSSF Scorecard security posture                                                               |
 
 The validation jobs in `pr-validation.yml` feed the `pr-validation-success` aggregator, which is the required merge signal. The `gate-completeness-check` job verifies that every validation job appears in that gate's `needs:` list.
 
-release-stable.yml jobs: spell-check, markdown-lint, table-format, dependency-pinning-scan, action-version-consistency-scan, gitleaks-scan, pester-tests, docusaurus-tests, discover-python-projects, python-lint, pytest, prepare-promotion, open-promotion-pr
+release-stable.yml jobs: prepare-promotion, open-promotion-pr
 
-release-stable-publish.yml jobs: release-please, sync-release-pr, validate-release, close-milestone, extension-provenance, plugin-package-release, plugin-snapshot-production, generate-dependency-sbom, upload-plugin-packages, vex-attest, verify-provenance, sbom-diff, append-verification-notes, publish-release, open-main-sync-pr
+release-stable-publish.yml jobs: validate-trigger, release-please, sync-release-pr, validate-release, close-milestone, extension-package-release, extension-provenance, plugin-package-release, generate-dependency-sbom, upload-plugin-packages, vex-attest, verify-provenance, sbom-diff, append-verification-notes, publish-release
 
-`release-stable.yml` opens the reviewed `main` to `release/stable` promotion after validating `main`; it does not run release-please or package release assets. After any reviewed pull request merges into `release/stable`, `release-stable-publish.yml` runs release-please on `release/stable`. Release-please owns the managed Stable release PR and draft Stable release.
+release-prerelease-prepare.yml jobs: prepare-promotion, open-promotion-pr
 
-When the managed PR merges, the workflow validates the released commit, builds and attests artifacts, publishes the immutable `plugins-v<version>` snapshot, finalizes the draft, and opens a non-auto-merged `release/stable` to `main` metadata synchronization PR.
+release-prerelease.yml jobs: release-please, sync-release-pr, validate-release,
+close-milestone, extension-package-prerelease, plugin-package-prerelease,
+generate-dependency-sbom, extension-provenance-prerelease,
+upload-plugin-packages, verify-provenance, publish-release
 
-release-prerelease.yml packages an explicit commit on `main` with an ephemeral odd-minor version. It does not create or reset a prerelease source branch.
+### Release Channel Contract
+
+The reviewed branch ladder is `main` to `release/prerelease` to
+`release/stable`. Each hop has two review boundaries: a promotion pull request
+and a release-please managed pull request. Promotion preparation writes exact
+release intent but creates no tag or release.
+
+After release-please opens the managed pull request, `sync-release-pr`
+synchronizes committed versions, removes the consumed `release-as`, and writes
+every release-catalog `source.ref` to the future exact channel tag. Merging the
+reviewed managed pull request runs release-please in tag-only mode.
+Release-please is the sole tag writer:
+
+* PreRelease creates `prerelease-v<version>`.
+* Stable creates `v<version>`.
+
+Release-please creates the draft channel release at the reviewed managed merge, and publication occurs after packaging and provenance verification complete.
+
+| Registration                               | Repository contract                                                   |
+|--------------------------------------------|-----------------------------------------------------------------------|
+| `microsoft/hve-core`                       | Ref-less development-tip registration for `main`                      |
+| `microsoft/hve-core#release/prerelease`    | Moving branch registration whose catalog pins `prerelease-v<version>` |
+| `microsoft/hve-core#release/stable`        | Moving branch registration whose catalog pins `v<version>`            |
+| `microsoft/hve-core#prerelease-v<version>` | Immutable exact PreRelease registration                               |
+| `microsoft/hve-core#v<version>`            | Immutable exact Stable registration                                   |
+
+Publication does not synchronize release metadata, changelog history, or catalog locators back to `main`. The ref-less main catalog omits `source.ref`; release-branch and exact-tag catalogs use their channel's exact immutable tag. An explicit marketplace refresh and plugin update are required for the ref-less main catalog, which has no release gate, SBOM, or attestation. Release-channel assets remain release-gated, SBOM-covered, and attested.
+
+Both release channels preserve the VSIX package, plugin-release-evidence.json, signed plugin ZIPs, SBOM, Sigstore, in-toto, provenance, attestation, verification, and Azure OIDC publication chain. Each Marketplace workflow passes its validated exact tag and the workflow that attested its VSIX to the generic publisher.
+
+The publisher's no-environment gate validates matrix structure, package-ID
+grammar and uniqueness, channel tag namespace and minor-version parity, and the
+lane-specific attestation signer before any Marketplace environment is
+activated.
+
+Input validation resolves the immutable release and protected-main commits
+before Marketplace environment activation. Tag helpers run only in unprivileged
+verification jobs, and only current-attempt packages that pass attestation
+verification enter the protected publication matrix. Another unprivileged job
+prepares the minimal locked `vsce` toolchain from the resolved protected-main
+commit. Protected publish jobs consume only immutable VSIX and toolchain
+artifacts, re-verify exact provenance, then obtain Azure OIDC and invoke `vsce`
+directly.
+
+Verification and publication are independently best-effort. Failed verification
+creates no publish leg, while successfully verified packages can still publish;
+publication legs likewise continue after another publish failure. Operators
+must inspect both verify and publish jobs and reconcile missing Marketplace
+versions. Recovery requires **Re-run all jobs** so the new run attempt recreates
+its immutable VSIX and toolchain artifacts; **Re-run failed jobs** cannot reuse
+artifacts from an earlier attempt. The workflow provides no transaction or
+rollback.
+
+A historical `release: published` run uses workflow code from that historical
+tag. The new privilege split applies to historical republication only when
+`workflow_dispatch` is run from a ref containing the new workflow. Under that
+precondition, historical republication no longer requires the tag's dependency
+manifest to match current publishing dependencies. The tag must remain
+compatible with unprivileged release-asset identity and selection and carry
+valid lane-specific attestations. This split contains stale historical tag code,
+but it cannot protect against an actor who can author or move the tag-loaded
+workflow itself.
+Tag protection, Marketplace environment reviewers, and Azure OIDC claim policy
+remain external controls.
+
+### Release Version Allocation
+
+Ordinary version allocation is branch-owned and does not classify commits or
+select an automatic patch, minor, or major release class. PreRelease reads its
+current `release/prerelease` version and returns the same major, minor plus
+two, and patch zero. Stable reads the promoted PreRelease version and returns
+the promoted major, promoted minor plus one, and patch zero. Current Stable
+state only rejects a candidate that does not advance it.
+
+The ordinary sequence is `3.3.101` to `3.5.0` to `3.6.0`. Matching plugin
+packages use the identical channel version. A major-line transition and a
+Stable patch or hotfix each require a separate explicit manifest and
+release-state decision. Odd/even minor parity remains repository policy
+aligned with VS Code Marketplace guidance and behavior, rather than a
+requirement of `MAJOR.MINOR.PATCH` syntax.
+
+Release catalogs set every plugin entry to their exact `prerelease-v<version>`
+or `v<version>` ref. Their reviewed, release-gated assets remain SBOM-covered,
+attested, and immutable. The ref-less main catalog instead sources canonical
+`.github` content and has no published-release assurance.
+
+Because snapshot publication has stopped, tags and catalogs remain immutable and supported only as historical records. They are not current release or registration namespaces.
+
+Final publication mints a release GitHub App token and atomically runs
+`gh release edit --prerelease --draft=false`; the resulting published event
+triggers `Pre-Release Marketplace Publish`. Main remains a ref-less
+development-tip channel and is not updated by release completion. Release
+branches, immutable tags, and published releases own release state and history.
+
+Hosted branch, tag, release, asset, workflow, and installed-client checks are
+authorized manual actions. Local validation does not execute or verify them.
 
 ## Reusable Workflows
 
@@ -288,7 +388,7 @@ Workflow Execution Matrix:
 |--------------------------------------|----------------------------------------------------------|----------------------------------------------------------|
 | Open PR to main/develop              | `pr-validation.yml`                                      | ✅ Yes                                                    |
 | Push to PR branch                    | `pr-validation.yml`                                      | ✅ Yes                                                    |
-| Merge to main                        | `release-stable.yml`, `security-scan.yml`                | ✅ Yes (via `security-scan.yml` -> `codeql-analysis.yml`) |
+| Merge to main                        | `release-prerelease-prepare.yml`, `security-scan.yml`    | ✅ Yes (via `security-scan.yml` -> `codeql-analysis.yml`) |
 | Sunday 4AM UTC                       | `codeql-analysis.yml`, `weekly-security-maintenance.yml` | ✅ Yes (standalone)                                       |
 | Feature branch push (no open PR)[^1] | None                                                     | ❌ No                                                     |
 
@@ -303,7 +403,7 @@ To add a new workflow to the repository:
 3. Use dependency pinning for all dependencies
 4. Use minimal permissions
 5. Add soft-fail input support
-6. Update `pr-validation.yml` and `release-stable.yml` to include new job
+6. Update each applicable validation orchestrator to include the new job
 7. Document in this README
 
 ## Using Reusable Workflows

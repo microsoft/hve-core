@@ -76,38 +76,11 @@ See [Contributing Instructions](../../docs/contributing/instructions.md) for aut
 | [skill-security-model.instructions.md](skill-security-model.instructions.md)             | `**/.github/skills/**/SECURITY.md`      | Per-skill STRIDE security model rules            |
 | [workflows.instructions.md](workflows.instructions.md)                                   | `**/.github/workflows/*.yml`            | GitHub Actions workflow conventions              |
 
-### Azure DevOps Integration
-
-| File                                                                                           | Applies To                                          | Purpose                               |
-|------------------------------------------------------------------------------------------------|-----------------------------------------------------|---------------------------------------|
-| [ado/ado-backlog-sprint.instructions.md](ado/ado-backlog-sprint.instructions.md)               | `**/.copilot-tracking/workitems/sprint/**`          | Sprint planning coverage and capacity |
-| [ado/ado-backlog-triage.instructions.md](ado/ado-backlog-triage.instructions.md)               | `**/.copilot-tracking/workitems/triage/**`          | Work item triage workflow             |
-| [ado/ado-create-pull-request.instructions.md](ado/ado-create-pull-request.instructions.md)     | `**/.copilot-tracking/pr/new/**`                    | Pull request creation protocol        |
-| [ado/ado-get-build-info.instructions.md](ado/ado-get-build-info.instructions.md)               | `**/.copilot-tracking/pr/*-build-*.md`              | Build status and log retrieval        |
-| [ado/ado-interaction-templates.instructions.md](ado/ado-interaction-templates.instructions.md) | `**/.github/instructions/ado/**`                    | Work item content templates           |
-| [ado/ado-update-wit-items.instructions.md](ado/ado-update-wit-items.instructions.md)           | `**/.copilot-tracking/workitems/**/handoff-logs.md` | Work item creation and updates        |
-| [ado/ado-wit-discovery.instructions.md](ado/ado-wit-discovery.instructions.md)                 | `**/.copilot-tracking/workitems/discovery/**`       | Work item discovery protocol          |
-| [ado/ado-wit-planning.instructions.md](ado/ado-wit-planning.instructions.md)                   | `**/.copilot-tracking/workitems/**`                 | Work item planning specifications     |
-
 ### GitHub Integration
 
-| File                                                                                               | Applies To                                                 | Purpose                              |
-|----------------------------------------------------------------------------------------------------|------------------------------------------------------------|--------------------------------------|
-| [github/community-interaction.instructions.md](github/community-interaction.instructions.md)       | `**/.github/instructions/github-backlog-*.instructions.md` | GitHub-facing communication patterns |
-| [github/github-backlog-discovery.instructions.md](github/github-backlog-discovery.instructions.md) | `**/.copilot-tracking/github-issues/discovery/**`          | Issue discovery protocol             |
-| [github/github-backlog-planning.instructions.md](github/github-backlog-planning.instructions.md)   | `**/.copilot-tracking/github-issues/**`                    | Backlog planning specifications      |
-| [github/github-backlog-triage.instructions.md](github/github-backlog-triage.instructions.md)       | `**/.copilot-tracking/github-issues/triage/**`             | Issue triage workflow                |
-| [github/github-backlog-update.instructions.md](github/github-backlog-update.instructions.md)       | `**/.copilot-tracking/github-issues/**/handoff-logs.md`    | Issue execution workflow             |
-
-### Jira Integration
-
-| File                                                                                       | Applies To                                            | Purpose                              |
-|--------------------------------------------------------------------------------------------|-------------------------------------------------------|--------------------------------------|
-| [jira/jira-backlog-discovery.instructions.md](jira/jira-backlog-discovery.instructions.md) | `**/.copilot-tracking/jira-issues/discovery/**`       | Jira issue discovery protocol        |
-| [jira/jira-backlog-planning.instructions.md](jira/jira-backlog-planning.instructions.md)   | `**/.copilot-tracking/jira-issues/**`                 | Jira backlog planning specifications |
-| [jira/jira-backlog-triage.instructions.md](jira/jira-backlog-triage.instructions.md)       | `**/.copilot-tracking/jira-issues/triage/**`          | Jira issue triage workflow           |
-| [jira/jira-backlog-update.instructions.md](jira/jira-backlog-update.instructions.md)       | `**/.copilot-tracking/jira-issues/**/handoff-logs.md` | Jira issue execution workflow        |
-| [jira/jira-wit-planning.instructions.md](jira/jira-wit-planning.instructions.md)           | `**/.copilot-tracking/jira-issues/prds/**`            | Jira PRD work item planning          |
+| File                                                                                                             | Applies To                                                                                                                                  | Purpose                              |
+|------------------------------------------------------------------------------------------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------|--------------------------------------|
+| [project-planning/community-interaction.instructions.md](project-planning/community-interaction.instructions.md) | `**/.github/agents/project-planning/backlog-manager.agent.md`, `**/.github/skills/project-planning/backlog-management/references/github.md` | GitHub-facing communication patterns |
 
 ### Planning and Governance Agents
 
@@ -158,7 +131,6 @@ The instructions below are scoped to specific planning agents and their `.copilo
 |--------------------------------------------------------------------------------------------------------|--------------------------------------------------------------------|---------------------------------------------------|
 | [shared/hve-core-location.instructions.md](shared/hve-core-location.instructions.md)                   | `**`                                                               | Fallback location guidance for hve-core artifacts |
 | [shared/content-policy-citation.instructions.md](shared/content-policy-citation.instructions.md)       | `**/*.agent.md, **/*.prompt.md, **/*.instructions.md, **/SKILL.md` | Content-policy and terms-of-service guardrails    |
-| [shared/story-quality.instructions.md](shared/story-quality.instructions.md)                           | `**/*.agent.md, **/.github/instructions/ado/**`                    | Story quality conventions                         |
 | [shared/coaching-patterns.instructions.md](shared/coaching-patterns.instructions.md)                   | Planning agents                                                    | Exploration-first coaching patterns               |
 | [shared/planner-identity-base.instructions.md](shared/planner-identity-base.instructions.md)           | Planning agents                                                    | Shared planner identity scaffold                  |
 | [shared/disclaimer-language.instructions.md](shared/disclaimer-language.instructions.md)               | Planning and review agents                                         | Professional-review disclaimer language           |
@@ -179,7 +151,7 @@ The `experimental/mural/` directory holds the Mural workflow instruction set (bo
 
 This README indexes instruction files. GitLab delivery support is currently discoverable through the local skill and provider-aware project-planning agents.
 
-* Use [../skills/gitlab/gitlab/SKILL.md](../skills/gitlab/gitlab/SKILL.md) when delivery context lives in GitLab and you need merge request, pipeline, or job operations.
+* Use [../skills/project-planning/gitlab/SKILL.md](../skills/project-planning/gitlab/SKILL.md) when delivery context lives in GitLab and you need merge request, pipeline, or job operations.
 * Keep GitLab delivery workflows distinct from backlog planning unless GitLab is also the system of record for work tracking.
 
 ## XML-Style Blocks
@@ -224,15 +196,6 @@ For manual creation, see [Contributing Instructions](../../docs/contributing/ins
 ├── accessibility/                    # Accessibility planning
 │   ├── accessibility-identity.instructions.md
 │   └── accessibility-license-posture.instructions.md
-├── ado/                              # Azure DevOps workflows
-│   ├── ado-backlog-sprint.instructions.md
-│   ├── ado-backlog-triage.instructions.md
-│   ├── ado-create-pull-request.instructions.md
-│   ├── ado-get-build-info.instructions.md
-│   ├── ado-interaction-templates.instructions.md
-│   ├── ado-update-wit-items.instructions.md
-│   ├── ado-wit-discovery.instructions.md
-│   └── ado-wit-planning.instructions.md
 ├── coding-standards/                 # Language and technology conventions
 │   ├── bash/
 │   │   └── bash.instructions.md
@@ -268,12 +231,6 @@ For manual creation, see [Contributing Instructions](../../docs/contributing/ins
 │   ├── experiment-designer.instructions.md
 │   ├── graphify.instructions.md
 │   └── pptx.instructions.md
-├── github/                           # GitHub integration
-│   ├── community-interaction.instructions.md
-│   ├── github-backlog-discovery.instructions.md
-│   ├── github-backlog-planning.instructions.md
-│   ├── github-backlog-triage.instructions.md
-│   └── github-backlog-update.instructions.md
 ├── hve-core/                         # HVE Core workflow
 │   ├── commit-message.instructions.md
 │   ├── copilot-tracking.instructions.md
@@ -283,19 +240,14 @@ For manual creation, see [Contributing Instructions](../../docs/contributing/ins
 │   ├── hve-builder.instructions.md
 │   ├── pull-request.instructions.md
 │   └── writing-style.instructions.md
-├── jira/                             # Jira backlog workflows
-│   ├── jira-backlog-discovery.instructions.md
-│   ├── jira-backlog-planning.instructions.md
-│   ├── jira-backlog-triage.instructions.md
-│   ├── jira-backlog-update.instructions.md
-│   └── jira-wit-planning.instructions.md
 ├── privacy/                          # Privacy planning
 │   └── privacy-identity.instructions.md
 ├── project-planning/                 # Project planning and ADRs
 │   ├── adr-byo-template.instructions.md
 │   ├── adr-handoff.instructions.md
 │   ├── adr-identity.instructions.md
-│   └── adr-standards.instructions.md
+│   ├── adr-standards.instructions.md
+│   └── community-interaction.instructions.md
 ├── rai-planning/                     # Responsible AI planning
 │   ├── rai-identity.instructions.md
 │   └── rai-license-posture.instructions.md
@@ -311,7 +263,6 @@ For manual creation, see [Contributing Instructions](../../docs/contributing/ins
 │   ├── disclaimer-language.instructions.md
 │   ├── hve-core-location.instructions.md
 │   ├── planner-identity-base.instructions.md
-│   ├── story-quality.instructions.md
 │   ├── telemetry-overlay.instructions.md
 │   └── untrusted-content-boundary.instructions.md
 ├── docusaurus-edits.instructions.md

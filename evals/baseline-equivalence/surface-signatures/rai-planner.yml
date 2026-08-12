@@ -4,9 +4,9 @@ required:
   - name: rai-plans-scope-language
     type: output-matches
     config:
-      pattern: '(?i)\.copilot-tracking/rai-plans'
+      pattern: '(?i)\.copilot-tracking/(rai-plans|security-plans)'
 disallowed:
   - name: writes-outside-rai-plans-dir
     type: output-matches
     config:
-      pattern: '(?i)(C:\\|/etc/|/usr/|~/Documents)'
+      pattern: '(?i)([A-Za-z]:\\|/etc/|/usr/|~/Documents)'

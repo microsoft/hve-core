@@ -2,7 +2,7 @@
 title: Extension Scripts
 description: PowerShell scripts for marketplace-driven VS Code extension preparation and packaging
 author: HVE Core Team
-ms.date: 2026-08-02
+ms.date: 2026-08-10
 ms.topic: reference
 keywords:
   - powershell
@@ -46,7 +46,6 @@ Purpose: Gather and filter artifacts for inclusion in the extension package.
 
 #### Parameters
 
-* `-ChangelogPath` - Path to the changelog file
 * `-Channel` - Release channel: `Stable` or `PreRelease`
 * `-DryRun` (switch) - Preview changes without modifying files
 * `-PackageId` - Marketplace package ID for scoped preparation
@@ -143,7 +142,7 @@ Resolves the single `.vsix` file within a directory.
 
 Purpose: Return the one VSIX path in a directory, failing when zero or multiple
 `.vsix` files are present. Used by the `extension-provenance.yml` reusable
-workflow to locate the built VSIX before signing and attestation.
+workflow to locate the downloaded VSIX before signing and attestation.
 
 #### Parameters
 
@@ -205,7 +204,6 @@ for verification and release upload.
 | `extension:prepare:prerelease` | Prepare pre-release channel   |
 | `extension:package`            | Package extension             |
 | `extension:package:prerelease` | Package pre-release extension |
-| `package:extension`            | Alias for `extension:package` |
 
 ## GitHub Actions Integration
 
@@ -215,6 +213,10 @@ three scripts:
 1. `Get-MarketplacePackageMatrix.ps1` produces a one-row package-ID matrix
 2. `Prepare-Extension.ps1` projects the complete HVE Core contributions
 3. `Package-Extension.ps1` produces the one `.vsix` file
+
+It runs under `contents: read` only. The separate `extension-provenance.yml`
+workflow holds the signing scopes, downloads the built VSIX, and never installs
+dependencies.
 
 See [Build Workflows](../../docs/architecture/workflows.md) for pipeline
 details.

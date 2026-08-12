@@ -239,14 +239,16 @@ Describe 'Package matrix workflow consumers' -Tag 'Unit' {
         $script:EmittedKeys = @((Get-MarketplacePackageMatrixCore -Channel PreRelease -CatalogPath $script:RepositoryCatalogPath).MatrixItems[0].Keys)
     }
 
+    # The reusable publisher's `verify` job is the direct `inputs.packages-matrix`
+    # consumer; `publish` fans out over the verification-derived
+    # `needs.collect.outputs.verified-matrix`, which is not a caller input.
     It 'Finds every workflow job that consumes a discovered package matrix' {
         @($script:Consumers).Count | Should -BeGreaterThan 0
         @($script:Consumers | ForEach-Object { "$($_.Workflow)/$($_.Job)" } | Sort-Object) | Should -Be @(
-            'extension-marketplace-publish.yml/publish'
+            'extension-marketplace-publish.yml/verify'
             'extension-package.yml/package'
-            'extension-provenance.yml/build-attest'
+            'extension-provenance.yml/attest'
             'plugin-package.yml/package'
-            'release-prerelease.yml/attest-and-upload'
             'release-prerelease.yml/upload-plugin-packages'
             'release-stable-publish.yml/upload-plugin-packages'
         )
@@ -257,11 +259,10 @@ Describe 'Package matrix workflow consumers' -Tag 'Unit' {
     }
 
     It 'References only emitted matrix keys in <Workflow>/<Job>' -ForEach @(
-        @{ Workflow = 'extension-marketplace-publish.yml'; Job = 'publish' }
+        @{ Workflow = 'extension-marketplace-publish.yml'; Job = 'verify' }
         @{ Workflow = 'extension-package.yml'; Job = 'package' }
-        @{ Workflow = 'extension-provenance.yml'; Job = 'build-attest' }
+        @{ Workflow = 'extension-provenance.yml'; Job = 'attest' }
         @{ Workflow = 'plugin-package.yml'; Job = 'package' }
-        @{ Workflow = 'release-prerelease.yml'; Job = 'attest-and-upload' }
         @{ Workflow = 'release-prerelease.yml'; Job = 'upload-plugin-packages' }
         @{ Workflow = 'release-stable-publish.yml'; Job = 'upload-plugin-packages' }
     ) {
