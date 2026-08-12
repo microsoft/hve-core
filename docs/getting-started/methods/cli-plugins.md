@@ -3,7 +3,7 @@ title: Copilot CLI Plugin
 description: Register an HVE Core catalog ref and install the complete hve-core plugin
 sidebar_position: 2
 author: Microsoft
-ms.date: 2026-08-08
+ms.date: 2026-08-12
 ms.topic: how-to
 ---
 
@@ -87,10 +87,17 @@ Each plugin includes:
 | Skills       | Yes           | Self-contained skill packages                      |
 | Instructions | No            | Included for `#file:` references, not auto-applied |
 
-Each plugin is a self-contained tree of regular files and real directories.
-Artifacts are copied from the source repository during generation, so a plugin
-installs the same way on every operating system and needs no symbolic link
-support.
+All marketplace entries install from the shared `.github` source tree, whose
+manifest is `.github/plugin.json`. During Git-source installation, the CLI
+copies that complete source tree for each installed entry. The declarations on
+the selected marketplace entry determine which recognized agents, commands,
+skills, and hooks the CLI loads for that package; they do not filter the copied
+files. Distinct packages can therefore share the same source tree and manifest
+while loading different component sets.
+
+Generated per-package ZIPs are release assets. They are separate from the
+Git-source tree used by `copilot plugin install` and do not determine the
+contents copied during installation.
 
 ## Limitations
 

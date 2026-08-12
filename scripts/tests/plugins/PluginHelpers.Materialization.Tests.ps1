@@ -64,6 +64,7 @@ Describe 'Get-PluginTrackedPathIndex' -Tag 'Unit' {
         It 'Returns exactly the staged paths' {
             @($script:trackedIndex.Paths | Sort-Object) | Should -Be @(
                 @(
+                    '.github/plugin.json',
                     '.github/skills/rpi/rpi-plan/SKILL.md',
                     '.github/skills/rpi/rpi-plan/references/checklist.md',
                     'package.json'
