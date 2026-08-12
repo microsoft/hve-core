@@ -3,7 +3,7 @@ title: 'AI Artifacts Common Standards'
 description: 'Common standards and quality gates for all AI artifact contributions to hve-core'
 sidebar_position: 2
 author: Microsoft
-ms.date: 2026-08-03
+ms.date: 2026-08-06
 ms.topic: reference
 ---
 
@@ -156,7 +156,7 @@ npm run lint:models:refresh
 
 An artifact may belong to one or more package recipes when its component maturity is aligned for each membership. `x-hve.displayName` supplies display metadata, `componentMaturity` records lifecycle disclosure and tombstones, and `documentation` points to `docs/plugins/<name>.md`. The starter profile belongs only to `hve-core-all`. Root-level repository-only artifacts are not declared.
 
-When an agent handoff targets another catalog-declared agent, shared marketplace closure adds the dependency to the resolved projection. Unresolved or ambiguous targets fail. Run `npm run lint:marketplace`, `npm run plugin:generate`, and both extension preparation commands after recipe changes.
+When an agent handoff targets another catalog-declared agent, shared marketplace closure adds the dependency to the resolved projection. Unresolved or ambiguous targets fail. Run `npm run lint:marketplace` and `npm run docs:generate:check` after recipe changes.
 
 ## Extension Packaging
 
@@ -164,22 +164,30 @@ Plugin and VSIX packaging consume one handoff-resolved projection per catalog en
 
 Lifecycle maturity belongs in marketplace metadata, not artifact frontmatter. Stable and PreRelease both include active `stable`, `preview`, and `experimental` components. `deprecated` and `removed` values are excluded from both channels. Labels are disclosure and governance metadata, not channel filters or Responsible AI assessment maturity ratings.
 
-## Plugin Generation
+## Plugin Package Staging
 
-The `plugins/` directory contains **auto-generated plugin bundles** created from `.github/plugin/marketplace.json` for Copilot clients. This ignored directory is build output and **MUST NOT be edited or committed**.
+`.github/plugin/marketplace.json` declares canonical package membership.
+Temporary plugin bundles are materialized only for explicit package assembly
+under a caller-supplied absolute staging root outside the repository. Ordinary
+validation never creates a repository-root `plugins/` tree.
 
 ### Generation Workflow
 
 When you add or change an artifact:
 
 1. Author the artifact under `.github/`.
-2. Add its recipe-relative path to every applicable catalog entry.
+2. Add its `.github`-root-relative canonical path to every applicable catalog
+  entry: `agents/*.agent.md`, `prompts/*.prompt.md`,
+  `instructions/*.instructions.md`, a `skills/*` directory, or a
+  `hooks/*.json` manifest.
 3. Align component maturity for each declared membership.
 4. Update the durable package document at `docs/plugins/<name>.md`.
 5. Run `npm run lint:marketplace`.
-6. Run `npm run plugin:generate` and both extension preparation commands.
+6. Run `npm run docs:generate:check` and the focused tests for the changed
+  artifact kind.
 
-Generators derive outputs from active catalog entries and clean stale plugin roots, extension manifests, and generated READMEs. Commit canonical sources and durable package documentation only; leave `plugins/` ignored and unstaged.
+Package generators derive host-specific outputs from active catalog entries.
+Commit canonical sources and durable package documentation only.
 
 ### Plugin Directory Structure
 
@@ -192,33 +200,39 @@ Each generated plugin directory contains:
 | Root plugin manifest   | Generated `plugin.json` for Copilot clients                        |
 | Shared resources       | Declared templates and scripts required by packaged customizations |
 
-### Critical Rules for Plugin Files
+### Critical Rules for Plugin Staging
 
 > [!WARNING]
-> Files under `plugins/` are generated outputs and MUST NOT be edited directly.
+> `HVE_PLUGIN_STAGING_ROOT` or `-StagingRoot` must name an absolute path outside
+> the repository. Do not create, edit, or commit a repository-root `plugins/`
+> directory.
 
-| Rule                     | Description                                                                                          |
-|--------------------------|------------------------------------------------------------------------------------------------------|
-| Regenerate after changes | Run `npm run plugin:generate` after modifying marketplace recipes or packaged artifacts              |
-| Generated files          | Materialized artifacts, README files, and manifests are generated fresh on each run                  |
-| Durable edits            | Direct edits to plugin files are discarded during regeneration                                       |
-| Source of truth          | Edit `.github/` sources, `.github/plugin/marketplace.json`, or the matching `docs/plugins/<name>.md` |
-| Git hygiene              | Never add or commit a path under the root `plugins/` directory                                       |
+| Rule               | Description                                                                                          |
+|--------------------|------------------------------------------------------------------------------------------------------|
+| Validate changes   | Run non-mutating marketplace, documentation, and focused test commands                               |
+| Stage explicitly   | Materialize packages only under an external absolute staging root                                    |
+| Generated files    | Materialized artifacts, README files, and manifests are generated fresh on each run                  |
+| Source of truth    | Edit `.github/` sources, `.github/plugin/marketplace.json`, or the matching `docs/plugins/<name>.md` |
+| Repository hygiene | Never create or commit a path under the repository-root `plugins/` directory                         |
 
-### When to Regenerate Plugins
+### When to Materialize Plugins
 
-Run `npm run plugin:generate` whenever you:
+Materialize plugins only when you need to inspect or assemble package output.
+Supply external staging explicitly:
 
-* Add a new artifact to any package recipe
-* Remove an artifact from any package recipe
-* Modify artifact frontmatter (description, dependencies, handoffs)
-* Update artifact file content that affects generated README documentation
-* Change marketplace identity metadata or component lifecycle maturity
-* Update the matching `docs/plugins/<name>.md` document for any package
+```bash
+HVE_PLUGIN_STAGING_ROOT=/absolute/path/outside/hve-core npm run plugin:generate
+```
+
+For ordinary recipe and artifact changes, use `npm run plugin:validate` and
+`npm run docs:generate:check` without materializing packages.
 
 ### Validating the Marketplace Recipe
 
-Run `npm run plugin:validate` before generation. It validates immutable sources, standard membership, the display name, source containment, the documentation pointer, lifecycle maturity and tombstones, complete active coverage, the starter profile, root manifest mirrors, and handoff closure.
+Run `npm run plugin:validate` before package assembly. It validates canonical
+sources, standard membership, the display name, source containment, the
+documentation pointer, lifecycle maturity and tombstones, complete active
+coverage, the starter profile, root manifest mirrors, and handoff closure.
 
 ### Plugin Generation Reference
 

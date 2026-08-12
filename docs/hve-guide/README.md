@@ -3,7 +3,7 @@ title: HVE Guide
 description: Role-specific guides and the AI-assisted project lifecycle for engineering teams using HVE Core
 sidebar_position: 1
 author: Microsoft
-ms.date: 2026-08-02
+ms.date: 2026-08-06
 ms.topic: overview
 keywords:
   - hve guide
@@ -42,17 +42,17 @@ flowchart LR
 > [!TIP]
 > [Design Thinking](../design-thinking/using-together.md) can feed into this lifecycle at three exit points. See the [DT-RPI integration guide](../design-thinking/dt-rpi-integration.md) for details.
 
-| Stage   | Name               | Key Tools                                                                                                                    |
-|---------|--------------------|------------------------------------------------------------------------------------------------------------------------------|
-| Stage 1 | Setup              | hve-core-installer (skill), git-setup                                                                                        |
-| Stage 2 | Discovery          | rpi-research, brd-builder, security-planner, dt-coach, sssc-planner, rai-planner                                             |
-| Stage 3 | Product Definition | prd-builder, product-manager-advisor, adr-creation, architecture-diagrams skill, security-planner, sssc-planner, rai-planner |
-| Stage 4 | Decomposition      | ado-prd-to-wit, github-backlog-manager                                                                                       |
-| Stage 5 | Sprint Planning    | github-backlog-manager, agile-coach                                                                                          |
-| Stage 6 | Implementation     | RPI Agent, rpi-plan, rpi-implement, hve-builder, coding-standards                                                            |
-| Stage 7 | Review             | rpi-review, code-review, hve-builder                                                                                         |
-| Stage 8 | Delivery           | pull-request, git-commit, git-merge, ado-get-build-info                                                                      |
-| Stage 9 | Operations         | documentation, hve-builder, incident-response                                                                                |
+| Stage   | Name               | Key Tools                                                                                                                      |
+|---------|--------------------|--------------------------------------------------------------------------------------------------------------------------------|
+| Stage 1 | Setup              | hve-core-installer (skill), git-setup                                                                                          |
+| Stage 2 | Discovery          | rpi-research, brd-builder, security-planner, dt-coach, sssc-planner, rai-planner                                               |
+| Stage 3 | Product Definition | prd-builder, requirements-author skill, adr-creation, architecture-diagrams skill, security-planner, sssc-planner, rai-planner |
+| Stage 4 | Decomposition      | functional-planner, backlog-manager                                                                                            |
+| Stage 5 | Sprint Planning    | backlog-manager, backlog-management                                                                                            |
+| Stage 6 | Implementation     | RPI Agent, rpi-plan, rpi-implement, hve-builder, coding-standards                                                              |
+| Stage 7 | Review             | rpi-review, code-review, hve-builder                                                                                           |
+| Stage 8 | Delivery           | pull-request, git-commit, git-merge, ado-get-build-info                                                                        |
+| Stage 9 | Operations         | documentation, hve-builder, incident-response                                                                                  |
 
 > Cross-cutting: each workflow persists its own durable state, evidence, and
 > handoff artifacts when work must span conversations.

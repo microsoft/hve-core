@@ -1,9 +1,9 @@
 ---
 title: VEX Verification
-description: Download, verify, and interpret the OpenVEX vulnerability exploitability document published with each HVE Core release
+description: Download, verify, and interpret the OpenVEX vulnerability exploitability document published with Stable HVE Core releases
 sidebar_position: 4
 author: Microsoft
-ms.date: 2026-07-03
+ms.date: 2026-08-09
 ms.topic: how-to
 keywords:
   - VEX
@@ -18,7 +18,14 @@ keywords:
 estimated_reading_time: 6
 ---
 
-Every HVE Core release publishes a Vulnerability Exploitability eXchange (VEX) document in [OpenVEX](https://openvex.dev/) v0.2.0 JSON format alongside the Software Bill of Materials (SBOM). Where the SBOM tells you *what* components ship in a release, the VEX document tells you *whether a known vulnerability in one of those components actually affects HVE Core*. Like the SBOM, the VEX document is cryptographically attested with Sigstore so you can confirm it was produced by the official CI/CD pipeline.
+Each Stable HVE Core release publishes a Vulnerability Exploitability eXchange
+(VEX) document in [OpenVEX](https://openvex.dev/) v0.2.0 JSON format alongside
+the Software Bill of Materials (SBOM). PreRelease does not publish a VEX
+document. Where the SBOM tells you *what* components ship in a release, the VEX
+document tells you *whether a known vulnerability in one of those components
+actually affects HVE Core*. Like the SBOM, the VEX document is cryptographically
+attested with Sigstore so you can confirm it was produced by the official CI/CD
+pipeline.
 
 ## How VEX Complements the SBOM
 
@@ -36,22 +43,25 @@ The two are designed to be consumed together: a scanner reads the SBOM to find c
 
 ## Downloading the VEX Document
 
-The VEX document is published as a release asset named `hve-core.openvex.json`. Download it with the GitHub CLI (replace `<version>` with the release tag, for example `v1.2.0`):
+The VEX document is published as a Stable release asset named
+`hve-core.openvex.json`. Download it from the exact Stable tag
+`v<version>` (for example, `v1.2.0`):
 
 ```bash
-gh release download <version> -R microsoft/hve-core -p 'hve-core.openvex.json'
+gh release download v<version> -R microsoft/hve-core -p 'hve-core.openvex.json'
 ```
 
-To download the VEX document together with its Sigstore companions:
+The combined download below retrieves the VEX document, its Sigstore companion,
+and the dependency SBOM to prepare for the SBOM-bound verification step:
 
 ```bash
-gh release download <version> -R microsoft/hve-core \
-  -p 'hve-core.openvex.json' -p 'hve-core.openvex.json.sigstore.json'
+gh release download v<version> -R microsoft/hve-core \
+  -p 'hve-core.openvex.json' -p 'hve-core.openvex.json.sigstore.json' -p 'dependencies.spdx.json'
 ```
 
 ## Verifying the VEX Attestation
 
-The release publishes two Sigstore attestations for the VEX document:
+A Stable release publishes two Sigstore attestations for the VEX document:
 
 1. **Provenance of the VEX document**, so you can confirm the file itself came from the official pipeline. Verify it against the dedicated reusable VEX attestation workflow:
 

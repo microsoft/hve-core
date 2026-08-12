@@ -220,7 +220,9 @@ The [Documentation](https://github.com/microsoft/hve-core/blob/main/.github/agen
 
 ### Backlog Management
 
-The [GitHub Backlog Manager](https://github.com/microsoft/hve-core/blob/main/.github/agents/github/github-backlog-manager.agent.md) coordinates five workflows (discovery, triage, sprint planning, execution, and quick add) for managing issue lifecycles. The [ADO Backlog Manager](https://github.com/microsoft/hve-core/blob/main/.github/agents/ado/ado-backlog-manager.agent.md) provides equivalent capabilities for Azure DevOps work items.
+The [Backlog Manager](https://github.com/microsoft/hve-core/blob/main/.github/agents/project-planning/backlog-manager.agent.md) resolves the backing tracker at runtime and coordinates work discovery, triage, sprint planning, assigned-work retrieval, task planning, and execution across Azure DevOps, GitHub, and Jira. Its planning modes are read-only and produce reviewed handoffs, and a separate execution pass applies those handoffs under a three-tier autonomy model with dry-run preview.
+
+The [Functional Planner](https://github.com/microsoft/hve-core/blob/main/.github/agents/project-planning/functional-planner.agent.md) turns a PRD into a validated work item hierarchy handoff and never mutates a tracker.
 
 ### Project Planning
 

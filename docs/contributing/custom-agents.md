@@ -3,7 +3,7 @@ title: 'Contributing Agents to HVE Core'
 description: 'Requirements and standards for contributing GitHub Copilot agent files to hve-core'
 sidebar_position: 5
 author: Microsoft
-ms.date: 2026-08-02
+ms.date: 2026-08-06
 ms.topic: how-to
 ---
 
@@ -319,9 +319,16 @@ named dependencies that the agent must dispatch by name.
 
 ## Marketplace Recipe Registration
 
-Distributable agents must be declared under the `agents` field of the `hve-core` entry in `.github/plugin/marketplace.json`. Use the recipe-relative `agents/<subpath>/<name>.md` path and keep the canonical source under `.github/agents/`.
+Distributable agents must be declared under the `agents` field of the
+`hve-core` entry in `.github/plugin/marketplace.json`. Use the
+`.github`-root-relative canonical path
+`agents/<subpath>/<name>.agent.md`.
 
-Agent handoffs are closed transitively over catalog-declared agents. Unresolved or ambiguous targets fail marketplace validation, so every handoff target must belong to the recipe. Add non-stable lifecycle disclosure through `x-hve.componentMaturity`, update `docs/plugins/hve-core.md`, then run `npm run lint:marketplace` and `npm run plugin:generate`.
+Agent handoffs are closed transitively over catalog-declared agents. Unresolved
+or ambiguous targets fail marketplace validation, so every handoff target must
+belong to the recipe. Add non-stable lifecycle disclosure through
+`x-hve.componentMaturity`, update `docs/plugins/hve-core.md`, then run
+`npm run lint:marketplace` and `npm run docs:generate:check`.
 
 ## Agent Content Structure Standards
 

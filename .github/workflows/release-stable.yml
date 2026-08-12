@@ -2,372 +2,629 @@
 # SPDX-License-Identifier: MIT
 name: Stable Release Preparation
 
-# Validates main and opens a reviewable main -> release/stable promotion pull
-# request. Release preparation and creation begin only after that promotion
+# Opens or refreshes the reviewed release/prerelease -> release/stable promotion
+# pull request. Release preparation and creation begin only after that promotion
 # merges, when release-stable-publish.yml runs release-please on release/stable.
 
 on:
-    push:
-        branches:
-            - main
+  release:
+    types: [published]
 
-    workflow_dispatch:
+  workflow_dispatch:
+    inputs:
+      prerelease-tag:
+        description: "Published PreRelease tag to promote, for example prerelease-v3.3.101"
+        required: true
+        type: string
 
+# One promotion at a time per target branch. A cancelled run could leave the
+# stable per-hop promotion head half-refreshed.
 concurrency:
-    group: ${{ github.workflow }}-${{ github.ref }}
-    cancel-in-progress: false
+  group: ${{ github.workflow }}-release/stable
+  cancel-in-progress: false
 
 # Minimal permissions for security
 permissions:
-    contents: read
+  contents: read
+
+env:
+  SOURCE_BRANCH: release/prerelease
+  BASE_BRANCH: release/stable
+  PROMOTION_HEAD_PREFIX: release-promotion--release-prerelease--to--release-stable
+  TARGET_CONFIG: release-please-config.json
+  TARGET_MANIFEST: .release-please-manifest.json
+  SOURCE_CONFIG: release-please-prerelease-config.json
+  SOURCE_MANIFEST: .release-please-prerelease-manifest.json
 
 jobs:
-    spell-check:
-        name: Spell Check
-        uses: ./.github/workflows/spell-check.yml
-        permissions:
-            contents: read
+  prepare-promotion:
+    name: Prepare Stable Promotion
+    # Only a published numeric odd-minor pre-release promotes automatically.
+    # Recovery and re-promotion runs use the dispatch input.
+    if: >
+      github.event_name == 'workflow_dispatch'
+      || (
+        github.event.release.prerelease == true
+        && github.event.release.draft == false
+        && startsWith(github.event.release.tag_name, 'prerelease-v')
+      )
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: read
+    outputs:
+      promote: ${{ steps.promote.outputs.promote }}
+      version: ${{ steps.resolve.outputs.version }}
+      promotion-head: ${{ steps.state.outputs.promotion-head }}
+      source-sha: ${{ steps.state.outputs.source-sha }}
+      source-tag: ${{ steps.state.outputs.source-tag }}
+      source-version: ${{ steps.state.outputs.source-version }}
+      stable-baseline: ${{ steps.state.outputs.stable-baseline }}
+    steps:
+      - name: Generate GitHub App Token
+        id: app-token
+        uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v2.0.0
         with:
-            soft-fail: false
+          app-id: ${{ vars.RELEASE_APP_ID }}
+          private-key: ${{ secrets.RELEASE_APP_PRIVATE_KEY }}
 
-    markdown-lint:
-        name: Markdown Lint
-        uses: ./.github/workflows/markdown-lint.yml
-        permissions:
-            contents: read
+      # Executable release tooling always comes from main, never from the
+      # promotion head or from the release branch being prepared.
+      - name: Checkout trusted release tooling
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-            soft-fail: false
+          ref: main
+          sparse-checkout: |
+            scripts/release/Resolve-ReleasePromotionVersion.ps1
+            scripts/release/Update-VersionFiles.ps1
+          sparse-checkout-cone-mode: false
+          persist-credentials: false
 
-    table-format:
-        name: Table Format Check
-        uses: ./.github/workflows/table-format.yml
-        permissions:
-            contents: read
+      # Full history: the promotion merges the selected published tag commit
+      # and the whole range between both release branches, which shallow
+      # history cannot express.
+      - name: Checkout promotion working tree
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-            soft-fail: false
+          ref: main
+          fetch-depth: 0
+          path: promotion
+          token: ${{ steps.app-token.outputs.token }}
+          persist-credentials: true
 
-    dependency-pinning-scan:
-        name: Dependency Pinning Scan
-        uses: ./.github/workflows/dependency-pinning-scan.yml
-        permissions:
-            contents: read
-            security-events: write # Required for SARIF upload to Security tab
+      - name: Resolve promotion state
+        id: state
+        env:
+          DISPATCH_TAG: ${{ inputs.prerelease-tag }}
+          EVENT_NAME: ${{ github.event_name }}
+          EVENT_TAG: ${{ github.event.release.tag_name }}
+          GH_TOKEN: ${{ github.token }}
+          REPOSITORY: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+          cd "$GITHUB_WORKSPACE/promotion"
+
+          # The anchor is both the changelog commit cutoff and the seed identity,
+          # so it is captured from the current source configuration before any
+          # target-owned restore can replace that file with a copy the seeded
+          # branch predates or never carried.
+          BOOTSTRAP_SHA=$(jq -r '.packages["."]["bootstrap-sha"] // ""' "$TARGET_CONFIG")
+          if ! printf '%s' "$BOOTSTRAP_SHA" | grep -Eq '^[0-9a-f]{40}$'; then
+            echo "::error::$TARGET_CONFIG carries no lowercase 40-character bootstrap-sha anchor"
+            exit 1
+          fi
+
+          # A release branch is seeded and protected by hand. Each channel config
+          # anchor names the exact commit its branch is created at; this workflow
+          # never creates or moves a branch.
+          for entry in "$SOURCE_BRANCH:$SOURCE_CONFIG" "$BASE_BRANCH:$TARGET_CONFIG"; do
+            branch=${entry%%:*}
+            seed_config=${entry#*:}
+            if git ls-remote --exit-code --heads origin "$branch" >/dev/null 2>&1; then
+              continue
+            fi
+            SEED_SHA=$(jq -r '.packages["."]["bootstrap-sha"] // ""' "$seed_config")
+            echo "::notice::$branch does not exist yet; create it at $seed_config bootstrap-sha $SEED_SHA and protect both release branches before promotions can open"
+            echo "continue=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          done
+
+          if [ "$EVENT_NAME" = 'workflow_dispatch' ]; then
+            SOURCE_TAG="$DISPATCH_TAG"
+          else
+            SOURCE_TAG="$EVENT_TAG"
+          fi
+          if [[ "$SOURCE_TAG" == *$'\n'* || "$SOURCE_TAG" == *$'\r'* || ! "$SOURCE_TAG" =~ ^prerelease-v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "::error::Stable promotion requires a published prerelease-vMAJOR.MINOR.PATCH PreRelease tag"
+            exit 1
+          fi
+          SOURCE_VERSION=${SOURCE_TAG#prerelease-v}
+          SOURCE_MINOR=${SOURCE_VERSION#*.}
+          SOURCE_MINOR=${SOURCE_MINOR%%.*}
+          if (( 10#$SOURCE_MINOR % 2 == 0 )); then
+            echo "::error::Promotion source $SOURCE_VERSION has an even minor; Stable promotes only the odd-minor PreRelease line"
+            exit 1
+          fi
+          PROMOTION_HEAD="$PROMOTION_HEAD_PREFIX--$SOURCE_TAG"
+
+          git fetch --no-tags origin \
+            "+refs/heads/$SOURCE_BRANCH:refs/remotes/origin/$SOURCE_BRANCH" \
+            "+refs/heads/$BASE_BRANCH:refs/remotes/origin/$BASE_BRANCH"
+          if ! git fetch --no-tags origin "+refs/tags/$SOURCE_TAG:refs/tags/$SOURCE_TAG"; then
+            echo "::error::Published PreRelease tag $SOURCE_TAG does not exist"
+            exit 1
+          fi
+          if ! SOURCE_SHA=$(git rev-parse --verify --end-of-options "refs/tags/$SOURCE_TAG^{commit}"); then
+            echo "::error::$SOURCE_TAG does not resolve to a commit"
+            exit 1
+          fi
+
+          release_state=$(gh api "/repos/$REPOSITORY/releases/tags/$SOURCE_TAG" \
+            --jq '[.draft, .prerelease, (.published_at != null), .tag_name] | @tsv' 2>/dev/null || true)
+          if [ "$release_state" != $'false\ttrue\ttrue\t'"$SOURCE_TAG" ]; then
+            echo "::error::$SOURCE_TAG is not a published, non-draft GitHub PreRelease"
+            exit 1
+          fi
+
+          MANIFEST_VERSION=$(git show "$SOURCE_SHA:$SOURCE_MANIFEST" | jq -r '.["."] // ""')
+          if [ "$MANIFEST_VERSION" != "$SOURCE_VERSION" ]; then
+            echo "::error::$SOURCE_TAG resolves to $SOURCE_SHA but $SOURCE_MANIFEST carries $MANIFEST_VERSION"
+            exit 1
+          fi
+          if ! git merge-base --is-ancestor "$SOURCE_SHA" "refs/remotes/origin/$SOURCE_BRANCH"; then
+            echo "::error::$SOURCE_TAG commit $SOURCE_SHA is not contained in $SOURCE_BRANCH"
+            exit 1
+          fi
+
+          EVIDENCE_DIR="$RUNNER_TEMP/stable-promotion-evidence"
+          rm -rf "$EVIDENCE_DIR"
+          mkdir -p "$EVIDENCE_DIR"
+          if ! gh release download "$SOURCE_TAG" -R "$REPOSITORY" \
+            -p 'plugin-release-evidence.json' -D "$EVIDENCE_DIR"; then
+            echo "::error::$SOURCE_TAG carries no readable plugin-release-evidence.json"
+            exit 1
+          fi
+          EVIDENCE=$(cat "$EVIDENCE_DIR/plugin-release-evidence.json")
+          if ! printf '%s' "$EVIDENCE" | jq -e \
+            --arg version "$SOURCE_VERSION" \
+            --arg source_commit "$SOURCE_SHA" \
+            --arg repository "$REPOSITORY" '
+              .schema == "hve-core/plugin-release-evidence/v2" and
+              .sourceCommit == $source_commit and
+              .version == $version and
+              .locator.source == "github" and
+              .locator.repo == $repository and
+              .locator.ref == ("prerelease-v" + $version) and
+              (.packageCount | type == "number" and . > 0) and
+              (.packages | type == "array") and
+              ((.packages | length) == .packageCount) and
+              all(.packages[];
+                (.name | type == "string" and length > 0) and
+                (.fileCount | type == "number" and . > 0) and
+                (.digest | type == "string" and test("^[0-9a-f]{64}$"))) and
+              (.fileCount | type == "number" and . > 0) and
+              (.totalBytes | type == "number" and . > 0) and
+              (.digest | type == "string" and test("^[0-9a-f]{64}$"))
+            ' >/dev/null; then
+            echo "::error::$SOURCE_TAG evidence does not match published source $SOURCE_TAG at $SOURCE_SHA"
+            exit 1
+          fi
+
+          STABLE_BASELINE=$(git show "refs/remotes/origin/$BASE_BRANCH:$TARGET_MANIFEST" | jq -r '.["."] // ""')
+          if [[ "$STABLE_BASELINE" == *$'\n'* || "$STABLE_BASELINE" == *$'\r'* || ! "$STABLE_BASELINE" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "::error::$BASE_BRANCH $TARGET_MANIFEST has no MAJOR.MINOR.PATCH version"
+            exit 1
+          fi
+          STABLE_MINOR=${STABLE_BASELINE#*.}
+          STABLE_MINOR=${STABLE_MINOR%%.*}
+          if (( 10#$STABLE_MINOR % 2 != 0 )); then
+            echo "::error::Stable baseline $STABLE_BASELINE has an odd minor"
+            exit 1
+          fi
+
+          if [ "$(git rev-list --count "refs/remotes/origin/$BASE_BRANCH..$SOURCE_SHA")" -eq 0 ]; then
+            echo "::notice::$SOURCE_TAG has no commits ahead of $BASE_BRANCH"
+            echo "continue=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          # Interlock: a managed release pull request owns the target
+          # branch until it merges, and a foreign promotion head would
+          # race this one.
+          open_prs=$(gh pr list --base "$BASE_BRANCH" --state open --limit 100 \
+            --json number,headRefName -R "$REPOSITORY")
+          managed_release_prs=$(printf '%s' "$open_prs" | jq -r \
+            '[.[] | select(.headRefName | startswith("release-please--")) | "#\(.number) \(.headRefName)"] | join(", ")')
+          if [ -n "$managed_release_prs" ]; then
+            echo "::notice::Managed release pull request still owns $BASE_BRANCH: $managed_release_prs"
+            echo "continue=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          foreign_promotion_prs=$(printf '%s' "$open_prs" | jq -r --arg head "$PROMOTION_HEAD" \
+            '[.[] | select(.headRefName | startswith("release-promotion--")) | select(.headRefName != $head) | "#\(.number) \(.headRefName)"] | join(", ")')
+          if [ -n "$foreign_promotion_prs" ]; then
+            echo "::notice::Another promotion pull request still owns $BASE_BRANCH: $foreign_promotion_prs"
+            echo "continue=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          {
+            echo "continue=true"
+            echo "bootstrap-sha=$BOOTSTRAP_SHA"
+            echo "promotion-head=$PROMOTION_HEAD"
+            echo "source-sha=$SOURCE_SHA"
+            echo "source-tag=$SOURCE_TAG"
+            echo "source-version=$SOURCE_VERSION"
+            echo "stable-baseline=$STABLE_BASELINE"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Resolve exact Stable version
+        id: resolve
+        if: ${{ steps.state.outputs.continue == 'true' }}
+        env:
+          SOURCE_VERSION: ${{ steps.state.outputs.source-version }}
+          STABLE_BASELINE: ${{ steps.state.outputs.stable-baseline }}
+        run: |
+          set -euo pipefail
+          RESOLVED=$(pwsh -NoProfile -File "$GITHUB_WORKSPACE/scripts/release/Resolve-ReleasePromotionVersion.ps1" \
+              -Channel Stable \
+              -PromotedSourceVersion "$SOURCE_VERSION" \
+              -CurrentStableVersion "$STABLE_BASELINE" \
+              -AsJson)
+
+          VERSION=$(printf '%s' "$RESOLVED" | jq -r '.Version // ""')
+          if [[ "$VERSION" == *$'\n'* || "$VERSION" == *$'\r'* || ! "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "::error::Resolved Stable version $VERSION is not MAJOR.MINOR.PATCH"
+            exit 1
+          fi
+
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "Promoting $SOURCE_BRANCH to $BASE_BRANCH as $VERSION"
+
+      # Read-only pre-flight before any promotion branch mutation or release
+      # intent write: an already occupied tag or GitHub release is immutable,
+      # so release-please could never issue this candidate.
+      - name: Validate candidate release identity is unoccupied
+        if: ${{ steps.state.outputs.continue == 'true' }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPOSITORY: ${{ github.repository }}
+          VERSION: ${{ steps.resolve.outputs.version }}
+        run: |
+          set -euo pipefail
+          cd "$GITHUB_WORKSPACE/promotion"
+
+          # A transport or authentication failure aborts under set -e instead
+          # of reporting the identity as available.
+          CANDIDATE_REF="refs/tags/v$VERSION"
+          OCCUPIED=$(git ls-remote origin "$CANDIDATE_REF")
+          if [ -n "$OCCUPIED" ]; then
+            echo "::error::Candidate release identity $CANDIDATE_REF already exists"
+            exit 1
+          fi
+
+          # Only an explicit not-found response proves the release identity is
+          # free. A success means it is occupied, and every auth, rate-limit,
+          # or transport outcome fails closed.
+          set +e
+          PROBE=$(gh api --include "/repos/$REPOSITORY/releases/tags/v$VERSION" 2>&1)
+          PROBE_EXIT=$?
+          set -e
+          if [ "$PROBE_EXIT" -eq 0 ]; then
+            echo "::error::A GitHub release already exists for v$VERSION"
+            exit 1
+          fi
+          if ! printf '%s\n' "$PROBE" | grep -Eq '^HTTP/[0-9.]+ 404|\(HTTP 404\)'; then
+            STATUS_LINE=$(printf '%s\n' "$PROBE" | grep -m1 -E '^HTTP/[0-9.]+ [0-9]{3}' || true)
+            echo "::error::Release lookup for v$VERSION returned no explicit not-found result: ${STATUS_LINE:-no HTTP status}"
+            exit 1
+          fi
+
+          echo "Release identity v$VERSION is unoccupied"
+
+      - name: Refresh the promotion head
+        id: promote
+        if: ${{ steps.state.outputs.continue == 'true' }}
+        env:
+          BOOTSTRAP_SHA: ${{ steps.state.outputs.bootstrap-sha }}
+          PROMOTION_HEAD: ${{ steps.state.outputs.promotion-head }}
+          SOURCE_SHA: ${{ steps.state.outputs.source-sha }}
+          SOURCE_TAG: ${{ steps.state.outputs.source-tag }}
+          STABLE_BASELINE: ${{ steps.state.outputs.stable-baseline }}
+          VERSION: ${{ steps.resolve.outputs.version }}
+        run: |
+          set -euo pipefail
+          cd "$GITHUB_WORKSPACE/promotion"
+
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+
+          EXPECTED_HEAD="$PROMOTION_HEAD_PREFIX--$SOURCE_TAG"
+          if [ "$PROMOTION_HEAD" != "$EXPECTED_HEAD" ]; then
+            echo "::error::Promotion head $PROMOTION_HEAD does not match selected source $EXPECTED_HEAD"
+            exit 1
+          fi
+
+          ALLOWLIST=$(printf '%s\n' \
+            'CHANGELOG.md' \
+            "$TARGET_CONFIG" \
+            "$TARGET_MANIFEST" \
+            'package.json' \
+            'package-lock.json' \
+            'extension/templates/package.template.json' \
+            '.github/plugin/marketplace.json' \
+            '.github/plugin/release-candidate.json')
+
+          merge_ref() {
+            local ref="$1"
+            local favor="$2"
+            if git merge --no-edit "$ref"; then
+              return 0
+            fi
+            local conflicts unexpected
+            conflicts=$(git diff --name-only --diff-filter=U)
+            unexpected=$(printf '%s\n' "$conflicts" | grep -vxF "$ALLOWLIST" || true)
+            git merge --abort
+            if [ -n "$unexpected" ]; then
+              echo "::error::Merging $ref conflicts outside release-owned files:"
+              printf '%s\n' "$unexpected"
+              exit 1
+            fi
+            # Every remaining conflict is release-owned state that the
+            # restore below rewrites from the target branch.
+            git merge --no-edit -X "$favor" "$ref"
+          }
+
+          if git ls-remote --exit-code origin "refs/heads/$PROMOTION_HEAD" >/dev/null 2>&1; then
+            git fetch --no-tags origin "+refs/heads/$PROMOTION_HEAD:refs/remotes/origin/$PROMOTION_HEAD"
+            git checkout -B "$PROMOTION_HEAD" "refs/remotes/origin/$PROMOTION_HEAD"
+          else
+            git checkout -B "$PROMOTION_HEAD" "refs/remotes/origin/$BASE_BRANCH"
+          fi
+
+          # The per-hop head is stable: fast-forward it from the target,
+          # then merge the selected published tag commit. Neither step
+          # force-updates it.
+          merge_ref "refs/remotes/origin/$BASE_BRANCH" theirs
+          merge_ref "$SOURCE_SHA" theirs
+
+          # Target-owned release state is restored whole, so a promotion
+          # never carries a source changelog or manifest forward.
+          # The complete previous marketplace is restored with them: candidate
+          # membership reaches the branch only through the managed release
+          # pull request, which rebuilds it from the record written below.
+          # A seeded branch can predate its branch-local manifest, so that one
+          # is restored only when the base already carries it and the first
+          # reviewed promotion introduces it from the merged source instead of
+          # failing on an absent path. The channel config is restored further
+          # below, once the derived baseline locator establishes who owns it.
+          restore_from_base() {
+            local mode="$1"
+            shift
+            local path
+            local present=()
+            for path in "$@"; do
+              if git cat-file -e "refs/remotes/origin/$BASE_BRANCH:$path" 2>/dev/null; then
+                present+=("$path")
+              elif [ "$mode" = 'required' ]; then
+                echo "::error::$BASE_BRANCH carries no $path"
+                exit 1
+              else
+                echo "::notice::$BASE_BRANCH carries no $path; the merged source copy becomes its first branch-local state"
+              fi
+            done
+            if [ "${#present[@]}" -gt 0 ]; then
+              git checkout "refs/remotes/origin/$BASE_BRANCH" -- "${present[@]}"
+            fi
+          }
+
+          restore_from_base required CHANGELOG.md .github/plugin/marketplace.json
+          restore_from_base optional "$TARGET_MANIFEST"
+
+          # Reapply selected-source shared content on every rerun. Once the
+          # source commit is an ancestor, merging it again is a no-op.
+          git checkout "$SOURCE_SHA" -- \
+            package.json package-lock.json \
+            extension/templates/package.template.json
+
+          TARGET_VERSION=$(jq -r '.["."] // ""' "$TARGET_MANIFEST")
+          if [ "$TARGET_VERSION" != "$STABLE_BASELINE" ]; then
+            echo "::error::Restored $TARGET_MANIFEST is $TARGET_VERSION but the resolved baseline is $STABLE_BASELINE"
+            exit 1
+          fi
+
+          # The baseline identity is the exact locator the restored target
+          # catalog already carries, never one rebuilt from the baseline
+          # version. A coherent baseline is a complete catalog at its own
+          # metadata version carrying one uniform locator: the reserved OMITTED
+          # locator when no entry names a ref, otherwise the one non-empty ref
+          # they all share. Historical entries carry a string-form source, which
+          # names no ref and therefore reads as omitted.
+          BASELINE_TAG=$(jq -r '
+            (.metadata.version // "") as $version
+            | [.plugins[] | (.version // "")] as $versions
+            | [.plugins[]
+               | if (.source | type) == "object" then (.source.ref // null) else null end] as $refs
+            | if ($version | test("^[0-9]+\\.[0-9]+\\.[0-9]+$"))
+                 and ($versions | length) > 0
+                 and ($versions | all(. == $version))
+              then
+                if ($refs | all(. == null))
+                then "OMITTED"
+                elif ($refs | all(type == "string" and length > 0))
+                     and (($refs | unique) | length) == 1
+                then $refs[0]
+                else ""
+                end
+              else ""
+              end
+          ' .github/plugin/marketplace.json)
+          if [ -z "$BASELINE_TAG" ] || [[ "$BASELINE_TAG" == *$'\n'* || "$BASELINE_TAG" == *$'\r'* ]]; then
+            echo "::error::Restored .github/plugin/marketplace.json does not carry one uniform baseline locator across a complete catalog at its own metadata version"
+            exit 1
+          fi
+
+          # The captured config anchor owns the seeded branch identity. It comes
+          # from the current source configuration, never from the restored
+          # target copy the seed can predate. OMITTED describes the ref-less
+          # bootstrap catalog, so it is coherent only while the target branch
+          # still sits on that seed commit.
+          if ! printf '%s' "$BOOTSTRAP_SHA" | grep -Eq '^[0-9a-f]{40}$'; then
+            echo "::error::Captured bootstrap-sha anchor is not a lowercase 40-character commit id"
+            exit 1
+          fi
+          # The derived baseline locator decides who owns the channel config.
+          # A ref-less bootstrap catalog is the hand-seeded first cutover, and
+          # the historical seed predates current tag, draft, and versioning
+          # policy, so the merged source config is what establishes it. Every
+          # later promotion restores the target-owned config instead, keeping
+          # ordinary steady-state release settings on the branch.
+          if [ "$BASELINE_TAG" = 'OMITTED' ]; then
+            BASE_TIP=$(git rev-parse "refs/remotes/origin/$BASE_BRANCH")
+            if [ "$BASE_TIP" != "$BOOTSTRAP_SHA" ]; then
+              echo "::error::$BASE_BRANCH carries the ref-less bootstrap catalog but its tip $BASE_TIP is not the $TARGET_CONFIG bootstrap-sha $BOOTSTRAP_SHA"
+              exit 1
+            fi
+            echo "::notice::$BASE_BRANCH is still at its bootstrap seed; the merged source $TARGET_CONFIG becomes its first branch-local release configuration"
+          else
+            restore_from_base optional "$TARGET_CONFIG"
+          fi
+
+          # The record is the only candidate authority. It names one immutable
+          # source commit and the deterministic transform the managed release
+          # pull request must reproduce byte for byte.
+          CANDIDATE_SOURCE_CATALOG="$RUNNER_TEMP/candidate-source-marketplace.json"
+          git show "$SOURCE_SHA:.github/plugin/marketplace.json" > "$CANDIDATE_SOURCE_CATALOG"
+
+          # Shared files keep their merged source content; the target version
+          # fields, the restored prior catalog, and the candidate record are
+          # rewritten from target-owned and immutable-source state.
+          pwsh -NoProfile -File "$GITHUB_WORKSPACE/scripts/release/Update-VersionFiles.ps1" \
+              -Version "$TARGET_VERSION" \
+              -Channel Stable \
+              -RepoRoot "$PWD" \
+              -SkipManifest \
+              -SkipPluginGenerate \
+              -CandidateAction Record \
+              -CandidateVersion "$VERSION" \
+              -CandidateSourceCommit "$SOURCE_SHA" \
+              -CandidateSourceCatalog "$CANDIDATE_SOURCE_CATALOG" \
+              -BaselineTag "$BASELINE_TAG"
+
+          # The captured changelog cutoff and the exact release intent are
+          # written last, so the effective target configuration carries both
+          # whether it was restored from the branch or merged from the source.
+          jq --arg version "$VERSION" --arg bootstrap "$BOOTSTRAP_SHA" '
+            .packages["."]["bootstrap-sha"] = $bootstrap
+            | .packages["."]["release-as"] = $version
+          ' "$TARGET_CONFIG" > "$TARGET_CONFIG.promotion"
+          mv "$TARGET_CONFIG.promotion" "$TARGET_CONFIG"
+          WRITTEN_INTENT=$(jq -r '.packages["."]["release-as"] // ""' "$TARGET_CONFIG")
+          if [ "$WRITTEN_INTENT" != "$VERSION" ]; then
+            echo "::error::$TARGET_CONFIG carries release-as $WRITTEN_INTENT instead of $VERSION"
+            exit 1
+          fi
+          WRITTEN_ANCHOR=$(jq -r '.packages["."]["bootstrap-sha"] // ""' "$TARGET_CONFIG")
+          if [ "$WRITTEN_ANCHOR" != "$BOOTSTRAP_SHA" ]; then
+            echo "::error::$TARGET_CONFIG carries bootstrap-sha $WRITTEN_ANCHOR instead of $BOOTSTRAP_SHA"
+            exit 1
+          fi
+
+          git add --all
+          if git diff --cached --quiet; then
+            git reset --quiet
+          else
+            git commit -m "chore(release): promote $SOURCE_BRANCH to $BASE_BRANCH as $VERSION"
+          fi
+
+          if [ "$(git rev-parse HEAD)" = "$(git rev-parse "refs/remotes/origin/$BASE_BRANCH")" ]; then
+            echo "::notice::$PROMOTION_HEAD matches $BASE_BRANCH; nothing to promote"
+            echo "promote=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          git push origin "HEAD:refs/heads/$PROMOTION_HEAD"
+          echo "promote=true" >> "$GITHUB_OUTPUT"
+
+  open-promotion-pr:
+    name: Open Stable Promotion PR
+    needs: [prepare-promotion]
+    if: ${{ needs.prepare-promotion.outputs.promote == 'true' }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+    steps:
+      - name: Generate GitHub App Token
+        id: app-token
+        uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v2.0.0
         with:
-            soft-fail: false
-            upload-sarif: true
-            upload-artifact: true
+          app-id: ${{ vars.RELEASE_APP_ID }}
+          private-key: ${{ secrets.RELEASE_APP_PRIVATE_KEY }}
 
-    action-version-consistency-scan:
-        name: Action Version Consistency Scan
-        uses: ./.github/workflows/action-version-consistency-scan.yml
-        permissions:
-            contents: read
-            security-events: write # Required for SARIF upload to Security tab
-        with:
-            soft-fail: false
-            upload-sarif: true
-            upload-artifact: true
+      # Auto-merge is deliberately never enabled. A human must review and merge
+      # this promotion before release-please prepares the Stable release PR.
+      - name: Open or update the promotion pull request
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+          REPO: ${{ github.repository }}
+          VERSION: ${{ needs.prepare-promotion.outputs.version }}
+          HEAD_BRANCH: ${{ needs.prepare-promotion.outputs.promotion-head }}
+          BASE_BRANCH: release/stable
+          SOURCE_BRANCH: release/prerelease
+          SOURCE_SHA: ${{ needs.prepare-promotion.outputs.source-sha }}
+          SOURCE_TAG: ${{ needs.prepare-promotion.outputs.source-tag }}
+          SOURCE_VERSION: ${{ needs.prepare-promotion.outputs.source-version }}
+          STABLE_BASELINE: ${{ needs.prepare-promotion.outputs.stable-baseline }}
+        run: |
+          set -euo pipefail
+          EXPECTED_HEAD="$PROMOTION_HEAD_PREFIX--$SOURCE_TAG"
+          if [ "$HEAD_BRANCH" != "$EXPECTED_HEAD" ]; then
+            echo "::error::Promotion head $HEAD_BRANCH does not match selected source $EXPECTED_HEAD"
+            exit 1
+          fi
 
-    gitleaks-scan:
-        name: Gitleaks Secret Scan
-        uses: ./.github/workflows/gitleaks-scan.yml
-        permissions:
-            contents: read
-            security-events: write # Required for SARIF upload to Security tab
-        with:
-            soft-fail: false
-            upload-sarif: true
-            upload-artifact: true
+          TITLE="chore(release): promote ${SOURCE_BRANCH} to ${BASE_BRANCH} as ${VERSION}"
+          BODY="## Stable promotion ${VERSION}
 
-    pester-tests:
-        name: PowerShell Tests
-        uses: ./.github/workflows/pester-tests.yml
-        permissions:
-            contents: read
-            id-token: write
-        with:
-            soft-fail: false
-            changed-files-only: false
-            code-coverage: true
+          Promotes published \`${SOURCE_TAG}\` from \`${SOURCE_BRANCH}\` into
+          \`${BASE_BRANCH}\` on the even-minor stable line.
 
-    docusaurus-tests:
-        name: Docusaurus Tests
-        uses: ./.github/workflows/docusaurus-tests.yml
-        permissions:
-            contents: read
-            id-token: write # Required for Codecov OIDC in the reusable workflow
-        with:
-            soft-fail: false
+          | Input | Value |
+          |-------|-------|
+          | Published PreRelease | \`${SOURCE_TAG}\` |
+          | Source commit | \`${SOURCE_SHA}\` |
+          | Promoted pre-release | \`${SOURCE_VERSION}\` |
+          | Stable baseline | \`${STABLE_BASELINE}\` |
+          | Exact release intent | \`${VERSION}\` |
 
-    discover-python-projects:
-        name: Discover Python Projects
-        runs-on: ubuntu-latest
-        permissions:
-            contents: read
-        outputs:
-            directories: ${{ steps.find.outputs.directories }}
-            has-projects: ${{ steps.find.outputs.has-projects }}
-        steps:
-            - name: Checkout repository
-              uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-              with:
-                  persist-credentials: false
+          Target-owned changelog, release-please config, manifest, and the
+          complete previous marketplace come from \`${BASE_BRANCH}\`. Candidate
+          membership reaches the branch only through the managed release pull
+          request, which rebuilds it from the recorded immutable source.
 
-            - name: Find Python projects
-              id: find
-              shell: pwsh
-              run: |
-                  $projectList = @(Get-ChildItem -Recurse -Force -Filter pyproject.toml |
-                    Where-Object { $_.FullName -notmatch 'node_modules' } |
-                    ForEach-Object { Resolve-Path -Relative $_.DirectoryName } |
-                    ForEach-Object { $_ -replace '^\.[\\/]', '' } |
-                    Sort-Object)
-                  $jsonItems = $projectList | ForEach-Object { $_ | ConvertTo-Json -Compress }
-                  $dirs = '[' + (($jsonItems) -join ',') + ']'
-                  "directories=$dirs" >> $env:GITHUB_OUTPUT
-                  if ($projectList.Count -eq 0) {
-                    "has-projects=false" >> $env:GITHUB_OUTPUT
-                    Write-Output 'No Python projects found'
-                  } else {
-                    "has-projects=true" >> $env:GITHUB_OUTPUT
-                    Write-Output "Found Python projects: $dirs"
-                  }
+          After this pull request merges, \`release-stable-publish.yml\` runs
+          release-please on \`${BASE_BRANCH}\`. Release-please then opens its
+          separately reviewed release PR containing version, changelog, manifest,
+          and immutable plugin locator updates.
 
-    python-lint:
-        name: "Python Lint (${{ matrix.directory }})"
-        needs: discover-python-projects
-        if: needs.discover-python-projects.outputs.has-projects == 'true'
-        strategy:
-            fail-fast: false
-            matrix:
-                directory: ${{ fromJson(needs.discover-python-projects.outputs.directories) }}
-        uses: ./.github/workflows/python-lint.yml
-        permissions:
-            contents: read
-        with:
-            soft-fail: false
-            changed-files-only: false
-            working-directory: ${{ matrix.directory }}
+          ---
+          *Managed automatically by the stable release preparation workflow. Auto-merge is not enabled.*"
 
-    pytest:
-        name: "Python Tests (${{ matrix.directory }})"
-        needs: discover-python-projects
-        if: needs.discover-python-projects.outputs.has-projects == 'true'
-        uses: ./.github/workflows/pytest-tests.yml
-        permissions:
-            contents: read
-            id-token: write
-        with:
-            working-directory: ${{ matrix.directory }}
-            soft-fail: false
-            changed-files-only: false
-        strategy:
-            fail-fast: false
-            matrix:
-                directory: ${{ fromJson(needs.discover-python-projects.outputs.directories) }}
+          PR_NUMBER=$(gh pr list --head "$HEAD_BRANCH" --base "$BASE_BRANCH" --state open \
+            --json number --jq '.[0].number // empty' \
+            -R "$REPO")
 
-    prepare-promotion:
-        name: Prepare Stable Promotion
-        needs:
-            - spell-check
-            - markdown-lint
-            - table-format
-            - dependency-pinning-scan
-            - action-version-consistency-scan
-            - gitleaks-scan
-            - pester-tests
-            - docusaurus-tests
-            - discover-python-projects
-            - python-lint
-            - pytest
-        if: ${{ !cancelled() && !failure() && github.ref == 'refs/heads/main' }}
-        runs-on: ubuntu-latest
-        permissions:
-            contents: read
-            pull-requests: read
-        outputs:
-            version: ${{ steps.prepared.outputs.version }}
-            promote: ${{ steps.promotion.outputs.promote }}
-        steps:
-            - name: Checkout validated main commit
-              uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-              with:
-                  ref: ${{ github.sha }}
-                  fetch-depth: 0
-                  persist-credentials: false
-
-            - name: Verify committed baseline consistency
-              id: prepared
-              run: |
-                  set -euo pipefail
-                  VERSION=$(jq -r '.["."] // ""' .release-please-manifest.json)
-                  if [ -z "$VERSION" ]; then
-                    echo "::error::.release-please-manifest.json has no root version"
-                    exit 1
-                  fi
-                  if ! [[ "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
-                    echo "::error::Prepared version $VERSION is not MAJOR.MINOR.PATCH"
-                    exit 1
-                  fi
-
-                  # Even/odd convention: even minor = stable. A prepared main commit
-                  # that carries an odd minor is never promotable.
-                  MINOR=$(echo "$VERSION" | cut -d. -f2)
-                  if (( MINOR % 2 != 0 )); then
-                    echo "::error::Prepared version $VERSION has odd minor ($MINOR); stable promotion requires an even minor"
-                    exit 1
-                  fi
-
-                  for entry in "package.json:.version" "package-lock.json:.version" "extension/templates/package.template.json:.version" ".github/plugin/marketplace.json:.metadata.version"; do
-                    file="${entry%%:*}"
-                    path="${entry#*:}"
-                    actual=$(jq -r "$path" "$file")
-                    if [ "$actual" != "$VERSION" ]; then
-                      echo "::error::$file $path is $actual but the prepared version is $VERSION"
-                      exit 1
-                    fi
-                  done
-
-                  if ! grep -Eq "^## \[${VERSION}\]" CHANGELOG.md; then
-                    echo "::error::CHANGELOG.md has no prepared entry for $VERSION"
-                    exit 1
-                  fi
-
-                  echo "version=$VERSION" >> "$GITHUB_OUTPUT"
-                  echo "Committed stable baseline: $VERSION"
-
-            - name: Setup Node.js
-              uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
-              with:
-                  node-version: "24"
-                  cache: "npm"
-
-            - name: Install dependencies
-              run: npm ci
-
-            - name: Setup PowerShell modules
-              uses: ./.github/actions/setup-ps-modules
-
-            # The catalog pins an immutable plugins-v<version> source ref. Validating
-            # it here keeps a promotion from carrying a catalog whose plugin locator
-            # disagrees with the prepared version.
-            - name: Validate catalog and plugin locator consistency
-              run: |
-                  mkdir -p logs
-                  npm run lint:marketplace
-
-            - name: Resolve promotion state
-              id: promotion
-              env:
-                  BASE_BRANCH: release/stable
-                  GH_TOKEN: ${{ github.token }}
-                  REPOSITORY: ${{ github.repository }}
-                  STABLE_VERSION: ${{ steps.prepared.outputs.version }}
-              run: |
-                  set -euo pipefail
-                  if ! git ls-remote --exit-code --heads origin "$BASE_BRANCH" >/dev/null 2>&1; then
-                    echo "::notice::$BASE_BRANCH does not exist yet; create and protect it before promotions can open"
-                    echo "promote=false" >> "$GITHUB_OUTPUT"
-                    exit 0
-                  fi
-
-                  git fetch --no-tags --depth=1 origin "$BASE_BRANCH"
-                  if ! git merge-base --is-ancestor FETCH_HEAD HEAD; then
-                    echo "::notice::$BASE_BRANCH contains release state not yet synchronized to main"
-                    echo "promote=false" >> "$GITHUB_OUTPUT"
-                    exit 0
-                  fi
-
-                  ahead_count=$(git rev-list --count FETCH_HEAD..HEAD)
-                  if [ "$ahead_count" -eq 0 ]; then
-                    echo "::notice::main has no commits ahead of $BASE_BRANCH"
-                    echo "promote=false" >> "$GITHUB_OUTPUT"
-                    exit 0
-                  fi
-
-                  STABLE_TAG="hve-core-v${STABLE_VERSION}"
-                  release_state=$(gh api "/repos/$REPOSITORY/releases/tags/$STABLE_TAG" \
-                    --jq '[.draft, .prerelease] | @tsv' 2>/dev/null || true)
-                  if [ "$release_state" != $'false\tfalse' ]; then
-                    echo "::notice::Current baseline $STABLE_TAG is not a published Stable release"
-                    echo "promote=false" >> "$GITHUB_OUTPUT"
-                    exit 0
-                  fi
-
-                  release_pr_count=$(gh pr list --base "$BASE_BRANCH" --state open \
-                    --json headRefName --jq '[.[] | select(.headRefName | startswith("release-please--"))] | length' \
-                    -R "$REPOSITORY")
-                  sync_pr_count=$(gh pr list --head "$BASE_BRANCH" --base main --state open \
-                    --json number --jq 'length' -R "$REPOSITORY")
-                  if [ "$release_pr_count" -ne 0 ] || [ "$sync_pr_count" -ne 0 ]; then
-                    echo "::notice::Release preparation or release/stable to main synchronization is still in flight"
-                    echo "promote=false" >> "$GITHUB_OUTPUT"
-                    exit 0
-                  fi
-
-                  main_tree=$(git rev-parse "HEAD^{tree}")
-                  base_tree=$(git rev-parse "FETCH_HEAD^{tree}")
-                  if [ "$main_tree" = "$base_tree" ]; then
-                    echo "::notice::$BASE_BRANCH already matches the prepared main tree; nothing to promote"
-                    echo "promote=false" >> "$GITHUB_OUTPUT"
-                    exit 0
-                  fi
-
-                  echo "promote=true" >> "$GITHUB_OUTPUT"
-
-    open-promotion-pr:
-        name: Open Stable Promotion PR
-        needs: [prepare-promotion]
-        if: ${{ needs.prepare-promotion.outputs.promote == 'true' }}
-        runs-on: ubuntu-latest
-        permissions:
-            contents: read
-            pull-requests: write
-        steps:
-            - name: Generate GitHub App Token
-              id: app-token
-              uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v2.0.0
-              with:
-                  app-id: ${{ vars.RELEASE_APP_ID }}
-                  private-key: ${{ secrets.RELEASE_APP_PRIVATE_KEY }}
-
-            # Auto-merge is deliberately never enabled. A human must review and merge
-            # this promotion before release-please prepares the Stable release PR.
-            - name: Open or update the promotion pull request
-              env:
-                  GH_TOKEN: ${{ steps.app-token.outputs.token }}
-                  REPO: ${{ github.repository }}
-                  VERSION: ${{ needs.prepare-promotion.outputs.version }}
-                  HEAD_BRANCH: main
-                  BASE_BRANCH: release/stable
-              run: |
-                  set -euo pipefail
-                  TITLE="chore(release): promote ${VERSION} to ${BASE_BRANCH}"
-                  BODY="## Stable promotion ${VERSION}
-
-                  Promotes \`${HEAD_BRANCH}\` into \`${BASE_BRANCH}\`.
-
-                  After this pull request merges, \`release-stable-publish.yml\` runs
-                  release-please on \`release/stable\`. Release-please then opens its
-                  separately reviewed release PR containing version, changelog, manifest,
-                  and immutable plugin locator updates.
-
-                  ---
-                  *Managed automatically by the stable release preparation workflow. Auto-merge is not enabled.*"
-
-                  PR_NUMBER=$(gh pr list --head "$HEAD_BRANCH" --base "$BASE_BRANCH" --state open \
-                    --json number --jq '.[0].number // empty' \
-                    -R "$REPO")
-
-                  if [ -n "$PR_NUMBER" ]; then
-                    gh pr edit "$PR_NUMBER" --title "$TITLE" --body "$BODY" -R "$REPO"
-                    echo "Updated promotion PR #$PR_NUMBER for $VERSION"
-                  else
-                    gh pr create \
-                      --head "$HEAD_BRANCH" \
-                      --base "$BASE_BRANCH" \
-                      --title "$TITLE" \
-                      --body "$BODY" \
-                      -R "$REPO"
-                    echo "Created promotion PR for $VERSION"
-                  fi
+          if [ -n "$PR_NUMBER" ]; then
+            gh pr edit "$PR_NUMBER" --title "$TITLE" --body "$BODY" -R "$REPO"
+            echo "Updated promotion PR #$PR_NUMBER for $VERSION"
+          else
+            gh pr create \
+              --head "$HEAD_BRANCH" \
+              --base "$BASE_BRANCH" \
+              --title "$TITLE" \
+              --body "$BODY" \
+              -R "$REPO"
+            echo "Created promotion PR for $VERSION"
+          fi

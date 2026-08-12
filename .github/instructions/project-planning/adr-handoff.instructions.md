@@ -183,7 +183,7 @@ HTML description template:
 </div>
 ```
 
-Execution follows `ado-update-wit-items.instructions.md`.
+Execution follows the backlog-management skill Execution workflow.
 
 ### GitHub Format — `{{ADR-TEMP-N}}`
 
@@ -228,7 +228,7 @@ Markdown body template:
 > - [ ] Reviewed and validated by a qualified human reviewer
 ```
 
-Execution follows `github-backlog-update.instructions.md`.
+Execution follows the backlog-management skill Execution workflow.
 
 ## Handoff State Recording
 

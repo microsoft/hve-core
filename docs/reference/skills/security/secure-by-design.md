@@ -1,8 +1,8 @@
 ---
 title: secure-by-design
 description: "Secure by Design principles knowledge base for assessing security-first design, development, and deployment across the software lifecycle."
-sidebar_position: 9
-ms.date: 2026-07-28
+sidebar_position: 10
+ms.date: 2026-08-06
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->

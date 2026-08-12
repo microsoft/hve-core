@@ -3,7 +3,7 @@ title: Adapt HVE Core Package Selections
 description: Choose or switch HVE Core catalog packages while preserving the release architecture
 sidebar_position: 4
 author: Microsoft
-ms.date: 2026-08-03
+ms.date: 2026-08-08
 ms.topic: how-to
 keywords:
   - migration
@@ -14,7 +14,7 @@ keywords:
 estimated_reading_time: 6
 ---
 
-HVE Core package selection is a forward adaptation of the catalog-defined distribution model. `.github/plugin/marketplace.json` remains the sole authority for active entries, package membership, maturity, documentation, and immutable sources.
+HVE Core package selection is a forward adaptation of the catalog-defined distribution model. `.github/plugin/marketplace.json` remains the sole authority for active entries, package membership, maturity, documentation, and sources.
 
 Choose the migration path for your host. Neither GitHub Copilot nor VS Code provides a universal automatic migration between different published identities.
 
@@ -32,21 +32,53 @@ Do not install `hve-core` and `hve-core-all` together because their content over
 
 Changing a Copilot marketplace registration is a configuration operation. It does not delete files from your repository or modify a cloned HVE Core installation.
 
-Register the catalog ref selected by your organization or release instructions:
+Use the ref-less development tip:
 
 ```bash
-copilot plugin marketplace add microsoft/hve-core#<ref>
+copilot plugin marketplace add microsoft/hve-core
 ```
 
-Then select the required package through the Copilot client.
+Use a moving reviewed channel:
 
-The Git ref after `#` selects the marketplace catalog. Inside that catalog, the selected entry uses `source.ref` to pin the matching immutable `plugins-v<version>` plugin bytes. Treat those two refs as one release unit: the selected catalog must point to its matching plugin snapshot.
+```bash
+copilot plugin marketplace add microsoft/hve-core#release/prerelease
+copilot plugin marketplace add microsoft/hve-core#release/stable
+```
+
+Use an immutable channel tag:
+
+```bash
+copilot plugin marketplace add microsoft/hve-core#prerelease-v<version>
+copilot plugin marketplace add microsoft/hve-core#v<version>
+```
+
+The development catalog omits `source.ref`. A release-branch registration
+resolves the current catalog on that branch, whose entries pin the
+corresponding exact channel tag. An exact-tag registration fixes both the
+catalog and its source payloads.
+
+Refresh the marketplace before requesting an installed-plugin update:
+
+```bash
+copilot plugin marketplace update hve-core
+copilot plugin update hve-core@hve-core
+```
+
+Switching registrations can require removing and re-adding the marketplace.
+Do not depend on a specific outcome for duplicate same-name registrations.
 
 ## VS Code Extension Selection
 
 Each catalog entry has a deterministic extension identity. `hve-core` remains the unsuffixed HVE Core extension, `ise-hve-essentials.hve-core`; other entries use package-specific generated identities. Stable and PreRelease have the same active package and component projections, but differ in source ownership, cadence, and version.
 
-Switch between Stable and PreRelease from the HVE Core extension page in VS Code. PreRelease packages from `main`. Stable packages only after reviewed `main` content is promoted into `release/stable`, so Stable can lag newer commits on `main`.
+PreRelease packages from the reviewed `release/prerelease` path and its
+`prerelease-v<version>` tag. Stable packages from the reviewed
+`release/stable` path and its `v<version>` tag. Stable can lag PreRelease
+because each promotion and release is independently reviewed.
+
+Select the channel offered by the HVE Core extension page in VS Code. A
+published channel release carries the associated release assurance; client
+channel-switch behavior must be confirmed in the installed host.
 
 ## Selective Clone Adaptation
 
@@ -62,9 +94,11 @@ The installer preserves repository-relative paths for every copied component. A 
 
 Schema version 2 stores `selection.package`. File records identify components without per-file package ownership, and hooks are not copied. When a schema version 2 manifest has no package, upgrade detection emits `INSTALLED_PACKAGE=` and requires explicit package reselection before replay.
 
-## Future Catalog Convergence
+## Historical Catalog Support
 
-A future reduction in package count is catalog cleanup plus generated stale-output cleanup. It does not require a framework rewrite, compatibility shells, aggregate metadata, aliases, or package-specific workflow branches. Dynamic package matrices, equal-channel parity checks, and immutable snapshots continue to derive from the active catalog.
+Previously issued `plugins-v` and `hve-core-v` catalogs and tags are immutable
+historical records. They are not future publication targets or active
+migration commands.
 
 ## Verify the Result
 

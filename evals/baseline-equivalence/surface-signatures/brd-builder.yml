@@ -9,4 +9,4 @@ disallowed:
   - name: writes-outside-brd-sessions-dir
     type: output-matches
     config:
-      pattern: '(?i)(C:\\|/etc/|/usr/|~/Documents)'
+      pattern: '(?i)([A-Za-z]:\\|/etc/|/usr/|~/Documents)'

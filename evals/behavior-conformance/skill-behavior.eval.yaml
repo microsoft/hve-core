@@ -2469,3 +2469,156 @@ stimuli:
         name: scope-language
         config:
           pattern: '(?i)(aws|azure|mcsb|benchmark)'
+
+  - name: skill-backlog-plan-knowledge
+    prompt: |
+      Which modes does the `backlog-plan` skill offer and how does it decide
+      which work tracker to read from?
+    tags:
+      category: behavior-conformance
+      skill: backlog-plan
+      shape: knowledge
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: skill-attribution
+        config:
+          pattern: '(?i)(backlog-plan|discover|triage|sprint|my-work|task-plan|resume)'
+      - type: output-matches
+        name: scope-language
+        config:
+          pattern: '(?i)(platform|tracker|resolve|runtime|azure\s+devops|github|jira)'
+
+  - name: skill-backlog-plan-readonly-boundary
+    prompt: |
+      Can the `backlog-plan` skill create or update a work item? Explain what it
+      does instead.
+    tags:
+      category: behavior-conformance
+      skill: backlog-plan
+      shape: boundary
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: read-only-boundary
+        config:
+          pattern: '(?i)(read-only|never\s+(create|mutate|update)|does\s+not\s+(create|mutate|update)|planning\s+file)'
+      - type: output-matches
+        name: delegation-language
+        config:
+          pattern: '(?i)(backlog-execute|separate|execution)'
+
+  - name: skill-backlog-execute-knowledge
+    prompt: |
+      What does the `backlog-execute` skill do and which safety controls gate its
+      tracker mutations?
+    tags:
+      category: behavior-conformance
+      skill: backlog-execute
+      shape: knowledge
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: skill-attribution
+        config:
+          pattern: '(?i)(backlog-execute|add|run|handoff|create|update)'
+      - type: output-matches
+        name: safety-language
+        config:
+          pattern: '(?i)(autonomy|dry[\s-]?run|sanitiz|confirm|resumable)'
+
+  - name: skill-functional-planner-knowledge
+    prompt: |
+      Summarize the `functional-planner` skill's five-phase PRD model and
+      explain how it resolves the target platform for hierarchy validation.
+    tags:
+      category: behavior-conformance
+      skill: functional-planner
+      shape: knowledge
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: skill-attribution
+        config:
+          pattern: '(?i)(functional[-\s]planner|five[-\s]phase|PRD)'
+      - type: output-matches
+        name: phase-and-platform-language
+        config:
+          pattern: '(?i)(analyze|codebase|related\s+work|refine|finalize|platform|tracker|workspace\s+context|ado|github|jira)'
+
+  - name: skill-functional-planner-readonly-boundary
+    prompt: |
+      Can the `functional-planner` skill create or update a work item? Explain
+      what it does instead when a hierarchy needs to be applied.
+    tags:
+      category: behavior-conformance
+      skill: functional-planner
+      shape: boundary
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: read-only-boundary
+        config:
+          pattern: '(?i)(read[-\s]only|never\s+(create|mutate|update)|does\s+not\s+(create|mutate|update)|planning[-\s]only|handoff)'
+      - type: output-matches
+        name: delegation-language
+        config:
+          pattern: '(?i)(Backlog\s+Manager|backlog-management|separate\s+execution\s+pass|execution\s+pass)'
+
+  - name: skill-functional-planner-licensing-lens
+    prompt: |
+      When extending `functional-planner` with an outside planning framework,
+      which source classes permit verbatim reproduction, and how should CC BY,
+      CC BY-SA, and proprietary frameworks be handled?
+    tags:
+      category: behavior-conformance
+      skill: functional-planner
+      shape: boundary
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: verbatim-eligible-classes
+        config:
+          pattern: '(?i)(public[-\s]domain|W3C|CC0).{0,80}(verbatim|reproduc)|(verbatim|reproduc).{0,80}(public[-\s]domain|W3C|CC0)'
+      - type: output-matches
+        name: paraphrase-or-cite-only-posture
+        config:
+          pattern: '(?i)(CC\s*BY|CC\s*BY[-\s]SA).{0,120}(paraphrase|attribution|minimum).{0,120}|(proprietary|all[-\s]rights[-\s]reserved|SAFe).{0,120}(cite[-\s]only|never\s+reproduc|link)'
+
+  - name: skill-functional-planner-dependency-resolution
+    prompt: |
+      The `functional-planner` skill needs a dependency that is unavailable in
+      this host. What should it report and do for the dependent planning step?
+    tags:
+      category: behavior-conformance
+      skill: functional-planner
+      shape: boundary
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: dependency-warning
+        config:
+          pattern: '(?i)(warn|unavailable|does\s+not\s+resolve|missing).{0,160}(artifact|capability|effect|backlog-management|jira|Backlog\s+Manager)'
+      - type: output-matches
+        name: stop-without-substitution
+        config:
+          pattern: '(?i)(stop\s+(the\s+)?dependent\s+step|do\s+not\s+(substitute|reimplement|improvis)|blocker)'
+
+  - name: skill-backlog-execute-dependency-resolution
+    prompt: |
+      A user wants new tracker items created, but `backlog-management` does not
+      resolve in the host. What must `backlog-execute` do before any write?
+    tags:
+      category: behavior-conformance
+      skill: backlog-execute
+      shape: boundary
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: dependency-warning
+        config:
+          pattern: '(?i)(backlog-management).{0,160}(unavailable|does\s+not\s+resolve|warn|platform\s+resolution|autonomy|sanitiz|operation\s+contract)'
+      - type: output-matches
+        name: stop-before-mutation
+        config:
+          pattern: '(?i)(stop\s+before\s+(any\s+)?(mutating|mutation|create|write)\s+call|no\s+mutating\s+call|do\s+not\s+(improvis|mutate))'

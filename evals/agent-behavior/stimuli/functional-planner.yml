@@ -1,0 +1,83 @@
+# Copyright (c) 2026 Microsoft Corporation. All rights reserved.
+# SPDX-License-Identifier: MIT
+#
+# Conformance checks emitted per the vally-tests agent reference.
+# Applicable to this top-level agent: Check 1 (required frontmatter),
+# Check 6 (handoff pattern), Check 7 (tool restrictions). Checks 4 and 5 are
+# subagent-only. Check 9 does not apply: this agent presents its workflow as a
+# numbered overview list rather than the phase or step heading form, and the
+# artifact is not edited to make an inapplicable check pass.
+stimuli:
+  - name: functional-planner-frontmatter-name-and-description
+    prompt: |
+      Open the agent artifact at `.github/agents/project-planning/functional-planner.agent.md`.
+
+      Report the human-readable agent name declared in its frontmatter, then restate its declared description verbatim. Do not paraphrase the description and do not describe the file itself.
+    tags:
+      category: agent-behavior
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: reports-human-readable-name
+        config:
+          pattern: '(?i)\bFunctional Planner\b'
+      - type: output-matches
+        name: reports-declared-description
+        config:
+          pattern: '(?i)analyzes PRDs and plans.{0,60}work-item hierarchies without mutating a tracker'
+      - type: output-matches
+        name: does-not-substitute-filename-for-name
+        config:
+          pattern: '(?i)name\s*(is|:)\s*.{0,3}functional-planner'
+          negate: true
+
+  - name: functional-planner-handoff-target-and-label
+    prompt: |
+      Open the agent artifact at `.github/agents/project-planning/functional-planner.agent.md`.
+
+      List every agent it can hand off to and the label each handoff entry carries. Identify each target agent the way the artifact identifies it.
+    tags:
+      category: agent-behavior
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: names-declared-handoff-target
+        config:
+          pattern: '(?i)\bBacklog Manager\b'
+      - type: output-matches
+        name: reports-declared-label
+        config:
+          pattern: '(?i)Execute Hierarchy'
+      - type: output-matches
+        name: identifies-target-by-name-not-path
+        config:
+          pattern: '(?i)agent\s*:\s*.{0,3}[\w/-]*\.agent\.md'
+          negate: true
+
+  - name: functional-planner-terminal-grant-scope
+    prompt: |
+      Open the agent artifact at `.github/agents/project-planning/functional-planner.agent.md`.
+
+      Its frontmatter grants terminal execution. Report what the artifact says that grant is for, and state which of its declared platform boundaries the tool list enforces and which it does not.
+    tags:
+      category: agent-behavior
+      advisory: "true"
+    graders:
+      - type: prompt
+        name: separates-enforced-boundary-from-stated-policy
+        config:
+          prompt: |
+            The response explains the scope of an agent's terminal grant from the
+            artifact. Score high when it reports that the terminal exists for the
+            Jira CLI read path, and distinguishes the Azure DevOps and GitHub
+            boundaries, which the read-only tool families make unreachable, from
+            the Jira boundary, which the terminal grant does not enforce and the
+            artifact holds as a stated policy. Score low when it claims the tool
+            list enforces the Jira boundary, when it claims the agent holds no
+            terminal, or when it invents a restriction the artifact does not state.
+          threshold: 0.6
+      - type: output-matches
+        name: does-not-claim-tool-list-enforces-jira-boundary
+        config:
+          pattern: '(?i)the tool (list|grant|frontmatter) (prevents|blocks|enforces|makes it impossible).{0,60}Jira'
+          negate: true

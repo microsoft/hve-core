@@ -10,9 +10,9 @@ BeforeAll {
     Mock Write-Warning {} -ModuleName MarketplaceHelpers
 
     $script:ComponentPaths = @{
-        Agents   = @('agents/rpi/rpi-planner.md')
-        Commands = @('commands/rpi/rpi-plan.md')
-        Rules    = @('rules/shared/hve-core-location.instructions.md')
+        Agents   = @('agents/rpi/rpi-planner.agent.md')
+        Commands = @('prompts/rpi/rpi-plan.prompt.md')
+        Rules    = @('instructions/shared/hve-core-location.instructions.md')
         Skills   = @('skills/rpi/rpi-plan')
         Hook     = 'hooks/rpi/telemetry.json'
     }
@@ -63,8 +63,8 @@ BeforeAll {
                 -Content "#!/usr/bin/env bash`necho audit`n" | Out-Null
 
             $entries += New-PluginFixtureEntry -Name 'ops' -Description 'Ops audit package' -Version '9.9.9' `
-                -Agents @('agents/ops/ops-auditor.md') -Commands @('commands/ops/ops-audit.md') `
-                -Rules @('rules/ops/ops-baseline.instructions.md') -Skills @('skills/ops/ops-toolkit') `
+                -Agents @('agents/ops/ops-auditor.agent.md') -Commands @('prompts/ops/ops-audit.prompt.md') `
+                -Rules @('instructions/ops/ops-baseline.instructions.md') -Skills @('skills/ops/ops-toolkit') `
                 -Hook 'hooks/ops/audit.json'
         }
         Add-PluginFixtureCatalog -RepoRoot $Root -Entries $entries -Version '9.9.9' `
@@ -139,10 +139,20 @@ Describe 'Test-PluginSourcePath' -Tag 'Unit' {
 }
 
 Describe 'Test-PluginObjectSource' -Tag 'Unit' {
-    Context 'when the locator is immutable and complete' {
-        It 'Reports no error' {
+    Context 'when the locator is complete' {
+        It 'Accepts a ref-less canonical source' {
             $sourceErrors = @(Test-PluginObjectSource -Source ([ordered]@{
-                        source = 'github'; repo = 'contoso/contoso-hve'; path = 'plugins/rpi'; ref = 'plugins-v9.9.9'
+                        source = 'github'; repo = 'contoso/contoso-hve'; path = '.github'
+                    }))
+            $sourceErrors | Should -HaveCount 0
+        }
+
+        It 'Accepts an exact channel release ref' -ForEach @(
+            @{ Ref = 'v9.9.9' }
+            @{ Ref = 'prerelease-v9.9.9' }
+        ) {
+            $sourceErrors = @(Test-PluginObjectSource -Source ([ordered]@{
+                        source = 'github'; repo = 'contoso/contoso-hve'; path = '.github'; ref = $Ref
                     }))
             $sourceErrors | Should -HaveCount 0
         }
@@ -150,16 +160,18 @@ Describe 'Test-PluginObjectSource' -Tag 'Unit' {
 
     Context 'when the locator is incomplete or mutable' {
         It 'Rejects <Label>' -ForEach @(
-            @{ Label = 'a missing source type'; Source = @{ repo = 'contoso/contoso-hve'; path = 'plugins/rpi'; ref = 'plugins-v9.9.9' }; Pattern = "missing required field 'source'" }
-            @{ Label = 'an unsupported source type'; Source = @{ source = 'gitlab'; repo = 'contoso/contoso-hve'; path = 'plugins/rpi'; ref = 'plugins-v9.9.9' }; Pattern = 'is not supported \(expected: github\)' }
-            @{ Label = 'a missing repository'; Source = @{ source = 'github'; path = 'plugins/rpi'; ref = 'plugins-v9.9.9' }; Pattern = "missing required field 'repo'" }
-            @{ Label = 'a malformed repository'; Source = @{ source = 'github'; repo = 'contoso'; path = 'plugins/rpi'; ref = 'plugins-v9.9.9' }; Pattern = "must use 'owner/name' form" }
-            @{ Label = 'a missing package path'; Source = @{ source = 'github'; repo = 'contoso/contoso-hve'; ref = 'plugins-v9.9.9' }; Pattern = "missing required field 'path'" }
-            @{ Label = 'an escaping package path'; Source = @{ source = 'github'; repo = 'contoso/contoso-hve'; path = 'plugins/../etc'; ref = 'plugins-v9.9.9' }; Pattern = 'must not escape the source repository' }
-            @{ Label = 'a missing ref'; Source = @{ source = 'github'; repo = 'contoso/contoso-hve'; path = 'plugins/rpi' }; Pattern = "'ref' must be a non-empty string" }
-            @{ Label = 'a branch ref'; Source = @{ source = 'github'; repo = 'contoso/contoso-hve'; path = 'plugins/rpi'; ref = 'main' }; Pattern = "must use the immutable 'plugins-v<version>' tag form" }
-            @{ Label = 'a sha ref'; Source = @{ source = 'github'; repo = 'contoso/contoso-hve'; path = 'plugins/rpi'; ref = '0123456789abcdef0123456789abcdef01234567' }; Pattern = "must use the immutable 'plugins-v<version>' tag form" }
-            @{ Label = 'a sha field'; Source = @{ source = 'github'; repo = 'contoso/contoso-hve'; path = 'plugins/rpi'; ref = 'plugins-v9.9.9'; sha = '0123456789abcdef0123456789abcdef01234567' }; Pattern = "'sha' is not supported" }
+            @{ Label = 'a missing source type'; Source = @{ repo = 'contoso/contoso-hve'; path = '.github' }; Pattern = "missing required field 'source'" }
+            @{ Label = 'an unsupported source type'; Source = @{ source = 'gitlab'; repo = 'contoso/contoso-hve'; path = '.github' }; Pattern = 'is not supported \(expected: github\)' }
+            @{ Label = 'a missing repository'; Source = @{ source = 'github'; path = '.github' }; Pattern = "missing required field 'repo'" }
+            @{ Label = 'a malformed repository'; Source = @{ source = 'github'; repo = 'contoso'; path = '.github' }; Pattern = "must use 'owner/name' form" }
+            @{ Label = 'a missing source path'; Source = @{ source = 'github'; repo = 'contoso/contoso-hve' }; Pattern = "missing required field 'path'" }
+            @{ Label = 'an escaping source path'; Source = @{ source = 'github'; repo = 'contoso/contoso-hve'; path = '.github/../etc' }; Pattern = 'must not escape the source repository' }
+            @{ Label = 'a blank ref'; Source = @{ source = 'github'; repo = 'contoso/contoso-hve'; path = '.github'; ref = '' }; Pattern = "'ref' must be a non-empty string when provided" }
+            @{ Label = 'a branch ref'; Source = @{ source = 'github'; repo = 'contoso/contoso-hve'; path = '.github'; ref = 'main' }; Pattern = "must use the immutable 'prerelease-v<version>' or 'v<version>' tag form" }
+            @{ Label = 'a legacy plugin ref'; Source = @{ source = 'github'; repo = 'contoso/contoso-hve'; path = '.github'; ref = 'plugins-v9.9.9' }; Pattern = "must use the immutable 'prerelease-v<version>' or 'v<version>' tag form" }
+            @{ Label = 'a retired component ref'; Source = @{ source = 'github'; repo = 'contoso/contoso-hve'; path = '.github'; ref = 'hve-core-v9.9.9' }; Pattern = "must use the immutable 'prerelease-v<version>' or 'v<version>' tag form" }
+            @{ Label = 'a sha ref'; Source = @{ source = 'github'; repo = 'contoso/contoso-hve'; path = '.github'; ref = '0123456789abcdef0123456789abcdef01234567' }; Pattern = "must use the immutable 'prerelease-v<version>' or 'v<version>' tag form" }
+            @{ Label = 'a sha field'; Source = @{ source = 'github'; repo = 'contoso/contoso-hve'; path = '.github'; ref = 'v9.9.9'; sha = '0123456789abcdef0123456789abcdef01234567' }; Pattern = "'sha' is not supported" }
         ) {
             $sourceErrors = @(Test-PluginObjectSource -Source $Source)
             $sourceErrors | Should -Not -BeNullOrEmpty
@@ -256,7 +268,6 @@ Describe 'Invoke-MarketplaceValidation' -Tag 'Unit' {
         It 'Reports the missing metadata field <Field>' -ForEach @(
             @{ Field = 'description' }
             @{ Field = 'version' }
-            @{ Field = 'pluginRoot' }
         ) {
             New-ValidatorFixture -Root $script:validatorRepo | Out-Null
             Set-CatalogEntry -Root $script:validatorRepo -Mutation { param($catalog) $catalog['metadata'].Remove($Field) }
@@ -291,6 +302,63 @@ Describe 'Invoke-MarketplaceValidation' -Tag 'Unit' {
             $run = Get-ValidationReport -Root $script:validatorRepo
             (Get-ReportError -Report $run.Report) -join ' ' | Should -Match "version '1\.0\.0' does not match package.json version '9\.9\.9'"
         }
+
+        It 'Reports an exact release ref that mismatches the package version' {
+            New-ValidatorFixture -Root $script:validatorRepo | Out-Null
+            Set-CatalogEntry -Root $script:validatorRepo -Mutation {
+                param($catalog)
+                $catalog['plugins'][0]['source']['ref'] = 'v1.0.0'
+            }
+
+            $run = Get-ValidationReport -Root $script:validatorRepo
+            (Get-ReportError -Report $run.Report) -join ' ' |
+                Should -Match "object source ref must match package version 'prerelease-v9\.9\.9' or 'v9\.9\.9'"
+        }
+    }
+
+    Context 'when source ref presence defines the catalog shape' {
+        It 'Accepts one uniform channel namespace on every entry' -ForEach @(
+            @{ Ref = 'v9.9.9' }
+            @{ Ref = 'prerelease-v9.9.9' }
+        ) {
+            New-ValidatorFixture -Root $script:validatorRepo -AddSecondPackage | Out-Null
+            $channelRef = $Ref
+            Set-CatalogEntry -Root $script:validatorRepo -Mutation {
+                param($catalog)
+                foreach ($entry in $catalog['plugins']) {
+                    $entry['source']['ref'] = $channelRef
+                }
+            }
+
+            $run = Get-ValidationReport -Root $script:validatorRepo
+            $run.Outcome.Success | Should -BeTrue
+            $run.Outcome.ErrorCount | Should -Be 0
+        }
+
+        It 'Rejects mixed ref presence across entries' {
+            New-ValidatorFixture -Root $script:validatorRepo -AddSecondPackage | Out-Null
+            Set-CatalogEntry -Root $script:validatorRepo -Mutation {
+                param($catalog)
+                $catalog['plugins'][0]['source']['ref'] = 'v9.9.9'
+            }
+
+            $run = Get-ValidationReport -Root $script:validatorRepo
+            (Get-ReportError -Report $run.Report) -join ' ' |
+                Should -Match 'object source ref must be either omitted from every entry or present on every entry'
+        }
+
+        It 'Rejects mixed channel namespaces across entries' {
+            New-ValidatorFixture -Root $script:validatorRepo -AddSecondPackage | Out-Null
+            Set-CatalogEntry -Root $script:validatorRepo -Mutation {
+                param($catalog)
+                $catalog['plugins'][0]['source']['ref'] = 'v9.9.9'
+                $catalog['plugins'][1]['source']['ref'] = 'prerelease-v9.9.9'
+            }
+
+            $run = Get-ValidationReport -Root $script:validatorRepo
+            (Get-ReportError -Report $run.Report) -join ' ' |
+                Should -Match 'object source ref must use one uniform release channel namespace across every entry'
+        }
     }
 
     Context 'when two packages share a name' {
@@ -323,21 +391,22 @@ Describe 'Invoke-MarketplaceValidation' -Tag 'Unit' {
         }
     }
 
-    Context 'when the object locator disagrees with package identity by case' {
-        It 'Reports a case-mismatched package path' {
+    Context 'when the object locator disagrees with catalog policy by case' {
+        It 'Reports a case-mismatched source path' {
             New-ValidatorFixture -Root $script:validatorRepo | Out-Null
-            Set-CatalogEntry -Root $script:validatorRepo -Mutation { param($catalog) $catalog['plugins'][0]['source']['path'] = 'plugins/RPI' }
+            Set-CatalogEntry -Root $script:validatorRepo -Mutation { param($catalog) $catalog['plugins'][0]['source']['path'] = '.GitHub' }
 
             $run = Get-ValidationReport -Root $script:validatorRepo
-            (Get-ReportError -Report $run.Report) -join ' ' | Should -Match "object source path must match package name 'plugins/rpi'"
+            (Get-ReportError -Report $run.Report) -join ' ' | Should -Match "object source path must be '\.github'"
         }
 
         It 'Reports a case-mismatched release ref' {
             New-ValidatorFixture -Root $script:validatorRepo | Out-Null
-            Set-CatalogEntry -Root $script:validatorRepo -Mutation { param($catalog) $catalog['plugins'][0]['source']['ref'] = 'Plugins-v9.9.9' }
+            Set-CatalogEntry -Root $script:validatorRepo -Mutation { param($catalog) $catalog['plugins'][0]['source']['ref'] = 'V9.9.9' }
 
             $run = Get-ValidationReport -Root $script:validatorRepo
-            (Get-ReportError -Report $run.Report) -join ' ' | Should -Match "object source ref must match package version 'plugins-v9\.9\.9'"
+            (Get-ReportError -Report $run.Report) -join ' ' |
+                Should -Match "object source ref must match package version 'prerelease-v9\.9\.9' or 'v9\.9\.9'"
         }
 
         It 'Reports a sha locator field' {
@@ -505,9 +574,9 @@ Describe 'Test-MarketplaceRepositoryContract' -Tag 'Unit' {
             New-ValidatorFixture -Root $script:contractRepo -AddSecondPackage | Out-Null
             Set-CatalogEntry -Root $script:contractRepo -Mutation {
                 param($catalog)
-                $sharedComponent = 'agents/rpi/rpi-planner.md'
-                $catalog['plugins'][1]['agents'] += $sharedComponent
-                $catalog['plugins'][1]['x-hve']['componentMaturity'] = @{ $sharedComponent = 'preview' }
+                $canonicalComponent = 'agents/rpi/rpi-planner.agent.md'
+                $catalog['plugins'][1]['agents'] += $canonicalComponent
+                $catalog['plugins'][1]['x-hve']['componentMaturity'] = @{ $canonicalComponent = 'preview' }
             }
 
             $run = Get-ValidationReport -Root $script:contractRepo
@@ -524,8 +593,8 @@ Describe 'Test-MarketplaceRepositoryContract' -Tag 'Unit' {
             $declared = @()
             foreach ($entry in @($catalog['plugins'])) {
                 Join-Path $script:contractRepo ([string]$entry['x-hve']['documentation']) | Should -Exist
-                [string]$entry['source']['path'] | Should -BeExactly "plugins/$([string]$entry['name'])"
-                [string]$entry['source']['ref'] | Should -BeExactly "plugins-v$([string]$entry['version'])"
+                [string]$entry['source']['path'] | Should -BeExactly '.github'
+                $entry['source'].Contains('ref') | Should -BeFalse
                 $declared += @('agents', 'commands', 'rules', 'skills', 'hooks') |
                     ForEach-Object { @($entry[$_]) } | Where-Object { $_ }
             }
@@ -551,19 +620,19 @@ Describe 'Test-MarketplaceRepositoryContract' -Tag 'Unit' {
             New-ValidatorFixture -Root $script:contractRepo | Out-Null
             Set-CatalogEntry -Root $script:contractRepo -Mutation {
                 param($catalog)
-                $catalog['plugins'][0]['agents'] = @('agents/rpi/rpi-planner.md', 'agents/root-only.md')
+                $catalog['plugins'][0]['agents'] = @('agents/rpi/rpi-planner.agent.md', 'agents/root-only.agent.md')
             }
 
             $run = Get-ValidationReport -Root $script:contractRepo
             (Get-ReportError -Report $run.Report) -join ' ' |
-                Should -Match "component path 'agents/root-only\.md' is a root-level repository artifact and must not be declared"
+                Should -Match "component path 'agents/root-only\.agent\.md' is a root-level repository artifact and must not be declared"
         }
 
         It 'Reports an unlabeled experimental-namespace component' {
             New-ValidatorFixture -Root $script:contractRepo | Out-Null
             Set-CatalogEntry -Root $script:contractRepo -Mutation {
                 param($catalog)
-                $catalog['plugins'][0]['agents'] = @('agents/rpi/rpi-planner.md', 'agents/experimental/preview-only.md')
+                $catalog['plugins'][0]['agents'] = @('agents/rpi/rpi-planner.agent.md', 'agents/experimental/preview-only.agent.md')
             }
 
             $run = Get-ValidationReport -Root $script:contractRepo
@@ -575,19 +644,19 @@ Describe 'Test-MarketplaceRepositoryContract' -Tag 'Unit' {
             New-ValidatorFixture -Root $script:contractRepo | Out-Null
             Set-CatalogEntry -Root $script:contractRepo -Mutation {
                 param($catalog)
-                $catalog['plugins'][0]['x-hve']['profiles'] = @{ starter = @('agents/rpi/absent.md') }
+                $catalog['plugins'][0]['x-hve']['profiles'] = @{ starter = @('agents/rpi/absent.agent.md') }
             }
 
             $run = Get-ValidationReport -Root $script:contractRepo
             (Get-ReportError -Report $run.Report) -join ' ' |
-                Should -Match "x-hve\.profiles\['starter'\] references 'agents/rpi/absent\.md', which is not declared component membership"
+                Should -Match "x-hve\.profiles\['starter'\] references 'agents/rpi/absent\.agent\.md', which is not declared component membership"
         }
 
         It 'Reports a hook declared in an installer profile' {
             New-ValidatorFixture -Root $script:contractRepo | Out-Null
             Set-CatalogEntry -Root $script:contractRepo -Mutation {
                 param($catalog)
-                $catalog['plugins'][0]['x-hve']['profiles'] = @{ starter = @('agents/rpi/rpi-planner.md', 'hooks/rpi/telemetry.json') }
+                $catalog['plugins'][0]['x-hve']['profiles'] = @{ starter = @('agents/rpi/rpi-planner.agent.md', 'hooks/rpi/telemetry.json') }
             }
 
             $run = Get-ValidationReport -Root $script:contractRepo

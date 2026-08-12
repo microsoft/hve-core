@@ -93,6 +93,47 @@ field_descriptor() {
   esac
 }
 
+# Maps a canonical catalog root to "<field>|<source suffix>|<package suffix>".
+catalog_root_descriptor() {
+  case "$1" in
+    agents) echo "agents|.agent.md|.md" ;;
+    prompts) echo "commands|.prompt.md|.md" ;;
+    instructions) echo "rules|.instructions.md|.instructions.md" ;;
+    skills) echo "skills||" ;;
+    *) echo "" ;;
+  esac
+}
+
+# The marketplace catalog stores canonical source identities while installer input
+# and manifests use package form. A path whose root is outside the four installable
+# fields, such as hooks/, carries through unprojected so catalog load never fails.
+to_package_component_path() {
+  local catalog_path="$1"
+  [[ "$catalog_path" == */* ]] || {
+    echo "$catalog_path"
+    return 0
+  }
+
+  local catalog_root="${catalog_path%%/*}"
+  local relative="${catalog_path#*/}"
+  local descriptor field source_suffix package_suffix
+  descriptor=$(catalog_root_descriptor "$catalog_root")
+  [[ -n "$descriptor" ]] || {
+    echo "$catalog_path"
+    return 0
+  }
+
+  IFS='|' read -r field source_suffix package_suffix <<<"$descriptor"
+  if [[ -n "$source_suffix" ]]; then
+    [[ "$relative" == *"$source_suffix" ]] || {
+      echo "$catalog_path"
+      return 0
+    }
+    relative="${relative%"$source_suffix"}$package_suffix"
+  fi
+  echo "$field/$relative"
+}
+
 # Trims and validates a component path, echoing the normalized value.
 normalize_component_path() {
   local candidate="$1"
@@ -161,14 +202,18 @@ main() {
   local -A membership=()
   local package_path
   while IFS= read -r package_path; do
-    [[ -n "$package_path" ]] && membership["$package_path"]=1
+    [[ -n "$package_path" ]] && membership["$(to_package_component_path "$package_path")"]=1
   done < <(jq -r '[(.agents // [])[], (.commands // [])[], (.rules // [])[], (.skills // [])[]] | .[]' <<<"$entry_json")
   [[ ${#membership[@]} -gt 0 ]] || fail "Marketplace package '$package_name' in '$catalog_path' declares no installable components."
+
+  # One projected membership set backs both component validation and the manifest filter.
+  local membership_json
+  membership_json=$(printf '%s\n' "${!membership[@]}" | LC_ALL=C sort | jq -R -s -c 'split("\n") | map(select(length > 0))')
 
   local -A component_maturity=()
   local maturity_key maturity_value
   while IFS=$'\t' read -r maturity_key maturity_value; do
-    [[ -n "$maturity_key" ]] && component_maturity["$maturity_key"]="$maturity_value"
+    [[ -n "$maturity_key" ]] && component_maturity["$(to_package_component_path "$maturity_key")"]="$maturity_value"
   done < <(jq -r '."x-hve".componentMaturity // {} | to_entries[] | "\(.key)\t\(.value)"' <<<"$entry_json")
 
   # An unsupported manifest must fail before the target is touched. Version 1 has
@@ -320,10 +365,9 @@ main() {
     echo "✅ Copied $component → $target"
   done
 
-  local files_json components_json recipe_components_json
+  local files_json components_json
   files_json=$(jq -s 'reduce .[] as $entry ({}; . * $entry) | to_entries | sort_by(.key) | from_entries' "$entries_file")
-  recipe_components_json=$(jq -c '[(.agents // [])[], (.commands // [])[], (.rules // [])[], (.skills // [])[]]' <<<"$entry_json")
-  components_json=$(jq -c --argjson recipe "$recipe_components_json" '
+  components_json=$(jq -c --argjson recipe "$membership_json" '
     [to_entries[].value.component as $component
       | select($component | type == "string" and length > 0)
       | select($recipe | index($component))

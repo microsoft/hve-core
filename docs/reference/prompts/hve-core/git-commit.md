@@ -1,8 +1,8 @@
 ---
 title: Git Commit
 description: "Stage all changes, generate a conventional commit message, and commit"
-sidebar_position: 3
-ms.date: 2026-07-16
+sidebar_position: 5
+ms.date: 2026-08-04
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->

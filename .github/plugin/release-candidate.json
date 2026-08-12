@@ -1,0 +1,9 @@
+{
+  "schema": "hve-core/release-candidate/v1",
+  "channel": "",
+  "sourceCommit": "",
+  "baselineTag": "",
+  "version": "",
+  "sourceCatalogDigest": "",
+  "transformedCatalogDigest": ""
+}

@@ -75,7 +75,7 @@ Describe 'New-StimulusIndex' -Tag 'Unit' {
         $instructionKeys = $index.coverage.Keys | Where-Object { $_ -like 'instruction:*' }
         $instructionKeys.Count | Should -BeGreaterOrEqual 30
 
-        $key = 'instruction:ado-backlog-sprint'
+        $key = 'instruction:commit-message'
         $index.coverage.ContainsKey($key) | Should -BeTrue
         $index.coverage[$key] -join ';' | Should -Match 'behavior-conformance/instructions\.eval\.yaml'
     }
@@ -118,7 +118,7 @@ Describe 'Test-StimulusCoverage' -Tag 'Unit' {
     }
 
     It 'Returns covering spec paths for a known instruction backlink' {
-        $paths = Test-StimulusCoverage -Index $script:Index -Kind 'instruction' -ArtifactId 'ado-backlog-sprint'
+        $paths = Test-StimulusCoverage -Index $script:Index -Kind 'instruction' -ArtifactId 'commit-message'
         $paths.Count | Should -BeGreaterOrEqual 1
         ($paths -join ';') | Should -Match 'behavior-conformance/instructions\.eval\.yaml'
     }

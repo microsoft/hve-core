@@ -28,6 +28,7 @@ BeforeAll {
     Mock Write-Host {} -ModuleName PluginHelpers
     Mock Write-Warning {}
     Mock Write-Warning {} -ModuleName PluginHelpers
+    $script:OriginalPluginStagingRoot = $env:HVE_PLUGIN_STAGING_ROOT
 
     function New-TombstoneFixture {
         <#
@@ -103,6 +104,8 @@ BeforeAll {
 Describe 'Removed component tombstones' -Tag 'Unit' {
     BeforeEach {
         $script:tombstoneRepo = Join-Path $TestDrive ([System.Guid]::NewGuid().ToString())
+        $script:tombstoneStagingRoot = Join-Path $TestDrive "$([System.Guid]::NewGuid())-staging"
+        $env:HVE_PLUGIN_STAGING_ROOT = $script:tombstoneStagingRoot
     }
 
     Context 'when the catalog retires components' {
@@ -111,7 +114,7 @@ Describe 'Removed component tombstones' -Tag 'Unit' {
             $script:discoveredTombstones = Get-RemovedComponentTombstone -CatalogPath (Join-Path $script:tombstoneRepo '.github/plugin/marketplace.json')
 
             Invoke-PluginGeneration -RepoRoot $script:tombstoneRepo -Refresh | Out-Null
-            $script:generatedRoot = Join-Path $script:tombstoneRepo 'plugins/security'
+            $script:generatedRoot = Join-Path $script:tombstoneStagingRoot 'security'
             $script:generatedPaths = @(Get-PluginFixtureInventory -Path $script:generatedRoot)
             $script:generatedText = @(Get-ChildItem -LiteralPath $script:generatedRoot -File -Recurse -Force |
                     ForEach-Object { Get-Content -LiteralPath $_.FullName -Raw }) -join "`n"
@@ -165,7 +168,7 @@ Describe 'Removed component tombstones' -Tag 'Unit' {
             New-TombstoneFixture -Root $script:tombstoneRepo -WithoutTombstones | Out-Null
             $script:controlTombstones = Get-RemovedComponentTombstone -CatalogPath (Join-Path $script:tombstoneRepo '.github/plugin/marketplace.json')
             Invoke-PluginGeneration -RepoRoot $script:tombstoneRepo -Refresh | Out-Null
-            $script:controlPaths = @(Get-PluginFixtureInventory -Path (Join-Path $script:tombstoneRepo 'plugins/security'))
+            $script:controlPaths = @(Get-PluginFixtureInventory -Path (Join-Path $script:tombstoneStagingRoot 'security'))
         }
 
         It 'Discovers an empty tombstone set' {
@@ -180,6 +183,7 @@ Describe 'Removed component tombstones' -Tag 'Unit' {
 }
 
 AfterAll {
+    $env:HVE_PLUGIN_STAGING_ROOT = $script:OriginalPluginStagingRoot
     Remove-Module PluginTestFixtures -Force -ErrorAction SilentlyContinue
     Remove-Module PluginHelpers -Force -ErrorAction SilentlyContinue
     Remove-Module CIHelpers -Force -ErrorAction SilentlyContinue

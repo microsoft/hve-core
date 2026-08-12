@@ -124,10 +124,32 @@ $schemaVersion = 2
 # the extension skill-materialization exclusions.
 $excludedSkillPath = '(^|/)(tests|\.venv|\.hypothesis|node_modules|__pycache__|\.ruff_cache|\.pytest_cache)(/|$)|\.pyc$'
 $fieldMap = [ordered]@{
-    agents   = @{ Kind = 'agent'; Root = '.github/agents'; PackageSuffix = '.md'; SourceSuffix = '.agent.md' }
-    commands = @{ Kind = 'prompt'; Root = '.github/prompts'; PackageSuffix = '.md'; SourceSuffix = '.prompt.md' }
-    rules    = @{ Kind = 'instruction'; Root = '.github/instructions'; PackageSuffix = '.instructions.md'; SourceSuffix = '.instructions.md' }
-    skills   = @{ Kind = 'skill'; Root = '.github/skills'; PackageSuffix = ''; SourceSuffix = '' }
+    agents   = @{ Kind = 'agent'; Root = '.github/agents'; CatalogRoot = 'agents'; PackageSuffix = '.md'; SourceSuffix = '.agent.md' }
+    commands = @{ Kind = 'prompt'; Root = '.github/prompts'; CatalogRoot = 'prompts'; PackageSuffix = '.md'; SourceSuffix = '.prompt.md' }
+    rules    = @{ Kind = 'instruction'; Root = '.github/instructions'; CatalogRoot = 'instructions'; PackageSuffix = '.instructions.md'; SourceSuffix = '.instructions.md' }
+    skills   = @{ Kind = 'skill'; Root = '.github/skills'; CatalogRoot = 'skills'; PackageSuffix = ''; SourceSuffix = '' }
+}
+
+# The marketplace catalog stores canonical source identities while installer input
+# and manifests use package form. A path whose root is outside the four installable
+# fields, such as hooks/, carries through unprojected so catalog load never fails.
+function ConvertTo-PackageComponentPath {
+    param([string]$CatalogPath)
+
+    $segments = $CatalogPath -split '/', 2
+    if ($segments.Count -lt 2) { return $CatalogPath }
+    $catalogRoot = $segments[0]
+    $relative = $segments[1]
+    foreach ($field in $fieldMap.Keys) {
+        $descriptor = $fieldMap[$field]
+        if (-not [string]::Equals($descriptor.CatalogRoot, $catalogRoot, [System.StringComparison]::Ordinal)) { continue }
+        if ($descriptor.SourceSuffix) {
+            if (-not $relative.EndsWith($descriptor.SourceSuffix, [System.StringComparison]::Ordinal)) { return $CatalogPath }
+            $relative = "$($relative.Substring(0, $relative.Length - $descriptor.SourceSuffix.Length))$($descriptor.PackageSuffix)"
+        }
+        return "$field/$relative"
+    }
+    return $CatalogPath
 }
 
 $sourceRoot = (Resolve-Path -LiteralPath $HveCoreBasePath).Path
@@ -152,13 +174,15 @@ $entry = $packageEntries[0]
 $componentMaturity = @{}
 if ($entry['x-hve'] -is [System.Collections.IDictionary] -and $entry['x-hve']['componentMaturity'] -is [System.Collections.IDictionary]) {
     foreach ($key in $entry['x-hve']['componentMaturity'].Keys) {
-        $componentMaturity[[string]$key] = [string]$entry['x-hve']['componentMaturity'][$key]
+        $maturityComponent = ConvertTo-PackageComponentPath -CatalogPath ([string]$key)
+        $componentMaturity[$maturityComponent] = [string]$entry['x-hve']['componentMaturity'][$key]
     }
 }
 $membership = [System.Collections.Generic.HashSet[string]]::new([System.StringComparer]::Ordinal)
 foreach ($field in $fieldMap.Keys) {
-    foreach ($packagePath in @($entry[$field])) {
-        if (-not [string]::IsNullOrWhiteSpace([string]$packagePath)) { [void]$membership.Add([string]$packagePath) }
+    foreach ($catalogPathValue in @($entry[$field])) {
+        if ([string]::IsNullOrWhiteSpace([string]$catalogPathValue)) { continue }
+        [void]$membership.Add((ConvertTo-PackageComponentPath -CatalogPath ([string]$catalogPathValue)))
     }
 }
 if ($membership.Count -eq 0) {

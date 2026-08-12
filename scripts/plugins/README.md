@@ -8,12 +8,12 @@ catalog and shared resolved package projection.
 
 ## Scripts
 
-| Script                           | npm Command                | Description                                          |
-|----------------------------------|----------------------------|------------------------------------------------------|
-| Generate-Plugins.ps1             | `npm run plugin:generate`  | Generate plugin directories from marketplace recipes |
-| Validate-Marketplace.ps1         | `npm run lint:marketplace` | Validate marketplace.json plugin manifest            |
-| Assert-PluginReleaseEvidence.ps1 | `npm run plugin:evidence`  | Record or verify deterministic release evidence      |
-| Modules/PluginHelpers.psm1       | (library)                  | Plugin materialization, manifest, and packaging      |
+| Script                           | npm Command                | Description                                     |
+|----------------------------------|----------------------------|-------------------------------------------------|
+| Generate-Plugins.ps1             | `npm run plugin:generate`  | Materialize plugin packages in external staging |
+| Validate-Marketplace.ps1         | `npm run lint:marketplace` | Validate marketplace.json plugin manifest       |
+| Assert-PluginReleaseEvidence.ps1 | `npm run plugin:evidence`  | Record or verify canonical release evidence     |
+| Modules/PluginHelpers.psm1       | (library)                  | Plugin materialization and packaging helpers    |
 
 ## Prerequisites
 
@@ -25,14 +25,18 @@ catalog and shared resolved package projection.
 
 1. Author artifacts in `.github/` (agents, prompts, instructions, skills, hooks)
 2. Declare package membership and metadata in `.github/plugin/marketplace.json`
-3. Run `npm run plugin:generate` to produce `plugins/`
-4. Validate deterministic evidence without staging generated `plugins/`
+3. Run `npm run lint:marketplace` for ordinary non-mutating validation
+4. Materialize packages only when packaging requires them, using an absolute
+  staging root outside the repository
+5. Validate deterministic evidence directly from canonical tracked sources
 
 ## Generated Output
 
 Plugin trees contain only regular files and real directories. No symbolic links
 are created, so generation needs no elevated privileges and no OS-specific
-configuration.
+configuration. Generation requires either `HVE_PLUGIN_STAGING_ROOT` or
+`-StagingRoot` to name an absolute path outside the repository. No default
+points to a workspace `plugins/` directory.
 
 Each declared package source is materialized from the paths git currently
 tracks beneath it. Working-tree bytes are copied, so locally modified tracked
@@ -47,10 +51,18 @@ new artifacts before generating.
 ## Refreshing Plugins After Artifact Changes
 
 ```bash
-npm run plugin:generate
+HVE_PLUGIN_STAGING_ROOT=/absolute/path/outside/hve-core npm run plugin:generate
 ```
 
-This regenerates all plugins from marketplace package recipes.
+To call the generator directly, pass the staging root explicitly:
+
+```powershell
+pwsh -File scripts/plugins/Generate-Plugins.ps1 -StagingRoot /absolute/path/outside/hve-core
+```
+
+These commands regenerate all plugins from marketplace package recipes in the
+selected temporary staging location. Ordinary validation uses
+`npm run lint:marketplace` and does not materialize packages.
 
 ## Marketplace Validation
 
@@ -72,7 +84,7 @@ of the linting pipeline. Pass `-OutputPath ''` to suppress the report file.
 
 ### Entry Source Contract
 
-Every entry uses an immutable GitHub object locator:
+Every entry uses the canonical `.github` source root:
 
 ```json
 {
@@ -80,47 +92,62 @@ Every entry uses an immutable GitHub object locator:
   "source": {
     "source": "github",
     "repo": "microsoft/hve-core",
-    "path": "plugins/rpi",
-    "ref": "plugins-v<version>"
+    "path": ".github"
   }
 }
 ```
 
-The `repo`, `path`, and `ref` fields are required. `path` must be
-`plugins/<package-name>`, and `ref` must match the package version as
-`plugins-v<version>`. Bare package names, moving refs, URL locators, and commit
-SHA locators are rejected.
+The `repo` and `path` fields are required, and `path` must be `.github`.
+Main catalog entries omit `ref`. Prerelease catalog entries use the exact
+`prerelease-v<version>` ref, and release catalog entries use the exact
+`v<version>` ref, each matching the package version. Branch refs, commit SHA
+locators, URL locators, and version-mismatched channel refs are rejected.
 
-## Locator-Aware Catalog Generation
+Moving registrations and immutable catalog locators serve different purposes.
+Use `microsoft/hve-core#release/prerelease` or
+`microsoft/hve-core#release/stable` when following a moving release branch.
+Use `prerelease-v<version>` or `v<version>` when selecting the immutable source
+tree and source SHA used for reproducible evidence.
 
-Default generation reads the immutable object sources from the production
-catalog without rewriting it. Passing an explicit release tag overrides those
-sources in a separate catalog projection:
+Component membership is relative to the `.github` source root:
 
-```bash
-pwsh -File scripts/plugins/Generate-Plugins.ps1 \
-  -ReleaseTag plugins-v<version> \
-  -MarketplaceOutputPath logs/marketplace-snapshot.json
-```
+* `agents/*.agent.md`
+* `prompts/*.prompt.md` under the `commands` field
+* `instructions/*.instructions.md` under the `rules` field
+* `skills/*` directories
+* `hooks/*.json`
 
-Locator override mode requires an explicit `-MarketplaceOutputPath` and refuses
-to write the production catalog. Only the immutable `plugins-v<version>` tag
-form is accepted; commit SHA locators are rejected.
+Generated ZIP paths are host-specific package layout, not catalog membership
+vocabulary.
 
 ## Deterministic Release Evidence
 
-`Assert-PluginReleaseEvidence.ps1` binds the immutable source commit, package
-version, catalog locator, and a digest of the generated package tree into one
-invariant. The digest covers repository-relative package paths and file content
-only, so it reproduces from a clean checkout of the same source commit and never
-compares against committed generated output.
+`Assert-PluginReleaseEvidence.ps1` produces only canonical evidence v2 by
+binding the immutable source commit, package version, exact channel ref
+(`prerelease-v<version>` or `v<version>`), package count, per-package
+non-vacuity and digests, and total digest into one invariant. It derives the
+file sets from declared canonical git-tracked sources, so it needs no generated
+package tree or staging root and reproduces from a clean checkout of the tagged
+commit.
 
 ```bash
-# Record
+# Record PreRelease evidence
 npm run plugin:evidence
 
-# Verify a snapshot against recorded evidence
+# Record Stable evidence explicitly
 pwsh -File scripts/plugins/Assert-PluginReleaseEvidence.ps1 \
+  -Channel Stable \
+  -SourceCommit <source SHA> \
+  -Version <version> \
+  -ReleaseTag v<version> \
+  -OutputPath logs/plugin-release-evidence.json
+
+# Verify Stable evidence against recorded evidence
+pwsh -File scripts/plugins/Assert-PluginReleaseEvidence.ps1 \
+  -Channel Stable \
+  -SourceCommit <source SHA> \
+  -Version <version> \
+  -ReleaseTag v<version> \
   -ExpectedEvidencePath logs/plugin-release-evidence.json
 ```
 
@@ -128,41 +155,22 @@ Verification fails when the source commit, version, locator, package set, or any
 digest disagrees, and when the recorded document is missing, corrupt, or
 incomplete. `-ExpectedPackageCount` adds a package-count precondition.
 
-## Snapshot Publication
+## Release Publication and Historical Snapshots
 
-The `Plugin Snapshot Publish` workflow generates one snapshot from an explicit
-immutable source, stages it as an orphan commit, and verifies the staged tree
-from a fresh clone before any reference is written.
+Release workflows attach `plugin-release-evidence.json` to the
+release for the exact `prerelease-v<version>` or `v<version>` channel ref and
+attest it alongside signed plugin ZIPs, SBOM, Sigstore, and in-toto assets.
+The release and prerelease branch registrations are reviewed and moving; the
+exact tags and their source SHAs are immutable release identities.
 
-Its targets are constrained by `Assert-PluginSnapshotTarget`:
+Future legacy snapshot publication and evidence v1 are retired. Existing
+historical identities, including earlier `hve-core-v` or `plugins-v` tags,
+catalogs, and assets, remain immutable records only. They are not current
+installation, registration, generation, or migration instructions, and they
+are not deleted, moved, rewritten, or migrated by the current release process.
 
-* Branch and tag must start with the disposable prefix `plugins-snapshot/`.
-* `main`, `release/plugins`, and `plugins-v<version>` references are refused.
-* An existing tag is refused rather than overwritten, and no push uses a force
-  flag.
-
-The workflow defaults to `dry-run: true`, which stages and verifies without
-pushing. It never writes the production catalog, and it fails if the catalog
-changed during the run.
-
-### Publication and Recovery Contract
-
-Publication is refused unless every precondition holds:
-
-1. The snapshot contains the complete expected package set, asserted with
-   `-ExpectedPackageCount`.
-2. The source commit, version, locator, and digest agree in recorded evidence.
-3. Archives and attestations match the same snapshot.
-4. Both clients install from the immutable reference and pass a functional
-   component check.
-
-Failure behavior and recovery:
-
-* Any failed precondition leaves release references untouched. Every guard fails
-  before a write.
-* Recovery moves forward by publishing a corrected next immutable tag or by
-  re-pinning to a previously verified immutable tag. Bare sources and tracked
-  generated output are never restored.
+Remote release-asset and installed-client verification are authorized manual
+actions. Local script and documentation checks do not execute or verify them.
 
 ---
 
