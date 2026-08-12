@@ -69,6 +69,8 @@ jobs:
       - name: Run gitleaks scan
         id: gitleaks
         shell: bash
+        env:
+          INPUT_LOG_OPTS: ${{ inputs.log-opts }}
         run: |
           set -euo pipefail
 
@@ -82,7 +84,7 @@ jobs:
             "--log-level" "info"
           )
 
-          LOG_OPTS="${{ inputs.log-opts }}"
+          LOG_OPTS="$INPUT_LOG_OPTS"
           if [ -n "$LOG_OPTS" ]; then
             SCAN_ARGS+=("--log-opts=$LOG_OPTS")
             echo "Scoping scan with log-opts: $LOG_OPTS"

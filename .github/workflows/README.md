@@ -269,13 +269,20 @@ Outputs: SARIF results uploaded to GitHub Security tab, job summary with analysi
 
 #### `dangerous-workflow-scan.yml`
 
-Purpose: Combines a blocking template-injection gate with an advisory Poutine
+Purpose: Combines a blocking workflow-injection gate with an advisory Poutine
 supply-chain scan for GitHub Actions workflows.
 
 Jobs:
 
 * `dangerous-workflow-check`: Runs `Test-DangerousWorkflow.ps1` as the blocking homegrown gate and uploads SARIF under the `dangerous-workflow` category
 * `poutine-scan`: Runs Poutine as an advisory scan by default and uploads SARIF under the `poutine` category
+
+Rules enforced by the homegrown gate:
+
+* `dangerous-workflow/template-injection`: attacker-controllable `github.event.*` and `github.head_ref` values interpolated into `run:` or `actions/github-script` bodies
+* `dangerous-workflow/direct-input-interpolation`: caller-controlled `workflow_call` or `workflow_dispatch` inputs interpolated into the same bodies (control CQ-6). Inputs declared `type: boolean` are the only exception; an input whose declared type cannot be resolved is reported so the gate fails closed. Route every other input through a step-level `env:` mapping named `INPUT_<UPPER_SNAKE>` and read the native shell variable inside the block
+
+Both rules scan `.github/workflows` and `.github/actions`. Composite action inputs have no `type` in the action metadata schema, so any action input reaching a `runs.steps[*].run` body is reported as `untyped` with no exception.
 
 Inputs:
 

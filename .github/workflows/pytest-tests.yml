@@ -40,23 +40,27 @@ jobs:
       - name: Set artifact name
         id: artifact-name
         shell: bash
-        run: echo "name=pytest-results-$(echo '${{ inputs.working-directory }}' | tr '/' '-')" >> "$GITHUB_OUTPUT"
+        env:
+          INPUT_WORKING_DIRECTORY: ${{ inputs.working-directory }}
+        run: echo "name=pytest-results-$(echo "$INPUT_WORKING_DIRECTORY" | tr '/' '-')" >> "$GITHUB_OUTPUT"
 
       - name: Check for Python files
         id: check-python
         if: inputs.changed-files-only
         shell: bash
+        env:
+          INPUT_WORKING_DIRECTORY: ${{ inputs.working-directory }}
         run: |
           # Get base ref for comparison
           BASE_SHA="${{ github.event.pull_request.base.sha || github.event.before }}"
           
           # Check if any Python files changed in the working directory
-          if git diff --name-only "$BASE_SHA" HEAD | grep -q "^${{ inputs.working-directory }}/.*\.py$"; then
+          if git diff --name-only "$BASE_SHA" HEAD | grep -q "^${INPUT_WORKING_DIRECTORY}/.*\.py$"; then
             echo "has_changes=true" >> "$GITHUB_OUTPUT"
-            echo "Python files changed in ${{ inputs.working-directory }}"
+            echo "Python files changed in $INPUT_WORKING_DIRECTORY"
           else
             echo "has_changes=false" >> "$GITHUB_OUTPUT"
-            echo "No Python files changed in ${{ inputs.working-directory }}"
+            echo "No Python files changed in $INPUT_WORKING_DIRECTORY"
           fi
 
       - name: Install uv
@@ -75,12 +79,14 @@ jobs:
         if: "!inputs.changed-files-only || steps.check-python.outputs.has_changes == 'true'"
         working-directory: ${{ inputs.working-directory }}
         shell: bash
+        env:
+          INPUT_WORKING_DIRECTORY: ${{ inputs.working-directory }}
         run: |
           if [ -f "pyproject.toml" ]; then
             echo "Installing dependencies with uv sync --locked"
             uv sync --locked --dev
           else
-            echo "No pyproject.toml found in ${{ inputs.working-directory }}"
+            echo "No pyproject.toml found in $INPUT_WORKING_DIRECTORY"
             echo "Skipping dependency installation"
           fi
 
