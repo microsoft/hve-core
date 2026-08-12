@@ -69,3 +69,35 @@ def test_assert_target_allowed_blocks_bind_all_address() -> None:
 def test_assert_target_allowed_permits_bind_all_when_allowlisted() -> None:
     assert_target_allowed({"baseUrl": "http://0.0.0.0:3000", "allowlist": ["0.0.0.0"]})
     assert_target_allowed({"baseUrl": "http://0.0.0.0:3000"}, allow_external=True)
+
+
+def test_assert_target_allowed_honours_url_shaped_allowlist_entries() -> None:
+    # A URL-shaped entry authorizes its own host rather than being silently
+    # inert, which previously left an operator believing a host was allowed.
+    assert_target_allowed(
+        {
+            "baseUrl": "https://docs.example.com/guide",
+            "allowlist": ["https://docs.example.com/guide"],
+        }
+    )
+    assert_target_allowed(
+        {
+            "baseUrl": "https://staging.example.com",
+            "allowlist": ["https://*.example.com/"],
+        }
+    )
+
+    with pytest.raises(ScriptError):
+        assert_target_allowed(
+            {
+                "baseUrl": "https://evil.example.net",
+                "allowlist": ["https://docs.example.com/guide"],
+            }
+        )
+
+
+def test_probe_visual_review_server_and_guard_agree_on_loopback() -> None:
+    # One definition of loopback: a host the guard refuses must not be probed.
+    from runtime_a11y import __main__ as cli
+
+    assert cli._probe_visual_review_server("http://0.0.0.0:3000") is False

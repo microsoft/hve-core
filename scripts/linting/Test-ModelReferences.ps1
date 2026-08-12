@@ -150,10 +150,13 @@ function Invoke-ModelReferenceValidation {
         if ($m.provider) { $providerLookup[$m.name] = $m.provider }
     }
 
-    # Find all agent and prompt files
+    # Find all agent and prompt files. A skill may vendor its own runtime
+    # dependencies, and those packages can ship their own agent and prompt files;
+    # those belong to the dependency rather than to this repository.
     $agentFiles = Get-ChildItem -Path $ScanPath -Recurse -Filter '*.agent.md' -ErrorAction SilentlyContinue
     $promptFiles = Get-ChildItem -Path $ScanPath -Recurse -Filter '*.prompt.md' -ErrorAction SilentlyContinue
-    $allFiles = @($agentFiles) + @($promptFiles) | Where-Object { $null -ne $_ }
+    $allFiles = @($agentFiles) + @($promptFiles) |
+        Where-Object { $null -ne $_ -and $_.FullName -notmatch '[\\/](node_modules|\.venv)[\\/]' }
 
     $results = @()
     $warnings = @()

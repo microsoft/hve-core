@@ -39,11 +39,15 @@ The Accessibility Reviewer is an orchestrator agent that audits a codebase again
 
 ## Modes and Inputs
 
+:::table{caption="Review modes and the inputs each mode accepts"}
+
 | Mode    | Behavior                                                                      | Key inputs                           |
 |---------|-------------------------------------------------------------------------------|--------------------------------------|
 | `audit` | Profiles the full codebase, assesses applicable skills, and verifies findings | Optional path focus, skills override |
 | `diff`  | Assesses only the changed files, then verifies findings                       | Changed files                        |
 | `plan`  | Assesses a plan document and passes findings through without verification     | Plan document                        |
+
+:::
 
 Additional inputs accepted across modes include an optional path focus, a skills-list override, a target skill (which fast-paths past the profiler), and a prior scan report.
 

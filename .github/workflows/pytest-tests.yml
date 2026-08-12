@@ -42,7 +42,9 @@ jobs:
         shell: bash
         env:
           INPUT_WORKING_DIRECTORY: ${{ inputs.working-directory }}
-        run: echo "name=pytest-results-$(echo "$INPUT_WORKING_DIRECTORY" | tr '/' '-')" >> "$GITHUB_OUTPUT"
+        run: |
+          set -euo pipefail
+          echo "name=pytest-results-$(echo "$INPUT_WORKING_DIRECTORY" | tr '/' '-')" >> "$GITHUB_OUTPUT"
 
       - name: Check for Python files
         id: check-python
@@ -50,10 +52,9 @@ jobs:
         shell: bash
         env:
           INPUT_WORKING_DIRECTORY: ${{ inputs.working-directory }}
+          BASE_SHA: ${{ github.event.pull_request.base.sha || github.event.before }}
         run: |
-          # Get base ref for comparison
-          BASE_SHA="${{ github.event.pull_request.base.sha || github.event.before }}"
-          
+          set -euo pipefail
           # Check if any Python files changed in the working directory
           if git diff --name-only "$BASE_SHA" HEAD | grep -q "^${INPUT_WORKING_DIRECTORY}/.*\.py$"; then
             echo "has_changes=true" >> "$GITHUB_OUTPUT"
@@ -82,6 +83,7 @@ jobs:
         env:
           INPUT_WORKING_DIRECTORY: ${{ inputs.working-directory }}
         run: |
+          set -euo pipefail
           if [ -f "pyproject.toml" ]; then
             echo "Installing dependencies with uv sync --locked"
             uv sync --locked --dev
@@ -90,11 +92,25 @@ jobs:
             echo "Skipping dependency installation"
           fi
 
+      - name: Set up Node for skill-local runtimes
+        if: "!inputs.changed-files-only || steps.check-python.outputs.has_changes == 'true'"
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: '24'
+
+      - name: Install skill-local Node dependencies
+        if: "!inputs.changed-files-only || steps.check-python.outputs.has_changes == 'true'"
+        shell: bash
+        env:
+          SEARCH_ROOT: ${{ inputs.working-directory }}
+        run: ./scripts/ci/install-skill-node-deps.sh
+
       - name: Run pytest with coverage
         if: "!inputs.changed-files-only || steps.check-python.outputs.has_changes == 'true'"
         working-directory: ${{ inputs.working-directory }}
         shell: bash
         run: |
+          set -euo pipefail
           if [ -f "pyproject.toml" ]; then
             echo "Running pytest with coverage"
             uv run pytest --cov --cov-report=xml:coverage.xml --cov-report=term-missing -v

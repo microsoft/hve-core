@@ -1,0 +1,186 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://microsoft.github.io/hve-core/accessibility/aria-at-catalog.schema.json",
+  "title": "ARIA-AT catalog",
+  "type": "object",
+  "required": ["catalogVersion", "mappings"],
+  "properties": {
+    "catalogVersion": {
+      "type": "string",
+      "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$"
+    },
+    "mappings": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/mapping" }
+    }
+  },
+  "additionalProperties": false,
+  "$defs": {
+    "source": {
+      "type": "object",
+      "required": [
+        "canonicalUrl",
+        "immutableUrl",
+        "patternUrl",
+        "exampleUrl",
+        "upstreamRepositoryPath",
+        "upstreamRepositoryUrl",
+        "upstreamRepositoryFileUrl",
+        "upstreamSha",
+        "catalogVersion"
+      ],
+      "properties": {
+        "canonicalUrl": { "type": "string", "format": "uri" },
+        "immutableUrl": { "type": "string", "format": "uri" },
+        "patternUrl": { "type": "string", "format": "uri" },
+        "exampleUrl": { "type": "string", "format": "uri" },
+        "ariaAtReportsUrl": {
+          "type": ["string", "null"],
+          "format": "uri"
+        },
+        "upstreamRepositoryPath": { "type": "string", "minLength": 1 },
+        "upstreamRepositoryUrl": { "type": "string", "format": "uri" },
+        "upstreamRepositoryFileUrl": { "type": "string", "format": "uri" },
+        "upstreamSha": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{40}$"
+        },
+        "catalogVersion": {
+          "type": "string",
+          "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$"
+        }
+      },
+      "additionalProperties": false
+    },
+    "command": {
+      "type": "object",
+      "required": ["kind"],
+      "properties": {
+        "kind": { "type": "string", "enum": ["command", "pause", "keyboard", "key"] },
+        "value": { "type": "string", "minLength": 1 },
+        "durationMs": { "type": "integer", "minimum": 0 }
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "kind": { "const": "pause" } } },
+          "then": { "required": ["durationMs"] },
+          "else": { "required": ["value"] }
+        }
+      ],
+      "additionalProperties": false
+    },
+    "assertion": {
+      "type": "object",
+      "required": ["type", "value"],
+      "properties": {
+        "type": { "type": "string", "enum": ["contains", "matches", "orderedContains"] },
+        "value": { "type": "string", "minLength": 1 }
+      },
+      "additionalProperties": false
+    },
+    "variant": {
+      "type": "object",
+      "required": [
+        "id",
+        "at",
+        "platform",
+        "automationEligible",
+        "automationExclusionReason",
+        "commands",
+        "assertions"
+      ],
+      "properties": {
+        "id": { "type": "string" },
+        "at": { "type": "string", "enum": ["nvda", "jaws"] },
+        "platform": { "type": "string" },
+        "automationEligible": { "type": "boolean" },
+        "automationExclusionReason": { "type": "string" },
+        "commands": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/command" }
+        },
+        "assertions": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/assertion" }
+        },
+        "manualEvidenceRequired": { "type": "boolean" },
+        "manualCommandGuidance": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 }
+        },
+        "functionalExpectation": { "type": "string", "minLength": 1 },
+        "runbookReference": { "type": "string", "minLength": 1 },
+        "manualEvidence": {
+          "type": "object",
+          "properties": {
+            "jawsVersion": { "type": "string", "minLength": 1 },
+            "browserVersion": { "type": "string", "minLength": 1 },
+            "windowsVersion": { "type": "string", "minLength": 1 },
+            "interactionMode": { "type": "string", "minLength": 1 },
+            "commandsPerformed": {
+              "type": "array",
+              "items": { "type": "string", "minLength": 1 }
+            },
+            "observedOutput": { "type": "string", "minLength": 1 },
+            "tester": { "type": "string", "minLength": 1 },
+            "date": { "type": "string", "minLength": 1 },
+            "evidenceUri": { "type": "string", "minLength": 1 },
+            "notes": { "type": "string", "minLength": 1 }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+    "mapping": {
+      "type": "object",
+      "required": [
+        "id",
+        "pattern",
+        "state",
+        "upstreamTestId",
+        "functionalExpectations",
+        "adaptationNotes",
+        "automationEligible",
+        "automationExclusionReason",
+        "source",
+        "commands",
+        "assertions",
+        "variants"
+      ],
+      "properties": {
+        "id": { "type": "string" },
+        "pattern": { "type": "string" },
+        "state": { "type": "string" },
+        "upstreamTestId": { "type": "string" },
+        "functionalExpectations": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "type": "string" }
+        },
+        "adaptationNotes": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "type": "string" }
+        },
+        "automationEligible": { "type": "boolean" },
+        "automationExclusionReason": { "type": "string" },
+        "source": { "$ref": "#/$defs/source" },
+        "commands": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/command" }
+        },
+        "assertions": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/assertion" }
+        },
+        "variants": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/variant" }
+        }
+      },
+      "additionalProperties": false
+    }
+  }
+}

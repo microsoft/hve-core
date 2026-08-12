@@ -58,6 +58,7 @@
     "lint:py:fix": "pwsh -NoProfile -File ./scripts/linting/Invoke-PythonLint.ps1 -Fix -OutputPath logs/python-lint-fix-results.json",
     "test:py": "pwsh -NoProfile -File ./scripts/linting/Invoke-PythonTests.ps1 -OutputPath logs/python-test-results.json",
     "test:node": "node --test",
+    "ci:test:a11y:smoke": "node --test \".github/skills/accessibility/accessibility/tests/runtime_a11y/runner/probe-smoke/*.smoke.mjs\"",
     "plugin:postprocess": "markdownlint-cli2 \"docs/plugins/*.md\" --fix && markdown-table-formatter \"docs/plugins/*.md\"",
     "plugin:generate": "pwsh -File scripts/plugins/Generate-Plugins.ps1 && npm run plugin:postprocess",
     "plugin:evidence": "pwsh -File scripts/plugins/Assert-PluginReleaseEvidence.ps1 -OutputPath logs/plugin-release-evidence.json",

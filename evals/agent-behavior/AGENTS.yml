@@ -3,6 +3,10 @@
 generated_at: 2026-08-07T03:26:38Z
 generator: 'scripts/evals/Build-AgentInventory.ps1'
 agents:
+  - slug: accessibility-framework-assessor
+    path: '.github/agents/accessibility/subagents/accessibility-framework-assessor.agent.md'
+    class: unknown
+    cost_tier: light
   - slug: accessibility-planner
     path: '.github/agents/accessibility/accessibility-planner.agent.md'
     class: unknown
