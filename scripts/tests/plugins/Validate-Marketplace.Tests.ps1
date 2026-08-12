@@ -514,25 +514,24 @@ Describe 'Test-MarketplaceRepositoryContract' -Tag 'Unit' {
         }
     }
 
-    Context 'when a generated plugin manifest is present' {
-        It 'Reports a manifest that does not mirror catalog identity' {
+    Context 'when the shared source manifest defines the catalog root' {
+        It 'Accepts a repository that owns .github/plugin.json' {
             New-ValidatorFixture -Root $script:contractRepo | Out-Null
-            Add-PluginFixtureFile -RepoRoot $script:contractRepo -RelativePath 'plugins/rpi/plugin.json' `
-                -Content '{"name":"rpi","version":"1.0.0"}' -Untracked | Out-Null
+            Join-Path $script:contractRepo '.github/plugin.json' | Should -Exist
 
             $run = Get-ValidationReport -Root $script:contractRepo
-            (Get-ReportError -Report $run.Report) -join ' ' |
-                Should -Match "repository contract: package 'rpi' root plugin\.json identity does not mirror the catalog"
+            $run.Outcome.Success | Should -BeTrue
+            $run.Outcome.ErrorCount | Should -Be 0
         }
 
-        It 'Reports a manifest that carries the catalog overlay' {
+        It 'Reports an absent shared source manifest' {
             New-ValidatorFixture -Root $script:contractRepo | Out-Null
-            Add-PluginFixtureFile -RepoRoot $script:contractRepo -RelativePath 'plugins/rpi/plugin.json' `
-                -Content '{"name":"rpi","version":"9.9.9","x-hve":{"displayName":"Contoso - rpi"}}' -Untracked | Out-Null
+            Remove-Item -LiteralPath (Join-Path $script:contractRepo '.github/plugin.json') -Force
 
             $run = Get-ValidationReport -Root $script:contractRepo
+            $run.Outcome.Success | Should -BeFalse
             (Get-ReportError -Report $run.Report) -join ' ' |
-                Should -Match "repository contract: package 'rpi' root plugin\.json must not contain x-hve"
+                Should -Match "repository contract: shared plugin manifest '\.github/plugin\.json' must exist"
         }
     }
 
