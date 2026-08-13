@@ -60,7 +60,7 @@ Use `requirements-author` when the outcome is understood and the task is to crea
    * Before delivery, verify that Background, Expected Outcomes, Validation & Measurement, Assumptions & Risks, and Open Questions & Resolution Gaps are present; every Amber or Red pillar has a gap row; and every failed draft rule has its exact adjacent warning.
    * If OH.1, OH.2, OH.3, OH.7, or OH.8 fails, label the hypothesis not investable and recommend returning to discovery.
 5. Deliver before persisting.
-   * Present the complete document inline.
+   * For Ready or Provisional, present the complete document inline. For Investigate, present the blocking pillars and targeted discovery actions instead.
    * Summarize readiness, investability, confidence, the top three gaps, and recommended next actions.
    * Offer to save only after presenting the draft. If the user accepts, ask for the destination.
    * Use `yyyy-mm-dd-<short-slug>.md` when saving unless the user specifies another name.
