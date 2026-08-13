@@ -2,7 +2,7 @@
 title: outcome-hypothesis
 description: "Create or assess an evidence-grounded, falsifiable outcome hypothesis: a testable prediction of what measurable business result will change, for whom, by when, and how leading and lagging indicators will prove or disprove it. Use when framing measurable outcomes, turning an MVP, POC, feature, or technical initiative into a beneficiary result, defining targets and indicators, or judging whether evidence is strong enough to invest. Also applies to business outcome hypotheses, value hypotheses, and outcome statements."
 sidebar_position: 8
-ms.date: 2026-08-12
+ms.date: 2026-08-13
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->
@@ -29,18 +29,18 @@ Use `requirements-author` instead when the outcome is already understood and the
 
 ## How to use it
 
-Invoke `/outcome-hypothesis` with the relevant evidence sources or an existing statement to assess. The skill scores seven readiness dimensions before drafting, then produces a Full Outcome Hypothesis, a Provisional Outcome Hypothesis with explicit gaps, or an Investigation response. It validates drafts against OH.0-OH.12 and identifies critical failures that make a hypothesis not investable.
+Invoke `/outcome-hypothesis` with the relevant evidence sources and choose create or assess mode. Create mode scores seven readiness dimensions before producing a Full Outcome Hypothesis, a Provisional Outcome Hypothesis with explicit gaps, or an Investigation response. Assess mode preserves the supplied statement, then reports the D1-D7 readiness decision and OH.0-OH.12 findings separately. Both modes identify critical failures that make a hypothesis not investable.
 
-Review the complete result in chat before asking to save it. Unknown baselines, targets, owners, stakeholders, sources, and dates remain explicit gaps rather than inferred values.
+Review a created draft in chat before asking to save it. Assessment does not revise or persist the supplied statement; request a revised draft separately when needed. Unknown baselines, targets, owners, stakeholders, sources, and dates remain explicit gaps rather than inferred values.
 
 ## Example usage
 
 ```text
 /outcome-hypothesis
 
-Assess the onboarding outcome described in our discovery notes. The product
+Create an onboarding outcome hypothesis from our discovery notes. The product
 dashboard shows 42% activation for mid-market support administrators, and the
 approved target is 60% within 90 days of guided setup launch.
 ```
 
-The skill first presents the D1-D7 scorecard and readiness route. It then returns the appropriate hypothesis or investigation response, including measurable indicators, the outcome chain, assumptions, falsification criteria, validation warnings, and unresolved evidence gaps.
+The skill first presents the D1-D7 scorecard and readiness route. In create mode, it then returns a Full or Provisional Outcome Hypothesis when readiness permits, including measurable indicators, validation warnings, investability, confidence, and unresolved evidence gaps.

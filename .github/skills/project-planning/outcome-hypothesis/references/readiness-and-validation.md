@@ -4,7 +4,7 @@ description: "Readiness scoring, validation rules, investability gates, and corr
 
 # Readiness and Validation
 
-Use this reference during readiness scoring and draft validation. Apply readiness rules and validation rules in their listed order.
+Use this reference during readiness scoring and create or assess validation. Apply readiness rules and validation rules in their listed order.
 
 ## D1-D7 Scorecard
 
@@ -26,7 +26,7 @@ Assign one status to each pillar:
 
 When a pillar evaluates multiple required facts, assign the least-ready status among them. A missing required fact makes that pillar Red even when another fact in the same pillar is evidenced.
 
-Show the scorecard before drafting:
+Show the scorecard before drafting or reporting assessment findings:
 
 | Pillar                   | Status              | Source / Gap                    |
 |--------------------------|---------------------|---------------------------------|
@@ -51,11 +51,13 @@ The decisions mean:
 
 * Ready to author: Draft a Full Outcome Hypothesis.
 * Provisional: Draft a Provisional Outcome Hypothesis with explicit resolution gaps.
-* Investigate: Do not draft. Name blocking pillars, propose targeted discovery actions, and return to evidence gathering.
+* Investigate: Do not draft. Name blocking pillars and propose targeted discovery actions. A read-only assessment of supplied content may continue.
 
-A current D1-D7 scorecard must exist before drafting.
+A current D1-D7 scorecard must exist before drafting or reporting assessment findings.
 
 ## Provisional Content
+
+This section applies to create mode.
 
 Use Status `Provisional` and Confidence `Low`.
 
@@ -67,15 +69,33 @@ Do not invent an owner or date. Every Amber and Red pillar must appear in Open Q
 
 ## Validation Procedure
 
-Apply OH.0-OH.12 in order. OH.0 is a precondition: when it fails, emit its warning in chat and stop without a draft. For every OH.1-OH.12 failure, add a warning immediately after the affected section and repeat it in chat:
+Apply OH.0-OH.12 in order after scoring D1-D7.
+
+### Create validation
+
+OH.0 passes when a current D1-D7 scorecard exists and readiness is Ready or Provisional. When it fails, emit its warning in chat and stop without a draft. For every OH.1-OH.12 failure, add a warning immediately after the affected section and repeat it in chat:
 
 > **VALIDATION WARNING: Rule OH.X**: `<description>`
 
 Use the failed rule's Requirement text as the warning description. When multiple rules fail in one section, emit one warning per rule in numeric order.
 
+### Assess validation
+
+OH.0 passes when a supplied hypothesis or outcome document is present. Any readiness result, including Investigate, is permitted because assessment does not authorize a replacement draft. When OH.0 fails, ask for the document and stop without further validation.
+
+Preserve the supplied content unchanged. Apply OH.1-OH.12 to that content and report every result in numeric order:
+
+| Rule | Result      | Evidence or location          | Gap or correction                  |
+|------|-------------|-------------------------------|------------------------------------|
+| OH.X | Pass / Fail | Section, statement, or Missing | Specific gap or correction / None |
+
+Use `Fail` when required content is missing or unsupported. Do not insert validation warnings into the supplied document. Offer a revised draft only after reporting the complete assessment and only as a separate create or revision request.
+
+### Validation rules
+
 | Rule  | Section                          | Requirement                                                                                                                                                                                                                                                                                                                   |
 |-------|----------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| OH.0  | Precondition                     | A current D1-D7 scorecard exists and readiness is Ready or Provisional. Return to discovery when no scorecard exists; do not draft for Investigate.                                                                                                                                                                           |
+| OH.0  | Precondition                     | Create: a current D1-D7 scorecard exists and readiness is Ready or Provisional; return to discovery when no scorecard exists and do not draft for Investigate. Assess: a supplied hypothesis or outcome document is present; any readiness result is permitted and no replacement draft is produced.                         |
 | OH.1  | Expected Outcomes                | The multi-line form contains Due to, We believe that, Will result in, Observable by, Within, and Validated by with at least one leading and one lagging target. A tightly scoped pilot sub-hypothesis may instead name intervention, beneficiary, KPI baseline and target, timeframe, and measurement method in one sentence. |
 | OH.2  | Expected Outcomes                | Every indicator target is a concrete number with units. Vague qualifiers fail.                                                                                                                                                                                                                                                |
 | OH.3  | Expected Outcomes                | The timeframe is a specific window anchored to an event or date.                                                                                                                                                                                                                                                              |
@@ -105,14 +125,14 @@ Require at least one leading and one lagging indicator. Allow one or two additio
 
 Targets and timeframes belong in the canonical statement. The indicator table adds operational definition, baseline, source, and owner.
 
-Draw this chain:
+In create mode, draw this chain. In assess mode, evaluate whether the supplied content contains the chain:
 
 * Business outcome
   * Lagging indicator
     * Leading indicator or indicators
       * Technical intervention or interventions
 
-If the chain breaks because evidence is missing, return to evidence gathering. If the logic is inconsistent, redraft before delivery.
+If the chain breaks because evidence is missing, return to evidence gathering. In create mode, redraft inconsistent logic before delivery. In assess mode, fail OH.8 and report the inconsistency without rewriting it.
 
 ## Assumptions and Falsification
 
@@ -125,6 +145,8 @@ Define:
 * Exit or pivot criteria
 
 ## Common Failure Corrections
+
+In create mode, apply these corrections before delivery. In assess mode, report the applicable correction without changing the supplied content.
 
 | Failure                                          | Correction                                                                                          |
 |--------------------------------------------------|-----------------------------------------------------------------------------------------------------|
@@ -139,6 +161,7 @@ Define:
 
 * Never fabricate baselines, targets, owners, stakeholder names, sources, or dates.
 * Never bypass or hide the readiness scorecard.
-* Never draft for an Investigate decision.
+* Never draft for an Investigate decision. A read-only assessment may continue.
 * Never infer inaccessible or protected source content.
-* Never persist before presenting the complete inline draft and obtaining destination confirmation.
+* Never persist a created draft before presenting it inline and obtaining destination confirmation.
+* Never alter supplied content during assessment.
