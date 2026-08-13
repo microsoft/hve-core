@@ -1,8 +1,8 @@
 ---
 title: gitlab
 description: Manage GitLab merge requests and pipelines with a Python CLI
-sidebar_position: 6
-ms.date: 2026-08-06
+sidebar_position: 7
+ms.date: 2026-08-11
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->

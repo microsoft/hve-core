@@ -1,0 +1,8 @@
+<!-- BEGIN FEASIBILITY-STUDY-INTERCHANGE -->
+```yaml
+base: &anchor
+  a: 1
+merged:
+  <<: *anchor
+```
+<!-- END FEASIBILITY-STUDY-INTERCHANGE -->

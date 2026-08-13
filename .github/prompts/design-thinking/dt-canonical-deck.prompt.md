@@ -44,7 +44,7 @@ Once slug is resolved, establish these paths:
 
 Run the asset-readiness check from `canonical-deck.md` first. When no DT method outputs map to a supported canonical artifact type, make no offer, say what is missing, and stop.
 
-When assets are ready, offer snapshot creation or refresh at the Method 3 and Method 5 exits:
+When assets are ready, offer snapshot creation or refresh at the Method 3 and Method 5 exits defined in `canonical-deck.md`:
 
 > We can snapshot the canonical deck now so your current artifacts stay traceable. Generate or refresh now?
 

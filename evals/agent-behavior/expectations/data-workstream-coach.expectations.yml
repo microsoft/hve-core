@@ -1,0 +1,156 @@
+# Copyright (c) 2026 Microsoft Corporation. All rights reserved.
+# SPDX-License-Identifier: MIT
+slug: data-workstream-coach
+class: planner-coach
+agent_file: .github/agents/data-science/data-workstream-coach.agent.md
+stimulus_file: evals/agent-behavior/stimuli/data-workstream-coach.yml
+source_review_date: 2026-08-03
+
+expectations:
+  - expectation_id: foundation-loaded-explicitly
+    summary: Initialization and resume explicitly load the foundation and the state reference.
+    signal: Output names `data-workstream-foundation` and its session-state protocol before state action.
+    pass_criteria: |
+      The response loads `data-workstream-foundation` at initialization and
+      resume and uses its `session-state.md` reference before validating,
+      mutating, recovering, reconstructing, or resuming state.
+    failure_modes:
+      - Assumes the foundation is injected automatically.
+      - Reproduces a competing state schema in the agent response.
+    priority: high
+    contract_ref: "agent §Foundation loading"
+
+  - expectation_id: authoritative-state-path
+    summary: State uses the foundation-defined project-scoped session path.
+    signal: Output reports `.copilot-tracking/ds/<project-slug>/session-state.md`.
+    pass_criteria: |
+      When a path is requested, it is project scoped under
+      `.copilot-tracking/ds/` and ends in `session-state.md`; no planner JSON or
+      alternative session root is proposed.
+    failure_modes:
+      - Uses `state.json`.
+      - Uses a session root outside `.copilot-tracking/ds/` or a slug-less path.
+    priority: high
+    contract_ref: "foundation references/session-state.md §Authoritative location"
+
+  - expectation_id: disclaimer-once
+    summary: New or unconfirmed state displays the Data-Science disclaimer once and persists its timestamp.
+    signal: Output includes the CAUTION disclaimer behavior and immutable timestamp rule.
+    pass_criteria: |
+      The disclaimer appears when `disclaimerShownAt` is unavailable or null,
+      then the timestamp is persisted once and not overwritten on valid resume.
+    failure_modes:
+      - Omits the disclaimer for new state.
+      - Repeats it when a valid timestamp exists.
+      - Treats an unconfirmed reconstructed timestamp as authoritative.
+    priority: high
+    contract_ref: "agent §Initialize or resume; foundation session-state §Disclaimer state"
+
+  - expectation_id: explicit-job-selection
+    summary: The coach offers jobs and waits for the user to select one.
+    signal: Output names relevant jobs with classes or outputs and asks for selection.
+    pass_criteria: No foreground job becomes active before explicit user confirmation.
+    failure_modes:
+      - Defaults silently to catalog or feasibility.
+      - Infers a job from topic language and begins work.
+    priority: high
+    contract_ref: "agent §Job routing"
+
+  - expectation_id: confirmed-class-specific-transition
+    summary: Job transitions name source, destination, rule, disposition, and carryover before confirmation.
+    signal: Output asks for confirmation and uses a class-specific outgoing disposition.
+    pass_criteria: |
+      A transition is applied only after confirmation and records `completed`
+      or `discarded-cleanly` for episodic, `paused` or `complete` for bounded,
+      or `flushed` for continuous work in `job_log`.
+    failure_modes:
+      - Switches silently.
+      - Uses a generic switched disposition.
+      - Pauses bounded work without phase and gate state.
+    priority: high
+    contract_ref: "foundation references/transition-protocol.md"
+
+  - expectation_id: lifecycle-completion-without-session-end
+    summary: Episodic and bounded work can complete inside the continuing session.
+    signal: Output persists invocation or terminal state and offers next actions.
+    pass_criteria: |
+      Completion does not auto-advance or end the coaching identity. A later
+      resume reports completed work and does not re-enter it without an explicit
+      revision or new-invocation request.
+    failure_modes:
+      - Repeats a completed episodic invocation on resume.
+      - Resets completed bounded work to active.
+      - Selects the next job automatically.
+    priority: high
+    contract_ref: "foundation references/lifecycle-classes.md §Session completion boundary"
+
+  - expectation_id: continuous-restoration
+    summary: Continuous catalog context restores from its durable artifact.
+    signal: Resume announcement names active catalog context and paused bounded work.
+    pass_criteria: The coach announces restored continuous and paused context before asking a job-specific question.
+    failure_modes:
+      - Treats continuous catalog work as complete.
+      - Ignores paused bounded work.
+    priority: medium
+    contract_ref: "foundation references/lifecycle-classes.md §Continuous jobs"
+
+  - expectation_id: reconstruction-confirmed-before-write
+    summary: Missing or corrupt state is reconstructed from durable evidence and confirmed before replacement.
+    signal: Output distinguishes evidence, inference, uncertainty, and user confirmation.
+    pass_criteria: |
+      Corrupt input is preserved when practical, reconstructed fields are
+      summarized, project identity is checked, and state is not created,
+      replaced, or resumed before confirmation.
+    failure_modes:
+      - Silently restarts.
+      - Infers gate approval or disclaimer acknowledgment from artifacts.
+      - Overwrites corrupt state before confirmation.
+    priority: high
+    contract_ref: "foundation references/session-state.md §Reconstruction protocol"
+
+  - expectation_id: seven-skill-boundaries
+    summary: Job routing preserves the seven Data Science skill authorities.
+    signal: Output routes concerns to the named owner rather than blending methods.
+    pass_criteria: |
+      Catalog, DataOps, feasibility, analysis authoring, AI-system evaluation
+      design, general experiment design, and ML experimentation concerns route
+      to `ds-catalog`, `ds-dataops`, `ds-feasibility`, `ds-analysis-authoring`,
+      `ds-evaluation-design`, `experiment-design`, and `ml-experimentation`
+      respectively. A supporting skill contributes within its own authority
+      without taking over the active job.
+    failure_modes:
+      - Uses `experiment-design` for ML tracking setup.
+      - Lets `ds-dataops` decide sensitivity classification.
+      - Routes AI-agent evaluation dataset design to `ml-experimentation`.
+      - Lets a supporting skill mutate coach state or switch jobs.
+    priority: high
+    contract_ref: "foundation references/job-registry.md §Seven-skill boundaries"
+
+  - expectation_id: skill-primary-analysis-and-evaluation
+    summary: Analysis and evaluation jobs are performed through their owning skill rather than delegated to a specialist agent.
+    signal: Output names `ds-analysis-authoring` or `ds-evaluation-design` and proceeds to produce the job output.
+    pass_criteria: |
+      A confirmed analysis job routes to `ds-analysis-authoring` and a confirmed
+      evaluation job routes to `ds-evaluation-design`. The coach produces the
+      durable output itself after user confirmation rather than handing the job
+      to a separate specialist agent.
+    failure_modes:
+      - Names a retired specialist agent as the owner of analysis or evaluation work.
+      - Declines to produce the deliverable on the grounds that coaching excludes doing the work.
+      - Selects analysis or evaluation without explicit user confirmation.
+    priority: high
+    contract_ref: "agent §Job routing; foundation references/job-registry.md §Registry"
+
+  - expectation_id: durable-write-scan-gate
+    summary: Every durable customer-artifact write is scanned in data mode first.
+    signal: Output describes scan-before-write, blocking high findings, and warning review.
+    pass_criteria: |
+      High-confidence findings block the write and expose only masked detail;
+      warning-only findings are surfaced for user review. An unavailable data
+      scanner also blocks the customer-artifact write.
+    failure_modes:
+      - Writes before scanning.
+      - Echoes raw matched content.
+      - Continues when scanner data mode is unavailable.
+    priority: high
+    contract_ref: "agent §Durable-write safety; foundation references/flow-state.md §Durable-write gate"
