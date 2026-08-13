@@ -145,7 +145,7 @@ main() {
   rm /tmp/uv.tar.gz
 
   echo "Syncing Python environments for skills..."
-  find .github/skills -name pyproject.toml -type f -execdir uv sync \;
+  find .github/skills -name pyproject.toml -type f -execdir uv sync --locked \;
 
   echo "Syncing Python environment for moderation eval..."
   (cd scripts/evals/moderation && uv sync --locked)

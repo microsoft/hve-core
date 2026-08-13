@@ -3,7 +3,7 @@ title: Build Workflows
 description: GitHub Actions CI/CD pipeline architecture for validation, security, and release automation
 sidebar_position: 3
 author: WilliamBerryiii
-ms.date: 2026-08-10
+ms.date: 2026-08-13
 ms.topic: overview
 ---
 
@@ -120,7 +120,7 @@ Individual validation workflows called by orchestration workflows:
 | `plugin-package.yml`                  | Plugin packaging                                 | N/A                                      |
 | `plugin-validation.yml`               | Marketplace package metadata and closure         | `npm run lint:marketplace`               |
 | `extension-marketplace-publish.yml`   | Extension marketplace publishing                 | N/A                                      |
-| `python-lint.yml`                     | Python linting (ruff)                            | `npm run lint:py`                        |
+| `python-lint.yml`                     | Python lint and format checks (ruff)             | `npm run lint:py`                        |
 | `pytest-tests.yml`                    | Python unit tests                                | `npm run test:py`                        |
 | `pip-audit.yml`                       | Python dependency auditing                       | N/A (pip-audit direct)                   |
 | `fuzz-tests.yml`                      | Python fuzz testing                              | N/A (pytest direct)                      |
@@ -388,7 +388,7 @@ Workflows invoke validation through npm scripts defined in `package.json`:
 | `extension:package:prerelease`  | `Package-Extension.ps1 -PreRelease`                                                                   | extension-package.yml                       |
 | `plugin:generate`               | `Generate-Plugins.ps1` + post-process                                                                 | plugin-package.yml                          |
 | `plugin:validate`               | Marketplace package metadata and closure validation                                                   | plugin-validation.yml                       |
-| `lint:py`                       | `ruff check`                                                                                          | python-lint.yml                             |
+| `lint:py`                       | `ruff check` + `ruff format --check`                                                                  | python-lint.yml                             |
 | `lint:models`                   | `Validate-ModelReferences.ps1`                                                                        | model-validation.yml                        |
 | `lint:ai-artifacts`             | `Validate-PlannerArtifacts.ps1 -FailOnMissing`                                                        | ai-artifact-validation.yml                  |
 | `lint:permissions`              | `Test-WorkflowPermissions.ps1`                                                                        | workflow-permissions-scan.yml               |
@@ -426,6 +426,14 @@ Workflows invoke validation through npm scripts defined in `package.json`:
 | `ci:eval:agent:dashboard:open`  | `New-AgentMatrixDashboard.ps1 -Open`                                                                  | CI-owned interactive lane                   |
 | `ci:eval:agent:report`          | Runs `ci:eval:agent:matrix` then `ci:eval:agent:dashboard`                                            | CI-owned noninteractive report lane         |
 | `ci:eval:agent:report:dryrun`   | Runs `ci:eval:agent:matrix:dryrun` then `ci:eval:agent:dashboard`                                     | CI-owned noninteractive dry-run report lane |
+
+### Python Lint Parity
+
+`npm run lint:py` runs the same command set as `python-lint.yml`: `ruff check` followed by the non-mutating `ruff format --check`. Execution conditions still differ in three ways:
+
+* Provisioning: the hosted lane runs `uv sync --locked` itself, while the local runner only verifies that a project committing `uv.lock` already provides that exact ruff version. When it does not, the local run fails before ruff executes and reports `uv sync --locked` as the setup action. Projects without a `uv.lock` fall back to the project `.venv` ruff and then a global ruff, with no version guarantee.
+* Project scope: local discovery covers every directory containing a `pyproject.toml`, including projects that `pr-validation.yml` excludes from its per-PR matrix.
+* Execution gate: the hosted lane defaults to running only when a pull request changes `.py` or `.pyi` files, while the local lane always scans every discovered project.
 
 ## Related Documentation
 
