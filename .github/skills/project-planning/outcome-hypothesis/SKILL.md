@@ -47,14 +47,14 @@ Use `requirements-author` when the outcome is understood and the task is to crea
    * Score D1-D7 from the gathered evidence and show the complete scorecard before drafting.
    * Apply the first matching readiness rule to select Ready to author, Provisional, or Investigate.
    * Before selecting, verify each status and the Red count against the readiness definitions. Never choose Provisional when the earlier Investigate rule matches.
-   * If the result is Investigate, do not draft. Name blocking pillars, propose targeted discovery actions, and stop until stronger evidence is available.
+   * Apply OH.0 as the final pre-draft gate. If it fails, emit its warning in chat, name blocking pillars and targeted discovery actions, and stop until stronger evidence is available.
 3. Draft according to readiness.
    * Read [Outcome Hypothesis Template](templates/outcome-hypothesis.md) and follow its structure.
    * Ready to author produces a Full Outcome Hypothesis.
    * Provisional produces every required section, marks unsupported content as a specific resolution gap, and uses low confidence.
    * Never fabricate a baseline, target, owner, stakeholder, source, or resolution date.
 4. Validate the draft.
-   * Apply OH.0-OH.12 from [Readiness and Validation](references/readiness-and-validation.md) in order.
+   * Apply OH.1-OH.12 from [Readiness and Validation](references/readiness-and-validation.md) in order.
    * Add each warning immediately after the affected section and surface it in the chat summary.
    * Do not claim a rule passes unless the rendered draft demonstrates it. Carry supplied indicator sources and owners into the measurement section instead of treating them as unknown.
    * Before delivery, verify that Background, Expected Outcomes, Validation & Measurement, Assumptions & Risks, and Open Questions & Resolution Gaps are present; every Amber or Red pillar has a gap row; and every failed draft rule has its exact adjacent warning.

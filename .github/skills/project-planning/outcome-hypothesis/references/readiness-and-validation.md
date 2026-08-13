@@ -67,7 +67,9 @@ Do not invent an owner or date. Every Amber and Red pillar must appear in Open Q
 
 ## Validation Procedure
 
-Apply OH.0-OH.12 in order. OH.0 is a precondition: when it fails, emit its warning in chat and stop without a draft. For every OH.1-OH.12 failure, add a warning immediately after the affected section and repeat it in chat:
+Evaluate OH.0 immediately after readiness scoring and before drafting. When it fails, emit its warning in chat and stop without a draft.
+
+After a Ready or Provisional draft exists, apply OH.1-OH.12 in order. For every failure, add a warning immediately after the affected section and repeat it in chat:
 
 > **VALIDATION WARNING: Rule OH.X**: `<description>`
 
