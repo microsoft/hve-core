@@ -83,6 +83,11 @@ Include at least one leading and one lagging indicator. Limit the document to th
 
 Add up to four more assumptions when needed.
 
+### Affected groups and trade-offs
+
+* Other affected groups or paths: `<adjacent teams, excluded segments, and people relying on fallback or accessibility paths>`
+* Transferred impacts: `<privacy, accessibility, workload, or operational impacts, plus mitigation or an explicit evidence gap>`
+
 ### Risks and falsification criteria
 
 * Hypothesis is disproved when: `<numeric lagging-indicator threshold within the timeframe>`
