@@ -156,7 +156,7 @@ In create mode, apply these corrections before delivery. In assess mode, report 
 | The statement describes building an artifact     | Rewrite it around the measurable beneficiary result and treat the artifact as the delivery vehicle. |
 | The target uses vague uplift language or a range | Require one committed numeric target; otherwise record a gap with owner and date.                   |
 | No baseline exists                               | Retrieve it or make baselining the first prerequisite activity with a completion date.              |
-| The beneficiary is generic                       | Ask for the role, segment, scale, geography, or channel that experiences the change.                |
+| The beneficiary is generic                       | Ask for the role, segment, scale, geography, or channel that experiences the change. Then route populations outside that segmentation to `Affected groups and trade-offs`. |
 | Fewer than three assumptions exist               | Probe data quality, adoption, attribution, workflow, commercial model, and other-group effects.     |
 | Affected groups or trade-offs are missing        | Identify other groups or paths; record transferred impacts, mitigation, or explicit evidence gap.   |
 | No falsification condition exists                | Add a threshold and timeframe that would disprove the prediction.                                   |
