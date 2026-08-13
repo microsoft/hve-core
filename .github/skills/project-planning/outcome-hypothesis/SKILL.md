@@ -64,6 +64,14 @@ Use `requirements-author` when the outcome is understood and the task is to crea
    * Summarize readiness, investability, confidence, the top three gaps, and recommended next actions.
    * Offer to save only after presenting the draft. If the user accepts, ask for the destination.
    * Use `yyyy-mm-dd-<short-slug>.md` when saving unless the user specifies another name.
+6. Offer a BRD handoff after persistence.
+   * Use the `requirements-author` skill's Outcome Hypothesis-to-BRD Handoff V1 reference as the canonical contract.
+   * Offer the handoff only when the persisted hypothesis has status `Committed` and every required business-goal seed field is complete.
+   * Map the complete goal statement, lagging KPI, lagging baseline, lagging target, timeframe, and lagging indicator owner without inference.
+   * Compute the workspace-relative source path and SHA-256 from the persisted artifact.
+   * Return the validated YAML inline. Do not persist a separate payload unless the user explicitly requests and confirms a destination.
+   * State the precedence in the handoff summary: Before Discover accepts the handoff, the validated payload is authoritative for imported seed values. Discover may explicitly accept or revise those values. After Discover exits, the BRD is authoritative. A later hypothesis change requires a new validated payload and explicit Discover re-entry.
+   * When the hypothesis is ineligible, name the failed eligibility rules and do not emit a partial payload.
 
 ## Inputs
 
@@ -88,6 +96,7 @@ Accept an existing discovery summary or D1-D7 scorecard as input, but confirm it
 * Unknown information remains an explicit gap rather than invented content.
 * Validation warnings and the investability result are visible.
 * The full draft appears before any persistence offer or write.
+* Any BRD handoff follows `OUTCOME_HYPOTHESIS_TO_BRD_HANDOFF_V1` and contains no invented values.
 
 ## Constraints
 
@@ -105,6 +114,7 @@ Accept an existing discovery summary or D1-D7 scorecard as input, but confirm it
 * Stop before drafting when no current D1-D7 scorecard exists.
 * Stop at Investigate until blocking evidence is strengthened.
 * Stop before persistence until the complete draft has been presented and the user has confirmed a destination.
+* Stop before BRD handoff when the artifact is unpersisted, its status is not `Committed`, or any required seed field is incomplete.
 
 ## Final Response Contract
 
@@ -115,3 +125,4 @@ Return:
 3. The validation and investability result.
 4. Confidence, unavailable-source limitations, top gaps, and recommended next actions.
 5. An optional persistence offer after the full inline delivery.
+6. An optional inline BRD handoff after confirmed persistence when eligibility passes.
