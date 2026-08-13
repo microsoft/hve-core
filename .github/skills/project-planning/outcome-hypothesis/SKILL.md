@@ -63,7 +63,7 @@ If the request is ambiguous, ask whether the user wants to create a hypothesis o
    * Score D1-D7 from the gathered evidence and show the complete scorecard before drafting or reporting assessment findings.
    * Apply the first matching readiness rule to select Ready to author, Provisional, or Investigate.
    * Before selecting, verify each status and the Red count against the readiness definitions. Never choose Provisional when the earlier Investigate rule matches.
-   * In create mode, if the result is Investigate, do not draft. Name blocking pillars, propose targeted discovery actions, and stop until stronger evidence is available.
+   * In create mode, apply OH.0 as the final pre-draft gate. If it fails, emit its warning in chat, name blocking pillars and targeted discovery actions, and stop until stronger evidence is available.
    * In assess mode, retain the readiness decision and continue evaluating the supplied content, including when readiness is Investigate.
 4. Draft according to readiness.
    * Draft only in create mode.
@@ -73,7 +73,7 @@ If the request is ambiguous, ask whether the user wants to create a hypothesis o
    * Never fabricate a baseline, target, owner, stakeholder, source, or resolution date.
    * Skip drafting and template use in assess mode.
 5. Validate according to mode.
-   * Apply OH.0-OH.13 from [Readiness and Validation](references/readiness-and-validation.md) in order.
+   * In create mode, apply OH.1-OH.13 from [Readiness and Validation](references/readiness-and-validation.md) in order after the draft exists.
    * In create mode, add each warning immediately after the affected section and surface it in the chat summary.
    * In assess mode, leave the supplied content unchanged and report one findings-table row for every rule from OH.0 through OH.13.
    * Do not claim a rule passes unless the created draft or supplied content demonstrates it. Carry supplied indicator sources and owners into create-mode measurement sections instead of treating them as unknown.
