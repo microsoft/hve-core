@@ -29,7 +29,7 @@ Use `requirements-author` instead when the outcome is already understood and the
 
 ## How to use it
 
-Invoke `/outcome-hypothesis` with the relevant evidence sources and choose create or assess mode. Create mode scores seven readiness dimensions before producing a Full Outcome Hypothesis, a Provisional Outcome Hypothesis with explicit gaps, or an Investigation response. Assess mode preserves the supplied statement, then reports the D1-D7 readiness decision and OH.0-OH.12 findings separately. Both modes identify critical failures that make a hypothesis not investable.
+Invoke `/outcome-hypothesis` with the relevant evidence sources and choose create or assess mode. Create mode scores seven readiness dimensions before producing a Full Outcome Hypothesis, a Provisional Outcome Hypothesis with explicit gaps, or an Investigation response. Assess mode preserves the supplied statement, then reports the D1-D7 readiness decision and OH.0-OH.13 findings separately. Both modes identify critical failures that make a hypothesis not investable.
 
 Review a created draft in chat before asking to save it. Unknown baselines,
 targets, owners, stakeholders, sources, and dates remain explicit gaps rather
@@ -37,10 +37,12 @@ than inferred values. An accepted save offer defaults to
 `docs/planning/outcome-hypotheses/yyyy-mm-dd-<short-slug>-outcome-hypothesis.md`
 unless you choose another destination.
 
-Treat the result as decision support, not investment approval, stakeholder
-commitment, or measurement sign-off. Validate it with affected stakeholders,
-the measurement owner, and the accountable decision owner before making
-commitments.
+Treat investable as an evidence-readiness signal only: it means the defined
+evidence gates passed, while not investable means required evidence is
+incomplete. The verdict is decision support, not financial or professional
+investment advice, approval, funding authorization, stakeholder commitment, or
+measurement sign-off. Validate it with affected stakeholders, the measurement
+owner, and the accountable sponsor or decision owner before making commitments.
 
 Assessment does not revise or persist the supplied statement; request a revised
 draft separately when needed.
