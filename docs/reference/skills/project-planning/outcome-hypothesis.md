@@ -2,7 +2,7 @@
 title: outcome-hypothesis
 description: "Create or assess an evidence-grounded, falsifiable outcome hypothesis: a testable prediction of what measurable business result will change, for whom, by when, and how leading and lagging indicators will prove or disprove it. Use when framing measurable outcomes, turning an MVP, POC, feature, or technical initiative into a beneficiary result, defining targets and indicators, or judging whether evidence is strong enough to invest. Also applies to business outcome hypotheses, value hypotheses, and outcome statements."
 sidebar_position: 8
-ms.date: 2026-08-12
+ms.date: 2026-08-13
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->
@@ -31,7 +31,16 @@ Use `requirements-author` instead when the outcome is already understood and the
 
 Invoke `/outcome-hypothesis` with the relevant evidence sources or an existing statement to assess. The skill scores seven readiness dimensions before drafting, then produces a Full Outcome Hypothesis, a Provisional Outcome Hypothesis with explicit gaps, or an Investigation response. It validates drafts against OH.0-OH.12 and identifies critical failures that make a hypothesis not investable.
 
-Review the complete result in chat before asking to save it. Unknown baselines, targets, owners, stakeholders, sources, and dates remain explicit gaps rather than inferred values.
+Review the complete result in chat before asking to save it. Unknown baselines,
+targets, owners, stakeholders, sources, and dates remain explicit gaps rather
+than inferred values. An accepted save offer defaults to
+`docs/planning/outcome-hypotheses/yyyy-mm-dd-<short-slug>-outcome-hypothesis.md`
+unless you choose another destination.
+
+Treat the result as decision support, not investment approval, stakeholder
+commitment, or measurement sign-off. Validate it with affected stakeholders,
+the measurement owner, and the accountable decision owner before making
+commitments.
 
 ## Example usage
 

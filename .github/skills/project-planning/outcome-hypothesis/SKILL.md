@@ -62,8 +62,9 @@ Use `requirements-author` when the outcome is understood and the task is to crea
 5. Deliver before persisting.
    * Present the complete document inline.
    * Summarize readiness, investability, confidence, the top three gaps, and recommended next actions.
-   * Offer to save only after presenting the draft. If the user accepts, ask for the destination.
-   * Use `yyyy-mm-dd-<short-slug>.md` when saving unless the user specifies another name.
+   * State that the hypothesis supports decision-making but does not constitute investment approval, stakeholder commitment, or a measurement sign-off. Require validation by affected stakeholders, the measurement owner, and the accountable decision owner.
+   * Offer to save only after presenting the draft. If the user accepts, propose `docs/planning/outcome-hypotheses/yyyy-mm-dd-<short-slug>-outcome-hypothesis.md` and accept a different destination when the user specifies one.
+   * Confirm the destination before writing. Populate the template frontmatter from the rendered document and persistence context, then save the complete document.
 
 ## Inputs
 
@@ -87,7 +88,9 @@ Accept an existing discovery summary or D1-D7 scorecard as input, but confirm it
 * The outcome chain connects the business result, lagging indicator, leading indicators, and intervention.
 * Unknown information remains an explicit gap rather than invented content.
 * Validation warnings and the investability result are visible.
+* The document states its advisory status and names the human validation owners.
 * The full draft appears before any persistence offer or write.
+* An accepted persistence offer has a confirmed destination and produces the complete rendered document with valid frontmatter.
 
 ## Constraints
 
@@ -97,6 +100,8 @@ Accept an existing discovery summary or D1-D7 scorecard as input, but confirm it
 * Require a specific role, segment, or business unit instead of a generic "users" or "customers" beneficiary.
 * Keep protected or unavailable source material unknown. Do not infer its contents.
 * Remind the user not to commit confidential material when the requested destination is a shared repository.
+* Default saved Markdown to `docs/planning/outcome-hypotheses/`; treat another user-confirmed location as an explicit override.
+* Do not create session state for this workflow. The rendered document carries its status, confidence, evidence gaps, and next actions.
 * For DOCX or PDF output, hand the completed Markdown to the user's preferred conversion capability rather than generating a binary file directly.
 
 ## Stop Rules
@@ -114,4 +119,5 @@ Return:
 2. The complete hypothesis document, unless readiness is Investigate. For Investigate, return the blocking pillars, targeted discovery actions, and evidence needed to resume.
 3. The validation and investability result.
 4. Confidence, unavailable-source limitations, top gaps, and recommended next actions.
-5. An optional persistence offer after the full inline delivery.
+5. The advisory status and required human validation owners.
+6. An optional persistence offer after the full inline delivery, using the canonical default destination unless the user overrides it.

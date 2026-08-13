@@ -1,11 +1,17 @@
 ---
-description: "Canonical Full and Provisional Outcome Hypothesis Markdown structure"
+title: "Outcome Hypothesis: <Title>"
+description: "Evidence-grounded outcome hypothesis for <Project or initiative>."
+author: "<Name or Author TBD>"
+ms.date: <YYYY-MM-DD>
+ms.topic: concept
 ---
 
-# Outcome Hypothesis: `<Title>`
+> [!CAUTION]
+> This outcome hypothesis supports decision-making but does not constitute
+> investment approval, stakeholder commitment, or measurement sign-off.
+> Validate it with affected stakeholders, the measurement owner, and the
+> accountable decision owner before using it to make commitments.
 
-**Date:** `<YYYY-MM-DD>`
-**Author:** `<Name or Author TBD>`
 **Project / Initiative:** `<Project or initiative>`
 **Status:** `<Draft | Provisional | In Review | Committed | Superseded>`
 **Confidence:** `<Low | Medium | High>`
