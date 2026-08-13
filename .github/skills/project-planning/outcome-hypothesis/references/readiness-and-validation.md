@@ -69,11 +69,13 @@ Do not invent an owner or date. Every Amber and Red pillar must appear in Open Q
 
 ## Validation Procedure
 
-Apply OH.0-OH.12 in order after scoring D1-D7.
+Before OH.0, classify measurement granularity and whether any individual-level measure uses personal or sensitive data. Default to aggregate or cohort-level measurement. Individual-level measurement requires a necessity and proportionality justification that explains why aggregate or cohort-level measurement cannot answer the hypothesis. When individual-level measurement uses personal or sensitive data, stop before scoring or drafting and invoke `Privacy Planner`; resume only after a completed Privacy Planner result is available.
+
+Apply OH.0-OH.13 in order after scoring D1-D7.
 
 ### Create validation
 
-OH.0 passes when a current D1-D7 scorecard exists and readiness is Ready or Provisional. When it fails, emit its warning in chat and stop without a draft. For every OH.1-OH.12 failure, add a warning immediately after the affected section and repeat it in chat:
+OH.0 passes when a current D1-D7 scorecard exists and readiness is Ready or Provisional. When it fails, emit its warning in chat and stop without a draft. For every OH.1-OH.13 failure, add a warning immediately after the affected section and repeat it in chat:
 
 > **VALIDATION WARNING: Rule OH.X**: `<description>`
 
@@ -83,7 +85,7 @@ Use the failed rule's Requirement text as the warning description. When multiple
 
 OH.0 passes when a supplied hypothesis or outcome document is present. Any readiness result, including Investigate, is permitted because assessment does not authorize a replacement draft. When OH.0 fails, ask for the document and stop without further validation.
 
-Preserve the supplied content unchanged. Apply OH.1-OH.12 to that content and report every result in numeric order:
+Preserve the supplied content unchanged. Apply OH.1-OH.13 to that content and report every result in numeric order:
 
 | Rule | Result      | Evidence or location          | Gap or correction                  |
 |------|-------------|-------------------------------|------------------------------------|
@@ -108,6 +110,7 @@ Use `Fail` when required content is missing or unsupported. Do not insert valida
 | OH.10 | Assumptions & Risks              | At least three assumptions each include Untested, Partially supported, or Evidenced status and the impact if false.                                                                                                                                                                                                           |
 | OH.11 | Assumptions & Risks              | At least one explicit condition would disprove the hypothesis.                                                                                                                                                                                                                                                                |
 | OH.12 | Open Questions & Resolution Gaps | Every Amber and Red scorecard item appears in the gaps table.                                                                                                                                                                                                                                                                 |
+| OH.13 | Validation & Measurement         | The plan declares aggregate, cohort, or individual granularity. Individual-level measurement includes a necessity and proportionality justification for why aggregate or cohort-level measurement is insufficient. If it uses personal or sensitive data, a completed Privacy Planner result was supplied before drafting; otherwise stop drafting and validation and invoke Privacy Planner. |
 
 ## Investability
 
@@ -162,6 +165,7 @@ In create mode, apply these corrections before delivery. In assess mode, report 
 * Never fabricate baselines, targets, owners, stakeholder names, sources, or dates.
 * Never bypass or hide the readiness scorecard.
 * Never draft for an Investigate decision. A read-only assessment may continue.
+* Never score, draft, or validate individual-level measurement that uses personal or sensitive data until a completed Privacy Planner result is available.
 * Never infer inaccessible or protected source content.
 * Never persist a created draft before presenting it inline and obtaining destination confirmation.
 * Never alter supplied content during assessment.
