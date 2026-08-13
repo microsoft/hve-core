@@ -59,7 +59,10 @@ Use `requirements-author` when the outcome is understood and the task is to crea
    * Do not claim a rule passes unless the rendered draft demonstrates it. Carry supplied indicator sources and owners into the measurement section instead of treating them as unknown.
    * Before delivery, verify that Background, Expected Outcomes, Validation & Measurement, Assumptions & Risks, and Open Questions & Resolution Gaps are present; every Amber or Red pillar has a gap row; and every failed draft rule has its exact adjacent warning.
    * If OH.1, OH.2, OH.3, OH.7, or OH.8 fails, label the hypothesis not investable and recommend returning to discovery.
-5. Deliver before persisting.
+5. Derive confidence.
+   * Apply Confidence Derivation from [Readiness and Validation](references/readiness-and-validation.md) after readiness and validation are known.
+   * Count every Amber pillar and every failed non-investability rule separately. Do not deduplicate related conditions.
+6. Deliver before persisting.
    * Present the complete document inline.
    * Summarize readiness, investability, confidence, the top three gaps, and recommended next actions.
    * Offer to save only after presenting the draft. If the user accepts, ask for the destination.
@@ -87,6 +90,7 @@ Accept an existing discovery summary or D1-D7 scorecard as input, but confirm it
 * The outcome chain connects the business result, lagging indicator, leading indicators, and intervention.
 * Unknown information remains an explicit gap rather than invented content.
 * Validation warnings and the investability result are visible.
+* Confidence follows the deterministic readiness, investability, and combined-degradation precedence.
 * The full draft appears before any persistence offer or write.
 
 ## Constraints

@@ -99,6 +99,20 @@ If OH.1, OH.2, OH.3, OH.7, or OH.8 fails:
 
 Other warnings lower confidence but do not automatically make the hypothesis not investable.
 
+## Confidence Derivation
+
+Derive Confidence after readiness and validation. Apply the first matching rule:
+
+1. For Investigate, do not emit hypothesis Confidence because no draft exists.
+2. For Provisional, use Confidence `Low`.
+3. For Ready, if OH.1, OH.2, OH.3, OH.7, or OH.8 fails, use Confidence `Low`.
+4. Otherwise, add the number of Amber pillars to the number of failed non-investability rules: OH.4, OH.5, OH.6, OH.9, OH.10, OH.11, and OH.12.
+   * A combined count of 0 is `High`.
+   * A combined count of 1 or 2 is `Medium`.
+   * A combined count of 3 or more is `Low`.
+
+Count every Amber pillar and every failed non-investability rule separately. Do not deduplicate related pillar and warning conditions. A Ready hypothesis with Low Confidence remains investable when none of the investability rules failed.
+
 ## Indicator and Chain Guidance
 
 Require at least one leading and one lagging indicator. Allow one or two additional leading indicators, but no more than three indicators total.

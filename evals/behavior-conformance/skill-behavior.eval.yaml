@@ -2,7 +2,7 @@
 name: behavior-conformance-skills
 description: >
   Advisory-tier behavior conformance evals for skills exercised through
-  knowledge, tool-trigger, and bleed-detection stimulus shapes. Total: 163
+  knowledge, tool-trigger, and bleed-detection stimulus shapes. Total: 164
   stimuli, including complete branch coverage for the RPI and prompt-builder
   skill updates. Each tool-trigger stimulus uses two graders with AND logic,
   and the suite-level scoring threshold gates the aggregate pass rate across
@@ -3057,6 +3057,35 @@ stimuli:
         name: validation-and-evidence-guardrail
         config:
           pattern: '(?i)(OH\.(?:0|1|2|3|7|8|12)|investable|investability|validate|validation|evidence|fabricate|fabrication)'
+
+  - name: skill-outcome-hypothesis-confidence-derivation
+    prompt: |
+      Explain the deterministic Confidence derivation for every readiness route
+      in the `outcome-hypothesis` skill. Include the investability override, the
+      combined Amber-pillar and non-investability-warning thresholds, a mixed
+      Amber-plus-warning case, and whether related signals are deduplicated.
+    tags:
+      category: behavior-conformance
+      skill: outcome-hypothesis
+      shape: knowledge
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: readiness-route-precedence
+        config:
+          pattern: '(?is)(Investigate.{0,100}(?:no|without).{0,40}Confidence|no.{0,40}Confidence.{0,100}Investigate).{0,300}Provisional.{0,80}Low'
+      - type: output-matches
+        name: combined-count-thresholds
+        config:
+          pattern: '(?is)(?:0|zero).{0,80}High.{0,160}(?:1\s*(?:-|or|to)\s*2|one.{0,30}two).{0,80}Medium.{0,160}(?:3\+|3 or more|three or more).{0,80}Low'
+      - type: output-matches
+        name: investability-low-override
+        config:
+          pattern: '(?is)OH\.1.{0,80}OH\.2.{0,80}OH\.3.{0,80}OH\.7.{0,80}OH\.8.{0,160}Low'
+      - type: output-matches
+        name: mixed-addition-without-deduplication
+        config:
+          pattern: '(?is)Amber.{0,100}(?:plus|add|\+).{0,100}(?:non-investability|noninvestability).{0,80}warning.{0,240}(?:do not|without|no).{0,50}deduplicat'
 
   - name: skill-outcome-hypothesis-tool-trigger
     prompt: |
