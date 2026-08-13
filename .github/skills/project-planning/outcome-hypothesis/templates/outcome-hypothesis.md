@@ -63,10 +63,10 @@ For a tightly scoped pilot sub-hypothesis, this one-sentence form is permitted:
 
 ### Indicator detail
 
-| Type    | Indicator           | Definition                 | Baseline                                                                      | Source / Owner                                                    |
-|---------|---------------------|----------------------------|-------------------------------------------------------------------------------|-------------------------------------------------------------------|
-| Leading | `<Named indicator>` | `<Operational definition>` | `<Current value and measurement period, or explicit baselining prerequisite>` | `<System or dashboard / named owner, or explicit resolution gap>` |
-| Lagging | `<Named indicator>` | `<Operational definition>` | `<Current value and measurement period, or explicit baselining prerequisite>` | `<System or dashboard / named owner, or explicit resolution gap>` |
+| Type    | Indicator           | Definition                 | Baseline                                                                      | Target                     | Source                                | Owner                                  |
+|---------|---------------------|----------------------------|-------------------------------------------------------------------------------|----------------------------|---------------------------------------|----------------------------------------|
+| Leading | `<Named indicator>` | `<Operational definition>` | `<Current value and measurement period, or explicit baselining prerequisite>` | `<Numeric value and unit>` | `<System or dashboard, or dated gap>` | `<Named person or role, or dated gap>` |
+| Lagging | `<Named indicator>` | `<Operational definition>` | `<Current value and measurement period, or explicit baselining prerequisite>` | `<Numeric value and unit>` | `<System or dashboard, or dated gap>` | `<Named person or role, or dated gap>` |
 
 Include at least one leading and one lagging indicator. Limit the document to three indicators total.
 

@@ -76,10 +76,34 @@ See [stakeholder-analysis.md](../../references/_shared/stakeholder-analysis.md) 
 ```text
 BG-001: Reduce average claim adjudication time by 30% within 12 months of launch.
 Priority: MUST
-KPI: 30-day rolling average adjudication time at or below 70% of baseline.
+KPI: 30-day rolling average adjudication time.
+Baseline: 10 days measured over the trailing 90 days.
+Target: 7 days.
+Timeframe: Within 12 months of launch.
+Owner: Claims Operations Lead.
 ```
 
 Use [id-schema.md](../../references/_shared/id-schema.md) for identifier prefix and digit rules.
+
+### Outcome Hypothesis Handoff Provenance
+
+{{outcome_hypothesis_handoff_provenance}}
+
+*Guidance*: When Discover ingests
+`OUTCOME_HYPOTHESIS_TO_BRD_HANDOFF_V1`, record:
+
+| Handoff ID | Source artifact | Source SHA-256 | Receipt status |
+|------------|-----------------|----------------|----------------|
+| `<ID>`     | `<Path>`        | `<Hash>`       | `<Accepted>`   |
+
+Record one disposition row for each imported goal field:
+
+| Field                                                       | Source value | Disposition            | Current BRD value | Revision rationale        |
+|-------------------------------------------------------------|--------------|------------------------|-------------------|---------------------------|
+| `<Statement / KPI / Baseline / Target / Timeframe / Owner>` | `<Original>` | `<Accepted / Revised>` | `<Current>`       | `<Required when revised>` |
+
+The BRD becomes authoritative after Discover exits. A later source change
+requires a new handoff and explicit Discover re-entry.
 
 **SMART Evaluation** (assessed at Define→Govern gate per `requirements-definition` skill):
 
@@ -273,11 +297,13 @@ Use this view to show which functional requirements enforce standing business ru
 
 {{assumptions}}
 
-*Guidance*: List assumptions about stakeholders, resources, dependencies, technical feasibility, etc. For each:
+*Guidance*: List assumptions about stakeholders, resources, dependencies,
+technical feasibility, and other load-bearing beliefs. Preserve imported
+outcome-hypothesis IDs and evidence status.
 
-* Assumption statement.
-* Impact if false: High, medium, or low.
-* Mitigation strategy.
+| ID     | Assumption    | Evidence status                                | Impact if false | Mitigation     | Source                          |
+|--------|---------------|------------------------------------------------|-----------------|----------------|---------------------------------|
+| `<ID>` | `<Statement>` | `<Untested / Partially supported / Evidenced>` | `<Impact>`      | `<Mitigation>` | `<Handoff ID or BRD discovery>` |
 
 ### Risk Register
 
@@ -289,6 +315,20 @@ Use this view to show which functional requirements enforce standing business ru
 * Probability: High, medium, or low.
 * Impact: High, medium, or low.
 * Mitigation action.
+
+---
+
+## Open Questions
+
+{{open_questions}}
+
+*Guidance*: Preserve imported question fields and manage status in the BRD.
+Discover initializes imported questions to `Open` unless it explicitly
+confirms another status.
+
+| ID     | Question or gap     | Why it matters | Owner              | Target date    | Status                         | Source                          |
+|--------|---------------------|----------------|--------------------|----------------|--------------------------------|---------------------------------|
+| `<ID>` | `<Question or gap>` | `<Impact>`     | `<Person or role>` | `<YYYY-MM-DD>` | `<Open / Resolved / Deferred>` | `<Handoff ID or BRD discovery>` |
 
 ---
 

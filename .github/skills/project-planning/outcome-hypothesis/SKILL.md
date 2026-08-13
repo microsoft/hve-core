@@ -93,6 +93,14 @@ If the request is ambiguous, ask whether the user wants to create a hypothesis o
    * In assess mode, present the supplied hypothesis unchanged under a labeled input section, followed by a separate labeled assessment section.
    * Present the same canonical CAUTION with the assessment result.
    * End an assessment with a separate offer to create a revised draft. Do not revise or persist the supplied document in the assessment response.
+8. Offer a BRD handoff after create-mode persistence.
+   * Use the `requirements-author` skill's Outcome Hypothesis-to-BRD Handoff V1 reference as the canonical contract.
+   * Offer the handoff only when the persisted hypothesis has status `Committed` and every required business-goal seed field is complete.
+   * Map the complete goal statement, lagging KPI, lagging baseline, lagging target, timeframe, and lagging indicator owner without inference.
+   * Compute the workspace-relative source path and SHA-256 from the persisted artifact.
+   * Return the validated YAML inline. Do not persist a separate payload unless the user explicitly requests and confirms a destination.
+   * State the precedence in the handoff summary: Before Discover accepts the handoff, the validated payload is authoritative for imported seed values. Discover may explicitly accept or revise those values. After Discover exits, the BRD is authoritative. A later hypothesis change requires a new validated payload and explicit Discover re-entry.
+   * When the hypothesis is ineligible, name the failed eligibility rules and do not emit a partial payload.
 
 ## Inputs
 
@@ -127,6 +135,7 @@ Create mode accepts an existing discovery summary or D1-D7 scorecard as input, b
 * A created draft appears before any persistence offer or write.
 * An accepted create-mode persistence offer has a confirmed destination and produces the complete rendered document with valid frontmatter.
 * A revised draft is produced only after a separate explicit request.
+* Any BRD handoff follows `OUTCOME_HYPOTHESIS_TO_BRD_HANDOFF_V1` and contains no invented values.
 
 ## Constraints
 
@@ -151,6 +160,7 @@ Create mode accepts an existing discovery summary or D1-D7 scorecard as input, b
 * In create mode, stop before drafting when no current D1-D7 scorecard exists.
 * In create mode, stop at Investigate until blocking evidence is strengthened.
 * In create mode, stop before persistence until the complete draft has been presented and the user has confirmed a destination.
+* Stop before BRD handoff when the artifact is unpersisted, its status is not `Committed`, or any required seed field is incomplete.
 
 ## Final Response Contract
 
@@ -164,6 +174,7 @@ For create mode when the privacy gate does not apply, return:
 4. Confidence, unavailable-source limitations, top gaps, and recommended next actions.
 5. The canonical Outcome-Hypothesis disclaimer and required human validation owners.
 6. An optional persistence offer after the full inline delivery, using the canonical default destination unless the user overrides it.
+7. An optional inline BRD handoff after confirmed persistence when eligibility passes.
 
 For assess mode, return in this order:
 
