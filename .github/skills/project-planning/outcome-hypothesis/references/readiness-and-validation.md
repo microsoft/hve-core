@@ -107,7 +107,7 @@ Use `Fail` when required content is missing or unsupported. Do not insert valida
 | OH.7  | Validation & Measurement         | Every indicator has a numeric current-state baseline or explicitly makes baselining a prerequisite with a target completion date.                                                                                                                                                                                             |
 | OH.8  | Validation & Measurement         | The chain connects business outcome, lagging indicator, leading indicators, and intervention end to end.                                                                                                                                                                                                                      |
 | OH.9  | Validation & Measurement         | The plan names who measures, how they measure, and the cadence or checkpoints for leading and lagging indicators.                                                                                                                                                                                                             |
-| OH.10 | Assumptions & Risks              | At least three assumptions each include Untested, Partially supported, or Evidenced status and the impact if false.                                                                                                                                                                                                           |
+| OH.10 | Assumptions & Risks              | At least three assumptions each include Untested, Partially supported, or Evidenced status and the impact if false. Other affected groups or paths and any transferred impacts, mitigations, or explicit evidence gaps are recorded.                                                                                          |
 | OH.11 | Assumptions & Risks              | At least one explicit condition would disprove the hypothesis.                                                                                                                                                                                                                                                                |
 | OH.12 | Open Questions & Resolution Gaps | Every Amber and Red scorecard item appears in the gaps table.                                                                                                                                                                                                                                                                 |
 | OH.13 | Validation & Measurement         | The plan declares aggregate, cohort, or individual granularity. Individual-level measurement includes a necessity and proportionality justification for why aggregate or cohort-level measurement is insufficient. If it uses personal or sensitive data, a completed Privacy Planner result was supplied before drafting; otherwise stop drafting and validation and invoke Privacy Planner. |
@@ -139,7 +139,7 @@ If the chain breaks because evidence is missing, return to evidence gathering. I
 
 ## Assumptions and Falsification
 
-List three to seven load-bearing assumptions. Probe data quality, adoption, attribution, workflow, and commercial model when the initial list is too narrow.
+List three to seven load-bearing assumptions. Probe data quality, adoption, attribution, workflow, commercial model, and effects on other groups when the initial list is too narrow. For other-group effects, consider adjacent teams, excluded segments, fallback or accessibility paths, privacy, and displaced workload or operational cost.
 
 Define:
 
@@ -157,7 +157,8 @@ In create mode, apply these corrections before delivery. In assess mode, report 
 | The target uses vague uplift language or a range | Require one committed numeric target; otherwise record a gap with owner and date.                   |
 | No baseline exists                               | Retrieve it or make baselining the first prerequisite activity with a completion date.              |
 | The beneficiary is generic                       | Ask for the role, segment, scale, geography, or channel that experiences the change.                |
-| Fewer than three assumptions exist               | Probe data quality, adoption, attribution, workflow, and commercial assumptions.                    |
+| Fewer than three assumptions exist               | Probe data quality, adoption, attribution, workflow, commercial model, and other-group effects.     |
+| Affected groups or trade-offs are missing        | Identify other groups or paths; record transferred impacts, mitigation, or explicit evidence gap.   |
 | No falsification condition exists                | Add a threshold and timeframe that would disprove the prediction.                                   |
 
 ## Guardrails
