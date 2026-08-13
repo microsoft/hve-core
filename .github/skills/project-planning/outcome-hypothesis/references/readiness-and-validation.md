@@ -67,7 +67,9 @@ Do not invent an owner or date. Every Amber and Red pillar must appear in Open Q
 
 ## Validation Procedure
 
-Apply OH.0-OH.12 in order. OH.0 is a precondition: when it fails, emit its warning in chat and stop without a draft. For every OH.1-OH.12 failure, add a warning immediately after the affected section and repeat it in chat:
+Before OH.0, classify measurement granularity and whether any individual-level measure uses personal or sensitive data. Default to aggregate or cohort-level measurement. Individual-level measurement requires a necessity and proportionality justification that explains why aggregate or cohort-level measurement cannot answer the hypothesis. When individual-level measurement uses personal or sensitive data, stop before drafting and invoke `Privacy Planner`; resume only after a completed Privacy Planner result is available.
+
+Apply OH.0-OH.13 in order. OH.0 is a precondition: when it fails, emit its warning in chat and stop without a draft. For every OH.1-OH.13 failure, add a warning immediately after the affected section and repeat it in chat:
 
 > **VALIDATION WARNING: Rule OH.X**: `<description>`
 
@@ -88,6 +90,7 @@ Use the failed rule's Requirement text as the warning description. When multiple
 | OH.10 | Assumptions & Risks              | At least three assumptions each include Untested, Partially supported, or Evidenced status and the impact if false.                                                                                                                                                                                                           |
 | OH.11 | Assumptions & Risks              | At least one explicit condition would disprove the hypothesis.                                                                                                                                                                                                                                                                |
 | OH.12 | Open Questions & Resolution Gaps | Every Amber and Red scorecard item appears in the gaps table.                                                                                                                                                                                                                                                                 |
+| OH.13 | Validation & Measurement         | The plan declares aggregate, cohort, or individual granularity. Individual-level measurement includes a necessity and proportionality justification for why aggregate or cohort-level measurement is insufficient. If it uses personal or sensitive data, a completed Privacy Planner result was supplied before drafting; otherwise stop drafting and validation and invoke Privacy Planner. |
 
 ## Investability
 
@@ -140,5 +143,6 @@ Define:
 * Never fabricate baselines, targets, owners, stakeholder names, sources, or dates.
 * Never bypass or hide the readiness scorecard.
 * Never draft for an Investigate decision.
+* Never score, draft, or validate individual-level measurement that uses personal or sensitive data until a completed Privacy Planner result is available.
 * Never infer inaccessible or protected source content.
 * Never persist before presenting the complete inline draft and obtaining destination confirmation.
