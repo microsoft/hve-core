@@ -35,6 +35,8 @@ Do not use it to create a full project plan, write a decision record, produce a 
 
 Use `requirements-author` when the outcome is understood and the task is to create or govern a BRD or PRD. Use `performance-slo-planner` for production SLOs, capacity, latency budgets, and load-test planning.
 
+* When an AI or ML intervention materially affects people's access, eligibility, treatment, allocation, or opportunities, continue outcome framing here and initiate the RAI Planner as a separate assessment. AI or ML involvement alone does not trigger this route.
+
 ## Flow
 
 1. Gather discovery context.
