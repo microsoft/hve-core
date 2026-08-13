@@ -81,11 +81,11 @@ If the request is ambiguous, ask whether the user wants to create a hypothesis o
    * If OH.1, OH.2, OH.3, OH.7, or OH.8 fails, label the hypothesis not investable and recommend returning to discovery.
 6. Deliver according to mode.
    * In create mode, present the complete document inline, then summarize readiness, investability, confidence, the top three gaps, and recommended next actions.
-   * State that the hypothesis supports decision-making but does not constitute investment approval, stakeholder commitment, or measurement sign-off. Require validation by affected stakeholders, the measurement owner, and the accountable decision owner.
+   * Load and present the `Outcome-Hypothesis` CAUTION from `shared/disclaimer-language.instructions.md` verbatim with the investability result. Do not duplicate or paraphrase the canonical disclaimer in this skill.
    * Offer to save a created draft only after presenting it. If the user accepts, propose `docs/planning/outcome-hypotheses/yyyy-mm-dd-<short-slug>-outcome-hypothesis.md` and accept a different destination when the user specifies one.
-   * Confirm the destination before writing. Populate the template frontmatter from the rendered document and persistence context, then save the complete document.
+   * Confirm the destination before writing. Populate the template frontmatter from the rendered document and persistence context, preserve the template's canonical CAUTION, then save the complete document.
    * In assess mode, present the supplied hypothesis unchanged under a labeled input section, followed by a separate labeled assessment section.
-   * Apply the same advisory framing to the assessment result.
+   * Present the same canonical CAUTION with the assessment result.
    * End an assessment with a separate offer to create a revised draft. Do not revise or persist the supplied document in the assessment response.
 
 ## Inputs
@@ -116,7 +116,7 @@ Create mode accepts an existing discovery summary or D1-D7 scorecard as input, b
 * Individual-level measures using personal or sensitive data are not scored, drafted, or validated until a completed Privacy Planner result is available.
 * Unknown information remains an explicit gap rather than invented content.
 * Create-mode validation warnings and each mode's investability result are visible.
-* Each mode states its advisory status and names the human validation owners.
+* Each mode presents the canonical Outcome-Hypothesis disclaimer, defines investability as evidence readiness, and names the human validation owners.
 * A created draft appears before any persistence offer or write.
 * An accepted create-mode persistence offer has a confirmed destination and produces the complete rendered document with valid frontmatter.
 * A revised draft is produced only after a separate explicit request.
@@ -155,7 +155,7 @@ For create mode when the privacy gate does not apply, return:
 2. The complete hypothesis document, unless readiness is Investigate. For Investigate, return the blocking pillars, targeted discovery actions, and evidence needed to resume.
 3. The validation and investability result.
 4. Confidence, unavailable-source limitations, top gaps, and recommended next actions.
-5. The advisory status and required human validation owners.
+5. The canonical Outcome-Hypothesis disclaimer and required human validation owners.
 6. An optional persistence offer after the full inline delivery, using the canonical default destination unless the user overrides it.
 
 For assess mode, return in this order:
@@ -165,5 +165,5 @@ For assess mode, return in this order:
 3. An OH.0-OH.13 findings table with Rule, Result, Evidence or location, and Gap or correction columns, one row per rule in numeric order.
 4. The investability result.
 5. Confidence, unavailable-source limitations, top gaps, and recommended next actions.
-6. The advisory status and required human validation owners.
+6. The canonical Outcome-Hypothesis disclaimer and required human validation owners.
 7. A separate offer to create a revised draft.

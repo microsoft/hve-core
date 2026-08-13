@@ -7,10 +7,18 @@ ms.topic: concept
 ---
 
 > [!CAUTION]
-> This outcome hypothesis supports decision-making but does not constitute
-> investment approval, stakeholder commitment, or measurement sign-off.
-> Validate it with affected stakeholders, the measurement owner, and the
-> accountable decision owner before using it to make commitments.
+> **Disclaimer:** This skill is an assistive decision-support tool only. It does
+> not provide financial or professional investment advice and does not replace
+> affected stakeholders, measurement owners, accountable sponsors or decision
+> owners, or other qualified human reviewers. The investability verdict is an
+> evidence-readiness signal only: "investable" means the defined evidence gates
+> passed, and "not investable" means required evidence is incomplete. All
+> scorecards, outcome hypotheses, investability verdicts, targets, and
+> measurement plans must be independently reviewed and validated by affected
+> stakeholders, the measurement owner, and the accountable sponsor or decision
+> owner before funding, commitment, or implementation. Outputs from this tool
+> do not constitute investment approval, funding authorization, stakeholder
+> commitment, or measurement sign-off.
 
 **Project / Initiative:** `<Project or initiative>`
 **Status:** `<Draft | Provisional | In Review | Committed | Superseded>`
