@@ -140,13 +140,29 @@ Because these files are generated, Dependabot is configured to leave them alone.
 
 ### Upgrading gh-aw-actions
 
-The `gh-aw-actions` version is pinned in `.github/aw/actions-lock.json`, which maps each action reference to a resolved commit SHA. This file, not Dependabot, is the upgrade path:
+The `gh-aw-actions` version is tied to the `gh aw` compiler release, not set independently, and Dependabot does not manage it. Since compiler v0.85.4 the `github/gh-aw-actions/*` family no longer resolves through `.github/aw/actions-lock.json`: the compiler emits the mutable tag `github/gh-aw-actions/<action>@vX.Y.Z` by default, and `--action-tag` is written to the lock files verbatim.
 
-1. Upgrade the `gh aw` CLI/compiler (the resolved `gh-aw-actions` version is tied to the compiler release, not set independently).
-2. Run `gh aw compile` (or `gh aw update-actions`) with API access to re-resolve actions and regenerate `actions-lock.json` plus every `*.lock.yml` file.
-3. Commit `actions-lock.json` and the regenerated lock files together.
+No compiler flag emits both an immutable SHA and a version comment, so the repository supplies the SHA at compile time and the version comment afterward:
 
-The pinned version is version-locked to the `gh aw` compiler that produces the lock files, so the bump and the recompile belong in the same change.
+1. Upgrade the `gh aw` CLI/compiler to the target release.
+2. Resolve the matching `gh-aw-actions` release tag to its commit SHA: `gh api repos/github/gh-aw-actions/commits/vX.Y.Z --jq '.sha'`.
+3. Recompile every workflow against that immutable commit: `gh aw compile --action-mode action --action-tag <sha>`.
+4. Restore the version comments that the compiler omits, so SHA-pinned actions stay traceable:
+
+   ```powershell
+   $sha = '<sha>'
+   $files = @('.github/workflows/agentics-maintenance.yml') + (Get-ChildItem .github/workflows -Filter '*.lock.yml').FullName
+   foreach ($file in $files) {
+       $raw = [System.IO.File]::ReadAllText($file)
+       $annotated = [regex]::Replace($raw, "(github/gh-aw-actions/[^@\s]+@$sha)(?=\r?`$)", '$1 # vX.Y.Z', 'Multiline')
+       [System.IO.File]::WriteAllText($file, $annotated, (New-Object System.Text.UTF8Encoding($false)))
+   }
+   ```
+
+5. Run `npm run lint:dependency-pinning` and `npm run lint:version-consistency` to confirm the generated workflows satisfy both the SHA-pinning and version-comment policies.
+6. Commit `.github/aw/actions-lock.json`, the regenerated lock files, and `agentics-maintenance.yml` together.
+
+Because the pinned version is version-locked to the compiler that produces the lock files, the bump and the recompile belong in the same change.
 
 ## Label-Driven Handoffs
 

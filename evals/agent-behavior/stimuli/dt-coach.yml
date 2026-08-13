@@ -3,7 +3,13 @@
 stimuli:
   - name: dt-coach-class-recipe
     prompt: |
-      Coach me through scoping a Design Thinking project (use the project slug `cafeteria-night-shift`) on "improving cafeteria experience for night-shift workers." Lay out the next 2-3 methods as phases. Write the coaching state under `.copilot-tracking/design-thinking-sessions/` and tell me the path you wrote it to.
+      Coach me through scoping a Design Thinking project (use the project slug `cafeteria-night-shift`) on "improving cafeteria experience for night-shift workers." Lay out the next 2-3 methods as phases. Write the coaching state under `.copilot-tracking/dt/` and tell me the path you wrote it to.
+    environment:
+      skills:
+        - '../../.github/skills/design-thinking/dt-coaching-foundation'
+      files:
+        - src: ../../.github/agents/design-thinking/dt-coach.agent.md
+          dest: .github/copilot-instructions.md
     tags:
       category: agent-behavior
     graders:
@@ -14,9 +20,143 @@ stimuli:
       - type: output-matches
         name: tracking-file-write
         config:
-          pattern: '(?i)\.copilot-tracking[-/\\]design-thinking-sessions'
+          pattern: '(?i)\.copilot-tracking[-/\\]dt[-/\\]'
       - type: output-matches
         name: no-source-edit
         config:
           pattern: '(?i)(created|wrote|modified|edited|patched|added)\s+\S{0,40}(\.cs|\.py|\.ts|\.js|package\.json)'
+          negate: true
+
+  - name: dt-coach-no-premature-deck-offer
+    prompt: |
+      Start a new Design Thinking project (use the project slug `clinic-intake-redesign`) on "reducing patient intake wait times." We have not run any methods yet. Set the project up and tell me what happens first.
+    environment:
+      skills:
+        - '../../.github/skills/design-thinking/dt-coaching-foundation'
+      files:
+        - src: ../../.github/agents/design-thinking/dt-coach.agent.md
+          dest: .github/copilot-instructions.md
+    tags:
+      category: agent-behavior
+    graders:
+      - type: output-matches
+        name: no-canonical-deck-offer
+        config:
+          pattern: '(?i)(canonical deck|customer[- ]card|generate (a |the )?deck|slide deck).{0,80}\?'
+          negate: true
+      - type: output-matches
+        name: no-opt-in-language
+        config:
+          pattern: '(?i)(opt[- ]in|would you like|do you want|shall I).{0,60}(canonical deck|customer[- ]card)'
+          negate: true
+
+  - name: dt-coach-asset-ready-deck-offer
+    prompt: |
+      We just finished Method 3 for the project slug `clinic-intake-redesign`. We have completed personas, a journey map, and a point-of-view statement recorded in the coaching state. What should we do next?
+    environment:
+      skills:
+        - '../../.github/skills/design-thinking/dt-coaching-foundation'
+      files:
+        - src: ../../.github/agents/design-thinking/dt-coach.agent.md
+          dest: .github/copilot-instructions.md
+    tags:
+      category: agent-behavior
+    graders:
+      - type: output-matches
+        name: readiness-gated-response
+        config:
+          pattern: '(?i)(canonical deck|customer[- ]card|snapshot|missing|not yet available|no .{0,30}artifacts)'
+      - type: output-matches
+        name: readiness-evidence-precedes-offer
+        config:
+          pattern: '(?i)(persona|journey map|point[- ]of[- ]view|method 3 output|artifacts? (we|you) have|what.{0,20}(exists|available)|based on)'
+
+  - name: dt-coach-method-5-deck-offer
+    prompt: |
+      We have just wrapped Method 5 for the project slug `clinic-intake-redesign`. Selected concepts and the three-lens evaluation are recorded in the coaching state. Where does that leave us?
+    environment:
+      skills:
+        - '../../.github/skills/design-thinking/dt-coaching-foundation'
+      files:
+        - src: ../../.github/agents/design-thinking/dt-coach.agent.md
+          dest: .github/copilot-instructions.md
+    tags:
+      category: agent-behavior
+    graders:
+      - type: output-matches
+        name: method-5-offer-or-gap
+        config:
+          pattern: '(?i)(canonical deck|customer[- ]card|snapshot|refresh|missing|not yet)'
+      - type: output-matches
+        name: readiness-evidence-precedes-offer
+        config:
+          pattern: '(?i)(concept|three[- ]lens|evaluation|method 5 output|artifacts? (we|you) have|based on)'
+
+  - name: dt-coach-explicit-deck-request-anytime
+    prompt: |
+      We are in Method 2 for project slug `clinic-intake-redesign`, and I want the canonical deck snapshot now even if assets are thin. Please do it and tell me what information is missing.
+    environment:
+      skills:
+        - '../../.github/skills/design-thinking/dt-coaching-foundation'
+      files:
+        - src: ../../.github/agents/design-thinking/dt-coach.agent.md
+          dest: .github/copilot-instructions.md
+    tags:
+      category: agent-behavior
+    graders:
+      - type: output-matches
+        name: honors-explicit-request
+        config:
+          pattern: '(?i)(canonical deck|snapshot|customer[- ]card|requested)'
+      - type: output-matches
+        name: does-not-refuse-out-of-hand
+        config:
+          pattern: '(?i)(cannot|can''t|won''t|will not|refuse).{0,80}(method 3|method 5|not allowed)'
+          negate: true
+      - type: output-matches
+        name: names-missing-evidence-when-thin
+        config:
+          pattern: '(?i)(missing|not yet|thin|need|questions to ask|insufficient)'
+
+  - name: dt-coach-method-5-first-decline-no-reoffer
+    prompt: |
+      At the Method 5 exit for `clinic-intake-redesign`, the team already declined the customer-card offer at this same checkpoint. Should we ask again later in this run?
+    environment:
+      skills:
+        - '../../.github/skills/design-thinking/dt-coaching-foundation'
+      files:
+        - src: ../../.github/agents/design-thinking/dt-coach.agent.md
+          dest: .github/copilot-instructions.md
+    tags:
+      category: agent-behavior
+    graders:
+      - type: output-matches
+        name: no-reoffer-after-method-5-decline
+        config:
+          pattern: '(?i)(do not re[- ]offer|no further customer[- ]card prompts|respect.*decline)'
+      - type: output-matches
+        name: continue-transition-guidance
+        config:
+          pattern: '(?i)(continue|move|transition).{0,40}(method 6|implementation)'
+
+  - name: dt-coach-not-ready-no-offer
+    prompt: |
+      We just finished Method 3 for the project slug `clinic-intake-redesign`, but honestly the session ran short. We have some raw interview notes and nothing else written up yet. What should we do next?
+    environment:
+      skills:
+        - '../../.github/skills/design-thinking/dt-coaching-foundation'
+      files:
+        - src: ../../.github/agents/design-thinking/dt-coach.agent.md
+          dest: .github/copilot-instructions.md
+    tags:
+      category: agent-behavior
+    graders:
+      - type: output-matches
+        name: names-what-is-missing
+        config:
+          pattern: '(?i)(missing|not yet|nothing.{0,20}(complete|written)|raw|before .{0,30}(deck|snapshot|render)|need)'
+      - type: output-matches
+        name: no-ungated-generation-promise
+        config:
+          pattern: "(?i)(i'?ll (generate|build|create).{0,30}(deck|card)|generating the (deck|snapshot) now)"
           negate: true

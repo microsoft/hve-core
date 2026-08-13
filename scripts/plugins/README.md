@@ -67,8 +67,9 @@ selected temporary staging location. Ordinary validation uses
 ## Marketplace Validation
 
 `Validate-Marketplace.ps1` validates `.github/plugin/marketplace.json` against
-its JSON schema and checks version alignment with the root `package.json` plus
-the source locator of every entry.
+its JSON schema, requires the shared `.github/plugin.json` manifest, and checks
+version alignment with the root `package.json` plus the source locator of every
+entry.
 
 ```bash
 npm run lint:marketplace
@@ -97,6 +98,25 @@ Every entry uses the canonical `.github` source root:
 }
 ```
 
+Git-source installation resolves `.github/plugin.json` as the manifest for
+that shared source root:
+
+```json
+{
+  "name": "hve-core",
+  "agents": [],
+  "commands": [],
+  "skills": []
+}
+```
+
+The shared manifest provides the source identity and explicit empty component
+defaults. Each entry in `.github/plugin/marketplace.json` owns its package
+membership declarations. Those entry declarations select the recognized
+components that the CLI loads for that package; they do not filter which files
+the CLI copies from the source root. `Validate-Marketplace.ps1` owns validation
+of the shared manifest and the entry source contract.
+
 The `repo` and `path` fields are required, and `path` must be `.github`.
 Main catalog entries omit `ref`. Prerelease catalog entries use the exact
 `prerelease-v<version>` ref, and release catalog entries use the exact
@@ -117,8 +137,11 @@ Component membership is relative to the `.github` source root:
 * `skills/*` directories
 * `hooks/*.json`
 
-Generated ZIP paths are host-specific package layout, not catalog membership
-vocabulary.
+For Git-source installation, the CLI copies the complete shared `.github`
+source tree for each installed entry. Generated per-package ZIPs are separate
+release assets materialized in external staging; the CLI does not use them for
+Git-source installation. Their host-specific paths are package layout, not
+catalog membership vocabulary.
 
 ## Deterministic Release Evidence
 

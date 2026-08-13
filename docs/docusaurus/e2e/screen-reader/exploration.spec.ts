@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: MIT
 import { test, expect } from '@playwright/test';
 import type { Page } from '@playwright/test';
+import { waitForHydration } from '../_helpers/a11yInvariants';
 
 // Screen-reader exploration flows.
 //
@@ -62,13 +63,26 @@ test.describe('Screen-reader exploration: search combobox', () => {
 
     const searchInput = page.locator('.navbar__search-input').first();
     await expect(searchInput).toBeVisible();
-    await expect(searchInput).toHaveAttribute('role', 'combobox');
+
+    // At rest the widget must not advertise a combobox it cannot behave as.
+    // Upstream attaches aria-autocomplete and the popup wiring lazily on first
+    // interaction; claiming role="combobox" before that announces "combobox,
+    // collapsed" for a control that owns no popup, which is less accurate than
+    // the native search input semantics already present.
+    await expect(searchInput).not.toHaveAttribute('role', 'combobox');
+    await expect(searchInput).toHaveAttribute('aria-label', /search/i);
 
     // A live region (role="status") carries the result-count announcement.
     const status = page.locator('[role="status"]').first();
 
     await searchInput.click();
     await searchInput.fill('getting started');
+
+    // Once the widget is attached it must expose the complete combobox
+    // contract, not a role in isolation.
+    await expect(searchInput).toHaveAttribute('role', 'combobox');
+    await expect(searchInput).toHaveAttribute('aria-expanded', 'true');
+    await expect(searchInput).toHaveAttribute('aria-autocomplete', /.+/);
 
     // The listbox of results a screen reader would navigate into is exposed.
     await expect(page.locator('[role="listbox"]').first()).toBeVisible({ timeout: 15000 });
@@ -104,6 +118,7 @@ test.describe('Screen-reader exploration: navbar dropdown announcements', () => 
     page,
   }) => {
     await page.goto('/hve-core/', { waitUntil: 'domcontentloaded' });
+    await waitForHydration(page);
 
     const toggle = page
       .getByRole('button')

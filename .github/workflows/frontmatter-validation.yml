@@ -57,6 +57,8 @@ jobs:
 
       - name: Run Frontmatter Validation
         shell: pwsh
+        env:
+          INPUT_FOOTER_EXCLUDE_PATHS: ${{ inputs.footer-exclude-paths }}
         run: |
           $params = @{}
           
@@ -71,7 +73,7 @@ jobs:
           }
           
           # Pass footer exclude paths if provided (overrides script defaults)
-          $footerExcludeInput = '${{ inputs.footer-exclude-paths }}'
+          $footerExcludeInput = $env:INPUT_FOOTER_EXCLUDE_PATHS
           if ($footerExcludeInput -and $footerExcludeInput -ne '') {
             $params['FooterExcludePaths'] = $footerExcludeInput -split ',' | ForEach-Object { $_.Trim() }
           }

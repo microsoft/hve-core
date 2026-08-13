@@ -65,7 +65,7 @@ param(
     [string]$Path = (git rev-parse --show-toplevel 2>$null),
 
     [Parameter(Mandatory = $false)]
-    [string[]]$FileExtensions = @('*.ps1', '*.psm1', '*.psd1', '*.sh', '*.py'),
+    [string[]]$FileExtensions = @('*.ps1', '*.psm1', '*.psd1', '*.sh', '*.py', '*.mjs', '*.cjs', '*.ts', '*.tsx', '*.jsx'),
 
     [Parameter(Mandatory = $false)]
     [string]$OutputPath = "logs/copyright-header-results.json",
@@ -89,7 +89,7 @@ Import-Module (Join-Path $PSScriptRoot "../lib/Modules/CIHelpers.psm1") -Force
 Import-Module (Join-Path $PSScriptRoot "../lib/Modules/CopyrightHeader.psm1") -Force
 
 # Canonical default exclusions shared between script-level param and Invoke-CopyrightHeaderCheck
-$DefaultExcludePaths = @('node_modules', '.git', 'vendor', 'logs', '.venv', '.copilot-tracking', 'plugins')
+$DefaultExcludePaths = @('node_modules', '.git', 'vendor', 'logs', '.venv', '.copilot-tracking', 'plugins', '.docusaurus')
 
 if (-not $PSBoundParameters.ContainsKey('ExcludePaths')) {
     $ExcludePaths = $DefaultExcludePaths
@@ -121,6 +121,8 @@ function Get-CommentPrefixForFile {
         '.tsx' { return '//' }
         '.js' { return '//' }
         '.jsx' { return '//' }
+        '.mjs' { return '//' }
+        '.cjs' { return '//' }
         default { return '#' }
     }
 }

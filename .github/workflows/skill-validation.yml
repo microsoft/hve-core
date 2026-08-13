@@ -39,11 +39,13 @@ jobs:
 
       - name: Run skill validation
         shell: pwsh
+        env:
+          INPUT_BASE_BRANCH: ${{ inputs.base-branch }}
         run: |
           $params = @{}
           if ('${{ inputs.changed-files-only }}' -eq 'true') {
             $params['ChangedFilesOnly'] = $true
-            $baseBranch = '${{ inputs.base-branch }}'
+            $baseBranch = $env:INPUT_BASE_BRANCH
             if (-not [string]::IsNullOrEmpty($baseBranch)) {
               $params['BaseBranch'] = $baseBranch
             }

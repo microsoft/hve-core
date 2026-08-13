@@ -39,17 +39,18 @@ Use this table to navigate to the appropriate guide based on what you want to co
 
 ## Contribution Guides
 
-| Guide                                      | Description                                                                     |
-|--------------------------------------------|---------------------------------------------------------------------------------|
-| [Common Standards](ai-artifacts-common.md) | Shared conventions, quality gates, and rejection criteria for all contributions |
-| [Custom Agents](custom-agents.md)          | How to create and submit new agent definitions                                  |
-| [Instructions](instructions.md)            | How to create repository-specific coding guidelines                             |
-| [Prompts](prompts.md)                      | How to create reusable prompt templates                                         |
-| [Skills](skills.md)                        | How to create skill packages with scripts and documentation                     |
-| [Hooks](hooks.md)                          | How to implement hook manifests, scripts, and collection registration           |
-| [Release Process](release-process.md)      | Extension channels, maturity levels, and publishing workflow                    |
-| [Evals in CI](evals-ci.md)                 | Auth contract, fork-PR policy, and how to add a new eval spec                   |
-| [Validation Commands](validation)          | Local-safe defaults, named CI-owned lanes, prerequisites, and cleanup           |
+| Guide                                                                 | Description                                                                      |
+|-----------------------------------------------------------------------|----------------------------------------------------------------------------------|
+| [Common Standards](ai-artifacts-common.md)                            | Shared conventions, quality gates, and rejection criteria for all contributions  |
+| [Accessibility Manual Validation](accessibility-manual-validation.md) | Public-safe, manual validation steps for the HVE Core docs accessibility bug set |
+| [Custom Agents](custom-agents.md)                                     | How to create and submit new agent definitions                                   |
+| [Instructions](instructions.md)                                       | How to create repository-specific coding guidelines                              |
+| [Prompts](prompts.md)                                                 | How to create reusable prompt templates                                          |
+| [Skills](skills.md)                                                   | How to create skill packages with scripts and documentation                      |
+| [Hooks](hooks.md)                                                     | How to implement hook manifests, scripts, and collection registration            |
+| [Release Process](release-process.md)                                 | Extension channels, maturity levels, and publishing workflow                     |
+| [Evals in CI](evals-ci.md)                                            | Auth contract, fork-PR policy, and how to add a new eval spec                    |
+| [Validation Commands](validation)                                     | Local-safe defaults, named CI-owned lanes, prerequisites, and cleanup            |
 
 ## Before You Start
 

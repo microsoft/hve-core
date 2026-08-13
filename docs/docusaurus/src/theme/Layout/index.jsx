@@ -4,12 +4,42 @@ import React, {useEffect, useRef} from 'react';
 import {useLocation} from '@docusaurus/router';
 import Layout from '@theme-original/Layout';
 
+// The container the classic layout renders as the skip link's destination. It is
+// a plain div, so on routes whose page supplies no landmark of its own the skip
+// link resolves to a non-landmark and there is nothing for it to move focus to.
+const SKIP_TO_CONTENT_FALLBACK_ID = '__docusaurus_skipToContent_fallback';
+
+const isSearchRoute = (pathname) => /(^|\/)search\/?$/.test(pathname);
+
 // Move keyboard focus to the main landmark after a route change so that
 // activating a navigation link does not reset focus to the skip link.
 // WCAG 2.4.3 Focus Order.
 export default function LayoutWrapper(props) {
   const {pathname, hash} = useLocation();
   const isInitialRender = useRef(true);
+
+  // The upstream search page owns its own Layout, so a landmark cannot be
+  // inserted around its content from here without enclosing the header and
+  // footer too. Promoting the existing skip-link container to a main landmark
+  // on this route reuses the element the skip link already targets, so no
+  // competing destination is created. Applied only where the page supplies no
+  // landmark of its own; routes that already render <main> are untouched.
+  useEffect(() => {
+    const fallback = document.getElementById(SKIP_TO_CONTENT_FALLBACK_ID);
+    if (!fallback) {
+      return undefined;
+    }
+    if (!isSearchRoute(pathname) || document.querySelector('main')) {
+      if (fallback.getAttribute('role') === 'main') {
+        fallback.removeAttribute('role');
+      }
+      return undefined;
+    }
+    fallback.setAttribute('role', 'main');
+    return () => {
+      fallback.removeAttribute('role');
+    };
+  }, [pathname]);
 
   useEffect(() => {
     // Skip the first render (initial page load) and in-page anchor navigation.
@@ -21,7 +51,7 @@ export default function LayoutWrapper(props) {
       return;
     }
 
-    const main = document.querySelector('main');
+    const main = document.querySelector('main, [role="main"]');
     if (main instanceof HTMLElement) {
       if (main.getAttribute('tabindex') !== '-1') {
         main.setAttribute('tabindex', '-1');

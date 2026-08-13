@@ -284,6 +284,15 @@
           "enum": ["pending", "covered", "partial", "gap", "not-applicable"],
           "description": "Coverage status for the control"
         },
+        "winningMethod": {
+          "type": ["string", "null"],
+          "description": "Strongest verification method backing the status (e.g., axe-static, probe-keyboard-traversal, manual-at, manual-keyboard, code-review)"
+        },
+        "methodAdequacy": {
+          "type": ["string", "null"],
+          "enum": ["decides", "informs", null],
+          "description": "Whether winningMethod decides or only informs the criterion, per the consolidated skill's method-adequacy doctrine. A control cannot be 'covered' when this is 'informs' for an interaction, announcement, adaptive-rendering, or faux-semantics criterion."
+        },
         "evidence": {
           "type": "array",
           "items": { "type": "string" },
@@ -379,6 +388,15 @@
           "type": "string",
           "enum": ["pending", "verified", "expired", "superseded"],
           "description": "Verification lifecycle status"
+        },
+        "winningMethod": {
+          "type": ["string", "null"],
+          "description": "Strongest verification method this evidence represents (e.g., axe-static, probe-keyboard-traversal, manual-at, manual-keyboard, code-review)"
+        },
+        "methodAdequacy": {
+          "type": ["string", "null"],
+          "enum": ["decides", "informs", null],
+          "description": "Whether winningMethod decides or only informs the owning criterion, per the consolidated skill's method-adequacy doctrine"
         },
         "notes": {
           "type": ["string", "null"],

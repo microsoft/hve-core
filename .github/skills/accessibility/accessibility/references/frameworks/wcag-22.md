@@ -286,6 +286,14 @@ Information, structure, and relationships conveyed through presentation can be p
 * Confirm form controls have programmatically associated labels (label-for, `aria-labelledby`, or wrapping label).
 * Confirm visual groupings (boxes, columns, bold headings) carry equivalent programmatic structure.
 
+**Technique depth**:
+
+* Tables (W3C technique H63): every header cell carries an explicit `scope="col"` or `scope="row"`. Markdown-generated tables emit `<th>` without `scope`, leaving association to assistive-technology inference, which is partial for single-header tables and fails for row-header and complex tables. For a build pipeline, inject `scope` on all header cells at build time rather than retrofitting source. Complex spanning tables use `headers`/`id`; layout tables carry `role="presentation"`.
+* Table names (W3C technique H39, recommended): give each data table an accessible name via `<caption>` or `aria-labelledby`/`aria-label`, so it is announced on entry. A table with no name announces only as a grid of cells.
+* Group names: give each visually-titled group (footer column, sidebar group, table-of-contents list) an accessible name that associates its title with its list, via `aria-labelledby` the title id or a wrapping `role="group"`/`<nav aria-label>`, so the group title is announced before its items.
+* Faux headings: a section title produced by a CSS `::before` label, bold text, or a `<div class="*__title">` is not a heading element and is absent from the heading outline. Replace it with a real `<h*>` and move the styling onto the heading selector so appearance is unchanged.
+* The table-name, group-name, faux-heading, and header-association outcomes are announcement-class: decide them with an accessibility-tree assertion or a manual assistive-technology pass per [at-announcement-model.md](at-announcement-model.md); attribute presence alone only informs 1.3.1.
+
 Source: <https://www.w3.org/TR/WCAG22/#info-and-relationships>
 
 ### sc-1-3-2
@@ -415,6 +423,8 @@ Text can be resized up to 200 per cent without loss of content or functionality,
 
 * Confirm zooming the browser to 200% does not clip content, hide controls, or create horizontal scrolling on text blocks.
 * Confirm text is sized in relative units (`rem`, `em`, `%`) rather than fixed pixels for body copy.
+* Confirm fixed-width controls do not clip their own text at 200%. A recurring failure is a fixed-width search input whose placeholder truncates (for example, "Search" to "Sear") and whose keyboard-shortcut badge collides with the text. Replace fixed `width`/`height` with `min-width: 0` plus `clamp()`/`%`/`rem` so the field grows or the placeholder ellipsizes gracefully, let the shortcut badge wrap or hide near 200%, and keep images at `max-width: 100%`.
+* This class is adaptive-rendering: decide it by rendering at 200% zoom (the `zoom-200` state), not by reading CSS. Static analysis only informs it.
 
 Source: <https://www.w3.org/TR/WCAG22/#resize-text>
 
@@ -491,6 +501,8 @@ Content can be presented without loss of information or functionality, and witho
 
 * Confirm a 320-pixel-wide viewport (or 400% zoom on a 1280-pixel viewport) does not produce horizontal scrolling on text content.
 * Confirm tables, code blocks, and large images may scroll horizontally only when two-dimensional layout is essential.
+* Confirm an expanded control does not layer over adjacent content at narrow width. A recurring failure is a navbar search field that, when expanded at 320px, overlaps the site brand or H1 and clips its shortcut hint. Reflow the navbar to a single row-with-wrap (or stack the search below the title), collapse the search to its icon until invoked, remove fixed widths, and verify there is no two-dimensional scroll.
+* This class is adaptive-rendering: decide it by rendering at the `reflow-320` state, not by reading CSS. Static analysis only informs it.
 
 Source: <https://www.w3.org/TR/WCAG22/#reflow>
 

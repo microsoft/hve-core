@@ -32,24 +32,24 @@ Lifecycle labels are disclosure metadata. In the channel model, both Stable and 
 
 ### Prompts
 
-| Name                                | Maturity | Description                                                                                                     |
-|-------------------------------------|----------|-----------------------------------------------------------------------------------------------------------------|
-| **dt-canonical-deck**               | preview  | Canonical deck workflow: opt-in offer, snapshot generation/refresh, and optional customer-card PowerPoint build |
-| **dt-figma-export**                 | preview  | Export Design Thinking artifacts to a FigJam board or Figma Design file via the Figma MCP server                |
-| **dt-handoff-implementation-space** | preview  | Compiles DT Methods 7-9 into research-ready input for rpi-research at the Implementation Space exit             |
-| **dt-handoff-problem-space**        | preview  | Compiles DT Methods 1-3 into research-ready input for rpi-research at the Problem Space exit                    |
-| **dt-handoff-solution-space**       | preview  | Compiles DT Methods 4-6 into research-ready input for rpi-research at the Solution Space exit                   |
-| **dt-method-04-convergence**        | preview  | Theme discovery for Design Thinking Method 4c through philosophy-based clustering                               |
-| **dt-method-04-ideation**           | preview  | Divergent ideation for Design Thinking Method 4b with constraint-informed solution generation                   |
-| **dt-method-05-concepts**           | preview  | Concept articulation for Design Thinking Method 5b from brainstorming themes                                    |
-| **dt-method-05-evaluation**         | preview  | Stakeholder alignment and three-lens evaluation for Design Thinking Method 5c                                   |
-| **dt-method-06-building**           | preview  | Scrappy prototype building with fidelity enforcement for Design Thinking Method 6b                              |
-| **dt-method-06-planning**           | preview  | Concept analysis and prototype approach design for Design Thinking Method 6a                                    |
-| **dt-method-06-testing**            | preview  | Hypothesis-driven testing and constraint validation for Design Thinking Method 6c                               |
-| **dt-method-next**                  | preview  | Assess DT project state and recommend next method with sequencing validation                                    |
-| **dt-resume-coaching**              | preview  | Resume a Design Thinking coaching session - reads coaching state and re-establishes context                     |
-| **dt-start-project**                | preview  | Start a new Design Thinking coaching project with state initialization and first coaching interaction           |
-| **rpi**                             | stable   | Coordinate one task through the Research, Plan, Implement, Review, and Follow-up RPI workflow                   |
+| Name                                | Maturity | Description                                                                                                          |
+|-------------------------------------|----------|----------------------------------------------------------------------------------------------------------------------|
+| **dt-canonical-deck**               | preview  | Canonical deck workflow: asset-ready offer, snapshot generation/refresh, and optional customer-card PowerPoint build |
+| **dt-figma-export**                 | preview  | Export Design Thinking artifacts to a FigJam board or Figma Design file via the Figma MCP server                     |
+| **dt-handoff-implementation-space** | preview  | Compiles DT Methods 7-9 into research-ready input for rpi-research at the Implementation Space exit                  |
+| **dt-handoff-problem-space**        | preview  | Compiles DT Methods 1-3 into research-ready input for rpi-research at the Problem Space exit                         |
+| **dt-handoff-solution-space**       | preview  | Compiles DT Methods 4-6 into research-ready input for rpi-research at the Solution Space exit                        |
+| **dt-method-04-convergence**        | preview  | Theme discovery for Design Thinking Method 4c through philosophy-based clustering                                    |
+| **dt-method-04-ideation**           | preview  | Divergent ideation for Design Thinking Method 4b with constraint-informed solution generation                        |
+| **dt-method-05-concepts**           | preview  | Concept articulation for Design Thinking Method 5b from brainstorming themes                                         |
+| **dt-method-05-evaluation**         | preview  | Stakeholder alignment and three-lens evaluation for Design Thinking Method 5c                                        |
+| **dt-method-06-building**           | preview  | Scrappy prototype building with fidelity enforcement for Design Thinking Method 6b                                   |
+| **dt-method-06-planning**           | preview  | Concept analysis and prototype approach design for Design Thinking Method 6a                                         |
+| **dt-method-06-testing**            | preview  | Hypothesis-driven testing and constraint validation for Design Thinking Method 6c                                    |
+| **dt-method-next**                  | preview  | Assess DT project state and recommend next method with sequencing validation                                         |
+| **dt-resume-coaching**              | preview  | Resume a Design Thinking coaching session - reads coaching state and re-establishes context                          |
+| **dt-start-project**                | preview  | Start a new Design Thinking coaching project with state initialization and first coaching interaction                |
+| **rpi**                             | stable   | Coordinate one task through the Research, Plan, Implement, Review, and Follow-up RPI workflow                        |
 
 ### Instructions
 
@@ -72,6 +72,8 @@ Lifecycle labels are disclosure metadata. In the channel model, both Stable and 
 | **rpi-research**           | stable   | Research-only RPI playbook that gathers task evidence, writes dated research artifacts under .copilot-tracking/research/, and hands off planning-ready findings. Use when the user needs evidence, alternatives, or task framing first.                                                                               |
 | **rpi-review**             | stable   | Compare RPI planning and implementation evidence, record review findings, and route follow-up work. Use when an implementation needs acceptance review.                                                                                                                                                               |
 | **telemetry-foundations**  | stable   | Declarative OpenTelemetry-aligned telemetry vocabulary and instrumentation conventions for traces, metrics, logs, and PII handling                                                                                                                                                                                    |
+| **ux-artifacts**           | preview  | Produce evidence-labelled UX needs, journey, structure, inclusion, and engineering-handoff assets. Use when a practitioner needs a durable UX artifact rather than coaching.                                                                                                                                          |
+| **ux-coaching**            | preview  | Coach a UX practitioner through problem framing, running a design critique, or making an evidence-backed case to a skeptical stakeholder. Use when the practitioner has a live UX task and wants to think it through rather than receive an answer.                                                                   |
 
 <!-- END AUTO-GENERATED ARTIFACTS -->
 
