@@ -63,6 +63,8 @@ jobs:
     steps:
       - name: Generate summary
         shell: pwsh
+        env:
+          INPUT_MAX_AGE_DAYS: ${{ inputs.max-age-days || 30 }}
         run: |
           $pinningScore = '${{ needs.validate-pinning.outputs.compliance-score }}'
           $unpinnedCount = '${{ needs.validate-pinning.outputs.unpinned-count }}'
@@ -86,7 +88,7 @@ jobs:
           |--------|--------|---------|
           | Dependency Pinning Compliance | $(if ($unpinnedCount -eq '0') { '✅ Pass' } else { '⚠️ Warning' }) | Score: $pinningScore% |
           | Unpinned Dependencies | $(if ($unpinnedCount -eq '0') { '✅ None' } else { "⚠️ $unpinnedCount found" }) | $(if ($unpinnedCount -ne '0') { 'Review warnings above' } else { 'All pinned' }) |
-          | Stale SHAs (>${{ inputs.max-age-days }} days) | $(if ($staleCount -eq '0') { '✅ None' } else { "⚠️ $staleCount found" }) | $(if ($staleCount -ne '0') { 'Review warnings above' } else { 'All current' }) |
+          | Stale SHAs (>$($env:INPUT_MAX_AGE_DAYS) days) | $(if ($staleCount -eq '0') { '✅ None' } else { "⚠️ $staleCount found" }) | $(if ($staleCount -ne '0') { 'Review warnings above' } else { 'All current' }) |
           
           ## 🛡️ Security Analysis
           
@@ -121,7 +123,7 @@ jobs:
               Get-Content 'logs/sha-staleness-results.json' | ConvertFrom-Json
             }
             
-            $thresholdDays = ${{ inputs.max-age-days || 30 }}
+            $thresholdDays = [int]$env:INPUT_MAX_AGE_DAYS
             $staleDetails = ""
             if ($stalenessReport -and $stalenessReport.Dependencies) {
               foreach ($staleDep in $stalenessReport.Dependencies) {
@@ -135,7 +137,7 @@ jobs:
           
           ## ℹ️ Recommended: Update Stale SHAs
           
-          **$staleCount SHA pins are outdated (>${{ inputs.max-age-days || 30 }} days old).** Consider updating them.
+          **$staleCount SHA pins are outdated (>$($env:INPUT_MAX_AGE_DAYS) days old).** Consider updating them.
           
           $staleDetails
           
@@ -155,7 +157,7 @@ jobs:
           
           Repository security posture is excellent:
           - All dependencies are properly pinned
-          - All SHAs are current (< ${{ inputs.max-age-days || 30 }} days old)
+          - All SHAs are current (< $($env:INPUT_MAX_AGE_DAYS) days old)
           - CodeQL analysis completed successfully
           - GitHub Secret Scanning and Dependabot actively monitoring
           
@@ -174,7 +176,7 @@ jobs:
           
           1. Review the build warnings generated in this workflow run
           2. For unpinned dependencies: Pin them to SHAs immediately (security risk)
-          3. For stale SHAs (>${{ inputs.max-age-days }} days): Update them when convenient (maintenance task)
+          3. For stale SHAs (>$($env:INPUT_MAX_AGE_DAYS) days): Update them when convenient (maintenance task)
           4. Download the JSON report artifacts for detailed analysis
           
           "@
@@ -183,6 +185,8 @@ jobs:
 
       - name: Set workflow conclusion
         shell: pwsh
+        env:
+          INPUT_MAX_AGE_DAYS: ${{ inputs.max-age-days || 30 }}
         run: |
           $unpinnedCount = '${{ needs.validate-pinning.outputs.unpinned-count }}'
           $staleCount = '${{ needs.check-staleness.outputs.stale-count }}'
@@ -193,7 +197,7 @@ jobs:
           }
           
           if ($staleCount -ne '0') {
-            Write-Output "::warning::Found $staleCount stale SHA pins (>${{ inputs.max-age-days || 30 }} days old). Consider updating them."
+            Write-Output "::warning::Found $staleCount stale SHA pins (>$($env:INPUT_MAX_AGE_DAYS) days old). Consider updating them."
           }
           
           if ($unpinnedCount -eq '0' -and $staleCount -eq '0') {

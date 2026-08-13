@@ -2,7 +2,7 @@
 title: Dev Container
 description: Pre-configured development environment for HVE Core with all required tools and extensions
 author: HVE Core Team
-ms.date: 2026-08-10
+ms.date: 2026-08-11
 ms.topic: guide
 keywords:
   - devcontainer
@@ -74,6 +74,7 @@ endpoints and credentials out of repository files.
 
 * Git
 * GitHub CLI (`gh`)
+* GitHub Copilot CLI (`copilot`)
 * Azure CLI (`az`)
 * actionlint (GitHub Actions workflow linter)
 

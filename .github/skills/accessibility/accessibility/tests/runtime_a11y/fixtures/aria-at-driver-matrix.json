@@ -1,0 +1,137 @@
+{
+  "criteria": [
+    {
+      "id": "4.1.2",
+      "framework": "wcag-22",
+      "title": "Name, Role, Value",
+      "adequateMethods": ["screen-reader"]
+    },
+    {
+      "id": "2.4.7",
+      "framework": "wcag-22",
+      "title": "Focus Visible",
+      "adequateMethods": ["manual-keyboard"]
+    },
+    {
+      "id": "1.4.3",
+      "framework": "wcag-22",
+      "title": "Contrast",
+      "adequateMethods": ["axe-auto"]
+    }
+  ],
+  "surfaces": [
+    {
+      "id": "modal-dialog",
+      "name": "Modal Dialog",
+      "platform": "web",
+      "widgetPattern": "dialog-modal",
+      "states": ["open"]
+    },
+    {
+      "id": "checkbox",
+      "name": "Checkbox",
+      "platform": "web",
+      "widgetPattern": "checkbox",
+      "states": ["default"]
+    },
+    {
+      "id": "combobox",
+      "name": "Combobox",
+      "platform": "web",
+      "widgetPattern": "combobox",
+      "states": ["default"]
+    },
+    {
+      "id": "menu-button",
+      "name": "Menu Button",
+      "platform": "web",
+      "widgetPattern": "menu-button",
+      "states": ["default"]
+    },
+    {
+      "id": "tabs",
+      "name": "Tabs",
+      "platform": "web",
+      "widgetPattern": "tabs",
+      "states": ["default"]
+    },
+    {
+      "id": "unknown-pattern",
+      "name": "Unknown Pattern",
+      "platform": "web",
+      "widgetPattern": "unknown-widget",
+      "states": ["default"]
+    }
+  ],
+  "cells": [
+    {
+      "criterionId": "4.1.2",
+      "surfaceId": "modal-dialog",
+      "state": "open",
+      "status": "pass",
+      "verifiedByMethod": "screen-reader",
+      "adequateMethods": ["screen-reader"],
+      "evidence": "evidence://dialog-open",
+      "rationale": "Adequate screen-reader evidence for the modal dialog."
+    },
+    {
+      "criterionId": "4.1.2",
+      "surfaceId": "modal-dialog",
+      "state": "open",
+      "status": "pass",
+      "verifiedByMethod": "axe-auto",
+      "adequateMethods": ["screen-reader"],
+      "evidence": "evidence://dialog-informs-only",
+      "rationale": "An automated check informs the criterion but cannot decide it."
+    },
+    {
+      "criterionId": "4.1.2",
+      "surfaceId": "checkbox",
+      "state": "default",
+      "status": "unknown",
+      "adequateMethods": ["screen-reader"],
+      "rationale": "The starter checkbox mapping remains manual-only in the public workflow."
+    },
+    {
+      "criterionId": "4.1.2",
+      "surfaceId": "combobox",
+      "state": "default",
+      "status": "unknown",
+      "adequateMethods": ["screen-reader"],
+      "rationale": "The combobox starter mapping remains manual-only because the local adapter cannot faithfully execute the ARIA-AT semantics."
+    },
+    {
+      "criterionId": "4.1.2",
+      "surfaceId": "menu-button",
+      "state": "default",
+      "status": "unknown",
+      "adequateMethods": ["screen-reader"],
+      "rationale": "The menu-button starter mapping remains manual-only for this dogfood sample."
+    },
+    {
+      "criterionId": "4.1.2",
+      "surfaceId": "tabs",
+      "state": "default",
+      "status": "unknown",
+      "adequateMethods": ["screen-reader"],
+      "rationale": "Tabs manual activation remains a human-only workflow in the public starter catalog."
+    },
+    {
+      "criterionId": "4.1.2",
+      "surfaceId": "unknown-pattern",
+      "state": "default",
+      "status": "unknown",
+      "adequateMethods": ["screen-reader"],
+      "rationale": "Unknown patterns should produce a generic manual draft and a project-refinement marker."
+    },
+    {
+      "criterionId": "2.4.7",
+      "surfaceId": "tabs",
+      "state": "default",
+      "status": "not-applicable",
+      "isApplicable": false,
+      "adequateMethods": ["manual-keyboard"],
+      "rationale": "The sample does not require a keyboard-focus visibility verdict for the tab surface."
+    }
+  ]
+}

@@ -1,0 +1,176 @@
+{
+  "$schema": "./a11y-runtime.config.schema.json",
+  "schemaVersion": "2026-07-17",
+  "baseUrl": "http://127.0.0.1:3001",
+  "serveMode": "auto",
+  "allowlist": [
+    "http://127.0.0.1:3001",
+    "http://localhost:3001"
+  ],
+  "routes": [
+    {
+      "path": "/hve-core/",
+      "title": "Homepage",
+      "surfaceIds": ["homepage"]
+    },
+    {
+      "path": "/hve-core/search/",
+      "title": "Search results",
+      "surfaceIds": ["search-results"]
+    }
+  ],
+  "surfaces": [
+    {
+      "id": "homepage",
+      "type": "page",
+      "route": "/hve-core/",
+      "selector": "input.navbar__search-input",
+      "states": [
+        { "state": "desktop" },
+        { "state": "reflow-320" },
+        { "state": "zoom-200" },
+        { "state": "text-spacing" },
+        { "state": "forced-colors" }
+      ]
+    },
+    {
+      "id": "search-results",
+      "type": "page",
+      "route": "/hve-core/search/",
+      "selector": "input[name=\"q\"]",
+      "states": [
+        { "state": "desktop" },
+        { "state": "reflow-320" },
+        { "state": "zoom-200" },
+        { "state": "text-spacing" },
+        { "state": "forced-colors" }
+      ]
+    }
+  ],
+  "calibration": {
+    "mode": "full",
+    "maxExecutionsPerJourney": 20,
+    "profileVersion": "2026.07.17",
+    "calibrationProfile": "guidepup-nvda-safe-isolated",
+    "manualBoundary": [
+      {
+        "id": "focus-indicator-visibility",
+        "reason": "Four-sided focus indicator visibility and clipping require manual verification.",
+        "reference": "docs/planning/runbooks/accessibility/manual-test-book.md"
+      }
+    ],
+    "journeys": [
+      {
+        "id": "search-keyboard-reachability",
+        "title": "Search combobox keyboard reachability",
+        "route": "/hve-core/",
+        "surfaceId": "homepage",
+        "state": "desktop",
+        "triggerAfterDriverStart": true,
+        "trigger": {
+          "action": "focus",
+          "target": "body",
+          "description": "Focus the document before sending keyboard commands"
+        },
+        "triggerSequence": [
+          {
+            "action": "focus",
+            "target": "body",
+            "waitFor": "input.navbar__search-input"
+          }
+        ],
+        "commands": [
+          { "kind": "pause", "durationMs": 1500 },
+          { "kind": "key", "value": "Control+K" },
+          { "kind": "pause", "durationMs": 1500 },
+          { "kind": "type", "value": "a" },
+          { "kind": "waitFor", "value": "[role=\"listbox\"], [role=\"option\"]", "durationMs": 5000 },
+          { "kind": "pause", "durationMs": 4000 }
+        ],
+        "assertions": [{ "id": "speech", "type": "contains", "value": "result" }],
+        "profileFingerprint": {
+          "locale": "en-US",
+          "driver": "nvda",
+          "driverVersion": "2026.1.1",
+          "browser": "chrome",
+          "browserVersion": "150.0.7871.127",
+          "automation": "guidepup-nvda-safe-isolated",
+          "automationVersion": "guidepup_nvda_0.2.0-2026.1.1",
+          "isolation": "isolated",
+          "verbosity": "default",
+          "punctuation": "preserve",
+          "speechMode": "default",
+          "addOnPosture": "isolated"
+        }
+      },
+      {
+        "id": "search-status-announcement",
+        "title": "Search results status announcement",
+        "route": "/hve-core/search/?q=agent",
+        "surfaceId": "search-results",
+        "state": "desktop",
+        "triggerAfterDriverStart": true,
+        "trigger": {
+          "action": "focus",
+          "target": "input[name=\"q\"]",
+          "description": "Focus the search field"
+        },
+        "triggerSequence": [
+          {
+            "action": "click",
+            "target": "input[name=\"q\"]",
+            "waitFor": "input[name=\"q\"]"
+          }
+        ],
+        "commands": [
+          { "kind": "pause", "durationMs": 2000 },
+          { "kind": "key", "value": "Control+A" },
+          { "kind": "pause", "durationMs": 1000 },
+          { "kind": "type", "value": "z" },
+          { "kind": "waitFor", "value": "#search-results-status[role=\"status\"]", "durationMs": 5000 },
+          { "kind": "pause", "durationMs": 4000 }
+        ],
+        "assertions": [{ "id": "speech", "type": "matches", "value": "No documents found|[0-9]+ documents? found" }],
+        "profileFingerprint": {
+          "locale": "en-US",
+          "driver": "nvda",
+          "driverVersion": "2026.1.1",
+          "browser": "chrome",
+          "browserVersion": "150.0.7871.127",
+          "automation": "guidepup-nvda-safe-isolated",
+          "automationVersion": "guidepup_nvda_0.2.0-2026.1.1",
+          "isolation": "isolated",
+          "verbosity": "default",
+          "punctuation": "preserve",
+          "speechMode": "default",
+          "addOnPosture": "isolated"
+        }
+      }
+    ],
+    "visualStates": [
+      "desktop",
+      "reflow-320",
+      "zoom-200",
+      "text-spacing",
+      "forced-colors"
+    ]
+  },
+  "visualReview": {
+    "enabled": true,
+    "evidenceRoot": ".",
+    "maxArtifactBytes": 1073741824,
+    "publicLoopbackOnly": true,
+    "rejectPersonalData": true,
+    "routes": [
+      { "path": "/hve-core/", "state": "desktop", "surfaceId": "homepage" },
+      { "path": "/hve-core/search/", "state": "desktop", "surfaceId": "search-results" }
+    ],
+    "states": [
+      "desktop",
+      "reflow-320",
+      "zoom-200",
+      "text-spacing",
+      "forced-colors"
+    ]
+  }
+}

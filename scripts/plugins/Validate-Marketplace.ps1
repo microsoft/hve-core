@@ -251,6 +251,16 @@ function Test-MarketplaceRepositoryContract {
         $contractErrors += "package documentation root 'docs/plugins' is missing under $RepoRoot"
     }
 
+    # Every entry installs from the shared '.github' source root, so this single
+    # manifest is what GitHub-object installation resolves for the whole catalog.
+    $sharedManifestPath = Join-Path $RepoRoot '.github/plugin.json'
+    $sharedManifest = if (Test-Path -LiteralPath $sharedManifestPath -PathType Leaf) {
+        Get-Content -LiteralPath $sharedManifestPath -Raw -Encoding utf8 | ConvertFrom-Json -AsHashtable
+    }
+    if ($sharedManifest -isnot [System.Collections.IDictionary]) {
+        $contractErrors += "shared plugin manifest '.github/plugin.json' must exist under $RepoRoot and contain a JSON object"
+    }
+
     $entries = @($Manifest['plugins'])
 
     # The active package set is derived from the package documents on disk, so
@@ -320,17 +330,6 @@ function Test-MarketplaceRepositoryContract {
         }
         if ($channelProjections['Stable'] -ne $channelProjections['PreRelease']) {
             $contractErrors += "package '$name' must resolve identical components and maturity on Stable and PreRelease"
-        }
-
-        $pluginRoot = Join-Path $RepoRoot "plugins/$name/plugin.json"
-        if (Test-Path -LiteralPath $pluginRoot -PathType Leaf) {
-            $pluginManifest = Get-Content -LiteralPath $pluginRoot -Raw -Encoding utf8 | ConvertFrom-Json -AsHashtable
-            if ([string]$pluginManifest['name'] -ne $name -or [string]$pluginManifest['version'] -ne [string]$entry['version']) {
-                $contractErrors += "package '$name' root plugin.json identity does not mirror the catalog"
-            }
-            if ($pluginManifest.Contains('x-hve')) {
-                $contractErrors += "package '$name' root plugin.json must not contain x-hve"
-            }
         }
     }
     if ($tombstoneCount -eq 0) {

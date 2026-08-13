@@ -64,6 +64,9 @@ jobs:
       - name: Run Dependency Pinning Validation
         id: pinning
         shell: pwsh
+        env:
+          INPUT_DEPENDENCY_TYPES: ${{ inputs.dependency-types }}
+          INPUT_THRESHOLD: ${{ inputs.threshold }}
         run: |
           Write-Host "Validating dependency SHA pinning compliance..."
           
@@ -83,13 +86,13 @@ jobs:
           }
           
           # Pass dependency types filter to script
-          if ('${{ inputs.dependency-types }}') {
-            $params['IncludeTypes'] = '${{ inputs.dependency-types }}'
+          if ($env:INPUT_DEPENDENCY_TYPES) {
+            $params['IncludeTypes'] = $env:INPUT_DEPENDENCY_TYPES
           }
           
           # Pass compliance threshold to script (script handles enforcement)
-          if ('${{ inputs.threshold }}') {
-            $params['Threshold'] = [int]'${{ inputs.threshold }}'
+          if ($env:INPUT_THRESHOLD) {
+            $params['Threshold'] = [int]$env:INPUT_THRESHOLD
           }
           
           # Run validation script (JSON format)

@@ -1,0 +1,24 @@
+{
+  "$schema": "https://microsoft.github.io/hve-core/accessibility/a11y-runtime-config.schema.json",
+  "schemaVersion": "1.0",
+  "baseUrl": "http://localhost:4173",
+  "serveMode": "off",
+  "surfaces": [
+    {
+      "id": "valid-surface",
+      "type": "component",
+      "route": "/checkout",
+      "selector": { "kind": "role", "role": "form", "name": "Checkout" },
+      "states": [
+        {
+          "state": "error",
+          "trigger": {
+            "action": "click",
+            "target": { "kind": "role", "role": "button", "name": "Submit" },
+            "description": "Submit without required fields to render validation messaging."
+          }
+        }
+      ]
+    }
+  ]
+}

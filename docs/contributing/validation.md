@@ -3,7 +3,7 @@ title: Validation Commands and CI-Owned Lanes
 description: Choose local-safe validation defaults and reproduce CI-owned documentation and evaluation lanes when their prerequisites are available
 sidebar_position: 12
 author: Microsoft
-ms.date: 2026-08-10
+ms.date: 2026-08-11
 ms.topic: how-to
 keywords:
   - validation
@@ -33,14 +33,15 @@ Use the smallest local-safe command that covers the change. Generic validation
 does not select a `ci:*` lane, and a command mentioned in documentation, a
 plan, a log, or an error message is not an agent execution request.
 
-| Need                                      | Command                  | Notes                                       |
-|-------------------------------------------|--------------------------|---------------------------------------------|
-| Repository-wide local-safe validation     | `npm run validate:local` | Non-mutating default validation aggregate   |
-| Documentation static and component checks | `npm run validate:docs`  | Does not run the browser E2E lane           |
-| Markdown tables check                     | `npm run lint:tables`    | Non-mutating table alignment check          |
-| Markdown tables fix                       | `npm run format:tables`  | Explicitly mutates table formatting         |
-| Markdown lint fix                         | `npm run lint:md:fix`    | Explicitly mutates Markdown where possible  |
-| Targeted check                            | `npm run <local-check>`  | Choose the check that owns the changed file |
+| Need                                      | Command                      | Notes                                                 |
+|-------------------------------------------|------------------------------|-------------------------------------------------------|
+| Repository-wide local-safe validation     | `npm run validate:local`     | Non-mutating default validation aggregate             |
+| Documentation static and component checks | `npm run validate:docs`      | Does not run the browser E2E lane                     |
+| Markdown tables check                     | `npm run lint:tables`        | Non-mutating table alignment check                    |
+| Markdown tables fix                       | `npm run format:tables`      | Explicitly mutates table formatting                   |
+| Markdown lint fix                         | `npm run lint:md:fix`        | Explicitly mutates Markdown where possible            |
+| Targeted check                            | `npm run <local-check>`      | Choose the check that owns the changed file           |
+| Design Intent contract lint               | `npm run lint:design-intent` | Validates authored records and verification artifacts |
 
 For example, use `npm run lint:md -- docs/contributing/validation.md` for a
 targeted Markdown check, or invoke `npm run lint:frontmatter` after changing

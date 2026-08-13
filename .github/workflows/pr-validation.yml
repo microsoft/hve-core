@@ -207,6 +207,43 @@ jobs:
       matrix:
         directory: ${{ fromJson(needs.discover-node-projects.outputs.directories) }}
 
+  accessibility-browser-smoke:
+    name: Accessibility Browser Smoke
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Set up Node
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: '24'
+
+      - name: Install accessibility skill Node dependencies
+        shell: bash
+        env:
+          SEARCH_ROOT: .github/skills/accessibility/accessibility
+        run: ./scripts/ci/install-skill-node-deps.sh
+
+      - name: Verify system Chrome
+        shell: bash
+        run: |
+          set -euo pipefail
+          chrome_bin="$(command -v google-chrome || command -v google-chrome-stable || true)"
+          if [ -z "$chrome_bin" ]; then
+            echo "::error::No system Google Chrome found on the runner; accessibility smoke tests require it"
+            exit 1
+          fi
+          echo "Using system Chrome at: $chrome_bin"
+          "$chrome_bin" --version
+
+      - name: Run accessibility browser smoke tests
+        run: npm run ci:test:a11y:smoke
+
   fuzz-tests:
     name: "Fuzz Tests (${{ matrix.directory }})"
     needs: discover-python-projects
@@ -760,6 +797,7 @@ jobs:
       - pytest
       - discover-node-projects
       - node-tests
+      - accessibility-browser-smoke
       - fuzz-tests
       - pip-audit
       - docusaurus-tests

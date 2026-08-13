@@ -58,7 +58,7 @@ jobs:
         run: |
           New-Item -ItemType Directory -Force -Path logs | Out-Null
           $params = @{
-            Path       = '.github/workflows'
+            Path       = @('.github/workflows', '.github/actions')
             Format     = 'sarif'
             OutputPath = 'logs/dangerous-workflow-results.sarif'
           }

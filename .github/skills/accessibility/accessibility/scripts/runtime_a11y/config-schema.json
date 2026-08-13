@@ -15,12 +15,17 @@
     "serveMode": {
       "type": "string",
       "enum": ["auto", "served", "external", "off"],
-      "description": "Whether the harness starts a dev server (auto), probes an already-served base (served/external), or does nothing (off)."
+      "description": "Server ownership for visual review capture. 'auto' reuses a healthy loopback server or starts and stops one it owns; 'served' requires a loopback server to be running already and fails otherwise; 'external' and 'off' never probe or start a server. 'auto' and 'served' accept loopback base URLs only."
     },
     "allowlist": {
       "type": "array",
       "items": { "type": "string" },
       "description": "Host or route/path glob patterns the harness may visit."
+    },
+    "syntheticPhrases": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Optional synthetic phrases emitted by synthetic AT-plan drivers for non-production contract tests."
     },
     "routes": {
       "type": "array",
@@ -39,7 +44,7 @@
       "type": "array",
       "items": {
         "type": "object",
-        "required": ["id", "type"],
+        "required": ["id"],
         "properties": {
           "id": { "type": "string" },
           "type": {
@@ -49,6 +54,7 @@
           "route": { "type": "string" },
           "selector": { "$ref": "#/$defs/selector" },
           "widgetPattern": { "type": "string" },
+          "ariaAt": { "$ref": "#/$defs/ariaAtOverride" },
           "states": {
             "type": "array",
             "items": { "$ref": "#/$defs/stateEntry" }
@@ -69,6 +75,136 @@
         },
         "additionalProperties": true
       }
+    },
+    "realScreenReader": {
+      "type": "object",
+      "properties": {
+        "commands": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/screenReaderAction" }
+        },
+        "expectedAnnouncements": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/expectedAnnouncement" }
+        }
+      },
+      "additionalProperties": true
+    },
+    "calibration": {
+      "type": "object",
+      "properties": {
+        "mode": {
+          "type": "string",
+          "enum": ["full", "nvdaOnly"]
+        },
+        "maxExecutionsPerJourney": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "profileVersion": {
+          "type": "string",
+          "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"
+        },
+        "calibrationProfile": {
+          "type": "string",
+          "minLength": 1
+        },
+        "manualBoundary": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["id", "reason"],
+            "properties": {
+              "id": { "type": "string", "minLength": 1 },
+              "reason": { "type": "string", "minLength": 1 },
+              "reference": { "type": "string" }
+            },
+            "additionalProperties": false
+          }
+        },
+        "journeys": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["id"],
+            "properties": {
+              "id": { "type": "string" },
+              "title": { "type": "string" },
+              "route": { "type": "string" },
+              "surfaceId": { "type": "string" },
+              "state": { "type": "string" },
+              "trigger": { "$ref": "#/$defs/trigger" },
+              "triggerSequence": {
+                "type": "array",
+                "minItems": 1,
+                "items": { "$ref": "#/$defs/trigger" }
+              },
+              "triggerAfterDriverStart": { "type": "boolean" },
+              "commands": {
+                "type": "array",
+                "items": { "$ref": "#/$defs/screenReaderAction" }
+              },
+              "assertions": {
+                "type": "array",
+                "items": { "$ref": "#/$defs/expectedAnnouncement" }
+              },
+              "profileFingerprint": {
+                "type": "object",
+                "additionalProperties": true
+              },
+              "visualStates": {
+                "type": "array",
+                "items": { "type": "string" }
+              }
+            },
+            "additionalProperties": true
+          }
+        },
+        "visualStates": {
+          "type": "array",
+          "items": { "type": "string" }
+        }
+      },
+      "additionalProperties": true
+    },
+    "visualReview": {
+      "type": "object",
+      "properties": {
+        "enabled": { "type": "boolean" },
+        "evidenceRoot": { "type": "string" },
+        "maxArtifactBytes": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 1073741824
+        },
+        "allowlist": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "publicLoopbackOnly": { "type": "boolean" },
+        "rejectPersonalData": { "type": "boolean" },
+        "operatorConfirmedNoPersonalData": { "type": "boolean" },
+        "fullPage": { "type": "boolean" },
+        "traceSnapshots": { "type": "boolean" },
+        "routes": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["path"],
+            "properties": {
+              "path": { "type": "string" },
+              "state": { "type": "string" },
+              "surfaceId": { "type": "string" }
+            },
+            "additionalProperties": true
+          }
+        },
+        "states": {
+          "type": "array",
+          "items": { "type": "string" }
+        }
+      },
+      "additionalProperties": true
     }
   },
   "additionalProperties": true,
@@ -112,7 +248,67 @@
       "required": ["state"],
       "properties": {
         "state": { "type": "string" },
-        "trigger": { "$ref": "#/$defs/trigger" }
+        "trigger": { "$ref": "#/$defs/trigger" },
+        "ariaAt": { "$ref": "#/$defs/ariaAtOverride" },
+        "realScreenReader": { "$ref": "#/$defs/realScreenReader" }
+      },
+      "additionalProperties": true
+    },
+    "screenReaderAction": {
+      "type": "object",
+      "required": ["kind"],
+      "properties": {
+        "kind": {
+          "type": "string",
+          "enum": ["command", "pause", "keyboard", "key", "perform", "type", "waitFor"]
+        },
+        "value": { "type": "string", "minLength": 1 },
+        "durationMs": { "type": "integer", "minimum": 0 }
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "kind": { "const": "pause" } } },
+          "then": { "required": ["durationMs"] },
+          "else": { "required": ["value"] }
+        }
+      ],
+      "additionalProperties": false
+    },
+    "expectedAnnouncement": {
+      "type": "object",
+      "required": ["type", "value"],
+      "properties": {
+        "id": { "type": "string" },
+        "type": { "type": "string", "enum": ["contains", "matches", "orderedContains"] },
+        "value": { "type": "string" }
+      },
+      "additionalProperties": true
+    },
+    "ariaAtOverride": {
+      "type": "object",
+      "properties": {
+        "commands": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/screenReaderAction" }
+        },
+        "assertions": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/expectedAnnouncement" }
+        }
+      },
+      "additionalProperties": true
+    },
+    "realScreenReader": {
+      "type": "object",
+      "properties": {
+        "commands": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/screenReaderAction" }
+        },
+        "expectedAnnouncements": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/expectedAnnouncement" }
+        }
       },
       "additionalProperties": true
     }

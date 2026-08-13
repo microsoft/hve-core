@@ -46,9 +46,10 @@ function New-PluginFixtureRepository {
     Creates an isolated git working tree that mimics the repository layout.
 
     .DESCRIPTION
-    Initializes a standalone git repository containing package.json and the
-    canonical roots the plugin pipeline reads. Nothing is committed, because
-    every production reader consults the index rather than history.
+    Initializes a standalone git repository containing package.json, the shared
+    .github/plugin.json manifest, and the canonical roots the plugin pipeline
+    reads. Nothing is committed, because every production reader consults the
+    index rather than history.
 
     .PARAMETER Path
     Directory to initialize.
@@ -104,6 +105,14 @@ function New-PluginFixtureRepository {
         author      = 'Contoso'
     } | ConvertTo-Json -Depth 5
     Add-PluginFixtureFile -RepoRoot $Path -RelativePath 'package.json' -Content $packageJson | Out-Null
+
+    $sharedManifest = [ordered]@{
+        name     = 'contoso-hve'
+        agents   = @()
+        commands = @()
+        skills   = @()
+    } | ConvertTo-Json -Depth 5
+    Add-PluginFixtureFile -RepoRoot $Path -RelativePath '.github/plugin.json' -Content $sharedManifest | Out-Null
 
     if (-not $SkipAgentRoot) {
         New-Item -ItemType Directory -Path (Join-Path $Path '.github/agents') -Force | Out-Null

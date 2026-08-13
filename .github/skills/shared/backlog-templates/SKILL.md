@@ -168,24 +168,27 @@ Debug-mode output retained under `.copilot-tracking/<planner-domain>/{slug}/debu
 
 ## Autonomy-Tier Enumeration
 
-Three tiers control how rendered work items reach the target backlog system. The canonical vocabulary is `manual` / `supervised` / `autonomous`.
+Three tiers control how rendered work items reach the target backlog system. The canonical vocabulary is `manual` / `supervised` / `autonomous`. A fourth value, `coached`, names a capability that emits no work items at all.
 
 * `manual` — The planner emits a backlog handoff file under `.copilot-tracking/`. The user creates each work item in the target system independently. No MCP tool invocations.
 * `supervised` — The planner drafts rendered work items in `.copilot-tracking/`, presents each batch of 5 to 10 items for user review, and only invokes MCP creation tools on user approval. This is the default tier.
 * `autonomous` — The planner invokes MCP creation tools directly on the sanitized batch after the user pre-approves the run. All items are created in a single operation.
+* `coached` — The capability produces a conversation and its own output rather than backlog work items. It renders nothing, invokes no creation tool, and reaches no backlog system, so no tier applies to it. No backlog planner selects this value and no planner state schema accepts it; it exists so a coaching-shaped capability has a name in this vocabulary instead of an undocumented absence. Coaching capabilities record no autonomy field in their own state.
 
 Cross-reference mapping for planners that use divergent vocabularies. Each planner persists the selected value in its session state under `userPreferences.autonomyTier` using its own vocabulary; this table is the single source of truth for cross-planner equivalence.
 
-| Canonical (this skill) | Accessibility (seed schema) | Security | RAI     | SSSC              | Privacy           |
-|------------------------|-----------------------------|----------|---------|-------------------|-------------------|
-| autonomous             | autonomous                  | Full     | Full    | Full              | Full              |
-| supervised (default)   | supervised                  | Partial  | Partial | Partial (default) | Partial (default) |
-| manual                 | manual                      | Manual   | Manual  | Guided            | Manual            |
+| Canonical (this skill) | Accessibility (seed schema) | Security       | RAI            | SSSC              | Privacy           |
+|------------------------|-----------------------------|----------------|----------------|-------------------|-------------------|
+| autonomous             | autonomous                  | Full           | Full           | Full              | Full              |
+| supervised (default)   | supervised                  | Partial        | Partial        | Partial (default) | Partial (default) |
+| manual                 | manual                      | Manual         | Manual         | Guided            | Manual            |
+| coached                | not applicable              | not applicable | not applicable | not applicable    | not applicable    |
 
 Notes:
 
 * Accessibility's vocabulary already matches the canonical names; the seed schema `autonomyTier` field is the persisted form.
 * SSSC uses `Guided` as the lowest-autonomy tier label. Treat `Guided` and `Manual` as equivalent across planners for cross-reference and reporting.
+* `coached` is not a tier and has no planner equivalent. It is not selectable, not persisted in any planner state schema, and carries no severity-to-tier routing. A planner that encounters it should treat it as out of range.
 * Severity-to-tier mapping (which severity routes to which tier) stays in each planner's handoff instruction file.
 
 ## Disclaimer-Block Placement Convention

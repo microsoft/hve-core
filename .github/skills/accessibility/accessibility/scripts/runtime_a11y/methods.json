@@ -1,0 +1,56 @@
+{
+  "$schema": "./methods.schema.json",
+  "vocabularyVersion": "2026-08-07",
+  "description": "Authoritative evidence-method vocabulary shared by the Python matrix engine and the Node probe runner. Rank orders evidence strength during merge. humanEvidence marks methods performed by a person, which the EARL renderer reports as manual mode. overwriteLocked marks methods a later automated result must never replace.",
+  "methods": [
+    {
+      "name": "manual-keyboard",
+      "rank": 70,
+      "humanEvidence": true,
+      "overwriteLocked": true,
+      "summary": "A person operated the surface by keyboard and recorded what happened."
+    },
+    {
+      "name": "screen-reader",
+      "rank": 65,
+      "humanEvidence": true,
+      "overwriteLocked": true,
+      "summary": "A real assistive technology produced the observed announcement."
+    },
+    {
+      "name": "cognitive-walkthrough",
+      "rank": 60,
+      "humanEvidence": true,
+      "overwriteLocked": false,
+      "summary": "A person judged comprehension, wording, or task flow."
+    },
+    {
+      "name": "runtime-automation",
+      "rank": 50,
+      "humanEvidence": false,
+      "overwriteLocked": false,
+      "summary": "A browser-driven probe observed the rendered surface."
+    },
+    {
+      "name": "axe-auto",
+      "rank": 45,
+      "humanEvidence": false,
+      "overwriteLocked": false,
+      "summary": "An automated rule engine reported a violation or pass."
+    },
+    {
+      "name": "static-source",
+      "rank": 40,
+      "humanEvidence": false,
+      "overwriteLocked": false,
+      "summary": "Source inspection without executing the surface."
+    },
+    {
+      "name": "plan-derived",
+      "rank": 35,
+      "humanEvidence": false,
+      "overwriteLocked": false,
+      "summary": "Carried from a planning artifact rather than observed."
+    }
+  ]
+}
