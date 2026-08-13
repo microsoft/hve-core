@@ -19,6 +19,9 @@ BeforeAll {
         $files = @{
             'package.json'                              = @"
 {
+  "metadata": {
+    "version": "0.1.0"
+  },
   "name": "fixture",
   "version": "$Version",
   "private": true,
@@ -159,6 +162,11 @@ Describe 'Set-RepositoryVersion' -Tag 'Unit' {
             $lock['packages']['node_modules/left-pad']['version'] | Should -BeExactly '1.2.3'
         }
 
+        It 'Leaves an earlier nested package version untouched' {
+            $package = Get-Content -LiteralPath (Join-Path $script:Root 'package.json') -Raw | ConvertFrom-Json
+            $package.metadata.version | Should -BeExactly '0.1.0'
+        }
+
         It 'Leaves <Path> unchanged' -ForEach @(
             @{ Path = '.release-please-manifest.json' }
             @{ Path = '.github/plugin/release-candidate.json' }
@@ -213,24 +221,39 @@ Describe 'Set-RepositoryVersion' -Tag 'Unit' {
 
             { Set-RepositoryVersion -RepoRoot $root -Version '3.3' } | Should -Throw
         }
+
+        It 'Writes no file when a later target member is missing' {
+            $root = New-VersionFixture -Root (Join-Path $TestDrive 'atomic-failure')
+            $catalogPath = Join-Path $root '.github/plugin/marketplace.json'
+            $catalog = Get-Content -LiteralPath $catalogPath -Raw | ConvertFrom-Json -AsHashtable
+            $catalog['metadata'].Remove('version')
+            $catalog | ConvertTo-Json -Depth 8 | Set-Content -LiteralPath $catalogPath -Encoding utf8NoBOM
+            $before = Get-FixtureInventory -Root $root
+
+            { Set-RepositoryVersion -RepoRoot $root -Version '3.3.0' } |
+                Should -Throw "Member location 'metadata.version' has no member 'version'."
+
+            Get-FixtureInventory -Root $root | ConvertTo-Json |
+                Should -BeExactly ($before | ConvertTo-Json)
+        }
     }
 }
 
 Describe 'Set-JsonMemberValue' -Tag 'Unit' {
-    It 'Throws when the pattern matches no member' {
-        { Set-JsonMemberValue -Content '{ "name": "fixture" }' -Pattern '"version":\s*"(?<value>[^"]*)"' -Value '3.3.0' } |
-            Should -Throw '*matched 0 members*'
+    It 'Throws when the exact member is absent' {
+        { Set-JsonMemberValue -Content '{ "name": "fixture" }' -Location @('version') -Value '3.3.0' } |
+            Should -Throw "Member location 'version' has no member 'version'."
     }
 
-    It 'Throws when the pattern matches more than one member' {
-        $content = '{ "a": { "version": "1.0.0" }, "b": { "version": "2.0.0" } }'
-        { Set-JsonMemberValue -Content $content -Pattern '"version":\s*"(?<value>[^"]*)"' -Value '3.3.0' } |
-            Should -Throw '*matched 2 members*'
+    It 'Selects the top-level member when a nested member precedes it' {
+        $content = '{ "nested": { "version": "1.0.0" }, "version": "2.0.0" }'
+        Set-JsonMemberValue -Content $content -Location @('version') -Value '3.3.0' |
+            Should -BeExactly '{ "nested": { "version": "1.0.0" }, "version": "3.3.0" }'
     }
 
     It 'Replaces only the captured value' {
         $content = "{`n  `"version`": `"1.0.0`",`n  `"other`": `"1.0.0`"`n}"
-        Set-JsonMemberValue -Content $content -Pattern '(?s)\A\{.*?"version":\s*"(?<value>[^"]*)"' -Value '3.3.0' |
+        Set-JsonMemberValue -Content $content -Location @('version') -Value '3.3.0' |
             Should -BeExactly "{`n  `"version`": `"3.3.0`",`n  `"other`": `"1.0.0`"`n}"
     }
 }

@@ -554,6 +554,8 @@ jobs:
           REQUIRED_ASSETS: |
             dependencies.spdx.json
             hve-core.openvex.json
+          OPTIONAL_ASSETS: |
+            dependency-diff.md
         run: |
           set -euo pipefail
           ASSET_INDEX="$RUNNER_TEMP/published-assets.tsv"
@@ -567,6 +569,8 @@ jobs:
           cut -f2 "$ASSET_INDEX" > "$ASSET_NAMES"
           REQUIRED_LIST="$RUNNER_TEMP/published-required-assets.txt"
           printf '%s\n' "$REQUIRED_ASSETS" > "$REQUIRED_LIST"
+          OPTIONAL_LIST="$RUNNER_TEMP/published-optional-assets.txt"
+          printf '%s\n' "$OPTIONAL_ASSETS" > "$OPTIONAL_LIST"
 
           # The release carries one hve-core VSIX with its complete sidecar set
           # plus the channel's required singleton assets, so no asset defines
@@ -574,6 +578,7 @@ jobs:
           pwsh -NoProfile -File ./scripts/release/Assert-ReleaseAssetSet.ps1 \
             -AssetNamePath "$ASSET_NAMES" \
             -RequiredAssetPath "$REQUIRED_LIST" \
+            -OptionalAssetPath "$OPTIONAL_LIST" \
             -Version "$RELEASE_VERSION" \
             -ReleaseTag "$RELEASE_TAG"
 

@@ -14,13 +14,15 @@
     expectation it is verified against.
 
     All identity comparison is ordinal and case sensitive. Missing, unexpected,
-    duplicate, and sidecar-incomplete VSIX assets are all reported together and
-    any finding is terminal. Verification is read-only: it never uploads,
-    clobbers, or otherwise repairs published state.
+    duplicate, sidecar-incomplete, and otherwise unapproved assets are all
+    reported together and any finding is terminal. Verification is read-only:
+    it never uploads, clobbers, or otherwise repairs published state.
 .PARAMETER AssetNamePath
     File containing one actual release asset name per line.
 .PARAMETER RequiredAssetPath
     File containing one required singleton asset name per line.
+.PARAMETER OptionalAssetPath
+    Optional file containing singleton asset names that may be present.
 .PARAMETER Version
     Released MAJOR.MINOR.PATCH version.
 .PARAMETER ReleaseTag
@@ -42,6 +44,9 @@ param(
     [Parameter(Mandatory = $true)]
     [ValidateNotNullOrEmpty()]
     [string]$RequiredAssetPath,
+
+    [Parameter(Mandatory = $false)]
+    [string]$OptionalAssetPath = '',
 
     [Parameter(Mandatory = $true)]
     [ValidatePattern('^\d+\.\d+\.\d+$')]
@@ -117,16 +122,19 @@ function Test-ReleaseAssetSet {
     .SYNOPSIS
         Reconciles actual release assets against their expected identities.
     .DESCRIPTION
-        Reports every missing, unexpected, duplicate, and sidecar-incomplete
-        asset rather than stopping at the first one, so a partial release is
-        described exactly once per finding. Every comparison is ordinal and case
-        sensitive, so two names differing only by case are two distinct assets.
+        Reports every missing, unexpected, duplicate, sidecar-incomplete, and
+        otherwise unapproved asset rather than stopping at the first one, so a
+        partial release is described exactly once per finding. Every comparison
+        is ordinal and case sensitive, so two names differing only by case are
+        two distinct assets.
     .PARAMETER AssetName
         Actual release asset names.
     .PARAMETER ExpectedVsix
         Expected VSIX asset names.
     .PARAMETER RequiredAsset
         Required singleton asset names.
+    .PARAMETER OptionalAsset
+        Singleton asset names that are allowed but not required.
     .OUTPUTS
         [string[]] Findings, empty when the asset set is complete.
     #>
@@ -143,7 +151,11 @@ function Test-ReleaseAssetSet {
 
         [Parameter(Mandatory = $true)]
         [AllowEmptyCollection()]
-        [string[]]$RequiredAsset
+        [string[]]$RequiredAsset,
+
+        [Parameter(Mandatory = $false)]
+        [AllowEmptyCollection()]
+        [string[]]$OptionalAsset = @()
     )
 
     $findings = [System.Collections.Generic.List[string]]::new()
@@ -201,6 +213,20 @@ function Test-ReleaseAssetSet {
         }
     }
 
+    $allowed = [System.Collections.Generic.HashSet[string]]::new(
+        [string[]]@($RequiredAsset + $OptionalAsset), [System.StringComparer]::Ordinal)
+    foreach ($kind in $primaryKinds) {
+        foreach ($primary in ([string[]]@($kind.Expected) + [string[]]@($kind.Actual))) {
+            [void]$allowed.Add($primary)
+            foreach ($suffix in $script:ReleaseAssetSidecarSuffix) {
+                [void]$allowed.Add($primary + $suffix)
+            }
+        }
+    }
+    foreach ($extra in (Get-SortedReleaseAssetName -Name ([string[]]@($present | Where-Object { -not $allowed.Contains($_) })))) {
+        $findings.Add("unexpected asset '$extra'")
+    }
+
     return [string[]]@($findings)
 }
 
@@ -237,6 +263,8 @@ function Assert-ReleaseAssetSet {
         File containing one actual release asset name per line.
     .PARAMETER RequiredAssetPath
         File containing one required singleton asset name per line.
+    .PARAMETER OptionalAssetPath
+        Optional file containing singleton asset names that may be present.
     .PARAMETER Version
         Released MAJOR.MINOR.PATCH version.
     .PARAMETER ReleaseTag
@@ -255,6 +283,9 @@ function Assert-ReleaseAssetSet {
         [ValidateNotNullOrEmpty()]
         [string]$RequiredAssetPath,
 
+        [Parameter(Mandatory = $false)]
+        [string]$OptionalAssetPath = '',
+
         [Parameter(Mandatory = $true)]
         [ValidateNotNullOrEmpty()]
         [string]$Version,
@@ -272,12 +303,19 @@ function Assert-ReleaseAssetSet {
     if ($requiredAsset.Count -eq 0) {
         throw "No required singleton assets were supplied for published $ReleaseTag"
     }
+    $optionalAsset = if ($OptionalAssetPath) {
+        Get-ReleaseAssetNameFromFile -Path $OptionalAssetPath
+    }
+    else {
+        [string[]]@()
+    }
 
     $expectedVsix = Get-ReleaseExpectedVsixName -Version $Version
 
     $findings = Test-ReleaseAssetSet -AssetName $assetName `
         -ExpectedVsix $expectedVsix `
-        -RequiredAsset $requiredAsset
+        -RequiredAsset $requiredAsset `
+        -OptionalAsset $optionalAsset
 
     if ($findings.Count -gt 0) {
         foreach ($finding in $findings) {
@@ -286,7 +324,7 @@ function Assert-ReleaseAssetSet {
         throw "published $ReleaseTag has incomplete release assets: $($findings.Count) findings; reconcile it before rerunning"
     }
 
-    Write-Host "Verified $($expectedVsix.Count) VSIX and $($requiredAsset.Count) required singleton assets with complete sidecars on published $ReleaseTag"
+    Write-Host "Verified $($expectedVsix.Count) VSIX, $($requiredAsset.Count) required singleton assets, and $($optionalAsset.Count) optional singleton assets with complete sidecars on published $ReleaseTag"
     return [pscustomobject]@{
         ReleaseTag = $ReleaseTag
         Version    = $Version
@@ -302,6 +340,7 @@ if ($MyInvocation.InvocationName -ne '.') {
     try {
         [void](Assert-ReleaseAssetSet -AssetNamePath $AssetNamePath `
                 -RequiredAssetPath $RequiredAssetPath `
+            -OptionalAssetPath $OptionalAssetPath `
                 -Version $Version `
                 -ReleaseTag $ReleaseTag)
         exit 0

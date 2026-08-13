@@ -57,6 +57,31 @@ function Get-PluginManifest {
     return (Get-Content -LiteralPath $Path -Raw -Encoding utf8 | ConvertFrom-Json)
 }
 
+function Test-PluginComponentPath {
+    <#
+    .SYNOPSIS
+    Tests whether a plugin component path is contained and well shaped.
+    .PARAMETER Path
+    Manifest-declared path relative to the plugin root.
+    .PARAMETER Shape
+    Anchored expression describing the expected artifact shape.
+    .OUTPUTS
+    [bool] True when the path is contained and matches the expected shape.
+    #>
+    [CmdletBinding()]
+    [OutputType([bool])]
+    param(
+        [Parameter(Mandatory = $true)] [string]$Path,
+        [Parameter(Mandatory = $true)] [string]$Shape
+    )
+
+    if ($Path -match '[\\:]' -or $Path -match '[\x00-\x1f]' -or $Path.IndexOfAny([char[]]'*?[]') -ge 0) { return $false }
+    foreach ($segment in ($Path -split '/')) {
+        if ([string]::IsNullOrEmpty($segment) -or $segment -eq '.' -or $segment -eq '..') { return $false }
+    }
+    return [bool]($Path -match $Shape)
+}
+
 function Get-PluginComponent {
     <#
     .SYNOPSIS
@@ -78,16 +103,20 @@ function Get-PluginComponent {
     )
 
     $fieldKinds = [ordered]@{
-        agents   = 'agent'
-        commands = 'prompt'
-        rules    = 'instruction'
-        skills   = 'skill'
+        agents   = @{ Kind = 'agent'; Shape = '^agents/[^/]+/.+\.agent\.md$' }
+        commands = @{ Kind = 'prompt'; Shape = '^prompts/[^/]+/.+\.prompt\.md$' }
+        rules    = @{ Kind = 'instruction'; Shape = '^instructions/[^/]+/.+\.instructions\.md$' }
+        skills   = @{ Kind = 'skill'; Shape = '^skills/[^/]+/[^/]+$' }
     }
     $items = @()
     foreach ($field in $fieldKinds.Keys) {
         foreach ($path in @($Manifest.$field)) {
-            if ([string]::IsNullOrWhiteSpace([string]$path)) { continue }
-            $items += @{ Kind = $fieldKinds[$field]; SourcePath = ".github/$([string]$path)" }
+            $declared = [string]$path
+            if ([string]::IsNullOrWhiteSpace($declared)) { continue }
+            if (-not (Test-PluginComponentPath -Path $declared -Shape $fieldKinds[$field].Shape)) {
+                throw "Plugin manifest $field entry '$declared' is not a contained artifact path."
+            }
+            $items += @{ Kind = $fieldKinds[$field].Kind; SourcePath = ".github/$declared" }
         }
     }
     return [hashtable[]]$items

@@ -632,6 +632,28 @@ Describe 'component-copy PowerShell and Bash parity' -Tag 'Unit' -Skip:(-not $sc
         $bashOutput | Should -Be $powerShellOutput
     }
 
+    It 'Accepts adjacent dots inside a valid filename in both implementations' {
+        $sourceRelative = '.github/agents/hve-core/foo..bar.agent.md'
+        $manifestRelative = 'agents/hve-core/foo..bar.agent.md'
+        $component = 'agents/hve-core/foo..bar.md'
+        foreach ($fixture in @($script:powerShellFixture, $script:bashFixture)) {
+            Set-Content -LiteralPath (Join-Path $fixture.Source $sourceRelative) -Value '# Adjacent dots' -NoNewline
+            $manifestPath = Join-Path $fixture.Source '.github/plugin.json'
+            $manifest = Get-Content -LiteralPath $manifestPath -Raw | ConvertFrom-Json
+            $manifest.agents = @($manifest.agents) + $manifestRelative
+            $manifest | ConvertTo-Json -Depth 10 | Set-Content -LiteralPath $manifestPath -NoNewline
+        }
+
+        $powerShellOutput = (Invoke-ComponentCopy -Fixture $script:powerShellFixture -Component @($component)).Trim()
+        $bashOutput = (Invoke-BashComponentCopy -Fixture $script:bashFixture -Component @($component)).Trim()
+
+        $LASTEXITCODE | Should -Be 0
+        $bashOutput | Should -Be $powerShellOutput
+        foreach ($fixture in @($script:powerShellFixture, $script:bashFixture)) {
+            Test-Path -LiteralPath (Join-Path $fixture.Target $sourceRelative) | Should -BeTrue
+        }
+    }
+
     It 'Produces identical report-only output' {
         New-Item -ItemType Directory -Path (Join-Path $script:powerShellFixture.Target '.github/skills/rpi/rpi-plan') -Force | Out-Null
         New-Item -ItemType Directory -Path (Join-Path $script:bashFixture.Target '.github/skills/rpi/rpi-plan') -Force | Out-Null

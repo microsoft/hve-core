@@ -148,6 +148,38 @@ Describe 'Assert-ReleaseAssetSet reconciliation' -Tag 'Unit' {
         $findings | Should -Contain "missing required asset 'dependencies.spdx.json'"
     }
 
+    It 'Reports a retired plugin ZIP as an unexpected asset' {
+        $findings = Invoke-AssetSetTest -AssetName (New-AssetSet -Add @('hve-core-3.3.0.zip'))
+        $findings | Should -Be @("unexpected asset 'hve-core-3.3.0.zip'")
+    }
+
+    It 'Reports an arbitrary extra asset' {
+        $findings = Invoke-AssetSetTest -AssetName (New-AssetSet -Add @('release-debug.txt'))
+        $findings | Should -Be @("unexpected asset 'release-debug.txt'")
+    }
+
+    It 'Allows a declared optional asset without requiring it' {
+        Test-ReleaseAssetSet -AssetName (New-AssetSet -Add @('dependency-diff.md')) `
+            -ExpectedVsix $script:ExpectedVsix `
+            -RequiredAsset $script:RequiredAsset `
+            -OptionalAsset @('dependency-diff.md') | Should -BeNullOrEmpty
+
+        Test-ReleaseAssetSet -AssetName (New-AssetSet) `
+            -ExpectedVsix $script:ExpectedVsix `
+            -RequiredAsset $script:RequiredAsset `
+            -OptionalAsset @('dependency-diff.md') | Should -BeNullOrEmpty
+    }
+
+    It 'Reports an unexpected VSIX with complete sidecars only once' {
+        $findings = Invoke-AssetSetTest -AssetName (New-AssetSet -Add @(
+                'hve-security-3.3.0.vsix'
+                'hve-security-3.3.0.vsix.spdx.json'
+                'hve-security-3.3.0.vsix.sigstore.json'
+                'hve-security-3.3.0.vsix.intoto.jsonl'
+            ))
+        $findings | Should -Be @("unexpected VSIX asset 'hve-security-3.3.0.vsix'")
+    }
+
     # The Stable channel adds its OpenVEX document to the required singleton
     # set, and a channel asset is required exactly as the caller supplies it.
     It 'Reports a missing channel singleton asset' {
@@ -173,12 +205,18 @@ Describe 'Assert-ReleaseAssetSet reconciliation' -Tag 'Unit' {
 
     It 'Treats a mixed-case required asset as absent' {
         $findings = Invoke-AssetSetTest -AssetName (New-AssetSet -Remove @('dependencies.spdx.json') -Add @('Dependencies.spdx.json'))
-        $findings | Should -Be @("missing required asset 'dependencies.spdx.json'")
+        $findings | Should -Be @(
+            "missing required asset 'dependencies.spdx.json'"
+            "unexpected asset 'Dependencies.spdx.json'"
+        )
     }
 
     It 'Treats a mixed-case sidecar as absent' {
         $findings = Invoke-AssetSetTest -AssetName (New-AssetSet -Remove @('hve-core-3.3.0.vsix.spdx.json') -Add @('hve-core-3.3.0.vsix.SPDX.json'))
-        $findings | Should -Be @("missing sidecar 'hve-core-3.3.0.vsix.spdx.json' for VSIX asset 'hve-core-3.3.0.vsix'")
+        $findings | Should -Be @(
+            "missing sidecar 'hve-core-3.3.0.vsix.spdx.json' for VSIX asset 'hve-core-3.3.0.vsix'"
+            "unexpected asset 'hve-core-3.3.0.vsix.SPDX.json'"
+        )
     }
 
     It 'Reports every finding rather than stopping at the first' {
@@ -256,6 +294,11 @@ Describe 'Assert-ReleaseAssetSet end to end' -Tag 'Unit' {
         # is both a missing identity and an unexpected one.
         { Invoke-AssertOverFile -AssetName (New-AssetSet) -Version '3.5.0' } |
             Should -Throw '*has incomplete release assets: 2 findings*'
+    }
+
+    It 'Fails a release carrying a retired plugin ZIP' {
+        { Invoke-AssertOverFile -AssetName (New-AssetSet -Add @('hve-core-3.3.0.zip')) } |
+            Should -Throw '*has incomplete release assets: 1 findings*'
     }
 
     It 'Fails an empty asset list' {

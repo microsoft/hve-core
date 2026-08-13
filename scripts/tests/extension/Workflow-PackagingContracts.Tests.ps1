@@ -514,8 +514,8 @@ Describe 'Retained marketplace publication' -Tag 'Unit' {
 
 Describe 'Retained release reconciliation and OpenVEX' -Tag 'Unit' {
     It 'Reconciles a matching published release against the fixed asset set in <Workflow>' -ForEach @(
-        @{ Workflow = 'release-prerelease.yml'; Required = @('dependencies.spdx.json') }
-        @{ Workflow = 'release-stable-publish.yml'; Required = @('dependencies.spdx.json', 'hve-core.openvex.json') }
+        @{ Workflow = 'release-prerelease.yml'; Required = @('dependencies.spdx.json'); Optional = @() }
+        @{ Workflow = 'release-stable-publish.yml'; Required = @('dependencies.spdx.json', 'hve-core.openvex.json'); Optional = @('dependency-diff.md') }
     ) {
         $step = Get-NamedJobStep -Document (Get-WorkflowDocument -Name $Workflow) `
             -JobName 'validate-release' -StepName 'Verify published release assets'
@@ -532,6 +532,17 @@ Describe 'Retained release reconciliation and OpenVEX' -Tag 'Unit' {
         $declared = [string[]]@(([string]$step['env']['REQUIRED_ASSETS']).Split("`n") |
                 ForEach-Object { $_.Trim() } | Where-Object { $_ })
         $declared | Should -Be $Required
+
+        if ($Optional.Count -gt 0) {
+            $run | Should -Match '-OptionalAssetPath "\$OPTIONAL_LIST"'
+            $optionalDeclared = [string[]]@(([string]$step['env']['OPTIONAL_ASSETS']).Split("`n") |
+                    ForEach-Object { $_.Trim() } | Where-Object { $_ })
+            $optionalDeclared | Should -Be $Optional
+        }
+        else {
+            $run | Should -Not -Match '-OptionalAssetPath'
+            $step['env'].Contains('OPTIONAL_ASSETS') | Should -BeFalse
+        }
     }
 
     It 'Verifies every committed version field at the released commit in <Workflow>' -ForEach @(

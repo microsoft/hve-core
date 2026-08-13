@@ -47,38 +47,38 @@ param(
 
 $ErrorActionPreference = 'Stop'
 
-# Each target names the exact members that carry the repository version. Every
-# pattern is structurally anchored and must match once, so a shape change fails
-# loudly instead of rewriting an unintended member.
+# Each target names the exact member locations that carry the repository
+# version. Locations are walked structurally, so a shape change fails loudly
+# instead of rewriting a same-named member nested elsewhere.
 $script:VersionTarget = @(
     [ordered]@{
-        Path    = 'package.json'
-        Pattern = @('(?s)\A\{.*?"version":\s*"(?<value>[^"]*)"')
-        Assert  = @('$.version')
+        Path     = 'package.json'
+        Location = @(, @('version'))
+        Assert   = @('$.version')
     }
     [ordered]@{
-        Path    = 'package-lock.json'
-        Pattern = @(
-            '(?s)\A\{.*?"version":\s*"(?<value>[^"]*)"',
-            '(?s)"packages":\s*\{\s*"":\s*\{.*?"version":\s*"(?<value>[^"]*)"'
+        Path     = 'package-lock.json'
+        Location = @(
+            , @('version')
+            , @('packages', '', 'version')
         )
         Assert  = @('$.version', '$.packages[""].version')
     }
     [ordered]@{
-        Path    = 'extension/templates/package.template.json'
-        Pattern = @('(?s)\A\{.*?"version":\s*"(?<value>[^"]*)"')
-        Assert  = @('$.version')
+        Path     = 'extension/templates/package.template.json'
+        Location = @(, @('version'))
+        Assert   = @('$.version')
     }
     [ordered]@{
-        Path    = '.github/plugin.json'
-        Pattern = @('(?s)\A\{.*?"version":\s*"(?<value>[^"]*)"')
-        Assert  = @('$.version')
+        Path     = '.github/plugin.json'
+        Location = @(, @('version'))
+        Assert   = @('$.version')
     }
     [ordered]@{
-        Path    = '.github/plugin/marketplace.json'
-        Pattern = @(
-            '(?s)"metadata":\s*\{.*?"version":\s*"(?<value>[^"]*)"',
-            '(?s)"plugins":\s*\[\s*\{.*?"version":\s*"(?<value>[^"]*)"'
+        Path     = '.github/plugin/marketplace.json'
+        Location = @(
+            , @('metadata', 'version')
+            , @('plugins', 0, 'version')
         )
         Assert  = @('$.metadata.version', '$.plugins[0].version')
     }
@@ -86,16 +86,147 @@ $script:VersionTarget = @(
 
 #region Functions
 
-function Set-JsonMemberValue {
+function Get-JsonValueEnd {
     <#
     .SYNOPSIS
-        Replaces one JSON member value identified by a structural pattern.
+        Returns the index just past a complete JSON value.
 
     .PARAMETER Content
         File content.
 
-    .PARAMETER Pattern
-        Regular expression with a 'value' capture group. It must match once.
+    .PARAMETER Start
+        Index of the value's first character.
+
+    .OUTPUTS
+        [int] Index just past the value.
+    #>
+    [CmdletBinding()]
+    [OutputType([int])]
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$Content,
+
+        [Parameter(Mandatory = $true)]
+        [int]$Start
+    )
+
+    $Index = $Start
+    if ($Content[$Index] -eq '"') {
+        for ($Index++; $Index -lt $Content.Length; $Index++) {
+            if ($Content[$Index] -eq '\') { $Index++; continue }
+            if ($Content[$Index] -eq '"') { return $Index + 1 }
+        }
+        throw 'Unterminated JSON string.'
+    }
+
+    if ($Content[$Index] -eq '{' -or $Content[$Index] -eq '[') {
+        $Depth = 0
+        while ($Index -lt $Content.Length) {
+            $Character = $Content[$Index]
+            if ($Character -eq '"') {
+                $Index = Get-JsonValueEnd -Content $Content -Start $Index
+                continue
+            }
+            if ($Character -eq '{' -or $Character -eq '[') { $Depth++ }
+            elseif ($Character -eq '}' -or $Character -eq ']') {
+                $Depth--
+                if ($Depth -eq 0) { return $Index + 1 }
+            }
+            $Index++
+        }
+        throw 'Unterminated JSON container.'
+    }
+
+    while ($Index -lt $Content.Length -and $Content[$Index] -notmatch '[,\}\]\s]') { $Index++ }
+    return $Index
+}
+
+function Get-JsonMemberValueSpan {
+    <#
+    .SYNOPSIS
+        Locates a string member value at an exact JSON location.
+
+    .DESCRIPTION
+        Walks containers by member name and array index, so a same-named member
+        nested elsewhere is never selected.
+
+    .PARAMETER Content
+        File content.
+
+    .PARAMETER Location
+        Ordered member names and array indices naming exactly one member.
+
+    .OUTPUTS
+        [int[]] Start index and length of the value text inside its quotes.
+    #>
+    [CmdletBinding()]
+    [OutputType([int[]])]
+    param(
+        [Parameter(Mandatory = $true)]
+        [ValidateNotNullOrEmpty()]
+        [string]$Content,
+
+        [Parameter(Mandatory = $true)]
+        [ValidateNotNull()]
+        [object[]]$Location
+    )
+
+    if ($Location.Count -eq 0) { throw 'JSON member location must not be empty.' }
+    $Description = ($Location | ForEach-Object { "$_" }) -join '.'
+    $Index = 0
+    while ($Index -lt $Content.Length -and [char]::IsWhiteSpace($Content[$Index])) { $Index++ }
+
+    foreach ($Segment in $Location) {
+        if ($Index -ge $Content.Length) { throw "Member location '$Description' is not present." }
+
+        if ($Segment -is [int]) {
+            if ($Content[$Index] -ne '[') { throw "Member location '$Description' expects an array at element $Segment." }
+            $Index++
+            for ($Element = 0; ; $Element++) {
+                while ($Index -lt $Content.Length -and $Content[$Index] -match '[\s,]') { $Index++ }
+                if ($Index -ge $Content.Length -or $Content[$Index] -eq ']') {
+                    throw "Member location '$Description' has no element $Segment."
+                }
+                if ($Element -eq $Segment) { break }
+                $Index = Get-JsonValueEnd -Content $Content -Start $Index
+            }
+            continue
+        }
+
+        if ($Content[$Index] -ne '{') { throw "Member location '$Description' expects an object at member '$Segment'." }
+        $Index++
+        $Found = $false
+        while (-not $Found) {
+            while ($Index -lt $Content.Length -and $Content[$Index] -match '[\s,]') { $Index++ }
+            if ($Index -ge $Content.Length -or $Content[$Index] -ne '"') {
+                throw "Member location '$Description' has no member '$Segment'."
+            }
+            $KeyEnd = Get-JsonValueEnd -Content $Content -Start $Index
+            $Key = $Content.Substring($Index + 1, $KeyEnd - $Index - 2)
+            $Index = $KeyEnd
+            while ($Index -lt $Content.Length -and $Content[$Index] -match '[\s:]') { $Index++ }
+            if ($Key -ceq [string]$Segment) { $Found = $true; continue }
+            $Index = Get-JsonValueEnd -Content $Content -Start $Index
+        }
+    }
+
+    if ($Index -ge $Content.Length -or $Content[$Index] -ne '"') {
+        throw "Member location '$Description' is not a string value."
+    }
+    $End = Get-JsonValueEnd -Content $Content -Start $Index
+    return , [int[]]@(($Index + 1), ($End - $Index - 2))
+}
+
+function Set-JsonMemberValue {
+    <#
+    .SYNOPSIS
+        Replaces one string member value at an exact JSON location.
+
+    .PARAMETER Content
+        File content.
+
+    .PARAMETER Location
+        Ordered member names and array indices naming exactly one member.
 
     .PARAMETER Value
         Replacement value.
@@ -111,21 +242,16 @@ function Set-JsonMemberValue {
         [string]$Content,
 
         [Parameter(Mandatory = $true)]
-        [ValidateNotNullOrEmpty()]
-        [string]$Pattern,
+        [ValidateNotNull()]
+        [object[]]$Location,
 
         [Parameter(Mandatory = $true)]
         [ValidateNotNullOrEmpty()]
         [string]$Value
     )
 
-    $matched = [regex]::Matches($Content, $Pattern)
-    if ($matched.Count -ne 1) {
-        throw "Pattern matched $($matched.Count) members; exactly one is required: $Pattern"
-    }
-
-    $group = $matched[0].Groups['value']
-    return $Content.Substring(0, $group.Index) + $Value + $Content.Substring($group.Index + $group.Length)
+    $Span = Get-JsonMemberValueSpan -Content $Content -Location $Location
+    return $Content.Substring(0, $Span[0]) + $Value + $Content.Substring($Span[0] + $Span[1])
 }
 
 function Get-JsonMemberValue {
@@ -188,39 +314,48 @@ function Set-RepositoryVersion {
         [string]$Version
     )
 
-    $results = @()
+    $Planned = @()
 
-    foreach ($target in $script:VersionTarget) {
-        $path = Join-Path $RepoRoot $target.Path
-        if (-not (Test-Path -LiteralPath $path -PathType Leaf)) {
-            throw "Version-tracked file not found: $($target.Path)"
+    foreach ($Target in $script:VersionTarget) {
+        $Path = Join-Path $RepoRoot $Target.Path
+        if (-not (Test-Path -LiteralPath $Path -PathType Leaf)) {
+            throw "Version-tracked file not found: $($Target.Path)"
         }
 
-        $original = Get-Content -LiteralPath $path -Raw
-        $updated = $original
-        foreach ($pattern in $target.Pattern) {
-            $updated = Set-JsonMemberValue -Content $updated -Pattern $pattern -Value $Version
+        $Original = Get-Content -LiteralPath $Path -Raw
+        $Updated = $Original
+        foreach ($Location in $Target.Location) {
+            $Updated = Set-JsonMemberValue -Content $Updated -Location $Location -Value $Version
         }
 
-        if ($updated -ne $original) {
-            Set-Content -LiteralPath $path -Value $updated -Encoding UTF8 -NoNewline
-        }
-
-        $json = Get-Content -LiteralPath $path -Raw | ConvertFrom-Json -AsHashtable
-        foreach ($assertion in $target.Assert) {
-            $actual = Get-JsonMemberValue -Json $json -Path $assertion
-            if ($actual -ne $Version) {
-                throw "$($target.Path) $assertion is '$actual' after update; expected '$Version'"
+        $Json = $Updated | ConvertFrom-Json -AsHashtable
+        foreach ($Assertion in $Target.Assert) {
+            $Actual = Get-JsonMemberValue -Json $Json -Path $Assertion
+            if ($Actual -ne $Version) {
+                throw "$($Target.Path) $Assertion is '$Actual' after update; expected '$Version'"
             }
         }
 
-        $results += [ordered]@{
-            Path    = $target.Path
-            Changed = $updated -ne $original
+        $Planned += [ordered]@{
+            Path     = $Target.Path
+            FullPath = $Path
+            Content  = $Updated
+            Changed  = $Updated -ne $Original
         }
     }
 
-    return $results
+    $Results = @()
+    foreach ($Plan in $Planned) {
+        if ($Plan.Changed) {
+            Set-Content -LiteralPath $Plan.FullPath -Value $Plan.Content -Encoding UTF8 -NoNewline
+        }
+        $Results += [ordered]@{
+            Path    = $Plan.Path
+            Changed = $Plan.Changed
+        }
+    }
+
+    return $Results
 }
 
 #endregion Functions

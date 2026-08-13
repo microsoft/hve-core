@@ -120,6 +120,21 @@ Describe 'Prepare-Extension component projection' -Tag 'Unit' {
         $manifest = [pscustomobject]@{ agents = @('agents/core/alpha.agent.md'); commands = @(); rules = $null; skills = @('') }
         @(Get-PluginComponent -Manifest $manifest).SourcePath | Should -Be @('.github/agents/core/alpha.agent.md')
     }
+
+    It 'Rejects malformed <Field> path <Path>' -ForEach @(
+        @{ Field = 'agents'; Path = '../package.json' }
+        @{ Field = 'agents'; Path = 'agents/core/../../../package.json.agent.md' }
+        @{ Field = 'commands'; Path = '/etc/passwd' }
+        @{ Field = 'commands'; Path = 'prompts/core/*.prompt.md' }
+        @{ Field = 'rules'; Path = 'instructions/core/style.md' }
+        @{ Field = 'skills'; Path = 'skills/core/toolkit/SKILL.md' }
+    ) {
+        $manifest = [pscustomobject]@{ agents = @(); commands = @(); rules = @(); skills = @() }
+        $manifest.$Field = @($Path)
+
+        { Get-PluginComponent -Manifest $manifest } |
+            Should -Throw "Plugin manifest $Field entry '$Path' is not a contained artifact path."
+    }
 }
 
 Describe 'Prepare-Extension contributions' -Tag 'Unit' {
@@ -296,6 +311,20 @@ Describe 'Prepare-Extension failure and dry-run behavior' -Tag 'Unit' {
         $result = Invoke-PrepareExtension -ExtensionDirectory $script:FailureFixture.ExtensionDirectory -RepoRoot $script:FailureFixture.RepoRoot
         $result.Success | Should -BeFalse
         $result.ErrorMessage | Should -BeExactly 'Plugin manifest declares no extension components.'
+    }
+
+    It 'Fails before writing when the plugin manifest declares an escaping component' {
+        $manifestPath = Join-Path $script:FailureFixture.RepoRoot '.github/plugin.json'
+        $manifest = Get-Content -LiteralPath $manifestPath -Raw | ConvertFrom-Json
+        $manifest.agents = @('../package.json')
+        Set-FixtureFile -Path $manifestPath -Value (($manifest | ConvertTo-Json -Depth 8) + "`n")
+
+        $result = Invoke-PrepareExtension -ExtensionDirectory $script:FailureFixture.ExtensionDirectory -RepoRoot $script:FailureFixture.RepoRoot
+
+        $result.Success | Should -BeFalse
+        $result.ErrorMessage | Should -BeExactly "Plugin manifest agents entry '../package.json' is not a contained artifact path."
+        Get-Content -LiteralPath (Join-Path $script:FailureFixture.ExtensionDirectory 'package.json') -Raw |
+            Should -BeExactly $script:OriginalPackage
     }
 
     It 'Fails when the package template declares an invalid version' {

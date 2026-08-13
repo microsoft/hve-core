@@ -110,6 +110,30 @@ Describe 'Get-TrackedFilesForSource failures' -Tag 'Unit' {
             Should -Be @('docs/templates/example-template.md')
     }
 
+    It 'Rejects an escaping prepared contribution before staging' {
+        $manifestPath = Join-Path $script:FailureFixture.ExtensionDirectory 'package.json'
+        $original = Get-Content -LiteralPath $manifestPath -Raw
+        $manifest = $original | ConvertFrom-Json
+        $manifest.contributes.chatAgents[0].path = './.github/../package.json'
+        $manifest | ConvertTo-Json -Depth 20 | Set-Content -LiteralPath $manifestPath -Encoding utf8NoBOM
+        $malformed = Get-Content -LiteralPath $manifestPath -Raw
+
+        { Copy-PreparedArtifacts -RepoRoot $script:FailureFixture.RepoRoot -ExtensionDirectory $script:FailureFixture.ExtensionDirectory } |
+            Should -Throw "Prepared chatAgents contribution '.github/../package.json' is not a contained artifact path."
+
+        Get-Content -LiteralPath $manifestPath -Raw | Should -BeExactly $malformed
+    }
+
+    It 'Rejects a pathspec glob before staging' {
+        $manifestPath = Join-Path $script:FailureFixture.ExtensionDirectory 'package.json'
+        $manifest = Get-Content -LiteralPath $manifestPath -Raw | ConvertFrom-Json
+        $manifest.contributes.chatAgents[0].path = './.github/agents/core/*.agent.md'
+        $manifest | ConvertTo-Json -Depth 20 | Set-Content -LiteralPath $manifestPath -Encoding utf8NoBOM
+
+        { Copy-PreparedArtifacts -RepoRoot $script:FailureFixture.RepoRoot -ExtensionDirectory $script:FailureFixture.ExtensionDirectory } |
+            Should -Throw "Prepared chatAgents contribution '.github/agents/core/*.agent.md' is not a contained artifact path."
+    }
+
     It 'Throws when a tracked file is missing from disk' {
         Remove-Item -LiteralPath (Join-Path $script:FailureFixture.RepoRoot 'docs/templates/example-template.md') -Force
         { Copy-PreparedArtifacts -RepoRoot $script:FailureFixture.RepoRoot -ExtensionDirectory $script:FailureFixture.ExtensionDirectory } |

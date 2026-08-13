@@ -61,7 +61,9 @@ assert_within_target_root() {
 
   case "$relative" in
     /*) fail "Component '$component' resolves outside the target root." ;;
-    *..*) fail "Component '$component' resolves outside the target root." ;;
+  esac
+  case "/$relative/" in
+    */../*) fail "Component '$component' resolves outside the target root." ;;
   esac
 
   while [[ -n "$remainder" ]]; do

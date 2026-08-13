@@ -196,6 +196,31 @@ function Get-TrackedFilesForSource {
     return [string[]]$files
 }
 
+function Test-PreparedContributionPath {
+    <#
+    .SYNOPSIS
+    Tests whether a prepared contribution path is contained and well shaped.
+    .PARAMETER Path
+    Repository-relative contribution path.
+    .PARAMETER Shape
+    Anchored expression describing the expected artifact shape.
+    .OUTPUTS
+    [bool] True when the path is contained and matches the expected shape.
+    #>
+    [CmdletBinding()]
+    [OutputType([bool])]
+    param(
+        [Parameter(Mandatory = $true)] [string]$Path,
+        [Parameter(Mandatory = $true)] [string]$Shape
+    )
+
+    if ($Path -match '[\\:]' -or $Path -match '[\x00-\x1f]' -or $Path.IndexOfAny([char[]]'*?[]') -ge 0) { return $false }
+    foreach ($segment in ($Path -split '/')) {
+        if ([string]::IsNullOrEmpty($segment) -or $segment -eq '.' -or $segment -eq '..') { return $false }
+    }
+    return [bool]($Path -match $Shape)
+}
+
 function Get-PreparedSourceRoots {
     <#
     .SYNOPSIS
@@ -212,14 +237,28 @@ function Get-PreparedSourceRoots {
     )
 
     $roots = [System.Collections.Generic.HashSet[string]]::new([System.StringComparer]::Ordinal)
-    foreach ($property in @('chatAgents', 'chatPromptFiles', 'chatInstructions')) {
+    $propertyShape = [ordered]@{
+        chatAgents       = '^\.github/agents/[^/]+/.+\.agent\.md$'
+        chatPromptFiles  = '^\.github/prompts/[^/]+/.+\.prompt\.md$'
+        chatInstructions = '^\.github/instructions/[^/]+/.+\.instructions\.md$'
+    }
+    foreach ($property in $propertyShape.Keys) {
         foreach ($item in @($PackageJson.contributes.$property)) {
-            if ($item.path) { [void]$roots.Add(([string]$item.path -replace '^\./', '')) }
+            if (-not $item.path) { continue }
+            $path = ([string]$item.path -replace '^\./', '')
+            if (-not (Test-PreparedContributionPath -Path $path -Shape $propertyShape[$property])) {
+                throw "Prepared $property contribution '$path' is not a contained artifact path."
+            }
+            [void]$roots.Add($path)
         }
     }
     foreach ($skill in @($PackageJson.contributes.chatSkills)) {
         if ($skill.path) {
-            [void]$roots.Add(((Split-Path -Parent ([string]$skill.path -replace '^\./', '')) -replace '\\', '/'))
+            $path = ([string]$skill.path -replace '^\./', '')
+            if (-not (Test-PreparedContributionPath -Path $path -Shape '^\.github/skills/[^/]+/[^/]+/SKILL\.md$')) {
+                throw "Prepared chatSkills contribution '$path' is not a contained artifact path."
+            }
+            [void]$roots.Add(((Split-Path -Parent $path) -replace '\\', '/'))
         }
     }
     return [string[]]@($roots | Sort-Object)
