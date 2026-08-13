@@ -101,7 +101,7 @@ Other warnings lower confidence but do not automatically make the hypothesis not
 
 ## Indicator and Chain Guidance
 
-Require at least one leading and one lagging indicator. Allow one or two additional leading indicators, but no more than three indicators total.
+Require at least one leading and one lagging indicator. Allow up to one additional leading indicator, but no more than three indicators total.
 
 Targets and timeframes belong in the canonical statement. The indicator table adds operational definition, baseline, source, and owner.
 
