@@ -3052,11 +3052,11 @@ stimuli:
       - type: output-matches
         name: readiness-scorecard
         config:
-          pattern: '(?i)(D1\s*(?:-|to)\s*D7|D[1-7]|readiness\s+scorecard|ready|provisional|investigate)'
+          pattern: '(?is)(?=.*(?:\bD1\b\s*(?:-|to)\s*\bD7\b|\bD1\b.*\bD2\b.*\bD3\b.*\bD4\b.*\bD5\b.*\bD6\b.*\bD7\b))(?=.*\bready\s+to\s+author\b)(?=.*\bprovisional\b)(?=.*\binvestigate\b)'
       - type: output-matches
         name: validation-and-evidence-guardrail
         config:
-          pattern: '(?i)(OH\.(?:0|1|2|3|7|8|12)|investable|investability|validate|validation|evidence|fabricate|fabrication)'
+          pattern: '(?is)(?=.*\bOH\.0\b\s*(?:-|to|through)\s*\bOH\.13\b)(?=.*\bOH\.1\b)(?=.*\bOH\.2\b)(?=.*\bOH\.3\b)(?=.*\bOH\.7\b)(?=.*\bOH\.8\b)(?=.*\bnot\s+investable\b)'
 
   - name: skill-outcome-hypothesis-tool-trigger
     prompt: |
@@ -3073,11 +3073,11 @@ stimuli:
       - type: output-matches
         name: skill-domain-attribution
         config:
-          pattern: '(?i)(outcome[-\s]hypothesis|business\s+outcome|beneficiary\s+result|measurable\s+(?:business\s+)?outcome)'
+          pattern: '(?is)(?=.*\boutcome[-\s]hypothesis\b)(?=.*(?:\bmeasur(?:able|ed)\b.{0,80}\bbeneficiar(?:y|ies)\b.{0,80}\b(?:result|outcome)s?\b|\bbeneficiar(?:y|ies)\b.{0,80}\bmeasur(?:able|ed)\b.{0,80}\b(?:result|outcome)s?\b|\bmeasur(?:able|ed)\b.{0,80}\b(?:result|outcome)s?\b.{0,80}\bbeneficiar(?:y|ies)\b|\bbeneficiar(?:y|ies)\b.{0,80}\b(?:result|outcome)s?\b.{0,80}\bmeasur(?:able|ed)\b))'
       - type: output-matches
         name: measurement-and-falsification
         config:
-          pattern: '(?i)(leading|lagging|indicator|measure|falsifiable|falsification|disprove|disproved)'
+          pattern: '(?is)(?=.*\bleading(?:\s+(?:indicator|evidence))?s?\b)(?=.*\blagging(?:\s+(?:indicator|evidence))?s?\b)(?=.*\b(?:falsif(?:y|ied|iable|ication)|disprov(?:e|ed))\b)'
 
   - name: skill-outcome-hypothesis-bleed-detection
     prompt: |
@@ -3095,11 +3095,11 @@ stimuli:
       - type: output-matches
         name: scope-boundary
         config:
-          pattern: '(?i)(not\s+apply|does\s+not|isn.t\s+the\s+right|different\s+skill|already\s+(?:agreed|understood|validated))'
+          pattern: '(?is)(?=.*(?:outcome[-\s]hypothesis|this\s+skill))(?=.*(?:(?:does\s+not\s+apply|not\s+applicable|isn.t\s+the\s+right|not\s+the\s+right).{0,100}(?:either|both|these\s+(?:requests|tasks)|(?:BRD|PRD|requirements).{0,100}(?:SLO|capacity|latency|load[-\s]test)|(?:SLO|capacity|latency|load[-\s]test).{0,100}(?:BRD|PRD|requirements))|(?:should\s+not|does\s+not|not\s+to)\s+(?:perform|handle|own|do).{0,100}(?:either|both|these\s+(?:requests|tasks)|(?:BRD|PRD|requirements).{0,100}(?:SLO|capacity|latency|load[-\s]test)|(?:SLO|capacity|latency|load[-\s]test).{0,100}(?:BRD|PRD|requirements))|(?:perform|handle|own|do)\s+neither\s+(?:request|task)))(?=.*(?:BRD|PRD|requirements))(?=.*(?:SLO|capacity|latency|load[-\s]test))'
       - type: output-matches
         name: specialist-routing
         config:
-          pattern: '(?is)(requirements-author.{0,500}performance-slo-planner|performance-slo-planner.{0,500}requirements-author)'
+          pattern: '(?is)(?!.*(?:do\s+not|don.t|should\s+not|never)\s+(?:route|use|send).{0,160}(?:requirements-author|performance-slo-planner))(?=.*(?:(?:route|use|send).{0,80}(?:BRD|PRD|requirements|acceptance\s+criteria).{0,160}requirements-author|(?:route|use|send).{0,80}requirements-author.{0,160}(?:BRD|PRD|requirements|acceptance\s+criteria)|(?:BRD|PRD|requirements|acceptance\s+criteria).{0,80}(?:belongs?\s+to|goes?\s+to).{0,80}requirements-author|requirements-author.{0,80}(?:handles?|owns?|is\s+for).{0,80}(?:BRD|PRD|requirements|acceptance\s+criteria)))(?=.*(?:(?:route|use|send).{0,80}(?:SLO|capacity|latency|load[-\s]test).{0,160}performance-slo-planner|(?:route|use|send).{0,80}performance-slo-planner.{0,160}(?:SLO|capacity|latency|load[-\s]test)|(?:SLO|capacity|latency|load[-\s]test).{0,80}(?:belongs?\s+to|goes?\s+to).{0,80}performance-slo-planner|performance-slo-planner.{0,80}(?:handles?|owns?|is\s+for).{0,80}(?:SLO|capacity|latency|load[-\s]test)))'
   - name: skill-outcome-hypothesis-aggregation-default
     prompt: |
       Using the `outcome-hypothesis` skill, propose measurement granularity for
