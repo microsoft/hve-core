@@ -3,7 +3,7 @@ title: "Tutorial: Handing Off from DT to RPI"
 description: Step-by-step tutorial for performing Design Thinking to RPI handoffs at each exit point
 sidebar_position: 15
 author: Microsoft
-ms.date: 2026-07-15
+ms.date: 2026-08-06
 ms.topic: tutorial
 keywords:
   - design thinking
@@ -20,8 +20,8 @@ Before starting a handoff, ensure you have:
 
 * A DT Coach session with a project slug, such as `factory-floor-maintenance`
 * Completed Methods 7-9 for the Implementation Spec Ready exit
-* A coaching state file at `.copilot-tracking/design-thinking-sessions/{project-slug}/coaching-state.md`
-* An artifact folder at `docs/design-thinking/{project-slug}/`
+* A coaching state file at `.copilot-tracking/dt/{project-slug}/coaching-state.md`
+* A project folder at `.copilot-tracking/dt/{project-slug}/`
 * Familiarity with [RPI workflow basics](../rpi/README.md)
 
 > [!NOTE]
@@ -62,7 +62,7 @@ Start a new chat session and run the Implementation Space handoff prompt:
 /dt-handoff-implementation-space project-slug=factory-floor-maintenance
 ```
 
-The prompt compiles the available DT artifacts, applies the current handoff contract, and produces two files in `docs/design-thinking/{project-slug}/`:
+The prompt compiles the available DT artifacts, applies the current handoff contract, and produces two files in `.copilot-tracking/dt/{project-slug}/`:
 
 * `handoff-summary.md`: The structured handoff metadata with confidence markers
 * `rpi-handoff-implementation-space.md`: A self-contained document for `rpi-research`

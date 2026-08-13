@@ -5,11 +5,15 @@
 """CLI entry point for the runtime accessibility probe harness.
 
 Subcommands:
-    run-all   Run every scoped probe and aggregate the normalized results.
-    probe     Run a single probe by id across its scoped surfaces and states.
-    render-artifacts
-              Render the coverage matrix, EARL report, manual test plans, and
-              artifact manifest from a matrix JSON document.
+    run-all              Run every scoped probe and aggregate normalized results.
+    probe                Run one probe across its scoped surfaces and states.
+    render-artifacts     Render coverage and review artifacts from a matrix.
+    capture-visual-review
+                         Capture deterministic visual-review evidence.
+    run-calibration      Run the local calibration loop.
+    run-at-plan          List or execute persisted assistive-technology cases.
+    verify-intent        Write a Design Intent verification artifact.
+    project-intent       Render a Design Intent record as Markdown.
 
 The harness invokes the Playwright probes with the skill-local Node package under
 ``scripts/runtime_a11y`` (``package.json`` + ``package-lock.json``). Install the
@@ -18,7 +22,9 @@ Playwright, axe-core, and the virtual screen reader from the local
 ``node_modules``. Config is passed to the Node runner through environment
 variables. Exit code is 0 on a completed run even when findings exist; a non-zero
 exit signals a harness error (bad config, missing dependencies, missing Node or
-browser, or a blocked target).
+browser, or a blocked target). ``verify-intent`` additionally exits with
+EXIT_INTENT_DRIFT when a blocking expectation failed and EXIT_INTENT_UNCOVERED
+when a blocking expectation was not evaluated.
 """
 
 from __future__ import annotations
@@ -43,6 +49,8 @@ from urllib.request import urlopen
 if __package__ in {None, ""}:
     sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
+from runtime_a11y import _intent as intent
+from runtime_a11y import _projection as projection
 from runtime_a11y._config import (
     LOOPBACK_HOSTS,
     assert_target_allowed,
@@ -50,6 +58,8 @@ from runtime_a11y._config import (
 )
 from runtime_a11y._errors import (
     EXIT_FAILURE,
+    EXIT_INTENT_DRIFT,
+    EXIT_INTENT_UNCOVERED,
     EXIT_SUCCESS,
     EXIT_USAGE,
     ScriptError,
@@ -1155,15 +1165,22 @@ def run(
         state_filter=state_filter,
     ):
         payload = _run_probe(config, probe_id, surface_id, state, base_url, trace)
+        emitting_probe = payload.get("probeId", probe_id)
         runs.append(
             {
-                "probeId": payload.get("probeId", probe_id),
+                "probeId": emitting_probe,
                 "surfaceId": surface_id,
                 "state": state,
             }
         )
         for item in payload.get("results", []):
-            results.append(item)
+            # Stamp the emitting probe on every row. Probes may push rows
+            # inline rather than exclusively through the shared result
+            # builder, so this aggregation point is the only place that sees
+            # them all. Consumers that join a row back to a declared
+            # expectation need it because criterion coverage overlaps across
+            # probes.
+            results.append({**item, "probeId": emitting_probe})
 
         operational_failure = payload.get("operationalFailure")
         if operational_failure:
@@ -1542,6 +1559,55 @@ def create_parser() -> argparse.ArgumentParser:
     probe.add_argument("probe_id", help="Probe id, e.g. probe-axe")
     _add_common(probe)
 
+    verify_intent = subparsers.add_parser(
+        "verify-intent",
+        help="Write a design-intent verification artifact from probe results",
+    )
+    verify_intent.add_argument(
+        "--record",
+        type=Path,
+        required=True,
+        help="Path to design-intent/<surface-id>.intent.yaml",
+    )
+    verify_intent.add_argument(
+        "--results",
+        type=Path,
+        required=True,
+        help="Path to a results document produced by run-all",
+    )
+    verify_intent.add_argument(
+        "--config",
+        type=Path,
+        default=None,
+        help="Optional runtime config used to validate surface and state bindings",
+    )
+    verify_intent.add_argument(
+        "--out",
+        type=Path,
+        default=None,
+        help=(
+            "Path to write the verification artifact "
+            "(defaults to the record's .verification directory)"
+        ),
+    )
+
+    project_intent = subparsers.add_parser(
+        "project-intent",
+        help="Render a design intent record as Markdown for engineering review",
+    )
+    project_intent.add_argument(
+        "--record",
+        type=Path,
+        required=True,
+        help="Path to design-intent/<surface-id>.intent.yaml",
+    )
+    project_intent.add_argument(
+        "--out",
+        type=Path,
+        default=None,
+        help="Path to write the Markdown projection (defaults to stdout)",
+    )
+
     render = subparsers.add_parser(
         "render-artifacts",
         help="Render coverage, EARL, and manual test-plan artifacts",
@@ -1599,6 +1665,73 @@ def create_parser() -> argparse.ArgumentParser:
     run_at_plan.add_argument("--list", action="store_true")
 
     return parser
+
+
+def _project_intent(args: argparse.Namespace) -> int:
+    """Render a record as Markdown, to a file or stdout."""
+    markdown, destination = projection.project(args.record, args.out)
+    if destination is None:
+        print(markdown, end="")
+    else:
+        print(f"Wrote {destination}")
+    return EXIT_SUCCESS
+
+
+def _warn_override_conflicts(
+    record: dict[str, Any], assertions: list[dict[str, Any]]
+) -> None:
+    """Report each conclusive disagreement between a probe and its override.
+
+    The gate fails closed on a conclusive disagreement. The artifact does not
+    reproduce human-authored override fields, so diagnostics read the authored
+    record to report the override outcome accurately.
+    """
+    override_outcomes = {
+        (intent_item.get("id"), expectation.get("id")): (
+            expectation.get("override") or {}
+        ).get("outcome")
+        for intent_item in record.get("intents", [])
+        for expectation in intent_item.get("expectations", [])
+    }
+    for item in assertions:
+        if not item.get("overrideConflict"):
+            continue
+        override_outcome = override_outcomes.get(
+            (item["intentId"], item["expectationId"])
+        )
+        print(
+            "Warning: design intent override conflict: "
+            f"intent '{item['intentId']}' expectation '{item['expectationId']}'; "
+            f"observed outcome '{item['outcome']}'; "
+            f"override outcome '{override_outcome}'.",
+            file=sys.stderr,
+        )
+
+
+def _verify_intent(args: argparse.Namespace) -> int:
+    """Generate a verification artifact and report blocking intent drift."""
+    raw_text = intent.read_record_text(args.record)
+    config = load_validated_config(args.config) if args.config else None
+    record = intent.parse_record(raw_text, args.record, config)
+    destination, document = intent.generate(
+        args.record, args.results, args.out, prepared=(raw_text, record)
+    )
+    print(f"Wrote {destination}")
+    _warn_override_conflicts(record, document["assertions"])
+    blocking = intent.evaluate_blocking(record, document["assertions"])
+    if blocking == intent.BLOCKING_FAILED:
+        print(
+            "Error: a blocking design intent expectation failed",
+            file=sys.stderr,
+        )
+        return EXIT_INTENT_DRIFT
+    if blocking == intent.BLOCKING_UNCOVERED:
+        print(
+            "Error: a blocking design intent expectation was never evaluated",
+            file=sys.stderr,
+        )
+        return EXIT_INTENT_UNCOVERED
+    return EXIT_SUCCESS
 
 
 def _cmd_run_at_plan(args: argparse.Namespace) -> int:
@@ -1936,6 +2069,10 @@ def main(argv: list[str] | None = None) -> int:
     args = parser.parse_args(argv)
 
     try:
+        if args.command == "verify-intent":
+            return _verify_intent(args)
+        if args.command == "project-intent":
+            return _project_intent(args)
         if args.command == "render-artifacts":
             return _cmd_render_artifacts(args)
         if args.command == "capture-visual-review":

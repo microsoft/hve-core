@@ -9,7 +9,7 @@ This instruction defines the coaching state schema, file conventions, and sessio
 
 Store the coaching state file at `.copilot-tracking/dt/{project-slug}/coaching-state.md`.
 
-* `{project-slug}` is a kebab-case project identifier provided by the user (e.g., `factory-floor-maintenance`). All DT artifacts are scoped under `.copilot-tracking/dt/{project-slug}/`.
+* `{project-slug}` is a kebab-case project identifier provided by the user (e.g., `factory-floor-maintenance`). DT method artifacts are scoped under `.copilot-tracking/dt/{project-slug}/`.
 * Create the directory when initializing a new coaching project.
 * One state file per project. Multiple concurrent projects each get their own directory.
 
@@ -53,8 +53,6 @@ artifacts: []
   #   type: "stakeholder-map"
 
 canonical_deck:
-  opted_in: false        # boolean; set during Phase 1 initialization
-  opted_in_at: null      # ISO 8601 timestamp; when user answered the opt-in checkpoint
   snapshots: []
     # - method: 1
     #   date: "YYYY-MM-DD"
@@ -135,8 +133,6 @@ Specialized DT workflows may extend the base state schema with additional top-le
 
 #### Canonical Deck Block
 
-* `opted_in`: boolean indicating whether the user accepted the canonical deck workflow during Phase 1 initialization. Set to `false` by default; set to `true` when the user accepts the opt-in checkpoint.
-* `opted_in_at`: ISO 8601 timestamp recording when the user answered the opt-in checkpoint. `null` until answered.
 * `snapshots`: list of snapshot records, one per canonical deck generation. Each entry records the method number, date, entry count, candidate count, and content fingerprint for staleness detection.
 * `last_offered_at`: ISO 8601 timestamp of the most recent canonical deck offer, whether accepted or declined.
 * `last_offered_response`: user's response to the most recent canonical deck offer: `"accepted"`, `"declined"`, or `null` if never offered.

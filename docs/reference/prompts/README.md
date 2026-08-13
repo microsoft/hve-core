@@ -2,7 +2,7 @@
 title: Prompts
 description: Reference documentation for HVE Core prompts.
 sidebar_position: 0
-ms.date: 2026-08-04
+ms.date: 2026-08-11
 ---
 
 <!-- BEGIN AUTO-GENERATED: index -->
@@ -12,7 +12,7 @@ This page lists the generated reference documentation for HVE Core prompts.
 |---------------------------------------------------------------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | [Accessibility Coverage Matrix](accessibility/accessibility-coverage-matrix.md)       | Build, refresh, report, or probe an accessibility coverage matrix across criteria, surfaces, and methods.                                                                 |
 | [Synth Data Generate](data-science/synth-data-generate.md)                            | Generate synthetic data for any subject with realistic patterns and relationships                                                                                         |
-| [Dt Canonical Deck](design-thinking/dt-canonical-deck.md)                             | Canonical deck workflow: opt-in offer, snapshot generation/refresh, and optional customer-card PowerPoint build                                                           |
+| [Dt Canonical Deck](design-thinking/dt-canonical-deck.md)                             | Canonical deck workflow: asset-ready offer, snapshot generation/refresh, and optional customer-card PowerPoint build                                                      |
 | [Dt Figma Export](design-thinking/dt-figma-export.md)                                 | Export Design Thinking artifacts to a FigJam board or Figma Design file via the Figma MCP server                                                                          |
 | [Dt Handoff Implementation Space](design-thinking/dt-handoff-implementation-space.md) | Compiles DT Methods 7-9 into research-ready input for rpi-research at the Implementation Space exit                                                                       |
 | [Dt Handoff Problem Space](design-thinking/dt-handoff-problem-space.md)               | Compiles DT Methods 1-3 into research-ready input for rpi-research at the Problem Space exit                                                                              |

@@ -12,7 +12,7 @@ from types import SimpleNamespace
 
 import pytest
 import runtime_a11y.__main__ as cli
-from runtime_a11y._errors import EXIT_SUCCESS, EXIT_USAGE
+from runtime_a11y._errors import EXIT_FAILURE, EXIT_SUCCESS, EXIT_USAGE
 
 
 @pytest.fixture(autouse=True)
@@ -372,7 +372,63 @@ def test_given_run_all_when_subprocess_returns_probe_data_then_aggregates_result
     document = json.loads(out_path.read_text(encoding="utf-8"))
     assert document["tool"] == "runtime_a11y"
     assert document["results"][0]["criterionId"] == "1.3.1"
+    assert document["results"][0]["probeId"] == "probe-axe"
     assert document["runs"][0]["probeId"] == "probe-axe"
+
+
+def test_given_operational_failure_when_run_all_then_persists_quarantined_evidence(
+    mocker,
+    tmp_path: Path,
+) -> None:
+    mocker.patch.object(cli, "load_validated_config", return_value={})
+    mocker.patch.object(
+        cli,
+        "_iter_runs",
+        return_value=iter(
+            [
+                ("probe-axe", "web", "default"),
+                ("probe-real-sr", "web", "default"),
+                ("probe-contrast", "web", "default"),
+            ]
+        ),
+    )
+    run_probe = mocker.patch.object(
+        cli,
+        "_run_probe",
+        side_effect=[
+            {
+                "probeId": "probe-axe",
+                "results": [{"criterionId": "1.3.1", "status": "pass"}],
+            },
+            {
+                "probeId": "probe-real-sr",
+                "results": [{"criterionId": "4.1.3", "status": "candidate"}],
+                "operationalFailure": {"reason": "driver state is unverified"},
+                "cleanup": {"status": "attempted"},
+            },
+        ],
+    )
+    out_path = _allowed_run_path(tmp_path, "operational-failure") / "results.json"
+
+    exit_code = cli.main(
+        [
+            "run-all",
+            "--config",
+            str(tmp_path / "runtime.json"),
+            "--out",
+            str(out_path),
+        ]
+    )
+
+    assert exit_code == EXIT_FAILURE
+    document = json.loads(out_path.read_text(encoding="utf-8"))
+    assert document["quarantined"] is True
+    assert document["operationalFailure"]["cleanup"] == {"status": "attempted"}
+    assert [item["probeId"] for item in document["results"]] == [
+        "probe-axe",
+        "probe-real-sr",
+    ]
+    assert run_probe.call_count == 2
 
 
 def test_given_calibration_run_when_run_root_override_is_provided_then_subprocess_receives_it(  # noqa: E501
