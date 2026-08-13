@@ -4,7 +4,7 @@ description: 'BRD-author view of the BRD-to-PRD handoff payload contract emitted
 
 # BRD-to-PRD Handoff Payload — BRD Author View
 
-This document is the brd-author skill's authoritative description of the payload the BRD Builder emits at Govern exit and that the PRD Builder accepts via its `from-brd-handoff` entry mode. The payload itself is governed by the schema in [brd-to-prd-handoff-v1.md](brd-to-prd-handoff-v1.md); this file restates the schema in the BRD author's vocabulary so the canonical template, Govern exit gate, and BRD Quality Reviewer all reference a single contract.
+This document is the brd-author skill's authoritative description of the payload the BRD Builder emits at Govern exit and that the PRD Builder ingests during Assess when present. The payload itself is governed by the schema in [brd-to-prd-handoff-v1.md](brd-to-prd-handoff-v1.md); this file restates the schema in the BRD author's vocabulary so the canonical template, Govern exit gate, and BRD Quality Reviewer all reference a single contract. PRD Builder has no separate BRD-handoff entry mode.
 
 The brd-author bundle feeds the `brd:`, `business_goals:`, `partitions:`, `known_open_items:`, and `prd_consumer_notes:` fields. The `quality_report:`, `counts:`, `traceability:`, and `signoff:` fields are assembled at Govern exit from the approved BRD, final quality report, traceability matrix, and signoff evidence.
 

@@ -320,3 +320,212 @@ stimuli:
         $LASTEXITCODE | Should -Be 0
     }
 }
+
+Describe 'Isolated agent environment generation' -Tag 'Unit' {
+    BeforeEach {
+        $script:TestRoot = Join-Path $TestDrive ([Guid]::NewGuid().ToString())
+        Initialize-FixtureRoot -Root $script:TestRoot
+    }
+
+    It 'Preserves a stimulus environment that remaps an agent to workspace instructions' {
+        Write-Partial -Root $script:TestRoot -Slug 'agent-one' -Content @"
+stimuli:
+  - name: agent-one-functional
+    prompt: Functional prompt.
+    environment:
+      files:
+        - src: ../../.github/agents/experimental/experiment-designer.agent.md
+          dest: .github/copilot-instructions.md
+      skills:
+        - ../../.github/skills/project-planning/experiment-design
+        - ../../.github/skills/data-science/ml-experimentation
+"@
+        (Invoke-AgentBehaviorSpecCore -RepoRoot $script:TestRoot).Outcome | Should -Be 'Wrote'
+
+        $spec = Read-OutputObject -Root $script:TestRoot
+        $stimulus = $spec.stimuli | Where-Object { $_.name -eq 'agent-one-functional' }
+        $stimulus.environment.files | Should -HaveCount 1
+        $stimulus.environment.files[0].src | Should -Be '../../.github/agents/experimental/experiment-designer.agent.md'
+        $stimulus.environment.files[0].dest | Should -Be '.github/copilot-instructions.md'
+        $stimulus.environment.skills | Should -HaveCount 2
+        $stimulus.environment.skills | Should -Contain '../../.github/skills/project-planning/experiment-design'
+        $stimulus.environment.skills | Should -Contain '../../.github/skills/data-science/ml-experimentation'
+    }
+
+    It 'Keeps each agent environment isolated from other agents' {
+        Write-Partial -Root $script:TestRoot -Slug 'agent-one' -Content @"
+stimuli:
+  - name: agent-one-functional
+    prompt: Functional prompt.
+    environment:
+      files:
+        - src: ../../.github/agents/experimental/experiment-designer.agent.md
+          dest: .github/copilot-instructions.md
+      skills:
+        - ../../.github/skills/project-planning/experiment-design
+"@
+        Write-Partial -Root $script:TestRoot -Slug 'agent-two' -Content @"
+stimuli:
+  - name: agent-two-functional
+    prompt: Functional prompt.
+    environment:
+      files:
+        - src: ../../.github/agents/hve-core/documentation.agent.md
+          dest: .github/copilot-instructions.md
+      skills:
+        - ../../.github/skills/hve-core/documentation
+"@
+        (Invoke-AgentBehaviorSpecCore -RepoRoot $script:TestRoot).Outcome | Should -Be 'Wrote'
+
+        $spec = Read-OutputObject -Root $script:TestRoot
+        $one = $spec.stimuli | Where-Object { $_.name -eq 'agent-one-functional' }
+        $two = $spec.stimuli | Where-Object { $_.name -eq 'agent-two-functional' }
+
+        $one.environment.files[0].dest | Should -Be $two.environment.files[0].dest
+        $one.environment.files[0].src | Should -Not -Be $two.environment.files[0].src
+        $one.environment.skills | Should -Not -Contain '../../.github/skills/hve-core/documentation'
+        $two.environment.skills | Should -Not -Contain '../../.github/skills/project-planning/experiment-design'
+    }
+
+    It 'Leaves stimuli without a declared environment untouched' {
+        Write-Partial -Root $script:TestRoot -Slug 'agent-one' -Content @"
+stimuli:
+  - name: agent-one-functional
+    prompt: Functional prompt.
+    environment:
+      files:
+        - src: ../../.github/agents/experimental/experiment-designer.agent.md
+          dest: .github/copilot-instructions.md
+  - name: agent-one-smoke
+    prompt: Smoke prompt.
+"@
+        (Invoke-AgentBehaviorSpecCore -RepoRoot $script:TestRoot).Outcome | Should -Be 'Wrote'
+
+        $spec = Read-OutputObject -Root $script:TestRoot
+        $smoke = $spec.stimuli | Where-Object { $_.name -eq 'agent-one-smoke' }
+        $smoke.Contains('environment') | Should -BeFalse
+    }
+
+    It 'Remains idempotent when a stimulus environment is present' {
+        Write-Partial -Root $script:TestRoot -Slug 'agent-one' -Content @"
+stimuli:
+  - name: agent-one-functional
+    prompt: Functional prompt.
+    environment:
+      files:
+        - src: ../../.github/agents/experimental/experiment-designer.agent.md
+          dest: .github/copilot-instructions.md
+      skills:
+        - ../../.github/skills/project-planning/experiment-design
+"@
+        (Invoke-AgentBehaviorSpecCore -RepoRoot $script:TestRoot).Outcome | Should -Be 'Wrote'
+        $first = Read-OutputYaml -Root $script:TestRoot
+        (Invoke-AgentBehaviorSpecCore -RepoRoot $script:TestRoot -WhatIf).Outcome | Should -Be 'NoDrift'
+        Read-OutputYaml -Root $script:TestRoot | Should -Be $first
+    }
+}
+
+Describe 'experiment-designer conditional-ML semantic graders' -Tag 'Unit' {
+    BeforeAll {
+        $script:RepoRoot = (Resolve-Path (Join-Path $PSScriptRoot '../../..')).Path
+        $partial = Join-Path $script:RepoRoot 'evals/agent-behavior/stimuli/experiment-designer.yml'
+        $parsed = ConvertFrom-Yaml -Yaml ([System.IO.File]::ReadAllText($partial))
+        $script:Stimulus = $parsed['stimuli'] | Where-Object { $_['name'] -eq 'experiment-designer-conditional-ml-route' }
+        $script:Patterns = @{}
+        foreach ($grader in $script:Stimulus['graders']) {
+            $script:Patterns[[string]$grader['name']] = [string]$grader['config']['pattern']
+        }
+
+        # A correct answer that states the ML skill before its machine-learning
+        # rationale. The retired graders rejected this ordering.
+        $script:ReorderedCorrectAnswer = @'
+At Phase 4 I load two reusable skills.
+
+- `experiment-design` owns general MVE framing, hypothesis formation, vetting, minimum scope, and result evaluation.
+- `ml-experimentation` owns reproducibility, experiment tracking, evaluation flow, and production readiness. It applies because the persisted context records a machine-learning experiment type.
+
+If `ml-experimentation` were unavailable, I would record the gap, continue with `experiment-design` for the general design work, and avoid claiming ML-specific coverage.
+'@
+
+        # Each fixture removes exactly one obligation from the correct answer.
+        $script:NegativeFixtures = @{
+            'conditional-ml-trigger'                = @'
+At Phase 4 I load two reusable skills.
+
+- `experiment-design` owns general framing, hypothesis formation, vetting, and scope.
+- `ml-experimentation` owns reproducibility, experiment tracking, evaluation flow, and production readiness.
+
+If that specialized skill were unavailable, I would record the gap, continue with `experiment-design` for the general design work, and avoid claiming specialized coverage.
+'@
+            'conditional-ml-skill-ownership'        = @'
+At Phase 4 I load one reusable skill for this machine-learning experiment type.
+
+- `experiment-design` owns general MVE framing, hypothesis formation, vetting, minimum scope, and result evaluation.
+
+If the specialized companion skill were unavailable, I would record the gap, continue with `experiment-design` for the general design work, and avoid claiming ML-specific coverage.
+'@
+            'conditional-load-failure-condition'    = @'
+At Phase 4 I load two reusable skills.
+
+- `experiment-design` owns general MVE framing, hypothesis formation, vetting, minimum scope, and result evaluation.
+- `ml-experimentation` owns reproducibility, experiment tracking, evaluation flow, and production readiness, because the persisted context records a machine-learning experiment type.
+
+I would record the gap, continue with `experiment-design` for the general design work, and avoid claiming ML-specific coverage.
+'@
+            'conditional-failure-records-gap'       = @'
+At Phase 4 I load two reusable skills.
+
+- `experiment-design` owns general MVE framing, hypothesis formation, vetting, minimum scope, and result evaluation.
+- `ml-experimentation` owns reproducibility, experiment tracking, evaluation flow, and production readiness, because the persisted context records a machine-learning experiment type.
+
+If `ml-experimentation` were unavailable, I would continue with `experiment-design` for the general design work and avoid claiming ML-specific coverage.
+'@
+            'conditional-failure-continues-general' = @'
+At Phase 4 I load two reusable skills.
+
+- `experiment-design` owns general MVE framing, hypothesis formation, vetting, minimum scope, and result evaluation.
+- `ml-experimentation` owns reproducibility, experiment tracking, evaluation flow, and production readiness, because the persisted context records a machine-learning experiment type.
+
+If `ml-experimentation` were unavailable, I would record the gap and stop the session, avoiding any claim of ML-specific coverage.
+'@
+            'conditional-failure-reduces-ml-depth'  = @'
+At Phase 4 I load two reusable skills.
+
+- `experiment-design` owns general MVE framing, hypothesis formation, vetting, minimum scope, and result evaluation.
+- `ml-experimentation` owns reproducibility, experiment tracking, evaluation flow, and production readiness, because the persisted context records a machine-learning experiment type.
+
+If `ml-experimentation` were unavailable, I would record the gap and continue with `experiment-design` exactly as planned.
+'@
+        }
+    }
+
+    It 'Declares the retained general grader plus six semantic invariants' {
+        $script:Patterns.Keys | Should -HaveCount 7
+        $script:Patterns.Keys | Should -Contain 'always-loaded-general-skill'
+        $script:Patterns.Keys | Should -Not -Contain 'conditional-ml-skill'
+        $script:Patterns.Keys | Should -Not -Contain 'conditional-failure-degrades-depth'
+    }
+
+    It 'Accepts a correct answer whose ordering the retired graders rejected' {
+        foreach ($name in $script:Patterns.Keys) {
+            $script:ReorderedCorrectAnswer | Should -Match $script:Patterns[$name] -Because "grader '$name' must accept a semantically correct answer"
+        }
+    }
+
+    It 'Fails only the omitted obligation for <Name>' -ForEach @(
+        @{ Name = 'conditional-ml-trigger' }
+        @{ Name = 'conditional-ml-skill-ownership' }
+        @{ Name = 'conditional-load-failure-condition' }
+        @{ Name = 'conditional-failure-records-gap' }
+        @{ Name = 'conditional-failure-continues-general' }
+        @{ Name = 'conditional-failure-reduces-ml-depth' }
+    ) {
+        $answer = $script:NegativeFixtures[$Name]
+        $answer | Should -Not -Match $script:Patterns[$Name] -Because "the fixture omits the obligation owned by '$Name'"
+
+        foreach ($other in $script:Patterns.Keys) {
+            if ($other -eq $Name) { continue }
+            $answer | Should -Match $script:Patterns[$other] -Because "grader '$other' owns a different obligation and must still pass"
+        }
+    }
+}

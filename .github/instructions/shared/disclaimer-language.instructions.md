@@ -1,6 +1,6 @@
 ---
 description: "Centralized disclaimer language for AI-assisted planning and review agents requiring professional review acknowledgment"
-applyTo: '**/.copilot-tracking/rai-plans/**, **/.copilot-tracking/rai-reviews/**, **/.copilot-tracking/security-plans/**, **/.copilot-tracking/sssc-plans/**, **/.copilot-tracking/sssc-reviews/**, **/.copilot-tracking/performance-plans/**, **/.copilot-tracking/adr-plans/**, **/.copilot-tracking/dt/**, **/docs/planning/adrs/**, **/.copilot-tracking/reviews/code-reviews/**, **/.copilot-tracking/security/**, **/.copilot-tracking/accessibility/**, **/.copilot-tracking/privacy-plans/**, **/.copilot-tracking/privacy-reviews/**, **/.copilot-tracking/prd-sessions/**, **/.copilot-tracking/brd-sessions/**, **/.copilot-tracking/documentation/**'
+applyTo: '**/.copilot-tracking/rai-plans/**, **/.copilot-tracking/rai-reviews/**, **/.copilot-tracking/security-plans/**, **/.copilot-tracking/sssc-plans/**, **/.copilot-tracking/sssc-reviews/**, **/.copilot-tracking/performance-plans/**, **/.copilot-tracking/adr-plans/**, **/.copilot-tracking/dt/**, **/.copilot-tracking/ds/**, **/docs/planning/adrs/**, **/.copilot-tracking/reviews/code-reviews/**, **/.copilot-tracking/security/**, **/.copilot-tracking/accessibility/**, **/.copilot-tracking/privacy-plans/**, **/.copilot-tracking/privacy-reviews/**, **/.copilot-tracking/prd-sessions/**, **/.copilot-tracking/brd-sessions/**, **/.copilot-tracking/documentation/**'
 ---
 
 # Disclaimer Language
@@ -61,6 +61,11 @@ Authoring contract (parsed by scripts/linting/Validate-PlannerArtifacts.ps1):
 
 > [!CAUTION]
 > **Disclaimer:** This agent is an assistive coaching tool only. It does not conduct user research, observe stakeholders, or speak for the people whose problems you are designing for, and it does not replace primary research, direct stakeholder contact, design review, or product and strategy decision authority. Personas, problem statements, journey maps, empathy maps, concept tests, and other Design Thinking artifacts produced with this tool are scaffolding for your own research and synthesis — not substitutes for real stakeholder voice or observed behavior. Validate all AI-generated assumptions, personas, themes, and insights against actual stakeholders before treating any Design Thinking artifact as a basis for product, design, or strategy commitments. Outputs from this tool do not constitute validated research findings or design approval.
+
+## Data-Science Coaching
+
+> [!CAUTION]
+> **Disclaimer:** This agent is an assistive data-science and data-engineering coaching tool only. It does not validate customer data, execute production pipelines, establish model fitness, or replace data owners, privacy and Responsible AI reviewers, engineering review, or business decision authority. Catalogs, feasibility findings, analyses, experiments, tests, and operational recommendations generated with this tool may be incomplete or inaccurate and must be independently reviewed against approved data sources, stakeholder evidence, and organizational controls before use. Outputs from this tool do not constitute data approval, feasibility sign-off, model approval, privacy or Responsible AI approval, or production readiness.
 
 ## Code-Review
 
