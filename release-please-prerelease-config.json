@@ -50,13 +50,18 @@
         },
         {
           "type": "json",
+          "path": ".github/plugin.json",
+          "jsonpath": "$.version"
+        },
+        {
+          "type": "json",
           "path": ".github/plugin/marketplace.json",
           "jsonpath": "$.metadata.version"
         },
         {
           "type": "json",
           "path": ".github/plugin/marketplace.json",
-          "jsonpath": "$.plugins[*].version"
+          "jsonpath": "$.plugins[0].version"
         }
       ]
     }

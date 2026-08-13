@@ -3,7 +3,7 @@ title: Contributing Hooks
 description: How to implement, register, and validate hook artifacts in hve-core
 sidebar_position: 7
 author: Microsoft
-ms.date: 2026-08-06
+ms.date: 2026-08-13
 ms.topic: how-to
 keywords:
   - hooks
@@ -15,7 +15,7 @@ estimated_reading_time: 6
 
 ## Why Hooks Exist
 
-Hooks let you run lightweight automation during Copilot lifecycle events without modifying agents, prompts, or skills. In hve-core, hooks are plugin-only package components distributed with other AI customization files.
+Hooks let you run lightweight automation during Copilot lifecycle events without modifying agents, prompts, or skills. In hve-core, hooks are plugin-only components distributed with other AI customization files.
 
 Use a hook when you need event-driven behavior such as:
 
@@ -32,8 +32,8 @@ Hooks use package-oriented source folders. Use this structure for hook contribut
 | `.github/hooks/<package>/<name>.json`               | Hook manifest that maps lifecycle events to executable commands |
 | `.github/hooks/<package>/<name>/`                   | Hook implementation scripts and support files                   |
 | `scripts/linting/schemas/hook-manifest.schema.json` | JSON Schema (draft-07) that defines the manifest contract       |
-| `.github/plugin/marketplace.json`                   | Standard `hooks` membership for one package                     |
-| `docs/plugins/*.md`                                 | Durable package documentation                                   |
+| `.github/plugin.json`                               | Canonical hook declaration for the plugin                       |
+| `docs/plugins/hve-core.md`                          | Durable plugin documentation                                    |
 
 Manifests live one package level down (`.github/hooks/<package>/`). A flat `.github/hooks/<name>.json` is treated as a repo-specific artifact and is excluded from distribution.
 
@@ -46,8 +46,8 @@ The telemetry hook is the current reference implementation:
 
 1. Add a manifest at `.github/hooks/<package>/<name>.json`.
 2. Add executable scripts under `.github/hooks/<package>/<name>/`.
-3. Register the manifest through the package's standard `hooks` field in `.github/plugin/marketplace.json`.
-4. Document the hook in the matching `docs/plugins/<package>.md` page.
+3. Register the manifest through the `hooks` field in `.github/plugin.json`.
+4. Document the hook in `docs/plugins/hve-core.md`.
 5. Add or update docs under `docs/` for setup and usage.
 
 Minimal manifest pattern:
@@ -120,10 +120,9 @@ Choose CLI event names that convert to valid VS Code events:
 
 `stop` and `sessionEnd` are distinct events, not duplicates: a hook that needs a per-turn signal registers `stop`, while a hook that needs a session-end signal registers `sessionEnd`. Registering both is valid when both signals are required.
 
-## Registering a Hook in A Package
+## Registering a Hook in the Plugin
 
-Set the package's standard `hooks` field to the `.github`-root-relative
-canonical manifest path:
+Set the plugin manifest's `hooks` field to the `.github`-root-relative canonical manifest path:
 
 ```json
 {
@@ -131,7 +130,7 @@ canonical manifest path:
 }
 ```
 
-Then update the corresponding page under `docs/plugins/` so users can discover what the hook does.
+Then update `docs/plugins/hve-core.md` so users can discover what the hook does.
 
 ## Validation Checklist
 

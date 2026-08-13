@@ -3,7 +3,7 @@ title: VS Code Extension Installation
 description: Install HVE Core as a VS Code extension from the marketplace
 sidebar_position: 1
 author: Microsoft
-ms.date: 2026-08-08
+ms.date: 2026-08-13
 ms.topic: how-to
 keywords:
   - extension
@@ -201,7 +201,7 @@ duplicate-registration behavior.
 
 1. Start with the HVE Core extension for the complete managed component set
 2. When you need MCP configuration or selected repository-owned components, ask an agent to use the included `hve-core-installer` skill
-3. Choose the starter profile or a custom selection, review lifecycle labels and dependency closure, then copy to a [clone-based method](./)
+3. Choose the complete manifest or a custom selection, review component paths and collisions, then copy to a [clone-based method](./)
 
 ## Troubleshooting
 
@@ -259,8 +259,8 @@ If you have both extension and manual installation (like Peer Clone):
 The extension includes `hve-core-installer`. Ask an agent to invoke it when you need MCP guidance, installation-method selection, or a smaller clone-based component set.
 
 1. Ask an agent to use `hve-core-installer`.
-2. Choose the starter profile or custom selection for clone adoption.
-3. Review agents, prompts, instructions, complete skill directories, lifecycle labels, and closure additions before writes.
+2. Choose the complete manifest or a custom selection for clone adoption.
+3. Review agents, prompts, instructions, distributable skill directories, and collisions before writes.
 
 | Capability                   | HVE Core Extension | Installer Skill                       |
 |------------------------------|-------------------:|---------------------------------------|

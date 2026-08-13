@@ -1,5 +1,5 @@
 ---
-title: Coding Standards
+title: Coding Standards Retired
 description: Language-specific coding instructions and pre-PR code review agents for bash, Bicep, C#, PowerShell, Python, Rust, and Terraform projects
 sidebar_position: 2
 author: Microsoft

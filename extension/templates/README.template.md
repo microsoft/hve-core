@@ -32,14 +32,14 @@ Review channel ownership, lifecycle disclosure, and selective clone adoption:
 
 ## Pre-release Channel
 
-HVE Core publishes the same artifacts on two release channels:
+HVE Core publishes the same complete component set on two release channels:
 
-| Channel     | Description                                         | Maturity Levels                     |
-|-------------|-----------------------------------------------------|-------------------------------------|
-| Stable      | Promoted release cadence                            | `stable`, `preview`, `experimental` |
-| Pre-release | Early access to changes ahead of the next promotion | `stable`, `preview`, `experimental` |
+| Channel     | Description                                         | Membership        |
+|-------------|-----------------------------------------------------|-------------------|
+| Stable      | Promoted release cadence                            | Complete manifest |
+| Pre-release | Early access to changes ahead of the next promotion | Complete manifest |
 
-Both channels ship identical content. The Included Artifacts tables above label each artifact's maturity so you can judge its stability before use.
+Both channels ship identical content. They differ in version, cadence, release source, and Marketplace channel behavior.
 
 To install the pre-release version, select **Install Pre-Release Version** from the extension page in VS Code.
 

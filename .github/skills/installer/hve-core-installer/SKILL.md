@@ -6,7 +6,7 @@ license: MIT
 metadata:
   authors: "microsoft/hve-core"
   spec_version: "1.0"
-  last_updated: "2026-08-09"
+  last_updated: "2026-08-13"
 ---
 
 # HVE-Core Installer Skill
@@ -202,9 +202,9 @@ The HVE Core extension has been installed from the VS Code Marketplace.
 • code-review, security-planner, ux-ui-designer, and more!
 
 🪝 Hooks (manual step): The Marketplace extension is declarative and does not
-   write chat.hookFilesLocations. To enable bundled hooks (e.g. telemetry), add
-   each package's hook folder to that setting yourself, or use a clone-based
-   or CLI-plugin install which documents this configuration.
+  write chat.hookFilesLocations. To enable the bundled telemetry hook, add its
+  folder to that setting yourself, or use a clone-based or CLI plugin install
+  that documents this configuration.
 
 📋 Configuring optional settings...
 ```

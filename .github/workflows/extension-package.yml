@@ -14,26 +14,20 @@ on:
         required: true
         type: string
       channel:
-        description: "Release channel (Stable or PreRelease) controlling agent maturity filtering"
+        description: "Release channel (Stable or PreRelease) controlling the pre-release packaging flag"
         required: false
         type: string
         default: "Stable"
-    outputs:
-      packages-matrix:
-        description: "JSON matrix of packages that were actually packaged (filtered by channel and maturity)"
-        value: ${{ jobs.discover-packages.outputs.matrix }}
 
 permissions:
   contents: read
 
 jobs:
-  discover-packages:
-    name: Discover Marketplace Packages
+  package:
+    name: Package hve-core
     runs-on: ubuntu-latest
     permissions:
       contents: read
-    outputs:
-      matrix: ${{ steps.discover.outputs.matrix }}
     steps:
       - name: Checkout code
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -41,9 +35,8 @@ jobs:
           ref: ${{ inputs.source-ref }}
           persist-credentials: false
 
-      - name: Setup PowerShell modules
-        uses: ./.github/actions/setup-ps-modules
-
+      # The gate runs before any dependency install, so a mismatched caller
+      # never reaches lifecycle scripts.
       - name: Validate packaging inputs
         shell: bash
         env:
@@ -68,30 +61,6 @@ jobs:
             exit 1
           fi
 
-      - name: Discover marketplace packages
-        id: discover
-        shell: pwsh
-        env:
-          INPUT_CHANNEL: ${{ inputs.channel }}
-        run: |
-          & ./scripts/extension/Get-MarketplacePackageMatrix.ps1 -Channel $env:INPUT_CHANNEL
-
-  package:
-    name: Package ${{ matrix.id }}
-    needs: discover-packages
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-    strategy:
-      fail-fast: false
-      matrix: ${{ fromJson(needs.discover-packages.outputs.matrix) }}
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          ref: ${{ inputs.source-ref }}
-          persist-credentials: false
-
       - name: Setup Node.js
         uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
@@ -114,10 +83,9 @@ jobs:
         run: |
           $channel = "$env:INPUT_CHANNEL".Trim()
           if (-not $channel) { $channel = 'Stable' }
-          $packageId = "${{ matrix.id }}"
 
-          Write-Host "🔧 Preparing extension for $channel channel (package: ${{ matrix.id }})..."
-          ./scripts/extension/Prepare-Extension.ps1 -Channel $channel -PackageId $packageId
+          Write-Host "🔧 Preparing extension for $channel channel..."
+          ./scripts/extension/Prepare-Extension.ps1 -Channel $channel
 
       - name: Package extension
         id: package
@@ -129,13 +97,10 @@ jobs:
           $version = "$env:INPUT_VERSION".Trim()
           $channel = "$env:INPUT_CHANNEL".Trim()
           if (-not $channel) { $channel = 'Stable' }
-          $packageId = "${{ matrix.id }}"
 
-          Write-Host "📦 Packaging extension for $channel channel (package: ${{ matrix.id }})..."
+          Write-Host "📦 Packaging extension for $channel channel..."
 
-          $arguments = @{
-            PackageId = $packageId
-          }
+          $arguments = @{}
 
           if ($channel -ieq 'PreRelease') {
             $arguments['PreRelease'] = $true
@@ -154,6 +119,6 @@ jobs:
       - name: Upload VSIX artifact
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
-          name: extension-vsix-${{ matrix.id }}
+          name: extension-vsix
           path: extension/*.vsix
           retention-days: 30

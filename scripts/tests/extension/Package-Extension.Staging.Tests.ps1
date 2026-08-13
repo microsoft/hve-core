@@ -187,7 +187,7 @@ Describe 'Invoke-PackageExtension' -Tag 'Unit' {
     Context 'when running with DryRun' {
         BeforeEach {
             $script:DryRunResult = Invoke-PackageExtension -ExtensionDirectory $script:RunFixture.ExtensionDirectory `
-                -RepoRoot $script:RunFixture.RepoRoot -PackageId 'sample' -DryRun
+                -RepoRoot $script:RunFixture.RepoRoot -DryRun
         }
 
         It 'Reports success with the resolved version and no output path' {
@@ -206,7 +206,7 @@ Describe 'Invoke-PackageExtension' -Tag 'Unit' {
             }
         }
 
-        It 'Restores the canonical README and removes the backup' {
+        It 'Leaves the canonical README untouched and creates no backup' {
             Get-Content -LiteralPath (Join-Path $script:RunFixture.ExtensionDirectory 'README.md') -Raw | Should -BeExactly "# Canonical README`n"
             Test-Path -LiteralPath (Join-Path $script:RunFixture.ExtensionDirectory 'README.md.bak') | Should -BeFalse
         }
@@ -216,7 +216,7 @@ Describe 'Invoke-PackageExtension' -Tag 'Unit' {
         BeforeEach {
             New-FakeVsceExecutable -Path (Join-Path $script:RunFixture.RepoRoot 'node_modules/.bin/vsce') -Version '1.0.0' | Out-Null
             $script:MismatchResult = Invoke-PackageExtension -ExtensionDirectory $script:RunFixture.ExtensionDirectory `
-                -RepoRoot $script:RunFixture.RepoRoot -PackageId 'sample'
+                -RepoRoot $script:RunFixture.RepoRoot
         }
 
         It 'Fails with the pinned version message' {
@@ -224,7 +224,7 @@ Describe 'Invoke-PackageExtension' -Tag 'Unit' {
             $script:MismatchResult.ErrorMessage | Should -BeExactly "Pinned vsce 3.9.2 is unavailable (found '1.0.0')."
         }
 
-        It 'Still cleans up staged directories and the README swap' {
+        It 'Still cleans up staged directories and leaves the canonical README' {
             foreach ($directory in @('.github', 'docs', 'scripts')) {
                 Test-Path -LiteralPath (Join-Path $script:RunFixture.ExtensionDirectory $directory) | Should -BeFalse
             }
@@ -236,7 +236,7 @@ Describe 'Invoke-PackageExtension' -Tag 'Unit' {
         BeforeEach {
             New-FakeVsceExecutable -Path (Join-Path $script:RunFixture.RepoRoot 'node_modules/.bin/vsce') -Version '3.9.2' -ExitCode 3 | Out-Null
             $script:FailureResult = Invoke-PackageExtension -ExtensionDirectory $script:RunFixture.ExtensionDirectory `
-                -RepoRoot $script:RunFixture.RepoRoot -PackageId 'sample'
+                -RepoRoot $script:RunFixture.RepoRoot
         }
 
         It 'Fails with the vsce exit code message' {
@@ -249,7 +249,7 @@ Describe 'Invoke-PackageExtension' -Tag 'Unit' {
             $observed.name | Should -BeExactly 'hve-sample'
         }
 
-        It 'Removes staged directories and restores the README after failure' {
+        It 'Removes staged directories and leaves the canonical README after failure' {
             foreach ($directory in @('.github', 'docs', 'scripts')) {
                 Test-Path -LiteralPath (Join-Path $script:RunFixture.ExtensionDirectory $directory) | Should -BeFalse
             }
@@ -262,7 +262,7 @@ Describe 'Invoke-PackageExtension' -Tag 'Unit' {
         BeforeEach {
             Remove-Item -LiteralPath (Join-Path $script:RunFixture.RepoRoot 'docs/templates/example-template.md') -Force
             $script:ThrowResult = Invoke-PackageExtension -ExtensionDirectory $script:RunFixture.ExtensionDirectory `
-                -RepoRoot $script:RunFixture.RepoRoot -PackageId 'sample'
+                -RepoRoot $script:RunFixture.RepoRoot
         }
 
         It 'Converts the thrown staging error into a failed result' {
@@ -282,7 +282,7 @@ Describe 'Invoke-PackageExtension' -Tag 'Unit' {
             New-FakeVsceExecutable -Path (Join-Path $script:RunFixture.RepoRoot 'node_modules/.bin/vsce') `
                 -Version '3.9.2' -VsixName 'hve-sample-2.0.0-dev.7.vsix' | Out-Null
             $script:SuccessResult = Invoke-PackageExtension -ExtensionDirectory $script:RunFixture.ExtensionDirectory `
-                -RepoRoot $script:RunFixture.RepoRoot -PackageId 'sample' -Version '2.0.0' -DevPatchNumber '7' -PreRelease
+                -RepoRoot $script:RunFixture.RepoRoot -Version '2.0.0' -DevPatchNumber '7' -PreRelease
         }
 
         It 'Reports the development version and the produced VSIX' {
@@ -301,12 +301,18 @@ Describe 'Invoke-PackageExtension' -Tag 'Unit' {
             $observed.version | Should -BeExactly '2.0.0-dev.7'
         }
 
-        It 'Swaps the package README in for the vsce run and restores it afterwards' {
+        It 'Packages the canonical README without swapping a package README' {
             Get-Content -LiteralPath (Join-Path $script:RunFixture.ExtensionDirectory 'vsce-observed-readme.md') -Raw |
-                Should -BeExactly "# Sample package README`n"
+                Should -BeExactly "# Canonical README`n"
             Get-Content -LiteralPath (Join-Path $script:RunFixture.ExtensionDirectory 'README.md') -Raw |
                 Should -BeExactly "# Canonical README`n"
             Test-Path -LiteralPath (Join-Path $script:RunFixture.ExtensionDirectory 'README.md.bak') | Should -BeFalse
+        }
+
+        It 'Ignores a suffixed package README left in the extension directory' {
+            Test-Path -LiteralPath (Join-Path $script:RunFixture.ExtensionDirectory 'README.sample.md') -PathType Leaf | Should -BeTrue
+            Get-Content -LiteralPath (Join-Path $script:RunFixture.ExtensionDirectory 'vsce-observed-readme.md') -Raw |
+                Should -Not -Match 'Sample package README'
         }
 
         It 'Restores the original manifest version after packaging' {

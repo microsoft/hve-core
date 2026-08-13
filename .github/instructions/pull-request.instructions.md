@@ -114,39 +114,18 @@ Priority rules:
 * Multiple change types can be selected.
 * When changed files do not match any detection pattern, leave "Other" unchecked for manual completion.
 
-## GHCP Maturity Detection
+## GHCP Distribution Detection
 
 Skip this section when no GHCP artifact files (`.instructions.md`, `.prompt.md`, `.agent.md`, `SKILL.md`) are included in the changes.
 
-After detecting GHCP files from change type detection, look up maturity through the marketplace source policy index:
+Determine distributable membership from `.github/plugin.json` and the sync policy:
 
-1. Import `scripts/lib/Modules/MarketplaceHelpers.psm1` and load `.github/plugin/marketplace.json` with `Get-MarketplaceCatalog`.
-2. Build `Get-MarketplaceSourcePolicyIndex`, which includes active membership and `componentMaturity` tombstones.
-3. Normalize `SKILL.md` paths to their skill directory before lookup; use the canonical repository path for every other artifact.
-4. Call `Get-MarketplaceSourceMaturity` for each path. Omit undeclared paths from package maturity claims.
-5. When one source appears in multiple packages, the helper returns the most restrictive value in this order: `removed`, `deprecated`, `experimental`, `preview`, `stable`.
+1. Agents, prompts, and instructions are distributable when they are tracked beneath a package subdirectory and match their canonical suffix.
+2. Skills are distributable when a tracked `.github/skills/<package>/<skill>/SKILL.md` exists and its top-level license has no noncommercial qualifier.
+3. Repository-root artifacts without a package segment are repository-specific.
+4. Do not infer per-artifact maturity. Stable and PreRelease ship the same manifest membership.
 
-Categorize files by maturity:
-
-| Maturity Level | Risk Level  | Indicator                 | Action                          |
-|----------------|-------------|---------------------------|---------------------------------|
-| stable         | ✅ Low       | Production-ready          | Include in standard change list |
-| preview        | 🔶 Medium   | Pre-release feature       | Flag in dedicated section       |
-| experimental   | ⚠️ High     | May have breaking changes | Add warning banner              |
-| deprecated     | 🚫 Critical | Scheduled for removal     | Add deprecation notice          |
-| removed        | 🚫 Critical | Removed tombstone         | Add removal notice              |
-
-## GHCP Maturity Output
-
-If non-stable GHCP files are detected, add this section before Notes.
-
-For experimental files:
-
-```markdown
-> [!WARNING]
-> This PR includes **experimental** GHCP artifacts that may have breaking changes.
-> - `path/to/file.prompt.md`
-```
+When a PR changes distributable membership, mention the affected artifact paths and require `npm run plugin:sync` plus `npm run plugin:validate` in the validation summary.
 
 For deprecated files:
 

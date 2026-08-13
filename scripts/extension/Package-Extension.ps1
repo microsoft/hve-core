@@ -5,7 +5,7 @@
 
 <#
 .SYNOPSIS
-    Packages one prepared HVE Core VS Code extension.
+    Packages the prepared HVE Core VS Code extension.
 .DESCRIPTION
     Stages only git-tracked files referenced by the prepared contribution
     manifest plus explicit shared resources, then invokes the repository-pinned
@@ -18,12 +18,10 @@
     Optional changelog path.
 .PARAMETER PreRelease
     Adds the vsce pre-release flag.
-.PARAMETER PackageId
-    Marketplace package ID. Defaults to hve-core.
 .PARAMETER DryRun
     Validates staging without invoking vsce.
 .EXAMPLE
-    ./Package-Extension.ps1 -PackageId hve-core -DryRun
+    ./Package-Extension.ps1 -DryRun
 #>
 
 [CmdletBinding()]
@@ -32,7 +30,6 @@ param(
     [Parameter(Mandatory = $false)] [string]$DevPatchNumber = '',
     [Parameter(Mandatory = $false)] [string]$ChangelogPath = '',
     [Parameter(Mandatory = $false)] [switch]$PreRelease,
-    [Parameter(Mandatory = $false)] [ValidateNotNullOrEmpty()] [string]$PackageId = 'hve-core',
     [Parameter(Mandatory = $false)] [switch]$DryRun
 )
 
@@ -124,30 +121,6 @@ function New-PackagingResult {
     )
 
     return @{ Success = $Success; OutputPath = $OutputPath; Version = $Version; ErrorMessage = $ErrorMessage }
-}
-
-function Get-PackageReadmePath {
-    <#
-    .SYNOPSIS
-    Returns the generated README for a package ID.
-    .PARAMETER PackageName
-    Marketplace package ID.
-    .PARAMETER ExtensionDirectory
-    Extension directory.
-    .OUTPUTS
-    [string] README path or null for hve-core.
-    #>
-    [CmdletBinding()]
-    [OutputType([string])]
-    param(
-        [Parameter(Mandatory = $true)] [string]$PackageName,
-        [Parameter(Mandatory = $true)] [string]$ExtensionDirectory
-    )
-
-    if ($PackageName -eq 'hve-core') { return $null }
-    $path = Join-Path $ExtensionDirectory "README.$PackageName.md"
-    if (Test-Path -LiteralPath $path -PathType Leaf) { return $path }
-    return $null
 }
 
 function Test-PackagingInputsValid {
@@ -289,40 +262,6 @@ function Copy-PreparedArtifacts {
     return [string[]]@($tracked | Sort-Object)
 }
 
-function Set-PackageReadme {
-    <#
-    .SYNOPSIS
-    Swaps or restores a package-specific README.
-    .PARAMETER ExtensionDirectory
-    Extension directory.
-    .PARAMETER PackageReadmePath
-    Package README path.
-    .PARAMETER Operation
-    Swap or Restore.
-    .OUTPUTS
-    [void]
-    #>
-    [CmdletBinding()]
-    [OutputType([void])]
-    param(
-        [Parameter(Mandatory = $true)] [string]$ExtensionDirectory,
-        [Parameter(Mandatory = $false)] [string]$PackageReadmePath = '',
-        [Parameter(Mandatory = $true)] [ValidateSet('Swap', 'Restore')] [string]$Operation
-    )
-
-    $readme = Join-Path $ExtensionDirectory 'README.md'
-    $backup = Join-Path $ExtensionDirectory 'README.md.bak'
-    if ($Operation -eq 'Swap') {
-        if (-not $PackageReadmePath) { return }
-        Copy-Item -LiteralPath $readme -Destination $backup -Force
-        Copy-Item -LiteralPath $PackageReadmePath -Destination $readme -Force
-    }
-    elseif (Test-Path -LiteralPath $backup) {
-        Copy-Item -LiteralPath $backup -Destination $readme -Force
-        Remove-Item -LiteralPath $backup -Force
-    }
-}
-
 function Get-PinnedVsceCommand {
     <#
     .SYNOPSIS
@@ -421,7 +360,7 @@ function Remove-PackagingArtifacts {
 function Invoke-PackageExtension {
     <#
     .SYNOPSIS
-    Stages and packages one prepared marketplace package.
+    Stages and packages the prepared hve-core extension.
     .PARAMETER ExtensionDirectory
     Extension directory.
     .PARAMETER RepoRoot
@@ -434,8 +373,6 @@ function Invoke-PackageExtension {
     Optional changelog.
     .PARAMETER PreRelease
     Adds pre-release packaging.
-    .PARAMETER PackageId
-    Marketplace package ID.
     .PARAMETER DryRun
     Skips VSIX creation.
     .OUTPUTS
@@ -450,7 +387,6 @@ function Invoke-PackageExtension {
         [Parameter(Mandatory = $false)] [string]$DevPatchNumber = '',
         [Parameter(Mandatory = $false)] [string]$ChangelogPath = '',
         [Parameter(Mandatory = $false)] [switch]$PreRelease,
-        [Parameter(Mandatory = $false)] [ValidateNotNullOrEmpty()] [string]$PackageId = 'hve-core',
         [Parameter(Mandatory = $false)] [switch]$DryRun
     )
 
@@ -478,9 +414,7 @@ function Invoke-PackageExtension {
 
         Remove-PackagingArtifacts -ExtensionDirectory $ExtensionDirectory
         $copied = @(Copy-PreparedArtifacts -RepoRoot $RepoRoot -ExtensionDirectory $ExtensionDirectory)
-        Write-Host "Staged $($copied.Count) tracked files for $PackageId"
-        $packageReadme = Get-PackageReadmePath -PackageName $PackageId -ExtensionDirectory $ExtensionDirectory
-        Set-PackageReadme -ExtensionDirectory $ExtensionDirectory -PackageReadmePath $packageReadme -Operation Swap
+        Write-Host "Staged $($copied.Count) tracked files"
         if ($DryRun) { return New-PackagingResult -Success $true -Version $resolved.PackageVersion }
 
         $vsce = Get-PinnedVsceCommand -RepoRoot $RepoRoot
@@ -498,7 +432,6 @@ function Invoke-PackageExtension {
     }
     catch { return New-PackagingResult -Success $false -ErrorMessage $_.Exception.Message }
     finally {
-        Set-PackageReadme -ExtensionDirectory $ExtensionDirectory -Operation Restore
         Remove-PackagingArtifacts -ExtensionDirectory $ExtensionDirectory
         if ($versionChanged -and (Test-Path -LiteralPath $packagePath)) {
             $package = Get-Content -LiteralPath $packagePath -Raw -Encoding utf8 | ConvertFrom-Json
@@ -512,7 +445,7 @@ if ($MyInvocation.InvocationName -ne '.') {
     $repoRoot = (Get-Item (Join-Path $PSScriptRoot '../..')).FullName
     $result = Invoke-PackageExtension -ExtensionDirectory (Join-Path $repoRoot 'extension') -RepoRoot $repoRoot `
         -Version $Version -DevPatchNumber $DevPatchNumber -ChangelogPath $ChangelogPath `
-        -PreRelease:$PreRelease -PackageId $PackageId -DryRun:$DryRun
+        -PreRelease:$PreRelease -DryRun:$DryRun
     if (-not $result.Success) {
         Write-CIAnnotation -Message $result.ErrorMessage -Level Error
         Write-Error -ErrorAction Continue "Package-Extension failed: $($result.ErrorMessage)"
