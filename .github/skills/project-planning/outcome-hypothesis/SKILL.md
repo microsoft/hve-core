@@ -82,7 +82,8 @@ If the request is ambiguous, ask whether the user wants to create a hypothesis o
    * Before create-mode delivery, verify that Background, Expected Outcomes, Validation & Measurement, Assumptions & Risks, and Open Questions & Resolution Gaps are present; every Amber or Red pillar has a gap row; and every failed draft rule has its exact adjacent warning.
    * If OH.1, OH.2, OH.3, OH.7, or OH.8 fails, label the hypothesis not investable and recommend returning to discovery.
 6. Deliver according to mode.
-   * In create mode, present the complete document inline, then summarize readiness, investability, confidence, the top three gaps, and recommended next actions.
+   * In create mode, present the complete document inline for Ready or Provisional. For Investigate, present the blocking pillars and targeted discovery actions instead.
+   * Summarize readiness, investability, confidence, the top three gaps, and recommended next actions.
    * Load and present the `Outcome-Hypothesis` CAUTION from `shared/disclaimer-language.instructions.md` verbatim with the investability result. Do not duplicate or paraphrase the canonical disclaimer in this skill.
    * Offer to save a created draft only after presenting it. If the user accepts, propose `docs/planning/outcome-hypotheses/yyyy-mm-dd-<short-slug>-outcome-hypothesis.md` and accept a different destination when the user specifies one.
    * Confirm the destination before writing. Populate the template frontmatter from the rendered document and persistence context, preserve the template's canonical CAUTION, then save the complete document.
