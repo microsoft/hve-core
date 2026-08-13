@@ -81,7 +81,10 @@ If the request is ambiguous, ask whether the user wants to create a hypothesis o
    * Do not claim a rule passes unless the created draft or supplied content demonstrates it. Carry supplied indicator sources and owners into create-mode measurement sections instead of treating them as unknown.
    * Before create-mode delivery, verify that Background, Expected Outcomes, Validation & Measurement, Assumptions & Risks, and Open Questions & Resolution Gaps are present; every Amber or Red pillar has a gap row; and every failed draft rule has its exact adjacent warning.
    * If OH.1, OH.2, OH.3, OH.7, or OH.8 fails, label the hypothesis not investable and recommend returning to discovery.
-6. Deliver according to mode.
+6. Derive confidence.
+   * Apply Confidence Derivation from [Readiness and Validation](references/readiness-and-validation.md) after readiness and validation are known.
+   * Count every Amber pillar and every failed non-investability rule separately. Do not deduplicate related conditions.
+7. Deliver according to mode.
    * In create mode, present the complete document inline for Ready or Provisional. For Investigate, present the blocking pillars and targeted discovery actions instead.
    * Summarize readiness, investability, confidence, the top three gaps, and recommended next actions.
    * Load and present the `Outcome-Hypothesis` CAUTION from `shared/disclaimer-language.instructions.md` verbatim with the investability result. Do not duplicate or paraphrase the canonical disclaimer in this skill.
@@ -120,6 +123,7 @@ Create mode accepts an existing discovery summary or D1-D7 scorecard as input, b
 * Unknown information remains an explicit gap rather than invented content.
 * Create-mode validation warnings and each mode's investability result are visible.
 * Each mode presents the canonical Outcome-Hypothesis disclaimer, defines investability as evidence readiness, and names the human validation owners.
+* Confidence follows the deterministic readiness, investability, and combined-degradation precedence.
 * A created draft appears before any persistence offer or write.
 * An accepted create-mode persistence offer has a confirmed destination and produces the complete rendered document with valid frontmatter.
 * A revised draft is produced only after a separate explicit request.
