@@ -2,7 +2,7 @@
 title: Jira Backlog Executor
 description: Runs the Jira skill CLI in one confirmed project. Applies a dispatched Jira operation set and returns Jira reads the caller cannot perform.
 sidebar_position: 4
-ms.date: 2026-08-06
+ms.date: 2026-08-13
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->

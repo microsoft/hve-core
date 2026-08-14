@@ -2,7 +2,7 @@
 title: Project Planning/Community Interaction
 description: "Community interaction voice, tone, and response templates for GitHub-facing agents and prompts"
 sidebar_position: 6
-ms.date: 2026-08-08
+ms.date: 2026-08-13
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->

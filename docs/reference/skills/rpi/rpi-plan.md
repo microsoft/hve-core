@@ -2,7 +2,7 @@
 title: rpi-plan
 description: "Create evidence-based RPI plans and phase details from supplied context, research, drafts, and decisions. Use when implementation planning is needed."
 sidebar_position: 4
-ms.date: 2026-07-27
+ms.date: 2026-08-13
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->

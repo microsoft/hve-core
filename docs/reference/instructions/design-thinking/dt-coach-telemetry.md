@@ -2,7 +2,7 @@
 title: Design Thinking/Dt Coach Telemetry
 description: Applies Design Thinking telemetry expectations to DT session artifacts
 sidebar_position: 1
-ms.date: 2026-07-30
+ms.date: 2026-08-13
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->

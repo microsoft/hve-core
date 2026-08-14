@@ -2,7 +2,7 @@
 title: backlog-management
 description: "Shared backlog conventions for Azure DevOps, GitHub, and Jira. Use for platform resolution, autonomy tiers, sanitization guards, and story quality."
 sidebar_position: 3
-ms.date: 2026-08-06
+ms.date: 2026-08-13
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->

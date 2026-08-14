@@ -2,7 +2,7 @@
 title: Project Planning/Backlog Guardrails
 description: "Always-on mutation guardrail for backlog tracking roots: require backlog-management activation before any tracker-bound mutation and stop when it is unavailable"
 sidebar_position: 5
-ms.date: 2026-08-06
+ms.date: 2026-08-13
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->

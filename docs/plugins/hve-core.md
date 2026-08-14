@@ -3,7 +3,7 @@ title: HVE Core
 description: Complete HVE Core plugin identity, distribution channels, membership policy, and capability inventory
 sidebar_position: 1
 author: Microsoft
-ms.date: 2026-08-13
+ms.date: 2026-08-14
 ms.topic: reference
 ---
 
@@ -35,7 +35,7 @@ The full path inventory remains machine-readable in `.github/plugin.json`. Agent
 |----------------|------:|----------------|-----------------------------------------------|
 | Agents         |    55 | `agents`       | `agents/<package>/**/*.agent.md`              |
 | Prompts        |    48 | `commands`     | `prompts/<package>/**/*.prompt.md`            |
-| Instructions   |    56 | `rules`        | `instructions/<package>/**/*.instructions.md` |
+| Instructions   |    57 | `rules`        | `instructions/<package>/**/*.instructions.md` |
 | Skills         |    71 | `skills`       | `skills/<package>/<skill>/SKILL.md`           |
 | Hooks          |     1 | `hooks`        | `hooks/shared/telemetry.json`                 |
 
@@ -46,7 +46,7 @@ The complete plugin includes:
 * RPI lifecycle coordination, research, planning, implementation, review, and walkthroughs
 * HVE Builder authoring, behavior testing, validation, and Vally conformance support
 * Coding standards and code review for multiple languages and infrastructure formats
-* Security, supply-chain security, privacy, accessibility, and Responsible AI planning and review
+* Security, TM7 threat-model generation, supply-chain security, privacy, accessibility, and Responsible AI planning and review
 * Business requirements, product requirements, architecture decisions, performance, and backlog workflows
 * Azure DevOps, GitHub, GitLab, and Jira integrations
 * Design Thinking, UX, data science, experimentation, diagrams, PowerPoint, voice-over, and demo media tooling

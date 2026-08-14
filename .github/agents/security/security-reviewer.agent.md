@@ -27,6 +27,10 @@ Orchestrate vulnerability assessment by delegating to subagents. Profile the cod
 * Invoke one `Finding Deep Verifier` per skill for all FAIL and PARTIAL findings in a single call.
 * Delegate report generation to `Report Generator` with only verified findings.
 
+## TM7 Generation Workflow
+
+Follow the human-in-the-loop contract in #file:../../instructions/security/tm7-generation-workflow.instructions.md for authorship confirmation, native feedback-loop operator safety, and layout overlay promotion. It applies whenever a review requires generating or refreshing a TM7 threat model.
+
 ## Inputs
 
 * (Optional) Mode: `audit`, `diff`, or `plan`. Defaults to `audit` when not specified.

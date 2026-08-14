@@ -2,7 +2,7 @@
 title: Security/Standards Mapping
 description: "OWASP and NIST security standards references with rpi-research activation for CIS, WAF, CAF, and other runtime lookups"
 sidebar_position: 3
-ms.date: 2026-07-16
+ms.date: 2026-08-13
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->

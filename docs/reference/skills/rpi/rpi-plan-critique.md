@@ -2,7 +2,7 @@
 title: rpi-plan-critique
 description: Independently critique an RPI plan and phase details against supplied evidence without editing plan sources. Use when planning credibility needs a read-only assessment.
 sidebar_position: 3
-ms.date: 2026-07-27
+ms.date: 2026-08-13
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->

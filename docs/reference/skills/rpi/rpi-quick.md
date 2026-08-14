@@ -2,7 +2,7 @@
 title: rpi-quick
 description: "Sequence Research, Plan, Implement, Review, and Follow-up for an RPI task. Use when one workflow should coordinate the full delivery lifecycle."
 sidebar_position: 5
-ms.date: 2026-07-27
+ms.date: 2026-08-13
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->

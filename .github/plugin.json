@@ -172,6 +172,7 @@
     "instructions/security/identity.instructions.md",
     "instructions/security/sssc-planner.instructions.md",
     "instructions/security/standards-mapping.instructions.md",
+    "instructions/security/tm7-generation-workflow.instructions.md",
     "instructions/security/vex-generation.instructions.md",
     "instructions/security/vex-standards.instructions.md",
     "instructions/shared/coaching-patterns.instructions.md",

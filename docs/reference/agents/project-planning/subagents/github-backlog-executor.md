@@ -2,7 +2,7 @@
 title: GitHub Backlog Executor
 description: "Applies a dispatched GitHub backlog operation set in one confirmed repository. Creates, updates, comments on, and closes issues and sub-issues."
 sidebar_position: 3
-ms.date: 2026-08-06
+ms.date: 2026-08-13
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->

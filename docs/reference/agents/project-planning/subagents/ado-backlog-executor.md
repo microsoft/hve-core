@@ -2,7 +2,7 @@
 title: ADO Backlog Executor
 description: "Applies a dispatched Azure DevOps backlog operation set in one confirmed project. Creates, updates, links, comments on, and transitions work items."
 sidebar_position: 1
-ms.date: 2026-08-06
+ms.date: 2026-08-13
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->

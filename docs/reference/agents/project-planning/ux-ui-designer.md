@@ -2,7 +2,7 @@
 title: UX UI Designer
 description: "Route UX practitioners between focused coaching, evidence-labelled asset production, inclusion decisions, design intent, and external design surfaces"
 sidebar_position: 9
-ms.date: 2026-08-04
+ms.date: 2026-08-13
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->

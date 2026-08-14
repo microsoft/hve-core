@@ -2,7 +2,7 @@
 title: Rpi
 description: "Coordinate one task through the Research, Plan, Implement, Review, and Follow-up RPI workflow"
 sidebar_position: 10
-ms.date: 2026-08-04
+ms.date: 2026-08-13
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->
