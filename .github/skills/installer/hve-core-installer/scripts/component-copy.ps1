@@ -116,7 +116,7 @@ function Assert-WithinTargetRoot {
 $schemaVersion = 2
 # Local environment, cache, and test directories are never distributed, matching
 # the extension skill-materialization exclusions.
-$excludedSkillPath = '(^|/)(tests|\.venv|\.hypothesis|node_modules|__pycache__|\.ruff_cache|\.pytest_cache)(/|$)|\.pyc$'
+$excludedSkillPath = '(^|/)(tests|\.venv|\.hypothesis|node_modules|__pycache__|\.ruff_cache|\.pytest_cache|\.git)(/|$)|(^|/)\.env(\..+)?$|(^|/)(\.DS_Store|Thumbs\.db)$|\.pyc$'
 $fieldMap = [ordered]@{
     agents   = @{ Kind = 'agent'; Root = '.github/agents'; ManifestRoot = 'agents'; PackageSuffix = '.md'; SourceSuffix = '.agent.md' }
     commands = @{ Kind = 'prompt'; Root = '.github/prompts'; ManifestRoot = 'prompts'; PackageSuffix = '.md'; SourceSuffix = '.prompt.md' }

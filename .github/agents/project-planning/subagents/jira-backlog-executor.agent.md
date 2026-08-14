@@ -58,7 +58,7 @@ Pre-requisite setup: activate the `jira` skill by name to resolve its CLI entry 
    * For every existing issue key in the set, including every target of an update, transition, or comment, compare the key's project prefix to the normalized key, then confirm it with a bounded `get <ISSUE-KEY> --fields project` and compare `fields.project.key`. The prefix alone is not sufficient, because a key is caller-supplied text.
    * For every create payload, compare the payload's own project key to the normalized key. A create payload that omits a project key inherits the confirmed one; a create payload that names a different one is a mismatch.
    * Reject the whole operation set and stop on any mismatch, on any issue whose project cannot be read, and on any response that omits the project field. Do not skip the mismatched entry and continue.
-   * Record the verified binding in `handoff-logs.md`, naming the confirmed project key and the issue keys it covers, before the first mutation.
+   * Record the verified binding before the first mutation, naming the confirmed project key and the issue keys it covers. A live run records it in `handoff-logs.md`; a dry run records it in `handoff-dryrun.md`.
 4. Validate before creating: discover valid issue types and required create fields with `fields` for the target project rather than assuming a fixed list, because supported types vary by project.
 5. Run the `backlog-execute` Required Flow against the dispatched operation set, supplying the Jira deltas below. For a read-only dispatch, run the queries and return their results instead.
 6. Return the result in the shape given under Response Format.

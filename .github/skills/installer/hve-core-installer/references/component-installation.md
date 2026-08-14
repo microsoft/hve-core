@@ -72,6 +72,24 @@ Resolve the chosen component list before any confirmation or write. Use these de
 
 Reject a component that is absent from the converted manifest membership before collision detection and before the first write. The copy scripts repeat the same membership check during preflight.
 
+### Upstream Source Verification
+
+For Methods 3 (Mounted) and 5 (Multi-Root), verify the pre-existing clone before collision detection or component copy. This is an advisory trust signal, not proof of repository integrity, and it must not silently reject an intentional fork or local development clone.
+
+Run the read-only check against the resolved HVE-Core source path:
+
+```bash
+git -C <HveCoreBasePath> remote get-url origin
+```
+
+Treat these `github.com/microsoft/hve-core` forms as expected, with an optional `.git` suffix and optional trailing slash where the URL form permits it:
+
+* `https://github.com/microsoft/hve-core.git`
+* `git@github.com:microsoft/hve-core.git`
+* `ssh://git@github.com/microsoft/hve-core.git`
+
+When `origin` is missing or does not match an expected HTTPS, SCP-like SSH, or `ssh://` form, display the observed value when available and warn that copied components may come from a fork or substituted local source. Ask `Continue using this HVE-Core source? (yes/no)`. Continue to collision detection only after an explicit `yes`; on `no` or an unclear answer, stop before any target-repository write.
+
 ### Collision Detection
 
 Run the pre-write check with the resolved component list. It validates every path and reports component-level collisions. A file component collides on its full target path; a skill component collides on its target directory. Nothing is written.

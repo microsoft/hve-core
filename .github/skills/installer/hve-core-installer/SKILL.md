@@ -420,7 +420,7 @@ Read [references/post-installation-setup.md](references/post-installation-setup.
 
 ## Phase 7: Component Installation and Upgrade
 
-Read [references/component-installation.md](references/component-installation.md) and follow its component installation and upgrade procedures exactly, including every confirmation gate it defines. When that file is unavailable, warn the user that component installation and upgrade cannot be performed and stop without writing to the target repository.
+Read [references/component-installation.md](references/component-installation.md) and follow its component installation and upgrade procedures exactly, including every confirmation gate it defines. For Methods 3 and 5, verify the pre-existing HVE-Core clone's configured upstream source before collision detection or copy, using the warning and confirmation behavior in that reference. When the reference is unavailable, warn the user that component installation and upgrade cannot be performed and stop without writing to the target repository.
 
 ## Error Recovery
 

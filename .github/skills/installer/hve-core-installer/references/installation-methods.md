@@ -146,6 +146,8 @@ Clone hve-core on your HOST machine (not in container):
 
 **Step 3:** After rebuild, validate mount exists at `/workspaces/hve-core`
 
+**Step 4:** Treat `/workspaces/hve-core` as a pre-existing source. Before Phase 7 collision detection or component copy, apply the upstream-source verification in [component-installation.md](component-installation.md). A missing or unexpected `origin` warns and requires confirmation; it does not automatically reject an intentional fork or local clone.
+
 #### Method 4: postCreateCommand (Codespaces)
 
 Add to devcontainer.json:
@@ -233,6 +235,8 @@ Local VS Code: use a relative clone path from the workspace file's directory.
 <!-- </method-5-workspace-local> -->
 
 User opens the `.code-workspace` file instead of the folder.
+
+Resolve the HVE-Core folder's actual clone path from the workspace file and treat it as a pre-existing source. Before Phase 7 collision detection or component copy, apply the upstream-source verification in [component-installation.md](component-installation.md). A missing or unexpected `origin` warns and requires confirmation; it does not automatically reject an intentional fork or local clone.
 
 #### Method 6: Submodule
 
