@@ -694,3 +694,91 @@ $($script:Tier1Text)
         }
     }
 }
+
+Describe 'Backlog handoff classification' -Tag 'Unit' {
+    BeforeAll {
+        # These cases run against the real repository footer config so they prove the
+        # shipped classification covers generated backlog handoffs, not a synthetic fixture.
+        $repoRoot = (Resolve-Path (Join-Path $PSScriptRoot '../../..')).Path
+        $script:RealFooterConfig = Import-FooterConfig -ConfigPath (Join-Path $repoRoot '.github/config/footer-with-review.yml')
+        $script:RealDisclaimerConfig = Import-DisclaimerSource -SourcePath $script:DisclaimerSourcePath
+
+        $script:RealNoteText = $script:RealFooterConfig.footers.'ai-content-note'.text
+        $script:RealCheckboxText = $script:RealFooterConfig.footers.'human-review-checkbox'.text
+
+        $script:HandoffRoot = Join-Path $script:TempTestDir 'handoff-scope'
+        $script:HandoffScopes = @(
+            '.copilot-tracking/workitems/execution/test-scope'
+            '.copilot-tracking/github-issues/execution/test-scope'
+            '.copilot-tracking/jira-issues/execution/test-scope'
+        )
+        foreach ($scope in $script:HandoffScopes) {
+            New-Item -ItemType Directory -Path (Join-Path $script:HandoffRoot $scope) -Force | Out-Null
+        }
+
+        # Mirror the real footer config and a disclaimer source into the fixture root so
+        # discovery can run unmocked against a realistic repository layout.
+        $fixtureConfigDir = Join-Path $script:HandoffRoot '.github/config'
+        New-Item -ItemType Directory -Path $fixtureConfigDir -Force | Out-Null
+        Copy-Item -Path (Join-Path $repoRoot '.github/config/footer-with-review.yml') -Destination (Join-Path $fixtureConfigDir 'footer-with-review.yml') -Force
+
+        $fixtureDisclaimerDir = Join-Path $script:HandoffRoot '.github/instructions/shared'
+        New-Item -ItemType Directory -Path $fixtureDisclaimerDir -Force | Out-Null
+        Copy-Item -Path $script:DisclaimerSourcePath -Destination (Join-Path $fixtureDisclaimerDir 'disclaimer-language.instructions.md') -Force
+    }
+
+    It 'Classifies a scoped handoff.md as human-facing under <_>' -ForEach @(
+        '.copilot-tracking/workitems/execution/test-scope'
+        '.copilot-tracking/github-issues/execution/test-scope'
+        '.copilot-tracking/jira-issues/execution/test-scope'
+    ) {
+        $refs = Find-ArtifactReferences `
+            -ArtifactClassification $script:RealFooterConfig.'artifact-classification' `
+            -RelativePath "$_/handoff.md"
+
+        $refs.Count | Should -Be 1
+        $refs[0].Tier | Should -Be 'human-facing'
+        $refs[0].RequiredFooters | Should -Contain 'human-review-checkbox'
+    }
+
+    It 'Fails a scoped handoff.md that omits the human review checkbox' {
+        $filePath = Join-Path $script:HandoffRoot '.copilot-tracking/github-issues/execution/test-scope/handoff.md'
+        $content = "# Handoff - Scope`n`n## Planned Operations`n`n* [ ] GH001 - Create - ``{{TEMP-1}}`` - Summary`n`n$($script:RealNoteText)`n"
+        Set-Content -Path $filePath -Value $content -Encoding utf8
+
+        $result = Test-AIArtifactCompliance -FilePath $filePath -FooterConfig $script:RealFooterConfig -DisclaimerConfig $script:RealDisclaimerConfig -RepoRoot $script:HandoffRoot
+        $result.Passed | Should -BeFalse
+        ($result.Issues -join ' ') | Should -Match 'Human Review Checkbox'
+    }
+
+    It 'Passes a scoped handoff.md that carries both required footers' {
+        $filePath = Join-Path $script:HandoffRoot '.copilot-tracking/github-issues/execution/test-scope/handoff.md'
+        $content = "# Handoff - Scope`n`n## Planned Operations`n`n* [ ] GH001 - Create - ``{{TEMP-1}}`` - Summary`n`n## Human Review`n`n$($script:RealNoteText)`n`n$($script:RealCheckboxText)`n"
+        Set-Content -Path $filePath -Value $content -Encoding utf8
+
+        $result = Test-AIArtifactCompliance -FilePath $filePath -FooterConfig $script:RealFooterConfig -DisclaimerConfig $script:RealDisclaimerConfig -RepoRoot $script:HandoffRoot
+        $result.Passed | Should -BeTrue
+        $result.Issues.Count | Should -Be 0
+    }
+
+    It 'Discovers a generated handoff.md, which does not use the .instructions.md suffix' {
+        $filePath = Join-Path $script:HandoffRoot '.copilot-tracking/github-issues/execution/test-scope/handoff.md'
+        $content = "# Handoff - Scope`n`n## Planned Operations`n`n* [ ] GH001 - Create - ``{{TEMP-1}}`` - Summary`n`n$($script:RealNoteText)`n"
+        Set-Content -Path $filePath -Value $content -Encoding utf8
+
+        Mock git { $script:HandoffRoot } -ParameterFilter { $args[0] -eq 'rev-parse' }
+        Mock Write-CIAnnotation {}
+        Mock Test-CIEnvironment { $false }
+        Mock Get-StandardTimestamp { '2025-01-01T00:00:00Z' }
+        Mock Write-Host {}
+
+        $result = Test-AIArtifactValidation `
+            -Paths @('.copilot-tracking/github-issues') `
+            -FooterConfigPath '.github/config/footer-with-review.yml' `
+            -DisclaimerSourcePath '.github/instructions/shared/disclaimer-language.instructions.md' `
+            -FailOnMissing
+
+        $result.FilesWithArtifacts | Should -Be 1
+        $result.HasFailures | Should -BeTrue
+    }
+}

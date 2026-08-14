@@ -3,7 +3,7 @@ title: Adapt HVE Core Package Selections
 description: Choose or switch HVE Core catalog packages while preserving the release architecture
 sidebar_position: 4
 author: Microsoft
-ms.date: 2026-08-08
+ms.date: 2026-08-11
 ms.topic: how-to
 keywords:
   - migration
@@ -11,7 +11,8 @@ keywords:
   - copilot plugin
   - vscode extension
   - selective clone
-estimated_reading_time: 6
+  - retired packages
+estimated_reading_time: 8
 ---
 
 HVE Core package selection is a forward adaptation of the catalog-defined distribution model. `.github/plugin/marketplace.json` remains the sole authority for active entries, package membership, maturity, documentation, and sources.
@@ -93,6 +94,95 @@ Use clone-based selective adoption when a complete selected package is broader t
 The installer preserves repository-relative paths for every copied component. A selected skill includes its complete directory, including scripts, references, tests, and assets. Hooks are plugin runtime configuration and are not copied into the target repository.
 
 Schema version 2 stores `selection.package`. File records identify components without per-file package ownership, and hooks are not copied. When a schema version 2 manifest has no package, upgrade detection emits `INSTALLED_PACKAGE=` and requires explicit package reselection before replay.
+
+## Retired Package Identities
+
+The `ado`, `github`, `jira`, and `gitlab` packages are retired. Their capability ships in `project-planning`, except for code scanning, which ships in `security`. The Marketplace offers no deprecation or tombstone signal, so an already-installed retired extension keeps surfacing commands that no longer resolve. Install the replacement, then uninstall the retired extension.
+
+If you installed `ise-hve-essentials.hve-core-all`, you already have everything and no action is required.
+
+### Retired extension identities
+
+| If you installed                | Install instead                                                                 |
+|---------------------------------|---------------------------------------------------------------------------------|
+| `ise-hve-essentials.hve-ado`    | `ise-hve-essentials.hve-project-planning`                                       |
+| `ise-hve-essentials.hve-github` | `ise-hve-essentials.hve-project-planning` and `ise-hve-essentials.hve-security` |
+| `ise-hve-essentials.hve-jira`   | `ise-hve-essentials.hve-project-planning`                                       |
+| `ise-hve-essentials.hve-gitlab` | `ise-hve-essentials.hve-project-planning`                                       |
+
+The `hve-github` row needs both extensions because its skills split across two packages: the backlog workflows moved to project planning, and the `gh-code-scanning` skill moved to security.
+
+### Retired read-only commands
+
+Each replacement resolves your tracker from the workspace, so you no longer choose a platform variant.
+
+| Retired command                                | Replacement               |
+|------------------------------------------------|---------------------------|
+| `/ado-discover-work-items`                     | `/backlog-plan discover`  |
+| `/github-discover-issues`                      | `/backlog-plan discover`  |
+| `/jira-discover-issues`                        | `/backlog-plan discover`  |
+| `/ado-triage-work-items`                       | `/backlog-plan triage`    |
+| `/github-triage-issues`                        | `/backlog-plan triage`    |
+| `/jira-triage-issues`                          | `/backlog-plan triage`    |
+| `/ado-sprint-plan`                             | `/backlog-plan sprint`    |
+| `/github-sprint-plan`                          | `/backlog-plan sprint`    |
+| `/ado-get-my-work-items`                       | `/backlog-plan my-work`   |
+| `/ado-process-my-work-items-for-task-planning` | `/backlog-plan task-plan` |
+| `/github-suggest`                              | `/backlog-plan resume`    |
+
+### Retired mutation commands
+
+| Retired command           | Replacement            |
+|---------------------------|------------------------|
+| `/ado-add-work-item`      | `/backlog-execute add` |
+| `/github-add-issue`       | `/backlog-execute add` |
+| `/ado-update-wit-items`   | `/backlog-execute run` |
+| `/github-execute-backlog` | `/backlog-execute run` |
+| `/jira-execute-backlog`   | `/backlog-execute run` |
+
+### Commands absorbed elsewhere
+
+| Retired command    | Replacement                                      |
+|--------------------|--------------------------------------------------|
+| `/jira-prd-to-wit` | The `Functional Planner` agent                   |
+| `/jira-setup`      | The Credential Setup section of the `jira` skill |
+
+### Relocated, not retired
+
+| Command                    | Now ships in |
+|----------------------------|--------------|
+| `/ado-create-pull-request` | `hve-core`   |
+| `/ado-get-build-info`      | `hve-core`   |
+
+### Relocated skills
+
+| Skill              | Now ships in       |
+|--------------------|--------------------|
+| `jira`             | `project-planning` |
+| `gitlab`           | `project-planning` |
+| `gh-code-scanning` | `security`         |
+
+### Retired agents
+
+| Retired agent             | Where its capability went                                                                                                                                     |
+|---------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `ADO Backlog Manager`     | The `Backlog Manager` agent, using `/backlog-plan` for read-only work and `/backlog-execute` for tracker changes                                              |
+| `GitHub Backlog Manager`  | The `Backlog Manager` agent, using `/backlog-plan` for read-only work and `/backlog-execute` for tracker changes                                              |
+| `Jira Backlog Manager`    | The `Backlog Manager` agent, using `/backlog-plan` for read-only work and `/backlog-execute` for tracker changes                                              |
+| `ADO PRD to WIT`          | The `Functional Planner` agent, which plans read-only and emits a handoff for `/backlog-execute run`                                                          |
+| `Jira PRD to WIT`         | The `Functional Planner` agent, which plans read-only and emits a handoff for `/backlog-execute run`                                                          |
+| `Agile Coach`             | The work-item quality reference inside the backlog skill, applied during requirements-to-backlog work                                                         |
+| `Product Manager Advisor` | Evidence-quality questioning and prioritization lenses in the `requirements-author` skill; hypothesis validation was already covered by `Experiment Designer` |
+
+### Behavior that got wider
+
+Runtime tracker resolution removed restrictions the platform-specific commands carried:
+
+* `/github-suggest` resumed GitHub sessions only. `/backlog-plan resume` resumes on any supported tracker.
+* `/ado-get-my-work-items` and the task-planning pair were Azure DevOps only. Both now work on any supported tracker.
+* Single-item creation used a fixed list of five Azure DevOps work item types. It now discovers the types your tracker actually offers.
+
+Autonomy tiers, content sanitization, dry-run preview, planning file locations and formats, and MCP server configuration are unchanged.
 
 ## Historical Catalog Support
 

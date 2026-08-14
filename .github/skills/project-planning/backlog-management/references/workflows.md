@@ -126,8 +126,9 @@ Populate acceptance criteria as markdown checkbox lists when extracted from docu
 1. Build `handoff.md` using the template below.
 2. Order operations using the platform's operation order from the Operation Contract below.
 3. Include planning-file references and the autonomy mode.
-4. Verify consistency across planning files and present the handoff for user review.
-5. Record completion in `planning-log.md`.
+4. Emit the Human Review section with its checkbox unchecked. Never check it on the user's behalf.
+5. Verify consistency across planning files and present the handoff for user review.
+6. Record completion in `planning-log.md`.
 
 ## Triage
 
@@ -186,7 +187,7 @@ A confirmed destination being present is not proof that an operation targets it.
 * Compare each hydrated value to the normalized confirmed destination. Compare every create payload's own destination field the same way when the payload carries one.
 * A mismatch rejects the whole operation set before the first mutation. Do not skip the mismatched entry and continue: a handoff that names a foreign destination is untrustworthy as a whole, not defective in one row.
 * An item whose owning destination cannot be read is a mismatch, not a pass. Stop and report rather than proceeding unbound.
-* Record the verified binding in `handoff-logs.md` before the first mutation, naming the normalized destination and the item keys it covers.
+* Record the verified binding before the first mutation, naming the normalized destination and the item keys it covers. A live run records it in `handoff-logs.md`; a dry run records it in `handoff-dryrun.md`, because the live operation log must contain no simulated result.
 
 | Platform     | Owning-destination value                                                 | Compared against      |
 |--------------|--------------------------------------------------------------------------|-----------------------|
@@ -200,7 +201,8 @@ Binding runs after contract validation and before the first mutation, including 
 
 Dry run is a full simulation with zero platform mutations. When the caller enables `dryRun`:
 
-* Resolve, validate, and sanitize every payload exactly as a live run would, including the Content Sanitization Guards and the Destination Binding check.
+* Resolve, validate, and sanitize every payload exactly as a live run would, including the Content Sanitization Guards and the Destination Binding check. Record the verified binding in `handoff-dryrun.md`, not in `handoff-logs.md`.
+* In `handoff-dryrun.md`, record a `## Destination Binding` section with `Confirmed destination`, `Verified`, and `Covered items` fields matching the live record shape.
 * Do not call any create, update, transition, close, comment, or link operation. Read-only calls used for validation remain permitted.
 * Assign a simulated key of the form `{{TEMP-N}} -> (dry-run)` and mark every dependent operation that would have consumed a real key. Hold the simulated keys in the dry-run record only. Never write a simulated key to the Temporary ID Mapping section of `handoff-logs.md`.
 * Record each operation in `handoff-dryrun.md`, beside `handoff.md`, with the payload summary that would have been sent. Never write a dry-run entry to `handoff-logs.md`, because that file is the resume authority for live runs and must contain no simulated result.
@@ -464,6 +466,14 @@ Include only the sections whose action verbs the active platform defines, ordere
 * `<analysis-file>.md`
 * `<plan-file>.md`
 * `planning-log.md`
+
+## Human Review
+
+This section is the execution gate. It is not an operation checkbox, and execution halts while the box below is unchecked. Only a human may check it.
+
+> **Note** — The author created this content with assistance from AI. All outputs should be reviewed and validated by a qualified human reviewer before use.
+
+> - [ ] Reviewed and validated by a qualified human reviewer
 ````
 
 ### handoff-logs.md
@@ -514,6 +524,12 @@ Written only by a dry run, overwritten on each dry run, and never read by a live
 * **Status**: Simulated. Nothing was created, changed, or closed.
 * **Simulated**: 0
 * **Would fail validation**: 0
+
+## Destination Binding
+
+* **Confirmed destination**: [normalized destination]
+* **Verified**: [YYYY-MM-DD HH:MM UTC]
+* **Covered items**: `ITEM-2`, `ITEM-3`
 
 ## Simulated Operations
 
