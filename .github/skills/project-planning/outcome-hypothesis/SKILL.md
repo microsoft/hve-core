@@ -86,19 +86,22 @@ If the request is ambiguous, ask whether the user wants to create a hypothesis o
    * Count every Amber pillar and every failed non-investability rule separately. Do not deduplicate related conditions.
 7. Deliver according to mode.
    * In create mode, present the complete document inline for Ready or Provisional. For Investigate, present the blocking pillars and targeted discovery actions instead.
-   * Summarize readiness, investability, confidence, the top three gaps, and recommended next actions.
-   * Load and present the `Outcome-Hypothesis` CAUTION from `shared/disclaimer-language.instructions.md` verbatim with the investability result. Do not duplicate or paraphrase the canonical disclaimer in this skill.
+   * For create-mode Investigate, report the required OH.0 pre-draft failure warning, but do not report OH.1-OH.13 validation, investability, or hypothesis Confidence because no draft exists. Summarize blocking pillars, unavailable-source limitations, targeted discovery actions, and evidence needed to resume.
+   * For create-mode Ready or Provisional, summarize readiness, investability, confidence, the top three gaps, and recommended next actions.
+   * Load and present the `Outcome-Hypothesis` CAUTION from `../../../instructions/shared/disclaimer-language.instructions.md` verbatim with the investability result. Do not duplicate or paraphrase the canonical disclaimer in this skill.
    * Offer to save a created draft only after presenting it. If the user accepts, propose `docs/planning/outcome-hypotheses/yyyy-mm-dd-<short-slug>-outcome-hypothesis.md` and accept a different destination when the user specifies one.
-   * Confirm the destination before writing. Populate the template frontmatter from the rendered document and persistence context, preserve the template's canonical CAUTION, then save the complete document.
+   * Confirm the destination before writing. Persist a Ready draft with status `Draft` and a Provisional draft with status `Provisional`; populate the template frontmatter from the rendered document and persistence context, preserve the template's canonical CAUTION, then save the complete document.
+   * Status is human-owned. Never set `Committed` automatically. Only after explicit human approval may an existing persisted, fully eligible artifact be updated to `Committed`, before its source hash and any handoff are computed.
    * In assess mode, present the supplied hypothesis unchanged under a labeled input section, followed by a separate labeled assessment section.
    * Present the same canonical CAUTION with the assessment result.
    * End an assessment with a separate offer to create a revised draft. Do not revise or persist the supplied document in the assessment response.
-8. Offer a BRD handoff after create-mode persistence.
+8. Offer a BRD handoff from an eligible persisted artifact.
    * Use the `requirements-author` skill's Outcome Hypothesis-to-BRD Handoff V1 reference as the canonical contract.
-   * Offer the handoff only when the persisted hypothesis has status `Committed` and every required business-goal seed field is complete.
-   * Map the complete goal statement, lagging KPI, lagging baseline, lagging target, timeframe, and lagging indicator owner without inference.
+   * Offer the handoff in either mode only when an existing persisted hypothesis has status `Committed`, a workspace-relative path, and every required business-goal seed field is complete.
+   * Map the complete goal statement, lagging KPI, lagging KPI measurement source, lagging baseline, lagging target, timeframe, and lagging indicator owner without inference.
    * Compute the workspace-relative source path and SHA-256 from the persisted artifact.
    * Return the validated YAML inline. Do not persist a separate payload unless the user explicitly requests and confirms a destination.
+   * In assess mode, remain read-only. The inline handoff is the only permitted output action.
    * State the precedence in the handoff summary: Before Discover accepts the handoff, the validated payload is authoritative for imported seed values. Discover may explicitly accept or revise those values. After Discover exits, the BRD is authoritative. A later hypothesis change requires a new validated payload and explicit Discover re-entry.
    * When the hypothesis is ineligible, name the failed eligibility rules and do not emit a partial payload.
 
@@ -131,11 +134,12 @@ Create mode accepts an existing discovery summary or D1-D7 scorecard as input, b
 * Unknown information remains an explicit gap rather than invented content.
 * Create-mode validation warnings and each mode's investability result are visible.
 * Each mode presents the canonical Outcome-Hypothesis disclaimer, defines investability as evidence readiness, and names the human validation owners.
-* Confidence follows the deterministic readiness, investability, and combined-degradation precedence.
+* Confidence follows the deterministic mode, readiness, investability, and combined-degradation precedence.
 * A created draft appears before any persistence offer or write.
-* An accepted create-mode persistence offer has a confirmed destination and produces the complete rendered document with valid frontmatter.
+* An accepted create-mode persistence offer has a confirmed destination and produces the complete rendered document with valid frontmatter and status `Draft` or `Provisional`.
+* Only explicit human approval can change an eligible persisted artifact to status `Committed`.
 * A revised draft is produced only after a separate explicit request.
-* Any BRD handoff follows `OUTCOME_HYPOTHESIS_TO_BRD_HANDOFF_V1` and contains no invented values.
+* Any BRD handoff follows `OUTCOME_HYPOTHESIS_TO_BRD_HANDOFF_V1`, comes from an existing persisted `Committed` artifact at a workspace-relative path, and contains no invented values.
 
 ## Constraints
 
@@ -151,6 +155,7 @@ Create mode accepts an existing discovery summary or D1-D7 scorecard as input, b
 * Do not create session state for this workflow. The rendered document carries its status, confidence, evidence gaps, and next actions.
 * For DOCX or PDF output, hand the completed Markdown to the user's preferred conversion capability rather than generating a binary file directly.
 * Keep assess findings separate from the supplied content so evaluation never silently becomes re-authoring.
+* In assess mode, do not write or update source artifacts. An inline handoff is allowed only when the assessed source is an existing persisted `Committed` artifact that passes the canonical eligibility checks.
 
 ## Stop Rules
 
@@ -160,7 +165,8 @@ Create mode accepts an existing discovery summary or D1-D7 scorecard as input, b
 * In create mode, stop before drafting when no current D1-D7 scorecard exists.
 * In create mode, stop at Investigate until blocking evidence is strengthened.
 * In create mode, stop before persistence until the complete draft has been presented and the user has confirmed a destination.
-* Stop before BRD handoff when the artifact is unpersisted, its status is not `Committed`, or any required seed field is incomplete.
+* Stop before changing a persisted artifact to `Committed` until explicit human approval and full eligibility are available.
+* Stop before BRD handoff when the source artifact is not existing and persisted, its status is not `Committed`, its path is not workspace-relative, any required seed field is incomplete, or any other canonical eligibility rule fails.
 
 ## Final Response Contract
 
@@ -170,11 +176,11 @@ For create mode when the privacy gate does not apply, return:
 
 1. The D1-D7 scorecard and readiness decision.
 2. The complete hypothesis document, unless readiness is Investigate. For Investigate, return the blocking pillars, targeted discovery actions, and evidence needed to resume.
-3. The validation and investability result.
-4. Confidence, unavailable-source limitations, top gaps, and recommended next actions.
+3. For Ready or Provisional only, the validation and investability result.
+4. For Ready or Provisional only, Confidence, unavailable-source limitations, top gaps, and recommended next actions. For Investigate, return the OH.0 pre-draft failure warning, unavailable-source limitations, blocking pillars, targeted discovery actions, and evidence needed to resume without OH.1-OH.13 validation, investability, or Confidence.
 5. The canonical Outcome-Hypothesis disclaimer and required human validation owners.
-6. An optional persistence offer after the full inline delivery, using the canonical default destination unless the user overrides it.
-7. An optional inline BRD handoff after confirmed persistence when eligibility passes.
+6. An optional persistence offer after the full inline delivery, using the canonical default destination unless the user overrides it. Persist a new Ready draft as `Draft` or a new Provisional draft as `Provisional`; do not set `Committed` automatically.
+7. An optional inline BRD handoff only from an existing persisted `Committed` source with a workspace-relative path when canonical eligibility passes.
 
 For assess mode, return in this order:
 
@@ -182,6 +188,7 @@ For assess mode, return in this order:
 2. The D1-D7 scorecard and readiness decision.
 3. An OH.0-OH.13 findings table with Rule, Result, Evidence or location, and Gap or correction columns, one row per rule in numeric order.
 4. The investability result.
-5. Confidence, unavailable-source limitations, top gaps, and recommended next actions.
+5. Confidence, unavailable-source limitations, top gaps, and recommended next actions. Assess-mode Investigate uses Confidence `Low`.
 6. The canonical Outcome-Hypothesis disclaimer and required human validation owners.
 7. A separate offer to create a revised draft.
+8. An optional inline BRD handoff only from the assessed existing persisted `Committed` artifact with a workspace-relative path when canonical eligibility passes. Do not modify the source artifact or emit a partial payload.

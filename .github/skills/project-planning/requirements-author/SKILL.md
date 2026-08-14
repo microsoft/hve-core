@@ -66,14 +66,17 @@ as the canonical contract.
    invalid provenance. Do not reinterpret a rejected payload as unstructured
    evidence.
 4. Assign the next stable `BG-###` identifier.
-5. Record distinct statement, KPI, baseline, target, timeframe, and owner
-   values.
+5. Record distinct statement, KPI, baseline, target, timeframe, measurement
+   source, and owner values.
 6. Mark each seed field `accepted` or `revised`. For a revision, preserve the
    source value, current BRD value, and rationale.
 7. Map assumptions and open questions into their canonical BRD sections.
    Initialize each imported question to `Open` unless Discover explicitly
-   confirms another BRD-owned status.
-8. Record the handoff ID, source path, and source SHA-256 in the BRD.
+   confirms another BRD-owned status. Every deferred question requires a
+   rationale for deferral and one target phase: `PRD`, `Implementation`,
+   `Operations`, or `Future-Release`.
+8. Record the handoff ID, source path, source SHA-256, and KPI measurement
+   source in the BRD provenance receipt.
 
 Before Discover accepts the handoff, the validated payload is authoritative
 for imported seed values. Discover may explicitly accept or revise those
@@ -446,4 +449,3 @@ The bundled reference bodies cite third-party standards and frameworks by name a
 ## License
 
 This skill is original Microsoft content licensed under [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/).
-

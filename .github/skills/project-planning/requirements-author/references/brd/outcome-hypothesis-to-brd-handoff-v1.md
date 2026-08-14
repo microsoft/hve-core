@@ -16,8 +16,9 @@ The producer emits a handoff only when:
 * the complete outcome hypothesis has been presented and persisted with
   status `Committed`;
 * the lagging indicator has a numeric baseline, numeric target, units,
-  measurement period, source, and owner;
-* the goal statement includes the target and timeframe;
+  measurement period, measurement source, and owner;
+* the goal statement includes the target and timeframe, and its lagging target
+  exactly matches the indicator-table target;
 * the timeframe is anchored to an event or date;
 * the hypothesis passes its investability and assumption validation; and
 * no required seed value contains `TBD`, `Unknown`, `Owner TBD`, `Date TBD`,
@@ -61,6 +62,7 @@ business_goal_seed:
     value: <NUMBER>
     unit: <UNIT>
   timeframe: <EVENT_OR_DATE_ANCHORED_WINDOW>
+  measurement_source: <LAGGING_KPI_SYSTEM_OR_DASHBOARD>
   owner: <NAMED_PERSON_OR_ROLE>
 assumptions:
   - source_id: A1
@@ -79,19 +81,20 @@ open_questions:
 
 ### Producer fields
 
-| Payload field                  | Outcome hypothesis source                          |
-|--------------------------------|----------------------------------------------------|
-| `source.title`                 | Document title                                     |
-| `source.status`                | Document status                                    |
-| `source.authored_at`           | Document date                                      |
-| `business_goal_seed.statement` | Complete expected-outcome statement                |
-| `business_goal_seed.kpi`       | Lagging indicator name and definition              |
-| `business_goal_seed.baseline`  | Lagging indicator baseline value, unit, and period |
-| `business_goal_seed.target`    | Lagging indicator target value and unit            |
-| `business_goal_seed.timeframe` | Expected Outcomes `Within` clause                  |
-| `business_goal_seed.owner`     | Lagging indicator owner                            |
-| `assumptions[]`                | Assumptions table                                  |
-| `open_questions[]`             | Open Questions and Resolution Gaps table           |
+| Payload field                           | Outcome hypothesis source                          |
+|-----------------------------------------|----------------------------------------------------|
+| `source.title`                          | Document title                                     |
+| `source.status`                         | Document status                                    |
+| `source.authored_at`                    | Document date                                      |
+| `business_goal_seed.statement`          | Complete expected-outcome statement                |
+| `business_goal_seed.kpi`                | Lagging indicator name and definition              |
+| `business_goal_seed.baseline`           | Lagging indicator baseline value, unit, and period |
+| `business_goal_seed.target`             | Lagging indicator target value and unit            |
+| `business_goal_seed.timeframe`          | Expected Outcomes `Within` clause                  |
+| `business_goal_seed.measurement_source` | Lagging indicator source                           |
+| `business_goal_seed.owner`              | Lagging indicator owner                            |
+| `assumptions[]`                         | Assumptions table                                  |
+| `open_questions[]`                      | Open Questions and Resolution Gaps table           |
 
 ### Computed fields
 
@@ -130,12 +133,15 @@ Requirements-author owns:
 9. Baseline and target values are numeric and have non-empty units.
 10. The baseline measurement period is non-empty.
 11. The timeframe is anchored to an event or date.
-12. The owner names a person or accountable role.
-13. Required seed fields reject placeholders, including `TBD`, `Unknown`,
+12. The measurement source names the lagging KPI system, query, or dashboard.
+13. The owner names a person or accountable role.
+14. The target exactly matches the lagging target in the source artifact's
+    canonical Expected Outcomes statement and indicator table.
+15. Required seed fields reject placeholders, including `TBD`, `Unknown`,
     `Owner TBD`, and `Date TBD`.
-14. `assumptions` contains three to seven entries with unique `source_id`
+16. `assumptions` contains three to seven entries with unique `source_id`
     values and every required field.
-15. `open_questions` is present and may be empty. Every entry has a unique
+17. `open_questions` is present and may be empty. Every entry has a unique
     `source_id` and all producer-owned fields.
 
 ### Rejection examples
@@ -146,6 +152,8 @@ Requirements-author owns:
 | `source.status: Provisional`                                                 | Source is not committed       |
 | Missing `business_goal_seed.baseline`                                        | Required seed field is absent |
 | `business_goal_seed.target.value: TBD`                                       | Target is not numeric         |
+| Missing `business_goal_seed.measurement_source`                              | Measurement source is absent  |
+| Source statement and indicator-table targets differ                          | Canonical target diverges     |
 | Missing `business_goal_seed.owner`                                           | Required owner is absent      |
 | `business_goal_seed.owner: Owner TBD`                                        | Owner is a placeholder        |
 | A SHA-256 value containing uppercase or fewer than 64 hexadecimal characters | Source hash is invalid        |
@@ -155,15 +163,15 @@ Requirements-author owns:
 After validation, BRD Discover:
 
 1. assigns the next stable `BG-###` identifier;
-2. writes distinct statement, KPI, baseline, target, timeframe, and owner
-   values into the Business Goals section;
+2. writes distinct statement, KPI, baseline, target, timeframe, measurement
+   source, and owner values into the Business Goals section;
 3. records each source value as `accepted` or `revised`;
 4. records the current BRD value and a rationale for every revision;
 5. maps assumptions into the Key Assumptions register and adds mitigation;
 6. maps questions into Open Questions and initializes status to `Open` unless
    Discover explicitly confirms another BRD status; and
-7. records the handoff ID, source path, and source hash in the provenance
-   subsection.
+7. records the handoff ID, source path, source hash, measurement source, and
+   every field disposition in the provenance subsection.
 
 Discover cannot exit until every imported seed field has a disposition and
 the receipt is internally consistent.
@@ -182,13 +190,13 @@ disposition record.
 
 ```yaml
 schema_version: OUTCOME_HYPOTHESIS_TO_BRD_HANDOFF_V1
-handoff_id: claims-cycle-time-to-brd-20260813T141500Z
+handoff_id: 2026-08-12-claims-cycle-time-outcome-hypothesis-to-brd-20260813T141500Z
 handoff_at: "2026-08-13T14:15:00Z"
 source:
   title: Reduce Claims Cycle Time
   status: Committed
   authored_at: "2026-08-12"
-  artifact_path: docs/outcomes/2026-08-12-claims-cycle-time.md
+  artifact_path: docs/planning/outcome-hypotheses/2026-08-12-claims-cycle-time-outcome-hypothesis.md
   artifact_sha256: 9b74c9897bac770ffc029102a200c5de1f3a4d9f0ea2c95c3b56a17e1d5fa1c4
 business_goal_seed:
   statement: Reduce average claim adjudication time by 30% within 12 months of launch.
@@ -201,6 +209,7 @@ business_goal_seed:
     value: 7
     unit: days
   timeframe: within 12 months of launch
+  measurement_source: Claims Operations adjudication dashboard
   owner: Claims Operations Lead
 assumptions:
   - source_id: A1

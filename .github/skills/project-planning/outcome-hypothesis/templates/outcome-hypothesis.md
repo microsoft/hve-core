@@ -2,7 +2,7 @@
 title: "Outcome Hypothesis: <Title>"
 description: "Evidence-grounded outcome hypothesis for <Project or initiative>."
 author: "<Name or Author TBD>"
-ms.date: <YYYY-MM-DD>
+ms.date: 2026-08-13
 ms.topic: concept
 ---
 
@@ -23,6 +23,8 @@ ms.topic: concept
 **Project / Initiative:** `<Project or initiative>`
 **Status:** `<Draft | Provisional | In Review | Committed | Superseded>`
 **Confidence:** `<Low | Medium | High>`
+
+Status is human-owned. Persist a Ready hypothesis as `Draft` and a Provisional hypothesis as `Provisional`. Only explicit human approval may update an existing persisted, eligible artifact to `Committed`; do not set `Committed` automatically.
 
 ## Background
 
@@ -59,14 +61,16 @@ For a tightly scoped pilot sub-hypothesis, this one-sentence form is permitted:
 
 > If we `<intervention>` for `<beneficiary>`, then `<KPI>` will improve from `<baseline>` to `<target>` within `<timeframe>`, as measured by `<method>`.
 
+The targets in either Expected Outcomes form are authoritative. Each indicator-table Target value must exactly match its corresponding statement target.
+
 ## Validation & Measurement
 
 ### Indicator detail
 
-| Type    | Indicator           | Definition                 | Baseline                                                                      | Target                     | Source                                | Owner                                  |
-|---------|---------------------|----------------------------|-------------------------------------------------------------------------------|----------------------------|---------------------------------------|----------------------------------------|
-| Leading | `<Named indicator>` | `<Operational definition>` | `<Current value and measurement period, or explicit baselining prerequisite>` | `<Numeric value and unit>` | `<System or dashboard, or dated gap>` | `<Named person or role, or dated gap>` |
-| Lagging | `<Named indicator>` | `<Operational definition>` | `<Current value and measurement period, or explicit baselining prerequisite>` | `<Numeric value and unit>` | `<System or dashboard, or dated gap>` | `<Named person or role, or dated gap>` |
+| Type    | Indicator           | Definition                 | Baseline                                                                      | Target                             | Source                                | Owner                                  |
+|---------|---------------------|----------------------------|-------------------------------------------------------------------------------|------------------------------------|---------------------------------------|----------------------------------------|
+| Leading | `<Named indicator>` | `<Operational definition>` | `<Current value and measurement period, or explicit baselining prerequisite>` | `<Exact Expected Outcomes target>` | `<System or dashboard, or dated gap>` | `<Named person or role, or dated gap>` |
+| Lagging | `<Named indicator>` | `<Operational definition>` | `<Current value and measurement period, or explicit baselining prerequisite>` | `<Exact Expected Outcomes target>` | `<System or dashboard, or dated gap>` | `<Named person or role, or dated gap>` |
 
 Include at least one leading and one lagging indicator. Limit the document to three indicators total.
 

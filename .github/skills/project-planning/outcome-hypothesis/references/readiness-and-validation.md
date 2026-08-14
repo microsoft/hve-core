@@ -85,7 +85,7 @@ Use the failed rule's Requirement text as the warning description. When multiple
 
 OH.0 passes when a supplied hypothesis or outcome document is present. Any readiness result, including Investigate, is permitted because assessment does not authorize a replacement draft. When OH.0 fails, ask for the document and stop without further validation.
 
-Preserve the supplied content unchanged. Apply OH.1-OH.13 to that content and report every result in numeric order:
+Preserve the supplied content unchanged. Apply and report every rule from OH.0 through OH.13 in numeric order. Evaluate OH.1-OH.13 against the supplied content:
 
 | Rule | Result      | Evidence or location           | Gap or correction                 |
 |------|-------------|--------------------------------|-----------------------------------|
@@ -99,7 +99,7 @@ Use `Fail` when required content is missing or unsupported. Do not insert valida
 |-------|----------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | OH.0  | Precondition                     | Create: a current D1-D7 scorecard exists and readiness is Ready or Provisional; return to discovery when no scorecard exists and do not draft for Investigate. Assess: a supplied hypothesis or outcome document is present; any readiness result is permitted and no replacement draft is produced.                                                                                          |
 | OH.1  | Expected Outcomes                | The multi-line form contains Due to, We believe that, Will result in, Observable by, Within, and Validated by with at least one leading and one lagging target. A tightly scoped pilot sub-hypothesis may instead name intervention, beneficiary, KPI baseline and target, timeframe, and measurement method in one sentence.                                                                 |
-| OH.2  | Expected Outcomes                | Every indicator target is a concrete number with units. Vague qualifiers fail.                                                                                                                                                                                                                                                                                                                |
+| OH.2  | Expected Outcomes                | The canonical Expected Outcomes statement is authoritative for every target. Every indicator target is a concrete number with units, and the indicator-table Target value exactly matches the corresponding statement target. Vague qualifiers or divergence fail.                                                                                                                            |
 | OH.3  | Expected Outcomes                | The timeframe is a specific window anchored to an event or date.                                                                                                                                                                                                                                                                                                                              |
 | OH.4  | Expected Outcomes                | The beneficiary is a specific role, segment, or business unit rather than generic users or customers.                                                                                                                                                                                                                                                                                         |
 | OH.5  | Background                       | The intervention describes a capability or workflow change rather than only an artifact such as an MVP, proof of concept, or chatbot.                                                                                                                                                                                                                                                         |
@@ -126,10 +126,11 @@ Other warnings lower confidence but do not automatically make the hypothesis not
 
 Derive Confidence after readiness and validation. Apply the first matching rule:
 
-1. For Investigate, do not emit hypothesis Confidence because no draft exists.
-2. For Provisional, use Confidence `Low`.
-3. For Ready, if OH.1, OH.2, OH.3, OH.7, or OH.8 fails, use Confidence `Low`.
-4. Otherwise, add the number of Amber pillars to the number of failed non-investability rules: OH.4, OH.5, OH.6, OH.9, OH.10, OH.11, OH.12, and OH.13.
+1. For create-mode Investigate, do not emit hypothesis Confidence because no draft exists.
+2. For assess-mode Investigate, use Confidence `Low` because the supplied content is assessed without a replacement draft.
+3. For Provisional, use Confidence `Low`.
+4. For Ready, if OH.1, OH.2, OH.3, OH.7, or OH.8 fails, use Confidence `Low`.
+5. Otherwise, add the number of Amber pillars to the number of failed non-investability rules: OH.4, OH.5, OH.6, OH.9, OH.10, OH.11, OH.12, and OH.13.
    * A combined count of 0 is `High`.
    * A combined count of 1 or 2 is `Medium`.
    * A combined count of 3 or more is `Low`.
@@ -140,7 +141,7 @@ Count every Amber pillar and every failed non-investability rule separately. Do 
 
 Require at least one leading and one lagging indicator. Allow up to one additional leading indicator, but no more than three indicators total.
 
-Targets and timeframes belong in the canonical statement. The indicator table adds operational definition, baseline, source, and owner.
+Targets and timeframes belong in the canonical Expected Outcomes statement. That statement is authoritative. The indicator table mirrors each statement target exactly and adds operational definition, baseline, source, and owner.
 
 In create mode, draw this chain. In assess mode, evaluate whether the supplied content contains the chain:
 

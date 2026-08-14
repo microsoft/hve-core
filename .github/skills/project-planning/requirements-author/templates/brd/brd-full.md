@@ -80,30 +80,11 @@ KPI: 30-day rolling average adjudication time.
 Baseline: 10 days measured over the trailing 90 days.
 Target: 7 days.
 Timeframe: Within 12 months of launch.
+Measurement source: Claims Operations adjudication dashboard.
 Owner: Claims Operations Lead.
 ```
 
 Use [id-schema.md](../../references/_shared/id-schema.md) for identifier prefix and digit rules.
-
-### Outcome Hypothesis Handoff Provenance
-
-{{outcome_hypothesis_handoff_provenance}}
-
-*Guidance*: When Discover ingests
-`OUTCOME_HYPOTHESIS_TO_BRD_HANDOFF_V1`, record:
-
-| Handoff ID | Source artifact | Source SHA-256 | Receipt status |
-|------------|-----------------|----------------|----------------|
-| `<ID>`     | `<Path>`        | `<Hash>`       | `<Accepted>`   |
-
-Record one disposition row for each imported goal field:
-
-| Field                                                       | Source value | Disposition            | Current BRD value | Revision rationale        |
-|-------------------------------------------------------------|--------------|------------------------|-------------------|---------------------------|
-| `<Statement / KPI / Baseline / Target / Timeframe / Owner>` | `<Original>` | `<Accepted / Revised>` | `<Current>`       | `<Required when revised>` |
-
-The BRD becomes authoritative after Discover exits. A later source change
-requires a new handoff and explicit Discover re-entry.
 
 **SMART Evaluation** (assessed at Define→Govern gate per `requirements-definition` skill):
 
@@ -114,6 +95,26 @@ requires a new handoff and explicit Discover re-entry.
 - [ ] **T**ime-bound: Includes explicit deadline
 
 **Status**: {{business_goal_smart_status}} (populated at Define→Govern assessment)
+
+### Outcome Hypothesis Handoff Provenance
+
+{{outcome_hypothesis_handoff_provenance}}
+
+*Guidance*: When Discover ingests
+`OUTCOME_HYPOTHESIS_TO_BRD_HANDOFF_V1`, record:
+
+| Handoff ID | Source artifact | Source SHA-256 | KPI measurement source  | Receipt status |
+|------------|-----------------|----------------|-------------------------|----------------|
+| `<ID>`     | `<Path>`        | `<Hash>`       | `<System or dashboard>` | `<Accepted>`   |
+
+Record one disposition row for each imported goal field:
+
+| Field                                                                            | Source value | Disposition            | Current BRD value | Revision rationale        |
+|----------------------------------------------------------------------------------|--------------|------------------------|-------------------|---------------------------|
+| `<Statement / KPI / Baseline / Target / Timeframe / Measurement source / Owner>` | `<Original>` | `<Accepted / Revised>` | `<Current>`       | `<Required when revised>` |
+
+The BRD becomes authoritative after Discover exits. A later source change
+requires a new handoff and explicit Discover re-entry.
 
 ---
 
@@ -324,11 +325,14 @@ outcome-hypothesis IDs and evidence status.
 
 *Guidance*: Preserve imported question fields and manage status in the BRD.
 Discover initializes imported questions to `Open` unless it explicitly
-confirms another status.
+confirms another status. Every `Deferred` row requires a rationale for
+deferral and a target phase selected from `PRD`, `Implementation`,
+`Operations`, or `Future-Release`. Populate both fields before emitting
+`BRD_TO_PRD_HANDOFF_V1`; do not invent them downstream.
 
-| ID     | Question or gap     | Why it matters | Owner              | Target date    | Status                         | Source                          |
-|--------|---------------------|----------------|--------------------|----------------|--------------------------------|---------------------------------|
-| `<ID>` | `<Question or gap>` | `<Impact>`     | `<Person or role>` | `<YYYY-MM-DD>` | `<Open / Resolved / Deferred>` | `<Handoff ID or BRD discovery>` |
+| ID     | Question or gap     | Why it matters | Owner              | Target date    | Status                         | Rationale for deferral     | Target phase                                           | Source                          |
+|--------|---------------------|----------------|--------------------|----------------|--------------------------------|----------------------------|--------------------------------------------------------|---------------------------------|
+| `<ID>` | `<Question or gap>` | `<Impact>`     | `<Person or role>` | `<YYYY-MM-DD>` | `<Open / Resolved / Deferred>` | `<Required when Deferred>` | `<PRD / Implementation / Operations / Future-Release>` | `<Handoff ID or BRD discovery>` |
 
 ---
 
