@@ -2,32 +2,38 @@
 // SPDX-License-Identifier: MIT
 import * as fs from "fs";
 import * as path from "path";
-import type { PackageCardData } from "../packageCards";
 import {
-  countMarketplaceComponents,
+  countPluginComponents,
   loadPackageCards,
 } from "../marketplaceCounts";
+import { labelRegistry } from "../labelRegistry";
 
 const marketplacePath = path.resolve(
   __dirname,
   "../../../../../.github/plugin/marketplace.json",
 );
 
-interface MarketplaceEntry {
+interface PluginManifest {
   name: string;
   description: string;
-  "x-hve": { displayName: string; documentation: string; maturity?: string };
+  version: string;
   [field: string]: unknown;
 }
 
 const catalog = JSON.parse(fs.readFileSync(marketplacePath, "utf-8")) as {
-  plugins: MarketplaceEntry[];
+  plugins: Array<{ name: string; source: string; version: string }>;
 };
+const [locator] = catalog.plugins;
+const manifestPath = path.resolve(
+  __dirname,
+  `../../../../../${locator.source}/plugin.json`,
+);
+const manifest = JSON.parse(fs.readFileSync(manifestPath, "utf-8")) as PluginManifest;
 
 // Independent re-derivation of the component tally so expected values come from
 // the catalog itself rather than from the function under test or a magic number.
 const componentFields = ["agents", "commands", "rules", "skills", "hooks"];
-function expectedComponentCount(entry: MarketplaceEntry): number {
+function expectedComponentCount(entry: PluginManifest): number {
   return componentFields.reduce((total, field) => {
     const value = entry[field];
     if (typeof value === "string") return total + 1;
@@ -36,61 +42,37 @@ function expectedComponentCount(entry: MarketplaceEntry): number {
   }, 0);
 }
 
-const retired = new Set(["deprecated", "removed"]);
-const expectedLabels: Record<string, PackageCardData["maturity"]> = {
-  stable: "Stable",
-  preview: "Preview",
-  experimental: "Experimental",
-};
-const activeEntries = catalog.plugins.filter(
-  (entry) => !retired.has(entry["x-hve"]?.maturity ?? "stable"),
-);
 const packageCards = loadPackageCards(marketplacePath);
-const cardsByName = new Map(packageCards.map((card) => [card.name, card]));
 
 describe("loadPackageCards against the canonical catalog", () => {
-  it("produces one sorted unique card for every active entry", () => {
-    const expected = activeEntries.map((entry) => entry.name).sort();
-    expect(packageCards.map((card) => card.name)).toEqual(expected);
-    expect(new Set(packageCards.map((card) => card.name)).size).toBe(
-      packageCards.length,
-    );
-  });
-
-  it.each(
-    activeEntries.map((entry): [string, MarketplaceEntry] => [
-      entry.name,
-      entry,
-    ]),
-  )("%s derives all card fields from its catalog entry", (name, entry) => {
-    const card = cardsByName.get(name)!;
-    expect(card.title).toBe(entry["x-hve"].displayName);
-    expect(card.description).toBe(entry.description);
-    expect(card.href).toBe(`/docs/plugins/${name}`);
-    expect(card.maturity).toBe(
-      expectedLabels[entry["x-hve"].maturity ?? "stable"],
-    );
-    expect(card.artifacts).toBe(expectedComponentCount(entry));
-    expect(card.artifacts).toBeGreaterThan(0);
+  it("derives one stable card from the locator and plugin manifest", () => {
+    expect(packageCards).toEqual([{
+      name: locator.name,
+      title: labelRegistry.hveCore,
+      description: manifest.description,
+      href: `/docs/plugins/${locator.name}`,
+      maturity: labelRegistry.stable,
+      artifacts: expectedComponentCount(manifest),
+    }]);
   });
 });
 
-describe("countMarketplaceComponents", () => {
+describe("countPluginComponents", () => {
   it("counts a string component field as one component", () => {
     expect(
-      countMarketplaceComponents({ hooks: "hooks/shared/telemetry.json" }),
+      countPluginComponents({ hooks: "hooks/shared/telemetry.json" }),
     ).toBe(1);
   });
 
   it("counts an array component field by its length", () => {
     expect(
-      countMarketplaceComponents({ agents: ["a.md", "b.md", "c.md"] }),
+      countPluginComponents({ agents: ["a.md", "b.md", "c.md"] }),
     ).toBe(3);
   });
 
   it("sums every declared component field", () => {
     expect(
-      countMarketplaceComponents({
+      countPluginComponents({
         agents: ["a.md", "b.md"],
         commands: ["c.md"],
         rules: [],
@@ -102,25 +84,16 @@ describe("countMarketplaceComponents", () => {
 
   it("ignores fields that are neither a string nor an array", () => {
     expect(
-      countMarketplaceComponents({ agents: ["a.md"], version: 3, author: {} }),
+      countPluginComponents({ agents: ["a.md"], version: 3, author: {} }),
     ).toBe(1);
   });
 
   it("returns zero for an entry with no component fields", () => {
-    expect(countMarketplaceComponents({ name: "empty" })).toBe(0);
+    expect(countPluginComponents({ name: "empty" })).toBe(0);
   });
 
-  it("counts a catalog package that declares hooks as a single string", () => {
-    const withStringHooks = catalog.plugins.filter(
-      (entry) => typeof entry.hooks === "string",
-    );
-    expect(withStringHooks.length).toBeGreaterThan(0);
-
-    for (const entry of withStringHooks) {
-      const withoutHooks = { ...entry, hooks: undefined };
-      expect(countMarketplaceComponents(entry)).toBe(
-        countMarketplaceComponents(withoutHooks) + 1,
-      );
-    }
+  it("matches an independent count of the canonical manifest", () => {
+    expect(countPluginComponents(manifest)).toBe(expectedComponentCount(manifest));
+    expect(countPluginComponents(manifest)).toBeGreaterThan(0);
   });
 });

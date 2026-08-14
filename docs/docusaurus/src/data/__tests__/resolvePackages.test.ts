@@ -3,7 +3,6 @@
 import * as fs from 'fs';
 import * as os from 'os';
 import * as path from 'path';
-import { resolvePackageMaturity } from '../packageCards';
 import { loadPackageCards } from '../marketplaceCounts';
 
 let fixtureRoot: string;
@@ -17,174 +16,124 @@ afterAll(() => {
   fs.rmSync(fixtureRoot, { recursive: true, force: true });
 });
 
-type Entry = Record<string, unknown>;
+type JsonObject = Record<string, unknown>;
 
-function entry(name: string, overrides: Entry = {}): Entry {
-  const { 'x-hve': overlay, ...rest } = overrides;
+function locator(overrides: JsonObject = {}): JsonObject {
   return {
-    name,
-    description: `${name} description`,
-    agents: [`agents/${name}/first.md`, `agents/${name}/second.md`],
-    skills: [`skills/${name}/only`],
-    hooks: `hooks/${name}/telemetry.json`,
-    ...rest,
-    'x-hve': {
-      displayName: `HVE Core - ${name}`,
-      documentation: `docs/plugins/${name}.md`,
-      ...((overlay ?? {}) as Entry),
-    },
+    name: 'hve-core',
+    source: '.github',
+    version: '1.2.3',
+    ...overrides,
   };
 }
 
-function withoutKey(source: Entry, key: string): Entry {
-  const copy = { ...source };
-  delete copy[key];
-  return copy;
+function manifest(overrides: JsonObject = {}): JsonObject {
+  return {
+    name: 'hve-core',
+    description: 'HVE Core description',
+    version: '1.2.3',
+    agents: ['agents/one.agent.md', 'agents/two.agent.md'],
+    commands: ['commands/one.prompt.md'],
+    rules: [],
+    skills: ['skills/one'],
+    hooks: 'hooks/shared/telemetry.json',
+    ...overrides,
+  };
 }
 
-function loadFixture(plugins: unknown) {
-  const file = path.join(fixtureRoot, `catalog-${(fixtureIndex += 1)}.json`);
-  fs.writeFileSync(file, JSON.stringify({ plugins }), 'utf-8');
-  return loadPackageCards(file);
+function writeFixture(
+  catalog: JsonObject,
+  pluginManifest: JsonObject | null = manifest(),
+): string {
+  const root = path.join(fixtureRoot, `fixture-${(fixtureIndex += 1)}`);
+  const marketplaceDirectory = path.join(root, '.github', 'plugin');
+  fs.mkdirSync(marketplaceDirectory, { recursive: true });
+  const marketplacePath = path.join(marketplaceDirectory, 'marketplace.json');
+  fs.writeFileSync(marketplacePath, JSON.stringify(catalog), 'utf-8');
+  if (pluginManifest !== null) {
+    fs.writeFileSync(
+      path.join(root, '.github', 'plugin.json'),
+      JSON.stringify(pluginManifest),
+      'utf-8',
+    );
+  }
+  return marketplacePath;
 }
 
-describe('resolvePackageMaturity', () => {
-  it('treats an absent maturity as stable', () => {
-    expect(resolvePackageMaturity(undefined)).toEqual({
-      kind: 'active',
+function catalog(plugins: unknown, version = '1.2.3'): JsonObject {
+  return { metadata: { version }, plugins };
+}
+
+describe('loadPackageCards locator resolution', () => {
+  it('builds one stable card from the resolved plugin manifest', () => {
+    expect(loadPackageCards(writeFixture(catalog([locator()])))).toEqual([{
+      name: 'hve-core',
+      title: 'HVE Core',
+      description: 'HVE Core description',
+      artifacts: 5,
       maturity: 'Stable',
-    });
-  });
-
-  it.each([
-    ['stable', 'Stable'],
-    ['preview', 'Preview'],
-    ['experimental', 'Experimental'],
-  ])('normalizes %s to %s', (raw, label) => {
-    expect(resolvePackageMaturity(raw)).toEqual({ kind: 'active', maturity: label });
-  });
-
-  it.each(['deprecated', 'removed'])('retires %s', (raw) => {
-    expect(resolvePackageMaturity(raw)).toEqual({ kind: 'retired' });
-  });
-
-  it.each([['beta'], [''], [7], [null], [{}], [['stable']]])(
-    'rejects the unsupported value %p',
-    (raw) => {
-      expect(resolvePackageMaturity(raw)).toEqual({ kind: 'unsupported' });
-    },
-  );
-});
-
-describe('loadPackageCards cardinality', () => {
-  it('builds a complete card from one entry', () => {
-    expect(loadFixture([entry('solo')])).toEqual([
-      {
-        name: 'solo',
-        title: 'HVE Core - solo',
-        description: 'solo description',
-        artifacts: 4,
-        maturity: 'Stable',
-        href: '/docs/plugins/solo',
-      },
-    ]);
-  });
-
-  it('builds one card per entry sorted ordinally by name', () => {
-    const cards = loadFixture([entry('zebra'), entry('alpha'), entry('alpha-two')]);
-    expect(cards.map((card) => card.name)).toEqual(['alpha', 'alpha-two', 'zebra']);
-  });
-
-  it('derives fields and counts from each entry', () => {
-    const cards = loadFixture([
-      entry('one', {
-        description: 'first description',
-        'x-hve': { displayName: 'First Package', maturity: 'preview' },
-      }),
-      entry('two', {
-        agents: 'agents/two/single.md',
-        commands: ['commands/two/a.md', 'commands/two/b.md'],
-        rules: [],
-        skills: undefined,
-        hooks: undefined,
-        'x-hve': { displayName: 'Second Package', maturity: 'experimental' },
-      }),
-    ]);
-
-    expect(cards).toEqual([
-      expect.objectContaining({
-        name: 'one', title: 'First Package', description: 'first description',
-        artifacts: 4, maturity: 'Preview', href: '/docs/plugins/one',
-      }),
-      expect.objectContaining({
-        name: 'two', title: 'Second Package', artifacts: 3,
-        maturity: 'Experimental', href: '/docs/plugins/two',
-      }),
-    ]);
-  });
-});
-
-describe('loadPackageCards retirement', () => {
-  it.each(['deprecated', 'removed'])('drops a %s entry', (maturity) => {
-    const cards = loadFixture([
-      entry('kept'),
-      entry('retired', { 'x-hve': { maturity } }),
-    ]);
-    expect(cards.map((card) => card.name)).toEqual(['kept']);
-  });
-
-  it('returns no cards when every entry is retired', () => {
-    expect(loadFixture([
-      entry('gone', { 'x-hve': { maturity: 'removed' } }),
-      entry('old', { 'x-hve': { maturity: 'deprecated' } }),
-    ])).toEqual([]);
+      href: '/docs/plugins/hve-core',
+    }]);
   });
 });
 
 describe('loadPackageCards failures', () => {
   it('rejects a missing plugins array', () => {
-    const file = path.join(fixtureRoot, 'no-plugins.json');
-    fs.writeFileSync(file, JSON.stringify({ name: 'hve-core' }), 'utf-8');
+    const file = writeFixture({ metadata: { version: '1.2.3' } });
     expect(() => loadPackageCards(file)).toThrow('plugins must be an array');
   });
 
-  it('rejects a non-object entry', () => {
-    expect(() => loadFixture([null])).toThrow('plugins[0]: entry must be an object');
-  });
-
-  it('rejects a missing name', () => {
-    expect(() => loadFixture([withoutKey(entry('solo'), 'name')])).toThrow(
-      'plugins[0]: name must be a non-empty string',
+  it('requires exactly one locator', () => {
+    expect(() => loadPackageCards(writeFixture(catalog([])))).toThrow(
+      'must contain exactly one plugin locator',
+    );
+    expect(() => loadPackageCards(writeFixture(catalog([locator(), locator()])))).toThrow(
+      'must contain exactly one plugin locator',
     );
   });
 
-  it('rejects duplicate names', () => {
-    expect(() => loadFixture([entry('twin'), entry('twin')])).toThrow(
-      'duplicate package name: twin',
+  it('rejects a non-object locator', () => {
+    expect(() => loadPackageCards(writeFixture(catalog([null])))).toThrow(
+      'plugins[0]: entry must be an object',
     );
   });
 
-  it('rejects missing required card metadata', () => {
-    expect(() => loadFixture([entry('solo', { description: undefined })])).toThrow(
-      'solo: description must be a non-empty string',
-    );
-    expect(() => loadFixture([withoutKey(entry('solo'), 'x-hve')])).toThrow(
-      'solo: x-hve must be an object',
-    );
-    expect(() => loadFixture([
-      entry('solo', { 'x-hve': { displayName: undefined } }),
-    ])).toThrow('solo: x-hve.displayName must be a non-empty string');
+  it.each(['/absolute', '../outside', '..\\outside'])(
+    'rejects escaping source %s',
+    (source) => {
+      const file = writeFixture(catalog([locator({ source })]));
+      expect(() => loadPackageCards(file)).toThrow('source escapes the repository');
+    },
+  );
+
+  it('rejects a missing plugin manifest', () => {
+    const file = writeFixture(catalog([locator()]), null);
+    expect(() => loadPackageCards(file)).toThrow('plugin manifest not found');
   });
 
-  it('rejects an incorrect documentation path', () => {
-    expect(() => loadFixture([
-      entry('solo', { 'x-hve': { documentation: 'docs/plugins/other.md' } }),
-    ])).toThrow('solo: x-hve.documentation must be docs/plugins/solo.md');
+  it('rejects locator and manifest name drift', () => {
+    const file = writeFixture(catalog([locator()]), manifest({ name: 'other' }));
+    expect(() => loadPackageCards(file)).toThrow(
+      'locator name hve-core does not match manifest name other',
+    );
   });
 
-  it('rejects unsupported active maturity', () => {
-    expect(() => loadFixture([
-      entry('solo', { 'x-hve': { maturity: 'beta' } }),
-    ])).toThrow('solo: unsupported package maturity: beta');
+  it('rejects catalog and manifest version drift', () => {
+    const locatorDrift = writeFixture(catalog([locator({ version: '2.0.0' })]));
+    expect(() => loadPackageCards(locatorDrift)).toThrow(
+      'catalog and manifest versions must match',
+    );
+
+    const metadataDrift = writeFixture(catalog([locator()], '2.0.0'));
+    expect(() => loadPackageCards(metadataDrift)).toThrow(
+      'catalog and manifest versions must match',
+    );
+  });
+
+  it('rejects missing manifest description', () => {
+    const file = writeFixture(catalog([locator()]), manifest({ description: undefined }));
+    expect(() => loadPackageCards(file)).toThrow(
+      'manifest.description must be a non-empty string',
+    );
   });
 });
