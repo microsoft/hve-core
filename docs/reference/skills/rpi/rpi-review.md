@@ -2,7 +2,7 @@
 title: rpi-review
 description: "Compare RPI planning and implementation evidence, record review findings, and route follow-up work. Use when an implementation needs acceptance review."
 sidebar_position: 7
-ms.date: 2026-07-27
+ms.date: 2026-08-13
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->

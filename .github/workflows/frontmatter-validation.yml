@@ -58,17 +58,20 @@ jobs:
       - name: Run Frontmatter Validation
         shell: pwsh
         env:
+          INPUT_CHANGED_FILES_ONLY: ${{ inputs.changed-files-only }}
+          INPUT_SKIP_FOOTER_VALIDATION: ${{ inputs.skip-footer-validation }}
+          INPUT_WARNINGS_AS_ERRORS: ${{ inputs.warnings-as-errors }}
           INPUT_FOOTER_EXCLUDE_PATHS: ${{ inputs.footer-exclude-paths }}
         run: |
           $params = @{}
           
-          if ('${{ inputs.changed-files-only }}' -eq 'true') {
+          if ($env:INPUT_CHANGED_FILES_ONLY -eq 'true') {
             $params['ChangedFilesOnly'] = $true
           }
-          if ('${{ inputs.skip-footer-validation }}' -eq 'true') {
+          if ($env:INPUT_SKIP_FOOTER_VALIDATION -eq 'true') {
             $params['SkipFooterValidation'] = $true
           }
-          if ('${{ inputs.warnings-as-errors }}' -eq 'true') {
+          if ($env:INPUT_WARNINGS_AS_ERRORS -eq 'true') {
             $params['WarningsAsErrors'] = $true
           }
           

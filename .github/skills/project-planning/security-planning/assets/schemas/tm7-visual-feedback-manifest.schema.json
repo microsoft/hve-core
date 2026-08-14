@@ -1,0 +1,291 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.invalid/schemas/tm7-visual-feedback-manifest.schema.json",
+  "title": "TM7 visual feedback manifest",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "manifest_type",
+    "model_id",
+    "spec_path",
+    "spec_sha256",
+    "generator_profile",
+    "generator_profile_sha256",
+    "candidate_sha256",
+    "iteration_id",
+    "pinned_tmt_version",
+    "created_at",
+    "surfaces",
+    "convergence"
+  ],
+  "properties": {
+    "schema_version": {
+      "type": "integer",
+      "const": 2
+    },
+    "manifest_type": {
+      "type": "string",
+      "const": "tm7_visual_feedback"
+    },
+    "model_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "spec_path": {
+      "type": "string",
+      "minLength": 1
+    },
+    "spec_sha256": {
+      "type": "string",
+      "minLength": 1
+    },
+    "generator_profile": {
+      "type": "string",
+      "minLength": 1
+    },
+    "generator_profile_sha256": {
+      "type": "string",
+      "minLength": 1
+    },
+    "candidate_sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "iteration_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "pinned_tmt_version": {
+      "type": "string",
+      "minLength": 1
+    },
+    "created_at": {
+      "type": "string",
+      "minLength": 1
+    },
+    "surfaces": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "surface_id",
+          "surface_guid",
+          "surface_name",
+          "capture_path",
+          "uia_path",
+          "metrics",
+          "findings",
+          "human_review_status",
+          "human_review_required"
+        ],
+        "properties": {
+          "surface_id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "surface_guid": {
+            "type": "string",
+            "minLength": 1
+          },
+          "surface_name": {
+            "type": "string",
+            "minLength": 1
+          },
+          "tab_index": {
+            "type": "integer"
+          },
+          "capture_path": {
+            "type": "string",
+            "minLength": 1
+          },
+          "uia_path": {
+            "type": "string",
+            "minLength": 1
+          },
+          "capture_scope": {
+            "type": "string",
+            "minLength": 1
+          },
+          "viewport": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["left", "top", "width", "height"],
+            "properties": {
+              "left": {"type": "integer"},
+              "top": {"type": "integer"},
+              "width": {"type": "integer"},
+              "height": {"type": "integer"}
+            }
+          },
+          "uia_canvas_announcement": {
+            "type": "string"
+          },
+          "metrics": {
+            "type": "object",
+            "additionalProperties": true,
+            "properties": {
+              "visible_clipping_count": {"type": "integer", "minimum": 0},
+              "visible_coverage_ratio": {"type": "number", "minimum": 0, "maximum": 1},
+              "backward_edge_count": {"type": "integer", "minimum": 0},
+              "max_handle_cluster_size": {"type": "integer", "minimum": 0},
+              "duplicate_route_leg_count": {"type": "integer", "minimum": 0},
+              "max_label_ownership_distance": {"type": "number", "minimum": 0},
+              "min_label_arrowhead_clearance": {"type": "number", "minimum": 0},
+              "branch_alignment_variance": {"type": "number", "minimum": 0},
+              "rank_monotonicity_ratio": {"type": "number", "minimum": 0, "maximum": 1},
+              "zone_whitespace_imbalance": {"type": "number", "minimum": 0, "maximum": 1},
+              "connector_label_count": {"type": "integer", "minimum": 0},
+              "label_ownership_flow_id": {"type": "string"},
+              "label_arrowhead_flow_id": {"type": "string"},
+              "coordinate_space": {"type": "string", "enum": ["tm7-model"]}
+            }
+          },
+          "findings": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "additionalProperties": true,
+              "required": [
+                "surface_id",
+                "metric_name",
+                "metric_value",
+                "threshold",
+                "severity",
+                "category"
+              ],
+              "properties": {
+                "surface_id": {"type": "string", "minLength": 1},
+                "node_id": {"type": "string"},
+                "flow_id": {"type": "string"},
+                "metric_name": {"type": "string", "minLength": 1},
+                "threshold": {"type": "number"},
+                "severity": {
+                  "type": "string",
+                  "enum": ["pass", "warn", "review"]
+                },
+                "category": {"type": "string", "minLength": 1},
+                "coordinate_space": {"type": "string", "minLength": 1},
+                "evidence_path": {"type": "string"}
+              }
+            }
+          },
+          "human_review_status": {
+            "type": "string",
+            "enum": ["pending"]
+          },
+          "human_review_required": {
+            "type": "boolean",
+            "const": true
+          }
+        }
+      }
+    },
+    "layout_calibration_v1": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "contract",
+        "scope",
+        "viewport_target",
+        "pane_rect",
+        "scroll_percentages",
+        "effective_scale",
+        "screenshot_dimensions",
+        "crop_dimensions",
+        "confidence"
+      ],
+      "properties": {
+        "contract": {"type": "string", "const": "layout_calibration_v1"},
+        "scope": {"type": "string", "const": "same-run"},
+        "viewport_target": {
+          "type": "array",
+          "items": {"type": "number"},
+          "minItems": 4,
+          "maxItems": 4
+        },
+        "pane_rect": {
+          "type": "array",
+          "items": {"type": "number"},
+          "minItems": 4,
+          "maxItems": 4
+        },
+        "scroll_percentages": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["horizontal", "vertical"],
+          "properties": {
+            "horizontal": {"type": "number"},
+            "vertical": {"type": "number"}
+          }
+        },
+        "effective_scale": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["x", "y"],
+          "properties": {
+            "x": {"type": "number"},
+            "y": {"type": "number"}
+          }
+        },
+        "screenshot_dimensions": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["width", "height"],
+          "properties": {
+            "width": {"type": "integer"},
+            "height": {"type": "integer"}
+          }
+        },
+        "crop_dimensions": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["width", "height"],
+          "properties": {
+            "width": {"type": "integer"},
+            "height": {"type": "integer"}
+          }
+        },
+        "confidence": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["pane_measured", "scroll_interface_found", "consistent"],
+          "properties": {
+            "pane_measured": {"type": "boolean"},
+            "scroll_interface_found": {"type": "boolean"},
+            "consistent": {"type": "boolean"},
+            "failure_reason": {"type": ["string", "null"]}
+          }
+        }
+      }
+    },
+    "convergence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status", "selected_candidate", "stop_reason"],
+      "properties": {
+        "status": {
+          "type": "string",
+          "enum": [
+            "pending",
+            "automated-ready-pending-human",
+            "stopped"
+          ]
+        },
+        "selected_candidate": {
+          "type": ["string", "null"]
+        },
+        "stop_reason": {
+          "type": "string"
+        },
+        "semantic_regression": {
+          "type": ["string", "null"]
+        },
+        "evidence_complete": {
+          "type": "boolean"
+        }
+      }
+    }
+  }
+}

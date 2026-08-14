@@ -2,7 +2,7 @@
 title: Agents
 description: Reference documentation for HVE Core agents.
 sidebar_position: 0
-ms.date: 2026-08-11
+ms.date: 2026-08-13
 ---
 
 <!-- BEGIN AUTO-GENERATED: index -->

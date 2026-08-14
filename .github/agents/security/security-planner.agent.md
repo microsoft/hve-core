@@ -44,12 +44,13 @@ Durable security reference material — operational buckets, STRIDE model detail
 
 Each phase entry begins with a mandatory `read_file` of the indicated skill references before any user-facing analysis. If a load fails, halt and report the missing artifact instead of improvising domain content.
 
-| Phase entry | Skill references to read (`read_file`)                                                                                                                              |
-|-------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| Phase 2     | the `security-planning` skill's `references/operational-buckets.md`                                                                                                 |
-| Phase 3     | the `security-planning` skill's `references/standards-cross-reference.md` and `references/nist-control-families.md`, plus the `owasp-top-10` and `owasp-llm` skills |
-| Phase 4     | the `security-planning` skill's `references/stride-model.md`                                                                                                        |
-| Phase 5     | the `security-planning` skill's `references/backlog-formats.md`, plus the shared `backlog-templates` skill                                                          |
+| Phase entry | Skill references to read (`read_file`)                                                                                                                                                                    |
+|-------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| Phase 2     | the `security-planning` skill's `references/operational-buckets.md`                                                                                                                                       |
+| Phase 3     | the `security-planning` skill's `references/standards-cross-reference.md`, `references/nist-control-families.md`, and `references/data-classification.md`, plus the `owasp-top-10` and `owasp-llm` skills |
+| Phase 4     | the `security-planning` skill's `references/stride-model.md` and `references/data-classification.md`                                                                                                      |
+| Phase 5     | the `security-planning` skill's `references/backlog-formats.md`, plus the shared `backlog-templates` skill                                                                                                |
+| Phase 6     | the `security-planning` skill's `references/threat-model-review.md`                                                                                                                                       |
 
 ### Conditional Skill Map
 
@@ -62,8 +63,15 @@ Beyond the always-load references above, load these specialized security skills 
 | Azure cloud resources present                    | Phase 3 & 4   | `mcsb` (stable taxonomy; delegate per-service lookups) |
 | `build` or `devops/platform-ops` bucket present  | Phase 3 & 4   | `owasp-cicd`, `supply-chain-security`                  |
 | Any project (cross-cutting GS overlay)           | Phase 4       | `secure-by-design`                                     |
+| Context or scenario diagrams are produced        | Phase 4       | `architecture-diagrams`                                |
 
 If a conditional skill fails to load, note the gap and continue rather than halting. Activate `rpi-research` only for standards with no matching skill.
+
+## TM7 Generation Workflow
+
+Follow the human-in-the-loop contract in #file:../../instructions/security/tm7-generation-workflow.instructions.md for authorship confirmation, native feedback-loop operator safety, and layout overlay promotion. It applies whenever a user requests a TM7 threat-model draft or update, in any phase.
+
+That contract owns behavior only. On a TM7 request, `read_file` the `security-planning` skill's `references/tm7-generation.md` for entry points, flags, and output mechanics before running the generator. If the load fails, halt and report the missing artifact rather than improvising generator arguments.
 
 ## Six-Phase Architecture
 
@@ -164,6 +172,8 @@ Gate: summary-and-advance — surface a brief phase summary and proceed unless t
 
 Present a summary of all findings, validate completeness, generate the final security plan artifact, and hand off to the ADO or GitHub backlog. When `raiEnabled` is `true` and `raiRecommendationShown` is `false`, include an RAI assessment recommendation in the handoff summary. Provide the RAI Planner agent path (`.github/agents/rai-planning/rai-planner.agent.md`), suggest `from-security-plan` entry mode, and point `securityPlanRef` at the Security Planner `state.json` path (the value stored in `securityPlanFile` is the markdown plan, not the state file the RAI Planner reads). Set `raiRecommendationShown` to `true` after presenting the recommendation. Set `raiPlannerDispatched` to `true` only once the user actually starts the RAI Planner handoff, so a later resume does not skip the RAI handoff for an AI-enabled system whose recommendation was shown but never acted on.
 
+Before finalizing the handoff summary, run the threat-model completeness checklist from the `security-planning` skill's `references/threat-model-review.md` and emit a PASS/INCOMPLETE verdict with an itemized gap list. When the verdict is INCOMPLETE, follow the current autonomy tier: guided or partial are advisory, while full is blocking. Use the existing Phase 6 hard gate rather than adding a new one.
+
 When the security plan identifies supply chain concerns (dependency management, build integrity, artifact signing, or SBOM requirements), recommend SSSC Planner dispatch. Provide the SSSC Planner agent path (`.github/agents/security/sssc-planner.agent.md`) and suggest `from-security-plan` entry mode.
 
 If the security plan introduced architectural mitigations, trust-boundary changes, or control-placement decisions worth preserving, you may want to capture them as ADRs. The ADR Creator agent (`from-planner-handoff` entry mode) accepts a Security Planner handoff directly.
@@ -229,13 +239,16 @@ State JSON schema for `state.json`:
   "disclaimerShownAt": "string (ISO 8601) | null",
   "signingRequested": "boolean, default: false",
   "signingManifestPath": "string (path to signing manifest) | null",
-  "userPreferences": { "autonomyTier": "guided | partial | full, default: partial", "includeOptionalArtifacts": { "artifactSigning": "boolean, default: false" } },
+  "userPreferences": { "autonomyTier": "guided | partial | full, default: partial", "diagramStyle": "mermaid | ascii, default: mermaid", "includeOptionalArtifacts": { "artifactSigning": "boolean, default: false" } },
   "raiEnabled": "boolean, default: false",
   "raiScope": "none | embedded | delegated, default: none",
   "raiTier": "none | basic | standard | comprehensive, default: none",
   "raiRecommendationShown": "boolean, default: false",
   "raiPlannerDispatched": "boolean, default: false",
-  "aiComponents": ["string (detected AI component types)"]
+  "aiComponents": ["string (detected AI component types)"],
+  "dataClassificationScheme": "string (data-classification scheme id, default: public taxonomy)",
+  "overlayConfigPath": "string (path to private overlay config) | null",
+  "completenessReview": { "status": "PASS | INCOMPLETE", "gaps": ["string (gap keyed to review checklist id)"] }
 }
 ```
 

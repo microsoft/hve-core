@@ -2,7 +2,7 @@
 title: Graph Research
 description: "Research a codebase through rpi-research using an existing graphify knowledge graph, with audit-tagged evidence reporting"
 sidebar_position: 2
-ms.date: 2026-07-16
+ms.date: 2026-08-13
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->

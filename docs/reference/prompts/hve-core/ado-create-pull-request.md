@@ -2,7 +2,7 @@
 title: Ado Create Pull Request
 description: "Create an Azure DevOps pull request with generated description, linked work items, and reviewers"
 sidebar_position: 1
-ms.date: 2026-08-04
+ms.date: 2026-08-13
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->

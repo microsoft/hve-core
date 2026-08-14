@@ -2,7 +2,7 @@
 title: ADR Creator
 description: "ADR Creator: phase-gated creator producing standards-aligned Architecture Decision Records with state recovery, rpi-research activation, and backlog handoff"
 sidebar_position: 1
-ms.date: 2026-07-16
+ms.date: 2026-08-13
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->

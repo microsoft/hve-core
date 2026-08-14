@@ -55,6 +55,7 @@
     "validate:devcontainer-changelog": "pwsh -NoProfile -File scripts/devcontainer/Write-DevcontainerChangeLog.ps1",
     "validate:devcontainer-lockfile": "pwsh -NoProfile -File ./scripts/devcontainer/Test-DevcontainerLockfile.ps1 -FailOnViolation",
     "validate:skills": "pwsh -NoProfile -File ./scripts/linting/Validate-SkillStructure.ps1 -WarningsAsErrors",
+    "validate:gap-citations": "uv run --project .github/skills/project-planning/security-planning python .github/skills/project-planning/security-planning/scripts/validate_gap_citations.py",
     "validate:ai-artifacts": "pwsh -NoProfile -File ./scripts/linting/Validate-PlannerArtifacts.ps1",
     "lint:py": "pwsh -NoProfile -File ./scripts/linting/Invoke-PythonLint.ps1 -OutputPath logs/python-lint-results.json",
     "lint:py:fix": "pwsh -NoProfile -File ./scripts/linting/Invoke-PythonLint.ps1 -Fix -OutputPath logs/python-lint-fix-results.json",

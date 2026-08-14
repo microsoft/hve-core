@@ -2,7 +2,7 @@
 title: Backlog Manager
 description: "Read-only backlog orchestrator for Azure DevOps, GitHub, and Jira. Classifies and plans requests, and dispatches every mutation to a per-platform executor."
 sidebar_position: 2
-ms.date: 2026-08-06
+ms.date: 2026-08-13
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->

@@ -2,7 +2,7 @@
 title: demo-video
 description: Assemble ordered frames or clips with narration into a narrated MP4 via FFmpeg
 sidebar_position: 4
-ms.date: 2026-08-06
+ms.date: 2026-08-13
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->

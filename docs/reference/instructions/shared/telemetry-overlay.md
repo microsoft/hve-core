@@ -2,7 +2,7 @@
 title: Shared/Telemetry Overlay
 description: "Shared telemetry overlay applying telemetry-foundations vocabulary across planner, ADR, PRD, accessibility, code-review, and implementation artifacts"
 sidebar_position: 6
-ms.date: 2026-08-04
+ms.date: 2026-08-13
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->

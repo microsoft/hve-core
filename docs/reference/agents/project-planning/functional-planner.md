@@ -2,7 +2,7 @@
 title: Functional Planner
 description: "Read-only Product Manager agent that analyzes PRDs and plans Azure DevOps, GitHub, or Jira work-item hierarchies without mutating a tracker"
 sidebar_position: 4
-ms.date: 2026-08-06
+ms.date: 2026-08-13
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->

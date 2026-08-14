@@ -2,7 +2,7 @@
 title: gh-code-scanning
 description: Retrieves and groups GitHub code scanning alerts by rule and severity using the gh CLI
 sidebar_position: 1
-ms.date: 2026-08-06
+ms.date: 2026-08-13
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->
