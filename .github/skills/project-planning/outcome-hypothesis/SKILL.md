@@ -10,7 +10,7 @@ description: >
   applies to business outcome hypotheses, value hypotheses, and outcome
   statements.
 argument-hint: "[context=artifact-or-summary] [mode=create|assess]"
-license: MIT
+license: CC-BY-4.0
 user-invocable: true
 ---
 
