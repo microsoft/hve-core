@@ -1,8 +1,8 @@
 ---
 title: dt-coaching-foundation
 description: "Design Thinking coaching foundation knowledge: coach identity and philosophy, quality and fidelity constraints, method sequencing, coaching state schema, and the canonical deck workflow"
-sidebar_position: 2
-ms.date: 2026-08-14
+sidebar_position: 1
+ms.date: 2026-08-13
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->
