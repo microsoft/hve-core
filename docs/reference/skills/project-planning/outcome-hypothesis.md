@@ -1,8 +1,8 @@
 ---
 title: outcome-hypothesis
 description: "Create or assess an evidence-grounded, falsifiable outcome hypothesis: a testable prediction of what measurable business result will change, for whom, by when, and how leading and lagging indicators will prove or disprove it. Use when framing measurable outcomes, turning an MVP, POC, feature, or technical initiative into a beneficiary result, defining targets and indicators, or judging whether evidence is strong enough to invest. Also applies to business outcome hypotheses, value hypotheses, and outcome statements."
-sidebar_position: 8
-ms.date: 2026-08-13
+sidebar_position: 9
+ms.date: 2026-08-14
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->

@@ -102,6 +102,46 @@ Describe 'eject component ownership' -Tag 'Unit' {
 
         (Get-EjectManifest -Target $target).files['.github/skills/rpi/rpi-plan/SKILL.md'].status | Should -Be 'managed'
     }
+
+    It 'Leaves no temporary manifest after a successful ejection' {
+        $target = New-EjectFixture -Manifest (New-TrackedManifest)
+
+        & $script:PowerShellScript -Component 'agents/hve-core/rpi-agent.md' -TargetRoot $target 6>&1 | Out-Null
+
+        @(Get-ChildItem -LiteralPath $target -Filter '.hve-tracking.json.*.tmp' -Force) | Should -BeNullOrEmpty
+    }
+}
+
+Describe 'eject atomic manifest replacement' -Tag 'Unit' {
+    It 'Preserves the original manifest and cleans up when the temporary write fails' {
+        $target = New-EjectFixture -Manifest (New-TrackedManifest)
+        $manifestPath = Join-Path $target '.hve-tracking.json'
+        $before = [System.IO.File]::ReadAllBytes($manifestPath)
+        Mock Set-Content { throw 'simulated temporary write failure' } -ParameterFilter {
+            $LiteralPath -like "$manifestPath.*.tmp"
+        }
+
+        { & $script:PowerShellScript -Component 'agents/hve-core/rpi-agent.md' -TargetRoot $target } |
+            Should -Throw -ExpectedMessage '*simulated temporary write failure*'
+
+        [System.IO.File]::ReadAllBytes($manifestPath) | Should -Be $before
+        @(Get-ChildItem -LiteralPath $target -Filter '.hve-tracking.json.*.tmp' -Force) | Should -BeNullOrEmpty
+    }
+
+    It 'Preserves the original manifest and cleans up when replacement fails' {
+        $target = New-EjectFixture -Manifest (New-TrackedManifest)
+        $manifestPath = Join-Path $target '.hve-tracking.json'
+        $before = [System.IO.File]::ReadAllBytes($manifestPath)
+        Mock Move-Item { throw 'simulated manifest replacement failure' } -ParameterFilter {
+            $Destination -eq $manifestPath
+        }
+
+        { & $script:PowerShellScript -Component 'agents/hve-core/rpi-agent.md' -TargetRoot $target } |
+            Should -Throw -ExpectedMessage '*simulated manifest replacement failure*'
+
+        [System.IO.File]::ReadAllBytes($manifestPath) | Should -Be $before
+        @(Get-ChildItem -LiteralPath $target -Filter '.hve-tracking.json.*.tmp' -Force) | Should -BeNullOrEmpty
+    }
 }
 
 Describe 'eject untracked component' -Tag 'Unit' {

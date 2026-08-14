@@ -3,7 +3,7 @@ title: 'Contributing Agents to HVE Core'
 description: 'Requirements and standards for contributing GitHub Copilot agent files to hve-core'
 sidebar_position: 5
 author: Microsoft
-ms.date: 2026-08-06
+ms.date: 2026-08-12
 ms.topic: how-to
 ---
 
@@ -93,27 +93,35 @@ Focus on agents that:
 
 ### Model Version Requirements
 
-All agents **MUST** target models listed in the model catalog (`scripts/linting/model-catalog.json`). The catalog defines which models are available in GitHub Copilot and which providers are accepted via the `providerAllowlist` field.
+All agents **MUST** target models listed in the model catalog (`scripts/linting/model-catalog.json`). The catalog defines which models are available in GitHub Copilot and which providers are accepted via the `providerAllowlist` field. Catalog membership is a validity check; use it alongside the responsibility-based profile selection in [Model Selection for Subagents](#model-selection-for-subagents) rather than as a free choice among catalog entries.
 
-Accepted: Any model in the catalog whose provider appears in `providerAllowlist` and whose status is `ga` or `preview` (e.g., `Claude Sonnet 4.6 (copilot)`, `GPT-5.4 (copilot)`, `Gemini 2.5 Pro (copilot)`)
+Accepted: A canonical profile scalar (see below) or any other model in the catalog whose provider appears in `providerAllowlist` and whose status is `ga` or `preview`, when a narrow, disclosed override justifies deviating from the canonical scalar
 
 Not Accepted: Models not present in the catalog, models from providers outside the `providerAllowlist`, custom/fine-tuned models, models with `retiring` or `retired` status
 
 ### Model Selection for Subagents
 
-The `model` frontmatter property is **optional**. When omitted, the agent inherits the parent conversation model. Use explicit model selection for cost optimization on subagents that perform read-only or validation tasks:
+The `model` frontmatter property is **optional** and, per the [official custom agents configuration reference](https://docs.github.com/en/copilot/reference/custom-agents-configuration), must be a single **string** for GitHub.com, the Copilot CLI, and supported IDEs. When omitted, a subagent inherits the invoking parent's model, and a directly invoked agent uses the current session or model-picker selection.
+
+When a stable model is needed, select a responsibility profile first (High, Medium, or Low; see the "Choose the model profile" section of the `hve-builder` skill's `artifact-types.md` reference), then declare that profile's canonical scalar:
 
 ```yaml
-# Subagent that does research (read-only) — use fast-tier model
-model:
-  - Claude Haiku 4.5 (copilot)
-  - GPT-5.4 mini (copilot)
+# Low profile: bounded, literal, mechanical execution
+model: GPT-5.6 Luna (copilot)
+```
+
+```yaml
+# Medium profile: semantic discovery, authoring, or calibrated review
+model: GPT-5.6 Terra (copilot)
 ```
 
 ```yaml
 # Subagent that writes code — omit model to inherit session model
 # (no model property)
 ```
+
+Do not use a YAML array for `model` (for example, a list of fallback models). VS Code Copilot Chat accepts an array for model fallback, but the Copilot CLI's frontmatter parser rejects it with `model: Expected string, received array` and drops the agent entirely, making it unavailable. This is tracked upstream in [github/copilot-cli#2133](https://github.com/github/copilot-cli/issues/2133); until resolved, always use a single scalar value here.
+Array-form fallback lists remain valid for `.prompt.md` files only.
 
 Parent agents can also pass `model` dynamically on `runSubagent` calls via instructions in the agent body. The cost tier constraint means subagent models cannot exceed the parent model's tier.
 
@@ -168,11 +176,11 @@ Agent files MUST:
 
 **`name`** (string)
 
-| Attribute | Details                                                  |
-|-----------|----------------------------------------------------------|
-| Purpose   | Custom display name for the agent                        |
-| Format    | Lowercase kebab-case matching filename without extension |
-| Default   | File name used if not specified                          |
+| Attribute | Details                                                                                                      |
+|-----------|--------------------------------------------------------------------------------------------------------------|
+| Purpose   | Custom display name for the agent; the dispatch identity used by prompts, fixed subagent lists, and handoffs |
+| Format    | Human-readable name (for example, `Report Generator`), not required to match the filename                    |
+| Default   | File name used if not specified                                                                              |
 
 **`tools`** (array of strings)
 
@@ -223,13 +231,13 @@ The name after `#tool:` matches the tool name as it appears in the `tools:` arra
 | Format      | Array of agent names. Use `*` to allow all agents, or `[]` to prevent subagent use |
 | Requirement | When specified, include the `agent` tool in the `tools` property                   |
 
-**`model`** (string or array of strings)
+**`model`** (string)
 
-| Attribute | Details                                                                                      |
-|-----------|----------------------------------------------------------------------------------------------|
-| Purpose   | Specifies the AI model for this agent                                                        |
-| Format    | Single model name or prioritized list of models (system tries each in order until available) |
-| Default   | Currently selected model in model picker when omitted                                        |
+| Attribute | Details                                                                                                                |
+|-----------|------------------------------------------------------------------------------------------------------------------------|
+| Purpose   | Specifies the AI model for this agent                                                                                  |
+| Format    | Single scalar model name; array/fallback-list values break the Copilot CLI and are not supported for `.agent.md` files |
+| Default   | Currently selected model in model picker when omitted (or the invoking parent's model for a subagent)                  |
 
 **`user-invocable`** (boolean)
 

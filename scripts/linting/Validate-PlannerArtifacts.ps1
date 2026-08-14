@@ -506,12 +506,16 @@ function Test-AIArtifactValidation {
     $footerConfig = Import-FooterConfig -ConfigPath (Join-Path $repoRoot $FooterConfigPath)
     $disclaimerConfig = Import-DisclaimerSource -SourcePath (Join-Path $repoRoot $DisclaimerSourcePath)
 
-    # Collect instruction files
+    # Collect candidate files. Every scan path is supplied explicitly by the caller,
+    # so enumeration deliberately ignores .gitignore: generated artifacts live under
+    # .copilot-tracking/, which is ignored, and would otherwise be undiscoverable.
+    # Generated artifacts also omit the .instructions.md suffix (for example handoff.md),
+    # so discovery matches any markdown file and classification filters out non-artifacts.
     $allFiles = @()
     foreach ($searchPath in $Paths) {
         $fullPath = Join-Path $repoRoot $searchPath
         if (Test-Path $fullPath) {
-            $files = Get-FilesRecursive -Path $fullPath -Include @('*.instructions.md')
+            $files = Get-ChildItem -Path $fullPath -Filter '*.md' -File -Recurse
             $allFiles += $files
         }
     }

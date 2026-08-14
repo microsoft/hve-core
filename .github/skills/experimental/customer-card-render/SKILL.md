@@ -77,15 +77,16 @@ For full PowerPoint pipeline documentation, activate the `powerpoint` skill by n
 | Use Case          | **4 slides** (see below) |
 | Persona           | Single slide             |
 
-### Use Case 3-Slide Layout
+### Use Case 4-Slide Layout
 
-Each Use Case expands into 3 consecutive slides with distinct sections:
+Each Use Case expands into 4 consecutive slides with distinct sections:
 
-| Slide       | Content                                                                                |
-|-------------|----------------------------------------------------------------------------------------|
-| **Slide 1** | Use Case Description, Use Case Overview, Business Value, Primary User                  |
-| **Slide 2** | Secondary User, Preconditions, Steps, Data Requirements                                |
-| **Slide 3** | Equipment Requirements, Operating Environment, Success Criteria, Pain Points, Evidence |
+| Slide       | Content                                                                      |
+|-------------|------------------------------------------------------------------------------|
+| **Slide 1** | Use Case Description, Use Case Overview, Business Value, Primary User        |
+| **Slide 2** | Secondary User, Preconditions, Steps, Data Requirements                      |
+| **Slide 3** | Equipment Requirements, Operating Environment, Success Criteria, Pain Points |
+| **Slide 4** | Extensions, Evidence                                                         |
 
 Cards are ordered by artifact type (Vision → Problem → Scenario → Use Case → Persona), then alphabetically by title within each type. Use Cases appear with all 4 slides consecutive (Slide N, N+1, N+2, N+3).
 
@@ -107,9 +108,9 @@ python .github/skills/experimental/customer-card-render/scripts/generate_cards.p
 | `--output-dir`    | No       | `<skill-root>/scripts/content` | Directory to write generated `content.yaml` files |
 | `-v`, `--verbose` | No       | —                              | Enable debug-level logging                        |
 
-The script reads each markdown file in `--canonical-dir`, detects the artifact type from frontmatter, extracts required sections, and generates `content.yaml` files. Vision, Problem, Scenario, and Persona artifacts produce one slide each. Use Case artifacts produce 3 consecutive slides per use case.
+The script reads each markdown file in `--canonical-dir`, detects the artifact type from frontmatter, extracts required sections, and generates `content.yaml` files. Vision, Problem, Scenario, and Persona artifacts produce one slide each. Use Case artifacts produce 4 consecutive slides per use case.
 
-For the section-to-field mapping contract and Use Case 3-slide layout details, see [references/mapping-spec.md](references/mapping-spec.md).
+For the section-to-field mapping contract and Use Case 4-slide layout details, see [references/mapping-spec.md](references/mapping-spec.md).
 
 ### Step 2: Build PPTX using the PowerPoint skill pipeline
 

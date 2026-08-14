@@ -2,7 +2,7 @@
 title: Git Merge
 description: "Coordinate Git merge, rebase, and rebase --onto workflows with conflict handling"
 sidebar_position: 6
-ms.date: 2026-08-04
+ms.date: 2026-08-13
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->

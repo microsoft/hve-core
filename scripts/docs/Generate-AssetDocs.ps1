@@ -70,6 +70,33 @@ Import-Module (Join-Path $PSScriptRoot 'Modules/DocsHelpers.psm1') -Force
 
 #region Pure Helpers
 
+function Test-DocContentEqual {
+    <#
+    .SYNOPSIS
+        Compares two page contents ignoring line-ending style.
+    .DESCRIPTION
+        Generated content always uses LF, but a Windows checkout with
+        core.autocrlf=true stores CRLF on disk. A raw ordinal comparison would
+        therefore report every page as changed, advancing ms.date and rewriting
+        files that have no real content difference. Normalizing CRLF to LF on
+        both sides keeps the generator idempotent across platforms.
+    .PARAMETER Left
+        First content string.
+    .PARAMETER Right
+        Second content string.
+    .OUTPUTS
+        [bool] True when the contents match apart from line endings.
+    #>
+    [CmdletBinding()]
+    [OutputType([bool])]
+    param(
+        [Parameter(Mandatory = $true)][AllowEmptyString()][AllowNull()][string]$Left,
+        [Parameter(Mandatory = $true)][AllowEmptyString()][AllowNull()][string]$Right
+    )
+
+    return [string]::Equals(($Left -replace "`r`n", "`n"), ($Right -replace "`r`n", "`n"), [System.StringComparison]::Ordinal)
+}
+
 function New-DocFrontmatter {
     <#
     .SYNOPSIS
@@ -169,8 +196,10 @@ function Test-AssetDocScaffoldOrphan {
         Determines whether an orphan page is an untouched generated scaffold.
     .DESCRIPTION
         Requires exactly one begin and end marker for both generated regions,
-        valid marker ordering, and a post-overview tail that is byte-identical
-        to either canonical interactive or non-interactive scaffold tail.
+        valid marker ordering, and a post-overview tail matching either the
+        canonical interactive or non-interactive scaffold tail. The tail
+        comparison ignores line-ending style so a CRLF checkout of the template
+        still matches an LF-generated page.
     .PARAMETER Content
         Full orphan page content.
     .PARAMETER InteractiveTail
@@ -211,8 +240,8 @@ function Test-AssetDocScaffoldOrphan {
         return $false
     }
 
-    return [string]::Equals($overview.After, $InteractiveTail, [System.StringComparison]::Ordinal) -or
-        [string]::Equals($overview.After, $NonInteractiveTail, [System.StringComparison]::Ordinal)
+    return (Test-DocContentEqual -Left $overview.After -Right $InteractiveTail) -or
+        (Test-DocContentEqual -Left $overview.After -Right $NonInteractiveTail)
 }
 
 #endregion Pure Helpers
@@ -342,10 +371,11 @@ function New-AssetDocContent {
     # rather than the first-scaffold date, while staying idempotent: rebuilding
     # with an unchanged date reproduces the file byte-for-byte, and preserved
     # human sections keep the output identical so human-only edits never advance
-    # the date.
+    # the date. The comparison ignores line endings so a CRLF checkout does not
+    # register as drift.
     $content = ((New-DocFrontmatter -Title $Model.Title -Description $descriptionMeta -SidebarPosition $SidebarPosition -MsDate $msDate) + $generatedTail).TrimEnd() + "`n"
 
-    if ($null -ne $existing -and -not [string]::Equals($content, $existing, [System.StringComparison]::Ordinal)) {
+    if ($null -ne $existing -and -not (Test-DocContentEqual -Left $content -Right $existing)) {
         $content = ((New-DocFrontmatter -Title $Model.Title -Description $descriptionMeta -SidebarPosition $SidebarPosition -MsDate $today) + $generatedTail).TrimEnd() + "`n"
     }
 
@@ -466,7 +496,7 @@ function New-IndexContent {
     # Advance ms.date to today only when the regenerated index differs, so the
     # date reflects the last content change rather than the first-scaffold date.
     $content = "$(New-DocFrontmatter -Title $Title -Description $Description -SidebarPosition $SidebarPosition -MsDate $msDate)`n`n$region`n"
-    if ($null -ne $existing -and -not [string]::Equals($content, $existing, [System.StringComparison]::Ordinal)) {
+    if ($null -ne $existing -and -not (Test-DocContentEqual -Left $content -Right $existing)) {
         $content = "$(New-DocFrontmatter -Title $Title -Description $Description -SidebarPosition $SidebarPosition -MsDate $today)`n`n$region`n"
     }
 
@@ -482,10 +512,10 @@ function Write-DocIfChanged {
     .SYNOPSIS
         Writes page content only when it differs, honoring -WhatIf.
     .DESCRIPTION
-        Compares the desired content against the current file using ordinal
-        comparison. Returns Unchanged when identical. Otherwise returns Created
-        or Updated; the write itself is gated by ShouldProcess so -WhatIf reports
-        drift without writing.
+        Compares the desired content against the current file, ignoring
+        line-ending style. Returns Unchanged when equivalent. Otherwise returns
+        Created or Updated; the write itself is gated by ShouldProcess so -WhatIf
+        reports drift without writing.
     .PARAMETER Path
         Absolute destination path.
     .PARAMETER Content
@@ -503,7 +533,7 @@ function Write-DocIfChanged {
     $exists = Test-Path -LiteralPath $Path
     if ($exists) {
         $current = Get-Content -LiteralPath $Path -Raw
-        if ([string]::Equals($current, $Content, [System.StringComparison]::Ordinal)) {
+        if (Test-DocContentEqual -Left $current -Right $Content) {
             return 'Unchanged'
         }
     }

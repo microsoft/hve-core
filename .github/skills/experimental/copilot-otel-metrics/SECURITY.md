@@ -2,7 +2,7 @@
 title: Copilot OTel Metrics Skill Security Model
 description: STRIDE threat model for the copilot-otel-metrics skill organized by assets, adversaries, and trust buckets (editor OTLP ingest, telemetry at rest, reference helper scripts, container image supply chain, editor-global configuration mutation, host process control, cloud control-plane artifact generation) with in-design mitigations and acknowledged enterprise readiness gaps
 author: microsoft/hve-core
-ms.date: 2026-07-30
+ms.date: 2026-08-07
 ms.topic: reference
 estimated_reading_time: 18
 keywords:
@@ -19,7 +19,7 @@ This document records the STRIDE threat model for the copilot-otel-metrics skill
 
 The skill is an assistant rather than a reference pack, and that changes the model materially. It may write the user's global `settings.json` after presenting a diff and obtaining explicit approval, and it generates files intended for the user to execute. It never starts a service and never provisions infrastructure: `docker compose`, `az deployment`, and `terraform apply` are handed to the user, not run. Buckets B5 through B7 exist because generating and writing are themselves exposures, independent of who runs the result.
 
-> **See also: repo-wide STRIDE model.** This skill participates in the repository-wide threat model at [`docs/security/security-model.md`](../../../../docs/security/security-model.md) and is registered in its [Skill Security Models](../../../../docs/security/security-model.md#skill-security-models) section.
+> **See also: repo-wide STRIDE model.** This skill participates in the repository-wide threat model at [`docs/security/security-model.md`](../../../../docs/security/security-model.md) and is registered in its [Skill Security Models](../../../../docs/security/security-model.md#skill-security-models) section. The seven buckets below are enumerated there as the **OT** threat family in [§ Copilot Telemetry Skill Threats](../../../../docs/security/security-model.md#copilot-telemetry-skill-threats); that section is authoritative for the current membership of the family. Each OT row derives its Likelihood, Impact, and Residual Risk from the risk-rating tables in this document wherever they rate the same failure mode, and marks any rating it does not inherit as a new assessment with a stated basis.
 
 ## Executive Summary
 

@@ -88,8 +88,10 @@ jobs:
       - name: Run pip-audit
         id: audit
         if: "!inputs.changed-files-only || env.HAS_CHANGES == 'true'"
+        env:
+          ARTIFACT_NAME: ${{ steps.meta.outputs.artifact-name }}
         run: |
-          $name = '${{ steps.meta.outputs.artifact-name }}'
+          $name = $env:ARTIFACT_NAME
           New-Item -ItemType Directory -Path "$env:GITHUB_WORKSPACE/logs" -Force | Out-Null
           $ignoreArgs = @()
           $knownVulnFile = 'pip-audit-known-vulnerabilities.txt'

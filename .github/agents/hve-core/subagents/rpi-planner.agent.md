@@ -3,11 +3,7 @@ name: RPI Planner
 description: "Revise one assigned RPI plan phase and matching phase details within a shared planning artifact. Use when a parent needs bounded phase authoring."
 user-invocable: false
 agents: []
-model:
-  - GPT-5.6 Terra (copilot)
-  - Claude Sonnet 5 (copilot)
-  - MAI-Code-1-Flash (copilot)
-  - Claude Opus 5 (copilot)
+model: GPT-5.6 Terra (copilot)
 tools:
   - read/readFile
   - edit/editFiles
