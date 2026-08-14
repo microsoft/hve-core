@@ -93,13 +93,13 @@ The source tree still groups capabilities by areas such as `project-planning` an
 
 ### Retired extension identities
 
-| If you installed                   | Install instead                   |
-|------------------------------------|-----------------------------------|
-| `ise-hve-essentials.hve-ado`       | `ise-hve-essentials.hve-core`     |
-| `ise-hve-essentials.hve-github`    | `ise-hve-essentials.hve-core`     |
-| `ise-hve-essentials.hve-jira`      | `ise-hve-essentials.hve-core`     |
-| `ise-hve-essentials.hve-gitlab`    | `ise-hve-essentials.hve-core`     |
-| `ise-hve-essentials.hve-core-all`  | `ise-hve-essentials.hve-core`     |
+| If you installed                  | Install instead               |
+|-----------------------------------|-------------------------------|
+| `ise-hve-essentials.hve-ado`      | `ise-hve-essentials.hve-core` |
+| `ise-hve-essentials.hve-github`   | `ise-hve-essentials.hve-core` |
+| `ise-hve-essentials.hve-jira`     | `ise-hve-essentials.hve-core` |
+| `ise-hve-essentials.hve-gitlab`   | `ise-hve-essentials.hve-core` |
+| `ise-hve-essentials.hve-core-all` | `ise-hve-essentials.hve-core` |
 
 ### Retired read-only commands
 
