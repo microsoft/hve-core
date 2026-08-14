@@ -20,12 +20,14 @@ set -euo pipefail
 readonly SCHEMA_VERSION=2
 # Local environment, cache, and test directories are never distributed, matching
 # the extension skill-materialization exclusions.
-readonly EXCLUDED_SKILL_PATH='(^|/)(tests|\.venv|\.hypothesis|node_modules|__pycache__|\.ruff_cache|\.pytest_cache)(/|$)|\.pyc$'
+readonly EXCLUDED_SKILL_PATH='(^|/)(tests|\.venv|\.hypothesis|node_modules|__pycache__|\.ruff_cache|\.pytest_cache|\.git)(/|$)|(^|/)\.env(\..+)?$|(^|/)(\.DS_Store|Thumbs\.db)$|\.pyc$'
 
 entries_file=""
+plan_files_dir=""
 
 cleanup() {
   [[ -n "$entries_file" ]] && rm -f "$entries_file"
+  [[ -n "$plan_files_dir" ]] && rm -rf "$plan_files_dir"
   return 0
 }
 trap cleanup EXIT
@@ -46,6 +48,20 @@ sha256_of() {
   else
     shasum -a 256 "$1" | cut -d' ' -f1
   fi
+}
+
+is_excluded_skill_path() {
+  local skill_path="$1"
+  local restore_nocasematch=false
+  local matched=false
+
+  if ! shopt -q nocasematch; then
+    shopt -s nocasematch
+    restore_nocasematch=true
+  fi
+  [[ "$skill_path" =~ $EXCLUDED_SKILL_PATH ]] && matched=true
+  [[ "$restore_nocasematch" == "true" ]] && shopt -u nocasematch
+  [[ "$matched" == "true" ]]
 }
 
 # Containment is decided by resolved path and real filesystem state, never by the
@@ -245,10 +261,12 @@ main() {
   fi
 
   # Preflight: normalize, bound, and resolve every component before any write.
+  plan_files_dir=$(mktemp -d)
   local -a plan_components=()
   local -A plan_kinds=() plan_maturities=() plan_targets=() plan_files=()
   local -A seen_targets=()
-  local raw candidate field descriptor kind root package_suffix source_suffix relative source_rel files
+  local raw candidate field descriptor kind root package_suffix source_suffix relative source_rel files file
+  local plan_index=0
   for raw in "$@"; do
     candidate=$(normalize_component_path "$raw")
 
@@ -268,13 +286,20 @@ main() {
     [[ -z "${seen_targets[$source_rel]+x}" ]] || fail "Component '$candidate' resolves to duplicate target '$source_rel'."
     seen_targets["$source_rel"]=1
 
+    files="$plan_files_dir/$plan_index"
+    ((plan_index += 1))
+    : >"$files"
     if [[ "$kind" == "skill" ]]; then
       [[ -d "$source_root/$source_rel" ]] || fail "Skill component '$candidate' has no source directory at '$source_rel'."
-      files=$(cd "$source_root" && find "$source_rel" -type f | grep -Eiv "$EXCLUDED_SKILL_PATH" | LC_ALL=C sort || true)
-      [[ -n "$files" ]] || fail "Skill component '$candidate' has no files at '$source_rel'."
+      while IFS= read -r -d '' file; do
+        if ! is_excluded_skill_path "$file"; then
+          printf '%s\0' "$file" >>"$files"
+        fi
+      done < <(cd "$source_root" && find "$source_rel" -type f -print0)
+      [[ -s "$files" ]] || fail "Skill component '$candidate' has no files at '$source_rel'."
     else
       [[ -f "$source_root/$source_rel" ]] || fail "Component '$candidate' has no source file at '$source_rel'."
-      files="$source_rel"
+      printf '%s\0' "$source_rel" >"$files"
     fi
 
     plan_components+=("$candidate")
@@ -335,16 +360,16 @@ main() {
     target="${plan_targets[$component]}"
 
     if [[ -n "${kept_components[$component]+x}" ]]; then
-      while IFS= read -r file; do
+      while IFS= read -r -d '' file; do
         if [[ -n "${existing_entry[$file]+x}" ]]; then
           jq -nc --arg path "$file" --argjson value "${existing_entry[$file]}" '{($path): $value}' >>"$entries_file"
         fi
-      done <<<"${plan_files[$component]}"
+      done <"${plan_files[$component]}"
       echo "⏭️ Kept existing: $component"
       continue
     fi
 
-    while IFS= read -r file; do
+    while IFS= read -r -d '' file; do
       if [[ "${existing_status[$file]:-}" == "ejected" ]]; then
         jq -nc --arg path "$file" --argjson value "${existing_entry[$file]}" '{($path): $value}' >>"$entries_file"
         echo "🔒 Skipped ejected: $file"
@@ -361,7 +386,7 @@ main() {
         --arg maturity "${plan_maturities[$component]}" --arg ver "$version" --arg sha "$hash" \
         '{($path): {component: $component, kind: $kind, maturity: $maturity, version: $ver, sha256: $sha, status: "managed"}}' \
         >>"$entries_file"
-    done <<<"${plan_files[$component]}"
+    done <"${plan_files[$component]}"
     echo "✅ Copied $component → $target"
   done
 

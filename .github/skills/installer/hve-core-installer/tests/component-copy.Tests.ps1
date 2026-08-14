@@ -32,6 +32,11 @@ BeforeAll {
             '.github/skills/rpi/rpi-plan/.VENV/lib/upper.py'              = 'sentinel_upper_venv'
             '.github/skills/rpi/rpi-plan/tests/test_plan.py'              = 'sentinel_tests'
             '.github/skills/rpi/rpi-plan/.PyTest_Cache/result.txt'        = 'sentinel_upper_cache'
+            '.github/skills/rpi/rpi-plan/.git/config'                     = 'sentinel_git'
+            '.github/skills/rpi/rpi-plan/.env'                            = 'sentinel_env'
+            '.github/skills/rpi/rpi-plan/.env.local'                      = 'sentinel_env_local'
+            '.github/skills/rpi/rpi-plan/.DS_Store'                       = 'sentinel_ds_store'
+            '.github/skills/rpi/rpi-plan/Thumbs.db'                       = 'sentinel_thumbs_db'
             '.github/hooks/shared/telemetry.json'                         = '{}'
         }
         foreach ($relative in $sourceFiles.Keys) {
@@ -234,13 +239,34 @@ Describe 'component-copy path mapping' -Tag 'Unit' {
         Test-Path -LiteralPath (Join-Path $script:fixture.Target '.github/skills/rpi/rpi-plan/references/notes.md') | Should -BeTrue
     }
 
-    It 'Excludes local environment and test directories from a skill copy' {
+    It 'Excludes local environment, test, VCS, secret-prone, and OS artifact paths from a skill copy' {
         Invoke-ComponentCopy -Fixture $script:fixture -Component @('skills/rpi/rpi-plan') | Out-Null
 
         Test-Path -LiteralPath (Join-Path $script:fixture.Target '.github/skills/rpi/rpi-plan/.venv') | Should -BeFalse
         Test-Path -LiteralPath (Join-Path $script:fixture.Target '.github/skills/rpi/rpi-plan/.VENV') | Should -BeFalse
         Test-Path -LiteralPath (Join-Path $script:fixture.Target '.github/skills/rpi/rpi-plan/tests') | Should -BeFalse
         Test-Path -LiteralPath (Join-Path $script:fixture.Target '.github/skills/rpi/rpi-plan/.PyTest_Cache') | Should -BeFalse
+        Test-Path -LiteralPath (Join-Path $script:fixture.Target '.github/skills/rpi/rpi-plan/.git') | Should -BeFalse
+        Test-Path -LiteralPath (Join-Path $script:fixture.Target '.github/skills/rpi/rpi-plan/.env') | Should -BeFalse
+        Test-Path -LiteralPath (Join-Path $script:fixture.Target '.github/skills/rpi/rpi-plan/.env.local') | Should -BeFalse
+        Test-Path -LiteralPath (Join-Path $script:fixture.Target '.github/skills/rpi/rpi-plan/.DS_Store') | Should -BeFalse
+        Test-Path -LiteralPath (Join-Path $script:fixture.Target '.github/skills/rpi/rpi-plan/Thumbs.db') | Should -BeFalse
+
+        $trackedPaths = @((Get-TrackingManifest -Fixture $script:fixture).files.Keys)
+        @($trackedPaths | Where-Object { $_ -match '/(\.git|\.env(?:\..+)?|\.DS_Store|Thumbs\.db)(/|$)' }) |
+            Should -BeNullOrEmpty
+    }
+
+    It 'Copies and tracks a skill filename containing a newline through the Bash implementation' -Skip:($IsWindows -or -not $script:BashAvailable) {
+        $relative = ".github/skills/rpi/rpi-plan/line`nbreak.md"
+        $sourceFile = Join-Path $script:fixture.Source $relative
+        Set-Content -LiteralPath $sourceFile -Value '# Newline name' -NoNewline
+
+        Invoke-BashComponentCopy -Fixture $script:fixture -Component @('skills/rpi/rpi-plan') | Out-Null
+
+        $LASTEXITCODE | Should -Be 0
+        Test-Path -LiteralPath (Join-Path $script:fixture.Target $relative) | Should -BeTrue
+        (Get-TrackingManifest -Fixture $script:fixture).files.Keys | Should -Contain $relative
     }
 
     It 'Omits file symlinks and does not traverse directory symlinks' {
