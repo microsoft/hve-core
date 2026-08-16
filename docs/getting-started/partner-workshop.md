@@ -51,9 +51,9 @@ workshop-output/
 |---------|-----------------------|-------------------------|
 | Context and user requirements | Reviewed draft | Customer validation and approval |
 | Backlog | Prioritized draft or planning handoff | Create approved external work items |
-| Azure architecture | Reviewed conceptual Mermaid diagram | Implement and validate infrastructure |
-| Azure Managed Application | Package and offer readiness plan | Build, test, certify, and publish offer |
-| Microsoft 365 Copilot agent | Experience and distribution plan | Build, test, approve, and publish agent |
+| Architecture Design | Reviewed conceptual Mermaid diagram | Implement and validate infrastructure |
+| Azure Managed Application | Package and offer readiness plan | Build, test, certify, and publish offer on Marketplace |
+| Microsoft 365 Copilot Agent | Experience and distribution plan | Build, test, approve, and publish agent |
 
 > [!IMPORTANT]
 > HVE Core custom agents run in GitHub Copilot and VS Code. They are not
@@ -64,7 +64,7 @@ workshop-output/
 
 ## Audience And Roles
 
-Form teams of four to six people. One person can cover more than one role.
+Form multidisciplinary teams of four to six people.
 
 | Track | Suggested Participants | Primary Workshop Output |
 |-------|------------------------|-------------------------|
@@ -76,7 +76,7 @@ Form teams of four to six people. One person can cover more than one role.
 Review the broader [HVE role guides](../hve-guide/roles/) after the workshop for
 ongoing role-specific workflows.
 
-## Two-Hour Agenda
+## Workshop Agenda
 
 | Time | Activity | Mode | Output |
 |------|----------|------|--------|
@@ -110,23 +110,17 @@ Complete these steps before participants arrive:
 
 Use this scenario when participants do not bring a project:
 
-> A partner wants to offer a Service Knowledge Assistant to enterprise
-> customers. Support specialists ask questions in Microsoft 365 Copilot and
-> receive grounded answers from approved product and service documents. Each
-> customer deploys the Azure data, search, model, API, identity, and monitoring
-> resources into its own subscription through an Azure Managed Application.
-> The solution must preserve source citations, respect user access, avoid using
-> customer content for model training, and provide operational audit evidence.
+A partner offers a Relationship Manager Assistant to banks and financial institutions. Relationship managers use Microsoft 365 Copilot to ask questions and receive grounded answers from approved customer profiles, product information, research reports, investment insights, onboarding guides, and compliance policies. The partner deploys the Azure data, search, model, API, identity, and monitoring resources into each customer's Azure subscription through an Azure Managed Application. The solution preserves source citations, enforces customer-specific access controls, prevents customer data from being used for model training, and provides audit evidence to support regulatory compliance and governance.
 
 Do not use production customer data during the workshop. Use synthetic or
 public sample content.
 
 ## Participant Flow
 
-1. Complete [shared setup](partner-workshop-setup).
-2. Choose a section in the [role exercises](partner-workshop-role-tracks).
-3. Complete the [cross-role capstone](partner-workshop-capstone).
-4. Start the [publication follow-up](partner-workshop-publishing) during the
+1. Complete [shared setup](partner-workshop-setup.md).
+2. Choose a section in the [role exercises](partner-workshop-role-tracks.md).
+3. Complete the [cross-role challenge](partner-workshop-capstone.md).
+4. Start the [publication follow-up](partner-workshop-publishing.md) during the
    workshop and finish it after the session.
 
 ## Completion Standard
@@ -135,14 +129,14 @@ The workshop is complete when the team has reviewed the six draft artifacts,
 identified unresolved assumptions, and assigned owners for publication follow-up.
 Actual Azure deployment, commercial marketplace certification, and Agent Store
 availability are post-workshop milestones unless the facilitator explicitly
-provides extra time and authorized environments.
+provides extra time and project managers have authorized environments.
 
 ## Related Guidance
 
-* [Installing HVE Core](install)
-* [Your First Full Workflow](first-workflow)
-* [Architecture Diagrams Skill](../agents/project-planning/arch-diagram-builder)
-* [MCP Configuration](mcp-configuration)
+* [Installing HVE Core](install.md)
+* [Your First Full Workflow](first-workflow.md)
+* [Architecture Diagrams Skill](../agents/project-planning/arch-diagram-builder.md)
+* [MCP Configuration](mcp-configuration.md)
 
 ---
 

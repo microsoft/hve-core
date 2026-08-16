@@ -3,7 +3,7 @@ title: Get Started with the HVE Partner Workshop
 description: Start with the two-hour HVE partner workshop, then use the supporting setup, workflow, and role references
 sidebar_position: 1
 author: Microsoft
-ms.date: 2026-08-11
+ms.date: 2026-08-14
 ms.topic: tutorial
 keywords:
   - github copilot
@@ -13,7 +13,7 @@ keywords:
 estimated_reading_time: 5
 ---
 
-Start with the [two-hour HVE partner workshop](partner-workshop). It gives
+Start with the [HVE partner workshop](partner-workshop.md). It gives
 partners new to HVE a shared setup path, role-based exercises, an integrated
 capstone, and publication follow-up.
 
@@ -31,11 +31,11 @@ technical participants work from one scenario to produce:
 
 | Step | Activity | Time |
 |------|----------|------|
-| 1 | [Review the workshop overview and agenda](partner-workshop) | 10 min |
-| 2 | [Set up Codespaces or local VS Code](partner-workshop-setup) | 15 min |
-| 3 | [Complete the PM, SME, design, or technical track](partner-workshop-role-tracks) | 45 min |
-| 4 | [Integrate requirements, backlog, and architecture](partner-workshop-capstone) | 35 min |
-| 5 | [Assess Marketplace and Agent Store readiness](partner-workshop-publishing) | 15 min |
+| 1 | [Review the workshop overview and agenda](partner-workshop.md) | 10 min |
+| 2 | [Set up Codespaces or local VS Code](partner-workshop-setup.md) | 15 min |
+| 3 | [Complete the PM, SME, design, or technical track](partner-workshop-role-tracks.md) | 45 min |
+| 4 | [Integrate requirements, backlog, and architecture](partner-workshop-capstone.md) | 35 min |
+| 5 | [Assess Marketplace and Agent Store readiness](partner-workshop-publishing.md) | 15 min |
 
 > [!NOTE]
 > The workshop creates reviewed drafts and publication plans. Azure deployment,
@@ -53,30 +53,14 @@ after the workshop.
 
 | Reference | Use It To |
 |-----------|-----------|
-| [Installation Guide](install) | Compare installation methods and resolve setup issues |
-| [Extension Collections](collections) | Choose a focused collection or HVE Core All |
-| [First Interaction](first-interaction) | Practice a one-minute agent interaction |
-| [First Research](first-research) | Learn the research phase on an existing codebase |
-| [First Full Workflow](first-workflow) | Run Research, Plan, Implement, and Review |
-| [Growing with HVE](../hve-guide/roles/new-contributor) | Progress toward independent HVE use |
+| [Installation Guide](install.md) | Compare installation methods and resolve setup issues |
+| [Marketplace Packages](packages.md) | Choose a focused collection or HVE Core All |
+| [First Interaction](first-interaction.md) | Practice a one-minute agent interaction |
+| [First Research](first-research.md) | Learn the research phase on an existing codebase |
+| [First Full Workflow](first-workflow.md) | Run Research, Plan, Implement, and Review |
+| [Growing with HVE](../hve-guide/roles/new-contributor.md) | Progress toward independent HVE use |
 | [Role Guides](../hve-guide/roles/) | Continue with role-specific workflows |
 | [RPI Workflow](../rpi/) | Understand HVE's core delivery methodology |
->>>>>>> 8bed022c (feat(docs): update getting started documentation for HVE Partner Workshop)
-
-## Supporting References
-
-Use the remaining Getting Started material as reference before, during, or
-after the workshop.
-
-| Reference                                              | Use It To                                             |
-|--------------------------------------------------------|-------------------------------------------------------|
-| [Installation Guide](install)                          | Compare installation methods and resolve setup issues |
-| [First Interaction](first-interaction)                 | Practice a one-minute agent interaction               |
-| [First Research](first-research)                       | Learn the research phase on an existing codebase      |
-| [First Full Workflow](first-workflow)                  | Run Research, Plan, Implement, and Review             |
-| [Growing with HVE](../hve-guide/roles/new-contributor) | Progress toward independent HVE use                   |
-| [Role Guides](../hve-guide/roles/)                     | Continue with role-specific workflows                 |
-| [RPI Workflow](../rpi/)                                | Understand HVE's core delivery methodology            |
 
 ## Troubleshooting
 
@@ -98,7 +82,7 @@ after the workshop.
 
 * Verify Git is installed: run `git --version` in terminal
 * Check network connectivity to github.com
-* See the [installation guide](install) for method-specific troubleshooting
+* See the [installation guide](install.md) for method-specific troubleshooting
 
 ## Optional Scripts
 
@@ -117,13 +101,13 @@ Copy the scripts you need to your project's `scripts/` directory and adjust path
 For projects requiring user-centered requirements discovery before implementation:
 
 * [Design Thinking Guide](../design-thinking/): Start with the DT overview
-* [Using the DT Coach](../design-thinking/dt-coach): Learn to use the DT Coach agent
-* [DT to RPI Integration](../design-thinking/dt-rpi-integration): Transition from DT to implementation
+* [Using the DT Coach](../design-thinking/dt-coach.md): Learn to use the DT Coach agent
+* [DT to RPI Integration](../design-thinking/dt-rpi-integration.md): Transition from DT to implementation
 
 ## See Also
 
 * [Available agents](https://github.com/microsoft/hve-core/blob/main/.github/CUSTOM-AGENTS.md)
-* [MCP Configuration](mcp-configuration)
+* [MCP Configuration](mcp-configuration.md)
 
 ---
 

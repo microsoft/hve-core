@@ -2,7 +2,7 @@
 title: HVE Core
 description: Hypervelocity Engineering prompt library for GitHub Copilot with convention-driven AI workflows and validated artifacts
 author: Microsoft
-ms.date: 2026-08-08
+ms.date: 2026-08-14
 ms.topic: overview
 keywords:
   - hypervelocity engineering
@@ -41,7 +41,11 @@ Use HVE Core when you want AI-assisted work to be repeatable, standards-aligned,
 > The HVE Builder skill (use with `/hve-builder`) and GitHub Copilot can help you adapt or copy relevant patterns into an agentic SDLC that you own and maintain independently.
 > To build an independent implementation, start with [Forking and Extending HVE Core](docs/customization/forking.md) and review the [HVE Core documentation](docs/README.md) before adopting any component.
 
-## Where to Start
+## Getting Started
+
+* Partner Workshop: Follow the [Getting Started with HVE Partner Workshop](docs/getting-started/README.md) for workshop-specific onboarding.
+
+## Setup HVE Core
 
 <!-- markdownlint-disable MD013 -->
 [![Install HVE Core](https://img.shields.io/badge/VS%20Code-Install%20HVE%20Core-007ACC?logo=visualstudiocode&logoColor=white)](https://marketplace.visualstudio.com/items?itemName=ise-hve-essentials.hve-core)
@@ -69,12 +73,6 @@ Use HVE Core when you want AI-assisted work to be repeatable, standards-aligned,
 > Behavior when switching or duplicating same-name marketplace registrations
 > has not been observed. See [CLI Plugins](docs/getting-started/methods/cli-plugins.md)
 > for details.
-
-## Choose Your Path
-
-* New to HVE-Core: Start with [Start Here](docs/getting-started/README.md) to complete your first workflow quickly.
-* Leading a team: Use the [Team Adoption Guide](docs/customization/team-adoption.md) to roll out standards and onboarding.
-* Contributing to this repo: Follow the [Contributing Guide](CONTRIBUTING.md) to add or improve agents, prompts, instructions, and skills.
 
 ## Navigate This Repository
 

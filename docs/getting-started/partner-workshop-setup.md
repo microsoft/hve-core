@@ -1,6 +1,6 @@
 ---
 title: Partner Workshop Setup
-description: Shared Codespaces and local VS Code setup instructions for the two-hour HVE partner workshop
+description: Shared Codespaces and local VS Code setup instructions for the  HVE partner workshop
 sidebar_position: 8
 author: Microsoft
 ms.date: 2026-08-11
@@ -15,8 +15,7 @@ estimated_reading_time: 8
 ---
 
 Use GitHub Codespaces when possible. It gives Windows and macOS participants the
-same browser-based environment and avoids local tool installation during the
-two-hour session.
+same browser-based environment and avoids local tool installation during the session.
 
 > [!NOTE]
 > These instructions use **Visual Studio Code**. The HVE Core extension is a VS
@@ -44,7 +43,7 @@ Before the session, complete these steps:
 5. Wait for the browser-based VS Code window to finish loading.
 6. Open the Extensions view from the Activity Bar.
 7. Search for **HVE Core All**.
-8. Confirm the publisher is `ise-hve-essentials`.
+8. Confirm the publisher is `ISE-HVE-ESSENTIALS`.
 9. Select **Install in Codespaces**.
 10. Confirm GitHub Copilot and GitHub Copilot Chat are enabled in the Codespace.
 11. Reload the window if VS Code asks you to do so.
@@ -93,7 +92,7 @@ If the expected agents are missing:
 2. Disable **HVE Installer** if both extensions are installed.
 3. Run **Developer: Reload Window** from the Command Palette.
 4. Reopen Copilot Chat and check the agent picker again.
-5. Use the [troubleshooting guide](troubleshooting) if the problem remains.
+5. Use the [troubleshooting guide](troubleshooting.md) if the problem remains.
 
 ## Create The Workshop Workspace
 
@@ -102,7 +101,7 @@ Ask one technical participant or the facilitator to complete these steps:
 1. Create a branch named `workshop/<team-name>`.
 2. Create a folder named `workshop-output`.
 3. Add six empty Markdown files using the names in the
-   [workshop overview](partner-workshop#outcomes).
+   [workshop overview](partner-workshop.md#outcomes).
 4. Add the scenario title and team member roles to `01-context-pack.md`.
 5. Do not enter credentials, personal data, customer secrets, or production
    content in prompts or files.
@@ -126,7 +125,7 @@ Use the same pattern in every role exercise:
 6. Save only the reviewed result to `workshop-output`.
 7. Hand the artifact to the next role.
 
-Proceed to the [role exercises](partner-workshop-role-tracks).
+Proceed to the [role exercises](partner-workshop-role-tracks.md).
 
 ---
 
