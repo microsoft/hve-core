@@ -2,7 +2,13 @@
 title: Experimental/Experiment Designer
 description: "MVE tracking-artifact conventions for session directories, artifact names, and file hygiene; routes MVE methodology to the experiment-design skill"
 sidebar_position: 1
-ms.date: 2026-08-01
+author: Microsoft
+ms.date: 2026-08-12
+ms.topic: reference
+keywords:
+  - instruction
+  - experimental
+  - experimental/experiment-designer
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->

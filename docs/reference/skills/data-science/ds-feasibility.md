@@ -2,7 +2,13 @@
 title: ds-feasibility
 description: "Author and validate durable data and ML feasibility studies using the Feasibility Study Interchange Profile, constrained YAML authority, UUID URN identity, lifecycle lineage, and evidence traceability. Use when assessing whether available data and technical evidence support a proposed outcome."
 sidebar_position: 6
-ms.date: 2026-08-05
+author: Microsoft
+ms.date: 2026-08-14
+ms.topic: reference
+keywords:
+  - skill
+  - data-science
+  - ds-feasibility
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->

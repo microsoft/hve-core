@@ -2,7 +2,13 @@
 title: ds-analysis-authoring
 description: "Authoring conventions for exploratory data analysis notebooks and analytical dashboards, covering section sequence, visualization selection, scale thresholds, caching and state, and dashboard validation budgets. Use when composing or reviewing an EDA notebook, an analytical dashboard, or a dashboard test pass."
 sidebar_position: 2
-ms.date: 2026-08-05
+author: Microsoft
+ms.date: 2026-08-14
+ms.topic: reference
+keywords:
+  - skill
+  - data-science
+  - ds-analysis-authoring
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->

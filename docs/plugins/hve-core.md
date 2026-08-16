@@ -3,8 +3,12 @@ title: HVE Core
 description: Complete HVE Core plugin identity, distribution channels, membership policy, and capability inventory
 sidebar_position: 1
 author: Microsoft
-ms.date: 2026-08-14
+ms.date: 2026-08-16
 ms.topic: reference
+keywords:
+  - package
+  - hve core
+  - foundation
 ---
 
 HVE Core is the single plugin and extension identity for all distributable HVE Core content.

@@ -2,7 +2,13 @@
 title: Project Planning/Community Interaction
 description: "Community interaction voice, tone, and response templates for GitHub-facing agents and prompts"
 sidebar_position: 6
-ms.date: 2026-08-13
+author: Microsoft
+ms.date: 2026-08-12
+ms.topic: reference
+keywords:
+  - instruction
+  - project-planning
+  - project-planning/community-interaction
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->

@@ -5,6 +5,10 @@ sidebar_position: 3
 author: Microsoft
 ms.date: 2026-08-13
 ms.topic: overview
+keywords:
+  - packages
+  - channels
+  - identity
 ---
 
 ## One Product Identity

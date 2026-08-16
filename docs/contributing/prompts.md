@@ -5,6 +5,10 @@ sidebar_position: 4
 author: Microsoft
 ms.date: 2026-08-13
 ms.topic: how-to
+keywords:
+  - contributing
+  - prompts
+  - standards
 ---
 
 This guide defines the requirements, standards, and best practices for contributing GitHub Copilot prompt files (`.prompt.md`) to the hve-core library.

@@ -2,7 +2,12 @@
 title: Reference
 description: Generated reference documentation for HVE Core GenAI assets.
 sidebar_position: 0
-ms.date: 2026-08-13
+author: Microsoft
+ms.date: 2026-08-12
+ms.topic: overview
+keywords:
+  - reference
+  - assets
 ---
 
 <!-- BEGIN AUTO-GENERATED: index -->

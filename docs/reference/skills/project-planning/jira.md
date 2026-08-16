@@ -2,7 +2,13 @@
 title: jira
 description: "Jira issue workflows for search, issue updates, transitions, comments, field discovery, and interactive credential setup via the Jira REST API. Use when you need to configure Jira access, search with JQL, inspect an issue, create or update work items, move an issue between statuses, post comments, or discover required fields for issue creation."
 sidebar_position: 8
-ms.date: 2026-08-11
+author: Microsoft
+ms.date: 2026-08-14
+ms.topic: reference
+keywords:
+  - skill
+  - project-planning
+  - jira
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->

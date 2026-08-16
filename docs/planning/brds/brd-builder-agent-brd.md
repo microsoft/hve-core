@@ -3,8 +3,12 @@ brd_id: "BRD-2026-Q2-BRD-BUILDER"
 title: "BRD Builder Agent Requirements"
 description: "Business Requirements Document for the BRD Builder agent, capturing business goals, requirements, and traceability for the project-planning collection's BRD authoring workflow."
 author: "HVE Core Maintainers"
-ms.date: "2026-06-28"
+ms.date: "2026-08-01"
 ms.topic: "reference"
+keywords:
+  - brd builder
+  - business requirements
+  - project planning
 status: "approved"
 version: "1.0.0"
 owners: ["microsoft/hve-core"]
