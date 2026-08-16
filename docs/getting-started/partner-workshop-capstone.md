@@ -1,6 +1,6 @@
 ---
 title: Partner Workshop Capstone
-description: Integrate role outputs into a requirements pack, backlog, Azure diagram, and publication readiness plan
+description: Integrate role outputs into a requirements pack, backlog, Azure architecture diagram, and publication readiness plan
 sidebar_position: 10
 author: Microsoft
 ms.date: 2026-08-11
@@ -14,8 +14,6 @@ keywords:
 estimated_reading_time: 8
 ---
 
-The capstone uses 40 minutes of the two-hour session: 25 minutes to integrate
-role outputs and 15 minutes to assess publication readiness.
 
 ## Integrate The Artifacts
 
@@ -57,23 +55,12 @@ Choose one target. Creating external items is optional during the workshop.
 
 ### GitHub Issues
 
-1. Select **GitHub Backlog Manager**.
+1. Select **Backlog Manager**.
 2. Ask it to inspect `05-backlog.md` for readiness and duplicates.
 3. Confirm repository, labels, milestone, owners, and issue hierarchy.
 4. Ask for a dry-run summary before any mutation.
 5. Review the proposed issue titles and acceptance criteria.
 6. Create issues only with facilitator approval and repository permission.
-
-### Azure DevOps Boards
-
-1. Select **AzDO PRD to WIT**.
-2. Ask it to inspect `02-requirements.md` and `05-backlog.md`.
-3. Confirm organization, project, area path, iteration, work item types, and
-   parent-child hierarchy.
-4. Ask for a planning handoff without creating work items.
-5. Review the handoff with the PM and technical role.
-6. Create work items only after authentication, field validation, and
-   facilitator approval.
 
 ### Markdown-Only Fallback
 
@@ -83,7 +70,7 @@ Choose one target. Creating external items is optional during the workshop.
 
 ## Review The Azure Architecture
 
-1. Render `04-azure-architecture.md` in Markdown Preview.
+1. Render `04-architecture.md` in Markdown Preview.
 2. Follow the primary user request from Microsoft 365 Copilot to the Azure API,
    retrieval layer, model, and response.
 3. Follow the content ingestion and update path separately.
@@ -111,7 +98,7 @@ Choose one target. Creating external items is optional during the workshop.
 8. Continue with the
    [publication instructions](partner-workshop-publishing).
 
-## Ten-Minute Playback
+## Ten-Minute Team Discussion
 
 1. PM presents the outcome, requirements, and first release slice.
 2. SME presents key constraints and unresolved domain questions.

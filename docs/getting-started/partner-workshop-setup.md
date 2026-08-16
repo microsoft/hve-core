@@ -1,9 +1,9 @@
 ---
 title: Partner Workshop Setup
-description: Shared Codespaces and local VS Code setup instructions for the  HVE partner workshop
+description: Shared Codespaces and local VS Code setup instructions for the HVE partner workshop
 sidebar_position: 8
 author: Microsoft
-ms.date: 2026-08-11
+ms.date: 2026-08-16
 ms.topic: tutorial
 keywords:
   - GitHub Codespaces
@@ -14,55 +14,48 @@ keywords:
 estimated_reading_time: 8
 ---
 
-Use GitHub Codespaces when possible. It gives Windows and macOS participants the
-same browser-based environment and avoids local tool installation during the session.
-
 > [!NOTE]
 > These instructions use **Visual Studio Code**. The HVE Core extension is a VS
 > Code extension. The full Visual Studio IDE is not the workshop host. Visual
-> Studio users can keep the IDE installed and use VS Code or Codespaces for the
+> Studio users can keep the IDE installed and use VS Code or GitHub Codespaces for the
 > workshop activities.
+
+## Choose Your Setup Path
+
+Select the setup option that fits your environment, then follow the matching steps below.
+
+* Use Option A if you want a browser-based VS Code experience in GitHub Codespaces.
+* Use Option B if you want to run VS Code locally on Windows or macOS.
 
 ## Shared Prerequisites
 
-Before the session, complete these steps:
+Before you begin either option, complete these steps:
 
-1. Sign in to the GitHub account that has repository and Copilot access.
-2. Confirm you can open the workshop repository.
-3. Confirm your organization permits GitHub Copilot Chat.
-4. Decide whether to use Codespaces or local VS Code.
-5. Ask the facilitator for the team scenario and backlog target.
+1. Sign in to your GitHub account with GitHub Copilot access.
+2. Confirm your organization permits GitHub Copilot Chat.
 
 ## Option A: GitHub Codespaces
 
-1. Open the workshop repository on GitHub.
-2. Select **Code**.
-3. Select the **Codespaces** tab.
-4. Select **Create codespace on main**, or choose the branch named by the
-   facilitator.
-5. Wait for the browser-based VS Code window to finish loading.
-6. Open the Extensions view from the Activity Bar.
-7. Search for **HVE Core All**.
-8. Confirm the publisher is `ISE-HVE-ESSENTIALS`.
-9. Select **Install in Codespaces**.
-10. Confirm GitHub Copilot and GitHub Copilot Chat are enabled in the Codespace.
-11. Reload the window if VS Code asks you to do so.
+1. Open the **Code** dropdown, select the **Codespaces** tab, and create a Codespace.
+2. Wait for the browser-based VS Code window to finish loading.
+3. Confirm GitHub Copilot and GitHub Copilot Chat are enabled in the Codespace.
+4. Open the Extensions view from the Activity Bar.
+5. Search for **HVE Core All**, confirm the publisher is `ISE-HVE-ESSENTIALS`, and install it in the Codespace.
+6. Open the terminal in Codespaces and git clone the workshop repository at https://github.com/asiapartners/hve-partner-workshop and open it in your chosen environment.
+7. Create a branch for workshop activities before you start editing files. Use a name such as `workshop/<team-name>`.
+8. Reload the window if VS Code asks you to do so.
 
 ## Option B: Local VS Code On Windows Or macOS
 
-1. Install [Git](https://git-scm.com/downloads).
-2. Install [Visual Studio Code](https://code.visualstudio.com/Download).
-3. Open VS Code.
-4. Open the Extensions view.
-5. Install **GitHub Copilot** and **GitHub Copilot Chat**.
-6. Sign in with the GitHub account that has Copilot access.
-7. Install
-   [HVE Core All](https://marketplace.visualstudio.com/items?itemName=ise-hve-essentials.hve-core-all).
-8. Open the Command Palette.
-9. Run **Git: Clone**.
-10. Paste the workshop repository URL.
-11. Choose a local folder and select **Open** when cloning finishes.
-12. Select **Trust** only when you recognize the repository and facilitator.
+1. Install [Git](https://git-scm.com/downloads) and [Visual Studio Code](https://code.visualstudio.com/Download).
+2. Open VS Code, open the Extensions view, and install **GitHub Copilot** and **GitHub Copilot Chat**.
+3. Sign in with your GitHub account that has Copilot access.1. 
+4. Install [HVE Core All](https://marketplace.visualstudio.com/items?itemName=ise-hve-essentials.hve-core-all).
+5. Open the Command Palette, run **Git: Clone** at https://github.com/asiapartners/hve-partner-workshop and open it.
+6. Select **Open** when cloning finishes, and select **Trust** only when you recognize the repository and facilitator.
+7. Create a branch for workshop activities before you start editing files. Use a name such as `workshop/<team-name>`.
+
+If you have Foundry local models available in your environment, prefer them for local inference. Otherwise, select `MAI-Code-1-Flash` in GitHub Copilot Chat for a more cost-effective option.he workshop repository on GitHub and select the branch you created earlier.
 
 On macOS, use the same menus and buttons. Keyboard shortcuts that use `Ctrl` on
 Windows often use `Command` on macOS, so this workshop favors menu navigation.
@@ -73,8 +66,7 @@ Complete these steps in either environment:
 
 1. Open Copilot Chat from the Activity Bar.
 2. Open the agent picker in the Chat view.
-3. Confirm that agents such as **RPI Agent**, **BRD Builder**, **Agile Coach**,
-   **UX UI Designer**, and **System Architecture Reviewer** are visible.
+3. Confirm that agents such as **RPI Agent**, **BRD Builder**, **UX UI Designer**, and **System Architecture Reviewer** are visible.
 4. Type `/` in Chat.
 5. Confirm that RPI prompts appear.
 6. Enter this prompt:
@@ -96,26 +88,33 @@ If the expected agents are missing:
 
 ## Create The Workshop Workspace
 
-Ask one technical participant or the facilitator to complete these steps:
+Ask technical lead to complete these steps:
 
-1. Create a branch named `workshop/<team-name>`.
-2. Create a folder named `workshop-output`.
-3. Add six empty Markdown files using the names in the
+1. Create a folder named `workshop-output` at the repository root.
+2. Add six empty Markdown files using the names in the
    [workshop overview](partner-workshop.md#outcomes).
-4. Add the scenario title and team member roles to `01-context-pack.md`.
-5. Do not enter credentials, personal data, customer secrets, or production
+```text
+workshop-output/
+|-- 01-context-pack.md
+|-- 02-requirements.md
+|-- 03-experience.md
+|-- 04-architecture.md
+|-- 05-backlog.md
+`-- 06-publication-readiness.md
+```
+3. Add the scenario title and team member roles to `01-context-pack.md`.
+4. Do not enter credentials, personal data, customer secrets, or production
    content in prompts or files.
-6. Commit only when the facilitator confirms that workshop outputs belong in
-   the repository.
+5. Commit your workshop outputs to your branch only.
 
 > [!TIP]
-> HVE workflows also use `.copilot-tracking/` for temporary state. Keep that
-> folder in `.gitignore`. The `workshop-output` folder is the team's reviewed,
-> shareable result.
+> Use `.copilot-tracking/` only for temporary workflow state. Keep that folder
+> in `.gitignore`. Create `workshop-output` at the repository root so it stays
+> the team's reviewed, shareable result.
 
 ## Learn The Interaction Pattern
 
-Use the same pattern in every role exercise:
+In the next step, we will use the same pattern in every role exercise:
 
 1. Select the named agent or invoke the named skill.
 2. Provide the scenario, known facts, constraints, and requested output path.

@@ -36,16 +36,19 @@ Use HVE Core when you want AI-assisted work to be repeatable, standards-aligned,
 * Skills that add reusable tool capabilities
 
 > [!CAUTION]
-> HVE Core is a highly opinionated, rapidly evolving agentic SDLC framework. It is best treated as a source of patterns and learning rather than a stable platform, foundation, or production dependency.
-> Workflows, interfaces, architecture, and recommended practices may change substantially, including in ways that are not backward compatible, as the technology landscape evolves. Evaluate all materials for your own requirements and risk tolerance.
+> HVE Core is a rapidly evolving agentic SDLC framework. It is a source of patterns and learning. You would need develop further enhancements to deploy for production.
+
+> As the technology landscape evoles, workflows, interfaces, architecture, and recommended practices may change substantially, including in ways that are not backward compatible. Evaluate all materials for your own requirements and risk tolerance.
+
 > The HVE Builder skill (use with `/hve-builder`) and GitHub Copilot can help you adapt or copy relevant patterns into an agentic SDLC that you own and maintain independently.
+
 > To build an independent implementation, start with [Forking and Extending HVE Core](docs/customization/forking.md) and review the [HVE Core documentation](docs/README.md) before adopting any component.
 
 ## Getting Started
 
-* Partner Workshop: Follow the [Getting Started with HVE Partner Workshop](docs/getting-started/README.md) for workshop-specific onboarding.
+* Microsoft Partner Workshop: Follow the [Getting Started with HVE Partner Workshop](docs/getting-started/README.md) for workshop-specific onboarding.
 
-## Setup HVE Core
+## Quick Start
 
 <!-- markdownlint-disable MD013 -->
 [![Install HVE Core](https://img.shields.io/badge/VS%20Code-Install%20HVE%20Core-007ACC?logo=visualstudiocode&logoColor=white)](https://marketplace.visualstudio.com/items?itemName=ise-hve-essentials.hve-core)
@@ -55,24 +58,6 @@ Use HVE Core when you want AI-assisted work to be repeatable, standards-aligned,
 2. Open any project and launch GitHub Copilot Chat (`Ctrl+Alt+I`).
 3. Select **RPI Agent** from the agent picker or run `/rpi`, then describe the task you want to complete.
 
-> [!TIP]
-> Using GitHub Copilot CLI? Choose a marketplace source:
->
-> * Ref-less current `main`: `microsoft/hve-core`
-> * Moving reviewed channels: `microsoft/hve-core#release/prerelease` and `microsoft/hve-core#release/stable`
-> * Immutable exact releases: `microsoft/hve-core#prerelease-v<version>` and `microsoft/hve-core#v<version>`
->
-> For example, register the development tip and install the focused package:
->
-> ```bash
-> copilot plugin marketplace add microsoft/hve-core
-> copilot plugin install hve-core@hve-core
-> ```
->
-> Reviewed source moves from `main` to `release/prerelease` to `release/stable`.
-> Behavior when switching or duplicating same-name marketplace registrations
-> has not been observed. See [CLI Plugins](docs/getting-started/methods/cli-plugins.md)
-> for details.
 
 ## Navigate This Repository
 
@@ -102,25 +87,6 @@ Full documentation is available at **<https://microsoft.github.io/hve-core/>**.
 | [Instructions Reference](.github/instructions/README.md)         | All coding instructions                          |
 | [AI Artifacts Architecture](docs/architecture/ai-artifacts.md)   | Prompt engineering framework and artifact types  |
 | [Validation Standards](docs/contributing/ai-artifacts-common.md) | CI/CD validation pipeline and quality gates      |
-
-## Label Management
-
-Repository labels are declared in [`.github/labels.yml`](.github/labels.yml) and synced automatically by the [Label Sync](.github/workflows/label-sync.yml) workflow on push to `main` or via manual `workflow_dispatch`.
-
-| Task               | How                                                                                                                                                                                                 |
-|--------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| **Add a label**    | Add an entry with `name`, `color` (bare hex, no `#`), and `description` to `.github/labels.yml`, then push to `main`                                                                                |
-| **Update a label** | Edit the existing entry's `color` or `description`                                                                                                                                                  |
-| **Rename a label** | Add an `aliases` array under the new canonical name listing the old name; the sync migrates existing assignments automatically                                                                      |
-| **Delete a label** | Remove it manually in the [GitHub Labels UI](https://github.com/microsoft/hve-core/labels). Deleting an entry from the file does **not** delete it from GitHub (the workflow runs in additive mode) |
-
-## Contributing
-
-We appreciate contributions! Whether you're fixing typos or adding new components:
-
-1. Read our [Contributing Guide](CONTRIBUTING.md).
-2. Check out [open issues](https://github.com/microsoft/hve-core/issues).
-3. Join the [discussion](https://github.com/microsoft/hve-core/discussions).
 
 ## Responsible AI
 

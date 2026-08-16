@@ -13,43 +13,40 @@ keywords:
 estimated_reading_time: 5
 ---
 
+## HVE Partner Workshop
 Start with the [HVE partner workshop](partner-workshop.md). It gives
-partners new to HVE a shared setup path, role-based exercises, an integrated
-capstone, and publication follow-up.
+partners new to HVE a shared setup path, role-based exercises, an integrated capstone, and publication follow-up.
 
-During the workshop, product managers, subject matter experts, designers, and
-technical participants work from one scenario to produce:
+During the workshop, project/product managers, subject matter experts, designers, and technical participants work from one scenario to produce:
 
 * grounded business, user, domain, design, and technical context
 * user and solution requirements with testable acceptance criteria
-* a prioritized GitHub or Azure DevOps backlog draft
+* a prioritized GitHub backlog draft
 * a reviewed Azure architecture diagram
-* follow-up plans for an Azure Managed Application offer and Microsoft 365
-  Copilot Agent Store publication
+* follow-up plans for an Azure Managed Application offer and Microsoft 365 Copilot Agent Store publication
 
 ## Start The Workshop
 
 | Step | Activity | Time |
 |------|----------|------|
-| 1 | [Review the workshop overview and agenda](partner-workshop.md) | 10 min |
-| 2 | [Set up Codespaces or local VS Code](partner-workshop-setup.md) | 15 min |
-| 3 | [Complete the PM, SME, design, or technical track](partner-workshop-role-tracks.md) | 45 min |
-| 4 | [Integrate requirements, backlog, and architecture](partner-workshop-capstone.md) | 35 min |
-| 5 | [Assess Marketplace and Agent Store readiness](partner-workshop-publishing.md) | 15 min |
+| 1 | [Review the workshop overview and agenda](partner-workshop.md) | 30 min |
+| 2 | [Set up Codespaces or local VS Code](partner-workshop-setup.md) | 30 min |
+| 3 | [Complete the PM, SME, Design, or Technical track](partner-workshop-role-tracks.md) | 60 min |
+| 4 | [Integrate requirements, backlog, and architecture](partner-workshop-capstone.md) | 60 min |
+| 5 | [Assess Microsoft Marketplace and Copilot Agent Store readiness](partner-workshop-publishing.md) | 30 min |
 
 > [!NOTE]
 > The workshop creates reviewed drafts and publication plans. Azure deployment,
 > certification, tenant approval, and production publication continue after
-> the two-hour session.
+> the session.
 
 ## Not sure which bundle of agents you need?
 
-Browse the available [Marketplace Packages](packages.md) to compare curated HVE capabilities.
+Marketplace packages are curated bundles of HVE capabilities that you can install into Copilot or VS Code so you get the right set of agents, prompts, instructions, and skills for your workflow. Browse the available [Marketplace Packages](packages.md) to compare curated HVE capabilities.
 
 ## Supporting References
 
-Use the remaining Getting Started material as reference before, during, or
-after the workshop.
+Use the remaining Getting Started material as reference after the workshop.
 
 | Reference | Use It To |
 |-----------|-----------|
