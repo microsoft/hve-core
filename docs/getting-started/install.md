@@ -3,7 +3,7 @@ title: Installing HVE Core
 description: Install the HVE Core extension or plugin, or adopt selected components from a clone
 sidebar_position: 2
 author: Microsoft
-ms.date: 2026-08-13
+ms.date: 2026-08-16
 ms.topic: how-to
 keywords: [installation, setup, github copilot, marketplace, selective clone]
 estimated_reading_time: 4
@@ -52,8 +52,11 @@ The installer can copy agents, prompts, instructions, and complete skill directo
 
 ```mermaid
 graph LR
+   accTitle: HVE Core distribution relationships
+   accDescr: The repository contains the marketplace locator and plugin manifest. The locator resolves the plugin root, while the manifest supplies membership to both the Copilot plugin and VS Code extension.
    REPO["microsoft/hve-core<br/>(canonical source)"] --> MANIFEST[".github/plugin.json<br/>(complete membership)"]
-   CATALOG["marketplace.json<br/>(one relative locator)"] --> ROOT[".github<br/>(plugin root)"]
+   REPO --> CATALOG[".github/plugin/marketplace.json<br/>(one relative locator)"]
+   CATALOG --> ROOT[".github<br/>(plugin root)"]
    MANIFEST --> PLUGIN["hve-core plugin"]
    MANIFEST --> EXT["hve-core VSIX"]
    ROOT --> PLUGIN

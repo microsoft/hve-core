@@ -64,7 +64,7 @@ See [activation-harness/README.md](agents/activation-harness/README.md) for the 
 
 ## Release
 
-The `release/` directory contains the repository version-update helper used by release workflows.
+The `release/` directory contains version normalization, promotion resolution, release-asset reconciliation, and provenance verification helpers used by release workflows.
 
 | Script                                | Purpose                                                    |
 |---------------------------------------|------------------------------------------------------------|

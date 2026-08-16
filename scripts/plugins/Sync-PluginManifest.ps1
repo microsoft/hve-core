@@ -59,9 +59,62 @@ $script:PluginManifestFile = '.github/plugin.json'
 $script:MarketplaceCatalogFile = '.github/plugin/marketplace.json'
 $script:FixedHookPath = 'hooks/shared/telemetry.json'
 $script:ManifestMetadataKey = @('author', 'homepage', 'repository', 'license', 'keywords')
+$script:LocatorMetadataKey = @('name', 'description', 'version', 'author', 'homepage', 'repository', 'license', 'keywords')
 $script:RecipeField = @('agents', 'commands', 'rules', 'skills', 'hooks', 'x-hve')
 
 #region Discovery
+
+function Get-TrackedPluginIndex {
+    <#
+    .SYNOPSIS
+        Reads tracked plugin paths and rejects symbolic-link index entries.
+
+    .PARAMETER RepoRoot
+        Root directory of the repository.
+
+    .OUTPUTS
+        [System.Collections.Specialized.OrderedDictionary] Paths and violation
+        messages derived from the git index.
+    #>
+    [CmdletBinding()]
+    [OutputType([System.Collections.Specialized.OrderedDictionary])]
+    param(
+        [Parameter(Mandatory = $true)]
+        [ValidateNotNullOrEmpty()]
+        [string]$RepoRoot
+    )
+
+    $output = & git -C $RepoRoot ls-files -s -z --full-name -- $script:PluginRoot
+    if ($LASTEXITCODE -ne 0) {
+        throw "git ls-files failed with exit code $LASTEXITCODE in $RepoRoot"
+    }
+
+    $prefix = "$script:PluginRoot/"
+    $paths = @()
+    $violations = @()
+    foreach ($entry in (($output -join '') -split "`0" | Where-Object { $_ })) {
+        if ($entry -notmatch '^(?<Mode>\d{6}) [0-9a-f]+ \d+\t(?<Path>.+)$') {
+            throw "Unexpected git ls-files entry: $entry"
+        }
+
+        $path = $Matches['Path']
+        if (-not $path.StartsWith($prefix, [System.StringComparison]::Ordinal)) {
+            continue
+        }
+
+        $relativePath = $path.Substring($prefix.Length)
+        if ($Matches['Mode'] -eq '120000') {
+            $violations += "Tracked plugin path is a symbolic link: $relativePath"
+            continue
+        }
+        $paths += $relativePath
+    }
+
+    return [ordered]@{
+        Paths      = @($paths)
+        Violations = @($violations)
+    }
+}
 
 function Get-TrackedPluginFile {
     <#
@@ -82,17 +135,11 @@ function Get-TrackedPluginFile {
         [string]$RepoRoot
     )
 
-    $output = & git -C $RepoRoot ls-files -z --full-name -- $script:PluginRoot
-    if ($LASTEXITCODE -ne 0) {
-        throw "git ls-files failed with exit code $LASTEXITCODE in $RepoRoot"
+    $index = Get-TrackedPluginIndex -RepoRoot $RepoRoot
+    if ($index.Violations.Count -gt 0) {
+        throw ($index.Violations -join [Environment]::NewLine)
     }
-
-    $prefix = "$script:PluginRoot/"
-    return @(
-        ($output -join '') -split "`0" |
-            Where-Object { $_.StartsWith($prefix, [System.StringComparison]::Ordinal) } |
-            ForEach-Object { $_.Substring($prefix.Length) }
-    )
+    return @($index.Paths)
 }
 
 function Get-SkillLicense {
@@ -173,6 +220,9 @@ function Get-PluginComponentSet {
     .PARAMETER RepoRoot
         Root directory of the repository.
 
+    .PARAMETER TrackedPath
+        Prevalidated plugin-root-relative tracked paths.
+
     .OUTPUTS
         [System.Collections.Specialized.OrderedDictionary] agents, commands,
         rules, and skills path arrays.
@@ -182,10 +232,16 @@ function Get-PluginComponentSet {
     param(
         [Parameter(Mandatory = $true)]
         [ValidateNotNullOrEmpty()]
-        [string]$RepoRoot
+        [string]$RepoRoot,
+
+        [Parameter(Mandatory = $false)]
+        [AllowEmptyCollection()]
+        [string[]]$TrackedPath
     )
 
-    $TrackedPath = Get-TrackedPluginFile -RepoRoot $RepoRoot
+    if (-not $PSBoundParameters.ContainsKey('TrackedPath')) {
+        $TrackedPath = Get-TrackedPluginFile -RepoRoot $RepoRoot
+    }
 
     $agents = [System.Collections.Generic.SortedSet[string]]::new([System.StringComparer]::Ordinal)
     $commands = [System.Collections.Generic.SortedSet[string]]::new([System.StringComparer]::Ordinal)
@@ -484,11 +540,20 @@ function Test-PluginCatalog {
     }
 
     $entry = $entries[0]
-    if ($entry['name'] -ne $Manifest['name']) {
-        $violations += "Catalog entry name '$($entry['name'])' does not match manifest name '$($Manifest['name'])'"
-    }
-    if ($entry['version'] -ne $Manifest['version']) {
-        $violations += "Catalog entry version '$($entry['version'])' does not match manifest version '$($Manifest['version'])'"
+    foreach ($field in $script:LocatorMetadataKey) {
+        $entryHasField = $entry.Contains($field)
+        $manifestHasField = $Manifest.Contains($field)
+        if ($entryHasField -ne $manifestHasField) {
+            $violations += "Catalog entry field '$field' presence does not match the manifest"
+            continue
+        }
+        if ($entryHasField) {
+            $entryValue = $entry[$field] | ConvertTo-Json -Depth 10 -Compress
+            $manifestValue = $Manifest[$field] | ConvertTo-Json -Depth 10 -Compress
+            if ($entryValue -cne $manifestValue) {
+                $violations += "Catalog entry field '$field' does not match the manifest"
+            }
+        }
     }
     if ($catalog['metadata']['version'] -ne $Manifest['version']) {
         $violations += "Catalog metadata version '$($catalog['metadata']['version'])' does not match manifest version '$($Manifest['version'])'"
@@ -548,7 +613,8 @@ function Invoke-PluginManifestSync {
         [switch]$Check
     )
 
-    $components = Get-PluginComponentSet -RepoRoot $RepoRoot
+    $trackedIndex = Get-TrackedPluginIndex -RepoRoot $RepoRoot
+    $components = Get-PluginComponentSet -RepoRoot $RepoRoot -TrackedPath $trackedIndex.Paths
     $version = Get-RepositoryVersion -RepoRoot $RepoRoot
     $manifest = New-PluginManifest -RepoRoot $RepoRoot -Component $components -Version $version
 
@@ -557,20 +623,20 @@ function Invoke-PluginManifestSync {
     $committedRaw = Get-Content -LiteralPath $manifestPath -Raw
     $committedJson = ($committedRaw -replace "`r`n", "`n").TrimEnd("`n") + "`n"
 
-    $violations = @()
+    $violations = @($trackedIndex.Violations)
     $changed = $expectedJson -ne $committedJson
+
+    $violations += @(Test-PluginCatalog -RepoRoot $RepoRoot -Manifest $manifest)
 
     if ($changed) {
         if ($Check) {
             $violations += "$script:PluginManifestFile is out of sync with tracked components"
             $violations += @(Compare-PluginComponentSet -Committed (ConvertFrom-Json $committedRaw -AsHashtable) -Expected $manifest)
         }
-        else {
+        elseif ($violations.Count -eq 0) {
             Set-Content -LiteralPath $manifestPath -Value $expectedJson -Encoding UTF8 -NoNewline
         }
     }
-
-    $violations += @(Test-PluginCatalog -RepoRoot $RepoRoot -Manifest $manifest)
 
     return [ordered]@{
         Changed    = $changed

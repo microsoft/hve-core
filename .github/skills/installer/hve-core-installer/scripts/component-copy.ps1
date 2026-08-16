@@ -124,11 +124,26 @@ $fieldMap = [ordered]@{
     skills   = @{ Kind = 'skill'; Root = '.github/skills'; ManifestRoot = 'skills'; PackageSuffix = ''; SourceSuffix = '' }
 }
 
-# The plugin manifest stores canonical source identities while installer input and
-# manifests use package form. A path whose root is outside the four installable
-# fields, such as hooks/, carries through unprojected so manifest load never fails.
 function ConvertTo-PackageComponentPath {
-    param([string]$ManifestPath)
+    <#
+    .SYNOPSIS
+        Converts a canonical plugin-manifest path to installer package form.
+    .DESCRIPTION
+        The plugin manifest stores canonical source identities while installer
+        input and tracking manifests use package form. Paths outside the four
+        installable fields, such as hooks, pass through unchanged.
+    .PARAMETER ManifestPath
+        Plugin-root-relative path declared by the canonical manifest.
+    .OUTPUTS
+        [string] Installer package path, or the original path when no mapping applies.
+    #>
+    [CmdletBinding()]
+    [OutputType([string])]
+    param(
+        [Parameter(Mandatory = $true)]
+        [ValidateNotNullOrEmpty()]
+        [string]$ManifestPath
+    )
 
     $segments = $ManifestPath -split '/', 2
     if ($segments.Count -lt 2) { return $ManifestPath }

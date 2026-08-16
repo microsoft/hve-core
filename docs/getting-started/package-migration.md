@@ -3,7 +3,7 @@ title: Migrate to the HVE Core Identity
 description: Move retired package installations to the single HVE Core plugin or extension
 sidebar_position: 4
 author: Microsoft
-ms.date: 2026-08-13
+ms.date: 2026-08-16
 ms.topic: how-to
 keywords:
   - migration
@@ -83,23 +83,31 @@ Use clone-based selective adoption when the complete plugin is broader than your
 
 The installer preserves repository-relative paths for every copied component. A selected skill includes its complete distributable directory, excluding local tests, environments, and caches. Hooks are plugin runtime configuration and are not copied into the target repository.
 
-Schema version 2 stores `selection.profile` and `selection.components`. File records identify component ownership without package identity, and hooks are not copied.
+Schema version 2 stores `selection.profile` and `selection.components`. File records identify component ownership without package identity, and hooks are not copied. Existing schema version 1 tracking files are not upgraded in place: remove `.hve-tracking.json` and run a clean installation. Because the one-plugin manifest no longer declares per-component maturity, new schema version 2 file records use the schema-default `stable` value.
 
 ## Retired Package Identities
 
-The `ado`, `github`, `jira`, `gitlab`, and `hve-core-all` package identities are retired. Their capabilities now ship through the complete `hve-core` plugin and extension. The Marketplace offers no deprecation or tombstone signal, so an already-installed retired extension keeps surfacing commands that no longer resolve. Install `ise-hve-essentials.hve-core`, verify the replacement, then uninstall the retired extension.
+Thirteen package identities are retired. Their capabilities now ship through the complete `hve-core` plugin and extension. The Marketplace offers no deprecation or tombstone signal, so an already-installed retired extension keeps surfacing commands that no longer resolve. Install `ise-hve-essentials.hve-core`, verify the replacement, then uninstall each retired extension listed below.
 
 The source tree still groups capabilities by areas such as `project-planning` and `security`, but those areas are no longer separate extension identities.
 
 ### Retired extension identities
 
-| If you installed                  | Install instead               |
-|-----------------------------------|-------------------------------|
-| `ise-hve-essentials.hve-ado`      | `ise-hve-essentials.hve-core` |
-| `ise-hve-essentials.hve-github`   | `ise-hve-essentials.hve-core` |
-| `ise-hve-essentials.hve-jira`     | `ise-hve-essentials.hve-core` |
-| `ise-hve-essentials.hve-gitlab`   | `ise-hve-essentials.hve-core` |
-| `ise-hve-essentials.hve-core-all` | `ise-hve-essentials.hve-core` |
+| If you installed                          | Install instead               |
+|-------------------------------------------|-------------------------------|
+| `ise-hve-essentials.hve-ado`              | `ise-hve-essentials.hve-core` |
+| `ise-hve-essentials.hve-coding-standards` | `ise-hve-essentials.hve-core` |
+| `ise-hve-essentials.hve-data-science`     | `ise-hve-essentials.hve-core` |
+| `ise-hve-essentials.hve-design-thinking`  | `ise-hve-essentials.hve-core` |
+| `ise-hve-essentials.hve-experimental`     | `ise-hve-essentials.hve-core` |
+| `ise-hve-essentials.hve-github`           | `ise-hve-essentials.hve-core` |
+| `ise-hve-essentials.hve-installer`        | `ise-hve-essentials.hve-core` |
+| `ise-hve-essentials.hve-jira`             | `ise-hve-essentials.hve-core` |
+| `ise-hve-essentials.hve-gitlab`           | `ise-hve-essentials.hve-core` |
+| `ise-hve-essentials.hve-core-all`         | `ise-hve-essentials.hve-core` |
+| `ise-hve-essentials.hve-project-planning` | `ise-hve-essentials.hve-core` |
+| `ise-hve-essentials.hve-rpi`              | `ise-hve-essentials.hve-core` |
+| `ise-hve-essentials.hve-security`         | `ise-hve-essentials.hve-core` |
 
 ### Retired read-only commands
 

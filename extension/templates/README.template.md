@@ -2,8 +2,6 @@
 
 > {{DESCRIPTION}}
 
-{{MATURITY_NOTICE}}
-
 {{BODY}}
 
 ## Included Artifacts
@@ -26,7 +24,7 @@ Some chat agents create workflow artifacts in your project directory. See the [i
 
 This extension contains the complete active HVE Core component set.
 
-Review channel ownership, lifecycle disclosure, and selective clone adoption:
+Review channel ownership, release assurance, and selective clone adoption:
 
 [HVE Core Identity and Channels](https://github.com/microsoft/hve-core/blob/main/docs/getting-started/packages.md)
 

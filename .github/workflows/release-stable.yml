@@ -313,7 +313,7 @@ jobs:
             exit 1
           fi
 
-          ALLOWLIST=$(printf '%s\n' \
+          RELEASE_OWNED_FILES=(
             'CHANGELOG.md' \
             "$TARGET_CONFIG" \
             "$TARGET_MANIFEST" \
@@ -321,7 +321,9 @@ jobs:
             'package-lock.json' \
             'extension/templates/package.template.json' \
             '.github/plugin.json' \
-            '.github/plugin/marketplace.json')
+            '.github/plugin/marketplace.json'
+          )
+          ALLOWLIST=$(printf '%s\n' "${RELEASE_OWNED_FILES[@]}")
 
           merge_ref() {
             local ref="$1"
@@ -421,10 +423,10 @@ jobs:
           # The selected published source decides component membership, and the
           # target baseline decides the version. Neither transforms a source
           # ref, records a release candidate, nor generates a plugin root.
-          pwsh -NoProfile -File "$GITHUB_WORKSPACE/scripts/plugins/Sync-PluginManifest.ps1" \
-              -RepoRoot "$PWD"
           pwsh -NoProfile -File "$GITHUB_WORKSPACE/scripts/release/Set-RepositoryVersion.ps1" \
               -Version "$TARGET_VERSION" \
+              -RepoRoot "$PWD"
+            pwsh -NoProfile -File "$GITHUB_WORKSPACE/scripts/plugins/Sync-PluginManifest.ps1" \
               -RepoRoot "$PWD"
 
           # The captured changelog cutoff and the exact release intent are
@@ -446,7 +448,11 @@ jobs:
             exit 1
           fi
 
-          git add --all
+          pwsh -NoProfile -File "$GITHUB_WORKSPACE/scripts/plugins/Sync-PluginManifest.ps1" \
+              -RepoRoot "$PWD" \
+              -Check
+
+          git add -- "${RELEASE_OWNED_FILES[@]}"
           if git diff --cached --quiet; then
             git reset --quiet
           else

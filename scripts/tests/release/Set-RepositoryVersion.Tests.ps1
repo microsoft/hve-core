@@ -97,12 +97,6 @@ BeforeAll {
   ".": "$Version"
 }
 "@
-            '.github/plugin/release-candidate.json'     = @"
-{
-  "schema": "hve-core/release-candidate/v1",
-  "version": "$Version"
-}
-"@
         }
 
         foreach ($relative in $files.Keys) {
@@ -169,7 +163,6 @@ Describe 'Set-RepositoryVersion' -Tag 'Unit' {
 
         It 'Leaves <Path> unchanged' -ForEach @(
             @{ Path = '.release-please-manifest.json' }
-            @{ Path = '.github/plugin/release-candidate.json' }
         ) {
             $script:After[$Path] | Should -BeExactly $script:Before[$Path]
         }

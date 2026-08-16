@@ -13,6 +13,9 @@ keywords:
 
 HVE Core is the single plugin and extension identity for all distributable HVE Core content.
 
+> [!CAUTION]
+> HVE Core evolves quickly. Evaluate these assets as adaptable engineering patterns, review changes before adoption, and pin an exact release tag when reproducible source is required.
+
 `.github/plugin.json` owns complete membership. `.github/plugin/marketplace.json` contains one `hve-core` entry whose relative source is `.github`; it does not repeat component membership.
 
 Stable and PreRelease contain the same complete agents, prompts, instructions, skills, and telemetry hook. Channel selection changes source ownership, cadence, version, release assurance, and VS Code Marketplace behavior, not membership.

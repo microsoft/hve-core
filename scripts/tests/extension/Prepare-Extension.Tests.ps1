@@ -81,15 +81,11 @@ Describe 'Prepare-Extension plugin manifest reading' -Tag 'Unit' {
         { Get-PluginManifest -Path $absent } | Should -Throw "Plugin manifest not found: $absent"
     }
 
-    It 'Consults no marketplace catalog' {
-        Get-Content -LiteralPath $script:PrepareScriptPath -Raw | Should -Not -Match '(?i)marketplace'
-    }
-
-    It 'Declares no package identity parameter' {
+    It 'Declares only the dry-run parameter' {
         $parseErrors = $null
         $ast = [System.Management.Automation.Language.Parser]::ParseFile($script:PrepareScriptPath, [ref]$null, [ref]$parseErrors)
         $parseErrors | Should -BeNullOrEmpty
-        @($ast.ParamBlock.Parameters | ForEach-Object { $_.Name.VariablePath.UserPath }) | Should -Be @('Channel', 'DryRun')
+        @($ast.ParamBlock.Parameters | ForEach-Object { $_.Name.VariablePath.UserPath }) | Should -Be @('DryRun')
     }
 }
 

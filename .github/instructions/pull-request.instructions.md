@@ -1,5 +1,5 @@
 ---
-description: 'hve-core pull request conventions: template mapping, change detection, and maturity tracking'
+description: 'hve-core pull request conventions: template mapping, change detection, and membership tracking'
 applyTo: '**/.copilot-tracking/pr/**'
 ---
 
@@ -55,7 +55,7 @@ Document all testing performed by the agent:
 
 ### Special Insertion Rules
 
-* Insert a GHCP Maturity section before `## Additional Notes` when non-stable GHCP artifacts are detected.
+* Insert a GHCP Membership Changes section before `## Additional Notes` when GHCP artifact membership changes.
 
 ## Checkbox Reference
 
@@ -79,7 +79,6 @@ Single authoritative reference for all checkbox handling in the PR template. All
 | Checklist > AI Artifact Contributions | AI artifact contribution verification | Manual              | N/A    | Human verification; never checked by agent                                    |
 | Checklist > Required Local Checks     | Local validation command results      | Agent (automated)   | Step 7 | Check only when the matching local command passed                             |
 | Checklist > Required CI Status Checks | Hosted workflow status results        | Agent (status)      | Step 7 | Check only when the matching hosted status passed; leave Pending CI unchecked |
-| GHCP Maturity (inserted)              | Non-stable artifact acknowledgment    | Manual              | N/A    | Inserted only when non-stable GHCP artifacts detected; left unchecked         |
 
 When a conditional checkbox's trigger condition is not met, annotate the checkbox inline with `(N/A — {brief reason})` to distinguish skipped-as-not-applicable from evaluated-and-failed.
 
@@ -135,23 +134,13 @@ For deprecated files:
 > - `path/to/legacy.agent.md`
 ```
 
-Always include the maturity summary table when any GHCP files are detected:
+Include a membership summary when the PR adds or removes distributable GHCP artifacts:
 
 ```markdown
-## GHCP Artifact Maturity
+## GHCP Membership Changes
 
-| File                     | Type         | Maturity        | Notes            |
-|--------------------------|--------------|-----------------|------------------|
-| `new-feature.prompt.md`  | Prompt       | ⚠️ experimental | Pre-release only |
-| `helper.agent.md`        | Agent        | 🔶 preview      | Pre-release only |
-| `video-to-gif/SKILL.md`  | Skill        | ✅ stable        | All builds       |
-| `coding.instructions.md` | Instructions | ✅ stable        | All builds       |
-```
-
-If any non-stable files detected, add:
-
-```markdown
-### GHCP Maturity Acknowledgment
-- [ ] I acknowledge this PR includes non-stable GHCP artifacts
-- [ ] Non-stable artifacts are intentional for this change
+| File                    | Type   | Membership change |
+|-------------------------|--------|-------------------|
+| `new-feature.prompt.md` | Prompt | Added             |
+| `legacy.agent.md`       | Agent  | Removed           |
 ```

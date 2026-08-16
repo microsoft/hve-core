@@ -290,20 +290,50 @@ Describe 'One-package build and artifact naming' -Tag 'Unit' {
         $inputs.Contains('channel') | Should -BeTrue
         $document['on']['workflow_call'].Contains('outputs') | Should -BeFalse
 
-        [string]$document['jobs']['package']['steps'][0]['with']['ref'] |
+        $checkout = Get-NamedJobStep -Document $document -JobName 'package' -StepName 'Checkout code'
+        [string]$checkout['with']['ref'] |
             Should -BeExactly '${{ inputs.source-ref }}'
 
         $steps = Get-JobStepText -Document $document -JobName 'package'
-        @($steps | Where-Object { $_ -match 'Prepare-Extension\.ps1 -Channel \$channel$' }) | Should -HaveCount 1
+        @($steps | Where-Object { $_ -match 'Prepare-Extension\.ps1$' }) | Should -HaveCount 1
         @($steps | Where-Object { $_ -match 'Package-Extension\.ps1 @arguments' }) | Should -HaveCount 1
     }
 
-    # The packaged source and the caller-supplied version must agree before any
-    # dependency lifecycle script runs.
-    It 'Validates packaging inputs before installing dependencies' {
+    It 'Validates the source ref before checkout and packaging inputs before dependencies' {
         $document = Get-WorkflowDocument -Name 'extension-package.yml'
         $names = [string[]]@($document['jobs']['package']['steps'] | ForEach-Object { [string]$_['name'] })
+        $names.IndexOf('Validate source ref') | Should -BeLessThan $names.IndexOf('Checkout code')
+        $names.IndexOf('Checkout code') | Should -BeLessThan $names.IndexOf('Validate packaging inputs')
         $names.IndexOf('Validate packaging inputs') | Should -BeLessThan $names.IndexOf('Install dependencies')
+    }
+
+    It 'Accepts source-ref form <SourceRef> before checkout' -Skip:$script:SkipShellFixtureTests -ForEach @(
+        @{ SourceRef = '1111111111111111111111111111111111111111' }
+        @{ SourceRef = 'main' }
+        @{ SourceRef = 'v3.2.2' }
+        @{ SourceRef = 'refs/tags/v3.2.2' }
+    ) {
+        $step = Get-NamedJobStep -Document (Get-WorkflowDocument -Name 'extension-package.yml') `
+            -JobName 'package' -StepName 'Validate source ref'
+        $result = Invoke-WorkflowShellStep -Body ([string]$step['run']) -TemplateVersion '3.3.0' -Environment @{
+            INPUT_SOURCE_REF = $SourceRef
+        }
+        $result.ExitCode | Should -Be 0
+    }
+
+    It 'Rejects malformed source-ref <SourceRef> before checkout' -Skip:$script:SkipShellFixtureTests -ForEach @(
+        @{ SourceRef = '' }
+        @{ SourceRef = '-branch' }
+        @{ SourceRef = 'bad..ref' }
+        @{ SourceRef = 'refs/heads/bad ref' }
+    ) {
+        $step = Get-NamedJobStep -Document (Get-WorkflowDocument -Name 'extension-package.yml') `
+            -JobName 'package' -StepName 'Validate source ref'
+        $result = Invoke-WorkflowShellStep -Body ([string]$step['run']) -TemplateVersion '3.3.0' -Environment @{
+            INPUT_SOURCE_REF = $SourceRef
+        }
+        $result.ExitCode | Should -Not -Be 0
+        $result.Output | Should -Match 'source-ref'
     }
 
     It 'Fails a committed template version mismatch in extension-package.yml' -Skip:$script:SkipShellFixtureTests {
@@ -317,18 +347,15 @@ Describe 'One-package build and artifact naming' -Tag 'Unit' {
         $result.Output | Should -Match 'is 3\.3\.0 but the caller requested 3\.5\.0'
     }
 
-    It 'Fails a blank <Field> in extension-package.yml' -Skip:$script:SkipShellFixtureTests -ForEach @(
-        @{ Field = 'source-ref'; SourceRef = ''; Version = '3.3.0' }
-        @{ Field = 'version'; SourceRef = '1111111111111111111111111111111111111111'; Version = '' }
-    ) {
+    It 'Fails a blank version in extension-package.yml' -Skip:$script:SkipShellFixtureTests {
         $step = Get-NamedJobStep -Document (Get-WorkflowDocument -Name 'extension-package.yml') `
             -JobName 'package' -StepName 'Validate packaging inputs'
         $result = Invoke-WorkflowShellStep -Body ([string]$step['run']) -TemplateVersion '3.3.0' -Environment @{
-            INPUT_SOURCE_REF = $SourceRef
-            INPUT_VERSION    = $Version
+            INPUT_SOURCE_REF = '1111111111111111111111111111111111111111'
+            INPUT_VERSION    = ''
         }
         $result.ExitCode | Should -Not -Be 0
-        $result.Output | Should -Match "$Field is required"
+        $result.Output | Should -Match 'version is required'
     }
 
     # The builder and the attest workflow must agree on one artifact name, so
@@ -621,6 +648,22 @@ Describe 'Release-please ownership and promotion transforms' -Tag 'Unit' {
         $run | Should -Match 'scripts/release/Set-RepositoryVersion\.ps1'
         $run | Should -Match '-Version "\$TARGET_VERSION"'
         $run | Should -Match '-RepoRoot "\$PWD"'
+
+        $versionPosition = $run.IndexOf('scripts/release/Set-RepositoryVersion.ps1', [System.StringComparison]::Ordinal)
+        $syncPosition = $run.IndexOf('scripts/plugins/Sync-PluginManifest.ps1', [System.StringComparison]::Ordinal)
+        $finalCheckPosition = $run.LastIndexOf('scripts/plugins/Sync-PluginManifest.ps1', [System.StringComparison]::Ordinal)
+        $versionPosition | Should -BeGreaterThan -1
+        $syncPosition | Should -BeGreaterThan $versionPosition
+        $finalCheckPosition | Should -BeGreaterThan $syncPosition
+        $run.Substring($finalCheckPosition) | Should -Match '-Check'
+    }
+
+    It 'Stages only the Stable release-owned files' {
+        $run = [string](Get-NamedJobStep -Document (Get-WorkflowDocument -Name 'release-stable.yml') `
+                -JobName 'prepare-promotion' -StepName 'Refresh the promotion head')['run']
+        $run | Should -Match 'RELEASE_OWNED_FILES=\('
+        $run | Should -Match 'git add -- "\$\{RELEASE_OWNED_FILES\[@\]\}"'
+        $run | Should -Not -Match 'git add --all'
     }
 
     It 'Checks out only trusted release tooling from main in <Workflow>' -ForEach @(

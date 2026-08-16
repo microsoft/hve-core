@@ -2,7 +2,7 @@
 title: Extension Scripts
 description: PowerShell scripts for manifest-driven VS Code extension preparation and packaging
 author: HVE Core Team
-ms.date: 2026-08-13
+ms.date: 2026-08-16
 ms.topic: reference
 keywords:
   - powershell
@@ -39,22 +39,18 @@ Purpose: Gather and filter artifacts for inclusion in the extension package.
 
 * Maps agents, prompts, instructions, and skills from plugin manifest membership
 * Writes the single `extension/package.json` and `extension/README.md`
-* Keeps component membership identical across channels
+* Produces channel-neutral component membership before packaging
 * Dry-run mode for previewing changes
 
 #### Parameters
 
-* `-Channel` - Release channel: `Stable` or `PreRelease`
 * `-DryRun` (switch) - Preview changes without modifying files
 
 #### Usage
 
 ```powershell
-# Prepare stable channel
+# Prepare channel-neutral extension resources
 ./scripts/extension/Prepare-Extension.ps1
-
-# Prepare pre-release channel
-./scripts/extension/Prepare-Extension.ps1 -Channel PreRelease
 
 # Dry run to preview
 ./scripts/extension/Prepare-Extension.ps1 -DryRun
@@ -135,12 +131,12 @@ for verification and release upload.
 
 ## npm Scripts
 
-| npm Script                     | Description                   |
-|--------------------------------|-------------------------------|
-| `extension:prepare`            | Prepare stable channel        |
-| `extension:prepare:prerelease` | Prepare pre-release channel   |
-| `extension:package`            | Package extension             |
-| `extension:package:prerelease` | Package pre-release extension |
+| npm Script                     | Description                                               |
+|--------------------------------|-----------------------------------------------------------|
+| `extension:prepare`            | Prepare channel-neutral resources                         |
+| `extension:prepare:prerelease` | Prepare the same resources for the PreRelease entry point |
+| `extension:package`            | Package extension                                         |
+| `extension:package:prerelease` | Package pre-release extension                             |
 
 ## GitHub Actions Integration
 

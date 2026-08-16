@@ -7,9 +7,11 @@ PowerShell tooling for synchronizing `.github/plugin.json` with the complete dis
 
 ## Scripts
 
-| Script                  | npm Command           | Description                                                |
-|-------------------------|-----------------------|------------------------------------------------------------|
-| Sync-PluginManifest.ps1 | `npm run plugin:sync` | Write deterministic membership and validate locator parity |
+| Script                         | npm Command                    | Description                                       |
+|--------------------------------|--------------------------------|---------------------------------------------------|
+| Sync-PluginManifest.ps1        | `npm run plugin:sync`          | Write deterministic membership and locator parity |
+| Sync-PluginManifest.ps1 -Check | `npm run lint:plugin-manifest` | Fail on manifest or marketplace locator drift     |
+| Aggregate validation           | `npm run plugin:validate`      | Check the manifest, locator, and hook declaration |
 
 ## Prerequisites
 
@@ -52,7 +54,7 @@ Check mode writes nothing and exits nonzero on manifest or locator drift.
 
 ## Locator Validation
 
-Check mode requires `.github/plugin/marketplace.json` to contain exactly one `hve-core` entry whose relative source is `.github`. It verifies name and version parity, source containment, manifest existence, component coverage, and the absence of recipe fields such as `agents`, `commands`, `rules`, `skills`, `hooks`, or `x-hve` on the locator entry.
+Check mode requires `.github/plugin/marketplace.json` to contain exactly one `hve-core` entry whose relative source is `.github`. It verifies parity for every retained manifest metadata field, source containment, manifest existence, component coverage, and the absence of recipe fields such as `agents`, `commands`, `rules`, `skills`, `hooks`, or `x-hve` on the locator entry.
 
 The moving registrations `microsoft/hve-core#release/prerelease` and `microsoft/hve-core#release/stable` select reviewed branch state. Exact `prerelease-v<version>` and `v<version>` registrations select immutable release state. The catalog always locates the plugin root relative to the selected repository ref.
 

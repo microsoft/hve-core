@@ -2,7 +2,7 @@
 title: Release Process
 description: Release HVE Core through reviewed PreRelease metadata and Stable promotion workflows
 sidebar_position: 9
-ms.date: 2026-08-13
+ms.date: 2026-08-16
 ms.topic: how-to
 author: WilliamBerryiii
 keywords:
@@ -96,8 +96,8 @@ flowchart TD
 1. A published PreRelease event runs `Stable Release Preparation`. A recovery
     dispatch must provide the published `prerelease-v<version>` tag.
 2. The workflow derives a promotion head from the validated source tag,
-    refreshes it from `release/stable`, validates matching canonical release
-    assets, and merges only that tag commit. It restores
+    refreshes it from `release/stable`, validates the published source tag,
+    version, and branch ancestry, and merges only that tag commit. It restores
     selected-source manifest and version content, projects Stable version
     fields, writes the exact `release-as`, and opens a reviewed PR. Newer
     `release/prerelease` commits and other selected tags are excluded.

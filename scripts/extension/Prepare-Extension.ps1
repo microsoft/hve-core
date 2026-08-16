@@ -10,22 +10,16 @@
     Reads .github/plugin.json as the sole component authority and writes the
     single hve-core extension manifest and README. Component membership is
     identical on every release channel.
-.PARAMETER Channel
-    Stable or PreRelease release channel. Membership does not vary by channel.
 .PARAMETER DryRun
     Reports the resolved contributions without writing extension output.
 .EXAMPLE
-    ./Prepare-Extension.ps1 -Channel Stable
+    ./Prepare-Extension.ps1
 .NOTES
     Runs through extension preparation package scripts.
 #>
 
 [CmdletBinding()]
 param(
-    [Parameter(Mandatory = $false)]
-    [ValidateSet('Stable', 'PreRelease')]
-    [string]$Channel = 'Stable',
-
     [Parameter(Mandatory = $false)]
     [switch]$DryRun
 )
@@ -276,7 +270,6 @@ function New-ExtensionReadme {
     $content = (Get-Content -LiteralPath $TemplatePath -Raw -Encoding utf8) `
         -replace '\{\{DISPLAY_NAME\}\}', $DisplayName `
         -replace '\{\{DESCRIPTION\}\}', $Description `
-        -replace '\{\{MATURITY_NOTICE\}\}', '' `
         -replace '\{\{BODY\}\}', $body `
         -replace '\{\{ARTIFACTS\}\}', (New-ExtensionArtifactSection -Items $Items -RepoRoot $RepoRoot)
     $content = ($content -replace '(\r?\n){3,}', "`n`n").TrimEnd() + "`n"
@@ -490,7 +483,6 @@ if ($MyInvocation.InvocationName -ne '.') {
         if (-not $result.Success) { throw $result.ErrorMessage }
 
         Write-Host 'HVE Core extension prepared' -ForegroundColor Green
-        Write-Host "  Channel: $Channel"
         Write-Host "  Agents: $($result.AgentCount)"
         Write-Host "  Prompts: $($result.PromptCount)"
         Write-Host "  Instructions: $($result.InstructionCount)"

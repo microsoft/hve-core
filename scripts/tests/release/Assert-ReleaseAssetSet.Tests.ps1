@@ -284,6 +284,15 @@ Describe 'Assert-ReleaseAssetSet end to end' -Tag 'Unit' {
         $result.Vsix | Should -Be @('hve-core-3.3.0.vsix')
     }
 
+    It 'Rejects malformed direct helper version <Version>' -ForEach @(
+        @{ Version = '3.3' }
+        @{ Version = 'v3.3.0' }
+        @{ Version = "3.3.0`n4.0.0" }
+    ) {
+        { Invoke-AssertOverFile -AssetName (New-AssetSet) -Version $Version } |
+            Should -Throw '*does not match*'
+    }
+
     It 'Fails an incomplete release with a finding count' {
         { Invoke-AssertOverFile -AssetName (New-AssetSet -Remove @('hve-core-3.3.0.vsix.sigstore.json')) } |
             Should -Throw '*has incomplete release assets: 1 findings*'

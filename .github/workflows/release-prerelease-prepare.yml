@@ -366,10 +366,10 @@ jobs:
           # The merged source decides component membership, and the target
           # baseline decides the version. Neither transforms a source ref,
           # records a release candidate, nor generates a plugin root.
-          pwsh -NoProfile -File "$GITHUB_WORKSPACE/scripts/plugins/Sync-PluginManifest.ps1" \
-              -RepoRoot "$PWD"
           pwsh -NoProfile -File "$GITHUB_WORKSPACE/scripts/release/Set-RepositoryVersion.ps1" \
               -Version "$TARGET_VERSION" \
+              -RepoRoot "$PWD"
+            pwsh -NoProfile -File "$GITHUB_WORKSPACE/scripts/plugins/Sync-PluginManifest.ps1" \
               -RepoRoot "$PWD"
 
           # The captured changelog cutoff and the exact release intent are
@@ -390,6 +390,10 @@ jobs:
             echo "::error::$TARGET_CONFIG carries bootstrap-sha $WRITTEN_ANCHOR instead of $BOOTSTRAP_SHA"
             exit 1
           fi
+
+          pwsh -NoProfile -File "$GITHUB_WORKSPACE/scripts/plugins/Sync-PluginManifest.ps1" \
+              -RepoRoot "$PWD" \
+              -Check
 
           git add --all
           if git diff --cached --quiet; then

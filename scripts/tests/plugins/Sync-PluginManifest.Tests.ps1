@@ -67,7 +67,11 @@ BeforeAll {
             name        = 'hve-core'
             description = 'Fixture plugin'
             version     = $Version
+            author      = [ordered]@{ name = 'Microsoft'; url = 'https://www.microsoft.com' }
+            homepage    = 'https://github.com/microsoft/hve-core'
+            repository  = 'https://github.com/microsoft/hve-core'
             license     = 'MIT'
+            keywords    = @('hve', 'agents')
             agents      = @()
             commands    = @()
             rules       = @()
@@ -89,6 +93,11 @@ BeforeAll {
                     source      = '.github'
                     description = 'Fixture plugin'
                     version     = $Version
+                    author      = [ordered]@{ name = 'Microsoft'; url = 'https://www.microsoft.com' }
+                    homepage    = 'https://github.com/microsoft/hve-core'
+                    repository  = 'https://github.com/microsoft/hve-core'
+                    license     = 'MIT'
+                    keywords    = @('hve', 'agents')
                 }
             )
         }
@@ -274,7 +283,8 @@ Describe 'New-PluginManifest' -Tag 'Unit' {
 
     It 'Orders manifest keys deterministically' {
         @($script:Manifest.Keys) | Should -Be @(
-            'name', 'description', 'version', 'license',
+            'name', 'description', 'version', 'author', 'homepage',
+            'repository', 'license', 'keywords',
             'agents', 'commands', 'rules', 'skills', 'hooks'
         )
     }
@@ -311,6 +321,38 @@ Describe 'Invoke-PluginManifestSync write mode' -Tag 'Unit' {
         $second = Invoke-PluginManifestSync -RepoRoot $script:WriteRoot
         $second.Changed | Should -BeFalse
         (Get-FileHash (Join-Path $script:WriteRoot '.github/plugin.json') -Algorithm SHA256).Hash | Should -BeExactly $before
+    }
+}
+
+Describe 'Invoke-PluginManifestSync failure atomicity' -Tag 'Unit' {
+    It 'Leaves a drifted manifest unchanged when catalog validation fails' {
+        $root = New-PluginFixture -Root (Join-Path $TestDrive 'atomicity')
+        Set-FixtureCatalog -Root $root -Transform {
+            param($c) @($c['plugins'])[0]['description'] = 'Drifted description'; $c
+        }
+        $manifestPath = Join-Path $root '.github/plugin.json'
+        $before = (Get-FileHash $manifestPath -Algorithm SHA256).Hash
+
+        $result = Invoke-PluginManifestSync -RepoRoot $root
+
+        $result.Changed | Should -BeTrue
+        $result.Violations -join "`n" | Should -Match "field 'description' does not match"
+        (Get-FileHash $manifestPath -Algorithm SHA256).Hash | Should -BeExactly $before
+    }
+
+    It 'Rejects a tracked symbolic link before component discovery' {
+        $root = New-PluginFixture -Root (Join-Path $TestDrive 'symlink')
+        $targetPath = Join-Path $root 'link-target.txt'
+        Set-Content -LiteralPath $targetPath -Value 'agents/alpha/one.agent.md' -Encoding UTF8 -NoNewline
+        $blob = (& git -C $root hash-object -w $targetPath).Trim()
+        Remove-Item -LiteralPath $targetPath -Force
+        & git -C $root update-index --add --cacheinfo 120000 $blob '.github/agents/alpha/link.agent.md'
+        $LASTEXITCODE | Should -Be 0
+
+        $result = Invoke-PluginManifestSync -RepoRoot $root
+
+        $result.Violations -join "`n" | Should -Match 'symbolic link: agents/alpha/link\.agent\.md'
+        $result.Manifest['agents'] | Should -Not -Contain 'agents/alpha/link.agent.md'
     }
 }
 
@@ -377,6 +419,11 @@ Describe 'Test-PluginCatalog' -Tag 'Unit' {
                     source      = '.github'
                     description = 'Fixture plugin'
                     version     = $c['metadata']['version']
+                    author      = [ordered]@{ name = 'Microsoft'; url = 'https://www.microsoft.com' }
+                    homepage    = 'https://github.com/microsoft/hve-core'
+                    repository  = 'https://github.com/microsoft/hve-core'
+                    license     = 'MIT'
+                    keywords    = @('hve', 'agents')
                 }
             )
             $c
@@ -400,7 +447,7 @@ Describe 'Test-PluginCatalog' -Tag 'Unit' {
             param($c) @($c['plugins'])[0]['name'] = 'other'; $c
         }
         (Test-PluginCatalog -RepoRoot $script:CatalogRoot -Manifest $script:CatalogManifest) -join "`n" |
-            Should -Match "entry name 'other' does not match"
+            Should -Match "field 'name' does not match"
     }
 
     It 'Rejects an entry version that differs from the manifest' {
@@ -408,7 +455,7 @@ Describe 'Test-PluginCatalog' -Tag 'Unit' {
             param($c) @($c['plugins'])[0]['version'] = '9.9.9'; $c
         }
         (Test-PluginCatalog -RepoRoot $script:CatalogRoot -Manifest $script:CatalogManifest) -join "`n" |
-            Should -Match 'entry version'
+            Should -Match "field 'version' does not match"
     }
 
     It 'Rejects catalog metadata that differs from the manifest' {
@@ -421,6 +468,23 @@ Describe 'Test-PluginCatalog' -Tag 'Unit' {
         Set-FixtureCatalog -Root $script:CatalogRoot -Transform {
             param($c) $c['metadata']['version'] = $script:CatalogManifest['version']; $c
         }
+    }
+
+    It 'Rejects duplicated field <Field> that differs from the manifest' -ForEach @(
+        @{ Field = 'description'; Value = 'Different description' }
+        @{ Field = 'author'; Value = [ordered]@{ name = 'Other'; url = 'https://example.com' } }
+        @{ Field = 'homepage'; Value = 'https://example.com/home' }
+        @{ Field = 'repository'; Value = 'https://example.com/repo' }
+        @{ Field = 'license'; Value = 'Apache-2.0' }
+        @{ Field = 'keywords'; Value = @('different') }
+    ) {
+        $field = $Field
+        $value = $Value
+        Set-FixtureCatalog -Root $script:CatalogRoot -Transform {
+            param($c) @($c['plugins'])[0][$field] = $value; $c
+        }.GetNewClosure()
+        (Test-PluginCatalog -RepoRoot $script:CatalogRoot -Manifest $script:CatalogManifest) -join "`n" |
+            Should -Match "field '$([regex]::Escape($Field))' does not match"
     }
 
     It 'Rejects retired package recipe field <Field>' -ForEach @(

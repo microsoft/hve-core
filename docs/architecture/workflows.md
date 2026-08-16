@@ -3,7 +3,7 @@ title: Build Workflows
 description: GitHub Actions CI/CD pipeline architecture for validation, security, and release automation
 sidebar_position: 3
 author: WilliamBerryiii
-ms.date: 2026-08-13
+ms.date: 2026-08-16
 ms.topic: overview
 keywords:
   - github actions
@@ -301,6 +301,8 @@ validated exact channel tag.
 
 ```mermaid
 flowchart LR
+    accTitle: Extension Marketplace publication flow
+    accDescr: PreRelease and Stable validate their exact release tags, then use one publisher to download the VSIX, verify its attestation, and publish through Azure OIDC and vsce.
     PRE[Validate prerelease-v tag and catalog] --> GENERIC[Generic Marketplace publisher]
     STABLE[Validate v tag and catalog] --> GENERIC
     GENERIC --> ASSET[Download VSIX release asset]

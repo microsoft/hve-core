@@ -49,7 +49,7 @@ param(
     [string]$OptionalAssetPath = '',
 
     [Parameter(Mandatory = $true)]
-    [ValidatePattern('^\d+\.\d+\.\d+$')]
+    [ValidatePattern('^\d+\.\d+\.\d+\z')]
     [string]$Version,
 
     [Parameter(Mandatory = $true)]
@@ -287,7 +287,7 @@ function Assert-ReleaseAssetSet {
         [string]$OptionalAssetPath = '',
 
         [Parameter(Mandatory = $true)]
-        [ValidateNotNullOrEmpty()]
+        [ValidatePattern('^\d+\.\d+\.\d+\z')]
         [string]$Version,
 
         [Parameter(Mandatory = $true)]
