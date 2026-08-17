@@ -1,4 +1,3 @@
-<!-- markdownlint-disable MD041 -->
 ---
 title: DT Coach
 description: Design Thinking coach guiding teams through the 9-method HVE framework with Think/Speak/Empower
@@ -6,6 +5,8 @@ sidebar_position: 1
 ms.date: 2026-08-13
 
 <!-- BEGIN AUTO-GENERATED: metadata -->
+## Metadata
+
 | Field       | Value                                              |
 |-------------|----------------------------------------------------|
 | Kind        | agent                                              |
