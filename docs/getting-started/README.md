@@ -82,3 +82,8 @@ For projects requiring user-centered requirements discovery before implementatio
 * [MCP Configuration](mcp-configuration.md)
 
 ---
+
+<!-- markdownlint-disable MD036 -->
+*🤖 Crafted with precision by ✨Copilot following brilliant human instruction,
+then carefully refined by our team of discerning human reviewers.*
+<!-- markdownlint-enable MD036 -->

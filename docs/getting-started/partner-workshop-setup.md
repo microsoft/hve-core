@@ -129,3 +129,8 @@ In the next step, we will use the same pattern in every role exercise:
 Proceed to the [role guide](partner-workshop-role-tracks.md).
 
 ---
+
+<!-- markdownlint-disable MD036 -->
+*🤖 Crafted with precision by ✨Copilot following brilliant human instruction,
+then carefully refined by our team of discerning human reviewers.*
+<!-- markdownlint-enable MD036 -->

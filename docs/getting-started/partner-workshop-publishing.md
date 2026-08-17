@@ -231,3 +231,8 @@ Use this section to close the workshop with a clear handoff.
 Keep the output concise and action-oriented. Do not wait for perfect information. The goal is to produce a reviewed draft that the team can refine after the workshop.
 
 ---
+
+<!-- markdownlint-disable MD036 -->
+*🤖 Crafted with precision by ✨Copilot following brilliant human instruction,
+then carefully refined by our team of discerning human reviewers.*
+<!-- markdownlint-enable MD036 -->

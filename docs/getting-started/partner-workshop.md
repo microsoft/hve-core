@@ -123,3 +123,8 @@ The workshop is complete when the team has reviewed the six draft artifacts, ide
 * [MCP Configuration](mcp-configuration.md)
 
 ---
+
+<!-- markdownlint-disable MD036 -->
+*🤖 Crafted with precision by ✨Copilot following brilliant human instruction,
+then carefully refined by our team of discerning human reviewers.*
+<!-- markdownlint-enable MD036 -->
