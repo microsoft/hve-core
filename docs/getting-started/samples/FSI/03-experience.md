@@ -12,8 +12,6 @@ keywords:
 estimated_reading_time: 5
 ---
 
-# Experience outline: Relationship Manager for FSI
-
 ## Scenario summary
 
 A relationship manager needs a trusted view of each account before customer conversations and follow-up work. The experience should help them quickly understand account health, surface risks and growth opportunities, and choose the next best action with confidence.

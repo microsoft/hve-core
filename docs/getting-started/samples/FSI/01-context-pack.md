@@ -12,8 +12,6 @@ keywords:
 estimated_reading_time: 5
 ---
 
-# Context Pack FSI
-
 ## Platform
 
 * Platform: Operations Intelligence Platform
