@@ -1,3 +1,17 @@
+---
+title: Experience Outline: Relationship Manager for FSI
+description: Sample user experience brief for the financial services relationship manager workshop scenario
+author: Microsoft
+ms.date: 2026-08-17
+ms.topic: reference
+keywords:
+  - sample
+  - FSI
+  - experience
+  - workshop
+estimated_reading_time: 5
+---
+
 # Experience outline: Relationship Manager for FSI
 
 ## Scenario summary
@@ -106,3 +120,10 @@ A relationship manager needs a trusted view of each account before customer conv
 * Validate whether users prefer Copilot output that is short, explainable, and grounded in visible evidence.
 * Assess whether the integration changes behavior in a positive way, such as faster follow-up, better account coverage, or improved confidence in recommendations.
 * Confirm that users understand the limits of Copilot and still want human review for important decisions.
+
+---
+
+<!-- markdownlint-disable MD036 -->
+*🤖 Crafted with precision by ✨Copilot following brilliant human instruction,
+then carefully refined by our team of discerning human reviewers.*
+<!-- markdownlint-enable MD036 -->

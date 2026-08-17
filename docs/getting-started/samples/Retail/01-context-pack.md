@@ -1,3 +1,17 @@
+---
+title: Context Pack Retail
+description: Sample context pack for the retail store operations workshop scenario
+author: Microsoft
+ms.date: 2026-08-17
+ms.topic: reference
+keywords:
+  - sample
+  - retail
+  - context pack
+  - workshop
+estimated_reading_time: 5
+---
+
 # Context Pack Retail
 
 ## Platform
@@ -85,3 +99,10 @@
 
 * Do not add credentials, personal data, customer secrets, or production content.
 * Keep the content concise, reviewable, and suitable for collaborative workshop use.
+
+---
+
+<!-- markdownlint-disable MD036 -->
+*🤖 Crafted with precision by ✨Copilot following brilliant human instruction,
+then carefully refined by our team of discerning human reviewers.*
+<!-- markdownlint-enable MD036 -->

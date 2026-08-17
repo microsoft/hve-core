@@ -1,3 +1,17 @@
+---
+title: Context Pack FSI
+description: Sample context pack for the financial services relationship manager workshop scenario
+author: Microsoft
+ms.date: 2026-08-17
+ms.topic: reference
+keywords:
+  - sample
+  - FSI
+  - context pack
+  - workshop
+estimated_reading_time: 5
+---
+
 # Context Pack FSI
 
 ## Platform
@@ -109,3 +123,10 @@
 * Do not add credentials, personal data, customer secrets, or production content.
 * Keep the content concise, reviewable, and suitable for collaborative workshop use.
 * The initial experience should remain scenario-specific and human-reviewable rather than fully automated.
+
+---
+
+<!-- markdownlint-disable MD036 -->
+*🤖 Crafted with precision by ✨Copilot following brilliant human instruction,
+then carefully refined by our team of discerning human reviewers.*
+<!-- markdownlint-enable MD036 -->
