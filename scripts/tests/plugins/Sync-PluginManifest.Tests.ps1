@@ -391,12 +391,21 @@ Describe 'Invoke-PluginManifestSync check mode' -Tag 'Unit' {
         $violations -join "`n" | Should -Match 'skills unexpected 1: skills/beta/noncommercial-skill'
     }
 
-    It 'Detects a stale version' {
+    It 'Detects stale <Field> drift' -ForEach @(
+        @{ Field = 'version'; Value = '9.9.9'; Pattern = "version differs: committed '9\.9\.9'; expected '1\.2\.3'" }
+        @{ Field = 'hooks'; Value = 'hooks/other.json'; Pattern = "hooks differs: committed 'hooks/other\.json'; expected 'hooks/shared/telemetry\.json'" }
+    ) {
+        $field, $value = $Field, $Value
         Set-FixtureManifest -Root $script:CheckRoot -Transform {
-            param($m) $m['version'] = '9.9.9'; $m
-        }
+            param($m) $m[$field] = $value; $m
+        }.GetNewClosure()
         $violations = (Invoke-PluginManifestSync -RepoRoot $script:CheckRoot -Check).Violations
-        $violations -join "`n" | Should -Match 'out of sync'
+        $violations -join "`n" | Should -Match $Pattern
+    }
+
+    It 'Reports unsupported raw-only drift explicitly' {
+        Set-FixtureManifest -Root $script:CheckRoot -Transform { param($m) $m['unknown'] = 'value'; $m }
+        (Invoke-PluginManifestSync -RepoRoot $script:CheckRoot -Check).Violations -join "`n" | Should -Match 'no supported drift detail is available'
     }
 
     AfterEach {
@@ -404,7 +413,7 @@ Describe 'Invoke-PluginManifestSync check mode' -Tag 'Unit' {
     }
 }
 
-Describe 'Test-PluginCatalog' -Tag 'Unit' {
+Describe 'Get-PluginCatalogViolations' -Tag 'Unit' {
     BeforeAll {
         $script:CatalogRoot = New-PluginFixture -Root (Join-Path $TestDrive 'catalog')
         $script:CatalogManifest = (Invoke-PluginManifestSync -RepoRoot $script:CatalogRoot).Manifest
@@ -431,14 +440,14 @@ Describe 'Test-PluginCatalog' -Tag 'Unit' {
     }
 
     It 'Accepts one relative locator entry' {
-        Test-PluginCatalog -RepoRoot $script:CatalogRoot -Manifest $script:CatalogManifest | Should -HaveCount 0
+        Get-PluginCatalogViolations -RepoRoot $script:CatalogRoot -Manifest $script:CatalogManifest | Should -HaveCount 0
     }
 
     It 'Rejects more than one entry' {
         Set-FixtureCatalog -Root $script:CatalogRoot -Transform {
             param($c) $c['plugins'] = @($c['plugins']) + @([ordered]@{ name = 'extra'; source = '.github'; version = '1.2.3' }); $c
         }
-        (Test-PluginCatalog -RepoRoot $script:CatalogRoot -Manifest $script:CatalogManifest) -join "`n" |
+        (Get-PluginCatalogViolations -RepoRoot $script:CatalogRoot -Manifest $script:CatalogManifest) -join "`n" |
             Should -Match 'declares 2 entries'
     }
 
@@ -446,7 +455,7 @@ Describe 'Test-PluginCatalog' -Tag 'Unit' {
         Set-FixtureCatalog -Root $script:CatalogRoot -Transform {
             param($c) @($c['plugins'])[0]['name'] = 'other'; $c
         }
-        (Test-PluginCatalog -RepoRoot $script:CatalogRoot -Manifest $script:CatalogManifest) -join "`n" |
+        (Get-PluginCatalogViolations -RepoRoot $script:CatalogRoot -Manifest $script:CatalogManifest) -join "`n" |
             Should -Match "field 'name' does not match"
     }
 
@@ -454,7 +463,7 @@ Describe 'Test-PluginCatalog' -Tag 'Unit' {
         Set-FixtureCatalog -Root $script:CatalogRoot -Transform {
             param($c) @($c['plugins'])[0]['version'] = '9.9.9'; $c
         }
-        (Test-PluginCatalog -RepoRoot $script:CatalogRoot -Manifest $script:CatalogManifest) -join "`n" |
+        (Get-PluginCatalogViolations -RepoRoot $script:CatalogRoot -Manifest $script:CatalogManifest) -join "`n" |
             Should -Match "field 'version' does not match"
     }
 
@@ -462,7 +471,7 @@ Describe 'Test-PluginCatalog' -Tag 'Unit' {
         Set-FixtureCatalog -Root $script:CatalogRoot -Transform {
             param($c) $c['metadata']['version'] = '9.9.9'; $c
         }
-        (Test-PluginCatalog -RepoRoot $script:CatalogRoot -Manifest $script:CatalogManifest) -join "`n" |
+        (Get-PluginCatalogViolations -RepoRoot $script:CatalogRoot -Manifest $script:CatalogManifest) -join "`n" |
             Should -Match 'metadata version'
 
         Set-FixtureCatalog -Root $script:CatalogRoot -Transform {
@@ -483,7 +492,7 @@ Describe 'Test-PluginCatalog' -Tag 'Unit' {
         Set-FixtureCatalog -Root $script:CatalogRoot -Transform {
             param($c) @($c['plugins'])[0][$field] = $value; $c
         }.GetNewClosure()
-        (Test-PluginCatalog -RepoRoot $script:CatalogRoot -Manifest $script:CatalogManifest) -join "`n" |
+        (Get-PluginCatalogViolations -RepoRoot $script:CatalogRoot -Manifest $script:CatalogManifest) -join "`n" |
             Should -Match "field '$([regex]::Escape($Field))' does not match"
     }
 
@@ -500,7 +509,7 @@ Describe 'Test-PluginCatalog' -Tag 'Unit' {
         Set-FixtureCatalog -Root $script:CatalogRoot -Transform {
             param($c) @($c['plugins'])[0][$field] = $value; $c
         }.GetNewClosure()
-        (Test-PluginCatalog -RepoRoot $script:CatalogRoot -Manifest $script:CatalogManifest) -join "`n" |
+        (Get-PluginCatalogViolations -RepoRoot $script:CatalogRoot -Manifest $script:CatalogManifest) -join "`n" |
             Should -Match "retired package recipe field '$([regex]::Escape($Field))'"
     }
 
@@ -508,7 +517,7 @@ Describe 'Test-PluginCatalog' -Tag 'Unit' {
         Set-FixtureCatalog -Root $script:CatalogRoot -Transform {
             param($c) @($c['plugins'])[0]['source'] = [ordered]@{ source = 'github'; repo = 'microsoft/hve-core'; path = '.github' }; $c
         }
-        (Test-PluginCatalog -RepoRoot $script:CatalogRoot -Manifest $script:CatalogManifest) -join "`n" |
+        (Get-PluginCatalogViolations -RepoRoot $script:CatalogRoot -Manifest $script:CatalogManifest) -join "`n" |
             Should -Match 'must be a relative path string'
     }
 
@@ -516,7 +525,7 @@ Describe 'Test-PluginCatalog' -Tag 'Unit' {
         Set-FixtureCatalog -Root $script:CatalogRoot -Transform {
             param($c) @($c['plugins'])[0]['source'] = '../elsewhere'; $c
         }
-        (Test-PluginCatalog -RepoRoot $script:CatalogRoot -Manifest $script:CatalogManifest) -join "`n" |
+        (Get-PluginCatalogViolations -RepoRoot $script:CatalogRoot -Manifest $script:CatalogManifest) -join "`n" |
             Should -Match 'escapes the repository'
     }
 
@@ -524,7 +533,7 @@ Describe 'Test-PluginCatalog' -Tag 'Unit' {
         Set-FixtureCatalog -Root $script:CatalogRoot -Transform {
             param($c) @($c['plugins'])[0]['source'] = 'missing'; $c
         }
-        (Test-PluginCatalog -RepoRoot $script:CatalogRoot -Manifest $script:CatalogManifest) -join "`n" |
+        (Get-PluginCatalogViolations -RepoRoot $script:CatalogRoot -Manifest $script:CatalogManifest) -join "`n" |
             Should -Match 'has no plugin manifest'
     }
 
@@ -533,7 +542,7 @@ Describe 'Test-PluginCatalog' -Tag 'Unit' {
         foreach ($key in $script:CatalogManifest.Keys) { $manifest[$key] = $script:CatalogManifest[$key] }
         $manifest['agents'] = @('agents/alpha/absent.agent.md')
 
-        (Test-PluginCatalog -RepoRoot $script:CatalogRoot -Manifest $manifest) -join "`n" |
+        (Get-PluginCatalogViolations -RepoRoot $script:CatalogRoot -Manifest $manifest) -join "`n" |
             Should -Match 'agents path does not exist'
     }
 
@@ -542,7 +551,7 @@ Describe 'Test-PluginCatalog' -Tag 'Unit' {
         foreach ($key in $script:CatalogManifest.Keys) { $manifest[$key] = $script:CatalogManifest[$key] }
         $manifest['skills'] = @('../outside')
 
-        (Test-PluginCatalog -RepoRoot $script:CatalogRoot -Manifest $manifest) -join "`n" |
+        (Get-PluginCatalogViolations -RepoRoot $script:CatalogRoot -Manifest $manifest) -join "`n" |
             Should -Match 'skills path escapes the plugin root'
     }
 }

@@ -3,13 +3,13 @@
 import * as fs from 'fs';
 import * as os from 'os';
 import * as path from 'path';
-import { loadPackageCards } from '../marketplaceCounts';
+import { loadPackageCards } from '../pluginManifestCards';
 
 let fixtureRoot: string;
 let fixtureIndex = 0;
 
 beforeAll(() => {
-  fixtureRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'hve-marketplace-'));
+  fixtureRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'hve-plugin-manifest-'));
 });
 
 afterAll(() => {
@@ -46,10 +46,10 @@ function writeFixture(
   pluginManifest: JsonObject | null = manifest(),
 ): string {
   const root = path.join(fixtureRoot, `fixture-${(fixtureIndex += 1)}`);
-  const marketplaceDirectory = path.join(root, '.github', 'plugin');
-  fs.mkdirSync(marketplaceDirectory, { recursive: true });
-  const marketplacePath = path.join(marketplaceDirectory, 'marketplace.json');
-  fs.writeFileSync(marketplacePath, JSON.stringify(catalog), 'utf-8');
+  const pluginLocatorDirectory = path.join(root, '.github', 'plugin');
+  fs.mkdirSync(pluginLocatorDirectory, { recursive: true });
+  const pluginLocatorPath = path.join(pluginLocatorDirectory, 'marketplace.json');
+  fs.writeFileSync(pluginLocatorPath, JSON.stringify(catalog), 'utf-8');
   if (pluginManifest !== null) {
     fs.writeFileSync(
       path.join(root, '.github', 'plugin.json'),
@@ -57,14 +57,14 @@ function writeFixture(
       'utf-8',
     );
   }
-  return marketplacePath;
+  return pluginLocatorPath;
 }
 
 function catalog(plugins: unknown, version = '1.2.3'): JsonObject {
   return { metadata: { version }, plugins };
 }
 
-describe('loadPackageCards locator resolution', () => {
+describe('loadPackageCards plugin manifest resolution', () => {
   it('builds one stable card from the resolved plugin manifest', () => {
     expect(loadPackageCards(writeFixture(catalog([locator()])))).toEqual([{
       name: 'hve-core',

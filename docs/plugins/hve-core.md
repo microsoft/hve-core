@@ -38,13 +38,13 @@ The full path inventory remains machine-readable in `.github/plugin.json`. Agent
 
 ## Component Inventory
 
-| Component kind | Count | Manifest field | Source convention                             |
-|----------------|------:|----------------|-----------------------------------------------|
-| Agents         |    55 | `agents`       | `agents/<package>/**/*.agent.md`              |
-| Prompts        |    48 | `commands`     | `prompts/<package>/**/*.prompt.md`            |
-| Instructions   |    57 | `rules`        | `instructions/<package>/**/*.instructions.md` |
-| Skills         |    71 | `skills`       | `skills/<package>/<skill>/SKILL.md`           |
-| Hooks          |     1 | `hooks`        | `hooks/shared/telemetry.json`                 |
+| Component kind | Manifest field | Source convention                             |
+|----------------|----------------|-----------------------------------------------|
+| Agents         | `agents`       | `agents/<package>/**/*.agent.md`              |
+| Prompts        | `commands`     | `prompts/<package>/**/*.prompt.md`            |
+| Instructions   | `rules`        | `instructions/<package>/**/*.instructions.md` |
+| Skills         | `skills`       | `skills/<package>/<skill>/SKILL.md`           |
+| Hooks          | `hooks`        | `hooks/shared/telemetry.json`                 |
 
 ### Capability Areas
 

@@ -5,10 +5,10 @@ import * as path from "path";
 import {
   countPluginComponents,
   loadPackageCards,
-} from "../marketplaceCounts";
+} from "../pluginManifestCards";
 import { labelRegistry } from "../labelRegistry";
 
-const marketplacePath = path.resolve(
+const pluginLocatorPath = path.resolve(
   __dirname,
   "../../../../../.github/plugin/marketplace.json",
 );
@@ -20,7 +20,7 @@ interface PluginManifest {
   [field: string]: unknown;
 }
 
-const catalog = JSON.parse(fs.readFileSync(marketplacePath, "utf-8")) as {
+const catalog = JSON.parse(fs.readFileSync(pluginLocatorPath, "utf-8")) as {
   plugins: Array<{ name: string; source: string; version: string }>;
 };
 const [locator] = catalog.plugins;
@@ -31,7 +31,7 @@ const manifestPath = path.resolve(
 const manifest = JSON.parse(fs.readFileSync(manifestPath, "utf-8")) as PluginManifest;
 
 // Independent re-derivation of the component tally so expected values come from
-// the catalog itself rather than from the function under test or a magic number.
+// the manifest itself rather than from the function under test or a magic number.
 const componentFields = ["agents", "commands", "rules", "skills", "hooks"];
 function expectedComponentCount(entry: PluginManifest): number {
   return componentFields.reduce((total, field) => {
@@ -42,9 +42,9 @@ function expectedComponentCount(entry: PluginManifest): number {
   }, 0);
 }
 
-const packageCards = loadPackageCards(marketplacePath);
+const packageCards = loadPackageCards(pluginLocatorPath);
 
-describe("loadPackageCards against the canonical catalog", () => {
+describe("loadPackageCards against the canonical plugin manifest", () => {
   it("derives one stable card from the locator and plugin manifest", () => {
     expect(packageCards).toEqual([{
       name: locator.name,

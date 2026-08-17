@@ -62,7 +62,7 @@ $script:VersionTarget = @(
             , @('version')
             , @('packages', '', 'version')
         )
-        Assert  = @('$.version', '$.packages[""].version')
+        Assert   = @('$.version', '$.packages[""].version')
     }
     [ordered]@{
         Path     = 'extension/templates/package.template.json'
@@ -80,7 +80,7 @@ $script:VersionTarget = @(
             , @('metadata', 'version')
             , @('plugins', 0, 'version')
         )
-        Assert  = @('$.metadata.version', '$.plugins[0].version')
+        Assert   = @('$.metadata.version', '$.plugins[0].version')
     }
 )
 

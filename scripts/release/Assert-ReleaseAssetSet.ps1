@@ -31,6 +31,10 @@
     ./Assert-ReleaseAssetSet.ps1 -AssetNamePath assets.txt `
         -RequiredAssetPath required.txt -Version 3.3.0 -ReleaseTag prerelease-v3.3.0
 .NOTES
+    This helper validates the current one-plugin release shape only. Historical
+    release records are not replay inputs, and legacy asset shapes remain
+    rejected.
+
     Invoked by the published-release recovery path of release-prerelease.yml and
     release-stable-publish.yml.
 #>
@@ -340,7 +344,7 @@ if ($MyInvocation.InvocationName -ne '.') {
     try {
         [void](Assert-ReleaseAssetSet -AssetNamePath $AssetNamePath `
                 -RequiredAssetPath $RequiredAssetPath `
-            -OptionalAssetPath $OptionalAssetPath `
+                -OptionalAssetPath $OptionalAssetPath `
                 -Version $Version `
                 -ReleaseTag $ReleaseTag)
         exit 0

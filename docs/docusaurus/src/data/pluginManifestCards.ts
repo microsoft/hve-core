@@ -8,7 +8,7 @@ import type { PackageCardData } from './packageCards';
 import { labelRegistry } from './labelRegistry';
 
 const componentFields = ['agents', 'commands', 'rules', 'skills', 'hooks'];
-const errorPrefix = '[marketplacePackages]';
+const errorPrefix = '[pluginManifestCards]';
 
 export function countPluginComponents(
   entry: Record<string, unknown>,
@@ -46,7 +46,7 @@ function readObject(pathname: string, context: string): Record<string, unknown> 
 }
 
 function resolvePluginManifestPath(
-  marketplacePath: string,
+  pluginLocatorPath: string,
   source: string,
 ): string {
   if (
@@ -57,7 +57,7 @@ function resolvePluginManifestPath(
     throw new Error(`${errorPrefix} source escapes the repository: ${source}`);
   }
 
-  const repositoryRoot = path.resolve(path.dirname(marketplacePath), '../..');
+  const repositoryRoot = path.resolve(path.dirname(pluginLocatorPath), '../..');
   const pluginRoot = path.resolve(repositoryRoot, ...source.split('/'));
   const relative = path.relative(repositoryRoot, pluginRoot);
   if (
@@ -71,12 +71,12 @@ function resolvePluginManifestPath(
   return path.join(pluginRoot, 'plugin.json');
 }
 
-export function loadPackageCards(marketplacePath: string): PackageCardData[] {
-  const catalog = readObject(marketplacePath, 'catalog');
+export function loadPackageCards(pluginLocatorPath: string): PackageCardData[] {
+  const catalog = readObject(pluginLocatorPath, 'catalog');
   const plugins = catalog.plugins;
 
   if (!Array.isArray(plugins)) {
-    throw new Error(`${errorPrefix} ${marketplacePath}: plugins must be an array`);
+    throw new Error(`${errorPrefix} ${pluginLocatorPath}: plugins must be an array`);
   }
   if (plugins.length !== 1) {
     throw new Error(
@@ -90,7 +90,7 @@ export function loadPackageCards(marketplacePath: string): PackageCardData[] {
   const entryVersion = requireText(entry.version, 'version', name);
   const metadata = requireObject(catalog.metadata, 'metadata');
   const catalogVersion = requireText(metadata.version, 'metadata.version', name);
-  const manifestPath = resolvePluginManifestPath(marketplacePath, source);
+  const manifestPath = resolvePluginManifestPath(pluginLocatorPath, source);
   if (!fs.existsSync(manifestPath)) {
     throw new Error(
       `${errorPrefix} ${name}: plugin manifest not found: ${source}/plugin.json`,

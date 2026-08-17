@@ -395,10 +395,10 @@ function ConvertTo-PluginManifestJson {
     return $json.TrimEnd("`n") + "`n"
 }
 
-function Compare-PluginComponentSet {
+function Compare-PluginManifest {
     <#
     .SYNOPSIS
-        Describes component differences between committed and derived manifests.
+        Describes supported differences between committed and derived manifests.
 
     .PARAMETER Committed
         Manifest content read from disk.
@@ -421,6 +421,13 @@ function Compare-PluginComponentSet {
     )
 
     $differences = @()
+    foreach ($field in @('version', 'hooks')) {
+        $committedValue = if ($null -ne $Committed -and $Committed.Contains($field)) { [string]$Committed[$field] } else { '<missing>' }
+        if ($committedValue -cne [string]$Expected[$field]) {
+            $differences += "$field differs: committed '$committedValue'; expected '$($Expected[$field])'"
+        }
+    }
+
     foreach ($kind in @('agents', 'commands', 'rules', 'skills')) {
         $committedPaths = @()
         if ($null -ne $Committed -and $Committed.Contains($kind)) {
@@ -446,7 +453,7 @@ function Compare-PluginComponentSet {
 
 #region Catalog
 
-function Test-PluginComponentCoverage {
+function Get-PluginComponentCoverageViolations {
     <#
     .SYNOPSIS
         Verifies every declared component path resolves inside the plugin root.
@@ -501,7 +508,7 @@ function Test-PluginComponentCoverage {
     return $violations
 }
 
-function Test-PluginCatalog {
+function Get-PluginCatalogViolations {
     <#
     .SYNOPSIS
         Validates the one-entry marketplace catalog against the plugin manifest.
@@ -580,7 +587,7 @@ function Test-PluginCatalog {
         return $violations
     }
 
-    return @($violations) + @(Test-PluginComponentCoverage -RepoRoot $RepoRoot -SourcePath $source -Manifest $Manifest)
+    return @($violations) + @(Get-PluginComponentCoverageViolations -RepoRoot $RepoRoot -SourcePath $source -Manifest $Manifest)
 }
 
 #endregion Catalog
@@ -626,12 +633,13 @@ function Invoke-PluginManifestSync {
     $violations = @($trackedIndex.Violations)
     $changed = $expectedJson -ne $committedJson
 
-    $violations += @(Test-PluginCatalog -RepoRoot $RepoRoot -Manifest $manifest)
+    $violations += @(Get-PluginCatalogViolations -RepoRoot $RepoRoot -Manifest $manifest)
 
     if ($changed) {
         if ($Check) {
-            $violations += "$script:PluginManifestFile is out of sync with tracked components"
-            $violations += @(Compare-PluginComponentSet -Committed (ConvertFrom-Json $committedRaw -AsHashtable) -Expected $manifest)
+            $violations += "$script:PluginManifestFile is out of sync with the derived manifest"
+            $drift = @(Compare-PluginManifest -Committed (ConvertFrom-Json $committedRaw -AsHashtable) -Expected $manifest)
+            $violations += if ($drift.Count -gt 0) { $drift } else { "$script:PluginManifestFile differs from the derived manifest, but no supported drift detail is available" }
         }
         elseif ($violations.Count -eq 0) {
             Set-Content -LiteralPath $manifestPath -Value $expectedJson -Encoding UTF8 -NoNewline
