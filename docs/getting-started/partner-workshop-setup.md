@@ -3,7 +3,7 @@ title: Partner Workshop Setup
 description: Shared Codespaces and local VS Code setup instructions for the HVE partner workshop
 sidebar_position: 8
 author: Microsoft
-ms.date: 2026-08-16
+ms.date: 2026-08-17
 ms.topic: tutorial
 keywords:
   - GitHub Codespaces
@@ -16,21 +16,18 @@ estimated_reading_time: 8
 
 ## Workshop Agenda
 
-| Item | Activity                               | Mode     | Output                                                 |
-|------|----------------------------------------|----------|--------------------------------------------------------|
-| 1    | HVE and RPI overview                   | Shared   | Common vocabulary and scenario                         |
-| 2    | **Environment setup and verification** | Shared   | Working HVE Core All installation                      |
-| 3    | Scenario framing                       | Shared   | Initial problem statement                              |
-| 4    | Role exercises                         | Breakout | Context, requirements, experience, architecture inputs |
-| 5    | Artifact integration                   | Shared   | Requirements, backlog, and Azure diagram               |
-| 6    | Publication readiness                  | Shared   | Managed App and Agent Store checklists                 |
-| 7    | Playback and next actions              | Shared   | Owners, gaps, and follow-up plan                       |
+| Item | Activity | Mode | Output |
+|------|----------|------|--------|
+| 1 | HVE and RPI overview | Shared | Common vocabulary and scenario |
+| 2 | Environment setup and verification | Shared | Working HVE Core All installation |
+| 3 | Scenario framing | Shared | Initial problem statement |
+| 4 | Role exercises | Breakout | Context, requirements, experience, architecture inputs |
+| 5 | Artifact integration | Shared | Requirements, backlog, and Azure diagram |
+| 6 | Publication readiness | Shared | Managed App and Agent Store checklists |
+| 7 | Playback and next actions | Shared | Owners, gaps, and follow-up plan |
 
 > [!NOTE]
-> These instructions use **Visual Studio Code**. The HVE Core extension is a VS
-> Code extension. The full Visual Studio IDE is not the workshop host. Visual
-> Studio users can keep the IDE installed and use VS Code or GitHub Codespaces for the
-> workshop activities.
+> These instructions use **Visual Studio Code**. The HVE Core extension is a VS Code extension. The full Visual Studio IDE is not the workshop host. Visual Studio users can keep the IDE installed and use VS Code or GitHub Codespaces for the workshop activities.
 
 ## Choose Your Setup Path
 
@@ -63,16 +60,15 @@ Before you begin either option, complete these steps:
 2. Open VS Code, open the Extensions view, and install **GitHub Copilot** and **GitHub Copilot Chat**.
 3. Sign in with your GitHub account that has Copilot access.
 4. Install [HVE Core All](https://marketplace.visualstudio.com/items?itemName=ise-hve-essentials.hve-core-all).
-5. Open the Command Palette, run **Git: Clone** at [https://github.com/asiapartners/hve-partner-workshop](https://github.com/asiapartners/hve-partner-workshop) and open it.
+5. Open the Command Palette, run **Git: Clone** on [https://github.com/asiapartners/hve-partner-workshop](https://github.com/asiapartners/hve-partner-workshop), and open it.
 6. Select **Open** when cloning finishes, and select **Trust** only when you recognize the repository and facilitator.
 7. Create a branch for workshop activities before you start editing files. Use a name such as `workshop/<team-name>`.
 
-If you have Foundry local models available in your environment, prefer them for local inference. Otherwise, select `MAI-Code-1-Flash` in GitHub Copilot Chat for a more cost-effective option.he workshop repository on GitHub and select the branch you created earlier.
+If you have Foundry local models available in your environment, prefer them for local inference. Otherwise, select `MAI-Code-1-Flash` in GitHub Copilot Chat for a more cost-effective option.
 
-On macOS, use the same menus and buttons. Keyboard shortcuts that use `Ctrl` on
-Windows often use `Command` on macOS, so this workshop favors menu navigation.
+On macOS, use the same menus and buttons. Keyboard shortcuts that use `Ctrl` on Windows often use `Command` on macOS, so this workshop favors menu navigation.
 
-## Verify HVE Core
+## Verify The Environment
 
 Complete these steps in either environment:
 
@@ -83,16 +79,13 @@ Complete these steps in either environment:
 5. Confirm that RPI prompts appear.
 6. Enter this prompt:
 
-   ```text
-   List the HVE Core agents and skills available for requirements, backlog
-   planning, user experience, and architecture. Do not modify files.
-   ```
-
-7. Compare the response with your assigned role.
+```text
+Review the repository and identify the most relevant HVE Core assets for a partner workshop scenario. Summarize the likely workflow, likely agents, and any prerequisites before the team begins the role exercises.
+```
 
 If the expected agents are missing:
 
-1. Confirm **HVE Core All** is installed in the current environment.
+1. Open the Extensions view.
 2. Disable **HVE Installer** if both extensions are installed.
 3. Run **Developer: Reload Window** from the Command Palette.
 4. Reopen Copilot Chat and check the agent picker again.
@@ -100,11 +93,10 @@ If the expected agents are missing:
 
 ## Create The Workshop Workspace
 
-Ask technical lead to complete these steps:
+Ask the technical lead to complete these steps:
 
 1. Create a folder named `workshop-output` at the repository root.
-2. Add six empty Markdown files using the names in the
-   [workshop overview](partner-workshop.md#outcomes).
+2. Add six empty Markdown files using the names in the [workshop overview](partner-workshop.md#outcomes).
 
 ```text
 workshop-output/
@@ -117,14 +109,11 @@ workshop-output/
 ```
 
 1. Add the scenario title and team member roles to `01-context-pack.md`.
-2. Do not enter credentials, personal data, customer secrets, or production
-   content in prompts or files.
+2. Do not enter credentials, personal data, customer secrets, or production content in prompts or files.
 3. Commit your workshop outputs to your branch only.
 
 > [!TIP]
-> Use `.copilot-tracking/` only for temporary workflow state. Keep that folder
-> in `.gitignore`. Create `workshop-output` at the repository root so it stays
-> the team's reviewed, shareable result.
+> Use `.copilot-tracking/` only for temporary workflow state. Keep that folder in `.gitignore`. Create `workshop-output` at the repository root so it stays the team's reviewed, shareable result.
 
 ## Learn The Interaction Pattern
 
@@ -132,17 +121,11 @@ In the next step, we will use the same pattern in every role exercise:
 
 1. Select the named agent or invoke the named skill.
 2. Provide the scenario, known facts, constraints, and requested output path.
-3. Tell the agent to mark unknowns as assumptions or open questions.
-4. Review the draft instead of accepting it as fact.
-5. Correct unsupported claims.
-6. Save only the reviewed result to `workshop-output`.
-7. Hand the artifact to the next role.
+3. Ask for a first draft.
+4. Review and revise the result.
+5. Save only the reviewed result to `workshop-output`.
+6. Hand the artifact to the next role.
 
 Proceed to the [role guide](partner-workshop-role-tracks.md).
 
 ---
-
-<!-- markdownlint-disable MD036 -->
-*🤖 Crafted with precision by ✨Copilot following brilliant human instruction,
-then carefully refined by our team of discerning human reviewers.*
-<!-- markdownlint-enable MD036 -->

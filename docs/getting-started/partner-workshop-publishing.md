@@ -16,15 +16,15 @@ estimated_reading_time: 12
 
 ## Workshop Agenda
 
-| Item | Activity                           | Mode     | Output                                                 |
-|------|------------------------------------|----------|--------------------------------------------------------|
-| 1    | HVE and RPI overview               | Shared   | Common vocabulary and scenario                         |
-| 2    | Environment setup and verification | Shared   | Working HVE Core All installation                      |
-| 3    | Scenario framing                   | Shared   | Initial problem statement                              |
-| 4    | Role exercises                     | Breakout | Context, requirements, experience, architecture inputs |
-| 5    | Artifact integration               | Shared   | Requirements, backlog, and Azure diagram               |
-| 6    | **Publication readiness**          | Shared   | Managed App and Agent Store checklists                 |
-| 7    | **Playback and next actions**      | Shared   | Owners, gaps, and follow-up plan                       |
+| Item | Activity | Mode | Output |
+|------|----------|------|--------|
+| 1 | HVE and RPI overview | Shared | Common vocabulary and scenario |
+| 2 | Environment setup and verification | Shared | Working HVE Core All installation |
+| 3 | Scenario framing | Shared | Initial problem statement |
+| 4 | Role exercises | Breakout | Context, requirements, experience, architecture inputs |
+| 5 | Artifact integration | Shared | Requirements, backlog, and Azure diagram |
+| 6 | Publication readiness | Shared | Managed App and Agent Store checklists |
+| 7 | Playback and next actions | Shared | Owners, gaps, and follow-up plan |
 
 Use this guide during the publication-readiness portion of the workshop. The goal is to turn the workshop outputs into a clear follow-up plan for the right publication path rather than to complete every certification step in-session.
 
@@ -59,7 +59,7 @@ Before building the offer package, capture the commercial and go-to-market conte
 3. Define the monetization model, billing approach, and taxation expectations early so the offer plan and support model are aligned.
 4. Capture a simple Lean Business Canvas summary with customer segments, problem, solution, channels, revenue, cost, partners, and differentiators.
 5. For Azure IP Cosell on Marketplace, complete a Partner Center Admin checklist that covers publisher setup, legal entity and tax readiness, offer metadata, support contacts, pricing plan, and technical package validation.
-6. For a Copilot Agent Store add-on, verify the supported agent type, packaging path, tenant admin approvals, consent boundaries, and whether the agent should be listed as a standalone offer or as an add-on to the Azure offer.
+6. For a Copilot Agent Store add-on, verify the supported agent type, packaging path, tenant admin approvals, consent boundaries, and whether the agent should be listed as a standalone offer or an add-on to the Azure offer.
 
 > [!NOTE]
 > Treat any commercial route, offer type, or add-on limitation as a verification item until current Microsoft guidance confirms the supported path. The policy matrix can change by agent type and distribution route.
@@ -70,7 +70,7 @@ Before building the offer package, capture the commercial and go-to-market conte
 
 Use this checklist when the team is preparing an Azure Managed Application or related offer for Microsoft Marketplace.
 
-* [ ] Confirm the target offer type is correct for the scenario, such as Azure Application or another supported Marketplace offer.
+* [ ] Confirm the target offer type is correct for the scenario.
 * [ ] Create or verify the Partner Center publisher account and ensure it is enrolled for the intended Marketplace program.
 * [ ] Confirm the legal entity, tax profile, payout setup, and support contacts are complete.
 * [ ] Define the offer name, short description, long description, categories, and search terms.
@@ -126,8 +126,6 @@ Use this checklist for the administrative and offer-readiness review that usuall
 
 ### Phase 2: Build and validate the package
 
-If you are new to Managed Application packaging, follow this sequence in order:
-
 1. Create a simple working folder for the package and keep the files organized before you start.
 2. Define the minimum Azure resources first, such as the app service, storage account, key vault, or other required resources for the scenario.
 3. Implement the deployment in Bicep if possible, because it is easier to read and maintain than raw ARM JSON.
@@ -169,7 +167,7 @@ If you are new to Managed Application packaging, follow this sequence in order:
 
 ## Microsoft 365 Copilot Agent path
 
-### Phase 1: Offer Commercialization
+### Phase 1: Offer commercialization
 
 1. Choose **Microsoft 365 Agents Toolkit** for a packaged declarative or custom engine agent that can target Microsoft Marketplace.
 
@@ -206,9 +204,9 @@ If you are new to Managed Application packaging, follow this sequence in order:
 
 Do not release either product until accountable humans confirm:
 
-1. Requirements and architecture are approved.
-2. Threat modeling and security testing are complete.
-3. Privacy, data residency, retention, and deletion are documented.
+1. The customer problem is documented and validated.
+2. The solution meets its business outcome and first-release criteria.
+3. Technical, data, and identity boundaries are documented.
 4. Accessibility checks are complete.
 5. Responsible AI risks, evaluation results, and mitigations are reviewed.
 6. Customer and publisher permissions follow least privilege.
@@ -228,82 +226,8 @@ Use this section to close the workshop with a clear handoff.
 5. Assign a follow-up owner and a target date for each remaining action.
 6. Keep the output as a draft until a responsible human reviewer confirms it.
 
-### Action item table
-
-| Action                                                      | Owner | Target date | Status      | Notes                                                                   |
-|-------------------------------------------------------------|-------|-------------|-------------|-------------------------------------------------------------------------|
-| Confirm the target publication route                        | TBD   | TBD         | Not started | Choose Azure Managed Application, Microsoft 365 Copilot agent, or both. |
-| Complete the Marketplace or Agent Store readiness checklist | TBD   | TBD         | Not started | Use the relevant checklist in this guide.                               |
-| Resolve the top blocker for packaging or validation         | TBD   | TBD         | Not started | Capture the blocker from the workshop playback.                         |
-| Assign support, privacy, security, and publishing approvers | TBD   | TBD         | Not started | Ensure the review path is explicit before submission.                   |
-| Schedule the next review or submission checkpoint           | TBD   | TBD         | Not started | Keep the follow-up date visible for the team.                           |
-
-## How to start the agents for this project
-
-If you want to continue the work in the repository with the available agent workflow, start with the planning and implementation agents in this order:
-
-1. Open the repository in VS Code and select the relevant agent mode for the task.
-2. Start with the RPI Planner to turn the workshop outputs into a concrete implementation plan.
-3. Use the RAI Planner if the experience includes AI or Copilot behavior that needs Responsible AI review.
-4. Use the Security Planner when the solution needs security, threat modeling, or publication readiness checks.
-5. Use the Backlog Manager or GitHub Backlog Executor when you are ready to turn the plan into tracked issues.
-6. Use the implementation workflow to build the solution, then return to the publishing guide for Marketplace and Agent Store readiness checks.
-
-### What you need before implementation starts
-
-Prepare the following items before you implementation:
-
-1. Confirm the target business outcome for the first mvp.
-2. Identify the minimum user journey that must work first, such as account review and next-best action selection.
-3. Gather the core workshop artifacts: context, requirements, experience draft, architecture notes, backlog draft, and publication readiness notes.
-4. Decide which data sources are allowed in the first version and which data must remain mocked or placeholder content.
-5. Write down the first success criteria in simple language, such as "the user can review one account and see a next-best action with supporting evidence."
-6. Confirm who owns implementation, review, and publication decisions.
-
-### New project starter checklist
-
-Use this path when the team is building the solution from scratch.
-
-1. Start with the scenario files and turn them into a short implementation brief.
-2. Choose the first user journey and define the main screens or workflow steps.
-3. Create a very small build plan with one or two milestones only.
-4. Pick the simplest technical approach that can prove the experience end to end.
-5. Keep the first release focused on one scenario and one user role.
-6. Add placeholder data, stubbed services, or mocked responses where real integrations are not ready yet.
-7. Validate the experience with a human reviewer before adding more complexity.
-8. Only then add security, privacy, and publishing requirements to the same solution path.
-
-### Current project starter checklist
-
-Use this path when the team already has an existing codebase, app, or service.
-
-1. Review the current repository structure and identify the closest existing entry points for the experience.
-2. Find the current authentication, data access, and deployment patterns before introducing new flows.
-3. Map the workshop requirements to the existing modules, services, or APIs.
-4. Decide what can be reused, what must be adapted, and what should be deferred.
-5. Add the minimum new capability needed to support the first slice of the experience.
-6. Validate that the existing environment can support the new workflow without breaking current behavior.
-7. Keep the implementation changes narrow and traceable to the workshop artifacts.
-8. Re-run the baseline checks for the project before moving to publication readiness.
-
-If the team wants a more structured handoff, use the workshop artifacts in this order:
-
-1. Context and requirements from the scenario files.
-2. Experience and architecture drafts.
-3. Backlog and publication readiness notes.
-4. The final playback summary with owners and next actions.
-
-## Deliverable
-
-A reviewed publication-readiness handoff that identifies the target route, required owners, and the remaining work before submission.
-
 ## Working session reminder
 
 Keep the output concise and action-oriented. Do not wait for perfect information. The goal is to produce a reviewed draft that the team can refine after the workshop.
 
 ---
-
-<!-- markdownlint-disable MD036 -->
-*🤖 Crafted with precision by ✨Copilot following brilliant human instruction,
-then carefully refined by our team of discerning human reviewers.*
-<!-- markdownlint-enable MD036 -->
