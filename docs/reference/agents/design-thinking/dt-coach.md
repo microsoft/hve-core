@@ -1,3 +1,4 @@
+<!-- markdownlint-disable MD041 -->
 ---
 title: DT Coach
 description: Design Thinking coach guiding teams through the 9-method HVE framework with Think/Speak/Empower

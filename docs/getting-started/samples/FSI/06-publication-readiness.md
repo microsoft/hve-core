@@ -161,23 +161,23 @@ The MVP helps a relationship manager prepare for customer conversations by conso
 
 ## Remaining checklist and follow-up owners
 
-| Item | Status | Owner | Follow-up |
-|---|---|---|---|
-| Confirm final solution name and listing copy | Open | Project manager | Draft final short and long descriptions for both destinations |
-| Finalize branding, positioning, and marketing narrative | Open | Project manager | Prepare a clear value proposition, differentiators, and launch messaging |
-| Define geographic coverage and launch scope | Open | Project manager | Confirm target regions, language needs, and any launch constraints |
-| Define pricing, billing, and taxation model | Open | Business owner | Align commercial terms with the Marketplace plan and any add-on packaging |
-| Complete Partner Center Admin checklist for Azure IP Cosell on Marketplace | Open | Partner Center admin or business owner | Confirm publisher setup, offer metadata, legal terms, support, and tax readiness |
-| Confirm Copilot Agent Store add-on limits and approvals | Open | Technical lead | Validate supported agent type, packaging constraints, and required tenant approvals |
-| Finalize architecture and flow visuals | In progress | Technical lead | Publish final diagram set and screenshot package |
-| Validate Entra ID access model and scopes | Open | Technical lead | Confirm least-privilege roles and consent workflow |
-| Define data classification and minimization controls | Open | Security or compliance reviewer | Approve allowed fields and retention expectations |
-| Complete Responsible AI evidence and guardrail notes | In progress | Technical lead | Map confidence labels and human review checkpoints |
-| Complete accessibility validation evidence | Open | Design lead | Capture keyboard, contrast, and screen-reader checks |
-| Prepare deployment and support runbook | Open | Technical lead | Add setup, troubleshooting, escalation, and rollback guidance |
-| Confirm legal and privacy disclosures | Open | Security or compliance reviewer | Validate publication disclosures and policy language |
-| Validate Marketplace packaging structure | Open | Project manager | Ensure metadata, assets, and support contacts are complete |
-| Validate Copilot Agent Store package readiness | Open | Technical lead | Ensure agent metadata, instructions, and tenant notes are complete |
+| Item                                                                       | Status      | Owner                                  | Follow-up                                                                           |
+|----------------------------------------------------------------------------|-------------|----------------------------------------|-------------------------------------------------------------------------------------|
+| Confirm final solution name and listing copy                               | Open        | Project manager                        | Draft final short and long descriptions for both destinations                       |
+| Finalize branding, positioning, and marketing narrative                    | Open        | Project manager                        | Prepare a clear value proposition, differentiators, and launch messaging            |
+| Define geographic coverage and launch scope                                | Open        | Project manager                        | Confirm target regions, language needs, and any launch constraints                  |
+| Define pricing, billing, and taxation model                                | Open        | Business owner                         | Align commercial terms with the Marketplace plan and any add-on packaging           |
+| Complete Partner Center Admin checklist for Azure IP Cosell on Marketplace | Open        | Partner Center admin or business owner | Confirm publisher setup, offer metadata, legal terms, support, and tax readiness    |
+| Confirm Copilot Agent Store add-on limits and approvals                    | Open        | Technical lead                         | Validate supported agent type, packaging constraints, and required tenant approvals |
+| Finalize architecture and flow visuals                                     | In progress | Technical lead                         | Publish final diagram set and screenshot package                                    |
+| Validate Entra ID access model and scopes                                  | Open        | Technical lead                         | Confirm least-privilege roles and consent workflow                                  |
+| Define data classification and minimization controls                       | Open        | Security or compliance reviewer        | Approve allowed fields and retention expectations                                   |
+| Complete Responsible AI evidence and guardrail notes                       | In progress | Technical lead                         | Map confidence labels and human review checkpoints                                  |
+| Complete accessibility validation evidence                                 | Open        | Design lead                            | Capture keyboard, contrast, and screen-reader checks                                |
+| Prepare deployment and support runbook                                     | Open        | Technical lead                         | Add setup, troubleshooting, escalation, and rollback guidance                       |
+| Confirm legal and privacy disclosures                                      | Open        | Security or compliance reviewer        | Validate publication disclosures and policy language                                |
+| Validate Marketplace packaging structure                                   | Open        | Project manager                        | Ensure metadata, assets, and support contacts are complete                          |
+| Validate Copilot Agent Store package readiness                             | Open        | Technical lead                         | Ensure agent metadata, instructions, and tenant notes are complete                  |
 
 ## Workshop exit criteria
 

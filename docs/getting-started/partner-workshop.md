@@ -18,7 +18,7 @@ estimated_reading_time: 8
 Use this workshop to move a product idea to a connected set of delivery artifacts. Participants work in one shared project, split into role tracks, and then combine their outputs into a requirements pack, prioritized backlog, Azure architecture, and publication readiness plan.
 
 The workshop teaches a repeatable workflow. It does not compress production
-Security review, Azure deployment, Microsoft Marketplace certification into a day.
+security review, Azure deployment, or Microsoft Marketplace certification into a day.
 
 ## Outcomes
 
@@ -43,13 +43,13 @@ workshop-output/
 `-- 06-publication-readiness.md
 ```
 
-| Outcome | Complete In Workshop| Continue After Workshop |
-|---------|-----------------------|-------------------------|
-| Context and user requirements | Reviewed draft | Customer validation and approval |
-| Backlog | Prioritized draft or planning handoff | Create approved external work items |
-| Architecture Design | Reviewed conceptual Mermaid diagram | Implement and validate infrastructure |
-| Azure Managed Application | Package and offer readiness plan | Build, test, certify, and publish offer on Marketplace |
-| Microsoft 365 Copilot Agent | Experience and distribution plan | Build, test, approve, and publish agent |
+| Outcome                       | Complete In Workshop                  | Continue After Workshop                                |
+|-------------------------------|---------------------------------------|--------------------------------------------------------|
+| Context and user requirements | Reviewed draft                        | Customer validation and approval                       |
+| Backlog                       | Prioritized draft or planning handoff | Create approved external work items                    |
+| Architecture Design           | Reviewed conceptual Mermaid diagram   | Implement and validate infrastructure                  |
+| Azure Managed Application     | Package and offer readiness plan      | Build, test, certify, and publish offer on Marketplace |
+| Microsoft 365 Copilot Agent   | Experience and distribution plan      | Build, test, approve, and publish agent                |
 
 > [!IMPORTANT]
 > HVE Core custom agents run in GitHub Copilot and VS Code. They are not
@@ -62,27 +62,27 @@ workshop-output/
 
 Form multidisciplinary teams of four to six people.
 
-| Track | Suggested Participants | Primary Workshop Output |
-|-------|------------------------|-------------------------|
-| Project Management | PM, Program manager, Product owner | Outcomes, requirements, priorities, backlog structure |
-| Subject Matter Expert | Industry SME, Compliance Lead, Operations Lead | Domain context, terminology, constraints, evidence |
-| Design | UX Designer, Service Designer, Design Thinking Faciliator, Researcher | Personas, User Journey, Accessibility, Responsible AI, Agent experience |
-| Technical | Architect, Forward Deployed Engineer, Security, platform lead | Azure design, diagram, deployment and publication plan |
+| Track                 | Suggested Participants                                                | Primary Workshop Output                                                 |
+|-----------------------|-----------------------------------------------------------------------|-------------------------------------------------------------------------|
+| Project Management    | PM, Program manager, Product owner                                    | Outcomes, requirements, priorities, backlog structure                   |
+| Subject Matter Expert | Industry SME, Compliance Lead, Operations Lead                        | Domain context, terminology, constraints, evidence                      |
+| Design                | UX Designer, Service Designer, Design Thinking Faciliator, Researcher | Personas, User Journey, Accessibility, Responsible AI, Agent experience |
+| Technical             | Architect, Forward Deployed Engineer, Security, platform lead         | Azure design, diagram, deployment and publication plan                  |
 
 Review the broader [HVE role guides](../hve-guide/roles/) after the workshop for
 ongoing role-specific workflows.
 
 ## Workshop Agenda
 
-| Item | Activity | Mode | Output |
-|------|----------|------|--------|
-| 1 | HVE and RPI overview | Shared | Common vocabulary and scenario |
-| 2 | Environment setup and verification | Shared | Working HVE Core All installation |
-| 3 | Scenario framing | Shared | Initial problem statement |
-| 4 | Role exercises | Breakout | Context, requirements, experience, architecture inputs |
-| 5 | Artifact integration | Shared | Requirements, backlog, and Azure diagram |
-| 6 | Publication readiness | Shared | Managed App and Agent Store checklists |
-| 7 | Playback and next actions | Shared | Owners, gaps, and follow-up plan |
+| Item | Activity                           | Mode     | Output                                                 |
+|------|------------------------------------|----------|--------------------------------------------------------|
+| 1    | HVE and RPI overview               | Shared   | Common vocabulary and scenario                         |
+| 2    | Environment setup and verification | Shared   | Working HVE Core All installation                      |
+| 3    | Scenario framing                   | Shared   | Initial problem statement                              |
+| 4    | Role exercises                     | Breakout | Context, requirements, experience, architecture inputs |
+| 5    | Artifact integration               | Shared   | Requirements, backlog, and Azure diagram               |
+| 6    | Publication readiness              | Shared   | Managed App and Agent Store checklists                 |
+| 7    | Playback and next actions          | Shared   | Owners, gaps, and follow-up plan                       |
 
 ## Facilitator Preparation
 
@@ -105,7 +105,16 @@ Complete these steps before participants arrive:
 
 Use this scenario when participants do not bring a project:
 
-A partner offers a Relationship Manager Assistant to banks and financial institutions. Relationship managers use Microsoft 365 Copilot to ask questions and receive grounded answers from approved customer profiles, product information, research reports, investment insights, onboarding guides, and compliance policies. The partner deploys the Azure data, search, model, API, identity, and monitoring resources into each customer's Azure subscription through an Azure Managed Application. The solution preserves source citations, enforces customer-specific access controls, prevents customer data from being used for model training, and provides audit evidence to support regulatory compliance and governance.
+A partner offers a Relationship Manager Assistant to banks and financial
+institutions. Relationship managers use Microsoft 365 Copilot to ask
+questions and receive grounded answers from approved customer profiles,
+product information, research reports, investment insights, onboarding guides,
+and compliance policies. The partner deploys the Azure data, search, model,
+API, identity, and monitoring resources into each customer's Azure
+subscription through an Azure Managed Application. The solution preserves
+source citations, enforces customer-specific access controls, prevents
+customer data from being used for model training, and provides audit
+evidence to support regulatory compliance and governance.
 
 Do not use production customer data during the workshop. Use synthetic or
 public sample content.
@@ -122,9 +131,10 @@ public sample content.
 
 The workshop is complete when the team has reviewed the six draft artifacts,
 identified unresolved assumptions, and assigned owners for publication follow-up.
-Actual Azure deployment, commercial Microsoft Marketplace validation, and Copilot Agent Store
-availability are post-workshop milestones unless the facilitator explicitly
-provides extra time and project managers have authorized environments.
+Actual Azure deployment, commercial Microsoft Marketplace validation, and
+Copilot Agent Store availability are post-workshop milestones unless the
+facilitator explicitly provides extra time and project managers have
+authorized environments.
 
 ## Related Guidance
 

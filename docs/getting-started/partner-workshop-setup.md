@@ -16,15 +16,15 @@ estimated_reading_time: 8
 
 ## Workshop Agenda
 
-| Item | Activity | Mode | Output |
-|------|----------|------|--------|
-| 1 | HVE and RPI overview | Shared | Common vocabulary and scenario |
-| 2 | **Environment setup and verification** | Shared | Working HVE Core All installation |
-| 3 | Scenario framing | Shared | Initial problem statement |
-| 4 | Role exercises | Breakout | Context, requirements, experience, architecture inputs |
-| 5 | Artifact integration | Shared | Requirements, backlog, and Azure diagram |
-| 6 | Publication readiness | Shared | Managed App and Agent Store checklists |
-| 7 | Playback and next actions | Shared | Owners, gaps, and follow-up plan |
+| Item | Activity                               | Mode     | Output                                                 |
+|------|----------------------------------------|----------|--------------------------------------------------------|
+| 1    | HVE and RPI overview                   | Shared   | Common vocabulary and scenario                         |
+| 2    | **Environment setup and verification** | Shared   | Working HVE Core All installation                      |
+| 3    | Scenario framing                       | Shared   | Initial problem statement                              |
+| 4    | Role exercises                         | Breakout | Context, requirements, experience, architecture inputs |
+| 5    | Artifact integration                   | Shared   | Requirements, backlog, and Azure diagram               |
+| 6    | Publication readiness                  | Shared   | Managed App and Agent Store checklists                 |
+| 7    | Playback and next actions              | Shared   | Owners, gaps, and follow-up plan                       |
 
 > [!NOTE]
 > These instructions use **Visual Studio Code**. The HVE Core extension is a VS
@@ -53,7 +53,7 @@ Before you begin either option, complete these steps:
 3. Confirm GitHub Copilot and GitHub Copilot Chat are enabled in the Codespace.
 4. Open the Extensions view from the Activity Bar.
 5. Search for **HVE Core All**, confirm the publisher is `ISE-HVE-ESSENTIALS`, and install it in the Codespace.
-6. Open the terminal in Codespaces and git clone the workshop repository at https://github.com/asiapartners/hve-partner-workshop and open it in your chosen environment.
+6. Open the terminal in Codespaces and clone the workshop repository at [https://github.com/asiapartners/hve-partner-workshop](https://github.com/asiapartners/hve-partner-workshop) and open it in your chosen environment.
 7. Create a branch for workshop activities before you start editing files. Use a name such as `workshop/<team-name>`.
 8. Reload the window if VS Code asks you to do so.
 
@@ -61,9 +61,9 @@ Before you begin either option, complete these steps:
 
 1. Install [Git](https://git-scm.com/downloads) and [Visual Studio Code](https://code.visualstudio.com/Download).
 2. Open VS Code, open the Extensions view, and install **GitHub Copilot** and **GitHub Copilot Chat**.
-3. Sign in with your GitHub account that has Copilot access.1. 
+3. Sign in with your GitHub account that has Copilot access.
 4. Install [HVE Core All](https://marketplace.visualstudio.com/items?itemName=ise-hve-essentials.hve-core-all).
-5. Open the Command Palette, run **Git: Clone** at https://github.com/asiapartners/hve-partner-workshop and open it.
+5. Open the Command Palette, run **Git: Clone** at [https://github.com/asiapartners/hve-partner-workshop](https://github.com/asiapartners/hve-partner-workshop) and open it.
 6. Select **Open** when cloning finishes, and select **Trust** only when you recognize the repository and facilitator.
 7. Create a branch for workshop activities before you start editing files. Use a name such as `workshop/<team-name>`.
 
@@ -105,6 +105,7 @@ Ask technical lead to complete these steps:
 1. Create a folder named `workshop-output` at the repository root.
 2. Add six empty Markdown files using the names in the
    [workshop overview](partner-workshop.md#outcomes).
+
 ```text
 workshop-output/
 |-- 01-context-pack.md
@@ -114,10 +115,11 @@ workshop-output/
 |-- 05-backlog.md
 `-- 06-publication-readiness.md
 ```
-3. Add the scenario title and team member roles to `01-context-pack.md`.
-4. Do not enter credentials, personal data, customer secrets, or production
+
+1. Add the scenario title and team member roles to `01-context-pack.md`.
+2. Do not enter credentials, personal data, customer secrets, or production
    content in prompts or files.
-5. Commit your workshop outputs to your branch only.
+3. Commit your workshop outputs to your branch only.
 
 > [!TIP]
 > Use `.copilot-tracking/` only for temporary workflow state. Keep that folder

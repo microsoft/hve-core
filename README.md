@@ -37,11 +37,11 @@ Use HVE Core when you want AI-assisted work to be repeatable, standards-aligned,
 
 > [!CAUTION]
 > HVE Core is a rapidly evolving agentic SDLC framework. It is a source of patterns and learning. You would need develop further enhancements to deploy for production.
-
+>
 > As the technology landscape evoles, workflows, interfaces, architecture, and recommended practices may change substantially, including in ways that are not backward compatible. Evaluate all materials for your own requirements and risk tolerance.
-
+>
 > The HVE Builder skill (use with `/hve-builder`) and GitHub Copilot can help you adapt or copy relevant patterns into an agentic SDLC that you own and maintain independently.
-
+>
 > To build an independent implementation, start with [Forking and Extending HVE Core](docs/customization/forking.md) and review the [HVE Core documentation](docs/README.md) before adopting any component.
 
 ## Getting Started
@@ -57,7 +57,6 @@ Use HVE Core when you want AI-assisted work to be repeatable, standards-aligned,
 1. Install the [HVE Core extension](https://marketplace.visualstudio.com/items?itemName=ise-hve-essentials.hve-core) from the VS Code Marketplace.
 2. Open any project and launch GitHub Copilot Chat (`Ctrl+Alt+I`).
 3. Select **RPI Agent** from the agent picker or run `/rpi`, then describe the task you want to complete.
-
 
 ## Navigate This Repository
 

@@ -92,17 +92,17 @@ The tutor responds by classifying you as beginner-to-intermediate, then launches
 
 ## Curriculum Overview
 
-| Module | Method                   | Space          | Topics                                                                   |
-|--------|--------------------------|----------------|--------------------------------------------------------------------------|
-| 1      | Scope Conversations      | Problem        | Frozen vs fluid requests, stakeholder mapping, constraint discovery      |
-| 2      | Design Research          | Problem        | Contextual inquiry, environmental observation, discovery questions       |
-| 3      | Input Synthesis          | Problem        | Affinity clustering, theme development, HMW questions                    |
-| 4      | Brainstorming            | Solution       | Divergent ideation, convergent clustering, AI Discovery Cards            |
-| 5      | User Concepts            | Solution       | Concept articulation, D/F/V analysis, stakeholder alignment              |
-| 6      | Low-Fidelity Prototypes  | Solution       | Paper prototyping, scrappy enforcement, feedback planning                |
-| 7      | High-Fidelity Prototypes | Implementation | Technical translation, functional prototypes, specifications             |
-| 8      | User Testing             | Implementation | Test protocols, evidence-based evaluation, severity classification       |
-| 9      | Iteration at Scale       | Implementation | Change management, scaling patterns, telemetry-driven optimization       |
+| Module | Method                   | Space          | Topics                                                              |
+|--------|--------------------------|----------------|---------------------------------------------------------------------|
+| 1      | Scope Conversations      | Problem        | Frozen vs fluid requests, stakeholder mapping, constraint discovery |
+| 2      | Design Research          | Problem        | Contextual inquiry, environmental observation, discovery questions  |
+| 3      | Input Synthesis          | Problem        | Affinity clustering, theme development, HMW questions               |
+| 4      | Brainstorming            | Solution       | Divergent ideation, convergent clustering, AI Discovery Cards       |
+| 5      | User Concepts            | Solution       | Concept articulation, D/F/V analysis, stakeholder alignment         |
+| 6      | Low-Fidelity Prototypes  | Solution       | Paper prototyping, scrappy enforcement, feedback planning           |
+| 7      | High-Fidelity Prototypes | Implementation | Technical translation, functional prototypes, specifications        |
+| 8      | User Testing             | Implementation | Test protocols, evidence-based evaluation, severity classification  |
+| 9      | Iteration at Scale       | Implementation | Change management, scaling patterns, telemetry-driven optimization  |
 
 The three spaces represent the natural progression of Design Thinking:
 

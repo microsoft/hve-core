@@ -16,15 +16,15 @@ estimated_reading_time: 12
 
 ## Workshop Agenda
 
-| Item | Activity | Mode | Output |
-|------|----------|------|--------|
-| 1 | HVE and RPI overview | Shared | Common vocabulary and scenario |
-| 2 | Environment setup and verification | Shared | Working HVE Core All installation |
-| 3 | Scenario framing | Shared | Initial problem statement |
-| 4 | Role exercises | Breakout | Context, requirements, experience, architecture inputs |
-| 5 | Artifact integration | Shared | Requirements, backlog, and Azure diagram |
-| 6 | **Publication readiness** | Shared | Managed App and Agent Store checklists |
-| 7 | **Playback and next actions** | Shared | Owners, gaps, and follow-up plan |
+| Item | Activity                           | Mode     | Output                                                 |
+|------|------------------------------------|----------|--------------------------------------------------------|
+| 1    | HVE and RPI overview               | Shared   | Common vocabulary and scenario                         |
+| 2    | Environment setup and verification | Shared   | Working HVE Core All installation                      |
+| 3    | Scenario framing                   | Shared   | Initial problem statement                              |
+| 4    | Role exercises                     | Breakout | Context, requirements, experience, architecture inputs |
+| 5    | Artifact integration               | Shared   | Requirements, backlog, and Azure diagram               |
+| 6    | **Publication readiness**          | Shared   | Managed App and Agent Store checklists                 |
+| 7    | **Playback and next actions**      | Shared   | Owners, gaps, and follow-up plan                       |
 
 Use this guide during the publication-readiness portion of the workshop. The goal is to turn the workshop outputs into a clear follow-up plan for the right publication path rather than to complete every certification step in-session.
 
@@ -230,13 +230,13 @@ Use this section to close the workshop with a clear handoff.
 
 ### Action item table
 
-| Action | Owner | Target date | Status | Notes |
-|--------|-------|-------------|--------|-------|
-| Confirm the target publication route | TBD | TBD | Not started | Choose Azure Managed Application, Microsoft 365 Copilot agent, or both. |
-| Complete the Marketplace or Agent Store readiness checklist | TBD | TBD | Not started | Use the relevant checklist in this guide. |
-| Resolve the top blocker for packaging or validation | TBD | TBD | Not started | Capture the blocker from the workshop playback. |
-| Assign support, privacy, security, and publishing approvers | TBD | TBD | Not started | Ensure the review path is explicit before submission. |
-| Schedule the next review or submission checkpoint | TBD | TBD | Not started | Keep the follow-up date visible for the team. |
+| Action                                                      | Owner | Target date | Status      | Notes                                                                   |
+|-------------------------------------------------------------|-------|-------------|-------------|-------------------------------------------------------------------------|
+| Confirm the target publication route                        | TBD   | TBD         | Not started | Choose Azure Managed Application, Microsoft 365 Copilot agent, or both. |
+| Complete the Marketplace or Agent Store readiness checklist | TBD   | TBD         | Not started | Use the relevant checklist in this guide.                               |
+| Resolve the top blocker for packaging or validation         | TBD   | TBD         | Not started | Capture the blocker from the workshop playback.                         |
+| Assign support, privacy, security, and publishing approvers | TBD   | TBD         | Not started | Ensure the review path is explicit before submission.                   |
+| Schedule the next review or submission checkpoint           | TBD   | TBD         | Not started | Keep the follow-up date visible for the team.                           |
 
 ## How to start the agents for this project
 
