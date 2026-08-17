@@ -214,3 +214,10 @@ flowchart LR
 ## Summary
 
 The proposed MVP is practical for workshop use and is well aligned to a human-review-first experience. The main gaps to resolve before implementation are access control, evidence grounding, auditability, deployment ownership, and publication packaging. If those controls are defined early, the solution can evolve from a workshop demo into a more enterprise-ready product without changing the core user experience.
+
+---
+
+<!-- markdownlint-disable MD036 -->
+*🤖 Crafted with precision by ✨Copilot following brilliant human instruction,
+then carefully refined by our team of discerning human reviewers.*
+<!-- markdownlint-enable MD036 -->

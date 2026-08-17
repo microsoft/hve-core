@@ -118,3 +118,10 @@ Relationship managers spend too much time collecting fragmented customer context
 * Show the rationale and evidence behind every recommendation so it can be reviewed by a human.
 * Avoid exposing sensitive or personally identifiable information outside approved contexts.
 * Fail safely when data is incomplete or the system cannot produce a trustworthy recommendation.
+
+---
+
+<!-- markdownlint-disable MD036 -->
+*🤖 Crafted with precision by ✨Copilot following brilliant human instruction,
+then carefully refined by our team of discerning human reviewers.*
+<!-- markdownlint-enable MD036 -->

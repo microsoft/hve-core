@@ -187,3 +187,10 @@ This draft is ready for capstone handoff when the team can answer these question
 * Which integrations are required now and which are optional later?
 * How are trust, security, and human review enforced?
 * What is still open before Marketplace and Copilot Agent Store submission?
+
+---
+
+<!-- markdownlint-disable MD036 -->
+*🤖 Crafted with precision by ✨Copilot following brilliant human instruction,
+then carefully refined by our team of discerning human reviewers.*
+<!-- markdownlint-enable MD036 -->

@@ -41,3 +41,10 @@ This draft links the workshop scenario context and decisions to requirements, ex
 * Which requirements have no clear owner or no mapped backlog item?
 * Which publication gates remain unowned or uncertain?
 * Which risks need a human decision before the team can proceed to implementation?
+
+---
+
+<!-- markdownlint-disable MD036 -->
+*🤖 Crafted with precision by ✨Copilot following brilliant human instruction,
+then carefully refined by our team of discerning human reviewers.*
+<!-- markdownlint-enable MD036 -->

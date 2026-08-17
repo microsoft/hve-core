@@ -78,3 +78,10 @@ This draft refines the workshop requirements into a more implementation-ready ba
 * Keep the first slice focused on one primary scenario: preparing for a customer conversation.
 * Treat evidence, trust, and human review as core requirements rather than optional enhancements.
 * Use this draft as the starting point for a more detailed implementation backlog once the team confirms scope and data availability.
+
+---
+
+<!-- markdownlint-disable MD036 -->
+*🤖 Crafted with precision by ✨Copilot following brilliant human instruction,
+then carefully refined by our team of discerning human reviewers.*
+<!-- markdownlint-enable MD036 -->
