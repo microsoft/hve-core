@@ -72,7 +72,6 @@ This draft refines the workshop requirements into a more implementation-ready ba
 
 * A planning-ready backlog hierarchy has been prepared for the first slice.
 * The backlog is ready to be translated into GitHub Issues once a GitHub-capable execution context is available.
-* The issue hierarchy and summary were logged in [.copilot-tracking/github-issues/execution/2026-08-16/handoff.md](.copilot-tracking/github-issues/execution/2026-08-16/handoff.md) for traceability.
 
 ### Notes for Backlog Refinement
 

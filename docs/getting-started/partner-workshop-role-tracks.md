@@ -36,7 +36,7 @@ A practical sequence for the workshop is:
 2. Project Management turns the draft into requirements, priorities, and backlog structure.
 3. Design translates that context into an experience draft and captures accessibility and responsible AI needs.
 4. Technical frames the solution approach, architecture, and publication considerations.
-5. The team reviews the handoff together during the capstone integration step.
+5. The team reviews the handoff together during the solution integration step.
 
 This sequence helps each role build on the previous one without waiting for perfect information.
 
@@ -54,7 +54,7 @@ This sequence helps each role build on the previous one without waiting for perf
 1. Review the shared scenario and workshop context.
 2. Choose a role track and complete its guided steps.
 3. Share your artifact with the rest of the team.
-4. After the role tracks, proceed first to the [Partner Workshop Capstone](partner-workshop-capstone) guide to integrate the outputs, then continue to the [Partner Workshop Publishing Follow-Up](partner-workshop-publishing) guide for publication readiness.
+4. After the role tracks, proceed first to the [Partner Workshop solution](partner-workshop-solution.md) guide to integrate the outputs, then continue to the [Partner Workshop Publishing Follow-Up](partner-workshop-publishing) guide for publication readiness.
 
 ## Track overview
 
@@ -272,7 +272,7 @@ Suggested prompt: "Create an architecture image from the mermaid diagram for thi
 Keep the output concise and action-oriented. Do not wait for perfect
 information. The goal is to produce a reviewed draft that the team can refine after the workshop.
 
-Proceed to the [capstone exercises](partner-workshop-capstone.md).
+Proceed to the [solution guide](partner-workshop-solution.md).
 
 ---
 

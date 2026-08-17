@@ -113,9 +113,9 @@ public sample content.
 ## Participant Flow
 
 1. Complete [shared setup](partner-workshop-setup.md).
-2. Choose a section in the [role exercises](partner-workshop-role-tracks.md).
-3. Complete the [cross-role challenge](partner-workshop-capstone.md).
-4. Start the [publication follow-up](partner-workshop-publishing.md) during the
+2. Choose a section in the [role guide](partner-workshop-role-tracks.md).
+3. Complete the [cross-role solution guide](partner-workshop-solution.md).
+4. Complete the [publication guide](partner-workshop-publishing.md) during the
    workshop and finish it after the session.
 
 ## Completion Standard
