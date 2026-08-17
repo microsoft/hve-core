@@ -1,127 +1,115 @@
 ---
-title: Partner Workshop solution
-description: Integrate role outputs into a shared solution pack, backlog, architecture view, and publication-readiness plan
-sidebar_position: 10
+title: VS Code MCP Server Configuration
+description: Configuration guide for GitHub MCP server integration with VS Code Copilot
 author: Microsoft
-ms.date: 2026-08-17
-ms.topic: tutorial
+ms.date: 2026-07-08
+ms.topic: reference
 keywords:
-  - workshop solution
-  - backlog
-  - requirements traceability
-  - Azure diagram
-  - publication readiness
-estimated_reading_time: 8
+  - mcp
+  - github copilot
+  - vscode
+  - configuration
+estimated_reading_time: 3
 ---
 
-## Workshop Agenda
+> **Note:** MCP servers are not enabled by default. The available server configurations are stored in `mcp.json.sample`. To enable them, either rename `mcp.json.sample` to `mcp.json`, or create a new `mcp.json` file with the desired server configuration.
 
-| Item | Activity                           | Mode     | Output                                                 |
-|------|------------------------------------|----------|--------------------------------------------------------|
-| 1    | HVE and RPI overview               | Shared   | Common vocabulary and scenario                         |
-| 2    | Environment setup and verification | Shared   | Working HVE Core All installation                      |
-| 3    | Scenario framing                   | Shared   | Initial problem statement                              |
-| 4    | Role exercises                     | Breakout | Context, requirements, experience, architecture inputs |
-| 5    | **Artifact integration**           | Shared   | Requirements, backlog, and Azure diagram               |
-| 6    | Publication readiness              | Shared   | Managed App and Agent Store checklists                 |
-| 7    | Playback and next actions          | Shared   | Owners, gaps, and follow-up plan                       |
+## Overview
 
-Use this guide during the solution portion of the workshop. Participants should bring their role outputs together, check for gaps and traceability, and leave with a reviewed handoff that can be refined after the session.
+This workspace uses the GitHub MCP server for enhanced Copilot capabilities.
 
-## Objective
+## Configuration
 
-Create one shared solution draft that connects business context, requirements, experience, backlog, architecture, and publication readiness into a coherent story.
+The MCP server configuration is provided in `.vscode/mcp.json.sample`.
 
-## Suggested solution flow
+> **Note:** If you want to use the recommended GitHub MCP server setup, run `npx @modelcontextprotocol/server-github` and update your `.vscode/mcp.json` accordingly. See the [GitHub MCP Server Documentation](https://github.com/github/github-mcp-server) for details.
 
-1. Ask each role to summarize its artifact in two minutes.
-2. Open the workshop output files in the shared folder.
-3. Compare terminology across the files and resolve contradictions.
-4. Use the SME context pack as the source of truth for domain terms and business rules.
-5. Confirm that each user story identifies a user, need, and outcome.
-6. Confirm that each acceptance criterion is observable and testable.
-7. Confirm that each architecture component maps to at least one requirement.
-8. Confirm that high-risk requirements and important decisions map to backlog items.
-9. Confirm that the experience captures uncertainty, feedback, access failures, and human escalation.
-10. Record unresolved items as follow-up work in 06-publication-readiness.md.
+### Authentication
 
-## Traceability review
+#### Option 1: OAuth (Recommended)
 
-Select **RPI Planner** and enter this prompt:
+* Uses VS Code's built-in GitHub authentication
+* No manual token management required
+* Managed via: VS Code → Accounts menu → Manage Trusted MCP Servers
 
-```text
-"Review the workshop output set from 01-context-pack.md through 06-publication-readiness as one solution pack. Build a traceability matrix from context facts and decisions to requirements, experience needs, architecture components, backlog items, tests, and publication gates. Report missing links, contradictions, unsupported claims, and unowned risks. Do not implement or publish anything."
-```
+#### Option 2: Personal Access Token
 
-Then complete these steps:
+* Required for GitHub Enterprise Server
+* Set environment variable: `GITHUB_PERSONAL_ACCESS_TOKEN`
+* Generate at: <https://github.com/settings/personal-access-tokens/new>
 
-1. Capture the matrix draft in 07-traceability-matrix.md
-2. Assign an owner to each gap.
-3. Fix gaps that can be resolved from workshop evidence.
-4. Record remaining gaps in 06-publication-readiness.md
-5. Mark generated content as draft until a responsible human reviews it.
+### Enterprise Configuration
 
-## Prepare the backlog target
+For GitHub Enterprise Server:
 
-Choose one target. Creating external items is optional during the workshop.
+1. Update `.vscode/mcp.json` with your enterprise URL:
 
-### GitHub Issues
+   ```json
+   {
+     "servers": {
+       "github": {
+         "url": "https://your-github-enterprise.com/mcp"
+       }
+     }
+   }
+   ```
 
-1. Select **Backlog Manager**.
-2. Ask it to inspect 05-backlog.md for readiness and duplicates.
-3. Confirm repository, labels, milestone, owners, and issue hierarchy.
-4. Ask for a dry-run summary before any mutation.
-5. Review the proposed issue titles and acceptance criteria.
-6. Create issues only with facilitator approval and repository permission.
+2. Set your PAT as an environment variable:
 
-### Markdown-only fallback
+   ```powershell
+   # PowerShell
+   $env:GITHUB_PERSONAL_ACCESS_TOKEN = "your_token_here"
+   ```
 
-1. Keep 05-backlog.md as the system-neutral backlog.
-2. Add columns for target system, owner, state, and external ID.
-3. Assign a post-workshop owner to import or create each approved item.
+   ```bash
+   # Bash/Linux/macOS
+   export GITHUB_PERSONAL_ACCESS_TOKEN="your_token_here"
+   ```
 
-## Review the architecture
+### Required Token Scopes
 
-1. Open 04-architecture.md in Markdown Preview.
-2. Follow the primary user request from Microsoft 365 Copilot to the Azure API, retrieval layer, model, and response path.
-3. Follow the content ingestion and update path separately.
-4. Identify where authorization is enforced.
-5. Identify where secrets and keys are stored.
-6. Identify where prompts, retrieved content, responses, and feedback could be logged.
-7. Confirm telemetry does not collect secrets or unnecessary personal data.
-8. Add failure paths for model, search, identity, and dependency outages.
-9. Add a cost owner and an operational owner.
-10. Mark the diagram as conceptual until infrastructure source and deployment validation exist.
+If using PAT authentication, your token needs:
 
-## Create the follow-up plan
+* `repo` - Full control of private repositories
+* `read:org` - Read org and team membership
+* `user` - Read user profile data
 
-1. Open 06-publication-readiness.md
-2. Add separate sections for Azure Managed Application and Microsoft 365 agent.
-3. Record required accounts, subscriptions, tenants, roles, and approvers.
-4. Record security, privacy, accessibility, legal, support, and Responsible AI reviews.
-5. Record test environments and preview audiences.
-6. Record listing content, icons, screenshots, privacy links, support links, and terms that still need owners.
-7. Assign target dates outside the workshop.
-8. Continue with the [publication guide](partner-workshop-publishing.md).
+### Usage
 
-## Ten-minute team discussion
+Once configured, the MCP server provides:
 
-1. The PM presents the outcome, requirements, and first release slice.
-2. The SME presents key constraints and unresolved domain questions.
-3. The designer presents the primary journey and human review points.
-4. The technical lead presents the architecture view and publication routes.
-5. The team names its three highest risks.
-6. The facilitator confirms owners and the next review date.
+* Repository operations (file management, search)
+* Branch management
+* Issue management
+* Pull request workflows
+* Code search capabilities
 
-## Deliverable
+### Security Notes
 
-A reviewed workshop handoff that connects context, requirements, experience, backlog, architecture, and publication readiness into one shared draft.
+* Never commit tokens to version control
+* Use OAuth when possible for automatic credential management
+* Rotate PATs regularly
+* Use fine-grained tokens with minimal required permissions
 
-## Working session reminder
+### Troubleshooting
 
-Keep the output concise and action-oriented. Do not wait for perfect information. The goal is to produce a reviewed draft that the team can refine after the workshop.
+**Server not connecting:**
 
-Proceed to the [publishing guide](partner-workshop-publishing.md).
+* Check VS Code version (1.101+ recommended for OAuth)
+* Verify GitHub authentication via Accounts menu
+* For PAT: Verify `GITHUB_PERSONAL_ACCESS_TOKEN` is set
+
+**Permission errors:**
+
+* Ensure token has required scopes
+* Check token hasn't expired
+* Verify repository access permissions
+
+### References
+
+* [VS Code MCP Extension Guide](https://code.visualstudio.com/api/extension-guides/ai/mcp)
+* [GitHub MCP Server Documentation](https://github.com/github/github-mcp-server)
+* [GitHub Personal Access Tokens](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/creating-a-personal-access-token)
 
 ---
 

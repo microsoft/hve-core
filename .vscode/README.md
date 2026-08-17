@@ -1,116 +1,135 @@
 ---
-title: VS Code MCP Server Configuration
-description: Configuration guide for GitHub MCP server integration with VS Code Copilot
-author: Microsoft
-ms.date: 2026-07-08
-ms.topic: reference
+title: Dev Container
+description: Pre-configured development environment for HVE Core with all required tools and extensions
+author: HVE Core Team
+ms.date: 2026-08-11
+ms.topic: guide
 keywords:
-  - mcp
-  - github copilot
+  - devcontainer
+  - development environment
   - vscode
-  - configuration
+  - docker
 estimated_reading_time: 3
 ---
 
-> **Note:** MCP servers are not enabled by default. The available server configurations are stored in `mcp.json.sample`. To enable them, either rename `mcp.json.sample` to `mcp.json`, or create a new `mcp.json` and copy across only the servers you need.
+A pre-configured development environment that includes all tools, extensions, and dependencies needed for HVE Core development. Ensures consistency across all development machines.
 
-## Overview
+## Prerequisites
 
-This workspace uses the GitHub MCP server for enhanced Copilot capabilities.
+* [Docker Desktop](https://www.docker.com/products/docker-desktop)
+* [Visual Studio Code](https://code.visualstudio.com/)
+* [Dev Containers extension](https://marketplace.visualstudio.com/items?itemName=ms-vscode-remote.remote-containers)
+* Git
 
-## Configuration
+## Quick Start
 
-The MCP server configuration is provided in `.vscode/mcp.json.sample`.
-
-> **Note:** If you want to use the recommended GitHub MCP server setup, run `npx @modelcontextprotocol/server-github` and update your `.vscode/mcp.json` accordingly. See the [GitHub MCP Server Documentation](https://github.com/github/github-mcp-server) for details.
-
-### Authentication
-
-#### Option 1: OAuth (Recommended)
-
-* Uses VS Code's built-in GitHub authentication
-* No manual token management required
-* Managed via: VS Code → Accounts menu → Manage Trusted MCP Servers
-
-#### Option 2: Personal Access Token
-
-* Required for GitHub Enterprise Server
-* Set environment variable: `GITHUB_PERSONAL_ACCESS_TOKEN`
-* Generate at: <https://github.com/settings/personal-access-tokens/new>
-
-### Enterprise Configuration
-
-For GitHub Enterprise Server:
-
-1. Update `.vscode/mcp.json` with your enterprise URL:
-
-   ```json
-   {
-     "servers": {
-       "github": {
-         "url": "https://your-github-enterprise.com/mcp"
-       }
-     }
-   }
-   ```
-
-2. Set your PAT as an environment variable:
-
-   ```powershell
-   # PowerShell
-   $env:GITHUB_PERSONAL_ACCESS_TOKEN = "your_token_here"
-   ```
+1. Clone the repository:
 
    ```bash
-   # Bash/Linux/macOS
-   export GITHUB_PERSONAL_ACCESS_TOKEN="your_token_here"
+   git clone https://github.com/microsoft/hve-core.git
+   cd hve-core
    ```
 
-### Required Token Scopes
+2. Open in VS Code:
 
-If using PAT authentication, your token needs:
+   ```bash
+   code .
+   ```
 
-* `repo` - Full control of private repositories
-* `read:org` - Read org and team membership
-* `user` - Read user profile data
+3. Reopen in container:
+   * Press `F1` or `Ctrl+Shift+P`
+   * Select **Dev Containers: Reopen in Container**
+   * Wait for the container to build (first time takes 5-10 minutes)
 
-### Usage
+## Restricted Networks and Custom Registries
 
-Once configured, the MCP server provides:
+Set restricted-network overrides on the host before opening VS Code, then
+rebuild the container. Supported variables are:
 
-* Repository operations (file management, search)
-* Branch management
-* Issue management
-* Pull request workflows
-* Code search capabilities
+* Build and package indexes: `HVE_DEVCONTAINER_IMAGE`,
+  `NPM_CONFIG_REGISTRY`, `PIP_INDEX_URL`, and `UV_DEFAULT_INDEX`
+* Setup endpoints: `HVE_GITHUB_RELEASES_URL`, `HVE_GITHUB_API_URL`,
+  `HVE_PSGALLERY_REPOSITORY`, and `HVE_PSGALLERY_SOURCE_URL`
 
-### Security Notes
+Runtime-only npm, pip, and uv overrides can instead use the user-level
+`dev.containers.containerEnv` VS Code setting. This setting cannot select the
+base image or configure setup endpoints because those values are resolved
+during container creation.
 
-* Never commit tokens to version control
-* Use OAuth when possible for automatic credential management
-* Rotate PATs regularly
-* Use fine-grained tokens with minimal required permissions
+See [Install behind a restricted network](../docs/contributing/validation.md#install-behind-a-restricted-network)
+for configuration examples and restore guidance. See
+[Enterprise artifact hub](../docs/customization/enterprise-artifact-hub.md)
+for defaults and the complete environment contract. Keep organization-specific
+endpoints and credentials out of repository files.
 
-### Troubleshooting
+## Included Tools
 
-**Server not connecting:**
+### Languages & Runtimes
 
-* Check VS Code version (1.101+ recommended for OAuth)
-* Verify GitHub authentication via Accounts menu
-* For PAT: Verify `GITHUB_PERSONAL_ACCESS_TOKEN` is set
+* Node.js 24
+* Python 3.11
+* PowerShell 7.x
 
-**Permission errors:**
+### CLI Tools
 
-* Ensure token has required scopes
-* Check token hasn't expired
-* Verify repository access permissions
+* Git
+* GitHub CLI (`gh`)
+* GitHub Copilot CLI (`copilot`)
+* Azure CLI (`az`)
+* actionlint (GitHub Actions workflow linter)
 
-### References
+### Code Quality
 
-* [VS Code MCP Extension Guide](https://code.visualstudio.com/api/extension-guides/ai/mcp)
-* [GitHub MCP Server Documentation](https://github.com/github/github-mcp-server)
-* [GitHub Personal Access Tokens](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/creating-a-personal-access-token)
+* Markdown: markdownlint, markdown-table-formatter
+* Spelling: Code Spell Checker (VS Code extension)
+* Shell: shellcheck
+
+### Security
+
+* Gitleaks (secret scanning)
+* osv-scanner (dependency vulnerability scanning)
+
+### PowerShell Modules
+
+* PSScriptAnalyzer
+* PowerShell-Yaml
+* Pester 5.7.1
+
+## Pre-installed VS Code Extensions
+
+* Spell Checking: Street Side Software Spell Checker
+* Markdown: markdownlint, Markdown All in One, Mermaid support
+* GitHub: GitHub Pull Requests
+
+## Common Commands
+
+Run these commands inside the container:
+
+```bash
+# Lint Markdown files
+markdownlint '**/*.md' --ignore node_modules
+
+# Check spelling
+cspell '**/*.md'
+
+# Check shell scripts
+shellcheck scripts/**/*.sh
+
+# Security scan
+gitleaks detect --source . --verbose
+```
+
+## Troubleshooting
+
+Container won't build: Ensure Docker Desktop is running and you have sufficient disk space (5GB+).
+
+Extensions not loading: Reload the window (`F1` → **Developer: Reload Window**).
+
+For more help, see [SUPPORT.md](../SUPPORT.md).
 
 ---
 
-*🤖 Crafted with precision by ✨Copilot following brilliant human instruction, then carefully refined by our team of discerning human reviewers.*
+<!-- markdownlint-disable MD036 -->
+*🤖 Crafted with precision by ✨Copilot following brilliant human instruction,
+then carefully refined by our team of discerning human reviewers.*
+<!-- markdownlint-enable MD036 -->
