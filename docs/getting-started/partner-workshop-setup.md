@@ -136,7 +136,7 @@ In the next step, we will use the same pattern in every role exercise:
 6. Save only the reviewed result to `workshop-output`.
 7. Hand the artifact to the next role.
 
-Proceed to the [role exercises](partner-workshop-role-tracks.md).
+Proceed to the [role guide](partner-workshop-role-tracks.md).
 
 ---
 

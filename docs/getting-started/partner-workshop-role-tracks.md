@@ -54,7 +54,7 @@ This sequence helps each role build on the previous one without waiting for perf
 1. Review the shared scenario and workshop context.
 2. Choose a role track and complete its guided steps.
 3. Share your artifact with the rest of the team.
-4. After the role tracks, proceed first to the [Partner Workshop solution](partner-workshop-solution.md) guide to integrate the outputs, then continue to the [Partner Workshop Publishing Follow-Up](partner-workshop-publishing) guide for publication readiness.
+4. After the role tracks, proceed first to the [Partner Workshop solution](partner-workshop-solution.md) guide to integrate the outputs, then continue to the [Partner Workshop Publishing Follow-Up](partner-workshop-publishing.md) guide for publication readiness.
 
 ## Track overview
 
@@ -119,8 +119,9 @@ Capture the business truth before anyone designs or builds anything.
 
 ### Deliverable
 
-workshop-output\01-context-pack.md: A context pack that the design and product teams can use to refine the experience and requirements.
-workshop-output\02-requirements.md: A requirements draft that can be reviewed by engineering and design.
+1. workshop-output\01-context-pack.md: A context pack that the design and product teams can use to refine the experience and requirements.
+
+2. workshop-output\02-requirements.md: A requirements draft that can be reviewed by engineering and design.
 
 ## Design Track
 
@@ -132,7 +133,7 @@ understanding of the problem.
 ### Steps
 
 1. Read the context pack workshop-output\01-context-pack.md created by the SME.
-2. Plan for a design thinking [**Microsoft AI Discovery Cards** workshop](https://aka.ms/AIDiscoveryCards) to brainstorm agentic AI capabilities with end users and stakeholders.
+2. Plan for a design thinking [**Microsoft AI Discovery Cards workshop**](https://aka.ms/AIDiscoveryCards) to brainstorm agentic AI capabilities with end users and stakeholders.
 3. Select one primary user and one core job to be done.
 4. Map the current journey and identify pain points.
 5. Describe the future journey with the intended solution.
@@ -144,11 +145,11 @@ Select the 01-context-pack file and use this prompt in GitHub Copilot Chat:
 ```
 8. If the team needs a guided conversation, ask **Design Thinking Coach** to help frame the opportunity and challenge assumptions. 
 ```text
-Prompt: "Coach me through a short design thinking session for this scenario. Help me frame the problem, identify user needs, and define a focused opportunity area for the solution."
+"Coach me through a short design thinking session for this scenario. Help me frame the problem, identify user needs, and define a focused opportunity area for the solution."
 ```
 9. If the team needs learning support or a clearer next step, ask **Design Thinking Learning Tutor** to explain the method and help transform notes into a simple design artifact. 
 ```text
-Prompt: "Act as a Design Thinking Learning Tutor. Explain the next design thinking step for this scenario and help me turn my notes into an insight, opportunity statement, or user journey outline."
+"Act as a Design Thinking Learning Tutor. Explain the next design thinking step for this scenario and help me turn my notes into an insight, opportunity statement, or user journey outline."
 ```
 10. Use **Accessibility Planner** and **Accessibility Reviewer** to surface accessibility requirements and review the draft for gaps. 
 Select the 03-experience.md and prompt **Accessibility Planner**: 
@@ -230,16 +231,16 @@ Frame the solution approach, architecture, and publication considerations.
 - Capture the publication requirements for Microsoft Marketplace and Microsoft 365 Copilot Agent Store readiness, including packaging, discoverability, supportability, and integration expectations. 
 - Create a simple Mermaid architecture diagram for the proposed solution. 
 ```text
-Prompt: "Review the 02-requirements.md and 03-experience.md and help frame a simple solution approach, major tradeoffs, and cloud architecture notes for the first MVP. Update 04-architecture.md. Consider where Microsoft Foundry, Microsoft 365 Copilot, Microsoft Agent 365 Control Plane, Microsoft Entra ID, Microsoft Fabric, Microsoft IQ and Azure Databases fit the solution where appropriate. Review this solution for well-architected design concerns, align the approach to Microsoft Cloud Adoption Framework guidance, and identify any gaps in reliability, security, operational excellence, performance efficiency, and cost optimization for the first MVP. Identify the integration and publication requirements needed to make this solution ready for Microsoft Marketplace and Microsoft 365 Copilot Agent Store, including packaging details, metadata, support expectations, and any required user experience or technical integrations. Create a Mermaid architecture diagram for this solution that shows the main user flow, core services, data sources, and key integrations for the first MVP."
+"Review the 02-requirements.md and 03-experience.md and help frame a simple solution approach, major tradeoffs, and cloud architecture notes for the first MVP. Update 04-architecture.md. Consider where Microsoft Foundry, Microsoft 365 Copilot, Microsoft Agent 365 Control Plane, Microsoft Entra ID, Microsoft Fabric, Microsoft IQ and Azure Databases fit the solution where appropriate. Review this solution for well-architected design concerns, align the approach to Microsoft Cloud Adoption Framework guidance, and identify any gaps in reliability, security, operational excellence, performance efficiency, and cost optimization for the first MVP. Identify the integration and publication requirements needed to make this solution ready for Microsoft Marketplace and Microsoft 365 Copilot Agent Store, including packaging details, metadata, support expectations, and any required user experience or technical integrations. Create a Mermaid architecture diagram for this solution that shows the main user flow, core services, data sources, and key integrations for the first MVP."
 ```
 4. Use **Security Planner** to review readiness and surface follow-up work. 
 ```text
-Suggested prompt: "Review this solution draft for security risks, deployment considerations, and follow-up actions needed before implementation."
+"Review this solution draft for security risks, deployment considerations, and follow-up actions needed before implementation."
 ```
 5. Review the mermaid diagram and use natural language to refine it.
 6. (Optional) Instead of GitHub Copilot, use Microsft 365 Copilot to create an image. In M365 Copilot, attach 04-architecture.md, and create an architecture image from the mermaid diagram for this solution using Azure and Copilot-style icons to represent core services, data sources, user experience layers, and integrations for the first MVP.
 ```text
-Suggested prompt: "Create an architecture image from the mermaid diagram for this solution using Azure and Copilot-style icons to represent core services, data sources, user experience layers, and integrations for the first MVP."
+"Create an architecture image from the mermaid diagram for this solution using Azure and Copilot-style icons to represent core services, data sources, user experience layers, and integrations for the first MVP."
 ```
 7. Create the publication-readiness artifact using the same workshop output folder.
    - Create a new file named `06-publication-readiness.md`.
@@ -257,7 +258,7 @@ Suggested prompt: "Create an architecture image from the mermaid diagram for thi
    - Add a section for support and operations, including ownership, known limitations, and rollout expectations.
    - Add a closing checklist for publication readiness, including the owners and follow-up items that still need attention.
    ```text
-   Review the requirements, experience draft, architecture notes, and backlog outline for the relationship manager scenario. Create a concise publication-readiness document in 06-publication-readiness.md that captures the solution summary, target user, value proposition, product branding and marketing notes, geographic coverage and market scope, monetization and taxation considerations, a Lean Business Canvas summary, Partner Center Admin publication checklist for Azure IP Cosell on Marketplace, Copilot Agent Store add-on readiness, user experience and packaging notes, technical readiness, security and privacy considerations, support and operations expectations, and a simple checklist of remaining publication work. Focus on what is needed for Microsoft Marketplace and Microsoft 365 Copilot Agent Store readiness, keep the output practical and workshop-friendly, and identify any owners or follow-up items that still need attention.
+   "Review the requirements, experience draft, architecture notes, and backlog outline for the relationship manager scenario. Create a concise publication-readiness document in 06-publication-readiness.md that captures the solution summary, target user, value proposition, product branding and marketing notes, geographic coverage and market scope, monetization and taxation considerations, a Lean Business Canvas summary, Partner Center Admin publication checklist for Azure IP Cosell on Marketplace, Copilot Agent Store add-on readiness, user experience and packaging notes, technical readiness, security and privacy considerations, support and operations expectations, and a simple checklist of remaining publication work. Focus on what is needed for Microsoft Marketplace and Microsoft 365 Copilot Agent Store readiness, keep the output practical and workshop-friendly, and identify any owners or follow-up items that still need attention."
    ```
 8. Share the output with the rest of the team.
 

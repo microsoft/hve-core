@@ -50,7 +50,7 @@ Create one shared solution draft that connects business context, requirements, e
 Select **RPI Planner** and enter this prompt:
 
 ```text
-Review the workshop output set from 01-context-pack.md through 06-publication-readiness as one solution pack. Build a traceability matrix from context facts and decisions to requirements, experience needs, architecture components, backlog items, tests, and publication gates. Report missing links, contradictions, unsupported claims, and unowned risks. Do not implement or publish anything.
+"Review the workshop output set from 01-context-pack.md through 06-publication-readiness as one solution pack. Build a traceability matrix from context facts and decisions to requirements, experience needs, architecture components, backlog items, tests, and publication gates. Report missing links, contradictions, unsupported claims, and unowned risks. Do not implement or publish anything."
 ```
 
 Then complete these steps:
