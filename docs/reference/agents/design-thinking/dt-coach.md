@@ -22,15 +22,12 @@ Design Thinking coach guiding teams through the 9-method HVE framework with Thin
 
 ## When to use it
 
-<!-- asset-docs:stub -->
 Describe the situations where this asset is the right choice, and when to reach for a different asset instead.
 
 ## How to use it
 
-<!-- asset-docs:stub -->
 Walk through invoking this asset step by step. Remove this section when the asset is not interactive.
 
 ## Example usage
 
-<!-- asset-docs:stub -->
 Provide a concrete example that shows the asset in action, including representative input and the resulting output.
