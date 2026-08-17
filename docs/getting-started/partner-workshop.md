@@ -99,8 +99,7 @@ Complete these steps before participants arrive:
 7. Confirm access to the target backlog before the session. If access is not
    available, use a Markdown backlog draft.
 8. Prepare a scenario or use the sample below.
-9. If access and approvals to Microsoft Marketplace, Azure subscription does not exist, keep them as
-   demonstrations.
+9. If access and approvals to Microsoft Marketplace, Azure subscription does not exist, keep them as demonstrations.
 
 ### Sample Scenario
 

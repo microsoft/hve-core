@@ -13,9 +13,9 @@ keywords:
 estimated_reading_time: 5
 ---
 
-## First Slice Backlog Draft
+## First MVP Backlog Draft
 
-This draft refines the workshop requirements into a more implementation-ready backlog for the first slice. It stays lightweight, but it is structured enough for backlog refinement, sequencing, and early implementation planning.
+This draft refines the workshop requirements into a more implementation-ready backlog for the first MVP. It stays lightweight, but it is structured enough for backlog refinement, sequencing, and early implementation planning.
 
 ### Epic
 
@@ -56,7 +56,7 @@ This draft refines the workshop requirements into a more implementation-ready ba
   * TASK-12 Record the action outcome and completion status for review.
   * TASK-13 Ensure the workflow fails safely when the system cannot produce a trustworthy recommendation.
 
-### Suggested Priority for the First Slice
+### Suggested Priority for the First MVP
 
 * P0: Unified account context view
 * P0: Evidence-backed recommendations with clear rationale
@@ -66,7 +66,7 @@ This draft refines the workshop requirements into a more implementation-ready ba
 
 * Capture early packaging and discoverability requirements for Microsoft Marketplace and Microsoft 365 Copilot Agent Store.
 * Document the minimum user experience and support expectations needed for review readiness, including clear value, trust, and explainability.
-* Keep the first slice focused on a clearly scoped scenario so it remains easy to review and publish later.
+* Keep the first MVP focused on a clearly scoped scenario so it remains easy to review and publish later.
 
 ### GitHub Issue Status
 
