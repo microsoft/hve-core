@@ -2,7 +2,13 @@
 title: ADR Creator
 description: "ADR Creator: phase-gated creator producing standards-aligned Architecture Decision Records with state recovery, rpi-research activation, and backlog handoff"
 sidebar_position: 1
-ms.date: 2026-07-16
+author: Microsoft
+ms.date: 2026-08-12
+ms.topic: reference
+keywords:
+  - agent
+  - project-planning
+  - adr-creation
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->

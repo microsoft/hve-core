@@ -51,6 +51,9 @@ jobs:
             ForEach-Object { Resolve-Path -Relative $_.DirectoryName } |
             ForEach-Object { $_ -replace '^\.[\\/]', '' } |
             Sort-Object)
+          # Reject repository-derived paths that could alter command structure downstream.
+          . ./scripts/security/Assert-WorkflowProjectDirectory.ps1
+          $projectList = @(Assert-WorkflowProjectDirectory -Path $projectList)
           $jsonItems = $projectList | ForEach-Object { $_ | ConvertTo-Json -Compress }
           $dirs = '[' + (($jsonItems) -join ',') + ']'
           "directories=$dirs" >> $env:GITHUB_OUTPUT

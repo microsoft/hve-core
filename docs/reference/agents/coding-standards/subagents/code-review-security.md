@@ -2,7 +2,13 @@
 title: Code Review Security
 description: Thin skill-backed perspective subagent that reviews a precomputed diff for security issues and writes structured findings
 sidebar_position: 6
-ms.date: 2026-07-05
+author: Microsoft
+ms.date: 2026-08-12
+ms.topic: reference
+keywords:
+  - agent
+  - coding-standards
+  - code-review-security
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->

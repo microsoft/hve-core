@@ -2,7 +2,13 @@
 title: Dt Method 06 Planning
 description: Concept analysis and prototype approach design for Design Thinking Method 6a
 sidebar_position: 11
-ms.date: 2026-07-03
+author: Microsoft
+ms.date: 2026-08-12
+ms.topic: reference
+keywords:
+  - prompt
+  - design-thinking
+  - dt-method-06-planning
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->

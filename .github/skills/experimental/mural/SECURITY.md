@@ -2,7 +2,7 @@
 title: Mural Skill Security Model
 description: STRIDE threat model for the Mural skill organized by assets, adversaries, and trust buckets (Browser to Loopback, CLI to Mural, on-disk cache, CLI caller process) with in-code mitigations and acknowledged enterprise readiness gaps
 author: microsoft/hve-core
-ms.date: 2026-06-30
+ms.date: 2026-08-07
 ms.topic: reference
 estimated_reading_time: 18
 keywords:
@@ -17,7 +17,9 @@ keywords:
 
 This document records the STRIDE threat model for the Mural skill (the `mural` package under `scripts/mural/`). The model is organized by trust bucket: Browser to Loopback (B1), CLI to Mural endpoints (B2), On-disk cache (B3), and CLI caller process (B4). Each bucket enumerates all six STRIDE categories with the in-code mitigations that address them. Assets and adversaries are enumerated first because credential-storage docs ([`docs/agents/mural/credentials.md`](../../../../docs/agents/mural/credentials.md)) reference them by id. Acknowledged enterprise readiness gaps are listed at the end of the document.
 
-> **See also: repo-wide STRIDE model.** This skill participates in the repository-wide threat model at [`docs/security/security-model.md`](../../../../docs/security/security-model.md). The Authorization Code + PKCE login flow implemented by `_run_login` is enumerated there as threats **OA-1 through OA-17** in [§ OAuth Authentication Threats](../../../../docs/security/security-model.md#oauth-authentication-threats). Each OA row cites Mural's published OAuth documentation at <https://developers.mural.co/public/docs/oauth> (verified 2026-05-10) and pins residual-risk expectations against published RFC behavior. Gap **G-EOP-2** below (refresh-token non-rotation) is **verified correct** against that source.
+> **See also: repo-wide STRIDE model.** This skill participates in the repository-wide threat model at [`docs/security/security-model.md`](../../../../docs/security/security-model.md) and is registered in its [Skill Security Models](../../../../docs/security/security-model.md#skill-security-models) section. The Authorization Code + PKCE login flow implemented by `_run_login` is enumerated there as the **OA** threat family in [§ OAuth Authentication Threats](../../../../docs/security/security-model.md#oauth-authentication-threats); that section is authoritative for the current membership of the family. Each OA row cites Mural's published OAuth documentation at <https://developers.mural.co/public/docs/oauth> (verified 2026-05-10) and pins residual-risk expectations against published RFC behavior. Gap **G-EOP-2** below (refresh-token non-rotation) is **verified correct** against that source.
+>
+> Two boundary facts in this document are load-bearing for that catalog. First, the browser launch performed by `_run_login` passes only the authorization URL, which carries `client_id`, `redirect_uri`, `state`, `code_challenge`, and the requested scopes; the PKCE `code_verifier` never leaves the process, so a hostile default-browser handler is a same-uid concern already recorded as ADV-a rather than a separate OA threat. Second, the callback handoff from the loopback receiver to the OAuth client is **synchronous and in-process**: `serve_forever` runs on a thread inside the same interpreter and the result is read from shared memory after `state` is compared with `secrets.compare_digest`. There is no inter-process boundary on that handoff, so it carries no distinct residual beyond the B1 rows below.
 
 ## Executive Summary
 
@@ -148,7 +150,7 @@ The loopback channel is plaintext HTTP because TLS to `127.0.0.1` is not availab
 
 ### Repudiation
 
-Not applicable. The loopback exchange is a synchronous, in-process step; no persistent action is taken until the token endpoint exchange in B2 succeeds.
+Not applicable. The loopback exchange is a synchronous, in-process step; no persistent action is taken until the token endpoint exchange in B2 succeeds. The handoff from the receiver to the OAuth client crosses no process boundary: `serve_forever` runs on a thread inside the same interpreter and the authorization code is read from the shared result object once `received` is set and `state` has been compared with `secrets.compare_digest`.
 
 ### Information Disclosure
 

@@ -2,7 +2,13 @@
 title: copilot-otel-metrics
 description: "Set up GitHub Copilot OpenTelemetry capture: configure the VS Code export settings, generate a local Grafana stack and dashboard, or generate the Azure collector, infrastructure, and dashboard for an organization."
 sidebar_position: 2
-ms.date: 2026-07-27
+author: Microsoft
+ms.date: 2026-08-12
+ms.topic: reference
+keywords:
+  - skill
+  - experimental
+  - copilot-otel-metrics
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->

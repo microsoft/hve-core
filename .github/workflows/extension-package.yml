@@ -14,36 +14,52 @@ on:
         required: true
         type: string
       channel:
-        description: "Release channel (Stable or PreRelease) controlling agent maturity filtering"
+        description: "Release channel (Stable or PreRelease) controlling the pre-release packaging flag"
         required: false
         type: string
         default: "Stable"
-    outputs:
-      packages-matrix:
-        description: "JSON matrix of packages that were actually packaged (filtered by channel and maturity)"
-        value: ${{ jobs.discover-packages.outputs.matrix }}
 
 permissions:
   contents: read
 
 jobs:
-  discover-packages:
-    name: Discover Marketplace Packages
+  package:
+    name: Package hve-core
     runs-on: ubuntu-latest
     permissions:
       contents: read
-    outputs:
-      matrix: ${{ steps.discover.outputs.matrix }}
     steps:
+      - name: Validate source ref
+        shell: bash
+        env:
+          INPUT_SOURCE_REF: ${{ inputs.source-ref }}
+        run: |
+          set -euo pipefail
+          source_ref="$INPUT_SOURCE_REF"
+          if [ -z "${source_ref//[[:space:]]/}" ]; then
+            echo "::error::source-ref is required and must not be blank"
+            exit 1
+          fi
+          if printf '%s' "$source_ref" | grep -Eq '^[0-9a-fA-F]{40}$'; then
+            exit 0
+          fi
+          if git check-ref-format --branch "$source_ref" >/dev/null 2>&1; then
+            exit 0
+          fi
+          if [[ "$source_ref" == refs/* ]] && git check-ref-format "$source_ref" >/dev/null 2>&1; then
+            exit 0
+          fi
+          echo "::error::source-ref must be a full commit SHA or valid Git ref"
+          exit 1
+
       - name: Checkout code
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           ref: ${{ inputs.source-ref }}
           persist-credentials: false
 
-      - name: Setup PowerShell modules
-        uses: ./.github/actions/setup-ps-modules
-
+      # The gate runs before any dependency install, so a mismatched caller
+      # never reaches lifecycle scripts.
       - name: Validate packaging inputs
         shell: bash
         env:
@@ -51,10 +67,6 @@ jobs:
           INPUT_VERSION: ${{ inputs.version }}
         run: |
           set -euo pipefail
-          if [ -z "${INPUT_SOURCE_REF// }" ]; then
-            echo "::error::source-ref is required and must not be blank"
-            exit 1
-          fi
           version="${INPUT_VERSION// }"
           if [ -z "$version" ]; then
             echo "::error::version is required and must not be blank"
@@ -67,30 +79,6 @@ jobs:
             echo "::error::extension/templates/package.template.json is $template_version but the caller requested $version"
             exit 1
           fi
-
-      - name: Discover marketplace packages
-        id: discover
-        shell: pwsh
-        env:
-          INPUT_CHANNEL: ${{ inputs.channel }}
-        run: |
-          & ./scripts/extension/Get-MarketplacePackageMatrix.ps1 -Channel $env:INPUT_CHANNEL
-
-  package:
-    name: Package ${{ matrix.id }}
-    needs: discover-packages
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-    strategy:
-      fail-fast: false
-      matrix: ${{ fromJson(needs.discover-packages.outputs.matrix) }}
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          ref: ${{ inputs.source-ref }}
-          persist-credentials: false
 
       - name: Setup Node.js
         uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
@@ -109,15 +97,9 @@ jobs:
       - name: Prepare extension resources
         id: prepare
         shell: pwsh
-        env:
-          INPUT_CHANNEL: ${{ inputs.channel }}
         run: |
-          $channel = "$env:INPUT_CHANNEL".Trim()
-          if (-not $channel) { $channel = 'Stable' }
-          $packageId = "${{ matrix.id }}"
-
-          Write-Host "🔧 Preparing extension for $channel channel (package: ${{ matrix.id }})..."
-          ./scripts/extension/Prepare-Extension.ps1 -Channel $channel -PackageId $packageId
+          Write-Host "🔧 Preparing extension resources..."
+          ./scripts/extension/Prepare-Extension.ps1
 
       - name: Package extension
         id: package
@@ -129,13 +111,10 @@ jobs:
           $version = "$env:INPUT_VERSION".Trim()
           $channel = "$env:INPUT_CHANNEL".Trim()
           if (-not $channel) { $channel = 'Stable' }
-          $packageId = "${{ matrix.id }}"
 
-          Write-Host "📦 Packaging extension for $channel channel (package: ${{ matrix.id }})..."
+          Write-Host "📦 Packaging extension for $channel channel..."
 
-          $arguments = @{
-            PackageId = $packageId
-          }
+          $arguments = @{}
 
           if ($channel -ieq 'PreRelease') {
             $arguments['PreRelease'] = $true
@@ -154,6 +133,6 @@ jobs:
       - name: Upload VSIX artifact
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
-          name: extension-vsix-${{ matrix.id }}
+          name: extension-vsix
           path: extension/*.vsix
           retention-days: 30

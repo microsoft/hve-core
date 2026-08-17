@@ -99,10 +99,11 @@ stimuli:
 
   - name: instruction-experiment-designer-conformance
     prompt: |
-      You are working on a Minimum Viable Experimentation session under
-      `.copilot-tracking/mve/payments-latency/`. Which
+      You are writing session artifacts for a Minimum Viable Experimentation
+      session under `.copilot-tracking/mve/payments-latency/`. Which
       `.github/instructions/**/*.instructions.md` file applies (cite its
-      path) and what MVE coaching conventions does it require?
+      path), what tracking-artifact conventions does it require, and where
+      does it say the MVE methodology itself lives?
     tags:
       category: behavior-conformance
       instruction: experiment-designer
@@ -115,7 +116,7 @@ stimuli:
       - type: output-matches
         name: scope-language
         config:
-          pattern: "(?i)\\bmve\\b|experiment|hypothes|assumption|validate"
+          pattern: "(?is)(artifact|directory|file\\s+name).*(experiment-design).*(methodology|MVE|hypothes|vetting)"
 
   - name: instruction-community-interaction-conformance
     prompt: |
@@ -328,6 +329,28 @@ stimuli:
         name: scope-language
         config:
           pattern: "(?i)license|attribution|reproduce|standard|posture"
+
+  - name: instruction-licensing-posture-conformance
+    prompt: |
+      You are writing a new reference file under
+      `.github/skills/data-science/ds-dataops/references/` that summarizes an
+      upstream CC BY 4.0 documentation page. Which
+      `.github/instructions/**/*.instructions.md` file defines the repository
+      posture for licensing, reproduction, and attribution of third-party
+      standards (cite its path), and how much upstream text may you reproduce?
+    tags:
+      category: behavior-conformance
+      instruction: licensing-posture
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: applyTo-evidence
+        config:
+          pattern: "(?i)skills/|\\.copilot-tracking/|licensing-posture"
+      - type: output-matches
+        name: scope-language
+        config:
+          pattern: "(?i)paraphrase|minimum|attribution|reproduce|third-party|THIRD-PARTY-NOTICES"
 
   - name: instruction-backlog-handoff-conformance
     prompt: |
@@ -1316,3 +1339,24 @@ stimuli:
         name: scope-language
         config:
           pattern: '(?i)(paraphrase|verbatim|public[-\s]domain|W3C|CC0|attribution)'
+  - name: instruction-tm7-generation-workflow-conformance
+    prompt: |
+      You are about to run the native Windows Threat Modeling Tool feedback
+      loop from a security planning session. Which
+      `.github/instructions/**/*.instructions.md` file applies (cite its
+      path) and what does it require of you before the harness takes over
+      the mouse and keyboard, before treating a generated model as
+      authored, and when asked to promote a layout overlay?
+    tags:
+      category: behavior-conformance
+      instruction: tm7-generation-workflow
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: applyTo-evidence
+        config:
+          pattern: "(?i)security-planner\\.agent\\.md|security-reviewer\\.agent\\.md|tm7-generation-workflow"
+      - type: output-matches
+        name: scope-language
+        config:
+          pattern: "(?i)confirm|wait|operator|pending|not\\s+an?\\s+approval|promote"

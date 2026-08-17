@@ -2,7 +2,13 @@
 title: Coding Standards/Powershell/Pester
 description: Instructions for Pester testing conventions
 sidebar_position: 1
-ms.date: 2026-07-03
+author: Microsoft
+ms.date: 2026-08-12
+ms.topic: reference
+keywords:
+  - instruction
+  - coding-standards
+  - coding-standards/powershell/pester
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->

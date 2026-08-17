@@ -189,6 +189,26 @@ On first invocation, create the project directory and `state.json` with Phase 1 
 
 Advance `currentPhase` only when exit criteria for the current phase are satisfied. Update bucket and mapping arrays progressively as individual items complete within a phase.
 
+## Threat-model SSOT and render workflow
+
+Threat content flows in one direction: prose model, then spec, then generated outputs.
+
+`docs/security/security-model.md` is the source of truth for threat substance, and the per-skill `SECURITY.md` models are authoritative for their own runtimes. A YAML threat-model spec encodes that analysis in the schema the generators accept; it is the machine-readable projection, not the origin. The `.tm7` and markdown outputs are build artifacts produced by `generate_tm7.py` and `generate_markdown.py`, and are regenerated on demand rather than edited.
+
+When the model changes, author or revise the threat in the prose model first, encode it in the YAML spec second, then regenerate the outputs. Never edit a generated artifact directly, and never introduce a threat into the spec that has no counterpart in the prose model. A spec entry may be deliberately absent when the schema cannot represent it honestly; record that exclusion and its reason in the prose model rather than fabricating a `target_ref` or `interaction_ref` to satisfy the schema.
+
+## Phase 6 completeness review
+
+At Phase 6, run the checklist from `references/threat-model-review.md` and emit a PASS or INCOMPLETE verdict with an itemized gap list. When the verdict is INCOMPLETE, follow the existing autonomy tier: guided or partial are advisory, while full is blocking.
+
+## Private config overlay handling
+
+Read an optional out-of-repo private config overlay referenced by `state.overlayConfigPath` when one is present so the planner can layer in internal taxonomy names, auth-service names, and review-gate steps. This is unrelated to the layout overlay produced by the TM7 feedback loop. If the private config overlay is absent, degrade gracefully and use the public defaults instead of embedding internal specifics in public artifacts.
+
+## Diagram style guidance
+
+During Phase 1 scoping, offer the user a diagram-style choice between Mermaid and ASCII, store the selection in `state.userPreferences.diagramStyle` with Mermaid as the default, and produce diagrams through the `architecture-diagrams` skill.
+
 ## Resume Protocol
 
 The planner inherits the Resume Sequence and Post-Summarization Recovery in `shared/planner-identity-base.instructions.md`. Security-specific notes on inherited steps:

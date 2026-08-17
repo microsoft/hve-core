@@ -29,10 +29,10 @@ You enter Review after completing implementation work in [Stage 6: Implementatio
 
 ### Primary Agents
 
-| Tool                     | Type  | How to Invoke                             | Purpose                                  |
-|--------------------------|-------|-------------------------------------------|------------------------------------------|
-| code-review              | Agent | Select **code-review** agent              | Multi-perspective review of code changes |
-| test-streamlit-dashboard | Agent | Select **test-streamlit-dashboard** agent | Test Streamlit dashboard implementations |
+| Tool                  | Type  | How to Invoke                    | Purpose                                       |
+|-----------------------|-------|----------------------------------|-----------------------------------------------|
+| code-review           | Agent | Select **code-review** agent     | Multi-perspective review of code changes      |
+| Data Workstream Coach | Agent | Select **Data Workstream Coach** | Validate dashboards and data pipeline outputs |
 
 ### Review Skills
 
@@ -99,10 +99,10 @@ Review the open PR for the payment processing refactor, focusing on breaking cha
 
 ### Dashboard Testing
 
-Select **test-streamlit-dashboard** agent:
+Select the **Data Workstream Coach** agent and confirm the testing job:
 
 ```text
-Test the sensor monitoring dashboard at src/dashboards/sensor_monitor.py, verifying that temperature readings render within the 15-45°C expected range and all navigation links resolve correctly
+Test the sensor monitoring dashboard at src/dashboards/sensor_monitor.py, verifying that readings render within the range declared for that dataset and all navigation links resolve correctly
 ```
 
 ### RPI Evidence Reconciliation

@@ -2,7 +2,7 @@
 title: Enterprise Artifact Hub
 description: Configure HVE Core to download tools, modules, and packages from internal mirrors or artifact proxies
 author: Microsoft
-ms.date: 2026-07-31
+ms.date: 2026-08-13
 ms.topic: how-to
 keywords:
   - enterprise
@@ -40,7 +40,7 @@ The table lists the supported enterprise variables and their defaults.
 | `HVE_DEVCONTAINER_IMAGE`   | `mcr.microsoft.com/devcontainers/base:2-jammy` | Base image used to build the DevContainer                |
 | `NPM_CONFIG_REGISTRY`      | `https://registry.npmjs.org/`                  | Registry used by npm commands                            |
 | `PIP_INDEX_URL`            | `https://pypi.org/simple/`                     | Index used by pip-compatible commands                    |
-| `UV_DEFAULT_INDEX`         | `https://pypi.org/simple/`                     | Index used by uv project commands such as `uv sync`      |
+| `UV_DEFAULT_INDEX`         | `https://pypi.org/simple`                      | Index used by uv project commands such as `uv sync`      |
 
 The three package index variables are standard tool settings rather than
 HVE-specific settings. The DevContainer reads them from the host, passes them as
@@ -151,6 +151,12 @@ HVE Core installs Python project dependencies with `uv sync`. Set
 `UV_DEFAULT_INDEX` to redirect those installs. `PIP_INDEX_URL` controls pip and uv's
 pip-compatible interface; it does not redirect `uv sync`. Set both variables
 when your workflows use both command families.
+
+Write `UV_DEFAULT_INDEX` with the exact index URL recorded in the tracked
+`uv.lock` files. uv treats `https://pypi.org/simple` and
+`https://pypi.org/simple/` as different lock inputs, so a trailing-slash
+mismatch makes `uv sync --locked` fail even when the resolved dependencies are
+identical.
 
 Keep internal indexes out of tracked `pyproject.toml` and `uv.lock` files so
 committed dependency metadata remains reproducible for public contributors.

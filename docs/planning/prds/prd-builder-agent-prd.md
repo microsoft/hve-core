@@ -5,6 +5,10 @@ description: "Product Requirements Document for the PRD Builder agent, defining 
 author: "HVE Core Maintainers"
 ms.date: "2026-08-05"
 ms.topic: "reference"
+keywords:
+  - prd builder
+  - product requirements
+  - project planning
 status: "approved"
 version: "1.0.0"
 owners: ["microsoft/hve-core"]

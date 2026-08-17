@@ -2,7 +2,13 @@
 title: Documentation
 description: "Orchestrates documentation audit, drift, authoring, and validation work through the documentation skill"
 sidebar_position: 1
-ms.date: 2026-07-03
+author: Microsoft
+ms.date: 2026-08-12
+ms.topic: reference
+keywords:
+  - agent
+  - hve-core
+  - documentation
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->

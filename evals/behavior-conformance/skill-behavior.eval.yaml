@@ -2,7 +2,7 @@
 name: behavior-conformance-skills
 description: >
   Advisory-tier behavior conformance evals for skills exercised through
-  knowledge, tool-trigger, and bleed-detection stimulus shapes. Total: 160
+  knowledge, tool-trigger, and bleed-detection stimulus shapes. Total: 149
   stimuli, including complete branch coverage for the RPI and prompt-builder
   skill updates. Each tool-trigger stimulus uses two graders with AND logic,
   and the suite-level scoring threshold gates the aggregate pass rate across
@@ -2470,6 +2470,411 @@ stimuli:
         config:
           pattern: '(?i)(aws|azure|mcsb|benchmark)'
 
+  - name: skill-ds-catalog-contract-knowledge
+    prompt: |
+      Using the `ds-catalog` skill, explain the `DS_CATALOG_V1` relationship
+      contract. Include stable relationship identity, a composite join key,
+      confidence, privacy mapping, and the DCAT posture.
+    environment:
+      skills:
+        - ../../.github/skills/data-science/ds-catalog
+    tags:
+      category: behavior-conformance
+      skill: ds-catalog
+      shape: knowledge
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: relationship-contract
+        config:
+          pattern: '(?i)(rel-).*(composite|array).*(confirmed|inferred|assumed)'
+      - type: output-matches
+        name: standards-boundary
+        config:
+          pattern: '(?i)(privacy-standards|gdpr_article|nist_pf_category).*(dcat).*(crosswalk|non-binding|no.*conformance)'
+
+  - name: skill-data-workstream-foundation-state-and-transition
+    prompt: |
+      Using the `data-workstream-foundation` skill, explain how the Data
+      Workstream Coach restores a project whose bounded feasibility job is
+      paused, then transitions to an episodic analysis job. Include the
+      authoritative state path, reconstruction confirmation rule, and outgoing
+      disposition and log requirements.
+    environment:
+      skills:
+        - ../../.github/skills/data-science/data-workstream-foundation
+    tags:
+      category: behavior-conformance
+      skill: data-workstream-foundation
+      shape: knowledge
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: state-authority-and-reconstruction
+        config:
+          pattern: '(?is)\.copilot-tracking[/\\]ds[/\\]\{?project-slug\}?[/\\]session-state\.md.*(reconstruct).*(confirm)'
+      - type: output-matches
+        name: transition-disposition-and-log
+        config:
+          pattern: '(?is)(feasibility).*(paused|pause).*(analysis).*(episodic).*(job_log|job log|from_job|to_job)'
+
+  - name: skill-ds-feasibility-profile-knowledge
+    prompt: |
+      Using the `ds-feasibility` skill, describe the durable study contract,
+      identity and revision rules, lifecycle lineage, and downstream ownership.
+      Clarify whether it assigns functional requirement numbers or writes back.
+    environment:
+      skills:
+        - ../../.github/skills/data-science/ds-feasibility
+    tags:
+      category: behavior-conformance
+      skill: ds-feasibility
+      shape: knowledge
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: profile-authority
+        config:
+          pattern: '(?i)(one|single).*(yaml).*(authoritative|authority).*(json schema|2020-12)'
+      - type: output-matches
+        name: identity-and-consumer-boundary
+        config:
+          pattern: '(?i)(uuid).*(revision).*(functional planner).*(does not|never|read-only|separate).*(FR-|functional requirement|writeback)'
+
+  - name: skill-ds-feasibility-handoff-emission-knowledge
+    prompt: |
+      Using the `ds-feasibility` skill, explain what is emitted alongside a
+      finished feasibility study, how a reader recognizes it, how staleness is
+      handled, and which fields a negative verdict omits.
+    environment:
+      skills:
+        - ../../.github/skills/data-science/ds-feasibility
+    tags:
+      category: behavior-conformance
+      skill: ds-feasibility
+      shape: knowledge
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: kind-recognition-and-no-version-or-hash
+        config:
+          pattern: '(?is)(kind).*(feasibility-to-prd-handoff).*(no|not|without).*(version|hash)'
+      - type: output-matches
+        name: regeneration-and-negative-verdict-omission
+        config:
+          pattern: '(?is)(regenerat).*(revision).*(do-not-proceed|insufficient-evidence|negative).*(omit|exclude|no candidate|without candidate)'
+
+  - name: skill-ds-dataops-tiers-and-validation-knowledge
+    prompt: |
+      Using the `ds-dataops` skill, name the tiers in the upstream data quality
+      model and say how `malformed` and `sandbox` relate to them. Then state
+      where data validation assertions belong and why that placement is chosen.
+    environment:
+      skills:
+        - ../../.github/skills/data-science/ds-dataops
+    tags:
+      category: behavior-conformance
+      skill: ds-dataops
+      shape: knowledge
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: tier-and-storage-area-distinction
+        config:
+          pattern: '(?i)(bronze).*(silver).*(gold)'
+      - type: output-matches
+        name: validation-placement-and-replay-rationale
+        config:
+          pattern: '(?i)(bronze[-\s]to[-\s]silver|between\s+bronze\s+and\s+silver).*(replay|recover|faithful|copy)'
+
+  - name: skill-ds-dataops-testing-tool-trigger
+    prompt: |
+      I am writing pytest tests for a data loader, a transformation function,
+      and a model predict wrapper. Which skill under `.github/skills/**/SKILL.md`
+      applies, and for each of those three cases what should be mocked?
+    environment:
+      skills:
+        - ../../.github/skills/data-science/ds-dataops
+    tags:
+      category: behavior-conformance
+      skill: ds-dataops
+      shape: tool-trigger
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: skill-domain-attribution
+        config:
+          pattern: '(?i)(ds-dataops|dataops|test|pytest)'
+      - type: output-matches
+        name: mocking-boundary
+        config:
+          pattern: '(?i)(mock).*(isfile|read_csv|model|load|predict)'
+
+  - name: skill-ds-dataops-validation-drift-provenance
+    prompt: |
+      Using the `ds-dataops` skill, explain how data validation differs from
+      data drift detection, what each one should trigger, and which upstream
+      playbook page states that distinction.
+    environment:
+      skills:
+        - ../../.github/skills/data-science/ds-dataops
+    tags:
+      category: behavior-conformance
+      skill: ds-dataops
+      shape: knowledge
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: remediation-asymmetry
+        config:
+          pattern: '(?i)(re[-\s]?rout|rectif).*(adapt|retrain)'
+      - type: output-matches
+        name: source-attribution
+        config:
+          pattern: '(?i)(model\s+production\s+checklist|ml-model-checklist|production\s+checklist)'
+
+  - name: skill-ds-dataops-ownership-bleed-detection
+    prompt: |
+      I want the `ds-dataops` skill to pick the exact metric names, units, and
+      instrument types for my drift monitoring, and to decide which of my
+      columns count as sensitive personal data. Will it do that?
+    environment:
+      skills:
+        - ../../.github/skills/data-science/ds-dataops
+    tags:
+      category: behavior-conformance
+      skill: ds-dataops
+      shape: bleed-detection
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: refusal-or-redirect
+        config:
+          pattern: '(?i)(telemetry-foundations|privacy-standards|owns|not\s+own|does\s+not\s+decide|delegat|route)'
+      - type: output-matches
+        name: scope-language
+        config:
+          pattern: '(?i)(metric|naming|unit|cardinality|sensitiv|classif)'
+
+  - name: skill-experiment-design-mve-knowledge
+    prompt: |
+      Using the `experiment-design` skill, give the standard hypothesis format
+      for a Minimum Viable Experiment and name several red flags indicating a
+      proposed engagement is not really an experiment.
+    environment:
+      skills:
+        - ../../.github/skills/project-planning/experiment-design
+    tags:
+      category: behavior-conformance
+      skill: experiment-design
+      shape: knowledge
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: hypothesis-format
+        config:
+          pattern: '(?i)(we\s+believe).*(we\s+will\s+test)'
+      - type: output-matches
+        name: red-flag-vocabulary
+        config:
+          pattern: '(?i)(demo|mini[-\s]?mvp|solved\s+problem|skipping\s+ahead|no\s+next\s+steps|red\s+flag)'
+
+  - name: skill-experiment-design-repeatability
+    prompt: |
+      Using the `experiment-design` skill, explain how to make a general
+      experiment repeatable and comparable without selecting ML infrastructure.
+    environment:
+      skills:
+        - ../../.github/skills/project-planning/experiment-design
+    tags:
+      category: behavior-conformance
+      skill: experiment-design
+      shape: knowledge
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: versioned-inputs
+        config:
+          pattern: '(?i)(input|artifact|firmware|model|container|dataset).*(version)'
+      - type: output-matches
+        name: experiment-comparability
+        config:
+          pattern: '(?i)(repeat|reproduc|compar).*(criteria|evaluation|input|condition)'
+
+  - name: skill-experiment-design-tool-trigger
+    prompt: |
+      Three unknowns compete for the same two-week window on a hardware
+      integration trial, and one of them is really a choice between two
+      vendor modules. Which skill applies, how do I decide which unknown to
+      test first, how should the vendor comparison be run, and what happens
+      to that ordering once the first result lands?
+    environment:
+      skills:
+        - ../../.github/skills/project-planning/experiment-design
+    tags:
+      category: behavior-conformance
+      skill: experiment-design
+      shape: tool-trigger
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: skill-domain-attribution
+        config:
+          pattern: '(?i)(experiment-design|experiment|mve|hypothesis)'
+      - type: output-matches
+        name: general-purpose-scope
+        config:
+          pattern: '(?i)(falsifi|unknown|minimum|success|threshold|criteria)'
+      - type: output-matches
+        name: risk-driven-prioritization
+        config:
+          pattern: '(?i)(prioriti|rank|first|sooner).*(risk|consequence|blocked|downstream|rework|invalidat)'
+      - type: output-matches
+        name: evidence-based-option-comparison
+        config:
+          pattern: '(?i)(trade\s*stud|compar|evaluat).*(criteria|requirement).*(before|agree|decide|owner)'
+      - type: output-matches
+        name: mid-flight-reprioritization
+        config:
+          pattern: '(?i)(re[-\s]?prioriti|re[-\s]?select|promote|drop|stop).*(finding|result|share|cadence)'
+
+  - name: skill-experiment-design-production-bleed-detection
+    prompt: |
+      My experiment is finished and validated. I now want to build and harden
+      the production service that ships it. Does the `experiment-design` skill
+      own that implementation work? Name what it does own.
+    environment:
+      skills:
+        - ../../.github/skills/project-planning/experiment-design
+    tags:
+      category: behavior-conformance
+      skill: experiment-design
+      shape: bleed-detection
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: refusal-or-redirect
+        config:
+          pattern: '(?i)(not\s+own|does\s+not|beyond|outside|different|hand\s*off|disposable)'
+      - type: output-matches
+        name: scope-language
+        config:
+          pattern: '(?i)(experiment|production|implementation|hypothes)'
+
+  - name: skill-experiment-design-ml-partitioning
+    prompt: |
+      Using the `experiment-design` skill, help me set up a hardware endurance
+      trial so its runs are comparable. What does this skill establish, and is
+      there anything it does not cover that I would need elsewhere?
+    environment:
+      skills:
+        - ../../.github/skills/project-planning/experiment-design
+    tags:
+      category: behavior-conformance
+      skill: experiment-design
+      shape: bleed-detection
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: general-comparability-scope
+        config:
+          pattern: '(?i)(version|comparab|repeat|criteria|condition|record)'
+      - type: output-matches
+        name: ml-ownership-redirect
+        config:
+          pattern: '(?i)(ml-experimentation|machine\s+learning|not\s+own|does\s+not|separate|elsewhere|different\s+skill)'
+      - type: output-matches
+        name: no-ml-content-bleed
+        config:
+          pattern: '(?i)(mlflow|azure\s*ml|experiment\s+tracking\s+(tool|framework|server|backend)|(dataset|model)\s+abstraction|feature\s+engineering|hyperparameter|training\s+run|model\s+production\s+checklist|ml\s+fundamentals\s+checklist)'
+          negate: true
+
+  - name: skill-ml-experimentation-authority
+    prompt: |
+      I have a trained model and need an experiment-tracking setup plus a
+      production-readiness review. Which skill applies, what reproducibility
+      facts must it preserve, and what lifecycle caveat applies to the checklist?
+    environment:
+      skills:
+        - ../../.github/skills/data-science/ml-experimentation
+    tags:
+      category: behavior-conformance
+      skill: ml-experimentation
+      shape: knowledge
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: ml-authority-and-reproducibility
+        config:
+          pattern: '(?i)(ml-experimentation).*(dataset).*(version).*(parameter).*(code).*(environment)'
+      - type: output-matches
+        name: lifecycle-caveat
+        config:
+          pattern: '(?i)(already|after).*(built|trained).*(case-by-case|use-case|not.*unconditional|readiness)'
+
+  - name: skill-ds-analysis-authoring-knowledge
+    prompt: |
+      Using the `ds-analysis-authoring` skill, explain how to structure an
+      exploratory notebook over a large dataset with a timestamp column. Cover
+      section ordering, when a temporal section applies, and what to do when a
+      scatter plot would contain far too many points.
+    environment:
+      skills:
+        - ../../.github/skills/data-science/ds-analysis-authoring
+    tags:
+      category: behavior-conformance
+      skill: ds-analysis-authoring
+      shape: knowledge
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: sequence-and-conditionality
+        config:
+          pattern: '(?is)(univariate).*(multivariate).*(temporal|time).*(datetime|timestamp|only|conditional)'
+      - type: output-matches
+        name: scale-handling-and-boundary
+        config:
+          pattern: '(?is)(sample|sampling|opacity|subset).*(ds-catalog|ds-dataops)'
+
+  - name: skill-ds-evaluation-design-knowledge
+    prompt: |
+      Using the `ds-evaluation-design` skill, explain how to scope and balance
+      an evaluation dataset for a grounded support agent. Cover the interview
+      posture, the minimum size, the category balance, how population coverage
+      records a pair that serves several populations, validation provenance,
+      how named risks map to detecting metrics, and how one consolidated
+      evaluation guide records the supporting rationale. Also explain how this
+      differs from evaluating a trained model.
+    environment:
+      skills:
+        - ../../.github/skills/data-science/ds-evaluation-design
+    tags:
+      category: behavior-conformance
+      skill: ds-evaluation-design
+      shape: knowledge
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: interview-size-and-balance
+        config:
+          pattern: '(?is)(one question|one at a time|confirm).*(30|thirty).*(easy).*(hard).*(safety)'
+      - type: output-matches
+        name: trained-model-boundary
+        config:
+          pattern: '(?is)(ml-experimentation).*(trained|model|predictive)'
+      - type: output-matches
+        name: population-and-provenance
+        config:
+          pattern: '(?is)(population_coverage|population coverage|populations).*(several populations|multiple populations|more than one population|do not sum|does not sum).*(validation_status|validation status).*(generation_method|generation method|review_state|review state)'
+      - type: output-matches
+        name: detection-assessment-boundary
+        config:
+          pattern: '(?is)(risk).*(detecting metric|detection coverage|unmeasured).*(rai-planner|assessment|classification|approval)'
+      - type: output-matches
+        name: consolidated-guide
+        config:
+          pattern: '(?is)(one|single|consolidated).*(evaluation guide).*(curation).*(metric selection).*(tool recommendations|tooling)'
+
   - name: skill-backlog-plan-knowledge
     prompt: |
       Which modes does the `backlog-plan` skill offer and how does it decide
@@ -2526,6 +2931,25 @@ stimuli:
         name: safety-language
         config:
           pattern: '(?i)(autonomy|dry[\s-]?run|sanitiz|confirm|resumable)'
+
+  - name: skill-backlog-execute-dependency-resolution
+    prompt: |
+      A user wants new tracker items created, but `backlog-management` does not
+      resolve in the host. What must `backlog-execute` do before any write?
+    tags:
+      category: behavior-conformance
+      skill: backlog-execute
+      shape: boundary
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: dependency-warning
+        config:
+          pattern: '(?i)(backlog-management).{0,160}(unavailable|does\s+not\s+resolve|warn|platform\s+resolution|autonomy|sanitiz|operation\s+contract)'
+      - type: output-matches
+        name: stop-before-mutation
+        config:
+          pattern: '(?i)(stop\s+before\s+(any\s+)?(mutating|mutation|create|write)\s+call|no\s+mutating\s+call|do\s+not\s+(improvis|mutate))'
 
   - name: skill-functional-planner-knowledge
     prompt: |
@@ -2604,25 +3028,6 @@ stimuli:
         config:
           pattern: '(?i)(stop\s+(the\s+)?dependent\s+step|do\s+not\s+(substitute|reimplement|improvis)|blocker)'
 
-  - name: skill-backlog-execute-dependency-resolution
-    prompt: |
-      A user wants new tracker items created, but `backlog-management` does not
-      resolve in the host. What must `backlog-execute` do before any write?
-    tags:
-      category: behavior-conformance
-      skill: backlog-execute
-      shape: boundary
-      advisory: "true"
-    graders:
-      - type: output-matches
-        name: dependency-warning
-        config:
-          pattern: '(?i)(backlog-management).{0,160}(unavailable|does\s+not\s+resolve|warn|platform\s+resolution|autonomy|sanitiz|operation\s+contract)'
-      - type: output-matches
-        name: stop-before-mutation
-        config:
-          pattern: '(?i)(stop\s+before\s+(any\s+)?(mutating|mutation|create|write)\s+call|no\s+mutating\s+call|do\s+not\s+(improvis|mutate))'
-
   - name: skill-ux-coaching-knowledge
     prompt: |
       Summarize the practice moments the `ux-coaching` skill covers and the
@@ -2641,6 +3046,7 @@ stimuli:
         name: scope-language
         config:
           pattern: '(?i)(gov\.uk|ddat|engineering\s+playbook|ux|coaching)'
+
   - name: skill-ux-coaching-tool-trigger
     prompt: |
       A skeptical stakeholder is unconvinced by our research and I need to make
@@ -2660,6 +3066,7 @@ stimuli:
         name: scope-language
         config:
           pattern: '(?i)(evidence|stakeholder|skill|coaching)'
+
   - name: skill-ux-coaching-bleed-detection
     prompt: |
       I want to run a full nine-method Design Thinking engagement with my team
@@ -2679,6 +3086,7 @@ stimuli:
         name: scope-language
         config:
           pattern: '(?i)(design\s+thinking|moment|single|scope|engagement)'
+
   - name: skill-ux-coaching-direct-entry-problem-framing
     prompt: |
       Using the `ux-coaching` skill, I want to work out what the problem
@@ -2699,6 +3107,7 @@ stimuli:
         config:
           pattern: '(?i)(you (must|need to) (first )?(complete|run|finish).{0,40}(method|workshop|session)|prerequisite)'
           negate: true
+
   - name: skill-ux-coaching-direct-entry-critique
     prompt: |
       Using the `ux-coaching` skill, I need to run a critique of our new
@@ -2718,6 +3127,7 @@ stimuli:
         config:
           pattern: '(?i)(you (must|need to) (first )?(complete|run|finish).{0,40}(problem framing|method|workshop))'
           negate: true
+
   - name: skill-ux-coaching-stuck-practitioner
     prompt: |
       Using the `ux-coaching` skill: you asked what users are trying to
@@ -2738,6 +3148,7 @@ stimuli:
         config:
           pattern: '(?i)(the user needs are|here are your user needs|your users need:)'
           negate: true
+
   - name: skill-ux-coaching-resume-reconstruction
     prompt: |
       Using the `ux-coaching` skill with project slug `settings-redesign`:
@@ -2758,6 +3169,7 @@ stimuli:
         config:
           pattern: '(?i)(last time you (decided|concluded|found)|previously you established|your earlier evidence (was|showed))'
           negate: true
+
   - name: skill-ux-coaching-no-shared-instruction-dependency
     prompt: |
       For the `ux-coaching` skill, which file supplies its coaching behavior,
@@ -3038,3 +3450,43 @@ stimuli:
         config:
           pattern: '(?i)(use|choose|select).{0,30}(frame-needs|map-journey|sketch-structure|decide-inclusion|prepare-handoff)'
           negate: true
+  - name: skill-security-planning-tm7-generation
+    prompt: |
+      I have a threat-model spec in YAML and I need a `.tm7` file that opens
+      in the Microsoft Threat Modeling Tool, plus a markdown report from the
+      same spec. Which skill covers this, and which entry point produces the
+      `.tm7`?
+    tags:
+      category: behavior-conformance
+      skill: security-planning
+      shape: tool-trigger
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: skill-attribution
+        config:
+          pattern: '(?i)security-planning'
+      - type: output-matches
+        name: scope-language
+        config:
+          pattern: '(?i)(generate_tm7|generate_markdown|\.tm7|threat model)'
+
+  - name: skill-security-planning-native-loop-bleed
+    prompt: |
+      I am on macOS and want to run the native Threat Modeling Tool feedback
+      loop against my generated model. Does the `security-planning` skill's
+      native feedback loop apply here?
+    tags:
+      category: behavior-conformance
+      skill: security-planning
+      shape: bleed-detection
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: skill-attribution
+        config:
+          pattern: '(?i)(not\s+apply|does\s+not|windows[-\s]only|unavailable|cannot|skipped)'
+      - type: output-matches
+        name: scope-language
+        config:
+          pattern: '(?i)(windows|macos|native|portable|generation)'

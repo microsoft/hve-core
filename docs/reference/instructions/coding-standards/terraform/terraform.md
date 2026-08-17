@@ -2,7 +2,13 @@
 title: Coding Standards/Terraform/Terraform
 description: Terraform infrastructure-as-code authoring conventions
 sidebar_position: 1
-ms.date: 2026-07-03
+author: Microsoft
+ms.date: 2026-08-12
+ms.topic: reference
+keywords:
+  - instruction
+  - coding-standards
+  - coding-standards/terraform/terraform
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->

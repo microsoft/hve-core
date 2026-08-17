@@ -2,7 +2,7 @@
 title: Environment Customization
 description: Configure DevContainers, VS Code settings, MCP servers, and coding agent environments for your team
 author: Microsoft
-ms.date: 2026-06-30
+ms.date: 2026-08-12
 ms.topic: how-to
 keywords:
   - devcontainer
@@ -27,6 +27,7 @@ The DevContainer ships with these tools:
 * Python 3.11
 * PowerShell 7.4 with PSScriptAnalyzer 1.25.0, PowerShell-Yaml 0.4.7, and Pester 5.7.1
 * Git and GitHub CLI
+* GitHub Copilot CLI (`copilot`)
 * Azure CLI
 * shellcheck for bash validation
 * actionlint for GitHub Actions workflow validation

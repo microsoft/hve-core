@@ -2,7 +2,13 @@
 title: SSSC Planner
 description: "Six-phase repository supply chain security assessment against OpenSSF Scorecard, SLSA, Sigstore, and SBOM standards, producing a prioritized backlog of reusable workflows."
 sidebar_position: 3
-ms.date: 2026-07-03
+author: Microsoft
+ms.date: 2026-08-12
+ms.topic: reference
+keywords:
+  - agent
+  - security
+  - sssc-planner
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->

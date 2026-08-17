@@ -1,8 +1,14 @@
 ---
 title: Security/Vex Generation
 description: "VEX generation rules: evidence requirements, confidence routing, forbidden transitions, report templates, and licensing posture for AI-assisted vulnerability triage - Brought to you by microsoft/hve-core"
-sidebar_position: 4
-ms.date: 2026-07-03
+sidebar_position: 5
+author: Microsoft
+ms.date: 2026-08-14
+ms.topic: reference
+keywords:
+  - instruction
+  - security
+  - security/vex-generation
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->

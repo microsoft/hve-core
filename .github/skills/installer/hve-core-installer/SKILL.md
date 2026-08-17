@@ -6,7 +6,7 @@ license: MIT
 metadata:
   authors: "microsoft/hve-core"
   spec_version: "1.0"
-  last_updated: "2026-08-09"
+  last_updated: "2026-08-13"
 ---
 
 # HVE-Core Installer Skill
@@ -202,9 +202,9 @@ The HVE Core extension has been installed from the VS Code Marketplace.
 • code-review, security-planner, ux-ui-designer, and more!
 
 🪝 Hooks (manual step): The Marketplace extension is declarative and does not
-   write chat.hookFilesLocations. To enable bundled hooks (e.g. telemetry), add
-   each package's hook folder to that setting yourself, or use a clone-based
-   or CLI-plugin install which documents this configuration.
+  write chat.hookFilesLocations. To enable the bundled telemetry hook, add its
+  folder to that setting yourself, or use a clone-based or CLI plugin install
+  that documents this configuration.
 
 📋 Configuring optional settings...
 ```
@@ -420,7 +420,7 @@ Read [references/post-installation-setup.md](references/post-installation-setup.
 
 ## Phase 7: Component Installation and Upgrade
 
-Read [references/component-installation.md](references/component-installation.md) and follow its component installation and upgrade procedures exactly, including every confirmation gate it defines. When that file is unavailable, warn the user that component installation and upgrade cannot be performed and stop without writing to the target repository.
+Read [references/component-installation.md](references/component-installation.md) and follow its component installation and upgrade procedures exactly, including every confirmation gate it defines. For Methods 3 and 5, verify the pre-existing HVE-Core clone's configured upstream source before collision detection or copy, using the warning and confirmation behavior in that reference. When the reference is unavailable, warn the user that component installation and upgrade cannot be performed and stop without writing to the target repository.
 
 ## Error Recovery
 

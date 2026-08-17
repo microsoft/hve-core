@@ -13,7 +13,7 @@ on:
         type: string
         default: ""
       dry-run:
-        description: "Dry run (validate the version, exact tag, and catalog and discover packages; do not publish)"
+        description: "Dry run (validate the version, exact tag, and catalog; do not publish)"
         required: false
         type: boolean
         default: false
@@ -109,24 +109,19 @@ jobs:
           echo "tag=prerelease-v$VERSION" >> "$GITHUB_OUTPUT"
 
   # A dry run stops before the credentialed publisher but still proves the exact
-  # tag, its catalog version, and the package matrix, matching the Stable lane.
-  discover:
-    name: Discover Pre-Release Marketplace Packages
+  # tag and its catalog version, matching the Stable lane.
+  verify-catalog:
+    name: Verify Pre-Release Catalog Version
     needs: [validate-version]
     runs-on: ubuntu-latest
     permissions:
       contents: read
-    outputs:
-      matrix: ${{ steps.discover.outputs.matrix }}
     steps:
       - name: Checkout code
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           ref: refs/tags/${{ needs.validate-version.outputs.tag }}
           persist-credentials: false
-
-      - name: Setup PowerShell modules
-        uses: ./.github/actions/setup-ps-modules
 
       - name: Resolve effective version
         shell: bash
@@ -135,27 +130,20 @@ jobs:
         run: |
           set -euo pipefail
           version="$INPUT_VERSION"
-          # The released tag is the discovery source, so its catalog version and
-          # immutable plugin locator are what the marketplace publish resolves.
+          # The released tag is the publication source, so its catalog version
+          # is what the marketplace publish resolves.
           catalog_version=$(jq -r '.metadata.version' .github/plugin/marketplace.json)
           if [ "$catalog_version" != "$version" ]; then
             echo "::error::Catalog version $catalog_version at the release ref does not match $version"
             exit 1
           fi
 
-      - name: Discover marketplace packages
-        id: discover
-        shell: pwsh
-        run: |
-          & ./scripts/extension/Get-MarketplacePackageMatrix.ps1 -Channel 'PreRelease'
-
   publish:
-    name: Publish Pre-Release Extensions
-    needs: [validate-version, discover]
+    name: Publish Pre-Release Extension
+    needs: [validate-version, verify-catalog]
     if: ${{ !inputs.dry-run }}
     uses: ./.github/workflows/extension-marketplace-publish.yml
     with:
-      packages-matrix: ${{ needs.discover.outputs.matrix }}
       tag: ${{ needs.validate-version.outputs.tag }}
       pre-release: true
     permissions:
