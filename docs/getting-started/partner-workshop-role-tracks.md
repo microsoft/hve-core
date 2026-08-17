@@ -263,7 +263,7 @@ Frame the solution approach, architecture, and publication considerations.
 ```
 
 1. Review the mermaid diagram and use natural language to refine it.
-2. (Optional) Instead of GitHub Copilot, use Microsft 365 Copilot to create an image. In M365 Copilot, attach 04-architecture.md, and create an architecture image from the mermaid diagram for this solution using Azure and Copilot-style icons to represent core services, data sources, user experience layers, and integrations for the first MVP.
+2. (Optional) Instead of GitHub Copilot, use Microsoft 365 Copilot to create an image. In M365 Copilot, attach 04-architecture.md, and create an architecture image from the mermaid diagram for this solution using Azure and Copilot-style icons to represent core services, data sources, user experience layers, and integrations for the first MVP.
 
 ```text
 "Create an architecture image from the mermaid diagram for this solution using Azure and Copilot-style icons to represent core services, data sources, user experience layers, and integrations for the first MVP."

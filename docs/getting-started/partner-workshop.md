@@ -100,9 +100,13 @@ Complete these steps before participants arrive:
 
 Use this scenario when participants do not bring a project:
 
-> A partner offers a Relationship Manager Assistant to banks and financial institutions. Relationship managers use Microsoft 365 Copilot to ask questions and receive grounded answers from approved customer profiles, product information, research reports, investment insights, onboarding guides, and compliance policies. 
-
-> The partner deploys the Azure data, search, model, API, identity, and monitoring resources into each customer's Azure subscription through an Azure Managed Application. The solution preserves source citations, enforces customer-specific access controls, prevents customer data from being used for model training, and provides audit evidence to support regulatory compliance and governance.
+> A partner wants to offer a Service Knowledge Assistant to enterprise
+> customers. Support specialists ask questions in Microsoft 365 Copilot and
+> receive grounded answers from approved product and service documents. Each
+> customer deploys the Azure data, search, model, API, identity, and monitoring
+> resources into its own subscription through an Azure Managed Application.
+> The solution must preserve source citations, respect user access, avoid using
+> customer content for model training, and provide operational audit evidence.
 
 Do not use production customer data during the workshop. Use synthetic or public sample content.
 

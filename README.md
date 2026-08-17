@@ -45,6 +45,7 @@ Use HVE Core when you want AI-assisted work to be repeatable, standards-aligned,
 4. Select **RPI Agent** from the agent picker or run `/rpi`, then describe the task you want to complete.
 
 ## Choose Your Path
+
 * New to HVE-Core: Start with [Start Here](docs/getting-started/README.md) to complete your first workflow quickly.
 * Microsoft Partner Workshop: Follow the [Getting Started with HVE Partner Workshop](docs/getting-started/README.md) for workshop-specific onboarding.
 * Leading a team: Use the [Team Adoption Guide](docs/customization/team-adoption.md) to roll out standards and onboarding.
