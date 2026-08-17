@@ -1,9 +1,8 @@
 ---
 title: Get Started with the HVE Partner Workshop
-description: Start with the two-hour HVE partner workshop, then use the supporting setup, workflow, and role references
-sidebar_position: 1
+description: Start with the HVE partner workshop, then use the supporting setup, workflow, and role references
 author: Microsoft
-ms.date: 2026-08-14
+ms.date: 2026-08-17
 ms.topic: tutorial
 keywords:
   - github copilot
@@ -15,10 +14,9 @@ estimated_reading_time: 5
 
 ## HVE Partner Workshop
 
-Start with the [HVE partner workshop](partner-workshop.md). It gives
-partners new to HVE a shared setup path, role-based exercises, an integrated solution, and publication follow-up.
+Start with the [HVE partner workshop](partner-workshop.md). It gives partners new to HVE a shared setup path, role-based exercises, an integrated solution, and publication follow-up.
 
-During the workshop, project/product managers, subject matter experts, designers, and technical participants work from one scenario to produce:
+During the workshop, project and product managers, subject matter experts, designers, and technical participants work from one scenario to produce:
 
 * grounded business, user, domain, design, and technical context
 * user and solution requirements with testable acceptance criteria
@@ -28,13 +26,13 @@ During the workshop, project/product managers, subject matter experts, designers
 
 ## Start The Workshop
 
-| Step | Activity                                                                                         | Time   |
-|------|--------------------------------------------------------------------------------------------------|--------|
-| 1    | [Review the workshop overview and agenda](partner-workshop.md)                                   | 30 min |
-| 2    | [Set up Codespaces or local VS Code](partner-workshop-setup.md)                                  | 30 min |
-| 3    | [Complete the PM, SME, Design, or Technical track](partner-workshop-role-tracks.md)              | 60 min |
-| 4    | [Integrate requirements, backlog, and architecture](partner-workshop-solution.md)                | 60 min |
-| 5    | [Assess Microsoft Marketplace and Copilot Agent Store readiness](partner-workshop-publishing.md) | 30 min |
+| Step | Activity | Time |
+|------|----------|------|
+| 1 | [Review the workshop overview and agenda](partner-workshop.md) | 30 min |
+| 2 | [Set up Codespaces or local VS Code](partner-workshop-setup.md) | 30 min |
+| 3 | [Complete the PM, SME, Design, or Technical track](partner-workshop-role-tracks.md) | 60 min |
+| 4 | [Integrate requirements, backlog, and architecture](partner-workshop-solution.md) | 60 min |
+| 5 | [Assess Microsoft Marketplace and Copilot Agent Store readiness](partner-workshop-publishing.md) | 30 min |
 
 > [!NOTE]
 > The workshop creates reviewed drafts and publication plans. Azure deployment,
@@ -49,34 +47,18 @@ Marketplace packages are curated bundles of HVE capabilities that you can instal
 
 Use the remaining Getting Started material as reference after the workshop.
 
-| Reference                                                 | Use It To                                             |
-|-----------------------------------------------------------|-------------------------------------------------------|
-| [Installation Guide](install.md)                          | Compare installation methods and resolve setup issues |
-| [Marketplace Packages](packages.md)                       | Choose a focused collection or HVE Core All           |
-| [First Interaction](first-interaction.md)                 | Practice a one-minute agent interaction               |
-| [First Research](first-research.md)                       | Learn the research phase on an existing codebase      |
-| [First Full Workflow](first-workflow.md)                  | Run Research, Plan, Implement, and Review             |
-| [Growing with HVE](../hve-guide/roles/new-contributor.md) | Progress toward independent HVE use                   |
-| [Role Guides](../hve-guide/roles/)                        | Continue with role-specific workflows                 |
-| [RPI Workflow](../rpi/)                                   | Understand HVE's core delivery methodology            |
+| Reference | Use It To |
+|-----------|-----------|
+| [Installation Guide](install.md) | Compare installation methods and resolve setup issues |
+| [Marketplace Packages](packages.md) | Choose a focused collection or HVE Core All |
+| [First Interaction](first-interaction.md) | Practice a one-minute agent interaction |
+| [First Research](first-research.md) | Learn the research phase on an existing codebase |
+| [First Full Workflow](first-workflow.md) | Run Research, Plan, Implement, and Review |
+| [Growing with HVE](../hve-guide/roles/new-contributor.md) | Progress toward independent HVE use |
+| [Role Guides](../hve-guide/roles/) | Continue with role-specific workflows |
+| [RPI Workflow](../rpi/) | Understand HVE's core delivery methodology |
 
 ## Troubleshooting
-
-### Installation Issues
-
-#### Agent not available
-
-* Ensure GitHub Copilot extension is installed and active
-* Reload VS Code window: `Ctrl+Shift+P` → "Developer: Reload Window"
-* Check that hve-core is accessible (cloned or configured correctly)
-
-#### Copilot not discovering customizations
-
-* For Multi-Root: Ensure you opened the `.code-workspace` file, not just the folder
-* Verify `chat.agentFilesLocations` points to the correct path
-* Check the window title shows the workspace name
-
-#### Git or clone errors
 
 * Verify Git is installed: run `git --version` in terminal
 * Check network connectivity to github.com
@@ -84,17 +66,9 @@ Use the remaining Getting Started material as reference after the workshop.
 
 ## Optional Scripts
 
-HVE Core includes utility scripts you may want to copy into your project:
+Copy the scripts you need to your project's `scripts/` directory and adjust paths, variables, or commands to fit your environment.
 
-| Script                                             | Purpose                                            |
-|----------------------------------------------------|----------------------------------------------------|
-| `scripts/linting/Validate-MarkdownFrontmatter.ps1` | Validate markdown frontmatter against JSON schemas |
-| `scripts/linting/Invoke-PSScriptAnalyzer.ps1`      | Run PSScriptAnalyzer with project settings         |
-| `scripts/security/Test-DependencyPinning.ps1`      | Check GitHub Actions for pinned dependencies       |
-
-Copy the scripts you need to your project's `scripts/` directory and adjust paths as needed.
-
-## Design Thinking References
+## Design Thinking and Discovery
 
 For projects requiring user-centered requirements discovery before implementation:
 
@@ -108,8 +82,3 @@ For projects requiring user-centered requirements discovery before implementatio
 * [MCP Configuration](mcp-configuration.md)
 
 ---
-
-<!-- markdownlint-disable MD036 -->
-*🤖 Crafted with precision by ✨Copilot following brilliant human instruction,
-then carefully refined by our team of discerning human reviewers.*
-<!-- markdownlint-enable MD036 -->
