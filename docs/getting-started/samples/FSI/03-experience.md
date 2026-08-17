@@ -1,6 +1,6 @@
 ---
-title: Experience Outline: Relationship Manager for FSI
-description: Sample user experience brief for the financial services relationship manager workshop scenario
+title: "Experience Outline: Relationship Manager for FSI"
+description: "User experience brief for the financial services relationship manager"
 author: Microsoft
 ms.date: 2026-08-17
 ms.topic: reference

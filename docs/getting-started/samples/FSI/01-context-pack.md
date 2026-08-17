@@ -1,6 +1,6 @@
 ---
-title: Context Pack FSI
-description: Sample context pack for the financial services relationship manager workshop scenario
+title: "Context Pack FSI"
+description: "Context pack for the financial services relationship manager"
 author: Microsoft
 ms.date: 2026-08-17
 ms.topic: reference

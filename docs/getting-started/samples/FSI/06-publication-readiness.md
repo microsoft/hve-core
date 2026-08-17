@@ -1,6 +1,6 @@
 ---
-title: Publication Readiness Draft
-description: Practical publication-readiness checklist and ownership plan for the FSI relationship manager MVP
+title: "Publication Readiness"
+description: "Practical publication-readiness checklist and ownership plan for the FSI relationship manager MVP"
 sidebar_position: 6
 author: Microsoft
 ms.date: 2026-08-17

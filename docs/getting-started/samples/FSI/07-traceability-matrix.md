@@ -1,6 +1,6 @@
 ---
-title: Traceability Matrix Draft
-description: Traceability review draft for the FSI relationship manager workshop scenario
+title: "Traceability Matrix"
+description: "Traceability review for the FSI relationship manager"
 sidebar_position: 7
 author: Microsoft
 ms.date: 2026-08-17

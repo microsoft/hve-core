@@ -1,6 +1,6 @@
 ---
-title: Workshop Requirements Draft
-description: Concise requirements draft for the FSI relationship manager workshop scenario
+title: "Workshop Requirements"
+description: "Concise requirements for the FSI relationship manager"
 sidebar_position: 2
 author: Microsoft
 ms.date: 2026-08-15

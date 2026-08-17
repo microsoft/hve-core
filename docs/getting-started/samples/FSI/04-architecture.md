@@ -1,6 +1,6 @@
 ---
 title: "Architecture draft: Relationship Manager for FSI"
-description: Solution approach, security review, Cloud Adoption Framework alignment, publication readiness, and architecture diagram for the first MVP.
+description: "Solution approach, security review, Cloud Adoption Framework alignment, publication readiness, and architecture diagram"
 sidebar_position: 4
 author: Microsoft
 ms.date: 2026-08-17

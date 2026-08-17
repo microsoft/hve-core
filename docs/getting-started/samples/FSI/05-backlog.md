@@ -1,6 +1,6 @@
 ---
-title: Backlog Draft
-description: Initial backlog hierarchy for the relationship manager workshop scenario
+title: "Backlog"
+description: "Backlog hierarchy for the relationship manager"
 sidebar_position: 5
 author: Microsoft
 ms.date: 2026-08-16
