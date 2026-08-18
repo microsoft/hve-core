@@ -12,8 +12,6 @@ keywords:
 estimated_reading_time: 5
 ---
 
-# Hypervelocity Engineering (HVE) Core
-
 HVE Core is a curated library of reusable prompts, agents, instructions, and skills that help teams build dependable, reviewable AI-assisted development workflows.
 
 Use HVE Core when you want AI-assisted work to be repeatable, standards-aligned, and grounded in validated artifacts.

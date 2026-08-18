@@ -60,13 +60,13 @@ estimated_reading_time: 5
   * Decide what to do next with confidence.
 * Business outcomes:
   * Improve store execution and customer experience.
-  * Reduce lost sales from stockouts, service delays, or missed follow-up.
+  * Reduce lost sales from out of stock products, service delays, or missed follow-up.
   * Improve team responsiveness and operational consistency.
   * Help the organization protect margin and strengthen store performance.
 * Measurable success metrics:
   * Time to identify a store issue or emerging risk.
   * Time to act on the highest-priority recommendation.
-  * Reduction in service delays, stockouts, or other operational incidents.
+  * Reduction in service delays, out of stock products, or other operational incidents.
   * Improvement in store-level sales, conversion, or customer satisfaction outcomes.
   * Open question: What are the target baselines and success thresholds for each metric?
 * Stakeholders:
