@@ -3,7 +3,7 @@ title: SBOM Verification
 description: Verify, download, and inspect the Software Bill of Materials published with each HVE Core release
 sidebar_position: 3
 author: Microsoft
-ms.date: 2026-08-10
+ms.date: 2026-08-13
 ms.topic: how-to
 keywords:
   - SBOM
@@ -17,19 +17,19 @@ estimated_reading_time: 5
 ---
 
 Stable and PreRelease HVE Core releases publish Software Bill of Materials
-(SBOM) files in SPDX 2.3 JSON format. Per-artifact SBOMs describe each VSIX or
-plugin ZIP. `dependencies.spdx.json` describes the dependency tree used during
+(SBOM) files in SPDX 2.3 JSON format. The per-artifact SBOM describes the VSIX.
+`dependencies.spdx.json` describes the dependency tree used during
 the build.
 
 ## What Gets Published
 
 Each channel release publishes:
 
-| Asset                    | Channel               | Attestation topology                         |
-|--------------------------|-----------------------|----------------------------------------------|
-| `<artifact>.spdx.json`   | Stable and PreRelease | SPDX predicate over its VSIX or ZIP subject  |
-| `dependencies.spdx.json` | Stable and PreRelease | SPDX predicate over each VSIX or ZIP subject |
-| `hve-core.openvex.json`  | Stable only           | Separate VEX subject attestation             |
+| Asset                               | Channel               | Attestation topology                 |
+|-------------------------------------|-----------------------|--------------------------------------|
+| `hve-core-<version>.vsix.spdx.json` | Stable and PreRelease | SPDX predicate over the VSIX subject |
+| `dependencies.spdx.json`            | Stable and PreRelease | SPDX predicate over the VSIX subject |
+| `hve-core.openvex.json`             | Stable only           | Separate VEX subject attestation     |
 
 The SBOM files are predicate payloads in the channel package workflows. They
 are not independently attested SPDX subjects. Stable additionally uses
@@ -52,11 +52,11 @@ Download assets from the exact channel tag:
 ```bash
 # PreRelease
 gh release download prerelease-v<version> -R microsoft/hve-core \
-  -p '*.vsix' -p '*.zip' -p '*.spdx.json'
+  -p '*.vsix' -p '*.vsix.spdx.json' -p 'dependencies.spdx.json'
 
 # Stable
 gh release download v<version> -R microsoft/hve-core \
-  -p '*.vsix' -p '*.zip' -p '*.spdx.json'
+  -p '*.vsix' -p '*.vsix.spdx.json' -p 'dependencies.spdx.json'
 ```
 
 Verify SPDX predicates through their primary artifact subjects:
@@ -72,15 +72,6 @@ gh attestation verify hve-core-<version>.vsix -R microsoft/hve-core \
   --signer-workflow microsoft/hve-core/.github/workflows/extension-provenance.yml \
   --predicate-type https://spdx.dev/Document/v2.3
 
-# Stable plugin ZIP
-gh attestation verify <plugin-id>.zip -R microsoft/hve-core \
-  --signer-workflow microsoft/hve-core/.github/workflows/release-stable-publish.yml \
-  --predicate-type https://spdx.dev/Document/v2.3
-
-# PreRelease plugin ZIP
-gh attestation verify <plugin-id>.zip -R microsoft/hve-core \
-  --signer-workflow microsoft/hve-core/.github/workflows/release-prerelease.yml \
-  --predicate-type https://spdx.dev/Document/v2.3
 ```
 
 These commands can match both the per-artifact and dependency SBOM
@@ -88,7 +79,7 @@ attestations because both use the SPDX 2.3 predicate type. Inspect the returned
 attestation statements when you need to distinguish the predicate payloads.
 
 Do not verify `dependencies.spdx.json` as an SPDX subject. On both channels it
-is an SPDX predicate payload over the primary package subjects. Stable also
+is an SPDX predicate payload over the VSIX subject. Stable also
 uses it as a subject for an OpenVEX predicate; PreRelease does not.
 
 A successful verification confirms:
@@ -122,7 +113,7 @@ jq '.packages[] | {name, licenseConcluded, licenseDeclared}' hve-core-<version>.
 ```
 
 Inspect `dependencies.spdx.json` as data while verifying its SPDX content
-through a primary VSIX or plugin ZIP subject:
+through the primary VSIX subject:
 
 ```bash
 jq '{

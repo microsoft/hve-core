@@ -3,8 +3,12 @@ title: 'Contributing Prompts to HVE Core'
 description: 'Requirements and standards for contributing GitHub Copilot prompt files to hve-core'
 sidebar_position: 4
 author: Microsoft
-ms.date: 2026-08-06
+ms.date: 2026-08-13
 ms.topic: how-to
+keywords:
+  - contributing
+  - prompts
+  - standards
 ---
 
 This guide defines the requirements, standards, and best practices for contributing GitHub Copilot prompt files (`.prompt.md`) to the hve-core library.
@@ -37,8 +41,7 @@ Prompt files are typically organized in a package subdirectory by convention:
 ```
 
 > [!NOTE]
-> Marketplace package recipes can reference artifacts from any canonical subfolder. Standard component paths
-> are declared in `.github/plugin/marketplace.json` and resolve to canonical source files.
+> Tracked prompts beneath a package subdirectory are included automatically when `npm run plugin:sync` derives `.github/plugin.json`.
 
 ### Naming Convention
 
@@ -203,16 +206,11 @@ Begin by reading the current branch state and identifying open work items.
 
 Prompts that delegate to a custom agent via `agent:` typically omit the activation line because the agent's phases define execution order.
 
-## Marketplace Recipe Registration
+## Plugin Manifest Registration
 
-Distributable prompts must be declared under the `commands` field of the
-`hve-core` entry in `.github/plugin/marketplace.json`. Use the
-`.github`-root-relative canonical path
-`prompts/<subpath>/<name>.prompt.md`.
+Distributable prompts must use the canonical path `.github/prompts/<package>/<subpath>/<name>.prompt.md`. `npm run plugin:sync` adds the `.github`-root-relative path to the `commands` array in `.github/plugin.json`.
 
-Add non-stable lifecycle disclosure only through `x-hve.componentMaturity`,
-update `docs/plugins/hve-core.md`, then run `npm run lint:marketplace` and
-`npm run docs:generate:check`.
+Update `docs/plugins/hve-core.md` when the user-visible prompt surface changes, then run `npm run plugin:validate` and `npm run docs:generate:check`.
 
 ## Prompt Content Structure Standards
 
@@ -512,7 +510,7 @@ Before submitting your prompt, verify:
 
 * [ ] Clear H1 title describing workflow
 * [ ] Overview/purpose section
-* [ ] Maturity set in marketplace package metadata (see [Common Standards - Maturity](ai-artifacts-common.md#marketplace-packages))
+* [ ] `npm run plugin:sync` and `npm run plugin:validate` completed for distributable prompt changes
 * [ ] Prerequisites or context section
 * [ ] Workflow steps with clear sequence
 * [ ] Success criteria defined

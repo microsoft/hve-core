@@ -2,7 +2,7 @@
 title: HVE Core
 description: Hypervelocity Engineering prompt library for GitHub Copilot with convention-driven AI workflows and validated artifacts
 author: Microsoft
-ms.date: 2026-08-08
+ms.date: 2026-08-13
 ms.topic: overview
 keywords:
   - hypervelocity engineering
@@ -58,7 +58,7 @@ Use HVE Core when you want AI-assisted work to be repeatable, standards-aligned,
 > * Moving reviewed channels: `microsoft/hve-core#release/prerelease` and `microsoft/hve-core#release/stable`
 > * Immutable exact releases: `microsoft/hve-core#prerelease-v<version>` and `microsoft/hve-core#v<version>`
 >
-> For example, register the development tip and install the focused package:
+> For example, register the development tip and install the HVE Core plugin:
 >
 > ```bash
 > copilot plugin marketplace add microsoft/hve-core
@@ -97,6 +97,7 @@ Full documentation is available at **<https://microsoft.github.io/hve-core/>**.
 |------------------------------------------------------------------|--------------------------------------------------|
 | [Getting Started](docs/getting-started/README.md)                | Setup and first workflow tutorial                |
 | [HVE Core Identity](docs/getting-started/packages.md)            | Distribution channels and lifecycle disclosure   |
+| [Plugin Inventory](docs/plugins/hve-core.md)                     | One-plugin identity and included capabilities    |
 | [Package Migration](docs/getting-started/package-migration.md)   | Move from retired distribution identities        |
 | [RPI Workflow](docs/rpi/README.md)                               | Deep dive into Research, Plan, Implement, Review |
 | [Contributing](docs/contributing/README.md)                      | Create custom agents, instructions, and prompts  |

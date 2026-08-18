@@ -1,9 +1,9 @@
 ---
-title: Adapt HVE Core Package Selections
-description: Choose or switch HVE Core catalog packages while preserving the release architecture
+title: Migrate to the HVE Core Identity
+description: Move retired package installations to the single HVE Core plugin or extension
 sidebar_position: 4
 author: Microsoft
-ms.date: 2026-08-11
+ms.date: 2026-08-16
 ms.topic: how-to
 keywords:
   - migration
@@ -15,19 +15,13 @@ keywords:
 estimated_reading_time: 8
 ---
 
-HVE Core package selection is a forward adaptation of the catalog-defined distribution model. `.github/plugin/marketplace.json` remains the sole authority for active entries, package membership, maturity, documentation, and sources.
+HVE Core now publishes one `hve-core` plugin and one `ise-hve-essentials.hve-core` extension. `.github/plugin.json` owns the complete distributable membership, and `.github/plugin/marketplace.json` contains one relative locator to `.github`.
 
 Choose the migration path for your host. Neither GitHub Copilot nor VS Code provides a universal automatic migration between different published identities.
 
-## Choose a Package
+## Replace Retired Identities
 
-| Package choice            | Scope                                                    |
-|---------------------------|----------------------------------------------------------|
-| `hve-core`                | Focused RPI, HVE Builder, Git, and code-review workflows |
-| `hve-core-all`            | All active content and the only starter profile          |
-| Domain or utility package | A narrower capability set listed by the active catalog   |
-
-Do not install `hve-core` and `hve-core-all` together because their content overlaps.
+Remove any retired domain, utility, or `hve-core-all` plugin registration before installing `hve-core`. Remove any package-suffixed HVE Core extension before installing the single HVE Core extension.
 
 ## GitHub Copilot Plugin Selection
 
@@ -53,10 +47,7 @@ copilot plugin marketplace add microsoft/hve-core#prerelease-v<version>
 copilot plugin marketplace add microsoft/hve-core#v<version>
 ```
 
-The development catalog omits `source.ref`. A release-branch registration
-resolves the current catalog on that branch, whose entries pin the
-corresponding exact channel tag. An exact-tag registration fixes both the
-catalog and its source payloads.
+The ref-less registration resolves current `main`. A release-branch registration resolves the current reviewed branch. An exact-tag registration fixes the catalog, manifest, and source tree together.
 
 Refresh the marketplace before requesting an installed-plugin update:
 
@@ -70,7 +61,7 @@ Do not depend on a specific outcome for duplicate same-name registrations.
 
 ## VS Code Extension Selection
 
-Each catalog entry has a deterministic extension identity. `hve-core` remains the unsuffixed HVE Core extension, `ise-hve-essentials.hve-core`; other entries use package-specific generated identities. Stable and PreRelease have the same active package and component projections, but differ in source ownership, cadence, and version.
+The sole extension identity is `ise-hve-essentials.hve-core`. Stable and PreRelease have the same complete component set but differ in source ownership, cadence, and version.
 
 PreRelease packages from the reviewed `release/prerelease` path and its
 `prerelease-v<version>` tag. Stable packages from the reviewed
@@ -83,34 +74,40 @@ channel-switch behavior must be confirmed in the installed host.
 
 ## Selective Clone Adaptation
 
-Use clone-based selective adoption when a complete selected package is broader than your repository needs.
+Use clone-based selective adoption when the complete plugin is broader than your repository needs.
 
 1. Pin or clone the HVE Core source version you intend to adopt.
-2. Invoke `hve-core-installer` and select an exact `PackageName`.
-3. Use `hve-core-all` for the `starter` profile, or choose components from the selected package.
-4. Review the selected components, dependency closure, and lifecycle labels before allowing writes.
-5. Review the resulting `.hve-tracking.json` manifest before committing adopted files.
+2. Invoke `hve-core-installer` and choose all manifest components or a subset.
+3. Review the selected components and collisions before allowing writes.
+4. Review the resulting `.hve-tracking.json` manifest before committing adopted files.
 
-The installer preserves repository-relative paths for every copied component. A selected skill includes its complete directory, including scripts, references, tests, and assets. Hooks are plugin runtime configuration and are not copied into the target repository.
+The installer preserves repository-relative paths for every copied component. A selected skill includes its complete distributable directory, excluding local tests, environments, and caches. Hooks are plugin runtime configuration and are not copied into the target repository.
 
-Schema version 2 stores `selection.package`. File records identify components without per-file package ownership, and hooks are not copied. When a schema version 2 manifest has no package, upgrade detection emits `INSTALLED_PACKAGE=` and requires explicit package reselection before replay.
+Schema version 2 stores `selection.profile` and `selection.components`. File records identify component ownership without package identity, and hooks are not copied. Existing schema version 1 tracking files are not upgraded in place: remove `.hve-tracking.json` and run a clean installation. Because the one-plugin manifest no longer declares per-component maturity, new schema version 2 file records use the schema-default `stable` value.
 
 ## Retired Package Identities
 
-The `ado`, `github`, `jira`, and `gitlab` packages are retired. Their capability ships in `project-planning`, except for code scanning, which ships in `security`. The Marketplace offers no deprecation or tombstone signal, so an already-installed retired extension keeps surfacing commands that no longer resolve. Install the replacement, then uninstall the retired extension.
+Thirteen package identities are retired. Their capabilities now ship through the complete `hve-core` plugin and extension. The Marketplace offers no deprecation or tombstone signal, so an already-installed retired extension keeps surfacing commands that no longer resolve. Install `ise-hve-essentials.hve-core`, verify the replacement, then uninstall each retired extension listed below.
 
-If you installed `ise-hve-essentials.hve-core-all`, you already have everything and no action is required.
+The source tree still groups capabilities by areas such as `project-planning` and `security`, but those areas are no longer separate extension identities.
 
 ### Retired extension identities
 
-| If you installed                | Install instead                                                                 |
-|---------------------------------|---------------------------------------------------------------------------------|
-| `ise-hve-essentials.hve-ado`    | `ise-hve-essentials.hve-project-planning`                                       |
-| `ise-hve-essentials.hve-github` | `ise-hve-essentials.hve-project-planning` and `ise-hve-essentials.hve-security` |
-| `ise-hve-essentials.hve-jira`   | `ise-hve-essentials.hve-project-planning`                                       |
-| `ise-hve-essentials.hve-gitlab` | `ise-hve-essentials.hve-project-planning`                                       |
-
-The `hve-github` row needs both extensions because its skills split across two packages: the backlog workflows moved to project planning, and the `gh-code-scanning` skill moved to security.
+| If you installed                          | Install instead               |
+|-------------------------------------------|-------------------------------|
+| `ise-hve-essentials.hve-ado`              | `ise-hve-essentials.hve-core` |
+| `ise-hve-essentials.hve-coding-standards` | `ise-hve-essentials.hve-core` |
+| `ise-hve-essentials.hve-data-science`     | `ise-hve-essentials.hve-core` |
+| `ise-hve-essentials.hve-design-thinking`  | `ise-hve-essentials.hve-core` |
+| `ise-hve-essentials.hve-experimental`     | `ise-hve-essentials.hve-core` |
+| `ise-hve-essentials.hve-github`           | `ise-hve-essentials.hve-core` |
+| `ise-hve-essentials.hve-installer`        | `ise-hve-essentials.hve-core` |
+| `ise-hve-essentials.hve-jira`             | `ise-hve-essentials.hve-core` |
+| `ise-hve-essentials.hve-gitlab`           | `ise-hve-essentials.hve-core` |
+| `ise-hve-essentials.hve-core-all`         | `ise-hve-essentials.hve-core` |
+| `ise-hve-essentials.hve-project-planning` | `ise-hve-essentials.hve-core` |
+| `ise-hve-essentials.hve-rpi`              | `ise-hve-essentials.hve-core` |
+| `ise-hve-essentials.hve-security`         | `ise-hve-essentials.hve-core` |
 
 ### Retired read-only commands
 
@@ -154,13 +151,13 @@ Each replacement resolves your tracker from the workspace, so you no longer choo
 | `/ado-create-pull-request` | `hve-core`   |
 | `/ado-get-build-info`      | `hve-core`   |
 
-### Relocated skills
+### Relocated skills within HVE Core
 
-| Skill              | Now ships in       |
-|--------------------|--------------------|
-| `jira`             | `project-planning` |
-| `gitlab`           | `project-planning` |
-| `gh-code-scanning` | `security`         |
+| Skill              | Source capability area |
+|--------------------|------------------------|
+| `jira`             | `project-planning`     |
+| `gitlab`           | `project-planning`     |
+| `gh-code-scanning` | `security`             |
 
 ### Retired agents
 
@@ -192,7 +189,7 @@ migration commands.
 
 ## Verify the Result
 
-Confirm the selected package's agents, prompts, instructions, and skills are available in the host. For selective clones, verify `.hve-tracking.json` records the intended package and selection. Review the [HVE Core identity and channels](packages) and [installation guide](install) for the current distribution contract.
+Confirm the plugin's agents, prompts, instructions, and skills are available in the host. For selective clones, verify `.hve-tracking.json` records the intended profile and components. Review the [HVE Core identity and channels](packages) and [installation guide](install) for the current distribution contract.
 
 ---
 

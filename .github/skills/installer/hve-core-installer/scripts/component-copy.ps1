@@ -4,7 +4,7 @@
 .SYNOPSIS
     Copies selected HVE-Core components into a target repository.
 .DESCRIPTION
-    Maps marketplace component paths to their canonical .github locations,
+    Maps plugin manifest component paths to their canonical .github locations,
     copies files and complete skill directories under TargetRoot without
     flattening paths, and writes the schema version 2 .hve-tracking.json
     manifest. Membership, path-safety, and manifest-schema checks all run
@@ -13,12 +13,10 @@
     Root path of the local HVE-Core clone used as the copy source.
 .PARAMETER TargetRoot
     Root of the repository that receives the copied components.
-.PARAMETER PackageName
-    Marketplace package name whose recipe declares the installable components.
 .PARAMETER SelectionName
-    Marketplace profile name that produced the selection, or 'custom'.
+    Profile name that produced the selection, or 'custom'.
 .PARAMETER Component
-    Marketplace component paths such as agents/hve-core/rpi-agent.md or skills/rpi/rpi-plan.
+    Component paths such as agents/hve-core/rpi-agent.md or skills/rpi/rpi-plan.
 .PARAMETER ReportOnly
     When set, runs preflight and reports component maturity and collisions without writing.
 .PARAMETER KeepExisting
@@ -26,7 +24,7 @@
 .PARAMETER Collisions
     Component paths that already exist in the target and may conflict.
 .EXAMPLE
-    ./scripts/component-copy.ps1 -HveCoreBasePath ../hve-core -TargetRoot . -PackageName hve-core-all -SelectionName starter -Component @('agents/hve-core/rpi-agent.md', 'skills/rpi/rpi-plan')
+    ./scripts/component-copy.ps1 -HveCoreBasePath ../hve-core -TargetRoot . -SelectionName starter -Component @('agents/hve-core/rpi-agent.md', 'skills/rpi/rpi-plan')
 .OUTPUTS
     Per-component copy status and manifest creation confirmation.
 #>
@@ -39,10 +37,6 @@ param(
     [Parameter(Mandatory)]
     [ValidateScript({ Test-Path -LiteralPath $_ -PathType Container })]
     [string]$TargetRoot,
-
-    [Parameter(Mandatory)]
-    [ValidateNotNullOrEmpty()]
-    [string]$PackageName,
 
     [Parameter(Mandatory)]
     [ValidateNotNullOrEmpty()]
@@ -124,69 +118,67 @@ $schemaVersion = 2
 # the extension skill-materialization exclusions.
 $excludedSkillPath = '(^|/)(tests|\.venv|\.hypothesis|node_modules|__pycache__|\.ruff_cache|\.pytest_cache|\.git)(/|$)|(^|/)\.env(\..+)?$|(^|/)(\.DS_Store|Thumbs\.db)$|\.pyc$'
 $fieldMap = [ordered]@{
-    agents   = @{ Kind = 'agent'; Root = '.github/agents'; CatalogRoot = 'agents'; PackageSuffix = '.md'; SourceSuffix = '.agent.md' }
-    commands = @{ Kind = 'prompt'; Root = '.github/prompts'; CatalogRoot = 'prompts'; PackageSuffix = '.md'; SourceSuffix = '.prompt.md' }
-    rules    = @{ Kind = 'instruction'; Root = '.github/instructions'; CatalogRoot = 'instructions'; PackageSuffix = '.instructions.md'; SourceSuffix = '.instructions.md' }
-    skills   = @{ Kind = 'skill'; Root = '.github/skills'; CatalogRoot = 'skills'; PackageSuffix = ''; SourceSuffix = '' }
+    agents   = @{ Kind = 'agent'; Root = '.github/agents'; ManifestRoot = 'agents'; PackageSuffix = '.md'; SourceSuffix = '.agent.md' }
+    commands = @{ Kind = 'prompt'; Root = '.github/prompts'; ManifestRoot = 'prompts'; PackageSuffix = '.md'; SourceSuffix = '.prompt.md' }
+    rules    = @{ Kind = 'instruction'; Root = '.github/instructions'; ManifestRoot = 'instructions'; PackageSuffix = '.instructions.md'; SourceSuffix = '.instructions.md' }
+    skills   = @{ Kind = 'skill'; Root = '.github/skills'; ManifestRoot = 'skills'; PackageSuffix = ''; SourceSuffix = '' }
 }
 
-# The marketplace catalog stores canonical source identities while installer input
-# and manifests use package form. A path whose root is outside the four installable
-# fields, such as hooks/, carries through unprojected so catalog load never fails.
 function ConvertTo-PackageComponentPath {
-    param([string]$CatalogPath)
+    <#
+    .SYNOPSIS
+        Converts a canonical plugin-manifest path to installer package form.
+    .DESCRIPTION
+        The plugin manifest stores canonical source identities while installer
+        input and tracking manifests use package form. Paths outside the four
+        installable fields, such as hooks, pass through unchanged.
+    .PARAMETER ManifestPath
+        Plugin-root-relative path declared by the canonical manifest.
+    .OUTPUTS
+        [string] Installer package path, or the original path when no mapping applies.
+    #>
+    [CmdletBinding()]
+    [OutputType([string])]
+    param(
+        [Parameter(Mandatory = $true)]
+        [ValidateNotNullOrEmpty()]
+        [string]$ManifestPath
+    )
 
-    $segments = $CatalogPath -split '/', 2
-    if ($segments.Count -lt 2) { return $CatalogPath }
-    $catalogRoot = $segments[0]
+    $segments = $ManifestPath -split '/', 2
+    if ($segments.Count -lt 2) { return $ManifestPath }
+    $manifestRoot = $segments[0]
     $relative = $segments[1]
     foreach ($field in $fieldMap.Keys) {
         $descriptor = $fieldMap[$field]
-        if (-not [string]::Equals($descriptor.CatalogRoot, $catalogRoot, [System.StringComparison]::Ordinal)) { continue }
+        if (-not [string]::Equals($descriptor.ManifestRoot, $manifestRoot, [System.StringComparison]::Ordinal)) { continue }
         if ($descriptor.SourceSuffix) {
-            if (-not $relative.EndsWith($descriptor.SourceSuffix, [System.StringComparison]::Ordinal)) { return $CatalogPath }
+            if (-not $relative.EndsWith($descriptor.SourceSuffix, [System.StringComparison]::Ordinal)) { return $ManifestPath }
             $relative = "$($relative.Substring(0, $relative.Length - $descriptor.SourceSuffix.Length))$($descriptor.PackageSuffix)"
         }
         return "$field/$relative"
     }
-    return $CatalogPath
+    return $ManifestPath
 }
 
 $sourceRoot = (Resolve-Path -LiteralPath $HveCoreBasePath).Path
 $targetBase = (Resolve-Path -LiteralPath $TargetRoot).Path
 $manifestPath = Join-Path $targetBase '.hve-tracking.json'
 
-$catalogPath = Join-Path $sourceRoot '.github/plugin/marketplace.json'
-if (-not (Test-Path -LiteralPath $catalogPath -PathType Leaf)) {
-    throw "Marketplace catalog not found: $catalogPath"
+$pluginManifestPath = Join-Path $sourceRoot '.github/plugin.json'
+if (-not (Test-Path -LiteralPath $pluginManifestPath -PathType Leaf)) {
+    throw "Plugin manifest not found: $pluginManifestPath"
 }
-$catalog = Get-Content -LiteralPath $catalogPath -Raw -Encoding utf8 | ConvertFrom-Json -AsHashtable
-$packageEntries = @(@($catalog['plugins']) | Where-Object {
-        [string]::Equals([string]$_['name'], $PackageName, [System.StringComparison]::Ordinal)
-    })
-if ($packageEntries.Count -eq 0) {
-    throw "Marketplace catalog '$catalogPath' declares no package named '$PackageName'."
-}
-if ($packageEntries.Count -gt 1) {
-    throw "Marketplace catalog '$catalogPath' declares $($packageEntries.Count) packages named '$PackageName'."
-}
-$entry = $packageEntries[0]
-$componentMaturity = @{}
-if ($entry['x-hve'] -is [System.Collections.IDictionary] -and $entry['x-hve']['componentMaturity'] -is [System.Collections.IDictionary]) {
-    foreach ($key in $entry['x-hve']['componentMaturity'].Keys) {
-        $maturityComponent = ConvertTo-PackageComponentPath -CatalogPath ([string]$key)
-        $componentMaturity[$maturityComponent] = [string]$entry['x-hve']['componentMaturity'][$key]
-    }
-}
+$pluginManifest = Get-Content -LiteralPath $pluginManifestPath -Raw -Encoding utf8 | ConvertFrom-Json -AsHashtable
 $membership = [System.Collections.Generic.HashSet[string]]::new([System.StringComparer]::Ordinal)
 foreach ($field in $fieldMap.Keys) {
-    foreach ($catalogPathValue in @($entry[$field])) {
-        if ([string]::IsNullOrWhiteSpace([string]$catalogPathValue)) { continue }
-        [void]$membership.Add((ConvertTo-PackageComponentPath -CatalogPath ([string]$catalogPathValue)))
+    foreach ($declaredPath in @($pluginManifest[$field])) {
+        if ([string]::IsNullOrWhiteSpace([string]$declaredPath)) { continue }
+        [void]$membership.Add((ConvertTo-PackageComponentPath -ManifestPath ([string]$declaredPath)))
     }
 }
 if ($membership.Count -eq 0) {
-    throw "Marketplace package '$PackageName' in '$catalogPath' declares no installable components."
+    throw "Plugin manifest '$pluginManifestPath' declares no installable components."
 }
 
 # An unsupported manifest must fail before the target is touched. Version 1 has
@@ -243,7 +235,7 @@ foreach ($raw in $Component) {
         throw "Component path '$normalized' must start with one of: $($fieldMap.Keys -join ', ')."
     }
     if (-not $membership.Contains($normalized)) {
-        throw "Component '$normalized' is not declared membership of the '$PackageName' marketplace recipe."
+        throw "Component '$normalized' is not declared in the plugin manifest."
     }
     if (-not $seenComponents.Add($normalized)) { continue }
 
@@ -287,11 +279,12 @@ foreach ($raw in $Component) {
         $componentFiles.Add($sourceRelative)
     }
 
-    $maturity = if ($componentMaturity.ContainsKey($normalized)) { $componentMaturity[$normalized] } else { 'stable' }
+    # The plugin manifest declares no per-component maturity, so tracking records
+    # the schema default that file-status-check and eject read back.
     $plan.Add(@{
             Component = $normalized
             Kind      = $descriptor.Kind
-            Maturity  = $maturity
+            Maturity  = 'stable'
             Target    = $sourceRelative
             Files     = [string[]]$componentFiles.ToArray()
         })
@@ -382,7 +375,6 @@ $manifest = [ordered]@{
     version       = $version
     installed     = (Get-Date).ToUniversalTime().ToString('yyyy-MM-ddTHH:mm:ssZ')
     selection     = [ordered]@{
-        package    = $PackageName
         profile    = $SelectionName
         components = $installedComponentOrder
     }

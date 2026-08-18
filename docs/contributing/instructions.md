@@ -3,8 +3,12 @@ title: 'Contributing Instructions to HVE Core'
 description: 'Requirements and standards for contributing GitHub Copilot instruction files to hve-core'
 sidebar_position: 3
 author: Microsoft
-ms.date: 2026-08-06
+ms.date: 2026-08-13
 ms.topic: how-to
+keywords:
+  - contributing
+  - instructions
+  - standards
 ---
 
 This guide defines the requirements, standards, and best practices for contributing GitHub Copilot instruction files (`.instructions.md`) to the hve-core library.
@@ -47,13 +51,12 @@ Instruction files are typically organized in a package subdirectory by conventio
 ```
 
 > [!IMPORTANT]
-> Files placed directly at the root of `.github/instructions/` (without a subdirectory) are repo-specific and never distributed through marketplace packages or extensions. Only use root-level placement for internal repository concerns such as CI/CD workflows or conventions that do not generalize to consumers. Files in subdirectories like `hve-core/`, `ado/`, and `shared/` are package-scoped and distributable.
+> Files placed directly at the root of `.github/instructions/` (without a subdirectory) are repo-specific and never distributed through the plugin or extension. Only use root-level placement for internal repository concerns such as CI/CD workflows or conventions that do not generalize to consumers. Files in subdirectories like `hve-core/`, `ado/`, and `shared/` are eligible for distribution.
 
 <!-- markdownlint-disable-next-line MD028 -->
 
 > [!NOTE]
-> Marketplace package recipes can reference artifacts from any canonical subfolder. Standard component paths
-> are declared in `.github/plugin/marketplace.json` and resolve to canonical source files.
+> Tracked instructions beneath a package subdirectory are included automatically when `npm run plugin:sync` derives `.github/plugin.json`.
 
 #### Examples
 
@@ -135,15 +138,11 @@ lastUpdated: '2025-11-19'
 ---
 ```
 
-## Marketplace Recipe Registration
+## Plugin Manifest Registration
 
-Distributable instructions must be declared under the `rules` field of the `hve-core` entry in `.github/plugin/marketplace.json`. Root-level instructions are repository-specific and remain outside recipe membership.
+Distributable instructions must use the canonical path `.github/instructions/<package>/<subpath>/<name>.instructions.md`. Root-level instructions remain repository-specific and outside plugin membership.
 
-Under the `rules` field, use the `.github`-root-relative canonical path
-`instructions/<subpath>/<name>.instructions.md`. Add non-stable lifecycle
-disclosure only through `x-hve.componentMaturity`, update
-`docs/plugins/hve-core.md`, then run `npm run lint:marketplace` and
-`npm run docs:generate:check`.
+Run `npm run plugin:sync` to add the `.github`-root-relative path to the `rules` array in `.github/plugin.json`. Update `docs/plugins/hve-core.md` when the user-visible instruction surface changes, then run `npm run plugin:validate` and `npm run docs:generate:check`.
 
 ## Content Structure Standards
 

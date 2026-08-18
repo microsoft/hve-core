@@ -57,20 +57,21 @@ The project is organized into these main areas:
 * Hooks (`.github/hooks/{package-id}/`) - Package-scoped Copilot hook manifests (JSON) that wire lifecycle event commands.
 * Extension (`extension/`) - VS Code extension source and packaging.
 * GitHub Configuration (`.github/`) - Workflows, instructions, prompts, agents, composite actions, and issue templates, typically organized into `{package-id}` subdirectories.
-* Plugin catalog (`.github/plugin/marketplace.json`) - Sole package identity, metadata, membership, maturity, and aggregate recipe.
+* Plugin manifest (`.github/plugin.json`) - Deterministic membership and metadata for the sole `hve-core` plugin.
+* Plugin locator (`.github/plugin/marketplace.json`) - One relative marketplace entry that points to `.github`.
 * Logs (`logs/`) - Output from validation and analysis scripts.
 
 ### Scripts Organization
 
 Scripts are organized by function:
 
-* Shared artifact libraries (`scripts/lib/Modules/`) - Artifact and marketplace projection helpers.
+* Shared artifact libraries (`scripts/lib/Modules/`) - Reusable artifact and validation helpers.
 * Extension (`scripts/extension/`) - Extension packaging and preparation.
 * Linting (`scripts/linting/`) - Markdown validation, link checking, frontmatter validation, model reference validation, and PowerShell analysis.
 * Devcontainer (`scripts/devcontainer/`) - Lockfile integrity validation and infrastructure change log generation.
 * Security (`scripts/security/`) - Dependency pinning validation, SHA staleness checks, and action version consistency.
 * Library (`scripts/lib/`) - Shared utilities such as verified downloads.
-* Plugins (`scripts/plugins/`) - Plugin generation and marketplace validation.
+* Plugins (`scripts/plugins/`) - Plugin manifest synchronization and validation.
 
 ### Skills Organization
 
@@ -86,7 +87,7 @@ When a prompt, agent, or instruction uses `#file:`:
 * Preserve the original artifact suffix, such as `.instructions.md`, `.agent.md`, or `.prompt.md`.
 * Use relative paths; do not use absolute paths or a `.github/` prefix. Plugin and extension packaging strip `.github/` while preserving relative depth between artifact-kind directories.
 * For example, from `.github/agents/{package-id}/`, a same-package instruction target uses `#file:../../instructions/{package-id}/name.instructions.md`.
-* Keep a cross-kind target in the same marketplace package recipe as the referencing artifact.
+* Ensure every distributable cross-kind target is included by the plugin manifest's tracked path-and-license classification.
 
 ### Documentation Structure
 
@@ -138,14 +139,14 @@ RPI and HVE Builder tracking records follow `.github/instructions/hve-core/copil
 By convention, custom agents are organized under `.github/agents/{package-id}/`. Each package typically places its agents in a dedicated subdirectory (e.g., `.github/agents/hve-core/`, `.github/agents/ado/`). Subagents are typically organized under `.github/agents/{package-id}/subagents/`.
 Parent agents reference subagents using glob paths like `.github/agents/**/code-review-functional.agent.md` so resolution works regardless of nesting depth.
 
-The marketplace catalog owns plugin and VSIX package composition:
+The plugin manifest owns plugin and VSIX composition:
 
-* `.github/plugin/marketplace.json` owns package identity, display names, maturity, documentation pointers, aggregate status, and `.github`-root-relative component membership: `agents/*.agent.md`, `prompts/*.prompt.md`, `instructions/*.instructions.md`, `skills/*` directories, and `hooks/*.json`. Package prose lives under `docs/plugins/`.
-* After changing marketplace recipes or canonical artifacts, run `npm run plugin:validate` and `npm run docs:generate:check` for ordinary validation. Run `npm run plugin:evidence` when release-evidence validation is in scope.
-* Materialize plugin packages only for explicit package assembly. `HVE_PLUGIN_STAGING_ROOT` or `-StagingRoot` must name an absolute path outside the repository before generation runs. Ordinary validation must never create a repository-root `plugins/` directory.
-* Run `npm run extension:prepare` and `npm run extension:prepare:prerelease` to regenerate package READMEs and `package.*.json` manifests under `extension/`.
+* `.github/plugin.json` owns the complete `hve-core` component membership: package-scoped agents, prompts, instructions, and distributable skills discovered from tracked `.github` paths, plus the fixed telemetry hook. `.github/plugin/marketplace.json` contains one relative locator to `.github` and no component recipe.
+* After adding, changing, moving, or removing a distributable artifact, run `npm run plugin:sync` to update the manifest. Run `npm run plugin:validate` to check manifest drift, marketplace parity and containment, component coverage, and hooks.
+* The installable plugin root is `.github`; do not materialize a copied plugin tree or create a repository-root `plugins/` directory.
+* Run `npm run extension:prepare` or `npm run extension:prepare:prerelease` to refresh the single `extension/package.json` and `extension/README.md`. Stable and PreRelease contain the same component set.
 * After adding, changing, moving, or removing a documentable agent, prompt, instruction, or skill, run `npm run docs:generate` and commit the matching page under `docs/reference/`. The generator owns page frontmatter and the prefix through `<!-- END AUTO-GENERATED: overview -->`; edit only the preserved `When to use it`, applicable `How to use it`, and `Example usage` tail. Do not edit generated regions or catalog indexes by hand.
-* Run `npm run plugin:validate` to confirm marketplace metadata and package closure are correct.
+* Run `npm run plugin:validate` to confirm the manifest, one-entry locator, component coverage, and hooks are correct.
 <!-- </project-structure> -->
 
 <!-- <script-operations> -->
@@ -154,8 +155,8 @@ The marketplace catalog owns plugin and VSIX package composition:
 * Scripts follow instructions provided by the codebase for convention and standards.
 * Scripts used by the codebase have an `npm run` script for ease of use.
 * A root `plugins/` directory is forbidden as validation or package output. Do not create, edit, or stage one.
-* Generate plugin output only under a caller-supplied absolute staging root outside the repository. For the npm wrapper, set `HVE_PLUGIN_STAGING_ROOT`; for the PowerShell script, pass `-StagingRoot`. Generated ZIP layout is host-specific and is not marketplace catalog vocabulary.
-* Artifacts at the root of `.github/agents/`, `.github/instructions/`, `.github/prompts/`, or `.github/skills/` (without a subdirectory) are repo-specific and excluded from marketplace membership, plugin generation, and extension packaging. Validation enforces this rule.
+* The plugin uses `.github` directly. Synchronize `.github/plugin.json`; do not generate plugin output or ZIP packages.
+* Artifacts at the root of `.github/agents/`, `.github/instructions/`, `.github/prompts/`, or `.github/skills/` (without a package subdirectory) are repo-specific and excluded from plugin membership and extension packaging. Validation enforces this rule.
 
 PowerShell scripts follow PSScriptAnalyzer rules from `scripts/linting/PSScriptAnalyzer.psd1` and include proper comment-based help. Validation runs via `npm run lint:ps` with results output to `logs/`.
 
