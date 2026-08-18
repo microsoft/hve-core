@@ -42,13 +42,13 @@ workshop-output/
 `-- 06-publication-readiness.md
 ```
 
-| Outcome | Complete In Workshop | Continue After Workshop |
-|---------|----------------------|-------------------------|
-| Context and user requirements | Reviewed draft | Customer validation and approval |
-| Backlog | Prioritized draft or planning handoff | Create approved external work items |
-| Architecture Design | Reviewed conceptual Mermaid diagram | Implement and validate infrastructure |
-| Azure Managed Application | Package and offer readiness plan | Build, test, certify, and publish offer on Marketplace |
-| Microsoft 365 Copilot Agent | Experience and distribution plan | Build, test, approve, and publish agent |
+| Outcome                       | Complete In Workshop                  | Continue After Workshop                                |
+|-------------------------------|---------------------------------------|--------------------------------------------------------|
+| Context and user requirements | Reviewed draft                        | Customer validation and approval                       |
+| Backlog                       | Prioritized draft or planning handoff | Create approved external work items                    |
+| Architecture Design           | Reviewed conceptual Mermaid diagram   | Implement and validate infrastructure                  |
+| Azure Managed Application     | Package and offer readiness plan      | Build, test, certify, and publish offer on Marketplace |
+| Microsoft 365 Copilot Agent   | Experience and distribution plan      | Build, test, approve, and publish agent                |
 
 > [!IMPORTANT]
 > HVE Core custom agents run in GitHub Copilot and VS Code. They are not
@@ -61,26 +61,26 @@ workshop-output/
 
 Form multidisciplinary teams of four to six people.
 
-| Track | Suggested Participants | Primary Workshop Output |
-|-------|------------------------|-------------------------|
-| Project Management | PM, Program manager, Product owner | Outcomes, requirements, priorities, backlog structure |
-| Subject Matter Expert | Industry SME, Compliance Lead, Operations Lead | Domain context, terminology, constraints, evidence |
-| Design | UX Designer, Service Designer, Design Thinking Facilitator, Researcher | Personas, User Journey, Accessibility, Responsible AI, Agent experience |
-| Technical | Architect, Forward Deployed Engineer, Security, Platform Lead | Azure design, diagram, deployment and publication plan |
+| Track                 | Suggested Participants                                                 | Primary Workshop Output                                                 |
+|-----------------------|------------------------------------------------------------------------|-------------------------------------------------------------------------|
+| Project Management    | PM, Program manager, Product owner                                     | Outcomes, requirements, priorities, backlog structure                   |
+| Subject Matter Expert | Industry SME, Compliance Lead, Operations Lead                         | Domain context, terminology, constraints, evidence                      |
+| Design                | UX Designer, Service Designer, Design Thinking Facilitator, Researcher | Personas, User Journey, Accessibility, Responsible AI, Agent experience |
+| Technical             | Architect, Forward Deployed Engineer, Security, Platform Lead          | Azure design, diagram, deployment and publication plan                  |
 
 Review the broader [HVE role guides](../hve-guide/roles/) after the workshop for ongoing role-specific workflows.
 
 ## Workshop Agenda
 
-| Item | Activity | Mode | Output |
-|------|----------|------|--------|
-| 1 | HVE and RPI overview | Shared | Common vocabulary and scenario |
-| 2 | Environment setup and verification | Shared | Working HVE Core All installation |
-| 3 | Scenario framing | Shared | Initial problem statement |
-| 4 | Role exercises | Breakout | Context, requirements, experience, architecture inputs |
-| 5 | Artifact integration | Shared | Requirements, backlog, and Azure diagram |
-| 6 | Publication readiness | Shared | Managed App and Agent Store checklists |
-| 7 | Playback and next actions | Shared | Owners, gaps, and follow-up plan |
+| Item | Activity                           | Mode     | Output                                                 |
+|------|------------------------------------|----------|--------------------------------------------------------|
+| 1    | HVE and RPI overview               | Shared   | Common vocabulary and scenario                         |
+| 2    | Environment setup and verification | Shared   | Working HVE Core All installation                      |
+| 3    | Scenario framing                   | Shared   | Initial problem statement                              |
+| 4    | Role exercises                     | Breakout | Context, requirements, experience, architecture inputs |
+| 5    | Artifact integration               | Shared   | Requirements, backlog, and Azure diagram               |
+| 6    | Publication readiness              | Shared   | Managed App and Agent Store checklists                 |
+| 7    | Playback and next actions          | Shared   | Owners, gaps, and follow-up plan                       |
 
 ## Facilitator Preparation
 

@@ -26,13 +26,13 @@ During the workshop, project and product managers, subject matter experts, desig
 
 ## Start The Workshop
 
-| Step | Activity | Time |
-|------|----------|------|
-| 1 | [Review the workshop overview and agenda](partner-workshop.md) | 30 min |
-| 2 | [Set up Codespaces or local VS Code](partner-workshop-setup.md) | 30 min |
-| 3 | [Complete the PM, SME, Design, or Technical track](partner-workshop-role-tracks.md) | 60 min |
-| 4 | [Integrate requirements, backlog, and architecture](partner-workshop-solution.md) | 60 min |
-| 5 | [Assess Microsoft Marketplace and Copilot Agent Store readiness](partner-workshop-publishing.md) | 30 min |
+| Step | Activity                                                                                         | Time   |
+|------|--------------------------------------------------------------------------------------------------|--------|
+| 1    | [Review the workshop overview and agenda](partner-workshop.md)                                   | 30 min |
+| 2    | [Set up Codespaces or local VS Code](partner-workshop-setup.md)                                  | 30 min |
+| 3    | [Complete the PM, SME, Design, or Technical track](partner-workshop-role-tracks.md)              | 60 min |
+| 4    | [Integrate requirements, backlog, and architecture](partner-workshop-solution.md)                | 60 min |
+| 5    | [Assess Microsoft Marketplace and Copilot Agent Store readiness](partner-workshop-publishing.md) | 30 min |
 
 > [!NOTE]
 > The workshop creates reviewed drafts and publication plans. Azure deployment,
@@ -47,16 +47,16 @@ Marketplace packages are curated bundles of HVE capabilities that you can instal
 
 Use the remaining Getting Started material as reference after the workshop.
 
-| Reference | Use It To |
-|-----------|-----------|
-| [Installation Guide](install.md) | Compare installation methods and resolve setup issues |
-| [Marketplace Packages](packages.md) | Choose a focused collection or HVE Core All |
-| [First Interaction](first-interaction.md) | Practice a one-minute agent interaction |
-| [First Research](first-research.md) | Learn the research phase on an existing codebase |
-| [First Full Workflow](first-workflow.md) | Run Research, Plan, Implement, and Review |
-| [Growing with HVE](../hve-guide/roles/new-contributor.md) | Progress toward independent HVE use |
-| [Role Guides](../hve-guide/roles/) | Continue with role-specific workflows |
-| [RPI Workflow](../rpi/) | Understand HVE's core delivery methodology |
+| Reference                                                 | Use It To                                             |
+|-----------------------------------------------------------|-------------------------------------------------------|
+| [Installation Guide](install.md)                          | Compare installation methods and resolve setup issues |
+| [Marketplace Packages](packages.md)                       | Choose a focused collection or HVE Core All           |
+| [First Interaction](first-interaction.md)                 | Practice a one-minute agent interaction               |
+| [First Research](first-research.md)                       | Learn the research phase on an existing codebase      |
+| [First Full Workflow](first-workflow.md)                  | Run Research, Plan, Implement, and Review             |
+| [Growing with HVE](../hve-guide/roles/new-contributor.md) | Progress toward independent HVE use                   |
+| [Role Guides](../hve-guide/roles/)                        | Continue with role-specific workflows                 |
+| [RPI Workflow](../rpi/)                                   | Understand HVE's core delivery methodology            |
 
 ## Troubleshooting
 

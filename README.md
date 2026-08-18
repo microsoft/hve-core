@@ -53,13 +53,13 @@ Use HVE Core when you want AI-assisted work to be repeatable, standards-aligned,
 
 ## Navigate This Repository
 
-| Goal | Go here |
-|------|---------|
+| Goal                            | Go here                                                          |
+|---------------------------------|------------------------------------------------------------------|
 | Start with the partner workshop | [docs/getting-started/README.md](docs/getting-started/README.md) |
-| Learn the core workflow | [docs/rpi/README.md](docs/rpi/) |
-| Find reusable assets | [docs/reference/README.md](docs/reference/README.md) |
-| Customize HVE Core | [docs/customization/README.md](docs/customization/README.md) |
-| Contribute changes | [CONTRIBUTING.md](CONTRIBUTING.md) |
+| Learn the core workflow         | [docs/rpi/README.md](docs/rpi/)                                  |
+| Find reusable assets            | [docs/reference/README.md](docs/reference/README.md)             |
+| Customize HVE Core              | [docs/customization/README.md](docs/customization/README.md)     |
+| Contribute changes              | [CONTRIBUTING.md](CONTRIBUTING.md)                               |
 
 ## Responsible AI
 

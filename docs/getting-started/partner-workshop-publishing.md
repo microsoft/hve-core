@@ -16,15 +16,15 @@ estimated_reading_time: 12
 
 ## Workshop Agenda
 
-| Item | Activity | Mode | Output |
-|------|----------|------|--------|
-| 1 | HVE and RPI overview | Shared | Common vocabulary and scenario |
-| 2 | Environment setup and verification | Shared | Working HVE Core All installation |
-| 3 | Scenario framing | Shared | Initial problem statement |
-| 4 | Role exercises | Breakout | Context, requirements, experience, architecture inputs |
-| 5 | Artifact integration | Shared | Requirements, backlog, and Azure diagram |
-| 6 | Publication readiness | Shared | Managed App and Agent Store checklists |
-| 7 | Playback and next actions | Shared | Owners, gaps, and follow-up plan |
+| Item | Activity                           | Mode     | Output                                                 |
+|------|------------------------------------|----------|--------------------------------------------------------|
+| 1    | HVE and RPI overview               | Shared   | Common vocabulary and scenario                         |
+| 2    | Environment setup and verification | Shared   | Working HVE Core All installation                      |
+| 3    | Scenario framing                   | Shared   | Initial problem statement                              |
+| 4    | Role exercises                     | Breakout | Context, requirements, experience, architecture inputs |
+| 5    | Artifact integration               | Shared   | Requirements, backlog, and Azure diagram               |
+| 6    | Publication readiness              | Shared   | Managed App and Agent Store checklists                 |
+| 7    | Playback and next actions          | Shared   | Owners, gaps, and follow-up plan                       |
 
 Use this guide during the publication-readiness portion of the workshop. The goal is to turn the workshop outputs into a clear follow-up plan for the right publication path rather than to complete every certification step in-session.
 
@@ -58,7 +58,7 @@ Before building the offer package, capture the commercial and go-to-market conte
 2. Confirm the initial geographic coverage, target customer segment, and any launch limitations such as language or regional compliance constraints.
 3. Define the monetization model, billing approach, and taxation expectations early so the offer plan and support model are aligned.
 4. Capture a simple Lean Business Canvas summary with customer segments, problem, solution, channels, revenue, cost, partners, and differentiators.
-5. For Azure IP Cosell on Marketplace, complete a Partner Center Admin checklist that covers publisher setup, legal entity and tax readiness, offer metadata, support contacts, pricing plan, and technical package validation.
+5. For Azure IP Co-sell on Marketplace, complete a Partner Center Admin checklist that covers publisher setup, legal entity and tax readiness, offer metadata, support contacts, pricing plan, and technical package validation.
 6. For a Copilot Agent Store add-on, verify the supported agent type, packaging path, tenant admin approvals, consent boundaries, and whether the agent should be listed as a standalone offer or an add-on to the Azure offer.
 
 > [!NOTE]
@@ -184,7 +184,7 @@ Use this checklist for the administrative and offer-readiness review that usuall
 6. Add citations, uncertainty behavior, feedback, and human escalation.
 7. Prepare the Microsoft 365 app package, manifest, icons, and required files when using Agents Toolkit.
 8. Run manifest and Responsible AI validation.
-9. Sideload into a test tenant with administrator approval.
+9. Side load into a test tenant with administrator approval.
 10. Test expected prompts, prohibited prompts, unauthorized access, missing content, dependency failures, prompt injection, and harmful output handling.
 11. Complete security, privacy, accessibility, Responsible AI, and support reviews.
 
