@@ -2,7 +2,7 @@
 name: behavior-conformance-skills
 description: >
   Advisory-tier behavior conformance evals for skills exercised through
-  knowledge, tool-trigger, and bleed-detection stimulus shapes. Total: 194
+  knowledge, tool-trigger, and bleed-detection stimulus shapes. Total: 196
   stimuli, including complete branch coverage for the RPI and prompt-builder
   skill updates. Each tool-trigger stimulus uses two graders with AND logic,
   and the suite-level scoring threshold gates the aggregate pass rate across
@@ -3787,13 +3787,51 @@ stimuli:
       advisory: "true"
     graders:
       - type: output-matches
-        name: assess-handoff-inline-only
+        name: assess-handoff-inline-only-and-source-unchanged
         config:
-          pattern: '(?is)(?:inline|in\s+the\s+response).{0,120}(?:handoff|YAML).{0,160}(?:unchanged|read[-\s]?only|do\s+not\s+(?:modify|update|persist|write|save))|(?:unchanged|read[-\s]?only|do\s+not\s+(?:modify|update|persist|write|save)).{0,160}(?:inline|in\s+the\s+response).{0,120}(?:handoff|YAML)'
+          pattern: '(?is)(?=.*(?:inline|in\s+the\s+response).{0,120}(?:handoff|YAML)|(?:handoff|YAML).{0,120}(?:inline|in\s+the\s+response))(?=.*(?:(?:supplied\s+)?(?:source|artifact|document|hypothesis).{0,100}(?:remains?|will\s+remain|is)\s+unchanged|(?:supplied\s+)?(?:source|artifact|document|hypothesis)\s+unchanged))'
       - type: output-matches
-        name: assess-handoff-no-source-write
+        name: assess-handoff-rejects-source-mutation-claims
         config:
-          pattern: '(?is)\b(?:I|we)\s+(?:will\s+|have\s+)?(?:persist|write|overwrite|rewrite)(?:d|s|ing)?\b\s+(?:the\s+)?(?:source\s+)?(?:artifact|document|hypothesis)\b'
+          pattern: '(?is)(?:\b(?:I|we)\s+(?:(?:will|shall|can|may|must|am|are|have|has|had)\s+)?(?:write|writ(?:e|es|ing|ten)|save(?:d|s|ing)?|persist(?:ed|s|ing)?|update(?:d|s|ing)?|modif(?:y|ies|ied|ying)|rewrit(?:e|es|ing|ten)|overwrit(?:e|es|ing|ten))\s+(?:the\s+)?(?:supplied\s+)?(?:source|artifact|document|hypothesis)\b|\b(?:the\s+)?(?:supplied\s+)?(?:source|artifact|document|hypothesis)\s+(?:(?:will|shall|can|may|must|is|are|was|were|has\s+been|have\s+been|gets?)\s+)(?:be(?:en|ing)?\s+)?(?:write|writ(?:e|es|ing|ten)|save(?:d|s|ing)?|persist(?:ed|s|ing)?|update(?:d|s|ing)?|modif(?:y|ies|ied|ying)|rewrit(?:e|es|ing|ten)|overwrit(?:e|es|ing|ten))\b|\b(?:the\s+)?(?:workflow|skill|assessment|handoff|response)\s+(?:(?:will|shall|can|may|must)\s+)?(?:write|writ(?:e|es|ing|ten)|save(?:d|s|ing)?|persist(?:ed|s|ing)?|update(?:d|s|ing)?|modif(?:y|ies|ied|ying)|rewrit(?:e|es|ing|ten)|overwrit(?:e|es|ing|ten))\s+(?:the\s+)?(?:supplied\s+)?(?:source|artifact|document|hypothesis)\b)'
+          negate: true
+  - name: skill-outcome-hypothesis-caution-reference-unavailable
+    prompt: |
+      The shared `disclaimer-language.instructions.md` reference, including its
+      `Outcome-Hypothesis` section, cannot be read. What may the
+      `outcome-hypothesis` skill deliver in create or assess mode?
+    tags:
+      category: behavior-conformance
+      skill: outcome-hypothesis
+      shape: knowledge
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: caution-unavailable-stop-and-rerun
+        config:
+          pattern: '(?is)(?=.*canonical.{0,80}CAUTION.{0,80}unavailable)(?=.*(?:stop|cannot|must\s+not|do\s+not).{0,160}(?:deliver|delivery|draft|assessment|persist|handoff))(?=.*(?:rerun|resume).{0,160}(?:accessible|available|readable))'
+      - type: output-matches
+        name: caution-unavailable-no-invented-substitute
+        config:
+          pattern: '(?is)(?:do\s+not|must\s+not|cannot).{0,100}(?:fabricate|invent|paraphrase).{0,120}(?:CAUTION|disclaimer|substitute)|(?:CAUTION|disclaimer|substitute).{0,120}(?:do\s+not|must\s+not|cannot).{0,100}(?:fabricate|invent|paraphrase)'
+  - name: skill-outcome-hypothesis-create-investigate-oh0-stop
+    prompt: |
+      Create an outcome hypothesis when D2 is Red and the scorecard has three
+      Red pillars. Explain the required response before any draft is produced.
+    tags:
+      category: behavior-conformance
+      skill: outcome-hypothesis
+      shape: knowledge
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: investigate-oh0-warning-and-discovery
+        config:
+          pattern: '(?is)(?=.*VALIDATION\s+WARNING:\s+Rule\s+OH\.0)(?=.*blocking\s+pillars?.{0,100}(?:D2|Red))(?=.*targeted\s+discovery\s+actions?)(?=.*evidence\s+needed\s+to\s+resume)'
+      - type: output-matches
+        name: investigate-oh0-rejects-post-draft-output
+        config:
+          pattern: '(?is)(?:\bOH\.(?:[1-9]|1[0-3])\b|^\s*(?:#{1,6}\s*)?(?:Full\s+Outcome\s+Hypothesis|Expected\s+Outcomes|Validation\s*&\s*Measurement)\b|^\s*(?:#{1,6}\s*)?(?:Investability|Confidence)\b|(?:would\s+you\s+like|can\s+I|offer).{0,100}(?:save|persist|write))'
           negate: true
   - name: skill-outcome-hypothesis-human-owned-status
     prompt: |

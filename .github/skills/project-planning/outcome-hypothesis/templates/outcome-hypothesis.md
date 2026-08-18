@@ -10,6 +10,8 @@ ms.topic: concept
 ../../../../instructions/shared/disclaimer-language.instructions.md verbatim.
 Do not retain this marker in the rendered document. -->
 
+`ms.date` is template metadata. Replace it with the actual ISO 8601 render date and, before saving, the actual persistence or update date.
+
 **Project / Initiative:** `<Project or initiative>`
 **Status:** `<Draft | Provisional | Committed>`
 **Confidence:** `<Low | Medium | High>`
@@ -111,9 +113,11 @@ Add up to four more assumptions when needed.
 
 Map every Amber and Red D1-D7 pillar. Keep the table even when no gaps remain.
 
-| Gap                      | Why it matters                              | Owner                        | Target date          |
-|--------------------------|---------------------------------------------|------------------------------|----------------------|
-| `<Specific gap or None>` | `<How it weakens or blocks the hypothesis>` | `<Named owner or Owner TBD>` | `<Date or Date TBD>` |
+| ID | Gap            | Why it matters                              | Owner                        | Target date (ISO 8601) |
+|----|----------------|---------------------------------------------|------------------------------|------------------------|
+| Q1 | `<Specific gap>` | `<How it weakens or blocks the hypothesis>` | `<Named owner or Owner TBD>` | `<YYYY-MM-DD or Date TBD>` |
+
+Use unique `Q1`-style IDs for source gaps. When no gaps remain, retain the table with no body rows; do not add a `None` row. Every populated target date must use ISO 8601 `YYYY-MM-DD`.
 
 For a Provisional hypothesis:
 

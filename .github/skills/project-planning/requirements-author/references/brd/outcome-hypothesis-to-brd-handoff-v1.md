@@ -28,6 +28,12 @@ Draft, Provisional, and unpersisted hypotheses are ineligible. Draft and
 Provisional are the producer's only non-committed states. Ineligibility does
 not invalidate the hypothesis document. It only prevents BRD handoff.
 
+`open_questions` may be empty. For every emitted question, the producer uses
+the unique `Q1`-style source ID from the source template row and copies its
+producer-owned values without inference. Placeholder values for an assumption
+or emitted question are ineligible. Do not emit a fake `None` question or
+invent a missing source ID, owner, or target date.
+
 ## Delivery boundary
 
 After persistence, the producer computes the source hash, validates the
@@ -85,7 +91,7 @@ open_questions:
 |-----------------------------------------|----------------------------------------------------|
 | `source.title`                          | Document title                                     |
 | `source.status`                         | Document status                                    |
-| `source.authored_at`                    | Document date                                      |
+| `source.authored_at`                    | Persisted artifact's actual `ms.date`              |
 | `business_goal_seed.statement`          | Complete expected-outcome statement                |
 | `business_goal_seed.kpi`                | Lagging indicator name and definition              |
 | `business_goal_seed.baseline`           | Lagging indicator baseline value, unit, and period |
@@ -94,7 +100,7 @@ open_questions:
 | `business_goal_seed.measurement_source` | Lagging indicator source                           |
 | `business_goal_seed.owner`              | Lagging indicator owner                            |
 | `assumptions[]`                         | Assumptions table                                  |
-| `open_questions[]`                      | Open Questions and Resolution Gaps table           |
+| `open_questions[]`                      | Open Questions and Resolution Gaps template rows   |
 
 ### Computed fields
 
@@ -140,9 +146,14 @@ Requirements-author owns:
 15. Required seed fields reject placeholders, including `TBD`, `Unknown`,
     `Owner TBD`, and `Date TBD`.
 16. `assumptions` contains three to seven entries with unique `source_id`
-    values and every required field.
-17. `open_questions` is present and may be empty. Every entry has a unique
-    `source_id` and all producer-owned fields.
+    values. Every producer-owned required field is present, non-placeholder,
+    and copied from the source.
+17. `open_questions` is present and may be empty. Every emitted entry has a
+    unique `source_id` copied from a unique `Q1`-style template row, and every
+    producer-owned field is present and non-placeholder. Each emitted
+    `target_date` is ISO 8601 `YYYY-MM-DD`. Reject the handoff rather than
+    inventing a missing ID, owner, or date, or emitting a placeholder or fake
+    `None` row.
 
 ### Rejection examples
 
@@ -157,6 +168,8 @@ Requirements-author owns:
 | Missing `business_goal_seed.owner`                                           | Required owner is absent      |
 | `business_goal_seed.owner: Owner TBD`                                        | Owner is a placeholder        |
 | A SHA-256 value containing uppercase or fewer than 64 hexadecimal characters | Source hash is invalid        |
+| An emitted question lacks a `Q1`-style source ID from the template            | Open-question source is absent |
+| An emitted question has `Owner TBD` or a non-ISO `target_date`                | Open-question value is invalid |
 
 ## BRD receipt
 

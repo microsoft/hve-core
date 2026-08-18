@@ -73,7 +73,11 @@ Before OH.0, classify measurement granularity and whether any individual-level m
 
 ### Create validation
 
-Evaluate OH.0 immediately after readiness scoring and before drafting. It passes when a current D1-D7 scorecard exists and readiness is Ready or Provisional. When it fails, emit its warning in chat and stop without a draft.
+Evaluate OH.0 immediately after readiness scoring and before drafting. It passes when a current D1-D7 scorecard exists and readiness is Ready or Provisional. When it fails, emit the following warning in chat and stop without a draft:
+
+> **VALIDATION WARNING: Rule OH.0**: Create drafting is blocked because `<precondition>`. Blocking pillars: `<D1-D7 pillars>`. Targeted discovery actions: `<actions>`. Evidence needed to resume: `<evidence>`.
+
+Populate every placeholder from the scorecard and available evidence. Do not emit OH.1-OH.13 findings, an investability verdict, Confidence, or a persistence offer when this warning applies.
 
 After a Ready or Provisional draft exists, apply OH.1-OH.13 in order. For every failure, add a warning immediately after the affected section and repeat it in chat:
 
