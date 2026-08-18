@@ -2,23 +2,13 @@
 title: "Outcome Hypothesis: <Title>"
 description: "Evidence-grounded outcome hypothesis for <Project or initiative>."
 author: "<Name or Author TBD>"
-ms.date: 2026-08-13
+ms.date: 2026-08-18
 ms.topic: concept
 ---
 
-> [!CAUTION]
-> **Disclaimer:** This skill is an assistive decision-support tool only. It does
-> not provide financial or professional investment advice and does not replace
-> affected stakeholders, measurement owners, accountable sponsors or decision
-> owners, or other qualified human reviewers. The investability verdict is an
-> evidence-readiness signal only: "investable" means the defined evidence gates
-> passed, and "not investable" means required evidence is incomplete. All
-> scorecards, outcome hypotheses, investability verdicts, targets, and
-> measurement plans must be independently reviewed and validated by affected
-> stakeholders, the measurement owner, and the accountable sponsor or decision
-> owner before funding, commitment, or implementation. Outputs from this tool
-> do not constitute investment approval, funding authorization, stakeholder
-> commitment, or measurement sign-off.
+<!-- Replace this marker with the complete `Outcome-Hypothesis` CAUTION from
+../../../../instructions/shared/disclaimer-language.instructions.md verbatim.
+Do not retain this marker in the rendered document. -->
 
 **Project / Initiative:** `<Project or initiative>`
 **Status:** `<Draft | Provisional | In Review | Committed | Superseded>`

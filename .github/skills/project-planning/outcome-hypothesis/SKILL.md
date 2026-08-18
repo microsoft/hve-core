@@ -48,6 +48,8 @@ If the request is ambiguous, ask whether the user wants to create a hypothesis o
 
 ## Flow
 
+Use the `Outcome-Hypothesis` CAUTION in `../../../instructions/shared/disclaimer-language.instructions.md` as the only disclaimer source. Load it verbatim when rendering a create-mode document or delivering either mode's result; never store a second literal in this skill or its template.
+
 1. Select the mode and gather discovery context.
    * For create mode, start with user-provided materials, then use available meeting, work-tracking, analytics, repository, and prior-artifact sources.
    * For assess mode, preserve the supplied hypothesis unchanged and gather its supporting sources when available.
@@ -70,6 +72,7 @@ If the request is ambiguous, ask whether the user wants to create a hypothesis o
 4. Draft according to readiness.
    * Draft only in create mode.
    * Read [Outcome Hypothesis Template](templates/outcome-hypothesis.md) and follow its structure.
+   * Replace the template's CAUTION insertion marker with the complete loaded canonical block before presenting the draft.
    * Ready to author produces a Full Outcome Hypothesis.
    * Provisional produces every required section, marks unsupported content as a specific resolution gap, and uses low confidence.
    * Never fabricate a baseline, target, owner, stakeholder, source, or resolution date.
@@ -88,9 +91,9 @@ If the request is ambiguous, ask whether the user wants to create a hypothesis o
    * In create mode, present the complete document inline for Ready or Provisional. For Investigate, present the blocking pillars and targeted discovery actions instead.
    * For create-mode Investigate, report the required OH.0 pre-draft failure warning, but do not report OH.1-OH.13 validation, investability, or hypothesis Confidence because no draft exists. Summarize blocking pillars, unavailable-source limitations, targeted discovery actions, and evidence needed to resume.
    * For create-mode Ready or Provisional, summarize readiness, investability, confidence, the top three gaps, and recommended next actions.
-   * Load and present the `Outcome-Hypothesis` CAUTION from `../../../instructions/shared/disclaimer-language.instructions.md` verbatim with the investability result. Do not duplicate or paraphrase the canonical disclaimer in this skill.
+   * Present the loaded canonical CAUTION verbatim with the investability result. Do not duplicate or paraphrase it in this skill.
    * Offer to save a created draft only after presenting it. If the user accepts, propose `docs/planning/outcome-hypotheses/yyyy-mm-dd-<short-slug>-outcome-hypothesis.md` and accept a different destination when the user specifies one.
-   * Confirm the destination before writing. Persist a Ready draft with status `Draft` and a Provisional draft with status `Provisional`; populate the template frontmatter from the rendered document and persistence context, preserve the template's canonical CAUTION, then save the complete document.
+   * Confirm the destination before writing. Persist a Ready draft with status `Draft` and a Provisional draft with status `Provisional`; populate the template frontmatter from the rendered document and persistence context, verify that the insertion marker was replaced, then save the complete rendered document.
    * Status is human-owned. Never set `Committed` automatically. Only after explicit human approval may an existing persisted, fully eligible artifact be updated to `Committed`, before its source hash and any handoff are computed.
    * In assess mode, present the supplied hypothesis unchanged under a labeled input section, followed by a separate labeled assessment section.
    * Present the same canonical CAUTION with the assessment result.
