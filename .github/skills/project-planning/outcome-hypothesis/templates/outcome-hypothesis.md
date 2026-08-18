@@ -11,10 +11,10 @@ ms.topic: concept
 Do not retain this marker in the rendered document. -->
 
 **Project / Initiative:** `<Project or initiative>`
-**Status:** `<Draft | Provisional | In Review | Committed | Superseded>`
+**Status:** `<Draft | Provisional | Committed>`
 **Confidence:** `<Low | Medium | High>`
 
-Status is human-owned. Persist a Ready hypothesis as `Draft` and a Provisional hypothesis as `Provisional`. Only explicit human approval may update an existing persisted, eligible artifact to `Committed`; do not set `Committed` automatically.
+The status lifecycle is closed: `Draft`, `Provisional`, and `Committed`. Status is human-owned. Persist a Ready hypothesis as `Draft` and a Provisional hypothesis as `Provisional`. Only explicit human approval may update an existing persisted, eligible artifact to `Committed`; do not set `Committed` automatically.
 
 ## Background
 

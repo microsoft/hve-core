@@ -94,7 +94,7 @@ Use the `Outcome-Hypothesis` CAUTION in `../../../instructions/shared/disclaimer
    * Present the loaded canonical CAUTION verbatim with the investability result. Do not duplicate or paraphrase it in this skill.
    * Offer to save a created draft only after presenting it. If the user accepts, propose `docs/planning/outcome-hypotheses/yyyy-mm-dd-<short-slug>-outcome-hypothesis.md` and accept a different destination when the user specifies one.
    * Confirm the destination before writing. Persist a Ready draft with status `Draft` and a Provisional draft with status `Provisional`; populate the template frontmatter from the rendered document and persistence context, verify that the insertion marker was replaced, then save the complete rendered document.
-   * Status is human-owned. Never set `Committed` automatically. Only after explicit human approval may an existing persisted, fully eligible artifact be updated to `Committed`, before its source hash and any handoff are computed.
+   * The status lifecycle is closed: `Draft`, `Provisional`, and `Committed`. Status is human-owned. Never set `Committed` automatically. Only after explicit human approval may an existing persisted, fully eligible artifact be updated to `Committed`, before its source hash and any handoff are computed.
    * In assess mode, present the supplied hypothesis unchanged under a labeled input section, followed by a separate labeled assessment section.
    * Present the same canonical CAUTION with the assessment result.
    * End an assessment with a separate offer to create a revised draft. Do not revise or persist the supplied document in the assessment response.
