@@ -24,9 +24,9 @@ The producer emits a handoff only when:
 * no required seed value contains `TBD`, `Unknown`, `Owner TBD`, `Date TBD`,
   or an empty value.
 
-Draft, Provisional, In Review, Superseded, and unpersisted hypotheses are
-ineligible. Ineligibility does not invalidate the hypothesis document. It
-only prevents BRD handoff.
+Draft, Provisional, and unpersisted hypotheses are ineligible. Draft and
+Provisional are the producer's only non-committed states. Ineligibility does
+not invalidate the hypothesis document. It only prevents BRD handoff.
 
 ## Delivery boundary
 

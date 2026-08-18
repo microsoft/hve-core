@@ -2,7 +2,7 @@
 title: "Outcome Hypothesis: <Title>"
 description: "Evidence-grounded outcome hypothesis for <Project or initiative>."
 author: "<Name or Author TBD>"
-ms.date: 2026-08-13
+ms.date: 2026-08-18
 ms.topic: concept
 ---
 
@@ -21,10 +21,10 @@ ms.topic: concept
 > commitment, or measurement sign-off.
 
 **Project / Initiative:** `<Project or initiative>`
-**Status:** `<Draft | Provisional | In Review | Committed | Superseded>`
+**Status:** `<Draft | Provisional | Committed>`
 **Confidence:** `<Low | Medium | High>`
 
-Status is human-owned. Persist a Ready hypothesis as `Draft` and a Provisional hypothesis as `Provisional`. Only explicit human approval may update an existing persisted, eligible artifact to `Committed`; do not set `Committed` automatically.
+The status lifecycle is closed: `Draft`, `Provisional`, and `Committed`. Status is human-owned. Persist a Ready hypothesis as `Draft` and a Provisional hypothesis as `Provisional`. Only explicit human approval may update an existing persisted, eligible artifact to `Committed`; do not set `Committed` automatically.
 
 ## Background
 
