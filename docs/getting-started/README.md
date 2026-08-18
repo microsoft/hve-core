@@ -1,6 +1,7 @@
 ---
 title: Get Started with the HVE Partner Workshop
 description: Start with the HVE partner workshop, then use the supporting setup, workflow, and role references
+sidebar_position: 1
 author: Microsoft
 ms.date: 2026-08-17
 ms.topic: tutorial
@@ -11,8 +12,6 @@ keywords:
   - getting started
 estimated_reading_time: 5
 ---
-
-## HVE Partner Workshop
 
 Start with the [HVE partner workshop](partner-workshop.md). It gives partners new to HVE a shared setup path, role-based exercises, an integrated solution, and publication follow-up.
 
