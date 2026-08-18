@@ -157,19 +157,19 @@ Requirements-author owns:
 
 ### Rejection examples
 
-| Invalid input                                                                | Rejection                     |
-|------------------------------------------------------------------------------|-------------------------------|
-| `schema_version: OUTCOME_HYPOTHESIS_TO_BRD_HANDOFF_V2`                       | Unsupported schema version    |
-| `source.status: Provisional`                                                 | Source is not committed       |
-| Missing `business_goal_seed.baseline`                                        | Required seed field is absent |
-| `business_goal_seed.target.value: TBD`                                       | Target is not numeric         |
-| Missing `business_goal_seed.measurement_source`                              | Measurement source is absent  |
-| Source statement and indicator-table targets differ                          | Canonical target diverges     |
-| Missing `business_goal_seed.owner`                                           | Required owner is absent      |
-| `business_goal_seed.owner: Owner TBD`                                        | Owner is a placeholder        |
-| A SHA-256 value containing uppercase or fewer than 64 hexadecimal characters | Source hash is invalid        |
-| An emitted question lacks a `Q1`-style source ID from the template            | Open-question source is absent |
-| An emitted question has `Owner TBD` or a non-ISO `target_date`                | Open-question value is invalid |
+| Invalid input                                                                | Rejection                      |
+|------------------------------------------------------------------------------|--------------------------------|
+| `schema_version: OUTCOME_HYPOTHESIS_TO_BRD_HANDOFF_V2`                       | Unsupported schema version     |
+| `source.status: Provisional`                                                 | Source is not committed        |
+| Missing `business_goal_seed.baseline`                                        | Required seed field is absent  |
+| `business_goal_seed.target.value: TBD`                                       | Target is not numeric          |
+| Missing `business_goal_seed.measurement_source`                              | Measurement source is absent   |
+| Source statement and indicator-table targets differ                          | Canonical target diverges      |
+| Missing `business_goal_seed.owner`                                           | Required owner is absent       |
+| `business_goal_seed.owner: Owner TBD`                                        | Owner is a placeholder         |
+| A SHA-256 value containing uppercase or fewer than 64 hexadecimal characters | Source hash is invalid         |
+| An emitted question lacks a `Q1`-style source ID from the template           | Open-question source is absent |
+| An emitted question has `Owner TBD` or a non-ISO `target_date`               | Open-question value is invalid |
 
 ## BRD receipt
 
