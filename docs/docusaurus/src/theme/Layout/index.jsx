@@ -1,6 +1,6 @@
 // Copyright (c) 2026 Microsoft Corporation. All rights reserved.
 // SPDX-License-Identifier: MIT
-import React, {useEffect, useRef} from 'react';
+import React, {useEffect} from 'react';
 import {useLocation} from '@docusaurus/router';
 import Layout from '@theme-original/Layout';
 
@@ -9,6 +9,15 @@ import Layout from '@theme-original/Layout';
 // link resolves to a non-landmark and there is nothing for it to move focus to.
 const SKIP_TO_CONTENT_FALLBACK_ID = '__docusaurus_skipToContent_fallback';
 
+// Whether the first document load has already been observed. This is module
+// scope rather than component state on purpose: navigating across a layout
+// boundary unmounts and remounts Layout, so an instance-scoped ref would reset
+// to its initial value and the route-change effect below would skip focusing
+// main content. The guard's intent is "do not steal focus on the initial page
+// load", which is a per-document condition. A module-scope flag has exactly
+// that lifetime, persisting across remounts and resetting on a full page load.
+let hasCompletedInitialLoad = false;
+
 const isSearchRoute = (pathname) => /(^|\/)search\/?$/.test(pathname);
 
 // Move keyboard focus to the main landmark after a route change so that
@@ -16,7 +25,6 @@ const isSearchRoute = (pathname) => /(^|\/)search\/?$/.test(pathname);
 // WCAG 2.4.3 Focus Order.
 export default function LayoutWrapper(props) {
   const {pathname, hash} = useLocation();
-  const isInitialRender = useRef(true);
 
   // The upstream search page owns its own Layout, so a landmark cannot be
   // inserted around its content from here without enclosing the header and
@@ -42,9 +50,9 @@ export default function LayoutWrapper(props) {
   }, [pathname]);
 
   useEffect(() => {
-    // Skip the first render (initial page load) and in-page anchor navigation.
-    if (isInitialRender.current) {
-      isInitialRender.current = false;
+    // Skip the initial page load and in-page anchor navigation.
+    if (!hasCompletedInitialLoad) {
+      hasCompletedInitialLoad = true;
       return;
     }
     if (hash) {

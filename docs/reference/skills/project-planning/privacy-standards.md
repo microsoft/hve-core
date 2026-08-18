@@ -2,7 +2,13 @@
 title: privacy-standards
 description: "Privacy planning reference for data-flow reasoning, standards mapping, and DPIA thresholds"
 sidebar_position: 10
-ms.date: 2026-08-11
+author: Microsoft
+ms.date: 2026-08-14
+ms.topic: reference
+keywords:
+  - skill
+  - project-planning
+  - privacy-standards
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->

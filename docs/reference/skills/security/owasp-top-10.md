@@ -2,7 +2,13 @@
 title: owasp-top-10
 description: "OWASP Top 10 for Web Applications (2025) knowledge base for identifying, assessing, and remediating web application security risks."
 sidebar_position: 9
-ms.date: 2026-08-13
+author: Microsoft
+ms.date: 2026-08-12
+ms.topic: reference
+keywords:
+  - skill
+  - security
+  - owasp-top-10
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->

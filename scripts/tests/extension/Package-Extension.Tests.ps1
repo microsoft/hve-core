@@ -5,7 +5,25 @@
 BeforeAll {
     . (Join-Path $PSScriptRoot '../../extension/Package-Extension.ps1')
     Import-Module (Join-Path $PSScriptRoot 'ExtensionTestFixtures.psm1') -Force
+    $script:PackageScriptPath = (Resolve-Path (Join-Path $PSScriptRoot '../../extension/Package-Extension.ps1')).Path
     Mock Write-Host {}
+}
+
+Describe 'Package-Extension package identity' -Tag 'Unit' {
+    It 'Declares no package identity parameter' {
+        $parseErrors = $null
+        $ast = [System.Management.Automation.Language.Parser]::ParseFile($script:PackageScriptPath, [ref]$null, [ref]$parseErrors)
+        $parseErrors | Should -BeNullOrEmpty
+        @($ast.ParamBlock.Parameters | ForEach-Object { $_.Name.VariablePath.UserPath }) |
+            Should -Be @('Version', 'DevPatchNumber', 'ChangelogPath', 'PreRelease', 'DryRun')
+    }
+
+    It 'Reads no marketplace catalog and swaps no package README' {
+        $source = Get-Content -LiteralPath $script:PackageScriptPath -Raw
+        $source | Should -Not -Match '(?i)marketplace'
+        $source | Should -Not -Match '(?i)PackageId'
+        $source | Should -Not -Match 'README\.md\.bak'
+    }
 }
 
 Describe 'Test-ExtensionManifestValid' -Tag 'Unit' {
@@ -103,26 +121,6 @@ Describe 'Get-VscePackageArguments' -Tag 'Unit' {
 
     It 'Adds the pre-release flag for the pre-release channel' {
         @(Get-VscePackageArguments -PreRelease) | Should -Be @('package', '--no-dependencies', '--pre-release')
-    }
-}
-
-Describe 'Get-PackageReadmePath' -Tag 'Unit' {
-    BeforeAll {
-        $script:ReadmeDirectory = (New-Item -Path (Join-Path $TestDrive 'readme-selection') -ItemType Directory -Force).FullName
-        Set-FixtureFile -Path (Join-Path $script:ReadmeDirectory 'README.sample.md') -Value "# Sample`n"
-    }
-
-    It 'Returns nothing for the canonical hve-core package' {
-        Get-PackageReadmePath -PackageName 'hve-core' -ExtensionDirectory $script:ReadmeDirectory | Should -BeNullOrEmpty
-    }
-
-    It 'Returns the package README when it exists' {
-        Get-PackageReadmePath -PackageName 'sample' -ExtensionDirectory $script:ReadmeDirectory |
-            Should -BeExactly (Join-Path $script:ReadmeDirectory 'README.sample.md')
-    }
-
-    It 'Returns nothing when the package README is absent' {
-        Get-PackageReadmePath -PackageName 'absent' -ExtensionDirectory $script:ReadmeDirectory | Should -BeNullOrEmpty
     }
 }
 

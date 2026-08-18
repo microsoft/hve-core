@@ -2,7 +2,13 @@
 title: ds-evaluation-design
 description: "Design evaluation datasets and supporting documentation for AI systems and agents, covering the scoping interview, difficulty distribution, dataset contract, sample review, and metric and tooling selection. Use when building or reviewing an evaluation set for a conversational agent, assistant, or retrieval-grounded AI system."
 sidebar_position: 5
-ms.date: 2026-08-08
+author: Microsoft
+ms.date: 2026-08-14
+ms.topic: reference
+keywords:
+  - skill
+  - data-science
+  - ds-evaluation-design
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->

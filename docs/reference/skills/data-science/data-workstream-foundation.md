@@ -2,7 +2,13 @@
 title: data-workstream-foundation
 description: "State, resume, reconstruction, job-lifecycle, transition, and flow-state mechanics for the Data Workstream Coach. Loaded by the coach; not a user entry point."
 sidebar_position: 1
-ms.date: 2026-08-03
+author: Microsoft
+ms.date: 2026-08-14
+ms.topic: reference
+keywords:
+  - skill
+  - data-science
+  - data-workstream-foundation
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->

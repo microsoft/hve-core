@@ -3,8 +3,12 @@ title: BRD & PRD Builders
 description: Twin agents for creating business and product requirements documents through guided Q&A
 sidebar_position: 2
 author: Microsoft
-ms.date: 2026-06-29
+ms.date: 2026-08-01
 ms.topic: tutorial
+keywords:
+  - brd builder
+  - prd builder
+  - requirements
 ---
 
 The BRD Builder and PRD Builder share a common architecture for producing requirements documents through structured question-and-answer sessions. Both are driven by the `requirements-author` skill, which loads each phase's guidance on demand. The BRD Builder runs a three-phase lifecycle focused on business justification, and the PRD Builder runs a seven-phase lifecycle focused on product specifications with measurable requirements.

@@ -10,7 +10,7 @@ keywords:
   - Section 508
   - getting started
 author: Microsoft
-ms.date: 2026-05-28
+ms.date: 2026-08-13
 ms.topic: tutorial
 estimated_reading_time: 5
 ---
@@ -22,7 +22,7 @@ This quickstart walks you through a first Accessibility Planner session: startin
 
 ## Prerequisites
 
-* A package containing the Accessibility Planner installed (see [Marketplace Packages](packages.md)).
+* The HVE Core plugin or extension installed (see [HVE Core Identity and Channels](packages.md)).
 * A workspace with the product surfaces you intend to assess, or a PRD, BRD, RAI plan, or security plan to seed Phase 1.
 
 ## Step 1: Start the planner

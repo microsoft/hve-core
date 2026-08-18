@@ -376,7 +376,10 @@ function Test-TopicValue {
         return $null
     }
 
-    $validTopics = @('overview', 'concept', 'tutorial', 'reference', 'how-to', 'troubleshooting')
+    # These mirror the ms.topic enum in
+    # scripts/linting/schemas/docs-frontmatter.schema.json so docs/** is governed
+    # identically whether or not schema validation is enabled.
+    $validTopics = @('overview', 'concept', 'tutorial', 'reference', 'how-to', 'troubleshooting', 'architecture')
     $topicValue = $Frontmatter['ms.topic']
 
     if ($topicValue -notin $validTopics) {
@@ -575,16 +578,23 @@ function Test-DocsFileFields {
 
     $issues = [System.Collections.Generic.List[ValidationIssue]]::new()
 
-    # Required fields
-    $titleIssue = Test-RequiredField -Frontmatter $Frontmatter -FieldName 'title' -RelativePath $RelativePath
-    if ($titleIssue) { $issues.Add($titleIssue) }
+    # Required fields. These mirror the required array in
+    # scripts/linting/schemas/docs-frontmatter.schema.json so docs/** is governed
+    # identically whether or not schema validation is enabled.
+    $requiredFields = @('title', 'description', 'author', 'ms.date', 'ms.topic', 'keywords')
 
-    $descIssue = Test-RequiredField -Frontmatter $Frontmatter -FieldName 'description' -RelativePath $RelativePath
-    if ($descIssue) { $issues.Add($descIssue) }
+    # ADR pages are mapped to adr-frontmatter.schema.json, which is a closed schema
+    # carrying its own categorization field (tags). Requiring keywords here would
+    # demand a property that schema forbids.
+    $isAdr = ($RelativePath -replace '\\', '/') -match '(^|/)docs/planning/adrs/\d{4}-[^/]+\.md$'
+    if ($isAdr) {
+        $requiredFields = $requiredFields | Where-Object { $_ -ne 'keywords' }
+    }
 
-    # Suggested fields
-    $suggestedIssues = Test-SuggestedFields -Frontmatter $Frontmatter -FieldNames @('author', 'ms.date', 'ms.topic') -RelativePath $RelativePath
-    $issues.AddRange($suggestedIssues)
+    foreach ($field in $requiredFields) {
+        $fieldIssue = Test-RequiredField -Frontmatter $Frontmatter -FieldName $field -RelativePath $RelativePath
+        if ($fieldIssue) { $issues.Add($fieldIssue) }
+    }
 
     # Date format
     $dateIssue = Test-DateFormat -Frontmatter $Frontmatter -RelativePath $RelativePath

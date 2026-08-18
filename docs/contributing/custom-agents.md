@@ -3,8 +3,12 @@ title: 'Contributing Agents to HVE Core'
 description: 'Requirements and standards for contributing GitHub Copilot agent files to hve-core'
 sidebar_position: 5
 author: Microsoft
-ms.date: 2026-08-12
+ms.date: 2026-08-13
 ms.topic: how-to
+keywords:
+  - contributing
+  - custom agents
+  - standards
 ---
 
 This guide defines the requirements, standards, and best practices for contributing GitHub Copilot agent files (`.agent.md`) to the hve-core library.
@@ -141,8 +145,7 @@ Agent files are typically organized in a package subdirectory by convention:
 ```
 
 > [!NOTE]
-> Marketplace package recipes can reference artifacts from any canonical subfolder. Standard component paths
-> are declared in `.github/plugin/marketplace.json` and resolve to canonical source files.
+> Tracked agents beneath a package subdirectory are included automatically when `npm run plugin:sync` derives `.github/plugin.json`.
 
 ### Naming Convention
 
@@ -325,18 +328,11 @@ Use generic dispatch prompts when a lifecycle stage needs isolated work and no
 stable specialized worker is required. Reserve an `agents:` allowlist for
 named dependencies that the agent must dispatch by name.
 
-## Marketplace Recipe Registration
+## Plugin Manifest Registration
 
-Distributable agents must be declared under the `agents` field of the
-`hve-core` entry in `.github/plugin/marketplace.json`. Use the
-`.github`-root-relative canonical path
-`agents/<subpath>/<name>.agent.md`.
+Distributable agents must use the canonical path `.github/agents/<package>/<subpath>/<name>.agent.md`. `npm run plugin:sync` adds the `.github`-root-relative path to the `agents` array in `.github/plugin.json`.
 
-Agent handoffs are closed transitively over catalog-declared agents. Unresolved
-or ambiguous targets fail marketplace validation, so every handoff target must
-belong to the recipe. Add non-stable lifecycle disclosure through
-`x-hve.componentMaturity`, update `docs/plugins/hve-core.md`, then run
-`npm run lint:marketplace` and `npm run docs:generate:check`.
+Ensure every declared subagent is also eligible for manifest inclusion. Update `docs/plugins/hve-core.md` when the user-visible agent surface changes, then run `npm run plugin:sync`, `npm run plugin:validate`, and `npm run docs:generate:check`.
 
 ## Agent Content Structure Standards
 

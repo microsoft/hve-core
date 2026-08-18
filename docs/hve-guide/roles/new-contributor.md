@@ -3,7 +3,7 @@ title: New Contributor Guide
 description: Guided onboarding path from first install through autonomous AI-assisted engineering with HVE Core
 sidebar_position: 2
 author: Microsoft
-ms.date: 2026-08-02
+ms.date: 2026-08-13
 ms.topic: tutorial
 keywords:
   - onboarding
@@ -26,7 +26,7 @@ This guide helps you get started with HVE Core from your first install through i
 > help me customize hve-core installation
 > ```
 >
-> Choose the starter profile unless you already know which agents, prompts, instructions, and complete skills your repository needs.
+> Choose the complete manifest unless you already know which agents, prompts, instructions, and distributable skills your repository needs.
 
 ## What HVE Core Does for You
 

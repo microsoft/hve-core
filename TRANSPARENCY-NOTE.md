@@ -2,7 +2,7 @@
 title: "Transparency Note: HVE Core"
 description: "Public Transparency Note for HVE Core, a prompt-engineering and agentic-customization framework distributed by microsoft/hve-core."
 author: HVE Core Maintainers
-ms.date: 2026-08-02
+ms.date: 2026-08-13
 ms.topic: overview
 keywords:
   - responsible-ai
@@ -58,12 +58,12 @@ HVE Core ships text files and supporting tools. When you load an HVE Core file i
 
 HVE Core has no model, no API, and no network calls while you author or install it. It ships one optional local telemetry hook that is disabled by default and, when you turn it on, records Copilot session lifecycle events to plaintext files on your own disk with no network egress.
 The processed event stream stores derived signals (such as tool-input key names and a truncated prompt preview) rather than full payloads; a separate, explicit opt-in is required before any verbatim prompt or tool input is captured. See the [Local Telemetry guide](docs/customization/local-telemetry.md) for exactly what is captured and how to disable or remove it.
-Validation tools (linters, frontmatter checks, Pester tests, plugin generation) run in CI on pull requests. Nothing runs on your machine unless you install the VS Code extension or run a packaged script yourself.
+Validation tools (linters, frontmatter checks, Pester tests, and plugin manifest checks) run in CI on pull requests. Nothing runs on your machine unless you install the VS Code extension or run a packaged script yourself.
 
 Most skills are pure authoring or validation helpers with no independent Responsible AI surface and are not called out individually. A few skills warrant specific mention because they assemble media outputs or depend on external services:
 
 * The **Customer Card Render** skill assembles synthetic-persona slides from authored Design Thinking content through a template-driven PowerPoint pipeline; HVE Core has no image-generation model. When concept imagery is needed, the workflow emits prompts the operator runs on an external platform such as M365 Copilot, where the host's Responsible AI layers apply. The cards stay low-fidelity and carry disclosure, redaction, and stereotyping-review controls. See Appendix 5.
-* The **PowerPoint**, **TTS Voice-over**, **Video to GIF**, and **VS Code Playwright** skills are labeled `experimental` in the catalog. These media and rendering tools are included in both Stable and PreRelease because lifecycle labels disclose support posture rather than filter channel content.
+* The **PowerPoint**, **TTS Voice-over**, **Video to GIF**, and **VS Code Playwright** skills provide advanced media and rendering capabilities. They are included in the complete manifest on both Stable and PreRelease.
   PowerPoint and TTS Voice-over turn authored YAML into slides and audio. They do not create likenesses of people or claim to be a real speaker; they assemble content that was written elsewhere. TTS Voice-over depends on an external speech service (such as Azure Speech) that you provision and govern under its own subscription and terms.
 
 #### Responsibility boundary
@@ -111,7 +111,7 @@ Legal and regulatory considerations. Organizations need to evaluate potential sp
 HVE Core is a set of files that depends on a downstream AI platform. That shapes its limits:
 
 * **Inherits the downstream model's inherent properties.** Every HVE Core output is produced by a host-platform model, so it inherits that model's inherent properties: the model will sometimes fail, is not neutral, and is not bias-free. HVE Core cannot detect or correct these properties and adds no safety layer of its own.
-* **No model of its own.** HVE Core cannot check what a model actually produces from its instructions. File quality is verified through linting, frontmatter checks, link checking, plugin-generation gates, and human pull-request review. Whether the output fits a given model and prompt depends on the host platform.
+* **No model of its own.** HVE Core cannot check what a model actually produces from its instructions. File quality is verified through linting, frontmatter checks, link checking, plugin-manifest gates, and human pull-request review. Whether the output fits a given model and prompt depends on the host platform.
 * **Behavior depends on the host.** Different Copilot Chat versions, model choices, and VS Code extensions can produce very different results from the same file. HVE Core does not pin the model and cannot guarantee the same behavior across hosts.
 * **No built-in safety filtering.** HVE Core relies entirely on the host platform's safety stack (input and output classifiers, jailbreak detection, content filters, abuse monitoring). It adds none of its own.
 * **Saved memory is controlled by the host.** Some agents write to the host's memory layer (user, session, or repository scope). HVE Core writes the notes; the host owns retention, scope isolation, redaction, and access. Follow the host's guidance to inspect and clear memory.
@@ -135,9 +135,9 @@ For a set of files, "performance" is not a model-accuracy score. It is how well 
 Quality rests on a few things:
 
 * **CI checks on every pull request.** Markdown linting, frontmatter validation, model-reference checks, link checking, PowerShell and Python linting, YAML validation, collection-metadata and marketplace validation, dependency-pinning and action-version checks, copyright-header checks, and skill-structure validation all run on each pull request and block merge on failure.
-* **Plugin-generation gate.** The complete marketplace recipe is regenerated from source on every change; a mismatch with generated plugin output blocks merge.
+* **Plugin-manifest gate.** The complete `.github/plugin.json` membership is derived from tracked distributable source paths; drift, invalid locator metadata, missing component paths, or invalid hooks block merge.
 * **Human review.** Every file change needs human review. Supply-chain and dependency checks surface to reviewers.
-* **Lifecycle disclosure and release review.** Components carry `stable`, `preview`, or `experimental` lifecycle labels for disclosure and governance. Both release channels include all three active labels; deprecated and removed components are excluded. Stable release review happens through promotion of an exact `main` tree into `release/stable`, independently of component labels. The labels are also separate from maturity classifications used in Responsible AI assessments.
+* **Manifest parity and release review.** Stable and PreRelease ship the same complete plugin manifest. Stable release review happens through promotion of a reviewed PreRelease tree into `release/stable`; channel selection changes release cadence and assurance rather than component membership.
 * **Feedback channel.** GitHub issues on `microsoft/hve-core` are the main place for bugs, requests, and concerns.
 
 HVE Core does not measure performance against a specific model. If you need reproducible behavior, pin both the file version and the host configuration.
@@ -145,7 +145,7 @@ HVE Core does not measure performance against a specific model. If you need repr
 ### Getting the best results
 
 * **Pin to a release tag.** Treat the main branch as a moving target. For anything production-relevant, pin to a release tag and review changes before upgrading.
-* **Choose a managed or selective footprint.** The extension and plugin contain every active component. Teams that need fewer repository-owned files can use the included installer skill's starter profile or custom selection across agents, prompts, instructions, and complete skill directories. The installer preserves repository-relative paths, records schema version 2, and does not copy hooks.
+* **Choose a managed or selective footprint.** The extension and plugin contain the same complete distributable component set. Teams that need fewer repository-owned files can use the included installer skill's complete or custom selection across agents, prompts, instructions, and whole skill directories. The installer preserves repository-relative paths, records schema version 2, and does not copy hooks.
 * **Read an agent's description before loading it.** Each agent file documents its purpose, inputs, outputs, and limits. Skipping this is the most common cause of surprises.
 * **Treat decision-shaping output as a draft.** Planning agents, code-review agents that gate pull requests, and customer-handoff agents produce drafts. Do not turn a draft into a binding decision without qualified human review.
 * **Check saved memory before sharing a workspace.** Agents that write to the memory layer carry context across sessions. Inspect and clear it through the host's controls before sharing a workspace, screenshot, or recording.
