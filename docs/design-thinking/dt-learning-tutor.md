@@ -3,7 +3,7 @@ title: Using the DT Learning Tutor
 description: Guide to using the dt-learning-tutor agent for self-paced Design Thinking education
 sidebar_position: 4
 author: Microsoft
-ms.date: 2026-08-06
+ms.date: 2026-08-11
 ms.topic: tutorial
 keywords:
   - dt-learning-tutor
