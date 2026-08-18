@@ -210,6 +210,7 @@
     "skills/experimental/video-to-gif",
     "skills/experimental/vscode-playwright",
     "skills/hve-core/architecture-diagrams",
+    "skills/hve-core/c4-architecture",
     "skills/hve-core/documentation",
     "skills/hve-core/hve-builder",
     "skills/hve-core/hve-builder-tester",

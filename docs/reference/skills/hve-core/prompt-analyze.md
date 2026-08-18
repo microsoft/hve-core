@@ -1,9 +1,9 @@
 ---
 title: prompt-analyze
 description: Compatibility alias for read-only prompt artifact review. Routes static and behavior analysis to hve-builder review mode.
-sidebar_position: 5
+sidebar_position: 6
 author: Microsoft
-ms.date: 2026-08-12
+ms.date: 2026-08-17
 ms.topic: reference
 keywords:
   - skill

@@ -420,6 +420,17 @@ jobs:
       upload-sarif: true
       upload-artifact: false
 
+  workflow-runner-check:
+    name: Workflow Runner Check
+    uses: ./.github/workflows/workflow-runner-scan.yml
+    permissions:
+      contents: read
+      security-events: write # Required for SARIF upload to Security tab
+    with:
+      soft-fail: false
+      upload-sarif: true
+      upload-artifact: false
+
   dangerous-workflow-check:
     name: Dangerous Workflow Check
     uses: ./.github/workflows/dangerous-workflow-scan.yml
@@ -686,6 +697,7 @@ jobs:
       - dependency-pinning-check
       - devcontainer-lockfile-check
       - workflow-permissions-check
+      - workflow-runner-check
       - dangerous-workflow-check
       - action-version-consistency-scan
       - gitleaks-scan

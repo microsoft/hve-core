@@ -2238,6 +2238,25 @@ stimuli:
         config:
           pattern: '(?i)(diagram|architecture|flowchart|mermaid|visual)'
 
+  - name: skill-c4-architecture-knowledge
+    prompt: |
+      Summarize what the `c4-architecture` skill helps with and name one C4
+      diagram level it produces.
+    tags:
+      category: behavior-conformance
+      skill: c4-architecture
+      shape: knowledge
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: c4-attribution
+        config:
+          pattern: '(?i)\bc4\b'
+      - type: output-matches
+        name: level-token
+        config:
+          pattern: '(?i)(system\s+context|container|component|\bcode\b)'
+
   - name: skill-caveman-knowledge
     prompt: |
       Summarize what the `caveman` skill is meant to help with and name one
