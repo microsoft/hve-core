@@ -6,7 +6,7 @@ import remarkGithubAlert from 'remark-github-blockquote-alert';
 import remarkDirective from 'remark-directive';
 import * as path from 'path';
 import { labelRegistry } from './src/data/labelRegistry';
-import { loadPackageCards } from './src/data/marketplaceCounts';
+import { loadPackageCards } from './src/data/pluginManifestCards';
 import remarkTableCaption from './plugins/remark-table-caption.mjs';
 import rehypeTableScope from './plugins/rehype-table-scope.mjs';
 

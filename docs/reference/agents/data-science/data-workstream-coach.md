@@ -2,7 +2,13 @@
 title: Data Workstream Coach
 description: "Coach a persistent data-science and data-engineering workstream through explicit jobs, durable state, routed skill authority, and safe customer-artifact writes."
 sidebar_position: 1
-ms.date: 2026-08-05
+author: Microsoft
+ms.date: 2026-08-14
+ms.topic: reference
+keywords:
+  - agent
+  - data-science
+  - data-workstream-coach
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->

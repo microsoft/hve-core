@@ -2,7 +2,12 @@
 title: Instructions
 description: Reference documentation for HVE Core instructions.
 sidebar_position: 0
-ms.date: 2026-08-13
+author: Microsoft
+ms.date: 2026-08-12
+ms.topic: overview
+keywords:
+  - reference
+  - instructions
 ---
 
 <!-- BEGIN AUTO-GENERATED: index -->

@@ -2,7 +2,13 @@
 title: ml-experimentation
 description: "Machine learning experimentation reference for model-experimentation conventions, experiment tracking and reproducibility, dataset and model abstractions, ML engagement fundamentals, and model-production readiness. Use when standing up ML experimentation infrastructure or assessing whether a trained model is ready for production."
 sidebar_position: 7
-ms.date: 2026-08-05
+author: Microsoft
+ms.date: 2026-08-14
+ms.topic: reference
+keywords:
+  - skill
+  - data-science
+  - ml-experimentation
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->

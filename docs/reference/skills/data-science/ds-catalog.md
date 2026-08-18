@@ -2,7 +2,13 @@
 title: ds-catalog
 description: "Create and enrich durable data catalogs using the native DS_CATALOG_V1 Markdown contract, declared entity relationships, privacy citation fields, and stable relationship IDs. Use when inventorying engagement data, recording semantic relationships, or preparing a catalog for ERD rendering."
 sidebar_position: 3
-ms.date: 2026-08-05
+author: Microsoft
+ms.date: 2026-08-14
+ms.topic: reference
+keywords:
+  - skill
+  - data-science
+  - ds-catalog
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->

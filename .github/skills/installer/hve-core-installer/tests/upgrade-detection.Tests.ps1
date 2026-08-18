@@ -35,22 +35,19 @@ BeforeAll {
     function script:New-InstalledManifest {
         param(
             [string]$Version = '3.3.100',
-            [AllowEmptyString()][string]$PackageName = 'hve-core-all',
             [string]$ProfileName = 'starter',
             [string[]]$Component = @('agents/hve-core/rpi-agent.md', 'skills/rpi/rpi-plan')
         )
-
-        $selection = [ordered]@{}
-        if (-not [string]::IsNullOrEmpty($PackageName)) { $selection['package'] = $PackageName }
-        $selection['profile'] = $ProfileName
-        $selection['components'] = $Component
 
         return @{
             schemaVersion = 2
             source        = 'microsoft/hve-core'
             version       = $Version
             installed     = '2026-08-01T00:00:00Z'
-            selection     = $selection
+            selection     = [ordered]@{
+                profile    = $ProfileName
+                components = $Component
+            }
             files         = @{}
         }
     }
@@ -78,22 +75,21 @@ Describe 'upgrade-detection contract' -Tag 'Unit' {
             Should -Be @('HveCoreBasePath', 'TargetRoot')
     }
 
-    It 'Emits package and selection vocabulary in the PowerShell implementation' {
-        $script:powerShellSource | Should -Match 'INSTALLED_PACKAGE='
+    It 'Emits selection vocabulary in the PowerShell implementation' {
         $script:powerShellSource | Should -Match 'INSTALLED_PROFILE='
         $script:powerShellSource | Should -Match 'INSTALLED_COMPONENTS='
     }
 
-    It 'Emits package and selection vocabulary in the Bash implementation' {
-        $script:bashSource | Should -Match 'INSTALLED_PACKAGE='
+    It 'Emits selection vocabulary in the Bash implementation' {
         $script:bashSource | Should -Match 'INSTALLED_PROFILE='
         $script:bashSource | Should -Match 'INSTALLED_COMPONENTS='
     }
 
-    It 'Declares no default package in either implementation' {
-        $script:powerShellSource | Should -Not -Match 'INSTALLED_PACKAGE=hve-core'
-        $script:bashSource | Should -Not -Match 'INSTALLED_PACKAGE=hve-core'
-        $script:bashSource | Should -Match '\.selection\.package // ""'
+    It 'Reads and emits no package identity in either implementation' {
+        $script:powerShellSource | Should -Not -Match 'INSTALLED_PACKAGE'
+        $script:bashSource | Should -Not -Match 'INSTALLED_PACKAGE'
+        $script:powerShellSource | Should -Not -Match "selection\['package'\]"
+        $script:bashSource | Should -Not -Match '\.selection\.package'
     }
 }
 
@@ -155,47 +151,28 @@ Describe 'upgrade-detection selection reporting' -Tag 'Unit' {
         $output | Should -Match '(?m)^INSTALLED_PROFILE=custom$'
         $output | Should -Match '(?m)^INSTALLED_COMPONENTS=agents/hve-core/documentation\.md$'
     }
-}
 
-Describe 'upgrade-detection package reporting' -Tag 'Unit' {
-    It 'Reports the recorded package' {
-        $fixture = New-UpgradeFixture -Manifest (New-InstalledManifest -PackageName 'hve-core-all')
-
-        Invoke-PowerShellDetector -Fixture $fixture | Should -Match '(?m)^INSTALLED_PACKAGE=hve-core-all$'
-    }
-
-    It 'Reports a focused package selection' {
-        $fixture = New-UpgradeFixture -Manifest (New-InstalledManifest -PackageName 'hve-core')
-
-        Invoke-PowerShellDetector -Fixture $fixture | Should -Match '(?m)^INSTALLED_PACKAGE=hve-core$'
-    }
-
-    It 'Emits INSTALLED_PACKAGE immediately before INSTALLED_PROFILE' {
-        $fixture = New-UpgradeFixture -Manifest (New-InstalledManifest -PackageName 'hve-core-all' -ProfileName 'starter')
+    It 'Emits VERSION_CHANGED immediately before INSTALLED_PROFILE' {
+        $fixture = New-UpgradeFixture -Manifest (New-InstalledManifest -ProfileName 'starter')
 
         Invoke-PowerShellDetector -Fixture $fixture |
-            Should -Match "(?m)^INSTALLED_PACKAGE=hve-core-all\r?\nINSTALLED_PROFILE=starter$"
+            Should -Match "(?m)^VERSION_CHANGED=true\r?\nINSTALLED_PROFILE=starter$"
     }
 
-    It 'Emits an empty package line for a package-less schema version 2 manifest' {
-        $fixture = New-UpgradeFixture -Manifest (New-InstalledManifest -PackageName '')
+    It 'Replays a manifest that records no package' {
+        $fixture = New-UpgradeFixture -Manifest (New-InstalledManifest -ProfileName 'starter')
 
         $output = Invoke-PowerShellDetector -Fixture $fixture
-        $output | Should -Match '(?m)^INSTALLED_PACKAGE=$'
-        $output | Should -Match '(?m)^INSTALLED_PROFILE=starter$'
+        $output | Should -Not -Match 'INSTALLED_PACKAGE'
         $output | Should -Match '(?m)^INSTALLED_COMPONENTS=agents/hve-core/rpi-agent\.md,skills/rpi/rpi-plan$'
     }
 
-    It 'Infers no package for a package-less manifest' {
-        $fixture = New-UpgradeFixture -Manifest (New-InstalledManifest -PackageName '')
+    It 'Defaults an absent profile to custom' {
+        $manifest = New-InstalledManifest
+        $manifest['selection'] = [ordered]@{ components = @('agents/hve-core/rpi-agent.md') }
+        $fixture = New-UpgradeFixture -Manifest $manifest
 
-        Invoke-PowerShellDetector -Fixture $fixture | Should -Not -Match 'INSTALLED_PACKAGE=hve-core'
-    }
-
-    It 'Succeeds without a recorded package' {
-        $fixture = New-UpgradeFixture -Manifest (New-InstalledManifest -PackageName '')
-
-        { Invoke-PowerShellDetector -Fixture $fixture } | Should -Not -Throw
+        Invoke-PowerShellDetector -Fixture $fixture | Should -Match '(?m)^INSTALLED_PROFILE=custom$'
     }
 }
 
@@ -232,18 +209,12 @@ Describe 'upgrade-detection PowerShell and Bash parity' -Tag 'Unit' -Skip:(-not 
         Invoke-BashDetector -Fixture $fixture | Should -Be (Invoke-PowerShellDetector -Fixture $fixture)
     }
 
-    It 'Produces identical output for a recorded package selection' {
-        $fixture = New-UpgradeFixture -SourceVersion '3.3.106' -Manifest (New-InstalledManifest -Version '3.3.100' -PackageName 'hve-core-all')
-
-        Invoke-BashDetector -Fixture $fixture | Should -Be (Invoke-PowerShellDetector -Fixture $fixture)
-    }
-
-    It 'Produces identical output and exits zero for a package-less schema version 2 manifest' {
-        $fixture = New-UpgradeFixture -Manifest (New-InstalledManifest -PackageName '')
+    It 'Produces identical output and emits no package line for a schema version 2 manifest' {
+        $fixture = New-UpgradeFixture -Manifest (New-InstalledManifest)
 
         $bashOutput = Invoke-BashDetector -Fixture $fixture
         $LASTEXITCODE | Should -Be 0
-        $bashOutput | Should -Match '(?m)^INSTALLED_PACKAGE=$'
+        $bashOutput | Should -Not -Match 'INSTALLED_PACKAGE'
         $bashOutput | Should -Be (Invoke-PowerShellDetector -Fixture $fixture)
     }
 

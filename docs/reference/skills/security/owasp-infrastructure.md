@@ -2,7 +2,13 @@
 title: owasp-infrastructure
 description: "OWASP Infrastructure Top 10 knowledge base for identifying, assessing, and remediating internal IT infrastructure security risks."
 sidebar_position: 6
-ms.date: 2026-08-13
+author: Microsoft
+ms.date: 2026-08-12
+ms.topic: reference
+keywords:
+  - skill
+  - security
+  - owasp-infrastructure
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->

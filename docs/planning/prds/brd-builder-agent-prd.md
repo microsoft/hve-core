@@ -5,6 +5,10 @@ description: "Product Requirements Document for the BRD Builder agent, defining 
 author: "HVE Core Maintainers"
 ms.date: "2026-08-05"
 ms.topic: "reference"
+keywords:
+  - brd builder
+  - product requirements
+  - project planning
 status: "approved"
 version: "1.0.0"
 owners: ["microsoft/hve-core"]

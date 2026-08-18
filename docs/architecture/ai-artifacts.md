@@ -3,8 +3,13 @@ title: AI Artifacts Architecture
 description: Prompt, agent, and instruction delegation model for Copilot customizations
 sidebar_position: 2
 author: Microsoft
-ms.date: 2026-08-06
+ms.date: 2026-08-13
 ms.topic: concept
+keywords:
+  - ai artifacts
+  - agents
+  - prompts
+  - instructions
 ---
 
 HVE Core provides a four-tier artifact system for customizing GitHub Copilot behavior. Each tier serves a distinct purpose in the delegation chain, enabling structured, reusable AI guidance that flows from user intent to technology-specific standards and executable utilities.
@@ -85,10 +90,10 @@ Instructions answer the question "what standards apply to this context?" and ens
 
 #### Repo-Specific Instructions
 
-Instructions placed at the root of `.github/instructions/` (without a subdirectory) are scoped to the hve-core repository itself and MUST NOT be included in marketplace package membership. These files govern internal repository concerns (CI/CD workflows, repo-specific conventions) that are not applicable outside the repository. Root-level artifacts are intentionally excluded from artifact selection and package composition.
+Instructions placed at the root of `.github/instructions/` (without a subdirectory) are scoped to the hve-core repository itself and MUST NOT be included in plugin membership. These files govern internal repository concerns (CI/CD workflows, repo-specific conventions) that are not applicable outside the repository. Root-level artifacts are intentionally excluded from artifact selection and plugin composition.
 
 > [!IMPORTANT]
-> Root-level files under `.github/instructions/` (no subdirectory) are repo-specific and never distributed. Files in subdirectories like `hve-core/`, `ado/`, and `shared/` are package-scoped and distributable.
+> Root-level files under `.github/instructions/` (no subdirectory) are repo-specific and never distributed. Files in package subdirectories such as `hve-core/`, `ado/`, and `shared/` are eligible for distribution.
 
 ### Skills
 
@@ -128,7 +133,7 @@ description: 'Video-to-GIF conversion with FFmpeg optimization'
 | `name`        | Lowercase kebab-case identifier matching directory name |
 | `description` | Brief capability description                            |
 
-Maturity is component metadata in `.github/plugin/marketplace.json`, not skill frontmatter. See [Marketplace Identity](#marketplace-identity).
+Distribution is determined by tracked path and license classification, not skill maturity metadata. See [Plugin Identity](#plugin-identity).
 
 Skills answer the question "what specialized utility does this task require?" and provide executable capabilities beyond conversational guidance.
 
@@ -208,37 +213,28 @@ The `{package-id}` path segment reflects the conventional organization; artifact
 
 Copilot discovers skills automatically when their description matches the current task context. Skills can also be referenced explicitly by name. The skill's `SKILL.md` documents prerequisites, parameters, and usage patterns. Cross-platform scripts ensure consistent behavior across operating systems.
 
-## Marketplace Identity
+## Plugin Identity
 
-`.github/plugin/marketplace.json` is the sole distribution authority. Every active `plugins[]` entry is an ordinary, self-contained recipe whose standard `agents`, `commands`, `rules`, `skills`, and optional `hooks` fields declare membership. The `x-hve` overlay carries display metadata, component lifecycle maturity, a documentation path, and optional profiles.
+`.github/plugin.json` is the sole component-membership authority for the `hve-core` plugin and VSIX. `.github/plugin/marketplace.json` contains one relative locator to the `.github` plugin root and does not repeat membership.
 
-`hve-core` is the focused package for RPI workflows, HVE Builder, Git operations, and code review. `hve-core-all` is the full bundle of active content and the only package that declares the starter profile. Domain and utility packages provide narrower capability sets. The catalog remains authoritative for active package names, memberships, maturity, and documentation.
+The one product identity includes every distributable agent, prompt, instruction, and skill plus the fixed telemetry hook. Stable and PreRelease use the same manifest membership.
 
-### Shared Projection
+### Deterministic Membership
 
-Catalog membership is relative to the canonical `.github` source root:
-`agents/*.agent.md`, `prompts/*.prompt.md`,
-`instructions/*.instructions.md`, `skills/*` directories, and
-`hooks/*.json`. `MarketplaceHelpers.psm1` applies lifecycle policy and closes
-transitive agent handoffs over those paths. Plugin generation and VSIX
-preparation consume the same resolved source set before mapping it to a
-host-specific package layout. Unresolved or ambiguous handoffs fail validation.
+`npm run plugin:sync` derives manifest membership from tracked canonical paths:
 
-### Lifecycle Labels and Channels
+* `agents/<package>/**/*.agent.md`
+* `prompts/<package>/**/*.prompt.md`
+* `instructions/<package>/**/*.instructions.md`
+* `skills/<package>/<skill>/SKILL.md`, unless its top-level license has a noncommercial qualifier
 
-| Lifecycle label | Stable Channel | PreRelease Channel |
-|-----------------|----------------|--------------------|
-| `stable`        | Included       | Included           |
-| `preview`       | Included       | Included           |
-| `experimental`  | Included       | Included           |
-| `deprecated`    | Excluded       | Excluded           |
-| `removed`       | Excluded       | Excluded           |
+Repository-root artifacts without a package segment are excluded. Paths are unique and ordinal-sorted. The telemetry hook is fixed at `hooks/shared/telemetry.json`.
 
-Component maturity defaults to `stable`. The label discloses lifecycle posture and informs governance; it does not select a release channel. Stable and PreRelease contain the same active package-name set and the same active component and maturity projection for each package. Removed component tombstones may remain in `x-hve.componentMaturity` after active membership is removed so policy checks retain the retirement record.
+`npm run plugin:validate` checks manifest drift, one-entry locator parity and containment, declared component coverage, and hooks without modifying files.
 
-### Self-Contained Outputs
+### Direct Outputs
 
-Every plugin and VSIX contains the complete resolved projection for its catalog entry. The architecture does not use package dependencies, aggregate metadata, `extensionPack`, or `extensionDependencies` to compose advertised content.
+The Copilot CLI installs directly from the `.github` plugin root. Extension preparation consumes the same manifest and produces one `hve-core` VSIX. The architecture has no package dependencies, package matrix, copied plugin tree, or plugin ZIP.
 
 ## Extension Integration
 
@@ -253,25 +249,19 @@ The extension scans these directories at startup:
 * `.github/instructions/{package-id}/` for technology standards
 * `.github/skills/{package-id}/` for utility packages
 
-These paths reflect the conventional directory structure. Artifact inclusion is controlled by standard component paths in `.github/plugin/marketplace.json`. Root-level artifacts (files directly under `.github/{type}/` with no subdirectory) are repo-specific, excluded from discovery, and never packaged into extension builds.
+These paths reflect the conventional directory structure. Artifact inclusion is controlled by `.github/plugin.json`. Root-level artifacts (files directly under `.github/{type}/` with no subdirectory) are repo-specific, excluded from discovery, and never packaged into extension builds.
 
-The lifecycle table above applies equally to extension contributions. Stable and PreRelease differ in source ownership, cadence, and version, not component membership.
+Stable and PreRelease differ in source ownership, cadence, and version, not component membership.
 
 ### Extension Identities
 
-Each active catalog entry projects to one Copilot plugin root and one VSIX identity. The focused `hve-core` entry retains the unsuffixed HVE Core extension identity, `ise-hve-essentials.hve-core`. Other entries use deterministic package-specific identities in the same publisher namespace, `ise-hve-essentials.hve-<package-name>`. These identities are generated from catalog package names and do not indicate that publication has occurred.
+HVE Core has one Copilot plugin root at `.github` and one VSIX identity, `ise-hve-essentials.hve-core`.
 
-The VS Code extension is prepared with `Prepare-Extension.ps1` and packaged
-with `Package-Extension.ps1`. Copilot package assembly materializes regular-file
-packages only under a caller-supplied absolute staging root outside the
-repository. Set `HVE_PLUGIN_STAGING_ROOT` before running
-`npm run plugin:generate`, or pass `-StagingRoot` directly to
-`Generate-Plugins.ps1`. Ordinary validation does not generate a repository-root
-`plugins/` tree.
+The VS Code extension is prepared with `Prepare-Extension.ps1` and packaged with `Package-Extension.ps1`. Both Stable and PreRelease preparation write the same component set to the single extension manifest and README. No Copilot package assembly step exists.
 
-Choose the catalog entry that matches the required scope. Do not install `hve-core` and `hve-core-all` together because their content overlaps. Both plugin entries include the telemetry hook. VS Code has no declarative hook contribution point, so extension users configure hook locations manually.
+The plugin includes the telemetry hook. VS Code has no declarative hook contribution point, so extension users configure its location manually.
 
-For a repository-owned selection, the installer requires an exact `PackageName` before it resolves a profile or component. The starter profile belongs only to `hve-core-all`. It copies agents, prompts, instructions, and complete skill directories while preserving repository-relative paths; hooks are not copied.
+For a repository-owned selection, the installer validates chosen component paths against `.github/plugin.json`. It copies agents, prompts, instructions, and complete distributable skill directories while preserving repository-relative paths; hooks are not copied.
 
 ### Activation Context
 
@@ -301,14 +291,13 @@ Artifacts that have been superseded or are scheduled for removal live under `.gi
 
 The build system excludes `.github/deprecated/` contents from all downstream surfaces:
 
-| Surface              | Exclusion Mechanism                         |
-|----------------------|---------------------------------------------|
-| Marketplace packages | Catalog membership and source containment   |
-| Plugin generation    | `Get-ArtifactFiles` path filter             |
-| Extension packaging  | Discovery function `deprecated` path filter |
-| VS Code activation   | Not discovered at runtime                   |
+| Surface             | Exclusion Mechanism                      |
+|---------------------|------------------------------------------|
+| Plugin manifest     | Sync scans only active artifact roots    |
+| Extension packaging | Consumes only plugin manifest membership |
+| VS Code activation  | Deprecated paths are not contributed     |
 
-Remove deprecated paths from marketplace membership when an artifact moves to `.github/deprecated/`. The path-based exclusion operates independently of `maturity` metadata, providing a reliable safety net against silent reintroduction.
+Run `npm run plugin:sync` after moving an artifact to `.github/deprecated/`. The path-based classification removes it from plugin and extension membership.
 
 ### Retention and Removal
 
@@ -324,18 +313,7 @@ Move an artifact to `.github/deprecated/{type}/` when:
 
 ## Removed Artifacts
 
-The `removed` maturity is an `x-hve.componentMaturity` tombstone keyed by a
-`.github`-root-relative canonical component path. It removes an artifact from
-every generated distribution while retaining policy history without adding
-maturity to artifact frontmatter.
-
-To reactivate an artifact, restore its standard membership path, remove or change the tombstone, regenerate plugin and extension outputs, and run marketplace validation. The validator requires non-vacuous tombstone coverage and complete active-membership coverage for each applicable package recipe.
-
-| Mechanism                  | Signal                      | Distribution behavior                 |
-|----------------------------|-----------------------------|---------------------------------------|
-| `deprecated` maturity      | Sunset in progress          | Excluded from both channels           |
-| `removed` tombstone        | Withdrawn from distribution | Excluded while policy history remains |
-| `.github/deprecated/` path | Archived source             | Excluded by source containment rules  |
+Remove a retired artifact from its active package-scoped path and run `npm run plugin:sync`. The manifest update removes it from both channels. Preserve migration history in the changelog or durable documentation when users need it; no distribution tombstone or compatibility entry is required.
 
 ## Related Documentation
 

@@ -2,7 +2,13 @@
 title: architecture-diagrams
 description: Architecture diagram authoring for cloud infrastructure and declared data catalogs. Use when rendering Azure IaC or DS_CATALOG_V1 relationships as caller-selected ASCII or Mermaid diagrams.
 sidebar_position: 1
-ms.date: 2026-08-03
+author: Microsoft
+ms.date: 2026-08-12
+ms.topic: reference
+keywords:
+  - skill
+  - hve-core
+  - architecture-diagrams
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->

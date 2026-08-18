@@ -76,7 +76,8 @@ jobs:
           ref: main
           sparse-checkout: |
             scripts/release/Resolve-ReleasePromotionVersion.ps1
-            scripts/release/Update-VersionFiles.ps1
+            scripts/release/Set-RepositoryVersion.ps1
+            scripts/plugins/Sync-PluginManifest.ps1
           sparse-checkout-cone-mode: false
           persist-credentials: false
 
@@ -173,40 +174,6 @@ jobs:
           fi
           if ! git merge-base --is-ancestor "$SOURCE_SHA" "refs/remotes/origin/$SOURCE_BRANCH"; then
             echo "::error::$SOURCE_TAG commit $SOURCE_SHA is not contained in $SOURCE_BRANCH"
-            exit 1
-          fi
-
-          EVIDENCE_DIR="$RUNNER_TEMP/stable-promotion-evidence"
-          rm -rf "$EVIDENCE_DIR"
-          mkdir -p "$EVIDENCE_DIR"
-          if ! gh release download "$SOURCE_TAG" -R "$REPOSITORY" \
-            -p 'plugin-release-evidence.json' -D "$EVIDENCE_DIR"; then
-            echo "::error::$SOURCE_TAG carries no readable plugin-release-evidence.json"
-            exit 1
-          fi
-          EVIDENCE=$(cat "$EVIDENCE_DIR/plugin-release-evidence.json")
-          if ! printf '%s' "$EVIDENCE" | jq -e \
-            --arg version "$SOURCE_VERSION" \
-            --arg source_commit "$SOURCE_SHA" \
-            --arg repository "$REPOSITORY" '
-              .schema == "hve-core/plugin-release-evidence/v2" and
-              .sourceCommit == $source_commit and
-              .version == $version and
-              .locator.source == "github" and
-              .locator.repo == $repository and
-              .locator.ref == ("prerelease-v" + $version) and
-              (.packageCount | type == "number" and . > 0) and
-              (.packages | type == "array") and
-              ((.packages | length) == .packageCount) and
-              all(.packages[];
-                (.name | type == "string" and length > 0) and
-                (.fileCount | type == "number" and . > 0) and
-                (.digest | type == "string" and test("^[0-9a-f]{64}$"))) and
-              (.fileCount | type == "number" and . > 0) and
-              (.totalBytes | type == "number" and . > 0) and
-              (.digest | type == "string" and test("^[0-9a-f]{64}$"))
-            ' >/dev/null; then
-            echo "::error::$SOURCE_TAG evidence does not match published source $SOURCE_TAG at $SOURCE_SHA"
             exit 1
           fi
 
@@ -346,15 +313,17 @@ jobs:
             exit 1
           fi
 
-          ALLOWLIST=$(printf '%s\n' \
+          RELEASE_OWNED_FILES=(
             'CHANGELOG.md' \
             "$TARGET_CONFIG" \
             "$TARGET_MANIFEST" \
             'package.json' \
             'package-lock.json' \
             'extension/templates/package.template.json' \
-            '.github/plugin/marketplace.json' \
-            '.github/plugin/release-candidate.json')
+            '.github/plugin.json' \
+            '.github/plugin/marketplace.json'
+          )
+          ALLOWLIST=$(printf '%s\n' "${RELEASE_OWNED_FILES[@]}")
 
           merge_ref() {
             local ref="$1"
@@ -390,15 +359,12 @@ jobs:
           merge_ref "$SOURCE_SHA" theirs
 
           # Target-owned release state is restored whole, so a promotion
-          # never carries a source changelog or manifest forward.
-          # The complete previous marketplace is restored with them: candidate
-          # membership reaches the branch only through the managed release
-          # pull request, which rebuilds it from the record written below.
+          # never carries a source changelog or catalog forward.
           # A seeded branch can predate its branch-local manifest, so that one
           # is restored only when the base already carries it and the first
           # reviewed promotion introduces it from the merged source instead of
           # failing on an absent path. The channel config is restored further
-          # below, once the derived baseline locator establishes who owns it.
+          # below, once the seed anchor establishes who owns it.
           restore_from_base() {
             local mode="$1"
             shift
@@ -434,83 +400,34 @@ jobs:
             exit 1
           fi
 
-          # The baseline identity is the exact locator the restored target
-          # catalog already carries, never one rebuilt from the baseline
-          # version. A coherent baseline is a complete catalog at its own
-          # metadata version carrying one uniform locator: the reserved OMITTED
-          # locator when no entry names a ref, otherwise the one non-empty ref
-          # they all share. Historical entries carry a string-form source, which
-          # names no ref and therefore reads as omitted.
-          BASELINE_TAG=$(jq -r '
-            (.metadata.version // "") as $version
-            | [.plugins[] | (.version // "")] as $versions
-            | [.plugins[]
-               | if (.source | type) == "object" then (.source.ref // null) else null end] as $refs
-            | if ($version | test("^[0-9]+\\.[0-9]+\\.[0-9]+$"))
-                 and ($versions | length) > 0
-                 and ($versions | all(. == $version))
-              then
-                if ($refs | all(. == null))
-                then "OMITTED"
-                elif ($refs | all(type == "string" and length > 0))
-                     and (($refs | unique) | length) == 1
-                then $refs[0]
-                else ""
-                end
-              else ""
-              end
-          ' .github/plugin/marketplace.json)
-          if [ -z "$BASELINE_TAG" ] || [[ "$BASELINE_TAG" == *$'\n'* || "$BASELINE_TAG" == *$'\r'* ]]; then
-            echo "::error::Restored .github/plugin/marketplace.json does not carry one uniform baseline locator across a complete catalog at its own metadata version"
-            exit 1
-          fi
-
           # The captured config anchor owns the seeded branch identity. It comes
           # from the current source configuration, never from the restored
-          # target copy the seed can predate. OMITTED describes the ref-less
-          # bootstrap catalog, so it is coherent only while the target branch
-          # still sits on that seed commit.
+          # target copy the seed can predate.
           if ! printf '%s' "$BOOTSTRAP_SHA" | grep -Eq '^[0-9a-f]{40}$'; then
             echo "::error::Captured bootstrap-sha anchor is not a lowercase 40-character commit id"
             exit 1
           fi
-          # The derived baseline locator decides who owns the channel config.
-          # A ref-less bootstrap catalog is the hand-seeded first cutover, and
-          # the historical seed predates current tag, draft, and versioning
+          # The seed anchor decides who owns the channel config. A branch still
+          # sitting on its bootstrap commit is the hand-seeded first cutover,
+          # and that historical seed predates current tag, draft, and versioning
           # policy, so the merged source config is what establishes it. Every
           # later promotion restores the target-owned config instead, keeping
           # ordinary steady-state release settings on the branch.
-          if [ "$BASELINE_TAG" = 'OMITTED' ]; then
-            BASE_TIP=$(git rev-parse "refs/remotes/origin/$BASE_BRANCH")
-            if [ "$BASE_TIP" != "$BOOTSTRAP_SHA" ]; then
-              echo "::error::$BASE_BRANCH carries the ref-less bootstrap catalog but its tip $BASE_TIP is not the $TARGET_CONFIG bootstrap-sha $BOOTSTRAP_SHA"
-              exit 1
-            fi
+          BASE_TIP=$(git rev-parse "refs/remotes/origin/$BASE_BRANCH")
+          if [ "$BASE_TIP" = "$BOOTSTRAP_SHA" ]; then
             echo "::notice::$BASE_BRANCH is still at its bootstrap seed; the merged source $TARGET_CONFIG becomes its first branch-local release configuration"
           else
             restore_from_base optional "$TARGET_CONFIG"
           fi
 
-          # The record is the only candidate authority. It names one immutable
-          # source commit and the deterministic transform the managed release
-          # pull request must reproduce byte for byte.
-          CANDIDATE_SOURCE_CATALOG="$RUNNER_TEMP/candidate-source-marketplace.json"
-          git show "$SOURCE_SHA:.github/plugin/marketplace.json" > "$CANDIDATE_SOURCE_CATALOG"
-
-          # Shared files keep their merged source content; the target version
-          # fields, the restored prior catalog, and the candidate record are
-          # rewritten from target-owned and immutable-source state.
-          pwsh -NoProfile -File "$GITHUB_WORKSPACE/scripts/release/Update-VersionFiles.ps1" \
+          # The selected published source decides component membership, and the
+          # target baseline decides the version. Neither transforms a source
+          # ref, records a release candidate, nor generates a plugin root.
+          pwsh -NoProfile -File "$GITHUB_WORKSPACE/scripts/release/Set-RepositoryVersion.ps1" \
               -Version "$TARGET_VERSION" \
-              -Channel Stable \
-              -RepoRoot "$PWD" \
-              -SkipManifest \
-              -SkipPluginGenerate \
-              -CandidateAction Record \
-              -CandidateVersion "$VERSION" \
-              -CandidateSourceCommit "$SOURCE_SHA" \
-              -CandidateSourceCatalog "$CANDIDATE_SOURCE_CATALOG" \
-              -BaselineTag "$BASELINE_TAG"
+              -RepoRoot "$PWD"
+            pwsh -NoProfile -File "$GITHUB_WORKSPACE/scripts/plugins/Sync-PluginManifest.ps1" \
+              -RepoRoot "$PWD"
 
           # The captured changelog cutoff and the exact release intent are
           # written last, so the effective target configuration carries both
@@ -531,7 +448,11 @@ jobs:
             exit 1
           fi
 
-          git add --all
+          pwsh -NoProfile -File "$GITHUB_WORKSPACE/scripts/plugins/Sync-PluginManifest.ps1" \
+              -RepoRoot "$PWD" \
+              -Check
+
+          git add -- "${RELEASE_OWNED_FILES[@]}"
           if git diff --cached --quiet; then
             git reset --quiet
           else
@@ -599,15 +520,15 @@ jobs:
           | Stable baseline | \`${STABLE_BASELINE}\` |
           | Exact release intent | \`${VERSION}\` |
 
-          Target-owned changelog, release-please config, manifest, and the
-          complete previous marketplace come from \`${BASE_BRANCH}\`. Candidate
-          membership reaches the branch only through the managed release pull
-          request, which rebuilds it from the recorded immutable source.
+          Target-owned changelog, release-please config, and manifest come from
+          \`${BASE_BRANCH}\`. The plugin manifest is resynchronized from the
+          selected published source and every version field is normalized to the
+          target baseline.
 
           After this pull request merges, \`release-stable-publish.yml\` runs
           release-please on \`${BASE_BRANCH}\`. Release-please then opens its
-          separately reviewed release PR containing version, changelog, manifest,
-          and immutable plugin locator updates.
+          separately reviewed release PR containing version, changelog, and
+          manifest updates.
 
           ---
           *Managed automatically by the stable release preparation workflow. Auto-merge is not enabled.*"
