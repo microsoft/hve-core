@@ -21,7 +21,7 @@ type JsonObject = Record<string, unknown>;
 function locator(overrides: JsonObject = {}): JsonObject {
   return {
     name: 'hve-core',
-    source: '.github',
+    source: '.',
     version: '1.2.3',
     ...overrides,
   };
@@ -32,11 +32,11 @@ function manifest(overrides: JsonObject = {}): JsonObject {
     name: 'hve-core',
     description: 'HVE Core description',
     version: '1.2.3',
-    agents: ['agents/one.agent.md', 'agents/two.agent.md'],
-    commands: ['commands/one.prompt.md'],
+    agents: ['.github/agents/one.agent.md', '.github/agents/two.agent.md'],
+    commands: ['.github/commands/one.prompt.md'],
     rules: [],
-    skills: ['skills/one'],
-    hooks: 'hooks/shared/telemetry.json',
+    skills: ['.github/skills/one'],
+    hooks: '.github/hooks/shared/telemetry.json',
     ...overrides,
   };
 }
@@ -52,7 +52,7 @@ function writeFixture(
   fs.writeFileSync(pluginLocatorPath, JSON.stringify(catalog), 'utf-8');
   if (pluginManifest !== null) {
     fs.writeFileSync(
-      path.join(root, '.github', 'plugin.json'),
+      path.join(root, 'plugin.json'),
       JSON.stringify(pluginManifest),
       'utf-8',
     );

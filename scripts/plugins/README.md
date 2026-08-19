@@ -3,7 +3,7 @@ title: Plugin Manifest Scripts
 description: PowerShell tooling for synchronizing and validating the HVE Core plugin manifest
 ---
 
-PowerShell tooling for synchronizing `.github/plugin.json` with the complete distributable HVE Core component set and validating the one-entry marketplace locator.
+PowerShell tooling for synchronizing root `plugin.json` with the complete distributable HVE Core component set and validating the one-entry marketplace locator. Discovery remains limited to tracked package-scoped artifacts under `.github`.
 
 ## Scripts
 
@@ -21,20 +21,20 @@ PowerShell tooling for synchronizing `.github/plugin.json` with the complete dis
 ## Source to Manifest Pipeline
 
 1. Author artifacts in `.github/` (agents, prompts, instructions, skills, hooks)
-2. Run `npm run plugin:sync` to derive `.github/plugin.json`
+2. Run `npm run plugin:sync` to derive root `plugin.json`
 3. Run `npm run plugin:validate` for non-mutating manifest and hook validation
 4. Prepare or package the single extension separately when VSIX output is in scope
 
 ## Manifest Output
 
-The script discovers these git-tracked, `.github`-relative component paths:
+The script discovers these git-tracked paths beneath `.github` and emits repository-relative `.github/...` component paths:
 
 * `agents/<package>/**/*.agent.md`
 * `prompts/<package>/**/*.prompt.md`
 * `instructions/<package>/**/*.instructions.md`
 * `skills/<package>/<skill>/SKILL.md`, unless the top-level license has a noncommercial qualifier
 
-Repository-root artifacts without a package segment are excluded. Paths are unique and ordinal-sorted. Metadata is preserved, the version follows root `package.json`, and `hooks/shared/telemetry.json` remains fixed.
+Artifacts without a package segment are excluded from discovery. Paths are unique and ordinal-sorted. Metadata is preserved, the version follows root `package.json`, and `.github/hooks/shared/telemetry.json` remains fixed. Validation also requires tracked, regular, non-empty root `plugin.json`, `README.md`, and `LICENSE` files.
 
 ## Synchronizing After Artifact Changes
 
@@ -60,7 +60,7 @@ The moving registrations `microsoft/hve-core#release/prerelease` and `microsoft/
 
 ## Release Boundary
 
-Plugin validation produces no package archive or release evidence document. Release workflows package, attest, and publish one VSIX separately. The Copilot CLI installs the plugin directly from the selected repository ref and relative `.github` source.
+Plugin validation produces no package archive or release evidence document. Release workflows package, attest, and publish one VSIX separately. The Copilot CLI installs the plugin directly from the repository root at the selected ref.
 
 ---
 

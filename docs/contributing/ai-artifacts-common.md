@@ -3,7 +3,7 @@ title: 'AI Artifacts Common Standards'
 description: 'Common standards and quality gates for all AI artifact contributions to hve-core'
 sidebar_position: 2
 author: Microsoft
-ms.date: 2026-08-13
+ms.date: 2026-08-19
 ms.topic: reference
 keywords:
   - contributing
@@ -156,7 +156,7 @@ npm run lint:models:refresh
 
 ## Plugin Membership
 
-`.github/plugin.json` is the distribution authority for the single `hve-core` plugin and VSIX. `npm run plugin:sync` derives its membership from tracked package-scoped artifacts:
+Root `plugin.json` is the distribution authority for the single `hve-core` plugin and VSIX. `npm run plugin:sync` derives repository-relative membership from tracked package-scoped artifacts under `.github`:
 
 * Agents under `.github/agents/<package>/**/*.agent.md`
 * Prompts under `.github/prompts/<package>/**/*.prompt.md`
@@ -176,7 +176,7 @@ Stable and PreRelease contain the same manifest membership. Their differences ar
 When you add or change an artifact:
 
 1. Author the artifact under a package subdirectory of `.github/`.
-2. Run `npm run plugin:sync` to update `.github/plugin.json`.
+2. Run `npm run plugin:sync` to update root `plugin.json`.
 3. Update `docs/plugins/hve-core.md` when user-visible capabilities or identity guidance changed.
 4. Run `npm run plugin:validate`.
 5. Run `npm run docs:generate:check` and the focused tests for the changed artifact kind.

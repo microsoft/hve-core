@@ -3,7 +3,7 @@ title: Installing HVE Core
 description: Install the HVE Core extension or plugin, or adopt selected components from a clone
 sidebar_position: 2
 author: Microsoft
-ms.date: 2026-08-16
+ms.date: 2026-08-19
 ms.topic: how-to
 keywords: [installation, setup, github copilot, marketplace, selective clone]
 estimated_reading_time: 4
@@ -22,7 +22,7 @@ Stable and PreRelease contain the same complete component set. They differ in so
 Teams that need a repository-owned subset can use `hve-core-installer`.
 
 1. Clone or pin the HVE Core version to adopt.
-2. Choose every component declared by `.github/plugin.json`, or select a subset.
+2. Choose every component declared by root `plugin.json`, or select a subset.
 3. Review component kinds and collisions before writes.
 4. Choose automatic source updates or a controlled pinned version.
 
@@ -46,7 +46,7 @@ The installer can copy agents, prompts, instructions, and complete skill directo
 ⭐ **VS Code Extension** is the recommended method for most users who don't need customization.
 
 > [!NOTE]
-> HVE Core uses one identity across the plugin and extension. `.github/plugin.json` owns membership, and `.github/plugin/marketplace.json` contains one relative locator to the `.github` plugin root.
+> HVE Core uses one identity across the plugin and extension. Root `plugin.json` owns membership, and `.github/plugin/marketplace.json` contains one relative locator to the repository root. Plugin clients resolve root README and LICENSE; the VSIX keeps its extension-owned metadata.
 
 ### Distribution Relationships
 
@@ -54,9 +54,9 @@ The installer can copy agents, prompts, instructions, and complete skill directo
 graph LR
    accTitle: HVE Core distribution relationships
    accDescr: The repository contains the marketplace locator and plugin manifest. The locator resolves the plugin root, while the manifest supplies membership to both the Copilot plugin and VS Code extension.
-   REPO["microsoft/hve-core<br/>(canonical source)"] --> MANIFEST[".github/plugin.json<br/>(complete membership)"]
+   REPO["microsoft/hve-core<br/>(plugin root)"] --> MANIFEST["plugin.json<br/>(complete membership)"]
    REPO --> CATALOG[".github/plugin/marketplace.json<br/>(one relative locator)"]
-   CATALOG --> ROOT[".github<br/>(plugin root)"]
+   CATALOG --> ROOT["repository root<br/>(README and LICENSE)"]
    MANIFEST --> PLUGIN["hve-core plugin"]
    MANIFEST --> EXT["hve-core VSIX"]
    ROOT --> PLUGIN
@@ -75,15 +75,15 @@ release branches that advance through `main` to `release/prerelease` to
 `release/stable`. An exact channel tag freezes one release catalog and its
 source payloads.
 
-| Use case             | Marketplace registration                   | Source resolution                    |
-|----------------------|--------------------------------------------|--------------------------------------|
-| Development tip      | `microsoft/hve-core`                       | Current `main` `.github` plugin root |
-| Moving PreRelease    | `microsoft/hve-core#release/prerelease`    | Current reviewed PreRelease branch   |
-| Moving Stable        | `microsoft/hve-core#release/stable`        | Current reviewed Stable branch       |
-| Immutable PreRelease | `microsoft/hve-core#prerelease-v<version>` | One exact PreRelease tag             |
-| Immutable Stable     | `microsoft/hve-core#v<version>`            | One exact Stable tag                 |
+| Use case             | Marketplace registration                   | Source resolution                  |
+|----------------------|--------------------------------------------|------------------------------------|
+| Development tip      | `microsoft/hve-core`                       | Current `main` repository root     |
+| Moving PreRelease    | `microsoft/hve-core#release/prerelease`    | Current reviewed PreRelease branch |
+| Moving Stable        | `microsoft/hve-core#release/stable`        | Current reviewed Stable branch     |
+| Immutable PreRelease | `microsoft/hve-core#prerelease-v<version>` | One exact PreRelease tag           |
+| Immutable Stable     | `microsoft/hve-core#v<version>`            | One exact Stable tag               |
 
-A moving release registration selects the catalog and relative `.github` source currently committed to its reviewed branch. The branch can advance, while an exact-tag registration remains fixed.
+A moving release registration selects the catalog and repository-root source currently committed to its reviewed branch. The branch can advance, while an exact-tag registration remains fixed.
 
 A published channel release is the assurance boundary for its immutable tag.
 The release workflow applies review and release gates, produces one VSIX and its
@@ -140,7 +140,7 @@ registrations; confirm the behavior supported by your Copilot CLI version.
 
 ### Clone Methods
 
-The installer validates each selected component against `.github/plugin.json`. Schema version 2 stores `selection.profile` and `selection.components` without package identity. File records identify component ownership, and hooks remain plugin-only.
+The installer validates each selected component against root `plugin.json`. Schema version 2 stores `selection.profile` and `selection.components` without package identity. File records identify component ownership, and hooks remain plugin-only.
 
 ## Developer Setup
 

@@ -2,7 +2,7 @@
 title: Customizing HVE Core
 description: Overview of customization approaches from lightweight settings to full fork-and-extend, with role-based entry points
 author: Microsoft
-ms.date: 2026-08-13
+ms.date: 2026-08-19
 ms.topic: overview
 sidebar_position: 1
 keywords:
@@ -72,7 +72,7 @@ graph LR
 | Create a reusable workflow             | Prompt          | `.github/prompts/{package-id}/name.prompt.md`         | Low        |
 | Build a specialized Copilot assistant  | Agent           | `.github/agents/{package-id}/name.agent.md`           | Medium     |
 | Package domain expertise               | Skill           | `.github/skills/{package-id}/{skill}/SKILL.md`        | Medium     |
-| Change managed distribution membership | Plugin Manifest | `.github/plugin.json`, `docs/plugins/hve-core.md`     | Medium     |
+| Change managed distribution membership | Plugin Manifest | `plugin.json`, `docs/plugins/hve-core.md`             | Medium     |
 | Add custom validation or packaging     | Build System    | `scripts/`, `package.json`                            | High       |
 | Diverge from upstream entirely         | Fork and Extend | Full repository                                       | High       |
 

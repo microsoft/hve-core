@@ -5,11 +5,12 @@
 
 <#
 .SYNOPSIS
-    Synchronizes .github/plugin.json with the distributable tracked component set.
+    Synchronizes root plugin.json with the distributable tracked component set.
 
 .DESCRIPTION
-    Derives the sole plugin manifest from git-tracked files under the .github
-    plugin root. Inclusion is a closed path-and-license classification:
+    Derives the sole root plugin manifest from git-tracked files under the
+    .github artifact discovery root. Inclusion is a closed path-and-license
+    classification:
 
     - agents/<package>/**/*.agent.md
     - prompts/<package>/**/*.prompt.md
@@ -54,10 +55,11 @@ param(
 
 $ErrorActionPreference = 'Stop'
 
-$script:PluginRoot = '.github'
-$script:PluginManifestFile = '.github/plugin.json'
+$script:ArtifactRoot = '.github'
+$script:PluginManifestFile = 'plugin.json'
 $script:MarketplaceCatalogFile = '.github/plugin/marketplace.json'
-$script:FixedHookPath = 'hooks/shared/telemetry.json'
+$script:FixedHookPath = '.github/hooks/shared/telemetry.json'
+$script:RequiredPluginMetadata = @('plugin.json', 'README.md', 'LICENSE')
 $script:ManifestMetadataKey = @('author', 'homepage', 'repository', 'license', 'keywords')
 $script:LocatorMetadataKey = @('name', 'description', 'version', 'author', 'homepage', 'repository', 'license', 'keywords')
 $script:RecipeField = @('agents', 'commands', 'rules', 'skills', 'hooks', 'x-hve')
@@ -84,12 +86,12 @@ function Get-TrackedPluginIndex {
         [string]$RepoRoot
     )
 
-    $output = & git -C $RepoRoot ls-files -s -z --full-name -- $script:PluginRoot
+    $output = & git -C $RepoRoot ls-files -s -z --full-name -- $script:ArtifactRoot
     if ($LASTEXITCODE -ne 0) {
         throw "git ls-files failed with exit code $LASTEXITCODE in $RepoRoot"
     }
 
-    $prefix = "$script:PluginRoot/"
+    $prefix = "$script:ArtifactRoot/"
     $paths = @()
     $violations = @()
     foreach ($entry in (($output -join '') -split "`0" | Where-Object { $_ })) {
@@ -119,13 +121,13 @@ function Get-TrackedPluginIndex {
 function Get-TrackedPluginFile {
     <#
     .SYNOPSIS
-        Lists git-tracked files under the plugin root.
+        Lists git-tracked files under the artifact discovery root.
 
     .PARAMETER RepoRoot
         Root directory of the repository.
 
     .OUTPUTS
-        [string[]] Plugin-root-relative forward-slash paths.
+        [string[]] Artifact-root-relative forward-slash paths.
     #>
     [CmdletBinding()]
     [OutputType([string[]])]
@@ -221,7 +223,7 @@ function Get-PluginComponentSet {
         Root directory of the repository.
 
     .PARAMETER TrackedPath
-        Prevalidated plugin-root-relative tracked paths.
+        Prevalidated artifact-root-relative tracked paths.
 
     .OUTPUTS
         [System.Collections.Specialized.OrderedDictionary] agents, commands,
@@ -254,9 +256,9 @@ function Get-PluginComponentSet {
             '^prompts/[^/]+/.+\.prompt\.md$' { [void]$commands.Add($path); continue }
             '^instructions/[^/]+/.+\.instructions\.md$' { [void]$rules.Add($path); continue }
             '^skills/[^/]+/[^/]+/SKILL\.md$' {
-                $license = Get-SkillLicense -Path (Join-Path $RepoRoot $script:PluginRoot $path)
+                $license = Get-SkillLicense -Path (Join-Path $RepoRoot $script:ArtifactRoot $path)
                 if (-not (Test-NoncommercialLicense -License $license)) {
-                    [void]$skills.Add(($path -replace '/SKILL\.md$', ''))
+                    [void]$skills.Add("$script:ArtifactRoot/$($path -replace '/SKILL\.md$', '')")
                 }
                 continue
             }
@@ -264,9 +266,9 @@ function Get-PluginComponentSet {
     }
 
     return [ordered]@{
-        agents   = @($agents)
-        commands = @($commands)
-        rules    = @($rules)
+        agents   = @($agents | ForEach-Object { "$script:ArtifactRoot/$_" })
+        commands = @($commands | ForEach-Object { "$script:ArtifactRoot/$_" })
+        rules    = @($rules | ForEach-Object { "$script:ArtifactRoot/$_" })
         skills   = @($skills)
     }
 }
@@ -451,7 +453,91 @@ function Compare-PluginManifest {
 
 #endregion Manifest
 
+#region Package metadata
+
+function Get-PluginMetadataViolations {
+    <#
+    .SYNOPSIS
+        Validates required files at the plugin root.
+
+    .PARAMETER RepoRoot
+        Root directory of the repository.
+
+    .OUTPUTS
+        [string[]] Violation messages.
+    #>
+    [CmdletBinding()]
+    [OutputType([string[]])]
+    param(
+        [Parameter(Mandatory = $true)]
+        [ValidateNotNullOrEmpty()]
+        [string]$RepoRoot
+    )
+
+    $violations = @()
+    foreach ($relativePath in $script:RequiredPluginMetadata) {
+        $path = Join-Path $RepoRoot $relativePath
+        if (-not (Test-Path -LiteralPath $path -PathType Leaf)) {
+            $violations += "Required plugin root file is missing or not a regular file: $relativePath"
+            continue
+        }
+
+        $indexOutput = & git -C $RepoRoot ls-files -s --full-name -- $relativePath
+        if ($LASTEXITCODE -ne 0) {
+            throw "git ls-files failed with exit code $LASTEXITCODE in $RepoRoot"
+        }
+        $entry = @($indexOutput | Where-Object { $_ })
+        if ($entry.Count -ne 1 -or $entry[0] -notmatch '^(?<Mode>\d{6}) [0-9a-f]+ \d+\t(?<Path>.+)$' -or $Matches['Path'] -cne $relativePath) {
+            $violations += "Required plugin root file is not tracked: $relativePath"
+            continue
+        }
+        if ($Matches['Mode'] -notin @('100644', '100755')) {
+            $violations += "Required plugin root file is not a tracked regular file: $relativePath (mode $($Matches['Mode']))"
+            continue
+        }
+        if ((Get-Item -LiteralPath $path).Length -eq 0) {
+            $violations += "Required plugin root file is empty: $relativePath"
+        }
+    }
+    return $violations
+}
+
+#endregion Package metadata
+
 #region Catalog
+
+function Resolve-PluginPath {
+    <#
+    .SYNOPSIS
+        Resolves a path through symbolic links in every existing segment.
+
+    .PARAMETER Path
+        Existing file or directory path to resolve.
+
+    .OUTPUTS
+        [string] Canonical absolute path.
+    #>
+    [CmdletBinding()]
+    [OutputType([string])]
+    param(
+        [Parameter(Mandatory = $true)]
+        [ValidateNotNullOrEmpty()]
+        [string]$Path
+    )
+
+    $fullPath = [System.IO.Path]::GetFullPath($Path)
+    $pathRoot = [System.IO.Path]::GetPathRoot($fullPath)
+    $current = $pathRoot
+    $relative = $fullPath.Substring($pathRoot.Length)
+    foreach ($segment in $relative.Split([System.IO.Path]::DirectorySeparatorChar, [System.StringSplitOptions]::RemoveEmptyEntries)) {
+        $current = Join-Path $current $segment
+        $item = Get-Item -LiteralPath $current -Force
+        if ($item.LinkType) {
+            $current = $item.ResolveLinkTarget($true).FullName
+        }
+    }
+    return [System.IO.Path]::GetFullPath($current)
+}
 
 function Get-PluginComponentCoverageViolations {
     <#
@@ -486,7 +572,8 @@ function Get-PluginComponentCoverageViolations {
     )
 
     $violations = @()
-    $root = Join-Path $RepoRoot $SourcePath
+    $root = Resolve-PluginPath -Path (Join-Path $RepoRoot $SourcePath)
+    $rootPrefix = $root.TrimEnd([System.IO.Path]::DirectorySeparatorChar) + [System.IO.Path]::DirectorySeparatorChar
 
     foreach ($kind in @('agents', 'commands', 'rules', 'skills')) {
         $type = if ($kind -eq 'skills') { 'Container' } else { 'Leaf' }
@@ -495,14 +582,27 @@ function Get-PluginComponentCoverageViolations {
                 $violations += "$kind path escapes the plugin root: $path"
                 continue
             }
-            if (-not (Test-Path -LiteralPath (Join-Path $root $path) -PathType $type)) {
+            $candidate = Join-Path $root $path
+            if (-not (Test-Path -LiteralPath $candidate -PathType $type)) {
                 $violations += "$kind path does not exist under $SourcePath : $path"
+                continue
+            }
+            $resolved = Resolve-PluginPath -Path $candidate
+            if ($resolved -cne $root -and -not $resolved.StartsWith($rootPrefix, [System.StringComparison]::Ordinal)) {
+                $violations += "$kind path resolves outside the plugin root: $path"
             }
         }
     }
 
-    if (-not (Test-Path -LiteralPath (Join-Path $root $Manifest['hooks']) -PathType Leaf)) {
+    $hookPath = Join-Path $root $Manifest['hooks']
+    if (-not (Test-Path -LiteralPath $hookPath -PathType Leaf)) {
         $violations += "hooks path does not exist under $SourcePath : $($Manifest['hooks'])"
+    }
+    else {
+        $resolvedHook = Resolve-PluginPath -Path $hookPath
+        if (-not $resolvedHook.StartsWith($rootPrefix, [System.StringComparison]::Ordinal)) {
+            $violations += "hooks path resolves outside the plugin root: $($Manifest['hooks'])"
+        }
     }
 
     return $violations
@@ -619,6 +719,15 @@ function Invoke-PluginManifestSync {
         [Parameter(Mandatory = $false)]
         [switch]$Check
     )
+
+    $metadataViolations = @(Get-PluginMetadataViolations -RepoRoot $RepoRoot)
+    if ($metadataViolations.Count -gt 0) {
+        return [ordered]@{
+            Changed    = $false
+            Violations = $metadataViolations
+            Manifest   = $null
+        }
+    }
 
     $trackedIndex = Get-TrackedPluginIndex -RepoRoot $RepoRoot
     $components = Get-PluginComponentSet -RepoRoot $RepoRoot -TrackedPath $trackedIndex.Paths

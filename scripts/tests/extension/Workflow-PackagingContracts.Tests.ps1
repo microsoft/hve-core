@@ -580,7 +580,7 @@ Describe 'Retained release reconciliation and OpenVEX' -Tag 'Unit' {
         $verify = @($steps | Where-Object { $_ -match 'release-please reported \$RELEASE_VERSION' })
         $verify | Should -HaveCount 1
         foreach ($path in @('package\.json', 'package-lock\.json', [regex]::Escape($Manifest),
-                'extension/templates/package\.template\.json', '\.github/plugin\.json',
+                'extension/templates/package\.template\.json', 'plugin\.json',
                 '\.github/plugin/marketplace\.json:\.metadata\.version',
                 '\.github/plugin/marketplace\.json:\.plugins\[0\]\.version')) {
             $verify[0] | Should -Match $path
@@ -619,6 +619,19 @@ Describe 'Retained release reconciliation and OpenVEX' -Tag 'Unit' {
 }
 
 Describe 'Release-please ownership and promotion transforms' -Tag 'Unit' {
+    It 'Versions root plugin.json in <Config>' -ForEach @(
+        @{ Config = 'release-please-config.json' }
+        @{ Config = 'release-please-prerelease-config.json' }
+    ) {
+        $path = Join-Path $script:RepositoryRoot $Config
+        $config = Get-Content -LiteralPath $path -Raw -Encoding utf8 | ConvertFrom-Json
+        $extraFiles = @($config.packages.'.'.'extra-files')
+        @($extraFiles | Where-Object { $_.path -eq 'plugin.json' -and $_.jsonpath -eq '$.version' }) |
+            Should -HaveCount 1
+        @($extraFiles | Where-Object { $_.path -eq '.github/plugin.json' }) |
+            Should -HaveCount 0
+    }
+
     It 'Creates no tag or GitHub release outside release-please in <Workflow>' -ForEach @(
         @{ Workflow = 'release-prerelease.yml' }
         @{ Workflow = 'release-stable-publish.yml' }
@@ -689,7 +702,7 @@ Describe 'Release-please ownership and promotion transforms' -Tag 'Unit' {
         $run = [string](Get-NamedJobStep -Document (Get-WorkflowDocument -Name $Workflow) `
                 -JobName 'prepare-promotion' -StepName 'Refresh the promotion head')['run']
         $run | Should -Match "restore_from_base required CHANGELOG\.md \.github/plugin/marketplace\.json"
-        $run | Should -Match "'\.github/plugin\.json'"
+        $run | Should -Match "'plugin\.json'"
         $run | Should -Not -Match 'release-candidate\.json'
     }
 

@@ -3,7 +3,7 @@ title: 'Contributing Prompts to HVE Core'
 description: 'Requirements and standards for contributing GitHub Copilot prompt files to hve-core'
 sidebar_position: 4
 author: Microsoft
-ms.date: 2026-08-13
+ms.date: 2026-08-19
 ms.topic: how-to
 keywords:
   - contributing
@@ -41,7 +41,7 @@ Prompt files are typically organized in a package subdirectory by convention:
 ```
 
 > [!NOTE]
-> Tracked prompts beneath a package subdirectory are included automatically when `npm run plugin:sync` derives `.github/plugin.json`.
+> Tracked prompts beneath a `.github/prompts/<package>/` subdirectory are included automatically when `npm run plugin:sync` derives root `plugin.json`.
 
 ### Naming Convention
 
@@ -208,7 +208,7 @@ Prompts that delegate to a custom agent via `agent:` typically omit the activati
 
 ## Plugin Manifest Registration
 
-Distributable prompts must use the canonical path `.github/prompts/<package>/<subpath>/<name>.prompt.md`. `npm run plugin:sync` adds the `.github`-root-relative path to the `commands` array in `.github/plugin.json`.
+Distributable prompts must use the canonical path `.github/prompts/<package>/<subpath>/<name>.prompt.md`. `npm run plugin:sync` adds that repository-relative path to the `commands` array in root `plugin.json`.
 
 Update `docs/plugins/hve-core.md` when the user-visible prompt surface changes, then run `npm run plugin:validate` and `npm run docs:generate:check`.
 

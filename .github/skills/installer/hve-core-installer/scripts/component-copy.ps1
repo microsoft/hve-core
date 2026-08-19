@@ -133,7 +133,7 @@ function ConvertTo-PackageComponentPath {
         input and tracking manifests use package form. Paths outside the four
         installable fields, such as hooks, pass through unchanged.
     .PARAMETER ManifestPath
-        Plugin-root-relative path declared by the canonical manifest.
+        Repository-root-relative path declared by the canonical manifest.
     .OUTPUTS
         [string] Installer package path, or the original path when no mapping applies.
     #>
@@ -145,7 +145,10 @@ function ConvertTo-PackageComponentPath {
         [string]$ManifestPath
     )
 
-    $segments = $ManifestPath -split '/', 2
+    if (-not $ManifestPath.StartsWith('.github/', [System.StringComparison]::Ordinal)) {
+        throw "Plugin manifest path '$ManifestPath' must start with '.github/'."
+    }
+    $segments = $ManifestPath.Substring('.github/'.Length) -split '/', 2
     if ($segments.Count -lt 2) { return $ManifestPath }
     $manifestRoot = $segments[0]
     $relative = $segments[1]
@@ -165,7 +168,7 @@ $sourceRoot = (Resolve-Path -LiteralPath $HveCoreBasePath).Path
 $targetBase = (Resolve-Path -LiteralPath $TargetRoot).Path
 $manifestPath = Join-Path $targetBase '.hve-tracking.json'
 
-$pluginManifestPath = Join-Path $sourceRoot '.github/plugin.json'
+$pluginManifestPath = Join-Path $sourceRoot 'plugin.json'
 if (-not (Test-Path -LiteralPath $pluginManifestPath -PathType Leaf)) {
     throw "Plugin manifest not found: $pluginManifestPath"
 }

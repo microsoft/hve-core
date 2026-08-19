@@ -57,7 +57,7 @@ The project is organized into these main areas:
 * Hooks (`.github/hooks/{package-id}/`) - Package-scoped Copilot hook manifests (JSON) that wire lifecycle event commands.
 * Extension (`extension/`) - VS Code extension source and packaging.
 * GitHub Configuration (`.github/`) - Workflows, instructions, prompts, agents, composite actions, and issue templates, typically organized into `{package-id}` subdirectories.
-* Plugin manifest (`.github/plugin.json`) - Deterministic membership and metadata for the sole `hve-core` plugin.
+* Plugin manifest (`plugin.json`) - Deterministic membership and metadata for the sole `hve-core` plugin.
 * Plugin locator (`.github/plugin/marketplace.json`) - One relative marketplace entry that points to `.github`.
 * Logs (`logs/`) - Output from validation and analysis scripts.
 
@@ -141,9 +141,9 @@ Parent agents reference subagents using glob paths like `.github/agents/**/code-
 
 The plugin manifest owns plugin and VSIX composition:
 
-* `.github/plugin.json` owns the complete `hve-core` component membership: package-scoped agents, prompts, instructions, and distributable skills discovered from tracked `.github` paths, plus the fixed telemetry hook. `.github/plugin/marketplace.json` contains one relative locator to `.github` and no component recipe.
+* Root `plugin.json` owns the complete `hve-core` component membership: package-scoped agents, prompts, instructions, and distributable skills discovered from tracked `.github` paths, plus the fixed telemetry hook. `.github/plugin/marketplace.json` contains one relative locator to the repository root and no component recipe.
 * After adding, changing, moving, or removing a distributable artifact, run `npm run plugin:sync` to update the manifest. Run `npm run plugin:validate` to check manifest drift, marketplace parity and containment, component coverage, and hooks.
-* The installable plugin root is `.github`; do not materialize a copied plugin tree or create a repository-root `plugins/` directory.
+* The installable plugin root is the repository root. Artifact discovery remains limited to package-scoped `.github` paths; do not materialize a copied plugin tree or create a repository-root `plugins/` directory.
 * Run `npm run extension:prepare` or `npm run extension:prepare:prerelease` to refresh the single `extension/package.json` and `extension/README.md`. Stable and PreRelease contain the same component set.
 * After adding, changing, moving, or removing a documentable agent, prompt, instruction, or skill, run `npm run docs:generate` and commit the matching page under `docs/reference/`. The generator owns page frontmatter and the prefix through `<!-- END AUTO-GENERATED: overview -->`; edit only the preserved `When to use it`, applicable `How to use it`, and `Example usage` tail. Do not edit generated regions or catalog indexes by hand.
 * Run `npm run plugin:validate` to confirm the manifest, one-entry locator, component coverage, and hooks are correct.
@@ -155,7 +155,7 @@ The plugin manifest owns plugin and VSIX composition:
 * Scripts follow instructions provided by the codebase for convention and standards.
 * Scripts used by the codebase have an `npm run` script for ease of use.
 * A root `plugins/` directory is forbidden as validation or package output. Do not create, edit, or stage one.
-* The plugin uses `.github` directly. Synchronize `.github/plugin.json`; do not generate plugin output or ZIP packages.
+* The plugin uses the repository root directly. Synchronize root `plugin.json`; do not generate plugin output or ZIP packages.
 * Artifacts at the root of `.github/agents/`, `.github/instructions/`, `.github/prompts/`, or `.github/skills/` (without a package subdirectory) are repo-specific and excluded from plugin membership and extension packaging. Validation enforces this rule.
 
 PowerShell scripts follow PSScriptAnalyzer rules from `scripts/linting/PSScriptAnalyzer.psd1` and include proper comment-based help. Validation runs via `npm run lint:ps` with results output to `logs/`.

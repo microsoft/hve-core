@@ -3,7 +3,7 @@ title: Contributing Hooks
 description: How to implement, register, and validate hook artifacts in hve-core
 sidebar_position: 7
 author: Microsoft
-ms.date: 2026-08-13
+ms.date: 2026-08-19
 ms.topic: how-to
 keywords:
   - hooks
@@ -32,7 +32,7 @@ Hooks use package-oriented source folders. Use this structure for hook contribut
 | `.github/hooks/<package>/<name>.json`               | Hook manifest that maps lifecycle events to executable commands |
 | `.github/hooks/<package>/<name>/`                   | Hook implementation scripts and support files                   |
 | `scripts/linting/schemas/hook-manifest.schema.json` | JSON Schema (draft-07) that defines the manifest contract       |
-| `.github/plugin.json`                               | Canonical hook declaration for the plugin                       |
+| `plugin.json`                                       | Canonical repository-relative hook declaration for the plugin   |
 | `docs/plugins/hve-core.md`                          | Durable plugin documentation                                    |
 
 Manifests live one package level down (`.github/hooks/<package>/`). A flat `.github/hooks/<name>.json` is treated as a repo-specific artifact and is excluded from distribution.
@@ -46,7 +46,7 @@ The telemetry hook is the current reference implementation:
 
 1. Add a manifest at `.github/hooks/<package>/<name>.json`.
 2. Add executable scripts under `.github/hooks/<package>/<name>/`.
-3. Register the manifest through the `hooks` field in `.github/plugin.json`.
+3. Register the manifest through the `hooks` field in root `plugin.json` using its repository-relative `.github/...` path.
 4. Document the hook in `docs/plugins/hve-core.md`.
 5. Add or update docs under `docs/` for setup and usage.
 
