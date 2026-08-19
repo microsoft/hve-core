@@ -2,7 +2,13 @@
 title: backlog-plan
 description: "Read-only backlog planning for Azure DevOps, GitHub, and Jira. Use to discover, triage, sprint-plan, or resume without mutating a tracker."
 sidebar_position: 4
-ms.date: 2026-08-06
+author: Microsoft
+ms.date: 2026-08-12
+ms.topic: reference
+keywords:
+  - skill
+  - project-planning
+  - backlog-plan
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->

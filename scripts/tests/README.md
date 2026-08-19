@@ -2,7 +2,7 @@
 title: Test Scripts
 description: Pester test runner, changed-file detection, and test directory organization
 author: HVE Core Team
-ms.date: 2026-08-01
+ms.date: 2026-08-13
 ms.topic: reference
 keywords:
   - powershell
@@ -113,7 +113,7 @@ tests/
 ├── extension/       Extension packaging tests
 ├── lib/             Library utility tests
 ├── linting/         Linting script tests
-├── plugins/         Plugin generation tests
+├── plugins/         Plugin manifest synchronization tests
 ├── security/        Security validation tests
 ├── Fixtures/        Shared test fixtures
 └── Mocks/           Shared mock data (GitMocks.psm1)

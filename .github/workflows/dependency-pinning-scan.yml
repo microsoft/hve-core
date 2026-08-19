@@ -65,8 +65,10 @@ jobs:
         id: pinning
         shell: pwsh
         env:
+          INPUT_SOFT_FAIL: ${{ inputs.soft-fail }}
           INPUT_DEPENDENCY_TYPES: ${{ inputs.dependency-types }}
           INPUT_THRESHOLD: ${{ inputs.threshold }}
+          INPUT_UPLOAD_SARIF: ${{ inputs.upload-sarif }}
         run: |
           Write-Host "Validating dependency SHA pinning compliance..."
           
@@ -81,7 +83,7 @@ jobs:
           }
           
           # Enable failure on threshold violations unless soft-fail is requested
-          if ('${{ inputs.soft-fail }}' -ne 'true') {
+          if ($env:INPUT_SOFT_FAIL -ne 'true') {
             $params['FailOnUnpinned'] = $true
           }
           
@@ -100,7 +102,7 @@ jobs:
           $jsonExitCode = $LASTEXITCODE
           
           # Generate SARIF format if requested
-          if ('${{ inputs.upload-sarif }}' -eq 'true') {
+          if ($env:INPUT_UPLOAD_SARIF -eq 'true') {
             Write-Host "Generating SARIF format for Security tab..."
             $params['Format'] = 'sarif'
             $params['OutputPath'] = 'logs/dependency-pinning-results.sarif'

@@ -147,6 +147,22 @@
           "type": "string",
           "enum": ["guided", "partial", "full"],
           "description": "How much autonomy the agent has in proceeding between phases"
+        },
+        "diagramStyle": {
+          "type": "string",
+          "enum": ["mermaid", "ascii"],
+          "description": "Preferred diagram output style for context and scenario diagrams; defaults to mermaid when absent"
+        },
+        "includeOptionalArtifacts": {
+          "type": "object",
+          "properties": {
+            "artifactSigning": {
+              "type": "boolean",
+              "description": "Whether the user opted in to cryptographic signing of session artifacts"
+            }
+          },
+          "additionalProperties": false,
+          "description": "Opt-in toggles for optional session artifacts"
         }
       },
       "additionalProperties": false
@@ -177,6 +193,39 @@
       "type": "array",
       "items": { "type": "string" },
       "description": "AI/ML components identified during scoping"
+    },
+    "dataClassificationScheme": {
+      "type": "string",
+      "description": "Identifier of the data-classification scheme in use; defaults to the public taxonomy when absent"
+    },
+    "overlayConfigPath": {
+      "type": ["string", "null"],
+      "description": "Optional path to an out-of-repo private overlay config supplying internal taxonomy, auth names, and review-gate steps; null or absent means public defaults apply"
+    },
+    "completenessReview": {
+      "type": "object",
+      "properties": {
+        "status": {
+          "type": "string",
+          "enum": ["PASS", "INCOMPLETE"],
+          "description": "Threat-model completeness verdict from the Phase 6 review"
+        },
+        "gaps": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Itemized completeness gaps keyed to review checklist item IDs"
+        }
+      },
+      "additionalProperties": false,
+      "description": "Result of the Phase 6 threat-model completeness review"
+    },
+    "signingRequested": {
+      "type": "boolean",
+      "description": "Whether the user requested cryptographic signing of session artifacts during the Phase 6 handoff"
+    },
+    "signingManifestPath": {
+      "type": ["string", "null"],
+      "description": "Path to the generated signing manifest, or null when signing was not performed"
     }
   },
   "additionalProperties": false,

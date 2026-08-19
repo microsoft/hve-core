@@ -2,7 +2,13 @@
 title: Dt Handoff Implementation Space
 description: Compiles DT Methods 7-9 into research-ready input for rpi-research at the Implementation Space exit
 sidebar_position: 3
-ms.date: 2026-07-16
+author: Microsoft
+ms.date: 2026-08-12
+ms.topic: reference
+keywords:
+  - prompt
+  - design-thinking
+  - dt-handoff-implementation-space
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->

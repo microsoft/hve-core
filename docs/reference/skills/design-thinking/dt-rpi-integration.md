@@ -2,7 +2,13 @@
 title: dt-rpi-integration
 description: "Design Thinking handoff knowledge for research-ready rpi-research inputs and DT-aware rpi-plan, rpi-implement, and rpi-review context"
 sidebar_position: 4
-ms.date: 2026-07-16
+author: Microsoft
+ms.date: 2026-08-12
+ms.topic: reference
+keywords:
+  - skill
+  - design-thinking
+  - dt-rpi-integration
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->

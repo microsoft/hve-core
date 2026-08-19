@@ -2,7 +2,13 @@
 title: code-review
 description: "Review code changes from multiple perspectives with context bootstrap, depth-tier rigor, and structured findings output."
 sidebar_position: 1
-ms.date: 2026-07-27
+author: Microsoft
+ms.date: 2026-08-12
+ms.topic: reference
+keywords:
+  - skill
+  - coding-standards
+  - code-review
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->

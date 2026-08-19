@@ -1,0 +1,119 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/microsoft/hve-core/ds-feasibility/feasibility-study-interchange-1.0.0.schema.json",
+  "title": "Feasibility Study Interchange Profile 1.0.0",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["profile", "profile_version", "study", "items", "revision_registry"],
+  "properties": {
+    "profile": {"const": "feasibility-study-interchange"},
+    "profile_version": {"const": "1.0.0"},
+    "study": {"$ref": "#/$defs/study"},
+    "items": {"type": "array", "items": {"$ref": "#/$defs/item"}},
+    "revision_registry": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/revision"}}
+  },
+  "$defs": {
+    "uuidUrn": {"type": "string", "pattern": "^urn:uuid:[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"},
+    "nullableUuidUrn": {"oneOf": [{"$ref": "#/$defs/uuidUrn"}, {"type": "null"}]},
+    "timestamp": {"type": "string", "format": "date-time"},
+    "nullableTimestamp": {"oneOf": [{"$ref": "#/$defs/timestamp"}, {"type": "null"}]},
+    "provenance": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["attributed_to", "source_refs", "generated_at"],
+      "properties": {
+        "attributed_to": {"type": "string", "minLength": 1},
+        "source_refs": {"type": "array", "items": {"type": "string", "minLength": 1}},
+        "generated_at": {"$ref": "#/$defs/timestamp"}
+      }
+    },
+    "review": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["needs_review", "reasons"],
+      "properties": {
+        "needs_review": {"type": "boolean"},
+        "reasons": {"type": "array", "uniqueItems": true, "items": {"type": "string", "minLength": 1}}
+      }
+    },
+    "lifecycle": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["effective_at", "reason", "predecessor_ids", "successor_ids"],
+      "properties": {
+        "effective_at": {"$ref": "#/$defs/nullableTimestamp"},
+        "reason": {"type": ["string", "null"]},
+        "predecessor_ids": {"type": "array", "uniqueItems": true, "items": {"$ref": "#/$defs/uuidUrn"}},
+        "successor_ids": {"type": "array", "uniqueItems": true, "items": {"$ref": "#/$defs/uuidUrn"}}
+      }
+    },
+    "relation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["relation_id", "type", "target", "rationale", "confidence", "provenance", "review"],
+      "properties": {
+        "relation_id": {"$ref": "#/$defs/uuidUrn"},
+        "type": {"enum": ["depends-on", "constrains", "satisfies", "implements", "validates", "evidenced-by", "supersedes", "split-from", "merged-from", "derived-from", "related-to"]},
+        "target": {"$ref": "#/$defs/uuidUrn"},
+        "rationale": {"type": "string", "minLength": 1},
+        "confidence": {"enum": ["high", "medium", "low"]},
+        "provenance": {"$ref": "#/$defs/provenance"},
+        "review": {"$ref": "#/$defs/review"}
+      }
+    },
+    "study": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["study_id", "study_revision_id", "revision_of", "title", "status", "location", "created_at", "modified_at", "provenance"],
+      "properties": {
+        "study_id": {"$ref": "#/$defs/uuidUrn"},
+        "study_revision_id": {"$ref": "#/$defs/uuidUrn"},
+        "revision_of": {"$ref": "#/$defs/nullableUuidUrn"},
+        "title": {"type": "string", "minLength": 1},
+        "status": {"enum": ["active", "complete", "withdrawn", "superseded"]},
+        "location": {"type": "string", "minLength": 1},
+        "created_at": {"$ref": "#/$defs/timestamp"},
+        "modified_at": {"$ref": "#/$defs/timestamp"},
+        "provenance": {"$ref": "#/$defs/provenance"}
+      }
+    },
+    "item": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["item_id", "item_revision_id", "revision_of", "display_ref", "narrative_anchor", "class", "title", "statement", "status", "planning_relevance", "confidence", "criteria_status", "acceptance_criteria", "evidence_refs", "relations", "provenance", "review", "location", "lifecycle"],
+      "properties": {
+        "item_id": {"$ref": "#/$defs/uuidUrn"},
+        "item_revision_id": {"$ref": "#/$defs/uuidUrn"},
+        "revision_of": {"$ref": "#/$defs/nullableUuidUrn"},
+        "display_ref": {"type": "string", "pattern": "^FS-[0-9]{3,}$"},
+        "narrative_anchor": {"type": "string", "pattern": "^fs-[0-9]{3,}$"},
+        "class": {"enum": ["capability-candidate", "constraint", "assumption", "finding", "risk", "dependency", "decision", "evidence", "gap", "non-goal"]},
+        "title": {"type": "string", "minLength": 1},
+        "statement": {"type": "string", "minLength": 1},
+        "status": {"enum": ["proposed", "active", "accepted", "rejected", "withdrawn", "superseded"]},
+        "planning_relevance": {"enum": ["candidate", "context", "not-applicable"]},
+        "confidence": {"enum": ["high", "medium", "low"]},
+        "criteria_status": {"enum": ["defined", "partial", "not-yet-defined", "not-applicable"]},
+        "acceptance_criteria": {"type": "array", "items": {"type": "string", "minLength": 1}},
+        "evidence_refs": {"type": "array", "uniqueItems": true, "items": {"$ref": "#/$defs/uuidUrn"}},
+        "relations": {"type": "array", "items": {"$ref": "#/$defs/relation"}},
+        "provenance": {"$ref": "#/$defs/provenance"},
+        "review": {"$ref": "#/$defs/review"},
+        "location": {"type": "string", "minLength": 1},
+        "lifecycle": {"$ref": "#/$defs/lifecycle"}
+      }
+    },
+    "revision": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["concept_id", "concept_kind", "revision_id", "revision_of", "recorded_at"],
+      "properties": {
+        "concept_id": {"$ref": "#/$defs/uuidUrn"},
+        "concept_kind": {"enum": ["study", "item"]},
+        "revision_id": {"$ref": "#/$defs/uuidUrn"},
+        "revision_of": {"$ref": "#/$defs/nullableUuidUrn"},
+        "recorded_at": {"$ref": "#/$defs/timestamp"}
+      }
+    }
+  }
+}

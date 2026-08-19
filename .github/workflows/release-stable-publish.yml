@@ -142,40 +142,6 @@ jobs:
             exit 1
           fi
 
-          EVIDENCE_DIR="$RUNNER_TEMP/stable-publish-evidence"
-          rm -rf "$EVIDENCE_DIR"
-          mkdir -p "$EVIDENCE_DIR"
-          if ! gh release download "$SOURCE_TAG" -R "$REPOSITORY" \
-            -p 'plugin-release-evidence.json' -D "$EVIDENCE_DIR"; then
-            echo "::error::$SOURCE_TAG carries no readable plugin-release-evidence.json"
-            exit 1
-          fi
-          EVIDENCE=$(cat "$EVIDENCE_DIR/plugin-release-evidence.json")
-          if ! printf '%s' "$EVIDENCE" | jq -e \
-            --arg version "$SOURCE_VERSION" \
-            --arg source_commit "$SOURCE_SHA" \
-            --arg repository "$REPOSITORY" '
-              .schema == "hve-core/plugin-release-evidence/v2" and
-              .sourceCommit == $source_commit and
-              .version == $version and
-              .locator.source == "github" and
-              .locator.repo == $repository and
-              .locator.ref == ("prerelease-v" + $version) and
-              (.packageCount | type == "number" and . > 0) and
-              (.packages | type == "array") and
-              ((.packages | length) == .packageCount) and
-              all(.packages[];
-                (.name | type == "string" and length > 0) and
-                (.fileCount | type == "number" and . > 0) and
-                (.digest | type == "string" and test("^[0-9a-f]{64}$"))) and
-              (.fileCount | type == "number" and . > 0) and
-              (.totalBytes | type == "number" and . > 0) and
-              (.digest | type == "string" and test("^[0-9a-f]{64}$"))
-            ' >/dev/null; then
-            echo "::error::$SOURCE_TAG evidence does not match selected source $SOURCE_TAG at $SOURCE_SHA"
-            exit 1
-          fi
-
           CANDIDATE=$(git show "$EVENT_SHA:release-please-config.json" | jq -r '.packages["."]["release-as"] // ""')
           BASELINE=$(git show 'refs/remotes/origin/release/stable:.release-please-manifest.json' | jq -r '.["."] // ""')
           for entry in "candidate:$CANDIDATE" "baseline:$BASELINE"; do
@@ -370,7 +336,9 @@ jobs:
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           ref: ${{ github.sha }}
-          sparse-checkout: scripts/release/Update-VersionFiles.ps1
+          sparse-checkout: |
+            scripts/release/Set-RepositoryVersion.ps1
+            scripts/plugins/Sync-PluginManifest.ps1
           sparse-checkout-cone-mode: false
           persist-credentials: false
 
@@ -408,81 +376,25 @@ jobs:
           jq 'del(.packages["."]["release-as"])' "$CONFIG" > "$CONFIG.sync"
           mv "$CONFIG.sync" "$CONFIG"
 
-          # Candidate membership is rebuilt from the retained record and the
-          # immutable source it names, never from the moving branch, the pull
-          # request body, or transient job state.
-          RECORD="$RELEASE_REPO/.github/plugin/release-candidate.json"
-          SOURCE_COMMIT=$(jq -r '.sourceCommit // ""' "$RECORD")
-          if ! printf '%s' "$SOURCE_COMMIT" | grep -Eq '^[0-9a-f]{40}$'; then
-            echo "::error::release-candidate.json carries no full immutable source commit"
-            exit 1
-          fi
-          git -C "$RELEASE_REPO" fetch --no-tags --depth 1 origin "$SOURCE_COMMIT"
-          git -C "$RELEASE_REPO" fetch --no-tags --depth 1 origin \
-            '+refs/heads/release/stable:refs/remotes/origin/release/stable'
-          BASELINE=$(git -C "$RELEASE_REPO" show \
-            'refs/remotes/origin/release/stable:.release-please-manifest.json' | jq -r '.["."] // ""')
-          if ! printf '%s' "$BASELINE" | grep -Eq '^[0-9]+\.[0-9]+\.[0-9]+$'; then
-            echo "::error::release/stable carries no MAJOR.MINOR.PATCH baseline version"
-            exit 1
-          fi
-
-          # The retained record must still describe the branch it advances
-          # from, so the baseline identity is read from the same immutable
-          # remote ref instead of rebuilt from the baseline version. A coherent
-          # baseline is a complete catalog at its own metadata version carrying
-          # one uniform locator: the reserved OMITTED locator when no entry
-          # names a ref, otherwise the one non-empty ref they all share.
-          # Historical entries carry a string-form source, which names no ref
-          # and therefore reads as omitted.
-          BASELINE_TAG=$(git -C "$RELEASE_REPO" show \
-            'refs/remotes/origin/release/stable:.github/plugin/marketplace.json' |
-            jq -r '
-              (.metadata.version // "") as $version
-              | [.plugins[] | (.version // "")] as $versions
-              | [.plugins[]
-                 | if (.source | type) == "object" then (.source.ref // null) else null end] as $refs
-              | if ($version | test("^[0-9]+\\.[0-9]+\\.[0-9]+$"))
-                   and ($versions | length) > 0
-                   and ($versions | all(. == $version))
-                then
-                  if ($refs | all(. == null))
-                  then "OMITTED"
-                  elif ($refs | all(type == "string" and length > 0))
-                       and (($refs | unique) | length) == 1
-                  then $refs[0]
-                  else ""
-                  end
-                else ""
-                end
-            ')
-          if [ -z "$BASELINE_TAG" ] || [[ "$BASELINE_TAG" == *$'\n'* || "$BASELINE_TAG" == *$'\r'* ]]; then
-            echo "::error::release/stable .github/plugin/marketplace.json does not carry one uniform baseline locator across a complete catalog at its own metadata version"
-            exit 1
-          fi
-
-          CANDIDATE_SOURCE_CATALOG="$RUNNER_TEMP/candidate-source-marketplace.json"
-          git -C "$RELEASE_REPO" show "$SOURCE_COMMIT:.github/plugin/marketplace.json" > "$CANDIDATE_SOURCE_CATALOG"
-
-          pwsh -NoProfile -File "$GITHUB_WORKSPACE/scripts/release/Update-VersionFiles.ps1" \
+          # Component membership is resynchronized from this preparation tree
+          # and every version field is normalized to the managed release
+          # version. Neither step transforms a source ref or records a
+          # release candidate.
+          pwsh -NoProfile -File "$GITHUB_WORKSPACE/scripts/plugins/Sync-PluginManifest.ps1" \
+              -RepoRoot "$RELEASE_REPO"
+          pwsh -NoProfile -File "$GITHUB_WORKSPACE/scripts/release/Set-RepositoryVersion.ps1" \
               -Version "$VERSION" \
-              -Channel Stable \
-              -RepoRoot "$RELEASE_REPO" \
-              -SkipPluginGenerate \
-              -CandidateAction Apply \
-              -CandidateSourceCommit "$SOURCE_COMMIT" \
-              -CandidateSourceCatalog "$CANDIDATE_SOURCE_CATALOG" \
-              -BaselineTag "$BASELINE_TAG"
+              -RepoRoot "$RELEASE_REPO"
 
           cd "$RELEASE_REPO"
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add --all
           if git diff --cached --quiet; then
-            echo "Preparation already carries $VERSION, its candidate record, and locator v$VERSION"
+            echo "Preparation already carries $VERSION and its synchronized plugin manifest"
             exit 0
           fi
-          git commit -m "chore(release): sync committed versions and plugin locator to $VERSION"
+          git commit -m "chore(release): sync committed versions and plugin manifest to $VERSION"
           git push origin "HEAD:refs/heads/$RELEASE_BRANCH"
 
   validate-release:
@@ -641,8 +553,9 @@ jobs:
           RELEASE_VERSION: ${{ needs.release-please.outputs.version }}
           REQUIRED_ASSETS: |
             dependencies.spdx.json
-            plugin-release-evidence.json
             hve-core.openvex.json
+          OPTIONAL_ASSETS: |
+            dependency-diff.md
         run: |
           set -euo pipefail
           ASSET_INDEX="$RUNNER_TEMP/published-assets.tsv"
@@ -656,31 +569,16 @@ jobs:
           cut -f2 "$ASSET_INDEX" > "$ASSET_NAMES"
           REQUIRED_LIST="$RUNNER_TEMP/published-required-assets.txt"
           printf '%s\n' "$REQUIRED_ASSETS" > "$REQUIRED_LIST"
+          OPTIONAL_LIST="$RUNNER_TEMP/published-optional-assets.txt"
+          printf '%s\n' "$OPTIONAL_ASSETS" > "$OPTIONAL_LIST"
 
-          # The evidence document names the exact plugin packages this release
-          # published, so it is read back through its own asset id instead of
-          # being reproduced from the working tree.
-          EVIDENCE_COUNT=$(awk -F'\t' '$2 == "plugin-release-evidence.json"' "$ASSET_INDEX" | wc -l)
-          if [ "$EVIDENCE_COUNT" -ne 1 ]; then
-            echo "::error::published $RELEASE_TAG carries $EVIDENCE_COUNT plugin-release-evidence.json assets; exactly one is required"
-            exit 1
-          fi
-          EVIDENCE_ID=$(awk -F'\t' '$2 == "plugin-release-evidence.json" { print $1 }' "$ASSET_INDEX")
-          EVIDENCE_PATH="$RUNNER_TEMP/plugin-release-evidence.json"
-          gh api -H 'Accept: application/octet-stream' \
-            "/repos/$REPOSITORY/releases/assets/$EVIDENCE_ID" > "$EVIDENCE_PATH"
-
-          # Plugin ZIP and VSIX identities both come from the released catalog
-          # under the channel package policy, and the evidence document is
-          # reconciled against that catalog-derived set, so no expected count
-          # is maintained by hand and no single asset defines its own
-          # expectation.
+          # The release carries one hve-core VSIX with its complete sidecar set
+          # plus the channel's required singleton assets, so no asset defines
+          # the expectation it is verified against.
           pwsh -NoProfile -File ./scripts/release/Assert-ReleaseAssetSet.ps1 \
             -AssetNamePath "$ASSET_NAMES" \
-            -EvidencePath "$EVIDENCE_PATH" \
             -RequiredAssetPath "$REQUIRED_LIST" \
-            -CatalogPath .github/plugin/marketplace.json \
-            -Channel Stable \
+            -OptionalAssetPath "$OPTIONAL_LIST" \
             -Version "$RELEASE_VERSION" \
             -ReleaseTag "$RELEASE_TAG"
 
@@ -696,7 +594,7 @@ jobs:
             exit 1
           fi
 
-          for entry in "package.json:.version" "package-lock.json:.version" ".release-please-manifest.json:.\".\"" "extension/templates/package.template.json:.version" ".github/plugin/marketplace.json:.metadata.version"; do
+          for entry in "package.json:.version" "package-lock.json:.version" ".release-please-manifest.json:.\".\"" "extension/templates/package.template.json:.version" ".github/plugin.json:.version" ".github/plugin/marketplace.json:.metadata.version" ".github/plugin/marketplace.json:.plugins[0].version"; do
             file="${entry%%:*}"
             path="${entry#*:}"
             actual=$(jq -r "$path" "$file")
@@ -705,13 +603,6 @@ jobs:
               exit 1
             fi
           done
-
-          if ! jq -e --arg version "$RELEASE_VERSION" '
-            all(.plugins[]; .version == $version and .source.ref == ("v" + $version))
-          ' .github/plugin/marketplace.json >/dev/null; then
-            echo "::error::Catalog versions or immutable plugin locators are inconsistent"
-            exit 1
-          fi
 
           if ! grep -Eq "^## \[${RELEASE_VERSION}\]" CHANGELOG.md; then
             echo "::error::CHANGELOG.md has no release entry for $RELEASE_VERSION"
@@ -726,40 +617,6 @@ jobs:
             echo "::error::release-please-config.json still carries release-as $STALE_INTENT"
             exit 1
           fi
-
-      # The candidate record stays in the tagged commit as evidence, so the
-      # released catalog is proved against the same digest the managed head
-      # reproduced before merge.
-      - name: Verify retained candidate record
-        env:
-          RELEASE_VERSION: ${{ needs.release-please.outputs.version }}
-        run: |
-          set -euo pipefail
-          pwsh -NoProfile -File ./scripts/release/Update-VersionFiles.ps1 \
-              -Version "$RELEASE_VERSION" \
-              -Channel Stable \
-              -RepoRoot "$PWD" \
-              -CandidateAction Verify
-
-      - name: Verify cross-channel package-set consistency
-        shell: pwsh
-        run: |
-          $ErrorActionPreference = 'Stop'
-          . ./scripts/extension/Get-MarketplacePackageMatrix.ps1
-          $catalogPath = './.github/plugin/marketplace.json'
-          $sets = @{}
-          foreach ($channel in @('Stable', 'PreRelease')) {
-            $names = [string[]]@((Get-MarketplacePackageMatrixCore -Channel $channel -CatalogPath $catalogPath).Names)
-            if ($names.Count -eq 0) {
-              throw "No $channel packages are eligible in $catalogPath"
-            }
-            [array]::Sort($names, [System.StringComparer]::Ordinal)
-            $sets[$channel] = $names
-          }
-          if ([string]::Join(',', $sets['Stable']) -cne [string]::Join(',', $sets['PreRelease'])) {
-            throw "Stable and PreRelease package sets differ: Stable [$($sets['Stable'] -join ', ')] versus PreRelease [$($sets['PreRelease'] -join ', ')]"
-          }
-          Write-Host "Verified $($sets['Stable'].Count) packages in both channels: $($sets['Stable'] -join ', ')"
 
   close-milestone:
     name: Close Release Milestone
@@ -805,23 +662,7 @@ jobs:
     uses: ./.github/workflows/extension-provenance.yml
     with:
       source-ref: ${{ needs.validate-release.outputs.sha }}
-      packages-matrix: ${{ needs.extension-package-release.outputs.packages-matrix }}
       release-tag: ${{ needs.validate-release.outputs.tag_name }}
-    permissions:
-      contents: write
-      id-token: write
-      attestations: write
-      artifact-metadata: write
-
-  plugin-package-release:
-    name: Package Plugins (Release)
-    needs: [validate-release]
-    if: ${{ needs.validate-release.outputs.release-state != 'published' }}
-    uses: ./.github/workflows/plugin-package.yml
-    with:
-      source-ref: ${{ needs.validate-release.outputs.sha }}
-      release-tag: ${{ needs.validate-release.outputs.tag_name }}
-      version: ${{ needs.validate-release.outputs.version }}
     permissions:
       contents: write
       id-token: write
@@ -876,102 +717,6 @@ jobs:
             "dependencies.spdx.json" \
             --clobber -R "$REPOSITORY"
 
-  upload-plugin-packages:
-    name: Attest and Upload Plugin (${{ matrix.id }})
-    needs: [validate-release, plugin-package-release, generate-dependency-sbom]
-    runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix: ${{ fromJson(needs.plugin-package-release.outputs.packages-matrix) }}
-    permissions:
-      contents: write
-      id-token: write
-      attestations: write
-      artifact-metadata: write
-    steps:
-      - name: Checkout Syft config
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          ref: ${{ needs.validate-release.outputs.sha }}
-          sparse-checkout: .syft.yaml
-          sparse-checkout-cone-mode: false
-          persist-credentials: false
-
-      - name: Download dependency SBOM
-        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
-        with:
-          name: sbom-dependencies
-          path: ./sbom
-
-      - name: Download plugin artifact
-        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
-        with:
-          name: plugin-package-${{ matrix.id }}
-          path: ./dist/plugins
-
-      - name: Verify plugin archive exists
-        run: |
-          PLUGIN_ARCHIVE="dist/plugins/${{ matrix.id }}.zip"
-          if [ ! -f "$PLUGIN_ARCHIVE" ]; then
-            echo "::error::Plugin archive not found for package ${{ matrix.id }}"
-            exit 1
-          fi
-
-      - name: Generate SBOM
-        uses: anchore/sbom-action@e22c389904149dbc22b58101806040fa8d37a610 # v0.24.0
-        with:
-          file: dist/plugins/${{ matrix.id }}.zip
-          format: spdx-json
-          output-file: dist/plugins/${{ matrix.id }}.zip.spdx.json
-          artifact-name: sbom-plugin-${{ matrix.id }}
-          upload-release-assets: false
-          upload-artifact: true
-          config: .syft.yaml
-
-      - name: Verify SBOM files exist
-        run: |
-          test -f "dist/plugins/${{ matrix.id }}.zip.spdx.json" \
-            || { echo "::error::Per-plugin SBOM not found: dist/plugins/${{ matrix.id }}.zip.spdx.json"; exit 1; }
-          test -f "sbom/dependencies.spdx.json" \
-            || { echo "::error::Dependency SBOM not found: sbom/dependencies.spdx.json"; exit 1; }
-
-      - name: Attest build provenance
-        id: attest
-        uses: actions/attest-build-provenance@4d101475d8b20a2381f78447822ac1eab6504dd8 # v4.2.2
-        with:
-          subject-path: dist/plugins/${{ matrix.id }}.zip
-
-      - name: Attest SBOM
-        uses: actions/attest@1e69f48acb82d1966a394da916b4c1698aa569d6 # v4.2.2
-        with:
-          subject-path: dist/plugins/${{ matrix.id }}.zip
-          sbom-path: dist/plugins/${{ matrix.id }}.zip.spdx.json
-
-      - name: Attest dependency SBOM
-        uses: actions/attest@1e69f48acb82d1966a394da916b4c1698aa569d6 # v4.2.2
-        with:
-          subject-path: dist/plugins/${{ matrix.id }}.zip
-          sbom-path: sbom/dependencies.spdx.json
-
-      - name: Upload assets to GitHub Release
-        env:
-          GH_TOKEN: ${{ github.token }}
-          REPOSITORY: ${{ github.repository }}
-          TAG: ${{ needs.validate-release.outputs.tag_name }}
-          BUNDLE_PATH: ${{ steps.attest.outputs.bundle-path }}
-        run: |
-          set -euo pipefail
-          cp "$BUNDLE_PATH" \
-            "dist/plugins/${{ matrix.id }}.zip.sigstore.json"
-          jq -c '.dsseEnvelope' "$BUNDLE_PATH" > \
-            "dist/plugins/${{ matrix.id }}.zip.intoto.jsonl"
-          gh release upload "$TAG" \
-            "dist/plugins/${{ matrix.id }}.zip" \
-            "dist/plugins/${{ matrix.id }}.zip.spdx.json" \
-            "dist/plugins/${{ matrix.id }}.zip.sigstore.json" \
-            "dist/plugins/${{ matrix.id }}.zip.intoto.jsonl" \
-            --clobber -R "$REPOSITORY"
-
   vex-attest:
     name: Attest and Upload VEX
     needs: [validate-release, generate-dependency-sbom]
@@ -987,13 +732,7 @@ jobs:
 
   verify-provenance:
     name: Verify Provenance
-    needs:
-      [
-        validate-release,
-        extension-provenance,
-        upload-plugin-packages,
-        vex-attest,
-      ]
+    needs: [validate-release, extension-provenance, vex-attest]
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -1016,7 +755,6 @@ jobs:
           gh release download "$RELEASE_TAG" \
             -R "$REPOSITORY" \
             -p '*.vsix' \
-            -p '*.zip' \
             -p 'hve-core.openvex.json' \
             -D ./artifacts
 
@@ -1147,13 +885,7 @@ jobs:
 
   append-verification-notes:
     name: Append Verification Instructions
-    needs:
-      [
-        validate-release,
-        extension-provenance,
-        upload-plugin-packages,
-        verify-provenance,
-      ]
+    needs: [validate-release, extension-provenance, verify-provenance]
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -1177,9 +909,6 @@ jobs:
           ```bash
           # Verify a VSIX extension package
           gh attestation verify <file>.vsix --repo microsoft/hve-core
-
-          # Verify a plugin ZIP package
-          gh attestation verify <file>.zip --repo microsoft/hve-core
           ```
 
           ## VEX (Vulnerability Exploitability eXchange)
@@ -1206,7 +935,6 @@ jobs:
       [
         validate-release,
         extension-provenance,
-        upload-plugin-packages,
         vex-attest,
         verify-provenance,
         sbom-diff,

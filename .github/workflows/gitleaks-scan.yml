@@ -71,6 +71,7 @@ jobs:
         shell: bash
         env:
           INPUT_LOG_OPTS: ${{ inputs.log-opts }}
+          INPUT_SOFT_FAIL: ${{ inputs.soft-fail }}
         run: |
           set -euo pipefail
 
@@ -105,7 +106,7 @@ jobs:
           elif [ "$EXIT_CODE" -eq 1 ]; then
             echo "::warning::Gitleaks detected secrets in the repository."
             echo "leaks-found=true" >> "$GITHUB_OUTPUT"
-            if [ "${{ inputs.soft-fail }}" != "true" ]; then
+            if [ "$INPUT_SOFT_FAIL" != "true" ]; then
               echo "::error::Secret scanning failed. Review detected secrets in logs/gitleaks-results.sarif"
               exit 1
             fi
@@ -133,8 +134,10 @@ jobs:
       - name: Add job summary
         if: always()
         shell: bash
+        env:
+          GITLEAKS_LEAKS_FOUND: ${{ steps.gitleaks.outputs.leaks-found }}
         run: |
-          LEAKS_FOUND="${{ steps.gitleaks.outputs.leaks-found }}"
+          LEAKS_FOUND="$GITLEAKS_LEAKS_FOUND"
           if [ "$LEAKS_FOUND" = "true" ]; then
             STATUS="⚠️ Secrets Detected"
           else

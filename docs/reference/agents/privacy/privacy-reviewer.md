@@ -2,7 +2,13 @@
 title: Privacy Reviewer
 description: "Privacy-focused reviewer orchestrator for assessment planning, evidence review, and report generation"
 sidebar_position: 2
-ms.date: 2026-07-03
+author: Microsoft
+ms.date: 2026-08-12
+ms.topic: reference
+keywords:
+  - agent
+  - privacy
+  - privacy-reviewer
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->

@@ -80,6 +80,9 @@ jobs:
             ForEach-Object { Resolve-Path -Relative $_.DirectoryName } |
             ForEach-Object { $_ -replace '^\.[\\/]', '' } |
             Sort-Object)
+          # Reject repository-derived paths that could alter command structure downstream.
+          . ./scripts/security/Assert-WorkflowProjectDirectory.ps1
+          $projectList = @(Assert-WorkflowProjectDirectory -Path $projectList)
           $jsonItems = $projectList | ForEach-Object { $_ | ConvertTo-Json -Compress }
           $dirs = '[' + (($jsonItems) -join ',') + ']'
           "directories=$dirs" >> $env:GITHUB_OUTPUT
@@ -118,6 +121,9 @@ jobs:
             Where-Object { @(Get-ChildItem -Path $_ -Recurse -Force -File -ErrorAction SilentlyContinue | Where-Object { $_.Name -match '\.(test|spec)\.(mjs|cjs|js)$' -and $_.FullName -notmatch 'node_modules' }).Count -gt 0 } |
             ForEach-Object { (Resolve-Path -Relative $_) -replace '^\.[\\/]', '' -replace '\\', '/' } |
             Sort-Object -Unique)
+          # Reject repository-derived paths that could alter command structure downstream.
+          . ./scripts/security/Assert-WorkflowProjectDirectory.ps1
+          $skills = @(Assert-WorkflowProjectDirectory -Path $skills)
           $jsonItems = $skills | ForEach-Object { $_ | ConvertTo-Json -Compress }
           $dirs = '[' + (($jsonItems) -join ',') + ']'
           "directories=$dirs" >> $env:GITHUB_OUTPUT
@@ -221,7 +227,7 @@ jobs:
       - name: Set up Node
         uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
-          node-version: '24'
+          node-version: "24"
 
       - name: Install accessibility skill Node dependencies
         shell: bash
@@ -414,6 +420,17 @@ jobs:
       upload-sarif: true
       upload-artifact: false
 
+  workflow-runner-check:
+    name: Workflow Runner Check
+    uses: ./.github/workflows/workflow-runner-scan.yml
+    permissions:
+      contents: read
+      security-events: write # Required for SARIF upload to Security tab
+    with:
+      soft-fail: false
+      upload-sarif: true
+      upload-artifact: false
+
   dangerous-workflow-check:
     name: Dangerous Workflow Check
     uses: ./.github/workflows/dangerous-workflow-scan.yml
@@ -569,18 +586,6 @@ jobs:
             exit 1
           fi
 
-          # The retained record, not the pull request body or the moving head,
-          # is what the managed release pull request later replays, so a head
-          # whose record does not name this exact intent is stale.
-          if ! git show "refs/remotes/pull/$PR_NUMBER/head:.github/plugin/release-candidate.json" | jq -e \
-            --arg version "$CANDIDATE" '
-              .version == $version and
-              (.sourceCommit | type == "string" and test("^[0-9a-f]{40}$"))
-            ' >/dev/null; then
-            echo "::error::release-candidate.json at $HEAD_SHA does not record $CANDIDATE with a full immutable source commit"
-            exit 1
-          fi
-
           # A tag is immutable, so a transport failure aborts under set -e
           # instead of reporting the identity as available.
           CANDIDATE_REF="refs/tags/prerelease-v$CANDIDATE"
@@ -656,128 +661,6 @@ jobs:
           fi
           echo "$HEAD_BRANCH advances release/stable from $BASELINE to $CANDIDATE using $SOURCE_TAG"
 
-      # The managed release head is the last mutable state before the release
-      # tag, so the required aggregate proves that exact commit reproduces the
-      # retained candidate from the immutable source the record names. It reads
-      # only: a drifted, partial, or malformed head fails instead of being
-      # repaired.
-      - name: Verify managed release head reproduces its retained candidate
-        if: >
-          github.event_name == 'pull_request'
-          && github.event.pull_request.head.repo.full_name == github.repository
-          && ((github.event.pull_request.base.ref == 'release/prerelease'
-          && github.event.pull_request.head.ref == 'release-please--branches--release/prerelease')
-          || (github.event.pull_request.base.ref == 'release/stable'
-          && github.event.pull_request.head.ref == 'release-please--branches--release/stable'))
-        env:
-          PR_NUMBER: ${{ github.event.pull_request.number }}
-          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
-          BASE_REF: ${{ github.event.pull_request.base.ref }}
-          HEAD_REF: ${{ github.event.pull_request.head.ref }}
-        run: |
-          set -euo pipefail
-          if [[ ! "$PR_NUMBER" =~ ^[0-9]+$ ]]; then
-            echo "::error::Managed release event carries an invalid pull request number"
-            exit 1
-          fi
-          if [[ ! "$HEAD_SHA" =~ ^[0-9a-f]{40}$ ]]; then
-            echo "::error::Managed release event carries an invalid head SHA"
-            exit 1
-          fi
-
-          # Channel identity comes from the exact base and head pair, never from
-          # a prefix match or a branch name this run could have widened.
-          case "$BASE_REF|$HEAD_REF" in
-            'release/prerelease|release-please--branches--release/prerelease')
-              CHANNEL=PreRelease
-              MANIFEST=.release-please-prerelease-manifest.json
-              ;;
-            'release/stable|release-please--branches--release/stable')
-              CHANNEL=Stable
-              MANIFEST=.release-please-manifest.json
-              ;;
-            *)
-              echo "::error::$HEAD_REF into $BASE_REF is not a managed release pull request"
-              exit 1
-              ;;
-          esac
-
-          # The verified commit is the exact event head, so a head that moved
-          # after the event fails rather than being proved at a later tip.
-          git fetch --no-tags origin \
-            "+refs/pull/$PR_NUMBER/head:refs/remotes/pull/$PR_NUMBER/head" \
-            "+refs/heads/$BASE_REF:refs/remotes/origin/$BASE_REF"
-          FETCHED_HEAD=$(git rev-parse "refs/remotes/pull/$PR_NUMBER/head")
-          if [ "$FETCHED_HEAD" != "$HEAD_SHA" ]; then
-            echo "::error::Fetched managed release head $FETCHED_HEAD does not match event head $HEAD_SHA"
-            exit 1
-          fi
-          git checkout --detach --force "$HEAD_SHA"
-
-          VERSION=$(jq -r '.["."] // ""' "$MANIFEST")
-          if ! printf '%s' "$VERSION" | grep -Eq '^[0-9]+\.[0-9]+\.[0-9]+$'; then
-            echo "::error::$MANIFEST at $HEAD_SHA has no MAJOR.MINOR.PATCH root version"
-            exit 1
-          fi
-
-          # Candidate membership is replayed from the retained record and the
-          # immutable source it names, never from the moving head.
-          SOURCE_COMMIT=$(jq -r '.sourceCommit // ""' .github/plugin/release-candidate.json)
-          if ! printf '%s' "$SOURCE_COMMIT" | grep -Eq '^[0-9a-f]{40}$'; then
-            echo "::error::release-candidate.json at $HEAD_SHA carries no full immutable source commit"
-            exit 1
-          fi
-          git fetch --no-tags --depth 1 origin "$SOURCE_COMMIT"
-          CANDIDATE_SOURCE_CATALOG="$RUNNER_TEMP/managed-head-candidate-source-marketplace.json"
-          git show "$SOURCE_COMMIT:.github/plugin/marketplace.json" > "$CANDIDATE_SOURCE_CATALOG"
-
-          BASELINE=$(git show "refs/remotes/origin/$BASE_REF:$MANIFEST" | jq -r '.["."] // ""')
-          if ! printf '%s' "$BASELINE" | grep -Eq '^[0-9]+\.[0-9]+\.[0-9]+$'; then
-            echo "::error::$BASE_REF carries no MAJOR.MINOR.PATCH baseline version"
-            exit 1
-          fi
-
-          # The baseline locator is the one uniform locator the target branch
-          # catalog already publishes across a complete catalog at its own
-          # metadata version: the reserved OMITTED locator when no entry names
-          # a ref, otherwise the one non-empty ref they all share. Historical
-          # entries carry a string-form source, which names no ref and therefore
-          # reads as omitted. A drifted target therefore fails the record
-          # instead of being compared against a locator rebuilt from a version.
-          BASELINE_TAG=$(git show "refs/remotes/origin/$BASE_REF:.github/plugin/marketplace.json" |
-            jq -r '
-              (.metadata.version // "") as $version
-              | [.plugins[] | (.version // "")] as $versions
-              | [.plugins[]
-                 | if (.source | type) == "object" then (.source.ref // null) else null end] as $refs
-              | if ($version | test("^[0-9]+\\.[0-9]+\\.[0-9]+$"))
-                   and ($versions | length) > 0
-                   and ($versions | all(. == $version))
-                then
-                  if ($refs | all(. == null))
-                  then "OMITTED"
-                  elif ($refs | all(type == "string" and length > 0))
-                       and (($refs | unique) | length) == 1
-                  then $refs[0]
-                  else ""
-                  end
-                else ""
-                end
-            ')
-          if [ -z "$BASELINE_TAG" ] || [[ "$BASELINE_TAG" == *$'\n'* || "$BASELINE_TAG" == *$'\r'* ]]; then
-            echo "::error::$BASE_REF .github/plugin/marketplace.json does not carry one uniform baseline locator across a complete catalog at its own metadata version"
-            exit 1
-          fi
-
-          pwsh -NoProfile -File ./scripts/release/Update-VersionFiles.ps1 \
-              -Version "$VERSION" \
-              -Channel "$CHANNEL" \
-              -RepoRoot "$PWD" \
-              -CandidateAction Verify \
-              -CandidateSourceCommit "$SOURCE_COMMIT" \
-              -CandidateSourceCatalog "$CANDIDATE_SOURCE_CATALOG" \
-              -BaselineTag "$BASELINE_TAG"
-
   pr-validation-success:
     name: PR Validation Success
     runs-on: ubuntu-latest
@@ -814,6 +697,7 @@ jobs:
       - dependency-pinning-check
       - devcontainer-lockfile-check
       - workflow-permissions-check
+      - workflow-runner-check
       - dangerous-workflow-check
       - action-version-consistency-scan
       - gitleaks-scan

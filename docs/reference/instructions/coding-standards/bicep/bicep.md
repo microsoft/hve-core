@@ -2,7 +2,13 @@
 title: Coding Standards/Bicep/Bicep
 description: Bicep infrastructure-as-code authoring conventions
 sidebar_position: 1
-ms.date: 2026-07-03
+author: Microsoft
+ms.date: 2026-08-12
+ms.topic: reference
+keywords:
+  - instruction
+  - coding-standards
+  - coding-standards/bicep/bicep
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->

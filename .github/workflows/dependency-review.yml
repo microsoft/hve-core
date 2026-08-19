@@ -53,7 +53,21 @@ jobs:
           # safe_globals() protection applies and the path is not exploitable.
           # The only patched release (5.0.0rc3) is a pre-release that breaks
           # detoxify==0.5.2, which requires transformers<5.
-          allow-ghsas: GHSA-69w3-r845-3855
+          #
+          # GHSA-5p2g-fcmc-qvqq (CVE-2025-71329) and GHSA-w3rx-r6r6-pgpr:
+          # image-size infinite-loop denial of service in the JXL, HEIF, and
+          # ICNS parsers. Both advisories cover every published version
+          # (<= 2.0.2) and report no patched version, so no upgrade clears
+          # them. The package reaches this repository only as a transitive
+          # dependency of @docusaurus/mdx-loader, which measures repository
+          # controlled documentation images at site-build time. The
+          # attacker-supplied image buffer the advisories require is not
+          # reachable, and the site ships as static output with no runtime
+          # image parsing. Revisit when upstream publishes a fix.
+          allow-ghsas: >-
+            GHSA-69w3-r845-3855,
+            GHSA-5p2g-fcmc-qvqq,
+            GHSA-w3rx-r6r6-pgpr
           comment-summary-in-pr: always
           license-check: true
           allow-licenses: >-
@@ -107,6 +121,24 @@ jobs:
           # transformers; CNRI-Python is a permissive PSF-style license. The
           # moderation eval is an internal test harness, not a distributed
           # product.
+          # The security-planning TM7 harness adds a Windows-only UI
+          # Automation group. Every package below ships a permissive license
+          # that already appears in allow-licenses; the action cannot match
+          # them because the dependency graph reports a compound expression or
+          # "unknown". Verified against the installed wheels:
+          # pkg:pypi/pywinauto declares a compound SPDX expression
+          # (BSD-3-Clause AND LGPL-2.1-only AND LGPL-2.1-or-later). The
+          # distributed wheel is BSD-3-Clause only: its METADATA declares
+          # "License: BSD 3-clause" with the OSI BSD classifier, its bundled
+          # LICENSE is the BSD 3-clause text, and the package contains no LGPL
+          # reference. The LGPL components are detected in the upstream source
+          # repository and are not redistributed in the wheel. This is the
+          # same situation as shapely above.
+          # pkg:pypi/comtypes is MIT (License-Expression: MIT).
+          # pkg:pypi/pillow is MIT-CMU (License-Expression: MIT-CMU).
+          # pkg:pypi/pywin32 is PSF (OSI Python Software Foundation License).
+          # The harness is Windows-only, opt-in, and not distributed as a
+          # product; portable TM7 generation requires none of these.
           #
           # axe-core and @axe-core/playwright are MPL-2.0, which is file-level
           # copyleft rather than project-level. Both are already vendored at the
@@ -143,6 +175,11 @@ jobs:
           # https://www.npmjs.com/package/@vscode/vsce-sign; those terms cover
           # this build-time use, and the toolchain tarball is never shipped as
           # a release asset.
+          # pkg:pypi/pyyaml is MIT licensed per its own source repository, but
+          # its PyPI metadata declares no SPDX expression, so the action cannot
+          # match it against allow-licenses. It is a direct dependency of the
+          # architecture-diagrams, ds-catalog, and ds-feasibility skills, which
+          # parse YAML through yaml.SafeLoader.
           allow-dependencies-licenses: >-
             pkg:pypi/lxml,
             pkg:pypi/typing-extensions,
@@ -162,6 +199,11 @@ jobs:
             pkg:pypi/safetensors,
             pkg:pypi/regex,
             pkg:pypi/tqdm,
+            pkg:pypi/pywinauto,
+            pkg:pypi/comtypes,
+            pkg:pypi/pillow,
+            pkg:pypi/pywin32,
+            pkg:pypi/pyyaml,
             pkg:npm/dompurify,
             pkg:npm/lunr-languages,
             pkg:npm/%40github/copilot,

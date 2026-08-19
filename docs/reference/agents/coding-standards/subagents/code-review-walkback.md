@@ -2,7 +2,13 @@
 title: Code Review Walkback
 description: Thin wrapper subagent that activates rpi-research for bounded Register 2 investigations and anchors results to a review board item
 sidebar_position: 8
-ms.date: 2026-07-16
+author: Microsoft
+ms.date: 2026-08-12
+ms.topic: reference
+keywords:
+  - agent
+  - coding-standards
+  - code-review-walkback
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->

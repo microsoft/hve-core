@@ -246,6 +246,16 @@ Patterns from `requirements-quality` skill: Gherkin Given/When/Then format (see 
 
 *Guidance*: Maintain the traceability matrix as part of the PRD. Use [traceability-matrix.md](../../references/_shared/traceability-matrix.md) for the canonical table shapes and formulas.
 
+### Feasibility Candidate Disposition
+
+{{feasibility_candidate_disposition_table}}
+
+*Guidance*: Include this register when a feasibility-to-PRD handoff is consumed. Each forward-verdict candidate appears exactly once. Record source handoff ID, source candidate ID, evidence references, disposition, rationale, and the resulting final PRD ID when accepted. Allowed dispositions are `accepted-fr`, `accepted-nfr`, `accepted-constraint`, `retained-gap`, `rejected`, and `deferred`. Negative feasibility verdicts have no candidate rows. Concern hints are advisory and never assign a final category or downstream planner.
+
+| Source handoff ID     | Source candidate ID     | Evidence references      | Disposition               | Resulting PRD ID           | Rationale                 |
+|-----------------------|-------------------------|--------------------------|---------------------------|----------------------------|---------------------------|
+| {{source_handoff_id}} | {{source_candidate_id}} | {{source_evidence_refs}} | {{candidate_disposition}} | {{resulting_prd_id_or_na}} | {{disposition_rationale}} |
+
 ### FR-to-AC Coverage
 
 {{fr_to_ac_traceability_table}}

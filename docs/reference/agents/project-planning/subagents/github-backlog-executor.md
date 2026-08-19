@@ -2,7 +2,13 @@
 title: GitHub Backlog Executor
 description: "Applies a dispatched GitHub backlog operation set in one confirmed repository. Creates, updates, comments on, and closes issues and sub-issues."
 sidebar_position: 3
-ms.date: 2026-08-06
+author: Microsoft
+ms.date: 2026-08-12
+ms.topic: reference
+keywords:
+  - agent
+  - project-planning
+  - github-backlog-executor
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->

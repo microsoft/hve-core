@@ -3,8 +3,12 @@ title: Build Workflows
 description: GitHub Actions CI/CD pipeline architecture for validation, security, and release automation
 sidebar_position: 3
 author: WilliamBerryiii
-ms.date: 2026-08-10
+ms.date: 2026-08-16
 ms.topic: overview
+keywords:
+  - github actions
+  - workflows
+  - ci/cd
 ---
 
 HVE Core uses GitHub Actions for continuous integration, quality validation, security scanning, and release automation. The workflow architecture emphasizes reusable components and parallel execution for fast feedback.
@@ -28,7 +32,7 @@ flowchart TD
         PROMO -->|merge, no tag| PRE_RP[Pre-Release Pipeline PR-only mode]
         PRE_RP --> PRE_REL[Review managed PreRelease PR]
         PRE_REL -->|merge| PRE_DRAFT[Tag-only Draft at Managed Merge]
-        PRE_DRAFT --> PRE_EVIDENCE[Release-tag Packages and Canonical Evidence]
+        PRE_DRAFT --> PRE_EVIDENCE[Release-tag VSIX and Assurance]
         PRE_EVIDENCE --> PRE_PUBLISH[App-token Prerelease Publication]
         PRE_PUBLISH --> PRE_MARKET[Pre-Release Marketplace Publish]
     end
@@ -40,7 +44,7 @@ flowchart TD
         ST_PROMO -->|merge, no tag| ST_RP[Stable Release Publish PR-only mode]
         ST_RP --> ST_REL[Review managed Stable PR]
         ST_REL -->|merge| ST_DRAFT[Tag-only Draft at Managed Merge]
-        ST_DRAFT --> ST_EVIDENCE[Release-tag Packages and Canonical Evidence]
+        ST_DRAFT --> ST_EVIDENCE[Release-tag VSIX and Assurance]
         ST_EVIDENCE --> ST_PUBLISH[App-token Stable Publication]
         ST_PUBLISH --> ST_MARKET[Stable Marketplace Publish]
     end
@@ -117,8 +121,7 @@ Individual validation workflows called by orchestration workflows:
 | `extension-provenance.yml`            | VS Code extension attestation and release upload | N/A                                      |
 | `copyright-headers.yml`               | Copyright header validation                      | `npm run validate:copyright`             |
 | `gitleaks-scan.yml`                   | Secret detection scanning                        | N/A (gitleaks direct)                    |
-| `plugin-package.yml`                  | Plugin packaging                                 | N/A                                      |
-| `plugin-validation.yml`               | Marketplace package metadata and closure         | `npm run lint:marketplace`               |
+| `plugin-validation.yml`               | Plugin manifest, locator, and hook validation    | `npm run plugin:validate`                |
 | `extension-marketplace-publish.yml`   | Extension marketplace publishing                 | N/A                                      |
 | `python-lint.yml`                     | Python linting (ruff)                            | `npm run lint:py`                        |
 | `pytest-tests.yml`                    | Python unit tests                                | `npm run test:py`                        |
@@ -194,7 +197,7 @@ flowchart LR
 | npm-audit                   | Inline                            | npm dependency vulnerabilities  |
 | codeql                      | `codeql-analysis.yml`             | Code security patterns          |
 | copyright-headers           | `copyright-headers.yml`           | Copyright header compliance     |
-| plugin-validation           | `plugin-validation.yml`           | Plugin and package metadata     |
+| plugin-validation           | `plugin-validation.yml`           | Plugin manifest, locator, hooks |
 | gitleaks-scan               | `gitleaks-scan.yml`               | Secret detection                |
 
 All jobs run in parallel with no dependencies, enabling fast feedback (typically under 3 minutes).
@@ -228,7 +231,7 @@ only rejects a candidate that does not advance it. The ordinary sequence is
 `3.3.101` to `3.5.0` to `3.6.0`.
 
 No commit classification or automatic patch, minor, or major release class
-participates in ordinary allocation. Matching plugin packages use the identical
+participates in ordinary allocation. The plugin manifest and VSIX use the same
 channel version. A major-line transition, or a Stable patch or hotfix, requires
 a separate explicit manifest and release-state decision. Odd/even minor parity
 is repository policy aligned with VS Code Marketplace guidance and behavior,
@@ -236,17 +239,15 @@ not a requirement of `MAJOR.MINOR.PATCH` syntax.
 
 ### Release Channel Jobs
 
-`release-prerelease.yml` jobs: `release-please`, `sync-release-pr`,
+`release-prerelease.yml` jobs: `validate-trigger`, `release-please`, `sync-release-pr`,
 `validate-release`, `close-milestone`, `extension-package-prerelease`,
-`plugin-package-prerelease`, `generate-dependency-sbom`,
-`extension-provenance-prerelease`, `upload-plugin-packages`,
+`generate-dependency-sbom`, `extension-provenance-prerelease`,
 `verify-provenance`, and `publish-release`.
 
 `release-stable-publish.yml` jobs: `validate-trigger`, `release-please`,
 `sync-release-pr`, `validate-release`, `close-milestone`,
 `extension-package-release`, `extension-provenance`,
-`plugin-package-release`, `generate-dependency-sbom`,
-`upload-plugin-packages`, `vex-attest`, `verify-provenance`, `sbom-diff`,
+`generate-dependency-sbom`, `vex-attest`, `verify-provenance`, `sbom-diff`,
 `append-verification-notes`, and `publish-release`.
 
 Both channels build the VSIX in `extension-package.yml`, which holds only
@@ -254,12 +255,11 @@ Both channels build the VSIX in `extension-package.yml`, which holds only
 signing scopes and never installs dependencies. No job does both.
 
 Both release workflows verify event, merge, release-please, and release-tag
-SHA equality plus target-branch ancestry. Extension and plugin packages use
-the validated release SHA bound to the immutable channel tag. Every release
-catalog entry uses `prerelease-v<version>` or `v<version>` for its channel. The
-workflows attach and attest
-`plugin-release-evidence.json`, derived from declared canonical tracked
-sources, alongside signed plugin ZIPs, SBOM, Sigstore, and in-toto assets.
+SHA equality plus target-branch ancestry. The extension uses the validated
+release SHA bound to the immutable channel tag. Each workflow attaches one
+VSIX with SPDX, Sigstore, and in-toto sidecars plus
+`dependencies.spdx.json`; Stable also publishes and attests
+`hve-core.openvex.json`.
 
 Both channels publish their draft with a release GitHub App token. The
 resulting `published` event triggers the matching Marketplace workflow.
@@ -268,9 +268,7 @@ development-tip channel sourced from canonical `.github` content and is not
 updated by release completion. Release branches, immutable tags, and published
 releases own release state and history.
 
-The ref-less `microsoft/hve-core` registration sources canonical content from `.github` through the ref-less main catalog. An explicit marketplace refresh and plugin update are required for that catalog, which has no release gate, SBOM, or attestation. PreRelease and Stable retain reviewed, release-gated, SBOM-covered, and attested immutable delivery through moving branch registrations and exact tags.
-
-Because snapshot publication has stopped, tags and catalogs remain immutable and supported only as historical records. They are not current release or registration namespaces.
+The ref-less `microsoft/hve-core` registration sources canonical content from `.github` through the main catalog. An explicit marketplace refresh and plugin update are required for that catalog, which has no release gate, SBOM, or attestation. PreRelease and Stable retain reviewed, release-gated, SBOM-covered, and attested immutable delivery through moving branch registrations and exact tags.
 
 ## Security Workflows
 
@@ -303,9 +301,10 @@ validated exact channel tag.
 
 ```mermaid
 flowchart LR
-    PRE[Validate prerelease-v tag] --> PRE_MATRIX[Resolve PreRelease package matrix]
-    PRE_MATRIX --> GENERIC[Generic Marketplace publisher]
-    STABLE[Validate v tag and discover Stable matrix] --> GENERIC
+    accTitle: Extension Marketplace publication flow
+    accDescr: PreRelease and Stable validate their exact release tags, then use one publisher to download the VSIX, verify its attestation, and publish through Azure OIDC and vsce.
+    PRE[Validate prerelease-v tag and catalog] --> GENERIC[Generic Marketplace publisher]
+    STABLE[Validate v tag and catalog] --> GENERIC
     GENERIC --> ASSET[Download VSIX release asset]
     ASSET --> VERIFY[Verify lane-specific attestation]
     VERIFY --> OIDC[Publish through Azure OIDC and vsce]
@@ -325,26 +324,9 @@ OIDC and `vsce`.
 
 ### Marketplace Build
 
-`Get-MarketplacePackageMatrix.ps1` emits a sorted, nonempty matrix from active catalog entries. Stable and PreRelease must resolve the same package-name set and the same active component and maturity projection for every package. The matrix, not a literal package count or a package-specific workflow branch, controls packaging and publication.
+Both channel workflows validate the one-entry catalog and call the generic publisher for `hve-core`. The publisher validates inputs, downloads `hve-core-<version>.vsix`, verifies its lane-specific attestation, prepares the locked publisher toolchain from protected `main`, and publishes through Azure OIDC and `vsce`.
 
-`hve-core` retains the unsuffixed HVE Core extension identity. Every other active catalog entry receives a deterministic package-specific extension identity and plugin root.
-
-Each package remains self-contained; the release model does not use package
-dependencies or aggregate metadata. Catalog membership uses `.github`-root
-canonical paths, while generated ZIP and VSIX paths remain host-specific
-packaging details.
-
-Lifecycle inclusion rules:
-
-| Lifecycle Level | Build Inclusion                                 |
-|-----------------|-------------------------------------------------|
-| Deprecated      | Excluded from both channels                     |
-| Removed         | Excluded from both channels                     |
-| Experimental    | Included in both Stable and PreRelease channels |
-| Preview         | Included in both Stable and PreRelease channels |
-| Stable          | Included in both Stable and PreRelease channels |
-
-Lifecycle labels are disclosure and governance metadata. Channel selection does not filter active components.
+Stable and PreRelease package the same `.github/plugin.json` membership into the same extension identity. The channel controls version, release source, and the VS Code Marketplace pre-release flag, not component inclusion.
 
 ### Version Channels
 
@@ -371,7 +353,7 @@ Workflows invoke validation through npm scripts defined in `package.json`:
 | `lint:links`                    | `Invoke-LinkLanguageCheck.ps1`                                                                        | link-lang-check.yml                         |
 | `lint:yaml`                     | `Invoke-YamlLint.ps1`                                                                                 | yaml-lint.yml                               |
 | `lint:ps`                       | `Invoke-PSScriptAnalyzer.ps1`                                                                         | ps-script-analyzer.yml                      |
-| `lint:marketplace`              | `Validate-Marketplace.ps1`                                                                            | plugin-validation.yml                       |
+| `lint:plugin-manifest`          | `Sync-PluginManifest.ps1 -Check`                                                                      | plugin-validation.yml                       |
 | `lint:version-consistency`      | `Test-ActionVersionConsistency.ps1`                                                                   | Local                                       |
 | `validate:local`                | Local-safe repository validation aggregate                                                            | Local-safe default                          |
 | `validate:docs`                 | Docusaurus lint, label registry, typecheck, and component tests                                       | Local-safe docs default                     |
@@ -386,8 +368,8 @@ Workflows invoke validation through npm scripts defined in `package.json`:
 | `extension:postprocess`         | `markdownlint-cli2 + markdown-table-formatter (extension/**/*.md)`                                    | extension-package.yml                       |
 | `extension:package`             | `Package-Extension.ps1`                                                                               | extension-package.yml                       |
 | `extension:package:prerelease`  | `Package-Extension.ps1 -PreRelease`                                                                   | extension-package.yml                       |
-| `plugin:generate`               | `Generate-Plugins.ps1` + post-process                                                                 | plugin-package.yml                          |
-| `plugin:validate`               | Marketplace package metadata and closure validation                                                   | plugin-validation.yml                       |
+| `plugin:sync`                   | `Sync-PluginManifest.ps1`                                                                             | Local manifest update                       |
+| `plugin:validate`               | Plugin manifest check plus hook validation                                                            | plugin-validation.yml                       |
 | `lint:py`                       | `ruff check`                                                                                          | python-lint.yml                             |
 | `lint:models`                   | `Validate-ModelReferences.ps1`                                                                        | model-validation.yml                        |
 | `lint:ai-artifacts`             | `Validate-PlannerArtifacts.ps1 -FailOnMissing`                                                        | ai-artifact-validation.yml                  |

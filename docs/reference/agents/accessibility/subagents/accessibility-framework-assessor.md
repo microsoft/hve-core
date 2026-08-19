@@ -2,7 +2,13 @@
 title: Accessibility Framework Assessor
 description: Assesses accessibility framework scopes through the consolidated Accessibility skill and returns structured findings
 sidebar_position: 1
-ms.date: 2026-07-05
+author: Microsoft
+ms.date: 2026-08-12
+ms.topic: reference
+keywords:
+  - agent
+  - accessibility
+  - accessibility-framework-assessor
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->

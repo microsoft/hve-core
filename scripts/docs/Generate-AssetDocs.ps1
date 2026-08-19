@@ -70,6 +70,33 @@ Import-Module (Join-Path $PSScriptRoot 'Modules/DocsHelpers.psm1') -Force
 
 #region Pure Helpers
 
+function Test-DocContentEqual {
+    <#
+    .SYNOPSIS
+        Compares two page contents ignoring line-ending style.
+    .DESCRIPTION
+        Generated content always uses LF, but a Windows checkout with
+        core.autocrlf=true stores CRLF on disk. A raw ordinal comparison would
+        therefore report every page as changed, advancing ms.date and rewriting
+        files that have no real content difference. Normalizing CRLF to LF on
+        both sides keeps the generator idempotent across platforms.
+    .PARAMETER Left
+        First content string.
+    .PARAMETER Right
+        Second content string.
+    .OUTPUTS
+        [bool] True when the contents match apart from line endings.
+    #>
+    [CmdletBinding()]
+    [OutputType([bool])]
+    param(
+        [Parameter(Mandatory = $true)][AllowEmptyString()][AllowNull()][string]$Left,
+        [Parameter(Mandatory = $true)][AllowEmptyString()][AllowNull()][string]$Right
+    )
+
+    return [string]::Equals(($Left -replace "`r`n", "`n"), ($Right -replace "`r`n", "`n"), [System.StringComparison]::Ordinal)
+}
+
 function New-DocFrontmatter {
     <#
     .SYNOPSIS
@@ -82,6 +109,12 @@ function New-DocFrontmatter {
         Stable sidebar position.
     .PARAMETER MsDate
         ISO 8601 last-modified date.
+    .PARAMETER Topic
+        Documentation topic type from the docs frontmatter schema enum.
+    .PARAMETER Keywords
+        Content categorization keywords emitted as a YAML block sequence.
+    .PARAMETER Author
+        Author or team responsible for the content.
     .OUTPUTS
         [string] The frontmatter block including the delimiting fences.
     #>
@@ -91,17 +124,68 @@ function New-DocFrontmatter {
         [Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string]$Title,
         [Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string]$Description,
         [Parameter(Mandatory = $true)][int]$SidebarPosition,
-        [Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string]$MsDate
+        [Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string]$MsDate,
+        [Parameter(Mandatory = $true)][ValidateSet('overview', 'concept', 'tutorial', 'reference', 'how-to', 'troubleshooting', 'architecture')][string]$Topic,
+        [Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string[]]$Keywords,
+        [Parameter(Mandatory = $false)][ValidateNotNullOrEmpty()][string]$Author = 'Microsoft'
     )
+
+    $keywordLines = foreach ($keyword in $Keywords) {
+        "  - $(Format-YamlScalar -Value $keyword)"
+    }
 
     return (@(
             '---'
             "title: $(Format-YamlScalar -Value $Title)"
             "description: $(Format-YamlScalar -Value $Description)"
             "sidebar_position: $SidebarPosition"
+            "author: $(Format-YamlScalar -Value $Author)"
             "ms.date: $MsDate"
+            "ms.topic: $Topic"
+            'keywords:'
+            $keywordLines
             '---'
         ) -join "`n")
+}
+
+function Get-AssetDocKeyword {
+    <#
+    .SYNOPSIS
+        Derives the frontmatter keywords for an asset reference page.
+    .DESCRIPTION
+        Combines the asset kind, its owning collection segment, and its artifact
+        key into a deduplicated, order-stable keyword list. The collection segment
+        is the directory immediately under docs/reference/<kindDir>/ and is omitted
+        for assets that sit directly in the kind directory.
+    .PARAMETER Model
+        Page model from New-AssetPageModel.
+    .OUTPUTS
+        [string[]] Deduplicated keyword list.
+    #>
+    [CmdletBinding()]
+    [OutputType([string[]])]
+    param(
+        [Parameter(Mandatory = $true)][PSCustomObject]$Model
+    )
+
+    $candidates = [System.Collections.Generic.List[string]]::new()
+    $candidates.Add($Model.Kind)
+
+    $segments = @(($Model.DocRel -replace '^docs/reference/', '').Split('/'))
+    if ($segments.Count -gt 2) {
+        $candidates.Add($segments[1])
+    }
+
+    $candidates.Add($Model.Key)
+
+    $seen = [System.Collections.Generic.HashSet[string]]::new([System.StringComparer]::OrdinalIgnoreCase)
+    $keywords = foreach ($candidate in $candidates) {
+        if (-not [string]::IsNullOrWhiteSpace($candidate) -and $seen.Add($candidate)) {
+            $candidate
+        }
+    }
+
+    return @($keywords)
 }
 
 function Remove-HowToUseSection {
@@ -169,8 +253,10 @@ function Test-AssetDocScaffoldOrphan {
         Determines whether an orphan page is an untouched generated scaffold.
     .DESCRIPTION
         Requires exactly one begin and end marker for both generated regions,
-        valid marker ordering, and a post-overview tail that is byte-identical
-        to either canonical interactive or non-interactive scaffold tail.
+        valid marker ordering, and a post-overview tail matching either the
+        canonical interactive or non-interactive scaffold tail. The tail
+        comparison ignores line-ending style so a CRLF checkout of the template
+        still matches an LF-generated page.
     .PARAMETER Content
         Full orphan page content.
     .PARAMETER InteractiveTail
@@ -211,8 +297,8 @@ function Test-AssetDocScaffoldOrphan {
         return $false
     }
 
-    return [string]::Equals($overview.After, $InteractiveTail, [System.StringComparison]::Ordinal) -or
-        [string]::Equals($overview.After, $NonInteractiveTail, [System.StringComparison]::Ordinal)
+    return (Test-DocContentEqual -Left $overview.After -Right $InteractiveTail) -or
+        (Test-DocContentEqual -Left $overview.After -Right $NonInteractiveTail)
 }
 
 #endregion Pure Helpers
@@ -336,17 +422,26 @@ function New-AssetDocContent {
     $overviewRegion = New-AssetGeneratedRegion -Region 'overview' -Body $overviewBody
     $generatedTail = "`n`n$metadataRegion`n`n## What it does`n`n$overviewRegion" + $humanTail
 
+    $frontmatterArgs = @{
+        Title           = $Model.Title
+        Description     = $descriptionMeta
+        SidebarPosition = $SidebarPosition
+        Topic           = 'reference'
+        Keywords        = (Get-AssetDocKeyword -Model $Model)
+    }
+
     # Assemble with the preserved ms.date first, then advance it to today only
     # when the regenerated output differs from the existing page. This makes
     # ms.date track the last time the generated frontmatter or regions changed
     # rather than the first-scaffold date, while staying idempotent: rebuilding
     # with an unchanged date reproduces the file byte-for-byte, and preserved
     # human sections keep the output identical so human-only edits never advance
-    # the date.
-    $content = ((New-DocFrontmatter -Title $Model.Title -Description $descriptionMeta -SidebarPosition $SidebarPosition -MsDate $msDate) + $generatedTail).TrimEnd() + "`n"
+    # the date. The comparison ignores line endings so a CRLF checkout does not
+    # register as drift.
+    $content = ((New-DocFrontmatter @frontmatterArgs -MsDate $msDate) + $generatedTail).TrimEnd() + "`n"
 
-    if ($null -ne $existing -and -not [string]::Equals($content, $existing, [System.StringComparison]::Ordinal)) {
-        $content = ((New-DocFrontmatter -Title $Model.Title -Description $descriptionMeta -SidebarPosition $SidebarPosition -MsDate $today) + $generatedTail).TrimEnd() + "`n"
+    if ($null -ne $existing -and -not (Test-DocContentEqual -Left $content -Right $existing)) {
+        $content = ((New-DocFrontmatter @frontmatterArgs -MsDate $today) + $generatedTail).TrimEnd() + "`n"
     }
 
     return $content
@@ -389,7 +484,7 @@ function New-KindIndexContent {
     $table = Format-MarkdownTable -Header @('Asset', 'Description') -Rows $rows.ToArray()
     $body = "This page lists the generated reference documentation for HVE Core $KindDir.`n`n" + $table
     $description = "Reference documentation for HVE Core $KindDir."
-    return (New-IndexContent -Title $title -Description $description -SidebarPosition 0 -RegionBody $body -ExistingPath (Join-Path $RepoRoot $indexRel))
+    return (New-IndexContent -Title $title -Description $description -SidebarPosition 0 -RegionBody $body -Keywords @('reference', $KindDir) -ExistingPath (Join-Path $RepoRoot $indexRel))
 }
 
 function New-RootIndexContent {
@@ -418,7 +513,7 @@ function New-RootIndexContent {
 
     $table = Format-MarkdownTable -Header @('Category', 'Assets') -Rows $rows.ToArray()
     $body = "This page lists the generated reference documentation, grouped by asset kind.`n`n" + $table
-    return (New-IndexContent -Title 'Reference' -Description 'Generated reference documentation for HVE Core GenAI assets.' -SidebarPosition 0 -RegionBody $body -ExistingPath (Join-Path $RepoRoot 'docs/reference/README.md'))
+    return (New-IndexContent -Title 'Reference' -Description 'Generated reference documentation for HVE Core GenAI assets.' -SidebarPosition 0 -RegionBody $body -Keywords @('reference', 'assets') -ExistingPath (Join-Path $RepoRoot 'docs/reference/README.md'))
 }
 
 function New-IndexContent {
@@ -433,6 +528,8 @@ function New-IndexContent {
         Stable sidebar position.
     .PARAMETER RegionBody
         The generated index body placed inside the index region.
+    .PARAMETER Keywords
+        Content categorization keywords for the index page.
     .PARAMETER ExistingPath
         Path to an existing index page. Its ms.date is preserved when the
         regenerated content is identical, and advanced to today when the
@@ -447,6 +544,7 @@ function New-IndexContent {
         [Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string]$Description,
         [Parameter(Mandatory = $true)][int]$SidebarPosition,
         [Parameter(Mandatory = $true)][string]$RegionBody,
+        [Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string[]]$Keywords,
         [Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string]$ExistingPath
     )
 
@@ -463,11 +561,19 @@ function New-IndexContent {
 
     $region = New-AssetGeneratedRegion -Region 'index' -Body $RegionBody
 
+    $frontmatterArgs = @{
+        Title           = $Title
+        Description     = $Description
+        SidebarPosition = $SidebarPosition
+        Topic           = 'overview'
+        Keywords        = $Keywords
+    }
+
     # Advance ms.date to today only when the regenerated index differs, so the
     # date reflects the last content change rather than the first-scaffold date.
-    $content = "$(New-DocFrontmatter -Title $Title -Description $Description -SidebarPosition $SidebarPosition -MsDate $msDate)`n`n$region`n"
-    if ($null -ne $existing -and -not [string]::Equals($content, $existing, [System.StringComparison]::Ordinal)) {
-        $content = "$(New-DocFrontmatter -Title $Title -Description $Description -SidebarPosition $SidebarPosition -MsDate $today)`n`n$region`n"
+    $content = "$(New-DocFrontmatter @frontmatterArgs -MsDate $msDate)`n`n$region`n"
+    if ($null -ne $existing -and -not (Test-DocContentEqual -Left $content -Right $existing)) {
+        $content = "$(New-DocFrontmatter @frontmatterArgs -MsDate $today)`n`n$region`n"
     }
 
     return $content
@@ -482,10 +588,10 @@ function Write-DocIfChanged {
     .SYNOPSIS
         Writes page content only when it differs, honoring -WhatIf.
     .DESCRIPTION
-        Compares the desired content against the current file using ordinal
-        comparison. Returns Unchanged when identical. Otherwise returns Created
-        or Updated; the write itself is gated by ShouldProcess so -WhatIf reports
-        drift without writing.
+        Compares the desired content against the current file, ignoring
+        line-ending style. Returns Unchanged when equivalent. Otherwise returns
+        Created or Updated; the write itself is gated by ShouldProcess so -WhatIf
+        reports drift without writing.
     .PARAMETER Path
         Absolute destination path.
     .PARAMETER Content
@@ -503,7 +609,7 @@ function Write-DocIfChanged {
     $exists = Test-Path -LiteralPath $Path
     if ($exists) {
         $current = Get-Content -LiteralPath $Path -Raw
-        if ([string]::Equals($current, $Content, [System.StringComparison]::Ordinal)) {
+        if (Test-DocContentEqual -Left $current -Right $Content) {
             return 'Unchanged'
         }
     }

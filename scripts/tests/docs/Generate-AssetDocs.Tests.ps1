@@ -352,3 +352,76 @@ Describe 'Invoke-AssetDocsGeneration input validation' -Tag 'Unit' {
         $result.DriftCount | Should -Be 0
     }
 }
+
+Describe 'New-DocFrontmatter' -Tag 'Unit' {
+    It 'Emits all required frontmatter fields' {
+        $fm = New-DocFrontmatter -Title 'Demo' -Description 'A demo.' -SidebarPosition 3 -MsDate '2026-07-02' -Topic 'reference' -Keywords @('agent', 'demo')
+        $fm | Should -Match '(?m)^title: Demo$'
+        $fm | Should -Match '(?m)^description: A demo\.$'
+        $fm | Should -Match '(?m)^sidebar_position: 3$'
+        $fm | Should -Match '(?m)^author: Microsoft$'
+        $fm | Should -Match '(?m)^ms\.date: 2026-07-02$'
+        $fm | Should -Match '(?m)^ms\.topic: reference$'
+        $fm | Should -Match '(?ms)^keywords:\r?\n  - agent\r?\n  - demo$'
+    }
+
+    It 'Honors an explicit author' {
+        $fm = New-DocFrontmatter -Title 'Demo' -Description 'A demo.' -SidebarPosition 1 -MsDate '2026-07-02' -Topic 'overview' -Keywords @('demo') -Author 'HVE Core Team'
+        $fm | Should -Match '(?m)^author: HVE Core Team$'
+    }
+
+    It 'Rejects a topic outside the docs schema enum' {
+        { New-DocFrontmatter -Title 'Demo' -Description 'A demo.' -SidebarPosition 1 -MsDate '2026-07-02' -Topic 'not-a-topic' -Keywords @('demo') } |
+            Should -Throw
+    }
+}
+
+Describe 'Get-AssetDocKeyword' -Tag 'Unit' {
+    It 'Combines kind, collection, and key' {
+        $model = [PSCustomObject]@{
+            Kind   = 'agent'
+            Key    = 'accessibility-planner'
+            DocRel = 'docs/reference/agents/accessibility/accessibility-planner.md'
+        }
+
+        Get-AssetDocKeyword -Model $model | Should -Be @('agent', 'accessibility', 'accessibility-planner')
+    }
+
+    It 'Omits the collection segment for assets directly under the kind directory' {
+        $model = [PSCustomObject]@{
+            Kind   = 'prompt'
+            Key    = 'standalone'
+            DocRel = 'docs/reference/prompts/standalone.md'
+        }
+
+        Get-AssetDocKeyword -Model $model | Should -Be @('prompt', 'standalone')
+    }
+
+    It 'Deduplicates repeated segments case-insensitively' {
+        $model = [PSCustomObject]@{
+            Kind   = 'skill'
+            Key    = 'jira'
+            DocRel = 'docs/reference/skills/jira/jira.md'
+        }
+
+        Get-AssetDocKeyword -Model $model | Should -Be @('skill', 'jira')
+    }
+}
+
+Describe 'Test-DocContentEqual' -Tag 'Unit' {
+    It 'Treats CRLF and LF forms of the same content as equal' {
+        Test-DocContentEqual -Left "a`nb`nc`n" -Right "a`r`nb`r`nc`r`n" | Should -BeTrue
+    }
+
+    It 'Reports genuinely different content as unequal' {
+        Test-DocContentEqual -Left "a`nb`n" -Right "a`r`nB`r`n" | Should -BeFalse
+    }
+
+    It 'Reports differing trailing whitespace as unequal' {
+        Test-DocContentEqual -Left "a`nb" -Right "a`r`nb`r`n" | Should -BeFalse
+    }
+
+    It 'Treats empty strings as equal' {
+        Test-DocContentEqual -Left '' -Right '' | Should -BeTrue
+    }
+}

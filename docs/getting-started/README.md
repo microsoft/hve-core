@@ -3,7 +3,7 @@ title: Getting Started with HVE Core
 description: Quick setup guide for using HVE Core Copilot customizations in your projects
 sidebar_position: 1
 author: Microsoft
-ms.date: 2026-07-15
+ms.date: 2026-08-13
 ms.topic: tutorial
 keywords:
   - github copilot
@@ -44,8 +44,7 @@ methods, or install the
 [VS Code extension](https://marketplace.visualstudio.com/items?itemName=ise-hve-essentials.hve-core)
 for the quickest path.
 
-Not sure which bundle of agents you need?
-Browse the available [Marketplace Packages](packages.md) to compare curated HVE capabilities.
+Review [HVE Core Identity and Channels](packages.md) to choose a source channel or selective clone adoption.
 
 ## Troubleshooting
 

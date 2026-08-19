@@ -1,6 +1,7 @@
 // Copyright (c) 2026 Microsoft Corporation. All rights reserved.
 // SPDX-License-Identifier: MIT
 import { test, expect } from '@playwright/test';
+import type { Page } from '@playwright/test';
 import { SITE_PAGES, visitInvariantPage } from './_helpers/a11yInvariants';
 import { testFocusTrapEscape, validateRovingTabindex } from './_helpers/focus';
 
@@ -10,6 +11,62 @@ import { testFocusTrapEscape, validateRovingTabindex } from './_helpers/focus';
 // order (2.4.3), focus visibility (2.4.7), and focus indicator size (2.4.11).
 // Contrast and structural ARIA checks stay in the existing axe specs to avoid
 // redundant coverage.
+
+// Assert that keyboard focus rests on the route's main landmark.
+//
+// The assertion is deliberately positive: it compares the active element by
+// identity against <main>. Asserting only that focus is *not* on the skip link
+// passes when focus is lost to <body>, since <body> carries no href. Reporting
+// the element that actually held focus keeps a failure diagnosable.
+async function expectFocusOnMainLandmark(page: Page, context: string): Promise<void> {
+  const focusState = await page.evaluate(() => {
+    const main = document.querySelector('main, [role="main"]');
+    const active = document.activeElement as HTMLElement | null;
+    const describe = (el: Element | null) => {
+      if (!el) return 'null';
+      const tag = el.tagName.toLowerCase();
+      if (tag === 'body') return 'body (focus lost)';
+      const className = String(el.className || '').split(' ').filter(Boolean)[0];
+      return className ? `${tag}.${className}` : tag;
+    };
+    return {
+      hasMain: Boolean(main),
+      focusIsMain: Boolean(main && active === main),
+      activeDescription: describe(active),
+    };
+  });
+
+  expect(focusState.hasMain, `${context}: the destination route should render a main landmark`).toBe(true);
+  expect(
+    focusState.focusIsMain,
+    `${context}: focus should rest on the main landmark, but it was on ${focusState.activeDescription}`,
+  ).toBe(true);
+}
+
+// Assert that the next Tab enters main content rather than restarting the focus
+// order at the skip link (WCAG 2.4.3).
+async function expectNextTabEntersMain(page: Page, context: string): Promise<void> {
+  await page.keyboard.press('Tab');
+
+  const tabState = await page.evaluate(() => {
+    const main = document.querySelector('main, [role="main"]');
+    const active = document.activeElement as HTMLElement | null;
+    return {
+      // Require focus to move strictly *inside* main. `contains` is true for
+      // main itself, so without the identity check this would also pass when
+      // Tab moved focus nowhere at all.
+      insideMain: Boolean(main && active && active !== main && main.contains(active)),
+      activeDescription: active
+        ? `${active.tagName.toLowerCase()}${active.getAttribute('href') ? ` href=${active.getAttribute('href')}` : ''}`
+        : 'null',
+    };
+  });
+
+  expect(
+    tabState.insideMain,
+    `${context}: the first Tab after navigation should focus an element inside main content, but focus moved to ${tabState.activeDescription}`,
+  ).toBe(true);
+}
 
 test.describe('Focus management', () => {
   for (const pageCase of SITE_PAGES.filter(({ path }) => path.includes('/docs/') || path === '/hve-core/')) {
@@ -115,7 +172,10 @@ test.describe('Focus management', () => {
       .not.toBe(initialTheme);
   });
 
-  test('activating a top navigation link does not leave focus on the skip link', async ({ page }) => {
+  // WCAG 2.4.3 Focus Order: activating a top-level navbar link crosses a layout
+  // boundary, which remounts the Layout component. Focus must still land on the
+  // destination route's main landmark rather than being lost to <body>.
+  test('activating a top navigation link moves focus to main content', async ({ page }) => {
     await page.goto('/hve-core/');
 
     const primaryLink = page.locator('.navbar__link[href*="/docs/"]').filter({ hasNot: page.locator('.navbar__link[href="/hve-core/"]') }).first();
@@ -127,12 +187,8 @@ test.describe('Focus management', () => {
     await primaryLink.click();
     await page.waitForLoadState('networkidle');
 
-    const focusIsOnSkipLink = await page.evaluate(() => {
-      const active = document.activeElement as HTMLElement | null;
-      return Boolean(active && active.getAttribute('href')?.includes('skip'));
-    });
-
-    expect(focusIsOnSkipLink, 'Focus should not remain on the skip link after using a top navigation link').toBe(false);
+    await expectFocusOnMainLandmark(page, 'After activating a top navigation link');
+    await expectNextTabEntersMain(page, 'After activating a top navigation link');
   });
 
   // WCAG 2.1.1 Keyboard / 2.4.3 Focus Order: opening the navbar dropdown (when
@@ -184,6 +240,82 @@ test.describe('Focus management', () => {
       await link.focus();
       await expect(link).toBeFocused();
     }
+  });
+
+  // WCAG 2.4.3 Focus Order: a dropdown item reaches the same cross-layout
+  // remount as a plain navbar link, so it must also land focus on main content.
+  test('activating a navbar dropdown item moves focus to main content', async ({ page }) => {
+    await page.goto('/hve-core/');
+
+    const dropdownToggle = page.locator('.navbar__item.dropdown .navbar__link').first();
+    if ((await dropdownToggle.count()) === 0) {
+      test.skip(true, 'No dropdown navbar item is configured.');
+      return;
+    }
+
+    // Open via the keyboard path a keyboard user actually takes, matching the
+    // operable path asserted by the dropdown keyboard-reachability test above.
+    await dropdownToggle.focus();
+    await dropdownToggle.press('ArrowDown');
+
+    const dropdownMenu = page.locator('.navbar__item.dropdown .dropdown__menu').first();
+    await expect(dropdownMenu).toBeVisible();
+
+    const firstItem = dropdownMenu.locator('a').first();
+    await firstItem.focus();
+    await firstItem.press('Enter');
+    await page.waitForLoadState('networkidle');
+
+    await expectFocusOnMainLandmark(page, 'After activating a navbar dropdown item');
+    await expectNextTabEntersMain(page, 'After activating a navbar dropdown item');
+  });
+
+  // WCAG 2.4.3 Focus Order: the defect is direction-agnostic, so navigating
+  // from a docs route back to the landing page must behave identically.
+  test('returning to the landing page moves focus to main content', async ({ page }) => {
+    await page.goto('/hve-core/docs/getting-started/');
+
+    const brand = page.locator('.navbar__brand').first();
+    if ((await brand.count()) === 0) {
+      test.skip(true, 'No navbar brand link is configured for this build.');
+      return;
+    }
+
+    await brand.click();
+    await page.waitForLoadState('networkidle');
+
+    await expectFocusOnMainLandmark(page, 'After returning to the landing page');
+  });
+
+  // Regression guard: navigation that stays inside one layout keeps the same
+  // Layout instance and already focuses main content. The remount fix widens
+  // when the route-change effect runs, so this path must not regress.
+  test('navigating between docs pages moves focus to main content', async ({ page }) => {
+    const startPath = '/hve-core/docs/getting-started/';
+    await page.goto(startPath);
+
+    // Resolve any sidebar link that leaves the current page rather than naming
+    // one slug. A hard-coded slug turns a renamed page into a silent skip,
+    // which would leave this guard permanently green while never running.
+    const sidebarLink = page
+      .locator('a.menu__link')
+      .filter({ hasNot: page.locator(`[href="${startPath}"]`) })
+      .first();
+
+    const target = await sidebarLink.getAttribute('href');
+    expect(
+      target,
+      'The docs sidebar should expose a sibling page link for the intra-layout focus guard',
+    ).toBeTruthy();
+    expect(
+      target,
+      'The intra-layout focus guard needs a sidebar link that navigates away from the starting page',
+    ).not.toBe(startPath);
+
+    await sidebarLink.click();
+    await page.waitForLoadState('networkidle');
+
+    await expectFocusOnMainLandmark(page, 'After navigating between docs pages');
   });
 });
 
