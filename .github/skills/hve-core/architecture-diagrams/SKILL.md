@@ -7,7 +7,7 @@ compatibility: "Works in any chat context where the caller needs an ASCII or Mer
 metadata:
   authors: "microsoft/hve-core"
   spec_version: "1.0"
-  last_updated: "2026-08-03"
+  last_updated: "2026-08-07"
 ---
 
 # Architecture Diagrams Skill
@@ -17,6 +17,8 @@ metadata:
 Turn infrastructure source files or a declared `DS_CATALOG_V1` data model into a readable architecture diagram for reviews, ADRs, and design discussions. Preserve the caller's selected output format and the source's authority boundaries.
 
 Infrastructure inputs include Terraform, Bicep, ARM templates, shell scripts, Kubernetes manifests, and Docker or Compose files. Catalog input uses declared entities and relationships from `ds-catalog`, the durable data-catalog skill. It does not infer a data model from SQL or ORM files.
+
+This skill documents infrastructure topology and data models. To document a software system, meaning its containers, its components, and the people and systems around it, use the `c4-architecture` skill instead.
 
 ## Success criteria
 
