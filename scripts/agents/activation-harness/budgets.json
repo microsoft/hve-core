@@ -1,0 +1,14 @@
+{
+  "description": "Cold-start byte budget ranges for agents governed by the activation harness. Each scenario declares a soft target and a hard ceiling. Payloads at or below target are within design intent. Payloads above target but at or below ceiling are reported as within tolerance and do not fail, absorbing ordinary growth in shared instruction files. Payloads above ceiling fail.",
+  "agents": {
+    ".github/agents/project-planning/adr-creation.agent.md": {
+      "scenarios": {
+        "CleanWorkspace": {
+          "target": 44000,
+          "ceiling": 48000,
+          "rationale": "PD-04=A set the 44,000-byte target against a cold start of 37,891 bytes. The cold-start set includes the shared disclaimer-language.instructions.md, which every planning workstream appends to, so the payload grows for reasons unrelated to this agent's design. The ceiling absorbs that shared growth while still failing on a genuine regression such as an on-demand instruction file re-attaching at cold start."
+        }
+      }
+    }
+  }
+}

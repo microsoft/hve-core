@@ -8,6 +8,15 @@ from __future__ import annotations
 EXIT_SUCCESS = 0
 EXIT_FAILURE = 1
 EXIT_USAGE = 2
+# A blocking design-intent expectation resolved to 'failed'. Distinct from a
+# harness or adapter error so a consuming project's CI can tell a real drift
+# signal apart from a broken run.
+EXIT_INTENT_DRIFT = 3
+# A blocking design-intent expectation was never evaluated. Distinct from
+# EXIT_INTENT_DRIFT because "the check failed" and "the check never ran" call
+# for different responses: the first is a regression, the second is missing
+# coverage that would otherwise pass silently.
+EXIT_INTENT_UNCOVERED = 4
 
 
 class ScriptError(Exception):

@@ -26,8 +26,8 @@ Describe 'Resolve-VsixFile' -Tag 'Unit' {
             Split-Path -Leaf (Resolve-VsixFile -DirectoryPath $script:SingleDirectory) | Should -BeExactly 'hve-core-3.3.106.vsix'
         }
 
-        It 'Accepts the Path alias' {
-            Resolve-VsixFile -Path $script:SingleDirectory | Should -BeExactly (Join-Path $script:SingleDirectory 'hve-core-3.3.106.vsix')
+        It 'Rejects the retired Path alias' {
+            { Resolve-VsixFile -Path $script:SingleDirectory } | Should -Throw '*Path*'
         }
     }
 

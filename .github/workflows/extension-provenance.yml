@@ -6,90 +6,50 @@ on:
   workflow_call:
     inputs:
       source-ref:
-        description: "Immutable source to package from (full commit SHA or tag)"
+        description: "Attestation source commit (full commit SHA of this run)"
         required: true
         type: string
-      version:
-        description: "Full version to package (e.g., 1.0.0)"
-        required: true
-        type: string
-      channel:
-        description: "Release channel (Stable or PreRelease) controlling agent maturity filtering"
-        required: false
-        type: string
-        default: "Stable"
       release-tag:
         description: "GitHub release tag to upload the attestation assets to"
         required: false
         type: string
         default: ""
-    outputs:
-      packages-matrix:
-        description: "JSON matrix of packages that were packaged"
-        value: ${{ jobs.discover-packages.outputs.matrix }}
 
 permissions:
   contents: read
 
 jobs:
-  discover-packages:
-    name: Discover Marketplace Packages
+  attest:
+    name: Attest hve-core
     runs-on: ubuntu-latest
-    permissions:
-      contents: read
-    outputs:
-      matrix: ${{ steps.discover.outputs.matrix }}
-      version: ${{ steps.read-version.outputs.version }}
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          ref: ${{ inputs.source-ref }}
-          persist-credentials: false
-
-      - name: Setup PowerShell modules
-        uses: ./.github/actions/setup-ps-modules
-
-      - name: Resolve effective version
-        id: read-version
-        shell: bash
-        env:
-          INPUT_SOURCE_REF: ${{ inputs.source-ref }}
-          INPUT_VERSION: ${{ inputs.version }}
-        run: |
-          set -euo pipefail
-          if [ -z "${INPUT_SOURCE_REF// }" ]; then
-            echo "::error::source-ref is required and must not be blank"
-            exit 1
-          fi
-          version="${INPUT_VERSION// }"
-          if [ -z "$version" ]; then
-            echo "::error::version is required and must not be blank"
-            exit 1
-          fi
-          echo "version=$version" >> "$GITHUB_OUTPUT"
-
-      - name: Discover marketplace packages
-        id: discover
-        shell: pwsh
-        env:
-          INPUT_CHANNEL: ${{ inputs.channel }}
-        run: |
-          & ./scripts/extension/Get-MarketplacePackageMatrix.ps1 -Channel $env:INPUT_CHANNEL
-
-  build-attest:
-    name: Build and Attest ${{ matrix.id }}
-    needs: discover-packages
-    runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix: ${{ fromJson(needs.discover-packages.outputs.matrix) }}
     permissions:
       contents: write
       id-token: write
       attestations: write
       artifact-metadata: write
     steps:
+      - name: Verify attestation source commit
+        shell: bash
+        env:
+          EVENT_SHA: ${{ github.sha }}
+          INPUT_SOURCE_REF: ${{ inputs.source-ref }}
+        run: |
+          set -euo pipefail
+          if [ -z "${INPUT_SOURCE_REF// }" ]; then
+            echo "::error::source-ref is required and must not be blank"
+            exit 1
+          fi
+          # Attestation records this run's commit, so the packaged source must be
+          # that same commit rather than any other resolvable ref.
+          if ! printf '%s' "$INPUT_SOURCE_REF" | grep -Eq '^[0-9a-f]{40}$'; then
+            echo "::error::source-ref must be a full 40-character lowercase commit SHA"
+            exit 1
+          fi
+          if [ "$INPUT_SOURCE_REF" != "$EVENT_SHA" ]; then
+            echo "::error::source-ref $INPUT_SOURCE_REF is not the attestation source commit $EVENT_SHA"
+            exit 1
+          fi
+
       - name: Checkout code
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -104,67 +64,17 @@ jobs:
           sparse-checkout-cone-mode: false
           persist-credentials: false
 
-      - name: Setup Node.js
-        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
-        with:
-          node-version: "24"
-
-      - name: Install dependencies
-        run: npm ci --ignore-scripts=false
-
-      - name: Setup PowerShell modules
-        uses: ./.github/actions/setup-ps-modules
-
-      - name: Prepare extension resources
-        shell: pwsh
-        env:
-          INPUT_CHANNEL: ${{ inputs.channel }}
-          PACKAGE_ID: ${{ matrix.id }}
-        run: |
-          $channel = "$env:INPUT_CHANNEL".Trim()
-          if (-not $channel) { $channel = 'Stable' }
-          $packageId = "$env:PACKAGE_ID"
-
-          Write-Host "🔧 Preparing extension for $channel channel (package: $env:PACKAGE_ID)..."
-          ./scripts/extension/Prepare-Extension.ps1 -Channel $channel -PackageId $packageId
-
-      - name: Package extension
-        shell: pwsh
-        env:
-          INPUT_VERSION: ${{ inputs.version }}
-          INPUT_CHANNEL: ${{ inputs.channel }}
-          PACKAGE_ID: ${{ matrix.id }}
-        run: |
-          $version = "$env:INPUT_VERSION".Trim()
-          $channel = "$env:INPUT_CHANNEL".Trim()
-          if (-not $channel) { $channel = 'Stable' }
-          $packageId = "$env:PACKAGE_ID"
-
-          Write-Host "📦 Packaging extension for $channel channel (package: $env:PACKAGE_ID)..."
-
-          $arguments = @{
-            PackageId = $packageId
-          }
-
-          if ($channel -ieq 'PreRelease') {
-            $arguments['PreRelease'] = $true
-          }
-
-          if ($version) {
-            $arguments['Version'] = $version
-          }
-
-          if (Test-Path "./CHANGELOG.md") {
-            $arguments['ChangelogPath'] = "./CHANGELOG.md"
-          }
-
-          ./scripts/extension/Package-Extension.ps1 @arguments
-
       - name: Download dependency SBOM
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
         with:
           name: sbom-dependencies
           path: ./sbom
+
+      - name: Download built VSIX
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: extension-vsix
+          path: ./extension
 
       - name: Resolve VSIX filename
         id: vsix
@@ -183,7 +93,7 @@ jobs:
           file: ${{ steps.vsix.outputs.file }}
           format: spdx-json
           output-file: extension/${{ steps.vsix.outputs.name }}.spdx.json
-          artifact-name: sbom-${{ matrix.id }}
+          artifact-name: sbom-hve-core
           upload-release-assets: false
           upload-artifact: true
           config: .syft.yaml
@@ -242,10 +152,3 @@ jobs:
             $env:SIGSTORE_PATH `
             $env:INTOTO_PATH `
             --clobber -R $env:REPOSITORY
-
-      - name: Upload VSIX artifact
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-        with:
-          name: extension-vsix-${{ matrix.id }}
-          path: extension/*.vsix
-          retention-days: 30

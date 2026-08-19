@@ -3,8 +3,12 @@ title: Copilot CLI Plugin
 description: Register an HVE Core catalog ref and install the complete hve-core plugin
 sidebar_position: 2
 author: Microsoft
-ms.date: 2026-08-02
+ms.date: 2026-08-13
 ms.topic: how-to
+keywords:
+  - copilot cli
+  - plugins
+  - installation
 ---
 
 Install the complete HVE Core component set as a Copilot CLI plugin for terminal-based AI-assisted development workflows.
@@ -15,11 +19,34 @@ Install the complete HVE Core component set as a Copilot CLI plugin for terminal
 
 ## Register hve-core as a Plugin Marketplace
 
+Choose a registration that matches the content you need.
+
+Register the ref-less development tip:
+
 ```bash
-copilot plugin marketplace add microsoft/hve-core#<ref>
+copilot plugin marketplace add microsoft/hve-core
 ```
 
-The Git ref after `#` selects the marketplace catalog. The catalog entry's `source.ref` pins the matching immutable `plugins-v<version>` plugin snapshot. Stable and PreRelease catalogs both use the marketplace name `hve-core`, so keep one active registration at a time and replace it when changing catalog refs.
+Register a moving reviewed release channel:
+
+```bash
+copilot plugin marketplace add microsoft/hve-core#release/prerelease
+copilot plugin marketplace add microsoft/hve-core#release/stable
+```
+
+Register an immutable channel tag:
+
+```bash
+copilot plugin marketplace add microsoft/hve-core#prerelease-v<version>
+copilot plugin marketplace add microsoft/hve-core#v<version>
+```
+
+`main` is the development tip. `release/prerelease` and `release/stable` are moving registrations that resolve the current reviewed branch catalog and relative `.github` plugin root. Exact-tag registrations freeze the catalog, manifest, and plugin source together.
+
+A published channel release provides release assurance for its exact tag,
+including release gates, SBOMs, attestations, provenance verification, and the
+configured publication path. The development tip does not provide that
+published-release assurance.
 
 ## Browse Available Plugins
 
@@ -33,7 +60,24 @@ Install `hve-core` from the registered marketplace through `/plugin`. The plugin
 copilot plugin install hve-core@hve-core
 ```
 
-Use the [migration guide](../package-migration) if you previously registered or installed a retired package identity.
+## Update an Installed Plugin
+
+Marketplace refresh and installed-plugin update are distinct actions. For a
+moving registration, refresh the catalog before requesting a plugin update:
+
+```bash
+copilot plugin marketplace update hve-core
+copilot plugin update hve-core@hve-core
+```
+
+Switching registrations can require removing and re-adding the marketplace.
+Do not assume how the client handles duplicate same-name registrations; use
+the behavior supported by your Copilot CLI version.
+
+If you previously registered or installed a retired package identity, the
+[retired package identities](../package-migration#retired-package-identities)
+section of the migration guide maps each retired extension, command, skill, and
+agent to its replacement.
 
 ## Plugin Contents
 
@@ -46,10 +90,7 @@ Each plugin includes:
 | Skills       | Yes           | Self-contained skill packages                      |
 | Instructions | No            | Included for `#file:` references, not auto-applied |
 
-Each plugin is a self-contained tree of regular files and real directories.
-Artifacts are copied from the source repository during generation, so a plugin
-installs the same way on every operating system and needs no symbolic link
-support.
+The one marketplace entry resolves the `.github` plugin root. `.github/plugin.json` declares the complete agents, commands, rules, skills, and hook membership that the client installs. No generated plugin tree or plugin ZIP participates in Git-source installation.
 
 ## Limitations
 

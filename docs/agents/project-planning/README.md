@@ -3,11 +3,15 @@ title: Project Planning Agents
 description: Agents for requirements gathering, architecture decisions, and security planning
 sidebar_position: 1
 author: Microsoft
-ms.date: 2026-06-29
+ms.date: 2026-08-06
 ms.topic: concept
+keywords:
+  - project planning
+  - agents
+  - requirements
 ---
 
-Four agents and **three** portable skills support structured project planning across requirements, architecture, security, **and performance**. Each agent follows a guided workflow to produce specific deliverables, from business requirements documents to security assessment plans and reliability targets.
+Nine agents and **three** portable skills support structured project planning across requirements, architecture, backlog management, security, **and performance**. Each agent follows a guided workflow to produce specific deliverables, from business requirements documents to security assessment plans and reliability targets.
 
 ## Why Use Project Planning Agents
 
@@ -24,12 +28,20 @@ These agents bring structure and consistency to activities that teams often hand
 
 ## Agent Overview
 
-| Agent                                     | Sub-Category | Workflow                    | Persistence | Key Output                     |
-|-------------------------------------------|--------------|-----------------------------|-------------|--------------------------------|
-| [BRD Builder](brd-prd-builders)           | Requirements | 3-phase Q&A                 | JSON state  | Business requirements document |
-| [PRD Builder](brd-prd-builders)           | Requirements | 7-phase Q&A                 | JSON state  | Product requirements document  |
-| [ADR Creator](adr-creation)               | Architecture | 3-phase Frame/Decide/Govern | JSON state  | Architecture decision record   |
-| [Security Planner](../security/README.md) | Security     | 6-phase STRIDE              | JSON state  | Security model and backlog     |
+| Agent                                                                                                   | Sub-Category | Workflow                    | Persistence    | Key Output                                      |
+|---------------------------------------------------------------------------------------------------------|--------------|-----------------------------|----------------|-------------------------------------------------|
+| [BRD Builder](brd-prd-builders)                                                                         | Requirements | 3-phase Q&A                 | JSON state     | Business requirements document                  |
+| [PRD Builder](brd-prd-builders)                                                                         | Requirements | 7-phase Q&A                 | JSON state     | Product requirements document                   |
+| [Meeting Analyst](../../reference/agents/project-planning/meeting-analyst.md)                           | Requirements | Transcript analysis         | Conversational | Extracted product requirements                  |
+| [UX UI Designer](../../reference/agents/project-planning/ux-ui-designer.md)                             | Requirements | JTBD and journey mapping    | Conversational | User journeys and accessibility requirements    |
+| [ADR Creator](adr-creation)                                                                             | Architecture | 3-phase Frame/Decide/Govern | JSON state     | Architecture decision record                    |
+| [System Architecture Reviewer](../../reference/agents/project-planning/system-architecture-reviewer.md) | Architecture | Design trade-off review     | Conversational | Architecture assessment                         |
+| [Network ISA-95 Planner](../../reference/agents/project-planning/network-isa95-planner.md)              | Architecture | Layered network planning    | Conversational | ISA-95 network plan                             |
+| [Backlog Manager](../backlog/README.md)                                                                 | Backlog      | Classify and dispatch       | Tracking files | Tracker operations across ADO, GitHub, and Jira |
+| [Functional Planner](../backlog/README.md)                                                              | Backlog      | PRD to hierarchy            | Tracking files | Reviewed work-item hierarchy handoff            |
+| [Security Planner](../security/README.md)                                                               | Security     | 6-phase STRIDE              | JSON state     | Security model and backlog                      |
+
+`Security Planner` is documented with the security agents and is listed here because it participates in project planning. The three backlog executor subagents are dispatched by `Backlog Manager` rather than invoked directly, so they are not listed as user-facing agents.
 
 ## Skills Overview
 
@@ -108,8 +120,7 @@ For greenfield projects, follow this order to build artifacts that feed into eac
 ## Related Documentation
 
 * [RPI Documentation](../../rpi/README.md): Task research, planning, and implementation workflows
-* [GitHub Backlog Manager](../github-backlog/README.md): Issue lifecycle management for GitHub repositories
-* [ADO Backlog Manager](../ado-backlog/README.md): Work item management for Azure DevOps projects
+* [Backlog Management](../backlog/README.md): Work and issue lifecycle management across Azure DevOps, GitHub, and Jira
 
 ---
 

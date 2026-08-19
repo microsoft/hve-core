@@ -1,42 +1,30 @@
 ---
 title: Installing HVE Core
-description: Install a catalog-selected HVE Core extension or plugin, or adopt selected components from a clone
+description: Install the HVE Core extension or plugin, or adopt selected components from a clone
 sidebar_position: 2
 author: Microsoft
-ms.date: 2026-08-03
+ms.date: 2026-08-16
 ms.topic: how-to
 keywords: [installation, setup, github copilot, marketplace, selective clone]
 estimated_reading_time: 4
 ---
 
-HVE Core delivers GitHub Copilot customizations through catalog-defined packages. Choose the package scope first, then select a managed extension, plugin, or repository-owned component installation.
+HVE Core delivers one complete component set through the `hve-core` VS Code extension and Copilot CLI plugin. Choose a managed installation or copy selected components from a clone.
 
-## Package Selection
+## Managed Installation
 
-| Package choice            | Best fit                                        |
-|---------------------------|-------------------------------------------------|
-| `hve-core`                | RPI, HVE Builder, Git, and code review          |
-| `hve-core-all`            | All active content and the starter profile      |
-| Domain or utility package | A narrower capability set listed in the catalog |
+Install `ise-hve-essentials.hve-core` from the VS Code Marketplace, or register this repository as a Copilot CLI marketplace and install `hve-core@hve-core`.
 
-> [!CAUTION]
-> Do not install `hve-core` and `hve-core-all` together because their content overlaps.
-
-## Marketplace Install
-
-When a selected package is available through your deployment surface, install the extension identity generated for that catalog entry. `hve-core` uses the unsuffixed HVE Core identity, `ise-hve-essentials.hve-core`; other entries use deterministic package-specific identities.
-
-Stable and PreRelease have equal active package and component projections. They differ in source ownership, cadence, and version. See [HVE Core Identity and Channels](packages) for the release contract.
+Stable and PreRelease contain the same complete component set. They differ in source ownership, cadence, and version. See [HVE Core Identity and Channels](packages) for the release contract.
 
 ## Selective Clone Adoption
 
 Teams that need a repository-owned subset can use `hve-core-installer`.
 
 1. Clone or pin the HVE Core version to adopt.
-2. Select one exact `PackageName` from the catalog before choosing a profile or component.
-3. Select the `starter` profile only from `hve-core-all`, or choose components from the selected package.
-4. Review component kinds, lifecycle labels, dependency closure, and collisions before writes.
-5. Choose automatic source updates or a controlled pinned version.
+2. Choose every component declared by `.github/plugin.json`, or select a subset.
+3. Review component kinds and collisions before writes.
+4. Choose automatic source updates or a controlled pinned version.
 
 The installer can copy agents, prompts, instructions, and complete skill directories. It preserves repository-relative paths and records the result in `.hve-tracking.json` schema version 2. Hooks are not copied.
 
@@ -58,52 +46,101 @@ The installer can copy agents, prompts, instructions, and complete skill directo
 ⭐ **VS Code Extension** is the recommended method for most users who don't need customization.
 
 > [!NOTE]
-> HVE Core can refer to the source repository, the catalog, or one selected package identity. The catalog defines each plugin root and extension identity; it does not define one shared extension for all content.
+> HVE Core uses one identity across the plugin and extension. `.github/plugin.json` owns membership, and `.github/plugin/marketplace.json` contains one relative locator to the `.github` plugin root.
 
-### Package Relationships
+### Distribution Relationships
 
 ```mermaid
 graph LR
-   REPO["microsoft/hve-core<br/>(canonical source)"] --> CATALOG["marketplace catalog"]
-   CATALOG --> FOCUSED["hve-core<br/>(focused)"]
-   CATALOG --> FULL["hve-core-all<br/>(full bundle)"]
-   CATALOG --> DOMAIN["domain and utility packages"]
-   FOCUSED --> EXT["package-specific VSIX"]
-   FOCUSED --> PLUGIN["package-specific plugin root"]
-   FULL --> EXT
-   FULL --> PLUGIN
-   DOMAIN --> EXT
-   DOMAIN --> PLUGIN
+   accTitle: HVE Core distribution relationships
+   accDescr: The repository contains the marketplace locator and plugin manifest. The locator resolves the plugin root, while the manifest supplies membership to both the Copilot plugin and VS Code extension.
+   REPO["microsoft/hve-core<br/>(canonical source)"] --> MANIFEST[".github/plugin.json<br/>(complete membership)"]
+   REPO --> CATALOG[".github/plugin/marketplace.json<br/>(one relative locator)"]
+   CATALOG --> ROOT[".github<br/>(plugin root)"]
+   MANIFEST --> PLUGIN["hve-core plugin"]
+   MANIFEST --> EXT["hve-core VSIX"]
+   ROOT --> PLUGIN
 ```
 
-### Which Package Should I Install?
+### Which Installation Should I Use?
 
-* **I need RPI, HVE Builder, Git, and code review** → Choose `hve-core`
-* **I need all active content or the starter profile** → Choose `hve-core-all`
-* **I need one domain capability** → Choose the matching domain or utility package
-* **My repository needs selected components only** → Use selective clone adoption
+* Use the VS Code extension for managed updates in Copilot Chat.
+* Use the `hve-core` plugin for Copilot CLI.
+* Use selective clone adoption when your repository should own only chosen files.
 
 ## Distribution Identity and Channels
 
-Release workflows discover active entries from the catalog. Stable and PreRelease use the same active package set and component maturity per package. Stable packages reviewed content from `release/stable`; PreRelease packages an explicit `main` commit.
+`main` is the ref-less development tip. PreRelease and Stable are reviewed
+release branches that advance through `main` to `release/prerelease` to
+`release/stable`. An exact channel tag freezes one release catalog and its
+source payloads.
 
-`hve-core` and `hve-core-all` each include the telemetry hook. VS Code does not expose a declarative hook contribution point, so configure hook locations manually for extension installations.
+| Use case             | Marketplace registration                   | Source resolution                    |
+|----------------------|--------------------------------------------|--------------------------------------|
+| Development tip      | `microsoft/hve-core`                       | Current `main` `.github` plugin root |
+| Moving PreRelease    | `microsoft/hve-core#release/prerelease`    | Current reviewed PreRelease branch   |
+| Moving Stable        | `microsoft/hve-core#release/stable`        | Current reviewed Stable branch       |
+| Immutable PreRelease | `microsoft/hve-core#prerelease-v<version>` | One exact PreRelease tag             |
+| Immutable Stable     | `microsoft/hve-core#v<version>`            | One exact Stable tag                 |
+
+A moving release registration selects the catalog and relative `.github` source currently committed to its reviewed branch. The branch can advance, while an exact-tag registration remains fixed.
+
+A published channel release is the assurance boundary for its immutable tag.
+The release workflow applies review and release gates, produces one VSIX and its
+SBOM and provenance sidecars, verifies provenance, and publishes through
+the configured release path. The ref-less development tip intentionally does
+not carry that published-release assurance.
+
+The plugin includes the telemetry hook. VS Code does not expose a declarative hook contribution point, so configure its location manually for extension installations.
 
 See [HVE Core Identity and Channels](packages) for the lifecycle and source contract.
 
 ### Copilot Plugin Registration
 
-Register an approved catalog ref, then select the required package through the client:
+Register the development tip without a ref:
 
 ```bash
-copilot plugin marketplace add microsoft/hve-core#<ref>
+copilot plugin marketplace add microsoft/hve-core
 ```
 
-The marketplace ref selects the catalog, and each selected entry's `source.ref` pins matching immutable `plugins-v<version>` bytes. Select the required catalog package through the client after registration.
+Register a moving reviewed channel:
+
+```bash
+copilot plugin marketplace add microsoft/hve-core#release/prerelease
+copilot plugin marketplace add microsoft/hve-core#release/stable
+```
+
+Register an immutable channel tag:
+
+```bash
+copilot plugin marketplace add microsoft/hve-core#prerelease-v<version>
+copilot plugin marketplace add microsoft/hve-core#v<version>
+```
+
+Install the plugin:
+
+```bash
+copilot plugin install hve-core@hve-core
+```
+
+### Refresh, Update, and Switching
+
+Marketplace refresh and installed-plugin update are separate client actions.
+When following a moving registration, refresh the catalog before requesting a
+plugin update:
+
+```bash
+copilot plugin marketplace update hve-core
+copilot plugin update hve-core@hve-core
+```
+
+Changing registrations can require removing and re-adding the marketplace in
+the client. Do not rely on a particular result for duplicate same-name
+registrations; confirm the behavior supported by your Copilot CLI version.
 
 ### Clone Methods
 
-The installer resolves an exact `PackageName` before any profile or component selection. The `starter` profile exists only in `hve-core-all`. Schema version 2 stores `selection.package`; a package-less manifest emits `INSTALLED_PACKAGE=` and requires explicit package reselection before replay. File records identify components, not per-file package ownership, and hooks remain plugin-only.
+The installer validates each selected component against `.github/plugin.json`. Schema version 2 stores `selection.profile` and `selection.components` without package identity. File records identify component ownership, and hooks remain plugin-only.
 
 ## Developer Setup
 
@@ -135,11 +172,11 @@ The three paths above cover the vast majority of scenarios. If your environment 
 
 ## Validation
 
-After installing, verify the artifacts declared by the selected package:
+After installing, verify artifacts declared by the HVE Core plugin:
 
-1. Open the selected package document under `docs/plugins/<name>.md` and choose a declared agent, prompt, instruction, or skill to verify.
+1. Open [HVE Core Plugin](../plugins/hve-core) and choose a declared agent, prompt, instruction, or skill to verify.
 2. Confirm that component is available through the installed extension or plugin client.
-3. If the selected package declares `RPI Agent` and RPI prompts, open Copilot Chat, type `@` to find the agent, then type `/` and verify its RPI entry points.
+3. Open Copilot Chat, type `@` to find `RPI Agent`, then type `/` and verify its RPI entry points.
 
 If a declared component is unavailable, check the [Troubleshooting](troubleshooting.md) page for common solutions.
 

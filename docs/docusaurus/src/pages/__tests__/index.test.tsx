@@ -6,7 +6,7 @@ import { render, screen } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import Home from '../index';
 import type { PackageCardData } from '../../data/packageCards';
-import { loadPackageCards } from '../../data/marketplaceCounts';
+import { loadPackageCards } from '../../data/pluginManifestCards';
 import { labelRegistry } from '../../data/labelRegistry';
 import {
   __resetPackageCards,

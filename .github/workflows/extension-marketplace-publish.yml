@@ -5,47 +5,325 @@ name: Extension Marketplace Publish
 on:
   workflow_call:
     inputs:
-      packages-matrix:
-        description: "JSON matrix of packages to publish"
-        required: true
-        type: string
       tag:
         description: "GitHub Release tag containing the attested VSIX assets"
-        required: false
+        required: true
         type: string
-        default: ""
       pre-release:
         description: "Publish as pre-release extension"
         required: false
         type: boolean
         default: false
-      verify-attestation:
-        description: "Verify the attested VSIX provenance before publishing"
-        required: false
-        type: boolean
-        default: true
 
 permissions:
   contents: read
 
 jobs:
+  validate-inputs:
+    name: Validate Release Publication Inputs
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    outputs:
+      release-digest: ${{ steps.validate.outputs.release-digest }}
+      publisher-digest: ${{ steps.validate.outputs.publisher-digest }}
+    steps:
+      - name: Validate publication inputs
+        id: validate
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          INPUT_TAG: ${{ inputs.tag }}
+          INPUT_PRE_RELEASE: ${{ inputs.pre-release }}
+          REPOSITORY: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+          case "$INPUT_PRE_RELEASE" in
+            true)
+              expected_pattern='^prerelease-v[0-9]+\.[0-9]+\.[0-9]+$'
+              expected_minor_parity=1
+              expected_parity_label='odd'
+              ;;
+            false)
+              expected_pattern='^v[0-9]+\.[0-9]+\.[0-9]+$'
+              expected_minor_parity=0
+              expected_parity_label='even'
+              ;;
+            *)
+              echo "::error::pre-release must be true or false"
+              exit 1
+              ;;
+          esac
+          if [[ ! "$INPUT_TAG" =~ $expected_pattern ]]; then
+            echo "::error::Release tag does not match the selected channel"
+            exit 1
+          fi
+          # The tag namespace is validated above, so the minor is read from that
+          # tag and must carry the selected channel's parity.
+          TAG_VERSION="${INPUT_TAG#prerelease-v}"
+          TAG_VERSION="${TAG_VERSION#v}"
+          TAG_MINOR="${TAG_VERSION#*.}"
+          TAG_MINOR="${TAG_MINOR%%.*}"
+          TAG_MINOR=$((10#$TAG_MINOR))
+          if (( TAG_MINOR % 2 != expected_minor_parity )); then
+            echo "::error::The selected channel requires an $expected_parity_label minor version but $INPUT_TAG carries minor $TAG_MINOR"
+            exit 1
+          fi
+
+          # Resolve the release tag without materializing its working tree.
+          # Annotated tag objects are dereferenced until a commit remains.
+          REF_JSON=$(gh api "repos/$REPOSITORY/git/ref/tags/$INPUT_TAG")
+          # A ref lookup can answer with a different ref, so the returned name is
+          # confirmed before any object authority is read from the response.
+          REF_NAME=$(printf '%s' "$REF_JSON" | jq -r '.ref')
+          if [ "$REF_NAME" != "refs/tags/$INPUT_TAG" ]; then
+            echo "::error::Requested refs/tags/$INPUT_TAG but the API answered with '$REF_NAME'"
+            exit 1
+          fi
+          OBJECT_TYPE=$(printf '%s' "$REF_JSON" | jq -r '.object.type')
+          OBJECT_SHA=$(printf '%s' "$REF_JSON" | jq -r '.object.sha')
+          depth=0
+          while [ "$OBJECT_TYPE" = 'tag' ]; do
+            depth=$((depth + 1))
+            if (( depth > 10 )); then
+              echo "::error::Release tag $INPUT_TAG exceeds the annotated tag dereference limit"
+              exit 1
+            fi
+            TAG_JSON=$(gh api "repos/$REPOSITORY/git/tags/$OBJECT_SHA")
+            OBJECT_TYPE=$(printf '%s' "$TAG_JSON" | jq -r '.object.type')
+            OBJECT_SHA=$(printf '%s' "$TAG_JSON" | jq -r '.object.sha')
+          done
+          if [ "$OBJECT_TYPE" != 'commit' ] || [[ ! "$OBJECT_SHA" =~ ^[0-9a-f]{40}$ ]]; then
+            echo "::error::Release tag $INPUT_TAG does not resolve to a commit"
+            exit 1
+          fi
+
+          MAIN_JSON=$(gh api "repos/$REPOSITORY/git/ref/heads/main")
+          MAIN_REF=$(printf '%s' "$MAIN_JSON" | jq -r '.ref')
+          if [ "$MAIN_REF" != 'refs/heads/main' ]; then
+            echo "::error::Requested refs/heads/main but the API answered with '$MAIN_REF'"
+            exit 1
+          fi
+          MAIN_TYPE=$(printf '%s' "$MAIN_JSON" | jq -r '.object.type')
+          PUBLISHER_DIGEST=$(printf '%s' "$MAIN_JSON" | jq -r '.object.sha')
+          if [ "$MAIN_TYPE" != 'commit' ] || [[ ! "$PUBLISHER_DIGEST" =~ ^[0-9a-f]{40}$ ]]; then
+            echo "::error::refs/heads/main does not resolve to a commit"
+            exit 1
+          fi
+          {
+            echo "release-digest=$OBJECT_SHA"
+            echo "publisher-digest=$PUBLISHER_DIGEST"
+          } >> "$GITHUB_OUTPUT"
+
+  verify:
+    name: Verify hve-core
+    needs: validate-inputs
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      attestations: read
+    steps:
+      - name: Checkout release commit
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ needs.validate-inputs.outputs.release-digest }}
+          persist-credentials: false
+
+      - name: Download attested VSIX from GitHub Release
+        id: select
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ inputs.tag }}
+          ASSET_DIRECTORY: ./dist
+          REPOSITORY: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+          mkdir -p "$ASSET_DIRECTORY"
+          gh release download "$RELEASE_TAG" --repo "$REPOSITORY" --pattern 'hve-core-*.vsix' --dir "$ASSET_DIRECTORY"
+          mapfile -t candidates < <(find "$ASSET_DIRECTORY" -maxdepth 1 -type f -name 'hve-core-*.vsix' | LC_ALL=C sort)
+          if [ "${#candidates[@]}" -ne 1 ]; then
+            echo "::error::Expected exactly one hve-core VSIX on $RELEASE_TAG but found ${#candidates[@]}"
+            exit 1
+          fi
+          {
+            echo "VSIX_FILE=${candidates[0]}"
+          } >> "$GITHUB_ENV"
+          echo "vsix-file=${candidates[0]}" >> "$GITHUB_OUTPUT"
+
+      - name: Verify attested VSIX provenance
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_DIGEST: ${{ needs.validate-inputs.outputs.release-digest }}
+          REPOSITORY: ${{ github.repository }}
+          SIGNER_WORKFLOW: ${{ github.repository }}/.github/workflows/extension-provenance.yml
+        run: |
+          set -euo pipefail
+          CHECKOUT_DIGEST=$(git rev-parse HEAD)
+          if [ "$RELEASE_DIGEST" != "$CHECKOUT_DIGEST" ]; then
+            echo "::error::Validation resolved $RELEASE_DIGEST but the verifier checked out $CHECKOUT_DIGEST"
+            exit 1
+          fi
+          gh attestation verify "$VSIX_FILE" --repo "$REPOSITORY" \
+            --signer-workflow "$SIGNER_WORKFLOW" \
+            --source-digest "$RELEASE_DIGEST"
+
+      # No conditional override: this artifact exists only after verification.
+      - name: Upload verified VSIX
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: extension-vsix-marketplace-${{ github.run_attempt }}
+          path: ${{ steps.select.outputs.vsix-file }}
+          if-no-files-found: error
+          overwrite: false
+
+  prepare-publisher:
+    name: Prepare Publisher Toolchain
+    needs: [validate-inputs, verify]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout protected publisher commit
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ needs.validate-inputs.outputs.publisher-digest }}
+          persist-credentials: false
+
+      - name: Confirm protected publisher checkout
+        shell: bash
+        env:
+          PUBLISHER_DIGEST: ${{ needs.validate-inputs.outputs.publisher-digest }}
+        run: |
+          set -euo pipefail
+          CHECKOUT_DIGEST=$(git rev-parse HEAD)
+          if [ "$PUBLISHER_DIGEST" != "$CHECKOUT_DIGEST" ]; then
+            echo "::error::Validation resolved $PUBLISHER_DIGEST but preparation checked out $CHECKOUT_DIGEST"
+            exit 1
+          fi
+
+      - name: Setup Node.js
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: "24"
+
+      # Lifecycle scripts run only in this unprivileged preparation job.
+      - name: Install publisher toolchain
+        run: npm ci --prefix scripts/extension/marketplace-publisher --ignore-scripts=false
+
+      - name: Archive publisher toolchain
+        shell: bash
+        run: |
+          set -euo pipefail
+          tar -czf "${RUNNER_TEMP}/marketplace-publisher-toolchain.tar.gz" \
+            -C scripts/extension/marketplace-publisher node_modules package.json
+
+      - name: Upload publisher toolchain
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: marketplace-publisher-toolchain-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/marketplace-publisher-toolchain.tar.gz
+          if-no-files-found: error
+          overwrite: false
+
   publish:
-    name: Publish ${{ matrix.id }}
+    name: Publish hve-core
+    needs: [validate-inputs, verify, prepare-publisher]
     runs-on: ubuntu-latest
     environment: marketplace
-    strategy:
-      fail-fast: false
-      matrix: ${{ fromJson(inputs.packages-matrix) }}
     permissions:
       contents: read
       attestations: read
       id-token: write
     steps:
-      - name: Checkout code
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Download verified VSIX
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
         with:
-          persist-credentials: false
+          name: extension-vsix-marketplace-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/vsix
+          digest-mismatch: error
 
+      # The job's only extension-name binding. Identity is bound before any
+      # publish credential is active, and later steps reuse the bound values.
+      - name: Select verified VSIX and bind extension identity
+        shell: bash
+        env:
+          VSIX_DIRECTORY: ${{ runner.temp }}/vsix
+        run: |
+          set -euo pipefail
+          EXTENSION_NAME='hve-core'
+          mapfile -t candidates < <(find "$VSIX_DIRECTORY" -type f -name '*.vsix' | LC_ALL=C sort)
+          if [ "${#candidates[@]}" -ne 1 ]; then
+            echo "::error::Expected exactly one VSIX for $EXTENSION_NAME but found ${#candidates[@]}"
+            exit 1
+          fi
+          # Anchoring on the version segment keeps the one identity from
+          # accepting a longer identity that shares its prefix.
+          expected_vsix_pattern="^${EXTENSION_NAME}-[0-9]+\.[0-9]+\.[0-9]+(-[A-Za-z0-9.]+)?\.vsix$"
+          VSIX_BASENAME=$(basename "${candidates[0]}")
+          if [[ ! "$VSIX_BASENAME" =~ $expected_vsix_pattern ]]; then
+            echo "::error::Verified artifact '$VSIX_BASENAME' is not the $EXTENSION_NAME package"
+            exit 1
+          fi
+          {
+            echo "VSIX_FILE=${candidates[0]}"
+            echo "EXTENSION_NAME=$EXTENSION_NAME"
+          } >> "$GITHUB_ENV"
+
+      - name: Re-verify attested VSIX provenance
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_DIGEST: ${{ needs.validate-inputs.outputs.release-digest }}
+          REPOSITORY: ${{ github.repository }}
+          SIGNER_WORKFLOW: ${{ github.repository }}/.github/workflows/extension-provenance.yml
+        run: |
+          set -euo pipefail
+          gh attestation verify "$VSIX_FILE" --repo "$REPOSITORY" \
+            --signer-workflow "$SIGNER_WORKFLOW" \
+            --source-digest "$RELEASE_DIGEST"
+
+      - name: Download publisher toolchain
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: marketplace-publisher-toolchain-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/toolchain
+          digest-mismatch: error
+
+      - name: Setup Node.js
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: "24"
+
+      - name: Extract publisher toolchain
+        shell: bash
+        env:
+          TOOLCHAIN_DIRECTORY: ${{ runner.temp }}/toolchain
+          PUBLISHER_ROOT: ${{ runner.temp }}/publisher
+        run: |
+          set -euo pipefail
+          mapfile -t archives < <(find "$TOOLCHAIN_DIRECTORY" -maxdepth 1 -type f -name '*.tar.gz' | LC_ALL=C sort)
+          if [ "${#archives[@]}" -ne 1 ]; then
+            echo "::error::Expected exactly one publisher toolchain archive but found ${#archives[@]}"
+            exit 1
+          fi
+          mkdir -p "$PUBLISHER_ROOT"
+          # The archive is unprivileged input, so archived ownership and mode
+          # bits are discarded rather than restored into the protected job.
+          tar --no-same-owner --no-same-permissions -xzf "${archives[0]}" -C "$PUBLISHER_ROOT"
+          VSCE_BIN="$PUBLISHER_ROOT/node_modules/.bin/vsce"
+          if [ ! -x "$VSCE_BIN" ]; then
+            echo "::error::Publisher toolchain does not contain an executable vsce binary"
+            exit 1
+          fi
+          EXPECTED_VERSION=$(jq -r '.dependencies["@vscode/vsce"]' "$PUBLISHER_ROOT/package.json")
+          ACTUAL_VERSION=$($VSCE_BIN --version)
+          if [ "$ACTUAL_VERSION" != "$EXPECTED_VERSION" ]; then
+            echo "::error::Publisher toolchain version $ACTUAL_VERSION does not match $EXPECTED_VERSION"
+            exit 1
+          fi
+          echo "VSCE_BIN=$VSCE_BIN" >> "$GITHUB_ENV"
+
+      # Publish credentials become active immediately before they are used.
       - name: Azure Login (OIDC)
         uses: azure/login@f5d393ae46f8fde4be8b75f32e3fc50e654ad0ca # v3.0.1
         with:
@@ -53,99 +331,32 @@ jobs:
           tenant-id: ${{ secrets.AZURE_TENANT_ID }}
           subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
 
-      - name: Setup Node.js
-        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
-        with:
-          node-version: "24"
-
-      # Opt back into dependency lifecycle scripts (the repo .npmrc sets
-      # ignore-scripts=true for dev safety). Publishing needs vsce's native
-      # install hooks (@vscode/vsce-sign, keytar) to run.
-      - name: Install dependencies
-        run: npm ci --ignore-scripts=false
-
-      # The packages matrix is ID-only, so the VS Code extension identity is
-      # derived here from the same mapping the packaging lane uses.
-      - name: Resolve extension identity
-        shell: pwsh
-        env:
-          PACKAGE_ID: ${{ matrix.id }}
-        run: |
-          Import-Module ./scripts/extension/Modules/ExtensionIdentity.psm1 -Force
-          $identity = Get-ExtensionIdentity -PackageId $env:PACKAGE_ID
-          "EXTENSION_NAME=$identity" >> $env:GITHUB_ENV
-          "VSIX_ASSET_GLOB=$(Get-ExtensionVsixGlob -ExtensionIdentity $identity)" >> $env:GITHUB_ENV
-
-      - name: Download attested VSIX from GitHub Release
-        if: ${{ inputs.tag != '' }}
-        shell: pwsh
-        env:
-          GH_TOKEN: ${{ github.token }}
-          RELEASE_TAG: ${{ inputs.tag }}
-          PACKAGE_ID: ${{ matrix.id }}
-          ASSET_DIRECTORY: ./dist
-          REPOSITORY: ${{ github.repository }}
-        run: |
-          New-Item -ItemType Directory -Path $env:ASSET_DIRECTORY -Force | Out-Null
-          gh release download "$env:RELEASE_TAG" --repo "$env:REPOSITORY" --pattern "$env:VSIX_ASSET_GLOB" --dir $env:ASSET_DIRECTORY
-          $selected = & ./scripts/extension/Select-PackageVsix.ps1 -AssetDirectory $env:ASSET_DIRECTORY -PackageId $env:PACKAGE_ID
-          "VSIX_FILE=$selected" >> $env:GITHUB_ENV
-
-      - name: Download intra-run VSIX artifact
-        if: ${{ inputs.tag == '' }}
-        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
-        with:
-          name: extension-vsix-${{ matrix.id }}
-          path: ./dist
-
-      - name: Resolve downloaded VSIX path
-        if: ${{ inputs.tag == '' }}
-        shell: pwsh
-        env:
-          PACKAGE_ID: ${{ matrix.id }}
-          VSIX_DIRECTORY: ./dist
-        run: |
-          $resolved = & ./scripts/extension/Resolve-VsixFile.ps1 -DirectoryPath $env:VSIX_DIRECTORY
-          "VSIX_FILE=$resolved" >> $env:GITHUB_ENV
-
-      - name: Verify attested VSIX provenance
-        if: ${{ inputs.verify-attestation && inputs.tag != '' }}
-        env:
-          GH_TOKEN: ${{ github.token }}
-          REPOSITORY: ${{ github.repository }}
-          SIGNER_WORKFLOW: ${{ github.repository }}/.github/workflows/extension-provenance.yml
-        run: |
-          set -euo pipefail
-          gh attestation verify "$VSIX_FILE" --repo "$REPOSITORY" --signer-workflow "$SIGNER_WORKFLOW"
-
       - name: Publish to VS Code Marketplace
         id: publish
         env:
           PRE_RELEASE: ${{ inputs.pre-release }}
-          PACKAGE_ID: ${{ matrix.id }}
         run: |
-          if [ -z "$VSIX_FILE" ]; then
-            echo "::error::No VSIX file found for package $PACKAGE_ID"
-            exit 1
-          fi
+          set -euo pipefail
           VSIX_VERSION=$(basename "$VSIX_FILE" .vsix | grep -oE '[0-9]+\.[0-9]+\.[0-9]+(-[a-zA-Z0-9.]+)?$')
-          echo "version=$VSIX_VERSION" >> "$GITHUB_OUTPUT"
+          {
+            echo "version=$VSIX_VERSION"
+            echo "extension-name=$EXTENSION_NAME"
+          } >> "$GITHUB_OUTPUT"
 
-          CHANNEL_LABEL="Stable"
-          PRE_RELEASE_FLAG=""
-          if [ "$PRE_RELEASE" == "true" ]; then
-            CHANNEL_LABEL="Pre-Release"
-            PRE_RELEASE_FLAG="--pre-release"
+          arguments=(publish --packagePath "$VSIX_FILE" --azure-credential)
+          CHANNEL_LABEL='Stable'
+          if [ "$PRE_RELEASE" = 'true' ]; then
+            CHANNEL_LABEL='Pre-Release'
+            arguments+=(--pre-release)
           fi
-
-          echo "📦 Publishing $PACKAGE_ID: $VSIX_FILE (v$VSIX_VERSION) [$CHANNEL_LABEL]"
-          npx vsce publish --packagePath "$VSIX_FILE" $PRE_RELEASE_FLAG --azure-credential
+          echo "📦 Publishing $EXTENSION_NAME: $VSIX_FILE (v$VSIX_VERSION) [$CHANNEL_LABEL]"
+          "$VSCE_BIN" "${arguments[@]}"
 
       - name: Summary
         env:
           PRE_RELEASE: ${{ inputs.pre-release }}
-          PACKAGE_ID: ${{ matrix.id }}
           PUBLISH_VERSION: ${{ steps.publish.outputs.version }}
+          EXTENSION_NAME: ${{ steps.publish.outputs.extension-name }}
         run: |
           CHANNEL_LABEL="Stable"
           EMOJI="🎉"
@@ -159,7 +370,6 @@ jobs:
           {
             echo "## ${EMOJI} Extension Published: $EXTENSION_NAME"
             echo ""
-            echo "**Package:** $PACKAGE_ID"
             echo "**Version:** $PUBLISH_VERSION"
             echo "**Channel:** $CHANNEL_LABEL"
             echo ""

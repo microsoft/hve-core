@@ -2,7 +2,13 @@
 title: Design Thinking/Dt Coach Telemetry
 description: Applies Design Thinking telemetry expectations to DT session artifacts
 sidebar_position: 1
-ms.date: 2026-07-30
+author: Microsoft
+ms.date: 2026-08-12
+ms.topic: reference
+keywords:
+  - instruction
+  - design-thinking
+  - design-thinking/dt-coach-telemetry
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->

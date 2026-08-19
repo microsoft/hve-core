@@ -1,8 +1,14 @@
 ---
 title: Git Commit Message
 description: Generate a conventional commit message from all branch changes
-sidebar_position: 2
-ms.date: 2026-07-16
+sidebar_position: 4
+author: Microsoft
+ms.date: 2026-08-12
+ms.topic: reference
+keywords:
+  - prompt
+  - hve-core
+  - git-commit-message
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->

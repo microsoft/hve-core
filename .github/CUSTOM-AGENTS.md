@@ -55,7 +55,6 @@ Use the self-contained `rpi-challenger` skill to interrogate a confirmed subject
 | **documentation**                | Documentation audit, drift, authoring, and validation workflow                                                           | Uses the shared documentation skill and escalates formal assessments to planner agents                                             |
 | **meeting-analyst**              | Analyzes meeting transcripts to extract product requirements via work-iq-mcp                                             | Experimental; requires work-iq-mcp EULA; transcripts may contain PII and confidential data, analysis files are unencrypted on disk |
 | **prd-builder**                  | Creates Product Requirements Documents through guided Q&A                                                                | Iterative questioning; state-tracked sessions                                                                                      |
-| **product-manager-advisor**      | Requirements discovery, story quality, and prioritization guidance                                                       | Principles over format; delegates to prd/brd builders                                                                              |
 | **security-planner**             | STRIDE-based security model analysis with standards mapping and backlog handoff                                          | Six-phase conversational workflow; experimental                                                                                    |
 | **sssc-planner**                 | Supply chain security assessment with 6-phase workflow against OpenSSF Scorecard, SLSA, Sigstore, and SBOM               | Six-phase conversational workflow; experimental                                                                                    |
 | **rai-planner**                  | Responsible AI assessment with 6-phase workflow against Microsoft Responsible AI Impact Assessment Guide and NIST AI RMF | Six-phase conversational workflow; experimental                                                                                    |
@@ -77,28 +76,12 @@ subagents, and skills. The retained `prompt-builder`, `prompt-analyze`, and
 `prompt-refactor` skills are compatibility aliases that route legacy requests
 to `hve-builder`; they are not independent agents or lifecycle owners.
 
-### Generator Agents
-
-| Agent                       | Purpose                                            | Key Constraint                       |
-|-----------------------------|----------------------------------------------------|--------------------------------------|
-| **gen-jupyter-notebook**    | Creates structured EDA notebooks from data sources | Requires data dictionaries           |
-| **gen-streamlit-dashboard** | Develops multi-page Streamlit dashboards           | Uses Context7 for documentation      |
-| **gen-data-spec**           | Generates data dictionaries and profiles           | Produces JSON and markdown artifacts |
-
 ### Platform Integration Agents
 
-| Agent                      | Purpose                                                                          | Key Constraint                            |
-|----------------------------|----------------------------------------------------------------------------------|-------------------------------------------|
-| **github-backlog-manager** | Consolidated GitHub backlog management with community interaction                | Uses MCP GitHub tools                     |
-| **jira-backlog-manager**   | Consolidated Jira backlog management with workflow dispatch and handoff tracking | Uses Jira skill planning workflows        |
-| **ado-prd-to-wit**         | Analyzes PRDs and plans Azure DevOps work item hierarchies                       | Planning-only; does not create work items |
-| **jira-prd-to-wit**        | Analyzes PRDs and plans Jira issue hierarchies                                   | Planning-only; does not mutate Jira       |
-
-### Testing Agents
-
-| Agent                        | Purpose                                     | Key Constraint                         |
-|------------------------------|---------------------------------------------|----------------------------------------|
-| **test-streamlit-dashboard** | Automated Streamlit testing with Playwright | Requires running Streamlit application |
+| Agent                  | Purpose                                                                                             | Key Constraint                                                       |
+|------------------------|-----------------------------------------------------------------------------------------------------|----------------------------------------------------------------------|
+| **backlog-manager**    | Unified backlog and work management for Azure DevOps, GitHub, and Jira, plus ADO PR/build/sprint    | Uses per-platform MCP tools and the Jira CLI; per-platform preflight |
+| **functional-planner** | Analyzes PRDs and plans Azure DevOps or Jira work-item hierarchies with selectable framework lenses | Planning-only; never mutates a tracker                               |
 
 ## Agent Details
 
@@ -124,16 +107,6 @@ to `hve-builder`; they are not independent agents or lifecycle owners.
 
 **Critical:** `RPI Agent` is a user-selected lifecycle wrapper, not an autonomous loop or a dispatcher for named specialized task workers. It may use generic bounded delegation only when it materially improves an isolated activity. Navigate durable artifacts with the task ID, `Pxx`, `Pxx-Txx`, headings, and `<!-- rpi:... -->` markers.
 
-### product-manager-advisor
-
-**Purpose:** Requirements discovery, story quality assurance, and prioritization guidance.
-
-**Workflow:** Discovery → Story Quality → Prioritization → Validation → Handoff
-
-**Handoffs:** Delegates to `prd-builder` for full PRDs, `brd-builder` for business requirements, `ux-ui-designer` for journey mapping, and activates `rpi-research` for decision-critical research.
-
-**Critical:** Focuses on quality principles rather than prescribing issue formats. Guides teams to leverage platform-native templates (GitHub issue forms, Azure DevOps work item templates). Differentiates from `prd-builder` by focusing on the requirements discovery gate rather than document authoring.
-
 ### ux-ui-designer
 
 **Purpose:** UX research artifacts including Jobs-to-be-Done analysis, user journey mapping, and accessibility requirements.
@@ -145,7 +118,7 @@ to `hve-builder`; they are not independent agents or lifecycle owners.
 * Accessibility requirements integrated into journey stages
 * Design handoff sections with flow descriptions and principles
 
-**Handoffs:** Delegates to `product-manager-advisor` for business alignment and activates `rpi-research` for technical feasibility research.
+**Handoffs:** Delegates to `prd-builder` for formal product requirements, `backlog-plan` for tracked work items, and activates `rpi-research` for technical feasibility research.
 
 **Critical:** Research-only. Does not generate UI designs or visual mockups. Produces artifacts that designers translate into Figma flows. Treats accessibility as a foundational constraint.
 
@@ -300,94 +273,21 @@ Users are responsible for verifying their repository's `.gitignore` configuratio
 **Critical:** Human-gated orchestrator invoked from the agent picker. After computing the diff via the `pr-reference` skill, it confirms scope with the operator, then lets the operator choose any combination of five perspectives (`functional`, `standards`, `accessibility`, `security`, `pr`) or `full` to run all five, plus a depth tier (`basic`, `standard`, or `comprehensive`) applied independently of perspective.
 It dispatches thin perspective subagents under `.github/agents/coding-standards/subagents/`, shares the computed diff to avoid duplicate git operations, and merges every report into a single output. Review-only; never modifies code. Maturity: experimental.
 
-### gen-jupyter-notebook
+### backlog-manager
 
-**Creates:** Exploratory data analysis notebooks:
+**Creates:** Backlog management artifacts under `.copilot-tracking/{workitems,github-issues,jira-issues}/`
 
-* `notebooks/*.ipynb` (EDA notebooks with parameterized data loading)
-* `data/processed/*.parquet` (derived datasets with semantic naming)
+**Workflow:** Platform and Intent Classification → Workflow Dispatch → Summary and Handoff
 
-**Workflow:** Context Gathering → Notebook Generation → Validation
+**Critical:** Unified across Azure DevOps, GitHub, and Jira. Resolves the target platform and runs a per-platform tool/credential preflight, delegates knowledge to the `backlog-management` skill, folds in ADO PR creation, build/pipeline info (and GitHub Actions), sprint, and task planning, routes PRD planning to the functional planner, and applies GitHub community-interaction guardrails for contributor-facing comments.
 
-**Critical:** Follows standard section layout with 13 required sections. Uses Plotly Express for interactive visualizations. References existing data dictionaries.
+### functional-planner
 
-### gen-streamlit-dashboard
+**Creates:** Work item planning files under `.copilot-tracking/{workitems,jira-issues}/prds/<artifact-normalized-name>/` (planning-log.md, artifact-analysis.md, the platform plan file, handoff.md)
 
-**Creates:** Multi-page Streamlit applications:
+**Workflow:** Analyze PRD → Discover Codebase → Discover Related Work Items → Refine Hierarchy → Finalize Handoff
 
-* `app.py` (main entry point with page navigation)
-* `pages/*.py` (summary statistics, univariate/multivariate analysis, time series)
-* `requirements.txt` (pinned dependencies)
-
-**Workflow:** Project Setup → Core Dashboard Development → Advanced Features → Refinement
-
-**Critical:** Uses Context7 for current Streamlit documentation. Supports AutoGen chat integration when reference scripts exist.
-
-### gen-data-spec
-
-**Creates:** Data documentation artifacts:
-
-* `outputs/data-dictionary-{{dataset}}-{{YYYY-MM-DD}}.md` (column definitions and semantics, with a human-readable summary section)
-* `outputs/data-profile-{{dataset}}-{{YYYY-MM-DD}}.json` (statistical profile for downstream tools)
-* `outputs/data-objectives-{{dataset}}-{{YYYY-MM-DD}}.json` (analysis goals and constraints)
-
-**Workflow:** Confirm Scope → Discover Data → Sample & Infer Schema → Profile → Clarify → Emit Artifacts
-
-**Critical:** Produces machine-readable profiles for downstream consumption. Follows strict JSON schemas. Minimal clarifying questions.
-
-### github-backlog-manager
-
-**Creates:** Backlog management artifacts under `.copilot-tracking/github-issues/`
-
-**Workflow:** Issue Creation | Backlog Discovery | Triage | Community Interaction
-
-**Critical:** Uses MCP GitHub tools. Follows community interaction guidelines from `community-interaction.instructions.md` for all contributor-facing comments.
-
-### jira-backlog-manager
-
-**Creates:** Backlog management artifacts under `.copilot-tracking/jira-issues/`
-
-**Workflow:** Intent Classification → Workflow Dispatch → Summary and Handoff
-
-**Critical:** Uses the Jira skill command surface. Supports discovery, triage, execution, and single-issue workflows while preserving planning files and autonomy gates.
-
-### ado-prd-to-wit
-
-**Creates:** Work item planning files:
-
-* `.copilot-tracking/workitems/prds/<artifact-normalized-name>/planning-log.md` (session activity and decisions)
-* `.copilot-tracking/workitems/prds/<artifact-normalized-name>/artifact-analysis.md` (PRD parsing and extraction)
-* `.copilot-tracking/workitems/prds/<artifact-normalized-name>/work-items.md` (Epic/Feature/Story hierarchy)
-* `.copilot-tracking/workitems/prds/<artifact-normalized-name>/handoff.md` (final handoff for ADO creation)
-
-**Workflow:** Analyze PRD → Discover Codebase → Discover Related Work Items → Refine → Finalize Handoff
-
-**Critical:** Planning-only. Uses ADO MCP tools for work item discovery. Supports Epics, Features, and User Stories.
-
-### jira-prd-to-wit
-
-**Creates:** Work item planning files:
-
-* `.copilot-tracking/jira-issues/prds/<artifact-normalized-name>/planning-log.md` (session activity and decisions)
-* `.copilot-tracking/jira-issues/prds/<artifact-normalized-name>/artifact-analysis.md` (PRD parsing and extraction)
-* `.copilot-tracking/jira-issues/prds/<artifact-normalized-name>/issues-plan.md` (planned Jira issue hierarchy and field mappings)
-* `.copilot-tracking/jira-issues/prds/<artifact-normalized-name>/handoff.md` (final handoff for Jira execution)
-
-**Workflow:** Analyze PRD → Discover Codebase → Discover Related Jira Issues → Refine → Finalize Handoff
-
-**Critical:** Planning-only. Validates Jira issue types and required fields before finalizing plans. Does not call Jira mutation commands.
-
-### test-streamlit-dashboard
-
-**Creates:** Test reports and issue documentation:
-
-* Test results summary (pass/fail counts by category)
-* Issue registry with reproduction steps (severity-categorized findings)
-* Performance metrics (page load times, render benchmarks)
-
-**Workflow:** Environment Setup → Functional Testing → Data Validation → Performance Assessment → Issue Reporting
-
-**Critical:** Uses Playwright for browser automation. Requires running Streamlit application. Categorizes issues by severity.
+**Critical:** Strictly planning-only; never mutates a tracker. Consumes the `functional-planner` skill for the read-only PRD model, per-platform hierarchy rules (ADO Epic/Feature/Story; Jira Epic/Story/Task/Sub-task), and selectable open framework lenses (generic, Scrum, Kanban). Hands off to the `backlog-manager` for execution after user review.
 
 ## Common Workflows
 

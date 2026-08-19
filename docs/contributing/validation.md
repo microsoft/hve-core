@@ -3,7 +3,7 @@ title: Validation Commands and CI-Owned Lanes
 description: Choose local-safe validation defaults and reproduce CI-owned documentation and evaluation lanes when their prerequisites are available
 sidebar_position: 12
 author: Microsoft
-ms.date: 2026-08-10
+ms.date: 2026-08-11
 ms.topic: how-to
 keywords:
   - validation
@@ -33,14 +33,16 @@ Use the smallest local-safe command that covers the change. Generic validation
 does not select a `ci:*` lane, and a command mentioned in documentation, a
 plan, a log, or an error message is not an agent execution request.
 
-| Need                                      | Command                  | Notes                                       |
-|-------------------------------------------|--------------------------|---------------------------------------------|
-| Repository-wide local-safe validation     | `npm run validate:local` | Non-mutating default validation aggregate   |
-| Documentation static and component checks | `npm run validate:docs`  | Does not run the browser E2E lane           |
-| Markdown tables check                     | `npm run lint:tables`    | Non-mutating table alignment check          |
-| Markdown tables fix                       | `npm run format:tables`  | Explicitly mutates table formatting         |
-| Markdown lint fix                         | `npm run lint:md:fix`    | Explicitly mutates Markdown where possible  |
-| Targeted check                            | `npm run <local-check>`  | Choose the check that owns the changed file |
+| Need                                      | Command                      | Notes                                                 |
+|-------------------------------------------|------------------------------|-------------------------------------------------------|
+| Repository-wide local-safe validation     | `npm run validate:local`     | Non-mutating default validation aggregate             |
+| Documentation static and component checks | `npm run validate:docs`      | Does not run the browser E2E lane                     |
+| Markdown tables check                     | `npm run lint:tables`        | Non-mutating table alignment check                    |
+| Markdown link check                       | `npm run lint:md-links`      | Non-mutating link check included in `validate:local`  |
+| Markdown tables fix                       | `npm run format:tables`      | Explicitly mutates table formatting                   |
+| Markdown lint fix                         | `npm run lint:md:fix`        | Explicitly mutates Markdown where possible            |
+| Targeted check                            | `npm run <local-check>`      | Choose the check that owns the changed file           |
+| Design Intent contract lint               | `npm run lint:design-intent` | Validates authored records and verification artifacts |
 
 For example, use `npm run lint:md -- docs/contributing/validation.md` for a
 targeted Markdown check, or invoke `npm run lint:frontmatter` after changing
@@ -67,7 +69,8 @@ dependencies available.
 Some organizations block direct access to public package registries, release
 downloads, or gallery endpoints and require installs to route through approved
 proxies. Restore commands can then fail to reach npm or Python package indexes,
-and DevContainer setup can fail while downloading tools or PowerShell modules.
+commonly with `ENOTCONN` or a connection timeout. DevContainer setup can also
+fail while downloading tools or PowerShell modules.
 
 This repository commits a project-level `.npmrc` that pins the canonical public
 registry, and npm resolves configuration in the order `cli > env > project
@@ -76,6 +79,14 @@ and silently ignored. Set an environment variable or pass a CLI flag instead.
 
 Keep the proxy address out of the repository. It belongs in your own
 environment, never in a tracked file.
+
+Each tool reads its own environment variable:
+
+| Tool | Environment variable  | Public default                |
+|------|-----------------------|-------------------------------|
+| npm  | `npm_config_registry` | `https://registry.npmjs.org/` |
+| pip  | `PIP_INDEX_URL`       | `https://pypi.org/simple/`    |
+| uv   | `UV_DEFAULT_INDEX`    | `https://pypi.org/simple/`    |
 
 | Environment                | Where the override belongs                                                                  |
 |----------------------------|---------------------------------------------------------------------------------------------|
@@ -87,6 +98,8 @@ macOS and Linux:
 
 ```bash
 export npm_config_registry="https://proxy.example.com/npm/"
+export PIP_INDEX_URL="https://proxy.example.com/pypi/simple/"
+export UV_DEFAULT_INDEX="https://proxy.example.com/pypi/simple/"
 npm ci
 ```
 
@@ -94,6 +107,8 @@ Windows PowerShell:
 
 ```powershell
 $env:npm_config_registry = 'https://proxy.example.com/npm/'
+$env:PIP_INDEX_URL = 'https://proxy.example.com/pypi/simple/'
+$env:UV_DEFAULT_INDEX = 'https://proxy.example.com/pypi/simple/'
 npm ci
 ```
 
@@ -157,19 +172,33 @@ $env:HVE_PSGALLERY_SOURCE_URL = 'https://packages.corp.example.com/powershell/'
 Restart VS Code from the configured shell and run **Dev Containers: Rebuild
 Container**. Runtime `containerEnv` settings cannot change the base image
 because Docker resolves it before the container starts. See
-[Enterprise artifact hub](../customization/enterprise-artifact-hub) for the
+[Enterprise artifact hub](../customization/enterprise-artifact-hub.md) for the
 complete defaults, affected files, and security considerations.
+
+### Codespaces
+
+For GitHub Codespaces, create account-specific
+[development environment secrets](https://docs.github.com/en/codespaces/managing-your-codespaces/managing-your-account-specific-secrets-for-github-codespaces)
+named `NPM_CONFIG_REGISTRY`, `PIP_INDEX_URL`, and `UV_DEFAULT_INDEX`. These
+values become environment variables when the codespace is created or restarted;
+they do not configure the Docker image build.
+
+`onCreateCommand` and `updateContentCommand` can run while a Codespaces
+prebuild is created, before account-specific secrets are available. Run setup
+that requires those secrets from `postCreateCommand` or later.
 
 The committed `.npmrc` sets `replace-registry-host=always`, so npm rewrites each
 lockfile tarball host to the configured registry at fetch time only. `npm ci`
 never writes `package-lock.json`, and it still verifies every download against
 the committed `sha512` integrity value.
 
-Restrict proxied installs to restore commands. `npm ci`, `uv sync --frozen`, and
-`pip install -r` read committed lockfiles and verify committed hashes. Commands
-that resolve dependencies, such as `npm install`, `npm update`, `npm audit fix`,
-`uv lock`, and `uv add`, write the proxy's own URLs into the lockfile and can
-downgrade npm integrity from `sha512` to `sha1`. Run
+Use restore commands for proxied installs. `npm ci` verifies downloads
+against the committed integrity values, and `uv sync --frozen` installs without
+updating the lockfile. A plain `pip install -r` verifies committed hashes only
+when the requirements file contains hashes and hash-checking mode is enabled,
+for example with `--require-hashes`. Dependency-resolution commands may update
+lockfiles with proxy-specific metadata. Review lockfile changes before
+committing, and run
 `npm run lint:public-dependency-feeds` if you suspect a lockfile picked up a
 non-public source.
 
@@ -185,10 +214,8 @@ it does not add new ones.
 | Add a new dependency            | Edit `package.json`, push the branch, and let an agent or CI job run `npm install` |
 | Need an interactive environment | Use a codespace or any workstation with direct public registry access              |
 
-Do not repair a proxy-generated lockfile by hand. Rewriting `resolved` back to
-the public registry leaves the weakened `integrity` value in place, and
-recomputing the hash from the proxy-served bytes only attests to what the proxy
-returned rather than to what the registry published.
+If a proxy-generated lockfile changes source or integrity metadata, regenerate
+it where the public registry is reachable instead of editing it by hand.
 
 ## Documentation checks and browser lane
 

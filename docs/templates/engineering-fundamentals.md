@@ -3,8 +3,12 @@ title: Engineering Fundamentals
 description: Language-agnostic design principles applied to every Code Review Standards review
 sidebar_position: 8
 author: microsoft/hve-core
-ms.date: 2026-07-08
+ms.date: 2026-08-01
 ms.topic: reference
+keywords:
+  - engineering fundamentals
+  - code review
+  - design principles
 ---
 
 <!-- Keep this file under 60 lines. Move extended rationale to separate reference files. -->

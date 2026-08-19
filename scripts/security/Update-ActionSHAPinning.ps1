@@ -75,7 +75,7 @@ $ActionSHAMap = @{
 
     # Attestation and provenance
     "actions/attest@v4"                    = "actions/attest@a1948c3f048ba23858d222213b7c278aabede763" # v4.1.1
-    "actions/attest-build-provenance@v4"   = "actions/attest-build-provenance@0f67c3f4856b2e3261c31976d6725780e5e4c373" # v4.1.1
+    "actions/attest-build-provenance@v4"   = "actions/attest-build-provenance@4d101475d8b20a2381f78447822ac1eab6504dd8" # v4.2.2
 
     # Security and code analysis
     "actions/dependency-review-action@v4"  = "actions/dependency-review-action@2031cfc080254a8a887f58cffee85186f0e49e48" # v4.9.0
@@ -301,7 +301,7 @@ function Get-SHAForAction {
 
                 # Handle actions with subpaths (e.g., github/codeql-action/init)
                 $parts = $actionPath -split '/'
-                
+
                 # Validate action reference format
                 if ($parts.Count -lt 2) {
                     Write-SecurityLog "Invalid action reference format: $ActionRef - must be 'owner/repo' or 'owner/repo/path'" -Level 'Warning'
@@ -309,7 +309,7 @@ function Get-SHAForAction {
                     Write-SecurityLog "SOLUTION: Verify action reference follows GitHub Actions format (e.g., actions/checkout@v4)" -Level 'Warning'
                     return $null
                 }
-                
+
                 $owner = $parts[0]
                 $repo = $parts[1]
 

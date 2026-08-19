@@ -1,0 +1,23 @@
+# Curated surface signature for the experimental Data Workstream Coach.
+required:
+  - name: foundation-loading-language
+    type: output-matches
+    config:
+      pattern: '(?i)data-workstream-foundation'
+  - name: authoritative-session-path-language
+    type: output-matches
+    config:
+      pattern: '(?i)\.copilot-tracking[/\\]ds[/\\][a-z0-9]+(?:-[a-z0-9]+)*[/\\]session-state\.md'
+disallowed:
+  - name: planner-json-state
+    type: output-matches
+    config:
+      pattern: '(?i)\.copilot-tracking[/\\]ds[/\\][^\s]+[/\\]state\.json'
+  - name: six-phase-planner-shape
+    type: output-matches
+    config:
+      pattern: '(?i)(six|6)[-\s]+phase\s+(planner|planning|assessment)'
+  - name: writes-outside-workspace
+    type: output-matches
+    config:
+      pattern: '(?i)(C:\\|/etc/|/usr/|~/Documents)'

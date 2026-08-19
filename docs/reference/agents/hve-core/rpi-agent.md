@@ -2,7 +2,13 @@
 title: RPI Agent
 description: "User-selected RPI workflow wrapper for Research, Plan, Implement, Review, and Follow-up. Use when one task needs lifecycle coordination."
 sidebar_position: 2
-ms.date: 2026-07-16
+author: Microsoft
+ms.date: 2026-08-12
+ms.topic: reference
+keywords:
+  - agent
+  - hve-core
+  - rpi-agent
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->

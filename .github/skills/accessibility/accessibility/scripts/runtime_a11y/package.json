@@ -1,0 +1,19 @@
+{
+  "name": "@hve-core/runtime-a11y",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Runtime accessibility probe harness for the HVE Core accessibility skill. Drives Playwright, axe-core, and a virtual screen reader against a project surface inventory.",
+  "license": "MIT",
+  "type": "module",
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "@axe-core/playwright": "4.12.1",
+    "@guidepup/virtual-screen-reader": "0.32.1",
+    "playwright": "1.61.1"
+  },
+  "optionalDependencies": {
+    "@guidepup/guidepup": "0.28.1"
+  }
+}

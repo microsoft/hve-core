@@ -3,8 +3,12 @@ title: Build Workflows
 description: GitHub Actions CI/CD pipeline architecture for validation, security, and release automation
 sidebar_position: 3
 author: WilliamBerryiii
-ms.date: 2026-08-04
+ms.date: 2026-08-16
 ms.topic: overview
+keywords:
+  - github actions
+  - workflows
+  - ci/cd
 ---
 
 HVE Core uses GitHub Actions for continuous integration, quality validation, security scanning, and release automation. The workflow architecture emphasizes reusable components and parallel execution for fast feedback.
@@ -21,22 +25,28 @@ flowchart TD
         PV --> TEST[Test Jobs]
     end
 
-    subgraph MAIN["Main Branch"]
-        direction TB
-        MERGE[Merge to Main] --> MN[release-stable.yml]
-        MN --> VAL[Validation]
-        VAL --> PROMO[Review main to release/stable Promotion]
-        PROMO --> STABLE[release-stable-publish.yml]
-        STABLE --> REL[release-please Stable PR]
-        REL --> REVIEW[Review Stable Release PR]
-        REVIEW --> EVIDENCE[Artifacts and Immutable Plugin Snapshot]
-        EVIDENCE --> PUBLISH[Publish Stable Release]
-        PUBLISH --> SYNC[Review release/stable to main Metadata Sync]
-    end
-
     subgraph PRE["PreRelease"]
         direction TB
-        SHA[Explicit main SHA] --> PRE_RELEASE[release-prerelease.yml]
+        MERGE[Merge to main] --> PREP[Pre-Release Promotion Preparation]
+        PREP --> PROMO[Review main to PreRelease Promotion]
+        PROMO -->|merge, no tag| PRE_RP[Pre-Release Pipeline PR-only mode]
+        PRE_RP --> PRE_REL[Review managed PreRelease PR]
+        PRE_REL -->|merge| PRE_DRAFT[Tag-only Draft at Managed Merge]
+        PRE_DRAFT --> PRE_EVIDENCE[Release-tag VSIX and Assurance]
+        PRE_EVIDENCE --> PRE_PUBLISH[App-token Prerelease Publication]
+        PRE_PUBLISH --> PRE_MARKET[Pre-Release Marketplace Publish]
+    end
+
+    subgraph STABLE["Stable"]
+        direction TB
+        PRE_PUBLISH --> ST_PREP[Stable Release Preparation]
+        ST_PREP --> ST_PROMO[Review PreRelease to Stable Promotion]
+        ST_PROMO -->|merge, no tag| ST_RP[Stable Release Publish PR-only mode]
+        ST_RP --> ST_REL[Review managed Stable PR]
+        ST_REL -->|merge| ST_DRAFT[Tag-only Draft at Managed Merge]
+        ST_DRAFT --> ST_EVIDENCE[Release-tag VSIX and Assurance]
+        ST_EVIDENCE --> ST_PUBLISH[App-token Stable Publication]
+        ST_PUBLISH --> ST_MARKET[Stable Marketplace Publish]
     end
 
     subgraph SCHED["Scheduled"]
@@ -47,38 +57,41 @@ flowchart TD
 
     subgraph MANUAL["Manual"]
         direction TB
-        DISPATCH[Manual Trigger] --> PUB[release-marketplace-stable.yml]
+        DISPATCH[Recovery Dispatch] --> PREP
+        DISPATCH --> ST_PREP
+        DISPATCH --> PUB[Channel Marketplace Workflow]
         PUB --> VSCE[Publish to Marketplace]
     end
 ```
 
 ## Workflow Inventory
 
-| Workflow                             | Trigger                   | Purpose                                                                |
-|--------------------------------------|---------------------------|------------------------------------------------------------------------|
-| `pr-validation.yml`                  | Pull request, manual      | Pre-merge quality gate with parallel validation                        |
-| `release-stable.yml`                 | Push to main, manual      | Validate `main` and open the reviewed Stable promotion PR              |
-| `release-stable-publish.yml`         | PR merged to Stable       | Run release-please, build release evidence, publish, and sync metadata |
-| `weekly-security-maintenance.yml`    | Sunday 2 AM UTC, manual   | Scheduled security posture review                                      |
-| `weekly-validation.yml`              | Schedule, manual          | Weekly full validation sweep                                           |
-| `security-scan.yml`                  | Push to main/develop      | CodeQL security validation                                             |
-| `release-marketplace-stable.yml`     | Manual                    | VS Code extension marketplace publishing                               |
-| `release-marketplace-prerelease.yml` | Manual                    | VS Code extension pre-release publishing                               |
-| `copilot-setup-steps.yml`            | Manual                    | Coding agent environment setup                                         |
-| `devcontainer-change-log.yml`        | Push to main/develop      | Logs devcontainer infrastructure file changes to the step summary      |
-| `devcontainer-lockfile-check.yml`    | Reusable                  | Validates devcontainer lockfile integrity and SHA-256 pinning          |
-| `release-prerelease.yml`             | Manual                    | Package an explicit main SHA as an immutable PreRelease                |
-| `scorecard.yml`                      | Schedule, push            | OpenSSF Scorecard security analysis                                    |
-| `codeql-analysis.yml`                | Schedule                  | Weekly CodeQL security scan (also reusable)                            |
-| `dependency-review.yml`              | Pull request              | Dependency vulnerability review (also reusable)                        |
-| `sha-staleness-check.yml`            | Manual                    | SHA reference freshness check (also reusable)                          |
-| `deploy-docs.yml`                    | Push to main, manual      | Docusaurus documentation site deployment                               |
-| `create-stale-docs-issues.yml`       | Schedule                  | Automated stale docs issue creation from ms.date freshness             |
-| `msdate-freshness-check.yml`         | Schedule, manual          | ms.date freshness validation across documentation                      |
-| `label-sync.yml`                     | Push to main, manual      | Repository label synchronization                                       |
-| `workflow-permissions-scan.yml`      | Schedule, manual          | GitHub Actions permissions audit                                       |
-| `weekly-gh-code-scanning.yml`        | Monday 3 AM UTC, manual   | Weekly GitHub code scanning alert retrieval and issue creation         |
-| `vex-detect.yml`                     | Schedule, release, manual | Dependency vulnerability scan and VEX triage issue creation            |
+| Workflow                             | Trigger                           | Purpose                                                                 |
+|--------------------------------------|-----------------------------------|-------------------------------------------------------------------------|
+| `pr-validation.yml`                  | Pull request, manual              | Pre-merge quality gate for main, develop, and both release branches     |
+| `release-prerelease-prepare.yml`     | Merged PR to `main`, manual       | Open the reviewed `main` to `release/prerelease` promotion PR           |
+| `release-prerelease.yml`             | Merged PR to `release/prerelease` | Prepare or publish the managed odd-minor PreRelease                     |
+| `release-stable.yml`                 | Published PreRelease, manual      | Open the reviewed `release/prerelease` to `release/stable` promotion PR |
+| `release-stable-publish.yml`         | Merged PR to `release/stable`     | Prepare or publish the managed even-minor Stable release                |
+| `weekly-security-maintenance.yml`    | Sunday 2 AM UTC, manual           | Scheduled security posture review                                       |
+| `weekly-validation.yml`              | Schedule, manual                  | Weekly full validation sweep                                            |
+| `security-scan.yml`                  | Push to main/develop              | CodeQL security validation                                              |
+| `release-marketplace-stable.yml`     | Published Stable release, manual  | VS Code extension Marketplace publishing                                |
+| `release-marketplace-prerelease.yml` | Published PreRelease, manual      | VS Code extension pre-release publishing                                |
+| `copilot-setup-steps.yml`            | Manual                            | Coding agent environment setup                                          |
+| `devcontainer-change-log.yml`        | Push to main/develop              | Logs devcontainer infrastructure file changes to the step summary       |
+| `devcontainer-lockfile-check.yml`    | Reusable                          | Validates devcontainer lockfile integrity and SHA-256 pinning           |
+| `scorecard.yml`                      | Schedule, push                    | OpenSSF Scorecard security analysis                                     |
+| `codeql-analysis.yml`                | Schedule                          | Weekly CodeQL security scan (also reusable)                             |
+| `dependency-review.yml`              | Pull request                      | Dependency vulnerability review (also reusable)                         |
+| `sha-staleness-check.yml`            | Manual                            | SHA reference freshness check (also reusable)                           |
+| `deploy-docs.yml`                    | Push to main, manual              | Docusaurus documentation site deployment                                |
+| `create-stale-docs-issues.yml`       | Schedule                          | Automated stale docs issue creation from ms.date freshness              |
+| `msdate-freshness-check.yml`         | Schedule, manual                  | ms.date freshness validation across documentation                       |
+| `label-sync.yml`                     | Push to main, manual              | Repository label synchronization                                        |
+| `workflow-permissions-scan.yml`      | Schedule, manual                  | GitHub Actions permissions audit                                        |
+| `weekly-gh-code-scanning.yml`        | Monday 3 AM UTC, manual           | Weekly GitHub code scanning alert retrieval and issue creation          |
+| `vex-detect.yml`                     | Schedule, release, manual         | Dependency vulnerability scan and VEX triage issue creation             |
 
 GitHub Agentic Workflow markdown files (`issue-triage.md`, `issue-implement.md`, `pr-review.md`, `dependency-pr-review.md`, `doc-update-check.md`, and `vex-draft.md`) compile to `*.lock.yml` workflows and are documented in [Agentic Workflows](agentic-workflows).
 
@@ -86,39 +99,39 @@ GitHub Agentic Workflow markdown files (`issue-triage.md`, `issue-implement.md`,
 
 Individual validation workflows called by orchestration workflows:
 
-| Workflow                              | Purpose                                        | npm Script                               |
-|---------------------------------------|------------------------------------------------|------------------------------------------|
-| `markdown-lint.yml`                   | Markdownlint validation                        | `npm run lint:md`                        |
-| `spell-check.yml`                     | cspell dictionary check                        | `npm run spell-check`                    |
-| `frontmatter-validation.yml`          | AI artifact frontmatter schemas                | `npm run lint:frontmatter`               |
-| `markdown-link-check.yml`             | Broken link detection                          | `npm run lint:md-links`                  |
-| `link-lang-check.yml`                 | Link language validation                       | `npm run lint:links`                     |
-| `yaml-lint.yml`                       | YAML syntax validation                         | `npm run lint:yaml`                      |
-| `ps-script-analyzer.yml`              | PowerShell static analysis                     | `npm run lint:ps`                        |
-| `table-format.yml`                    | Markdown table formatting                      | `npm run format:tables`                  |
-| `pester-tests.yml`                    | PowerShell unit tests                          | `npm run test:ps`                        |
-| `skill-validation.yml`                | Skill structure validation                     | `npm run validate:skills`                |
-| `dependency-pinning-scan.yml`         | Dependency pinning validation                  | N/A (PowerShell direct)                  |
-| `sha-staleness-check.yml`             | SHA reference freshness*                       | N/A (PowerShell direct)                  |
-| `codeql-analysis.yml`                 | CodeQL security scanning*                      | N/A (GitHub native)                      |
-| `dependency-review.yml`               | Dependency vulnerability review*               | N/A (GitHub native)                      |
-| `gh-code-scanning.yml`                | GitHub code scanning alert retrieval           | N/A (PowerShell direct)                  |
-| `create-gh-code-scanning-issues.yml`  | Create GitHub code scanning issues from alerts | N/A (bash + gh CLI direct)               |
-| `extension-package.yml`               | VS Code extension packaging                    | `npm run extension:package`              |
-| `copyright-headers.yml`               | Copyright header validation                    | `npm run validate:copyright`             |
-| `gitleaks-scan.yml`                   | Secret detection scanning                      | N/A (gitleaks direct)                    |
-| `plugin-package.yml`                  | Plugin packaging                               | N/A                                      |
-| `plugin-validation.yml`               | Marketplace package metadata and closure       | `npm run lint:marketplace`               |
-| `extension-marketplace-publish.yml`   | Extension marketplace publishing               | N/A                                      |
-| `python-lint.yml`                     | Python linting (ruff)                          | `npm run lint:py`                        |
-| `pytest-tests.yml`                    | Python unit tests                              | `npm run test:py`                        |
-| `pip-audit.yml`                       | Python dependency auditing                     | N/A (pip-audit direct)                   |
-| `fuzz-tests.yml`                      | Python fuzz testing                            | N/A (pytest direct)                      |
-| `docusaurus-tests.yml`                | Docusaurus test suite                          | N/A (npm test)                           |
-| `model-validation.yml`                | Model reference validation                     | `npm run lint:models`                    |
-| `ai-artifact-validation.yml`          | AI artifact structure validation               | `npm run lint:ai-artifacts`              |
-| `devcontainer-lockfile-check.yml`     | Devcontainer lockfile integrity                | `npm run validate:devcontainer-lockfile` |
-| `action-version-consistency-scan.yml` | Action version consistency                     | `npm run lint:version-consistency`       |
+| Workflow                              | Purpose                                          | npm Script                               |
+|---------------------------------------|--------------------------------------------------|------------------------------------------|
+| `markdown-lint.yml`                   | Markdownlint validation                          | `npm run lint:md`                        |
+| `spell-check.yml`                     | cspell dictionary check                          | `npm run spell-check`                    |
+| `frontmatter-validation.yml`          | AI artifact frontmatter schemas                  | `npm run lint:frontmatter`               |
+| `markdown-link-check.yml`             | Broken link detection                            | `npm run lint:md-links`                  |
+| `link-lang-check.yml`                 | Link language validation                         | `npm run lint:links`                     |
+| `yaml-lint.yml`                       | YAML syntax validation                           | `npm run lint:yaml`                      |
+| `ps-script-analyzer.yml`              | PowerShell static analysis                       | `npm run lint:ps`                        |
+| `table-format.yml`                    | Markdown table formatting                        | `npm run format:tables`                  |
+| `pester-tests.yml`                    | PowerShell unit tests                            | `npm run test:ps`                        |
+| `skill-validation.yml`                | Skill structure validation                       | `npm run validate:skills`                |
+| `dependency-pinning-scan.yml`         | Dependency pinning validation                    | N/A (PowerShell direct)                  |
+| `sha-staleness-check.yml`             | SHA reference freshness*                         | N/A (PowerShell direct)                  |
+| `codeql-analysis.yml`                 | CodeQL security scanning*                        | N/A (GitHub native)                      |
+| `dependency-review.yml`               | Dependency vulnerability review*                 | N/A (GitHub native)                      |
+| `gh-code-scanning.yml`                | GitHub code scanning alert retrieval             | N/A (PowerShell direct)                  |
+| `create-gh-code-scanning-issues.yml`  | Create GitHub code scanning issues from alerts   | N/A (bash + gh CLI direct)               |
+| `extension-package.yml`               | VS Code extension packaging (unprivileged)       | `npm run extension:package`              |
+| `extension-provenance.yml`            | VS Code extension attestation and release upload | N/A                                      |
+| `copyright-headers.yml`               | Copyright header validation                      | `npm run validate:copyright`             |
+| `gitleaks-scan.yml`                   | Secret detection scanning                        | N/A (gitleaks direct)                    |
+| `plugin-validation.yml`               | Plugin manifest, locator, and hook validation    | `npm run plugin:validate`                |
+| `extension-marketplace-publish.yml`   | Extension marketplace publishing                 | N/A                                      |
+| `python-lint.yml`                     | Python linting (ruff)                            | `npm run lint:py`                        |
+| `pytest-tests.yml`                    | Python unit tests                                | `npm run test:py`                        |
+| `pip-audit.yml`                       | Python dependency auditing                       | N/A (pip-audit direct)                   |
+| `fuzz-tests.yml`                      | Python fuzz testing                              | N/A (pytest direct)                      |
+| `docusaurus-tests.yml`                | Docusaurus test suite                            | N/A (npm test)                           |
+| `model-validation.yml`                | Model reference validation                       | `npm run lint:models`                    |
+| `ai-artifact-validation.yml`          | AI artifact structure validation                 | `npm run lint:ai-artifacts`              |
+| `devcontainer-lockfile-check.yml`     | Devcontainer lockfile integrity                  | `npm run validate:devcontainer-lockfile` |
+| `action-version-consistency-scan.yml` | Action version consistency                       | `npm run lint:version-consistency`       |
 
 Workflows marked with `*` are dual-purpose: they accept `workflow_call` for reuse by orchestration workflows and also run independently via their own triggers.
 
@@ -184,54 +197,78 @@ flowchart LR
 | npm-audit                   | Inline                            | npm dependency vulnerabilities  |
 | codeql                      | `codeql-analysis.yml`             | Code security patterns          |
 | copyright-headers           | `copyright-headers.yml`           | Copyright header compliance     |
-| plugin-validation           | `plugin-validation.yml`           | Plugin and package metadata     |
+| plugin-validation           | `plugin-validation.yml`           | Plugin manifest, locator, hooks |
 | gitleaks-scan               | `gitleaks-scan.yml`               | Secret detection                |
 
 All jobs run in parallel with no dependencies, enabling fast feedback (typically under 3 minutes).
 
-## Main Branch Pipeline
+## Release Promotion and Publication
 
-`release-stable.yml` opens the reviewed `main` to `release/stable` promotion after validating `main` and confirming that the prior Stable metadata has returned to `main`. It does not run release-please, package artifacts, create a tag, or publish a release.
+The preparation workflows each contain exactly two jobs:
 
-```mermaid
-flowchart LR
-    V1[spell-check] --> PREP[prepare-promotion]
-    V2[markdown-lint] --> PREP
-    V3[table-format] --> PREP
-    V4[dependency-pinning-scan] --> PREP
-    V5[action-version-consistency-scan] --> PREP
-    V6[gitleaks-scan] --> PREP
-    V7[pester-tests] --> PREP
-    V8[docusaurus-tests] --> PREP
-    V9[discover-python-projects] --> PREP
-    V9 --> V10[python-lint]
-    V9 --> V11[pytest]
-    V10 --> PREP
-    V11 --> PREP
-    PREP --> PR[open-promotion-pr]
-```
+| Workflow                         | Jobs                                     | Source and target                        |
+|----------------------------------|------------------------------------------|------------------------------------------|
+| `release-prerelease-prepare.yml` | `prepare-promotion`, `open-promotion-pr` | `main` to `release/prerelease`           |
+| `release-stable.yml`             | `prepare-promotion`, `open-promotion-pr` | `release/prerelease` to `release/stable` |
 
-### Main Branch Jobs
+Each preparation starts from the target branch, merges the current source,
+restores target-owned release metadata, writes the exact `release-as`, and
+opens a reviewed PR. Promotion heads are stable per hop and are updated without
+force. The promotion merge creates no tag.
 
-| Job                             | Purpose                                          | Dependencies             |
-|---------------------------------|--------------------------------------------------|--------------------------|
-| spell-check                     | Post-merge spelling validation                   | None                     |
-| markdown-lint                   | Post-merge Markdown validation                   | None                     |
-| table-format                    | Post-merge table validation                      | None                     |
-| dependency-pinning-scan         | Dependency pinning security check                | None                     |
-| action-version-consistency-scan | Action version consistency check                 | None                     |
-| gitleaks-scan                   | Secret detection scanning                        | None                     |
-| pester-tests                    | PowerShell unit tests                            | None                     |
-| docusaurus-tests                | Documentation site build and tests               | None                     |
-| discover-python-projects        | Enumerate Python projects                        | None                     |
-| python-lint                     | Python lint (ruff)                               | discover-python-projects |
-| pytest                          | Python unit tests                                | discover-python-projects |
-| prepare-promotion               | Verify source state and determine promotion need | All validation jobs      |
-| open-promotion-pr               | Open or update the reviewed `main` promotion     | prepare-promotion        |
+The release workflows accept only the exact promotion or managed head for
+their channel. A promotion merge selects PR-only mode. A managed PR merge
+selects tag-only mode and creates `prerelease-v<version>` for PreRelease or
+`v<version>` for Stable at that managed merge commit.
 
-After the promotion merges, `release-stable-publish.yml` runs release-please on `release/stable`. Release-please owns the managed Stable release PR and draft Stable release. The workflow synchronizes version fields and the immutable plugin locator on the managed PR.
+### Release Version Allocation
 
-After review and merge, it validates the released commit, packages and attests release assets, publishes the immutable `plugins-v<version>` snapshot, finalizes the draft, and opens a non-auto-merged `release/stable` to `main` metadata synchronization PR.
+Ordinary version allocation is branch-owned. PreRelease reads the current
+`release/prerelease` version and returns the same major, minor plus two, and
+patch zero. Stable reads the promoted PreRelease version and returns the
+promoted major, promoted minor plus one, and patch zero. Current Stable state
+only rejects a candidate that does not advance it. The ordinary sequence is
+`3.3.101` to `3.5.0` to `3.6.0`.
+
+No commit classification or automatic patch, minor, or major release class
+participates in ordinary allocation. The plugin manifest and VSIX use the same
+channel version. A major-line transition, or a Stable patch or hotfix, requires
+a separate explicit manifest and release-state decision. Odd/even minor parity
+is repository policy aligned with VS Code Marketplace guidance and behavior,
+not a requirement of `MAJOR.MINOR.PATCH` syntax.
+
+### Release Channel Jobs
+
+`release-prerelease.yml` jobs: `validate-trigger`, `release-please`, `sync-release-pr`,
+`validate-release`, `close-milestone`, `extension-package-prerelease`,
+`generate-dependency-sbom`, `extension-provenance-prerelease`,
+`verify-provenance`, and `publish-release`.
+
+`release-stable-publish.yml` jobs: `validate-trigger`, `release-please`,
+`sync-release-pr`, `validate-release`, `close-milestone`,
+`extension-package-release`, `extension-provenance`,
+`generate-dependency-sbom`, `vex-attest`, `verify-provenance`, `sbom-diff`,
+`append-verification-notes`, and `publish-release`.
+
+Both channels build the VSIX in `extension-package.yml`, which holds only
+`contents: read`, and attest it in `extension-provenance.yml`, which holds the
+signing scopes and never installs dependencies. No job does both.
+
+Both release workflows verify event, merge, release-please, and release-tag
+SHA equality plus target-branch ancestry. The extension uses the validated
+release SHA bound to the immutable channel tag. Each workflow attaches one
+VSIX with SPDX, Sigstore, and in-toto sidecars plus
+`dependencies.spdx.json`; Stable also publishes and attests
+`hve-core.openvex.json`.
+
+Both channels publish their draft with a release GitHub App token. The
+resulting `published` event triggers the matching Marketplace workflow.
+Main is not part of either release completion graph. It remains a ref-less
+development-tip channel sourced from canonical `.github` content and is not
+updated by release completion. Release branches, immutable tags, and published
+releases own release state and history.
+
+The ref-less `microsoft/hve-core` registration sources canonical content from `.github` through the main catalog. An explicit marketplace refresh and plugin update are required for that catalog, which has no release gate, SBOM, or attestation. PreRelease and Stable retain reviewed, release-gated, SBOM-covered, and attested immutable delivery through moving branch registrations and exact tags.
 
 ## Security Workflows
 
@@ -259,48 +296,37 @@ The `weekly-security-maintenance.yml` workflow runs every Sunday at 2AM UTC, pro
 
 ## Extension Publishing
 
-The `release-marketplace-stable.yml` and `release-marketplace-prerelease.yml` workflows discover active package IDs from the catalog and process one VSIX per matrix entry. Stable uses the reviewed `release/stable` release source, while PreRelease uses an explicit `main` source commit. The channels differ in source ownership, cadence, and version policy, not in active package membership or component maturity.
+Both Marketplace entry workflows publish release assets selected by a
+validated exact channel tag.
 
 ```mermaid
-flowchart TD
-    subgraph Stable["release-marketplace-stable.yml"]
-        NV[normalize-version] --> PKG1["package (matrix)"]
-        PKG1 --> PUB1["publish (matrix)"]
-    end
-    subgraph PreRelease["release-marketplace-prerelease.yml"]
-        VV[validate-version] --> PKG2["package (matrix)"]
-        PKG2 --> PUB2["publish (matrix)"]
-    end
+flowchart LR
+    accTitle: Extension Marketplace publication flow
+    accDescr: PreRelease and Stable validate their exact release tags, then use one publisher to download the VSIX, verify its attestation, and publish through Azure OIDC and vsce.
+    PRE[Validate prerelease-v tag and catalog] --> GENERIC[Generic Marketplace publisher]
+    STABLE[Validate v tag and catalog] --> GENERIC
+    GENERIC --> ASSET[Download VSIX release asset]
+    ASSET --> VERIFY[Verify lane-specific attestation]
+    VERIFY --> OIDC[Publish through Azure OIDC and vsce]
 ```
 
-### Publishing Jobs
+### Channel Tags and Attestation Signers
 
-| Job               | Purpose                                                               | Workflow                             |
-|-------------------|-----------------------------------------------------------------------|--------------------------------------|
-| normalize-version | Ensure Stable version consistency                                     | `release-marketplace-stable.yml`     |
-| validate-version  | Enforce the PreRelease odd-minor version convention                   | `release-marketplace-prerelease.yml` |
-| discover/package  | Resolve the catalog matrix and build one source-explicit VSIX per row | Both                                 |
-| publish           | Upload each selected VSIX through OIDC and `vsce`                     | Both                                 |
+| Channel    | Exact release tag       | Attestation signer         |
+|------------|-------------------------|----------------------------|
+| PreRelease | `prerelease-v<version>` | `extension-provenance.yml` |
+| Stable     | `v<version>`            | `extension-provenance.yml` |
+
+Both callers pass the exact tag to the generic publisher, which resolves the
+signer to the one constant both channels sign from. It downloads the matching
+VSIX release asset, verifies the attestation, and then publishes through Azure
+OIDC and `vsce`.
 
 ### Marketplace Build
 
-`Get-MarketplacePackageMatrix.ps1` emits a sorted, nonempty matrix from active catalog entries. Stable and PreRelease must resolve the same package-name set and the same active component and maturity projection for every package. The matrix, not a literal package count or a package-specific workflow branch, controls packaging and publication.
+Both channel workflows validate the one-entry catalog and call the generic publisher for `hve-core`. The publisher validates inputs, downloads `hve-core-<version>.vsix`, verifies its lane-specific attestation, prepares the locked publisher toolchain from protected `main`, and publishes through Azure OIDC and `vsce`.
 
-`hve-core` retains the unsuffixed HVE Core extension identity. Every other active catalog entry receives a deterministic package-specific extension identity and plugin root.
-
-A single immutable `plugins-v<version>` snapshot contains every active package root and the projected catalog that references them. Each package remains self-contained; the release model does not use package dependencies or aggregate metadata.
-
-Lifecycle inclusion rules:
-
-| Lifecycle Level | Build Inclusion                                 |
-|-----------------|-------------------------------------------------|
-| Deprecated      | Excluded from both channels                     |
-| Removed         | Excluded from both channels                     |
-| Experimental    | Included in both Stable and PreRelease channels |
-| Preview         | Included in both Stable and PreRelease channels |
-| Stable          | Included in both Stable and PreRelease channels |
-
-Lifecycle labels are disclosure and governance metadata. Channel selection does not filter active components.
+Stable and PreRelease package the same `.github/plugin.json` membership into the same extension identity. The channel controls version, release source, and the VS Code Marketplace pre-release flag, not component inclusion.
 
 ### Version Channels
 
@@ -308,6 +334,9 @@ Lifecycle labels are disclosure and governance metadata. Channel selection does 
 |-------------|--------------------|------------------|
 | Stable      | Even minor (1.2.0) | Main listing     |
 | Pre-release | Odd minor (1.3.0)  | Pre-release flag |
+
+Hosted Marketplace selection and installed-client switching remain operator
+observations, not results of local workflow or documentation validation.
 
 ## npm Script Mapping
 
@@ -324,7 +353,7 @@ Workflows invoke validation through npm scripts defined in `package.json`:
 | `lint:links`                    | `Invoke-LinkLanguageCheck.ps1`                                                                        | link-lang-check.yml                         |
 | `lint:yaml`                     | `Invoke-YamlLint.ps1`                                                                                 | yaml-lint.yml                               |
 | `lint:ps`                       | `Invoke-PSScriptAnalyzer.ps1`                                                                         | ps-script-analyzer.yml                      |
-| `lint:marketplace`              | `Validate-Marketplace.ps1`                                                                            | plugin-validation.yml                       |
+| `lint:plugin-manifest`          | `Sync-PluginManifest.ps1 -Check`                                                                      | plugin-validation.yml                       |
 | `lint:version-consistency`      | `Test-ActionVersionConsistency.ps1`                                                                   | Local                                       |
 | `validate:local`                | Local-safe repository validation aggregate                                                            | Local-safe default                          |
 | `validate:docs`                 | Docusaurus lint, label registry, typecheck, and component tests                                       | Local-safe docs default                     |
@@ -338,10 +367,9 @@ Workflows invoke validation through npm scripts defined in `package.json`:
 | `extension:prepare:prerelease`  | `pwsh ./scripts/extension/Prepare-Extension.ps1 -Channel PreRelease && npm run extension:postprocess` | extension-package.yml                       |
 | `extension:postprocess`         | `markdownlint-cli2 + markdown-table-formatter (extension/**/*.md)`                                    | extension-package.yml                       |
 | `extension:package`             | `Package-Extension.ps1`                                                                               | extension-package.yml                       |
-| `package:extension`             | Alias for `extension:package`                                                                         | extension-package.yml                       |
 | `extension:package:prerelease`  | `Package-Extension.ps1 -PreRelease`                                                                   | extension-package.yml                       |
-| `plugin:generate`               | `Generate-Plugins.ps1` + post-process                                                                 | plugin-package.yml                          |
-| `plugin:validate`               | Marketplace package metadata and closure validation                                                   | plugin-validation.yml                       |
+| `plugin:sync`                   | `Sync-PluginManifest.ps1`                                                                             | Local manifest update                       |
+| `plugin:validate`               | Plugin manifest check plus hook validation                                                            | plugin-validation.yml                       |
 | `lint:py`                       | `ruff check`                                                                                          | python-lint.yml                             |
 | `lint:models`                   | `Validate-ModelReferences.ps1`                                                                        | model-validation.yml                        |
 | `lint:ai-artifacts`             | `Validate-PlannerArtifacts.ps1 -FailOnMissing`                                                        | ai-artifact-validation.yml                  |

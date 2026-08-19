@@ -15,8 +15,7 @@
     ./scripts/upgrade-detection.ps1 -HveCoreBasePath ../hve-core
 .OUTPUTS
     UPGRADE_MODE, INSTALLED_VERSION, SOURCE_VERSION, VERSION_CHANGED,
-    INSTALLED_PACKAGE, INSTALLED_PROFILE, and INSTALLED_COMPONENTS key-value
-    pairs. INSTALLED_PACKAGE is empty when the manifest records no package.
+    INSTALLED_PROFILE, and INSTALLED_COMPONENTS key-value pairs.
 #>
 [CmdletBinding()]
 param(
@@ -45,8 +44,6 @@ if ($schemaVersion -ne 2) {
 
 $sourceVersion = (Get-Content -LiteralPath (Join-Path $HveCoreBasePath 'package.json') -Raw -Encoding utf8 | ConvertFrom-Json).version
 $selection = if ($manifest['selection'] -is [System.Collections.IDictionary]) { $manifest['selection'] } else { @{} }
-# Empty when a schema version 2 manifest predates package-explicit selection; no package is inferred.
-$packageName = if ($selection['package']) { [string]$selection['package'] } else { '' }
 $profileName = if ($selection['profile']) { [string]$selection['profile'] } else { 'custom' }
 $components = [string[]]@($selection['components'] | Where-Object { $_ })
 
@@ -55,6 +52,5 @@ Write-Host "INSTALLED_VERSION=$($manifest['version'])"
 Write-Host "SOURCE_VERSION=$sourceVersion"
 # Lower-cased so the emitted value matches UPGRADE_MODE and the Bash detector.
 Write-Host "VERSION_CHANGED=$(if ($sourceVersion -ne $manifest['version']) { 'true' } else { 'false' })"
-Write-Host "INSTALLED_PACKAGE=$packageName"
 Write-Host "INSTALLED_PROFILE=$profileName"
 Write-Host "INSTALLED_COMPONENTS=$($components -join ',')"

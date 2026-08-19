@@ -29,6 +29,19 @@ jobs:
       TARGET_SERVE_COMMAND: python -m http.server 3000 --directory dist
       TARGET_CONFIG: a11y-runtime.config.json
       TARGET_RESULTS: results.json
+      TARGET_INTENT_DIR: design-intent
+      # Point this at the runtime_a11y skill package as vendored in your repo.
+      HARNESS_DIR: .github/skills/accessibility/accessibility/scripts/runtime_a11y
+      # Point this at the accessibility skill root as vendored in your repo. It
+      # holds pyproject.toml, so uv resolves the harness environment from it.
+      HARNESS_PROJECT_DIR: .github/skills/accessibility/accessibility
+      # Gate strictness dial: basic (adequacy probes warn-only), standard
+      # (ratchet: adequacy probes block on changed surfaces), comprehensive
+      # (adequacy probes block everywhere). Core probes always block.
+      A11Y_TIER: standard
+      # Comma-separated surface ids treated as new/changed for the standard-tier
+      # ratchet: adequacy-probe failures on these block; others stay advisory.
+      A11Y_RATCHET_SURFACES: ''
     steps:
       - name: Checkout repository
         uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
@@ -84,21 +97,50 @@ jobs:
             sleep 2
           done
 
+      - name: Install runtime accessibility harness dependencies
+        working-directory: ${{ env.HARNESS_DIR }}
+        env:
+          PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: '1'
+        run: |
+          echo "TODO: set HARNESS_DIR to the runtime_a11y skill package as vendored in your repo."
+          npm ci
+
       - name: Run runtime accessibility harness
         working-directory: ${{ env.TARGET_WORKDIR }}
         run: |
+          set -euo pipefail
+          shopt -s nullglob
+          intent_records=("${{ env.TARGET_INTENT_DIR }}"/*.intent.yaml)
+          intent_active=false
+          if [ "${#intent_records[@]}" -gt 0 ]; then
+            intent_active=true
+          fi
+
           if [ ! -f "${{ env.TARGET_CONFIG }}" ]; then
+            if [ "$intent_active" = true ]; then
+              echo "::error::Design intent records exist, but ${{ env.TARGET_CONFIG }} is missing."
+              exit 1
+            fi
             echo "::warning::No a11y-runtime.config.json is committed yet; the gate activates once the target adopts it."
             exit 0
           fi
-          uv run python -m runtime_a11y run-all --config "${{ env.TARGET_CONFIG }}" --out "${{ env.TARGET_RESULTS }}" --base-url "${{ env.TARGET_BASE_URL }}"
 
-      - name: Enforce high-confidence probe failures
+          # A pre-existing results file must never satisfy the current run.
+          rm -f -- "${{ env.TARGET_RESULTS }}"
+          uv run --project "${{ github.workspace }}/${{ env.HARNESS_PROJECT_DIR }}" "${{ github.workspace }}/${{ env.HARNESS_PROJECT_DIR }}/scripts/runtime_a11y/__main__.py" run-all --config "${{ env.TARGET_CONFIG }}" --out "${{ env.TARGET_RESULTS }}" --base-url "${{ env.TARGET_BASE_URL }}"
+
+          if [ "$intent_active" = true ] && [ ! -f "${{ env.TARGET_RESULTS }}" ]; then
+            echo "::error::Runtime harness completed without producing current results for authored design intent."
+            exit 1
+          fi
+
+      - name: Enforce accessibility probe failures (tier-graduated)
         if: always()
         working-directory: ${{ env.TARGET_WORKDIR }}
         run: |
           python - <<'PY'
           import json
+          import os
           import pathlib
           import sys
 
@@ -108,7 +150,13 @@ jobs:
               sys.exit(0)
 
           payload = json.loads(result_path.read_text(encoding="utf-8"))
-          high_confidence = {
+          tier = os.environ.get("A11Y_TIER", "standard").strip().lower()
+          ratchet_surfaces = {
+              s.strip() for s in os.environ.get("A11Y_RATCHET_SURFACES", "").split(",") if s.strip()
+          }
+
+          # Core probes decide their criteria and block at every tier.
+          core_blocking = {
               "probe-axe",
               "probe-dom-hygiene",
               "probe-broken-links",
@@ -117,23 +165,102 @@ jobs:
               "probe-contrast",
               "probe-reflow-resize",
           }
-          failures = []
-          for item in payload.get("results", []):
+          # Interaction/announcement probes are the adequate method for the classes
+          # static analysis only informs. Their blocking posture graduates by tier:
+          # basic warn-only, standard ratchet on changed surfaces, comprehensive block.
+          adequacy_blocking = {
+              "probe-keyboard-traversal",
+              "probe-widget-keyboard",
+              "probe-live-region",
+              "probe-aria-tree",
+              "probe-virtual-sr",
+              "probe-real-sr",
+          }
+          all_gated = core_blocking | adequacy_blocking
+
+          def probe_for(item):
+              probe_id = item.get("probeId")
+              if probe_id in all_gated:
+                return probe_id
               evidence = str(item.get("evidence", ""))
+              for probe_id in all_gated:
+                  if evidence.startswith(f"{probe_id} evaluated"):
+                      return probe_id
+              return None
+
+          blocking = []
+          advisory = []
+          for item in payload.get("results", []):
               if item.get("status") != "fail":
                   continue
-              for probe_id in high_confidence:
-                  if evidence.startswith(f"{probe_id} evaluated"):
-                      failures.append(
-                          f"{probe_id}: {item.get('criterionId')} ({item.get('surfaceId')}/{item.get('state')})"
-                      )
-                      break
+              probe_id = probe_for(item)
+              if probe_id is None:
+                  continue
+              surface = item.get("surfaceId")
+              label = f"{probe_id}: {item.get('criterionId')} ({surface}/{item.get('state')})"
+              if probe_id in core_blocking:
+                  blocking.append(label)
+              elif tier == "comprehensive":
+                  blocking.append(label)
+              elif tier == "standard" and surface in ratchet_surfaces:
+                  blocking.append(label)
+              else:
+                  advisory.append(label)
 
-          if failures:
-              print("High-confidence probes reported fail cells:")
-              for failure in failures:
-                  print(f" - {failure}")
+          if advisory:
+              print(f"Advisory accessibility findings (tier={tier}, not blocking):")
+              for finding in advisory:
+                  print(f"::warning::{finding}")
+          if blocking:
+              print(f"Blocking accessibility findings (tier={tier}):")
+              for finding in blocking:
+                  print(f" - {finding}")
               sys.exit(1)
 
-          print("No high-confidence fail cells detected.")
+          print(f"No blocking accessibility findings (tier={tier}).")
           PY
+
+      - name: Verify declared design intent
+        if: always()
+        working-directory: ${{ env.TARGET_WORKDIR }}
+        run: |
+          set -euo pipefail
+          shopt -s nullglob
+          intent_records=("${{ env.TARGET_INTENT_DIR }}"/*.intent.yaml)
+          if [ "${#intent_records[@]}" -eq 0 ]; then
+            echo "::notice::No authored design-intent records are committed; intent verification is inactive."
+            exit 0
+          fi
+          if [ ! -f "${{ env.TARGET_CONFIG }}" ]; then
+            echo "::error::Design intent records exist, but ${{ env.TARGET_CONFIG }} is missing."
+            exit 1
+          fi
+          if [ ! -f "${{ env.TARGET_RESULTS }}" ]; then
+            echo "::error::Design intent records exist, but no current runtime results file was produced."
+            exit 1
+          fi
+          status=0
+          for record in "${intent_records[@]}"; do
+            echo "Verifying $record"
+            # Exit 3 means a blocking expectation failed: real intent drift.
+            # Exit 4 means a blocking expectation was never evaluated: missing
+            # coverage, which would otherwise pass silently. Both fail the job
+            # and are reported distinctly. Any other non-zero exit is an
+            # adapter error and stops the job.
+            uv run --project "${{ github.workspace }}/${{ env.HARNESS_PROJECT_DIR }}" "${{ github.workspace }}/${{ env.HARNESS_PROJECT_DIR }}/scripts/runtime_a11y/__main__.py" verify-intent \
+              --record "$record" \
+              --config "${{ env.TARGET_CONFIG }}" \
+              --results "${{ env.TARGET_RESULTS }}" || {
+              code=$?
+              if [ "$code" -eq 3 ]; then
+                echo "::error::Design intent drift in $record"
+                status=1
+              elif [ "$code" -eq 4 ]; then
+                echo "::error::Blocking design intent expectation never evaluated in $record"
+                status=1
+              else
+                exit "$code"
+              fi
+            }
+          done
+          exit "$status"

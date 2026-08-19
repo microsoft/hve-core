@@ -2,7 +2,13 @@
 title: Graph Research
 description: "Research a codebase through rpi-research using an existing graphify knowledge graph, with audit-tagged evidence reporting"
 sidebar_position: 2
-ms.date: 2026-07-16
+author: Microsoft
+ms.date: 2026-08-12
+ms.topic: reference
+keywords:
+  - prompt
+  - experimental
+  - graph-research
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->

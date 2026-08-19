@@ -3,7 +3,7 @@ title: Using DT Methods Together
 description: End-to-end walkthrough of a Design Thinking session across all nine methods
 sidebar_position: 16
 author: Microsoft
-ms.date: 2026-07-15
+ms.date: 2026-08-06
 ms.topic: tutorial
 keywords:
   - design thinking
@@ -219,7 +219,7 @@ Cumulative with Exits 1-2.
 * Refinement log, scaling assessment, and deployment plan
 * Adoption metrics with leading and lagging indicators
 
-Each exit point produces a handoff summary and a self-contained RPI document in the project artifact folder at `docs/design-thinking/{project-slug}/`. The coaching state remains in `.copilot-tracking/design-thinking-sessions/{project-slug}/coaching-state.md`. Earlier exit points transfer leaner artifacts, requiring `rpi-research` to cast a wider investigation net. Later exit points carry cumulative evidence, narrowing the Research phase to specific verification and refinement targets.
+Each exit point produces a handoff summary and a self-contained RPI document in the project folder at `.copilot-tracking/dt/{project-slug}/`. The coaching state remains in `.copilot-tracking/dt/{project-slug}/coaching-state.md`. Earlier exit points transfer leaner artifacts, requiring `rpi-research` to cast a wider investigation net. Later exit points carry cumulative evidence, narrowing the Research phase to specific verification and refinement targets.
 
 For a step-by-step walkthrough of each handoff, see [Tutorial: Handing Off from DT to RPI](tutorial-handoff-to-rpi.md). For the handoff contract and per-phase mappings, see [DT-RPI Integration](dt-rpi-integration.md).
 

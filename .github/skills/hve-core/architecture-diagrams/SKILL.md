@@ -1,24 +1,52 @@
 ---
 name: architecture-diagrams
-description: "Architecture diagram authoring for cloud infrastructure: parse Azure IaC, map relationships, and render either ASCII block diagrams or Mermaid flowcharts based on the caller's chosen output format"
+description: "Architecture diagram authoring for cloud infrastructure and declared data catalogs. Use when rendering Azure IaC or DS_CATALOG_V1 relationships as caller-selected ASCII or Mermaid diagrams."
 license: MIT
 user-invocable: true
-compatibility: "Works in any chat context where the caller needs an ASCII or Mermaid architecture diagram from infrastructure source files"
+compatibility: "Works in any chat context where the caller needs an ASCII or Mermaid diagram from infrastructure source files or a declared DS_CATALOG_V1 data catalog"
 metadata:
   authors: "microsoft/hve-core"
   spec_version: "1.0"
-  last_updated: "2026-06-19"
+  last_updated: "2026-08-07"
 ---
 
 # Architecture Diagrams Skill
 
-## Purpose
+## Goal
 
-Use this skill to turn infrastructure source files into readable architecture diagrams for reviews, ADRs, and design discussions. The skill is optimized for cloud systems and assumes the primary inputs are Terraform, Bicep, ARM templates, shell scripts, Kubernetes manifests, and Docker/Compose files. It focuses on structure, relationships, and boundary clarity rather than rendered graphics.
+Turn infrastructure source files or a declared `DS_CATALOG_V1` data model into a readable architecture diagram for reviews, ADRs, and design discussions. Preserve the caller's selected output format and the source's authority boundaries.
+
+Infrastructure inputs include Terraform, Bicep, ARM templates, shell scripts, Kubernetes manifests, and Docker or Compose files. Catalog input uses declared entities and relationships from `ds-catalog`, the durable data-catalog skill. It does not infer a data model from SQL or ORM files.
+
+This skill documents infrastructure topology and data models. To document a software system, meaning its containers, its components, and the people and systems around it, use the `c4-architecture` skill instead.
+
+## Success criteria
+
+* The diagram includes only the confirmed source scope.
+* Infrastructure sources retain their existing parsing and relationship behavior.
+* Catalog diagrams preserve declared entity IDs, endpoints, cardinality, endpoint minimums, join keys, confidence, and evidence basis without inventing relationships.
+* Caller preference controls ASCII or Mermaid output.
+* Inferred and assumed catalog relationships remain visibly distinct from confirmed relationships.
+
+## Constraints
+
+* Treat a diagram as a view over source authority, not a semantic authority of its own.
+* Read [catalog-erd.md](references/catalog-erd.md) for `DS_CATALOG_V1` input, multiplicity mapping, confidence rendering, the catalog output contract, and the Functional Planner compatibility boundary.
+* Do not parse SQL DDL, Prisma, SQLAlchemy, or another ORM as catalog input.
+* Do not render primary-key, foreign-key, or uniqueness markers for catalog join keys; the catalog declares field names, not database key roles.
+* Keep the Feasibility Study Interchange Profile and downstream requirement mappings in their owning workstreams.
+
+## Stop rules
+
+* Stop and ask for scope when infrastructure boundaries are ambiguous.
+* Stop and report an unsupported catalog version, unresolved endpoint, unknown cardinality, missing or invalid endpoint minimum, unknown confidence value, or malformed join-key declaration instead of guessing or partially rendering.
+* Stop before diagram generation when no output preference can be resolved.
 
 ## Output Format
 
-This skill produces either ASCII block diagrams or Mermaid flowcharts. Neither is the default: the caller or surrounding context chooses the output format for each diagram. When the caller does not state a preference, ask which format they want before generating. Follow the ASCII Conventions or the Mermaid Conventions below depending on the selected format, and keep the structure, boundaries, and relationships identical across formats.
+This skill produces either ASCII block diagrams or Mermaid diagrams. Neither is the default: the caller or surrounding context chooses the output format for each diagram. When the caller does not state a preference, ask which format they want before generating.
+
+The diagram type follows the source type. Infrastructure sources render as ASCII block diagrams or Mermaid flowcharts using the ASCII Conventions or Mermaid Conventions below. Catalog sources render as ASCII entity lines or a Mermaid `erDiagram` using [catalog-erd.md](references/catalog-erd.md). In every case, keep the structure, boundaries, and relationships identical across formats.
 
 ## Preference Contract
 
@@ -43,10 +71,10 @@ The `userPreferences.diagramFormat` value must be either `ascii` or `mermaid`. T
 
 Follow this sequence when authoring a diagram:
 
-1. Discovery. Identify the relevant infrastructure files and the architectural scope. When the scope is unclear, ask which folders or services should be included.
-2. Parsing. Read the selected sources to extract services, data stores, networking components, ingress points, and deployment units.
-3. Relationship mapping. Connect components with the correct direction and annotate important dependencies, network paths, or optional links.
-4. Generation. Render the final diagram in the caller's chosen format—ASCII text or a Mermaid flowchart—with clear grouping, boundaries, and a compact legend.
+1. Discovery. Identify the relevant infrastructure files or declared catalog and the architectural scope. When the scope is unclear, ask which folders, services, or entities should be included.
+2. Parsing. For infrastructure, extract services, data stores, networking components, ingress points, and deployment units. For a catalog, execute `scripts/render_catalog_erd.py` or follow [catalog-erd.md](references/catalog-erd.md) without adding inferred semantics.
+3. Relationship mapping. For infrastructure, connect components with the correct direction. For a catalog, retain the exact declared endpoints, cardinality, endpoint minimums, join keys, confidence, and basis.
+4. Generation. Render the final diagram in the caller's chosen format, with clear boundaries or entity labels and a compact legend.
 
 ## ASCII Conventions
 
@@ -147,7 +175,7 @@ When reading infrastructure sources, extract:
 
 ## Output Format Contract
 
-Use this structure for every diagram:
+Use this structure for every infrastructure diagram:
 
 ```markdown
 ## <Name> Architecture
@@ -162,6 +190,8 @@ Use this structure for every diagram:
 ```
 
 The title should use title case and follow the pattern `<Name> Architecture`. The legend should explain any special symbols used, and the key relationships section should focus on the most important dependencies or data flows.
+
+Catalog diagrams use the parallel `## <Engagement> Data Model` contract defined in [catalog-erd.md](references/catalog-erd.md), with a Legend covering multiplicity and confidence and a Key Relationships section carrying every declared relationship and its basis.
 
 ## Worked Example: AKS Platform Architecture
 

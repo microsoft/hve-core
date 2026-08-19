@@ -8,7 +8,7 @@
 # canonical activation scenarios (CleanWorkspace, SteadyState, GovernEntry,
 # AdoptTemplate) via Get-AgentActivationFingerprint and asserts:
 #   * baseline.json remains a well-formed reference for explicit drift audits
-#   * CleanWorkspace cold-start byte budget < 44,000 bytes (PD-04=A)
+#   * CleanWorkspace cold-start byte range from budgets.json (PD-04=A)
 #   * Lifecycle Dispatch load-set composition (always-attach vs on-demand)
 #   * pester runner emits logs/pester-summary.json + logs/pester-failures.json
 
@@ -37,7 +37,12 @@ BeforeAll {
     $script:Baseline = Get-Content -LiteralPath $baselinePath -Raw -Encoding UTF8 |
         ConvertFrom-Json -AsHashtable
 
-    $script:ColdStartBudget = 44000
+    $budgetsPath = Join-Path $script:RepoRoot 'scripts/agents/activation-harness/budgets.json'
+    $script:Budgets = Get-Content -LiteralPath $budgetsPath -Raw -Encoding UTF8 |
+        ConvertFrom-Json -AsHashtable
+    $script:ColdStartRange = $script:Budgets['agents'][$script:AgentRelPath]['scenarios']['CleanWorkspace']
+    $script:ColdStartTarget = [int]$script:ColdStartRange['target']
+    $script:ColdStartCeiling = [int]$script:ColdStartRange['ceiling']
 
     $script:Fingerprints = @{}
     foreach ($name in @('CleanWorkspace', 'SteadyState', 'GovernEntry', 'AdoptTemplate')) {
@@ -104,11 +109,28 @@ Describe '@adr-creation activation baseline reference is well formed' -Tag 'Unit
 }
 
 Describe '@adr-creation cold-start byte budget' -Tag 'Unit' {
-    It 'CleanWorkspace ColdStartBytes is below the PD-04 budget' {
+    It 'declares a well-formed cold-start range' {
+        $script:ColdStartTarget | Should -BeGreaterThan 0
+        $script:ColdStartCeiling | Should -BeGreaterOrEqual $script:ColdStartTarget -Because 'ceiling is the hard limit and cannot sit below the soft target'
+        $script:ColdStartRange['rationale'] | Should -Match '\S' -Because 'a range that widens the original budget must record why'
+    }
+
+    It 'CleanWorkspace ColdStartBytes is within the PD-04 range' {
         $current = $script:Fingerprints['CleanWorkspace']
-        $current.ColdStartBytes | Should -BeLessThan $script:ColdStartBudget -Because @"
+
+        if ($current.ColdStartBytes -gt $script:ColdStartTarget) {
+            Write-Warning @"
+Cold-start payload is above target but within tolerance (PD-04=A).
+Target  : $($script:ColdStartTarget) bytes
+Ceiling : $($script:ColdStartCeiling) bytes
+Actual  : $($current.ColdStartBytes) bytes
+"@
+        }
+
+        $current.ColdStartBytes | Should -BeLessOrEqual $script:ColdStartCeiling -Because @"
 Cold-start byte budget violation (PD-04=A).
-Target  : less than $($script:ColdStartBudget) bytes
+Target  : $($script:ColdStartTarget) bytes
+Ceiling : $($script:ColdStartCeiling) bytes
 Actual  : $($current.ColdStartBytes) bytes
 Loaded  : $($current.LoadedFiles | ForEach-Object { "$($_.Path) ($($_.Bytes))" } | Join-String -Separator '; ')
 "@

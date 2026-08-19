@@ -1,8 +1,14 @@
 ---
 title: supply-chain-security
 description: "Software supply chain security reference for OpenSSF Scorecard, SLSA, Sigstore, SBOM, and posture/backlog taxonomies."
-sidebar_position: 11
-ms.date: 2026-07-28
+sidebar_position: 12
+author: Microsoft
+ms.date: 2026-08-12
+ms.topic: reference
+keywords:
+  - skill
+  - security
+  - supply-chain-security
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->

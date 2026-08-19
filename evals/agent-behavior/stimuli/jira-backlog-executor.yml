@@ -1,0 +1,113 @@
+# Copyright (c) 2026 Microsoft Corporation. All rights reserved.
+# SPDX-License-Identifier: MIT
+#
+# Conformance checks emitted per the vally-tests agent reference.
+# Applicable to this subagent: Check 1 (required frontmatter), Check 4
+# (user-invocable flag), Check 5 (subagent structural template), Check 7 (tool
+# restrictions). Check 6 does not apply: this subagent declares no handoffs.
+# Check 9 does not apply: it carries no phase or step headings, and the artifact
+# is not edited to make an inapplicable check pass.
+stimuli:
+  - name: jira-backlog-executor-frontmatter-name-and-description
+    prompt: |
+      Open the agent artifact at `.github/agents/project-planning/subagents/jira-backlog-executor.agent.md`.
+
+      Report the human-readable agent name declared in its frontmatter, then restate its declared description verbatim. Do not paraphrase the description and do not describe the file itself.
+    tags:
+      category: agent-behavior
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: reports-human-readable-name
+        config:
+          pattern: '(?i)\bJira Backlog Executor\b'
+      - type: output-matches
+        name: reports-declared-description
+        config:
+          pattern: '(?i)Runs the Jira skill CLI in one confirmed project'
+      - type: output-matches
+        name: does-not-substitute-filename-for-name
+        config:
+          pattern: '(?i)name\s*(is|:)\s*.{0,3}jira-backlog-executor'
+          negate: true
+
+  - name: jira-backlog-executor-user-invocable-flag
+    prompt: |
+      Open the agent artifact at `.github/agents/project-planning/subagents/jira-backlog-executor.agent.md`.
+
+      Report the value its frontmatter declares for `user-invocable`, and explain how a user reaches this artifact given that value.
+    tags:
+      category: agent-behavior
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: reports-declared-flag-value
+        config:
+          pattern: '(?i)user-invocable\s*(is|:|=)?\s*.{0,3}false'
+      - type: output-matches
+        name: reaches-through-a-dispatching-parent
+        config:
+          pattern: '(?i)(dispatch|Backlog Manager|parent agent|orchestrator)'
+      - type: output-matches
+        name: not-described-as-picker-selectable
+        config:
+          pattern: '(?i)(appears in|select(able)? from|choose it in) the (agent )?picker'
+          negate: true
+
+  - name: jira-backlog-executor-structural-template
+    prompt: |
+      Open the agent artifact at `.github/agents/project-planning/subagents/jira-backlog-executor.agent.md`.
+
+      List its top-level section headings in order, exactly as written, and state whether its first heading matches the name declared in its frontmatter.
+    tags:
+      category: agent-behavior
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: reports-purpose-section
+        config:
+          pattern: '(?im)^\W*Purpose\b'
+      - type: output-matches
+        name: reports-inputs-section
+        config:
+          pattern: '(?im)^\W*Inputs\b'
+      - type: output-matches
+        name: reports-required-steps-section
+        config:
+          pattern: '(?i)Required\s+Steps'
+      - type: output-matches
+        name: reports-response-format-section
+        config:
+          pattern: '(?i)Response\s+Format'
+      - type: output-matches
+        name: confirms-heading-matches-name
+        config:
+          pattern: '(?i)(match(es|ing)?|same as|identical)'
+
+  - name: jira-backlog-executor-tool-restriction-fit
+    prompt: |
+      Open the agent artifact at `.github/agents/project-planning/subagents/jira-backlog-executor.agent.md`.
+
+      Read its declared `tools:` list together with its declared description and the boundary its body states for that grant. Assess whether the restriction set is appropriate for the role the description states, and state which part of the boundary the tool list enforces and which part it does not. Justify the assessment from the artifact rather than from general expectations.
+    tags:
+      category: agent-behavior
+      advisory: "true"
+    graders:
+      - type: prompt
+        name: tool-restriction-appropriate-for-purpose
+        config:
+          prompt: |
+            The response assesses whether a subagent's declared tool set fits its
+            stated purpose. Score high when it reasons from the artifact's own
+            declared tools, description, and stated boundary; observes that the
+            grant is a general terminal rather than a Jira-specific tool family;
+            and reports that the artifact narrows it to the Jira CLI invocation
+            shape in prose while the host does not enforce that narrowing. Score
+            low when it invents tools, ignores the declared description, or
+            asserts that the tool list itself confines the agent to the Jira CLI.
+          threshold: 0.6
+      - type: output-matches
+        name: does-not-claim-host-enforces-cli-only
+        config:
+          pattern: '(?i)the (tool (list|grant)|host|frontmatter) (enforces|prevents|blocks|guarantees).{0,60}(only the Jira CLI|CLI[- ]only)'
+          negate: true

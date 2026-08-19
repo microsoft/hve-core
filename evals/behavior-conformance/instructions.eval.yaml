@@ -15,148 +15,47 @@ defaults:
   executor: copilot-sdk
 
 stimuli:
-  - name: instruction-ado-backlog-sprint-conformance
-    prompt: |
-      You are preparing sprint planning artifacts under
-      `.copilot-tracking/workitems/sprint/iter-42/`. Which
-      `.github/instructions/**/*.instructions.md` file applies (cite its path)
-      and summarize its top three requirements?
-    tags:
-      category: behavior-conformance
-      instruction: ado-backlog-sprint
-      advisory: "true"
-    graders:
-      - type: output-matches
-        name: applyTo-evidence
-        config:
-          pattern: "(?i)\\.copilot-tracking/workitems/sprint|workitems/sprint/"
-      - type: output-matches
-        name: scope-language
-        config:
-          pattern: "(?i)sprint|iteration|capacity|coverage\\s+analysis"
-
-  - name: instruction-ado-backlog-triage-conformance
-    prompt: |
-      You are about to triage a batch of untriaged Azure DevOps work items
-      under `.copilot-tracking/workitems/triage/q4-cleanup/`. Which
-      `.github/instructions/**/*.instructions.md` file applies (cite its path)
-      and summarize the triage requirements it enforces?
-    tags:
-      category: behavior-conformance
-      instruction: ado-backlog-triage
-      advisory: "true"
-    graders:
-      - type: output-matches
-        name: applyTo-evidence
-        config:
-          pattern: "(?i)\\.copilot-tracking/workitems/triage|workitems/triage/"
-      - type: output-matches
-        name: scope-language
-        config:
-          pattern: "(?i)triage|duplicate|iteration\\s+assignment|field\\s+classification"
-
-  - name: instruction-ado-create-pull-request-conformance
+  - name: skill-ado-create-pull-request-conformance
     prompt: |
       You are creating an Azure DevOps pull request from artifacts under
-      `.copilot-tracking/pr/new/feature-x/`. Which
-      `.github/instructions/**/*.instructions.md` file applies (cite its path)
-      and what does it require for work item discovery and reviewer
-      identification?
+      `.copilot-tracking/pr/new/feature-x/`. Which skill owns that protocol,
+      and what must run before the first pull request operation?
     tags:
       category: behavior-conformance
-      instruction: ado-create-pull-request
+      skill: backlog-management
       advisory: "true"
     graders:
       - type: output-matches
-        name: applyTo-evidence
+        name: skill-named
         config:
-          pattern: "(?i)\\.copilot-tracking/pr/new|pr/new/"
+          pattern: "(?i)backlog-management"
+      - type: output-matches
+        name: preflight-required
+        config:
+          pattern: "(?i)preflight|platform resolution|confirm.{0,30}destination|sanitiz"
       - type: output-matches
         name: scope-language
         config:
           pattern: "(?i)work\\s+item|reviewer|pull\\s+request|automated\\s+linking"
 
-  - name: instruction-ado-get-build-info-conformance
+  - name: skill-ado-get-build-info-conformance
     prompt: |
       A user asks about Azure DevOps build status for a branch and you are
       drafting a response file at `.copilot-tracking/pr/123-build-info.md`.
-      Which `.github/instructions/**/*.instructions.md` file applies (cite
-      its path) and what does it require?
+      Which skill owns that protocol and how is it reached?
     tags:
       category: behavior-conformance
-      instruction: ado-get-build-info
+      skill: backlog-management
       advisory: "true"
     graders:
       - type: output-matches
-        name: applyTo-evidence
+        name: skill-named
         config:
-          pattern: "(?i)\\.copilot-tracking/pr/.*build|pr/.*-build-"
+          pattern: "(?i)backlog-management|build-info"
       - type: output-matches
         name: scope-language
         config:
           pattern: "(?i)azure\\s*devops|\\bado\\b|build|pull\\s*request|branch"
-
-  - name: instruction-ado-update-wit-items-conformance
-    prompt: |
-      You are about to execute work item create/update operations from a
-      handoff log at `.copilot-tracking/workitems/sprint-12/handoff-logs.md`.
-      Which `.github/instructions/**/*.instructions.md` file applies (cite
-      its path) and what does it require about MCP ADO tools and handoff
-      tracking?
-    tags:
-      category: behavior-conformance
-      instruction: ado-update-wit-items
-      advisory: "true"
-    graders:
-      - type: output-matches
-        name: applyTo-evidence
-        config:
-          pattern: "(?i)handoff-logs\\.md|workitems/.*handoff"
-      - type: output-matches
-        name: scope-language
-        config:
-          pattern: "(?i)mcp|ado|work\\s+item|handoff"
-
-  - name: instruction-ado-wit-discovery-conformance
-    prompt: |
-      You are running ADO work item discovery and writing output under
-      `.copilot-tracking/workitems/discovery/team-roadmap/`. Which
-      `.github/instructions/**/*.instructions.md` file applies (cite its
-      path) and what does it require?
-    tags:
-      category: behavior-conformance
-      instruction: ado-wit-discovery
-      advisory: "true"
-    graders:
-      - type: output-matches
-        name: applyTo-evidence
-        config:
-          pattern: "(?i)\\.copilot-tracking/workitems/discovery|workitems/discovery/"
-      - type: output-matches
-        name: scope-language
-        config:
-          pattern: "(?i)discover|assignment|artifact|planning\\s+file"
-
-  - name: instruction-ado-wit-planning-conformance
-    prompt: |
-      You are writing an ADO work item planning file under
-      `.copilot-tracking/workitems/prd-payments/issues-plan.md`. Which
-      `.github/instructions/**/*.instructions.md` file is the reference
-      specification (cite its path) and what does it require for templates,
-      field definitions, and search protocols?
-    tags:
-      category: behavior-conformance
-      instruction: ado-wit-planning
-      advisory: "true"
-    graders:
-      - type: output-matches
-        name: applyTo-evidence
-        config:
-          pattern: "(?i)\\.copilot-tracking/workitems|workitems/"
-      - type: output-matches
-        name: scope-language
-        config:
-          pattern: "(?i)template|field|search\\s+protocol|planning\\s+file"
 
   - name: instruction-docusaurus-edits-conformance
     prompt: |
@@ -200,10 +99,11 @@ stimuli:
 
   - name: instruction-experiment-designer-conformance
     prompt: |
-      You are working on a Minimum Viable Experimentation session under
-      `.copilot-tracking/mve/payments-latency/`. Which
+      You are writing session artifacts for a Minimum Viable Experimentation
+      session under `.copilot-tracking/mve/payments-latency/`. Which
       `.github/instructions/**/*.instructions.md` file applies (cite its
-      path) and what MVE coaching conventions does it require?
+      path), what tracking-artifact conventions does it require, and where
+      does it say the MVE methodology itself lives?
     tags:
       category: behavior-conformance
       instruction: experiment-designer
@@ -216,89 +116,7 @@ stimuli:
       - type: output-matches
         name: scope-language
         config:
-          pattern: "(?i)\\bmve\\b|experiment|hypothes|assumption|validate"
-
-  - name: instruction-github-backlog-discovery-conformance
-    prompt: |
-      You are running GitHub issue discovery and writing output under
-      `.copilot-tracking/github-issues/discovery/v2-features/`. Which
-      `.github/instructions/**/*.instructions.md` file applies (cite its
-      path) and what discovery paths does it require?
-    tags:
-      category: behavior-conformance
-      instruction: github-backlog-discovery
-      advisory: "true"
-    graders:
-      - type: output-matches
-        name: applyTo-evidence
-        config:
-          pattern: "(?i)\\.copilot-tracking/github-issues/discovery|github-issues/discovery"
-      - type: output-matches
-        name: scope-language
-        config:
-          pattern: "(?i)discover|user-centric|artifact-driven|search-based|github\\s+issue"
-
-  - name: instruction-github-backlog-planning-conformance
-    prompt: |
-      You are creating GitHub backlog planning files under
-      `.copilot-tracking/github-issues/v3-roadmap/`. Which
-      `.github/instructions/**/*.instructions.md` file is the reference
-      specification (cite its path) and what does it require for templates,
-      search protocols, and state persistence?
-    tags:
-      category: behavior-conformance
-      instruction: github-backlog-planning
-      advisory: "true"
-    graders:
-      - type: output-matches
-        name: applyTo-evidence
-        config:
-          pattern: "(?i)\\.copilot-tracking/github-issues|github-issues/"
-      - type: output-matches
-        name: scope-language
-        config:
-          pattern: "(?i)template|search\\s+protocol|state\\s+persistence|similarity"
-
-  - name: instruction-github-backlog-triage-conformance
-    prompt: |
-      You are triaging untriaged GitHub issues with artifacts under
-      `.copilot-tracking/github-issues/triage/q1-cleanup/`. Which
-      `.github/instructions/**/*.instructions.md` file applies (cite its
-      path) and what does it require for label suggestion, milestone
-      assignment, and duplicate detection?
-    tags:
-      category: behavior-conformance
-      instruction: github-backlog-triage
-      advisory: "true"
-    graders:
-      - type: output-matches
-        name: applyTo-evidence
-        config:
-          pattern: "(?i)\\.copilot-tracking/github-issues/triage|github-issues/triage"
-      - type: output-matches
-        name: scope-language
-        config:
-          pattern: "(?i)triage|label|milestone|duplicate|conventional\\s+commit"
-
-  - name: instruction-github-backlog-update-conformance
-    prompt: |
-      You are about to execute GitHub issue operations from a handoff log at
-      `.copilot-tracking/github-issues/v2-features/handoff-logs.md`. Which
-      `.github/instructions/**/*.instructions.md` file applies (cite its
-      path) and what does the execution workflow require?
-    tags:
-      category: behavior-conformance
-      instruction: github-backlog-update
-      advisory: "true"
-    graders:
-      - type: output-matches
-        name: applyTo-evidence
-        config:
-          pattern: "(?i)github-issues/.*handoff-logs\\.md|handoff-logs\\.md"
-      - type: output-matches
-        name: scope-language
-        config:
-          pattern: "(?i)handoff|sequential|create|update|link|close|github"
+          pattern: "(?is)(artifact|directory|file\\s+name).*(experiment-design).*(methodology|MVE|hypothes|vetting)"
 
   - name: instruction-community-interaction-conformance
     prompt: |
@@ -315,11 +133,36 @@ stimuli:
       - type: output-matches
         name: applyTo-evidence
         config:
-          pattern: "(?i)community-interaction|github-backlog-.*\\.instructions\\.md"
+          pattern: "(?i)community-interaction\\.instructions\\.md|project-planning/community-interaction"
       - type: output-matches
         name: scope-language
         config:
           pattern: "(?i)thank|scope|door|concise|tone|voice|template"
+
+  - name: instruction-backlog-guardrails-conformance
+    prompt: |
+      You are about to create a work item on a tracker while working in a file
+      under `.copilot-tracking/workitems/`, and you have not loaded any backlog
+      skill. Which `.github/instructions/**/*.instructions.md` file applies
+      (cite its path), what must you activate before the mutation, and what do
+      you do when that activation fails?
+    tags:
+      category: behavior-conformance
+      instruction: backlog-guardrails
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: applyTo-evidence
+        config:
+          pattern: "(?i)backlog-guardrails\\.instructions\\.md|project-planning/backlog-guardrails"
+      - type: output-matches
+        name: activation-required
+        config:
+          pattern: "(?i)backlog-management"
+      - type: output-matches
+        name: stop-behavior
+        config:
+          pattern: "(?i)stop|halt|do not proceed|cannot proceed|before the mutation"
 
   - name: instruction-markdown-conformance
     prompt: |
@@ -424,48 +267,6 @@ stimuli:
         config:
           pattern: "(?i)voice|tone|style|formal|instructional|professional"
 
-  - name: instruction-jira-backlog-planning-conformance
-    prompt: |
-      You are creating Jira backlog planning files under
-      `.copilot-tracking/jira-issues/migration-plan/`. Which
-      `.github/instructions/**/*.instructions.md` file is the reference
-      specification (cite its path) and what conventions does it require for
-      planning, search, and state persistence?
-    tags:
-      category: behavior-conformance
-      instruction: jira-backlog-planning
-      advisory: "true"
-    graders:
-      - type: output-matches
-        name: applyTo-evidence
-        config:
-          pattern: "(?i)\\.copilot-tracking/jira-issues|jira-issues/"
-      - type: output-matches
-        name: scope-language
-        config:
-          pattern: "(?i)\\bjira\\b|template|jql|search|state\\s+persistence"
-
-  - name: instruction-jira-wit-planning-conformance
-    prompt: |
-      You are working on Jira PRD-driven work item planning files under
-      `.copilot-tracking/jira-issues/prds/payments-prd/`. Which
-      `.github/instructions/**/*.instructions.md` file is the reference
-      specification (cite its path) and what does it require for hierarchy
-      mapping and field validation?
-    tags:
-      category: behavior-conformance
-      instruction: jira-wit-planning
-      advisory: "true"
-    graders:
-      - type: output-matches
-        name: applyTo-evidence
-        config:
-          pattern: "(?i)\\.copilot-tracking/jira-issues/prds|jira-issues/prds"
-      - type: output-matches
-        name: scope-language
-        config:
-          pattern: "(?i)\\bprd\\b|hierarchy|field|handoff|issue\\s+type"
-
   - name: instruction-rai-identity-conformance
     prompt: |
       You are running an RAI planning session with artifacts under
@@ -529,6 +330,28 @@ stimuli:
         config:
           pattern: "(?i)license|attribution|reproduce|standard|posture"
 
+  - name: instruction-licensing-posture-conformance
+    prompt: |
+      You are writing a new reference file under
+      `.github/skills/data-science/ds-dataops/references/` that summarizes an
+      upstream CC BY 4.0 documentation page. Which
+      `.github/instructions/**/*.instructions.md` file defines the repository
+      posture for licensing, reproduction, and attribution of third-party
+      standards (cite its path), and how much upstream text may you reproduce?
+    tags:
+      category: behavior-conformance
+      instruction: licensing-posture
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: applyTo-evidence
+        config:
+          pattern: "(?i)skills/|\\.copilot-tracking/|licensing-posture"
+      - type: output-matches
+        name: scope-language
+        config:
+          pattern: "(?i)paraphrase|minimum|attribution|reproduce|third-party|THIRD-PARTY-NOTICES"
+
   - name: instruction-backlog-handoff-conformance
     prompt: |
       You are completing Phase 5 of a Security Planning session and
@@ -570,27 +393,6 @@ stimuli:
         name: scope-language
         config:
           pattern: "(?i)sssc|supply\\s+chain|capabilit|sbom|scorecard|slsa|sigstore"
-
-  - name: instruction-story-quality-conformance
-    prompt: |
-      You are authoring a new ADO User Story or refining one in a custom
-      agent file at `.github/agents/ado/my-backlog-agent.agent.md`. Which
-      `.github/instructions/**/*.instructions.md` file defines the shared
-      story quality conventions (cite its path) and what does it require for
-      titles, descriptions, and acceptance criteria?
-    tags:
-      category: behavior-conformance
-      instruction: story-quality
-      advisory: "true"
-    graders:
-      - type: output-matches
-        name: applyTo-evidence
-        config:
-          pattern: "(?i)\\.agent\\.md|\\.github/instructions/ado/"
-      - type: output-matches
-        name: scope-language
-        config:
-          pattern: "(?i)story|title|description|acceptance\\s+criteria|user\\s+story|goal\\s+statement|problem\\s+statement"
 
   - name: instruction-disclaimer-language-conformance
     prompt: |
@@ -1294,24 +1096,6 @@ stimuli:
         config:
           pattern: '(?i)(\.copilot-tracking[-/\\]reviews|artifact|persist|schema|verdict)'
 
-  - name: instruction-ado-interaction-templates-conformance
-    prompt: |
-      You are drafting a new Azure DevOps backlog comment or work-item description.
-      Which instruction file should guide the shared wording and field structure?
-    tags:
-      category: behavior-conformance
-      instruction: ado-interaction-templates
-      advisory: "true"
-    graders:
-      - type: output-matches
-        name: instruction-attribution
-        config:
-          pattern: '(?i)(ado|azure\s+devops|work\s+item|comment|description|interaction)'
-      - type: output-matches
-        name: scope-language
-        config:
-          pattern: '(?i)(template|guidance|work\s+item|ado|description)'
-
   - name: instruction-adr-byo-template-conformance
     prompt: |
       You are creating a new ADR draft and need the repository's BYO template guidance.
@@ -1401,60 +1185,6 @@ stimuli:
         name: scope-language
         config:
           pattern: '(?i)(graph|evidence|knowledge|planning)'
-
-  - name: instruction-jira-backlog-discovery-conformance
-    prompt: |
-      You are discovering backlog work items from Jira data and need the canonical discovery guidance.
-      Which instruction file should guide the search and planning workflow?
-    tags:
-      category: behavior-conformance
-      instruction: jira-backlog-discovery
-      advisory: "true"
-    graders:
-      - type: output-matches
-        name: instruction-attribution
-        config:
-          pattern: '(?i)(jira|backlog|discovery|search|planning)'
-      - type: output-matches
-        name: scope-language
-        config:
-          pattern: '(?i)(jira|backlog|discovery|planning|issue)'
-
-  - name: instruction-jira-backlog-triage-conformance
-    prompt: |
-      You are triaging Jira issues and need the shared triage guidance for labels and duplicates.
-      Which instruction file applies and what does it help decide?
-    tags:
-      category: behavior-conformance
-      instruction: jira-backlog-triage
-      advisory: "true"
-    graders:
-      - type: output-matches
-        name: instruction-attribution
-        config:
-          pattern: '(?i)(jira|triage|label|duplicate|issue)'
-      - type: output-matches
-        name: scope-language
-        config:
-          pattern: '(?i)(triage|label|duplicate|jira|issue)'
-
-  - name: instruction-jira-backlog-update-conformance
-    prompt: |
-      You are updating Jira backlog items after a planning handoff and need the update guidance.
-      Which instruction file should guide the update workflow?
-    tags:
-      category: behavior-conformance
-      instruction: jira-backlog-update
-      advisory: "true"
-    graders:
-      - type: output-matches
-        name: instruction-attribution
-        config:
-          pattern: '(?i)(jira|backlog|update|handoff|issue)'
-      - type: output-matches
-        name: scope-language
-        config:
-          pattern: '(?i)(update|jira|backlog|handoff|issue)'
 
   - name: instruction-vex-generation-conformance
     prompt: |
@@ -1589,3 +1319,44 @@ stimuli:
         name: scope-language
         config:
           pattern: "(?i)duplicate-then-populate|anchor\\s+inheritance|probe-before-bulk|z-order"
+
+  - name: instruction-licensing-posture-conformance
+    prompt: |
+      You are authoring a skill reference file that summarizes upstream
+      standards material. Which instruction file governs that work, what path
+      scope applies, and what does it permit for paraphrase, verbatim text,
+      public-domain, W3C, CC0, and attribution?
+    tags:
+      category: behavior-conformance
+      instruction: licensing-posture
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: applyTo-evidence
+        config:
+          pattern: '(?i)(\*\*/skills/\*\*|\.github/skills/|\.copilot-tracking/)'
+      - type: output-matches
+        name: scope-language
+        config:
+          pattern: '(?i)(paraphrase|verbatim|public[-\s]domain|W3C|CC0|attribution)'
+  - name: instruction-tm7-generation-workflow-conformance
+    prompt: |
+      You are about to run the native Windows Threat Modeling Tool feedback
+      loop from a security planning session. Which
+      `.github/instructions/**/*.instructions.md` file applies (cite its
+      path) and what does it require of you before the harness takes over
+      the mouse and keyboard, before treating a generated model as
+      authored, and when asked to promote a layout overlay?
+    tags:
+      category: behavior-conformance
+      instruction: tm7-generation-workflow
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: applyTo-evidence
+        config:
+          pattern: "(?i)security-planner\\.agent\\.md|security-reviewer\\.agent\\.md|tm7-generation-workflow"
+      - type: output-matches
+        name: scope-language
+        config:
+          pattern: "(?i)confirm|wait|operator|pending|not\\s+an?\\s+approval|promote"

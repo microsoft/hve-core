@@ -2,7 +2,13 @@
 title: Accessibility/Accessibility Identity
 description: "Identity and orchestration instructions for the Accessibility Planner agent. Contains six-phase workflow, state.json schema reference, session recovery, and question cadence."
 sidebar_position: 1
-ms.date: 2026-07-03
+author: Microsoft
+ms.date: 2026-08-12
+ms.topic: reference
+keywords:
+  - instruction
+  - accessibility
+  - accessibility/accessibility-identity
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->

@@ -29,7 +29,7 @@ jobs:
       - name: Fetch code scanning alerts
         shell: pwsh
         run: |
-          $alerts = & .github/skills/github/gh-code-scanning/scripts/Get-CodeScanningAlerts.ps1 `
+          $alerts = & .github/skills/security/gh-code-scanning/scripts/Get-CodeScanningAlerts.ps1 `
             -Owner $env:OWNER `
             -Repo $env:REPO `
             -OutputFormat Json

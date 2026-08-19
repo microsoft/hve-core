@@ -2,7 +2,13 @@
 title: Experimental/Pptx
 description: "Shared conventions for PowerPoint Builder agent, subagent, and powerpoint skill"
 sidebar_position: 3
-ms.date: 2026-07-03
+author: Microsoft
+ms.date: 2026-08-12
+ms.topic: reference
+keywords:
+  - instruction
+  - experimental
+  - experimental/pptx
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->

@@ -3,7 +3,7 @@ title: "Stage 2: Discovery"
 description: Research requirements, gather context, and build foundational documents with AI-assisted exploration
 sidebar_position: 2
 author: Microsoft
-ms.date: 2026-07-15
+ms.date: 2026-08-06
 ms.topic: how-to
 keywords:
   - ai-assisted project lifecycle
@@ -27,21 +27,21 @@ You enter Discovery after completing [Stage 1: Setup](setup.md) with a configure
 
 ## Available Tools
 
-| Tool                   | Type   | How to Invoke                           | Purpose                                                                                    |
-|------------------------|--------|-----------------------------------------|--------------------------------------------------------------------------------------------|
-| rpi-research           | Skill  | Use `/rpi-research`                     | Research best practices and technical topics                                               |
-| brd-builder            | Agent  | Select **brd-builder** agent            | Create business requirements documents                                                     |
-| security-planner       | Agent  | Select **security-planner** agent       | Generate security plans and security models                                                |
-| sssc-planner           | Agent  | Select **sssc-planner** agent           | Assess supply chain security posture against OpenSSF standards                             |
-| rai-planner            | Agent  | Select **rai-planner** agent            | Assess responsible AI risks and generate RAI plans                                         |
-| gen-data-spec          | Agent  | Select **gen-data-spec** agent          | Generate data specifications and schemas                                                   |
-| adr-creation           | Agent  | Select **adr-creation** agent           | Document architecture decisions                                                            |
-| architecture-diagrams  | Skill  | Use the **architecture-diagrams** skill | Generate architecture diagrams                                                             |
-| ux-ui-designer         | Agent  | Select **ux-ui-designer** agent         | Design user experience and interface concepts                                              |
-| github-backlog-manager | Agent  | Select **github-backlog-manager** agent | Discover and triage existing GitHub issues                                                 |
-| risk-register          | Prompt | `/risk-register`                        | Identify and track project risks                                                           |
-| dt-coach               | Agent  | Select **dt-coach** agent               | Guide teams through Design Thinking methods for user-centered requirements discovery       |
-| experiment-designer    | Agent  | Select **experiment-designer** agent    | Design Minimum Viable Experiments to validate unknowns before committing to implementation |
+| Tool                  | Type   | How to Invoke                           | Purpose                                                                                    |
+|-----------------------|--------|-----------------------------------------|--------------------------------------------------------------------------------------------|
+| rpi-research          | Skill  | Use `/rpi-research`                     | Research best practices and technical topics                                               |
+| brd-builder           | Agent  | Select **brd-builder** agent            | Create business requirements documents                                                     |
+| security-planner      | Agent  | Select **security-planner** agent       | Generate security plans and security models                                                |
+| sssc-planner          | Agent  | Select **sssc-planner** agent           | Assess supply chain security posture against OpenSSF standards                             |
+| rai-planner           | Agent  | Select **rai-planner** agent            | Assess responsible AI risks and generate RAI plans                                         |
+| Data Workstream Coach | Agent  | Select **Data Workstream Coach**        | Catalog data entities, relationships, and dataset profiles                                 |
+| adr-creation          | Agent  | Select **adr-creation** agent           | Document architecture decisions                                                            |
+| architecture-diagrams | Skill  | Use the **architecture-diagrams** skill | Generate architecture diagrams                                                             |
+| ux-ui-designer        | Agent  | Select **ux-ui-designer** agent         | Design user experience and interface concepts                                              |
+| backlog-manager       | Agent  | Select **backlog-manager** agent        | Discover and triage existing work items                                                    |
+| risk-register         | Prompt | `/risk-register`                        | Identify and track project risks                                                           |
+| dt-coach              | Agent  | Select **dt-coach** agent               | Guide teams through Design Thinking methods for user-centered requirements discovery       |
+| experiment-designer   | Agent  | Select **experiment-designer** agent    | Design Minimum Viable Experiments to validate unknowns before committing to implementation |
 
 ## Design Thinking as Pre-Research Methodology
 

@@ -95,6 +95,7 @@ def test_render_markdown_includes_summary_table_and_residual(tmp_path: Path) -> 
     render_markdown(_sample_matrix(), _sample_coverage(), out, repo_slug="octo/repo")
 
     text = out.read_text(encoding="utf-8")
+    assert text.startswith("<!-- markdownlint-disable-file -->")
     assert "# Accessibility Coverage Matrix" in text
     assert "Reviewed and validated by a qualified human reviewer" in text
     assert "Disclaimer:" in text

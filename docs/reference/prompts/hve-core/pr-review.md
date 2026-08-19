@@ -1,8 +1,14 @@
 ---
 title: Pr Review
 description: Review a pull request or local change set by routing to the consolidated Code Review agent
-sidebar_position: 6
-ms.date: 2026-07-16
+sidebar_position: 8
+author: Microsoft
+ms.date: 2026-08-12
+ms.topic: reference
+keywords:
+  - prompt
+  - hve-core
+  - pr-review
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->

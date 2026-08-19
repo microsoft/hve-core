@@ -2,11 +2,7 @@
 name: RPI Researcher
 description: "Executes one delegated internal, external, or hybrid RPI research lane and progressively writes owned evidence. Use for independent research threads."
 user-invocable: false
-model:
-  - GPT-5.6 Terra (copilot)
-  - Claude Sonnet 5 (copilot)
-  - MAI-Code-1-Flash (copilot)
-  - Claude Opus 5 (copilot)
+model: GPT-5.6 Terra (copilot)
 tools: [execute/killTerminal, execute/sendToTerminal, execute/runInTerminal, read, agent, edit, search, web, 'microsoft-docs/*']
 agents: []
 ---

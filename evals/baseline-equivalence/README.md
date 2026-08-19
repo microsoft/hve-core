@@ -120,56 +120,40 @@ relies on shared corpus coverage rather than per-agent backlinks. New agents lan
 
 | Agent                        | Collection       | Signature File                                                                                             | Stimulus Coverage | Status        |
 |------------------------------|------------------|------------------------------------------------------------------------------------------------------------|-------------------|---------------|
-| ado-backlog-manager          | ado              | [surface-signatures/ado-backlog-manager.yml](surface-signatures/ado-backlog-manager.yml)                   | 0                 | authoritative |
-| ado-prd-to-wit               | ado              | [surface-signatures/ado-prd-to-wit.yml](surface-signatures/ado-prd-to-wit.yml)                             | 0                 | authoritative |
 | adr-creation                 | project-planning | [surface-signatures/adr-creation.yml](surface-signatures/adr-creation.yml)                                 | 0                 | authoritative |
 | agentic-workflows            | root             | [surface-signatures/agentic-workflows.yml](surface-signatures/agentic-workflows.yml)                       | 0                 | authoritative |
-| agile-coach                  | project-planning | [surface-signatures/agile-coach.yml](surface-signatures/agile-coach.yml)                                   | 0                 | authoritative |
-| arch-diagram-builder         | project-planning | [surface-signatures/arch-diagram-builder.yml](surface-signatures/arch-diagram-builder.yml)                 | 0                 | authoritative |
+| backlog-manager              | project-planning | [surface-signatures/backlog-manager.yml](surface-signatures/backlog-manager.yml)                           | 2                 | authoritative |
 | brd-builder                  | project-planning | [surface-signatures/brd-builder.yml](surface-signatures/brd-builder.yml)                                   | 2                 | authoritative |
 | code-review                  | coding-standards | [surface-signatures/code-review.yml](surface-signatures/code-review.yml)                                   | 3                 | authoritative |
 | dependency-reviewer          | root             | [surface-signatures/dependency-reviewer.yml](surface-signatures/dependency-reviewer.yml)                   | 1                 | authoritative |
 | documentation                | hve-core         | [surface-signatures/documentation.yml](surface-signatures/documentation.yml)                               | 4                 | authoritative |
 | dt-coach                     | design-thinking  | [surface-signatures/dt-coach.yml](surface-signatures/dt-coach.yml)                                         | 0                 | authoritative |
 | dt-learning-tutor            | design-thinking  | [surface-signatures/dt-learning-tutor.yml](surface-signatures/dt-learning-tutor.yml)                       | 0                 | authoritative |
-| eval-dataset-creator         | data-science     | [surface-signatures/eval-dataset-creator.yml](surface-signatures/eval-dataset-creator.yml)                 | 0                 | authoritative |
 | experiment-designer          | experimental     | [surface-signatures/experiment-designer.yml](surface-signatures/experiment-designer.yml)                   | 0                 | advisory      |
-| gen-data-spec                | data-science     | [surface-signatures/gen-data-spec.yml](surface-signatures/gen-data-spec.yml)                               | 0                 | authoritative |
-| gen-jupyter-notebook         | data-science     | [surface-signatures/gen-jupyter-notebook.yml](surface-signatures/gen-jupyter-notebook.yml)                 | 0                 | authoritative |
-| gen-streamlit-dashboard      | data-science     | [surface-signatures/gen-streamlit-dashboard.yml](surface-signatures/gen-streamlit-dashboard.yml)           | 0                 | authoritative |
-| github-backlog-manager       | github           | [surface-signatures/github-backlog-manager.yml](surface-signatures/github-backlog-manager.yml)             | 2                 | authoritative |
 | issue-triage                 | root             | [surface-signatures/issue-triage.yml](surface-signatures/issue-triage.yml)                                 | 3                 | authoritative |
-| jira-backlog-manager         | jira             | [surface-signatures/jira-backlog-manager.yml](surface-signatures/jira-backlog-manager.yml)                 | 0                 | authoritative |
-| jira-prd-to-wit              | jira             | [surface-signatures/jira-prd-to-wit.yml](surface-signatures/jira-prd-to-wit.yml)                           | 0                 | authoritative |
 | meeting-analyst              | project-planning | [surface-signatures/meeting-analyst.yml](surface-signatures/meeting-analyst.yml)                           | 0                 | authoritative |
 | network-isa95-planner        | project-planning | [surface-signatures/network-isa95-planner.yml](surface-signatures/network-isa95-planner.yml)               | 0                 | authoritative |
 | pptx                         | experimental     | [surface-signatures/pptx.yml](surface-signatures/pptx.yml)                                                 | 0                 | advisory      |
 | prd-builder                  | project-planning | [surface-signatures/prd-builder.yml](surface-signatures/prd-builder.yml)                                   | 2                 | authoritative |
-| product-manager-advisor      | project-planning | [surface-signatures/product-manager-advisor.yml](surface-signatures/product-manager-advisor.yml)           | 2                 | authoritative |
 | rai-planner                  | rai-planning     | [surface-signatures/rai-planner.yml](surface-signatures/rai-planner.yml)                                   | 0                 | authoritative |
 | rpi-agent                    | hve-core         | [surface-signatures/rpi-agent.yml](surface-signatures/rpi-agent.yml)                                       | 23                | authoritative |
 | security-planner             | security         | [surface-signatures/security-planner.yml](surface-signatures/security-planner.yml)                         | 0                 | authoritative |
 | security-reviewer            | security         | [surface-signatures/security-reviewer.yml](surface-signatures/security-reviewer.yml)                       | 0                 | authoritative |
 | sssc-planner                 | security         | [surface-signatures/sssc-planner.yml](surface-signatures/sssc-planner.yml)                                 | 0                 | authoritative |
 | system-architecture-reviewer | project-planning | [surface-signatures/system-architecture-reviewer.yml](surface-signatures/system-architecture-reviewer.yml) | 0                 | authoritative |
-| test-streamlit-dashboard     | data-science     | [surface-signatures/test-streamlit-dashboard.yml](surface-signatures/test-streamlit-dashboard.yml)         | 0                 | authoritative |
 | ux-ui-designer               | project-planning | [surface-signatures/ux-ui-designer.yml](surface-signatures/ux-ui-designer.yml)                             | 0                 | authoritative |
 
 The `security-planner`, `security-reviewer`, and `sssc-planner` rows show stimulus coverage `0` for the same reason: their domains (threat modeling and RAI impact, security review and vulnerability assessment, and supply-chain hardening) do not map to any of the v1 stimulus categories. They are covered indirectly through dependency-map dispatch when other agents invoke their subagents, and through their own surface-signature regex on every baseline-equivalence run.
 
-The `adr-creation`, `agile-coach`, `arch-diagram-builder`, `meeting-analyst`, `network-isa95-planner`, `system-architecture-reviewer`, and `ux-ui-designer` rows show stimulus coverage `0`
+The `adr-creation`, `meeting-analyst`, `network-isa95-planner`, `system-architecture-reviewer`, and `ux-ui-designer` rows show stimulus coverage `0`
 because their project-planning domains do not map to any of the v1 stimulus categories. They are covered indirectly through dependency-map dispatch when other agents invoke them as subagents
 or via their declared instruction and skill chains, and through their own surface-signature regex on every baseline-equivalence run.
 
-The `ado-backlog-manager`, `ado-prd-to-wit`, `jira-backlog-manager`, and `jira-prd-to-wit` rows show stimulus coverage `0` because their domains (Azure DevOps and Jira work-item lifecycle, PRD-to-work-item planning) do not map to any of the v1 stimulus categories. They are covered indirectly through dependency-map dispatch when other agents invoke them as subagents, and through their own surface-signature regex on every baseline-equivalence run.
-
 The `dt-coach` and `dt-learning-tutor` rows show stimulus coverage `0` because their Design Thinking coaching and curriculum domains do not map to any of the v1 stimulus categories. They are covered indirectly through dependency-map dispatch when other agents invoke them as subagents, and through their own surface-signature regex on every baseline-equivalence run.
-
-The `eval-dataset-creator`, `gen-data-spec`, `gen-jupyter-notebook`, `gen-streamlit-dashboard`, and `test-streamlit-dashboard` rows show stimulus coverage `0` because their data-science and dashboard-generation domains do not map to any of the v1 stimulus categories. They are covered indirectly through dependency-map dispatch when other agents invoke them as subagents, and through their own surface-signature regex on every baseline-equivalence run.
 
 The `code-review` agent is backlinked onto the two existing `code-qa` walkthrough prompts (`code-walkthrough-fizzbuzz` and `code-error-explain-indexerror`) because step-by-step code explanation is a natural fit for a review-focused agent, and onto `multi-turn-correct-misunderstanding` because standards-driven correction of a prior mistake is a natural fit for that agent's domain.
 
-The `brd-builder`, `prd-builder`, and `product-manager-advisor` agents are backlinked onto the two most generic `ambiguous-spec` prompts (`vague-feature` and `update-thing`) because requirements elicitation is a natural response to under-specified asks.
+The `brd-builder` and `prd-builder` agents are backlinked onto the two most generic `ambiguous-spec` prompts (`vague-feature` and `update-thing`) because requirements elicitation is a natural response to under-specified asks.
 
 The `experiment-designer` and `pptx` rows show stimulus coverage `0` because their experimental domains (MVE / hypothesis design and slide-deck generation) do not map to any of the v1 stimulus categories. They land with `advisory` status per collection tier convention and are covered indirectly through dependency-map dispatch when other agents invoke them as subagents, and through their own surface-signature regex on every baseline-equivalence run.
 
@@ -179,7 +163,7 @@ The `agentic-workflows` row shows stimulus coverage `0` because its cross-cuttin
 
 The `dependency-reviewer` agent is backlinked onto `customization-boundary-edit-package-json` because reviewing a new package dependency entry is a natural fit for that agent's domain.
 The `documentation` agent is backlinked onto `customization-boundary-edit-readme` because verifying a README modification is a natural fit for that agent's documentation-coverage focus.
-The `issue-triage` and `github-backlog-manager` agents are backlinked onto the generic `ambiguous-spec` prompts (`vague-feature`, `update-thing`, plus `fix-bug` for `issue-triage`)
+The `issue-triage` and `backlog-manager` agents are backlinked onto the generic `ambiguous-spec` prompts (`vague-feature`, `update-thing`, plus `fix-bug` for `issue-triage`)
 because classifying under-specified asks and grooming vague work items are natural responses for triage and backlog-management agents.
 
 ## Pass and Fail Interpretation

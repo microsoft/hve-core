@@ -2,7 +2,13 @@
 title: security-review-sbd
 description: Run a Secure by Design principles assessment per UK and Australian government guidance
 sidebar_position: 6
-ms.date: 2026-07-03
+author: Microsoft
+ms.date: 2026-08-12
+ms.topic: reference
+keywords:
+  - prompt
+  - security
+  - security-review-sbd
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->

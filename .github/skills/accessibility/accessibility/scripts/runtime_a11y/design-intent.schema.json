@@ -1,0 +1,326 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/microsoft/hve-core/schemas/design-intent.schema.json",
+  "title": "Design Intent Record",
+  "description": "Human-authored design intent record stored at design-intent/<surface-id>.intent.yaml in a consuming repository. Validated after YAML-to-JSON parsing. Committed source; never rewritten by a generator.",
+  "type": "object",
+  "required": [
+    "schemaVersion",
+    "surfaceId",
+    "title",
+    "owner",
+    "status",
+    "decidedOn",
+    "decidedBy",
+    "version",
+    "intents"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "const": "1.1",
+      "description": "Contract version of this authored record."
+    },
+    "surfaceId": {
+      "$ref": "#/$defs/surfaceId",
+      "description": "Join key. Equals the authored filename stem and an existing a11y-runtime.config.json surfaces[].id."
+    },
+    "title": {
+      "$ref": "#/$defs/nonEmptyString",
+      "description": "Short human-readable name for the surface decision."
+    },
+    "owner": {
+      "$ref": "#/$defs/nonEmptyString",
+      "description": "Accountable person or team for this record."
+    },
+    "status": {
+      "type": "string",
+      "enum": ["proposed", "accepted", "retired"],
+      "description": "Lifecycle state. Git history is the only v1 lineage. Retired records are inactive."
+    },
+    "decidedOn": {
+      "type": "string",
+      "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+      "description": "ISO 8601 calendar date of the decision. The validator additionally requires a real calendar date."
+    },
+    "decidedBy": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": { "$ref": "#/$defs/nonEmptyString" },
+      "description": "People or roles who made the decision."
+    },
+    "version": {
+      "type": "integer",
+      "minimum": 1,
+      "description": "Monotonic revision counter for this record."
+    },
+    "tooling": {
+      "$ref": "#/$defs/nonEmptyString",
+      "description": "Optional note about the authoring or design tooling behind the decision."
+    },
+    "groundedIn": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": { "$ref": "#/$defs/sourceReference" },
+      "description": "Optional references to standards or research. Identifiers and metadata only; never criterion prose."
+    },
+    "intents": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/intent" },
+      "description": "What the design must convey and how each claim is checked."
+    }
+  },
+  "additionalProperties": false,
+  "$defs": {
+    "nonEmptyString": {
+      "type": "string",
+      "minLength": 1
+    },
+    "surfaceId": {
+      "type": "string",
+      "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+    },
+    "criterionReference": {
+      "type": "string",
+      "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*:[A-Za-z0-9][A-Za-z0-9._:-]*$",
+      "description": "framework:criterionId reference. Carries no criterion text."
+    },
+    "isoDate": {
+      "type": "string",
+      "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+    },
+    "outcome": {
+      "type": "string",
+      "enum": ["passed", "failed", "cantTell", "inapplicable", "untested"],
+      "description": "EARL-derived outcome vocabulary."
+    },
+    "sourceReference": {
+      "type": "object",
+      "required": ["id", "title", "url", "use", "reproduction"],
+      "properties": {
+        "id": { "$ref": "#/$defs/nonEmptyString" },
+        "title": { "$ref": "#/$defs/nonEmptyString" },
+        "url": { "$ref": "#/$defs/nonEmptyString" },
+        "use": { "$ref": "#/$defs/nonEmptyString" },
+        "reproduction": {
+          "const": "paraphrase-only",
+          "description": "Fixed. Cite-only sources are referenced, never reproduced."
+        }
+      },
+      "additionalProperties": false
+    },
+    "binding": {
+      "type": "object",
+      "required": ["state"],
+      "properties": {
+        "state": {
+          "$ref": "#/$defs/nonEmptyString",
+          "description": "Interaction state name. 'default' is every surface's implicit base state; any other value must be declared in a11y-runtime.config.json surfaces[].states."
+        }
+      },
+      "additionalProperties": false,
+      "description": "Binding to the runtime inventory. Selectors stay canonical in a11y-runtime.config.json and are never copied here."
+    },
+    "override": {
+      "type": "object",
+      "required": ["outcome", "rationale", "reviewedBy", "reviewedOn"],
+      "properties": {
+        "outcome": { "$ref": "#/$defs/outcome" },
+        "rationale": { "$ref": "#/$defs/nonEmptyString" },
+        "reviewedBy": { "$ref": "#/$defs/nonEmptyString" },
+        "reviewedOn": { "$ref": "#/$defs/isoDate" }
+      },
+      "additionalProperties": false,
+      "description": "Human-authoritative outcome for this expectation. Readable without any generated artifact."
+    },
+    "expectation": {
+      "type": "object",
+      "required": ["id", "method", "assert", "detail", "criteria", "role", "blocking"],
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^EXP-\\d{3,}$"
+        },
+        "method": {
+          "type": "string",
+          "enum": [
+            "static-source",
+            "axe-auto",
+            "runtime-automation",
+            "manual-keyboard",
+            "cognitive-walkthrough",
+            "screen-reader"
+          ]
+        },
+        "assert": {
+          "type": "string",
+          "enum": [
+            "probe-axe",
+            "probe-keyboard-traversal",
+            "probe-focus-visible",
+            "probe-focus-obscured",
+            "probe-live-region",
+            "probe-aria-tree",
+            "probe-virtual-sr",
+            "probe-real-sr",
+            "probe-widget-keyboard",
+            "probe-reflow-resize",
+            "probe-target-size",
+            "probe-contrast",
+            "probe-forced-colors",
+            "probe-reduced-motion",
+            "probe-structure-crawl",
+            "probe-name-in-label",
+            "probe-use-of-color",
+            "probe-text-spacing",
+            "probe-hover-focus",
+            "probe-link-purpose",
+            "probe-input-purpose",
+            "probe-forms",
+            "probe-context-change",
+            "probe-orientation",
+            "probe-audio-control",
+            "probe-timing",
+            "probe-zoom-blocker",
+            "probe-console-errors",
+            "probe-broken-links",
+            "probe-dom-hygiene",
+            "probe-title-lang",
+            "custom"
+          ],
+          "description": "Exact current runtime probe ID, or 'custom' for an informational human-run check."
+        },
+        "detail": { "$ref": "#/$defs/nonEmptyString" },
+        "criteria": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": { "$ref": "#/$defs/criterionReference" }
+        },
+        "role": {
+          "type": "string",
+          "enum": ["decides", "informs"]
+        },
+        "blocking": { "type": "boolean" },
+        "override": { "$ref": "#/$defs/override" }
+      },
+      "additionalProperties": false,
+      "allOf": [
+        {
+          "if": {
+            "properties": { "role": { "const": "informs" } },
+            "required": ["role"]
+          },
+          "then": {
+            "properties": { "blocking": { "const": false } }
+          },
+          "$comment": "An informing expectation cannot block."
+        },
+        {
+          "if": {
+            "properties": { "assert": { "const": "custom" } },
+            "required": ["assert"]
+          },
+          "then": {
+            "anyOf": [
+              {
+                "properties": {
+                  "role": { "const": "informs" },
+                  "blocking": { "const": false }
+                }
+              },
+              {
+                "properties": {
+                  "role": { "const": "decides" },
+                  "blocking": { "const": true }
+                }
+              }
+            ]
+          },
+          "$comment": "A custom assertion is informational by default. It may decide and block; without an override it remains uncovered, and any present override must be complete."
+        },
+        {
+          "if": {
+            "properties": { "assert": { "const": "probe-axe" } },
+            "required": ["assert"]
+          },
+          "then": {
+            "properties": { "method": { "const": "axe-auto" } }
+          },
+          "$comment": "probe-axe is the axe-core lane."
+        },
+        {
+          "if": {
+            "properties": {
+              "assert": {
+                "type": "string",
+                "not": { "enum": ["custom", "probe-axe"] }
+              }
+            },
+            "required": ["assert"]
+          },
+          "then": {
+            "properties": { "method": { "const": "runtime-automation" } }
+          },
+          "$comment": "Every other probe ID runs in the runtime automation lane."
+        },
+        {
+          "if": {
+            "required": ["override"]
+          },
+          "then": {
+            "anyOf": [
+              {
+                "properties": { "assert": { "const": "custom" } },
+                "required": ["assert"]
+              },
+              {
+                "properties": { "role": { "const": "decides" } },
+                "required": ["role"]
+              }
+            ]
+          },
+          "$comment": "Override is human authority. It is always allowed for custom checks and otherwise only for deciding expectations."
+        }
+      ]
+    },
+    "intent": {
+      "type": "object",
+      "required": ["id", "conveys", "rationale", "audience", "evidence", "binding", "expectations"],
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^INT-\\d{3,}$"
+        },
+        "conveys": {
+          "$ref": "#/$defs/nonEmptyString",
+          "description": "One sentence naming what the design must communicate."
+        },
+        "rationale": {
+          "$ref": "#/$defs/nonEmptyString",
+          "description": "Original human reasoning. Never copied standard text."
+        },
+        "audience": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": { "$ref": "#/$defs/nonEmptyString" }
+        },
+        "evidence": {
+          "type": "string",
+          "enum": ["observed", "reported", "assumed"],
+          "description": "Strength of the basis for this intent."
+        },
+        "binding": { "$ref": "#/$defs/binding" },
+        "expectations": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/$defs/expectation" }
+        }
+      },
+      "additionalProperties": false
+    }
+  }
+}

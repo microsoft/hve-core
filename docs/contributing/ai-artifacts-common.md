@@ -3,8 +3,12 @@ title: 'AI Artifacts Common Standards'
 description: 'Common standards and quality gates for all AI artifact contributions to hve-core'
 sidebar_position: 2
 author: Microsoft
-ms.date: 2026-08-03
+ms.date: 2026-08-13
 ms.topic: reference
+keywords:
+  - contributing
+  - ai artifacts
+  - standards
 ---
 
 This document defines shared standards, conventions, and quality gates that apply to **all** AI artifact contributions to hve-core (agents, prompts, instructions, and skills).
@@ -150,86 +154,41 @@ npm run lint:models:refresh
 4. Future-proofing: older models will be deprecated and removed from service
 5. Cost optimization: fast-tier models reduce consumption for tasks that do not require premium reasoning
 
-## Marketplace Packages
+## Plugin Membership
 
-`.github/plugin/marketplace.json` is the sole distribution authority. Its active entries are ordinary, self-contained package recipes. Standard `agents`, `commands`, `rules`, `skills`, and optional `hooks` fields declare recipe membership.
+`.github/plugin.json` is the distribution authority for the single `hve-core` plugin and VSIX. `npm run plugin:sync` derives its membership from tracked package-scoped artifacts:
 
-An artifact may belong to one or more package recipes when its component maturity is aligned for each membership. `x-hve.displayName` supplies display metadata, `componentMaturity` records lifecycle disclosure and tombstones, and `documentation` points to `docs/plugins/<name>.md`. The starter profile belongs only to `hve-core-all`. Root-level repository-only artifacts are not declared.
+* Agents under `.github/agents/<package>/**/*.agent.md`
+* Prompts under `.github/prompts/<package>/**/*.prompt.md`
+* Instructions under `.github/instructions/<package>/**/*.instructions.md`
+* Skills with `.github/skills/<package>/<skill>/SKILL.md` unless the skill's top-level license has a noncommercial qualifier
 
-When an agent handoff targets another catalog-declared agent, shared marketplace closure adds the dependency to the resolved projection. Unresolved or ambiguous targets fail. Run `npm run lint:marketplace`, `npm run plugin:generate`, and both extension preparation commands after recipe changes.
+Root-level repository-only artifacts are excluded. The manifest retains the fixed telemetry hook. `.github/plugin/marketplace.json` contains one `hve-core` locator to `.github` and no component recipe.
 
 ## Extension Packaging
 
-Plugin and VSIX packaging consume one handoff-resolved projection per catalog entry. `Prepare-Extension.ps1` maps canonical sources to VS Code contributions and derives deterministic extension identities. `Package-Extension.ps1` stages only git-tracked files from those contribution roots plus explicit shared resources. Hooks remain plugin-only because VS Code has no declarative hook contribution point.
+`Prepare-Extension.ps1` maps the complete plugin manifest to the single `ise-hve-essentials.hve-core` extension. `Package-Extension.ps1` stages only git-tracked files from those contribution roots plus explicit shared resources. Hooks remain plugin-only because VS Code has no declarative hook contribution point.
 
-Lifecycle maturity belongs in marketplace metadata, not artifact frontmatter. Stable and PreRelease both include active `stable`, `preview`, and `experimental` components. `deprecated` and `removed` values are excluded from both channels. Labels are disclosure and governance metadata, not channel filters or Responsible AI assessment maturity ratings.
+Stable and PreRelease contain the same manifest membership. Their differences are version, cadence, source branch, release assurance, and the VS Code Marketplace pre-release flag.
 
-## Plugin Generation
-
-The `plugins/` directory contains **auto-generated plugin bundles** created from `.github/plugin/marketplace.json` for Copilot clients. This ignored directory is build output and **MUST NOT be edited or committed**.
-
-### Generation Workflow
+## Manifest Workflow
 
 When you add or change an artifact:
 
-1. Author the artifact under `.github/`.
-2. Add its recipe-relative path to every applicable catalog entry.
-3. Align component maturity for each declared membership.
-4. Update the durable package document at `docs/plugins/<name>.md`.
-5. Run `npm run lint:marketplace`.
-6. Run `npm run plugin:generate` and both extension preparation commands.
+1. Author the artifact under a package subdirectory of `.github/`.
+2. Run `npm run plugin:sync` to update `.github/plugin.json`.
+3. Update `docs/plugins/hve-core.md` when user-visible capabilities or identity guidance changed.
+4. Run `npm run plugin:validate`.
+5. Run `npm run docs:generate:check` and the focused tests for the changed artifact kind.
+6. Run the applicable extension preparation command when extension output is in scope.
 
-Generators derive outputs from active catalog entries and clean stale plugin roots, extension manifests, and generated READMEs. Commit canonical sources and durable package documentation only; leave `plugins/` ignored and unstaged.
+Commit canonical sources, the synchronized plugin manifest, the sole plugin documentation page, and the single extension manifest and README when they change. Do not create a copied plugin tree or plugin ZIP.
 
-### Plugin Directory Structure
+### Validation Contract
 
-Each generated plugin directory contains:
+`npm run plugin:validate` runs manifest check mode and hook validation. It rejects membership drift, invalid one-entry locator metadata, name or version mismatch, source escape, missing declared components, recipe fields on the locator, and invalid hooks.
 
-| Content                | Description                                                        |
-|------------------------|--------------------------------------------------------------------|
-| Materialized artifacts | Regular-file copies of declared, Git-tracked `.github/` sources    |
-| Generated README       | Auto-generated documentation listing all included artifacts        |
-| Root plugin manifest   | Generated `plugin.json` for Copilot clients                        |
-| Shared resources       | Declared templates and scripts required by packaged customizations |
-
-### Critical Rules for Plugin Files
-
-> [!WARNING]
-> Files under `plugins/` are generated outputs and MUST NOT be edited directly.
-
-| Rule                     | Description                                                                                          |
-|--------------------------|------------------------------------------------------------------------------------------------------|
-| Regenerate after changes | Run `npm run plugin:generate` after modifying marketplace recipes or packaged artifacts              |
-| Generated files          | Materialized artifacts, README files, and manifests are generated fresh on each run                  |
-| Durable edits            | Direct edits to plugin files are discarded during regeneration                                       |
-| Source of truth          | Edit `.github/` sources, `.github/plugin/marketplace.json`, or the matching `docs/plugins/<name>.md` |
-| Git hygiene              | Never add or commit a path under the root `plugins/` directory                                       |
-
-### When to Regenerate Plugins
-
-Run `npm run plugin:generate` whenever you:
-
-* Add a new artifact to any package recipe
-* Remove an artifact from any package recipe
-* Modify artifact frontmatter (description, dependencies, handoffs)
-* Update artifact file content that affects generated README documentation
-* Change marketplace identity metadata or component lifecycle maturity
-* Update the matching `docs/plugins/<name>.md` document for any package
-
-### Validating the Marketplace Recipe
-
-Run `npm run plugin:validate` before generation. It validates immutable sources, standard membership, the display name, source containment, the documentation pointer, lifecycle maturity and tombstones, complete active coverage, the starter profile, root manifest mirrors, and handoff closure.
-
-### Plugin Generation Reference
-
-For detailed documentation on the plugin generation system, including:
-
-* Generation script implementation details
-* Marketplace package validation rules
-* Plugin directory structure specifications
-* Troubleshooting generation errors
-
-See the [Plugin Scripts README](https://github.com/microsoft/hve-core/blob/main/scripts/plugins/README.md).
+See the [Plugin Scripts README](https://github.com/microsoft/hve-core/blob/main/scripts/plugins/README.md) for synchronization and validation details.
 
 ## XML-Style Block Standards
 

@@ -1,8 +1,14 @@
 ---
 title: Vally Test Write
 description: "Authors Vally conformance test stimuli for an existing prompt, instructions, agent, or skill artifact"
-sidebar_position: 9
-ms.date: 2026-07-16
+sidebar_position: 11
+author: Microsoft
+ms.date: 2026-08-12
+ms.topic: reference
+keywords:
+  - prompt
+  - hve-core
+  - vally-test-write
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->

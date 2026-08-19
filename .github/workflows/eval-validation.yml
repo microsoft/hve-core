@@ -64,15 +64,18 @@ jobs:
       - name: Detect eval-relevant changes
         id: detect
         shell: pwsh
+        env:
+          INPUT_CHANGED_FILES_ONLY: ${{ inputs.changed-files-only }}
+          INPUT_BASE_BRANCH: ${{ inputs.base-branch }}
         run: |
-          if ('${{ inputs.changed-files-only }}' -ne 'true') {
+          if ($env:INPUT_CHANGED_FILES_ONLY -ne 'true') {
             'EVAL_RELEVANT=true' >> $env:GITHUB_ENV
             'eval-relevant=true' >> $env:GITHUB_OUTPUT
             Write-Output 'changed-files-only is false; running full eval suite.'
             exit 0
           }
 
-          $baseBranch = '${{ inputs.base-branch }}'
+          $baseBranch = $env:INPUT_BASE_BRANCH
           if ([string]::IsNullOrEmpty($baseBranch)) {
             $baseBranch = 'origin/main'
           }
@@ -256,8 +259,10 @@ jobs:
 
       - name: Generate changed-artifact manifest
         shell: pwsh
+        env:
+          INPUT_BASE_BRANCH: ${{ inputs.base-branch }}
         run: |
-          $base = '${{ inputs.base-branch }}'
+          $base = $env:INPUT_BASE_BRANCH
           if ([string]::IsNullOrWhiteSpace($base)) { $base = 'origin/main' }
           pwsh -NoProfile -File scripts/evals/Get-ChangedAIArtifact.ps1 `
             -BaseRef $base -HeadRef HEAD -OutFile logs/changed-ai-artifacts.json
@@ -376,8 +381,10 @@ jobs:
       - name: Generate changed-artifact manifest
         if: env.EVAL_EXECUTE == 'true'
         shell: pwsh
+        env:
+          INPUT_BASE_BRANCH: ${{ inputs.base-branch }}
         run: |
-          $base = '${{ inputs.base-branch }}'
+          $base = $env:INPUT_BASE_BRANCH
           if ([string]::IsNullOrWhiteSpace($base)) { $base = 'origin/main' }
           pwsh -NoProfile -File scripts/evals/Get-ChangedAIArtifact.ps1 `
             -BaseRef $base -HeadRef HEAD -OutFile logs/changed-ai-artifacts.json
@@ -385,8 +392,10 @@ jobs:
       - name: Generate changed-spec stimulus manifest
         if: env.EVAL_EXECUTE == 'true'
         shell: pwsh
+        env:
+          INPUT_BASE_BRANCH: ${{ inputs.base-branch }}
         run: |
-          $base = '${{ inputs.base-branch }}'
+          $base = $env:INPUT_BASE_BRANCH
           if ([string]::IsNullOrWhiteSpace($base)) { $base = 'origin/main' }
           pwsh -NoProfile -File scripts/evals/Get-ChangedSpecStimulus.ps1 `
             -BaseRef $base -HeadRef HEAD -OutFile logs/changed-spec-stimuli.json

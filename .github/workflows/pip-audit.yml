@@ -42,15 +42,19 @@ jobs:
 
       - name: Derive artifact name
         id: meta
+        env:
+          INPUT_WORKING_DIRECTORY: ${{ inputs.working-directory }}
         run: |
-          $name = '${{ inputs.working-directory }}' -replace '/', '-' -replace '^\.', '' -replace '^-', ''
+          $name = $env:INPUT_WORKING_DIRECTORY -replace '/', '-' -replace '^\.', '' -replace '^-', ''
           "artifact-name=pip-audit-$name" >> $env:GITHUB_OUTPUT
 
       - name: Check for dependency file changes
         if: inputs.changed-files-only
+        env:
+          INPUT_WORKING_DIRECTORY: ${{ inputs.working-directory }}
         run: |
           $baseRef = if ($env:GITHUB_BASE_REF) { $env:GITHUB_BASE_REF } else { 'main' }
-          $workingDir = '${{ inputs.working-directory }}'
+          $workingDir = $env:INPUT_WORKING_DIRECTORY
           $changed = git diff --name-only --diff-filter=ACMR "origin/$baseRef...HEAD" -- $workingDir |
             Where-Object { $_ -match '(pyproject\.toml|uv\.lock|requirements.*\.txt)$' }
           if ($changed) {
@@ -84,8 +88,10 @@ jobs:
       - name: Run pip-audit
         id: audit
         if: "!inputs.changed-files-only || env.HAS_CHANGES == 'true'"
+        env:
+          ARTIFACT_NAME: ${{ steps.meta.outputs.artifact-name }}
         run: |
-          $name = '${{ steps.meta.outputs.artifact-name }}'
+          $name = $env:ARTIFACT_NAME
           New-Item -ItemType Directory -Path "$env:GITHUB_WORKSPACE/logs" -Force | Out-Null
           $ignoreArgs = @()
           $knownVulnFile = 'pip-audit-known-vulnerabilities.txt'

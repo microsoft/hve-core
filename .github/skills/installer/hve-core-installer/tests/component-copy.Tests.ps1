@@ -32,6 +32,11 @@ BeforeAll {
             '.github/skills/rpi/rpi-plan/.VENV/lib/upper.py'              = 'sentinel_upper_venv'
             '.github/skills/rpi/rpi-plan/tests/test_plan.py'              = 'sentinel_tests'
             '.github/skills/rpi/rpi-plan/.PyTest_Cache/result.txt'        = 'sentinel_upper_cache'
+            '.github/skills/rpi/rpi-plan/.git/config'                     = 'sentinel_git'
+            '.github/skills/rpi/rpi-plan/.env'                            = 'sentinel_env'
+            '.github/skills/rpi/rpi-plan/.env.local'                      = 'sentinel_env_local'
+            '.github/skills/rpi/rpi-plan/.DS_Store'                       = 'sentinel_ds_store'
+            '.github/skills/rpi/rpi-plan/Thumbs.db'                       = 'sentinel_thumbs_db'
             '.github/hooks/shared/telemetry.json'                         = '{}'
         }
         foreach ($relative in $sourceFiles.Keys) {
@@ -55,46 +60,22 @@ BeforeAll {
             $symlinkAvailable = $false
         }
 
-        $catalog = [ordered]@{
-            name    = 'hve-core'
-            plugins = @(
-                [ordered]@{
-                    name     = 'hve-core'
-                    version  = $Version
-                    agents   = @('agents/hve-core/rpi-agent.md', 'agents/hve-core/subagents/rpi-planner.md')
-                    commands = @('commands/hve-core/rpi.md')
-                    rules    = @('rules/hve-core/copilot-tracking.instructions.md')
-                    skills   = @('skills/rpi/rpi-plan')
-                    hooks    = 'hooks/shared/telemetry.json'
-                    'x-hve'  = [ordered]@{
-                        componentMaturity = [ordered]@{
-                            'hooks/shared/telemetry.json' = 'experimental'
-                        }
-                    }
-                }
-                [ordered]@{
-                    name     = 'hve-core-all'
-                    version  = $Version
-                    agents   = @('agents/experimental/pptx.md', 'agents/hve-core/rpi-agent.md', 'agents/hve-core/subagents/rpi-planner.md')
-                    commands = @('commands/hve-core/rpi.md')
-                    rules    = @('rules/hve-core/copilot-tracking.instructions.md')
-                    skills   = @('skills/rpi/rpi-plan')
-                    hooks    = 'hooks/shared/telemetry.json'
-                    'x-hve'  = [ordered]@{
-                        componentMaturity = [ordered]@{
-                            'agents/experimental/pptx.md' = 'experimental'
-                            'hooks/shared/telemetry.json' = 'experimental'
-                        }
-                        profiles          = [ordered]@{
-                            starter = @('agents/hve-core/rpi-agent.md', 'skills/rpi/rpi-plan')
-                        }
-                    }
-                }
+        $manifest = [ordered]@{
+            name     = 'hve-core'
+            version  = $Version
+            agents   = @(
+                'agents/hve-core/rpi-agent.agent.md'
+                'agents/hve-core/subagents/rpi-planner.agent.md'
+                'agents/experimental/pptx.agent.md'
             )
+            commands = @('prompts/hve-core/rpi.prompt.md')
+            rules    = @('instructions/hve-core/copilot-tracking.instructions.md')
+            skills   = @('skills/rpi/rpi-plan')
+            hooks    = 'hooks/shared/telemetry.json'
         }
-        $catalogPath = Join-Path $source '.github/plugin/marketplace.json'
-        New-Item -ItemType Directory -Path (Split-Path $catalogPath -Parent) -Force | Out-Null
-        $catalog | ConvertTo-Json -Depth 10 | Set-Content -LiteralPath $catalogPath -NoNewline
+        $pluginManifestPath = Join-Path $source '.github/plugin.json'
+        New-Item -ItemType Directory -Path (Split-Path $pluginManifestPath -Parent) -Force | Out-Null
+        $manifest | ConvertTo-Json -Depth 10 | Set-Content -LiteralPath $pluginManifestPath -NoNewline
 
         Set-Content -LiteralPath (Join-Path $source 'package.json') -Value "{ `"version`": `"$Version`" }" -NoNewline
         New-Item -ItemType Directory -Path $target -Force | Out-Null
@@ -106,7 +87,6 @@ BeforeAll {
         param(
             [pscustomobject]$Fixture,
             [string[]]$Component,
-            [string]$PackageName = 'hve-core-all',
             [string]$SelectionName = 'custom',
             [switch]$ReportOnly,
             [switch]$KeepExisting,
@@ -116,7 +96,6 @@ BeforeAll {
         $arguments = @{
             HveCoreBasePath = $Fixture.Source
             TargetRoot      = $Fixture.Target
-            PackageName     = $PackageName
             SelectionName   = $SelectionName
             Component       = $Component
         }
@@ -131,7 +110,6 @@ BeforeAll {
         param(
             [pscustomobject]$Fixture,
             [string[]]$Component,
-            [string]$PackageName = 'hve-core-all',
             [string]$SelectionName = 'custom',
             [hashtable]$Environment = @{}
         )
@@ -142,7 +120,7 @@ BeforeAll {
             [System.Environment]::SetEnvironmentVariable($key, $Environment[$key])
         }
         try {
-            $output = & bash $script:BashScript $Fixture.Source $Fixture.Target $PackageName $SelectionName @Component 2>&1 | Out-String
+            $output = & bash $script:BashScript $Fixture.Source $Fixture.Target $SelectionName @Component 2>&1 | Out-String
         }
         finally {
             foreach ($key in $Environment.Keys) { [System.Environment]::SetEnvironmentVariable($key, $saved[$key]) }
@@ -172,33 +150,32 @@ Describe 'component-copy parameter contract' -Tag 'Unit' {
     }
 
     It 'Declares the mandatory selection and target parameters' {
-        foreach ($name in @('HveCoreBasePath', 'TargetRoot', 'PackageName', 'SelectionName', 'Component')) {
+        foreach ($name in @('HveCoreBasePath', 'TargetRoot', 'SelectionName', 'Component')) {
             $script:command.Parameters.Keys | Should -Contain $name
             $attributes = @($script:command.Parameters[$name].Attributes | Where-Object { $_ -is [System.Management.Automation.ParameterAttribute] })
             @($attributes | Where-Object { $_.Mandatory }).Count | Should -Be 1 -Because "$name identifies what is copied and where"
         }
     }
 
-    It 'Requires an explicit package with no production default' {
-        $script:command.Parameters['PackageName'].ParameterType | Should -Be ([string])
-        $script:command.Parameters['PackageName'].Attributes.Where({ $_ -is [System.Management.Automation.ParameterAttribute] }).Mandatory |
-            Should -Contain $true
-        $script:powerShellSource | Should -Not -Match '\[string\]\$PackageName\s*='
-        $script:bashSource | Should -Match '<package_name>'
+    It 'Declares no package identity parameter' {
+        $script:command.Parameters.Keys | Should -Not -Contain 'PackageName'
+        $script:powerShellSource | Should -Not -Match '(?i)PackageName'
+        $script:bashSource | Should -Not -Match 'package_name'
+        $script:bashSource | Should -Match '<selection_name> <component\.\.\.>'
     }
 
-    It 'Writes package identity from the PowerShell implementation' {
-        $script:powerShellSource | Should -Match '\$PackageName'
+    It 'Resolves membership from the plugin manifest in the PowerShell implementation' {
+        $script:powerShellSource | Should -Match '\.github/plugin\.json'
+        $script:powerShellSource | Should -Not -Match '(?i)marketplace'
         $script:powerShellSource | Should -Match '\$SelectionName'
         $script:powerShellSource | Should -Match "schemaVersion = \`$schemaVersion"
-        $script:powerShellSource | Should -Not -Match '(?i)PackageId'
     }
 
-    It 'Writes package identity from the Bash implementation' {
-        $script:bashSource | Should -Match 'package_name'
+    It 'Resolves membership from the plugin manifest in the Bash implementation' {
+        $script:bashSource | Should -Match '\.github/plugin\.json'
+        $script:bashSource | Should -Not -Match '(?i)marketplace'
         $script:bashSource | Should -Match 'selection_name'
         $script:bashSource | Should -Match 'schemaVersion: \$schema'
-        $script:bashSource | Should -Not -Match '(?i)package_id'
     }
 }
 
@@ -234,13 +211,34 @@ Describe 'component-copy path mapping' -Tag 'Unit' {
         Test-Path -LiteralPath (Join-Path $script:fixture.Target '.github/skills/rpi/rpi-plan/references/notes.md') | Should -BeTrue
     }
 
-    It 'Excludes local environment and test directories from a skill copy' {
+    It 'Excludes local environment, test, VCS, secret-prone, and OS artifact paths from a skill copy' {
         Invoke-ComponentCopy -Fixture $script:fixture -Component @('skills/rpi/rpi-plan') | Out-Null
 
         Test-Path -LiteralPath (Join-Path $script:fixture.Target '.github/skills/rpi/rpi-plan/.venv') | Should -BeFalse
         Test-Path -LiteralPath (Join-Path $script:fixture.Target '.github/skills/rpi/rpi-plan/.VENV') | Should -BeFalse
         Test-Path -LiteralPath (Join-Path $script:fixture.Target '.github/skills/rpi/rpi-plan/tests') | Should -BeFalse
         Test-Path -LiteralPath (Join-Path $script:fixture.Target '.github/skills/rpi/rpi-plan/.PyTest_Cache') | Should -BeFalse
+        Test-Path -LiteralPath (Join-Path $script:fixture.Target '.github/skills/rpi/rpi-plan/.git') | Should -BeFalse
+        Test-Path -LiteralPath (Join-Path $script:fixture.Target '.github/skills/rpi/rpi-plan/.env') | Should -BeFalse
+        Test-Path -LiteralPath (Join-Path $script:fixture.Target '.github/skills/rpi/rpi-plan/.env.local') | Should -BeFalse
+        Test-Path -LiteralPath (Join-Path $script:fixture.Target '.github/skills/rpi/rpi-plan/.DS_Store') | Should -BeFalse
+        Test-Path -LiteralPath (Join-Path $script:fixture.Target '.github/skills/rpi/rpi-plan/Thumbs.db') | Should -BeFalse
+
+        $trackedPaths = @((Get-TrackingManifest -Fixture $script:fixture).files.Keys)
+        @($trackedPaths | Where-Object { $_ -match '/(\.git|\.env(?:\..+)?|\.DS_Store|Thumbs\.db)(/|$)' }) |
+            Should -BeNullOrEmpty
+    }
+
+    It 'Copies and tracks a skill filename containing a newline through the Bash implementation' -Skip:($IsWindows -or -not $script:BashAvailable) {
+        $relative = ".github/skills/rpi/rpi-plan/line`nbreak.md"
+        $sourceFile = Join-Path $script:fixture.Source $relative
+        Set-Content -LiteralPath $sourceFile -Value '# Newline name' -NoNewline
+
+        Invoke-BashComponentCopy -Fixture $script:fixture -Component @('skills/rpi/rpi-plan') | Out-Null
+
+        $LASTEXITCODE | Should -Be 0
+        Test-Path -LiteralPath (Join-Path $script:fixture.Target $relative) | Should -BeTrue
+        (Get-TrackingManifest -Fixture $script:fixture).files.Keys | Should -Contain $relative
     }
 
     It 'Omits file symlinks and does not traverse directory symlinks' {
@@ -295,10 +293,16 @@ Describe 'component-copy tracking manifest' -Tag 'Unit' {
         Invoke-ComponentCopy -Fixture $script:fixture -SelectionName 'starter' -Component @('skills/rpi/rpi-plan', 'agents/hve-core/rpi-agent.md') | Out-Null
 
         $selection = (Get-TrackingManifest -Fixture $script:fixture).selection
-        @($selection.Keys) | Should -Be @('package', 'profile', 'components')
-        $selection.package | Should -Be 'hve-core-all'
+        @($selection.Keys) | Should -Be @('profile', 'components')
         $selection.profile | Should -Be 'starter'
         @($selection.components) | Should -Be @('agents/hve-core/rpi-agent.md', 'skills/rpi/rpi-plan')
+    }
+
+    It 'Persists no package identity' {
+        Invoke-ComponentCopy -Fixture $script:fixture -Component @('agents/hve-core/rpi-agent.md') | Out-Null
+
+        Get-Content -LiteralPath (Join-Path $script:fixture.Target '.hve-tracking.json') -Raw |
+            Should -Not -Match '"package"'
     }
 
     It 'Records component, kind, maturity, version, hash, and status for each file' {
@@ -308,13 +312,13 @@ Describe 'component-copy tracking manifest' -Tag 'Unit' {
         @($entry.Keys | Sort-Object) | Should -Be @('component', 'kind', 'maturity', 'sha256', 'status', 'version')
         $entry.component | Should -Be 'agents/experimental/pptx.md'
         $entry.kind | Should -Be 'agent'
-        $entry.maturity | Should -Be 'experimental'
+        $entry.maturity | Should -Be 'stable'
         $entry.version | Should -Be '3.3.106'
         $entry.status | Should -Be 'managed'
         $entry.sha256 | Should -Be (Get-FileHash -LiteralPath (Join-Path $script:fixture.Target '.github/agents/experimental/pptx.agent.md') -Algorithm SHA256).Hash.ToLower()
     }
 
-    It 'Defaults an unlabeled component to stable maturity' {
+    It 'Records the schema-default maturity the manifest does not declare' {
         Invoke-ComponentCopy -Fixture $script:fixture -Component @('agents/hve-core/rpi-agent.md') | Out-Null
 
         (Get-TrackingManifest -Fixture $script:fixture).files['.github/agents/hve-core/rpi-agent.agent.md'].maturity | Should -Be 'stable'
@@ -371,36 +375,14 @@ Describe 'component-copy preflight rejection' -Tag 'Unit' {
 
     It 'Rejects a partial skill selection' {
         { Invoke-ComponentCopy -Fixture $script:fixture -Component @('skills/rpi/rpi-plan/SKILL.md') } |
-            Should -Throw -ExpectedMessage '*not declared membership*'
+            Should -Throw -ExpectedMessage '*not declared in the plugin manifest*'
 
         Get-TargetFile -Fixture $script:fixture | Should -BeNullOrEmpty
     }
 
-    It 'Rejects a component that the recipe does not declare' {
+    It 'Rejects a component that the plugin manifest does not declare' {
         { Invoke-ComponentCopy -Fixture $script:fixture -Component @('agents/hve-core/absent.md') } |
-            Should -Throw -ExpectedMessage '*not declared membership*'
-    }
-
-    It 'Rejects an unknown package before any write' {
-        { Invoke-ComponentCopy -Fixture $script:fixture -PackageName 'not-a-package' -Component @('agents/hve-core/rpi-agent.md') } |
-            Should -Throw -ExpectedMessage "*declares no package named 'not-a-package'*"
-
-        Get-TargetFile -Fixture $script:fixture | Should -BeNullOrEmpty
-    }
-
-    It 'Rejects a component outside the selected focused package before any write' {
-        { Invoke-ComponentCopy -Fixture $script:fixture -PackageName 'hve-core' -Component @('agents/experimental/pptx.md') } |
-            Should -Throw -ExpectedMessage "*not declared membership of the 'hve-core' marketplace recipe*"
-
-        Get-TargetFile -Fixture $script:fixture | Should -BeNullOrEmpty
-    }
-
-    It 'Accepts shared components from focused and full packages' {
-        Invoke-ComponentCopy -Fixture $script:fixture -PackageName 'hve-core' -Component @('agents/hve-core/rpi-agent.md') | Out-Null
-        (Get-TrackingManifest -Fixture $script:fixture).selection.package | Should -Be 'hve-core'
-
-        Invoke-ComponentCopy -Fixture $script:fixture -PackageName 'hve-core-all' -Component @('agents/hve-core/rpi-agent.md') | Out-Null
-        (Get-TrackingManifest -Fixture $script:fixture).selection.package | Should -Be 'hve-core-all'
+            Should -Throw -ExpectedMessage '*not declared in the plugin manifest*'
     }
 
     It 'Rejects a declared component whose source is missing' {
@@ -414,14 +396,22 @@ Describe 'component-copy preflight rejection' -Tag 'Unit' {
 
     It 'Rejects a target root that does not exist' {
         { & $script:PowerShellScript -HveCoreBasePath $script:fixture.Source -TargetRoot (Join-Path $script:fixture.Root 'absent') `
-            -PackageName 'hve-core-all' -SelectionName 'custom' -Component @('agents/hve-core/rpi-agent.md') } | Should -Throw -ExpectedMessage '*TargetRoot*'
+            -SelectionName 'custom' -Component @('agents/hve-core/rpi-agent.md') } | Should -Throw -ExpectedMessage '*TargetRoot*'
     }
 
-    It 'Rejects a source without a marketplace catalog' {
-        Remove-Item -LiteralPath (Join-Path $script:fixture.Source '.github/plugin/marketplace.json') -Force
+    It 'Rejects a source without a plugin manifest' {
+        Remove-Item -LiteralPath (Join-Path $script:fixture.Source '.github/plugin.json') -Force
 
         { Invoke-ComponentCopy -Fixture $script:fixture -Component @('agents/hve-core/rpi-agent.md') } |
-            Should -Throw -ExpectedMessage '*Marketplace catalog not found*'
+            Should -Throw -ExpectedMessage '*Plugin manifest not found*'
+    }
+
+    It 'Rejects a plugin manifest that declares no installable component' {
+        '{ "name": "hve-core", "hooks": "hooks/shared/telemetry.json" }' |
+            Set-Content -LiteralPath (Join-Path $script:fixture.Source '.github/plugin.json') -NoNewline
+
+        { Invoke-ComponentCopy -Fixture $script:fixture -Component @('agents/hve-core/rpi-agent.md') } |
+            Should -Throw -ExpectedMessage '*declares no installable components*'
     }
 }
 
@@ -520,7 +510,7 @@ Describe 'component-copy report-only preflight' -Tag 'Unit' {
     It 'Reports canonical maturity for every component without writing' {
         $output = Invoke-ComponentCopy -Fixture $script:fixture -ReportOnly -Component @('agents/experimental/pptx.md', 'skills/rpi/rpi-plan')
 
-        $output | Should -Match 'COMPONENT=agents/experimental/pptx\.md\|KIND=agent\|MATURITY=experimental\|TARGET=\.github/agents/experimental/pptx\.agent\.md\|EXISTS=false'
+        $output | Should -Match 'COMPONENT=agents/experimental/pptx\.md\|KIND=agent\|MATURITY=stable\|TARGET=\.github/agents/experimental/pptx\.agent\.md\|EXISTS=false'
         $output | Should -Match 'COMPONENT=skills/rpi/rpi-plan\|KIND=skill\|MATURITY=stable\|TARGET=\.github/skills/rpi/rpi-plan\|EXISTS=false'
         $output | Should -Match 'COLLISIONS_DETECTED=false'
         Get-TargetFile -Fixture $script:fixture | Should -BeNullOrEmpty
@@ -548,26 +538,23 @@ Describe 'component-copy report-only preflight' -Tag 'Unit' {
     }
 }
 
-Describe 'component-copy production starter selection' -Tag 'Unit' {
+Describe 'component-copy production manifest selection' -Tag 'Unit' {
     BeforeAll {
-        Import-Module (Join-Path $script:RepoRoot 'scripts/lib/Modules/MarketplaceHelpers.psm1') -Force
-
-        $catalog = Get-MarketplaceCatalog -Path (Join-Path $script:RepoRoot '.github/plugin/marketplace.json')
-        $entry = @($catalog['plugins']) | Where-Object { $_['name'] -eq 'hve-core-all' }
-        $agentIndex = Get-MarketplaceAgentIndex -Catalog $catalog -RepoRoot $script:RepoRoot
-        $script:StarterSelection = @(Resolve-MarketplaceComponentSelection -Entry $entry -RepoRoot $script:RepoRoot -AgentIndex $agentIndex -ProfileName 'starter')
-        $script:ProductionTarget = Join-Path $TestDrive 'production-starter'
+        # A real subset of .github/plugin.json membership, so the production
+        # manifest itself gates the selection rather than a test-local recipe.
+        $script:ProductionSelection = @(
+            'agents/hve-core/rpi-agent.md'
+            'commands/hve-core/rpi.md'
+            'rules/hve-core/hve-builder.instructions.md'
+            'skills/rpi/rpi-plan'
+        )
+        $script:ProductionTarget = Join-Path $TestDrive 'production-selection'
         New-Item -ItemType Directory -Path $script:ProductionTarget -Force | Out-Null
     }
 
-    AfterAll {
-        Remove-Module MarketplaceHelpers -Force -ErrorAction SilentlyContinue
-    }
-
-    It 'Copies the resolved starter profile into the canonical target layout' {
+    It 'Copies the selected components into the canonical target layout' {
         & $script:PowerShellScript -HveCoreBasePath $script:RepoRoot -TargetRoot $script:ProductionTarget `
-            -PackageName 'hve-core-all' -SelectionName 'starter' `
-            -Component @($script:StarterSelection | ForEach-Object { $_.PackagePath }) 6>&1 | Out-Null
+            -SelectionName 'starter' -Component $script:ProductionSelection 6>&1 | Out-Null
 
         Test-Path -LiteralPath (Join-Path $script:ProductionTarget '.github/agents/hve-core/rpi-agent.agent.md') | Should -BeTrue
         Test-Path -LiteralPath (Join-Path $script:ProductionTarget '.github/prompts/hve-core/rpi.prompt.md') | Should -BeTrue
@@ -575,15 +562,42 @@ Describe 'component-copy production starter selection' -Tag 'Unit' {
         Test-Path -LiteralPath (Join-Path $script:ProductionTarget '.github/skills/rpi/rpi-plan/SKILL.md') | Should -BeTrue
     }
 
-    It 'Tracks every starter component with canonical maturity' {
+    It 'Tracks every selected component without a package field' {
         $manifest = Get-Content -LiteralPath (Join-Path $script:ProductionTarget '.hve-tracking.json') -Raw | ConvertFrom-Json -AsHashtable
 
         $manifest.schemaVersion | Should -Be 2
-        $manifest.selection.package | Should -Be 'hve-core-all'
+        $manifest.selection.Keys | Should -Not -Contain 'package'
         $manifest.selection.profile | Should -Be 'starter'
-        @($manifest.selection.components).Count | Should -Be @($script:StarterSelection).Count
-        $tracked = @($manifest.files.Values | ForEach-Object { $_.maturity } | Sort-Object -Unique)
-        $tracked | Should -Contain 'experimental' -Because 'the starter includes experimental Vally content and must disclose it'
+        @($manifest.selection.components | Sort-Object) | Should -Be @($script:ProductionSelection | Sort-Object)
+    }
+
+    It 'Rejects a real component that the production manifest excludes' {
+        $rejectTarget = Join-Path $TestDrive 'production-reject'
+        New-Item -ItemType Directory -Path $rejectTarget -Force | Out-Null
+
+        { & $script:PowerShellScript -HveCoreBasePath $script:RepoRoot -TargetRoot $rejectTarget `
+                -SelectionName 'custom' -Component @('skills/security/owasp-docker') } |
+            Should -Throw -ExpectedMessage '*not declared in the plugin manifest*'
+
+        @(Get-ChildItem -LiteralPath $rejectTarget -Recurse -File -Force) | Should -BeNullOrEmpty
+    }
+
+    It 'Copies the same selection with Bash against the live manifest' -Skip:(-not $script:BashAvailable) {
+        $bashTarget = Join-Path $TestDrive 'production-selection-bash'
+        New-Item -ItemType Directory -Path $bashTarget -Force | Out-Null
+
+        Invoke-BashComponentCopy -Fixture ([pscustomobject]@{ Source = $script:RepoRoot; Target = $bashTarget }) `
+            -SelectionName 'starter' -Component $script:ProductionSelection | Out-Null
+        $LASTEXITCODE | Should -Be 0
+
+        Test-Path -LiteralPath (Join-Path $bashTarget '.github/prompts/hve-core/rpi.prompt.md') | Should -BeTrue
+        Test-Path -LiteralPath (Join-Path $bashTarget '.github/instructions/hve-core/hve-builder.instructions.md') | Should -BeTrue
+
+        $manifest = Get-Content -LiteralPath (Join-Path $bashTarget '.hve-tracking.json') -Raw | ConvertFrom-Json -AsHashtable
+        $manifest.schemaVersion | Should -Be 2
+        $manifest.selection.Keys | Should -Not -Contain 'package'
+        @($manifest.selection.components | Sort-Object) |
+            Should -Be @($script:ProductionSelection | Sort-Object) -Because 'Bash must install exactly the selected components regardless of emitted order'
     }
 }
 
@@ -624,7 +638,7 @@ Describe 'component-copy PowerShell and Bash parity' -Tag 'Unit' -Skip:(-not $sc
         $bashManifest.schemaVersion | Should -Be $powerShellManifest.schemaVersion
         $bashManifest.source | Should -Be $powerShellManifest.source
         $bashManifest.version | Should -Be $powerShellManifest.version
-        $bashManifest.selection.package | Should -Be $powerShellManifest.selection.package
+        @($bashManifest.selection.Keys) | Should -Be @($powerShellManifest.selection.Keys)
         $bashManifest.selection.profile | Should -Be $powerShellManifest.selection.profile
         @($bashManifest.selection.components) | Should -Be @($powerShellManifest.selection.components)
         @($bashManifest.files.Keys | Sort-Object) | Should -Be @($powerShellManifest.files.Keys | Sort-Object)
@@ -642,6 +656,28 @@ Describe 'component-copy PowerShell and Bash parity' -Tag 'Unit' -Skip:(-not $sc
         $bashOutput = (Invoke-BashComponentCopy -Fixture $script:bashFixture -SelectionName 'starter' -Component $script:AllComponents).Trim()
 
         $bashOutput | Should -Be $powerShellOutput
+    }
+
+    It 'Accepts adjacent dots inside a valid filename in both implementations' {
+        $sourceRelative = '.github/agents/hve-core/foo..bar.agent.md'
+        $manifestRelative = 'agents/hve-core/foo..bar.agent.md'
+        $component = 'agents/hve-core/foo..bar.md'
+        foreach ($fixture in @($script:powerShellFixture, $script:bashFixture)) {
+            Set-Content -LiteralPath (Join-Path $fixture.Source $sourceRelative) -Value '# Adjacent dots' -NoNewline
+            $manifestPath = Join-Path $fixture.Source '.github/plugin.json'
+            $manifest = Get-Content -LiteralPath $manifestPath -Raw | ConvertFrom-Json
+            $manifest.agents = @($manifest.agents) + $manifestRelative
+            $manifest | ConvertTo-Json -Depth 10 | Set-Content -LiteralPath $manifestPath -NoNewline
+        }
+
+        $powerShellOutput = (Invoke-ComponentCopy -Fixture $script:powerShellFixture -Component @($component)).Trim()
+        $bashOutput = (Invoke-BashComponentCopy -Fixture $script:bashFixture -Component @($component)).Trim()
+
+        $LASTEXITCODE | Should -Be 0
+        $bashOutput | Should -Be $powerShellOutput
+        foreach ($fixture in @($script:powerShellFixture, $script:bashFixture)) {
+            Test-Path -LiteralPath (Join-Path $fixture.Target $sourceRelative) | Should -BeTrue
+        }
     }
 
     It 'Produces identical report-only output' {
@@ -694,7 +730,7 @@ Describe 'component-copy PowerShell and Bash parity' -Tag 'Unit' -Skip:(-not $sc
         @($powerShellManifest.selection.components) | Should -Be $script:AllComponents
     }
 
-    It 'Exits non-zero and writes nothing for a component outside recipe membership' {
+    It 'Exits non-zero and writes nothing for a component outside manifest membership' {
         Invoke-BashComponentCopy -Fixture $script:bashFixture -Component @('agents/hve-core/absent.md') | Out-Null
         $LASTEXITCODE | Should -Not -Be 0
 
@@ -709,6 +745,18 @@ Describe 'component-copy PowerShell and Bash parity' -Tag 'Unit' -Skip:(-not $sc
         $LASTEXITCODE | Should -Not -Be 0
         $output | Should -Match 'clean reinstall'
         Test-Path -LiteralPath (Join-Path $script:bashFixture.Target '.github/agents') | Should -BeFalse
+    }
+
+    It 'Exits non-zero in both implementations when the plugin manifest is absent' {
+        foreach ($fixture in @($script:powerShellFixture, $script:bashFixture)) {
+            Remove-Item -LiteralPath (Join-Path $fixture.Source '.github/plugin.json') -Force
+        }
+
+        { Invoke-ComponentCopy -Fixture $script:powerShellFixture -Component @('agents/hve-core/rpi-agent.md') } |
+            Should -Throw -ExpectedMessage '*Plugin manifest not found*'
+        $bashOutput = Invoke-BashComponentCopy -Fixture $script:bashFixture -Component @('agents/hve-core/rpi-agent.md')
+        $LASTEXITCODE | Should -Not -Be 0
+        $bashOutput | Should -Match 'Plugin manifest not found'
     }
 }
 

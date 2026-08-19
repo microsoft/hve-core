@@ -1,8 +1,14 @@
 ---
 title: Git Setup
 description: "Interactive, verification-first Git configuration assistant (non-destructive)"
-sidebar_position: 5
-ms.date: 2026-07-16
+sidebar_position: 7
+author: Microsoft
+ms.date: 2026-08-12
+ms.topic: reference
+keywords:
+  - prompt
+  - hve-core
+  - git-setup
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->

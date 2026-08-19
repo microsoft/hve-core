@@ -67,6 +67,15 @@ foreach ($file in $matched) {
     $manifest['files'][$file]['ejectedAt'] = $ejectedAt
 }
 
-$manifest | ConvertTo-Json -Depth 10 | Set-Content -LiteralPath $manifestPath -Encoding utf8
+$tempPath = "$manifestPath.$([guid]::NewGuid().ToString('N')).tmp"
+try {
+    $manifest | ConvertTo-Json -Depth 10 | Set-Content -LiteralPath $tempPath -Encoding utf8
+    Move-Item -LiteralPath $tempPath -Destination $manifestPath -Force
+}
+finally {
+    if (Test-Path -LiteralPath $tempPath) {
+        Remove-Item -LiteralPath $tempPath -Force
+    }
+}
 Write-Host "✅ Ejected: $Component"
 Write-Host '   HVE-Core will never update this component.'
