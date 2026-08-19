@@ -39,11 +39,57 @@ on:
         description: "Run attempt of the calling orchestrator"
         required: true
         type: number
+      continuation_authenticated:
+        description: "Whether the orchestrator authenticated the continuation tuple"
+        required: true
+        type: boolean
       worker_timeout_minutes:
         description: "Worker timeout selected by the bounded proof contract"
         required: false
         default: 20
         type: number
+  bots: ["github-actions[bot]"]
+  permissions:
+    actions: read
+
+if: needs.pre_activation.outputs.trusted_caller == 'true'
+
+jobs:
+  pre-activation:
+    outputs:
+      trusted_caller: ${{ steps.trusted-caller.outputs.trusted_caller }}
+    steps:
+      - name: Verify trusted continuation caller
+        id: trusted-caller
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
+        env:
+          CONTINUATION_AUTHENTICATED: ${{ inputs.continuation_authenticated }}
+          ORCHESTRATOR_RUN_ID: ${{ inputs.orchestrator_run_id }}
+          ORCHESTRATOR_ATTEMPT: ${{ inputs.orchestrator_attempt }}
+        with:
+          script: |
+            const bot = "github-actions[bot]";
+            if (context.actor !== bot) {
+              core.setOutput("trusted_caller", "true");
+              return;
+            }
+
+            const { data: run } = await github.rest.actions.getWorkflowRun({
+              ...context.repo,
+              run_id: context.runId,
+            });
+            const trusted =
+              context.eventName === "workflow_dispatch" &&
+              run.event === "workflow_dispatch" &&
+              run.path === ".github/workflows/backlog-groom-orchestrator.yml" &&
+              run.actor?.login === bot &&
+              run.triggering_actor?.login === bot &&
+              String(run.id) === String(context.runId) &&
+              Number(run.run_attempt) === Number(process.env.GITHUB_RUN_ATTEMPT) &&
+              process.env.CONTINUATION_AUTHENTICATED === "true" &&
+              String(process.env.ORCHESTRATOR_RUN_ID) === String(context.runId) &&
+              Number(process.env.ORCHESTRATOR_ATTEMPT) === Number(process.env.GITHUB_RUN_ATTEMPT);
+            core.setOutput("trusted_caller", String(trusted));
 
 engine: copilot
 timeout-minutes: ${{ inputs.worker_timeout_minutes || 20 }}

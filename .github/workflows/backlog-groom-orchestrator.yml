@@ -90,6 +90,7 @@ jobs:
       manifest-artifact-id: ${{ steps.manifest.outputs.artifact-id }}
       planned-aic-per-wave: ${{ steps.plan.outputs.planned-aic-per-wave }}
       planned-sweep-aic: ${{ steps.plan.outputs.planned-sweep-aic }}
+      continuation-authenticated: ${{ steps.plan.outputs.continuation-authenticated }}
     steps:
       - name: Plan initiation, resume, or continuation
         id: plan
@@ -165,9 +166,12 @@ jobs:
               const metadata = authenticatedMetadata ?? await getArtifactMetadata(artifactId);
               fs.mkdirSync(destination, { recursive: true });
               const archivePath = `${destination}.zip`;
-              await exec.exec("gh", [
-                "api", `/repos/${context.repo.owner}/${context.repo.repo}/actions/artifacts/${metadata.artifact.id}/zip`,
-              ], { outStream: fs.createWriteStream(archivePath) });
+              const { data: archive } = await github.rest.actions.downloadArtifact({
+                ...context.repo,
+                artifact_id: metadata.artifact.id,
+                archive_format: "zip",
+              });
+              fs.writeFileSync(archivePath, Buffer.from(archive));
               await exec.exec("unzip", ["-q", archivePath, "-d", destination]);
               fs.rmSync(archivePath, { force: true });
               return metadata;
@@ -633,6 +637,7 @@ jobs:
             core.setOutput("manifest-digest", manifest.manifest_digest);
             core.setOutput("planned-aic-per-wave", String(snapshot.planned_aic_per_wave));
             core.setOutput("planned-sweep-aic", String(snapshot.planned_sweep_aic));
+            core.setOutput("continuation-authenticated", String(isContinuation));
       - name: Upload immutable sweep snapshot
         id: snapshot
         if: ${{ steps.plan.outputs.mode == 'new' }}
@@ -672,6 +677,7 @@ jobs:
       prior_cursor: ${{ matrix.shard.prior_cursor }}
       orchestrator_run_id: ${{ github.run_id }}
       orchestrator_attempt: ${{ fromJSON(github.run_attempt) }}
+      continuation_authenticated: ${{ needs.plan.outputs.continuation-authenticated == 'true' }}
       worker_timeout_minutes: ${{ matrix.shard.worker_timeout_minutes }}
     permissions:
       actions: write
@@ -1006,8 +1012,12 @@ jobs:
               );
               fs.mkdirSync(destination, { recursive: true });
               const archive = `${destination}.zip`;
-              await exec.exec("gh", ["api", `/repos/${context.repo.owner}/${context.repo.repo}/actions/artifacts/${parsedArtifactId}/zip`],
-                { outStream: fs.createWriteStream(archive) });
+              const { data } = await github.rest.actions.downloadArtifact({
+                ...context.repo,
+                artifact_id: parsedArtifactId,
+                archive_format: "zip",
+              });
+              fs.writeFileSync(archive, Buffer.from(data));
               await exec.exec("unzip", ["-q", archive, "-d", destination]);
               fs.rmSync(archive, { force: true });
             };

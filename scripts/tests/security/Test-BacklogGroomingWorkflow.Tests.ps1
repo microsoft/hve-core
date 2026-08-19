@@ -332,6 +332,28 @@ Describe 'Compiled backlog grooming workflow' -Tag 'Unit' {
         $script:Lock | Should -Not -Match '(?m)^\s*security-events: write$'
         $script:Lock | Should -Not -Match 'create_code_scanning_alert'
     }
+
+    It 'requires role authorization and authenticated orchestrator provenance for the continuation bot' {
+        $script:Source | Should -Match '(?m)^  bots: \["github-actions\[bot\]"\]$'
+        $script:Source | Should -Match '(?ms)^  permissions:\s+actions: read$'
+        $script:Source | Should -Match '(?ms)^      continuation_authenticated:\s+.*?required: true\s+type: boolean'
+        $script:Source | Should -Match "(?m)^if: needs\.pre_activation\.outputs\.trusted_caller == 'true'$"
+        $script:Source | Should -Match '(?m)^      trusted_caller: \$\{\{ steps\.trusted-caller\.outputs\.trusted_caller \}\}$'
+        $script:Source | Should -Match 'run\.path === "\.github/workflows/backlog-groom-orchestrator\.yml"'
+        $script:Source | Should -Match 'run\.actor\?\.login === bot'
+        $script:Source | Should -Match 'run\.triggering_actor\?\.login === bot'
+        $script:Source | Should -Match 'process\.env\.CONTINUATION_AUTHENTICATED === "true"'
+        $script:Source | Should -Match 'String\(process\.env\.ORCHESTRATOR_RUN_ID\) === String\(context\.runId\)'
+        $script:Source | Should -Match 'Number\(process\.env\.ORCHESTRATOR_ATTEMPT\) === Number\(process\.env\.GITHUB_RUN_ATTEMPT\)'
+
+        $script:Orchestrator | Should -Match 'continuation-authenticated: \$\{\{ steps\.plan\.outputs\.continuation-authenticated \}\}'
+        $script:Orchestrator | Should -Match 'core\.setOutput\("continuation-authenticated", String\(isContinuation\)\)'
+        $script:Orchestrator | Should -Match 'continuation_authenticated: \$\{\{ needs\.plan\.outputs\.continuation-authenticated == ''true'' \}\}'
+
+        $script:Lock | Should -Match 'GH_AW_REQUIRED_ROLES: "admin,maintainer,write"'
+        $script:Lock | Should -Match 'GH_AW_ALLOWED_BOTS: "github-actions\[bot\]"'
+        $script:Lock | Should -Match "needs\.pre_activation\.outputs\.activated == 'true' && \(needs\.pre_activation\.outputs\.trusted_caller == 'true'\)"
+    }
 }
 
 Describe 'Backlog grooming sharded orchestration contracts' -Tag 'Unit' {
@@ -1086,6 +1108,9 @@ Describe 'Backlog grooming sweep dispatch and recovery contracts' -Tag 'Unit' {
     It 'S10 narrows paginated discovery and resumes the first missing wave within a download limit' {
         $script:Orchestrator | Should -Match 'github\.paginate\(\s+github\.rest\.actions\.listArtifactsForRepo'
         $script:Orchestrator | Should -Match 'artifact\.name\.startsWith\(snapshotPrefix\)'
+        [regex]::Matches($script:Orchestrator, 'github\.rest\.actions\.downloadArtifact\(').Count | Should -Be 2
+        $script:Orchestrator | Should -Not -Match 'outStream: fs\.createWriteStream'
+        [regex]::Matches($script:Orchestrator, 'fs\.writeFileSync\([^;]+Buffer\.from\(').Count | Should -Be 2
         $script:Orchestrator | Should -Match 'SWEEP_DISCOVERY_DOWNLOAD_LIMIT: 50'
         $script:Orchestrator | Should -Match 'SWEEP_DISCOVERY_METADATA_LIMIT: 500'
         $script:Orchestrator | Should -Match 'Active sweep discovery candidate download limit exceeded'
