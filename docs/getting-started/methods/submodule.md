@@ -3,7 +3,7 @@ title: Git Submodule Installation
 description: Set up HVE Core as a git submodule for version-controlled team consumption
 sidebar_position: 7
 author: Microsoft
-ms.date: 2026-08-02
+ms.date: 2026-08-19
 ms.topic: how-to
 keywords:
   - git submodule
@@ -105,9 +105,17 @@ Create or update `.vscode/settings.json`:
   },
   "chat.agentSkillsLocations": {
     "lib/hve-core/.github/skills": true,
+    "lib/hve-core/.github/skills/accessibility": true,
     "lib/hve-core/.github/skills/shared": true,
     "lib/hve-core/.github/skills/coding-standards": true,
+    "lib/hve-core/.github/skills/data-science": true,
     "lib/hve-core/.github/skills/design-thinking": true,
+    "lib/hve-core/.github/skills/hve-core": true,
+    "lib/hve-core/.github/skills/installer": true,
+    "lib/hve-core/.github/skills/project-planning": true,
+    "lib/hve-core/.github/skills/rai": true,
+    "lib/hve-core/.github/skills/rpi": true,
+    "lib/hve-core/.github/skills/security": true,
     ".github/skills": true
   }
 }
