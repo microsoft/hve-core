@@ -19,18 +19,29 @@ Use this workshop to move a product idea to a connected set of delivery artifact
 
 The workshop teaches a repeatable workflow. It does not compress production security review, Azure deployment, or Microsoft Marketplace certification into a day.
 
+## Workshop Agenda
+
+| Step | Activity                                                                                         | Time   |
+|------|--------------------------------------------------------------------------------------------------|--------|
+| 1    | [**Workshop Overview**](partner-workshop.md)                                   | 30 min |
+| 2    | [Set up Codespaces or local VS Code](partner-workshop-setup.md)                                  | 30 min |
+| 3    | [Plan, Envision, Experience, Architecture Design, Backlog](partner-workshop-role-tracks.md)              | 90 min |
+| 4    | [Validation & Solutioning](partner-workshop-solution.md)                | 30 min |
+| 5    | [Microsoft Marketplace and Copilot Agent Store readiness](partner-workshop-publishing.md) | 60 min |
+| 6    | [Handoff to Implementation & Commercialization](partner-workshop-implementation.md)                            | 30 min |
+
 ## Outcomes
 
 By the end of the facilitated session, the team can:
 
-* give HVE Core grounded business, user, domain, design, and technical context
-* create business and user requirements with testable acceptance criteria
-* convert requirements into a prioritized GitHub or Azure DevOps backlog draft
-* generate and review a Mermaid architecture diagram for an Azure solution
-* explain the steps and approval gates for an Azure Managed Application offer on Microsoft Marketplace
-* explain the supported routes to the Microsoft 365 Copilot Agent Store
+* Provide HVE Core grounded business, user, domain, design, and technical context
+* Create business and user requirements with testable acceptance criteria
+* Convert requirements into a prioritized GitHub backlog
+* Generate and review a Mermaid architecture diagram for an Azure solution
+* Explain the steps and approval gates for an Azure Managed Application offer on Microsoft Marketplace
+* Explain the supported routes to the Microsoft 365 Copilot Agent Store
 
-The team should leave with these draft artifacts:
+The team should leave with these artifacts:
 
 ```text
 workshop-output/
@@ -69,32 +80,6 @@ Form multidisciplinary teams of four to six people.
 | Technical             | Architect, Forward Deployed Engineer, Security, Platform Lead          | Azure design, diagram, deployment and publication plan                  |
 
 Review the broader [HVE role guides](../hve-guide/roles/) after the workshop for ongoing role-specific workflows.
-
-## Workshop Agenda
-
-| Item | Activity                           | Mode     | Output                                                 |
-|------|------------------------------------|----------|--------------------------------------------------------|
-| 1    | HVE and RPI overview               | Shared   | Common vocabulary and scenario                         |
-| 2    | Environment setup and verification | Shared   | Working HVE Core All installation                      |
-| 3    | Scenario framing                   | Shared   | Initial problem statement                              |
-| 4    | Role exercises                     | Breakout | Context, requirements, experience, architecture inputs |
-| 5    | Artifact integration               | Shared   | Requirements, backlog, and Azure diagram               |
-| 6    | Publication readiness              | Shared   | Managed App and Agent Store checklists                 |
-| 7    | Playback and next actions          | Shared   | Owners, gaps, and follow-up plan                       |
-
-## Facilitator Preparation
-
-Complete these steps before participants arrive:
-
-1. Ensure the workshop repository can be accessed by every participant.
-2. Enable GitHub Codespaces for the repository or confirm participants can clone it locally.
-3. Confirm participants have GitHub Copilot access.
-4. Ask participants to install **HVE Core All**, not HVE Core and HVE Installer together.
-5. Create a new branch for each team or a disposable workshop repository.
-6. Choose whether the backlog target is GitHub Issues or Azure DevOps Boards.
-7. Confirm access to the target backlog before the session. If access is not available, use a Markdown backlog draft.
-8. Prepare a scenario or use the sample below.
-9. If access and approvals to Microsoft Marketplace or Azure subscriptions do not exist, keep them as demonstrations.
 
 ### Sample Scenario
 

@@ -16,15 +16,14 @@ estimated_reading_time: 10
 
 ## Workshop Agenda
 
-| Item | Activity                           | Mode     | Output                                                 |
-|------|------------------------------------|----------|--------------------------------------------------------|
-| 1    | HVE and RPI overview               | Shared   | Common vocabulary and scenario                         |
-| 2    | Environment setup and verification | Shared   | Working HVE Core All installation                      |
-| 3    | **Scenario framing**               | Shared   | Initial problem statement                              |
-| 4    | **Role exercises**                 | Breakout | Context, requirements, experience, architecture inputs |
-| 5    | Artifact integration               | Shared   | Requirements, backlog, and Azure diagram               |
-| 6    | Publication readiness              | Shared   | Managed App and Agent Store checklists                 |
-| 7    | Playback and next actions          | Shared   | Owners, gaps, and follow-up plan                       |
+| Step | Activity                                                                                         | Time   |
+|------|--------------------------------------------------------------------------------------------------|--------|
+| 1    | [Workshop Overview](partner-workshop.md)                                   | 30 min |
+| 2    | [Set up Codespaces or local VS Code](partner-workshop-setup.md)                                  | 30 min |
+| 3    | [**Plan, Envision, Experience, Architecture Design, Backlog**](partner-workshop-role-tracks.md)              | 90 min |
+| 4    | [Validation & Solutioning](partner-workshop-solution.md)                | 30 min |
+| 5    | [Microsoft Marketplace and Copilot Agent Store readiness](partner-workshop-publishing.md) | 60 min |
+| 6    | [Handoff to Implementation & Commercialization](partner-workshop-implementation.md)                            | 30 min |
 
 Use this guide during the role-exercise portion of the workshop. Participants should work from the same scenario, capture assumptions, and leave with a handoff that the next role can use.
 

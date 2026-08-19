@@ -16,15 +16,14 @@ estimated_reading_time: 12
 
 ## Workshop Agenda
 
-| Item | Activity                           | Mode     | Output                                                 |
-|------|------------------------------------|----------|--------------------------------------------------------|
-| 1    | HVE and RPI overview               | Shared   | Common vocabulary and scenario                         |
-| 2    | Environment setup and verification | Shared   | Working HVE Core All installation                      |
-| 3    | Scenario framing                   | Shared   | Initial problem statement                              |
-| 4    | Role exercises                     | Breakout | Context, requirements, experience, architecture inputs |
-| 5    | Artifact integration               | Shared   | Requirements, backlog, and Azure diagram               |
-| 6    | Publication readiness              | Shared   | Managed App and Agent Store checklists                 |
-| 7    | Playback and next actions          | Shared   | Owners, gaps, and follow-up plan                       |
+| Step | Activity                                                                                         | Time   |
+|------|--------------------------------------------------------------------------------------------------|--------|
+| 1    | [Workshop Overview](partner-workshop.md)                                   | 30 min |
+| 2    | [Set up Codespaces or local VS Code](partner-workshop-setup.md)                                  | 30 min |
+| 3    | [Plan, Envision, Experience, Architecture Design, Backlog](partner-workshop-role-tracks.md)              | 90 min |
+| 4    | [Validation & Solutioning](partner-workshop-solution.md)                | 30 min |
+| 5    | [**Microsoft Marketplace and Copilot Agent Store readiness**](partner-workshop-publishing.md) | 60 min |
+| 6    | [Handoff to Implementation & Commercialization](partner-workshop-implementation.md)                            | 30 min |
 
 Use this guide during the publication-readiness portion of the workshop. The goal is to turn the workshop outputs into a clear follow-up plan for the right publication path rather than to complete every certification step in-session.
 
@@ -225,11 +224,9 @@ Use this section to close the workshop with a clear handoff.
 4. Capture the top three blockers that must be resolved before submission.
 5. Assign a follow-up owner and a target date for each remaining action.
 6. Keep the output as a draft until a responsible human reviewer confirms it.
+7. Engineers would continue to implement the project.
 
-## Working session reminder
-
-Keep the output concise and action-oriented. Do not wait for perfect information. The goal is to produce a reviewed draft that the team can refine after the workshop.
-
+Proceed to the [implementation guide](partner-workshop-implementation.md).
 ---
 
 <!-- markdownlint-disable MD036 -->
