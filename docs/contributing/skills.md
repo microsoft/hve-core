@@ -3,7 +3,7 @@ title: Contributing Skills to HVE Core
 description: Requirements and standards for contributing skill packages to hve-core
 sidebar_position: 6
 author: Microsoft
-ms.date: 2026-08-13
+ms.date: 2026-08-19
 ms.topic: how-to
 keywords:
   - skills
@@ -76,7 +76,7 @@ Skill files are typically organized in a package subdirectory by convention:
 ```
 
 > [!NOTE]
-> Tracked skills beneath a package subdirectory are included automatically when `npm run plugin:sync` derives `.github/plugin.json`, unless the skill's top-level license has a noncommercial qualifier.
+> Tracked skills beneath a `.github/skills/<package>/` subdirectory are included automatically when `npm run plugin:sync` derives root `plugin.json`, unless the skill's top-level license has a noncommercial qualifier.
 
 The `scripts/` directory is **optional**. When present, it **MUST** contain at least one PowerShell script for PowerShell or cross-platform skills, and it **SHOULD** contain at least one `.sh` file when a bash implementation is also provided. Python skills may instead package executable modules under `scripts/<package>/__init__.py` and still satisfy the scripts requirement. Skills without scripts are valid and function as documentation-driven knowledge packages.
 
@@ -240,7 +240,7 @@ This example demonstrates a skill incorporating third-party content with provena
 
 Distributable skills must use the canonical path `.github/skills/<package>/<skill>/SKILL.md`, and the directory name must equal the skill `name`. Skills whose top-level license contains a noncommercial qualifier are not distributed.
 
-Run `npm run plugin:sync` to add the skill directory to the `skills` array in `.github/plugin.json`. Update `docs/plugins/hve-core.md` when the user-visible skill surface changes, then run `npm run plugin:validate`, `npm run validate:skills`, and `npm run docs:generate:check`.
+Run `npm run plugin:sync` to add the repository-relative `.github/...` skill directory to the `skills` array in root `plugin.json`. Update `docs/plugins/hve-core.md` when the user-visible skill surface changes, then run `npm run plugin:validate`, `npm run validate:skills`, and `npm run docs:generate:check`.
 
 ## SKILL.md Content Structure
 

@@ -2,7 +2,7 @@
 title: Extension Scripts
 description: PowerShell scripts for manifest-driven VS Code extension preparation and packaging
 author: HVE Core Team
-ms.date: 2026-08-16
+ms.date: 2026-08-19
 ms.topic: reference
 keywords:
   - powershell
@@ -20,18 +20,18 @@ publishing the HVE Core VS Code extension.
 
 The extension packaging pipeline follows the one plugin manifest:
 
-1. `Prepare-Extension.ps1` maps `.github/plugin.json` to one extension manifest and README
+1. `Prepare-Extension.ps1` maps root `plugin.json` to one extension manifest and README
 2. `Package-Extension.ps1` stages tracked contribution files and creates one `.vsix`
 3. `Resolve-VsixFile.ps1` requires exactly one VSIX for provenance workflows
 4. `Export-AttestationBundle.ps1` writes Sigstore and in-toto sidecars
 
-Membership comes from `.github/plugin.json`. Stable and PreRelease preparation use the same component set.
+Membership comes from root `plugin.json`. Stable and PreRelease preparation use the same component set. Repository-relative `.github/...` declarations become extension contribution paths without adding plugin-root README or license files.
 
 ## Scripts
 
 ### `Prepare-Extension.ps1`
 
-Prepares extension contents from `.github/plugin.json`.
+Prepares extension contents from root `plugin.json`.
 
 Purpose: Gather and filter artifacts for inclusion in the extension package.
 

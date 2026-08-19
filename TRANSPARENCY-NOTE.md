@@ -2,7 +2,7 @@
 title: "Transparency Note: HVE Core"
 description: "Public Transparency Note for HVE Core, a prompt-engineering and agentic-customization framework distributed by microsoft/hve-core."
 author: HVE Core Maintainers
-ms.date: 2026-08-13
+ms.date: 2026-08-19
 ms.topic: overview
 keywords:
   - responsible-ai
@@ -135,7 +135,7 @@ For a set of files, "performance" is not a model-accuracy score. It is how well 
 Quality rests on a few things:
 
 * **CI checks on every pull request.** Markdown linting, frontmatter validation, model-reference checks, link checking, PowerShell and Python linting, YAML validation, collection-metadata and marketplace validation, dependency-pinning and action-version checks, copyright-header checks, and skill-structure validation all run on each pull request and block merge on failure.
-* **Plugin-manifest gate.** The complete `.github/plugin.json` membership is derived from tracked distributable source paths; drift, invalid locator metadata, missing component paths, or invalid hooks block merge.
+* **Plugin-manifest gate.** The complete root `plugin.json` membership is derived from tracked distributable `.github` source paths; missing or untracked root metadata, drift, invalid locator metadata, escaping or absent component paths, or invalid hooks block merge.
 * **Human review.** Every file change needs human review. Supply-chain and dependency checks surface to reviewers.
 * **Manifest parity and release review.** Stable and PreRelease ship the same complete plugin manifest. Stable release review happens through promotion of a reviewed PreRelease tree into `release/stable`; channel selection changes release cadence and assurance rather than component membership.
 * **Feedback channel.** GitHub issues on `microsoft/hve-core` are the main place for bugs, requests, and concerns.

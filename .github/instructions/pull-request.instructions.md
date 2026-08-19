@@ -117,7 +117,7 @@ Priority rules:
 
 Skip this section when no GHCP artifact files (`.instructions.md`, `.prompt.md`, `.agent.md`, `SKILL.md`) are included in the changes.
 
-Determine distributable membership from `.github/plugin.json` and the sync policy:
+Determine distributable membership from root `plugin.json` and the sync policy:
 
 1. Agents, prompts, and instructions are distributable when they are tracked beneath a package subdirectory and match their canonical suffix.
 2. Skills are distributable when a tracked `.github/skills/<package>/<skill>/SKILL.md` exists and its top-level license has no noncommercial qualifier.

@@ -2,7 +2,7 @@
 title: Contributing
 description: Guidelines for contributing code, documentation, and improvements to the HVE Core project
 author: HVE Core Team
-ms.date: 2026-08-13
+ms.date: 2026-08-19
 ms.topic: guide
 keywords:
   - contributing
@@ -25,11 +25,12 @@ All types of contributions are encouraged and valued. See the [Table of Contents
 
 ## Table of Contents
 
+* [Table of Contents](#table-of-contents)
 * [Build and Validation Requirements](#build-and-validation-requirements)
   * [Required Tools](#required-tools)
   * [Validation Commands](#validation-commands)
   * [Development Environment](#development-environment)
-* [Table of Contents](#table-of-contents)
+* [Label Management](#label-management)
 * [Code of Conduct](#code-of-conduct)
 * [I Have a Question](#i-have-a-question)
 * [I Want To Contribute](#i-want-to-contribute)
@@ -116,6 +117,19 @@ For additional validation commands specific to AI artifacts (agents, prompts, in
 ### Development Environment
 
 We strongly recommend using the provided DevContainer, which comes pre-configured with all required tools. See the [DevContainer README](./.devcontainer/README.md) for setup instructions.
+
+## Label Management
+
+Repository labels are declared in [`.github/labels.yml`](.github/labels.yml)
+and synchronized by the [Label Sync](.github/workflows/label-sync.yml) workflow
+on pushes to `main` or through `workflow_dispatch`.
+
+| Task           | How                                                                                                                                                                |
+|----------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| Add a label    | Add `name`, `color` (bare hex without `#`), and `description` to `.github/labels.yml`, then push to `main`                                                         |
+| Update a label | Edit the existing entry's `color` or `description`                                                                                                                 |
+| Rename a label | Add the old name to the new canonical entry's `aliases` array; synchronization migrates existing assignments                                                       |
+| Delete a label | Remove it in the [GitHub Labels UI](https://github.com/microsoft/hve-core/labels); removing the declaration does not delete it because synchronization is additive |
 
 ## Code of Conduct
 

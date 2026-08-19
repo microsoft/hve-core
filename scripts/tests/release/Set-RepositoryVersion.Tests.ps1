@@ -60,7 +60,7 @@ BeforeAll {
   "publisher": "ise-hve-essentials"
 }
 "@
-            '.github/plugin.json'                       = @"
+            'plugin.json'                               = @"
 {
   "name": "hve-core",
   "description": "Fixture plugin",
@@ -85,7 +85,7 @@ BeforeAll {
   "plugins": [
     {
       "name": "hve-core",
-      "source": ".github",
+    "source": ".",
       "description": "Fixture plugin",
       "version": "$Version"
     }
@@ -138,7 +138,7 @@ Describe 'Set-RepositoryVersion' -Tag 'Unit' {
             @{ Path = 'package-lock.json'; Member = '$.version'; Expected = '3.3.0' }
             @{ Path = 'package-lock.json'; Member = '$.packages[""].version'; Expected = '3.3.0' }
             @{ Path = 'extension/templates/package.template.json'; Member = '$.version'; Expected = '3.3.0' }
-            @{ Path = '.github/plugin.json'; Member = '$.version'; Expected = '3.3.0' }
+            @{ Path = 'plugin.json'; Member = '$.version'; Expected = '3.3.0' }
             @{ Path = '.github/plugin/marketplace.json'; Member = '$.metadata.version'; Expected = '3.3.0' }
             @{ Path = '.github/plugin/marketplace.json'; Member = '$.plugins[0].version'; Expected = '3.3.0' }
         ) {
@@ -173,7 +173,7 @@ Describe 'Set-RepositoryVersion' -Tag 'Unit' {
 
         It 'Adds no source ref to the catalog entry' {
             $catalog = Get-Content -LiteralPath (Join-Path $script:Root '.github/plugin/marketplace.json') -Raw | ConvertFrom-Json -AsHashtable
-            @($catalog['plugins'])[0]['source'] | Should -BeExactly '.github'
+            @($catalog['plugins'])[0]['source'] | Should -BeExactly '.'
         }
 
         It 'Keeps the catalog at one entry' {
@@ -203,10 +203,10 @@ Describe 'Set-RepositoryVersion' -Tag 'Unit' {
     Context 'when the repository shape is unexpected' {
         It 'Throws when a version-tracked file is missing' {
             $root = New-VersionFixture -Root (Join-Path $TestDrive 'missing')
-            Remove-Item -LiteralPath (Join-Path $root '.github/plugin.json') -Force
+            Remove-Item -LiteralPath (Join-Path $root 'plugin.json') -Force
 
             { Set-RepositoryVersion -RepoRoot $root -Version '3.3.0' } |
-                Should -Throw '*Version-tracked file not found: .github/plugin.json*'
+                Should -Throw '*Version-tracked file not found: plugin.json*'
         }
 
         It 'Rejects a version that is not three numeric segments' {

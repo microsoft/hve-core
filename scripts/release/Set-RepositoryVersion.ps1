@@ -13,7 +13,7 @@
     - package.json $.version
     - package-lock.json $.version and $.packages[""].version
     - extension/templates/package.template.json $.version
-    - .github/plugin.json $.version
+    - plugin.json $.version
     - .github/plugin/marketplace.json $.metadata.version and the sole
       $.plugins[0].version
 
@@ -70,7 +70,7 @@ $script:VersionTarget = @(
         Assert   = @('$.version')
     }
     [ordered]@{
-        Path     = '.github/plugin.json'
+        Path     = 'plugin.json'
         Location = @(, @('version'))
         Assert   = @('$.version')
     }

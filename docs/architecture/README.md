@@ -3,7 +3,7 @@ title: Architecture Overview
 description: HVE Core system design and component relationships
 sidebar_position: 1
 author: Microsoft
-ms.date: 2026-08-13
+ms.date: 2026-08-19
 ms.topic: concept
 keywords:
   - architecture
@@ -43,7 +43,7 @@ graph TD
 | GitHub Workflows    | `.github/workflows/`       | CI/CD pipelines for validation, security, and release automation          |
 | Access Control      | `.github/CODEOWNERS`       | Path-based review requirements and ownership                              |
 | MCP Configuration   | `.vscode/mcp.json`         | Model Context Protocol server definitions                                 |
-| Plugin Manifest     | `.github/plugin.json`      | Deterministic membership for the plugin and extension                     |
+| Plugin Manifest     | `plugin.json`              | Deterministic membership for the plugin and extension                     |
 | Test Infrastructure | `scripts/tests/`           | Pester test suites with fixtures and mocks                                |
 
 ## Core Subsystems
@@ -63,7 +63,7 @@ Automation scripts handle quality assurance and development workflows. The scrip
 
 ### Plugins
 
-`.github/plugin.json` defines the complete `hve-core` membership from package-scoped canonical agents, prompts, instructions, and distributable skills. `.github/plugin/marketplace.json` contains one relative locator to the `.github` plugin root. The Copilot CLI installs from that root directly, and extension preparation uses the same manifest for one VSIX.
+Root `plugin.json` defines the complete `hve-core` membership from package-scoped canonical agents, prompts, instructions, and distributable skills discovered under `.github`. `.github/plugin/marketplace.json` contains one relative locator to the repository root. Agent Plugins and the Copilot CLI install from that root and resolve its README and LICENSE, while extension preparation uses the same membership for one VSIX with extension-owned metadata.
 
 See [scripts/plugins/README.md](https://github.com/microsoft/hve-core/blob/main/scripts/plugins/README.md) for synchronization and validation commands.
 

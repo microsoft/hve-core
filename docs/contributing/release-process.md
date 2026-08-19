@@ -2,7 +2,7 @@
 title: Release Process
 description: Release HVE Core through reviewed PreRelease metadata and Stable promotion workflows
 sidebar_position: 9
-ms.date: 2026-08-16
+ms.date: 2026-08-19
 ms.topic: how-to
 author: WilliamBerryiii
 keywords:
@@ -133,7 +133,7 @@ prepares channel version metadata and changelog changes on its release branch:
 
 * Updated `package.json` and `package-lock.json` versions
 * Updated `extension/templates/package.template.json` version
-* Updated `.github/plugin.json` version
+* Updated root `plugin.json` version
 * Updated `.github/plugin/marketplace.json` metadata and sole entry version
 * Updated channel manifest
 * Updated `CHANGELOG.md`
@@ -347,7 +347,14 @@ The VS Code extension is published to two same-content channels with different c
 
 ### Membership Policy
 
-`.github/plugin.json` is identical in membership across Stable and PreRelease. `npm run plugin:sync` derives it from tracked package-scoped agents, prompts, instructions, and distributable skills; the fixed telemetry hook is included on both channels.
+Root `plugin.json` is identical in membership across Stable and PreRelease.
+`npm run plugin:sync` derives it from tracked package-scoped agents, prompts,
+instructions, and distributable skills under `.github`; the fixed telemetry
+hook is included on both channels. Promotion and release validation version
+root `plugin.json`, and each moving branch or exact tag resolves root README
+and LICENSE from its selected snapshot. The VSIX continues to package
+`extension/README.md` and `extension/LICENSE` from that immutable release
+source.
 
 Channel selection changes version, source ownership, release assurance, and the VS Code Marketplace pre-release flag. It never filters components.
 

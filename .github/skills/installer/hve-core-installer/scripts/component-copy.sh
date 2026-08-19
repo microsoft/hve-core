@@ -122,11 +122,15 @@ manifest_root_descriptor() {
   esac
 }
 
-# The plugin manifest stores canonical source identities while installer input and
+# The plugin manifest stores repository-root-relative source identities while installer input and
 # manifests use package form. A path whose root is outside the four installable
 # fields, such as hooks/, carries through unprojected so manifest load never fails.
 to_package_component_path() {
   local manifest_path="$1"
+  [[ "$manifest_path" == .github/* ]] || {
+    fail "Plugin manifest path '$manifest_path' must start with '.github/'."
+  }
+  manifest_path="${manifest_path#.github/}"
   [[ "$manifest_path" == */* ]] || {
     echo "$manifest_path"
     return 0
@@ -201,7 +205,7 @@ main() {
   target_base=$(cd "$target_root_arg" && pwd)
   local manifest_path="$target_base/.hve-tracking.json"
 
-  local plugin_manifest_path="$source_root/.github/plugin.json"
+  local plugin_manifest_path="$source_root/plugin.json"
   [[ -f "$plugin_manifest_path" ]] || fail "Plugin manifest not found: $plugin_manifest_path"
 
   local -A membership=()

@@ -320,7 +320,7 @@ jobs:
             'package.json' \
             'package-lock.json' \
             'extension/templates/package.template.json' \
-            '.github/plugin.json' \
+            'plugin.json' \
             '.github/plugin/marketplace.json'
           )
           ALLOWLIST=$(printf '%s\n' "${RELEASE_OWNED_FILES[@]}")

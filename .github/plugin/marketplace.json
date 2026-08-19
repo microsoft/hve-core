@@ -10,7 +10,7 @@
   "plugins": [
     {
       "name": "hve-core",
-      "source": ".github",
+      "source": ".",
       "description": "Opinionated, rapidly evolving HVE Core agentic SDLC patterns and tools",
       "version": "3.2.2",
       "author": {

@@ -1,9 +1,9 @@
 ---
 title: hve-builder-tester
 description: "Test HVE artifact behavior with black-box scenarios, contained simulation or approved native execution, independent grading, and evidence reports."
-sidebar_position: 3
+sidebar_position: 4
 author: Microsoft
-ms.date: 2026-08-12
+ms.date: 2026-08-17
 ms.topic: reference
 keywords:
   - skill

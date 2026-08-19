@@ -3,7 +3,7 @@ title: 'Contributing Instructions to HVE Core'
 description: 'Requirements and standards for contributing GitHub Copilot instruction files to hve-core'
 sidebar_position: 3
 author: Microsoft
-ms.date: 2026-08-13
+ms.date: 2026-08-19
 ms.topic: how-to
 keywords:
   - contributing
@@ -56,7 +56,7 @@ Instruction files are typically organized in a package subdirectory by conventio
 <!-- markdownlint-disable-next-line MD028 -->
 
 > [!NOTE]
-> Tracked instructions beneath a package subdirectory are included automatically when `npm run plugin:sync` derives `.github/plugin.json`.
+> Tracked instructions beneath a `.github/instructions/<package>/` subdirectory are included automatically when `npm run plugin:sync` derives root `plugin.json`.
 
 #### Examples
 
@@ -142,7 +142,7 @@ lastUpdated: '2025-11-19'
 
 Distributable instructions must use the canonical path `.github/instructions/<package>/<subpath>/<name>.instructions.md`. Root-level instructions remain repository-specific and outside plugin membership.
 
-Run `npm run plugin:sync` to add the `.github`-root-relative path to the `rules` array in `.github/plugin.json`. Update `docs/plugins/hve-core.md` when the user-visible instruction surface changes, then run `npm run plugin:validate` and `npm run docs:generate:check`.
+Run `npm run plugin:sync` to add the repository-relative `.github/...` path to the `rules` array in root `plugin.json`. Update `docs/plugins/hve-core.md` when the user-visible instruction surface changes, then run `npm run plugin:validate` and `npm run docs:generate:check`.
 
 ## Content Structure Standards
 

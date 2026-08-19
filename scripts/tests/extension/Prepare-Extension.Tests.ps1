@@ -34,7 +34,7 @@ BeforeAll {
         # makes any surviving catalog read fail loudly instead of passing silently.
         Remove-Item -LiteralPath $fixture.CatalogPath -Force
         if ($null -ne $Manifest) {
-            Set-FixtureFile -Path (Join-Path $fixture.RepoRoot '.github/plugin.json') `
+            Set-FixtureFile -Path (Join-Path $fixture.RepoRoot 'plugin.json') `
                 -Value (($Manifest | ConvertTo-Json -Depth 8) + "`n")
         }
         return $fixture
@@ -55,11 +55,11 @@ BeforeAll {
             name        = 'hve-core'
             description = 'Manifest fixture description'
             version     = '9.9.9'
-            agents      = @('agents/labs/gamma.agent.md', 'agents/core/alpha.agent.md')
-            commands    = @('prompts/core/build.prompt.md')
-            rules       = @('instructions/core/style.instructions.md')
-            skills      = @('skills/labs/probe', 'skills/core/toolkit')
-            hooks       = 'hooks/core/session.json'
+            agents      = @('.github/agents/labs/gamma.agent.md', '.github/agents/core/alpha.agent.md')
+            commands    = @('.github/prompts/core/build.prompt.md')
+            rules       = @('.github/instructions/core/style.instructions.md')
+            skills      = @('.github/skills/labs/probe', '.github/skills/core/toolkit')
+            hooks       = '.github/hooks/core/session.json'
         }
     }
 
@@ -69,7 +69,7 @@ BeforeAll {
 Describe 'Prepare-Extension plugin manifest reading' -Tag 'Unit' {
     BeforeAll {
         $script:ManifestFixture = New-PluginFixtureRepo -Path (Join-Path $TestDrive 'manifest-repo') -Manifest (Get-PluginManifestFixture)
-        $script:ManifestPath = Join-Path $script:ManifestFixture.RepoRoot '.github/plugin.json'
+        $script:ManifestPath = Join-Path $script:ManifestFixture.RepoRoot 'plugin.json'
     }
 
     It 'Reads the manifest as the component authority' {
@@ -113,7 +113,7 @@ Describe 'Prepare-Extension component projection' -Tag 'Unit' {
     }
 
     It 'Skips empty manifest fields' {
-        $manifest = [pscustomobject]@{ agents = @('agents/core/alpha.agent.md'); commands = @(); rules = $null; skills = @('') }
+        $manifest = [pscustomobject]@{ agents = @('.github/agents/core/alpha.agent.md'); commands = @(); rules = $null; skills = @('') }
         @(Get-PluginComponent -Manifest $manifest).SourcePath | Should -Be @('.github/agents/core/alpha.agent.md')
     }
 
@@ -293,7 +293,7 @@ Describe 'Prepare-Extension failure and dry-run behavior' -Tag 'Unit' {
     }
 
     It 'Fails when the plugin manifest is absent' {
-        Remove-Item -LiteralPath (Join-Path $script:FailureFixture.RepoRoot '.github/plugin.json') -Force
+        Remove-Item -LiteralPath (Join-Path $script:FailureFixture.RepoRoot 'plugin.json') -Force
 
         $result = Invoke-PrepareExtension -ExtensionDirectory $script:FailureFixture.ExtensionDirectory -RepoRoot $script:FailureFixture.RepoRoot
         $result.Success | Should -BeFalse
@@ -301,8 +301,8 @@ Describe 'Prepare-Extension failure and dry-run behavior' -Tag 'Unit' {
     }
 
     It 'Fails when the plugin manifest declares no components' {
-        Set-FixtureFile -Path (Join-Path $script:FailureFixture.RepoRoot '.github/plugin.json') `
-            -Value (([ordered]@{ name = 'hve-core'; description = 'Empty'; hooks = 'hooks/core/session.json' } | ConvertTo-Json -Depth 4) + "`n")
+        Set-FixtureFile -Path (Join-Path $script:FailureFixture.RepoRoot 'plugin.json') `
+            -Value (([ordered]@{ name = 'hve-core'; description = 'Empty'; hooks = '.github/hooks/core/session.json' } | ConvertTo-Json -Depth 4) + "`n")
 
         $result = Invoke-PrepareExtension -ExtensionDirectory $script:FailureFixture.ExtensionDirectory -RepoRoot $script:FailureFixture.RepoRoot
         $result.Success | Should -BeFalse
@@ -310,7 +310,7 @@ Describe 'Prepare-Extension failure and dry-run behavior' -Tag 'Unit' {
     }
 
     It 'Fails before writing when the plugin manifest declares an escaping component' {
-        $manifestPath = Join-Path $script:FailureFixture.RepoRoot '.github/plugin.json'
+        $manifestPath = Join-Path $script:FailureFixture.RepoRoot 'plugin.json'
         $manifest = Get-Content -LiteralPath $manifestPath -Raw | ConvertFrom-Json
         $manifest.agents = @('../package.json')
         Set-FixtureFile -Path $manifestPath -Value (($manifest | ConvertTo-Json -Depth 8) + "`n")

@@ -594,7 +594,7 @@ jobs:
             exit 1
           fi
 
-          for entry in "package.json:.version" "package-lock.json:.version" ".release-please-manifest.json:.\".\"" "extension/templates/package.template.json:.version" ".github/plugin.json:.version" ".github/plugin/marketplace.json:.metadata.version" ".github/plugin/marketplace.json:.plugins[0].version"; do
+          for entry in "package.json:.version" "package-lock.json:.version" ".release-please-manifest.json:.\".\"" "extension/templates/package.template.json:.version" "plugin.json:.version" ".github/plugin/marketplace.json:.metadata.version" ".github/plugin/marketplace.json:.plugins[0].version"; do
             file="${entry%%:*}"
             path="${entry#*:}"
             actual=$(jq -r "$path" "$file")
