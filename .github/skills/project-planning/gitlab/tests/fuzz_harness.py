@@ -12,6 +12,8 @@ import io
 import sys
 from contextlib import redirect_stderr, suppress
 
+import _gitlab_credentials as credentials
+import _gitlab_oauth as oauth
 import gitlab
 import pytest
 
@@ -22,6 +24,12 @@ except ImportError:
     FUZZING = False
 else:
     FUZZING = True
+
+
+# A CLI failure surfaces as SystemExit from the dispatch-layer die() helper
+# or as GitLabError from a library-level helper that promises a return
+# value. Both are expected refusals, not fuzz findings.
+_EXPECTED_CLI_ERRORS = (SystemExit, gitlab.GitLabError)
 
 
 def fuzz_strip_git_suffix(data: bytes) -> None:
@@ -35,7 +43,7 @@ def fuzz_validate_numeric_id(data: bytes) -> None:
     """Fuzz numeric identifier validation."""
     provider = atheris.FuzzedDataProvider(data)
     value = provider.ConsumeUnicodeNoSurrogates(40)
-    with redirect_stderr(io.StringIO()), suppress(SystemExit):
+    with redirect_stderr(io.StringIO()), suppress(*_EXPECTED_CLI_ERRORS):
         gitlab.validate_numeric_id(value)
 
 
@@ -65,7 +73,7 @@ def fuzz_load_json_payload(data: bytes) -> None:
     """Fuzz JSON payload parsing."""
     provider = atheris.FuzzedDataProvider(data)
     raw_payload = provider.ConsumeUnicodeNoSurrogates(100)
-    with redirect_stderr(io.StringIO()), suppress(SystemExit):
+    with redirect_stderr(io.StringIO()), suppress(*_EXPECTED_CLI_ERRORS):
         gitlab.load_json_payload(raw_payload, "usage: gitlab")
 
 
@@ -73,7 +81,7 @@ def fuzz_validate_positive_int(data: bytes) -> None:
     """Fuzz validate_positive_int with arbitrary byte strings."""
     fdp = atheris.FuzzedDataProvider(data)
     text = fdp.ConsumeUnicodeNoSurrogates(fdp.remaining_bytes())
-    with redirect_stderr(io.StringIO()), suppress(SystemExit):
+    with redirect_stderr(io.StringIO()), suppress(*_EXPECTED_CLI_ERRORS):
         gitlab.validate_positive_int(text, "test-field")
 
 
@@ -81,7 +89,7 @@ def fuzz_validate_state(data: bytes) -> None:
     """Fuzz MR state validation with arbitrary byte strings."""
     fdp = atheris.FuzzedDataProvider(data)
     text = fdp.ConsumeUnicodeNoSurrogates(fdp.remaining_bytes())
-    with redirect_stderr(io.StringIO()), suppress(SystemExit):
+    with redirect_stderr(io.StringIO()), suppress(*_EXPECTED_CLI_ERRORS):
         gitlab.validate_state(text)
 
 
@@ -89,7 +97,7 @@ def fuzz_validate_ref(data: bytes) -> None:
     """Fuzz ref validation with arbitrary byte strings."""
     fdp = atheris.FuzzedDataProvider(data)
     text = fdp.ConsumeUnicodeNoSurrogates(fdp.remaining_bytes())
-    with redirect_stderr(io.StringIO()), suppress(SystemExit):
+    with redirect_stderr(io.StringIO()), suppress(*_EXPECTED_CLI_ERRORS):
         gitlab.validate_ref(text)
 
 
@@ -101,8 +109,52 @@ def fuzz_parse_fields(data: bytes) -> None:
         fdp.ConsumeUnicodeNoSurrogates(fdp.ConsumeIntInRange(0, 64))
         for _ in range(count)
     ]
-    with redirect_stderr(io.StringIO()), suppress(SystemExit):
+    with redirect_stderr(io.StringIO()), suppress(*_EXPECTED_CLI_ERRORS):
         gitlab.parse_fields(args)
+
+
+def fuzz_token_profile(data: bytes) -> None:
+    """Fuzz OAuth token-profile response validation."""
+    fdp = atheris.FuzzedDataProvider(data)
+    payload = {
+        "access_token": fdp.ConsumeUnicodeNoSurrogates(64),
+        "refresh_token": fdp.ConsumeUnicodeNoSurrogates(64),
+        "expires_in": fdp.ConsumeIntInRange(-1, 100_000),
+        "scope": fdp.ConsumeUnicodeNoSurrogates(32),
+    }
+    with suppress(oauth.OAuthError):
+        oauth.token_profile(
+            payload,
+            issuer="https://gitlab.example.com",
+            client_id="client",
+            now=0.0,
+        )
+
+
+def fuzz_validate_profile_name(data: bytes) -> None:
+    """Fuzz profile-name validation."""
+    fdp = atheris.FuzzedDataProvider(data)
+    name = fdp.ConsumeUnicodeNoSurrogates(fdp.remaining_bytes())
+    with suppress(ValueError):
+        credentials.validate_profile_name(name)
+
+
+def fuzz_validate_profile(data: bytes) -> None:
+    """Fuzz persisted profile validation."""
+    fdp = atheris.FuzzedDataProvider(data)
+    profile = {
+        "issuer": fdp.ConsumeUnicodeNoSurrogates(32),
+        "client_id": fdp.ConsumeUnicodeNoSurrogates(32),
+        "access_token": fdp.ConsumeUnicodeNoSurrogates(32),
+        "refresh_token": fdp.ConsumeUnicodeNoSurrogates(32),
+        "token_type": fdp.ConsumeUnicodeNoSurrogates(16),
+        "obtained_at": fdp.ConsumeInt(8),
+        "expires_at": fdp.ConsumeInt(8),
+        "scopes": [fdp.ConsumeUnicodeNoSurrogates(16)],
+        "usable": fdp.ConsumeBool(),
+    }
+    with suppress(ValueError):
+        credentials.validate_profile(profile)
 
 
 FUZZ_TARGETS = [
@@ -114,6 +166,9 @@ FUZZ_TARGETS = [
     fuzz_validate_state,
     fuzz_validate_ref,
     fuzz_parse_fields,
+    fuzz_token_profile,
+    fuzz_validate_profile_name,
+    fuzz_validate_profile,
 ]
 
 

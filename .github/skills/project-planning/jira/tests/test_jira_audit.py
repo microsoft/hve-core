@@ -52,8 +52,10 @@ def test_audit_writes_attempt_then_success(
     assert events[0]["skill"] == "jira"
     assert events[0]["op"] == "get"
     assert events[0]["method"] == "GET"
-    assert events[0]["resource"] == "/issue/PROJ-1"
+    assert "resource" not in events[0]
     assert events[0]["actor"] == "jira-pat"
+    assert events[0]["origin"] == "https://jira.example.com"
+    assert events[0]["auth_mode"] == "data-center-pat"
     assert events[1]["outcome"] == "success"
 
 
@@ -117,6 +119,32 @@ def test_audit_actor_override(
     assert _events(log)[0]["actor"] == "ci-service@example.com"
 
 
+def test_scoped_audit_excludes_cloud_id_and_resource_path(
+    configured_cloud_environment: None,
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+    response_factory: object,
+    mocker: MockerFixture,
+) -> None:
+    cloud_id = "private-cloud-id"
+    log = tmp_path / "audit.jsonl"
+    monkeypatch.setenv("JIRA_CLOUD_TOKEN_MODE", "scoped")
+    monkeypatch.setenv("JIRA_CLOUD_ID", cloud_id)
+    monkeypatch.setenv("JIRA_AUDIT_LOG", str(log))
+    client = jira.JiraClient.from_environment()
+    mocker.patch("jira._OPENER.open", return_value=response_factory("{}"))  # type: ignore[operator]
+
+    client.request("GET", "/issue/PROJ-1?expand=names")
+
+    rendered = log.read_text(encoding="utf-8")
+    events = _events(log)
+    assert events[0]["origin"] == "https://api.atlassian.com"
+    assert events[0]["auth_mode"] == "cloud-scoped-token"
+    assert cloud_id not in rendered
+    assert "PROJ-1" not in rendered
+    assert "expand" not in rendered
+
+
 def test_audit_outcome_warns_when_unwritable(
     monkeypatch: pytest.MonkeyPatch,
     tmp_path: Path,
@@ -128,6 +156,37 @@ def test_audit_outcome_warns_when_unwritable(
         raise OSError("disk full")
 
     monkeypatch.setattr(jira, "_audit_write", boom)
-    jira._audit_outcome("actor", "GET", "/issue/PROJ-1", "success")
+    jira._audit_outcome("actor", "GET", "success")
 
     assert "audit outcome write failed" in capsys.readouterr().err
+
+
+def test_audit_write_redacts_unsanitized_fields_and_stays_valid_json(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    """The sink redacts fields no call site sanitized, without breaking JSON.
+
+    Redacting the serialized line instead of each value would corrupt the
+    record, because the bare form-shape rule consumes the closing quote and
+    the comma that follow the matched value.
+    """
+    log = tmp_path / "audit.jsonl"
+    monkeypatch.setenv("JIRA_AUDIT_LOG", str(log))
+    secret = "SUPERSECRET123"
+
+    jira._audit_write(
+        {
+            "ts": "x",
+            "future_field": f"api_token={secret}",
+            "password": secret,
+            "note": "after",
+            "status": 403,
+        }
+    )
+
+    line = log.read_text(encoding="utf-8").strip()
+    record = json.loads(line)
+
+    assert secret not in line
+    assert record["note"] == "after"
+    assert record["status"] == 403

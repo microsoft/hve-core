@@ -11,8 +11,8 @@ TEST_PROJECT = "group/project"
 TEST_PROJECT_ENCODED = "group%2Fproject"
 
 USAGE_MAIN = (
-    "usage: gitlab {mr-list|mr-get|mr-create|mr-update|mr-comment|mr-notes|"
-    "pipeline-get|pipeline-run|pipeline-jobs|job-log} [args...]"
+    "usage: gitlab {mr-list|mr-get|mr-create|mr-update|mr-comment|auth|"
+    "mr-notes|pipeline-get|pipeline-run|pipeline-jobs|job-log} [args...]"
 )
 USAGE_MR_GET = "usage: gitlab mr-get <mr-iid>"
 USAGE_MR_CREATE = "usage: gitlab mr-create <json> or pipe JSON to stdin"

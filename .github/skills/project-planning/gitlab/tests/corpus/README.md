@@ -2,7 +2,7 @@
 title: Fuzz Corpus Seeds
 description: Seed inputs for coverage-guided fuzzing with the Atheris fuzz harness
 author: Microsoft
-ms.date: 2026-07-08
+ms.date: 2026-08-13
 ms.topic: reference
 keywords:
   - fuzz
@@ -33,6 +33,9 @@ array position:
 | 5     | `fuzz_validate_state`        |
 | 6     | `fuzz_validate_ref`          |
 | 7     | `fuzz_parse_fields`          |
+| 8     | `fuzz_token_profile`         |
+| 9     | `fuzz_validate_profile_name` |
+| 10    | `fuzz_validate_profile`      |
 
 ## Usage
 

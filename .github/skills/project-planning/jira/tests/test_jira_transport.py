@@ -53,6 +53,70 @@ def test_from_environment_builds_basic_auth_client(
     assert client.api_url == TEST_API_URL
     assert client.auth_header == f"Basic {encoded}"
     assert client.use_legacy_search is False
+    assert client.auth_mode == "cloud-unscoped-token"
+
+
+def test_from_environment_builds_scoped_cloud_client(
+    configured_cloud_environment: None,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setenv("JIRA_CLOUD_TOKEN_MODE", "scoped")
+    monkeypatch.setenv("JIRA_CLOUD_ID", "cloud-id_value")
+
+    client = jira.JiraClient.from_environment()
+
+    assert client.api_url == (
+        "https://api.atlassian.com/ex/jira/cloud-id_value/rest/api/2"
+    )
+    assert client.audit_origin == "https://api.atlassian.com"
+    assert client.auth_mode == "cloud-scoped-token"
+
+
+def test_from_environment_rejects_mixed_cloud_and_data_center(
+    configured_cloud_environment: None,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setenv("JIRA_PAT", TEST_PAT)
+
+    with pytest.raises(jira.ScriptError, match="cannot be combined"):
+        jira.JiraClient.from_environment()
+
+
+def test_from_environment_rejects_unscoped_mode_with_data_center_pat(
+    configured_server_environment: None,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setenv("JIRA_CLOUD_TOKEN_MODE", "unscoped")
+
+    with pytest.raises(jira.ScriptError, match="cannot be combined"):
+        jira.JiraClient.from_environment()
+
+
+def test_from_environment_rejects_padded_scoped_cloud_id(
+    configured_cloud_environment: None,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setenv("JIRA_CLOUD_TOKEN_MODE", "scoped")
+    monkeypatch.setenv("JIRA_CLOUD_ID", "  cloud-id_value  ")
+
+    with pytest.raises(jira.ScriptError):
+        jira.JiraClient.from_environment()
+
+
+@pytest.mark.parametrize(
+    "cloud_id",
+    ["", "../tenant", "tenant/id", "tenant%2Fid", "tenant id", "tenant?id"],
+)
+def test_scoped_cloud_rejects_unsafe_cloud_id(
+    configured_cloud_environment: None,
+    monkeypatch: pytest.MonkeyPatch,
+    cloud_id: str,
+) -> None:
+    monkeypatch.setenv("JIRA_CLOUD_TOKEN_MODE", "scoped")
+    monkeypatch.setenv("JIRA_CLOUD_ID", cloud_id)
+
+    with pytest.raises(jira.ScriptError):
+        jira.JiraClient.from_environment()
 
 
 @pytest.mark.parametrize(
@@ -187,6 +251,25 @@ def test_request_returns_parsed_json(
     assert _request_headers(request)["authorization"] == f"Bearer {TEST_PAT}"
 
 
+def test_scoped_request_cannot_use_configured_site_as_destination(
+    configured_cloud_environment: None,
+    monkeypatch: pytest.MonkeyPatch,
+    response_factory: ResponseFactory,
+    mocker: MockerFixture,
+) -> None:
+    monkeypatch.setenv("JIRA_BASE_URL", "https://hostile.example")
+    monkeypatch.setenv("JIRA_CLOUD_TOKEN_MODE", "scoped")
+    monkeypatch.setenv("JIRA_CLOUD_ID", "tenant")
+    client = jira.JiraClient.from_environment()
+    opener = mocker.patch("jira._OPENER.open", return_value=response_factory("{}"))
+
+    client.request("GET", "/issue/PROJ-1")
+
+    request = opener.call_args.args[0]
+    assert request.full_url.startswith("https://api.atlassian.com/")
+    assert "hostile.example" not in request.full_url
+
+
 def test_request_returns_none_for_empty_body(
     configured_client: jira.JiraClient,
     response_factory: ResponseFactory,
@@ -318,11 +401,12 @@ def test_request_translates_url_error(
         "jira._OPENER.open",
         side_effect=urllib.error.URLError("network down"),
     )
-    with pytest.raises(jira.ScriptError) as exc_info:
+    with pytest.raises(jira.JiraAPIError) as exc_info:
         configured_client.request("GET", REQUEST_PATH)
 
     assert str(exc_info.value) == (
-        f"Could not reach Jira API at {REQUEST_URL}: network down"
+        f"Jira API request failed from GET {REQUEST_URL}: "
+        "could not reach the Jira API: network down"
     )
 
 

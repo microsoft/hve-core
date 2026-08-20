@@ -8,7 +8,7 @@ compatibility: 'Requires Python 3.11+ and Jira credentials in environment variab
 metadata:
   authors: "microsoft/hve-core"
   spec_version: "1.0"
-  last_updated: "2026-08-01"
+  last_updated: "2026-08-18"
 ---
 
 # Jira Skill
@@ -38,24 +38,67 @@ Set the required environment variables before running the script.
 
 ### Authentication Variables
 
-| Variable          | When required              | Purpose                                                    |
-|-------------------|----------------------------|------------------------------------------------------------|
-| `JIRA_BASE_URL`   | Always                     | Jira base URL, for example `https://company.atlassian.net` |
-| `JIRA_USER_EMAIL` | Jira Cloud                 | Account email used for basic authentication                |
-| `JIRA_API_TOKEN`  | Jira Cloud                 | API token paired with the Jira Cloud email                 |
-| `JIRA_PAT`        | Jira Server or Data Center | Personal access token used for bearer authentication       |
+| Variable                | When required              | Purpose                                                    |
+|-------------------------|----------------------------|------------------------------------------------------------|
+| `JIRA_BASE_URL`         | Always                     | Jira base URL, for example `https://company.atlassian.net` |
+| `JIRA_USER_EMAIL`       | Jira Cloud                 | Account email used for basic authentication                |
+| `JIRA_API_TOKEN`        | Jira Cloud                 | API token paired with the Jira Cloud email                 |
+| `JIRA_PAT`              | Jira Server or Data Center | Personal access token used for bearer authentication       |
+| `JIRA_CLOUD_TOKEN_MODE` | Jira Cloud optional        | `unscoped` (default) or `scoped`                           |
+| `JIRA_CLOUD_ID`         | Scoped Jira Cloud token    | Atlassian Cloud resource identifier                        |
 
 Authentication is selected automatically:
 
 * If `JIRA_PAT` is set, the script uses bearer authentication for Jira Server or Data Center.
 * Otherwise, the script expects `JIRA_USER_EMAIL` and `JIRA_API_TOKEN` for Jira Cloud.
+* Scoped Cloud mode routes only to `https://api.atlassian.com/ex/jira/{cloudId}`;
+  mixed Cloud and Data Center credentials fail closed.
+
+### Scoped Cloud Token Setup
+
+Scoped mode uses the same Basic authentication variables as unscoped mode and
+adds a Cloud ID. It is not the OAuth 3LO flow, so the
+`oauth/token/accessible-resources` endpoint is not a discovery or introspection
+step for these credentials.
+
+1. Create a scoped API token for your Atlassian account and select its scopes
+   during creation. See [Manage API tokens for your Atlassian account](https://support.atlassian.com/atlassian-account/docs/manage-api-tokens-for-your-atlassian-account/).
+2. Choose scopes for the commands you intend to run. `read:jira-work` covers
+   `search`, `get`, `comments`, and `fields`. Add `write:jira-work` for
+   `create`, `update`, `transition`, and `comment`. Granular scopes are listed
+   in [Jira scopes for OAuth 2.0 and Forge apps](https://developer.atlassian.com/cloud/jira/platform/scopes-for-oauth-2-3LO-and-forge-apps/).
+   Jira project permissions still apply independently of token scopes.
+3. Obtain the Cloud ID for your site from a trusted Atlassian administrator or
+   your site's account record. The Cloud ID is not a secret, but it determines
+   the request destination.
+4. Confirm that the Cloud ID belongs to the same site as `JIRA_BASE_URL`. The
+   CLI cannot verify this association: in scoped mode it routes to the
+   Atlassian resource API and does not use `JIRA_BASE_URL` as a destination.
+   Treat the association as operator-maintained configuration.
+5. Set the variables, then confirm access with a read-only command:
+
+```bash
+export JIRA_BASE_URL="https://company.atlassian.net"
+export JIRA_USER_EMAIL="you@example.com"
+export JIRA_API_TOKEN="$(cat ~/.secrets/jira-token)"
+export JIRA_CLOUD_TOKEN_MODE="scoped"
+export JIRA_CLOUD_ID="your-cloud-id"
+python scripts/jira.py --fields key search "ORDER BY created DESC" --max-results 1
+```
+
+A successful read proves the token and route work together. It does not prove
+that the Cloud ID corresponds to `JIRA_BASE_URL`, so verify that separately in
+step 4.
 
 ### Operational Variables
 
-| Variable           | When required | Purpose                                                                                 |
-|--------------------|---------------|-----------------------------------------------------------------------------------------|
-| `JIRA_AUDIT_LOG`   | Optional      | Path to a JSON Lines audit log. When set, every request is audited (see Audit Logging). |
-| `JIRA_AUDIT_ACTOR` | Optional      | Overrides the recorded actor identity (for example, a CI service principal).            |
+| Variable              | When required | Purpose                                                                                 |
+|-----------------------|---------------|-----------------------------------------------------------------------------------------|
+| `JIRA_AUDIT_LOG`      | Optional      | Path to a JSON Lines audit log. When set, every request is audited (see Audit Logging). |
+| `JIRA_AUDIT_ACTOR`    | Optional      | Overrides the recorded actor identity (for example, a CI service principal).            |
+| `JIRA_DEBUG`          | Optional      | Set to `1` to print a redacted traceback on failure. Never disables redaction.          |
+| `JIRA_ALLOW_INSECURE` | Optional      | Set to `1` to permit explicit loopback HTTP development endpoints only.                 |
+| `JIRA_CONFIRM_WRITES` | Optional      | Set to `1` to satisfy the write confirmation gate without `--confirm` or `--yes`.       |
 
 ### Audit Logging
 
@@ -64,11 +107,16 @@ When `JIRA_AUDIT_LOG` is set, the script writes a structured JSON Lines audit tr
 * An `attempt` record is written **before** the request is sent. If the audit log cannot be written, the operation is aborted and nothing is sent to Jira.
 * An `outcome` record (`success` or `error`, with HTTP status on failure) is written after the request completes.
 
-Each record includes a UTC timestamp, the `actor` (from `JIRA_AUDIT_ACTOR`, otherwise `JIRA_USER_EMAIL` or `jira-pat`), the operation, HTTP method, and the request path. Credentials, authorization headers, and query strings are never written. Audit failures after the request emit a warning without altering the result.
+Each record includes a UTC timestamp, the `actor` (from `JIRA_AUDIT_ACTOR`, otherwise `JIRA_USER_EMAIL` or `jira-pat`), the operation, HTTP method, normalized origin, auth mode, and event. Resource paths, Cloud IDs, credentials, authorization headers, and query strings are excluded. Place this operationally sensitive file at an access-controlled path and retain it only as long as operations require. Audit failures after the request emit a warning without altering the result.
 
 ### Credential Rotation
 
-The script reads credentials from the environment on every invocation, so an external rotator can swap `JIRA_API_TOKEN` or `JIRA_PAT` between calls without code changes. A `401` or `403` response indicates the token may be expired or revoked; rotate the credential through your Atlassian account or instance token settings. Full OAuth-style refresh flows are out of scope for this CLI.
+Atlassian Cloud API tokens have a selected lifetime of 1 to 365 days. Prefer a
+scoped token and set `JIRA_CLOUD_TOKEN_MODE=scoped` with `JIRA_CLOUD_ID`.
+Atlassian 3LO is not used because its token exchange requires a client secret.
+For Jira Data Center, create a bounded PAT through the Jira UI and rotate it
+out of band. The CLI does not issue PATs because the response would contain a
+new secret without a transactional, non-model-visible sink.
 
 ## Credential Setup
 
@@ -108,7 +156,7 @@ The agent's terminal and the user's terminal are separate sessions, so an `expor
 1. **Audit.** Probe the known variable names and classify each as set or missing, without printing any value:
 
    ```sh
-   for v in JIRA_BASE_URL JIRA_USER_EMAIL JIRA_API_TOKEN JIRA_PAT JIRA_AUDIT_LOG JIRA_AUDIT_ACTOR; do
+    for v in JIRA_BASE_URL JIRA_USER_EMAIL JIRA_API_TOKEN JIRA_PAT JIRA_CLOUD_TOKEN_MODE JIRA_CLOUD_ID JIRA_AUDIT_LOG JIRA_AUDIT_ACTOR; do
      if printenv "$v" >/dev/null 2>&1; then echo "$v: set"; else echo "$v: missing"; fi
    done
    ```
@@ -130,13 +178,13 @@ Setup is complete when every required variable for the detected platform is set,
 Search for your current Jira issues and return a compact table:
 
 ```bash
-python scripts/jira.py search 'assignee = currentUser() ORDER BY updated DESC' --fields key,fields.summary,fields.status.name
+python scripts/jira.py --fields key,fields.summary,fields.status.name search 'assignee = currentUser() ORDER BY updated DESC'
 ```
 
 Inspect one issue with a compact field list:
 
 ```bash
-python scripts/jira.py get PROJ-123 --fields key,fields.summary,fields.status.name,fields.assignee.displayName
+python scripts/jira.py --fields key,fields.summary,fields.status.name,fields.assignee.displayName get PROJ-123
 ```
 
 Create an issue from JSON piped through stdin:
@@ -176,14 +224,14 @@ See [JQL Reference](./references/jql-reference.md) for the query patterns this
 skill expects.
 
 ```bash
-python scripts/jira.py search 'project = PROJ AND status = "In Progress"' --fields key,fields.summary,fields.status.name
-python scripts/jira.py search 'assignee = currentUser() ORDER BY updated DESC' 10 --fields key,fields.summary
+python scripts/jira.py --fields key,fields.summary,fields.status.name search 'project = PROJ AND status = "In Progress"'
+python scripts/jira.py --fields key,fields.summary search 'assignee = currentUser() ORDER BY updated DESC' 10
 ```
 
 ### Get One Issue
 
 ```bash
-python scripts/jira.py get PROJ-123 --fields key,fields.summary,fields.priority.name,fields.status.name
+python scripts/jira.py --fields key,fields.summary,fields.priority.name,fields.status.name get PROJ-123
 ```
 
 ### Create an Issue
@@ -246,7 +294,7 @@ printf 'Deployed to staging.\n' | python scripts/jira.py comment PROJ-123
 ### List Comments
 
 ```bash
-python scripts/jira.py comments PROJ-123 PROJ-456 --fields _issue,author.displayName,created,body
+python scripts/jira.py --fields _issue,author.displayName,created,body comments PROJ-123 PROJ-456
 ```
 
 ## Troubleshooting
