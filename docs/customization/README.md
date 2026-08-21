@@ -2,7 +2,7 @@
 title: Customizing HVE Core
 description: Overview of customization approaches from lightweight settings to full fork-and-extend, with role-based entry points
 author: Microsoft
-ms.date: 2026-08-19
+ms.date: 2026-08-20
 ms.topic: overview
 sidebar_position: 1
 keywords:
@@ -38,6 +38,8 @@ HVE Core supports a range of customization depths. Start with the lightest optio
 
 ```mermaid
 graph LR
+  accTitle: HVE Core Customization Depth Spectrum
+  accDescr: Customization progresses from VS Code settings through instructions, agents and prompts, skills, marketplace recipes, build-system changes, and a full fork as complexity increases.
     A["VS Code Settings"] --> B["Instructions"]
     B --> C["Agents & Prompts"]
     C --> D["Skills"]

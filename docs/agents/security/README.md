@@ -14,7 +14,7 @@ tags:
   - agents
   - security
 author: Microsoft
-ms.date: 2026-07-15
+ms.date: 2026-08-20
 ms.topic: concept
 estimated_reading_time: 8
 ---
@@ -38,6 +38,8 @@ The Security Planner agent walks your team through a structured six-phase securi
 
 ```mermaid
 flowchart LR
+  accTitle: Security Planning Six-Phase Workflow
+  accDescr: Security planning moves from project scoping through bucket analysis, standards mapping, security modeling, backlog generation, and review handoff, with an optional RAI path for AI systems.
   subgraph Scoping
     A["Phase 1<br/>Project Scoping"]
   end

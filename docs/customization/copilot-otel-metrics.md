@@ -3,7 +3,7 @@ title: Copilot OpenTelemetry Metrics
 description: Capture GitHub Copilot Chat OpenTelemetry signals on your own machine in a local Grafana stack, or across an organization through Azure
 sidebar_position: 11
 author: Microsoft
-ms.date: 2026-07-29
+ms.date: 2026-08-20
 ms.topic: how-to
 keywords:
   - opentelemetry
@@ -67,6 +67,8 @@ The split between metrics and traces matters more than it first appears, and the
 
 ```mermaid
 graph LR
+  accTitle: Local OpenTelemetry Signal Flow
+  accDescr: Copilot sends OTLP data to a collector, which routes metrics to Prometheus, traces to Tempo, and events to Loki before Grafana presents all three signals.
     A["VS Code<br/>Copilot Chat"] -->|OTLP :4318| B["OTel Collector"]
     B --> C["Prometheus<br/>metrics"]
     B --> D["Tempo<br/>traces"]
@@ -431,6 +433,8 @@ The intuitive answer, pointing `endpoint` straight at Azure Monitor, does not wo
 
 ```mermaid
 graph LR
+  accTitle: Fleet Telemetry Collection Flow
+  accDescr: Copilot sends telemetry to an OpenTelemetry collector that holds the workload identity, forwards data to Application Insights and Log Analytics, and presents it in Grafana.
     A["Copilot<br/>VS Code"] -->|OTLP| B["OTel Collector<br/>holds the identity"]
     B --> C["Application<br/>Insights"]
     C --> D["Log Analytics"]
