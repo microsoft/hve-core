@@ -196,6 +196,23 @@ jobs:
       matrix:
         directory: ${{ fromJson(needs.discover-python-projects.outputs.directories) }}
 
+  copilot-otel-runtime-tests:
+    name: Copilot OTEL Runtime Tests
+    uses: ./.github/workflows/pytest-tests.yml
+    permissions:
+      contents: read
+      id-token: write
+    with:
+      working-directory: .github/skills/experimental/copilot-otel-metrics
+      soft-fail: false
+      changed-files-only: true
+      changed-paths-pattern: '^\.github/skills/experimental/copilot-otel-metrics/(examples/.*\.(py|yaml)|examples/azure/agent-host-relay/.*\.yaml|tests/.*\.py|pyproject\.toml)$|^\.github/workflows/(pytest-tests|pr-validation)\.yml$'
+      marker-expression: slow
+      strict-runtime: true
+      artifact-suffix: -runtime
+      pre-pull-compose-file: examples/compose.yaml
+      pre-pull-compose-service: otel-collector
+
   node-tests:
     name: "Node Tests (${{ matrix.directory }})"
     needs: discover-node-projects
@@ -678,6 +695,7 @@ jobs:
       - yaml-lint
       - pester-tests
       - pytest
+      - copilot-otel-runtime-tests
       - discover-node-projects
       - node-tests
       - accessibility-browser-smoke

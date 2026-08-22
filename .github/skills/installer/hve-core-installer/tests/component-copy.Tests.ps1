@@ -3,8 +3,15 @@
 # SPDX-License-Identifier: MIT
 
 # Discovery-time capability probe: the Bash parity fixtures execute the real
-# component-copy.sh, which needs both an interpreter and jq.
-$script:BashAvailable = [bool](Get-Command bash -ErrorAction SilentlyContinue) -and [bool](Get-Command jq -ErrorAction SilentlyContinue)
+# component-copy.sh, which needs both an interpreter and jq. On Windows `bash`
+# resolves to the WSL launcher in System32, which cannot execute a script named
+# by a Windows path, so it does not count as an available interpreter.
+$script:BashCommand = Get-Command bash -ErrorAction SilentlyContinue
+if ($IsWindows -and $script:BashCommand -and
+    $script:BashCommand.Source -eq (Join-Path $env:SystemRoot 'System32/bash.exe')) {
+    $script:BashCommand = $null
+}
+$script:BashAvailable = [bool]$script:BashCommand -and [bool](Get-Command jq -ErrorAction SilentlyContinue)
 
 BeforeAll {
     $script:PowerShellScript = (Resolve-Path (Join-Path $PSScriptRoot '../scripts/component-copy.ps1')).Path
@@ -71,7 +78,6 @@ BeforeAll {
             commands = @('.github/prompts/hve-core/rpi.prompt.md')
             rules    = @('.github/instructions/hve-core/copilot-tracking.instructions.md')
             skills   = @('.github/skills/rpi/rpi-plan')
-            hooks    = '.github/hooks/shared/telemetry.json'
         }
         $pluginManifestPath = Join-Path $source 'plugin.json'
         $manifest | ConvertTo-Json -Depth 10 | Set-Content -LiteralPath $pluginManifestPath -NoNewline
@@ -408,26 +414,32 @@ Describe 'component-copy preflight rejection' -Tag 'Unit' {
     }
 
     It 'Rejects a plugin manifest that declares no installable component' {
-        '{ "name": "hve-core", "hooks": ".github/hooks/shared/telemetry.json" }' |
+        '{ "name": "hve-core", "version": "1.0.0" }' |
             Set-Content -LiteralPath (Join-Path $script:fixture.Source 'plugin.json') -NoNewline
 
         { Invoke-ComponentCopy -Fixture $script:fixture -Component @('agents/hve-core/rpi-agent.md') } |
             Should -Throw -ExpectedMessage '*declares no installable components*'
     }
 
-    It 'Rejects installable manifest entries outside .github in both implementations' {
-        $powerShellFixture = New-ComponentCopyFixture
-        $bashFixture = New-ComponentCopyFixture
-        foreach ($fixture in @($powerShellFixture, $bashFixture)) {
-            $manifestPath = Join-Path $fixture.Source 'plugin.json'
-            $manifest = Get-Content -LiteralPath $manifestPath -Raw | ConvertFrom-Json
-            $manifest.agents = @('agents/hve-core/rpi-agent.agent.md')
-            $manifest | ConvertTo-Json -Depth 10 | Set-Content -LiteralPath $manifestPath -NoNewline
-        }
+    It 'Rejects installable manifest entries outside .github' {
+        $manifestPath = Join-Path $script:fixture.Source 'plugin.json'
+        $manifest = Get-Content -LiteralPath $manifestPath -Raw | ConvertFrom-Json
+        $manifest.agents = @('agents/hve-core/rpi-agent.agent.md')
+        $manifest | ConvertTo-Json -Depth 10 | Set-Content -LiteralPath $manifestPath -NoNewline
 
-        { Invoke-ComponentCopy -Fixture $powerShellFixture -Component @('agents/hve-core/rpi-agent.md') } |
+        { Invoke-ComponentCopy -Fixture $script:fixture -Component @('agents/hve-core/rpi-agent.md') } |
             Should -Throw -ExpectedMessage "*must start with '.github/'*"
+    }
+
+    It 'Rejects installable manifest entries outside .github in the Bash implementation' -Skip:(-not $script:BashAvailable) {
+        $bashFixture = New-ComponentCopyFixture
+        $manifestPath = Join-Path $bashFixture.Source 'plugin.json'
+        $manifest = Get-Content -LiteralPath $manifestPath -Raw | ConvertFrom-Json
+        $manifest.agents = @('agents/hve-core/rpi-agent.agent.md')
+        $manifest | ConvertTo-Json -Depth 10 | Set-Content -LiteralPath $manifestPath -NoNewline
+
         $bashOutput = Invoke-BashComponentCopy -Fixture $bashFixture -Component @('agents/hve-core/rpi-agent.md')
+
         $LASTEXITCODE | Should -Not -Be 0
         $bashOutput | Should -Match "must start with '\.github/'"
     }

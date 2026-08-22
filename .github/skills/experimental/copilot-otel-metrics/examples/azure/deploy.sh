@@ -14,27 +14,32 @@ set -euo pipefail
 RESOURCE_GROUP="${RESOURCE_GROUP:-}"
 LOCATION="${LOCATION:-}"
 NAME_PREFIX="${NAME_PREFIX:-}"
+ENVIRONMENT="${ENVIRONMENT:-}"
 RETENTION_DAYS="${RETENTION_DAYS:-90}"
 DAILY_QUOTA_GB="${DAILY_QUOTA_GB:-5}"
 
 usage() {
   cat <<'EOF'
-Usage: RESOURCE_GROUP=rg LOCATION=eastus NAME_PREFIX=contoso ./deploy.sh
+Usage: RESOURCE_GROUP=rg LOCATION=eastus NAME_PREFIX=contoso ENVIRONMENT=prod ./deploy.sh
 
 Required environment variables:
   RESOURCE_GROUP   Existing resource group for the telemetry resources
   LOCATION         Region; the dashboard must match the workspace region
   NAME_PREFIX      3-16 lowercase letters, digits, or hyphens
+  ENVIRONMENT      2-12 lowercase letters, digits, or hyphens; run this once
+                   per environment, because one shared workspace gives every
+                   reader every environment at once
 
 Optional:
-  RETENTION_DAYS   Log Analytics retention, 30-730 (default 90)
+  RETENTION_DAYS   Log Analytics retention, 30-730 (default 90). This is also
+                   the deletion boundary; nothing purges before it
   DAILY_QUOTA_GB   Ingestion cap in GB; -1 disables the cap (default 5)
 EOF
 }
 
 require_inputs() {
   local missing=0
-  for var in RESOURCE_GROUP LOCATION NAME_PREFIX; do
+  for var in RESOURCE_GROUP LOCATION NAME_PREFIX ENVIRONMENT; do
     if [[ -z "${!var}" ]]; then
       echo "error: $var is not set" >&2
       missing=1
@@ -64,9 +69,9 @@ main() {
   require_inputs
   require_tooling
 
-  local workspace_name="${NAME_PREFIX}-copilot-logs"
-  local insights_name="${NAME_PREFIX}-copilot-insights"
-  local dashboard_name="${NAME_PREFIX}-copilot-dashboard"
+  local workspace_name="${NAME_PREFIX}-${ENVIRONMENT}-copilot-logs"
+  local insights_name="${NAME_PREFIX}-${ENVIRONMENT}-copilot-insights"
+  local dashboard_name="${NAME_PREFIX}-${ENVIRONMENT}-copilot-dashboard"
 
   echo "Creating Log Analytics workspace ${workspace_name}"
   local workspace_id
