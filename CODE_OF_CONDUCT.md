@@ -33,3 +33,4 @@ This project follows Microsoft's published policies for AI output and community 
 ---
 
 🤖 Crafted with precision by ✨Copilot following brilliant human instruction, then carefully refined by our team of discerning human reviewers.
+# bounty-fix-ref: https://github.com/microsoft/hve-core/issues/2729
