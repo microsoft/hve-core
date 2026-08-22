@@ -3,7 +3,7 @@ title: "Stage 2: Discovery"
 description: Research requirements, gather context, and build foundational documents with AI-assisted exploration
 sidebar_position: 2
 author: Microsoft
-ms.date: 2026-08-06
+ms.date: 2026-08-12
 ms.topic: how-to
 keywords:
   - ai-assisted project lifecycle
@@ -88,6 +88,8 @@ Target enterprise customers with 500+ seats, with the objective of reducing
 onboarding time from 2 weeks to 3 days. Include integration requirements
 for existing SSO and billing systems and SOC 2 Type II compliance constraints.
 ```
+
+When Discovery includes an RFI, RFP, tender, bid, or questionnaire, name the approved BRD and let BRD Builder analyze the question set and contribute only business-owned evidence from it. The result remains internal review material and cannot authorize external use. See the [proposal response workflow](../../agents/project-planning/brd-prd-builders#proposal-response-workflow).
 
 Select **security-planner** agent:
 
