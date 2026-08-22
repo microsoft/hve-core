@@ -68,6 +68,25 @@ retained as identifiers.
 
 ---
 
+Google for Developers machine-learning documentation
+Copyright: © Google LLC
+License: Creative Commons Attribution 4.0 International (CC BY 4.0)
+License URI: <https://creativecommons.org/licenses/by/4.0/>
+Source: <https://developers.google.com/machine-learning/problem-framing/problem>
+Source: <https://developers.google.com/machine-learning/guides/rules-of-ml>
+Usage: Machine-learning problem-framing entry tests embedded in the experiment-design
+skill's problem-framing reference: the comparison of a machine-learning approach against
+a non-machine-learning baseline on value, cost and maintenance, and resources; the
+predictive-machine-learning conditions of usable predictive data and an actionable
+prediction; the supervised entry conditions of labelled outcomes and prediction-time
+features; and preferring a heuristic until it becomes hard to maintain. The material has
+been changed: it is paraphrased, reorganized into per-paradigm entry tests, restated in
+this repository's vocabulary, and placed inside a cross-paradigm procedure the upstream
+pages do not describe. No upstream passage is reproduced. Content available under the
+Creative Commons Attribution 4.0 License except as otherwise noted by the source.
+
+---
+
 C4 Model
 Creator: Simon Brown
 License: Creative Commons Attribution 4.0 International (CC BY 4.0)

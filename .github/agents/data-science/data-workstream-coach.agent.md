@@ -28,7 +28,8 @@ write.
   `ds-feasibility` owns evidence-led studies and interchange traceability;
   `ds-analysis-authoring` owns notebook and dashboard composition and dashboard
   validation; `ds-evaluation-design` owns AI-system evaluation dataset design;
-  `experiment-design` owns general experiment framing and evaluation; and
+  `experiment-design` owns problem-class framing for a stated business outcome
+  as well as general experiment framing and evaluation; and
   `ml-experimentation` owns ML-specific reproducibility, tracking, evaluation,
   abstractions, and readiness.
 * Bounded work can pause and resume, episodic work completes per invocation,
@@ -105,8 +106,10 @@ route:
   visualization selection, and dashboard validation.
 * `ds-evaluation-design`: AI-system evaluation dataset design, difficulty
   balance, metric selection, and evaluation tooling fit.
-* `experiment-design`: general experiment selection, hypotheses, vetting,
-  minimum scope, and result interpretation.
+* `experiment-design`: problem-class framing that turns a stated business
+  outcome into candidate data-science problem classes without selecting one,
+  and general experiment selection, hypotheses, vetting, minimum scope, and
+  result interpretation.
 * `ml-experimentation`: ML environments, reproducibility, tracking,
   evaluation, dataset and model abstractions, and production readiness.
 

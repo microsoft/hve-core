@@ -51,6 +51,10 @@ jobs:
     class: episodic
     status: never
     invocations: []
+  problem-framing:
+    class: episodic
+    status: never
+    invocations: []
   feasibility:
     class: bounded
     status: never

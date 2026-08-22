@@ -13,17 +13,18 @@ it does not duplicate the methods owned by a skill.
 
 ## Registry
 
-| Job             | Class        | Primary route                                                                                | Optional supporting route                                                                                                                | Durable output or completion evidence                           |
-|-----------------|--------------|----------------------------------------------------------------------------------------------|------------------------------------------------------------------------------------------------------------------------------------------|-----------------------------------------------------------------|
-| `catalog`       | `continuous` | `ds-catalog`: durable catalog entities, declared relationships, lineage, and model semantics | `ds-analysis-authoring` when a presented dataset profile is the requested output; `privacy-standards` for classification citation fields | Caller-approved data catalog                                    |
-| `model-diagram` | `episodic`   | `ds-catalog`: authoritative declared entities and relationships                              | `architecture-diagrams`: render the declared model without becoming semantic authority                                                   | Mermaid or ASCII diagram                                        |
-| `feasibility`   | `bounded`    | `ds-feasibility`: evidence-led feasibility studies with durable traceability                 | None                                                                                                                                     | Caller-approved feasibility study                               |
-| `pipeline`      | `episodic`   | `ds-dataops`: tier behavior, pipeline invariants, validation, tests, and drift               | `privacy-standards` for sensitivity classification and DPIA thresholds                                                                   | Transformation, validation, or pipeline code                    |
-| `analysis`      | `episodic`   | `ds-analysis-authoring`: EDA notebook and analytical dashboard authoring and validation      | `ds-catalog` for column semantics; `ds-dataops` for derived-dataset persistence                                                          | Notebook, dashboard, or analysis deliverable                    |
-| `evaluation`    | `episodic`   | `ds-evaluation-design`: AI-system evaluation dataset design, metrics, and tooling            | `rai-planner` when a surfaced risk needs assessment rather than a test case                                                              | Evaluation dataset with curation, metric, and tooling documents |
-| `experiment`    | `episodic`   | `experiment-design`: experiment selection, hypotheses, vetting, scope, and evaluation        | `ml-experimentation`: ML reproducibility, tracking, evaluation, abstractions, and production readiness                                   | Hypothesis, experiment assets, and result disposition           |
-| `testing`       | `episodic`   | `ds-dataops`: DataOps and DS/MLOps test techniques                                           | `ds-analysis-authoring` for dashboard validation technique                                                                               | Test code and assertions                                        |
-| `observability` | `episodic`   | `ds-dataops`: data/model signals and validation-versus-drift guidance                        | `telemetry-foundations`: metric names, instruments, units, cardinality, and PII-safe telemetry conventions                               | Instrumentation code and signal recommendations                 |
+| Job               | Class        | Primary route                                                                                                        | Optional supporting route                                                                                                                | Durable output or completion evidence                           |
+|-------------------|--------------|----------------------------------------------------------------------------------------------------------------------|------------------------------------------------------------------------------------------------------------------------------------------|-----------------------------------------------------------------|
+| `catalog`         | `continuous` | `ds-catalog`: durable catalog entities, declared relationships, lineage, and model semantics                         | `ds-analysis-authoring` when a presented dataset profile is the requested output; `privacy-standards` for classification citation fields | Caller-approved data catalog                                    |
+| `model-diagram`   | `episodic`   | `ds-catalog`: authoritative declared entities and relationships                                                      | `architecture-diagrams`: render the declared model without becoming semantic authority                                                   | Mermaid or ASCII diagram                                        |
+| `problem-framing` | `episodic`   | `experiment-design`: candidate data-science problem classes for a stated business outcome, with entry-test reasoning | None                                                                                                                                     | Candidate framing set with reasoning, unknowns, and gaps        |
+| `feasibility`     | `bounded`    | `ds-feasibility`: evidence-led feasibility studies with durable traceability                                         | None                                                                                                                                     | Caller-approved feasibility study                               |
+| `pipeline`        | `episodic`   | `ds-dataops`: tier behavior, pipeline invariants, validation, tests, and drift                                       | `privacy-standards` for sensitivity classification and DPIA thresholds                                                                   | Transformation, validation, or pipeline code                    |
+| `analysis`        | `episodic`   | `ds-analysis-authoring`: EDA notebook and analytical dashboard authoring and validation                              | `ds-catalog` for column semantics; `ds-dataops` for derived-dataset persistence                                                          | Notebook, dashboard, or analysis deliverable                    |
+| `evaluation`      | `episodic`   | `ds-evaluation-design`: AI-system evaluation dataset design, metrics, and tooling                                    | `rai-planner` when a surfaced risk needs assessment rather than a test case                                                              | Evaluation dataset with curation, metric, and tooling documents |
+| `experiment`      | `episodic`   | `experiment-design`: experiment selection, hypotheses, vetting, scope, and evaluation                                | `ml-experimentation`: ML reproducibility, tracking, evaluation, abstractions, and production readiness                                   | Hypothesis, experiment assets, and result disposition           |
+| `testing`         | `episodic`   | `ds-dataops`: DataOps and DS/MLOps test techniques                                                                   | `ds-analysis-authoring` for dashboard validation technique                                                                               | Test code and assertions                                        |
+| `observability`   | `episodic`   | `ds-dataops`: data/model signals and validation-versus-drift guidance                                                | `telemetry-foundations`: metric names, instruments, units, cardinality, and PII-safe telemetry conventions                               | Instrumentation code and signal recommendations                 |
 
 ## Seven-skill boundaries
 
@@ -44,6 +45,26 @@ The two evaluation authorities are adjacent and must not be blended.
 `ds-evaluation-design` covers systems whose output is a response, such as
 assistants and agents. `ml-experimentation` covers a trained model's predictive
 performance.
+
+`problem-framing` and `experiment` both route to `experiment-design` and stay
+distinct. `problem-framing` asks what kind of data-science problem a stated
+business outcome is, and completes without choosing one. `experiment` assumes a
+direction and selects what to test.
+
+## Problem-framing completion evidence
+
+This job has two completion shapes and neither is an abandonment.
+
+* Normal completion records the candidate problem classes, the grounded-versus-
+  original reasoning behind each, unresolved discriminating questions marked
+  unknown, and gaps carrying an answer holder and a coordinator. No candidate is
+  selected, ranked, or scored.
+* An unstated business outcome completes with a single outcome-definition gap,
+  its answer holder, its coordinator, and an explicit statement that no candidate
+  analysis was performed. Record it as completed work, not `discarded-cleanly`.
+
+Completion returns control to the coach. A feasibility or experiment job starts
+only after a separate user-confirmed transition.
 
 ## Selection rules
 

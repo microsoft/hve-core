@@ -4,7 +4,7 @@ slug: data-workstream-coach
 class: planner-coach
 agent_file: .github/agents/data-science/data-workstream-coach.agent.md
 stimulus_file: evals/agent-behavior/stimuli/data-workstream-coach.yml
-source_review_date: 2026-08-03
+source_review_date: 2026-08-21
 
 expectations:
   - expectation_id: foundation-loaded-explicitly
@@ -140,6 +140,27 @@ expectations:
       - Selects analysis or evaluation without explicit user confirmation.
     priority: high
     contract_ref: "agent §Job routing; foundation references/job-registry.md §Registry"
+
+  - expectation_id: problem-framing-job-contract
+    summary: A confirmed problem-framing job exposes candidate problem classes without selecting one and stops only for an unstated business outcome.
+    signal: Output routes `problem-framing` to `experiment-design`, records assignable gaps, and offers no recommendation.
+    pass_criteria: |
+      A confirmed `problem-framing` job routes to `experiment-design` as an
+      episodic invocation. An unstated business outcome stops before candidate
+      analysis and completes with an outcome-definition gap carrying an answer
+      holder and a coordinator. A stated outcome with an unresolved high-power
+      question elicits the value, marks it unknown, records its answer holder
+      and coordinator, continues the remaining analysis, presents surviving
+      candidates with grounded-versus-original reasoning, selects none,
+      completes episodically, and asks before any next job.
+    failure_modes:
+      - Treats an undefined business outcome as the subject of an experiment.
+      - Recommends, ranks, or confidence-scores a candidate framing.
+      - Halts the analysis on an unanswered question.
+      - Applies experiment vetting, red flags, or readiness prioritization to a confirmed problem-framing job.
+      - Auto-advances into feasibility or experiment work.
+    priority: high
+    contract_ref: "foundation references/job-registry.md §Problem-framing completion evidence; experiment-design references/problem-framing.md"
 
   - expectation_id: durable-write-scan-gate
     summary: Every durable customer-artifact write is scanned in data mode first.

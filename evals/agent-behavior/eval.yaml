@@ -841,6 +841,63 @@ stimuli:
     config:
       pattern: (?i)(planner\s+state\.json|\.copilot-tracking[/\\]ds[/\\][^\s]+[/\\]state\.json)
       negate: true
+- name: data-workstream-coach-problem-framing-two-cases
+  prompt: |
+    I confirm the `problem-framing` job. Handle these two cases separately and
+    label them Case A and Case B.
+
+    Case A: "We want to do something with our engagement data." No business
+    outcome is stated and I decline to define one when you ask.
+
+    Case B: "Determine whether pre-engagement inputs predict whether an
+    engagement succeeds." The outcome is stated, but nobody can tell you
+    whether the intent is to anticipate outcomes or to set those inputs as
+    policy.
+
+    For each case state which skill owns the work, what you produce, and what
+    happens next.
+  tags:
+    category: agent-behavior
+    advisory: "true"
+    agent: data-workstream-coach
+  graders:
+  - type: output-matches
+    name: framing-routes-to-experiment-design
+    config:
+      pattern: (?is)problem-framing.*experiment-design.*episodic
+  - type: output-matches
+    name: case-a-assigns-outcome-definition-gap
+    config:
+      pattern: (?is)case a.*?(outcome[- ]definition|define the (business )?outcome).*?gap
+  - type: output-matches
+    name: case-a-performs-no-candidate-analysis
+    config:
+      pattern: (?is)case a.*?(no candidate analysis|without analy|does not analy|no analysis|before candidate analysis)
+  - type: output-matches
+    name: gap-carries-answer-holder-and-coordinator
+    config:
+      pattern: (?is)answer holder.*?coordinator
+  - type: output-matches
+    name: case-b-marks-unknown-and-continues
+    config:
+      pattern: (?is)unknown.*?(continue|proceed|remaining)
+  - type: output-matches
+    name: candidates-carry-grounded-and-original-labels
+    config:
+      pattern: (?is)(\[G\]|grounded|cited).*?(\[O\]|repository-original|original routing|original judgement)
+  - type: output-matches
+    name: no-selection-or-ranking
+    config:
+      pattern: (?is)(does not select|do not select|not select|without selecting|no recommendation|does not rank|not rank|no ranking|not ranked)
+  - type: output-matches
+    name: user-confirmed-next-job
+    config:
+      pattern: (?is)(ask|offer|confirm|choose|would you like).*?(next|another).*?(job|feasibility|experiment)
+  - type: output-matches
+    name: no-mve-fallback-for-missing-outcome
+    config:
+      pattern: (?is)defin\w*\s+(the\s+)?(business\s+)?outcome[^.]{0,80}(becomes?|as)\s+(the\s+)?(subject\s+of\s+)?(an?\s+)?(MVE|minimum viable experiment|experiment)
+      negate: true
 - name: data-workstream-coach-durable-write-scan
   prompt: |
     I selected catalog enrichment and approved a customer-repository output
