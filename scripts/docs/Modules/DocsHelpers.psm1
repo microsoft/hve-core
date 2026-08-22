@@ -523,6 +523,125 @@ function Test-AssetInteractive {
     }
 }
 
+function Get-AssetDocSectionContract {
+    <#
+    .SYNOPSIS
+        Returns the ordered asset-documentation section contract.
+
+    .DESCRIPTION
+        Defines section identity, heading order, content source, and per-kind
+        status rules in one shared list. A rule may be a direct status or an
+        interactive/non-interactive status map. Call Resolve-AssetDocSectionStatus
+        to obtain the canonical Required, Optional, or NotApplicable result.
+
+    .OUTPUTS
+        [PSCustomObject[]] Ordered section contract entries.
+    #>
+    [CmdletBinding()]
+    [OutputType([PSCustomObject[]])]
+    param()
+
+    return @(
+        [PSCustomObject]@{
+            Name            = 'what-it-does'
+            Heading         = '## What it does'
+            GeneratedRegion = 'overview'
+            TemplateRegion  = $null
+            Requirements    = [ordered]@{
+                agent       = 'Required'
+                prompt      = 'Required'
+                instruction = 'Required'
+                skill       = 'Required'
+            }
+        }
+        [PSCustomObject]@{
+            Name            = 'when-to-use-it'
+            Heading         = '## When to use it'
+            GeneratedRegion = $null
+            TemplateRegion  = 'when-to-use-it'
+            Requirements    = [ordered]@{
+                agent       = 'Required'
+                prompt      = 'Required'
+                instruction = 'Required'
+                skill       = 'Required'
+            }
+        }
+        [PSCustomObject]@{
+            Name            = 'how-to-use-it'
+            Heading         = '## How to use it'
+            GeneratedRegion = $null
+            TemplateRegion  = 'how-to-use-it'
+            Requirements    = [ordered]@{
+                agent       = [ordered]@{ Interactive = 'Required'; NonInteractive = 'NotApplicable' }
+                prompt      = [ordered]@{ Interactive = 'Required'; NonInteractive = 'NotApplicable' }
+                instruction = 'NotApplicable'
+                skill       = 'NotApplicable'
+            }
+        }
+        [PSCustomObject]@{
+            Name            = 'example-usage'
+            Heading         = '## Example usage'
+            GeneratedRegion = $null
+            TemplateRegion  = 'example-usage'
+            Requirements    = [ordered]@{
+                agent       = 'Required'
+                prompt      = 'Required'
+                # Optional: scaffolded for instruction pages but not enforced,
+                # because an always-on instruction has no invocation to show.
+                instruction = 'Optional'
+                skill       = 'Required'
+            }
+        }
+    )
+}
+
+function Resolve-AssetDocSectionStatus {
+    <#
+    .SYNOPSIS
+        Resolves a section contract entry for an asset model.
+
+    .PARAMETER Section
+        Entry returned by Get-AssetDocSectionContract.
+
+    .PARAMETER Kind
+        Asset kind used to select the per-kind rule.
+
+    .PARAMETER Interactive
+        Whether the asset has an interactive usage flow.
+
+    .OUTPUTS
+        [string] Required, Optional, or NotApplicable.
+    #>
+    [CmdletBinding()]
+    [OutputType([string])]
+    param(
+        [Parameter(Mandatory = $true)][PSCustomObject]$Section,
+        [Parameter(Mandatory = $true)][ValidateSet('agent', 'prompt', 'instruction', 'skill')][string]$Kind,
+        [Parameter(Mandatory = $true)][bool]$Interactive
+    )
+
+    if ($null -eq $Section.PSObject.Properties['Requirements']) {
+        throw "Section '$($Section.Name)' does not define Requirements."
+    }
+
+    $rule = $Section.Requirements[$Kind]
+    if ($null -eq $rule) {
+        throw "Section '$($Section.Name)' does not define a requirement for kind '$Kind'."
+    }
+
+    if ($rule -is [System.Collections.IDictionary]) {
+        $interactionKey = if ($Interactive) { 'Interactive' } else { 'NonInteractive' }
+        $rule = $rule[$interactionKey]
+    }
+
+    $status = [string]$rule
+    if ($status -notin @('Required', 'Optional', 'NotApplicable')) {
+        throw "Section '$($Section.Name)' resolves to unsupported status '$status'."
+    }
+
+    return $status
+}
+
 function Format-AssetInvocation {
     <#
     .SYNOPSIS
@@ -964,6 +1083,7 @@ Export-ModuleMember -Function @(
     'Format-MarkdownTable',
     'Format-YamlScalar',
     'Get-AssetDocMarker',
+    'Get-AssetDocSectionContract',
     'Get-AssetDocsPath',
     'Get-AssetFrontmatter',
     'Get-AssetInvocation',
@@ -973,6 +1093,7 @@ Export-ModuleMember -Function @(
     'New-AssetMetadataBlock',
     'New-AssetOverviewBody',
     'New-AssetPageModel',
+    'Resolve-AssetDocSectionStatus',
     'Split-AssetDocByMarkers',
     'Test-AssetDocStub',
     'Test-AssetInteractive'
