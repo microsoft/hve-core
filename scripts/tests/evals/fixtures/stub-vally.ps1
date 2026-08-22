@@ -28,6 +28,12 @@
 #   per-stim - emits one trial per entry of STUB_VALLY_STIM_RESULTS_JSON
 #              (JSON object {stimulusName: passedBool}); exit 1 only when
 #              any record failed AND STUB_VALLY_FAIL_ON_ANY=1.
+#   graded-nonzero - one trial carrying named grader details for the stimulus in
+#              STUB_VALLY_GRADED_STIMULUS, with the graders named in
+#              STUB_VALLY_GRADED_PASSING all passing, then exits 1. Models a real
+#              run where every declared grader passed but some other grader on
+#              some other trial failed, which is how `vally eval` reports a
+#              nonzero exit on an otherwise usable run.
 
 # Note: $args is the automatic parameter variable when no param block exists.
 
@@ -201,6 +207,22 @@ $records = switch ($mode) {
         }
         @($emitted)
     }
+    'graded-nonzero' {
+        if (-not $env:STUB_VALLY_GRADED_STIMULUS) {
+            Write-Error "stub-vally: graded-nonzero mode requires STUB_VALLY_GRADED_STIMULUS."
+            exit 70
+        }
+        $stimulusName = [string]$env:STUB_VALLY_GRADED_STIMULUS
+        $graderNames = @(([string]$env:STUB_VALLY_GRADED_PASSING) -split ',' | Where-Object { $_ })
+        $record = New-StubRecord -Name $stimulusName -Passed $true
+        $record.gradeResult['stimulusName'] = $stimulusName
+        $record.gradeResult['details'] = @(
+            foreach ($grader in $graderNames) {
+                [ordered]@{ name = $grader; kind = 'code'; passed = $true; score = 1.0 }
+            }
+        )
+        @($record)
+    }
     default {
         Write-Error "stub-vally: unknown mode '$mode'"
         exit 66
@@ -219,6 +241,7 @@ Set-Content -LiteralPath (Join-Path $runDir 'eval-results.md') -Value "# stub ev
 if ($mode -eq 'fail') { exit 1 }
 if ($mode -eq 'fail-noname') { exit 1 }
 if ($mode -eq 'errored') { exit 1 }
+if ($mode -eq 'graded-nonzero') { exit 1 }
 if ($mode -eq 'per-stim' -and $env:STUB_VALLY_FAIL_ON_ANY -eq '1') {
     foreach ($r in $records) {
         if (-not $r.gradeResult.passed) { exit 1 }
