@@ -143,7 +143,7 @@ authorized manual actions. Local validation does not execute or verify them.
 | `frontmatter-validation.yml` | Custom PS script         | YAML frontmatter validation          | `soft-fail` (false), `changed-files-only` (true), `skip-footer-validation` (false), `warnings-as-errors` (true) | frontmatter-validation-results |
 | `skill-validation.yml`       | Custom PS script         | Skill directory structure validation | `soft-fail` (false), `changed-files-only` (true)                                                                | skill-validation-results       |
 | `link-lang-check.yml`        | Custom PS script         | Detect language-specific URLs        | `soft-fail` (false)                                                                                             | link-lang-check-results        |
-| `markdown-link-check.yml`    | markdown-link-check      | Validate links (internal/external)   | `soft-fail` (true)                                                                                              | markdown-link-check-results    |
+| `markdown-link-check.yml`    | markdown-link-check      | Validate internal and external links | `soft-fail` (false), `changed-files-only` (true, external links only), `throttle-limit` (8)                     | markdown-link-check-results    |
 
 All validation workflows use `permissions: contents: read`, publish PR annotations, and retain artifacts for 30 days.
 
