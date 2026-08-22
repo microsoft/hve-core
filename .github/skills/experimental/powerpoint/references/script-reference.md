@@ -299,7 +299,7 @@ python scripts/embed_audio.py \
 
 Embeds WAV audio files into PPTX slides. Audio files are matched to slides by naming convention (`slide-001.wav`, `slide-002.wav`, etc.). The audio icon is placed off-screen (below the slide boundary) to keep it hidden during presentation. Pass `--slides` to embed audio on specific slides only.
 
-**Dependencies**: Requires `pillow` (`pip install pillow`) for poster frame generation.
+**Dependencies**: Requires `pillow` (`pip install pillow`) for poster frame generation. <!-- pip-install-ok -->
 
 > [!NOTE]
 > WAV files are embedded uncompressed. For large narrated decks, consider pre-compressing audio before embedding to manage PPTX file size.

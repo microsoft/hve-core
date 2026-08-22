@@ -28,7 +28,7 @@ Do not commit dependency source URLs pointing at private or organization-scoped 
 When a network blocks the public registries, route installs through the approved proxy from your own environment and never from a tracked file.
 
 * Set the override with an environment variable or a CLI flag. A user-level `~/.npmrc` is outranked by this repository's committed `.npmrc`, because npm resolves configuration in the order `cli > env > project .npmrc > user .npmrc > global`.
-* Restrict proxied use to restore commands such as `npm ci`, `uv sync --frozen`, and `pip install -r`. They read committed lockfiles and verify committed hashes, and `npm ci` does not write `package-lock.json`.
+* Restrict proxied use to restore commands such as `npm ci`, `uv sync --frozen`, and `pip install -r`. They read committed lockfiles and verify committed hashes, and `npm ci` does not write `package-lock.json`. <!-- pip-install-ok -->
 * Do not resolve dependencies through a proxy. `npm install`, `npm update`, `npm audit fix`, `uv lock`, and `uv add` write the proxy's own URLs into the lockfile, and an npm proxy that omits `dist.integrity` also downgrades the recorded integrity to `sha1`.
 * Generate lockfile changes where the public registry is reachable. Dependabot covers version bumps of existing dependencies. To add a new dependency, edit the manifest, push the branch, and let an agent or CI job with direct public registry access produce the lockfile.
 * Do not hand-repair a proxy-generated lockfile. Restoring the `resolved` URL leaves the weakened `integrity` value in place, and recomputing the hash from proxy-served bytes attests only to what the proxy returned.

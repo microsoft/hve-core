@@ -9,7 +9,7 @@ Conventions for Python 3.11+ scripts used in automation, tooling, and CLI applic
 
 ## Environment and Dependency Management
 
-1. **Never use `pip install` directly.** All package management must be handled using `uv` (e.g., `uv add <package>`).
+1. **Never use `pip install` directly.** All package management must be handled using `uv` (e.g., `uv add <package>`). <!-- pip-install-ok -->
 2. **Never run Python scripts or tools outside a virtual environment.** Always execute scripts via `uv run <script.py>` or ensure the 
 `.venv` is activated before running.
 3. Ensure a `.venv` exists in the project root before executing any Python code. If starting from scratch, refer to the `uv-projects.instructions.md` file for environment setup.
@@ -21,7 +21,7 @@ import sys
 
 EXIT_SUCCESS = 0  # Successful execution
 EXIT_FAILURE = 1  # General failure
-EXIT_ERROR = 2    # Arguments or configuration error
+EXIT_ERROR = 2  # Arguments or configuration error
 
 
 def main() -> int:
@@ -121,13 +121,17 @@ import os
 from pathlib import Path
 
 
-def run_command(cmd: list[str], cwd: Path | None = None, extra_env: dict[str, str] | None = None) -> str:
+def run_command(
+    cmd: list[str], cwd: Path | None = None, extra_env: dict[str, str] | None = None
+) -> str:
     """Run command and return stdout, raising on failure."""
     env = os.environ.copy()
     if extra_env:
         env.update(extra_env)
     try:
-        result = subprocess.run(cmd, capture_output=True, text=True, check=True, cwd=cwd, env=env)
+        result = subprocess.run(
+            cmd, capture_output=True, text=True, check=True, cwd=cwd, env=env
+        )
         return result.stdout
     except subprocess.CalledProcessError as e:
         logger.error("Command failed: %s\nstderr: %s", e.returncode, e.stderr)

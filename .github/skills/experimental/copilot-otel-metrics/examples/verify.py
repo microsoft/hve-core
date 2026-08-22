@@ -90,7 +90,7 @@ def check_copilot_traces() -> None:
             n = len(res.get("traces") or [])
             if n:
                 found[svc] = n
-        except Exception:  # noqa: BLE001 - absent service is not an error
+        except Exception:  # noqa: BLE001, S110 - absent service is not an error
             pass
     record(
         "copilot traces present",

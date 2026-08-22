@@ -38,7 +38,7 @@ For full PowerPoint pipeline documentation, activate the `powerpoint` skill by n
   powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | iex"
 
   # Via pip (fallback)
-  pip install uv
+  pip install uv <!-- pip-install-ok -->
   ```
 
 * The experimental `powerpoint` skill, activated by name, for the `Invoke-PptxPipeline.ps1` build step. When it does not resolve, warn the user that the build step is unavailable and stop.
@@ -154,7 +154,7 @@ For complete mapping details, see [references/mapping-spec.md](references/mappin
 
 | Issue                           | Cause                                     | Solution                                                                                                                 |
 |---------------------------------|-------------------------------------------|--------------------------------------------------------------------------------------------------------------------------|
-| `uv` not found                  | uv not installed                          | Run `curl -LsSf https://astral.sh/uv/install.sh \| sh` (macOS/Linux) or `pip install uv`                                 |
+| `uv` not found                  | uv not installed                          | Run `curl -LsSf https://astral.sh/uv/install.sh \| sh` (macOS/Linux) or `pip install uv` <!-- pip-install-ok -->         |
 | Python not found by uv          | No Python 3.11+ on PATH                   | Run `uv python install 3.11`                                                                                             |
 | Template not found              | `--canonical-dir` contains unknown type   | Check frontmatter `type:` field against supported artifact types                                                         |
 | Empty output directory          | No canonical markdown files found         | Confirm `--canonical-dir` path and that files have `---` frontmatter                                                     |

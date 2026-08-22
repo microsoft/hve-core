@@ -138,7 +138,9 @@ day = np.random.choice(pd.date_range(start=start_date, end=end_date))
 day = pd.Timestamp(day).date()  # Ensures Python datetime.date
 hour = int(np.random.choice(range(8, 19)))
 minute = int(np.random.randint(0, 60))
-start_time = datetime.combine(day, datetime.min.time()) + timedelta(hours=hour, minutes=minute)
+start_time = datetime.combine(day, datetime.min.time()) + timedelta(
+    hours=hour, minutes=minute
+)
 ```
 
 ### Data Types & Ranges

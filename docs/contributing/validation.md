@@ -192,15 +192,10 @@ lockfile tarball host to the configured registry at fetch time only. `npm ci`
 never writes `package-lock.json`, and it still verifies every download against
 the committed `sha512` integrity value.
 
-Use restore commands for proxied installs. `npm ci` verifies downloads
-against the committed integrity values, and `uv sync --frozen` installs without
-updating the lockfile. A plain `pip install -r` verifies committed hashes only
+Use restore commands for proxied installs. `npm ci` verifies downloads against the committed integrity values, and `uv sync --frozen` installs without
+updating the lockfile. A plain `pip install -r` verifies committed hashes only <!-- pip-install-ok -->
 when the requirements file contains hashes and hash-checking mode is enabled,
-for example with `--require-hashes`. Dependency-resolution commands may update
-lockfiles with proxy-specific metadata. Review lockfile changes before
-committing, and run
-`npm run lint:public-dependency-feeds` if you suspect a lockfile picked up a
-non-public source.
+for example with `--require-hashes`. Dependency-resolution commands may update lockfiles with proxy-specific metadata. Review lockfile changes before committing, and run `npm run lint:public-dependency-feeds` if you suspect a lockfile picked up a non-public source.
 
 ### Add or update a dependency from a restricted network
 
