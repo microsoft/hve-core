@@ -372,7 +372,13 @@ function Test-AssetDocOrphan {
 function Test-AssetDocStructure {
     <#
     .SYNOPSIS
-        Verifies required headings and generated-region markers on a page.
+        Verifies required headings, canonical section order, and generated-region
+        markers on a page.
+    .DESCRIPTION
+        Reports a missing Required section, an applicable section that appears out
+        of the contract's canonical order, and a damaged generated-region marker
+        pair. Optional sections are only order-checked when the page includes
+        them, and NotApplicable sections are ignored.
     .PARAMETER Model
         Page model from New-AssetPageModel.
     .PARAMETER Content
@@ -389,14 +395,30 @@ function Test-AssetDocStructure {
 
     $findings = @()
 
-    $required = @('## What it does', '## When to use it', '## Example usage')
-    if ($Model.Interactive) {
-        $required += '## How to use it'
+    $present = [System.Collections.Generic.List[PSCustomObject]]::new()
+    foreach ($section in (Get-AssetDocSectionContract)) {
+        $status = Resolve-AssetDocSectionStatus -Section $section -Kind $Model.Kind -Interactive $Model.Interactive
+        if ($status -eq 'NotApplicable') {
+            continue
+        }
+
+        $heading = $section.Heading
+        $match = [regex]::Match($Content, '(?m)^' + [regex]::Escape($heading) + '\s*$')
+        if (-not $match.Success) {
+            if ($status -eq 'Required') {
+                $findings += New-AssetDocFinding -Level 'Error' -Category 'Structure' -Path $Model.DocRel -Message "Missing required section '$heading'."
+            }
+            continue
+        }
+
+        $present.Add([PSCustomObject]@{ Heading = $heading; Index = $match.Index })
     }
-    foreach ($heading in $required) {
-        $pattern = '(?m)^' + [regex]::Escape($heading) + '\s*$'
-        if ($Content -notmatch $pattern) {
-            $findings += New-AssetDocFinding -Level 'Error' -Category 'Structure' -Path $Model.DocRel -Message "Missing required section '$heading'."
+
+    # The contract declares canonical order, so a page that carries every heading
+    # in the wrong sequence must fail rather than pass an existence-only check.
+    for ($i = 1; $i -lt $present.Count; $i++) {
+        if ($present[$i].Index -lt $present[$i - 1].Index) {
+            $findings += New-AssetDocFinding -Level 'Error' -Category 'Structure' -Path $Model.DocRel -Message "Section '$($present[$i].Heading)' must appear after '$($present[$i - 1].Heading)' in canonical contract order."
         }
     }
 
