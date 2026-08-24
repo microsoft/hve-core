@@ -257,6 +257,5 @@
     ".github/skills/shared/backlog-templates",
     ".github/skills/shared/pr-reference",
     ".github/skills/shared/telemetry-foundations"
-  ],
-  "hooks": ".github/hooks/shared/telemetry.json"
+  ]
 }

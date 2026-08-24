@@ -37,10 +37,7 @@ Hooks use package-oriented source folders. Use this structure for hook contribut
 
 Manifests live one package level down (`.github/hooks/<package>/`). A flat `.github/hooks/<name>.json` is treated as a repo-specific artifact and is excluded from distribution.
 
-The telemetry hook is the current reference implementation:
-
-* `.github/hooks/shared/telemetry.json`
-* `.github/hooks/shared/telemetry/`
+The repository ships no hook manifest today. The generic contract below stays supported, and the validator accepts a repository with zero manifests.
 
 ## Implementing a New Hook
 
@@ -79,11 +76,9 @@ For reliability and portability, hook scripts should follow these rules:
 * Keep runtime short and respect `timeoutSec` values in the manifest.
 * Support both bash and PowerShell paths when practical.
 
-Telemetry follows this model with a no-op gate and structured JSONL append behavior.
-
 ## Manifest Schema and Validation
 
-Manifests are validated against `scripts/linting/schemas/hook-manifest.schema.json`, the authoritative contract. The schema enforces the allowed top-level keys (`version`, `description`, `hooks`), the ten CLI-lowercase event names (`sessionStart`, `sessionEnd`, `userPromptSubmit`, `userPromptSubmitted`, `preToolUse`, `postToolUse`, `preCompact`, `subagentStart`, `subagentStop`, `stop`), and the permitted command properties.
+Manifests are validated against `scripts/linting/schemas/hook-manifest.schema.json`, the authoritative contract. The schema enforces the allowed top-level keys (`version`, `description`, `hooks`), the eleven CLI-lowercase event names (`sessionStart`, `sessionEnd`, `userPromptSubmit`, `userPromptSubmitted`, `preToolUse`, `postToolUse`, `preCompact`, `subagentStart`, `subagentStop`, `stop`, `agentStop`), and the permitted command properties.
 
 Run `npm run lint:hooks` to validate every package-scoped manifest. On failure, the validator prints each error and the schema path so you can reconcile the manifest against the contract.
 
@@ -101,10 +96,9 @@ when a hook persists payloads to disk:
 * Write to local, gitignored locations and never to committed paths.
 * Document exactly what is captured, where it is written, and how to remove it.
 
-The telemetry hook applies this pattern: its processed `sessions-*.jsonl` stream
-stores only tool-input key names and a truncated prompt preview, while the
-verbatim `raw-input.jsonl` dump is a separate opt-in (`HVE_TELEMETRY_RAW=1`,
-off by default). See [Local Telemetry](../customization/local-telemetry#sensitive-data-and-privacy).
+A hook that persists derived signals should keep any verbatim payload capture
+behind its own environment gate, default it off, and name the exact file it
+writes so an operator can delete it.
 
 ## Event Compatibility Guidance
 
@@ -148,7 +142,6 @@ When your hook includes scripts, also run the relevant script linters and tests 
 * [Custom Agents](custom-agents)
 * [Instructions](instructions)
 * [Common Standards](ai-artifacts-common)
-* [Local Telemetry](../customization/local-telemetry)
 
 ---
 

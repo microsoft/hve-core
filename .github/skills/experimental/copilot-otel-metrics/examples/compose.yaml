@@ -1,41 +1,94 @@
-# Local Copilot OTel stack: Grafana, Prometheus, Tempo, Loki, Pyroscope in one container.
+# Local Copilot OTel stack: a filtering Collector in front of Grafana,
+# Prometheus, Tempo, Loki, and Pyroscope.
 #
-# The data volume is declared external so this file binds the existing
-# copilot-otel-data volume rather than creating a project-prefixed duplicate,
-# which would silently orphan the accumulated history.
+# Copilot exports to the Collector, never to LGTM directly. The Collector is
+# the only OTLP listener published on the host; LGTM's OTLP ports are
+# deliberately unmapped so no local process can bypass the filter.
 #
-# Create it once before the first up:
-#   docker volume create copilot-otel-data
+# Images are pinned by manifest digest. Grafana credentials are required with
+# no default, and the telemetry volume is external so this file binds the
+# existing copilot-otel-data volume rather than creating a project-prefixed
+# duplicate. Grafana's own database is deliberately NOT on that volume: see the
+# copilot-otel-grafana-db notes below.
+#
+# Prerequisites, credential handling, and first-run steps:
+# references/local-setup.md.
 
 services:
+  otel-collector:
+    # otel/opentelemetry-collector-contrib:0.158.0
+    image: otel/opentelemetry-collector-contrib@sha256:c5918f78992ee73b0d6f0e599423ac5ec52dd5d9726733114d6eca53d5a32ed5
+    container_name: copilot-otel-collector
+    restart: unless-stopped
+    command: ["--config=/etc/otelcol-contrib/config.yaml"]
+    ports:
+      # The only OTLP ingress for the stack, loopback only.
+      - "127.0.0.1:4317:4317" # OTLP gRPC
+      - "127.0.0.1:4318:4318" # OTLP HTTP  <- Copilot exports here
+    volumes:
+      - ./otel-collector-local.yaml:/etc/otelcol-contrib/config.yaml:ro
+    networks:
+      - copilot-otel
+    # memory_limiter resolves its percentages against the container's cgroup
+    # limit when one exists and against total host memory when it does not.
+    mem_limit: 512m
+    read_only: true
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    depends_on:
+      lgtm:
+        condition: service_healthy
+
   lgtm:
-    image: grafana/otel-lgtm:0.29.2
+    # grafana/otel-lgtm:0.29.2
+    image: grafana/otel-lgtm@sha256:af7242c1a9608faf6d26e6f235392fd0c32b67258228f9a3cfc96e724974930c
     container_name: copilot-otel-lgtm
     restart: unless-stopped
     ports:
-      # Loopback only. Grafana ships with default admin credentials and this
-      # stack is single-machine, so nothing needs to be reachable off-host.
+      # Read surfaces only, loopback only. There is deliberately no 4317 or
+      # 4318 mapping here; OTLP arrives from the Collector over the internal
+      # network instead.
       - "127.0.0.1:3000:3000" # Grafana UI
-      - "127.0.0.1:4317:4317" # OTLP gRPC
-      - "127.0.0.1:4318:4318" # OTLP HTTP  <- Copilot exports here
       - "127.0.0.1:9090:9090" # Prometheus
       - "127.0.0.1:3200:3200" # Tempo
+    networks:
+      - copilot-otel
     environment:
-      # Two flags, space separated, appended to the Prometheus command line.
-      #
-      # otlp-deltatocumulative is applied defensively. Prometheus drops
-      # delta-temporality metrics by default, and a dropped delta metric was
-      # observed to fail the whole batched write, taking co-batched cumulative
-      # metrics with it. This converts instead of dropping, and is inert for
-      # cumulative-only traffic. Its per-series state resets on restart.
-      #
+      # This image enables anonymous Grafana access with the Admin role and
+      # hides the login form. All three flags are required: disabling anonymous
+      # access without restoring the login form leaves no way in.
+      GF_AUTH_ANONYMOUS_ENABLED: "false"
+      GF_AUTH_DISABLE_LOGIN_FORM: "false"
+      GF_AUTH_BASIC_ENABLED: "true"
+      # The :? form fails the `up` when the variable is unset. That is all it
+      # does. Grafana reads GF_SECURITY_ADMIN_* only when it initializes its
+      # database, so on a database that already exists the value is supplied
+      # and then ignored. The separate copilot-otel-grafana-db volume below is
+      # what makes this pair actually take effect.
+      # validate_dashboard.py reads the same pair.
+      GF_SECURITY_ADMIN_USER: ${COPILOT_OTEL_GRAFANA_USER:?set COPILOT_OTEL_GRAFANA_USER before starting the stack}
+      GF_SECURITY_ADMIN_PASSWORD: ${COPILOT_OTEL_GRAFANA_PASSWORD:?set COPILOT_OTEL_GRAFANA_PASSWORD before starting the stack}
+      # Space-separated flags appended to the Prometheus command line.
+      # otlp-deltatocumulative converts delta-temporality metrics that
+      # Prometheus would otherwise drop, failing the whole batched write; it is
+      # inert for cumulative-only traffic and its state resets on restart.
       # Retention is raised from the 15d default so per-month token totals are
-      # real rather than silently truncated at 15 days.
+      # not silently truncated.
       PROMETHEUS_EXTRA_ARGS: "--enable-feature=otlp-deltatocumulative --storage.tsdb.retention.time=120d"
     volumes:
       # Everything persistent lives under /data: grafana, prometheus, tempo,
-      # loki, pyroscope. One mount covers all five.
+      # loki, pyroscope.
       - copilot-otel-data:/data
+      # Grafana's database, mounted over GF_PATHS_DATA so it is not part of the
+      # reusable telemetry volume. Grafana applies GF_SECURITY_ADMIN_USER and
+      # GF_SECURITY_ADMIN_PASSWORD only when it creates grafana.db; on a reused
+      # /data volume it would find an existing database and keep whatever
+      # password that database already carries, possibly the image default.
+      # Giving the database its own project-managed volume means a new stack
+      # initializes it, so the configured credential is the live one.
+      - copilot-otel-grafana-db:/data/grafana/data
     healthcheck:
       test:
         [
@@ -47,6 +100,16 @@ services:
       retries: 10
       start_period: 30s
 
+networks:
+  # Explicit so the LGTM OTLP listener is reachable from the Collector and from
+  # nothing else.
+  copilot-otel:
+    driver: bridge
+
 volumes:
   copilot-otel-data:
     external: true
+  # Deliberately not external. Compose creates it per project, which is what
+  # produces the Grafana first run that adopts the configured credential.
+  # Dashboards and Grafana users live here rather than in copilot-otel-data.
+  copilot-otel-grafana-db: {}

@@ -56,6 +56,29 @@ Describe 'Resolve-ConfigPath' -Tag 'Unit' {
         }
     }
 
+    Context 'when git rev-parse cannot determine the repository root' {
+        BeforeEach {
+            $script:OrigEnv = $env:PS_MODULE_CONFIG_PATH
+            $env:PS_MODULE_CONFIG_PATH = $null
+            # Simulates git being unavailable, a non-clone checkout, or a linked
+            # worktree whose main .git is unreachable, forcing the path fallback.
+            Mock git { }
+        }
+        AfterEach {
+            $env:PS_MODULE_CONFIG_PATH = $script:OrigEnv
+        }
+
+        It 'Does not duplicate the scripts path segment' {
+            $result = Resolve-ConfigPath -Explicit ''
+            $result | Should -Not -Match 'scripts[\\/]scripts'
+        }
+
+        It 'Resolves to the existing manifest at the repository root' {
+            $result = Resolve-ConfigPath -Explicit ''
+            Test-Path -LiteralPath $result | Should -BeTrue
+        }
+    }
+
     Context 'when explicit param takes precedence over env var' {
         BeforeEach {
             $script:OrigEnv = $env:PS_MODULE_CONFIG_PATH

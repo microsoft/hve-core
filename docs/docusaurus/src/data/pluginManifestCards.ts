@@ -7,7 +7,7 @@ import * as path from 'path';
 import type { PackageCardData } from './packageCards';
 import { labelRegistry } from './labelRegistry';
 
-const componentFields = ['agents', 'commands', 'rules', 'skills', 'hooks'];
+const componentFields = ['agents', 'commands', 'rules', 'skills'];
 const errorPrefix = '[pluginManifestCards]';
 
 export function countPluginComponents(
