@@ -59,6 +59,30 @@ Prompt files MUST:
 3. Begin content directly after frontmatter
 4. End with single newline character
 
+## Path Portability
+
+Prompt packages can be loaded from the repository or from a distributed
+extension, so references to other artifacts must remain valid in either
+context.
+
+* Refer to a skill, agent, subagent, or prompt by the `name:` value from its
+  frontmatter wrapped in backticks, not by a hard-coded path.
+* Refer to an instruction file by its full `<name>.instructions.md` filename
+  and name the specific section when only part applies. The filename is the
+  stable reference; hosts attach instructions through `applyTo` or semantic
+  matching.
+* Refer to a prompt whose frontmatter omits `name:` by its
+  `<name>.prompt.md` filename, because the host derives the slash command from
+  the filename stem.
+* Reserve file paths for caller-defined tracking or evidence locations,
+  frontmatter wiring such as `agents:`, `agent:`, and `applyTo`, and resources
+  that belong to the artifact being authored.
+* Never hard-code a skill's `.github/skills/<package>/<skill>/SKILL.md` path or
+  a path into another skill's directory. Name the skill and let progressive
+  disclosure resolve it across repository, extension, and plugin distributions.
+* Use `#file:` only when the prompt must include another file's full contents;
+  otherwise, name the artifact or use a path relative to its own resources.
+
 ## Frontmatter Requirements
 
 ### Required Fields
