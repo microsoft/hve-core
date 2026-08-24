@@ -9,6 +9,7 @@
     "raiPlanFile",
     "currentPhase",
     "entryMode",
+    "preflight",
     "assessmentDepth",
     "standardsMapped",
     "securityModelAnalysisStarted",
@@ -50,6 +51,62 @@
       "type": "string",
       "enum": ["capture", "from-prd", "from-security-plan"],
       "description": "How the assessment was initiated"
+    },
+    "preflight": {
+      "type": "object",
+      "required": ["templates", "assessmentContentFile"],
+      "properties": {
+        "templates": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["kind", "reference"],
+            "properties": {
+              "kind": {
+                "type": "string",
+                "enum": ["document", "mural"]
+              },
+              "reference": {
+                "type": "string",
+                "minLength": 1
+              }
+            },
+            "additionalProperties": false
+          },
+          "uniqueItems": true,
+          "description": "Every supplied document or Mural template and its recoverable source reference"
+        },
+        "assessmentContentFile": {
+          "type": ["string", "null"],
+          "description": "Path to the mandatory template-aligned content file, or null when no template was supplied"
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "templates": { "minItems": 1 }
+            }
+          },
+          "then": {
+            "properties": {
+              "assessmentContentFile": {
+                "type": "string",
+                "pattern": "^\\.copilot-tracking/rai-plans/[a-z0-9]+(?:-[a-z0-9]+)*/assessment-content\\.md$"
+              }
+            }
+          },
+          "else": {
+            "properties": {
+              "assessmentContentFile": {
+                "type": "null"
+              }
+            }
+          }
+        }
+      ],
+      "additionalProperties": false,
+      "description": "Persisted Phase 1 template preflight state used by resume and recovery"
     },
     "disclaimerShownAt": {
       "type": ["string", "null"],
@@ -191,6 +248,32 @@
       "description": "Per-phase gate model: phases 2, 3, and 6 are hard gates requiring explicit user confirmation; phases 1, 4, and 5 are summary-and-advance gates"
     }
   },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "entryMode": { "const": "from-security-plan" }
+        }
+      },
+      "then": {
+        "required": ["securityPlanRef"],
+        "properties": {
+          "securityPlanRef": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      },
+      "else": {
+        "required": ["securityPlanRef"],
+        "properties": {
+          "securityPlanRef": {
+            "type": "null"
+          }
+        }
+      }
+    }
+  ],
   "additionalProperties": false,
   "$defs": {
     "noticeLogEntry": {
