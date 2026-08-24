@@ -74,12 +74,16 @@ Then perform input preflight in this order:
 
 Whenever one or more document or Mural templates are supplied, create
 `assessment-content.md` as an extracted section-and-item skeleton before
-preflight step 2, then populate it from project materials during step 2. Record
-missing evidence explicitly. Persist every supplied template's kind and source
-reference in `preflight.templates`, together with
-`preflight.assessmentContentFile`. The assessment remains authoritative in
-`rai-plan.md`. Template provision is optional, but `assessment-content.md` is
-mandatory once any template is supplied.
+preflight step 2, then populate it from project materials during step 2. Add
+enough stable-ID rows to preserve every supported perspective and scenario
+rather than limiting content to existing placeholders. For a Mural template,
+pre-existing widgets, sticky notes, and anchors define layout only; their count
+never limits the number of content items. Record one stable-ID row for every
+supported Mural item. Record missing evidence explicitly. Persist every
+supplied template's kind and source reference in `preflight.templates`,
+together with `preflight.assessmentContentFile`. The assessment remains
+authoritative in `rai-plan.md`. Template provision is optional, but
+`assessment-content.md` is mandatory once any template is supplied.
 
 After preflight, explore the AI system's purpose, technology stack, deployment
 model, stakeholder roles, data inputs and outputs, and intended use context.
@@ -111,7 +115,14 @@ Verb sequence:
 3. `mural area list` to resolve A1, A2, A3 by title substring.
 4. `mural tag create` to re-assert the reserved tag manifest (`authored-by-ai`, `rai-phase2`).
 5. `mural area probe` before any parented `mural widget create-bulk` call.
-6. `mural widget create-bulk` per area, decomposing source rows: A1 from the numbered subsections within `## System Definition` in `rai-plan.md`; A2 from the AI component table rows in the `### AI Component Inventory` subsection under `## System Definition`; A3 from bullets in `## Stakeholder Impact`.
+6. `mural widget create-bulk` per area. For a supplied Mural template, use the
+   mandatory `assessment-content.md` stable-ID rows and create one widget for
+   every row, adding widgets beyond the template's pre-existing count when
+   needed. When no Mural template was supplied, derive A1 from the numbered
+   subsections within `## System Definition` in `rai-plan.md`; derive A2 from
+   the AI component table rows in the `### AI Component Inventory` subsection
+   under `## System Definition`; and derive A3 from bullets in
+   `## Stakeholder Impact`.
 7. `mural widget update-bulk` for anchor inheritance: copy `(x, y, w, h, style.backgroundColor)` from per-area placeholder anchors onto the new widgets.
 8. `mural widget delete` for consumed anchors only.
 9. `mural widget list-with-context` for readback verification.
@@ -135,7 +146,7 @@ Facilitate AI-specific threat analysis per component. Catalog potential threats 
 
 ### Phase 5: RAI Impact Assessment (NIST Manage)
 
-Explore control surface coverage for each identified threat. Document evidence of existing mitigations and highlight potential gaps. Explore appropriate reliance by examining trust calibration mechanisms, human-in-the-loop design for high-stakes decisions, and patterns of over-reliance or under-reliance. Explore tradeoffs between competing trustworthiness characteristics (for example, transparency versus privacy). Prepare the control surface catalog and evidence register.
+Explore control surface coverage for each identified threat. Document evidence of existing mitigations and highlight potential gaps. Explore appropriate reliance by examining trust calibration mechanisms, human-in-the-loop design for high-stakes decisions, and patterns of over-reliance or under-reliance. Explore tradeoffs between competing trustworthiness characteristics (for example, transparency versus privacy). Prepare the control surface catalog and evidence register. When populating an impact assessment template, add rows or cells when the complete content set exceeds the existing structure.
 
 * Artifacts: `rai-plan.md` sections `## Control Surface Catalog`, `## Evidence Register`, and `## Tradeoffs`
 
