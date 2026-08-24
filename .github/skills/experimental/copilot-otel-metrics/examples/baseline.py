@@ -11,7 +11,8 @@ the store before export is enabled, then reports what is genuinely new afterward
     baseline.py capture          write a snapshot
     baseline.py diff             compare the store against the snapshot
 
-The snapshot defaults to a user cache path. Set COPILOT_OTEL_BASELINE to override.
+The snapshot defaults to a user cache path. Set COPILOT_OTEL_BASELINE to override
+it with another path inside that same cache directory.
 """
 
 from __future__ import annotations
@@ -25,12 +26,23 @@ import time
 import urllib.parse
 import urllib.request
 
+from _input_policy import PolicyError, contain_path, open_url
+
 PROM = "http://localhost:9090"
 TEMPO = "http://localhost:3200"
-SNAPSHOT = pathlib.Path(
-    os.environ.get("COPILOT_OTEL_BASELINE")
-    or pathlib.Path.home() / ".cache" / "copilot-otel" / "pre-enable-baseline.json"
-)
+
+# The snapshot is written, so the override is contained to the cache root.
+# An unconstrained path here turns a read-only diagnostic into an arbitrary
+# file write driven by an environment variable.
+CACHE_ROOT = pathlib.Path.home() / ".cache" / "copilot-otel"
+try:
+    SNAPSHOT = (
+        contain_path(os.environ["COPILOT_OTEL_BASELINE"], CACHE_ROOT)
+        if os.environ.get("COPILOT_OTEL_BASELINE")
+        else CACHE_ROOT / "pre-enable-baseline.json"
+    )
+except PolicyError as exc:
+    sys.exit(str(exc))
 
 # Copilot metrics that a synthetic sender is unlikely to fabricate, because they
 # require real editor activity to exist at all. Any of these appearing after the
@@ -59,7 +71,7 @@ def api(base: str, path: str, params: dict | None = None) -> dict:
     url = f"{base}{path}"
     if params:
         url += "?" + urllib.parse.urlencode(params, doseq=True)
-    with urllib.request.urlopen(url, timeout=20) as resp:
+    with open_url(url, timeout=20) as resp:
         return json.load(resp)
 
 
@@ -72,7 +84,11 @@ def label_values(label: str) -> list[str]:
 
 def tempo_trace_names() -> list[str]:
     try:
-        res = api(TEMPO, "/api/search", {"q": '{resource.service.name="copilot-chat"}', "limit": "50"})
+        res = api(
+            TEMPO,
+            "/api/search",
+            {"q": '{resource.service.name="copilot-chat"}', "limit": "50"},
+        )
         return sorted({t.get("rootTraceName", "") for t in (res.get("traces") or [])})
     except Exception:  # noqa: BLE001
         return []
@@ -147,7 +163,10 @@ def do_diff() -> int:
         print(f"  New service_version not used by synthetic payloads: {real_version}")
         return 0
     if new_metrics or new_sessions or new_traces:
-        print("  INCONCLUSIVE: something new arrived, but nothing uniquely attributable to the extension.")
+        print(
+            "  INCONCLUSIVE: something new arrived, but nothing uniquely "
+            "attributable to the extension."
+        )
         print("  Treat as not yet confirmed and re-check after more editor activity.")
         return 1
     print("  NOT CONFIRMED: nothing new since baseline.")
@@ -156,7 +175,9 @@ def do_diff() -> int:
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
+    parser = argparse.ArgumentParser(
+        description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
+    )
     parser.add_argument("action", choices=["capture", "diff"])
     args = parser.parse_args()
     return do_capture() if args.action == "capture" else do_diff()

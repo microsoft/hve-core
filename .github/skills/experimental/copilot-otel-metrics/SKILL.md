@@ -9,7 +9,7 @@ compatibility: 'VS Code with GitHub Copilot Chat. Docker with Compose v2 for the
 metadata:
   authors: "microsoft/hve-core"
   spec_version: "1.0"
-  last_updated: "2026-07-27"
+  last_updated: "2026-08-18"
 ---
 
 # Copilot OpenTelemetry Metrics
@@ -64,7 +64,8 @@ Every setting name, metric name, and API version here is a snapshot of one build
 
 * **The installed extension manifest settles settings.** Read `contributes.configuration` in the Copilot Chat extension's `package.json`, or open the Settings UI and filter on `otel`. Do not settle a settings question from documentation, including this document.
 * **The store settles metric names.** Enumerate what the build emits before writing a query against it.
-* **Verified for this revision:** extension `copilot-chat` `0.59.2026072702` declares 11 `github.copilot.chat.otel.*` settings, all `scope: application`. Re-check the count before relying on it.
+* **A runtime test settles what the filter reaches.** A claim about how a running Collector behaves needs runtime evidence. `tests/test_collector_carriers.py` starts the pinned image and records what each OTLP carrier does; a static test that reads the configuration and confirms it says the right thing does not establish that the Collector does the right thing. Every unbacked control claim this skill has had to retract came from treating the first as the second.
+* **Verified for this revision:** extension `copilot-chat` `0.52.0` declares 7 `github.copilot.chat.otel.*` settings, none declaring a `scope`. An earlier revision verified `0.59.2026072702` as declaring 11, all `scope: application`. Both observations stand for their own build, which is exactly why the count and the scope must be re-checked rather than carried forward. Treat any statement about how many settings exist, or which file they resolve from, as build-specific.
 
 ## Inputs
 
@@ -108,22 +109,25 @@ Every setting name, metric name, and API version here is a snapshot of one build
 
 Read the references. Copy or adapt the seeds. Offer the helpers to the user with the exact command, resolved to an absolute path so it works from whatever directory their shell is in.
 
-| Path                                             | Use                                                                                                                       |
-|--------------------------------------------------|---------------------------------------------------------------------------------------------------------------------------|
-| `references/local-setup.md`                      | Read for the settings procedure, the profile pitfall, the diff-and-confirm write, and the paste alternative               |
-| `references/local-stack.md`                      | Read for the local backend, the generated compose contract, and the helper inventory                                      |
-| `references/org-distribution.md`                 | Read for managed-settings channels, precedence, and the agent-host split                                                  |
-| `references/azure-capture.md`                    | Read for the Azure data path, the product and cost comparison, and the generated templates                                |
-| `references/verification.md`                     | Read for proving data landed, the false-positive pitfalls, and metric enumeration                                         |
-| `examples/compose.yaml`                          | Copy as the seed for a generated local stack                                                                              |
-| `examples/dashboards/copilot-otel.json`          | Copy as the seed for a generated local PromQL dashboard                                                                   |
-| `examples/dashboards/copilot-otel-azure.json`    | Copy as the seed for a generated Azure KQL dashboard                                                                      |
-| `examples/azure/`                                | Copy as the seed for the collector configuration and infrastructure templates                                             |
-| `examples/verify.py`                             | Offer to the user as a stored-signal check they run themselves                                                            |
-| `examples/inspect_metrics.py`                    | Offer to the user to enumerate the metric surface their build emits                                                       |
-| `examples/baseline.py`                           | Offer to the user to separate real telemetry from residue                                                                 |
-| `examples/validate_dashboard.py`                 | Offer to the user for a **local** PromQL or TraceQL dashboard only; it has no Azure Monitor path and it overwrites by uid |
-| `examples/README.md`, `examples/azure/README.md` | Written for the user, not part of the agent's reading path. Point the user at them rather than summarizing them           |
+| Path                                             | Use                                                                                                                                      |
+|--------------------------------------------------|------------------------------------------------------------------------------------------------------------------------------------------|
+| `references/local-setup.md`                      | Read for the settings procedure, the profile pitfall, the diff-and-confirm write, and the paste alternative                              |
+| `references/local-stack.md`                      | Read for the local backend, the generated compose contract, and the helper inventory                                                     |
+| `references/org-distribution.md`                 | Read for managed-settings channels, precedence, and the agent-host split                                                                 |
+| `references/azure-capture.md`                    | Read for the Azure data path, the product and cost comparison, and the generated templates                                               |
+| `references/verification.md`                     | Read for proving data landed, the false-positive pitfalls, and metric enumeration                                                        |
+| `examples/compose.yaml`                          | Copy as the seed for a generated local stack                                                                                             |
+| `examples/otel-collector-local.yaml`             | Copy alongside `compose.yaml`; carries the fail-closed local attribute allow-list and the content scrub for the carriers it cannot reach |
+| `examples/dashboards/copilot-otel.json`          | Copy as the seed for a generated local PromQL dashboard                                                                                  |
+| `examples/dashboards/copilot-otel-azure.json`    | Copy as the seed for a generated Azure KQL dashboard                                                                                     |
+| `examples/azure/`                                | Copy as the seed for the fleet collector configuration and infrastructure templates                                                      |
+| `examples/azure/agent-host-relay/`               | Copy as the per-workstation relay every fleet deployment runs; it must be healthy before managed settings point at loopback              |
+| `examples/verify.py`                             | Offer to the user as a stored-signal check they run themselves                                                                           |
+| `examples/inspect_metrics.py`                    | Offer to the user to enumerate the metric surface their build emits                                                                      |
+| `examples/baseline.py`                           | Offer to the user to separate real telemetry from residue                                                                                |
+| `examples/validate_dashboard.py`                 | Offer to the user for a **local** PromQL or TraceQL dashboard only; it has no Azure Monitor path and it overwrites by uid                |
+| `examples/settings_upsert.py`                    | Offer to the user for the assisted settings write; it enforces the schema, backs up, and replaces the file atomically                    |
+| `examples/README.md`, `examples/azure/README.md` | Written for the user, not part of the agent's reading path. Point the user at them rather than summarizing them                          |
 
 ## References
 

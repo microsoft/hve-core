@@ -3,19 +3,38 @@
 # Copilot's exporter sends static headers; Azure Monitor requires rotating Entra
 # credentials. This collector is what bridges the two, and it is not optional.
 #
-# Supply the connection string through the environment, never in this file:
+# Supply every credential and certificate path through the environment, never in
+# this file:
 #   export APPLICATIONINSIGHTS_CONNECTION_STRING="InstrumentationKey=...;IngestionEndpoint=..."
+#   export COPILOT_OTEL_INGEST_TOKEN="<the fleet ingest token>"
+#   export COPILOT_OTEL_ENVIRONMENT="prod"            # one deployment per environment
+#   export COPILOT_OTEL_TLS_CERT_FILE="/etc/otel/tls/tls.crt"
+#   export COPILOT_OTEL_TLS_KEY_FILE="/etc/otel/tls/tls.key"
 #
 # Requires the OpenTelemetry Collector Contrib distribution; the azuremonitor
-# exporter is not in the core distribution.
+# exporter and the redaction processor are not in the core distribution.
 
 receivers:
   otlp:
     protocols:
+      # Authentication and TLS are required on both protocols. If TLS is
+      # terminated by an ingress controller in front of this collector, delete
+      # the tls blocks and record that the terminating hop owns certificate
+      # lifecycle and cipher policy.
       http:
         endpoint: 0.0.0.0:4318
+        auth:
+          authenticator: bearertokenauth
+        tls:
+          cert_file: ${env:COPILOT_OTEL_TLS_CERT_FILE}
+          key_file: ${env:COPILOT_OTEL_TLS_KEY_FILE}
       grpc:
         endpoint: 0.0.0.0:4317
+        auth:
+          authenticator: bearertokenauth
+        tls:
+          cert_file: ${env:COPILOT_OTEL_TLS_CERT_FILE}
+          key_file: ${env:COPILOT_OTEL_TLS_KEY_FILE}
 
 processors:
   # Bounds collector memory so a traffic spike degrades rather than crashes it.
@@ -24,35 +43,97 @@ processors:
     limit_percentage: 80
     spike_limit_percentage: 20
 
-  # Six of these attributes were observed carrying plaintext content on spans
-  # with github.copilot.chat.otel.captureContent set to false. The seventh,
-  # copilot_chat.reasoning_content, was observed marked [encrypted] and is
-  # stripped defensively. This is the only place to remove any of it before it
-  # reaches billable, queryable storage. Remove an action here only as a
-  # deliberate decision.
-  attributes/strip-content:
-    actions:
-      - key: copilot_chat.user_request
-        action: delete
-      - key: copilot_chat.reasoning_content
-        action: delete
-      - key: gen_ai.input.messages
-        action: delete
-      - key: gen_ai.output.messages
-        action: delete
-      - key: gen_ai.system_instructions
-        action: delete
-      - key: gen_ai.tool.call.arguments
-        action: delete
-      - key: gen_ai.tool.call.result
-        action: delete
+  # Fleet minimization. This is otel-collector-local.yaml's policy verbatim,
+  # and tests/test_azure_templates.py asserts that parity: this configuration
+  # may not filter less than the local stack. allow_all_keys: false makes
+  # allowed_keys authoritative, so adding a key here stores it fleet-wide.
+  redaction:
+    allow_all_keys: false
+    allowed_keys:
+      # Resource identity. Dropping these would orphan every span.
+      - service.name
+      - service.namespace
+      - service.version
+      - telemetry.sdk.language
+      - telemetry.sdk.name
+      - telemetry.sdk.version
+      # Model and token accounting. The token panels read these directly.
+      - gen_ai.provider.name
+      - gen_ai.operation.name
+      - gen_ai.request.model
+      - gen_ai.response.model
+      - gen_ai.response.finish_reasons
+      - gen_ai.usage.input_tokens
+      - gen_ai.usage.output_tokens
+      - gen_ai.usage.cache_read.input_tokens
+      # Prometheus stores this as the gen_ai_token_type label; without it,
+      # input and output tokens collapse into one indistinguishable series.
+      - gen_ai.token.type
+      # The discriminator baseline.py reads through the session_id label.
+      - session.id
+      # Agent and tool identity. Names only; arguments and results are not
+      # allowed and therefore cannot reach storage.
+      - gen_ai.agent.name
+      - gen_ai.tool.name
+      - gen_ai.tool.type
+      - copilot_chat.mode_name
+      - copilot_chat.turn_count
+      - copilot_chat.copilot_usage_nano_aiu
+      - github.copilot.agent.type
+      # Both spellings normalize to the copilot_chat_edit_source label and
+      # normalization is not reversible, so both are allowed.
+      - copilot_chat.edit_source
+      - copilot_chat.edit.source
+      # Failure triage without failure content.
+      - error.type
+    # Masked, not dropped, so a panel keeps its shape while the value is gone.
+    blocked_values:
+      - "gh[pousr]_[0-9A-Za-z]{16,}"
+      - "github_pat_[0-9A-Za-z_]{20,}"
+      - "xox[baprs]-[0-9A-Za-z-]{10,}"
+      - "A(?:KIA|SIA)[0-9A-Z]{16}"
+      - "eyJ[0-9A-Za-z_-]{10,}\\.[0-9A-Za-z_-]{10,}\\.[0-9A-Za-z_-]*"
+      - "(?i)(?:AccountKey|SharedAccessKey|SharedAccessSignature)=[0-9A-Za-z+/=%&-]{16,}"
+      - "sk-(?:ant-)?[0-9A-Za-z_-]{20,}"
+      - "AIza[0-9A-Za-z_-]{35}"
+      - "(?i)-----BEGIN [A-Z ]*PRIVATE KEY-----"
+      - "(?i)\\b(?:bearer|authorization|api[_-]?key|secret|password)\\b\\s*[:=]\\s*\\S+"
+    # Silent so the processor does not annotate telemetry with the names of the
+    # keys it removed, which would reintroduce the drift it exists to stop.
+    summary: silent
+
+  # Carriers the redaction processor cannot reach. redaction traverses
+  # attribute maps only, so span status messages, span event names, trace
+  # state, and non-map log bodies are overwritten here.
+  #
+  # Invariant: a carrier the allow-list does not reach is scrubbed unless a
+  # shipped consumer reads it. Span names and metric metadata are therefore
+  # absent, as are carriers this distribution cannot address. Both residual
+  # kinds are registered in SECURITY.md.
+  transform/scrub:
+    error_mode: ignore
+    trace_statements:
+      - set(span.status.message, "[redacted]") where span.status.message != ""
+      - set(span.trace_state, "") where span.trace_state != ""
+      - set(spanevent.name, "[redacted]")
+    log_statements:
+      - set(log.body, "[redacted]") where log.body != nil
+      - set(log.severity_text, "[redacted]") where log.severity_text != ""
+      - set(log.event_name, "[redacted]") where log.event_name != ""
 
   # Fleet dimensions for grouping. Keep these to org structure; anything that
   # identifies an individual lands on every span they produce.
+  #
+  # These are grouping keys, not boundaries. Separation comes from deploying
+  # one collector and one workspace per environment, which is why the
+  # environment name is a required input rather than a default.
   resource/fleet:
     attributes:
       - key: service.namespace
         value: github-copilot
+        action: upsert
+      - key: deployment.environment.name
+        value: ${env:COPILOT_OTEL_ENVIRONMENT}
         action: upsert
 
   batch:
@@ -67,27 +148,40 @@ extensions:
   health_check:
     endpoint: 0.0.0.0:13133
 
-  # Copilot can only send a fixed header set, so a static bearer token is the
-  # available fleet authentication mechanism. Every workstation holds the same
-  # value: it is write-side only, but it cannot be rotated per user. Uncomment
-  # and add `auth: { authenticator: bearertokenauth }` to the otlp receiver
-  # after deciding that trade-off deliberately.
+  # Copilot sends a fixed header set, so a static bearer token is the available
+  # fleet authentication mechanism. Every workstation holds the same value: it
+  # authenticates the fleet rather than a person, cannot be rotated for one
+  # user, and is write-side only.
   #
-  # bearertokenauth:
-  #   token: ${env:COPILOT_OTEL_INGEST_TOKEN}
+  # Because this authenticator is mandatory and managed telemetry.headers do
+  # not reach the agent host, an agent host exporting directly receives 401 or
+  # UNAUTHENTICATED and OTLP drops that telemetry rather than queuing it. Run
+  # the loopback relay in agent-host-relay/ instead of exporting the token into
+  # the environment or removing this authenticator. See README.md.
+  #
+  # Mutual TLS would authenticate each workstation instead. Adding
+  # client_ca_file beside cert_file and key_file selects
+  # RequireAndVerifyClientCert; it is not enabled because whether the agent
+  # host can present a client certificate is unestablished. See SECURITY.md.
+  bearertokenauth:
+    scheme: Bearer
+    token: ${env:COPILOT_OTEL_INGEST_TOKEN}
 
 service:
-  extensions: [health_check]
+  extensions: [health_check, bearertokenauth]
   pipelines:
+    # resource/fleet runs after filtering so operator-owned environment
+    # identity survives the allow-list without the allow-list having to trust
+    # client-supplied dimensions.
     traces:
       receivers: [otlp]
-      processors: [memory_limiter, attributes/strip-content, resource/fleet, batch]
+      processors: [memory_limiter, redaction, transform/scrub, resource/fleet, batch]
       exporters: [azuremonitor]
     metrics:
       receivers: [otlp]
-      processors: [memory_limiter, resource/fleet, batch]
+      processors: [memory_limiter, redaction, transform/scrub, resource/fleet, batch]
       exporters: [azuremonitor]
     logs:
       receivers: [otlp]
-      processors: [memory_limiter, attributes/strip-content, resource/fleet, batch]
+      processors: [memory_limiter, redaction, transform/scrub, resource/fleet, batch]
       exporters: [azuremonitor]

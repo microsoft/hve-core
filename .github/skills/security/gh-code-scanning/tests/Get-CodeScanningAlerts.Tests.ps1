@@ -94,6 +94,40 @@ Describe 'Get-CodeScanningAlerts' -Tag 'Unit' {
             $rawJson | Should -Match '"AffectedPaths":\s*\['
         }
 
+        It 'Serializes a single rule group as a JSON array' {
+            # Regression: one group previously serialized as a bare object, which broke the
+            # workflow consumer that iterates with jq '.[]'. Json and GroupedJson share the
+            # same switch branch, so this covers both.
+            $singleRuleJson = '[{"number":1,"rule":{"id":"VulnerabilitiesID","description":"Vulnerabilities","security_severity_level":"high"},"tool":{"name":"Scorecard"},"most_recent_instance":{"location":{"path":"no file associated with this alert"}}}]'
+            ${Function:gh} = {
+                $global:LASTEXITCODE = 0
+                return $singleRuleJson
+            }.GetNewClosure()
+
+            $rawJson = (& $script:ScriptPath -Owner 'testorg' -Repo 'testrepo' -OutputFormat Json | Out-String).Trim()
+
+            $rawJson | Should -BeLike '`[*`]'
+            $rawJson | ConvertFrom-Json | Should -HaveCount 1
+        }
+
+        It 'Serializes an empty result as an empty JSON array' {
+            ${Function:gh} = {
+                $global:LASTEXITCODE = 0
+                return '[]'
+            }.GetNewClosure()
+
+            $rawJson = (& $script:ScriptPath -Owner 'testorg' -Repo 'testrepo' -OutputFormat Json | Out-String).Trim()
+
+            $rawJson | Should -Be '[]'
+        }
+
+        It 'Serializes multiple rule groups as a JSON array' {
+            $rawJson = (& $script:ScriptPath -Owner 'testorg' -Repo 'testrepo' -OutputFormat Json | Out-String).Trim()
+
+            $rawJson | Should -BeLike '`[*`]'
+            $rawJson | ConvertFrom-Json | Should -HaveCount 2
+        }
+
         It 'Serializes AffectedPaths as empty array and sets HasFilePaths false when alert has no associated file path' {
             $noPathJson = '[{"number":10,"rule":{"id":"BranchProtectionID","description":"Branch-Protection","security_severity_level":"high"},"tool":{"name":"Scorecard"},"most_recent_instance":{"location":{"path":"no file associated with this alert"}}}]'
             ${Function:gh} = {

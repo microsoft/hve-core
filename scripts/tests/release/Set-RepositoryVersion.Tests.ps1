@@ -68,8 +68,7 @@ BeforeAll {
   "agents": [],
   "commands": [],
   "rules": [],
-  "skills": [],
-  "hooks": "hooks/shared/telemetry.json"
+  "skills": []
 }
 "@
             '.github/plugin/marketplace.json'           = @"

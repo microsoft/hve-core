@@ -196,6 +196,23 @@ jobs:
       matrix:
         directory: ${{ fromJson(needs.discover-python-projects.outputs.directories) }}
 
+  copilot-otel-runtime-tests:
+    name: Copilot OTEL Runtime Tests
+    uses: ./.github/workflows/pytest-tests.yml
+    permissions:
+      contents: read
+      id-token: write
+    with:
+      working-directory: .github/skills/experimental/copilot-otel-metrics
+      soft-fail: false
+      changed-files-only: true
+      changed-paths-pattern: '^\.github/skills/experimental/copilot-otel-metrics/(examples/.*\.(py|yaml)|examples/azure/agent-host-relay/.*\.yaml|tests/.*\.py|pyproject\.toml)$|^\.github/workflows/(pytest-tests|pr-validation)\.yml$'
+      marker-expression: slow
+      strict-runtime: true
+      artifact-suffix: -runtime
+      pre-pull-compose-file: examples/compose.yaml
+      pre-pull-compose-service: otel-collector
+
   node-tests:
     name: "Node Tests (${{ matrix.directory }})"
     needs: discover-node-projects
@@ -331,7 +348,9 @@ jobs:
     with:
       soft-fail: false
       changed-files-only: true
-      base-branch: ${{ github.event.pull_request.base.sha || format('origin/{0}', github.base_ref) }}
+      # Outside a pull request both operands are empty, so fall back to a real
+      # ref instead of the literal 'origin/'.
+      base-branch: ${{ github.event.pull_request.base.sha || (github.base_ref && format('origin/{0}', github.base_ref)) || 'origin/main' }}
 
   msdate-freshness:
     name: ms.date Freshness Check
@@ -359,7 +378,7 @@ jobs:
     with:
       soft-fail: false
       changed-files-only: true
-      base-branch: ${{ github.event.pull_request.base.sha || format('origin/{0}', github.base_ref) }}
+      base-branch: ${{ github.event.pull_request.base.sha || (github.base_ref && format('origin/{0}', github.base_ref)) || 'origin/main' }}
 
   eval-validation:
     name: Eval Validation
@@ -370,7 +389,7 @@ jobs:
     with:
       soft-fail: false
       changed-files-only: true
-      base-branch: ${{ github.event.pull_request.base.sha || format('origin/{0}', github.base_ref) }}
+      base-branch: ${{ github.event.pull_request.base.sha || (github.base_ref && format('origin/{0}', github.base_ref)) || 'origin/main' }}
     secrets:
       copilot-github-token: ${{ secrets.COPILOT_GITHUB_TOKEN }}
 
@@ -507,6 +526,9 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
+      # The promotion checks read the pull request head through the API instead
+      # of fetching its ref, which needs this scope and nothing more.
+      pull-requests: read
     steps:
       - name: Checkout code
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -533,10 +555,12 @@ jobs:
           && github.event.pull_request.base.ref == 'release/prerelease'
           && github.event.pull_request.head.ref == 'release-promotion--main--to--release-prerelease'
         env:
+          GH_TOKEN: ${{ github.token }}
           HEAD_BRANCH: ${{ github.event.pull_request.head.ref }}
           HEAD_SHA: ${{ github.event.pull_request.head.sha }}
           PR_NUMBER: ${{ github.event.pull_request.number }}
           PROMOTION_HEAD: release-promotion--main--to--release-prerelease
+          REPOSITORY: ${{ github.repository }}
         run: |
           set -euo pipefail
           if [ "$HEAD_BRANCH" != "$PROMOTION_HEAD" ]; then
@@ -552,22 +576,30 @@ jobs:
             exit 1
           fi
 
-          # hve-core is public, so this origin access is intentionally
-          # credential free; the fetch and ls-remote below stop working if the
-          # repository ever becomes private.
-
-          # The verified commit is the exact event head, so a head that moved
-          # after the event fails rather than being proved at a later tip.
-          git fetch --no-tags origin \
-            "+refs/pull/$PR_NUMBER/head:refs/remotes/pull/$PR_NUMBER/head" \
-            "+refs/heads/release/prerelease:refs/remotes/origin/release/prerelease"
-          if [ "$(git rev-parse "refs/remotes/pull/$PR_NUMBER/head")" != "$HEAD_SHA" ]; then
-            echo "::error::Fetched PreRelease promotion head does not match event head $HEAD_SHA"
+          # Every read below is pinned to an immutable commit and served by the
+          # API, so no pull-request ref enters the local object store. A head
+          # that moved after the event fails rather than being proved at a
+          # later tip.
+          CURRENT_HEAD=$(gh api "/repos/$REPOSITORY/pulls/$PR_NUMBER" --jq '.head.sha')
+          if [ "$CURRENT_HEAD" != "$HEAD_SHA" ]; then
+            echo "::error::PreRelease promotion head moved from $HEAD_SHA to $CURRENT_HEAD"
             exit 1
           fi
 
-          CANDIDATE=$(git show "refs/remotes/pull/$PR_NUMBER/head:release-please-prerelease-config.json" | jq -r '.packages["."]["release-as"] // ""')
-          BASELINE=$(git show 'refs/remotes/origin/release/prerelease:.release-please-prerelease-manifest.json' | jq -r '.["."] // ""')
+          # release/prerelease is mutable, so it is resolved once and every later
+          # read uses the resolved commit rather than the branch name.
+          BASELINE_SHA=$(gh api "/repos/$REPOSITORY/git/ref/heads/release/prerelease" --jq '.object.sha')
+          if [[ ! "$BASELINE_SHA" =~ ^[0-9a-f]{40}$ ]]; then
+            echo "::error::release/prerelease did not resolve to a commit SHA"
+            exit 1
+          fi
+
+          CANDIDATE=$(gh api -H 'Accept: application/vnd.github.raw' \
+            "/repos/$REPOSITORY/contents/release-please-prerelease-config.json?ref=$HEAD_SHA" \
+            | jq -r '.packages["."]["release-as"] // ""')
+          BASELINE=$(gh api -H 'Accept: application/vnd.github.raw' \
+            "/repos/$REPOSITORY/contents/.release-please-prerelease-manifest.json?ref=$BASELINE_SHA" \
+            | jq -r '.["."] // ""')
           for entry in "candidate:$CANDIDATE" "baseline:$BASELINE"; do
             value=${entry#*:}
             if [[ "$value" == *$'\n'* || "$value" == *$'\r'* || ! "$value" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
@@ -603,9 +635,11 @@ jobs:
           && github.event.pull_request.base.ref == 'release/stable'
           && startsWith(github.head_ref, 'release-promotion--release-prerelease--to--release-stable--prerelease-v')
         env:
+          GH_TOKEN: ${{ github.token }}
           HEAD_BRANCH: ${{ github.head_ref }}
           HEAD_SHA: ${{ github.event.pull_request.head.sha }}
           PR_NUMBER: ${{ github.event.pull_request.number }}
+          REPOSITORY: ${{ github.repository }}
         run: |
           set -euo pipefail
           if [[ ! "$HEAD_BRANCH" =~ ^release-promotion--release-prerelease--to--release-stable--(prerelease-v[0-9]+\.[0-9]+\.[0-9]+)$ ]]; then
@@ -625,17 +659,26 @@ jobs:
             exit 1
           fi
 
-          git fetch --no-tags origin \
-            "+refs/pull/$PR_NUMBER/head:refs/remotes/pull/$PR_NUMBER/head" \
-            "+refs/heads/release/stable:refs/remotes/origin/release/stable" \
-            "+refs/tags/$SOURCE_TAG:refs/tags/$SOURCE_TAG"
-          if [ "$(git rev-parse "refs/remotes/pull/$PR_NUMBER/head")" != "$HEAD_SHA" ]; then
-            echo "::error::Fetched Stable promotion head does not match event head $HEAD_SHA"
+          # Every read below is pinned to an immutable commit and served by the
+          # API, so no pull-request ref enters the local object store.
+          CURRENT_HEAD=$(gh api "/repos/$REPOSITORY/pulls/$PR_NUMBER" --jq '.head.sha')
+          if [ "$CURRENT_HEAD" != "$HEAD_SHA" ]; then
+            echo "::error::Stable promotion head moved from $HEAD_SHA to $CURRENT_HEAD"
             exit 1
           fi
 
-          CANDIDATE=$(git show "refs/remotes/pull/$PR_NUMBER/head:release-please-config.json" | jq -r '.packages["."]["release-as"] // ""')
-          BASELINE=$(git show 'refs/remotes/origin/release/stable:.release-please-manifest.json' | jq -r '.["."] // ""')
+          BASELINE_SHA=$(gh api "/repos/$REPOSITORY/git/ref/heads/release/stable" --jq '.object.sha')
+          if [[ ! "$BASELINE_SHA" =~ ^[0-9a-f]{40}$ ]]; then
+            echo "::error::release/stable did not resolve to a commit SHA"
+            exit 1
+          fi
+
+          CANDIDATE=$(gh api -H 'Accept: application/vnd.github.raw' \
+            "/repos/$REPOSITORY/contents/release-please-config.json?ref=$HEAD_SHA" \
+            | jq -r '.packages["."]["release-as"] // ""')
+          BASELINE=$(gh api -H 'Accept: application/vnd.github.raw' \
+            "/repos/$REPOSITORY/contents/.release-please-manifest.json?ref=$BASELINE_SHA" \
+            | jq -r '.["."] // ""')
           for entry in "candidate:$CANDIDATE" "baseline:$BASELINE"; do
             value=${entry#*:}
             if [[ "$value" == *$'\n'* || "$value" == *$'\r'* || ! "$value" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
@@ -654,8 +697,44 @@ jobs:
             exit 1
           fi
 
-          SOURCE_SHA=$(git rev-parse --verify --end-of-options "refs/tags/$SOURCE_TAG^{commit}")
-          if git merge-base --is-ancestor "$SOURCE_SHA" refs/remotes/origin/release/stable; then
+          # Annotated tags peel to a commit through the API, bounded by a hop
+          # limit and a visited set so a malformed chain cannot loop.
+          tag_object=$(gh api "/repos/$REPOSITORY/git/ref/tags/$SOURCE_TAG" --jq '.object.type + " " + .object.sha')
+          object_type=${tag_object%% *}
+          object_sha=${tag_object##* }
+          visited=''
+          SOURCE_SHA=''
+          hop=0
+          while [ "$hop" -lt 10 ]; do
+            hop=$((hop + 1))
+            if [ "$object_type" = 'commit' ]; then
+              SOURCE_SHA="$object_sha"
+              break
+            fi
+            if [ "$object_type" != 'tag' ]; then
+              echo "::error::$SOURCE_TAG resolves to unsupported object type $object_type"
+              exit 1
+            fi
+            case " $visited " in
+              *" $object_sha "*)
+                echo "::error::$SOURCE_TAG tag chain revisits $object_sha"
+                exit 1
+                ;;
+            esac
+            visited="$visited $object_sha"
+            tag_object=$(gh api "/repos/$REPOSITORY/git/tags/$object_sha" --jq '.object.type + " " + .object.sha')
+            object_type=${tag_object%% *}
+            object_sha=${tag_object##* }
+          done
+          if [[ ! "$SOURCE_SHA" =~ ^[0-9a-f]{40}$ ]]; then
+            echo "::error::$SOURCE_TAG did not peel to a commit within the allowed hops"
+            exit 1
+          fi
+
+          # ahead or identical means the source commit is already reachable from
+          # release/stable, which is what the previous ancestry test proved.
+          CONTAINMENT=$(gh api "/repos/$REPOSITORY/compare/$SOURCE_SHA...$BASELINE_SHA" --jq '.status')
+          if [ "$CONTAINMENT" = 'ahead' ] || [ "$CONTAINMENT" = 'identical' ]; then
             echo "::error::$SOURCE_TAG at $SOURCE_SHA is already contained in release/stable"
             exit 1
           fi
@@ -678,6 +757,7 @@ jobs:
       - yaml-lint
       - pester-tests
       - pytest
+      - copilot-otel-runtime-tests
       - discover-node-projects
       - node-tests
       - accessibility-browser-smoke

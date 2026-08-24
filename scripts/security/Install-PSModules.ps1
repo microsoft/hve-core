@@ -97,7 +97,7 @@ function Resolve-ConfigPath {
     if ($env:PS_MODULE_CONFIG_PATH) { return $env:PS_MODULE_CONFIG_PATH }
 
     $repoRoot = git rev-parse --show-toplevel 2>$null
-    if (-not $repoRoot) { $repoRoot = Split-Path $PSScriptRoot }
+    if (-not $repoRoot) { $repoRoot = Split-Path (Split-Path $PSScriptRoot -Parent) -Parent }
     return Join-Path $repoRoot 'scripts/security/ps-module-versions.json'
 }
 
