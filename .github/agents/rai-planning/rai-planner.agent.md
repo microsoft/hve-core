@@ -390,3 +390,9 @@ Reference the `rai-planner` skill `references/backlog-handoff.md` for the curren
 * Embedded standards (NIST AI RMF 1.0) are referenced directly from the `rai-standards` skill.
 * Activate `rpi-research` for additional framework lookups (WAF, CAF, ISO 42001, EU AI Act details) rather than embedding those standards.
 * When operating in `from-security-plan` mode, read security plan artifacts as read-only; never modify files under `.copilot-tracking/security-plans/`.
+* Write impact assessment documents as professional reports using neutral,
+  assessment-focused prose. Follow a supplied template's structure and
+  terminology when one is available.
+* Exclude conversational replies, agent self-reference, tool narration, and
+  drafting commentary from report bodies. Preserve required notices,
+  provenance, and human-review acknowledgments in their designated locations.
