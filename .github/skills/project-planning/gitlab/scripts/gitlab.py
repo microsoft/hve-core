@@ -713,9 +713,7 @@ def _auth_headers() -> dict[str, str]:
 def _required_oauth_client_id(context: AuthContext) -> str:
     """Return the trusted OAuth client ID or fail on an incomplete context."""
     if not context.client_id:
-        raise GitLabError(
-            "GitLab OAuth context is missing a client ID", EXIT_FAILURE
-        )
+        raise GitLabError("GitLab OAuth context is missing a client ID", EXIT_FAILURE)
     return context.client_id
 
 

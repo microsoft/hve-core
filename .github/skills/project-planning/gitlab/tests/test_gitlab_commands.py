@@ -287,11 +287,10 @@ def test_write_commands_require_stdin_or_inline_content(
     command: CommandFn,
     args: list[str],
     usage_message: str,
-    capsys: pytest.CaptureFixture[str],
 ) -> None:
     stdin_factory("")
 
-    _assert_usage_error(command, args, usage_message, capsys)
+    _assert_usage_error(command, args, usage_message)
 
 
 def test_mr_notes_uses_default_max_results(
