@@ -108,7 +108,8 @@ stimuli:
       title clarification for #2558 and a maintainer comment on #2601. Classify
       the workflow, explain the allowed handoff operations, and state the
       approval and freshness checks required before writeback. Do not execute
-      any GitHub mutation.
+      any GitHub mutation. Explicitly name the `Grooming` classification and
+      state: "Allowed operations are Update and Comment; Close is prohibited."
     tags:
       category: agent-behavior
     graders:
