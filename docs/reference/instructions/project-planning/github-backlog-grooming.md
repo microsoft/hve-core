@@ -57,10 +57,10 @@ request and current documentation. The other still describes missing work.
 Backlog Manager returns advisory output without invoking a workflow worker or
 mutating either issue.
 
-| Issue | Similarity | Disposition | Status | Recommended next step |
-|-------|------------|-------------|--------|-----------------------|
-| #123 | Distinct | Likely completed | Assessed | Verify the cited acceptance evidence, then decide whether to close |
-| #456 | Distinct | Still needed | Assessed | Keep open and clarify the remaining acceptance signal |
+| Issue | Similarity | Disposition      | Status   | Recommended next step                                              |
+|-------|------------|------------------|----------|--------------------------------------------------------------------|
+| #123  | Distinct   | Likely completed | Assessed | Verify the cited acceptance evidence, then decide whether to close |
+| #456  | Distinct   | Still needed     | Assessed | Keep open and clarify the remaining acceptance signal              |
 
 ### Issue #123: Document the supported setup
 

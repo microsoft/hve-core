@@ -169,17 +169,17 @@ Dispatch the workflow to the command that owns it. Each run creates a tracking d
 
 The read-only and mutating halves of backlog work are owned by two commands. Dispatch to the command rather than reproducing its protocol; each resolves the platform itself and reads the matching reference.
 
-| Workflow      | Dispatch target                                                                                                    |
-|---------------|--------------------------------------------------------------------------------------------------------------------|
+| Workflow      | Dispatch target                                                                                                       |
+|---------------|-----------------------------------------------------------------------------------------------------------------------|
 | Grooming      | Apply `github-backlog-grooming.instructions.md` directly with ordinary GitHub issue inventory and repository evidence |
-| Discovery     | `backlog-plan` skill, `discover` mode                                                                              |
-| Triage        | `backlog-plan` skill, `triage` mode                                                                                |
-| Sprint        | `backlog-plan` skill, `sprint` mode                                                                                |
-| Task Planning | `backlog-plan` skill, `my-work` then `task-plan` mode                                                              |
-| Execution     | The executor subagent for the resolved platform, dispatched operation set                                          |
-| Single Item   | The executor subagent for the resolved platform, single-item dispatch                                              |
-| PRD Planning  | Routes to the `Functional Planner` agent (read-only hierarchy planning); on completion, the user invokes Execution |
-| Build Info    | Azure DevOps only, through the build-info reference of the `backlog-management` skill                              |
+| Discovery     | `backlog-plan` skill, `discover` mode                                                                                 |
+| Triage        | `backlog-plan` skill, `triage` mode                                                                                   |
+| Sprint        | `backlog-plan` skill, `sprint` mode                                                                                   |
+| Task Planning | `backlog-plan` skill, `my-work` then `task-plan` mode                                                                 |
+| Execution     | The executor subagent for the resolved platform, dispatched operation set                                             |
+| Single Item   | The executor subagent for the resolved platform, single-item dispatch                                                 |
+| PRD Planning  | Routes to the `Functional Planner` agent (read-only hierarchy planning); on completion, the user invokes Execution    |
+| Build Info    | Azure DevOps only, through the build-info reference of the `backlog-management` skill                                 |
 
 ### Executor Dispatch
 

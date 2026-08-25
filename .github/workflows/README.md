@@ -55,7 +55,7 @@ Compose multiple reusable workflows for comprehensive validation and security sc
 | `release-stable.yml`              | Published PreRelease; dispatch                          | Reviewed Stable promotion     | Open the target-based `release/prerelease` to `release/stable` promotion PR                  |
 | `release-stable-publish.yml`      | Merged PR to `release/stable`                           | Managed Stable release        | Prepare the managed release PR or publish the verified even-minor release and VSIX assurance |
 | `backlog-groom-orchestrator.yml`  | First-Monday schedule; manual dispatch                  | Advisory multi-run sweep      | Assess one immutable backlog snapshot and retain a complete final aggregate                  |
-| `backlog-groom-publisher.yml`     | Completed sweep, manual replay                          | Authenticated publication     | Update the compact trusted tracker and optionally publish immutable Pages history             |
+| `backlog-groom-publisher.yml`     | Completed sweep, manual replay                          | Authenticated publication     | Update the compact trusted tracker and optionally publish immutable Pages history            |
 | `weekly-security-maintenance.yml` | Schedule (Sun 2AM UTC)                                  | Soft-fail warnings            | Weekly security posture                                                                      |
 | `scorecard.yml`                   | Push to main, Schedule (Sun 3AM UTC)                    | SARIF upload                  | OpenSSF Scorecard security posture                                                           |
 
@@ -228,16 +228,16 @@ all six values from the terminal reducer summary.
 
 ### Permissions
 
-| Job or workflow     | Permissions                                         | Responsibility                                              |
-|---------------------|-----------------------------------------------------|-------------------------------------------------------------|
-| Plan                | `actions: read`, `issues: read`                     | Capture or recover the snapshot and plan one wave           |
-| Assess              | `actions: write`, `contents: read`, `issues: read`  | Run the bounded workers and upload shard evidence           |
-| Validate and reduce | `actions: read`                                     | Validate immutable artifacts and reconstruct results        |
-| Checkpoint          | `actions: read`                                     | Persist one accepted checkpoint after exact wave validation |
-| Continue            | `actions: write`, `contents: read`                  | Dispatch exactly one authenticated successor                |
-| Core publisher      | `actions: read`, `issues: write`                    | Revalidate the aggregate and update the compact tracker     |
-| Optional history    | `actions: read`, `contents: write`                  | Persist authenticated report history when explicitly enabled |
-| Optional Pages request | `actions: write`, `contents: read`               | Dispatch the existing docs deployment at the report head    |
+| Job or workflow        | Permissions                                        | Responsibility                                               |
+|------------------------|----------------------------------------------------|--------------------------------------------------------------|
+| Plan                   | `actions: read`, `issues: read`                    | Capture or recover the snapshot and plan one wave            |
+| Assess                 | `actions: write`, `contents: read`, `issues: read` | Run the bounded workers and upload shard evidence            |
+| Validate and reduce    | `actions: read`                                    | Validate immutable artifacts and reconstruct results         |
+| Checkpoint             | `actions: read`                                    | Persist one accepted checkpoint after exact wave validation  |
+| Continue               | `actions: write`, `contents: read`                 | Dispatch exactly one authenticated successor                 |
+| Core publisher         | `actions: read`, `issues: write`                   | Revalidate the aggregate and update the compact tracker      |
+| Optional history       | `actions: read`, `contents: write`                 | Persist authenticated report history when explicitly enabled |
+| Optional Pages request | `actions: write`, `contents: read`                 | Dispatch the existing docs deployment at the report head     |
 
 No job combines `actions: write` with `issues: write`. Candidate issues are
 read-only throughout assessment. The publisher is the only issue-write surface,
@@ -322,7 +322,7 @@ repository and account billing before approving a large snapshot.
 | Artifact retention  | Sweep-critical artifacts use 30-day retention; when enabled, accepted final reports persist on the report-history branch and Pages                             |
 | Artifact storage    | Stored bytes count against repository or account quotas; artifact count grows per wave and with reruns                                                         |
 | Dispatch inputs     | GitHub allows 25 top-level `workflow_dispatch` inputs and 65,535 characters; the orchestrator uses nine and the publisher uses six                             |
-| Report size         | The tracker has a 65,000-character guard and excludes per-issue rows; enabled optional publication escapes detailed evidence for Pages                          |
+| Report size         | The tracker has a 65,000-character guard and excludes per-issue rows; enabled optional publication escapes detailed evidence for Pages                         |
 
 See GitHub's [Actions limits](https://docs.github.com/en/actions/reference/limits),
 [REST API rate limits](https://docs.github.com/en/rest/using-the-rest-api/rate-limits-for-the-rest-api),
