@@ -991,6 +991,56 @@ def test_error_excerpt_leaves_short_body_unmarked(mural_module: Any) -> None:
     assert mural_module._error_excerpt(body) == body
 
 
+# ---------------------------------------------------------------------------
+# _build_api_error is the sixth construction site and shares the same bound
+# ---------------------------------------------------------------------------
+
+
+def test_build_api_error_bounds_oversized_body(mural_module: Any) -> None:
+    """Every non-2xx API response flows through here, so it must be bounded.
+
+    ``_read_capped`` allows up to ``MURAL_MAX_BODY_BYTES`` (16 MiB by default),
+    four orders of magnitude above the excerpt limit.
+    """
+    limit = mural_module.MAX_ERROR_EXCERPT_CHARS
+    body = ("A" * (limit * 8)).encode("utf-8")
+
+    exc = mural_module._build_api_error(500, body, None)
+
+    assert len(exc.message) == limit + len("... (truncated)")
+    assert exc.message.endswith("... (truncated)")
+
+
+def test_build_api_error_masks_token_in_message(mural_module: Any) -> None:
+    """A secret quoted in the upstream `message` field does not reach the exception."""
+    body = json.dumps(
+        {"code": "BAD_REQUEST", "message": f"rejected access_token={_EXCERPT_SECRET}"}
+    ).encode("utf-8")
+
+    exc = mural_module._build_api_error(400, body, None)
+
+    assert _EXCERPT_SECRET not in exc.message
+    assert exc.code == "BAD_REQUEST"
+
+
+def test_build_api_error_masks_token_in_non_json_body(mural_module: Any) -> None:
+    """The raw-decode fallback is bounded and redacted too."""
+    body = f"gateway failure refresh_token={_EXCERPT_SECRET}".encode("utf-8")
+
+    exc = mural_module._build_api_error(502, body, None)
+
+    assert _EXCERPT_SECRET not in exc.message
+
+
+def test_build_api_error_falls_back_to_status_for_empty_body(
+    mural_module: Any,
+) -> None:
+    """An empty body still yields a usable message rather than a blank string."""
+    exc = mural_module._build_api_error(503, b"", None)
+
+    assert exc.message == "HTTP 503"
+
+
 def test_refresh_http_error_excludes_raw_refresh_token(
     mural_module: Any,
     recorded_http: Any,

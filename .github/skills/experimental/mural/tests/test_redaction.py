@@ -678,3 +678,64 @@ def test_emit_json_stays_pretty_printed_on_stdout(
     out = capsys.readouterr().out
     assert "\n" in out.strip()
     assert json.loads(out) == {"status": "cleared", "scope": "all"}
+
+
+# ---------------------------------------------------------------------------
+# The record channel carries the same barrier as the envelope channel
+#
+# `_emit_records` is the primary stdout data path for every list command. It
+# printed `_format_output(...)` directly while `_emit_json` redacted, so the
+# busiest channel was the one without a barrier.
+# ---------------------------------------------------------------------------
+
+
+def _json_args() -> argparse.Namespace:
+    return argparse.Namespace(format="json", fields=None)
+
+
+def test_emit_records_masks_pattern_matched_value(
+    mural_module: Any, capsys: pytest.CaptureFixture[str]
+) -> None:
+    """Upstream record text carrying a token shape is masked before stdout."""
+    records = [{"id": "w1", "text": f"access_token={SECRET_VALUE}"}]
+
+    mural_module._emit_records(records, _json_args())
+
+    out = capsys.readouterr().out
+    assert SECRET_VALUE not in out
+    assert "w1" in out
+
+
+def test_emit_records_masks_sensitive_key(
+    mural_module: Any, capsys: pytest.CaptureFixture[str]
+) -> None:
+    """A sensitive mapping key is masked by value regardless of its shape."""
+    records = [{"id": "w1", "client_secret": SECRET_VALUE}]
+
+    mural_module._emit_records(records, _json_args())
+
+    out = capsys.readouterr().out
+    assert SECRET_VALUE not in out
+    assert json.loads(out) == [{"id": "w1", "client_secret": "***"}]
+
+
+def test_emit_record_masks_sensitive_key(
+    mural_module: Any, capsys: pytest.CaptureFixture[str]
+) -> None:
+    """The single-record path shares the barrier with the list path."""
+    mural_module._emit_record({"id": "w1", "access_token": SECRET_VALUE}, _json_args())
+
+    out = capsys.readouterr().out
+    assert SECRET_VALUE not in out
+    assert json.loads(out) == {"id": "w1", "access_token": "***"}
+
+
+def test_emit_records_preserves_benign_content(
+    mural_module: Any, capsys: pytest.CaptureFixture[str]
+) -> None:
+    """Redaction must not disturb records that carry no secret shape."""
+    records = [{"id": "w1", "text": "retrospective"}, {"id": "w2", "text": "blockers"}]
+
+    mural_module._emit_records(records, _json_args())
+
+    assert json.loads(capsys.readouterr().out) == records

@@ -542,7 +542,16 @@ def _extract_error_payload(
 
 
 def _build_api_error(status: int, body_bytes: bytes, headers_obj: Any) -> MuralAPIError:
+    """Build a :class:`MuralAPIError` from a non-2xx response.
+
+    The message is bounded and redacted here rather than inside
+    :func:`_extract_error_payload`, which stays a pure decode seam for fuzzing.
+    This is the sixth exception-construction site in the module and carries
+    every non-2xx API response, so without the excerpt the raw body reaches the
+    exception message bounded only by ``MURAL_MAX_BODY_BYTES``.
+    """
     code, message, request_id = _extract_error_payload(body_bytes, headers_obj)
+    message = _error_excerpt(message or "")
     if not message:
         message = f"HTTP {status}"
     return MuralAPIError(status, code, message, request_id)

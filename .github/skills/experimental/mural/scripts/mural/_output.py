@@ -265,21 +265,28 @@ def _apply_widget_text_coalesce(payload: Any) -> Any:
 
 
 def _emit_records(records: list[Any], args: argparse.Namespace) -> int:
+    """Write a redacted record list to stdout.
+
+    Records carry upstream API content, so they pass through the same barrier
+    as :func:`_emit_json`. Without it the primary stdout data path would be the
+    one channel in the package that emits unredacted upstream text.
+    """
     _apply_widget_text_coalesce(records)
     fields = _read_fields(args)
     fmt = (
         "json" if _state._CLI_FORCE_JSON else (getattr(args, "format", None) or "json")
     )
-    print(_format_output(records, fields, fmt))
+    print(_format_output(_redact_payload(records), fields, fmt))
     return EXIT_SUCCESS
 
 
 def _emit_record(record: Any, args: argparse.Namespace) -> int:
+    """Write a single redacted record to stdout. See :func:`_emit_records`."""
     record = _pkg()._unwrap_value_envelope(record)
     _apply_widget_text_coalesce(record)
     fields = _read_fields(args)
     fmt = (
         "json" if _state._CLI_FORCE_JSON else (getattr(args, "format", None) or "json")
     )
-    print(_format_output(record, fields, fmt))
+    print(_format_output(_redact_payload(record), fields, fmt))
     return EXIT_SUCCESS
