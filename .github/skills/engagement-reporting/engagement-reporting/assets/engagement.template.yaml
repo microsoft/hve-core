@@ -1,0 +1,92 @@
+# engagement.yaml
+#
+# The installer copies this template to engagement.yaml at the root of your
+# engagement workspace. For manual setup, copy it there and rename it
+# engagement.yaml. Edit the copied file, not this packaged template.
+# The agent reads this to know where your data lives.
+
+engagement:
+  name: "" # e.g. "Contoso Data Platform"
+  customer: "" # e.g. "Contoso"
+  start_date: "" # e.g. "2026-03-01"
+  description: "" # Brief engagement description
+
+# Board connection (optional - omit this section if the engagement has no board)
+# Supported: ado | github | jira | gitlab
+# board:
+#   type: ado
+#   # ADO:
+#   #   org: CSECodeHub
+#   #   project: "12345 - CONTOSO - Data Platform"
+#   #   query_path: "Shared Queries/weekly-report"
+#   # GitHub:
+#   #   repo: "org/repo-name"
+#   # Jira:
+#   #   instance: "customer.atlassian.net"
+#   #   project_key: "CDP"
+#   # GitLab:
+#   #   instance: "gitlab.com"
+#   #   project: "group/project"
+
+# Data sources
+# M365 sources (calendar, email, internal meetings, SharePoint) are always on via WorkIQ.
+# Configure only the settings that vary per engagement.
+sources:
+  customer_meetings: false # true if customer tenant recordings are accessible
+  transcripts: "transcripts/" # Local folder for customer meeting VTT/DOCX/TXT files
+
+# Stakeholders drive WorkIQ research. The agent enumerates messages and calendar
+# events where these people participate, which is more reliable than matching
+# customer or product keywords against subject lines. List everyone directly
+# involved in the engagement on either side.
+stakeholders:
+  microsoft: [] # e.g. [{ name: "Jane Doe", email: "jane.doe@microsoft.com", role: "EM" }]
+  customer: [] # e.g. [{ name: "Alex Smith", email: "alex.smith@customer.com", role: "PM" }]
+  partner: [] # optional; SI, ISV, or other partners on the engagement
+
+# Preferred spellings used in reports. Add only terms relevant to this
+# engagement; never modify the packaged terminology instruction.
+terminology:
+  terms: []
+  # Example:
+  # terms:
+  #   - canonical: "Microsoft Fabric"
+  #     variants: ["MS Fabric", "Fabric platform"]
+  #     note: "Use the full product name on first mention"
+
+# Recurring meetings and content locations the agent should always check.
+# Adding entries here lets the agent pick up activity even when subject lines
+# do not mention the customer or product by name.
+research_hints:
+  meeting_series: [] # e.g. ["Weekly Sync", "Steerco", "Sales to Delivery Handoff"]
+  onenote_notebooks: [] # e.g. ["Contoso Engagement"]
+  sharepoint_sites: [] # e.g. ["https://microsoft.sharepoint.com/sites/contoso-engagement"]
+  teams_channels: [] # e.g. [{ team_id: "<team-guid>", channel_id: "<channel-guid>", name: "General" }]
+  additional_keywords: [] # optional fallback substrings for subject/topic matching
+
+# Report configuration
+reports:
+  weekly:
+    template: "weekly-standard"
+    audience: "" # e.g. "Internal Microsoft", "Customer PM", "EM, Customer PM"
+    audience_note: "" # Optional; e.g. "For internal Microsoft audiences only." for internal-only reports
+    research_depth: standard # Use thorough only for an explicit deep-research or audit run
+    council: false # Enable only for high-stakes or materially ambiguous reports
+    include_activity_table: false # Enable for task-level tracking
+  # monthly:
+  #   template: "monthly-standard"
+  #   audience: "Director, VP"
+  #   council: true
+
+# Distribution (optional)
+# When enabled and the WorkIQ Message entity supports writes, the agent creates
+# an Outlook draft with the final report pasted in. The user reviews and sends
+# from Outlook. The workflow never invokes a send action. If Outlook is
+# unreachable or draft-write capability is not exposed, this phase is skipped.
+distribution:
+  outlook_draft:
+    enabled: false
+    to: [] # e.g. ["director@microsoft.com", "em@microsoft.com"]
+    cc: []
+    bcc: []
+    subject_template: "{customer} {report_type} - {date}"
