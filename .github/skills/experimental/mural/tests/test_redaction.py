@@ -130,6 +130,53 @@ def test_redact_masks_azure_blob_sas_query(mural_module: Any) -> None:
     assert "?***" in result
 
 
+@pytest.mark.parametrize(
+    "host",
+    [
+        "example.blob.core.windows.net",
+        "example.Blob.Core.Windows.Net",
+        "EXAMPLE.BLOB.CORE.WINDOWS.NET",
+    ],
+)
+def test_redact_masks_azure_blob_sas_query_any_host_casing(
+    mural_module: Any, host: str
+) -> None:
+    """Host casing must not defeat redaction.
+
+    ``_validate_asset_url`` admits the URL on its lowercased ``parsed.hostname``,
+    so a mixed-case host reaches the redactor. Before the pattern carried
+    ``(?i)`` the validator accepted URLs the redactor could not mask.
+    Parameters are ordered as Azure emits them, with ``sig`` last.
+    """
+    url = (
+        f"https://{host}/container/blob.png"
+        "?sv=2024-11-04&st=2026-01-01T00%3A00%3A00Z&se=2026-01-01T01%3A00%3A00Z"
+        f"&sr=b&sp=cw&spr=https&sig={SECRET_VALUE}"
+    )
+    result = mural_module._redact(url)
+    assert SECRET_VALUE not in result
+
+
+def test_redact_masks_bare_sas_signature(mural_module: Any) -> None:
+    """A `sig=` with no host prefix still masks.
+
+    Upstream error bodies quote SAS parameters without the URL, and truncation
+    can strip the host, so the signature cannot rely on the host-anchored
+    pattern alone.
+    """
+    result = mural_module._redact(f"sv=2024-11-04&sr=b&sig={SECRET_VALUE}")
+    assert SECRET_VALUE not in result
+    assert "sig=***" in result
+
+
+def test_redact_masks_sas_signature_in_json_error_body(mural_module: Any) -> None:
+    """A signature quoted inside a JSON error body masks without eating the quote."""
+    body = f'{{"detail": "upload rejected for sig={SECRET_VALUE}"}}'
+    result = mural_module._redact(body)
+    assert SECRET_VALUE not in result
+    assert result.endswith('"}')
+
+
 # ---------------------------------------------------------------------------
 # Composition + edge cases
 # ---------------------------------------------------------------------------
