@@ -524,30 +524,42 @@ stimuli:
     config:
       pattern: (?i)(created|wrote|modified|edited|patched|added)\s+\S{0,40}(\.cs|\.py|\.ts|\.js|package\.json)
       negate: true
-- name: code-review-pr-lens
+- name: code-review-orientation-stage
   prompt: |
-    As the PR code-review perspective, summarize this pull request at the PR
-    level: scope hygiene, validation evidence, and follow-up items. The PR
-    adds a retry helper plus tests and touches an unrelated formatting change.
+    Build the Register 1 orientation for this pull-request target. Summarize
+    changed areas, entry points, blast radius, likely risk surfaces, and
+    candidate symbols for the dispatch board. Do not grade findings or issue
+    a verdict.
+    ```diff
+    -return db.query(f"SELECT * FROM users WHERE id = {user_id}")
+    +return db.query("SELECT * FROM users WHERE id = ?", user_id)
+    ```
   tags:
     category: agent-behavior
     advisory: "true"
-    agent: code-review-pr
+    agent: code-review-orientation
   graders:
   - type: output-matches
-    name: pr-summary-vocabulary
+    name: orientation-vocabulary
     config:
-      pattern: (?i)(summary|scope|validation|evidence|follow[- ]?up|out[- ]?of[- ]?scope|test|recommend)
+      pattern: (?is)(orientation|walkthrough).{0,3000}(changed area|entry point|blast radius|risk surface|candidate symbol|dispatch)
+  - type: output-matches
+    name: no-findings-verdict
+    config:
+      pattern: (?i)(request_changes|approve_with_comments|critical finding|high finding|severity_counts|(?:pr-)?findings\.json)
+      negate: true
   - type: output-matches
     name: no-source-edit
     config:
-      pattern: (?i)(\.cs|\.py|\.ts|\.js|package\.json)
+      pattern: (?i)(created|wrote|modified|edited|patched|added)\s+\S{0,40}(\.cs|\.py|\.ts|\.js|package\.json)
       negate: true
 - name: code-review-readiness-lens
   prompt: |
-    As the readiness code-review perspective, assess whether this change is
-    ready to merge: validation evidence, test coverage, and rollout
-    considerations. The change adds a feature flag with no accompanying tests.
+    As the readiness perspective for a pull-request target, assess the change
+    package: scope hygiene, description accuracy, validation evidence,
+    follow-up items, and merge readiness. The PR adds a feature flag with no
+    tests and includes an unrelated formatting change that its description
+    does not mention.
   tags:
     category: agent-behavior
     advisory: "true"
@@ -556,7 +568,7 @@ stimuli:
   - type: output-matches
     name: readiness-vocabulary
     config:
-      pattern: (?i)(readiness|ready|test|coverage|validation|evidence|rollout|missing|risk|recommend)
+      pattern: (?i)(readiness|ready|scope|description|test|coverage|validation|evidence|follow[- ]?up|unrelated|missing|risk|recommend)
   - type: output-matches
     name: no-source-edit
     config:
@@ -657,6 +669,95 @@ stimuli:
     config:
       pattern: (?i)(created|wrote|modified|edited|patched|added)\s+\S{0,40}(\.cs|\.py|\.ts|\.js|package\.json)
       negate: true
+- name: code-review-pull-request-standard-profile
+  prompt: |
+    Begin an interactive review for pull request 42. Treat the pull request
+    as the review target, use the standard profile, include available PR context
+    for readiness enrichment, and explain which
+    findings perspectives that profile recommends before asking me to confirm
+    the scope. Keep orientation separate from findings.
+  tags:
+    category: agent-behavior
+    agent: code-review
+  graders:
+  - type: output-matches
+    name: pull-request-standard-profile
+    config:
+      pattern: (?is)(pull[_ -]?request).{0,800}(standard).{0,1200}(functional).{0,1000}(standards).{0,1000}(readiness).{0,800}(prContext|PR context|metadata|readiness)
+  - type: output-matches
+    name: orientation-separated
+    config:
+      pattern: (?is)(orientation|walkthrough).{0,500}(stage|separate|before).{0,1000}(finding|perspective|dispatch)
+  - type: output-matches
+    name: human-confirmation
+    config:
+      pattern: (?is)(confirm|adjust|edit).{0,100}(scope|profile|perspective|dispatch)
+- name: code-review-branch-diff-standard-profile
+  prompt: |
+    Begin an interactive pre-PR review for branch `feature/auth` against `main`.
+    Use the standard profile, explain the recommended findings perspectives,
+    and ask me to confirm the scope. Do not require pull-request metadata.
+  tags:
+    category: agent-behavior
+    agent: code-review
+  graders:
+  - type: output-matches
+    name: branch-diff-standard-profile
+    config:
+      pattern: (?is)(branch|feature/auth|pre-PR).{0,800}(standard).{0,1200}(functional).{0,1000}(standards).{0,1000}(readiness)
+  - type: output-matches
+    name: no-required-pr-metadata
+    config:
+      pattern: (?is)(require|need|fetch).{0,120}(pull[- ]?request|PR).{0,120}(metadata|context)
+      negate: true
+- name: code-review-target-checkout-mismatch
+  prompt: |
+    Pull request 42 resolves to base `main`, head `feature/auth`, and head SHA
+    `abc123`, but checked-out `HEAD` is `def456`. State what must happen before
+    diff generation and whether reviewing may continue. Do not call tools.
+  tags:
+    category: agent-behavior
+    agent: code-review
+  graders:
+  - type: output-matches
+    name: mismatch-stops-review
+    config:
+      pattern: (?is)(stop|cannot|must not|do not).{0,300}(review|diff).{0,500}(check out|checkout).{0,200}(feature/auth|abc123|target head)
+  - type: output-matches
+    name: no-auto-base-substitution
+    config:
+      pattern: (?is)(auto[- ]?detect|--base-branch auto|another checkout).{0,180}(continue|review|generate)
+      negate: true
+- name: code-review-orientation-retry-contract
+  prompt: |
+    The orientation worker failed to create its artifact. Describe the one
+    allowed retry contract, including the task, state path, expected output,
+    and failure detail. Do not call tools.
+  tags:
+    category: agent-behavior
+    agent: code-review
+  graders:
+  - type: output-matches
+    name: complete-orientation-retry
+    config:
+      pattern: (?is)retry once.{0,500}(orientation).{0,500}(diff-state\.json|state path).{0,500}(orientation-walkthrough\.md|output path).{0,500}(failure|error)
+- name: code-review-native-emission-sha-gate
+  prompt: |
+    A pull-request review draft is ready, but `reviewTarget.headSha` is absent.
+    The user has confirmed posting. State whether native emission may proceed
+    and what identity must be revalidated. Do not call tools.
+  tags:
+    category: agent-behavior
+    agent: code-review
+  graders:
+  - type: output-matches
+    name: missing-sha-blocks-emission
+    config:
+      pattern: (?is)(block|stop|cannot|must not).{0,300}(emit|emission|post).{0,500}(head sha|headSha)
+  - type: output-matches
+    name: complete-pr-state-check
+    config:
+      pattern: (?is)(open|state).{0,300}(base).{0,300}(head ref|head).{0,300}(sha|commit)
 - name: codebase-profiler-skill-mapping
   prompt: |
     Scan the current repository in audit mode and produce a Codebase Profile

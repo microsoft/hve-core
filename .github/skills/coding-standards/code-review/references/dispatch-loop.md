@@ -1,7 +1,7 @@
 ---
 title: Code Review Dispatch Loop
 description: Human-steered review loop, dispatch board contract, and manifest-backed walk-back rules.
-ms.date: 2026-06-20
+ms.date: 2026-08-25
 ---
 
 ## Purpose
@@ -26,6 +26,13 @@ Use a canonical `dispatch-manifest.json` file to track the loop state across the
 
 ```json
 {
+  "reviewTarget": {
+    "kind": "pull_request",
+    "provider": "github",
+    "id": "123",
+    "headSha": "0123456789abcdef"
+  },
+  "reviewProfile": "standard",
   "phaseGates": {
     "orientationConfirmed": true,
     "humanAccepted": false,

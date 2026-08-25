@@ -7,6 +7,34 @@ stimulus_file: evals/agent-behavior/stimuli/code-review.yml
 source_review_date: 2026-07-17
 
 expectations:
+  - expectation_id: review-target-and-profile
+    summary: Review targets and profiles are independent, with standard as the default profile.
+    signal: Output distinguishes target kind from profile and findings perspectives.
+    pass_criteria: |
+      Pull-request, branch-diff, and local-changes reviews default to standard,
+      which recommends Functional, Standards, and Readiness and adds specialist
+      perspectives from detected signals. Orientation is not a findings perspective.
+    failure_modes:
+      - The response dispatches a PR findings lane.
+      - The response dispatches a PR findings lane.
+      - The response binds the standard profile only to pull-request targets.
+      - The response omits Readiness from the standard profile.
+    priority: high
+    contract_ref: "agent §Review Targets and Profiles"
+
+  - expectation_id: pr-context-conditional-enrichment
+    summary: PR enrichment stays conditional on pull-request target context, not on profile.
+    signal: Output distinguishes a pull-request target with prContext from a pre-PR target using the same profile.
+    pass_criteria: |
+      A pull-request target using standard may enrich readiness with PR metadata
+      and state checks when prContext is available. A branch-diff or local-changes
+      target using standard does not require PR metadata before orientation or review.
+    failure_modes:
+      - The response requires PR metadata for a branch-diff or local-changes review.
+      - The response uses the standard profile alone to trigger PR checks or native emission.
+    priority: high
+    contract_ref: "agent §Step 1 Tier 0 Context Bootstrap"
+
   - expectation_id: orientation-and-dispatch-board
     summary: The first response presents factual orientation and a dispatch board.
     signal: Output identifies an orientation or walkthrough and a dispatch board.
@@ -39,3 +67,16 @@ expectations:
       - Applies fixes directly to the reviewed source files.
     priority: high
     contract_ref: "agent review scope and stimulus boundary"
+
+  - expectation_id: stateless-dispatch-contract
+    summary: Fresh-context workers receive serialized task identity and exact output paths.
+    signal: Dispatch state carries task kind and output path, and retries repeat the complete contract.
+    pass_criteria: |
+      Orientation and findings workers can determine their role and output path
+      from diff-state.json plus the current dispatch without relying on prior
+      invocation history.
+    failure_modes:
+      - A retry refers only to a prior invocation.
+      - A worker must infer whether it writes orientation or findings.
+    priority: high
+    contract_ref: "agent §Step 6 Dispatch Selected Perspectives"

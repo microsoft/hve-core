@@ -1,0 +1,31 @@
+# Copyright (c) 2026 Microsoft Corporation. All rights reserved.
+# SPDX-License-Identifier: MIT
+stimuli:
+  - name: code-review-orientation-stage
+    prompt: |
+      Build the Register 1 orientation for this pull-request target. Summarize
+      changed areas, entry points, blast radius, likely risk surfaces, and
+      candidate symbols for the dispatch board. Do not grade findings or issue
+      a verdict.
+      ```diff
+      -return db.query(f"SELECT * FROM users WHERE id = {user_id}")
+      +return db.query("SELECT * FROM users WHERE id = ?", user_id)
+      ```
+    tags:
+      category: agent-behavior
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: orientation-vocabulary
+        config:
+          pattern: '(?is)(orientation|walkthrough).{0,3000}(changed area|entry point|blast radius|risk surface|candidate symbol|dispatch)'
+      - type: output-matches
+        name: no-findings-verdict
+        config:
+          pattern: '(?i)(request_changes|approve_with_comments|critical finding|high finding|severity_counts|(?:pr-)?findings\.json)'
+          negate: true
+      - type: output-matches
+        name: no-source-edit
+        config:
+          pattern: '(?i)(created|wrote|modified|edited|patched|added)\s+\S{0,40}(\.cs|\.py|\.ts|\.js|package\.json)'
+          negate: true
