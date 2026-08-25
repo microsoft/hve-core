@@ -95,11 +95,14 @@ class TestMain:
             "sys.argv", ["gitlab", "--fields", "profile", "auth", "status"]
         )
 
-        with pytest.raises(SystemExit) as exc_info:
-            gitlab.main()
+        assert gitlab.main() == gitlab.EXIT_USAGE
 
-        assert exc_info.value.code == gitlab.EXIT_USAGE
-        assert "--fields is not valid with auth commands" in capsys.readouterr().err
+        # main is the sole emission boundary: it must produce exactly one
+        # redacted "error: ..." line when GITLAB_DEBUG is unset.
+        assert (
+            capsys.readouterr().err
+            == "error: --fields is not valid with auth commands\n"
+        )
 
     @pytest.mark.parametrize(
         "argv",
@@ -118,10 +121,7 @@ class TestMain:
         )
         monkeypatch.setattr("sys.argv", argv)
 
-        with pytest.raises(SystemExit) as exc_info:
-            gitlab.main()
-
-        assert exc_info.value.code == gitlab.EXIT_USAGE
+        assert gitlab.main() == gitlab.EXIT_USAGE
         assert "gitlab auth {login|device-login|status|logout}" in (
             capsys.readouterr().err
         )
@@ -156,10 +156,7 @@ class TestMain:
         monkeypatch.setattr(gitlab, "require_environment", lambda: None)
         monkeypatch.setattr("sys.argv", argv)
 
-        with pytest.raises(SystemExit) as exc_info:
-            gitlab.main()
-
-        assert exc_info.value.code == gitlab.EXIT_USAGE
+        assert gitlab.main() == gitlab.EXIT_USAGE
         assert USAGE_MAIN in capsys.readouterr().err
 
     def test_main_passes_empty_arguments_when_only_fields_are_present(
@@ -170,10 +167,7 @@ class TestMain:
         monkeypatch.setattr(gitlab, "require_environment", lambda: None)
         monkeypatch.setattr("sys.argv", ARGV_FIELDS_ONLY)
 
-        with pytest.raises(SystemExit) as exc_info:
-            gitlab.main()
-
-        assert exc_info.value.code == gitlab.EXIT_USAGE
+        assert gitlab.main() == gitlab.EXIT_USAGE
         assert gitlab.selected_fields == FIELDS_MR
         assert USAGE_MAIN in capsys.readouterr().err
 
@@ -308,7 +302,6 @@ class TestAuthCommands:
         self,
         monkeypatch: pytest.MonkeyPatch,
         tmp_path: pathlib.Path,
-        capsys: pytest.CaptureFixture[str],
     ) -> None:
         store_path = tmp_path / "gitlab" / "gitlab-token.json"
         monkeypatch.setenv("GITLAB_AUTH_MODE", "oauth")
@@ -316,8 +309,8 @@ class TestAuthCommands:
         monkeypatch.setenv("GITLAB_OAUTH_CLIENT_ID", "client")
         monkeypatch.setenv("GITLAB_TOKEN_STORE", str(store_path))
 
-        with pytest.raises(SystemExit) as exc_info:
+        with pytest.raises(gitlab.GitLabError) as exc_info:
             gitlab.cmd_auth_status([])
 
-        assert exc_info.value.code == gitlab.EXIT_USAGE
-        assert "must not be set" in capsys.readouterr().err
+        assert exc_info.value.exit_code == gitlab.EXIT_USAGE
+        assert "must not be set" in str(exc_info.value)

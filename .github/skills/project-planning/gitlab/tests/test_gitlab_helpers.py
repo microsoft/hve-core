@@ -83,15 +83,59 @@ def _network_invocations(source: str, module: str) -> list[tuple[str, str, str]]
     return visitor.invocations
 
 
-class TestDie:
-    """Tests for die."""
+def _is_main_guard(node: ast.AST) -> bool:
+    """Report whether a node is the ``if __name__ == "__main__":`` guard."""
+    if not isinstance(node, ast.If) or not isinstance(node.test, ast.Compare):
+        return False
+    left = node.test.left
+    comparators = node.test.comparators
+    return (
+        isinstance(left, ast.Name)
+        and left.id == "__name__"
+        and len(comparators) == 1
+        and isinstance(comparators[0], ast.Constant)
+        and comparators[0].value == "__main__"
+    )
 
-    def test_prints_error_and_exits(self, capsys: pytest.CaptureFixture[str]) -> None:
-        with pytest.raises(SystemExit) as exc_info:
-            gitlab.die("boom", gitlab.EXIT_USAGE)
 
-        assert exc_info.value.code == gitlab.EXIT_USAGE
-        assert capsys.readouterr().err.strip() == "error: boom"
+def _exit_mechanism_violations(source: str) -> list[str]:
+    """Return violations of the single-failure-mechanism contract.
+
+    ``GitLabError`` is the module's only failure mechanism. Process exit belongs
+    to the ``__main__`` guard alone, so a ``raise SystemExit`` or ``sys.exit``
+    anywhere else, or any ``die`` definition, reintroduces the second mechanism
+    this contract exists to prevent.
+    """
+    tree = ast.parse(source)
+    guarded: set[int] = set()
+    for node in ast.walk(tree):
+        if _is_main_guard(node):
+            for child in ast.walk(node):
+                guarded.add(id(child))
+
+    violations: list[str] = []
+    for node in ast.walk(tree):
+        if id(node) in guarded:
+            continue
+        if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)) and (
+            node.name == "die"
+        ):
+            violations.append("def die")
+        elif isinstance(node, ast.Raise):
+            raised = node.exc
+            if isinstance(raised, ast.Call):
+                raised = raised.func
+            if isinstance(raised, ast.Name) and raised.id == "SystemExit":
+                violations.append("raise SystemExit")
+        elif (
+            isinstance(node, ast.Call)
+            and isinstance(node.func, ast.Attribute)
+            and node.func.attr == "exit"
+            and isinstance(node.func.value, ast.Name)
+            and node.func.value.id == "sys"
+        ):
+            violations.append("sys.exit")
+    return violations
 
 
 class TestRedact:
@@ -288,9 +332,30 @@ class TestSourceContracts:
         self, source: str, expected: str
     ) -> None:
         invocations = _network_invocations(source, "unexpected.py")
-
         assert invocations
         assert invocations[0][1] == expected
+
+    def test_gitlab_error_is_the_only_failure_mechanism(self) -> None:
+        assert _exit_mechanism_violations(SOURCE) == []
+        assert not hasattr(gitlab, "die")
+
+    @pytest.mark.parametrize(
+        ("source", "expected"),
+        [
+            ("def bypass():\n    raise SystemExit(2)\n", "raise SystemExit"),
+            ("def bypass():\n    sys.exit(2)\n", "sys.exit"),
+            ("def die(message):\n    return message\n", "def die"),
+        ],
+    )
+    def test_source_contract_detects_second_failure_mechanism(
+        self, source: str, expected: str
+    ) -> None:
+        assert _exit_mechanism_violations(source) == [expected]
+
+    def test_source_contract_allows_guarded_process_exit(self) -> None:
+        guarded = 'if __name__ == "__main__":\n    sys.exit(main())\n'
+
+        assert _exit_mechanism_violations(guarded) == []
 
     def test_job_log_output_is_redacted(
         self,
@@ -334,16 +399,12 @@ class TestValidateNumericId:
         gitlab.validate_numeric_id(value)
 
     @pytest.mark.parametrize("value", ["", "abc", "12a", "-1", "1.2", " 5 "])
-    def test_rejects_non_numeric_values(
-        self,
-        value: str,
-        capsys: pytest.CaptureFixture[str],
-    ) -> None:
-        with pytest.raises(SystemExit) as exc_info:
+    def test_rejects_non_numeric_values(self, value: str) -> None:
+        with pytest.raises(gitlab.GitLabError) as exc_info:
             gitlab.validate_numeric_id(value)
 
-        assert exc_info.value.code == gitlab.EXIT_USAGE
-        assert f"expected numeric ID, got: {value}" in capsys.readouterr().err
+        assert exc_info.value.exit_code == gitlab.EXIT_USAGE
+        assert f"expected numeric ID, got: {value}" in str(exc_info.value)
 
 
 class TestValidatePositiveInt:
@@ -354,18 +415,13 @@ class TestValidatePositiveInt:
         gitlab.validate_positive_int(value, "max_results")
 
     @pytest.mark.parametrize("value", ["", "ten", "5x", "-2", "3.14"])
-    def test_rejects_invalid_values(
-        self,
-        value: str,
-        capsys: pytest.CaptureFixture[str],
-    ) -> None:
-        with pytest.raises(SystemExit) as exc_info:
+    def test_rejects_invalid_values(self, value: str) -> None:
+        with pytest.raises(gitlab.GitLabError) as exc_info:
             gitlab.validate_positive_int(value, "max_results")
 
-        assert exc_info.value.code == gitlab.EXIT_USAGE
-        assert (
-            f"max_results must be a positive integer, got: {value}"
-            in capsys.readouterr().err
+        assert exc_info.value.exit_code == gitlab.EXIT_USAGE
+        assert f"max_results must be a positive integer, got: {value}" in str(
+            exc_info.value
         )
 
 
@@ -394,16 +450,13 @@ class TestParseFields:
         assert cleaned == ["mr-get", "7"]
         assert gitlab.selected_fields == ["iid", "title"]
 
-    def test_requires_value_after_fields(
-        self, capsys: pytest.CaptureFixture[str]
-    ) -> None:
-        with pytest.raises(SystemExit) as exc_info:
+    def test_requires_value_after_fields(self) -> None:
+        with pytest.raises(gitlab.GitLabError) as exc_info:
             gitlab.parse_fields(["mr-list", "--fields"])
 
-        assert exc_info.value.code == gitlab.EXIT_USAGE
-        assert (
-            "usage: --fields requires a comma-separated value list"
-            in capsys.readouterr().err
+        assert exc_info.value.exit_code == gitlab.EXIT_USAGE
+        assert "usage: --fields requires a comma-separated value list" in str(
+            exc_info.value
         )
 
 
