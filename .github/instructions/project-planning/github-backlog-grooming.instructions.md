@@ -175,6 +175,13 @@ as the assessment status and state the reason when a selected issue was not
 deeply assessed. Include `Distinct` and no-change results. When no issues were
 selected, render `No issues assessed` instead of omitting the table.
 
+For a deferred issue, use `Uncertain` for both `similarity_outcome` and
+`disposition`, state the deferral reason in every assessment-dependent text
+field, and record stable selection and deferral identifiers in
+`repository_evidence`. These values encode incomplete assessment state; they do
+not claim that a deep assessment produced an uncertain result. Use empty
+lineage arrays unless applicable lineage was established before deferral.
+
 In structured report data, every issue includes `lineage_evidence` with exactly
 `original_delivery` and `replacement_or_removal` arrays. Both arrays are
 non-empty and contain distinct stable identifiers for `Superseded`; use empty
@@ -244,6 +251,11 @@ alternative operation. Reject labels, assignees, milestone, state,
 `state_reason`, type, `duplicate_of`, and every other non-allowlisted mutation
 field. Record the issue's RFC 3339 `updated_at` value as `Expected Updated At`
 on every approved grooming operation.
+
+When composing a Grooming Comment that requests more information, use the
+community information-request structure without an automatic-closure deadline,
+closure promise, or reopen instruction. Grooming never closes an issue, so its
+comment must ask only for the evidence needed for reassessment.
 
 `GitHub Backlog Executor` must re-read and compare `Expected Updated At`
 immediately before mutation. A stale skip

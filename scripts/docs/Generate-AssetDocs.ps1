@@ -227,6 +227,28 @@ function Get-AssetDocTemplateSectionBody {
     return $Template.Substring($bodyStart, $endIndex - $bodyStart).Trim("`r", "`n")
 }
 
+function Remove-HowToUseSection {
+    <#
+    .SYNOPSIS
+        Removes the top-level How to use it section from a documentation tail.
+    .PARAMETER Tail
+        Human-authored page content after the generated overview region.
+    .OUTPUTS
+        [string] The tail with the How to use it section removed.
+    #>
+    [CmdletBinding()]
+    [OutputType([string])]
+    param(
+        [Parameter(Mandatory = $true)][AllowEmptyString()][string]$Tail
+    )
+
+    return [regex]::Replace(
+        $Tail,
+        '(?ms)^## How to use it[^\S\r\n]*\r?\n.*?(?=^## |\z)',
+        ''
+    )
+}
+
 function Get-AssetDocPageRelPath {
     <#
     .SYNOPSIS

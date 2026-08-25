@@ -38,7 +38,7 @@ the same report as structured data and stores it as an immutable shard result.
 * Include one result row for every selected issue, including no-change and
   deferred outcomes.
 * Record the stop reason and set the report cursor to the last assessed issue,
-  or to `0` when no issue was assessed.
+  or retain the caller-supplied previous cursor when no issue was assessed.
 * Keep sensitive issue details out of the report.
 
 ## Stop Rules
@@ -49,8 +49,9 @@ needed to render the final report. Mark selected but incomplete issues as
 
 When candidate validation, repository access, or required evidence is
 unavailable, report the missing evidence and use the fail-closed `noop` path
-defined by the workflow and shared policy. Do not invent candidate, assessment,
-or cursor state.
+defined by the workflow and shared policy. A fail-closed `noop` does not emit
+or advance report cursor state. Do not invent candidate, assessment, or cursor
+state.
 
 ## Constraints
 

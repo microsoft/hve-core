@@ -249,6 +249,11 @@ Describe 'Invoke-AssetDocsGeneration interactivity migration' -Tag 'Unit' {
     It 'Removes untouched interactive scaffolding when an existing agent becomes background-only' {
         $repo = New-AssetFixtureRepo
         Invoke-AssetDocsGeneration -RepoRoot $repo -TemplatePath $script:TemplatePath | Out-Null
+        $pagePath = Join-Path $repo 'docs/reference/agents/hve-core/alpha-agent.md'
+        $page = Get-Content -LiteralPath $pagePath -Raw
+        $page = $page -replace 'Provide a concrete example that shows the asset in action, including representative input and the resulting output\.', 'Run the alpha agent with a representative request and preserve this authored example.'
+        Set-Content -LiteralPath $pagePath -Value $page -Encoding utf8NoBOM -NoNewline
+        $expectedTail = [regex]::Match($page, '(?ms)^## Example usage\s*\r?\n.*\z').Value
         $agentPath = Join-Path $repo '.github/agents/hve-core/alpha-agent.agent.md'
         $agent = Get-Content -LiteralPath $agentPath -Raw
         $agent = $agent -replace '(?m)^description:', "user-invocable: false`ndescription:"
@@ -256,11 +261,11 @@ Describe 'Invoke-AssetDocsGeneration interactivity migration' -Tag 'Unit' {
 
         Invoke-AssetDocsGeneration -RepoRoot $repo -TemplatePath $script:TemplatePath | Out-Null
 
-        $content = Get-Content -LiteralPath (Join-Path $repo 'docs/reference/agents/hve-core/alpha-agent.md') -Raw
+        $content = Get-Content -LiteralPath $pagePath -Raw
         $content | Should -Match 'Background agent'
         $content | Should -Match '(?m)^\| Interactive\s+\| No\s+\|$'
         $content | Should -Not -Match '## How to use it'
-        $content | Should -Match '## Example usage'
+        [regex]::Match($content, '(?ms)^## Example usage\s*\r?\n.*\z').Value | Should -BeExactly $expectedTail
     }
 }
 
