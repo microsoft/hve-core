@@ -200,7 +200,7 @@ BeforeAll {
     $script:Lock = Read-RepoFile '.github/workflows/backlog-groom.lock.yml'
     $script:Orchestrator = Read-RepoFile '.github/workflows/backlog-groom-orchestrator.yml'
     $script:Publisher = Read-RepoFile '.github/workflows/backlog-groom-publisher.yml'
-    $script:WaveValidator = Read-RepoFile '.github/actions/backlog-groom-wave-validator/validate.js'
+    $script:WaveValidator = Read-RepoFile 'scripts/security/Invoke-BacklogGroomWaveValidator.ps1'
     $script:DeployDocs = Read-RepoFile '.github/workflows/deploy-docs.yml'
     $script:WorkflowReadme = Read-RepoFile '.github/workflows/README.md'
     $script:Policy = Read-RepoFile '.github/instructions/project-planning/github-backlog-grooming.instructions.md'
@@ -400,19 +400,26 @@ Describe 'Backlog grooming sharded orchestration contracts' -Tag 'Unit' {
         $script:Orchestrator | Should -Not -Match '(?ms)^  assess:.*?secrets: inherit'
         [regex]::Matches($script:Orchestrator, '(?m)^\s+issues: write$').Count | Should -Be 0
         [regex]::Matches($script:Publisher, '(?m)^\s+issues: write$').Count | Should -Be 1
-        $script:WaveValidator | Should -Match 'byShard\.size !== manifest\.shards\.length'
+        $script:WaveValidator | Should -Match '\$ByShard\.Count -ne \$ManifestShards\.Count'
         $script:WaveValidator | Should -Match 'Wave result set is incomplete'
         foreach ($rejection in @('missing', 'stale', 'unexpected', 'duplicate', 'manifest-mismatched')) {
             $script:WaveValidator | Should -Match ([regex]::Escape($rejection))
         }
-        $script:WaveValidator | Should -Match 'exactKeys\(result, \['
+        $script:WaveValidator | Should -Match 'Test-ExactJsonKeys -Element \$Result -Keys \$ResultKeys'
     }
 
     It 'fails closed on invalid shard artifact sets without issue-write access' {
         $script:Orchestrator | Should -Not -Match '(?m)^  inject:$'
         $script:Orchestrator | Should -Not -Match '(?m)^      failure-injection:$'
         $script:Orchestrator | Should -Match '(?m)^  validate-wave:$'
-        $script:Orchestrator | Should -Match 'uses: \./\.github/actions/backlog-groom-wave-validator'
+        $script:Orchestrator | Should -Match '(?ms)^      - name: Validate wave artifacts\s+id: validate\s+shell: pwsh\s+env:'
+        $script:Orchestrator | Should -Match 'MANIFEST_PATH: wave-manifest/manifest\.json'
+        $script:Orchestrator | Should -Match 'RESULTS_DIRECTORY: wave-results'
+        $script:Orchestrator | Should -Match 'AGGREGATE_DIRECTORY: wave-aggregate'
+        $script:Orchestrator | Should -Match 'EXPECTED_RUN_ID: \$\{\{ github\.run_id \}\}'
+        $script:Orchestrator | Should -Match 'EXPECTED_ATTEMPT: \$\{\{ github\.run_attempt \}\}'
+        $script:Orchestrator | Should -Match '\./scripts/security/Invoke-BacklogGroomWaveValidator\.ps1'
+        $script:Orchestrator | Should -Not -Match 'uses: \./\.github/actions/backlog-groom-wave-validator'
         $script:WaveValidator | Should -Match 'Wave manifest digest mismatch'
         $script:WaveValidator | Should -Match 'Missing, duplicate, stale, unexpected, or manifest-mismatched shard result'
         $script:WaveValidator | Should -Match 'Shard result digest mismatch'
@@ -1189,7 +1196,7 @@ Describe 'Backlog grooming sweep reduction publication and documentation contrac
 
     It 'S15 counts deferred and closed-after-capture rows exactly once with a reason' {
         $script:Orchestrator | Should -Match 'deferredRows = rows\.filter\(\(row\) => row\.assessment_status === "Deferred"\)'
-        $script:WaveValidator | Should -Match 'assessedIds\.length \+ deferredIds\.length !== rows\.length'
+        $script:WaveValidator | Should -Match '\$AssessedIds\.Count \+ \$DeferredIds\.Count -ne \$Rows\.Count'
         $script:Agent | Should -Match 'missing, closed, or pull-request entries'
         $script:Source | Should -Match '(?s)Individual\s+candidate retrieval or evidence gaps produce canonical `Deferred` rows'
     }

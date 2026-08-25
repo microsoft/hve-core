@@ -733,13 +733,20 @@ jobs:
           path: wave-results
       - name: Validate wave artifacts
         id: validate
-        uses: ./.github/actions/backlog-groom-wave-validator
-        with:
-          manifest-path: wave-manifest/manifest.json
-          results-directory: wave-results
-          aggregate-directory: wave-aggregate
-          expected-run-id: ${{ github.run_id }}
-          expected-attempt: ${{ github.run_attempt }}
+        shell: pwsh
+        env:
+          MANIFEST_PATH: wave-manifest/manifest.json
+          RESULTS_DIRECTORY: wave-results
+          AGGREGATE_DIRECTORY: wave-aggregate
+          EXPECTED_RUN_ID: ${{ github.run_id }}
+          EXPECTED_ATTEMPT: ${{ github.run_attempt }}
+        run: |
+          ./scripts/security/Invoke-BacklogGroomWaveValidator.ps1 `
+            -ManifestPath $env:MANIFEST_PATH `
+            -ResultsDirectory $env:RESULTS_DIRECTORY `
+            -AggregateDirectory $env:AGGREGATE_DIRECTORY `
+            -ExpectedRunId $env:EXPECTED_RUN_ID `
+            -ExpectedAttempt $env:EXPECTED_ATTEMPT
       - name: Upload immutable wave aggregate
         id: aggregate
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1

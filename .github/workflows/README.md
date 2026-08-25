@@ -138,7 +138,7 @@ authorized manual actions. Local validation does not execute or verify them.
 immutable snapshot of the open issue inventory. An initiation captures the
 ordered issue IDs, cursor order, capacity constants, source revision, and
 content digest. Each nonempty run assesses one wave through at most two
-read-only worker shards, invokes the shared wave validator, and uploads one
+read-only worker shards, invokes the PowerShell wave validator, and uploads one
 immutable aggregate and checkpoint. An empty snapshot skips model workers and
 still produces a validated empty aggregate. A successful nonterminal
 checkpoint dispatches only the next wave. The terminal run authenticates the
@@ -170,7 +170,8 @@ protocol; operators leave the continuation fields at their defaults when
 initiating a sweep. The coordinator passes only artifact identities, digests,
 run identities, the sweep identity, and the next wave number between runs.
 Candidate issue IDs remain inside retained artifacts. Production executes
-`.github/actions/backlog-groom-wave-validator` before checkpoint creation.
+`scripts/security/Invoke-BacklogGroomWaveValidator.ps1` before checkpoint
+creation.
 
 ### Production inputs
 
