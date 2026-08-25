@@ -74,21 +74,30 @@ jobs:
           REPORT_REF: ${{ inputs.report-ref }}
         with:
           script: |
-            const requestedRef = process.env.REPORT_REF || "backlog-grooming-reports";
+            const reportsBranch = "backlog-grooming-reports";
+            const requestedRef = process.env.REPORT_REF;
             try {
-              if (/^[a-f0-9]{40}$/.test(requestedRef)) {
-                await github.rest.git.getCommit({ ...context.repo, commit_sha: requestedRef });
-              } else {
-                const { data: ref } = await github.rest.git.getRef({
-                  ...context.repo,
-                  ref: `heads/${requestedRef}`,
-                });
-                if (ref.object.type !== "commit") throw new Error("Report history ref must resolve to a commit");
+              const { data: reportRef } = await github.rest.git.getRef({
+                ...context.repo,
+                ref: `heads/${reportsBranch}`,
+              });
+              if (reportRef.object.type !== "commit") {
+                throw new Error("Report history branch head must resolve to a commit");
               }
+              if (requestedRef) {
+                if (!/^[a-f0-9]{40}$/.test(requestedRef)) {
+                  throw new Error("Requested report ref must be a full lowercase commit SHA");
+                }
+                if (requestedRef !== reportRef.object.sha) {
+                  throw new Error("Requested report commit must equal the current authenticated report branch head");
+                }
+                await github.rest.git.getCommit({ ...context.repo, commit_sha: requestedRef });
+              }
+              const authenticatedRef = requestedRef || reportRef.object.sha;
               core.setOutput("available", "true");
-              core.setOutput("ref", requestedRef);
+              core.setOutput("ref", authenticatedRef);
             } catch (error) {
-              if (error.status !== 404 || process.env.REPORT_REF) throw error;
+              if (error.status !== 404 || requestedRef) throw error;
               core.info("No backlog grooming report history exists yet");
               core.setOutput("available", "false");
             }

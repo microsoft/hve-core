@@ -2,7 +2,7 @@
 title: GitHub Actions Workflows
 description: Modular CI/CD workflow architecture for validation, security scanning, and automated maintenance
 author: HVE Core Team
-ms.date: 2026-08-24
+ms.date: 2026-08-25
 ms.topic: reference
 keywords:
   - github actions
@@ -55,7 +55,7 @@ Compose multiple reusable workflows for comprehensive validation and security sc
 | `release-stable.yml`              | Published PreRelease; dispatch                          | Reviewed Stable promotion     | Open the target-based `release/prerelease` to `release/stable` promotion PR                  |
 | `release-stable-publish.yml`      | Merged PR to `release/stable`                           | Managed Stable release        | Prepare the managed release PR or publish the verified even-minor release and VSIX assurance |
 | `backlog-groom-orchestrator.yml`  | First-Monday schedule; manual dispatch                  | Advisory multi-run sweep      | Assess one immutable backlog snapshot and retain a complete final aggregate                  |
-| `backlog-groom-publisher.yml`     | Completed sweep, manual replay                          | Authenticated publication     | Publish immutable Pages history and update the compact trusted tracker                       |
+| `backlog-groom-publisher.yml`     | Completed sweep, manual replay                          | Authenticated publication     | Update the compact trusted tracker and optionally publish immutable Pages history             |
 | `weekly-security-maintenance.yml` | Schedule (Sun 2AM UTC)                                  | Soft-fail warnings            | Weekly security posture                                                                      |
 | `scorecard.yml`                   | Push to main, Schedule (Sun 3AM UTC)                    | SARIF upload                  | OpenSSF Scorecard security posture                                                           |
 
@@ -146,6 +146,19 @@ snapshot, every checkpoint, each manifest, and every aggregate against GitHub
 artifact and workflow-run metadata before reconstructing the complete snapshot
 in capture order.
 
+The AW assessment worker is repository-only at
+`.github/agents/backlog-grooming.agent.md`. The worker owns the bounded JSON
+response contract used by `backlog-groom.md`, including deferred-row fields,
+while deterministic workflow code owns provenance, digests, and result
+publication. Root scope intentionally excludes this worker from plugin,
+extension, and generated reference distribution.
+
+Interactive grooming does not dispatch the AW worker. Backlog Manager applies
+`github-backlog-grooming.instructions.md` directly to ordinary issue inventory
+and repository evidence, then returns a compact advisory issue index with
+labeled per-issue details. Only an explicitly approved `Update` or `Comment`
+handoff can proceed to GitHub Backlog Executor, and `Close` remains prohibited.
+
 The reducer retains detailed JSON and Markdown for 30 days and writes the exact
 publisher inputs to its job summary. It does not mutate the tracker. Completion
 activates `backlog-groom-publisher.yml` through the platform `workflow_run`
@@ -153,16 +166,23 @@ event. The publisher resolves the terminal artifact from the completed run,
 authenticates its producer and source revision, revalidates the final aggregate,
 and compares the trusted tracker state before any persistence.
 
-Accepted publication stores escaped HTML, `aggregate.json`, `history.json`, and
-`latest.json` on `backlog-grooming-reports`. The publisher then updates or
-reopens the compact bot-owned tracker and dispatches `deploy-docs.yml` with the
-exact report commit. The existing Docusaurus deployment stages that history at
-`/backlog-grooming/`, so production retains one GitHub Pages deployment. The
-snapshot records the trusted tracker's aggregate digest at capture time.
-Publication is a compare-and-swap: an idempotent replay may use the same final
-digest, otherwise the current tracker digest must equal the final aggregate's
-predecessor digest. A stale or ambiguous aggregate fails before report or
+Core publication revalidates the aggregate and updates or reopens the compact
+bot-owned tracker without report-history or Pages permissions, wording, or
+links. The snapshot records the trusted tracker's aggregate digest at capture
+time. Publication is a compare-and-swap: an idempotent replay may use the same
+final digest, otherwise the current tracker digest must equal the final
+aggregate's predecessor digest. A stale or ambiguous aggregate fails before
 tracker mutation.
+
+Optional report publication is disabled unless the repository variable
+`BACKLOG_GROOM_PUBLISH_GH_PAGES` equals the exact lowercase value `true`. When
+enabled, a downstream non-blocking job stores escaped HTML, `aggregate.json`,
+`history.json`, and `latest.json` on `backlog-grooming-reports`. A separate
+job dispatches `deploy-docs.yml` with the authenticated current branch-head
+SHA. The existing Docusaurus deployment stages that history at
+`/backlog-grooming/`, so production retains one GitHub Pages deployment.
+History or deployment failures do not roll back the completed core tracker
+publication.
 
 The production workflow starts on schedule and also supports manual initiation
 or recovery. Its `workflow_dispatch` inputs form a versioned continuation
@@ -215,13 +235,31 @@ all six values from the terminal reducer summary.
 | Validate and reduce | `actions: read`                                     | Validate immutable artifacts and reconstruct results        |
 | Checkpoint          | `actions: read`                                     | Persist one accepted checkpoint after exact wave validation |
 | Continue            | `actions: write`, `contents: read`                  | Dispatch exactly one authenticated successor                |
-| Publisher           | `actions: read`, `contents: write`, `issues: write` | Persist report history and update the compact tracker       |
-| Pages request       | `actions: write`, `contents: read`                  | Dispatch the existing docs deployment at the report commit  |
+| Core publisher      | `actions: read`, `issues: write`                    | Revalidate the aggregate and update the compact tracker     |
+| Optional history    | `actions: read`, `contents: write`                  | Persist authenticated report history when explicitly enabled |
+| Optional Pages request | `actions: write`, `contents: read`               | Dispatch the existing docs deployment at the report head    |
 
 No job combines `actions: write` with `issues: write`. Candidate issues are
 read-only throughout assessment. The publisher is the only issue-write surface,
 and GitHub activates it only after the terminal orchestrator run completes
 successfully.
+
+### Optional report publication rollout
+
+Keep `BACKLOG_GROOM_PUBLISH_GH_PAGES` unset for the default tracker-only mode.
+Before setting it to `true`, complete this checklist:
+
+1. Enable GitHub Pages with GitHub Actions as its source.
+2. Allow the default branch to deploy to the `github-pages` environment.
+3. Confirm `deploy-docs.yml` succeeds for an ordinary documentation deployment.
+4. Set `BACKLOG_GROOM_PUBLISH_GH_PAGES` to the exact lowercase value `true`.
+5. Confirm the next terminal sweep publishes history, hands off a 40-character
+  branch-head SHA, and requests the documentation deployment.
+
+Rollback by unsetting the variable or changing it to any value other than
+`true`. Tracker publication remains active. After an optional failure, inspect
+the history or deployment job, correct the prerequisite, and replay the exact
+publisher tuple if the report should be retried.
 
 ### Capacity and cost
 
@@ -281,10 +319,10 @@ repository and account billing before approving a large snapshot.
 | Discovery metadata  | At most 500 snapshot and checkpoint candidates are authenticated by producer metadata per discovery pass                                                       |
 | Discovery downloads | Only producer-authenticated snapshot and checkpoint candidates consume the shared 50-download budget per discovery pass                                        |
 | Artifact retrieval  | Cross-run download requires an authenticated token and exact run ID; artifact ID, name, producer workflow, run, source SHA, schema, and digest are revalidated |
-| Artifact retention  | Sweep-critical artifacts use 30-day retention; accepted final reports persist on the report-history branch and Pages                                           |
+| Artifact retention  | Sweep-critical artifacts use 30-day retention; when enabled, accepted final reports persist on the report-history branch and Pages                             |
 | Artifact storage    | Stored bytes count against repository or account quotas; artifact count grows per wave and with reruns                                                         |
 | Dispatch inputs     | GitHub allows 25 top-level `workflow_dispatch` inputs and 65,535 characters; the orchestrator uses nine and the publisher uses six                             |
-| Report size         | The tracker has a 65,000-character guard and excludes per-issue rows; detailed evidence is escaped and published to Pages                                      |
+| Report size         | The tracker has a 65,000-character guard and excludes per-issue rows; enabled optional publication escapes detailed evidence for Pages                          |
 
 See GitHub's [Actions limits](https://docs.github.com/en/actions/reference/limits),
 [REST API rate limits](https://docs.github.com/en/rest/using-the-rest-api/rate-limits-for-the-rest-api),
@@ -310,7 +348,8 @@ account concurrency, and billing limits.
 | API or concurrency throttling                                           | GitHub rejects or delays metadata, download, or dispatch calls  | Unchanged          | Current job fails or remains queued; no partial tracker write | Wait for limits to reset, then resume from the last accepted checkpoint       | Only an unaccepted wave may repeat        |
 | Multiple trusted trackers                                               | Publisher re-resolves more than one trusted bot-owned marker    | Unchanged          | No issue write                                                | Resolve tracker ambiguity manually, then redispatch the exact publisher tuple | No assessment rerun required              |
 | Final reducer fails                                                     | Chain, manifest, aggregate, or exact-set validation fails       | Unchanged          | No final accepted artifact or publication summary             | Repair or rerun the first invalid or missing wave                             | Only unaccepted work should repeat        |
-| Publisher fails                                                         | Metadata, digest, compact report, or issue API validation fails | Unchanged          | Final artifacts remain retained; tracker is not advanced      | Correct the publication blocker and redispatch the same exact tuple           | No assessment rerun required              |
+| Core publisher fails                                                    | Metadata, digest, compact report, or issue API validation fails | Unchanged          | Final artifacts remain retained; tracker is not advanced      | Correct the publication blocker and redispatch the same exact tuple           | No assessment rerun required              |
+| Optional history or Pages publication fails                             | History write, SHA handoff, staging, or deployment fails        | Already advanced   | Core tracker remains published; optional job records failure  | Correct the optional prerequisite and replay the same exact publisher tuple   | No assessment rerun required              |
 
 The production sweep starts on the first Monday of each month at 09:00 UTC. A
 weekly Monday cron reaches the orchestrator, which exits as a calendar no-op

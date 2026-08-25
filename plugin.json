@@ -37,7 +37,6 @@
     ".github/agents/experimental/experiment-designer.agent.md",
     ".github/agents/experimental/pptx.agent.md",
     ".github/agents/experimental/subagents/pptx-subagent.agent.md",
-    ".github/agents/github/backlog-grooming.agent.md",
     ".github/agents/hve-core/documentation.agent.md",
     ".github/agents/hve-core/rpi-agent.agent.md",
     ".github/agents/hve-core/subagents/hve-artifact-tester.agent.md",

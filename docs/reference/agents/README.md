@@ -3,7 +3,7 @@ title: Agents
 description: Reference documentation for HVE Core agents.
 sidebar_position: 0
 author: Microsoft
-ms.date: 2026-08-18
+ms.date: 2026-08-25
 ms.topic: overview
 keywords:
   - reference
@@ -34,7 +34,6 @@ This page lists the generated reference documentation for HVE Core agents.
 | [Experiment Designer](experimental/experiment-designer.md)                                      | Coach for designing a Minimum Viable Experiment (MVE) with hypothesis formation, vetting, and experiment planning                                                                                                                                                                                                               |
 | [PowerPoint Builder](experimental/pptx.md)                                                      | Creates, updates, and manages PowerPoint slide decks using YAML-driven content with python-pptx                                                                                                                                                                                                                                 |
 | [PowerPoint Subagent](experimental/subagents/pptx-subagent.md)                                  | Executes PowerPoint skill operations including content extraction, YAML creation, deck building, and visual validation                                                                                                                                                                                                          |
-| [Backlog Grooming](github/backlog-grooming.md)                                                  | Assesses open GitHub issues for backlog health and returns bounded advisory reports without mutating candidate issues                                                                                                                                                                                                           |
 | [Documentation](hve-core/documentation.md)                                                      | Orchestrates documentation audit, drift, authoring, and validation work through the documentation skill                                                                                                                                                                                                                         |
 | [RPI Agent](hve-core/rpi-agent.md)                                                              | User-selected RPI workflow wrapper for Research, Plan, Implement, Review, and Follow-up. Use when one task needs lifecycle coordination.                                                                                                                                                                                        |
 | [HVE Artifact Tester](hve-core/subagents/hve-artifact-tester.md)                                | Performs contained literal conformance simulation of an HVE artifact and records simulated, emulated, and observed behavior. Dispatched by hve-builder-tester.                                                                                                                                                                  |

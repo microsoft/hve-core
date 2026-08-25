@@ -324,7 +324,9 @@ stimuli:
       negate: true
 - name: backlog-grooming-assesses-large-inventory-advisory-only
   prompt: |
-    Execute one synthetic automated shard from this complete caller contract.
+    Open the repository-only AW worker at
+    `.github/agents/backlog-grooming.agent.md`, then execute one synthetic
+    automated shard from this complete caller contract.
     Do not query or mutate live GitHub state. Treat the hydrated candidates
     and repository evidence below as the completed results of the required
     read-only retrieval and search steps.
@@ -454,13 +456,13 @@ stimuli:
 
     Assess all five candidates in the supplied order. The expected run totals
     are assessed 5, priority cohort 1, round-robin cohort 4, deferred 0, stop
-    reason "completed shard", and next cursor 104. Produce the canonical
-    Backlog Grooming Report with both required populated Markdown tables and
-    the matching shard-result JSON contract. Use these exact table header
-    lines without abbreviating, renaming, or splitting their columns:
+    reason "completed shard", and next cursor 104. Produce the compact
+    Backlog Grooming Report with a labeled run summary, the compact issue
+    index, labeled per-issue details, and the matching shard-result JSON
+    contract. Use this exact issue-index header without abbreviating or
+    renaming its columns:
 
-    | Run timestamp | Total open inventory | Assessed | Priority cohort | Round-robin cohort | Deferred | Stop reason | Next cursor |
-    | Issue | Title | Selection reason | Activity and ownership context | Acceptance signals | Repository evidence | Similarity outcome | Disposition | Grooming finding | Recommended next step | Assessment status |
+    | Issue | Similarity | Disposition | Status | Recommended next step |
 
     Encode the shard-result JSON with exactly the top-level keys `run` and
     `issues`, using the complete schema imported from the Backlog Grooming
@@ -472,13 +474,17 @@ stimuli:
     agent: backlog-grooming
   graders:
   - type: output-matches
-    name: run-summary-table
+    name: labeled-run-summary
     config:
-      pattern: (?i)\|\s*Run timestamp\s*\|\s*Total open inventory\s*\|.*Next cursor\s*\|
+      pattern: (?is)Run timestamp.{0,500}Total open inventory.{0,500}Next cursor
   - type: output-matches
-    name: issue-results-table
+    name: compact-issue-index
     config:
-      pattern: (?i)\|\s*Issue\s*\|\s*Title\s*\|\s*Selection reason\s*\|.*Assessment status\s*\|
+      pattern: (?i)\|\s*Issue\s*\|\s*Similarity\s*\|\s*Disposition\s*\|\s*Status\s*\|\s*Recommended next step\s*\|
+  - type: output-matches
+    name: labeled-issue-details
+    config:
+      pattern: '(?is)Issue #?105.{0,1500}Repository evidence.{0,1500}Assessment status'
   - type: output-matches
     name: coverage-and-taxonomy
     config:
@@ -589,22 +595,46 @@ stimuli:
     config:
       pattern: (?i)Step\s+\d+:\s*(Platform and Intent|Workflow Dispatch|Summary and Handoff)
       negate: true
-- name: backlog-manager-routes-github-grooming-digest
+- name: backlog-manager-performs-workflow-neutral-github-grooming
   prompt: |
-    Review the latest weekly GitHub backlog grooming digest. It recommends a
-    title clarification for #2558 and a maintainer comment on #2601. Classify
-    the workflow, explain the allowed handoff operations, and state the
-    approval and freshness checks required before writeback. Do not execute
-    any GitHub mutation. Explicitly name the `Grooming` classification and
-    state: "Allowed operations are Update and Comment; Close is prohibited."
+    Classify this request as GitHub Grooming, then assess the supplied ordinary
+    issue inventory directly through the reusable grooming policy. Do not
+    invoke a workflow-bound worker, require automation inputs, or execute a
+    GitHub mutation.
+
+    Inventory scope: open issues selected by a maintainer for this review.
+
+    Issue #2558 requests a workflow-neutral grooming policy. Repository
+    evidence shows that
+    `.github/instructions/project-planning/github-backlog-grooming.instructions.md`
+    defines evidence-backed advisory assessment and that Backlog Manager
+    applies it directly. Treat the issue as Distinct and Likely completed.
+
+    Issue #2601 requests automatic closure of inactive issues. Repository
+    evidence contains no implementation and the grooming policy keeps closure
+    advisory and maintainer-owned. Treat the issue as Distinct and Still
+    needed.
+
+    Produce the compact issue index and labeled per-issue details. Explain the
+    allowed handoff operations and the approval and freshness checks required
+    before writeback. Explicitly state: "Allowed operations are Update and
+    Comment; Close is prohibited."
   tags:
     category: agent-behavior
     agent: backlog-manager
   graders:
   - type: output-matches
-    name: grooming-route
+    name: grooming-classification
     config:
-      pattern: (?i)\bgrooming\b|backlog health|grooming digest
+      pattern: (?i)\bGitHub Grooming\b|\bGrooming\b
+  - type: output-matches
+    name: compact-issue-index
+    config:
+      pattern: (?i)\|\s*Issue\s*\|\s*Similarity\s*\|\s*Disposition\s*\|\s*Status\s*\|\s*Recommended next step\s*\|
+  - type: output-matches
+    name: labeled-issue-details
+    config:
+      pattern: '(?is)Issue #?2558.{0,800}Repository evidence.{0,800}Issue #?2601'
   - type: output-matches
     name: non-closing-handoff
     config:
@@ -617,6 +647,11 @@ stimuli:
     name: no-github-mutation
     config:
       pattern: (?i)(updated|closed|commented on)\s+(github\s+)?issue\s*#?\d+
+      negate: true
+  - type: output-matches
+    name: no-aw-contract-dependency
+    config:
+      pattern: (?i)shard[_ -]?id|manifest[_ -]?digest|ordered_candidate_ids|safe[- ]output|publish-backlog-grooming-result
       negate: true
 - name: brd-builder-class-recipe
   prompt: |

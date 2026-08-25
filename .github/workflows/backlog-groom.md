@@ -78,15 +78,21 @@ jobs:
               ...context.repo,
               run_id: context.runId,
             });
-            const trusted =
+            const initialRun =
+              context.eventName === "schedule" &&
+              run.event === "schedule" &&
+              process.env.CONTINUATION_AUTHENTICATED === "false";
+            const continuationRun =
               context.eventName === "workflow_dispatch" &&
               run.event === "workflow_dispatch" &&
+              process.env.CONTINUATION_AUTHENTICATED === "true";
+            const trusted =
+              (initialRun || continuationRun) &&
               run.path === ".github/workflows/backlog-groom-orchestrator.yml" &&
               run.actor?.login === bot &&
               run.triggering_actor?.login === bot &&
               String(run.id) === String(context.runId) &&
               Number(run.run_attempt) === Number(process.env.GITHUB_RUN_ATTEMPT) &&
-              process.env.CONTINUATION_AUTHENTICATED === "true" &&
               String(process.env.ORCHESTRATOR_RUN_ID) === String(context.runId) &&
               Number(process.env.ORCHESTRATOR_ATTEMPT) === Number(process.env.GITHUB_RUN_ATTEMPT);
             core.setOutput("trusted_caller", String(trusted));
@@ -100,7 +106,7 @@ concurrency:
   job-discriminator: ${{ inputs.shard_id || github.run_id }}
 
 imports:
-  - ../agents/github/backlog-grooming.agent.md
+  - ../agents/backlog-grooming.agent.md
   - ../instructions/project-planning/github-backlog-grooming.instructions.md
 
 checkout: false
@@ -110,6 +116,8 @@ permissions:
   issues: read
 
 safe-outputs:
+  threat-detection: false
+  report-failed-jobs: false
   report-failure-as-issue: false
   report-incomplete: false
   missing-tool: false
@@ -194,7 +202,7 @@ safe-outputs:
                 return;
               }
               const runKeys = ["timestamp", "total_open_inventory", "assessed", "priority_cohort", "round_robin_cohort", "deferred", "stop_reason", "next_cursor"];
-              const rowKeys = ["issue", "title", "selection_reason", "activity_and_ownership_context", "acceptance_signals", "repository_evidence", "lineage_evidence", "similarity_outcome", "disposition", "grooming_finding", "recommended_next_step", "assessment_status"];
+              const rowKeys = ["issue", "title", "selection_reason", "activity_and_ownership_context", "acceptance_signals", "repository_evidence", "lineage_evidence", "similarity_outcome", "disposition", "grooming_finding", "recommended_next_step", "assessment_status", "deferral_reason"];
               const lineageKeys = ["original_delivery", "replacement_or_removal"];
               const similarities = new Set(["Match", "Similar", "Distinct", "Uncertain"]);
               const dispositions = new Set(["Still needed", "Likely completed", "Superseded", "Possible duplicate", "Needs correction", "Uncertain"]);
@@ -226,8 +234,20 @@ safe-outputs:
                     !row.lineage_evidence.replacement_or_removal.every((item) => validText(item, 500)) ||
                     !similarities.has(row.similarity_outcome) || !dispositions.has(row.disposition) ||
                     !validText(row.grooming_finding) || !validText(row.recommended_next_step) ||
-                    !statuses.has(row.assessment_status)) {
+                    !statuses.has(row.assessment_status) || typeof row.deferral_reason !== "string" ||
+                    row.deferral_reason.length > 500) {
                   core.setFailed("Report issue data does not match the canonical row schema");
+                  return;
+                }
+                if (row.assessment_status === "Deferred" &&
+                    (!validText(row.deferral_reason, 500) || row.similarity_outcome !== "Uncertain" ||
+                     row.disposition !== "Uncertain" || row.lineage_evidence.original_delivery.length !== 0 ||
+                     row.lineage_evidence.replacement_or_removal.length !== 0)) {
+                  core.setFailed("Deferred rows require a reason, Uncertain outcomes, and empty lineage evidence");
+                  return;
+                }
+                if (row.assessment_status === "Assessed" && row.deferral_reason !== "") {
+                  core.setFailed("Assessed rows cannot include a deferral reason");
                   return;
                 }
                 if ((row.disposition === "Possible duplicate") && !["Match", "Similar"].includes(row.similarity_outcome)) {
@@ -420,24 +440,11 @@ and call `publish-backlog-grooming-result` exactly once with:
 * `completed-at`: the captured UTC assessment completion timestamp
 
 The isolated result job validates report counts, issue identity, caller
-provenance, and timestamp order. It then emits one artifact envelope containing:
-
-* `schema_version`: `backlog-grooming-shard-result/v1`
-* `run_id`: the `orchestrator_run_id` input
-* `attempt`: the `orchestrator_attempt` input
-* `shard_id`: the `shard_id` input
-* `manifest_digest`: the lowercase 64-character `manifest_digest` input
-* `ordered_candidate_ids`: the validated input array
-* `result_digest`: an empty string reserved for deterministic post-processing
-* `producer`: `backlog-groom/result-job`
-* `started_at`: the UTC assessment start timestamp
-* `completed_at`: the UTC assessment completion timestamp
-* `report_data`: the canonical report object for this shard
-
-The deterministic result job owns `result_digest` calculation and immutable
-artifact publication. Never invent a digest or include caller-controlled
-provenance in `report-data`. Return a concise assessment summary after the safe
-output call succeeds.
+provenance, and timestamp order. It alone constructs the immutable artifact
+envelope, calculates its digest, and publishes it. Never include
+caller-controlled provenance in `report-data`. After the safe output call
+succeeds, return only the canonical Backlog Grooming Report required by the
+imported agent.
 
 Call `noop` only when shard input validation fails or a repository-wide access
 failure prevents production of a trustworthy result envelope. Individual

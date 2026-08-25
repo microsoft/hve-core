@@ -425,7 +425,7 @@ function Invoke-BacklogGroomWaveValidation {
     $RowKeys = @(
         'issue', 'title', 'selection_reason', 'activity_and_ownership_context', 'acceptance_signals',
         'repository_evidence', 'lineage_evidence', 'similarity_outcome', 'disposition', 'grooming_finding',
-        'recommended_next_step', 'assessment_status'
+        'recommended_next_step', 'assessment_status', 'deferral_reason'
     )
     $ResultKeys = @(
         'schema_version', 'run_id', 'attempt', 'shard_id', 'manifest_digest',
@@ -483,11 +483,28 @@ function Invoke-BacklogGroomWaveValidation {
         foreach ($Row in $Issues.EnumerateArray()) {
             $Issue = $Row.GetProperty('issue')
             $IssueId = if (Test-SafeJsonInteger -Element $Issue -Minimum 1) { $Issue.GetInt64() } else { -1 }
+            $AssessmentStatus = $Row.GetProperty('assessment_status').GetString()
             if (-not (Test-ExactJsonKeys -Element $Row -Keys $RowKeys) -or
                 $Expected.OrderedCandidateIds -notcontains $IssueId -or
-                $Row.GetProperty('assessment_status').GetString() -notin @('Assessed', 'Deferred') -or
+                $AssessmentStatus -notin @('Assessed', 'Deferred') -or
                 $RowsByIssue.ContainsKey($IssueId)) {
                 throw "Malformed, duplicate, or out-of-shard wave issue $IssueId"
+            }
+            $DeferralReason = $Row.GetProperty('deferral_reason').GetString()
+            $LineageEvidence = $Row.GetProperty('lineage_evidence')
+            $OriginalDelivery = $LineageEvidence.GetProperty('original_delivery')
+            $ReplacementOrRemoval = $LineageEvidence.GetProperty('replacement_or_removal')
+            if ($AssessmentStatus -ceq 'Deferred' -and
+                ([string]::IsNullOrWhiteSpace($DeferralReason) -or
+                $Row.GetProperty('similarity_outcome').GetString() -cne 'Uncertain' -or
+                $Row.GetProperty('disposition').GetString() -cne 'Uncertain' -or
+                $OriginalDelivery.ValueKind -ne [System.Text.Json.JsonValueKind]::Array -or
+                $ReplacementOrRemoval.ValueKind -ne [System.Text.Json.JsonValueKind]::Array -or
+                $OriginalDelivery.GetArrayLength() -ne 0 -or $ReplacementOrRemoval.GetArrayLength() -ne 0)) {
+                throw "Deferred wave issue $IssueId requires a reason, Uncertain outcomes, and empty lineage evidence"
+            }
+            if ($AssessmentStatus -ceq 'Assessed' -and $DeferralReason -cne '') {
+                throw "Assessed wave issue $IssueId cannot include a deferral reason"
             }
             $RowsByIssue[$IssueId] = $Row.Clone()
         }

@@ -14,21 +14,21 @@ Return an evidence-backed advisory report for maintainers without changing
 candidate issues or making unsupported final dispositions.
 
 Follow the shared policy in
-[github-backlog-grooming.instructions.md](../../instructions/project-planning/github-backlog-grooming.instructions.md).
+[github-backlog-grooming.instructions.md](../instructions/project-planning/github-backlog-grooming.instructions.md).
 Use the qualitative similarity framework from the backlog planning instructions
 referenced by that policy.
 
 ## Outcome
 
-The final response contains the canonical run-summary and issue-results
-Markdown tables. Every selected issue appears exactly once with evidence,
-assessment status, and an advisory next step. The calling workflow validates
-the same report as structured data and stores it as an immutable shard result.
+The final response contains the compact Markdown report defined by the shared
+policy. Every selected issue appears exactly once with evidence, assessment
+status, and an advisory next step. The same assessment is submitted once as
+structured JSON for deterministic validation and immutable result publication.
 
 ## Success Criteria
 
 * Validate and assess only the caller-supplied issue numbers, preserving their
-  order and rejecting missing, closed, or pull-request entries.
+  order and representing post-snapshot unavailable entries as `Deferred`.
 * Give every deeply assessed issue exactly one `Match`, `Similar`, `Distinct`,
   or `Uncertain` outcome with supporting evidence.
 * Reconcile every deeply assessed issue with default-branch content, pull
@@ -49,7 +49,7 @@ needed to render the final report. Mark selected but incomplete issues as
 
 When candidate validation, repository access, or required evidence is
 unavailable, report the missing evidence and use the fail-closed `noop` path
-defined by the workflow and shared policy. A fail-closed `noop` does not emit
+defined by the calling workflow. A fail-closed `noop` does not emit
 or advance report cursor state. Do not invent candidate, assessment, or cursor
 state.
 
@@ -70,58 +70,37 @@ state.
 ## Assessment Procedure
 
 1. Validate the caller-supplied ordered candidate IDs, then retrieve exactly
-  those open non-pull-request issues.
+   those open non-pull-request issues.
 2. Hydrate selected issues, including their title, body, comments, activity,
-  ownership, labels, milestone, and linked development context.
+   ownership, labels, milestone, and linked development context.
 3. Extract the concrete requested outcomes and acceptance signals from each
-  selected issue before deciding its disposition.
+   selected issue before deciding its disposition.
 4. Search the default branch code, configuration, and documentation for current
-  implementation or contradiction evidence tied to those outcomes.
+   implementation or contradiction evidence tied to those outcomes.
 5. Search open, merged, and closed pull requests plus open and closed issues for
-  implementation, supersession, duplication, or intentional-removal evidence.
-  Follow explicit links between issues, pull requests, and commits.
-  For `Superseded`, record both the original surface's delivery lineage and its
-  removal or replacement lineage when both are available.
+   implementation, supersession, duplication, or intentional-removal evidence.
+   Follow explicit links between issues, pull requests, and commits.
+   For `Superseded`, record both the original surface's delivery lineage and its
+   removal or replacement lineage when both are available.
 6. Inspect relevant commits or releases when pull-request or issue linkage does
-  not establish the current state. Use `Uncertain` when required repository
-  evidence is unavailable, conflicting, or too weak to support a disposition.
-  Treat unlinked pull requests and commits as valid lineage evidence only when
-  changed paths, delivered behavior, and current default-branch state
-  corroborate the extracted acceptance signals.
+   not establish the current state. Use `Uncertain` when required repository
+   evidence is unavailable, conflicting, or too weak to support a disposition.
+   Treat unlinked pull requests and commits as valid lineage evidence only when
+   changed paths, delivered behavior, and current default-branch state
+   corroborate the extracted acceptance signals.
 7. Assess possible overlap and apply exactly one qualitative similarity outcome
-  plus one repository-grounded disposition to every deeply assessed issue.
+   plus one repository-grounded disposition to every deeply assessed issue.
 8. Record deferred issues, stop reason, and the next cursor.
-9. Render the canonical report and request one validated shard result after
-  every successful assessment. Request `noop` only when the assessment cannot
-  complete according to the calling workflow.
+9. Render the compact report and request one validated shard result after
+   every successful assessment. Request `noop` only when the assessment cannot
+   complete according to the calling workflow.
 
 ## Response Format
 
-Start with a concise `Backlog Grooming Report` heading. Render these two tables
-with populated rows and no substitute schema.
-
-| Run timestamp | Total open inventory | Assessed | Priority cohort | Round-robin cohort | Deferred | Stop reason | Next cursor |
-|---------------|----------------------|----------|-----------------|--------------------|----------|-------------|-------------|
-
-| Issue | Title | Selection reason | Activity and ownership context | Acceptance signals | Repository evidence | Similarity outcome | Disposition | Grooming finding | Recommended next step | Assessment status |
-|-------|-------|------------------|--------------------------------|--------------------|---------------------|--------------------|-------------|------------------|-----------------------|-------------------|
-
-For `Uncertain`, include the uncertainty reason in the grooming finding. For a
-possible `Match` or `Similar` result, include compared issue numbers. Use
-`sensitive context omitted` when a title or detail should not be reproduced.
-When no issues were selected, render `No issues assessed` in the issue-results
-table.
-
-After the tables, include only the shard-result status and any required repair
-guidance. A recommended next step may ask a maintainer to verify and close a
-likely completed or superseded issue, or may propose specific title or body
-corrections when repository evidence shows the issue is inaccurate. Keep the
-recommendation advisory, cite its evidence in the same row, and do not add
-hidden reasoning or an alternate report format.
-
-Before rendering the final response, escape backslashes and pipe characters in
-every text cell, replace line breaks with `<br>`, remove ASCII control
-characters, and insert a zero-width space after `@` in mention-like text.
+Render the compact issue index and labeled per-issue details defined by the
+shared policy. Include the run timestamp, total open inventory, assessed count,
+priority cohort count, round-robin cohort count, deferred count, stop reason,
+and next cursor in a short labeled run summary before the issue index.
 
 For shard-result publication, encode the same report as JSON with exactly `run`
 and `issues` and use this exact schema:
@@ -154,7 +133,8 @@ and `issues` and use this exact schema:
       "disposition": "Still needed",
       "grooming_finding": "non-empty text",
       "recommended_next_step": "non-empty text",
-      "assessment_status": "Assessed"
+      "assessment_status": "Assessed",
+      "deferral_reason": ""
     }
   ]
 }
@@ -173,7 +153,13 @@ negative-search scopes. Each issue also includes `lineage_evidence` with exactly
 arrays contain non-empty, distinct issue, pull-request, commit, release, or path
 identifiers establishing the original delivery and later replacement or
 removal. For other dispositions, use empty arrays when that lineage does not
-apply. Do not rename, add, or omit keys, interpolate issue text into keys, or
-omit a selected issue. Preserve raw text values in JSON; apply cell escaping
-only to the model-facing Markdown. The isolated result job independently
-validates structured values before artifact upload.
+apply. Use an empty `deferral_reason` for `Assessed`. For `Deferred`, use a
+non-empty `deferral_reason`, `Uncertain` similarity and disposition, and empty
+lineage arrays. Do not rename, add, or omit keys, interpolate issue text into
+keys, or omit a selected issue. Preserve raw text values in JSON; apply cell
+escaping only to the model-facing Markdown. The isolated result job
+independently validates structured values before artifact upload.
+
+After the safe output succeeds, return only the compact Markdown report. Do not
+include caller-controlled provenance, a result digest, hidden reasoning, or an
+alternate response shape.

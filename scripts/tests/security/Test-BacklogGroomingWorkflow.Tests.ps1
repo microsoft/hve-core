@@ -196,6 +196,44 @@ BeforeAll {
         return $PriorCursor
     }
 
+    function Get-WorkflowJobSection {
+        param(
+            [Parameter(Mandatory)] [string]$WorkflowSource,
+            [Parameter(Mandatory)] [string]$JobName
+        )
+
+        $jobMatch = [regex]::Match(
+            $WorkflowSource,
+            "(?ms)^  $([regex]::Escape($JobName)):\s+.*?(?=^  [a-z0-9-]+:|\z)"
+        )
+        if (-not $jobMatch.Success) { throw "Workflow job '$JobName' was not found" }
+        return $jobMatch.Value
+    }
+
+    function Test-OptionalPublicationEnabled {
+        param([AllowEmptyString()] [string]$Value)
+
+        return $Value -ceq 'true'
+    }
+
+    function Resolve-AuthenticatedReportRef {
+        param(
+            [AllowEmptyString()] [string]$RequestedRef,
+            [Parameter(Mandatory)] [string]$BranchHead
+        )
+
+        if ($RequestedRef) {
+            if ($RequestedRef -cnotmatch '^[a-f0-9]{40}$') {
+                throw 'Requested report ref must be a full lowercase commit SHA'
+            }
+            if ($RequestedRef -cne $BranchHead) {
+                throw 'Requested report commit must equal the current authenticated report branch head'
+            }
+            return $RequestedRef
+        }
+        return $BranchHead
+    }
+
     $script:Source = Read-RepoFile '.github/workflows/backlog-groom.md'
     $script:Lock = Read-RepoFile '.github/workflows/backlog-groom.lock.yml'
     $script:Orchestrator = Read-RepoFile '.github/workflows/backlog-groom-orchestrator.yml'
@@ -203,8 +241,11 @@ BeforeAll {
     $script:WaveValidator = Read-RepoFile 'scripts/security/Invoke-BacklogGroomWaveValidator.ps1'
     $script:DeployDocs = Read-RepoFile '.github/workflows/deploy-docs.yml'
     $script:WorkflowReadme = Read-RepoFile '.github/workflows/README.md'
+    $script:CorePublisher = Get-WorkflowJobSection -WorkflowSource $script:Publisher -JobName 'publish'
+    $script:HistoryPublisher = Get-WorkflowJobSection -WorkflowSource $script:Publisher -JobName 'publish-history'
+    $script:PagesPublisher = Get-WorkflowJobSection -WorkflowSource $script:Publisher -JobName 'deploy-pages'
     $script:Policy = Read-RepoFile '.github/instructions/project-planning/github-backlog-grooming.instructions.md'
-    $script:Agent = Read-RepoFile '.github/agents/github/backlog-grooming.agent.md'
+    $script:Agent = Read-RepoFile '.github/agents/backlog-grooming.agent.md'
     $script:Manager = Read-RepoFile '.github/agents/project-planning/backlog-manager.agent.md'
     $script:Executor = Read-RepoFile '.github/agents/project-planning/subagents/github-backlog-executor.agent.md'
 }
@@ -215,7 +256,7 @@ Describe 'Backlog grooming workflow source' -Tag 'Unit' {
         $script:Source | Should -Not -Match '(?m)^  schedule:$'
         $script:Source | Should -Not -Match '(?m)^  workflow_dispatch:$'
         $script:Orchestrator | Should -Match '(?m)^  workflow_dispatch:$'
-        $script:Source | Should -Match '(?m)^  - \.\./agents/github/backlog-grooming\.agent\.md$'
+        $script:Source | Should -Match '(?m)^  - \.\./agents/backlog-grooming\.agent\.md$'
         $script:Source | Should -Match '(?m)^  - \.\./instructions/project-planning/github-backlog-grooming\.instructions\.md$'
     }
 
@@ -271,6 +312,8 @@ Describe 'Backlog grooming workflow source' -Tag 'Unit' {
         $script:Source | Should -Match 'Superseded requires distinct original-delivery and replacement-or-removal evidence'
         $script:Source | Should -Match 'assessedRows !== run\.assessed \|\| deferredRows !== run\.deferred'
         $script:Source | Should -Match 'Report row statuses do not match the run counts'
+        $script:Source | Should -Match 'Deferred rows require a reason, Uncertain outcomes, and empty lineage evidence'
+        $script:Source | Should -Match 'Assessed rows cannot include a deferral reason'
         $script:Source | Should -Match 'const canonicalize = \(value\) =>'
         $script:Source | Should -Match '\.createHash\("sha256"\)'
         $script:Source | Should -Match '\.update\(canonicalize\(result\)\)'
@@ -330,7 +373,7 @@ Describe 'Compiled backlog grooming workflow' -Tag 'Unit' {
         $script:Lock | Should -Not -Match 'create_code_scanning_alert'
     }
 
-    It 'requires role authorization and authenticated orchestrator provenance for the continuation bot' {
+    It 'requires role authorization and authenticated orchestrator provenance for initial and continuation bots' {
         $script:Source | Should -Match '(?m)^  bots: \["github-actions\[bot\]"\]$'
         $script:Source | Should -Match '(?ms)^  permissions:\s+actions: read$'
         $script:Source | Should -Match '(?ms)^      continuation_authenticated:\s+.*?required: true\s+type: boolean'
@@ -339,7 +382,13 @@ Describe 'Compiled backlog grooming workflow' -Tag 'Unit' {
         $script:Source | Should -Match 'run\.path === "\.github/workflows/backlog-groom-orchestrator\.yml"'
         $script:Source | Should -Match 'run\.actor\?\.login === bot'
         $script:Source | Should -Match 'run\.triggering_actor\?\.login === bot'
+        $script:Source | Should -Match 'context\.eventName === "schedule"'
+        $script:Source | Should -Match 'run\.event === "schedule"'
+        $script:Source | Should -Match 'process\.env\.CONTINUATION_AUTHENTICATED === "false"'
+        $script:Source | Should -Match 'context\.eventName === "workflow_dispatch"'
+        $script:Source | Should -Match 'run\.event === "workflow_dispatch"'
         $script:Source | Should -Match 'process\.env\.CONTINUATION_AUTHENTICATED === "true"'
+        $script:Source | Should -Match '\(initialRun \|\| continuationRun\)'
         $script:Source | Should -Match 'String\(process\.env\.ORCHESTRATOR_RUN_ID\) === String\(context\.runId\)'
         $script:Source | Should -Match 'Number\(process\.env\.ORCHESTRATOR_ATTEMPT\) === Number\(process\.env\.GITHUB_RUN_ATTEMPT\)'
 
@@ -374,10 +423,12 @@ Describe 'Backlog grooming sharded orchestration contracts' -Tag 'Unit' {
 
         foreach ($field in @(
                 'schema_version', 'run_id', 'attempt', 'shard_id', 'manifest_digest',
-                'ordered_candidate_ids', 'result_digest', 'producer', 'started_at', 'completed_at'
+                'ordered_candidate_ids', 'producer', 'started_at', 'completed_at'
             )) {
-            $script:Source | Should -Match ([regex]::Escape("``$field``"))
+            $script:Source | Should -Match "(?m)^\s+${field}(?::|,)"
         }
+        $script:Source | Should -Match 'const envelope = \{ \.\.\.result, result_digest: resultDigest \}'
+        $script:Source | Should -Not -Match '`result_digest`'
         $script:Orchestrator | Should -Match 'schema_version: "backlog-grooming-sweep-snapshot/v1"'
         $script:Orchestrator | Should -Match 'schema_version: "backlog-grooming-wave-manifest/v1"'
         $script:Orchestrator | Should -Match 'cursor_candidate_ids: cursorIds'
@@ -510,8 +561,11 @@ Describe 'Backlog grooming production publisher' -Tag 'Unit' {
         $script:Publisher | Should -Match '(?m)^  workflow_dispatch:$'
         $script:Publisher | Should -Match '(?ms)^  workflow_run:\s+workflows:\s+- Backlog Grooming Sweep\s+branches:\s+- main\s+types:\s+- completed'
         $script:Publisher | Should -Match 'context\.payload\.workflow_run\?\.id'
+        $script:Publisher | Should -Match 'const manualReplay = !automaticRunId'
+        $script:Publisher | Should -Match 'manualReplay\s+\? parsePositiveInteger\("final-run-id", process\.env\.FINAL_RUN_ID\)'
         $script:Publisher | Should -Match 'run\.head_branch !== repository\.default_branch'
         $script:Publisher | Should -Match 'run\.head_sha !== defaultRef\.object\.sha'
+        $script:Publisher | Should -Match 'Publication requires the current default-branch orchestrator revision'
         $script:Publisher | Should -Match 'Completed orchestrator run is nonterminal; publication is not required'
         $script:Publisher | Should -Match "if: \$\{\{ needs\.discover\.outputs\.terminal == 'true' \}\}"
         $script:Publisher | Should -Match '(?m)^          artifact-ids: \$\{\{ steps\.authenticate\.outputs\.final-artifact-id \}\}$'
@@ -550,20 +604,30 @@ Describe 'Backlog grooming production publisher' -Tag 'Unit' {
     }
 
     It 're-resolves only the trusted bot-owned marker tracker before one create or update' {
-        $script:Publisher | Should -Match 'const marker = "<!-- gh-aw:backlog-grooming-tracker -->"'
-        $script:Publisher | Should -Match 'github\.rest\.issues\.listForRepo'
-        $script:Publisher | Should -Match 'issue\.user\?\.login === "github-actions\[bot\]"'
-        $script:Publisher | Should -Match 'issue\.user\?\.type === "Bot"'
-        $script:Publisher | Should -Match 'Multiple trusted backlog grooming trackers are ambiguous'
-        $script:Publisher | Should -Match 'currentAggregateDigest === aggregate\.aggregate_digest'
-        $script:Publisher | Should -Match 'publication is idempotent'
-        $script:Publisher | Should -Match 'Trusted marker-only tracker accepted for initial publication'
-        $script:Publisher | Should -Match 'aggregate\.predecessor_aggregate_digest !== null'
-        $script:Publisher | Should -Match 'currentAggregateDigest !== aggregate\.predecessor_aggregate_digest'
-        $script:Publisher | Should -Match 'tracker changed after this sweep snapshot was captured'
-        [regex]::Matches($script:Publisher, 'github\.rest\.issues\.create\(').Count | Should -Be 1
-        [regex]::Matches($script:Publisher, 'github\.rest\.issues\.update\(').Count | Should -Be 1
-        $script:Publisher | Should -Match 'title: "Backlog grooming tracker"'
+        $script:CorePublisher | Should -Match 'const marker = "<!-- gh-aw:backlog-grooming-tracker -->"'
+        $script:CorePublisher | Should -Match 'const resolveTrustedTrackerState = async \(\) =>'
+        $script:CorePublisher | Should -Match 'github\.rest\.issues\.listForRepo'
+        $script:CorePublisher | Should -Match 'issue\.user\?\.login === "github-actions\[bot\]"'
+        $script:CorePublisher | Should -Match 'issue\.user\?\.type === "Bot"'
+        $script:CorePublisher | Should -Match 'Multiple trusted backlog grooming trackers are ambiguous'
+        $script:CorePublisher | Should -Match 'mutationTrackerState\.aggregateDigest === aggregate\.aggregate_digest'
+        $script:CorePublisher | Should -Match 'publication is idempotent'
+        $script:CorePublisher | Should -Match 'Trusted marker-only tracker accepted for initial publication'
+        $script:CorePublisher | Should -Match 'aggregate\.predecessor_aggregate_digest !== null'
+        $script:CorePublisher | Should -Match 'initialTrackerState\.aggregateDigest !== aggregate\.predecessor_aggregate_digest'
+        $script:CorePublisher | Should -Match 'tracker changed after this sweep snapshot was captured'
+        [regex]::Matches($script:CorePublisher, 'await resolveTrustedTrackerState\(\)').Count | Should -Be 2
+        $refreshIndex = $script:CorePublisher.LastIndexOf('await resolveTrustedTrackerState()')
+        $mutationIndex = $script:CorePublisher.IndexOf('await github.rest.issues.create({')
+        $mutationIndex | Should -BeGreaterThan $refreshIndex
+        $script:CorePublisher | Should -Match 'mutationTrackerState\.fingerprint !== initialTrackerState\.fingerprint'
+        $script:CorePublisher | Should -Match 'tracker identity or state changed before mutation'
+        $script:CorePublisher | Should -Match 'issue_number: mutationTrackerState\.tracker\.number'
+        $script:CorePublisher | Should -Not -Match 'issue_number: trackers\[0\]\.number'
+        [regex]::Matches($script:CorePublisher, 'github\.rest\.issues\.create\(').Count | Should -Be 1
+        [regex]::Matches($script:CorePublisher, 'github\.rest\.issues\.update\(').Count | Should -Be 1
+        $script:CorePublisher | Should -Match 'title: "Backlog grooming tracker"'
+        $script:HistoryPublisher | Should -Not -Match 'github\.rest\.issues\.'
     }
 
     It 'has no candidate mutation or comment path and writes summary after persistence' {
@@ -575,41 +639,94 @@ Describe 'Backlog grooming production publisher' -Tag 'Unit' {
         $summaryIndex | Should -BeGreaterThan $updateIndex
     }
 
-    It 'persists escaped historical Pages reports and dispatches the existing site deployment' {
-        $script:Publisher | Should -Match '(?m)^      contents: write$'
-        $script:Publisher | Should -Match 'const reportsBranch = "backlog-grooming-reports"'
-        $script:Publisher | Should -Match 'backlog-grooming/sweeps/\$\{reportSlug\}/index\.html'
-        $script:Publisher | Should -Match 'backlog-grooming/history\.json'
-        $script:Publisher | Should -Match 'const escapeHtml = \(value\) =>'
-        $script:Publisher | Should -Match 'github\.rest\.git\.createBlob'
-        $script:Publisher | Should -Match 'github\.rest\.git\.createTree'
-        $script:Publisher | Should -Match 'github\.rest\.git\.createCommit'
-        $script:Publisher | Should -Match '(?ms)^  deploy-pages:.*?permissions:\s+actions: write\s+contents: read'
-        $script:Publisher | Should -Match 'workflow_id: "deploy-docs\.yml"'
+    It 'gates the complete non-blocking optional publication unit with an exact repository variable' {
+        [regex]::Matches(
+            $script:Publisher,
+            "(?m)^    if: \$\{\{ vars\.BACKLOG_GROOM_PUBLISH_GH_PAGES == 'true' \}\}$"
+        ).Count | Should -Be 2
+        [regex]::Matches($script:Publisher, '(?m)^    continue-on-error: true$').Count | Should -Be 2
+        $script:HistoryPublisher | Should -Match '(?ms)^  publish-history:.*?needs:\s+- discover\s+- publish'
+        $script:CorePublisher | Should -Match '(?ms)^  publish:.*?permissions:\s+actions: read\s+issues: write'
+        $script:CorePublisher | Should -Not -Match 'contents: write|GitHub Pages|pagesRoot|reportUrl|backlog-grooming-reports'
+        $script:CorePublisher | Should -Match 'Inspect the \[source workflow run\]'
+        $script:HistoryPublisher | Should -Match '(?ms)permissions:\s+actions: read\s+contents: write'
+        $script:HistoryPublisher | Should -Not -Match 'issues: write'
+        $script:PagesPublisher | Should -Match '(?ms)permissions:\s+actions: write\s+contents: read'
+        $script:PagesPublisher | Should -Not -Match 'issues: write|contents: write'
+    }
+
+    It 'enables optional publication only for the exact lowercase value <Value>' -ForEach @(
+        @{ Value = 'true'; Expected = $true }
+        @{ Value = ''; Expected = $false }
+        @{ Value = 'TRUE'; Expected = $false }
+        @{ Value = 'True'; Expected = $false }
+        @{ Value = 'false'; Expected = $false }
+        @{ Value = '1'; Expected = $false }
+    ) {
+        Test-OptionalPublicationEnabled -Value $Value | Should -Be $Expected
+    }
+
+    It 'persists accessible historical reports before dispatching their authenticated head' {
+        $script:HistoryPublisher | Should -Match 'const reportsBranch = "backlog-grooming-reports"'
+        $script:HistoryPublisher | Should -Match 'backlog-grooming/sweeps/\$\{reportSlug\}/index\.html'
+        $script:HistoryPublisher | Should -Match 'backlog-grooming/history\.json'
+        $script:HistoryPublisher | Should -Match 'const escapeHtml = \(value\) =>'
+        $script:HistoryPublisher | Should -Match 'github\.rest\.git\.createBlob'
+        $script:HistoryPublisher | Should -Match 'github\.rest\.git\.createTree'
+        $script:HistoryPublisher | Should -Match 'github\.rest\.git\.createCommit'
+        $script:HistoryPublisher | Should -Match 'authenticatedReportRef\.object\.sha !== reportCommitSha'
+        $script:HistoryPublisher | Should -Match 'Report history commit is not the current authenticated branch head'
+        $script:HistoryPublisher.IndexOf('authenticatedReportRef.object.sha !== reportCommitSha') |
+            Should -BeLessThan $script:HistoryPublisher.IndexOf('core.setOutput("report-commit-sha", reportCommitSha)')
+        $script:HistoryPublisher | Should -Match '<caption>Issue assessments for \$\{escapeHtml\(reportSlug\)\}</caption>'
+        $script:HistoryPublisher | Should -Match '<caption>Published backlog grooming sweeps</caption>'
+        [regex]::Matches($script:HistoryPublisher, '<th scope=(?:"|\\")col(?:"|\\")>').Count |
+            Should -BeGreaterOrEqual 12
+        [regex]::Matches($script:HistoryPublisher, '<th scope="row">').Count | Should -Be 2
+        $script:HistoryPublisher | Should -Match '<summary>Evidence for issue #\$\{escapeHtml\(row\.issue\)\}</summary>'
+        $script:PagesPublisher | Should -Match 'Authenticated report branch head is required before deployment dispatch'
+        $script:PagesPublisher | Should -Match 'workflow_id: "deploy-docs\.yml"'
+    }
+
+    It 'accepts only the exact authenticated report branch head for enabled deployment' {
+        $head = '0123456789abcdef0123456789abcdef01234567'
+        Resolve-AuthenticatedReportRef -RequestedRef $head -BranchHead $head | Should -BeExactly $head
+        Resolve-AuthenticatedReportRef -RequestedRef '' -BranchHead $head | Should -BeExactly $head
+
+        { Resolve-AuthenticatedReportRef -RequestedRef 'backlog-grooming-reports' -BranchHead $head } |
+            Should -Throw '*full lowercase commit SHA*'
+        { Resolve-AuthenticatedReportRef -RequestedRef 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa' -BranchHead $head } |
+            Should -Throw '*current authenticated report branch head*'
+        { Resolve-AuthenticatedReportRef -RequestedRef 'fedcba9876543210fedcba9876543210fedcba98' -BranchHead $head } |
+            Should -Throw '*current authenticated report branch head*'
+
         $script:DeployDocs | Should -Match '(?m)^      report-ref:$'
-        $script:DeployDocs | Should -Match 'const requestedRef = process\.env\.REPORT_REF \|\| "backlog-grooming-reports"'
+        $script:DeployDocs | Should -Match 'const reportsBranch = "backlog-grooming-reports"'
+        $script:DeployDocs | Should -Match 'if \(!/\^\[a-f0-9\]\{40\}\$/\.test\(requestedRef\)\)'
+        $script:DeployDocs | Should -Match 'requestedRef !== reportRef\.object\.sha'
+        $script:DeployDocs | Should -Match 'const authenticatedRef = requestedRef \|\| reportRef\.object\.sha'
         $script:DeployDocs | Should -Match 'ref: \$\{\{ steps\.reports\.outputs\.ref \}\}'
         $script:DeployDocs | Should -Match 'docs/docusaurus/build/backlog-grooming'
-        $script:Publisher | Should -Match 'View the latest detailed report'
     }
 }
 
 Describe 'Backlog grooming policy and agent' -Tag 'Unit' {
-    It 'requires complete all-open inventory and starvation-free continuation' {
-        $script:Policy | Should -Match 'Every open non-pull-request issue except the workflow-owned marker-bearing'
-        $script:Policy | Should -Match 'Paginate until the complete open-issue\s+metadata inventory'
-        $script:Policy | Should -Match '(?s)beginning after the\s+previous successful run''s cursor'
-        $script:Policy | Should -Match 'Wrap to the start of the inventory'
-        $script:Policy | Should -Match 'Do not impose an age threshold or fixed semantic issue-count limit'
-        $script:Policy | Should -Match 'When no issue requires a maintainer action'
-        $script:Policy | Should -Match '[Tt]he model never supplies the destination\s+issue\s+number'
-        $script:Policy | Should -Match 'create one open issue titled\s+`Backlog\s+grooming tracker`'
-        $script:Policy | Should -Match 'set\s+its state to open in the same update'
+    It 'keeps the reusable policy workflow-neutral' {
+        $script:Policy | Should -Match 'Assess an ordinary GitHub issue inventory'
+        $script:Policy | Should -Match 'When the caller supplies a bounded inventory,\s+assess only that inventory'
+        $script:Policy | Should -Match 'paginate until\s+the complete relevant inventory'
+        $script:Policy | Should -Match 'Do not impose an age threshold as an eligibility rule'
+        foreach ($automationTerm in @('shard', 'manifest', 'digest', 'safe-output', 'safe output', 'artifact', 'checkpoint', 'publisher', 'ordered candidate')) {
+            $script:Policy | Should -Not -Match ([regex]::Escape($automationTerm))
+        }
     }
 
-    It 'defines the canonical tables and qualitative outcomes' {
-        $script:Policy | Should -Match '\| Run timestamp \| Total open inventory \| Assessed \| Priority cohort \| Round-robin cohort \| Deferred \| Stop reason \| Next cursor \|'
-        $script:Policy | Should -Match '\| Issue \| Title \| Selection reason \| Activity and ownership context \| Acceptance signals \| Repository evidence \| Similarity outcome \| Disposition \| Grooming finding \| Recommended next step \| Assessment status \|'
+    It 'defines the compact report and qualitative outcomes' {
+        $script:Policy | Should -Match '\| Issue \| Similarity \| Disposition \| Status \| Recommended next step \|'
+        $script:Policy | Should -Match '### Issue #123: Example title'
+        $script:Policy | Should -Match '\* Repository evidence:'
+        $script:Policy | Should -Match '\* Grooming finding:'
+        $script:Policy | Should -Not -Match '\| Issue \| Title \| Selection reason \| Activity and ownership context \|'
         foreach ($outcome in @('Match', 'Similar', 'Distinct', 'Uncertain')) {
             $script:Policy | Should -Match "\* ``$outcome``"
         }
@@ -619,12 +736,15 @@ Describe 'Backlog grooming policy and agent' -Tag 'Unit' {
         foreach ($key in @('timestamp', 'total_open_inventory', 'assessed', 'priority_cohort', 'round_robin_cohort', 'deferred', 'stop_reason', 'next_cursor')) {
             $script:Agent | Should -Match ([regex]::Escape("`"$key`""))
         }
-        foreach ($key in @('issue', 'title', 'selection_reason', 'activity_and_ownership_context', 'acceptance_signals', 'repository_evidence', 'lineage_evidence', 'original_delivery', 'replacement_or_removal', 'similarity_outcome', 'disposition', 'grooming_finding', 'recommended_next_step', 'assessment_status')) {
+        foreach ($key in @('issue', 'title', 'selection_reason', 'activity_and_ownership_context', 'acceptance_signals', 'repository_evidence', 'lineage_evidence', 'original_delivery', 'replacement_or_removal', 'similarity_outcome', 'disposition', 'grooming_finding', 'recommended_next_step', 'assessment_status', 'deferral_reason')) {
             $script:Agent | Should -Match ([regex]::Escape("`"$key`""))
         }
         $script:Agent | Should -Match 'Use integers without `#` or prose for `issue`, `next_cursor`, and every count'
         $script:Agent | Should -Match 'Use exactly `Assessed` or `Deferred` for `assessment_status`'
+        $script:Agent | Should -Match 'For `Deferred`, use a\s+non-empty `deferral_reason`, `Uncertain` similarity and disposition, and empty\s+lineage arrays'
         $script:Agent | Should -Match 'put compared issue numbers in the finding rather than the\s+enum value'
+        [regex]::Matches($script:Source, 'result_digest').Count | Should -Be 1
+        $script:Source | Should -Match 'return only the canonical Backlog Grooming Report required by the\s+imported agent'
     }
 
     It 'requires repository-grounded dispositions and evidence-backed maintainer actions' {
@@ -637,7 +757,7 @@ Describe 'Backlog grooming policy and agent' -Tag 'Unit' {
         $script:Agent | Should -Match 'unlinked pull requests and commits as valid lineage evidence'
         $script:Policy | Should -Match 'Direct issue linkage is not required'
         $script:Source | Should -Match 'Do not require a direct issue link'
-        $script:Policy | Should -Match '\| Issue \| Title \| Selection reason \| Activity and ownership context \| Acceptance signals \| Repository evidence \| Similarity outcome \| Disposition \|'
+        $script:Policy | Should -Match '\| Issue \| Similarity \| Disposition \| Status \| Recommended next step \|'
         foreach ($disposition in @('Still needed', 'Likely completed', 'Superseded', 'Possible duplicate', 'Needs correction', 'Uncertain')) {
             $script:Policy | Should -Match "\* ``$disposition``"
         }
@@ -649,8 +769,8 @@ Describe 'Backlog grooming policy and agent' -Tag 'Unit' {
     It 'requires complete legacy and replacement lineage for superseded work' {
         $script:Agent | Should -Match 'For `Superseded`, record both the original surface''s delivery lineage and its\s+removal or replacement lineage when both are available'
         $script:Policy | Should -Match 'cite the original\s+surface''s delivery issue or pull request and the later removal or replacement\s+issue or pull request'
-        $script:Policy | Should -Match '`lineage_evidence` with exactly\s+`original_delivery` and `replacement_or_removal` arrays'
-        $script:Policy | Should -Match 'Both arrays are\s+non-empty and contain distinct stable identifiers for `Superseded`'
+        $script:Agent | Should -Match '`lineage_evidence` with exactly\s+`original_delivery` and `replacement_or_removal` arrays'
+        $script:Agent | Should -Match 'For `Superseded`, both\s+arrays contain non-empty, distinct'
     }
 
     It 'defines discriminating evidence rules for representative dispositions' -ForEach @(
@@ -691,10 +811,10 @@ Describe 'Backlog grooming policy and agent' -Tag 'Unit' {
 
     It 'keeps candidate content inert and sensitive output minimized' {
         $script:Agent | Should -Match 'untrusted\s+inert data'
-        $script:Agent | Should -Match 'escape backslashes and pipe characters'
-        $script:Agent | Should -Match 'replace line breaks with `<br>`'
-        $script:Agent | Should -Match 'zero-width space after `@`'
-        $script:Agent | Should -Match 'sensitive context omitted'
+        $script:Policy | Should -Match 'escape backslashes\s+and pipe characters'
+        $script:Policy | Should -Match 'replace line breaks with `<br>`'
+        $script:Policy | Should -Match 'zero-width space\s+after `@`'
+        $script:Policy | Should -Match 'sensitive context omitted'
         $script:Agent | Should -Match 'Do not close, create, edit, assign, milestone, label, or comment on candidate'
     }
 }
@@ -706,6 +826,13 @@ Describe 'Interactive grooming route and fresh-state execution' -Tag 'Unit' {
         }
         $script:Manager | Should -Match '`needs-triage` indicates Triage'
         $script:Manager | Should -Match 'explicit item key or single-entity phrasing scopes the request to Single Item unless the request explicitly reviews a grooming digest'
+    }
+
+    It 'applies reusable grooming policy directly without a child-agent dispatch' {
+        $script:Manager | Should -Not -Match '(?m)^  - Backlog Grooming$'
+        $script:Manager | Should -Match '#file:\.\./\.\./instructions/project-planning/github-backlog-grooming\.instructions\.md'
+        $script:Manager | Should -Match '\| Grooming\s+\| Apply `github-backlog-grooming\.instructions\.md` directly with ordinary GitHub issue inventory and repository evidence'
+        $script:Manager | Should -Match 'Do not dispatch the repository-only AW worker'
     }
 
     It 'limits grooming handoffs to one approved non-closing operation per issue' {
@@ -1072,12 +1199,14 @@ Describe 'Backlog grooming sweep snapshot and checkpoint contracts' -Tag 'Unit' 
     }
 
     It 'S03 partitions snapshot IDs into exhaustive ordered disjoint wave slices' {
-        $ids = @(1..27)
+        $ids = @(9, 2, 7, 12, 3, 8, 1, 11, 4, 10, 6, 5)
         $slices = Get-SweepSlices -IssueIds $ids -WaveCapacity 10
         @($slices | ForEach-Object { $_ }) | Should -Be $ids
-        @($slices | ForEach-Object { $_ } | Select-Object -Unique) | Should -HaveCount 27
-        $slices[0] | Should -Be @(1..10)
-        $slices[2] | Should -Be @(21..27)
+        @($slices | ForEach-Object { $_ } | Select-Object -Unique) | Should -HaveCount 12
+        $slices[0] | Should -Be $ids[0..9]
+        $slices[1] | Should -Be $ids[10..11]
+        $script:Orchestrator | Should -Match 'waveIssueIds = snapshot\.cursor_candidate_ids\.slice'
+        $script:Orchestrator | Should -Not -Match 'waveIssueIds = snapshot\.ordered_issue_ids\.slice'
     }
 
     It 'S04 computes planned sweep AIC with safe finite arithmetic' {
@@ -1172,8 +1301,9 @@ Describe 'Backlog grooming sweep dispatch and recovery contracts' -Tag 'Unit' {
         [regex]::Matches($script:Publisher, '(?m)^\s+issues: write$').Count | Should -Be 1
         [regex]::Matches($script:Orchestrator, '(?m)^\s+actions: write$').Count | Should -Be 2
         $script:Orchestrator | Should -Match '(?ms)^  continue:.*?permissions:\s+actions: write\s+contents: read'
-        $script:Publisher | Should -Match '(?ms)^  publish:.*?permissions:\s+actions: read\s+contents: write\s+issues: write'
-        $script:Publisher | Should -Match '(?ms)^  deploy-pages:.*?permissions:\s+actions: write\s+contents: read'
+        $script:CorePublisher | Should -Match '(?ms)permissions:\s+actions: read\s+issues: write'
+        $script:HistoryPublisher | Should -Match '(?ms)permissions:\s+actions: read\s+contents: write'
+        $script:PagesPublisher | Should -Match '(?ms)permissions:\s+actions: write\s+contents: read'
     }
 }
 
@@ -1191,22 +1321,24 @@ Describe 'Backlog grooming sweep reduction publication and documentation contrac
             [pscustomobject]@{ Issue = 3; Status = 'Assessed' }
         )
         Get-SweepCursor -CursorCandidateIds @(3, 1, 2) -Rows $rows -PriorCursor 9 | Should -Be 1
-        $script:Orchestrator | Should -Match 'const rows = snapshot\.ordered_issue_ids\.map'
+        $script:Orchestrator | Should -Match 'const rows = snapshot\.cursor_candidate_ids\.map'
+        [regex]::Matches($script:Orchestrator, '(?:candidateSnapshot|snapshot)\.cursor_candidate_ids\.slice').Count | Should -BeGreaterOrEqual 4
+        $script:Orchestrator | Should -Not -Match 'snapshot\.ordered_issue_ids\.slice'
     }
 
     It 'S15 counts deferred and closed-after-capture rows exactly once with a reason' {
         $script:Orchestrator | Should -Match 'deferredRows = rows\.filter\(\(row\) => row\.assessment_status === "Deferred"\)'
         $script:WaveValidator | Should -Match '\$AssessedIds\.Count \+ \$DeferredIds\.Count -ne \$Rows\.Count'
-        $script:Agent | Should -Match 'missing, closed, or pull-request entries'
+        $script:Agent | Should -Match 'representing post-snapshot unavailable entries as `Deferred`'
         $script:Source | Should -Match '(?s)Individual\s+candidate retrieval or evidence gaps produce canonical `Deferred` rows'
     }
 
     It 'S16 keeps the trusted tracker compact and inventory-independent' {
-        $script:Publisher | Should -Match 'Compact trusted tracker exceeds 65,000 characters'
-        $script:Publisher | Should -Match 'Detailed per-issue evidence is published to GitHub Pages'
-        $publishSection = $script:Publisher.Substring($script:Publisher.IndexOf("`n  publish:"))
-        $publishSection | Should -Not -Match 'for \(const row of aggregate\.rows\)'
-        $script:Publisher | Should -Match 'View the latest detailed report'
+        $script:CorePublisher | Should -Match 'Compact trusted tracker exceeds 65,000 characters'
+        $script:CorePublisher | Should -Not -Match 'for \(const row of aggregate\.rows\)'
+        $script:CorePublisher | Should -Not -Match 'GitHub Pages|detailed report|report history'
+        $script:CorePublisher | Should -Match 'Inspect the \[source workflow run\]'
+        $script:HistoryPublisher | Should -Match 'View the optional detailed report'
     }
 
     It 'S17 keeps failure injection out of production' {

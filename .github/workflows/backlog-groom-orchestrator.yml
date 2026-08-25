@@ -450,12 +450,13 @@ jobs:
                 for (const [index, entry] of validCheckpoints.entries()) {
                   const current = entry.checkpoint;
                   const expectedWave = index + 1;
-                  const expectedIds = candidateSnapshot.ordered_issue_ids.slice(
+                  const expectedIds = candidateSnapshot.cursor_candidate_ids.slice(
                     index * candidateSnapshot.wave_capacity,
                     (index + 1) * candidateSnapshot.wave_capacity,
                   );
+                  const expectedSortedIds = [...expectedIds].sort((a, b) => a - b);
                   const currentIds = [...current.assessed_issue_ids, ...current.deferred_issue_ids].sort((a, b) => a - b);
-                  if (current.wave_number !== expectedWave || JSON.stringify(currentIds) !== JSON.stringify(expectedIds) ||
+                  if (current.wave_number !== expectedWave || JSON.stringify(currentIds) !== JSON.stringify(expectedSortedIds) ||
                       currentIds.some((issue) => covered.has(issue)) ||
                       current.prior_checkpoint_artifact_id !== (predecessor ? String(predecessor.artifact.id) : null) ||
                       current.prior_checkpoint_run_id !== (predecessor ? String(predecessor.checkpoint.source_run_id) : null) ||
@@ -591,7 +592,7 @@ jobs:
               return;
             }
             const start = (waveNumber - 1) * snapshot.wave_capacity;
-            const waveIssueIds = snapshot.ordered_issue_ids.slice(start, start + snapshot.wave_capacity);
+            const waveIssueIds = snapshot.cursor_candidate_ids.slice(start, start + snapshot.wave_capacity);
             const prioritySet = new Set(snapshot.priority_issue_ids);
             const shards = Array.from({ length: snapshot.shard_count }, (_, index) => ({
               shard_id: `shard-${String(index + 1).padStart(2, "0")}`,
@@ -828,10 +829,11 @@ jobs:
             const deferredIds = JSON.parse(process.env.DEFERRED_IDS);
             const waveIds = [...assessedIds, ...deferredIds].sort((a, b) => a - b);
             const waveNumber = Number("${{ needs.plan.outputs.wave-number }}");
-            const expectedIds = snapshot.ordered_issue_ids.slice(
+            const expectedIds = snapshot.cursor_candidate_ids.slice(
               (waveNumber - 1) * snapshot.wave_capacity,
               waveNumber * snapshot.wave_capacity,
             );
+            const expectedSortedIds = [...expectedIds].sort((a, b) => a - b);
             const manifestKeys = [
               "schema_version", "sweep_id", "snapshot_digest", "wave_number", "required_waves",
               "prior_checkpoint_run_id", "prior_checkpoint_artifact_id", "prior_checkpoint_digest",
@@ -858,9 +860,9 @@ jobs:
                 recordedAggregateDigest !== process.env.AGGREGATE_DIGEST ||
                 JSON.stringify(aggregate.assessed_issue_ids) !== JSON.stringify(assessedIds) ||
                 JSON.stringify(aggregate.deferred_issue_ids) !== JSON.stringify(deferredIds) ||
-                JSON.stringify(waveIds) !== JSON.stringify(expectedIds) ||
+                JSON.stringify(waveIds) !== JSON.stringify(expectedSortedIds) ||
                 JSON.stringify(aggregate.rows.map((row) => row.issue).sort((a, b) => a - b)) !==
-                  JSON.stringify(expectedIds)) {
+                  JSON.stringify(expectedSortedIds)) {
               throw new Error("Checkpoint manifest, aggregate, or wave coverage validation failed");
             }
             let prior = null;
@@ -1111,10 +1113,11 @@ jobs:
             let coveredCount = 0;
             let prior = null;
             for (const item of chain) {
-              const expectedIds = snapshot.ordered_issue_ids.slice(
+              const expectedIds = snapshot.cursor_candidate_ids.slice(
                 (item.wave_number - 1) * snapshot.wave_capacity,
                 item.wave_number * snapshot.wave_capacity,
               );
+              const expectedSortedIds = [...expectedIds].sort((a, b) => a - b);
               const waveIds = [...item.assessed_issue_ids, ...item.deferred_issue_ids].sort((a, b) => a - b);
               const expectedCumulativeDigest = digest({
                 prior: prior?.cumulative_digest ?? null,
@@ -1123,7 +1126,7 @@ jobs:
                 deferred_issue_ids: item.deferred_issue_ids,
               });
               coveredCount += expectedIds.length;
-              if (JSON.stringify(waveIds) !== JSON.stringify(expectedIds) ||
+              if (JSON.stringify(waveIds) !== JSON.stringify(expectedSortedIds) ||
                   item.prior_checkpoint_run_id !== (prior?.source_run_id ?? null) ||
                   item.prior_checkpoint_digest !== (prior?.checkpoint_digest ?? null) ||
                   item.cumulative_covered_count !== coveredCount ||
@@ -1187,7 +1190,7 @@ jobs:
               }
               prior = item;
             }
-            const rows = snapshot.ordered_issue_ids.map((issue) => rowsByIssue.get(issue));
+            const rows = snapshot.cursor_candidate_ids.map((issue) => rowsByIssue.get(issue));
             if (rows.some((row) => !row) || rowsByIssue.size !== snapshot.total_snapshot_count) {
               throw new Error("Final result set does not exactly equal the snapshot");
             }

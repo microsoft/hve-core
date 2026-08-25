@@ -75,12 +75,13 @@ BeforeAll {
                 activity_and_ownership_context = 'active'
                 acceptance_signals = @('signal')
                 repository_evidence = @('evidence')
-                lineage_evidence = [ordered]@{ original_delivery = 'none'; replacement_or_removal = 'none' }
+                lineage_evidence = [ordered]@{ original_delivery = @(); replacement_or_removal = @() }
                 similarity_outcome = 'Distinct'
                 disposition = 'Still needed'
                 grooming_finding = 'Keep'
                 recommended_next_step = 'Refine'
                 assessment_status = 'Assessed'
+                deferral_reason = ''
             },
             [ordered]@{
                 issue = 102
@@ -89,12 +90,13 @@ BeforeAll {
                 activity_and_ownership_context = 'unknown'
                 acceptance_signals = @()
                 repository_evidence = @()
-                lineage_evidence = [ordered]@{ original_delivery = 'none'; replacement_or_removal = 'none' }
+                lineage_evidence = [ordered]@{ original_delivery = @(); replacement_or_removal = @() }
                 similarity_outcome = 'Uncertain'
                 disposition = 'Uncertain'
                 grooming_finding = 'Deferred'
                 recommended_next_step = 'Revisit'
                 assessment_status = 'Deferred'
+                deferral_reason = 'Assessment budget was exhausted'
             }
         )
         $Result = [ordered]@{
@@ -257,6 +259,47 @@ Describe 'Backlog grooming wave validation' -Tag 'Unit' {
                 -ResultsDirectory $Fixture.ResultsDirectory -AggregateDirectory $Fixture.AggregateDirectory `
                 -ExpectedRunId '12345' -ExpectedAttempt 1 } |
             Should -Throw '*Malformed, duplicate, or out-of-shard wave issue 999*'
+    }
+
+    It 'rejects a Deferred row with <InvalidState>' -ForEach @(
+        @{
+            InvalidState = 'no deferral reason'
+            Mutate = { param($Row) $Row.deferral_reason = '' }
+        }
+        @{
+            InvalidState = 'a definitive similarity outcome'
+            Mutate = { param($Row) $Row.similarity_outcome = 'Distinct' }
+        }
+        @{
+            InvalidState = 'a definitive disposition'
+            Mutate = { param($Row) $Row.disposition = 'Still needed' }
+        }
+        @{
+            InvalidState = 'lineage evidence'
+            Mutate = { param($Row) $Row.lineage_evidence.original_delivery = @('PR #1') }
+        }
+    ) {
+        $Fixture = New-ValidWaveFixture -Root (Join-Path $TestDrive "deferred-$InvalidState")
+        & $Mutate $Fixture.Result.report_data.issues[1]
+        Set-TestDigest -Value $Fixture.Result -DigestProperty 'result_digest'
+        Write-TestJson -Value $Fixture.Result -Path $Fixture.ResultPath
+
+        { Invoke-BacklogGroomWaveValidation -ManifestPath $Fixture.ManifestPath `
+                -ResultsDirectory $Fixture.ResultsDirectory -AggregateDirectory $Fixture.AggregateDirectory `
+                -ExpectedRunId '12345' -ExpectedAttempt 1 } |
+            Should -Throw '*Deferred wave issue 102 requires a reason, Uncertain outcomes, and empty lineage evidence*'
+    }
+
+    It 'rejects an Assessed row with a deferral reason' {
+        $Fixture = New-ValidWaveFixture -Root (Join-Path $TestDrive 'assessed-deferral-reason')
+        $Fixture.Result.report_data.issues[0].deferral_reason = 'Not deferred'
+        Set-TestDigest -Value $Fixture.Result -DigestProperty 'result_digest'
+        Write-TestJson -Value $Fixture.Result -Path $Fixture.ResultPath
+
+        { Invoke-BacklogGroomWaveValidation -ManifestPath $Fixture.ManifestPath `
+                -ResultsDirectory $Fixture.ResultsDirectory -AggregateDirectory $Fixture.AggregateDirectory `
+                -ExpectedRunId '12345' -ExpectedAttempt 1 } |
+            Should -Throw '*Assessed wave issue 101 cannot include a deferral reason*'
     }
 
     It 'rejects <Mode> properties at the <Layer> layer' -ForEach @(

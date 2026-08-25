@@ -32,7 +32,7 @@ agents:
     class: unknown
     cost_tier: light
   - slug: backlog-grooming
-    path: '.github/agents/github/backlog-grooming.agent.md'
+    path: '.github/agents/backlog-grooming.agent.md'
     class: unknown
     cost_tier: light
   - slug: backlog-manager
