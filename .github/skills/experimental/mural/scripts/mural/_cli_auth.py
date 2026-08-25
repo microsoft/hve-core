@@ -839,7 +839,7 @@ def _logout_remove_credentials(
         except OSError as exc:
             errors[key] = f"delete failed: {exc}"
             continue
-        removed.append("***")
+        removed.append(key)
     result["removed_keys"] = removed
     if errors:
         result["status"] = "partial" if removed else "error"
