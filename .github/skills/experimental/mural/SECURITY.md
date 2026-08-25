@@ -2,7 +2,7 @@
 title: Mural Skill Security Model
 description: STRIDE threat model for the Mural skill covering browser callback, Mural API egress, on-disk cache, caller input, and Azure SAS uploads
 author: microsoft/hve-core
-ms.date: 2026-08-24
+ms.date: 2026-08-25
 ms.topic: reference
 estimated_reading_time: 18
 keywords:
@@ -23,17 +23,17 @@ This document records the STRIDE threat model for the Mural skill (the `mural` p
 
 ## Executive Summary
 
-The Mural skill is a local Python CLI with an embedded stdio MCP server. It authenticates to Mural with OAuth 2.0 Authorization Code + PKCE, caches access and refresh tokens in the OS keyring (or a `0600` file fallback), and makes authenticated HTTPS calls to the Mural REST API. Its highest-risk behaviors are at-rest credential storage on the operator workstation and the browser-mediated OAuth login flow; both are mitigated in code, with residual gaps tracked in the gap register. The skill runs no public listener (the loopback receiver is single-shot and bound to `127.0.0.1`) and treats all Mural-authored content returned through the CLI as untrusted.
+The Mural skill is a local Python CLI dispatched through `argparse`. It authenticates to Mural with OAuth 2.0 Authorization Code + PKCE, caches access and refresh tokens in the OS keyring (or a `0600` file fallback), and makes authenticated HTTPS calls to the Mural REST API. Its highest-risk behaviors are at-rest credential storage on the operator workstation and the browser-mediated OAuth login flow; both are mitigated in code, with residual gaps tracked in the gap register. The skill runs no public listener (the loopback receiver is single-shot and bound to `127.0.0.1`) and treats all Mural-authored content returned through the CLI as untrusted. An agent caller reaches the skill by invoking the CLI through a terminal tool, so both stdout and stderr are captured into agent context; that is why every output sink routes through the redaction barrier described in B4 rather than only the operator-facing ones.
 
 ### Security Posture Overview
 
-| Dimension          | Value                                                                                |
-|--------------------|--------------------------------------------------------------------------------------|
-| Runtime surface    | REST CLI + embedded stdio MCP server; OAuth Auth Code + PKCE; single-shot loopback   |
-| Trust buckets      | B1 Browser→Loopback, B2 CLI→Mural, B3 cache, B4 caller, B5 Azure SAS upload          |
-| Credentials        | OAuth access/refresh tokens + `client_id`/`client_secret`; OS keyring or `0600` file |
-| Network egress     | HTTPS through separate no-redirect API, token, and Azure SAS upload openers          |
-| Open residual gaps | 10 (EoP-High: no client-side token revocation / refresh-token non-rotation)          |
+| Dimension          | Value                                                                                                |
+|--------------------|------------------------------------------------------------------------------------------------------|
+| Runtime surface    | `argparse` REST CLI consumed by an agent terminal tool; OAuth Auth Code + PKCE; single-shot loopback |
+| Trust buckets      | B1 Browser→Loopback, B2 CLI→Mural, B3 cache, B4 caller, B5 Azure SAS upload                          |
+| Credentials        | OAuth access/refresh tokens + `client_id`/`client_secret`; OS keyring or `0600` file                 |
+| Network egress     | HTTPS through separate no-redirect API, token, and Azure SAS upload openers                          |
+| Open residual gaps | 10 (EoP-High: no client-side token revocation / refresh-token non-rotation)                          |
 
 ## Contents
 
@@ -53,7 +53,7 @@ The Mural skill is a local Python CLI with an embedded stdio MCP server. It auth
 
 ### Components
 
-1. `scripts/mural/` Python package — the CLI entry point, command handlers, and the embedded stdio MCP server.
+1. `scripts/mural/` Python package — the `argparse` CLI entry point and command handlers. The package exports a `MCPInvalidParamsError` validation exception retained for CLI helper compatibility; it implements no JSON-RPC framing, tool dispatch, or stdio server loop.
 2. OAuth login flow (`_run_login`) — opens the browser to Mural's authorization URL and runs a single-shot loopback receiver at `http://127.0.0.1:8765/callback`.
 3. Token store and credential file — per-user cache (`mural-token.json`, mode `0600`) and `mural.{profile}.env`, or the OS keyring backend.
 4. REST and token clients — separate `urllib.request` no-redirect openers for the canonical Mural API and OAuth token endpoint.
@@ -64,7 +64,7 @@ The Mural skill is a local Python CLI with an embedded stdio MCP server. It auth
 ```mermaid
 flowchart TD
     subgraph HOST["Operator Workstation (trust zone)"]
-        CLI["mural CLI / MCP server"]
+        CLI["mural CLI (argparse)"]
         LOOP["Single-shot loopback<br/>127.0.0.1:8765"]
         STORE["Token store + credential file<br/>(keyring or 0600 file)"]
     end
@@ -98,8 +98,8 @@ flowchart TD
 ┌───────────────────────────────────────────────────────────────┐
 │ TRUST BOUNDARY: Operator Workstation                          │
 │  ┌─────────────┐  ┌────────────────┐  ┌────────────────────┐  │
-│  │ mural CLI / │  │ Loopback recv  │  │ Token store +      │  │
-│  │ MCP server │  │ 127.0.0.1:8765 │  │ credential file    │  │
+│  │ mural CLI   │  │ Loopback recv  │  │ Token store +      │  │
+│  │ (argparse)  │  │ 127.0.0.1:8765 │  │ credential file    │  │
 │  └─────────────┘  └────────────────┘  └────────────────────┘  │
 └───────────────┬───────────────────────────────┬───────────────┘
                 │ open browser                  │ HTTPS (TLS)
