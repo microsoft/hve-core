@@ -7,7 +7,7 @@
 .SYNOPSIS
     Prepares the HVE Core VS Code extension from the plugin manifest.
 .DESCRIPTION
-    Reads .github/plugin.json as the sole component authority and writes the
+    Reads root plugin.json as the sole component authority and writes the
     single hve-core extension manifest and README. Component membership is
     identical on every release channel.
 .PARAMETER DryRun
@@ -56,7 +56,7 @@ function Test-PluginComponentPath {
     .SYNOPSIS
     Tests whether a plugin component path is contained and well shaped.
     .PARAMETER Path
-    Manifest-declared path relative to the plugin root.
+    Manifest-declared path relative to the repository root.
     .PARAMETER Shape
     Anchored expression describing the expected artifact shape.
     .OUTPUTS
@@ -97,10 +97,10 @@ function Get-PluginComponent {
     )
 
     $fieldKinds = [ordered]@{
-        agents   = @{ Kind = 'agent'; Shape = '^agents/[^/]+/.+\.agent\.md$' }
-        commands = @{ Kind = 'prompt'; Shape = '^prompts/[^/]+/.+\.prompt\.md$' }
-        rules    = @{ Kind = 'instruction'; Shape = '^instructions/[^/]+/.+\.instructions\.md$' }
-        skills   = @{ Kind = 'skill'; Shape = '^skills/[^/]+/[^/]+$' }
+        agents   = @{ Kind = 'agent'; Shape = '^\.github/agents/[^/]+/.+\.agent\.md$' }
+        commands = @{ Kind = 'prompt'; Shape = '^\.github/prompts/[^/]+/.+\.prompt\.md$' }
+        rules    = @{ Kind = 'instruction'; Shape = '^\.github/instructions/[^/]+/.+\.instructions\.md$' }
+        skills   = @{ Kind = 'skill'; Shape = '^\.github/skills/[^/]+/[^/]+$' }
     }
     $items = @()
     foreach ($field in $fieldKinds.Keys) {
@@ -110,7 +110,7 @@ function Get-PluginComponent {
             if (-not (Test-PluginComponentPath -Path $declared -Shape $fieldKinds[$field].Shape)) {
                 throw "Plugin manifest $field entry '$declared' is not a contained artifact path."
             }
-            $items += @{ Kind = $fieldKinds[$field].Kind; SourcePath = ".github/$declared" }
+            $items += @{ Kind = $fieldKinds[$field].Kind; SourcePath = $declared }
         }
     }
     return [hashtable[]]$items
@@ -428,7 +428,7 @@ function Invoke-PrepareExtension {
     )
 
     try {
-        $manifest = Get-PluginManifest -Path (Join-Path $RepoRoot '.github/plugin.json')
+        $manifest = Get-PluginManifest -Path (Join-Path $RepoRoot 'plugin.json')
         $items = @(Get-PluginComponent -Manifest $manifest)
         if ($items.Count -eq 0) {
             return New-PrepareResult -Success $false -ErrorMessage 'Plugin manifest declares no extension components.'

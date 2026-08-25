@@ -3,7 +3,7 @@ title: HVE Core
 description: Complete HVE Core plugin identity, distribution channels, membership policy, and capability inventory
 sidebar_position: 1
 author: Microsoft
-ms.date: 2026-08-16
+ms.date: 2026-08-19
 ms.topic: reference
 keywords:
   - package
@@ -16,7 +16,7 @@ HVE Core is the single plugin and extension identity for all distributable HVE C
 > [!CAUTION]
 > HVE Core evolves quickly. Evaluate these assets as adaptable engineering patterns, review changes before adoption, and pin an exact release tag when reproducible source is required.
 
-`.github/plugin.json` owns complete membership. `.github/plugin/marketplace.json` contains one `hve-core` entry whose relative source is `.github`; it does not repeat component membership.
+Root `plugin.json` owns complete membership. `.github/plugin/marketplace.json` contains one `hve-core` entry whose relative source is the repository root; it does not repeat component membership. The plugin details view resolves root `README.md` and `LICENSE`, while the VSIX retains its own generated README and license.
 
 Stable and PreRelease contain the same complete agents, prompts, instructions, skills, and telemetry hook. Channel selection changes source ownership, cadence, version, release assurance, and VS Code Marketplace behavior, not membership.
 
@@ -34,17 +34,16 @@ copilot plugin install hve-core@hve-core
 
 Install the extension as `ise-hve-essentials.hve-core`. For a repository-owned subset, use `hve-core-installer` to choose all manifest components or a custom selection. The installer records `selection.profile` and `selection.components` in `.hve-tracking.json` and does not copy hooks.
 
-The full path inventory remains machine-readable in `.github/plugin.json`. Agent, prompt, instruction, and skill reference pages are available under `docs/reference/`.
+The full repository-relative path inventory remains machine-readable in root `plugin.json`. Agent, prompt, instruction, and skill reference pages are available under `docs/reference/`.
 
 ## Component Inventory
 
-| Component kind | Manifest field | Source convention                             |
-|----------------|----------------|-----------------------------------------------|
-| Agents         | `agents`       | `agents/<package>/**/*.agent.md`              |
-| Prompts        | `commands`     | `prompts/<package>/**/*.prompt.md`            |
-| Instructions   | `rules`        | `instructions/<package>/**/*.instructions.md` |
-| Skills         | `skills`       | `skills/<package>/<skill>/SKILL.md`           |
-| Hooks          | `hooks`        | `hooks/shared/telemetry.json`                 |
+| Component kind | Manifest field | Source convention                                     |
+|----------------|----------------|-------------------------------------------------------|
+| Agents         | `agents`       | `.github/agents/<package>/**/*.agent.md`              |
+| Prompts        | `commands`     | `.github/prompts/<package>/**/*.prompt.md`            |
+| Instructions   | `rules`        | `.github/instructions/<package>/**/*.instructions.md` |
+| Skills         | `skills`       | `.github/skills/<package>/<skill>/SKILL.md`           |
 
 ### Capability Areas
 
@@ -54,7 +53,7 @@ The complete plugin includes:
 * HVE Builder authoring, behavior testing, validation, and Vally conformance support
 * Coding standards and code review for multiple languages and infrastructure formats
 * Security, TM7 threat-model generation, supply-chain security, privacy, accessibility, and Responsible AI planning and review
-* Business requirements, product requirements, architecture decisions, performance, and backlog workflows
+* Outcome hypotheses, business requirements, product requirements, architecture decisions, performance, and backlog workflows
 * Azure DevOps, GitHub, GitLab, and Jira integrations
 * Design Thinking, UX, data science, experimentation, diagrams, PowerPoint, voice-over, and demo media tooling
 * Documentation authoring, release workflows, Git operations, and local telemetry foundations

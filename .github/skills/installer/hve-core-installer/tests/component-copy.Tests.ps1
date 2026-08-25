@@ -3,8 +3,15 @@
 # SPDX-License-Identifier: MIT
 
 # Discovery-time capability probe: the Bash parity fixtures execute the real
-# component-copy.sh, which needs both an interpreter and jq.
-$script:BashAvailable = [bool](Get-Command bash -ErrorAction SilentlyContinue) -and [bool](Get-Command jq -ErrorAction SilentlyContinue)
+# component-copy.sh, which needs both an interpreter and jq. On Windows `bash`
+# resolves to the WSL launcher in System32, which cannot execute a script named
+# by a Windows path, so it does not count as an available interpreter.
+$script:BashCommand = Get-Command bash -ErrorAction SilentlyContinue
+if ($IsWindows -and $script:BashCommand -and
+    $script:BashCommand.Source -eq (Join-Path $env:SystemRoot 'System32/bash.exe')) {
+    $script:BashCommand = $null
+}
+$script:BashAvailable = [bool]$script:BashCommand -and [bool](Get-Command jq -ErrorAction SilentlyContinue)
 
 BeforeAll {
     $script:PowerShellScript = (Resolve-Path (Join-Path $PSScriptRoot '../scripts/component-copy.ps1')).Path
@@ -64,17 +71,15 @@ BeforeAll {
             name     = 'hve-core'
             version  = $Version
             agents   = @(
-                'agents/hve-core/rpi-agent.agent.md'
-                'agents/hve-core/subagents/rpi-planner.agent.md'
-                'agents/experimental/pptx.agent.md'
+                '.github/agents/hve-core/rpi-agent.agent.md'
+                '.github/agents/hve-core/subagents/rpi-planner.agent.md'
+                '.github/agents/experimental/pptx.agent.md'
             )
-            commands = @('prompts/hve-core/rpi.prompt.md')
-            rules    = @('instructions/hve-core/copilot-tracking.instructions.md')
-            skills   = @('skills/rpi/rpi-plan')
-            hooks    = 'hooks/shared/telemetry.json'
+            commands = @('.github/prompts/hve-core/rpi.prompt.md')
+            rules    = @('.github/instructions/hve-core/copilot-tracking.instructions.md')
+            skills   = @('.github/skills/rpi/rpi-plan')
         }
-        $pluginManifestPath = Join-Path $source '.github/plugin.json'
-        New-Item -ItemType Directory -Path (Split-Path $pluginManifestPath -Parent) -Force | Out-Null
+        $pluginManifestPath = Join-Path $source 'plugin.json'
         $manifest | ConvertTo-Json -Depth 10 | Set-Content -LiteralPath $pluginManifestPath -NoNewline
 
         Set-Content -LiteralPath (Join-Path $source 'package.json') -Value "{ `"version`": `"$Version`" }" -NoNewline
@@ -165,14 +170,16 @@ Describe 'component-copy parameter contract' -Tag 'Unit' {
     }
 
     It 'Resolves membership from the plugin manifest in the PowerShell implementation' {
-        $script:powerShellSource | Should -Match '\.github/plugin\.json'
+        $script:powerShellSource | Should -Match "Join-Path \`$sourceRoot 'plugin\.json'"
+        $script:powerShellSource | Should -Not -Match '\.github/plugin\.json'
         $script:powerShellSource | Should -Not -Match '(?i)marketplace'
         $script:powerShellSource | Should -Match '\$SelectionName'
         $script:powerShellSource | Should -Match "schemaVersion = \`$schemaVersion"
     }
 
     It 'Resolves membership from the plugin manifest in the Bash implementation' {
-        $script:bashSource | Should -Match '\.github/plugin\.json'
+        $script:bashSource | Should -Match '\$source_root/plugin\.json'
+        $script:bashSource | Should -Not -Match '\.github/plugin\.json'
         $script:bashSource | Should -Not -Match '(?i)marketplace'
         $script:bashSource | Should -Match 'selection_name'
         $script:bashSource | Should -Match 'schemaVersion: \$schema'
@@ -400,18 +407,41 @@ Describe 'component-copy preflight rejection' -Tag 'Unit' {
     }
 
     It 'Rejects a source without a plugin manifest' {
-        Remove-Item -LiteralPath (Join-Path $script:fixture.Source '.github/plugin.json') -Force
+        Remove-Item -LiteralPath (Join-Path $script:fixture.Source 'plugin.json') -Force
 
         { Invoke-ComponentCopy -Fixture $script:fixture -Component @('agents/hve-core/rpi-agent.md') } |
             Should -Throw -ExpectedMessage '*Plugin manifest not found*'
     }
 
     It 'Rejects a plugin manifest that declares no installable component' {
-        '{ "name": "hve-core", "hooks": "hooks/shared/telemetry.json" }' |
-            Set-Content -LiteralPath (Join-Path $script:fixture.Source '.github/plugin.json') -NoNewline
+        '{ "name": "hve-core", "version": "1.0.0" }' |
+            Set-Content -LiteralPath (Join-Path $script:fixture.Source 'plugin.json') -NoNewline
 
         { Invoke-ComponentCopy -Fixture $script:fixture -Component @('agents/hve-core/rpi-agent.md') } |
             Should -Throw -ExpectedMessage '*declares no installable components*'
+    }
+
+    It 'Rejects installable manifest entries outside .github' {
+        $manifestPath = Join-Path $script:fixture.Source 'plugin.json'
+        $manifest = Get-Content -LiteralPath $manifestPath -Raw | ConvertFrom-Json
+        $manifest.agents = @('agents/hve-core/rpi-agent.agent.md')
+        $manifest | ConvertTo-Json -Depth 10 | Set-Content -LiteralPath $manifestPath -NoNewline
+
+        { Invoke-ComponentCopy -Fixture $script:fixture -Component @('agents/hve-core/rpi-agent.md') } |
+            Should -Throw -ExpectedMessage "*must start with '.github/'*"
+    }
+
+    It 'Rejects installable manifest entries outside .github in the Bash implementation' -Skip:(-not $script:BashAvailable) {
+        $bashFixture = New-ComponentCopyFixture
+        $manifestPath = Join-Path $bashFixture.Source 'plugin.json'
+        $manifest = Get-Content -LiteralPath $manifestPath -Raw | ConvertFrom-Json
+        $manifest.agents = @('agents/hve-core/rpi-agent.agent.md')
+        $manifest | ConvertTo-Json -Depth 10 | Set-Content -LiteralPath $manifestPath -NoNewline
+
+        $bashOutput = Invoke-BashComponentCopy -Fixture $bashFixture -Component @('agents/hve-core/rpi-agent.md')
+
+        $LASTEXITCODE | Should -Not -Be 0
+        $bashOutput | Should -Match "must start with '\.github/'"
     }
 }
 
@@ -540,7 +570,7 @@ Describe 'component-copy report-only preflight' -Tag 'Unit' {
 
 Describe 'component-copy production manifest selection' -Tag 'Unit' {
     BeforeAll {
-        # A real subset of .github/plugin.json membership, so the production
+        # A real subset of root plugin.json membership, so the production
         # manifest itself gates the selection rather than a test-local recipe.
         $script:ProductionSelection = @(
             'agents/hve-core/rpi-agent.md'
@@ -660,11 +690,11 @@ Describe 'component-copy PowerShell and Bash parity' -Tag 'Unit' -Skip:(-not $sc
 
     It 'Accepts adjacent dots inside a valid filename in both implementations' {
         $sourceRelative = '.github/agents/hve-core/foo..bar.agent.md'
-        $manifestRelative = 'agents/hve-core/foo..bar.agent.md'
+        $manifestRelative = '.github/agents/hve-core/foo..bar.agent.md'
         $component = 'agents/hve-core/foo..bar.md'
         foreach ($fixture in @($script:powerShellFixture, $script:bashFixture)) {
             Set-Content -LiteralPath (Join-Path $fixture.Source $sourceRelative) -Value '# Adjacent dots' -NoNewline
-            $manifestPath = Join-Path $fixture.Source '.github/plugin.json'
+            $manifestPath = Join-Path $fixture.Source 'plugin.json'
             $manifest = Get-Content -LiteralPath $manifestPath -Raw | ConvertFrom-Json
             $manifest.agents = @($manifest.agents) + $manifestRelative
             $manifest | ConvertTo-Json -Depth 10 | Set-Content -LiteralPath $manifestPath -NoNewline
@@ -749,7 +779,7 @@ Describe 'component-copy PowerShell and Bash parity' -Tag 'Unit' -Skip:(-not $sc
 
     It 'Exits non-zero in both implementations when the plugin manifest is absent' {
         foreach ($fixture in @($script:powerShellFixture, $script:bashFixture)) {
-            Remove-Item -LiteralPath (Join-Path $fixture.Source '.github/plugin.json') -Force
+            Remove-Item -LiteralPath (Join-Path $fixture.Source 'plugin.json') -Force
         }
 
         { Invoke-ComponentCopy -Fixture $script:powerShellFixture -Component @('agents/hve-core/rpi-agent.md') } |

@@ -173,3 +173,19 @@ def test_main_handles_broken_pipe(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(jira, "_print_result", raise_broken_pipe)
 
     assert jira.main() == jira.EXIT_FAILURE
+
+
+def test_main_redacts_unexpected_exception(
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    class FakeParser:
+        def parse_args(self) -> argparse.Namespace:
+            raise RuntimeError("api_token=hidden")
+
+    monkeypatch.setattr(jira, "create_parser", FakeParser)
+
+    assert jira.main() == jira.EXIT_FAILURE
+    captured = capsys.readouterr()
+    assert captured.err.strip() == "error: unexpected Jira CLI failure"
+    assert "hidden" not in captured.err

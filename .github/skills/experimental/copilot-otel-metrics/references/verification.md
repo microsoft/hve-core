@@ -37,6 +37,21 @@ For the Azure path the same principle applies against Log Analytics: a `count` o
 
 Offer `examples/verify.py` when the user wants this run end to end for the local stack. Offer the command, not the execution.
 
+## What the filter reaches is a test result, not a reading of the config
+
+The recurring failure in this skill's history is a claim about running behavior supported only by a static test that read the configuration and confirmed it said the right thing. The configuration saying so and the Collector doing so are different facts, and the second one is the one a user relies on.
+
+`tests/test_collector_carriers.py` is where the difference is settled. It starts the pinned Collector with the shipped configuration, sends payloads placing a distinct marker in each of 28 OTLP carriers, and records for each whether it is dropped, replaced, or passed through unchanged.
+
+Two properties make its output usable as evidence:
+
+* **A paired control run.** The same payloads run against a derivation with the content processors removed, and every marker must appear. Absence under policy only means something if the instrument would have shown the value had it survived; otherwise "dropped by policy" and "never rendered by the exporter" are indistinguishable.
+* **The map is asserted.** A configuration or image change that opens a carrier fails the suite rather than passing quietly.
+
+When a user asks what the filter protects, answer from that module. Its current result: attributes at every level and map-valued log bodies are governed; span status messages, span event names, trace state, the other log body shapes, severity text, and log event names are scrubbed; and span names, metric metadata, span links, metric exemplars, and the instrumentation scope and schema fields pass through — the first pair by choice because dashboards read them, the second pair because no processor in this distribution can reach them, and the last because they are expected to carry only library identity, which is an expectation rather than a control. `SECURITY.md` carries the same table with the gap identifiers.
+
+A skipped run is not a passing run. On a contributor machine with no container runtime the module skips with a stated reason, and that reason says the carrier map was not verified by that run. Where the result is read as evidence rather than as a contribution gate, the skip is not allowed: strict mode turns a missing runtime into a failure, and it is on by default whenever `CI` is set. `COPILOT_OTEL_STRICT_RUNTIME` overrides that in either direction, so a lane with no usable runtime opts out deliberately rather than by silence.
+
 ## Four things that look like failure and are not
 
 **HTTP 200 does not mean stored.** A dropped payload returns `200 {"partialSuccess":{}}`, byte-identical to an accepted one. This is the single most misleading signal in the entire pipeline. Never report success from an export response.
@@ -89,7 +104,7 @@ Re-check after every extension update. When a name cannot be verified in the mom
 Work down this list before assuming something is broken.
 
 1. Was the window reloaded after the settings change? These settings are read at startup.
-2. Was the setting written to the file that actually resolves? Application-scoped settings come from the default profile regardless of the active profile.
+2. Was the setting written to the file that actually resolves? This depends on the scope the installed build declares. Where a key is application-scoped it comes from the default profile regardless of the active profile; where it declares no scope the active profile's file applies. The global file is correct under either, so check it first.
 3. Is a policy or environment variable overriding the setting? **Developer: Policy Diagnostics** answers the policy half.
 4. Is the backend actually up and listening on the endpoint the setting names?
 5. Has any Copilot activity occurred since the reload? An idle editor emits nothing.

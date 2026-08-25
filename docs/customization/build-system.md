@@ -2,7 +2,7 @@
 title: Build System and Validation
 description: Understand plugin manifest synchronization, schema validation, npm scripts, and CI checks for customizing HVE Core
 author: Microsoft
-ms.date: 2026-08-13
+ms.date: 2026-08-19
 ms.topic: how-to
 keywords:
   - build system
@@ -15,7 +15,7 @@ estimated_reading_time: 8
 
 ## Plugin Manifest Synchronization
 
-`.github/plugin.json` is the deterministic distribution manifest for the one `hve-core` plugin and VSIX.
+Root `plugin.json` is the deterministic distribution manifest for the one `hve-core` plugin and VSIX. Its component paths are repository-relative, while discovery remains scoped to eligible package directories under `.github`.
 
 `npm run plugin:sync` runs `Sync-PluginManifest.ps1`, which derives agents, prompts, instructions, and distributable skills from git-tracked package-scoped paths. It preserves plugin metadata, synchronizes the repository version, and retains the fixed telemetry hook.
 
@@ -29,7 +29,7 @@ npm run plugin:validate
 ```
 
 > [!IMPORTANT]
-> The Copilot plugin root is `.github`. Do not create a copied plugin tree or plugin ZIP.
+> The Copilot plugin root is the repository root. Do not create a copied plugin tree or plugin ZIP; keep distributable artifacts in their canonical `.github` package directories.
 
 ## Schema Validation System
 

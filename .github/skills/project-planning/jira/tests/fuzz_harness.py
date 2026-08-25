@@ -94,6 +94,14 @@ def fuzz_clamp_max_results(data: bytes) -> None:
         jira._clamp_max_results(value)
 
 
+def fuzz_validate_cloud_id(data: bytes) -> None:
+    """Fuzz scoped Cloud ID path-segment validation."""
+    provider = atheris.FuzzedDataProvider(data)
+    value = provider.ConsumeUnicodeNoSurrogates(provider.remaining_bytes())
+    with suppress(jira.ScriptError):
+        jira._validate_cloud_id(value)
+
+
 FUZZ_TARGETS = [
     fuzz_extract_error_message,
     fuzz_validate_issue_key,
@@ -102,6 +110,7 @@ FUZZ_TARGETS = [
     fuzz_read_json_argument,
     fuzz_validate_project_key,
     fuzz_clamp_max_results,
+    fuzz_validate_cloud_id,
 ]
 
 

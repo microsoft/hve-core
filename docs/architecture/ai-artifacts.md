@@ -3,7 +3,7 @@ title: AI Artifacts Architecture
 description: Prompt, agent, and instruction delegation model for Copilot customizations
 sidebar_position: 2
 author: Microsoft
-ms.date: 2026-08-13
+ms.date: 2026-08-19
 ms.topic: concept
 keywords:
   - ai artifacts
@@ -215,9 +215,9 @@ Copilot discovers skills automatically when their description matches the curren
 
 ## Plugin Identity
 
-`.github/plugin.json` is the sole component-membership authority for the `hve-core` plugin and VSIX. `.github/plugin/marketplace.json` contains one relative locator to the `.github` plugin root and does not repeat membership.
+Root `plugin.json` is the sole component-membership authority for the `hve-core` plugin and VSIX. `.github/plugin/marketplace.json` contains one relative locator to the repository root and does not repeat membership. The plugin details surface resolves root `README.md` and `LICENSE`; the VSIX keeps `extension/README.md` and `extension/LICENSE` as its separate metadata surface.
 
-The one product identity includes every distributable agent, prompt, instruction, and skill plus the fixed telemetry hook. Stable and PreRelease use the same manifest membership.
+The one product identity includes every distributable agent, prompt, instruction, and skill. Stable and PreRelease use the same manifest membership.
 
 ### Deterministic Membership
 
@@ -228,7 +228,7 @@ The one product identity includes every distributable agent, prompt, instruction
 * `instructions/<package>/**/*.instructions.md`
 * `skills/<package>/<skill>/SKILL.md`, unless its top-level license has a noncommercial qualifier
 
-Repository-root artifacts without a package segment are excluded. Paths are unique and ordinal-sorted. The telemetry hook is fixed at `hooks/shared/telemetry.json`.
+Repository-root artifacts without a package segment are excluded. Paths are unique and ordinal-sorted. The manifest declares a hook only while one ships under the plugin root; the repository ships none today.
 
 `npm run plugin:validate` checks manifest drift, one-entry locator parity and containment, declared component coverage, and hooks without modifying files.
 
@@ -249,19 +249,19 @@ The extension scans these directories at startup:
 * `.github/instructions/{package-id}/` for technology standards
 * `.github/skills/{package-id}/` for utility packages
 
-These paths reflect the conventional directory structure. Artifact inclusion is controlled by `.github/plugin.json`. Root-level artifacts (files directly under `.github/{type}/` with no subdirectory) are repo-specific, excluded from discovery, and never packaged into extension builds.
+These paths reflect the conventional directory structure. Artifact inclusion is controlled by root `plugin.json`, whose declarations are repository-relative `.github/...` paths. Artifacts directly under `.github/{type}/` with no package subdirectory are repo-specific, excluded from discovery, and never packaged into extension builds.
 
 Stable and PreRelease differ in source ownership, cadence, and version, not component membership.
 
 ### Extension Identities
 
-HVE Core has one Copilot plugin root at `.github` and one VSIX identity, `ise-hve-essentials.hve-core`.
+HVE Core has one Copilot plugin root at the repository root and one VSIX identity, `ise-hve-essentials.hve-core`. Artifact discovery remains bounded to eligible package-scoped paths under `.github`.
 
 The VS Code extension is prepared with `Prepare-Extension.ps1` and packaged with `Package-Extension.ps1`. Both Stable and PreRelease preparation write the same component set to the single extension manifest and README. No Copilot package assembly step exists.
 
-The plugin includes the telemetry hook. VS Code has no declarative hook contribution point, so extension users configure its location manually.
+The plugin ships no hooks. Telemetry is opt-in through the `copilot-otel-metrics` skill, which the user installs and configures deliberately.
 
-For a repository-owned selection, the installer validates chosen component paths against `.github/plugin.json`. It copies agents, prompts, instructions, and complete distributable skill directories while preserving repository-relative paths; hooks are not copied.
+For a repository-owned selection, the installer validates chosen component paths against root `plugin.json`. It converts repository-relative manifest declarations to installer form, then copies agents, prompts, instructions, and complete distributable skill directories while preserving canonical `.github` target paths; hooks are not copied.
 
 ### Activation Context
 

@@ -3,7 +3,7 @@ title: HVE Core Identity and Channels
 description: Understand the single HVE Core identity and its development, PreRelease, and Stable channels
 sidebar_position: 3
 author: Microsoft
-ms.date: 2026-08-13
+ms.date: 2026-08-19
 ms.topic: overview
 keywords:
   - packages
@@ -15,7 +15,7 @@ keywords:
 
 HVE Core publishes one plugin named `hve-core` and one VS Code extension named `ise-hve-essentials.hve-core`.
 
-`.github/plugin.json` is the deterministic membership authority for both products. `.github/plugin/marketplace.json` contains one `hve-core` locator whose relative source is `.github`; it does not repeat component membership.
+Root `plugin.json` is the deterministic membership authority for both products. `.github/plugin/marketplace.json` contains one `hve-core` locator whose relative source is the repository root; it does not repeat component membership. Plugin clients resolve root README and LICENSE, while the VSIX packages `extension/README.md` and `extension/LICENSE`.
 
 ## Stable and PreRelease
 
@@ -37,9 +37,9 @@ Source moves in one direction through reviewed target-based promotion PRs:
 no tag. Release-please opens a separate managed PR on the target branch, and
 merging that PR creates the channel's exact tag and draft release.
 
-`main` is not a release-please target. It is a ref-less development-tip channel, so a marketplace refresh followed by a plugin update resolves current `main` content from `.github`. Release branches, tags, and published releases own release state and history; PreRelease publication does not synchronize versions or `CHANGELOG.md` state back into `main`.
+`main` is not a release-please target. It is a ref-less development-tip channel, so a marketplace refresh followed by a plugin update resolves current `main` content from the repository root. Release branches, tags, and published releases own release state and history; PreRelease publication does not synchronize versions or `CHANGELOG.md` state back into `main`.
 
-The plugin root remains `.github` on every branch and exact tag. The extension identity remains `ise-hve-essentials.hve-core` on both Marketplace channels.
+The plugin root remains the repository root on every branch and exact tag, with artifact discovery bounded to package-scoped `.github` paths. The extension identity remains `ise-hve-essentials.hve-core` on both Marketplace channels.
 
 Release branches are reviewed moving channels. Registering a branch resolves its current committed manifest and source, while an exact tag fixes both catalog selection and source content.
 

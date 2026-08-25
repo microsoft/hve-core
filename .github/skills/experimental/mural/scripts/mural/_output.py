@@ -47,6 +47,11 @@ __all__ = [
 ]
 
 LOGGER = logging.getLogger("mural")
+# _emit prints to stderr itself. Without a handler, logging's lastResort
+# fallback would also write every WARNING-or-above record to stderr, printing
+# those messages twice. The NullHandler suppresses that while leaving the
+# logger available to an embedder that configures its own handlers.
+LOGGER.addHandler(logging.NullHandler())
 
 _HTML_TAG_RE = re.compile(r"<[^>]+>")
 

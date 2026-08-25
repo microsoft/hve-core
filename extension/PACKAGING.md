@@ -2,7 +2,7 @@
 title: Extension Packaging Guide
 description: Developer guide for packaging and publishing the HVE Core VS Code extension
 author: Microsoft
-ms.date: 2026-08-13
+ms.date: 2026-08-19
 ms.topic: reference
 ---
 
@@ -92,7 +92,7 @@ packages one VSIX from the release tag, attaches the same VSIX assurance plus
 Stable OpenVEX, and publishes the release with an App token. The resulting
 event triggers Stable Marketplace publication.
 
-Release branches and exact tags retain the relative `.github` plugin root. Their reviewed, immutable VSIX assets remain release-gated, SBOM-covered, and attested. The ref-less main catalog represents `main`, receives no post-release synchronization, and requires an explicit marketplace refresh and plugin update; its bytes have no release gate, SBOM, or attestation.
+Release branches and exact tags retain the repository-root plugin source from their selected snapshots. Their reviewed, immutable VSIX assets remain release-gated, SBOM-covered, and attested. The ref-less main catalog represents `main`, receives no post-release synchronization, and requires an explicit marketplace refresh and plugin update; its bytes have no release gate, SBOM, or attestation.
 
 The moving registrations are `microsoft/hve-core#release/prerelease` and
 `microsoft/hve-core#release/stable`; immutable registrations use
@@ -109,7 +109,7 @@ patch or hotfix needs a separate explicit manifest and release-state decision.
 
 ## Packaging Pipeline Overview
 
-Extension packaging is a two-step process: **Prepare** maps `.github/plugin.json`
+Extension packaging is a two-step process: **Prepare** maps root `plugin.json`
 into VS Code contributions, then **Package** stages its tracked files, runs the
 pinned `vsce`, and cleans up.
 
@@ -132,11 +132,11 @@ flowchart LR
 
 ### Manifest Projection
 
-The prepare step reads `.github/plugin.json` and maps each declared component to its canonical `.github` source and VS Code contribution type. Hooks are omitted because VS Code has no declarative hook contribution point.
+The prepare step reads root `plugin.json` and maps each repository-relative `.github/...` component to its VS Code contribution type. Hooks are omitted because VS Code has no declarative hook contribution point. Root `README.md` and `LICENSE` are plugin metadata, not extension contributions; the VSIX retains `extension/README.md` and `extension/LICENSE`.
 
 ```mermaid
 flowchart TB
-    MANIFEST["Plugin Manifest<br/>.github/plugin.json"] --> AG[Agents]
+    MANIFEST["Plugin Manifest<br/>plugin.json"] --> AG[Agents]
     MANIFEST --> PR[Commands to Prompts]
     MANIFEST --> IN[Rules to Instructions]
     MANIFEST --> SK[Skills]
@@ -171,7 +171,7 @@ npm run extension:prepare:prerelease
 
 The preparation script automatically:
 
-* Reads identity, description, and membership from `.github/plugin.json`
+* Reads identity, description, and membership from root `plugin.json`
 * Maps canonical source paths to VS Code contribution kinds
 * Refreshes the one HVE Core extension manifest and README
 * Writes HVE Core's VS Code contribution paths
@@ -300,7 +300,7 @@ patch or hotfix remains a separate explicit manifest and release-state
 decision.
 
 Each managed PR synchronizes `package.json`, `package-lock.json`,
-`extension/templates/package.template.json`, `.github/plugin.json`,
+`extension/templates/package.template.json`, root `plugin.json`,
 `.github/plugin/marketplace.json`, the channel manifest, and `CHANGELOG.md` on
 its release branch.
 `Prepare-Extension.ps1` generates `extension/package.json` from the template
@@ -399,7 +399,7 @@ See [Plugin Membership](../docs/contributing/ai-artifacts-common.md#plugin-membe
 
 ## Marketplace Build
 
-`.github/plugin.json` defines the complete extension membership. `.github/plugin/marketplace.json` provides one relative `hve-core` locator for Copilot CLI registration.
+Root `plugin.json` defines the complete extension membership. `.github/plugin/marketplace.json` provides one relative `hve-core` locator to the repository root for Copilot CLI registration. Extension preparation consumes only manifest-declared `.github` components and does not add root plugin metadata to contribution membership.
 
 Prepare and package directly:
 

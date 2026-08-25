@@ -65,9 +65,14 @@ from ._exceptions import (
     MuralValidationError,
     ResponseTooLarge,
 )
-from ._validation import _validate_asset_url
+from ._validation import (
+    _canonicalize_api_base_url,
+    _validate_api_path,
+    _validate_asset_url,
+)
 
 LOGGER = logging.getLogger("mural")
+REQUEST_TIMEOUT_SECONDS = 30
 
 
 def _pkg() -> Any:
@@ -167,7 +172,16 @@ def _parse_rate_limit_headers(
 
 
 class _NoRedirect(urllib.request.HTTPRedirectHandler):
-    """Redirect handler that refuses redirects on the OAuth token endpoint."""
+    """Redirect handler that refuses credential-bearing redirects."""
+
+    def __init__(
+        self,
+        error_code: str = "TOKEN_REDIRECT",
+        context: str = "token endpoint",
+    ) -> None:
+        super().__init__()
+        self.error_code = error_code
+        self.context = context
 
     def _block(
         self,
@@ -177,11 +191,10 @@ class _NoRedirect(urllib.request.HTTPRedirectHandler):
         msg: str,
         headers: Any,
     ) -> Any:
-        location = headers.get("Location", "<unknown>") if headers else "<unknown>"
         raise MuralAPIError(
             code,
-            "TOKEN_REDIRECT",
-            f"token endpoint attempted redirect to {location}",
+            self.error_code,
+            f"{self.context} refused HTTP redirect",
         )
 
     http_error_301 = _block
@@ -192,6 +205,12 @@ class _NoRedirect(urllib.request.HTTPRedirectHandler):
 
 
 _TOKEN_OPENER = urllib.request.build_opener(_NoRedirect())
+_API_OPENER = urllib.request.build_opener(
+    _NoRedirect("API_REDIRECT", "Mural API request")
+)
+_SAS_OPENER = urllib.request.build_opener(
+    _NoRedirect("ASSET_UPLOAD_REDIRECT", "asset upload")
+)
 
 
 def _read_capped(stream: Any, limit: int) -> bytes:
@@ -287,7 +306,7 @@ def _refresh_access_token(
     )
     LOGGER.debug("POST %s", _redact(token_url))
     try:
-        with _http(request) as resp:  # type: ignore[arg-type]
+        with _http(request, timeout=REQUEST_TIMEOUT_SECONDS) as resp:  # type: ignore[arg-type]
             data = _parse_token_response(resp)
             status = getattr(resp, "status", 200)
     except urllib.error.HTTPError as exc:
@@ -314,13 +333,18 @@ def _authenticated_request(
     env: dict[str, str] | None = None,
     profile: str | None = None,
     _now: Callable[[], float] = time.time,
-    _http: Callable[..., Any] = urllib.request.urlopen,
+    _http: Callable[..., Any] = _API_OPENER.open,
+    _token_http: Callable[..., Any] = _TOKEN_OPENER.open,
     _sleep: Callable[[float], None] = time.sleep,
     _bucket: _TokenBucket | None = None,
 ) -> Any | None:
     """Perform an authenticated request with refresh, retry, and backoff."""
     src = env if env is not None else os.environ
-    base = base_url or src.get(ENV_BASE_URL) or MURAL_BASE_URL_DEFAULT
+    base = _canonicalize_api_base_url(
+        base_url or src.get(ENV_BASE_URL) or MURAL_BASE_URL_DEFAULT,
+        env=src,
+    )
+    relative_path = _validate_api_path(path)
     client_id = src.get(ENV_CLIENT_ID)
     if not client_id:
         raise MuralError(f"{ENV_CLIENT_ID} is not set")
@@ -353,13 +377,13 @@ def _authenticated_request(
             client_id=client_id,
             client_secret=client_secret,
             token_url=MURAL_TOKEN_URL,
-            _http=_http,
+            _http=_token_http,
             _now=_now,
             profile_name=profile_name,
         )
         profile_data = _select_profile(store, profile_name)
 
-    url = _join_url(base, path, params)
+    url = _join_url(base, relative_path, params)
     encoded: bytes | None = None
     headers = {
         "User-Agent": USER_AGENT,
@@ -383,7 +407,7 @@ def _authenticated_request(
         )
         LOGGER.debug("%s %s", method.upper(), _redact(url))
         try:
-            with _http(request) as resp:  # type: ignore[arg-type]
+            with _http(request, timeout=REQUEST_TIMEOUT_SECONDS) as resp:  # type: ignore[arg-type]
                 status = getattr(resp, "status", 200)
                 body_bytes = _read_capped(resp, MURAL_MAX_BODY_BYTES)
                 _parse_rate_limit_headers(resp.headers, bucket=_bucket)
@@ -404,7 +428,7 @@ def _authenticated_request(
                     client_id=client_id,
                     client_secret=client_secret,
                     token_url=MURAL_TOKEN_URL,
-                    _http=_http,
+                    _http=_token_http,
                     _now=_now,
                     profile_name=profile_name,
                 )
@@ -440,10 +464,8 @@ def _authenticated_request(
 
 
 def _join_url(base: str, path: str, params: dict[str, Any] | None) -> str:
-    if path.startswith(("http://", "https://")):
-        url = path
-    else:
-        url = base.rstrip("/") + "/" + path.lstrip("/")
+    relative_path = _validate_api_path(path)
+    url = base.rstrip("/") + relative_path
     if params:
         flat = {k: v for k, v in params.items() if v is not None}
         if flat:
@@ -546,7 +568,7 @@ def _upload_to_sas(
     headers: dict[str, str],
     body: bytes,
     content_type: str,
-    _http: Callable[..., Any] = urllib.request.urlopen,
+    _http: Callable[..., Any] = _SAS_OPENER.open,
 ) -> None:
     """PUT ``body`` to the Azure SAS ``url`` after validating it.
 
@@ -574,7 +596,7 @@ def _upload_to_sas(
     )
     LOGGER.debug("PUT %s", _redact(url))
     try:
-        with _http(request) as resp:  # type: ignore[arg-type]
+        with _http(request, timeout=REQUEST_TIMEOUT_SECONDS) as resp:  # type: ignore[arg-type]
             status = getattr(resp, "status", 200)
             if status >= 400:
                 payload = _read_response_body(resp).decode("utf-8", errors="replace")

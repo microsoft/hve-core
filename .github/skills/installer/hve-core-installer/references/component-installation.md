@@ -11,7 +11,7 @@ description: Phase 7 component installation and the Phase 7 upgrade mode for the
 
 After Phase 6 completes, offer users the option to copy HVE-Core components into their target repository. This phase ONLY applies to clone-based installation methods (1-6), NOT to extension installation.
 
-A component is one agent, prompt, instruction, or complete skill declared by `.github/plugin.json`. Every Phase 7 operation validates its component paths against that manifest before writing. Component paths use installer form and map to canonical target paths without flattening:
+A component is one agent, prompt, instruction, or complete skill declared by root `plugin.json`. Every Phase 7 operation validates its component paths against that manifest before writing. The manifest uses repository-relative `.github/...` paths; component selections use installer form and map to canonical target paths without flattening:
 
 <!-- <component-kind-map> -->
 | Component path                           | Target path                                                          |
@@ -50,14 +50,14 @@ Your choice? (1/2/3)
 
 User input handling:
 
-* "1", "all", "complete" → Select every agent, prompt, instruction, and skill declared by `.github/plugin.json`; set the selection name to `all`
+* "1", "all", "complete" → Select every agent, prompt, instruction, and skill declared by root `plugin.json`; set the selection name to `all`
 * "2", "choose", "custom", "components" → Proceed to the Custom Selection sub-flow
 * "3", "skip", "none", "no" → Skip to the final success report
 * Unclear response → Ask for clarification
 
 ### Custom Selection Sub-Flow
 
-When the user selects option 2, read `.github/plugin.json` from the HVE-Core source at `$hveCoreBasePath`. Present the declared components grouped by kind. Convert canonical manifest paths to installer paths before passing them to collision detection or component copy.
+When the user selects option 2, read root `plugin.json` from the HVE-Core source at `$hveCoreBasePath`. Present the declared components grouped by kind. Convert canonical repository-relative manifest paths to installer paths before passing them to collision detection or component copy.
 
 ### Selection Resolution
 
@@ -243,7 +243,7 @@ At Phase 7 start, check for an existing manifest.
 
 Output keys: `UPGRADE_MODE`, and when a manifest exists, `INSTALLED_VERSION`, `SOURCE_VERSION`, `VERSION_CHANGED`, `INSTALLED_PROFILE`, and `INSTALLED_COMPONENTS`. An unsupported `schemaVersion` fails with clean-reinstall guidance.
 
-Replay `INSTALLED_COMPONENTS` after validating each recorded path against the current `.github/plugin.json` membership. Pass the recorded profile as `-SelectionName` or the Bash selection-name argument. If any recorded component is no longer declared, stop and ask the user to choose a current component set before writing.
+Replay `INSTALLED_COMPONENTS` after validating each recorded path against the current root `plugin.json` membership. Pass the recorded profile as `-SelectionName` or the Bash selection-name argument. If any recorded component is no longer declared, stop and ask the user to choose a current component set before writing.
 
 ### Upgrade Prompt
 

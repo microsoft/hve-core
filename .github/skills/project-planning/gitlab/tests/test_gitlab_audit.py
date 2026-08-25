@@ -53,7 +53,11 @@ def test_audit_writes_attempt_then_success(
     assert events[0]["skill"] == "gitlab"
     assert events[0]["op"] == "mr-get"
     assert events[0]["actor"] == "gitlab-token"
-    assert events[0]["resource"] == "/api/v4/projects/1/merge_requests/2"
+    assert "resource" not in events[0]
+    assert events[0]["origin"] == "https://gitlab.example.com"
+    assert events[0]["auth_mode"] == "legacy-token"
+    assert "projects/1" not in log.read_text(encoding="utf-8")
+    assert "per_page" not in log.read_text(encoding="utf-8")
     assert events[1]["outcome"] == "success"
 
 
@@ -71,12 +75,42 @@ def test_audit_records_error_outcome_with_status(
         side_effect=http_error_factory("boom", 500, TEST_API_URL),  # type: ignore[operator]
     )
 
-    with pytest.raises(SystemExit):
+    with pytest.raises(gitlab.GitLabAPIError):
         gitlab.request("GET", f"{TEST_API_URL}/projects/1/pipelines/3")
 
     events = _events(log)
     assert events[-1]["outcome"] == "error"
     assert events[-1]["status"] == 500
+
+
+def test_oauth_audit_excludes_resource_and_profile_identifiers(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    log = tmp_path / "audit.jsonl"
+    monkeypatch.setenv("GITLAB_AUDIT_LOG", str(log))
+    gitlab.auth_context = gitlab.AuthContext(
+        mode="oauth",
+        issuer="https://gitlab.example.com",
+        profile_name="private-profile",
+        store_path=tmp_path / "private-store.json",
+        client_id="client",
+    )
+
+    gitlab._audit_attempt(
+        "oauth",
+        "GET",
+        "https://gitlab.example.com/api/v4/projects/42?private_token=secret",
+    )
+
+    rendered = log.read_text(encoding="utf-8")
+    event = _events(log)[0]
+    assert event["origin"] == "https://gitlab.example.com"
+    assert event["auth_mode"] == "oauth"
+    assert "projects/42" not in rendered
+    assert "private-profile" not in rendered
+    assert "private-store" not in rendered
+    assert "secret" not in rendered
 
 
 def test_audit_fail_closed_blocks_request(
@@ -113,12 +147,13 @@ def test_auth_error_adds_rotation_hint(
         side_effect=http_error_factory("denied", 401, TEST_API_URL),  # type: ignore[operator]
     )
 
-    with pytest.raises(SystemExit):
+    with pytest.raises(gitlab.GitLabAPIError) as exc_info:
         gitlab.request("GET", f"{TEST_API_URL}/projects/1/merge_requests/2")
 
-    err = capsys.readouterr().err
-    assert "expired or revoked" in err
-    assert "GITLAB_TOKEN" in err
+    rendered = str(exc_info.value)
+    assert "expired or revoked" in rendered
+    assert "GITLAB_TOKEN" in rendered
+    assert capsys.readouterr().err == ""
 
 
 def test_audit_outcome_warns_when_unwritable(
@@ -135,3 +170,91 @@ def test_audit_outcome_warns_when_unwritable(
     gitlab._audit_outcome("actor", "GET", "/projects/1", "success")
 
     assert "audit outcome write failed" in capsys.readouterr().err
+
+
+def test_oauth_audit_uses_bounded_schema(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    log = tmp_path / "audit.jsonl"
+    monkeypatch.setenv("GITLAB_AUDIT_LOG", str(log))
+
+    gitlab._oauth_audit_attempt("oauth.refresh")
+    gitlab._oauth_audit_outcome("oauth.refresh", "error", 503, "http")
+
+    events = _events(log)
+    assert events == [
+        {
+            "ts": events[0]["ts"],
+            "skill": "gitlab",
+            "transport": "oauth",
+            "auth_mode": "oauth",
+            "operation": "oauth.refresh",
+            "event": "attempt",
+        },
+        {
+            "ts": events[1]["ts"],
+            "skill": "gitlab",
+            "transport": "oauth",
+            "auth_mode": "oauth",
+            "operation": "oauth.refresh",
+            "event": "outcome",
+            "outcome": "error",
+            "status": 503,
+            "failure_kind": "http",
+        },
+    ]
+
+
+def test_oauth_attempt_failure_blocks_egress(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+    mocker: MockerFixture,
+) -> None:
+    monkeypatch.setenv("GITLAB_AUDIT_LOG", str(tmp_path / "missing" / "audit.jsonl"))
+    opener = mocker.MagicMock()
+
+    with pytest.raises(SystemExit):
+        gitlab.oauth.post_form(
+            "https://gitlab.example.com",
+            "/oauth/token",
+            {"grant_type": "refresh_token"},
+            opener=opener,
+            timeout=30,
+            operation="oauth.refresh",
+            audit_attempt=gitlab._oauth_audit_attempt,
+            audit_outcome=gitlab._oauth_audit_outcome,
+        )
+
+    opener.assert_not_called()
+
+
+def test_audit_write_redacts_unsanitized_fields_and_stays_valid_json(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    """The sink redacts fields no call site sanitized, without breaking JSON.
+
+    Redacting the serialized line instead of each value would corrupt the
+    record, because the bare form-shape rule consumes the closing quote and
+    the comma that follow the matched value.
+    """
+    log = tmp_path / "audit.jsonl"
+    monkeypatch.setenv("GITLAB_AUDIT_LOG", str(log))
+    secret = "SUPERSECRET123"
+
+    gitlab._audit_write(
+        {
+            "ts": "x",
+            "future_field": f"access_token={secret}",
+            "password": secret,
+            "note": "after",
+            "status": 403,
+        }
+    )
+
+    line = log.read_text(encoding="utf-8").strip()
+    record = json.loads(line)
+
+    assert secret not in line
+    assert record["note"] == "after"
+    assert record["status"] == 403

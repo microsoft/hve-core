@@ -152,9 +152,9 @@ Use research when readiness identifies a gap. Otherwise, select the smallest lif
 
 ## See Also
 
-* [Engineer Guide](../hve-guide/roles/engineer) - Role-specific guide for engineers using RPI
-* [Tech Lead Guide](../hve-guide/roles/tech-lead) - Architecture review and prompt engineering workflows
-* [Stage 6: Implementation](../hve-guide/lifecycle/implementation) - Where RPI fits in the project lifecycle
+* [Engineer Guide](../hve-guide/roles/engineer.md) - Role-specific guide for engineers using RPI
+* [Tech Lead Guide](../hve-guide/roles/tech-lead.md) - Architecture review and prompt engineering workflows
+* [Stage 6: Implementation](../hve-guide/lifecycle/implementation.md) - Where RPI fits in the project lifecycle
 
 ---
 
