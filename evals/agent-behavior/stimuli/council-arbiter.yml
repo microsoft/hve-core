@@ -1,0 +1,25 @@
+# Copyright (c) 2026 Microsoft Corporation. All rights reserved.
+# SPDX-License-Identifier: MIT
+stimuli:
+  - name: council-arbiter-user-approved-reconciliation
+    prompt: |
+      Reconcile two independent engagement report critiques. Critic A says to
+      remove the deployment claim; Critic B says to narrow it to validation in
+      progress; research finding R-17 supports Critic B. Explain the evidence-
+      backed recommendation and what must happen before the draft is edited.
+    tags:
+      category: agent-behavior
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: evidence-backed-reconciliation
+        config:
+          pattern: '(?is)(R-17|research).{0,120}(narrow|validation in progress|Critic B)'
+      - type: output-matches
+        name: user-decision-before-edit
+        config:
+          pattern: '(?is)(user|human).{0,80}(approve|decision|confirm).{0,100}(before|prior).{0,80}(edit|change|revis)'
+      - type: output-matches
+        name: reconciliation-record
+        config:
+          pattern: '(?i)(council-minutes|reconciliation|approved decision)'

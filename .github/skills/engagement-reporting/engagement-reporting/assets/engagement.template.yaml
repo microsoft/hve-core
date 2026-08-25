@@ -1,8 +1,9 @@
 # engagement.yaml
 #
-# The installer copies this template to engagement.yaml at the root of your
-# engagement workspace. For manual setup, copy it there and rename it
-# engagement.yaml. Edit the copied file, not this packaged template.
+# Copy this template to engagement.yaml at the root of your engagement
+# workspace. HVE Core installs the packaged template but does not create the
+# workspace configuration automatically. Edit the copied file, not this
+# packaged template.
 # The agent reads this to know where your data lives.
 
 engagement:

@@ -35,6 +35,30 @@ Use the Engagement Report Generator when a user needs the complete interactive
 coordination experience. Do not use this skill to publish reports or send
 email.
 
+## Set up the workspace
+
+Copy the packaged configuration template to the root of the engagement
+workspace:
+
+```bash
+cp .github/skills/engagement-reporting/engagement-reporting/assets/engagement.template.yaml \
+  engagement.yaml
+```
+
+Edit `engagement.yaml` with the engagement identity, stakeholders, source
+locations, and optional distribution settings. Add these local and potentially
+sensitive paths to the workspace `.gitignore` before running a report:
+
+```gitignore
+engagement.yaml
+.working/
+reports/
+transcripts/
+```
+
+The HVE Core installer installs the template with the skill but does not create
+the workspace configuration or modify `.gitignore`.
+
 ## Example usage
 
 ```text

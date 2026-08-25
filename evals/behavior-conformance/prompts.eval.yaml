@@ -916,3 +916,27 @@ stimuli:
         name: standards-paraphrase
         config:
           pattern: "(?i)(paraphrase|paraphrasing|summary|cite|link|verbatim|normative text|not reproduce)"
+
+  - name: prompt-engagement-report-council-critique-conformance
+    prompt: |
+      Invoke `engagement-report-council-critique` for critic run `critic-3`.
+      The draft says a milestone is complete, but research finding R-8 says it
+      remains in progress. Produce an independent evidence-backed critique
+      without rewriting the draft or reconciling other critiques.
+    tags:
+      category: behavior-conformance
+      prompt: engagement-report-council-critique
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: critic-attribution
+        config:
+          pattern: '(?i)(critic-3|critic run|engagement-report-council-critique)'
+      - type: output-matches
+        name: evidence-linked-finding
+        config:
+          pattern: '(?is)(R-8|research finding).{0,120}(in progress|needs-edit|unsupported|accuracy)'
+      - type: output-matches
+        name: independent-critique-shape
+        config:
+          pattern: '(?i)(accuracy|completeness|finding|proposed direction|missing material)'

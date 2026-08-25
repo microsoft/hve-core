@@ -2,8 +2,9 @@
 name: behavior-conformance-skills
 description: >
   Advisory-tier behavior conformance evals for skills exercised through
-  knowledge, tool-trigger, and bleed-detection stimulus shapes. Total: 196
-  stimuli, including complete branch coverage for the RPI and prompt-builder
+  knowledge, tool-trigger, and bleed-detection stimulus shapes. Total: 198
+  stimuli, including the engagement-reporting coverage stop and complete branch
+  coverage for the RPI and prompt-builder
   skill updates. Each tool-trigger stimulus uses two graders with AND logic,
   and the suite-level scoring threshold gates the aggregate pass rate across
   stimuli.
@@ -3897,3 +3898,28 @@ stimuli:
         config:
           pattern: '(?is)(invoke|run|start|route|use).{0,80}privacy-standards|privacy-standards.{0,80}(invoke|run|start|route|use)'
           negate: true
+
+  - name: skill-engagement-reporting-coverage-stop
+    prompt: |
+      Use the `engagement-reporting` skill to prepare a weekly report for a
+      configured engagement. A required primary source cannot be retrieved, and
+      the remaining evidence is below the coverage sanity gate. Explain the
+      result without filling the gap from a prior report or assumptions.
+    tags:
+      category: behavior-conformance
+      skill: engagement-reporting
+      shape: tool-trigger
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: coverage-blocked
+        config:
+          pattern: '(?i)(Coverage blocked|coverage gap|below.{0,40}coverage|source retrieval fail)'
+      - type: output-matches
+        name: no-fabrication
+        config:
+          pattern: '(?i)(do not|cannot|will not|never).{0,80}(fabricat|assum|invent|prior report)'
+      - type: output-matches
+        name: user-direction
+        config:
+          pattern: '(?i)(user direction|manual context|resolve|restore|source)'
