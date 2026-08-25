@@ -122,10 +122,19 @@ stimuli:
       advisory and maintainer-owned. Treat the issue as Distinct and Still
       needed.
 
-      Produce the compact issue index and labeled per-issue details. Explain the
-      allowed handoff operations and the approval and freshness checks required
-      before writeback. Explicitly state: "Allowed operations are Update and
-      Comment; Close is prohibited."
+      Produce the compact issue index with this exact header:
+
+      | Issue | Similarity | Disposition | Status | Recommended next step |
+
+      Follow it with `Issue #2558` and `Issue #2601` headings in that order.
+      Under each heading, include the exact labels `Repository evidence`,
+      `Similarity outcome`, `Disposition`, `Grooming finding`, `Recommended
+      next step`, and `Assessment status`.
+
+      Explain the handoff using these exact sentences: "Allowed operations are
+      Update and Comment; Close is prohibited." and "Writeback requires
+      per-field approval and a fresh Expected Updated At value; stale approval
+      must stop execution." Do not claim that any issue was changed.
     tags:
       category: agent-behavior
     graders:
@@ -144,7 +153,7 @@ stimuli:
       - type: output-matches
         name: non-closing-handoff
         config:
-          pattern: '(?is)(Update|Comment).{0,200}(never|not|prohibit|exclude).{0,80}Close|(never|not|prohibit|exclude).{0,80}Close.{0,200}(Update|Comment)'
+          pattern: '(?is)(Update|Comment).{0,200}(Close.{0,80}(never|not|prohibit|exclude)|(never|not|prohibit|exclude).{0,80}Close)'
       - type: output-matches
         name: approval-freshness
         config:
