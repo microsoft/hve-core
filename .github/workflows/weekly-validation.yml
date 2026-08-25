@@ -92,6 +92,15 @@ jobs:
     permissions:
       contents: read
 
+  markdown-link-check:
+    name: Markdown Link Check (Full Repository)
+    uses: ./.github/workflows/markdown-link-check.yml
+    permissions:
+      contents: read
+    with:
+      soft-fail: true
+      changed-files-only: false
+
   create-stale-docs-issues:
     name: Create or Update Issues for Stale Documentation
     needs: [msdate-freshness]
