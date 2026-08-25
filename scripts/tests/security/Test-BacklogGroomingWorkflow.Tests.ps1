@@ -205,6 +205,7 @@ BeforeAll {
     $script:MultiWaveProofHelper = Read-RepoFile '.github/actions/backlog-groom-multi-wave-proof/proof.js'
     $script:Publisher = Read-RepoFile '.github/workflows/backlog-groom-publisher.yml'
     $script:WaveValidator = Read-RepoFile '.github/actions/backlog-groom-wave-validator/validate.js'
+    $script:DeployDocs = Read-RepoFile '.github/workflows/deploy-docs.yml'
     $script:WorkflowReadme = Read-RepoFile '.github/workflows/README.md'
     $script:Policy = Read-RepoFile '.github/instructions/project-planning/github-backlog-grooming.instructions.md'
     $script:Agent = Read-RepoFile '.github/agents/github/backlog-grooming.agent.md'
@@ -509,20 +510,33 @@ Describe 'Backlog grooming production publisher' -Tag 'Unit' {
         [regex]::Matches($script:Orchestrator, '(?m)^\s+issues: write$').Count | Should -Be 0
         [regex]::Matches($script:Publisher, '(?m)^\s+issues: write$').Count | Should -Be 1
         $script:Publisher | Should -Match '(?m)^  workflow_dispatch:$'
-        $script:Publisher | Should -Match '(?m)^          artifact-ids: \$\{\{ inputs\.final-artifact-id \}\}$'
+        $script:Publisher | Should -Match '(?ms)^  workflow_run:\s+workflows:\s+- Backlog Grooming Sweep\s+branches:\s+- main\s+types:\s+- completed'
+        $script:Publisher | Should -Match 'context\.payload\.workflow_run\?\.id'
+        $script:Publisher | Should -Match 'run\.head_branch !== repository\.default_branch'
+        $script:Publisher | Should -Match 'run\.head_sha !== defaultRef\.object\.sha'
+        $script:Publisher | Should -Match 'Completed orchestrator run is nonterminal; publication is not required'
+        $script:Publisher | Should -Match "if: \$\{\{ needs\.discover\.outputs\.terminal == 'true' \}\}"
+        $script:Publisher | Should -Match '(?m)^          artifact-ids: \$\{\{ steps\.authenticate\.outputs\.final-artifact-id \}\}$'
         $script:Publisher | Should -Match 'run\.path !== "\.github/workflows/backlog-groom-orchestrator\.yml"'
         $script:Orchestrator | Should -Match '(?ms)^  assess:.*?permissions:\s+actions: write\s+contents: read\s+issues: read'
         $script:Source | Should -Not -Match '(?m)^\s+issues: write$'
         $script:Lock | Should -Not -Match '(?m)^\s+issues: write$'
     }
 
-    It 'keeps publication and scheduling disabled by default' {
+    It 'automates terminal publication while scheduling only the first Monday sweep' {
         $script:Orchestrator | Should -Not -Match '(?m)^      publish-report:$'
         $script:Orchestrator | Should -Not -Match '(?m)^      failure-injection:$'
         $script:Proof | Should -Match '(?m)^  workflow_dispatch:$'
         $script:Proof | Should -Not -Match '(?m)^  schedule:$'
         $script:Publisher | Should -Not -Match '(?m)^  schedule:$'
-        $script:Orchestrator | Should -Not -Match '(?m)^  schedule:$'
+        $script:Orchestrator | Should -Match "(?ms)^  schedule:\s+- cron: '0 9 \* \* 1'"
+        $script:Orchestrator | Should -Match 'context\.eventName === "schedule" && new Date\(\)\.getUTCDate\(\) > 7'
+        $script:Orchestrator | Should -Match 'core\.setOutput\("mode", "calendar-noop"\)'
+        $script:Orchestrator | Should -Match "INPUT_PROTOCOL_VERSION: \$\{\{ inputs\.protocol-version \|\| 'backlog-grooming-sweep/v1' \}\}"
+        $script:Orchestrator | Should -Match 'INPUT_WAVE_NUMBER: \$\{\{ inputs\.wave-number \|\| 1 \}\}'
+        $script:Orchestrator | Should -Match "steps\.plan\.outputs\.mode != 'calendar-noop'"
+        $script:Orchestrator | Should -Match "needs\.plan\.outputs\.mode != 'calendar-noop'"
+        $script:Publisher | Should -Match "github\.event\.workflow_run\.conclusion == 'success'"
         $script:Source | Should -Match '(?m)^  workflow_call:$'
         $script:Source | Should -Not -Match '(?m)^  (schedule|workflow_dispatch):$'
     }
@@ -547,6 +561,8 @@ Describe 'Backlog grooming production publisher' -Tag 'Unit' {
         $script:Publisher | Should -Match 'Multiple trusted backlog grooming trackers are ambiguous'
         $script:Publisher | Should -Match 'currentAggregateDigest === aggregate\.aggregate_digest'
         $script:Publisher | Should -Match 'publication is idempotent'
+        $script:Publisher | Should -Match 'Trusted marker-only tracker accepted for initial publication'
+        $script:Publisher | Should -Match 'aggregate\.predecessor_aggregate_digest !== null'
         $script:Publisher | Should -Match 'currentAggregateDigest !== aggregate\.predecessor_aggregate_digest'
         $script:Publisher | Should -Match 'tracker changed after this sweep snapshot was captured'
         [regex]::Matches($script:Publisher, 'github\.rest\.issues\.create\(').Count | Should -Be 1
@@ -561,6 +577,24 @@ Describe 'Backlog grooming production publisher' -Tag 'Unit' {
         $summaryIndex = $script:Publisher.LastIndexOf('await core.summary.addRaw(report).write();')
         $updateIndex | Should -BeGreaterThan -1
         $summaryIndex | Should -BeGreaterThan $updateIndex
+    }
+
+    It 'persists escaped historical Pages reports and dispatches the existing site deployment' {
+        $script:Publisher | Should -Match '(?m)^      contents: write$'
+        $script:Publisher | Should -Match 'const reportsBranch = "backlog-grooming-reports"'
+        $script:Publisher | Should -Match 'backlog-grooming/sweeps/\$\{reportSlug\}/index\.html'
+        $script:Publisher | Should -Match 'backlog-grooming/history\.json'
+        $script:Publisher | Should -Match 'const escapeHtml = \(value\) =>'
+        $script:Publisher | Should -Match 'github\.rest\.git\.createBlob'
+        $script:Publisher | Should -Match 'github\.rest\.git\.createTree'
+        $script:Publisher | Should -Match 'github\.rest\.git\.createCommit'
+        $script:Publisher | Should -Match '(?ms)^  deploy-pages:.*?permissions:\s+actions: write\s+contents: read'
+        $script:Publisher | Should -Match 'workflow_id: "deploy-docs\.yml"'
+        $script:DeployDocs | Should -Match '(?m)^      report-ref:$'
+        $script:DeployDocs | Should -Match 'const requestedRef = process\.env\.REPORT_REF \|\| "backlog-grooming-reports"'
+        $script:DeployDocs | Should -Match 'ref: \$\{\{ steps\.reports\.outputs\.ref \}\}'
+        $script:DeployDocs | Should -Match 'docs/docusaurus/build/backlog-grooming'
+        $script:Publisher | Should -Match 'View the latest detailed report'
     }
 }
 
@@ -1142,8 +1176,8 @@ Describe 'Backlog grooming sweep dispatch and recovery contracts' -Tag 'Unit' {
         [regex]::Matches($script:Publisher, '(?m)^\s+issues: write$').Count | Should -Be 1
         [regex]::Matches($script:Orchestrator, '(?m)^\s+actions: write$').Count | Should -Be 2
         $script:Orchestrator | Should -Match '(?ms)^  continue:.*?permissions:\s+actions: write\s+contents: read'
-        $script:Publisher | Should -Match '(?ms)^  publish:.*?permissions:\s+actions: read\s+issues: write'
-        $script:Publisher | Should -Not -Match '(?ms)^  publish:.*?permissions:.*?actions: write'
+        $script:Publisher | Should -Match '(?ms)^  publish:.*?permissions:\s+actions: read\s+contents: write\s+issues: write'
+        $script:Publisher | Should -Match '(?ms)^  deploy-pages:.*?permissions:\s+actions: write\s+contents: read'
     }
 }
 
@@ -1173,9 +1207,10 @@ Describe 'Backlog grooming sweep reduction publication and documentation contrac
 
     It 'S16 keeps the trusted tracker compact and inventory-independent' {
         $script:Publisher | Should -Match 'Compact trusted tracker exceeds 65,000 characters'
-        $script:Publisher | Should -Match 'Detailed per-issue evidence is retained in the final workflow artifact'
+        $script:Publisher | Should -Match 'Detailed per-issue evidence is published to GitHub Pages'
         $publishSection = $script:Publisher.Substring($script:Publisher.IndexOf("`n  publish:"))
         $publishSection | Should -Not -Match 'for \(const row of aggregate\.rows\)'
+        $script:Publisher | Should -Match 'View the latest detailed report'
     }
 
     It 'S17 removes injection from production and retains a finite manual proof' {
@@ -1239,7 +1274,8 @@ Describe 'Backlog grooming sweep reduction publication and documentation contrac
         foreach ($content in @(
                 'Backlog Grooming Sweep', 'wave_capacity', 'required_waves',
                 'N_max \u2248 retention_days \* 24 \* 60 / T_wave_minutes \* wave_capacity',
-                '30 days', '2,000', '65,000', 'Recovery', 'manual-only'
+                '30 days', '2,000', '65,000', 'Recovery',
+                'first Monday of each month at 09:00 UTC'
             )) {
             $script:WorkflowReadme | Should -Match $content
         }

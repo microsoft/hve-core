@@ -1,6 +1,8 @@
 name: Backlog Grooming Sweep
 
 on:
+  schedule:
+    - cron: '0 9 * * 1'
   workflow_dispatch:
     inputs:
       protocol-version:
@@ -97,9 +99,9 @@ jobs:
         uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
         env:
           GH_TOKEN: ${{ github.token }}
-          INPUT_PROTOCOL_VERSION: ${{ inputs.protocol-version }}
+          INPUT_PROTOCOL_VERSION: ${{ inputs.protocol-version || 'backlog-grooming-sweep/v1' }}
           INPUT_SWEEP_ID: ${{ inputs.sweep-id }}
-          INPUT_WAVE_NUMBER: ${{ inputs.wave-number }}
+          INPUT_WAVE_NUMBER: ${{ inputs.wave-number || 1 }}
           INPUT_SNAPSHOT_RUN_ID: ${{ inputs.snapshot-run-id }}
           INPUT_SNAPSHOT_ARTIFACT_ID: ${{ inputs.snapshot-artifact-id }}
           INPUT_SNAPSHOT_DIGEST: ${{ inputs.snapshot-digest }}
@@ -242,6 +244,13 @@ jobs:
                 throw new Error("Sweep checkpoint transition counts are invalid");
               }
             };
+
+            if (context.eventName === "schedule" && new Date().getUTCDate() > 7) {
+              core.setOutput("mode", "calendar-noop");
+              core.setOutput("shard-matrix", "[]");
+              core.setOutput("continuation-authenticated", "false");
+              return;
+            }
 
             if (process.env.INPUT_PROTOCOL_VERSION !== process.env.SWEEP_PROTOCOL_VERSION) {
               throw new Error("Unknown sweep continuation protocol version");
@@ -649,7 +658,7 @@ jobs:
           retention-days: 30
       - name: Upload immutable wave manifest
         id: manifest
-        if: ${{ steps.plan.outputs.mode != 'complete-noop' }}
+        if: ${{ steps.plan.outputs.mode != 'complete-noop' && steps.plan.outputs.mode != 'calendar-noop' }}
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: backlog-grooming-sweep-v1-${{ steps.plan.outputs.sweep-id }}-manifest-${{ steps.plan.outputs.wave-number }}-${{ github.run_id }}
@@ -695,6 +704,7 @@ jobs:
       - assess
     if: >-
       ${{ always() && needs.plan.result == 'success' &&
+          needs.plan.outputs.mode != 'calendar-noop' &&
           (needs.assess.result == 'success' ||
            (needs.assess.result == 'skipped' && needs.plan.outputs.shard-matrix == '[]')) }}
     runs-on: ubuntu-latest
@@ -1215,12 +1225,12 @@ jobs:
           path: final-output
           if-no-files-found: error
           retention-days: 30
-      - name: Record approval-gated publication inputs
+      - name: Record automatic publication inputs
         uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
         with:
           script: |
             await core.summary
-              .addHeading("Backlog grooming publication approval required")
+              .addHeading("Backlog grooming publication queued")
               .addTable([
                 [{ data: "Publisher input", header: true }, { data: "Value", header: true }],
                 ["final-run-id", String(context.runId)],
@@ -1230,5 +1240,5 @@ jobs:
                 ["snapshot-digest", "${{ needs.plan.outputs.snapshot-digest }}"],
                 ["source-sha", "${{ needs.plan.outputs.source-sha }}"],
               ])
-              .addRaw("\nDispatch Backlog Grooming Publisher manually only after reviewing the retained final artifact.\n")
+              .addRaw("\nThe completed run activates Backlog Grooming Publisher automatically. These values also support an exact manual replay.\n")
               .write();

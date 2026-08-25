@@ -14,6 +14,12 @@ on:
       - 'docs/**'
       - '.github/workflows/deploy-docs.yml'
   workflow_dispatch:
+    inputs:
+      report-ref:
+        description: Exact backlog grooming report commit to stage when available
+        required: false
+        type: string
+        default: ''
 
 concurrency:
   group: pages-deploy-${{ github.ref }}
@@ -60,6 +66,47 @@ jobs:
       - name: Build site
         working-directory: docs/docusaurus
         run: npm run build
+
+      - name: Resolve backlog grooming report history
+        id: reports
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
+        env:
+          REPORT_REF: ${{ inputs.report-ref }}
+        with:
+          script: |
+            const requestedRef = process.env.REPORT_REF || "backlog-grooming-reports";
+            try {
+              if (/^[a-f0-9]{40}$/.test(requestedRef)) {
+                await github.rest.git.getCommit({ ...context.repo, commit_sha: requestedRef });
+              } else {
+                const { data: ref } = await github.rest.git.getRef({
+                  ...context.repo,
+                  ref: `heads/${requestedRef}`,
+                });
+                if (ref.object.type !== "commit") throw new Error("Report history ref must resolve to a commit");
+              }
+              core.setOutput("available", "true");
+              core.setOutput("ref", requestedRef);
+            } catch (error) {
+              if (error.status !== 404 || process.env.REPORT_REF) throw error;
+              core.info("No backlog grooming report history exists yet");
+              core.setOutput("available", "false");
+            }
+
+      - name: Checkout backlog grooming report history
+        if: ${{ steps.reports.outputs.available == 'true' }}
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ steps.reports.outputs.ref }}
+          path: report-history
+          persist-credentials: false
+          sparse-checkout: backlog-grooming
+
+      - name: Stage backlog grooming reports
+        if: ${{ steps.reports.outputs.available == 'true' }}
+        run: |
+          mkdir -p docs/docusaurus/build/backlog-grooming
+          cp -R report-history/backlog-grooming/. docs/docusaurus/build/backlog-grooming/
 
       - name: Configure Pages
         uses: actions/configure-pages@45bfe0192ca1faeb007ade9deae92b16b8254a0d # v6.0.0

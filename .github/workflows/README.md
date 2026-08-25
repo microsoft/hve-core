@@ -2,7 +2,7 @@
 title: GitHub Actions Workflows
 description: Modular CI/CD workflow architecture for validation, security scanning, and automated maintenance
 author: HVE Core Team
-ms.date: 2026-08-18
+ms.date: 2026-08-19
 ms.topic: reference
 keywords:
   - github actions
@@ -56,7 +56,7 @@ Compose multiple reusable workflows for comprehensive validation and security sc
 | `release-stable-publish.yml`         | Merged PR to `release/stable`                           | Managed Stable release        | Prepare the managed release PR or publish the verified even-minor release and VSIX assurance |
 | `backlog-groom-orchestrator.yml`     | Manual dispatch                                         | Advisory multi-run sweep      | Assess one immutable backlog snapshot and retain a complete final aggregate                  |
 | `backlog-groom-multi-wave-proof.yml` | Manual dispatch                                         | Zero-model hosted proof       | Exercise bounded continuation, duplicate no-op, and failed-wave recovery                     |
-| `backlog-groom-publisher.yml`        | Manual dispatch                                         | Approval-gated publication    | Revalidate one exact final aggregate and update the compact trusted tracker                  |
+| `backlog-groom-publisher.yml`        | Completed sweep, manual replay                          | Authenticated publication     | Publish immutable Pages history and update the compact trusted tracker                       |
 | `weekly-security-maintenance.yml`    | Schedule (Sun 2AM UTC)                                  | Soft-fail warnings            | Weekly security posture                                                                      |
 | `scorecard.yml`                      | Push to main, Schedule (Sun 3AM UTC)                    | SARIF upload                  | OpenSSF Scorecard security posture                                                           |
 
@@ -148,16 +148,22 @@ artifact and workflow-run metadata before reconstructing the complete snapshot
 in capture order.
 
 The reducer retains detailed JSON and Markdown for 30 days and writes the exact
-publisher inputs to its job summary. It does not mutate the tracker. A human
-must separately dispatch `backlog-groom-publisher.yml` with the final run,
-artifact, digest, sweep, snapshot, and source revision identifiers. The
-publisher downloads that exact artifact ID, authenticates its successful
-orchestrator run, revalidates the final aggregate, and only then updates or
-reopens the trusted bot-owned tracker. The snapshot records the trusted
-tracker's aggregate digest at capture time. Publication is a compare-and-swap:
-the publisher permits an idempotent replay of the same final digest, otherwise
-the current tracker digest must equal the final aggregate's predecessor digest.
-A stale or ambiguous aggregate fails before tracker mutation.
+publisher inputs to its job summary. It does not mutate the tracker. Completion
+activates `backlog-groom-publisher.yml` through the platform `workflow_run`
+event. The publisher resolves the terminal artifact from the completed run,
+authenticates its producer and source revision, revalidates the final aggregate,
+and compares the trusted tracker state before any persistence.
+
+Accepted publication stores escaped HTML, `aggregate.json`, `history.json`, and
+`latest.json` on `backlog-grooming-reports`. The publisher then updates or
+reopens the compact bot-owned tracker and dispatches `deploy-docs.yml` with the
+exact report commit. The existing Docusaurus deployment stages that history at
+`/backlog-grooming/`, so production retains one GitHub Pages deployment. The
+snapshot records the trusted tracker's aggregate digest at capture time.
+Publication is a compare-and-swap: an idempotent replay may use the same final
+digest, otherwise the current tracker digest must equal the final aggregate's
+predecessor digest. A stale or ambiguous aggregate fails before report or
+tracker mutation.
 
 The production workflow is manual-only. Its `workflow_dispatch` inputs form a
 versioned continuation protocol; operators leave the continuation fields at
@@ -202,8 +208,9 @@ worker execution.
 | `checkpoint-artifact-id` | `string` | Empty                       | Positive immutable artifact ID               | Continuation | Requires plan `actions: read` |
 | `checkpoint-digest`      | `string` | Empty                       | 64 lowercase hex characters                  | Continuation | No added permission           |
 
-The approval-gated publisher has no defaults. All six values are required from
-the terminal reducer summary.
+Automatic publication derives the run, artifact, sweep, and source identities
+from the completed orchestrator run. Manual replay has no defaults and requires
+all six values from the terminal reducer summary.
 
 | Publisher input     | Type     | Valid value or range                   | Permission effect              |
 |---------------------|----------|----------------------------------------|--------------------------------|
@@ -216,22 +223,23 @@ the terminal reducer summary.
 
 ### Permissions
 
-| Job or workflow     | Permissions                                        | Responsibility                                              |
-|---------------------|----------------------------------------------------|-------------------------------------------------------------|
-| Plan                | `actions: read`, `issues: read`                    | Capture or recover the snapshot and plan one wave           |
-| Assess              | `actions: write`, `contents: read`, `issues: read` | Run the bounded workers and upload shard evidence           |
-| Validate and reduce | `actions: read`                                    | Validate immutable artifacts and reconstruct results        |
-| Checkpoint          | `actions: read`                                    | Persist one accepted checkpoint after exact wave validation |
-| Continue            | `actions: write`, `contents: read`                 | Dispatch exactly one authenticated successor                |
-| Publisher workflow  | `actions: read`, `issues: write`                   | Update the tracker after a separate manual approval         |
-| Conflict proof      | No repository scopes                               | Exercise shared rejection logic without issue writes        |
-| Multi-wave proof    | `actions: read`, `contents: read`                  | Validate synthetic artifacts and reduce terminal evidence   |
-| Proof dispatch      | `actions: write`                                   | Dispatch one bounded ordinary or recovery continuation      |
+| Job or workflow     | Permissions                                         | Responsibility                                              |
+|---------------------|-----------------------------------------------------|-------------------------------------------------------------|
+| Plan                | `actions: read`, `issues: read`                     | Capture or recover the snapshot and plan one wave           |
+| Assess              | `actions: write`, `contents: read`, `issues: read`  | Run the bounded workers and upload shard evidence           |
+| Validate and reduce | `actions: read`                                     | Validate immutable artifacts and reconstruct results        |
+| Checkpoint          | `actions: read`                                     | Persist one accepted checkpoint after exact wave validation |
+| Continue            | `actions: write`, `contents: read`                  | Dispatch exactly one authenticated successor                |
+| Publisher           | `actions: read`, `contents: write`, `issues: write` | Persist report history and update the compact tracker       |
+| Pages request       | `actions: write`, `contents: read`                  | Dispatch the existing docs deployment at the report commit  |
+| Conflict proof      | No repository scopes                                | Exercise shared rejection logic without issue writes        |
+| Multi-wave proof    | `actions: read`, `contents: read`                   | Validate synthetic artifacts and reduce terminal evidence   |
+| Proof dispatch      | `actions: write`                                    | Dispatch one bounded ordinary or recovery continuation      |
 
 No job combines `actions: write` with `issues: write`. Candidate issues are
-read-only throughout assessment. The separately dispatched publisher is the
-only issue-write surface. Neither an initial sweep nor an automatic
-continuation can reach it.
+read-only throughout assessment. The publisher is the only issue-write surface,
+and GitHub activates it only after the terminal orchestrator run completes
+successfully.
 
 ### Capacity and cost
 
@@ -291,10 +299,10 @@ time. Review repository and account billing before approving a large snapshot.
 | Discovery metadata  | At most 500 snapshot and checkpoint candidates are authenticated by producer metadata per discovery pass                                                       |
 | Discovery downloads | Only producer-authenticated snapshot and checkpoint candidates consume the shared 50-download budget per discovery pass                                        |
 | Artifact retrieval  | Cross-run download requires an authenticated token and exact run ID; artifact ID, name, producer workflow, run, source SHA, schema, and digest are revalidated |
-| Artifact retention  | All sweep-critical and proof artifacts use 30-day retention; expiry blocks resume or publication                                                               |
+| Artifact retention  | Sweep-critical and proof artifacts use 30-day retention; accepted final reports persist on the report-history branch and Pages                                 |
 | Artifact storage    | Stored bytes count against repository or account quotas; artifact count grows per wave and with reruns                                                         |
 | Dispatch inputs     | GitHub allows 25 top-level `workflow_dispatch` inputs and 65,535 characters; the orchestrator uses nine and the publisher uses six                             |
-| Report size         | The tracker has a 65,000-character guard and excludes per-issue rows; detailed evidence remains in artifacts                                                   |
+| Report size         | The tracker has a 65,000-character guard and excludes per-issue rows; detailed evidence is escaped and published to Pages                                      |
 
 See GitHub's [Actions limits](https://docs.github.com/en/actions/reference/limits),
 [REST API rate limits](https://docs.github.com/en/rest/using-the-rest-api/rate-limits-for-the-rest-api),
@@ -322,11 +330,13 @@ account concurrency, and billing limits.
 | Final reducer fails                                                     | Chain, manifest, aggregate, or exact-set validation fails       | Unchanged          | No final accepted artifact or publication summary             | Repair or rerun the first invalid or missing wave                             | Only unaccepted work should repeat        |
 | Publisher fails                                                         | Metadata, digest, compact report, or issue API validation fails | Unchanged          | Final artifacts remain retained; tracker is not advanced      | Correct the publication blocker and redispatch the same exact tuple           | No assessment rerun required              |
 
-The production schedule remains disabled. The hosted zero-model multi-wave
-proof was executed on 2026-08-18 in the dedicated test repository. No
-model-backed production coordinator sweep or successful tracker publication
-has occurred. Both proof and publisher workflows remain manual-only. The proof
-cannot publish; the publisher cannot start or continue a sweep.
+The production sweep starts on the first Monday of each month at 09:00 UTC. A
+weekly Monday cron reaches the orchestrator, which exits as a calendar no-op
+after the seventh day of the month so only the first Monday starts assessment.
+Maintainers can also initiate or resume a sweep manually. The publisher starts
+automatically only after a successful terminal sweep and supports exact manual
+replay. The proof cannot publish, and the publisher cannot start or continue a
+sweep.
 
 ## Reusable Workflows
 
