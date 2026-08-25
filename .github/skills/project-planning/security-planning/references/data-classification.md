@@ -80,9 +80,11 @@ copying internal taxonomies. In particular:
 
 - Microsoft Purview default sensitivity labels use a public ladder such as
   Personal, Public, General, Confidential, and Highly Confidential.
-- Public Microsoft material describes data classification frameworks and
-  sensitivity labels, including categories and labels such as Customer Data,
-  Public, General, Confidential, and Highly Confidential.
+- Microsoft's public service-assurance taxonomy documents a classification
+  framework whose levels are Public, General, Confidential, and Highly
+  Confidential, and records that the level formerly named Internal is now
+  General. The asset-role category names above are this reference's own
+  vendor-neutral vocabulary and are not drawn from that page.
 
 A team can map its local labels onto the generic hints above while preserving a
 review-friendly, public-safe schema.
@@ -90,7 +92,7 @@ review-friendly, public-safe schema.
 Sources:
 
 * Microsoft Purview sensitivity labels: <https://learn.microsoft.com/purview/sensitivity-labels>
-- Microsoft data classification and sensitivity label taxonomy: <https://learn.microsoft.com/en-us/compliance/assurance/assurance-data-classification-and-labels>
+* Microsoft data classification and sensitivity label taxonomy: <https://learn.microsoft.com/compliance/assurance/assurance-data-classification-and-labels>
 
 ## Private overlay for internal taxonomies
 
