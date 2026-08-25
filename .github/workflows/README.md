@@ -2,7 +2,7 @@
 title: GitHub Actions Workflows
 description: Modular CI/CD workflow architecture for validation, security scanning, and automated maintenance
 author: HVE Core Team
-ms.date: 2026-08-19
+ms.date: 2026-08-24
 ms.topic: reference
 keywords:
   - github actions
@@ -47,18 +47,17 @@ Modular reusable workflows following Single Responsibility Principle. Each workf
 
 Compose multiple reusable workflows for comprehensive validation and security scanning.
 
-| Workflow                             | Triggers                                                | Mode                          | Purpose                                                                                      |
-|--------------------------------------|---------------------------------------------------------|-------------------------------|----------------------------------------------------------------------------------------------|
-| `pr-validation.yml`                  | PR to main, develop, or either release branch; dispatch | Strict validation             | Pre-merge quality gate with the `PR Validation Success` required-check aggregator            |
-| `release-prerelease-prepare.yml`     | Merged PR to `main`; dispatch                           | Reviewed PreRelease promotion | Open the target-based `main` to `release/prerelease` promotion PR                            |
-| `release-prerelease.yml`             | Merged PR to `release/prerelease`                       | Managed PreRelease release    | Prepare the managed release PR or publish the verified odd-minor release and VSIX assurance  |
-| `release-stable.yml`                 | Published PreRelease; dispatch                          | Reviewed Stable promotion     | Open the target-based `release/prerelease` to `release/stable` promotion PR                  |
-| `release-stable-publish.yml`         | Merged PR to `release/stable`                           | Managed Stable release        | Prepare the managed release PR or publish the verified even-minor release and VSIX assurance |
-| `backlog-groom-orchestrator.yml`     | Manual dispatch                                         | Advisory multi-run sweep      | Assess one immutable backlog snapshot and retain a complete final aggregate                  |
-| `backlog-groom-multi-wave-proof.yml` | Manual dispatch                                         | Zero-model hosted proof       | Exercise bounded continuation, duplicate no-op, and failed-wave recovery                     |
-| `backlog-groom-publisher.yml`        | Completed sweep, manual replay                          | Authenticated publication     | Publish immutable Pages history and update the compact trusted tracker                       |
-| `weekly-security-maintenance.yml`    | Schedule (Sun 2AM UTC)                                  | Soft-fail warnings            | Weekly security posture                                                                      |
-| `scorecard.yml`                      | Push to main, Schedule (Sun 3AM UTC)                    | SARIF upload                  | OpenSSF Scorecard security posture                                                           |
+| Workflow                          | Triggers                                                | Mode                          | Purpose                                                                                      |
+|-----------------------------------|---------------------------------------------------------|-------------------------------|----------------------------------------------------------------------------------------------|
+| `pr-validation.yml`               | PR to main, develop, or either release branch; dispatch | Strict validation             | Pre-merge quality gate with the `PR Validation Success` required-check aggregator            |
+| `release-prerelease-prepare.yml`  | Merged PR to `main`; dispatch                           | Reviewed PreRelease promotion | Open the target-based `main` to `release/prerelease` promotion PR                            |
+| `release-prerelease.yml`          | Merged PR to `release/prerelease`                       | Managed PreRelease release    | Prepare the managed release PR or publish the verified odd-minor release and VSIX assurance  |
+| `release-stable.yml`              | Published PreRelease; dispatch                          | Reviewed Stable promotion     | Open the target-based `release/prerelease` to `release/stable` promotion PR                  |
+| `release-stable-publish.yml`      | Merged PR to `release/stable`                           | Managed Stable release        | Prepare the managed release PR or publish the verified even-minor release and VSIX assurance |
+| `backlog-groom-orchestrator.yml`  | First-Monday schedule; manual dispatch                  | Advisory multi-run sweep      | Assess one immutable backlog snapshot and retain a complete final aggregate                  |
+| `backlog-groom-publisher.yml`     | Completed sweep, manual replay                          | Authenticated publication     | Publish immutable Pages history and update the compact trusted tracker                       |
+| `weekly-security-maintenance.yml` | Schedule (Sun 2AM UTC)                                  | Soft-fail warnings            | Weekly security posture                                                                      |
+| `scorecard.yml`                   | Push to main, Schedule (Sun 3AM UTC)                    | SARIF upload                  | OpenSSF Scorecard security posture                                                           |
 
 The validation jobs in `pr-validation.yml` feed the `pr-validation-success` aggregator, which is the required merge signal. The `gate-completeness-check` job verifies that every validation job appears in that gate's `needs:` list.
 
@@ -165,28 +164,13 @@ digest, otherwise the current tracker digest must equal the final aggregate's
 predecessor digest. A stale or ambiguous aggregate fails before report or
 tracker mutation.
 
-The production workflow is manual-only. Its `workflow_dispatch` inputs form a
-versioned continuation protocol; operators leave the continuation fields at
-their defaults when initiating a sweep. The coordinator passes only artifact
-identities, digests, run identities, the sweep identity, and the next wave
-number between runs. Candidate issue IDs remain inside retained artifacts.
-Failure injection is available only through the separate manual-only
-`backlog-groom-proof.yml` workflow. Production and proof both execute
-`.github/actions/backlog-groom-wave-validator`; the proof treats expected
-validator rejection as success and cannot create a checkpoint, successor, or
-tracker update.
-
-`backlog-groom-multi-wave-proof.yml` is a separate manual-only, non-production
-hosted harness. It creates an immutable synthetic snapshot of issue IDs 1001
-through 1025, partitions them into three waves with capacity 10, and generates
-deterministic shard-result fixtures without invoking gh-aw, a model, or issue
-APIs. Its planned AIC is explicitly labeled `synthetic/planned`, and observed
-model use is zero. Every accepted fixture set passes through the same production
-wave validator before checkpoint creation. The selectable scenarios prove a
-three-run completion, an accepted duplicate no-op, and a rejected wave followed
-by a separately dispatched recovery of only that wave. Terminal evidence binds
-artifact IDs, producer runs, source revision, predecessor identities, schemas,
-and content digests for 30 days.
+The production workflow starts on schedule and also supports manual initiation
+or recovery. Its `workflow_dispatch` inputs form a versioned continuation
+protocol; operators leave the continuation fields at their defaults when
+initiating a sweep. The coordinator passes only artifact identities, digests,
+run identities, the sweep identity, and the next wave number between runs.
+Candidate issue IDs remain inside retained artifacts. Production executes
+`.github/actions/backlog-groom-wave-validator` before checkpoint creation.
 
 ### Production inputs
 
@@ -232,9 +216,6 @@ all six values from the terminal reducer summary.
 | Continue            | `actions: write`, `contents: read`                  | Dispatch exactly one authenticated successor                |
 | Publisher           | `actions: read`, `contents: write`, `issues: write` | Persist report history and update the compact tracker       |
 | Pages request       | `actions: write`, `contents: read`                  | Dispatch the existing docs deployment at the report commit  |
-| Conflict proof      | No repository scopes                                | Exercise shared rejection logic without issue writes        |
-| Multi-wave proof    | `actions: read`, `contents: read`                   | Validate synthetic artifacts and reduce terminal evidence   |
-| Proof dispatch      | `actions: write`                                    | Dispatch one bounded ordinary or recovery continuation      |
 
 No job combines `actions: write` with `issues: write`. Candidate issues are
 read-only throughout assessment. The publisher is the only issue-write surface,
@@ -281,8 +262,8 @@ attempts, and artifact expiry reduce reachable inventory.
 Actions minutes, artifact storage, API requests, and model usage all grow with
 snapshot size. A nonempty wave creates one manifest, one or two shard results,
 one aggregate, and one checkpoint. The sweep also creates one snapshot and one
-terminal final artifact. Reruns and proof runs add artifacts and billed runner
-time. Review repository and account billing before approving a large snapshot.
+terminal final artifact. Reruns add artifacts and billed runner time. Review
+repository and account billing before approving a large snapshot.
 
 ### Platform limits
 
@@ -299,7 +280,7 @@ time. Review repository and account billing before approving a large snapshot.
 | Discovery metadata  | At most 500 snapshot and checkpoint candidates are authenticated by producer metadata per discovery pass                                                       |
 | Discovery downloads | Only producer-authenticated snapshot and checkpoint candidates consume the shared 50-download budget per discovery pass                                        |
 | Artifact retrieval  | Cross-run download requires an authenticated token and exact run ID; artifact ID, name, producer workflow, run, source SHA, schema, and digest are revalidated |
-| Artifact retention  | Sweep-critical and proof artifacts use 30-day retention; accepted final reports persist on the report-history branch and Pages                                 |
+| Artifact retention  | Sweep-critical artifacts use 30-day retention; accepted final reports persist on the report-history branch and Pages                                           |
 | Artifact storage    | Stored bytes count against repository or account quotas; artifact count grows per wave and with reruns                                                         |
 | Dispatch inputs     | GitHub allows 25 top-level `workflow_dispatch` inputs and 65,535 characters; the orchestrator uses nine and the publisher uses six                             |
 | Report size         | The tracker has a 65,000-character guard and excludes per-issue rows; detailed evidence is escaped and published to Pages                                      |
@@ -335,8 +316,7 @@ weekly Monday cron reaches the orchestrator, which exits as a calendar no-op
 after the seventh day of the month so only the first Monday starts assessment.
 Maintainers can also initiate or resume a sweep manually. The publisher starts
 automatically only after a successful terminal sweep and supports exact manual
-replay. The proof cannot publish, and the publisher cannot start or continue a
-sweep.
+replay. The publisher cannot start or continue a sweep.
 
 ## Reusable Workflows
 

@@ -199,10 +199,6 @@ BeforeAll {
     $script:Source = Read-RepoFile '.github/workflows/backlog-groom.md'
     $script:Lock = Read-RepoFile '.github/workflows/backlog-groom.lock.yml'
     $script:Orchestrator = Read-RepoFile '.github/workflows/backlog-groom-orchestrator.yml'
-    $script:Proof = Read-RepoFile '.github/workflows/backlog-groom-proof.yml'
-    $script:MultiWaveProof = Read-RepoFile '.github/workflows/backlog-groom-multi-wave-proof.yml'
-    $script:MultiWaveProofAction = Read-RepoFile '.github/actions/backlog-groom-multi-wave-proof/action.yml'
-    $script:MultiWaveProofHelper = Read-RepoFile '.github/actions/backlog-groom-multi-wave-proof/proof.js'
     $script:Publisher = Read-RepoFile '.github/workflows/backlog-groom-publisher.yml'
     $script:WaveValidator = Read-RepoFile '.github/actions/backlog-groom-wave-validator/validate.js'
     $script:DeployDocs = Read-RepoFile '.github/workflows/deploy-docs.yml'
@@ -406,20 +402,15 @@ Describe 'Backlog grooming sharded orchestration contracts' -Tag 'Unit' {
         [regex]::Matches($script:Publisher, '(?m)^\s+issues: write$').Count | Should -Be 1
         $script:WaveValidator | Should -Match 'byShard\.size !== manifest\.shards\.length'
         $script:WaveValidator | Should -Match 'Wave result set is incomplete'
-        foreach ($rejection in @('missing', 'stale', 'unexpected', 'duplicate', 'conflicting', 'manifest-mismatched')) {
-            "$script:WaveValidator`n$script:Proof" | Should -Match ([regex]::Escape($rejection))
+        foreach ($rejection in @('missing', 'stale', 'unexpected', 'duplicate', 'manifest-mismatched')) {
+            $script:WaveValidator | Should -Match ([regex]::Escape($rejection))
         }
         $script:WaveValidator | Should -Match 'exactKeys\(result, \['
     }
 
-    It 'fails closed on injected or invalid shard artifact sets without issue-write access' {
+    It 'fails closed on invalid shard artifact sets without issue-write access' {
         $script:Orchestrator | Should -Not -Match '(?m)^  inject:$'
         $script:Orchestrator | Should -Not -Match '(?m)^      failure-injection:$'
-        $script:Proof | Should -Match '(?m)^  inject:$'
-        $script:Proof | Should -Match '(?m)^      failure-injection:$'
-        $script:Proof | Should -Match 'Authorized conflicting artifact injection'
-        $script:Proof | Should -Match 'uses: \./\.github/actions/backlog-groom-wave-validator'
-        $script:Proof | Should -Match 'Production validator did not fail closed before aggregate creation'
         $script:Orchestrator | Should -Match '(?m)^  validate-wave:$'
         $script:Orchestrator | Should -Match 'uses: \./\.github/actions/backlog-groom-wave-validator'
         $script:WaveValidator | Should -Match 'Wave manifest digest mismatch'
@@ -526,8 +517,6 @@ Describe 'Backlog grooming production publisher' -Tag 'Unit' {
     It 'automates terminal publication while scheduling only the first Monday sweep' {
         $script:Orchestrator | Should -Not -Match '(?m)^      publish-report:$'
         $script:Orchestrator | Should -Not -Match '(?m)^      failure-injection:$'
-        $script:Proof | Should -Match '(?m)^  workflow_dispatch:$'
-        $script:Proof | Should -Not -Match '(?m)^  schedule:$'
         $script:Publisher | Should -Not -Match '(?m)^  schedule:$'
         $script:Orchestrator | Should -Match "(?ms)^  schedule:\s+- cron: '0 9 \* \* 1'"
         $script:Orchestrator | Should -Match 'context\.eventName === "schedule" && new Date\(\)\.getUTCDate\(\) > 7'
@@ -1213,61 +1202,8 @@ Describe 'Backlog grooming sweep reduction publication and documentation contrac
         $script:Publisher | Should -Match 'View the latest detailed report'
     }
 
-    It 'S17 removes injection from production and retains a finite manual proof' {
-        $proofNodeTest = Join-Path $script:RepoRoot '.github/actions/backlog-groom-multi-wave-proof/proof.test.js'
-        $nodeOutput = & node --test $proofNodeTest 2>&1
-        $nodeExitCode = $LASTEXITCODE
-        $nodeOutput | Out-Host
-        $nodeExitCode | Should -Be 0
-
+    It 'S17 keeps failure injection out of production' {
         $script:Orchestrator | Should -Not -Match 'failure-injection|(?m)^  inject:$|complete-three-wave|duplicate-dispatch|failed-wave-resume'
-        $script:Proof | Should -Match '(?m)^  workflow_dispatch:$'
-        $script:Proof | Should -Not -Match '(?m)^  schedule:$|issues: write'
-        $script:Proof | Should -Match 'duplicate-artifact'
-        $script:Proof | Should -Match 'conflicting-artifact'
-        $script:Proof | Should -Match 'uses: \./\.github/actions/backlog-groom-wave-validator'
-        $script:Proof | Should -Match 'VALIDATION_OUTCOME'
-
-        $script:MultiWaveProof | Should -Match '(?m)^  workflow_dispatch:$'
-        $script:MultiWaveProof | Should -Not -Match '(?m)^  (schedule|push|pull_request|workflow_call):$|issues: write'
-        $script:MultiWaveProof | Should -Not -Match 'COPILOT_GITHUB_TOKEN|GH_AW_|backlog-groom\.lock\.yml|secrets\.'
-        foreach ($scenario in @('complete-three-wave', 'duplicate-dispatch', 'failed-wave-resume')) {
-            $script:MultiWaveProof | Should -Match ([regex]::Escape($scenario))
-        }
-        $script:MultiWaveProof | Should -Match 'uses: \./\.github/actions/backlog-groom-wave-validator'
-        $script:MultiWaveProof | Should -Match 'uses: \./\.github/actions/backlog-groom-multi-wave-proof'
-        [regex]::Matches($script:MultiWaveProof, '(?m)^\s+actions: write$').Count | Should -Be 1
-        $script:MultiWaveProof | Should -Match '(?ms)^  dispatch:.*?permissions:\s+actions: write'
-        $script:MultiWaveProof | Should -Match 'github\.rest\.actions\.createWorkflowDispatch'
-        $script:MultiWaveProof | Should -Match "dispatch-kind: \$\{\{ steps\.accept\.outputs\.dispatch-kind \|\| steps\.gate\.outputs\.dispatch-kind \|\| 'none' \}\}"
-        $script:MultiWaveProof | Should -Match 'artifact\.digest !== uploadedArtifactDigest'
-        $script:MultiWaveProof | Should -Match 'Dispatch proof recovery'
-        $script:MultiWaveProof | Should -Match 'command: wait-duplicate-noop'
-        $script:MultiWaveProof | Should -Match 'observed_noop_artifact_digest'
-        $script:MultiWaveProof | Should -Match 'observed_noop_digest'
-        $script:MultiWaveProof | Should -Not -Match 'listArtifactsForRepo'
-        $script:MultiWaveProof | Should -Match 'retention-days: 30'
-        $script:MultiWaveProof | Should -Not -Match 'retention-days: (?:[0-9]|1[0-9]|2[0-9])$'
-        $script:MultiWaveProofAction | Should -Match 'run: node "\$GITHUB_ACTION_PATH/proof\.js"'
-        $script:MultiWaveProofHelper | Should -Match 'Array\.from\(\{ length: 25 \}'
-        $script:MultiWaveProofHelper | Should -Match 'wave_capacity: 10'
-        $script:MultiWaveProofHelper | Should -Match 'classification: "synthetic/planned"'
-        $script:MultiWaveProofHelper | Should -Match 'observed_model_use: 0'
-        $script:MultiWaveProofHelper | Should -Match 'GITHUB_ACTOR !== "github-actions\[bot\]"'
-        $script:MultiWaveProofHelper | Should -Match 'integer\("wave-number".*1, 3\)'
-        $script:MultiWaveProofHelper | Should -Match 'fixture_created: false'
-        $script:MultiWaveProofHelper | Should -Match 'validator_invoked: false'
-        $script:MultiWaveProofHelper | Should -Match 'aggregate_created: false'
-        $script:MultiWaveProofHelper | Should -Match 'ordinary_successor_dispatched: false'
-        $script:MultiWaveProofHelper | Should -Match 'AUTHENTICATED_CONFLICTING_SHARD_RESULT'
-        $script:MultiWaveProofHelper | Should -Match 'baseline_control_accepted: true'
-        $script:MultiWaveProofHelper | Should -Match 'injected_conflict_authenticated: true'
-        $script:MultiWaveProofHelper | Should -Match 'runProductionControl'
-        $script:MultiWaveProofHelper | Should -Match 'require\.main === module'
-        $script:MultiWaveProofHelper | Should -Match 'Terminal proof reduction is not the exact immutable 25-ID snapshot'
-        $script:MultiWaveProofHelper | Should -Match 'actions/workflows/backlog-groom-multi-wave-proof\.yml/runs'
-        $script:MultiWaveProofHelper | Should -Match 'event=workflow_dispatch&head_sha='
-        $script:MultiWaveProofHelper | Should -Match 'Proof workflow run discovery reached its finite source-SHA limit'
     }
 
     It 'S18 documents source-accurate sweep operations limits recovery and rollout state' {
