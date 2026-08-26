@@ -26,7 +26,7 @@
     ".github/agents/coding-standards/subagents/code-review-accessibility.agent.md",
     ".github/agents/coding-standards/subagents/code-review-explainer.agent.md",
     ".github/agents/coding-standards/subagents/code-review-functional.agent.md",
-    ".github/agents/coding-standards/subagents/code-review-pr.agent.md",
+    ".github/agents/coding-standards/subagents/code-review-orientation.agent.md",
     ".github/agents/coding-standards/subagents/code-review-readiness.agent.md",
     ".github/agents/coding-standards/subagents/code-review-security.agent.md",
     ".github/agents/coding-standards/subagents/code-review-standards.agent.md",
