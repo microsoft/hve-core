@@ -6,6 +6,8 @@ from __future__ import annotations
 
 import json
 import pathlib
+import traceback
+from collections.abc import Callable
 
 import gitlab
 import pytest
@@ -217,6 +219,36 @@ class TestMain:
 
 class TestAuthCommands:
     """Tests for stateful OAuth command behavior."""
+
+    @pytest.mark.parametrize(
+        ("provider", "command"),
+        [
+            ("gitlab.oauth.authorization_code_login", gitlab.cmd_auth_login),
+            ("gitlab.oauth.device_login", gitlab.cmd_auth_device_login),
+        ],
+    )
+    def test_login_wrapper_traceback_excludes_provider_secret(
+        self,
+        monkeypatch: pytest.MonkeyPatch,
+        mocker: MockerFixture,
+        tmp_path: pathlib.Path,
+        provider: str,
+        command: Callable[[list[str]], None],
+    ) -> None:
+        store_path = tmp_path / "gitlab" / "gitlab-token.json"
+        _configure_oauth(monkeypatch, store_path)
+        mocker.patch(
+            provider,
+            side_effect=gitlab.oauth.OAuthError("access_token=provider-secret"),
+        )
+
+        with pytest.raises(gitlab.GitLabError) as exc_info:
+            command([])
+
+        formatted = "".join(traceback.format_exception(exc_info.value))
+        assert "provider-secret" not in formatted
+        assert "access_token=[REDACTED]" in formatted
+        assert exc_info.value.exit_code == gitlab.EXIT_FAILURE
 
     def test_login_surfaces_url_and_persists_profile(
         self,

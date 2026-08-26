@@ -1342,7 +1342,7 @@ def cmd_auth_login(args: list[str]) -> None:
             audit_outcome=_oauth_audit_outcome,
         )
     except oauth.OAuthError as exc:
-        raise GitLabError(str(exc), EXIT_FAILURE) from exc
+        raise GitLabError(_redact(str(exc)), EXIT_FAILURE) from None
     _save_auth_profile(profile_name, store_path, profile)
     _emit_stdout(f"authenticated GitLab OAuth profile {profile_name}")
 
@@ -1367,7 +1367,7 @@ def cmd_auth_device_login(args: list[str]) -> None:
             audit_outcome=_oauth_audit_outcome,
         )
     except oauth.OAuthError as exc:
-        raise GitLabError(str(exc), EXIT_FAILURE) from exc
+        raise GitLabError(_redact(str(exc)), EXIT_FAILURE) from None
     _save_auth_profile(profile_name, store_path, profile)
     _emit_stdout(f"authenticated GitLab OAuth profile {profile_name}")
 
