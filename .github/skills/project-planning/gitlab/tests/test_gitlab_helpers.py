@@ -88,10 +88,13 @@ def _is_main_guard(node: ast.AST) -> bool:
     if not isinstance(node, ast.If) or not isinstance(node.test, ast.Compare):
         return False
     left = node.test.left
+    operators = node.test.ops
     comparators = node.test.comparators
     return (
         isinstance(left, ast.Name)
         and left.id == "__name__"
+        and len(operators) == 1
+        and isinstance(operators[0], ast.Eq)
         and len(comparators) == 1
         and isinstance(comparators[0], ast.Constant)
         and comparators[0].value == "__main__"
@@ -110,8 +113,9 @@ def _exit_mechanism_violations(source: str) -> list[str]:
     guarded: set[int] = set()
     for node in ast.walk(tree):
         if _is_main_guard(node):
-            for child in ast.walk(node):
-                guarded.add(id(child))
+            for statement in node.body:
+                for child in ast.walk(statement):
+                    guarded.add(id(child))
 
     violations: list[str] = []
     for node in ast.walk(tree):
@@ -356,6 +360,18 @@ class TestSourceContracts:
         guarded = 'if __name__ == "__main__":\n    sys.exit(main())\n'
 
         assert _exit_mechanism_violations(guarded) == []
+
+    @pytest.mark.parametrize(
+        "source",
+        [
+            'if __name__ != "__main__":\n    sys.exit(2)\n',
+            ('if __name__ == "__main__":\n    main()\nelse:\n    sys.exit(2)\n'),
+        ],
+    )
+    def test_source_contract_rejects_exit_outside_canonical_guard_body(
+        self, source: str
+    ) -> None:
+        assert _exit_mechanism_violations(source) == ["sys.exit"]
 
     def test_job_log_output_is_redacted(
         self,
