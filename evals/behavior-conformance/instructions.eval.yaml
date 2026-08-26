@@ -2,8 +2,8 @@ name: behavior-conformance-instructions
 description: >
   Advisory-tier behavior conformance evals for high-signal Markdown-applyTo
   instructions in `.github/instructions/**` (covers ADO, coding-standards,
-  experimental, GitHub, hve-core, Jira, privacy, RAI planning, security, and shared
-  scopes). Each stimulus prompts the model
+  engagement reporting, experimental, GitHub, hve-core, Jira, privacy, RAI
+  planning, security, and shared scopes). Each stimulus prompts the model
   to identify the instruction that applies in a given working context and
   asserts both `applyTo` path evidence and instruction-specific scope
   vocabulary. Per DD-05, this is an advisory tier and grader false-positives

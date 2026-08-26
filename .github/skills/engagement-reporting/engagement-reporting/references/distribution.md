@@ -1,7 +1,7 @@
 ---
 title: Outlook Draft Distribution
 description: Capability detection, draft creation, traceability, and stop rules for optional Outlook distribution.
-ms.date: 2026-08-24
+ms.date: 2026-08-25
 ms.topic: reference
 ---
 
@@ -29,10 +29,15 @@ completion.
 1. Resolve the configured subject template using customer, engagement, date,
    and report type
 2. Read recipients from the configured `to`, `cc`, and `bcc` lists
-3. Convert the approved report from Markdown to HTML while preserving tables
-   and lists
-4. Exclude working-file references and unapproved evidence appendices
-5. When WorkIQ `create_entity` is available, create the draft directly with:
+3. Render the approved Markdown body to HTML inline while preserving headings,
+   links, ordered and unordered lists, bold, italic, and table markup
+4. Stop distribution if faithful conversion is unavailable. Do not manually
+   flatten Markdown or fall back to `contentType: "Text"`.
+5. Inspect the rendered body before draft creation. When the Markdown contains
+   a table, conversion succeeds only when the output contains `<table>`.
+6. Exclude working-file references and unapproved evidence appendices from the
+   approved Markdown before conversion
+7. When WorkIQ `create_entity` is available, create the draft directly with:
    * `parentUrl`: `/me/messages`
    * `jsonBody`: a JSON-encoded Message with this shape:
 
@@ -55,15 +60,19 @@ completion.
      }
      ```
 
+   The body `contentType` is always `HTML`, and `content` is the rendered HTML.
    Convert every configured email string into an
    `{ "emailAddress": { "address": "..." } }` recipient object. An empty
    configured list becomes an empty recipient array.
-6. Do not run schema discovery before this standard path
-7. If the standard call fails specifically because the exposed interface or
+8. Before draft creation, verify the payload still contains
+   `"contentType": "HTML"` and, for a tabular report, `<table>`. Stop when either
+   invariant is missing.
+9. Do not run schema discovery before this standard path
+10. If the standard call fails specifically because the exposed interface or
    payload shape differs, inspect the schema once and retry once
-8. Do not read generated schema files, enumerate unrelated Message operations,
+11. Do not read generated schema files, enumerate unrelated Message operations,
    or perform a second report-validation pass
-9. Do not invoke `sendMail`, a send action, or any equivalent operation
+12. Do not invoke `sendMail`, a send action, or any equivalent operation
 
 The workflow uses the draft-create operation only. It does not register or rely
 on a hook, and it does not inspect or invoke transmission operations.
@@ -73,6 +82,9 @@ on a hook, and it does not inspect or invoke transmission operations.
 For the first interface-shape or payload-validation failure, perform the single
 schema-assisted retry described above. Stop after the second shape or
 validation failure.
+
+Conversion and structure-validation failures are terminal. Do not create a
+draft with flattened or plain-text content.
 
 Retry once for a transient connectivity failure. Stop immediately for a
 permission failure. For terminal or repeated failures:

@@ -12,7 +12,8 @@ execution:
   mode: fast
   max_source_tool_calls: 6
   review_passes: 1
-  allow_subagents: false
+  allow_subagents_by_default: false
+  allow_explicit_review_escalation: true
   allow_repository_diagnostics: false
 
 template_variables:
@@ -182,4 +183,4 @@ continuity:
   next_steps_follow_through: true
   flag_repeated_status: true
 
-council: optional # Off by default; use for high-stakes or materially ambiguous reports
+council: optional # Off by default; explicit high-stakes or ambiguous runs may dispatch the Council subagents

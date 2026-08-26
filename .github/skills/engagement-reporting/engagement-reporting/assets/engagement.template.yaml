@@ -17,7 +17,7 @@ engagement:
 # board:
 #   type: ado
 #   # ADO:
-#   #   org: CSECodeHub
+#   #   org: contoso
 #   #   project: "12345 - CONTOSO - Data Platform"
 #   #   query_path: "Shared Queries/weekly-report"
 #   # GitHub:
@@ -74,10 +74,6 @@ reports:
     research_depth: standard # Use thorough only for an explicit deep-research or audit run
     council: false # Enable only for high-stakes or materially ambiguous reports
     include_activity_table: false # Enable for task-level tracking
-  # monthly:
-  #   template: "monthly-standard"
-  #   audience: "Director, VP"
-  #   council: true
 
 # Distribution (optional)
 # When enabled and the WorkIQ Message entity supports writes, the agent creates

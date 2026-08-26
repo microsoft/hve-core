@@ -3,6 +3,9 @@ name: Engagement Report Council Critic
 description: Independently critiques one engagement report draft against research evidence without reading other critiques.
 user-invocable: false
 agents: []
+tools:
+  - read
+  - edit
 ---
 
 # Engagement Report Council Critic

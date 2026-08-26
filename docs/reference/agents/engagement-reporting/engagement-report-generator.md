@@ -3,7 +3,7 @@ title: Engagement Report Generator
 description: "Coordinates source-grounded engagement reports, review, optional Council critique, and Outlook draft creation."
 sidebar_position: 1
 author: Microsoft
-ms.date: 2026-08-24
+ms.date: 2026-08-25
 ms.topic: reference
 keywords:
   - agent
@@ -28,10 +28,10 @@ Coordinates source-grounded engagement reports, review, optional Council critiqu
 
 ## When to use it
 
-Use this agent to coordinate a weekly, monthly, quarterly, or stakeholder
-engagement report from source discovery through review and approval. It is the
-right entry point when the report may need WorkIQ research, board evidence,
-independent review, Council critique, or optional Outlook draft creation.
+Use this agent to coordinate a weekly engagement report from source discovery
+through review and approval. It is the right entry point when the report may
+need WorkIQ research, board evidence, independent review, Council critique, or
+optional Outlook draft creation.
 
 Use the `engagement-reporting` skill directly when another agent already owns
 the user interaction and only needs the reporting workflow.
@@ -58,4 +58,6 @@ claims that lack primary-source support.
 
 The agent gathers the configured evidence, prepares the report and talk track,
 runs the appropriate review gate, and returns the approved output paths,
-coverage gaps, unresolved claims, and retention action.
+coverage gaps, unresolved claims, and retention action. Outlook distribution
+uses validated HTML and stops rather than flattening a report when conversion
+cannot preserve required structures.

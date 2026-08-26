@@ -6,6 +6,27 @@ agents:
   - Engagement Report Council Arbiter
   - Engagement Report Council Critic
   - Engagement Report Reviewer
+tools:
+  - agent
+  - read
+  - edit
+  - search
+  - workiq/ask
+  - workiq/fetch
+  - workiq/search_paths
+  - workiq/get_schema
+  - workiq/create_entity
+  - ado/search_workitem
+  - ado/wit_get_work_item
+  - ado/wit_get_work_items_batch_by_ids
+  - ado/wit_list_work_item_comments
+  - ado/repo_list_pull_requests_by_repo_or_project
+  - ado/repo_get_pull_request_by_id
+  - ado/repo_get_pull_request_changes
+  - github/search_issues
+  - github/issue_read
+  - github/search_pull_requests
+  - github/pull_request_read
 disable-model-invocation: true
 ---
 
@@ -82,8 +103,10 @@ report generation. Do not narrate internal validation steps; present the draft
 or a specific blocker requiring user input.
 
 For approved Outlook distribution, call the standard WorkIQ draft-create
-operation directly. Do not perform routine schema discovery, read generated
-schema files, or narrate payload-shape checks.
+operation directly only after rendering the approved Markdown to HTML inline
+and verifying the `contentType: "HTML"` and table-preservation invariants. Do
+not perform routine schema discovery, read generated schema files, manually
+flatten Markdown, or narrate payload-shape checks.
 
 ## Stop rules
 
@@ -92,5 +115,7 @@ schema files, or narrate payload-shape checks.
 * Stop before finalization when a material claim lacks primary-source support
 * Stop distribution when separate draft-creation approval, the approved report,
   draft-write capability, or explicit configuration is unavailable
+* Stop distribution when inline Markdown-to-HTML rendering or structure
+  validation fails; never fall back to a plain-text body
 * Never send email, publish a report, commit working files, or upload source
   material

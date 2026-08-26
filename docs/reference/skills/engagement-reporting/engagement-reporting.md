@@ -1,9 +1,9 @@
 ---
 title: engagement-reporting
-description: "Creates source-grounded internal or external engagement status reports. Use for weekly, monthly, QBR, or stakeholder updates."
+description: Creates source-grounded internal or external weekly engagement status reports with optional Outlook draft creation.
 sidebar_position: 1
 author: Microsoft
-ms.date: 2026-08-24
+ms.date: 2026-08-25
 ms.topic: reference
 keywords:
   - skill
@@ -22,14 +22,14 @@ keywords:
 ## What it does
 
 <!-- BEGIN AUTO-GENERATED: overview -->
-Creates source-grounded internal or external engagement status reports. Use for weekly, monthly, QBR, or stakeholder updates.
+Creates source-grounded internal or external weekly engagement status reports with optional Outlook draft creation.
 <!-- END AUTO-GENERATED: overview -->
 
 ## When to use it
 
-Use this skill to create source-grounded weekly, monthly, quarterly, or
-stakeholder engagement reports. It is suitable for M365-only reporting and can
-also normalize optional Azure DevOps, GitHub, Jira, or GitLab board evidence.
+Use this skill to create source-grounded weekly engagement reports. It is
+suitable for M365-only reporting and can also normalize optional Azure DevOps,
+GitHub, Jira, or GitLab board evidence.
 
 Use the Engagement Report Generator when a user needs the complete interactive
 coordination experience. Do not use this skill to publish reports or send
@@ -50,14 +50,16 @@ locations, and optional distribution settings. Add these local and potentially
 sensitive paths to the workspace `.gitignore` before running a report:
 
 ```gitignore
-engagement.yaml
-.working/
-reports/
-transcripts/
+/engagement.yaml
+/.working/
+/reports/
+/transcripts/
 ```
 
 The HVE Core installer installs the template with the skill but does not create
-the workspace configuration or modify `.gitignore`.
+the workspace configuration or modify `.gitignore`. Keep these paths at the
+engagement workspace root; do not place customer report data inside the
+packaged skill directory.
 
 ## Example usage
 
@@ -69,3 +71,6 @@ With a valid `engagement.yaml`, the skill discovers configured sources,
 normalizes evidence, enforces coverage and verification gates, drafts against
 the selected template, applies review, and returns approved report artifacts.
 Optional Outlook distribution creates a draft only after separate approval.
+The agent renders the approved report as HTML inline. If conversion cannot
+preserve required structures, including tables, distribution stops instead of
+flattening the report.

@@ -1,6 +1,6 @@
 ---
 name: engagement-reporting
-description: Creates source-grounded internal or external engagement status reports. Use for weekly, monthly, QBR, or stakeholder updates.
+description: Creates source-grounded internal or external weekly engagement status reports with optional Outlook draft creation.
 argument-hint: "[report type] [reporting period]"
 user-invocable: true
 compatibility: VS Code with GitHub Copilot, WorkIQ access, and optional board MCP access
@@ -30,7 +30,8 @@ Read the bundled references when entering their phase:
 Use the [engagement template](assets/engagement.template.yaml) to scaffold
 engagement configuration and the
 [weekly standard template](assets/weekly-standard.yaml) for the default weekly
-report contract.
+report contract. Render Outlook draft bodies as faithful HTML; never manually
+flatten Markdown or substitute plain text.
 
 ## Flow
 
@@ -60,8 +61,9 @@ report contract.
 9. Present the final draft for explicit user approval and save the approved
    output
 10. When Outlook distribution is configured, ask separately for approval to
-    create the draft, then follow `references/distribution.md`; use the direct
-    WorkIQ draft-create path without routine schema discovery
+    create the draft, then follow `references/distribution.md`; render faithful
+    HTML inline and use the direct WorkIQ draft-create path without routine
+    schema discovery
 11. Complete the retention handoff
 
 ## Inputs
@@ -84,6 +86,8 @@ report contract.
   creation before distribution
 * Distribution creates at most one draft through `/me/messages` and never
   invokes a send action
+* Outlook draft bodies are validated HTML; a report table remains an HTML table
+  and conversion failure stops distribution
 * The user receives a retention reminder for unencrypted working files
 
 ## Constraints
@@ -122,6 +126,8 @@ report contract.
   support
 * Stop with `Distribution skipped` when the report is unapproved, distribution
   is disabled, or message-write capability is unavailable
+* Stop with `Distribution skipped` when deterministic HTML conversion or
+  structure validation fails; never fall back to `contentType: "Text"`
 
 ## Handoff
 
