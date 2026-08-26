@@ -212,6 +212,18 @@ Distributable prompts must use the canonical path `.github/prompts/<package>/<su
 
 Update `docs/plugins/hve-core.md` when the user-visible prompt surface changes, then run `npm run plugin:validate` and `npm run docs:generate:check`.
 
+## Path Portability
+
+Prompts are packaged and relocatable. The root directory varies by distribution context (in-repo, Copilot CLI plugin, VS Code extension). To ensure references to other artifacts remain portable and do not break across environments, follow these cross-artifact reference rules:
+
+* **Refer by name:** Refer to a skill, agent, subagent, or prompt by the `name:` value from its frontmatter, not by a hard-coded path.
+* **Instruction files:** Refer to an instruction file by its full `<name>.instructions.md` filename.
+* **Bundled resources:** Reserve file paths for a prompt's own bundled resources (relative to the prompt root only).
+* **No hard-coded paths:** Never hard-code a skill's `SKILL.md` path, an agent's file path, or a cross-artifact directory path.
+* **File inclusions:** Use `#file:` only when the prompt must pull in another file's full contents.
+
+Repo-root-relative paths (such as `.github/prompts/...` or `.github/skills/...`) break portability and should not be used for cross-artifact references.
+
 ## Prompt Content Structure Standards
 
 ### Required Sections

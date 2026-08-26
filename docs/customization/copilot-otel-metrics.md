@@ -3,7 +3,7 @@ title: Copilot OpenTelemetry Metrics
 description: Capture GitHub Copilot Chat OpenTelemetry signals on your own machine in a local Grafana stack, or across an organization through Azure
 sidebar_position: 11
 author: Microsoft
-ms.date: 2026-07-29
+ms.date: 2026-08-18
 ms.topic: how-to
 keywords:
   - opentelemetry
@@ -20,7 +20,7 @@ estimated_reading_time: 18
 
 GitHub Copilot Chat can export traces, metrics, and events over OpenTelemetry. Point it at a collector you run yourself and you get a measured view of your own agent sessions: which models you use, how long calls take, which tools run most, how many tokens you burn, and how much of that is cache.
 
-Everything up to [Configuring this for an organization](#configuring-this-for-an-organization) runs on one machine, in one container, and sends nothing anywhere. You do not need an administrator to try it. The sections after that cover pushing the same configuration to a fleet and collecting it in Azure, which does need one.
+Everything up to [Configuring this for an organization](#configuring-this-for-an-organization) runs on one machine, in two containers, and sends nothing anywhere. You do not need an administrator to try it. The sections after that cover pushing the same configuration to a fleet and collecting it in Azure, which does need one.
 
 :::tip Let the skill do it
 The [`copilot-otel-metrics` skill](https://github.com/microsoft/hve-core/blob/main/.github/skills/experimental/copilot-otel-metrics/SKILL.md) walks this guide for you.
@@ -67,10 +67,11 @@ The split between metrics and traces matters more than it first appears, and the
 
 ```mermaid
 graph LR
-    A["VS Code<br/>Copilot Chat"] -->|OTLP :4318| B["OTel Collector"]
-    B --> C["Prometheus<br/>metrics"]
-    B --> D["Tempo<br/>traces"]
-    B --> E["Loki<br/>events"]
+    A["VS Code<br/>Copilot Chat"] -->|OTLP :4318| B["OTel Collector<br/>allow-list filter"]
+    B -->|OTLP, internal network| G["LGTM container"]
+    G --> C["Prometheus<br/>metrics"]
+    G --> D["Tempo<br/>traces"]
+    G --> E["Loki<br/>events"]
     C --> F["Grafana<br/>:3000"]
     D --> F
     E --> F
@@ -78,48 +79,113 @@ graph LR
 
 ## Start the stack
 
-The Grafana OTel-LGTM image bundles Grafana, Prometheus, Tempo, Loki, and an OpenTelemetry Collector in a single container with the datasources pre-provisioned.
+Two containers. The Grafana OTel-LGTM image bundles Grafana, Prometheus, Tempo, and Loki with the datasources pre-provisioned. In front of it sits an OpenTelemetry Collector that decides what is allowed to reach any of them.
+
+The Collector is not decoration. It is the only OTLP listener published on your machine, and LGTM's own OTLP ports are deliberately unmapped. If both listened, any local process could write straight past the filter, and binding to loopback would not help, because everything on your machine is already on loopback.
 
 ```yaml
 services:
+  otel-collector:
+    # otel/opentelemetry-collector-contrib:0.158.0
+    image: otel/opentelemetry-collector-contrib@sha256:c5918f78992ee73b0d6f0e599423ac5ec52dd5d9726733114d6eca53d5a32ed5
+    container_name: copilot-otel-collector
+    restart: unless-stopped
+    command: ["--config=/etc/otelcol-contrib/config.yaml"]
+    ports:
+      - "127.0.0.1:4317:4317"   # OTLP gRPC
+      - "127.0.0.1:4318:4318"   # OTLP HTTP
+    volumes:
+      - ./otel-collector-local.yaml:/etc/otelcol-contrib/config.yaml:ro
+    networks: [copilot-otel]
+    depends_on:
+      lgtm:
+        condition: service_healthy
+
   lgtm:
-    image: grafana/otel-lgtm:0.29.2
+    # grafana/otel-lgtm:0.29.2
+    image: grafana/otel-lgtm@sha256:af7242c1a9608faf6d26e6f235392fd0c32b67258228f9a3cfc96e724974930c
     container_name: copilot-otel-lgtm
     restart: unless-stopped
     ports:
       - "127.0.0.1:3000:3000"   # Grafana
-      - "127.0.0.1:4317:4317"   # OTLP gRPC
-      - "127.0.0.1:4318:4318"   # OTLP HTTP
       - "127.0.0.1:9090:9090"   # Prometheus
       - "127.0.0.1:3200:3200"   # Tempo
+    networks: [copilot-otel]
     environment:
+      GF_AUTH_ANONYMOUS_ENABLED: "false"
+      GF_AUTH_DISABLE_LOGIN_FORM: "false"
+      GF_AUTH_BASIC_ENABLED: "true"
+      GF_SECURITY_ADMIN_USER: ${COPILOT_OTEL_GRAFANA_USER:?set COPILOT_OTEL_GRAFANA_USER before starting the stack}
+      GF_SECURITY_ADMIN_PASSWORD: ${COPILOT_OTEL_GRAFANA_PASSWORD:?set COPILOT_OTEL_GRAFANA_PASSWORD before starting the stack}
       PROMETHEUS_EXTRA_ARGS: "--enable-feature=otlp-deltatocumulative --storage.tsdb.retention.time=120d"
     volumes:
       - copilot-otel-data:/data
+
+networks:
+  copilot-otel:
+    driver: bridge
 
 volumes:
   copilot-otel-data:
     external: true
 ```
 
+The Collector configuration it mounts is an allow-list, not a delete-list:
+
+```yaml
+processors:
+  redaction:
+    allow_all_keys: false
+    allowed_keys:
+      - service.name
+      - gen_ai.request.model
+      - gen_ai.usage.input_tokens
+      - gen_ai.usage.output_tokens
+      - copilot_chat.mode_name
+      # ...the rest of the keys the dashboards actually read
+    summary: silent
+```
+
+The allow-list is not the whole story, and the difference is worth knowing before you rely on it. It governs **attributes**, plus a map-valued log body. It does not reach span names, span status messages, span event names, trace state, non-map log bodies, severity text, metric metadata, span links, or metric exemplars. A second `transform/scrub` processor closes the ones nothing in the shipped dashboards reads.
+
+Three things still reach the store unfiltered, and they are recorded as gaps rather than described away:
+
+* **Span names and metric metadata**, because dashboard queries match on them. A span name is composed by the emitter, so this is the residual worth watching.
+* **Span link attributes and metric exemplar attributes**, because this Collector distribution offers no way to reach them. OTTL has no `spanlink` context, refuses to index `links`, and silently ignores an assignment to `datapoint.exemplars`.
+* **Instrumentation scope name and version, and the resource and scope schema URLs**, because they are expected to carry library identity rather than content. That is an expectation about a well-behaved emitter, not a control: nothing filters these fields, so anything placed in them is stored.
+
+None of that is inferred from reading the configuration. `tests/test_collector_carriers.py` starts the pinned Collector, sends a distinct marker through each of 28 carriers, and records what survives, with a paired control run proving each marker is visible when nothing filters it. The recorded map is asserted, so a change that opens a carrier fails the test suite.
+
+That direction is the whole point. A delete-list removes the content attributes someone already knows about; it passes through the one a future extension release adds. An allow-list drops anything it has not been told to keep, so an unfamiliar attribute is a dropped attribute rather than a stored one. The full file is in the skill's examples directory.
+
 ```bash
+export COPILOT_OTEL_GRAFANA_USER=admin
+read -rs -p 'Grafana password: ' COPILOT_OTEL_GRAFANA_PASSWORD; echo
+export COPILOT_OTEL_GRAFANA_PASSWORD
 docker volume create copilot-otel-data
 docker compose up -d
 ```
 
-Four details in that file are deliberate:
+The password is read rather than typed inline so it does not land in the terminal scrollback or the shell history file. In PowerShell, `Read-Host -AsSecureString` serves the same purpose. A Compose `.env` file reaches the containers but not the bundled Python helpers, which read the same two variables from the environment of the shell that runs them.
 
-* Ports bind to `127.0.0.1` because Grafana ships with default credentials and nothing needs to reach this stack from off-host.
+Several details in that file are deliberate:
+
+* Grafana credentials are required and have no default. The LGTM image otherwise enables anonymous access with the Admin role and hides the login form, which would leave every panel and every stored prompt fragment readable by anything that can reach port 3000. The `${VAR:?message}` form fails the `up` rather than starting on a guessable credential.
+* Both images are pinned by digest, with the tag kept in a comment. A tag is mutable, so a tag-pinned stack can change under a configuration you already reviewed.
+* Ports bind to `127.0.0.1` because nothing here should be reachable from off-host.
 * The volume is declared `external` so Compose binds the volume you created instead of making a project-prefixed duplicate and orphaning your history.
 * `otlp-deltatocumulative` is set defensively. Prometheus drops delta-temporality metrics by default, and a dropped delta metric can fail the entire batched write, taking unrelated cumulative metrics with it. The flag converts instead of dropping and is inert when traffic is already cumulative.
 * Retention is raised well past the 15 day default, because a monthly total would otherwise truncate silently at fifteen days.
 
-Everything in this guide is copy-pasteable, but the dashboard is not: it is roughly nineteen kilobytes of JSON.
-Runnable copies of the compose file, the dashboard, and the verification helpers live in the
+The filter decides what is stored. It does not change what the extension emits, so content attributes still leave the editor and still cross the loopback hop in plaintext before the Collector drops them.
+
+Two artifacts in this guide are not copy-pasteable. The dashboard is roughly nineteen kilobytes of JSON, and the Collector configuration is shown above only as an excerpt. The compose file bind-mounts `./otel-collector-local.yaml`, so the Collector cannot start without the complete file: Docker creates an empty directory at that path instead. Take both from the skill rather than from this page.
+Runnable copies of the compose file, the full Collector configuration, the dashboard, and the helper scripts live in the
 [copilot-otel-metrics skill](https://github.com/microsoft/hve-core/blob/main/.github/skills/experimental/copilot-otel-metrics/SKILL.md),
 whose [examples directory](https://github.com/microsoft/hve-core/tree/main/.github/skills/experimental/copilot-otel-metrics/examples)
-holds [the dashboard JSON](https://github.com/microsoft/hve-core/blob/main/.github/skills/experimental/copilot-otel-metrics/examples/dashboards/copilot-otel.json)
-to import into Grafana. The YAML above mirrors the file shipped there.
+holds [the Collector configuration](https://github.com/microsoft/hve-core/blob/main/.github/skills/experimental/copilot-otel-metrics/examples/otel-collector-local.yaml)
+and [the dashboard JSON](https://github.com/microsoft/hve-core/blob/main/.github/skills/experimental/copilot-otel-metrics/examples/dashboards/copilot-otel.json)
+to import into Grafana. The YAML above mirrors the files shipped there.
 
 ## Turn on export
 
@@ -134,25 +200,29 @@ Add these to your **user** `settings.json`, then reload the window.
 ```
 
 > [!IMPORTANT]
-> These settings are application-scoped. They cannot live in workspace `.vscode/settings.json`, and they do not take effect until you run **Developer: Reload Window**. If you enable export and see nothing, the reload is almost always why.
+> These settings do not take effect until you run **Developer: Reload Window**. If you enable export and see nothing, the reload is almost always why.
 
-Application scope has a second consequence that is easier to miss. These keys resolve from the **default profile no matter which profile is active**, so editing `User/profiles/<id>/settings.json` accomplishes nothing and tells you nothing: no error, no warning, no telemetry.
-Run **Preferences: Open Application Settings (JSON)** from the command palette and VS Code opens the exact file these settings come from. If you run both stable and Insiders you have two of these files, and only the one belonging to the build you are testing counts.
+Which settings file they resolve from depends on the scope the installed build declares, and that is worth checking rather than assuming.
+In the build verified for this page, none of the OTel keys declares a scope, so they take VS Code's default `window` scope and the active profile's settings file applies.
+If your build declares them `scope: application`, they resolve from the **default profile no matter which profile is active**, and editing `User/profiles/<id>/settings.json` accomplishes nothing and tells you nothing: no error, no warning, no telemetry.
+
+Run **Preferences: Open Application Settings (JSON)** from the command palette and VS Code opens the global file. That target is correct either way, so it is the safe place to write when you are unsure. If you run both stable and Insiders you have two of these files, and only the one belonging to the build you are testing counts.
 
 <details>
-<summary>All eleven settings, and the environment variables that override them</summary>
+<summary>All seven settings, and the environment variables that override them</summary>
 
-Three keys turn export on. The other eight tune it. Every name below is prefixed with `github.copilot.chat.otel.`.
+Three keys turn export on. The other four tune it. Every name below is prefixed with `github.copilot.chat.otel.`.
+
+Verified against GitHub Copilot Chat 0.52.0.
+An earlier revision of this page listed eleven settings, adding `protocol`, `headers`, `serviceName`, and `resourceAttributes`, verified against build `0.59.2026072702` where all eleven were application-scoped.
+Both observations were accurate for their own build, which is the real lesson: this surface moves with the extension.
+Writing a key your build does not declare gives you a setting that is silently inert, so check your own installed extension before using any of them.
 
 | Setting                  | Type    | Default                   | Sets what                                                              |
 |--------------------------|---------|---------------------------|------------------------------------------------------------------------|
 | `enabled`                | boolean | `false`                   | Master switch for trace, metric, and log emission                      |
 | `exporterType`           | string  | `"otlp-http"`             | One of `otlp-grpc`, `otlp-http`, `console`, `file`                     |
 | `otlpEndpoint`           | string  | `"http://localhost:4318"` | Where the data goes                                                    |
-| `protocol`               | string  | `""`                      | `""`, `http/json`, `http/protobuf`, or `grpc`; empty means `http/json` |
-| `headers`                | object  | `{}`                      | Extra OTLP headers, such as auth tokens, sent by the exporter          |
-| `serviceName`            | string  | `""`                      | The `service.name` resource attribute                                  |
-| `resourceAttributes`     | object  | `{}`                      | Extra resource attributes, merged per key with the environment         |
 | `captureContent`         | boolean | `false`                   | Prompts, responses, system instructions, and tool definitions on spans |
 | `maxAttributeSizeChars`  | integer | `0`                       | Truncation limit in characters; `0` disables truncation                |
 | `outfile`                | string  | `""`                      | JSON-lines output path; setting it forces the `file` exporter          |
@@ -165,10 +235,6 @@ Resolution order is enterprise policy, then environment variable, then user sett
 | `enabled`               | `COPILOT_OTEL_ENABLED`                  |
 | `captureContent`        | `COPILOT_OTEL_CAPTURE_CONTENT`          |
 | `otlpEndpoint`          | `OTEL_EXPORTER_OTLP_ENDPOINT`           |
-| `protocol`              | `OTEL_EXPORTER_OTLP_PROTOCOL`           |
-| `serviceName`           | `OTEL_SERVICE_NAME`                     |
-| `resourceAttributes`    | `OTEL_RESOURCE_ATTRIBUTES`              |
-| `headers`               | `OTEL_EXPORTER_OTLP_HEADERS`            |
 | `maxAttributeSizeChars` | `COPILOT_OTEL_MAX_ATTRIBUTE_SIZE_CHARS` |
 
 That second table is the practical route for a devcontainer or a CI runner, where editing a global settings file is awkward. `exporterType`, `outfile`, and `dbSpanExporter.enabled` declared no environment variable in the build inspected for this page, so those three come from settings or policy. Check your own installed extension before relying on either table.
@@ -309,7 +375,7 @@ Four small Python scripts sit beside the dashboard in the skill's [examples dire
 | `baseline.py`           | Is this telemetry genuinely Copilot's, or residue from something else       |
 | `validate_dashboard.py` | Does every panel in this dashboard return data                              |
 
-Download them, then run them from wherever you put them:
+All four import `_input_policy.py`, a fifth file in the same directory that holds their shared endpoint and path rules. Download it alongside them and keep it in the same directory, or every one of them fails at import:
 
 ```bash
 python3 verify.py
@@ -379,10 +445,11 @@ That command returns your own prompt text. Do not paste its output into a shared
 > [!WARNING]
 > With content capture disabled I still observed six attributes populated in plaintext on spans: `copilot_chat.user_request`, `gen_ai.input.messages`,
 > `gen_ai.output.messages`, `gen_ai.tool.call.arguments`, `gen_ai.tool.call.result`, and `gen_ai.system_instructions`.
-> A seventh, `copilot_chat.reasoning_content`, was present but marked `[encrypted]`. **Treat the store as holding your prompt text regardless of the setting.**
-> On a local-only stack the data stays on your machine, but the volume is unencrypted, traces have no configured expiry, and `docker compose down` preserves it
-> deliberately, so any local user with Docker or filesystem access can read it. The skill's threat model rates that Medium residual risk and tracks it as an open gap.
-> It stops being a local question entirely the moment `otlpEndpoint` points at a shared or hosted collector. Treat both the endpoint and the volume as sensitive.
+> A seventh, `copilot_chat.reasoning_content`, was present but marked `[encrypted]`. **The extension emits these regardless of the setting.**
+> The Collector's allow-list is what keeps them out of the store: none of them is allowed, so they are dropped before Prometheus or Tempo sees them. That covers these seven, which are attributes. It does not cover every carrier: span names and metric metadata reach storage unfiltered because dashboard queries read them, and span links and metric exemplars reach it because no processor in this distribution can address them.
+> What the filter cannot change is that they leave the editor and cross the loopback hop in plaintext, so anything reading the OTLP port directly still sees them.
+> The volume itself is unencrypted and `docker compose down` preserves it deliberately, so any local user with Docker or filesystem access can read whatever
+> survived filtering. It stops being a local question entirely the moment `otlpEndpoint` points at a shared or hosted collector. Treat both the endpoint and the volume as sensitive.
 
 ## Configuring this for an organization
 
@@ -523,8 +590,7 @@ To stop exporting, set `github.copilot.chat.otel.enabled` to `false` and reload 
 ## Related reading
 
 * The [copilot-otel-metrics skill](https://github.com/microsoft/hve-core/blob/main/.github/skills/experimental/copilot-otel-metrics/SKILL.md) walks this guide for you and generates the local stack, both dashboards, and the Azure collector and infrastructure templates. It is invoked explicitly and never activates on its own.
-* The skill's [examples directory](https://github.com/microsoft/hve-core/tree/main/.github/skills/experimental/copilot-otel-metrics/examples) holds runnable copies of everything on this page: the compose file, both dashboards, the helper scripts, and the [Azure templates](https://github.com/microsoft/hve-core/tree/main/.github/skills/experimental/copilot-otel-metrics/examples/azure) with their own deploy guide.
-* [Local Telemetry](local-telemetry) covers the hook-based JSONL capture, which records session lifecycle events rather than OTel signals.
+* The skill's [examples directory](https://github.com/microsoft/hve-core/tree/main/.github/skills/experimental/copilot-otel-metrics/examples) holds runnable copies of everything on this page: the compose file, the Collector configuration, both dashboards, the helper scripts, and the [Azure templates](https://github.com/microsoft/hve-core/tree/main/.github/skills/experimental/copilot-otel-metrics/examples/azure) with their own deploy guide.
 * [Monitor agent usage with OpenTelemetry](https://code.visualstudio.com/docs/agents/guides/monitoring-agents) is the upstream reference for signal names and settings.
 * [Manage AI settings in enterprise environments](https://code.visualstudio.com/docs/enterprise/ai-settings) documents the managed settings channels in full.
 * [Visualize Azure Monitor data with Grafana](https://learn.microsoft.com/azure/azure-monitor/visualize/visualize-grafana-overview) compares the two Grafana products in Microsoft's own words.
