@@ -93,7 +93,7 @@ stimuli:
       - type: output-matches
         name: depth-with-rationale
         config:
-          pattern: '(?is)(recommended depth).{0,200}(basic|standard|comprehensive|tier [123]).{0,800}(because|change|risk|blast radius|hotspot|validation|ambigu)'
+          pattern: '(?is)(recommended depth).{0,200}(basic|standard|comprehensive|tier [123]).{0,800}(because|change|risk|blast radius|hotspot|validation|ambiguity)'
       - type: output-matches
         name: single-decision-prompt
         config:
