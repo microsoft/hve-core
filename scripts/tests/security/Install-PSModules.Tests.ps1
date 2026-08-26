@@ -170,10 +170,61 @@ Describe 'Test-ModulePresent' -Tag 'Unit' {
     }
 }
 
+Describe 'Ensure-RepositoryAvailable' -Tag 'Unit' {
+    Context 'when the repository is already registered' {
+        BeforeAll {
+            Mock Get-PSRepository {
+                [PSCustomObject]@{ Name = 'PSGallery' }
+            }
+            Mock Register-PSRepository {}
+        }
+
+        It 'Does not register the repository again' {
+            Ensure-RepositoryAvailable -Name 'PSGallery'
+
+            Should -Invoke Register-PSRepository -Times 0 -Exactly
+        }
+    }
+
+    Context 'when PSGallery is missing' {
+        BeforeAll {
+            Mock Get-PSRepository { $null }
+            Mock Register-PSRepository {}
+        }
+
+        It 'Registers PSGallery with the expected source and trust policy' {
+            Ensure-RepositoryAvailable -Name 'PSGallery'
+
+            Should -Invoke Register-PSRepository -Times 1 -Exactly -ParameterFilter {
+                $Name -eq 'PSGallery' -and
+                $SourceLocation -eq 'https://www.powershellgallery.com/api/v2' -and
+                $InstallationPolicy -eq 'Trusted'
+            }
+        }
+    }
+
+    Context 'when a non-PSGallery repository is missing' {
+        BeforeAll {
+            Mock Get-PSRepository { $null }
+            Mock Register-PSRepository {}
+        }
+
+        It 'Does not register an alternate repository automatically' {
+            Ensure-RepositoryAvailable -Name 'CustomRepo'
+
+            Should -Invoke Register-PSRepository -Times 0 -Exactly
+        }
+    }
+}
+
 Describe 'Install-SingleModule' -Tag 'Unit' {
     Context 'when Install-Module succeeds on first attempt' {
         BeforeAll {
             Mock Install-Module {}
+            Mock Get-PSRepository {
+                [PSCustomObject]@{ Name = 'PSGallery' }
+            }
+            Mock Register-PSRepository {}
         }
 
         It 'Calls Install-Module exactly once' {
@@ -200,6 +251,10 @@ Describe 'Install-SingleModule' -Tag 'Unit' {
                     throw "PSGallery transient failure"
                 }
             }
+            Mock Get-PSRepository {
+                [PSCustomObject]@{ Name = 'PSGallery' }
+            }
+            Mock Register-PSRepository {}
         }
         BeforeEach {
             $script:CallCount = 0
@@ -230,6 +285,10 @@ Describe 'Install-SingleModule' -Tag 'Unit' {
     Context 'when Install-Module fails on all attempts' {
         BeforeAll {
             Mock Install-Module { throw "PSGallery is down" }
+            Mock Get-PSRepository {
+                [PSCustomObject]@{ Name = 'PSGallery' }
+            }
+            Mock Register-PSRepository {}
         }
 
         It 'Throws after exhausting retries' {
@@ -251,6 +310,10 @@ Describe 'Install-SingleModule' -Tag 'Unit' {
     Context 'when running in GitHub Actions' {
         BeforeAll {
             Mock Install-Module { throw "network error" }
+            Mock Get-PSRepository {
+                [PSCustomObject]@{ Name = 'PSGallery' }
+            }
+            Mock Register-PSRepository {}
         }
         BeforeEach {
             $script:OrigGA = $env:GITHUB_ACTIONS
@@ -295,6 +358,10 @@ Describe 'Invoke-PSModuleInstall end-to-end' -Tag 'Unit' {
                     'FakeModuleB' { [PSCustomObject]@{ Version = [version]'2.5.0' } }
                 }
             }
+            Mock Get-PSRepository {
+                [PSCustomObject]@{ Name = 'PSGallery' }
+            }
+            Mock Register-PSRepository {}
             Mock Install-Module {}
             Mock Import-Module {}
         }
@@ -311,6 +378,10 @@ Describe 'Invoke-PSModuleInstall end-to-end' -Tag 'Unit' {
             Mock Get-Module {
                 [PSCustomObject]@{ Version = [version]'1.0.0' }
             }
+            Mock Get-PSRepository {
+                [PSCustomObject]@{ Name = 'PSGallery' }
+            }
+            Mock Register-PSRepository {}
             Mock Install-Module {}
             Mock Import-Module {}
         }
@@ -331,6 +402,10 @@ Describe 'Invoke-PSModuleInstall end-to-end' -Tag 'Unit' {
                     'FakeModuleB' { [PSCustomObject]@{ Version = [version]'2.5.0' } }
                 }
             }
+            Mock Get-PSRepository {
+                [PSCustomObject]@{ Name = 'PSGallery' }
+            }
+            Mock Register-PSRepository {}
             Mock Install-Module {}
             Mock Import-Module {}
         }
@@ -351,6 +426,10 @@ Describe 'Invoke-PSModuleInstall end-to-end' -Tag 'Unit' {
                     'FakeModuleB' { [PSCustomObject]@{ Version = [version]'2.5.0' } }
                 }
             }
+            Mock Get-PSRepository {
+                [PSCustomObject]@{ Name = 'PSGallery' }
+            }
+            Mock Register-PSRepository {}
             Mock Install-Module {}
             Mock Import-Module {}
         }

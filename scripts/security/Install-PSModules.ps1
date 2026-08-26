@@ -144,6 +144,37 @@ function Test-ModulePresent {
     return [bool]$installed
 }
 
+function Ensure-RepositoryAvailable {
+    <#
+    .SYNOPSIS
+        Ensures the requested repository is registered before installation.
+    .OUTPUTS
+        [void]
+    #>
+    [CmdletBinding()]
+    [OutputType([void])]
+    param(
+        [Parameter(Mandatory = $true)]
+        [ValidateNotNullOrEmpty()]
+        [string]$Name
+    )
+
+    $repo = Get-PSRepository -Name $Name -ErrorAction SilentlyContinue
+    if ($repo) {
+        return
+    }
+
+    if ($Name -ne 'PSGallery') {
+        return
+    }
+
+    Register-PSRepository -Name $Name `
+        -SourceLocation 'https://www.powershellgallery.com/api/v2' `
+        -InstallationPolicy Trusted `
+        -ErrorAction Stop
+    Write-Host "📦 Registered repository $Name" -ForegroundColor DarkCyan
+}
+
 function Install-SingleModule {
     <#
     .SYNOPSIS
@@ -178,6 +209,8 @@ function Install-SingleModule {
     )
 
     $isCI = $env:GITHUB_ACTIONS -eq 'true'
+
+    Ensure-RepositoryAvailable -Name $Repository
 
     for ($attempt = 1; $attempt -le $MaxAttempts; $attempt++) {
         try {

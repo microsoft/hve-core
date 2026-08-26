@@ -414,7 +414,7 @@ it to `scripts/lib/`.
 | Error mode   | `$ErrorActionPreference = 'Stop'`; throws on exhausted retries                                                                             |
 | Exit code    | 0 on success, 1 on any module install failure                                                                                              |
 | Logging      | Timestamped `Write-Host` (green success, yellow retry, red failure); emits `::warning::` annotations when `$env:GITHUB_ACTIONS -eq 'true'` |
-| Idempotent   | Skips modules already present at the required version (`Get-Module -ListAvailable`) unless `-Force` is specified                           |
+| Idempotent   | Skips modules already present at the required version (`Get-Module -ListAvailable`) unless `-Force` is specified; registers PSGallery on demand when the repository is missing |
 | Side effects | `Import-Module` each installed module into the session when `-Import` is specified                                                         |
 
 #### Parameters
