@@ -6,7 +6,7 @@ user-invocable: false
 metadata:
   authors: "microsoft/hve-core"
   spec_version: "1.1"
-  last_updated: "2026-06-14"
+  last_updated: "2026-08-13"
 ---
 
 # Requirements Author Skill
@@ -28,6 +28,7 @@ Shared (`references/_shared/`):
 BRD scope (`references/brd/`):
 
 * [BRD-to-PRD Handoff](references/brd/brd-to-prd-handoff-v1.md)
+* [Outcome Hypothesis-to-BRD Handoff](references/brd/outcome-hypothesis-to-brd-handoff-v1.md)
 * [BRD Quality Formats](references/brd/brd-quality-formats.md)
 
 PRD scope (`references/prd/`):
@@ -52,6 +53,35 @@ PRD scope (`references/prd/`):
 * Identify stakeholders, decision owners, and review participants.
 * Define scope boundaries, assumptions, and dependency surfaces.
 * Draft initial requirement candidates and map early traceability placeholders.
+* Validate and disposition an `OUTCOME_HYPOTHESIS_TO_BRD_HANDOFF_V1` payload when one is supplied.
+
+### Outcome hypothesis intake
+
+Use [Outcome Hypothesis-to-BRD Handoff](references/brd/outcome-hypothesis-to-brd-handoff-v1.md)
+as the canonical contract.
+
+1. Accept the YAML inline or from a user-supplied artifact path.
+2. Validate the complete payload before copying any value into the BRD.
+3. Reject unsupported versions, incomplete seeds, placeholder values, and
+   invalid provenance. Do not reinterpret a rejected payload as unstructured
+   evidence.
+4. Assign the next stable `BG-###` identifier.
+5. Record distinct statement, KPI, baseline, target, timeframe, measurement
+   source, and owner values.
+6. Mark each seed field `accepted` or `revised`. For a revision, preserve the
+   source value, current BRD value, and rationale.
+7. Map assumptions and open questions into their canonical BRD sections.
+   Initialize each imported question to `Open` unless Discover explicitly
+   confirms another BRD-owned status. Every deferred question requires a
+   rationale for deferral and one target phase: `PRD`, `Implementation`,
+   `Operations`, or `Future-Release`.
+8. Record the handoff ID, source path, source SHA-256, and KPI measurement
+   source in the BRD provenance receipt.
+
+Before Discover accepts the handoff, the validated payload is authoritative
+for imported seed values. Discover may explicitly accept or revise those
+values. After Discover exits, the BRD is authoritative. A later hypothesis
+change requires a new validated payload and explicit Discover re-entry.
 
 ### Hard exit gate
 
@@ -60,6 +90,8 @@ Discover exits only when:
 * Scope is bounded and stakeholder ownership is explicit.
 * Core assumptions and constraints are documented and reviewable.
 * Seed artifacts needed for Define are present and internally consistent.
+* Any outcome-hypothesis handoff has passed validation, every imported seed
+  field has an explicit disposition, and its provenance receipt is complete.
 
 ### Output artifacts
 
@@ -67,6 +99,7 @@ Discover exits only when:
 * Stakeholder inventory with role and ownership mapping.
 * Initial assumption and constraint register.
 * Seed requirement and traceability scaffold for Define.
+* Outcome-hypothesis receipt and field dispositions when a handoff was supplied.
 
 ## Define {#define}
 
@@ -437,5 +470,3 @@ The bundled reference bodies cite third-party standards and frameworks by name a
 ## License
 
 This skill is original Microsoft content licensed under [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/).
-
-

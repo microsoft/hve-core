@@ -7,6 +7,10 @@ description: Operational bucket definitions, classification guidance, and the GS
 
 This reference captures the operational bucket definitions and the General Security (GS) overlay used by the Security Planner.
 
+## Context-diagram and operational-view elicitation
+
+When building the initial model, elicit the system context by enumerating the external entities that interact with the system and by identifying third-party services or libraries that the implementation depends on. Prefer manifest-based discovery from files such as `package.json`, `*.csproj`, `requirements*.txt`, or `uv.lock`, and record the resulting dependencies in the context-diagram narrative so the model reflects the real operating boundary. Use the same evidence to populate the operational view in `representations.operational_views` by describing deployment responsibilities, hosting locations, operating responsibilities, and the services or libraries that are present in the runtime environment.
+
 ## Bucket definitions
 
 The planning workflow uses eight buckets:

@@ -2,7 +2,13 @@
 title: Experimental/Graphify
 description: Conventions for consuming graphify-out/ knowledge-graph evidence inside the RPI workflow
 sidebar_position: 2
-ms.date: 2026-07-03
+author: Microsoft
+ms.date: 2026-08-12
+ms.topic: reference
+keywords:
+  - instruction
+  - experimental
+  - experimental/graphify
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->

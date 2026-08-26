@@ -1,0 +1,11 @@
+description: Generic SDL/Core profile for broad threat modeling
+asset_source: microsoft/threat-modeling-templates/default.tb7
+knowledge_base: default
+type_ids:
+  external_interactor: GE.EI
+  process: GE.P
+  data_store: GE.DS
+  data_flow: GE.DF
+  trust_boundary_line: GE.TB.L
+  trust_boundary_box: GE.TB.B
+  annotation: GE.A

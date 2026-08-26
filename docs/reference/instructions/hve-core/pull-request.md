@@ -2,7 +2,13 @@
 title: Hve Core/Pull Request
 description: "Pull request description generation and creation via diff analysis, subagent review, and MCP tools"
 sidebar_position: 7
-ms.date: 2026-07-23
+author: Microsoft
+ms.date: 2026-08-12
+ms.topic: reference
+keywords:
+  - instruction
+  - hve-core
+  - hve-core/pull-request
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->

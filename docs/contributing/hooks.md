@@ -3,7 +3,7 @@ title: Contributing Hooks
 description: How to implement, register, and validate hook artifacts in hve-core
 sidebar_position: 7
 author: Microsoft
-ms.date: 2026-08-06
+ms.date: 2026-08-19
 ms.topic: how-to
 keywords:
   - hooks
@@ -15,7 +15,7 @@ estimated_reading_time: 6
 
 ## Why Hooks Exist
 
-Hooks let you run lightweight automation during Copilot lifecycle events without modifying agents, prompts, or skills. In hve-core, hooks are plugin-only package components distributed with other AI customization files.
+Hooks let you run lightweight automation during Copilot lifecycle events without modifying agents, prompts, or skills. In hve-core, hooks are plugin-only components distributed with other AI customization files.
 
 Use a hook when you need event-driven behavior such as:
 
@@ -32,22 +32,19 @@ Hooks use package-oriented source folders. Use this structure for hook contribut
 | `.github/hooks/<package>/<name>.json`               | Hook manifest that maps lifecycle events to executable commands |
 | `.github/hooks/<package>/<name>/`                   | Hook implementation scripts and support files                   |
 | `scripts/linting/schemas/hook-manifest.schema.json` | JSON Schema (draft-07) that defines the manifest contract       |
-| `.github/plugin/marketplace.json`                   | Standard `hooks` membership for one package                     |
-| `docs/plugins/*.md`                                 | Durable package documentation                                   |
+| `plugin.json`                                       | Canonical repository-relative hook declaration for the plugin   |
+| `docs/plugins/hve-core.md`                          | Durable plugin documentation                                    |
 
 Manifests live one package level down (`.github/hooks/<package>/`). A flat `.github/hooks/<name>.json` is treated as a repo-specific artifact and is excluded from distribution.
 
-The telemetry hook is the current reference implementation:
-
-* `.github/hooks/shared/telemetry.json`
-* `.github/hooks/shared/telemetry/`
+The repository ships no hook manifest today. The generic contract below stays supported, and the validator accepts a repository with zero manifests.
 
 ## Implementing a New Hook
 
 1. Add a manifest at `.github/hooks/<package>/<name>.json`.
 2. Add executable scripts under `.github/hooks/<package>/<name>/`.
-3. Register the manifest through the package's standard `hooks` field in `.github/plugin/marketplace.json`.
-4. Document the hook in the matching `docs/plugins/<package>.md` page.
+3. Register the manifest through the `hooks` field in root `plugin.json` using its repository-relative `.github/...` path.
+4. Document the hook in `docs/plugins/hve-core.md`.
 5. Add or update docs under `docs/` for setup and usage.
 
 Minimal manifest pattern:
@@ -79,11 +76,9 @@ For reliability and portability, hook scripts should follow these rules:
 * Keep runtime short and respect `timeoutSec` values in the manifest.
 * Support both bash and PowerShell paths when practical.
 
-Telemetry follows this model with a no-op gate and structured JSONL append behavior.
-
 ## Manifest Schema and Validation
 
-Manifests are validated against `scripts/linting/schemas/hook-manifest.schema.json`, the authoritative contract. The schema enforces the allowed top-level keys (`version`, `description`, `hooks`), the ten CLI-lowercase event names (`sessionStart`, `sessionEnd`, `userPromptSubmit`, `userPromptSubmitted`, `preToolUse`, `postToolUse`, `preCompact`, `subagentStart`, `subagentStop`, `stop`), and the permitted command properties.
+Manifests are validated against `scripts/linting/schemas/hook-manifest.schema.json`, the authoritative contract. The schema enforces the allowed top-level keys (`version`, `description`, `hooks`), the eleven CLI-lowercase event names (`sessionStart`, `sessionEnd`, `userPromptSubmit`, `userPromptSubmitted`, `preToolUse`, `postToolUse`, `preCompact`, `subagentStart`, `subagentStop`, `stop`, `agentStop`), and the permitted command properties.
 
 Run `npm run lint:hooks` to validate every package-scoped manifest. On failure, the validator prints each error and the schema path so you can reconcile the manifest against the contract.
 
@@ -101,10 +96,9 @@ when a hook persists payloads to disk:
 * Write to local, gitignored locations and never to committed paths.
 * Document exactly what is captured, where it is written, and how to remove it.
 
-The telemetry hook applies this pattern: its processed `sessions-*.jsonl` stream
-stores only tool-input key names and a truncated prompt preview, while the
-verbatim `raw-input.jsonl` dump is a separate opt-in (`HVE_TELEMETRY_RAW=1`,
-off by default). See [Local Telemetry](../customization/local-telemetry#sensitive-data-and-privacy).
+A hook that persists derived signals should keep any verbatim payload capture
+behind its own environment gate, default it off, and name the exact file it
+writes so an operator can delete it.
 
 ## Event Compatibility Guidance
 
@@ -120,10 +114,9 @@ Choose CLI event names that convert to valid VS Code events:
 
 `stop` and `sessionEnd` are distinct events, not duplicates: a hook that needs a per-turn signal registers `stop`, while a hook that needs a session-end signal registers `sessionEnd`. Registering both is valid when both signals are required.
 
-## Registering a Hook in A Package
+## Registering a Hook in the Plugin
 
-Set the package's standard `hooks` field to the `.github`-root-relative
-canonical manifest path:
+Set the plugin manifest's `hooks` field to the `.github`-root-relative canonical manifest path:
 
 ```json
 {
@@ -131,7 +124,7 @@ canonical manifest path:
 }
 ```
 
-Then update the corresponding page under `docs/plugins/` so users can discover what the hook does.
+Then update `docs/plugins/hve-core.md` so users can discover what the hook does.
 
 ## Validation Checklist
 
@@ -149,7 +142,6 @@ When your hook includes scripts, also run the relevant script linters and tests 
 * [Custom Agents](custom-agents)
 * [Instructions](instructions)
 * [Common Standards](ai-artifacts-common)
-* [Local Telemetry](../customization/local-telemetry)
 
 ---
 

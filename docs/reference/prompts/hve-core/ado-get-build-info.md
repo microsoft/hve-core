@@ -2,7 +2,13 @@
 title: Ado Get Build Info
 description: Retrieve Azure DevOps build status and logs for a pull request or build number
 sidebar_position: 2
-ms.date: 2026-08-04
+author: Microsoft
+ms.date: 2026-08-12
+ms.topic: reference
+keywords:
+  - prompt
+  - hve-core
+  - ado-get-build-info
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->

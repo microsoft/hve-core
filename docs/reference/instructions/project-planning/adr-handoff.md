@@ -2,7 +2,13 @@
 title: Project Planning/Adr Handoff
 description: "ADR Creator Govern-phase handoff protocol: compact summary template, peer-agent routing heuristics, and dual-format (ADO + GitHub) work item templates"
 sidebar_position: 2
-ms.date: 2026-07-03
+author: Microsoft
+ms.date: 2026-08-12
+ms.topic: reference
+keywords:
+  - instruction
+  - project-planning
+  - project-planning/adr-handoff
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->

@@ -111,7 +111,9 @@ if ($MyInvocation.InvocationName -ne '.') {
             $Grouped | Format-Table -AutoSize -Property Count, SecuritySeverity, RuleId, RuleDescription
         }
         { $_ -in 'Json', 'GroupedJson' } {
-            $Grouped | ConvertTo-Json -Depth 5
+            # The array wrapper keeps the output a JSON array for every result size.
+            # Piping to ConvertTo-Json emits a bare object for a single group and nothing at all for none.
+            ConvertTo-Json -InputObject @($Grouped) -Depth 5
         }
     }
 

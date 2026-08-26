@@ -2,7 +2,13 @@
 title: Sssc Capture
 description: Start supply chain security planning from existing knowledge using the SSSC Planner agent in capture mode
 sidebar_position: 9
-ms.date: 2026-07-03
+author: Microsoft
+ms.date: 2026-08-12
+ms.topic: reference
+keywords:
+  - prompt
+  - security
+  - sssc-capture
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->

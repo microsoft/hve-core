@@ -2,9 +2,13 @@
 title: Release Process
 description: Release HVE Core through reviewed PreRelease metadata and Stable promotion workflows
 sidebar_position: 9
-ms.date: 2026-08-10
+ms.date: 2026-08-19
 ms.topic: how-to
 author: WilliamBerryiii
+keywords:
+  - release process
+  - release-please
+  - publishing
 ---
 
 ## Overview
@@ -77,11 +81,9 @@ flowchart TD
     draft odd-minor `prerelease-v<version>` release at that merge commit.
 7. The workflow proves event SHA, PR merge SHA, release-please SHA, tag SHA,
    and `release/prerelease` ancestry are consistent.
-8. It packages from the validated release SHA, sets every release catalog
-    entry to the exact `prerelease-v<version>` ref, and attaches and attests
-    `plugin-release-evidence.json`. The evidence is derived from the declared
-    canonical tracked sources and verifies package non-vacuity and digests
-    against the release SHA.
+8. It packages one VSIX from the validated release SHA, attaches the VSIX SPDX,
+    Sigstore, and in-toto sidecars plus `dependencies.spdx.json`, and verifies
+    provenance against the immutable release identity.
 9. A release GitHub App token publishes the prerelease with
    `gh release edit --prerelease --draft=false`. The event triggers
    `Pre-Release Marketplace Publish`.
@@ -94,9 +96,9 @@ flowchart TD
 1. A published PreRelease event runs `Stable Release Preparation`. A recovery
     dispatch must provide the published `prerelease-v<version>` tag.
 2. The workflow derives a promotion head from the validated source tag,
-    refreshes it from `release/stable`, validates matching canonical release
-    evidence, and merges only that tag commit. It restores
-    selected-source package and catalog content, projects Stable version
+    refreshes it from `release/stable`, validates the published source tag,
+    version, and branch ancestry, and merges only that tag commit. It restores
+    selected-source manifest and version content, projects Stable version
     fields, writes the exact `release-as`, and opens a reviewed PR. Newer
     `release/prerelease` commits and other selected tags are excluded.
 3. Review `PR Validation Success`, the even-minor intent, and the promoted
@@ -104,17 +106,17 @@ flowchart TD
 4. `Stable Release Publish` revalidates the tag-scoped merged head and current
     Stable intent in a read-only job, then runs release-please in PR-only mode
     and opens or updates the managed Stable PR.
-5. Review the managed version, changelog, manifest, and exact
-    `v<stable-version>` plugin ref. The future release tag does not
-    exist yet by design. Postprocessing removes the consumed `release-as`.
+5. Review the managed version, changelog, plugin manifest, and marketplace
+    locator version. The future release tag does not exist yet by design.
+    Postprocessing removes the consumed `release-as`.
 6. Merge the managed PR. Release-please creates the draft even-minor
     `v<version>` release at that managed merge commit.
 7. The workflow proves event SHA, PR merge SHA, release-please SHA, tag SHA,
     and `release/stable` ancestry are consistent.
-8. It packages from the release tag and attaches signed plugin ZIPs,
-    `plugin-release-evidence.json`, SBOM, VEX, Sigstore, in-toto, provenance,
-    and verification assets. Release evidence and package assets are attested
-    against the immutable release identity.
+8. It packages one VSIX from the release tag and attaches its SPDX, Sigstore,
+    and in-toto sidecars, `dependencies.spdx.json`, Stable OpenVEX, provenance,
+    and verification notes. The VSIX and VEX assurance are bound to the
+    immutable release identity.
 9. A release GitHub App token publishes the Stable release with
     `gh release edit --draft=false`. The event triggers
     `Stable Marketplace Publish`.
@@ -131,7 +133,8 @@ prepares channel version metadata and changelog changes on its release branch:
 
 * Updated `package.json` and `package-lock.json` versions
 * Updated `extension/templates/package.template.json` version
-* Updated `.github/plugin/marketplace.json` version and exact channel tag ref
+* Updated root `plugin.json` version
+* Updated `.github/plugin/marketplace.json` metadata and sole entry version
 * Updated channel manifest
 * Updated `CHANGELOG.md`
 
@@ -152,8 +155,8 @@ release-please opens its managed PR:
 For example, the ordinary sequence is `3.3.101` to `3.5.0` to `3.6.0`.
 PreRelease reads only `release/prerelease`. Stable derives its candidate from
 the promoted PreRelease version; the current Stable version only rejects a
-candidate that does not advance it. Matching plugin packages use the identical
-channel version.
+candidate that does not advance it. The plugin manifest and VSIX use the
+identical channel version.
 
 > [!NOTE]
 > Stable releases use an even minor version number (for example, `1.2.0`), and
@@ -201,7 +204,7 @@ deterministic, so rerunning preparation without reconciling channel state
 selects the same occupied version and fails again.
 
 1. Inspect the tag, the GitHub release, its target commit, and available
-    canonical plugin evidence. Determine whether they belong to a completed HVE
+    published release assets and provenance. Determine whether they belong to a completed HVE
     Core release or are unrelated, manual, or abandoned state.
 2. Do not delete, move, or force-update the immutable tag. Do not republish a
     completed release to make branch metadata agree with it.
@@ -232,12 +235,12 @@ preparation workflow.
 3. Merge the promotion and verify it creates no tag. Confirm the resulting
     `Pre-Release Pipeline` run opens the managed PR in PR-only mode.
 4. Review the managed PR on `release/prerelease`, including synchronized
-    versions, changelog, manifest, and immutable plugin locator.
+    versions, changelog, plugin manifest, and marketplace version parity.
 5. Merge the managed PR and verify the draft `prerelease-v<version>` release
     targets that managed merge commit.
-6. Verify packaging uses the release tag and attaches signed plugin ZIPs,
-    `plugin-release-evidence.json`, SBOM, Sigstore, and in-toto assets for the
-    same source SHA.
+6. Verify packaging uses the release tag and attaches one VSIX, its SPDX,
+    Sigstore, and in-toto sidecars, and `dependencies.spdx.json` for the same
+    source SHA.
 7. Verify App-token publication marks the GitHub release as a prerelease,
     and triggers `Pre-Release Marketplace Publish`.
 
@@ -250,19 +253,17 @@ The promotion and managed release PR are separate review boundaries. When ready 
 2. Confirm the head is
     `release-promotion--release-prerelease--to--release-stable--<source-tag>`,
     the suffix matches the selected published PreRelease tag, the source commit
-    has matching canonical release evidence, and the proposed version is
+    has matching release provenance, and the proposed version is
     even-minor. A
     newer branch tip or another selected tag must not enter the promotion.
 3. Merge the promotion and verify it creates no tag. Confirm the resulting
     `Stable Release Publish` run opens the managed PR in PR-only mode.
 4. Review the managed PR on `release/stable`, including its changelog, version
-    fields, manifest, and future exact plugin ref. The ref becomes resolvable
-    when the approved merge creates the Stable `v<version>` tag.
+    fields, plugin manifest, and marketplace version parity.
 5. Merge the managed PR and verify the draft tag targets that managed merge
     commit.
-6. Verify the workflow attaches the VSIX, signed plugin ZIPs,
-    `plugin-release-evidence.json`, SBOM, VEX, Sigstore, in-toto, and provenance
-    assets.
+6. Verify the workflow attaches one VSIX, its SPDX, Sigstore, and in-toto
+    sidecars, `dependencies.spdx.json`, Stable OpenVEX, and provenance assets.
 7. Verify App-token publication triggers `Stable Marketplace Publish` for the
     same release tag.
 
@@ -333,61 +334,38 @@ Because snapshot publication has stopped, tags and catalogs remain immutable and
 | Merge managed Stable PR                    | Creates the draft tag and starts the even-minor artifact pipeline |
 | Publish Stable with App token              | Starts Stable Marketplace publication                             |
 
-## Extension Channels and Maturity
+## Extension Channels and Membership
 
 The VS Code extension is published to two same-content channels with different cadence, versioning, and source ownership.
 
 ### Extension Channels
 
-| Channel    | Moving source        | Immutable source        | Included Active Labels                  |
-|------------|----------------------|-------------------------|-----------------------------------------|
-| Stable     | `release/stable`     | `v<version>`            | `stable`, `preview`, and `experimental` |
-| PreRelease | `release/prerelease` | `prerelease-v<version>` | `stable`, `preview`, and `experimental` |
+| Channel    | Moving source        | Immutable source        | Component membership |
+|------------|----------------------|-------------------------|----------------------|
+| Stable     | `release/stable`     | `v<version>`            | Complete manifest    |
+| PreRelease | `release/prerelease` | `prerelease-v<version>` | Complete manifest    |
 
-### Maturity Levels
+### Membership Policy
 
-The `hve-core` recipe declares non-stable component lifecycle labels in `x-hve.componentMaturity` under `.github/plugin/marketplace.json`:
+Root `plugin.json` is identical in membership across Stable and PreRelease.
+`npm run plugin:sync` derives it from tracked package-scoped agents, prompts,
+instructions, and distributable skills under `.github`; the fixed telemetry
+hook is included on both channels. Promotion and release validation version
+root `plugin.json`, and each moving branch or exact tag resolves root README
+and LICENSE from its selected snapshot. The VSIX continues to package
+`extension/README.md` and `extension/LICENSE` from that immutable release
+source.
 
-| Level          | Description                                                                 | Included In     |
-|----------------|-----------------------------------------------------------------------------|-----------------|
-| `stable`       | Established component                                                       | Both channels   |
-| `preview`      | Functional component still receiving compatibility work                     | Both channels   |
-| `experimental` | Early development that may change significantly                             | Both channels   |
-| `deprecated`   | Scheduled for removal                                                       | Neither channel |
-| `removed`      | Source retained for traceability but withdrawn from generated distributions | Neither channel |
-
-Lifecycle labels disclose support posture and inform governance. They are not channel filters and are separate from maturity classifications used in Responsible AI assessments.
-
-### Maturity Lifecycle
-
-```mermaid
-stateDiagram-v2
-    [*] --> experimental : New artifact
-    experimental --> preview : Core features complete
-    preview --> stable : Production tested
-    stable --> deprecated : Superseded or obsolete
-    deprecated --> removed : Withdrawn from distribution
-    removed --> [*] : Source eventually deleted
-```
-
-The `removed` level is a marketplace tombstone. The artifact file remains in its
-source location (for example, under `.github/skills/{package-id}/`) so history and
-references stay intact, but every downstream surface (marketplace validation, plugin
-generation, and extension packaging) excludes it. Use `removed` when you want to retire
-an artifact from distribution without moving it to `.github/deprecated/` or deleting it
-outright. See [AI Artifacts Architecture - Removed Artifacts](../architecture/ai-artifacts.md#removed-artifacts)
-for the architectural contract.
+Channel selection changes version, source ownership, release assurance, and the VS Code Marketplace pre-release flag. It never filters components.
 
 ### Contributor Guidelines
 
-| Guideline          | Action                                                                                                                                                                                                                                                             |
-|--------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| New contributions  | Omit component maturity for the default `stable` value unless targeting early adopters                                                                                                                                                                             |
-| Experimental work  | Set `experimental` on the package-relative component path                                                                                                                                                                                                          |
-| Preview promotions | Set `preview` when core functionality is complete                                                                                                                                                                                                                  |
-| Stable promotions  | Remove the component-maturity override after production validation                                                                                                                                                                                                 |
-| Deprecation        | Set `deprecated` before removal to provide transition time. Move the artifact file to `.github/deprecated/{type}/` when archival placement is intended. See [AI Artifacts Architecture](../architecture/ai-artifacts.md#deprecated-artifacts) for the full policy. |
-| Removal            | Remove active standard membership and retain a `removed` tombstone in `x-hve.componentMaturity` when source should remain for history, references, or possible reinstatement. See [Removed Artifacts](../architecture/ai-artifacts.md#removed-artifacts).          |
+| Guideline         | Action                                                                                                                                                                                           |
+|-------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| New contributions | Place the artifact under a package-scoped canonical path and run `npm run plugin:sync`.                                                                                                          |
+| Validation        | Run `npm run plugin:validate` and applicable artifact, documentation, and extension checks.                                                                                                      |
+| Deprecation       | Add migration guidance, then move the artifact under `.github/deprecated/` when it should leave both channels. See [Deprecated Artifacts](../architecture/ai-artifacts.md#deprecated-artifacts). |
+| Removal           | Delete the active source and synchronize the manifest. Preserve needed history in the changelog or migration documentation rather than a distribution tombstone.                                 |
 
 ---
 

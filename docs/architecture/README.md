@@ -3,8 +3,12 @@ title: Architecture Overview
 description: HVE Core system design and component relationships
 sidebar_position: 1
 author: Microsoft
-ms.date: 2026-08-06
+ms.date: 2026-08-19
 ms.topic: concept
+keywords:
+  - architecture
+  - system design
+  - hve core
 ---
 
 HVE Core provides a Copilot customization framework that enables teams to extend GitHub Copilot with project-specific context, workflows, and automation. The framework organizes reusable AI artifacts, development scripts, and documentation into a cohesive system that integrates with VS Code and GitHub workflows.
@@ -21,26 +25,26 @@ graph TD
     EXT --> SKILLS[Skills]
     SCRIPTS[Scripts] --> LINTING[Linting]
     SCRIPTS --> SECURITY[Security]
-    SCRIPTS --> PLUGINS[Plugins]
+    SCRIPTS --> MANIFEST[Plugin Manifest]
     DOCS[Documentation] --> GUIDES[User Guides]
     DOCS --> ARCH[Architecture]
 ```
 
 ## Component Summary
 
-| Component           | Location                   | Purpose                                                                       |
-|---------------------|----------------------------|-------------------------------------------------------------------------------|
-| Extension           | `extension/`               | VS Code extension providing contribution points for AI artifacts              |
-| Scripts             | `scripts/`                 | PowerShell automation for linting, security validation, and plugin generation |
-| Documentation       | `docs/`                    | User guides, architecture docs, and contribution guidelines                   |
-| GitHub Assets       | `.github/`                 | Workflows, instructions, prompts, agents, skills, and issue templates         |
-| Dev Container       | `.devcontainer/`           | Codespaces and local container development environment                        |
-| Frontmatter Schema  | `scripts/linting/schemas/` | JSON schemas for AI artifact validation                                       |
-| GitHub Workflows    | `.github/workflows/`       | CI/CD pipelines for validation, security, and release automation              |
-| Access Control      | `.github/CODEOWNERS`       | Path-based review requirements and ownership                                  |
-| MCP Configuration   | `.vscode/mcp.json`         | Model Context Protocol server definitions                                     |
-| Plugin staging      | External absolute path     | Temporary Copilot package output for explicit assembly                        |
-| Test Infrastructure | `scripts/tests/`           | Pester test suites with fixtures and mocks                                    |
+| Component           | Location                   | Purpose                                                                   |
+|---------------------|----------------------------|---------------------------------------------------------------------------|
+| Extension           | `extension/`               | VS Code extension providing contribution points for AI artifacts          |
+| Scripts             | `scripts/`                 | PowerShell automation for linting, security validation, and manifest sync |
+| Documentation       | `docs/`                    | User guides, architecture docs, and contribution guidelines               |
+| GitHub Assets       | `.github/`                 | Workflows, instructions, prompts, agents, skills, and issue templates     |
+| Dev Container       | `.devcontainer/`           | Codespaces and local container development environment                    |
+| Frontmatter Schema  | `scripts/linting/schemas/` | JSON schemas for AI artifact validation                                   |
+| GitHub Workflows    | `.github/workflows/`       | CI/CD pipelines for validation, security, and release automation          |
+| Access Control      | `.github/CODEOWNERS`       | Path-based review requirements and ownership                              |
+| MCP Configuration   | `.vscode/mcp.json`         | Model Context Protocol server definitions                                 |
+| Plugin Manifest     | `plugin.json`              | Deterministic membership for the plugin and extension                     |
+| Test Infrastructure | `scripts/tests/`           | Pester test suites with fixtures and mocks                                |
 
 ## Core Subsystems
 
@@ -54,18 +58,14 @@ Automation scripts handle quality assurance and development workflows. The scrip
 
 * Linting scripts validate markdown formatting, link integrity, YAML structure, and PowerShell code quality
 * Security scripts verify dependency pinning and SHA staleness for workflow actions
-* Plugin scripts generate Copilot packages from marketplace recipes
+* Plugin scripts synchronize and validate the canonical plugin manifest
 * Library modules provide shared utilities like verified downloads
 
 ### Plugins
 
-Marketplace entries in `.github/plugin/marketplace.json` define self-contained
-packages from `.github`-root-relative canonical paths: `agents/*.agent.md`,
-`prompts/*.prompt.md`, `instructions/*.instructions.md`, `skills/*`
-directories, and `hooks/*.json`. Explicit package assembly requires
-`HVE_PLUGIN_STAGING_ROOT` or `-StagingRoot` to name an absolute path outside the
-repository. Ordinary validation never creates a repository-root `plugins/`
-tree. See [scripts/plugins/README.md](https://github.com/microsoft/hve-core/blob/main/scripts/plugins/README.md) for the generation pipeline.
+Root `plugin.json` defines the complete `hve-core` membership from package-scoped canonical agents, prompts, instructions, and distributable skills discovered under `.github`. `.github/plugin/marketplace.json` contains one relative locator to the repository root. Agent Plugins and the Copilot CLI install from that root and resolve its README and LICENSE, while extension preparation uses the same membership for one VSIX with extension-owned metadata.
+
+See [scripts/plugins/README.md](https://github.com/microsoft/hve-core/blob/main/scripts/plugins/README.md) for synchronization and validation commands.
 
 ### Documentation
 
@@ -77,7 +77,7 @@ The `.github/` directory contains workflow definitions, issue templates, and the
 
 Skills package executable utilities with cross-platform scripts and domain-specific guidance; each skill is self-contained with a SKILL.md file describing capabilities and usage patterns. By convention, skills are organized under `.github/skills/{package-id}/{skill-name}/`.
 
-## Package Relationships
+## Component Relationships
 
 Components interact through well-defined boundaries. The extension registers contribution points for agents, prompts, and instructions, making them available to Copilot Chat. Skills use a separate discovery mechanism: Copilot scans `.github/skills/{package-id}/` subdirectories by convention for `SKILL.md` files that describe executable capabilities. Scripts operate independently of the extension but share configuration files like `PSScriptAnalyzer.psd1` and schema definitions in `scripts/linting/schemas/`.
 

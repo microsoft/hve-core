@@ -148,17 +148,22 @@ Describe 'Invoke-AssetDocsGeneration human sections' -Tag 'Unit' {
     It 'Scaffolds the How to use it section for an interactive asset' {
         $content = Get-Content -LiteralPath (Join-Path $script:repo 'docs/reference/agents/hve-core/alpha-agent.md') -Raw
 
-        $content | Should -Match '(?m)^## When to use it$'
-        $content | Should -Match '(?m)^## How to use it$'
-        $content | Should -Match '(?m)^## Example usage$'
+        @([regex]::Matches($content, '(?m)^## .+$').Value) | Should -Be @(
+            '## What it does'
+            '## When to use it'
+            '## How to use it'
+            '## Example usage'
+        )
     }
 
     It 'Omits the How to use it section for a delegated subagent' {
         $content = Get-Content -LiteralPath (Join-Path $script:repo 'docs/reference/agents/hve-core/subagents/nested-sub.md') -Raw
 
-        $content | Should -Match '(?m)^## When to use it$'
-        $content | Should -Not -Match '(?m)^## How to use it$'
-        $content | Should -Match '(?m)^## Example usage$'
+        @([regex]::Matches($content, '(?m)^## .+$').Value) | Should -Be @(
+            '## What it does'
+            '## When to use it'
+            '## Example usage'
+        )
     }
 
     It 'Omits the How to use it section for passive instructions and skills' {
@@ -169,6 +174,10 @@ Describe 'Invoke-AssetDocsGeneration human sections' -Tag 'Unit' {
 
     It 'Marks every scaffolded human section as an unwritten stub' {
         Test-AssetDocStub -Content (Get-Content -LiteralPath (Join-Path $script:repo 'docs/reference/prompts/hve-core/demo.md') -Raw) | Should -BeTrue
+    }
+
+    It 'Keeps output headings out of the scaffold body template' {
+        Get-Content -LiteralPath $script:TemplatePath -Raw | Should -Not -Match '(?m)^## '
     }
 
     It 'Preserves an authored human tail while refreshing the generated regions' {
@@ -342,6 +351,16 @@ Describe 'Invoke-AssetDocsGeneration input validation' -Tag 'Unit' {
             Should -Throw -ExpectedMessage "Template not found: $missing"
     }
 
+    It 'Throws when an applicable template section body is missing' {
+        $repo = New-AssetFixtureRepo
+        $brokenTemplate = Join-Path $TestDrive 'broken-asset-doc.template.md'
+        $template = Get-Content -LiteralPath $script:TemplatePath -Raw
+        Set-Content -LiteralPath $brokenTemplate -Value ($template -replace '<!-- END ASSET-DOC TEMPLATE: example-usage -->', '') -Encoding utf8NoBOM -NoNewline
+
+        { Invoke-AssetDocsGeneration -RepoRoot $repo -TemplatePath $brokenTemplate } |
+            Should -Throw -ExpectedMessage "Template section 'example-usage' must contain exactly one begin marker and one end marker."
+    }
+
     It 'Produces no pages for a repository with no documentable assets' {
         $repo = Join-Path $TestDrive 'empty-repo'
         New-Item -ItemType Directory -Path (Join-Path $repo '.github') -Force | Out-Null
@@ -350,6 +369,61 @@ Describe 'Invoke-AssetDocsGeneration input validation' -Tag 'Unit' {
 
         $result.Created.Count | Should -Be 0
         $result.DriftCount | Should -Be 0
+    }
+}
+
+Describe 'New-DocFrontmatter' -Tag 'Unit' {
+    It 'Emits all required frontmatter fields' {
+        $fm = New-DocFrontmatter -Title 'Demo' -Description 'A demo.' -SidebarPosition 3 -MsDate '2026-07-02' -Topic 'reference' -Keywords @('agent', 'demo')
+        $fm | Should -Match '(?m)^title: Demo$'
+        $fm | Should -Match '(?m)^description: A demo\.$'
+        $fm | Should -Match '(?m)^sidebar_position: 3$'
+        $fm | Should -Match '(?m)^author: Microsoft$'
+        $fm | Should -Match '(?m)^ms\.date: 2026-07-02$'
+        $fm | Should -Match '(?m)^ms\.topic: reference$'
+        $fm | Should -Match '(?ms)^keywords:\r?\n  - agent\r?\n  - demo$'
+    }
+
+    It 'Honors an explicit author' {
+        $fm = New-DocFrontmatter -Title 'Demo' -Description 'A demo.' -SidebarPosition 1 -MsDate '2026-07-02' -Topic 'overview' -Keywords @('demo') -Author 'HVE Core Team'
+        $fm | Should -Match '(?m)^author: HVE Core Team$'
+    }
+
+    It 'Rejects a topic outside the docs schema enum' {
+        { New-DocFrontmatter -Title 'Demo' -Description 'A demo.' -SidebarPosition 1 -MsDate '2026-07-02' -Topic 'not-a-topic' -Keywords @('demo') } |
+            Should -Throw
+    }
+}
+
+Describe 'Get-AssetDocKeyword' -Tag 'Unit' {
+    It 'Combines kind, collection, and key' {
+        $model = [PSCustomObject]@{
+            Kind   = 'agent'
+            Key    = 'accessibility-planner'
+            DocRel = 'docs/reference/agents/accessibility/accessibility-planner.md'
+        }
+
+        Get-AssetDocKeyword -Model $model | Should -Be @('agent', 'accessibility', 'accessibility-planner')
+    }
+
+    It 'Omits the collection segment for assets directly under the kind directory' {
+        $model = [PSCustomObject]@{
+            Kind   = 'prompt'
+            Key    = 'standalone'
+            DocRel = 'docs/reference/prompts/standalone.md'
+        }
+
+        Get-AssetDocKeyword -Model $model | Should -Be @('prompt', 'standalone')
+    }
+
+    It 'Deduplicates repeated segments case-insensitively' {
+        $model = [PSCustomObject]@{
+            Kind   = 'skill'
+            Key    = 'jira'
+            DocRel = 'docs/reference/skills/jira/jira.md'
+        }
+
+        Get-AssetDocKeyword -Model $model | Should -Be @('skill', 'jira')
     }
 }
 
@@ -370,4 +444,3 @@ Describe 'Test-DocContentEqual' -Tag 'Unit' {
         Test-DocContentEqual -Left '' -Right '' | Should -BeTrue
     }
 }
-

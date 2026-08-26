@@ -29,6 +29,7 @@ __all__ = [
     "DEFAULT_REDIRECT_URI",
     # Environment variable name registry.
     "ENV_BASE_URL",
+    "ENV_ALLOW_INSECURE_API",
     "ENV_CLIENT_ID",
     "ENV_CLIENT_SECRET",
     "ENV_PROFILE",
@@ -100,6 +101,7 @@ MURAL_TOKEN_URL = "https://app.mural.co/api/public/v1/authorization/oauth2/token
 DEFAULT_REDIRECT_URI = "http://localhost:8765/callback"
 
 ENV_BASE_URL = "MURAL_BASE_URL"
+ENV_ALLOW_INSECURE_API = "MURAL_ALLOW_INSECURE_API"
 ENV_CLIENT_ID = "MURAL_CLIENT_ID"
 ENV_CLIENT_SECRET = "MURAL_CLIENT_SECRET"
 ENV_PROFILE = "MURAL_PROFILE"

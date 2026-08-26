@@ -1,8 +1,8 @@
 ---
 title: Mural Skill Security Model
-description: STRIDE threat model for the Mural skill organized by assets, adversaries, and trust buckets (Browser to Loopback, CLI to Mural, on-disk cache, CLI caller process) with in-code mitigations and acknowledged enterprise readiness gaps
+description: STRIDE threat model for the Mural skill covering browser callback, Mural API egress, on-disk cache, caller input, and Azure SAS uploads
 author: microsoft/hve-core
-ms.date: 2026-06-30
+ms.date: 2026-08-14
 ms.topic: reference
 estimated_reading_time: 18
 keywords:
@@ -15,9 +15,11 @@ keywords:
 <!-- markdownlint-disable-file -->
 # Mural Skill Security Model
 
-This document records the STRIDE threat model for the Mural skill (the `mural` package under `scripts/mural/`). The model is organized by trust bucket: Browser to Loopback (B1), CLI to Mural endpoints (B2), On-disk cache (B3), and CLI caller process (B4). Each bucket enumerates all six STRIDE categories with the in-code mitigations that address them. Assets and adversaries are enumerated first because credential-storage docs ([`docs/agents/mural/credentials.md`](../../../../docs/agents/mural/credentials.md)) reference them by id. Acknowledged enterprise readiness gaps are listed at the end of the document.
+This document records the STRIDE threat model for the Mural skill (the `mural` package under `scripts/mural/`). The model is organized by trust bucket: Browser to Loopback (B1), CLI to Mural endpoints (B2), On-disk cache (B3), CLI caller process (B4), and CLI to Azure Blob SAS upload (B5). Each bucket enumerates all six STRIDE categories with the in-code mitigations that address them. Assets and adversaries are enumerated first because credential-storage docs ([`docs/agents/mural/credentials.md`](../../../../docs/agents/mural/credentials.md)) reference them by id. Acknowledged enterprise readiness gaps are listed at the end of the document.
 
-> **See also: repo-wide STRIDE model.** This skill participates in the repository-wide threat model at [`docs/security/security-model.md`](../../../../docs/security/security-model.md). The Authorization Code + PKCE login flow implemented by `_run_login` is enumerated there as threats **OA-1 through OA-17** in [§ OAuth Authentication Threats](../../../../docs/security/security-model.md#oauth-authentication-threats). Each OA row cites Mural's published OAuth documentation at <https://developers.mural.co/public/docs/oauth> (verified 2026-05-10) and pins residual-risk expectations against published RFC behavior. Gap **G-EOP-2** below (refresh-token non-rotation) is **verified correct** against that source.
+> **See also: repo-wide STRIDE model.** This skill participates in the repository-wide threat model at [`docs/security/security-model.md`](../../../../docs/security/security-model.md) and is registered in its [Skill Security Models](../../../../docs/security/security-model.md#skill-security-models) section. The Authorization Code + PKCE login flow implemented by `_run_login` is enumerated there as the **OA** threat family in [§ OAuth Authentication Threats](../../../../docs/security/security-model.md#oauth-authentication-threats); that section is authoritative for the current membership of the family. Each OA row cites Mural's published OAuth documentation at <https://developers.mural.co/public/docs/oauth> (verified 2026-05-10) and pins residual-risk expectations against published RFC behavior. Gap **G-EOP-2** below (refresh-token non-rotation) is **verified correct** against that source.
+>
+> Two boundary facts in this document are load-bearing for that catalog. First, the browser launch performed by `_run_login` passes only the authorization URL, which carries `client_id`, `redirect_uri`, `state`, `code_challenge`, and the requested scopes; the PKCE `code_verifier` never leaves the process, so a hostile default-browser handler is a same-uid concern already recorded as ADV-a rather than a separate OA threat. Second, the callback handoff from the loopback receiver to the OAuth client is **synchronous and in-process**: `serve_forever` runs on a thread inside the same interpreter and the result is read from shared memory after `state` is compared with `secrets.compare_digest`. There is no inter-process boundary on that handoff, so it carries no distinct residual beyond the B1 rows below.
 
 ## Executive Summary
 
@@ -28,9 +30,9 @@ The Mural skill is a local Python CLI with an embedded stdio MCP server. It auth
 | Dimension          | Value                                                                                |
 |--------------------|--------------------------------------------------------------------------------------|
 | Runtime surface    | REST CLI + embedded stdio MCP server; OAuth Auth Code + PKCE; single-shot loopback   |
-| Trust buckets      | B1 Browser→Loopback, B2 CLI→Mural, B3 On-disk cache, B4 CLI caller process           |
+| Trust buckets      | B1 Browser→Loopback, B2 CLI→Mural, B3 cache, B4 caller, B5 Azure SAS upload          |
 | Credentials        | OAuth access/refresh tokens + `client_id`/`client_secret`; OS keyring or `0600` file |
-| Network egress     | HTTPS to `https://app.mural.co` (system trust store; no-redirect token opener)       |
+| Network egress     | HTTPS through separate no-redirect API, token, and Azure SAS upload openers          |
 | Open residual gaps | 10 (EoP-High: no client-side token revocation / refresh-token non-rotation)          |
 
 ## Contents
@@ -43,6 +45,7 @@ The Mural skill is a local Python CLI with an embedded stdio MCP server. It auth
 * [Bucket B2: CLI → Mural endpoints](#bucket-b2-cli--mural-endpoints)
 * [Bucket B3: On-disk cache](#bucket-b3-on-disk-cache)
 * [Bucket B4: CLI Caller Process](#bucket-b4-cli-caller-process)
+* [Bucket B5: CLI → Azure Blob SAS upload](#bucket-b5-cli--azure-blob-sas-upload)
 * [Enterprise Readiness Gaps](#enterprise-readiness-gaps)
 * [References](#references)
 
@@ -53,7 +56,8 @@ The Mural skill is a local Python CLI with an embedded stdio MCP server. It auth
 1. `scripts/mural/` Python package — the CLI entry point, command handlers, and the embedded stdio MCP server.
 2. OAuth login flow (`_run_login`) — opens the browser to Mural's authorization URL and runs a single-shot loopback receiver at `http://127.0.0.1:8765/callback`.
 3. Token store and credential file — per-user cache (`mural-token.json`, mode `0600`) and `mural.{profile}.env`, or the OS keyring backend.
-4. REST client — `urllib.request` calls to `https://app.mural.co` through a no-redirect opener with a capped JSON parser.
+4. REST and token clients — separate `urllib.request` no-redirect openers for the canonical Mural API and OAuth token endpoint.
+5. Azure Blob upload client — a dedicated no-redirect opener for capability-bearing SAS PUT requests.
 
 ### Data Flow
 
@@ -71,14 +75,19 @@ flowchart TD
         AUTH["Authorization server"]
         API["REST + token endpoints"]
     end
+    subgraph AZURE["Azure Blob Storage (capability boundary)"]
+        BLOB["Signed upload destination"]
+    end
     CLI -->|"open auth URL + PKCE challenge"| TAB
     TAB -->|"redirect with code + state (HTTP loopback)"| LOOP
     LOOP -->|"code"| CLI
     CLI -->|"code + verifier (HTTPS, no-redirect)"| AUTH
     AUTH -->|"access + refresh tokens"| CLI
     CLI -->|"persist"| STORE
-    CLI -->|"Bearer request (HTTPS)"| API
+    CLI -->|"Bearer request (HTTPS, no-redirect)"| API
     API -->|"widget content (untrusted)"| CLI
+    API -->|"SAS upload capability"| CLI
+    CLI -->|"asset PUT (HTTPS, no-redirect)"| BLOB
 ```
 
 ## Trust Boundaries
@@ -98,6 +107,11 @@ flowchart TD
     │ BOUNDARY: Browser      │      │ BOUNDARY: Mural SaaS       │
     │  Mural consent page    │      │  Auth server + REST API    │
     └────────────────────────┘      └────────────────────────────┘
+                                             │ signed upload URL
+                                  ┌──────────▼───────────────┐
+                                  │ BOUNDARY: Azure Blob     │
+                                  │  capability-bearing PUT  │
+                                  └──────────────────────────┘
 ```
 
 ### Boundary Descriptions
@@ -106,7 +120,8 @@ flowchart TD
 |----------------------|------------------------------------------|-----------------------------------------------------------------------------------------------------|
 | Operator Workstation | Tokens, client secret, code verifier     | OS keyring / `0600` files, single-shot loopback bound to `127.0.0.1`, PKCE verifier held in-process |
 | Browser              | Authorization code, `state`              | Random `state` compared with `secrets.compare_digest`; user verifies consent URL                    |
-| Mural SaaS           | Request/response integrity, bearer token | TLS via system trust store; no-redirect token opener; capped JSON response parser                   |
+| Mural SaaS           | Request/response integrity, bearer token | TLS via system trust store; no-redirect API/token openers; capped JSON response parser              |
+| Azure Blob           | SAS capability, asset body integrity     | HTTPS host allow-list; signed-query redaction; dedicated no-redirect PUT opener                     |
 
 ## Assets
 
@@ -116,6 +131,7 @@ flowchart TD
 | A2 | Mural OAuth refresh tokens                  | Long-lived       | Mural does **not** rotate refresh tokens at refresh time, so a leaked refresh token remains valid until revoked at the portal. See Enterprise Readiness Gaps.                                           |
 | A3 | Mural OAuth `client_id` and `client_secret` | Long-lived       | Provisioned at <https://app.mural.co/account/api>. Stored in the credential file (B3) or environment.                                                                                                   |
 | A4 | Cached widget content from Mural            | Command lifetime | CLI output may include sticky-note text, attachments, or comments authored by other Mural users. May contain PII or confidential workshop content; downstream automation must treat as untrusted input. |
+| A5 | Azure Blob SAS upload URL                   | One upload       | Query-bearing capability returned by Mural; redacted from output and sent only to an allowed HTTPS Blob host.                                                                                           |
 
 ## Adversaries
 
@@ -148,7 +164,7 @@ The loopback channel is plaintext HTTP because TLS to `127.0.0.1` is not availab
 
 ### Repudiation
 
-Not applicable. The loopback exchange is a synchronous, in-process step; no persistent action is taken until the token endpoint exchange in B2 succeeds.
+Not applicable. The loopback exchange is a synchronous, in-process step; no persistent action is taken until the token endpoint exchange in B2 succeeds. The handoff from the receiver to the OAuth client crosses no process boundary: `serve_forever` runs on a thread inside the same interpreter and the authorization code is read from the shared result object once `received` is set and `state` has been compared with `secrets.compare_digest`.
 
 ### Information Disclosure
 
@@ -189,7 +205,10 @@ All REST and OAuth token-endpoint calls target `https://app.mural.co/...` over T
 ### Tampering
 
 * TLS protects request and response bodies in transit.
-* Token-endpoint calls go through a dedicated opener that refuses HTTP redirects, so a 30x cannot be used to silently retarget the request (see [`scripts/mural/`](scripts/mural/) `_NoRedirect`).
+* OAuth token, authenticated API, and Azure SAS upload calls use dedicated
+    no-redirect openers, so a 30x cannot silently retarget credential-bearing or
+    capability-bearing requests (see [`scripts/mural/`](scripts/mural/)
+    `_NoRedirect`).
 
 ### Repudiation
 
@@ -197,7 +216,10 @@ All REST and OAuth token-endpoint calls target `https://app.mural.co/...` over T
 
 ### Information Disclosure
 
-* Bearer tokens are sent only in the `Authorization` header to `https://app.mural.co` and never logged.
+* Bearer tokens are sent only in the `Authorization` header to the canonical
+    `https://app.mural.co/api/public/v1` base. Custom remote bases and absolute
+    operation URLs are rejected before credential loading. Explicit HTTP
+    loopback testing requires `MURAL_ALLOW_INSECURE_API=1` and a port.
 * The token-endpoint opener blocks 30x responses, preventing a hostile redirect from leaking refresh tokens to a non-Mural origin (see [`scripts/mural/`](scripts/mural/) `_NoRedirect`).
 * The token response parser requires `Content-Type: application/json` and reads through a capped-size reader; a non-JSON response (HTML error page, captive portal, etc.) raises a typed error rather than being parsed as a token (see [`scripts/mural/`](scripts/mural/) `_parse_token_response`).
 
@@ -213,7 +235,7 @@ All REST and OAuth token-endpoint calls target `https://app.mural.co/...` over T
 
 ### TLS posture
 
-The skill performs every Mural API and OAuth token-endpoint call through `urllib.request.urlopen`. There is no `ssl.SSLContext`, custom `HTTPSHandler`, `cafile`/`capath` argument, or certificate-pinning callback anywhere in the skill source. Operators inherit Python's default HTTPS behavior end to end, with the implications below.
+The skill performs Mural API, OAuth token, and Azure SAS upload calls through dedicated `urllib.request` opener instances. There is no custom `ssl.SSLContext`, `HTTPSHandler`, `cafile`/`capath` argument, or certificate-pinning callback anywhere in the skill source. Operators inherit Python's default HTTPS behavior end to end, with the implications below.
 
 * **Trust store.** Validation uses the default `ssl.create_default_context()` (created implicitly by `urllib`), which loads the system trust store. On Linux this is OpenSSL's default cert paths; on macOS Python links against the system Security framework when built with the official installer; on Windows Python loads the SChannel certificate store.
 * **Custom CA roots.** The skill does **not** expose a CLI flag for a CA bundle. Operators behind a TLS-inspecting proxy or with an internal CA must export the standard Python/OpenSSL environment variables (`SSL_CERT_FILE`, `SSL_CERT_DIR`) before invoking `python -m mural`. The skill does not depend on `requests`, so `REQUESTS_CA_BUNDLE` has no effect.
@@ -224,12 +246,12 @@ The skill performs every Mural API and OAuth token-endpoint call through `urllib
 
 ### Risk Rating
 
-| Threat                                         | Likelihood | Impact | Residual Risk | Status                         |
-|------------------------------------------------|------------|--------|---------------|--------------------------------|
-| TLS MITM / hostile redirect retargeting        | Low        | High   | Low           | Mitigated (no-redirect opener) |
-| Refresh-token leak via 30x to non-Mural origin | Low        | High   | Low           | Mitigated                      |
-| Upstream rate-limit / oversized-body DoS       | Med        | Low    | Low           | Mitigated (capped reader)      |
-| Compromised local CA (no cert pinning)         | Low        | High   | Low           | Accepted (G-TLS-1)             |
+| Threat                                         | Likelihood | Impact | Residual Risk | Status                                             |
+|------------------------------------------------|------------|--------|---------------|----------------------------------------------------|
+| TLS MITM / hostile redirect retargeting        | Low        | High   | Low           | Mitigated (validated base and no-redirect openers) |
+| Refresh-token leak via 30x to non-Mural origin | Low        | High   | Low           | Mitigated                                          |
+| Upstream rate-limit / oversized-body DoS       | Med        | Low    | Low           | Mitigated (capped reader)                          |
+| Compromised local CA (no cert pinning)         | Low        | High   | Low           | Accepted (G-TLS-1)                                 |
 
 ## Bucket B3: On-disk cache
 
@@ -342,6 +364,42 @@ The skill exposes Mural operations through local CLI commands. The caller proces
 | Secret leakage into logs                    | Low        | High   | Low           | Mitigated (`_redact`)           |
 | Untrusted Mural content consumed downstream | Med        | Med    | Med           | By design (G-INF-4)             |
 | Duplicate-write double-attribution          | Low        | Low    | Low           | Mitigated (idempotency cache)   |
+
+## Bucket B5: CLI → Azure Blob SAS upload
+
+Asset-upload commands obtain a signed URL from Mural and send the asset body through the dedicated `_SAS_OPENER`.
+
+### Spoofing
+
+* `_validate_asset_url` requires HTTPS and an allowed Azure Blob host before the signed capability is used.
+
+### Tampering
+
+* TLS protects the upload body and signed query in transit. The dedicated opener refuses all redirects, so the PUT body and capability cannot be retargeted.
+
+### Repudiation
+
+* Upload failures produce typed operation results and deterministic exit codes. The skill does not provide a tamper-evident upload audit sink (G-REP-1).
+
+### Information Disclosure
+
+* The SAS query is a bearer capability and is redacted from diagnostics. It is never copied into the API Authorization header or normal command output.
+
+### Denial of Service
+
+* Each upload uses a finite request timeout and makes one attempt when a redirect is returned. Upstream availability and large local asset costs remain bounded by the caller's operation.
+
+### Elevation of Privilege
+
+* The signed URL defines the provider-granted upload capability. Host validation and redirect refusal prevent the CLI from broadening that authority to another destination.
+
+### Risk Rating
+
+| Threat                               | Likelihood | Impact | Residual Risk | Status                            |
+|--------------------------------------|------------|--------|---------------|-----------------------------------|
+| SAS capability disclosure            | Low        | High   | Low           | Mitigated (redaction + HTTPS)     |
+| Redirected capability or body replay | Low        | High   | Low           | Mitigated (dedicated no-redirect) |
+| Host substitution                    | Low        | High   | Low           | Mitigated (Blob host allow-list)  |
 
 ## Enterprise Readiness Gaps
 

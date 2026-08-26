@@ -2,7 +2,13 @@
 title: Code Review Standards
 description: Thin skill-backed perspective subagent that reviews a precomputed diff against project coding standards and writes structured findings
 sidebar_position: 7
-ms.date: 2026-07-05
+author: Microsoft
+ms.date: 2026-08-12
+ms.topic: reference
+keywords:
+  - agent
+  - coding-standards
+  - code-review-standards
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->
