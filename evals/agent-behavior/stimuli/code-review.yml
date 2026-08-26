@@ -10,18 +10,23 @@ stimuli:
       +def get_user(user_id):
       +    return db.query("SELECT * FROM users WHERE id = ?", user_id)
       ```
-
+    environment:
+      files:
+        - src: ../../.github/agents/coding-standards/code-review.agent.md
+          dest: .github/copilot-instructions.md
+      skills:
+        - ../../.github/skills/coding-standards/code-review
     tags:
       category: agent-behavior
     graders:
       - type: output-matches
         name: orientation-and-board
         config:
-          pattern: '(?is)(orientation|walkthrough).{0,4000}dispatch\s+board|dispatch\s+board.{0,4000}(orientation|walkthrough)'
+          pattern: '(?is)(orientation|walkthrough).{0,4000}(dispatch\s+board|recommended dispatch)|(dispatch\s+board|recommended dispatch).{0,4000}(orientation|walkthrough)'
       - type: output-matches
         name: human-confirmation
         config:
-          pattern: '(?is)(confirm|adjust|edit).{0,80}(scope|orientation|walkthrough|dispatch\s+board)|(scope|orientation|walkthrough|dispatch\s+board).{0,80}(confirm|adjust|edit)'
+          pattern: '(?is)(confirm|adjust|edit).{0,100}(scope|orientation|walkthrough|dispatch\s+board|board|perspective|depth)|(scope|orientation|walkthrough|dispatch\s+board|board|perspective|depth).{0,100}(confirm|adjust|edit)'
       - type: output-matches
         name: no-source-edit
         config:
@@ -36,17 +41,23 @@ stimuli:
       interactive confirmation for that pull-request target using the standard
       profile. Explain the recommended findings perspectives before asking me to
       confirm the scope. Keep orientation separate from findings.
+    environment:
+      files:
+        - src: ../../.github/agents/coding-standards/code-review.agent.md
+          dest: .github/copilot-instructions.md
+      skills:
+        - ../../.github/skills/coding-standards/code-review
     tags:
       category: agent-behavior
     graders:
       - type: output-matches
         name: pull-request-standard-profile
         config:
-          pattern: '(?is)(pull[_ -]?request).{0,800}(standard).{0,1200}(functional).{0,1000}(standards).{0,1000}(readiness).{0,800}(prContext|PR context|metadata|PR description|checks|mergeability|readiness)'
+          pattern: '(?is)(pull[_ -]?request)(?=.{0,3000}standard)(?=.{0,3000}functional)(?=.{0,3000}standards)(?=.{0,3000}readiness)(?=.{0,3000}(prContext|PR context|metadata|PR description|checks|mergeability|merge readiness))'
       - type: output-matches
         name: orientation-separated
         config:
-          pattern: '(?is)(orientation|walkthrough).{0,500}(stage|separate|before).{0,1000}(finding|perspective|dispatch)'
+          pattern: '(?is)(orientation|walkthrough).{0,500}(stage|separate|before|factual|no findings).{0,1000}(finding|perspective|dispatch)'
       - type: output-matches
         name: human-confirmation
         config:
@@ -60,6 +71,12 @@ stimuli:
       confirmation using the standard profile, explain the recommended findings
       perspectives, and ask me to confirm the scope. Do not require pull-request
       metadata.
+    environment:
+      files:
+        - src: ../../.github/agents/coding-standards/code-review.agent.md
+          dest: .github/copilot-instructions.md
+      skills:
+        - ../../.github/skills/coding-standards/code-review
     tags:
       category: agent-behavior
     graders:
@@ -70,7 +87,8 @@ stimuli:
       - type: output-matches
         name: no-required-pr-metadata
         config:
-          pattern: '(?is)((pull[- ]?request|PR).{0,120}(metadata|context).{0,120}(not required|not needed|optional|unavailable)|(not require|not need).{0,120}(pull[- ]?request|PR).{0,120}(metadata|context))'
+          pattern: '(?is)(provide|fetch|need|required before|must supply|must provide).{0,120}(pull[- ]?request|PR).{0,120}(metadata|context|number|identifier)'
+          negate: true
 
   - name: code-review-decision-ready-dispatch-board
     prompt: |
@@ -81,6 +99,12 @@ stimuli:
       confirmation before dispatch. Make the board, perspective ownership,
       omitted perspectives, and depth recommendation clear enough that I can
       approve or edit them in one reply.
+    environment:
+      files:
+        - src: ../../.github/agents/coding-standards/code-review.agent.md
+          dest: .github/copilot-instructions.md
+      skills:
+        - ../../.github/skills/coding-standards/code-review
     tags:
       category: agent-behavior
     graders:
@@ -91,7 +115,7 @@ stimuli:
       - type: output-matches
         name: perspectives-with-ownership
         config:
-          pattern: '(?is)(recommended perspectives).{0,1500}(functional|standards|readiness).{0,1000}(B\d|item\s*#?\s*\d|#\s*\d|items\s+\d)'
+          pattern: '(?is)(recommended (perspectives|dispatch)|perspective ownership)(?=.{0,2000}(functional|standards|readiness))(?=.{0,2000}(board items|B\d|item\s*#?\s*\**\d|#\s*\d|items?\s+\**\d))'
       - type: output-matches
         name: omitted-perspective-rationale
         config:
@@ -99,11 +123,11 @@ stimuli:
       - type: output-matches
         name: depth-with-rationale
         config:
-          pattern: '(?is)(recommended depth).{0,200}(basic|standard|comprehensive|tier [123]).{0,800}(because|change|risk|blast radius|hotspot|validation|ambiguity)'
+          pattern: '(?is)(recommended depth|depth:).{0,200}(basic|standard|comprehensive|tier [123]).{0,800}(because|change|risk|blast radius|hotspot|validation|ambiguity)'
       - type: output-matches
         name: single-decision-prompt
         config:
-          pattern: '(?is)((edit|adjust).{0,100}(board|perspective|depth).{0,300}(approve|confirm|run|go)|(approve|confirm|run|go).{0,300}(edit|adjust).{0,100}(board|perspective|depth))'
+          pattern: '(?is)(confirm before dispatch|approve)(?=.{0,400}(board|perspective|depth))(?=.{0,400}(edit|adjust|reply))'
 
   - name: code-review-target-checkout-mismatch
     prompt: |
@@ -111,6 +135,12 @@ stimuli:
       Pull request 42 resolves to base `main`, head `feature/auth`, and head SHA
       `abc123`, but checked-out `HEAD` is `def456`. State what must happen before
       diff generation and whether reviewing may continue. Do not call tools.
+    environment:
+      files:
+        - src: ../../.github/agents/coding-standards/code-review.agent.md
+          dest: .github/copilot-instructions.md
+      skills:
+        - ../../.github/skills/coding-standards/code-review
     tags:
       category: agent-behavior
     graders:
@@ -121,7 +151,7 @@ stimuli:
       - type: output-matches
         name: checkout-target-head
         config:
-          pattern: '(?is)(check out|checkout).{0,200}(feature/auth|abc123|target head)|(feature/auth|abc123|target head).{0,200}(check out|checkout)'
+          pattern: '(?is)(check out|checked out|checkout).{0,400}(feature/auth|abc123|target head)|(feature/auth|abc123|target head).{0,400}(check out|checked out|checkout)'
       - type: output-matches
         name: no-auto-base-substitution
         config:
@@ -134,13 +164,19 @@ stimuli:
       The orientation worker failed to create its artifact. Describe the one
       allowed retry contract, including the task, state path, expected output,
       and failure detail. Do not call tools.
+    environment:
+      files:
+        - src: ../../.github/agents/coding-standards/code-review.agent.md
+          dest: .github/copilot-instructions.md
+      skills:
+        - ../../.github/skills/coding-standards/code-review
     tags:
       category: agent-behavior
     graders:
       - type: output-matches
         name: complete-orientation-retry
         config:
-          pattern: '(?is)retry.{0,120}once.{0,500}(orientation).{0,500}(diff-state\.json|state path).{0,500}(orientation-walkthrough\.md|output path).{0,500}(failure|error)'
+          pattern: '(?is)(retry.{0,120}once|one allowed retry).{0,500}(orientation).{0,500}(diff-state\.json|state path).{0,500}(orientation-walkthrough\.md|output path).{0,500}(failure|error)'
 
   - name: code-review-perspective-no-output-retry
     prompt: |
@@ -148,13 +184,19 @@ stimuli:
       A selected Functional perspective invocation returned no output and did
       not create its expected findings file. Describe the recovery behavior and
       when that perspective may be marked skipped. Do not call tools.
+    environment:
+      files:
+        - src: ../../.github/agents/coding-standards/code-review.agent.md
+          dest: .github/copilot-instructions.md
+      skills:
+        - ../../.github/skills/coding-standards/code-review
     tags:
       category: agent-behavior
     graders:
       - type: output-matches
         name: complete-perspective-retry
         config:
-          pattern: '(?is)retry.{0,120}once.{0,500}(complete original|complete.*dispatch).{0,500}(failure|no output|missing).{0,500}(functional-findings\.json|expected (findings[- ]file|output))'
+          pattern: '(?is)retry.{0,120}once.{0,500}(complete original|complete.*dispatch).{0,500}(failure|no output|missing).{0,500}(functional-findings\.json|expected (findings[- ](file|path)|output))'
       - type: output-matches
         name: skip-only-after-retry
         config:
@@ -168,13 +210,19 @@ stimuli:
       diff and untracked-file evidence, and no serialized requirement supports
       the claim. Explain whether the finding may affect severity counts or the
       final verdict and how the merge records it. Do not call tools.
+    environment:
+      files:
+        - src: ../../.github/agents/coding-standards/code-review.agent.md
+          dest: .github/copilot-instructions.md
+      skills:
+        - ../../.github/skills/coding-standards/code-review
     tags:
       category: agent-behavior
     graders:
       - type: output-matches
         name: unsupported-finding-rejected
         config:
-          pattern: '(?is)((reject|exclude).{0,300}(unsupported|not supported|unverified)|(unsupported|not supported|unverified).{0,300}(reject|exclude)).{0,500}(severity count|verdict)'
+          pattern: '(?is)(reject|exclude)(?=.{0,500}(evidence|support))(?=.{0,800}(severity count|verdict))'
       - type: output-matches
         name: rejected-evidence-recorded
         config:
@@ -185,15 +233,21 @@ stimuli:
       This is a behavior-contract scenario, not a live review.
       A pull-request review draft is ready, but `reviewTarget.headSha` is absent.
       The user has confirmed posting. State whether native emission may proceed
-      and what identity must be revalidated. Do not call tools.
+      and state the complete PR identity revalidation contract. Do not call tools.
+    environment:
+      files:
+        - src: ../../.github/agents/coding-standards/code-review.agent.md
+          dest: .github/copilot-instructions.md
+      skills:
+        - ../../.github/skills/coding-standards/code-review
     tags:
       category: agent-behavior
     graders:
       - type: output-matches
         name: missing-sha-blocks-emission
         config:
-          pattern: '(?is)((block|stop|cannot|must not).{0,300}(emit|emission|post).{0,500}(head sha|headSha)|(head sha|headSha).{0,300}(block|stop|cannot|must not).{0,300}(emit|emission|post))'
+          pattern: '(?is)((block|stop|cannot|must not|may not).{0,300}(emit|emission|post|proceed).{0,500}(head sha|headSha)|(head sha|headSha).{0,300}(block|stop|cannot|must not|may not).{0,300}(emit|emission|post|proceed))'
       - type: output-matches
         name: complete-pr-state-check
         config:
-          pattern: '(?is)(open|state).{0,300}(base).{0,300}(head ref|head).{0,300}(sha|commit)'
+          pattern: '(?is)(revalidat|validat|check)(?=.{0,600}(open|state))(?=.{0,600}base)(?=.{0,600}head)(?=.{0,600}(sha|commit))'
