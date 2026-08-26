@@ -38,7 +38,7 @@ Write the orientation narrative and dispatch-board appendices to `task.outputPat
 
 1. Read `diff-state.json`, the Skill Reference Contract files, and the full diff at `diffPatchPath` once in one parallel block. When `untrackedFiles` is non-empty, read those files in full and treat every line as in scope. Stop when the task kind is not `orientation` or the output path is absent.
 2. Map the changed areas, user-visible intent, implementation shape, entry points, control flow, data flow, call paths, and blast radius. Use `reviewTarget` and `reviewProfile` as context, not as findings. Give deeper orientation to `hotspots` and skip `outOfScope`.
-3. Write factual, evidence-anchored Register 1 prose without severity, verdicts, or recommendations. End with changed areas, likely entry points, likely risk surfaces, candidate symbols or functions, and questions that merit deeper review.
+3. Write factual, evidence-anchored Register 1 prose without severity, verdicts, or recommendations. End with a decision-ready dispatch appendix that groups the change into coherent review areas. For each area include a concise name, a specific preliminary signal, supporting changed-file or symbol references, likely entry points and blast radius, candidate symbols or functions, and questions that merit deeper review. Do not emit a bare area-name list. A preliminary signal may state a visible contract or verification question, but it does not prove a finding or recommend a fix.
 4. Write the complete artifact to `task.outputPath` and return a one-line summary with the changed-area count and exact output path.
 
 If clarification is genuinely required before the walkthrough can proceed, return the questions instead of guessing.

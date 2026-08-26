@@ -69,6 +69,36 @@ stimuli:
           pattern: '(?is)(require|need|fetch).{0,120}(pull[- ]?request|PR).{0,120}(metadata|context)'
           negate: true
 
+  - name: code-review-decision-ready-dispatch-board
+    prompt: |
+      Begin an interactive pre-PR review of a branch that changes request
+      parsing, validation tests, and deployment documentation. Present the
+      orientation handoff and ask for confirmation before dispatch. Make the
+      review choices clear enough that I can approve or edit them in one reply.
+    tags:
+      category: agent-behavior
+    graders:
+      - type: output-matches
+        name: detailed-board
+        config:
+          pattern: '(?is)(dispatch board).{0,500}(area).{0,300}(status).{0,300}(preliminary signal).{0,2000}(\.py|\.ts|\.js|\.md|symbol|function)'
+      - type: output-matches
+        name: perspectives-with-ownership
+        config:
+          pattern: '(?is)(recommended perspectives).{0,1500}(functional|standards|readiness).{0,1000}(item\s*#?\s*\d|#\s*\d|items\s+\d)'
+      - type: output-matches
+        name: omitted-perspective-rationale
+        config:
+          pattern: '(?is)(not recommended|skip(?:ping)?|omit(?:ted)?).{0,300}(accessibility|security|functional|standards|readiness).{0,500}(because|no |not |without |out of scope)'
+      - type: output-matches
+        name: depth-with-rationale
+        config:
+          pattern: '(?is)(recommended depth).{0,200}(basic|standard|comprehensive|tier [123]).{0,800}(because|change|risk|blast radius|hotspot|validation|ambigu)'
+      - type: output-matches
+        name: single-decision-prompt
+        config:
+          pattern: '(?is)(edit|adjust).{0,100}(board|perspective|depth).{0,300}(approve|confirm|run|go)'
+
   - name: code-review-target-checkout-mismatch
     prompt: |
       Pull request 42 resolves to base `main`, head `feature/auth`, and head SHA
@@ -99,6 +129,42 @@ stimuli:
         name: complete-orientation-retry
         config:
           pattern: '(?is)retry once.{0,500}(orientation).{0,500}(diff-state\.json|state path).{0,500}(orientation-walkthrough\.md|output path).{0,500}(failure|error)'
+
+  - name: code-review-perspective-no-output-retry
+    prompt: |
+      A selected Functional perspective invocation returned no output and did
+      not create its expected findings file. Describe the recovery behavior and
+      when that perspective may be marked skipped. Do not call tools.
+    tags:
+      category: agent-behavior
+    graders:
+      - type: output-matches
+        name: complete-perspective-retry
+        config:
+          pattern: '(?is)retry once.{0,500}(complete original|complete.*dispatch).{0,500}(failure|no output|missing).{0,500}(functional-findings\.json|expected output)'
+      - type: output-matches
+        name: skip-only-after-retry
+        config:
+          pattern: '(?is)(skip|skipped).{0,250}(retry).{0,120}(fail|failed|unavailable)|(retry).{0,250}(fail|failed|unavailable).{0,120}(skip|skipped)'
+
+  - name: code-review-rejects-unsupported-finding
+    prompt: |
+      During merge, a Functional worker returns well-formed JSON containing one
+      High finding, but its cited file and lines are absent from the persisted
+      diff and untracked-file evidence, and no serialized requirement supports
+      the claim. Explain whether the finding may affect severity counts or the
+      final verdict and how the merge records it. Do not call tools.
+    tags:
+      category: agent-behavior
+    graders:
+      - type: output-matches
+        name: unsupported-finding-rejected
+        config:
+          pattern: '(?is)(reject|exclude).{0,300}(unsupported|not supported|unverified).{0,500}(severity count|verdict)'
+      - type: output-matches
+        name: rejected-evidence-recorded
+        config:
+          pattern: '(?is)(record|report).{0,300}(rejected worker evidence|execution limitation).{0,300}(perspective|title|reason)'
 
   - name: code-review-native-emission-sha-gate
     prompt: |

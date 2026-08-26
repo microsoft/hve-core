@@ -16,7 +16,6 @@ expectations:
       perspectives from detected signals. Orientation is not a findings perspective.
     failure_modes:
       - The response dispatches a PR findings lane.
-      - The response dispatches a PR findings lane.
       - The response binds the standard profile only to pull-request targets.
       - The response omits Readiness from the standard profile.
     priority: high
@@ -36,14 +35,16 @@ expectations:
     contract_ref: "agent §Step 1 Tier 0 Context Bootstrap"
 
   - expectation_id: orientation-and-dispatch-board
-    summary: The first response presents factual orientation and a dispatch board.
-    signal: Output identifies an orientation or walkthrough and a dispatch board.
+    summary: The first response presents factual orientation and a decision-ready dispatch board.
+    signal: Output identifies an orientation or walkthrough and a dispatch board with evidence-backed preliminary signals.
     pass_criteria: |
-      The response summarizes the supplied diff factually and presents a
-      dispatch board before deeper review.
+      The response summarizes the supplied diff factually and presents a table
+      of coherent review areas with status, preliminary signals, and supporting
+      file or symbol references before deeper review.
     failure_modes:
       - Response skips factual orientation.
       - Response omits the dispatch board.
+      - The dispatch board is only a numbered list of area names.
     priority: high
     contract_ref: "agent §Step 2 Orientation Floor and Dispatch-Board Confirmation"
 
@@ -55,6 +56,22 @@ expectations:
     failure_modes:
       - Response proceeds directly to deeper review.
       - Response does not ask for confirmation.
+    priority: high
+    contract_ref: "agent §Step 2 Orientation Floor and Dispatch-Board Confirmation"
+
+  - expectation_id: decision-ready-review-selection
+    summary: Perspective and depth recommendations accompany the first dispatch-board confirmation.
+    signal: The confirmation surface explains perspective ownership, omissions, and depth rationale.
+    pass_criteria: |
+      The first confirmation response maps recommended perspectives to board
+      item IDs, explains surprising omissions, recommends a depth with a
+      scope-based rationale, and lets the human edit or approve all choices in
+      one reply.
+    failure_modes:
+      - Perspective and depth recommendations are deferred until after board confirmation.
+      - Recommended perspectives have no board-item ownership or rationale.
+      - The depth recommendation has no change-specific rationale.
+      - The human must complete two confirmations when approving all defaults.
     priority: high
     contract_ref: "agent §Step 2 Orientation Floor and Dispatch-Board Confirmation"
 
@@ -78,5 +95,21 @@ expectations:
     failure_modes:
       - A retry refers only to a prior invocation.
       - A worker must infer whether it writes orientation or findings.
+      - A failed or no-output invocation is skipped without the complete-contract retry.
     priority: high
     contract_ref: "agent §Step 6 Dispatch Selected Perspectives"
+
+  - expectation_id: grounded-findings-aggregation
+    summary: Only findings supported by persisted review evidence affect the merged verdict.
+    signal: Merge behavior validates worker citations before counting severity or normalizing the verdict.
+    pass_criteria: |
+      Source findings resolve to persisted diff or cited untracked-file evidence
+      or an explicit serialized requirement. PR-deliverable findings resolve to
+      an exact prContext field. Unsupported findings are recorded as rejected
+      worker evidence and do not affect severity counts or the verdict.
+    failure_modes:
+      - The merge trusts a worker verdict independently of accepted findings.
+      - A schema-conforming but unsupported finding affects severity counts.
+      - Rejected worker evidence is silently discarded.
+    priority: high
+    contract_ref: "agent §Step 7 Merge, Walk Back, and Persist"
