@@ -216,6 +216,28 @@ class TestMain:
         assert captured.err.strip() == "error: unexpected GitLab CLI failure"
         assert "hidden" not in captured.err
 
+    def test_main_handles_typed_error_at_single_redacted_boundary(
+        self,
+        monkeypatch: pytest.MonkeyPatch,
+        mocker: MockerFixture,
+        capsys: pytest.CaptureFixture[str],
+    ) -> None:
+        error = gitlab.GitLabError("private_token=hidden", gitlab.EXIT_USAGE)
+        debug_traceback = mocker.patch.object(gitlab, "_emit_debug_traceback")
+        monkeypatch.setattr(gitlab, "require_environment", lambda: None)
+        monkeypatch.setitem(
+            gitlab.COMMANDS,
+            "mr-list",
+            lambda _args: (_ for _ in ()).throw(error),
+        )
+        monkeypatch.setattr("sys.argv", ARGV_MAIN_LIST)
+
+        result = gitlab.main()
+
+        assert result == gitlab.EXIT_USAGE
+        assert capsys.readouterr().err == "error: private_token=[REDACTED]\n"
+        debug_traceback.assert_called_once_with(error)
+
 
 class TestAuthCommands:
     """Tests for stateful OAuth command behavior."""
