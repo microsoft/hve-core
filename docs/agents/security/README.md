@@ -138,7 +138,7 @@ The Security Planner supports two entry modes, each matched to a prompt file.
 
 ## Related Agents
 
-* [Supply Chain Reviewer](supply-chain-reviewer) for an automated, evidence-verified supply-chain posture report in audit, diff, or plan mode.
+* [SSSC Reviewer](sssc-reviewer) for an automated, evidence-verified supply-chain posture report in audit, diff, or plan mode.
 
 <!-- markdownlint-disable MD036 -->
 *🤖 Crafted with precision by ✨Copilot following brilliant human instruction,

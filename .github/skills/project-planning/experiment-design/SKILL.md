@@ -56,7 +56,7 @@ Read only the reference that matches the active concern.
 | MVE session directory, artifact filenames, placement, and tracking-file hygiene           | `experiment-designer.instructions.md`, applied automatically to MVE tracking paths |
 | Phase order, gates, session writes, and coaching flow                                     | The consuming experiment agent                                                     |
 | ML environments, reproducibility, tracking, model evaluation, abstractions, and readiness | `ml-experimentation`, the ML-specific experimentation reference                    |
-| Pipeline mechanics, data tiering, replay, validation, and DS/MLOps test technique         | `ds-dataops`, the DataOps and testing reference                                    |
+| Pipeline mechanics, data tiering, replay, validation, and DS/MLOps test technique         | `dataops`, the DataOps and testing reference                                       |
 | Metric names, instruments, units, cardinality, and PII-safe telemetry                     | `telemetry-foundations`, the OpenTelemetry-aligned instrumentation skill           |
 | Data sensitivity classification and DPIA thresholds                                       | `privacy-standards`, the privacy classification reference                          |
 
