@@ -168,6 +168,11 @@ The `name` and `description` are required. The description drives the agent's ac
 
 Organize checks into numbered sections with bullet points. Each bullet should be a concrete, verifiable check:
 
+In the resulting `SKILL.md`, `## Core Checklist` renders as a level-two
+heading and each `####` section heading renders as level four. The following
+block shows the literal Markdown source; these markers are not headings while
+displayed inside this example.
+
 ```markdown
 ## Core Checklist
 
