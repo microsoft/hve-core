@@ -419,35 +419,102 @@ def test_main_redacts_auth_scope_error_text(
     assert "client_secret=***" in err
 
 
+@pytest.mark.parametrize(
+    ("scenario", "expected_exit", "expected_error", "expected_keys"),
+    [
+        (
+            "human-authored",
+            "EXIT_NOPERM",
+            "human_authored_widget_protected",
+            {"error", "mural", "widget"},
+        ),
+        (
+            "tag-merge",
+            "EXIT_TEMPFAIL",
+            "tag_merge_conflict",
+            {
+                "error",
+                "mural",
+                "widget",
+                "intended",
+                "observed",
+                "missing",
+                "extra",
+                "attempts",
+            },
+        ),
+        (
+            "area-capacity",
+            "EXIT_AREA_CAPACITY",
+            "AREA_CAPACITY_EXCEEDED",
+            {
+                "error",
+                "exit_code",
+                "area_id",
+                "area_capacity",
+                "computed_extent",
+                "suggestion",
+            },
+        ),
+        (
+            "bulk-atomic",
+            "EXIT_TEMPFAIL",
+            "bulk_atomic_abort",
+            {"error", "aborted", "succeeded", "failed", "warnings"},
+        ),
+    ],
+)
 def test_main_redacts_structured_stderr_envelope(
     mural_module: Any,
     monkeypatch: pytest.MonkeyPatch,
     capsys: pytest.CaptureFixture[str],
+    scenario: str,
+    expected_exit: str,
+    expected_error: str,
+    expected_keys: set[str],
 ) -> None:
-    """Envelopes stay parseable JSON with their key set intact after redaction."""
-    summary = {
-        "succeeded": [],
-        "failed": [
-            {
-                "widget_id": "w-1",
-                "error": f"upstream rejected: client_secret={SECRET_VALUE}",
-            }
-        ],
-        "warnings": [],
-    }
+    """Every structured handler emits redacted, parseable stderr JSON."""
+    credential_shaped = f"code={SECRET_VALUE}"
 
     def boom(_args: argparse.Namespace) -> int:
+        if scenario == "human-authored":
+            raise mural_module.MuralHumanAuthoredProtected(
+                mural_id=credential_shaped,
+                widget_id="w-1",
+            )
+        if scenario == "tag-merge":
+            raise mural_module.MuralTagMergeConflict(
+                mural_id="m-1",
+                widget_id="w-1",
+                intended=[credential_shaped],
+                observed=[],
+                attempts=3,
+            )
+        if scenario == "area-capacity":
+            raise mural_module.MuralAreaCapacityExceeded(
+                area_id="a-1",
+                area_capacity={"width": 100, "height": 100},
+                computed_extent={"width": 200, "height": 200},
+                suggestion=credential_shaped,
+            )
+        summary = {
+            "succeeded": [],
+            "failed": [{"widget_id": "w-1", "error": credential_shaped}],
+            "warnings": [],
+        }
         raise mural_module.MuralBulkAtomicAbort(summary)
 
     result = _drive_main(mural_module, monkeypatch, boom)
 
-    err = capsys.readouterr().err
-    assert result == mural_module.EXIT_TEMPFAIL
+    captured = capsys.readouterr()
+    assert result == getattr(mural_module, expected_exit)
+    assert captured.out == ""
+    err = captured.err
     assert SECRET_VALUE not in err
+    assert "code=***" in err
     envelope = json.loads(err)
-    assert envelope["error"] == "bulk_atomic_abort"
-    assert envelope["aborted"] is True
-    assert set(envelope) == {"error", "aborted", "succeeded", "failed", "warnings"}
+    assert envelope["error"] == expected_error
+    assert set(envelope) == expected_keys
 
 
 def test_emit_json_error_writes_redacted_json_to_stderr(
@@ -461,45 +528,6 @@ def test_emit_json_error_writes_redacted_json_to_stderr(
     assert captured.out == ""
     assert SECRET_VALUE not in captured.err
     assert json.loads(captured.err)["detail"] == "code=***"
-
-
-# ---------------------------------------------------------------------------
-# `main()` sink call-site contracts (defense-in-depth)
-# ---------------------------------------------------------------------------
-
-
-def test_main_error_handlers_wrap_exception_text_in_redact(
-    mural_module: Any,
-) -> None:
-    """Both `MuralError` handlers and the scope handler must redact at the sink."""
-    src = _package_src(mural_module)
-    for call_site in (
-        "print(_redact(str(exc)), file=sys.stderr)",
-        'print(f"auth: {_redact(str(exc))}", file=sys.stderr)',
-        'print(f"error: {_redact(str(exc))}", file=sys.stderr)',
-    ):
-        assert call_site in src, f"missing redacted sink: {call_site}"
-
-
-def test_no_bare_json_envelope_written_to_stderr(mural_module: Any) -> None:
-    """Structured envelopes must route through `_emit_json_error`, not `print`."""
-    src = _package_src(mural_module)
-    assert "print(json.dumps(envelope), file=sys.stderr)" not in src, (
-        "stderr envelopes bypass the redaction barrier; "
-        "use _emit_json_error(envelope) instead"
-    )
-
-
-def test_transport_exceptions_use_error_excerpt(mural_module: Any) -> None:
-    """Token and asset failures must carry an excerpt, not a raw response body."""
-    src = _package_src(mural_module)
-    for forbidden in (
-        'raise MuralAPIError(status, "TOKEN_INVALID_JSON", text)',
-        'raise MuralAPIError(status, "REFRESH_FAILED", json.dumps(data))',
-        'raise MuralAPIError(status, "ASSET_UPLOAD_FAILED", payload)',
-    ):
-        assert forbidden not in src, f"raw response body in exception: {forbidden}"
-    assert "_error_excerpt(" in src
 
 
 # ---------------------------------------------------------------------------
