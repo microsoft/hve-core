@@ -103,12 +103,12 @@ When a single fragment mixes both, keep only the information request as the sour
 
 Evaluate these conditions in order and stop at the first match, so a question always resolves to exactly one state:
 
-| Order | `response_state` | Condition                                                                                                                                                           |
-|-------|------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| 1     | `unresolved`     | An open unresolved item lists the question in its `source_question_ids`.                                                                                            |
-| 2     | `unaddressed`    | No response record names the question in `source_question_id`.                                                                                                      |
-| 3     | `qualified`      | A response record exists and carries a non-empty `qualifications`, links an open unresolved item, or links a claim whose `evidence_review` is not `supported`.        |
-| 4     | `addressed`      | A response record exists, every linked claim is `supported`, and no qualification or open unresolved link remains.                                                  |
+| Order | `response_state` | Condition                                                                                                                                                      |
+|-------|------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| 1     | `unresolved`     | An open unresolved item lists the question in its `source_question_ids`.                                                                                       |
+| 2     | `unaddressed`    | No response record names the question in `source_question_id`.                                                                                                 |
+| 3     | `qualified`      | A response record exists and carries a non-empty `qualifications`, links an open unresolved item, or links a claim whose `evidence_review` is not `supported`. |
+| 4     | `addressed`      | A response record exists, every linked claim is `supported`, and no qualification or open unresolved link remains.                                             |
 
 Operations move a question between states only by changing those records:
 

@@ -109,18 +109,18 @@ structural_readiness:
 
 `blocking_ids` is derived, not chosen. Evaluate every record against the conditions below, list the ID named by each condition it meets, then deduplicate. Order the result by record kind, `SQ` then `CLM` then `RSP` then `UNR`, and numerically within each kind. A record may meet more than one condition, and a record meeting none is never listed.
 
-| Condition                                                                                                 | ID listed                |
-|-----------------------------------------------------------------------------------------------------------|--------------------------|
-| A source question has `classification: unknown` or no `response_state`                                    | The `SQ` ID              |
-| No response record names the source question                                                              | The `SQ` ID              |
-| A response record exists but its qualification or unresolved link is not visible beside it                | The `SQ` ID              |
-| A claim's `evidence_review` is `unsupported`, `conflicting`, or `stale`                                   | The `CLM` ID             |
-| A claim is `partially_supported` or `unreviewed` with no `qualification` and no unresolved item naming it | The `CLM` ID             |
-| A claim asserts fact with empty `evidence_refs`                                                           | The `CLM` ID             |
-| A response broadens a linked claim                                                                        | The `RSP` ID             |
+| Condition                                                                                                                         | ID listed                |
+|-----------------------------------------------------------------------------------------------------------------------------------|--------------------------|
+| A source question has `classification: unknown` or no `response_state`                                                            | The `SQ` ID              |
+| No response record names the source question                                                                                      | The `SQ` ID              |
+| A response record exists but its qualification or unresolved link is not visible beside it                                        | The `SQ` ID              |
+| A claim's `evidence_review` is `unsupported`, `conflicting`, or `stale`                                                           | The `CLM` ID             |
+| A claim is `partially_supported` or `unreviewed` with no `qualification` and no unresolved item naming it                         | The `CLM` ID             |
+| A claim asserts fact with empty `evidence_refs`                                                                                   | The `CLM` ID             |
+| A response broadens a linked claim                                                                                                | The `RSP` ID             |
 | An unresolved item lacks a `type`, `owner_domain`, `clearing_action`, valid `status`, or valid `cleared_by` value for that status | The `UNR` ID             |
-| A coverage count or percentage does not match the source-question records                                 | Every mismatched `SQ` ID |
-| A fixed authority marker is missing or holds a value this skill does not permit                           | Every record ID          |
+| A coverage count or percentage does not match the source-question records                                                         | Every mismatched `SQ` ID |
+| A fixed authority marker is missing or holds a value this skill does not permit                                                   | Every record ID          |
 
 `blocking_ids` is empty exactly when `status` is `ready_for_internal_review`. An open unresolved item does not block on its own; it blocks through the conditions above, such as the question it leaves without a response or the claim it leaves unsupported.
 
