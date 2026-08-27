@@ -3,7 +3,7 @@ title: "Stage 7: Review"
 description: Validate implementations through code review, PR management, and quality assessment
 sidebar_position: 8
 author: Microsoft
-ms.date: 2026-07-15
+ms.date: 2026-08-19
 ms.topic: how-to
 keywords:
   - ai-assisted project lifecycle
@@ -29,10 +29,10 @@ You enter Review after completing implementation work in [Stage 6: Implementatio
 
 ### Primary Agents
 
-| Tool                  | Type  | How to Invoke                    | Purpose                                       |
-|-----------------------|-------|----------------------------------|-----------------------------------------------|
-| code-review           | Agent | Select **code-review** agent     | Multi-perspective review of code changes      |
-| Data Workstream Coach | Agent | Select **Data Workstream Coach** | Validate dashboards and data pipeline outputs |
+| Tool                               | Type  | How to Invoke                                 | Purpose                                       |
+|------------------------------------|-------|-----------------------------------------------|-----------------------------------------------|
+| code-review                        | Agent | Select **code-review** agent                  | Multi-perspective review of code changes      |
+| Data Science and Engineering Coach | Agent | Select **Data Science and Engineering Coach** | Validate dashboards and data pipeline outputs |
 
 ### Review Skills
 
@@ -99,7 +99,7 @@ Review the open PR for the payment processing refactor, focusing on breaking cha
 
 ### Dashboard Testing
 
-Select the **Data Workstream Coach** agent and confirm the testing job:
+Select the **Data Science and Engineering Coach** agent and confirm the testing job:
 
 ```text
 Test the sensor monitoring dashboard at src/dashboards/sensor_monitor.py, verifying that readings render within the range declared for that dataset and all navigation links resolve correctly

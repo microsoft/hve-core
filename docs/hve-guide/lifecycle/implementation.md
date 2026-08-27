@@ -3,7 +3,7 @@ title: "Stage 6: Implementation"
 description: Build features, write code, and create content with the full suite of AI-assisted development tools
 sidebar_position: 7
 author: Microsoft
-ms.date: 2026-07-15
+ms.date: 2026-08-19
 ms.topic: how-to
 keywords:
   - ai-assisted project lifecycle
@@ -29,10 +29,10 @@ You enter Implementation after completing [Stage 5: Sprint Planning](sprint-plan
 
 ### Primary Agents
 
-| Tool                  | Type  | How to Invoke                    | Purpose                                          |
-|-----------------------|-------|----------------------------------|--------------------------------------------------|
-| RPI Agent             | Agent | Select **RPI Agent**             | Coordinate the applicable RPI phase skills       |
-| Data Workstream Coach | Agent | Select **Data Workstream Coach** | Produce notebooks, dashboards, and pipeline code |
+| Tool                               | Type  | How to Invoke                                 | Purpose                                          |
+|------------------------------------|-------|-----------------------------------------------|--------------------------------------------------|
+| RPI Agent                          | Agent | Select **RPI Agent**                          | Coordinate the applicable RPI phase skills       |
+| Data Science and Engineering Coach | Agent | Select **Data Science and Engineering Coach** | Produce notebooks, dashboards, and pipeline code |
 
 ### Prompts
 
@@ -119,7 +119,7 @@ Execute the plan:
 with the event dispatcher component and implement the retry queue second.
 ```
 
-Select the **Data Workstream Coach** agent and confirm the analysis job:
+Select the **Data Science and Engineering Coach** agent and confirm the analysis job:
 
 ```text
 Create a data analysis notebook for the Q4 sales transactions dataset in
