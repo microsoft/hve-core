@@ -44,7 +44,6 @@ The full repository-relative path inventory remains machine-readable in root `pl
 | Prompts        | `commands`     | `.github/prompts/<package>/**/*.prompt.md`            |
 | Instructions   | `rules`        | `.github/instructions/<package>/**/*.instructions.md` |
 | Skills         | `skills`       | `.github/skills/<package>/<skill>/SKILL.md`           |
-| Hooks          | `hooks`        | `.github/hooks/shared/telemetry.json`                 |
 
 ### Capability Areas
 

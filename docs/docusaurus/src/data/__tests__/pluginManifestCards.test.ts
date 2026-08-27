@@ -32,7 +32,7 @@ const manifest = JSON.parse(fs.readFileSync(manifestPath, "utf-8")) as PluginMan
 
 // Independent re-derivation of the component tally so expected values come from
 // the manifest itself rather than from the function under test or a magic number.
-const componentFields = ["agents", "commands", "rules", "skills", "hooks"];
+const componentFields = ["agents", "commands", "rules", "skills"];
 function expectedComponentCount(entry: PluginManifest): number {
   return componentFields.reduce((total, field) => {
     const value = entry[field];
@@ -60,7 +60,7 @@ describe("loadPackageCards against the canonical plugin manifest", () => {
 describe("countPluginComponents", () => {
   it("counts a string component field as one component", () => {
     expect(
-      countPluginComponents({ hooks: "hooks/shared/telemetry.json" }),
+      countPluginComponents({ skills: ".github/skills/rpi/rpi-plan" }),
     ).toBe(1);
   });
 
@@ -77,9 +77,17 @@ describe("countPluginComponents", () => {
         commands: ["c.md"],
         rules: [],
         skills: ["s"],
+      }),
+    ).toBe(4);
+  });
+
+  it("ignores a retired field the manifest no longer declares", () => {
+    expect(
+      countPluginComponents({
+        agents: ["a.md"],
         hooks: "hooks/shared/telemetry.json",
       }),
-    ).toBe(5);
+    ).toBe(1);
   });
 
   it("ignores fields that are neither a string nor an array", () => {

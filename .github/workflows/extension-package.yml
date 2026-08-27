@@ -32,6 +32,7 @@ jobs:
       - name: Validate source ref
         shell: bash
         env:
+          EVENT_SHA: ${{ github.sha }}
           INPUT_SOURCE_REF: ${{ inputs.source-ref }}
         run: |
           set -euo pipefail
@@ -40,22 +41,21 @@ jobs:
             echo "::error::source-ref is required and must not be blank"
             exit 1
           fi
-          if printf '%s' "$source_ref" | grep -Eq '^[0-9a-fA-F]{40}$'; then
-            exit 0
+          # source-ref is an asserted contract value; the checkout below uses the
+          # run's own commit, so a mutable ref can never select the packaged tree.
+          if ! printf '%s' "$source_ref" | grep -Eq '^[0-9a-f]{40}$'; then
+            echo "::error::source-ref must be a full 40-character lowercase commit SHA"
+            exit 1
           fi
-          if git check-ref-format --branch "$source_ref" >/dev/null 2>&1; then
-            exit 0
+          if [ "$source_ref" != "$EVENT_SHA" ]; then
+            echo "::error::source-ref $source_ref is not the packaging source commit $EVENT_SHA"
+            exit 1
           fi
-          if [[ "$source_ref" == refs/* ]] && git check-ref-format "$source_ref" >/dev/null 2>&1; then
-            exit 0
-          fi
-          echo "::error::source-ref must be a full commit SHA or valid Git ref"
-          exit 1
 
       - name: Checkout code
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          ref: ${{ inputs.source-ref }}
+          ref: ${{ github.sha }}
           persist-credentials: false
 
       # The gate runs before any dependency install, so a mismatched caller
