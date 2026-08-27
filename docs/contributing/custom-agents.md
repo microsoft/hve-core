@@ -334,6 +334,18 @@ Distributable agents must use the canonical path `.github/agents/<package>/<subp
 
 Ensure every declared subagent is also eligible for manifest inclusion. Update `docs/plugins/hve-core.md` when the user-visible agent surface changes, then run `npm run plugin:sync`, `npm run plugin:validate`, and `npm run docs:generate:check`.
 
+## Path Portability
+
+Agents are packaged and relocatable. The root directory varies by distribution context (in-repo, Copilot CLI plugin, VS Code extension). To ensure references to other artifacts remain portable and do not break across environments, follow these cross-artifact reference rules:
+
+* **Refer by name:** Refer to a skill, agent, subagent, or prompt by the `name:` value from its frontmatter, not by a hard-coded path.
+* **Instruction files:** Refer to an instruction file by its full `<name>.instructions.md` filename.
+* **Bundled resources:** Reserve file paths for an agent's own bundled resources (relative to the agent root only).
+* **No hard-coded paths:** Never hard-code a skill's `SKILL.md` path, another agent's file path, or a cross-artifact directory path.
+* **File inclusions:** Use `#file:` only when the agent must pull in another file's full contents.
+
+Repo-root-relative paths (such as `.github/agents/...` or `.github/skills/...`) break portability and should not be used for cross-artifact references.
+
 ## Agent Content Structure Standards
 
 ### Required Sections

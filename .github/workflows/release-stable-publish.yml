@@ -83,14 +83,6 @@ jobs:
             echo "source-tag=$SOURCE_TAG"
           } >> "$GITHUB_OUTPUT"
 
-      - name: Checkout Stable trigger validation workspace
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          ref: main
-          fetch-depth: 0
-          path: trigger-validation
-          persist-credentials: false
-
       - name: Validate selected promotion source and intent
         id: source
         if: ${{ steps.identity.outputs.mode == 'promotion' }}
@@ -98,29 +90,51 @@ jobs:
           EVENT_SHA: ${{ github.sha }}
           GH_TOKEN: ${{ github.token }}
           HEAD_SHA: ${{ github.event.pull_request.head.sha }}
-          PR_NUMBER: ${{ github.event.pull_request.number }}
           REPOSITORY: ${{ github.repository }}
           SOURCE_TAG: ${{ steps.identity.outputs.source-tag }}
         run: |
           set -euo pipefail
-          cd "$GITHUB_WORKSPACE/trigger-validation"
 
           if [[ ! "$HEAD_SHA" =~ ^[0-9a-f]{40}$ ]] || [[ ! "$EVENT_SHA" =~ ^[0-9a-f]{40}$ ]]; then
             echo "::error::Stable promotion event carries an invalid commit SHA"
             exit 1
           fi
           SOURCE_VERSION=${SOURCE_TAG#prerelease-v}
-          git fetch --no-tags origin \
-            "+refs/pull/$PR_NUMBER/head:refs/remotes/pull/$PR_NUMBER/head" \
-            "+refs/heads/release/prerelease:refs/remotes/origin/release/prerelease" \
-            "+refs/heads/release/stable:refs/remotes/origin/release/stable"
-          if [ "$(git rev-parse "refs/remotes/pull/$PR_NUMBER/head")" != "$HEAD_SHA" ]; then
-            echo "::error::Fetched pull request head does not match event head $HEAD_SHA"
+
+          # Annotated tags peel to a commit through the API, bounded by a hop
+          # limit and a visited set so a malformed chain cannot loop.
+          tag_object=$(gh api "/repos/$REPOSITORY/git/ref/tags/$SOURCE_TAG" --jq '.object.type + " " + .object.sha')
+          object_type=${tag_object%% *}
+          object_sha=${tag_object##* }
+          visited=''
+          SOURCE_SHA=''
+          hop=0
+          while [ "$hop" -lt 10 ]; do
+            hop=$((hop + 1))
+            if [ "$object_type" = 'commit' ]; then
+              SOURCE_SHA="$object_sha"
+              break
+            fi
+            if [ "$object_type" != 'tag' ]; then
+              echo "::error::$SOURCE_TAG resolves to unsupported object type $object_type"
+              exit 1
+            fi
+            case " $visited " in
+              *" $object_sha "*)
+                echo "::error::$SOURCE_TAG tag chain revisits $object_sha"
+                exit 1
+                ;;
+            esac
+            visited="$visited $object_sha"
+            tag_object=$(gh api "/repos/$REPOSITORY/git/tags/$object_sha" --jq '.object.type + " " + .object.sha')
+            object_type=${tag_object%% *}
+            object_sha=${tag_object##* }
+          done
+          if [[ ! "$SOURCE_SHA" =~ ^[0-9a-f]{40}$ ]]; then
+            echo "::error::$SOURCE_TAG did not peel to a commit within the allowed hops"
             exit 1
           fi
 
-          git fetch --no-tags origin "+refs/tags/$SOURCE_TAG:refs/tags/$SOURCE_TAG"
-          SOURCE_SHA=$(git rev-parse --verify --end-of-options "refs/tags/$SOURCE_TAG^{commit}")
           release_state=$(gh api "/repos/$REPOSITORY/releases/tags/$SOURCE_TAG" \
             --jq '[.draft, .prerelease, (.published_at != null), .tag_name] | @tsv' 2>/dev/null || true)
           if [ "$release_state" != $'false\ttrue\ttrue\t'"$SOURCE_TAG" ]; then
@@ -128,22 +142,45 @@ jobs:
             exit 1
           fi
 
-          MANIFEST_VERSION=$(git show "$SOURCE_SHA:.release-please-prerelease-manifest.json" | jq -r '.["."] // ""')
+          MANIFEST_VERSION=$(gh api -H 'Accept: application/vnd.github.raw' \
+            "/repos/$REPOSITORY/contents/.release-please-prerelease-manifest.json?ref=$SOURCE_SHA" \
+            | jq -r '.["."] // ""')
           if [ "$MANIFEST_VERSION" != "$SOURCE_VERSION" ]; then
             echo "::error::$SOURCE_TAG resolves to $SOURCE_SHA but the PreRelease manifest carries $MANIFEST_VERSION"
             exit 1
           fi
-          if ! git merge-base --is-ancestor "$SOURCE_SHA" refs/remotes/origin/release/prerelease; then
+
+          # Mutable release branches are resolved once, and containment is proved
+          # against the resolved immutable commits through the compare API.
+          PRERELEASE_SHA=$(gh api "/repos/$REPOSITORY/git/ref/heads/release/prerelease" --jq '.object.sha')
+          STABLE_SHA=$(gh api "/repos/$REPOSITORY/git/ref/heads/release/stable" --jq '.object.sha')
+          for resolved in "release/prerelease:$PRERELEASE_SHA" "release/stable:$STABLE_SHA"; do
+            if [[ ! "${resolved#*:}" =~ ^[0-9a-f]{40}$ ]]; then
+              echo "::error::${resolved%%:*} did not resolve to a commit SHA"
+              exit 1
+            fi
+          done
+
+          CONTAINMENT=$(gh api "/repos/$REPOSITORY/compare/$SOURCE_SHA...$PRERELEASE_SHA" --jq '.status')
+          if [ "$CONTAINMENT" != 'ahead' ] && [ "$CONTAINMENT" != 'identical' ]; then
             echo "::error::$SOURCE_TAG commit $SOURCE_SHA is not contained in release/prerelease"
             exit 1
           fi
-          if ! git merge-base --is-ancestor "$SOURCE_SHA" "refs/remotes/pull/$PR_NUMBER/head"; then
+
+          # The event head SHA is immutable, so the promotion head is compared
+          # directly rather than fetched.
+          HEAD_CONTAINMENT=$(gh api "/repos/$REPOSITORY/compare/$SOURCE_SHA...$HEAD_SHA" --jq '.status')
+          if [ "$HEAD_CONTAINMENT" != 'ahead' ] && [ "$HEAD_CONTAINMENT" != 'identical' ]; then
             echo "::error::Promotion head $HEAD_SHA does not contain selected source $SOURCE_SHA"
             exit 1
           fi
 
-          CANDIDATE=$(git show "$EVENT_SHA:release-please-config.json" | jq -r '.packages["."]["release-as"] // ""')
-          BASELINE=$(git show 'refs/remotes/origin/release/stable:.release-please-manifest.json' | jq -r '.["."] // ""')
+          CANDIDATE=$(gh api -H 'Accept: application/vnd.github.raw' \
+            "/repos/$REPOSITORY/contents/release-please-config.json?ref=$EVENT_SHA" \
+            | jq -r '.packages["."]["release-as"] // ""')
+          BASELINE=$(gh api -H 'Accept: application/vnd.github.raw' \
+            "/repos/$REPOSITORY/contents/.release-please-manifest.json?ref=$STABLE_SHA" \
+            | jq -r '.["."] // ""')
           for entry in "candidate:$CANDIDATE" "baseline:$BASELINE"; do
             value=${entry#*:}
             if [[ "$value" == *$'\n'* || "$value" == *$'\r'* || ! "$value" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
@@ -168,11 +205,13 @@ jobs:
         if: ${{ steps.identity.outputs.mode == 'managed' }}
         env:
           EVENT_SHA: ${{ github.sha }}
+          GH_TOKEN: ${{ github.token }}
+          REPOSITORY: ${{ github.repository }}
         run: |
           set -euo pipefail
-          cd "$GITHUB_WORKSPACE/trigger-validation"
-          git fetch --no-tags origin "+refs/heads/release/stable:refs/remotes/origin/release/stable"
-          INTENT=$(git show "$EVENT_SHA:release-please-config.json" | jq -r '.packages["."]["release-as"] // ""')
+          INTENT=$(gh api -H 'Accept: application/vnd.github.raw' \
+            "/repos/$REPOSITORY/contents/release-please-config.json?ref=$EVENT_SHA" \
+            | jq -r '.packages["."]["release-as"] // ""')
           if [ -n "$INTENT" ]; then
             echo "::error::Managed Stable merge still carries release-as $INTENT"
             exit 1
@@ -342,18 +381,46 @@ jobs:
           sparse-checkout-cone-mode: false
           persist-credentials: false
 
-      # Data-only checkout: executable tooling comes from the trusted github.sha checkout.
-      - name: Checkout release preparation data
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          ref: ${{ needs.release-please.outputs.release-pr-branch }}
-          path: release-preparation
-          token: ${{ steps.app-token.outputs.token }}
-          persist-credentials: true
+      # The managed branch is resolved to one immutable commit and fetched over a
+      # credential-free remote, so no write token exists while the tree is
+      # transformed.
+      - name: Resolve and fetch the release preparation commit
+        id: preparation
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_BRANCH: ${{ needs.release-please.outputs.release-pr-branch }}
+          REPOSITORY: ${{ github.repository }}
+          SERVER_URL: ${{ github.server_url }}
+        run: |
+          set -euo pipefail
+          if [[ ! "$RELEASE_BRANCH" =~ ^release-please--[A-Za-z0-9._/-]+$ ]]; then
+            echo "::error::$RELEASE_BRANCH is not a managed release preparation branch"
+            exit 1
+          fi
+
+          resolved_object=$(gh api "/repos/$REPOSITORY/git/ref/heads/$RELEASE_BRANCH" --jq '.object.sha')
+          if [[ ! "$resolved_object" =~ ^[0-9a-f]{40}$ ]]; then
+            echo "::error::$RELEASE_BRANCH did not resolve to a commit SHA"
+            exit 1
+          fi
+
+          RELEASE_REPO="$GITHUB_WORKSPACE/release-preparation"
+          mkdir -p "$RELEASE_REPO"
+          git -C "$RELEASE_REPO" init --quiet
+          git -C "$RELEASE_REPO" -c credential.helper= fetch --no-tags --depth 1 \
+            "$SERVER_URL/$REPOSITORY.git" \
+            "+refs/heads/$RELEASE_BRANCH:refs/remotes/preparation/head"
+          fetched_object=$(git -C "$RELEASE_REPO" rev-parse refs/remotes/preparation/head)
+          if [ "$fetched_object" != "$resolved_object" ]; then
+            echo "::error::$RELEASE_BRANCH moved from $resolved_object to $fetched_object during preparation"
+            exit 1
+          fi
+          git -C "$RELEASE_REPO" checkout --quiet --detach refs/remotes/preparation/head
+
+          echo "commit=$resolved_object" >> "$GITHUB_OUTPUT"
 
       - name: Update committed version fields and retire the promotion intent
-        env:
-          RELEASE_BRANCH: ${{ needs.release-please.outputs.release-pr-branch }}
+        id: transform
         run: |
           set -euo pipefail
           RELEASE_REPO="$GITHUB_WORKSPACE/release-preparation"
@@ -392,10 +459,30 @@ jobs:
           git add --all
           if git diff --cached --quiet; then
             echo "Preparation already carries $VERSION and its synchronized plugin manifest"
+            echo "committed=false" >> "$GITHUB_OUTPUT"
             exit 0
           fi
           git commit -m "chore(release): sync committed versions and plugin manifest to $VERSION"
-          git push origin "HEAD:refs/heads/$RELEASE_BRANCH"
+          echo "committed=true" >> "$GITHUB_OUTPUT"
+
+      # The write credential exists only for this push, and the lease binds the
+      # update to the exact commit the tree was built from.
+      - name: Push the synchronized release preparation commit
+        if: ${{ steps.transform.outputs.committed == 'true' }}
+        env:
+          EXPECTED_COMMIT: ${{ steps.preparation.outputs.commit }}
+          GH_APP_TOKEN: ${{ steps.app-token.outputs.token }}
+          RELEASE_BRANCH: ${{ needs.release-please.outputs.release-pr-branch }}
+          REPOSITORY: ${{ github.repository }}
+          SERVER_URL: ${{ github.server_url }}
+        run: |
+          set -euo pipefail
+          RELEASE_REPO="$GITHUB_WORKSPACE/release-preparation"
+          push_host=${SERVER_URL#https://}
+          git -C "$RELEASE_REPO" -c credential.helper= push \
+            --force-with-lease="refs/heads/$RELEASE_BRANCH:$EXPECTED_COMMIT" \
+            "https://x-access-token:$GH_APP_TOKEN@$push_host/$REPOSITORY.git" \
+            "HEAD:refs/heads/$RELEASE_BRANCH"
 
   validate-release:
     name: Validate release-please Stable output
@@ -681,7 +768,7 @@ jobs:
       - name: Checkout dependency manifests
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          ref: ${{ needs.validate-release.outputs.sha }}
+          ref: ${{ github.sha }}
           sparse-checkout: |
             package.json
             package-lock.json
@@ -741,7 +828,7 @@ jobs:
       - name: Checkout verification script
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          ref: ${{ needs.validate-release.outputs.sha }}
+          ref: ${{ github.sha }}
           persist-credentials: false
 
       - name: Download release artifacts

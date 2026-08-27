@@ -292,7 +292,7 @@ Describe 'One-package build and artifact naming' -Tag 'Unit' {
 
         $checkout = Get-NamedJobStep -Document $document -JobName 'package' -StepName 'Checkout code'
         [string]$checkout['with']['ref'] |
-            Should -BeExactly '${{ inputs.source-ref }}'
+            Should -BeExactly '${{ github.sha }}'
 
         $steps = Get-JobStepText -Document $document -JobName 'package'
         @($steps | Where-Object { $_ -match 'Prepare-Extension\.ps1$' }) | Should -HaveCount 1
@@ -307,16 +307,12 @@ Describe 'One-package build and artifact naming' -Tag 'Unit' {
         $names.IndexOf('Validate packaging inputs') | Should -BeLessThan $names.IndexOf('Install dependencies')
     }
 
-    It 'Accepts source-ref form <SourceRef> before checkout' -Skip:$script:SkipShellFixtureTests -ForEach @(
-        @{ SourceRef = '1111111111111111111111111111111111111111' }
-        @{ SourceRef = 'main' }
-        @{ SourceRef = 'v3.2.2' }
-        @{ SourceRef = 'refs/tags/v3.2.2' }
-    ) {
+    It 'Accepts a source-ref equal to the run commit before checkout' -Skip:$script:SkipShellFixtureTests {
         $step = Get-NamedJobStep -Document (Get-WorkflowDocument -Name 'extension-package.yml') `
             -JobName 'package' -StepName 'Validate source ref'
         $result = Invoke-WorkflowShellStep -Body ([string]$step['run']) -TemplateVersion '3.3.0' -Environment @{
-            INPUT_SOURCE_REF = $SourceRef
+            EVENT_SHA        = 'abcdef1111111111111111111111111111111111'
+            INPUT_SOURCE_REF = 'abcdef1111111111111111111111111111111111'
         }
         $result.ExitCode | Should -Be 0
     }
@@ -326,10 +322,16 @@ Describe 'One-package build and artifact naming' -Tag 'Unit' {
         @{ SourceRef = '-branch' }
         @{ SourceRef = 'bad..ref' }
         @{ SourceRef = 'refs/heads/bad ref' }
+        @{ SourceRef = 'main' }
+        @{ SourceRef = 'v3.2.2' }
+        @{ SourceRef = 'refs/tags/v3.2.2' }
+        @{ SourceRef = 'ABCDEF1111111111111111111111111111111111' }
+        @{ SourceRef = '2222222222222222222222222222222222222222' }
     ) {
         $step = Get-NamedJobStep -Document (Get-WorkflowDocument -Name 'extension-package.yml') `
             -JobName 'package' -StepName 'Validate source ref'
         $result = Invoke-WorkflowShellStep -Body ([string]$step['run']) -TemplateVersion '3.3.0' -Environment @{
+            EVENT_SHA        = 'abcdef1111111111111111111111111111111111'
             INPUT_SOURCE_REF = $SourceRef
         }
         $result.ExitCode | Should -Not -Be 0
@@ -363,6 +365,170 @@ Describe 'One-package build and artifact naming' -Tag 'Unit' {
     It 'Matches the VSIX artifact producer and consumer names' {
         (Get-WorkflowText -Name 'extension-package.yml') | Should -Match 'name: extension-vsix'
         (Get-WorkflowText -Name 'extension-provenance.yml') | Should -Match 'name: extension-vsix'
+    }
+}
+
+# A caller-supplied ref must never select a checked-out tree; the run's own
+# commit is the only trusted selector, and the gates below are what make it so.
+Describe 'Trusted source binding' -Tag 'Unit' {
+    It 'Checks out the run commit in <Workflow> step <StepName>' -ForEach @(
+        @{ Workflow = 'extension-package.yml'; JobName = 'package'; StepName = 'Checkout code' }
+        @{ Workflow = 'extension-provenance.yml'; JobName = 'attest'; StepName = 'Checkout code' }
+        @{ Workflow = 'extension-provenance.yml'; JobName = 'attest'; StepName = 'Checkout Syft config' }
+        @{ Workflow = 'release-prerelease.yml'; JobName = 'generate-dependency-sbom'; StepName = 'Checkout dependency manifests' }
+        @{ Workflow = 'release-prerelease.yml'; JobName = 'verify-provenance'; StepName = 'Checkout verification script' }
+        @{ Workflow = 'release-stable-publish.yml'; JobName = 'generate-dependency-sbom'; StepName = 'Checkout dependency manifests' }
+        @{ Workflow = 'release-stable-publish.yml'; JobName = 'verify-provenance'; StepName = 'Checkout verification script' }
+    ) {
+        $step = Get-NamedJobStep -Document (Get-WorkflowDocument -Name $Workflow) -JobName $JobName -StepName $StepName
+        [string]$step['with']['ref'] | Should -BeExactly '${{ github.sha }}'
+    }
+
+    It 'Retains the release identity gate that makes the run commit trusted in <Workflow>' -ForEach @(
+        @{ Workflow = 'release-prerelease.yml' }
+        @{ Workflow = 'release-stable-publish.yml' }
+    ) {
+        $document = Get-WorkflowDocument -Name $Workflow
+        $identity = Get-NamedJobStep -Document $document -JobName 'validate-release' -StepName 'Verify trusted release identity'
+        [string]$identity['run'] | Should -Match 'MERGE_SHA'
+        [string]$identity['run'] | Should -Match 'RELEASE_SHA'
+        [string]$document['jobs']['validate-release']['outputs']['sha'] | Should -BeExactly '${{ github.sha }}'
+        [string[]]@($document['jobs']['generate-dependency-sbom']['needs']) | Should -Contain 'validate-release'
+        [string[]]@($document['jobs']['verify-provenance']['needs']) | Should -Contain 'validate-release'
+    }
+}
+
+# Promotion validation reads through the API now, so the contracts that matter
+# are the absence of pull-request Git transport and the immutability of the refs
+# every read is pinned to.
+Describe 'Immutable promotion validation' -Tag 'Unit' {
+    $script:PromotionJobs = @(
+        @{ Workflow = 'pr-validation.yml'; JobName = 'gate-completeness-check' }
+        @{ Workflow = 'release-stable-publish.yml'; JobName = 'validate-trigger' }
+    )
+
+    It 'Uses no pull-request Git transport in <Workflow> job <JobName>' -ForEach $script:PromotionJobs {
+        $steps = Get-JobStepText -Document (Get-WorkflowDocument -Name $Workflow) -JobName $JobName
+        @($steps | Where-Object { $_ -match 'git\s+fetch|git\s+pull|gh\s+pr\s+checkout|refs/pull/' }) | Should -HaveCount 0
+    }
+
+    It 'Pins every promotion content read to a resolved commit in <Workflow> job <JobName>' -ForEach $script:PromotionJobs {
+        $text = (Get-JobStepText -Document (Get-WorkflowDocument -Name $Workflow) -JobName $JobName) -join "`n"
+        $refs = @([regex]::Matches($text, '\?ref=\$(?<name>[A-Za-z_]+)') | ForEach-Object { $_.Groups['name'].Value } | Sort-Object -Unique)
+        $refs | Should -Not -BeNullOrEmpty
+        @($refs | Where-Object { $_ -notin @('HEAD_SHA', 'EVENT_SHA', 'BASELINE_SHA', 'SOURCE_SHA', 'STABLE_SHA', 'PRERELEASE_SHA') }) |
+            Should -BeNullOrEmpty
+    }
+
+    It 'Bounds annotated tag peeling in <Workflow> job <JobName>' -ForEach $script:PromotionJobs {
+        $text = (Get-JobStepText -Document (Get-WorkflowDocument -Name $Workflow) -JobName $JobName) -join "`n"
+        $text | Should -Match 'hop.*-lt 10'
+        $text | Should -Match 'tag chain revisits'
+        $text | Should -Match 'unsupported object type'
+        $text | Should -Match 'did not peel to a commit'
+    }
+
+    It 'Proves containment through compare status rather than local ancestry in <Workflow> job <JobName>' -ForEach $script:PromotionJobs {
+        $text = (Get-JobStepText -Document (Get-WorkflowDocument -Name $Workflow) -JobName $JobName) -join "`n"
+        $text | Should -Match 'compare/\$SOURCE_SHA\.\.\.'
+        $text | Should -Match "'ahead'"
+        $text | Should -Match "'identical'"
+        $text | Should -Not -Match 'merge-base'
+    }
+
+    It 'Declares only the token scope each promotion job needs' {
+        $gate = (Get-WorkflowDocument -Name 'pr-validation.yml')['jobs']['gate-completeness-check']['permissions']
+        [string]$gate['contents'] | Should -BeExactly 'read'
+        [string]$gate['pull-requests'] | Should -BeExactly 'read'
+        @($gate.Keys) | Should -HaveCount 2
+
+        # The Stable trigger compares immutable event SHAs, so it needs no
+        # pull-request scope at all.
+        $trigger = (Get-WorkflowDocument -Name 'release-stable-publish.yml')['jobs']['validate-trigger']['permissions']
+        [string]$trigger['contents'] | Should -BeExactly 'read'
+        @($trigger.Keys) | Should -HaveCount 1
+    }
+
+    It 'Retains every Stable trigger gate without a validation checkout' {
+        $document = Get-WorkflowDocument -Name 'release-stable-publish.yml'
+        $names = [string[]]@($document['jobs']['validate-trigger']['steps'] | ForEach-Object { [string]$_['name'] })
+        $names | Should -Not -Contain 'Checkout Stable trigger validation workspace'
+
+        $steps = Get-JobStepText -Document $document -JobName 'validate-trigger'
+        foreach ($gate in @(
+                'is not a merged same-repository pull request',
+                'does not match event SHA',
+                'is not an authorized Stable release head',
+                'is not a published, non-draft GitHub PreRelease',
+                'but the PreRelease manifest carries',
+                'is not contained in release/prerelease',
+                'does not contain selected source',
+                'still carries release-as')) {
+            @($steps | Where-Object { $_ -match [regex]::Escape($gate) }) |
+                Should -Not -BeNullOrEmpty -Because "the '$gate' check must survive the API migration"
+        }
+    }
+}
+
+# The release preparation tree is untrusted data. These contracts keep the write
+# credential out of it and bind the push to the commit the tree was built from.
+Describe 'Release preparation transport' -Tag 'Unit' {
+    $script:SyncWorkflows = @(
+        @{ Workflow = 'release-prerelease.yml' }
+        @{ Workflow = 'release-stable-publish.yml' }
+    )
+
+    It 'Fetches release preparation data without a credential in <Workflow>' -ForEach $script:SyncWorkflows {
+        $document = Get-WorkflowDocument -Name $Workflow
+        $names = [string[]]@($document['jobs']['sync-release-pr']['steps'] | ForEach-Object { [string]$_['name'] })
+        $names | Should -Not -Contain 'Checkout release preparation data'
+
+        $checkouts = @($document['jobs']['sync-release-pr']['steps'] | Where-Object { [string]$_['uses'] -match 'actions/checkout@' })
+        $checkouts | Should -HaveCount 1
+        [string]$checkouts[0]['with']['ref'] | Should -BeExactly '${{ github.sha }}'
+        [string]$checkouts[0]['with']['persist-credentials'] | Should -Match '^[Ff]alse$'
+
+        $prepare = Get-NamedJobStep -Document $document -JobName 'sync-release-pr' `
+            -StepName 'Resolve and fetch the release preparation commit'
+        [string]$prepare['run'] | Should -Match 'credential\.helper= fetch'
+        [string]$prepare['run'] | Should -Not -Match 'x-access-token'
+    }
+
+    It 'Binds the preparation tree to an API-resolved immutable commit in <Workflow>' -ForEach $script:SyncWorkflows {
+        $prepare = Get-NamedJobStep -Document (Get-WorkflowDocument -Name $Workflow) -JobName 'sync-release-pr' `
+            -StepName 'Resolve and fetch the release preparation commit'
+        $run = [string]$prepare['run']
+        $run | Should -Match 'release-please--'
+        $run | Should -Match 'is not a managed release preparation branch'
+        $run | Should -Match 'did not resolve to a commit SHA'
+        $run | Should -Match 'moved from .* during preparation'
+        $run | Should -Match 'commit=\$resolved_object'
+    }
+
+    It 'Transforms the preparation tree without the write token in <Workflow>' -ForEach $script:SyncWorkflows {
+        $transform = Get-NamedJobStep -Document (Get-WorkflowDocument -Name $Workflow) -JobName 'sync-release-pr' `
+            -StepName 'Update committed version fields and retire the promotion intent'
+        $transformEnv = if ($transform.Contains('env')) { $transform['env'] } else { $null }
+        $envKeys = if ($null -ne $transformEnv) { [string[]]@($transformEnv.Keys) } else { @() }
+        @($envKeys | Where-Object { $_ -match 'TOKEN' }) | Should -BeNullOrEmpty
+        [string]$transform['run'] | Should -Not -Match 'git push'
+        [string]$transform['run'] | Should -Match 'committed=false'
+        [string]$transform['run'] | Should -Match 'committed=true'
+    }
+
+    It 'Scopes the write token to a lease-guarded push in <Workflow>' -ForEach $script:SyncWorkflows {
+        $document = Get-WorkflowDocument -Name $Workflow
+        $push = Get-NamedJobStep -Document $document -JobName 'sync-release-pr' `
+            -StepName 'Push the synchronized release preparation commit'
+        [string]$push['if'] | Should -Match "steps\.transform\.outputs\.committed == 'true'"
+        [string]$push['env']['GH_APP_TOKEN'] | Should -BeExactly '${{ steps.app-token.outputs.token }}'
+        [string]$push['run'] | Should -Match '--force-with-lease="refs/heads/\$RELEASE_BRANCH:\$EXPECTED_COMMIT"'
+
+        $tokenSteps = @($document['jobs']['sync-release-pr']['steps'] | Where-Object {
+                $stepEnv = if ($_.Contains('env')) { $_['env'] } else { $null }
+                $null -ne $stepEnv -and @($stepEnv.Keys) -contains 'GH_APP_TOKEN'
+            })
+        $tokenSteps | Should -HaveCount 1
     }
 }
 

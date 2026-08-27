@@ -2,7 +2,7 @@
 title: ASR Trigger Taxonomy
 description: Closed enum of eight Architecturally Significant Requirement (ASR) trigger kinds enforced by the ADR frontmatter validator (GP-07)
 author: microsoft/hve-core
-ms.date: 2026-05-02
+ms.date: 2026-08-21
 ms.topic: reference
 keywords:
   - adr
@@ -14,7 +14,7 @@ keywords:
 
 # ASR Trigger Taxonomy (GP-07)
 
-Architecturally Significant Requirement (ASR) triggers recorded in ADR frontmatter under `asrTriggers[].kind` are drawn from a closed enum of eight kinds. No other values are permitted. The frontmatter validator rejects unknown values with a `ASR_KIND_UNKNOWN` error. Adding a new kind requires a separate ADR amending the taxonomy; ad-hoc extension during authoring is prohibited.
+Architecturally Significant Requirement (ASR) triggers recorded in ADR frontmatter under `asr_triggers[].kind` are drawn from a closed enum of eight kinds. No other values are permitted. The frontmatter validator rejects unknown values and reports the invalid field and allowed values. Adding a new kind requires a separate ADR amending the taxonomy; ad-hoc extension during authoring is prohibited.
 
 ## cost
 
@@ -61,19 +61,19 @@ Architecturally Significant Requirement (ASR) triggers recorded in ADR frontmatt
 ## evolvability
 
 - **Triggers**: a decision that materially changes the system's capacity to absorb future technology shifts, swap dependencies, or extend behavior without rewrite. Distinct from `maintainability`, which targets near-term changeability and contributor experience; `evolvability` targets long-horizon adaptability and protection of optionality.
-- **Signals**: an anticipated platform migration, an expected protocol or standard evolution, a multi-year horizon for replaceability of a core component, a modular boundary that preserves substitution headroom, or coupling that would foreclose a known future change.
+- **Signals**: an anticipated platform migration, an expected protocol or standard evolution, a multi-year horizon for the ability to replace a core component, a modular boundary that preserves substitution headroom, or coupling that would foreclose a known future change.
 - **Evidence**: link to a roadmap, technology-radar entry, dependency end-of-life schedule, architectural fitness function, or extensibility evaluation.
 
 ## Per-Trigger Schema
 
-Each entry in `asrTriggers[]` conforms to the following shape. Field rules:
+Each entry in `asr_triggers[]` conforms to the following shape. Field rules:
 
 - `kind`: required. One of the eight values above. Closed enum; unknown values are rejected.
 - `evidence`: required free-text reference (link, document title, ticket ID, requirement ID, or quoted constraint). Empty strings are rejected.
 - `note`: required free-text rationale of 280 characters or fewer explaining why the trigger applies. Strings longer than 280 characters are rejected.
 
 ```yaml
-asrTriggers:
+asr_triggers:
   - kind: <one of: cost | performance | security | compliance | availability | scalability | maintainability | evolvability>
     evidence: <required, non-empty reference>
     note: <required, ≤ 280 chars>

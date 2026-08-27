@@ -232,6 +232,112 @@ Some prose between blocks.
         $config.disclaimers['sssc-planner'].text | Should -Be 'SSSC text.'
     }
 
+    It 'Uses an explicit lower-kebab disclaimer id while preserving the readable heading' {
+        $source = Join-Path $script:TempTestDir 'explicit-id.md'
+        $content = @"
+# Disclaimer Language
+
+## Data Science and Engineering Coaching
+
+<!-- disclaimer-id: data-science-engineering -->
+> [!CAUTION]
+> **Disclaimer:** Data science and engineering text.
+"@
+        Set-Content -Path $source -Value $content -Encoding utf8
+        $config = Import-DisclaimerSource -SourcePath $source
+        $config.disclaimers.ContainsKey('data-science-engineering-planner') | Should -BeTrue
+        $config.disclaimers.ContainsKey('data-planner') | Should -BeFalse
+        $config.disclaimers['data-science-engineering-planner'].id | Should -Be 'data-science-engineering-full-disclaimer'
+        $config.disclaimers['data-science-engineering-planner'].label | Should -Be 'Data Science and Engineering Coaching Disclaimer'
+    }
+
+    It 'Preserves first-word fallback identifiers when metadata is absent' {
+        $config = Import-DisclaimerSource -SourcePath $script:DisclaimerSourcePath
+        $config.disclaimers['rai-planner'].id | Should -Be 'rai-full-disclaimer'
+        $config.disclaimers['sssc-planner'].id | Should -Be 'sssc-full-disclaimer'
+    }
+
+    It 'Rejects an empty disclaimer id marker' {
+        $source = Join-Path $script:TempTestDir 'invalid-empty-marker.md'
+        $content = @"
+# Disclaimer Language
+
+## Data Science and Engineering Coaching
+
+<!-- disclaimer-id:  -->
+> [!CAUTION]
+> **Disclaimer:** Data science and engineering text.
+"@
+        Set-Content -Path $source -Value $content -Encoding utf8
+        { Import-DisclaimerSource -SourcePath $source } | Should -Throw '*disclaimer-id*'
+    }
+
+    It 'Rejects a non-kebab disclaimer id marker' {
+        $source = Join-Path $script:TempTestDir 'invalid-non-kebab-marker.md'
+        $content = @"
+# Disclaimer Language
+
+## Data Science and Engineering Coaching
+
+<!-- disclaimer-id: Data_Science -->
+> [!CAUTION]
+> **Disclaimer:** Data science and engineering text.
+"@
+        Set-Content -Path $source -Value $content -Encoding utf8
+        { Import-DisclaimerSource -SourcePath $source } | Should -Throw '*disclaimer-id*'
+    }
+
+    It 'Rejects disclaimer id markers with noncanonical comment whitespace: <Marker>' -ForEach @(
+        @{ Marker = '<!--disclaimer-id: data-science-engineering -->' }
+        @{ Marker = '<!--  disclaimer-id: data-science-engineering -->' }
+    ) {
+        $source = Join-Path $script:TempTestDir "invalid-comment-whitespace-$([guid]::NewGuid().ToString('N')).md"
+        $content = @"
+# Disclaimer Language
+
+## Data Science and Engineering Coaching
+
+$Marker
+> [!CAUTION]
+> **Disclaimer:** Data science and engineering text.
+"@
+        Set-Content -Path $source -Value $content -Encoding utf8
+        { Import-DisclaimerSource -SourcePath $source } | Should -Throw '*disclaimer-id*'
+    }
+
+    It 'Rejects multiple disclaimer id markers in one section' {
+        $source = Join-Path $script:TempTestDir 'invalid-multiple-markers.md'
+        $content = @"
+# Disclaimer Language
+
+## Data Science and Engineering Coaching
+
+<!-- disclaimer-id: data-science -->
+<!-- disclaimer-id: data-science-engineering -->
+> [!CAUTION]
+> **Disclaimer:** Data science and engineering text.
+"@
+        Set-Content -Path $source -Value $content -Encoding utf8
+        { Import-DisclaimerSource -SourcePath $source } | Should -Throw '*multiple disclaimer-id*'
+    }
+
+    It 'Rejects a disclaimer id marker that is not immediately before CAUTION' {
+        $source = Join-Path $script:TempTestDir 'invalid-misplaced-marker.md'
+        $content = @"
+# Disclaimer Language
+
+## Data Science and Engineering Coaching
+
+<!-- disclaimer-id: data-science-engineering -->
+
+Intervening prose.
+> [!CAUTION]
+> **Disclaimer:** Data science and engineering text.
+"@
+        Set-Content -Path $source -Value $content -Encoding utf8
+        { Import-DisclaimerSource -SourcePath $source } | Should -Throw '*immediately before*'
+    }
+
     It 'Silently skips H2 sections that contain no CAUTION blockquote' {
         $source = Join-Path $script:TempTestDir 'empty-section.md'
         $content = @"
