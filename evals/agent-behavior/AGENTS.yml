@@ -87,8 +87,8 @@ agents:
     path: '.github/agents/security/subagents/cve-analyzer.agent.md'
     class: unknown
     cost_tier: light
-  - slug: data-workstream-coach
-    path: '.github/agents/data-science/data-workstream-coach.agent.md'
+  - slug: data-science-engineering-coach
+    path: '.github/agents/data-science-engineering/data-science-engineering-coach.agent.md'
     class: unknown
     cost_tier: light
   - slug: dependency-reviewer
@@ -209,10 +209,6 @@ agents:
     cost_tier: light
   - slug: sssc-reviewer
     path: '.github/agents/security/sssc-reviewer.agent.md'
-    class: unknown
-    cost_tier: light
-  - slug: supply-chain-reviewer
-    path: '.github/agents/security/supply-chain-reviewer.agent.md'
     class: unknown
     cost_tier: light
   - slug: supply-chain-skill-assessor
