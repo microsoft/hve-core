@@ -5,17 +5,18 @@ argument-hint: "Report type and reporting period"
 agents:
   - Engagement Report Council Arbiter
   - Engagement Report Council Critic
+  - Engagement Report Outlook Drafter
   - Engagement Report Reviewer
 tools:
   - agent
   - read
   - edit
   - search
+  - workiq/accept_eula
   - workiq/ask
   - workiq/fetch
   - workiq/search_paths
   - workiq/get_schema
-  - workiq/create_entity
   - ado/search_workitem
   - ado/wit_get_work_item
   - ado/wit_get_work_items_batch_by_ids
@@ -56,8 +57,8 @@ Apply these engagement-reporting rules throughout the workflow:
 * Sensitive source material is minimized in working files and excluded from
   version control
 * Review findings and Council decisions are resolved before final output
-* Outlook distribution creates at most one draft through the standard
-  `/me/messages` draft-create operation and never invokes a send action
+* Outlook distribution is delegated after separate approval to a draft-only
+  subagent that makes at most one `/me/messages` create attempt and cannot send
 * The final response identifies the report path, coverage gaps, unresolved
   claims, and retention action
 
@@ -79,34 +80,39 @@ session.
 
 1. Activate the `engagement-reporting` skill and follow its intake, research,
    synthesis, review, output, and retention gates
-2. For routine weekly reports, use the standard-depth fast path, preserve the
+2. Before the first WorkIQ query, obtain explicit user confirmation to accept
+   the WorkIQ EULA when acceptance is required, then invoke only the EULA
+   acceptance operation
+3. For routine weekly reports, use the standard-depth fast path, preserve the
    configured weekly template exactly, stay within the source-call budget, and
    apply one silent review inline
-3. Preserve the skill's evidence and stop rules; do not replace missing source
+4. Preserve the skill's evidence and stop rules; do not replace missing source
    coverage with assumptions or prior-report wording
-4. Dispatch `Engagement Report Reviewer` only when an isolated review is
+5. Dispatch `Engagement Report Reviewer` only when an isolated review is
    requested or the report is high-stakes or materially complex
-5. When Council validation is explicitly enabled, dispatch
+6. When Council validation is explicitly enabled, dispatch
    `Engagement Report Council Critic` at least twice with isolated inputs and
    distinct critic run identifiers. Use distinct model selections when the
    runtime supports them. If independent agent runs are unavailable, prepare
    `engagement-report-council-critique` for manual execution in separate model
    sessions. Treat a single critique as review, not Council validation.
-6. Dispatch `Engagement Report Council Arbiter` only after at least two
-   independent critiques exist; present material reconciliation decisions to
-   the user before editing the draft
-7. Require explicit user approval of the final report, save it, then ask
+7. Dispatch `Engagement Report Council Arbiter` in proposal mode only after at
+   least two independent critiques exist. Present material reconciliation
+   decisions to the user before editing the draft, then dispatch the Arbiter
+   again in persistence mode with the approved decisions to write Council
+   minutes
+8. Require explicit user approval of the final report, save it, then ask
    separately for approval before optional Outlook draft creation
+9. After separate draft approval, dispatch `Engagement Report Outlook Drafter`
+   with only the approved report path and validated distribution configuration
 
 Do not run Markdown linters, shell searches, or repository diagnostics during
 report generation. Do not narrate internal validation steps; present the draft
 or a specific blocker requiring user input.
 
-For approved Outlook distribution, call the standard WorkIQ draft-create
-operation directly only after rendering the approved Markdown to HTML inline
-and verifying the `contentType: "HTML"` and table-preservation invariants. Do
-not perform routine schema discovery, read generated schema files, manually
-flatten Markdown, or narrate payload-shape checks.
+For approved Outlook distribution, never call a message-write operation from
+this parent agent. The Outlook Drafter owns the single draft-create attempt
+after rendering and validating the approved content.
 
 ## Stop rules
 
@@ -117,5 +123,7 @@ flatten Markdown, or narrate payload-shape checks.
   draft-write capability, or explicit configuration is unavailable
 * Stop distribution when inline Markdown-to-HTML rendering or structure
   validation fails; never fall back to a plain-text body
+* Stop before creating any working artifact when `.working/`, `reports/`,
+  `transcripts/`, or `engagement.yaml` is not protected by ignore rules
 * Never send email, publish a report, commit working files, or upload source
   material

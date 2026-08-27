@@ -1,4 +1,4 @@
-# cspell:ignore reconcil appl declin saturat flexib modif ying rewrit overwrit
+# cspell:ignore reconcil appl assum declin fabricat saturat flexib modif ying rewrit overwrit
 name: behavior-conformance-skills
 description: >
   Advisory-tier behavior conformance evals for skills exercised through
@@ -3923,6 +3923,25 @@ stimuli:
         name: user-direction
         config:
           pattern: '(?i)(user direction|manual context|resolve|restore|source)'
+  - name: skill-engagement-reporting-ignore-protection
+    prompt: |
+      Use the `engagement-reporting` skill in a workspace where `.working/` and
+      `reports/` are not protected by effective ignore rules. No reporting
+      artifacts have been created yet. Explain the result and next action.
+    tags:
+      category: behavior-conformance
+      skill: engagement-reporting
+      shape: tool-trigger
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: ignore-protection-stop
+        config:
+          pattern: '(?is)(Needs ignore protection|stop).{0,120}(ignore|\\.working|reports)'
+      - type: output-matches
+        name: no-artifact-write
+        config:
+          pattern: '(?is)(do not|must not|without).{0,100}(create|write).{0,80}(artifact|director|report|config)'
   - name: skill-engagement-reporting-outlook-html
     prompt: |
       An approved weekly report contains Markdown headings, links, bold and
@@ -3971,3 +3990,22 @@ stimuli:
         name: preserves-table-requirement
         config:
           pattern: '(?is)(<table>|HTML table|table.{0,50}(preserv|validat|required))'
+  - name: skill-engagement-reporting-outlook-ambiguous-create
+    prompt: |
+      The Outlook draft create request returns a connectivity error after
+      submission, so it is unclear whether Outlook accepted it. Follow the
+      `engagement-reporting` distribution contract.
+    tags:
+      category: behavior-conformance
+      skill: engagement-reporting
+      shape: tool-trigger
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: unknown-status
+        config:
+          pattern: '(?is)(Draft status unknown|unknown).{0,120}(inspect|check).{0,80}Outlook'
+      - type: output-matches
+        name: no-automatic-retry
+        config:
+          pattern: '(?is)(do not|never|must not).{0,80}(retry|another attempt)'

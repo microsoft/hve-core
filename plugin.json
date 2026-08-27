@@ -38,6 +38,7 @@
     ".github/agents/engagement-reporting/subagents/council-arbiter.agent.md",
     ".github/agents/engagement-reporting/subagents/council-critic.agent.md",
     ".github/agents/engagement-reporting/subagents/engagement-report-reviewer.agent.md",
+    ".github/agents/engagement-reporting/subagents/outlook-drafter.agent.md",
     ".github/agents/experimental/experiment-designer.agent.md",
     ".github/agents/experimental/pptx.agent.md",
     ".github/agents/experimental/subagents/pptx-subagent.agent.md",

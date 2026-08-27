@@ -11,7 +11,7 @@ This suite covers every user-invocable hve-core agent with at least one function
 
 The complement to [baseline-equivalence](../baseline-equivalence/README.md) is intentional: baseline-equivalence asserts the customization layer does not alter underlying model behavior beyond documented divergences, while agent-behavior asserts each agent actually performs its declared job.
 
-The suite is organized around four behavioral classes (research-writer, code-reviewer, workitem-manager, planner-coach). Every parent agent belongs to exactly one class, and class membership selects the stimulus shape and grader template used in [stimuli/](stimuli/). The parent-agent table below is the authoritative class assignment; the maintained stimulus inventory contains 60 enrolled agents, including 29 subagents.
+The suite is organized around four behavioral classes (research-writer, code-reviewer, workitem-manager, planner-coach). Every parent agent belongs to exactly one class, and class membership selects the stimulus shape and grader template used in [stimuli/](stimuli/). The parent-agent table below is the authoritative class assignment; the maintained stimulus inventory contains 61 enrolled agents, including 30 subagents.
 
 ## Layout
 

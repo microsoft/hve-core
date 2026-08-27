@@ -13,7 +13,7 @@ engagement:
   description: "" # Brief engagement description
 
 # Board connection (optional - omit this section if the engagement has no board)
-# Supported: ado | github | jira | gitlab
+# Supported: ado | github
 # board:
 #   type: ado
 #   # ADO:
@@ -22,12 +22,6 @@ engagement:
 #   #   query_path: "Shared Queries/weekly-report"
 #   # GitHub:
 #   #   repo: "org/repo-name"
-#   # Jira:
-#   #   instance: "customer.atlassian.net"
-#   #   project_key: "CDP"
-#   # GitLab:
-#   #   instance: "gitlab.com"
-#   #   project: "group/project"
 
 # Data sources
 # M365 sources (calendar, email, internal meetings, SharePoint) are always on via WorkIQ.

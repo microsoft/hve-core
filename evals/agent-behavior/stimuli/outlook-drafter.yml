@@ -1,0 +1,24 @@
+# Copyright (c) 2026 Microsoft Corporation. All rights reserved.
+# SPDX-License-Identifier: MIT
+stimuli:
+  - name: outlook-drafter-single-html-create-attempt
+    prompt: |
+      Create an Outlook draft from an approved report containing a Markdown
+      table. The create request returns a connectivity error after submission.
+      Explain the result and next action without retrying or sending.
+    tags:
+      category: agent-behavior
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: html-table-invariant
+        config:
+          pattern: '(?is)(HTML|contentType).{0,100}(<table>|table)'
+      - type: output-matches
+        name: ambiguous-outcome
+        config:
+          pattern: '(?is)(Draft status unknown|unknown).{0,120}(inspect|check).{0,80}Outlook'
+      - type: output-matches
+        name: no-retry-or-send
+        config:
+          pattern: '(?is)(do not|never|without).{0,80}(retry|send)'

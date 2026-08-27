@@ -30,7 +30,10 @@ and exclude it from report instructions.
 * Keep research, drafts, critiques, and review artifacts under `.working/`
 * Keep final reports under `reports/`
 * Keep local source transcripts under `transcripts/`
-* Confirm these paths and `engagement.yaml` remain ignored before writing
+* Before any artifact write, verify that `.working/`, `reports/`,
+  `transcripts/`, and `engagement.yaml` are protected by effective ignore
+  rules. If any path is unprotected, stop with `Needs ignore protection`; do
+  not create directories, configuration, research, drafts, or reports
 * Do not reference sensitive working-file paths in commits, pull requests,
   issues, or other shared collaboration surfaces
 

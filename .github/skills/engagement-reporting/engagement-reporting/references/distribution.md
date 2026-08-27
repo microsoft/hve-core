@@ -1,7 +1,7 @@
 ---
 title: Outlook Draft Distribution
 description: Capability detection, draft creation, traceability, and stop rules for optional Outlook distribution.
-ms.date: 2026-08-25
+ms.date: 2026-08-27
 ms.topic: reference
 ---
 
@@ -18,7 +18,8 @@ Continue only when:
 * The user approved the final report
 * After the report was saved, the user separately approved Outlook draft
   creation
-* WorkIQ exposes `create_entity` or an equivalent draft-create capability
+* The Engagement Report Outlook Drafter and its draft-create capability are
+  available
 * Recipient fields and subject substitutions are valid
 
 If a precondition fails, record `Distribution skipped` and continue report
@@ -37,7 +38,7 @@ completion.
    a table, conversion succeeds only when the output contains `<table>`.
 6. Exclude working-file references and unapproved evidence appendices from the
    approved Markdown before conversion
-7. When WorkIQ `create_entity` is available, create the draft directly with:
+7. Make one WorkIQ `create_entity` attempt with:
    * `parentUrl`: `/me/messages`
    * `jsonBody`: a JSON-encoded Message with this shape:
 
@@ -67,27 +68,23 @@ completion.
 8. Before draft creation, verify the payload still contains
    `"contentType": "HTML"` and, for a tabular report, `<table>`. Stop when either
    invariant is missing.
-9. Do not run schema discovery before this standard path
-10. If the standard call fails specifically because the exposed interface or
-   payload shape differs, inspect the schema once and retry once
-11. Do not read generated schema files, enumerate unrelated Message operations,
-   or perform a second report-validation pass
-12. Do not invoke `sendMail`, a send action, or any equivalent operation
+9. Do not run schema discovery, enumerate unrelated Message operations, or
+   perform a second report-validation pass
+10. Do not retry draft creation after any response or connectivity failure; a
+   failed response does not prove that the service did not create the draft
+11. Do not invoke `sendMail`, a send action, or any equivalent operation
 
 The workflow uses the draft-create operation only. It does not register or rely
 on a hook, and it does not inspect or invoke transmission operations.
 
 ## Error handling
 
-For the first interface-shape or payload-validation failure, perform the single
-schema-assisted retry described above. Stop after the second shape or
-validation failure.
-
 Conversion and structure-validation failures are terminal. Do not create a
 draft with flattened or plain-text content.
 
-Retry once for a transient connectivity failure. Stop immediately for a
-permission failure. For terminal or repeated failures:
+After an ambiguous response or connectivity failure, record `Draft status
+unknown` and require the user to inspect Outlook before authorizing any later
+attempt. Stop immediately for a permission failure. For terminal failures:
 
 * Stop draft creation
 * Do not fall back to sending
@@ -97,8 +94,8 @@ permission failure. For terminal or repeated failures:
 
 Do not copy raw tool payloads or error responses into the distribution record.
 Do not narrate schema inspection, payload validation, or draft-write mechanics
-to the user. Report only `Draft created`, `Distribution skipped`, or the
-specific action the user must take.
+to the user. Report only `Draft created`, `Draft status unknown`, `Distribution skipped`, or
+the specific action the user must take.
 
 ## Traceability
 

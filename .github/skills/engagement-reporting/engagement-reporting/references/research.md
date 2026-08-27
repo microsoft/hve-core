@@ -1,7 +1,7 @@
 ---
 title: Engagement Reporting Research
 description: Source discovery, WorkIQ retrieval, board normalization, and coverage gates for engagement reporting.
-ms.date: 2026-08-10
+ms.date: 2026-08-27
 ms.topic: reference
 ---
 
@@ -59,8 +59,10 @@ directionality or attribution caveat.
 
 ## WorkIQ retrieval
 
-Accept the WorkIQ EULA before the first query when the tool requires it.
-Feature-detect available operations rather than assuming one API shape.
+When WorkIQ requires EULA acceptance, obtain the user's explicit confirmation
+before invoking the EULA acceptance operation. Stop WorkIQ research when the
+user declines. Feature-detect available read operations rather than assuming
+one API shape.
 
 ### Natural-language retrieval
 
