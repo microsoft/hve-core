@@ -2,7 +2,7 @@
 title: Agentic Workflows
 description: End-to-end process flow for AI-driven issue triage, implementation, and review workflows in hve-core
 author: HVE Core Team
-ms.date: 2026-08-20
+ms.date: 2026-08-26
 ms.topic: concept
 sidebar_position: 4
 keywords:
@@ -24,7 +24,7 @@ hve-core uses GitHub Agentic Workflows to support the journey from issue creatio
 ```mermaid
 flowchart TD
     accTitle: Issue Triage and Pull Request Review Workflow
-    accDescr: Six connected workflows move an issue through triage, implementation, automated review outcomes, revision loops, human approval, and merge.
+    accDescr: Issue triage routes qualifying issues into implementation. Opened pull requests pass through automated review outcomes, revision loops when needed, and human review before merge.
     subgraph TRIGGER["Issue Created or Labeled"]
         A["New issue opened<br/>or labeled needs-triage"]
     end

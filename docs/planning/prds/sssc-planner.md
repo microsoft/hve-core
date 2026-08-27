@@ -2,7 +2,7 @@
 title: SSSC Planner - Product Requirements Document
 description: Product requirements for an SSSC Planner that helps HVE-Core and downstream projects keep supply chain security planning consistent, auditable, and actionable.
 author: GitHub Copilot
-ms.date: 2026-08-20
+ms.date: 2026-08-26
 ms.topic: concept
 sidebar_position: 1
 keywords: [prd, sssc, supply chain security, planner, governance]
@@ -213,8 +213,9 @@ flowchart TD
 ```mermaid
 erDiagram
   accTitle: SSSC Session State and Artifact Model
-  accDescr: An SSSC session persists state, produces phase artifacts, processes references, records notices, generates handoff items, and optionally traces back to PRD state.
+  accDescr: PRD state can optionally seed an SSSC session. The session persists its own state, produces phase artifacts, processes references, records notices, and generates handoff items.
     PRD ||--|| PRD_STATE : tracks
+    PRD_STATE o|--o{ SSSC_SESSION : optionally-seeds
     SSSC_SESSION ||--|| STATE_JSON : persists
     SSSC_SESSION ||--o{ PHASE_ARTIFACT : produces
     SSSC_SESSION ||--o{ REFERENCE : processes

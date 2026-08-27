@@ -21,32 +21,31 @@ const inventory = JSON.parse(execFileSync(
 )) as MermaidFence[];
 const mermaidBrowserBundle = path.join(packageRoot, 'node_modules/mermaid/dist/mermaid.min.js');
 
-const routeCases = [
-  {
-    name: 'Customization',
-    path: '/hve-core/docs/customization/',
-    diagramCount: 1,
-  },
-  {
-    name: 'Release Process',
-    path: '/hve-core/docs/contributing/release-process/',
-    diagramCount: 1,
-  },
-  {
-    name: 'Agentic Workflows',
-    path: '/hve-core/docs/architecture/agentic-workflows/',
-    diagramCount: 3,
-  },
-  {
-    name: 'SSSC Planner PRD',
-    path: '/hve-core/docs/planning/prds/sssc-planner/',
-    diagramCount: 5,
-  },
-] as const;
+function documentationRoute(file: string): string {
+  const relativePath = file
+    .replace(/^docs\//, '')
+    .replace(/\.(?:md|mdx)$/i, '')
+    .replace(/(^|\/)README$/i, '$1');
+  return `/hve-core/docs/${relativePath}${relativePath.endsWith('/') ? '' : '/'}`;
+}
 
-// The source validator owns exhaustive coverage. These routes prove that the
-// production Docusaurus pipeline publishes every current Mermaid syntax family
-// as a named and described graphic instead of a raw source block.
+const routeCases = Array.from(inventory.reduce((cases, fence) => {
+  const route = documentationRoute(fence.file);
+  const routeCase = cases.get(route);
+  if (routeCase) {
+    routeCase.diagramCount += 1;
+  } else {
+    cases.set(route, {
+      name: fence.file,
+      path: route,
+      diagramCount: 1,
+    });
+  }
+  return cases;
+}, new Map<string, { name: string; path: string; diagramCount: number }>()).values());
+
+// The source inventory also drives deployed-route coverage so every Mermaid
+// fence passes through the production Docusaurus rendering pipeline.
 test.describe('Mermaid accessibility', () => {
   test('all deployed source fences render with associated metadata', async ({ page }) => {
     test.setTimeout(120000);
