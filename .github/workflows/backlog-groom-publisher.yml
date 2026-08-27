@@ -309,8 +309,6 @@ jobs:
     permissions:
       actions: read
       contents: write
-    outputs:
-      report-commit-sha: ${{ steps.publish.outputs.report-commit-sha }}
     steps:
       - name: Authenticate exact final artifact metadata
         id: authenticate
@@ -554,30 +552,45 @@ jobs:
             }
             core.setOutput("report-commit-sha", reportCommitSha);
             await core.summary.addRaw(`[View the optional detailed report](${reportUrl}).`).write();
-
-  deploy-pages:
-    name: Request Pages deployment for exact report commit
-    needs: publish-history
-    if: ${{ vars.BACKLOG_GROOM_PUBLISH_GH_PAGES == 'true' }}
-    continue-on-error: true
-    runs-on: ubuntu-latest
-    permissions:
-      actions: write
-      contents: read
-    steps:
-      - name: Dispatch documentation deployment
+      - name: Record immutable Pages provenance
         uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
         env:
-          REPORT_COMMIT_SHA: ${{ needs.publish-history.outputs.report-commit-sha }}
+          REPORT_COMMIT_SHA: ${{ steps.publish.outputs.report-commit-sha }}
         with:
           script: |
+            const crypto = require("crypto");
+            const fs = require("fs");
             if (!/^[a-f0-9]{40}$/.test(process.env.REPORT_COMMIT_SHA)) {
-              throw new Error("Authenticated report branch head is required before deployment dispatch");
+              throw new Error("Authenticated report commit is required for Pages provenance");
             }
-            const { data: repository } = await github.rest.repos.get({ ...context.repo });
-            await github.rest.actions.createWorkflowDispatch({
-              ...context.repo,
-              workflow_id: "deploy-docs.yml",
-              ref: repository.default_branch,
-              inputs: { "report-ref": process.env.REPORT_COMMIT_SHA },
-            });
+            const material = {
+              schema_version: "backlog-grooming-pages-provenance/v1",
+              publisher_run_id: String(context.runId),
+              publisher_run_attempt: Number(process.env.GITHUB_RUN_ATTEMPT),
+              publisher_source_sha: context.sha,
+              repository_id: String(context.payload.repository.id),
+              report_commit_sha: process.env.REPORT_COMMIT_SHA,
+            };
+            const canonicalize = (value) => {
+              if (Array.isArray(value)) return `[${value.map(canonicalize).join(",")}]`;
+              if (value !== null && typeof value === "object") return `{${Object.keys(value).sort().map(
+                (key) => `${JSON.stringify(key)}:${canonicalize(value[key])}`,
+              ).join(",")}}`;
+              return JSON.stringify(value);
+            };
+            const provenance = {
+              ...material,
+              provenance_digest: crypto.createHash("sha256").update(canonicalize(material)).digest("hex"),
+            };
+            fs.mkdirSync("pages-provenance", { recursive: true });
+            fs.writeFileSync(
+              "pages-provenance/provenance.json",
+              `${JSON.stringify(provenance, null, 2)}\n`,
+            );
+      - name: Upload immutable Pages provenance
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v4.6.2
+        with:
+          name: backlog-grooming-pages-provenance-${{ github.run_id }}
+          path: pages-provenance/provenance.json
+          if-no-files-found: error
+          retention-days: 30

@@ -216,24 +216,6 @@ BeforeAll {
         return $Value -ceq 'true'
     }
 
-    function Resolve-AuthenticatedReportRef {
-        param(
-            [AllowEmptyString()] [string]$RequestedRef,
-            [Parameter(Mandatory)] [string]$BranchHead
-        )
-
-        if ($RequestedRef) {
-            if ($RequestedRef -cnotmatch '^[a-f0-9]{40}$') {
-                throw 'Requested report ref must be a full lowercase commit SHA'
-            }
-            if ($RequestedRef -cne $BranchHead) {
-                throw 'Requested report commit must equal the current authenticated report branch head'
-            }
-            return $RequestedRef
-        }
-        return $BranchHead
-    }
-
     $script:Source = Read-RepoFile '.github/workflows/backlog-groom.md'
     $script:Lock = Read-RepoFile '.github/workflows/backlog-groom.lock.yml'
     $script:Orchestrator = Read-RepoFile '.github/workflows/backlog-groom-orchestrator.yml'
@@ -243,7 +225,6 @@ BeforeAll {
     $script:WorkflowReadme = Read-RepoFile '.github/workflows/README.md'
     $script:CorePublisher = Get-WorkflowJobSection -WorkflowSource $script:Publisher -JobName 'publish'
     $script:HistoryPublisher = Get-WorkflowJobSection -WorkflowSource $script:Publisher -JobName 'publish-history'
-    $script:PagesPublisher = Get-WorkflowJobSection -WorkflowSource $script:Publisher -JobName 'deploy-pages'
     $script:Policy = Read-RepoFile '.github/instructions/project-planning/github-backlog-grooming.instructions.md'
     $script:Agent = Read-RepoFile '.github/agents/backlog-grooming.agent.md'
     $script:Manager = Read-RepoFile '.github/agents/project-planning/backlog-manager.agent.md'
@@ -286,7 +267,8 @@ Describe 'Backlog grooming workflow source' -Tag 'Unit' {
         $script:Source | Should -Match '(?s)Do not omit the\s+row or call `noop` for an individual post-capture state change'
         $script:Source | Should -Match '(?s)Call `noop` only when shard input validation fails or a repository-wide access'
         $script:Source | Should -Match 'Report issue IDs do not match the planned shard candidates'
-        $script:Source | Should -Match 'Worker candidate IDs must be unique positive integers in ascending order'
+        $script:Source | Should -Match 'Worker candidate IDs must be unique positive integers'
+        $script:Source | Should -Not -Match 'Worker candidate IDs must be unique positive integers in ascending order'
         $script:Source | Should -Match 'The orchestrator, not the worker,\s+owns inventory selection'
         $script:Source | Should -Not -Match '<!-- gh-aw:backlog-grooming-tracker -->'
     }
@@ -586,6 +568,7 @@ Describe 'Backlog grooming production publisher' -Tag 'Unit' {
         $script:Orchestrator | Should -Match 'INPUT_WAVE_NUMBER: \$\{\{ inputs\.wave-number \|\| 1 \}\}'
         $script:Orchestrator | Should -Match "steps\.plan\.outputs\.mode != 'calendar-noop'"
         $script:Orchestrator | Should -Match "needs\.plan\.outputs\.mode != 'calendar-noop'"
+        $script:Orchestrator | Should -Match "needs\.plan\.outputs\.mode != 'complete-noop'"
         $script:Publisher | Should -Match "github\.event\.workflow_run\.conclusion == 'success'"
         $script:Source | Should -Match '(?m)^  workflow_call:$'
         $script:Source | Should -Not -Match '(?m)^  (schedule|workflow_dispatch):$'
@@ -643,16 +626,15 @@ Describe 'Backlog grooming production publisher' -Tag 'Unit' {
         [regex]::Matches(
             $script:Publisher,
             "(?m)^    if: \$\{\{ vars\.BACKLOG_GROOM_PUBLISH_GH_PAGES == 'true' \}\}$"
-        ).Count | Should -Be 2
-        [regex]::Matches($script:Publisher, '(?m)^    continue-on-error: true$').Count | Should -Be 2
+        ).Count | Should -Be 1
+        [regex]::Matches($script:Publisher, '(?m)^    continue-on-error: true$').Count | Should -Be 1
         $script:HistoryPublisher | Should -Match '(?ms)^  publish-history:.*?needs:\s+- discover\s+- publish'
         $script:CorePublisher | Should -Match '(?ms)^  publish:.*?permissions:\s+actions: read\s+issues: write'
         $script:CorePublisher | Should -Not -Match 'contents: write|GitHub Pages|pagesRoot|reportUrl|backlog-grooming-reports'
         $script:CorePublisher | Should -Match 'Inspect the \[source workflow run\]'
         $script:HistoryPublisher | Should -Match '(?ms)permissions:\s+actions: read\s+contents: write'
         $script:HistoryPublisher | Should -Not -Match 'issues: write'
-        $script:PagesPublisher | Should -Match '(?ms)permissions:\s+actions: write\s+contents: read'
-        $script:PagesPublisher | Should -Not -Match 'issues: write|contents: write'
+        $script:HistoryPublisher | Should -Match 'actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a'
     }
 
     It 'enables optional publication only for the exact lowercase value <Value>' -ForEach @(
@@ -666,7 +648,7 @@ Describe 'Backlog grooming production publisher' -Tag 'Unit' {
         Test-OptionalPublicationEnabled -Value $Value | Should -Be $Expected
     }
 
-    It 'persists accessible historical reports before dispatching their authenticated head' {
+    It 'persists accessible historical reports before recording immutable provenance' {
         $script:HistoryPublisher | Should -Match 'const reportsBranch = "backlog-grooming-reports"'
         $script:HistoryPublisher | Should -Match 'backlog-grooming/sweeps/\$\{reportSlug\}/index\.html'
         $script:HistoryPublisher | Should -Match 'backlog-grooming/history\.json'
@@ -684,28 +666,26 @@ Describe 'Backlog grooming production publisher' -Tag 'Unit' {
             Should -BeGreaterOrEqual 12
         [regex]::Matches($script:HistoryPublisher, '<th scope="row">').Count | Should -Be 2
         $script:HistoryPublisher | Should -Match '<summary>Evidence for issue #\$\{escapeHtml\(row\.issue\)\}</summary>'
-        $script:PagesPublisher | Should -Match 'Authenticated report branch head is required before deployment dispatch'
-        $script:PagesPublisher | Should -Match 'workflow_id: "deploy-docs\.yml"'
+        $script:HistoryPublisher | Should -Match 'backlog-grooming-pages-provenance-\$\{\{ github\.run_id \}\}'
+        $script:HistoryPublisher | Should -Match 'publisher_run_id: String\(context\.runId\)'
+        $script:HistoryPublisher | Should -Match 'publisher_source_sha: context\.sha'
+        $script:HistoryPublisher | Should -Match 'provenance_digest: crypto\.createHash\("sha256"\)'
     }
 
-    It 'accepts only the exact authenticated report branch head for enabled deployment' {
-        $head = '0123456789abcdef0123456789abcdef01234567'
-        Resolve-AuthenticatedReportRef -RequestedRef $head -BranchHead $head | Should -BeExactly $head
-        Resolve-AuthenticatedReportRef -RequestedRef '' -BranchHead $head | Should -BeExactly $head
-
-        { Resolve-AuthenticatedReportRef -RequestedRef 'backlog-grooming-reports' -BranchHead $head } |
-            Should -Throw '*full lowercase commit SHA*'
-        { Resolve-AuthenticatedReportRef -RequestedRef 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa' -BranchHead $head } |
-            Should -Throw '*current authenticated report branch head*'
-        { Resolve-AuthenticatedReportRef -RequestedRef 'fedcba9876543210fedcba9876543210fedcba98' -BranchHead $head } |
-            Should -Throw '*current authenticated report branch head*'
-
-        $script:DeployDocs | Should -Match '(?m)^      report-ref:$'
-        $script:DeployDocs | Should -Match 'const reportsBranch = "backlog-grooming-reports"'
-        $script:DeployDocs | Should -Match 'if \(!/\^\[a-f0-9\]\{40\}\$/\.test\(requestedRef\)\)'
-        $script:DeployDocs | Should -Match 'requestedRef !== reportRef\.object\.sha'
-        $script:DeployDocs | Should -Match 'const authenticatedRef = requestedRef \|\| reportRef\.object\.sha'
-        $script:DeployDocs | Should -Match 'ref: \$\{\{ steps\.reports\.outputs\.ref \}\}'
+    It 'stages reports only from immutable provenance bound to a successful publisher run' {
+        $script:DeployDocs | Should -Match '(?ms)^  workflow_run:\s+workflows:\s+- Backlog Grooming Publisher\s+branches:\s+- main\s+types:\s+- completed'
+        $script:DeployDocs | Should -Match "github\.event_name == 'workflow_run' && github\.event\.workflow_run\.conclusion == 'success'"
+        $script:DeployDocs | Should -Match 'run\.path !== "\.github/workflows/backlog-groom-publisher\.yml"'
+        $script:DeployDocs | Should -Match 'github\.rest\.actions\.listWorkflowRunArtifacts'
+        $script:DeployDocs | Should -Match 'Publisher run must contain exactly one immutable Pages provenance artifact'
+        $script:DeployDocs | Should -Match 'artifact-ids: \$\{\{ steps\.reports\.outputs\.artifact-id \}\}'
+        $script:DeployDocs | Should -Match 'provenance\.publisher_run_id !== String\(run\.id\)'
+        $script:DeployDocs | Should -Match 'provenance\.publisher_run_attempt !== run\.run_attempt'
+        $script:DeployDocs | Should -Match 'provenance\.publisher_source_sha !== run\.head_sha'
+        $script:DeployDocs | Should -Match 'recordedDigest !== computedDigest'
+        $script:DeployDocs | Should -Match 'Pages provenance is not bound to the triggering publisher run'
+        $script:DeployDocs | Should -Not -Match 'const reportsBranch = "backlog-grooming-reports"|requestedRef|report-ref'
+        $script:DeployDocs | Should -Match 'ref: \$\{\{ steps\.provenance\.outputs\.ref \}\}'
         $script:DeployDocs | Should -Match 'docs/docusaurus/build/backlog-grooming'
     }
 }
@@ -1303,7 +1283,8 @@ Describe 'Backlog grooming sweep dispatch and recovery contracts' -Tag 'Unit' {
         $script:Orchestrator | Should -Match '(?ms)^  continue:.*?permissions:\s+actions: write\s+contents: read'
         $script:CorePublisher | Should -Match '(?ms)permissions:\s+actions: read\s+issues: write'
         $script:HistoryPublisher | Should -Match '(?ms)permissions:\s+actions: read\s+contents: write'
-        $script:PagesPublisher | Should -Match '(?ms)permissions:\s+actions: write\s+contents: read'
+        $script:Publisher | Should -Not -Match '(?m)^\s+actions: write$'
+        $script:DeployDocs | Should -Match '(?ms)^  build:.*?permissions:\s+actions: read\s+contents: read\s+pages: write'
     }
 }
 

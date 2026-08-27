@@ -46,6 +46,14 @@ param(
 $ErrorActionPreference = 'Stop'
 
 #region Functions
+<#
+.SYNOPSIS
+    Converts a value to a JavaScript-compatible JSON string.
+.PARAMETER Value
+    String value to encode.
+.OUTPUTS
+    System.String
+#>
 function ConvertTo-JavaScriptJsonString {
     [CmdletBinding()]
     [OutputType([string])]
@@ -87,6 +95,14 @@ function ConvertTo-JavaScriptJsonString {
     return $Builder.ToString()
 }
 
+<#
+.SYNOPSIS
+    Converts a JSON number to JavaScript-compatible canonical text.
+.PARAMETER Element
+    JSON number element to render.
+.OUTPUTS
+    System.String
+#>
 function ConvertTo-JavaScriptJsonNumber {
     [CmdletBinding()]
     [OutputType([string])]
@@ -133,6 +149,14 @@ function ConvertTo-JavaScriptJsonNumber {
     return $Rendered
 }
 
+<#
+.SYNOPSIS
+    Serializes a JSON element using the workflow canonicalization rules.
+.PARAMETER Element
+    JSON element to canonicalize.
+.OUTPUTS
+    System.String
+#>
 function ConvertTo-CanonicalJson {
     [CmdletBinding()]
     [OutputType([string])]
@@ -175,6 +199,14 @@ function ConvertTo-CanonicalJson {
     }
 }
 
+<#
+.SYNOPSIS
+    Computes the canonical SHA-256 digest for a JSON element.
+.PARAMETER Element
+    JSON element to digest.
+.OUTPUTS
+    System.String
+#>
 function Get-CanonicalJsonDigest {
     [CmdletBinding()]
     [OutputType([string])]
@@ -188,6 +220,16 @@ function Get-CanonicalJsonDigest {
     return [Convert]::ToHexString([System.Security.Cryptography.SHA256]::HashData($Bytes)).ToLowerInvariant()
 }
 
+<#
+.SYNOPSIS
+    Tests whether a JSON object has exactly the expected keys.
+.PARAMETER Element
+    JSON object to inspect.
+.PARAMETER Keys
+    Complete expected key set.
+.OUTPUTS
+    System.Boolean
+#>
 function Test-ExactJsonKeys {
     [CmdletBinding()]
     [OutputType([bool])]
@@ -209,6 +251,18 @@ function Test-ExactJsonKeys {
     return ($ActualKeys -join '|') -ceq ($ExpectedKeys -join '|')
 }
 
+<#
+.SYNOPSIS
+    Tests whether a JSON number is an integer within safe bounds.
+.PARAMETER Element
+    JSON number to inspect.
+.PARAMETER Minimum
+    Inclusive minimum value.
+.PARAMETER Maximum
+    Inclusive maximum value.
+.OUTPUTS
+    System.Boolean
+#>
 function Test-SafeJsonInteger {
     [CmdletBinding()]
     [OutputType([bool])]
@@ -228,6 +282,16 @@ function Test-SafeJsonInteger {
         $Element.TryGetInt64([ref]$Value) -and $Value -ge $Minimum -and $Value -le $Maximum
 }
 
+<#
+.SYNOPSIS
+    Reads unique positive safe integers from a JSON array.
+.PARAMETER Name
+    Field name used in validation errors.
+.PARAMETER Element
+    JSON array to validate.
+.OUTPUTS
+    System.Int64[]
+#>
 function Assert-PositiveUniqueJsonIds {
     [CmdletBinding()]
     [OutputType([long[]])]
@@ -253,6 +317,16 @@ function Assert-PositiveUniqueJsonIds {
     return $Ids.ToArray()
 }
 
+<#
+.SYNOPSIS
+    Tests two integer arrays for identical ordered values.
+.PARAMETER Left
+    First integer array.
+.PARAMETER Right
+    Second integer array.
+.OUTPUTS
+    System.Boolean
+#>
 function Test-LongArrayEqual {
     [CmdletBinding()]
     [OutputType([bool])]
@@ -269,6 +343,14 @@ function Test-LongArrayEqual {
     return $Left.Count -eq $Right.Count -and ($Left -join ',') -ceq ($Right -join ',')
 }
 
+<#
+.SYNOPSIS
+    Reads one JSON file as a detached element.
+.PARAMETER Path
+    JSON file path.
+.OUTPUTS
+    System.Text.Json.JsonElement
+#>
 function Read-JsonElement {
     [CmdletBinding()]
     [OutputType([System.Text.Json.JsonElement])]
@@ -286,6 +368,14 @@ function Read-JsonElement {
     }
 }
 
+<#
+.SYNOPSIS
+    Creates a JSON array from ordinary values or JSON elements.
+.PARAMETER Values
+    Values to append in order.
+.OUTPUTS
+    System.Text.Json.Nodes.JsonArray
+#>
 function New-JsonArray {
     [CmdletBinding()]
     [OutputType([System.Text.Json.Nodes.JsonArray])]
@@ -307,6 +397,22 @@ function New-JsonArray {
     return , $Array
 }
 
+<#
+.SYNOPSIS
+    Validates a complete backlog grooming wave and writes its aggregate.
+.PARAMETER ManifestPath
+    Immutable wave manifest path.
+.PARAMETER ResultsDirectory
+    Directory containing shard result envelopes.
+.PARAMETER AggregateDirectory
+    Directory that receives aggregate.json.
+.PARAMETER ExpectedRunId
+    Authorized orchestrator run ID.
+.PARAMETER ExpectedAttempt
+    Authorized orchestrator attempt.
+.OUTPUTS
+    System.Management.Automation.PSCustomObject
+#>
 function Invoke-BacklogGroomWaveValidation {
     [CmdletBinding()]
     [OutputType([pscustomobject])]
@@ -390,8 +496,11 @@ function Invoke-BacklogGroomWaveValidation {
         $PriorityCandidateIds = [long[]]@(Assert-PositiveUniqueJsonIds -Name "$ShardId priority_candidate_ids" -Element $Shard.GetProperty('priority_candidate_ids'))
         $RoundRobinCandidateIds = [long[]]@(Assert-PositiveUniqueJsonIds -Name "$ShardId round_robin_candidate_ids" -Element $Shard.GetProperty('round_robin_candidate_ids'))
         $CohortIds = [long[]]@(@($PriorityCandidateIds) + @($RoundRobinCandidateIds))
-        [Array]::Sort($CohortIds)
-        if (-not (Test-LongArrayEqual -Left $CohortIds -Right $OrderedCandidateIds)) {
+        $UniqueCohortIds = [System.Collections.Generic.HashSet[long]]::new()
+        $CohortsAreUnique = @($CohortIds | Where-Object { -not $UniqueCohortIds.Add($_) }).Count -eq 0
+        if (-not $CohortsAreUnique -or
+            @($CohortIds | Where-Object { $OrderedCandidateIds -notcontains $_ }).Count -gt 0 -or
+            @($OrderedCandidateIds | Where-Object { $UniqueCohortIds -notcontains $_ }).Count -gt 0) {
             throw 'Wave manifest shard cohorts do not match its candidate IDs'
         }
         $PlannedIssueIds.AddRange($OrderedCandidateIds)
@@ -404,7 +513,9 @@ function Invoke-BacklogGroomWaveValidation {
     }
     $SortedPlannedIssueIds = $PlannedIssueIds.ToArray()
     [Array]::Sort($SortedPlannedIssueIds)
-    if (-not (Test-LongArrayEqual -Left $SortedPlannedIssueIds -Right $OrderedIssueIds)) {
+    $SortedOrderedIssueIds = [long[]]$OrderedIssueIds.Clone()
+    [Array]::Sort($SortedOrderedIssueIds)
+    if (-not (Test-LongArrayEqual -Left $SortedPlannedIssueIds -Right $SortedOrderedIssueIds)) {
         throw 'Wave manifest shards do not exactly partition the wave issue IDs'
     }
 
@@ -483,28 +594,86 @@ function Invoke-BacklogGroomWaveValidation {
         foreach ($Row in $Issues.EnumerateArray()) {
             $Issue = $Row.GetProperty('issue')
             $IssueId = if (Test-SafeJsonInteger -Element $Issue -Minimum 1) { $Issue.GetInt64() } else { -1 }
-            $AssessmentStatus = $Row.GetProperty('assessment_status').GetString()
+            $Title = $Row.GetProperty('title')
+            $SelectionReason = $Row.GetProperty('selection_reason')
+            $ActivityContext = $Row.GetProperty('activity_and_ownership_context')
+            $AcceptanceSignals = $Row.GetProperty('acceptance_signals')
+            $RepositoryEvidence = $Row.GetProperty('repository_evidence')
+            $LineageEvidence = $Row.GetProperty('lineage_evidence')
+            $SimilarityOutcome = $Row.GetProperty('similarity_outcome')
+            $Disposition = $Row.GetProperty('disposition')
+            $GroomingFinding = $Row.GetProperty('grooming_finding')
+            $RecommendedNextStep = $Row.GetProperty('recommended_next_step')
+            $AssessmentStatusElement = $Row.GetProperty('assessment_status')
+            $DeferralReasonElement = $Row.GetProperty('deferral_reason')
+            $LineageKeys = @('original_delivery', 'replacement_or_removal')
+            $TextFields = @(
+                @{ Element = $Title; Maximum = 500 },
+                @{ Element = $SelectionReason; Maximum = 200 },
+                @{ Element = $ActivityContext; Maximum = 2000 },
+                @{ Element = $AcceptanceSignals; Maximum = 2000 },
+                @{ Element = $GroomingFinding; Maximum = 2000 },
+                @{ Element = $RecommendedNextStep; Maximum = 2000 }
+            )
+            $TextFieldsValid = @($TextFields | Where-Object {
+                    $_.Element.ValueKind -ne [System.Text.Json.JsonValueKind]::String -or
+                    [string]::IsNullOrWhiteSpace($_.Element.GetString()) -or
+                    $_.Element.GetString().Length -gt $_.Maximum
+                }).Count -eq 0
+            $RepositoryEvidenceValid = $RepositoryEvidence.ValueKind -eq [System.Text.Json.JsonValueKind]::Array -and
+                $RepositoryEvidence.GetArrayLength() -gt 0 -and
+                @($RepositoryEvidence.EnumerateArray() | Where-Object {
+                        $_.ValueKind -ne [System.Text.Json.JsonValueKind]::String -or
+                        [string]::IsNullOrWhiteSpace($_.GetString()) -or $_.GetString().Length -gt 500
+                    }).Count -eq 0
+            $LineageValid = Test-ExactJsonKeys -Element $LineageEvidence -Keys $LineageKeys
+            $OriginalDelivery = if ($LineageValid) { $LineageEvidence.GetProperty('original_delivery') } else { [System.Text.Json.JsonElement]::new() }
+            $ReplacementOrRemoval = if ($LineageValid) { $LineageEvidence.GetProperty('replacement_or_removal') } else { [System.Text.Json.JsonElement]::new() }
+            $LineageValid = $LineageValid -and
+                $OriginalDelivery.ValueKind -eq [System.Text.Json.JsonValueKind]::Array -and
+                $ReplacementOrRemoval.ValueKind -eq [System.Text.Json.JsonValueKind]::Array -and
+                @(@($OriginalDelivery.EnumerateArray()) + @($ReplacementOrRemoval.EnumerateArray()) | Where-Object {
+                        $_.ValueKind -ne [System.Text.Json.JsonValueKind]::String -or
+                        [string]::IsNullOrWhiteSpace($_.GetString()) -or $_.GetString().Length -gt 500
+                    }).Count -eq 0
+            $AssessmentStatus = if ($AssessmentStatusElement.ValueKind -eq [System.Text.Json.JsonValueKind]::String) {
+                $AssessmentStatusElement.GetString()
+            } else { '' }
             if (-not (Test-ExactJsonKeys -Element $Row -Keys $RowKeys) -or
                 $Expected.OrderedCandidateIds -notcontains $IssueId -or
+                -not $TextFieldsValid -or -not $RepositoryEvidenceValid -or -not $LineageValid -or
+                $SimilarityOutcome.ValueKind -ne [System.Text.Json.JsonValueKind]::String -or
+                $SimilarityOutcome.GetString() -notin @('Match', 'Similar', 'Distinct', 'Uncertain') -or
+                $Disposition.ValueKind -ne [System.Text.Json.JsonValueKind]::String -or
+                $Disposition.GetString() -notin @('Still needed', 'Likely completed', 'Superseded', 'Possible duplicate', 'Needs correction', 'Uncertain') -or
                 $AssessmentStatus -notin @('Assessed', 'Deferred') -or
+                $DeferralReasonElement.ValueKind -ne [System.Text.Json.JsonValueKind]::String -or
+                $DeferralReasonElement.GetString().Length -gt 500 -or
                 $RowsByIssue.ContainsKey($IssueId)) {
                 throw "Malformed, duplicate, or out-of-shard wave issue $IssueId"
             }
-            $DeferralReason = $Row.GetProperty('deferral_reason').GetString()
-            $LineageEvidence = $Row.GetProperty('lineage_evidence')
-            $OriginalDelivery = $LineageEvidence.GetProperty('original_delivery')
-            $ReplacementOrRemoval = $LineageEvidence.GetProperty('replacement_or_removal')
+            $DeferralReason = $DeferralReasonElement.GetString()
             if ($AssessmentStatus -ceq 'Deferred' -and
                 ([string]::IsNullOrWhiteSpace($DeferralReason) -or
-                $Row.GetProperty('similarity_outcome').GetString() -cne 'Uncertain' -or
-                $Row.GetProperty('disposition').GetString() -cne 'Uncertain' -or
-                $OriginalDelivery.ValueKind -ne [System.Text.Json.JsonValueKind]::Array -or
-                $ReplacementOrRemoval.ValueKind -ne [System.Text.Json.JsonValueKind]::Array -or
+                $SimilarityOutcome.GetString() -cne 'Uncertain' -or
+                $Disposition.GetString() -cne 'Uncertain' -or
                 $OriginalDelivery.GetArrayLength() -ne 0 -or $ReplacementOrRemoval.GetArrayLength() -ne 0)) {
                 throw "Deferred wave issue $IssueId requires a reason, Uncertain outcomes, and empty lineage evidence"
             }
             if ($AssessmentStatus -ceq 'Assessed' -and $DeferralReason -cne '') {
                 throw "Assessed wave issue $IssueId cannot include a deferral reason"
+            }
+            if ($Disposition.GetString() -ceq 'Possible duplicate' -and
+                $SimilarityOutcome.GetString() -notin @('Match', 'Similar')) {
+                throw "Possible duplicate wave issue $IssueId requires a Match or Similar outcome"
+            }
+            if ($Disposition.GetString() -ceq 'Superseded') {
+                $OriginalValues = @($OriginalDelivery.EnumerateArray() | ForEach-Object { $_.GetString() })
+                $ReplacementValues = @($ReplacementOrRemoval.EnumerateArray() | ForEach-Object { $_.GetString() })
+                if ($OriginalValues.Count -eq 0 -or $ReplacementValues.Count -eq 0 -or
+                    @($ReplacementValues | Where-Object { $OriginalValues -notcontains $_ }).Count -eq 0) {
+                    throw "Superseded wave issue $IssueId requires distinct original and replacement evidence"
+                }
             }
             $RowsByIssue[$IssueId] = $Row.Clone()
         }
@@ -556,6 +725,14 @@ function Invoke-BacklogGroomWaveValidation {
     }
 }
 
+<#
+.SYNOPSIS
+    Converts a mutable JSON node to a detached JSON element.
+.PARAMETER Node
+    JSON node to convert.
+.OUTPUTS
+    System.Text.Json.JsonElement
+#>
 function Read-JsonElementFromNode {
     [CmdletBinding()]
     [OutputType([System.Text.Json.JsonElement])]

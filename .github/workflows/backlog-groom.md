@@ -279,10 +279,14 @@ safe-outputs:
                 return;
               }
               if (!Array.isArray(orderedCandidateIds) || orderedCandidateIds.some(
-                (issue, index) => !Number.isInteger(issue) || issue <= 0 ||
-                  (index > 0 && issue <= orderedCandidateIds[index - 1]),
+                (issue) => !Number.isInteger(issue) || issue <= 0,
               )) {
-                core.setFailed("Worker candidate IDs must be unique positive integers in ascending order");
+                core.setFailed("Worker candidate IDs must be unique positive integers");
+                return;
+              }
+              const candidateSet = new Set(orderedCandidateIds);
+              if (candidateSet.size !== orderedCandidateIds.length) {
+                core.setFailed("Worker candidate IDs must be unique positive integers");
                 return;
               }
               let priorityCandidateIds;
@@ -300,11 +304,12 @@ safe-outputs:
                 core.setFailed("Worker cohort IDs must be arrays");
                 return;
               }
-              const cohortIds = [...priorityCandidateIds, ...roundRobinCandidateIds]
-                .sort((left, right) => left - right);
+              const cohortIds = [...priorityCandidateIds, ...roundRobinCandidateIds];
+              const cohortSet = new Set(cohortIds);
               if (
-                  JSON.stringify(cohortIds) !== JSON.stringify(orderedCandidateIds) ||
-                  new Set(cohortIds).size !== cohortIds.length ||
+                  cohortSet.size !== candidateSet.size ||
+                  ![...cohortSet].every((issue) => candidateSet.has(issue)) ||
+                  cohortSet.size !== cohortIds.length ||
                   !Number.isInteger(totalOpenInventory) || totalOpenInventory < orderedCandidateIds.length ||
                   !Number.isInteger(priorCursor) || priorCursor < 0) {
                 core.setFailed("Worker inventory or cohort context is invalid");
@@ -316,8 +321,8 @@ safe-outputs:
                 core.setFailed("Report inventory or cohort counts do not match the planned context");
                 return;
               }
-              if (JSON.stringify([...issueNumbers].sort((left, right) => left - right)) !==
-                  JSON.stringify(orderedCandidateIds)) {
+              if (issueNumbers.size !== candidateSet.size ||
+                  ![...issueNumbers].every((issue) => candidateSet.has(issue))) {
                 core.setFailed("Report issue IDs do not match the planned shard candidates");
                 return;
               }

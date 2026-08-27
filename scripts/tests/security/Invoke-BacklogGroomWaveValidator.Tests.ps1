@@ -73,7 +73,7 @@ BeforeAll {
                 title = 'First issue'
                 selection_reason = 'priority'
                 activity_and_ownership_context = 'active'
-                acceptance_signals = @('signal')
+                acceptance_signals = 'signal'
                 repository_evidence = @('evidence')
                 lineage_evidence = [ordered]@{ original_delivery = @(); replacement_or_removal = @() }
                 similarity_outcome = 'Distinct'
@@ -88,8 +88,8 @@ BeforeAll {
                 title = 'Second issue'
                 selection_reason = 'round-robin'
                 activity_and_ownership_context = 'unknown'
-                acceptance_signals = @()
-                repository_evidence = @()
+                acceptance_signals = 'signal unavailable before the assessment budget expired'
+                repository_evidence = @('issue state captured from the immutable inventory')
                 lineage_evidence = [ordered]@{ original_delivery = @(); replacement_or_removal = @() }
                 similarity_outcome = 'Uncertain'
                 disposition = 'Uncertain'
@@ -184,6 +184,39 @@ Describe 'Backlog grooming wave validation' -Tag 'Unit' {
         $Aggregate.rows.issue | Should -Be @(101, 102)
         $Aggregate.aggregate_digest | Should -BeExactly $Validation.AggregateDigest
         $Aggregate.result_digests | Should -Be @($Fixture.Result.result_digest)
+    }
+
+    It 'preserves priority-first cursor wraparound order while comparing cohort membership as a set' {
+        $Fixture = New-ValidWaveFixture -Root (Join-Path $TestDrive 'wraparound-order')
+        $ThirdRow = $Fixture.Result.report_data.issues[0] | ConvertTo-Json -Depth 20 | ConvertFrom-Json -AsHashtable
+        $ThirdRow.issue = 2
+        $ThirdRow.title = 'Third issue'
+        $Fixture.Manifest.ordered_issue_ids = @(105, 1, 2)
+        $Fixture.Manifest.planned_aic = 3
+        $Fixture.Manifest.shards[0].ordered_candidate_ids = @(105, 1, 2)
+        $Fixture.Manifest.shards[0].priority_candidate_ids = @(105)
+        $Fixture.Manifest.shards[0].round_robin_candidate_ids = @(1, 2)
+        $Fixture.Manifest.shards[0].total_open_inventory = 3
+        $Fixture.Result.ordered_candidate_ids = @(105, 1, 2)
+        $Fixture.Result.report_data.issues[0].issue = 105
+        $Fixture.Result.report_data.issues[1].issue = 1
+        $Fixture.Result.report_data.issues = @($Fixture.Result.report_data.issues) + @($ThirdRow)
+        $Fixture.Result.report_data.run.total_open_inventory = 3
+        $Fixture.Result.report_data.run.assessed = 2
+        $Fixture.Result.report_data.run.round_robin_cohort = 2
+        $Fixture.Result.report_data.run.next_cursor = 105
+        Set-TestDigest -Value $Fixture.Manifest -DigestProperty 'manifest_digest'
+        $Fixture.Result.manifest_digest = $Fixture.Manifest.manifest_digest
+        Set-TestDigest -Value $Fixture.Result -DigestProperty 'result_digest'
+        Write-TestJson -Value $Fixture.Manifest -Path $Fixture.ManifestPath
+        Write-TestJson -Value $Fixture.Result -Path $Fixture.ResultPath
+
+        $Validation = Invoke-BacklogGroomWaveValidation -ManifestPath $Fixture.ManifestPath `
+            -ResultsDirectory $Fixture.ResultsDirectory -AggregateDirectory $Fixture.AggregateDirectory `
+            -ExpectedRunId '12345' -ExpectedAttempt 1
+
+        (Get-Content -LiteralPath $Validation.AggregatePath -Raw | ConvertFrom-Json).rows.issue |
+            Should -Be @(105, 1, 2)
     }
 
     It 'rejects a manifest digest mismatch' {
@@ -300,6 +333,50 @@ Describe 'Backlog grooming wave validation' -Tag 'Unit' {
                 -ResultsDirectory $Fixture.ResultsDirectory -AggregateDirectory $Fixture.AggregateDirectory `
                 -ExpectedRunId '12345' -ExpectedAttempt 1 } |
             Should -Throw '*Assessed wave issue 101 cannot include a deferral reason*'
+    }
+
+    It 'rejects a row with invalid producer field <InvalidField>' -ForEach @(
+        @{ InvalidField = 'array acceptance signals'; Mutate = { param($Row) $Row.acceptance_signals = @('signal') } }
+        @{ InvalidField = 'empty repository evidence'; Mutate = { param($Row) $Row.repository_evidence = @() } }
+        @{ InvalidField = 'blank title'; Mutate = { param($Row) $Row.title = ' ' } }
+        @{ InvalidField = 'overlong selection reason'; Mutate = { param($Row) $Row.selection_reason = 'x' * 201 } }
+        @{ InvalidField = 'unknown similarity'; Mutate = { param($Row) $Row.similarity_outcome = 'Exact' } }
+        @{ InvalidField = 'non-string lineage item'; Mutate = { param($Row) $Row.lineage_evidence.original_delivery = @(1) } }
+    ) {
+        $Fixture = New-ValidWaveFixture -Root (Join-Path $TestDrive "invalid-$InvalidField")
+        & $Mutate $Fixture.Result.report_data.issues[0]
+        Set-TestDigest -Value $Fixture.Result -DigestProperty 'result_digest'
+        Write-TestJson -Value $Fixture.Result -Path $Fixture.ResultPath
+
+        { Invoke-BacklogGroomWaveValidation -ManifestPath $Fixture.ManifestPath `
+                -ResultsDirectory $Fixture.ResultsDirectory -AggregateDirectory $Fixture.AggregateDirectory `
+                -ExpectedRunId '12345' -ExpectedAttempt 1 } |
+            Should -Throw '*Malformed, duplicate, or out-of-shard wave issue 101*'
+    }
+
+    It 'rejects a Possible duplicate row without Match or Similar evidence' {
+        $Fixture = New-ValidWaveFixture -Root (Join-Path $TestDrive 'duplicate-coupling')
+        $Fixture.Result.report_data.issues[0].disposition = 'Possible duplicate'
+        Set-TestDigest -Value $Fixture.Result -DigestProperty 'result_digest'
+        Write-TestJson -Value $Fixture.Result -Path $Fixture.ResultPath
+
+        { Invoke-BacklogGroomWaveValidation -ManifestPath $Fixture.ManifestPath `
+                -ResultsDirectory $Fixture.ResultsDirectory -AggregateDirectory $Fixture.AggregateDirectory `
+                -ExpectedRunId '12345' -ExpectedAttempt 1 } |
+            Should -Throw '*Possible duplicate wave issue 101 requires a Match or Similar outcome*'
+    }
+
+    It 'rejects a Superseded row without distinct original and replacement evidence' {
+        $Fixture = New-ValidWaveFixture -Root (Join-Path $TestDrive 'superseded-lineage')
+        $Fixture.Result.report_data.issues[0].disposition = 'Superseded'
+        $Fixture.Result.report_data.issues[0].similarity_outcome = 'Match'
+        Set-TestDigest -Value $Fixture.Result -DigestProperty 'result_digest'
+        Write-TestJson -Value $Fixture.Result -Path $Fixture.ResultPath
+
+        { Invoke-BacklogGroomWaveValidation -ManifestPath $Fixture.ManifestPath `
+                -ResultsDirectory $Fixture.ResultsDirectory -AggregateDirectory $Fixture.AggregateDirectory `
+                -ExpectedRunId '12345' -ExpectedAttempt 1 } |
+            Should -Throw '*Superseded wave issue 101 requires distinct original and replacement evidence*'
     }
 
     It 'rejects <Mode> properties at the <Layer> layer' -ForEach @(

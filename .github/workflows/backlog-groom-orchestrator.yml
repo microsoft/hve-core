@@ -706,6 +706,7 @@ jobs:
     if: >-
       ${{ always() && needs.plan.result == 'success' &&
           needs.plan.outputs.mode != 'calendar-noop' &&
+          needs.plan.outputs.mode != 'complete-noop' &&
           (needs.assess.result == 'success' ||
            (needs.assess.result == 'skipped' && needs.plan.outputs.shard-matrix == '[]')) }}
     runs-on: ubuntu-latest

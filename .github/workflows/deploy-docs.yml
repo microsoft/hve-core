@@ -14,12 +14,13 @@ on:
       - 'docs/**'
       - '.github/workflows/deploy-docs.yml'
   workflow_dispatch:
-    inputs:
-      report-ref:
-        description: Exact backlog grooming report commit to stage when available
-        required: false
-        type: string
-        default: ''
+  workflow_run:
+    workflows:
+      - Backlog Grooming Publisher
+    branches:
+      - main
+    types:
+      - completed
 
 concurrency:
   group: pages-deploy-${{ github.ref }}
@@ -43,6 +44,7 @@ jobs:
     needs: test
     runs-on: ubuntu-latest
     permissions:
+      actions: read
       contents: read
       pages: write
     steps:
@@ -67,52 +69,94 @@ jobs:
         working-directory: docs/docusaurus
         run: npm run build
 
-      - name: Resolve backlog grooming report history
+      - name: Authenticate publisher provenance artifact
+        if: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success' }}
         id: reports
         uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
-        env:
-          REPORT_REF: ${{ inputs.report-ref }}
         with:
           script: |
-            const reportsBranch = "backlog-grooming-reports";
-            const requestedRef = process.env.REPORT_REF;
-            try {
-              const { data: reportRef } = await github.rest.git.getRef({
-                ...context.repo,
-                ref: `heads/${reportsBranch}`,
-              });
-              if (reportRef.object.type !== "commit") {
-                throw new Error("Report history branch head must resolve to a commit");
-              }
-              if (requestedRef) {
-                if (!/^[a-f0-9]{40}$/.test(requestedRef)) {
-                  throw new Error("Requested report ref must be a full lowercase commit SHA");
-                }
-                if (requestedRef !== reportRef.object.sha) {
-                  throw new Error("Requested report commit must equal the current authenticated report branch head");
-                }
-                await github.rest.git.getCommit({ ...context.repo, commit_sha: requestedRef });
-              }
-              const authenticatedRef = requestedRef || reportRef.object.sha;
-              core.setOutput("available", "true");
-              core.setOutput("ref", authenticatedRef);
-            } catch (error) {
-              if (error.status !== 404 || requestedRef) throw error;
-              core.info("No backlog grooming report history exists yet");
-              core.setOutput("available", "false");
+            const run = context.payload.workflow_run;
+            const { data: repository } = await github.rest.repos.get({ ...context.repo });
+            if (run.path !== ".github/workflows/backlog-groom-publisher.yml" ||
+                run.head_branch !== repository.default_branch || run.conclusion !== "success") {
+              throw new Error("Report staging requires a successful default-branch publisher run");
             }
+            const artifacts = await github.paginate(
+              github.rest.actions.listWorkflowRunArtifacts,
+              { ...context.repo, run_id: run.id, per_page: 100 },
+            );
+            const expectedName = `backlog-grooming-pages-provenance-${run.id}`;
+            const provenance = artifacts.filter(
+              (artifact) => !artifact.expired && artifact.name === expectedName,
+            );
+            if (provenance.length !== 1) {
+              throw new Error("Publisher run must contain exactly one immutable Pages provenance artifact");
+            }
+            core.setOutput("artifact-id", String(provenance[0].id));
+            core.setOutput("run-id", String(run.id));
+
+      - name: Download exact publisher provenance
+        if: ${{ steps.reports.outputs.artifact-id != '' }}
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          artifact-ids: ${{ steps.reports.outputs.artifact-id }}
+          path: pages-provenance
+          github-token: ${{ github.token }}
+          run-id: ${{ steps.reports.outputs.run-id }}
+
+      - name: Validate immutable publisher provenance
+        if: ${{ steps.reports.outputs.artifact-id != '' }}
+        id: provenance
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
+        with:
+          script: |
+            const crypto = require("crypto");
+            const fs = require("fs");
+            const provenance = JSON.parse(
+              fs.readFileSync("pages-provenance/provenance.json", "utf8"),
+            );
+            const { provenance_digest: recordedDigest, ...material } = provenance;
+            const canonicalize = (value) => {
+              if (Array.isArray(value)) return `[${value.map(canonicalize).join(",")}]`;
+              if (value !== null && typeof value === "object") return `{${Object.keys(value).sort().map(
+                (key) => `${JSON.stringify(key)}:${canonicalize(value[key])}`,
+              ).join(",")}}`;
+              return JSON.stringify(value);
+            };
+            const computedDigest = crypto.createHash("sha256").update(canonicalize(material)).digest("hex");
+            const run = context.payload.workflow_run;
+            const exactKeys = (value, keys) => value && typeof value === "object" && !Array.isArray(value) &&
+              Object.keys(value).sort().join("|") === [...keys].sort().join("|");
+            if (!exactKeys(provenance, [
+              "schema_version", "publisher_run_id", "publisher_run_attempt",
+              "publisher_source_sha", "repository_id", "report_commit_sha", "provenance_digest",
+            ]) || provenance.schema_version !== "backlog-grooming-pages-provenance/v1" ||
+                provenance.publisher_run_id !== String(run.id) ||
+                provenance.publisher_run_attempt !== run.run_attempt ||
+                provenance.publisher_source_sha !== run.head_sha ||
+                !/^[a-f0-9]{40}$/.test(provenance.publisher_source_sha) ||
+                provenance.repository_id !== String(context.payload.repository.id) ||
+                !/^[a-f0-9]{40}$/.test(provenance.report_commit_sha) ||
+                !/^[a-f0-9]{64}$/.test(recordedDigest) || recordedDigest !== computedDigest) {
+              throw new Error("Pages provenance is not bound to the triggering publisher run");
+            }
+            await github.rest.git.getCommit({
+              ...context.repo,
+              commit_sha: provenance.report_commit_sha,
+            });
+            core.setOutput("ref", provenance.report_commit_sha);
 
       - name: Checkout backlog grooming report history
-        if: ${{ steps.reports.outputs.available == 'true' }}
+        if: ${{ steps.provenance.outputs.ref != '' }}
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          ref: ${{ steps.reports.outputs.ref }}
+          ref: ${{ steps.provenance.outputs.ref }}
           path: report-history
           persist-credentials: false
           sparse-checkout: backlog-grooming
 
       - name: Stage backlog grooming reports
-        if: ${{ steps.reports.outputs.available == 'true' }}
+        if: ${{ steps.provenance.outputs.ref != '' }}
         run: |
           mkdir -p docs/docusaurus/build/backlog-grooming
           cp -R report-history/backlog-grooming/. docs/docusaurus/build/backlog-grooming/
