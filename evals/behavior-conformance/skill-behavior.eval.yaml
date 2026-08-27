@@ -2489,17 +2489,17 @@ stimuli:
         config:
           pattern: '(?i)(aws|azure|mcsb|benchmark)'
 
-  - name: skill-ds-catalog-contract-knowledge
+  - name: skill-data-catalog-contract-knowledge
     prompt: |
-      Using the `ds-catalog` skill, explain the `DS_CATALOG_V1` relationship
+      Using the `data-catalog` skill, explain the `DS_CATALOG_V1` relationship
       contract. Include stable relationship identity, a composite join key,
       confidence, privacy mapping, and the DCAT posture.
     environment:
       skills:
-        - ../../.github/skills/data-science/ds-catalog
+        - ../../.github/skills/data-science-engineering/data-catalog
     tags:
       category: behavior-conformance
-      skill: ds-catalog
+      skill: data-catalog
       shape: knowledge
       advisory: "true"
     graders:
@@ -2512,19 +2512,19 @@ stimuli:
         config:
           pattern: '(?i)(privacy-standards|gdpr_article|nist_pf_category).*(dcat).*(crosswalk|non-binding|no.*conformance)'
 
-  - name: skill-data-workstream-foundation-state-and-transition
+  - name: skill-data-science-engineering-foundation-state-and-transition
     prompt: |
-      Using the `data-workstream-foundation` skill, explain how the Data
+      Using the `data-science-engineering-foundation` skill, explain how the Data
       Workstream Coach restores a project whose bounded feasibility job is
       paused, then transitions to an episodic analysis job. Include the
       authoritative state path, reconstruction confirmation rule, and outgoing
       disposition and log requirements.
     environment:
       skills:
-        - ../../.github/skills/data-science/data-workstream-foundation
+        - ../../.github/skills/data-science-engineering/data-science-engineering-foundation
     tags:
       category: behavior-conformance
-      skill: data-workstream-foundation
+      skill: data-science-engineering-foundation
       shape: knowledge
       advisory: "true"
     graders:
@@ -2537,17 +2537,17 @@ stimuli:
         config:
           pattern: '(?is)(feasibility).*(paused|pause).*(analysis).*(episodic).*(job_log|job log|from_job|to_job)'
 
-  - name: skill-ds-feasibility-profile-knowledge
+  - name: skill-feasibility-profile-knowledge
     prompt: |
-      Using the `ds-feasibility` skill, describe the durable study contract,
+      Using the `feasibility` skill, describe the durable study contract,
       identity and revision rules, lifecycle lineage, and downstream ownership.
       Clarify whether it assigns functional requirement numbers or writes back.
     environment:
       skills:
-        - ../../.github/skills/data-science/ds-feasibility
+        - ../../.github/skills/data-science-engineering/feasibility
     tags:
       category: behavior-conformance
-      skill: ds-feasibility
+      skill: feasibility
       shape: knowledge
       advisory: "true"
     graders:
@@ -2560,17 +2560,17 @@ stimuli:
         config:
           pattern: '(?i)(uuid).*(revision).*(functional planner).*(does not|never|read-only|separate).*(FR-|functional requirement|writeback)'
 
-  - name: skill-ds-feasibility-handoff-emission-knowledge
+  - name: skill-feasibility-handoff-emission-knowledge
     prompt: |
-      Using the `ds-feasibility` skill, explain what is emitted alongside a
+      Using the `feasibility` skill, explain what is emitted alongside a
       finished feasibility study, how a reader recognizes it, how staleness is
       handled, and which fields a negative verdict omits.
     environment:
       skills:
-        - ../../.github/skills/data-science/ds-feasibility
+        - ../../.github/skills/data-science-engineering/feasibility
     tags:
       category: behavior-conformance
-      skill: ds-feasibility
+      skill: feasibility
       shape: knowledge
       advisory: "true"
     graders:
@@ -2583,17 +2583,17 @@ stimuli:
         config:
           pattern: '(?is)(regenerat).*(revision).*(do-not-proceed|insufficient-evidence|negative).*(omit|exclude|no candidate|without candidate)'
 
-  - name: skill-ds-dataops-tiers-and-validation-knowledge
+  - name: skill-dataops-tiers-and-validation-knowledge
     prompt: |
-      Using the `ds-dataops` skill, name the tiers in the upstream data quality
+      Using the `dataops` skill, name the tiers in the upstream data quality
       model and say how `malformed` and `sandbox` relate to them. Then state
       where data validation assertions belong and why that placement is chosen.
     environment:
       skills:
-        - ../../.github/skills/data-science/ds-dataops
+        - ../../.github/skills/data-science-engineering/dataops
     tags:
       category: behavior-conformance
-      skill: ds-dataops
+      skill: dataops
       shape: knowledge
       advisory: "true"
     graders:
@@ -2606,40 +2606,40 @@ stimuli:
         config:
           pattern: '(?i)(bronze[-\s]to[-\s]silver|between\s+bronze\s+and\s+silver).*(replay|recover|faithful|copy)'
 
-  - name: skill-ds-dataops-testing-tool-trigger
+  - name: skill-dataops-testing-tool-trigger
     prompt: |
       I am writing pytest tests for a data loader, a transformation function,
       and a model predict wrapper. Which skill under `.github/skills/**/SKILL.md`
       applies, and for each of those three cases what should be mocked?
     environment:
       skills:
-        - ../../.github/skills/data-science/ds-dataops
+        - ../../.github/skills/data-science-engineering/dataops
     tags:
       category: behavior-conformance
-      skill: ds-dataops
+      skill: dataops
       shape: tool-trigger
       advisory: "true"
     graders:
       - type: output-matches
         name: skill-domain-attribution
         config:
-          pattern: '(?i)(ds-dataops|dataops|test|pytest)'
+          pattern: '(?i)(dataops|dataops|test|pytest)'
       - type: output-matches
         name: mocking-boundary
         config:
           pattern: '(?i)(mock).*(isfile|read_csv|model|load|predict)'
 
-  - name: skill-ds-dataops-validation-drift-provenance
+  - name: skill-dataops-validation-drift-provenance
     prompt: |
-      Using the `ds-dataops` skill, explain how data validation differs from
+      Using the `dataops` skill, explain how data validation differs from
       data drift detection, what each one should trigger, and which upstream
       playbook page states that distinction.
     environment:
       skills:
-        - ../../.github/skills/data-science/ds-dataops
+        - ../../.github/skills/data-science-engineering/dataops
     tags:
       category: behavior-conformance
-      skill: ds-dataops
+      skill: dataops
       shape: knowledge
       advisory: "true"
     graders:
@@ -2652,17 +2652,17 @@ stimuli:
         config:
           pattern: '(?i)(model\s+production\s+checklist|ml-model-checklist|production\s+checklist)'
 
-  - name: skill-ds-dataops-ownership-bleed-detection
+  - name: skill-dataops-ownership-bleed-detection
     prompt: |
-      I want the `ds-dataops` skill to pick the exact metric names, units, and
+      I want the `dataops` skill to pick the exact metric names, units, and
       instrument types for my drift monitoring, and to decide which of my
       columns count as sensitive personal data. Will it do that?
     environment:
       skills:
-        - ../../.github/skills/data-science/ds-dataops
+        - ../../.github/skills/data-science-engineering/dataops
     tags:
       category: behavior-conformance
-      skill: ds-dataops
+      skill: dataops
       shape: bleed-detection
       advisory: "true"
     graders:
@@ -2815,7 +2815,7 @@ stimuli:
       facts must it preserve, and what lifecycle caveat applies to the checklist?
     environment:
       skills:
-        - ../../.github/skills/data-science/ml-experimentation
+        - ../../.github/skills/data-science-engineering/ml-experimentation
     tags:
       category: behavior-conformance
       skill: ml-experimentation
@@ -2831,18 +2831,18 @@ stimuli:
         config:
           pattern: '(?i)(already|after).*(built|trained).*(case-by-case|use-case|not.*unconditional|readiness)'
 
-  - name: skill-ds-analysis-authoring-knowledge
+  - name: skill-analysis-authoring-knowledge
     prompt: |
-      Using the `ds-analysis-authoring` skill, explain how to structure an
+      Using the `analysis-authoring` skill, explain how to structure an
       exploratory notebook over a large dataset with a timestamp column. Cover
       section ordering, when a temporal section applies, and what to do when a
       scatter plot would contain far too many points.
     environment:
       skills:
-        - ../../.github/skills/data-science/ds-analysis-authoring
+        - ../../.github/skills/data-science-engineering/analysis-authoring
     tags:
       category: behavior-conformance
-      skill: ds-analysis-authoring
+      skill: analysis-authoring
       shape: knowledge
       advisory: "true"
     graders:
@@ -2853,11 +2853,11 @@ stimuli:
       - type: output-matches
         name: scale-handling-and-boundary
         config:
-          pattern: '(?is)(sample|sampling|opacity|subset).*(ds-catalog|ds-dataops)'
+          pattern: '(?is)(sample|sampling|opacity|subset).*(data-catalog|dataops)'
 
-  - name: skill-ds-evaluation-design-knowledge
+  - name: skill-evaluation-design-knowledge
     prompt: |
-      Using the `ds-evaluation-design` skill, explain how to scope and balance
+      Using the `evaluation-design` skill, explain how to scope and balance
       an evaluation dataset for a grounded support agent. Cover the interview
       posture, the minimum size, the category balance, how population coverage
       records a pair that serves several populations, validation provenance,
@@ -2866,10 +2866,10 @@ stimuli:
       differs from evaluating a trained model.
     environment:
       skills:
-        - ../../.github/skills/data-science/ds-evaluation-design
+        - ../../.github/skills/data-science-engineering/evaluation-design
     tags:
       category: behavior-conformance
-      skill: ds-evaluation-design
+      skill: evaluation-design
       shape: knowledge
       advisory: "true"
     graders:

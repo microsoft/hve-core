@@ -178,7 +178,7 @@ jobs:
           # pkg:pypi/pyyaml is MIT licensed per its own source repository, but
           # its PyPI metadata declares no SPDX expression, so the action cannot
           # match it against allow-licenses. It is a direct dependency of the
-          # architecture-diagrams, ds-catalog, and ds-feasibility skills, which
+          # architecture-diagrams, data-catalog, and feasibility skills, which
           # parse YAML through yaml.SafeLoader.
           allow-dependencies-licenses: >-
             pkg:pypi/lxml,
