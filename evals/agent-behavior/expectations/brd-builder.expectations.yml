@@ -237,13 +237,15 @@ expectations:
       decision outside the skill reports `none` rather than looping, and names
       the blocking unresolved items.
     failure_modes:
-      - `next_operation` is omitted from the reported pointer.
+      - "`next_operation` is omitted from the reported pointer."
       - The agent invokes the next operation without a new user request.
       - A payload blocked only by human decisions reports a further skill operation.
     priority: medium
-    applies_when: "stimulus explicitly requests proposal-response work"
+    applies_when: "skill returns RESPONSE_EVIDENCE_POINTER_V1"
     contract_ref: "skill §Operation Sequence; skill reference §Reporting"
 
+  - expectation_id: proposal-response-rejected-continuation
+    summary: A rejected continuation remains an error and does not enter proposal-response state.
     signal: Output reports `RESPONSE_EVIDENCE_ERROR_V1` and leaves `proposalResponseArtifacts` without the rejected path.
     pass_criteria: |
       When the skill returns `RESPONSE_EVIDENCE_ERROR_V1` with

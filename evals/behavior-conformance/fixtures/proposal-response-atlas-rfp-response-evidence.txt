@@ -27,6 +27,8 @@ unresolved_items:
     claim_ids: [CLM-001]
     owner_domain: product
     clearing_action: Supply the approved availability requirement.
+    status: open
+    cleared_by: null
 coverage:
   question_count: 1
   addressed_count: 0

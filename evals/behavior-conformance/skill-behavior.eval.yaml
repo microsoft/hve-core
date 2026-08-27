@@ -2409,10 +2409,11 @@ stimuli:
       from `.copilot-tracking/proposal-responses/atlas-rfp/response-evidence.yml`.
       Read and validate the persisted payload at that path before changing it.
       Approved PRD evidence NFR-014 supports a 99.9% monthly availability
-      target and satisfies the UNR-001 clearing action. Add the
-      operation-appropriate product claim as `CLM-002`, retain `SQ-001` and
-      `CLM-001`, keep the same artifact path, and return a compact pointer
-      that exposes recalculated coverage.
+      target and satisfies the UNR-001 clearing action. Register that evidence
+      as `SRC-001`, add the operation-appropriate product claim as `CLM-002`,
+      and retain `SQ-001`, `CLM-001`, and `UNR-001`. Mark `UNR-001` cleared by
+      `SRC-001#NFR-014` instead of deleting it, keep the same artifact path,
+      and return a compact pointer that exposes recalculated coverage.
     environment:
       skills:
         - ../../.github/skills/project-planning/proposal-response
@@ -2432,11 +2433,19 @@ stimuli:
       - type: output-matches
         name: operation-appropriate-addition
         config:
-          pattern: '(?is)changed_record_ids.*CLM-0*2'
+          pattern: '(?is)changed_record_ids.*CLM-0*2.*UNR-0*1'
       - type: output-matches
         name: preservation-reported-as-counts
         config:
-          pattern: '(?is)record_counts:.*claims:\s*2'
+          pattern: '(?is)record_counts:.*claims:\s*2.*unresolved_items:\s*1'
+      - type: output-matches
+        name: cleared-item-reported
+        config:
+          pattern: '(?is)cleared_unresolved_items:.*UNR-0*1.*SRC-0*1#NFR-0*14'
+      - type: output-matches
+        name: cleared-item-excluded-from-open-coverage
+        config:
+          pattern: '(?is)coverage:.*unresolved_count:\s*0'
       - type: output-matches
         name: legacy-payload-accepted
         config:

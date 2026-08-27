@@ -35,4 +35,8 @@ Report the operation with the compact pointer or error payload the skill returns
 
 Report the agent's own `extensionsLoaded` and `proposalResponseArtifacts` values alongside the skill's payload, each value listed exactly once. These arrays belong to the agent's session state, not to the skill's contract.
 
-Close each extension turn by naming the operation the skill's `next_operation` reports, so the user knows the remaining step without re-reading the payload.
+When the skill returns `RESPONSE_EVIDENCE_POINTER_V1`, close the extension turn
+by naming the operation its `next_operation` reports, so the user knows the
+remaining step without re-reading the payload. A rejected turn has no next
+operation; close it with the error payload's `validation_error` and
+`clearing_action`.

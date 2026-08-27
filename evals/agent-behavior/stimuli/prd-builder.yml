@@ -41,3 +41,40 @@ stimuli:
         config:
           pattern: '(?i)(proposal-response|RESPONSE_EVIDENCE_V1|extensionsLoaded)'
           negate: true
+
+  - name: prd-builder-rejects-invalid-proposal-continuation
+    prompt: |
+      Continue the product proposal-response contribution from
+      `.copilot-tracking/proposal-responses/atlas-rfp/response-evidence.yml`.
+      The current PRD session has no `proposalResponseArtifacts` field. Read
+      and validate the supplied evidence artifact, report the skill result and
+      the PRD extension state, and do not replace the invalid artifact.
+    environment:
+      files:
+        - src: ../../.github/agents/project-planning/prd-builder.agent.md
+          dest: .github/copilot-instructions.md
+        - src: ../behavior-conformance/fixtures/proposal-response-atlas-rfp-invalid-evidence.txt
+          dest: .copilot-tracking/proposal-responses/atlas-rfp/response-evidence.yml
+      skills:
+        - ../../.github/skills/project-planning/proposal-response
+    tags:
+      category: agent-behavior
+      scenario: prd-proposal-rejected
+    graders:
+      - type: output-matches
+        name: rejected-contract-reported
+        config:
+          pattern: '(?i)schema:\s*RESPONSE_EVIDENCE_ERROR_V1'
+      - type: output-matches
+        name: rejected-closeout-reported
+        config:
+          pattern: '(?is)validation_error:\s*unknown_schema.*clearing_action:'
+      - type: output-matches
+        name: rejected-path-not-added-to-state
+        config:
+          pattern: '(?is)proposalResponseArtifacts.{0,100}(absent|not (?:created|added)|unchanged|\[\s*\])'
+      - type: output-matches
+        name: no-next-operation-on-error
+        config:
+          pattern: '(?i)next_operation'
+          negate: true

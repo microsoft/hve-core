@@ -99,7 +99,7 @@ When a single fragment mixes both, keep only the information request as the sour
 
 ## Response State
 
-`response_state` is derived from the current records, never asserted directly. Recompute it for every source question after each operation, before coverage is calculated. An unresolved item counts as open while it appears in `unresolved_items`; clearing it requires approved supplied evidence, not a drafting decision.
+`response_state` is derived from the current records, never asserted directly. Recompute it for every source question after each operation, before coverage is calculated. An unresolved item affects response state only while its `status` is `open`; clearing it requires approved supplied evidence, not a drafting decision.
 
 Evaluate these conditions in order and stop at the first match, so a question always resolves to exactly one state:
 
@@ -107,8 +107,8 @@ Evaluate these conditions in order and stop at the first match, so a question al
 |-------|------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | 1     | `unresolved`     | An open unresolved item lists the question in its `source_question_ids`.                                                                                            |
 | 2     | `unaddressed`    | No response record names the question in `source_question_id`.                                                                                                      |
-| 3     | `qualified`      | A response record exists and carries a non-empty `qualifications`, a non-empty `unresolved_item_ids`, or a linked claim whose `evidence_review` is not `supported`. |
-| 4     | `addressed`      | A response record exists, every linked claim is `supported`, and no qualification or unresolved link remains.                                                       |
+| 3     | `qualified`      | A response record exists and carries a non-empty `qualifications`, links an open unresolved item, or links a claim whose `evidence_review` is not `supported`.        |
+| 4     | `addressed`      | A response record exists, every linked claim is `supported`, and no qualification or open unresolved link remains.                                                  |
 
 Operations move a question between states only by changing those records:
 
@@ -165,7 +165,17 @@ source_question_ids: [SQ-004]
 claim_ids: []
 owner_domain: business
 clearing_action: Obtain the commercial owner's decision and approved source record.
+status: open
+cleared_by: null
 ```
+
+Create every unresolved item with `status: open` and `cleared_by: null`. When
+approved supplied evidence directly satisfies its `clearing_action`, retain the
+record, set `status: cleared`, and set `cleared_by` to the registered evidence
+reference, such as `SRC-001#FR-021`. A cleared item remains in
+`unresolved_items` as history but does not affect `response_state`, coverage,
+routing, or the pointer's `unresolved_ids`. Never clear an item from a drafting
+decision or an unregistered source.
 
 ## Coverage
 

@@ -86,6 +86,8 @@ unresolved_items:
     claim_ids: []
     owner_domain: legal_or_commercial
     clearing_action: Obtain the commercial owner's decision and approved source record.
+    status: open
+    cleared_by: null
 coverage:
   question_count: 4
   addressed_count: 3
@@ -94,5 +96,5 @@ coverage:
   addressed_percent: 75.0
 structural_readiness:
   status: not_ready
-  blocking_ids: [SQ-004, UNR-003]
+  blocking_ids: [SQ-004]
   advisory_only: true
