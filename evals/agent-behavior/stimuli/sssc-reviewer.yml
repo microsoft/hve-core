@@ -60,7 +60,7 @@ stimuli:
       - type: output-matches
         name: changed-file-resolution-stated
         config:
-          pattern: '(?is)direct[- ]comparison|changed[- ]file resolution|resolution used|two[- ]file assertion|git diff|repository comparison|compar(ed|ing|ison)[^.]{0,60}(branch|repository|base)|(branch|repository|base)[^.]{0,60}compar(ed|ing|ison)|(changed[- ]?files?|file list)[^.]{0,60}(supplied|provided|named|stated|asserted|listed|given)'
+          pattern: '(?is)direct[- ]comparison|changed[- ]file resolution|resolution used|two[- ]file assertion|git diff|repository comparison|(compared|comparing|comparison)[^.]{0,60}(branch|repository|base)|(branch|repository|base)[^.]{0,60}(compared|comparing|comparison)|(changed[- ]?files?|file list)[^.]{0,60}(supplied|provided|named|stated|asserted|listed|given)'
       - type: output-matches
         name: supply-chain-files-retained
         config:
@@ -68,4 +68,4 @@ stimuli:
       - type: output-matches
         name: degraded-evidence-recorded
         config:
-          pattern: '(?is)(reduc(e|ed|es|ing)|degrad(e|ed|es|ing)|limited|lower(ed)?|unavailable)[^.]{0,120}(evidence|rigor|pr-reference|confidence|quality)|(evidence|rigor|pr-reference|confidence)[^.]{0,120}(reduc(e|ed|es|ing)|degrad(e|ed|es|ing)|limited|lower(ed)?|unavailable|not available|could not)'
+          pattern: '(?is)(reduced|reduces|reducing|reduce|degraded|degrades|degrading|degrade|limited|lower(ed)?|unavailable)[^.]{0,120}(evidence|rigor|pr-reference|confidence|quality)|(evidence|rigor|pr-reference|confidence)[^.]{0,120}(reduced|reduces|reducing|reduce|degraded|degrades|degrading|degrade|limited|lower(ed)?|unavailable|not available|could not)'
