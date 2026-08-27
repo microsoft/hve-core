@@ -74,9 +74,9 @@ from ._validation import (
 LOGGER = logging.getLogger("mural")
 REQUEST_TIMEOUT_SECONDS = 30
 
-# Upper bound on upstream response text carried inside an exception message.
-# ``_redact`` only masks the substring shapes it knows about, so an unbounded
-# body could still surface an unrecognised secret shape or flood a terminal.
+# Upper bound on ordinary Mural API response text carried inside an exception.
+# Token and SAS boundaries never carry opaque bodies. For the remaining API
+# diagnostics, ``_redact`` and this cap provide defense in depth.
 MAX_ERROR_EXCERPT_CHARS = 512
 
 
@@ -96,14 +96,11 @@ def _redact(text: str) -> str:
 
 
 def _error_excerpt(text: str) -> str:
-    """Return a redacted, length-bounded excerpt of an upstream response body.
+    """Return a redacted, length-bounded ordinary API response excerpt.
 
-    Exception messages built from token-endpoint or asset-upload responses are
-    surfaced to the operator, so the raw body must never travel inside them.
-    Redaction runs before truncation: cutting first could sever a key name from
-    its value and defeat the substitution patterns. Truncation then runs as
-    defense-in-depth, bounding both unrecognised secret shapes and hostile
-    bodies that would otherwise flood the error channel.
+    Credential-bearing token and SAS response bodies are discarded at their
+    boundaries instead. Redaction runs before truncation here so cutting cannot
+    sever a key from its value and defeat substitution patterns.
     """
     if not text:
         return ""
@@ -283,7 +280,7 @@ def _parse_token_response(resp: Any) -> dict[str, Any]:
         raise MuralAPIError(
             status,
             "TOKEN_BAD_CONTENT_TYPE",
-            f"token endpoint returned non-JSON Content-Type: {content_type}",
+            "token endpoint returned non-JSON Content-Type",
         )
     body_bytes = _read_capped(resp, MURAL_MAX_BODY_BYTES)
     text = body_bytes.decode("utf-8", errors="replace")
@@ -293,7 +290,7 @@ def _parse_token_response(resp: Any) -> dict[str, Any]:
         raise MuralAPIError(
             status,
             "TOKEN_INVALID_JSON",
-            _error_excerpt(text) or "token endpoint returned malformed JSON",
+            "token endpoint returned malformed JSON",
         ) from exc
     if not isinstance(data, dict):
         raise MuralAPIError(
@@ -337,13 +334,10 @@ def _refresh_access_token(
             data = _parse_token_response(resp)
             status = getattr(resp, "status", 200)
     except urllib.error.HTTPError as exc:
-        text = _read_response_body(exc).decode("utf-8", errors="replace")
-        _emit(f"refresh failed: HTTP {exc.code} {text}", level=logging.ERROR)
-        raise MuralAPIError(
-            exc.code, "REFRESH_FAILED", _error_excerpt(text) or "refresh failed"
-        ) from exc
+        _emit(f"refresh failed: HTTP {exc.code}", level=logging.ERROR)
+        raise MuralAPIError(exc.code, "REFRESH_FAILED", "token refresh failed") from exc
     if status >= 400:
-        raise MuralAPIError(status, "REFRESH_FAILED", _error_excerpt(json.dumps(data)))
+        raise MuralAPIError(status, "REFRESH_FAILED", "token refresh failed")
     if "access_token" not in data:
         raise MuralAPIError(status, "REFRESH_INVALID_PAYLOAD", "missing access_token")
     return data
@@ -544,11 +538,9 @@ def _extract_error_payload(
 def _build_api_error(status: int, body_bytes: bytes, headers_obj: Any) -> MuralAPIError:
     """Build a :class:`MuralAPIError` from a non-2xx response.
 
-    The message is bounded and redacted here rather than inside
-    :func:`_extract_error_payload`, which stays a pure decode seam for fuzzing.
-    This is the sixth exception-construction site in the module and carries
-    every non-2xx API response, so without the excerpt the raw body reaches the
-    exception message bounded only by ``MURAL_MAX_BODY_BYTES``.
+    Ordinary Mural API messages are bounded and redacted here rather than
+    inside :func:`_extract_error_payload`, which stays a pure decode seam for
+    fuzzing. Token and SAS response bodies do not use this path.
     """
     code, message, request_id = _extract_error_payload(body_bytes, headers_obj)
     message = _error_excerpt(message or "")
@@ -635,16 +627,14 @@ def _upload_to_sas(
         with _http(request, timeout=REQUEST_TIMEOUT_SECONDS) as resp:  # type: ignore[arg-type]
             status = getattr(resp, "status", 200)
             if status >= 400:
-                payload = _read_response_body(resp).decode("utf-8", errors="replace")
                 raise MuralAPIError(
                     status,
                     "ASSET_UPLOAD_FAILED",
-                    _error_excerpt(payload) or "upload failed",
+                    "asset upload failed",
                 )
     except urllib.error.HTTPError as exc:
-        text = _read_response_body(exc).decode("utf-8", errors="replace")
         raise MuralAPIError(
-            exc.code, "ASSET_UPLOAD_FAILED", _error_excerpt(text) or "upload failed"
+            exc.code, "ASSET_UPLOAD_FAILED", "asset upload failed"
         ) from exc
     except urllib.error.URLError as exc:
         raise MuralError(f"network error uploading to asset url: {exc}") from exc
