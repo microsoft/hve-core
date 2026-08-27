@@ -51,7 +51,7 @@
     ".github/agents/accessibility/subagents": true,
     ".github/agents/coding-standards": true,
     ".github/agents/coding-standards/subagents": true,
-    ".github/agents/data-science": true,
+    ".github/agents/data-science-engineering": true,
     ".github/agents/design-thinking": true,
     ".github/agents/engagement-reporting": true,
     ".github/agents/engagement-reporting/subagents": true,
@@ -69,7 +69,7 @@
   },
   "chat.promptFilesLocations": {
     ".github/prompts/accessibility": true,
-    ".github/prompts/data-science": true,
+    ".github/prompts/data-science-engineering": true,
     ".github/prompts/design-thinking": true,
     ".github/prompts/engagement-reporting": true,
     ".github/prompts/experimental": true,
