@@ -1249,6 +1249,14 @@ def main(argv: list[str] | None = None) -> int:
         envelope = {"error": "bulk_atomic_abort", "aborted": True, **exc.summary}
         _emit_json_error(envelope)
         return EXIT_TEMPFAIL
+    except MuralAPIError as exc:
+        code = f" code={exc.code}" if exc.code else ""
+        request_id = f" request_id={_redact(exc.request_id)}" if exc.request_id else ""
+        print(
+            f"error: HTTP {exc.status}{code}: {_redact(exc.message)}{request_id}",
+            file=sys.stderr,
+        )
+        return 1
     except MuralError as exc:
         print(f"error: {_redact(str(exc))}", file=sys.stderr)
         return 1

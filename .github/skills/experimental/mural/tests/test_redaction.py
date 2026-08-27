@@ -357,26 +357,44 @@ def _drive_main(
     return mural_module.main([])
 
 
-def test_main_redacts_mural_error_text(
+@pytest.mark.parametrize(
+    ("code", "request_id", "expected"),
+    [
+        (
+            "REFRESH_FAILED",
+            f"code={SECRET_VALUE}",
+            "error: HTTP 400 code=REFRESH_FAILED: "
+            "client_secret=*** request_id=code=***\n",
+        ),
+        (None, None, "error: HTTP 400: client_secret=***\n"),
+        ("", "", "error: HTTP 400: client_secret=***\n"),
+    ],
+)
+def test_main_preserves_api_diagnostics_and_redacts_untrusted_fields(
     mural_module: Any,
     monkeypatch: pytest.MonkeyPatch,
     capsys: pytest.CaptureFixture[str],
+    code: str | None,
+    request_id: str | None,
+    expected: str,
 ) -> None:
-    """The terminal `MuralError` handler must not print a raw response body."""
+    """Typed API errors keep structural fields and redact untrusted fields."""
 
     def boom(_args: argparse.Namespace) -> int:
         raise mural_module.MuralAPIError(
             status=400,
-            code="REFRESH_FAILED",
-            message=f'{{"refresh_token": "{SECRET_VALUE}"}}',
+            code=code,
+            message=f"client_secret={SECRET_VALUE}",
+            request_id=request_id,
         )
 
     result = _drive_main(mural_module, monkeypatch, boom)
 
-    err = capsys.readouterr().err
+    captured = capsys.readouterr()
     assert result == 1
-    assert SECRET_VALUE not in err
-    assert '"refresh_token": "***"' in err
+    assert captured.out == ""
+    assert SECRET_VALUE not in captured.err
+    assert captured.err == expected
 
 
 def test_main_redacts_autoload_credentials_error_text(
