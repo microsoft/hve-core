@@ -144,10 +144,10 @@ function Test-ModulePresent {
     return [bool]$installed
 }
 
-function Ensure-RepositoryAvailable {
+function Initialize-Repository {
     <#
     .SYNOPSIS
-        Ensures the requested repository is registered before installation.
+        Initializes the requested repository before installation.
     .OUTPUTS
         [void]
     #>
@@ -210,7 +210,7 @@ function Install-SingleModule {
 
     $isCI = $env:GITHUB_ACTIONS -eq 'true'
 
-    Ensure-RepositoryAvailable -Name $Repository
+    Initialize-Repository -Name $Repository
 
     for ($attempt = 1; $attempt -le $MaxAttempts; $attempt++) {
         try {

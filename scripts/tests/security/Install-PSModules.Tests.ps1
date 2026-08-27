@@ -170,7 +170,7 @@ Describe 'Test-ModulePresent' -Tag 'Unit' {
     }
 }
 
-Describe 'Ensure-RepositoryAvailable' -Tag 'Unit' {
+Describe 'Initialize-Repository' -Tag 'Unit' {
     Context 'when the repository is already registered' {
         BeforeAll {
             Mock Get-PSRepository {
@@ -180,7 +180,7 @@ Describe 'Ensure-RepositoryAvailable' -Tag 'Unit' {
         }
 
         It 'Does not register the repository again' {
-            Ensure-RepositoryAvailable -Name 'PSGallery'
+            Initialize-Repository -Name 'PSGallery'
 
             Should -Invoke Register-PSRepository -Times 0 -Exactly
         }
@@ -193,7 +193,7 @@ Describe 'Ensure-RepositoryAvailable' -Tag 'Unit' {
         }
 
         It 'Registers PSGallery with the expected source and trust policy' {
-            Ensure-RepositoryAvailable -Name 'PSGallery'
+            Initialize-Repository -Name 'PSGallery'
 
             Should -Invoke Register-PSRepository -Times 1 -Exactly -ParameterFilter {
                 $Name -eq 'PSGallery' -and
@@ -210,7 +210,7 @@ Describe 'Ensure-RepositoryAvailable' -Tag 'Unit' {
         }
 
         It 'Does not register an alternate repository automatically' {
-            Ensure-RepositoryAvailable -Name 'CustomRepo'
+            Initialize-Repository -Name 'CustomRepo'
 
             Should -Invoke Register-PSRepository -Times 0 -Exactly
         }
