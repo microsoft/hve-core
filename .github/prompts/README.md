@@ -118,7 +118,7 @@ These workflows are skills rather than prompts. Each resolves the active tracker
 
 ### Data Science
 
-* **[Synthetic Data Generation](./data-science/synth-data-generate.prompt.md)** - Generate synthetic data for any subject with realistic patterns and relationships
+* **[Synthetic Data Generation](./data-science-engineering/synth-data-generate.prompt.md)** - Generate synthetic data for any subject with realistic patterns and relationships
 
 ### Experimental & Tools
 
