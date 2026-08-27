@@ -344,17 +344,45 @@ jobs:
             scripts/plugins/Sync-PluginManifest.ps1
           sparse-checkout-cone-mode: false
           persist-credentials: false
-      # Data-only checkout: executable tooling comes from the trusted github.sha checkout.
-      - name: Checkout release preparation data
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          ref: ${{ needs.release-please.outputs.release-pr-branch }}
-          path: release-preparation
-          token: ${{ steps.app-token.outputs.token }}
-          persist-credentials: true
-      - name: Update committed version fields and retire the promotion intent
+      # The managed branch is resolved to one immutable commit and fetched over a
+      # credential-free remote, so no write token exists while the tree is
+      # transformed.
+      - name: Resolve and fetch the release preparation commit
+        id: preparation
         env:
+          GH_TOKEN: ${{ github.token }}
           RELEASE_BRANCH: ${{ needs.release-please.outputs.release-pr-branch }}
+          REPOSITORY: ${{ github.repository }}
+          SERVER_URL: ${{ github.server_url }}
+        run: |
+          set -euo pipefail
+          if [[ ! "$RELEASE_BRANCH" =~ ^release-please--[A-Za-z0-9._/-]+$ ]]; then
+            echo "::error::$RELEASE_BRANCH is not a managed release preparation branch"
+            exit 1
+          fi
+
+          resolved_object=$(gh api "/repos/$REPOSITORY/git/ref/heads/$RELEASE_BRANCH" --jq '.object.sha')
+          if [[ ! "$resolved_object" =~ ^[0-9a-f]{40}$ ]]; then
+            echo "::error::$RELEASE_BRANCH did not resolve to a commit SHA"
+            exit 1
+          fi
+
+          RELEASE_REPO="$GITHUB_WORKSPACE/release-preparation"
+          mkdir -p "$RELEASE_REPO"
+          git -C "$RELEASE_REPO" init --quiet
+          git -C "$RELEASE_REPO" -c credential.helper= fetch --no-tags --depth 1 \
+            "$SERVER_URL/$REPOSITORY.git" \
+            "+refs/heads/$RELEASE_BRANCH:refs/remotes/preparation/head"
+          fetched_object=$(git -C "$RELEASE_REPO" rev-parse refs/remotes/preparation/head)
+          if [ "$fetched_object" != "$resolved_object" ]; then
+            echo "::error::$RELEASE_BRANCH moved from $resolved_object to $fetched_object during preparation"
+            exit 1
+          fi
+          git -C "$RELEASE_REPO" checkout --quiet --detach refs/remotes/preparation/head
+
+          echo "commit=$resolved_object" >> "$GITHUB_OUTPUT"
+      - name: Update committed version fields and retire the promotion intent
+        id: transform
         run: |
           set -euo pipefail
           RELEASE_REPO="$GITHUB_WORKSPACE/release-preparation"
@@ -392,10 +420,29 @@ jobs:
           git add --all
           if git diff --cached --quiet; then
             echo "Preparation already carries $VERSION and its synchronized plugin manifest"
+            echo "committed=false" >> "$GITHUB_OUTPUT"
             exit 0
           fi
           git commit -m "chore(release): sync committed versions and plugin manifest to $VERSION"
-          git push origin "HEAD:refs/heads/$RELEASE_BRANCH"
+          echo "committed=true" >> "$GITHUB_OUTPUT"
+      # The write credential exists only for this push, and the lease binds the
+      # update to the exact commit the tree was built from.
+      - name: Push the synchronized release preparation commit
+        if: ${{ steps.transform.outputs.committed == 'true' }}
+        env:
+          EXPECTED_COMMIT: ${{ steps.preparation.outputs.commit }}
+          GH_APP_TOKEN: ${{ steps.app-token.outputs.token }}
+          RELEASE_BRANCH: ${{ needs.release-please.outputs.release-pr-branch }}
+          REPOSITORY: ${{ github.repository }}
+          SERVER_URL: ${{ github.server_url }}
+        run: |
+          set -euo pipefail
+          RELEASE_REPO="$GITHUB_WORKSPACE/release-preparation"
+          push_host=${SERVER_URL#https://}
+          git -C "$RELEASE_REPO" -c credential.helper= push \
+            --force-with-lease="refs/heads/$RELEASE_BRANCH:$EXPECTED_COMMIT" \
+            "https://x-access-token:$GH_APP_TOKEN@$push_host/$REPOSITORY.git" \
+            "HEAD:refs/heads/$RELEASE_BRANCH"
   validate-release:
     name: Validate release-please Pre-Release output
     needs:
@@ -663,7 +710,7 @@ jobs:
       - name: Checkout dependency manifests
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          ref: ${{ needs.validate-release.outputs.sha }}
+          ref: ${{ github.sha }}
           sparse-checkout: |
             package.json
             package-lock.json
@@ -726,7 +773,7 @@ jobs:
       - name: Checkout verification script
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          ref: ${{ needs.validate-release.outputs.sha }}
+          ref: ${{ github.sha }}
           persist-credentials: false
       - name: Download release artifacts
         env:

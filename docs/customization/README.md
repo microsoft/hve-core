@@ -96,20 +96,20 @@ with type-specific examples.
 
 ## Role-Based Entry Points
 
-Each HVE role benefits from different customization techniques. The table below maps the nine roles to the guides most relevant to their workflow.
+Each HVE role benefits from different customization techniques. The table below maps each role to the guides most relevant to their workflow.
 
-| Role                     | Recommended Guides                                                                                    | Rationale                                                                        |
-|--------------------------|-------------------------------------------------------------------------------------------------------|----------------------------------------------------------------------------------|
-| Engineer                 | [Instructions](instructions.md), [Agents](custom-agents.md)                                           | Coding standards and specialized review agents accelerate daily development      |
-| TPM                      | [Prompts](prompts.md), [Plugin Manifest](packages.md)                                                 | Reusable planning prompts and managed distribution standardize project workflows |
-| Tech Lead / Architect    | [Instructions](instructions.md), [Agents](custom-agents.md), [Skills](skills.md)                      | Standards enforcement, architecture review agents, and deep domain knowledge     |
-| Security Architect       | [Skills](skills.md), [Instructions](instructions.md)                                                  | Compliance knowledge packages and security-focused coding conventions            |
-| Data Scientist           | [Skills](skills.md), [Prompts](prompts.md)                                                            | Analytical domain bundles and repeatable notebook workflows                      |
-| SRE / Operations         | [Instructions](instructions.md), [Environment](environment.md), [Local Telemetry](local-telemetry.md) | Infrastructure conventions, DevContainer tuning, and local telemetry workflows   |
-| Platform / Observability | [Copilot OTel Metrics](copilot-otel-metrics.md), [Local Telemetry](local-telemetry.md)                | Agent usage, token cost, and latency measurement through OpenTelemetry           |
-| Business Program Manager | [Prompts](prompts.md), [Team Adoption](team-adoption.md)                                              | Sprint-planning prompts and governance patterns for stakeholder alignment        |
-| New Contributor          | [Instructions](instructions.md), [Environment](environment.md)                                        | Quick onboarding through conventions and a ready-to-use development environment  |
-| Utility                  | [Plugin Manifest](packages.md), [Build System](build-system.md)                                       | Cross-cutting tooling assembly and validation pipeline customization             |
+| Role                     | Recommended Guides                                                               | Rationale                                                                        |
+|--------------------------|----------------------------------------------------------------------------------|----------------------------------------------------------------------------------|
+| Engineer                 | [Instructions](instructions.md), [Agents](custom-agents.md)                      | Coding standards and specialized review agents accelerate daily development      |
+| TPM                      | [Prompts](prompts.md), [Plugin Manifest](packages.md)                            | Reusable planning prompts and managed distribution standardize project workflows |
+| Tech Lead / Architect    | [Instructions](instructions.md), [Agents](custom-agents.md), [Skills](skills.md) | Standards enforcement, architecture review agents, and deep domain knowledge     |
+| Security Architect       | [Skills](skills.md), [Instructions](instructions.md)                             | Compliance knowledge packages and security-focused coding conventions            |
+| Data Scientist           | [Skills](skills.md), [Prompts](prompts.md)                                       | Analytical domain bundles and repeatable notebook workflows                      |
+| SRE / Operations         | [Instructions](instructions.md), [Environment](environment.md)                   | Infrastructure conventions and DevContainer tuning                               |
+| Platform / Observability | [Copilot OTel Metrics](copilot-otel-metrics.md)                                  | Agent usage, token cost, and latency measurement through OpenTelemetry           |
+| Business Program Manager | [Prompts](prompts.md), [Team Adoption](team-adoption.md)                         | Sprint-planning prompts and governance patterns for stakeholder alignment        |
+| New Contributor          | [Instructions](instructions.md), [Environment](environment.md)                   | Quick onboarding through conventions and a ready-to-use development environment  |
+| Utility                  | [Plugin Manifest](packages.md), [Build System](build-system.md)                  | Cross-cutting tooling assembly and validation pipeline customization             |
 
 ## File Index
 
@@ -122,7 +122,7 @@ Each HVE role benefits from different customization techniques. The table below 
 7. [Forking and Extending](forking.md): Full fork-and-extend customization
 8. [Environment Customization](environment.md): DevContainers, VS Code settings, MCP servers
 9. [Team Adoption and Governance](team-adoption.md): Governance, naming, onboarding, change management
-10. [Local Telemetry](local-telemetry.md): Enable local telemetry, review capture and storage schema mechanics, and generate reports
+10. [Enterprise Artifact Hub](enterprise-artifact-hub.md): Distribute and govern artifacts across an organization
 11. [Copilot OpenTelemetry Metrics](copilot-otel-metrics.md): Export Copilot OTel signals to a local Grafana stack, or to a fleet-wide Azure pipeline, and query agent, token, and latency data
 
 ## Related Resources
