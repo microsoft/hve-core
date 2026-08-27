@@ -235,7 +235,10 @@ Purpose: Detect broken links before deployment.
 ##### Features
 
 * Discovers tracked and untracked, non-ignored Markdown files so local validation does not require staging
-* Checks internal and external links
+* Validates internal links repository-wide, because renaming or deleting a target breaks references in files the change never touched
+* Restricts external-link fetching to files changed against a base branch with `-ChangedFilesOnly` and `-BaseBranch`; external links in unchanged files are reported as skipped
+* Fetches each unique external URL once, no matter how many files reference it
+* Checks files concurrently, bounded by `-ThrottleLimit` (default 8)
 * Configurable via `markdown-link-check.config.json`
 * Retries failed links
 * Respects robots.txt
@@ -257,6 +260,7 @@ Purpose: Detect broken links before deployment.
 * Artifacts: `markdown-link-check-results` (JSON)
 * Annotations: Error for each broken link
 * Exit Code: Non-zero if broken links found
+* Scope: pull request validation always checks internal links repository-wide and limits external-link fetching to changed files; `weekly-validation.yml` fetches external links across the full repository
 
 ### ADR Consistency Validation
 
