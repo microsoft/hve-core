@@ -11,7 +11,7 @@ This suite covers every user-invocable hve-core agent with at least one function
 
 The complement to [baseline-equivalence](../baseline-equivalence/README.md) is intentional: baseline-equivalence asserts the customization layer does not alter underlying model behavior beyond documented divergences, while agent-behavior asserts each agent actually performs its declared job.
 
-The suite is organized around four behavioral classes (research-writer, code-reviewer, workitem-manager, planner-coach). Every parent agent belongs to exactly one class, and class membership selects the stimulus shape and grader template used in [stimuli/](stimuli/). The parent-agent table below is the authoritative class assignment; the maintained stimulus inventory contains 58 enrolled agents, including 22 subagents.
+The suite is organized around four behavioral classes (research-writer, code-reviewer, workitem-manager, planner-coach). Every parent agent belongs to exactly one class, and class membership selects the stimulus shape and grader template used in [stimuli/](stimuli/). The parent-agent table below is the authoritative class assignment; the maintained stimulus inventory contains 56 enrolled agents, including 26 subagents.
 
 ## Layout
 
@@ -130,7 +130,7 @@ Agents that investigate topics, analyze data, or produce structured documents as
 
 Agents that analyze code, diffs, or artifacts and surface issues, risks, or recommendations.
 
-**Members (8):** code-review, dependency-reviewer, rai-reviewer, accessibility-reviewer, privacy-reviewer, security-reviewer, supply-chain-reviewer, sssc-reviewer
+**Members (7):** code-review, dependency-reviewer, rai-reviewer, accessibility-reviewer, privacy-reviewer, security-reviewer, sssc-reviewer
 
 **Required Graders:**
 
@@ -222,7 +222,7 @@ stimuli:
 
 Agents that sequence work, plan tasks, coach the user through a process, or orchestrate multi-phase workflows.
 
-**Members (13):** accessibility-planner, agentic-workflows, data-workstream-coach, documentation, dt-coach, dt-learning-tutor, experiment-designer, pptx, privacy-planner, rai-planner, rpi-agent, security-planner, sssc-planner
+**Members (13):** accessibility-planner, agentic-workflows, data-science-engineering-coach, documentation, dt-coach, dt-learning-tutor, experiment-designer, pptx, privacy-planner, rai-planner, rpi-agent, security-planner, sssc-planner
 
 **Required Graders:**
 
@@ -248,41 +248,40 @@ For an entirely new agent, also re-run [Build-AgentInventory.ps1](../../scripts/
 
 The inventory lists every user-invocable hve-core parent agent and its class assignment. The Phase 1 partials in [stimuli/](stimuli/) are placeholders carrying a `notes: 'TODO(phase-2): replace with <class> class recipe ...'` marker; Phase 2 swaps each placeholder for a class-specific stimulus. Class membership is stable across that transition.
 
-| Agent                        | Class            | Cost Tier | Agent File                                                                                                                                           |
-|------------------------------|------------------|-----------|------------------------------------------------------------------------------------------------------------------------------------------------------|
-| accessibility-planner        | planner-coach    | light     | [.github/agents/accessibility/accessibility-planner.agent.md](../../.github/agents/accessibility/accessibility-planner.agent.md)                     |
-| accessibility-reviewer       | code-reviewer    | light     | [.github/agents/accessibility/accessibility-reviewer.agent.md](../../.github/agents/accessibility/accessibility-reviewer.agent.md)                   |
-| adr-creation                 | research-writer  | light     | [.github/agents/project-planning/adr-creation.agent.md](../../.github/agents/project-planning/adr-creation.agent.md)                                 |
-| agentic-workflows            | planner-coach    | light     | [.github/agents/agentic-workflows.agent.md](../../.github/agents/agentic-workflows.agent.md)                                                         |
-| backlog-manager              | workitem-manager | light     | [.github/agents/project-planning/backlog-manager.agent.md](../../.github/agents/project-planning/backlog-manager.agent.md)                           |
-| brd-builder                  | research-writer  | light     | [.github/agents/project-planning/brd-builder.agent.md](../../.github/agents/project-planning/brd-builder.agent.md)                                   |
-| code-review                  | code-reviewer    | light     | [.github/agents/coding-standards/code-review.agent.md](../../.github/agents/coding-standards/code-review.agent.md)                                   |
-| data-workstream-coach        | planner-coach    | light     | [.github/agents/data-science/data-workstream-coach.agent.md](../../.github/agents/data-science/data-workstream-coach.agent.md)                       |
-| dependency-reviewer          | code-reviewer    | light     | [.github/agents/dependency-reviewer.agent.md](../../.github/agents/dependency-reviewer.agent.md)                                                     |
-| documentation                | planner-coach    | light     | [.github/agents/hve-core/documentation.agent.md](../../.github/agents/hve-core/documentation.agent.md)                                               |
-| dt-coach                     | planner-coach    | light     | [.github/agents/design-thinking/dt-coach.agent.md](../../.github/agents/design-thinking/dt-coach.agent.md)                                           |
-| dt-learning-tutor            | planner-coach    | light     | [.github/agents/design-thinking/dt-learning-tutor.agent.md](../../.github/agents/design-thinking/dt-learning-tutor.agent.md)                         |
-| experiment-designer          | planner-coach    | light     | [.github/agents/experimental/experiment-designer.agent.md](../../.github/agents/experimental/experiment-designer.agent.md)                           |
-| functional-planner           | workitem-manager | light     | [.github/agents/project-planning/functional-planner.agent.md](../../.github/agents/project-planning/functional-planner.agent.md)                     |
-| issue-triage                 | workitem-manager | light     | [.github/agents/issue-triage.agent.md](../../.github/agents/issue-triage.agent.md)                                                                   |
-| meeting-analyst              | research-writer  | light     | [.github/agents/project-planning/meeting-analyst.agent.md](../../.github/agents/project-planning/meeting-analyst.agent.md)                           |
-| network-isa95-planner        | research-writer  | light     | [.github/agents/project-planning/network-isa95-planner.agent.md](../../.github/agents/project-planning/network-isa95-planner.agent.md)               |
-| pptx                         | planner-coach    | light     | [.github/agents/experimental/pptx.agent.md](../../.github/agents/experimental/pptx.agent.md)                                                         |
-| prd-builder                  | research-writer  | light     | [.github/agents/project-planning/prd-builder.agent.md](../../.github/agents/project-planning/prd-builder.agent.md)                                   |
-| privacy-planner              | planner-coach    | light     | [.github/agents/privacy/privacy-planner.agent.md](../../.github/agents/privacy/privacy-planner.agent.md)                                             |
-| privacy-reviewer             | code-reviewer    | light     | [.github/agents/privacy/privacy-reviewer.agent.md](../../.github/agents/privacy/privacy-reviewer.agent.md)                                           |
-| rai-planner                  | planner-coach    | light     | [.github/agents/rai-planning/rai-planner.agent.md](../../.github/agents/rai-planning/rai-planner.agent.md)                                           |
-| rai-reviewer                 | code-reviewer    | light     | [.github/agents/rai-planning/rai-reviewer.agent.md](../../.github/agents/rai-planning/rai-reviewer.agent.md)                                         |
-| rpi-agent                    | planner-coach    | light     | [.github/agents/hve-core/rpi-agent.agent.md](../../.github/agents/hve-core/rpi-agent.agent.md)                                                       |
-| security-planner             | planner-coach    | light     | [.github/agents/security/security-planner.agent.md](../../.github/agents/security/security-planner.agent.md)                                         |
-| security-reviewer            | code-reviewer    | light     | [.github/agents/security/security-reviewer.agent.md](../../.github/agents/security/security-reviewer.agent.md)                                       |
-| sssc-planner                 | planner-coach    | light     | [.github/agents/security/sssc-planner.agent.md](../../.github/agents/security/sssc-planner.agent.md)                                                 |
-| sssc-reviewer                | code-reviewer    | light     | [.github/agents/security/sssc-reviewer.agent.md](../../.github/agents/security/sssc-reviewer.agent.md)                                               |
-| supply-chain-reviewer        | code-reviewer    | light     | [.github/agents/security/supply-chain-reviewer.agent.md](../../.github/agents/security/supply-chain-reviewer.agent.md)                               |
-| system-architecture-reviewer | research-writer  | light     | [.github/agents/project-planning/system-architecture-reviewer.agent.md](../../.github/agents/project-planning/system-architecture-reviewer.agent.md) |
-| ux-ui-designer               | research-writer  | light     | [.github/agents/project-planning/ux-ui-designer.agent.md](../../.github/agents/project-planning/ux-ui-designer.agent.md)                             |
+| Agent                          | Class            | Cost Tier | Agent File                                                                                                                                                               |
+|--------------------------------|------------------|-----------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| accessibility-planner          | planner-coach    | light     | [.github/agents/accessibility/accessibility-planner.agent.md](../../.github/agents/accessibility/accessibility-planner.agent.md)                                         |
+| accessibility-reviewer         | code-reviewer    | light     | [.github/agents/accessibility/accessibility-reviewer.agent.md](../../.github/agents/accessibility/accessibility-reviewer.agent.md)                                       |
+| adr-creation                   | research-writer  | light     | [.github/agents/project-planning/adr-creation.agent.md](../../.github/agents/project-planning/adr-creation.agent.md)                                                     |
+| agentic-workflows              | planner-coach    | light     | [.github/agents/agentic-workflows.agent.md](../../.github/agents/agentic-workflows.agent.md)                                                                             |
+| backlog-manager                | workitem-manager | light     | [.github/agents/project-planning/backlog-manager.agent.md](../../.github/agents/project-planning/backlog-manager.agent.md)                                               |
+| brd-builder                    | research-writer  | light     | [.github/agents/project-planning/brd-builder.agent.md](../../.github/agents/project-planning/brd-builder.agent.md)                                                       |
+| code-review                    | code-reviewer    | light     | [.github/agents/coding-standards/code-review.agent.md](../../.github/agents/coding-standards/code-review.agent.md)                                                       |
+| data-science-engineering-coach | planner-coach    | light     | [.github/agents/data-science-engineering/data-science-engineering-coach.agent.md](../../.github/agents/data-science-engineering/data-science-engineering-coach.agent.md) |
+| dependency-reviewer            | code-reviewer    | light     | [.github/agents/dependency-reviewer.agent.md](../../.github/agents/dependency-reviewer.agent.md)                                                                         |
+| documentation                  | planner-coach    | light     | [.github/agents/hve-core/documentation.agent.md](../../.github/agents/hve-core/documentation.agent.md)                                                                   |
+| dt-coach                       | planner-coach    | light     | [.github/agents/design-thinking/dt-coach.agent.md](../../.github/agents/design-thinking/dt-coach.agent.md)                                                               |
+| dt-learning-tutor              | planner-coach    | light     | [.github/agents/design-thinking/dt-learning-tutor.agent.md](../../.github/agents/design-thinking/dt-learning-tutor.agent.md)                                             |
+| experiment-designer            | planner-coach    | light     | [.github/agents/experimental/experiment-designer.agent.md](../../.github/agents/experimental/experiment-designer.agent.md)                                               |
+| functional-planner             | workitem-manager | light     | [.github/agents/project-planning/functional-planner.agent.md](../../.github/agents/project-planning/functional-planner.agent.md)                                         |
+| issue-triage                   | workitem-manager | light     | [.github/agents/issue-triage.agent.md](../../.github/agents/issue-triage.agent.md)                                                                                       |
+| meeting-analyst                | research-writer  | light     | [.github/agents/project-planning/meeting-analyst.agent.md](../../.github/agents/project-planning/meeting-analyst.agent.md)                                               |
+| network-isa95-planner          | research-writer  | light     | [.github/agents/project-planning/network-isa95-planner.agent.md](../../.github/agents/project-planning/network-isa95-planner.agent.md)                                   |
+| pptx                           | planner-coach    | light     | [.github/agents/experimental/pptx.agent.md](../../.github/agents/experimental/pptx.agent.md)                                                                             |
+| prd-builder                    | research-writer  | light     | [.github/agents/project-planning/prd-builder.agent.md](../../.github/agents/project-planning/prd-builder.agent.md)                                                       |
+| privacy-planner                | planner-coach    | light     | [.github/agents/privacy/privacy-planner.agent.md](../../.github/agents/privacy/privacy-planner.agent.md)                                                                 |
+| privacy-reviewer               | code-reviewer    | light     | [.github/agents/privacy/privacy-reviewer.agent.md](../../.github/agents/privacy/privacy-reviewer.agent.md)                                                               |
+| rai-planner                    | planner-coach    | light     | [.github/agents/rai-planning/rai-planner.agent.md](../../.github/agents/rai-planning/rai-planner.agent.md)                                                               |
+| rai-reviewer                   | code-reviewer    | light     | [.github/agents/rai-planning/rai-reviewer.agent.md](../../.github/agents/rai-planning/rai-reviewer.agent.md)                                                             |
+| rpi-agent                      | planner-coach    | light     | [.github/agents/hve-core/rpi-agent.agent.md](../../.github/agents/hve-core/rpi-agent.agent.md)                                                                           |
+| security-planner               | planner-coach    | light     | [.github/agents/security/security-planner.agent.md](../../.github/agents/security/security-planner.agent.md)                                                             |
+| security-reviewer              | code-reviewer    | light     | [.github/agents/security/security-reviewer.agent.md](../../.github/agents/security/security-reviewer.agent.md)                                                           |
+| sssc-planner                   | planner-coach    | light     | [.github/agents/security/sssc-planner.agent.md](../../.github/agents/security/sssc-planner.agent.md)                                                                     |
+| sssc-reviewer                  | code-reviewer    | light     | [.github/agents/security/sssc-reviewer.agent.md](../../.github/agents/security/sssc-reviewer.agent.md)                                                                   |
+| system-architecture-reviewer   | research-writer  | light     | [.github/agents/project-planning/system-architecture-reviewer.agent.md](../../.github/agents/project-planning/system-architecture-reviewer.agent.md)                     |
+| ux-ui-designer                 | research-writer  | light     | [.github/agents/project-planning/ux-ui-designer.agent.md](../../.github/agents/project-planning/ux-ui-designer.agent.md)                                                 |
 
-The maintained stimulus inventory totals 58 agents: 36 parent agents plus 22 enrolled subagents whose stimulus partials exist in [stimuli/](stimuli/). Subagents without a matching stimulus partial remain excluded from the matrix run set and are documented separately in the inventory generator and related eval research. [AGENTS.yml](AGENTS.yml) remains generator-owned and is refreshed in the generation phase.
+The maintained stimulus inventory totals 56 agents: 30 parent agents plus 26 enrolled subagents whose stimulus partials exist in [stimuli/](stimuli/). Subagents without a matching stimulus partial remain excluded from the matrix run set and are documented separately in the inventory generator and related eval research. [AGENTS.yml](AGENTS.yml) remains generator-owned and is refreshed in the generation phase.
 
 ## Related Suites
 

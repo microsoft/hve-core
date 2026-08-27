@@ -408,6 +408,8 @@ jobs:
       contents: read
     with:
       soft-fail: true
+      changed-files-only: true
+      base-branch: ${{ github.event.pull_request.base.sha || format('origin/{0}', github.base_ref) }}
 
   dependency-pinning-check:
     name: Validate Dependency Pinning
