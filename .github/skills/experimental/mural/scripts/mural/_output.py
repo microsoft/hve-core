@@ -20,11 +20,13 @@ import os
 import re
 import sys
 import traceback
+import urllib.parse
 from typing import Any
 
 from . import _state
 from ._constants import _REDACT_KEYS, EXIT_SUCCESS
-from ._validation import _format_output
+from ._exceptions import MuralSecurityError
+from ._validation import _format_output, _validate_asset_url
 
 # Private (underscore-prefixed) globals defined here are consumed by sibling
 # modules via explicit ``from ._output import ...`` rather than within this
@@ -264,29 +266,58 @@ def _apply_widget_text_coalesce(payload: Any) -> Any:
     return payload
 
 
-def _emit_records(records: list[Any], args: argparse.Namespace) -> int:
-    """Write a redacted record list to stdout.
+def _mask_record_transport_credentials(payload: Any) -> Any:
+    """Mask validated Azure Blob SAS URLs without changing record content."""
+    if isinstance(payload, str):
+        try:
+            _validate_asset_url(payload)
+        except MuralSecurityError:
+            return payload
+        query = urllib.parse.urlsplit(payload).query
+        if any(
+            key.lower() == "sig"
+            for key, _value in urllib.parse.parse_qsl(query, keep_blank_values=True)
+        ):
+            return _pkg()._redact(payload)
+        return payload
+    if isinstance(payload, dict):
+        return {
+            key: _mask_record_transport_credentials(value)
+            for key, value in payload.items()
+        }
+    if isinstance(payload, list):
+        return [_mask_record_transport_credentials(item) for item in payload]
+    if isinstance(payload, tuple):
+        return tuple(_mask_record_transport_credentials(item) for item in payload)
+    if isinstance(payload, (set, frozenset)):
+        items = (_mask_record_transport_credentials(item) for item in payload)
+        return frozenset(items) if isinstance(payload, frozenset) else set(items)
+    return payload
 
-    Records carry upstream API content, so they pass through the same barrier
-    as :func:`_emit_json`. Without it the primary stdout data path would be the
-    one channel in the package that emits unredacted upstream text.
+
+def _emit_records(records: list[Any], args: argparse.Namespace) -> int:
+    """Write a record list to stdout, masking validated SAS URL values.
+
+    Successful records preserve Mural-authored content verbatim. Complete
+    Azure Blob SAS URL values are the exception because their ``sig`` query
+    parameter is a transport credential rather than authored record content.
     """
     _apply_widget_text_coalesce(records)
     fields = _read_fields(args)
     fmt = (
         "json" if _state._CLI_FORCE_JSON else (getattr(args, "format", None) or "json")
     )
-    print(_format_output(_redact_payload(records), fields, fmt))
+    print(_format_output(_mask_record_transport_credentials(records), fields, fmt))
     return EXIT_SUCCESS
 
 
 def _emit_record(record: Any, args: argparse.Namespace) -> int:
-    """Write a single redacted record to stdout. See :func:`_emit_records`."""
+    """Write one record to stdout. See :func:`_emit_records`."""
     record = _pkg()._unwrap_value_envelope(record)
     _apply_widget_text_coalesce(record)
     fields = _read_fields(args)
     fmt = (
         "json" if _state._CLI_FORCE_JSON else (getattr(args, "format", None) or "json")
     )
-    print(_format_output(_redact_payload(record), fields, fmt))
+    print(_format_output(_mask_record_transport_credentials(record), fields, fmt))
     return EXIT_SUCCESS

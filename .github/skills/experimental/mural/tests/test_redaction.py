@@ -681,11 +681,12 @@ def test_emit_json_stays_pretty_printed_on_stdout(
 
 
 # ---------------------------------------------------------------------------
-# The record channel carries the same barrier as the envelope channel
+# Record output preserves authored content and masks validated SAS URLs
 #
 # `_emit_records` is the primary stdout data path for every list command. It
-# printed `_format_output(...)` directly while `_emit_json` redacted, so the
-# busiest channel was the one without a barrier.
+# carries arbitrary Mural-authored values, so diagnostic key and pattern
+# redaction would alter legitimate content. Only complete Azure Blob SAS URL
+# values are transport credentials at this boundary.
 # ---------------------------------------------------------------------------
 
 
@@ -693,41 +694,59 @@ def _json_args() -> argparse.Namespace:
     return argparse.Namespace(format="json", fields=None)
 
 
-def test_emit_records_masks_pattern_matched_value(
+def test_emit_records_json_preserves_credential_shaped_content(
     mural_module: Any, capsys: pytest.CaptureFixture[str]
 ) -> None:
-    """Upstream record text carrying a token shape is masked before stdout."""
-    records = [{"id": "w1", "text": f"access_token={SECRET_VALUE}"}]
+    records = [
+        {
+            "id": "w1",
+            "text": "use code=ALPHA and access_token=placeholder",
+            "client_secret": "workshop field label",
+        }
+    ]
+
+    mural_module._emit_records(records, _json_args())
+
+    out = capsys.readouterr().out
+    assert json.loads(out) == records
+
+
+def test_emit_record_table_preserves_credential_shaped_content(
+    mural_module: Any, capsys: pytest.CaptureFixture[str]
+) -> None:
+    record = {
+        "id": "w1",
+        "text": "use code=ALPHA and access_token=placeholder",
+        "client_secret": "workshop field label",
+    }
+    args = argparse.Namespace(format="table", fields=None)
+
+    mural_module._emit_record(record, args)
+
+    out = capsys.readouterr().out
+    assert "use code=ALPHA and access_token=placeholder" in out
+    assert "workshop field label" in out
+
+
+def test_emit_records_masks_validated_azure_blob_sas_url(
+    mural_module: Any, capsys: pytest.CaptureFixture[str]
+) -> None:
+    sas_url = (
+        "https://example.blob.core.windows.net/container/blob.png"
+        f"?sv=2024-11-04&sp=cw&sig={SECRET_VALUE}"
+    )
+    records = [{"id": "w1", "assetUrl": sas_url}]
 
     mural_module._emit_records(records, _json_args())
 
     out = capsys.readouterr().out
     assert SECRET_VALUE not in out
-    assert "w1" in out
-
-
-def test_emit_records_masks_sensitive_key(
-    mural_module: Any, capsys: pytest.CaptureFixture[str]
-) -> None:
-    """A sensitive mapping key is masked by value regardless of its shape."""
-    records = [{"id": "w1", "client_secret": SECRET_VALUE}]
-
-    mural_module._emit_records(records, _json_args())
-
-    out = capsys.readouterr().out
-    assert SECRET_VALUE not in out
-    assert json.loads(out) == [{"id": "w1", "client_secret": "***"}]
-
-
-def test_emit_record_masks_sensitive_key(
-    mural_module: Any, capsys: pytest.CaptureFixture[str]
-) -> None:
-    """The single-record path shares the barrier with the list path."""
-    mural_module._emit_record({"id": "w1", "access_token": SECRET_VALUE}, _json_args())
-
-    out = capsys.readouterr().out
-    assert SECRET_VALUE not in out
-    assert json.loads(out) == {"id": "w1", "access_token": "***"}
+    assert json.loads(out) == [
+        {
+            "id": "w1",
+            "assetUrl": "https://example.blob.core.windows.net/container/blob.png?***",
+        }
+    ]
 
 
 def test_emit_records_preserves_benign_content(
