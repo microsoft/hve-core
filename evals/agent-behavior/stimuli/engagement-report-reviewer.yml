@@ -18,7 +18,7 @@ stimuli:
       - type: output-matches
         name: data-minimization
         config:
-          pattern: '(?i)(privacy|PII|personal data|email address|remove|unnecessary disclosure|minimi)'
+          pattern: '(?i)(privacy|PII|personal data|email address|remove|unnecessary disclosure|minimize|minimization)'
       - type: output-matches
         name: review-disposition
         config:

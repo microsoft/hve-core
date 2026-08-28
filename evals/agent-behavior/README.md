@@ -2,7 +2,7 @@
 title: Agent Behavior Suite
 description: 'Per-agent behavioral evals assembled from per-agent stimulus partials and graded against four class recipes'
 author: HVE Core Team
-ms.date: 2026-08-10
+ms.date: 2026-08-27
 ---
 
 ## Purpose
@@ -262,7 +262,7 @@ The inventory lists every user-invocable hve-core parent agent and its class ass
 | documentation                  | planner-coach    | light     | [.github/agents/hve-core/documentation.agent.md](../../.github/agents/hve-core/documentation.agent.md)                                                                   |
 | dt-coach                       | planner-coach    | light     | [.github/agents/design-thinking/dt-coach.agent.md](../../.github/agents/design-thinking/dt-coach.agent.md)                                                               |
 | dt-learning-tutor              | planner-coach    | light     | [.github/agents/design-thinking/dt-learning-tutor.agent.md](../../.github/agents/design-thinking/dt-learning-tutor.agent.md)                                             |
-| engagement-report-generator    | research-writer  | light     | [.github/agents/engagement-reporting/engagement-report-generator.agent.md](../../.github/agents/engagement-reporting/engagement-report-generator.agent.md)                 |
+| engagement-report-generator    | research-writer  | light     | [.github/agents/engagement-reporting/engagement-report-generator.agent.md](../../.github/agents/engagement-reporting/engagement-report-generator.agent.md)               |
 | experiment-designer            | planner-coach    | light     | [.github/agents/experimental/experiment-designer.agent.md](../../.github/agents/experimental/experiment-designer.agent.md)                                               |
 | functional-planner             | workitem-manager | light     | [.github/agents/project-planning/functional-planner.agent.md](../../.github/agents/project-planning/functional-planner.agent.md)                                         |
 | issue-triage                   | workitem-manager | light     | [.github/agents/issue-triage.agent.md](../../.github/agents/issue-triage.agent.md)                                                                                       |
@@ -283,7 +283,11 @@ The inventory lists every user-invocable hve-core parent agent and its class ass
 | ux-ui-designer                 | research-writer  | light     | [.github/agents/project-planning/ux-ui-designer.agent.md](../../.github/agents/project-planning/ux-ui-designer.agent.md)                                                 |
 
 The maintained stimulus inventory totals 61 agents: 31 parent agents plus 30
-enrolled subagents. whose stimulus partials exist in [stimuli/](stimuli/). Subagents without a matching stimulus partial remain excluded from the matrix run set and are documented separately in the inventory generator and related eval research. [AGENTS.yml](AGENTS.yml) remains generator-owned and is refreshed in the generation phase.
+enrolled subagents whose stimulus partials exist in [stimuli/](stimuli/).
+Subagents without a matching stimulus partial remain excluded from the matrix
+run set and are documented separately in the inventory generator and related
+eval research. [AGENTS.yml](AGENTS.yml) remains generator-owned and is refreshed
+in the generation phase.
 
 ## Related Suites
 

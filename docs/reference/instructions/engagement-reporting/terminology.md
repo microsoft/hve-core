@@ -3,7 +3,7 @@ title: Engagement Reporting/Terminology
 description: "Correct spellings and naming conventions for people, products, and teams"
 sidebar_position: 3
 author: Microsoft
-ms.date: 2026-08-24
+ms.date: 2026-08-27
 ms.topic: reference
 keywords:
   - instruction
@@ -38,6 +38,6 @@ sources.
 
 ## Example usage
 
-If `engagement.yaml` maps `Project Northstar` and `North Star` to the canonical
-term `Northstar`, the report uses `Northstar` consistently while leaving the
+If `engagement.yaml` maps `Project North Star` and `North-Star` to the canonical
+term `North Star`, the report uses `North Star` consistently while leaving the
 source record unchanged.
