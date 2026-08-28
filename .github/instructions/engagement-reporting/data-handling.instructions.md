@@ -30,6 +30,9 @@ and exclude it from report instructions.
 * Keep research, drafts, critiques, and review artifacts under `.working/`
 * Keep final reports under `reports/`
 * Keep local source transcripts under `transcripts/`
+* Accept only workspace-relative local paths; reject absolute paths and parent
+  traversal, and stop when a resolved path escapes its approved directory under
+  the workspace
 * Before any artifact write, verify that `.working/`, `reports/`,
   `transcripts/`, and `engagement.yaml` are protected by effective ignore
   rules. If any path is unprotected, stop with `Needs ignore protection`; do

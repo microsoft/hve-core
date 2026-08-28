@@ -40,7 +40,8 @@ flatten Markdown or substitute plain text.
    consolidated or executive format. Ask before using an unsupported report
    type.
 2. Read `engagement.yaml`; validate required engagement and stakeholder fields,
-   then load optional canonical terminology and report options
+   require workspace-relative confined local paths, then load optional
+   canonical terminology and report options
 3. Before any artifact write, verify that `.working/`, `reports/`,
    `transcripts/`, and `engagement.yaml` are protected by effective ignore
    rules. Stop with `Needs ignore protection` without creating any artifact
@@ -128,6 +129,8 @@ flatten Markdown or substitute plain text.
 
 * Stop with `Needs configuration` when the report type, reporting period,
   audience, engagement identity, or required stakeholder information is missing
+* Stop with `Needs configuration` when a local path is absolute, contains parent
+  traversal, or resolves outside its approved directory under the workspace
 * Stop with `Needs ignore protection` before any artifact write when
   `.working/`, `reports/`, `transcripts/`, or `engagement.yaml` is not protected
   by effective ignore rules

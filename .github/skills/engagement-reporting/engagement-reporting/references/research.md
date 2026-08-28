@@ -135,8 +135,14 @@ supporting evidence.
 
 ## Local transcripts
 
-Read supported VTT, DOCX, and plain-text files from the configured transcript
-directory. Summarize and minimize; do not copy raw excerpts containing names,
+Accept only a workspace-relative transcript path beneath the engagement
+workspace's `transcripts/` root. Resolve it canonically, reject absolute paths
+and parent traversal, and verify that the resolved directory remains beneath
+that root. Stop with `Needs configuration` when confinement cannot be
+established.
+
+Read supported VTT, DOCX, and plain-text files only after the path passes these
+checks. Summarize and minimize; do not copy raw excerpts containing names,
 email addresses, customer identifiers, or confidential detail.
 
 ## Coverage gate

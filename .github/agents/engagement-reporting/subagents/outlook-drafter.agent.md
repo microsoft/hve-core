@@ -22,18 +22,33 @@ not retrieve source evidence, edit reports, or interact with boards.
 * Validated subject and recipient configuration
 * Confirmation of separate Outlook draft approval
 
+## Success criteria
+
+* The approved Markdown is represented as faithful HTML
+* A Markdown table remains an HTML `<table>`
+* Exactly one draft-create attempt targets `/me/messages`
+* A confirmed success returns the draft link transiently when available
+* No message is sent, published, retried, or persisted with sensitive metadata
+
+## Stop rules
+
+* Stop with `Distribution skipped` when an input or separate approval is missing
+* Stop with `Distribution skipped` when faithful HTML conversion or structure
+  validation fails
+* Stop with `Draft status unknown` after an ambiguous response or connectivity
+  failure and require Outlook inspection before any later attempt
+* Stop with `Distribution skipped` for a permission failure
+
 ## Required steps
 
-1. Stop when separate draft approval or a required input is missing
-2. Read only the approved final report
-3. Render Markdown to faithful HTML while preserving headings, links, ordered
+1. Read only the approved final report
+2. Render Markdown to faithful HTML while preserving headings, links, ordered
    and unordered lists, bold, italic, and tables
-4. Verify `contentType` is `HTML` and require `<table>` when the source contains
+3. Verify `contentType` is `HTML` and require `<table>` when the source contains
    a Markdown table
-5. Make exactly one `create_entity` attempt with `parentUrl: /me/messages`
-6. Return `Draft created` after confirmed success
-7. Return `Draft status unknown` after an ambiguous response or connectivity
-   failure and require Outlook inspection before any later attempt
+4. Make exactly one `create_entity` attempt with `parentUrl: /me/messages`
+5. Return `Draft created` and the transient draft link after confirmed success
+   when the tool provides a link
 
 ## Constraints
 
@@ -48,8 +63,9 @@ not retrieve source evidence, edit reports, or interact with boards.
 
 ## Response format
 
-Return only:
+Return only one status and its required action:
 
-* `Draft created`
+* `Draft created` with the transient draft link and Outlook review action when
+  the tool provides a link
 * `Draft status unknown` with the required Outlook inspection action
 * `Distribution skipped` with the unmet precondition

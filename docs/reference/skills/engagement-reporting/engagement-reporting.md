@@ -3,7 +3,7 @@ title: engagement-reporting
 description: Creates source-grounded internal or external weekly engagement status reports with optional Outlook draft creation.
 sidebar_position: 1
 author: Microsoft
-ms.date: 2026-08-25
+ms.date: 2026-08-27
 ms.topic: reference
 keywords:
   - skill
@@ -29,7 +29,7 @@ Creates source-grounded internal or external weekly engagement status reports wi
 
 Use this skill to create source-grounded weekly engagement reports. It is
 suitable for M365-only reporting and can also normalize optional Azure DevOps,
-GitHub, Jira, or GitLab board evidence.
+or GitHub board evidence.
 
 Use the Engagement Report Generator when a user needs the complete interactive
 coordination experience. Do not use this skill to publish reports or send

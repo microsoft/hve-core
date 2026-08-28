@@ -1,7 +1,7 @@
 ---
 name: engagement-report-council-critique
 description: Template prompt for running one independent Council critique against research evidence
-argument-hint: "Draft report and research findings"
+argument-hint: "Critic run, output path, draft, research, coverage, audience, and template"
 ---
 
 # Engagement Report Council Critique
@@ -22,7 +22,22 @@ report.
 * The critique remains independent of other model critiques
 * Critic run and available model provenance are recorded
 
+## Inputs
+
+* `${input:critic-run-id}`: (Required) Unique identifier for this isolated run
+* `${input:critique-path}`: (Required) Target path for the critique artifact
+* `${input:draft}`: (Required) Draft report content or readable local path
+* `${input:research}`: (Required) Normalized research content or readable path
+* `${input:coverage}`: (Required) Source coverage summary
+* `${input:audience}`: (Required) Intended report audience
+* `${input:template}`: (Required) Report template content or readable path
+
 ## Review criteria
+
+Review `${input:draft}` independently against `${input:research}`,
+`${input:coverage}`, `${input:audience}`, and `${input:template}`. Identify the
+run as `${input:critic-run-id}` and write the result only to
+`${input:critique-path}`.
 
 1. Accuracy and source grounding
 2. Completeness and material omissions
@@ -73,6 +88,4 @@ Completeness: complete | minor-gap | material-gap
 * Do not reconcile findings
 * Do not infer facts beyond the supplied research
 
-The report generator inserts the critic run identifier, target critique path,
-draft, research, coverage summary, audience, and template below this line. Use
-the selected model identifier when visible; otherwise record `unavailable`.
+Use the selected model identifier when visible; otherwise record `unavailable`.

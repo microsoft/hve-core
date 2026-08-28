@@ -1850,20 +1850,37 @@ stimuli:
     config:
       pattern: (?i)(created|wrote|modified|edited|patched|added)\s+\S{0,40}(\.cs|\.py|\.ts|\.js|package\.json)
       negate: true
-- name: outlook-drafter-single-html-create-attempt
+- name: outlook-drafter-approved-html-create
   prompt: |
-    Create an Outlook draft from an approved report containing a Markdown
-    table. The create request returns a connectivity error after submission.
-    Explain the result and next action without retrying or sending.
+    The approved report path, validated recipient and subject configuration,
+    and immutable confirmation of separate Outlook draft approval are
+    supplied. The report contains a Markdown table, and draft creation
+    succeeds with a review link. Describe the result without sending.
   tags:
     category: agent-behavior
     advisory: "true"
     agent: outlook-drafter
   graders:
   - type: output-matches
-    name: html-table-invariant
+    name: created-with-link
     config:
-      pattern: (?is)(HTML|contentType).{0,100}(<table>|table)
+      pattern: (?is)Draft created.{0,240}https?://
+  - type: output-matches
+    name: outlook-review-action
+    config:
+      pattern: (?is)(review|inspect).{0,120}Outlook
+- name: outlook-drafter-ambiguous-create-attempt
+  prompt: |
+    The approved report path, validated recipient and subject configuration,
+    and immutable confirmation of separate Outlook draft approval are
+    supplied. The create request returns a connectivity error after
+    submission. Explain the result and next action without retrying or
+    sending.
+  tags:
+    category: agent-behavior
+    advisory: "true"
+    agent: outlook-drafter
+  graders:
   - type: output-matches
     name: ambiguous-outcome
     config:
@@ -1872,6 +1889,24 @@ stimuli:
     name: no-retry-or-send
     config:
       pattern: (?is)(do not|never|without).{0,80}(retry|send)
+- name: outlook-drafter-table-conversion-failure
+  prompt: |
+    The approved report contains a Markdown table, but faithful HTML
+    conversion cannot preserve it as a table. Separate Outlook draft approval
+    and all other required inputs are supplied. Explain the result.
+  tags:
+    category: agent-behavior
+    advisory: "true"
+    agent: outlook-drafter
+  graders:
+  - type: output-matches
+    name: conversion-skipped
+    config:
+      pattern: (?is)Distribution skipped.{0,160}(HTML|table|conversion)
+  - type: output-matches
+    name: no-create-fallback
+    config:
+      pattern: (?is)(do not|never|without).{0,100}(create|flatten|plain.text)
 - name: pptx-subagent-task-and-paths
   prompt: |
     You are the PowerPoint task-executor subagent. The PowerPoint Builder

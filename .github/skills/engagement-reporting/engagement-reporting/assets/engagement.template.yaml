@@ -28,6 +28,7 @@ engagement:
 # Configure only the settings that vary per engagement.
 sources:
   customer_meetings: false # true if customer tenant recordings are accessible
+  # Must remain under the workspace transcripts/ root.
   transcripts: "transcripts/" # Local folder for customer meeting VTT/DOCX/TXT files
 
 # Stakeholders drive WorkIQ research. The agent enumerates messages and calendar

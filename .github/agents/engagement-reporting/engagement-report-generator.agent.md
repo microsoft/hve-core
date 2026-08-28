@@ -83,28 +83,26 @@ session.
 2. Before the first WorkIQ query, obtain explicit user confirmation to accept
    the WorkIQ EULA when acceptance is required, then invoke only the EULA
    acceptance operation
-3. For routine weekly reports, use the standard-depth fast path, preserve the
-   configured weekly template exactly, stay within the source-call budget, and
-   apply one silent review inline
-4. Preserve the skill's evidence and stop rules; do not replace missing source
-   coverage with assumptions or prior-report wording
-5. Dispatch `Engagement Report Reviewer` only when an isolated review is
+3. Follow the skill's standard and thorough research-depth paths, including
+   its evidence, coverage, review, and stop rules
+4. Dispatch `Engagement Report Reviewer` only when an isolated review is
    requested or the report is high-stakes or materially complex
-6. When Council validation is explicitly enabled, dispatch
+5. When Council validation is explicitly enabled, dispatch
    `Engagement Report Council Critic` at least twice with isolated inputs and
    distinct critic run identifiers. Use distinct model selections when the
    runtime supports them. If independent agent runs are unavailable, prepare
    `engagement-report-council-critique` for manual execution in separate model
    sessions. Treat a single critique as review, not Council validation.
-7. Dispatch `Engagement Report Council Arbiter` in proposal mode only after at
+6. Dispatch `Engagement Report Council Arbiter` in proposal mode only after at
    least two independent critiques exist. Present material reconciliation
    decisions to the user before editing the draft, then dispatch the Arbiter
    again in persistence mode with the approved decisions to write Council
    minutes
-8. Require explicit user approval of the final report, save it, then ask
+7. Require explicit user approval of the final report, save it, then ask
    separately for approval before optional Outlook draft creation
-9. After separate draft approval, dispatch `Engagement Report Outlook Drafter`
-   with only the approved report path and validated distribution configuration
+8. After separate draft approval, dispatch `Engagement Report Outlook Drafter`
+   with the approved report path, validated distribution configuration, and
+   immutable confirmation of the separate Outlook draft approval
 
 Do not run Markdown linters, shell searches, or repository diagnostics during
 report generation. Do not narrate internal validation steps; present the draft

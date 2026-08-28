@@ -90,7 +90,7 @@ sections:
     description: "One concise paragraph describing the engagement outcome, scope, and current focus"
     source: engagement_config + manual_input
     rules:
-      - "Use the customer name, project name, and business context the audience recognises"
+      - "Use the customer name, project name, and business context the audience recognizes"
       - "Keep the description stable unless the scope or framing changes"
       - "Do not introduce unverified customer strategy or business claims"
 

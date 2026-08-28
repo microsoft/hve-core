@@ -28,10 +28,24 @@ Creates one approved HTML Outlook draft through a constrained distribution-only 
 
 ## When to use it
 
-<!-- asset-docs:stub -->
-Describe the situations where this asset is the right choice, and when to reach for a different asset instead.
+Delegate to this subagent only after the report is approved, saved, and
+separately approved for Outlook draft creation. Supply the approved report
+path, validated recipient and subject configuration, and immutable confirmation
+of the separate approval.
+
+Use a different workflow when content still needs research, editing, or review.
+The drafter validates faithful HTML and table conversion, makes exactly one
+draft-create attempt through `/me/messages`, and never sends or retries.
 
 ## Example usage
 
-<!-- asset-docs:stub -->
-Provide a concrete example that shows the asset in action, including representative input and the resulting output.
+```text
+Create one Outlook draft from reports/weekly-2026-08-21.md using the validated
+distribution configuration. Separate draft approval was granted after the
+report was saved.
+```
+
+On confirmed success, the subagent returns `Draft created`, the transient
+review link when available, and an instruction to review and send from Outlook.
+After an ambiguous response, it returns `Draft status unknown` and requires
+Outlook inspection before a later attempt.
