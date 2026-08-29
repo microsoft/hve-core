@@ -67,11 +67,11 @@ A confirmed problem-class framing request reads [problem-framing.md](references/
 | Concern                                                                                                                              | Owner                                                                              |
 |--------------------------------------------------------------------------------------------------------------------------------------|------------------------------------------------------------------------------------|
 | Candidate problem classes for a stated business outcome, entry-test reasoning, discriminating questions, and assignable framing gaps | This pack, through [problem-framing.md](references/problem-framing.md)             |
-| Whether a proposed outcome is achievable with available data and evidence                                                            | `ds-feasibility`, the evidence-led feasibility study reference                     |
+| Whether a proposed outcome is achievable with available data and evidence                                                            | `feasibility`, the evidence-led feasibility study reference                        |
 | MVE session directory, artifact filenames, placement, and tracking-file hygiene                                                      | `experiment-designer.instructions.md`, applied automatically to MVE tracking paths |
 | Phase order, gates, session writes, and coaching flow                                                                                | The consuming experiment agent                                                     |
 | ML environments, reproducibility, tracking, model evaluation, abstractions, and readiness                                            | `ml-experimentation`, the ML-specific experimentation reference                    |
-| Pipeline mechanics, data tiering, replay, validation, and DS/MLOps test technique                                                    | `ds-dataops`, the DataOps and testing reference                                    |
+| Pipeline mechanics, data tiering, replay, validation, and DS/MLOps test technique                                                    | `dataops`, the DataOps and testing reference                                       |
 | Metric names, instruments, units, cardinality, and PII-safe telemetry                                                                | `telemetry-foundations`, the OpenTelemetry-aligned instrumentation skill           |
 | Data sensitivity classification and DPIA thresholds                                                                                  | `privacy-standards`, the privacy classification reference                          |
 

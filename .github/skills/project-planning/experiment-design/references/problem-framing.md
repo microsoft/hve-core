@@ -101,7 +101,7 @@ An invocation stopped for an unstated business outcome returns the outcome-defin
 ## What this procedure never does
 
 * It never selects, ranks, scores, or confidence-thresholds a candidate. The practitioner is the subject-matter expert and makes that call.
-* It never estimates feasibility. `ds-feasibility` owns whether a proposed outcome is achievable with the available data and evidence.
+* It never estimates feasibility. `feasibility` owns whether a proposed outcome is achievable with the available data and evidence.
 * It never designs or scopes an experiment. That begins after a framing direction is chosen.
 * It never invents a missing fact. Unknowns are labelled and assigned.
 * It never presents an original routing judgement as though a standard supports it.

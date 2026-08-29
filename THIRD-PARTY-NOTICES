@@ -58,7 +58,7 @@ Source: https://microsoft.github.io/code-with-engineering-playbook/design/design
 Source: https://microsoft.github.io/code-with-engineering-playbook/design/design-reviews/trade-studies/
 Usage: Data-tiering, pipeline-invariant, DS/MLOps testing, validation-versus-drift,
 model-experimentation, ML checklist, experiment-candidate selection, and option-comparison
-guidance embedded in data-science skill files.
+guidance embedded in data science and engineering skill files.
 Every page cited above is playbook documentation and is therefore covered by CC BY 4.0.
 The upstream project carries a separate LICENSE-CODE file applying the MIT License to code
 samples only; no code sample from that project is reproduced here. Content is derived from

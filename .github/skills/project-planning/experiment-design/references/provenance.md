@@ -50,7 +50,7 @@ MVE coaching content in this pack is HVE Core original material. It was consolid
 
 ## Where this pack is silent
 
-* Whether a proposed outcome is achievable with the available data and evidence belongs to `ds-feasibility`. This pack exposes candidate problem classes; it does not assess them.
+* Whether a proposed outcome is achievable with the available data and evidence belongs to `feasibility`. This pack exposes candidate problem classes; it does not assess them.
 * ML experimentation setup, experiment tracking frameworks, dataset and model abstractions, model evaluation flow, and ML checklists belong to `ml-experimentation`.
-* Pipeline mechanics, data tiering, replay semantics, and DS/MLOps test technique belong to `ds-dataops`.
+* Pipeline mechanics, data tiering, replay semantics, and DS/MLOps test technique belong to `dataops`.
 * This pack does not select a universal framework, tool, metric, or threshold. It requires that a team decide, document, and apply one consistently, and that decision depends on project context.
