@@ -3,7 +3,7 @@ title: DT to RPI Integration
 description: How Design Thinking outputs feed into the RPI workflow
 sidebar_position: 14
 author: Microsoft
-ms.date: 2026-08-06
+ms.date: 2026-08-20
 ms.topic: how-to
 keywords:
   - design thinking
@@ -19,6 +19,8 @@ Design Thinking and RPI connect through structured handoff artifacts. When a DT 
 
 ```mermaid
 flowchart TD
+  accTitle: Design Thinking to RPI Handoff Pipeline
+  accDescr: Exit points from the problem, solution, and implementation spaces feed RPI research, planning, implementation, and review, with a return path for revising assumptions.
     DT["DT Coach Session"]
 
     subgraph problem["Problem Space"]

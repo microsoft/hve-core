@@ -333,7 +333,7 @@ stimuli:
   - name: instruction-licensing-posture-conformance
     prompt: |
       You are writing a new reference file under
-      `.github/skills/data-science/ds-dataops/references/` that summarizes an
+      `.github/skills/data-science-engineering/dataops/references/` that summarizes an
       upstream CC BY 4.0 documentation page. Which
       `.github/instructions/**/*.instructions.md` file defines the repository
       posture for licensing, reproduction, and attribution of third-party
@@ -628,7 +628,7 @@ stimuli:
   - name: instruction-python-uv-projects-conformance
     prompt: |
       You are setting up a new Python skill virtual environment under
-      `.github/skills/data-science/example-skill/` and need to manage
+      `.github/skills/data-science-engineering/example-skill/` and need to manage
       dependencies with uv. Which `.github/instructions/**/*.instructions.md`
       file applies (cite its path) and which uv commands does it prescribe
       for init, venv creation, dependency add, sync, and lock?

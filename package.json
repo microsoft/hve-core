@@ -112,7 +112,7 @@
   },
   "devDependencies": {
     "@cspell/cspell-json-reporter": "10.0.1",
-    "@microsoft/vally-cli": "0.13.0",
+    "@microsoft/vally-cli": "0.14.0",
     "@vscode/vsce": "3.9.2",
     "alex": "11.0.1",
     "audit-ci": "7.1.0",
