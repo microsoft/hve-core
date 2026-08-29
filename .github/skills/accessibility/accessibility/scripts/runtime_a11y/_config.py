@@ -139,8 +139,10 @@ def assert_host_allowed(
 
 def _validated_http_host(url: str) -> str:
     """Return the host from an absolute HTTP(S) URL without credentials."""
-    if not isinstance(url, str) or not url or any(
-        ord(character) <= 32 or ord(character) == 127 for character in url
+    if (
+        not isinstance(url, str)
+        or not url
+        or any(ord(character) <= 32 or ord(character) == 127 for character in url)
     ):
         raise ScriptError(
             "Config baseUrl must be an absolute HTTP(S) URL without whitespace "

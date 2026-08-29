@@ -157,7 +157,8 @@ def test_given_unsafe_target_when_resolve_scan_target_then_rejects(
         scan.resolve_scan_target(target, allow_external=True)
 
 
-def test_given_external_target_without_authorization_when_resolve_then_rejects(
-) -> None:
+def test_given_external_target_without_authorization_when_resolve_then_rejects() -> (
+    None
+):
     with pytest.raises(scan.ScriptError, match="--allow-host HOST"):
         scan.resolve_scan_target("https://example.com/page")
