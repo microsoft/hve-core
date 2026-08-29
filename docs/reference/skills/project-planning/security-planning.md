@@ -1,9 +1,9 @@
 ---
 title: security-planning
 description: "Security planning reference set for operational buckets, STRIDE analysis, standards mapping, NIST control families, backlog scaffolding, and deterministic TM7 (.tm7) plus markdown dual-output generation."
-sidebar_position: 14
+sidebar_position: 15
 author: Microsoft
-ms.date: 2026-08-18
+ms.date: 2026-08-21
 ms.topic: reference
 keywords:
   - skill

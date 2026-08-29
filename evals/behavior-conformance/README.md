@@ -22,19 +22,19 @@ Each tier shares the same advisory contract, the same `output-matches` grader fa
 | Spec                       | Tier | Mode     | Stimuli | Category               | Status            |
 |----------------------------|------|----------|---------|------------------------|-------------------|
 | `prompts.eval.yaml`        | 3p   | Advisory | 51      | `behavior-conformance` | Active (Phase 9)  |
-| `instructions.eval.yaml`   | 3i   | Advisory | 61      | `behavior-conformance` | Active (Phase 11) |
-| `skill-behavior.eval.yaml` | 3s   | Advisory | 141     | `behavior-conformance` | Active (Phase 13) |
+| `instructions.eval.yaml`   | 3i   | Advisory | 62      | `behavior-conformance` | Active (Phase 11) |
+| `skill-behavior.eval.yaml` | 3s   | Advisory | 219     | `behavior-conformance` | Active (Phase 13) |
 
 The maintained `prompts.eval.yaml` inventory contains 51 stimuli across 48 prompt subjects. Coverage includes RPI orchestration, security review and planning, Design Thinking, Git and pull request operations, evaluation authoring, and VEX workflows. Backlog and work-item coverage moved to `skill-behavior.eval.yaml` when those workflows became skills.
 
-The maintained `instructions.eval.yaml` inventory contains 61 stimuli across 46 instruction subjects. Coverage spans:
+The maintained `instructions.eval.yaml` inventory contains 62 stimuli across 46 instruction subjects. Coverage spans:
 
 * Delivery workflows: `ado-create-pull-request`, `ado-get-build-info`, `pull-request`.
 * HVE-Core authoring: `commit-message`, `copilot-tracking`, `hve-builder`, `markdown`, `pull-request`, and `writing-style`.
 * RAI, Accessibility, and Security planning: `accessibility-identity`, `rai-identity`, `rai-risk-classification`, `backlog-handoff`, `sssc-assessment`, and `standards-mapping`.
 * Additional: `docusaurus-edits`, `dt-coach-telemetry`, `experiment-designer`, `disclaimer-language`.
 
-The maintained `skill-behavior.eval.yaml` inventory contains 141 stimuli across 56 skill subjects. It covers RPI and HVE Builder workflows, including the HVE Builder bounded-read, research-bridge, unavailable-bridge, and read-only-review decisions plus direct `rpi-challenger` and `rpi-plan-critique` contracts.
+The maintained `skill-behavior.eval.yaml` inventory contains 219 stimuli across 57 skill subjects. It covers RPI and HVE Builder workflows, including the HVE Builder bounded-read, research-bridge, unavailable-bridge, and read-only-review decisions plus direct `rpi-challenger` and `rpi-plan-critique` contracts.
 
 The `backlog-plan` and `backlog-execute` workflow commands carry knowledge coverage plus a read-only boundary assertion and a mutation-safety assertion respectively. The retained `prompt-analyze`, `prompt-builder`, and `prompt-refactor` compatibility routes and other installed skill domains remain in advisory mode.
 

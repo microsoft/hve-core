@@ -3,7 +3,7 @@ prd_id: "PRD-2026-Q2-PRD-BUILDER"
 title: "PRD Builder Agent Product Requirements"
 description: "Product Requirements Document for the PRD Builder agent, defining product goals, functional requirements, and acceptance criteria for the guided Product Requirements Document authoring workflow in the project-planning package."
 author: "HVE Core Maintainers"
-ms.date: "2026-08-05"
+ms.date: "2026-08-20"
 ms.topic: "reference"
 keywords:
   - prd builder
@@ -209,6 +209,8 @@ NFR-008: The PRD Builder operates across HVE-Core distribution contexts (reposit
 
 ```mermaid
 flowchart LR
+  accTitle: PRD Builder Product Lifecycle
+  accDescr: Seven phases progress from assessment through finalization, using shared requirements guidance, optional BRD seeding, and reviewer findings at validation.
     A[Assess] --> B[Discover]
     B --> C[Create]
     C --> D[Build]
