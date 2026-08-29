@@ -1,13 +1,14 @@
 // Copyright (c) 2026 Microsoft Corporation. All rights reserved.
 // SPDX-License-Identifier: MIT
 import { execFileSync } from 'node:child_process';
-import { readFileSync } from 'node:fs';
+import { readdirSync, readFileSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 
 const scriptDirectory = path.dirname(fileURLToPath(import.meta.url));
 const repositoryRoot = path.resolve(scriptDirectory, '../../..');
-const openingFencePattern = /^\s*(`{3,}|~{3,})mermaid(?:\s+.*)?$/;
+const generatedDocsRoot = path.resolve(scriptDirectory, '../.docusaurus/docusaurus-plugin-content-docs/default');
+const openingFencePattern = /^\s*(`{3,}|~{3,})(.*)$/;
 
 function normalizePath(filePath) {
   return filePath.replaceAll('\\', '/');
@@ -39,6 +40,41 @@ export function discoverDocumentationFiles() {
     .sort();
 }
 
+export function groupRouteCases(fences, documents) {
+  const routeBySource = new Map(documents.map((document) => [
+    document.source.replace(/^@site\/\.\.\//, 'docs/'),
+    document.permalink,
+  ]));
+  const cases = new Map();
+
+  for (const fence of fences) {
+    const route = routeBySource.get(fence.file);
+    if (!route) {
+      throw new Error(`No Docusaurus permalink found for ${fence.file}`);
+    }
+
+    const routeCase = cases.get(route);
+    if (routeCase) {
+      routeCase.diagramCount += 1;
+    } else {
+      cases.set(route, {
+        name: fence.file,
+        path: route,
+        diagramCount: 1,
+      });
+    }
+  }
+
+  return Array.from(cases.values());
+}
+
+function discoverGeneratedDocuments() {
+  return readdirSync(generatedDocsRoot)
+    .filter((file) => file.startsWith('site-') && file.endsWith('.json'))
+    .map((file) => JSON.parse(readFileSync(path.join(generatedDocsRoot, file), 'utf8')))
+    .filter((document) => typeof document.source === 'string' && typeof document.permalink === 'string');
+}
+
 export function extractMermaidFences(content, file = '<memory>') {
   const lines = content.split(/\r?\n/);
   const fences = [];
@@ -51,6 +87,7 @@ export function extractMermaidFences(content, file = '<memory>') {
 
     const marker = openingMatch[1][0];
     const minimumLength = openingMatch[1].length;
+    const isMermaid = /^mermaid(?:\s+.*)?$/.test(openingMatch[2].trim());
     const closingPattern = new RegExp(`^\\s*${marker}{${minimumLength},}\\s*$`);
     const startLine = index + 1;
     const sourceLines = [];
@@ -61,18 +98,22 @@ export function extractMermaidFences(content, file = '<memory>') {
         closed = true;
         break;
       }
-      sourceLines.push(lines[index]);
+      if (isMermaid) {
+        sourceLines.push(lines[index]);
+      }
     }
 
-    if (!closed) {
+    if (isMermaid && !closed) {
       throw new Error(`${file}:${startLine}: Mermaid fence is not closed`);
     }
 
-    fences.push({
-      file,
-      startLine,
-      source: sourceLines.join('\n'),
-    });
+    if (isMermaid) {
+      fences.push({
+        file,
+        startLine,
+        source: sourceLines.join('\n'),
+      });
+    }
   }
 
   return fences;
@@ -164,6 +205,11 @@ async function main() {
       console.error(`- ${failure}`);
     }
     process.exitCode = 1;
+    return;
+  }
+
+  if (process.argv.includes('--routes-json')) {
+    process.stdout.write(JSON.stringify(groupRouteCases(fences, discoverGeneratedDocuments())));
     return;
   }
 

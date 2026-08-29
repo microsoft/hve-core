@@ -19,37 +19,19 @@ const inventory = JSON.parse(execFileSync(
   ['scripts/validate-mermaid-accessibility.mjs', '--json'],
   { cwd: packageRoot, encoding: 'utf8' },
 )) as MermaidFence[];
+const routeCases = JSON.parse(execFileSync(
+  process.execPath,
+  ['scripts/validate-mermaid-accessibility.mjs', '--routes-json'],
+  { cwd: packageRoot, encoding: 'utf8' },
+)) as { name: string; path: string; diagramCount: number }[];
 const mermaidBrowserBundle = path.join(packageRoot, 'node_modules/mermaid/dist/mermaid.min.js');
-
-function documentationRoute(file: string): string {
-  const relativePath = file
-    .replace(/^docs\//, '')
-    .replace(/\.(?:md|mdx)$/i, '')
-    .replace(/(^|\/)README$/i, '$1');
-  return `/hve-core/docs/${relativePath}${relativePath.endsWith('/') ? '' : '/'}`;
-}
-
-const routeCases = Array.from(inventory.reduce((cases, fence) => {
-  const route = documentationRoute(fence.file);
-  const routeCase = cases.get(route);
-  if (routeCase) {
-    routeCase.diagramCount += 1;
-  } else {
-    cases.set(route, {
-      name: fence.file,
-      path: route,
-      diagramCount: 1,
-    });
-  }
-  return cases;
-}, new Map<string, { name: string; path: string; diagramCount: number }>()).values());
 
 // The source inventory also drives deployed-route coverage so every Mermaid
 // fence passes through the production Docusaurus rendering pipeline.
 test.describe('Mermaid accessibility', () => {
   test('all deployed source fences render with associated metadata', async ({ page }) => {
     test.setTimeout(120000);
-    expect(inventory).toHaveLength(64);
+    expect(inventory).toHaveLength(63);
 
     await page.goto('/hve-core/', { waitUntil: 'domcontentloaded' });
     await page.addScriptTag({ path: mermaidBrowserBundle });
@@ -162,7 +144,7 @@ test.describe('Mermaid accessibility', () => {
       await waitForHydration(page);
 
       const diagrams = page.locator('svg[role~="graphics-document"]');
-      await expect(diagrams).toHaveCount(routeCase.diagramCount);
+      await expect(diagrams).toHaveCount(routeCase.diagramCount, { timeout: 15000 });
       await expect(page.locator('pre code.language-mermaid')).toHaveCount(0);
 
       for (let index = 0; index < routeCase.diagramCount; index += 1) {

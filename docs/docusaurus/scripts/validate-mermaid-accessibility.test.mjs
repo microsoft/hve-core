@@ -4,6 +4,7 @@ import assert from 'node:assert/strict';
 import { describe, test } from 'node:test';
 import {
   extractMermaidFences,
+  groupRouteCases,
   isDeployedDocumentationFile,
   validateSourceMetadata,
 } from './validate-mermaid-accessibility.mjs';
@@ -50,10 +51,79 @@ flowchart LR
     );
   });
 
+  test('ignores Mermaid examples nested inside a larger code fence', () => {
+    assert.deepEqual(
+      extractMermaidFences(`\`\`\`\`markdown
+Example structure:
+
+\`\`\`mermaid
+flowchart LR
+  accTitle: Nested example
+  accDescr: A moves to B.
+  A --> B
+\`\`\`
+\`\`\`\`
+`, 'docs/example.md'),
+      [],
+    );
+  });
+
   test('rejects an unclosed Mermaid fence with its source location', () => {
     assert.throws(
       () => extractMermaidFences('```mermaid\nflowchart LR', 'docs/example.md'),
       /docs\/example\.md:1: Mermaid fence is not closed/,
+    );
+  });
+});
+
+describe('Mermaid route inventory', () => {
+  const documents = [
+    {
+      source: '@site/../planning/adrs/0001-long-title.md',
+      permalink: '/hve-core/docs/planning/adrs/0001',
+    },
+    {
+      source: '@site/../guides/example.md',
+      permalink: '/hve-core/docs/guides/example',
+    },
+    {
+      source: '@site/../guides/README.md',
+      permalink: '/hve-core/docs/guides/',
+    },
+  ];
+
+  test('groups fences by canonical Docusaurus permalink', () => {
+    assert.deepEqual(
+      groupRouteCases([
+        { file: 'docs/planning/adrs/0001-long-title.md' },
+        { file: 'docs/guides/example.md' },
+        { file: 'docs/guides/example.md' },
+        { file: 'docs/guides/README.md' },
+      ], documents),
+      [
+        {
+          name: 'docs/planning/adrs/0001-long-title.md',
+          path: '/hve-core/docs/planning/adrs/0001',
+          diagramCount: 1,
+        },
+        {
+          name: 'docs/guides/example.md',
+          path: '/hve-core/docs/guides/example',
+          diagramCount: 2,
+        },
+        {
+          name: 'docs/guides/README.md',
+          path: '/hve-core/docs/guides/',
+          diagramCount: 1,
+        },
+      ],
+    );
+  });
+
+  test('rejects an inventory source without generated route metadata', () => {
+    assert.throws(
+      () => groupRouteCases([{ file: 'docs/missing.md' }], documents),
+      /No Docusaurus permalink found for docs\/missing\.md/,
     );
   });
 });
