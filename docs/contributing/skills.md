@@ -266,86 +266,104 @@ This skill converts video files to optimized GIF animations using FFmpeg two-pas
 
 Lists installation requirements for each platform:
 
-```markdown
+The resulting `SKILL.md` uses `##` for the level-two `Prerequisites` heading and
+`###` for each level-three platform subsection. The following block shows the
+literal Markdown source.
+
+````markdown
 ## Prerequisites
 
 FFmpeg MUST be installed and available in your system PATH.
 
 ### macOS
 
-\`\`\`bash
+```bash
 brew install ffmpeg
-\`\`\`
+```
 
 ### Linux
 
-\`\`\`bash
+```bash
 sudo apt install ffmpeg
-\`\`\`
+```
 
 ### Windows
 
-\`\`\`powershell
+```powershell
 choco install ffmpeg
-\`\`\`
 ```
+````
 
 #### 4. Quick Start
 
 Shows basic usage with default settings:
 
-```markdown
+In the resulting `SKILL.md`, `## Quick Start` renders as a level-two heading.
+The following block shows the literal Markdown source.
+
+````markdown
 ## Quick Start
 
-\`\`\`bash
+```bash
 ./scripts/convert.sh input.mp4
-\`\`\`
 ```
+````
 
 #### 5. Parameters Reference (when scripts are included)
 
 Documents all configurable options with defaults. Include this section when the skill contains scripts with configurable parameters.
 
-```markdown
+In the resulting `SKILL.md`, `## Parameters` renders as a level-two heading.
+The following block shows the literal Markdown source.
+
+````markdown
 ## Parameters
 
 | Parameter | Default | Description  |
 |-----------|---------|--------------|
 | --fps     | 10      | Frame rate   |
 | --width   | 480     | Output width |
-```
+````
 
 #### 6. Script Reference (when scripts are included)
 
 Documents both bash and PowerShell usage. Include this section when the skill contains a `scripts/` directory.
 
-```markdown
+In the resulting `SKILL.md`, `## Script Reference` renders as a level-two
+heading and each `###` script heading renders as level three. The following
+block shows the literal Markdown source.
+
+````markdown
 ## Script Reference
 
 ### convert.sh (Bash)
 
-\`\`\`bash
+```bash
 ./convert.sh --input video.mp4 --fps 15
-\`\`\`
+```
 
 ### convert.ps1 (PowerShell)
 
-\`\`\`powershell
+```powershell
 ./convert.ps1 -InputPath video.mp4 -Fps 15
-\`\`\`
 ```
+````
 
 #### 7. Troubleshooting
 
 Common issues and solutions:
 
-```markdown
+In the resulting `SKILL.md`, `## Troubleshooting` renders as a level-two
+heading and `### Tool not found` renders as level three. The following block
+shows the literal Markdown source.
+
+````markdown
 ## Troubleshooting
 
 ### Tool not found
 
 Verify the dependency is in your PATH...
-```
+````
 
 #### 8. Attribution Footer
 

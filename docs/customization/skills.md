@@ -77,7 +77,10 @@ The description drives activation decisions. Write it to match the vocabulary us
 
 The body contains the full skill instructions. Structure it with clear sections, concrete examples, and actionable rules:
 
-```markdown
+In the resulting `SKILL.md`, each `##` marker below renders as a level-two
+heading. The following block shows the literal Markdown source.
+
+````markdown
 ## Review Protocol
 
 1. Validate the OpenAPI specification against the schema in
@@ -96,7 +99,7 @@ The body contains the full skill instructions. Structure it with clear sections,
 
 All error responses follow this structure:
 
-\`\`\`json
+```json
 {
   "error": {
     "code": "ResourceNotFound",
@@ -104,8 +107,8 @@ All error responses follow this structure:
     "target": "/users/12345"
   }
 }
-\`\`\`
 ```
+````
 
 ## Authoring with HVE Builder
 
@@ -162,16 +165,20 @@ The [pr-reference skill](pathname://../../.github/skills/shared/pr-reference/SKI
 
 Reference materials expand the skill's knowledge base without bloating the core instructions. Link to reference files from within SKILL.md using relative paths:
 
-```markdown
+In the resulting `SKILL.md`, the surrounding content remains under its
+level-two section heading; the nested Bash fence is a code block, not another
+heading. The following block shows the literal Markdown source.
+
+````markdown
 For the detailed technical reference, see
 [Detailed Reference](references/REFERENCE.md).
 
 Run the validation script to check for breaking changes:
 
-\`\`\`bash
+```bash
 ./scripts/validate-openapi.sh --spec openapi.yaml --baseline v2.json
-\`\`\`
 ```
+````
 
 Guidelines for organizing reference materials:
 
