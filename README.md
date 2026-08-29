@@ -66,8 +66,8 @@ Use HVE Core when you want AI-assisted work to be repeatable, standards-aligned,
 > ```
 >
 > Reviewed source moves from `main` to `release/prerelease` to `release/stable`.
-> Behavior when switching or duplicating same-name marketplace registrations
-> has not been observed. See [CLI Plugins](docs/getting-started/methods/cli-plugins.md)
+> The behavior when switching or duplicating same-name marketplace registrations
+  has not yet been observed. See [CLI Plugins](docs/getting-started/methods/cli-plugins.md)
 > for details.
 
 ## Choose Your Path
