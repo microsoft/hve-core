@@ -4,9 +4,74 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 
-import { buildChromeLaunchOptions, ensureAutomationWindowFocused, ensureScreenReaderStopped } from '../../../scripts/runtime_a11y/runner/_shared.mjs';
+import { applyTrigger, buildChromeLaunchOptions, ensureAutomationWindowFocused, ensureScreenReaderStopped } from '../../../scripts/runtime_a11y/runner/_shared.mjs';
+import { assertArtifactId, assertHttpUrl } from '../../../scripts/runtime_a11y/runner/validation.mjs';
 
-test('buildChromeLaunchOptions hardens system Chrome against restore and first-run prompts', () => {
+test('assertHttpUrl accepts absolute HTTP targets and rejects browser sink bypasses', () => {
+  assert.equal(assertHttpUrl('https://example.com/path', 'Runtime base URL'), 'https://example.com/path');
+  for (const value of [
+    'file:///tmp/page.html',
+    '//example.com/path',
+    'http:example.com/path',
+    'http:\\example.com\\path',
+    'https://user:password@example.com',
+    'https://example.com/a b',
+  ]) {
+    assert.throws(() => assertHttpUrl(value, 'Runtime base URL'), undefined, value);
+  }
+});
+
+test('assertArtifactId rejects path separators, collisions, unicode, and invalid lengths', () => {
+  assert.equal(assertArtifactId('search-results_2.0'), 'search-results_2.0');
+  assert.equal(assertArtifactId(`a${'b'.repeat(127)}`).length, 128);
+  for (const value of [
+    '',
+    '-leading',
+    '../escape',
+    'bad/name',
+    'bad name',
+    'résumé',
+    `a${'b'.repeat(128)}`,
+  ]) {
+    assert.throws(() => assertArtifactId(value), undefined, value);
+  }
+});
+
+test('applyTrigger rejects invalid navigation before permissive action handling', async () => {
+  const navigations = [];
+  const page = {
+    url: () => 'http://127.0.0.1:3000/current',
+    goto: async (url) => navigations.push(url),
+    locator: () => ({}),
+  };
+
+  await assert.rejects(
+    applyTrigger(page, { action: 'navigate', value: 'https://attacker.example/path' }),
+    /configured origin/,
+  );
+  assert.deepEqual(navigations, []);
+});
+
+test('applyTrigger navigates relative and absolute same-origin destinations', async () => {
+  const navigations = [];
+  const page = {
+    url: () => 'http://127.0.0.1:3000/current',
+    goto: async (url) => navigations.push(url),
+    locator: () => ({}),
+  };
+
+  await applyTrigger(page, { action: 'navigate', value: '/next' });
+  await applyTrigger(page, {
+    action: 'visit',
+    target: { value: 'http://127.0.0.1:3000/visited' },
+  });
+  assert.deepEqual(navigations, [
+    'http://127.0.0.1:3000/next',
+    'http://127.0.0.1:3000/visited',
+  ]);
+});
+
+test('buildChromeLaunchOptions ignores generic caller arguments', () => {
   const options = buildChromeLaunchOptions({ headless: false, args: ['--window-size=1440,900'] });
 
   assert.equal(options.channel, 'chrome');
@@ -17,7 +82,6 @@ test('buildChromeLaunchOptions hardens system Chrome against restore and first-r
     '--no-default-browser-check',
     '--no-first-run',
     '--force-renderer-accessibility',
-    '--window-size=1440,900',
   ]);
 });
 

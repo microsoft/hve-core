@@ -4,6 +4,7 @@ import { access, mkdir, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 
 import { launchChrome, maximizeBrowserWindow } from './_shared.mjs';
+import { assertArtifactId, assertHttpUrl } from './validation.mjs';
 
 const DEFAULT_VISUAL_REVIEW_STATES = [
   'desktop',
@@ -41,10 +42,10 @@ export function resolveBrowserVersion(browser, configuredVersion) {
   }
 }
 
-function buildRouteSlug(route) {
-  const raw = route?.path || route?.route || 'route';
-  const normalized = String(raw).replace(/^\//, '').replace(/[^a-zA-Z0-9._-]+/g, '-');
-  return normalized || '';
+export function buildVisualReviewArtifactSegment(route, stateName) {
+  const surfaceId = assertArtifactId(route?.surfaceId || 'surface', 'Surface ID');
+  const stateId = assertArtifactId(stateName, 'State ID');
+  return [surfaceId, stateId];
 }
 
 function getVisualReviewFilters(config = {}) {
@@ -181,6 +182,7 @@ async function writeJsonFile(targetPath, payload) {
 export async function captureVisualReviewEvidence(config = {}) {
   const plan = buildVisualReviewPlan(config);
   const baseUrl = process.env.RUNTIME_A11Y_BASE_URL || config.baseUrl || 'http://127.0.0.1:3000';
+  assertHttpUrl(baseUrl, 'Runtime base URL');
   const runRoot = process.env.RUNTIME_A11Y_VISUAL_REVIEW_RUN_ROOT || path.join(process.cwd(), '.copilot-tracking', 'accessibility', 'local-runs', 'tmp');
   const browserName = process.env.RUNTIME_A11Y_BROWSER_NAME || 'chrome';
   const browserVersion = process.env.RUNTIME_A11Y_BROWSER_VERSION || 'unknown';
@@ -199,10 +201,9 @@ export async function captureVisualReviewEvidence(config = {}) {
     for (const route of selectedRoutes) {
       for (const stateEntry of selectedStates) {
         const stateName = typeof stateEntry === 'string' ? stateEntry : stateEntry.state;
-        const routeSlug = buildRouteSlug(route);
-        const stateSlug = String(stateName).replace(/[^a-zA-Z0-9._-]+/g, '-');
-        const artifactSegment = [routeSlug, stateSlug].join('-') || 'root';
-        const artifactDir = path.join(runRoot, 'artifacts', artifactSegment);
+        const artifactSegments = buildVisualReviewArtifactSegment(route, stateName);
+        const artifactDir = path.join(runRoot, 'artifacts', ...artifactSegments);
+        const outcomeId = artifactSegments.join(':');
         await mkdir(artifactDir, { recursive: true });
 
         const screenshotPath = path.join(artifactDir, 'screenshot.png');
@@ -295,7 +296,7 @@ export async function captureVisualReviewEvidence(config = {}) {
             measurementPath: path.relative(runRoot, measurementPath).replace(/\\/g, '/'),
             tracePath: path.relative(runRoot, tracePath).replace(/\\/g, '/'),
             deterministicMetrics: envelope.metrics,
-            probeOutcomes: [{ id: `${routeSlug}-${stateSlug}`, status: 'pass' }],
+            probeOutcomes: [{ id: outcomeId, status: 'pass' }],
             browser: { name: browserName, version: resolveBrowserVersion(browser, browserVersion) },
             maximizeWindow: maximizeResult,
           });
@@ -310,7 +311,7 @@ export async function captureVisualReviewEvidence(config = {}) {
             measurementPath: path.relative(runRoot, measurementPath).replace(/\\/g, '/'),
             tracePath: path.relative(runRoot, tracePath).replace(/\\/g, '/'),
             deterministicMetrics: {},
-            probeOutcomes: [{ id: `${routeSlug}-${stateSlug}`, status: 'capture-failure', detail: error instanceof Error ? error.message : String(error) }],
+            probeOutcomes: [{ id: outcomeId, status: 'capture-failure', detail: error instanceof Error ? error.message : String(error) }],
             browser: { name: browserName, version: browserVersion || 'unknown' },
             maximizeWindow: maximizeResult,
           });

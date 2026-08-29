@@ -10,11 +10,31 @@ import { test } from 'node:test';
 
 import {
   buildVisualReviewPlan,
+  buildVisualReviewArtifactSegment,
   buildDeterministicMeasurementEnvelope,
   captureVisualReviewEvidence,
   resolveBrowserVersion,
   resolveRouteUrl,
 } from '../../../scripts/runtime_a11y/runner/visual-review-executor.mjs';
+
+test('buildVisualReviewArtifactSegment uses validated surface and state IDs', () => {
+  assert.equal(
+    buildVisualReviewArtifactSegment({ surfaceId: 'search-results' }, 'zoom-200').join('/'),
+    'search-results/zoom-200',
+  );
+  assert.throws(
+    () => buildVisualReviewArtifactSegment({ surfaceId: 'search/results' }, 'zoom-200'),
+    /Surface ID/,
+  );
+  assert.throws(
+    () => buildVisualReviewArtifactSegment({ surfaceId: 'search-results' }, 'zoom 200'),
+    /State ID/,
+  );
+  assert.notDeepEqual(
+    buildVisualReviewArtifactSegment({ surfaceId: 'home-search' }, 'default'),
+    buildVisualReviewArtifactSegment({ surfaceId: 'home' }, 'search-default'),
+  );
+});
 
 test('resolveBrowserVersion uses the configured value or synchronous browser API', () => {
   const browser = {
@@ -103,7 +123,7 @@ test('captureVisualReviewEvidence writes a Playwright trace zip artifact and des
       `visual review capture did not succeed: ${outcome?.detail ?? 'no detail recorded'}`,
     );
 
-    const artifactDir = path.join(runRoot, 'artifacts', `${run.route.replace(/^\//, '').replace(/[^a-zA-Z0-9._-]+/g, '-')}-desktop`);
+    const artifactDir = path.join(runRoot, 'artifacts', 'home', 'desktop');
     const tracePath = path.join(artifactDir, 'trace.zip');
     const measurementPath = path.join(artifactDir, 'measurements.json');
 

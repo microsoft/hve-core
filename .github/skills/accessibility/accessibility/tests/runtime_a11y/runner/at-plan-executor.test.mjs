@@ -1761,6 +1761,51 @@ test('processAtPlanCase reports navigation errors and cleans up the browser', as
   assert.equal(result.evidence.error.includes('trigger navigation failed'), true);
 });
 
+test('processAtPlanCase rejects an unsupported target before navigation', async () => {
+  let navigationCount = 0;
+  const page = {
+    goto: async () => {
+      navigationCount += 1;
+    },
+    setViewportSize: async () => undefined,
+    emulateMedia: async () => undefined,
+    evaluate: async () => undefined,
+    locator: () => ({ focus: async () => undefined }),
+    keyboard: { press: async () => undefined },
+  };
+  const browser = {
+    newContext: async () => ({
+      newPage: async () => page,
+      close: async () => undefined,
+    }),
+    close: async () => undefined,
+  };
+
+  const result = await processAtPlanCase({
+    matrixCase: {
+      caseId: 'case-invalid-target',
+      state: 'default',
+      targetUrl: 'file:///tmp/page.html',
+      commands: [{ kind: 'command', value: 'perform' }],
+      assertions: [{ id: 'a', type: 'contains', value: 'dialog' }],
+    },
+    runtimeConfig: { baseUrl: 'http://127.0.0.1:3000' },
+    driverFactory: async () => ({
+      supported: true,
+      status: 'ready',
+      driver: 'guidepup',
+      synthetic: false,
+      async start() {},
+      async stop() {},
+    }),
+    browserFactory: async () => browser,
+  });
+
+  assert.equal(result.status, 'error');
+  assert.equal(navigationCount, 0);
+  assert.match(result.evidence.error, /AT-plan target URL/);
+});
+
 test('processAtPlanCase does not launch a browser for synthetic execution', async () => {
   let browserLaunches = 0;
   let commandExecutions = 0;
