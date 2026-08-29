@@ -15,7 +15,7 @@ tags:
   - agents
   - security
 author: Microsoft
-ms.date: 2026-08-22
+ms.date: 2026-08-26
 ms.topic: concept
 estimated_reading_time: 7
 ---
@@ -58,6 +58,8 @@ The reviewer runs in one of three modes. When no mode is supplied, it defaults t
 
 ```mermaid
 flowchart LR
+  accTitle: Supply Chain Review Four-Stage Pipeline
+  accDescr: Review profiles the codebase, assesses supply-chain capabilities, verifies findings against evidence, and has the SSSC Reviewer author the report.
   A["Codebase Profiler<br/>(profile)"] --> B["Supply Chain Skill Assessor<br/>(assess)"]
   B --> C["Finding Deep Verifier<br/>(verify)"]
   C --> D["SSSC Reviewer<br/>(authors the report)"]

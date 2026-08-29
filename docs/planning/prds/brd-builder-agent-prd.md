@@ -3,7 +3,7 @@ prd_id: "PRD-2026-Q2-BRD-BUILDER"
 title: "BRD Builder Agent Product Requirements"
 description: "Product Requirements Document for the BRD Builder agent, defining product goals, functional requirements, and acceptance criteria for the guided Business Requirements Document authoring workflow in the project-planning package."
 author: "HVE Core Maintainers"
-ms.date: "2026-08-05"
+ms.date: "2026-08-20"
 ms.topic: "reference"
 keywords:
   - brd builder
@@ -209,6 +209,8 @@ NFR-008: The BRD Builder operates across HVE-Core distribution contexts (reposit
 
 ```mermaid
 flowchart LR
+  accTitle: BRD Builder Product Workflow
+  accDescr: Discover, Define, and Govern consume shared requirements guidance, apply reviewer findings, and produce a governed handoff for PRD creation.
     A[Discover] --> B[Define]
     B --> C[Govern]
     S[(requirements-author skill)] -. templates and lifecycle .-> A

@@ -3,7 +3,7 @@ id: "0010"
 title: "Stabilize PR-time Vally evaluation execution"
 description: "Stabilize and accelerate PR-time Vally evaluations through typed-result parsing, shard-batched moderation, self-contained worker stimuli, semantic graders, and GPT-5.6 Luna."
 author: "HVE Core Maintainers"
-ms.date: "2026-07-10"
+ms.date: "2026-08-20"
 ms.topic: "reference"
 status: "proposed"
 proposed_date: "2026-07-10"
@@ -226,6 +226,8 @@ The implementation was confirmed on 2026-07-10 with the following evidence:
 
 ```mermaid
 flowchart LR
+  accTitle: Pull Request Evaluation and Moderation Reconciliation
+  accDescr: Changed artifacts run through filtered Vally trials, typed-result parsing, grading, and shard moderation before advisory and authoritative outcomes are reconciled.
     changed["Changed AI artifacts and stimuli"] --> plan["Tag-filtered Vally run plan"]
     plan --> luna["GPT-5.6 Luna trial execution"]
     luna --> jsonl["Typed results.jsonl"]

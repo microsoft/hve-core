@@ -2991,6 +2991,25 @@ stimuli:
         config:
           pattern: '(?i)(vex|openvex|status|justification|not_affected|under_investigation)'
 
+  - name: skill-rai-standards-knowledge
+    prompt: |
+      Summarize what the `rai-standards` skill provides and name one Responsible
+      AI framework it references.
+    tags:
+      category: behavior-conformance
+      skill: rai-standards
+      shape: knowledge
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: skill-attribution
+        config:
+          pattern: '(?i)(rai|responsible ai|standards|reference)'
+      - type: output-matches
+        name: scope-language
+        config:
+          pattern: '(?i)(nist|ai rmf|stride|eu ai act|risk tier|govern|map|measure|manage)'
+
   - name: skill-copilot-otel-metrics-knowledge
     prompt: |
       Summarize what the `copilot-otel-metrics` skill sets up and name the

@@ -1,9 +1,9 @@
 ---
 title: experiment-design
-description: "Experiment design reference for Minimum Viable Experiment coaching, hypothesis formation, vetting and red flags, and experiment readiness. Use when framing, vetting, scoping, or evaluating an experiment of any kind, including data feasibility, architecture, LLM, performance, use-case, UX, prototyping, and hardware experiments."
+description: "Experiment design reference for problem-class framing, Minimum Viable Experiment coaching, hypothesis formation, vetting and red flags, and experiment readiness. Use when translating a stated business outcome into candidate data-science problem classes, or when framing, vetting, scoping, or evaluating an experiment of any kind, including data feasibility, architecture, LLM, performance, use-case, UX, prototyping, and hardware experiments."
 sidebar_position: 5
 author: Microsoft
-ms.date: 2026-08-19
+ms.date: 2026-08-28
 ms.topic: reference
 keywords:
   - skill
@@ -23,7 +23,7 @@ keywords:
 ## What it does
 
 <!-- BEGIN AUTO-GENERATED: overview -->
-Experiment design reference for Minimum Viable Experiment coaching, hypothesis formation, vetting and red flags, and experiment readiness. Use when framing, vetting, scoping, or evaluating an experiment of any kind, including data feasibility, architecture, LLM, performance, use-case, UX, prototyping, and hardware experiments.
+Experiment design reference for problem-class framing, Minimum Viable Experiment coaching, hypothesis formation, vetting and red flags, and experiment readiness. Use when translating a stated business outcome into candidate data-science problem classes, or when framing, vetting, scoping, or evaluating an experiment of any kind, including data feasibility, architecture, LLM, performance, use-case, UX, prototyping, and hardware experiments.
 <!-- END AUTO-GENERATED: overview -->
 
 ## When to use it

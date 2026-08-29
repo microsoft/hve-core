@@ -12,6 +12,12 @@ Import-Module (Join-Path $PSScriptRoot 'CIHelpers.psm1') -Force
 $script:PackageDocBeginMarker = '<!-- BEGIN AUTO-GENERATED ARTIFACTS -->'
 $script:PackageDocEndMarker = '<!-- END AUTO-GENERATED ARTIFACTS -->'
 
+# Anchored so only a real heading line matches, and case-insensitive through an
+# inline flag rather than a caller-supplied option. The PowerShell match operator
+# ignores case by default while [regex]::Match does not, so a pattern without the
+# flag would mean different things to different consumers.
+$script:PackageDocArtifactHeadingPattern = '(?im)^##\s+Included Artifacts\s*$'
+
 function Set-ContentIfChanged {
     <#
     .SYNOPSIS
@@ -431,6 +437,27 @@ function Get-MaturityVocabulary {
     return , @('stable', 'preview', 'experimental', 'deprecated', 'removed')
 }
 
+function Get-PackageDocArtifactHeadingPattern {
+    <#
+    .SYNOPSIS
+    Returns the canonical package-document artifact heading pattern.
+
+    .DESCRIPTION
+    Every consumer that locates the artifact heading in a package document uses
+    this pattern, so the rule cannot drift between them. The pattern carries an
+    inline case-insensitivity flag and is therefore safe under both the
+    PowerShell match operator and [regex]::Match.
+
+    .OUTPUTS
+    [string] Regular expression matching the artifact heading line.
+    #>
+    [CmdletBinding()]
+    [OutputType([string])]
+    param()
+
+    return $script:PackageDocArtifactHeadingPattern
+}
+
 function Get-MaturityRank {
     <#
     .SYNOPSIS
@@ -528,6 +555,7 @@ Export-ModuleMember -Function @(
     'Get-ArtifactKey',
     'Get-MaturityRank',
     'Get-MaturityVocabulary',
+    'Get-PackageDocArtifactHeadingPattern',
     'Resolve-ArtifactMaturity',
     'Resolve-StrictSafeMaturity',
     'Set-ContentIfChanged',
