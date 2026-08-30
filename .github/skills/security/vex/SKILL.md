@@ -88,9 +88,18 @@ Products use [Package URL (PURL)](https://github.com/package-url/purl-spec) form
 
 The OpenVEX specification reference content in this skill is derived from the OpenVEX Community
 specification and remains attributed to the OpenVEX Community. The reusable VEX management
-playbooks and the surrounding guidance in this skill are hve-core-authored content. The skill
-frontmatter uses a mixed-attribution metadata set so the upstream specification reference and the
-hve-core playbooks are clearly distinguished.
+playbooks and the surrounding guidance in this skill are hve-core-authored content.
+
+Licenses are allocated per file in the table below. The frontmatter expression is the conjunction
+of every license present in the package, so a redistributor of the whole package complies with all
+of them; the table states which license actually governs each file.
+
+| Path                                                 | License    | Origin                    |
+|------------------------------------------------------|------------|---------------------------|
+| `references/openvex-schema.md`                       | Apache-2.0 | Derived from OpenVEX spec |
+| `references/vex-status-logic.md`                     | Apache-2.0 | Derived from OpenVEX spec |
+| `references/cve-data-sources.md`                     | CC-BY-4.0  | hve-core-authored         |
+| `SKILL.md`, playbooks, and remaining package content | CC-BY-4.0  | hve-core-authored         |
 
 ### Third-Party Attribution
 
