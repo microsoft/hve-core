@@ -58,9 +58,9 @@ an entry point through control flow and key dependencies. An artifact
 walkthrough usually follows its sections in reading order.
 
 ```mermaid
+flowchart LR
 accTitle: RPI walkthrough segment loop
 accDescr: The walkthrough resolves and reviews a target, plans segments, explains one segment at a time, and either continues, reviews more deeply, or finishes by closing without a handoff or handing work off.
-flowchart LR
     A[Resolve target] --> B[Review evidence]
     B --> C[Plan segments]
     C --> D[Explain one segment]
