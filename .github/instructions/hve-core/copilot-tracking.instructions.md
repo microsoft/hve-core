@@ -1,6 +1,6 @@
 ---
-description: "Shared .copilot-tracking conventions for RPI, HVE Builder, and compatibility workflow evidence"
-applyTo: '.copilot-tracking/research/**, .copilot-tracking/plans/**, .copilot-tracking/details/**, .copilot-tracking/changes/**, .copilot-tracking/reviews/**, .copilot-tracking/sandbox/**, .copilot-tracking/prompts/**, .copilot-tracking/walkthroughs/**, .copilot-tracking/hve-builder/**'
+description: "Shared .copilot-tracking conventions for RPI, HVE Builder, proposal response, and compatibility workflow evidence"
+applyTo: '.copilot-tracking/research/**, .copilot-tracking/plans/**, .copilot-tracking/details/**, .copilot-tracking/changes/**, .copilot-tracking/reviews/**, .copilot-tracking/sandbox/**, .copilot-tracking/prompts/**, .copilot-tracking/walkthroughs/**, .copilot-tracking/hve-builder/**, .copilot-tracking/proposal-responses/**'
 ---
 
 # Copilot Tracking Conventions
@@ -13,7 +13,7 @@ Apply these conventions whenever an RPI, HVE Builder, or compatibility workflow 
 * Persist research, planning, details, changes, and review outputs under `.copilot-tracking/` using the conventions below.
 * Use `{{task_slug}}` for task slugs and `{{YYYY-MM-DD}}` for dates. Keep `{{task_slug}}` lower-kebab-case.
 * Generated tracking Markdown starts with `<!-- markdownlint-disable-file -->` and uses plain-text workspace-relative paths. Do not use markdown links, backticks around paths, or `#file:` directives in tracking artifacts.
-* Tracking artifacts are ordinary Markdown. Do not add `applyTo` metadata or create a `.instructions.md` tracking artifact.
+* Markdown is the default tracking format. Versioned payload contracts and session state use the YAML or JSON format defined by their owning schema. Do not add `applyTo` metadata or create a `.instructions.md` tracking artifact.
 
 ## Handoff Expectations
 
@@ -36,6 +36,7 @@ Apply these conventions whenever an RPI, HVE Builder, or compatibility workflow 
 * Implementation evidence stays under `.copilot-tracking/changes/{{YYYY-MM-DD}}/{{task_slug}}-changes.md`.
 * Review evidence stays under `.copilot-tracking/reviews/logs/{{YYYY-MM-DD}}/{{task_slug}}-review.md`.
 * HVE Builder stage evidence stays under `.copilot-tracking/hve-builder/{{YYYY-MM-DD}}/{{artifact_slug}}-{{stage}}-{{attempt}}.md`. Scan existing files and increment `{{attempt}}` rather than overwriting another run.
+* Proposal-response evidence stays under `.copilot-tracking/proposal-responses/{{response_slug}}/response-evidence.yml`. Analyze, contribute, and draft operations update this canonical artifact in place while preserving stable record IDs; requested renderings use stable sibling filenames.
 * Keep `.copilot-tracking/` paths and other internal planning, research, or implementation artifact references out of production code, code comments, documentation strings, and commit messages. Internal artifacts guide implementation logic; comments stay self-contained and may cite public materials such as RFCs, specifications, or official documentation.
 * For the research phase, keep writes inside `.copilot-tracking/research/` except for subagent outputs or workflow tracking files that the current execution explicitly requires.
 * When material gaps remain, re-enter the current phase and update the dated artifact rather than skipping ahead.

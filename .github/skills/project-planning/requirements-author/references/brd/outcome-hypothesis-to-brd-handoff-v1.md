@@ -45,6 +45,12 @@ path. It validates the payload before copying any value into the BRD. A failed
 payload remains rejected structured input and is not reinterpreted as
 unstructured evidence.
 
+Inline delivery is intentional for this one-time seed. The committed outcome
+hypothesis remains the durable source artifact, so a second handoff file is
+optional rather than canonical. By contrast, BRD Govern persists
+`BRD_TO_PRD_HANDOFF_V1` because that payload is itself a governance record
+consumed across agent sessions.
+
 ## Format
 
 ```yaml
