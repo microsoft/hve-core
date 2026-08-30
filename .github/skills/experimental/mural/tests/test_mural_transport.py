@@ -60,6 +60,7 @@ def test_authenticated_request_happy_path_uses_bearer(
         "/workspaces/ws-1",
         token_store_path=fake_token_store,
         _http=recorded_http,
+        _token_http=recorded_http,
         _now=fake_now,
         _sleep=lambda _s: None,
         _bucket=_fresh_bucket(mural_module),
@@ -69,6 +70,91 @@ def test_authenticated_request_happy_path_uses_bearer(
     assert len(recorded_http.calls) == 1
     auth = recorded_http.calls[0].headers.get("Authorization")
     assert auth == f"Bearer {TEST_ACCESS_TOKEN}"
+
+
+def test_authenticated_request_uses_finite_transport_timeout(
+    mural_module: Any,
+    fake_token_store: pathlib.Path,
+    response_factory: Any,
+    fake_now: Any,
+) -> None:
+    _seed_store(fake_token_store)
+    observed: list[float] = []
+
+    def http(request: Any, *, timeout: float) -> Any:
+        del request
+        observed.append(timeout)
+        return response_factory(b'{"ok":true}', status=200)
+
+    mural_module._authenticated_request(
+        "GET",
+        "/workspaces",
+        token_store_path=fake_token_store,
+        _http=http,
+        _now=fake_now,
+        _sleep=lambda _s: None,
+        _bucket=_fresh_bucket(mural_module),
+    )
+
+    assert observed == [mural_module.REQUEST_TIMEOUT_SECONDS]
+
+
+def test_authenticated_request_rejects_base_before_token_store_load(
+    mural_module: Any,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    def _fail_load(_path: object) -> None:
+        raise AssertionError("token store must not be loaded")
+
+    import mural._transport as transport
+
+    monkeypatch.setattr(transport, "_load_token_store", _fail_load)
+    with pytest.raises(mural_module.MuralSecurityError):
+        mural_module._authenticated_request(
+            "GET",
+            "/workspaces",
+            base_url="https://evil.example/api/public/v1",
+            env={"MURAL_CLIENT_ID": "client"},
+        )
+
+
+def test_authenticated_request_uses_distinct_api_and_token_http(
+    mural_module: Any,
+    fake_token_store: pathlib.Path,
+    recorded_http: Any,
+    response_factory: Any,
+    fake_now: Any,
+) -> None:
+    _seed_store(fake_token_store, expires_at=0)
+    token_http = type(recorded_http)()
+    token_http.responses.append(
+        response_factory(
+            json.dumps(
+                {
+                    "access_token": "new-access",
+                    "refresh_token": "new-refresh",
+                    "expires_in": 3600,
+                }
+            ).encode(),
+            headers={"Content-Type": "application/json"},
+        )
+    )
+    recorded_http.responses.append(response_factory(b'{"ok":true}'))
+
+    result = mural_module._authenticated_request(
+        "GET",
+        "/workspaces",
+        token_store_path=fake_token_store,
+        _http=recorded_http,
+        _token_http=token_http,
+        _now=fake_now,
+        _sleep=lambda _s: None,
+        _bucket=_fresh_bucket(mural_module),
+    )
+
+    assert result == {"ok": True}
+    assert len(token_http.calls) == 1
+    assert len(recorded_http.calls) == 1
 
 
 def test_authenticated_request_proactive_refresh_within_leeway(
@@ -102,6 +188,7 @@ def test_authenticated_request_proactive_refresh_within_leeway(
         "/workspaces",
         token_store_path=fake_token_store,
         _http=recorded_http,
+        _token_http=recorded_http,
         _now=fake_now,
         _sleep=lambda _s: None,
         _bucket=_fresh_bucket(mural_module),
@@ -153,6 +240,7 @@ def test_authenticated_request_401_forces_single_refresh_then_retry(
         "/workspaces",
         token_store_path=fake_token_store,
         _http=recorded_http,
+        _token_http=recorded_http,
         _now=fake_now,
         _sleep=lambda _s: None,
         _bucket=_fresh_bucket(mural_module),
@@ -196,6 +284,7 @@ def test_authenticated_request_401_does_not_loop(
             "/workspaces",
             token_store_path=fake_token_store,
             _http=recorded_http,
+            _token_http=recorded_http,
             _now=fake_now,
             _sleep=lambda _s: None,
             _bucket=_fresh_bucket(mural_module),
@@ -432,6 +521,40 @@ def test_parse_rate_limit_drains_bucket_when_remaining_zero(mural_module: Any) -
     assert bucket.tokens == 0.0
 
 
+@pytest.mark.parametrize("code", [301, 302, 303, 307, 308])
+def test_api_no_redirect_handler_refuses_without_location_disclosure(
+    mural_module: Any, code: int
+) -> None:
+    import io
+    import urllib.request
+    from email.message import Message
+
+    request = urllib.request.Request(mural_module.MURAL_BASE_URL_DEFAULT)
+    headers = Message()
+    headers["Location"] = "https://example.invalid/sensitive"
+    with pytest.raises(mural_module.MuralAPIError) as excinfo:
+        mural_module._NoRedirect("API_REDIRECT", "Mural API request")._block(
+            request, io.BytesIO(), code, "redirect", headers
+        )
+    assert excinfo.value.code == "API_REDIRECT"
+    assert "example.invalid" not in str(excinfo.value)
+
+
+@pytest.mark.parametrize("code", [301, 302, 303, 307, 308])
+def test_sas_no_redirect_handler_refuses(mural_module: Any, code: int) -> None:
+    import io
+    import urllib.request
+    from email.message import Message
+
+    request = urllib.request.Request("https://blob.example.invalid")
+    headers = Message()
+    with pytest.raises(mural_module.MuralAPIError) as excinfo:
+        mural_module._NoRedirect("ASSET_UPLOAD_REDIRECT", "asset upload")._block(
+            request, io.BytesIO(), code, "redirect", headers
+        )
+    assert excinfo.value.code == "ASSET_UPLOAD_REDIRECT"
+
+
 # ---------------------------------------------------------------------------
 # Phase 4: response-body cap, Retry-After backoff, refresh-lock idempotency
 # ---------------------------------------------------------------------------
@@ -560,6 +683,7 @@ def test_apply_refresh_writes_int_now_when_expires_in_missing(
         "/workspaces",
         token_store_path=fake_token_store,
         _http=recorded_http,
+        _token_http=recorded_http,
         _now=fake_now,
         _sleep=lambda _s: None,
         _bucket=_fresh_bucket(mural_module),
@@ -602,6 +726,7 @@ def test_proactive_refresh_triggers_when_stored_expires_at_is_zero(
         "/workspaces",
         token_store_path=fake_token_store,
         _http=recorded_http,
+        _token_http=recorded_http,
         _now=fake_now,
         _sleep=lambda _s: None,
         _bucket=_fresh_bucket(mural_module),
@@ -710,6 +835,9 @@ def test_concurrent_401_responses_trigger_single_refresh(
 
     monkeypatch.setattr(mural_module, "_apply_refresh", _counting_apply_refresh)
 
+    def _token_http(*_args: Any, **_kwargs: Any) -> Any:
+        raise AssertionError("patched refresh must not use the token network")
+
     http_lock = threading.Lock()
     api_calls: list[str] = []
 
@@ -734,6 +862,7 @@ def test_concurrent_401_responses_trigger_single_refresh(
                 "/workspaces/ws-1",
                 token_store_path=fake_token_store,
                 _http=_http,
+                _token_http=_token_http,
                 _now=fake_now,
                 _sleep=lambda _s: None,
                 _bucket=_fresh_bucket(mural_module),
@@ -780,6 +909,9 @@ def test_concurrent_proactive_refreshes_coalesce(
 
     monkeypatch.setattr(mural_module, "_apply_refresh", _counting_apply_refresh)
 
+    def _token_http(*_args: Any, **_kwargs: Any) -> Any:
+        raise AssertionError("patched refresh must not use the token network")
+
     http_lock = threading.Lock()
     api_calls: list[str] = []
 
@@ -802,6 +934,7 @@ def test_concurrent_proactive_refreshes_coalesce(
                 "/workspaces/ws-1",
                 token_store_path=fake_token_store,
                 _http=_http,
+                _token_http=_token_http,
                 _now=fake_now,
                 _sleep=lambda _s: None,
                 _bucket=_fresh_bucket(mural_module),

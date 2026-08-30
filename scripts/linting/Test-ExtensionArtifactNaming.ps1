@@ -68,7 +68,6 @@ function Test-ExtensionArtifactNaming {
     param(
         [Parameter(Mandatory = $true)]
         [ValidateNotNullOrEmpty()]
-        [Alias('RepositoryRoot')]
         [string]$RepoRoot
     )
 

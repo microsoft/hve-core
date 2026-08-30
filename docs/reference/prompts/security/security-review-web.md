@@ -2,7 +2,13 @@
 title: security-review-web
 description: Run an OWASP Top 10 web vulnerability assessment without codebase profiling
 sidebar_position: 7
-ms.date: 2026-07-03
+author: Microsoft
+ms.date: 2026-08-12
+ms.topic: reference
+keywords:
+  - prompt
+  - security
+  - security-review-web
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->

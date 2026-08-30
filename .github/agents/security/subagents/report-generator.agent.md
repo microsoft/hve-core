@@ -7,9 +7,7 @@ tools:
   - search/fileSearch
   - read/readFile
 user-invocable: false
-model:
-  - Claude Haiku 4.5 (copilot)
-  - GPT-5.4 mini (copilot)
+model: GPT-5.6 Terra (copilot)
 ---
 
 # Report Generator
@@ -32,7 +30,7 @@ Collate verified findings from all skill assessments into a single vulnerability
 * Report date in ISO 8601 format (YYYY-MM-DD).
 * Comma-separated list of skill names assessed.
 * (Optional) Mode: `audit`, `diff`, or `plan`. Determines report format and filename pattern. Defaults to `audit`.
-* (Optional) Domain: `security` or `accessibility`. Determines report directory, filename pattern, and report format. Defaults to `security`. Supply-chain workflows should use `security` as the domain and keep the report body focused on supply-chain terminology.
+* (Optional) Domain: `security` or `accessibility`. Determines report directory, filename pattern, and report format. Defaults to `security`.
 * (Optional) Repository slug used in accessibility filenames (lowercase repository name with non-alphanumeric characters replaced by hyphens). Required when Domain is `accessibility`.
 * (Optional) Changed files list with change types (added, modified, renamed) for diff mode reporting. Included as an appendix in the generated report.
 * (Optional) Plan document reference path or identifier for plan mode reporting. Recorded in the report header.

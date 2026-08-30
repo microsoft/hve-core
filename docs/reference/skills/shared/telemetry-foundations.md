@@ -2,16 +2,22 @@
 title: telemetry-foundations
 description: "Declarative OpenTelemetry-aligned telemetry vocabulary and instrumentation conventions for traces, metrics, logs, and PII handling"
 sidebar_position: 3
-ms.date: 2026-07-03
+author: Microsoft
+ms.date: 2026-08-12
+ms.topic: reference
+keywords:
+  - skill
+  - shared
+  - telemetry-foundations
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->
-| Field       | Value                                         |
-|-------------|-----------------------------------------------|
-| Kind        | skill                                         |
-| Source      | `.github/skills/shared/telemetry-foundations` |
-| Invocation  | Loaded on demand by referencing agents        |
-| Interactive | No                                            |
+| Field       | Value                                                                                   |
+|-------------|-----------------------------------------------------------------------------------------|
+| Kind        | skill                                                                                   |
+| Source      | `.github/skills/shared/telemetry-foundations`                                           |
+| Invocation  | Invoked directly as `/telemetry-foundations`, or loaded on demand by referencing agents |
+| Interactive | No                                                                                      |
 <!-- END AUTO-GENERATED: metadata -->
 
 ## What it does

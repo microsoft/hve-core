@@ -14,7 +14,7 @@ tags:
   - agents
   - security
 author: Microsoft
-ms.date: 2026-06-27
+ms.date: 2026-08-20
 ms.topic: concept
 estimated_reading_time: 8
 ---
@@ -38,6 +38,8 @@ The Security Planner agent walks your team through a structured six-phase securi
 
 ```mermaid
 flowchart LR
+  accTitle: Security Planning Six-Phase Workflow
+  accDescr: Security planning moves from project scoping through bucket analysis, standards mapping, security modeling, backlog generation, and review handoff, with an optional RAI path for AI systems.
   subgraph Scoping
     A["Phase 1<br/>Project Scoping"]
   end
@@ -69,7 +71,7 @@ Classifies the application into seven operational buckets: infrastructure, DevOp
 
 ### Phase 3: Standards Mapping
 
-Maps each operational bucket to the relevant controls from OWASP Top 10, NIST 800-53, and CIS Benchmarks. The agent dispatches a Researcher Subagent for WAF and CAF runtime lookups when cloud-hosted components are in scope.
+Maps each operational bucket to the relevant controls from OWASP Top 10, NIST 800-53, and CIS Benchmarks. The agent activates `rpi-research` for WAF and CAF runtime lookups when cloud-hosted components are in scope.
 
 ### Phase 4: Security Model Analysis
 
@@ -125,7 +127,7 @@ The Security Planner supports two entry modes, each matched to a prompt file.
 ## Prerequisites
 
 * The Security Planner agent installed and enabled in your VS Code workspace.
-* The `Researcher Subagent` available for standards lookups in Phase 3.
+* The `rpi-research` skill available for standards lookups in Phase 3.
 * For From-PRD mode: PRD or BRD artifacts present under `.copilot-tracking/`.
 
 ## Next Steps
@@ -138,7 +140,7 @@ The Security Planner supports two entry modes, each matched to a prompt file.
 
 ## Related Agents
 
-* [Supply Chain Reviewer](supply-chain-reviewer) for an automated, evidence-verified supply-chain posture report in audit, diff, or plan mode.
+* [SSSC Reviewer](sssc-reviewer) for an automated, evidence-verified supply-chain posture report in audit, diff, or plan mode.
 
 <!-- markdownlint-disable MD036 -->
 *🤖 Crafted with precision by ✨Copilot following brilliant human instruction,

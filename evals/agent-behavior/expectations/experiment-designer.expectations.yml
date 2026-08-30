@@ -10,7 +10,7 @@ class: planner-coach
 agent_file: .github/agents/experimental/experiment-designer.agent.md
 stimulus_file: evals/agent-behavior/stimuli/experiment-designer.yml
 latest_result: evals/results/agent-matrix/2026-05-28/experiment-designer.json
-source_review_date: 2026-05-28
+source_review_date: 2026-08-03
 
 expectations:
   - expectation_id: mve-tracking-path
@@ -100,6 +100,23 @@ expectations:
       - Red flags listed but not tied to the experiment under design.
     priority: medium
     contract_ref: "agent §Phase 3: MVE Vetting and Red Flag Check (Vetting Criteria + Red Flag Checklist)"
+
+  - expectation_id: conditional-ml-skill-route
+    summary: Recorded machine-learning experiment type activates ML-specific depth without narrowing general coaching.
+    signal: Output names `experiment-design` and conditionally loads `ml-experimentation` from the persisted experiment type.
+    pass_criteria: |
+      General hypothesis, vetting, scope, and result work remains with
+      `experiment-design`. A recorded machine-learning experiment type loads
+      `ml-experimentation` at experiment-design entry for environments,
+      reproducibility, tracking, model evaluation, abstractions, and readiness.
+      If the conditional skill is unavailable, the response records the gap
+      and continues general coaching rather than claiming ML-specific depth.
+    failure_modes:
+      - Infers the domain without reading the recorded experiment type.
+      - Uses `experiment-design` as the owner of ML tracking infrastructure.
+      - Treats a missing conditional skill as a complete session blocker.
+    priority: high
+    contract_ref: "agent §Conditional Skill Map"
 
   - expectation_id: scope-and-timeline-bounded
     summary: Experiment design names a timeline in weeks and explicit out-of-scope items.

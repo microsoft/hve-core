@@ -2,7 +2,13 @@
 title: Rai Capture
 description: Start responsible AI assessment planning from existing knowledge using the RAI Planner agent in capture mode
 sidebar_position: 1
-ms.date: 2026-07-03
+author: Microsoft
+ms.date: 2026-08-12
+ms.topic: reference
+keywords:
+  - prompt
+  - rai-planning
+  - rai-capture
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->

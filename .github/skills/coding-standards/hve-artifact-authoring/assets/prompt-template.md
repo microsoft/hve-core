@@ -13,14 +13,27 @@ argument-hint: 'arg=... [option={a|b}]'
 
 ## Requirements
 
-1. When ${input:task} provided, use as primary task
-2. When ${input:option} provided, apply as constraint
+* Use `${input:task}` as the primary task.
+* Apply `${input:option}` only when provided.
+
+## Success Criteria
+
+* The result satisfies the task and selected option.
+* Validation evidence is included.
+
+## Stop Rules
+
+* Stop when required input or authority is missing.
 
 ## Steps
 
-1. Execute the primary workflow
-2. Validate results against requirements
-3. Present findings to user
+1. Execute the primary workflow.
+2. Validate results against requirements.
+3. Present the result and evidence.
+
+## Output
+
+Return changed artifacts, validation, blockers, and the next action.
 
 ---
 

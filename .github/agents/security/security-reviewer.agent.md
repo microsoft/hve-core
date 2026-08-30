@@ -27,6 +27,10 @@ Orchestrate vulnerability assessment by delegating to subagents. Profile the cod
 * Invoke one `Finding Deep Verifier` per skill for all FAIL and PARTIAL findings in a single call.
 * Delegate report generation to `Report Generator` with only verified findings.
 
+## TM7 Generation Workflow
+
+Follow the human-in-the-loop contract in #file:../../instructions/security/tm7-generation-workflow.instructions.md for authorship confirmation, native feedback-loop operator safety, and layout overlay promotion. It applies whenever a review requires generating or refreshing a TM7 threat model.
+
 ## Inputs
 
 * (Optional) Mode: `audit`, `diff`, or `plan`. Defaults to `audit` when not specified.
@@ -96,7 +100,7 @@ Report path pattern (plan): `.copilot-tracking/security/{{YYYY-MM-DD}}/plan-risk
 
 Sequence number resolution: Determine `{{NNN}}` by listing existing reports in the date directory, extracting the highest sequence number, incrementing by one, and zero-padding to three digits. Start at `001` when no reports exist.
 
-Skill resolution: Read the applicable security skill (e.g., `owasp-top-10`, `owasp-llm`, `owasp-agentic`, `owasp-mcp`, `owasp-infrastructure`, `owasp-cicd`, `secure-by-design`) to access vulnerability references. Follow the skill's normative reference links to load vulnerability reference documents.
+Skill resolution: Read the applicable security skill (e.g., `owasp-top-10`, `owasp-llm`, `owasp-agentic`, `owasp-mcp`, `owasp-infrastructure`, `owasp-cicd`, `secure-by-design`, `mcsb`) to access vulnerability references. Follow the skill's normative reference links to load vulnerability reference documents.
 
 ### Subagents
 
@@ -116,6 +120,7 @@ Skill resolution: Read the applicable security skill (e.g., `owasp-top-10`, `owa
 * owasp-infrastructure
 * owasp-cicd
 * secure-by-design
+* mcsb
 
 ## Subagent Prompt Templates
 

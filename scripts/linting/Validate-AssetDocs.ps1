@@ -62,7 +62,7 @@
 
 .NOTES
     Runs via: npm run lint:asset-docs
-    Dependencies: DocsHelpers, CollectionHelpers, and CIHelpers modules.
+    Dependencies: DocsHelpers, and CIHelpers modules.
 #>
 
 [CmdletBinding()]
@@ -94,12 +94,11 @@ $ErrorActionPreference = 'Stop'
 
 # Import the modules this script calls directly, highest-level first and
 # lowest-level last, so each -Force re-import re-scopes shared dependencies in
-# dependency order and every command used here (DocsHelpers, CollectionHelpers,
-# CIHelpers) resolves in this script's scope. DocsHelpers exposes the shared
+# dependency order and every command used here resolves in this script's scope.
+# DocsHelpers exposes the shared
 # render helpers (New-AssetPageModel, New-AssetMetadataBlock, New-AssetOverviewBody)
 # so the sync check renders exactly what the generator produces.
 Import-Module (Join-Path -Path $PSScriptRoot -ChildPath '../docs/Modules/DocsHelpers.psm1') -Force
-Import-Module (Join-Path -Path $PSScriptRoot -ChildPath '../collections/Modules/CollectionHelpers.psm1') -Force
 Import-Module (Join-Path -Path $PSScriptRoot -ChildPath 'Modules/LintingHelpers.psm1') -Force
 Import-Module (Join-Path -Path $PSScriptRoot -ChildPath '../lib/Modules/CIHelpers.psm1') -Force
 
@@ -373,7 +372,13 @@ function Test-AssetDocOrphan {
 function Test-AssetDocStructure {
     <#
     .SYNOPSIS
-        Verifies required headings and generated-region markers on a page.
+        Verifies required headings, canonical section order, and generated-region
+        markers on a page.
+    .DESCRIPTION
+        Reports a missing Required section, an applicable section that appears out
+        of the contract's canonical order, and a damaged generated-region marker
+        pair. Optional sections are only order-checked when the page includes
+        them, and NotApplicable sections are ignored.
     .PARAMETER Model
         Page model from New-AssetPageModel.
     .PARAMETER Content
@@ -390,14 +395,30 @@ function Test-AssetDocStructure {
 
     $findings = @()
 
-    $required = @('## What it does', '## When to use it', '## Example usage')
-    if ($Model.Interactive) {
-        $required += '## How to use it'
+    $present = [System.Collections.Generic.List[PSCustomObject]]::new()
+    foreach ($section in (Get-AssetDocSectionContract)) {
+        $status = Resolve-AssetDocSectionStatus -Section $section -Kind $Model.Kind -Interactive $Model.Interactive
+        if ($status -eq 'NotApplicable') {
+            continue
+        }
+
+        $heading = $section.Heading
+        $match = [regex]::Match($Content, '(?m)^' + [regex]::Escape($heading) + '\s*$')
+        if (-not $match.Success) {
+            if ($status -eq 'Required') {
+                $findings += New-AssetDocFinding -Level 'Error' -Category 'Structure' -Path $Model.DocRel -Message "Missing required section '$heading'."
+            }
+            continue
+        }
+
+        $present.Add([PSCustomObject]@{ Heading = $heading; Index = $match.Index })
     }
-    foreach ($heading in $required) {
-        $pattern = '(?m)^' + [regex]::Escape($heading) + '\s*$'
-        if ($Content -notmatch $pattern) {
-            $findings += New-AssetDocFinding -Level 'Error' -Category 'Structure' -Path $Model.DocRel -Message "Missing required section '$heading'."
+
+    # The contract declares canonical order, so a page that carries every heading
+    # in the wrong sequence must fail rather than pass an existence-only check.
+    for ($i = 1; $i -lt $present.Count; $i++) {
+        if ($present[$i].Index -lt $present[$i - 1].Index) {
+            $findings += New-AssetDocFinding -Level 'Error' -Category 'Structure' -Path $Model.DocRel -Message "Section '$($present[$i].Heading)' must appear after '$($present[$i - 1].Heading)' in canonical contract order."
         }
     }
 
@@ -444,7 +465,13 @@ function Test-AssetDocRegionSync {
             # Missing markers are reported by the structure check.
             continue
         }
-        if (-not [string]::Equals($split.Body, $region.Fresh, [System.StringComparison]::Ordinal)) {
+        # Normalize line endings before comparison. Committed pages check out as
+        # CRLF on Windows (git autocrlf) while the renderer emits LF, so an ordinal
+        # compare would report false drift. Line endings are a platform concern,
+        # not generated-content drift.
+        $actualBody = $split.Body -replace '\r\n', "`n" -replace '\r', "`n"
+        $expectedBody = $region.Fresh -replace '\r\n', "`n" -replace '\r', "`n"
+        if (-not [string]::Equals($actualBody, $expectedBody, [System.StringComparison]::Ordinal)) {
             $findings += New-AssetDocFinding -Level 'Error' -Category 'Sync' -Path $Model.DocRel -Message "Generated '$($region.Name)' region is out of sync; run npm run docs:generate."
         }
     }

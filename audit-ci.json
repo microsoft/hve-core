@@ -2,8 +2,18 @@
   "$schema": "https://github.com/IBM/audit-ci/raw/main/docs/schema.json",
   "moderate": true,
   "allowlist": [
-    "GHSA-9mqv-5hh9-4cgg",
-    "GHSA-v2hh-gcrm-f6hx"
+    {
+      "GHSA-5p2g-fcmc-qvqq": {
+        "active": true,
+        "notes": "No patched image-size release is available; Docusaurus 3.10.2 transitively requires image-size ^2.0.2."
+      }
+    },
+    {
+      "GHSA-w3rx-r6r6-pgpr": {
+        "active": true,
+        "notes": "No patched image-size release is available; Docusaurus 3.10.2 transitively requires image-size ^2.0.2."
+      }
+    }
   ],
   "report-type": "important",
   "output-format": "text"

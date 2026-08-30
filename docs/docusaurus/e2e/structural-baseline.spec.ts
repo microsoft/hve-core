@@ -31,5 +31,63 @@ test.describe('Structural baseline', () => {
         ).toBeLessThanOrEqual(1);
       }
     });
+
+    test(`${spec.name} labels footer column lists with their titles and exposes banner text`, async ({ page }) => {
+      await visitInvariantPage(page, spec);
+
+      const banner = page.locator('header').first();
+      if ((await banner.count()) > 0) {
+        await expect(banner).toBeVisible();
+        // A landmark's accessible name comes from aria-label or aria-labelledby.
+        // Landmark roles do not support name-from-content, so falling back to
+        // textContent asserted only that the header contains some text, which is
+        // always true. Resolve the name the way assistive technology does.
+        const accessibleName = await banner.evaluate((element) => {
+          const labelledBy = element.getAttribute('aria-labelledby');
+          if (labelledBy) {
+            return labelledBy
+              .split(/\s+/)
+              .map((id) => document.getElementById(id)?.textContent?.trim() ?? '')
+              .join(' ')
+              .trim();
+          }
+          return element.getAttribute('aria-label')?.trim() ?? '';
+        });
+        // A single banner per page needs no name to be distinguishable, so an
+        // absent name is conformant. A present-but-empty name is not: it
+        // announces an unnamed landmark.
+        const hasNamingAttribute = await banner.evaluate(
+          (element) => element.hasAttribute('aria-label') || element.hasAttribute('aria-labelledby'),
+        );
+        if (hasNamingAttribute) {
+          expect(
+            accessibleName,
+            `${spec.name}: the banner landmark declares a naming attribute that resolves to an empty accessible name`,
+          ).toMatch(/\S/);
+        }
+      }
+
+      const footerColumns = page.locator('.footer__col');
+      if ((await footerColumns.count()) === 0) {
+        test.skip(true, `${spec.name}: no footer columns are rendered.`);
+        return;
+      }
+
+      for (let index = 0; index < await footerColumns.count(); index += 1) {
+        const column = footerColumns.nth(index);
+        const title = column.locator('.footer__title').first();
+        await expect(title).toBeVisible();
+
+        const list = column.locator('ul.footer__items').first();
+        await expect(list).toBeVisible();
+        const labelledBy = await list.getAttribute('aria-labelledby');
+        expect(labelledBy, `${spec.name}: footer list ${index} should be labelled by its heading`).toBeTruthy();
+
+        if (labelledBy) {
+          const associatedHeading = page.locator(`#${labelledBy}`).first();
+          await expect(associatedHeading).toBeVisible();
+        }
+      }
+    });
   }
 });

@@ -1,0 +1,199 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "TM7 Agent Review Request",
+  "description": "Self-sufficient per-surface visual review payload emitted by the TM7 feedback harness for agent-assisted layout correction.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "surfaces",
+    "defect_classes",
+    "coordinate_translation",
+    "port_convention",
+    "overlay_seed_path",
+    "replay_command",
+    "agent_round"
+  ],
+  "properties": {
+    "surfaces": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "surface_id",
+          "surface_name",
+          "surface_guid",
+          "screenshot_path",
+          "uia_path",
+          "metrics_path",
+          "node_rects",
+          "predicted_connector_label_rects",
+          "connector_handles",
+          "zone_content_rects",
+          "boundary_rects",
+          "viewport_target",
+          "diagram_bounds",
+          "existing_findings",
+          "review_status"
+        ],
+        "properties": {
+          "surface_id": {
+            "type": "string"
+          },
+          "surface_name": {
+            "type": "string"
+          },
+          "surface_guid": {
+            "type": "string"
+          },
+          "screenshot_path": {
+            "type": "string"
+          },
+          "uia_path": {
+            "type": "string"
+          },
+          "metrics_path": {
+            "type": "string"
+          },
+          "node_rects": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "array",
+              "items": {
+                "type": "number"
+              },
+              "minItems": 4,
+              "maxItems": 4
+            }
+          },
+          "predicted_connector_label_rects": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "array",
+              "items": {
+                "type": "number"
+              },
+              "minItems": 4,
+              "maxItems": 4
+            }
+          },
+          "connector_handles": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["x", "y"],
+              "properties": {
+                "x": {
+                  "type": "number"
+                },
+                "y": {
+                  "type": "number"
+                }
+              }
+            }
+          },
+          "zone_content_rects": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "array",
+              "items": {
+                "type": "number"
+              },
+              "minItems": 4,
+              "maxItems": 4
+            }
+          },
+          "boundary_rects": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "array",
+              "items": {
+                "type": "number"
+              },
+              "minItems": 4,
+              "maxItems": 4
+            }
+          },
+          "viewport_target": {
+            "oneOf": [
+              {
+                "type": "array",
+                "items": {
+                  "type": "number"
+                },
+                "minItems": 4,
+                "maxItems": 4
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "diagram_bounds": {
+            "oneOf": [
+              {
+                "type": "array",
+                "items": {
+                  "type": "number"
+                },
+                "minItems": 4,
+                "maxItems": 4
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "existing_findings": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            }
+          },
+          "review_status": {
+            "type": "string",
+            "enum": ["pending"]
+          }
+        }
+      }
+    },
+    "defect_classes": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "coordinate_translation": {
+      "type": "string"
+    },
+    "port_convention": {
+      "type": "string"
+    },
+    "overlay_seed_path": {
+      "oneOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "replay_command": {
+      "oneOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "agent_round": {
+      "type": "integer",
+      "minimum": 0
+    }
+  }
+}

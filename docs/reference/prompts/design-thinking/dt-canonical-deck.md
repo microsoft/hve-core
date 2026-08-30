@@ -1,8 +1,14 @@
 ---
 title: Dt Canonical Deck
-description: "Canonical deck workflow: opt-in offer, snapshot generation/refresh, and optional customer-card PowerPoint build"
+description: "Canonical deck workflow: asset-ready offer, snapshot generation/refresh, and optional customer-card PowerPoint build"
 sidebar_position: 1
-ms.date: 2026-07-03
+author: Microsoft
+ms.date: 2026-08-12
+ms.topic: reference
+keywords:
+  - prompt
+  - design-thinking
+  - dt-canonical-deck
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->
@@ -17,7 +23,7 @@ ms.date: 2026-07-03
 ## What it does
 
 <!-- BEGIN AUTO-GENERATED: overview -->
-Canonical deck workflow: opt-in offer, snapshot generation/refresh, and optional customer-card PowerPoint build
+Canonical deck workflow: asset-ready offer, snapshot generation/refresh, and optional customer-card PowerPoint build
 <!-- END AUTO-GENERATED: overview -->
 
 ## When to use it

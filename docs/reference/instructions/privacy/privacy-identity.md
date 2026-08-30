@@ -2,7 +2,13 @@
 title: Privacy/Privacy Identity
 description: "Privacy Planner identity, six-phase orchestration, state management, and session recovery protocols"
 sidebar_position: 1
-ms.date: 2026-07-03
+author: Microsoft
+ms.date: 2026-08-12
+ms.topic: reference
+keywords:
+  - instruction
+  - privacy
+  - privacy/privacy-identity
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->

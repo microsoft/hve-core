@@ -1,8 +1,14 @@
 ---
 title: Dt Handoff Problem Space
-description: Problem Space exit handoff - compiles DT Methods 1-3 outputs into an RPI-ready artifact targeting Task Researcher
+description: Compiles DT Methods 1-3 into research-ready input for rpi-research at the Problem Space exit
 sidebar_position: 4
-ms.date: 2026-07-03
+author: Microsoft
+ms.date: 2026-08-12
+ms.topic: reference
+keywords:
+  - prompt
+  - design-thinking
+  - dt-handoff-problem-space
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->
@@ -17,7 +23,7 @@ ms.date: 2026-07-03
 ## What it does
 
 <!-- BEGIN AUTO-GENERATED: overview -->
-Problem Space exit handoff - compiles DT Methods 1-3 outputs into an RPI-ready artifact targeting Task Researcher
+Compiles DT Methods 1-3 into research-ready input for rpi-research at the Problem Space exit
 <!-- END AUTO-GENERATED: overview -->
 
 ## When to use it

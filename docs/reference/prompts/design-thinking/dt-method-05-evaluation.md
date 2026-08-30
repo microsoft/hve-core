@@ -2,7 +2,13 @@
 title: Dt Method 05 Evaluation
 description: Stakeholder alignment and three-lens evaluation for Design Thinking Method 5c
 sidebar_position: 9
-ms.date: 2026-07-03
+author: Microsoft
+ms.date: 2026-08-12
+ms.topic: reference
+keywords:
+  - prompt
+  - design-thinking
+  - dt-method-05-evaluation
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->

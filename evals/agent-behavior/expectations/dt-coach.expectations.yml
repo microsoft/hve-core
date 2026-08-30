@@ -29,32 +29,32 @@ expectations:
 
   - expectation_id: coaching-state-path
     summary: New DT projects report a coaching-state file under the project slug directory.
-    signal: Output names a path matching `.copilot-tracking/design-thinking-sessions/<project-slug>/coaching-state.md`.
+    signal: Output names a path matching `.copilot-tracking/dt/<project-slug>/coaching-state.md`.
     pass_criteria: |
       When the request initiates a new DT project, the response cites a
-      workspace-relative path under `.copilot-tracking/design-thinking-sessions/<project-slug>/` and
+      workspace-relative path under `.copilot-tracking/dt/<project-slug>/` and
       the named file is `coaching-state.md` (per §Session Management ›
       Starting a New Project).
     failure_modes:
-      - Reports a slug-less file like `.copilot-tracking/design-thinking-sessions/cafeteria-night-shift.md` directly under the `design-thinking-sessions/` root.
+      - Reports a slug-less file like `.copilot-tracking/dt/cafeteria-night-shift.md` directly under the `dt/` root.
       - Drops the `coaching-state.md` filename in favor of a generic `plan.md` or `scope.md`.
-      - Writes outside `.copilot-tracking/design-thinking-sessions/` (e.g. session-state temp dirs).
+      - Writes outside `.copilot-tracking/dt/` (e.g. session-state temp dirs).
     priority: high
     contract_ref: "agent §Session Management › Starting a New Project (`coaching-state.md`)"
 
   - expectation_id: project-slug-kebab-case
     summary: The project slug embedded in the path is kebab-case and matches the topic.
-    signal: Path segment after `.copilot-tracking/design-thinking-sessions/` is a single kebab-case identifier.
+    signal: Path segment after `.copilot-tracking/dt/` is a single kebab-case identifier.
     pass_criteria: |
-      The directory segment immediately under `.copilot-tracking/design-thinking-sessions/` matches
+      The directory segment immediately under `.copilot-tracking/dt/` matches
       `[a-z0-9]+(-[a-z0-9]+)*` and is derived from the user's topic (e.g.
       `cafeteria-night-shift`, `factory-floor-maintenance`).
     failure_modes:
       - Slug uses spaces, camelCase, or snake_case.
       - Slug is a generic placeholder like `project` or `dt-project`.
-      - No slug subdirectory (file written directly under `.copilot-tracking/design-thinking-sessions/`).
+      - No slug subdirectory (file written directly under `.copilot-tracking/dt/`).
     priority: medium
-    contract_ref: "agent §Session Management (slug under `.copilot-tracking/design-thinking-sessions/{project-slug}/`)"
+    contract_ref: "agent §Session Management (slug under `.copilot-tracking/dt/{project-slug}/`)"
 
   - expectation_id: nine-method-vocabulary
     summary: Method references use the agent's declared 9-method vocabulary.
@@ -100,22 +100,37 @@ expectations:
     applies_when: "response covers more than one method or phase"
     contract_ref: "agent §Required Phases (`Announce phase transitions briefly`)"
 
-  - expectation_id: canonical-deck-opt-in-on-new-project
-    summary: First-project responses include the canonical-deck opt-in checkpoint.
-    signal: Output asks the canonical-deck question verbatim or paraphrased.
+  - expectation_id: canonical-deck-no-premature-offer
+    summary: Project initiation does not offer canonical deck generation.
+    signal: Output contains no canonical-deck or customer-card offer on a new-project turn.
     pass_criteria: |
-      On a new-project initiation turn, the response asks the user whether to
-      enable the canonical deck and customer-card workflow (per §Phase 1 final
-      bullet, MANDATORY per `dt-canonical-deck.instructions.md`). Wording may
-      vary but must reference the canonical deck or customer-card workflow as
-      an opt-in.
+      On a new-project initiation turn, the response does not offer, ask about,
+      or enable canonical deck or customer-card generation. Offers are reserved
+      for the Method 3 and Method 5 exits and require the asset-readiness check
+      to pass, so no assets exist to render at initiation.
     failure_modes:
-      - Project initiated without asking the opt-in question.
-      - Opt-in deferred to a later turn without acknowledging the requirement.
-      - Workflow enabled silently without asking.
+      - Response asks the user to opt into the canonical deck workflow at project start.
+      - Response offers customer-card generation before any method output exists.
+      - Response enables the deck workflow silently at initiation.
     priority: medium
     applies_when: "stimulus starts a new DT project (no prior coaching-state file referenced)"
-    contract_ref: "agent §Phase 1 (canonical workflow opt-in checkpoint, MANDATORY)"
+    contract_ref: "agent §Canonical deck offers (`only at the Method 3 and Method 5 exits`)"
+
+  - expectation_id: canonical-deck-asset-ready-offer
+    summary: Method 3 and Method 5 exits gate the offer on asset readiness.
+    signal: Output either offers the deck after confirming readiness or states what is missing.
+    pass_criteria: |
+      At a Method 3 or Method 5 exit, the response either offers canonical deck
+      snapshot creation or refresh after confirming that method outputs map to a
+      supported canonical artifact type, or declines to offer and names the
+      missing artifacts. Either branch is a pass; an ungated offer is not.
+    failure_modes:
+      - Offer made without any reference to available method outputs or readiness.
+      - Readiness fails but the response offers generation anyway.
+      - Readiness passes but neither an offer nor a missing-artifact statement appears.
+    priority: medium
+    applies_when: "stimulus reaches a Method 3 or Method 5 exit"
+    contract_ref: "canonical-deck.md §Asset-Readiness Check; agent §Canonical deck offers"
 
   - expectation_id: no-doing-the-work
     summary: Scoping responses do not prescribe finished solutions for the user.
@@ -142,7 +157,7 @@ expectations:
       - Coach claims to modify source files as part of a scoping turn.
       - Coach edits `package.json` to add DT-related scripts.
     priority: medium
-    contract_ref: "agent scope (coaching writes are confined to `.copilot-tracking/design-thinking-sessions/` per §Session Management)"
+    contract_ref: "agent scope (coaching writes are confined to `.copilot-tracking/dt/` per §Session Management)"
 
   - expectation_id: stimulus-topic-fidelity
     summary: Output substantively addresses the stimulus's DT scoping topic.

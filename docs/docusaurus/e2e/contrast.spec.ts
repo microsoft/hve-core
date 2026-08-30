@@ -1,7 +1,7 @@
 // Copyright (c) 2026 Microsoft Corporation. All rights reserved.
 // SPDX-License-Identifier: MIT
 import { test, expect } from '@playwright/test';
-import { SITE_PAGES, visitInvariantPage } from './_helpers/a11yInvariants';
+import { SITE_PAGES, openSearchWidget, visitInvariantPage, waitForHydration } from './_helpers/a11yInvariants';
 
 function parseColor(color: string): { r: number; g: number; b: number; a: number } | null {
   const match = color.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)(?:,\s*([\d.]+))?\)/i);
@@ -107,19 +107,41 @@ test.describe('Contrast measurement gates', () => {
       const count = await proseLinks.count();
       test.skip(count === 0, 'No in-content prose links on this page.');
 
-      const link = proseLinks.first();
-      await expect(link).toBeVisible();
+      // SC 1.4.1 is a per-link guarantee, so every prose link is measured rather
+      // than a single sample. A link satisfies the criterion when it carries a
+      // visible underline, or when it is distinguishable from surrounding text
+      // by a non-color means (weight or style) in addition to color.
+      const offenders = await proseLinks.evaluateAll((elements) =>
+        elements
+          .map((element) => {
+            const computed = window.getComputedStyle(element);
+            const parent = element.parentElement
+              ? window.getComputedStyle(element.parentElement)
+              : null;
+            const underlined = /underline/i.test(computed.textDecorationLine);
+            const weightDelta = parent
+              ? Math.abs(
+                Number.parseInt(computed.fontWeight || '400', 10)
+                  - Number.parseInt(parent.fontWeight || '400', 10),
+              )
+              : 0;
+            const styleDelta = parent ? computed.fontStyle !== parent.fontStyle : false;
+            const nonColorCue = underlined || weightDelta >= 300 || styleDelta;
+            return nonColorCue
+              ? null
+              : {
+                text: (element.textContent || '').trim().slice(0, 40),
+                decoration: computed.textDecorationLine,
+                fontWeight: computed.fontWeight,
+              };
+          })
+          .filter(Boolean),
+      );
 
-      const style = await link.evaluate((element) => {
-        const computed = window.getComputedStyle(element);
-        return {
-          textDecorationLine: computed.textDecorationLine,
-          textDecorationStyle: computed.textDecorationStyle,
-          textDecorationColor: computed.textDecorationColor,
-        };
-      });
-
-      expect(style.textDecorationLine, `${pageCase.name} should render a visible underline for content links`).toMatch(/underline/i);
+      expect(
+        offenders,
+        `${pageCase.name} has prose links distinguished by color alone: ${JSON.stringify(offenders)}`,
+      ).toEqual([]);
     });
   }
 
@@ -152,6 +174,92 @@ test.describe('Contrast measurement gates', () => {
         placeholderRatio,
         `${describeContrastCase('Search input placeholder', '.navbar__search-input', '::placeholder')} should meet SC 1.4.3 AA (${threshold}:1) in ${mode} mode`,
       ).toBeGreaterThanOrEqual(threshold);
+    }
+  });
+
+  test('measures the selected search result contrast in light and dark mode', async ({ page }) => {
+    await page.goto('/hve-core/docs/getting-started/', { waitUntil: 'domcontentloaded' });
+    await waitForHydration(page);
+
+    const toggle = page.getByRole('button', { name: /switch between dark and light mode/i });
+    await expect(toggle).toBeVisible();
+
+    for (const mode of ['light', 'dark'] as const) {
+      if (mode === 'dark') {
+        await toggle.click();
+        await page.keyboard.press('Enter');
+        await expect.poll(async () => page.locator('html').getAttribute('data-theme')).toBe('dark');
+      }
+
+      const searchInput = await openSearchWidget(page);
+      await searchInput.fill('getting');
+      await expect(page.locator('[role="listbox"] [role="option"]').first()).toBeVisible({ timeout: 15000 });
+
+      // Rove the selection onto the first option so the measured state is the one
+      // a keyboard user actually reads.
+      await searchInput.press('ArrowDown');
+      const selected = page.locator('[role="option"][aria-selected="true"]').first();
+      await expect(selected).toHaveCount(1);
+
+      const option = await measureContrast(page, '[role="option"][aria-selected="true"]');
+      const optionRatio = calculateContrastRatio(option.foreground, option.backgroundColor);
+      expect(
+        optionRatio,
+        `${describeContrastCase('Selected search result', '[role="option"][aria-selected="true"]')} should meet SC 1.4.3 AA (4.5:1) in ${mode} mode`,
+      ).toBeGreaterThanOrEqual(4.5);
+
+      // The matched term is a <mark> descendant that upstream paints in its own
+      // color. A container-only measurement misses it entirely, and the defect
+      // was the mark resolving to the option's own background.
+      const markCount = await page.locator('[role="option"][aria-selected="true"] mark').count();
+      expect(markCount, 'the query should highlight a matched term inside the selected option').toBeGreaterThan(0);
+
+      const mark = await measureContrast(page, '[role="option"][aria-selected="true"] mark');
+      const markRatio = calculateContrastRatio(mark.foreground, mark.backgroundColor);
+      expect(
+        markRatio,
+        `${describeContrastCase('Selected search result matched term', '[role="option"][aria-selected="true"] mark')} should meet SC 1.4.3 AA (4.5:1) in ${mode} mode`,
+      ).toBeGreaterThanOrEqual(4.5);
+
+      // SC 1.4.1: the match must stay distinguishable from adjacent option text by
+      // something other than color, so the affordance survives for users who
+      // cannot perceive the color difference. Compared against a sibling text run
+      // rather than the background, which would pass even if the mark became
+      // indistinguishable from its neighbors.
+      const distinction = await page.evaluate(() => {
+        const markNode = document.querySelector('[role="option"][aria-selected="true"] mark');
+        if (!markNode || !markNode.parentElement) {
+          return null;
+        }
+        const siblingText = Array.from(markNode.parentElement.childNodes).find(
+          (node) => node.nodeType === Node.TEXT_NODE && (node.textContent || '').trim().length > 0,
+        );
+        if (!siblingText) {
+          return null;
+        }
+        const markStyle = window.getComputedStyle(markNode);
+        const parentStyle = window.getComputedStyle(markNode.parentElement);
+        return {
+          markWeight: markStyle.fontWeight,
+          siblingWeight: parentStyle.fontWeight,
+          markDecoration: markStyle.textDecorationLine,
+          siblingDecoration: parentStyle.textDecorationLine,
+          markStyleName: markStyle.fontStyle,
+          siblingStyleName: parentStyle.fontStyle,
+        };
+      });
+
+      expect(distinction, 'the selected option should contain a matched term beside plain text').not.toBeNull();
+      const differsByNonColor =
+        distinction!.markWeight !== distinction!.siblingWeight ||
+        distinction!.markDecoration !== distinction!.siblingDecoration ||
+        distinction!.markStyleName !== distinction!.siblingStyleName;
+      expect(
+        differsByNonColor,
+        `The matched term must differ from adjacent option text by a non-color property in ${mode} mode: ${JSON.stringify(distinction)}`,
+      ).toBe(true);
+
+      await searchInput.press('Escape');
     }
   });
 

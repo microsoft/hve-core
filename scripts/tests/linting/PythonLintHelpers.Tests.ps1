@@ -52,6 +52,50 @@ Describe 'Get-PythonSkill' -Tag 'Unit' {
             $result.Count | Should -Be 1
             ($result -join ';') | Should -Not -Match 'node_modules'
         }
+
+        It 'Excludes pyproject.toml under the repository-root plugins generated output' {
+            $repo = Join-Path $TestDrive 'repo-with-generated-plugins'
+            $skill = Join-Path $repo '.github/skills/security/vex'
+            $generated = Join-Path $repo 'plugins/hve-core/skills/security/vex'
+            New-Item -ItemType Directory -Path $skill -Force | Out-Null
+            New-Item -ItemType Directory -Path $generated -Force | Out-Null
+            Set-Content -Path (Join-Path $skill 'pyproject.toml') -Value ''
+            Set-Content -Path (Join-Path $generated 'pyproject.toml') -Value ''
+
+            $result = Get-PythonSkill -RepoRoot $repo
+
+            $result.Count | Should -Be 1
+            ($result -join ';') | Should -Not -Match '[\\/]plugins[\\/]'
+            ($result -join ';') | Should -Match 'skills[\\/]security[\\/]vex$'
+        }
+
+        It 'Includes root directories whose names merely contain plugins' {
+            $repo = Join-Path $TestDrive 'repo-with-plugins-lookalike'
+            $lookalike = Join-Path $repo 'plugins-archive'
+            $prefixed = Join-Path $repo 'myplugins'
+            New-Item -ItemType Directory -Path $lookalike -Force | Out-Null
+            New-Item -ItemType Directory -Path $prefixed -Force | Out-Null
+            Set-Content -Path (Join-Path $lookalike 'pyproject.toml') -Value ''
+            Set-Content -Path (Join-Path $prefixed 'pyproject.toml') -Value ''
+
+            $result = Get-PythonSkill -RepoRoot $repo
+
+            $result.Count | Should -Be 2
+            ($result -join ';') | Should -Match 'plugins-archive'
+            ($result -join ';') | Should -Match 'myplugins'
+        }
+
+        It 'Includes pyproject.toml under a plugins directory below the repository root' {
+            $repo = Join-Path $TestDrive 'repo-with-nested-plugins'
+            $nested = Join-Path $repo 'docs/plugins/sample'
+            New-Item -ItemType Directory -Path $nested -Force | Out-Null
+            Set-Content -Path (Join-Path $nested 'pyproject.toml') -Value ''
+
+            $result = Get-PythonSkill -RepoRoot $repo
+
+            $result.Count | Should -Be 1
+            ($result -join ';') | Should -Match 'docs[\\/]plugins[\\/]sample$'
+        }
     }
 
     Context 'When repository contains no pyproject.toml files' {

@@ -1,23 +1,29 @@
 ---
 title: security-planning
-description: "Security planning reference set for operational buckets, STRIDE analysis, standards mapping, NIST control families, and backlog scaffolding."
-sidebar_position: 5
-ms.date: 2026-07-03
+description: "Security planning reference set for operational buckets, STRIDE analysis, standards mapping, NIST control families, backlog scaffolding, and deterministic TM7 (.tm7) plus markdown dual-output generation."
+sidebar_position: 15
+author: Microsoft
+ms.date: 2026-08-21
+ms.topic: reference
+keywords:
+  - skill
+  - project-planning
+  - security-planning
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->
-| Field       | Value                                               |
-|-------------|-----------------------------------------------------|
-| Kind        | skill                                               |
-| Source      | `.github/skills/project-planning/security-planning` |
-| Invocation  | Loaded on demand by referencing agents              |
-| Interactive | No                                                  |
+| Field       | Value                                                                               |
+|-------------|-------------------------------------------------------------------------------------|
+| Kind        | skill                                                                               |
+| Source      | `.github/skills/project-planning/security-planning`                                 |
+| Invocation  | Invoked directly as `/security-planning`, or loaded on demand by referencing agents |
+| Interactive | No                                                                                  |
 <!-- END AUTO-GENERATED: metadata -->
 
 ## What it does
 
 <!-- BEGIN AUTO-GENERATED: overview -->
-Security planning reference set for operational buckets, STRIDE analysis, standards mapping, NIST control families, and backlog scaffolding.
+Security planning reference set for operational buckets, STRIDE analysis, standards mapping, NIST control families, backlog scaffolding, and deterministic TM7 (.tm7) plus markdown dual-output generation.
 <!-- END AUTO-GENERATED: overview -->
 
 ## When to use it

@@ -1,23 +1,29 @@
 ---
 title: rpi-plan
-description: Create implementation-ready planning artifacts and validation evidence for RPI tasks.
-sidebar_position: 2
-ms.date: 2026-07-03
+description: "Create evidence-based RPI plans and phase details from supplied context, research, drafts, and decisions. Use when implementation planning is needed."
+sidebar_position: 4
+author: Microsoft
+ms.date: 2026-08-12
+ms.topic: reference
+keywords:
+  - skill
+  - rpi
+  - rpi-plan
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->
-| Field       | Value                                  |
-|-------------|----------------------------------------|
-| Kind        | skill                                  |
-| Source      | `.github/skills/rpi/rpi-plan`          |
-| Invocation  | Loaded on demand by referencing agents |
-| Interactive | No                                     |
+| Field       | Value                                                                      |
+|-------------|----------------------------------------------------------------------------|
+| Kind        | skill                                                                      |
+| Source      | `.github/skills/rpi/rpi-plan`                                              |
+| Invocation  | Invoked directly as `/rpi-plan`, or loaded on demand by referencing agents |
+| Interactive | No                                                                         |
 <!-- END AUTO-GENERATED: metadata -->
 
 ## What it does
 
 <!-- BEGIN AUTO-GENERATED: overview -->
-Create implementation-ready planning artifacts and validation evidence for RPI tasks.
+Create evidence-based RPI plans and phase details from supplied context, research, drafts, and decisions. Use when implementation planning is needed.
 <!-- END AUTO-GENERATED: overview -->
 
 ## When to use it

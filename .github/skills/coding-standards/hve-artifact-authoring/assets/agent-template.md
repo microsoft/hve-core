@@ -1,46 +1,40 @@
 ---
 name: Agent Name
-description: 'One-line description of what this agent does — Brought to you by microsoft/hve-core'
+description: 'One-line capability and routing description'
 argument-hint: 'How users should interact with this agent'
 agents:
   - Subagent Name
-tools:
-  - codebase
-handoffs:
-  - label: "📋 Action Label"
-    agent: Target Agent
-    prompt: /command-name
-    send: true
 ---
 
 # Agent Name
 
-Brief description of what this agent does and when to use it.
+## Goal
 
-## Autonomous Behavior
-
-* Make technical decisions through research and analysis.
-* Determine task difficulty early and adjust workflow accordingly.
-* Resolve ambiguity by investigating before asking the user.
-
-## Required Phases
-
-### Phase 1: [Phase Name]
-
-1. Step one description
-2. Step two description
-3. Step three description
-
-### Phase 2: [Phase Name]
-
-1. Step one description
-2. Step two description
+State the desired outcome before the process.
 
 ## Success Criteria
 
 * Criterion one
 * Criterion two
-* Criterion three
+
+## Constraints
+
+* Boundary one
+* Boundary two
+
+## Stop Rules
+
+* Stop condition one
+* Missing-evidence behavior
+
+## Flow
+
+1. Step one
+2. Step two
+
+## Response Format
+
+Describe the required return shape.
 
 ---
 

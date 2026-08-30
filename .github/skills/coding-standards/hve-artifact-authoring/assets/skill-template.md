@@ -1,37 +1,49 @@
 ---
 name: skill-name
-description: 'Brief description of what this skill does, 1-1024 characters'
-user-invocable: true
+description: 'Brief capability and activation description'
 argument-hint: '[input=...] [option=value]'
+license: MIT
+user-invocable: true
 ---
 
 # Skill Name
 
-## What is This Skill?
+## Goal
 
-Brief description of purpose and use case.
+State the desired outcome.
 
-## Use Cases
+## Flow
 
-* Use case one
-* Use case two
+1. Step one.
+2. Step two.
 
-## Requirements
+## Inputs
 
-* Prerequisite one
-* Prerequisite two
+* Required input
+* Optional constraint
 
-## Usage
+## Success Criteria
 
-How to invoke and use the skill.
+* Criterion one
+* Criterion two
 
-## Examples
+## Constraints
 
-Concrete usage examples with expected output.
+* Boundary one
+* Boundary two
 
-## Troubleshooting
+## Stop Rules
 
-Common issues and solutions.
+* Stop condition one
+* Missing-evidence behavior
+
+## Handoff
+
+Describe the next owner or state.
+
+## Final Response Contract
+
+Describe the required return shape.
 
 ---
 

@@ -2,7 +2,13 @@
 title: Code Review PR
 description: Thin skill-backed orientation detailer that turns a precomputed diff into a factual Register 1 walkthrough plus dispatch-board appendices within the orientation-first review workflow
 sidebar_position: 4
-ms.date: 2026-07-05
+author: Microsoft
+ms.date: 2026-08-12
+ms.topic: reference
+keywords:
+  - agent
+  - coding-standards
+  - code-review-pr
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->

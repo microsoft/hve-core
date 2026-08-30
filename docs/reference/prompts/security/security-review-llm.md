@@ -2,7 +2,13 @@
 title: security-review-llm
 description: Run OWASP LLM and Agentic vulnerability assessments with codebase profiling
 sidebar_position: 5
-ms.date: 2026-07-03
+author: Microsoft
+ms.date: 2026-08-12
+ms.topic: reference
+keywords:
+  - prompt
+  - security
+  - security-review-llm
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->

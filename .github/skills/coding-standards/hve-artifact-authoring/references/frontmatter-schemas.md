@@ -1,85 +1,85 @@
 ---
-description: 'Frontmatter field reference for agents, prompts, instructions, skills, and collection manifests'
+description: 'Current frontmatter field reference for HVE Core agents, prompts, instructions, and skills'
 ---
 
 # Frontmatter Schema Reference
 
-## Agent Frontmatter (`agent-frontmatter.schema.json`)
+Use the repository schemas as the validation authority. This reference summarizes the supported
+field boundaries that most often affect artifact design.
 
-| Field                      | Type                             | Required | Notes                                      |
-|----------------------------|----------------------------------|----------|--------------------------------------------|
-| `description`              | string (minLength 1)             | **Yes**  | Shown as placeholder in chat input         |
-| `name`                     | string                           | No       | Defaults to filename                       |
-| `argument-hint`            | string                           | No       | Guidance text in chat input                |
-| `agents`                   | array of strings OR `"*"`        | No       | Allowed subagents; `"*"` = all             |
-| `tools`                    | array of strings                 | No       | Available tools (builtin, MCP, extensions) |
-| `model`                    | string OR array of strings       | No       | Model override                             |
-| `target`                   | `"vscode"` or `"github-copilot"` | No       | Execution target                           |
-| `handoffs`                 | array of handoff objects         | No       | Agent delegation buttons                   |
-| `user-invocable`           | boolean                          | No       | Default: true                              |
-| `disable-model-invocation` | boolean                          | No       | Default: false                             |
-| `mcp-servers`              | array of MCP server configs      | No       | MCP server declarations                    |
+## Shared Requirements
 
-### Handoff Object
+* Frontmatter is the first content in the file and uses `---` delimiters.
+* `description` is required and states capability plus routing intent.
+* Fields belong only to the artifact types named below.
+* Omit optional fields rather than adding empty placeholders.
 
-```yaml
-handoffs:
-  - label: "Button Label"        # Required: UI button text
-    agent: Target Agent Name     # Required: agent to hand off to
-    prompt: "/command args"      # Optional: prompt to send
-    send: true                   # Optional: auto-send (default: false)
-```
+## Agent Frontmatter
 
-## Prompt Frontmatter (`prompt-frontmatter.schema.json`)
+| Field                      | Required | Purpose                                              |
+|----------------------------|----------|------------------------------------------------------|
+| `name`                     | Yes      | Human-readable picker and dispatch identity          |
+| `description`              | Yes      | Capability and parent-routing metadata               |
+| `argument-hint`            | No       | User invocation guidance                             |
+| `agents`                   | No       | Fixed subagent allowlist; omit for unrestricted use  |
+| `tools`                    | No       | User-managed opaque tool configuration               |
+| `model`                    | No       | One scalar model selection                           |
+| `handoffs`                 | No       | User-mediated transitions                            |
+| `user-invocable`           | No       | Picker visibility; false for background-only workers |
+| `disable-model-invocation` | No       | Prevents model-driven invocation of an orchestrator  |
+| `target`                   | No       | Host execution target                                |
+| `mcp-servers`              | No       | MCP server declarations                              |
+| `hooks`                    | No       | Preview lifecycle hooks                              |
 
-| Field           | Type                 | Required | Notes                             |
-|-----------------|----------------------|----------|-----------------------------------|
-| `description`   | string (1-200 chars) | **Yes**  | Workflow description              |
-| `name`          | string               | No       | Used after "/" in chat            |
-| `agent`         | string               | No       | Named custom agent to delegate to |
-| `argument-hint` | string               | No       | Argument guidance                 |
-| `model`         | string               | No       | Model override                    |
-| `tools`         | array of strings     | No       | Available tools                   |
+Use `agents: []` when nested dispatch is prohibited. Do not use an array for an agent or subagent
+`model` value.
 
-## Instruction Frontmatter (`instruction-frontmatter.schema.json`)
+## Prompt Frontmatter
 
-| Field         | Type                  | Required | Notes                          |
-|---------------|-----------------------|----------|--------------------------------|
-| `description` | string (minLength 1)  | **Yes**  | Target and scope               |
-| `name`        | string                | No       | Defaults to filename           |
-| `applyTo`     | string (glob pattern) | No       | Auto-application file matching |
+| Field           | Required | Purpose                                         |
+|-----------------|----------|-------------------------------------------------|
+| `description`   | Yes      | Capability and slash-command routing metadata   |
+| `name`          | No       | Explicit slash-command name                     |
+| `agent`         | No       | Named custom agent that receives the prompt     |
+| `argument-hint` | No       | Parameter guidance                              |
+| `model`         | No       | Scalar model or supported ordered fallback list |
+| `tools`         | No       | Prompt-specific tool configuration              |
 
-## Skill Frontmatter (`skill-frontmatter.schema.json`)
+A prompt's tool list overrides the referenced agent's list. Add it only when that narrowing is
+intentional.
 
-| Field                      | Type                  | Required | Notes                       |
-|----------------------------|-----------------------|----------|-----------------------------|
-| `name`                     | string (kebab-case)   | **Yes**  | Lowercase with hyphens      |
-| `description`              | string (1-1024 chars) | **Yes**  | Brief description           |
-| `user-invocable`           | boolean               | No       | Default: true               |
-| `disable-model-invocation` | boolean               | No       | Default: false              |
-| `argument-hint`            | string                | No       | Argument hints              |
-| `license`                  | string                | No       | SPDX license identifier     |
-| `compatibility`            | string                | No       | Runtime requirements        |
-| `metadata`                 | object                | No       | Authors, spec_version, etc. |
+## Instruction Frontmatter
 
-## Collection Manifest (`collection-manifest.schema.json`)
+| Field         | Required | Purpose                                 |
+|---------------|----------|-----------------------------------------|
+| `description` | Yes      | Convention and scope summary            |
+| `applyTo`     | Yes      | Glob selecting files that receive rules |
+| `name`        | No       | Optional display metadata               |
 
-| Field              | Type                            | Required | Notes                                              |
-|--------------------|---------------------------------|----------|----------------------------------------------------|
-| `id`               | string (pattern `^[a-z0-9-]+$`) | **Yes**  | Unique ID                                          |
-| `name`             | string (minLength 1)            | **Yes**  | Display name                                       |
-| `description`      | string (minLength 1)            | **Yes**  | Brief description                                  |
-| `items`            | array (minItems 1)              | **Yes**  | Artifact references                                |
-| `maturity`         | enum                            | No       | stable, preview, experimental, deprecated, removed |
-| `tags`             | array of strings                | No       | Discovery tags                                     |
-| `display.ordering` | `"alpha"` or `"manual"`         | No       | Default: alpha                                     |
+Keep durable project-wide facts in root instructions and path-specific conventions in scoped
+instruction files.
 
-### Item Object
+## Skill Frontmatter
 
-```yaml
-items:
-  - path: .github/agents/collection-id/name.agent.md   # Required
-    kind: agent                                          # Required: agent|prompt|instruction|skill|hook
-    usage: "Usage guidance text"                         # Optional
-    maturity: stable                                     # Optional: overrides collection maturity
-```
+| Field            | Required | Purpose                                           |
+|------------------|----------|---------------------------------------------------|
+| `name`           | Yes      | Lowercase kebab-case name matching the directory  |
+| `description`    | Yes      | Capability and semantic activation metadata       |
+| `argument-hint`  | No       | User invocation guidance                          |
+| `license`        | No       | SPDX license expression                           |
+| `user-invocable` | No       | Slash-command visibility                          |
+| `compatibility`  | No       | Runtime or environment requirements               |
+| `metadata`       | No       | Authors, specification version, and related facts |
+
+Skill frontmatter does not declare `tools`, `model`, `agent`, `handoffs`, or `applyTo`. Put reusable
+scripts, references, templates, and assets beneath the skill root and reference them with relative
+paths.
+
+## Validation
+
+Run the applicable current repository checks:
+
+* `npm run lint:frontmatter`
+* `npm run validate:skills` for skill changes
+* `npm run plugin:sync` and `npm run plugin:validate` for distributable membership changes
+* `npm run docs:generate` and `npm run docs:generate:check` for documentable artifacts

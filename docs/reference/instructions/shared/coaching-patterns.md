@@ -2,7 +2,13 @@
 title: Shared/Coaching Patterns
 description: "Shared exploration-first coaching patterns for planning agents (RAI, security, SSSC, Privacy) adapted from Design Thinking research methods"
 sidebar_position: 1
-ms.date: 2026-07-03
+author: Microsoft
+ms.date: 2026-08-12
+ms.topic: reference
+keywords:
+  - instruction
+  - shared
+  - shared/coaching-patterns
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->

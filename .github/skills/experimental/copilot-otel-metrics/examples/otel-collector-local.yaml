@@ -1,0 +1,152 @@
+# OpenTelemetry Collector configuration for the local Copilot stack.
+#
+# The only OTLP listener published on the host. LGTM has no host OTLP mapping,
+# so nothing reaches storage without passing the policy declared here.
+#
+# Requires the OpenTelemetry Collector Contrib distribution; the redaction
+# processor is not in the core distribution.
+#
+# Policy rationale, carrier coverage, and residual gaps: SECURITY.md and
+# references/local-stack.md.
+
+receivers:
+  otlp:
+    protocols:
+      # Bound to the container interface. Host exposure is decided by the
+      # loopback port mappings in compose.yaml, not here.
+      http:
+        endpoint: 0.0.0.0:4318
+      grpc:
+        endpoint: 0.0.0.0:4317
+
+processors:
+  # Bounds Collector memory so a traffic spike degrades rather than crashes it.
+  memory_limiter:
+    check_interval: 1s
+    limit_percentage: 80
+    spike_limit_percentage: 20
+
+  # Fail-closed attribute minimization. allow_all_keys: false makes
+  # allowed_keys authoritative, so an unlisted attribute is dropped rather
+  # than stored. blocked_values is a second pass that masks credential shapes
+  # in the values that survive.
+  redaction:
+    allow_all_keys: false
+    allowed_keys:
+      # Resource identity. Dropping these would orphan every span.
+      - service.name
+      - service.namespace
+      - service.version
+      - telemetry.sdk.language
+      - telemetry.sdk.name
+      - telemetry.sdk.version
+      # Model and token accounting. The token panels read these directly.
+      - gen_ai.provider.name
+      - gen_ai.operation.name
+      - gen_ai.request.model
+      - gen_ai.response.model
+      - gen_ai.response.finish_reasons
+      - gen_ai.usage.input_tokens
+      - gen_ai.usage.output_tokens
+      - gen_ai.usage.cache_read.input_tokens
+      # The token panels group by this. Prometheus stores it as the
+      # gen_ai_token_type label; dropping it collapsed input and output tokens
+      # into one indistinguishable series.
+      - gen_ai.token.type
+      # Read by baseline.py through the session_id label; it discriminates
+      # injected series from real ones.
+      - session.id
+      # Agent and tool identity. Names only; arguments and results are not
+      # allowed and therefore cannot reach storage.
+      - gen_ai.agent.name
+      - gen_ai.tool.name
+      - gen_ai.tool.type
+      - copilot_chat.mode_name
+      - copilot_chat.turn_count
+      - copilot_chat.copilot_usage_nano_aiu
+      - github.copilot.agent.type
+      # Both spellings normalize to the copilot_chat_edit_source label and
+      # normalization is not reversible, so both are allowed. Unresolved gap:
+      # SECURITY.md.
+      - copilot_chat.edit_source
+      - copilot_chat.edit.source
+      # Failure triage without failure content.
+      - error.type
+    # Masked rather than dropped, so a panel keeps its shape. Recognizable
+    # shapes only; a credential with no distinctive prefix passes. See
+    # SECURITY.md.
+    blocked_values:
+      - "gh[pousr]_[0-9A-Za-z]{16,}"
+      - "github_pat_[0-9A-Za-z_]{20,}"
+      - "xox[baprs]-[0-9A-Za-z-]{10,}"
+      # Temporary credentials use the ASIA prefix; AKIA alone missed them.
+      - "A(?:KIA|SIA)[0-9A-Z]{16}"
+      # An unsigned token carries the same payload, so the third segment may
+      # legitimately be empty.
+      - "eyJ[0-9A-Za-z_-]{10,}\\.[0-9A-Za-z_-]{10,}\\.[0-9A-Za-z_-]*"
+      # Azure connection-string secrets.
+      - "(?i)(?:AccountKey|SharedAccessKey|SharedAccessSignature)=[0-9A-Za-z+/=%&-]{16,}"
+      # Provider API keys in the shapes most likely to be pasted into a chat.
+      - "sk-(?:ant-)?[0-9A-Za-z_-]{20,}"
+      - "AIza[0-9A-Za-z_-]{35}"
+      - "(?i)-----BEGIN [A-Z ]*PRIVATE KEY-----"
+      - "(?i)\\b(?:bearer|authorization|api[_-]?key|secret|password)\\b\\s*[:=]\\s*\\S+"
+    # Silent so the processor does not annotate telemetry with the names of the
+    # keys it removed, which would reintroduce the drift it exists to stop.
+    summary: silent
+
+  # Carriers the redaction processor cannot reach. redaction traverses
+  # attribute maps only, so span status messages, span event names, trace
+  # state, and non-map log bodies are overwritten here.
+  #
+  # Invariant: a carrier the allow-list does not reach is scrubbed unless a
+  # shipped consumer reads it. Span names and metric metadata are therefore
+  # absent, as are carriers this distribution cannot address. Both residual
+  # kinds are registered in SECURITY.md.
+  #
+  # error_mode: ignore is deliberate and fail-open per statement: a statement
+  # that errors on one record shape is skipped for that record, which is what
+  # lets a map-valued log body keep its allow-listed subset.
+  transform/scrub:
+    error_mode: ignore
+    trace_statements:
+      - set(span.status.message, "[redacted]") where span.status.message != ""
+      - set(span.trace_state, "") where span.trace_state != ""
+      - set(spanevent.name, "[redacted]")
+    log_statements:
+      - set(log.body, "[redacted]") where log.body != nil
+      - set(log.severity_text, "[redacted]") where log.severity_text != ""
+      - set(log.event_name, "[redacted]") where log.event_name != ""
+
+  batch:
+    timeout: 10s
+    send_batch_size: 1024
+
+exporters:
+  # Reachable only on the internal Compose network; TLS is not used on that hop
+  # and insecure states so explicitly rather than relying on a default.
+  # otlp_grpc rather than otlp: the pinned Collector deprecates the otlp alias.
+  otlp_grpc/lgtm:
+    endpoint: lgtm:4317
+    tls:
+      insecure: true
+
+extensions:
+  health_check:
+    endpoint: 0.0.0.0:13133
+
+service:
+  extensions: [health_check]
+  pipelines:
+    traces:
+      receivers: [otlp]
+      processors: [memory_limiter, redaction, transform/scrub, batch]
+      exporters: [otlp_grpc/lgtm]
+    metrics:
+      receivers: [otlp]
+      processors: [memory_limiter, redaction, transform/scrub, batch]
+      exporters: [otlp_grpc/lgtm]
+    logs:
+      receivers: [otlp]
+      processors: [memory_limiter, redaction, transform/scrub, batch]
+      exporters: [otlp_grpc/lgtm]

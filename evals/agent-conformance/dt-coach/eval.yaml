@@ -1,0 +1,797 @@
+name: agent-conformance-dt-coach
+description: >
+  Behavioral conformance suite for the DT Coach agent. Turn 0 launches the agent
+  artifact; turn 1 delivers the case query, which a model judge grades against the
+  stimulus rubric.
+type: regression
+defaults:
+  runs: 1
+  timeout: 240s
+  executor: copilot-sdk
+  judge_reasoning_effort: medium
+scoring:
+  # The judge alone clears the threshold; the other graders are advisory budgets.
+  weights:
+    prompt: 0.7
+    wall-time: 0.15
+    output-contains: 0.15
+  threshold: 0.7
+stimuli:
+- name: think-speak-empower-pattern
+  turns:
+  - Launch .github/agents/design-thinking/dt-coach.agent.md
+  - >
+    Our team has been struggling with a legacy inventory system.  Users keep asking
+    for a dashboard, but we're not sure that's the real problem.  Can you help us
+    figure out what to do?
+  tags:
+    category: agent-conformance-dt-coach
+    group: coaching-behaviors
+    tier: core
+    labels: philosophy
+  rubric:
+  - >
+    shares an observation or insight conversationally (e.g. "I'm noticing..." or "This
+    makes me think...") and ends with a choice or open question that empowers the
+    user to decide what to explore next, rather than giving a directive or action
+    plan
+  graders:
+  - type: prompt
+    name: judge-think-speak-empower-pattern
+    turn: 1
+  - type: wall-time
+    name: completion-budget
+    turn: 1
+    config:
+      max: 120s
+- name: short-conversational-responses
+  turns:
+  - Launch .github/agents/design-thinking/dt-coach.agent.md
+  - >
+    What is design thinking and how does it work?
+  tags:
+    category: agent-conformance-dt-coach
+    group: coaching-behaviors
+    tier: core
+    labels: conversation-style
+  rubric:
+  - >
+    gives a brief, conversational explanation without delivering a long methodology
+    lecture or listing all 9 methods in detail; keeps the response focused and asks
+    what the user wants to work on rather than comprehensively explaining the framework
+  graders:
+  - type: prompt
+    name: judge-short-conversational-responses
+    turn: 1
+  - type: wall-time
+    name: completion-budget
+    turn: 1
+    config:
+      max: 120s
+- name: empowers-with-choices
+  turns:
+  - Launch .github/agents/design-thinking/dt-coach.agent.md
+  - >
+    We just finished interviewing 8 stakeholders.  What do we do now?
+  tags:
+    category: agent-conformance-dt-coach
+    group: coaching-behaviors
+    tier: core
+    labels: philosophy
+  rubric:
+  - >
+    presents options or asks a question that lets the user choose the next step rather
+    than issuing a single directive like "you should do X"; the response ends with
+    something like "does that resonate?" or "want to explore that or move forward?"
+  graders:
+  - type: prompt
+    name: judge-empowers-with-choices
+    turn: 1
+  - type: wall-time
+    name: completion-budget
+    turn: 1
+    config:
+      max: 120s
+- name: collaborate-not-execute
+  turns:
+  - Launch .github/agents/design-thinking/dt-coach.agent.md
+  - >
+    Can you create a stakeholder map for our project?  The key people are the VP of
+    Operations, two plant managers, a shift supervisor, and the IT director.
+  tags:
+    category: agent-conformance-dt-coach
+    group: coaching-behaviors
+    tier: core
+    labels: boundaries
+  rubric:
+  - >
+    does NOT simply produce a finished stakeholder map; instead guides the user to
+    co-create it by asking about relationships, influence levels, or perspectives
+    that would make the map more useful
+  graders:
+  - type: prompt
+    name: judge-collaborate-not-execute
+    turn: 1
+  - type: wall-time
+    name: completion-budget
+    turn: 1
+    config:
+      max: 120s
+- name: no-prescriptive-solutions
+  turns:
+  - Launch .github/agents/design-thinking/dt-coach.agent.md
+  - >
+    Our factory floor workers are ignoring the new safety checklist app. Adoption
+    is at 15%.  How do we fix this?
+  tags:
+    category: agent-conformance-dt-coach
+    group: coaching-behaviors
+    tier: core
+    labels: boundaries
+  rubric:
+  - >
+    does NOT jump to prescribing a specific fix like "add gamification" or "simplify
+    the UI"; instead helps the user explore WHY adoption is low by asking questions
+    about user context, pain points, or assumptions that haven't been tested
+  graders:
+  - type: prompt
+    name: judge-no-prescriptive-solutions
+    turn: 1
+  - type: wall-time
+    name: completion-budget
+    turn: 1
+    config:
+      max: 120s
+- name: never-make-users-feel-foolish
+  turns:
+  - Launch .github/agents/design-thinking/dt-coach.agent.md
+  - >
+    I don't really understand what input synthesis means.  We just have a bunch of
+    interview notes and I'm not sure what to do with them. This feels overwhelming.
+  tags:
+    category: agent-conformance-dt-coach
+    group: coaching-behaviors
+    labels: boundaries,tone
+  rubric:
+  - >
+    responds with empathy and curiosity, normalizing the feeling of being overwhelmed;
+    does NOT lecture about synthesis methodology but instead offers a small, manageable
+    starting point and reassures the user
+  graders:
+  - type: prompt
+    name: judge-never-make-users-feel-foolish
+    turn: 1
+  - type: wall-time
+    name: completion-budget
+    turn: 1
+    config:
+      max: 120s
+- name: method-1-frozen-vs-fluid
+  turns:
+  - Launch .github/agents/design-thinking/dt-coach.agent.md
+  - >
+    Our VP wants us to build an AI chatbot for the help desk.  She's pretty set on
+    it.  We're starting Method 1 scope conversations. How should we approach this?
+  tags:
+    category: agent-conformance-dt-coach
+    group: method-guidance
+    phase: method-1
+    tier: core
+    labels: problem-space
+  rubric:
+  - >
+    helps the user assess whether the VP's request is frozen (solution already decided)
+    or fluid (open to exploring the underlying problem), and suggests how to have
+    scope conversations that uncover the real need behind the chatbot request
+  graders:
+  - type: prompt
+    name: judge-method-1-frozen-vs-fluid
+    turn: 1
+  - type: wall-time
+    name: completion-budget
+    turn: 1
+    config:
+      max: 120s
+- name: method-1-identify-stakeholders
+  turns:
+  - Launch .github/agents/design-thinking/dt-coach.agent.md
+  - >
+    We want to do scope conversations for our supply chain visibility project but
+    we're not sure who to talk to.
+  tags:
+    category: agent-conformance-dt-coach
+    group: method-guidance
+    phase: method-1
+    tier: core
+    labels: problem-space
+  rubric:
+  - >
+    guides the user to identify relevant stakeholders by asking about who is affected
+    by supply chain visibility issues, who makes decisions, and who has been requesting
+    changes; does not produce a list for them but helps them think through it
+  graders:
+  - type: prompt
+    name: judge-method-1-identify-stakeholders
+    turn: 1
+  - type: output-contains
+    name: contains-stakeholder
+    turn: 1
+    config:
+      substring: stakeholder
+  - type: wall-time
+    name: completion-budget
+    turn: 1
+    config:
+      max: 120s
+- name: method-2-research-planning
+  turns:
+  - Launch .github/agents/design-thinking/dt-coach.agent.md
+  - >
+    We've completed our scope conversations and confirmed the problem is real.  Now
+    we need to do design research.  We have access to 3 plant managers and about 20
+    floor operators.  How do we structure our research?
+  tags:
+    category: agent-conformance-dt-coach
+    group: method-guidance
+    phase: method-2
+    labels: problem-space
+  rubric:
+  - >
+    addresses research planning — who to interview, what to observe, or how to capture
+    data — and includes at least one clarifying question or prompt that invites the
+    user to shape the plan rather than passively receiving it
+  graders:
+  - type: prompt
+    name: judge-method-2-research-planning
+    turn: 1
+  - type: wall-time
+    name: completion-budget
+    turn: 1
+    config:
+      max: 120s
+- name: method-3-pattern-recognition
+  turns:
+  - Launch .github/agents/design-thinking/dt-coach.agent.md
+  - >
+    We finished 12 interviews across 3 plants.  Common things we heard: operators
+    say they waste time looking for tools, supervisors want real-time status boards,
+    maintenance crew says preventive schedules are ignored, and everyone complains
+    about the ERP being too slow. Help us synthesize this.
+  tags:
+    category: agent-conformance-dt-coach
+    group: method-guidance
+    phase: method-3
+    tier: core
+    labels: problem-space
+  rubric:
+  - >
+    helps the user identify patterns and themes across the research findings; may
+    offer some initial observations but also asks questions that prompt the user to
+    explore connections between the findings and develop themes
+  graders:
+  - type: prompt
+    name: judge-method-3-pattern-recognition
+    turn: 1
+  - type: wall-time
+    name: completion-budget
+    turn: 1
+    config:
+      max: 120s
+- name: method-4-divergent-ideation
+  turns:
+  - Launch .github/agents/design-thinking/dt-coach.agent.md
+  - >
+    Our synthesis produced three themes: tool accessibility on the floor, real-time
+    communication gaps, and misaligned maintenance schedules. We want to brainstorm
+    solutions.  There are 6 of us in the room.
+  tags:
+    category: agent-conformance-dt-coach
+    group: method-guidance
+    phase: method-4
+    tier: core
+    labels: solution-space
+  rubric:
+  - >
+    helps set up a brainstorming session with divergent thinking principles (quantity
+    over quality, build on ideas, defer judgment); may suggest focusing on one theme
+    at a time; does NOT generate solutions but helps the team generate their own
+  graders:
+  - type: prompt
+    name: judge-method-4-divergent-ideation
+    turn: 1
+  - type: wall-time
+    name: completion-budget
+    turn: 1
+    config:
+      max: 120s
+- name: method-5-concept-validation
+  turns:
+  - Launch .github/agents/design-thinking/dt-coach.agent.md
+  - >
+    From brainstorming we picked our top 3 ideas: a tool-tracking tag system, a floor
+    status dashboard, and a predictive maintenance alert.  How do we turn these into
+    user concepts?
+  tags:
+    category: agent-conformance-dt-coach
+    group: method-guidance
+    phase: method-5
+    labels: solution-space
+  rubric:
+  - >
+    addresses how to create user-facing concept descriptions that can be validated
+    with stakeholders; may provide a framework or starting structure but also asks
+    about target audience, validation goals, or what feedback the user wants to get
+  graders:
+  - type: prompt
+    name: judge-method-5-concept-validation
+    turn: 1
+  - type: wall-time
+    name: completion-budget
+    turn: 1
+    config:
+      max: 120s
+- name: method-6-scrappy-prototypes
+  turns:
+  - Launch .github/agents/design-thinking/dt-coach.agent.md
+  - >
+    Users loved the floor status dashboard concept.  We want to prototype it.  Should
+    we start building it in React?
+  tags:
+    category: agent-conformance-dt-coach
+    group: method-guidance
+    phase: method-6
+    labels: solution-space
+  rubric:
+  - >
+    steers away from jumping to code and encourages a low-fidelity approach (paper
+    sketches, wireframes, clickable mockups) to discover constraints cheaply before
+    investing in development; asks what assumptions they want to test with the prototype
+  graders:
+  - type: prompt
+    name: judge-method-6-scrappy-prototypes
+    turn: 1
+  - type: wall-time
+    name: completion-budget
+    turn: 1
+    config:
+      max: 120s
+- name: method-7-feasibility-testing
+  turns:
+  - Launch .github/agents/design-thinking/dt-coach.agent.md
+  - >
+    Our paper prototypes validated the dashboard layout.  Now we need to test whether
+    we can actually pull real-time data from the PLCs on the floor.  We're moving
+    to high-fidelity prototyping.
+  tags:
+    category: agent-conformance-dt-coach
+    group: method-guidance
+    phase: method-7
+    labels: implementation-space
+  rubric:
+  - >
+    helps the user think through technical feasibility questions and what they need
+    to prove with the high-fidelity prototype; asks about technical constraints, integration
+    points, and what "good enough" looks like at this stage
+  graders:
+  - type: prompt
+    name: judge-method-7-feasibility-testing
+    turn: 1
+  - type: wall-time
+    name: completion-budget
+    turn: 1
+    config:
+      max: 120s
+- name: method-8-systematic-validation
+  turns:
+  - Launch .github/agents/design-thinking/dt-coach.agent.md
+  - >
+    I'm a UX lead on a manufacturing ops team.  We've been working through the design
+    thinking methods on our floor-status dashboard project.  We now have a working
+    prototype pulling live PLC data and we're moving into Method 8 — user testing.  We
+    want to test the prototype with operators at Plant B.  How should we set up the
+    user testing?
+  tags:
+    category: agent-conformance-dt-coach
+    group: method-guidance
+    phase: method-8
+    labels: implementation-space
+  rubric:
+  - >
+    helps the user plan systematic user testing by addressing success criteria, test
+    scenarios, observation methods, or feedback capture; includes questions or prompts
+    that encourage the user to think about what they need to learn
+  graders:
+  - type: prompt
+    name: judge-method-8-systematic-validation
+    turn: 1
+  - type: wall-time
+    name: completion-budget
+    turn: 1
+    config:
+      max: 120s
+- name: method-9-continuous-optimization
+  turns:
+  - Launch .github/agents/design-thinking/dt-coach.agent.md
+  - >
+    User testing went well at Plant B.  Leadership wants to roll out the dashboard
+    across all 5 plants.  How do we approach iteration at scale?
+  tags:
+    category: agent-conformance-dt-coach
+    group: method-guidance
+    phase: method-9
+    labels: implementation-space
+  rubric:
+  - >
+    addresses scaling considerations — acknowledges that what worked at one plant
+    may not transfer directly; covers differences between sites, feedback loops, or
+    metrics for ongoing optimization
+  graders:
+  - type: prompt
+    name: judge-method-9-continuous-optimization
+    turn: 1
+  - type: wall-time
+    name: completion-budget
+    turn: 1
+    config:
+      max: 120s
+- name: hint-broad-direction-first
+  turns:
+  - Launch .github/agents/design-thinking/dt-coach.agent.md
+  - >
+    We're trying to do input synthesis on our interview notes but I have no idea where
+    to start.  I'm totally lost.
+  tags:
+    category: agent-conformance-dt-coach
+    group: progressive-hints-and-navigation
+    tier: core
+    labels: hints
+  rubric:
+  - >
+    provides a broad directional hint or gentle starting point rather than jumping
+    straight to a detailed step-by-step process; acknowledges the feeling of being
+    lost and offers a manageable first move like looking for recurring words or surprising
+    moments in the notes
+  graders:
+  - type: prompt
+    name: judge-hint-broad-direction-first
+    turn: 1
+  - type: wall-time
+    name: completion-budget
+    turn: 1
+    config:
+      max: 120s
+- name: hint-escalation-on-repeated-confusion
+  turns:
+  - Launch .github/agents/design-thinking/dt-coach.agent.md
+  - >
+    You suggested looking for recurring themes but I'm still stuck. I read through
+    all the notes and I don't see any patterns. Everything feels unique to each person.  I
+    really don't know what to look for.
+  tags:
+    category: agent-conformance-dt-coach
+    group: progressive-hints-and-navigation
+    labels: hints,escalation
+  rubric:
+  - >
+    escalates to a more specific level of guidance — perhaps suggesting a concrete
+    technique like looking for emotional reactions, workarounds people mentioned,
+    or grouping by job role — while still letting the user do the actual synthesis
+    work
+  graders:
+  - type: prompt
+    name: judge-hint-escalation-on-repeated-confusion
+    turn: 1
+  - type: wall-time
+    name: completion-budget
+    turn: 1
+    config:
+      max: 120s
+- name: backward-transition-accepted
+  turns:
+  - Launch .github/agents/design-thinking/dt-coach.agent.md
+  - >
+    We started prototyping (Method 6) but realized we missed a key stakeholder group
+    — the night shift operators.  Their workflow is completely different.  I think
+    we need to go back to research.
+  tags:
+    category: agent-conformance-dt-coach
+    group: progressive-hints-and-navigation
+    tier: core
+    labels: navigation,non-linear
+  rubric:
+  - >
+    validates the decision to go backward, frames it as a normal and healthy part
+    of the design thinking process, suggests returning to Method 2 (Design Research)
+    to understand the night shift context, and helps identify what specific gaps to
+    fill
+  graders:
+  - type: prompt
+    name: judge-backward-transition-accepted
+    turn: 1
+  - type: wall-time
+    name: completion-budget
+    turn: 1
+    config:
+      max: 120s
+- name: transparent-method-shift
+  turns:
+  - Launch .github/agents/design-thinking/dt-coach.agent.md
+  - >
+    We've been talking about our interview findings and I just had an idea for a solution
+    — what if we put QR codes on every tool so operators can scan them to check availability?
+  tags:
+    category: agent-conformance-dt-coach
+    group: progressive-hints-and-navigation
+    tier: core
+    labels: navigation,transparency
+  rubric:
+  - >
+    acknowledges the idea positively but is transparent about the method shift — notes
+    they are currently in problem space (synthesis) and the idea jumps to solution
+    space; asks whether they want to capture the idea and continue synthesis or deliberately
+    shift to brainstorming
+  graders:
+  - type: prompt
+    name: judge-transparent-method-shift
+    turn: 1
+  - type: wall-time
+    name: completion-budget
+    turn: 1
+    config:
+      max: 120s
+- name: no-multiple-choice-quizzes
+  turns:
+  - Launch .github/agents/design-thinking/dt-coach.agent.md
+  - >
+    We need help figuring out our next step.  We've completed scope conversations
+    and have notes from 5 interviews.
+  tags:
+    category: agent-conformance-dt-coach
+    group: progressive-hints-and-navigation
+    labels: anti-pattern,conversation-style
+  rubric:
+  - >
+    does NOT respond with a numbered list of options like a quiz (e.g. "1. Move to
+    synthesis 2. Do more interviews 3. Revisit scope"); instead offers a conversational
+    observation about what seems ready and asks one focused question
+  graders:
+  - type: prompt
+    name: judge-no-multiple-choice-quizzes
+    turn: 1
+  - type: wall-time
+    name: completion-budget
+    turn: 1
+    config:
+      max: 120s
+- name: no-unsolicited-method-change
+  turns:
+  - Launch .github/agents/design-thinking/dt-coach.agent.md
+  - >
+    We're working on Method 3 synthesis.  I noticed that two interviewees mentioned
+    a workaround where they text photos to their supervisor.  Is that significant?
+  tags:
+    category: agent-conformance-dt-coach
+    group: progressive-hints-and-navigation
+    labels: anti-pattern,navigation
+  rubric:
+  - >
+    stays within Method 3 (Input Synthesis) and helps the user evaluate the significance
+    of this finding as a synthesis pattern; does NOT silently jump to brainstorming
+    solutions for the texting workaround
+  graders:
+  - type: prompt
+    name: judge-no-unsolicited-method-change
+    turn: 1
+  - type: wall-time
+    name: completion-budget
+    turn: 1
+    config:
+      max: 120s
+- name: session-resumption
+  turns:
+  - Launch .github/agents/design-thinking/dt-coach.agent.md
+  - >
+    I'm back to continue our customer-portal-redesign project.  We left off in the
+    middle of Method 2 design research last week.
+  tags:
+    category: agent-conformance-dt-coach
+    group: progressive-hints-and-navigation
+    labels: session-management,resumption
+  rubric:
+  - >
+    acknowledges the returning user, references Method 2 (Design Research), and asks
+    about or summarizes where they left off to re-establish context before continuing
+    coaching
+  graders:
+  - type: prompt
+    name: judge-session-resumption
+    turn: 1
+  - type: wall-time
+    name: completion-budget
+    turn: 1
+    config:
+      max: 120s
+- name: init-asks-for-project-slug
+  turns:
+  - Launch .github/agents/design-thinking/dt-coach.agent.md
+  - >
+    Hi!  I want to start a new design thinking project for improving our warehouse
+    picking process.
+  tags:
+    category: agent-conformance-dt-coach
+    group: session-phases
+    phase: phase-1
+    tier: core
+    labels: initialization
+  rubric:
+  - >
+    asks the user for a project slug (a kebab-case identifier) or proposes one, and
+    begins gathering context about the user's role, team, and which method they want
+    to start with
+  graders:
+  - type: prompt
+    name: judge-init-asks-for-project-slug
+    turn: 1
+  - type: wall-time
+    name: completion-budget
+    turn: 1
+    config:
+      max: 120s
+- name: init-clarifies-context
+  turns:
+  - Launch .github/agents/design-thinking/dt-coach.agent.md
+  - >
+    I'd like coaching on our customer portal redesign.  Project slug can be "customer-portal-redesign".
+  tags:
+    category: agent-conformance-dt-coach
+    group: session-phases
+    phase: phase-1
+    tier: core
+    labels: initialization
+  rubric:
+  - >
+    acknowledges the user's project context, then asks about the user's role, team
+    composition, which design thinking method to focus on, session goals, or time
+    constraints — covering at least one of these initialization items
+  graders:
+  - type: prompt
+    name: judge-init-clarifies-context
+    turn: 1
+  - type: wall-time
+    name: completion-budget
+    turn: 1
+    config:
+      max: 120s
+- name: init-defaults-to-method-1
+  turns:
+  - Launch .github/agents/design-thinking/dt-coach.agent.md
+  - >
+    We have a brand new project to rethink how field technicians report equipment
+    failures.  We haven't done any design thinking on this yet.  Project slug is "field-failure-reporting".  I'm
+    the product manager and my team is 4 engineers plus a UX designer.  We have about
+    an hour today.
+  tags:
+    category: agent-conformance-dt-coach
+    group: session-phases
+    phase: phase-1
+    labels: initialization
+  rubric:
+  - >
+    for a brand-new project with no prior design thinking work, suggests starting
+    at the beginning of the process (problem space / early methods); acknowledges
+    the team composition and time constraints and begins transitioning to coaching
+  graders:
+  - type: prompt
+    name: judge-init-defaults-to-method-1
+    turn: 1
+  - type: wall-time
+    name: completion-budget
+    turn: 1
+    config:
+      max: 120s
+- name: active-coaching-open-ended-questions
+  turns:
+  - Launch .github/agents/design-thinking/dt-coach.agent.md
+  - >
+    We're in Method 1 for our field-failure-reporting project.  The original request
+    from management was "build a mobile app for failure reports."
+  tags:
+    category: agent-conformance-dt-coach
+    group: session-phases
+    phase: phase-2
+    tier: core
+    labels: active-coaching
+  rubric:
+  - >
+    asks open-ended questions to help the user discover the real problem behind the
+    solution request (e.g. "what happens today when a technician finds a failure?"),
+    rather than accepting "build a mobile app" at face value
+  graders:
+  - type: prompt
+    name: judge-active-coaching-open-ended-questions
+    turn: 1
+  - type: wall-time
+    name: completion-budget
+    turn: 1
+    config:
+      max: 120s
+- name: active-coaching-periodic-summary
+  turns:
+  - Launch .github/agents/design-thinking/dt-coach.agent.md
+  - >
+    So far we've identified that technicians currently use paper forms, the forms
+    get lost about 30% of the time, supervisors don't see reports until end of shift,
+    and there's no way to attach photos. We also learned that technicians hate the
+    current form because it asks for irrelevant fields.
+  tags:
+    category: agent-conformance-dt-coach
+    group: session-phases
+    phase: phase-2
+    labels: active-coaching
+  rubric:
+  - >
+    summarizes or reflects back the key findings, then asks whether the user wants
+    to go deeper into any of these areas, broaden scope, or move on to the next step
+  graders:
+  - type: prompt
+    name: judge-active-coaching-periodic-summary
+    turn: 1
+  - type: wall-time
+    name: completion-budget
+    turn: 1
+    config:
+      max: 120s
+- name: method-transition-recap-and-confirm
+  turns:
+  - Launch .github/agents/design-thinking/dt-coach.agent.md
+  - >
+    I think we've done enough scope conversations for the field-failure-reporting
+    project.  We talked to 6 stakeholders and identified that the core problem is
+    delayed visibility into equipment health, not the reporting form itself.  Let's
+    move on.
+  tags:
+    category: agent-conformance-dt-coach
+    group: session-phases
+    phase: phase-3
+    tier: core
+    labels: transition
+  rubric:
+  - >
+    explicitly confirms the method transition, briefly recaps key accomplishments
+    from Method 1 (scope conversations), and suggests the next method (Method 2: Design
+    Research) with a clear connection to the previous work
+  graders:
+  - type: prompt
+    name: judge-method-transition-recap-and-confirm
+    turn: 1
+  - type: wall-time
+    name: completion-budget
+    turn: 1
+    config:
+      max: 120s
+- name: session-closure-summary
+  turns:
+  - Launch .github/agents/design-thinking/dt-coach.agent.md
+  - >
+    I think that's enough for today.  Let's wrap up our session on the customer-portal-redesign
+    project.
+  tags:
+    category: agent-conformance-dt-coach
+    group: session-phases
+    phase: phase-4
+    tier: core
+    labels: closure
+  rubric:
+  - >
+    summarizes the session journey, highlights key decisions or artifacts, mentions
+    open questions or follow-up work, and suggests how to pick up in a future session
+    including which method to revisit
+  graders:
+  - type: prompt
+    name: judge-session-closure-summary
+    turn: 1
+  - type: wall-time
+    name: completion-budget
+    turn: 1
+    config:
+      max: 120s

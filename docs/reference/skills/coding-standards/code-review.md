@@ -2,16 +2,22 @@
 title: code-review
 description: "Review code changes from multiple perspectives with context bootstrap, depth-tier rigor, and structured findings output."
 sidebar_position: 1
-ms.date: 2026-07-03
+author: Microsoft
+ms.date: 2026-08-12
+ms.topic: reference
+keywords:
+  - skill
+  - coding-standards
+  - code-review
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->
-| Field       | Value                                         |
-|-------------|-----------------------------------------------|
-| Kind        | skill                                         |
-| Source      | `.github/skills/coding-standards/code-review` |
-| Invocation  | Loaded on demand by referencing agents        |
-| Interactive | No                                            |
+| Field       | Value                                                                         |
+|-------------|-------------------------------------------------------------------------------|
+| Kind        | skill                                                                         |
+| Source      | `.github/skills/coding-standards/code-review`                                 |
+| Invocation  | Invoked directly as `/code-review`, or loaded on demand by referencing agents |
+| Interactive | No                                                                            |
 <!-- END AUTO-GENERATED: metadata -->
 
 ## What it does

@@ -24,3 +24,33 @@ suites:
     filter:
       category: script-validation
 
+  agent-conformance-accessibility-planner:
+    description: Behavioral conformance regression suite for the Accessibility Planner agent
+    filter:
+      category: agent-conformance-accessibility-planner
+
+  agent-conformance-dt-coach:
+    description: Behavioral conformance regression suite for the DT Coach agent
+    filter:
+      category: agent-conformance-dt-coach
+
+  agent-conformance-privacy-planner:
+    description: Behavioral conformance regression suite for the Privacy Planner agent
+    filter:
+      category: agent-conformance-privacy-planner
+
+  agent-conformance-rai-planner:
+    description: Behavioral conformance regression suite for the RAI Planner agent
+    filter:
+      category: agent-conformance-rai-planner
+
+  agent-conformance-security-planner:
+    description: Behavioral conformance regression suite for the Security Planner agent
+    filter:
+      category: agent-conformance-security-planner
+
+  agent-conformance-sssc-planner:
+    description: Behavioral conformance regression suite for the SSSC Planner agent
+    filter:
+      category: agent-conformance-sssc-planner
+

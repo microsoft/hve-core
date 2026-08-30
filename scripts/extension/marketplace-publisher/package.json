@@ -1,0 +1,10 @@
+{
+  "name": "hve-core-marketplace-publisher",
+  "version": "0.0.0",
+  "description": "Minimal pinned toolchain for VS Code Marketplace publication",
+  "private": true,
+  "license": "MIT",
+  "dependencies": {
+    "@vscode/vsce": "3.9.2"
+  }
+}

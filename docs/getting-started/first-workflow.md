@@ -3,7 +3,7 @@ title: Your First Full Workflow
 description: Hands-on tutorial using Research, Plan, Implement phases to create a validation script
 sidebar_position: 6
 author: Microsoft
-ms.date: 2026-06-27
+ms.date: 2026-07-15
 ms.topic: tutorial
 keywords:
   - getting started
@@ -54,22 +54,19 @@ Multiple unknowns make RPI a good fit for this task: existing script patterns, P
 > below.
 
 The `/clear` command resets Copilot's context between phases. Each RPI phase
-should start fresh. The artifacts (research doc, plan) carry the context
-forward, not the chat history. This tutorial uses the task prompts
-(`/task-research`, `/task-plan`, `/task-implement`) to make each phase visible,
-while the `/rpi-*` skill entry points provide the same workflow from a
-separate surface.
+can start fresh because the research and planning artifacts carry verified
+context forward. This tutorial invokes `/rpi-research`, `/rpi-plan`, and
+`/rpi-implement` separately so you can see each responsibility and artifact.
 
 > [!NOTE]
 > Understanding why `/clear` matters (not just that you should use it) helps you recognize when context degradation affects your results. See [Context Engineering](../rpi/context-engineering.md) for the full explanation.
 
 ## Phase 1: Research
 
-### Switch to Task Researcher
+### Invoke rpi-research
 
 1. Open Copilot Chat (`Ctrl+Alt+I`)
-1. Click the agent picker dropdown at the top
-1. Select **Task Researcher**
+1. Type `/rpi-research` to activate the Research phase skill
 
 ### Your Research Prompt
 
@@ -88,7 +85,7 @@ Consider:
 
 ### What You'll Get
 
-Task Researcher analyzes the codebase and returns findings about:
+`rpi-research` analyzes the codebase and returns findings about:
 
 * Existing PowerShell scripts and their patterns
 * PSScriptAnalyzer settings and conventions
@@ -108,11 +105,10 @@ From the research output, identify:
 
 ## Phase 2: Plan
 
-### Clear and Switch
+### Clear and Invoke rpi-plan
 
 1. Type `/clear` in the chat to reset context
-1. Click the agent picker dropdown
-1. Select **Task Planner**
+1. Type `/rpi-plan` to activate the Plan phase skill
 
 ### Your Planning Prompt
 
@@ -131,7 +127,7 @@ Requirements from research:
 
 ### Plan Output
 
-Task Planner creates a structured plan with:
+`rpi-plan` creates a structured plan with:
 
 * File creation steps
 * Implementation details for each file
@@ -150,11 +146,10 @@ Task Planner creates a structured plan with:
 
 ## Phase 3: Implement
 
-### Clear and Switch to Implementor
+### Clear and Invoke rpi-implement
 
 1. Type `/clear` in the chat to reset context
-1. Click the agent picker dropdown
-1. Select **Task Implementor**
+1. Type `/rpi-implement` to activate the Implement phase skill
 
 ### Your Implementation Prompt
 
@@ -177,7 +172,7 @@ Plan:
 
 ### Watch It Work
 
-Task Implementor will:
+`rpi-implement` will:
 
 1. Create the PowerShell script with proper structure
 1. Update `package.json` with the npm script
@@ -214,41 +209,42 @@ npm run check:docs-readme
 Rename-Item docs/rpi/README.md.bak README.md
 ```
 
-## Alternative: Single-Session with rpi-agent
+## Alternative: Coordinated Lifecycle with RPI Agent
 
-The three-agent workflow above separates research, planning, and implementation
-into distinct phases with `/clear` between each. This is the best way to learn
-RPI because you see each phase produce its own artifact.
+The three-skill workflow above separates research, planning, and implementation
+with `/clear` between each phase. This is a useful way to learn RPI because you
+see each phase produce its own artifact.
 
-For day-to-day work, the [rpi-agent](https://github.com/microsoft/hve-core/blob/main/.github/CUSTOM-AGENTS.md#rpi-agent)
-runs all three phases in a single session. It follows the same methodology but
-handles the phase transitions automatically.
+For day-to-day work, select
+[RPI Agent](https://github.com/microsoft/hve-core/blob/main/.github/CUSTOM-AGENTS.md#rpi-agent)
+or invoke `/rpi`. Both coordinate the same phase skills and include
+Review and Follow-up when the task reaches those stages.
 
-To compare the experience, select **rpi-agent** from the agent picker and try
+To compare the experience, select **RPI Agent** from the agent picker and try
 this prompt:
 
 > Create a PowerShell script that validates every subfolder under docs/ contains
 > a README.md file. Place it at scripts/linting/Test-DocsReadme.ps1 and add an
 > npm script entry.
 
-The rpi-agent researches, plans, and implements without `/clear` commands
-between phases.
+RPI Agent coordinates the applicable skills without requiring manual agent
+switches between phases.
 
 ## What You Learned
 
 * Use `/clear` between phases to prevent context pollution through phase separation.
 * Research reduces unknowns by discovering patterns before coding.
-* The plan gives Implementor clear requirements, acting as a specification.
+* The plan gives `rpi-implement` clear requirements, acting as a specification.
 * Findings and plans bridge phases by carrying context, not chat history.
 
 ## Troubleshooting
 
-| Issue                 | Solution                                                                                          |
-|-----------------------|---------------------------------------------------------------------------------------------------|
-| PowerShell not found  | Ensure `pwsh` is installed and in PATH                                                            |
-| npm script not found  | Check `package.json` was saved                                                                    |
-| Wrong folders checked | Verify script targets `docs/*` pattern                                                            |
-| Agent skips phases    | Use `/clear` before each `/rpi` request; see [Context Engineering](../rpi/context-engineering.md) |
+| Issue                 | Solution                                                                                                |
+|-----------------------|---------------------------------------------------------------------------------------------------------|
+| PowerShell not found  | Ensure `pwsh` is installed and in PATH                                                                  |
+| npm script not found  | Check `package.json` was saved                                                                          |
+| Wrong folders checked | Verify script targets `docs/*` pattern                                                                  |
+| A phase lacks context | Attach or name the preceding durable artifact; see [Context Engineering](../rpi/context-engineering.md) |
 
 ## Next Step
 

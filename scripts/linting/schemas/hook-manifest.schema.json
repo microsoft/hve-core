@@ -1,7 +1,7 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
   "title": "Hook Manifest",
-  "description": "Schema for hve-core collection-scoped hook manifests under .github/hooks/<collection>/<name>.json. Event keys use the Copilot CLI lowercase form; VS Code converts them to PascalCase at load time. Declaring an event in both CLI-lowercase and PascalCase form is rejected so each event fires once.",
+  "description": "Schema for hve-core package-scoped hook manifests under .github/hooks/<package>/<name>.json. Event keys use the Copilot CLI lowercase form; VS Code converts them to PascalCase at load time. Declaring an event in both CLI-lowercase and PascalCase form is rejected so each event fires once.",
   "type": "object",
   "required": [
     "version",
@@ -35,7 +35,8 @@
           "preCompact",
           "subagentStart",
           "subagentStop",
-          "stop"
+          "stop",
+          "agentStop"
         ]
       },
       "additionalProperties": {

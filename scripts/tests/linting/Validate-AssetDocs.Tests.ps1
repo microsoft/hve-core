@@ -4,7 +4,7 @@
 
 BeforeAll {
     # Dot-source the generator first so its -Force module re-imports (DocsHelpers
-    # -> CollectionHelpers -> CIHelpers) settle before the validator runs its own
+    # -> -> CIHelpers) settle before the validator runs its own
     # imports. The validator's explicit imports then land last, keeping every
     # command it uses (including Write-CIAnnotation) in this script's scope. The
     # generator also provides Invoke-AssetDocsGeneration for scaffolding fixtures.
@@ -59,7 +59,7 @@ BeforeAll {
 }
 
 AfterAll {
-    Remove-Module DocsHelpers, CollectionHelpers, CIHelpers -Force -ErrorAction SilentlyContinue
+    Remove-Module DocsHelpers, CIHelpers -Force -ErrorAction SilentlyContinue
 }
 
 Describe 'Test-AssetDocCoverage' -Tag 'Unit' {
@@ -224,6 +224,44 @@ Describe 'Test-AssetDocStructure' -Tag 'Unit' {
         ($findings | Where-Object { $_.Category -eq 'Structure' -and $_.Message -match 'Example usage' }) | Should -Not -BeNullOrEmpty
     }
 
+    It 'Accepts an instruction page without the optional Example usage section' {
+        $script:instrContent | Should -Match '(?m)^## Example usage$'
+        $withoutExample = $script:instrContent -replace '## Example usage', '## Renamed'
+
+        Test-AssetDocStructure -Model $script:instrModel -Content $withoutExample | Should -BeNullOrEmpty
+    }
+
+    It 'Flags applicable sections that appear out of canonical contract order' {
+        # Swap two heading names so every required heading is still present and
+        # only the sequence drifts from the shared contract.
+        $reordered = $script:agentContent -replace '## When to use it', '## __swap__' -replace '## Example usage', '## When to use it' -replace '## __swap__', '## Example usage'
+        $findings = @(Test-AssetDocStructure -Model $script:agentModel -Content $reordered)
+
+        ($findings | Where-Object { $_.Message -match 'Missing required section' }) | Should -BeNullOrEmpty
+        ($findings | Where-Object { $_.Category -eq 'Structure' -and $_.Message -match 'canonical contract order' }) | Should -Not -BeNullOrEmpty
+    }
+
+    It 'Order-checks an optional section the page includes' {
+        $reordered = $script:instrContent -replace '## When to use it', '## __swap__' -replace '## Example usage', '## When to use it' -replace '## __swap__', '## Example usage'
+        $findings = @(Test-AssetDocStructure -Model $script:instrModel -Content $reordered)
+
+        ($findings | Where-Object { $_.Category -eq 'Structure' -and $_.Message -match 'canonical contract order' }) | Should -Not -BeNullOrEmpty
+    }
+
+    It 'Derives every required heading from the shared contract' {
+        $requiredSections = @(Get-AssetDocSectionContract | Where-Object {
+                (Resolve-AssetDocSectionStatus -Section $_ -Kind $script:instrModel.Kind -Interactive $script:instrModel.Interactive) -eq 'Required'
+            })
+
+        foreach ($section in $requiredSections) {
+            $broken = $script:instrContent -replace [regex]::Escape($section.Heading), '## Renamed'
+            $findings = @(Test-AssetDocStructure -Model $script:instrModel -Content $broken)
+
+            ($findings | Where-Object { $_.Message -match [regex]::Escape($section.Heading) }) |
+                Should -Not -BeNullOrEmpty
+        }
+    }
+
     It 'Requires the How to use section for interactive assets' {
         $script:agentModel.Interactive | Should -BeTrue
         $broken = $script:agentContent -replace '## How to use it', '## Something else'
@@ -253,6 +291,16 @@ Describe 'Test-AssetDocRegionSync' -Tag 'Unit' {
 
     It 'Reports no drift for a freshly generated page' {
         Test-AssetDocRegionSync -Model $script:agentModel -Content $script:agentContent | Should -BeNullOrEmpty
+    }
+
+    It 'Reports no drift when the page uses CRLF line endings' {
+        $crlfContent = ($script:agentContent -replace '\r\n', "`n") -replace '\r', "`n" -replace '\n', "`r`n"
+        Test-AssetDocRegionSync -Model $script:agentModel -Content $crlfContent | Should -BeNullOrEmpty
+    }
+
+    It 'Reports no drift when the page uses lone CR line endings' {
+        $crContent = ($script:agentContent -replace '\r\n', "`n") -replace '\r', "`n" -replace '\n', "`r"
+        Test-AssetDocRegionSync -Model $script:agentModel -Content $crContent | Should -BeNullOrEmpty
     }
 
     It 'Detects a tampered metadata region' {
@@ -341,6 +389,11 @@ Describe 'Invoke-AssetDocsValidation' -Tag 'Unit' {
         $tampered = Set-TamperedMetadataCell -Content (Get-Content -LiteralPath $page -Raw) -Field 'Kind' -NewValue 'TAMPERED'
         Set-Content -LiteralPath $page -Value $tampered -Encoding utf8NoBOM -NoNewline
         (Invoke-AssetDocsValidation -RepoRoot $repo -CheckSync) | Should -Be 1
+    }
+
+    It 'Exits 0 for a freshly generated tree under strict coverage and sync checks' {
+        $repo = New-ValidatorFixture
+        (Invoke-AssetDocsValidation -RepoRoot $repo -FailOnMissing -CheckSync) | Should -Be 0
     }
 
     It 'Does not block unrelated changes on a pre-existing orphan' {
