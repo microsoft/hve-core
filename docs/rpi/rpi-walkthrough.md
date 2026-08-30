@@ -3,7 +3,7 @@ title: RPI Walkthrough
 description: Explore code, features, interfaces, or RPI artifacts through a guided, evidence-linked explanation
 sidebar_position: 5
 author: Microsoft
-ms.date: 2026-08-29
+ms.date: 2026-08-30
 ms.topic: how-to
 keywords:
   - rpi walkthrough
@@ -59,7 +59,7 @@ walkthrough usually follows its sections in reading order.
 
 ```mermaid
 accTitle: RPI walkthrough segment loop
-accDescr: The walkthrough resolves and reviews a target, plans segments, explains one segment at a time, and either continues, reviews more deeply, or closes with a handoff.
+accDescr: The walkthrough resolves and reviews a target, plans segments, explains one segment at a time, and either continues, reviews more deeply, or finishes by closing without a handoff or handing work off.
 flowchart LR
     A[Resolve target] --> B[Review evidence]
     B --> C[Plan segments]
@@ -74,9 +74,13 @@ Each segment includes:
 
 * A heading that shows your current position
 * An explanation of what the segment does, how it connects, and why it exists
-* An overview or focused diagram when structure is easier to understand visually
 * Inline links and a reference table pointing to the relevant files and lines
 * One or two questions that let you continue or request more depth
+
+Before the first segment, the walkthrough includes an overview diagram when the
+target has meaningful structure or flow. A later segment includes a focused
+diagram only when it clarifies relationships not already clear from the overview
+and prose.
 
 The skill pauses at each segment boundary. You control the pace and can change
 the detail level during the walkthrough.
@@ -93,7 +97,7 @@ decision or request a change, the skill creates a dated ledger at:
 The ledger keeps the request connected to the evidence that prompted it. Each
 entry is reconciled as applied now, handed off to RPI work, deferred, or
 declined. The walkthrough does not modify source files unless you explicitly
-choose immediate reconciliation and the requested change is safely scoped.
+ask it to apply the requested change now and the change is safely scoped.
 
 For example, after learning how an authentication path handles expired tokens,
 you might request consistent audit logging. The walkthrough records that
@@ -102,9 +106,10 @@ request and its disposition without interrupting the remaining explanation.
 ## Continue into RPI Work
 
 A walkthrough may use `/rpi-research` to gather external evidence needed for an
-accurate explanation. It does not automatically continue into downstream RPI
-work. At closeout, it recommends the smallest applicable RPI command only when
-an open ledger entry needs further work:
+accurate explanation. In a standalone walkthrough, it does not automatically
+continue into downstream RPI work. At closeout, it recommends the smallest
+applicable RPI command when a ledger entry was handed off or still needs further
+work:
 
 | Need                                                       | Recommended command |
 |------------------------------------------------------------|---------------------|
@@ -114,12 +119,14 @@ an open ledger entry needs further work:
 | Completed work needs acceptance review                     | `/rpi-review`       |
 | Several lifecycle stages need coordination                 | `/rpi-quick`        |
 
-When no decision or requested change needs follow-up, the walkthrough closes
-without an RPI handoff.
+When an active RPI parent workflow owns continuation, the walkthrough returns
+the ledger and evidence to that parent instead of selecting the next command.
+When no decision or requested change needs follow-up, it closes without an RPI
+handoff.
 
 ## Next Steps
 
-* [Understanding the RPI Workflow](README) - Choose the RPI entry surface that owns your next action
+* [Understanding the RPI Workflow](./) - Choose the RPI entry surface that owns your next action
 * [Using RPI Together](using-together) - See how RPI lifecycle concepts connect through durable evidence
 * [Context Engineering](context-engineering) - Manage conversation context across longer workflows
 
