@@ -2,7 +2,7 @@
 title: Release Process
 description: Release HVE Core through reviewed PreRelease metadata and Stable promotion workflows
 sidebar_position: 9
-ms.date: 2026-08-19
+ms.date: 2026-08-20
 ms.topic: how-to
 author: WilliamBerryiii
 keywords:
@@ -41,6 +41,8 @@ Workflow ownership is explicit:
 
 ```mermaid
 flowchart TD
+    accTitle: PreRelease and Stable Promotion Workflows
+    accDescr: Each release channel uses a promotion pull request without a tag, followed by a managed release pull request that creates the channel tag before packaging and publication.
     subgraph PRE[PreRelease]
         P1[Review main to PreRelease promotion PR] -->|merge, no tag| P2[Review managed PreRelease PR]
         P2 -->|merge| P3[Draft odd-minor tag at managed merge]

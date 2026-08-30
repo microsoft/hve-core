@@ -53,21 +53,8 @@ jobs:
           # safe_globals() protection applies and the path is not exploitable.
           # The only patched release (5.0.0rc3) is a pre-release that breaks
           # detoxify==0.5.2, which requires transformers<5.
-          #
-          # GHSA-5p2g-fcmc-qvqq (CVE-2025-71329) and GHSA-w3rx-r6r6-pgpr:
-          # image-size infinite-loop denial of service in the JXL, HEIF, and
-          # ICNS parsers. Both advisories cover every published version
-          # (<= 2.0.2) and report no patched version, so no upgrade clears
-          # them. The package reaches this repository only as a transitive
-          # dependency of @docusaurus/mdx-loader, which measures repository
-          # controlled documentation images at site-build time. The
-          # attacker-supplied image buffer the advisories require is not
-          # reachable, and the site ships as static output with no runtime
-          # image parsing. Revisit when upstream publishes a fix.
           allow-ghsas: >-
-            GHSA-69w3-r845-3855,
-            GHSA-5p2g-fcmc-qvqq,
-            GHSA-w3rx-r6r6-pgpr
+            GHSA-69w3-r845-3855
           comment-summary-in-pr: always
           license-check: true
           allow-licenses: >-
@@ -180,6 +167,12 @@ jobs:
           # match it against allow-licenses. It is a direct dependency of the
           # architecture-diagrams, data-catalog, and feasibility skills, which
           # parse YAML through yaml.SafeLoader.
+          # pkg:npm/robust-predicates resolves as the compound expression
+          # "LicenseRef-scancode-public-domain AND Unlicense", which the action
+          # cannot match even though both halves are public-domain dedications
+          # and Unlicense already appears in allow-licenses. It arrives
+          # transitively through mermaid's d3 dependency graph and renders
+          # documentation diagrams at build time.
           allow-dependencies-licenses: >-
             pkg:pypi/lxml,
             pkg:pypi/typing-extensions,
@@ -205,6 +198,7 @@ jobs:
             pkg:pypi/pywin32,
             pkg:pypi/pyyaml,
             pkg:npm/dompurify,
+            pkg:npm/robust-predicates,
             pkg:npm/lunr-languages,
             pkg:npm/%40github/copilot,
             pkg:npm/%40github/copilot-darwin-arm64,

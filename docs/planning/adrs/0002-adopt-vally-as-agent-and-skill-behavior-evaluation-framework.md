@@ -3,7 +3,7 @@ id: "0002"
 title: "Adopt Vally as the agent and skill behavior evaluation framework"
 description: "Adopt Vally (@microsoft/vally-cli) with a Copilot-SDK executor and a multi-suite evals/ tree as the standard way to evaluate the behavior of hve-core's authored AI customization artifacts, wired into PR CI and supported by a vally-tests authoring skill and a content-moderation pipeline."
 author: "HVE Core Team"
-ms.date: "2026-07-28"
+ms.date: "2026-08-20"
 ms.topic: "reference"
 status: "accepted"
 proposed_date: "2026-05-30"
@@ -290,6 +290,8 @@ left to enforcement on the right.
 
 ```mermaid
 flowchart LR
+  accTitle: Vally Evaluation Pipeline Layers
+  accDescr: Skills, authoring agents, moderation, and configuration feed evaluation suites and baseline comparison before pull request validation applies the resulting gate.
     subgraph Authoring["Authoring"]
         skill[".github/skills/hve-core/vally-tests"]
         subagent["vally-test-author subagent"]
