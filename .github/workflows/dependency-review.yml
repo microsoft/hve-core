@@ -167,6 +167,12 @@ jobs:
           # match it against allow-licenses. It is a direct dependency of the
           # architecture-diagrams, data-catalog, and feasibility skills, which
           # parse YAML through yaml.SafeLoader.
+          # pkg:npm/robust-predicates resolves as the compound expression
+          # "LicenseRef-scancode-public-domain AND Unlicense", which the action
+          # cannot match even though both halves are public-domain dedications
+          # and Unlicense already appears in allow-licenses. It arrives
+          # transitively through mermaid's d3 dependency graph and renders
+          # documentation diagrams at build time.
           allow-dependencies-licenses: >-
             pkg:pypi/lxml,
             pkg:pypi/typing-extensions,
@@ -192,6 +198,7 @@ jobs:
             pkg:pypi/pywin32,
             pkg:pypi/pyyaml,
             pkg:npm/dompurify,
+            pkg:npm/robust-predicates,
             pkg:npm/lunr-languages,
             pkg:npm/%40github/copilot,
             pkg:npm/%40github/copilot-darwin-arm64,
