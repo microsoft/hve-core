@@ -223,6 +223,8 @@ The dependency pinning scanner runs in CI as part of the security validation wor
 
 ```mermaid
 flowchart LR
+  accTitle: Dependency Pinning CI Pipeline
+  accDescr: Continuous integration runs the PowerShell pinning scanner, passes when no violations exist, or sends findings through SARIF to GitHub Code Scanning.
     A[CI Trigger] --> B[Test-DependencyPinning.ps1]
     B --> C{Violations?}
     C -->|None| D[✅ Pass]

@@ -104,6 +104,8 @@ HVE Core contains seven primary component categories:
 
 ```mermaid
 flowchart TD
+   accTitle: HVE Core System Architecture and Data Flow
+   accDescr: Developer workstation artifacts, IDE, Copilot, local tools, and containers exchange context and tool calls with GitHub services, repositories, Actions, and security scanning across network boundaries.
     subgraph DEV["Developer Workstation"]
         ARTIFACTS["HVE Core Artifacts<br/>(.instructions.md, .prompt.md, etc)"]
         IDE["VS Code IDE"]

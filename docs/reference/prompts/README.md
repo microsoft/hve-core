@@ -3,7 +3,7 @@ title: Prompts
 description: Reference documentation for HVE Core prompts.
 sidebar_position: 0
 author: Microsoft
-ms.date: 2026-08-12
+ms.date: 2026-08-17
 ms.topic: overview
 keywords:
   - reference
@@ -16,7 +16,7 @@ This page lists the generated reference documentation for HVE Core prompts.
 | Asset                                                                                 | Description                                                                                                                                                               |
 |---------------------------------------------------------------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | [Accessibility Coverage Matrix](accessibility/accessibility-coverage-matrix.md)       | Build, refresh, report, or probe an accessibility coverage matrix across criteria, surfaces, and methods.                                                                 |
-| [Synth Data Generate](data-science/synth-data-generate.md)                            | Generate synthetic data for any subject with realistic patterns and relationships                                                                                         |
+| [Synth Data Generate](data-science-engineering/synth-data-generate.md)                | Generate synthetic data for any subject with realistic patterns and relationships                                                                                         |
 | [Dt Canonical Deck](design-thinking/dt-canonical-deck.md)                             | Canonical deck workflow: asset-ready offer, snapshot generation/refresh, and optional customer-card PowerPoint build                                                      |
 | [Dt Figma Export](design-thinking/dt-figma-export.md)                                 | Export Design Thinking artifacts to a FigJam board or Figma Design file via the Figma MCP server                                                                          |
 | [Dt Handoff Implementation Space](design-thinking/dt-handoff-implementation-space.md) | Compiles DT Methods 7-9 into research-ready input for rpi-research at the Implementation Space exit                                                                       |
