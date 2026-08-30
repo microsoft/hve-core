@@ -2,7 +2,7 @@
 title: Authoring Custom Skills
 description: Build self-contained skill packages that bundle domain knowledge, reference materials, and scripts for on-demand use
 author: Microsoft
-ms.date: 2026-07-15
+ms.date: 2026-08-29
 ms.topic: how-to
 keywords:
   - skills

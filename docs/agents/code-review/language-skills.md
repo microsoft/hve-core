@@ -16,7 +16,7 @@ tags:
   - skills
   - coding-standards
 author: Microsoft
-ms.date: 2026-08-19
+ms.date: 2026-08-29
 ms.topic: how-to
 estimated_reading_time: 8
 ---
@@ -169,20 +169,20 @@ The `name` and `description` are required. The description drives the agent's ac
 Organize checks into numbered sections with bullet points. Each bullet should be a concrete, verifiable check:
 
 In the resulting `SKILL.md`, `## Core Checklist` renders as a level-two
-heading and each `####` section heading renders as level four. The following
+heading and each `###` section heading renders as level three. The following
 block shows the literal Markdown source; these markers are not headings while
 displayed inside this example.
 
 ```markdown
 ## Core Checklist
 
-#### 1. API Conventions
+### 1. API Conventions
 
 * Use `@api_version("v2")` decorator on all public endpoint functions.
 * Return `ApiResponse` wrapper for all HTTP handlers.
 * Include `correlation_id` in every log statement within request handlers.
 
-#### 2. Approved Libraries
+### 2. Approved Libraries
 
 * Use `httpx` for HTTP clients (not `requests`).
 * Use `pydantic` for data validation (not manual dict parsing).

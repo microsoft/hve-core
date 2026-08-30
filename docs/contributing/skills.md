@@ -3,7 +3,7 @@ title: Contributing Skills to HVE Core
 description: Requirements and standards for contributing skill packages to hve-core
 sidebar_position: 6
 author: Microsoft
-ms.date: 2026-08-19
+ms.date: 2026-08-29
 ms.topic: how-to
 keywords:
   - skills
