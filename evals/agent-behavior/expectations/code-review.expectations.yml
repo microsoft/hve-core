@@ -30,6 +30,19 @@ expectations:
     priority: high
     contract_ref: "agent §Step 2 Orientation Floor and Dispatch-Board Confirmation"
 
+  - expectation_id: change-risk-evidence
+    summary: The first response presents advisory change-risk evidence before depth selection.
+    signal: Output identifies checklist evidence or availability and a recommended review depth.
+    pass_criteria: |
+      The response surfaces change-risk evidence, including relevant tests or
+      rollback context, and keeps the depth recommendation subject to human
+      confirmation or correction.
+    failure_modes:
+      - Response omits change-risk evidence.
+      - Response selects a depth without human confirmation.
+    priority: high
+    contract_ref: "agent §Step 2 Orientation Floor and Dispatch-Board Confirmation"
+
   - expectation_id: no-source-edit
     summary: Orientation does not modify reviewed source files.
     signal: Output does not report source-file edits.
