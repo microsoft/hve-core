@@ -3,25 +3,30 @@
 # SPDX-License-Identifier: MIT
 
 # Running a workflow step body against fixtures needs the shell it declares and
-# the jq the body calls, so the discovery phase records their availability.
-$script:SkipShellFixtureTests = -not (
-    (Get-Command bash -CommandType Application -ErrorAction SilentlyContinue) -and
-    (Get-Command jq -CommandType Application -ErrorAction SilentlyContinue)
-)
+# the jq available inside that shell, which may differ from the host command path.
+$script:BashCommand = (Get-Command bash -CommandType Application -ErrorAction SilentlyContinue |
+    Select-Object -First 1).Source
+$script:SkipShellFixtureTests = -not $script:BashCommand
+if (-not $script:SkipShellFixtureTests) {
+    & $script:BashCommand -c 'command -v jq >/dev/null && command -v pwsh >/dev/null' 2>$null
+    $script:SkipShellFixtureTests = $LASTEXITCODE -ne 0
+}
 
 BeforeAll {
+    $script:BashCommand = (Get-Command bash -CommandType Application -ErrorAction SilentlyContinue |
+            Select-Object -First 1).Source
     $script:RepositoryRoot = (Resolve-Path (Join-Path $PSScriptRoot '../../..')).Path
     $script:WorkflowDirectory = Join-Path $script:RepositoryRoot '.github/workflows'
 
     # Every workflow that participates in building, attesting, publishing, or
     # reconciling the one hve-core package.
     $script:PackagingWorkflow = [string[]]@(
-        'extension-package.yml'
         'extension-provenance.yml'
         'extension-marketplace-publish.yml'
         'release-marketplace-prerelease.yml'
         'release-marketplace-stable.yml'
         'release-prerelease.yml'
+        'release-vsix-publish.yml'
         'release-stable-publish.yml'
         'release-prerelease-prepare.yml'
         'release-stable.yml'
@@ -128,6 +133,77 @@ BeforeAll {
         return $found[0]
     }
 
+    function Invoke-BashFixtureStep {
+        <#
+        .SYNOPSIS
+        Runs a Bash step body in a disposable fixture.
+        .PARAMETER Body
+        Step run text.
+        .PARAMETER Environment
+        Environment variables supplied to the step, including blank values.
+        .PARAMETER Setup
+        Optional fixture setup callback receiving the fixture path.
+        .OUTPUTS
+        [pscustomobject] Exit code, output, workflow output, and attempt count.
+        #>
+        [CmdletBinding()]
+        [OutputType([pscustomobject])]
+        param(
+            [Parameter(Mandatory = $true)]
+            [string]$Body,
+
+            [Parameter(Mandatory = $true)]
+            [hashtable]$Environment,
+
+            [Parameter(Mandatory = $false)]
+            [scriptblock]$Setup
+        )
+
+        $fixture = Join-Path ([System.IO.Path]::GetTempPath()) ([System.Guid]::NewGuid().ToString('n'))
+        New-Item -ItemType Directory -Path $fixture -Force | Out-Null
+        try {
+            if ($Setup) {
+                & $Setup $fixture
+            }
+            $stepPath = Join-Path $fixture 'step.sh'
+            [IO.File]::WriteAllText($stepPath, ($Body -replace "`r?`n", "`n"), [Text.UTF8Encoding]::new($false))
+            $environmentPath = Join-Path $fixture 'environment.sh'
+            $environmentLines = [string[]]@($Environment.GetEnumerator() | ForEach-Object {
+                    $encodedValue = [Convert]::ToBase64String([Text.Encoding]::UTF8.GetBytes([string]$_.Value))
+                    "export $($_.Key)=`"`$(printf '%s' '$encodedValue' | base64 --decode)`""
+                })
+            [IO.File]::WriteAllText($environmentPath, ($environmentLines -join "`n") + "`n", [Text.UTF8Encoding]::new($false))
+
+            Push-Location -LiteralPath $fixture
+            try {
+                if (Test-Path -LiteralPath (Join-Path $fixture 'bin')) {
+                    & $script:BashCommand -c 'chmod +x ./bin/*'
+                    if ($LASTEXITCODE -ne 0) {
+                        throw 'Unable to make fixture commands executable'
+                    }
+                }
+                $output = & $script:BashCommand -c 'source ./environment.sh; export PATH="$PWD/bin:$PATH"; bash ./step.sh' 2>$null
+                $exitCode = $LASTEXITCODE
+                $githubOutputPath = Join-Path $fixture 'github-output.txt'
+                $attemptCountPath = Join-Path $fixture 'attempt-count.txt'
+                return [pscustomobject]@{
+                    ExitCode    = $exitCode
+                    Output      = [string]::Join("`n", [string[]]@($output))
+                    GithubOutput = if (Test-Path -LiteralPath $githubOutputPath) {
+                        Get-Content -LiteralPath $githubOutputPath -Raw -Encoding utf8
+                    } else { '' }
+                    AttemptCount = if (Test-Path -LiteralPath $attemptCountPath) {
+                        [int](Get-Content -LiteralPath $attemptCountPath -Raw -Encoding utf8).Trim()
+                    } else { 0 }
+                }
+            } finally {
+                Pop-Location
+            }
+        } finally {
+            Remove-Item -LiteralPath $fixture -Recurse -Force -ErrorAction SilentlyContinue
+        }
+    }
+
     function Invoke-WorkflowShellStep {
         <#
         .SYNOPSIS
@@ -154,43 +230,296 @@ BeforeAll {
             [hashtable]$Environment
         )
 
-        $fixture = Join-Path ([System.IO.Path]::GetTempPath()) ([System.Guid]::NewGuid().ToString('n'))
-        New-Item -ItemType Directory -Path (Join-Path $fixture 'extension/templates') -Force | Out-Null
-        try {
-            Set-Content -LiteralPath (Join-Path $fixture 'extension/templates/package.template.json') `
+        $setup = {
+            param($FixturePath)
+            $templateDirectory = Join-Path $FixturePath 'extension/templates'
+            New-Item -ItemType Directory -Path $templateDirectory -Force | Out-Null
+            Set-Content -LiteralPath (Join-Path $templateDirectory 'package.template.json') `
                 -Value "{`"name`":`"hve-core`",`"version`":`"$TemplateVersion`"}" -Encoding utf8
-            $stepPath = Join-Path $fixture 'step.sh'
-            Set-Content -LiteralPath $stepPath -Value $Body -Encoding utf8
-
-            # env carries blank values that a PowerShell environment assignment
-            # would delete, which set -u would then report as an unset variable.
-            $assignments = [string[]]@($Environment.GetEnumerator() | ForEach-Object { "$($_.Key)=$($_.Value)" })
-            Push-Location -LiteralPath $fixture
-            try {
-                $output = & env @assignments bash $stepPath 2>$null
-                return [pscustomobject]@{
-                    ExitCode = $LASTEXITCODE
-                    Output   = [string]::Join("`n", [string[]]@($output))
-                }
-            } finally {
-                Pop-Location
-            }
-        } finally {
-            Remove-Item -LiteralPath $fixture -Recurse -Force -ErrorAction SilentlyContinue
         }
+        return Invoke-BashFixtureStep -Body $Body -Environment $Environment -Setup $setup
     }
+
+    function Invoke-ReleaseDiscoveryShellStep {
+        <#
+        .SYNOPSIS
+        Runs the release-discovery Bash body against deterministic API responses.
+        .PARAMETER Body
+        Release-discovery step run text.
+        .PARAMETER Response
+        JSON responses returned by successive mocked API calls. The last response repeats.
+        .PARAMETER Environment
+        Expected release identity environment.
+        .PARAMETER ApiFailureAttempt
+        Optional API attempt that returns a nonzero exit code.
+        .OUTPUTS
+        [pscustomobject] Exit code, output, workflow output, and API attempt count.
+        #>
+        [CmdletBinding()]
+        [OutputType([pscustomobject])]
+        param(
+            [Parameter(Mandatory = $true)]
+            [string]$Body,
+
+            [Parameter(Mandatory = $true)]
+            [ValidateNotNullOrEmpty()]
+            [string[]]$Response,
+
+            [Parameter(Mandatory = $true)]
+            [hashtable]$Environment,
+
+            [Parameter(Mandatory = $false)]
+            [int]$ApiFailureAttempt = 0
+        )
+
+        $setup = {
+            param($FixturePath)
+            $binDirectory = Join-Path $FixturePath 'bin'
+            $responseDirectory = Join-Path $FixturePath 'responses'
+            New-Item -ItemType Directory -Path $binDirectory, $responseDirectory -Force | Out-Null
+            for ($attempt = 1; $attempt -le 12; $attempt++) {
+                $responseIndex = [Math]::Min($attempt - 1, $Response.Count - 1)
+                Set-Content -LiteralPath (Join-Path $responseDirectory "$attempt.json") `
+                    -Value $Response[$responseIndex] -Encoding utf8
+            }
+            $ghCommand = @'
+#!/usr/bin/env bash
+set -euo pipefail
+attempt=0
+if [ -f "$MOCK_COUNTER_FILE" ]; then
+  attempt=$(cat "$MOCK_COUNTER_FILE")
+fi
+attempt=$((attempt + 1))
+printf '%s' "$attempt" > "$MOCK_COUNTER_FILE"
+if [ "$MOCK_API_FAILURE_ATTEMPT" -eq "$attempt" ]; then
+  exit 1
+fi
+cat "$MOCK_RESPONSE_DIRECTORY/$attempt.json"
+'@
+            [IO.File]::WriteAllText((Join-Path $binDirectory 'gh'), ($ghCommand -replace "`r?`n", "`n"), [Text.UTF8Encoding]::new($false))
+            $sleepCommand = @'
+#!/usr/bin/env bash
+exit 0
+'@
+            [IO.File]::WriteAllText((Join-Path $binDirectory 'sleep'), ($sleepCommand -replace "`r?`n", "`n"), [Text.UTF8Encoding]::new($false))
+        }
+        $fixtureEnvironment = @{} + $Environment
+        $fixtureEnvironment['GITHUB_OUTPUT'] = './github-output.txt'
+        $fixtureEnvironment['MOCK_API_FAILURE_ATTEMPT'] = $ApiFailureAttempt
+        $fixtureEnvironment['MOCK_COUNTER_FILE'] = './attempt-count.txt'
+        $fixtureEnvironment['MOCK_RESPONSE_DIRECTORY'] = './responses'
+        $fixtureEnvironment['RUNNER_TEMP'] = '.'
+        return Invoke-BashFixtureStep -Body $Body -Environment $fixtureEnvironment -Setup $setup
+    }
+
+        function Invoke-ReleaseAssetShellStep {
+                <#
+                .SYNOPSIS
+                Runs a release asset verification Bash body with mocked GitHub and PowerShell commands.
+                .PARAMETER Body
+                Release asset verification step run text.
+                .PARAMETER AssetName
+                Release asset names returned by the mocked API.
+                .PARAMETER Environment
+                Release identity environment supplied to the step.
+                .OUTPUTS
+                [pscustomobject] Exit code and captured command output.
+                #>
+                [CmdletBinding()]
+                [OutputType([pscustomobject])]
+                param(
+                        [Parameter(Mandatory = $true)]
+                        [string]$Body,
+
+                        [Parameter(Mandatory = $true)]
+                        [AllowEmptyCollection()]
+                        [string[]]$AssetName,
+
+                        [Parameter(Mandatory = $true)]
+                        [hashtable]$Environment
+                )
+
+                $setup = {
+                        param($FixturePath)
+                        $binDirectory = Join-Path $FixturePath 'bin'
+                        $releaseDirectory = Join-Path $FixturePath 'scripts/release'
+                        $moduleDirectory = Join-Path $FixturePath 'scripts/lib/Modules'
+                        New-Item -ItemType Directory -Path $binDirectory -Force | Out-Null
+                        New-Item -ItemType Directory -Path $releaseDirectory, $moduleDirectory -Force | Out-Null
+                        Copy-Item -LiteralPath (Join-Path $script:RepositoryRoot 'scripts/release/Assert-ReleaseAssetSet.ps1') `
+                            -Destination $releaseDirectory
+                        Copy-Item -LiteralPath (Join-Path $script:RepositoryRoot 'scripts/lib/Modules/CIHelpers.psm1') `
+                            -Destination $moduleDirectory
+                        $assetRows = for ($index = 0; $index -lt $AssetName.Count; $index++) {
+                                "$($index + 1)`t$($AssetName[$index])"
+                        }
+                        $assetNames = if ($AssetName.Count -gt 0) {
+                            ($AssetName -join "`n") + "`n"
+                        }
+                        else {
+                            ''
+                        }
+                        $assetResponse = if ($assetRows.Count -gt 0) {
+                            ($assetRows -join "`n") + "`n"
+                        }
+                        else {
+                            ''
+                        }
+                        [IO.File]::WriteAllText((Join-Path $FixturePath 'asset-response.names'), $assetNames, [Text.UTF8Encoding]::new($false))
+                        [IO.File]::WriteAllText((Join-Path $FixturePath 'asset-response.tsv'), $assetResponse, [Text.UTF8Encoding]::new($false))
+                        $ghCommand = @'
+#!/usr/bin/env bash
+set -euo pipefail
+if [ "$1" = 'api' ]; then
+    shift
+    if [ "$1" != '--paginate' ]; then
+        exit 2
+    fi
+    shift
+    if [ "$1" != "$MOCK_EXPECTED_ASSET_ENDPOINT" ]; then
+        exit 3
+    fi
+    shift
+    if [ "$1" != '--jq' ] || [ "$#" -ne 2 ]; then
+        exit 4
+    fi
+    case "$2" in
+        '.[].name')
+            cat "$MOCK_ASSET_NAME_RESPONSE"
+            ;;
+        '.[] | [.id, .name] | @tsv')
+            cat "$MOCK_ASSET_TSV_RESPONSE"
+            ;;
+        *)
+            exit 5
+            ;;
+    esac
+    exit 0
+fi
+if [ "$1" = 'release' ] && [ "$2" = 'download' ]; then
+    pattern=''
+    destination='.'
+    while [ "$#" -gt 0 ]; do
+        case "$1" in
+            -p)
+                pattern="$2"
+                shift 2
+                ;;
+            -D)
+                destination="$2"
+                shift 2
+                ;;
+            *)
+                shift
+                ;;
+        esac
+    done
+    mkdir -p "$destination"
+    printf '%s' 'fixture bytes' > "$destination/$pattern"
+    exit 0
+fi
+exit 1
+'@
+                        [IO.File]::WriteAllText((Join-Path $binDirectory 'gh'), ($ghCommand -replace "`r?`n", "`n"), [Text.UTF8Encoding]::new($false))
+                        $pwshCommand = @'
+#!/usr/bin/env bash
+set -euo pipefail
+if [[ "$*" == *'Assert-ReleaseAssetSet.ps1'* ]]; then
+    exec "$MOCK_REAL_PWSH" "$@"
+fi
+printf 'pwsh %s\n' "$*"
+'@
+                        [IO.File]::WriteAllText((Join-Path $binDirectory 'pwsh'), ($pwshCommand -replace "`r?`n", "`n"), [Text.UTF8Encoding]::new($false))
+                }
+                $fixtureEnvironment = @{} + $Environment
+                $fixtureEnvironment['MOCK_ASSET_NAME_RESPONSE'] = './asset-response.names'
+                $fixtureEnvironment['MOCK_ASSET_TSV_RESPONSE'] = './asset-response.tsv'
+                $fixtureEnvironment['MOCK_EXPECTED_ASSET_ENDPOINT'] = "/repos/$($Environment['REPOSITORY'])/releases/$($Environment['RELEASE_ID'])/assets?per_page=100"
+                $fixtureEnvironment['MOCK_REAL_PWSH'] = (& $script:BashCommand -c 'command -v pwsh').Trim()
+                $fixtureEnvironment['RUNNER_TEMP'] = '.'
+                return Invoke-BashFixtureStep -Body $Body -Environment $fixtureEnvironment -Setup $setup
+        }
+
+        function Invoke-ManagedReleaseIdentityShellStep {
+                <#
+                .SYNOPSIS
+                Runs a managed release postcondition against deterministic GitHub responses.
+                .PARAMETER Body
+                Managed release identity step run text.
+                .PARAMETER Environment
+                Release-please outputs and expected identity supplied to the step.
+                .PARAMETER TagObject
+                Type and SHA returned by the mocked exact tag lookup.
+                .PARAMETER ReleaseJson
+                JSON returned by the mocked exact release lookup.
+                .PARAMETER FailureEndpoint
+                Optional endpoint substring whose mocked request fails.
+                .OUTPUTS
+                [pscustomobject] Exit code and captured output.
+                #>
+                [CmdletBinding()]
+                [OutputType([pscustomobject])]
+                param(
+                        [Parameter(Mandatory = $true)]
+                        [string]$Body,
+
+                        [Parameter(Mandatory = $true)]
+                        [hashtable]$Environment,
+
+                        [Parameter(Mandatory = $true)]
+                        [string]$TagObject,
+
+                        [Parameter(Mandatory = $true)]
+                        [string]$ReleaseJson,
+
+                        [Parameter(Mandatory = $false)]
+                        [string]$FailureEndpoint = ''
+                )
+
+                $setup = {
+                        param($FixturePath)
+                        $binDirectory = Join-Path $FixturePath 'bin'
+                        New-Item -ItemType Directory -Path $binDirectory -Force | Out-Null
+                        $ghCommand = @'
+#!/usr/bin/env bash
+set -euo pipefail
+endpoint="$2"
+if [ -n "$MOCK_FAILURE_ENDPOINT" ] && [[ "$endpoint" == *"$MOCK_FAILURE_ENDPOINT"* ]]; then
+    exit 1
+fi
+case "$endpoint" in
+    */git/ref/tags/*|*/git/tags/*)
+        printf '%s\n' "$MOCK_TAG_OBJECT"
+        ;;
+    */releases/tags/*)
+        printf '%s\n' "$MOCK_RELEASE_JSON"
+        ;;
+    *)
+        exit 1
+        ;;
+esac
+'@
+                        [IO.File]::WriteAllText((Join-Path $binDirectory 'gh'), ($ghCommand -replace "`r?`n", "`n"), [Text.UTF8Encoding]::new($false))
+                }
+                $fixtureEnvironment = @{} + $Environment
+                $fixtureEnvironment['MOCK_FAILURE_ENDPOINT'] = $FailureEndpoint
+                $fixtureEnvironment['MOCK_RELEASE_JSON'] = $ReleaseJson
+                $fixtureEnvironment['MOCK_TAG_OBJECT'] = $TagObject
+                $fixtureEnvironment['RUNNER_TEMP'] = '.'
+                return Invoke-BashFixtureStep -Body $Body -Environment $fixtureEnvironment -Setup $setup
+        }
 }
 
 Describe 'Retired multi-package contracts' -Tag 'Unit' {
     # Every retired contract is proved absent from the active packaging and
     # release surface, so a reintroduced matrix or ZIP job fails here first.
     It 'Declares no package matrix input or output in <Workflow>' -ForEach @(
-        @{ Workflow = 'extension-package.yml' }
         @{ Workflow = 'extension-provenance.yml' }
         @{ Workflow = 'extension-marketplace-publish.yml' }
         @{ Workflow = 'release-marketplace-prerelease.yml' }
         @{ Workflow = 'release-marketplace-stable.yml' }
         @{ Workflow = 'release-prerelease.yml' }
+        @{ Workflow = 'release-vsix-publish.yml' }
         @{ Workflow = 'release-stable-publish.yml' }
     ) {
         $text = Get-WorkflowText -Name $Workflow
@@ -200,10 +529,10 @@ Describe 'Retired multi-package contracts' -Tag 'Unit' {
     }
 
     It 'Declares no job-level matrix strategy in <Workflow>' -ForEach @(
-        @{ Workflow = 'extension-package.yml' }
         @{ Workflow = 'extension-provenance.yml' }
         @{ Workflow = 'extension-marketplace-publish.yml' }
         @{ Workflow = 'release-prerelease.yml' }
+        @{ Workflow = 'release-vsix-publish.yml' }
         @{ Workflow = 'release-stable-publish.yml' }
     ) {
         $document = Get-WorkflowDocument -Name $Workflow
@@ -217,12 +546,12 @@ Describe 'Retired multi-package contracts' -Tag 'Unit' {
     }
 
     It 'Invokes no retired package selection or discovery script in <Workflow>' -ForEach @(
-        @{ Workflow = 'extension-package.yml' }
         @{ Workflow = 'extension-provenance.yml' }
         @{ Workflow = 'extension-marketplace-publish.yml' }
         @{ Workflow = 'release-marketplace-prerelease.yml' }
         @{ Workflow = 'release-marketplace-stable.yml' }
         @{ Workflow = 'release-prerelease.yml' }
+        @{ Workflow = 'release-vsix-publish.yml' }
         @{ Workflow = 'release-stable-publish.yml' }
         @{ Workflow = 'release-prerelease-prepare.yml' }
         @{ Workflow = 'release-stable.yml' }
@@ -281,8 +610,8 @@ Describe 'Retired multi-package contracts' -Tag 'Unit' {
 
 Describe 'One-package build and artifact naming' -Tag 'Unit' {
     It 'Packages one hve-core VSIX from the explicit source ref' {
-        $document = Get-WorkflowDocument -Name 'extension-package.yml'
-        [string[]]@($document['jobs'].Keys) | Should -Be @('package')
+        $document = Get-WorkflowDocument -Name 'extension-provenance.yml'
+        [string[]]@($document['jobs'].Keys | Sort-Object) | Should -Be @('attest', 'package')
 
         $inputs = $document['on']['workflow_call']['inputs']
         $inputs['source-ref']['required'] | Should -BeTrue
@@ -300,7 +629,7 @@ Describe 'One-package build and artifact naming' -Tag 'Unit' {
     }
 
     It 'Validates the source ref before checkout and packaging inputs before dependencies' {
-        $document = Get-WorkflowDocument -Name 'extension-package.yml'
+        $document = Get-WorkflowDocument -Name 'extension-provenance.yml'
         $names = [string[]]@($document['jobs']['package']['steps'] | ForEach-Object { [string]$_['name'] })
         $names.IndexOf('Validate source ref') | Should -BeLessThan $names.IndexOf('Checkout code')
         $names.IndexOf('Checkout code') | Should -BeLessThan $names.IndexOf('Validate packaging inputs')
@@ -308,7 +637,7 @@ Describe 'One-package build and artifact naming' -Tag 'Unit' {
     }
 
     It 'Accepts a source-ref equal to the run commit before checkout' -Skip:$script:SkipShellFixtureTests {
-        $step = Get-NamedJobStep -Document (Get-WorkflowDocument -Name 'extension-package.yml') `
+        $step = Get-NamedJobStep -Document (Get-WorkflowDocument -Name 'extension-provenance.yml') `
             -JobName 'package' -StepName 'Validate source ref'
         $result = Invoke-WorkflowShellStep -Body ([string]$step['run']) -TemplateVersion '3.3.0' -Environment @{
             EVENT_SHA        = 'abcdef1111111111111111111111111111111111'
@@ -328,7 +657,7 @@ Describe 'One-package build and artifact naming' -Tag 'Unit' {
         @{ SourceRef = 'ABCDEF1111111111111111111111111111111111' }
         @{ SourceRef = '2222222222222222222222222222222222222222' }
     ) {
-        $step = Get-NamedJobStep -Document (Get-WorkflowDocument -Name 'extension-package.yml') `
+        $step = Get-NamedJobStep -Document (Get-WorkflowDocument -Name 'extension-provenance.yml') `
             -JobName 'package' -StepName 'Validate source ref'
         $result = Invoke-WorkflowShellStep -Body ([string]$step['run']) -TemplateVersion '3.3.0' -Environment @{
             EVENT_SHA        = 'abcdef1111111111111111111111111111111111'
@@ -338,10 +667,11 @@ Describe 'One-package build and artifact naming' -Tag 'Unit' {
         $result.Output | Should -Match 'source-ref'
     }
 
-    It 'Fails a committed template version mismatch in extension-package.yml' -Skip:$script:SkipShellFixtureTests {
-        $step = Get-NamedJobStep -Document (Get-WorkflowDocument -Name 'extension-package.yml') `
+    It 'Fails a committed template version mismatch in extension-provenance.yml' -Skip:$script:SkipShellFixtureTests {
+        $step = Get-NamedJobStep -Document (Get-WorkflowDocument -Name 'extension-provenance.yml') `
             -JobName 'package' -StepName 'Validate packaging inputs'
         $result = Invoke-WorkflowShellStep -Body ([string]$step['run']) -TemplateVersion '3.3.0' -Environment @{
+            INPUT_CHANNEL    = 'Stable'
             INPUT_SOURCE_REF = '1111111111111111111111111111111111111111'
             INPUT_VERSION    = '3.5.0'
         }
@@ -349,22 +679,22 @@ Describe 'One-package build and artifact naming' -Tag 'Unit' {
         $result.Output | Should -Match 'is 3\.3\.0 but the caller requested 3\.5\.0'
     }
 
-    It 'Fails a blank version in extension-package.yml' -Skip:$script:SkipShellFixtureTests {
-        $step = Get-NamedJobStep -Document (Get-WorkflowDocument -Name 'extension-package.yml') `
+    It 'Fails a blank version in extension-provenance.yml' -Skip:$script:SkipShellFixtureTests {
+        $step = Get-NamedJobStep -Document (Get-WorkflowDocument -Name 'extension-provenance.yml') `
             -JobName 'package' -StepName 'Validate packaging inputs'
         $result = Invoke-WorkflowShellStep -Body ([string]$step['run']) -TemplateVersion '3.3.0' -Environment @{
             INPUT_SOURCE_REF = '1111111111111111111111111111111111111111'
             INPUT_VERSION    = ''
         }
         $result.ExitCode | Should -Not -Be 0
-        $result.Output | Should -Match 'version is required'
+        $result.Output | Should -Match 'version must be canonical MAJOR.MINOR.PATCH'
     }
 
     # The builder and the attest workflow must agree on one artifact name, so
     # they can never disagree about what was signed within a run.
     It 'Matches the VSIX artifact producer and consumer names' {
-        (Get-WorkflowText -Name 'extension-package.yml') | Should -Match 'name: extension-vsix'
-        (Get-WorkflowText -Name 'extension-provenance.yml') | Should -Match 'name: extension-vsix'
+        $text = Get-WorkflowText -Name 'extension-provenance.yml'
+        @([regex]::Matches($text, 'name: extension-vsix')) | Should -HaveCount 2
     }
 }
 
@@ -372,27 +702,20 @@ Describe 'One-package build and artifact naming' -Tag 'Unit' {
 # commit is the only trusted selector, and the gates below are what make it so.
 Describe 'Trusted source binding' -Tag 'Unit' {
     It 'Checks out the run commit in <Workflow> step <StepName>' -ForEach @(
-        @{ Workflow = 'extension-package.yml'; JobName = 'package'; StepName = 'Checkout code' }
+        @{ Workflow = 'extension-provenance.yml'; JobName = 'package'; StepName = 'Checkout code' }
         @{ Workflow = 'extension-provenance.yml'; JobName = 'attest'; StepName = 'Checkout code' }
-        @{ Workflow = 'extension-provenance.yml'; JobName = 'attest'; StepName = 'Checkout Syft config' }
-        @{ Workflow = 'release-prerelease.yml'; JobName = 'generate-dependency-sbom'; StepName = 'Checkout dependency manifests' }
-        @{ Workflow = 'release-prerelease.yml'; JobName = 'verify-provenance'; StepName = 'Checkout verification script' }
-        @{ Workflow = 'release-stable-publish.yml'; JobName = 'generate-dependency-sbom'; StepName = 'Checkout dependency manifests' }
-        @{ Workflow = 'release-stable-publish.yml'; JobName = 'verify-provenance'; StepName = 'Checkout verification script' }
+        @{ Workflow = 'release-vsix-publish.yml'; JobName = 'generate-dependency-sbom'; StepName = 'Checkout dependency manifests' }
+        @{ Workflow = 'release-vsix-publish.yml'; JobName = 'verify-provenance'; StepName = 'Checkout verification script' }
     ) {
         $step = Get-NamedJobStep -Document (Get-WorkflowDocument -Name $Workflow) -JobName $JobName -StepName $StepName
         [string]$step['with']['ref'] | Should -BeExactly '${{ github.sha }}'
     }
 
-    It 'Retains the release identity gate that makes the run commit trusted in <Workflow>' -ForEach @(
-        @{ Workflow = 'release-prerelease.yml' }
-        @{ Workflow = 'release-stable-publish.yml' }
-    ) {
-        $document = Get-WorkflowDocument -Name $Workflow
-        $identity = Get-NamedJobStep -Document $document -JobName 'validate-release' -StepName 'Verify trusted release identity'
-        [string]$identity['run'] | Should -Match 'MERGE_SHA'
-        [string]$identity['run'] | Should -Match 'RELEASE_SHA'
-        [string]$document['jobs']['validate-release']['outputs']['sha'] | Should -BeExactly '${{ github.sha }}'
+    It 'Retains the tag identity gate that makes the run commit trusted' {
+        $document = Get-WorkflowDocument -Name 'release-vsix-publish.yml'
+        $identity = Get-NamedJobStep -Document $document -JobName 'validate-release' -StepName 'Validate tag source and committed release state'
+        [string]$identity['run'] | Should -Match 'TAG_SHA.*EVENT_SHA'
+        [string]$document['jobs']['validate-release']['outputs']['source-sha'] | Should -BeExactly '${{ steps.identity.outputs.source-sha }}'
         [string[]]@($document['jobs']['generate-dependency-sbom']['needs']) | Should -Contain 'validate-release'
         [string[]]@($document['jobs']['verify-provenance']['needs']) | Should -Contain 'validate-release'
     }
@@ -539,7 +862,7 @@ Describe 'Retained provenance and SBOM assurance' -Tag 'Unit' {
     }
 
     It 'Attests one VSIX with build provenance, per-VSIX SBOM, and dependency SBOM' {
-        [string[]]@($script:ProvenanceDocument['jobs'].Keys) | Should -Be @('attest')
+        [string[]]@($script:ProvenanceDocument['jobs'].Keys | Sort-Object) | Should -Be @('attest', 'package')
 
         @($script:ProvenanceSteps | Where-Object { $_ -match 'anchore/sbom-action@' }) | Should -HaveCount 1
         @($script:ProvenanceSteps | Where-Object { $_ -match 'actions/attest-build-provenance@' }) | Should -HaveCount 1
@@ -562,14 +885,28 @@ Describe 'Retained provenance and SBOM assurance' -Tag 'Unit' {
         $text | Should -Match 'gh release upload'
     }
 
-    # The privileged attest workflow signs what the unprivileged builder
-    # produced, so it may run neither packaging script nor a dependency install.
-    It 'Runs no packaging or dependency install in extension-provenance.yml' {
-        $text = Get-WorkflowText -Name 'extension-provenance.yml'
-        $text | Should -Not -Match 'Prepare-Extension\.ps1'
-        $text | Should -Not -Match 'Package-Extension\.ps1'
-        $text | Should -Not -Match 'npm ci'
-        $text | Should -Not -Match 'actions/setup-node@'
+    It 'Separates unprivileged packaging from privileged attestation' {
+        $package = $script:ProvenanceDocument['jobs']['package']
+        [string[]]@($package['permissions'].Keys) | Should -Be @('contents')
+        [string]$package['permissions']['contents'] | Should -BeExactly 'read'
+
+        $attest = $script:ProvenanceDocument['jobs']['attest']
+        [string[]]@($attest['needs']) | Should -Be @('package')
+        [string[]]@($attest['permissions'].Keys) | Sort-Object |
+            Should -Be @('artifact-metadata', 'attestations', 'contents', 'id-token')
+        [string]$attest['permissions']['contents'] | Should -BeExactly 'write'
+        [string]$attest['permissions']['id-token'] | Should -BeExactly 'write'
+        [string]$attest['permissions']['attestations'] | Should -BeExactly 'write'
+        [string]$attest['permissions']['artifact-metadata'] | Should -BeExactly 'write'
+
+        $packageText = (Get-JobStepText -Document $script:ProvenanceDocument -JobName 'package') -join "`n"
+        $packageText | Should -Match 'npm ci --ignore-scripts=false'
+        $packageText | Should -Match 'Package-Extension\.ps1'
+        $packageText | Should -Not -Match 'actions/attest'
+
+        $attestText = $script:ProvenanceSteps -join "`n"
+        $attestText | Should -Not -Match 'npm ci'
+        $attestText | Should -Not -Match 'Package-Extension\.ps1'
     }
 
     It 'Requires the attestation source ref to be this run commit' {
@@ -577,20 +914,14 @@ Describe 'Retained provenance and SBOM assurance' -Tag 'Unit' {
         @($script:ProvenanceSteps | Where-Object { $_ -match 'is not the attestation source commit' }) | Should -HaveCount 1
     }
 
-    It 'Verifies release provenance for one VSIX in <Workflow>' -ForEach @(
-        @{ Workflow = 'release-prerelease.yml' }
-        @{ Workflow = 'release-stable-publish.yml' }
-    ) {
-        $steps = Get-JobStepText -Document (Get-WorkflowDocument -Name $Workflow) -JobName 'verify-provenance'
+    It 'Verifies release provenance for one VSIX in the tag producer' {
+        $steps = Get-JobStepText -Document (Get-WorkflowDocument -Name 'release-vsix-publish.yml') -JobName 'verify-provenance'
         @($steps | Where-Object { $_ -match 'Invoke-ProvenanceVerification\.ps1' }) | Should -HaveCount 1
         @($steps | Where-Object { $_ -match "\-p '\*\.vsix'" }) | Should -HaveCount 1
     }
 
-    It 'Generates and uploads the dependency SBOM in <Workflow>' -ForEach @(
-        @{ Workflow = 'release-prerelease.yml' }
-        @{ Workflow = 'release-stable-publish.yml' }
-    ) {
-        $document = Get-WorkflowDocument -Name $Workflow
+    It 'Generates and uploads the dependency SBOM in the tag producer' {
+        $document = Get-WorkflowDocument -Name 'release-vsix-publish.yml'
         $steps = Get-JobStepText -Document $document -JobName 'generate-dependency-sbom'
         @($steps | Where-Object { $_ -match 'anchore/sbom-action@' }) | Should -HaveCount 1
         @($steps | Where-Object { $_ -match 'gh release upload' }) | Should -HaveCount 1
@@ -706,46 +1037,23 @@ Describe 'Retained marketplace publication' -Tag 'Unit' {
 }
 
 Describe 'Retained release reconciliation and OpenVEX' -Tag 'Unit' {
-    It 'Reconciles a matching published release against the fixed asset set in <Workflow>' -ForEach @(
-        @{ Workflow = 'release-prerelease.yml'; Required = @('dependencies.spdx.json'); Optional = @() }
-        @{ Workflow = 'release-stable-publish.yml'; Required = @('dependencies.spdx.json', 'hve-core.openvex.json'); Optional = @('dependency-diff.md') }
-    ) {
-        $step = Get-NamedJobStep -Document (Get-WorkflowDocument -Name $Workflow) `
+    It 'Reconciles a matching published release against channel-specific fixed assets' {
+        $step = Get-NamedJobStep -Document (Get-WorkflowDocument -Name 'release-vsix-publish.yml') `
             -JobName 'validate-release' -StepName 'Verify published release assets'
         $run = [string]$step['run']
         $run | Should -Match 'Assert-ReleaseAssetSet\.ps1'
-        $run | Should -Match '-AssetNamePath "\$ASSET_NAMES"'
-        $run | Should -Match '-RequiredAssetPath "\$REQUIRED_LIST"'
-        $run | Should -Match '-Version "\$RELEASE_VERSION"'
-        $run | Should -Match '-ReleaseTag "\$RELEASE_TAG"'
-        $run | Should -Not -Match '-EvidencePath'
-        $run | Should -Not -Match '-CatalogPath'
-        $run | Should -Not -Match '-Channel'
-
-        $declared = [string[]]@(([string]$step['env']['REQUIRED_ASSETS']).Split("`n") |
-                ForEach-Object { $_.Trim() } | Where-Object { $_ })
-        $declared | Should -Be $Required
-
-        if ($Optional.Count -gt 0) {
-            $run | Should -Match '-OptionalAssetPath "\$OPTIONAL_LIST"'
-            $optionalDeclared = [string[]]@(([string]$step['env']['OPTIONAL_ASSETS']).Split("`n") |
-                    ForEach-Object { $_.Trim() } | Where-Object { $_ })
-            $optionalDeclared | Should -Be $Optional
-        }
-        else {
-            $run | Should -Not -Match '-OptionalAssetPath'
-            $step['env'].Contains('OPTIONAL_ASSETS') | Should -BeFalse
-        }
+        $run | Should -Match 'dependencies\.spdx\.json'
+        $run | Should -Match 'hve-core\.openvex\.json'
+        $run | Should -Match 'dependency-diff\.md'
+        $run | Should -Match "CHANNEL.*Stable"
+        [string]$step['if'] | Should -Match "release-state == 'published'"
     }
 
-    It 'Verifies every committed version field at the released commit in <Workflow>' -ForEach @(
-        @{ Workflow = 'release-prerelease.yml'; Manifest = '.release-please-prerelease-manifest.json' }
-        @{ Workflow = 'release-stable-publish.yml'; Manifest = '.release-please-manifest.json' }
-    ) {
-        $steps = Get-JobStepText -Document (Get-WorkflowDocument -Name $Workflow) -JobName 'validate-release'
-        $verify = @($steps | Where-Object { $_ -match 'release-please reported \$RELEASE_VERSION' })
+    It 'Verifies every committed version field at the tag event commit' {
+        $steps = Get-JobStepText -Document (Get-WorkflowDocument -Name 'release-vsix-publish.yml') -JobName 'validate-release'
+        $verify = @($steps | Where-Object { $_ -match 'but the tag declares \$RELEASE_VERSION' })
         $verify | Should -HaveCount 1
-        foreach ($path in @('package\.json', 'package-lock\.json', [regex]::Escape($Manifest),
+        foreach ($path in @('package\.json', 'package-lock\.json', 'release-please.*manifest\.json',
                 'extension/templates/package\.template\.json', 'plugin\.json',
                 '\.github/plugin/marketplace\.json:\.metadata\.version',
                 '\.github/plugin/marketplace\.json:\.plugins\[0\]\.version')) {
@@ -754,9 +1062,10 @@ Describe 'Retained release reconciliation and OpenVEX' -Tag 'Unit' {
     }
 
     It 'Attests and uploads the Stable OpenVEX document' {
-        $document = Get-WorkflowDocument -Name 'release-stable-publish.yml'
+        $document = Get-WorkflowDocument -Name 'release-vsix-publish.yml'
         [string]$document['jobs']['vex-attest']['uses'] | Should -BeExactly './.github/workflows/vex-attest.yml'
         [string]$document['jobs']['vex-attest']['with']['sbom-artifact'] | Should -BeExactly 'sbom-dependencies'
+        [string]$document['jobs']['vex-attest']['if'] | Should -Match "channel == 'Stable'"
 
         $verifySteps = Get-JobStepText -Document $document -JobName 'verify-provenance'
         @($verifySteps | Where-Object { $_ -match "\-p 'hve-core\.openvex\.json'" }) | Should -HaveCount 1
@@ -765,22 +1074,29 @@ Describe 'Retained release reconciliation and OpenVEX' -Tag 'Unit' {
     }
 
     It 'Documents VSIX and VEX verification without a plugin ZIP instruction' {
-        $notes = [string](Get-NamedJobStep -Document (Get-WorkflowDocument -Name 'release-stable-publish.yml') `
+        $notes = [string](Get-NamedJobStep -Document (Get-WorkflowDocument -Name 'release-vsix-publish.yml') `
                 -JobName 'append-verification-notes' -StepName 'Append verification section to release notes')['run']
         $notes | Should -Match 'gh attestation verify <file>\.vsix'
         $notes | Should -Match 'gh attestation verify hve-core\.openvex\.json'
         $notes | Should -Not -Match '<file>\.zip'
     }
 
-    It 'Skips every artifact-producing chain for a matching published release in <Workflow>' -ForEach @(
-        @{ Workflow = 'release-prerelease.yml'; Package = 'extension-package-prerelease'; Provenance = 'extension-provenance-prerelease' }
-        @{ Workflow = 'release-stable-publish.yml'; Package = 'extension-package-release'; Provenance = 'extension-provenance' }
+    It 'Skips every artifact-producing chain for a matching published release' {
+        $document = Get-WorkflowDocument -Name 'release-vsix-publish.yml'
+        foreach ($job in @('extension-provenance', 'generate-dependency-sbom', 'vex-attest', 'sbom-diff', 'append-verification-notes')) {
+            [string]$document['jobs'][$job]['if'] |
+                Should -Match "release-state == 'draft'" -Because "job '$job' must not rebuild a published release"
+        }
+    }
+
+    It 'Leaves both pull-request workflows with pre-tag jobs only' -ForEach @(
+        @{ Workflow = 'release-prerelease.yml' }
+        @{ Workflow = 'release-stable-publish.yml' }
     ) {
         $document = Get-WorkflowDocument -Name $Workflow
-        foreach ($job in @($Package, $Provenance, 'generate-dependency-sbom')) {
-            [string]$document['jobs'][$job]['if'] |
-                Should -Match "release-state != 'published'" -Because "$Workflow job '$job' must not rebuild a published release"
-        }
+        [string[]]@($document['jobs'].Keys) | Sort-Object |
+            Should -Be @('release-please', 'sync-release-pr', 'validate-trigger')
+        (Get-WorkflowText -Name $Workflow) | Should -Not -Match 'extension-vsix|sbom-dependencies|attest-build-provenance|vex-attest|verify-provenance|publish-release|close-milestone'
     }
 }
 
@@ -902,13 +1218,574 @@ Describe 'Release-please ownership and promotion transforms' -Tag 'Unit' {
         @($steps | Where-Object { $_ -match 'the PreRelease release identity is occupied' }) | Should -HaveCount 1
     }
 
-    It 'Publishes the release only after provenance verification in <Workflow>' -ForEach @(
-        @{ Workflow = 'release-prerelease.yml' }
-        @{ Workflow = 'release-stable-publish.yml' }
-    ) {
-        $document = Get-WorkflowDocument -Name $Workflow
+    It 'Publishes the release only after provenance verification in the tag producer' {
+        $document = Get-WorkflowDocument -Name 'release-vsix-publish.yml'
         [string[]]@($document['jobs']['publish-release']['needs']) | Should -Contain 'verify-provenance'
         $steps = Get-JobStepText -Document $document -JobName 'publish-release'
         @($steps | Where-Object { $_ -match 'gh release edit .*--draft=false' }) | Should -HaveCount 1
+    }
+}
+
+Describe 'Sole post-tag release producer' -Tag 'Unit' {
+    BeforeAll {
+        $script:ReleaseProducer = Get-WorkflowDocument -Name 'release-vsix-publish.yml'
+        $script:ReleaseProducerText = Get-WorkflowText -Name 'release-vsix-publish.yml'
+    }
+
+    It 'Triggers only for Stable and PreRelease tag pushes with tag-scoped concurrency' {
+        [string[]]@($script:ReleaseProducer['on'].Keys) | Should -Be @('push')
+        [string[]]@($script:ReleaseProducer['on']['push']['tags']) | Should -Be @('v*', 'prerelease-v*')
+        [string]$script:ReleaseProducer['concurrency']['group'] | Should -BeExactly 'release-vsix-${{ github.ref }}'
+        $script:ReleaseProducer['concurrency']['cancel-in-progress'] | Should -BeFalse
+    }
+
+    It 'Enforces exact tag grammar, parity, protected tag source, and branch containment' {
+        $identity = [string](Get-NamedJobStep -Document $script:ReleaseProducer -JobName 'validate-release' `
+                -StepName 'Validate tag event identity')['run']
+        $identity | Should -Match "EVENT_NAME.*push"
+        $identity | Should -Match "EVENT_REF_TYPE.*tag"
+        $identity | Should -Match 'EVENT_REF_PROTECTED'
+        $identity | Should -Match '\^v\(\[0-9\]\+\\\.\[0-9\]\+\\\.\[0-9\]\+\)\$'
+        $identity | Should -Match '\^prerelease-v'
+        $identity | Should -Match 'Stable version .* odd minor'
+        $identity | Should -Match 'PreRelease version .* even minor'
+
+        $source = [string](Get-NamedJobStep -Document $script:ReleaseProducer -JobName 'validate-release' `
+                -StepName 'Validate tag source and committed release state')['run']
+        $source | Should -Match 'refs/tags/\$RELEASE_TAG\^\{commit\}'
+        $source | Should -Match 'TAG_SHA.*EVENT_SHA'
+        $source | Should -Match 'merge-base --is-ancestor "\$EVENT_SHA" HEAD'
+        $source | Should -Match 'stale release-as'
+        $source | Should -Match 'CHANGELOG\.md has no release entry'
+    }
+
+    It 'Uses exactly twelve discovery attempts and ten-second waits only for absence' {
+        $discovery = [string](Get-NamedJobStep -Document $script:ReleaseProducer -JobName 'validate-release' `
+                -StepName 'Discover exact release')['run']
+        $discovery | Should -Match 'seq 1 12'
+        $discovery | Should -Match 'attempt.*-lt 12'
+        $discovery | Should -Match 'sleep 10'
+        $discovery.IndexOf('MATCH_COUNT" -eq 1', [System.StringComparison]::Ordinal) |
+            Should -BeLessThan $discovery.IndexOf('sleep 10', [System.StringComparison]::Ordinal)
+        $discovery | Should -Match 'API failed'
+        $discovery | Should -Match 'malformed response'
+        $discovery | Should -Match 'matches \$MATCH_COUNT GitHub releases'
+        $discovery | Should -Match 'release target .* does not match'
+        $discovery | Should -Match 'prerelease state .* does not match'
+        $discovery | Should -Match 'absent after exactly 12'
+    }
+
+    It 'Discovers the exact draft after bounded absence retries' -Skip:$script:SkipShellFixtureTests {
+        $discovery = [string](Get-NamedJobStep -Document $script:ReleaseProducer -JobName 'validate-release' `
+                -StepName 'Discover exact release')['run']
+        $sourceSha = '1111111111111111111111111111111111111111'
+        $release = '[{"id":123,"tag_name":"v3.4.0","target_commitish":"' + $sourceSha + '","draft":true,"prerelease":false}]'
+        $result = Invoke-ReleaseDiscoveryShellStep -Body $discovery -Response @('[]', '[]', $release) -Environment @{
+            EXPECTED_CHANNEL = 'Stable'
+            EXPECTED_SHA     = $sourceSha
+            EXPECTED_TAG     = 'v3.4.0'
+            GH_TOKEN         = 'fixture-token'
+            REPOSITORY       = 'microsoft/hve-core'
+        }
+        $result.ExitCode | Should -Be 0
+        $result.AttemptCount | Should -Be 3
+        $result.GithubOutput | Should -Match 'release-id=123'
+        $result.GithubOutput | Should -Match 'release-state=draft'
+    }
+
+    It 'Classifies an exact published PreRelease without rebuilding artifacts' -Skip:$script:SkipShellFixtureTests {
+        $discovery = [string](Get-NamedJobStep -Document $script:ReleaseProducer -JobName 'validate-release' `
+                -StepName 'Discover exact release')['run']
+        $sourceSha = '1111111111111111111111111111111111111111'
+        $release = '[{"id":124,"tag_name":"prerelease-v3.5.0","target_commitish":"' + $sourceSha + '","draft":false,"prerelease":true}]'
+        $result = Invoke-ReleaseDiscoveryShellStep -Body $discovery -Response @($release) -Environment @{
+            EXPECTED_CHANNEL = 'PreRelease'
+            EXPECTED_SHA     = $sourceSha
+            EXPECTED_TAG     = 'prerelease-v3.5.0'
+            GH_TOKEN         = 'fixture-token'
+            REPOSITORY       = 'microsoft/hve-core'
+        }
+        $result.ExitCode | Should -Be 0
+        $result.AttemptCount | Should -Be 1
+        $result.GithubOutput | Should -Match 'release-id=124'
+        $result.GithubOutput | Should -Match 'release-state=published'
+    }
+
+    It 'Fails release discovery immediately on an API error' -Skip:$script:SkipShellFixtureTests {
+        $discovery = [string](Get-NamedJobStep -Document $script:ReleaseProducer -JobName 'validate-release' `
+                -StepName 'Discover exact release')['run']
+        $result = Invoke-ReleaseDiscoveryShellStep -Body $discovery -Response @('[]') -ApiFailureAttempt 1 -Environment @{
+            EXPECTED_CHANNEL = 'Stable'
+            EXPECTED_SHA     = '1111111111111111111111111111111111111111'
+            EXPECTED_TAG     = 'v3.4.0'
+            GH_TOKEN         = 'fixture-token'
+            REPOSITORY       = 'microsoft/hve-core'
+        }
+        $result.ExitCode | Should -Not -Be 0
+        $result.AttemptCount | Should -Be 1
+        $result.Output | Should -Match 'Release discovery API failed on attempt 1'
+    }
+
+    It 'Fails release discovery on a malformed API response' -Skip:$script:SkipShellFixtureTests {
+        $discovery = [string](Get-NamedJobStep -Document $script:ReleaseProducer -JobName 'validate-release' `
+                -StepName 'Discover exact release')['run']
+        $result = Invoke-ReleaseDiscoveryShellStep -Body $discovery -Response @('{"not":"an-array"}') -Environment @{
+            EXPECTED_CHANNEL = 'Stable'
+            EXPECTED_SHA     = '1111111111111111111111111111111111111111'
+            EXPECTED_TAG     = 'v3.4.0'
+            GH_TOKEN         = 'fixture-token'
+            REPOSITORY       = 'microsoft/hve-core'
+        }
+        $result.ExitCode | Should -Not -Be 0
+        $result.AttemptCount | Should -Be 1
+        $result.Output | Should -Match 'malformed response on attempt 1'
+    }
+
+    It 'Fails release discovery when a tag matches multiple releases' -Skip:$script:SkipShellFixtureTests {
+        $discovery = [string](Get-NamedJobStep -Document $script:ReleaseProducer -JobName 'validate-release' `
+                -StepName 'Discover exact release')['run']
+        $sourceSha = '1111111111111111111111111111111111111111'
+        $release = '{"id":123,"tag_name":"v3.4.0","target_commitish":"' + $sourceSha + '","draft":true,"prerelease":false}'
+        $result = Invoke-ReleaseDiscoveryShellStep -Body $discovery -Response @("[$release,$release]") -Environment @{
+            EXPECTED_CHANNEL = 'Stable'
+            EXPECTED_SHA     = $sourceSha
+            EXPECTED_TAG     = 'v3.4.0'
+            GH_TOKEN         = 'fixture-token'
+            REPOSITORY       = 'microsoft/hve-core'
+        }
+        $result.ExitCode | Should -Not -Be 0
+        $result.AttemptCount | Should -Be 1
+        $result.Output | Should -Match 'matches 2 GitHub releases'
+    }
+
+    It 'Fails release discovery when the release target differs from the tag source' -Skip:$script:SkipShellFixtureTests {
+        $discovery = [string](Get-NamedJobStep -Document $script:ReleaseProducer -JobName 'validate-release' `
+                -StepName 'Discover exact release')['run']
+        $release = '[{"id":123,"tag_name":"v3.4.0","target_commitish":"2222222222222222222222222222222222222222","draft":true,"prerelease":false}]'
+        $result = Invoke-ReleaseDiscoveryShellStep -Body $discovery -Response @($release) -Environment @{
+            EXPECTED_CHANNEL = 'Stable'
+            EXPECTED_SHA     = '1111111111111111111111111111111111111111'
+            EXPECTED_TAG     = 'v3.4.0'
+            GH_TOKEN         = 'fixture-token'
+            REPOSITORY       = 'microsoft/hve-core'
+        }
+        $result.ExitCode | Should -Not -Be 0
+        $result.Output | Should -Match 'release target .* does not match tag event commit'
+    }
+
+    It 'Fails release discovery when channel and prerelease state disagree' -Skip:$script:SkipShellFixtureTests {
+        $discovery = [string](Get-NamedJobStep -Document $script:ReleaseProducer -JobName 'validate-release' `
+                -StepName 'Discover exact release')['run']
+        $sourceSha = '1111111111111111111111111111111111111111'
+        $release = '[{"id":123,"tag_name":"v3.4.0","target_commitish":"' + $sourceSha + '","draft":true,"prerelease":true}]'
+        $result = Invoke-ReleaseDiscoveryShellStep -Body $discovery -Response @($release) -Environment @{
+            EXPECTED_CHANNEL = 'Stable'
+            EXPECTED_SHA     = $sourceSha
+            EXPECTED_TAG     = 'v3.4.0'
+            GH_TOKEN         = 'fixture-token'
+            REPOSITORY       = 'microsoft/hve-core'
+        }
+        $result.ExitCode | Should -Not -Be 0
+        $result.Output | Should -Match 'prerelease state true does not match Stable'
+    }
+
+    It 'Fails release discovery after exactly twelve absent observations' -Skip:$script:SkipShellFixtureTests {
+        $discovery = [string](Get-NamedJobStep -Document $script:ReleaseProducer -JobName 'validate-release' `
+                -StepName 'Discover exact release')['run']
+        $result = Invoke-ReleaseDiscoveryShellStep -Body $discovery -Response @('[]') -Environment @{
+            EXPECTED_CHANNEL = 'Stable'
+            EXPECTED_SHA     = '1111111111111111111111111111111111111111'
+            EXPECTED_TAG     = 'v3.4.0'
+            GH_TOKEN         = 'fixture-token'
+            REPOSITORY       = 'microsoft/hve-core'
+        }
+        $result.ExitCode | Should -Not -Be 0
+        $result.AttemptCount | Should -Be 12
+        $result.Output | Should -Match 'absent after exactly 12 release discovery attempts'
+    }
+
+    It 'Calls the consolidated builder with all validated inputs after dependency SBOM generation' {
+        $builder = $script:ReleaseProducer['jobs']['extension-provenance']
+        [string[]]@($builder['needs']) | Should -Be @('validate-release', 'generate-dependency-sbom')
+        [string]$builder['uses'] | Should -BeExactly './.github/workflows/extension-provenance.yml'
+        [string]$builder['with']['source-ref'] | Should -BeExactly '${{ github.sha }}'
+        [string]$builder['with']['version'] | Should -BeExactly '${{ needs.validate-release.outputs.version }}'
+        [string]$builder['with']['channel'] | Should -BeExactly '${{ needs.validate-release.outputs.channel }}'
+        [string]$builder['with']['release-tag'] | Should -BeExactly '${{ needs.validate-release.outputs.tag-name }}'
+    }
+
+    It 'Keeps published releases verification-only without producing artifacts' {
+        foreach ($job in @('generate-dependency-sbom', 'extension-provenance', 'vex-attest', 'sbom-diff', 'append-verification-notes', 'publish-release')) {
+            [string]$script:ReleaseProducer['jobs'][$job]['if'] | Should -Match "release-state == 'draft'"
+        }
+        $publishedVerification = Get-NamedJobStep -Document $script:ReleaseProducer -JobName 'validate-release' `
+            -StepName 'Verify published release assets'
+        [string]$publishedVerification['if'] | Should -Match "release-state == 'published'"
+        [string]$publishedVerification['run'] | Should -Match 'Assert-ReleaseAssetSet\.ps1'
+        [string]$publishedVerification['run'] | Should -Match '(?s)gh release download.*hve-core-\$RELEASE_VERSION\.vsix'
+        [string]$publishedVerification['run'] | Should -Match 'Invoke-ProvenanceVerification\.ps1'
+        [string]$publishedVerification['run'] | Should -Match 'ExpectedSourceSha.*EXPECTED_SHA'
+        [string]$publishedVerification['env']['EXPECTED_SHA'] | Should -BeExactly '${{ steps.identity.outputs.source-sha }}'
+        [string]$script:ReleaseProducer['jobs']['validate-release']['permissions']['attestations'] | Should -BeExactly 'read'
+    }
+
+    It 'Executes published verification with the validated source SHA' -Skip:$script:SkipShellFixtureTests {
+        $step = Get-NamedJobStep -Document $script:ReleaseProducer -JobName 'validate-release' `
+            -StepName 'Verify published release assets'
+        $sourceSha = '1111111111111111111111111111111111111111'
+        $version = '3.4.0'
+        $vsix = "hve-core-$version.vsix"
+        $result = Invoke-ReleaseAssetShellStep -Body ([string]$step['run']) -AssetName @(
+            $vsix
+            "$vsix.spdx.json"
+            "$vsix.sigstore.json"
+            "$vsix.intoto.jsonl"
+            'dependencies.spdx.json'
+            'hve-core.openvex.json'
+        ) -Environment @{
+            CHANNEL         = 'Stable'
+            EXPECTED_SHA    = $sourceSha
+            GH_TOKEN        = 'fixture-token'
+            RELEASE_ID      = '123'
+            RELEASE_TAG     = "v$version"
+            RELEASE_VERSION = $version
+            REPOSITORY      = 'microsoft/hve-core'
+        }
+        $result.ExitCode | Should -Be 0
+        $result.Output | Should -Match "ExpectedSourceSha $sourceSha"
+    }
+
+    It 'Fails published verification when the source SHA binding is absent' -Skip:$script:SkipShellFixtureTests {
+        $step = Get-NamedJobStep -Document $script:ReleaseProducer -JobName 'validate-release' `
+            -StepName 'Verify published release assets'
+        $version = '3.4.0'
+        $vsix = "hve-core-$version.vsix"
+        $result = Invoke-ReleaseAssetShellStep -Body ([string]$step['run']) -AssetName @(
+            $vsix
+            "$vsix.spdx.json"
+            "$vsix.sigstore.json"
+            "$vsix.intoto.jsonl"
+            'dependencies.spdx.json'
+            'hve-core.openvex.json'
+        ) -Environment @{
+            CHANNEL         = 'Stable'
+            GH_TOKEN        = 'fixture-token'
+            RELEASE_ID      = '123'
+            RELEASE_TAG     = "v$version"
+            RELEASE_VERSION = $version
+            REPOSITORY      = 'microsoft/hve-core'
+        }
+        $result.ExitCode | Should -Not -Be 0
+    }
+
+    It 'Reconciles draft assets before minting the publication token' {
+        $publish = $script:ReleaseProducer['jobs']['publish-release']
+        [string]$publish['permissions']['contents'] | Should -BeExactly 'read'
+        $stepNames = [string[]]@($publish['steps'] | ForEach-Object { [string]$_['name'] })
+        $stepNames.IndexOf('Checkout release asset verifier') |
+            Should -BeLessThan $stepNames.IndexOf('Verify draft release assets')
+        $stepNames.IndexOf('Verify draft release assets') |
+            Should -BeLessThan $stepNames.IndexOf('Generate GitHub App Token')
+        $stepNames.IndexOf('Generate GitHub App Token') |
+            Should -BeLessThan $stepNames.IndexOf('Publish GitHub Release')
+        $token = Get-NamedJobStep -Document $script:ReleaseProducer -JobName 'publish-release' `
+            -StepName 'Generate GitHub App Token'
+        [string]$token['with']['permission-contents'] | Should -BeExactly 'write'
+    }
+
+    It 'Builds the channel-specific exact draft asset policy' -Skip:$script:SkipShellFixtureTests -ForEach @(
+        @{ Channel = 'Stable'; Version = '3.4.0'; Tag = 'v3.4.0'; IncludesOptional = $true }
+        @{ Channel = 'PreRelease'; Version = '3.5.0'; Tag = 'prerelease-v3.5.0'; IncludesOptional = $false }
+    ) {
+        $step = Get-NamedJobStep -Document $script:ReleaseProducer -JobName 'publish-release' `
+            -StepName 'Verify draft release assets'
+        $vsix = "hve-core-$Version.vsix"
+        $assets = @($vsix, "$vsix.spdx.json", "$vsix.sigstore.json", "$vsix.intoto.jsonl", 'dependencies.spdx.json')
+        if ($Channel -eq 'Stable') {
+            $assets += 'hve-core.openvex.json'
+        }
+        $result = Invoke-ReleaseAssetShellStep -Body ([string]$step['run']) -AssetName $assets -Environment @{
+            CHANNEL         = $Channel
+            GH_TOKEN        = 'fixture-token'
+            RELEASE_ID      = '123'
+            RELEASE_TAG     = $Tag
+            RELEASE_VERSION = $Version
+            REPOSITORY      = 'microsoft/hve-core'
+        }
+        $result.ExitCode | Should -Be 0
+        if ($IncludesOptional) {
+            $result.Output | Should -Match '2 required singleton assets, and 1 optional singleton assets'
+        }
+        else {
+            $result.Output | Should -Match '1 required singleton assets, and 0 optional singleton assets'
+        }
+    }
+
+    It 'Fails draft verification before PowerShell when the release has no assets' -Skip:$script:SkipShellFixtureTests {
+        $step = Get-NamedJobStep -Document $script:ReleaseProducer -JobName 'publish-release' `
+            -StepName 'Verify draft release assets'
+        $result = Invoke-ReleaseAssetShellStep -Body ([string]$step['run']) -AssetName @() -Environment @{
+            CHANNEL         = 'PreRelease'
+            GH_TOKEN        = 'fixture-token'
+            RELEASE_ID      = '123'
+            RELEASE_TAG     = 'prerelease-v3.5.0'
+            RELEASE_VERSION = '3.5.0'
+            REPOSITORY      = 'microsoft/hve-core'
+        }
+        $result.ExitCode | Should -Not -Be 0
+        $result.Output | Should -Match 'carries no release assets'
+    }
+
+    It 'Fails draft verification through the exact-set helper for non-empty invalid assets' -Skip:$script:SkipShellFixtureTests {
+        $step = Get-NamedJobStep -Document $script:ReleaseProducer -JobName 'publish-release' `
+            -StepName 'Verify draft release assets'
+        $version = '3.5.0'
+        $vsix = "hve-core-$version.vsix"
+        $result = Invoke-ReleaseAssetShellStep -Body ([string]$step['run']) -AssetName @(
+            $vsix
+            "$vsix.spdx.json"
+            "$vsix.sigstore.json"
+            'dependencies.spdx.json'
+        ) -Environment @{
+            CHANNEL         = 'PreRelease'
+            GH_TOKEN        = 'fixture-token'
+            RELEASE_ID      = '123'
+            RELEASE_TAG     = "prerelease-v$version"
+            RELEASE_VERSION = $version
+            REPOSITORY      = 'microsoft/hve-core'
+        }
+        $result.ExitCode | Should -Not -Be 0
+    }
+
+    It 'Removes the retired package workflow and every active caller' {
+        Test-Path -LiteralPath (Join-Path $script:WorkflowDirectory 'extension-package.yml') | Should -BeFalse
+        foreach ($workflow in Get-ChildItem -LiteralPath $script:WorkflowDirectory -Filter '*.yml') {
+            (Get-Content -LiteralPath $workflow.FullName -Raw -Encoding utf8) |
+                Should -Not -Match 'uses:\s+\./\.github/workflows/extension-package\.yml'
+        }
+    }
+}
+
+Describe 'Managed release identity postconditions' -Tag 'Unit' {
+    It 'Exports a validated managed identity in <Workflow>' -ForEach @(
+        @{ Workflow = 'release-prerelease.yml'; TagPrefix = 'prerelease-v' }
+        @{ Workflow = 'release-stable-publish.yml'; TagPrefix = 'v' }
+    ) {
+        $document = Get-WorkflowDocument -Name $Workflow
+        [string]$document['jobs']['validate-trigger']['outputs']['release-tag'] |
+            Should -BeExactly '${{ steps.managed.outputs.release-tag }}'
+        [string]$document['jobs']['validate-trigger']['outputs']['release-version'] |
+            Should -BeExactly '${{ steps.managed.outputs.release-version }}'
+        $managed = Get-NamedJobStep -Document $document -JobName 'validate-trigger' `
+            -StepName 'Validate managed release intent was consumed'
+        [string]$managed['id'] | Should -BeExactly 'managed'
+        [string]$managed['run'] | Should -Match "release-tag=$([regex]::Escape($TagPrefix))"
+        [string]$managed['run'] | Should -Match 'release-version=\$VERSION'
+    }
+
+    It 'Accepts exact current-run creation in <Workflow>' -Skip:$script:SkipShellFixtureTests -ForEach @(
+        @{ Workflow = 'release-prerelease.yml'; Channel = 'PreRelease'; Tag = 'prerelease-v3.5.0'; Draft = $true; PreRelease = $false }
+        @{ Workflow = 'release-stable-publish.yml'; Channel = 'Stable'; Tag = 'v3.4.0'; Draft = $true; PreRelease = $false }
+    ) {
+        $document = Get-WorkflowDocument -Name $Workflow
+        $step = Get-NamedJobStep -Document $document -JobName 'release-please' -StepName 'Verify managed release identity'
+        $sourceSha = '1111111111111111111111111111111111111111'
+        $release = @{
+            tag_name         = $Tag
+            target_commitish = $sourceSha
+            draft            = $Draft
+            prerelease       = $PreRelease
+        } | ConvertTo-Json -Compress
+        $result = Invoke-ManagedReleaseIdentityShellStep -Body ([string]$step['run']) -TagObject "commit $sourceSha" `
+            -ReleaseJson $release -Environment @{
+                CREATED_SHA     = $sourceSha
+                CREATED_TAG     = $Tag
+                EXPECTED_CHANNEL = $Channel
+                EXPECTED_SHA    = $sourceSha
+                EXPECTED_TAG    = $Tag
+                GH_TOKEN        = 'fixture-token'
+                PATHS_RELEASED  = '["."]'
+                RELEASE_CREATED = 'true'
+                RELEASES_CREATED = 'true'
+                REPOSITORY      = 'microsoft/hve-core'
+            }
+        $result.ExitCode | Should -Be 0
+    }
+
+    It 'Accepts an exact completed rerun in <Workflow>' -Skip:$script:SkipShellFixtureTests -ForEach @(
+        @{ Workflow = 'release-prerelease.yml'; Channel = 'PreRelease'; Tag = 'prerelease-v3.5.0'; PreRelease = $true }
+        @{ Workflow = 'release-stable-publish.yml'; Channel = 'Stable'; Tag = 'v3.4.0'; PreRelease = $false }
+    ) {
+        $document = Get-WorkflowDocument -Name $Workflow
+        $step = Get-NamedJobStep -Document $document -JobName 'release-please' -StepName 'Verify managed release identity'
+        $sourceSha = '1111111111111111111111111111111111111111'
+        $release = @{
+            tag_name         = $Tag
+            target_commitish = $sourceSha
+            draft            = $false
+            prerelease       = $PreRelease
+        } | ConvertTo-Json -Compress
+        $result = Invoke-ManagedReleaseIdentityShellStep -Body ([string]$step['run']) -TagObject "commit $sourceSha" `
+            -ReleaseJson $release -Environment @{
+                CREATED_SHA     = ''
+                CREATED_TAG     = ''
+                EXPECTED_CHANNEL = $Channel
+                EXPECTED_SHA    = $sourceSha
+                EXPECTED_TAG    = $Tag
+                GH_TOKEN        = 'fixture-token'
+                PATHS_RELEASED  = '[]'
+                RELEASE_CREATED = ''
+                RELEASES_CREATED = 'false'
+                REPOSITORY      = 'microsoft/hve-core'
+            }
+        $result.ExitCode | Should -Be 0
+    }
+
+    It 'Rejects a managed release whose target differs in <Workflow>' -Skip:$script:SkipShellFixtureTests -ForEach @(
+        @{ Workflow = 'release-prerelease.yml'; Channel = 'PreRelease'; Tag = 'prerelease-v3.5.0' }
+        @{ Workflow = 'release-stable-publish.yml'; Channel = 'Stable'; Tag = 'v3.4.0' }
+    ) {
+        $document = Get-WorkflowDocument -Name $Workflow
+        $step = Get-NamedJobStep -Document $document -JobName 'release-please' -StepName 'Verify managed release identity'
+        $sourceSha = '1111111111111111111111111111111111111111'
+        $release = @{
+            tag_name         = $Tag
+            target_commitish = '2222222222222222222222222222222222222222'
+            draft            = $true
+            prerelease       = $false
+        } | ConvertTo-Json -Compress
+        $result = Invoke-ManagedReleaseIdentityShellStep -Body ([string]$step['run']) -TagObject "commit $sourceSha" `
+            -ReleaseJson $release -Environment @{
+                CREATED_SHA     = ''
+                CREATED_TAG     = ''
+                EXPECTED_CHANNEL = $Channel
+                EXPECTED_SHA    = $sourceSha
+                EXPECTED_TAG    = $Tag
+                GH_TOKEN        = 'fixture-token'
+                PATHS_RELEASED  = '[]'
+                RELEASE_CREATED = ''
+                RELEASES_CREATED = 'false'
+                REPOSITORY      = 'microsoft/hve-core'
+            }
+        $result.ExitCode | Should -Not -Be 0
+        $result.Output | Should -Match 'does not target managed merge'
+    }
+
+    It 'Rejects a published release with the wrong channel state in <Workflow>' -Skip:$script:SkipShellFixtureTests -ForEach @(
+        @{ Workflow = 'release-prerelease.yml'; Channel = 'PreRelease'; Tag = 'prerelease-v3.5.0'; PreRelease = $false }
+        @{ Workflow = 'release-stable-publish.yml'; Channel = 'Stable'; Tag = 'v3.4.0'; PreRelease = $true }
+    ) {
+        $document = Get-WorkflowDocument -Name $Workflow
+        $step = Get-NamedJobStep -Document $document -JobName 'release-please' -StepName 'Verify managed release identity'
+        $sourceSha = '1111111111111111111111111111111111111111'
+        $release = @{
+            tag_name         = $Tag
+            target_commitish = $sourceSha
+            draft            = $false
+            prerelease       = $PreRelease
+        } | ConvertTo-Json -Compress
+        $result = Invoke-ManagedReleaseIdentityShellStep -Body ([string]$step['run']) -TagObject "commit $sourceSha" `
+            -ReleaseJson $release -Environment @{
+                CREATED_SHA     = ''
+                CREATED_TAG     = ''
+                EXPECTED_CHANNEL = $Channel
+                EXPECTED_SHA    = $sourceSha
+                EXPECTED_TAG    = $Tag
+                GH_TOKEN        = 'fixture-token'
+                PATHS_RELEASED  = '[]'
+                RELEASE_CREATED = ''
+                RELEASES_CREATED = 'false'
+                REPOSITORY      = 'microsoft/hve-core'
+            }
+        $result.ExitCode | Should -Not -Be 0
+    }
+
+    It 'Rejects malformed or absent exact managed release state' -Skip:$script:SkipShellFixtureTests -ForEach @(
+        @{ ReleaseJson = '[]'; FailureEndpoint = ''; Error = 'malformed response' }
+        @{ ReleaseJson = '{}'; FailureEndpoint = '/releases/tags/'; Error = '' }
+        @{ ReleaseJson = '{}'; FailureEndpoint = '/git/ref/tags/'; Error = '' }
+    ) {
+        $document = Get-WorkflowDocument -Name 'release-stable-publish.yml'
+        $step = Get-NamedJobStep -Document $document -JobName 'release-please' -StepName 'Verify managed release identity'
+        $sourceSha = '1111111111111111111111111111111111111111'
+        $result = Invoke-ManagedReleaseIdentityShellStep -Body ([string]$step['run']) -TagObject "commit $sourceSha" `
+            -ReleaseJson $ReleaseJson -FailureEndpoint $FailureEndpoint -Environment @{
+                CREATED_SHA     = ''
+                CREATED_TAG     = ''
+                EXPECTED_CHANNEL = 'Stable'
+                EXPECTED_SHA    = $sourceSha
+                EXPECTED_TAG    = 'v3.4.0'
+                GH_TOKEN        = 'fixture-token'
+                PATHS_RELEASED  = '[]'
+                RELEASE_CREATED = ''
+                RELEASES_CREATED = 'false'
+                REPOSITORY      = 'microsoft/hve-core'
+            }
+        $result.ExitCode | Should -Not -Be 0
+        if ($Error) {
+            $result.Output | Should -Match $Error
+        }
+    }
+
+    It 'Rejects inconsistent current-run output cardinality' -Skip:$script:SkipShellFixtureTests {
+        $document = Get-WorkflowDocument -Name 'release-stable-publish.yml'
+        $step = Get-NamedJobStep -Document $document -JobName 'release-please' -StepName 'Verify managed release identity'
+        $sourceSha = '1111111111111111111111111111111111111111'
+        $release = '{"tag_name":"v3.4.0","target_commitish":"' + $sourceSha + '","draft":true,"prerelease":false}'
+        $result = Invoke-ManagedReleaseIdentityShellStep -Body ([string]$step['run']) -TagObject "commit $sourceSha" `
+            -ReleaseJson $release -Environment @{
+                CREATED_SHA     = $sourceSha
+                CREATED_TAG     = 'v3.4.0'
+                EXPECTED_CHANNEL = 'Stable'
+                EXPECTED_SHA    = $sourceSha
+                EXPECTED_TAG    = 'v3.4.0'
+                GH_TOKEN        = 'fixture-token'
+                PATHS_RELEASED  = '[".","other"]'
+                RELEASE_CREATED = 'true'
+                RELEASES_CREATED = 'true'
+                REPOSITORY      = 'microsoft/hve-core'
+            }
+        $result.ExitCode | Should -Not -Be 0
+        $result.Output | Should -Match 'unexpected managed release identity'
+    }
+}
+
+Describe 'Release workflow consumers and metadata' -Tag 'Unit' {
+    It 'Runs Scorecard after the consolidated post-tag producer' {
+        $scorecard = Get-WorkflowDocument -Name 'scorecard.yml'
+        [string[]]@($scorecard['on']['workflow_run']['workflows']) |
+            Should -Be @('Release VSIX Publish')
+    }
+
+    It 'Uses the verified create-github-app-token version comment consistently' {
+        $pinMatches = Get-ChildItem -LiteralPath $script:WorkflowDirectory -Filter '*.yml' |
+            Select-String -SimpleMatch 'actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1'
+        $pinMatches | Should -HaveCount 10
+        @($pinMatches | Where-Object { $_.Line -notmatch '# v3\.2\.0\s*$' }) |
+            Should -BeNullOrEmpty
+    }
+
+    It 'Removes superseded current-state release workflow names from operational documents' {
+        $paths = @(
+            (Join-Path $script:RepositoryRoot 'docs/contributing/release-process.md')
+            (Join-Path $script:RepositoryRoot 'docs/architecture/workflows.md')
+        )
+        foreach ($path in $paths) {
+            $text = Get-Content -LiteralPath $path -Raw -Encoding utf8
+            $text | Should -Not -Match 'Pre-Release Pipeline'
+            $text | Should -Not -Match 'Stable Release Publish'
+        }
+    }
+
+    It 'Documents the Stable dependency diff as conditional and best effort' {
+        foreach ($path in @(
+                (Join-Path $script:WorkflowDirectory 'README.md')
+                (Join-Path $script:RepositoryRoot 'docs/contributing/release-process.md')
+                (Join-Path $script:RepositoryRoot 'docs/architecture/workflows.md')
+            )) {
+            $text = Get-Content -LiteralPath $path -Raw -Encoding utf8
+            $text | Should -Match '(?s)best-effort.*dependency diff|dependency diff.*best-effort'
+            $text | Should -Match 'previous|prior'
+        }
     }
 }

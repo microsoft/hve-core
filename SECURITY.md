@@ -2,7 +2,7 @@
 title: Security
 description: Security vulnerability reporting procedures and Microsoft's coordinated disclosure policy
 author: Microsoft Security Response Center
-ms.date: 2026-08-13
+ms.date: 2026-08-29
 ms.topic: reference
 keywords:
   - security
@@ -111,14 +111,58 @@ HVE Core publishes cryptographically attested assets under exact channel tags:
    ```
 
 The GitHub Release is the canonical verification surface for SLSA and Sigstore
-provenance. Marketplace publication uses the verified release VSIX, while VS
-Code separately verifies the Marketplace signature during installation.
+provenance. `release-vsix-publish.yml` is the sole post-tag producer. It runs
+only for pushes of exact `v<version>` or `prerelease-v<version>` tags and
+validates the protected tag, source, channel branch, committed release state,
+and matching draft before producing assets. Marketplace publication remains a
+separate path that consumes only the published release VSIX. VS Code separately
+verifies the Marketplace signature during installation.
 
 A successful verification confirms:
 
 * The artifact was built from the microsoft/hve-core repository
 * The build occurred in GitHub Actions
 * The artifact has not been modified since signing
+
+The release gate first authenticates the attestation cryptographically with the
+exact subject digest, signer workflow and revision, source ref and revision,
+and a hosted-runner restriction. It then applies fail-closed semantic policy to
+the authenticated statement. The policy requires the exact subject and digest,
+SLSA provenance v1, GitHub Actions `workflow/v1`, the `push` event, a
+GitHub-hosted runner, the expected external parameters, one resolved source
+dependency, and the expected builder identity. Missing, additional, or
+mismatched policy fields fail verification.
+
+`extension-provenance.yml` retains the signer identity but separates duties.
+Its `contents: read` package job installs dependencies and packages the VSIX.
+The dependent privileged attestation job receives fixed-name artifacts through
+digest-checked transfers and never installs dependencies or packages the
+extension. No job both packages and signs.
+
+> [!IMPORTANT]
+> HVE Core does not claim SLSA Build Level 3. Future Stable and PreRelease
+> releases still require successful runtime evidence, active governance
+> evidence, platform assurance mapping, and qualified human review before such
+> a claim can be made.
+
+Tag governance is a mandatory activation prerequisite and is not yet active or
+proven. The intended `release-tags-creation-by-release-app` ruleset restricts
+creation only and gives the Release App its only bypass. The separate
+`release-tags-immutable` ruleset restricts updates, deletion, and force pushes
+with no bypass. This documentation does not imply that either ruleset is
+installed.
+
+Post-tag recovery begins by classifying the tag and release state. When both
+the tag and matching draft or published release exist, recovery reruns the
+original immutable tag-push workflow. A tag-only state first requires
+release-please to create the missing exact draft; a draft-only state first
+requires release-please to materialize the tag. Partial assets may be replaced
+only while the release remains draft, and publication remains blocked until
+asset and provenance verification succeeds. Do not move, delete, or recreate
+the tag, create a replacement release identity, or convert a published release
+back to draft. The producer has no default `workflow_dispatch` recovery path.
+Its bounded discovery window fails closed but does not guarantee draft
+visibility.
 
 ### Verifying the SBOM
 
