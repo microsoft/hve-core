@@ -717,10 +717,18 @@ Describe 'Trusted source binding' -Tag 'Unit' {
         [string]$identity['run'] | Should -Match "EVENT_REF_PROTECTED.*!= 'true'"
     }
 
-    It 'Acknowledges Poutine only on the trusted signer checkouts' {
-        $text = Get-WorkflowText -Name 'extension-provenance.yml'
-        $pattern = '(?m)^\s+# poutine:ignore untrusted_checkout_exec\r?\n\s+uses: actions/checkout@'
-        @([regex]::Matches($text, $pattern)) | Should -HaveCount 2
+    It 'Acknowledges only the trusted signer path for the Poutine checkout rule' -Tag 'Poutine' {
+        $config = Get-Content -LiteralPath (Join-Path $script:RepositoryRoot '.poutine.yml') -Raw -Encoding utf8 |
+            ConvertFrom-Yaml
+        $exceptions = @($config['skip'] | Where-Object {
+                @($_['rule']) -contains 'untrusted_checkout_exec' -and
+                @($_['path']) -contains '.github/workflows/extension-provenance.yml'
+            })
+        $exceptions | Should -HaveCount 1
+        @($exceptions[0].Keys | Sort-Object) | Should -Be @('path', 'rule')
+
+        Get-WorkflowText -Name 'extension-provenance.yml' |
+            Should -Not -Match 'poutine:ignore'
     }
 
     It 'Checks out the run commit in <Workflow> step <StepName>' -ForEach @(

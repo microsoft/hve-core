@@ -7,11 +7,9 @@
 # Disable the once-per-day outbound version check in CI runs.
 disableVersionCheck: true
 
-# Advisory findings can be acknowledged here by rule/path/level once triaged.
-# Example:
-# skip:
-#   - level: note
-#   - rule: unpinnable_action
-#     path:
-#       - .github/workflows/example.yml
-skip: []
+# The retained signer is called only after the release producer validates a
+# protected release-tag push and binds the run commit to that tag.
+skip:
+  - rule: untrusted_checkout_exec
+    path:
+      - .github/workflows/extension-provenance.yml
