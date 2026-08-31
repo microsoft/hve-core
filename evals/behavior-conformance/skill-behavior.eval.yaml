@@ -1524,9 +1524,13 @@ stimuli:
           pattern: '(?i)^\s*[''"]?hve-builder-tester[''"]?[.!]?\s*$'
   - name: skill-hve-builder-final-candidate-behavior-gate
     prompt: |
-      An HVE Builder run is making a Major change. State the behavior-gate
-      timing, invocation limit, and response to a Revise verdict. Return
-      exactly three labeled lines: `Timing:`, `Invocations:`, and `Revise:`.
+      An HVE Builder run is making a Major change. Choose one value from each
+      pair based on the skill's behavior:
+      `Timing:` `after-candidate-freeze` | `before-candidate-freeze`
+      `Invocations:` `repeat-until-pass` | `zero-or-one`
+      `Revise:` `stop-and-defer` | `correct-and-retest`
+      Return exactly three unbulleted labeled lines in that order, using only
+      the selected value after each label and no explanation.
     environment:
       skills:
         - ../../.github/skills/hve-core/hve-builder
@@ -1537,17 +1541,9 @@ stimuli:
       advisory: "true"
     graders:
       - type: output-matches
-        name: final-candidate-timing
+        name: final-candidate-decisions
         config:
-          pattern: '(?im)^Timing:\s*(?![^\r\n]*(?:not|never)\s+(?:complete|closed|pass(?:ed)?))(?![^\r\n]*(?:but|however|yet|although).{0,80}(?:pending|remain(?:s|ing)?|incomplete|not\s+(?:complete|closed|pass(?:ed)?)))(?=[^\r\n]*(?:(?:all\s+known|known|all)[^,;\r\n]{0,40}(?:change|edit|finding)s?[^,;\r\n]{0,40}(?:applied|complete(?:d)?|closed|resolved|done)|(?:apply|applied|complete(?:d)?|close(?:d)?|resolve(?:d)?)[^,;\r\n]{0,40}(?:all\s+known|known|all)[^,;\r\n]{0,40}(?:change|edit|finding)s?|no\s+(?:known\s+)?(?:change|edit|finding)s?\s+remain))(?=[^\r\n]*(?:(?:static\s+review|static\s+findings?|review).{0,40}(?:complete(?:d)?|closed|pass(?:ed|es)?)|(?:complete(?:d)?|close(?:d)?|pass(?:ed)?).{0,40}(?:static\s+review|static\s+findings?|review)))(?=[^\r\n]*(?:validat(?:ion|e|ed).{0,40}(?:complete(?:d)?|closed|pass(?:ed|es)?)|(?:complete(?:d)?|pass(?:ed)?).{0,40}validat(?:ion|e|ed)))(?=[^\r\n]*(?:(?:freez(?:e|ing)|froz(?:e|en)).{0,60}(?:before|then|prior).{0,30}(?:test|dispatch|invok)|(?:test|dispatch|invok).{0,60}(?:after|following).{0,30}(?:freez|froz|boundary)))[^\r\n]*$'
-      - type: output-matches
-        name: one-invocation-limit
-        config:
-          pattern: '(?im)^Invocations:\s*(?![^\r\n]*(?:multiple|twice|repeat(?:ed|ing)?|rerun|retest|again|additional|second|(?:but|however|unless|then).{0,40}more\s+than\s+one))(?=[^\r\n]*(?:at\s+most\s+once|zero\s+or\s+one|only\s+once|one\s+time\s+only|no\s+more\s+than\s+one|max(?:imum)?\s+(?:of\s+)?one(?:\s+invocation)?|one\s+invocation\s+(?:maximum|total)))[^\r\n]*$'
-      - type: output-matches
-        name: revise-terminates-run
-        config:
-          pattern: '(?im)^Revise:\s*(?![^\r\n]*(?:do\s+not|never)\s+(?:stop|end|terminate))(?!\s*(?:continue|proceed|keep\s+going)\b)(?![^\r\n]*(?:[;,.]\s*|\b(?:and|then|but)\s+)(?:continue|proceed|keep\s+going)\b)(?![^\r\n]*(?:should|may|can|must|will)\s+(?:continue|proceed|keep\s+going))(?![^\r\n]*(?:edit|correct|fix|revise)\s+(?:now|first|then|before|in\s+(?:this|same|current)))(?![^\r\n]*(?:then|and)\s+(?:edit|correct|fix|revise))(?![^\r\n]*(?:retest|rerun)\s+(?:this|same|current|now))(?=[^\r\n]*(?:(?:stop|end|terminate)s?(?:\s+(?:this|the|current)\s+(?:run|invocation))?|(?:do\s+not|never)\s+(?:continue|proceed|keep\s+going)))(?=[^\r\n]*(?:later|new|subsequent).{0,80}(?:run|invocation))(?=[^\r\n]*(?:no|without|do\s+not).{0,80}(?:same[-\s]?run\s+)?(?:source\s+)?(?:edit|correct|correction|retest|rerun))[^\r\n]*$'
+          pattern: '(?i)^[ \t]*Timing:[ \t]*after-candidate-freeze[ \t]*\r?\n[ \t]*Invocations:[ \t]*zero-or-one[ \t]*\r?\n[ \t]*Revise:[ \t]*stop-and-defer[ \t]*(?:\r?\n)?(?![\s\S])'
   - name: skill-hve-builder-tester-knowledge
     prompt: |
       What fidelity labels unavailable side effects without claiming native
