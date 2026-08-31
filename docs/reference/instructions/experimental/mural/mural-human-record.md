@@ -3,7 +3,7 @@ title: Experimental/Mural/Mural Human Record
 description: Mural is the durable record of human conversation; AI never silently authors decisions and AI contribution must remain visible somewhere durable.
 sidebar_position: 3
 author: Microsoft
-ms.date: 2026-08-12
+ms.date: 2026-08-27
 ms.topic: reference
 keywords:
   - instruction
@@ -28,8 +28,10 @@ Mural is the durable record of human conversation; AI never silently authors dec
 
 ## When to use it
 
-<!-- asset-docs:stub -->
-Describe the situations where this asset is the right choice, and when to reach for a different asset instead.
+Use this contract whenever an extractor or facilitator reads from or writes to
+a Mural board that records human conversation. Declare the mode explicitly,
+preserve human-authored text, and keep AI contributions visibly tagged; stop
+when a request would require silent AI authorship of a decision.
 
 ## Example usage
 

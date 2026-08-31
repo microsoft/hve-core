@@ -40,7 +40,7 @@
     "security:sign": "pwsh -NoProfile -File scripts/security/Sign-PlannerArtifacts.ps1",
     "sssc:sign": "pwsh -NoProfile -File scripts/security/Sign-PlannerArtifacts.ps1",
     "lint:ai-artifacts": "pwsh -NoProfile -File ./scripts/linting/Validate-PlannerArtifacts.ps1 -FailOnMissing",
-    "lint:asset-docs": "pwsh -NoProfile -File scripts/linting/Validate-AssetDocs.ps1 -FailOnMissing -CheckSync",
+    "lint:asset-docs": "pwsh -NoProfile -File scripts/linting/Validate-AssetDocs.ps1 -FailOnMissing -CheckSync -RequireAuthoredContent instruction",
     "lint:models": "pwsh -NoProfile -File scripts/linting/Test-ModelReferences.ps1 -OutputPath logs/model-validation-results.json",
     "lint:models:refresh": "pwsh -NoProfile -File scripts/linting/Update-ModelCatalog.ps1",
     "validate:local": "npm run lint:plugin-manifest && npm run lint:tables && npm run lint:md && npm run lint:ps && npm run lint:yaml && npm run lint:json && npm run lint:links && npm run lint:md-links && npm run lint:frontmatter && npm run lint:adr-consistency && npm run lint:hooks && npm run lint:design-intent && npm run lint:version-consistency && npm run lint:permissions && npm run lint:workflow-runner && npm run lint:dangerous-workflow && npm run lint:dependency-pinning && npm run lint:public-dependency-feeds && npm run lint:pr-gate && npm run lint:ps-module-pins && npm run lint:extension-artifact-naming && npm run lint:py && npm run validate:skills && npm run lint:ai-artifacts && npm run lint:asset-docs && npm run lint:models && npm run validate:devcontainer-lockfile",
