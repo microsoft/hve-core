@@ -47,8 +47,9 @@ jobs:
           CHANGED_FILES_ONLY: ${{ inputs.changed-files-only }}
         run: |
           $params = @{
-            FailOnMissing = $true
-            CheckSync = $true
+            FailOnMissing          = $true
+            CheckSync              = $true
+            RequireAuthoredContent = @('instruction')
           }
           if ($env:CHANGED_FILES_ONLY -eq 'true') {
             $params['ChangedFilesOnly'] = $true
