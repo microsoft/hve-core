@@ -80,7 +80,3 @@ plans, selling them to competitors.
 * Establish a recurring update management cycle with defined ownership.
 * Subscribe to vendor security advisory feeds for all deployed software.
 * Conduct post-update validation to confirm patches are applied and effective.
-
----
-
-*🤖 Crafted with precision by ✨Copilot following brilliant human instruction, then carefully refined by our team of discerning human reviewers.*

@@ -1,11 +1,12 @@
 ---
-description: 'Embedded ADR standards: MADR v4.0.0 template (CC0), Y-Statement formula, status taxonomy, naming rules, ASR trigger schema, and Microsoft-attributed paraphrases for ADR Creator sessions - Brought to you by microsoft/hve-core'
+description: 'Embedded ADR standards: MADR v4.0.0 template (CC0), Y-Statement formula, status taxonomy, naming rules, ASR trigger schema, and Microsoft-attributed paraphrases for ADR Creator sessions'
 applyTo: '**/.copilot-tracking/adr-plans/**, **/docs/planning/adrs/**'
 ---
 
 # ADR Standards Reference
 
-This file is the standards anchor for the ADR Creator agent. It embeds the MADR v4.0.0 template (CC0-1.0), the Y-Statement six-slot formula (Zimmermann/Zdun), the canonical status taxonomy with legal transitions, the file-naming rule, and the ASR (Architecturally Significant Requirement) trigger schema. Microsoft-authored guidance is paraphrased under CC-BY 4.0 with explicit change indication. Other sources (Nygard 2011, IEEE 42010:2022, arc42 §9, joelparkerhenderson) are cite-only to prevent CC-BY-SA contamination. Standards lookups outside this embedded set are delegated to the Researcher Subagent at runtime.
+This file is the standards anchor for the ADR Creator agent. It embeds the MADR v4.0.0 template (CC0-1.0), the Y-Statement six-slot formula (Zimmermann/Zdun), the canonical status taxonomy with legal transitions, the file-naming rule, and the ASR (Architecturally Significant Requirement) trigger schema.
+Microsoft-authored guidance is paraphrased under CC-BY 4.0 with explicit change indication. Other sources (Nygard 2011, IEEE 42010:2022, arc42 §9, joelparkerhenderson) are cite-only to prevent CC-BY-SA contamination. Standards lookups outside this embedded set activate `rpi-research` at runtime.
 
 ## MADR v4.0.0 Verbatim Template
 
@@ -178,6 +179,15 @@ Allocation semantics:
 * The 4-digit ID prefix is immutable on rename. Only the `kebab-case-title` suffix may change after the file is created. Renames that alter the numeric prefix are forbidden.
 * Project slugs partition the ID space; two different projects may both have an ADR `0001-...` without conflict. Supersession links resolve within a single project.
 
+## Personas, Not People
+
+ADRs are durable, version-controlled artifacts that travel with the repository and are frequently read by people who never attended the meeting where the decision was made. Record stakeholder perspectives by persona or role rather than by named individual so that the record stays accurate as people change teams or leave the organization, and so that personal identifiers are not committed to a repository that may be public.
+
+* Refer to participants by their role or persona — for example, "the platform on-call engineer", "the security reviewer", "the data platform team" — rather than by personal name, `@mention`, email address, or other personal identifier.
+* Abstract paraphrased input, objections, and endorsements to the contributing role. "The on-call engineer raised reliability concerns" is preferred over "Jordan raised reliability concerns".
+* The single exception is named decider attribution: when the user explicitly requires that a specific individual be credited as a decider for accountability, that name may appear in the deciders metadata. Even then, prefer pairing the name with the role.
+* This rule is enforced at the Govern phase before any durable write. It is independent of the Sensitive-Content Scan Gate, which detects PII and public-repository internal URLs but does not detect persona-versus-name usage.
+
 ## ASR Trigger Schema (GP-07)
 
 Architecturally Significant Requirements (ASRs) are recorded in the ADR frontmatter under `asrTriggers`. Each entry is a 3-field object:
@@ -237,13 +247,15 @@ The following sources inform ADR practice but are referenced by URL only. Do not
 * arc42, Section 9 "Architecture Decisions." Source: <https://docs.arc42.org/section-9/> (link only; do NOT quote — CC-BY-SA contamination risk).
 * joelparkerhenderson ADR catalog. Source: <https://github.com/joelparkerhenderson/architecture-decision-record> (link only; do NOT quote — CC-BY-SA contamination risk).
 
-## Researcher Subagent Delegation
+## Research Activation
 
-Standards lookups outside the set embedded in this file must be delegated to the Researcher Subagent at runtime. The agent must `runSubagent` against the `Researcher Subagent` for any of the following:
+Standards lookups outside the set embedded in this file must activate `rpi-research` at runtime for any of the following:
 
 * Domain-specific or industry-specific architecture decision frameworks not covered above.
 * Updated revisions of MADR, Y-Statement, IEEE 42010, or arc42 published after this file was authored.
 * Organizational ADR conventions or templates supplied by the user that require external research to validate.
 * Any standard, framework, or pattern not listed in the embedded set or the Cite-Only References.
 
-Do not embed additional standards content inline at runtime. The agent's standards surface is fixed to the embedded content above plus subagent-mediated lookups; expanding the embedded set requires an explicit edit to this file.
+Each activation must include the topic and ADR decision purpose; ADR authors, deciders, and reviewers as the audience and intended use; explicit questions and evidence criteria; source, version, licensing, quotation, scope, and non-goal boundaries; phase-gate, autonomy-tier, and write constraints; supplied state, ADR, template, prior-art, and user evidence; requested outputs; and output mode (`comparison` or `analysis`). Explicitly identify `.copilot-tracking/adr-plans/{slug}/` as a trusted alternate evidence root and require the skill to mirror `research/YYYY-MM-DD/<task-slug>-research.md` and `research/subagents/...` beneath it. The skill owns the exact date, task slug, artifact paths, worker selection, lane contracts, budgets, and synthesis.
+
+The ADR Creator reads the completed primary research artifact and synthesizes applicable cited findings into phase state and the active ADR. Treat `Blocked` and `Needs clarification` as unresolved evidence. If `rpi-research` or a required lookup capability is unavailable, stop the dependent standards lookup and surface the limitation. Do not embed or synthesize uncertain additional standards content at runtime. The agent's standards surface is fixed to the embedded content above plus completed research evidence; expanding the embedded set requires an explicit edit to this file.

@@ -1,0 +1,40 @@
+---
+title: Shared/Planner Identity Base
+description: "Shared identity scaffold for phase-based planning agents (SSSC, RAI, Security, Accessibility, Privacy) covering state-file convention, six-phase orchestration template, state protocol, resume protocol, question cadence mechanics, optional disclaimer cadence, and error handling"
+sidebar_position: 5
+author: Microsoft
+ms.date: 2026-08-27
+ms.topic: reference
+keywords:
+  - instruction
+  - shared
+  - shared/planner-identity-base
+---
+
+<!-- BEGIN AUTO-GENERATED: metadata -->
+| Field       | Value                                                                                                                                                                                                                  |
+|-------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| Kind        | instruction                                                                                                                                                                                                            |
+| Source      | `.github/instructions/shared/planner-identity-base.instructions.md`                                                                                                                                                    |
+| Invocation  | Applied automatically to `**/.copilot-tracking/sssc-plans/**, **/.copilot-tracking/rai-plans/**, **/.copilot-tracking/security-plans/**, **/.copilot-tracking/accessibility/**, **/.copilot-tracking/privacy-plans/**` |
+| Interactive | No                                                                                                                                                                                                                     |
+<!-- END AUTO-GENERATED: metadata -->
+
+## What it does
+
+<!-- BEGIN AUTO-GENERATED: overview -->
+Shared identity scaffold for phase-based planning agents (SSSC, RAI, Security, Accessibility, Privacy) covering state-file convention, six-phase orchestration template, state protocol, resume protocol, question cadence mechanics, optional disclaimer cadence, and error handling
+<!-- END AUTO-GENERATED: overview -->
+
+## When to use it
+
+Apply this base whenever SSSC, RAI, Security, Accessibility, or Privacy planner
+state and artifacts are created, resumed, or recovered. It supplies shared
+state, phase, cadence, disclaimer, and error mechanics; the matching planner
+identity remains authoritative for concrete phases, schemas, gates, and
+cross-planner behavior.
+
+## Example usage
+
+<!-- asset-docs:stub -->
+Provide a concrete example that shows the asset in action, including representative input and the resulting output.

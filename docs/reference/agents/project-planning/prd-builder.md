@@ -1,0 +1,42 @@
+---
+title: PRD Builder
+description: "Product Requirements Document builder with guided Q&A and references"
+sidebar_position: 7
+author: Microsoft
+ms.date: 2026-08-12
+ms.topic: reference
+keywords:
+  - agent
+  - project-planning
+  - prd-builder
+---
+
+<!-- BEGIN AUTO-GENERATED: metadata -->
+| Field       | Value                                                  |
+|-------------|--------------------------------------------------------|
+| Kind        | agent                                                  |
+| Source      | `.github/agents/project-planning/prd-builder.agent.md` |
+| Invocation  | Selected from the chat agent picker as `PRD Builder`   |
+| Interactive | Yes                                                    |
+<!-- END AUTO-GENERATED: metadata -->
+
+## What it does
+
+<!-- BEGIN AUTO-GENERATED: overview -->
+Product Requirements Document builder with guided Q&A and references
+<!-- END AUTO-GENERATED: overview -->
+
+## When to use it
+
+<!-- asset-docs:stub -->
+Describe the situations where this asset is the right choice, and when to reach for a different asset instead.
+
+## How to use it
+
+<!-- asset-docs:stub -->
+Walk through invoking this asset step by step. Remove this section when the asset is not interactive.
+
+## Example usage
+
+<!-- asset-docs:stub -->
+Provide a concrete example that shows the asset in action, including representative input and the resulting output.

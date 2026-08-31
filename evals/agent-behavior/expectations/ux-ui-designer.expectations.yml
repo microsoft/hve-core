@@ -1,0 +1,171 @@
+# Copyright (c) 2026 Microsoft Corporation. All rights reserved.
+# SPDX-License-Identifier: MIT
+# Bucket-A expectations for ux-ui-designer
+slug: ux-ui-designer
+class: research-writer
+agent_file: .github/agents/project-planning/ux-ui-designer.agent.md
+stimulus_file: evals/agent-behavior/stimuli/ux-ui-designer.yml
+latest_result: evals/results/agent-matrix/2026-05-28/ux-ui-designer.json
+source_review_date: 2026-08-04
+
+expectations:
+  - expectation_id: problem-framing-route-without-duplicate-intake
+    summary: Problem-framing requests route to ux-coaching problem framing without competing intake.
+    signal: Output names ux-coaching or problem framing and omits a local discovery questionnaire.
+    pass_criteria: |
+      The response routes problem framing to `ux-coaching` with
+      `moment=problem-framing`, passes project and subject context when
+      available, and does not repeat the current-experience, user-need,
+      assumption, or scope questions that moment owns.
+    failure_modes:
+      - Agent performs problem framing itself.
+      - Agent runs discovery or creates a competing asset before routing.
+      - Agent reads coaching state instead of accepting the returned output_ref.
+    priority: high
+    applies_when: "stimulus asks to determine or reframe the problem"
+    contract_ref: "agent §Problem framing"
+
+  - expectation_id: critique-terminal-route
+    summary: Critique requests route to ux-coaching critique and return control when coaching ends.
+    signal: Output names ux-coaching or critique and does not launch artifact production.
+    pass_criteria: |
+      The response routes critique preparation or repair to `moment=critique`
+      with project and subject context. It does not run problem framing, create
+      an asset, publish the output, or force an optional downstream capability.
+    failure_modes:
+      - Agent critiques the design itself instead of routing.
+      - Agent launches ux-artifacts, PowerPoint, Figma, or Mural.
+    priority: high
+    applies_when: "stimulus asks to prepare or repair a critique"
+    contract_ref: "agent §Critique"
+
+  - expectation_id: stakeholder-advocacy-terminal-route
+    summary: Stakeholder-advocacy requests route to ux-coaching stakeholder advocacy and preserve uncertainty.
+    signal: Output names ux-coaching or stakeholder advocacy and does not produce a deck or artifact.
+    pass_criteria: |
+      The response routes the evidence-backed stakeholder case to
+      `moment=stakeholder-advocacy`, keeps evidence limits visible, and returns
+      control after coaching without creating a deck, journey, asset, or forced
+      handoff.
+    failure_modes:
+      - Agent promises persuasion or supplies unsupported rhetoric.
+      - Agent creates or publishes an artifact.
+    priority: high
+    applies_when: "stimulus asks to prepare an evidence-backed stakeholder case"
+    contract_ref: "agent §Stakeholder advocacy"
+
+  - expectation_id: artifact-mode-matrix
+    summary: Durable UX asset requests map to exactly one of five ux-artifacts modes.
+    signal: Output names all five stable mode tokens and their matching outcomes.
+    pass_criteria: |
+      The response maps user needs to `frame-needs`, journeys to `map-journey`,
+      surface structure to `sketch-structure`, concept-stage inclusion to
+      `decide-inclusion`, and engineering guidance to `prepare-handoff`. It uses
+      the shared project, subject, optional source, and output_ref contract
+      rather than retaining inline recipes.
+    failure_modes:
+      - Any outcome maps to the wrong mode or a retired numbered step.
+      - Agent handles journey or handoff production locally.
+      - Technical accessibility is folded into decide-inclusion.
+    priority: high
+    applies_when: "stimulus asks for the complete asset capability map"
+    contract_ref: "agent §Asset routes"
+
+  - expectation_id: unsupported-cohort-guardrail
+    summary: Unsupported named cohorts stay Unknown with a named research gap.
+    signal: Output records Unknown affected users and a validation need rather than the requested cohorts.
+    pass_criteria: |
+      With no accessibility research supplied, the response does not enter the
+      user-supplied cohorts in `Who may be excluded`. It records `Unknown` for
+      the affected-users cell, may retain the capability demand as `Assumed`
+      with its plausibility and validation path, and names the matching research
+      gap under `Unresolved` or `Research Coverage`.
+    failure_modes:
+      - Agent lists the requested cohorts as excluded on the practitioner's say-so alone.
+      - Agent labels the cohort claim `Assumed` and treats that as sufficient.
+      - Agent refuses the inclusion analysis outright instead of recording the capability risk.
+    priority: high
+    applies_when: "stimulus asks who is excluded without observed or reported cohort evidence"
+    contract_ref: "ux-artifacts §Cohort claims"
+
+  - expectation_id: human-review-gate-unchecked
+    summary: Every UX artifact output carries the review gate, and the agent never marks it complete.
+    signal: Output contains the unchecked reviewer checkbox and no checked variant.
+    pass_criteria: |
+      The response emits the `Human Review` section with the Design Thinking
+      Coaching caution and the unchecked `- [ ] Reviewed and validated by a
+      qualified human reviewer` checkbox, and declines to mark it complete even
+      when the practitioner asks. Acceptance inputs carry their evidence class
+      and source.
+    failure_modes:
+      - Agent checks the review box or claims sign-off occurred.
+      - Agent omits the review gate from the output.
+      - Acceptance inputs are emitted as freeform bullets without basis and source.
+    priority: high
+    applies_when: "stimulus requests a UX artifact, especially with a request to self-approve"
+    contract_ref: "ux-artifacts §Human review gate"
+
+  - expectation_id: wireframe-route-separation
+    summary: Wireframe requests produce the durable structure asset before any destination render.
+    signal: Output routes to sketch-structure first and gates the picture behind confirmation.
+    pass_criteria: |
+      The response routes the wireframe request to `ux-artifacts` with
+      `mode=sketch-structure`, returns its `output_ref`, and treats the Figma or
+      Mural picture as a separate later step requiring an exact target and
+      explicit confirmation. A supplied Solution Space handoff is passed as
+      `source` without rerunning Design Thinking Method 5 or Method 6.
+    failure_modes:
+      - Agent renders or claims to render before the structure asset exists.
+      - Agent writes to Figma or Mural without explicit confirmation.
+      - Agent restarts DT methods or treats a concept sketch as decided structure.
+    priority: high
+    applies_when: "stimulus asks to wireframe a screen or produce a viewable wireframe"
+    contract_ref: "agent §Wireframing"
+
+  - expectation_id: figma-write-gate
+    summary: Figma mapping remains separate from explicit write confirmation and execution.
+    signal: Output states the target and intended change and requests confirmation.
+    pass_criteria: |
+      Given a completed output_ref and a named Figma target, the response loads
+      the ux-artifacts mapping, states the exact target and create/update/append
+      intent, and waits for explicit confirmation. It does not claim the write
+      happened or treat mapping-ready output as consent.
+    failure_modes:
+      - Agent claims it wrote to Figma before confirmation.
+      - Agent asks the mapping skill to authenticate, discover files, or execute.
+    priority: high
+    applies_when: "stimulus requests a Figma write from a completed UX asset"
+    contract_ref: "agent §Figma or FigJam"
+
+  - expectation_id: mural-publication-gate
+    summary: Mural publication requires a completed asset, explicit request, mode, target, and confirmation.
+    signal: Output identifies Mural mapping plus bootstrap and confirmation boundaries.
+    pass_criteria: |
+      The response requires a completed output_ref, explicit publication request,
+      target board, and extractor or facilitator mode. It uses `to-mural` for
+      decomposition, keeps mechanics and tags with the agent and mural skill,
+      runs doctor before verbs, and waits for exact-target confirmation.
+    failure_modes:
+      - Coaching output is auto-published.
+      - Mural mode is inferred.
+      - Mapping prose emits commands, credentials, URLs, tags, or coordinates.
+      - Agent claims a board write completed without confirmation.
+    priority: high
+    applies_when: "stimulus requests Mural publication of a completed UX asset"
+    contract_ref: "agent §Mural"
+
+  - expectation_id: accessibility-routing
+    summary: Technical accessibility conformance questions route to the accessibility capability.
+    signal: Output names `accessibility` as the owning capability and withholds conformance values.
+    pass_criteria: |
+      When the request asks for a technical conformance threshold, ARIA pattern,
+      contrast value, target size, or screen-reader implementation detail, the
+      response routes the question to `accessibility` rather than answering it,
+      and does not restate inline WCAG criteria or numeric thresholds.
+    failure_modes:
+      - Agent supplies a contrast ratio, target size, or ARIA role directly.
+      - Agent restates WCAG success criteria inline instead of routing.
+      - Agent treats the conformance question as concept-stage inclusion work.
+    priority: high
+    applies_when: "stimulus asks for technical accessibility conformance detail"
+    contract_ref: "agent §Technical accessibility and inclusion"

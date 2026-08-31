@@ -18,6 +18,11 @@ coverage:
         threshold: 1%
         flags:
           - pytest
+      node:
+        target: auto
+        threshold: 1%
+        flags:
+          - node
     patch:
       default:
         target: 80%
@@ -32,6 +37,11 @@ coverage:
         informational: true
         flags:
           - pytest
+      node:
+        target: 80%
+        informational: true
+        flags:
+          - node
 
 ignore:
   - "scripts/tests/**"
@@ -48,6 +58,10 @@ flags:
       - ".github/skills/**/scripts/**"
     carryforward: true
   pytest:
+    paths:
+      - ".github/skills/**/scripts/**"
+    carryforward: true
+  node:
     paths:
       - ".github/skills/**/scripts/**"
     carryforward: true

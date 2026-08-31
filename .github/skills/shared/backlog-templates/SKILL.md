@@ -1,14 +1,13 @@
 ---
 name: backlog-templates
-description: "Shared work-item templates and conventions for ADO and GitHub backlog handoff across the RAI, Security, SSSC, and Accessibility planners"
+description: "Shared work-item templates and conventions for ADO and GitHub backlog handoff across the RAI, Security, SSSC, Accessibility, and Privacy planners"
 license: MIT
 user-invocable: true
-compatibility:
-  hosts: ["vscode", "github-coding-agent"]
+compatibility: "Hosts: vscode, github-coding-agent. Reference-only templates; the consuming planner supplies tracker access."
 metadata:
-  authors: ["microsoft/hve-core"]
+  authors: "microsoft/hve-core"
   spec_version: "1.0.0"
-  last_updated: "2026-05-09"
+  last_updated: "2026-08-09"
 ---
 
 # Backlog Templates
@@ -21,17 +20,18 @@ Planners that emit Phase-final backlog work items all need the same dual-format 
 
 Callers:
 
-* RAI Planner (`.github/instructions/rai-planning/rai-backlog-handoff.instructions.md`)
-* Security Planner (`.github/instructions/security/backlog-handoff.instructions.md`)
-* SSSC Planner (`.github/instructions/security/sssc-backlog.instructions.md`)
-* Accessibility Planner (`.github/instructions/accessibility/accessibility-backlog-handoff.instructions.md`)
+* RAI Planner (`rai-planner` skill `references/backlog-handoff.md`)
+* Security Planner (`.github/agents/security/security-planner.agent.md`; security-specific handoff details in `.github/skills/project-planning/security-planning/references/backlog-formats.md`)
+* SSSC Planner (`.github/instructions/security/sssc-planner.instructions.md`)
+* Accessibility Planner (`accessibility/accessibility` skill `references/phases/backlog-handoff.md`)
+* Privacy Planner (`.github/instructions/privacy/privacy-identity.instructions.md`)
 
 What stays per-planner (NOT in this skill):
 
 * Domain-specific HTML and markdown body content (NIST characteristic vs. STRIDE category vs. WCAG criterion vs. Scorecard check).
 * Severity-to-priority and severity-to-tier mapping tables — different input vocabularies per planner.
 * Work-item hierarchy mapping (Epic / Feature / Story / Task / Bug).
-* The accessibility disclaimer text (pinned to `accessibility-backlog-handoff.instructions.md` by the L7 disclaimer lever).
+* The accessibility disclaimer text (pinned to `accessibility-identity.instructions.md` by the L7 disclaimer lever).
 
 ## ADO Work Item Template
 
@@ -75,7 +75,7 @@ Worked example (Security Planner):
 </div>
 ```
 
-Each planner substitutes its own field block (NIST characteristic + threat + control surface for RAI; framework + criterion + surface + personas + evidence + tradeoff for Accessibility; supply-chain control + Scorecard check + adoption type for SSSC).
+Each planner substitutes its own field block (NIST characteristic + threat + control surface for RAI; framework + criterion + surface + personas + evidence + tradeoff for Accessibility; supply-chain control + Scorecard check + adoption type for SSSC; data category + processing purpose + DPIA reference + lawful basis + risk tier for Privacy).
 
 Planner-specific ADO description field block (the keys substituted into the `<!-- planner-specific field block goes here -->` slot):
 
@@ -83,6 +83,7 @@ Planner-specific ADO description field block (the keys substituted into the `<!-
 * Security — `threat_id`, `stride_category`, `bucket`, `risk_level`.
 * SSSC — Scorecard Check, Risk Level, Effort, Adoption Type, Prerequisite, Adoption Steps, Source References (Workflow, Script, Documentation).
 * Accessibility — `framework`, `criterion`, `surface`, `wcag_level`, `severity`, `category`, `risk_tier`, `tradeoff_ref` (when applicable). Add an assistive-technology validation note when `severity` is `critical` or `major`.
+* Privacy — `data_category`, `processing_purpose`, `dpia_ref`, `lawful_basis`, `risk_tier`.
 
 ## GitHub Issue Template
 
@@ -93,7 +94,7 @@ Canonical YAML metadata header:
 ```yaml
 ---
 id: "{{<PREFIX>-TEMP-N}}"
-planner: {rai|security|sssc|accessibility}
+planner: {rai|security|sssc|accessibility|privacy}
 priority: {Critical|High|Medium|Low}
 standards: ["{standard_id_1}", "{standard_id_2}"]
 evidence_refs: ["{evidence_id_1}"]
@@ -107,6 +108,7 @@ Planner-specific augmentation fields (added to the same YAML block, not replacin
 * Security — `threat_id`, `stride_category`, `risk_level`, `bucket`, `standards`.
 * SSSC — `scorecard_check`, `risk_level`, `adoption_type`, `effort`, `standards`.
 * Accessibility — `framework`, `criterion`, `surface`, `wcag_level`, `severity`, `category`, `risk_tier`, `tradeoff_ref`, `standards`.
+* Privacy — `data_category`, `processing_purpose`, `dpia_ref`, `lawful_basis`, `risk_tier`, `standards`.
 
 Markdown body skeleton:
 
@@ -166,24 +168,27 @@ Debug-mode output retained under `.copilot-tracking/<planner-domain>/{slug}/debu
 
 ## Autonomy-Tier Enumeration
 
-Three tiers control how rendered work items reach the target backlog system. The canonical vocabulary is `manual` / `supervised` / `autonomous`.
+Three tiers control how rendered work items reach the target backlog system. The canonical vocabulary is `manual` / `supervised` / `autonomous`. A fourth value, `coached`, names a capability that emits no work items at all.
 
 * `manual` — The planner emits a backlog handoff file under `.copilot-tracking/`. The user creates each work item in the target system independently. No MCP tool invocations.
 * `supervised` — The planner drafts rendered work items in `.copilot-tracking/`, presents each batch of 5 to 10 items for user review, and only invokes MCP creation tools on user approval. This is the default tier.
 * `autonomous` — The planner invokes MCP creation tools directly on the sanitized batch after the user pre-approves the run. All items are created in a single operation.
+* `coached` — The capability produces a conversation and its own output rather than backlog work items. It renders nothing, invokes no creation tool, and reaches no backlog system, so no tier applies to it. No backlog planner selects this value and no planner state schema accepts it; it exists so a coaching-shaped capability has a name in this vocabulary instead of an undocumented absence. Coaching capabilities record no autonomy field in their own state.
 
 Cross-reference mapping for planners that use divergent vocabularies. Each planner persists the selected value in its session state under `userPreferences.autonomyTier` using its own vocabulary; this table is the single source of truth for cross-planner equivalence.
 
-| Canonical (this skill) | Accessibility (seed schema) | Security | RAI     | SSSC              |
-|------------------------|-----------------------------|----------|---------|-------------------|
-| autonomous             | autonomous                  | Full     | Full    | Full              |
-| supervised (default)   | supervised                  | Partial  | Partial | Partial (default) |
-| manual                 | manual                      | Manual   | Manual  | Guided            |
+| Canonical (this skill) | Accessibility (seed schema) | Security       | RAI            | SSSC              | Privacy           |
+|------------------------|-----------------------------|----------------|----------------|-------------------|-------------------|
+| autonomous             | autonomous                  | Full           | Full           | Full              | Full              |
+| supervised (default)   | supervised                  | Partial        | Partial        | Partial (default) | Partial (default) |
+| manual                 | manual                      | Manual         | Manual         | Guided            | Manual            |
+| coached                | not applicable              | not applicable | not applicable | not applicable    | not applicable    |
 
 Notes:
 
 * Accessibility's vocabulary already matches the canonical names; the seed schema `autonomyTier` field is the persisted form.
 * SSSC uses `Guided` as the lowest-autonomy tier label. Treat `Guided` and `Manual` as equivalent across planners for cross-reference and reporting.
+* `coached` is not a tier and has no planner equivalent. It is not selectable, not persisted in any planner state schema, and carries no severity-to-tier routing. A planner that encounters it should treat it as out of range.
 * Severity-to-tier mapping (which severity routes to which tier) stays in each planner's handoff instruction file.
 
 ## Disclaimer-Block Placement Convention
@@ -193,7 +198,8 @@ Every backlog handoff artifact (handoff summary, ADO output file, GitHub output 
 Source-of-truth split for the disclaimer text:
 
 * RAI, Security, SSSC — Read the disclaimer text from `.github/instructions/shared/disclaimer-language.instructions.md` under the corresponding planner section.
-* Accessibility — Read the disclaimer text from `.github/instructions/accessibility/accessibility-backlog-handoff.instructions.md` under the `Planning Disclaimer` heading. The L7 disclaimer lever pins the accessibility disclaimer to that file. Do not move it to `shared/disclaimer-language.instructions.md`.
+* Privacy — Read the disclaimer text from `.github/instructions/shared/disclaimer-language.instructions.md` under the Privacy Planning section.
+* Accessibility — Read the disclaimer text from `.github/instructions/accessibility/accessibility-identity.instructions.md` under the `Disclaimer Handling` heading. The L7 disclaimer lever pins the accessibility disclaimer to that file. Do not move it to `shared/disclaimer-language.instructions.md`.
 
 Placement rules:
 
@@ -214,14 +220,13 @@ Work items use the format `WI-{PREFIX}-{NNN}` where the prefix identifies the or
 | Security      | `WI-SEC-`  | `{{SEC-TEMP-N}}`  |
 | SSSC          | `WI-SSSC-` | `{{SSSC-TEMP-N}}` |
 | Accessibility | `WI-A11Y-` | `{{A11Y-TEMP-N}}` |
+| Privacy       | `WI-PRIV-` | `{{PRIV-TEMP-N}}` |
 
 Rules:
 
 * Distinct prefixes prevent ID collision when multiple planners produce a backlog against the same project.
 * Sequence is monotonic per plan slug. Do not reuse identifiers across plans or sessions.
 * GitHub temporary IDs are replaced with real issue numbers at creation time; preserve the temporary ID in `state.noticeLog` for traceability.
-* Cross-planner references use the target planner's full ID, prefixed with the relationship type: `Accessibility-Ref: WI-A11Y-{NNN}`, `Security-Ref: WI-SEC-{NNN}`, `RAI-Ref: WI-RAI-{NNN}`, `SSSC-Ref: WI-SSSC-{NNN}`.
+* Cross-planner references use the target planner's full ID, prefixed with the relationship type: `Accessibility-Ref: WI-A11Y-{NNN}`, `Security-Ref: WI-SEC-{NNN}`, `RAI-Ref: WI-RAI-{NNN}`, `SSSC-Ref: WI-SSSC-{NNN}`, `Privacy-Ref: WI-PRIV-{NNN}`.
 
 Internal reference IDs (`T-{BUCKET}-{NNN}` for threats, `EV-A11Y-{NNN}` for evidence, `SEED-A11Y-{NNN}` for seeds, `TO-A11Y-{NNN}` for tradeoffs) remain scoped to their owning planner and are out of scope for this skill.
-
-*🤖 Crafted with precision by ✨Copilot following brilliant human instruction, then carefully refined by our team of discerning human reviewers.*

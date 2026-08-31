@@ -1,4 +1,4 @@
-# Copyright (c) Microsoft Corporation.
+# Copyright (c) 2026 Microsoft Corporation. All rights reserved.
 # SPDX-License-Identifier: MIT
 """OAuth Authorization Code + PKCE loopback flow tests."""
 
@@ -291,7 +291,7 @@ def test_exchange_authorization_code_missing_access_token_raises(
 def test_exchange_authorization_code_rejects_redirect(
     mural_module: Any, recorded_http: Any, response_factory: Any, fake_now: Any
 ) -> None:
-    def _redirect_http(req: Any) -> Any:
+    def _redirect_http(req: Any, **_kwargs: Any) -> Any:
         return mural_module._NoRedirect()._block(
             req, None, 302, "Found", {"Location": "https://evil.example/steal"}
         )
@@ -307,13 +307,13 @@ def test_exchange_authorization_code_rejects_redirect(
             _now=fake_now,
         )
     assert excinfo.value.code == "TOKEN_REDIRECT"
-    assert "https://evil.example/steal" in excinfo.value.message
+    assert "evil.example" not in excinfo.value.message
 
 
 def test_refresh_access_token_rejects_redirect(
     mural_module: Any, recorded_http: Any, fake_now: Any
 ) -> None:
-    def _redirect_http(req: Any) -> Any:
+    def _redirect_http(req: Any, **_kwargs: Any) -> Any:
         return mural_module._NoRedirect()._block(
             req, None, 301, "Moved", {"Location": "https://evil.example/steal"}
         )
@@ -326,7 +326,7 @@ def test_refresh_access_token_rejects_redirect(
             _http=_redirect_http,
         )
     assert excinfo.value.code == "TOKEN_REDIRECT"
-    assert "https://evil.example/steal" in excinfo.value.message
+    assert "evil.example" not in excinfo.value.message
 
 
 def test_exchange_authorization_code_rejects_non_json_content_type(
@@ -554,7 +554,8 @@ def test_run_login_happy_path_persists_record(
     mural_module._save_token_store(target, record)
     import os
 
-    assert oct(os.stat(target).st_mode & 0o777) == "0o600"
+    if os.name != "nt":
+        assert oct(os.stat(target).st_mode & 0o777) == "0o600"
 
 
 def test_run_login_default_http_rejects_token_endpoint_redirect(

@@ -1,5 +1,5 @@
 #Requires -Modules Pester
-# Copyright (c) Microsoft Corporation.
+# Copyright (c) 2026 Microsoft Corporation. All rights reserved.
 # SPDX-License-Identifier: MIT
 using module ..\..\security\Modules\SecurityClasses.psm1
 
@@ -67,6 +67,7 @@ Describe 'DependencyViolation' -Tag 'Unit' {
             @{ Value = 'VersionMismatch' }
             @{ Value = 'MissingVersionComment' }
             @{ Value = 'MissingPermissions' }
+            @{ Value = 'MissingJobPermissions' }
             @{ Value = '' }
         ) {
             $v = [DependencyViolation]::new()

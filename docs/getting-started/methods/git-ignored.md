@@ -3,7 +3,7 @@ title: Git-Ignored Folder Installation
 description: Install HVE Core in a git-ignored folder for devcontainer environments
 sidebar_position: 3
 author: Microsoft
-ms.date: 2026-03-10
+ms.date: 2026-08-19
 ms.topic: how-to
 keywords:
   - git-ignored
@@ -52,7 +52,7 @@ my-project/
 
 ## Quick Start
 
-Install the [VS Code extension](https://marketplace.visualstudio.com/items?itemName=ise-hve-essentials.hve-core) for the fastest setup. For guided setup with installation method selection and MCP configuration, install the [HVE Core Installer](https://marketplace.visualstudio.com/items?itemName=ise-hve-essentials.hve-installer) extension and ask any agent "help me customize hve-core installation". Use the manual steps below for direct configuration.
+Install the [VS Code extension](https://marketplace.visualstudio.com/items?itemName=ise-hve-essentials.hve-core) for the fastest setup. For guided installation-method selection, MCP configuration, or selective clone adoption, ask an agent to use the included `hve-core-installer` skill. Use the manual steps below for direct configuration.
 
 ## Manual Setup
 
@@ -115,15 +115,23 @@ Create or update `.vscode/settings.json`:
   "chat.instructionsFilesLocations": {
     ".hve-core/.github/instructions/ado": true,
     ".hve-core/.github/instructions/coding-standards": true,
-    ".hve-core/.github/instructions/design-thinking": true,
     ".hve-core/.github/instructions/github": true,
     ".hve-core/.github/instructions/hve-core": true,
     ".hve-core/.github/instructions/shared": true
   },
   "chat.agentSkillsLocations": {
     ".hve-core/.github/skills": true,
+    ".hve-core/.github/skills/accessibility": true,
     ".hve-core/.github/skills/shared": true,
-    ".hve-core/.github/skills/coding-standards": true
+    ".hve-core/.github/skills/coding-standards": true,
+    ".hve-core/.github/skills/data-science": true,
+    ".hve-core/.github/skills/design-thinking": true,
+    ".hve-core/.github/skills/hve-core": true,
+    ".hve-core/.github/skills/installer": true,
+    ".hve-core/.github/skills/project-planning": true,
+    ".hve-core/.github/skills/rai": true,
+    ".hve-core/.github/skills/rpi": true,
+    ".hve-core/.github/skills/security": true
   }
 }
 ```
@@ -135,7 +143,7 @@ Add to `.devcontainer/devcontainer.json` so HVE Core is cloned on container crea
 ```jsonc
 {
   // ... existing configuration ...
-  
+
   "postCreateCommand": "[ -d .hve-core ] || git clone --depth 1 https://github.com/microsoft/hve-core.git .hve-core"
 }
 ```
@@ -145,7 +153,7 @@ Add to `.devcontainer/devcontainer.json` so HVE Core is cloned on container crea
 1. Rebuild your devcontainer (`Ctrl+Shift+P` → "Dev Containers: Rebuild Container")
 2. Open GitHub Copilot Chat (`Ctrl+Alt+I`)
 3. Click the agent picker dropdown
-4. Verify HVE Core agents appear (task-planner, task-researcher, prompt-builder)
+4. Verify `RPI Agent` and `Documentation` appear, then confirm `/rpi-research` is available
 
 ## Complete Devcontainer Example
 
@@ -153,9 +161,9 @@ Add to `.devcontainer/devcontainer.json` so HVE Core is cloned on container crea
 {
   "name": "My Project with HVE Core",
   "image": "mcr.microsoft.com/devcontainers/base:ubuntu",
-  
+
   "postCreateCommand": "[ -d .hve-core ] || git clone --depth 1 https://github.com/microsoft/hve-core.git .hve-core",
-  
+
   "customizations": {
     "vscode": {
       "settings": {
@@ -179,15 +187,23 @@ Add to `.devcontainer/devcontainer.json` so HVE Core is cloned on container crea
         "chat.instructionsFilesLocations": {
           ".hve-core/.github/instructions/ado": true,
           ".hve-core/.github/instructions/coding-standards": true,
-          ".hve-core/.github/instructions/design-thinking": true,
           ".hve-core/.github/instructions/github": true,
           ".hve-core/.github/instructions/hve-core": true,
           ".hve-core/.github/instructions/shared": true
         },
         "chat.agentSkillsLocations": {
           ".hve-core/.github/skills": true,
+          ".hve-core/.github/skills/accessibility": true,
           ".hve-core/.github/skills/shared": true,
-          ".hve-core/.github/skills/coding-standards": true
+          ".hve-core/.github/skills/coding-standards": true,
+          ".hve-core/.github/skills/data-science": true,
+          ".hve-core/.github/skills/design-thinking": true,
+          ".hve-core/.github/skills/hve-core": true,
+          ".hve-core/.github/skills/installer": true,
+          ".hve-core/.github/skills/project-planning": true,
+          ".hve-core/.github/skills/rai": true,
+          ".hve-core/.github/skills/rpi": true,
+          ".hve-core/.github/skills/security": true
         }
       }
     }

@@ -1,6 +1,6 @@
 ---
-description: "Shared exploration-first coaching patterns for planning agents (RAI, security, SSSC) adapted from Design Thinking research methods"
-applyTo: '**/.copilot-tracking/rai-plans/**, **/.copilot-tracking/security-plans/**, **/.copilot-tracking/sssc-plans/**'
+description: "Shared exploration-first coaching patterns for planning agents (RAI, security, SSSC, Privacy) adapted from Design Thinking research methods"
+applyTo: '**/.copilot-tracking/rai-plans/**, **/.copilot-tracking/security-plans/**, **/.copilot-tracking/sssc-plans/**, **/.copilot-tracking/privacy-plans/**'
 ---
 
 # Shared Coaching Patterns

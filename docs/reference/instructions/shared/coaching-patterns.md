@@ -1,0 +1,40 @@
+---
+title: Shared/Coaching Patterns
+description: "Shared exploration-first coaching patterns for planning agents (RAI, security, SSSC, Privacy) adapted from Design Thinking research methods"
+sidebar_position: 1
+author: Microsoft
+ms.date: 2026-08-27
+ms.topic: reference
+keywords:
+  - instruction
+  - shared
+  - shared/coaching-patterns
+---
+
+<!-- BEGIN AUTO-GENERATED: metadata -->
+| Field       | Value                                                                                                                                                                           |
+|-------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| Kind        | instruction                                                                                                                                                                     |
+| Source      | `.github/instructions/shared/coaching-patterns.instructions.md`                                                                                                                 |
+| Invocation  | Applied automatically to `**/.copilot-tracking/rai-plans/**, **/.copilot-tracking/security-plans/**, **/.copilot-tracking/sssc-plans/**, **/.copilot-tracking/privacy-plans/**` |
+| Interactive | No                                                                                                                                                                              |
+<!-- END AUTO-GENERATED: metadata -->
+
+## What it does
+
+<!-- BEGIN AUTO-GENERATED: overview -->
+Shared exploration-first coaching patterns for planning agents (RAI, security, SSSC, Privacy) adapted from Design Thinking research methods
+<!-- END AUTO-GENERATED: overview -->
+
+## When to use it
+
+Use these patterns during capture, discovery, or Phase 1 conversations for RAI,
+security, supply chain, and privacy planners. Explore the user's system before
+classifying it, preserve raw statements and tensions, and defer standards,
+prioritization, and remediation to later planner phases unless a specific
+identity overrides the cadence.
+
+## Example usage
+
+<!-- asset-docs:stub -->
+Provide a concrete example that shows the asset in action, including representative input and the resulting output.

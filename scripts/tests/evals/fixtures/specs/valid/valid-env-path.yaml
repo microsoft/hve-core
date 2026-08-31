@@ -1,0 +1,21 @@
+name: fixture-valid-env-path
+description: Compliant spec whose environment paths resolve relative to the spec directory.
+type: capability
+defaults:
+  runs: 1
+  timeout: 60s
+  executor: copilot-sdk
+scoring:
+  threshold: 0.7
+environment:
+  files:
+    - valid-minimal.yaml
+
+stimuli:
+  - name: stimulus-with-env-path
+    prompt: "What is the capital of France?"
+    tags: {category: fixture}
+    graders:
+      - type: output-matches
+        name: mentions-paris
+        config: {pattern: '(?i)\bparis\b'}

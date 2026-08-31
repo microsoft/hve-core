@@ -5,6 +5,10 @@
 
 # Vally evaluation results
 evals/results/
+vally-results/
+
+# Generated Copilot plugin packages
+/plugins/
 
 # macOS
 .DS_Store
@@ -113,6 +117,7 @@ StyleCopReport.xml
 *.tlh
 *.tmp
 *.tmp_proj
+_tmp*
 *_wpftmp.csproj
 *.log
 *.tlog
@@ -459,11 +464,24 @@ dependency-pinning-artifacts/
 pr.md
 pr-reference.xml
 
+# Root-level PowerShell scratch files (debug/test/scratch/tmp prefixes at repo root only)
+/debug-*.ps1
+/debug-*.psm1
+/test-*.ps1
+/test-*.psm1
+/scratch-*.ps1
+/scratch-*.psm1
+/tmp-*.ps1
+/tmp-*.psm1
+
 # Dependency pinning scan artifacts
 dependency-pinning-artifacts/
 
 # Copilot tracking
 .copilot-tracking/
+
+# Local telemetry opt-in marker
+.hve-telemetry
 
 # MCP server configuration - exclude local token files
 .mcp/*-local.json
@@ -474,3 +492,6 @@ dependency-pinning-artifacts/
 docs/docusaurus/build/
 docs/docusaurus/.docusaurus/
 docs/docusaurus/node_modules/
+
+# Playwright test output
+test-results/

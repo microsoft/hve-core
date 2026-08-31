@@ -27,8 +27,18 @@
       "description": "The agent used for running the prompt. Options: ask, edit, agent (default), or a custom agent name"
     },
     "model": {
-      "type": "string",
-      "description": "The language model to use when running the prompt. Defaults to current selection if not specified."
+      "oneOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      ],
+      "description": "The language model(s) to use when running the prompt. Accepts a single string or a prioritized array. Defaults to current selection if not specified."
     },
     "tools": {
       "type": "array",

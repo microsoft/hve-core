@@ -1,1 +1,0 @@
-../../../../.github/instructions/project-planning/prd-builder-telemetry.instructions.md

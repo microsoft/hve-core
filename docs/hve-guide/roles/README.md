@@ -3,17 +3,17 @@ title: Role Guides
 description: Find your role-specific guide for AI-assisted engineering with HVE Core tooling
 sidebar_position: 1
 author: Microsoft
-ms.date: 2026-02-18
+ms.date: 2026-08-02
 ms.topic: concept
 keywords:
   - roles
   - guides
   - AI-assisted engineering
-  - collections
+  - capabilities
 estimated_reading_time: 5
 ---
 
-HVE Core provides role-specific tooling through collections of agents, prompts, instructions, and skills. Each role guide covers recommended collections, stage walkthroughs, starter prompts, and collaboration patterns tailored to how you work.
+HVE Core provides role-specific capabilities through agents, prompts, instructions, and skills in the complete distribution identity. Each role guide covers recommended capabilities, stage walkthroughs, starter prompts, and collaboration patterns tailored to how you work.
 
 ## Role Overview
 
@@ -30,7 +30,7 @@ HVE Core provides role-specific tooling through collections of agents, prompts, 
 | New Contributor          | 2                | 10                | Stage 1, Stage 2, Stage 6, Stage 7          | [New Contributor](new-contributor.md)                   |
 | Utility                  | N/A              | 13                | All                                         | [Utility](utility.md)                                   |
 
-> **Dedicated Assets** count agents, prompts, instructions, and skills built specifically for a role's primary workflow. **Total Addressable** adds cross-cutting tools (memory, Git prompts, auto-activated instructions) and shared collection assets. The **+** suffix indicates additional auto-activated assets not individually enumerated.
+> **Dedicated Assets** count agents, prompts, instructions, and skills built specifically for a role's primary workflow. **Total Addressable** adds cross-cutting tools (Git prompts, auto-activated instructions, and shared skills). The **+** suffix indicates additional auto-activated assets not individually enumerated.
 
 ## Find Your Role
 
@@ -45,7 +45,7 @@ HVE Core provides role-specific tooling through collections of agents, prompts, 
 | Manage infrastructure, handle incidents, or deploy            | [SRE / Operations](sre-operations.md)                   |
 | Define business outcomes or manage stakeholder alignment      | [Business Program Manager](business-program-manager.md) |
 | Get started contributing to the project                       | [New Contributor](new-contributor.md)                   |
-| Use cross-cutting utilities (memory, docs, media)             | [Utility](utility.md)                                   |
+| Use cross-cutting utilities (workflow state, docs, media)     | [Utility](utility.md)                                   |
 
 ## Collaboration Patterns
 
@@ -70,7 +70,7 @@ Each role intersects with 9 lifecycle stages, producing 81 role-stage pairs. Cov
 
 Strongest coverage: Engineer at Stages 6-7 (implementation and review), TPM at Stages 2-5 (requirements through sprint planning), SRE at Stage 9 (operations), UX Designer at Stages 2-3 (discovery and design via Design Thinking).
 
-Thinnest roles: Security Architect (3 dedicated assets, 6 of 9 stages at None or Thin) and Business Program Manager (beta, all tooling borrowed from shared collections).
+Thinnest roles: Security Architect (3 dedicated assets, 6 of 9 stages at None or Thin) and Business Program Manager (beta, all tooling borrowed from shared capabilities).
 
 Least-covered stage: Stage 4 Decomposition: 8 of 9 roles have no dedicated tooling. Only TPM has strong coverage at this stage.
 

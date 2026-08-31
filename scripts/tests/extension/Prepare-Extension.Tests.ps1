@@ -1,2933 +1,349 @@
 #Requires -Modules Pester
-# Copyright (c) Microsoft Corporation.
+# Copyright (c) 2026 Microsoft Corporation. All rights reserved.
 # SPDX-License-Identifier: MIT
 
 BeforeAll {
-    . $PSScriptRoot/../../extension/Prepare-Extension.ps1
-}
+    . (Join-Path $PSScriptRoot '../../extension/Prepare-Extension.ps1')
+    Import-Module (Join-Path $PSScriptRoot 'ExtensionTestFixtures.psm1') -Force
+    $script:PrepareScriptPath = (Resolve-Path (Join-Path $PSScriptRoot '../../extension/Prepare-Extension.ps1')).Path
 
-#region Package Generation Function Tests
+    function script:New-PluginFixtureRepo {
+        <#
+        .SYNOPSIS
+        Builds a repository fixture whose only membership authority is plugin.json.
+        .PARAMETER Path
+        Root directory to populate.
+        .PARAMETER Manifest
+        Plugin manifest content.
+        .OUTPUTS
+        [hashtable] Fixture paths.
+        #>
+        [CmdletBinding()]
+        [OutputType([hashtable])]
+        param(
+            [Parameter(Mandatory = $true)]
+            [string]$Path,
 
-Describe 'Get-CollectionDisplayName' {
-    It 'Returns displayName when present' {
-        $manifest = @{ displayName = 'My Display Name'; name = 'fallback' }
-        $result = Get-CollectionDisplayName -CollectionManifest $manifest -DefaultValue 'default'
-        $result | Should -Be 'My Display Name'
+            [Parameter(Mandatory = $false)]
+            [AllowNull()]
+            [System.Collections.IDictionary]$Manifest
+        )
+
+        $fixture = New-ExtensionFixtureRepo -Path $Path
+        # The marketplace catalog must not participate in preparation; removing it
+        # makes any surviving catalog read fail loudly instead of passing silently.
+        Remove-Item -LiteralPath $fixture.CatalogPath -Force
+        if ($null -ne $Manifest) {
+            Set-FixtureFile -Path (Join-Path $fixture.RepoRoot 'plugin.json') `
+                -Value (($Manifest | ConvertTo-Json -Depth 8) + "`n")
+        }
+        return $fixture
     }
 
-    It 'Derives display name from name when displayName absent' {
-        $manifest = @{ name = 'Git Workflow' }
-        $result = Get-CollectionDisplayName -CollectionManifest $manifest -DefaultValue 'default'
-        $result | Should -Be 'HVE Core - Git Workflow'
-    }
+    function script:Get-PluginManifestFixture {
+        <#
+        .SYNOPSIS
+        Returns the deterministic plugin manifest used by preparation tests.
+        .OUTPUTS
+        [System.Collections.Specialized.OrderedDictionary] Manifest content.
+        #>
+        [CmdletBinding()]
+        [OutputType([System.Collections.Specialized.OrderedDictionary])]
+        param()
 
-    It 'Returns default when both displayName and name absent' {
-        $manifest = @{ id = 'test' }
-        $result = Get-CollectionDisplayName -CollectionManifest $manifest -DefaultValue 'Fallback'
-        $result | Should -Be 'Fallback'
-    }
-
-    It 'Ignores whitespace-only displayName' {
-        $manifest = @{ displayName = '   '; name = 'valid' }
-        $result = Get-CollectionDisplayName -CollectionManifest $manifest -DefaultValue 'default'
-        $result | Should -Be 'HVE Core - valid'
-    }
-}
-
-Describe 'Copy-TemplateWithOverrides' {
-    It 'Overrides existing properties' {
-        $template = [PSCustomObject]@{ name = 'original'; version = '1.0.0' }
-        $result = Copy-TemplateWithOverrides -Template $template -Overrides @{ name = 'overridden' }
-        $result.name | Should -Be 'overridden'
-        $result.version | Should -Be '1.0.0'
-    }
-
-    It 'Preserves template property order' {
-        $template = [PSCustomObject]@{ a = '1'; b = '2'; c = '3' }
-        $result = Copy-TemplateWithOverrides -Template $template -Overrides @{ b = 'new' }
-        $names = @($result.PSObject.Properties.Name)
-        $names[0] | Should -Be 'a'
-        $names[1] | Should -Be 'b'
-        $names[2] | Should -Be 'c'
-    }
-
-    It 'Appends new override keys not in template' {
-        $template = [PSCustomObject]@{ name = 'ext' }
-        $result = Copy-TemplateWithOverrides -Template $template -Overrides @{ name = 'ext'; extra = 'value' }
-        $result.extra | Should -Be 'value'
-    }
-
-    It 'Returns PSCustomObject' {
-        $template = [PSCustomObject]@{ name = 'ext' }
-        $result = Copy-TemplateWithOverrides -Template $template -Overrides @{}
-        $result | Should -BeOfType [PSCustomObject]
-    }
-}
-
-Describe 'Set-JsonFile' {
-    BeforeAll {
-        $script:tempDir = Join-Path ([System.IO.Path]::GetTempPath()) ([System.Guid]::NewGuid().ToString())
-        New-Item -ItemType Directory -Path $script:tempDir -Force | Out-Null
-    }
-
-    AfterAll {
-        Remove-Item -Path $script:tempDir -Recurse -Force -ErrorAction SilentlyContinue
-    }
-
-    It 'Creates file with JSON content' {
-        $path = Join-Path $script:tempDir 'test.json'
-        Set-JsonFile -Path $path -Content @{ name = 'test'; version = '1.0.0' }
-        Test-Path $path | Should -BeTrue
-        $content = Get-Content -Path $path -Raw | ConvertFrom-Json
-        $content.name | Should -Be 'test'
-    }
-
-    It 'Creates parent directories when missing' {
-        $path = Join-Path $script:tempDir 'nested/deep/test.json'
-        Set-JsonFile -Path $path -Content @{ key = 'value' }
-        Test-Path $path | Should -BeTrue
-    }
-}
-
-Describe 'Remove-StaleGeneratedFiles' {
-    BeforeAll {
-        $script:tempDir = Join-Path ([System.IO.Path]::GetTempPath()) ([System.Guid]::NewGuid().ToString())
-        $script:extDir = Join-Path $script:tempDir 'extension'
-        New-Item -ItemType Directory -Path $script:extDir -Force | Out-Null
-    }
-
-    AfterAll {
-        Remove-Item -Path $script:tempDir -Recurse -Force -ErrorAction SilentlyContinue
-    }
-
-    It 'Removes stale package.*.json files not in expected set' {
-        $keepFile = Join-Path $script:extDir 'package.rpi.json'
-        $staleFile = Join-Path $script:extDir 'package.obsolete.json'
-        '{}' | Set-Content -Path $keepFile
-        '{}' | Set-Content -Path $staleFile
-
-        Remove-StaleGeneratedFiles -RepoRoot $script:tempDir -ExpectedFiles @($keepFile)
-
-        Test-Path $keepFile | Should -BeTrue
-        Test-Path $staleFile | Should -BeFalse
-    }
-
-    It 'Does not remove non-collection files' {
-        $regularFile = Join-Path $script:extDir 'README.md'
-        '# Test' | Set-Content -Path $regularFile
-
-        Remove-StaleGeneratedFiles -RepoRoot $script:tempDir -ExpectedFiles @()
-
-        Test-Path $regularFile | Should -BeTrue
-    }
-}
-
-Describe 'Invoke-ExtensionCollectionsGeneration' {
-    BeforeAll {
-        $script:tempDir = Join-Path ([System.IO.Path]::GetTempPath()) ([System.Guid]::NewGuid().ToString())
-
-        # Set up minimal repo structure
-        $collectionsDir = Join-Path $script:tempDir 'collections'
-        $templatesDir = Join-Path $script:tempDir 'extension/templates'
-        New-Item -ItemType Directory -Path $collectionsDir -Force | Out-Null
-        New-Item -ItemType Directory -Path $templatesDir -Force | Out-Null
-
-        # Package template
-        @{
+        return [ordered]@{
             name        = 'hve-core'
-            displayName = 'HVE Core'
-            version     = '2.0.0'
-            description = 'Default description'
-            publisher   = 'test-pub'
-            engines     = @{ vscode = '^1.80.0' }
-            contributes = @{}
-        } | ConvertTo-Json -Depth 5 | Set-Content -Path (Join-Path $templatesDir 'package.template.json')
-
-        # hve-core collection (flagship)
-        @"
-id: hve-core
-name: HVE Core
-displayName: HVE Core
-description: All artifacts
-"@ | Set-Content -Path (Join-Path $collectionsDir 'hve-core.collection.yml')
-
-        # ado collection
-        @"
-id: ado
-name: ADO Workflow
-displayName: HVE Core - ADO Workflow
-description: ADO workflow agents
-"@ | Set-Content -Path (Join-Path $collectionsDir 'ado.collection.yml')
-
-        # hve-core-all collection (no description to test fallback)
-        @"
-id: hve-core-all
-name: All
-displayName: HVE Core - All
-"@ | Set-Content -Path (Join-Path $collectionsDir 'hve-core-all.collection.yml')
-    }
-
-    AfterAll {
-        Remove-Item -Path $script:tempDir -Recurse -Force -ErrorAction SilentlyContinue
-    }
-
-    It 'Generates package.json for hve-core' {
-        $null = Invoke-ExtensionCollectionsGeneration -RepoRoot $script:tempDir
-        $pkgPath = Join-Path $script:tempDir 'extension/package.json'
-        Test-Path $pkgPath | Should -BeTrue
-        $pkg = Get-Content $pkgPath -Raw | ConvertFrom-Json
-        $pkg.name | Should -Be 'hve-core'
-        $pkg.version | Should -Be '2.0.0'
-    }
-
-    It 'Generates collection package file for non-default collection' {
-        $null = Invoke-ExtensionCollectionsGeneration -RepoRoot $script:tempDir
-        $pkgPath = Join-Path $script:tempDir 'extension/package.ado.json'
-        Test-Path $pkgPath | Should -BeTrue
-        $pkg = Get-Content $pkgPath -Raw | ConvertFrom-Json
-        $pkg.name | Should -Be 'hve-ado'
-        $pkg.displayName | Should -Be 'HVE Core - ADO Workflow'
-    }
-
-    It 'Returns array of generated file paths' {
-        $result = Invoke-ExtensionCollectionsGeneration -RepoRoot $script:tempDir
-        $result.Count | Should -Be 3
-    }
-
-    It 'Propagates version from template to all generated files' {
-        $result = Invoke-ExtensionCollectionsGeneration -RepoRoot $script:tempDir
-        foreach ($file in $result) {
-            $pkg = Get-Content $file -Raw | ConvertFrom-Json
-            $pkg.version | Should -Be '2.0.0'
+            description = 'Manifest fixture description'
+            version     = '9.9.9'
+            agents      = @('.github/agents/labs/gamma.agent.md', '.github/agents/core/alpha.agent.md')
+            commands    = @('.github/prompts/core/build.prompt.md')
+            rules       = @('.github/instructions/core/style.instructions.md')
+            skills      = @('.github/skills/labs/probe', '.github/skills/core/toolkit')
+            hooks       = '.github/hooks/core/session.json'
         }
     }
 
-    It 'Removes stale collection files not matching current collections' {
-        $staleFile = Join-Path $script:tempDir 'extension/package.obsolete.json'
-        '{}' | Set-Content -Path $staleFile
-
-        Invoke-ExtensionCollectionsGeneration -RepoRoot $script:tempDir
-
-        Test-Path $staleFile | Should -BeFalse
-    }
-
-    It 'Generates package for hve-core-all with description fallback' {
-        $null = Invoke-ExtensionCollectionsGeneration -RepoRoot $script:tempDir
-        $pkgPath = Join-Path $script:tempDir 'extension/package.hve-core-all.json'
-        Test-Path $pkgPath | Should -BeTrue
-        $pkg = Get-Content $pkgPath -Raw | ConvertFrom-Json
-        $pkg.name | Should -Be 'hve-core-all'
-        $pkg.displayName | Should -Be 'HVE Core - All'
-        # Falls back to template description when collection lacks description
-        $pkg.description | Should -Be 'Default description'
-    }
-
-    It 'Throws when package template is missing' {
-        $badRoot = Join-Path ([System.IO.Path]::GetTempPath()) ([System.Guid]::NewGuid().ToString())
-        New-Item -ItemType Directory -Path (Join-Path $badRoot 'collections') -Force | Out-Null
-        New-Item -ItemType Directory -Path (Join-Path $badRoot 'extension/templates') -Force | Out-Null
-        @"
-id: test
-"@ | Set-Content -Path (Join-Path $badRoot 'collections/test.collection.yml')
-
-        { Invoke-ExtensionCollectionsGeneration -RepoRoot $badRoot } | Should -Throw '*Package template not found*'
-
-        Remove-Item -Path $badRoot -Recurse -Force -ErrorAction SilentlyContinue
-    }
-
-    It 'Throws when no collection files exist' {
-        $emptyRoot = Join-Path ([System.IO.Path]::GetTempPath()) ([System.Guid]::NewGuid().ToString())
-        New-Item -ItemType Directory -Path (Join-Path $emptyRoot 'collections') -Force | Out-Null
-        New-Item -ItemType Directory -Path (Join-Path $emptyRoot 'extension/templates') -Force | Out-Null
-        @{ name = 'test'; version = '1.0.0' } | ConvertTo-Json | Set-Content -Path (Join-Path $emptyRoot 'extension/templates/package.template.json')
-
-        { Invoke-ExtensionCollectionsGeneration -RepoRoot $emptyRoot } | Should -Throw '*No root collection files found*'
-
-        Remove-Item -Path $emptyRoot -Recurse -Force -ErrorAction SilentlyContinue
-    }
+    Mock Write-Host {}
 }
 
-Describe 'New-CollectionReadme' {
+Describe 'Prepare-Extension plugin manifest reading' -Tag 'Unit' {
     BeforeAll {
-        $script:tempDir = Join-Path ([System.IO.Path]::GetTempPath()) ([System.Guid]::NewGuid().ToString())
-        New-Item -ItemType Directory -Path $script:tempDir -Force | Out-Null
-
-        # Resolve the real template from the repo
-        $script:repoRoot = (Get-Item "$PSScriptRoot/../../..").FullName
-        $script:templatePath = Join-Path $script:repoRoot 'extension/templates/README.template.md'
-
-        # Create mock artifact files with frontmatter descriptions
-        $agentsDir = Join-Path $script:tempDir '.github/agents'
-        $promptsDir = Join-Path $script:tempDir '.github/prompts'
-        $instrDir = Join-Path $script:tempDir '.github/instructions'
-        $skillsDir = Join-Path $script:tempDir '.github/skills/my-skill'
-        New-Item -ItemType Directory -Path $agentsDir -Force | Out-Null
-        New-Item -ItemType Directory -Path $promptsDir -Force | Out-Null
-        New-Item -ItemType Directory -Path $instrDir -Force | Out-Null
-        New-Item -ItemType Directory -Path $skillsDir -Force | Out-Null
-
-        @"
----
-description: "Alpha agent description"
----
-# Alpha
-"@ | Set-Content -Path (Join-Path $agentsDir 'alpha.agent.md')
-
-        @"
----
-description: "Zebra agent description"
----
-# Zebra
-"@ | Set-Content -Path (Join-Path $agentsDir 'zebra.agent.md')
-
-        @"
----
-description: "My prompt description"
----
-# Prompt
-"@ | Set-Content -Path (Join-Path $promptsDir 'my-prompt.prompt.md')
-
-        @"
----
-description: "My instruction description"
-applyTo: "**/*.ps1"
----
-# Instruction
-"@ | Set-Content -Path (Join-Path $instrDir 'my-instr.instructions.md')
-
-        @"
----
-name: my-skill
-description: "My skill description"
----
-# Skill
-"@ | Set-Content -Path (Join-Path $skillsDir 'SKILL.md')
+        $script:ManifestFixture = New-PluginFixtureRepo -Path (Join-Path $TestDrive 'manifest-repo') -Manifest (Get-PluginManifestFixture)
+        $script:ManifestPath = Join-Path $script:ManifestFixture.RepoRoot 'plugin.json'
     }
 
-    AfterAll {
-        Remove-Item -Path $script:tempDir -Recurse -Force -ErrorAction SilentlyContinue
+    It 'Reads the manifest as the component authority' {
+        (Get-PluginManifest -Path $script:ManifestPath).description | Should -BeExactly 'Manifest fixture description'
     }
 
-    It 'Generates README with title and description from collection manifest' {
-        $collection = @{
-            id          = 'test-coll'
-            name        = 'Test Collection'
-            description = 'A test collection for unit testing'
-            items       = @()
-        }
-        $mdPath = Join-Path $script:tempDir 'test.collection.md'
-        'Body content goes here.' | Set-Content -Path $mdPath
-        $outPath = Join-Path $script:tempDir 'README.test-coll.md'
-
-        New-CollectionReadme -Collection $collection -CollectionMdPath $mdPath -TemplatePath $script:templatePath -RepoRoot $script:tempDir -OutputPath $outPath
-
-        $content = Get-Content -Path $outPath -Raw
-        $content | Should -Match '# HVE Core - Test Collection'
-        $content | Should -Match '> A test collection for unit testing'
-        $content | Should -Match 'Body content goes here'
+    It 'Throws with the manifest path when the manifest is absent' {
+        $absent = Join-Path $script:ManifestFixture.RepoRoot '.github/absent.json'
+        { Get-PluginManifest -Path $absent } | Should -Throw "Plugin manifest not found: $absent"
     }
 
-    It 'Uses HVE Core as title for hve-core collection' {
-        $collection = @{
-            id          = 'hve-core'
-            name        = 'HVE Core'
-            description = 'Full bundle'
-            items       = @()
-        }
-        $mdPath = Join-Path $script:tempDir 'core.collection.md'
-        'All artifacts.' | Set-Content -Path $mdPath
-        $outPath = Join-Path $script:tempDir 'README.md'
-
-        New-CollectionReadme -Collection $collection -CollectionMdPath $mdPath -TemplatePath $script:templatePath -RepoRoot $script:tempDir -OutputPath $outPath
-
-        $content = Get-Content -Path $outPath -Raw
-        $content | Should -Match '# HVE Core'
-        $content | Should -Not -Match '# HVE Core All'
-    }
-
-    It 'Generates sorted artifact tables with descriptions grouped by kind' {
-        $collection = @{
-            id    = 'multi'
-            name  = 'Multi'
-            description = 'Multi-artifact test'
-            items = @(
-                @{ kind = 'agent'; path = '.github/agents/zebra.agent.md' },
-                @{ kind = 'agent'; path = '.github/agents/alpha.agent.md' },
-                @{ kind = 'prompt'; path = '.github/prompts/my-prompt.prompt.md' },
-                @{ kind = 'instruction'; path = '.github/instructions/my-instr.instructions.md' },
-                @{ kind = 'skill'; path = '.github/skills/my-skill/' }
-            )
-        }
-        $mdPath = Join-Path $script:tempDir 'multi.collection.md'
-        'Test body.' | Set-Content -Path $mdPath
-        $outPath = Join-Path $script:tempDir 'README.multi.md'
-
-        New-CollectionReadme -Collection $collection -CollectionMdPath $mdPath -TemplatePath $script:templatePath -RepoRoot $script:tempDir -OutputPath $outPath
-
-        $content = Get-Content -Path $outPath -Raw
-        $content | Should -Match '### Chat Agents'
-        $content | Should -Match '\| Name \| Description \|'
-        $content | Should -Match '\*\*alpha\*\*.*Alpha agent description'
-        $content | Should -Match '\*\*zebra\*\*.*Zebra agent description'
-        $content | Should -Match '### Prompts'
-        $content | Should -Match '\*\*my-prompt\*\*.*My prompt description'
-        $content | Should -Match '### Instructions'
-        $content | Should -Match '\*\*my-instr\*\*.*My instruction description'
-        $content | Should -Match '### Skills'
-        $content | Should -Match '\*\*my-skill\*\*.*My skill description'
-    }
-
-    It 'Includes Full Edition link for non-default collections' {
-        $collection = @{
-            id          = 'test-edition'
-            name        = 'Test Edition'
-            description = 'Test edition test'
-            items       = @()
-        }
-        $mdPath = Join-Path $script:tempDir 'test-edition.collection.md'
-        'Test edition body.' | Set-Content -Path $mdPath
-        $outPath = Join-Path $script:tempDir 'README.test-edition.md'
-
-        New-CollectionReadme -Collection $collection -CollectionMdPath $mdPath -TemplatePath $script:templatePath -RepoRoot $script:tempDir -OutputPath $outPath
-
-        $content = Get-Content -Path $outPath -Raw
-        $content | Should -Match '## Full Edition'
-        $content | Should -Match 'HVE Core.*extension'
-    }
-
-    It 'Excludes Full Edition link for hve-core' {
-        $collection = @{
-            id          = 'hve-core'
-            name        = 'HVE Core'
-            description = 'Flagship bundle'
-            items       = @()
-        }
-        $mdPath = Join-Path $script:tempDir 'core2.collection.md'
-        'Core body.' | Set-Content -Path $mdPath
-        $outPath = Join-Path $script:tempDir 'README.core2.md'
-
-        New-CollectionReadme -Collection $collection -CollectionMdPath $mdPath -TemplatePath $script:templatePath -RepoRoot $script:tempDir -OutputPath $outPath
-
-        $content = Get-Content -Path $outPath -Raw
-        $content | Should -Not -Match '## Full Edition'
-    }
-
-    It 'Excludes Full Edition link for hve-core-all' {
-        $collection = @{
-            id          = 'hve-core-all'
-            name        = 'All'
-            description = 'Full bundle'
-            items       = @()
-        }
-        $mdPath = Join-Path $script:tempDir 'all2.collection.md'
-        'All body.' | Set-Content -Path $mdPath
-        $outPath = Join-Path $script:tempDir 'README.all2.md'
-
-        New-CollectionReadme -Collection $collection -CollectionMdPath $mdPath -TemplatePath $script:templatePath -RepoRoot $script:tempDir -OutputPath $outPath
-
-        $content = Get-Content -Path $outPath -Raw
-        $content | Should -Not -Match '## Full Edition'
-    }
-
-    It 'Includes common footer sections' {
-        $collection = @{
-            id          = 'footer-test'
-            name        = 'Footer'
-            description = 'Footer test'
-            items       = @()
-        }
-        $mdPath = Join-Path $script:tempDir 'footer.collection.md'
-        'Footer body.' | Set-Content -Path $mdPath
-        $outPath = Join-Path $script:tempDir 'README.footer.md'
-
-        New-CollectionReadme -Collection $collection -CollectionMdPath $mdPath -TemplatePath $script:templatePath -RepoRoot $script:tempDir -OutputPath $outPath
-
-        $content = Get-Content -Path $outPath -Raw
-        $content | Should -Match '## Getting Started'
-        $content | Should -Match '## Pre-release Channel'
-        $content | Should -Match '## Requirements'
-        $content | Should -Match '## License'
-        $content | Should -Match '## Support'
-        $content | Should -Match 'Microsoft ISE HVE Essentials'
-    }
-
-    It 'Handles collection without description key' {
-        $collection = @{
-            id    = 'no-desc'
-            name  = 'No Description'
-            items = @()
-        }
-        $mdPath = Join-Path $script:tempDir 'no-desc.collection.md'
-        'No description body.' | Set-Content -Path $mdPath
-        $outPath = Join-Path $script:tempDir 'README.no-desc.md'
-
-        New-CollectionReadme -Collection $collection -CollectionMdPath $mdPath -TemplatePath $script:templatePath -RepoRoot $script:tempDir -OutputPath $outPath
-
-        $content = Get-Content -Path $outPath -Raw
-        $content | Should -Match '# HVE Core - No Description'
-        $content | Should -Match 'No description body'
-    }
-
-    Context 'Maturity filtering' {
-        It 'Excludes experimental items when AllowedMaturities contains only stable' {
-            $collection = @{
-                id    = 'maturity-test'
-                name  = 'Maturity Test'
-                description = 'Maturity filtering test'
-                items = @(
-                    @{ kind = 'agent'; path = '.github/agents/alpha.agent.md'; maturity = 'stable' },
-                    @{ kind = 'agent'; path = '.github/agents/zebra.agent.md'; maturity = 'experimental' }
-                )
-            }
-            $mdPath = Join-Path $script:tempDir 'maturity-filter.collection.md'
-            'Maturity body.' | Set-Content -Path $mdPath
-            $outPath = Join-Path $script:tempDir 'README.maturity-filter.md'
-
-            New-CollectionReadme -Collection $collection -CollectionMdPath $mdPath -TemplatePath $script:templatePath -RepoRoot $script:tempDir -OutputPath $outPath -AllowedMaturities @('stable')
-
-            $content = Get-Content -Path $outPath -Raw
-            $content | Should -Match 'alpha'
-            $content | Should -Not -Match 'zebra'
-        }
-
-        It 'Includes experimental items when AllowedMaturities allows them' {
-            $collection = @{
-                id    = 'maturity-test2'
-                name  = 'Maturity Test 2'
-                description = 'Maturity filtering test'
-                items = @(
-                    @{ kind = 'agent'; path = '.github/agents/alpha.agent.md'; maturity = 'stable' },
-                    @{ kind = 'agent'; path = '.github/agents/zebra.agent.md'; maturity = 'experimental' }
-                )
-            }
-            $mdPath = Join-Path $script:tempDir 'maturity-all.collection.md'
-            'All maturity body.' | Set-Content -Path $mdPath
-            $outPath = Join-Path $script:tempDir 'README.maturity-all.md'
-
-            New-CollectionReadme -Collection $collection -CollectionMdPath $mdPath -TemplatePath $script:templatePath -RepoRoot $script:tempDir -OutputPath $outPath -AllowedMaturities @('stable', 'preview', 'experimental')
-
-            $content = Get-Content -Path $outPath -Raw
-            $content | Should -Match 'alpha'
-            $content | Should -Match 'zebra'
-        }
-
-        It 'Excludes deprecated items regardless of channel' {
-            $collection = @{
-                id    = 'deprecated-test'
-                name  = 'Deprecated Test'
-                description = 'Deprecated filtering test'
-                items = @(
-                    @{ kind = 'agent'; path = '.github/agents/alpha.agent.md'; maturity = 'stable' },
-                    @{ kind = 'agent'; path = '.github/agents/zebra.agent.md'; maturity = 'deprecated' }
-                )
-            }
-            $mdPath = Join-Path $script:tempDir 'deprecated.collection.md'
-            'Deprecated body.' | Set-Content -Path $mdPath
-            $outPath = Join-Path $script:tempDir 'README.deprecated.md'
-
-            New-CollectionReadme -Collection $collection -CollectionMdPath $mdPath -TemplatePath $script:templatePath -RepoRoot $script:tempDir -OutputPath $outPath -AllowedMaturities @('stable', 'preview', 'experimental')
-
-            $content = Get-Content -Path $outPath -Raw
-            $content | Should -Match 'alpha'
-            $content | Should -Not -Match 'zebra'
-        }
-    }
-
-    Context 'Template marker handling' {
-        It 'Preserves intro text and replaces marker section in README' {
-            $collection = @{
-                id          = 'marker-intro'
-                name        = 'Marker Intro'
-                description = 'Marker intro test'
-                items       = @(
-                    @{ kind = 'agent'; path = '.github/agents/alpha.agent.md' }
-                )
-            }
-            $mdPath = Join-Path $script:tempDir 'marker-intro.collection.md'
-            @"
-Hand-authored intro paragraph.
-
-<!-- BEGIN AUTO-GENERATED ARTIFACTS -->
-
-Old stale artifact list.
-
-<!-- END AUTO-GENERATED ARTIFACTS -->
-"@ | Set-Content -Path $mdPath -Encoding utf8NoBOM
-            $outPath = Join-Path $script:tempDir 'README.marker-intro.md'
-
-            New-CollectionReadme -Collection $collection -CollectionMdPath $mdPath -TemplatePath $script:templatePath -RepoRoot $script:tempDir -OutputPath $outPath
-
-            $content = Get-Content -Path $outPath -Raw
-            $content | Should -Match 'Hand-authored intro paragraph'
-            $content | Should -Not -Match 'Old stale artifact list'
-        }
-
-        It 'Writes back updated artifact section into collection.md' {
-            $collection = @{
-                id          = 'marker-wb'
-                name        = 'Marker Writeback'
-                description = 'Marker writeback test'
-                items       = @(
-                    @{ kind = 'agent'; path = '.github/agents/alpha.agent.md' }
-                )
-            }
-            $mdPath = Join-Path $script:tempDir 'marker-wb.collection.md'
-            @"
-Writeback intro.
-
-<!-- BEGIN AUTO-GENERATED ARTIFACTS -->
-
-Old content to replace.
-
-<!-- END AUTO-GENERATED ARTIFACTS -->
-"@ | Set-Content -Path $mdPath -Encoding utf8NoBOM
-            $outPath = Join-Path $script:tempDir 'README.marker-wb.md'
-
-            New-CollectionReadme -Collection $collection -CollectionMdPath $mdPath -TemplatePath $script:templatePath -RepoRoot $script:tempDir -OutputPath $outPath
-
-            $mdContent = Get-Content -Path $mdPath -Raw
-            $mdContent | Should -Match '<!-- BEGIN AUTO-GENERATED ARTIFACTS -->'
-            $mdContent | Should -Match '<!-- END AUTO-GENERATED ARTIFACTS -->'
-            $mdContent | Should -Match 'alpha'
-            $mdContent | Should -Not -Match 'Old content to replace'
-        }
-
-        It 'Works without markers for backward compatibility' {
-            $collection = @{
-                id          = 'no-markers'
-                name        = 'No Markers'
-                description = 'No markers test'
-                items       = @(
-                    @{ kind = 'agent'; path = '.github/agents/alpha.agent.md' }
-                )
-            }
-            $mdPath = Join-Path $script:tempDir 'no-markers.collection.md'
-            'Legacy body content without markers.' | Set-Content -Path $mdPath -Encoding utf8NoBOM
-            $outPath = Join-Path $script:tempDir 'README.no-markers.md'
-
-            New-CollectionReadme -Collection $collection -CollectionMdPath $mdPath -TemplatePath $script:templatePath -RepoRoot $script:tempDir -OutputPath $outPath
-
-            $content = Get-Content -Path $outPath -Raw
-            $content | Should -Match 'Legacy body content without markers'
-        }
-
-        It 'Preserves footer content after end marker' {
-            $collection = @{
-                id          = 'marker-footer'
-                name        = 'Marker Footer'
-                description = 'Marker footer test'
-                items       = @(
-                    @{ kind = 'agent'; path = '.github/agents/alpha.agent.md' }
-                )
-            }
-            $mdPath = Join-Path $script:tempDir 'marker-footer.collection.md'
-            @"
-Footer intro.
-
-<!-- BEGIN AUTO-GENERATED ARTIFACTS -->
-
-Old artifacts.
-
-<!-- END AUTO-GENERATED ARTIFACTS -->
-
-## Prerequisites
-
-This requires setup first.
-"@ | Set-Content -Path $mdPath -Encoding utf8NoBOM
-            $outPath = Join-Path $script:tempDir 'README.marker-footer.md'
-
-            New-CollectionReadme -Collection $collection -CollectionMdPath $mdPath -TemplatePath $script:templatePath -RepoRoot $script:tempDir -OutputPath $outPath
-
-            $readmeContent = Get-Content -Path $outPath -Raw
-            $readmeContent | Should -Match 'Footer intro'
-            $readmeContent | Should -Match 'Prerequisites'
-
-            $mdContent = Get-Content -Path $mdPath -Raw
-            $mdContent | Should -Match '<!-- BEGIN AUTO-GENERATED ARTIFACTS -->'
-            $mdContent | Should -Match '<!-- END AUTO-GENERATED ARTIFACTS -->'
-            $mdContent | Should -Match '## Prerequisites'
-            $mdContent | Should -Match 'This requires setup first'
-        }
+    It 'Declares only the dry-run parameter' {
+        $parseErrors = $null
+        $ast = [System.Management.Automation.Language.Parser]::ParseFile($script:PrepareScriptPath, [ref]$null, [ref]$parseErrors)
+        $parseErrors | Should -BeNullOrEmpty
+        @($ast.ParamBlock.Parameters | ForEach-Object { $_.Name.VariablePath.UserPath }) | Should -Be @('DryRun')
     }
 }
 
-#endregion Package Generation Function Tests
-
-Describe 'Get-AllowedMaturities' {
-    It 'Returns only stable for Stable channel' {
-        $result = Get-AllowedMaturities -Channel 'Stable'
-        $result | Should -Be @('stable')
-    }
-
-    It 'Returns all maturities for PreRelease channel' {
-        $result = Get-AllowedMaturities -Channel 'PreRelease'
-        $result | Should -Contain 'stable'
-        $result | Should -Contain 'preview'
-        $result | Should -Contain 'experimental'
-    }
-
-}
-
-Describe 'Test-CollectionMaturityEligible' {
-    It 'Returns eligible for stable collection on Stable channel' {
-        $manifest = @{ id = 'test'; maturity = 'stable' }
-        $result = Test-CollectionMaturityEligible -CollectionManifest $manifest -Channel 'Stable'
-        $result.IsEligible | Should -BeTrue
-        $result.Reason | Should -BeNullOrEmpty
-    }
-
-    It 'Returns eligible for stable collection on PreRelease channel' {
-        $manifest = @{ id = 'test'; maturity = 'stable' }
-        $result = Test-CollectionMaturityEligible -CollectionManifest $manifest -Channel 'PreRelease'
-        $result.IsEligible | Should -BeTrue
-    }
-
-    It 'Returns eligible for preview collection on Stable channel' {
-        $manifest = @{ id = 'test'; maturity = 'preview' }
-        $result = Test-CollectionMaturityEligible -CollectionManifest $manifest -Channel 'Stable'
-        $result.IsEligible | Should -BeTrue
-    }
-
-    It 'Returns eligible for preview collection on PreRelease channel' {
-        $manifest = @{ id = 'test'; maturity = 'preview' }
-        $result = Test-CollectionMaturityEligible -CollectionManifest $manifest -Channel 'PreRelease'
-        $result.IsEligible | Should -BeTrue
-    }
-
-    It 'Returns ineligible for experimental collection on Stable channel' {
-        $manifest = @{ id = 'exp-coll'; maturity = 'experimental' }
-        $result = Test-CollectionMaturityEligible -CollectionManifest $manifest -Channel 'Stable'
-        $result.IsEligible | Should -BeFalse
-        $result.Reason | Should -Match 'experimental.*excluded from Stable'
-    }
-
-    It 'Returns eligible for experimental collection on PreRelease channel' {
-        $manifest = @{ id = 'exp-coll'; maturity = 'experimental' }
-        $result = Test-CollectionMaturityEligible -CollectionManifest $manifest -Channel 'PreRelease'
-        $result.IsEligible | Should -BeTrue
-    }
-
-    It 'Returns ineligible for deprecated collection on Stable channel' {
-        $manifest = @{ id = 'old-coll'; maturity = 'deprecated' }
-        $result = Test-CollectionMaturityEligible -CollectionManifest $manifest -Channel 'Stable'
-        $result.IsEligible | Should -BeFalse
-        $result.Reason | Should -Match 'deprecated.*excluded from all channels'
-    }
-
-    It 'Returns ineligible for deprecated collection on PreRelease channel' {
-        $manifest = @{ id = 'old-coll'; maturity = 'deprecated' }
-        $result = Test-CollectionMaturityEligible -CollectionManifest $manifest -Channel 'PreRelease'
-        $result.IsEligible | Should -BeFalse
-        $result.Reason | Should -Match 'deprecated.*excluded from all channels'
-    }
-
-    It 'Returns ineligible for removed collection on Stable channel' {
-        $manifest = @{ id = 'gone-coll'; maturity = 'removed' }
-        $result = Test-CollectionMaturityEligible -CollectionManifest $manifest -Channel 'Stable'
-        $result.IsEligible | Should -BeFalse
-        $result.Reason | Should -Match 'removed.*excluded from all channels'
-    }
-
-    It 'Returns ineligible for removed collection on PreRelease channel' {
-        $manifest = @{ id = 'gone-coll'; maturity = 'removed' }
-        $result = Test-CollectionMaturityEligible -CollectionManifest $manifest -Channel 'PreRelease'
-        $result.IsEligible | Should -BeFalse
-        $result.Reason | Should -Match 'removed.*excluded from all channels'
-    }
-
-    It 'Defaults to stable when maturity key is absent' {
-        $manifest = @{ id = 'no-maturity' }
-        $result = Test-CollectionMaturityEligible -CollectionManifest $manifest -Channel 'Stable'
-        $result.IsEligible | Should -BeTrue
-    }
-
-    It 'Defaults to stable when maturity value is empty string' {
-        $manifest = @{ id = 'empty-maturity'; maturity = '' }
-        $result = Test-CollectionMaturityEligible -CollectionManifest $manifest -Channel 'Stable'
-        $result.IsEligible | Should -BeTrue
-    }
-
-    It 'Returns ineligible for unknown maturity value' {
-        $manifest = @{ id = 'bad-coll'; maturity = 'alpha' }
-        $result = Test-CollectionMaturityEligible -CollectionManifest $manifest -Channel 'PreRelease'
-        $result.IsEligible | Should -BeFalse
-        $result.Reason | Should -Match 'invalid maturity value'
-    }
-
-    It 'Returns hashtable with expected keys' {
-        $manifest = @{ id = 'test'; maturity = 'stable' }
-        $result = Test-CollectionMaturityEligible -CollectionManifest $manifest -Channel 'Stable'
-        $result.Keys | Should -Contain 'IsEligible'
-        $result.Keys | Should -Contain 'Reason'
-    }
-}
-
-Describe 'Test-PathsExist' {
+Describe 'Prepare-Extension component projection' -Tag 'Unit' {
     BeforeAll {
-        $script:tempDir = Join-Path ([System.IO.Path]::GetTempPath()) ([System.Guid]::NewGuid().ToString())
-        New-Item -ItemType Directory -Path $script:tempDir -Force | Out-Null
-        $script:extDir = Join-Path $script:tempDir 'extension'
-        $script:ghDir = Join-Path $script:tempDir '.github'
-        New-Item -ItemType Directory -Path $script:extDir -Force | Out-Null
-        New-Item -ItemType Directory -Path $script:ghDir -Force | Out-Null
-        $script:pkgJson = Join-Path $script:extDir 'package.json'
-        '{}' | Set-Content -Path $script:pkgJson
+        $script:Components = @(Get-PluginComponent -Manifest ([pscustomobject](Get-PluginManifestFixture)))
     }
 
-    AfterAll {
-        Remove-Item -Path $script:tempDir -Recurse -Force -ErrorAction SilentlyContinue
+    It 'Maps <Field> entries to kind <Kind> under .github' -ForEach @(
+        @{ Field = 'agents'; Kind = 'agent'; Expected = @('.github/agents/labs/gamma.agent.md', '.github/agents/core/alpha.agent.md') }
+        @{ Field = 'commands'; Kind = 'prompt'; Expected = @('.github/prompts/core/build.prompt.md') }
+        @{ Field = 'rules'; Kind = 'instruction'; Expected = @('.github/instructions/core/style.instructions.md') }
+        @{ Field = 'skills'; Kind = 'skill'; Expected = @('.github/skills/labs/probe', '.github/skills/core/toolkit') }
+    ) {
+        @($script:Components | Where-Object { $_.Kind -eq $Kind } | ForEach-Object { $_.SourcePath }) | Should -Be $Expected
     }
 
-    It 'Returns valid when all paths exist' {
-        $result = Test-PathsExist -ExtensionDir $script:extDir -PackageJsonPath $script:pkgJson -GitHubDir $script:ghDir
-        $result.IsValid | Should -BeTrue
-        $result.MissingPaths | Should -BeNullOrEmpty
+    It 'Projects every declared component exactly once' {
+        @($script:Components).Count | Should -Be 6
+        @($script:Components.SourcePath | Sort-Object -Unique).Count | Should -Be 6
     }
 
-    It 'Returns invalid when extension dir missing' {
-        $nonexistentPath = [System.IO.Path]::Combine([System.IO.Path]::GetTempPath(), 'nonexistent-ext-dir-12345')
-        $result = Test-PathsExist -ExtensionDir $nonexistentPath -PackageJsonPath $script:pkgJson -GitHubDir $script:ghDir
-        $result.IsValid | Should -BeFalse
-        $result.MissingPaths | Should -Contain $nonexistentPath
+    It 'Projects no hook component' {
+        @($script:Components | Where-Object { $_.SourcePath -like '*hooks*' }) | Should -HaveCount 0
     }
 
-    It 'Collects multiple missing paths' {
-        $missing1 = [System.IO.Path]::Combine([System.IO.Path]::GetTempPath(), 'missing-path-1')
-        $missing2 = [System.IO.Path]::Combine([System.IO.Path]::GetTempPath(), 'missing-path-2')
-        $missing3 = [System.IO.Path]::Combine([System.IO.Path]::GetTempPath(), 'missing-path-3')
-        $result = Test-PathsExist -ExtensionDir $missing1 -PackageJsonPath $missing2 -GitHubDir $missing3
-        $result.IsValid | Should -BeFalse
-        $result.MissingPaths.Count | Should -Be 3
+    It 'Skips empty manifest fields' {
+        $manifest = [pscustomobject]@{ agents = @('.github/agents/core/alpha.agent.md'); commands = @(); rules = $null; skills = @('') }
+        @(Get-PluginComponent -Manifest $manifest).SourcePath | Should -Be @('.github/agents/core/alpha.agent.md')
+    }
+
+    It 'Rejects malformed <Field> path <Path>' -ForEach @(
+        @{ Field = 'agents'; Path = '../package.json' }
+        @{ Field = 'agents'; Path = 'agents/core/../../../package.json.agent.md' }
+        @{ Field = 'commands'; Path = '/etc/passwd' }
+        @{ Field = 'commands'; Path = 'prompts/core/*.prompt.md' }
+        @{ Field = 'rules'; Path = 'instructions/core/style.md' }
+        @{ Field = 'skills'; Path = 'skills/core/toolkit/SKILL.md' }
+    ) {
+        $manifest = [pscustomobject]@{ agents = @(); commands = @(); rules = @(); skills = @() }
+        $manifest.$Field = @($Path)
+
+        { Get-PluginComponent -Manifest $manifest } |
+            Should -Throw "Plugin manifest $Field entry '$Path' is not a contained artifact path."
     }
 }
 
-Describe 'Get-DiscoveredAgents' {
+Describe 'Prepare-Extension contributions' -Tag 'Unit' {
     BeforeAll {
-        $script:tempDir = Join-Path ([System.IO.Path]::GetTempPath()) ([System.Guid]::NewGuid().ToString())
-        $script:agentsDir = Join-Path $script:tempDir 'agents'
-        $script:agentsSubDir = Join-Path $script:agentsDir 'test-collection'
-        New-Item -ItemType Directory -Path $script:agentsSubDir -Force | Out-Null
-
-        # Create test agent files in subdirectory (distributable)
-        @'
----
-description: "Stable agent"
----
-'@ | Set-Content -Path (Join-Path $script:agentsSubDir 'stable.agent.md')
-
-        @'
----
-description: "Preview agent"
----
-'@ | Set-Content -Path (Join-Path $script:agentsSubDir 'preview.agent.md')
-
-        # Create root-level agent (repo-specific, should be skipped)
-        @'
----
-description: "Root-level agent"
----
-'@ | Set-Content -Path (Join-Path $script:agentsDir 'root-agent.agent.md')
-
+        $script:Contributions = Get-ExtensionContributions -Items @(Get-PluginComponent -Manifest ([pscustomobject](Get-PluginManifestFixture)))
     }
 
-    AfterAll {
-        Remove-Item -Path $script:tempDir -Recurse -Force -ErrorAction SilentlyContinue
+    It 'Emits the exact agent contribution inventory sorted by name' {
+        @($script:Contributions.Agents.name) | Should -Be @('alpha', 'gamma')
+        @($script:Contributions.Agents.path) | Should -Be @('./.github/agents/core/alpha.agent.md', './.github/agents/labs/gamma.agent.md')
     }
 
-    It 'Discovers agents matching allowed maturities' {
-        $result = Get-DiscoveredAgents -AgentsDir $script:agentsDir -AllowedMaturities @('stable', 'preview') -ExcludedAgents @()
-        $result.DirectoryExists | Should -BeTrue
-        $result.Agents.Count | Should -Be 2
+    It 'Emits the exact prompt contribution inventory' {
+        @($script:Contributions.Prompts.name) | Should -Be @('build')
+        @($script:Contributions.Prompts.path) | Should -Be @('./.github/prompts/core/build.prompt.md')
     }
 
-    It 'Filters agents by maturity' {
-        $result = Get-DiscoveredAgents -AgentsDir $script:agentsDir -AllowedMaturities @('preview') -ExcludedAgents @()
-        $result.Agents.Count | Should -Be 0
-        $result.Skipped.Count | Should -Be 3
+    It 'Suffixes instruction contribution names and keeps canonical paths' {
+        @($script:Contributions.Instructions.name) | Should -Be @('style-instructions')
+        @($script:Contributions.Instructions.path) | Should -Be @('./.github/instructions/core/style.instructions.md')
     }
 
-    It 'Excludes specified agents' {
-        $result = Get-DiscoveredAgents -AgentsDir $script:agentsDir -AllowedMaturities @('stable', 'preview') -ExcludedAgents @('stable')
-        $result.Agents.Count | Should -Be 1
+    It 'Points skill contributions at the SKILL.md entry file' {
+        @($script:Contributions.Skills.name) | Should -Be @('probe', 'toolkit')
+        @($script:Contributions.Skills.path) | Should -Be @('./.github/skills/labs/probe/SKILL.md', './.github/skills/core/toolkit/SKILL.md')
     }
 
-    It 'Returns empty when directory does not exist' {
-        $nonexistentPath = [System.IO.Path]::Combine([System.IO.Path]::GetTempPath(), 'nonexistent-agents-dir-12345')
-        $result = Get-DiscoveredAgents -AgentsDir $nonexistentPath -AllowedMaturities @('stable') -ExcludedAgents @()
-        $result.DirectoryExists | Should -BeFalse
-        $result.Agents | Should -BeNullOrEmpty
-    }
-
-    It 'Skips root-level repo-specific agents with correct skip reason' {
-        $result = Get-DiscoveredAgents -AgentsDir $script:agentsDir -AllowedMaturities @('stable', 'preview') -ExcludedAgents @()
-        $agentNames = $result.Agents | ForEach-Object { $_.name }
-        $agentNames | Should -Not -Contain 'root-agent'
-        $skipped = $result.Skipped | Where-Object { $_.Name -eq 'root-agent' }
-        $skipped | Should -Not -BeNullOrEmpty
-        $skipped.Reason | Should -Match 'repo-specific'
+    It 'Exposes exactly the four VS Code contribution buckets' {
+        @($script:Contributions.Keys | Sort-Object) | Should -Be @('Agents', 'Instructions', 'Prompts', 'Skills')
     }
 }
 
-Describe 'Get-DiscoveredPrompts' {
+Describe 'Prepare-Extension manifest contributes' -Tag 'Unit' {
     BeforeAll {
-        $script:tempDir = Join-Path ([System.IO.Path]::GetTempPath()) ([System.Guid]::NewGuid().ToString())
-        $script:promptsDir = Join-Path $script:tempDir 'prompts'
-        $script:promptsSubDir = Join-Path $script:promptsDir 'test-collection'
-        $script:ghDir = Join-Path $script:tempDir '.github'
-        New-Item -ItemType Directory -Path $script:promptsSubDir -Force | Out-Null
-        New-Item -ItemType Directory -Path $script:ghDir -Force | Out-Null
-
-        @'
----
-description: "Test prompt"
----
-'@ | Set-Content -Path (Join-Path $script:promptsSubDir 'test.prompt.md')
-    }
-
-    AfterAll {
-        Remove-Item -Path $script:tempDir -Recurse -Force -ErrorAction SilentlyContinue
-    }
-
-    It 'Discovers prompts in directory' {
-        $result = Get-DiscoveredPrompts -PromptsDir $script:promptsDir -GitHubDir $script:ghDir -AllowedMaturities @('stable')
-        $result.DirectoryExists | Should -BeTrue
-        $result.Prompts.Count | Should -BeGreaterThan 0
-    }
-
-    It 'Returns empty when directory does not exist' {
-        $nonexistentPath = [System.IO.Path]::Combine([System.IO.Path]::GetTempPath(), 'nonexistent-prompts-dir-12345')
-        $result = Get-DiscoveredPrompts -PromptsDir $nonexistentPath -GitHubDir $script:ghDir -AllowedMaturities @('stable')
-        $result.DirectoryExists | Should -BeFalse
-    }
-}
-
-Describe 'Get-DiscoveredInstructions' {
-    BeforeAll {
-        $script:tempDir = Join-Path ([System.IO.Path]::GetTempPath()) ([System.Guid]::NewGuid().ToString())
-        $script:instrDir = Join-Path $script:tempDir 'instructions'
-        $script:instrSubDir = Join-Path $script:instrDir 'test-collection'
-        $script:ghDir = Join-Path $script:tempDir '.github'
-        New-Item -ItemType Directory -Path $script:instrSubDir -Force | Out-Null
-        New-Item -ItemType Directory -Path $script:ghDir -Force | Out-Null
-
-        @'
----
-description: "Test instruction"
-applyTo: "**/*.ps1"
----
-'@ | Set-Content -Path (Join-Path $script:instrSubDir 'test.instructions.md')
-    }
-
-    AfterAll {
-        Remove-Item -Path $script:tempDir -Recurse -Force -ErrorAction SilentlyContinue
-    }
-
-    It 'Discovers instructions in directory' {
-        $result = Get-DiscoveredInstructions -InstructionsDir $script:instrDir -GitHubDir $script:ghDir -AllowedMaturities @('stable')
-        $result.DirectoryExists | Should -BeTrue
-        $result.Instructions.Count | Should -BeGreaterThan 0
-    }
-
-    It 'Returns empty when directory does not exist' {
-        $nonexistentPath = [System.IO.Path]::Combine([System.IO.Path]::GetTempPath(), 'nonexistent-instr-dir-12345')
-        $result = Get-DiscoveredInstructions -InstructionsDir $nonexistentPath -GitHubDir $script:ghDir -AllowedMaturities @('stable')
-        $result.DirectoryExists | Should -BeFalse
-    }
-
-    It 'Skips root-level repo-specific instructions' {
-        @'
----
-description: "Repo-specific workflow instruction"
-applyTo: "**/.github/workflows/*.yml"
----
-'@ | Set-Content -Path (Join-Path $script:instrDir 'workflows.instructions.md')
-
-        $result = Get-DiscoveredInstructions -InstructionsDir $script:instrDir -GitHubDir $script:ghDir -AllowedMaturities @('stable')
-        $instrNames = $result.Instructions | ForEach-Object { $_.name }
-        $instrNames | Should -Not -Contain 'workflows-instructions'
-        $result.Skipped | Where-Object { $_.Reason -match 'repo-specific' } | Should -Not -BeNullOrEmpty
-    }
-
-    It 'Still discovers instructions in subdirectories' {
-        $otherDir = Join-Path $script:instrDir 'csharp'
-        New-Item -ItemType Directory -Path $otherDir -Force | Out-Null
-        @'
----
-description: "Repo-specific"
-applyTo: "**/.github/workflows/*.yml"
----
-'@ | Set-Content -Path (Join-Path $script:instrDir 'workflows.instructions.md')
-        @'
----
-description: "C# instruction"
-applyTo: "**/*.cs"
----
-'@ | Set-Content -Path (Join-Path $otherDir 'csharp.instructions.md')
-
-        $result = Get-DiscoveredInstructions -InstructionsDir $script:instrDir -GitHubDir $script:ghDir -AllowedMaturities @('stable')
-        $instrNames = $result.Instructions | ForEach-Object { $_.name }
-        $instrNames | Should -Contain 'csharp-instructions'
-        $instrNames | Should -Not -Contain 'workflows-instructions'
-    }
-}
-
-Describe 'Get-DiscoveredSkills' {
-    BeforeAll {
-        $script:tempDir = Join-Path ([System.IO.Path]::GetTempPath()) ([System.Guid]::NewGuid().ToString())
-        $script:skillsDir = Join-Path $script:tempDir 'skills'
-        New-Item -ItemType Directory -Path $script:skillsDir -Force | Out-Null
-
-        # Create test skill under a collection-id directory
-        $skillDir = Join-Path $script:skillsDir 'test-collection/test-skill'
-        New-Item -ItemType Directory -Path $skillDir -Force | Out-Null
-        @'
----
-name: test-skill
-description: "Test skill"
----
-# Skill
-'@ | Set-Content -Path (Join-Path $skillDir 'SKILL.md')
-
-        # Create nested skill under same collection-id directory
-        $nestedSkillDir = Join-Path $script:skillsDir 'test-collection/nested-skill'
-        New-Item -ItemType Directory -Path $nestedSkillDir -Force | Out-Null
-        @'
----
-name: nested-skill
-description: "Nested skill in collection"
----
-# Nested Skill
-'@ | Set-Content -Path (Join-Path $nestedSkillDir 'SKILL.md')
-
-        # Create root-level skill (repo-specific, should be skipped)
-        $rootSkillDir = Join-Path $script:skillsDir 'root-skill'
-        New-Item -ItemType Directory -Path $rootSkillDir -Force | Out-Null
-        @'
----
-name: root-skill
-description: "Root-level skill"
----
-# Root Skill
-'@ | Set-Content -Path (Join-Path $rootSkillDir 'SKILL.md')
-
-    }
-
-    AfterAll {
-        Remove-Item -Path $script:tempDir -Recurse -Force -ErrorAction SilentlyContinue
-    }
-
-    It 'Discovers skills in directory' {
-        $result = Get-DiscoveredSkills -SkillsDir $script:skillsDir -AllowedMaturities @('stable')
-        $result.DirectoryExists | Should -BeTrue
-        $result.Skills.Count | Should -Be 2
-        $skillNames = $result.Skills | ForEach-Object { $_.name }
-        $skillNames | Should -Contain 'test-skill'
-        $skillNames | Should -Contain 'nested-skill'
-    }
-
-    It 'Returns empty when directory does not exist' {
-        $nonexistent = Join-Path $script:tempDir 'nonexistent-skills'
-        $result = Get-DiscoveredSkills -SkillsDir $nonexistent -AllowedMaturities @('stable')
-        $result.DirectoryExists | Should -BeFalse
-        $result.Skills | Should -BeNullOrEmpty
-    }
-
-    It 'Filters skills when stable is not an allowed maturity' {
-        $result = Get-DiscoveredSkills -SkillsDir $script:skillsDir -AllowedMaturities @('preview')
-        $result.Skills.Count | Should -Be 0
-        $result.Skipped.Count | Should -BeGreaterThan 0
-    }
-
-    It 'Discovers nested skills with correct path' {
-        $result = Get-DiscoveredSkills -SkillsDir $script:skillsDir -AllowedMaturities @('stable')
-        $nestedSkill = $result.Skills | Where-Object { $_.name -eq 'nested-skill' }
-        $nestedSkill | Should -Not -BeNullOrEmpty
-        $nestedSkill.path | Should -Be './.github/skills/test-collection/nested-skill/SKILL.md'
-    }
-
-    It 'Skips root-level repo-specific skills with correct skip reason' {
-        $result = Get-DiscoveredSkills -SkillsDir $script:skillsDir -AllowedMaturities @('stable')
-        $skillNames = $result.Skills | ForEach-Object { $_.name }
-        $skillNames | Should -Not -Contain 'root-skill'
-        $skipped = $result.Skipped | Where-Object { $_.Name -eq 'root-skill' }
-        $skipped | Should -Not -BeNullOrEmpty
-        $skipped.Reason | Should -Match 'repo-specific'
-    }
-}
-
-Describe 'Get-CollectionManifest' {
-    BeforeAll {
-        $script:tempDir = Join-Path ([System.IO.Path]::GetTempPath()) ([System.Guid]::NewGuid().ToString())
-        New-Item -ItemType Directory -Path $script:tempDir -Force | Out-Null
-    }
-
-    AfterAll {
-        Remove-Item -Path $script:tempDir -Recurse -Force -ErrorAction SilentlyContinue
-    }
-
-    It 'Loads collection manifest from valid YAML path' {
-        $manifestFile = Join-Path $script:tempDir 'test.collection.yml'
-        @"
-id: test
-name: test-ext
-displayName: Test Extension
-description: Test
-items:
-  - hve-core-all
-"@ | Set-Content -Path $manifestFile
-
-        $result = Get-CollectionManifest -CollectionPath $manifestFile
-        $result | Should -Not -BeNullOrEmpty
-        $result.id | Should -Be 'test'
-    }
-
-    It 'Loads collection manifest from valid JSON path' {
-        $manifestFile = Join-Path $script:tempDir 'test.collection.json'
-        @{
-            '\$schema' = '../schemas/collection-manifest.schema.json'
-            id = 'test'
-            name = 'test-ext'
-            displayName = 'Test Extension'
-            description = 'Test'
-            items = @('hve-core-all')
-        } | ConvertTo-Json -Depth 5 | Set-Content -Path $manifestFile
-
-        $result = Get-CollectionManifest -CollectionPath $manifestFile
-        $result | Should -Not -BeNullOrEmpty
-        $result.id | Should -Be 'test'
-    }
-
-    It 'Throws when path does not exist' {
-        $nonexistent = Join-Path $script:tempDir 'nonexistent.json'
-        { Get-CollectionManifest -CollectionPath $nonexistent } | Should -Throw '*not found*'
-    }
-
-    It 'Returns hashtable with expected keys' {
-        $manifestFile = Join-Path $script:tempDir 'keys.collection.yml'
-        @"
-id: keys
-name: keys-ext
-displayName: Keys
-description: Keys test
-items:
-  - developer
-"@ | Set-Content -Path $manifestFile
-
-        $result = Get-CollectionManifest -CollectionPath $manifestFile
-        $result.Keys | Should -Contain 'id'
-        $result.Keys | Should -Contain 'name'
-        $result.Keys | Should -Contain 'items'
-    }
-}
-
-Describe 'Test-GlobMatch' {
-    It 'Returns true for matching wildcard pattern' {
-        $result = Test-GlobMatch -Name 'rpi-agent' -Patterns @('rpi-*')
-        $result | Should -BeTrue
-    }
-
-    It 'Returns false for non-matching pattern' {
-        $result = Test-GlobMatch -Name 'memory' -Patterns @('rpi-*')
-        $result | Should -BeFalse
-    }
-
-    It 'Matches against multiple patterns' {
-        $result = Test-GlobMatch -Name 'memory' -Patterns @('rpi-*', 'mem*')
-        $result | Should -BeTrue
-    }
-
-    It 'Handles exact name match' {
-        $result = Test-GlobMatch -Name 'memory' -Patterns @('memory')
-        $result | Should -BeTrue
-    }
-}
-
-Describe 'Get-CollectionArtifacts' {
-    It 'Returns artifacts from collection items across supported kinds' {
-        $collection = @{
-            items = @(
-                @{ kind = 'agent'; path = '.github/agents/dev-agent.agent.md' },
-                @{ kind = 'prompt'; path = '.github/prompts/dev-prompt.prompt.md' },
-                @{ kind = 'instruction'; path = '.github/instructions/dev/dev.instructions.md' },
-                @{ kind = 'skill'; path = '.github/skills/video-to-gif/' }
-            )
-        }
-
-        $result = Get-CollectionArtifacts -Collection $collection -AllowedMaturities @('stable', 'preview')
-        $result.Agents | Should -Contain 'dev-agent'
-        $result.Prompts | Should -Contain 'dev-prompt'
-        $result.Instructions | Should -Contain 'dev/dev'
-        $result.Skills | Should -Contain 'video-to-gif'
-    }
-
-    It 'Uses item maturity when provided' {
-        $collection = @{
-            items = @(
-                @{ kind = 'agent'; path = '.github/agents/dev-agent.agent.md'; maturity = 'stable' },
-                @{ kind = 'agent'; path = '.github/agents/preview-dev.agent.md'; maturity = 'preview' }
-            )
-        }
-
-        $result = Get-CollectionArtifacts -Collection $collection -AllowedMaturities @('stable')
-        $result.Agents | Should -Contain 'dev-agent'
-        $result.Agents | Should -Not -Contain 'preview-dev'
-    }
-
-    It 'Defaults to stable maturity when item maturity is omitted' {
-        $collection = @{
-            items = @(
-                @{ kind = 'agent'; path = '.github/agents/dev-agent.agent.md' },
-                @{ kind = 'agent'; path = '.github/agents/preview-dev.agent.md' }
-            )
-        }
-
-        $result = Get-CollectionArtifacts -Collection $collection -AllowedMaturities @('stable')
-        $result.Agents | Should -Contain 'dev-agent'
-        $result.Agents | Should -Contain 'preview-dev'
-    }
-
-    It 'Returns empty when collection has no items' {
-        $collection = @{ id = 'empty' }
-        $result = Get-CollectionArtifacts -Collection $collection -AllowedMaturities @('stable')
-        $result.Agents.Count | Should -Be 0
-        $result.Prompts.Count | Should -Be 0
-        $result.Instructions.Count | Should -Be 0
-        $result.Skills.Count | Should -Be 0
-    }
-}
-
-Describe 'Resolve-HandoffDependencies' {
-    BeforeAll {
-        $script:tempDir = Join-Path ([System.IO.Path]::GetTempPath()) ([System.Guid]::NewGuid().ToString())
-        $script:agentsDir = Join-Path $script:tempDir 'agents'
-        New-Item -ItemType Directory -Path $script:agentsDir -Force | Out-Null
-
-        # Agent with no handoffs
-        @'
----
-description: "Solo agent"
----
-'@ | Set-Content -Path (Join-Path $script:agentsDir 'solo.agent.md')
-
-        # Agent with single handoff (object format matching real agents)
-        @'
----
-description: "Parent agent"
-handoffs:
-  - label: "Go to child"
-    agent: child
-    prompt: Continue
----
-'@ | Set-Content -Path (Join-Path $script:agentsDir 'parent.agent.md')
-
-        @'
----
-description: "Child agent"
----
-'@ | Set-Content -Path (Join-Path $script:agentsDir 'child.agent.md')
-
-        # Self-referential agent (object format)
-        @'
----
-description: "Self agent"
-handoffs:
-  - label: "Self"
-    agent: self-ref
----
-'@ | Set-Content -Path (Join-Path $script:agentsDir 'self-ref.agent.md')
-
-        # Circular chain (object format)
-        @'
----
-description: "Chain A"
-handoffs:
-  - label: "To B"
-    agent: chain-b
----
-'@ | Set-Content -Path (Join-Path $script:agentsDir 'chain-a.agent.md')
-
-        @'
----
-description: "Chain B"
-handoffs:
-  - label: "To A"
-    agent: chain-a
----
-'@ | Set-Content -Path (Join-Path $script:agentsDir 'chain-b.agent.md')
-
-    }
-
-    AfterAll {
-        Remove-Item -Path $script:tempDir -Recurse -Force -ErrorAction SilentlyContinue
-    }
-
-    It 'Returns seed agents when no handoffs' {
-        $result = Resolve-HandoffDependencies -SeedAgents @('solo') -AgentsDir $script:agentsDir
-        $result | Should -Contain 'solo'
-        $result.Count | Should -Be 1
-    }
-
-    It 'Resolves single-level handoff' {
-        $result = Resolve-HandoffDependencies -SeedAgents @('parent') -AgentsDir $script:agentsDir
-        $result | Should -Contain 'parent'
-        $result | Should -Contain 'child'
-    }
-
-    It 'Handles self-referential handoffs' {
-        $result = Resolve-HandoffDependencies -SeedAgents @('self-ref') -AgentsDir $script:agentsDir
-        $result | Should -Contain 'self-ref'
-        $result.Count | Should -Be 1
-    }
-
-    It 'Handles circular handoff chains' {
-        $result = Resolve-HandoffDependencies -SeedAgents @('chain-a') -AgentsDir $script:agentsDir
-        $result | Should -Contain 'chain-a'
-        $result | Should -Contain 'chain-b'
-        $result.Count | Should -Be 2
-    }
-}
-
-Describe 'Resolve-RequiresDependencies' {
-    It 'Resolves agent requires to include dependent prompts' {
-        $result = Resolve-RequiresDependencies `
-            -ArtifactNames @{ agents = @('main') } `
-            -AllowedMaturities @('stable') `
-            -CollectionRequires @{ agents = @{ 'main' = @{ prompts = @('dep-prompt') } } } `
-            -CollectionMaturities @{ prompts = @{ 'dep-prompt' = 'stable' } }
-        $result.Prompts | Should -Contain 'dep-prompt'
-    }
-
-    It 'Resolves transitive agent dependencies' {
-        $result = Resolve-RequiresDependencies `
-            -ArtifactNames @{ agents = @('top') } `
-            -AllowedMaturities @('stable') `
-            -CollectionRequires @{ agents = @{ 'top' = @{ agents = @('mid') }; 'mid' = @{ prompts = @('leaf-prompt') } } } `
-            -CollectionMaturities @{ agents = @{ 'mid' = 'stable' }; prompts = @{ 'leaf-prompt' = 'stable' } }
-        $result.Agents | Should -Contain 'mid'
-        $result.Prompts | Should -Contain 'leaf-prompt'
-    }
-
-    It 'Respects maturity filter on dependencies' {
-        $result = Resolve-RequiresDependencies `
-            -ArtifactNames @{ agents = @('main') } `
-            -AllowedMaturities @('stable') `
-            -CollectionRequires @{ agents = @{ 'main' = @{ prompts = @('exp-prompt') } } } `
-            -CollectionMaturities @{ prompts = @{ 'exp-prompt' = 'experimental' } }
-        $result.Prompts | Should -Not -Contain 'exp-prompt'
-    }
-}
-
-Describe 'Update-PackageJsonContributes' {
-    It 'Updates contributes section with chat participants' {
-        $packageJson = [PSCustomObject]@{
-            name = 'test-extension'
-            contributes = [PSCustomObject]@{}
-        }
-        $agents = @(
-            @{ name = 'agent1'; description = 'Desc 1' }
-        )
-        $prompts = @(
-            @{ name = 'prompt1'; description = 'Prompt desc' }
-        )
-        $instructions = @(
-            @{ name = 'instr1'; description = 'Instr desc' }
-        )
-
-        $result = Update-PackageJsonContributes -PackageJson $packageJson -ChatAgents $agents -ChatPromptFiles $prompts -ChatInstructions $instructions -ChatSkills @()
-        $result.contributes | Should -Not -BeNullOrEmpty
-    }
-
-    It 'Handles empty arrays' {
-        $packageJson = [PSCustomObject]@{
-            name = 'test-extension'
-            contributes = [PSCustomObject]@{}
-        }
-
-        $result = Update-PackageJsonContributes -PackageJson $packageJson -ChatAgents @() -ChatPromptFiles @() -ChatInstructions @() -ChatSkills @()
-        $result | Should -Not -BeNullOrEmpty
-    }
-}
-
-Describe 'New-PrepareResult' {
-    It 'Creates success result with counts' {
-        $result = New-PrepareResult -Success $true -AgentCount 5 -PromptCount 10 -InstructionCount 15 -SkillCount 3 -Version '1.0.0'
-        $result.Success | Should -BeTrue
-        $result.AgentCount | Should -Be 5
-        $result.PromptCount | Should -Be 10
-        $result.InstructionCount | Should -Be 15
-        $result.SkillCount | Should -Be 3
-        $result.Version | Should -Be '1.0.0'
-        $result.ErrorMessage | Should -BeNullOrEmpty
-    }
-
-    It 'Creates failure result with error message' {
-        $result = New-PrepareResult -Success $false -ErrorMessage 'Something went wrong'
-        $result.Success | Should -BeFalse
-        $result.ErrorMessage | Should -Be 'Something went wrong'
-        $result.AgentCount | Should -Be 0
-        $result.PromptCount | Should -Be 0
-        $result.InstructionCount | Should -Be 0
-    }
-
-    It 'Returns hashtable with all expected keys' {
-        $result = New-PrepareResult -Success $true
-        $result.Keys | Should -Contain 'Success'
-        $result.Keys | Should -Contain 'AgentCount'
-        $result.Keys | Should -Contain 'PromptCount'
-        $result.Keys | Should -Contain 'InstructionCount'
-        $result.Keys | Should -Contain 'SkillCount'
-        $result.Keys | Should -Contain 'Version'
-        $result.Keys | Should -Contain 'ErrorMessage'
-    }
-}
-
-Describe 'Invoke-PrepareExtension' {
-    BeforeAll {
-        $script:tempDir = Join-Path $TestDrive ([System.Guid]::NewGuid().ToString())
-        New-Item -ItemType Directory -Path $script:tempDir -Force | Out-Null
-
-        # Create extension directory with package.json
-        $script:extDir = Join-Path $script:tempDir 'extension'
-        New-Item -ItemType Directory -Path $script:extDir -Force | Out-Null
-        @'
-{
-    "name": "test-extension",
-    "version": "1.2.3",
-    "contributes": {}
-}
-'@ | Set-Content -Path (Join-Path $script:extDir 'package.json')
-
-        # Create package template for generation
-        $script:templatesDir = Join-Path $script:extDir 'templates'
-        New-Item -ItemType Directory -Path $script:templatesDir -Force | Out-Null
-        @'
-{
-    "name": "hve-core",
-    "displayName": "HVE Core",
-    "version": "1.2.3",
-    "description": "Test extension",
-    "publisher": "test-pub",
-    "engines": { "vscode": "^1.80.0" },
-    "contributes": {}
-}
-'@ | Set-Content -Path (Join-Path $script:templatesDir 'package.template.json')
-
-        # Create collections directory with a minimal hve-core collection (flagship)
-        $script:collectionsDir = Join-Path $script:tempDir 'collections'
-        New-Item -ItemType Directory -Path $script:collectionsDir -Force | Out-Null
-        @"
-id: hve-core
-name: HVE Core
-displayName: HVE Core
-description: Test extension
-"@ | Set-Content -Path (Join-Path $script:collectionsDir 'hve-core.collection.yml')
-
-        # Create .github structure with subdirectories (root-level files are repo-specific)
-        $script:ghDir = Join-Path $script:tempDir '.github'
-        $script:agentsDir = Join-Path $script:ghDir 'agents'
-        $script:agentsSubDir = Join-Path $script:agentsDir 'test-collection'
-        $script:promptsDir = Join-Path $script:ghDir 'prompts'
-        $script:promptsSubDir = Join-Path $script:promptsDir 'test-collection'
-        $script:instrDir = Join-Path $script:ghDir 'instructions'
-        $script:instrSubDir = Join-Path $script:instrDir 'test-collection'
-        New-Item -ItemType Directory -Path $script:agentsSubDir -Force | Out-Null
-        New-Item -ItemType Directory -Path $script:promptsSubDir -Force | Out-Null
-        New-Item -ItemType Directory -Path $script:instrSubDir -Force | Out-Null
-
-        # Create test agent in subdirectory
-        @'
----
-description: "Test agent"
----
-# Agent
-'@ | Set-Content -Path (Join-Path $script:agentsSubDir 'test.agent.md')
-
-        # Create test prompt in subdirectory
-        @'
----
-description: "Test prompt"
----
-# Prompt
-'@ | Set-Content -Path (Join-Path $script:promptsSubDir 'test.prompt.md')
-
-        # Create test instruction in subdirectory
-        @'
----
-description: "Test instruction"
-applyTo: "**/*.ps1"
----
-# Instruction
-'@ | Set-Content -Path (Join-Path $script:instrSubDir 'test.instructions.md')
-
-    }
-
-    AfterAll {
-        Remove-Item -Path $script:tempDir -Recurse -Force -ErrorAction SilentlyContinue
-    }
-
-    It 'Returns success result with correct counts' {
-        $result = Invoke-PrepareExtension `
-            -ExtensionDirectory $script:extDir `
-            -RepoRoot $script:tempDir `
-            -Channel 'Stable' `
-            -DryRun
-
-        $result.Success | Should -BeTrue
-        $result.AgentCount | Should -Be 1
-        $result.PromptCount | Should -Be 1
-        $result.InstructionCount | Should -Be 1
-        $result.Version | Should -Be '1.2.3'
-    }
-
-    It 'Fails when extension directory missing' {
-        $nonexistentPath = Join-Path $TestDrive 'nonexistent-ext-dir-12345'
-        $result = Invoke-PrepareExtension `
-            -ExtensionDirectory $nonexistentPath `
-            -RepoRoot $script:tempDir `
-            -Channel 'Stable'
-
-        $result.Success | Should -BeFalse
-        $result.ErrorMessage | Should -Not -BeNullOrEmpty
-    }
-
-    It 'Respects channel filtering' {
-        # Add preview agent in subdirectory
-        @'
----
-description: "Preview agent"
----
-'@ | Set-Content -Path (Join-Path $script:agentsSubDir 'preview.agent.md')
-
-        $collectionPath = Join-Path $script:tempDir 'channel-filter.collection.yml'
-        @"
-id: hve-core
-name: HVE Core
-displayName: HVE Core
-description: Channel filtering test
-items:
-  - kind: agent
-    path: .github/agents/test-collection/test.agent.md
-    maturity: stable
-  - kind: agent
-    path: .github/agents/test-collection/preview.agent.md
-    maturity: preview
-"@ | Set-Content -Path $collectionPath
-
-        $stableResult = Invoke-PrepareExtension `
-            -ExtensionDirectory $script:extDir `
-            -RepoRoot $script:tempDir `
-            -Channel 'Stable' `
-            -Collection $collectionPath `
-            -DryRun
-
-        $preReleaseResult = Invoke-PrepareExtension `
-            -ExtensionDirectory $script:extDir `
-            -RepoRoot $script:tempDir `
-            -Channel 'PreRelease' `
-            -Collection $collectionPath `
-            -DryRun
-
-        $preReleaseResult.AgentCount | Should -BeGreaterThan $stableResult.AgentCount
-    }
-
-    It 'Filters prompts and instructions by maturity' {
-        # Add experimental prompt in subdirectory
-        @'
----
-description: "Experimental prompt"
----
-'@ | Set-Content -Path (Join-Path $script:promptsSubDir 'experimental.prompt.md')
-
-        # Add preview instruction in subdirectory
-        @'
----
-description: "Preview instruction"
-applyTo: "**/*.js"
----
-'@ | Set-Content -Path (Join-Path $script:instrSubDir 'preview.instructions.md')
-
-        $collectionPath = Join-Path $script:tempDir 'prompt-instruction-filter.collection.yml'
-        @"
-id: hve-core
-name: HVE Core
-displayName: HVE Core
-description: Prompt/instruction filtering test
-items:
-  - kind: agent
-    path: .github/agents/test-collection/test.agent.md
-    maturity: stable
-  - kind: prompt
-    path: .github/prompts/test-collection/test.prompt.md
-    maturity: stable
-  - kind: prompt
-    path: .github/prompts/test-collection/experimental.prompt.md
-    maturity: experimental
-  - kind: instruction
-    path: .github/instructions/test-collection/test.instructions.md
-    maturity: stable
-  - kind: instruction
-    path: .github/instructions/test-collection/preview.instructions.md
-    maturity: preview
-"@ | Set-Content -Path $collectionPath
-
-        $stableResult = Invoke-PrepareExtension `
-            -ExtensionDirectory $script:extDir `
-            -RepoRoot $script:tempDir `
-            -Channel 'Stable' `
-            -Collection $collectionPath `
-            -DryRun
-
-        $preReleaseResult = Invoke-PrepareExtension `
-            -ExtensionDirectory $script:extDir `
-            -RepoRoot $script:tempDir `
-            -Channel 'PreRelease' `
-            -Collection $collectionPath `
-            -DryRun
-
-        $preReleaseResult.PromptCount | Should -BeGreaterThan $stableResult.PromptCount
-        $preReleaseResult.InstructionCount | Should -BeGreaterThan $stableResult.InstructionCount
-    }
-
-    It 'Updates package.json when not DryRun' {
-        $result = Invoke-PrepareExtension `
-            -ExtensionDirectory $script:extDir `
-            -RepoRoot $script:tempDir `
-            -Channel 'Stable' `
-            -DryRun:$false
-
-        $result.Success | Should -BeTrue
-
-        $pkgJson = Get-Content -Path (Join-Path $script:extDir 'package.json') -Raw | ConvertFrom-Json
-        $pkgJson.contributes.chatAgents | Should -Not -BeNullOrEmpty
-    }
-
-    It 'Copies changelog when path provided' {
-        $changelogPath = Join-Path $script:tempDir 'CHANGELOG.md'
-        '# Changelog' | Set-Content -Path $changelogPath
-
-        $result = Invoke-PrepareExtension `
-            -ExtensionDirectory $script:extDir `
-            -RepoRoot $script:tempDir `
-            -Channel 'Stable' `
-            -ChangelogPath $changelogPath `
-            -DryRun:$false
-
-        $result.Success | Should -BeTrue
-        Test-Path (Join-Path $script:extDir 'CHANGELOG.md') | Should -BeTrue
-    }
-
-    It 'Fails when package template is missing' {
-        $badRoot = Join-Path $TestDrive 'bad-template-root'
-        $badExtDir = Join-Path $badRoot 'extension'
-        New-Item -ItemType Directory -Path $badExtDir -Force | Out-Null
-        New-Item -ItemType Directory -Path (Join-Path $badRoot 'collections') -Force | Out-Null
-        New-Item -ItemType Directory -Path (Join-Path $badRoot '.github/agents') -Force | Out-Null
-        @"
-id: test
-"@ | Set-Content -Path (Join-Path $badRoot 'collections/test.collection.yml')
-
-        $result = Invoke-PrepareExtension `
-            -ExtensionDirectory $badExtDir `
-            -RepoRoot $badRoot `
-            -Channel 'Stable'
-
-        $result.Success | Should -BeFalse
-        $result.ErrorMessage | Should -Match 'Package generation failed'
-    }
-
-    It 'Fails when no collection YAML files exist' {
-        $emptyRoot = Join-Path $TestDrive 'empty-collections-root'
-        $emptyExtDir = Join-Path $emptyRoot 'extension'
-        New-Item -ItemType Directory -Path $emptyExtDir -Force | Out-Null
-        New-Item -ItemType Directory -Path (Join-Path $emptyRoot 'collections') -Force | Out-Null
-        New-Item -ItemType Directory -Path (Join-Path $emptyRoot 'extension/templates') -Force | Out-Null
-        New-Item -ItemType Directory -Path (Join-Path $emptyRoot '.github/agents') -Force | Out-Null
-        @{ name = 'test'; version = '1.0.0' } | ConvertTo-Json | Set-Content -Path (Join-Path $emptyRoot 'extension/templates/package.template.json')
-
-        $result = Invoke-PrepareExtension `
-            -ExtensionDirectory $emptyExtDir `
-            -RepoRoot $emptyRoot `
-            -Channel 'Stable'
-
-        $result.Success | Should -BeFalse
-        $result.ErrorMessage | Should -Match 'Package generation failed'
-    }
-
-    Context 'Collection template copy' {
-        BeforeAll {
-            # Developer collection manifest (in collections/ for generation)
-            $script:devCollectionYaml = Join-Path $script:collectionsDir 'developer.collection.yml'
-            @"
-id: developer
-name: hve-developer
-displayName: HVE Core - Developer Edition
-description: Developer edition
-"@ | Set-Content -Path $script:devCollectionYaml
-            $script:devCollectionPath = $script:devCollectionYaml
-
-            # hve-core collection manifest (flagship, skips template copy)
-            $script:coreCollectionPath = Join-Path $script:tempDir 'hve-core.collection.yml'
-            @"
-id: hve-core
-name: HVE Core
-displayName: HVE Core
-description: Flagship collection
-"@ | Set-Content -Path $script:coreCollectionPath
-
-            # Collection manifest referencing a missing template
-            $script:missingCollectionPath = Join-Path $script:tempDir 'nonexistent.collection.yml'
-            @"
-id: nonexistent
-name: nonexistent
-displayName: Nonexistent
-description: Missing template
-"@ | Set-Content -Path $script:missingCollectionPath
-
-        }
-
-        AfterEach {
-            # Clean up backup files left by collection template copy
-            $bakPath = Join-Path $script:extDir 'package.json.bak'
-            if (Test-Path $bakPath) {
-                Remove-Item -Path $bakPath -Force
-            }
-        }
-
-        It 'Skips template copy when no collection specified' {
-            $result = Invoke-PrepareExtension `
-                -ExtensionDirectory $script:extDir `
-                -RepoRoot $script:tempDir `
-                -Channel 'Stable' `
-                -DryRun
-
-            $result.Success | Should -BeTrue
-            # package.json should contain the generated hve-core content (not a collection template)
-            $currentJson = Get-Content -Path (Join-Path $script:extDir 'package.json') -Raw | ConvertFrom-Json
-            $currentJson.name | Should -Be 'hve-core'
-            Test-Path (Join-Path $script:extDir 'package.json.bak') | Should -BeFalse
-        }
-
-        It 'Skips template copy for hve-core collection' {
-            $result = Invoke-PrepareExtension `
-                -ExtensionDirectory $script:extDir `
-                -RepoRoot $script:tempDir `
-                -Channel 'Stable' `
-                -Collection $script:coreCollectionPath `
-                -DryRun
-
-            $result.Success | Should -BeTrue
-            Test-Path (Join-Path $script:extDir 'package.json.bak') | Should -BeFalse
-        }
-
-        It 'Returns error when collection template file missing' {
-            $result = Invoke-PrepareExtension `
-                -ExtensionDirectory $script:extDir `
-                -RepoRoot $script:tempDir `
-                -Channel 'Stable' `
-                -Collection $script:missingCollectionPath `
-                -DryRun
-
-            $result.Success | Should -BeFalse
-            $result.ErrorMessage | Should -Match 'Collection template not found'
-        }
-
-        It 'Copies template to package.json for non-default collection' {
-            $result = Invoke-PrepareExtension `
-                -ExtensionDirectory $script:extDir `
-                -RepoRoot $script:tempDir `
-                -Channel 'Stable' `
-                -Collection $script:devCollectionPath `
-                -DryRun
-
-            $result.Success | Should -BeTrue
-            $updatedJson = Get-Content -Path (Join-Path $script:extDir 'package.json') -Raw | ConvertFrom-Json
-            $updatedJson.name | Should -Be 'hve-developer'
-        }
-
-        It 'Creates package.json.bak backup before template copy' {
-            $result = Invoke-PrepareExtension `
-                -ExtensionDirectory $script:extDir `
-                -RepoRoot $script:tempDir `
-                -Channel 'Stable' `
-                -Collection $script:devCollectionPath `
-                -DryRun
-
-            $result.Success | Should -BeTrue
-            $bakPath = Join-Path $script:extDir 'package.json.bak'
-            Test-Path $bakPath | Should -BeTrue
-            # Backup should contain the hve-core (flagship) generated content
-            $bakJson = Get-Content -Path $bakPath -Raw | ConvertFrom-Json
-            $bakJson.name | Should -Be 'hve-core'
-        }
-    }
-
-    Context 'Collection maturity gating' {
-        BeforeAll {
-            # Deprecated collection in collections/ directory for generation
-            $script:deprecatedCollectionPath = Join-Path $script:collectionsDir 'deprecated-coll.collection.yml'
-            @"
-id: deprecated-coll
-name: deprecated-ext
-displayName: Deprecated Collection
-description: Deprecated collection for testing
-maturity: deprecated
-"@ | Set-Content -Path $script:deprecatedCollectionPath
-
-            # Experimental collection in collections/ directory for generation
-            $script:experimentalCollectionPath = Join-Path $script:collectionsDir 'experimental-coll.collection.yml'
-            @"
-id: experimental-coll
-name: experimental-ext
-displayName: Experimental Collection
-description: Experimental collection for testing
-maturity: experimental
-"@ | Set-Content -Path $script:experimentalCollectionPath
-        }
-
-        It 'Returns early success for deprecated collection on Stable channel' {
-            $result = Invoke-PrepareExtension `
-                -ExtensionDirectory $script:extDir `
-                -RepoRoot $script:tempDir `
-                -Channel 'Stable' `
-                -Collection $script:deprecatedCollectionPath `
-                -DryRun
-
-            $result.Success | Should -BeTrue
-            $result.AgentCount | Should -Be 0
-        }
-
-        It 'Returns early success for deprecated collection on PreRelease channel' {
-            $result = Invoke-PrepareExtension `
-                -ExtensionDirectory $script:extDir `
-                -RepoRoot $script:tempDir `
-                -Channel 'PreRelease' `
-                -Collection $script:deprecatedCollectionPath `
-                -DryRun
-
-            $result.Success | Should -BeTrue
-            $result.AgentCount | Should -Be 0
-        }
-
-        It 'Returns early success for experimental collection on Stable channel' {
-            $result = Invoke-PrepareExtension `
-                -ExtensionDirectory $script:extDir `
-                -RepoRoot $script:tempDir `
-                -Channel 'Stable' `
-                -Collection $script:experimentalCollectionPath `
-                -DryRun
-
-            $result.Success | Should -BeTrue
-            $result.AgentCount | Should -Be 0
-        }
-
-        It 'Processes experimental collection on PreRelease channel' {
-            $result = Invoke-PrepareExtension `
-                -ExtensionDirectory $script:extDir `
-                -RepoRoot $script:tempDir `
-                -Channel 'PreRelease' `
-                -Collection $script:experimentalCollectionPath `
-                -DryRun
-
-            $result.Success | Should -BeTrue
-            $result.ErrorMessage | Should -Be ''
-        }
-    }
-
-    Context 'Exclusion reporting and skill filtering' {
-        BeforeAll {
-            # Add root-level repo-specific files to trigger exclusion messages
-            @'
----
-description: "Root-level agent"
----
-'@ | Set-Content -Path (Join-Path $script:agentsDir 'root-agent.agent.md')
-
-            @'
----
-description: "Root-level prompt"
----
-'@ | Set-Content -Path (Join-Path $script:promptsDir 'root-prompt.prompt.md')
-
-            @'
----
-description: "Root-level instruction"
-applyTo: "**/*.ps1"
----
-'@ | Set-Content -Path (Join-Path $script:instrDir 'root-instr.instructions.md')
-
-            # Add skills directory with skill in subdirectory
-            $script:skillsDir = Join-Path $script:ghDir 'skills'
-            $script:skillSubDir = Join-Path $script:skillsDir 'test-collection/test-skill'
-            New-Item -ItemType Directory -Path $script:skillSubDir -Force | Out-Null
-            @'
----
-name: test-skill
-description: "Test skill"
----
-# Skill
-'@ | Set-Content -Path (Join-Path $script:skillSubDir 'SKILL.md')
-
-            # Add root-level skill
-            $rootSkillDir = Join-Path $script:skillsDir 'root-skill'
-            New-Item -ItemType Directory -Path $rootSkillDir -Force | Out-Null
-            @'
----
-name: root-skill
-description: "Root-level skill"
----
-# Root Skill
-'@ | Set-Content -Path (Join-Path $rootSkillDir 'SKILL.md')
-
-            # Restore valid package.json and template
-            @'
-{
-    "name": "hve-core",
-    "displayName": "HVE Core",
-    "version": "1.2.3",
-    "description": "Test extension",
-    "publisher": "test-pub",
-    "engines": { "vscode": "^1.80.0" },
-    "contributes": {}
-}
-'@ | Set-Content -Path (Join-Path $script:templatesDir 'package.template.json')
-        }
-
-        It 'Reports skipped items when root-level repo-specific files exist' {
-            $result = Invoke-PrepareExtension `
-                -ExtensionDirectory $script:extDir `
-                -RepoRoot $script:tempDir `
-                -Channel 'Stable' `
-                -DryRun
-
-            $result.Success | Should -BeTrue
-            $result.AgentCount | Should -BeGreaterOrEqual 1
-            $result.SkillCount | Should -BeGreaterOrEqual 1
-        }
-
-        It 'Filters skills by collection membership' {
-            $collectionPath = Join-Path $script:tempDir 'skill-filter.collection.yml'
-            @"
-id: hve-core
-name: HVE Core
-displayName: HVE Core
-description: Skill filtering test
-items:
-  - kind: agent
-    path: .github/agents/test-collection/test.agent.md
-    maturity: stable
-  - kind: skill
-    path: .github/skills/test-collection/test-skill/
-    maturity: stable
-"@ | Set-Content -Path $collectionPath
-
-            $result = Invoke-PrepareExtension `
-                -ExtensionDirectory $script:extDir `
-                -RepoRoot $script:tempDir `
-                -Channel 'Stable' `
-                -Collection $collectionPath `
-                -DryRun
-
-            $result.Success | Should -BeTrue
-            $result.SkillCount | Should -Be 1
-        }
-
-        It 'Shows DryRun message when changelog provided with DryRun' {
-            $changelogPath = Join-Path $script:tempDir 'CHANGELOG-DRYRUN.md'
-            '# DryRun Changelog' | Set-Content -Path $changelogPath
-
-            $result = Invoke-PrepareExtension `
-                -ExtensionDirectory $script:extDir `
-                -RepoRoot $script:tempDir `
-                -Channel 'Stable' `
-                -ChangelogPath $changelogPath `
-                -DryRun
-
-            $result.Success | Should -BeTrue
-        }
-    }
-}
-
-#region Additional Coverage Tests
-
-Describe 'Get-ArtifactDescription' {
-    BeforeAll {
-        $script:tempDir = Join-Path ([System.IO.Path]::GetTempPath()) ([System.Guid]::NewGuid().ToString())
-        New-Item -ItemType Directory -Path $script:tempDir -Force | Out-Null
-    }
-
-    AfterAll {
-        Remove-Item -Path $script:tempDir -Recurse -Force -ErrorAction SilentlyContinue
-    }
-
-    It 'Returns empty string when file does not exist' {
-        $result = Get-ArtifactDescription -FilePath (Join-Path $script:tempDir 'nonexistent.md')
-        $result | Should -Be ''
-    }
-
-    It 'Returns empty string when file has no frontmatter' {
-        $path = Join-Path $script:tempDir 'no-frontmatter.md'
-        '# Just a heading' | Set-Content -Path $path
-        $result = Get-ArtifactDescription -FilePath $path
-        $result | Should -Be ''
-    }
-
-    It 'Returns empty string when frontmatter has no description' {
-        $path = Join-Path $script:tempDir 'no-desc.md'
-        @"
----
-applyTo: "**/*.ps1"
----
-# No description
-"@ | Set-Content -Path $path
-        $result = Get-ArtifactDescription -FilePath $path
-        $result | Should -Be ''
-    }
-
-    It 'Returns description from valid frontmatter' {
-        $path = Join-Path $script:tempDir 'valid.md'
-        @"
----
-description: "My artifact description"
----
-# Valid
-"@ | Set-Content -Path $path
-        $result = Get-ArtifactDescription -FilePath $path
-        $result | Should -Be 'My artifact description'
-    }
-
-    It 'Strips branding suffix from description' {
-        $path = Join-Path $script:tempDir 'branded.md'
-        @"
----
-description: "Some tool - Brought to you by microsoft/hve-core"
----
-# Branded
-"@ | Set-Content -Path $path
-        $result = Get-ArtifactDescription -FilePath $path
-        $result | Should -Be 'Some tool'
-    }
-
-    It 'Returns empty string when frontmatter YAML is invalid' {
-        $path = Join-Path $script:tempDir 'bad-yaml.md'
-        @"
----
-description: [invalid: yaml: :
----
-# Bad
-"@ | Set-Content -Path $path
-        $result = Get-ArtifactDescription -FilePath $path
-        $result | Should -Be ''
-    }
-}
-
-Describe 'Get-CollectionArtifactKey - default branch' {
-    It 'Handles unknown kind with matching suffix' {
-        $result = Get-CollectionArtifactKey -Kind 'custom' -Path '.github/custom/my-file.custom.md'
-        $result | Should -Be 'my-file'
-    }
-
-    It 'Handles unknown kind with .md extension but no matching suffix' {
-        $result = Get-CollectionArtifactKey -Kind 'custom' -Path '.github/custom/readme.md'
-        $result | Should -Be 'readme'
-    }
-
-    It 'Handles unknown kind with non-md file' {
-        $result = Get-CollectionArtifactKey -Kind 'custom' -Path '.github/custom/config.json'
-        $result | Should -Be 'config.json'
-    }
-}
-
-Describe 'Test-TemplateConsistency' {
-    BeforeAll {
-        $script:tempDir = Join-Path ([System.IO.Path]::GetTempPath()) ([System.Guid]::NewGuid().ToString())
-        New-Item -ItemType Directory -Path $script:tempDir -Force | Out-Null
-    }
-
-    AfterAll {
-        Remove-Item -Path $script:tempDir -Recurse -Force -ErrorAction SilentlyContinue
-    }
-
-    It 'Returns inconsistent when template file not found' {
-        $manifest = @{ name = 'test'; displayName = 'Test'; description = 'Desc' }
-        $result = Test-TemplateConsistency -TemplatePath (Join-Path $script:tempDir 'nonexistent.json') -CollectionManifest $manifest
-        $result.IsConsistent | Should -BeFalse
-        $result.Mismatches.Count | Should -Be 1
-        $result.Mismatches[0].Field | Should -Be 'file'
-        $result.Mismatches[0].Message | Should -Match 'not found'
-    }
-
-    It 'Returns inconsistent when template is invalid JSON' {
-        $badPath = Join-Path $script:tempDir 'bad-template.json'
-        'not valid json {{{' | Set-Content -Path $badPath
-        $manifest = @{ name = 'test' }
-        $result = Test-TemplateConsistency -TemplatePath $badPath -CollectionManifest $manifest
-        $result.IsConsistent | Should -BeFalse
-        $result.Mismatches[0].Message | Should -Match 'Failed to parse'
-    }
-
-    It 'Returns consistent when fields match' {
-        $path = Join-Path $script:tempDir 'matching.json'
-        @{ name = 'hve-rpi'; displayName = 'HVE RPI'; description = 'RPI tools' } | ConvertTo-Json | Set-Content -Path $path
-        $manifest = @{ name = 'hve-rpi'; displayName = 'HVE RPI'; description = 'RPI tools' }
-        $result = Test-TemplateConsistency -TemplatePath $path -CollectionManifest $manifest
-        $result.IsConsistent | Should -BeTrue
-        $result.Mismatches.Count | Should -Be 0
-    }
-
-    It 'Reports mismatches for diverging fields' {
-        $path = Join-Path $script:tempDir 'diverging.json'
-        @{ name = 'old-name'; displayName = 'Old Name'; description = 'Old desc' } | ConvertTo-Json | Set-Content -Path $path
-        $manifest = @{ name = 'new-name'; displayName = 'New Name'; description = 'New desc' }
-        $result = Test-TemplateConsistency -TemplatePath $path -CollectionManifest $manifest
-        $result.IsConsistent | Should -BeFalse
-        $result.Mismatches.Count | Should -Be 3
-    }
-
-    It 'Skips comparison when field missing in either side' {
-        $path = Join-Path $script:tempDir 'partial.json'
-        @{ name = 'test' } | ConvertTo-Json | Set-Content -Path $path
-        $manifest = @{ displayName = 'Test Display' }
-        $result = Test-TemplateConsistency -TemplatePath $path -CollectionManifest $manifest
-        $result.IsConsistent | Should -BeTrue
-    }
-}
-
-Describe 'Update-PackageJsonContributes - existing contributes fields' {
-    It 'Updates existing chatAgents field via else branch' {
-        $packageJson = [PSCustomObject]@{
-            name        = 'test-extension'
-            contributes = [PSCustomObject]@{
-                chatAgents       = @(@{ path = './old.agent.md' })
-                chatPromptFiles  = @(@{ path = './old.prompt.md' })
-                chatInstructions = @(@{ path = './old.instr.md' })
-                chatSkills       = @(@{ path = './old.skill' })
-            }
-        }
-        $agents = @(@{ name = 'new-agent'; path = './.github/agents/new.agent.md' })
-        $prompts = @(@{ name = 'new-prompt'; path = './.github/prompts/new.prompt.md' })
-        $instructions = @(@{ name = 'new-instr'; path = './.github/instructions/new.instructions.md' })
-        $skills = @(@{ name = 'new-skill'; path = './.github/skills/new-skill' })
-
-        $result = Update-PackageJsonContributes -PackageJson $packageJson `
-            -ChatAgents $agents `
-            -ChatPromptFiles $prompts `
-            -ChatInstructions $instructions `
-            -ChatSkills $skills
-
-        $result.contributes.chatAgents[0].path | Should -Be './.github/agents/new.agent.md'
-        $result.contributes.chatPromptFiles[0].path | Should -Be './.github/prompts/new.prompt.md'
-        $result.contributes.chatInstructions[0].path | Should -Be './.github/instructions/new.instructions.md'
-        $result.contributes.chatSkills[0].path | Should -Be './.github/skills/new-skill'
-    }
-
-    It 'Adds contributes section when missing' {
-        $packageJson = [PSCustomObject]@{
-            name = 'bare-extension'
-        }
-
-        $result = Update-PackageJsonContributes -PackageJson $packageJson `
-            -ChatAgents @() `
+        $script:BaseManifest = [pscustomobject]@{ name = 'hve-core'; version = '1.2.3' }
+        $script:Updated = Update-PackageJsonContributes -PackageJson $script:BaseManifest `
+            -ChatAgents @([pscustomobject]@{ name = 'alpha'; path = './a' }) `
             -ChatPromptFiles @() `
-            -ChatInstructions @() `
-            -ChatSkills @()
+            -ChatInstructions @([pscustomobject]@{ name = 'style-instructions'; path = './s' }) `
+            -ChatSkills @([pscustomobject]@{ name = 'toolkit'; path = './t/SKILL.md' })
+    }
 
-        $result.contributes | Should -Not -BeNullOrEmpty
+    It 'Writes contribution keys in a deterministic order' {
+        @($script:Updated.contributes.PSObject.Properties.Name) |
+            Should -Be @('chatAgents', 'chatPromptFiles', 'chatInstructions', 'chatSkills')
+    }
+
+    It 'Serializes contribution keys in the same deterministic order' {
+        $serialized = $script:Updated | ConvertTo-Json -Depth 20
+        $order = @([regex]::Matches($serialized, '"(chatAgents|chatPromptFiles|chatInstructions|chatSkills)"') |
+                ForEach-Object { $_.Groups[1].Value })
+        $order | Should -Be @('chatAgents', 'chatPromptFiles', 'chatInstructions', 'chatSkills')
+    }
+
+    It 'Preserves empty contribution buckets' {
+        $script:Updated.contributes.chatPromptFiles | Should -HaveCount 0
+    }
+
+    It 'Leaves the source manifest untouched' {
+        $script:BaseManifest.PSObject.Properties['contributes'] | Should -BeNullOrEmpty
     }
 }
 
-Describe 'Resolve-HandoffDependencies - additional cases' {
-    BeforeAll {
-        $script:tempDir = Join-Path ([System.IO.Path]::GetTempPath()) ([System.Guid]::NewGuid().ToString())
-        $script:agentsDir = Join-Path $script:tempDir 'agents'
-        New-Item -ItemType Directory -Path $script:agentsDir -Force | Out-Null
-
-        # Agent with string-format handoffs
-        @'
----
-description: "String handoff agent"
-handoffs:
-  - string-target
----
-'@ | Set-Content -Path (Join-Path $script:agentsDir 'string-handoff.agent.md')
-
-        @'
----
-description: "String target"
----
-'@ | Set-Content -Path (Join-Path $script:agentsDir 'string-target.agent.md')
-
-        # Agent with broken YAML in handoffs section
-        @'
----
-description: "Broken YAML agent"
-handoffs:
-  - label: [invalid: yaml: :
----
-'@ | Set-Content -Path (Join-Path $script:agentsDir 'broken-yaml.agent.md')
+Describe 'Prepare-Extension one-package preparation' -Tag 'Unit' {
+    BeforeEach {
+        $script:Fixture = New-PluginFixtureRepo -Path (Join-Path $TestDrive "prepare-$([guid]::NewGuid().ToString('N'))") -Manifest (Get-PluginManifestFixture)
+        $script:Result = Invoke-PrepareExtension -ExtensionDirectory $script:Fixture.ExtensionDirectory -RepoRoot $script:Fixture.RepoRoot
+        $script:Package = Get-Content -LiteralPath (Join-Path $script:Fixture.ExtensionDirectory 'package.json') -Raw | ConvertFrom-Json
     }
 
-    AfterAll {
-        Remove-Item -Path $script:tempDir -Recurse -Force -ErrorAction SilentlyContinue
+    It 'Reports the template version and every contribution count' {
+        $script:Result.Success | Should -BeTrue
+        $script:Result.ErrorMessage | Should -BeExactly ''
+        $script:Result.Version | Should -BeExactly '9.9.9'
+        $script:Result.AgentCount | Should -Be 2
+        $script:Result.PromptCount | Should -Be 1
+        $script:Result.InstructionCount | Should -Be 1
+        $script:Result.SkillCount | Should -Be 2
     }
 
-    It 'Resolves string-format handoffs' {
-        $result = Resolve-HandoffDependencies -SeedAgents @('string-handoff') -AgentsDir $script:agentsDir
-        $result | Should -Contain 'string-handoff'
-        $result | Should -Contain 'string-target'
+    It 'Keeps the single template identity and takes the manifest description' {
+        $script:Package.name | Should -BeExactly 'hve-core'
+        $script:Package.displayName | Should -BeExactly 'Fixture Core'
+        $script:Package.description | Should -BeExactly 'Manifest fixture description'
     }
 
-    It 'Warns but continues when handoff target file is missing' {
-        $result = Resolve-HandoffDependencies -SeedAgents @('missing-agent') -AgentsDir $script:agentsDir 3>&1
-        # The function emits a warning and returns the seed agent
-        $agentNames = @($result | Where-Object { $_ -is [string] })
-        $agentNames | Should -Contain 'missing-agent'
+    It 'Writes every manifest component into the extension contributions' {
+        @($script:Package.contributes.chatAgents.name) | Should -Be @('alpha', 'gamma')
+        @($script:Package.contributes.chatPromptFiles.name) | Should -Be @('build')
+        @($script:Package.contributes.chatInstructions.name) | Should -Be @('style-instructions')
+        @($script:Package.contributes.chatSkills.name) | Should -Be @('probe', 'toolkit')
     }
 
-    It 'Warns and continues when handoff YAML is malformed' {
-        $result = Resolve-HandoffDependencies -SeedAgents @('broken-yaml') -AgentsDir $script:agentsDir 3>&1
-        $warnings = @($result | Where-Object { $_ -is [System.Management.Automation.WarningRecord] })
-        $warnings.Count | Should -BeGreaterOrEqual 1
-        $agentNames = @($result | Where-Object { $_ -is [string] })
-        $agentNames | Should -Contain 'broken-yaml'
-    }
-}
-
-Describe 'Resolve-HandoffDependencies - display name resolution' {
-    BeforeAll {
-        $script:tempDir = Join-Path ([System.IO.Path]::GetTempPath()) ([System.Guid]::NewGuid().ToString())
-        $script:agentsDir = Join-Path $script:tempDir 'agents'
-        New-Item -ItemType Directory -Path $script:agentsDir -Force | Out-Null
-
-        # Agent whose handoffs use display names instead of file stems
-        @'
----
-name: Parent Agent
-description: "Agent with display-name handoffs"
-handoffs:
-  - label: "Go to child"
-    agent: Child Agent
-    prompt: Continue
----
-'@ | Set-Content -Path (Join-Path $script:agentsDir 'parent-agent.agent.md')
-
-        @'
----
-name: Child Agent
-description: "Child with display name"
----
-'@ | Set-Content -Path (Join-Path $script:agentsDir 'child-agent.agent.md')
-
-        # Chain using display names: Planner -> Implementor (mimics real hve-core agents)
-        @'
----
-name: Task Planner
-description: "Planner agent"
-handoffs:
-  - label: "Implement"
-    agent: Task Implementor
----
-'@ | Set-Content -Path (Join-Path $script:agentsDir 'task-planner.agent.md')
-
-        @'
----
-name: Task Implementor
-description: "Implementor agent"
-handoffs:
-  - label: "Review"
-    agent: Task Planner
----
-'@ | Set-Content -Path (Join-Path $script:agentsDir 'task-implementor.agent.md')
+    It 'Generates only the unsuffixed package manifest and README' {
+        $generated = [string[]]@(Get-ChildItem -LiteralPath $script:Fixture.ExtensionDirectory -File |
+                Where-Object { $_.Name -like 'package*.json' -or $_.Name -like 'README*.md' } |
+                ForEach-Object { $_.Name })
+        [array]::Sort($generated, [System.StringComparer]::Ordinal)
+        $generated | Should -Be @('README.md', 'README.obsolete.md', 'package.json', 'package.obsolete.json')
     }
 
-    AfterAll {
-        Remove-Item -Path $script:tempDir -Recurse -Force -ErrorAction SilentlyContinue
+    It 'Deletes no pre-existing extension file' {
+        Test-Path -LiteralPath (Join-Path $script:Fixture.ExtensionDirectory 'package.obsolete.json') | Should -BeTrue
+        Test-Path -LiteralPath (Join-Path $script:Fixture.ExtensionDirectory 'README.obsolete.md') | Should -BeTrue
     }
 
-    It 'Resolves handoff targets specified by display name' {
-        $result = Resolve-HandoffDependencies -SeedAgents @('parent-agent') -AgentsDir $script:agentsDir
-        $result | Should -Contain 'parent-agent'
-        $result | Should -Contain 'child-agent'
+    It 'Renders the README from the manifest description and durable document' {
+        $readme = Get-Content -LiteralPath (Join-Path $script:Fixture.ExtensionDirectory 'README.md') -Raw
+        $readme | Should -Match '(?m)^# Fixture Core$'
+        $readme | Should -Match '(?m)^> Manifest fixture description$'
+        $readme | Should -Match 'Fixture Core intro paragraph\.'
     }
 
-    It 'Resolves circular display-name handoff chains' {
-        $result = Resolve-HandoffDependencies -SeedAgents @('task-planner') -AgentsDir $script:agentsDir
-        $result | Should -Contain 'task-planner'
-        $result | Should -Contain 'task-implementor'
+    It 'Renders artifact tables without a maturity column' {
+        $readme = Get-Content -LiteralPath (Join-Path $script:Fixture.ExtensionDirectory 'README.md') -Raw
+        $readme | Should -Match '\| Name \| Description \|'
+        $readme | Should -Not -Match '\| Name \| Maturity \| Description \|'
+        $readme | Should -Match '\| \*\*alpha\*\* \| Alpha fixture agent \|'
+        $readme | Should -Match '\| \*\*toolkit\*\* \| Toolkit fixture skill \|'
+    }
+
+    It 'Excludes the durable document artifact table' {
+        Get-Content -LiteralPath (Join-Path $script:Fixture.ExtensionDirectory 'README.md') -Raw |
+            Should -Not -Match 'Durable table that must never reach the extension README'
     }
 }
 
-Describe 'Get-DiscoveredPrompts - maturity filtering' {
-    BeforeAll {
-        $script:tempDir = Join-Path ([System.IO.Path]::GetTempPath()) ([System.Guid]::NewGuid().ToString())
-        $script:promptsDir = Join-Path $script:tempDir 'prompts'
-        $script:promptsSubDir = Join-Path $script:promptsDir 'test-collection'
-        $script:ghDir = Join-Path $script:tempDir '.github'
-        New-Item -ItemType Directory -Path $script:promptsSubDir -Force | Out-Null
-        New-Item -ItemType Directory -Path $script:ghDir -Force | Out-Null
-
-        @'
----
-description: "Stable prompt"
----
-'@ | Set-Content -Path (Join-Path $script:promptsSubDir 'stable.prompt.md')
-    }
-
-    AfterAll {
-        Remove-Item -Path $script:tempDir -Recurse -Force -ErrorAction SilentlyContinue
-    }
-
-    It 'Skips prompts when none match allowed maturities' {
-        $result = Get-DiscoveredPrompts -PromptsDir $script:promptsDir -GitHubDir $script:ghDir -AllowedMaturities @('experimental')
-        $result.Prompts.Count | Should -Be 0
-        $result.Skipped.Count | Should -Be 1
-        $result.Skipped[0].Reason | Should -Match 'maturity'
+Describe 'Prepare-Extension channel parity' -Tag 'Unit' {
+    It 'Produces byte-identical output for Stable and PreRelease' {
+        $outputs = @{}
+        foreach ($channel in @('Stable', 'PreRelease')) {
+            $fixture = New-PluginFixtureRepo -Path (Join-Path $TestDrive "channel-$channel") -Manifest (Get-PluginManifestFixture)
+            Invoke-PrepareExtension -ExtensionDirectory $fixture.ExtensionDirectory -RepoRoot $fixture.RepoRoot | Out-Null
+            $outputs[$channel] = @{
+                Package = Get-Content -LiteralPath (Join-Path $fixture.ExtensionDirectory 'package.json') -Raw
+                Readme  = Get-Content -LiteralPath (Join-Path $fixture.ExtensionDirectory 'README.md') -Raw
+            }
+        }
+        $outputs['PreRelease'].Package | Should -BeExactly $outputs['Stable'].Package
+        $outputs['PreRelease'].Readme | Should -BeExactly $outputs['Stable'].Readme
     }
 }
 
-Describe 'Get-DiscoveredInstructions - maturity filtering' {
-    BeforeAll {
-        $script:tempDir = Join-Path ([System.IO.Path]::GetTempPath()) ([System.Guid]::NewGuid().ToString())
-        $script:instrDir = Join-Path $script:tempDir 'instructions'
-        $script:instrSubDir = Join-Path $script:instrDir 'test-collection'
-        $script:ghDir = Join-Path $script:tempDir '.github'
-        New-Item -ItemType Directory -Path $script:instrSubDir -Force | Out-Null
-        New-Item -ItemType Directory -Path $script:ghDir -Force | Out-Null
-
-        @'
----
-description: "Test instruction"
-applyTo: "**/*.ps1"
----
-'@ | Set-Content -Path (Join-Path $script:instrSubDir 'test.instructions.md')
+Describe 'Prepare-Extension failure and dry-run behavior' -Tag 'Unit' {
+    BeforeEach {
+        $script:FailureFixture = New-PluginFixtureRepo -Path (Join-Path $TestDrive "failure-$([guid]::NewGuid().ToString('N'))") -Manifest (Get-PluginManifestFixture)
+        $script:OriginalPackage = Get-Content -LiteralPath (Join-Path $script:FailureFixture.ExtensionDirectory 'package.json') -Raw
     }
 
-    AfterAll {
-        Remove-Item -Path $script:tempDir -Recurse -Force -ErrorAction SilentlyContinue
+    It 'Writes nothing under DryRun' {
+        $result = Invoke-PrepareExtension -ExtensionDirectory $script:FailureFixture.ExtensionDirectory `
+            -RepoRoot $script:FailureFixture.RepoRoot -DryRun
+
+        $result.Success | Should -BeTrue
+        $result.AgentCount | Should -Be 2
+        Get-Content -LiteralPath (Join-Path $script:FailureFixture.ExtensionDirectory 'package.json') -Raw |
+            Should -BeExactly $script:OriginalPackage
+        Get-Content -LiteralPath (Join-Path $script:FailureFixture.ExtensionDirectory 'README.md') -Raw |
+            Should -BeExactly "# Placeholder`n"
     }
 
-    It 'Skips instructions when none match allowed maturities' {
-        $result = Get-DiscoveredInstructions -InstructionsDir $script:instrDir -GitHubDir $script:ghDir -AllowedMaturities @('experimental')
-        $result.Instructions.Count | Should -Be 0
-        $result.Skipped.Count | Should -Be 1
-        $result.Skipped[0].Reason | Should -Match 'maturity'
-    }
-}
+    It 'Fails when the plugin manifest is absent' {
+        Remove-Item -LiteralPath (Join-Path $script:FailureFixture.RepoRoot 'plugin.json') -Force
 
-Describe 'Invoke-PrepareExtension - error cases' {
-    BeforeAll {
-        $script:tempDir = Join-Path $TestDrive ([System.Guid]::NewGuid().ToString())
-        New-Item -ItemType Directory -Path $script:tempDir -Force | Out-Null
-
-        $script:extDir = Join-Path $script:tempDir 'extension'
-        New-Item -ItemType Directory -Path $script:extDir -Force | Out-Null
-
-        $script:templatesDir = Join-Path $script:extDir 'templates'
-        New-Item -ItemType Directory -Path $script:templatesDir -Force | Out-Null
-        @'
-{
-    "name": "hve-core",
-    "displayName": "HVE Core",
-    "version": "1.0.0",
-    "description": "Test extension",
-    "publisher": "test-pub",
-    "engines": { "vscode": "^1.80.0" },
-    "contributes": {}
-}
-'@ | Set-Content -Path (Join-Path $script:templatesDir 'package.template.json')
-
-        $script:collectionsDir = Join-Path $script:tempDir 'collections'
-        New-Item -ItemType Directory -Path $script:collectionsDir -Force | Out-Null
-        @"
-id: hve-core
-name: HVE Core
-displayName: HVE Core
-description: Test
-"@ | Set-Content -Path (Join-Path $script:collectionsDir 'hve-core.collection.yml')
-
-        $script:ghDir = Join-Path $script:tempDir '.github'
-        New-Item -ItemType Directory -Path (Join-Path $script:ghDir 'agents') -Force | Out-Null
-        New-Item -ItemType Directory -Path (Join-Path $script:ghDir 'prompts') -Force | Out-Null
-        New-Item -ItemType Directory -Path (Join-Path $script:ghDir 'instructions') -Force | Out-Null
+        $result = Invoke-PrepareExtension -ExtensionDirectory $script:FailureFixture.ExtensionDirectory -RepoRoot $script:FailureFixture.RepoRoot
+        $result.Success | Should -BeFalse
+        $result.ErrorMessage | Should -BeLike 'Plugin manifest not found:*'
     }
 
-    AfterAll {
-        Remove-Item -Path $script:tempDir -Recurse -Force -ErrorAction SilentlyContinue
+    It 'Fails when the plugin manifest declares no components' {
+        Set-FixtureFile -Path (Join-Path $script:FailureFixture.RepoRoot 'plugin.json') `
+            -Value (([ordered]@{ name = 'hve-core'; description = 'Empty'; hooks = '.github/hooks/core/session.json' } | ConvertTo-Json -Depth 4) + "`n")
+
+        $result = Invoke-PrepareExtension -ExtensionDirectory $script:FailureFixture.ExtensionDirectory -RepoRoot $script:FailureFixture.RepoRoot
+        $result.Success | Should -BeFalse
+        $result.ErrorMessage | Should -BeExactly 'Plugin manifest declares no extension components.'
     }
 
-    It 'Fails when package.json has invalid JSON' {
-        # Write invalid JSON and mock generation to preserve it
-        $badPkgPath = Join-Path $script:extDir 'package.json'
-        'NOT VALID JSON' | Set-Content -Path $badPkgPath
+    It 'Fails before writing when the plugin manifest declares an escaping component' {
+        $manifestPath = Join-Path $script:FailureFixture.RepoRoot 'plugin.json'
+        $manifest = Get-Content -LiteralPath $manifestPath -Raw | ConvertFrom-Json
+        $manifest.agents = @('../package.json')
+        Set-FixtureFile -Path $manifestPath -Value (($manifest | ConvertTo-Json -Depth 8) + "`n")
 
-        Mock Invoke-ExtensionCollectionsGeneration { return @($badPkgPath) }
-
-        $result = Invoke-PrepareExtension `
-            -ExtensionDirectory $script:extDir `
-            -RepoRoot $script:tempDir `
-            -Channel 'Stable'
+        $result = Invoke-PrepareExtension -ExtensionDirectory $script:FailureFixture.ExtensionDirectory -RepoRoot $script:FailureFixture.RepoRoot
 
         $result.Success | Should -BeFalse
-        $result.ErrorMessage | Should -Match 'Failed to parse package.json'
+        $result.ErrorMessage | Should -BeExactly "Plugin manifest agents entry '../package.json' is not a contained artifact path."
+        Get-Content -LiteralPath (Join-Path $script:FailureFixture.ExtensionDirectory 'package.json') -Raw |
+            Should -BeExactly $script:OriginalPackage
     }
 
-    It 'Fails when package.json lacks version field' {
-        $badPkgPath = Join-Path $script:extDir 'package.json'
-        @{ name = 'test-no-version' } | ConvertTo-Json | Set-Content -Path $badPkgPath
+    It 'Fails when the package template declares an invalid version' {
+        $templatePath = Join-Path $script:FailureFixture.RepoRoot 'extension/templates/package.template.json'
+        $template = Get-Content -LiteralPath $templatePath -Raw -Encoding utf8 | ConvertFrom-Json
+        $template.version = '9.9'
+        Set-FixtureFile -Path $templatePath -Value (($template | ConvertTo-Json -Depth 8) + "`n")
 
-        Mock Invoke-ExtensionCollectionsGeneration { return @($badPkgPath) }
-
-        $result = Invoke-PrepareExtension `
-            -ExtensionDirectory $script:extDir `
-            -RepoRoot $script:tempDir `
-            -Channel 'Stable'
-
+        $result = Invoke-PrepareExtension -ExtensionDirectory $script:FailureFixture.ExtensionDirectory -RepoRoot $script:FailureFixture.RepoRoot
         $result.Success | Should -BeFalse
-        $result.ErrorMessage | Should -Match "does not contain a 'version' field"
+        $result.ErrorMessage | Should -BeExactly 'Invalid version format in package template: 9.9'
     }
 
-    It 'Fails when version format is invalid' {
-        $badPkgPath = Join-Path $script:extDir 'package.json'
-        @{ name = 'test'; version = 'not-semver' } | ConvertTo-Json | Set-Content -Path $badPkgPath
+    It 'Fails when a required template is missing' {
+        $readmeTemplatePath = Join-Path $script:FailureFixture.RepoRoot 'extension/templates/README.template.md'
+        Remove-Item -LiteralPath $readmeTemplatePath -Force
 
-        Mock Invoke-ExtensionCollectionsGeneration { return @($badPkgPath) }
-
-        $result = Invoke-PrepareExtension `
-            -ExtensionDirectory $script:extDir `
-            -RepoRoot $script:tempDir `
-            -Channel 'Stable'
-
+        $result = Invoke-PrepareExtension -ExtensionDirectory $script:FailureFixture.ExtensionDirectory -RepoRoot $script:FailureFixture.RepoRoot
         $result.Success | Should -BeFalse
-        $result.ErrorMessage | Should -Match 'Invalid version format'
-    }
-
-    It 'Warns when changelog path specified but file not found' {
-        $validPkgPath = Join-Path $script:extDir 'package.json'
-        @{ name = 'test'; version = '1.0.0'; contributes = @{} } | ConvertTo-Json -Depth 5 | Set-Content -Path $validPkgPath
-
-        $result = Invoke-PrepareExtension `
-            -ExtensionDirectory $script:extDir `
-            -RepoRoot $script:tempDir `
-            -Channel 'Stable' `
-            -ChangelogPath (Join-Path $script:tempDir 'NONEXISTENT-CHANGELOG.md') 3>&1
-
-        # Filter out the result hashtable from warnings
-        $hashtableResult = $result | Where-Object { $_ -is [hashtable] }
-        if ($hashtableResult) {
-            $hashtableResult.Success | Should -BeTrue
-        }
-    }
-
-    Context 'Collection with requires dependencies' {
-        BeforeAll {
-            $script:reqCollectionPath = Join-Path $script:tempDir 'requires-test.collection.yml'
-            @"
-id: hve-core
-name: HVE Core
-displayName: HVE Core
-description: Requires test
-items:
-  - kind: agent
-    path: .github/agents/test-collection/main.agent.md
-    maturity: stable
-    requires:
-      prompts:
-        - dep-prompt
-  - kind: prompt
-    path: .github/prompts/test-collection/dep-prompt.prompt.md
-    maturity: stable
-"@ | Set-Content -Path $script:reqCollectionPath
-
-            # Create required agent and prompt files in subdirectories
-            $reqAgentDir = Join-Path $script:ghDir 'agents/test-collection'
-            $reqPromptDir = Join-Path $script:ghDir 'prompts/test-collection'
-            New-Item -ItemType Directory -Path $reqAgentDir -Force | Out-Null
-            New-Item -ItemType Directory -Path $reqPromptDir -Force | Out-Null
-            @'
----
-description: "Main agent"
----
-'@ | Set-Content -Path (Join-Path $reqAgentDir 'main.agent.md')
-
-            @'
----
-description: "Dependent prompt"
----
-'@ | Set-Content -Path (Join-Path $reqPromptDir 'dep-prompt.prompt.md')
-
-            # Restore valid package.json
-            $validPkgPath = Join-Path $script:extDir 'package.json'
-            @{ name = 'hve-core'; version = '1.0.0'; contributes = @{} } | ConvertTo-Json -Depth 5 | Set-Content -Path $validPkgPath
-        }
-
-        It 'Resolves requires dependencies in collection' {
-            $result = Invoke-PrepareExtension `
-                -ExtensionDirectory $script:extDir `
-                -RepoRoot $script:tempDir `
-                -Channel 'Stable' `
-                -Collection $script:reqCollectionPath `
-                -DryRun
-
-            $result.Success | Should -BeTrue
-            $result.AgentCount | Should -BeGreaterOrEqual 1
-            $result.PromptCount | Should -BeGreaterOrEqual 1
-        }
+        $result.ErrorMessage | Should -BeExactly "README template not found: $readmeTemplatePath"
     }
 }
 
-Describe 'Invoke-ExtensionCollectionsGeneration - collection manifest errors' {
-    BeforeAll {
-        $script:tempDir = Join-Path ([System.IO.Path]::GetTempPath()) ([System.Guid]::NewGuid().ToString())
-
-        $collectionsDir = Join-Path $script:tempDir 'collections'
-        $templatesDir = Join-Path $script:tempDir 'extension/templates'
-        New-Item -ItemType Directory -Path $collectionsDir -Force | Out-Null
-        New-Item -ItemType Directory -Path $templatesDir -Force | Out-Null
-
-        @{
-            name        = 'hve-core'
-            displayName = 'HVE Core'
-            version     = '1.0.0'
-            description = 'default'
-            publisher   = 'test-pub'
-            engines     = @{ vscode = '^1.80.0' }
-            contributes = @{}
-        } | ConvertTo-Json -Depth 5 | Set-Content -Path (Join-Path $templatesDir 'package.template.json')
-    }
-
-    AfterAll {
-        Remove-Item -Path $script:tempDir -Recurse -Force -ErrorAction SilentlyContinue
-    }
-
-    It 'Throws when collection id is empty' {
-        $collectionsDir = Join-Path $script:tempDir 'collections'
-        Remove-Item -Path "$collectionsDir/*" -Force -ErrorAction SilentlyContinue
-        @"
-id:
-name: empty-id
-"@ | Set-Content -Path (Join-Path $collectionsDir 'empty.collection.yml')
-
-        { Invoke-ExtensionCollectionsGeneration -RepoRoot $script:tempDir } | Should -Throw '*Collection id is required*'
-    }
-
-    It 'Throws when collection manifest is not a hashtable' {
-        $collectionsDir = Join-Path $script:tempDir 'collections'
-        Remove-Item -Path "$collectionsDir/*" -Force -ErrorAction SilentlyContinue
-        # YAML that parses as a scalar string
-        'just a string' | Set-Content -Path (Join-Path $collectionsDir 'bad.collection.yml')
-
-        { Invoke-ExtensionCollectionsGeneration -RepoRoot $script:tempDir } | Should -Throw '*must be a hashtable*'
-    }
+AfterAll {
+    Remove-Module ExtensionTestFixtures -Force -ErrorAction SilentlyContinue
 }
-
-Describe 'Invoke-ExtensionCollectionsGeneration - README generation' {
-    BeforeAll {
-        $script:tempDir = Join-Path ([System.IO.Path]::GetTempPath()) ([System.Guid]::NewGuid().ToString())
-
-        $collectionsDir = Join-Path $script:tempDir 'collections'
-        $templatesDir = Join-Path $script:tempDir 'extension/templates'
-        New-Item -ItemType Directory -Path $collectionsDir -Force | Out-Null
-        New-Item -ItemType Directory -Path $templatesDir -Force | Out-Null
-
-        # Package template
-        @{
-            name        = 'hve-core'
-            displayName = 'HVE Core'
-            version     = '1.0.0'
-            description = 'default'
-            publisher   = 'test-pub'
-            engines     = @{ vscode = '^1.80.0' }
-            contributes = @{}
-        } | ConvertTo-Json -Depth 5 | Set-Content -Path (Join-Path $templatesDir 'package.template.json')
-
-        # README template
-        $repoRoot = (Get-Item "$PSScriptRoot/../../..").FullName
-        $realTemplatePath = Join-Path $repoRoot 'extension/templates/README.template.md'
-        if (Test-Path $realTemplatePath) {
-            Copy-Item -Path $realTemplatePath -Destination (Join-Path $templatesDir 'README.template.md')
-        }
-        else {
-            @"
-# {{DISPLAY_NAME}}
-
-> {{DESCRIPTION}}
-
-{{BODY}}
-
-{{ARTIFACTS}}
-
-{{FULL_EDITION}}
-"@ | Set-Content -Path (Join-Path $templatesDir 'README.template.md')
-        }
-
-        # Collection with a .collection.md body file
-        @"
-id: readme-test
-name: README Test
-displayName: HVE Core - README Test
-description: Test readme generation
-"@ | Set-Content -Path (Join-Path $collectionsDir 'readme-test.collection.yml')
-
-        'Body content for readme test.' | Set-Content -Path (Join-Path $collectionsDir 'readme-test.collection.md')
-
-        # hve-core needed for the defaults
-        @"
-id: hve-core
-name: HVE Core
-displayName: HVE Core
-description: All artifacts
-"@ | Set-Content -Path (Join-Path $collectionsDir 'hve-core.collection.yml')
-
-        'HVE Core body content.' | Set-Content -Path (Join-Path $collectionsDir 'hve-core.collection.md')
-
-        # hve-core-all collection with body
-        @"
-id: hve-core-all
-name: All
-displayName: HVE Core - All
-description: All combined
-"@ | Set-Content -Path (Join-Path $collectionsDir 'hve-core-all.collection.yml')
-
-        'HVE Core All body content.' | Set-Content -Path (Join-Path $collectionsDir 'hve-core-all.collection.md')
-
-        # Collection without .collection.md body
-        @"
-id: no-readme
-name: No README
-displayName: HVE Core - No README
-description: Collection without body
-"@ | Set-Content -Path (Join-Path $collectionsDir 'no-readme.collection.yml')
-    }
-
-    AfterAll {
-        Remove-Item -Path $script:tempDir -Recurse -Force -ErrorAction SilentlyContinue
-    }
-
-    It 'Generates README files for collections with .collection.md' {
-        $null = Invoke-ExtensionCollectionsGeneration -RepoRoot $script:tempDir
-        $readmePath = Join-Path $script:tempDir 'extension/README.readme-test.md'
-        Test-Path $readmePath | Should -BeTrue
-        $content = Get-Content -Path $readmePath -Raw
-        $content | Should -Match 'Body content for readme test'
-    }
-
-    It 'Generates README.md for hve-core collection' {
-        $null = Invoke-ExtensionCollectionsGeneration -RepoRoot $script:tempDir
-        $readmePath = Join-Path $script:tempDir 'extension/README.md'
-        Test-Path $readmePath | Should -BeTrue
-        $content = Get-Content -Path $readmePath -Raw
-        $content | Should -Match 'HVE Core body content'
-    }
-
-    It 'Generates README for hve-core-all collection' {
-        $null = Invoke-ExtensionCollectionsGeneration -RepoRoot $script:tempDir
-        $readmePath = Join-Path $script:tempDir 'extension/README.hve-core-all.md'
-        Test-Path $readmePath | Should -BeTrue
-        $content = Get-Content -Path $readmePath -Raw
-        $content | Should -Match 'HVE Core All body content'
-    }
-
-    It 'Skips README generation when .collection.md is missing' {
-        $null = Invoke-ExtensionCollectionsGeneration -RepoRoot $script:tempDir
-        $readmePath = Join-Path $script:tempDir 'extension/README.no-readme.md'
-        Test-Path $readmePath | Should -BeFalse
-    }
-}
-
-#region Deprecated Path Exclusion Tests
-
-Describe 'Get-DiscoveredAgents - deprecated path exclusion' {
-    BeforeAll {
-        $script:tempDir = Join-Path ([System.IO.Path]::GetTempPath()) ([System.Guid]::NewGuid().ToString())
-        $script:agentsDir = Join-Path $script:tempDir 'agents'
-        New-Item -ItemType Directory -Path $script:agentsDir -Force | Out-Null
-
-        # Create active agent
-        $activeDir = Join-Path $script:agentsDir 'rpi'
-        New-Item -ItemType Directory -Path $activeDir -Force | Out-Null
-        @'
----
-description: "Active agent"
----
-'@ | Set-Content -Path (Join-Path $activeDir 'active.agent.md')
-
-        # Create deprecated agent
-        $deprecatedDir = Join-Path $script:agentsDir 'deprecated'
-        New-Item -ItemType Directory -Path $deprecatedDir -Force | Out-Null
-        @'
----
-description: "Deprecated agent"
----
-'@ | Set-Content -Path (Join-Path $deprecatedDir 'old.agent.md')
-    }
-
-    AfterAll {
-        Remove-Item -Path $script:tempDir -Recurse -Force -ErrorAction SilentlyContinue
-    }
-
-    It 'Excludes agents in deprecated directory' {
-        $result = Get-DiscoveredAgents -AgentsDir $script:agentsDir -AllowedMaturities @('stable') -ExcludedAgents @()
-        $agentNames = $result.Agents | ForEach-Object { $_.name }
-        $agentNames | Should -Contain 'active'
-        $agentNames | Should -Not -Contain 'old'
-    }
-}
-
-Describe 'Get-DiscoveredPrompts - deprecated path exclusion' {
-    BeforeAll {
-        $script:tempDir = Join-Path ([System.IO.Path]::GetTempPath()) ([System.Guid]::NewGuid().ToString())
-        $script:promptsDir = Join-Path $script:tempDir 'prompts'
-        $script:ghDir = Join-Path $script:tempDir '.github'
-        New-Item -ItemType Directory -Path $script:promptsDir -Force | Out-Null
-        New-Item -ItemType Directory -Path $script:ghDir -Force | Out-Null
-
-        # Create active prompt
-        $activeDir = Join-Path $script:promptsDir 'rpi'
-        New-Item -ItemType Directory -Path $activeDir -Force | Out-Null
-        @'
----
-description: "Active prompt"
----
-'@ | Set-Content -Path (Join-Path $activeDir 'active.prompt.md')
-
-        # Create deprecated prompt
-        $deprecatedDir = Join-Path $script:promptsDir 'deprecated'
-        New-Item -ItemType Directory -Path $deprecatedDir -Force | Out-Null
-        @'
----
-description: "Deprecated prompt"
----
-'@ | Set-Content -Path (Join-Path $deprecatedDir 'old.prompt.md')
-    }
-
-    AfterAll {
-        Remove-Item -Path $script:tempDir -Recurse -Force -ErrorAction SilentlyContinue
-    }
-
-    It 'Excludes prompts in deprecated directory' {
-        $result = Get-DiscoveredPrompts -PromptsDir $script:promptsDir -GitHubDir $script:ghDir -AllowedMaturities @('stable')
-        $promptNames = $result.Prompts | ForEach-Object { $_.name }
-        $promptNames | Should -Contain 'active'
-        $promptNames | Should -Not -Contain 'old'
-    }
-}
-
-Describe 'Get-DiscoveredInstructions - deprecated path exclusion' {
-    BeforeAll {
-        $script:tempDir = Join-Path ([System.IO.Path]::GetTempPath()) ([System.Guid]::NewGuid().ToString())
-        $script:instrDir = Join-Path $script:tempDir 'instructions'
-        $script:ghDir = Join-Path $script:tempDir '.github'
-        New-Item -ItemType Directory -Path $script:instrDir -Force | Out-Null
-        New-Item -ItemType Directory -Path $script:ghDir -Force | Out-Null
-
-        # Create active instruction
-        $activeDir = Join-Path $script:instrDir 'rpi'
-        New-Item -ItemType Directory -Path $activeDir -Force | Out-Null
-        @'
----
-description: "Active instruction"
-applyTo: "**/*.ps1"
----
-'@ | Set-Content -Path (Join-Path $activeDir 'active.instructions.md')
-
-        # Create deprecated instruction
-        $deprecatedDir = Join-Path $script:instrDir 'deprecated'
-        New-Item -ItemType Directory -Path $deprecatedDir -Force | Out-Null
-        @'
----
-description: "Deprecated instruction"
-applyTo: "**/*.ps1"
----
-'@ | Set-Content -Path (Join-Path $deprecatedDir 'old.instructions.md')
-    }
-
-    AfterAll {
-        Remove-Item -Path $script:tempDir -Recurse -Force -ErrorAction SilentlyContinue
-    }
-
-    It 'Excludes instructions in deprecated directory' {
-        $result = Get-DiscoveredInstructions -InstructionsDir $script:instrDir -GitHubDir $script:ghDir -AllowedMaturities @('stable')
-        $instrNames = $result.Instructions | ForEach-Object { $_.name }
-        $instrNames | Should -Contain 'active-instructions'
-        $instrNames | Should -Not -Contain 'old-instructions'
-    }
-}
-
-Describe 'Get-DiscoveredSkills - deprecated path exclusion' {
-    BeforeAll {
-        $script:tempDir = Join-Path ([System.IO.Path]::GetTempPath()) ([System.Guid]::NewGuid().ToString())
-        $script:skillsDir = Join-Path $script:tempDir 'skills'
-        New-Item -ItemType Directory -Path $script:skillsDir -Force | Out-Null
-
-        # Create active skill
-        $activeSkillDir = Join-Path $script:skillsDir 'experimental/good-skill'
-        New-Item -ItemType Directory -Path $activeSkillDir -Force | Out-Null
-        @'
----
-name: good-skill
-description: "Active skill"
----
-'@ | Set-Content -Path (Join-Path $activeSkillDir 'SKILL.md')
-
-        # Create deprecated skill
-        $deprecatedSkillDir = Join-Path $script:skillsDir 'deprecated/old-skill'
-        New-Item -ItemType Directory -Path $deprecatedSkillDir -Force | Out-Null
-        @'
----
-name: old-skill
-description: "Deprecated skill"
----
-'@ | Set-Content -Path (Join-Path $deprecatedSkillDir 'SKILL.md')
-    }
-
-    AfterAll {
-        Remove-Item -Path $script:tempDir -Recurse -Force -ErrorAction SilentlyContinue
-    }
-
-    It 'Excludes skills in deprecated directory' {
-        $result = Get-DiscoveredSkills -SkillsDir $script:skillsDir -AllowedMaturities @('stable')
-        $skillNames = $result.Skills | ForEach-Object { $_.name }
-        $skillNames | Should -Contain 'good-skill'
-        $skillNames | Should -Not -Contain 'old-skill'
-    }
-}
-
-#endregion Deprecated Path Exclusion Tests
-
-#region Maturity Notice Tests
-
-Describe 'New-CollectionReadme - maturity notice' {
-    BeforeAll {
-        $script:tempDir = Join-Path ([System.IO.Path]::GetTempPath()) ([System.Guid]::NewGuid().ToString())
-        New-Item -ItemType Directory -Path $script:tempDir -Force | Out-Null
-
-        # Create minimal README template with all tokens including MATURITY_NOTICE
-        $templateContent = @"
-# {{DISPLAY_NAME}}
-
-> {{DESCRIPTION}}
-
-{{MATURITY_NOTICE}}
-
-{{BODY}}
-
-## Included Artifacts
-
-{{ARTIFACTS}}
-
-{{FULL_EDITION}}
-"@
-        $script:templatePath = Join-Path $script:tempDir 'README.template.md'
-        Set-Content -Path $script:templatePath -Value $templateContent
-
-        # Create collection body markdown
-        $script:bodyPath = Join-Path $script:tempDir 'test.collection.md'
-        Set-Content -Path $script:bodyPath -Value 'Collection body content.'
-    }
-
-    AfterAll {
-        Remove-Item -Path $script:tempDir -Recurse -Force -ErrorAction SilentlyContinue
-    }
-
-    It 'Includes experimental notice for experimental collection' {
-        $collection = @{
-            id          = 'test-exp'
-            name        = 'Test Experimental'
-            description = 'An experimental collection'
-            maturity    = 'experimental'
-            items       = @()
-        }
-        $outputPath = Join-Path $script:tempDir 'README-exp.md'
-        New-CollectionReadme -Collection $collection -CollectionMdPath $script:bodyPath `
-            -TemplatePath $script:templatePath -RepoRoot $script:tempDir -OutputPath $outputPath
-
-        $content = Get-Content -Path $outputPath -Raw
-        $content | Should -Match '\u26A0' # warning sign emoji
-        $content | Should -Match 'Pre-Release channel'
-    }
-
-    It 'Has no notice for collection without maturity field' {
-        $collection = @{
-            id          = 'test-default'
-            name        = 'Test Default'
-            description = 'A default collection'
-            items       = @()
-        }
-        $outputPath = Join-Path $script:tempDir 'README-default.md'
-        New-CollectionReadme -Collection $collection -CollectionMdPath $script:bodyPath `
-            -TemplatePath $script:templatePath -RepoRoot $script:tempDir -OutputPath $outputPath
-
-        $content = Get-Content -Path $outputPath -Raw
-        $content | Should -Not -Match '\u26A0'
-    }
-
-    It 'Has no notice for explicit stable maturity' {
-        $collection = @{
-            id          = 'test-stable'
-            name        = 'Test Stable'
-            description = 'A stable collection'
-            maturity    = 'stable'
-            items       = @()
-        }
-        $outputPath = Join-Path $script:tempDir 'README-stable.md'
-        New-CollectionReadme -Collection $collection -CollectionMdPath $script:bodyPath `
-            -TemplatePath $script:templatePath -RepoRoot $script:tempDir -OutputPath $outputPath
-
-        $content = Get-Content -Path $outputPath -Raw
-        $content | Should -Not -Match '\u26A0'
-    }
-}
-
-#endregion Maturity Notice Tests
-
-#region Split-CollectionMdByMarkers Tests
-
-Describe 'Split-CollectionMdByMarkers' {
-    It 'Returns HasMarkers false for content without markers' {
-        $result = Split-CollectionMdByMarkers -Content 'Hello world'
-        $result.HasMarkers | Should -BeFalse
-        $result.Intro | Should -Be 'Hello world'
-        $result.Footer | Should -Be ''
-    }
-
-    It 'Throws for empty string input' {
-        { Split-CollectionMdByMarkers -Content '' } | Should -Throw
-    }
-
-    It 'Parses intro and footer around markers' {
-        $content = "Intro text`n`n<!-- BEGIN AUTO-GENERATED ARTIFACTS -->`n`nGenerated`n`n<!-- END AUTO-GENERATED ARTIFACTS -->`n`nFooter text"
-        $result = Split-CollectionMdByMarkers -Content $content
-        $result.HasMarkers | Should -BeTrue
-        $result.Intro | Should -Be 'Intro text'
-        $result.Footer | Should -Be 'Footer text'
-    }
-
-    It 'Returns HasMarkers false when only BEGIN marker is present' {
-        $content = "Intro`n<!-- BEGIN AUTO-GENERATED ARTIFACTS -->`nSome content"
-        $result = Split-CollectionMdByMarkers -Content $content
-        $result.HasMarkers | Should -BeFalse
-    }
-
-    It 'Returns HasMarkers false when END marker appears before BEGIN' {
-        $content = "<!-- END AUTO-GENERATED ARTIFACTS -->`n<!-- BEGIN AUTO-GENERATED ARTIFACTS -->"
-        $result = Split-CollectionMdByMarkers -Content $content
-        $result.HasMarkers | Should -BeFalse
-    }
-
-    It 'Returns HasMarkers false for duplicate BEGIN markers without END' {
-        $content = "<!-- BEGIN AUTO-GENERATED ARTIFACTS -->`n<!-- BEGIN AUTO-GENERATED ARTIFACTS -->`nContent"
-        $result = Split-CollectionMdByMarkers -Content $content
-        $result.HasMarkers | Should -BeFalse
-    }
-
-    It 'Does not include an Existing key in the result' {
-        $noMarkers = Split-CollectionMdByMarkers -Content 'plain'
-        $noMarkers.Keys | Should -Not -Contain 'Existing'
-
-        $withMarkers = Split-CollectionMdByMarkers -Content "Intro`n<!-- BEGIN AUTO-GENERATED ARTIFACTS -->`n`n<!-- END AUTO-GENERATED ARTIFACTS -->"
-        $withMarkers.Keys | Should -Not -Contain 'Existing'
-    }
-}
-
-#endregion Split-CollectionMdByMarkers Tests
-
-#endregion Additional Coverage Tests

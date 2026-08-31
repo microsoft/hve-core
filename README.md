@@ -2,7 +2,7 @@
 title: HVE Core
 description: Hypervelocity Engineering prompt library for GitHub Copilot with convention-driven AI workflows and validated artifacts
 author: Microsoft
-ms.date: 2026-05-04
+ms.date: 2026-08-13
 ms.topic: overview
 keywords:
   - hypervelocity engineering
@@ -15,6 +15,8 @@ keywords:
 estimated_reading_time: 3
 ---
 
+## Hypervelocity Engineering (HVE) Core
+
 <!-- markdownlint-disable MD013 -->
 [![CI Status](https://github.com/microsoft/hve-core/actions/workflows/release-stable.yml/badge.svg)](https://github.com/microsoft/hve-core/actions/workflows/release-stable.yml)
 [![CodeQL](https://github.com/microsoft/hve-core/actions/workflows/codeql-analysis.yml/badge.svg)](https://github.com/microsoft/hve-core/actions/workflows/codeql-analysis.yml)
@@ -24,92 +26,85 @@ estimated_reading_time: 3
 [![Documentation](https://img.shields.io/badge/docs-microsoft.github.io%2Fhve--core-blue)](https://microsoft.github.io/hve-core/)
 <!-- markdownlint-enable MD013 -->
 
-Hypervelocity Engineering (HVE) Core (accelerating software delivery through AI-augmented workflows) gives you specialized agents, auto-applied coding instructions, reusable prompts, and validated skills for GitHub Copilot. Turn Copilot into a convention-driven engineering workflow (agents follow your repository's standards automatically) that scales from solo developers to enterprise teams.
+HVE Core helps teams ship faster with GitHub Copilot by combining specialized agents, reusable prompts, coding instructions, and validated skills into one workflow system.
 
-> [!TIP]
-> Install from the VS Code Marketplace in under 30 seconds. See the [Installation Guide](docs/getting-started/install.md) for all options.
+Use HVE Core when you want AI-assisted work to be repeatable, standards-aligned, and scalable across individuals and teams. HVE Core provides structured AI workflow building blocks:
 
-## Quick Start
+* Agents for specialized tasks such as research, planning, implementation, and review
+* Prompts for repeatable workflow entry points
+* Instructions that apply coding standards automatically
+* Skills that add reusable tool capabilities
+
+> [!CAUTION]
+> HVE Core is a highly opinionated, rapidly evolving agentic SDLC framework. It is best treated as a source of patterns and learning rather than a stable platform, foundation, or production dependency.
+> Workflows, interfaces, architecture, and recommended practices may change substantially, including in ways that are not backward compatible, as the technology landscape evolves. Evaluate all materials for your own requirements and risk tolerance.
+> The HVE Builder skill (use with `/hve-builder`) and GitHub Copilot can help you adapt or copy relevant patterns into an agentic SDLC that you own and maintain independently.
+> To build an independent implementation, start with [Forking and Extending HVE Core](docs/customization/forking.md) and review the [HVE Core documentation](docs/README.md) before adopting any component.
+
+## Where to Start
 
 <!-- markdownlint-disable MD013 -->
-[![Install HVE Core - Flagship Collection](https://img.shields.io/badge/VS%20Code-Install%20HVE%20Core-007ACC?logo=visualstudiocode&logoColor=white)](https://marketplace.visualstudio.com/items?itemName=ise-hve-essentials.hve-core) [![Install HVE Core - All Collection](https://img.shields.io/badge/VS%20Code-Install%20All%20Collections-007ACC?logo=visualstudiocode&logoColor=white)](https://marketplace.visualstudio.com/items?itemName=ise-hve-essentials.hve-core-all)
+[![Install HVE Core](https://img.shields.io/badge/VS%20Code-Install%20HVE%20Core-007ACC?logo=visualstudiocode&logoColor=white)](https://marketplace.visualstudio.com/items?itemName=ise-hve-essentials.hve-core)
 <!-- markdownlint-enable MD013 -->
 
-1. Install the [HVE Core - Flagship Collection extension](https://marketplace.visualstudio.com/items?itemName=ise-hve-essentials.hve-core) from the VS Code Marketplace.
+1. Install the [HVE Core extension](https://marketplace.visualstudio.com/items?itemName=ise-hve-essentials.hve-core) from the VS Code Marketplace.
 2. Open any project and launch GitHub Copilot Chat (`Ctrl+Alt+I`).
-3. Select an agent from the picker (try **rpi-agent**, **task-researcher**, or **memory**) and start a conversation.
-
-That's it. Agents, instructions, and prompts activate automatically once the extension is installed.
-
-**Using GitHub Copilot CLI?** Install as a plugin instead:
-
-```bash
-copilot plugin marketplace add microsoft/hve-core
-copilot plugin install hve-core@hve-core
-```
-
-See [CLI Plugins](docs/getting-started/methods/cli-plugins.md) for usage details.
-
-Ready for more? Follow the [Getting Started Guide](docs/getting-started/README.md).
-
-## Choose Your Extension
-
-Two VS Code extensions serve different needs:
-
-Collections are curated bundles of agents, prompts, instructions, and skills targeting specific workflows or domains. The **HVE Core** extension installs the flagship collection (41 artifacts for RPI (Research → Plan → Implement) workflows). Install **HVE Core All** for the complete bundle (221 artifacts across all domains).
-
-| Extension                                                                                             | What it includes                                                | Best for                                                                |
-|-------------------------------------------------------------------------------------------------------|-----------------------------------------------------------------|-------------------------------------------------------------------------|
-| [HVE Core All](https://marketplace.visualstudio.com/items?itemName=ise-hve-essentials.hve-core-all)   | Every collection: all agents, prompts, instructions, and skills | Individual developers and teams that want the full library              |
-| [HVE Installer](https://marketplace.visualstudio.com/items?itemName=ise-hve-essentials.hve-installer) | Selective installation of specific collections                  | Teams that want to pick only the collections relevant to their workflow |
-
-Not sure which to choose? Start with HVE Core All. You can switch to HVE Installer later if you need finer control over which collections are active. See the [Collections Overview](docs/getting-started/collections.md) for a comparison of all available bundles.
-
-**Copilot CLI users:** All collections are also available as [CLI plugins](docs/getting-started/methods/cli-plugins.md) via `copilot plugin install <collection>@hve-core`.
-
-## What's Included
-
-| Component    | Count | Description                                                          | Documentation                                  |
-|--------------|-------|----------------------------------------------------------------------|------------------------------------------------|
-| Agents       | 49    | Specialized AI assistants for research, planning, and implementation | [Agents](.github/CUSTOM-AGENTS.md)             |
-| Instructions | 102   | Repository-specific coding guidelines applied automatically          | [Instructions](.github/instructions/README.md) |
-| Prompts      | 63    | Reusable templates for common tasks like commits and PRs             | [Prompts](.github/prompts/README.md)           |
-| Skills       | 11    | Self-contained packages with cross-platform scripts and guidance     | [Skills](.github/skills/)                      |
-| Scripts      | N/A   | Validation tools for linting, security, and quality                  | [Scripts](scripts/README.md)                   |
+3. Select **RPI Agent** from the agent picker or run `/rpi`, then describe the task you want to complete.
 
 > [!TIP]
-> **Component types at a glance:**
+> Using GitHub Copilot CLI? Choose a marketplace source:
 >
-> * Agents - Specialized AI personas with domain expertise (e.g., Task Researcher, Security Planner)
-> * Prompts - Predefined commands that trigger specific workflows (e.g., `/task-research`, `/git-commit`)
-> * Instructions - Coding standards and conventions auto-applied to matching files
-> * Skills - Reusable tool packages that extend agent capabilities
+> * Ref-less current `main`: `microsoft/hve-core`
+> * Moving reviewed channels: `microsoft/hve-core#release/prerelease` and `microsoft/hve-core#release/stable`
+> * Immutable exact releases: `microsoft/hve-core#prerelease-v<version>` and `microsoft/hve-core#v<version>`
+>
+> For example, register the development tip and install the HVE Core plugin:
+>
+> ```bash
+> copilot plugin marketplace add microsoft/hve-core
+> copilot plugin install hve-core@hve-core
+> ```
+>
+> Reviewed source moves from `main` to `release/prerelease` to `release/stable`.
+> Behavior when switching or duplicating same-name marketplace registrations
+> has not been observed. See [CLI Plugins](docs/getting-started/methods/cli-plugins.md)
+> for details.
+
+## Choose Your Path
+
+* New to HVE-Core: Start with [Start Here](docs/getting-started/README.md) to complete your first workflow quickly.
+* Leading a team: Use the [Team Adoption Guide](docs/customization/team-adoption.md) to roll out standards and onboarding.
+* Contributing to this repo: Follow the [Contributing Guide](CONTRIBUTING.md) to add or improve agents, prompts, instructions, and skills.
+
+## Navigate This Repository
+
+| Goal                         | Go here                                                            |
+|------------------------------|--------------------------------------------------------------------|
+| Getting Started              | [docs/getting-started/README.md](docs/getting-started/README.md)   |
+| Understand all setup options | [docs/getting-started/install.md](docs/getting-started/install.md) |
+| Learn the core methodology   | [docs/rpi/README.md](docs/rpi/README.md)                           |
+| Browse docs by topic         | [docs/README.md](docs/README.md)                                   |
+| Explore agents               | [.github/CUSTOM-AGENTS.md](.github/CUSTOM-AGENTS.md)               |
+| Explore instructions         | [.github/instructions/README.md](.github/instructions/README.md)   |
+| Explore prompts              | [.github/prompts/README.md](.github/prompts/README.md)             |
+| Explore skills               | [.github/skills/](.github/skills/)                                 |
 
 ## Documentation
 
 Full documentation is available at **<https://microsoft.github.io/hve-core/>**.
 
-| Guide                                                            | Description                                     |
-|------------------------------------------------------------------|-------------------------------------------------|
-| [Getting Started](docs/getting-started/README.md)                | Setup and first workflow tutorial               |
-| [Collections](docs/getting-started/collections.md)               | Available bundles and selection guide           |
-| [RPI Workflow](docs/rpi/README.md)                               | Deep dive into Research, Plan, Implement        |
-| [Contributing](docs/contributing/README.md)                      | Create custom agents, instructions, and prompts |
-| [Agents Reference](.github/CUSTOM-AGENTS.md)                     | All available agents                            |
-| [Instructions Reference](.github/instructions/README.md)         | All coding instructions                         |
-| [AI Artifacts Architecture](docs/architecture/ai-artifacts.md)   | Prompt engineering framework and artifact types |
-| [Validation Standards](docs/contributing/ai-artifacts-common.md) | CI/CD validation pipeline and quality gates     |
-
-## Label Management
-
-Repository labels are declared in [`.github/labels.yml`](.github/labels.yml) and synced automatically by the [Label Sync](.github/workflows/label-sync.yml) workflow on push to `main` or via manual `workflow_dispatch`.
-
-| Task               | How                                                                                                                                                                                                 |
-|--------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| **Add a label**    | Add an entry with `name`, `color` (bare hex, no `#`), and `description` to `.github/labels.yml`, then push to `main`                                                                                |
-| **Update a label** | Edit the existing entry's `color` or `description`                                                                                                                                                  |
-| **Rename a label** | Add an `aliases` array under the new canonical name listing the old name; the sync migrates existing assignments automatically                                                                      |
-| **Delete a label** | Remove it manually in the [GitHub Labels UI](https://github.com/microsoft/hve-core/labels). Deleting an entry from the file does **not** delete it from GitHub (the workflow runs in additive mode) |
+| Guide                                                            | Description                                      |
+|------------------------------------------------------------------|--------------------------------------------------|
+| [Getting Started](docs/getting-started/README.md)                | Setup and first workflow tutorial                |
+| [HVE Core Identity](docs/getting-started/packages.md)            | Distribution channels and lifecycle disclosure   |
+| [Plugin Inventory](docs/plugins/hve-core.md)                     | One-plugin identity and included capabilities    |
+| [Package Migration](docs/getting-started/package-migration.md)   | Move from retired distribution identities        |
+| [RPI Workflow](docs/rpi/README.md)                               | Deep dive into Research, Plan, Implement, Review |
+| [Contributing](docs/contributing/README.md)                      | Create custom agents, instructions, and prompts  |
+| [Agents Reference](.github/CUSTOM-AGENTS.md)                     | All available agents                             |
+| [Instructions Reference](.github/instructions/README.md)         | All coding instructions                          |
+| [AI Artifacts Architecture](docs/architecture/ai-artifacts.md)   | Prompt engineering framework and artifact types  |
+| [Validation Standards](docs/contributing/ai-artifacts-common.md) | CI/CD validation pipeline and quality gates      |
 
 ## Contributing
 
@@ -138,6 +133,8 @@ section. See [THIRD-PARTY-NOTICES](./THIRD-PARTY-NOTICES) for full details.
 See [SECURITY.md](./SECURITY.md) for the security policy and vulnerability reporting.
 
 See [GOVERNANCE.md](./GOVERNANCE.md) for the project governance model.
+
+See [TRANSPARENCY-NOTE.md](./TRANSPARENCY-NOTE.md) for the Responsible AI Transparency Note covering intended uses, limitations, and the responsibility boundary between HVE Core and the host platform.
 
 ## Trademark Notice
 

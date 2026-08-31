@@ -1,5 +1,5 @@
 #Requires -Modules Pester
-# Copyright (c) Microsoft Corporation.
+# Copyright (c) 2026 Microsoft Corporation. All rights reserved.
 # SPDX-License-Identifier: MIT
 
 BeforeAll {
@@ -174,6 +174,45 @@ Describe 'Get-ModelReferences' -Tag 'Unit' {
 
 #endregion
 
+#region Test-ModelValueIsArray Tests
+
+Describe 'Test-ModelValueIsArray' -Tag 'Unit' {
+    Context 'when model is a string' {
+        It 'Returns false' {
+            $frontmatter = @{ model = 'Claude Haiku 4.5 (copilot)' }
+            Test-ModelValueIsArray -Frontmatter $frontmatter | Should -BeFalse
+        }
+    }
+
+    Context 'when model is an array' {
+        It 'Returns true for a multi-item list' {
+            $frontmatter = @{ model = @('Claude Haiku 4.5 (copilot)', 'GPT-5.4 mini (copilot)') }
+            Test-ModelValueIsArray -Frontmatter $frontmatter | Should -BeTrue
+        }
+
+        It 'Returns true for a single-item list' {
+            $frontmatter = @{ model = @('GPT-5.4 mini (copilot)') }
+            Test-ModelValueIsArray -Frontmatter $frontmatter | Should -BeTrue
+        }
+    }
+
+    Context 'when model value is null' {
+        It 'Returns false' {
+            $frontmatter = @{ model = $null }
+            Test-ModelValueIsArray -Frontmatter $frontmatter | Should -BeFalse
+        }
+    }
+
+    Context 'when model property is absent' {
+        It 'Returns false' {
+            $frontmatter = @{ name = 'Test Agent' }
+            Test-ModelValueIsArray -Frontmatter $frontmatter | Should -BeFalse
+        }
+    }
+}
+
+#endregion
+
 #region Invoke-ModelReferenceValidation Tests
 
 Describe 'Invoke-ModelReferenceValidation' -Tag 'Unit' {
@@ -215,19 +254,19 @@ Describe 'Invoke-ModelReferenceValidation' -Tag 'Unit' {
             @"
 ---
 name: Valid Agent
-model:
-  - Claude Haiku 4.5 (copilot)
-  - GPT-5.4 mini (copilot)
+model: Claude Haiku 4.5 (copilot)
 ---
 
 # Agent
 "@ | Set-Content -Path (Join-Path $script:ValidDir 'test.agent.md') -Encoding utf8
 
-            # Create prompt file with valid single model
+            # Create prompt file with valid model array
             @"
 ---
 description: Valid Prompt
-model: Gemini 3 Flash (Preview) (copilot)
+model:
+  - GPT-5.4 mini (copilot)
+  - Gemini 3 Flash (Preview) (copilot)
 ---
 
 # Prompt
@@ -278,17 +317,17 @@ model: Gemini 3 Flash (Preview) (copilot)
             $script:InvalidDir = Join-Path $script:ValidationDir 'invalid-models'
             New-Item -ItemType Directory -Path $script:InvalidDir -Force | Out-Null
 
-            # Create agent file with invalid model
+            # Create prompt file with invalid model in array
             @"
 ---
-name: Bad Agent
+description: Bad Prompt
 model:
   - Claude Haiku 4.5 (copilot)
   - Nonexistent Model (copilot)
 ---
 
-# Agent
-"@ | Set-Content -Path (Join-Path $script:InvalidDir 'bad.agent.md') -Encoding utf8
+# Prompt
+"@ | Set-Content -Path (Join-Path $script:InvalidDir 'bad.prompt.md') -Encoding utf8
 
             $script:InvalidResult = Invoke-ModelReferenceValidation -CatalogPath $script:TestCatalogPath -ScanPath $script:InvalidDir
         }
@@ -332,17 +371,17 @@ model:
             $script:RetiringCatalogPath = Join-Path $script:CatalogDir 'retiring-catalog.json'
             $retiringCatalog | ConvertTo-Json -Depth 5 | Set-Content -Path $script:RetiringCatalogPath -Encoding utf8
 
-            # Create agent file with retiring model
+            # Create prompt file with retiring model in array
             @"
 ---
-name: Retiring Agent
+description: Retiring Prompt
 model:
   - Old Model (copilot)
   - Claude Haiku 4.5 (copilot)
 ---
 
-# Agent
-"@ | Set-Content -Path (Join-Path $script:RetiringDir 'retiring.agent.md') -Encoding utf8
+# Prompt
+"@ | Set-Content -Path (Join-Path $script:RetiringDir 'retiring.prompt.md') -Encoding utf8
 
             $script:RetiringResult = Invoke-ModelReferenceValidation -CatalogPath $script:RetiringCatalogPath -ScanPath $script:RetiringDir
         }
@@ -378,17 +417,17 @@ model:
             $script:MixedDir = Join-Path $script:ValidationDir 'mixed-models'
             New-Item -ItemType Directory -Path $script:MixedDir -Force | Out-Null
 
-            # Create agent file with both invalid and retiring model
+            # Create prompt file with both invalid and retiring model
             @"
 ---
-name: Mixed Agent
+description: Mixed Prompt
 model:
   - Old Model (copilot)
   - Fake Model (copilot)
 ---
 
-# Agent
-"@ | Set-Content -Path (Join-Path $script:MixedDir 'mixed.agent.md') -Encoding utf8
+# Prompt
+"@ | Set-Content -Path (Join-Path $script:MixedDir 'mixed.prompt.md') -Encoding utf8
 
             $script:MixedResult = Invoke-ModelReferenceValidation -CatalogPath $script:RetiringCatalogPath -ScanPath $script:MixedDir
         }
@@ -400,6 +439,88 @@ model:
         It 'Reports one invalid and one retiring' {
             $script:MixedResult.invalidReferences | Should -Be 1
             $script:MixedResult.retiringReferences | Should -Be 1
+        }
+    }
+
+    Context 'when an agent file declares an array-form model' {
+        BeforeAll {
+            $script:AgentArrayDir = Join-Path $script:ValidationDir 'agent-array-model'
+            New-Item -ItemType Directory -Path $script:AgentArrayDir -Force | Out-Null
+
+            # Agent file with array-form model, both entries otherwise valid
+            @"
+---
+name: Array Agent
+model:
+  - Claude Haiku 4.5 (copilot)
+  - GPT-5.4 mini (copilot)
+---
+
+# Agent
+"@ | Set-Content -Path (Join-Path $script:AgentArrayDir 'array.agent.md') -Encoding utf8
+
+            $script:AgentArrayResult = Invoke-ModelReferenceValidation -CatalogPath $script:TestCatalogPath -ScanPath $script:AgentArrayDir
+        }
+
+        It 'Marks file result as invalid' {
+            $script:AgentArrayResult.results[0].status | Should -Be 'invalid'
+        }
+
+        It 'Reports every array entry as an invalid reference' {
+            $script:AgentArrayResult.invalidReferences | Should -Be 2
+        }
+
+        It 'Reports zero valid references' {
+            $script:AgentArrayResult.validReferences | Should -Be 0
+        }
+
+        It 'Contains one descriptive error about array-form model' {
+            $script:AgentArrayResult.errors | Should -HaveCount 1
+            $script:AgentArrayResult.errors[0].message | Should -Match 'Array-form model is not supported for agent files'
+        }
+    }
+
+    Context 'when an agent file declares an empty array-form model' {
+        BeforeAll {
+            $script:AgentEmptyArrayDir = Join-Path $script:ValidationDir 'agent-empty-array-model'
+            New-Item -ItemType Directory -Path $script:AgentEmptyArrayDir -Force | Out-Null
+
+            # Agent file with an empty array-form model (model: [])
+            @"
+---
+name: Empty Array Agent
+model: []
+---
+
+# Agent
+"@ | Set-Content -Path (Join-Path $script:AgentEmptyArrayDir 'empty-array.agent.md') -Encoding utf8
+
+            $script:AgentEmptyArrayResult = Invoke-ModelReferenceValidation -CatalogPath $script:TestCatalogPath -ScanPath $script:AgentEmptyArrayDir
+        }
+
+        It 'Does not skip the file via the zero-model early return' {
+            $script:AgentEmptyArrayResult.results | Should -HaveCount 1
+        }
+
+        It 'Marks file result as invalid' {
+            $script:AgentEmptyArrayResult.results[0].status | Should -Be 'invalid'
+        }
+
+        It 'Counts the file among files with models' {
+            $script:AgentEmptyArrayResult.filesWithModels | Should -Be 1
+        }
+
+        It 'Reports one invalid reference' {
+            $script:AgentEmptyArrayResult.invalidReferences | Should -Be 1
+        }
+
+        It 'Reports zero valid references' {
+            $script:AgentEmptyArrayResult.validReferences | Should -Be 0
+        }
+
+        It 'Contains one descriptive error about array-form model' {
+            $script:AgentEmptyArrayResult.errors | Should -HaveCount 1
+            $script:AgentEmptyArrayResult.errors[0].message | Should -Match 'Array-form model is not supported for agent files'
         }
     }
 

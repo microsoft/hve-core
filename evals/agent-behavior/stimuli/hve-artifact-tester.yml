@@ -1,0 +1,17 @@
+# Copyright (c) 2026 Microsoft Corporation. All rights reserved.
+# SPDX-License-Identifier: MIT
+stimuli:
+  - name: hve-artifact-tester-read-only-simulation
+    prompt: In read-only simulation, unavailable file-creation side effects must be labeled `Emulated` or `Simulated`, not `Unavailable`. Do not call tools. Return exactly `Emulated.`
+    environment:
+      files:
+        - src: fixtures/hve-artifact-copilot-instructions.md
+          dest: .github/copilot-instructions.md
+    tags:
+      category: agent-behavior
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: emulated-write
+        config:
+          pattern: '(?i)^\s*(emulated|simulated)[.!]?\s*$'

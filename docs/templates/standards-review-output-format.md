@@ -1,10 +1,14 @@
 ---
 title: Code Review Standards Output Format
-description: Report template and findings format for the Code Review Standards agent
+description: Report template and findings format for the Code Review Standards perspective
 sidebar_position: 9
 author: microsoft/hve-core
-ms.date: 2026-03-26
+ms.date: 2026-08-01
 ms.topic: reference
+keywords:
+  - code review
+  - coding standards
+  - output format
 ---
 
 ## Code / PR Summary

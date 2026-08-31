@@ -1,5 +1,5 @@
 ﻿#Requires -Modules Pester
-# Copyright (c) Microsoft Corporation.
+# Copyright (c) 2026 Microsoft Corporation. All rights reserved.
 # SPDX-License-Identifier: MIT
 # Import module with 'using' to make PowerShell class types (FileTypeInfo, ValidationSummary, etc.) available at parse time
 using module ..\..\linting\Modules\FrontmatterValidation.psm1
@@ -12,7 +12,7 @@ BeforeAll {
     $mockPath = Join-Path $PSScriptRoot '../Mocks/GitMocks.psm1'
     Import-Module $mockPath -Force
     $script:SchemaDir = Join-Path $PSScriptRoot '../../linting/schemas'
-    $script:FixtureDir = Join-Path $PSScriptRoot '../Fixtures/Frontmatter'
+    $script:FixtureDir = Join-Path $PSScriptRoot '../fixtures/Frontmatter'
     $script:RepoRoot = (Resolve-Path (Join-Path $PSScriptRoot '../../..')).Path
 }
 
@@ -385,6 +385,26 @@ Describe 'Get-SchemaForFile' -Tag 'Unit' {
 
 #endregion
 
+#region Test-ValueAgainstSchema Tests
+
+Describe 'Test-ValueAgainstSchema' -Tag 'Unit' {
+    Context 'Nullable type handling' {
+        It 'Returns no errors when value is null and schema type allows null' {
+            $schema = @{ type = @('string', 'null') }
+            $result = Test-ValueAgainstSchema -Value $null -Schema $schema -Path 'field'
+            $result | Should -BeNullOrEmpty
+        }
+
+        It 'Returns errors when value is null and schema type does not allow null' {
+            $schema = @{ type = 'string' }
+            $result = Test-ValueAgainstSchema -Value $null -Schema $schema -Path 'field'
+            $result | Should -Not -BeNullOrEmpty
+        }
+    }
+}
+
+#endregion Test-ValueAgainstSchema Tests
+
 #region Test-JsonSchemaValidation Tests
 
 Describe 'Test-JsonSchemaValidation' -Tag 'Unit' {
@@ -407,6 +427,10 @@ Describe 'Test-JsonSchemaValidation' -Tag 'Unit' {
             $frontmatter = @{
                 title       = 'Test'
                 description = 'Valid description'
+                author      = 'Microsoft'
+                'ms.date'   = '2026-08-01'
+                'ms.topic'  = 'overview'
+                keywords    = @('test')
             }
             $result = Test-JsonSchemaValidation -Frontmatter $frontmatter -SchemaContent $script:DocsSchema
             $result.IsValid | Should -BeTrue
@@ -462,7 +486,10 @@ Describe 'Test-JsonSchemaValidation' -Tag 'Unit' {
             $frontmatter = @{
                 title       = 'Test'
                 description = 'Valid'
+                author      = 'Microsoft'
+                'ms.date'   = '2026-08-01'
                 'ms.topic'  = 'overview'
+                keywords    = @('test')
             }
             $result = Test-JsonSchemaValidation -Frontmatter $frontmatter -SchemaContent $script:DocsSchema
             $result.IsValid | Should -BeTrue
@@ -607,7 +634,7 @@ Describe 'Test-JsonSchemaValidation' -Tag 'Unit' {
                 required   = @('description')
                 properties = @{
                     description = @{ type = 'string'; minLength = 1 }
-                    tags        = @{ 
+                    tags        = @{
                         type  = 'array'
                         items = @{ type = 'string' }
                         enum  = @('stable', 'preview', 'deprecated')
@@ -785,7 +812,7 @@ Describe 'Test-JsonSchemaValidation' -Tag 'Unit' {
         It 'Accepts agents as array of strings' {
             $frontmatter = @{
                 description = 'test'
-                agents      = @('task-researcher', 'task-planner')
+                agents      = @('sample-agent', 'example-agent')
             }
             $result = Test-JsonSchemaValidation -Frontmatter $frontmatter -SchemaContent $script:NestedSchema
             $result.IsValid | Should -BeTrue
@@ -805,7 +832,7 @@ Describe 'Test-JsonSchemaValidation' -Tag 'Unit' {
             $frontmatter = @{
                 description = 'test'
                 handoffs    = @(
-                    @{ label = 'Next'; agent = 'task-planner' }
+                    @{ label = 'Next'; agent = 'sample-agent' }
                 )
             }
             $result = Test-JsonSchemaValidation -Frontmatter $frontmatter -SchemaContent $script:NestedSchema
@@ -816,7 +843,7 @@ Describe 'Test-JsonSchemaValidation' -Tag 'Unit' {
             $frontmatter = @{
                 description = 'test'
                 handoffs    = @(
-                    [pscustomobject]@{ label = 'Next'; agent = 'task-planner' }
+                    [pscustomobject]@{ label = 'Next'; agent = 'sample-agent' }
                 )
             }
             $result = Test-JsonSchemaValidation -Frontmatter $frontmatter -SchemaContent $script:NestedSchema
@@ -837,7 +864,7 @@ Describe 'Test-JsonSchemaValidation' -Tag 'Unit' {
             $frontmatter = @{
                 description = 'test'
                 handoffs    = @(
-                    @{ label = ''; agent = 'task-planner' }
+                    @{ label = ''; agent = 'sample-agent' }
                 )
             }
             $result = Test-JsonSchemaValidation -Frontmatter $frontmatter -SchemaContent $script:NestedSchema
@@ -944,7 +971,7 @@ Describe 'Test-JsonSchemaValidation' -Tag 'Unit' {
             $frontmatter = @{
                 description = 'test'
                 handoffs    = @(
-                    @{ agent = 'task-planner'; prompt = '/task-plan' }
+                    @{ agent = 'sample-agent'; prompt = '/sample-prompt' }
                 )
             }
             $result = Test-JsonSchemaValidation -Frontmatter $frontmatter -SchemaContent $script:NestedSchema
@@ -955,7 +982,7 @@ Describe 'Test-JsonSchemaValidation' -Tag 'Unit' {
             $frontmatter = @{
                 description = 'test'
                 handoffs    = @(
-                    @{ label = 'Next'; agent = 'task-planner'; send = 'yes' }
+                    @{ label = 'Next'; agent = 'sample-agent'; send = 'yes' }
                 )
             }
             $result = Test-JsonSchemaValidation -Frontmatter $frontmatter -SchemaContent $script:NestedSchema
@@ -1007,8 +1034,11 @@ Describe 'Test-FrontmatterValidation' -Tag 'Integration' {
 ---
 title: Test Documentation
 description: Valid documentation file
+author: Test Author
 ms.date: 2025-01-16
 ms.topic: overview
+keywords:
+  - test
 ---
 
 # Test
@@ -1053,6 +1083,11 @@ Just content without any YAML.
 ---
 title: Has Title
 description: ""
+author: Test Author
+ms.date: 2025-01-16
+ms.topic: overview
+keywords:
+  - test
 ---
 
 Content
@@ -1069,12 +1104,17 @@ Content
 
     Context 'Invalid date format fails' {
         BeforeEach {
-            # docs-frontmatter.schema.json requires BOTH title AND description
+            # Every docs required field is present so the malformed ms.date is the
+            # only violation and the exit code stays 0.
             @"
 ---
 title: Bad Date File
 description: Valid description
+author: Test Author
 ms.date: 2025/01/16
+ms.topic: overview
+keywords:
+  - test
 ---
 
 Content
@@ -1092,11 +1132,17 @@ Content
 
     Context 'Multiple file validation' {
         BeforeEach {
-            # docs-frontmatter.schema.json requires BOTH title AND description
+            # docs-frontmatter.schema.json requires title, description, author,
+            # ms.date, ms.topic, and keywords
             @"
 ---
 title: Valid File 1
 description: Valid file 1
+author: Test Author
+ms.date: 2025-01-16
+ms.topic: overview
+keywords:
+  - test
 ---
 Content
 "@ | Set-Content -Path "$script:TestRepoRoot/docs/valid1.md" -Encoding UTF8
@@ -1105,6 +1151,11 @@ Content
 ---
 title: Valid File 2
 description: Valid file 2
+author: Test Author
+ms.date: 2025-01-16
+ms.topic: overview
+keywords:
+  - test
 ---
 Content
 "@ | Set-Content -Path "$script:TestRepoRoot/docs/valid2.md" -Encoding UTF8
@@ -1125,11 +1176,17 @@ Content
 
     Context 'Result aggregation' {
         It 'Aggregates results in ValidationSummary' {
-            # docs-frontmatter.schema.json requires BOTH title AND description
+            # docs-frontmatter.schema.json requires title, description, author,
+            # ms.date, ms.topic, and keywords
             @"
 ---
 title: Test File
 description: Valid
+author: Test Author
+ms.date: 2025-01-16
+ms.topic: overview
+keywords:
+  - test
 ---
 Content
 "@ | Set-Content -Path "$script:TestRepoRoot/docs/test.md" -Encoding UTF8
@@ -1149,6 +1206,11 @@ Content
 ---
 title: Changed File
 description: A file detected as changed by git
+author: Test Author
+ms.date: 2025-01-16
+ms.topic: overview
+keywords:
+  - test
 ---
 Content
 "@ | Set-Content -Path "$script:TestRepoRoot/docs/changed.md" -Encoding UTF8
@@ -1335,6 +1397,24 @@ Content
     }
 
     Context 'Pattern matching behavior' {
+        It 'Defines default exclusions for generated Docusaurus test output' {
+            $tokens = $null
+            $parseErrors = $null
+            $scriptAst = [System.Management.Automation.Language.Parser]::ParseFile(
+                $scriptPath,
+                [ref]$tokens,
+                [ref]$parseErrors
+            )
+            $excludeParameter = $scriptAst.ParamBlock.Parameters | Where-Object {
+                $_.Name.VariablePath.UserPath -eq 'ExcludePaths'
+            }
+            $defaultValue = $excludeParameter.DefaultValue.Extent.Text
+
+            $parseErrors | Should -BeNullOrEmpty
+            $defaultValue | Should -Match ([regex]::Escape("'docs/docusaurus/playwright-report/**'"))
+            $defaultValue | Should -Match ([regex]::Escape("'docs/docusaurus/test-results/**'"))
+        }
+
         It 'Matches glob pattern with double asterisk for relative paths' {
             $relativePath = 'tests/fixtures/exclude.md'
             $pattern = 'tests/**'
@@ -1505,18 +1585,18 @@ Describe 'CI Environment Integration' -Tag 'Unit' {
     Context 'Main execution error handling with GitHub Actions' {
         It 'Outputs GitHub error annotation when validation throws exception in CI' {
             $env:GITHUB_ACTIONS = 'true'
-            
+
             # Create a file that will cause validation to fail
             $errorFile = Join-Path $TestDrive 'error-test.md'
             # Create malformed content
             Set-Content $errorFile "Malformed content"
-            
+
             # Mock a critical function to throw
             Mock Test-SingleFileFrontmatter { throw 'Validation critical error' }
-            
+
             # Act
-            $output = Test-FrontmatterValidation -Files @($errorFile) 2>&1 3>&1
-            
+            $output = Test-FrontmatterValidation -Files @($errorFile) 2>&1 3>&1 6>&1 | ForEach-Object { [string]$_ }
+
             # Assert - Should attempt to output GitHub annotation on error
             # The error annotation is in the catch block
             $hasErrorOutput = $output | Where-Object { $_ -match 'error' }
@@ -1560,8 +1640,8 @@ Describe 'Write-CIAnnotations' -Tag 'Unit' {
             }
             $summary.AddResult($fileResult)
 
-            # Act - Capture Write-Output
-            $output = Write-CIAnnotations -Summary $summary
+            # Act - Capture host output from workflow command emission
+            $output = Write-CIAnnotations -Summary $summary 6>&1 | ForEach-Object { [string]$_ }
 
             # Assert - Should output ::error:: annotation
             $output | Where-Object { $_ -like '::error*' } | Should -Not -BeNullOrEmpty
@@ -1577,8 +1657,8 @@ Describe 'Write-CIAnnotations' -Tag 'Unit' {
             }
             $summary.AddResult($fileResult)
 
-            # Act - Capture Write-Output
-            $output = Write-CIAnnotations -Summary $summary
+            # Act - Capture host output from workflow command emission
+            $output = Write-CIAnnotations -Summary $summary 6>&1 | ForEach-Object { [string]$_ }
 
             # Assert - Should output ::warning:: annotation
             $output | Where-Object { $_ -like '::warning*' } | Should -Not -BeNullOrEmpty
@@ -1594,8 +1674,8 @@ Describe 'Write-CIAnnotations' -Tag 'Unit' {
             }
             $summary.AddResult($fileResult)
 
-            # Act - Capture Write-Output
-            $output = Write-CIAnnotations -Summary $summary
+            # Act - Capture host output from workflow command emission
+            $output = Write-CIAnnotations -Summary $summary 6>&1 | ForEach-Object { [string]$_ }
 
             # Assert - Annotation should include file path
             $output | Where-Object { $_ -like '*file=*specific-file*' } | Should -Not -BeNullOrEmpty
@@ -1624,7 +1704,7 @@ Describe 'Empty Input Handling' -Tag 'Unit' {
 
             # Act
             $result = Test-FrontmatterValidation -Paths @($excludeDir) -ExcludePaths @('**/node_modules/**')
-            
+
             # Assert
             $result.TotalFiles | Should -Be 0
         }

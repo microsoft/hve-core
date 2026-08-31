@@ -45,15 +45,23 @@ Within each file, order content as: terraform/provider blocks, variables, locals
 
 File and folder names use `kebab-case` (e.g., `storage-account.tf`, `modules/web-app/`).
 
-Resource names, variable names, local values, and output names use `snake_case` (e.g., `azurerm_storage_account.main_storage`, `resource_group_name`, `local.computed_name`).
+Resource names, variable names, local values, and output names use `snake_case` (e.g., `azurerm_storage_account.data_storage`, `resource_group_name`, `local.computed_name`).
 
-### Resource Logical Names
+### Resource and Data Source Logical Names
 
-Resource logical names (the label after the resource type) follow these patterns:
+Logical names (the label after the resource or data source type) follow these patterns:
 
-* Single instance of a resource type: use `"main"` (e.g., `azurerm_resource_group.main`)
+* Singleton of a type: use `"this"` (e.g., `azurerm_resource_group.this`, `data.azurerm_client_config.this`). The Terraform community has coalesced around `"this"` as the dominant symbolic name for the sole resource or data source of a given type within a module.
 * Multiple instances with distinct purposes: use descriptive names (e.g., `azurerm_storage_account.data`, `azurerm_storage_account.logs`)
 * Dynamic instances: use `for_each` with descriptive keys from `each.key`
+
+```hcl
+resource "azurerm_storage_account" "this" {
+  // resource parameters here
+}
+
+data "azurerm_client_config" "this" {}
+```
 
 ## Variables and Outputs
 
@@ -84,7 +92,7 @@ Every output includes a meaningful `description` without trailing periods. Sensi
 ```hcl
 output "storage_account_id" {
   description = "Resource ID of the deployed storage account"
-  value       = var.should_deploy ? azurerm_storage_account.main[0].id : null
+  value       = var.should_deploy ? azurerm_storage_account.this[0].id : null
   sensitive   = true  // Set true for secrets
 }
 ```
@@ -115,7 +123,7 @@ module "workload" {
   for_each = var.workload_configurations
 
   name                = each.key
-  resource_group_name = azurerm_resource_group.main.name
+  resource_group_name = azurerm_resource_group.this.name
   configuration       = each.value
 }
 ```
@@ -160,7 +168,7 @@ Ternary operators remain appropriate for boolean conditions (`var.is_production 
 
 ## Data Sources and Deferred Lookups
 
-Use standard Terraform data source syntax for existing resource lookups (e.g., `data "azurerm_resource_group"`, `data "azurerm_client_config"`).
+Use standard Terraform data source syntax for existing resource lookups (e.g., `data "azurerm_resource_group"`, `data "azurerm_client_config"`). Apply the same logical-name convention as resources: a singleton data source uses `"this"`, while multiple data sources of the same type use descriptive names or `for_each` keys.
 
 ### Deferred Data Resources
 
@@ -265,7 +273,7 @@ Use `terraform fmt` for formatting, `terraform validate` for configuration valid
 Use lifecycle blocks for resources requiring special handling:
 
 ```hcl
-resource "azurerm_storage_account" "main" {
+resource "azurerm_storage_account" "this" {
   // ...
 
   lifecycle {

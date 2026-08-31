@@ -1,5 +1,5 @@
 #Requires -Modules Pester
-# Copyright (c) Microsoft Corporation.
+# Copyright (c) 2026 Microsoft Corporation. All rights reserved.
 # SPDX-License-Identifier: MIT
 <#
 .SYNOPSIS
@@ -13,10 +13,10 @@ $script:repoRoot = (Resolve-Path (Join-Path $PSScriptRoot '../../..')).Path
 
 $script:identityFiles = @(
     (Join-Path $script:repoRoot '.github/instructions/security/identity.instructions.md'),
-    (Join-Path $script:repoRoot '.github/instructions/security/sssc-identity.instructions.md')
+    (Join-Path $script:repoRoot '.github/instructions/security/sssc-planner.instructions.md')
 )
 
-Describe 'Inline planner state schema defaults' {
+Describe 'Inline planner state schema defaults' -Tag 'Unit' {
     BeforeAll {
         function Get-InlineStateJson {
             param([string]$Path)

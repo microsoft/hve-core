@@ -97,7 +97,3 @@ foothold inside the container.
 * Establish automated patch scanning and notification for all four domains.
 * Decommission or isolate components that have reached end-of-life.
 * Validate that patches are effective by confirming new binary versions are running.
-
----
-
-*🤖 Crafted with precision by ✨Copilot following brilliant human instruction, then carefully refined by our team of discerning human reviewers.*

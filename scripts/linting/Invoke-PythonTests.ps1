@@ -1,5 +1,5 @@
 ﻿#!/usr/bin/env pwsh
-# Copyright (c) Microsoft Corporation.
+# Copyright (c) 2026 Microsoft Corporation. All rights reserved.
 # SPDX-License-Identifier: MIT
 #
 # Invoke-PythonTests.ps1
@@ -7,7 +7,7 @@
 # Purpose: Dynamically discovers and tests Python skills using pytest
 # Author: HVE Core Team
 
-#Requires -Version 7.0
+#Requires -Version 7.4
 
 [CmdletBinding()]
 param(
@@ -82,11 +82,18 @@ function Invoke-PythonTests {
                 $runner = 'pytest'
                 $syncOutput = $null
 
-                if ($uvCommand -and (Test-Path $uvLockPath)) {
+                # use uv if the command is available, regardless of whether uv.lock exists
+                if ($uvCommand) {
                     $runner = 'uv'
-                    Write-Host '  Using uv locked environment' -ForegroundColor Gray
+                    
+                    if (Test-Path $uvLockPath) {
+                        Write-Host '  Using uv locked environment' -ForegroundColor Gray
+                        $syncOutput = & uv sync --locked --dev 2>&1
+                    } else {
+                        Write-Host '  Using uv environment (syncing dev dependencies)' -ForegroundColor Gray
+                        $syncOutput = & uv sync --dev 2>&1
+                    }
 
-                    $syncOutput = & uv sync --locked --dev 2>&1
                     $syncExitCode = $LASTEXITCODE
                     Write-Host "$syncOutput"
 
@@ -126,7 +133,8 @@ function Invoke-PythonTests {
                     }
 
                     if (-not $pytestCmd) {
-                        Write-Host '❌ pytest not available (no uv lockfile, no .venv, and not installed globally)' -ForegroundColor Red
+                        # Updated error message to reflect that uv is the primary check
+                        Write-Host '❌ pytest not available (uv not found, no .venv, and not installed globally)' -ForegroundColor Red
                         $results.success = $false
                         $results.failed++
                         $results.errors += $skillPath

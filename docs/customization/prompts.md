@@ -1,8 +1,8 @@
 ---
 title: Creating Custom Prompts
-description: Author reusable prompt templates with variables, agent delegation, and mode configuration for team workflows
+description: Author reusable prompt templates with variables, agent delegation, and tool restrictions for team workflows
 author: Microsoft
-ms.date: 2026-02-24
+ms.date: 2026-08-06
 ms.topic: how-to
 keywords:
   - prompts
@@ -16,7 +16,9 @@ estimated_reading_time: 6
 
 Prompts are single-session workflow definitions. You invoke a prompt, Copilot executes it, and the task completes in one shot. This distinguishes prompts from agents (multi-turn conversations) and instructions (passive guidance applied to file edits).
 
-Prompt files (`.prompt.md`) live in `.github/prompts/{collection-id}/`:
+Prompt files live under `.github/prompts/`. They are commonly organized into
+package-scoped subdirectories such as `.github/prompts/hve-core/` or
+`.github/prompts/security/`, though the repository also contains top-level prompt files:
 
 ```text
 .github/prompts/
@@ -57,40 +59,50 @@ release notes.
 Frontmatter fields:
 
 * `description` (required): A one-line summary displayed in the prompt picker
-* `agent` (optional): Delegates execution to a specific custom agent
+* `name` (optional): A human-readable identifier for the prompt
+* `argument-hint` (optional): Hint text shown in the prompt picker for expected inputs
+* `agent` (optional): Selects the `ask`, `agent`, or `plan` built-in mode, or delegates to a named custom agent; defaults to the current agent when omitted, or to `agent` when `tools` is specified
+* `model` (optional): Pins the prompt to a specific model or prioritized model list
 * `tools` (optional): Restricts available tools for the prompt
-* `mode` (optional): Changes Copilot behavior mode
 
 The body contains the actual instructions Copilot follows, including any structured sections, requirements, or constraints.
 
-## Accelerating with Prompt Builder
+## Authoring with HVE Builder
 
-The Prompt Builder agent automates prompt creation, evaluation, and refinement. Use its three commands instead of authoring prompt files entirely by hand.
-
-Create a new prompt or improve an existing one with `/prompt-build`:
+Use `hve-builder` create or improve mode to author a prompt and run its quality
+gates through one lifecycle:
 
 ```text
-/prompt-build files=.github/prompts/contoso/sprint-summary.prompt.md promptFiles=.github/prompts/contoso/release-notes.prompt.md
+Use hve-builder with mode=create,
+targets=.github/prompts/contoso/release-notes.prompt.md, and
+requirements="Use sprint-summary.prompt.md as a known structural reference".
 ```
 
-Provide `files` for reference context (existing prompts to use as patterns, instruction files, agent files the prompt delegates to) and `promptFiles` for the prompt files to create or update.
+Provide existing prompts, applicable instructions, and any target agent as
+known references during intake.
 
-Evaluate a prompt's quality with `/prompt-analyze`:
+Use review mode for read-only assessment:
 
 ```text
-/prompt-analyze promptFiles=.github/prompts/contoso/release-notes.prompt.md
+Use hve-builder with mode=review and
+targets=.github/prompts/contoso/release-notes.prompt.md.
 ```
 
-The report covers purpose, capabilities, issues by severity, and overall quality. Run this before sharing prompts with the team.
+The report covers purpose, activation, architecture, issues by severity, and
+the overall outcome. Review it before sharing prompts with the team.
 
-Consolidate overlapping prompts with `/prompt-refactor`:
+Use refactor mode to consolidate overlapping prompts without intentionally
+changing their supported behavior:
 
 ```text
-/prompt-refactor promptFiles=.github/prompts/contoso/*.prompt.md requirements="merge similar reporting prompts into one parameterized template"
+Use hve-builder with mode=refactor,
+targets=.github/prompts/contoso/*.prompt.md, and requirements="merge similar
+reporting prompts into one parameterized template".
 ```
 
 > [!TIP]
-> Run `/prompt-analyze` on existing prompts before creating new ones. The quality report often reveals that an existing prompt can be improved rather than replaced.
+> Run `hve-builder` review mode on existing prompts before creating new ones.
+> The evidence often shows that an existing prompt can be improved instead.
 
 ## Variables and Dynamic Content
 
@@ -135,21 +147,37 @@ defined in #file:.github/instructions/coding-standards/typescript.instructions.m
 
 ## Agent Delegation from Prompts
 
-The `agent:` frontmatter field delegates prompt execution to a custom agent. The value uses the agent's human-readable `name:` from its frontmatter.
+The `agent:` frontmatter field selects how Copilot runs a prompt. Use a built-in mode
+when the prompt needs general conversation, autonomous tool use, or planning behavior:
+
+| Value   | Use when the prompt should                                   |
+|---------|--------------------------------------------------------------|
+| `ask`   | Answer questions without planning source edits               |
+| `agent` | Choose tools and carry out a multi-step task                 |
+| `plan`  | Create an implementation plan before source changes are made |
+
+When `agent` is omitted, VS Code uses the current agent. If the prompt declares
+`tools`, VS Code defaults to `agent` instead.
+
+Use a custom agent's human-readable `name:` when the prompt should delegate to that
+agent's specialized protocol instead of a built-in mode.
 
 ```yaml
 ---
 description: "Plans implementation tasks from a requirements document"
-agent: Task Planner
+agent: RPI Agent
 ---
 ```
 
-When a prompt delegates to an agent, the agent's full protocol (phases, steps, tool restrictions) governs execution. The prompt body provides additional context or scoping without duplicating the agent's workflow.
+When a prompt delegates to a named agent, the agent's full protocol (phases, steps,
+tool restrictions) governs execution. The prompt body provides additional context or
+scoping without duplicating the agent's workflow. Use `agent: agent` instead when the
+prompt needs autonomous tool use but no specialized custom-agent protocol.
 
 ```markdown
 ---
 description: "Plans the next sprint using gathered requirements"
-agent: Task Planner
+agent: RPI Agent
 ---
 
 # Sprint Planning
@@ -163,22 +191,9 @@ agent: Task Planner
 
 This approach separates the reusable agent logic from the specific context of each prompt invocation.
 
-## Mode Configuration
-
-The `mode:` frontmatter field changes Copilot's behavior for the duration of the prompt. Modes control how Copilot interprets the task and which interaction patterns it follows.
-
-```yaml
----
-description: "Performs a security audit of authentication flows"
-mode: agent
----
-```
-
-Mode configuration is useful when a prompt needs Copilot to operate differently than the default chat mode, such as using an agent-style protocol for a single-shot security scan or a focused editing mode for refactoring tasks.
-
 ## Role Scenarios
 
-**Adventure Works' PM** creates a sprint-planning prompt at `.github/prompts/adventure-works/sprint-planning.prompt.md`. The prompt takes a `${input:sprintNumber}` variable, delegates to the Task Planner agent, and scopes the plan to requirements tagged for the specified sprint. PMs across the team invoke `/sprint-planning` and provide only the sprint number.
+**Adventure Works' PM** creates a sprint-planning prompt at `.github/prompts/adventure-works/sprint-planning.prompt.md`. The prompt takes a `${input:sprintNumber}` variable, delegates to RPI Agent, and requires the `rpi-plan` phase to scope work to requirements tagged for the specified sprint. PMs across the team invoke `/sprint-planning` and provide only the sprint number.
 
 **Fabrikam's Data Scientist** builds a notebook-review prompt that analyzes Jupyter notebooks for reproducibility issues. The prompt checks for hardcoded paths, missing dependency declarations, and undocumented data transformations. It uses `#file:` references to pull in the team's notebook conventions.
 

@@ -1,0 +1,33 @@
+# Vally stimulus template — vally-tests skill
+#
+# Copy a single block from `stimuli:` below into the routed eval file from
+# references/eval-suite-routing.md. Every authored stimulus must carry
+# `tags.advisory: "true"` until the graduation policy in
+# evals/behavior-conformance/README.md promotes it.
+#
+# Field reference:
+# * `name`              — unique kebab-case identifier per stimulus.
+# * `prompt`            — block scalar holding the literal user prompt.
+# * `tags.category`     — fixed value `behavior-conformance` or `agent-behavior`.
+# * `tags.kind`         — one of `prompt`, `instructions`, `agent`, `skill`.
+# * `tags.target_artifact` — repo-relative path to the artifact under test.
+# * `tags.advisory`     — always `"true"` on authoring; graduation flips it.
+# * `tags.refusal_category` — optional. Set only on stimuli that intentionally
+#   exercise refusal taxonomy edge cases; mirrors the category id from
+#   references/refusal-taxonomy.md.
+# * `graders`           — array of grader blocks. See grader-template.yml.
+
+stimuli:
+  - name: example-prompt-conformance-stub
+    prompt: |
+      Invoke <prompt-name> with <argument>. Produce the standard handoff.
+    tags:
+      category: behavior-conformance
+      kind: prompt
+      target_artifact: .github/prompts/hve-core/<prompt-name>.prompt.md
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: agent-attribution
+        config:
+          pattern: "(?i)\\b<expected-agent-name>\\b"

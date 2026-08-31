@@ -81,7 +81,3 @@ include org:admin, enabling full takeover.
 * Implement automated drift detection for entitlements.
 * Require multi-party approval for non-routine privilege grants.
 * Track all permission changes with immutable, tamper-evident logs.
-
----
-
-*🤖 Crafted with precision by ✨Copilot following brilliant human instruction, then carefully refined by our team of discerning human reviewers.*

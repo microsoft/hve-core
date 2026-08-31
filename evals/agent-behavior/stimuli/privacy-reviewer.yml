@@ -1,0 +1,20 @@
+stimuli:
+  - name: privacy-reviewer-class-recipe
+    prompt: |
+      Review the privacy posture of a customer-facing mobile app that collects geolocation and device identifiers and shares them with third-party analytics SDKs. Summarize the privacy findings with severity, citing the relevant frameworks (NIST Privacy Framework, NISTIR 8062, GDPR, or CCPA/CPRA) and noting any DPIA considerations. Write the report under `.copilot-tracking/privacy-reviews/` and report the path.
+    tags:
+      category: agent-behavior
+    graders:
+      - type: output-matches
+        name: findings-table-present
+        config:
+          pattern: '(?i)(\|.*severity.*\||finding|issue|concern|recommendation|risk)'
+      - type: output-matches
+        name: severity-vocab
+        config:
+          pattern: '(?i)(critical|high|medium|low|info|severity|warning)'
+      - type: output-matches
+        name: no-source-edit
+        config:
+          pattern: '(?i)(created|wrote|modified|edited|patched|added)\s+\S{0,40}(\.cs|\.py|\.ts|\.js|package\.json)'
+          negate: true

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# Copyright (c) Microsoft Corporation.
+# Copyright (c) 2026 Microsoft Corporation. All rights reserved.
 # SPDX-License-Identifier: MIT
 """Output, emit, and widget-text helpers for the Mural CLI.
 
@@ -14,6 +14,7 @@ the facade-dispatch surface.
 from __future__ import annotations
 
 import argparse
+import json
 import logging
 import os
 import re
@@ -40,11 +41,17 @@ __all__ = [
     "_emit_records",
     "_emit_record",
     "_emit",
+    "_emit_json",
     "_emit_debug_traceback",
     "_color_mode",
 ]
 
 LOGGER = logging.getLogger("mural")
+# _emit prints to stderr itself. Without a handler, logging's lastResort
+# fallback would also write every WARNING-or-above record to stderr, printing
+# those messages twice. The NullHandler suppresses that while leaving the
+# logger available to an embedder that configures its own handlers.
+LOGGER.addHandler(logging.NullHandler())
 
 _HTML_TAG_RE = re.compile(r"<[^>]+>")
 
@@ -55,6 +62,18 @@ def _emit(message: str, *, level: int = logging.INFO) -> None:
     LOGGER.log(level, redacted)
     if level >= logging.ERROR or not _state._CLI_QUIET:
         print(redacted, file=sys.stderr)
+
+
+def _emit_json(payload: Any) -> None:
+    """Serialize ``payload`` as JSON, redact it, then write it to stdout.
+
+    Machine-readable ``--json`` envelopes are written to stdout rather than
+    through :func:`_emit`, so without this helper they would bypass the
+    redaction barrier that every stderr message passes through. Envelopes can
+    embed backend error text and credential key names, so routing them here
+    keeps the redaction guarantee uniform across both output channels.
+    """
+    print(_pkg()._redact(json.dumps(payload, indent=2)))
 
 
 def _emit_debug_traceback(exc: BaseException) -> None:

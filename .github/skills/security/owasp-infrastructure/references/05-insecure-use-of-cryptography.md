@@ -92,7 +92,3 @@ Customers unknowingly transfer money to the attacker.
 * Enable cryptographic identity and integrity verification on all internal communication
   protocols.
 * Conduct a full audit of internal communication paths and remediate any unencrypted channels.
-
----
-
-*🤖 Crafted with precision by ✨Copilot following brilliant human instruction, then carefully refined by our team of discerning human reviewers.*

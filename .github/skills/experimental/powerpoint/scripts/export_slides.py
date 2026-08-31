@@ -1,4 +1,4 @@
-# Copyright (c) Microsoft Corporation.
+# Copyright (c) 2026 Microsoft Corporation. All rights reserved.
 # SPDX-License-Identifier: MIT
 """Export PowerPoint slides to PDF with optional slide filtering.
 
@@ -21,9 +21,12 @@ import sys
 import tempfile
 from pathlib import Path
 
+from pdf_safety import PdfRenderError, PdfSafetyError, safe_open_pdf
+
 EXIT_SUCCESS = 0
 EXIT_FAILURE = 1
 EXIT_ERROR = 2
+EXIT_RENDER = 3
 
 logger = logging.getLogger(__name__)
 
@@ -148,6 +151,11 @@ def filter_pdf_pages(pdf_path: Path, pages: list[int], output_path: Path) -> Pat
 
     Returns:
         Path to the filtered PDF.
+
+    Raises:
+        PdfSafetyError: For any size, format, page-count, or parse failure
+            from the safety layer. The caller (typically :func:`run`) is
+            responsible for translating the failure into a process exit code.
     """
     try:
         import fitz  # noqa: PLC0415 — PyMuPDF
@@ -157,22 +165,39 @@ def filter_pdf_pages(pdf_path: Path, pages: list[int], output_path: Path) -> Pat
         )
         sys.exit(EXIT_FAILURE)
 
-    doc = fitz.open(str(pdf_path))
-    new_doc = fitz.open()
-    total_pages = len(doc)
-
-    for page_num in pages:
-        if 1 <= page_num <= total_pages:
-            new_doc.insert_pdf(doc, from_page=page_num - 1, to_page=page_num - 1)
-        else:
-            logger.warning(
-                "Slide %d out of range (1-%d), skipping", page_num, total_pages
-            )
-
     output_path.parent.mkdir(parents=True, exist_ok=True)
-    new_doc.save(str(output_path))
-    new_doc.close()
-    doc.close()
+
+    try:
+        with safe_open_pdf(pdf_path) as doc:
+            new_doc = fitz.open()
+            try:
+                total_pages = len(doc)
+                for page_num in pages:
+                    if 1 <= page_num <= total_pages:
+                        try:
+                            new_doc.insert_pdf(
+                                doc,
+                                from_page=page_num - 1,
+                                to_page=page_num - 1,
+                            )
+                        except Exception as exc:
+                            raise PdfRenderError(
+                                f"PDF filter failed during page insert for {pdf_path}"
+                            ) from exc
+                    else:
+                        logger.warning(
+                            "Slide %d out of range (1-%d), skipping",
+                            page_num,
+                            total_pages,
+                        )
+
+                new_doc.save(str(output_path))
+            finally:
+                new_doc.close()
+    except PdfSafetyError:
+        raise
+    except Exception as exc:
+        raise PdfRenderError(f"PDF filter failed for {pdf_path}") from exc
 
     logger.info("Filtered PDF saved: %s (%d pages)", output_path, len(pages))
     return output_path
@@ -208,7 +233,14 @@ def run(args: argparse.Namespace) -> int:
         if args.slides:
             slide_nums = parse_slide_numbers(args.slides)
             logger.info("Filtering to slides: %s", slide_nums)
-            filter_pdf_pages(full_pdf, slide_nums, output_path)
+            try:
+                filter_pdf_pages(full_pdf, slide_nums, output_path)
+            except PdfRenderError as exc:
+                logger.error("PDF render failed for %s: %s", full_pdf, exc)
+                return EXIT_RENDER
+            except PdfSafetyError as exc:
+                logger.error("PDF safety check failed for %s: %s", full_pdf, exc)
+                return EXIT_FAILURE
         else:
             output_path.parent.mkdir(parents=True, exist_ok=True)
             shutil.copy2(str(full_pdf), str(output_path))

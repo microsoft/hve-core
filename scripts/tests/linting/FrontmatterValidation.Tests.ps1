@@ -1,4 +1,4 @@
-﻿# Copyright (c) Microsoft Corporation.
+﻿# Copyright (c) 2026 Microsoft Corporation. All rights reserved.
 # SPDX-License-Identifier: MIT
 
 <#
@@ -814,13 +814,14 @@ Describe 'Test-GitHubResourceFileFields' -Tag 'Unit' {
 
 Describe 'Test-DocsFileFields' -Tag 'Unit' {
     Context 'Valid frontmatter' {
-        It 'Returns only warnings for complete frontmatter' {
+        It 'Returns no errors for complete frontmatter' {
             $frontmatter = @{
                 title = 'Getting Started'
                 description = 'How to get started with the project'
                 author = 'docs-team'
                 'ms.date' = '2025-01-16'
                 'ms.topic' = 'overview'
+                keywords = @('getting started', 'onboarding')
             }
 
             $issues = Test-DocsFileFields -Frontmatter $frontmatter -RelativePath 'docs/getting-started.md'
@@ -848,10 +849,8 @@ Describe 'Test-DocsFileFields' -Tag 'Unit' {
             $errors = $issues | Where-Object { $_.Type -eq 'Error' -and $_.Field -eq 'description' }
             $errors.Count | Should -Be 1
         }
-    }
 
-    Context 'Missing suggested fields' {
-        It 'Returns warnings for missing author, ms.date, ms.topic' {
+        It 'Returns an error for each of author, ms.date, ms.topic, and keywords' {
             $frontmatter = @{
                 title = 'Test'
                 description = 'Test'
@@ -859,8 +858,58 @@ Describe 'Test-DocsFileFields' -Tag 'Unit' {
 
             $issues = Test-DocsFileFields -Frontmatter $frontmatter -RelativePath 'docs/test.md'
 
-            $warnings = $issues | Where-Object { $_.Type -eq 'Warning' }
-            $warnings.Count | Should -BeGreaterOrEqual 3
+            foreach ($field in @('author', 'ms.date', 'ms.topic', 'keywords')) {
+                $fieldErrors = $issues | Where-Object { $_.Type -eq 'Error' -and $_.Field -eq $field }
+                $fieldErrors.Count | Should -Be 1 -Because "'$field' is required for docs files"
+            }
+        }
+
+        It 'Returns error for an empty keywords array' {
+            $frontmatter = @{
+                title = 'Test'
+                description = 'Test'
+                author = 'docs-team'
+                'ms.date' = '2025-01-16'
+                'ms.topic' = 'overview'
+                keywords = @()
+            }
+
+            $issues = Test-DocsFileFields -Frontmatter $frontmatter -RelativePath 'docs/test.md'
+
+            $keywordErrors = $issues | Where-Object { $_.Type -eq 'Error' -and $_.Field -eq 'keywords' }
+            $keywordErrors.Count | Should -Be 1
+        }
+    }
+
+    Context 'ADR pages' {
+        It 'Does not require keywords because the ADR schema forbids it' {
+            $frontmatter = @{
+                title = 'Adopt something'
+                description = 'An architecture decision'
+                author = 'HVE Core Maintainers'
+                'ms.date' = '2026-07-16'
+                'ms.topic' = 'reference'
+            }
+
+            $issues = Test-DocsFileFields -Frontmatter $frontmatter -RelativePath 'docs/planning/adrs/0001-adopt-something.md'
+
+            $errors = $issues | Where-Object { $_.Type -eq 'Error' }
+            $errors.Count | Should -Be 0
+        }
+
+        It 'Still requires keywords for non-ADR pages under docs/planning' {
+            $frontmatter = @{
+                title = 'A PRD'
+                description = 'A product requirements document'
+                author = 'HVE Core Maintainers'
+                'ms.date' = '2026-07-16'
+                'ms.topic' = 'reference'
+            }
+
+            $issues = Test-DocsFileFields -Frontmatter $frontmatter -RelativePath 'docs/planning/prds/a-prd.md'
+
+            $keywordErrors = $issues | Where-Object { $_.Type -eq 'Error' -and $_.Field -eq 'keywords' }
+            $keywordErrors.Count | Should -Be 1
         }
     }
 
@@ -880,7 +929,7 @@ Describe 'Test-DocsFileFields' -Tag 'Unit' {
         }
 
         It 'Returns no warning for valid topic types' {
-            $validTopics = @('overview', 'concept', 'tutorial', 'reference', 'how-to', 'troubleshooting')
+            $validTopics = @('overview', 'concept', 'tutorial', 'reference', 'how-to', 'troubleshooting', 'architecture')
 
             foreach ($topic in $validTopics) {
                 $frontmatter = @{
@@ -1200,6 +1249,8 @@ description: A test file description
 ms.date: 01/15/2025
 author: testuser
 ms.topic: concept
+keywords:
+  - test
 ---
 
 # Content
@@ -1388,6 +1439,72 @@ No footer
 
             $footerIssues = $result.Issues | Where-Object { $_.Field -eq 'footer' }
             $footerIssues | Should -BeNullOrEmpty
+        }
+    }
+
+    Context 'Agentic GHCP asset footers' {
+        It 'Does not require footer for agentic GHCP asset <RelativePath>' -ForEach @(
+            @{ RelativePath = '.github/workflows/workflow-notes.md' }
+            @{ RelativePath = '.github/skills/example/references/reference.md' }
+            @{ RelativePath = '.github/skills/example/SKILL.md' }
+        ) {
+            $mockContent = @"
+---
+title: Agentic Asset
+description: Test asset
+---
+
+# Agentic Asset
+
+No Copilot footer here
+"@
+            $testFile = Join-Path $script:TestRepoRoot $RelativePath
+            $result = Test-SingleFileFrontmatter `
+                -FilePath $testFile `
+                -RepoRoot $script:TestRepoRoot `
+                -FileReader { $mockContent }.GetNewClosure()
+
+            $footerIssues = $result.Issues | Where-Object { $_.Field -eq 'footer' }
+            $footerIssues | Should -BeNullOrEmpty
+        }
+
+        It 'Rejects standard Copilot footer for agentic GHCP asset <RelativePath>' -ForEach @(
+            @{
+                RelativePath = '.github/workflows/workflow-notes.md'
+                FooterText   = '🤖 Crafted with precision by ✨Copilot following brilliant human instruction, carefully refined by our team of discerning human reviewers.'
+            }
+            @{
+                RelativePath = '.github/workflows/README.md'
+                FooterText   = '🤖 Crafted with precision by ✨Copilot following brilliant human instruction, then carefully refined by our team of discerning human reviewers.'
+            }
+            @{
+                RelativePath = '.github/skills/example/references/reference.md'
+                FooterText   = '🤖 Crafted with precision by ✨Copilot following brilliant human instruction, carefully refined by our team of discerning human reviewers.'
+            }
+            @{
+                RelativePath = '.github/skills/example/SKILL.md'
+                FooterText   = '🤖 Crafted with precision by ✨Copilot following brilliant human instruction, carefully refined by our team of discerning human reviewers.'
+            }
+        ) {
+            $mockContent = @"
+---
+title: Agentic Asset
+description: Test asset
+---
+
+# Agentic Asset
+
+$FooterText
+"@
+            $testFile = Join-Path $script:TestRepoRoot $RelativePath
+            $result = Test-SingleFileFrontmatter `
+                -FilePath $testFile `
+                -RepoRoot $script:TestRepoRoot `
+                -FileReader { $mockContent }.GetNewClosure()
+
+            $footerIssues = $result.Issues | Where-Object { $_.Field -eq 'footer' }
+            $footerIssues | Should -Not -BeNullOrEmpty
+            $footerIssues[0].Message | Should -Be 'Standard Copilot footer is not allowed on agentic GHCP assets'
         }
     }
 }
@@ -1603,7 +1720,7 @@ Describe 'Write-CIAnnotations' -Tag 'Unit' {
         $result.AddError('Test error', 'field')
         $summary.AddResult($result)
 
-        $output = Write-CIAnnotations -Summary $summary
+        $output = Write-CIAnnotations -Summary $summary 6>&1 | ForEach-Object { [string]$_ }
         $output | Should -BeLike '::error file=test.md*::Test error'
     }
 
@@ -1613,7 +1730,7 @@ Describe 'Write-CIAnnotations' -Tag 'Unit' {
         $result.AddWarning('Test warning', 'field')
         $summary.AddResult($result)
 
-        $output = Write-CIAnnotations -Summary $summary
+        $output = Write-CIAnnotations -Summary $summary 6>&1 | ForEach-Object { [string]$_ }
         $output | Should -BeLike '::warning file=test.md*::Test warning'
     }
 
@@ -1624,7 +1741,7 @@ Describe 'Write-CIAnnotations' -Tag 'Unit' {
         $result.AddError('Error at line', 'field', 42)
         $summary.AddResult($result)
 
-        $output = Write-CIAnnotations -Summary $summary
+        $output = Write-CIAnnotations -Summary $summary 6>&1 | ForEach-Object { [string]$_ }
         $output | Should -BeLike '::error file=test.md,line=42::Error at line'
     }
 
@@ -1634,7 +1751,7 @@ Describe 'Write-CIAnnotations' -Tag 'Unit' {
         $result.HasFrontmatter = $true
         $summary.AddResult($result)
 
-        $output = Write-CIAnnotations -Summary $summary
+        $output = Write-CIAnnotations -Summary $summary 6>&1 | ForEach-Object { [string]$_ }
         $output | Should -BeNullOrEmpty
     }
 
@@ -1644,7 +1761,7 @@ Describe 'Write-CIAnnotations' -Tag 'Unit' {
         $result.AddError('50% complete', 'field')
         $summary.AddResult($result)
 
-        $output = Write-CIAnnotations -Summary $summary
+        $output = Write-CIAnnotations -Summary $summary 6>&1 | ForEach-Object { [string]$_ }
         $output | Should -Match '50%25 complete'
     }
 
@@ -1654,7 +1771,7 @@ Describe 'Write-CIAnnotations' -Tag 'Unit' {
         $result.AddError("line1`rline2", 'field')
         $summary.AddResult($result)
 
-        $output = Write-CIAnnotations -Summary $summary
+        $output = Write-CIAnnotations -Summary $summary 6>&1 | ForEach-Object { [string]$_ }
         $output | Should -Match 'line1%0Dline2'
     }
 
@@ -1664,7 +1781,7 @@ Describe 'Write-CIAnnotations' -Tag 'Unit' {
         $result.AddError("line1`nline2", 'field')
         $summary.AddResult($result)
 
-        $output = Write-CIAnnotations -Summary $summary
+        $output = Write-CIAnnotations -Summary $summary 6>&1 | ForEach-Object { [string]$_ }
         $output | Should -Match 'line1%0Aline2'
     }
 
@@ -1674,7 +1791,7 @@ Describe 'Write-CIAnnotations' -Tag 'Unit' {
         $result.AddError('scope::value', 'field')
         $summary.AddResult($result)
 
-        $output = Write-CIAnnotations -Summary $summary
+        $output = Write-CIAnnotations -Summary $summary 6>&1 | ForEach-Object { [string]$_ }
         $output | Should -Match 'scope%3A%3Avalue'
     }
 
@@ -1684,7 +1801,7 @@ Describe 'Write-CIAnnotations' -Tag 'Unit' {
         $result.AddError('Test error', 'field')
         $summary.AddResult($result)
 
-        $output = Write-CIAnnotations -Summary $summary
+        $output = Write-CIAnnotations -Summary $summary 6>&1 | ForEach-Object { [string]$_ }
         $output | Should -Match 'file=path%3Afile\.md'
     }
 
@@ -1694,7 +1811,7 @@ Describe 'Write-CIAnnotations' -Tag 'Unit' {
         $result.AddError('Test error', 'field')
         $summary.AddResult($result)
 
-        $output = Write-CIAnnotations -Summary $summary
+        $output = Write-CIAnnotations -Summary $summary 6>&1 | ForEach-Object { [string]$_ }
         $output | Should -Match 'file=file%2Cbackup\.md'
     }
 
@@ -1704,7 +1821,7 @@ Describe 'Write-CIAnnotations' -Tag 'Unit' {
         $result.AddError('Test error', 'field')
         $summary.AddResult($result)
 
-        $output = Write-CIAnnotations -Summary $summary
+        $output = Write-CIAnnotations -Summary $summary 6>&1 | ForEach-Object { [string]$_ }
         $output | Should -Match 'file=file%2520name\.md'
     }
 

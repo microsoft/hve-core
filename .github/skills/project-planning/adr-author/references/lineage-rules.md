@@ -60,5 +60,3 @@ The validator emits one of the following five error categories when a lineage ru
 3. `LINEAGE_BAD_STATUS_TRANSITION` — successor or predecessor ends in a status other than the permitted (`accepted`/`proposed`, `superseded`) combination.
 4. `LINEAGE_ATOMIC_VIOLATION` — exactly one of the two affected ADR files was modified in the Govern invocation; both must be present in the change set.
 5. `LINEAGE_LAST_DECISION_DRIFT` — `last_decision_id` in `.adr-config.yml` does not match the highest ADR identifier on disk, indicating an unauthorized manual edit or a missed script run.
-
-*🤖 Crafted with precision by ✨Copilot following brilliant human instruction, then carefully refined by our team of discerning human reviewers.*

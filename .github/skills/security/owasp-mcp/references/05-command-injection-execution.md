@@ -87,7 +87,3 @@ The agent constructs an unparameterized query and the injection destroys the dat
 * Audit all recent tool executions for unauthorized commands.
 * Patch tool implementations to use parameterized execution.
 * Deploy sandboxing and least-privilege enforcement.
-
----
-
-*🤖 Crafted with precision by ✨Copilot following brilliant human instruction, then carefully refined by our team of discerning human reviewers.*

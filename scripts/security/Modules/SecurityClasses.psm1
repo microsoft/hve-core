@@ -1,4 +1,4 @@
-# Copyright (c) Microsoft Corporation.
+# Copyright (c) 2026 Microsoft Corporation. All rights reserved.
 # SPDX-License-Identifier: MIT
 
 # SecurityClasses.psm1
@@ -35,6 +35,9 @@ class DependencyViolation {
         - VersionMismatch: Version comment does not match the resolved pinned reference
         - MissingVersionComment: Dependency is pinned but lacks a human-readable version comment
         - MissingPermissions: Workflow file lacks required permissions declarations
+        - MissingJobPermissions: Workflow job lacks its own permissions declaration and inherits an implicit grant
+        - NonUbuntuRunner: Job's runs-on value is not a GitHub-hosted Ubuntu label
+        - MissingRunner: Job has no resolvable runs-on value
         - Empty string: Default or unclassified violation
     #>
 
@@ -46,7 +49,7 @@ class DependencyViolation {
     [string]$CurrentRef
     [ValidateSet('High', 'Medium', 'Low', 'Info')]
     [string]$Severity
-    [ValidateSet('Unpinned', 'Stale', 'VersionMismatch', 'MissingVersionComment', 'MissingPermissions', '')]
+    [ValidateSet('Unpinned', 'Stale', 'VersionMismatch', 'MissingVersionComment', 'MissingPermissions', 'MissingJobPermissions', 'NonUbuntuRunner', 'MissingRunner', '')]
     [string]$ViolationType
     [string]$Description
     [string]$Remediation

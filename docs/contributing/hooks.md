@@ -1,0 +1,149 @@
+---
+title: Contributing Hooks
+description: How to implement, register, and validate hook artifacts in hve-core
+sidebar_position: 7
+author: Microsoft
+ms.date: 2026-08-19
+ms.topic: how-to
+keywords:
+  - hooks
+  - contributing
+  - telemetry
+  - sidecar automation
+estimated_reading_time: 6
+---
+
+## Why Hooks Exist
+
+Hooks let you run lightweight automation during Copilot lifecycle events without modifying agents, prompts, or skills. In hve-core, hooks are plugin-only components distributed with other AI customization files.
+
+Use a hook when you need event-driven behavior such as:
+
+* collecting local diagnostics or telemetry
+* enforcing lightweight local policy checks
+* triggering sidecar automation before or after tool calls
+
+## Hook Layout in This Repository
+
+Hooks use package-oriented source folders. Use this structure for hook contributions:
+
+| Path                                                | Purpose                                                         |
+|-----------------------------------------------------|-----------------------------------------------------------------|
+| `.github/hooks/<package>/<name>.json`               | Hook manifest that maps lifecycle events to executable commands |
+| `.github/hooks/<package>/<name>/`                   | Hook implementation scripts and support files                   |
+| `scripts/linting/schemas/hook-manifest.schema.json` | JSON Schema (draft-07) that defines the manifest contract       |
+| `plugin.json`                                       | Canonical repository-relative hook declaration for the plugin   |
+| `docs/plugins/hve-core.md`                          | Durable plugin documentation                                    |
+
+Manifests live one package level down (`.github/hooks/<package>/`). A flat `.github/hooks/<name>.json` is treated as a repo-specific artifact and is excluded from distribution.
+
+The repository ships no hook manifest today. The generic contract below stays supported, and the validator accepts a repository with zero manifests.
+
+## Implementing a New Hook
+
+1. Add a manifest at `.github/hooks/<package>/<name>.json`.
+2. Add executable scripts under `.github/hooks/<package>/<name>/`.
+3. Register the manifest through the `hooks` field in root `plugin.json` using its repository-relative `.github/...` path.
+4. Document the hook in `docs/plugins/hve-core.md`.
+5. Add or update docs under `docs/` for setup and usage.
+
+Minimal manifest pattern:
+
+```json
+{
+  "version": 1,
+  "hooks": {
+    "preToolUse": [
+      {
+        "type": "command",
+        "bash": ".github/hooks/shared/my-hook/my-hook.sh",
+        "powershell": ".github/hooks/shared/my-hook/Invoke-MyHook.ps1",
+        "timeoutSec": 10
+      }
+    ]
+  }
+}
+```
+
+## Script Contract and Runtime Behavior
+
+For reliability and portability, hook scripts should follow these rules:
+
+* Read event payload JSON from stdin.
+* Return quickly on the disabled path.
+* Write `{"continue":true}` to stdout on normal completion.
+* Avoid interactive prompts.
+* Keep runtime short and respect `timeoutSec` values in the manifest.
+* Support both bash and PowerShell paths when practical.
+
+## Manifest Schema and Validation
+
+Manifests are validated against `scripts/linting/schemas/hook-manifest.schema.json`, the authoritative contract. The schema enforces the allowed top-level keys (`version`, `description`, `hooks`), the eleven CLI-lowercase event names (`sessionStart`, `sessionEnd`, `userPromptSubmit`, `userPromptSubmitted`, `preToolUse`, `postToolUse`, `preCompact`, `subagentStart`, `subagentStop`, `stop`, `agentStop`), and the permitted command properties.
+
+Run `npm run lint:hooks` to validate every package-scoped manifest. On failure, the validator prints each error and the schema path so you can reconcile the manifest against the contract.
+
+## Handling Sensitive Payloads
+
+Hook payloads can contain sensitive data. `PreToolUse` inputs include full file
+contents being written and shell command strings, and `UserPromptSubmit`
+includes the full prompt, any of which may carry secrets. Follow these rules
+when a hook persists payloads to disk:
+
+* Store only the minimum needed for the hook's purpose. Prefer derived signals
+  (keys, lengths, counts, truncated previews) over verbatim values.
+* Gate any verbatim payload capture behind its own explicit opt-in, separate
+  from the hook's main enable gate, and default it off.
+* Write to local, gitignored locations and never to committed paths.
+* Document exactly what is captured, where it is written, and how to remove it.
+
+A hook that persists derived signals should keep any verbatim payload capture
+behind its own environment gate, default it off, and name the exact file it
+writes so an operator can delete it.
+
+## Event Compatibility Guidance
+
+Write a single CLI-format block per event: lowercase event keys with `bash` and `powershell` command properties. VS Code automatically converts the lowercase CLI event names to its PascalCase form and maps `bash` to `osx`/`linux` and `powershell` to `windows`, so one block covers both surfaces. Do not also declare a PascalCase copy of the same event; VS Code would register and fire both, duplicating every invocation.
+
+Choose CLI event names that convert to valid VS Code events:
+
+* `sessionStart` -> `SessionStart`
+* `preToolUse` -> `PreToolUse`
+* `userPromptSubmit` -> `UserPromptSubmit`: VS Code converts this form; the Copilot CLI documents the camelCase name for this event as `userPromptSubmitted`, so the validator accepts both.
+* `stop` -> `Stop`: a per-turn signal in the Copilot CLI (documented as `agentStop`, fired when the main agent finishes a turn) whose payload carries `stopReason` (for example `end_turn`); VS Code documents `Stop` as the agent session end.
+* `sessionEnd` -> `SessionEnd`: the **session** termination, fired once; its payload carries `reason` (`complete`, `error`, `abort`, `timeout`, or `user_exit`) and no `stopReason`. Only the Copilot CLI and cloud agent fire `SessionEnd`; VS Code does not implement this event, so a `sessionEnd` hook never fires there.
+
+`stop` and `sessionEnd` are distinct events, not duplicates: a hook that needs a per-turn signal registers `stop`, while a hook that needs a session-end signal registers `sessionEnd`. Registering both is valid when both signals are required.
+
+## Registering a Hook in the Plugin
+
+Set the plugin manifest's `hooks` field to the `.github`-root-relative canonical manifest path:
+
+```json
+{
+  "hooks": "hooks/<package>/my-hook.json"
+}
+```
+
+Then update `docs/plugins/hve-core.md` so users can discover what the hook does.
+
+## Validation Checklist
+
+Before opening a PR:
+
+1. Run `npm run lint:hooks`
+2. Run `npm run plugin:validate`
+3. Run `npm run docs:generate:check`
+4. Run `npm run lint:md`
+
+When your hook includes scripts, also run the relevant script linters and tests for those languages.
+
+## Related Guides
+
+* [Custom Agents](custom-agents)
+* [Instructions](instructions)
+* [Common Standards](ai-artifacts-common)
+
+---
+
+*🤖 Crafted with precision by ✨Copilot following brilliant human instruction,
+then carefully refined by our team of discerning human reviewers.*

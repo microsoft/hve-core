@@ -1,0 +1,21 @@
+# Copyright (c) 2026 Microsoft Corporation. All rights reserved.
+# SPDX-License-Identifier: MIT
+stimuli:
+  - name: code-review-pr-lens
+    prompt: |
+      As the PR code-review perspective, summarize this pull request at the PR
+      level: scope hygiene, validation evidence, and follow-up items. The PR
+      adds a retry helper plus tests and touches an unrelated formatting change.
+    tags:
+      category: agent-behavior
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: pr-summary-vocabulary
+        config:
+          pattern: '(?i)(summary|scope|validation|evidence|follow[- ]?up|out[- ]?of[- ]?scope|test|recommend)'
+      - type: output-matches
+        name: no-source-edit
+        config:
+          pattern: '(?i)(\.cs|\.py|\.ts|\.js|package\.json)'
+          negate: true

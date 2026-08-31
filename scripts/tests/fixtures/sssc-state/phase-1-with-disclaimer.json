@@ -44,7 +44,7 @@
     {
       "noticeType": "professional-review-reminder",
       "shownAt": "2025-01-01T00:00:00Z",
-      "source": ".github/instructions/security/sssc-identity.instructions.md",
+      "source": ".github/instructions/security/sssc-planner.instructions.md",
       "details": { "phase": "phase1" }
     }
   ],

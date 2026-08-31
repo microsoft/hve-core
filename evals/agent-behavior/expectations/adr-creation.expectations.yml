@@ -1,0 +1,57 @@
+# Copyright (c) 2026 Microsoft Corporation. All rights reserved.
+# SPDX-License-Identifier: MIT
+# Supporting expectations for adr-creation. The executable graders live in the
+# matching stimulus partial.
+slug: adr-creation
+class: research-writer
+agent_file: .github/agents/project-planning/adr-creation.agent.md
+stimulus_file: evals/agent-behavior/stimuli/adr-creation.yml
+latest_result: evals/results/agent-matrix/2026-05-28/adr-creation.json
+source_review_date: 2026-07-17
+
+expectations:
+  - expectation_id: session-path
+    summary: Session state is placed under the ADR planning subtree.
+    signal: Output names `.copilot-tracking/adr-plans/adopt-postgresql`.
+    pass_criteria: |
+      The response reports the supplied project slug under
+      `.copilot-tracking/adr-plans/`.
+    failure_modes:
+      - Session path uses a different tracking subtree.
+      - Session path omits the supplied project slug.
+    priority: high
+    contract_ref: "agent §ADR Creator; identity §Canonical state.json Schema"
+
+  - expectation_id: initial-phase
+    summary: A capture session starts in Frame.
+    signal: Output identifies Frame as the current phase.
+    pass_criteria: |
+      The response states that the initialized capture session is in Frame.
+    failure_modes:
+      - Response starts in Decide or Govern.
+      - Response omits the current phase.
+    priority: high
+    contract_ref: "identity §Three-Phase State Machine; identity §State Creation"
+
+  - expectation_id: stimulus-topic-fidelity
+    summary: Response preserves the decision topic from the stimulus.
+    signal: Output mentions PostgreSQL.
+    pass_criteria: |
+      The response identifies PostgreSQL as the subject of the ADR session.
+    failure_modes:
+      - Response discusses an unrelated architecture decision.
+      - Response uses only generic placeholder text.
+    priority: medium
+    stimulus_scoped: true
+    contract_ref: "stimulus topic"
+
+  - expectation_id: no-source-edit
+    summary: Session initialization does not modify source code.
+    signal: Output does not report source-file or package-manifest edits.
+    pass_criteria: |
+      The response does not claim edits to source files or package.json.
+    failure_modes:
+      - Session initialization claims a source-code change.
+      - Session initialization claims a package.json change.
+    priority: medium
+    contract_ref: "agent scope and stimulus boundary"

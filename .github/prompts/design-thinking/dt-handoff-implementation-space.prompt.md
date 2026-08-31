@@ -1,5 +1,5 @@
 ---
-description: 'Compiles DT Methods 7-9 outputs into an RPI-ready handoff artifact targeting Task Researcher'
+description: 'Compiles DT Methods 7-9 into research-ready input for rpi-research at the Implementation Space exit'
 agent: 'agent'
 tools: ['read_file', 'create_file', 'replace_string_in_file']
 argument-hint: "project-slug=..."
@@ -7,7 +7,7 @@ argument-hint: "project-slug=..."
 
 # Implementation Space Exit Handoff
 
-Compile Design Thinking Methods 7-9 outputs into an RPI-ready handoff artifact with tiered routing.
+Compile Design Thinking Methods 7-9 outputs into a research-ready handoff artifact for `rpi-research`, with the exit tier retained as context.
 Invoke when a team graduates from the Implementation Space and chooses lateral handoff to the RPI pipeline.
 This is the final DT exit point: the richest handoff carrying cumulative artifact lineage from all nine methods.
 
@@ -20,6 +20,14 @@ This is the final DT exit point: the richest handoff carrying cumulative artifac
 * All DT coaching artifacts are scoped to `.copilot-tracking/dt/{project-slug}/`. Never write DT artifacts directly under `.copilot-tracking/dt/` without a project-slug directory.
 
 ## Required Steps
+
+### Step 0: Load Handoff Knowledge
+
+Before compiling any artifacts, activate `dt-rpi-integration`, then load these bundled references through its reference table:
+
+* Handoff contract for the exit-point taxonomy, tier context, artifact schema, and quality markers.
+* Subagent handoff for the readiness assessment and compilation workflow.
+* Research context for `rpi-research` framing at the receiving end.
 
 ### Step 1: Read Coaching State
 
@@ -101,13 +109,13 @@ Tag each readiness signal with a quality marker:
 | `unknown`     | Identified gap not yet investigated                      |
 | `conflicting` | Multiple sources disagree                                |
 
-Readiness note: all Implementation Space exits hand off to Task Researcher regardless of tier or prototype maturity. The exit tier and readiness assessment provide context that shapes the Researcher's investigation scope. Higher tiers with more validated evidence typically narrow the research needed.
+Readiness note: all Implementation Space exits hand off to `rpi-research` regardless of tier or prototype maturity. The exit tier and readiness assessment shape the investigation scope. Higher tiers with more validated evidence typically narrow the research needed without bypassing it.
 
 If critical gaps exist (signals marked `unknown` or `conflicting`), present findings and ask whether to proceed with the handoff or return to address gaps first. If no user response is available, default to proceeding with the handoff and documenting gaps in the Investigation Targets section.
 
 ### Step 4: Produce Handoff Artifact
 
-Create the handoff summary file at `.copilot-tracking/dt/{project-slug}/handoff-summary-implementation-space.md` following the exit-point artifact schema from the DT-RPI handoff contract.
+Create the handoff summary file at `.copilot-tracking/dt/{project-slug}/handoff-summary-implementation-space.md` following the `implementation-spec-ready` exit-point schema in the `dt-rpi-integration` handoff contract.
 
 Include the YAML header. The `tier` field extends the base DT-RPI handoff contract schema to capture exit granularity:
 
@@ -115,7 +123,7 @@ Include the YAML header. The `tier` field extends the base DT-RPI handoff contra
 exit_point: "implementation-spec-ready"
 dt_method: 9          # or 7/8 based on tier
 dt_space: "implementation"
-handoff_target: "researcher"
+handoff_target: "rpi-research"
 date: "{today's date}"
 tier: "comprehensive"  # guided | structured | comprehensive
 ```
@@ -131,15 +139,15 @@ Record a lateral transition in the coaching state `transition_log`:
 ```yaml
 - type: lateral
   from_method: 9      # or 7/8 based on tier
-  to: "rpi-researcher"
-  rationale: "Implementation Space complete: handoff to RPI Researcher with validated implementation artifacts"
+   to: "rpi-research"
+   rationale: "Implementation Space complete: handoff to rpi-research with validated implementation artifacts"
   date: "{today's date}"
   tier: "comprehensive"   # guided | structured | comprehensive
 ```
 
 ### Step 5: Generate RPI Entry
 
-Create a self-contained RPI handoff document at `.copilot-tracking/research/{project-slug}-research-topic.md` for task-researcher to consume directly.
+Create a self-contained RPI handoff document at `.copilot-tracking/research/{project-slug}-research-topic.md` for `rpi-research` to consume as research-ready input.
 
 Include YAML frontmatter with `description` set to a summary of the handoff context (for example, `description: 'RPI research topic from DT Implementation Space for {project name}'`).
 
@@ -155,7 +163,7 @@ Structure the document with these sections:
 
 #### Research Topic
 
-Frame the implementation artifacts as a research question. State the validated prototype, architecture decisions, and what the Researcher should investigate further (production readiness, scaling gaps, integration concerns).
+Frame the implementation artifacts as a research question. State the validated prototype, architecture decisions, and what `rpi-research` should investigate further (production readiness, scaling gaps, integration concerns).
 
 #### Validated Implementation Evidence
 
@@ -171,14 +179,14 @@ Validated and assumed constraints with sources, organized by type.
 
 #### Investigation Priorities
 
-Items tagged `assumed`, `unknown`, or `conflicting` requiring Researcher investigation. Group by priority (blockers first, then high-impact, then lower-impact).
+Items tagged `assumed`, `unknown`, or `conflicting` requiring investigation during `rpi-research`. Group by priority (blockers first, then high-impact, then lower-impact).
 
 #### DT Artifact Paths
 
-List all `.copilot-tracking/dt/{project-slug}/` artifact paths so the Researcher can read original DT evidence directly.
+List all `.copilot-tracking/dt/{project-slug}/` artifact paths so `rpi-research` can read original DT evidence directly.
 
 Inline all content directly rather than referencing `.copilot-tracking/` paths (except in the DT Artifact Paths section).
-The document stands alone as complete context for the receiving task-researcher.
+The document stands alone as complete context for `rpi-research`.
 
 ### Step 6: Completion Ceremony
 
@@ -191,7 +199,7 @@ Present the completion ceremony as a conversational summary to the user covering
    * Confirm all completed methods in `methods_completed`.
    * Verify the lateral transition entry from Step 4 is recorded.
    * Append a completion summary to `session_log`.
-5. Forward look: describe how the RPI pipeline carries the DT investment forward, naming the target agent and the handoff artifact path.
+5. Forward look: describe how the RPI pipeline carries the DT investment forward, naming `rpi-research` as the target phase and giving the handoff artifact path.
 
 ---
 

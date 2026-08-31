@@ -1,1127 +1,494 @@
-﻿#!/usr/bin/env pwsh
-# Copyright (c) Microsoft Corporation.
+#!/usr/bin/env pwsh
+# Copyright (c) 2026 Microsoft Corporation. All rights reserved.
 # SPDX-License-Identifier: MIT
-#Requires -Version 7.0
+#Requires -Version 7.4
 
 <#
 .SYNOPSIS
-    Packages the HVE Core VS Code extension.
-
+    Packages the prepared HVE Core VS Code extension.
 .DESCRIPTION
-    This script packages the VS Code extension into a .vsix file.
-    It uses the version from package.json or a specified version.
-    Optionally adds a dev patch number for pre-release builds.
-    Supports VS Code Marketplace pre-release channel with -PreRelease switch.
-
+    Stages only git-tracked files referenced by the prepared contribution
+    manifest plus explicit shared resources, then invokes the repository-pinned
+    vsce executable without installing or downloading dependencies.
 .PARAMETER Version
-    Optional. The version to use for the package.
-    If not specified, uses the version from package.json.
-
+    Optional semantic version override.
 .PARAMETER DevPatchNumber
-    Optional. Dev patch number to append (e.g., "123" creates "1.0.0-dev.123").
-
+    Optional development suffix number.
 .PARAMETER ChangelogPath
-    Optional. Path to a changelog file to include in the package.
-
+    Optional changelog path.
 .PARAMETER PreRelease
-    Optional. When specified, packages the extension for VS Code Marketplace pre-release channel.
-    Uses vsce --pre-release flag which marks the extension for the pre-release track.
-
-.PARAMETER Collection
-    Optional. Path to a collection manifest file (YAML or JSON). When specified, only
-    collection-filtered artifacts are copied and the output filename uses the
-    collection ID.
-
+    Adds the vsce pre-release flag.
 .PARAMETER DryRun
-    Optional. Validates packaging orchestration without invoking vsce.
-
+    Validates staging without invoking vsce.
 .EXAMPLE
-    ./Package-Extension.ps1
-    # Packages using version from package.json
-
-.EXAMPLE
-    ./Package-Extension.ps1 -Version "2.0.0"
-    # Packages with specific version
-
-.EXAMPLE
-    ./Package-Extension.ps1 -DevPatchNumber "123"
-    # Packages with dev version (e.g., 1.0.0-dev.123)
-
-.EXAMPLE
-    ./Package-Extension.ps1 -Version "1.1.0" -DevPatchNumber "456"
-    # Packages with specific dev version (1.1.0-dev.456)
-
-.EXAMPLE
-    ./Package-Extension.ps1 -PreRelease
-    # Packages for VS Code Marketplace pre-release channel
-
-.EXAMPLE
-    ./Package-Extension.ps1 -Version "1.1.0" -PreRelease
-    # Packages with ODD minor version for pre-release channel
-
-.EXAMPLE
-    . ./Package-Extension.ps1
-    # Dot-source to import functions for testing without executing packaging.
+    ./Package-Extension.ps1 -DryRun
 #>
 
 [CmdletBinding()]
 param(
-    [Parameter(Mandatory = $false)]
-    [string]$Version = "",
-
-    [Parameter(Mandatory = $false)]
-    [string]$DevPatchNumber = "",
-
-    [Parameter(Mandatory = $false)]
-    [string]$ChangelogPath = "",
-
-    [Parameter(Mandatory = $false)]
-    [switch]$PreRelease,
-
-    [Parameter(Mandatory = $false)]
-    [string]$Collection = "",
-
-    [Parameter(Mandatory = $false)]
-    [Alias('dry-run')]
-    [switch]$DryRun
+    [Parameter(Mandatory = $false)] [string]$Version = '',
+    [Parameter(Mandatory = $false)] [string]$DevPatchNumber = '',
+    [Parameter(Mandatory = $false)] [string]$ChangelogPath = '',
+    [Parameter(Mandatory = $false)] [switch]$PreRelease,
+    [Parameter(Mandatory = $false)] [switch]$DryRun
 )
 
 $ErrorActionPreference = 'Stop'
 
-Import-Module (Join-Path $PSScriptRoot "../lib/Modules/CIHelpers.psm1") -Force
-Import-Module (Join-Path $PSScriptRoot "../collections/Modules/CollectionHelpers.psm1") -Force
-
-#region Pure Functions
-
-function Test-VsceAvailable {
-    <#
-    .SYNOPSIS
-        Checks if vsce or npx is available for packaging.
-    .OUTPUTS
-        Hashtable with IsAvailable, CommandType ('vsce', 'npx', or $null), and Command path.
-    #>
-    [CmdletBinding()]
-    [OutputType([hashtable])]
-    param()
-
-    $vsceCmd = Get-Command vsce -ErrorAction SilentlyContinue
-    if ($vsceCmd) {
-        return @{
-            IsAvailable = $true
-            CommandType = 'vsce'
-            Command     = $vsceCmd.Source
-        }
-    }
-
-    $npxCmd = Get-Command npx -ErrorAction SilentlyContinue
-    if ($npxCmd) {
-        return @{
-            IsAvailable = $true
-            CommandType = 'npx'
-            Command     = $npxCmd.Source
-        }
-    }
-
-    return @{
-        IsAvailable = $false
-        CommandType = $null
-        Command     = $null
-    }
-}
+Import-Module (Join-Path $PSScriptRoot '../lib/Modules/CIHelpers.psm1') -Force
 
 function Test-ExtensionManifestValid {
     <#
     .SYNOPSIS
-        Validates an extension manifest (package.json content) for required fields and format.
+    Validates required extension manifest fields.
     .PARAMETER ManifestContent
-        The parsed package.json content as a PSObject.
+    Parsed extension manifest.
     .OUTPUTS
-        Hashtable with IsValid boolean and Errors array.
+    [hashtable] Validation state and errors.
     #>
     [CmdletBinding()]
     [OutputType([hashtable])]
     param(
         [Parameter(Mandatory = $true)]
-        [PSObject]$ManifestContent
+        [psobject]$ManifestContent
     )
 
     $errors = @()
-
-    # Check required fields
-    if (-not $ManifestContent.PSObject.Properties['name']) {
-        $errors += "Missing required 'name' field"
+    foreach ($field in @('name', 'version', 'publisher', 'engines')) {
+        if (-not $ManifestContent.PSObject.Properties[$field]) { $errors += "Missing required '$field' field" }
     }
-
-    if (-not $ManifestContent.PSObject.Properties['version']) {
-        $errors += "Missing required 'version' field"
-    } elseif ($ManifestContent.version -notmatch '^\d+\.\d+\.\d+') {
-        $errors += "Invalid version format: '$($ManifestContent.version)'. Expected semantic version (e.g., 1.0.0)"
+    if ($ManifestContent.version -and $ManifestContent.version -notmatch '^\d+\.\d+\.\d+') {
+        $errors += "Invalid version format: '$($ManifestContent.version)'"
     }
-
-    if (-not $ManifestContent.PSObject.Properties['publisher']) {
-        $errors += "Missing required 'publisher' field"
-    }
-
-    if (-not $ManifestContent.PSObject.Properties['engines']) {
-        $errors += "Missing required 'engines' field"
-    } elseif (-not $ManifestContent.engines.PSObject.Properties['vscode']) {
+    if ($ManifestContent.engines -and -not $ManifestContent.engines.PSObject.Properties['vscode']) {
         $errors += "Missing required 'engines.vscode' field"
     }
-
-    return @{
-        IsValid = ($errors.Count -eq 0)
-        Errors  = $errors
-    }
-}
-
-function Get-VscePackageCommand {
-    <#
-    .SYNOPSIS
-        Builds the vsce package command arguments without executing.
-    .PARAMETER CommandType
-        The type of command to use ('vsce' or 'npx').
-    .PARAMETER PreRelease
-        Whether to include the --pre-release flag.
-    .OUTPUTS
-        Hashtable with Executable and Arguments array.
-    #>
-    [CmdletBinding()]
-    [OutputType([hashtable])]
-    param(
-        [Parameter(Mandatory = $true)]
-        [ValidateSet('vsce', 'npx')]
-        [string]$CommandType,
-
-        [Parameter(Mandatory = $false)]
-        [switch]$PreRelease
-    )
-
-    $vsceArgs = @('package', '--no-dependencies')
-    if ($PreRelease) {
-        $vsceArgs += '--pre-release'
-    }
-
-    if ($CommandType -eq 'npx') {
-        # --yes auto-confirms npx package installation for non-interactive CI environments
-        return @{
-            Executable = 'npx'
-            Arguments  = @('--yes', '@vscode/vsce@3.7.1') + $vsceArgs
-        }
-    }
-
-    return @{
-        Executable = 'vsce'
-        Arguments  = $vsceArgs
-    }
-}
-
-function New-PackagingResult {
-    <#
-    .SYNOPSIS
-        Creates a standardized packaging result object.
-    .PARAMETER Success
-        Whether the packaging operation succeeded.
-    .PARAMETER OutputPath
-        Path to the generated .vsix file (if successful).
-    .PARAMETER Version
-        The package version used.
-    .PARAMETER ErrorMessage
-        Error message if the operation failed.
-    .OUTPUTS
-        Hashtable with Success, OutputPath, Version, and ErrorMessage.
-    #>
-    [CmdletBinding()]
-    [OutputType([hashtable])]
-    param(
-        [Parameter(Mandatory = $true)]
-        [bool]$Success,
-
-        [Parameter(Mandatory = $false)]
-        [string]$OutputPath = "",
-
-        [Parameter(Mandatory = $false)]
-        [string]$Version = "",
-
-        [Parameter(Mandatory = $false)]
-        [string]$ErrorMessage = ""
-    )
-
-    return @{
-        Success      = $Success
-        OutputPath   = $OutputPath
-        Version      = $Version
-        ErrorMessage = $ErrorMessage
-    }
-}
-
-function Get-CollectionReadmePath {
-    <#
-    .SYNOPSIS
-        Resolves the collection-specific README path from a collection manifest.
-    .DESCRIPTION
-        Maps a collection manifest to its collection-specific README file. Returns
-        null when the collection is the flagship package (hve-core) or when no
-        matching collection README exists on disk. Supports both YAML and JSON
-        manifest formats.
-    .PARAMETER CollectionPath
-        Path to the collection manifest file (YAML or JSON).
-    .PARAMETER ExtensionDirectory
-        Path to the extension directory containing README files.
-    .OUTPUTS
-        String path to the collection README, or $null if not applicable.
-    #>
-    [CmdletBinding()]
-    [OutputType([string])]
-    param(
-        [Parameter(Mandatory = $true)]
-        [string]$CollectionPath,
-
-        [Parameter(Mandatory = $true)]
-        [string]$ExtensionDirectory
-    )
-
-    $manifest = Get-CollectionManifest -CollectionPath $CollectionPath
-    $collectionId = $manifest.id
-
-    # Flagship package uses the default README.md
-    if ($collectionId -eq 'hve-core') {
-        return $null
-    }
-
-    $collectionReadmePath = Join-Path $ExtensionDirectory "README.$collectionId.md"
-    if (Test-Path $collectionReadmePath) {
-        return $collectionReadmePath
-    }
-
-    return $null
+    return @{ IsValid = ($errors.Count -eq 0); Errors = $errors }
 }
 
 function Get-ResolvedPackageVersion {
     <#
     .SYNOPSIS
-        Resolves the package version from parameters or manifest content.
+    Resolves the package version.
     .PARAMETER SpecifiedVersion
-        Version specified via parameter (may be empty).
+    Optional version override.
     .PARAMETER ManifestVersion
-        Version from the package.json manifest.
+    Manifest version.
     .PARAMETER DevPatchNumber
-        Optional dev patch number to append.
+    Optional development suffix number.
     .OUTPUTS
-        Hashtable with IsValid, BaseVersion, PackageVersion, and ErrorMessage.
+    [hashtable] Resolved version state.
     #>
     [CmdletBinding()]
     [OutputType([hashtable])]
     param(
-        [Parameter(Mandatory = $false)]
-        [string]$SpecifiedVersion = "",
-
-        [Parameter(Mandatory = $true)]
-        [string]$ManifestVersion,
-
-        [Parameter(Mandatory = $false)]
-        [string]$DevPatchNumber = ""
+        [Parameter(Mandatory = $false)] [string]$SpecifiedVersion = '',
+        [Parameter(Mandatory = $true)] [string]$ManifestVersion,
+        [Parameter(Mandatory = $false)] [string]$DevPatchNumber = ''
     )
 
-    $baseVersion = ""
-
-    if ($SpecifiedVersion -and $SpecifiedVersion -ne "") {
-        # Validate specified version format
-        if ($SpecifiedVersion -notmatch '^\d+\.\d+\.\d+$') {
-            return @{
-                IsValid        = $false
-                BaseVersion    = ""
-                PackageVersion = ""
-                ErrorMessage   = "Invalid version format specified: '$SpecifiedVersion'. Expected semantic version format (e.g., 1.0.0)."
-            }
-        }
-        $baseVersion = $SpecifiedVersion
-    } else {
-        # Validate manifest version
-        if ($ManifestVersion -notmatch '^\d+\.\d+\.\d+') {
-            return @{
-                IsValid        = $false
-                BaseVersion    = ""
-                PackageVersion = ""
-                ErrorMessage   = "Invalid version format in package.json: '$ManifestVersion'. Expected semantic version format (e.g., 1.0.0)."
-            }
-        }
-        # Extract base version
-        $ManifestVersion -match '^(\d+\.\d+\.\d+)' | Out-Null
-        $baseVersion = $Matches[1]
+    $baseVersion = if ($SpecifiedVersion) { $SpecifiedVersion } else { $ManifestVersion }
+    if ($baseVersion -notmatch '^(\d+\.\d+\.\d+)') {
+        return @{ IsValid = $false; BaseVersion = ''; PackageVersion = ''; ErrorMessage = "Invalid version format: '$baseVersion'" }
     }
+    $baseVersion = $Matches[1]
+    $packageVersion = if ($DevPatchNumber) { "$baseVersion-dev.$DevPatchNumber" } else { $baseVersion }
+    return @{ IsValid = $true; BaseVersion = $baseVersion; PackageVersion = $packageVersion; ErrorMessage = '' }
+}
 
-    # Apply dev patch number if provided
-    $packageVersion = if ($DevPatchNumber -and $DevPatchNumber -ne "") {
-        "$baseVersion-dev.$DevPatchNumber"
-    } else {
-        $baseVersion
-    }
+function New-PackagingResult {
+    <#
+    .SYNOPSIS
+    Creates a packaging result.
+    .PARAMETER Success
+    Success state.
+    .PARAMETER OutputPath
+    VSIX path.
+    .PARAMETER Version
+    Package version.
+    .PARAMETER ErrorMessage
+    Error message.
+    .OUTPUTS
+    [hashtable] Packaging result.
+    #>
+    [CmdletBinding()]
+    [OutputType([hashtable])]
+    param(
+        [Parameter(Mandatory = $true)] [bool]$Success,
+        [Parameter(Mandatory = $false)] [string]$OutputPath = '',
+        [Parameter(Mandatory = $false)] [string]$Version = '',
+        [Parameter(Mandatory = $false)] [string]$ErrorMessage = ''
+    )
 
-    return @{
-        IsValid        = $true
-        BaseVersion    = $baseVersion
-        PackageVersion = $packageVersion
-        ErrorMessage   = ""
-    }
+    return @{ Success = $Success; OutputPath = $OutputPath; Version = $Version; ErrorMessage = $ErrorMessage }
 }
 
 function Test-PackagingInputsValid {
     <#
     .SYNOPSIS
-        Validates all required paths for extension packaging.
-    .DESCRIPTION
-        Pure function that checks existence of ExtensionDirectory, package.json,
-        .github directory, and CIHelpers.psm1 module. Returns resolved paths for use
-        by downstream functions.
+    Validates packaging paths.
     .PARAMETER ExtensionDirectory
-        Absolute path to the extension directory.
+    Extension directory.
     .PARAMETER RepoRoot
-        Absolute path to the repository root.
+    Repository root.
     .OUTPUTS
-        Hashtable with IsValid, Errors array, and resolved paths.
+    [hashtable] Validation state and resolved package path.
     #>
     [CmdletBinding()]
     [OutputType([hashtable])]
     param(
-        [Parameter(Mandatory = $true)]
-        [string]$ExtensionDirectory,
-
-        [Parameter(Mandatory = $true)]
-        [string]$RepoRoot
+        [Parameter(Mandatory = $true)] [string]$ExtensionDirectory,
+        [Parameter(Mandatory = $true)] [string]$RepoRoot
     )
 
     $errors = @()
-
-    if (-not (Test-Path $ExtensionDirectory)) {
-        $errors += "Extension directory not found: $ExtensionDirectory"
+    $packageJsonPath = Join-Path $ExtensionDirectory 'package.json'
+    if (-not (Test-Path -LiteralPath $ExtensionDirectory -PathType Container)) { $errors += "Extension directory not found: $ExtensionDirectory" }
+    if (-not (Test-Path -LiteralPath $packageJsonPath -PathType Leaf)) { $errors += "package.json not found: $packageJsonPath" }
+    if (-not (Test-Path -LiteralPath (Join-Path $RepoRoot '.git'))) {
+        $isWorktree = git -C $RepoRoot rev-parse --is-inside-work-tree 2>$null
+        if ($LASTEXITCODE -ne 0 -or $isWorktree -ne 'true') { $errors += "Git worktree not found: $RepoRoot" }
     }
-
-    $packageJsonPath = Join-Path $ExtensionDirectory "package.json"
-    if (-not (Test-Path $packageJsonPath)) {
-        $errors += "package.json not found: $packageJsonPath"
-    }
-
-    $githubDir = Join-Path $RepoRoot ".github"
-    if (-not (Test-Path $githubDir)) {
-        $errors += ".github directory not found: $githubDir"
-    }
-
-    $ciHelpersPath = Join-Path $RepoRoot "scripts/lib/Modules/CIHelpers.psm1"
-    if (-not (Test-Path $ciHelpersPath)) {
-        $errors += "CIHelpers.psm1 not found: $ciHelpersPath"
-    }
-
-    return @{
-        IsValid         = ($errors.Count -eq 0)
-        Errors          = $errors
-        PackageJsonPath = $packageJsonPath
-        GitHubDir       = $githubDir
-        CIHelpersPath   = $ciHelpersPath
-    }
+    return @{ IsValid = ($errors.Count -eq 0); Errors = $errors; PackageJsonPath = $packageJsonPath }
 }
 
-function Get-PackagingDirectorySpec {
+function Test-DistributionPath {
     <#
     .SYNOPSIS
-        Returns specification for directories to copy during packaging.
-    .DESCRIPTION
-        Pure function that defines source to destination mappings without performing I/O.
-        Each spec includes Source, Destination, Required flag, and optional IsFile flag.
-    .PARAMETER RepoRoot
-        Absolute path to the repository root.
-    .PARAMETER ExtensionDirectory
-        Absolute path to the extension directory.
+    Checks whether a tracked path is distributable.
+    .PARAMETER Path
+    Repository-relative path.
     .OUTPUTS
-        Array of hashtables with Source, Destination, Required, and IsFile properties.
+    [bool] True when the path is distributable.
     #>
     [CmdletBinding()]
-    [OutputType([hashtable[]])]
+    [OutputType([bool])]
     param(
-        [Parameter(Mandatory = $true)]
-        [string]$RepoRoot,
-
-        [Parameter(Mandatory = $true)]
-        [string]$ExtensionDirectory
+        [Parameter(Mandatory = $true)] [string]$Path
     )
 
-    return @(
-        @{
-            Source      = Join-Path $RepoRoot ".github"
-            Destination = Join-Path $ExtensionDirectory ".github"
-            IsFile      = $false
-        },
-        @{
-            Source      = Join-Path $RepoRoot "scripts/lib/Modules/CIHelpers.psm1"
-            Destination = Join-Path $ExtensionDirectory "scripts/lib/Modules/CIHelpers.psm1"
-            IsFile      = $true
-        },
-        @{
-            Source      = Join-Path $RepoRoot "docs/templates"
-            Destination = Join-Path $ExtensionDirectory "docs/templates"
-            IsFile      = $false
-        }
-    )
+    return ($Path -notmatch '(^|/)(tests|\.venv|node_modules|__pycache__|\.ruff_cache|\.pytest_cache)(/|$)')
 }
 
-#endregion Pure Functions
-
-#region I/O Functions
-
-function Copy-DirectoryFiltered {
+function Get-TrackedFilesForSource {
     <#
     .SYNOPSIS
-        Copies a directory tree while excluding dev artifact directories.
-    .DESCRIPTION
-        Recursive copy that skips directories matching ExcludePatterns.
-        Prevents copying large non-distributable artifacts (.venv, __pycache__, etc.)
-        that slow down packaging and crash vsce's secret scanner.
-    .PARAMETER Source
-        Source directory path.
-    .PARAMETER Destination
-        Destination directory path.
-    .PARAMETER ExcludePatterns
-        Directory names to exclude from the copy.
-    #>
-    [CmdletBinding()]
-    param(
-        [Parameter(Mandatory = $true)]
-        [string]$Source,
-
-        [Parameter(Mandatory = $true)]
-        [string]$Destination,
-
-        [Parameter(Mandatory = $false)]
-        [string[]]$ExcludePatterns = @('.venv', '.ruff_cache', '.pytest_cache', '__pycache__', 'node_modules')
-    )
-
-    if (-not (Test-Path $Destination)) {
-        New-Item -Path $Destination -ItemType Directory -Force | Out-Null
-    }
-
-    # Copy files at current level
-    Get-ChildItem -Path $Source -File -ErrorAction SilentlyContinue | ForEach-Object {
-        Copy-Item -Path $_.FullName -Destination (Join-Path $Destination $_.Name) -Force
-    }
-
-    # Recurse into subdirectories, skipping excluded patterns
-    Get-ChildItem -Path $Source -Directory -ErrorAction SilentlyContinue | ForEach-Object {
-        if ($_.Name -notin $ExcludePatterns) {
-            Copy-DirectoryFiltered -Source $_.FullName -Destination (Join-Path $Destination $_.Name) -ExcludePatterns $ExcludePatterns
-        }
-    }
-}
-
-function Copy-CollectionArtifacts {
-    <#
-    .SYNOPSIS
-        Copies only collection-filtered artifacts to the extension directory.
-    .DESCRIPTION
-        Reads the prepared package.json to determine which artifacts were selected
-        by collection filtering, then copies only those files instead of the entire
-        .github directory.
+    Returns distributable tracked files under one source path.
     .PARAMETER RepoRoot
-        Absolute path to the repository root.
-    .PARAMETER ExtensionDirectory
-        Absolute path to the extension directory.
-    .PARAMETER PrepareResult
-        Result hashtable from Invoke-PrepareExtension. Reserved for future collection metadata handling.
+    Repository root.
+    .PARAMETER SourcePath
+    Repository-relative file or directory.
+    .OUTPUTS
+    [string[]] Tracked file paths.
     #>
     [CmdletBinding()]
-    [Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSReviewUnusedParameter', 'PrepareResult', Justification = 'Reserved for future collection metadata handling')]
+    [OutputType([string[]])]
     param(
-        [Parameter(Mandatory = $true)]
-        [string]$RepoRoot,
-
-        [Parameter(Mandatory = $true)]
-        [string]$ExtensionDirectory,
-
-        [Parameter(Mandatory = $true)]
-        [hashtable]$PrepareResult
+        [Parameter(Mandatory = $true)] [string]$RepoRoot,
+        [Parameter(Mandatory = $true)] [string]$SourcePath
     )
 
-    $preparedPkgJson = Get-Content -Path (Join-Path $ExtensionDirectory "package.json") -Raw | ConvertFrom-Json
-
-    # Copy filtered agents
-    if ($preparedPkgJson.contributes.chatAgents) {
-        foreach ($agent in $preparedPkgJson.contributes.chatAgents) {
-            $srcPath = Join-Path $RepoRoot ($agent.path -replace '^\.[\\/]', '')
-            if (-not (Test-Path $srcPath)) {
-                Write-Warning "Skipping missing collection artifact: $srcPath (referenced by contributes.chatAgents in package.json)"
-                continue
-            }
-            $destPath = Join-Path $ExtensionDirectory ($agent.path -replace '^\.[\\/]', '')
-            $destDir = Split-Path $destPath -Parent
-            New-Item -Path $destDir -ItemType Directory -Force | Out-Null
-            Copy-Item -Path $srcPath -Destination $destPath -Force
-        }
-    }
-
-    # Copy filtered prompts
-    if ($preparedPkgJson.contributes.chatPromptFiles) {
-        foreach ($prompt in $preparedPkgJson.contributes.chatPromptFiles) {
-            $srcPath = Join-Path $RepoRoot ($prompt.path -replace '^\.[\\/]', '')
-            if (-not (Test-Path $srcPath)) {
-                Write-Warning "Skipping missing collection artifact: $srcPath (referenced by contributes.chatPromptFiles in package.json)"
-                continue
-            }
-            $destPath = Join-Path $ExtensionDirectory ($prompt.path -replace '^\.[\\/]', '')
-            $destDir = Split-Path $destPath -Parent
-            New-Item -Path $destDir -ItemType Directory -Force | Out-Null
-            Copy-Item -Path $srcPath -Destination $destPath -Force
-        }
-    }
-
-    # Copy filtered instructions
-    if ($preparedPkgJson.contributes.chatInstructions) {
-        foreach ($instr in $preparedPkgJson.contributes.chatInstructions) {
-            $srcPath = Join-Path $RepoRoot ($instr.path -replace '^\.[\\/]', '')
-            if (-not (Test-Path $srcPath)) {
-                Write-Warning "Skipping missing collection artifact: $srcPath (referenced by contributes.chatInstructions in package.json)"
-                continue
-            }
-            $destPath = Join-Path $ExtensionDirectory ($instr.path -replace '^\.[\\/]', '')
-            $destDir = Split-Path $destPath -Parent
-            New-Item -Path $destDir -ItemType Directory -Force | Out-Null
-            Copy-Item -Path $srcPath -Destination $destPath -Force
-        }
-    }
-
-    # Copy filtered skills
-    if ($preparedPkgJson.contributes.chatSkills) {
-        foreach ($skill in $preparedPkgJson.contributes.chatSkills) {
-            $srcPath = Join-Path $RepoRoot ($skill.path -replace '^\.[\\/]', '')
-            if (-not (Test-Path $srcPath)) {
-                Write-Warning "Skipping missing collection artifact: $srcPath (referenced by contributes.chatSkills in package.json)"
-                continue
-            }
-            # Copy the full skill directory, not just SKILL.md
-            $srcDir = Split-Path $srcPath -Parent
-            $destPath = Join-Path $ExtensionDirectory ($skill.path -replace '^\.[\\/]', '')
-            $destDir = Split-Path $destPath -Parent
-            Copy-DirectoryFiltered -Source $srcDir -Destination $destDir
-
-            # Remove co-located test directories from packaged skills
-            Get-ChildItem -Path $destDir -Directory -Filter 'tests' -Recurse -ErrorAction SilentlyContinue |
-                Remove-Item -Recurse -Force
-        }
-    }
+    $normalized = (($SourcePath -replace '\\', '/') -replace '^\./', '').TrimEnd('/')
+    $files = @(git -C $RepoRoot ls-files -- $normalized)
+    if ($LASTEXITCODE -ne 0) { throw "Failed to enumerate tracked files for '$normalized'." }
+    $files = @($files | Where-Object { Test-DistributionPath -Path $_ } | Sort-Object -Unique)
+    if ($files.Count -eq 0) { throw "Prepared source '$normalized' has no distributable tracked files." }
+    return [string[]]$files
 }
 
-function Set-CollectionReadme {
+function Test-PreparedContributionPath {
     <#
     .SYNOPSIS
-        Swaps or restores the collection-specific README for extension packaging.
-    .DESCRIPTION
-        In swap mode, backs up the original README.md and copies the collection
-        README in its place. In restore mode, copies the backup back and removes it.
-    .PARAMETER ExtensionDirectory
-        Path to the extension directory.
-    .PARAMETER CollectionReadmePath
-        Path to the collection-specific README file. Required for Swap operation.
-    .PARAMETER Operation
-        Either 'Swap' to replace README.md with collection content, or 'Restore'
-        to revert README.md from backup.
+    Tests whether a prepared contribution path is contained and well shaped.
+    .PARAMETER Path
+    Repository-relative contribution path.
+    .PARAMETER Shape
+    Anchored expression describing the expected artifact shape.
+    .OUTPUTS
+    [bool] True when the path is contained and matches the expected shape.
     #>
     [CmdletBinding()]
+    [OutputType([bool])]
     param(
-        [Parameter(Mandatory = $true)]
-        [string]$ExtensionDirectory,
-
-        [Parameter(Mandatory = $false)]
-        [string]$CollectionReadmePath = "",
-
-        [Parameter(Mandatory = $true)]
-        [ValidateSet('Swap', 'Restore')]
-        [string]$Operation
+        [Parameter(Mandatory = $true)] [string]$Path,
+        [Parameter(Mandatory = $true)] [string]$Shape
     )
 
-    $readmePath = Join-Path $ExtensionDirectory "README.md"
-    $backupPath = Join-Path $ExtensionDirectory "README.md.bak"
+    if ($Path -match '[\\:]' -or $Path -match '[\x00-\x1f]' -or $Path.IndexOfAny([char[]]'*?[]') -ge 0) { return $false }
+    foreach ($segment in ($Path -split '/')) {
+        if ([string]::IsNullOrEmpty($segment) -or $segment -eq '.' -or $segment -eq '..') { return $false }
+    }
+    return [bool]($Path -match $Shape)
+}
 
-    if ($Operation -eq 'Swap') {
-        if (-not $CollectionReadmePath -or $CollectionReadmePath -eq "") {
-            Write-Warning "No collection README path provided for swap operation"
-            return
-        }
-        Copy-Item -Path $readmePath -Destination $backupPath -Force
-        Copy-Item -Path $CollectionReadmePath -Destination $readmePath -Force
-        Write-Host "   Swapped README.md with $(Split-Path $CollectionReadmePath -Leaf)" -ForegroundColor Green
+function Get-PreparedSourceRoots {
+    <#
+    .SYNOPSIS
+    Reads contribution source roots from a prepared extension manifest.
+    .PARAMETER PackageJson
+    Prepared package manifest.
+    .OUTPUTS
+    [string[]] Repository-relative source roots.
+    #>
+    [CmdletBinding()]
+    [OutputType([string[]])]
+    param(
+        [Parameter(Mandatory = $true)] [psobject]$PackageJson
+    )
+
+    $roots = [System.Collections.Generic.HashSet[string]]::new([System.StringComparer]::Ordinal)
+    $propertyShape = [ordered]@{
+        chatAgents       = '^\.github/agents/[^/]+/.+\.agent\.md$'
+        chatPromptFiles  = '^\.github/prompts/[^/]+/.+\.prompt\.md$'
+        chatInstructions = '^\.github/instructions/[^/]+/.+\.instructions\.md$'
     }
-    elseif ($Operation -eq 'Restore') {
-        if (Test-Path $backupPath) {
-            Copy-Item -Path $backupPath -Destination $readmePath -Force
-            Remove-Item -Path $backupPath -Force
-            Write-Host "   Restored original README.md" -ForegroundColor Green
+    foreach ($property in $propertyShape.Keys) {
+        foreach ($item in @($PackageJson.contributes.$property)) {
+            if (-not $item.path) { continue }
+            $path = ([string]$item.path -replace '^\./', '')
+            if (-not (Test-PreparedContributionPath -Path $path -Shape $propertyShape[$property])) {
+                throw "Prepared $property contribution '$path' is not a contained artifact path."
+            }
+            [void]$roots.Add($path)
         }
     }
+    foreach ($skill in @($PackageJson.contributes.chatSkills)) {
+        if ($skill.path) {
+            $path = ([string]$skill.path -replace '^\./', '')
+            if (-not (Test-PreparedContributionPath -Path $path -Shape '^\.github/skills/[^/]+/[^/]+/SKILL\.md$')) {
+                throw "Prepared chatSkills contribution '$path' is not a contained artifact path."
+            }
+            [void]$roots.Add(((Split-Path -Parent $path) -replace '\\', '/'))
+        }
+    }
+    return [string[]]@($roots | Sort-Object)
+}
+
+function Copy-PreparedArtifacts {
+    <#
+    .SYNOPSIS
+    Copies tracked prepared artifacts and explicit shared resources.
+    .PARAMETER RepoRoot
+    Repository root.
+    .PARAMETER ExtensionDirectory
+    Extension directory.
+    .OUTPUTS
+    [string[]] Copied repository-relative paths.
+    #>
+    [CmdletBinding()]
+    [OutputType([string[]])]
+    param(
+        [Parameter(Mandatory = $true)] [string]$RepoRoot,
+        [Parameter(Mandatory = $true)] [string]$ExtensionDirectory
+    )
+
+    $packageJson = Get-Content -LiteralPath (Join-Path $ExtensionDirectory 'package.json') -Raw -Encoding utf8 | ConvertFrom-Json
+    $sourceRoots = @(Get-PreparedSourceRoots -PackageJson $packageJson)
+    $sourceRoots += @('scripts/lib/Modules/CIHelpers.psm1', 'docs/templates')
+    $tracked = [System.Collections.Generic.HashSet[string]]::new([System.StringComparer]::Ordinal)
+    foreach ($root in $sourceRoots) {
+        foreach ($file in Get-TrackedFilesForSource -RepoRoot $RepoRoot -SourcePath $root) { [void]$tracked.Add($file) }
+    }
+
+    foreach ($relative in $tracked) {
+        $source = Join-Path $RepoRoot $relative
+        if (-not (Test-Path -LiteralPath $source -PathType Leaf)) { throw "Tracked prepared file is missing: $relative" }
+        $destination = Join-Path $ExtensionDirectory $relative
+        $parent = Split-Path -Parent $destination
+        if (-not (Test-Path -LiteralPath $parent)) { New-Item -Path $parent -ItemType Directory -Force | Out-Null }
+        Copy-Item -LiteralPath $source -Destination $destination -Force
+    }
+    return [string[]]@($tracked | Sort-Object)
+}
+
+function Get-PinnedVsceCommand {
+    <#
+    .SYNOPSIS
+    Resolves an available vsce command matching the repository pin.
+    .PARAMETER RepoRoot
+    Repository root.
+    .OUTPUTS
+    [hashtable] Availability, command, and expected version.
+    #>
+    [CmdletBinding()]
+    [OutputType([hashtable])]
+    param(
+        [Parameter(Mandatory = $true)] [string]$RepoRoot
+    )
+
+    $rootPackage = Get-Content -LiteralPath (Join-Path $RepoRoot 'package.json') -Raw -Encoding utf8 | ConvertFrom-Json
+    $expected = [string]$rootPackage.devDependencies.'@vscode/vsce'
+    $local = Join-Path $RepoRoot 'node_modules/.bin/vsce'
+    $command = if (Test-Path -LiteralPath $local -PathType Leaf) { $local } else { (Get-Command vsce -ErrorAction SilentlyContinue).Source }
+    if (-not $command) { return @{ IsAvailable = $false; Command = ''; ExpectedVersion = $expected; ActualVersion = '' } }
+    $actual = (& $command --version 2>$null | Select-Object -First 1).Trim()
+    return @{ IsAvailable = ($actual -eq $expected); Command = $command; ExpectedVersion = $expected; ActualVersion = $actual }
+}
+
+function Get-VscePackageArguments {
+    <#
+    .SYNOPSIS
+    Returns deterministic vsce package arguments.
+    .PARAMETER PreRelease
+    Adds pre-release packaging.
+    .OUTPUTS
+    [string[]] vsce arguments.
+    #>
+    [CmdletBinding()]
+    [OutputType([string[]])]
+    param(
+        [Parameter(Mandatory = $false)] [switch]$PreRelease
+    )
+
+    $arguments = @('package', '--no-dependencies')
+    if ($PreRelease) { $arguments += '--pre-release' }
+    return [string[]]$arguments
 }
 
 function Invoke-VsceCommand {
     <#
     .SYNOPSIS
-        Executes vsce package command with platform-appropriate wrapper.
-    .DESCRIPTION
-        Abstracts platform-specific execution of vsce/npx commands. On Windows with npx,
-        uses cmd /c to avoid PowerShell misinterpreting @ in @vscode/vsce as splatting.
-        The UseWindowsWrapper parameter enables deterministic platform behavior in tests.
+    Invokes vsce in the extension directory.
     .PARAMETER Executable
-        The executable to run ('vsce' or 'npx').
+    vsce executable.
     .PARAMETER Arguments
-        Array of arguments to pass to the executable.
+    vsce arguments.
     .PARAMETER WorkingDirectory
-        Directory to execute the command in.
-    .PARAMETER UseWindowsWrapper
-        When true and Executable is 'npx', uses cmd /c wrapper for Windows compatibility.
+    Extension directory.
     .OUTPUTS
-        Hashtable with Success boolean and ExitCode integer.
+    [hashtable] Process result.
     #>
     [CmdletBinding()]
     [OutputType([hashtable])]
     param(
-        [Parameter(Mandatory = $true)]
-        [string]$Executable,
-
-        [Parameter(Mandatory = $true)]
-        [string[]]$Arguments,
-
-        [Parameter(Mandatory = $true)]
-        [string]$WorkingDirectory,
-
-        [Parameter(Mandatory = $false)]
-        [switch]$UseWindowsWrapper
+        [Parameter(Mandatory = $true)] [string]$Executable,
+        [Parameter(Mandatory = $true)] [string[]]$Arguments,
+        [Parameter(Mandatory = $true)] [string]$WorkingDirectory
     )
 
     Push-Location $WorkingDirectory
     try {
         $global:LASTEXITCODE = 0
-
-        if ($UseWindowsWrapper -and $Executable -eq 'npx') {
-            $cmdArgs = @('/c', 'npx') + $Arguments
-            & cmd @cmdArgs
-        } else {
-            & $Executable @Arguments
-        }
-
-        return @{
-            Success  = ($LASTEXITCODE -eq 0)
-            ExitCode = $LASTEXITCODE
-        }
+        & $Executable @Arguments
+        return @{ Success = ($LASTEXITCODE -eq 0); ExitCode = $LASTEXITCODE }
     }
-    finally {
-        Pop-Location
-    }
+    finally { Pop-Location }
 }
 
 function Remove-PackagingArtifacts {
     <#
     .SYNOPSIS
-        Removes temporary directories created during packaging.
-    .DESCRIPTION
-        Cleans up directories copied to the extension folder during the packaging process.
-        Silently skips directories that do not exist.
+    Removes staged resource directories.
     .PARAMETER ExtensionDirectory
-        Absolute path to the extension directory.
-    .PARAMETER DirectoryNames
-        Array of directory names to remove. Defaults to .github, docs, scripts.
+    Extension directory.
+    .OUTPUTS
+    [void]
     #>
     [CmdletBinding()]
+    [OutputType([void])]
     param(
-        [Parameter(Mandatory = $true)]
-        [string]$ExtensionDirectory,
-
-        [Parameter(Mandatory = $false)]
-        [string[]]$DirectoryNames = @(".github", "docs", "scripts")
+        [Parameter(Mandatory = $true)] [string]$ExtensionDirectory
     )
 
-    foreach ($dir in $DirectoryNames) {
-        $dirPath = Join-Path $ExtensionDirectory $dir
-        if (Test-Path $dirPath) {
-            Remove-Item -Path $dirPath -Recurse -Force
-            Write-Host "   Removed $dir" -ForegroundColor Gray
-        }
+    foreach ($directory in @('.github', 'docs', 'scripts')) {
+        $path = Join-Path $ExtensionDirectory $directory
+        if (Test-Path -LiteralPath $path) { Remove-Item -LiteralPath $path -Recurse -Force }
     }
 }
-
-function Restore-PackageJsonVersion {
-    <#
-    .SYNOPSIS
-        Restores original version in package.json after packaging.
-    .DESCRIPTION
-        Writes the original version back to package.json if it was temporarily modified
-        during packaging. Safely handles null inputs by returning early.
-    .PARAMETER PackageJsonPath
-        Absolute path to the package.json file.
-    .PARAMETER PackageJson
-        The parsed package.json object to modify.
-    .PARAMETER OriginalVersion
-        The original version string to restore.
-    #>
-    [CmdletBinding()]
-    param(
-        [Parameter(Mandatory = $false)]
-        [AllowNull()]
-        [string]$PackageJsonPath,
-
-        [Parameter(Mandatory = $false)]
-        [AllowNull()]
-        [PSObject]$PackageJson,
-
-        [Parameter(Mandatory = $false)]
-        [AllowNull()]
-        [string]$OriginalVersion
-    )
-
-    # Handle null coercion: PowerShell converts $null to empty string for [string] params
-    if ([string]::IsNullOrEmpty($OriginalVersion) -or $null -eq $PackageJson -or [string]::IsNullOrEmpty($PackageJsonPath)) {
-        return
-    }
-
-    try {
-        $PackageJson.version = $OriginalVersion
-        $PackageJson | ConvertTo-Json -Depth 10 | Set-Content -Path $PackageJsonPath -Encoding UTF8NoBOM
-        Write-Host "   Version restored to: $OriginalVersion" -ForegroundColor Green
-    }
-    catch {
-        Write-Warning "Failed to restore original package.json version to '$OriginalVersion': $($_.Exception.Message)"
-    }
-}
-
-#endregion I/O Functions
-
-#region Orchestration Functions
 
 function Invoke-PackageExtension {
     <#
     .SYNOPSIS
-        Orchestrates VS Code extension packaging with full error handling.
-    .DESCRIPTION
-        Executes the complete packaging workflow: validates paths, resolves version,
-        prepares directories, invokes vsce, and handles cleanup.
+    Stages and packages the prepared hve-core extension.
     .PARAMETER ExtensionDirectory
-        Absolute path to the extension directory containing package.json.
+    Extension directory.
     .PARAMETER RepoRoot
-        Absolute path to the repository root directory.
+    Repository root.
     .PARAMETER Version
-        Optional explicit version string (e.g., "1.2.3").
+    Optional version override.
     .PARAMETER DevPatchNumber
-        Optional dev build patch number for pre-release versions.
+    Optional development suffix.
     .PARAMETER ChangelogPath
-        Optional path to changelog file to include in package.
+    Optional changelog.
     .PARAMETER PreRelease
-        Switch to mark the package as a pre-release version.
-    .PARAMETER Collection
-        Optional path to a collection manifest file (YAML or JSON). When specified, only
-        collection-filtered artifacts are copied and the output filename uses the
-        collection ID.
+    Adds pre-release packaging.
     .PARAMETER DryRun
-        When specified, validates packaging orchestration without invoking vsce.
+    Skips VSIX creation.
     .OUTPUTS
-        Hashtable with Success, OutputPath, Version, and ErrorMessage properties.
+    [hashtable] Packaging result.
     #>
     [CmdletBinding()]
     [OutputType([hashtable])]
     param(
-        [Parameter(Mandatory = $true)]
-        [ValidateNotNullOrEmpty()]
-        [string]$ExtensionDirectory,
-
-        [Parameter(Mandatory = $true)]
-        [ValidateNotNullOrEmpty()]
-        [string]$RepoRoot,
-
-        [Parameter(Mandatory = $false)]
-        [string]$Version = "",
-
-        [Parameter(Mandatory = $false)]
-        [string]$DevPatchNumber = "",
-
-        [Parameter(Mandatory = $false)]
-        [string]$ChangelogPath = "",
-
-        [Parameter(Mandatory = $false)]
-        [switch]$PreRelease,
-
-        [Parameter(Mandatory = $false)]
-        [string]$Collection = "",
-
-        [Parameter(Mandatory = $false)]
-        [switch]$DryRun
+        [Parameter(Mandatory = $true)] [string]$ExtensionDirectory,
+        [Parameter(Mandatory = $true)] [string]$RepoRoot,
+        [Parameter(Mandatory = $false)] [string]$Version = '',
+        [Parameter(Mandatory = $false)] [string]$DevPatchNumber = '',
+        [Parameter(Mandatory = $false)] [string]$ChangelogPath = '',
+        [Parameter(Mandatory = $false)] [switch]$PreRelease,
+        [Parameter(Mandatory = $false)] [switch]$DryRun
     )
 
-    $dirsToClean = @(".github", "docs", "scripts")
-    $originalVersion = $null
-    $packageJson = $null
-    $PackageJsonPath = $null
-    $packageVersion = $null
-    $versionWasModified = $false
-
+    $packagePath = Join-Path $ExtensionDirectory 'package.json'
+    $originalVersion = ''
+    $versionChanged = $false
     try {
-        # Validate all inputs using pure function
-        $inputValidation = Test-PackagingInputsValid -ExtensionDirectory $ExtensionDirectory -RepoRoot $RepoRoot
-        if (-not $inputValidation.IsValid) {
-            return New-PackagingResult -Success $false -ErrorMessage ($inputValidation.Errors -join '; ')
+        $inputs = Test-PackagingInputsValid -ExtensionDirectory $ExtensionDirectory -RepoRoot $RepoRoot
+        if (-not $inputs.IsValid) { return New-PackagingResult -Success $false -ErrorMessage ($inputs.Errors -join '; ') }
+        $package = Get-Content -LiteralPath $packagePath -Raw -Encoding utf8 | ConvertFrom-Json
+        $manifest = Test-ExtensionManifestValid -ManifestContent $package
+        if (-not $manifest.IsValid) { return New-PackagingResult -Success $false -ErrorMessage ($manifest.Errors -join '; ') }
+        $resolved = Get-ResolvedPackageVersion -SpecifiedVersion $Version -ManifestVersion ([string]$package.version) -DevPatchNumber $DevPatchNumber
+        if (-not $resolved.IsValid) { return New-PackagingResult -Success $false -ErrorMessage $resolved.ErrorMessage }
+
+        $originalVersion = [string]$package.version
+        if ($resolved.PackageVersion -ne $originalVersion) {
+            $package.version = $resolved.PackageVersion
+            $package | ConvertTo-Json -Depth 20 | Set-Content -LiteralPath $packagePath -Encoding utf8NoBOM
+            $versionChanged = $true
+        }
+        if ($ChangelogPath -and (Test-Path -LiteralPath $ChangelogPath -PathType Leaf)) {
+            Copy-Item -LiteralPath $ChangelogPath -Destination (Join-Path $ExtensionDirectory 'CHANGELOG.md') -Force
         }
 
-        $PackageJsonPath = $inputValidation.PackageJsonPath
+        Remove-PackagingArtifacts -ExtensionDirectory $ExtensionDirectory
+        $copied = @(Copy-PreparedArtifacts -RepoRoot $RepoRoot -ExtensionDirectory $ExtensionDirectory)
+        Write-Host "Staged $($copied.Count) tracked files"
+        if ($DryRun) { return New-PackagingResult -Success $true -Version $resolved.PackageVersion }
 
-        Write-Host "📦 HVE Core Extension Packager" -ForegroundColor Cyan
-        Write-Host "==============================" -ForegroundColor Cyan
-        Write-Host ""
-
-        # Read and validate package.json
-        Write-Host "📖 Reading package.json..." -ForegroundColor Yellow
-        try {
-            $packageJson = Get-Content -Path $PackageJsonPath -Raw | ConvertFrom-Json
+        $vsce = Get-PinnedVsceCommand -RepoRoot $RepoRoot
+        if (-not $vsce.IsAvailable) {
+            return New-PackagingResult -Success $false -ErrorMessage "Pinned vsce $($vsce.ExpectedVersion) is unavailable (found '$($vsce.ActualVersion)')."
         }
-        catch {
-            return New-PackagingResult -Success $false -ErrorMessage "Failed to parse package.json: $($_.Exception.Message)"
-        }
-
-        $manifestValidation = Test-ExtensionManifestValid -ManifestContent $packageJson
-        if (-not $manifestValidation.IsValid) {
-            return New-PackagingResult -Success $false -ErrorMessage "Invalid package.json: $($manifestValidation.Errors -join '; ')"
-        }
-
-        # Resolve version using pure function
-        $versionResult = Get-ResolvedPackageVersion `
-            -SpecifiedVersion $Version `
-            -ManifestVersion $packageJson.version `
-            -DevPatchNumber $DevPatchNumber
-
-        if (-not $versionResult.IsValid) {
-            return New-PackagingResult -Success $false -ErrorMessage $versionResult.ErrorMessage
-        }
-
-        $packageVersion = $versionResult.PackageVersion
-        Write-Host "   Using version: $packageVersion" -ForegroundColor Green
-
-        # Handle temporary version update for dev builds
-        $originalVersion = $packageJson.version
-
-        if ($packageVersion -ne $originalVersion) {
-            Write-Host ""
-            Write-Host "📝 Temporarily updating package.json version..." -ForegroundColor Yellow
-            $packageJson.version = $packageVersion
-            $packageJson | ConvertTo-Json -Depth 10 | Set-Content -Path $PackageJsonPath -Encoding UTF8NoBOM
-            Write-Host "   Version: $originalVersion -> $packageVersion" -ForegroundColor Green
-            $versionWasModified = $true
-        }
-
-        # Handle changelog if provided
-        if ($ChangelogPath -and $ChangelogPath -ne "") {
-            Write-Host ""
-            Write-Host "📋 Processing changelog..." -ForegroundColor Yellow
-
-            if (Test-Path $ChangelogPath) {
-                $changelogDest = Join-Path $ExtensionDirectory "CHANGELOG.md"
-                Copy-Item -Path $ChangelogPath -Destination $changelogDest -Force
-                Write-Host "   Copied changelog to extension directory" -ForegroundColor Green
-            }
-            else {
-                Write-Warning "Changelog file not found: $ChangelogPath"
-            }
-        }
-
-        # Prepare extension directory
-        Write-Host ""
-        Write-Host "🗂️  Preparing extension directory..." -ForegroundColor Yellow
-
-        # Clean any existing copied directories
-        foreach ($dir in $dirsToClean) {
-            $dirPath = Join-Path $ExtensionDirectory $dir
-            if (Test-Path $dirPath) {
-                Remove-Item -Path $dirPath -Recurse -Force
-                Write-Host "   Cleaned existing $dir directory" -ForegroundColor Gray
-            }
-        }
-
-        # Get and execute copy specifications
-        $copySpecs = Get-PackagingDirectorySpec -RepoRoot $RepoRoot -ExtensionDirectory $ExtensionDirectory
-
-        if ($Collection -and $Collection -ne "") {
-            # Collection mode: copy only filtered artifacts for .github content
-            Write-Host "   Using collection-filtered artifact copy..." -ForegroundColor Gray
-
-            # Copy non-.github specs normally
-            foreach ($spec in $copySpecs) {
-                if ($spec.Source -like "*/.github*" -or $spec.Source -like "*\.github*") {
-                    continue
-                }
-                $specName = Split-Path $spec.Source -Leaf
-                Write-Host "   Copying $specName..." -ForegroundColor Gray
-
-                if ($spec.IsFile) {
-                    $parentDir = Split-Path $spec.Destination -Parent
-                    New-Item -Path $parentDir -ItemType Directory -Force | Out-Null
-                    Copy-Item -Path $spec.Source -Destination $spec.Destination -Force
-                } else {
-                    $parentDir = Split-Path $spec.Destination -Parent
-                    if (-not (Test-Path $parentDir)) {
-                        New-Item -Path $parentDir -ItemType Directory -Force | Out-Null
-                    }
-                    Copy-Item -Path $spec.Source -Destination $spec.Destination -Recurse -Force
-                }
-            }
-
-            # Copy collection-specific artifacts
-            Copy-CollectionArtifacts -RepoRoot $RepoRoot -ExtensionDirectory $ExtensionDirectory -PrepareResult @{}
-        } else {
-            # Full mode: copy everything, filtering out dev artifacts during copy
-            foreach ($spec in $copySpecs) {
-                $specName = Split-Path $spec.Source -Leaf
-                Write-Host "   Copying $specName..." -ForegroundColor Gray
-
-                if ($spec.IsFile) {
-                    $parentDir = Split-Path $spec.Destination -Parent
-                    New-Item -Path $parentDir -ItemType Directory -Force | Out-Null
-                    Copy-Item -Path $spec.Source -Destination $spec.Destination -Force
-                } else {
-                    Copy-DirectoryFiltered -Source $spec.Source -Destination $spec.Destination
-                }
-            }
-        }
-
-        # Remove test directories from copied skills (not excluded by Copy-DirectoryFiltered)
-        $skillsDir = Join-Path $ExtensionDirectory ".github" "skills"
-        if (Test-Path $skillsDir) {
-            Get-ChildItem -Path $skillsDir -Directory -Filter 'tests' -Recurse -ErrorAction SilentlyContinue |
-                Remove-Item -Recurse -Force
-        }
-
-        Write-Host "   ✅ Extension directory prepared" -ForegroundColor Green
-
-        # Swap collection README if collection specifies one
-        if ($Collection -and $Collection -ne "") {
-            $collectionReadmePath = Get-CollectionReadmePath -CollectionPath $Collection -ExtensionDirectory $ExtensionDirectory
-            if ($collectionReadmePath) {
-                Write-Host ""
-                Write-Host "📄 Applying collection README..." -ForegroundColor Yellow
-                Set-CollectionReadme -ExtensionDirectory $ExtensionDirectory -CollectionReadmePath $collectionReadmePath -Operation Swap
-            }
-        }
-
-        if ($DryRun) {
-            Write-Host ""
-            Write-Host "🧪 Dry-run complete: packaging orchestration validated without VSIX creation." -ForegroundColor Yellow
-            return New-PackagingResult -Success $true -Version $packageVersion
-        }
-
-        # Check vsce availability using pure function
-        $vsceAvailability = Test-VsceAvailable
-        if (-not $vsceAvailability.IsAvailable) {
-            return New-PackagingResult -Success $false -ErrorMessage "Neither vsce nor npx found. Please install @vscode/vsce globally or ensure npm is available."
-        }
-
-        # Build vsce command using pure function
-        $vsceCommand = Get-VscePackageCommand -CommandType $vsceAvailability.CommandType -PreRelease:$PreRelease
-
-        # Package extension
-        Write-Host ""
-        Write-Host "📦 Packaging extension..." -ForegroundColor Yellow
-
-        if ($PreRelease) {
-            Write-Host "   Mode: Pre-release channel" -ForegroundColor Magenta
-        }
-
-        Write-Host "   Using $($vsceAvailability.CommandType)..." -ForegroundColor Gray
-
-        # Execute vsce command using I/O function
-        $useWindowsWrapper = ($IsWindows -or $env:OS -eq 'Windows_NT') -and ($vsceCommand.Executable -eq 'npx')
-        $vsceResult = Invoke-VsceCommand `
-            -Executable $vsceCommand.Executable `
-            -Arguments $vsceCommand.Arguments `
-            -WorkingDirectory $ExtensionDirectory `
-            -UseWindowsWrapper:$useWindowsWrapper
-
-        if (-not $vsceResult.Success) {
-            return New-PackagingResult -Success $false -ErrorMessage "vsce package command failed with exit code $($vsceResult.ExitCode)"
-        }
-
-        # Find the generated vsix file
-        $vsixFile = Get-ChildItem -Path $ExtensionDirectory -Filter "*.vsix" | Sort-Object LastWriteTime -Descending | Select-Object -First 1
-
-        if (-not $vsixFile) {
-            return New-PackagingResult -Success $false -ErrorMessage "No .vsix file found after packaging"
-        }
-
-        Write-Host ""
-        Write-Host "✅ Extension packaged successfully!" -ForegroundColor Green
-        Write-Host "   File: $($vsixFile.Name)" -ForegroundColor Cyan
-        Write-Host "   Size: $([math]::Round($vsixFile.Length / 1KB, 2)) KB" -ForegroundColor Cyan
-        Write-Host "   Version: $packageVersion" -ForegroundColor Cyan
-
-        # Output for CI/CD consumption
-        Set-CIOutput -Name 'version' -Value $packageVersion
-        Set-CIOutput -Name 'vsix-file' -Value $vsixFile.Name
-        Set-CIOutput -Name 'pre-release' -Value $PreRelease.IsPresent
-
-        Write-Host ""
-        Write-Host "🎉 Done!" -ForegroundColor Green
-        Write-Host ""
-
-        return New-PackagingResult -Success $true -OutputPath $vsixFile.FullName -Version $packageVersion
+        $process = Invoke-VsceCommand -Executable $vsce.Command -Arguments (Get-VscePackageArguments -PreRelease:$PreRelease) -WorkingDirectory $ExtensionDirectory
+        if (-not $process.Success) { return New-PackagingResult -Success $false -ErrorMessage "vsce failed with exit code $($process.ExitCode)" }
+        $vsix = Get-ChildItem -LiteralPath $ExtensionDirectory -Filter '*.vsix' -File | Sort-Object LastWriteTime -Descending | Select-Object -First 1
+        if (-not $vsix) { return New-PackagingResult -Success $false -ErrorMessage 'No .vsix file found after packaging' }
+        Set-CIOutput -Name version -Value $resolved.PackageVersion
+        Set-CIOutput -Name vsix-file -Value $vsix.Name
+        Set-CIOutput -Name pre-release -Value $PreRelease.IsPresent
+        return New-PackagingResult -Success $true -OutputPath $vsix.FullName -Version $resolved.PackageVersion
     }
-    catch {
-        return New-PackagingResult -Success $false -ErrorMessage $_.Exception.Message
-    }
+    catch { return New-PackagingResult -Success $false -ErrorMessage $_.Exception.Message }
     finally {
-        # Restore canonical package.json from collection template backup
-        $backupPath = Join-Path $ExtensionDirectory "package.json.bak"
-        if (Test-Path $backupPath) {
-            Copy-Item -Path $backupPath -Destination $PackageJsonPath -Force
-            Remove-Item -Path $backupPath -Force
-            Write-Host "   Restored canonical package.json from backup" -ForegroundColor Green
-
-            # Re-read restored package.json for downstream restore steps
-            $packageJson = Get-Content -Path $PackageJsonPath -Raw | ConvertFrom-Json
-        }
-
-        # Restore collection README if it was swapped
-        Set-CollectionReadme -ExtensionDirectory $ExtensionDirectory -Operation Restore
-
-        # Cleanup copied directories using I/O function
-        Write-Host ""
-        Write-Host "🧹 Cleaning up..." -ForegroundColor Yellow
-        Remove-PackagingArtifacts -ExtensionDirectory $ExtensionDirectory -DirectoryNames $dirsToClean
-
-        # Restore original version if it was changed using I/O function
-        if ($versionWasModified) {
-            Write-Host ""
-            Write-Host "🔄 Restoring original package.json version..." -ForegroundColor Yellow
-            Restore-PackageJsonVersion -PackageJsonPath $PackageJsonPath -PackageJson $packageJson -OriginalVersion $originalVersion
+        Remove-PackagingArtifacts -ExtensionDirectory $ExtensionDirectory
+        if ($versionChanged -and (Test-Path -LiteralPath $packagePath)) {
+            $package = Get-Content -LiteralPath $packagePath -Raw -Encoding utf8 | ConvertFrom-Json
+            $package.version = $originalVersion
+            $package | ConvertTo-Json -Depth 20 | Set-Content -LiteralPath $packagePath -Encoding utf8NoBOM
         }
     }
 }
 
-#endregion Orchestration Functions
-
-#region Main Execution
 if ($MyInvocation.InvocationName -ne '.') {
-    try {
-        $ScriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
-        $RepoRoot = (Get-Item "$ScriptDir/../..").FullName
-        $ExtensionDir = Join-Path $RepoRoot "extension"
-
-        $result = Invoke-PackageExtension `
-            -ExtensionDirectory $ExtensionDir `
-            -RepoRoot $RepoRoot `
-            -Version $Version `
-            -DevPatchNumber $DevPatchNumber `
-            -ChangelogPath $ChangelogPath `
-            -PreRelease:$PreRelease `
-            -Collection $Collection `
-            -DryRun:$DryRun
-
-        if (-not $result.Success) {
-            Write-Error -ErrorAction Continue $result.ErrorMessage
-            exit 1
-        }
-        exit 0
-    }
-    catch {
-        Write-Error -ErrorAction Continue "Package-Extension failed: $($_.Exception.Message)"
-        Write-CIAnnotation -Message $_.Exception.Message -Level Error
+    $repoRoot = (Get-Item (Join-Path $PSScriptRoot '../..')).FullName
+    $result = Invoke-PackageExtension -ExtensionDirectory (Join-Path $repoRoot 'extension') -RepoRoot $repoRoot `
+        -Version $Version -DevPatchNumber $DevPatchNumber -ChangelogPath $ChangelogPath `
+        -PreRelease:$PreRelease -DryRun:$DryRun
+    if (-not $result.Success) {
+        Write-CIAnnotation -Message $result.ErrorMessage -Level Error
+        Write-Error -ErrorAction Continue "Package-Extension failed: $($result.ErrorMessage)"
         exit 1
     }
+    exit 0
 }
-#endregion Main Execution

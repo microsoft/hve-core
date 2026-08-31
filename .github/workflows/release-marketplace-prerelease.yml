@@ -1,3 +1,5 @@
+# Copyright (c) 2026 Microsoft Corporation. All rights reserved.
+# SPDX-License-Identifier: MIT
 name: Pre-Release Marketplace Publish
 
 on:
@@ -11,7 +13,7 @@ on:
         type: string
         default: ""
       dry-run:
-        description: "Dry run (package only, do not publish)"
+        description: "Dry run (validate the version, exact tag, and catalog; do not publish)"
         required: false
         type: boolean
         default: false
@@ -28,41 +30,58 @@ jobs:
     name: Validate Pre-Release Version
     if: ${{ github.event_name == 'workflow_dispatch' || (github.event_name == 'release' && github.event.release.prerelease == true) }}
     runs-on: ubuntu-latest
-    permissions: {}
+    permissions:
+      contents: read
     outputs:
       version: ${{ steps.validate.outputs.version }}
+      tag: ${{ steps.validate.outputs.tag }}
     steps:
       - name: Resolve version from event
         id: resolve
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          EVENT_TAG: ${{ github.event.release.tag_name }}
+          MANUAL_VERSION: ${{ inputs.version }}
+          REPOSITORY: ${{ github.repository }}
         run: |
-          if [[ "${{ github.event_name }}" == "release" ]]; then
-            TAG="${{ github.event.release.tag_name }}"
-            VERSION="${TAG#hve-core-v}"
-            VERSION="${VERSION#v}"
-            echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          set -euo pipefail
+          if [[ "$EVENT_NAME" == "release" ]]; then
+            TAG="$EVENT_TAG"
+            if ! [[ "$TAG" =~ ^prerelease-v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+              echo "::error::Release tag has an invalid pre-release version form"
+              exit 1
+            fi
+            VERSION="${TAG#prerelease-v}"
             echo "Resolved version from release tag: $VERSION"
           else
-            echo "version=${{ inputs.version }}" >> "$GITHUB_OUTPUT"
+            VERSION="${MANUAL_VERSION#prerelease-v}"
+            VERSION="${VERSION#v}"
+            if [ -n "$VERSION" ] && ! [[ "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+              echo "::error::Manual version has an invalid MAJOR.MINOR.PATCH form"
+              exit 1
+            fi
           fi
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
 
       - name: Validate pre-release version
         id: validate
         env:
           GH_TOKEN: ${{ github.token }}
           INPUT_VERSION: ${{ steps.resolve.outputs.version }}
+          REPOSITORY: ${{ github.repository }}
         run: |
           VERSION="$INPUT_VERSION"
-          # Strip leading 'v' or 'hve-core-v' prefix if present
+          # Strip the channel tag prefix if present
+          VERSION="${VERSION#prerelease-v}"
           VERSION="${VERSION#v}"
-          VERSION="${VERSION#hve-core-v}"
 
           # Auto-detect from latest pre-release tag when no version specified
           if [ -z "$VERSION" ]; then
             TAG=$(gh release list --exclude-drafts --limit 10 --json tagName,isPrerelease \
               -q '[.[] | select(.isPrerelease)] | .[0].tagName // empty' \
-              -R "${{ github.repository }}")
+              -R "$REPOSITORY")
             if [ -n "$TAG" ]; then
-              VERSION="${TAG#hve-core-v}"
+              VERSION="${TAG#prerelease-v}"
               echo "📦 Auto-detected pre-release version: $VERSION"
             else
               echo "::error::No pre-release found. Provide a version manually (e.g., 3.1.44)"
@@ -78,6 +97,7 @@ jobs:
 
           # Even/odd convention: odd minor = pre-release, even minor = stable
           PUBLISH_MINOR=$(echo "$VERSION" | cut -d. -f2)
+          PUBLISH_MINOR=$((10#$PUBLISH_MINOR))
           if (( PUBLISH_MINOR % 2 == 0 )); then
             echo "::error::Pre-release channel requires odd minor version. Got: $VERSION (even minor = stable)"
             echo "::error::Use the stable publish workflow for even-minor versions"
@@ -86,26 +106,48 @@ jobs:
 
           echo "✅ Valid pre-release version: $VERSION"
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "tag=prerelease-v$VERSION" >> "$GITHUB_OUTPUT"
 
-  package:
-    name: Package Pre-Release Extensions
-    needs: validate-version
-    uses: ./.github/workflows/extension-package.yml
-    with:
-      version: ${{ needs.validate-version.outputs.version }}
-      channel: PreRelease
+  # A dry run stops before the credentialed publisher but still proves the exact
+  # tag and its catalog version, matching the Stable lane.
+  verify-catalog:
+    name: Verify Pre-Release Catalog Version
+    needs: [validate-version]
+    runs-on: ubuntu-latest
     permissions:
       contents: read
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: refs/tags/${{ needs.validate-version.outputs.tag }}
+          persist-credentials: false
+
+      - name: Resolve effective version
+        shell: bash
+        env:
+          INPUT_VERSION: ${{ needs.validate-version.outputs.version }}
+        run: |
+          set -euo pipefail
+          version="$INPUT_VERSION"
+          # The released tag is the publication source, so its catalog version
+          # is what the marketplace publish resolves.
+          catalog_version=$(jq -r '.metadata.version' .github/plugin/marketplace.json)
+          if [ "$catalog_version" != "$version" ]; then
+            echo "::error::Catalog version $catalog_version at the release ref does not match $version"
+            exit 1
+          fi
 
   publish:
-    name: Publish Pre-Release Extensions
-    needs: [package]
+    name: Publish Pre-Release Extension
+    needs: [validate-version, verify-catalog]
     if: ${{ !inputs.dry-run }}
     uses: ./.github/workflows/extension-marketplace-publish.yml
     with:
-      collections-matrix: ${{ needs.package.outputs.collections-matrix }}
+      tag: ${{ needs.validate-version.outputs.tag }}
       pre-release: true
     permissions:
       contents: read
+      attestations: read
       id-token: write
     secrets: inherit

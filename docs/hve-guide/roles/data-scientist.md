@@ -3,7 +3,7 @@ title: Data Scientist Guide
 description: HVE Core support for data scientists building notebooks, dashboards, data specifications, and analytics workflows
 sidebar_position: 9
 author: Microsoft
-ms.date: 2026-03-10
+ms.date: 2026-08-03
 ms.topic: how-to
 keywords:
   - data science
@@ -15,12 +15,12 @@ estimated_reading_time: 10
 
 This guide is for you if you analyze data, build Jupyter notebooks, create dashboards, define data specifications, or develop analytics pipelines. Data scientists have focused tooling with 13 addressable assets spanning data exploration, visualization, and pipeline development.
 
-## Recommended Collections
+## Capability Groups
 
 > [!TIP]
-> Install the [HVE Core extension](https://marketplace.visualstudio.com/items?itemName=ise-hve-essentials.hve-core) from the VS Code Marketplace for the flagship RPI workflow and core artifacts with zero configuration.
+> Install the [HVE Core extension](https://marketplace.visualstudio.com/items?itemName=ise-hve-essentials.hve-core) from the VS Code Marketplace for the complete active component set with zero configuration.
 >
-> Your primary collections are `data-science` (notebook generation, dashboard creation, and data specification tools) and `hve-core` (research and planning workflows for larger analytics projects). For clone-based setups, see the [Installation Guide](../../getting-started/install.md).
+> For selective clone adoption, choose notebook generation, dashboard, data specification, Python environment, and research components that match your analytics workflow. Capability groups help you discover related components; they are not independently installable products. See the [Installation Guide](../../getting-started/install.md).
 
 ## What HVE Core Does for You
 
@@ -44,50 +44,50 @@ This guide is for you if you analyze data, build Jupyter notebooks, create dashb
 
 ## Stage Walkthrough
 
-1. Stage 2: Discovery. Use the **task-researcher** agent to investigate data sources, explore available datasets, and research analytical approaches.
-2. Stage 3: Product Definition. Run the **gen-data-spec** agent to define data schemas, sources, and transformation requirements as structured specification documents.
-3. Stage 6: Notebook Development. Generate analysis notebooks with the **gen-jupyter-notebook** agent and create dashboards with the **gen-streamlit-dashboard** agent.
-4. Stage 7: Validation. Test generated dashboards with the **test-streamlit-dashboard** agent and review analysis results for accuracy and completeness.
+1. Stage 2: Discovery. Use `/rpi-research` to investigate data sources, explore available datasets, and research analytical approaches.
+2. Stage 3: Product Definition. Select the **Data Science and Engineering Coach** and confirm the catalog job to define entities, relationships, and dataset profiles as a durable catalog.
+3. Stage 6: Notebook Development. Confirm the analysis job to produce notebooks and dashboards, and the pipeline job to produce transformation and validation code.
+4. Stage 7: Validation. Confirm the testing job for dashboard and pipeline validation, and the evaluation job when an AI system needs an evaluation dataset.
 5. Stage 8: Delivery. Package notebooks, dashboards, and documentation for sharing with stakeholders and engineering teams.
 
 ## Starter Prompts
 
-Select **gen-jupyter-notebook** agent:
+Select the **Data Science and Engineering Coach** agent and confirm the analysis job:
 
 ```text
 Create a data analysis notebook for the Q4 sales transactions dataset in
 data/sales-q4-2025.parquet. Include data quality assessment, revenue trend
 analysis by product category and region, and customer cohort segmentation
-using RFM scoring with matplotlib visualizations.
+using RFM scoring.
 ```
 
-Select **gen-data-spec** agent:
+Select the **Data Science and Engineering Coach** agent and confirm the catalog job:
 
 ```text
-Define a data specification for the customer event ingestion pipeline.
-Source is a Kafka topic with Avro encoding, target is a Delta Lake table.
-Include timestamp normalization, PII hashing transformations, quality
-rules for null checks, and partitioning by event_date and event_type.
+Catalog the customer event ingestion pipeline. Source is a Kafka topic with
+Avro encoding, target is a Delta Lake table. Capture entities, relationships,
+sensitivity classification, and a dataset profile covering timestamp
+normalization and null-check quality rules.
 ```
 
-Select **gen-streamlit-dashboard** agent:
+Select the **Data Science and Engineering Coach** agent and confirm the analysis job for a dashboard:
 
 ```text
 Build a dashboard for API latency and error rate metrics from the
 Prometheus endpoint at /metrics. Include P50/P95/P99 latency percentiles,
 error rate breakdown by endpoint (5xx vs 4xx), and a 30-day daily active
-users trend. Set refresh interval to 5 minutes.
+users trend.
 ```
 
-Select **test-streamlit-dashboard** agent:
+Select the **Data Science and Engineering Coach** agent and confirm the evaluation job:
 
 ```text
-Validate the dashboard at dashboards/api-performance.json. Check that all
-queries return data for the last 7 days, panels render without errors, and
-the refresh rate does not exceed Prometheus scrape intervals.
+Build an evaluation dataset for our grounded support assistant. It answers
+from the product knowledge base, calls a ticket-lookup tool, and must refuse
+account changes. We evaluate in batch before each release.
 ```
 
-Select **task-researcher** agent:
+Use `/rpi-research`:
 
 ```text
 Research data sources for predicting customer churn in the SaaS platform.
@@ -98,15 +98,15 @@ granularity, and GDPR privacy constraints for EU customer data.
 
 ## Key Agents and Workflows
 
-| Agent                        | Purpose                                    | Docs                                            |
-|------------------------------|--------------------------------------------|-------------------------------------------------|
-| **gen-jupyter-notebook**     | Jupyter notebook generation                | Agent file                                      |
-| **gen-streamlit-dashboard**  | Streamlit dashboard creation               | Agent file                                      |
-| **gen-data-spec**            | Data specification document creation       | Agent file                                      |
-| **test-streamlit-dashboard** | Dashboard functional testing               | Agent file                                      |
-| **task-researcher**          | Data source and pattern research           | [Task Researcher](../../rpi/task-researcher.md) |
-| **task-planner**             | Analytics pipeline planning                | [Task Planner](../../rpi/task-planner.md)       |
-| **memory**                   | Session context and preference persistence | Agent file                                      |
+| Agent or skill                         | Purpose                                                          | Docs                       |
+|----------------------------------------|------------------------------------------------------------------|----------------------------|
+| **Data Science and Engineering Coach** | Persistent data science and engineering coaching and job routing | Agent file                 |
+| **analysis-authoring**                 | Notebook and dashboard authoring and validation                  | Skill file                 |
+| **data-catalog**                       | Catalog entities, relationships, and profiles                    | Skill file                 |
+| **dataops**                            | Pipeline invariants, validation, and testing                     | Skill file                 |
+| **evaluation-design**                  | AI-system evaluation dataset design                              | Skill file                 |
+| **rpi-research**                       | Data source and pattern research                                 | [RPI workflow](../../rpi/) |
+| **rpi-plan**                           | Analytics pipeline planning                                      | [RPI workflow](../../rpi/) |
 
 Prompts complement the agents for cross-cutting workflows:
 
@@ -119,13 +119,13 @@ Python environment management follows the `uv` virtual environment instructions 
 
 ## Tips
 
-| Do                                                                          | Don't                                                        |
-|-----------------------------------------------------------------------------|--------------------------------------------------------------|
-| Start with the **gen-data-spec** agent to define schemas before coding      | Jump straight to notebook coding without data specifications |
-| Use the **gen-jupyter-notebook** agent for structured, documented notebooks | Create raw notebooks without documentation cells             |
-| Test dashboards with the **test-streamlit-dashboard** agent                 | Deploy dashboards without functional validation              |
-| Research data sources with the **task-researcher** agent first              | Assume data availability without investigation               |
-| Use `uv` for reproducible Python environments                               | Install packages globally or skip environment isolation      |
+| Do                                                       | Don't                                                       |
+|----------------------------------------------------------|-------------------------------------------------------------|
+| Confirm the catalog job to define entities before coding | Jump straight to notebook coding without data understanding |
+| Let the coach route analysis work to its owning skill    | Create raw notebooks without documentation cells            |
+| Confirm the testing job before shipping a dashboard      | Deploy dashboards without functional validation             |
+| Research data sources with `/rpi-research` first         | Assume data availability without investigation              |
+| Use `uv` for reproducible Python environments            | Install packages globally or skip environment isolation     |
 
 ## Related Roles
 
@@ -135,7 +135,7 @@ Python environment management follows the `uv` virtual environment instructions 
 ## Next Steps
 
 > [!TIP]
-> Explore the data science collection: [Data Science Collection](https://github.com/microsoft/hve-core/blob/main/collections/data-science.collection.md)
+> Browse the complete HVE Core inventory: [HVE Core](../../plugins/hve-core)
 > Set up your Python environment: [uv Projects](https://github.com/microsoft/hve-core/blob/main/.github/instructions/coding-standards/uv-projects.instructions.md)
 > See how analytics fits the project lifecycle: [AI-Assisted Project Lifecycle](../lifecycle/)
 

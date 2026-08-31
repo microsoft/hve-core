@@ -3,7 +3,7 @@ title: Using the DT Coach
 description: Guide to using the dt-coach agent for AI-assisted Design Thinking sessions
 sidebar_position: 3
 author: Microsoft
-ms.date: 2026-02-25
+ms.date: 2026-08-06
 ms.topic: tutorial
 keywords:
   - dt-coach
@@ -29,26 +29,36 @@ Use the DT Coach when your project involves:
 
 1. Coaches through all nine methods using a Think/Speak/Empower philosophy
 2. Manages session state so you can pause and resume across conversations
-3. Enforces quality appropriate to each space (rough in Problem, scrappy in Solution, functional in Validation)
+3. Enforces quality appropriate to each space (rough in Problem, scrappy in Solution, functional in the Implementation Space)
 4. Guides transitions between methods based on exit signals rather than arbitrary timelines
-5. Prepares handoffs to RPI agents when your DT session reaches a natural exit point
+5. Prepares handoffs to the RPI workflow when your DT session reaches a natural exit point
 
 > [!NOTE]
 > The DT Coach never prescribes solutions. It shares observations, asks questions, and offers choices. You drive the thinking; the coach helps you think more clearly.
 
 ## Output Artifacts
 
-DT Coach creates session artifacts at:
+DT Coach creates session artifacts in one location:
 
 ```text
 .copilot-tracking/dt/{project-slug}/
 ```
 
-This directory contains:
+This project directory contains:
 
 * `coaching-state.md`: Session state with method progress, transition log, and recovery points
+* `transition_log`: Recorded handoff and method-transition history
+
+Project artifacts live in the same directory:
+
+```text
+.copilot-tracking/dt/{project-slug}/
+```
+
+This directory also contains:
+
 * `method-{NN}-*/`: Per-method working artifacts (notes, themes, prototypes)
-* Handoff artifacts when transitioning to RPI agents
+* Handoff artifacts when transitioning to RPI
 
 ## How to Use DT Coach
 
@@ -62,7 +72,9 @@ This directory contains:
 ### Option 2: Start from a DT Prompt
 
 Use `/dt-method-next` to have the coach assess where you are and guide you to the next appropriate method.
-Use `/dt-figma-export` when you want to turn existing `.copilot-tracking/dt/` artifacts into a collaborative FigJam board or Figma Design file after a method produces review-ready output.
+Use `/dt-canonical-deck` to generate a canonical deck snapshot, then follow the customer-card workflow when you want a PowerPoint deck derived from the snapshot.
+Use `/rpi-research` when a DT session has reached a natural exit point and you want to begin the RPI Research phase.
+Use `/dt-figma-export` or a Mural board export when you want to turn existing DT artifacts into a collaborative board for review.
 
 ### Starting a Session
 
@@ -75,7 +87,9 @@ We've been asked to "build a digital dashboard" but I'm not sure that's
 the right solution.
 ```
 
-The coach responds with observations and a guiding question, never a solution. You drive the conversation forward.
+The coach responds with observations and a guiding question, never a solution. When a new project starts, the coach creates the project directory at `.copilot-tracking/dt/{project-slug}/` for both state and artifacts, and initializes `coaching-state.md` before method-specific coaching begins.
+
+It does not ask about the canonical deck and customer-card workflow at that point. That offer arrives at the Method 3 and Method 5 exits, once the work has produced content worth capturing, and you can ask for it directly at any time.
 
 ### Navigating Methods
 
@@ -126,8 +140,6 @@ Session state persists in `.copilot-tracking/dt/{project-slug}/coaching-state.md
 * [DT to RPI Integration](dt-rpi-integration.md): How DT outputs feed into the RPI workflow
 * [Export DT Artifacts to Figma](figma-export.md): Optional board export workflow for workshop collaboration
 * [DT Learning Tutor](dt-learning-tutor.md): Curriculum-based training across all methods
-
-> Brought to you by microsoft/hve-core
 
 <!-- markdownlint-disable MD036 -->
 *🤖 Crafted with precision by ✨Copilot following brilliant human instruction,

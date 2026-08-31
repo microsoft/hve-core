@@ -2,7 +2,7 @@
 title: GitHub Actions Workflows
 description: Modular CI/CD workflow architecture for validation, security scanning, and automated maintenance
 author: HVE Core Team
-ms.date: 2026-05-01
+ms.date: 2026-08-19
 ms.topic: reference
 keywords:
   - github actions
@@ -47,16 +47,88 @@ Modular reusable workflows following Single Responsibility Principle. Each workf
 
 Compose multiple reusable workflows for comprehensive validation and security scanning.
 
-| Workflow                          | Triggers                                | Jobs                                                            | Mode                       | Purpose                              |
-|-----------------------------------|-----------------------------------------|-----------------------------------------------------------------|----------------------------|--------------------------------------|
-| `pr-validation.yml`               | PR to main/develop (open, push, reopen) | 9 jobs (8 reusable workflows + 1 inline)                        | Strict validation          | Pre-merge quality gate with security |
-| `release-stable.yml`              | Push to main                            | 5 jobs (5 reusable workflows)                                   | Strict mode, SARIF uploads | Post-merge validation                |
-| `weekly-security-maintenance.yml` | Schedule (Sun 2AM UTC)                  | 4 (validate-pinning, check-staleness, codeql-analysis, summary) | Soft-fail warnings         | Weekly security posture              |
-| `scorecard.yml`                   | Push to main, Schedule (Sun 3AM UTC)    | 1 (scorecard)                                                   | SARIF upload               | OpenSSF Scorecard security posture   |
+| Workflow                          | Triggers                                                | Mode                          | Purpose                                                                                      |
+|-----------------------------------|---------------------------------------------------------|-------------------------------|----------------------------------------------------------------------------------------------|
+| `pr-validation.yml`               | PR to main, develop, or either release branch; dispatch | Strict validation             | Pre-merge quality gate with the `PR Validation Success` required-check aggregator            |
+| `release-prerelease-prepare.yml`  | Merged PR to `main`; dispatch                           | Reviewed PreRelease promotion | Open the target-based `main` to `release/prerelease` promotion PR                            |
+| `release-prerelease.yml`          | Merged PR to `release/prerelease`                       | Managed PreRelease release    | Prepare the managed release PR or publish the verified odd-minor release and VSIX assurance  |
+| `release-stable.yml`              | Published PreRelease; dispatch                          | Reviewed Stable promotion     | Open the target-based `release/prerelease` to `release/stable` promotion PR                  |
+| `release-stable-publish.yml`      | Merged PR to `release/stable`                           | Managed Stable release        | Prepare the managed release PR or publish the verified even-minor release and VSIX assurance |
+| `weekly-security-maintenance.yml` | Schedule (Sun 2AM UTC)                                  | Soft-fail warnings            | Weekly security posture                                                                      |
+| `scorecard.yml`                   | Push to main, Schedule (Sun 3AM UTC)                    | SARIF upload                  | OpenSSF Scorecard security posture                                                           |
 
-pr-validation.yml jobs: codeql-analysis, spell-check, markdown-lint, table-format, psscriptanalyzer, frontmatter-validation, link-lang-check, markdown-link-check, dependency-pinning-check
+The validation jobs in `pr-validation.yml` feed the `pr-validation-success` aggregator, which is the required merge signal. The `gate-completeness-check` job verifies that every validation job appears in that gate's `needs:` list.
 
-release-stable.yml jobs: spell-check, markdown-lint, table-format, codeql-analysis, dependency-pinning-scan
+release-stable.yml jobs: prepare-promotion, open-promotion-pr
+
+release-stable-publish.yml jobs: validate-trigger, release-please, sync-release-pr, validate-release, close-milestone, extension-package-release, extension-provenance, generate-dependency-sbom, vex-attest, verify-provenance, sbom-diff, append-verification-notes, publish-release
+
+release-prerelease-prepare.yml jobs: prepare-promotion, open-promotion-pr
+
+release-prerelease.yml jobs: validate-trigger, release-please, sync-release-pr,
+validate-release, close-milestone, extension-package-prerelease,
+generate-dependency-sbom, extension-provenance-prerelease,
+verify-provenance, publish-release
+
+### Release Channel Contract
+
+The reviewed branch ladder is `main` to `release/prerelease` to
+`release/stable`. Each hop has two review boundaries: a promotion pull request
+and a release-please managed pull request. Promotion preparation writes exact
+release intent but creates no tag or release.
+
+After release-please opens the managed pull request, `sync-release-pr`
+synchronizes committed versions and removes the consumed `release-as`. Merging
+the reviewed managed pull request runs release-please in tag-only mode.
+Release-please is the sole tag writer:
+
+* PreRelease creates `prerelease-v<version>`.
+* Stable creates `v<version>`.
+
+Release-please creates the draft channel release at the reviewed managed merge, and publication occurs after packaging and provenance verification complete.
+
+| Registration                               | Repository contract                                    |
+|--------------------------------------------|--------------------------------------------------------|
+| `microsoft/hve-core`                       | Ref-less development-tip registration for `main`       |
+| `microsoft/hve-core#release/prerelease`    | Moving registration for the reviewed PreRelease branch |
+| `microsoft/hve-core#release/stable`        | Moving registration for the reviewed Stable branch     |
+| `microsoft/hve-core#prerelease-v<version>` | Immutable exact PreRelease registration                |
+| `microsoft/hve-core#v<version>`            | Immutable exact Stable registration                    |
+
+Publication does not synchronize release metadata or changelog history back to `main`. An explicit marketplace refresh and plugin update are required for ref-less main, which has no release gate, SBOM, or attestation. Release-channel assets remain release-gated, SBOM-covered, and attested.
+
+Both release channels preserve one VSIX, its SPDX, Sigstore, and in-toto sidecars, `dependencies.spdx.json`, provenance verification, and Azure OIDC publication. Stable additionally preserves `hve-core.openvex.json` and its attestations.
+
+`extension-marketplace-publish.yml` has four jobs: `validate-inputs`, `verify`, `prepare-publisher`, and `publish`. Input validation resolves immutable release and protected-main commits before Marketplace environment activation. Verification downloads the one VSIX and checks its lane-specific attestation. Publisher preparation builds the minimal locked `vsce` toolchain from protected `main`. The protected publish job re-verifies provenance, obtains Azure OIDC, and invokes `vsce` directly.
+
+Tag protection, Marketplace environment reviewers, and Azure OIDC claim policy remain external controls.
+
+### Release Version Allocation
+
+Ordinary version allocation is branch-owned and does not classify commits or
+select an automatic patch, minor, or major release class. PreRelease reads its
+current `release/prerelease` version and returns the same major, minor plus
+two, and patch zero. Stable reads the promoted PreRelease version and returns
+the promoted major, promoted minor plus one, and patch zero. Current Stable
+state only rejects a candidate that does not advance it.
+
+The ordinary sequence is `3.3.101` to `3.5.0` to `3.6.0`. The plugin manifest
+and VSIX use the identical channel version. A major-line transition and a
+Stable patch or hotfix each require a separate explicit manifest and
+release-state decision. Odd/even minor parity remains repository policy
+aligned with VS Code Marketplace guidance and behavior, rather than a
+requirement of `MAJOR.MINOR.PATCH` syntax.
+
+Release branches and exact tags retain the repository-root plugin source from their selected snapshots. Their reviewed, release-gated VSIX assets remain SBOM-covered, attested, and immutable. The ref-less main catalog instead sources current root `plugin.json` and canonical `.github` artifacts from `main` and has no published-release assurance.
+
+Final publication mints a release GitHub App token and atomically runs
+`gh release edit --prerelease --draft=false`; the resulting published event
+triggers `Pre-Release Marketplace Publish`. Main remains a ref-less
+development-tip channel and is not updated by release completion. Release
+branches, immutable tags, and published releases own release state and history.
+
+Hosted branch, tag, release, asset, workflow, and installed-client checks are
+authorized manual actions. Local validation does not execute or verify them.
 
 ## Reusable Workflows
 
@@ -71,7 +143,9 @@ release-stable.yml jobs: spell-check, markdown-lint, table-format, codeql-analys
 | `frontmatter-validation.yml` | Custom PS script         | YAML frontmatter validation          | `soft-fail` (false), `changed-files-only` (true), `skip-footer-validation` (false), `warnings-as-errors` (true) | frontmatter-validation-results |
 | `skill-validation.yml`       | Custom PS script         | Skill directory structure validation | `soft-fail` (false), `changed-files-only` (true)                                                                | skill-validation-results       |
 | `link-lang-check.yml`        | Custom PS script         | Detect language-specific URLs        | `soft-fail` (false)                                                                                             | link-lang-check-results        |
-| `markdown-link-check.yml`    | markdown-link-check      | Validate links (internal/external)   | `soft-fail` (true)                                                                                              | markdown-link-check-results    |
+| `markdown-link-check.yml`    | markdown-link-check      | Validate internal and external links | `soft-fail` (false), `changed-files-only` (true, external links only), `throttle-limit` (8)                     | markdown-link-check-results    |
+
+Parenthesized values are the defaults declared by each reusable workflow, not the values its callers pass. Callers override them per lane: `pr-validation.yml` and `weekly-validation.yml` both invoke `markdown-link-check.yml` with `soft-fail: true`, and `weekly-validation.yml` additionally sets `changed-files-only: false` for the full-repository sweep.
 
 All validation workflows use `permissions: contents: read`, publish PR annotations, and retain artifacts for 30 days.
 
@@ -150,13 +224,46 @@ Triggers: `schedule` (Sundays at 4 AM UTC), `workflow_call`
 
 Features:
 
-* Languages: JavaScript/TypeScript analysis
+* Languages: `actions` (GitHub Actions workflows), `python` (Python scripts), and `javascript-typescript` (VS Code extension source)
 * Queries: security-extended and security-and-quality query suites
 * Coverage: Detects SQL injection, XSS, command injection, path traversal, and 200+ other vulnerabilities
 * Integration: Results appear in Security > Code Scanning tab
-* Auto-build: Automatically detects and builds JavaScript/TypeScript projects
+* Auto-build: Prepares compiled code where required for each language target; Actions analysis needs no compilation
 
 Outputs: SARIF results uploaded to GitHub Security tab, job summary with analysis details
+
+#### `dangerous-workflow-scan.yml`
+
+Purpose: Combines a blocking workflow-injection gate with an advisory Poutine
+supply-chain scan for GitHub Actions workflows.
+
+Jobs:
+
+* `dangerous-workflow-check`: Runs `Test-DangerousWorkflow.ps1` as the blocking homegrown gate and uploads SARIF under the `dangerous-workflow` category
+* `poutine-scan`: Runs Poutine as an advisory scan by default and uploads SARIF under the `poutine` category
+
+Rules enforced by the homegrown gate:
+
+* `dangerous-workflow/template-injection`: attacker-controllable `github.event.*` and `github.head_ref` values interpolated into `run:` or `actions/github-script` bodies
+* `dangerous-workflow/direct-input-interpolation`: caller-controlled `workflow_call` or `workflow_dispatch` inputs interpolated into the same bodies (control CQ-6). Inputs declared `type: boolean` are the only exception; an input whose declared type cannot be resolved is reported so the gate fails closed. Route every other input through a step-level `env:` mapping named `INPUT_<UPPER_SNAKE>` and read the native shell variable inside the block
+
+Both rules scan `.github/workflows` and `.github/actions`. Composite action inputs have no `type` in the action metadata schema, so any action input reaching a `runs.steps[*].run` body is reported as `untyped` with no exception.
+
+Inputs:
+
+* `soft-fail` (boolean, default: false): Continue when the homegrown gate finds violations
+* `poutine-soft-fail` (boolean, default: true): Keep Poutine findings advisory
+* `upload-sarif` (boolean, default: true): Upload both scanners' SARIF results to the Security tab
+* `upload-artifact` (boolean, default: true): Retain both scanners' result artifacts
+
+Outputs:
+
+* `violation-count`: Number of findings from the homegrown gate
+* `is-compliant`: Whether the homegrown gate found no violations
+
+`pr-validation.yml` calls this workflow as the blocking `dangerous-workflow-check`
+required-check dependency. That call keeps the homegrown gate strict while explicitly
+setting Poutine to advisory mode.
 
 #### `dependency-review.yml`
 
@@ -233,11 +340,12 @@ Outputs: SARIF results uploaded to GitHub Security tab, job summary with badge l
 
 **Previous Behavior:** CodeQL previously ran as both a standalone workflow (on PR/push events) AND within orchestrator workflows, causing duplicate analyses on the same commits and wasting GitHub Actions minutes.
 
-**Current Architecture:** CodeQL now runs exclusively through orchestrator workflows to prevent duplicate runs and ensure consistent security scanning:
+**Current Architecture:** CodeQL now runs through dedicated entrypoint workflows to prevent duplicate runs and ensure consistent security scanning:
 
 * CodeQL PR validation: Runs via `pr-validation.yml` on all PR activity (open, push, reopen)
-* Main branch: Runs via `release-stable.yml` on every push to main
+* Main branch: Runs via `security-scan.yml` on pushes to `main` and `develop`, which calls the reusable workflow `codeql-analysis.yml`
 * Weekly scan: Standalone scheduled run every Sunday at 4 AM UTC for continuous security monitoring
+* `release-stable.yml` does not run CodeQL
 
 This architecture ensures:
 
@@ -248,13 +356,13 @@ This architecture ensures:
 
 Workflow Execution Matrix:
 
-| Event                                | Workflows That Run                                       | CodeQL Included     |
-|--------------------------------------|----------------------------------------------------------|---------------------|
-| Open PR to main/develop              | `pr-validation.yml` (9 jobs)                             | ✅  Yes              |
-| Push to PR branch                    | `pr-validation.yml` (9 jobs)                             | ✅  Yes              |
-| Merge to main                        | `release-stable.yml` (5 jobs)                            | ✅  Yes              |
-| Sunday 4AM UTC                       | `codeql-analysis.yml`, `weekly-security-maintenance.yml` | ✅  Yes (standalone) |
-| Feature branch push (no open PR)[^1] | None                                                     | ❌  No               |
+| Event                                | Workflows That Run                                       | CodeQL Included                                          |
+|--------------------------------------|----------------------------------------------------------|----------------------------------------------------------|
+| Open PR to main/develop              | `pr-validation.yml`                                      | ✅ Yes                                                    |
+| Push to PR branch                    | `pr-validation.yml`                                      | ✅ Yes                                                    |
+| Merge to main                        | `release-prerelease-prepare.yml`, `security-scan.yml`    | ✅ Yes (via `security-scan.yml` -> `codeql-analysis.yml`) |
+| Sunday 4AM UTC                       | `codeql-analysis.yml`, `weekly-security-maintenance.yml` | ✅ Yes (standalone)                                       |
+| Feature branch push (no open PR)[^1] | None                                                     | ❌ No                                                     |
 
 [^1]: Feature branches without an open PR are not validated. Open a PR to main or develop to trigger validation workflows.
 
@@ -267,7 +375,7 @@ To add a new workflow to the repository:
 3. Use dependency pinning for all dependencies
 4. Use minimal permissions
 5. Add soft-fail input support
-6. Update `pr-validation.yml` and `release-stable.yml` to include new job
+6. Update each applicable validation orchestrator to include the new job
 7. Document in this README
 
 ## Using Reusable Workflows
@@ -564,9 +672,3 @@ Use `continue-on-error: true` to prevent workflow failure on SARIF upload issues
 * [GitHub Actions: Workflow syntax](https://docs.github.com/en/actions/using-workflows/workflow-syntax-for-github-actions)
 * [GitHub Actions: Security hardening](https://docs.github.com/en/actions/security-guides/security-hardening-for-github-actions)
 * [SARIF specification](https://docs.oasis-open.org/sarif/sarif/v2.1.0/sarif-v2.1.0.html)
-
----
-
-<!-- markdownlint-disable MD036 -->
-*🤖 Crafted with precision by ✨Copilot following brilliant human instruction, then carefully refined by our team of discerning human reviewers.*
-<!-- markdownlint-enable MD036 -->

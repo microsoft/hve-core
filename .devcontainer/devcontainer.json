@@ -1,6 +1,14 @@
 {
   "name": "HVE Core - Markdown Editing",
-  "image": "${localEnv:HVE_DEVCONTAINER_IMAGE:mcr.microsoft.com/devcontainers/base:2-jammy}",
+  "build": {
+    "dockerfile": "Dockerfile",
+    "args": {
+      "BASE_IMAGE": "${localEnv:HVE_DEVCONTAINER_IMAGE}",
+      "NPM_CONFIG_REGISTRY": "${localEnv:NPM_CONFIG_REGISTRY}",
+      "PIP_INDEX_URL": "${localEnv:PIP_INDEX_URL}",
+      "UV_DEFAULT_INDEX": "${localEnv:UV_DEFAULT_INDEX}"
+    }
+  },
   "features": {
     "ghcr.io/devcontainers/features/node:1": {
       "version": "24"
@@ -11,7 +19,8 @@
     "ghcr.io/devcontainers/features/git:1": {},
     "ghcr.io/devcontainers/features/github-cli:1": {},
     "ghcr.io/devcontainers/features/azure-cli:1": {},
-    "ghcr.io/devcontainers/features/powershell:1": {}
+    "ghcr.io/devcontainers/features/powershell:1": {},
+    "ghcr.io/devcontainers/features/copilot-cli:1": {}
   },
   "customizations": {
     "vscode": {

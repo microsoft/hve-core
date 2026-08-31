@@ -83,7 +83,3 @@ operations fail due to CPU starvation.
 * Review and adjust limits based on observed resource consumption patterns.
 * Configure monitoring and alerting for resource exhaustion and OOM events.
 * Validate that the aggregate of all container resource limits does not oversubscribe the host.
-
----
-
-*🤖 Crafted with precision by ✨Copilot following brilliant human instruction, then carefully refined by our team of discerning human reviewers.*

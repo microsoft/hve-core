@@ -3,13 +3,17 @@ title: 'Contributing Agents to HVE Core'
 description: 'Requirements and standards for contributing GitHub Copilot agent files to hve-core'
 sidebar_position: 5
 author: Microsoft
-ms.date: 2026-03-14
+ms.date: 2026-08-19
 ms.topic: how-to
+keywords:
+  - contributing
+  - custom agents
+  - standards
 ---
 
 This guide defines the requirements, standards, and best practices for contributing GitHub Copilot agent files (`.agent.md`) to the hve-core library.
 
-⚙️ Common Standards: See [AI Artifacts Common Standards](ai-artifacts-common.md) for shared requirements (XML blocks, markdown quality, RFC 2119, validation, testing).
+⚙️ Common Standards: See [AI Artifacts Common Standards](ai-artifacts-common) for shared requirements (XML blocks, markdown quality, RFC 2119, validation, testing).
 
 ## What is an Agent?
 
@@ -93,27 +97,35 @@ Focus on agents that:
 
 ### Model Version Requirements
 
-All agents **MUST** target the **latest available models** from Anthropic and OpenAI only. The model catalog (`scripts/linting/model-catalog.json`) contains the full list of models available in GitHub Copilot, but hve-core restricts usage to Anthropic and OpenAI.
+All agents **MUST** target models listed in the model catalog (`scripts/linting/model-catalog.json`). The catalog defines which models are available in GitHub Copilot and which providers are accepted via the `providerAllowlist` field. Catalog membership is a validity check; use it alongside the responsibility-based profile selection in [Model Selection for Subagents](#model-selection-for-subagents) rather than as a free choice among catalog entries.
 
-Accepted: Latest Claude and GPT models with `(copilot)` suffix (e.g., `Claude Sonnet 4.6 (copilot)`, `GPT-5.4 (copilot)`)
+Accepted: A canonical profile scalar (see below) or any other model in the catalog whose provider appears in `providerAllowlist` and whose status is `ga` or `preview`, when a narrow, disclosed override justifies deviating from the canonical scalar
 
-Not Accepted: Models from other providers, older model versions not in the catalog, custom/fine-tuned models, deprecated versions
+Not Accepted: Models not present in the catalog, models from providers outside the `providerAllowlist`, custom/fine-tuned models, models with `retiring` or `retired` status
 
 ### Model Selection for Subagents
 
-The `model` frontmatter property is **optional**. When omitted, the agent inherits the parent conversation model. Use explicit model selection for cost optimization on subagents that perform read-only or validation tasks:
+The `model` frontmatter property is **optional** and, per the [official custom agents configuration reference](https://docs.github.com/en/copilot/reference/custom-agents-configuration), must be a single **string** for GitHub.com, the Copilot CLI, and supported IDEs. When omitted, a subagent inherits the invoking parent's model, and a directly invoked agent uses the current session or model-picker selection.
+
+When a stable model is needed, select a responsibility profile first (High, Medium, or Low; see the "Choose the model profile" section of the `hve-builder` skill's `artifact-types.md` reference), then declare that profile's canonical scalar:
 
 ```yaml
-# Subagent that does research (read-only) — use fast-tier model
-model:
-  - Claude Haiku 4.5 (copilot)
-  - GPT-5.4 mini (copilot)
+# Low profile: bounded, literal, mechanical execution
+model: GPT-5.6 Luna (copilot)
+```
+
+```yaml
+# Medium profile: semantic discovery, authoring, or calibrated review
+model: GPT-5.6 Terra (copilot)
 ```
 
 ```yaml
 # Subagent that writes code — omit model to inherit session model
 # (no model property)
 ```
+
+Do not use a YAML array for `model` (for example, a list of fallback models). VS Code Copilot Chat accepts an array for model fallback, but the Copilot CLI's frontmatter parser rejects it with `model: Expected string, received array` and drops the agent entirely, making it unavailable. This is tracked upstream in [github/copilot-cli#2133](https://github.com/github/copilot-cli/issues/2133); until resolved, always use a single scalar value here.
+Array-form fallback lists remain valid for `.prompt.md` files only.
 
 Parent agents can also pass `model` dynamically on `runSubagent` calls via instructions in the agent body. The cost tier constraint means subagent models cannot exceed the parent model's tier.
 
@@ -123,23 +135,22 @@ Run `npm run lint:models` to validate model references against the catalog.
 
 ### Location
 
-Agent files are typically organized in a collection subdirectory by convention:
+Agent files are typically organized in a package subdirectory by convention:
 
 ```text
-.github/agents/{collection-id}/
+.github/agents/{package-id}/
 ├── your-agent-name.agent.md
 └── subagents/
     └── your-subagent-name.agent.md
 ```
 
 > [!NOTE]
-> Collections can reference artifacts from any subfolder. The `path:` field in collection YAML files
-> accepts any valid repo-relative path regardless of the artifact's parent directory.
+> Tracked agents beneath a `.github/agents/<package>/` subdirectory are included automatically when `npm run plugin:sync` derives root `plugin.json`.
 
 ### Naming Convention
 
 * Use lowercase kebab-case: `security-reviewer.agent.md`
-* Be descriptive and action-oriented: `task-planner.agent.md`, `pr-review.agent.md`, `rpi-agent.agent.md`
+* Be descriptive and action-oriented: `security-reviewer.agent.md`, `code-review.agent.md`, `rpi-agent.agent.md`
 * Avoid generic names: `helper.agent.md` ❌ → `ado-work-item-processor.agent.md` ✅
 
 ### File Format
@@ -168,11 +179,11 @@ Agent files MUST:
 
 **`name`** (string)
 
-| Attribute | Details                                                  |
-|-----------|----------------------------------------------------------|
-| Purpose   | Custom display name for the agent                        |
-| Format    | Lowercase kebab-case matching filename without extension |
-| Default   | File name used if not specified                          |
+| Attribute | Details                                                                                                      |
+|-----------|--------------------------------------------------------------------------------------------------------------|
+| Purpose   | Custom display name for the agent; the dispatch identity used by prompts, fixed subagent lists, and handoffs |
+| Format    | Human-readable name (for example, `Report Generator`), not required to match the filename                    |
+| Default   | File name used if not specified                                                                              |
 
 **`tools`** (array of strings)
 
@@ -198,10 +209,22 @@ Valid tools:
 * `searchResults` - Search view results
 * `edit/createFile` - File creation
 * `edit/createDirectory` - Directory creation
-* `Bicep (EXPERIMENTAL)/*` - Bicep tooling
 * `terraform/*` - Terraform tooling
 * `context7/*` - Library documentation
 * `microsoft-docs/*` - Microsoft documentation
+
+> [!NOTE]
+> This curated list reflects commonly used tools but is not exhaustive and can drift as GitHub Copilot and VS Code evolve. Treat the official [VS Code custom agents documentation](https://code.visualstudio.com/docs/copilot/customization/custom-agents) as the authoritative, up-to-date source for available tools and tool names.
+
+#### Referencing tools in agent bodies
+
+The `tools:` frontmatter field controls which tools an agent can access. To reference a specific tool inside the agent body (or a prompt), use the `#tool:` syntax:
+
+```markdown
+Use #tool:codebase to locate the relevant files, then #tool:editFiles to apply changes.
+```
+
+The name after `#tool:` matches the tool name as it appears in the `tools:` array (for example, `#tool:search`, `#tool:runCommands`, `#tool:githubRepo`). This differs from the `tools:` frontmatter field, which grants access, whereas `#tool:` directs the agent to invoke a specific granted tool at a point in the workflow.
 
 **`agents`** (array of strings)
 
@@ -211,13 +234,13 @@ Valid tools:
 | Format      | Array of agent names. Use `*` to allow all agents, or `[]` to prevent subagent use |
 | Requirement | When specified, include the `agent` tool in the `tools` property                   |
 
-**`model`** (string or array of strings)
+**`model`** (string)
 
-| Attribute | Details                                                                                      |
-|-----------|----------------------------------------------------------------------------------------------|
-| Purpose   | Specifies the AI model for this agent                                                        |
-| Format    | Single model name or prioritized list of models (system tries each in order until available) |
-| Default   | Currently selected model in model picker when omitted                                        |
+| Attribute | Details                                                                                                                |
+|-----------|------------------------------------------------------------------------------------------------------------------------|
+| Purpose   | Specifies the AI model for this agent                                                                                  |
+| Format    | Single scalar model name; array/fallback-list values break the Copilot CLI and are not supported for `.agent.md` files |
+| Default   | Currently selected model in model picker when omitted (or the invoking parent's model for a subagent)                  |
 
 **`user-invocable`** (boolean)
 
@@ -276,9 +299,9 @@ Example:
 
 ```yaml
   handoffs:
-    - label: "📋 Create Plan"
-      agent: Task Planner
-      prompt: /task-plan
+    - label: "Coordinate RPI Work"
+      agent: RPI Agent
+      prompt: "Coordinate this task through the applicable RPI phases"
       send: true
   ```
 
@@ -296,75 +319,32 @@ Example:
 ```yaml
 ---
 description: 'Validates and reviews contributed agents, prompts, and instructions for quality and compliance'
-tools: ['codebase', 'search', 'problems', 'editFiles', 'changes', 'usages']
+tools: ['agent', 'read', 'search']
 disable-model-invocation: true
-agents:
-  - Prompt Tester
-  - Prompt Evaluator
 ---
 ```
 
-## Collection Entry Requirements
+Use generic dispatch prompts when a lifecycle stage needs isolated work and no
+stable specialized worker is required. Reserve an `agents:` allowlist for
+named dependencies that the agent must dispatch by name.
 
-All agents must have matching entries in one or more `collections/*.collection.yml` manifests. Collection entries control selection and maturity.
+## Plugin Manifest Registration
 
-### Adding Your Agent to a Collection
+Distributable agents must use the canonical path `.github/agents/<package>/<subpath>/<name>.agent.md`. `npm run plugin:sync` adds that repository-relative path to the `agents` array in root `plugin.json`.
 
-After creating your agent file, add an `items[]` entry to each target collection:
+Ensure every declared subagent is also eligible for manifest inclusion. Update `docs/plugins/hve-core.md` when the user-visible agent surface changes, then run `npm run plugin:sync`, `npm run plugin:validate`, and `npm run docs:generate:check`.
 
-```yaml
-items:
-  # path can reference artifacts from any subfolder
-  - path: .github/agents/{collection-id}/my-new-agent.agent.md
-  kind: agent
-  maturity: stable
-```
+## Path Portability
 
-### Selecting Collections for Agents
+Agents are packaged and relocatable. The root directory varies by distribution context (in-repo, Copilot CLI plugin, VS Code extension). To ensure references to other artifacts remain portable and do not break across environments, follow these cross-artifact reference rules:
 
-Choose collections based on who benefits most from your agent:
+* **Refer by name:** Refer to a skill, agent, subagent, or prompt by the `name:` value from its frontmatter, not by a hard-coded path.
+* **Instruction files:** Refer to an instruction file by its full `<name>.instructions.md` filename.
+* **Bundled resources:** Reserve file paths for an agent's own bundled resources (relative to the agent root only).
+* **No hard-coded paths:** Never hard-code a skill's `SKILL.md` path, another agent's file path, or a cross-artifact directory path.
+* **File inclusions:** Use `#file:` only when the agent must pull in another file's full contents.
 
-| Agent Type             | Recommended Collections                   |
-|------------------------|-------------------------------------------|
-| Task workflow agents   | `hve-core-all`, `hve-core`                |
-| Architecture agents    | `hve-core-all`, `project-planning`        |
-| Documentation agents   | `hve-core-all`, `hve-core`                |
-| Data science agents    | `hve-core-all`, `data-science`            |
-| Design thinking agents | `hve-core-all`, `design-thinking`         |
-| ADO/work item agents   | `hve-core-all`, `ado`, `project-planning` |
-| Code review agents     | `hve-core-all`, `hve-core`                |
-
-### Declaring Agent Dependencies
-
-If your agent dispatches other agents at runtime via `runSubagent`, invokes prompts, or depends on skills, document those relationships in the agent content and validate packaging behavior in affected collections.
-
-For complete collection documentation, see [AI Artifacts Common Standards - Collection Manifests](ai-artifacts-common.md#collection-manifests-and-dependencies).
-
-### MCP Tool Dependencies
-
-When agents reference MCP tools in their `tools:` frontmatter or body content, document the dependencies clearly.
-
-#### Frontmatter Declaration
-
-```yaml
-tools: ['github/*', 'ado/*', 'context7/*', 'microsoft-docs/*']
-```
-
-#### Curated MCP Servers Referenced by HVE Core Agents
-
-| Server         | Tool Pattern       | Purpose                                   |
-|----------------|--------------------|-------------------------------------------|
-| github         | `github/*`         | GitHub repository and issue management    |
-| ado            | `ado/*`            | Azure DevOps work items, pipelines, repos |
-| context7       | `context7/*`       | Library and SDK documentation lookup      |
-| microsoft-docs | `microsoft-docs/*` | Microsoft Learn documentation             |
-
-#### Guidelines for MCP Tool References
-
-* Document MCP dependencies in agent body text when using `mcp_*` tool patterns
-* Agents should gracefully handle missing MCP servers (tools unavailable)
-* Reference the [MCP Server Configuration](../getting-started/mcp-configuration.md) guide when agents require MCP tools
-* Prefer built-in VS Code Copilot tools when equivalent functionality exists
+Repo-root-relative paths (such as `.github/agents/...` or `.github/skills/...`) break portability and should not be used for cross-artifact references.
 
 ## Agent Content Structure Standards
 
@@ -415,21 +395,15 @@ before they're merged into the library.
 
 #### 6. Attribution Footer
 
-Include at end of file (MANDATORY):
-
-```markdown
----
-
-Brought to you by microsoft/hve-core
-```
+Source artifacts carry no attribution footer.
 
 ### XML-Style Block Requirements
 
-See [AI Artifacts Common Standards - XML-Style Block Standards](ai-artifacts-common.md#xml-style-block-standards) for complete rules and examples.
+See [AI Artifacts Common Standards - XML-Style Block Standards](ai-artifacts-common#xml-style-block-standards) for complete rules and examples.
 
 ### Directive Language Standards
 
-Use RFC 2119 compliant keywords (MUST/SHOULD/MAY). See [AI Artifacts Common Standards - RFC 2119 Directive Language](ai-artifacts-common.md#rfc-2119-directive-language) for complete guidance.
+Use RFC 2119 compliant keywords (MUST/SHOULD/MAY). See [AI Artifacts Common Standards - RFC 2119 Directive Language](ai-artifacts-common#rfc-2119-directive-language) for complete guidance.
 
 ## Tool Usage Discipline
 
@@ -505,7 +479,7 @@ Report validation status:
 
 ## Research and External Sources
 
-When agents integrate external knowledge, consult authoritative sources and provide minimal, annotated snippets with reference links. See [AI Artifacts Common Standards - Attribution Requirements](ai-artifacts-common.md#attribution-requirements) for guidelines.
+When agents integrate external knowledge, consult authoritative sources and provide minimal, annotated snippets with reference links. See [AI Artifacts Common Standards - Attribution Requirements](ai-artifacts-common#attribution-requirements) for guidelines.
 
 ## Validation Checklist
 
@@ -528,13 +502,13 @@ Before submitting your agent, verify:
 * [ ] Core directives with RFC 2119 keywords
 * [ ] Examples wrapped in XML-style blocks
 * [ ] Success criteria defined
-* [ ] Attribution footer present
+* [ ] Attribution footer absent
 
 ### Common Standards
 
-* [ ] Markdown quality (see [Common Standards - Markdown Quality](ai-artifacts-common.md#markdown-quality-standards))
-* [ ] XML-style blocks properly formatted (see [Common Standards - XML-Style Blocks](ai-artifacts-common.md#xml-style-block-standards))
-* [ ] RFC 2119 keywords used consistently (see [Common Standards - RFC 2119](ai-artifacts-common.md#rfc-2119-directive-language))
+* [ ] Markdown quality (see [Common Standards - Markdown Quality](ai-artifacts-common#markdown-quality-standards))
+* [ ] XML-style blocks properly formatted (see [Common Standards - XML-Style Blocks](ai-artifacts-common#xml-style-block-standards))
+* [ ] RFC 2119 keywords used consistently (see [Common Standards - RFC 2119](ai-artifacts-common#rfc-2119-directive-language))
 
 ### Technical Validation
 
@@ -552,7 +526,7 @@ Before submitting your agent, verify:
 
 ## Testing Your Agent
 
-See [AI Artifacts Common Standards - Common Testing Practices](ai-artifacts-common.md#common-testing-practices) for testing guidelines. For agents specifically:
+See [AI Artifacts Common Standards - Common Testing Practices](ai-artifacts-common#common-testing-practices) for testing guidelines. For agents specifically:
 
 1. Test with realistic scenarios matching the agent's purpose
 2. Verify tool usage patterns execute correctly
@@ -567,29 +541,31 @@ See [AI Artifacts Common Standards - Common Testing Practices](ai-artifacts-comm
 
 Referencing tools that don't exist or using incorrect camelCase variants. Use exact tool names from VS Code Copilot's available tools list.
 
-For additional common issues (XML blocks, markdown, directives), see [AI Artifacts Common Standards - Common Issues and Fixes](ai-artifacts-common.md#common-issues-and-fixes).
+For additional common issues (XML blocks, markdown, directives), see [AI Artifacts Common Standards - Common Issues and Fixes](ai-artifacts-common#common-issues-and-fixes).
 
 ## Automated Validation
 
-Run these commands before submission (see [Common Standards - Common Validation](ai-artifacts-common.md#common-validation-standards)):
+Run these commands before submission (see [Common Standards - Common Validation](ai-artifacts-common#common-validation-standards)):
 
 * `npm run lint:frontmatter`
 * `npm run lint:md`
 * `npm run spell-check`
 * `npm run lint:md-links`
+* `npm run docs:generate` (required when adding a new agent; scaffolds the reference page under `docs/reference/agents/`)
+* `npm run lint:asset-docs`
 
 All checks **MUST** pass before merge.
 
 ## Related Documentation
 
-* [AI Artifacts Common Standards](ai-artifacts-common.md) - Shared standards for all contributions
-* [Contributing Prompts](prompts.md) - Workflow-specific guidance files
-* [Contributing Instructions](instructions.md) - Technology-specific standards
+* [AI Artifacts Common Standards](ai-artifacts-common) - Shared standards for all contributions
+* [Contributing Prompts](prompts) - Workflow-specific guidance files
+* [Contributing Instructions](instructions) - Technology-specific standards
 * [Pull Request Template](https://github.com/microsoft/hve-core/blob/main/.github/PULL_REQUEST_TEMPLATE.md) - Submission requirements
 
 ## Getting Help
 
-See [AI Artifacts Common Standards - Getting Help](ai-artifacts-common.md#getting-help) for support resources. For agent-specific assistance, review existing examples in `.github/agents/{collection-id}/` (the conventional location for agent files).
+See [AI Artifacts Common Standards - Getting Help](ai-artifacts-common#getting-help) for support resources. For agent-specific assistance, review existing examples in `.github/agents/{package-id}/` (the conventional location for agent files).
 
 ---
 

@@ -3,7 +3,7 @@ title: Git Submodule Installation
 description: Set up HVE Core as a git submodule for version-controlled team consumption
 sidebar_position: 7
 author: Microsoft
-ms.date: 2026-03-10
+ms.date: 2026-08-19
 ms.topic: how-to
 keywords:
   - git submodule
@@ -49,7 +49,7 @@ your-project/
 
 ## Quick Start
 
-Install the [VS Code extension](https://marketplace.visualstudio.com/items?itemName=ise-hve-essentials.hve-core) for the fastest setup. For guided setup with installation method selection and MCP configuration, install the [HVE Core Installer](https://marketplace.visualstudio.com/items?itemName=ise-hve-essentials.hve-installer) extension and ask any agent "help me customize hve-core installation". Use the manual steps below for direct configuration.
+Install the [VS Code extension](https://marketplace.visualstudio.com/items?itemName=ise-hve-essentials.hve-core) for the fastest setup. For guided installation-method selection, MCP configuration, or selective clone adoption, ask an agent to use the included `hve-core-installer` skill. Use the manual steps below for direct configuration.
 
 ## Manual Setup
 
@@ -98,7 +98,6 @@ Create or update `.vscode/settings.json`:
   "chat.instructionsFilesLocations": {
     "lib/hve-core/.github/instructions/ado": true,
     "lib/hve-core/.github/instructions/coding-standards": true,
-    "lib/hve-core/.github/instructions/design-thinking": true,
     "lib/hve-core/.github/instructions/github": true,
     "lib/hve-core/.github/instructions/hve-core": true,
     "lib/hve-core/.github/instructions/shared": true,
@@ -106,8 +105,17 @@ Create or update `.vscode/settings.json`:
   },
   "chat.agentSkillsLocations": {
     "lib/hve-core/.github/skills": true,
+    "lib/hve-core/.github/skills/accessibility": true,
     "lib/hve-core/.github/skills/shared": true,
     "lib/hve-core/.github/skills/coding-standards": true,
+    "lib/hve-core/.github/skills/data-science": true,
+    "lib/hve-core/.github/skills/design-thinking": true,
+    "lib/hve-core/.github/skills/hve-core": true,
+    "lib/hve-core/.github/skills/installer": true,
+    "lib/hve-core/.github/skills/project-planning": true,
+    "lib/hve-core/.github/skills/rai": true,
+    "lib/hve-core/.github/skills/rpi": true,
+    "lib/hve-core/.github/skills/security": true,
     ".github/skills": true
   }
 }
@@ -214,7 +222,7 @@ After setup, verify HVE Core is working:
 1. Check `lib/hve-core/` contains the HVE Core repository
 2. Open Copilot Chat (`Ctrl+Alt+I`)
 3. Click the agent picker dropdown
-4. Verify HVE Core agents appear (task-planner, task-researcher, etc.)
+4. Verify `RPI Agent` and `Documentation` appear, then confirm `/rpi-research` is available
 
 ## Troubleshooting
 
@@ -266,7 +274,7 @@ git commit
 ## Next Steps
 
 * [Your First Workflow](../first-workflow.md) - Try HVE Core with a real task
-* [RPI Workflow](../../rpi/) - Research, Plan, Implement methodology
+* [RPI Workflow](../../rpi/) - Research, Plan, Implement, Review methodology
 * [Back to Installation Guide](../install.md) - Compare other methods
 
 ---

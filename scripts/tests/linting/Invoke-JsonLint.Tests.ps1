@@ -1,5 +1,5 @@
 #Requires -Modules Pester
-# Copyright (c) Microsoft Corporation.
+# Copyright (c) 2026 Microsoft Corporation. All rights reserved.
 # SPDX-License-Identifier: MIT
 <#
 .SYNOPSIS
@@ -166,7 +166,7 @@ Describe 'Invoke-JsonLintCore' -Tag 'Unit' {
 Describe 'Repository JSON validity' -Tag 'Integration' {
     It 'All schema and fixture JSON files parse strictly' {
         $repoRoot = Join-Path $PSScriptRoot '../../..'
-        $targets = @('scripts/linting/schemas', 'scripts/tests/Fixtures') | ForEach-Object {
+        $targets = @('scripts/linting/schemas', 'scripts/tests/fixtures') | ForEach-Object {
             Join-Path $repoRoot $_
         }
 

@@ -50,7 +50,3 @@ Source: <https://owasp.org/www-project-top-10-ci-cd-security-risks/>
 Modifications: Vulnerability descriptions restructured into agent-consumable reference
 documents with added detection and remediation guidance.
 OWASP® is a registered trademark of the OWASP Foundation. Use does not imply endorsement.
-
----
-
-*🤖 Crafted with precision by ✨Copilot following brilliant human instruction, then carefully refined by our team of discerning human reviewers.*

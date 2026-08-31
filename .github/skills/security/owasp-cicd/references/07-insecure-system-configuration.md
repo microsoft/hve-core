@@ -109,7 +109,3 @@ to deploy malicious code to production through legitimate deployment pipelines.
 * Restrict debug permissions on execution nodes to only those who require them, with appropriate
   monitoring.
 * Establish a vulnerability management cadence for all CI/CD infrastructure components.
-
----
-
-*🤖 Crafted with precision by ✨Copilot following brilliant human instruction, then carefully refined by our team of discerning human reviewers.*

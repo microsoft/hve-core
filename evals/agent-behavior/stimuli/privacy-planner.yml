@@ -1,0 +1,20 @@
+stimuli:
+  - name: privacy-planner-class-recipe
+    prompt: |
+      Start a privacy planning session for a customer analytics service that ingests account profiles and usage events. Outline the six phases of the privacy assessment, including where the DPIA threshold gate applies. Write the planning state under `.copilot-tracking/privacy-plans/` and report the path.
+    tags:
+      category: agent-behavior
+    graders:
+      - type: output-matches
+        name: phase-marker-present
+        config:
+          pattern: '(?im)(^\s*(#{2,3}\s|step\s+\d+|phase\s+\d+|\d+[.)])|\|\s*\d+\s*[—–-]|\bphases?\b)'
+      - type: output-matches
+        name: tracking-file-write
+        config:
+          pattern: '(?i)\.copilot-tracking[-/\\]privacy-plans'
+      - type: output-matches
+        name: no-source-edit
+        config:
+          pattern: '(?i)(created|wrote|modified|edited|patched|added)\s+\S{0,40}(\.cs|\.py|\.ts|\.js|package\.json)'
+          negate: true

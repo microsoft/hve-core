@@ -1,142 +1,120 @@
+# Copyright (c) 2026 Microsoft Corporation. All rights reserved.
+# SPDX-License-Identifier: MIT
 name: Package Extension
 
 on:
   workflow_call:
     inputs:
+      source-ref:
+        description: "Immutable source to package from (full commit SHA or tag)"
+        required: true
+        type: string
       version:
-        description: "Full version to use (e.g., 1.0.0 or empty to use package.json)"
-        required: false
+        description: "Full version to package (e.g., 1.0.0)"
+        required: true
         type: string
-        default: ""
-      dev-patch-number:
-        description: "Dev patch number to append (creates version like 1.0.0-dev.123)"
-        required: false
-        type: string
-        default: ""
-      use-changelog:
-        description: "Whether to download and use changelog artifact"
-        required: false
-        type: boolean
-        default: false
       channel:
-        description: "Release channel (Stable or PreRelease) controlling agent maturity filtering"
+        description: "Release channel (Stable or PreRelease) controlling the pre-release packaging flag"
         required: false
         type: string
         default: "Stable"
-    outputs:
-      version:
-        description: "Version that was packaged"
-        value: ${{ jobs.discover-collections.outputs.version }}
-      collections-matrix:
-        description: "JSON matrix of collections that were actually packaged (filtered by channel and maturity)"
-        value: ${{ jobs.discover-collections.outputs.matrix }}
 
 permissions:
   contents: read
 
 jobs:
-  discover-collections:
-    name: Discover Collection Manifests
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-    outputs:
-      matrix: ${{ steps.discover.outputs.matrix }}
-      version: ${{ steps.read-version.outputs.version }}
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
-        with:
-          persist-credentials: false
-
-      - name: Setup PowerShell modules
-        shell: pwsh
-        run: |
-          Install-Module -Name PowerShell-Yaml -RequiredVersion 0.4.7 -Force -Scope CurrentUser
-
-      - name: Resolve effective version
-        id: read-version
-        shell: bash
-        run: |
-          version="${{ inputs.version }}"
-          dev_patch="${{ inputs.dev-patch-number }}"
-          if [ -z "$version" ]; then
-            version=$(jq -r .version extension/templates/package.template.json)
-          fi
-          if [ -n "$dev_patch" ]; then
-            version="${version}-dev.${dev_patch}"
-          fi
-          echo "version=$version" >> "$GITHUB_OUTPUT"
-
-      - name: Discover collection manifests
-        id: discover
-        shell: pwsh
-        run: |
-          & ./scripts/extension/Find-CollectionManifests.ps1 -Channel '${{ inputs.channel }}'
-
   package:
-    name: Package ${{ matrix.id }}
-    needs: discover-collections
+    name: Package hve-core
     runs-on: ubuntu-latest
     permissions:
       contents: read
-    strategy:
-      fail-fast: false
-      matrix: ${{ fromJson(needs.discover-collections.outputs.matrix) }}
     steps:
+      - name: Validate source ref
+        shell: bash
+        env:
+          EVENT_SHA: ${{ github.sha }}
+          INPUT_SOURCE_REF: ${{ inputs.source-ref }}
+        run: |
+          set -euo pipefail
+          source_ref="$INPUT_SOURCE_REF"
+          if [ -z "${source_ref//[[:space:]]/}" ]; then
+            echo "::error::source-ref is required and must not be blank"
+            exit 1
+          fi
+          # source-ref is an asserted contract value; the checkout below uses the
+          # run's own commit, so a mutable ref can never select the packaged tree.
+          if ! printf '%s' "$source_ref" | grep -Eq '^[0-9a-f]{40}$'; then
+            echo "::error::source-ref must be a full 40-character lowercase commit SHA"
+            exit 1
+          fi
+          if [ "$source_ref" != "$EVENT_SHA" ]; then
+            echo "::error::source-ref $source_ref is not the packaging source commit $EVENT_SHA"
+            exit 1
+          fi
+
       - name: Checkout code
-        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
+          ref: ${{ github.sha }}
           persist-credentials: false
+
+      # The gate runs before any dependency install, so a mismatched caller
+      # never reaches lifecycle scripts.
+      - name: Validate packaging inputs
+        shell: bash
+        env:
+          INPUT_SOURCE_REF: ${{ inputs.source-ref }}
+          INPUT_VERSION: ${{ inputs.version }}
+        run: |
+          set -euo pipefail
+          version="${INPUT_VERSION// }"
+          if [ -z "$version" ]; then
+            echo "::error::version is required and must not be blank"
+            exit 1
+          fi
+          # The packaged source and the caller-supplied version must agree so a
+          # release can never ship a VSIX built from a different commit.
+          template_version=$(jq -r .version extension/templates/package.template.json)
+          if [ "$version" != "$template_version" ]; then
+            echo "::error::extension/templates/package.template.json is $template_version but the caller requested $version"
+            exit 1
+          fi
 
       - name: Setup Node.js
-        uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6.4.0
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
           node-version: "24"
 
+      # Opt back into dependency lifecycle scripts (the repo .npmrc sets
+      # ignore-scripts=true for dev safety). Packaging needs vsce's native
+      # install hooks (@vscode/vsce-sign, keytar) to run.
       - name: Install dependencies
-        run: npm ci
+        run: npm ci --ignore-scripts=false
 
-      - name: Setup PowerShell
-        shell: pwsh
-        run: |
-          Write-Host "PowerShell version: $($PSVersionTable.PSVersion)"
-          Install-Module -Name PowerShell-Yaml -RequiredVersion 0.4.7 -Force -Scope CurrentUser
-
-      - name: Download changelog artifact
-        if: inputs.use-changelog
-        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
-        with:
-          name: changelog
-          path: ./
-        continue-on-error: true
+      - name: Setup PowerShell modules
+        uses: ./.github/actions/setup-ps-modules
 
       - name: Prepare extension resources
         id: prepare
         shell: pwsh
         run: |
-          $channel = "${{ inputs.channel }}".Trim()
-          if (-not $channel) { $channel = 'Stable' }
-          $collection = "${{ matrix.manifest }}"
-
-          Write-Host "🔧 Preparing extension for $channel channel (collection: ${{ matrix.id }})..."
-          ./scripts/extension/Prepare-Extension.ps1 -Channel $channel -Collection $collection
+          Write-Host "🔧 Preparing extension resources..."
+          ./scripts/extension/Prepare-Extension.ps1
 
       - name: Package extension
         id: package
         shell: pwsh
+        env:
+          INPUT_VERSION: ${{ inputs.version }}
+          INPUT_CHANNEL: ${{ inputs.channel }}
         run: |
-          $version = "${{ inputs.version }}".Trim()
-          $devPatch = "${{ inputs.dev-patch-number }}".Trim()
-          $channel = "${{ inputs.channel }}".Trim()
+          $version = "$env:INPUT_VERSION".Trim()
+          $channel = "$env:INPUT_CHANNEL".Trim()
           if (-not $channel) { $channel = 'Stable' }
-          $collection = "${{ matrix.manifest }}"
 
-          Write-Host "📦 Packaging extension for $channel channel (collection: ${{ matrix.id }})..."
+          Write-Host "📦 Packaging extension for $channel channel..."
 
-          $arguments = @{
-            Collection = $collection
-          }
+          $arguments = @{}
 
           if ($channel -ieq 'PreRelease') {
             $arguments['PreRelease'] = $true
@@ -144,10 +122,6 @@ jobs:
 
           if ($version) {
             $arguments['Version'] = $version
-          }
-
-          if ($devPatch) {
-            $arguments['DevPatchNumber'] = $devPatch
           }
 
           if (Test-Path "./CHANGELOG.md") {
@@ -159,6 +133,6 @@ jobs:
       - name: Upload VSIX artifact
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
-          name: extension-vsix-${{ matrix.id }}
+          name: extension-vsix
           path: extension/*.vsix
           retention-days: 30

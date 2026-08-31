@@ -1,0 +1,33 @@
+# Copyright (c) 2026 Microsoft Corporation. All rights reserved.
+# SPDX-License-Identifier: MIT
+stimuli:
+  - name: code-review-class-recipe
+    prompt: |
+      Begin an interactive review of this diff. Return a factual orientation and a short dispatch board, then ask me to confirm the review scope before deeper analysis. Do not modify source code.
+      ```diff
+      -def get_user(user_id):
+      -    return db.query(f"SELECT * FROM users WHERE id = {user_id}")
+      +def get_user(user_id):
+      +    return db.query("SELECT * FROM users WHERE id = ?", user_id)
+      ```
+
+    tags:
+      category: agent-behavior
+    graders:
+      - type: output-matches
+        name: orientation-and-board
+        config:
+          pattern: '(?is)(orientation|walkthrough).{0,4000}dispatch\s+board|dispatch\s+board.{0,4000}(orientation|walkthrough)'
+      - type: output-matches
+        name: human-confirmation
+        config:
+          pattern: '(?is)(confirm|adjust|edit).{0,80}(scope|orientation|walkthrough|dispatch\s+board)|(scope|orientation|walkthrough|dispatch\s+board).{0,80}(confirm|adjust|edit)'
+      - type: output-matches
+        name: change-risk-evidence
+        config:
+          pattern: '(?is)(?=.*(?:change[- ]risk|evidence\s+checklist))(?=.*(?:observed|unavailable|qualitative|change[- ]scope|path[- ]criticality|history|test[- ]presence|coverage|rollback))(?=.*recommended\s+depth)(?=.*(?:confirm|adjust|correct|select)).+'
+      - type: output-matches
+        name: no-source-edit
+        config:
+          pattern: '(?i)(created|wrote|modified|edited|patched|added)\s+\S{0,40}(\.cs|\.py|\.ts|\.js|package\.json)'
+          negate: true

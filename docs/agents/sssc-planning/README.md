@@ -14,7 +14,7 @@ tags:
   - agents
   - security
 author: Microsoft
-ms.date: 2026-03-18
+ms.date: 2026-08-20
 ms.topic: concept
 estimated_reading_time: 8
 ---
@@ -32,12 +32,14 @@ The SSSC Planner agent walks your team through a structured six-phase supply cha
 | ⚡ Actionable output          | The final phase produces backlog items with adoption steps, priority derived from risk level, and improvement projections per check |
 
 > [!TIP]
-> New to the agent? Read [Why SSSC Planning?](why-sssc-planning.md) for the reasoning behind each phase.
+> New to the agent? Read [Why SSSC Planning?](why-sssc-planning) for the reasoning behind each phase.
 
 ## The SSSC Planning Flow
 
 ```mermaid
 flowchart LR
+  accTitle: SSSC Planning Six-Phase Workflow
+  accDescr: Supply-chain planning moves from project scoping through capability assessment, standards mapping, gap analysis, backlog generation, and review handoff, with optional backlog-manager references.
   subgraph Scoping
     A["Phase 1<br/>Project Scoping"]
   end
@@ -91,7 +93,7 @@ Work items generated in Phase 5 are assigned an autonomy tier that controls how 
 |---------|---------------------------------|-----------------------------------------------|
 | Full    | Agent executes without approval | Low-risk configuration changes                |
 | Partial | Agent drafts, human approves    | Default tier for most supply chain work items |
-| Manual  | Human plans and executes        | High-risk items requiring new capabilities    |
+| Guided  | Human plans and executes        | High-risk items requiring new capabilities    |
 
 ## Entry Modes
 
@@ -127,17 +129,17 @@ The SSSC Planner supports four entry modes, each matched to a prompt file.
 ## Prerequisites
 
 * The SSSC Planner agent installed and enabled in your VS Code workspace.
-* The `Researcher Subagent` available for WAF and CAF runtime lookups.
+* The `rpi-research` skill available for WAF and CAF runtime lookups.
 * For From-PRD/From-BRD mode: PRD or BRD artifacts present under `.copilot-tracking/`.
 * For From-Security-Plan mode: A completed Security Planner state file.
 
 ## Next Steps
 
-* [Why SSSC Planning?](why-sssc-planning.md) for the reasoning behind each phase.
-* [Agent Overview](agent-overview.md) for the architecture and state management details.
-* [Entry Modes](entry-modes.md) for a deep dive into all four entry mode workflows.
-* [Phase Reference](phase-reference.md) for phase-by-phase field and artifact details.
-* [Handoff Pipeline](handoff-pipeline.md) for backlog generation and improvement projections.
+* [Why SSSC Planning?](why-sssc-planning) for the reasoning behind each phase.
+* [Agent Overview](agent-overview) for the architecture and state management details.
+* [Entry Modes](entry-modes) for a deep dive into all four entry mode workflows.
+* [Phase Reference](phase-reference) for phase-by-phase field and artifact details.
+* [Handoff Pipeline](handoff-pipeline) for backlog generation and improvement projections.
 
 <!-- markdownlint-disable MD036 -->
 *🤖 Crafted with precision by ✨Copilot following brilliant human instruction,

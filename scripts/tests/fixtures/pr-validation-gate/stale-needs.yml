@@ -1,0 +1,30 @@
+name: Stale Needs Fixture
+on:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo lint
+
+  test:
+    name: Test
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo test
+
+  pr-validation-success:
+    name: PR Validation Success
+    runs-on: ubuntu-latest
+    if: always()
+    needs:
+      - lint
+      - test
+      - deleted-job
+    steps:
+      - run: echo gate

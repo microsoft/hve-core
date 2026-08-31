@@ -1,5 +1,5 @@
 #Requires -Modules Pester
-# Copyright (c) Microsoft Corporation.
+# Copyright (c) 2026 Microsoft Corporation. All rights reserved.
 # SPDX-License-Identifier: MIT
 <#
 .SYNOPSIS
@@ -15,7 +15,7 @@ $script:files = @(
     (Join-Path $script:repoRoot '.github/instructions/shared/planner-identity-base.instructions.md')
 )
 
-Describe 'Cadence Rule 5 enforces discovery-first ordering' {
+Describe 'Cadence Rule 5 enforces discovery-first ordering' -Tag 'Unit' {
     BeforeAll {
         function Get-Rule5Text {
             param([string]$Path)

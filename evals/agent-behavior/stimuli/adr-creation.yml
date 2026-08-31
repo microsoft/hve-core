@@ -1,0 +1,26 @@
+# Copyright (c) 2026 Microsoft Corporation. All rights reserved.
+# SPDX-License-Identifier: MIT
+stimuli:
+  - name: adr-creation-class-recipe
+    prompt: |
+      Start an ADR planning session for "Adopt PostgreSQL for the primary data store" using entry mode `capture`, project slug `adopt-postgresql`, and the default long-form output template. Initialize `.copilot-tracking/adr-plans/adopt-postgresql/state.json` with current phase `frame`, then report the tracking path and phase. Do not modify source code.
+    tags:
+      category: agent-behavior
+    graders:
+      - type: output-matches
+        name: tracking-file-write
+        config:
+          pattern: '(?i)\.copilot-tracking[-/\\]adr-plans[-/\\]adopt-postgresql'
+      - type: output-matches
+        name: frame-phase
+        config:
+          pattern: '(?i)\bframe\b'
+      - type: output-matches
+        name: topic-coverage
+        config:
+          pattern: '(?i)postgres(?:ql)?'
+      - type: output-matches
+        name: no-source-edit
+        config:
+          pattern: '(?i)(created|wrote|modified|edited|patched|added)\s+\S{0,40}(\.cs|\.py|\.ts|\.js|package\.json)'
+          negate: true

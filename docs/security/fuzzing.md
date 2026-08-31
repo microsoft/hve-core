@@ -3,7 +3,7 @@ title: Fuzzing
 description: OSSF Scorecard fuzz harness convention and compliance for HVE Core Python skills
 sidebar_position: 5
 author: Microsoft
-ms.date: 2026-03-16
+ms.date: 2026-07-08
 ms.topic: concept
 keywords:
   - fuzzing

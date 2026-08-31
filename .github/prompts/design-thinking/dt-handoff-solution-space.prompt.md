@@ -1,5 +1,5 @@
 ---
-description: 'Solution Space exit handoff - compiles DT Methods 4-6 outputs into an RPI-ready artifact targeting Task Researcher'
+description: 'Compiles DT Methods 4-6 into research-ready input for rpi-research at the Solution Space exit'
 agent: 'agent'
 tools: ['read_file', 'create_file']
 argument-hint: "project-slug=..."
@@ -7,10 +7,10 @@ argument-hint: "project-slug=..."
 
 # Solution Space Exit Handoff
 
-Compile Design Thinking Methods 4-6 outputs into an RPI-ready handoff artifact targeting Task Researcher.
+Compile Design Thinking Methods 4-6 outputs into a research-ready handoff artifact for `rpi-research`.
 Invoke when a team graduates from the Solution Space and chooses lateral handoff to the RPI pipeline.
 
-Methods 4-6 (Brainstorming, User Concepts, Lo-fi Prototypes) correspond to Tier 2 "Concept Validated" in the three-tier exit schema, routing to RPI Researcher for investigation with rich Solution Space context. The handoff transfers tested concepts, constraint discoveries, lo-fi prototype feedback, and narrowed directions.
+Methods 4-6 (Brainstorming, User Concepts, Lo-fi Prototypes) correspond to Tier 2 "Concept Validated" in the three-tier exit schema. This exit routes to `rpi-research` with rich Solution Space context: tested concepts, constraint discoveries, lo-fi prototype feedback, and narrowed directions.
 
 ## Inputs
 
@@ -21,6 +21,14 @@ Methods 4-6 (Brainstorming, User Concepts, Lo-fi Prototypes) correspond to Tier 
 * All DT coaching artifacts are scoped to `.copilot-tracking/dt/{project-slug}/`. Never write DT artifacts directly under `.copilot-tracking/dt/` without a project-slug directory.
 
 ## Required Steps
+
+### Step 0: Load Handoff Knowledge
+
+Before compiling any artifacts, activate `dt-rpi-integration`, then load these bundled references through its reference table:
+
+* Handoff contract for the exit-point taxonomy, artifact schema, and quality markers.
+* Subagent handoff for the readiness assessment and compilation workflow.
+* Research context for `rpi-research` framing at the receiving end.
 
 ### Step 1: Read Coaching State
 
@@ -58,7 +66,7 @@ Note any expected artifact missing from the coaching state as a gap.
 
 ### Step 3: Readiness Assessment
 
-Evaluate Solution Space completion against these readiness signals:
+Apply the readiness signals defined in `rpi-handoff-contract.md` and the subagent dispatch protocol from `subagent-handoff.md`. Evaluate Solution Space completion against these readiness signals:
 
 * Lo-fi prototypes tested in real user environments (not simulated or hypothetical).
 * Constraints categorized by type (Physical/Environmental/Workflow) and severity (Blocker/Friction/Minor).
@@ -81,7 +89,7 @@ Document the readiness decision and any caveats in the handoff artifact.
 
 ### Step 4: Produce Handoff Artifact
 
-Create the handoff summary file at `.copilot-tracking/dt/{project-slug}/handoff-solution-space.md` following the exit-point artifact schema from the DT→RPI handoff contract.
+Create the handoff summary file at `.copilot-tracking/dt/{project-slug}/handoff-solution-space.md` following the `concept-validated` exit-point schema in the `dt-rpi-integration` handoff contract.
 
 Include the YAML header:
 
@@ -89,7 +97,7 @@ Include the YAML header:
 exit_point: "concept-validated"
 dt_method: 6
 dt_space: "solution"
-handoff_target: "researcher"
+handoff_target: "rpi-research"
 date: "{today's date}"
 ```
 
@@ -108,34 +116,42 @@ Record a lateral transition in the coaching state `transition_log`:
 ```yaml
 - type: lateral
   from_method: 6
-  to: rpi-researcher
-  rationale: "Solution Space complete: handoff to RPI Researcher with validated concepts"
+  to: "rpi-research"
+  rationale: "Solution Space complete: handoff to rpi-research with validated concepts"
   date: "{today's date}"
 ```
 
 ### Step 5: Generate RPI Entry
 
-Create a self-contained RPI handoff document at `.copilot-tracking/research/{project-slug}-research-topic.md` for task-researcher to consume directly.
+Create a self-contained RPI handoff document at `.copilot-tracking/research/{project-slug}-research-topic.md` for `rpi-research` to consume as research-ready input.
 
 Include YAML frontmatter with `description` set to a summary of the handoff context (for example, `description: 'RPI research topic from DT Solution Space for {project name}'`).
 
 Transform DT artifacts into research-topic context using these mappings:
 
-| DT Artifact                       | Research Topic Context    | Notes                                        |
-|-----------------------------------|---------------------------|----------------------------------------------|
-| Validated concepts (Method 5)     | Research scope definition | Concepts frame what the Researcher validates |
-| Constraint discoveries (Method 6) | Known constraints         | Group by category, flag blockers             |
-| User behavior patterns (Method 6) | Observed context          | Include observation evidence                 |
-| Invalidated assumptions           | Investigation priorities  | Document what testing disproved              |
-| Technical unknowns                | Primary research targets  | Items marked assumed/unknown/conflicting     |
+| DT Artifact                       | Research Topic Context    | Notes                                           |
+|-----------------------------------|---------------------------|-------------------------------------------------|
+| Validated concepts (Method 5)     | Research scope definition | Concepts frame what `rpi-research` investigates |
+| Constraint discoveries (Method 6) | Known constraints         | Group by category, flag blockers                |
+| User behavior patterns (Method 6) | Observed context          | Include observation evidence                    |
+| Invalidated assumptions           | Investigation priorities  | Document what testing disproved                 |
+| Technical unknowns                | Primary research targets  | Items marked assumed/unknown/conflicting        |
 
 Structure the document with these sections:
 
-* Research Topic: frame the validated concepts as a research question for the Researcher to investigate. State the problem domain, validated directions, and what remains uncertain.
-* Known Constraints: constraints organized by category (Physical/Environmental/Workflow) with severity markers. The Researcher treats these as established boundaries.
+* Research Topic: frame the validated concepts as a research question for `rpi-research`. State the problem domain, validated directions, and what remains uncertain.
+* Known Constraints: constraints organized by category (Physical/Environmental/Workflow) with severity markers. The RPI research phase treats these as established boundaries.
 * Observed Context: user behavior patterns and environmental observations from prototype testing that provide context for research.
-* Investigation Priorities: items tagged `assumed`, `unknown`, or `conflicting` requiring Researcher investigation. Prioritize blockers and high-impact unknowns.
-* DT Artifact Paths: list all `.copilot-tracking/dt/{project-slug}/` artifact paths so the Researcher can read original DT evidence directly.
+* Investigation Priorities: items tagged `assumed`, `unknown`, or `conflicting` requiring investigation during `rpi-research`. Prioritize blockers and high-impact unknowns.
+* DT Artifact Paths: list all `.copilot-tracking/dt/{project-slug}/` artifact paths so `rpi-research` can read original DT evidence directly.
+
+## Optional UX Structure Route
+
+The handoff above is the Solution Space exit. This route is separate, optional, and never automatic.
+
+When the practitioner separately asks to wireframe a validated concept, they may pass the completed handoff document as an explicit `source` to the `ux-artifacts` `sketch-structure` mode. That mode records what a surface contains and how it behaves; a picture is a later destination step it does not perform.
+
+Do not start this route as part of the exit, and do not treat it as a prerequisite for `rpi-research`. Methods 5 and 6 keep their existing low-fidelity constraints: concept sketches stay scrappy, prototypes stay deliberately rough, and neither becomes an interface specification here.
 
 ---
 

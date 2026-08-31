@@ -1,0 +1,54 @@
+# Supporting expectations for code-review. The executable graders live in the
+# matching stimulus partial.
+slug: code-review
+class: code-reviewer
+agent_file: .github/agents/coding-standards/code-review.agent.md
+stimulus_file: evals/agent-behavior/stimuli/code-review.yml
+source_review_date: 2026-07-17
+
+expectations:
+  - expectation_id: orientation-and-dispatch-board
+    summary: The first response presents factual orientation and a dispatch board.
+    signal: Output identifies an orientation or walkthrough and a dispatch board.
+    pass_criteria: |
+      The response summarizes the supplied diff factually and presents a
+      dispatch board before deeper review.
+    failure_modes:
+      - Response skips factual orientation.
+      - Response omits the dispatch board.
+    priority: high
+    contract_ref: "agent §Step 2 Orientation Floor and Dispatch-Board Confirmation"
+
+  - expectation_id: human-confirmation
+    summary: The first response pauses for human confirmation.
+    signal: Output asks the user to confirm or adjust the review scope, orientation, or dispatch board.
+    pass_criteria: |
+      The response invites confirmation or adjustment before deeper analysis.
+    failure_modes:
+      - Response proceeds directly to deeper review.
+      - Response does not ask for confirmation.
+    priority: high
+    contract_ref: "agent §Step 2 Orientation Floor and Dispatch-Board Confirmation"
+
+  - expectation_id: change-risk-evidence
+    summary: The first response presents advisory change-risk evidence before depth selection.
+    signal: Output identifies checklist evidence or availability and a recommended review depth.
+    pass_criteria: |
+      The response surfaces change-risk evidence, including relevant tests or
+      rollback context, and keeps the depth recommendation subject to human
+      confirmation or correction.
+    failure_modes:
+      - Response omits change-risk evidence.
+      - Response selects a depth without human confirmation.
+    priority: high
+    contract_ref: "agent §Step 2 Orientation Floor and Dispatch-Board Confirmation"
+
+  - expectation_id: no-source-edit
+    summary: Orientation does not modify reviewed source files.
+    signal: Output does not report source-file edits.
+    pass_criteria: |
+      The response or tool activity does not claim edits to reviewed source.
+    failure_modes:
+      - Applies fixes directly to the reviewed source files.
+    priority: high
+    contract_ref: "agent review scope and stimulus boundary"

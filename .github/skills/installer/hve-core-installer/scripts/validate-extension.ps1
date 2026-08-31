@@ -1,4 +1,4 @@
-﻿# Copyright (c) Microsoft Corporation.
+﻿# Copyright (c) 2026 Microsoft Corporation. All rights reserved.
 # SPDX-License-Identifier: MIT
 <#
 .SYNOPSIS
@@ -7,7 +7,7 @@
     Checks the installed extensions list for ise-hve-essentials.hve-core
     and reports version information.
 .PARAMETER CodeCli
-    Path or name of the VS Code CLI executable. Defaults to 'code'.
+    VS Code CLI command name. Allowed values are 'code' and 'code-insiders'.
 .EXAMPLE
     ./scripts/validate-extension.ps1
 .EXAMPLE
@@ -19,6 +19,7 @@
 param(
     [Parameter()]
     [ValidateNotNullOrEmpty()]
+    [ValidateSet('code', 'code-insiders')]
     [string]$CodeCli = 'code'
 )
 

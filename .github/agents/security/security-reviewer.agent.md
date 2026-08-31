@@ -27,6 +27,10 @@ Orchestrate vulnerability assessment by delegating to subagents. Profile the cod
 * Invoke one `Finding Deep Verifier` per skill for all FAIL and PARTIAL findings in a single call.
 * Delegate report generation to `Report Generator` with only verified findings.
 
+## TM7 Generation Workflow
+
+Follow the human-in-the-loop contract in #file:../../instructions/security/tm7-generation-workflow.instructions.md for authorship confirmation, native feedback-loop operator safety, and layout overlay promotion. It applies whenever a review requires generating or refreshing a TM7 threat model.
+
 ## Inputs
 
 * (Optional) Mode: `audit`, `diff`, or `plan`. Defaults to `audit` when not specified.
@@ -96,7 +100,7 @@ Report path pattern (plan): `.copilot-tracking/security/{{YYYY-MM-DD}}/plan-risk
 
 Sequence number resolution: Determine `{{NNN}}` by listing existing reports in the date directory, extracting the highest sequence number, incrementing by one, and zero-padding to three digits. Start at `001` when no reports exist.
 
-Skill resolution: Read the applicable security skill (e.g., `owasp-top-10`, `owasp-llm`, `owasp-agentic`, `owasp-mcp`, `owasp-infrastructure`, `owasp-cicd`, `secure-by-design`) to access vulnerability references. Follow the skill's normative reference links to load vulnerability reference documents.
+Skill resolution: Read the applicable security skill (e.g., `owasp-top-10`, `owasp-llm`, `owasp-agentic`, `owasp-mcp`, `owasp-infrastructure`, `owasp-cicd`, `secure-by-design`, `mcsb`) to access vulnerability references. Follow the skill's normative reference links to load vulnerability reference documents.
 
 ### Subagents
 
@@ -107,16 +111,6 @@ Skill resolution: Read the applicable security skill (e.g., `owasp-top-10`, `owa
 | Report Generator      | `.github/agents/**/report-generator.agent.md`      | Collates all verified findings and generates the final vulnerability report.       |
 | Skill Assessor        | `.github/agents/**/skill-assessor.agent.md`        | Assesses a single skill against the codebase, returning structured findings.       |
 
-### Model Selection for Subagents
-
-Apply cost-first model selection when invoking subagents. Security scanning subagents compare code against reference patterns rather than generating code.
-
-* Codebase Profiler: specify `model: "Claude Haiku 4.5 (copilot)"` (read-only scanning and classification).
-* Skill Assessor: specify `model: "Claude Haiku 4.5 (copilot)"` (pattern matching against vulnerability references).
-* Finding Deep Verifier: omit `model` (inherits session model) since adversarial verification requires deeper reasoning.
-* Report Generator: specify `model: "Claude Haiku 4.5 (copilot)"` (collation and formatting, not analysis).
-* When the cost tier constraint prevents downgrading, omit `model` and let the platform resolve it.
-
 ### Available Skills
 
 * owasp-agentic
@@ -126,6 +120,7 @@ Apply cost-first model selection when invoking subagents. Security scanning suba
 * owasp-infrastructure
 * owasp-cicd
 * secure-by-design
+* mcsb
 
 ## Subagent Prompt Templates
 
@@ -261,6 +256,7 @@ Detect the scanning mode, profile the codebase or plan document, assess applicab
 * When mode is `audit` or `diff`, display the audit/diff scan completion format with verification counts, finding counts, assessed skills, and the report file path.
 * When mode is `plan`, display the plan scan completion format with risk counts, assessed skills, and the report file path.
 * When the excluded skills list is not empty, append a note to the completion message listing each excluded skill and its failure reason.
+* After the completion summary, display the Security-Review CAUTION block from #file:../../instructions/shared/disclaimer-language.instructions.md verbatim under a distinct **Professional Review Disclaimer** heading so it is not mistaken for a CAUTION finding-status row. Emit this disclaimer on every report output; this reviewer is stateless and does not track disclaimer cadence.
 
 ## Required Protocol
 

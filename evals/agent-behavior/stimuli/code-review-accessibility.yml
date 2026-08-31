@@ -1,0 +1,24 @@
+# Copyright (c) 2026 Microsoft Corporation. All rights reserved.
+# SPDX-License-Identifier: MIT
+stimuli:
+  - name: code-review-accessibility-lens
+    prompt: |
+      As the accessibility code-review perspective, review this markup for
+      conformance issues and cite the relevant success criteria.
+      ```html
+      <button><img src="trash.png"></button>
+      <input type="text">
+      ```
+    tags:
+      category: agent-behavior
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: accessibility-finding-vocabulary
+        config:
+          pattern: '(?i)(accessibility|alt text|label|aria|WCAG|success criteria|contrast|finding|issue)'
+      - type: output-matches
+        name: no-source-edit
+        config:
+          pattern: '(?i)(created|wrote|modified|edited|patched|added)\s+\S{0,40}(\.cs|\.py|\.ts|\.js|package\.json)'
+          negate: true

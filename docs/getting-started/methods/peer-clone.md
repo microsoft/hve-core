@@ -3,7 +3,7 @@ title: Peer Directory Clone Installation
 description: Install HVE Core as a sibling directory for local VS Code development
 sidebar_position: 4
 author: Microsoft
-ms.date: 2026-03-10
+ms.date: 2026-08-19
 ms.topic: how-to
 keywords:
   - peer directory
@@ -50,7 +50,7 @@ projects/
 
 ## Quick Start
 
-Install the flagship HVE Core [VS Code extension](https://marketplace.visualstudio.com/items?itemName=ise-hve-essentials.hve-core) for the fastest setup. For guided setup with installation method selection and MCP configuration, install the [HVE Core Installer](https://marketplace.visualstudio.com/items?itemName=ise-hve-essentials.hve-installer) extension and ask any agent "help me customize hve-core installation". Use the manual steps below for direct configuration.
+Install the complete HVE Core [VS Code extension](https://marketplace.visualstudio.com/items?itemName=ise-hve-essentials.hve-core) for the fastest setup. For guided installation-method selection, MCP configuration, or selective clone adoption, ask an agent to use the included `hve-core-installer` skill. Use the manual steps below for direct configuration.
 
 ## Manual Setup
 
@@ -100,15 +100,23 @@ Create or update `.vscode/settings.json` in your project:
   "chat.instructionsFilesLocations": {
     "../hve-core/.github/instructions/ado": true,
     "../hve-core/.github/instructions/coding-standards": true,
-    "../hve-core/.github/instructions/design-thinking": true,
     "../hve-core/.github/instructions/github": true,
     "../hve-core/.github/instructions/hve-core": true,
     "../hve-core/.github/instructions/shared": true
   },
   "chat.agentSkillsLocations": {
     "../hve-core/.github/skills": true,
+    "../hve-core/.github/skills/accessibility": true,
     "../hve-core/.github/skills/shared": true,
-    "../hve-core/.github/skills/coding-standards": true
+    "../hve-core/.github/skills/coding-standards": true,
+    "../hve-core/.github/skills/data-science": true,
+    "../hve-core/.github/skills/design-thinking": true,
+    "../hve-core/.github/skills/hve-core": true,
+    "../hve-core/.github/skills/installer": true,
+    "../hve-core/.github/skills/project-planning": true,
+    "../hve-core/.github/skills/rai": true,
+    "../hve-core/.github/skills/rpi": true,
+    "../hve-core/.github/skills/security": true
   }
 }
 ```
@@ -126,7 +134,7 @@ You should see `.agent.md` files. Then validate in VS Code:
 1. Reload VS Code window (`Ctrl+Shift+P` → "Developer: Reload Window")
 2. Open GitHub Copilot Chat (`Ctrl+Alt+I`)
 3. Click the agent picker dropdown
-4. Verify HVE Core agents appear (task-planner, task-researcher, prompt-builder)
+4. Verify `RPI Agent` and `Documentation` appear, then confirm `/rpi-research` is available
 
 ## Updating HVE Core
 

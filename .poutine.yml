@@ -1,0 +1,17 @@
+# Poutine configuration
+# Poutine runs as an advisory supply-chain scanner in CI (see
+# .github/workflows/dangerous-workflow-scan.yml). Findings are uploaded to the
+# Security tab as SARIF under the "poutine" category and do not block merge.
+# The homegrown dangerous-workflow/template-injection check remains the hard gate.
+
+# Disable the once-per-day outbound version check in CI runs.
+disableVersionCheck: true
+
+# Advisory findings can be acknowledged here by rule/path/level once triaged.
+# Example:
+# skip:
+#   - level: note
+#   - rule: unpinnable_action
+#     path:
+#       - .github/workflows/example.yml
+skip: []

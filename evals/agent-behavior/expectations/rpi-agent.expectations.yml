@@ -1,0 +1,156 @@
+# Copyright (c) 2026 Microsoft Corporation. All rights reserved.
+# SPDX-License-Identifier: MIT
+# Bucket-A expectations for rpi-agent
+# Format: per-agent YAML, 5–10 grader-worthy expectations grounded in the agent
+# file's explicit promises and/or current matrix failures. This file is consumed
+# by the next pass that rewrites stimuli + graders end-to-end; do not treat it
+# as a Vally grader file directly.
+slug: rpi-agent
+class: planner-coach
+agent_file: .github/agents/hve-core/rpi-agent.agent.md
+stimulus_file: evals/agent-behavior/stimuli/rpi-agent.yml
+latest_result: evals/results/agent-matrix/2026-05-28/rpi-agent.json
+source_review_date: 2026-07-13
+
+expectations:
+  - expectation_id: tracking-path-output
+    summary: Artifact discussions use current dated tracking locations.
+    signal: Output names a workspace-relative dated path under a current tracking category.
+    pass_criteria: |
+      When the workflow describes an artifact, the response cites the applicable
+      plain dated path: `.copilot-tracking/plans/<YYYY-MM-DD>/<task>-plan.md`,
+      `.copilot-tracking/details/<YYYY-MM-DD>/<task>-phase-details.md`,
+      `.copilot-tracking/reviews/plans/<YYYY-MM-DD>/<task>-plan-critique.md`,
+      `.copilot-tracking/changes/<YYYY-MM-DD>/<task>-changes.md`, or
+      `.copilot-tracking/reviews/logs/<YYYY-MM-DD>/<task>-review.md`.
+    failure_modes:
+      - Plan placed in `~/.copilot/session-state/.../plan.md` instead of a dated tracking location.
+      - Plan written to repo root or `docs/` instead of `.copilot-tracking/plans/`.
+      - Critique or review evidence placed outside its dated reviews location.
+    priority: high
+    contract_ref: "RPI Agent tracking-artifact contract"
+
+  - expectation_id: conditional-research-readiness
+    summary: Research readiness is evaluated only when planning needs it.
+    signal: Output distinguishes ready research from an evidence gap that requires
+      the `rpi-research` skill.
+    pass_criteria: |
+      Before planning, the response identifies whether supplied research is ready.
+      It routes unresolved evidence needs to the `rpi-research` skill and proceeds
+      to the `rpi-plan` skill when research is already sufficient.
+    failure_modes:
+      - Repeats research despite planning-ready evidence.
+      - Starts planning without identifying whether research is ready.
+      - Treats an evidence gap as permission to invent research findings.
+    priority: high
+    contract_ref: "RPI Agent conditional research-readiness contract"
+
+  - expectation_id: phase-skill-routing
+    summary: Each workflow stage routes to the applicable current RPI skill.
+    signal: Output identifies the relevant `rpi-research`, `rpi-plan`, `rpi-implement`,
+      or `rpi-review` skill by stage.
+    pass_criteria: |
+      For a request spanning workflow stages, the response routes evidence gaps to
+      `rpi-research`, planning to `rpi-plan`, approved plan execution to
+      `rpi-implement`, and completed-work assessment to `rpi-review`. It names only
+      the stages applicable to the request.
+    failure_modes:
+      - Routes an evidence gap directly to implementation.
+      - Uses planning to evaluate completed implementation work.
+      - Names a retired worker instead of the relevant RPI skill.
+    priority: high
+    contract_ref: "RPI Agent phase skill-routing contract"
+
+  - expectation_id: stable-identity-and-markers
+    summary: Related RPI artifacts retain a stable task identity and navigable markers.
+    signal: Output references a shared task ID and stable phase or task markers.
+    pass_criteria: |
+      When plan, details, critique, changes, or review records are discussed, the
+      response keeps one stable task ID across them and uses stable IDs or markers
+      to identify phases and tasks.
+    failure_modes:
+      - Each phase receives an unrelated task identity.
+      - Navigation relies on changing line numbers instead of stable IDs or markers.
+    priority: medium
+    contract_ref: "RPI Agent identity-and-marker contract"
+
+  - expectation_id: explicit-task-identity-recovery
+    summary: Explicit task anchors override unrelated saved state.
+    signal: Output selects the explicitly requested task.
+    pass_criteria: |
+      When the request and saved state identify different tasks, the response
+      selects the requested task.
+    failure_modes:
+      - Selects or resumes the unrelated saved task.
+    priority: high
+    contract_ref: "RPI Agent explicit task-identity recovery contract"
+
+  - expectation_id: implementation-amendments-and-divergences
+    summary: Implementation differences are recorded as amendments and divergences.
+    signal: Output distinguishes an `AM-xxx` plan amendment from a `DIV-xxx` changes
+      record divergence.
+    pass_criteria: |
+      When execution changes an approved plan, the response records the amendment
+      and the implementation divergence in the appropriate artifacts, with the
+      divergence linked to the amendment and affected plan or detail sections.
+    failure_modes:
+      - Unrecorded scope change during implementation.
+      - Divergence noted without its related amendment.
+      - Amendment recorded only in an implementation summary.
+    priority: medium
+    contract_ref: "RPI Agent amendment-and-divergence contract"
+
+  - expectation_id: review-execution-and-outcome-separation
+    summary: Review execution status is distinct from the review outcome.
+    signal: Output reports a review execution state separately from its outcome or
+      follow-up decision.
+    pass_criteria: |
+      A review response states whether review work completed, was partial, deferred,
+      or blocked independently of whether the outcome accepts the work, requires
+      rework, or routes follow-up.
+    failure_modes:
+      - Presents a completed command as proof of an accepted review outcome.
+      - Treats a blocked review as an accepted implementation.
+    priority: high
+    contract_ref: "RPI Agent review execution-and-outcome contract"
+
+  - expectation_id: follow-up-routing
+    summary: Follow-up work returns to the applicable stage or becomes a residual task.
+    signal: Output routes follow-up to research, planning, implementation, or a
+      distinct residual task.
+    pass_criteria: |
+      After review or implementation, the response routes evidence gaps to research,
+      plan changes to planning, approved scoped edits to implementation, and unrelated
+      remaining work to a distinct residual task.
+    failure_modes:
+      - Treats every finding as implementation work.
+      - Continues a completed workflow without a concrete next-stage or residual-task route.
+    priority: medium
+    contract_ref: "RPI Agent follow-up-routing contract"
+
+  - expectation_id: no-source-edit-during-outline
+    summary: Outline and coaching responses remain read-only.
+    signal: Output does not claim source-tree modifications while describing an outline
+      or coaching response.
+    pass_criteria: |
+      No occurrences of edit or create verbs paired with `.cs`, `.py`, `.ts`, `.js`,
+      `.go`, `.rs`, `.java`, `package.json`, `pyproject.toml`, or `Cargo.toml` paths
+      occur in an outline or coaching response.
+    failure_modes:
+      - Coaching response claims source edits before research and planning.
+      - Modifies `package.json` to add scripts as part of an outline.
+    priority: medium
+    contract_ref: "RPI Agent outline boundary"
+
+  - expectation_id: sufficient-evidence-planning-route
+    summary: Planning-ready evidence routes directly to planning.
+    signal: The response names only the `rpi-plan` skill.
+    pass_criteria: |
+      For the `rpi-agent-class-recipe` stimulus, the response is `rpi-plan`
+      with only harmless surrounding whitespace, quotes, or terminal punctuation.
+    failure_modes:
+      - Routes planning-ready evidence back to `rpi-research`.
+      - Names an alternative skill or adds workflow prose.
+    priority: medium
+    stimulus_scoped: true
+    contract_ref: "RPI Agent conditional research-readiness contract"

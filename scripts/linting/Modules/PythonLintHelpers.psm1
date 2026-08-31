@@ -1,4 +1,4 @@
-# Copyright (c) Microsoft Corporation.
+# Copyright (c) 2026 Microsoft Corporation. All rights reserved.
 # SPDX-License-Identifier: MIT
 
 # PythonLintHelpers.psm1
@@ -6,7 +6,7 @@
 # Purpose: Shared helper functions for Python lint and lint-fix wrappers
 # Author: HVE Core Team
 
-#Requires -Version 7.0
+#Requires -Version 7.4
 
 Import-Module (Join-Path $PSScriptRoot "../../lib/Modules/CIHelpers.psm1") -Force
 
@@ -17,7 +17,8 @@ function Get-PythonSkill {
 
     .DESCRIPTION
     Recursively scans the repository for pyproject.toml files, excluding
-    node_modules, and returns the parent directory of each match.
+    node_modules and the repository-root plugins/ generated-output tree, and
+    returns the parent directory of each match.
 
     .PARAMETER RepoRoot
     Repository root to scan.
@@ -34,8 +35,15 @@ function Get-PythonSkill {
 
     Push-Location $RepoRoot
     try {
+        $scanRoot = (Get-Location).ProviderPath
+
         $skills = Get-ChildItem -Path . -Filter 'pyproject.toml' -Recurse -Force -File |
             Where-Object { $_.FullName -notmatch 'node_modules' } |
+            Where-Object {
+                # plugins/ at the repository root is generated output copied from canonical sources.
+                $relativePath = [System.IO.Path]::GetRelativePath($scanRoot, $_.FullName)
+                ($relativePath -split '[\\/]')[0] -ne 'plugins'
+            } |
             ForEach-Object { $_.Directory.FullName }
         return @($skills)
     } finally {

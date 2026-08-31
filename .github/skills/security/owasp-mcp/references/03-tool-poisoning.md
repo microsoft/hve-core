@@ -84,7 +84,3 @@ benign requests become destructive.
 * Rotate tokens or credentials that may have been abused.
 * Conduct forensic analysis of affected agents, actions, and data changes.
 * Patch CI/CD and registry processes to require signed commits and multi-party approvals.
-
----
-
-*🤖 Crafted with precision by ✨Copilot following brilliant human instruction, then carefully refined by our team of discerning human reviewers.*

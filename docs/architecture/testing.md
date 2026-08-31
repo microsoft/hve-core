@@ -3,8 +3,12 @@ title: Testing Architecture
 description: PowerShell Pester test infrastructure and conventions
 sidebar_position: 4
 author: Microsoft
-ms.date: 2026-05-20
+ms.date: 2026-08-01
 ms.topic: concept
+keywords:
+  - testing
+  - pester
+  - powershell
 ---
 
 ## Overview
@@ -17,7 +21,7 @@ Test files follow a mirror pattern where each script directory has a correspondi
 
 ```text
 scripts/
-├── collections/
+├── evals/
 │   └── *.ps1
 ├── extension/
 │   ├── Package-Extension.ps1
@@ -31,7 +35,7 @@ scripts/
 ├── security/
 │   └── *.ps1
 └── tests/
-    ├── collections/
+    ├── evals/
     ├── extension/
     ├── lib/
     ├── linting/
@@ -67,7 +71,14 @@ Code coverage analyzes scripts in production directories while excluding test fi
 | Output path       | `logs/coverage.xml` |
 | Excluded patterns | `*.Tests.ps1`       |
 
-Coverage directories include `linting/`, `security/`, `lib/`, `extension/`, `plugins/`, `collections/`, and `tests/`.
+Coverage directories include `linting/`, `security/`, `lib/`, `extension/`, `plugins/`, and `tests/`, plus skill scripts under `.github/skills/` (resolved separately further down in the config).
+
+When code coverage is enabled, the [pester-tests.yml](https://github.com/microsoft/hve-core/blob/main/.github/workflows/pester-tests.yml)
+workflow enforces the coverage target through its **Coverage Threshold Check** step. The step sources both the measured
+percentage (`CoveragePercent`) and the target (`CoverageTarget`) from `logs/pester-summary.json`, which is the authoritative
+summary written by [Invoke-PesterTests.ps1](https://github.com/microsoft/hve-core/blob/main/scripts/tests/Invoke-PesterTests.ps1).
+The target originates in [pester.config.ps1](https://github.com/microsoft/hve-core/blob/main/scripts/tests/pester.config.ps1)
+as the single source of truth. The job fails when the measured coverage falls below the 80% target, unless soft-fail mode is enabled.
 
 ### Test Output
 
@@ -75,6 +86,13 @@ Coverage directories include `linting/`, `security/`, `lib/`, `extension/`, `plu
 |-----------------|----------|---------------------------|
 | Test results    | NUnitXml | `logs/pester-results.xml` |
 | Coverage report | JaCoCo   | `logs/coverage.xml`       |
+
+When code coverage is enabled, `Invoke-PesterTests.ps1` also records the coverage measurement in `logs/pester-summary.json`:
+
+| Field             | Description                                                                   |
+|-------------------|-------------------------------------------------------------------------------|
+| `CoveragePercent` | Measured code coverage percentage, rounded to two decimal places              |
+| `CoverageTarget`  | Configured coverage target (`CoveragePercentTarget`), rounded to two decimals |
 
 ## Test Utilities
 

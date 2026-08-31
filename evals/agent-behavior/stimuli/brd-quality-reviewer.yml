@@ -1,0 +1,18 @@
+stimuli:
+  - name: brd-quality-reviewer-mentions-quality-guidance
+    prompt: |
+      You are reviewing a planning handoff for a business-requirements draft.
+      Briefly describe what the brd-quality-reviewer agent is meant to help with
+      and name one quality concern it should surface for the draft.
+    tags:
+      category: agent-behavior
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: agent-domain-attribution
+        config:
+          pattern: '(?i)(brd|business|requirements|review|quality)'
+      - type: output-matches
+        name: scope-language
+        config:
+          pattern: '(?i)(draft|review|quality|requirements)'

@@ -102,7 +102,3 @@ credentials and injecting a backdoor into the build output.
 * Implement container image signing and enforce verification before deployment.
 * Generate and maintain SBOMs for all artifacts produced by CI/CD pipelines.
 * Audit and remediate all existing pipeline stages that currently lack integrity validation.
-
----
-
-*🤖 Crafted with precision by ✨Copilot following brilliant human instruction, then carefully refined by our team of discerning human reviewers.*

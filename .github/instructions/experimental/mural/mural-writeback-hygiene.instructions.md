@@ -64,5 +64,3 @@ Every writeback that closes a workshop must re-apply the tag manifest before exi
 
 * Bulk operations report a `{succeeded, failed, warnings}` envelope. Treat any non-empty `failed` array as a writeback to retry or escalate; never silently drop entries.
 * `--atomic` on `mural widget update-bulk` aborts on first failure with `MuralBulkAtomicAbort` (exit 75). Use it only when downstream consumers cannot tolerate partial state.
-
-🤖 Crafted with precision by ✨Copilot following brilliant human instruction, then carefully refined by our team of discerning human reviewers.

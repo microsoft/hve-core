@@ -1,0 +1,1 @@
+0{"@context":"https://openvex.dev/ns/v0.2.0","statements":[{"vulnerability":{"name":"CVE-2024-1234"},"status":"not_affected","justification":"vulnerable_code_not_in_execute_path"}]}

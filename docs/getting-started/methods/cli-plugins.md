@@ -1,26 +1,52 @@
 ---
-title: Copilot CLI Plugins
-description: Install HVE Core agents, prompts, and skills as Copilot CLI plugins
+title: Copilot CLI Plugin
+description: Register an HVE Core catalog ref and install the complete hve-core plugin
 sidebar_position: 2
 author: Microsoft
-ms.date: 2026-03-23
+ms.date: 2026-08-19
 ms.topic: how-to
+keywords:
+  - copilot cli
+  - plugins
+  - installation
 ---
 
-Install HVE Core collections as Copilot CLI plugins for terminal-based
-AI-assisted development workflows.
+Install the complete HVE Core component set as a Copilot CLI plugin for terminal-based AI-assisted development workflows.
 
 ## Prerequisites
 
 * GitHub Copilot CLI installed and authenticated
-* Git symlink support enabled (Windows: Developer Mode +
-  `git config --global core.symlinks true`)
 
 ## Register hve-core as a Plugin Marketplace
+
+Choose a registration that matches the content you need.
+
+Register the ref-less development tip:
 
 ```bash
 copilot plugin marketplace add microsoft/hve-core
 ```
+
+Register a moving reviewed release channel:
+
+```bash
+copilot plugin marketplace add microsoft/hve-core#release/prerelease
+copilot plugin marketplace add microsoft/hve-core#release/stable
+```
+
+Register an immutable channel tag:
+
+```bash
+copilot plugin marketplace add microsoft/hve-core#prerelease-v<version>
+copilot plugin marketplace add microsoft/hve-core#v<version>
+```
+
+`main` is the development tip. `release/prerelease` and `release/stable` are moving registrations that resolve the current reviewed branch catalog and repository-root plugin package. Exact-tag registrations freeze the catalog, root manifest, README, LICENSE, and plugin source together.
+
+A published channel release provides release assurance for its exact tag,
+including release gates, SBOMs, attestations, provenance verification, and the
+configured publication path. The development tip does not provide that
+published-release assurance.
 
 ## Browse Available Plugins
 
@@ -28,42 +54,30 @@ Type `/plugin` in a Copilot CLI chat session to browse available plugins.
 
 ## Install a Plugin
 
-Choose **one** of the following plugins to install. Each command installs a
-different collection from the hve-core marketplace.
-
-For the core Research, Plan, Implement, Review lifecycle:
+Install `hve-core` from the registered marketplace through `/plugin`. The plugin includes the complete active HVE Core component set, including the Research, Plan, Implement, Review lifecycle.
 
 ```bash
 copilot plugin install hve-core@hve-core
 ```
 
-For the full bundle (includes everything in `hve-core` plus all additional
-collections):
+## Update an Installed Plugin
+
+Marketplace refresh and installed-plugin update are distinct actions. For a
+moving registration, refresh the catalog before requesting a plugin update:
 
 ```bash
-copilot plugin install hve-core-all@hve-core
+copilot plugin marketplace update hve-core
+copilot plugin update hve-core@hve-core
 ```
 
-> [!TIP]
-> `hve-core-all` is a superset of `hve-core`. Install one or the other, not
-> both. If you are unsure which to pick, start with `hve-core-all` for the
-> complete experience.
+Switching registrations can require removing and re-adding the marketplace.
+Do not assume how the client handles duplicate same-name registrations; use
+the behavior supported by your Copilot CLI version.
 
-## Available Plugins
-
-| Plugin           | Description                                                                                                                                                               |
-|------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| hve-core         | Research, Plan, Implement, Review lifecycle                                                                                                                               |
-| github           | GitHub issue management                                                                                                                                                   |
-| ado              | Azure DevOps integration                                                                                                                                                  |
-| coding-standards | Language-specific coding guidelines                                                                                                                                       |
-| project-planning | PRDs, BRDs, ADRs, architecture diagrams                                                                                                                                   |
-| data-science     | Data specs, notebooks, dashboards                                                                                                                                         |
-| design-thinking  | Design thinking coaching and methodology                                                                                                                                  |
-| security         | Security and incident response                                                                                                                                            |
-| installer        | Installer skill for guided workspace setup and MCP auto-configuration ([Extension](https://marketplace.visualstudio.com/items?itemName=ise-hve-essentials.hve-installer)) |
-| experimental     | Experimental and preview artifacts                                                                                                                                        |
-| hve-core-all     | Full HVE Core bundle                                                                                                                                                      |
+If you previously registered or installed a retired package identity, the
+[retired package identities](../package-migration#retired-package-identities)
+section of the migration guide maps each retired extension, command, skill, and
+agent to its replacement.
 
 ## Plugin Contents
 
@@ -73,11 +87,10 @@ Each plugin includes:
 |--------------|---------------|----------------------------------------------------|
 | Agents       | Yes           | Custom chat agents for specialized workflows       |
 | Commands     | Yes           | Task prompts accessible via the CLI                |
-| Skills       | Yes           | Self-contained skill packages (hve-core-all only)  |
+| Skills       | Yes           | Self-contained skill packages                      |
 | Instructions | No            | Included for `#file:` references, not auto-applied |
 
-Artifacts are symlinked from the plugin directory to the source repository,
-enabling zero-copy installation.
+The one marketplace entry resolves the repository root. Root `plugin.json` declares the complete agents, commands, rules, skills, and hook membership as repository-relative `.github/...` paths. The client resolves the root README and LICENSE; no generated plugin tree or plugin ZIP participates in Git-source installation.
 
 ## Limitations
 
@@ -115,21 +128,22 @@ After installing a plugin, agents and named commands are available in your CLI s
 
 CLI plugins provide two distinct interaction patterns:
 
-| Mode          | Command                  | Behavior                                                     |
-|---------------|--------------------------|--------------------------------------------------------------|
-| Named Command | `/git-commit`            | Executes a predefined workflow, then returns to default mode |
-| Agent Mode    | `/agent Task Researcher` | Switches to the agent for open-ended conversation            |
+| Mode          | Command                     | Behavior                                                     |
+|---------------|-----------------------------|--------------------------------------------------------------|
+| Named Command | `/git-commit`               | Executes a predefined workflow, then returns to default mode |
+| Skill         | `/rpi-research`             | Activates one reusable RPI phase capability                  |
+| Agent Mode    | `/agent hve-core:rpi-agent` | Switches to the coordinated RPI lifecycle                    |
 
 Named commands (prompts) run a specific workflow and produce structured output. Agent mode enables freeform conversation with a specialized agent until you exit.
 
 > [!IMPORTANT]
-> The CLI does not support prompts that switch to a custom agent directly.
-> Prompts like `/task-research` are designed to run within a specific agent
-> context. To use them, first switch to the agent, then run the prompt:
+> The CLI does not switch to a custom agent on behalf of an agent-bound
+> prompt. Select `hve-core:rpi-agent` when you want lifecycle coordination, or invoke a
+> direct phase skill such as `/rpi-research`:
 >
 > ```text
-> /agent Task Researcher
-> /task-research topic="API authentication patterns"
+> /agent hve-core:rpi-agent
+> Research API authentication patterns before deciding whether planning is ready.
 > ```
 >
 > Prompts that do not require an agent context (e.g., `/git-commit`,
@@ -137,41 +151,42 @@ Named commands (prompts) run a specific workflow and produce structured output. 
 
 ### Example: Research Workflow
 
-Switch to the agent first, then run the prompt:
+Invoke the Research phase skill directly:
 
 ```text
-> /agent Task Researcher
-Switched to Task Researcher
-> /task-research topic="API authentication patterns"
-[Agent executes research workflow, creates research document]
+> /rpi-research topic="API authentication patterns"
+[Skill executes the research workflow and creates a research document]
 ```
 
-Continue with follow-up questions in the same agent context:
+Continue with follow-up questions in the same session:
 
 ```text
 > What are common API authentication patterns for REST APIs?
 [Research conversation continues]
 > How do OAuth2 and API keys compare for microservices?
 [Follow-up within same agent context]
-> /exit
 ```
 
 ### Available Agents
 
-After installing the hve-core plugin, these agents are available via `/agent <name>`:
+After installing the hve-core plugin, these agents are available via `/agent <qualified-name>`:
 
-* Task Researcher - deep research and technical investigation
-* Task Planner - implementation planning with phased execution
-* Task Implementor - code changes following plans
-* Memory - persistent context across sessions
-* PR Review - pull request analysis and feedback
+* `hve-core:rpi-agent` coordinates Research, Plan, Implement, Review, and Follow-up
+* `hve-core:documentation` audits, authors, and validates documentation
+
+Start an interactive scripted invocation with the same qualified identifier:
+
+```bash
+copilot --agent hve-core:rpi-agent
+```
 
 For the complete list, run `/help` in a CLI session to see all available commands and agents.
 
 ### When to Use Each Mode
 
 * Use **named commands** (`/git-commit-message`, `/git-merge`) directly from default mode for workflows that do not require a custom agent.
-* Use **agent mode** (`/agent <name>`) first, then run agent-specific prompts (`/task-research`, `/task-plan`) for structured workflows that need agent context.
+* Use direct skills (`/rpi-research`, `/rpi-plan`, `/rpi-implement`, `/rpi-review`) for one bounded RPI responsibility.
+* Use **agent mode** with `/agent hve-core:rpi-agent` for lifecycle coordination.
 * Stay in **agent mode** for exploratory conversations, follow-up questions, or tasks that don't fit a predefined prompt.
 
 ---

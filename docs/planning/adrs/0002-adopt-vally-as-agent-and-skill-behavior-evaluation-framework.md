@@ -3,7 +3,7 @@ id: "0002"
 title: "Adopt Vally as the agent and skill behavior evaluation framework"
 description: "Adopt Vally (@microsoft/vally-cli) with a Copilot-SDK executor and a multi-suite evals/ tree as the standard way to evaluate the behavior of hve-core's authored AI customization artifacts, wired into PR CI and supported by a vally-tests authoring skill and a content-moderation pipeline."
 author: "HVE Core Team"
-ms.date: "2026-05-30"
+ms.date: "2026-08-20"
 ms.topic: "reference"
 status: "accepted"
 proposed_date: "2026-05-30"
@@ -25,13 +25,13 @@ tags:
   - "ci"
   - "vally"
 affected_components:
-  - "evals/README.md"
+  - "evals/"
   - ".vally.yaml"
-  - "scripts/evals/moderation/moderate.py"
-  - ".github/skills/hve-core/vally-tests/SKILL.md"
+  - "scripts/evals/"
+  - "scripts/evals/moderation/"
+  - ".github/skills/hve-core/vally-tests/"
   - ".github/agents/hve-core/subagents/vally-test-author.agent.md"
-  - ".github/agents/content-policy-citation.agent.md"
-  - ".github/workflows/evals-agent-matrix.yml"
+  - ".github/instructions/shared/content-policy-citation.instructions.md"
   - ".github/workflows/pr-validation.yml"
 supersedes: null
 superseded-by: null
@@ -54,15 +54,15 @@ success_criteria:
   - metric: "baseline-equivalence-divergence"
     target: "zero undocumented divergences between the customization layer and the underlying Copilot baseline"
     measurement_window: "per-PR for baseline-equivalence suite"
-    source: "Planned baseline-equivalence suite README (evals/baseline-equivalence)"
+    source: "evals/baseline-equivalence/README.md"
   - metric: "eval-ci-gating"
     target: "the evaluation matrix runs in PR CI and blocks merge on authoritative-gate failures"
     measurement_window: "every PR run"
-    source: "Planned evals agent-matrix CI workflow (.github/workflows)"
+    source: ".github/workflows/pr-validation.yml"
   - metric: "corpus-moderation-enforcement"
     target: "generated test corpora pass the moderation pipeline before use, with refusal-taxonomy categories enforced"
     measurement_window: "per corpus generation"
-    source: "Planned corpus moderation pipeline (scripts/evals/moderation)"
+    source: "scripts/evals/moderation/moderate.py"
 decisionMetadata:
   driverToTriggerMap:
     "Regression safety": "ASR-maintainability-eval-suite"
@@ -97,9 +97,8 @@ PowerShell and Python orchestration layer under `scripts/evals/` (including the
 content-moderation pipeline at `scripts/evals/moderation/`), a `vally-tests`
 authoring skill at `.github/skills/hve-core/vally-tests/`, a
 `.github/agents/hve-core/subagents/vally-test-author.agent.md` subagent, a
-`.github/agents/content-policy-citation.agent.md` agent, and CI wiring through
-`.github/workflows/evals-agent-matrix.yml` with changes to
-`.github/workflows/pr-validation.yml`. How should hve-core standardize
+`.github/instructions/shared/content-policy-citation.instructions.md` shared content-policy instruction, and CI wiring through
+changes to `.github/workflows/pr-validation.yml`. How should hve-core standardize
 behavioral evaluation of its AI artifacts?
 
 > Source: `.copilot-tracking/adr-plans/agent-evaluation-framework/state.json`, Frame-phase scope, drivers, constraints, and ASR triggers.
@@ -140,7 +139,7 @@ below keeps that distinction explicit so the matrix that follows is read as a
 fit-for-purpose comparison rather than a feature bake-off.
 
 * Option A: Adopt Vally (`@microsoft/vally-cli`) with a Copilot-SDK executor and a multi-suite `evals/` tree.
-* Option B: Adopt `vyta/beval` for runtime/agentic behavioral evaluation (complementary; integration in progress, not a replacement).
+* Option B: Adopt `vyta/beval` for runtime/agentic behavioral evaluation (considered as complementary at decision time; subsequently retired, see the 2026-07-23 update below).
 * Option C: No automated behavior evaluation (status quo): markdown/frontmatter linting plus human PR review only.
 
 ## Decision Outcome
@@ -169,13 +168,22 @@ its tag-routed grader catalog matches the multi-suite design, and it is npm-
 and GitHub-Actions-native so it fits existing PR CI and local `npm run`
 workflows.
 
-`vyta/beval` (Option B) is treated as complementary rather than rejected. It
-targets a different layer (runtime, multi-turn agentic behavior with scored
+`vyta/beval` (Option B) was originally adopted as a complementary layer targeting
+a different problem (runtime, multi-turn agentic behavior with scored
 multi-dimensional metrics and persona-driven conversation simulation over
-ACP/A2A) and is being integrated through open pull requests. It does not
-provide a pairwise baseline-equivalence comparison and therefore cannot replace
-Vally for the customization-artifact regression and baseline-equivalence role.
-The two frameworks are intended to coexist at different layers.
+ACP/A2A). It did not provide a pairwise baseline-equivalence comparison and so
+never replaced Vally for the customization-artifact regression and
+baseline-equivalence role.
+
+> **Update (2026-07-23): beval retired.** The runtime behavioral suites that
+> ran on beval's Given/When/Then ACP DSL were migrated to Vally 0.9.0 `turns`
+> stimuli (two-turn: agent launch then case query) with prompt graders carrying
+> the rubrics verbatim, `wall-time` budgets, and `output-contains` graders. The
+> beval toolchain, its CI workflow, and its dependency footprint were removed;
+> the migrated suites live under `evals/agent-conformance/<suite>/eval.yaml` and
+> run through the standard Vally pipeline. Vally's multi-turn support subsumed
+> the runtime layer beval previously covered, so the two frameworks no longer
+> coexist.
 
 The status quo (Option C) was rejected because it leaves AI artifacts without
 any regression safety net or baseline protection and makes authoring
@@ -187,7 +195,7 @@ Adopting Vally trades a heavier CI footprint and the inherent noise of
 non-deterministic evaluation for a regression and baseline-equivalence net the
 repository did not previously have. The good outcomes accrue to artifact
 authors and reviewers; the bad outcomes land on CI maintenance and runtime
-cost; the neutral items reflect deliberate scoping decisions (the beval
+cost; the neutral items reflect deliberate scoping decisions (the former beval
 coexistence boundary and the data-driven `.vally.yaml` configuration) that are
 neither wins nor regressions on their own.
 
@@ -198,7 +206,7 @@ neither wins nor regressions on their own.
 * Bad, because it adds a new external dependency (`@microsoft/vally-cli`) plus a Copilot-SDK runtime to CI.
 * Bad, because non-deterministic LLM evaluation introduces cost, latency, and flakiness that require multiple runs, tolerant graders, and generous timeouts.
 * Bad, because it lands a large, multi-suite eval-infrastructure footprint that becomes ongoing maintenance surface.
-* Neutral, because `vyta/beval` remains a complementary runtime/agentic evaluation layer under active integration; the two frameworks coexist at different layers.
+* Neutral, because `vyta/beval` was later retired (2026-07-23) once Vally's multi-turn `turns` support subsumed the runtime/agentic layer; its behavioral suites were migrated to Vally and the two frameworks no longer coexist.
 * Neutral, because the executor and grader catalog are configured centrally in `.vally.yaml`, so suite behavior is data-driven rather than encoded per test.
 
 ### Confirmation
@@ -206,7 +214,7 @@ neither wins nor regressions on their own.
 Compliance with this decision is confirmed by the evaluation framework itself
 running under `autonomyTier: partial` Govern controls:
 
-1. The evaluation matrix at `.github/workflows/evals-agent-matrix.yml` runs the `evals/` suites in PR CI and blocks merge on authoritative-gate failures.
+1. The evaluation matrix in `.github/workflows/pr-validation.yml` runs the `evals/` suites in PR CI and blocks merge on authoritative-gate failures.
 2. The baseline-equivalence suite (`evals/baseline-equivalence/README.md`) asserts that only documented divergences from the Copilot baseline are present.
 3. The corpus-moderation pipeline (`scripts/evals/moderation/moderate.py`) gates generated test corpora against the closed refusal taxonomy before use.
 4. The `vally-tests` skill provides the repeatable authoring path whose outputs feed the suites above.
@@ -238,11 +246,13 @@ authors.
 
 ### Option B: Adopt vyta/beval for runtime/agentic evaluation
 
-beval is the stronger tool for the problem it targets, namely scoring how a
+beval was the stronger tool for the problem it targeted, namely scoring how a
 running agent behaves across a multi-turn conversation, but that is a different
 problem from proving an edited instruction file still matches the baseline.
-Its current alpha maturity and the absence of a pairwise comparison are why it
-supplements rather than replaces Vally here.
+Its alpha maturity and the absence of a pairwise comparison were why it
+supplemented rather than replaced Vally. It was subsequently retired once
+Vally's `turns` multi-turn stimuli covered the runtime layer directly (see the
+2026-07-23 update under Decision Outcome).
 
 > See [github.com/vyta/beval](https://github.com/vyta/beval): a language-agnostic framework for behavioral evaluation of AI agents and LLM systems with a Given/When/Then DSL, scored multi-dimensional metrics, layered graders, and conversation simulation over ACP/A2A.
 
@@ -274,12 +284,14 @@ The framework is organized as four cooperating stages. Authoring artifacts (the
 expectation files. Those files, together with the moderation pipeline output,
 are gathered into the suite tree under `evals/`. The suite tree drives two
 consumers: the baseline-equivalence comparison and the PR CI matrix. CI is
-where enforcement happens, with the agent-matrix workflow feeding the
-PR-validation gate. The diagram below traces that flow from authoring on the
+where enforcement happens, with the `pr-validation.yml` workflow running the
+evaluation matrix as the merge gate. The diagram below traces that flow from authoring on the
 left to enforcement on the right.
 
 ```mermaid
 flowchart LR
+  accTitle: Vally Evaluation Pipeline Layers
+  accDescr: Skills, authoring agents, moderation, and configuration feed evaluation suites and baseline comparison before pull request validation applies the resulting gate.
     subgraph Authoring["Authoring"]
         skill[".github/skills/hve-core/vally-tests"]
         subagent["vally-test-author subagent"]
@@ -296,7 +308,6 @@ flowchart LR
     end
 
     subgraph CI["PR CI"]
-        matrix["evals-agent-matrix.yml"]
         prval["pr-validation.yml"]
     end
 
@@ -305,8 +316,7 @@ flowchart LR
     moderation --> suiteTree
     vally --> suiteTree
     suiteTree --> baseline
-    suiteTree --> matrix
-    matrix --> prval
+    suiteTree --> prval
 ```
 
 ## Risks and Mitigations
@@ -320,8 +330,8 @@ flowchart LR
 If this decision is reversed, the rollback path is:
 
 1. Remove the `evals/` suite tree, `.vally.yaml`, and the `scripts/evals/` orchestration and moderation layers.
-2. Remove the `.github/skills/hve-core/vally-tests/` skill, the `vally-test-author` subagent, and the `content-policy-citation` agent.
-3. Drop the `.github/workflows/evals-agent-matrix.yml` workflow and revert the `evals/`-related changes in `.github/workflows/pr-validation.yml`.
+2. Remove the `.github/skills/hve-core/vally-tests/` skill, the `vally-test-author` subagent, and the `content-policy-citation` shared instruction.
+3. Revert the `evals/`-related changes in `.github/workflows/pr-validation.yml`.
 4. Update any collection manifests that reference the removed skill/agent and re-run `npm run plugin:generate`.
 5. Document the reversal in a superseding ADR that links back to this one and sets `superseded-by` here.
 
@@ -329,13 +339,13 @@ No data migration is required: removing the framework leaves the underlying AI c
 
 ## Affected Components
 
-* evals/README.md
+* evals/
 * .vally.yaml
-* scripts/evals/moderation/moderate.py
-* .github/skills/hve-core/vally-tests/SKILL.md
+* scripts/evals/
+* scripts/evals/moderation/
+* .github/skills/hve-core/vally-tests/
 * .github/agents/hve-core/subagents/vally-test-author.agent.md
-* .github/agents/content-policy-citation.agent.md
-* .github/workflows/evals-agent-matrix.yml
+* .github/instructions/shared/content-policy-citation.instructions.md
 * .github/workflows/pr-validation.yml
 
 ## More Information
@@ -343,14 +353,21 @@ No data migration is required: removing the framework leaves the underlying AI c
 * Session state: `.copilot-tracking/adr-plans/agent-evaluation-framework/state.json`
 * Suite architecture: `evals/README.md` and the `evals/` suite tree
 * Central config: `./.vally.yaml`
-* Orchestration and moderation: `scripts/evals/moderation/moderate.py` (PowerShell and Python)
-* Authoring skill: `.github/skills/hve-core/vally-tests/SKILL.md`
+* Orchestration: `scripts/evals/` (PowerShell and Python)
+* Moderation pipeline: `scripts/evals/moderation/`
+* Authoring skill: `.github/skills/hve-core/vally-tests/`
 * Test-author subagent: `.github/agents/hve-core/subagents/vally-test-author.agent.md`
-* Content-policy agent: `.github/agents/content-policy-citation.agent.md`
-* Evaluation matrix workflow: `.github/workflows/evals-agent-matrix.yml`
-* PR validation workflow: `.github/workflows/pr-validation.yml`
-* Complementary runtime framework: [vyta/beval](https://github.com/vyta/beval) (language-agnostic agentic behavioral evaluation; integration in progress via open PRs)
+* Content-policy shared instruction: `.github/instructions/shared/content-policy-citation.instructions.md`
+* PR validation workflow (evaluation matrix gate): `.github/workflows/pr-validation.yml`
+* Former complementary runtime framework: [vyta/beval](https://github.com/vyta/beval) (language-agnostic agentic behavioral evaluation; retired 2026-07-23 after its suites were migrated to Vally 0.9.0 `turns` stimuli)
 
-This decision should be re-visited if `vyta/beval` integration matures enough to subsume the customization-artifact regression role, if Vally's Copilot-SDK executor or `vally compare` contract changes materially, or if the cost and flakiness of non-deterministic evaluation outweigh the regression-safety benefit.
+This decision's revisit trigger ("re-visited if `vyta/beval` integration
+matures enough to subsume the customization-artifact regression role") resolved
+in the inverse direction: Vally's Copilot-SDK executor and `turns` multi-turn
+support matured enough to subsume beval's runtime layer, so beval was retired
+rather than expanded. The decision should still be re-visited if Vally's
+Copilot-SDK executor or `vally compare` contract changes materially, or if the
+cost and flakiness of non-deterministic evaluation outweigh the regression-safety
+benefit.
 
 🤖 Crafted with precision by ✨Copilot following brilliant human instruction, then carefully refined by our team of discerning human reviewers.

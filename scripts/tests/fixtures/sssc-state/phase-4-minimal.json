@@ -19,7 +19,7 @@
   },
   "referencesProcessed": [
     {
-      "filePath": ".github/instructions/security/sssc-standards.instructions.md",
+      "filePath": ".github/instructions/security/sssc-planner.instructions.md",
       "type": "standard",
       "sourceDescription": "Embedded SSSC standards",
       "processedInPhase": 3,

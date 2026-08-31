@@ -1,92 +1,157 @@
 #Requires -Modules Pester
-# Copyright (c) Microsoft Corporation.
+# Copyright (c) 2026 Microsoft Corporation. All rights reserved.
 # SPDX-License-Identifier: MIT
 
-Describe 'collision-detection' -Tag 'Unit' {
+# Discovery-time capability probe: the Bash parity fixtures execute the real
+# collision-detection.sh, which delegates to component-copy.sh and needs jq.
+$script:BashAvailable = [bool](Get-Command bash -ErrorAction SilentlyContinue) -and [bool](Get-Command jq -ErrorAction SilentlyContinue)
+
+BeforeAll {
+    $script:PowerShellScript = (Resolve-Path (Join-Path $PSScriptRoot '../scripts/collision-detection.ps1')).Path
+    $script:BashScript = (Resolve-Path (Join-Path $PSScriptRoot '../scripts/collision-detection.sh')).Path
+    $script:RepoRoot = (Resolve-Path (Join-Path $PSScriptRoot '../../../../..')).Path
+    $script:FixtureCounter = 0
+
+    # Real plugin manifest members used as the detection input.
+    $script:Components = @('agents/hve-core/rpi-agent.md', 'skills/rpi/rpi-plan')
+
+    function script:New-CollisionFixture {
+        param([string[]]$ExistingTarget = @())
+
+        $script:FixtureCounter++
+        $target = Join-Path $TestDrive "collision-$($script:FixtureCounter)"
+        New-Item -ItemType Directory -Path $target -Force | Out-Null
+
+        foreach ($relative in $ExistingTarget) {
+            $full = Join-Path $target $relative
+            if ($relative.EndsWith('/')) {
+                New-Item -ItemType Directory -Path $full -Force | Out-Null
+                continue
+            }
+            New-Item -ItemType Directory -Path (Split-Path $full -Parent) -Force | Out-Null
+            Set-Content -LiteralPath $full -Value '# Local' -NoNewline
+        }
+        return $target
+    }
+
+    function script:Get-KeyValue {
+        param([string]$Output, [string]$Key)
+
+        $match = [regex]::Match($Output, "(?m)^$([regex]::Escape($Key))=(.*)$")
+        if (-not $match.Success) { return @() }
+        return @($match.Groups[1].Value.Trim() -split ',' | Where-Object { $_ })
+    }
+}
+
+Describe 'collision-detection parameter contract' -Tag 'Unit' {
     BeforeAll {
-        $script:scriptPath = Join-Path $PSScriptRoot '../scripts/collision-detection.ps1'
-        $script:testRoot = Join-Path ([System.IO.Path]::GetTempPath()) "hve-test-collision-$([guid]::NewGuid().ToString('N'))"
-        $script:sourceRoot = Join-Path $script:testRoot 'source'
+        $script:command = Get-Command -Name $script:PowerShellScript
+        $script:powerShellSource = Get-Content -LiteralPath $script:PowerShellScript -Raw
+        $script:bashSource = Get-Content -LiteralPath $script:BashScript -Raw
     }
 
-    BeforeEach {
-        New-Item -ItemType Directory -Path $script:testRoot -Force | Out-Null
-        New-Item -ItemType Directory -Path $script:sourceRoot -Force | Out-Null
-
-        # Create source agents
-        $agentsDir = Join-Path $script:sourceRoot '.github/agents/hve-core'
-        New-Item -ItemType Directory -Path $agentsDir -Force | Out-Null
-        Set-Content -Path (Join-Path $agentsDir 'task-researcher.agent.md') -Value '# Researcher'
-        Set-Content -Path (Join-Path $agentsDir 'task-planner.agent.md') -Value '# Planner'
-
-        Push-Location $script:testRoot
-    }
-
-    AfterEach {
-        Pop-Location
-    }
-
-    AfterAll {
-        if (Test-Path $script:testRoot) {
-            Remove-Item $script:testRoot -Recurse -Force -ErrorAction SilentlyContinue
+    It 'Declares the source, target, and component parameters' {
+        foreach ($name in @('HveCoreBasePath', 'TargetRoot', 'Component')) {
+            $script:command.Parameters.Keys | Should -Contain $name
+            $attributes = @($script:command.Parameters[$name].Attributes | Where-Object { $_ -is [System.Management.Automation.ParameterAttribute] })
+            @($attributes | Where-Object { $_.Mandatory }).Count | Should -Be 1
         }
     }
 
-    Context 'No collisions' {
-        It 'Reports COLLISIONS_DETECTED=false when target directory does not exist' {
-            $output = & $script:scriptPath -Selection 'hve-core' 6>&1 | Out-String
-
-            $output | Should -Match 'COLLISIONS_DETECTED=false'
-        }
-
-        It 'Reports COLLISIONS_DETECTED=false when no matching files exist' {
-            New-Item -ItemType Directory -Path '.github/agents' -Force | Out-Null
-            Set-Content -Path '.github/agents/unrelated.md' -Value '# Other'
-
-            $output = & $script:scriptPath -Selection 'hve-core' 6>&1 | Out-String
-
-            $output | Should -Match 'COLLISIONS_DETECTED=false'
-        }
+    It 'Declares no package identity in either implementation' {
+        $script:command.Parameters.Keys | Should -Not -Contain 'PackageName'
+        $script:powerShellSource | Should -Not -Match '(?i)PackageName'
+        $script:bashSource | Should -Not -Match 'package_name'
+        $script:bashSource | Should -Match '<target_root> <component\.\.\.>'
     }
 
-    Context 'Collisions detected' {
-        It 'Reports COLLISIONS_DETECTED=true when target files exist' {
-            New-Item -ItemType Directory -Path '.github/agents' -Force | Out-Null
-            Set-Content -Path '.github/agents/task-researcher.agent.md' -Value '# Existing'
+    It 'Delegates to component-copy report mode in both implementations' {
+        $script:powerShellSource | Should -Match 'component-copy\.ps1'
+        $script:powerShellSource | Should -Match '-ReportOnly'
+        $script:bashSource | Should -Match 'component-copy\.sh'
+        $script:bashSource | Should -Match 'REPORT_ONLY=true'
+    }
+}
 
-            $output = & $script:scriptPath -Selection 'hve-core' 6>&1 | Out-String
+Describe 'collision-detection component reporting' -Tag 'Unit' {
+    It 'Reports canonical maturity and target for every selected component' {
+        $target = New-CollisionFixture
+        $output = & $script:PowerShellScript -HveCoreBasePath $script:RepoRoot -TargetRoot $target -Component $script:Components 6>&1 | Out-String
 
-            $output | Should -Match 'COLLISIONS_DETECTED=true'
-        }
-
-        It 'Lists collision file paths' {
-            New-Item -ItemType Directory -Path '.github/agents' -Force | Out-Null
-            Set-Content -Path '.github/agents/task-researcher.agent.md' -Value '# Existing'
-            Set-Content -Path '.github/agents/task-planner.agent.md' -Value '# Existing'
-
-            $output = & $script:scriptPath -Selection 'hve-core' 6>&1 | Out-String
-
-            $output | Should -Match 'COLLISION_FILES='
-            $output | Should -Match 'task-researcher\.agent\.md'
-            $output | Should -Match 'task-planner\.agent\.md'
-        }
+        $output | Should -Match 'COMPONENT=agents/hve-core/rpi-agent\.md\|KIND=agent\|MATURITY=stable\|TARGET=\.github/agents/hve-core/rpi-agent\.agent\.md\|EXISTS=false'
+        $output | Should -Match 'COMPONENT=skills/rpi/rpi-plan\|KIND=skill\|MATURITY=stable\|TARGET=\.github/skills/rpi/rpi-plan\|EXISTS=false'
+        $output | Should -Match 'COLLISIONS_DETECTED=false'
     }
 
-    Context 'Collection selection' {
-        It 'Uses collectionAgents for non-hve-core selection' {
-            New-Item -ItemType Directory -Path '.github/agents' -Force | Out-Null
-            Set-Content -Path '.github/agents/custom-agent.agent.md' -Value '# Custom'
+    It 'Reports the schema-default maturity for a formerly experimental component' {
+        $target = New-CollisionFixture
+        $output = & $script:PowerShellScript -HveCoreBasePath $script:RepoRoot -TargetRoot $target -Component @('skills/hve-core/vally-tests') 6>&1 | Out-String
 
-            $output = & $script:scriptPath -Selection 'my-collection' -CollectionAgents @('my-collection/custom-agent.agent.md') 6>&1 | Out-String
+        $output | Should -Match 'MATURITY=stable'
+        $output | Should -Not -Match 'MATURITY=experimental'
+        @(Get-ChildItem -LiteralPath $target -Recurse -File -Force) | Should -BeNullOrEmpty
+    }
 
-            $output | Should -Match 'COLLISIONS_DETECTED=true'
-            $output | Should -Match 'custom-agent\.agent\.md'
-        }
+    It 'Reports a file collision on the full target path' {
+        $target = New-CollisionFixture -ExistingTarget @('.github/agents/hve-core/rpi-agent.agent.md')
+        $output = & $script:PowerShellScript -HveCoreBasePath $script:RepoRoot -TargetRoot $target -Component $script:Components 6>&1 | Out-String
 
-        It 'Reports no collisions for empty collectionAgents' {
-            $output = & $script:scriptPath -Selection 'my-collection' -CollectionAgents @() 6>&1 | Out-String
+        $output | Should -Match 'COLLISIONS_DETECTED=true'
+        Get-KeyValue -Output $output -Key 'COLLISION_COMPONENTS' | Should -Be @('agents/hve-core/rpi-agent.md')
+        Get-KeyValue -Output $output -Key 'COLLISION_TARGETS' | Should -Be @('.github/agents/hve-core/rpi-agent.agent.md')
+    }
 
-            $output | Should -Match 'COLLISIONS_DETECTED=false'
-        }
+    It 'Reports a skill collision on the target directory' {
+        $target = New-CollisionFixture -ExistingTarget @('.github/skills/rpi/rpi-plan/')
+        $output = & $script:PowerShellScript -HveCoreBasePath $script:RepoRoot -TargetRoot $target -Component $script:Components 6>&1 | Out-String
+
+        Get-KeyValue -Output $output -Key 'COLLISION_COMPONENTS' | Should -Be @('skills/rpi/rpi-plan')
+        Get-KeyValue -Output $output -Key 'COLLISION_TARGETS' | Should -Be @('.github/skills/rpi/rpi-plan')
+    }
+
+    It 'Reports an unrelated existing agent as no collision' {
+        $target = New-CollisionFixture -ExistingTarget @('.github/agents/hve-core/unrelated.agent.md')
+        $output = & $script:PowerShellScript -HveCoreBasePath $script:RepoRoot -TargetRoot $target -Component $script:Components 6>&1 | Out-String
+
+        $output | Should -Match 'COLLISIONS_DETECTED=false'
+    }
+
+    It 'Rejects a component the plugin manifest does not declare' {
+        $target = New-CollisionFixture
+        { & $script:PowerShellScript -HveCoreBasePath $script:RepoRoot -TargetRoot $target -Component @('agents/hve-core/absent.md') } |
+            Should -Throw -ExpectedMessage '*not declared in the plugin manifest*'
+    }
+
+    It 'Rejects a real component the plugin manifest excludes' {
+        $target = New-CollisionFixture
+        { & $script:PowerShellScript -HveCoreBasePath $script:RepoRoot -TargetRoot $target -Component @('skills/security/owasp-docker') } |
+            Should -Throw -ExpectedMessage '*not declared in the plugin manifest*'
+        @(Get-ChildItem -LiteralPath $target -Recurse -File -Force) | Should -BeNullOrEmpty
+    }
+}
+
+Describe 'collision-detection PowerShell and Bash parity' -Tag 'Unit' -Skip:(-not $script:BashAvailable) {
+    It 'Produces identical output without collisions' {
+        $target = New-CollisionFixture
+        $powerShellOutput = (& $script:PowerShellScript -HveCoreBasePath $script:RepoRoot -TargetRoot $target -Component $script:Components 6>&1 | Out-String).Trim()
+        $bashOutput = (& bash $script:BashScript $script:RepoRoot $target @script:Components 2>&1 | Out-String).Trim()
+
+        $bashOutput | Should -Be $powerShellOutput
+    }
+
+    It 'Produces identical output with file and skill collisions' {
+        $target = New-CollisionFixture -ExistingTarget @('.github/agents/hve-core/rpi-agent.agent.md', '.github/skills/rpi/rpi-plan/')
+        $powerShellOutput = (& $script:PowerShellScript -HveCoreBasePath $script:RepoRoot -TargetRoot $target -Component $script:Components 6>&1 | Out-String).Trim()
+        $bashOutput = (& bash $script:BashScript $script:RepoRoot $target @script:Components 2>&1 | Out-String).Trim()
+
+        $bashOutput | Should -Be $powerShellOutput
+        $bashOutput | Should -Match 'COLLISIONS_DETECTED=true'
+    }
+
+    It 'Exits non-zero for a component the plugin manifest does not declare' {
+        $target = New-CollisionFixture
+        & bash $script:BashScript $script:RepoRoot $target 'agents/hve-core/absent.md' 2>&1 | Out-Null
+
+        $LASTEXITCODE | Should -Not -Be 0
     }
 }

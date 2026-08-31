@@ -1,1 +1,0 @@
-../../../../.github/instructions/accessibility/accessibility-framework-selection.instructions.md

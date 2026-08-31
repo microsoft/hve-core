@@ -71,7 +71,7 @@ CI validates copyright headers through the repository's copyright validation scr
 <!-- <example-copyright-header> -->
 ```bash
 #!/usr/bin/env bash
-# Copyright (c) Microsoft Corporation.
+# Copyright (c) 2026 Microsoft Corporation. All rights reserved.
 # SPDX-License-Identifier: MIT
 #
 # script-name.sh

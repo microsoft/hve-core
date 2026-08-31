@@ -3,7 +3,7 @@ title: Security Architect Guide
 description: HVE Core support for security architects building security models, security plans, and compliance verification
 sidebar_position: 7
 author: Microsoft
-ms.date: 2026-03-10
+ms.date: 2026-08-04
 ms.topic: how-to
 keywords:
   - security
@@ -22,12 +22,12 @@ This guide is for you if you perform security model analysis, build security pla
 > AI outputs may contain inaccuracies, miss critical threats, or produce recommendations that are incomplete or inappropriate for your environment.
 > Never treat AI-generated security artifacts as authoritative without independent verification.
 
-## Recommended Collections
+## Capability Groups
 
 > [!TIP]
-> Install the [HVE Core extension](https://marketplace.visualstudio.com/items?itemName=ise-hve-essentials.hve-core) from the VS Code Marketplace for the flagship RPI workflow and core artifacts with zero configuration.
+> Install the [HVE Core extension](https://marketplace.visualstudio.com/items?itemName=ise-hve-essentials.hve-core) from the VS Code Marketplace for the complete active component set with zero configuration.
 >
-> Your primary collections are `security` (security plan creation, risk registers, and incident response tools) and `project-planning` (broader project context). For clone-based setups, see the [Installation Guide](../../getting-started/install.md).
+> For selective clone adoption, choose security planning, supply chain assessment, Responsible AI, risk, and research components that match your review scope. Capability groups help you discover related components; they are not independently installable products. See the [Installation Guide](../../getting-started/install.md).
 
 ## What HVE Core Does for You
 
@@ -49,12 +49,12 @@ This guide is for you if you perform security model analysis, build security pla
 
 ## Stage Walkthrough
 
-1. Stage 2: Discovery. Use the **task-researcher** agent to investigate the threat landscape, existing security controls, and compliance requirements for your system.
+1. Stage 2: Discovery. Use `/rpi-research` to investigate the threat landscape, existing security controls, and compliance requirements for your system.
 2. Stage 3: Product Definition. Run the **security-planner** agent to generate a security plan with security models, attack vectors, and mitigation strategies.
 3. Stage 3: Product Definition. Run the **sssc-planner** agent to assess supply chain security posture against OpenSSF standards.
 4. Stage 3: Product Definition. Run the **rai-planner** agent if the project includes AI/ML components.
 5. Stage 3: Product Definition. Use `/risk-register` to assess and document component-level risks with severity ratings, likelihood, and mitigation plans.
-6. Stage 7: Review. Validate implementation against security requirements using the **task-reviewer** agent for code-level security compliance checks.
+6. Stage 7: Review. Use `/rpi-review` to validate implementation evidence against the approved security requirements and plan.
 7. Stage 9: Operations. Maintain incident response readiness with `/incident-response` and update security models as the system evolves.
 
 ## Starter Prompts
@@ -93,7 +93,7 @@ Select **rai-planner** agent:
 Assess responsible AI risks based on the security plan
 ```
 
-Select **task-researcher** agent:
+Use `/rpi-research`:
 
 ```text
 Research security patterns for GraphQL APIs, focusing on query depth
@@ -104,14 +104,13 @@ arguments.
 
 ## Key Agents and Workflows
 
-| Agent                | Purpose                                                    | Docs                                            |
-|----------------------|------------------------------------------------------------|-------------------------------------------------|
-| **security-planner** | Security plan and security model generation                | Agent file                                      |
-| **sssc-planner**     | Supply chain security assessment against OpenSSF standards | Agent file                                      |
-| **rai-planner**      | Responsible AI risk assessment and RAI plan generation     | Agent file                                      |
-| **task-researcher**  | Security-focused codebase and threat research              | [Task Researcher](../../rpi/task-researcher.md) |
-| **task-reviewer**    | Security compliance review                                 | [Task Reviewer](../../rpi/task-reviewer.md)     |
-| **memory**           | Session context and preference persistence                 | Agent file                                      |
+| Agent or skill       | Purpose                                                    | Docs                       |
+|----------------------|------------------------------------------------------------|----------------------------|
+| **security-planner** | Security plan and security model generation                | Agent file                 |
+| **sssc-planner**     | Supply chain security assessment against OpenSSF standards | Agent file                 |
+| **rai-planner**      | Responsible AI risk assessment and RAI plan generation     | Agent file                 |
+| **rpi-research**     | Security-focused codebase and threat research              | [RPI workflow](../../rpi/) |
+| **rpi-review**       | Implementation review against approved security plans      | [RPI workflow](../../rpi/) |
 
 Prompts complement the agents for targeted security workflows:
 
@@ -141,15 +140,15 @@ Prompts complement the agents for targeted security workflows:
 ## Next Steps
 
 > [!TIP]
-> Explore security tools: [Security Collection](https://github.com/microsoft/hve-core/blob/main/collections/security.collection.md)
-> Plan responsible AI assessments: [RAI Planning Collection](https://github.com/microsoft/hve-core/blob/main/collections/rai-planning.collection.md)
+> Browse the complete HVE Core inventory: [HVE Core](../../plugins/hve-core)
+> Plan responsible AI assessments: [Responsible AI Planning](../../agents/rai-planning/)
 > Review the security model documentation: [Security Model](../../security/security-model.md)
 > See how security fits the project lifecycle: [AI-Assisted Project Lifecycle](../lifecycle/)
 
 ---
 
 > [!IMPORTANT]
-> Security-specific tooling covers Stage 2, Stage 3, Stage 7, and Stage 9 only. Stages 4 through 6 and Stage 8 rely on general-purpose agents (the **task-researcher** and **task-reviewer** agents) rather than dedicated security tooling. Specialized security coverage for decomposition, sprint planning, implementation, and delivery is a planned improvement.
+> Security-specific tooling covers Stage 2, Stage 3, Stage 7, and Stage 9 only. Stages 4 through 6 and Stage 8 use the general-purpose RPI phase skills rather than dedicated security tooling. Specialized security coverage for decomposition, sprint planning, implementation, and delivery is a planned improvement.
 
 <!-- markdownlint-disable MD036 -->
 *🤖 Crafted with precision by ✨Copilot following brilliant human instruction,

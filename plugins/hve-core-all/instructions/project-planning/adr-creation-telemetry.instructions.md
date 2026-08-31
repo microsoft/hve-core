@@ -1,1 +1,0 @@
-../../../../.github/instructions/project-planning/adr-creation-telemetry.instructions.md

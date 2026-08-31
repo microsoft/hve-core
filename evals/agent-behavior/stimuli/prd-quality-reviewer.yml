@@ -1,0 +1,18 @@
+stimuli:
+  - name: prd-quality-reviewer-mentions-quality-guidance
+    prompt: |
+      You are reviewing a product-requirements draft for a planning workflow.
+      Briefly describe what the prd-quality-reviewer agent is meant to help with
+      and name one quality concern it should surface for the draft.
+    tags:
+      category: agent-behavior
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: agent-domain-attribution
+        config:
+          pattern: '(?i)(prd|product|requirements|review|quality)'
+      - type: output-matches
+        name: scope-language
+        config:
+          pattern: '(?i)(draft|review|quality|requirements)'

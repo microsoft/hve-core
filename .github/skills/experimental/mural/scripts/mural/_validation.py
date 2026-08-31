@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# Copyright (c) Microsoft Corporation.
+# Copyright (c) 2026 Microsoft Corporation. All rights reserved.
 # SPDX-License-Identifier: MIT
 """Validation, projection, pagination, and body-builder helpers.
 
@@ -21,7 +21,11 @@ import re
 import urllib.parse
 from typing import Any
 
-from ._constants import ENV_DEFAULT_WORKSPACE
+from ._constants import (
+    ENV_ALLOW_INSECURE_API,
+    ENV_DEFAULT_WORKSPACE,
+    MURAL_BASE_URL_DEFAULT,
+)
 from ._exceptions import (
     MuralAmbiguousWorkspaceError,
     MuralSecurityError,
@@ -70,6 +74,81 @@ _VALID_AREA_LAYOUTS: frozenset[str] = frozenset({"free", "column", "row"})
 # Module-level cache of area metadata keyed by area id. Populated by
 # ``_get_area`` and the CLI ``area get`` handler. Process-local; not persisted.
 _area_cache: dict[str, dict[str, Any]] = {}
+
+
+def _canonicalize_api_base_url(
+    value: str,
+    *,
+    env: dict[str, str] | None = None,
+) -> str:
+    """Return a canonical, approved Mural API base URL."""
+    if not isinstance(value, str) or not value:
+        raise MuralSecurityError("Mural API base URL is empty")
+    if any(ord(character) < 32 or ord(character) == 127 for character in value):
+        raise MuralSecurityError("Mural API base URL contains control characters")
+    if "\\" in value:
+        raise MuralSecurityError("Mural API base URL must not contain backslashes")
+    try:
+        parsed = urllib.parse.urlsplit(value)
+        port = parsed.port
+    except ValueError as exc:
+        raise MuralSecurityError(f"Mural API base URL is malformed: {exc}") from exc
+    if parsed.username is not None or parsed.password is not None:
+        raise MuralSecurityError("Mural API base URL must not contain userinfo")
+    if parsed.query or parsed.fragment:
+        raise MuralSecurityError(
+            "Mural API base URL must not contain query or fragment"
+        )
+    host = (parsed.hostname or "").lower()
+    if not host:
+        raise MuralSecurityError("Mural API base URL has no host")
+    if parsed.path.rstrip("/") != "/api/public/v1":
+        raise MuralSecurityError("Mural API base URL path must be /api/public/v1")
+
+    if host == "app.mural.co":
+        if parsed.scheme != "https" or port not in (None, 443):
+            raise MuralSecurityError(
+                "production Mural API base must use HTTPS on the default port"
+            )
+        return MURAL_BASE_URL_DEFAULT
+
+    loopback_hosts = {"localhost", "127.0.0.1", "::1"}
+    src = env if env is not None else os.environ
+    if (
+        host not in loopback_hosts
+        or parsed.scheme != "http"
+        or port is None
+        or src.get(ENV_ALLOW_INSECURE_API, "").strip() != "1"
+    ):
+        raise MuralSecurityError(
+            "custom Mural API bases are disabled; use the production endpoint or "
+            f"set {ENV_ALLOW_INSECURE_API}=1 for an explicit HTTP loopback port"
+        )
+    netloc = f"[{host}]:{port}" if ":" in host else f"{host}:{port}"
+    return urllib.parse.urlunsplit(("http", netloc, "/api/public/v1", "", ""))
+
+
+def _validate_api_path(path: str) -> str:
+    """Return an API-relative path after rejecting origin and traversal input."""
+    if not isinstance(path, str) or not path:
+        raise MuralValidationError("Mural API path must be a non-empty string")
+    if any(ord(character) < 32 or ord(character) == 127 for character in path):
+        raise MuralValidationError("Mural API path contains control characters")
+    if "\\" in path:
+        raise MuralValidationError("Mural API path must not contain backslashes")
+    if path.startswith(("//", "http://", "https://")):
+        raise MuralValidationError("Mural API path must not override the API origin")
+    if "?" in path or "#" in path:
+        raise MuralValidationError(
+            "Mural API path must not contain query or fragment components"
+        )
+    decoded = urllib.parse.unquote(path)
+    if decoded != path and any(token in decoded for token in ("/", "\\")):
+        raise MuralValidationError("Mural API path must not contain encoded separators")
+    segments = decoded.split("/")
+    if any(segment in (".", "..") for segment in segments):
+        raise MuralValidationError("Mural API path must not contain dot segments")
+    return "/" + path.lstrip("/")
 
 
 def _validate_mural_id(value: str) -> str:
@@ -475,11 +554,25 @@ def _build_shape_body(args: argparse.Namespace) -> dict[str, Any]:
 
 
 def _build_arrow_body(args: argparse.Namespace) -> dict[str, Any]:
+    x1 = _coerce_xy(getattr(args, "x1", None), "--x1")
+    y1 = _coerce_xy(getattr(args, "y1", None), "--y1")
+    x2 = _coerce_xy(getattr(args, "x2", None), "--x2")
+    y2 = _coerce_xy(getattr(args, "y2", None), "--y2")
+    origin_x = min(x1, x2)
+    origin_y = min(y1, y2)
+    # Clamp bounding-box dimensions to avoid zero-size rectangles rejected by
+    # the API; point coordinates still preserve the true arrow endpoints.
+    width = max(abs(x2 - x1), 1.0)
+    height = max(abs(y2 - y1), 1.0)
     body: dict[str, Any] = {
-        "x1": _coerce_xy(getattr(args, "x1", None), "--x1"),
-        "y1": _coerce_xy(getattr(args, "y1", None), "--y1"),
-        "x2": _coerce_xy(getattr(args, "x2", None), "--x2"),
-        "y2": _coerce_xy(getattr(args, "y2", None), "--y2"),
+        "x": origin_x,
+        "y": origin_y,
+        "width": width,
+        "height": height,
+        "points": [
+            {"x": x1 - origin_x, "y": y1 - origin_y},
+            {"x": x2 - origin_x, "y": y2 - origin_y},
+        ],
     }
     if getattr(args, "style", None):
         body["style"] = _parse_json_arg(args.style, "--style")

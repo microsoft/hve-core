@@ -1,0 +1,68 @@
+# Copyright (c) 2026 Microsoft Corporation. All rights reserved.
+# SPDX-License-Identifier: MIT
+# cspell:ignore degrad substitut unavailab
+stimuli:
+  - name: experiment-designer-class-recipe
+    prompt: |
+      Design a minimum viable experiment for "Will adding a price slider increase conversion?" Lay out phases, hypothesis, and success metrics. Write the design under `.copilot-tracking/mve/` and report the path.
+    tags:
+      category: agent-behavior
+    graders:
+      - type: output-matches
+        name: phase-marker-present
+        config:
+          pattern: '(?im)(^\s*(#{2,3}\s|step\s+\d+|phase\s+\d+|\d+[.)])|\|\s*\d+\s*[—–-]|\bphases?\b)'
+      - type: output-matches
+        name: tracking-file-write
+        config:
+          pattern: '(?i)\.copilot-tracking[-/\\](mve|plans)'
+      - type: output-matches
+        name: no-source-edit
+        config:
+          pattern: '(?i)(created|wrote|modified|edited|patched|added)\s+\S{0,40}(\.cs|\.py|\.ts|\.js|package\.json)'
+          negate: true
+
+  - name: experiment-designer-conditional-ml-route
+    prompt: |
+      My persisted MVE context records `experiment type: machine learning`.
+      We completed general hypothesis framing and are entering experiment
+      design. State which reusable skills you load, what each owns, and what
+      you would do if the conditional ML skill were unavailable.
+    environment:
+      files:
+        - src: ../../.github/agents/experimental/experiment-designer.agent.md
+          dest: .github/copilot-instructions.md
+      skills:
+        - ../../.github/skills/project-planning/experiment-design
+        - ../../.github/skills/data-science-engineering/ml-experimentation
+    tags:
+      category: agent-behavior
+    graders:
+      - type: output-matches
+        name: always-loaded-general-skill
+        config:
+          pattern: '(?is)(experiment-design).*(hypothes|vetting|scope|general)'
+      - type: output-matches
+        name: conditional-ml-trigger
+        config:
+          pattern: '(?is)(machine[- ]learning|recorded experiment type|persisted (experiment )?type|experiment type[^.]{0,40}\bml\b)'
+      - type: output-matches
+        name: conditional-ml-skill-ownership
+        config:
+          pattern: '(?is)(?=.*ml-experimentation)(?=.*(reproducib|tracking|evaluation|readiness|environments?)).'
+      - type: output-matches
+        name: conditional-load-failure-condition
+        config:
+          pattern: '(?is)(unavailable|fails? to load|could not load|cannot load|missing|absent)'
+      - type: output-matches
+        name: conditional-failure-records-gap
+        config:
+          pattern: '(?is)(note|noting|record|recording|flag|flagging|mark|marking|state|stating|surface|surfacing)[^.]{0,80}(gap|limitation|absence|unavailab|missing)|(gap|limitation)[^.]{0,80}(note|record|flag|mark|state|surface)'
+      - type: output-matches
+        name: conditional-failure-continues-general
+        config:
+          pattern: '(?is)(continue|continuing|proceed|proceeding|still)[^.]{0,120}(experiment-design|general (coaching|design|guidance|framing|work))'
+      - type: output-matches
+        name: conditional-failure-reduces-ml-depth
+        config:
+          pattern: '(?is)(degrad|reduced depth|less depth|shallower|without ml|avoid (invent|assert|claim)|not (invent|assert|claim|substitut)|no ml-specific|missing ml-specific|ml-specific (guidance|coverage|detail|infrastructure|recommendation))'

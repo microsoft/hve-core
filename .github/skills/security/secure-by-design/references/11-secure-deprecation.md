@@ -77,5 +77,3 @@ and the **Australian Signals Directorate / ACSC** (© Commonwealth of Australia)
 [CC-BY-4.0](https://creativecommons.org/licenses/by/4.0/).
 Modifications: Synthesized into structured principle-checklist format with OWASP cross-references;
 merged UK and AU guidance into unified principle areas.
-
-*🤖 Crafted with precision by ✨Copilot following brilliant human instruction, then carefully refined by our team of discerning human reviewers.*

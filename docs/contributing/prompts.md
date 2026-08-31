@@ -3,8 +3,12 @@ title: 'Contributing Prompts to HVE Core'
 description: 'Requirements and standards for contributing GitHub Copilot prompt files to hve-core'
 sidebar_position: 4
 author: Microsoft
-ms.date: 2026-03-17
+ms.date: 2026-08-19
 ms.topic: how-to
+keywords:
+  - contributing
+  - prompts
+  - standards
 ---
 
 This guide defines the requirements, standards, and best practices for contributing GitHub Copilot prompt files (`.prompt.md`) to the hve-core library.
@@ -29,23 +33,22 @@ Create a prompt when you need to:
 
 ### Location
 
-Prompt files are typically organized in a collection subdirectory by convention:
+Prompt files are typically organized in a package subdirectory by convention:
 
 ```text
-.github/prompts/{collection-id}/
+.github/prompts/{package-id}/
 └── your-prompt-name.prompt.md
 ```
 
 > [!NOTE]
-> Collections can reference artifacts from any subfolder. The `path:` field in collection YAML files
-> accepts any valid repo-relative path regardless of the artifact's parent directory.
+> Tracked prompts beneath a `.github/prompts/<package>/` subdirectory are included automatically when `npm run plugin:sync` derives root `plugin.json`.
 
 ### Naming Convention
 
 * Use lowercase kebab-case: `pull-request.prompt.md`
 * Be specific about workflow/task: `ado-create-pull-request.prompt.md`
 * Include domain prefix when relevant: `ado-`, `git-`, `github-`
-* Avoid generic names: `workflow.prompt.md` ❌ → `ado-process-my-work-items-for-task-planning.prompt.md` ✅
+* Avoid generic names: `workflow.prompt.md` ❌ → `security-plan-from-prd.prompt.md` ✅
 
 ### File Format
 
@@ -203,36 +206,23 @@ Begin by reading the current branch state and identifying open work items.
 
 Prompts that delegate to a custom agent via `agent:` typically omit the activation line because the agent's phases define execution order.
 
-## Collection Entry Requirements
+## Plugin Manifest Registration
 
-All prompts must have matching entries in one or more `collections/*.collection.yml` manifests. Collection entries control distribution and maturity.
+Distributable prompts must use the canonical path `.github/prompts/<package>/<subpath>/<name>.prompt.md`. `npm run plugin:sync` adds that repository-relative path to the `commands` array in root `plugin.json`.
 
-### Adding Your Prompt to a Collection
+Update `docs/plugins/hve-core.md` when the user-visible prompt surface changes, then run `npm run plugin:validate` and `npm run docs:generate:check`.
 
-After creating your prompt file, add an `items[]` entry in each target collection manifest:
+## Path Portability
 
-```yaml
-items:
-  # path can reference artifacts from any subfolder
-  - path: .github/prompts/{collection-id}/my-prompt.prompt.md
-    kind: prompt
-    maturity: stable
-```
+Prompts are packaged and relocatable. The root directory varies by distribution context (in-repo, Copilot CLI plugin, VS Code extension). To ensure references to other artifacts remain portable and do not break across environments, follow these cross-artifact reference rules:
 
-### Selecting Collections for Prompts
+* **Refer by name:** Refer to a skill, agent, subagent, or prompt by the `name:` value from its frontmatter, not by a hard-coded path.
+* **Instruction files:** Refer to an instruction file by its full `<name>.instructions.md` filename.
+* **Bundled resources:** Reserve file paths for a prompt's own bundled resources (relative to the prompt root only).
+* **No hard-coded paths:** Never hard-code a skill's `SKILL.md` path, an agent's file path, or a cross-artifact directory path.
+* **File inclusions:** Use `#file:` only when the prompt must pull in another file's full contents.
 
-Choose collections based on who invokes or benefits from the workflow:
-
-| Prompt Type             | Recommended Collections                   |
-|-------------------------|-------------------------------------------|
-| Git/PR workflows        | `hve-core-all`, `hve-core`                |
-| ADO work item workflows | `hve-core-all`, `ado`, `project-planning` |
-| GitHub issue workflows  | `hve-core-all`, `github`                  |
-| RPI workflow prompts    | `hve-core-all`, `hve-core`                |
-| Documentation workflows | `hve-core-all`, `hve-core`                |
-| Architecture prompts    | `hve-core-all`, `project-planning`        |
-
-For complete collection documentation, see [AI Artifacts Common Standards - Collection Manifests](ai-artifacts-common.md#collection-manifests-and-dependencies).
+Repo-root-relative paths (such as `.github/prompts/...` or `.github/skills/...`) break portability and should not be used for cross-artifact references.
 
 ## Prompt Content Structure Standards
 
@@ -319,13 +309,7 @@ work item discovery, reviewer identification, and compliance validation.
 
 #### 8. Attribution Footer
 
-Always include an attribution footer at the end of the file.
-
-```markdown
----
-
-Brought to you by microsoft/hve-core
-```
+Source artifacts carry no attribution footer.
 
 ### XML-Style Block Requirements
 
@@ -538,12 +522,12 @@ Before submitting your prompt, verify:
 
 * [ ] Clear H1 title describing workflow
 * [ ] Overview/purpose section
-* [ ] Maturity set in collection item (see [Common Standards - Maturity](ai-artifacts-common.md#maturity-field-requirements))
+* [ ] `npm run plugin:sync` and `npm run plugin:validate` completed for distributable prompt changes
 * [ ] Prerequisites or context section
 * [ ] Workflow steps with clear sequence
 * [ ] Success criteria defined
 * [ ] Error handling documented
-* [ ] Attribution footer present
+* [ ] Attribution footer absent
 
 ### Workflow Definition
 
@@ -573,6 +557,61 @@ Before submitting your prompt, verify:
 * [ ] Follows repository conventions
 * [ ] Compatible with existing prompts/workflows
 * [ ] Does not duplicate existing prompt functionality
+
+## Authoring with the HVE Builder Skill
+
+The `hve-builder` skill is the lifecycle entrypoint for prompts, instruction files,
+agents, subagents, and skills. It applies the standards on this page, dispatches
+independent review, runs behavior testing when a change warrants it, and resolves a
+single overall outcome. Prefer it over hand-editing when you are creating a new prompt
+or making a behavior-bearing change to an existing one.
+
+Activate it by asking for the work in natural language, optionally naming the mode.
+There is no slash command; `hve-builder` is a skill, not a prompt.
+
+### Modes
+
+| Mode       | Write authority              | Use when                                                     |
+|------------|------------------------------|--------------------------------------------------------------|
+| `create`   | Creates new source artifacts | The target prompt does not exist yet                         |
+| `improve`  | Edits existing source        | An existing prompt needs new or corrected behavior           |
+| `refactor` | Edits existing source        | Cleanup must preserve current behavior                       |
+| `replace`  | Rewrites existing source     | The artifact needs wholesale replacement                     |
+| `review`   | Read-only; writes evidence   | You want static and behavior findings without source changes |
+| `validate` | Read-only; writes evidence   | You want host validation results only                        |
+
+The skill infers the narrowest safe mode when you do not name one, and asks only when
+plausible modes would grant materially different write authority.
+
+### Compatibility aliases
+
+Three alias skills preserve legacy activation phrasing and route straight to
+`hve-builder`. They add no second author, test, or evaluation loop.
+
+| Alias skill       | Routes to                              |
+|-------------------|----------------------------------------|
+| `prompt-builder`  | `hve-builder` in `create` or `improve` |
+| `prompt-analyze`  | `hve-builder` in read-only `review`    |
+| `prompt-refactor` | `hve-builder` in `refactor`            |
+
+Each alias translates its legacy `promptFiles` input to the `hve-builder` `targets`
+input. New work should name `hve-builder` and its mode directly.
+
+### Behavior testing
+
+`hve-builder` delegates behavior testing to `hve-builder-tester`, which is the sole
+behavior-testing entrypoint. Behavior testing runs for major mutations and for
+behavior-bearing review targets, and is legitimately skipped for eligible minor and
+medium changes.
+
+### Evidence
+
+Runs write author, review, behavior-test, and validation evidence under
+`.copilot-tracking/hve-builder/{{YYYY-MM-DD}}/` unless you supply a different evidence
+root. Read-only modes change nothing else.
+
+Authoring standards for all artifact kinds live in
+`.github/instructions/hve-core/hve-builder.instructions.md`.
 
 ## Testing Your Prompt
 
@@ -605,6 +644,8 @@ Run these commands before submission (see [Common Standards - Common Validation]
 * `npm run lint:md`
 * `npm run spell-check`
 * `npm run lint:md-links`
+* `npm run docs:generate` (required when adding a new prompt; scaffolds the reference page under `docs/reference/prompts/`)
+* `npm run lint:asset-docs`
 
 All checks **MUST** pass before merge.
 
@@ -617,7 +658,7 @@ All checks **MUST** pass before merge.
 
 ## Getting Help
 
-See [AI Artifacts Common Standards - Getting Help](ai-artifacts-common.md#getting-help) for support resources. For prompt-specific assistance, review existing examples in `.github/prompts/{collection-id}/` (the conventional location for prompt files).
+See [AI Artifacts Common Standards - Getting Help](ai-artifacts-common.md#getting-help) for support resources. For prompt-specific assistance, review existing examples in `.github/prompts/{package-id}/` (the conventional location for prompt files).
 
 ---
 

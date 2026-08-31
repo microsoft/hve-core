@@ -1,14 +1,17 @@
 ---
 title: Enterprise Artifact Hub
-description: Configure HVE Core to download tools and modules from internal mirrors or artifact proxies
+description: Configure HVE Core to download tools, modules, and packages from internal mirrors or artifact proxies
 author: Microsoft
-ms.date: 2026-03-13
+ms.date: 2026-08-13
 ms.topic: how-to
 keywords:
   - enterprise
   - artifact hub
   - mirror
   - proxy
+  - package registry
+  - npm
+  - uv
   - environment variables
 estimated_reading_time: 5
 ---
@@ -16,24 +19,33 @@ estimated_reading_time: 5
 ## Overview
 
 Organizations behind firewalls or air-gapped networks often cannot reach public
-registries such as `github.com` or `PSGallery`. HVE Core uses `HVE_*`
-environment variables to redirect tool downloads, PowerShell module installs, and
-GitHub API calls to internal mirrors or artifact proxies. When these variables
-are unset, every download falls back to its public default, so no configuration
-is needed for public GitHub environments.
+services such as GitHub, PowerShell Gallery, npm, or PyPI. HVE Core uses `HVE_*`
+environment variables to redirect release downloads, PowerShell module installs,
+GitHub API calls, and the DevContainer base image. Standard package manager
+variables redirect npm, pip-compatible, and uv package installs.
+
+Each setting has a public default except the optional custom PowerShell Gallery
+source URL. Public GitHub environments therefore require no configuration.
 
 ## Environment Variables
 
-The table below lists every `HVE_*` variable, its default value, and which files
-read it.
+The table lists the supported enterprise variables and their defaults.
 
-| Variable                   | Default                                        | Description                                              |
+| Variable                   | Default                                        | Purpose                                                  |
 |----------------------------|------------------------------------------------|----------------------------------------------------------|
-| `HVE_GITHUB_RELEASES_URL`  | `https://github.com`                           | Base URL for tool downloads (actionlint, gitleaks, uv)   |
+| `HVE_GITHUB_RELEASES_URL`  | `https://github.com`                           | Base URL for release binary downloads                    |
 | `HVE_GITHUB_API_URL`       | `https://api.github.com`                       | GitHub API base URL for security scripts                 |
 | `HVE_PSGALLERY_REPOSITORY` | `PSGallery`                                    | PowerShell repository name for module installs           |
 | `HVE_PSGALLERY_SOURCE_URL` | _(empty)_                                      | Source URL for custom PowerShell repository registration |
-| `HVE_DEVCONTAINER_IMAGE`   | `mcr.microsoft.com/devcontainers/base:2-jammy` | Base container image for DevContainer builds             |
+| `HVE_DEVCONTAINER_IMAGE`   | `mcr.microsoft.com/devcontainers/base:2-jammy` | Base image used to build the DevContainer                |
+| `NPM_CONFIG_REGISTRY`      | `https://registry.npmjs.org/`                  | Registry used by npm commands                            |
+| `PIP_INDEX_URL`            | `https://pypi.org/simple/`                     | Index used by pip-compatible commands                    |
+| `UV_DEFAULT_INDEX`         | `https://pypi.org/simple`                      | Index used by uv project commands such as `uv sync`      |
+
+The three package index variables are standard tool settings rather than
+HVE-specific settings. The DevContainer reads them from the host, passes them as
+Docker build arguments, and persists them under the same names inside the
+container.
 
 Affected files per variable:
 
@@ -46,15 +58,22 @@ Affected files per variable:
   `.devcontainer/scripts/on-create.sh`,
   `.github/workflows/copilot-setup-steps.yml`
 * `HVE_DEVCONTAINER_IMAGE` :
-  `.devcontainer/devcontainer.json`
+  `.devcontainer/devcontainer.json`,
+  `.devcontainer/Dockerfile`
+* `NPM_CONFIG_REGISTRY`, `PIP_INDEX_URL`, and `UV_DEFAULT_INDEX` :
+  `.devcontainer/devcontainer.json`,
+  `.devcontainer/Dockerfile`
 
 ## DevContainer Configuration
 
-Set the variables on your host machine before opening the DevContainer. The
-`.devcontainer/devcontainer.json` file uses `HVE_DEVCONTAINER_IMAGE` in the
-`image` field to select the base container image, and forwards the remaining
-four variables into the container through its `remoteEnv` block. No changes to
-the DevContainer configuration are required.
+Set the variables on your host machine before building the DevContainer. The
+`.devcontainer/devcontainer.json` file maps `HVE_DEVCONTAINER_IMAGE` to
+`build.args.BASE_IMAGE`. The `.devcontainer/Dockerfile` consumes that argument
+in its `FROM` instruction.
+
+The npm, pip, and uv settings map to same-named Docker build arguments and
+environment variables. The remaining four `HVE_*` settings enter the container
+through `remoteEnv`. No repository changes are required.
 
 Export the variables in your shell profile:
 
@@ -64,10 +83,19 @@ export HVE_GITHUB_API_URL="https://github.corp.example.com/api/v3"
 export HVE_PSGALLERY_REPOSITORY="InternalGallery"
 export HVE_PSGALLERY_SOURCE_URL="https://nuget.corp.example.com/v2"
 export HVE_DEVCONTAINER_IMAGE="registry.corp.example.com/devcontainers/base:2-jammy"
+export NPM_CONFIG_REGISTRY="https://npm.corp.example.com/"
+export PIP_INDEX_URL="https://pypi.corp.example.com/simple/"
+export UV_DEFAULT_INDEX="https://pypi.corp.example.com/simple/"
 ```
 
 Add these lines to `~/.bashrc`, `~/.zshrc`, or a `.env` file sourced by your
 shell so they persist across sessions.
+
+> [!CAUTION]
+> Use repository and index URLs that do not contain credentials. Docker build
+> arguments and environment variables can persist in image metadata and the
+> resulting container. Configure authentication separately through your
+> organization's approved credential mechanism.
 
 ## GitHub Copilot Coding Agent
 
@@ -83,10 +111,14 @@ The workflow references these values as `vars.HVE_GITHUB_RELEASES_URL`,
 `vars.HVE_PSGALLERY_REPOSITORY`, and `vars.HVE_PSGALLERY_SOURCE_URL`. When a
 variable is absent, the workflow falls back to the public default.
 
+The package index and base image build variables apply to the DevContainer.
+The Copilot setup workflow does not read them.
+
 ## Security Scripts
 
-`HVE_GITHUB_API_URL` is used by the security analysis scripts under
-`scripts/security/`:
+`HVE_GITHUB_API_URL` is consumed by the shared security helper module
+`scripts/security/Modules/SecurityHelpers.psm1` and the security automation that depends
+on it:
 
 * `Test-SHAStaleness.ps1`
 * `Update-ActionSHAPinning.ps1`
@@ -105,27 +137,36 @@ code changes but are relevant for a complete enterprise artifact hub setup.
 
 ### npm
 
-HVE Core respects the standard `.npmrc` registry configuration. Set the
-registry in a project-level or user-level `.npmrc` file:
+The DevContainer reads `NPM_CONFIG_REGISTRY` from the host at build time. The
+resulting environment setting overrides the canonical public registry in the
+tracked `.npmrc` for npm commands inside the container.
 
-```text
-registry=https://npm.corp.example.com/
-```
+Keep internal registry URLs out of the repository. For npm commands outside the
+DevContainer and for Codespaces, follow
+[Install behind a restricted network](../contributing/validation#install-behind-a-restricted-network).
 
 ### pip and uv
 
-HVE Core respects the standard `UV_INDEX_URL` environment variable. Set it
-in your shell profile or add an `[[tool.uv.index]]` entry in `pyproject.toml`:
+HVE Core installs Python project dependencies with `uv sync`. Set
+`UV_DEFAULT_INDEX` to redirect those installs. `PIP_INDEX_URL` controls pip and uv's
+pip-compatible interface; it does not redirect `uv sync`. Set both variables
+when your workflows use both command families.
 
-```bash
-export UV_INDEX_URL="https://pypi.corp.example.com/simple"
-```
+Write `UV_DEFAULT_INDEX` with the exact index URL recorded in the tracked
+`uv.lock` files. uv treats `https://pypi.org/simple` and
+`https://pypi.org/simple/` as different lock inputs, so a trailing-slash
+mismatch makes `uv sync --locked` fail even when the resolved dependencies are
+identical.
+
+Keep internal indexes out of tracked `pyproject.toml` and `uv.lock` files so
+committed dependency metadata remains reproducible for public contributors.
 
 ### Container Images
 
 Set `HVE_DEVCONTAINER_IMAGE` to point at a mirrored base image in your internal
-container registry. The `.devcontainer/devcontainer.json` `image` field reads
-this variable at build time and falls back to the default MCR image when unset.
+container registry. The `.devcontainer/devcontainer.json`
+`build.args.BASE_IMAGE` setting reads this variable and passes it to the
+Dockerfile. It falls back to the default MCR image when unset.
 
 ```bash
 export HVE_DEVCONTAINER_IMAGE="registry.corp.example.com/devcontainers/base:2-jammy"
@@ -135,11 +176,15 @@ export HVE_DEVCONTAINER_IMAGE="registry.corp.example.com/devcontainers/base:2-ja
 
 After configuring the variables, confirm the setup works:
 
-1. Rebuild the DevContainer and verify that tool downloads (actionlint, gitleaks,
-   uv) complete from the configured URLs.
-2. Run `npm run lint:ps` and confirm the security scripts complete without API
-   errors.
-3. When `HVE_PSGALLERY_SOURCE_URL` is set, check that `Register-PSRepository`
-   succeeds and PowerShell modules install from the custom repository.
+1. Rebuild the DevContainer and verify that release downloads, npm setup, and
+  uv environment synchronization complete through the configured services.
+2. Run `npm config get registry` inside the container and confirm it returns the
+  internal npm registry.
+3. Run `uv sync --frozen` from a skill directory and confirm package downloads
+  use the internal Python index.
+4. Run the required security scripts and confirm GitHub API calls complete
+  without connection errors.
+5. When `HVE_PSGALLERY_SOURCE_URL` is set, check that `Register-PSRepository`
+  succeeds and PowerShell modules install from the custom repository.
 
 🤖 _Crafted with precision by ✨Copilot following brilliant human instruction, then carefully refined by our team of discerning human reviewers._

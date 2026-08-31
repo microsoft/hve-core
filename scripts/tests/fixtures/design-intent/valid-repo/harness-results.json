@@ -1,0 +1,67 @@
+{
+  "tool": "runtime_a11y",
+  "runAt": "2026-07-21T09:14:30+00:00",
+  "baseUrl": "http://localhost:4173",
+  "runs": [
+    { "probeId": "probe-keyboard-traversal", "surfaceId": "valid-surface", "state": "default" },
+    { "probeId": "probe-focus-visible", "surfaceId": "valid-surface", "state": "default" },
+    { "probeId": "probe-axe", "surfaceId": "valid-surface", "state": "default" }
+  ],
+  "results": [
+    {
+      "criterionId": "2.1.1",
+      "framework": "wcag-22",
+      "surfaceId": "valid-surface",
+      "state": "default",
+      "status": "pass",
+      "method": "runtime-automation",
+      "evidence": "probe-keyboard-traversal evaluated http://localhost:4173/checkout for 2.1.1",
+      "severity": "minor",
+      "probeId": "probe-keyboard-traversal"
+    },
+    {
+      "criterionId": "2.1.2",
+      "framework": "wcag-22",
+      "surfaceId": "valid-surface",
+      "state": "default",
+      "status": "pass",
+      "method": "runtime-automation",
+      "evidence": "probe-keyboard-traversal evaluated http://localhost:4173/checkout for 2.1.2",
+      "severity": "minor",
+      "probeId": "probe-keyboard-traversal"
+    },
+    {
+      "criterionId": "1.4.11",
+      "framework": "wcag-22",
+      "surfaceId": "valid-surface",
+      "state": "default",
+      "status": "fail",
+      "method": "runtime-automation",
+      "evidence": "probe-focus-visible evaluated http://localhost:4173/checkout for 1.4.11",
+      "severity": "minor",
+      "probeId": "probe-focus-visible"
+    },
+    {
+      "criterionId": "1.3.1",
+      "framework": "wcag-22",
+      "surfaceId": "valid-surface",
+      "state": "default",
+      "status": "pass",
+      "method": "runtime-automation",
+      "evidence": "probe-axe evaluated http://localhost:4173/checkout for 1.3.1",
+      "severity": "minor",
+      "probeId": "probe-axe"
+    },
+    {
+      "criterionId": "3.1.1",
+      "framework": "wcag-22",
+      "surfaceId": "valid-surface",
+      "state": "default",
+      "status": "candidate",
+      "method": "runtime-automation",
+      "evidence": "probe-axe evaluated http://localhost:4173/checkout for 3.1.1",
+      "severity": "minor",
+      "probeId": "probe-axe"
+    }
+  ]
+}

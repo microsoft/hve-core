@@ -2,7 +2,7 @@
 title: Forking and Extending HVE Core
 description: Fork HVE Core to create a fully customized prompt engineering framework with upstream sync and Copilot-assisted adaptation
 author: Microsoft
-ms.date: 2026-02-24
+ms.date: 2026-08-19
 ms.topic: tutorial
 keywords:
   - forking
@@ -15,13 +15,13 @@ estimated_reading_time: 10
 ## When to Fork
 
 Forking creates an independent copy of HVE Core that you fully control. Consider forking
-when in-place customization (adding instructions, creating collections, extending
+when in-place customization (adding instructions, adding package-scoped artifacts, extending
 validation) is insufficient for your needs.
 
 ### Fork when you need to
 
 * Replace core workflow agents with organization-specific versions
-* Modify the plugin generation pipeline or build system
+* Modify plugin membership, extension packaging, or the build system
 * Enforce custom governance policies that require structural changes
 * Maintain a private distribution channel with proprietary artifacts
 * Integrate with internal systems that require changes to core scripts
@@ -29,7 +29,7 @@ validation) is insufficient for your needs.
 ### Stay with in-place customization when you
 
 * Add new agents, prompts, or instructions without modifying existing ones
-* Create organization-specific collections alongside existing collections
+* Add organization-specific artifacts under your own package-scoped namespaces
 * Extend validation with custom linting scripts
 * Configure existing tools through their settings files
 
@@ -60,8 +60,13 @@ git fetch upstream
 ### Step 3: Install dependencies
 
 ```bash
-npm install
+npm ci
 ```
+
+If your network blocks public package registries, see
+[Install behind a restricted network](../contributing/validation#install-behind-a-restricted-network).
+Set the registry override in your environment rather than in a fork file, so the
+fork stays restorable for everyone who clones it.
 
 ### Step 4: Make initial configuration changes
 
@@ -75,8 +80,9 @@ Update these files to reflect your organization:
 ### Step 5: Verify the build
 
 ```bash
-npm run lint:all
-npm run plugin:generate
+npm run validate:local
+npm run plugin:sync
+npm run plugin:validate
 ```
 
 ## Seven Customization Areas
@@ -85,22 +91,21 @@ After forking, these areas provide the highest-value customization opportunities
 
 ### 1. VS Code Extensions
 
-The `extension/` directory contains packaging configuration for distributing collections
-as a VS Code extension. Modify `extension/templates/` to customize the extension manifest,
+The `extension/` directory contains packaging configuration for distributing the HVE Core component set as one VS Code extension. Modify `extension/templates/` to customize the extension manifest,
 README, and marketplace presentation. See the
 [VS Code Extension API](https://code.visualstudio.com/api) for extension packaging details.
 
 ### 2. Copilot Paths
 
 Agent and prompt files live under `.github/agents/` and `.github/prompts/`. Restructure
-these directories to match your organization's team topology or domain boundaries. Update
-collection manifests to reflect new paths.
+these directories to match your organization's team topology or domain boundaries. Run
+`npm run plugin:sync` to reflect eligible `.github` paths in root `plugin.json`.
 
 ### 3. MCP Servers
 
 If your workflows depend on MCP (Model Context Protocol) servers, configure server
 definitions in `.vscode/mcp.json` or workspace settings. Fork-level changes let you
-add organization-specific MCP servers that all collections can reference.
+add organization-specific MCP servers that all relevant agents and skills can reference.
 
 ### 4. npm Scripts
 
@@ -150,15 +155,16 @@ Conflicts typically occur in files you have customized. Common conflict points:
 
 * `package.json` (script modifications)
 * `.markdownlint.json` (rule adjustments)
-* Collection YAML files (added or removed artifacts)
+* Root `plugin.json` membership after artifacts are added or removed
 * Workflow files (permission or job changes)
 
 For each conflict, evaluate whether to keep your change, accept the upstream change, or
 combine both. Validate after resolution:
 
 ```bash
-npm run lint:all
-npm run plugin:generate
+npm run validate:local
+npm run plugin:sync
+npm run plugin:validate
 ```
 
 ### Files to sync vs. skip
@@ -169,7 +175,7 @@ npm run plugin:generate
 | Schema files in `scripts/linting/schemas/` | `README.md` (your branding)           |
 | Agent and prompt templates                 | `.github/workflows/` (your CI config) |
 | Shared instructions                        | `CONTRIBUTING.md` (your guidelines)   |
-| Documentation in `docs/`                   | Custom collection manifests           |
+| Documentation in `docs/`                   | Custom plugin membership and branding |
 
 ## Copilot-Assisted Adaptation
 
@@ -222,7 +228,7 @@ so you can identify the delta on each sync.
 When upstream deprecates an artifact, evaluate whether to:
 
 * Remove it from your fork immediately
-* Keep it with a `maturity: deprecated` tag for a transition period
+* Move it under `.github/deprecated/` for a documented transition period
 * Replace it with an organization-specific alternative
 
 ### Health checks
@@ -230,8 +236,8 @@ When upstream deprecates an artifact, evaluate whether to:
 Run the full validation suite after every sync:
 
 ```bash
-npm run lint:all
-npm run plugin:generate
+npm run validate:local
+npm run plugin:sync
 npm run plugin:validate
 ```
 
@@ -254,6 +260,7 @@ upstream change against regulatory requirements before merging.
 * [VS Code Extension API](https://code.visualstudio.com/api) for extension packaging and
   distribution
 * [docs/contributing/](../contributing/) for artifact syntax and contribution guidelines
+* [Validation Commands and CI-Owned Lanes](../contributing/validation) for local-safe defaults and separate CI lanes
 
 <!-- markdownlint-disable MD036 -->
 *🤖 Crafted with precision by ✨Copilot following brilliant human instruction,

@@ -9,7 +9,7 @@
       "command": "npx",
       "args": [
         "-y",
-        "@microsoft/workiq",
+        "@microsoft/workiq@1.0.0",
         "mcp"
       ]
     },

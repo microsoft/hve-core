@@ -1,0 +1,43 @@
+# Copyright (c) 2026 Microsoft Corporation. All rights reserved.
+# SPDX-License-Identifier: MIT
+stimuli:
+  - name: rpi-agent-class-recipe
+    prompt: |
+      Research evidence for this task is sufficient. The current lifecycle
+      routes planning through the `rpi-plan` skill, not the `rpi-planner` phase
+      subagent. Do not call tools. Return exactly `rpi-plan`.
+    tags:
+      category: agent-behavior
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: planning-route
+        config:
+          pattern: '(?i)^\s*[''"]?rpi-plan[''"]?[.!]?\s*$'
+  - name: rpi-agent-conformance-3eb62554
+    prompt: |
+      Close out this session. The existing session-state artifact is `.copilot-tracking/rpi-sessions/2026-07-22/demo-state.json`.
+    tags:
+      category: agent-behavior
+      kind: agent
+      target_artifact: ".github/agents/hve-core/rpi-agent.agent.md"
+      advisory: "true"
+      prompt_sha256: 3eb62554be5f1feed44fb65188c7863cbc0aa6dfa0c6a23c99e8f2e1babae210
+    graders:
+      - type: output-matches
+        name: terminal-state-link-row
+        config:
+          pattern: '(?ms)\|\s*\[[^\]\r\n]+\]\(\.copilot-tracking/rpi-sessions/2026-07-22/demo-state\.json\)\s*\|\s*[^|\r\n]{1,80}\s*\|\s*$'
+  - name: rpi-agent-task-recovery-class-recipe
+    prompt: |
+      Start `/rpi-implement` for issue 2607. The available saved state belongs
+      to issue 2628. Do not call tools. Return only the issue number you would
+      act on.
+    tags:
+      category: agent-behavior
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: requested-task-selected
+        config:
+          pattern: '^\s*2607\s*$'

@@ -1,4 +1,4 @@
-# Copyright (c) Microsoft Corporation.
+# Copyright (c) 2026 Microsoft Corporation. All rights reserved.
 # SPDX-License-Identifier: MIT
 """Table build and extract utilities for PowerPoint skill scripts.
 
@@ -165,6 +165,7 @@ def extract_table(shape, colors: dict | None = None) -> dict:
                 if cell_fill:
                     cell_data["fill"] = cell_fill
             except (AttributeError, TypeError):
+                # Cell exposes no fill; leave it unset.
                 pass
 
             # Merge info
