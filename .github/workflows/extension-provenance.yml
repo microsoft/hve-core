@@ -50,6 +50,8 @@ jobs:
           fi
 
       - name: Checkout code
+        # The sole caller validates a protected release-tag push before this job.
+        # poutine:ignore untrusted_checkout_exec
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           ref: ${{ github.sha }}
@@ -149,6 +151,8 @@ jobs:
           fi
 
       - name: Checkout code
+        # The sole caller validates a protected release-tag push before this job.
+        # poutine:ignore untrusted_checkout_exec
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           ref: ${{ github.sha }}

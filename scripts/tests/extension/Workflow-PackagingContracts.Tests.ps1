@@ -701,6 +701,28 @@ Describe 'One-package build and artifact naming' -Tag 'Unit' {
 # A caller-supplied ref must never select a checked-out tree; the run's own
 # commit is the only trusted selector, and the gates below are what make it so.
 Describe 'Trusted source binding' -Tag 'Unit' {
+    It 'Limits the reusable signer to one protected release-tag push caller' {
+        $callers = @(Get-ChildItem -LiteralPath $script:WorkflowDirectory -Filter '*.yml' |
+                Select-String -Pattern 'uses:\s+\./\.github/workflows/extension-provenance\.yml\s*$')
+        $callers | Should -HaveCount 1
+        Split-Path -Path $callers[0].Path -Leaf | Should -BeExactly 'release-vsix-publish.yml'
+
+        $document = Get-WorkflowDocument -Name 'release-vsix-publish.yml'
+        [string[]]@($document['on'].Keys) | Should -Be @('push')
+        [string[]]@($document['on']['push']['tags']) | Should -Be @('v*', 'prerelease-v*')
+        $identity = Get-NamedJobStep -Document $document -JobName 'validate-release' `
+            -StepName 'Validate tag event identity'
+        [string]$identity['run'] | Should -Match "EVENT_NAME.*!= 'push'"
+        [string]$identity['run'] | Should -Match "EVENT_REF_TYPE.*!= 'tag'"
+        [string]$identity['run'] | Should -Match "EVENT_REF_PROTECTED.*!= 'true'"
+    }
+
+    It 'Acknowledges Poutine only on the trusted signer checkouts' {
+        $text = Get-WorkflowText -Name 'extension-provenance.yml'
+        $pattern = '(?m)^\s+# poutine:ignore untrusted_checkout_exec\r?\n\s+uses: actions/checkout@'
+        @([regex]::Matches($text, $pattern)) | Should -HaveCount 2
+    }
+
     It 'Checks out the run commit in <Workflow> step <StepName>' -ForEach @(
         @{ Workflow = 'extension-provenance.yml'; JobName = 'package'; StepName = 'Checkout code' }
         @{ Workflow = 'extension-provenance.yml'; JobName = 'attest'; StepName = 'Checkout code' }
@@ -1598,16 +1620,16 @@ Describe 'Managed release identity postconditions' -Tag 'Unit' {
         } | ConvertTo-Json -Compress
         $result = Invoke-ManagedReleaseIdentityShellStep -Body ([string]$step['run']) -TagObject "commit $sourceSha" `
             -ReleaseJson $release -Environment @{
-                CREATED_SHA     = $sourceSha
-                CREATED_TAG     = $Tag
-                EXPECTED_CHANNEL = $Channel
-                EXPECTED_SHA    = $sourceSha
-                EXPECTED_TAG    = $Tag
-                GH_TOKEN        = 'fixture-token'
-                PATHS_RELEASED  = '["."]'
-                RELEASE_CREATED = 'true'
-                RELEASES_CREATED = 'true'
-                REPOSITORY      = 'microsoft/hve-core'
+                CREATED_SHA          = $sourceSha
+                CREATED_TAG          = $Tag
+                EXPECTED_CHANNEL     = $Channel
+                EXPECTED_SHA         = $sourceSha
+                EXPECTED_TAG         = $Tag
+                GH_TOKEN             = 'fixture-token'
+                PATHS_RELEASED       = '["."]'
+                ROOT_RELEASE_CREATED = 'true'
+                ANY_RELEASE_CREATED  = 'true'
+                REPOSITORY           = 'microsoft/hve-core'
             }
         $result.ExitCode | Should -Be 0
     }
@@ -1634,8 +1656,8 @@ Describe 'Managed release identity postconditions' -Tag 'Unit' {
                 EXPECTED_TAG    = $Tag
                 GH_TOKEN        = 'fixture-token'
                 PATHS_RELEASED  = '[]'
-                RELEASE_CREATED = ''
-                RELEASES_CREATED = 'false'
+                ROOT_RELEASE_CREATED = ''
+                ANY_RELEASE_CREATED  = 'false'
                 REPOSITORY      = 'microsoft/hve-core'
             }
         $result.ExitCode | Should -Be 0
@@ -1663,8 +1685,8 @@ Describe 'Managed release identity postconditions' -Tag 'Unit' {
                 EXPECTED_TAG    = $Tag
                 GH_TOKEN        = 'fixture-token'
                 PATHS_RELEASED  = '[]'
-                RELEASE_CREATED = ''
-                RELEASES_CREATED = 'false'
+                ROOT_RELEASE_CREATED = ''
+                ANY_RELEASE_CREATED  = 'false'
                 REPOSITORY      = 'microsoft/hve-core'
             }
         $result.ExitCode | Should -Not -Be 0
@@ -1693,8 +1715,8 @@ Describe 'Managed release identity postconditions' -Tag 'Unit' {
                 EXPECTED_TAG    = $Tag
                 GH_TOKEN        = 'fixture-token'
                 PATHS_RELEASED  = '[]'
-                RELEASE_CREATED = ''
-                RELEASES_CREATED = 'false'
+                ROOT_RELEASE_CREATED = ''
+                ANY_RELEASE_CREATED  = 'false'
                 REPOSITORY      = 'microsoft/hve-core'
             }
         $result.ExitCode | Should -Not -Be 0
@@ -1717,8 +1739,8 @@ Describe 'Managed release identity postconditions' -Tag 'Unit' {
                 EXPECTED_TAG    = 'v3.4.0'
                 GH_TOKEN        = 'fixture-token'
                 PATHS_RELEASED  = '[]'
-                RELEASE_CREATED = ''
-                RELEASES_CREATED = 'false'
+                ROOT_RELEASE_CREATED = ''
+                ANY_RELEASE_CREATED  = 'false'
                 REPOSITORY      = 'microsoft/hve-core'
             }
         $result.ExitCode | Should -Not -Be 0
@@ -1741,8 +1763,8 @@ Describe 'Managed release identity postconditions' -Tag 'Unit' {
                 EXPECTED_TAG    = 'v3.4.0'
                 GH_TOKEN        = 'fixture-token'
                 PATHS_RELEASED  = '[".","other"]'
-                RELEASE_CREATED = 'true'
-                RELEASES_CREATED = 'true'
+                ROOT_RELEASE_CREATED = 'true'
+                ANY_RELEASE_CREATED  = 'true'
                 REPOSITORY      = 'microsoft/hve-core'
             }
         $result.ExitCode | Should -Not -Be 0

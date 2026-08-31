@@ -229,16 +229,16 @@ jobs:
           EXPECTED_TAG: ${{ needs.validate-trigger.outputs.release-tag }}
           GH_TOKEN: ${{ steps.app-token.outputs.token }}
           PATHS_RELEASED: ${{ steps.release.outputs.paths_released }}
-          RELEASE_CREATED: ${{ steps.release.outputs.release_created }}
-          RELEASES_CREATED: ${{ steps.release.outputs.releases_created }}
+          ROOT_RELEASE_CREATED: ${{ steps.release.outputs.release_created }}
+          ANY_RELEASE_CREATED: ${{ steps.release.outputs.releases_created }}
           REPOSITORY: ${{ github.repository }}
         run: |
           set -euo pipefail
-          if [ -n "$RELEASE_CREATED" ] && [ "$RELEASE_CREATED" != 'true' ] && [ "$RELEASE_CREATED" != 'false' ]; then
+          if [ -n "$ROOT_RELEASE_CREATED" ] && [ "$ROOT_RELEASE_CREATED" != 'true' ] && [ "$ROOT_RELEASE_CREATED" != 'false' ]; then
             echo "::error::release-please returned invalid root release_created state"
             exit 1
           fi
-          if [ "$RELEASES_CREATED" != 'true' ] && [ "$RELEASES_CREATED" != 'false' ]; then
+          if [ "$ANY_RELEASE_CREATED" != 'true' ] && [ "$ANY_RELEASE_CREATED" != 'false' ]; then
             echo "::error::release-please returned invalid releases_created state"
             exit 1
           fi
@@ -246,15 +246,15 @@ jobs:
             echo "::error::release-please returned malformed paths_released"
             exit 1
           fi
-          if [ "$RELEASE_CREATED" = 'true' ]; then
-            if [ "$RELEASES_CREATED" != 'true' ] \
+          if [ "$ROOT_RELEASE_CREATED" = 'true' ]; then
+            if [ "$ANY_RELEASE_CREATED" != 'true' ] \
               || ! printf '%s' "$PATHS_RELEASED" | jq -e 'length == 1 and .[0] == "."' >/dev/null \
               || [ "$CREATED_TAG" != "$EXPECTED_TAG" ] \
               || [ "$CREATED_SHA" != "$EXPECTED_SHA" ]; then
               echo "::error::release-please created an unexpected managed release identity"
               exit 1
             fi
-          elif [ "$RELEASES_CREATED" != 'false' ] \
+          elif [ "$ANY_RELEASE_CREATED" != 'false' ] \
             || ! printf '%s' "$PATHS_RELEASED" | jq -e 'length == 0' >/dev/null \
             || [ -n "$CREATED_TAG" ] \
             || [ -n "$CREATED_SHA" ]; then
