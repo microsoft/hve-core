@@ -242,6 +242,25 @@ Describe 'Test-AssetDocStructure' -Tag 'Unit' {
         ($findings | Where-Object { $_.Category -eq 'Structure' -and $_.Message -match 'canonical contract order' }) | Should -Not -BeNullOrEmpty
     }
 
+    It 'Rejects a stubbed duplicate after an authored contract section' {
+        $content = $script:instrContent
+        foreach ($heading in @('## When to use it', '## Example usage')) {
+            $body = Get-AssetDocSectionBody -Content $content -Heading $heading
+            $content = $content.Replace($body, "Authored guidance for $heading.")
+        }
+        $content += "`n`n## When to use it`n`n<!-- asset-docs:stub -->`nDuplicate placeholder.`n"
+
+        Test-AssetDocAuthored -Model $script:instrModel -Content $content -RequireAuthoredContent instruction |
+            Should -BeNullOrEmpty
+
+        $findings = @(Test-AssetDocStructure -Model $script:instrModel -Content $content)
+        $duplicates = @($findings | Where-Object { $_.Category -eq 'Structure' -and $_.Message -match 'Duplicate section' })
+
+        $duplicates | Should -HaveCount 1
+        $duplicates[0].Level | Should -Be 'Error'
+        $duplicates[0].Message | Should -Match ([regex]::Escape('## When to use it'))
+    }
+
     It 'Order-checks an optional section the page includes' {
         $reordered = $script:instrContent -replace '## When to use it', '## __swap__' -replace '## Example usage', '## When to use it' -replace '## __swap__', '## Example usage'
         $findings = @(Test-AssetDocStructure -Model $script:instrModel -Content $reordered)

@@ -402,10 +402,11 @@ function Test-AssetDocStructure {
         Verifies required headings, canonical section order, and generated-region
         markers on a page.
     .DESCRIPTION
-        Reports a missing Required section, an applicable section that appears out
-        of the contract's canonical order, and a damaged generated-region marker
-        pair. Optional sections are only order-checked when the page includes
-        them, and NotApplicable sections are ignored.
+        Reports duplicate contract headings, a missing Required section, an
+        applicable section that appears out of the contract's canonical order,
+        and a damaged generated-region marker pair. Optional sections are only
+        order-checked when the page includes them. NotApplicable sections are
+        checked for duplicates but excluded from presence and order checks.
     .PARAMETER Model
         Page model from New-AssetPageModel.
     .PARAMETER Content
@@ -425,20 +426,24 @@ function Test-AssetDocStructure {
     $present = [System.Collections.Generic.List[PSCustomObject]]::new()
     foreach ($section in (Get-AssetDocSectionContract)) {
         $status = Resolve-AssetDocSectionStatus -Section $section -Kind $Model.Kind -Interactive $Model.Interactive
+        $heading = $section.Heading
+        $headingMatches = [regex]::Matches($Content, '(?m)^' + [regex]::Escape($heading) + '\s*$')
+        if ($headingMatches.Count -gt 1) {
+            $findings += New-AssetDocFinding -Level 'Error' -Category 'Structure' -Path $Model.DocRel -Message "Duplicate section '$heading' appears $($headingMatches.Count) times; contract headings must be unique."
+        }
+
         if ($status -eq 'NotApplicable') {
             continue
         }
 
-        $heading = $section.Heading
-        $match = [regex]::Match($Content, '(?m)^' + [regex]::Escape($heading) + '\s*$')
-        if (-not $match.Success) {
+        if ($headingMatches.Count -eq 0) {
             if ($status -eq 'Required') {
                 $findings += New-AssetDocFinding -Level 'Error' -Category 'Structure' -Path $Model.DocRel -Message "Missing required section '$heading'."
             }
             continue
         }
 
-        $present.Add([PSCustomObject]@{ Heading = $heading; Index = $match.Index })
+        $present.Add([PSCustomObject]@{ Heading = $heading; Index = $headingMatches[0].Index })
     }
 
     # The contract declares canonical order, so a page that carries every heading
