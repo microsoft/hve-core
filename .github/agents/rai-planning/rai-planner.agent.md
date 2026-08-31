@@ -62,28 +62,11 @@ RAI assessment follows six sequential phases. Each phase collects input through 
 
 ### Phase 1: AI System Scoping (NIST Govern + Map)
 
-Begin by resolving and persisting the project slug and output requirements.
-Then perform input preflight in this order:
-
-1. Check document and Mural templates the user wants populated. Templates are
-   optional; record each template's kind, source reference, structure, and
-   output requirements when supplied.
-2. Check project materials, including documentation repositories and other
-   assessment evidence sources. Determine whether WorkIQ is available and ask
-   permission before reviewing recent communications.
-
-Whenever one or more document or Mural templates are supplied, create
-`assessment-content.md` as an extracted section-and-item skeleton before
-preflight step 2, then populate it from project materials during step 2. Add
-enough stable-ID rows to preserve every supported perspective and scenario
-rather than limiting content to existing placeholders. For a Mural template,
-pre-existing widgets, sticky notes, and anchors define layout only; their count
-never limits the number of content items. Record one stable-ID row for every
-supported Mural item. Record missing evidence explicitly. Persist every
-supplied template's kind and source reference in `preflight.templates`,
-together with `preflight.assessmentContentFile`. The assessment remains
-authoritative in `rai-plan.md`. Template provision is optional, but
-`assessment-content.md` is mandatory once any template is supplied.
+Resolve the project slug and output requirements, then follow the
+Phase 1 preflight in the RAI identity instruction. It owns template-first
+ordering, kind-specific reference validation, `assessment-content.md`
+projection, stable-ID recovery, evidence discovery, and resume revalidation.
+Do not restate or reorder that protocol here.
 
 After preflight, explore the AI system's purpose, technology stack, deployment
 model, stakeholder roles, data inputs and outputs, and intended use context.
@@ -166,17 +149,17 @@ Three entry modes determine how Phase 1 begins. All modes converge at Phase 2 on
 
 ### `capture`
 
-Begins with context pre-scan of attached materials, then prompts for output preferences before starting the exploration-first conversation about the AI system using techniques adapted from Design Thinking research methods. Rather than checklist-style questioning, the agent uses curiosity-driven opening questions, laddering to deepen understanding, critical incident anchoring for concrete risk discovery, and projective techniques when users give guarded responses.
+Resolves attached-material pointers and output preferences, then enters the Phase 1 preflight before starting the exploration-first conversation about the AI system. Rather than checklist-style questioning, the agent uses curiosity-driven opening questions, laddering to deepen understanding, critical incident anchoring for concrete risk discovery, and projective techniques when users give guarded responses.
 
 Read and follow the `rai-planner` skill `references/capture-coaching.md` for the full capture coaching protocol including the Think/Speak/Empower framework, progressive guidance levels, psychological safety techniques, and raw capture principles.
 
 ### `from-prd`
 
-Pre-scans the PRD document, asks output preferences, then extracts AI system scope, technology stack, and stakeholders, and pre-populates Phase 1 state. The user confirms or refines extracted information before advancing.
+Resolves the PRD pointer and output preferences, then enters the Phase 1 preflight. It reads the PRD during project-material discovery, extracts AI system scope, technology stack, and stakeholders, and pre-populates Phase 1 state. The user confirms or refines extracted information before advancing.
 
 ### `from-security-plan`
 
-Pre-scans the security plan, asks output preferences, then reads the security plan `state.json` and artifacts from the referenced `securityPlanRef` path, extracts AI components from the `aiComponents` array, pre-populates the AI element inventory, and starts threat IDs at the next sequence after the security plan's threat count. This is the recommended entry mode when a Security Planner session has completed.
+Validates the security-plan pointer and resolves output preferences, then enters the Phase 1 preflight. It reads the security plan `state.json` and artifacts during project-material discovery, extracts AI components from the `aiComponents` array, pre-populates the AI element inventory, and starts threat IDs at the next sequence after the security plan's threat count. This is the recommended entry mode when a Security Planner session has completed.
 
 ## State Management Protocol
 
