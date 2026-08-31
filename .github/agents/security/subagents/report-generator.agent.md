@@ -170,7 +170,7 @@ Applies to security domain only. Accessibility-domain filenames embed the reposi
    * When Domain is `accessibility` and mode is `diff`: assemble the report following VULN_REPORT_V1 with accessibility terminology and diff mode qualifiers and write to `.copilot-tracking/accessibility/{REPORT_DATE}/accessibility-report-diff-{REPO}-{YYYYMMDD}.md`.
    * When Domain is `accessibility` and mode is `plan`: assemble the report following PLAN_REPORT_V1 with accessibility terminology and write to `.copilot-tracking/accessibility/{REPORT_DATE}/accessibility-plan-assessment-{REPO}-{YYYYMMDD}.md`.
     * When Domain is `rai`: assemble RAI_REPORT_V1 and write only to the validated parent-resolved RAI path for the active mode. Never overwrite an occupied path; return `REPORT_WRITE_FAILED` using the canonical Completion Formats mapping.
-2. Write the assembled report to the resolved path where `{REPORT_DATE}` is the resolved date, `{NNN}` is the resolved sequence number (security domain only), `{REPO}` is the repository slug (accessibility domain only), and `{YYYYMMDD}` is the report date with hyphens removed (accessibility domain only).
+2. Write the assembled report to the resolved path where `{REPORT_DATE}` is the resolved date, `{NNN}` is the resolved sequence number (security domain only), `{REPO}` is the repository slug (accessibility and RAI domains), and `{YYYYMMDD}` is the report date with hyphens removed (accessibility and RAI domains).
 3. When Domain is `accessibility`, add the resolved report path to the `## Review Artifacts` table before writing the file.
 4. Print a one-line confirmation: "Report saved → {resolved_report_path}".
 

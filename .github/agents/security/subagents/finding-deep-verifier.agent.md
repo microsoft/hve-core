@@ -34,7 +34,7 @@ Perform deep adversarial verification of all FAIL and PARTIAL findings for a sin
 
 ## Constants
 
-Skill resolution: Read the applicable security skill by name (e.g., `owasp-top-10`, `owasp-llm`, `owasp-agentic`, `owasp-mcp`, `owasp-infrastructure`, `owasp-cicd`, `secure-by-design`). Follow the skill's normative reference links to access vulnerability references.
+Skill resolution: When Domain is omitted, read the applicable security skill by name (e.g., `owasp-top-10`, `owasp-llm`, `owasp-agentic`, `owasp-mcp`, `owasp-infrastructure`, `owasp-cicd`, `secure-by-design`) and follow its normative reference links to vulnerability references. When `Domain=rai`, read the named framework material from `rai-standards` instead.
 
 Verdict values: CONFIRMED, DISPROVED, DOWNGRADED.
 
@@ -151,7 +151,7 @@ Where:
 ### Pre-requisite: Setup
 
 1. When `Domain=rai`, validate the RAI request before reading sources. Stop with the terminal error envelope when validation fails.
-2. Read the applicable security skill by name to obtain framework metadata and context.
+2. Resolve framework metadata and context from the applicable security skill when Domain is omitted, or from `rai-standards` when `Domain=rai`.
 3. Parse the findings list from the input. Every finding in the list is verified within this single invocation.
 
 ### Step 1: Read Vulnerability References
