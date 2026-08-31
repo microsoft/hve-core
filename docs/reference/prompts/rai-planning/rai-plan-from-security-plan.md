@@ -2,7 +2,13 @@
 title: Rai Plan From Security Plan
 description: Start responsible AI assessment planning from a completed Security Plan using the RAI Planner agent in from-security-plan mode (recommended)
 sidebar_position: 3
-ms.date: 2026-07-03
+author: Microsoft
+ms.date: 2026-08-12
+ms.topic: reference
+keywords:
+  - prompt
+  - rai-planning
+  - rai-plan-from-security-plan
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->

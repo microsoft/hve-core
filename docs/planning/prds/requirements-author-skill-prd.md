@@ -3,8 +3,12 @@ prd_id: "PRD-2026-Q2-REQUIREMENTS-AUTHOR"
 title: "Requirements-Author Shared Skill Product Requirements"
 description: "Product Requirements Document for the requirements-author shared skill, defining product goals, functional requirements, and acceptance criteria for the unified BRD and PRD authoring capability consumed by the project-planning package agents."
 author: "HVE Core Maintainers"
-ms.date: 2026-08-10
+ms.date: "2026-08-20"
 ms.topic: "reference"
+keywords:
+  - requirements-author
+  - product requirements
+  - skills
 status: "approved"
 version: "1.0.0"
 owners: ["microsoft/hve-core"]
@@ -207,6 +211,8 @@ NFR-008: Changes to the skill keep `.github/plugin/marketplace.json` recipe memb
 
 ```mermaid
 flowchart LR
+  accTitle: Requirements Author Skill Architecture
+  accDescr: BRD and PRD builders load shared and type-specific references, apply common taxonomy and traceability, and pair with reviewers that enforce one quality-gate contract.
     subgraph Skill[requirements-author skill]
         S[_shared references]
         B[brd templates and lifecycle]

@@ -2,7 +2,13 @@
 title: Sssc From Brd
 description: Start supply chain security planning from BRD artifacts using the SSSC Planner agent in from-brd mode
 sidebar_position: 10
-ms.date: 2026-07-03
+author: Microsoft
+ms.date: 2026-08-12
+ms.topic: reference
+keywords:
+  - prompt
+  - security
+  - sssc-from-brd
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->

@@ -1,8 +1,14 @@
 ---
 title: requirements-author
 description: "Requirements authoring guide for BRD and PRD across Discover, Define, and Govern with canonical templates and handoff contracts"
-sidebar_position: 12
-ms.date: 2026-08-11
+sidebar_position: 14
+author: Microsoft
+ms.date: 2026-08-21
+ms.topic: reference
+keywords:
+  - skill
+  - project-planning
+  - requirements-author
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->

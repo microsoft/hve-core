@@ -2,7 +2,13 @@
 title: vex
 description: OpenVEX v0.2.0 specification reference plus VEX management playbooks - Brought to you by microsoft/hve-core.
 sidebar_position: 13
-ms.date: 2026-08-06
+author: Microsoft
+ms.date: 2026-08-12
+ms.topic: reference
+keywords:
+  - skill
+  - security
+  - vex
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->

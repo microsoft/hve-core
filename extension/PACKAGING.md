@@ -2,7 +2,7 @@
 title: Extension Packaging Guide
 description: Developer guide for packaging and publishing the HVE Core VS Code extension
 author: Microsoft
-ms.date: 2026-08-10
+ms.date: 2026-08-19
 ms.topic: reference
 ---
 
@@ -74,9 +74,9 @@ PR. Merging that exact managed head selects tag-only mode and creates the draft
 odd-minor release at its merge commit.
 
 The PreRelease workflow verifies event, merge, release-please, and tag SHA
-equality plus `release/prerelease` ancestry. It packages from the immutable
-release tag, attaches and attests `plugin-release-evidence.json` plus signed
-plugin ZIP, SBOM, Sigstore, and in-toto assets, and publishes the prerelease
+equality plus `release/prerelease` ancestry. It packages one VSIX from the
+immutable release tag, attaches SPDX, Sigstore, and in-toto sidecars plus
+`dependencies.spdx.json`, verifies provenance, and publishes the prerelease
 with a release GitHub App token. That event triggers PreRelease Marketplace
 publication. Release branches, tags, and published GitHub releases retain
 release state and history; publication does not update `main`.
@@ -88,38 +88,37 @@ PR-only mode. Merging the later managed Stable PR creates the draft even-minor
 release at its merge commit.
 
 Stable performs the same identity and ancestry checks on `release/stable`,
-packages from the release tag, attaches and attests the same canonical evidence
-and signed package assets, and publishes the release with an App token. The
-resulting event triggers Stable Marketplace publication.
+packages one VSIX from the release tag, attaches the same VSIX assurance plus
+Stable OpenVEX, and publishes the release with an App token. The resulting
+event triggers Stable Marketplace publication.
 
-Release catalogs set every plugin entry to `prerelease-v<version>` or `v<version>` for its channel. Their reviewed, immutable assets remain release-gated, SBOM-covered, and attested. The ref-less main catalog represents `main`, omits `source.ref`, receives no post-release synchronization, and requires an explicit marketplace refresh and plugin update; its bytes have no release gate, SBOM, or attestation.
+Release branches and exact tags retain the repository-root plugin source from their selected snapshots. Their reviewed, immutable VSIX assets remain release-gated, SBOM-covered, and attested. The ref-less main catalog represents `main`, receives no post-release synchronization, and requires an explicit marketplace refresh and plugin update; its bytes have no release gate, SBOM, or attestation.
 
 The moving registrations are `microsoft/hve-core#release/prerelease` and
 `microsoft/hve-core#release/stable`; immutable registrations use
-`#prerelease-v<version>` and `#v<version>`. Because snapshot publication has stopped, tags and catalogs remain immutable and supported only as historical records. They are not current release or registration namespaces.
+`#prerelease-v<version>` and `#v<version>`.
 
 For ordinary promotions, PreRelease reads `release/prerelease` and returns the
 same major, minor plus two, and patch zero. Stable reads the promoted
 PreRelease version and returns its major, its minor plus one, and patch zero.
 The ordinary sequence is `3.3.101` to `3.5.0` to `3.6.0`. Current Stable state
 only rejects a non-advancing candidate. Neither channel classifies commits or
-automatically selects a patch, minor, or major release class. Matching plugin
-packages use the identical channel version. A major-line transition or Stable
+automatically selects a patch, minor, or major release class. The plugin
+manifest and VSIX use the identical channel version. A major-line transition or Stable
 patch or hotfix needs a separate explicit manifest and release-state decision.
 
 ## Packaging Pipeline Overview
 
-Extension packaging is a two-step process: **Prepare** resolves the `hve-core`
-recipe into VS Code contributions, then **Package** stages its tracked files,
-runs the pinned `vsce`, and cleans up.
+Extension packaging is a two-step process: **Prepare** maps root `plugin.json`
+into VS Code contributions, then **Package** stages its tracked files, runs the
+pinned `vsce`, and cleans up.
 
 ```mermaid
 flowchart LR
     subgraph Prepare["Step 1 · Prepare-Extension.ps1"]
-        P1[Load marketplace.json] --> P2[Select hve-core]
-        P2 --> P3[Apply Lifecycle Policy]
-        P3 --> P4[Resolve Agent Handoff Closure]
-        P4 --> P5[Write package.json]
+        P1[Load plugin.json] --> P2[Map component kinds]
+        P2 --> P3[Write package.json]
+        P3 --> P4[Write README.md]
     end
 
     subgraph Package["Step 2 · Package-Extension.ps1"]
@@ -131,27 +130,20 @@ flowchart LR
     Prepare --> Package --> VSIX[".vsix"]
 ```
 
-### Package Projection and Resolution
+### Manifest Projection
 
-The prepare step reads `.github/plugin/marketplace.json`, selects `hve-core`,
-maps its standard component paths to canonical `.github` sources, applies
-lifecycle policy, and resolves transitive agent handoffs through
-the shared marketplace projection.
+The prepare step reads root `plugin.json` and maps each repository-relative `.github/...` component to its VS Code contribution type. Hooks are omitted because VS Code has no declarative hook contribution point. Root `README.md` and `LICENSE` are plugin metadata, not extension contributions; the VSIX retains `extension/README.md` and `extension/LICENSE`.
 
 ```mermaid
 flowchart TB
-    CAT["Marketplace Catalog<br/>.github/plugin/marketplace.json"] --> PKG[Select hve-core]
-    CH[Channel: Stable / PreRelease] --> PKG
-    PKG --> RECIPE[Resolve Standard Membership]
-    RECIPE --> AG[Agents]
-    RECIPE --> PR[Commands to Prompts]
-    RECIPE --> IN[Rules to Instructions]
-    RECIPE --> SK[Skills]
-    AG --> HD[Resolve Agent Handoff Closure]
-    PR --> FINAL[Canonical Source Set]
+    MANIFEST["Plugin Manifest<br/>plugin.json"] --> AG[Agents]
+    MANIFEST --> PR[Commands to Prompts]
+    MANIFEST --> IN[Rules to Instructions]
+    MANIFEST --> SK[Skills]
+    AG --> FINAL[Canonical Source Set]
+    PR --> FINAL
     IN --> FINAL
     SK --> FINAL
-    HD --> FINAL
     FINAL --> UPD["Write VS Code Contributions<br/>chatAgents · chatPromptFiles<br/>chatInstructions · chatSkills"]
 ```
 
@@ -161,7 +153,7 @@ flowchart TB
 
 #### Step 1: Prepare the Extension
 
-First, generate the extension manifest from the marketplace recipe:
+First, prepare the extension manifest from the plugin manifest:
 
 ```bash
 # Discover components and update package.json (Stable channel)
@@ -179,11 +171,9 @@ npm run extension:prepare:prerelease
 
 The preparation script automatically:
 
-* Reads identity, display name, membership, lifecycle maturity, and documentation
-    from `.github/plugin/marketplace.json`
-* Resolves canonical source paths and transitive agent handoffs through the
-    shared marketplace helper
-* Generates the one HVE Core extension manifest
+* Reads identity, description, and membership from root `plugin.json`
+* Maps canonical source paths to VS Code contribution kinds
+* Refreshes the one HVE Core extension manifest and README
 * Writes HVE Core's VS Code contribution paths
 * Uses the existing template version without modifying its source
 
@@ -240,7 +230,7 @@ flowchart TB
 
     PREP --> STAGE["Stage git-tracked contribution files<br/>+ explicit shared resources"]
     STAGE --> CHECK[Validate Every Contribution Path]
-    CHECK --> RDM[Select Generated Package README]
+    CHECK --> RDM[Use Prepared README]
     RDM --> VSCE
 
     VSCE["vsce package --no-dependencies"] --> VSIX[".vsix output"]
@@ -263,14 +253,13 @@ publish.
 | PreRelease | `prerelease-v<version>` | `extension-provenance.yml` | `vsce --pre-release` through OIDC |
 | Stable     | `v<version>`            | `extension-provenance.yml` | Stable publication through OIDC   |
 
-The generic publisher receives the channel package matrix and the exact release
-tag, and resolves the signer to the one workflow both channels attest from. It
-downloads the matching VSIX release asset, verifies its provenance attestation,
+The generic publisher receives the exact channel tag, downloads the one matching
+VSIX release asset, verifies its provenance against `extension-provenance.yml`,
 and publishes it with `--azure-credential`.
 
 ## What Gets Included
 
-The generated manifest and tracked staging allowlist control what gets packaged.
+The prepared manifest and tracked staging allowlist control what gets packaged.
 The archive can include:
 
 * Declared `.github/agents/**` agent definitions
@@ -311,13 +300,14 @@ patch or hotfix remains a separate explicit manifest and release-state
 decision.
 
 Each managed PR synchronizes `package.json`, `package-lock.json`,
-`extension/templates/package.template.json`, `.github/plugin/marketplace.json`,
-the channel manifest, and `CHANGELOG.md` on its release branch.
+`extension/templates/package.template.json`, root `plugin.json`,
+`.github/plugin/marketplace.json`, the channel manifest, and `CHANGELOG.md` on
+its release branch.
 `Prepare-Extension.ps1` generates `extension/package.json` from the template
 before artifact discovery, and release packaging supplies the verified release
 version and release tag explicitly.
 
-Generated package files are ephemeral build artifacts (gitignored). They are created and consumed by `Prepare-Extension.ps1` and `Package-Extension.ps1` at build time.
+`Prepare-Extension.ps1` refreshes the tracked `extension/package.json` and `extension/README.md`. `Package-Extension.ps1` consumes those files and stages temporary shared resources during packaging.
 
 ### Development Builds
 
@@ -345,10 +335,10 @@ The extension supports dual-channel publishing to VS Code Marketplace with separ
 
 ### Even/Odd Versioning Policy
 
-| Minor Version     | Channel    | Example      | Active Lifecycle Labels             |
-|-------------------|------------|--------------|-------------------------------------|
-| EVEN (0, 2, 4...) | Stable     | 1.0.0, 1.2.0 | `stable`, `preview`, `experimental` |
-| ODD (1, 3, 5...)  | PreRelease | 1.1.0, 1.3.0 | `stable`, `preview`, `experimental` |
+| Minor Version     | Channel    | Example      | Component Membership |
+|-------------------|------------|--------------|----------------------|
+| EVEN (0, 2, 4...) | Stable     | 1.0.0, 1.2.0 | Complete manifest    |
+| ODD (1, 3, 5...)  | PreRelease | 1.1.0, 1.3.0 | Complete manifest    |
 
 Odd/even minor parity is repository policy aligned with VS Code Marketplace
 guidance and behavior, not a requirement of `MAJOR.MINOR.PATCH` syntax. Hosted
@@ -384,59 +374,55 @@ Use the reviewed two-PR workflow for publishing pre-releases:
     mode.
 4. Review the managed PR from
     `release-please--branches--release/prerelease`, including synchronized
-    version fields, changelog, manifest, and exact `prerelease-v<version>`
-    plugin ref.
+    version fields, changelog, plugin manifest, and marketplace version parity.
 5. Merge the managed PR. Verify the draft `prerelease-v<version>` release
     targets that merge commit and the workflow proves target-branch ancestry.
-6. Verify extension and plugin packaging use the release tag and attach signed
-    plugin ZIPs, `plugin-release-evidence.json`, SBOM, Sigstore, and in-toto
-    assets for the same release SHA.
+6. Verify extension packaging uses the release tag and attaches one VSIX, its
+    SPDX, Sigstore, and in-toto sidecars, and `dependencies.spdx.json` for the
+    same release SHA.
 7. Verify the release GitHub App token publishes the prerelease. The
     Marketplace workflow passes the validated tag and
     `.github/workflows/extension-provenance.yml` signer to the generic
     publisher for release-asset verification and OIDC publication.
 
-### Lifecycle Disclosure
+### Content Parity
 
-Stable and PreRelease package the same active component set. Lifecycle labels disclose support posture and are not channel filters:
+Stable and PreRelease package the same complete component set:
 
-| Lifecycle Label | Stable | PreRelease |
-|-----------------|--------|------------|
-| `stable`        | Yes    | Yes        |
-| `preview`       | Yes    | Yes        |
-| `experimental`  | Yes    | Yes        |
-| `deprecated`    | No     | No         |
-| `removed`       | No     | No         |
+| Content               | Stable | PreRelease |
+|-----------------------|--------|------------|
+| Plugin manifest paths | Same   | Same       |
+| Extension README      | Same   | Same       |
+| VS Code contributions | Same   | Same       |
 
-See [Marketplace Packages](../docs/contributing/ai-artifacts-common.md#marketplace-packages) for contributor guidance.
+See [Plugin Membership](../docs/contributing/ai-artifacts-common.md#plugin-membership) for contributor guidance.
 
 ## Marketplace Build
 
-`.github/plugin/marketplace.json` defines the `hve-core` identity, display name, membership, lifecycle labels, and documentation. `Get-MarketplacePackageMatrix.ps1` emits exactly that identity for either channel.
+Root `plugin.json` defines the complete extension membership. `.github/plugin/marketplace.json` provides one relative `hve-core` locator to the repository root for Copilot CLI registration. Extension preparation consumes only manifest-declared `.github` components and does not add root plugin metadata to contribution membership.
 
-Prepare and package one ID directly:
+Prepare and package directly:
 
 ```powershell
-pwsh ./scripts/extension/Prepare-Extension.ps1 -PackageId hve-core -Channel Stable
-pwsh ./scripts/extension/Package-Extension.ps1 -PackageId hve-core
+pwsh ./scripts/extension/Prepare-Extension.ps1 -Channel Stable
+pwsh ./scripts/extension/Package-Extension.ps1
 ```
 
-Preparation consumes the shared handoff-resolved projection. Packaging stages
-only git-tracked contribution paths plus explicit shared resources and invokes
-the repository-pinned `vsce`. No retired manifest reader, full-tree copy, or
-installer fallback is used.
+Preparation consumes the plugin manifest. Packaging stages only git-tracked
+contribution paths plus explicit shared resources and invokes the
+repository-pinned `vsce`.
 
 Remote release, asset, workflow, and installed-client checks in this guide are
 authorized manual actions. Local packaging and documentation checks do not
 execute or verify them.
 
-To add a distributable component, update the `hve-core` recipe and [HVE Core](../docs/plugins/hve-core.md), then run marketplace validation and both extension preparation channels.
+To add a distributable component, place it under an eligible package-scoped path, run `npm run plugin:sync`, update [HVE Core](../docs/plugins/hve-core.md), run `npm run plugin:validate`, and check both extension preparation channels.
 
 ## Notes
 
 * Selected tracked source files and shared resources are staged temporarily and removed after packaging
 * `LICENSE` and `CHANGELOG.md` are copied from root during packaging and excluded from git
-* Only declared package files and explicit shared resources are included
+* Only declared plugin files and explicit shared resources are included
 * Repo-specific instructions at the root of `.github/instructions/` are excluded from all builds
 * Non-essential files are excluded (workflows, issue templates, agent installer, etc.)
 * The root `package.json` contains development scripts for the repository

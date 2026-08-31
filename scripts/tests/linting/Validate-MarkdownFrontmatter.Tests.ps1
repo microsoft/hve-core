@@ -427,6 +427,10 @@ Describe 'Test-JsonSchemaValidation' -Tag 'Unit' {
             $frontmatter = @{
                 title       = 'Test'
                 description = 'Valid description'
+                author      = 'Microsoft'
+                'ms.date'   = '2026-08-01'
+                'ms.topic'  = 'overview'
+                keywords    = @('test')
             }
             $result = Test-JsonSchemaValidation -Frontmatter $frontmatter -SchemaContent $script:DocsSchema
             $result.IsValid | Should -BeTrue
@@ -482,7 +486,10 @@ Describe 'Test-JsonSchemaValidation' -Tag 'Unit' {
             $frontmatter = @{
                 title       = 'Test'
                 description = 'Valid'
+                author      = 'Microsoft'
+                'ms.date'   = '2026-08-01'
                 'ms.topic'  = 'overview'
+                keywords    = @('test')
             }
             $result = Test-JsonSchemaValidation -Frontmatter $frontmatter -SchemaContent $script:DocsSchema
             $result.IsValid | Should -BeTrue
@@ -1027,8 +1034,11 @@ Describe 'Test-FrontmatterValidation' -Tag 'Integration' {
 ---
 title: Test Documentation
 description: Valid documentation file
+author: Test Author
 ms.date: 2025-01-16
 ms.topic: overview
+keywords:
+  - test
 ---
 
 # Test
@@ -1073,6 +1083,11 @@ Just content without any YAML.
 ---
 title: Has Title
 description: ""
+author: Test Author
+ms.date: 2025-01-16
+ms.topic: overview
+keywords:
+  - test
 ---
 
 Content
@@ -1089,12 +1104,17 @@ Content
 
     Context 'Invalid date format fails' {
         BeforeEach {
-            # docs-frontmatter.schema.json requires BOTH title AND description
+            # Every docs required field is present so the malformed ms.date is the
+            # only violation and the exit code stays 0.
             @"
 ---
 title: Bad Date File
 description: Valid description
+author: Test Author
 ms.date: 2025/01/16
+ms.topic: overview
+keywords:
+  - test
 ---
 
 Content
@@ -1112,11 +1132,17 @@ Content
 
     Context 'Multiple file validation' {
         BeforeEach {
-            # docs-frontmatter.schema.json requires BOTH title AND description
+            # docs-frontmatter.schema.json requires title, description, author,
+            # ms.date, ms.topic, and keywords
             @"
 ---
 title: Valid File 1
 description: Valid file 1
+author: Test Author
+ms.date: 2025-01-16
+ms.topic: overview
+keywords:
+  - test
 ---
 Content
 "@ | Set-Content -Path "$script:TestRepoRoot/docs/valid1.md" -Encoding UTF8
@@ -1125,6 +1151,11 @@ Content
 ---
 title: Valid File 2
 description: Valid file 2
+author: Test Author
+ms.date: 2025-01-16
+ms.topic: overview
+keywords:
+  - test
 ---
 Content
 "@ | Set-Content -Path "$script:TestRepoRoot/docs/valid2.md" -Encoding UTF8
@@ -1145,11 +1176,17 @@ Content
 
     Context 'Result aggregation' {
         It 'Aggregates results in ValidationSummary' {
-            # docs-frontmatter.schema.json requires BOTH title AND description
+            # docs-frontmatter.schema.json requires title, description, author,
+            # ms.date, ms.topic, and keywords
             @"
 ---
 title: Test File
 description: Valid
+author: Test Author
+ms.date: 2025-01-16
+ms.topic: overview
+keywords:
+  - test
 ---
 Content
 "@ | Set-Content -Path "$script:TestRepoRoot/docs/test.md" -Encoding UTF8
@@ -1169,6 +1206,11 @@ Content
 ---
 title: Changed File
 description: A file detected as changed by git
+author: Test Author
+ms.date: 2025-01-16
+ms.topic: overview
+keywords:
+  - test
 ---
 Content
 "@ | Set-Content -Path "$script:TestRepoRoot/docs/changed.md" -Encoding UTF8

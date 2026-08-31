@@ -2,7 +2,7 @@
 title: Contributing
 description: Guidelines for contributing code, documentation, and improvements to the HVE Core project
 author: HVE Core Team
-ms.date: 2026-08-01
+ms.date: 2026-08-19
 ms.topic: guide
 keywords:
   - contributing
@@ -25,11 +25,12 @@ All types of contributions are encouraged and valued. See the [Table of Contents
 
 ## Table of Contents
 
+* [Table of Contents](#table-of-contents)
 * [Build and Validation Requirements](#build-and-validation-requirements)
   * [Required Tools](#required-tools)
   * [Validation Commands](#validation-commands)
   * [Development Environment](#development-environment)
-* [Table of Contents](#table-of-contents)
+* [Label Management](#label-management)
 * [Code of Conduct](#code-of-conduct)
 * [I Have a Question](#i-have-a-question)
 * [I Want To Contribute](#i-want-to-contribute)
@@ -61,7 +62,7 @@ All types of contributions are encouraged and valued. See the [Table of Contents
   * [Running Tests Locally](#running-tests-locally)
 * [Release Process](#release-process)
   * [How Releases Work](#how-releases-work)
-  * [Version Determination](#version-determination)
+  * [Version Allocation](#version-allocation)
   * [Commit Message Examples](#commit-message-examples)
   * [Release Validation](#release-validation)
 * [Attribution](#attribution)
@@ -98,7 +99,7 @@ npm run lint:yaml                 # Run YAML linter
 npm run lint:frontmatter          # Validate markdown frontmatter
 npm run lint:links                # Check link language paths
 npm run lint:md-links             # Check markdown links
-npm run lint:marketplace          # Validate marketplace metadata and closure
+npm run plugin:validate           # Validate plugin manifest drift, locator, and hooks
 npm run lint:version-consistency  # Check action version consistency
 npm run validate:copyright        # Validate copyright headers
 npm run validate:skills           # Validate skill directory structure
@@ -116,6 +117,19 @@ For additional validation commands specific to AI artifacts (agents, prompts, in
 ### Development Environment
 
 We strongly recommend using the provided DevContainer, which comes pre-configured with all required tools. See the [DevContainer README](./.devcontainer/README.md) for setup instructions.
+
+## Label Management
+
+Repository labels are declared in [`.github/labels.yml`](.github/labels.yml)
+and synchronized by the [Label Sync](.github/workflows/label-sync.yml) workflow
+on pushes to `main` or through `workflow_dispatch`.
+
+| Task           | How                                                                                                                                                                |
+|----------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| Add a label    | Add `name`, `color` (bare hex without `#`), and `description` to `.github/labels.yml`, then push to `main`                                                         |
+| Update a label | Edit the existing entry's `color` or `description`                                                                                                                 |
+| Rename a label | Add the old name to the new canonical entry's `aliases` array; synchronization migrates existing assignments                                                       |
+| Delete a label | Remove it in the [GitHub Labels UI](https://github.com/microsoft/hve-core/labels); removing the declaration does not delete it because synchronization is additive |
 
 ## Code of Conduct
 
@@ -372,21 +386,16 @@ This project uses [release-please](https://github.com/googleapis/release-please)
 
 ### How Releases Work
 
-1. Commit with Conventional Commits - All commits to `main` must follow conventional commit format (see [commit message instructions](./.github/instructions/hve-core/commit-message.instructions.md))
-2. Release PR Creation - After commits are pushed to `main`, release-please automatically creates or updates a "release PR"
-3. Review Release PR - Maintainers review the release PR to verify version bump and changelog accuracy
-4. Merge to Release - When the release PR is merged, a git tag and GitHub Release are automatically created
+1. Commit to `main` with Conventional Commits (see [commit message instructions](./.github/instructions/hve-core/commit-message.instructions.md)).
+2. Review and merge the `main` to `release/prerelease` promotion PR. This creates no tag.
+3. Review and merge release-please's managed PreRelease PR. Its merge creates `prerelease-v<version>`, packages and attests one VSIX, and publishes the prerelease.
+4. Review and merge the `release/prerelease` to `release/stable` promotion PR, then the managed Stable PR. The managed merge creates `v<version>`, packages and attests one VSIX, publishes Stable OpenVEX, and publishes the release.
 
-### Version Determination
+### Version Allocation
 
-Version bumps are determined by commit types:
+Ordinary release versions are branch-owned. PreRelease advances the current PreRelease minor by two and resets patch to zero. Stable advances the promoted PreRelease minor by one and resets patch to zero. This produces odd-minor PreRelease and even-minor Stable versions.
 
-| Commit Type                    | Version Bump | Example                  |
-|--------------------------------|--------------|--------------------------|
-| `feat:`                        | Minor        | 1.0.0 → 1.1.0            |
-| `fix:`                         | Patch        | 1.0.0 → 1.0.1            |
-| `docs:`, `chore:`, `refactor:` | No bump      | Appear in changelog only |
-| `feat!:` or `BREAKING CHANGE:` | Major        | 1.0.0 → 2.0.0            |
+Commit types organize changelog entries but do not select an automatic patch, minor, or major release class. A major-line transition or Stable patch or hotfix requires a separate reviewed release-state decision.
 
 ### Commit Message Examples
 

@@ -2,7 +2,13 @@
 title: BRD Builder
 description: "Business Requirements Document builder with guided Q&A and references"
 sidebar_position: 3
-ms.date: 2026-07-03
+author: Microsoft
+ms.date: 2026-08-12
+ms.topic: reference
+keywords:
+  - agent
+  - project-planning
+  - brd-builder
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->

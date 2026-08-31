@@ -3,7 +3,7 @@ title: Asset reference documentation
 description: How contributors generate, author, and validate reference pages for agents, prompts, instructions, and skills
 sidebar_position: 12
 author: Microsoft
-ms.date: 2026-07-27
+ms.date: 2026-08-27
 ms.topic: how-to
 keywords:
   - asset documentation
@@ -76,7 +76,9 @@ Use this sequence whenever you add, change, move, or remove a documentable asset
 3. Review the generated diff under `docs/reference/`. Confirm new, moved, and
    removed pages match the source change.
 4. Update the authored tail of the paired page. Remove `<!-- asset-docs:stub -->`
-   from each section after replacing its placeholder text.
+   from each section you author after replacing its placeholder text. A Required
+   section cannot retain the sentinel once enforcement is active for its kind;
+   an Optional section may remain a scaffold.
 5. Run `npm run docs:generate:check` to confirm a second generation pass reports
    no drift.
 6. Run `npm run lint:asset-docs` to validate full-repository coverage, orphaned
@@ -129,17 +131,18 @@ another model to rewrite generated regions.
 
 Local and pull request validation use the same validator at different scopes:
 
-| Context                   | Scope                | Enforcement                                                                |
-|---------------------------|----------------------|----------------------------------------------------------------------------|
-| `npm run lint:asset-docs` | Full repository      | Coverage, orphans, structure, and generated-region sync                    |
-| Pull request validation   | Changed assets/pages | The same checks, limited to paths affected relative to the configured base |
+| Context                   | Scope                | Enforcement                                                                                                                          |
+|---------------------------|----------------------|--------------------------------------------------------------------------------------------------------------------------------------|
+| `npm run lint:asset-docs` | Full repository      | Coverage, orphans, structure, generated-region sync, and Required instruction guidance                                               |
+| Pull request validation   | Changed assets/pages | The same checks, limited to paths affected relative to the configured base; Required instruction guidance is blocking for this scope |
 
 The changed-files scope prevents unrelated pre-existing findings from blocking a
 pull request. It still catches a changed source with a missing or stale page, a
 changed page with no source, and renames or deletions that leave an orphan.
 
-The generator and CI gate do not author human judgment. Stub detection starts as a
-warning and becomes blocking by asset kind through the completeness rollout.
+The generator and CI gate do not author human judgment. Required instruction
+guidance is now blocking. Stubs for other asset kinds and Optional instruction
+examples remain warnings until their applicable rollout changes enforcement.
 
 ## Follow the completeness rollout
 
@@ -147,9 +150,9 @@ Authored-content enforcement is promoted incrementally so contributors can backf
 the catalog without making unrelated pull requests repair every existing stub at
 once:
 
-1. [Instructions (#2361)](https://github.com/microsoft/hve-core/issues/2361):
-   require `When to use it`; `How to use it` is not applicable and `Example usage`
-   is optional.
+1. [Instructions (#2361)](https://github.com/microsoft/hve-core/issues/2361),
+   enforced: require `When to use it`; `How to use it` is not applicable and
+   `Example usage` is optional.
 2. [Prompts (#2362)](https://github.com/microsoft/hve-core/issues/2362): require
    `When to use it`, `How to use it`, and `Example usage`.
 3. [Skills (#2363)](https://github.com/microsoft/hve-core/issues/2363): require all
@@ -158,10 +161,10 @@ once:
    applicable authored sections, including orchestration, delegation, and handoff
    behavior where relevant.
 
-Until enforcement is enabled for a kind, the validator can report authored stubs as
-warnings. New and materially changed assets should still receive complete authored
-sections now; the rollout changes enforcement timing, not the documentation quality
-target.
+Until enforcement is enabled for each remaining kind, the validator reports its
+authored stubs as warnings. New and materially changed assets should still receive
+complete authored sections now; the rollout changes enforcement timing, not the
+documentation quality target.
 
 ## Resolve common failures
 

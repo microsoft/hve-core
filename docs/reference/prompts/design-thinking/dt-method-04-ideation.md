@@ -2,7 +2,13 @@
 title: Dt Method 04 Ideation
 description: Divergent ideation for Design Thinking Method 4b with constraint-informed solution generation
 sidebar_position: 7
-ms.date: 2026-07-03
+author: Microsoft
+ms.date: 2026-08-12
+ms.topic: reference
+keywords:
+  - prompt
+  - design-thinking
+  - dt-method-04-ideation
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->

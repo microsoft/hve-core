@@ -3,7 +3,7 @@ title: Dangerous Workflow Detection
 description: How the hybrid dangerous-workflow control combines a homegrown template-injection gate with the Poutine supply-chain scanner for GitHub Actions workflows
 sidebar_position: 6
 author: Microsoft
-ms.date: 2026-07-16
+ms.date: 2026-08-08
 ms.topic: reference
 keywords:
   - security
@@ -27,11 +27,12 @@ workflow patterns before merge. The control is a hybrid of two complementary par
 
 ## The homegrown gate (blocking)
 
-The homegrown check enforces a single, high-signal rule:
+The homegrown check enforces one rule with two detection sources, both reported under the
+same rule identifier:
 
 * `dangerous-workflow/template-injection`
-  * Triggered when attacker-controllable GitHub event values are interpolated directly into
-    `run:` or `github-script` code execution contexts.
+  * **Untrusted event values.** Triggered when attacker-controllable GitHub event values are
+    interpolated directly into `run:` or `github-script` code execution contexts.
     The narrowed scope covers free-text and ref fields such as `github.event.pull_request.title`,
     `github.event.pull_request.body`, `github.event.pull_request.head.ref`,
     `github.event.pull_request.head.label`, `github.event.issue.title`, `github.event.issue.body`,
@@ -40,8 +41,30 @@ The homegrown check enforces a single, high-signal rule:
     `github.event.head_commit.author.*`, `github.event.commits[*].message`,
     `github.event.commits[*].author.*`, `github.event.workflow_run.head_branch`,
     `github.event.workflow_run.display_title`, `github.event.pages[*].page_name`, and `github.head_ref`.
-  * Indirect derivations through `steps.*`, `needs.*`, and `env.*` are intentionally out of scope
-    to keep the rule deterministic and low-noise.
+  * **Workflow inputs.** Triggered when a workflow input is interpolated directly into the same
+    execution contexts. Input declarations are resolved from every trigger that declares them, so a
+    `workflow_dispatch` input is treated exactly like a `workflow_call` input. Inputs declared
+    `boolean` or `number` are validated by GitHub before the runner receives them and are never
+    reported; a name declared by more than one trigger is exempt only when every one of its
+    declarations is typed `boolean` or `number`. Compound expressions such as
+    `${{ inputs.max-age-days || 30 }}` are classified on every input they reference, so
+    `${{ inputs.a || inputs.b }}` is reported when either `a` or `b` is unsafe.
+  * Indirect derivations through `steps.*`, `needs.*`, `matrix.*`, and `env.*` are intentionally out
+    of scope to keep the rule deterministic and low-noise.
+
+The input rule detects deviation from the safe pattern rather than attempting to prove a value is
+tainted. The safe pattern is a step-level `env:` mapping read through native shell syntax:
+
+```yaml
+- name: Run validation
+  env:
+    INPUT_WORKING_DIRECTORY: ${{ inputs.working-directory }}
+  run: |
+    echo "$INPUT_WORKING_DIRECTORY"
+```
+
+The value then reaches the shell as data and is never parsed as command structure, so the control
+holds without filtering the value first.
 
 This gate is PowerShell-native, has no runtime dependencies, and runs offline as part of
 `npm run validate:local`.
@@ -71,6 +94,11 @@ The split is deliberate:
 * The `# poutine:ignore untrusted_checkout_exec` marker is honored by Poutine to acknowledge
   reviewed checkout exceptions. It does not affect the homegrown template-injection gate.
 * Taint-based expansion of the injection rule (indirect derivations) remains tracked as follow-on work.
+  CodeQL's `actions/code-injection` query models untrusted sources as `github.event.*` values, so it
+  does not report workflow-input interpolation either; the homegrown input rule covers that case.
+* A repository-derived value that reaches a `run:` block through a dynamic job matrix is an indirect
+  derivation and is not reported here. Project discovery paths are validated separately by
+  `scripts/security/Assert-WorkflowProjectDirectory.ps1` before they enter a matrix.
 
 ## Why this exists
 

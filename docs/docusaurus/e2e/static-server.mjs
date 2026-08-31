@@ -5,6 +5,7 @@ import path from 'node:path';
 import fs from 'node:fs';
 import express from 'express';
 import compression from 'compression';
+import rateLimit from 'express-rate-limit';
 
 // Production-grade static server for the e2e suite.
 //
@@ -18,6 +19,26 @@ const buildDir = path.resolve(currentDir, '..', 'build');
 const BASE = '/hve-core/';
 const PORT = Number(process.env.PORT ?? 3001);
 const HOST = process.env.HOST ?? '127.0.0.1';
+
+function readPositiveInteger(name, fallback) {
+  const raw = process.env[name];
+  if (raw === undefined || raw.trim() === '') {
+    return fallback;
+  }
+  const value = Number(raw);
+  if (!Number.isInteger(value) || value <= 0) {
+    console.error(`[e2e static server] ${name} must be a positive integer, received "${raw}".`);
+    process.exit(1);
+  }
+  return value;
+}
+
+// Request budget for every filesystem-backed route. The default ceiling is
+// deliberately high because all parallel Playwright workers share one loopback
+// address, so a production-sized limit would throttle the suite rather than an
+// abusive client. The overrides let a test drive a deterministic 429.
+const RATE_LIMIT_WINDOW_MS = readPositiveInteger('RATE_LIMIT_WINDOW_MS', 60_000);
+const RATE_LIMIT_MAX = readPositiveInteger('RATE_LIMIT_MAX', 100_000);
 
 // Fail loudly when the build output is missing rather than serving 404s that
 // surface downstream as opaque navigation failures. Callers must build first.
@@ -38,6 +59,17 @@ const notFoundPage = path.join(buildDir, '404.html');
 
 const app = express();
 app.use(compression());
+
+// Applied before any static or not-found handler so no filesystem read is served
+// outside the budget.
+app.use(
+  rateLimit({
+    windowMs: RATE_LIMIT_WINDOW_MS,
+    limit: RATE_LIMIT_MAX,
+    standardHeaders: 'draft-8',
+    legacyHeaders: false,
+  }),
+);
 
 // Serve the static build under the configured baseUrl. Directory requests
 // resolve to their index.html, matching Docusaurus trailing-slash routes.

@@ -291,7 +291,7 @@ def test_exchange_authorization_code_missing_access_token_raises(
 def test_exchange_authorization_code_rejects_redirect(
     mural_module: Any, recorded_http: Any, response_factory: Any, fake_now: Any
 ) -> None:
-    def _redirect_http(req: Any) -> Any:
+    def _redirect_http(req: Any, **_kwargs: Any) -> Any:
         return mural_module._NoRedirect()._block(
             req, None, 302, "Found", {"Location": "https://evil.example/steal"}
         )
@@ -307,13 +307,13 @@ def test_exchange_authorization_code_rejects_redirect(
             _now=fake_now,
         )
     assert excinfo.value.code == "TOKEN_REDIRECT"
-    assert "https://evil.example/steal" in excinfo.value.message
+    assert "evil.example" not in excinfo.value.message
 
 
 def test_refresh_access_token_rejects_redirect(
     mural_module: Any, recorded_http: Any, fake_now: Any
 ) -> None:
-    def _redirect_http(req: Any) -> Any:
+    def _redirect_http(req: Any, **_kwargs: Any) -> Any:
         return mural_module._NoRedirect()._block(
             req, None, 301, "Moved", {"Location": "https://evil.example/steal"}
         )
@@ -326,7 +326,7 @@ def test_refresh_access_token_rejects_redirect(
             _http=_redirect_http,
         )
     assert excinfo.value.code == "TOKEN_REDIRECT"
-    assert "https://evil.example/steal" in excinfo.value.message
+    assert "evil.example" not in excinfo.value.message
 
 
 def test_exchange_authorization_code_rejects_non_json_content_type(

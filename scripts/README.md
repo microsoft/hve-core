@@ -2,7 +2,7 @@
 title: Scripts
 description: PowerShell scripts for linting, validation, and security automation
 author: HVE Core Team
-ms.date: 2026-08-06
+ms.date: 2026-08-13
 ms.topic: reference
 keywords:
   - powershell
@@ -19,16 +19,16 @@ This directory contains PowerShell scripts for automating linting, validation, a
 
 ```text
 scripts/
-├── lib/             Shared artifact, marketplace, and CI helpers
+├── lib/             Shared artifact and CI helpers
 ├── agents/          Agent activation harness and baseline snapshots
 ├── evals/           Eval runner and moderation automation
-├── release/         Release version-file update helper
+├── release/         Release version normalization and assurance helpers
 ├── devcontainer/    Devcontainer lockfile and change log validation
 ├── docs/            Asset documentation generator, helper modules, and templates
 ├── extension/       VS Code extension packaging utilities
 ├── lib/             Shared utility modules
 ├── linting/         PowerShell linting and validation scripts
-├── plugins/         Copilot CLI plugin generation
+├── plugins/         Copilot CLI plugin manifest synchronization
 ├── security/        Security scanning and dependency pinning scripts
 └── tests/           Pester test organization
 ```
@@ -64,11 +64,14 @@ See [activation-harness/README.md](agents/activation-harness/README.md) for the 
 
 ## Release
 
-The `release/` directory contains the repository version-update helper used by release workflows.
+The `release/` directory contains version normalization, promotion resolution, release-asset reconciliation, and provenance verification helpers used by release workflows.
 
-| Script                    | Purpose                                                                                                                    |
-|---------------------------|----------------------------------------------------------------------------------------------------------------------------|
-| `Update-VersionFiles.ps1` | Update version strings across package.json, package-lock.json, extension manifests, plugin metadata, and release manifests |
+| Script                                | Purpose                                                    |
+|---------------------------------------|------------------------------------------------------------|
+| `Set-RepositoryVersion.ps1`           | Normalize the five repository-owned version targets        |
+| `Resolve-ReleasePromotionVersion.ps1` | Calculate the next branch-owned channel version            |
+| `Assert-ReleaseAssetSet.ps1`          | Reconcile one VSIX, sidecars, and channel singleton assets |
+| `Invoke-ProvenanceVerification.ps1`   | Verify release provenance through the GitHub CLI           |
 
 ## Linting Scripts
 
@@ -89,7 +92,7 @@ The `linting/` directory contains scripts for validating code quality and docume
 | `Invoke-PythonTests.ps1`           | Python tests via pytest                                   |
 | `Validate-AdrConsistency.ps1`      | Validate ADR structure and Govern-phase consistency rules |
 | `Validate-AssetDocs.ps1`           | Validate asset documentation coverage and sync            |
-| `Validate-HookManifests.ps1`       | Validate collection-scoped hook manifests                 |
+| `Validate-HookManifests.ps1`       | Validate package-scoped hook manifests                    |
 | `Validate-PlannerArtifacts.ps1`    | Validate AI artifact footers and planner disclaimers      |
 
 See [linting/README.md](linting/README.md) for detailed documentation.
@@ -208,12 +211,11 @@ See [security/README.md](security/README.md) for detailed documentation.
 
 ## Plugins
 
-Copilot CLI plugin generation and validation.
+Copilot CLI plugin manifest synchronization and validation.
 
-| Script                     | Purpose                                               |
-|----------------------------|-------------------------------------------------------|
-| `Generate-Plugins.ps1`     | Generate plugin packages from the marketplace catalog |
-| `Validate-Marketplace.ps1` | Validate marketplace metadata                         |
+| Script                    | Purpose                                                            |
+|---------------------------|--------------------------------------------------------------------|
+| `Sync-PluginManifest.ps1` | Write deterministic membership or check manifest and locator drift |
 
 ## Tests
 
@@ -224,7 +226,7 @@ Pester test organization matching the scripts structure.
 | `lib/`          | Shared helper tests           |
 | `devcontainer/` | Devcontainer validation tests |
 | `extension/`    | Extension packaging tests     |
-| `plugins/`      | Plugin generation tests       |
+| `plugins/`      | Plugin manifest sync tests    |
 | `linting/`      | Linting script tests          |
 | `security/`     | Security validation tests     |
 | `Fixtures/`     | Shared test fixtures          |
@@ -347,7 +349,6 @@ Key rules:
 * [Extension Packaging Documentation](extension/README.md)
 * [Library Utilities Documentation](lib/README.md)
 * [Linting Scripts Documentation](linting/README.md)
-* [Plugin Generation Documentation](plugins/README.md)
 * [Security Scripts Documentation](security/README.md)
 * [Test Organization Documentation](tests/README.md)
 * [Agent Activation Harness Documentation](agents/activation-harness/README.md)

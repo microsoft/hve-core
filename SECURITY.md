@@ -2,7 +2,7 @@
 title: Security
 description: Security vulnerability reporting procedures and Microsoft's coordinated disclosure policy
 author: Microsoft Security Response Center
-ms.date: 2026-08-10
+ms.date: 2026-08-13
 ms.topic: reference
 keywords:
   - security
@@ -88,11 +88,13 @@ HVE Core publishes cryptographically attested assets under exact channel tags:
    ```bash
    # PreRelease
    gh release download prerelease-v<version> -R microsoft/hve-core \
-     -p '*.vsix' -p '*.zip' -p 'plugin-release-evidence.json'
+     -p '*.vsix' -p '*.vsix.spdx.json' -p '*.vsix.sigstore.json' \
+     -p '*.vsix.intoto.jsonl' -p 'dependencies.spdx.json'
 
    # Stable
    gh release download v<version> -R microsoft/hve-core \
-     -p '*.vsix' -p '*.zip' -p 'plugin-release-evidence.json' \
+     -p '*.vsix' -p '*.vsix.spdx.json' -p '*.vsix.sigstore.json' \
+     -p '*.vsix.intoto.jsonl' \
      -p 'hve-core.openvex.json' -p 'dependencies.spdx.json'
    ```
 
@@ -106,14 +108,6 @@ HVE Core publishes cryptographically attested assets under exact channel tags:
    # PreRelease VSIX
    gh attestation verify hve-core-<version>.vsix -R microsoft/hve-core \
      --signer-workflow microsoft/hve-core/.github/workflows/extension-provenance.yml
-
-   # Stable plugin ZIP
-   gh attestation verify <plugin-id>.zip -R microsoft/hve-core \
-     --signer-workflow microsoft/hve-core/.github/workflows/release-stable-publish.yml
-
-   # PreRelease plugin ZIP
-   gh attestation verify <plugin-id>.zip -R microsoft/hve-core \
-     --signer-workflow microsoft/hve-core/.github/workflows/release-prerelease.yml
    ```
 
 The GitHub Release is the canonical verification surface for SLSA and Sigstore
@@ -128,9 +122,9 @@ A successful verification confirms:
 
 ### Verifying the SBOM
 
-Both channels publish per-artifact SPDX SBOMs and `dependencies.spdx.json`.
-These documents are attached as SPDX predicates over each VSIX or plugin ZIP
-subject. Because the per-artifact and dependency predicates share the SPDX 2.3
+Both channels publish a per-VSIX SPDX SBOM and `dependencies.spdx.json`.
+These documents are attached as SPDX predicates over the VSIX subject. Because
+the per-artifact and dependency predicates share the SPDX 2.3
 predicate type, one verification can match more than one attestation. For
 commands and inspection guidance, see the [SBOM Verification Guide](docs/security/sbom-verification.md).
 
@@ -152,16 +146,6 @@ gh attestation verify dependencies.spdx.json -R microsoft/hve-core \
 
 For download, verification, status interpretation, and how to apply it with Trivy or Grype, see the [VEX Verification Guide](docs/security/vex-verification.md).
 
-### Verifying Canonical Plugin Evidence
-
-Both channels publish `plugin-release-evidence.json`. Verify that subject
-against the reusable plugin package workflow:
-
-```bash
-gh attestation verify plugin-release-evidence.json -R microsoft/hve-core \
-  --signer-workflow microsoft/hve-core/.github/workflows/plugin-package.yml
-```
-
 ### Release Artifact Formats
 
 Attested primary artifacts can have these companion files:
@@ -177,16 +161,12 @@ The `.sigstore.json` bundle contains the full Sigstore verification material. Th
 
 ### Attestation Topology
 
-| Subject or predicate payload           | Channel               | Signer workflow              |
-|----------------------------------------|-----------------------|------------------------------|
-| VSIX subject                           | Stable                | `extension-provenance.yml`   |
-| VSIX subject                           | PreRelease            | `extension-provenance.yml`   |
-| Plugin ZIP subject                     | Stable                | `release-stable-publish.yml` |
-| Plugin ZIP subject                     | PreRelease            | `release-prerelease.yml`     |
-| SPDX predicates over VSIX or ZIP       | Stable and PreRelease | Same signer as the subject   |
-| Plugin release evidence subject        | Stable and PreRelease | `plugin-package.yml`         |
-| OpenVEX document subject               | Stable only           | `vex-attest.yml`             |
-| OpenVEX predicate over dependency SBOM | Stable only           | `vex-attest.yml`             |
+| Subject or predicate payload           | Channel               | Signer workflow            |
+|----------------------------------------|-----------------------|----------------------------|
+| VSIX subject                           | Stable and PreRelease | `extension-provenance.yml` |
+| SPDX predicates over the VSIX          | Stable and PreRelease | `extension-provenance.yml` |
+| OpenVEX document subject               | Stable only           | `vex-attest.yml`           |
+| OpenVEX predicate over dependency SBOM | Stable only           | `vex-attest.yml`           |
 
 Per-artifact SBOM files are predicate payloads, not independently attested
 subjects. `dependencies.spdx.json` is an SPDX predicate payload on both

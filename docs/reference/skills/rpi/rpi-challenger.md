@@ -2,7 +2,13 @@
 title: rpi-challenger
 description: "Challenge a confirmed task, decision, plan, or artifact through adaptive skeptical questions. Use when you need to expose assumptions before acting."
 sidebar_position: 1
-ms.date: 2026-07-27
+author: Microsoft
+ms.date: 2026-08-12
+ms.topic: reference
+keywords:
+  - skill
+  - rpi
+  - rpi-challenger
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->

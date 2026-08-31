@@ -2,7 +2,13 @@
 title: Git Commit
 description: "Stage all changes, generate a conventional commit message, and commit"
 sidebar_position: 5
-ms.date: 2026-08-04
+author: Microsoft
+ms.date: 2026-08-12
+ms.topic: reference
+keywords:
+  - prompt
+  - hve-core
+  - git-commit
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->

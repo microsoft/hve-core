@@ -111,7 +111,7 @@ def test_request_bytes_uses_error_context(
         side_effect=http_error_factory("boom", 500, TEST_API_URL),  # type: ignore[operator]
     )
 
-    with pytest.raises(SystemExit):
+    with pytest.raises(gitlab.GitLabAPIError) as exc_info:
         gitlab._request_bytes(
             "GET",
             f"{TEST_API_URL}/projects/1/jobs/2/trace",
@@ -119,7 +119,8 @@ def test_request_bytes_uses_error_context(
             error_context="fetching job log",
         )
 
-    assert "fetching job log" in capsys.readouterr().err
+    assert "fetching job log" in str(exc_info.value)
+    assert capsys.readouterr().err == ""
 
 
 def test_mr_update_rejects_oversized_stdin(

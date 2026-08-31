@@ -11,7 +11,7 @@ tags:
   - agents
   - security
 author: Microsoft
-ms.date: 2026-07-15
+ms.date: 2026-08-20
 ms.topic: reference
 estimated_reading_time: 7
 ---
@@ -22,6 +22,8 @@ The SSSC Planner is a phase-based conversational agent that produces supply chai
 
 ```mermaid
 flowchart TD
+  accTitle: SSSC Planner Agent Architecture
+  accDescr: The SSSC Planner reads and writes session state, generates plan files, activates research for standards questions, and follows consolidated SSSC and shared planner guidance.
   subgraph Agent
     SP["SSSC Planner"]
     RR["rpi-research"]

@@ -1,0 +1,226 @@
+project_metadata:
+  name: Generic service
+  version: 1.0
+  summary: Generic example threat-model specification for TM7 generation
+  scope: Service boundary and supporting platform operations
+  assumptions:
+    - Traffic crosses a public network
+    - The service uses an identity provider and transport encryption
+  policy_values:
+    cryptography_suites:
+      - TLS 1.3
+    identity_providers:
+      - OIDC-compatible identity provider
+    data_classification_labels:
+      - public
+      - internal
+      - restricted
+
+mode: pre-populated-comprehensive
+template_profile: sdl_core_generic
+
+representations:
+  context_diagrams:
+    - id: ctx-01
+      name: Context diagram
+      description: System boundary, external entity, and trust boundary
+      elements:
+        - id: ext-01
+          kind: external_interactor
+          name: End user
+          trust_zone_id: tz-01
+        - id: proc-01
+          kind: process
+          name: Application service
+          trust_zone_id: tz-01
+      flows:
+        - id: flow-01
+          source_ref: ext-01
+          target_ref: proc-01
+          ordinal: 1
+      trust_zone_ids:
+        - tz-01
+  functional_scenarios:
+    - id: func-01
+      name: Primary interaction
+      description: End users submit content and receive a result
+      elements:
+        - id: proc-01
+          kind: process
+          name: Request handler
+          trust_zone_id: tz-01
+        - id: ds-01
+          kind: data_store
+          name: Content store
+          trust_zone_id: tz-01
+      flows:
+        - id: flow-02
+          source_ref: proc-01
+          target_ref: ds-01
+          ordinal: 2
+      trust_zone_ids:
+        - tz-01
+  operational_views:
+    - id: op-01
+      name: Deployment and operations
+      description: Managed deployment, observability, and credential issuance
+      components:
+        - id: proc-03
+          kind: process
+          name: Deployment pipeline
+          trust_zone_id: tz-02
+      trust_zone_ids:
+        - tz-01
+        - tz-02
+
+assets:
+  - id: asset-01
+    name: User content
+    kind: data
+    description: User-submitted content stored for processing
+    sensitivity: internal
+    category: Content
+
+components:
+  - id: proc-01
+    name: Application service
+    kind: process
+    asset_ids:
+      - asset-01
+    trust_zone_id: tz-01
+    layout_role: main
+  - id: proc-02
+    name: Request handler
+    kind: process
+    asset_ids:
+      - asset-01
+    trust_zone_id: tz-01
+    layout_role: connected
+  - id: ds-01
+    name: Content store
+    kind: data_store
+    asset_ids:
+      - asset-01
+    trust_zone_id: tz-01
+    layout_role: contextual
+  - id: proc-03
+    name: Deployment pipeline
+    kind: process
+    asset_ids: []
+    trust_zone_id: tz-02
+    layout_role: contextual
+
+trust_zones:
+  - id: tz-01
+    name: Application boundary
+    description: In-scope application boundary
+  - id: tz-02
+    name: Operations boundary
+    description: Deployment and platform boundary
+    parent_trust_zone_id: tz-01
+
+data_flows:
+  - id: flow-01
+    source_ref: ext-01
+    target_ref: proc-01
+    ordinal: 1
+    label: submit request
+    transport: HTTPS
+    encryption: TLS 1.3
+    authentication: bearer token
+    authorization: scoped access token
+    data_sensitivity: internal
+    retention: 90 days
+    notes: Initial request path
+  - id: flow-02
+    source_ref: proc-01
+    target_ref: ds-01
+    ordinal: 2
+    label: persist content
+    transport: HTTPS
+    encryption: TLS 1.3
+    authentication: service identity
+    authorization: role-based access control
+    data_sensitivity: internal
+    notes: Persisted content path
+
+threats:
+  # target_ref is the semantic target. interaction_ref is its TM7 placement flow.
+  # A non-endpoint placement requires an explicit human-reviewed placement_override.
+  - id: threat-01
+    target_ref: proc-01
+    interaction_ref: flow-01
+    category: tampering
+    title: Payload tampering in transit
+    description: An attacker could alter the request payload between the client and the service
+    state: Open
+    citations:
+      stride:
+        - T
+      nist:
+        - SC-8
+      mitre: []
+    mitigation_ids:
+      - mitigation-01
+  - id: threat-02
+    target_ref: ds-01
+    interaction_ref: flow-02
+    category: information-disclosure
+    title: Sensitive content disclosure
+    description: The content store could reveal protected data to an unauthorized party
+    state: Open
+    citations:
+      stride:
+        - I
+      nist:
+        - SC-28
+      mitre:
+        - CAPEC-125
+    mitigation_ids:
+      - mitigation-02
+
+mitigations:
+  - id: mitigation-01
+    name: Request integrity validation
+    description: Validate integrity and authenticity of requests before processing
+    target_refs:
+      - proc-01
+    citations:
+      nist:
+        - SC-8
+  - id: mitigation-02
+    name: Access-control enforcement
+    description: Enforce least-privilege access and encrypt stored content
+    target_refs:
+      - ds-01
+    citations:
+      nist:
+        - SC-28
+
+abuse_cases:
+  - id: abuse-01
+    title: Replay of a previously valid request
+    description: An adversary reuses a captured request to trigger an unintended action
+    actor: External adversary
+    objective: Bypass intended controls
+    evil_user_story: As an authenticated low-privilege user, I want to manipulate the checkout flow so that I can bypass authorization
+    flow_ids:
+      - flow-01
+    mitigation_ids:
+      - mitigation-01
+
+security_test_cases:
+  - id: test-01
+    title: Negative boundary input
+    description: Submit malformed input and verify the service rejects it
+    target_refs:
+      - proc-01
+    test_type: negative-input
+    expected_result: The service rejects the malformed input and logs the event
+  - id: test-02
+    title: Authorization enforcement
+    description: Exercise a request with insufficient privileges and verify denial
+    target_refs:
+      - ds-01
+    test_type: authorization
+    expected_result: The request is denied and audited

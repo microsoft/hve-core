@@ -83,8 +83,8 @@ function Get-ExtensionCatalogFixture {
     .SYNOPSIS
     Returns the deterministic marketplace catalog used by extension tests.
     .DESCRIPTION
-    Five packages exercise stable, experimental, and removed maturity, component
-    maturity filtering, and a non-empty agent handoff closure.
+    Five packages exercise legacy catalog structure and a non-empty agent
+    handoff closure for extension tests that still consume the fixture.
     .OUTPUTS
     [System.Collections.Specialized.OrderedDictionary] Catalog object.
     #>
@@ -110,7 +110,6 @@ function Get-ExtensionCatalogFixture {
                     displayName       = 'Fixture Core'
                     maturity          = 'stable'
                     documentation     = 'docs/plugins/hve-core.md'
-                    componentMaturity = [ordered]@{ 'commands/core/build.md' = 'preview' }
                 }
             }
             [ordered]@{
@@ -123,7 +122,6 @@ function Get-ExtensionCatalogFixture {
                     displayName       = 'Fixture Core - All'
                     maturity          = 'stable'
                     documentation     = 'docs/plugins/hve-core-all.md'
-                    componentMaturity = [ordered]@{ 'skills/labs/probe' = 'experimental' }
                 }
             }
             [ordered]@{
@@ -242,8 +240,6 @@ function New-ExtensionFixtureRepo {
         '# {{DISPLAY_NAME}}'
         ''
         '> {{DESCRIPTION}}'
-        ''
-        '{{MATURITY_NOTICE}}'
         ''
         '{{BODY}}'
         ''

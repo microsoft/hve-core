@@ -338,7 +338,7 @@ stimuli:
           dest: .github/copilot-instructions.md
       skills:
         - ../../.github/skills/project-planning/experiment-design
-        - ../../.github/skills/data-science/ml-experimentation
+        - ../../.github/skills/data-science-engineering/ml-experimentation
 "@
         (Invoke-AgentBehaviorSpecCore -RepoRoot $script:TestRoot).Outcome | Should -Be 'Wrote'
 
@@ -349,7 +349,7 @@ stimuli:
         $stimulus.environment.files[0].dest | Should -Be '.github/copilot-instructions.md'
         $stimulus.environment.skills | Should -HaveCount 2
         $stimulus.environment.skills | Should -Contain '../../.github/skills/project-planning/experiment-design'
-        $stimulus.environment.skills | Should -Contain '../../.github/skills/data-science/ml-experimentation'
+        $stimulus.environment.skills | Should -Contain '../../.github/skills/data-science-engineering/ml-experimentation'
     }
 
     It 'Keeps each agent environment isolated from other agents' {

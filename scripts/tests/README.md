@@ -2,7 +2,7 @@
 title: Test Scripts
 description: Pester test runner, changed-file detection, and test directory organization
 author: HVE Core Team
-ms.date: 2026-08-01
+ms.date: 2026-08-21
 ms.topic: reference
 keywords:
   - powershell
@@ -113,7 +113,7 @@ tests/
 ├── extension/       Extension packaging tests
 ├── lib/             Library utility tests
 ├── linting/         Linting script tests
-├── plugins/         Plugin generation tests
+├── plugins/         Plugin manifest synchronization tests
 ├── security/        Security validation tests
 ├── Fixtures/        Shared test fixtures
 └── Mocks/           Shared mock data (GitMocks.psm1)
@@ -126,6 +126,58 @@ Planner-related tests are split intentionally: rule-validator suites (state
 schema, cadence ordering, startup blocks, risk-grid grammar) live under
 `linting/` alongside other linter tests, while artifact-signing and runtime
 concerns (e.g. `Sign-PlannerArtifacts.Tests.ps1`) live under `security/`.
+
+## PowerShell 7 and Pester gotchas
+
+### Read empty files as empty strings
+
+In PowerShell 7, `Get-Content -Raw` returns `$null` for a 0-byte file instead of
+an empty string. This can make string assertions fail unexpectedly. Check the
+file size and use `[System.IO.File]::ReadAllText` when a string result is
+required:
+
+```powershell
+$Bytes = if (Test-Path $Path) { (Get-Item $Path).Length } else { -1 }
+$Content = if ($Bytes -gt 0) {
+    [System.IO.File]::ReadAllText($Path)
+}
+else {
+    ''
+}
+```
+
+### Wait for redirected output to flush
+
+`Start-Process -Wait` can return before redirected output file handles finish
+flushing, especially for small payloads in a Pester runspace. Call
+`WaitForExit()`, check the output size, and use a short retry when successful
+execution should have produced output:
+
+```powershell
+$Process = Start-Process -FilePath 'pwsh' -ArgumentList $Arguments `
+    -RedirectStandardOutput $OutputPath -Wait -PassThru
+$Process.WaitForExit()
+
+$Bytes = if (Test-Path $OutputPath) { (Get-Item $OutputPath).Length } else { -1 }
+if ($Bytes -eq 0 -and $Process.ExitCode -eq 0) {
+    Start-Sleep -Milliseconds 100
+    $Bytes = (Get-Item $OutputPath).Length
+}
+```
+
+### Put diagnostic context in assertions
+
+`[System.IO.File]::AppendAllText` calls inside Pester `It` blocks can be
+silently swallowed, so in-test diagnostic files are unreliable. Add context
+with `Should -Because`; the test runner preserves it in
+`logs/pester-failures.json`:
+
+```powershell
+$Result.StdOut | Should -Match 'expected text' -Because (
+    "ExitCode=$($Result.ExitCode); StdOutBytes=$($Result.StdOutBytes); " +
+    "StdErr=[$($Result.StdErr)]"
+)
+```
 
 ## Related Documentation
 
