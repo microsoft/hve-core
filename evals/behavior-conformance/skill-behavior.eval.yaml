@@ -1529,8 +1529,8 @@ stimuli:
       `Timing:` `after-candidate-freeze` | `before-candidate-freeze`
       `Invocations:` `repeat-until-pass` | `zero-or-one`
       `Revise:` `stop-and-defer` | `correct-and-retest`
-      Return exactly three unbulleted labeled lines in that order, using only
-      the selected value after each label and no explanation.
+      Return exactly three labeled lines without bullets in that order, using
+      only the selected value after each label and no explanation.
     environment:
       skills:
         - ../../.github/skills/hve-core/hve-builder
