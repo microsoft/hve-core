@@ -34,3 +34,7 @@ Include a brief findings summary, then reproduce this caution verbatim:
 > regulatory sign‑off.
 
 Do not claim that a report was created, saved, generated, or written. Do not claim that child agents, subagents, tools, report generation, collision resolution, retries, or native orchestration ran.
+
+---
+
+🤖 Crafted with precision by ✨Copilot following brilliant human instruction, then carefully refined by our team of discerning human reviewers.
