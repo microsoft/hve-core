@@ -150,6 +150,23 @@ Stop as `blocked` before mutation when intent, stage, provider, target, actor, a
 
 Stop as `still-prepared` when finalization cannot locate the expected object on the selected shared reference. Stop as `conflict` when identity, semantic revision, predecessor revision, publication evidence, event order, or lifecycle state differs from the preview. Stop without acceptance when the record is expired, withdrawn, superseded, rejected, ambiguous, or changed after recipient review. When source state is advanced, diverged, or unknown, stop acceptance until the recipient records a continuation-baseline choice or requests clarification.
 
+## Decision Response Shape
+
+Treat a request to describe or explain behavior as read-only knowledge work. Inspect only named artifacts needed to answer, do not create or update files, and do not execute a lifecycle event. State the applicable contract, and distinguish a hypothetical valid transition from an effective event when operational inputs are absent.
+
+For a knowledge or preview response, state each applicable decision explicitly instead of relying on implication:
+
+* `Outcome`: `blocked`, `prepared`, `shared`, `still-prepared`, `conflict`, or the authorized terminal disposition
+* `Reason`: Missing input, failed gate, verified revision, or valid transition
+* `Authority`: Actor permitted to perform the action and any authority another actor lacks
+* `Source boundary`: Explicit sources used, private scans refused, unrelated work excluded, and missing-source treatment
+* `Revision effect`: Acceptance retained or invalidated, continuation-baseline choice, and receipt availability
+* `Mutation boundary`: Exact proposed mutation and the separately authorized action, or confirmation that no mutation may proceed
+* `Terminal event`: For close, exactly one authorized disposition and its predecessor state
+* `Feedback`: For close, permitted sanitized fields and excluded task content, identities, repository coordinates, URLs, evidence content, and sensitive metadata
+* `Submission status`: For close, confirmation that feedback remains local and unsubmitted
+* `Next action`: The exact authorized action that can follow
+
 ## Return Contract
 
 Return the mode, stage, provider, bounded target, actor role, semantic revision, effective lifecycle state, source comparison, continuation-baseline choice when required, outcome, proposed or effective event, finalized receipt when available, blocked or conflict reasons, and exact next authorized action. Never return private source bodies or imply that a prepared local record has been shared.

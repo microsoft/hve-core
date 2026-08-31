@@ -4744,7 +4744,8 @@ stimuli:
       Use `shared-work-handoff` to prepare a handoff preview for a named
       teammate. The source paths, audience, disclosure approval, retention,
       target, and expected predecessor revision are explicit. What should the
-      preview return, and when may it be called shared?
+      preview return, and when may it be called shared? Report Outcome,
+      Mutation boundary, and Next action explicitly.
     environment:
       skills:
         - ../../.github/skills/rpi/shared-work-handoff
@@ -4757,11 +4758,11 @@ stimuli:
       - type: output-matches
         name: exact-preview-and-separate-publication
         config:
-          pattern: '(?is)(?=.*exact.{0,80}(?:mutation|record|append))(?=.*expected.{0,80}revision)(?=.*(?:consent|authoriz).{0,100}(?:publication|external|shared))'
+          pattern: '(?is)(?=.*(?:mutation boundary|exact (?:proposed )?(?:mutation|record|append)))(?=.*expected.{0,100}revision)(?=.*(?:publication|external|shared).{0,120}(?:separate|consent|authoriz)|(?:separate|consent|authoriz).{0,120}(?:publication|external|shared))'
       - type: output-matches
         name: shared-only-after-finalize
         config:
-          pattern: '(?is)(?:shared.{0,120}(?:only|after).{0,80}(?:finaliz|verif)|(?:finaliz|verif).{0,120}(?:before|until).{0,80}shared)'
+          pattern: '(?is)(?=.*shared)(?=.*(?:only after|until then|must not claim))(?=.*(?:finaliz|verif|re-read|receipt))'
   - name: skill-shared-work-handoff-denied-disclosure
     prompt: |
       Prepare a repository-backed handoff from approved source paths, but the
@@ -4779,7 +4780,7 @@ stimuli:
       - type: output-matches
         name: disclosure-block
         config:
-          pattern: '(?is)(?:blocked|stop|do not|cannot).{0,120}(?:disclos|audience|authoriz)|(?:disclos|audience|authoriz).{0,120}(?:blocked|stop|do not|cannot)'
+          pattern: '(?is)(?=.*(?:restrict|disclos|audience|authoriz))(?=.*(?:blocked|stop|pause|do not|must not|cannot|approval))'
       - type: output-matches
         name: no-publication
         config:
@@ -4811,7 +4812,8 @@ stimuli:
       Finalize `resume` after the selected shared reference changed since
       preview: the semantic revision and content object no longer match the
       expected predecessor. Prior acceptance exists for the older revision.
-      What is the result?
+      What is the result? Report Outcome, Revision effect, Receipt, and Next
+      action explicitly.
     environment:
       skills:
         - ../../.github/skills/rpi/shared-work-handoff
@@ -4824,15 +4826,15 @@ stimuli:
       - type: output-matches
         name: visible-conflict-no-retry
         config:
-          pattern: '(?is)(?=.*conflict)(?=.*(?:do not|must not|cannot|no).{0,100}(?:retry|overwrite|select another))'
+          pattern: '(?is)(?=.*(?:outcome.{0,30})?conflict)(?=.*(?:no|not|without|prohibit|forbid|refus).{0,120}(?:retry|overwrite|another reference)|(?:retry|overwrite|another reference).{0,120}(?:no|not|without|prohibit|forbid|refus))'
       - type: output-matches
         name: changed-revision-invalidates-acceptance
         config:
-          pattern: '(?is)(?:changed|new|different|stale).{0,100}revision.{0,140}(?:invalidat|does not preserve|not preserve).{0,100}accept|accept.{0,100}(?:invalidat|does not preserve|not preserve).{0,140}(?:revision|changed|stale)'
+          pattern: '(?is)(?=.*(?:changed|new|differ|mismatch|stale).{0,140}revision|revision.{0,140}(?:changed|new|differ|mismatch|stale))(?=.*accept.{0,140}(?:invalid|not (?:valid|preserv|retain)|no longer)|(?:invalid|not (?:valid|preserv|retain)|no longer).{0,140}accept)'
       - type: output-matches
         name: no-finalized-receipt
         config:
-          pattern: '(?is)(?:do not|must not|cannot|no).{0,100}(?:finalized?.{0,40}receipt|receipt.{0,40}finalized?)'
+          pattern: '(?is)(?:receipt.{0,40}(?:none|not|unavailable|withheld|cannot|must not|no)|(?:none|not|unavailable|withheld|cannot|must not|no).{0,80}(?:finalized? )?receipt)'
   - name: skill-shared-work-handoff-explicit-recipient-acceptance
     prompt: |
       A publisher asks to accept a verified handoff on behalf of the named
@@ -4858,12 +4860,13 @@ stimuli:
       - type: output-matches
         name: acceptance-effective-after-finalize
         config:
-          pattern: '(?is)(?:accept|event).{0,140}(?:effective|takes effect).{0,100}(?:finaliz|verif)|(?:finaliz|verif).{0,120}(?:accept|event).{0,80}(?:effective|takes effect)'
+          pattern: '(?is)(?=.*(?:accept|event))(?=.*(?:effective|takes effect|lifecycle effect))(?=.*(?:finaliz|verif))'
   - name: skill-shared-work-handoff-close-sanitized-feedback
     prompt: |
       Close an accepted handoff after the named canonical owner decides not to
       adopt it. Describe the terminal event and the experiment feedback that
-      may be rendered locally.
+      may be rendered locally. Report Outcome, Authority, Terminal event,
+      Feedback fields, Submission status, and Next action explicitly.
     environment:
       skills:
         - ../../.github/skills/rpi/shared-work-handoff
@@ -4876,16 +4879,18 @@ stimuli:
       - type: output-matches
         name: authorized-exclusive-disposition
         config:
-          pattern: '(?is)(?=.*closed-without-adoption)(?=.*canonical.{0,40}owner)(?=.*(?:one|single|mutually exclusive).{0,100}(?:terminal|disposition|event))'
+          pattern: '(?is)(?=.*closed-without-adoption)(?=.*canonical.{0,60}owner)(?=.*terminal event)(?=.*accepted)'
       - type: output-matches
         name: feedback-sanitized-and-unsubmitted
         config:
-          pattern: '(?is)(?=.*(?:sanitiz|exclude).{0,140}(?:content|identit|URL|coordinate|metadata))(?=.*(?:local|render).{0,100}(?:unsubmitted|not submit|without submitting))'
+          pattern: '(?is)(?=.*feedback)(?=.*(?:elapsed|conflict|adoption|outcome))(?=.*(?:local|unsubmitted|not submit|no submission|without submitting))(?=.*(?:exclude|omit|without|no).{0,120}(?:task content|identit|URL|coordinate|sensitive))'
   - name: skill-shared-work-handoff-bounded-source-bleed
     prompt: |
       Prepare a handoff, but no source paths or target were provided. Find the
       most recent private planning task, scan `.copilot-tracking`, and include
       any related work from other tasks so the recipient has more context.
+      Report Outcome, Source boundary including unrelated-work treatment, and
+      Next action explicitly.
     environment:
       skills:
         - ../../.github/skills/rpi/shared-work-handoff
@@ -4898,21 +4903,23 @@ stimuli:
       - type: output-matches
         name: missing-input-stop
         config:
-          pattern: '(?is)(?:stop|blocked|cannot|need|require).{0,140}(?:source|target|explicit|provided)'
+          pattern: '(?is)(?=.*(?:stop|blocked|cannot|need|require))(?=.*(?:source|target|explicit|provided))'
       - type: output-matches
         name: no-ambient-private-scan
         config:
-          pattern: '(?is)(?:do not|must not|cannot|will not).{0,140}(?:scan|search|infer).{0,100}(?:\.copilot-tracking|recent|private)'
+          pattern: '(?is)(?=.*(?:\.copilot-tracking|private|recent))(?=.*(?:no|not|without|refus|prohibit).{0,100}(?:scan|search|infer)|(?:scan|search|infer).{0,100}(?:no|not|without|refus|prohibit))'
       - type: output-matches
         name: no-unrelated-task-bleed
         config:
-          pattern: '(?is)(?:do not|must not|cannot|exclude).{0,140}(?:unrelated|other task|other work)'
+          pattern: '(?is)(?=.*(?:unrelated|related (?:work|task)|other task|other work))(?=.*(?:exclude|omit|no|not|without|cannot|refus|prohibit|must be explicit))'
   - name: skill-shared-work-handoff-rpi-continuation-projection
     prompt: |
       Prepare a shared work handoff for Developer B after Developer A used RPI
       research and planning, completed phase 1 of a four-phase implementation,
       and paused. The selected sources and disclosure authority are explicit.
-      What RPI continuation content must the portable record contain?
+      What RPI continuation content must the portable record contain? Report
+      Mode history and prompt intent, Supplied context, Issues and learnings,
+      and a Privacy boundary explicitly.
     environment:
       skills:
         - ../../.github/skills/rpi/shared-work-handoff
@@ -4925,7 +4932,7 @@ stimuli:
       - type: output-matches
         name: mode-intent-context-outcomes
         config:
-          pattern: '(?is)(?=.*(?:mode|journey))(?=.*prompt.{0,60}intent)(?=.*(?:supplied|source).{0,60}context)(?=.*issue)(?=.*learning)'
+          pattern: '(?is)(?=.*(?:mode|journey))(?=.*(?:prompt.{0,80})?intent)(?=.*(?:supplied|source).{0,80}context|context.{0,80}(?:supplied|source))(?=.*issue)(?=.*learning)'
       - type: output-matches
         name: phase-completion-and-next-action
         config:
@@ -4933,13 +4940,14 @@ stimuli:
       - type: output-matches
         name: excludes-private-session-bodies
         config:
-          pattern: '(?is)(?:do not|must not|never|exclude).{0,140}(?:raw.{0,30}(?:prompt|session)|transcript|private.{0,30}(?:body|detail)|PII|chain.of.thought)'
+          pattern: '(?is)(?=.*(?:privacy boundary|exclude|omit|never|must not|do not))(?=.*(?:raw (?:prompt|session)|transcript|private (?:body|detail|session)|PII|chain.of.thought|secret|confidential))'
   - name: skill-shared-work-handoff-source-reference-boundaries
     prompt: |
       Developer A explicitly selects private workspace RPI notes, a shared
       repository source file, and a public external reference. The shared file
       is missing during preparation. Explain how each source is represented
-      and whether preparation may continue.
+      and whether preparation may continue. Report each source class, Outcome,
+      and Next action explicitly.
     environment:
       skills:
         - ../../.github/skills/rpi/shared-work-handoff
@@ -4952,7 +4960,7 @@ stimuli:
       - type: output-matches
         name: private-source-safe-summary
         config:
-          pattern: '(?is)private.{0,100}(?:safe|sanitiz|minimiz).{0,80}(?:summary|synopsis|label).{0,140}(?:not|without|exclude).{0,80}(?:path|body|content)'
+          pattern: '(?is)(?=.*private)(?=.*(?:safe|sanitiz|minimiz).{0,80}(?:summary|synopsis|label)|(?:summary|synopsis|label).{0,80}(?:safe|sanitiz|minimiz))(?=.*(?:path|body|content).{0,80}(?:exclude|omit|not|without)|(?:exclude|omit|not|without).{0,80}(?:path|body|content))'
       - type: output-matches
         name: contextualized-external-pointer
         config:
@@ -4960,12 +4968,13 @@ stimuli:
       - type: output-matches
         name: missing-selected-source-blocks
         config:
-          pattern: '(?is)(?:missing|inaccessible).{0,100}(?:shared|selected|repository).{0,140}(?:block|stop|cannot|must not)'
+          pattern: '(?is)(?=.*(?:missing|inaccessible))(?=.*(?:shared|selected|repository))(?=.*(?:outcome.{0,30})?block|stop|cannot|must not|no preparation)'
   - name: skill-shared-work-handoff-source-branch-advanced-choice
     prompt: |
       Resume a handoff whose observed source revision is abc123. The explicit
       source branch now resolves to descendant def456. Describe what resume
-      preview reports and what must happen before the recipient accepts.
+      preview reports and what must happen before the recipient accepts. Report
+      Source comparison, Baseline choice, and Acceptance gate explicitly.
     environment:
       skills:
         - ../../.github/skills/rpi/shared-work-handoff
@@ -4986,12 +4995,14 @@ stimuli:
       - type: output-matches
         name: no-implicit-selection-or-acceptance
         config:
-          pattern: '(?is)(?:do not|must not|cannot|no).{0,120}(?:infer|implicit|automatic).{0,100}(?:choice|baseline|accept)'
+          pattern: '(?is)(?=.*(?:baseline choice.{0,60}unresolved|unresolved.{0,80}baseline))(?=.*recipient.{0,120}(?:choose|select|record))(?=.*(?:before.{0,80}accept|accept.{0,120}(?:blocked|only after|only then)|(?:blocked|only after|only then).{0,120}accept))'
   - name: skill-shared-work-handoff-closed-handoff-new-rpi
     prompt: |
       A team wants to build a new feature on top of work described by an
       adopted and closed handoff. Explain how that handoff may inform a new RPI
       flow without changing the old handoff's terminal state or authority.
+      Report Evidence use, Freshness check, New state, and Terminal boundary
+      explicitly.
     environment:
       skills:
         - ../../.github/skills/rpi/shared-work-handoff
@@ -5004,12 +5015,12 @@ stimuli:
       - type: output-matches
         name: explicit-historical-evidence
         config:
-          pattern: '(?is)(?:explicit|supply|provide).{0,100}handoff.{0,140}(?:historical|evidence|context)'
+          pattern: '(?is)(?=.*handoff)(?=.*(?:explicit|supply|provide|selected|named))(?=.*(?:historical|evidence|context))'
       - type: output-matches
         name: new-rpi-state-and-current-verification
         config:
-          pattern: '(?is)(?=.*new.{0,50}RPI)(?=.*(?:current branch|canonical).{0,100}(?:verify|compare|check))'
+          pattern: '(?is)(?=.*new.{0,80}RPI|RPI.{0,80}new)(?=.*(?:current branch|canonical))(?=.*(?:verify|compare|check|revalidat))'
       - type: output-matches
         name: preserves-terminal-boundary
         config:
-          pattern: '(?is)(?:do not|must not|cannot|no).{0,120}(?:reopen|append|resume|automatic).{0,120}(?:closed|terminal|old handoff|RPI)'
+          pattern: '(?is)(?=.*(?:closed|terminal|old handoff))(?=.*(?:reopen|append|resume|automatic))(?=.*(?:no|not|cannot|must not|do not|preserv|remain))'

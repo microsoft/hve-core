@@ -231,5 +231,6 @@ Evaluate the practice against a simpler branch-and-conversation baseline. Track 
 ---
 
 <!-- markdownlint-disable MD036 -->
-*Crafted with GitHub Copilot assistance and reviewed by the HVE Core team.*
+*🤖 Crafted with precision by ✨Copilot following brilliant human instruction,
+then carefully refined by our team of discerning human reviewers.*
 <!-- markdownlint-enable MD036 -->
