@@ -144,6 +144,20 @@ function Test-ModulePresent {
     return [bool]$installed
 }
 
+function Register-DefaultPSGallery {
+    <#
+    .SYNOPSIS
+        Registers PowerShellGet's default PSGallery repository.
+    .OUTPUTS
+        [void]
+    #>
+    [CmdletBinding()]
+    [OutputType([void])]
+    param()
+
+    Register-PSRepository -Default -ErrorAction Stop
+}
+
 function Initialize-Repository {
     <#
     .SYNOPSIS
@@ -168,10 +182,7 @@ function Initialize-Repository {
         return
     }
 
-    Register-PSRepository -Name $Name `
-        -SourceLocation 'https://www.powershellgallery.com/api/v2' `
-        -InstallationPolicy Trusted `
-        -ErrorAction Stop
+    Register-DefaultPSGallery
     Write-Host "📦 Registered repository $Name" -ForegroundColor DarkCyan
 }
 

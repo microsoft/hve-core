@@ -170,6 +170,18 @@ Describe 'Test-ModulePresent' -Tag 'Unit' {
     }
 }
 
+Describe 'Register-DefaultPSGallery' -Tag 'Unit' {
+    It 'Uses only the PowerShellGet default parameter set' {
+        $command = (Get-Command Register-DefaultPSGallery).ScriptBlock.Ast.Find({
+                param($Ast)
+                $Ast -is [System.Management.Automation.Language.CommandAst] -and
+                $Ast.GetCommandName() -eq 'Register-PSRepository'
+            }, $true)
+
+        $command.Extent.Text | Should -BeExactly 'Register-PSRepository -Default -ErrorAction Stop'
+    }
+}
+
 Describe 'Initialize-Repository' -Tag 'Unit' {
     Context 'when the repository is already registered' {
         BeforeAll {
@@ -189,17 +201,13 @@ Describe 'Initialize-Repository' -Tag 'Unit' {
     Context 'when PSGallery is missing' {
         BeforeAll {
             Mock Get-PSRepository { $null }
-            Mock Register-PSRepository {}
+            Mock Register-DefaultPSGallery {}
         }
 
-        It 'Registers PSGallery with the expected source and trust policy' {
+        It 'Registers PSGallery with the default parameter set' {
             Initialize-Repository -Name 'PSGallery'
 
-            Should -Invoke Register-PSRepository -Times 1 -Exactly -ParameterFilter {
-                $Name -eq 'PSGallery' -and
-                $SourceLocation -eq 'https://www.powershellgallery.com/api/v2' -and
-                $InstallationPolicy -eq 'Trusted'
-            }
+            Should -Invoke Register-DefaultPSGallery -Times 1 -Exactly
         }
     }
 
