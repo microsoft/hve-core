@@ -425,6 +425,72 @@ stimuli:
     }
 }
 
+Describe 'RAI Reviewer evaluation ownership' -Tag 'Unit' {
+  BeforeAll {
+    $script:RaiReviewerPartialPath = Join-Path $PSScriptRoot '../../../evals/agent-behavior/stimuli/rai-reviewer.yml'
+    $script:RaiReviewerPartial = ConvertFrom-Yaml -Yaml ([System.IO.File]::ReadAllText($script:RaiReviewerPartialPath))
+    $script:RaiReviewerSmoke = $script:RaiReviewerPartial['stimuli'] |
+      Where-Object { $_['name'] -eq 'rai-reviewer-class-recipe' }
+    $script:RaiReviewerContract = $script:RaiReviewerPartial['stimuli'] |
+      Where-Object { $_['name'] -eq 'rai-reviewer-audit-completion-contract' }
+    $pathGrader = $script:RaiReviewerContract['graders'] |
+      Where-Object { $_['name'] -eq 'rai-report-root-and-path' }
+    $script:RaiReviewerPathPattern = [string]$pathGrader['config']['pattern']
+  }
+
+  It 'Keeps the class recipe limited to prompt-visible smoke graders' {
+    $graderNames = @($script:RaiReviewerSmoke['graders'] | ForEach-Object { [string]$_['name'] })
+
+    $graderNames | Should -HaveCount 4
+    $graderNames | Should -Contain 'findings-table-present'
+    $graderNames | Should -Contain 'severity-vocab'
+    $graderNames | Should -Contain 'rai-framework-language'
+    $graderNames | Should -Contain 'no-source-edit'
+    $graderNames | Should -Not -Contain 'rai-report-root-and-path'
+    $graderNames | Should -Not -Contain 'caution-or-qualified-review'
+    $graderNames | Should -Not -Contain 'pending-human-accountability'
+  }
+
+  It 'Stages the RAI contract dependencies in one isolated response scenario' {
+    $files = @($script:RaiReviewerContract['environment']['files'])
+    $skills = @($script:RaiReviewerContract['environment']['skills'])
+    $graderNames = @($script:RaiReviewerContract['graders'] | ForEach-Object { [string]$_['name'] })
+
+    $files | Should -HaveCount 2
+    $files[0]['src'] | Should -Be '../../.github/agents/rai-planning/rai-reviewer.agent.md'
+    $files[0]['dest'] | Should -Be '.github/copilot-instructions.md'
+    $files[1]['src'] | Should -Be '../../.github/instructions/shared/disclaimer-language.instructions.md'
+    $skills | Should -Contain '../../.github/skills/rai/rai-standards'
+    $skills | Should -Contain '../../.github/skills/security/security-reviewer-formats'
+    $graderNames | Should -Contain 'rai-report-format'
+    $graderNames | Should -Contain 'generation-complete'
+    $graderNames | Should -Contain 'rai-report-root-and-path'
+    $graderNames | Should -Contain 'caution-or-qualified-review'
+    $graderNames | Should -Contain 'pending-human-accountability'
+    $graderNames | Should -Contain 'no-native-execution-claim'
+  }
+
+  It 'Accepts valid audit report path variant <Name>' -ForEach @(
+    @{ Name = 'forward slash'; Path = '.copilot-tracking/rai-reviews/2026-08-30/rai-report-customer-chatbot-20260830.md' }
+    @{ Name = 'backslash'; Path = '.copilot-tracking\rai-reviews\2026-08-30\rai-report-customer-chatbot-20260830.md' }
+    @{ Name = 'flattened'; Path = '.copilot-tracking-rai-reviews-2026-08-30-rai-report-customer-chatbot-20260830.md' }
+    @{ Name = 'collision suffix'; Path = '.copilot-tracking/rai-reviews/2026-08-30/rai-report-customer-chatbot-20260830-2.md' }
+    @{ Name = 'multi-digit collision suffix'; Path = '.copilot-tracking/rai-reviews/2026-08-30/rai-report-customer-chatbot-20260830-12.md' }
+  ) {
+    $Path | Should -Match $script:RaiReviewerPathPattern
+  }
+
+  It 'Rejects invalid audit report path variant <Name>' -ForEach @(
+    @{ Name = 'unrelated root'; Path = '.copilot-tracking/security/2026-08-30/rai-report-customer-chatbot-20260830.md' }
+    @{ Name = 'malformed date'; Path = '.copilot-tracking/rai-reviews/20260830/rai-report-customer-chatbot-20260830.md' }
+    @{ Name = 'wrong report mode'; Path = '.copilot-tracking/rai-reviews/2026-08-30/rai-plan-assessment-customer-chatbot-20260830.md' }
+    @{ Name = 'collision suffix one'; Path = '.copilot-tracking/rai-reviews/2026-08-30/rai-report-customer-chatbot-20260830-1.md' }
+    @{ Name = 'missing markdown extension'; Path = '.copilot-tracking/rai-reviews/2026-08-30/rai-report-customer-chatbot-20260830' }
+  ) {
+    $Path | Should -Not -Match $script:RaiReviewerPathPattern
+  }
+}
+
 Describe 'experiment-designer conditional-ML semantic graders' -Tag 'Unit' {
     BeforeAll {
         $script:RepoRoot = (Resolve-Path (Join-Path $PSScriptRoot '../../..')).Path

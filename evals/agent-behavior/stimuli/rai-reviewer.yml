@@ -16,23 +16,61 @@ stimuli:
         config:
           pattern: '(?i)(critical|high|medium|low|info|severity|warning)'
       - type: output-matches
-        name: rai-report-root-and-path
-        config:
-          pattern: '(?i)\.copilot-tracking/rai-reviews/\d{4}-\d{2}-\d{2}/rai-report-[a-z0-9-]+-\d{8}\.md'
-      - type: output-matches
         name: rai-framework-language
         config:
           pattern: '(?i)(nist ai rmf|ai stride|eu ai act|responsible ai)'
       - type: output-matches
-        name: caution-or-qualified-review
-        config:
-          pattern: '(?i)(assistive tool|qualified human review|independently reviewed|does not constitute)'
-      - type: output-matches
-        name: pending-human-accountability
-        config:
-          pattern: '(?i)(human acceptance.{0,20}pending|pending.{0,20}human (review|acceptance))'
-      - type: output-matches
         name: no-source-edit
         config:
           pattern: '(?i)(created|wrote|modified|edited|patched|added)\s+\S{0,40}(\.cs|\.py|\.ts|\.js|package\.json)'
+          negate: true
+
+  - name: rai-reviewer-audit-completion-contract
+    prompt: |
+      Use the staged RAI Reviewer instructions and RAI Planning caution source
+      to return a dry-run audit completion response for repository
+      `customer-chatbot` dated 2026-08-30. Project a successful
+      `RAI_REPORT_V1` result at the unoccupied path
+      `.copilot-tracking/rai-reviews/2026-08-30/rai-report-customer-chatbot-20260830.md`
+      with generation `complete` and human acceptance `PENDING`. Include the
+      canonical RAI caution and a brief findings summary. Do not invoke child
+      agents, write files, or claim that native orchestration ran. This
+      scenario tests staged response-contract semantics only.
+    environment:
+      files:
+        - src: ../../.github/agents/rai-planning/rai-reviewer.agent.md
+          dest: .github/copilot-instructions.md
+        - src: ../../.github/instructions/shared/disclaimer-language.instructions.md
+          dest: .github/instructions/shared/disclaimer-language.instructions.md
+      skills:
+        - ../../.github/skills/rai/rai-standards
+        - ../../.github/skills/security/security-reviewer-formats
+    tags:
+      category: agent-behavior
+      scenario: staged-response-contract
+    graders:
+      - type: output-matches
+        name: rai-report-format
+        config:
+          pattern: '(?i)\bRAI_REPORT_V1\b'
+      - type: output-matches
+        name: generation-complete
+        config:
+          pattern: '(?is)(generation.{0,30}complete|complete.{0,30}generation)'
+      - type: output-matches
+        name: rai-report-root-and-path
+        config:
+          pattern: '(?i)\.copilot-tracking[-/\\]rai-reviews[-/\\]\d{4}-\d{2}-\d{2}[-/\\]rai-report-[a-z0-9-]+-\d{8}(?:-(?:[2-9]|[1-9]\d+))?\.md'
+      - type: output-matches
+        name: caution-or-qualified-review
+        config:
+          pattern: '(?is)(assistive tool only).{0,700}(independently reviewed|qualified human reviewers).{0,700}(does not constitute|regulatory sign.?off)'
+      - type: output-matches
+        name: pending-human-accountability
+        config:
+          pattern: '(?is)(human acceptance.{0,30}pending|pending.{0,30}human acceptance)'
+      - type: output-matches
+        name: no-native-execution-claim
+        config:
+          pattern: '(?is)(wrote|created|saved|generated)\s+(the\s+)?(?:report|file)|(?:child|sub)[- ]?agents?\s+(?:ran|executed|completed|were invoked)'
           negate: true
