@@ -106,6 +106,8 @@ param(
     [string]$OutputPath = 'logs/asset-docs-validation-results.json'
 )
 
+$ErrorActionPreference = 'Stop'
+
 $normalizedAuthoredKinds = [System.Collections.Generic.List[string]]::new()
 foreach ($value in $RequireAuthoredContent) {
     foreach ($kind in ($value -split ',')) {
@@ -116,8 +118,6 @@ foreach ($value in $RequireAuthoredContent) {
     }
 }
 $RequireAuthoredContent = $normalizedAuthoredKinds.ToArray()
-
-$ErrorActionPreference = 'Stop'
 
 # Import the modules this script calls directly, highest-level first and
 # lowest-level last, so each -Force re-import re-scopes shared dependencies in

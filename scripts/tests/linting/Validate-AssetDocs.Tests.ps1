@@ -413,6 +413,22 @@ Describe 'Test-AssetDocAuthored' -Tag 'Unit' {
 }
 
 Describe 'Invoke-AssetDocsValidation' -Tag 'Unit' {
+    It 'Sets the terminating error policy before top-level initialization' {
+        $tokens = $null
+        $parseErrors = $null
+        $ast = [System.Management.Automation.Language.Parser]::ParseFile(
+            $script:ValidatorPath,
+            [ref]$tokens,
+            [ref]$parseErrors
+        )
+
+        $parseErrors | Should -BeNullOrEmpty
+        $firstStatement = $ast.EndBlock.Statements[0]
+        $firstStatement | Should -BeOfType ([System.Management.Automation.Language.AssignmentStatementAst])
+        $firstStatement.Left.VariablePath.UserPath | Should -Be 'ErrorActionPreference'
+        $firstStatement.Right.Expression.Value | Should -Be 'Stop'
+    }
+
     It 'Exposes the public validation parameters' {
         $command = Get-Command $script:ValidatorPath
 
