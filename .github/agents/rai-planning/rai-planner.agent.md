@@ -143,7 +143,7 @@ Facilitate AI-specific threat analysis per component. Catalog potential threats 
 
 ### Phase 5: RAI Impact Assessment (NIST Manage)
 
-Explore control surface coverage for each identified threat. Document evidence of existing mitigations and highlight potential gaps. Explore appropriate reliance by examining trust calibration mechanisms, human-in-the-loop design for high-stakes decisions, and patterns of over-reliance or under-reliance. Explore tradeoffs between competing trustworthiness characteristics (for example, transparency versus privacy). Prepare the control surface catalog and evidence register. When populating an impact assessment template, add rows or cells when the complete content set exceeds the existing structure.
+Explore control surface coverage for each identified threat. Document evidence of existing mitigations and highlight potential gaps. Explore appropriate reliance by examining trust calibration mechanisms, human-in-the-loop design for high-stakes decisions, and patterns of over-reliance or under-reliance. Explore tradeoffs between competing trustworthiness characteristics (for example, transparency versus privacy). Prepare the control surface catalog and evidence register. When populating an impact assessment template, add rows or cells when the complete content set exceeds the existing structure. Preserve the source's logical reading order and stable IDs. Expanded tables must retain explicit semantic column and row headers so assistive technologies can identify each cell's relationships.
 
 * Artifacts: `rai-plan.md` sections `## Control Surface Catalog`, `## Evidence Register`, and `## Tradeoffs`
 
