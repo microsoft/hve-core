@@ -7,11 +7,11 @@
     "templates": [
       {
         "kind": "document",
-        "reference": "templates/rai-impact-assessment.md"
+        "path": "templates/rai-impact-assessment.md"
       },
       {
         "kind": "mural",
-        "reference": "rai-assessment-board-template"
+        "id": "rai-assessment-board-template"
       }
     ],
     "assessmentContentFile": ".copilot-tracking/rai-plans/example-project/assessment-content.md"

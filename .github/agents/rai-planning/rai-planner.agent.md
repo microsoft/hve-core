@@ -337,9 +337,13 @@ Five-step resume protocol when returning to an existing RAI assessment:
 1. Read `state.json` from the project slug directory.
 2. If `disclaimerShownAt` is `null`, display the Startup Announcement verbatim and set `disclaimerShownAt` to the current ISO 8601 timestamp.
 3. Display current phase progress and checklist status.
-4. Read persisted preflight state. When `templates` is non-empty, verify the
-   required `assessmentContentFile`; if it is missing or unusable, pause phase
-   work and recreate it from every recorded template and the authoritative
+4. Read persisted preflight state. Revalidate every template by kind before
+   dereferencing it. For documents, normalize the stored workspace-relative
+   path, resolve it against the workspace root, and reject it when the result
+   escapes the workspace. For Mural, accept only the stored opaque ID and keep
+   authentication in the tool boundary. When `templates` is non-empty, verify
+   the required `assessmentContentFile`; if it is missing or unusable, pause
+   phase work and recreate it from every validated template and the authoritative
    `rai-plan.md`, preserving previously issued stable IDs. Stop and ask the
    user only if recreation fails. When `templates` is empty, do not require the
    file. Summarize what was completed and what remains.

@@ -59,19 +59,40 @@
         "templates": {
           "type": "array",
           "items": {
-            "type": "object",
-            "required": ["kind", "reference"],
-            "properties": {
-              "kind": {
-                "type": "string",
-                "enum": ["document", "mural"]
+            "oneOf": [
+              {
+                "type": "object",
+                "required": ["kind", "path"],
+                "properties": {
+                  "kind": {
+                    "const": "document"
+                  },
+                  "path": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 1024,
+                    "pattern": "^(?!/)(?!.*(?:^|/)\\.\\.(?:/|$))(?!.*[\\\\?#:])[^/\\r\\n]+(?:/[^/\\r\\n]+)*$",
+                    "description": "Workspace-relative document path; runtime containment validation is also required"
+                  }
+                },
+                "additionalProperties": false
               },
-              "reference": {
-                "type": "string",
-                "minLength": 1
+              {
+                "type": "object",
+                "required": ["kind", "id"],
+                "properties": {
+                  "kind": {
+                    "const": "mural"
+                  },
+                  "id": {
+                    "type": "string",
+                    "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]{0,127}$",
+                    "description": "Opaque Mural identifier; authentication remains outside persisted state"
+                  }
+                },
+                "additionalProperties": false
               }
-            },
-            "additionalProperties": false
+            ]
           },
           "uniqueItems": true,
           "description": "Every supplied document or Mural template and its recoverable source reference"
@@ -260,7 +281,7 @@
         "properties": {
           "securityPlanRef": {
             "type": "string",
-            "minLength": 1
+            "pattern": "^\\.copilot-tracking/security-plans/[a-z0-9]+(?:-[a-z0-9]+)*/(?:security-plan\\.md|state\\.json)$"
           }
         }
       },
