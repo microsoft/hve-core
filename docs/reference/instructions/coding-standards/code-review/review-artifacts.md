@@ -3,7 +3,7 @@ title: Coding Standards/Code Review/Review Artifacts
 description: "Code review artifact persistence: folder structure, metadata schema, verdict normalization, and writing rules"
 sidebar_position: 2
 author: Microsoft
-ms.date: 2026-08-12
+ms.date: 2026-08-27
 ms.topic: reference
 keywords:
   - instruction
@@ -28,8 +28,10 @@ Code review artifact persistence: folder structure, metadata schema, verdict nor
 
 ## When to use it
 
-<!-- asset-docs:stub -->
-Describe the situations where this asset is the right choice, and when to reach for a different asset instead.
+Apply these rules when a code-review workflow writes durable review evidence
+under `.copilot-tracking/reviews/code-reviews/`. They define the canonical
+files, normalized verdicts, and human-review controls; skip artifact creation
+for selected-code reviews or an empty diff as the source protocol directs.
 
 ## Example usage
 
