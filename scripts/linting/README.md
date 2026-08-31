@@ -2,7 +2,7 @@
 title: Linting Scripts
 description: PowerShell scripts for code quality validation and documentation checks
 author: HVE Core Team
-ms.date: 2026-08-06
+ms.date: 2026-08-27
 ms.topic: reference
 keywords:
   - powershell
@@ -545,13 +545,13 @@ GenAI asset (agent, prompt, instruction, skill) against the `docs/reference` tre
 It runs five checks and writes a JSON summary, exiting non-zero when any
 error-level finding is present:
 
-| Check     | Behavior                                                                                        |
-|-----------|-------------------------------------------------------------------------------------------------|
-| Coverage  | Every asset has a docs page; an error under `-FailOnMissing`, otherwise a warning               |
-| Orphans   | Every `docs/reference` page maps to an existing asset                                           |
-| Sync      | Generated regions match a fresh render; reported under `-CheckSync`                             |
-| Structure | Required H2 sections and generated-region markers are present                                   |
-| Authored  | Human sections differ from stubs; an error under `-RequireAuthoredContent`, otherwise a warning |
+| Check     | Behavior                                                                                                                                      |
+|-----------|-----------------------------------------------------------------------------------------------------------------------------------------------|
+| Coverage  | Every asset has a docs page; an error under `-FailOnMissing`, otherwise a warning                                                             |
+| Orphans   | Every `docs/reference` page maps to an existing asset                                                                                         |
+| Sync      | Generated regions match a fresh render; reported under `-CheckSync`                                                                           |
+| Structure | Required H2 sections and generated-region markers are present                                                                                 |
+| Authored  | Applicable human sections differ from stubs; a Required stub is an error for kinds selected by `-RequireAuthoredContent`, otherwise a warning |
 
 Reference index pages (`README.md`) are excluded from the coverage, sync,
 structure, and authored checks and are never treated as orphans. The
@@ -562,7 +562,7 @@ structure, and authored checks and are never treated as orphans. The
 * `-RepoRoot` - Repository root (default: the git top level)
 * `-FailOnMissing` (switch) - Treat missing documentation pages as errors
 * `-CheckSync` (switch) - Compare generated regions against a fresh render and report drift as errors
-* `-RequireAuthoredContent` (switch) - Treat remaining stub placeholders as errors
+* `-RequireAuthoredContent` (string array) - Treat Required-section stubs as errors for selected `agent`, `prompt`, `instruction`, or `skill` kinds; separate multiple command-line values with commas
 * `-ChangedFilesOnly` (switch) - Validate only assets and pages affected by changed files
 * `-BaseBranch` - Git reference for changed-file detection (default: `origin/main`)
 * `-OutputPath` - JSON results path (default: `logs/asset-docs-validation-results.json`)
@@ -575,6 +575,12 @@ structure, and authored checks and are never treated as orphans. The
 
 # Enforce coverage and generated-region sync
 ./scripts/linting/Validate-AssetDocs.ps1 -FailOnMissing -CheckSync
+
+# Also enforce Required instruction guidance
+./scripts/linting/Validate-AssetDocs.ps1 -FailOnMissing -CheckSync -RequireAuthoredContent instruction
+
+# Select multiple kinds in one direct command-line value
+./scripts/linting/Validate-AssetDocs.ps1 -RequireAuthoredContent instruction,prompt
 ```
 
 ##### GitHub Actions Integration
@@ -712,12 +718,12 @@ blockquote markers, so line wrapping does not affect matching.
 
 ## npm Scripts
 
-| npm Script                       | Description                                                                                                            |
-|----------------------------------|------------------------------------------------------------------------------------------------------------------------|
-| `lint:ai-artifacts`              | Run `pwsh -NoProfile -File ./scripts/linting/Validate-PlannerArtifacts.ps1 -FailOnMissing` to enforce footers          |
-| `lint:asset-docs`                | Run `pwsh -NoProfile -File scripts/linting/Validate-AssetDocs.ps1 -FailOnMissing -CheckSync` to enforce asset docs     |
-| `lint:extension-artifact-naming` | Run `pwsh -NoProfile -File scripts/linting/Test-ExtensionArtifactNaming.ps1` to validate extension VSIX artifact names |
-| `lint:hooks`                     | Run `pwsh -File scripts/linting/Validate-HookManifests.ps1` to validate collection-scoped hook manifests               |
+| npm Script                       | Description                                                                                                                                                                              |
+|----------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `lint:ai-artifacts`              | Run `pwsh -NoProfile -File ./scripts/linting/Validate-PlannerArtifacts.ps1 -FailOnMissing` to enforce footers                                                                            |
+| `lint:asset-docs`                | Run `pwsh -NoProfile -File scripts/linting/Validate-AssetDocs.ps1 -FailOnMissing -CheckSync -RequireAuthoredContent instruction` to enforce asset docs and Required instruction guidance |
+| `lint:extension-artifact-naming` | Run `pwsh -NoProfile -File scripts/linting/Test-ExtensionArtifactNaming.ps1` to validate extension VSIX artifact names                                                                   |
+| `lint:hooks`                     | Run `pwsh -File scripts/linting/Validate-HookManifests.ps1` to validate collection-scoped hook manifests                                                                                 |
 
 ## Shared Module
 
