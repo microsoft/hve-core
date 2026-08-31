@@ -62,7 +62,7 @@
             "oneOf": [
               {
                 "type": "object",
-                "required": ["kind", "path"],
+                "required": ["kind", "path", "stableIdMap"],
                 "properties": {
                   "kind": {
                     "const": "document"
@@ -73,13 +73,25 @@
                     "maxLength": 1024,
                     "pattern": "^(?!/)(?!.*(?:^|/)\\.\\.(?:/|$))(?!.*[\\\\?#:])[^/\\r\\n]+(?:/[^/\\r\\n]+)*$",
                     "description": "Workspace-relative document path; runtime containment validation is also required"
+                  },
+                  "stableIdMap": {
+                    "type": "object",
+                    "minProperties": 1,
+                    "propertyNames": {
+                      "pattern": "^(?!(?:document|mural):)[A-Za-z0-9][A-Za-z0-9._:/-]{0,255}$"
+                    },
+                    "additionalProperties": {
+                      "type": "string",
+                      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$"
+                    },
+                    "description": "Recoverable source-item to stable-ID mappings for this document template; runtime validation enforces one-to-one values and consistency with reconstructed content"
                   }
                 },
                 "additionalProperties": false
               },
               {
                 "type": "object",
-                "required": ["kind", "id"],
+                "required": ["kind", "id", "stableIdMap"],
                 "properties": {
                   "kind": {
                     "const": "mural"
@@ -88,6 +100,18 @@
                     "type": "string",
                     "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]{0,127}$",
                     "description": "Opaque Mural identifier; authentication remains outside persisted state"
+                  },
+                  "stableIdMap": {
+                    "type": "object",
+                    "minProperties": 1,
+                    "propertyNames": {
+                      "pattern": "^(?!(?:document|mural):)[A-Za-z0-9][A-Za-z0-9._:/-]{0,255}$"
+                    },
+                    "additionalProperties": {
+                      "type": "string",
+                      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$"
+                    },
+                    "description": "Recoverable source-item to stable-ID mappings for this Mural template; runtime validation enforces one-to-one values and consistency with reconstructed content"
                   }
                 },
                 "additionalProperties": false
@@ -127,7 +151,7 @@
         }
       ],
       "additionalProperties": false,
-      "description": "Persisted Phase 1 template preflight state used by resume and recovery"
+      "description": "Persisted Phase 1 references only; each template contains its own recovery mappings, while extracted template structure and output requirements are stored in assessmentContentFile"
     },
     "disclaimerShownAt": {
       "type": ["string", "null"],

@@ -343,22 +343,32 @@ Five-step resume protocol when returning to an existing RAI assessment:
    escapes the workspace. For Mural, accept only the stored opaque ID and keep
    authentication in the tool boundary. When `templates` is non-empty, verify
    the required `assessmentContentFile`; if it is missing or unusable, pause
-   phase work and recreate it from every validated template and the authoritative
-   `rai-plan.md`, preserving previously issued stable IDs. Stop and ask the
-   user only if recreation fails. When `templates` is empty, do not require the
-   file. Summarize what was completed and what remains.
+   phase work and recreate it from every validated template, the authoritative
+   `rai-plan.md`, and each template's local `stableIdMap`. Require every local
+   map to be non-empty, one-to-one, and consistent with reconstructed content.
+   If a local map is absent, empty, non-bijective, or conflicting, obtain
+   confirmation before issuing replacement IDs. For these recoverable preflight
+   map failures, the RAI-specific stop-and-confirm recovery path takes
+   precedence over generic corrupted-state reset handling; generic corruption
+   handling still applies to other invalid state.
+   Stop and ask the user if validation or recreation fails.
+   When `templates` is empty, require a null content file.
+   Summarize what was completed and what remains.
 5. Continue from the last incomplete action.
 
 ### Post-Summarization Recovery
 
-Six-step recovery when conversation context is compacted:
+Seven-step recovery when conversation context is compacted:
 
 1. Read `state.json` for project slug and current phase.
 2. If `disclaimerShownAt` is `null`, display the Startup Announcement verbatim and set `disclaimerShownAt` to the current ISO 8601 timestamp.
-3. Read the RAI plan markdown file referenced in `raiPlanFile`.
-4. Reconstruct context from existing artifacts: system definition pack, standards mapping, security model addendum, and control surface catalog.
-5. Identify the next incomplete task within the current phase.
-6. Resume with a brief summary of recovered state and the next action to take.
+3. Run the complete Session Resume step 4 preflight validation and recovery
+   contract, including the empty-template/null-content requirement, before
+   reconstructing context or resuming the next task.
+4. Read the RAI plan markdown file referenced in `raiPlanFile`.
+5. Reconstruct context from existing artifacts: system definition pack, standards mapping, security model addendum, and control surface catalog.
+6. Identify the next incomplete task within the current phase.
+7. Resume with a brief summary of recovered state and the next action to take.
 
 ## Backlog Handoff Protocol
 
