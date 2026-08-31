@@ -1,1 +1,0 @@
-../../../../.github/agents/security/security-auditor.agent.md

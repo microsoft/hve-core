@@ -26,9 +26,7 @@
   },
   "json.schemas": [
     {
-      "fileMatch": [
-        ".copilot-tracking/rai-plans/*/state.json"
-      ],
+      "fileMatch": [".copilot-tracking/rai-plans/*/state.json"],
       "url": "./scripts/linting/schemas/rai-state.schema.json"
     },
     {
@@ -99,7 +97,4 @@
       "file": ".github/instructions/hve-core/commit-message.instructions.md"
     }
   ],
-  "chat.tools.terminal.autoApprove": {
-    "git stash": true
-  },
 }

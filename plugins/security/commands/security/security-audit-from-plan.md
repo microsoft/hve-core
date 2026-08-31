@@ -1,1 +1,0 @@
-../../../../.github/prompts/security/security-audit-from-plan.prompt.md
