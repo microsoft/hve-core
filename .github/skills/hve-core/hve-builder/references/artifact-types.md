@@ -40,7 +40,7 @@ A single requirement often splits across both axes. For example, "do not write t
 Treat delegation as a first-class architecture decision, not an afterthought. During intake, before settling the shape, analyze what the skill or agent being authored could hand to a subagent.
 
 * Identify functionality a focused subagent could own: high-volume discovery, mechanical checks, fresh-context review, or profile-specific execution. Match the model to the responsibility; fresh-context review usually needs more judgment than mechanical validation.
-* Weigh delegating against inlining. Delegating buys context isolation, parallelism, and a right-sized model per responsibility; inlining is simpler for tightly coupled, low-volume, or latency-sensitive steps. Prefer making, updating, or reusing a subagent over inlining coordination, orchestration, or workflow logic.
+* Weigh delegating against inlining. Delegate when context isolation, parallelism, or a distinct model responsibility repays the dispatch; keep tightly coupled, low-volume, or latency-sensitive work in the current context.
 * Design the loop explicitly: define dispatch inputs, owned evidence, return schema, stage gate, and which later step consumes the result. Parallelize only independent work.
 * Favor reuse. Check whether an existing subagent already covers the responsibility before creating a new one, and prefer extending or adjusting an existing subagent over duplicating it.
 * Make the contract executable. A create-only worker writes its owned log once; progressive logs require edit capability. A parent that dispatches subagents declares its allowed agent set.
@@ -92,7 +92,7 @@ model: GPT-5.6 Luna (copilot)
 
 The worker body defines its bounded input and structured summary without selecting a tool configuration or order.
 
-Parent-owned test step: classify the change first. The `hve-builder` skill records a satisfied-and-skipped behavior gate for minor and medium changes, including frontmatter-only and name-reference changes. For a major change, test the workflow through the `hve-builder-tester` skill, which executes at the worker's own declared profile. Select simulation or native fidelity explicitly and report the evidence limitation. Do not dispatch `HVE Artifact Tester` directly; the tester skill owns design, fidelity, evidence integrity, grading, and cleanup.
+Parent-owned test step: classify the complete change after static findings and local validation are closed. The `hve-builder` skill records a supported skip for Minor and Medium changes. For a Major change, freeze the source boundary and invoke `hve-builder-tester` at most once as the final stage in that HVE Builder run. The tester owns fidelity, execution, evidence integrity, independent grading, and cleanup; do not dispatch `HVE Artifact Tester` directly.
 
 ## Placement heuristics
 

@@ -3,7 +3,7 @@ title: Instructions
 description: Reference documentation for HVE Core instructions.
 sidebar_position: 0
 author: Microsoft
-ms.date: 2026-08-25
+ms.date: 2026-08-31
 ms.topic: overview
 keywords:
   - reference
@@ -45,7 +45,7 @@ This page lists the generated reference documentation for HVE Core instructions.
 | [Hve Core/Commit Message](hve-core/commit-message.md)                                             | Commit message format and conventions                                                                                                                                                                                                                                                 |
 | [Hve Core/Copilot Tracking](hve-core/copilot-tracking.md)                                         | Shared .copilot-tracking conventions for RPI, HVE Builder, proposal response, and compatibility workflow evidence                                                                                                                                                                     |
 | [Hve Core/Git Merge](hve-core/git-merge.md)                                                       | Git merge, rebase, and rebase --onto workflows with conflict handling and stop controls                                                                                                                                                                                               |
-| [Hve Core/Hve Builder](hve-core/hve-builder.md)                                                   | Authoring standards for prompts, agents, subagents, instructions, and skills, grounded in the frontier-LLM instruction-quality research                                                                                                                                               |
+| [Hve Core/Hve Builder](hve-core/hve-builder.md)                                                   | Core authoring conventions for prompts, agents, subagents, instructions, and skills                                                                                                                                                                                                   |
 | [Hve Core/Licensing Posture](hve-core/licensing-posture.md)                                       | Repository posture for licensing, reproduction, and attribution of third-party standards in skills and tracking artifacts                                                                                                                                                             |
 | [Hve Core/Markdown](hve-core/markdown.md)                                                         | Markdown authoring conventions for all .md files                                                                                                                                                                                                                                      |
 | [Hve Core/Pull Request](hve-core/pull-request.md)                                                 | Pull request description generation and creation via diff analysis, subagent review, and MCP tools                                                                                                                                                                                    |

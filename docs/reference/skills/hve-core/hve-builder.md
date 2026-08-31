@@ -1,9 +1,9 @@
 ---
 title: hve-builder
-description: "Author, review, or validate Copilot prompt-engineering artifacts through independent review, behavior testing, and host checks."
+description: "Author, review, or validate Copilot artifacts with one final behavior gate after candidate convergence."
 sidebar_position: 5
 author: Microsoft
-ms.date: 2026-08-17
+ms.date: 2026-08-31
 ms.topic: reference
 keywords:
   - skill
@@ -23,7 +23,7 @@ keywords:
 ## What it does
 
 <!-- BEGIN AUTO-GENERATED: overview -->
-Author, review, or validate Copilot prompt-engineering artifacts through independent review, behavior testing, and host checks.
+Author, review, or validate Copilot artifacts with one final behavior gate after candidate convergence.
 <!-- END AUTO-GENERATED: overview -->
 
 ## When to use it

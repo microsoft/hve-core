@@ -55,12 +55,12 @@ description: "Author and review Terraform modules against organization conventio
 
 ## Authoring a discoverable extension subagent
 
-Use a subagent when the host needs a specialized review dimension or a tier-specific execution worker that hve-builder should dispatch during its author, review, or test loop. Because subagents are not auto-loaded, three things must be true for hve-builder to reach it.
+Use a subagent when the host needs a specialized independent review dimension or tier-specific execution that materially benefits from isolation. Because subagents are not auto-loaded, three things must be true for hve-builder to reach one.
 
 * Routing `description`: write it so a parent can decide when to delegate, in the shape "Use when ..." naming the specialization. Supplied metadata or `rpi-research` uses the description to identify a relevant subagent, so the description is the discovery surface.
 * Stable `name`: hve-builder dispatches by the `name` from frontmatter, not by file path or glob. Give it a distinct, namespaced name to avoid collisions across installed libraries.
 * Structured return: return a bounded, structured summary the orchestrator can act on. Selecting the extension's tool set stays with its author under the Tool-configuration boundary in [requirements-catalog.md](requirements-catalog.md).
-* Model fit: `model:` is optional. An omitted extension subagent model inherits the invoking parent's model; an omitted directly invoked extension agent or prompt model uses the current session selection. When the extension needs a stable profile, select it by responsibility and declare its exact ordered list. Use Medium (`GPT-5.6 Terra`, `Claude Sonnet 5`, `MAI-Code-1-Flash`) for semantic authoring or calibrated review, Low (`GPT-5.6 Luna`, `MAI-Code-1-Flash`, `Claude Haiku 4.5`) for bounded mechanical work, and High (`Claude Opus 5`, `GPT-5.6 Sol`, `GPT-5.5`) only for responsibilities that require the deepest reasoning profile. Each declared name carries the `(copilot)` suffix in frontmatter.
+* Model fit: `model:` is optional. An omitted extension subagent model inherits the invoking parent's model. When the extension needs a stable profile, select it by responsibility and use the scalar agent or subagent value defined in [artifact-types.md](artifact-types.md). Prompt artifacts may use that reference's host-supported fallback form.
 * Host registration: confirm the host registers the subagent through a fixed parent `agents:` array, an intentionally unrestricted parent that omits `agents:`, or standard `agents` membership in its marketplace package entry so approved lifecycle dispatch can reach it.
 
 Example frontmatter:
@@ -70,10 +70,7 @@ Example frontmatter:
 name: Terraform Module Reviewer
 description: "Reviews a Terraform module and returns severity-graded findings. Use when reviewing Terraform module changes."
 user-invocable: false
-model:
-  - GPT-5.6 Terra (copilot)
-  - Claude Sonnet 5 (copilot)
-  - MAI-Code-1-Flash (copilot)
+model: GPT-5.6 Terra (copilot)
 ---
 ```
 

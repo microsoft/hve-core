@@ -1522,6 +1522,32 @@ stimuli:
         name: review-runtime-route
         config:
           pattern: '(?i)^\s*[''"]?hve-builder-tester[''"]?[.!]?\s*$'
+  - name: skill-hve-builder-final-candidate-behavior-gate
+    prompt: |
+      An HVE Builder run is making a Major change. State the behavior-gate
+      timing, invocation limit, and response to a Revise verdict. Return
+      exactly three labeled lines: `Timing:`, `Invocations:`, and `Revise:`.
+    environment:
+      skills:
+        - ../../.github/skills/hve-core/hve-builder
+    tags:
+      category: behavior-conformance
+      skill: hve-builder
+      shape: knowledge
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: final-candidate-timing
+        config:
+          pattern: '(?is)Timing:.*(?=.*(?:known|all).{0,100}(?:change|edit|finding))(?=.*(?:static|review))(?=.*validat)(?=.*(?:complete|closed|pass|frozen))'
+      - type: output-matches
+        name: one-invocation-limit
+        config:
+          pattern: '(?i)Invocations:.*(?:at\s+most\s+once|zero\s+or\s+one|one\s+time)'
+      - type: output-matches
+        name: revise-terminates-run
+        config:
+          pattern: '(?is)Revise:.*(?=.*(?:stop|end|terminate))(?=.*(?:later|new|subsequent).{0,80}(?:run|invocation))(?=.*(?:no|without).{0,80}(?:retest|rerun|edit|correction))'
   - name: skill-hve-builder-tester-knowledge
     prompt: |
       What fidelity labels unavailable side effects without claiming native

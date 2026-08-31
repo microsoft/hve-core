@@ -1,9 +1,9 @@
 ---
 title: hve-builder-tester
-description: "Test HVE artifact behavior with black-box scenarios, contained simulation or approved native execution, independent grading, and evidence reports."
+description: Run one complete black-box behavior test for HVE artifacts with explicit fidelity and independent grading.
 sidebar_position: 4
 author: Microsoft
-ms.date: 2026-08-17
+ms.date: 2026-08-31
 ms.topic: reference
 keywords:
   - skill
@@ -23,7 +23,7 @@ keywords:
 ## What it does
 
 <!-- BEGIN AUTO-GENERATED: overview -->
-Test HVE artifact behavior with black-box scenarios, contained simulation or approved native execution, independent grading, and evidence reports.
+Run one complete black-box behavior test for HVE artifacts with explicit fidelity and independent grading.
 <!-- END AUTO-GENERATED: overview -->
 
 ## When to use it
