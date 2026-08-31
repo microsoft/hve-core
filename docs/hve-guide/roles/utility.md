@@ -1,9 +1,9 @@
 ---
 title: Utility Reference
-description: Cross-cutting HVE Core utilities for documentation, media, Git workflows, durable workflow state, and diagnostics
+description: Cross-cutting HVE Core utilities for documentation, media, Git workflows, workspace-local state, and shared continuation
 sidebar_position: 10
 author: Microsoft
-ms.date: 2026-08-03
+ms.date: 2026-08-28
 ms.topic: reference
 keywords:
   - utility
@@ -14,13 +14,13 @@ keywords:
 estimated_reading_time: 8
 ---
 
-Use these cross-cutting utilities when your workflow spans multiple roles or lifecycle stages. These tools handle documentation maintenance, media processing, Git workflows, installation management, and diagnostics. Each stateful workflow resumes from its own durable artifacts rather than a general memory or checkpoint capability.
+Use these cross-cutting utilities when your workflow spans multiple roles or lifecycle stages. These tools handle documentation maintenance, media processing, Git workflows, installation management, and diagnostics. Each stateful workflow resumes from its own workspace-local artifacts rather than a general memory or checkpoint capability.
 
 ## Utility Categories
 
 | Category      | Purpose                                               |
 |---------------|-------------------------------------------------------|
-| Continuity    | Resume from each workflow's durable artifacts         |
+| Continuity    | Resume locally or prepare checked-in continuation     |
 | Documentation | Documentation audit, drift, authoring, and validation |
 | Media         | Video-to-GIF conversion with FFmpeg optimization      |
 | Git           | Commit messages, merge workflows, PR creation         |
@@ -33,6 +33,8 @@ Use these cross-cutting utilities when your workflow spans multiple roles or lif
 
 Resume a workflow from the state and evidence files it owns. For RPI, reference the dated research, plan, phase details, changes, and review artifacts with the same stable task ID. Backlog managers and planning agents use their domain-specific state files and handoff records.
 
+Use [Share Work for Another Contributor](../../rpi/shared-work-handoff) when a named teammate must continue from a different working copy. It minimizes selected evidence into a checked-in handoff without exposing private workflow state.
+
 ```text
 /rpi Continue task authentication-refactor from the latest dated plan,
 phase details, changes record, and review evidence. Resume the next
@@ -41,7 +43,7 @@ incomplete task without repeating completed research.
 
 ### Documentation Operations
 
-The **documentation** agent handles documentation audit, drift, authoring, and validation through its four modes. Resume a documentation session from its durable session artifacts when available.
+The **documentation** agent handles documentation audit, drift, authoring, and validation through its four modes. Resume a documentation session from its workspace-local session artifacts when available.
 
 Select **documentation** agent:
 
@@ -101,16 +103,17 @@ This fallback activates automatically. No manual configuration is needed.
 
 ### Skills
 
-| Skill        | Category     | Description                             |
-|--------------|--------------|-----------------------------------------|
-| installer    | Installation | HVE Core customized installation        |
-| video-to-gif | Media        | FFmpeg two-pass video-to-GIF conversion |
+| Skill               | Category     | Description                                     |
+|---------------------|--------------|-------------------------------------------------|
+| installer           | Installation | HVE Core customized installation                |
+| shared-work-handoff | Continuity   | Optional checked-in continuation between people |
+| video-to-gif        | Media        | FFmpeg two-pass video-to-GIF conversion         |
 
 ## Tips
 
 | Do                                                                 | Don't                                                      |
 |--------------------------------------------------------------------|------------------------------------------------------------|
-| Resume from the durable artifacts owned by each workflow           | Rely on a conversation transcript as authoritative state   |
+| Resume from the workspace-local artifacts owned by each workflow   | Rely on a conversation transcript as authoritative state   |
 | Use `/git-commit` for all commits to maintain conventions          | Write ad-hoc commit messages that skip conventional format |
 | Ask an agent to use `hve-core-installer` for selective clone setup | Copy components without reviewing paths and maturity       |
 | Refer to the skill docs for media processing parameters            | Guess at FFmpeg options without consulting the skill file  |
