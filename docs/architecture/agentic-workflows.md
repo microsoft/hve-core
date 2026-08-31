@@ -2,7 +2,7 @@
 title: Agentic Workflows
 description: End-to-end process flow for AI-driven issue triage, implementation, and review workflows in hve-core
 author: HVE Core Team
-ms.date: 2026-08-26
+ms.date: 2026-08-31
 ms.topic: concept
 sidebar_position: 4
 keywords:
@@ -207,10 +207,10 @@ The [RPI Agent](https://github.com/microsoft/hve-core/blob/main/.github/agents/h
 |-----------------|-------------------------------------------------------------------------|
 | `rpi-research`  | Closes demonstrated evidence gaps and produces research evidence        |
 | `rpi-plan`      | Creates marker-addressed plans, phase details, and independent critique |
-| `rpi-implement` | Executes approved work and records changes, amendments, and validation  |
+| `rpi-implement` | Executes approved work and records changes, decisions, and validation   |
 | `rpi-review`    | Reconciles evidence, records findings, and routes the next action       |
 
-The skills coordinate through durable artifacts stored in `.copilot-tracking/`.
+The skills coordinate through workspace-local artifacts stored in `.copilot-tracking/`. These gitignored files survive chat resets while the working copy remains available, but another contributor or fresh clone cannot depend on them. Use [Share Work for Another Contributor](../rpi/shared-work-handoff) for intentionally minimized, checked-in continuation context.
 
 ### Prompt Engineering
 

@@ -3,7 +3,7 @@ title: Installing HVE Core
 description: Install the HVE Core extension or plugin, or adopt selected components from a clone
 sidebar_position: 2
 author: Microsoft
-ms.date: 2026-08-20
+ms.date: 2026-08-31
 ms.topic: how-to
 keywords: [installation, setup, github copilot, marketplace, selective clone]
 estimated_reading_time: 4
@@ -192,6 +192,8 @@ Add this line to your project's `.gitignore`:
 > This applies to all installation methods. The `.copilot-tracking/` folder is created in your project directory, not in HVE Core itself.
 
 The folder stores ephemeral workflow artifacts (research documents, implementation plans, PR review notes, and work item planning files) that help agents maintain context across sessions. These files are useful during your workflow but should not be committed to your repository.
+
+When another contributor needs continuation context, use [Share Work for Another Contributor](../rpi/shared-work-handoff) to publish a minimized handoff under a checked-in repository path. Do not remove `.copilot-tracking/` from `.gitignore` to share private workflow state.
 
 ## MCP Server Configuration (Optional)
 

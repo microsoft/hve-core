@@ -1,9 +1,9 @@
 ---
 title: "Context Engineering: Why AI Context Management Matters"
-description: Understand how long RPI lifecycles accumulate context and how durable artifacts support deliberate resumption
+description: Understand how long RPI lifecycles accumulate context and how workspace-local artifacts support deliberate resumption
 sidebar_position: 3
 author: Microsoft
-ms.date: 2026-07-15
+ms.date: 2026-08-28
 ms.topic: concept
 keywords:
   - context engineering
@@ -16,7 +16,7 @@ keywords:
 estimated_reading_time: 7
 ---
 
-You begin a long RPI lifecycle through `RPI Agent` or `/rpi-quick` to add a feature. The research-readiness assessment reuses adequate evidence or activates research for a demonstrated gap. Planning, implementation, and review then leave durable task evidence. In the same conversation, you ask for a second feature: "Now add input validation to the API endpoint."
+You begin a long RPI lifecycle through `RPI Agent` or `/rpi-quick` to add a feature. The research-readiness assessment reuses adequate evidence or activates research for a demonstrated gap. Planning, implementation, and review then leave workspace-local task evidence. In the same conversation, you ask for a second feature: "Now add input validation to the API endpoint."
 
 The conversation jumps straight to writing code without reassessing whether the new task has adequate evidence, an approved plan, or a decision-critical gap. The output compiles. Tests pass. But the validation logic misses three edge cases, ignores the validation patterns already established in your codebase, and introduces a naming convention that contradicts every other validator in the project.
 
@@ -63,7 +63,9 @@ Starting a new chat achieves the same result through a different mechanism. Both
 
 ## Restoring Context After /clear
 
-`/clear` removes chat history, but a task can resume from its durable artifacts. Those artifacts live in `.copilot-tracking/` (gitignored), not in chat history, so they survive the clear. Bring the relevant task evidence back into the agent's view.
+`/clear` removes chat history, but a task can resume from its workspace-local artifacts. Those artifacts live in `.copilot-tracking/` (gitignored), not in chat history, so they survive the clear while the working copy remains available. Bring the relevant task evidence back into the agent's view.
+
+Another contributor, device, or fresh clone cannot rely on gitignored files. When continuation must cross that boundary, use [Share Work for Another Contributor](shared-work-handoff) to prepare intentionally minimized context under a checked-in repository path.
 
 Two mechanisms work reliably:
 
@@ -90,7 +92,7 @@ When multiple artifact sets exist, open the relevant file or reference its path 
 
 `/compact` takes a different approach. Instead of removing conversation history entirely, it summarizes the history into a condensed form that preserves key context while reducing the token count.
 
-`/compact` remains available as a typed command but is no longer offered as an agent handoff button. It was removed from agent handoffs because Autopilot mode could trigger compaction loops that degraded context unpredictably.
+`/compact` remains available as a typed command but is no longer offered as an agent handoff button. It was removed from agent handoffs because Autopilot mode could trigger repeated compaction that degraded context unpredictably.
 
 When to use `/compact`:
 
@@ -112,13 +114,13 @@ The tradeoff is precision. `/compact` summaries lose detail because the model de
 | `/clear`          | Removes all conversation history   | Changing concepts, switching tasks   |
 | `/compact`        | Summarizes history, reduces tokens | Mid-phase, conversation growing long |
 | New chat          | Starts with a fresh context        | Starting unrelated work              |
-| Open artifacts    | Restores selected durable evidence | Resuming an existing RPI task        |
+| Open artifacts    | Restores selected local evidence   | Resuming an existing RPI task        |
 
 ## Long-Lifecycle Context
 
 `RPI Agent` is a user-selected lifecycle wrapper, and `/rpi-quick` is a skill-based full-flow entry point. They activate the same phase skills and may coordinate a long task, but neither guarantees that every run executes fresh research or all lifecycle concepts in one conversation.
 
-When a lifecycle spans planning, implementation, review, and follow-up, tokens can accumulate across the task. Research readiness remains conditional: adequate evidence can be reused, while a demonstrated gap activates research. A context reset does not change those decisions; it lets you resume the next responsible action from the durable artifact set.
+When a lifecycle spans planning, implementation, review, and follow-up, tokens can accumulate across the task. Research readiness remains conditional: adequate evidence can be reused, while a demonstrated gap activates research. A context reset does not change those decisions; it lets you resume the next responsible action from the workspace-local artifact set.
 
 Use `/clear` or `/compact` when the conversation has accumulated irrelevant detail, then reference the stable task ID and the plan, phase details, critique, changes, or review record that establishes the next action.
 
@@ -137,7 +139,7 @@ Context degradation produces observable symptoms. Catching them early prevents w
 |------------------------------------------------------|-----------------------------------------------------|---------------------------------------------------------------|
 | Reusing a long lifecycle conversation for a new task | Recency bias bypasses readiness and evidence checks | Reset context, then begin from the new task's evidence        |
 | Long accumulated sessions                            | Token budget is consumed by history                 | Use `/compact` or start a new chat                            |
-| Mixing unrelated tasks                               | Cross-contamination between task contexts           | Use `/clear` and resume from the relevant durable artifacts   |
+| Mixing unrelated tasks                               | Cross-contamination between task contexts           | Use `/clear` and resume from the relevant local artifacts     |
 | Ignoring degradation signs                           | Progressively worse output quality                  | Recognize the signs and reset or compact context deliberately |
 
 ## Next Steps

@@ -3,7 +3,7 @@ title: Understanding the RPI Workflow
 description: Learn how Research, Plan, Implement, Review, and Follow-up guide evidence-led delivery
 sidebar_position: 1
 author: Microsoft
-ms.date: 2026-07-15
+ms.date: 2026-08-28
 ms.topic: concept
 keywords:
   - rpi workflow
@@ -31,7 +31,7 @@ RPI solves this through a counterintuitive insight: when AI knows it cannot impl
 
 * Assesses evidence before opening a research stage, so adequate research is reused rather than repeated.
 * Uses verified existing patterns instead of inventing plausible ones.
-* Preserves decisions, changes, validation, and review routing in durable task artifacts.
+* Preserves decisions, changes, validation, and review routing in workspace-local task artifacts.
 
 > [!TIP]
 > See [Why the RPI Workflow Works](why-rpi) for the psychology, quality comparisons, and entry surfaces behind the lifecycle.
@@ -44,7 +44,7 @@ RPI separates lifecycle concepts without requiring an autonomous chain of specia
 
 Use `/rpi-research` only when available evidence is not adequate for requirements, acceptance criteria, dependencies, material risks, complexity, uncertainty, or a decision-critical question. Multi-file changes, new patterns, external integrations, and architecture decisions can reveal a gap, but they do not automatically require fresh research.
 
-Research is read-only. It searches the workspace and relevant external sources, distinguishes evidence from assumptions, evaluates alternatives, and records planning readiness. When research runs, its durable output is:
+Research is read-only. It searches the workspace and relevant external sources, distinguishes evidence from assumptions, evaluates alternatives, and records planning readiness. When research runs, its workspace-local output is:
 
 ```text
 .copilot-tracking/research/{{YYYY-MM-DD}}/{{task_slug}}-research.md
@@ -76,11 +76,11 @@ Implementation records material work and truthful validation in:
 .copilot-tracking/changes/{{YYYY-MM-DD}}/{{task_slug}}-changes.md
 ```
 
-Each material change receives a `CHG-xxx` identifier. Completion checkboxes change only after evidence exists. If implementation needs a significant departure from the approved plan, it records a linked `DIV-xxx` and `AM-xxx`, updates the affected phase details, and returns the amendment for fresh plan critique. Affected dependent work resumes only after a `Pass` disposition; unrelated completed work remains intact.
+Implementation records material work under descriptive headings tied to plan areas or markers. Completion checkboxes change only after evidence exists. If new information changes requirements, scope, architecture, acceptance criteria, dependencies, or the evidence boundary, implementation updates the current plan and details after the required user decision. The task's existing critique remains historical evidence rather than running again.
 
 ### ✅ Review with rpi-review
 
-Use `/rpi-review` when the implementation evidence is ready for acceptance review. Review does not modify the sources under review. It compares requirements, acceptance criteria, plan and task completion, critique dispositions, amendments, changes, divergences, and validation evidence in one record:
+Use `/rpi-review` when the implementation evidence is ready for acceptance review. Review does not modify the sources under review. It compares requirements, acceptance criteria, plan and task completion, critique dispositions, implementation-time decisions, changes, blockers, follow-up items, and validation evidence in one record:
 
 ```text
 .copilot-tracking/reviews/logs/{{YYYY-MM-DD}}/{{task_slug}}-review.md
@@ -111,13 +111,15 @@ Select `RPI Agent` when you want a user-selected lifecycle wrapper that activate
 
 Use `/clear` or a new chat when a long lifecycle has accumulated context, you are switching concepts, or the conversation is no longer serving the task well. A context reset is a tool for clarity, not a requirement to repeat research or restart the lifecycle.
 
-Durable artifacts carry the necessary context:
+Workspace-local artifacts carry the necessary context through chat resets and later sessions when the same working copy remains available:
 
 ```text
 research, when it runs → plan and details → changes → review and routed follow-up
 ```
 
 Resume with the same stable task ID and open or reference the relevant dated artifacts. Navigate plan and detail sections with `Pxx`, `Pxx-Txx`, headings, and `<!-- rpi:... -->` markers.
+
+Because `.copilot-tracking` is gitignored, another contributor or a fresh clone cannot depend on these files. Use [Share Work for Another Contributor](shared-work-handoff) when a named teammate needs intentionally minimized, checked-in continuation context.
 
 For the technical explanation of why this matters, see [Context Engineering](context-engineering).
 
@@ -127,7 +129,7 @@ For the technical explanation of why this matters, see [Context Engineering](con
 |-----------------------------------------------------------|-------------------------------------------------|
 | The task needs evidence, planning, or review routing      | The change is clear and isolated                |
 | Dependencies, risk, or uncertainty need explicit handling | Existing evidence and acceptance are sufficient |
-| A handoff needs durable task evidence                     | No durable lifecycle evidence is needed         |
+| A task needs workspace-local lifecycle evidence           | No lifecycle evidence is needed                 |
 
 Use research when readiness identifies a gap. Otherwise, select the smallest lifecycle action that gives the task credible evidence and a clear owner.
 
@@ -147,6 +149,7 @@ Use research when readiness identifies a gap. Otherwise, select the smallest lif
 * [Why the RPI Workflow Works](why-rpi) - Understand why phase separation improves evidence and traceability
 * [Using RPI Together](using-together) - Follow a complete workflow example
 * [Context Engineering](context-engineering) - Why context management matters
+* [Share Work for Another Contributor](shared-work-handoff) - Publish optional minimized continuation context
 * [Agents Reference](https://github.com/microsoft/hve-core/blob/main/.github/CUSTOM-AGENTS.md) - All available agents
 * [Agent Systems Catalog](../agents/) - Browse all agent families beyond RPI
 

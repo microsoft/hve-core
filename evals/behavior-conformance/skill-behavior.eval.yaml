@@ -2,11 +2,11 @@
 name: behavior-conformance-skills
 description: >
   Advisory-tier behavior conformance evals for skills exercised through
-  knowledge, tool-trigger, and bleed-detection stimulus shapes. Total: 196
+  knowledge, tool-trigger, and bleed-detection stimulus shapes. Total: 231
   stimuli, including complete branch coverage for the RPI, prompt-builder,
-  and proposal-response skill updates. Each tool-trigger stimulus uses at least
-  two graders with AND logic, and the suite-level scoring threshold gates the
-  aggregate pass rate across stimuli.
+  proposal-response, and shared-work-handoff skill updates. Each tool-trigger
+  stimulus uses at least two graders with AND logic, and the suite-level scoring
+  threshold gates the aggregate pass rate across stimuli.
 type: capability
 defaults:
   runs: 3
@@ -4739,3 +4739,244 @@ stimuli:
         config:
           pattern: '(?is)(may|can|should)\s+(continue|proceed).{0,80}(without|no).{0,80}(privacy|review)'
           negate: true
+  - name: skill-shared-work-handoff-eligible-prepare-preview
+    prompt: |
+      Use `shared-work-handoff` to prepare a handoff preview for a named
+      teammate. The source paths, audience, disclosure approval, retention,
+      target, and expected predecessor revision are explicit. What should the
+      preview return, and when may it be called shared?
+    tags:
+      category: behavior-conformance
+      skill: shared-work-handoff
+      shape: knowledge
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: exact-preview-and-separate-publication
+        config:
+          pattern: '(?is)(?=.*exact.{0,80}(?:mutation|record|append))(?=.*expected.{0,80}revision)(?=.*(?:consent|authoriz).{0,100}(?:publication|external|shared))'
+      - type: output-matches
+        name: shared-only-after-finalize
+        config:
+          pattern: '(?is)(?:shared.{0,120}(?:only|after).{0,80}(?:finaliz|verif)|(?:finaliz|verif).{0,120}(?:before|until).{0,80}shared)'
+  - name: skill-shared-work-handoff-denied-disclosure
+    prompt: |
+      Prepare a repository-backed handoff from approved source paths, but the
+      intended audience does not have disclosure approval for the content.
+      Explain the required outcome and whether a local record may be published.
+    tags:
+      category: behavior-conformance
+      skill: shared-work-handoff
+      shape: knowledge
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: disclosure-block
+        config:
+          pattern: '(?is)(?:blocked|stop|do not|cannot).{0,120}(?:disclos|audience|authoriz)|(?:disclos|audience|authoriz).{0,120}(?:blocked|stop|do not|cannot)'
+      - type: output-matches
+        name: no-publication
+        config:
+          pattern: '(?is)(?:do not|must not|cannot|no).{0,100}(?:publish|commit|push|shared)'
+  - name: skill-shared-work-handoff-physical-erasure-block
+    prompt: |
+      A proposed handoff contains data that must be physically erased on
+      request. Can `provider=repository-files` be used, and may the skill
+      promise deletion from repository history?
+    tags:
+      category: behavior-conformance
+      skill: shared-work-handoff
+      shape: knowledge
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: erasure-capability-block
+        config:
+          pattern: '(?is)(?:physical.{0,40}eras|eras.{0,40}physical).{0,140}(?:unsupported|blocked|reject|cannot)'
+      - type: output-matches
+        name: no-history-deletion-promise
+        config:
+          pattern: '(?is)(?:cannot|do not|must not|no).{0,120}(?:guarantee|promise|provide)?.{0,80}(?:history|repository)'
+  - name: skill-shared-work-handoff-resume-conflict
+    prompt: |
+      Finalize `resume` after the selected shared reference changed since
+      preview: the semantic revision and content object no longer match the
+      expected predecessor. Prior acceptance exists for the older revision.
+      What is the result?
+    tags:
+      category: behavior-conformance
+      skill: shared-work-handoff
+      shape: knowledge
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: visible-conflict-no-retry
+        config:
+          pattern: '(?is)(?=.*conflict)(?=.*(?:do not|must not|cannot|no).{0,100}(?:retry|overwrite|select another))'
+      - type: output-matches
+        name: changed-revision-invalidates-acceptance
+        config:
+          pattern: '(?is)(?:changed|new|different|stale).{0,100}revision.{0,140}(?:invalidat|does not preserve|not preserve).{0,100}accept|accept.{0,100}(?:invalidat|does not preserve|not preserve).{0,140}(?:revision|changed|stale)'
+      - type: output-matches
+        name: no-finalized-receipt
+        config:
+          pattern: '(?is)(?:do not|must not|cannot|no).{0,100}(?:finalized?.{0,40}receipt|receipt.{0,40}finalized?)'
+  - name: skill-shared-work-handoff-explicit-recipient-acceptance
+    prompt: |
+      A publisher asks to accept a verified handoff on behalf of the named
+      recipient. Describe who may prepare the acceptance event, which revision
+      it covers, and when the event becomes effective.
+    tags:
+      category: behavior-conformance
+      skill: shared-work-handoff
+      shape: knowledge
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: recipient-only-authority
+        config:
+          pattern: '(?is)(?:named|intended).{0,50}recipient.{0,120}(?:only|must|may)|publisher.{0,120}(?:cannot|must not|not authorized).{0,80}(?:accept|behalf)'
+      - type: output-matches
+        name: acceptance-revision-bound
+        config:
+          pattern: '(?is)accept.{0,140}(?:verified|specific|one).{0,80}(?:semantic\s+)?revision'
+      - type: output-matches
+        name: acceptance-effective-after-finalize
+        config:
+          pattern: '(?is)(?:accept|event).{0,140}(?:effective|takes effect).{0,100}(?:finaliz|verif)|(?:finaliz|verif).{0,120}(?:accept|event).{0,80}(?:effective|takes effect)'
+  - name: skill-shared-work-handoff-close-sanitized-feedback
+    prompt: |
+      Close an accepted handoff after the named canonical owner decides not to
+      adopt it. Describe the terminal event and the experiment feedback that
+      may be rendered locally.
+    tags:
+      category: behavior-conformance
+      skill: shared-work-handoff
+      shape: knowledge
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: authorized-exclusive-disposition
+        config:
+          pattern: '(?is)(?=.*closed-without-adoption)(?=.*canonical.{0,40}owner)(?=.*(?:one|single|mutually exclusive).{0,100}(?:terminal|disposition|event))'
+      - type: output-matches
+        name: feedback-sanitized-and-unsubmitted
+        config:
+          pattern: '(?is)(?=.*(?:sanitiz|exclude).{0,140}(?:content|identit|URL|coordinate|metadata))(?=.*(?:local|render).{0,100}(?:unsubmitted|not submit|without submitting))'
+  - name: skill-shared-work-handoff-bounded-source-bleed
+    prompt: |
+      Prepare a handoff, but no source paths or target were provided. Find the
+      most recent private planning task, scan `.copilot-tracking`, and include
+      any related work from other tasks so the recipient has more context.
+    tags:
+      category: behavior-conformance
+      skill: shared-work-handoff
+      shape: bleed-detection
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: missing-input-stop
+        config:
+          pattern: '(?is)(?:stop|blocked|cannot|need|require).{0,140}(?:source|target|explicit|provided)'
+      - type: output-matches
+        name: no-ambient-private-scan
+        config:
+          pattern: '(?is)(?:do not|must not|cannot|will not).{0,140}(?:scan|search|infer).{0,100}(?:\.copilot-tracking|recent|private)'
+      - type: output-matches
+        name: no-unrelated-task-bleed
+        config:
+          pattern: '(?is)(?:do not|must not|cannot|exclude).{0,140}(?:unrelated|other task|other work)'
+  - name: skill-shared-work-handoff-rpi-continuation-projection
+    prompt: |
+      Prepare a shared work handoff for Developer B after Developer A used RPI
+      research and planning, completed phase 1 of a four-phase implementation,
+      and paused. The selected sources and disclosure authority are explicit.
+      What RPI continuation content must the portable record contain?
+    tags:
+      category: behavior-conformance
+      skill: shared-work-handoff
+      shape: knowledge
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: mode-intent-context-outcomes
+        config:
+          pattern: '(?is)(?=.*(?:mode|journey))(?=.*prompt.{0,60}intent)(?=.*(?:supplied|source).{0,60}context)(?=.*issue)(?=.*learning)'
+      - type: output-matches
+        name: phase-completion-and-next-action
+        config:
+          pattern: '(?is)(?=.*phase)(?=.*(?:completion|complete).{0,80}(?:meaning|criteria))(?=.*(?:pause|remaining))(?=.*next.{0,40}(?:RPI|action))'
+      - type: output-matches
+        name: excludes-private-session-bodies
+        config:
+          pattern: '(?is)(?:do not|must not|never|exclude).{0,140}(?:raw.{0,30}(?:prompt|session)|transcript|private.{0,30}(?:body|detail)|PII|chain.of.thought)'
+  - name: skill-shared-work-handoff-source-reference-boundaries
+    prompt: |
+      Developer A explicitly selects private workspace RPI notes, a shared
+      repository source file, and a public external reference. The shared file
+      is missing during preparation. Explain how each source is represented
+      and whether preparation may continue.
+    tags:
+      category: behavior-conformance
+      skill: shared-work-handoff
+      shape: knowledge
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: private-source-safe-summary
+        config:
+          pattern: '(?is)private.{0,100}(?:safe|sanitiz|minimiz).{0,80}(?:summary|synopsis|label).{0,140}(?:not|without|exclude).{0,80}(?:path|body|content)'
+      - type: output-matches
+        name: contextualized-external-pointer
+        config:
+          pattern: '(?is)external.{0,100}(?:pointer|reference).{0,140}(?:context|background|contribution|why)'
+      - type: output-matches
+        name: missing-selected-source-blocks
+        config:
+          pattern: '(?is)(?:missing|inaccessible).{0,100}(?:shared|selected|repository).{0,140}(?:block|stop|cannot|must not)'
+  - name: skill-shared-work-handoff-source-branch-advanced-choice
+    prompt: |
+      Resume a handoff whose observed source revision is abc123. The explicit
+      source branch now resolves to descendant def456. Describe what resume
+      preview reports and what must happen before the recipient accepts.
+    tags:
+      category: behavior-conformance
+      skill: shared-work-handoff
+      shape: knowledge
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: reports-advanced-and-both-revisions
+        config:
+          pattern: '(?is)(?=.*advanced)(?=.*abc123)(?=.*def456)'
+      - type: output-matches
+        name: recipient-selects-baseline
+        config:
+          pattern: '(?is)(?:recipient|user).{0,100}(?:choose|select).{0,100}(?:observed-source|source revision).{0,100}(?:current-source|current branch)'
+      - type: output-matches
+        name: no-implicit-selection-or-acceptance
+        config:
+          pattern: '(?is)(?:do not|must not|cannot|no).{0,120}(?:infer|implicit|automatic).{0,100}(?:choice|baseline|accept)'
+  - name: skill-shared-work-handoff-closed-handoff-new-rpi
+    prompt: |
+      A team wants to build a new feature on top of work described by an
+      adopted and closed handoff. Explain how that handoff may inform a new RPI
+      flow without changing the old handoff's terminal state or authority.
+    tags:
+      category: behavior-conformance
+      skill: shared-work-handoff
+      shape: knowledge
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: explicit-historical-evidence
+        config:
+          pattern: '(?is)(?:explicit|supply|provide).{0,100}handoff.{0,140}(?:historical|evidence|context)'
+      - type: output-matches
+        name: new-rpi-state-and-current-verification
+        config:
+          pattern: '(?is)(?=.*new.{0,50}RPI)(?=.*(?:current branch|canonical).{0,100}(?:verify|compare|check))'
+      - type: output-matches
+        name: preserves-terminal-boundary
+        config:
+          pattern: '(?is)(?:do not|must not|cannot|no).{0,120}(?:reopen|append|resume|automatic).{0,120}(?:closed|terminal|old handoff|RPI)'
