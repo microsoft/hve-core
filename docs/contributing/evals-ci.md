@@ -3,7 +3,7 @@ title: Evals in CI
 description: Auth contract, fork-PR policy, and how to add a new eval spec for the hve-core vally pipeline
 sidebar_position: 11
 author: Microsoft
-ms.date: 2026-08-06
+ms.date: 2026-08-30
 ms.topic: how-to
 keywords:
   - evals
@@ -170,10 +170,10 @@ The validator accepts numeric values in `[0.0, 1.0]`; out-of-range or non-numeri
 
 Content moderation runs in two complementary CI lanes, each scoped to a different surface.
 
-| Lane              | Job in [`pr-validation.yml`](../../.github/workflows/pr-validation.yml) | Script                                                                                       | Toolchain                                | Surface                                                                   |
-|-------------------|-------------------------------------------------------------------------|----------------------------------------------------------------------------------------------|------------------------------------------|---------------------------------------------------------------------------|
-| Markdown corpus   | `eval-lint`                                                             | [scripts/evals/Test-EvalSpecText.ps1](../../scripts/evals/Test-EvalSpecText.ps1)             | Node (alex.js, retext-profanities)       | `.github/{agents,prompts,instructions,skills}/**/*.md` and `docs/**/*.md` |
-| Eval-spec stimuli | `content-moderation`                                                    | [scripts/evals/Invoke-CorpusModeration.ps1](../../scripts/evals/Invoke-CorpusModeration.ps1) | Python + Detoxify (`unitary/toxic-bert`) | Stimulus text and expected-output fixtures inside `evals/**/*.yaml`       |
+| Lane              | Job in [`pr-validation.yml`](../../.github/workflows/pr-validation.yml) | Script                                                                                       | Toolchain                                  | Surface                                                                   |
+|-------------------|-------------------------------------------------------------------------|----------------------------------------------------------------------------------------------|--------------------------------------------|---------------------------------------------------------------------------|
+| Markdown corpus   | `eval-lint`                                                             | [scripts/evals/Test-EvalSpecText.ps1](../../scripts/evals/Test-EvalSpecText.ps1)             | Node (retext-equality, retext-profanities) | `.github/{agents,prompts,instructions,skills}/**/*.md` and `docs/**/*.md` |
+| Eval-spec stimuli | `content-moderation`                                                    | [scripts/evals/Invoke-CorpusModeration.ps1](../../scripts/evals/Invoke-CorpusModeration.ps1) | Python + Detoxify (`unitary/toxic-bert`)   | Stimulus text and expected-output fixtures inside `evals/**/*.yaml`       |
 
 The two lanes target different surfaces and do not overlap: the markdown-corpus lane keeps the AI artifacts that ship to contributors free of insensitive or foul language; the eval-spec stimuli lane scores adversarial test inputs against a Detoxify cutoff so a spec that probes a model with toxic content cannot itself ship unredacted.
 
@@ -200,10 +200,10 @@ for local reproduction prerequisites and output handling.
 |-----------------------|---------------------------------|---------------------------------------------------------------------|
 | `ci:eval:lint:vally`  | `vally lint --eval-spec evals/` | Spec validation via the upstream CLI                                |
 | `ci:eval:lint:schema` | `Test-EvalSpec.ps1`             | Schema lint, agent-behavior coverage, and orphaned-tag reachability |
-| `ci:eval:lint:text`   | `Test-EvalSpecText.ps1`         | retext-profanities + alex.js gate on the AI-artifact corpus         |
+| `ci:eval:lint:text`   | `Test-EvalSpecText.ps1`         | retext-profanities + retext-equality gate on the AI-artifact corpus |
 | `ci:eval:lint:safety` | `Test-VallyTestSafety.ps1`      | Safety validation for eval stimuli                                  |
 
-`ci:eval:lint:text` scans `.github/{agents,prompts,instructions,skills}/**/*.md` and `docs/**/*.md`. By default `retext-profanities` findings flip the exit code (errors) and `alex` findings emit `::warning` annotations only. Pass `-FailOnAlex` to promote alex findings to errors for local hardening:
+`ci:eval:lint:text` scans `.github/{agents,prompts,instructions,skills}/**/*.md` and `docs/**/*.md`. By default `retext-profanities` findings flip the exit code (errors) and retext-equality findings retain the `alex` source contract and emit `::warning` annotations only. Pass `-FailOnAlex` to promote those compatibility findings to errors for local hardening:
 
 ```pwsh
 pwsh scripts/evals/Test-EvalSpecText.ps1 -FailOnAlex
@@ -215,8 +215,8 @@ False-positive lexical matches (e.g., `penetration test`, `attack surface`, `tok
 
 | Exit | Meaning                                                                                      |
 |------|----------------------------------------------------------------------------------------------|
-| 0    | No error-level findings (alex.js findings may still be reported as warnings).                |
-| 1    | At least one `retext-profanities` finding, or any alex.js finding when `-FailOnAlex` is set. |
+| 0    | No error-level findings (alex-compatible findings may still be reported as warnings).        |
+| 1    | At least one `retext-profanities` finding, or an alex-compatible finding with `-FailOnAlex`. |
 | 2    | Setup failure (corpus expansion failed, Node shim missing, or `node` not on PATH).           |
 
 ### Schema lint, coverage, and reachability
