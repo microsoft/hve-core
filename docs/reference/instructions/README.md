@@ -3,7 +3,7 @@ title: Instructions
 description: Reference documentation for HVE Core instructions.
 sidebar_position: 0
 author: Microsoft
-ms.date: 2026-08-18
+ms.date: 2026-08-25
 ms.topic: overview
 keywords:
   - reference
@@ -57,6 +57,7 @@ This page lists the generated reference documentation for HVE Core instructions.
 | [Project Planning/Adr Standards](project-planning/adr-standards.md)                               | Embedded ADR standards: MADR v4.0.0 template (CC0), Y-Statement formula, status taxonomy, naming rules, ASR trigger schema, and Microsoft-attributed paraphrases for ADR Creator sessions                                                                                             |
 | [Project Planning/Backlog Guardrails](project-planning/backlog-guardrails.md)                     | Always-on mutation guardrail for backlog tracking roots: require backlog-management activation before any tracker-bound mutation and stop when it is unavailable                                                                                                                      |
 | [Project Planning/Community Interaction](project-planning/community-interaction.md)               | Community interaction voice, tone, and response templates for GitHub-facing agents and prompts                                                                                                                                                                                        |
+| [Project Planning/Github Backlog Grooming](project-planning/github-backlog-grooming.md)           | Reusable GitHub backlog grooming policy for evidence-backed assessment, advisory dispositions, and approved writeback                                                                                                                                                                 |
 | [Rai Planning/Rai Identity](rai-planning/rai-identity.md)                                         | RAI Planner identity, 6-phase orchestration, state management, and session recovery                                                                                                                                                                                                   |
 | [Rai Planning/Rai License Posture](rai-planning/rai-license-posture.md)                           | RAI-specific overlay mapping RAI standards onto the repository licensing posture                                                                                                                                                                                                      |
 | [Security/Identity](security/identity.md)                                                         | Security Planner identity, six-phase orchestration, state management, and session recovery protocols                                                                                                                                                                                  |
