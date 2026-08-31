@@ -3,7 +3,7 @@ title: Build Workflows
 description: GitHub Actions CI/CD pipeline architecture for validation, security, and release automation
 sidebar_position: 3
 author: WilliamBerryiii
-ms.date: 2026-08-19
+ms.date: 2026-08-20
 ms.topic: overview
 keywords:
   - github actions
@@ -17,6 +17,8 @@ HVE Core uses GitHub Actions for continuous integration, quality validation, sec
 
 ```mermaid
 flowchart TD
+    accTitle: CI and Release Pipeline Architecture
+    accDescr: Pull request validation gates merges, then managed PreRelease and Stable branch ladders create tags and publish packages, while scheduled and manual workflows handle maintenance and recovery.
     subgraph PR["Pull Request"]
         direction TB
         PR1[PR Opened/Updated] --> PV[pr-validation.yml]
@@ -151,6 +153,8 @@ The `pr-validation.yml` workflow serves as the primary quality gate for all pull
 
 ```mermaid
 flowchart LR
+    accTitle: Pull Request Validation Job Groups
+    accDescr: Linting, analysis, and security checks run as parallel validation groups to provide fast pull request feedback.
     subgraph "Linting"
         ML[markdown-lint]
         SC[spell-check]
