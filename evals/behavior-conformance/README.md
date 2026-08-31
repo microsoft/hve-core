@@ -15,7 +15,7 @@ Behavior conformance answers a focused question per stimulus: *does the asset un
 * Instruction conformance: verifies that instructions in `.github/instructions/**/*.instructions.md` are interpreted by the model in line with their `applyTo` and content rules.
 * Skill behavior: verifies that skill invocation produces the canonical artifacts and section headers each `SKILL.md` advertises across three stimulus shapes (knowledge, tool-trigger, bleed-detection).
 
-Each tier shares the same advisory contract, the same `output-matches` grader family, and the same manifest-driven gating model as the other Tier 1/2 suites. None of them introduce a model-judge grader.
+Each tier shares the same advisory contract and manifest-driven gating model as the other Tier 1/2 suites. Most stimuli use deterministic `output-matches` graders. `skill-behavior.eval.yaml` also uses one `prompt` model-judge grader for a semantic contract that regex cannot credibly assess.
 
 ## Spec inventory
 
@@ -38,7 +38,7 @@ The maintained `skill-behavior.eval.yaml` inventory contains 221 stimuli across 
 
 The `backlog-plan` and `backlog-execute` workflow commands carry knowledge coverage plus a read-only boundary assertion and a mutation-safety assertion respectively. The retained `prompt-analyze`, `prompt-builder`, and `prompt-refactor` compatibility routes and other installed skill domains remain in advisory mode.
 
-The current branch-specific calibration status is not yet established for gating. Pass-rate and false-positive measurements are collected from advisory CI runs before graduation, and regex-only `output-matches` graders check contract vocabulary and routing signals rather than full semantic correctness.
+The current branch-specific calibration status is not yet established for gating. Pass-rate and false-positive measurements are collected from advisory CI runs before graduation. Most stimuli use `output-matches` to check contract vocabulary and routing signals, while one skill stimulus uses `prompt` to assess a semantic changes-record contract.
 
 ## Pipeline integration
 
@@ -67,20 +67,21 @@ Driver and workflow changes are not required to graduate a stimulus: the per-sti
 
 ## Graders
 
-Per **DD-23** and **DD-24**, each stimulus declares one or more `output-matches` graders. Simple routing cases commonly use two graders, while richer contract cases use additional graders when distinct requirements need independent signals:
+Per **DD-23** and **DD-24**, most stimuli declare one or more `output-matches` graders. Simple routing cases commonly use two graders, while richer contract cases use additional graders when distinct requirements need independent signals. One skill stimulus uses `prompt` for semantic behavior that deterministic regex cannot credibly assess:
 
-| Grader role                  | Pattern source     | Intent                                                                    |
-|------------------------------|--------------------|---------------------------------------------------------------------------|
-| Routing or attribution       | Per-stimulus regex | Asserts the response selects or identifies the documented capability.     |
-| Scope or contract vocabulary | Per-stimulus regex | Asserts the response stays in scope and carries required contract terms.  |
-| Additional contract signal   | Per-stimulus regex | Separately checks a material boundary, status, artifact, or handoff rule. |
+| Grader role                    | Configuration source      | Intent                                                                       |
+|--------------------------------|---------------------------|------------------------------------------------------------------------------|
+| Routing or attribution         | Per-stimulus regex        | Asserts the response selects or identifies the documented capability.        |
+| Scope or contract vocabulary   | Per-stimulus regex        | Asserts the response stays in scope and carries required contract terms.     |
+| Additional contract signal     | Per-stimulus regex        | Separately checks a material boundary, status, artifact, or handoff rule.    |
+| Model-judged semantic contract | Per-stimulus judge prompt | Assesses behavior that cannot be reduced credibly to deterministic patterns. |
 
-The repository's grader registry exposes `output-matches` (regex), `exact-match`, `contains`, and the hygiene-only `orphan-files`/`valid-refs` graders. No `type: prompt` (model judge) grader is registered, so this suite does not add LLM-judge grading; deeper semantic coverage is intentionally deferred to Phase 15 custom-grader work tracked under WI-16.
+The behavior specs currently configure `output-matches` and one `prompt` grader. Vally's deterministic output family exposes `output-contains`, `output-not-contains`, `output-matches`, and `output-not-matches`. The CLI registers the LLM-backed `prompt` and `panel` graders on demand when a spec uses them. `orphan-files` and `valid-refs` are skill-hygiene checks run by `vally lint`; they are not eval grader types. This suite loads no custom grader plugin.
 
 ## Anti-patterns
 
 * Do not flip `tags.advisory: false` on a stimulus before its prompt has been promoted in Phase 14.
-* Do not introduce a `type: prompt` grader. The registry does not support it and the lint will fail.
+* Prefer deterministic output graders when they can credibly assess the behavior. Reserve `prompt` for semantic contracts that cannot be reduced to stable deterministic signals.
 * Do not introduce per-suite workflow files; gating must remain inside the existing `eval-execute` job.
 * Do not bypass `StimulusIndex.psm1` to hand-roll a manifest mapping; backlink resolution must remain centralized.
 
