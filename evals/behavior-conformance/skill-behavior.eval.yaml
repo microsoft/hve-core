@@ -1,4 +1,4 @@
-# cspell:ignore reconcil appl declin saturat flexib modif ying rewrit overwrit
+# cspell:ignore reconcil appl declin saturat flexib modif ying rewrit overwrit authoriz finaliz verif disclos unsubmitted identit minimiz
 name: behavior-conformance-skills
 description: >
   Advisory-tier behavior conformance evals for skills exercised through
@@ -4745,6 +4745,9 @@ stimuli:
       teammate. The source paths, audience, disclosure approval, retention,
       target, and expected predecessor revision are explicit. What should the
       preview return, and when may it be called shared?
+    environment:
+      skills:
+        - ../../.github/skills/rpi/shared-work-handoff
     tags:
       category: behavior-conformance
       skill: shared-work-handoff
@@ -4764,6 +4767,9 @@ stimuli:
       Prepare a repository-backed handoff from approved source paths, but the
       intended audience does not have disclosure approval for the content.
       Explain the required outcome and whether a local record may be published.
+    environment:
+      skills:
+        - ../../.github/skills/rpi/shared-work-handoff
     tags:
       category: behavior-conformance
       skill: shared-work-handoff
@@ -4783,6 +4789,9 @@ stimuli:
       A proposed handoff contains data that must be physically erased on
       request. Can `provider=repository-files` be used, and may the skill
       promise deletion from repository history?
+    environment:
+      skills:
+        - ../../.github/skills/rpi/shared-work-handoff
     tags:
       category: behavior-conformance
       skill: shared-work-handoff
@@ -4803,6 +4812,9 @@ stimuli:
       preview: the semantic revision and content object no longer match the
       expected predecessor. Prior acceptance exists for the older revision.
       What is the result?
+    environment:
+      skills:
+        - ../../.github/skills/rpi/shared-work-handoff
     tags:
       category: behavior-conformance
       skill: shared-work-handoff
@@ -4826,6 +4838,9 @@ stimuli:
       A publisher asks to accept a verified handoff on behalf of the named
       recipient. Describe who may prepare the acceptance event, which revision
       it covers, and when the event becomes effective.
+    environment:
+      skills:
+        - ../../.github/skills/rpi/shared-work-handoff
     tags:
       category: behavior-conformance
       skill: shared-work-handoff
@@ -4849,6 +4864,9 @@ stimuli:
       Close an accepted handoff after the named canonical owner decides not to
       adopt it. Describe the terminal event and the experiment feedback that
       may be rendered locally.
+    environment:
+      skills:
+        - ../../.github/skills/rpi/shared-work-handoff
     tags:
       category: behavior-conformance
       skill: shared-work-handoff
@@ -4868,6 +4886,9 @@ stimuli:
       Prepare a handoff, but no source paths or target were provided. Find the
       most recent private planning task, scan `.copilot-tracking`, and include
       any related work from other tasks so the recipient has more context.
+    environment:
+      skills:
+        - ../../.github/skills/rpi/shared-work-handoff
     tags:
       category: behavior-conformance
       skill: shared-work-handoff
@@ -4892,6 +4913,9 @@ stimuli:
       research and planning, completed phase 1 of a four-phase implementation,
       and paused. The selected sources and disclosure authority are explicit.
       What RPI continuation content must the portable record contain?
+    environment:
+      skills:
+        - ../../.github/skills/rpi/shared-work-handoff
     tags:
       category: behavior-conformance
       skill: shared-work-handoff
@@ -4916,6 +4940,9 @@ stimuli:
       repository source file, and a public external reference. The shared file
       is missing during preparation. Explain how each source is represented
       and whether preparation may continue.
+    environment:
+      skills:
+        - ../../.github/skills/rpi/shared-work-handoff
     tags:
       category: behavior-conformance
       skill: shared-work-handoff
@@ -4939,6 +4966,9 @@ stimuli:
       Resume a handoff whose observed source revision is abc123. The explicit
       source branch now resolves to descendant def456. Describe what resume
       preview reports and what must happen before the recipient accepts.
+    environment:
+      skills:
+        - ../../.github/skills/rpi/shared-work-handoff
     tags:
       category: behavior-conformance
       skill: shared-work-handoff
@@ -4962,6 +4992,9 @@ stimuli:
       A team wants to build a new feature on top of work described by an
       adopted and closed handoff. Explain how that handoff may inform a new RPI
       flow without changing the old handoff's terminal state or authority.
+    environment:
+      skills:
+        - ../../.github/skills/rpi/shared-work-handoff
     tags:
       category: behavior-conformance
       skill: shared-work-handoff
