@@ -16,6 +16,22 @@ stimuli:
         config:
           pattern: '(?i)(critical|high|medium|low|info|severity|warning)'
       - type: output-matches
+        name: rai-report-root-and-path
+        config:
+          pattern: '(?i)\.copilot-tracking/rai-reviews/\d{4}-\d{2}-\d{2}/rai-report-[a-z0-9-]+-\d{8}\.md'
+      - type: output-matches
+        name: rai-framework-language
+        config:
+          pattern: '(?i)(nist ai rmf|ai stride|eu ai act|responsible ai)'
+      - type: output-matches
+        name: caution-or-qualified-review
+        config:
+          pattern: '(?i)(assistive tool|qualified human review|independently reviewed|does not constitute)'
+      - type: output-matches
+        name: pending-human-accountability
+        config:
+          pattern: '(?i)(human acceptance.{0,20}pending|pending.{0,20}human (review|acceptance))'
+      - type: output-matches
         name: no-source-edit
         config:
           pattern: '(?i)(created|wrote|modified|edited|patched|added)\s+\S{0,40}(\.cs|\.py|\.ts|\.js|package\.json)'
