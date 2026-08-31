@@ -25,7 +25,7 @@ Every finding records one category, mapped requirement or review dimension, targ
 
 * Candidate revision: {{source_revision_or_equivalent_provenance}}
 * Tested profile and model: {{profile_and_model_per_target}}
-* Behavior gate: {{Executed_or_Satisfied-and-skipped}}
+* Behavior disposition: {{Executed_or_Satisfied-and-skipped}}
 * Fidelity: {{simulation_native_or_Not_applicable}}
 * Execution status: {{Complete_Partial_Deferred_Blocked_or_Not_run}}
 * Verdict: {{Pass_Revise_Blocked_Not_available_or_Not_applicable}}
