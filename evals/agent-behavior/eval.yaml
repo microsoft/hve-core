@@ -710,6 +710,10 @@ stimuli:
     config:
       pattern: (?is)(confirm|adjust|edit).{0,80}(scope|orientation|walkthrough|dispatch\s+board)|(scope|orientation|walkthrough|dispatch\s+board).{0,80}(confirm|adjust|edit)
   - type: output-matches
+    name: change-risk-evidence
+    config:
+      pattern: (?is)(?=.*(?:change[- ]risk|evidence\s+checklist))(?=.*(?:observed|unavailable|qualitative|change[- ]scope|path[- ]criticality|history|test[- ]presence|coverage|rollback))(?=.*recommended\s+depth)(?=.*(?:confirm|adjust|correct|select)).+
+  - type: output-matches
     name: no-source-edit
     config:
       pattern: (?i)(created|wrote|modified|edited|patched|added)\s+\S{0,40}(\.cs|\.py|\.ts|\.js|package\.json)
