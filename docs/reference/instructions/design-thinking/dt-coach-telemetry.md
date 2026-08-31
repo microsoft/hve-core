@@ -3,7 +3,7 @@ title: Design Thinking/Dt Coach Telemetry
 description: Applies Design Thinking telemetry expectations to DT session artifacts
 sidebar_position: 1
 author: Microsoft
-ms.date: 2026-08-12
+ms.date: 2026-08-27
 ms.topic: reference
 keywords:
   - instruction
@@ -28,8 +28,10 @@ Applies Design Thinking telemetry expectations to DT session artifacts
 
 ## When to use it
 
-<!-- asset-docs:stub -->
-Describe the situations where this asset is the right choice, and when to reach for a different asset instead.
+Apply this overlay when a Design Thinking session artifact introduces or
+revises observable production behavior, audit trails, or telemetry decisions.
+Use `telemetry-foundations` for approved names, units, and PII handling; when
+the behavior is not observable in production, no telemetry is required.
 
 ## Example usage
 

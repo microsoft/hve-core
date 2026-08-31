@@ -2,7 +2,7 @@
 title: Agentic Workflows
 description: End-to-end process flow for AI-driven issue triage, implementation, and review workflows in hve-core
 author: HVE Core Team
-ms.date: 2026-08-10
+ms.date: 2026-08-26
 ms.topic: concept
 sidebar_position: 4
 keywords:
@@ -23,6 +23,8 @@ hve-core uses GitHub Agentic Workflows to support the journey from issue creatio
 
 ```mermaid
 flowchart TD
+    accTitle: Issue Triage and Pull Request Review Workflow
+    accDescr: Issue triage routes qualifying issues into implementation. Opened pull requests pass through automated review outcomes, revision loops when needed, and human review before merge.
     subgraph TRIGGER["Issue Created or Labeled"]
         A["New issue opened<br/>or labeled needs-triage"]
     end
@@ -172,16 +174,18 @@ Review workflow after a pull request opens:
 
 ```mermaid
 stateDiagram-v2
+    accTitle: Issue Lifecycle and Label State Machine
+    accDescr: Issues move from triage and classification into agent implementation, pull request review, revision or approval outcomes, and final merge.
     [*] --> needs_triage: Issue opened
     needs_triage --> classified: Triage removes needs-triage,<br/>adds type + component labels
     classified --> agent_ready: Triage adds agent-ready<br/>(if criteria met)
     classified --> human_review: Criteria not met,<br/>awaits human labeling
     agent_ready --> pr_opened: Implementation agent<br/>opens PR
     pr_opened --> review_requested: User with admin, maintainer,<br/>or write access invokes /review
-    review_requested --> review_passed: Checks pass;<br/>review-passed added
-    review_requested --> needs_revision: Blocking non-maintainer findings;<br/>needs-revision added
-    review_requested --> draft_revision: Five or more critical non-maintainer findings;<br/>draft + needs-revision
-    review_requested --> comment_only: Advisory or non-blocking findings;<br/>COMMENT only
+    review_requested --> review_passed: Checks pass,<br/>review-passed added
+    review_requested --> needs_revision: Blocking non-maintainer findings,<br/>needs-revision added
+    review_requested --> draft_revision: Five or more critical non-maintainer findings,<br/>draft + needs-revision
+    review_requested --> comment_only: Advisory or non-blocking findings,<br/>COMMENT only
     comment_only --> pr_opened: PR remains open
     needs_revision --> pr_opened: Author pushes fixes
     draft_revision --> pr_opened: Author pushes fixes
@@ -256,6 +260,8 @@ Five agents support upstream planning activities:
 
 ```mermaid
 flowchart LR
+    accTitle: Hosted Workflows and Interactive Agent Integration
+    accDescr: Repository-hosted workflows coordinate through events and labels while interactive agents share instructions, skills, and tracking artifacts across the development lifecycle.
     subgraph HOSTED["Repository-Hosted Workflows"]
         direction TB
         TRIAGE["Issue Triage<br/><i>event-driven</i>"]

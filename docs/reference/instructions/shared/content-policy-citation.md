@@ -3,7 +3,7 @@ title: Shared/Content Policy Citation
 description: Content-policy and terms-of-service guardrails for public output and eval stimuli
 sidebar_position: 2
 author: Microsoft
-ms.date: 2026-08-12
+ms.date: 2026-08-27
 ms.topic: reference
 keywords:
   - instruction
@@ -28,8 +28,11 @@ Content-policy and terms-of-service guardrails for public output and eval stimul
 
 ## When to use it
 
-<!-- asset-docs:stub -->
-Describe the situations where this asset is the right choice, and when to reach for a different asset instead.
+Apply these guards before public collaboration output, workflow-visible
+summaries, or Vally stimuli can expose a suspected policy or terms concern.
+Use neutral wording and the top-level Microsoft policy link without category,
+rationale, or payload details; private reasoning is outside this public-output
+contract.
 
 ## Example usage
 

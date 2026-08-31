@@ -3,7 +3,7 @@ title: Instructions
 description: Reference documentation for HVE Core instructions.
 sidebar_position: 0
 author: Microsoft
-ms.date: 2026-08-12
+ms.date: 2026-08-18
 ms.topic: overview
 keywords:
   - reference
@@ -43,7 +43,7 @@ This page lists the generated reference documentation for HVE Core instructions.
 | [Experimental/Mural/Mural Writing Style](experimental/mural/mural-writing-style.md)               | Asymmetric writing style for Mural: outbound (writing into Mural) is sticky-concise; inbound (extracting from Mural) is context-hydrated.                                                                                                                                             |
 | [Experimental/Pptx](experimental/pptx.md)                                                         | Shared conventions for PowerPoint Builder agent, subagent, and powerpoint skill                                                                                                                                                                                                       |
 | [Hve Core/Commit Message](hve-core/commit-message.md)                                             | Commit message format and conventions                                                                                                                                                                                                                                                 |
-| [Hve Core/Copilot Tracking](hve-core/copilot-tracking.md)                                         | Shared .copilot-tracking conventions for RPI, HVE Builder, and compatibility workflow evidence                                                                                                                                                                                        |
+| [Hve Core/Copilot Tracking](hve-core/copilot-tracking.md)                                         | Shared .copilot-tracking conventions for RPI, HVE Builder, proposal response, and compatibility workflow evidence                                                                                                                                                                     |
 | [Hve Core/Git Merge](hve-core/git-merge.md)                                                       | Git merge, rebase, and rebase --onto workflows with conflict handling and stop controls                                                                                                                                                                                               |
 | [Hve Core/Hve Builder](hve-core/hve-builder.md)                                                   | Authoring standards for prompts, agents, subagents, instructions, and skills, grounded in the frontier-LLM instruction-quality research                                                                                                                                               |
 | [Hve Core/Licensing Posture](hve-core/licensing-posture.md)                                       | Repository posture for licensing, reproduction, and attribution of third-party standards in skills and tracking artifacts                                                                                                                                                             |

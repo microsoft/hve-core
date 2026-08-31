@@ -167,3 +167,112 @@ expectations:
     priority: medium
     stimulus_scoped: true
     contract_ref: "stimulus design (per-stimulus, not agent-intrinsic)"
+
+  - expectation_id: proposal-response-business-activation
+    summary: Explicit proposal-response continuation activates business-domain contribution only.
+    signal: Output names `proposal-response#contribute:business`, returns the supplied proposal-response artifact path, and preserves builder state transport.
+    pass_criteria: |
+      An explicit RFI, RFP, questionnaire, tender, bid-response, proposal, or
+      reusable response-evidence request invokes `proposal-response` contribute
+      mode with the business domain, uses approved business-owned evidence, and
+      retains internal-review and outside-scope authority markers. The complete
+      payload is persisted under `.copilot-tracking/proposal-responses/`; the
+      response and BRD state carry its supplied path rather than a payload copy.
+      A continuation passes the same path to the skill, retains it once in
+      `proposalResponseArtifacts`, retains the business extension once in
+      `extensionsLoaded`, preserves prior SQ, CLM, and UNR IDs, adds only an
+      operation-appropriate business record, and exposes recalculated coverage.
+    failure_modes:
+      - Product-owned proof or release authority is supplied by BRD Builder.
+      - The extension load is recorded in `phaseSkillsLoaded` instead of `extensionsLoaded`.
+      - The complete `RESPONSE_EVIDENCE_V1` payload is returned inline without an artifact pointer.
+      - A supplied artifact path is replaced, omitted, or duplicated in `proposalResponseArtifacts`.
+      - Existing SQ, CLM, or UNR records are discarded, renumbered, or hidden.
+      - Coverage is reused without recalculation after the contribution.
+    priority: high
+    applies_when: "stimulus explicitly requests proposal-response contribution"
+    contract_ref: "agent §Lifecycle Dispatch › Proposal Response Extension"
+
+  - expectation_id: proposal-response-tri-operation-binding
+    summary: BRD Builder performs analyze, contribute, and draft for the business domain.
+    signal: Output reports a pointer whose `operation` matches the requested analyze, contribute, or draft operation.
+    pass_criteria: |
+      An explicit proposal-response request for `analyze`, `contribute`, or
+      `draft` is carried inside BRD Builder without redirecting the user to
+      invoke the skill directly. `contribute` stays bound to the business
+      domain. `draft` renders responses over every reviewed claim, including
+      product-owned claims, and creates no product-owned claim of its own.
+    failure_modes:
+      - An analyze or draft request is refused or redirected to direct skill invocation.
+      - A draft omits questions answered by product-owned claims.
+      - The draft creates, edits, or reclassifies a product-owned claim.
+    priority: high
+    applies_when: "stimulus requests a proposal-response analyze, contribute, or draft operation"
+    contract_ref: "agent §Lifecycle Dispatch › Proposal Response Extension"
+
+  - expectation_id: proposal-response-source-intake
+    summary: A user-named BRD becomes a registered, cited source rather than transcribed prose.
+    signal: Output reports an approved-source record for the named path and claims citing `SRC-###` references.
+    pass_criteria: |
+      When the user names an existing BRD path as approved evidence, the path is
+      read, registered with its own `SRC` ID and read date, and every resulting
+      claim's `evidence_refs` entry names that source ID plus the requirement or
+      section it drew from. A named path that does not resolve stops the
+      operation with the path and the smallest clearing action visible, and
+      produces no claim.
+    failure_modes:
+      - Claim evidence is a bare filename or transcribed sentence with no source ID.
+      - A source is registered without being read.
+      - An unresolvable source path is silently replaced by recalled content.
+    priority: high
+    applies_when: "stimulus names an approved source artifact path"
+    contract_ref: "skill §Flow, §Stop Rules; reference §Approved Sources"
+
+  - expectation_id: proposal-response-next-operation-reported
+    summary: Each proposal-response turn closes by naming the remaining step.
+    signal: Output carries the skill's `next_operation` value and states it to the user.
+    pass_criteria: |
+      The reported pointer carries `next_operation`, and the turn closes by
+      naming that operation. A payload whose only open items require a human
+      decision outside the skill reports `none` rather than looping, and names
+      the blocking unresolved items.
+    failure_modes:
+      - "`next_operation` is omitted from the reported pointer."
+      - The agent invokes the next operation without a new user request.
+      - A payload blocked only by human decisions reports a further skill operation.
+    priority: medium
+    applies_when: "skill returns RESPONSE_EVIDENCE_POINTER_V1"
+    contract_ref: "skill §Operation Sequence; skill reference §Reporting"
+
+  - expectation_id: proposal-response-rejected-continuation
+    summary: A rejected continuation remains an error and does not enter proposal-response state.
+    signal: Output reports `RESPONSE_EVIDENCE_ERROR_V1` and leaves `proposalResponseArtifacts` without the rejected path.
+    pass_criteria: |
+      When the skill returns `RESPONSE_EVIDENCE_ERROR_V1` with
+      `artifact_written: false`, the builder reports the rejection, its
+      `validation_error`, and its `clearing_action`, leaves
+      `state.proposalResponseArtifacts` unchanged, does not create that array,
+      and never appends the rejected `artifact_path`. Only a returned
+      `RESPONSE_EVIDENCE_POINTER_V1` records a path.
+    failure_modes:
+      - The rejected `artifact_path` is appended to `proposalResponseArtifacts`.
+      - A missing `proposalResponseArtifacts` array is created for a rejected operation.
+      - The rejection is reported as a successful contribution or a written artifact.
+      - The validation error or clearing action is omitted from the report.
+    priority: high
+    applies_when: "skill returns a rejected continuation result"
+    contract_ref: "skill reference §Rejected Operations"
+
+  - expectation_id: ordinary-brd-no-proposal-activation
+    summary: Ordinary BRD work does not activate proposal-response behavior.
+    signal: Output contains no proposal-response contract, appendix, or extension-load language.
+    pass_criteria: |
+      Creation, refinement, resume, quality review, and BRD-to-PRD handoff
+      requests continue through the canonical BRD lifecycle without loading or
+      emitting proposal-response artifacts.
+    failure_modes:
+      - An ordinary BRD request emits `RESPONSE_EVIDENCE_V1`.
+      - A missing `extensionsLoaded` array triggers proposal-response activation.
+    priority: high
+    applies_when: "stimulus contains no explicit proposal-response intent"
+    contract_ref: "agent §Lifecycle Dispatch › Proposal Response Extension"
