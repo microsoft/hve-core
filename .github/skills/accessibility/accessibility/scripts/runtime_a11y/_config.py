@@ -118,6 +118,56 @@ def _host_is_allowlisted(host: str, allowlist: list[str]) -> bool:
     return False
 
 
+def assert_host_allowed(
+    host: str,
+    allowlist: list[str] | None = None,
+    allow_external: bool = False,
+) -> None:
+    """Require a loopback, allowlisted, or explicitly authorized host."""
+    if _host_is_loopback(host):
+        return
+    if allowlist and _host_is_allowlisted(host, allowlist):
+        return
+    if allow_external:
+        return
+    raise ScriptError(
+        f"Refusing to probe non-loopback host '{host}'. Add it to the allowlist "
+        "or re-run with --allow-external to confirm intentional external access.",
+        EXIT_USAGE,
+    )
+
+
+def _validated_http_host(url: str) -> str:
+    """Return the host from an absolute HTTP(S) URL without credentials."""
+    if (
+        not isinstance(url, str)
+        or not url
+        or any(ord(character) <= 32 or ord(character) == 127 for character in url)
+    ):
+        raise ScriptError(
+            "Config baseUrl must be an absolute HTTP(S) URL without whitespace "
+            "or control characters.",
+            EXIT_USAGE,
+        )
+
+    parsed = urlparse(url)
+    if parsed.scheme.lower() not in {"http", "https"} or not parsed.hostname:
+        raise ScriptError(
+            "Config baseUrl must be an absolute HTTP(S) URL with a host "
+            "(for example http://127.0.0.1:3000).",
+            EXIT_USAGE,
+        )
+    if parsed.username is not None or parsed.password is not None:
+        raise ScriptError("Config baseUrl must not include credentials.", EXIT_USAGE)
+    try:
+        parsed.port
+    except ValueError as exc:
+        raise ScriptError(
+            "Config baseUrl includes an invalid port.", EXIT_USAGE
+        ) from exc
+    return parsed.hostname
+
+
 def assert_target_allowed(config: dict[str, Any], allow_external: bool = False) -> None:
     """Enforce the SSRF/localhost-allowlist guard on the config baseUrl.
 
@@ -130,24 +180,12 @@ def assert_target_allowed(config: dict[str, Any], allow_external: bool = False) 
         ScriptError: If the target host is neither loopback nor authorized.
     """
     base_url = config.get("baseUrl", "")
-    host = urlparse(base_url).hostname or ""
-    if not host:
-        raise ScriptError(
-            "Config baseUrl must include a host (for example http://127.0.0.1:3000).",
-            EXIT_USAGE,
-        )
-    if _host_is_loopback(host):
-        return
+    host = _validated_http_host(base_url)
     allowlist = config.get("allowlist") or []
-    if isinstance(allowlist, list) and _host_is_allowlisted(host, allowlist):
-        return
-    if allow_external:
-        return
-    raise ScriptError(
-        f"Refusing to probe non-loopback host '{host}'. Add it to the config "
-        "allowlist or re-run with --allow-external to confirm intentional "
-        "external access.",
-        EXIT_USAGE,
+    assert_host_allowed(
+        host,
+        allowlist=allowlist if isinstance(allowlist, list) else None,
+        allow_external=allow_external,
     )
 
 
