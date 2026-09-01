@@ -44,7 +44,8 @@ and exclude it from report instructions.
 
 * Require user approval before creating an Outlook draft
 * Create drafts only when distribution is explicitly enabled
-* Use message-write capability only to create a draft under `/me/messages`
+* Use only the WorkIQ Mail MCP server's dedicated `CreateDraftMessage`
+  capability for Outlook draft creation
 * Do not invoke `sendMail`, a send action, or an equivalent transmission
   operation
 * Never send email or publish a report

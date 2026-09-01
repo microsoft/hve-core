@@ -3,7 +3,7 @@ title: engagement-reporting
 description: Creates source-grounded internal or external weekly engagement status reports with optional Outlook draft creation.
 sidebar_position: 1
 author: Microsoft
-ms.date: 2026-08-27
+ms.date: 2026-09-01
 ms.topic: reference
 keywords:
   - skill
@@ -71,6 +71,7 @@ With a valid `engagement.yaml`, the skill discovers configured sources,
 normalizes evidence, enforces coverage and verification gates, drafts against
 the selected template, applies review, and returns approved report artifacts.
 Optional Outlook distribution creates a draft only after separate approval.
-The agent renders the approved report as HTML inline. If conversion cannot
-preserve required structures, including tables, distribution stops instead of
-flattening the report.
+The agent renders the approved report as HTML inline and uses the dedicated
+WorkIQ Mail MCP `CreateDraftMessage` operation. If the WorkIQ Mail MCP server is
+unavailable or conversion cannot preserve required structures, including
+tables, distribution stops instead of flattening the report.

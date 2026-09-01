@@ -3,7 +3,7 @@ title: Engagement Report Council Arbiter
 description: Reconciles independent report critiques against research evidence and records user-approved decisions.
 sidebar_position: 1
 author: Microsoft
-ms.date: 2026-08-24
+ms.date: 2026-09-01
 ms.topic: reference
 keywords:
   - agent
@@ -37,7 +37,9 @@ independent critics have completed.
 
 ## Example usage
 
-The report generator supplies two critique artifacts, the draft, research
-findings, coverage summary, audience, and template. The arbiter returns
-evidence-backed recommendations and writes approved decisions to
-`synthesis/council-minutes.md`.
+The report generator first dispatches proposal mode with two critique artifacts,
+the draft, research findings, coverage summary, audience, and template. After
+the user decides the material proposals, the generator dispatches persistence
+mode with the validated reporting date, report-type slug, completed critique
+set, and approved decisions. The arbiter writes only the confined
+`synthesis/council-minutes.md` record.

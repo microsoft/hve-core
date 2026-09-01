@@ -3,7 +3,7 @@ title: Engagement Report Council Critic
 description: Independently critiques one engagement report draft against research evidence without reading other critiques.
 sidebar_position: 2
 author: Microsoft
-ms.date: 2026-08-24
+ms.date: 2026-09-01
 ms.topic: reference
 keywords:
   - agent
@@ -38,6 +38,7 @@ review.
 ## Example usage
 
 The report generator supplies one draft, the normalized research findings,
-coverage summary, audience, template, critic identifier, and output path. The
-critic returns section-level accuracy and completeness findings without reading
-other critiques or rewriting the draft.
+coverage summary, audience, template, reporting date, report-type slug, and
+critic-run slug. The critic derives a confined synthesis path and returns
+section-level accuracy and completeness findings without reading other
+critiques or rewriting the draft.

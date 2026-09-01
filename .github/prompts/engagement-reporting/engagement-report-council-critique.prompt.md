@@ -1,7 +1,7 @@
 ---
 name: engagement-report-council-critique
 description: Template prompt for running one independent Council critique against research evidence
-argument-hint: "Critic run, output path, draft, research, coverage, audience, and template"
+argument-hint: "Report date, report type, critic run, draft, research, coverage, audience, and template"
 ---
 
 # Engagement Report Council Critique
@@ -24,8 +24,12 @@ report.
 
 ## Inputs
 
-* `${input:critic-run-id}`: (Required) Unique identifier for this isolated run
-* `${input:critique-path}`: (Required) Target path for the critique artifact
+* `${input:report-date}`: (Required) Reporting session date in `YYYY-MM-DD`
+  format
+* `${input:report-type}`: (Required) Lowercase report-type slug using only
+  letters, numbers, and hyphens
+* `${input:critic-run-id}`: (Required) Unique lowercase run slug using only
+  letters, numbers, and hyphens
 * `${input:draft}`: (Required) Draft report content or readable local path
 * `${input:research}`: (Required) Normalized research content or readable path
 * `${input:coverage}`: (Required) Source coverage summary
@@ -36,8 +40,19 @@ report.
 
 Review `${input:draft}` independently against `${input:research}`,
 `${input:coverage}`, `${input:audience}`, and `${input:template}`. Identify the
-run as `${input:critic-run-id}` and write the result only to
-`${input:critique-path}`.
+run as `${input:critic-run-id}`.
+
+Validate the date and slug inputs before writing. Reject absolute paths, path
+separators, parent traversal, empty segments, and values outside the declared
+formats. Derive the critique path without accepting a caller-provided output
+path:
+
+```text
+.working/${input:report-date}-${input:report-type}/synthesis/critique-${input:critic-run-id}.md
+```
+
+Resolve the derived path canonically and write only when it remains beneath the
+reporting session's `synthesis/` directory.
 
 1. Accuracy and source grounding
 2. Completeness and material omissions
@@ -87,5 +102,6 @@ Completeness: complete | minor-gap | material-gap
 * Do not rewrite the draft
 * Do not reconcile findings
 * Do not infer facts beyond the supplied research
+* Do not write when any path segment is invalid or confinement cannot be proven
 
 Use the selected model identifier when visible; otherwise record `unavailable`.

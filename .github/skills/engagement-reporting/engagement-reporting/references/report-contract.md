@@ -1,7 +1,7 @@
 ---
 title: Engagement Reporting Contract
 description: Synthesis, traceability, review, output, talk-track, and retention requirements for engagement reports.
-ms.date: 2026-08-13
+ms.date: 2026-09-01
 ms.topic: reference
 ---
 
@@ -19,7 +19,7 @@ ms.topic: reference
     ├── synthesis/
     │   ├── draft.md
     │   ├── council-prompt.md
-    │   ├── critique-*.md
+    │   ├── critique-{critic-run-id}.md
     │   └── council-minutes.md
     └── review/
         ├── accuracy-check.md
@@ -38,6 +38,29 @@ Final claim -> Draft claim -> Research finding -> Primary source
 Previous reports can establish continuity but cannot support factual claims.
 When directionality, ownership, completion state, or attribution is unclear,
 flag the claim for verification.
+
+## Report style and terminology
+
+Write in active voice and calibrate detail to the configured audience:
+tactical for engineers, outcome-focused for directors, and strategic for
+executives. Describe engagement outcomes and decisions rather than the
+reporting process.
+
+Use configured canonical terms from `engagement.yaml`; preserve source
+spellings when no terminology entry exists, and ask when a configured term is
+ambiguous. Preserve contributor spelling conventions rather than normalizing
+British and American spelling across separately authored sections.
+
+Use concise bullet fragments without trailing full stops, semicolons for
+related clauses within a bullet, and dates for scheduled events. Write "and"
+instead of ampersands in prose. Avoid "deep dive", "sync up", "circle back",
+"leverage", "robust", "seamless", em dashes, generic assistant phrases,
+source-channel narration, and retrieval-process commentary.
+
+Demonstrate progression from the prior period. Frame future events through
+completed preparation work, and keep source references, coverage gaps,
+confidence, and verification details in working artifacts rather than the
+audience-facing report.
 
 ## Synthesis
 
@@ -64,19 +87,28 @@ cross-report discrepancies, or unclear directionality.
 
 1. Build a critique input containing the draft, normalized findings, coverage,
    audience, and accuracy rules
-2. Dispatch `Engagement Report Council Critic` at least twice with distinct run
-   identifiers
-   and isolated inputs
+2. Dispatch `Engagement Report Council Critic` at least twice with the validated
+   reporting date, report-type slug, distinct critic-run slugs, and isolated
+   inputs. Each critic derives and canonically confines its own synthesis path.
 3. Use distinct model selections when supported and record model provenance;
    otherwise label the runs as same-model independent critiques
 4. If independent agent runs are unavailable, use
-   `engagement-report-council-critique` manually in separate model sessions and save each result as `critique-*.md`
+   `engagement-report-council-critique` manually in separate model sessions.
+   Supply the reporting date, report-type slug, and critic-run slug so the
+   prompt derives each confined
+   `synthesis/critique-{critic-run-id}.md` artifact path.
 5. Treat one critique as ordinary review rather than Council validation
-6. Dispatch `Engagement Report Council Arbiter` to reconcile findings against
-   research, not model agreement
-7. Present material edits and disagreements to the user
-8. Record critic runs, model provenance, evidence, decisions, rejected
-   findings, and applied edits in `council-minutes.md`
+6. Dispatch `Engagement Report Council Arbiter` in `proposal` mode to reconcile
+   findings against research, not model agreement. Proposal mode writes
+   nothing.
+7. Present material edits and disagreements to the user and record the approved
+   and rejected decisions.
+8. Dispatch the Arbiter again in `persistence` mode with the validated reporting
+   date, report-type slug, completed critique set, and user-approved decision
+   set.
+9. Record critic runs, model provenance, evidence, decisions, rejected
+   findings, and applied edits only in the canonically confined
+   `synthesis/council-minutes.md`.
 
 ## Review gate
 

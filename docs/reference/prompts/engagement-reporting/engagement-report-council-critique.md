@@ -3,7 +3,7 @@ title: engagement-report-council-critique
 description: Template prompt for running one independent Council critique against research evidence
 sidebar_position: 1
 author: Microsoft
-ms.date: 2026-08-24
+ms.date: 2026-09-01
 ms.topic: reference
 keywords:
   - prompt
@@ -41,7 +41,8 @@ Use the Engagement Report Reviewer when only one independent review is needed.
    selected template.
 2. Start a separate model session for each critic.
 3. Invoke `/engagement-report-council-critique` and append the prepared inputs,
-   a unique critic identifier, and the target critique path.
+   reporting date, report-type slug, and a unique critic-run slug. The prompt
+   derives the confined critique path.
 4. Save each critique independently.
 5. Provide at least two completed critiques to the Council Arbiter.
 
@@ -49,6 +50,8 @@ Use the Engagement Report Reviewer when only one independent review is needed.
 
 ```text
 /engagement-report-council-critique
+Report date: 2026-08-28
+Report type: weekly
 Critic run: critic-2
 Audience: customer steering committee
 Draft: [draft content]

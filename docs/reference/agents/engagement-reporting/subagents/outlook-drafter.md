@@ -3,7 +3,7 @@ title: Engagement Report Outlook Drafter
 description: Creates one approved HTML Outlook draft through a constrained distribution-only workflow.
 sidebar_position: 4
 author: Microsoft
-ms.date: 2026-08-27
+ms.date: 2026-09-01
 ms.topic: reference
 keywords:
   - agent
@@ -35,7 +35,7 @@ of the separate approval.
 
 Use a different workflow when content still needs research, editing, or review.
 The drafter validates faithful HTML and table conversion, makes exactly one
-draft-create attempt through `/me/messages`, and never sends or retries.
+dedicated `CreateDraftMessage` attempt, and never sends or retries.
 
 ## Example usage
 

@@ -919,10 +919,11 @@ stimuli:
 
   - name: prompt-engagement-report-council-critique-conformance
     prompt: |
-      Invoke `engagement-report-council-critique` for critic run `critic-3`.
-      The draft says a milestone is complete, but research finding R-8 says it
-      remains in progress. Produce an independent evidence-backed critique
-      without rewriting the draft or reconciling other critiques.
+      Invoke `engagement-report-council-critique` for report date `2026-08-28`,
+      report type `weekly`, and critic run `critic-3`. The draft says a
+      milestone is complete, but research finding R-8 says it remains in
+      progress. Produce an independent evidence-backed critique without
+      rewriting the draft or reconciling other critiques.
     tags:
       category: behavior-conformance
       prompt: engagement-report-council-critique
@@ -940,3 +941,7 @@ stimuli:
         name: independent-critique-shape
         config:
           pattern: '(?i)(accuracy|completeness|finding|proposed direction|missing material)'
+      - type: output-matches
+        name: confined-critique-path
+        config:
+          pattern: '(?i)\.working/2026-08-28-weekly/synthesis/critique-critic-3\.md'

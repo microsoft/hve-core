@@ -1,7 +1,7 @@
 ---
 title: Outlook Draft Distribution
 description: Capability detection, draft creation, traceability, and stop rules for optional Outlook distribution.
-ms.date: 2026-08-27
+ms.date: 2026-09-01
 ms.topic: reference
 ---
 
@@ -18,8 +18,8 @@ Continue only when:
 * The user approved the final report
 * After the report was saved, the user separately approved Outlook draft
   creation
-* The Engagement Report Outlook Drafter and its draft-create capability are
-  available
+* The Engagement Report Outlook Drafter and the WorkIQ Mail MCP server's
+  dedicated `CreateDraftMessage` capability are available
 * Recipient fields and subject substitutions are valid
 
 If a precondition fails, record `Distribution skipped` and continue report
@@ -38,44 +38,34 @@ completion.
    a table, conversion succeeds only when the output contains `<table>`.
 6. Exclude working-file references and unapproved evidence appendices from the
    approved Markdown before conversion
-7. Make one WorkIQ `create_entity` attempt with:
-   * `parentUrl`: `/me/messages`
-   * `jsonBody`: a JSON-encoded Message with this shape:
+7. Make one WorkIQ Mail `CreateDraftMessage` attempt with this shape:
 
-     ```json
-     {
-       "subject": "Resolved subject",
-       "body": {
-         "contentType": "HTML",
-         "content": "<p>Approved report HTML</p>"
-       },
-       "toRecipients": [
-         {
-           "emailAddress": {
-             "address": "recipient@example.com"
-           }
-         }
-       ],
-       "ccRecipients": [],
-       "bccRecipients": []
-     }
-     ```
+   ```json
+   {
+     "to": ["recipient@example.com"],
+     "cc": [],
+     "bcc": [],
+     "subject": "Resolved subject",
+     "body": "<p>Approved report HTML</p>",
+     "contentType": "HTML"
+   }
+   ```
 
-   The body `contentType` is always `HTML`, and `content` is the rendered HTML.
-   Convert every configured email string into an
-   `{ "emailAddress": { "address": "..." } }` recipient object. An empty
-   configured list becomes an empty recipient array.
+   Pass configured email strings directly in the matching recipient arrays. An
+   empty configured list becomes an empty array. The `body` is the rendered
+   HTML and `contentType` is always `HTML`.
 8. Before draft creation, verify the payload still contains
    `"contentType": "HTML"` and, for a tabular report, `<table>`. Stop when either
    invariant is missing.
-9. Do not run schema discovery, enumerate unrelated Message operations, or
-   perform a second report-validation pass
+9. Do not run schema discovery, enumerate unrelated mail operations, or perform
+   a second report-validation pass
 10. Do not retry draft creation after any response or connectivity failure; a
    failed response does not prove that the service did not create the draft
 11. Do not invoke `sendMail`, a send action, or any equivalent operation
 
-The workflow uses the draft-create operation only. It does not register or rely
-on a hook, and it does not inspect or invoke transmission operations.
+The Outlook Drafter is granted only the dedicated draft-create operation. It
+does not register or rely on a hook, and it cannot inspect or invoke
+transmission operations.
 
 ## Error handling
 

@@ -19,6 +19,7 @@ engagement:
 #   # ADO:
 #   #   org: contoso
 #   #   project: "12345 - CONTOSO - Data Platform"
+#   #   # Saved query path resolved and executed through the ADO query tools.
 #   #   query_path: "Shared Queries/weekly-report"
 #   # GitHub:
 #   #   repo: "org/repo-name"
@@ -71,10 +72,11 @@ reports:
     include_activity_table: false # Enable for task-level tracking
 
 # Distribution (optional)
-# When enabled and the WorkIQ Message entity supports writes, the agent creates
-# an Outlook draft with the final report pasted in. The user reviews and sends
-# from Outlook. The workflow never invokes a send action. If Outlook is
-# unreachable or draft-write capability is not exposed, this phase is skipped.
+# When enabled and WorkIQ Mail exposes its dedicated CreateDraftMessage
+# operation, the agent creates an Outlook draft with the final report pasted in.
+# The user reviews and sends from Outlook. The workflow never invokes a send
+# action. If Outlook or the draft-only operation is unavailable, this phase is
+# skipped.
 distribution:
   outlook_draft:
     enabled: false
