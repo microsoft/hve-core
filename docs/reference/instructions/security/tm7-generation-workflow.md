@@ -3,7 +3,7 @@ title: Security/Tm7 Generation Workflow
 description: Human-in-the-loop contract for TM7 threat-model generation and the native Windows TMT feedback loop
 sidebar_position: 4
 author: Microsoft
-ms.date: 2026-08-14
+ms.date: 2026-08-27
 ms.topic: reference
 keywords:
   - instruction
@@ -28,8 +28,11 @@ Human-in-the-loop contract for TM7 threat-model generation and the native Window
 
 ## When to use it
 
-<!-- asset-docs:stub -->
-Describe the situations where this asset is the right choice, and when to reach for a different asset instead.
+Apply this contract when a Security Planner or Reviewer generates a TM7 draft,
+updates a model, or considers the native Windows TMT feedback loop. Generation
+still requires explicit authorship confirmation before handoff, while native
+UI automation requires a separate desktop-takeover confirmation and visual
+review.
 
 ## Example usage
 

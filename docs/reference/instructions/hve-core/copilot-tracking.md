@@ -3,7 +3,7 @@ title: Hve Core/Copilot Tracking
 description: "Shared .copilot-tracking conventions for RPI, HVE Builder, proposal response, and compatibility workflow evidence"
 sidebar_position: 2
 author: Microsoft
-ms.date: 2026-08-18
+ms.date: 2026-08-27
 ms.topic: reference
 keywords:
   - instruction
@@ -28,8 +28,10 @@ Shared .copilot-tracking conventions for RPI, HVE Builder, proposal response, an
 
 ## When to use it
 
-<!-- asset-docs:stub -->
-Describe the situations where this asset is the right choice, and when to reach for a different asset instead.
+Apply these conventions when RPI, HVE Builder, or compatibility workflows
+persist intermediate evidence under the listed `.copilot-tracking/` roots.
+Use the canonical dated paths and stable task identity there, but keep tracking
+references out of production code, documentation strings, and commit messages.
 
 ## Example usage
 

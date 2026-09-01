@@ -3,7 +3,7 @@ title: Shared/Disclaimer Language
 description: Centralized disclaimer language for AI-assisted planning and review agents requiring professional review acknowledgment
 sidebar_position: 3
 author: Microsoft
-ms.date: 2026-08-18
+ms.date: 2026-08-27
 ms.topic: reference
 keywords:
   - instruction
@@ -28,8 +28,11 @@ Centralized disclaimer language for AI-assisted planning and review agents requi
 
 ## When to use it
 
-<!-- asset-docs:stub -->
-Describe the situations where this asset is the right choice, and when to reach for a different asset instead.
+Use this file when a covered planning, coaching, or review workflow must emit
+its canonical professional-review disclaimer or acknowledgment. Select the
+matching H2 block and preserve it verbatim; planner identity instructions own
+the display cadence, and only a human may complete the associated review
+checkbox.
 
 ## Example usage
 

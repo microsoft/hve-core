@@ -2047,9 +2047,15 @@ stimuli:
           pattern: '(?i)(evaluate\s+completed|review|implement|code\s+edit|phase)'
   - name: skill-code-review-knowledge
     prompt: |
-      Summarize the review workflow defined by the `code-review` skill: its
-      perspectives, depth tiers, severity taxonomy, and structured output
-      contract. Cite at least three elements it standardizes.
+      Summarize the review workflow defined by the `code-review` skill,
+      including its perspectives, depth tiers, severity taxonomy, structured
+      output contract, and change-risk evidence checklist. Explain all six
+      checklist categories and the observed, unavailable, and qualitative
+      evidence states. Cover complete evidence, unavailable history or
+      coverage, conflicting evidence, the standard fallback for incomplete or
+      inconclusive evidence, comprehensive recommendations for material
+      observed concerns, and a human-selected depth that overrides the
+      recommendation with a persisted rationale.
     tags:
       category: behavior-conformance
       skill: code-review
@@ -2059,11 +2065,11 @@ stimuli:
       - type: output-matches
         name: skill-domain-attribution
         config:
-          pattern: '(?i)(code-review|code review|perspective|depth|severity|verdict|finding)'
+          pattern: '(?is)(?=.*(?:code-review|code review))(?=.*perspective)(?=.*depth)(?=.*severity)(?=.*(?:output|finding|verdict))(?=.*(?:change[- ]risk|evidence checklist))(?=.*change[- ]scope)(?=.*path[- ]criticality)(?=.*history)(?=.*test[- ]presence)(?=.*coverage)(?=.*rollback).+'
       - type: output-matches
         name: scope-language
         config:
-          pattern: '(?i)(review|severity|perspective|output|finding|verdict)'
+          pattern: '(?is)(?=.*observed)(?=.*unavailable)(?=.*qualitative)(?=.*standard)(?=.*(?:incomplete|inconclusive))(?=.*comprehensive)(?=.*(?:conflict|advisory))(?=.*human)(?=.*(?:override|selected))(?=.*rationale).+'
   - name: skill-privacy-standards-knowledge
     prompt: |
       Summarize the privacy frameworks the `privacy-standards` skill provides

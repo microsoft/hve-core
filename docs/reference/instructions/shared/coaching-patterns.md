@@ -3,7 +3,7 @@ title: Shared/Coaching Patterns
 description: "Shared exploration-first coaching patterns for planning agents (RAI, security, SSSC, Privacy) adapted from Design Thinking research methods"
 sidebar_position: 1
 author: Microsoft
-ms.date: 2026-08-12
+ms.date: 2026-08-27
 ms.topic: reference
 keywords:
   - instruction
@@ -28,8 +28,11 @@ Shared exploration-first coaching patterns for planning agents (RAI, security, S
 
 ## When to use it
 
-<!-- asset-docs:stub -->
-Describe the situations where this asset is the right choice, and when to reach for a different asset instead.
+Use these patterns during capture, discovery, or Phase 1 conversations for RAI,
+security, supply chain, and privacy planners. Explore the user's system before
+classifying it, preserve raw statements and tensions, and defer standards,
+prioritization, and remediation to later planner phases unless a specific
+identity overrides the cadence.
 
 ## Example usage
 
