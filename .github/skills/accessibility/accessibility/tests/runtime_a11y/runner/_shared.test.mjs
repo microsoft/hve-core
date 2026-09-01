@@ -37,6 +37,28 @@ test('assertArtifactId rejects path separators, collisions, unicode, and invalid
   }
 });
 
+test('assertArtifactId rejects Windows device names and trailing dots', () => {
+  // Win32 resolves these in any directory and strips trailing dots, so both
+  // forms would break or silently collide as evidence path segments.
+  for (const value of [
+    'CON',
+    'con',
+    'NUL',
+    'PRN',
+    'AUX',
+    'COM1',
+    'LPT9',
+    'CON.txt',
+    'nul.json',
+    'trailing.',
+  ]) {
+    assert.throws(() => assertArtifactId(value), undefined, value);
+  }
+  assert.equal(assertArtifactId('console'), 'console');
+  assert.equal(assertArtifactId('com10'), 'com10');
+  assert.equal(assertArtifactId('contrast'), 'contrast');
+});
+
 test('applyTrigger rejects invalid navigation before permissive action handling', async () => {
   const navigations = [];
   const page = {

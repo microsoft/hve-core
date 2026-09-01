@@ -133,10 +133,10 @@ flowchart TD
 | Path A local filesystem                            | Operator-selected local content                             | Accept an explicit existing regular local path or local `file:` URI; reject network-shaped resolved paths before any filesystem probe; reject non-local authority; access runs as the operator and is not repository-confined |
 | npm registry                                       | Path A scanner integrity                                    | Exact package version; argv without shell; no lockfile integrity for npx resolution (G-SUP-1)                                                                                                                                 |
 | Path B config and CLI to Python guard              | Browser destination and host network position               | JSON Schema; absolute credential-free HTTP(S); host authorization; external authorization never overrides scheme validation                                                                                                   |
-| Path B config/environment to JavaScript navigation | Navigation and artifact identity                            | Reassert HTTP(S); route paths and trigger destinations remain same-origin; portable path-bearing identifiers are rejected before writes                                                                                       |
+| Path B config/environment to JavaScript navigation | Navigation and artifact identity                            | Reassert and reauthorize the effective HTTP(S) base URL after CLI overrides; route paths and trigger destinations remain same-origin; portable path-bearing identifiers are rejected before writes                            |
 | Python to Node/npm/PowerShell child                | Caller environment and execution context                    | Argument-list spawning; full inherited environment is explicit residual G-INF-3                                                                                                                                               |
 | Playwright to system Chrome                        | Browser identity, parser surface, network position          | Fixed channel and launch arguments; ephemeral profile; launch-bound readiness/version evidence; endpoint owns binary identity and patching (G-SUP-2)                                                                          |
-| Browser and direct requests to web content         | Host network position and target-derived data               | Broken-link direct requests use at most five validated same-origin redirect hops; no complete browser redirect, DNS, worker, socket, download, or process-egress control                                                      |
+| Browser and direct requests to web content         | Host network position and target-derived data               | Broken-link direct requests retry GET after unsupported HEAD responses and use at most five validated same-origin redirect hops; no complete browser redirect, DNS, worker, socket, download, or process-egress control       |
 | Browser/runner to evidence                         | Artifact integrity and confidentiality                      | Portable identifiers, run-root containment, bounded normalized shape, hashes where supported, and target-derived content treated as untrusted                                                                                 |
 | Design-intent record to verifier                   | Human decision integrity                                    | Safe YAML loading, schema/semantic validation, digest binding, contained atomic writes, and no generator-authored override                                                                                                    |
 
@@ -342,7 +342,7 @@ flowchart TD
 
 ### Spoofing
 
-* The Python guard requires an absolute credential-free HTTP(S) base URL with a host, then permits loopback, a configured host allowlist, or explicit external authorization.
+* The Python guard requires an absolute credential-free HTTP(S) base URL with a host, then permits loopback, a configured host allowlist, or explicit external authorization. A CLI base-URL override re-enters this guard before `run-all` or `probe` can start browser work.
 * The JavaScript runner reasserts the HTTP(S) invariant before browser launch.
 
 ### Tampering
@@ -392,7 +392,7 @@ flowchart TD
 ### Information Disclosure
 
 * Browser requests originate from the workstation network position. No complete interception policy constrains redirects, subresources, Service Workers, WebSockets, downloads, DNS changes, peer IPs, or browser-internal connections.
-* The broken-link direct-request helper is narrower: it disables automatic redirects and follows at most five validated same-origin HTTP(S) hops.
+* The broken-link direct-request helper is narrower: it disables automatic redirects, retries with GET when HEAD returns 405 or 501, and follows at most five validated same-origin HTTP(S) hops.
 
 ### Denial of Service
 
@@ -414,7 +414,7 @@ flowchart TD
 
 ### Spoofing
 
-* Probe, route, surface, state, journey, and visual-review machine identifiers use one portable grammar and are validated before path construction.
+* Probe, route, surface, state, journey, and visual-review machine identifiers use one portable grammar and are validated before path construction. The grammar rejects trailing-dot aliases and Windows reserved device names, including device names followed by an extension.
 * Configuration-supplied aliases do not override a schema-validated identifier. The calibration journey identifier is taken from the validated `id` and re-asserted before any path is composed.
 
 ### Tampering

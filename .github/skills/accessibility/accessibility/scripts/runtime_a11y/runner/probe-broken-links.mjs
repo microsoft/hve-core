@@ -7,13 +7,26 @@ export const MAX_REDIRECT_HOPS = 5;
 
 const REDIRECT_STATUSES = new Set([301, 302, 303, 307, 308]);
 
+// HEAD-hostile endpoints answer 405/501 rather than throwing, so a GET retry
+// keeps a valid GET-only URL from being reported broken.
+const GET_FALLBACK_STATUSES = new Set([405, 501]);
+
+function readStatus(response) {
+  return typeof response?.status === 'function' ? response.status() : 0;
+}
+
 async function requestWithoutRedirects(request, url, timeout) {
   const options = { timeout, maxRedirects: 0 };
+  let response;
   try {
-    return await request.head(url, options);
+    response = await request.head(url, options);
   } catch {
     return request.get(url, options);
   }
+  if (GET_FALLBACK_STATUSES.has(readStatus(response))) {
+    return request.get(url, options);
+  }
+  return response;
 }
 
 export async function checkLinkWithRedirects(

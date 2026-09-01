@@ -139,3 +139,31 @@ test('checkLinkWithRedirects falls back from HEAD to GET without redirects', asy
 test('the default redirect limit remains five hops', () => {
   assert.equal(MAX_REDIRECT_HOPS, 5);
 });
+
+test('checkLinkWithRedirects retries with GET when HEAD is not allowed', async () => {
+  for (const headStatus of [405, 501]) {
+    const { request, calls } = sequenceRequest([
+      response(headStatus),
+      response(200),
+    ]);
+
+    const result = await checkLinkWithRedirects(
+      request,
+      'https://example.com/get-only',
+    );
+
+    assert.equal(result.broken, false, `status ${headStatus} should retry with GET`);
+    assert.equal(result.status, 200);
+    assert.deepEqual(calls.map(({ method }) => method), ['HEAD', 'GET']);
+  }
+});
+
+test('checkLinkWithRedirects does not retry a genuine client error', async () => {
+  const { request, calls } = sequenceRequest([response(404)]);
+
+  const result = await checkLinkWithRedirects(request, 'https://example.com/missing');
+
+  assert.equal(result.broken, true);
+  assert.equal(result.status, 404);
+  assert.deepEqual(calls.map(({ method }) => method), ['HEAD']);
+});

@@ -80,6 +80,9 @@ def test_given_unsupported_base_url_when_validate_then_raises_script_error(
             },
             "../../escape",
         ),
+        ({"calibration": {"journeys": [{"id": "CON"}]}}, "CON"),
+        ({"calibration": {"journeys": [{"id": "nul.json"}]}}, "nul.json"),
+        ({"calibration": {"journeys": [{"id": "trailing."}]}}, "trailing."),
     ],
 )
 def test_given_invalid_artifact_id_when_validate_then_raises_script_error(

@@ -213,7 +213,8 @@
   "$defs": {
     "artifactId": {
       "type": "string",
-      "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$"
+      "description": "Portable identifier used as an evidence path segment. Excludes trailing dots and Windows reserved device names, which Win32 would collide or fail on.",
+      "pattern": "^(?![Cc][Oo][Nn](\\.|$))(?![Pp][Rr][Nn](\\.|$))(?![Aa][Uu][Xx](\\.|$))(?![Nn][Uu][Ll](\\.|$))(?![Cc][Oo][Mm][1-9](\\.|$))(?![Ll][Pp][Tt][1-9](\\.|$))(?!.*\\.$)[A-Za-z0-9][A-Za-z0-9._-]{0,127}$"
     },
     "selector": {
       "oneOf": [
