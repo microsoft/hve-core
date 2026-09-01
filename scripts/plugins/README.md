@@ -7,12 +7,12 @@ PowerShell tooling for synchronizing root `plugin.json` with the complete distri
 
 ## Scripts
 
-| Script                          | Invocation                      | Description                                                 |
-|---------------------------------|---------------------------------|-------------------------------------------------------------|
-| Install-HveCorePlugin.ps1       | Direct `pwsh` script            | Install HVE Core through a marketplace at an exact Git SHA  |
-| Sync-PluginManifest.ps1         | `npm run plugin:sync`           | Write deterministic membership and locator parity          |
-| Sync-PluginManifest.ps1 -Check  | `npm run lint:plugin-manifest`  | Fail on manifest or marketplace locator drift               |
-| Aggregate validation            | `npm run plugin:validate`       | Check the manifest and locator                              |
+| Script                         | Invocation                     | Description                                                |
+|--------------------------------|--------------------------------|------------------------------------------------------------|
+| Install-HveCorePlugin.ps1      | Direct `pwsh` script           | Install HVE Core through a marketplace at an exact Git SHA |
+| Sync-PluginManifest.ps1        | `npm run plugin:sync`          | Write deterministic membership and locator parity          |
+| Sync-PluginManifest.ps1 -Check | `npm run lint:plugin-manifest` | Fail on manifest or marketplace locator drift              |
+| Aggregate validation           | `npm run plugin:validate`      | Check the manifest and locator                             |
 
 ## Prerequisites
 
