@@ -3,7 +3,7 @@ title: Coding Standards/Rust/Rust
 description: Rust code authoring conventions
 sidebar_position: 2
 author: Microsoft
-ms.date: 2026-08-12
+ms.date: 2026-08-27
 ms.topic: reference
 keywords:
   - instruction
@@ -28,8 +28,10 @@ Rust code authoring conventions
 
 ## When to use it
 
-<!-- asset-docs:stub -->
-Describe the situations where this asset is the right choice, and when to reach for a different asset instead.
+Apply these conventions to Rust crate configuration and `.rs` source files,
+including error handling, async work, observability, serialization, and public
+API documentation. Test code also follows the Rust test instructions for
+placement, fixtures, and mocking.
 
 ## Example usage
 

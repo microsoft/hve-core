@@ -3,7 +3,7 @@ title: Hve Core/Pull Request
 description: "Pull request description generation and creation via diff analysis, subagent review, and MCP tools"
 sidebar_position: 7
 author: Microsoft
-ms.date: 2026-08-12
+ms.date: 2026-08-27
 ms.topic: reference
 keywords:
   - instruction
@@ -28,8 +28,11 @@ Pull request description generation and creation via diff analysis, subagent rev
 
 ## When to use it
 
-<!-- asset-docs:stub -->
-Describe the situations where this asset is the right choice, and when to reach for a different asset instead.
+Use these instructions when generating, validating, or creating a pull request
+from branch-diff evidence under `.copilot-tracking/pr/`. Resolve the repository
+template and required checks before authoring, leave human-only verification
+unchecked, and request creation approval only when the user asked for a PR and
+readiness checks pass.
 
 ## Example usage
 
